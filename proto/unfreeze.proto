@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package types;
+
+message Unfreeze {
+    //开始时间
+    int64 startTime = 1;
+    //币种
+    string tokenName = 2;
+    //冻结总额
+    int64 totalCount = 3;
+    //发币人地址
+    string senderAddr = 4;
+    //收币人地址
+    string receiverAddr = 5;
+    //解冻间隔
+    int64 unfreezeGap = 6;
+    //解冻方式（百分比；固额） 1 百分比 -> 2 固额
+    int32 unfreezeMeans = 7;
+    //解冻数量：若为百分比解冻方式该字段值为百分比乘以100，若为固额该字段值为币数量
+    int64 unfreezeAmount = 8;
+    //已解冻次数
+    int32 withdrawTimes = 9;
+}
+
+// message for execs.unfreeze
+message UnfreezeAction {
+    oneof value {
+        UnfreezeCreate create = 1;
+        UnfreezeWithdraw withdraw = 2;
+        UnfreezeTerminate terminate = 3;
+    }
+    int32 ty = 10;
+}
+
+message UnfreezeCreate {
+
+}
+
+message UnfreezeWithdraw {
+
+}
+
+message UnfreezeTerminate {
+
+}
+
+message ReceiptUnfreeze {
+
+}
