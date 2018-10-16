@@ -40,15 +40,3 @@ func GetName() string {
 func (u *Unfreeze) GetDriverName() string {
 	return driverName
 }
-
-func (u *Unfreeze) GetPayloadValue() types.Message {
-	return &uf.UnfreezeAction{}
-}
-
-func (u *Unfreeze) GetTypeMap() map[string]int32 {
-	return map[string]int32{
-		"Create":    uf.UnfreezeActionCreate,
-		"Withdraw":  uf.UnfreezeActionWithdraw,
-		"Terminate": uf.UnfreezeActionTerminate,
-	}
-}
