@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"fmt"
-
 	log "github.com/inconshreveable/log15"
 	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
@@ -19,7 +17,7 @@ func init() {
 }
 
 func Init(name string) {
-	drivers.Register(GetName(), newGame, 0)
+	drivers.Register(GetName(), newUnfreeze, 0)
 }
 
 type Unfreeze struct {

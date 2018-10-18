@@ -3,24 +3,26 @@ syntax = "proto3";
 package types;
 
 message Unfreeze {
+	//解冻交易ID（唯一识别码）
+	string unfreezeID = 1;
     //开始时间
-    int64 startTime = 1;
+    int64 startTime = 2;
     //币种
-    string tokenName = 2;
+    string tokenName = 3;
     //冻结总额
-    int64 totalCount = 3;
+    int64 totalCount = 4;
     //发币人地址
-    string senderAddr = 4;
+    string initiator = 5;
     //收币人地址
-    string receiverAddr = 5;
+    string beneficiary = 6;
     //解冻间隔
-    int64 unfreezeGap = 6;
+    int64 period = 7;
     //解冻方式（百分比；固额） 1 百分比 -> 2 固额
-    int32 unfreezeMeans = 7;
+    int32 means = 8;
     //解冻数量：若为百分比解冻方式该字段值为百分比乘以100，若为固额该字段值为币数量
-    int64 unfreezeAmount = 8;
+    int64 amount = 9;
     //已解冻次数
-    int32 withdrawTimes = 9;
+    int32 withdrawTimes = 10;
 }
 
 // message for execs.unfreeze
@@ -34,17 +36,31 @@ message UnfreezeAction {
 }
 
 message UnfreezeCreate {
-
+    int64 startTime = 1;
+    string tokenName = 2;
+    int64 totalCount = 3;
+    string initiator = 4;
+    string beneficiary = 5;
+    int64 period = 6;
+    int32 means = 7;
+    int64 amount = 8;
 }
 
 message UnfreezeWithdraw {
-
+    string unfreezeID = 1;
 }
 
 message UnfreezeTerminate {
-
+    string unfreezeID = 1;
 }
 
+//TODO: 更多receipt类型
 message ReceiptUnfreeze {
+    string tokenName = 1;
+    string createAddr = 2;
+    string receiveAddr = 3;
+}
 
+message QueryWithdraw {
+    string unfreezeID = 1;
 }
