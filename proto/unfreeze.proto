@@ -23,6 +23,8 @@ message Unfreeze {
     int64 amount = 9;
     //已解冻次数
     int32 withdrawTimes = 10;
+	//解冻剩余币数
+	int64 remaining = 11;
 }
 
 // message for execs.unfreeze
@@ -32,18 +34,18 @@ message UnfreezeAction {
         UnfreezeWithdraw withdraw = 2;
         UnfreezeTerminate terminate = 3;
     }
-    int32 ty = 10;
+    int32 ty = 4;
 }
 
+// action
 message UnfreezeCreate {
     int64 startTime = 1;
     string tokenName = 2;
     int64 totalCount = 3;
-    string initiator = 4;
-    string beneficiary = 5;
-    int64 period = 6;
-    int32 means = 7;
-    int64 amount = 8;
+    string beneficiary = 4;
+    int64 period = 5;
+    int32 means = 6;
+    int64 amount = 7;
 }
 
 message UnfreezeWithdraw {
@@ -54,13 +56,22 @@ message UnfreezeTerminate {
     string unfreezeID = 1;
 }
 
-//TODO: 更多receipt类型
-message ReceiptUnfreeze {
-    string tokenName = 1;
-    string createAddr = 2;
-    string receiveAddr = 3;
+// receipt
+message ReceiptCreate {
+    string unfreezeID = 1;
+    string initiator = 2;
 }
 
-message QueryWithdraw {
+message ReceiptWithdraw {
+    int32 withdrawTimes = 1;
+    string beneficiary = 3;
+}
+
+message ReceiptTerminate {
+    string unfreezeID = 1;
+}
+
+// query
+message QueryWithdrawStatus {
     string unfreezeID = 1;
 }

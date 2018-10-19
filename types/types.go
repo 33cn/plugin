@@ -35,9 +35,9 @@ type UnfreezeType struct {
 
 func (u *UnfreezeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogCreateUnfreeze:    {reflect.TypeOf(ReceiptUnfreeze{}), "LogCreateUnfreeze"},
-		TyLogWithdrawUnfreeze:  {reflect.TypeOf(ReceiptUnfreeze{}), "LogWithdrawUnfreeze"},
-		TyLogTerminateUnfreeze: {reflect.TypeOf(ReceiptUnfreeze{}), "LogTerminateUnfreeze"},
+		TyLogCreateUnfreeze:    {reflect.TypeOf(ReceiptCreate{}), "LogCreateUnfreeze"},
+		TyLogWithdrawUnfreeze:  {reflect.TypeOf(ReceiptWithdraw{}), "LogWithdrawUnfreeze"},
+		TyLogTerminateUnfreeze: {reflect.TypeOf(ReceiptTerminate{}), "LogTerminateUnfreeze"},
 	}
 }
 
