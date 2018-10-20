@@ -72,6 +72,11 @@ message ReceiptTerminate {
 }
 
 // query
-message QueryWithdrawStatus {
+message QueryUnfreezeWithdraw {
     string unfreezeID = 1;
+}
+
+message ReplyQueryUnfreezeWithdraw {
+    string unfreezeID = 1;
+    int64 availableAmount = 2;
 }

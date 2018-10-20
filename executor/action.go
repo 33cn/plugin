@@ -81,40 +81,10 @@ func (a *action) UnfreezeWithdraw(withdraw *uf.UnfreezeWithdraw) (*types.Receipt
 	}
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	currentTime := time.Now().Unix()
-	expectTimes := (currentTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
-	reaTimes := expectTimes - int64(unfreeze.WithdrawTimes)
-	if reaTimes <= 0 {
-		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", types.ErrUnfreezeBeforeDue)
-		return nil, types.ErrUnfreezeBeforeDue
-	}
-	if unfreeze.Remaining <= 0 {
-		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", types.ErrUnfreezeEmptied)
-		return nil, types.ErrUnfreezeEmptied
-	}
-
-	var available int64
-	switch unfreeze.Means {
-	case 1: // 百分比
-		for i := int64(0); i < reaTimes; i++ {
-			if tmp := unfreeze.Remaining * unfreeze.Amount / 10000; tmp == 0 {
-				available = unfreeze.Remaining
-				break
-			} else {
-				available += tmp
-			}
-		}
-	case 2: // 固额
-		for i := int64(0); i < reaTimes; i++ {
-			if unfreeze.Remaining <= unfreeze.Amount {
-				available = unfreeze.Remaining
-				break
-			}
-			available += unfreeze.Amount
-		}
-	default:
-		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", types.ErrUnfreezeMeans)
-		return nil, types.ErrUnfreezeMeans
+	reaTimes, available, err := getWithdrawAvailable(unfreeze)
+	if err != nil {
+		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", err)
+		return nil, err
 	}
 
 	tokenAccDB, err := account.NewAccountDB("token", unfreeze.TokenName, a.db)
@@ -225,8 +195,63 @@ func (a *action) getTerminateLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
 }
 
 //查询可提币状态
-func QueryWithdraw(stateDB dbm.KV, param *uf.QueryWithdrawStatus) (types.Message, error) {
+func QueryWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (types.Message, error) {
 	//查询提币次数
 	//计算当前可否提币
-	return &types.Reply{}, nil
+	unfreezeID := param.UnfreezeID
+	value, err := stateDB.Get(key(unfreezeID))
+	if err != nil {
+		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
+		return nil, err
+	}
+	var unfreeze uf.Unfreeze
+	err = types.Decode(value, &unfreeze)
+	if err != nil {
+		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
+		return nil, err
+	}
+	reply := &uf.ReplyQueryUnfreezeWithdraw{UnfreezeID: unfreezeID}
+	_, available, err := getWithdrawAvailable(unfreeze)
+	if err != nil {
+		reply.AvailableAmount = 0
+	} else {
+		reply.AvailableAmount = available
+	}
+	return reply, nil
+}
+
+func getWithdrawAvailable(unfreeze uf.Unfreeze) (int64, int64, error) {
+	currentTime := time.Now().Unix()
+	expectTimes := (currentTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
+	reaTimes := expectTimes - int64(unfreeze.WithdrawTimes)
+	if reaTimes <= 0 {
+		return 0, 0, types.ErrUnfreezeBeforeDue
+	}
+	if unfreeze.Remaining <= 0 {
+		return 0, 0, types.ErrUnfreezeEmptied
+	}
+
+	var available int64
+	switch unfreeze.Means {
+	case 1: // 百分比
+		for i := int64(0); i < reaTimes; i++ {
+			if tmp := unfreeze.Remaining * unfreeze.Amount / 10000; tmp == 0 {
+				available = unfreeze.Remaining
+				break
+			} else {
+				available += tmp
+			}
+		}
+	case 2: // 固额
+		for i := int64(0); i < reaTimes; i++ {
+			if unfreeze.Remaining <= unfreeze.Amount {
+				available = unfreeze.Remaining
+				break
+			}
+			available += unfreeze.Amount
+		}
+	default:
+		return 0, 0, types.ErrUnfreezeMeans
+	}
+	return reaTimes, available, nil
 }
