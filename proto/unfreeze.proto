@@ -57,18 +57,11 @@ message UnfreezeTerminate {
 }
 
 // receipt
-message ReceiptCreate {
+message ReceiptUnfreeze {
     string unfreezeID = 1;
     string initiator = 2;
-}
-
-message ReceiptWithdraw {
-    int32 withdrawTimes = 1;
-    string beneficiary = 3;
-}
-
-message ReceiptTerminate {
-    string unfreezeID = 1;
+	string beneficiary = 3;
+	string tokenName = 4;
 }
 
 // query

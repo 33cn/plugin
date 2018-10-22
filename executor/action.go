@@ -61,7 +61,7 @@ func (a *action) UnfreezeCreate(create *uf.UnfreezeCreate) (*types.Receipt, erro
 	k := []byte(unfreezeID)
 	v := types.Encode(unfreeze)
 	kv = append(kv, &types.KeyValue{k, v})
-	receiptLog := a.getCreateLog(unfreeze)
+	receiptLog := a.getUnfreezeLog(unfreeze)
 	logs = append(logs, receiptLog)
 	return &types.Receipt{types.ExecOk, kv, logs}, nil
 }
@@ -103,7 +103,7 @@ func (a *action) UnfreezeWithdraw(withdraw *uf.UnfreezeWithdraw) (*types.Receipt
 	unfreeze.WithdrawTimes += int32(reaTimes)
 	unfreeze.Remaining -= available
 	a.saveStateDB(&unfreeze)
-	receiptLog := a.getWithdrawLog(&unfreeze)
+	receiptLog := a.getUnfreezeLog(&unfreeze)
 	logs = append(logs, receiptLog)
 	k := []byte(withdraw.UnfreezeID)
 	v := types.Encode(&unfreeze)
@@ -147,7 +147,7 @@ func (a *action) UnfreezeTerminate(terminate *uf.UnfreezeTerminate) (*types.Rece
 	kv = append(kv, receipt.KV...)
 	unfreeze.Remaining = 0
 	a.saveStateDB(&unfreeze)
-	receiptLog := a.getTerminateLog(&unfreeze)
+	receiptLog := a.getUnfreezeLog(&unfreeze)
 	logs = append(logs, receiptLog)
 	k := []byte(terminate.UnfreezeID)
 	v := types.Encode(&unfreeze)
@@ -165,37 +165,20 @@ func key(id string) (keys []byte) {
 	return keys
 }
 
-func (a *action) getCreateLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
+func (a *action) getUnfreezeLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = uf.TyLogCreateUnfreeze
-	r := &uf.ReceiptCreate{}
+	r := &uf.ReceiptUnfreeze{}
 	r.UnfreezeID = unfreeze.UnfreezeID
 	r.Initiator = unfreeze.Initiator
-	log.Log = types.Encode(r)
-	return log
-}
-
-func (a *action) getWithdrawLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
-	log := &types.ReceiptLog{}
-	log.Ty = uf.TyLogCreateUnfreeze
-	r := &uf.ReceiptWithdraw{}
-	r.WithdrawTimes = unfreeze.WithdrawTimes
 	r.Beneficiary = unfreeze.Beneficiary
-	log.Log = types.Encode(r)
-	return log
-}
-
-func (a *action) getTerminateLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
-	log := &types.ReceiptLog{}
-	log.Ty = uf.TyLogCreateUnfreeze
-	r := &uf.ReceiptTerminate{}
-	r.UnfreezeID = unfreeze.UnfreezeID
+	r.TokenName = unfreeze.TokenName
 	log.Log = types.Encode(r)
 	return log
 }
 
 //查询可提币状态
-func QueryWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (types.Message, error) {
+func QueryUnfreezeWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (types.Message, error) {
 	//查询提币次数
 	//计算当前可否提币
 	unfreezeID := param.UnfreezeID

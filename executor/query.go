@@ -5,6 +5,6 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 )
 
-func (u *Unfreeze) Query_QueryWithdraw(in *uf.QueryUnfreezeWithdraw) (types.Message, error) {
-	return QueryWithdraw(u.GetStateDB(), in)
+func (u *Unfreeze) Query_QueryUnfreezeWithdraw(in *uf.QueryUnfreezeWithdraw) (types.Message, error) {
+	return QueryUnfreezeWithdraw(u.GetStateDB(), in)
 }

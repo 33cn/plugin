@@ -22,12 +22,12 @@ var (
 	ExecerUnfreeze = []byte(UnfreezeX)
 )
 
-//const (
-//	Action_CreateUnfreeze    = "createUnfreeze"
-//	Action_WithdrawUnfreeze  = "withdrawUnfreeze"
-//	Action_TerminateUnfreeze = "terminateUnfreeze"
-//)
+const (
+	Action_CreateUnfreeze    = "createUnfreeze"
+	Action_WithdrawUnfreeze  = "withdrawUnfreeze"
+	Action_TerminateUnfreeze = "terminateUnfreeze"
+)
 
-//const (
-//	FuncName_QueryXXX = "QueryXXX"
-//)
+const (
+	FuncName_QueryUnfreezeWithdraw = "QueryUnfreezeWithdraw"
+)
