@@ -8,23 +8,34 @@ message Unfreeze {
     //开始时间
     int64 startTime = 2;
     //币种
-    string tokenName = 3;
+    string assetExec = 3;
+    string assetSymbol = 4;
     //冻结总额
-    int64 totalCount = 4;
+    int64 totalCount = 5;
     //发币人地址
-    string initiator = 5;
+    string initiator = 6;
     //收币人地址
-    string beneficiary = 6;
-    //解冻间隔
-    int64 period = 7;
-    //解冻方式（百分比；固额） 1 百分比 -> 2 固额
-    int32 means = 8;
-    //解冻数量：若为百分比解冻方式该字段值为百分比乘以100，若为固额该字段值为币数量
-    int64 amount = 9;
-    //已解冻次数
-    int32 withdrawTimes = 10;
-	//解冻剩余币数
-	int64 remaining = 11;
+    string beneficiary = 7;
+    //解冻剩余币数
+    int64 remaining = 8;
+    //解冻方式（百分比；固额）
+    string means = 9;
+    oneof meansOpt {
+        FixAmount fixAmount = 10;
+        LeftProportion leftProportion = 11;
+    }
+}
+
+// 按时间固定额度解冻
+message FixAmount {
+    int64 period = 1;
+    int64 amount = 2;
+}
+
+// 固定时间间隔按余量百分比解冻
+message LeftProportion {
+    int64 period = 1;
+    int64 tenThousandth = 2;
 }
 
 // message for execs.unfreeze
@@ -43,9 +54,11 @@ message UnfreezeCreate {
     string tokenName = 2;
     int64 totalCount = 3;
     string beneficiary = 4;
-    int64 period = 5;
-    int32 means = 6;
-    int64 amount = 7;
+    string means = 5;
+    oneof meansOpt {
+        FixAmount fixAmount = 6;
+        LeftProportion leftProportion = 7;
+    }
 }
 
 message UnfreezeWithdraw {
