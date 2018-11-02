@@ -33,7 +33,7 @@ func newAction(u *Unfreeze, tx *types.Transaction, index int32) *action {
 func (a *action) UnfreezeCreate(create *uf.UnfreezeCreate) (*types.Receipt, error) {
 	//构造ID - txHash
 	var unfreezeID string = "unfreezeID_" + common.ToHex(a.txhash)
-	tokenAccDB, err := account.NewAccountDB("token", create.TokenName, a.db)
+	tokenAccDB, err := account.NewAccountDB(create.AssetExec, create.AssetSymbol, a.db)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +49,15 @@ func (a *action) UnfreezeCreate(create *uf.UnfreezeCreate) (*types.Receipt, erro
 	unfreeze := &uf.Unfreeze{
 		UnfreezeID:  unfreezeID,
 		StartTime:   create.StartTime,
-		TokenName:   create.TokenName,
+		AssetExec: create.AssetExec,
+		AssetSymbol: create.AssetSymbol,
 		TotalCount:  create.TotalCount,
 		Initiator:   a.fromaddr,
 		Beneficiary: create.Beneficiary,
-		Period:      create.Period,
 		Means:       create.Means,
-		Amount:      create.Amount,
+		// TODO set option
 	}
+
 	a.saveStateDB(unfreeze)
 	k := []byte(unfreezeID)
 	v := types.Encode(unfreeze)
@@ -81,13 +82,13 @@ func (a *action) UnfreezeWithdraw(withdraw *uf.UnfreezeWithdraw) (*types.Receipt
 	}
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	reaTimes, available, err := getWithdrawAvailable(unfreeze, a.blocktime)
+	_, available, err := getWithdrawAvailable(unfreeze, a.blocktime)
 	if err != nil {
 		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", err)
 		return nil, err
 	}
 
-	tokenAccDB, err := account.NewAccountDB("token", unfreeze.TokenName, a.db)
+	tokenAccDB, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, a.db)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (a *action) UnfreezeWithdraw(withdraw *uf.UnfreezeWithdraw) (*types.Receipt
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	unfreeze.WithdrawTimes += int32(reaTimes)
+	//unfreeze.WithdrawTimes += int32(reaTimes)
 	unfreeze.Remaining -= available
 	a.saveStateDB(&unfreeze)
 	receiptLog := a.getUnfreezeLog(&unfreeze)
@@ -132,7 +133,7 @@ func (a *action) UnfreezeTerminate(terminate *uf.UnfreezeTerminate) (*types.Rece
 		uflog.Error("unfreeze terminate ", "execaddr", a.execaddr, "err", uf.ErrUnfreezeEmptied)
 		return nil, uf.ErrUnfreezeEmptied
 	}
-	tokenAccDB, err := account.NewAccountDB("token", unfreeze.TokenName, a.db)
+	tokenAccDB, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, a.db)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +173,7 @@ func (a *action) getUnfreezeLog(unfreeze *uf.Unfreeze) *types.ReceiptLog {
 	r.UnfreezeID = unfreeze.UnfreezeID
 	r.Initiator = unfreeze.Initiator
 	r.Beneficiary = unfreeze.Beneficiary
-	r.TokenName = unfreeze.TokenName
+	r.TokenName = unfreeze.AssetSymbol // TODO exec
 	log.Log = types.Encode(r)
 	return log
 }
@@ -205,6 +206,8 @@ func QueryUnfreezeWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (typ
 }
 
 func getWithdrawAvailable(unfreeze uf.Unfreeze, calcTime int64) (int64, int64, error) {
+	return 1, 1, nil // TODO impl
+	/*
 	expectTimes := (calcTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
 	reaTimes := expectTimes - int64(unfreeze.WithdrawTimes)
 	if reaTimes <= 0 {
@@ -237,4 +240,5 @@ func getWithdrawAvailable(unfreeze uf.Unfreeze, calcTime int64) (int64, int64, e
 		return 0, 0, uf.ErrUnfreezeMeans
 	}
 	return reaTimes, available, nil
+	*/
 }

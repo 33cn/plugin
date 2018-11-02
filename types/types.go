@@ -95,18 +95,13 @@ func CreateUnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
 		tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	v := &UnfreezeCreate{
-		StartTime:   parm.StartTime,
-		TokenName:   parm.TokenName,
-		TotalCount:  parm.TotalCount,
-		Beneficiary: parm.Beneficiary,
-		Period:      parm.Period,
-		Means:       parm.Means,
-		Amount:      parm.Amount,
+	if parm.AssetExec == "" || parm.AssetSymbol == "" || parm.TotalCount <= 0 || parm.Means == "" {
+		tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
+		return nil, types.ErrInvalidParam
 	}
 	create := &UnfreezeAction{
 		Ty:    UnfreezeActionCreate,
-		Value: &UnfreezeAction_Create{v},
+		Value: &UnfreezeAction_Create{parm},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(getRealExecName(types.GetParaName())),
