@@ -18,7 +18,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Unfreeze{}))
 }
 
-func Init(name string) {
+func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newUnfreeze, 0)
 }
 

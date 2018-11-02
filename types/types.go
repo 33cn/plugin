@@ -65,7 +65,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInputPara
+			return nil, types.ErrInvalidParam
 		}
 		return CreateUnfreezeCreateTx(&param)
 	} else if action == Action_WithdrawUnfreeze {
@@ -73,7 +73,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInputPara
+			return nil, types.ErrInvalidParam
 		}
 		return CreateUnfreezeWithdrawTx(&param)
 	} else if action == Action_TerminateUnfreeze {
@@ -81,7 +81,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInputPara
+			return nil, types.ErrInvalidParam
 		}
 		return CreateUnfreezeTerminateTx(&param)
 	} else {

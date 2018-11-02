@@ -125,12 +125,12 @@ func (a *action) UnfreezeTerminate(terminate *uf.UnfreezeTerminate) (*types.Rece
 		return nil, err
 	}
 	if a.fromaddr != unfreeze.Initiator {
-		uflog.Error("unfreeze terminate ", "execaddr", a.execaddr, "err", types.ErrUnfreezeID)
-		return nil, types.ErrUnfreezeID
+		uflog.Error("unfreeze terminate ", "execaddr", a.execaddr, "err", uf.ErrUnfreezeID)
+		return nil, uf.ErrUnfreezeID
 	}
 	if unfreeze.Remaining <= 0 {
-		uflog.Error("unfreeze terminate ", "execaddr", a.execaddr, "err", types.ErrUnfreezeEmptied)
-		return nil, types.ErrUnfreezeEmptied
+		uflog.Error("unfreeze terminate ", "execaddr", a.execaddr, "err", uf.ErrUnfreezeEmptied)
+		return nil, uf.ErrUnfreezeEmptied
 	}
 	tokenAccDB, err := account.NewAccountDB("token", unfreeze.TokenName, a.db)
 	if err != nil {
@@ -208,10 +208,10 @@ func getWithdrawAvailable(unfreeze uf.Unfreeze) (int64, int64, error) {
 	expectTimes := (currentTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
 	reaTimes := expectTimes - int64(unfreeze.WithdrawTimes)
 	if reaTimes <= 0 {
-		return 0, 0, types.ErrUnfreezeBeforeDue
+		return 0, 0, uf.ErrUnfreezeBeforeDue
 	}
 	if unfreeze.Remaining <= 0 {
-		return 0, 0, types.ErrUnfreezeEmptied
+		return 0, 0, uf.ErrUnfreezeEmptied
 	}
 
 	var available int64
@@ -234,7 +234,7 @@ func getWithdrawAvailable(unfreeze uf.Unfreeze) (int64, int64, error) {
 			available += unfreeze.Amount
 		}
 	default:
-		return 0, 0, types.ErrUnfreezeMeans
+		return 0, 0, uf.ErrUnfreezeMeans
 	}
 	return reaTimes, available, nil
 }
