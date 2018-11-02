@@ -81,7 +81,7 @@ func (a *action) UnfreezeWithdraw(withdraw *uf.UnfreezeWithdraw) (*types.Receipt
 	}
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	reaTimes, available, err := getWithdrawAvailable(unfreeze)
+	reaTimes, available, err := getWithdrawAvailable(unfreeze, a.blocktime)
 	if err != nil {
 		uflog.Error("unfreeze withdraw ", "execaddr", a.execaddr, "err", err)
 		return nil, err
@@ -193,8 +193,9 @@ func QueryUnfreezeWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (typ
 		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
 		return nil, err
 	}
+	currentTime := time.Now().Unix() // TODO
 	reply := &uf.ReplyQueryUnfreezeWithdraw{UnfreezeID: unfreezeID}
-	_, available, err := getWithdrawAvailable(unfreeze)
+	_, available, err := getWithdrawAvailable(unfreeze, currentTime)
 	if err != nil {
 		reply.AvailableAmount = 0
 	} else {
@@ -203,9 +204,8 @@ func QueryUnfreezeWithdraw(stateDB dbm.KV, param *uf.QueryUnfreezeWithdraw) (typ
 	return reply, nil
 }
 
-func getWithdrawAvailable(unfreeze uf.Unfreeze) (int64, int64, error) {
-	currentTime := time.Now().Unix()
-	expectTimes := (currentTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
+func getWithdrawAvailable(unfreeze uf.Unfreeze, calcTime int64) (int64, int64, error) {
+	expectTimes := (calcTime + unfreeze.Period - unfreeze.StartTime) / unfreeze.Period
 	reaTimes := expectTimes - int64(unfreeze.WithdrawTimes)
 	if reaTimes <= 0 {
 		return 0, 0, uf.ErrUnfreezeBeforeDue
