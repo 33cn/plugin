@@ -51,13 +51,14 @@ message UnfreezeAction {
 // action
 message UnfreezeCreate {
     int64 startTime = 1;
-    string tokenName = 2;
-    int64 totalCount = 3;
-    string beneficiary = 4;
-    string means = 5;
+    string assetExec = 2;
+    string assetSymbol = 3;
+    int64 totalCount = 4;
+    string beneficiary = 5;
+    string means = 6;
     oneof meansOpt {
-        FixAmount fixAmount = 6;
-        LeftProportion leftProportion = 7;
+        FixAmount fixAmount = 7;
+        LeftProportion leftProportion = 8;
     }
 }
 
