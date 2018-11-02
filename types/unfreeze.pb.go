@@ -9,6 +9,8 @@ It is generated from these files:
 
 It has these top-level messages:
 	Unfreeze
+	FixAmount
+	LeftProportion
 	UnfreezeAction
 	UnfreezeCreate
 	UnfreezeWithdraw
@@ -40,29 +42,49 @@ type Unfreeze struct {
 	// 开始时间
 	StartTime int64 `protobuf:"varint,2,opt,name=startTime" json:"startTime,omitempty"`
 	// 币种
-	TokenName string `protobuf:"bytes,3,opt,name=tokenName" json:"tokenName,omitempty"`
+	AssetExec   string `protobuf:"bytes,3,opt,name=assetExec" json:"assetExec,omitempty"`
+	AssetSymbol string `protobuf:"bytes,4,opt,name=assetSymbol" json:"assetSymbol,omitempty"`
 	// 冻结总额
-	TotalCount int64 `protobuf:"varint,4,opt,name=totalCount" json:"totalCount,omitempty"`
+	TotalCount int64 `protobuf:"varint,5,opt,name=totalCount" json:"totalCount,omitempty"`
 	// 发币人地址
-	Initiator string `protobuf:"bytes,5,opt,name=initiator" json:"initiator,omitempty"`
+	Initiator string `protobuf:"bytes,6,opt,name=initiator" json:"initiator,omitempty"`
 	// 收币人地址
-	Beneficiary string `protobuf:"bytes,6,opt,name=beneficiary" json:"beneficiary,omitempty"`
-	// 解冻间隔
-	Period int64 `protobuf:"varint,7,opt,name=period" json:"period,omitempty"`
-	// 解冻方式（百分比；固额） 1 百分比 -> 2 固额
-	Means int32 `protobuf:"varint,8,opt,name=means" json:"means,omitempty"`
-	// 解冻数量：若为百分比解冻方式该字段值为百分比乘以100，若为固额该字段值为币数量
-	Amount int64 `protobuf:"varint,9,opt,name=amount" json:"amount,omitempty"`
-	// 已解冻次数
-	WithdrawTimes int32 `protobuf:"varint,10,opt,name=withdrawTimes" json:"withdrawTimes,omitempty"`
+	Beneficiary string `protobuf:"bytes,7,opt,name=beneficiary" json:"beneficiary,omitempty"`
 	// 解冻剩余币数
-	Remaining int64 `protobuf:"varint,11,opt,name=remaining" json:"remaining,omitempty"`
+	Remaining int64 `protobuf:"varint,8,opt,name=remaining" json:"remaining,omitempty"`
+	// 解冻方式（百分比；固额）
+	Means string `protobuf:"bytes,9,opt,name=means" json:"means,omitempty"`
+	// Types that are valid to be assigned to MeansOpt:
+	//	*Unfreeze_FixAmount
+	//	*Unfreeze_LeftProportion
+	MeansOpt isUnfreeze_MeansOpt `protobuf_oneof:"meansOpt"`
 }
 
 func (m *Unfreeze) Reset()                    { *m = Unfreeze{} }
 func (m *Unfreeze) String() string            { return proto.CompactTextString(m) }
 func (*Unfreeze) ProtoMessage()               {}
 func (*Unfreeze) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+type isUnfreeze_MeansOpt interface {
+	isUnfreeze_MeansOpt()
+}
+
+type Unfreeze_FixAmount struct {
+	FixAmount *FixAmount `protobuf:"bytes,10,opt,name=fixAmount,oneof"`
+}
+type Unfreeze_LeftProportion struct {
+	LeftProportion *LeftProportion `protobuf:"bytes,11,opt,name=leftProportion,oneof"`
+}
+
+func (*Unfreeze_FixAmount) isUnfreeze_MeansOpt()      {}
+func (*Unfreeze_LeftProportion) isUnfreeze_MeansOpt() {}
+
+func (m *Unfreeze) GetMeansOpt() isUnfreeze_MeansOpt {
+	if m != nil {
+		return m.MeansOpt
+	}
+	return nil
+}
 
 func (m *Unfreeze) GetUnfreezeID() string {
 	if m != nil {
@@ -78,9 +100,16 @@ func (m *Unfreeze) GetStartTime() int64 {
 	return 0
 }
 
-func (m *Unfreeze) GetTokenName() string {
+func (m *Unfreeze) GetAssetExec() string {
 	if m != nil {
-		return m.TokenName
+		return m.AssetExec
+	}
+	return ""
+}
+
+func (m *Unfreeze) GetAssetSymbol() string {
+	if m != nil {
+		return m.AssetSymbol
 	}
 	return ""
 }
@@ -106,37 +135,154 @@ func (m *Unfreeze) GetBeneficiary() string {
 	return ""
 }
 
-func (m *Unfreeze) GetPeriod() int64 {
+func (m *Unfreeze) GetRemaining() int64 {
+	if m != nil {
+		return m.Remaining
+	}
+	return 0
+}
+
+func (m *Unfreeze) GetMeans() string {
+	if m != nil {
+		return m.Means
+	}
+	return ""
+}
+
+func (m *Unfreeze) GetFixAmount() *FixAmount {
+	if x, ok := m.GetMeansOpt().(*Unfreeze_FixAmount); ok {
+		return x.FixAmount
+	}
+	return nil
+}
+
+func (m *Unfreeze) GetLeftProportion() *LeftProportion {
+	if x, ok := m.GetMeansOpt().(*Unfreeze_LeftProportion); ok {
+		return x.LeftProportion
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*Unfreeze) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _Unfreeze_OneofMarshaler, _Unfreeze_OneofUnmarshaler, _Unfreeze_OneofSizer, []interface{}{
+		(*Unfreeze_FixAmount)(nil),
+		(*Unfreeze_LeftProportion)(nil),
+	}
+}
+
+func _Unfreeze_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*Unfreeze)
+	// meansOpt
+	switch x := m.MeansOpt.(type) {
+	case *Unfreeze_FixAmount:
+		b.EncodeVarint(10<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.FixAmount); err != nil {
+			return err
+		}
+	case *Unfreeze_LeftProportion:
+		b.EncodeVarint(11<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.LeftProportion); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("Unfreeze.MeansOpt has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _Unfreeze_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*Unfreeze)
+	switch tag {
+	case 10: // meansOpt.fixAmount
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(FixAmount)
+		err := b.DecodeMessage(msg)
+		m.MeansOpt = &Unfreeze_FixAmount{msg}
+		return true, err
+	case 11: // meansOpt.leftProportion
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(LeftProportion)
+		err := b.DecodeMessage(msg)
+		m.MeansOpt = &Unfreeze_LeftProportion{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _Unfreeze_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*Unfreeze)
+	// meansOpt
+	switch x := m.MeansOpt.(type) {
+	case *Unfreeze_FixAmount:
+		s := proto.Size(x.FixAmount)
+		n += proto.SizeVarint(10<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Unfreeze_LeftProportion:
+		s := proto.Size(x.LeftProportion)
+		n += proto.SizeVarint(11<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+// 按时间固定额度解冻
+type FixAmount struct {
+	Period int64 `protobuf:"varint,1,opt,name=period" json:"period,omitempty"`
+	Amount int64 `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+}
+
+func (m *FixAmount) Reset()                    { *m = FixAmount{} }
+func (m *FixAmount) String() string            { return proto.CompactTextString(m) }
+func (*FixAmount) ProtoMessage()               {}
+func (*FixAmount) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *FixAmount) GetPeriod() int64 {
 	if m != nil {
 		return m.Period
 	}
 	return 0
 }
 
-func (m *Unfreeze) GetMeans() int32 {
-	if m != nil {
-		return m.Means
-	}
-	return 0
-}
-
-func (m *Unfreeze) GetAmount() int64 {
+func (m *FixAmount) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *Unfreeze) GetWithdrawTimes() int32 {
+// 固定时间间隔按余量百分比解冻
+type LeftProportion struct {
+	Period        int64 `protobuf:"varint,1,opt,name=period" json:"period,omitempty"`
+	TenThousandth int64 `protobuf:"varint,2,opt,name=tenThousandth" json:"tenThousandth,omitempty"`
+}
+
+func (m *LeftProportion) Reset()                    { *m = LeftProportion{} }
+func (m *LeftProportion) String() string            { return proto.CompactTextString(m) }
+func (*LeftProportion) ProtoMessage()               {}
+func (*LeftProportion) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *LeftProportion) GetPeriod() int64 {
 	if m != nil {
-		return m.WithdrawTimes
+		return m.Period
 	}
 	return 0
 }
 
-func (m *Unfreeze) GetRemaining() int64 {
+func (m *LeftProportion) GetTenThousandth() int64 {
 	if m != nil {
-		return m.Remaining
+		return m.TenThousandth
 	}
 	return 0
 }
@@ -154,7 +300,7 @@ type UnfreezeAction struct {
 func (m *UnfreezeAction) Reset()                    { *m = UnfreezeAction{} }
 func (m *UnfreezeAction) String() string            { return proto.CompactTextString(m) }
 func (*UnfreezeAction) ProtoMessage()               {}
-func (*UnfreezeAction) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*UnfreezeAction) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 type isUnfreezeAction_Value interface {
 	isUnfreezeAction_Value()
@@ -305,18 +451,42 @@ func _UnfreezeAction_OneofSizer(msg proto.Message) (n int) {
 // action
 type UnfreezeCreate struct {
 	StartTime   int64  `protobuf:"varint,1,opt,name=startTime" json:"startTime,omitempty"`
-	TokenName   string `protobuf:"bytes,2,opt,name=tokenName" json:"tokenName,omitempty"`
-	TotalCount  int64  `protobuf:"varint,3,opt,name=totalCount" json:"totalCount,omitempty"`
-	Beneficiary string `protobuf:"bytes,4,opt,name=beneficiary" json:"beneficiary,omitempty"`
-	Period      int64  `protobuf:"varint,5,opt,name=period" json:"period,omitempty"`
-	Means       int32  `protobuf:"varint,6,opt,name=means" json:"means,omitempty"`
-	Amount      int64  `protobuf:"varint,7,opt,name=amount" json:"amount,omitempty"`
+	AssetExec   string `protobuf:"bytes,2,opt,name=assetExec" json:"assetExec,omitempty"`
+	AssetSymbol string `protobuf:"bytes,3,opt,name=assetSymbol" json:"assetSymbol,omitempty"`
+	TotalCount  int64  `protobuf:"varint,4,opt,name=totalCount" json:"totalCount,omitempty"`
+	Beneficiary string `protobuf:"bytes,5,opt,name=beneficiary" json:"beneficiary,omitempty"`
+	Means       string `protobuf:"bytes,6,opt,name=means" json:"means,omitempty"`
+	// Types that are valid to be assigned to MeansOpt:
+	//	*UnfreezeCreate_FixAmount
+	//	*UnfreezeCreate_LeftProportion
+	MeansOpt isUnfreezeCreate_MeansOpt `protobuf_oneof:"meansOpt"`
 }
 
 func (m *UnfreezeCreate) Reset()                    { *m = UnfreezeCreate{} }
 func (m *UnfreezeCreate) String() string            { return proto.CompactTextString(m) }
 func (*UnfreezeCreate) ProtoMessage()               {}
-func (*UnfreezeCreate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*UnfreezeCreate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+type isUnfreezeCreate_MeansOpt interface {
+	isUnfreezeCreate_MeansOpt()
+}
+
+type UnfreezeCreate_FixAmount struct {
+	FixAmount *FixAmount `protobuf:"bytes,7,opt,name=fixAmount,oneof"`
+}
+type UnfreezeCreate_LeftProportion struct {
+	LeftProportion *LeftProportion `protobuf:"bytes,8,opt,name=leftProportion,oneof"`
+}
+
+func (*UnfreezeCreate_FixAmount) isUnfreezeCreate_MeansOpt()      {}
+func (*UnfreezeCreate_LeftProportion) isUnfreezeCreate_MeansOpt() {}
+
+func (m *UnfreezeCreate) GetMeansOpt() isUnfreezeCreate_MeansOpt {
+	if m != nil {
+		return m.MeansOpt
+	}
+	return nil
+}
 
 func (m *UnfreezeCreate) GetStartTime() int64 {
 	if m != nil {
@@ -325,9 +495,16 @@ func (m *UnfreezeCreate) GetStartTime() int64 {
 	return 0
 }
 
-func (m *UnfreezeCreate) GetTokenName() string {
+func (m *UnfreezeCreate) GetAssetExec() string {
 	if m != nil {
-		return m.TokenName
+		return m.AssetExec
+	}
+	return ""
+}
+
+func (m *UnfreezeCreate) GetAssetSymbol() string {
+	if m != nil {
+		return m.AssetSymbol
 	}
 	return ""
 }
@@ -346,25 +523,99 @@ func (m *UnfreezeCreate) GetBeneficiary() string {
 	return ""
 }
 
-func (m *UnfreezeCreate) GetPeriod() int64 {
-	if m != nil {
-		return m.Period
-	}
-	return 0
-}
-
-func (m *UnfreezeCreate) GetMeans() int32 {
+func (m *UnfreezeCreate) GetMeans() string {
 	if m != nil {
 		return m.Means
 	}
-	return 0
+	return ""
 }
 
-func (m *UnfreezeCreate) GetAmount() int64 {
-	if m != nil {
-		return m.Amount
+func (m *UnfreezeCreate) GetFixAmount() *FixAmount {
+	if x, ok := m.GetMeansOpt().(*UnfreezeCreate_FixAmount); ok {
+		return x.FixAmount
 	}
-	return 0
+	return nil
+}
+
+func (m *UnfreezeCreate) GetLeftProportion() *LeftProportion {
+	if x, ok := m.GetMeansOpt().(*UnfreezeCreate_LeftProportion); ok {
+		return x.LeftProportion
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*UnfreezeCreate) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _UnfreezeCreate_OneofMarshaler, _UnfreezeCreate_OneofUnmarshaler, _UnfreezeCreate_OneofSizer, []interface{}{
+		(*UnfreezeCreate_FixAmount)(nil),
+		(*UnfreezeCreate_LeftProportion)(nil),
+	}
+}
+
+func _UnfreezeCreate_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*UnfreezeCreate)
+	// meansOpt
+	switch x := m.MeansOpt.(type) {
+	case *UnfreezeCreate_FixAmount:
+		b.EncodeVarint(7<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.FixAmount); err != nil {
+			return err
+		}
+	case *UnfreezeCreate_LeftProportion:
+		b.EncodeVarint(8<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.LeftProportion); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("UnfreezeCreate.MeansOpt has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _UnfreezeCreate_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*UnfreezeCreate)
+	switch tag {
+	case 7: // meansOpt.fixAmount
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(FixAmount)
+		err := b.DecodeMessage(msg)
+		m.MeansOpt = &UnfreezeCreate_FixAmount{msg}
+		return true, err
+	case 8: // meansOpt.leftProportion
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(LeftProportion)
+		err := b.DecodeMessage(msg)
+		m.MeansOpt = &UnfreezeCreate_LeftProportion{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _UnfreezeCreate_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*UnfreezeCreate)
+	// meansOpt
+	switch x := m.MeansOpt.(type) {
+	case *UnfreezeCreate_FixAmount:
+		s := proto.Size(x.FixAmount)
+		n += proto.SizeVarint(7<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *UnfreezeCreate_LeftProportion:
+		s := proto.Size(x.LeftProportion)
+		n += proto.SizeVarint(8<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
 }
 
 type UnfreezeWithdraw struct {
@@ -374,7 +625,7 @@ type UnfreezeWithdraw struct {
 func (m *UnfreezeWithdraw) Reset()                    { *m = UnfreezeWithdraw{} }
 func (m *UnfreezeWithdraw) String() string            { return proto.CompactTextString(m) }
 func (*UnfreezeWithdraw) ProtoMessage()               {}
-func (*UnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*UnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *UnfreezeWithdraw) GetUnfreezeID() string {
 	if m != nil {
@@ -390,7 +641,7 @@ type UnfreezeTerminate struct {
 func (m *UnfreezeTerminate) Reset()                    { *m = UnfreezeTerminate{} }
 func (m *UnfreezeTerminate) String() string            { return proto.CompactTextString(m) }
 func (*UnfreezeTerminate) ProtoMessage()               {}
-func (*UnfreezeTerminate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*UnfreezeTerminate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *UnfreezeTerminate) GetUnfreezeID() string {
 	if m != nil {
@@ -410,7 +661,7 @@ type ReceiptUnfreeze struct {
 func (m *ReceiptUnfreeze) Reset()                    { *m = ReceiptUnfreeze{} }
 func (m *ReceiptUnfreeze) String() string            { return proto.CompactTextString(m) }
 func (*ReceiptUnfreeze) ProtoMessage()               {}
-func (*ReceiptUnfreeze) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*ReceiptUnfreeze) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *ReceiptUnfreeze) GetUnfreezeID() string {
 	if m != nil {
@@ -448,7 +699,7 @@ type QueryUnfreezeWithdraw struct {
 func (m *QueryUnfreezeWithdraw) Reset()                    { *m = QueryUnfreezeWithdraw{} }
 func (m *QueryUnfreezeWithdraw) String() string            { return proto.CompactTextString(m) }
 func (*QueryUnfreezeWithdraw) ProtoMessage()               {}
-func (*QueryUnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*QueryUnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
 func (m *QueryUnfreezeWithdraw) GetUnfreezeID() string {
 	if m != nil {
@@ -465,7 +716,7 @@ type ReplyQueryUnfreezeWithdraw struct {
 func (m *ReplyQueryUnfreezeWithdraw) Reset()                    { *m = ReplyQueryUnfreezeWithdraw{} }
 func (m *ReplyQueryUnfreezeWithdraw) String() string            { return proto.CompactTextString(m) }
 func (*ReplyQueryUnfreezeWithdraw) ProtoMessage()               {}
-func (*ReplyQueryUnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*ReplyQueryUnfreezeWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *ReplyQueryUnfreezeWithdraw) GetUnfreezeID() string {
 	if m != nil {
@@ -483,6 +734,8 @@ func (m *ReplyQueryUnfreezeWithdraw) GetAvailableAmount() int64 {
 
 func init() {
 	proto.RegisterType((*Unfreeze)(nil), "types.Unfreeze")
+	proto.RegisterType((*FixAmount)(nil), "types.FixAmount")
+	proto.RegisterType((*LeftProportion)(nil), "types.LeftProportion")
 	proto.RegisterType((*UnfreezeAction)(nil), "types.UnfreezeAction")
 	proto.RegisterType((*UnfreezeCreate)(nil), "types.UnfreezeCreate")
 	proto.RegisterType((*UnfreezeWithdraw)(nil), "types.UnfreezeWithdraw")
@@ -495,34 +748,40 @@ func init() {
 func init() { proto.RegisterFile("unfreeze.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 463 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x4d, 0x8f, 0xd3, 0x30,
-	0x10, 0x6d, 0x92, 0x26, 0x6d, 0xa7, 0xa2, 0x0b, 0x16, 0x0b, 0x16, 0x42, 0xa8, 0x8a, 0x38, 0xf4,
-	0x54, 0xa4, 0xae, 0x10, 0x5c, 0x97, 0xe5, 0x50, 0x2e, 0x48, 0x58, 0x8b, 0x38, 0xbb, 0xdd, 0x29,
-	0x58, 0x24, 0x4e, 0xe4, 0x4e, 0x77, 0x15, 0xfe, 0x04, 0x3f, 0x8c, 0x0b, 0x07, 0x7e, 0x10, 0x8a,
-	0xdd, 0xb4, 0x69, 0xba, 0x6a, 0xd5, 0x3d, 0xfa, 0xcd, 0x7b, 0xfe, 0x78, 0x6f, 0xc6, 0x30, 0x58,
-	0xe9, 0x85, 0x41, 0xfc, 0x85, 0xe3, 0xdc, 0x64, 0x94, 0xb1, 0x90, 0x8a, 0x1c, 0x97, 0xf1, 0x5f,
-	0x1f, 0xba, 0x5f, 0xd7, 0x15, 0xf6, 0x0a, 0xa0, 0x62, 0x7d, 0xfa, 0xc8, 0xbd, 0xa1, 0x37, 0xea,
-	0x89, 0x1a, 0xc2, 0x5e, 0x42, 0x6f, 0x49, 0xd2, 0xd0, 0xb5, 0x4a, 0x91, 0xfb, 0x43, 0x6f, 0x14,
-	0x88, 0x2d, 0x50, 0x56, 0x29, 0xfb, 0x89, 0xfa, 0xb3, 0x4c, 0x91, 0x07, 0x56, 0xbc, 0x05, 0xca,
-	0xbd, 0x29, 0x23, 0x99, 0x5c, 0x65, 0x2b, 0x4d, 0xbc, 0x6d, 0xc5, 0x35, 0xa4, 0x54, 0x2b, 0xad,
-	0x48, 0x49, 0xca, 0x0c, 0x0f, 0x9d, 0x7a, 0x03, 0xb0, 0x21, 0xf4, 0x67, 0xa8, 0x71, 0xa1, 0xe6,
-	0x4a, 0x9a, 0x82, 0x47, 0xb6, 0x5e, 0x87, 0xd8, 0x33, 0x88, 0x72, 0x34, 0x2a, 0xbb, 0xe1, 0x1d,
-	0xbb, 0xf7, 0x7a, 0xc5, 0x9e, 0x42, 0x98, 0xa2, 0xd4, 0x4b, 0xde, 0x1d, 0x7a, 0xa3, 0x50, 0xb8,
-	0x45, 0xc9, 0x96, 0xa9, 0xbd, 0x49, 0xcf, 0xb1, 0xdd, 0x8a, 0xbd, 0x86, 0x47, 0x77, 0x8a, 0x7e,
-	0xdc, 0x18, 0x79, 0x57, 0xbe, 0x69, 0xc9, 0xc1, 0xaa, 0x76, 0xc1, 0xf2, 0xae, 0x06, 0x53, 0xa9,
-	0xb4, 0xd2, 0xdf, 0x79, 0xdf, 0xf9, 0xb0, 0x01, 0xe2, 0x3f, 0x1e, 0x0c, 0x2a, 0x4b, 0x2f, 0xe7,
-	0xa4, 0x32, 0xcd, 0xde, 0x40, 0x34, 0x37, 0x28, 0x09, 0xad, 0xa9, 0xfd, 0xc9, 0xf9, 0xd8, 0xba,
-	0x3f, 0xae, 0x68, 0x57, 0xb6, 0x38, 0x6d, 0x89, 0x35, 0x8d, 0xbd, 0x85, 0x6e, 0x75, 0xa4, 0x35,
-	0xba, 0x3f, 0x79, 0xde, 0x90, 0x7c, 0x5b, 0x97, 0xa7, 0x2d, 0xb1, 0xa1, 0xb2, 0xf7, 0xd0, 0x23,
-	0x34, 0xa9, 0xd2, 0xe5, 0x51, 0x81, 0xd5, 0xf1, 0x86, 0xee, 0xba, 0xaa, 0x4f, 0x5b, 0x62, 0x4b,
-	0x66, 0x03, 0xf0, 0xa9, 0xb0, 0xb1, 0x84, 0xc2, 0xa7, 0xe2, 0x43, 0x07, 0xc2, 0x5b, 0x99, 0xac,
-	0x30, 0xfe, 0x57, 0x7b, 0x8d, 0xbb, 0xe6, 0x6e, 0x1b, 0x78, 0x07, 0xdb, 0xc0, 0x3f, 0xdc, 0x06,
-	0xc1, 0x5e, 0x1b, 0x34, 0x82, 0x6e, 0x1f, 0x0a, 0x3a, 0xbc, 0x3f, 0xe8, 0xe8, 0xfe, 0xa0, 0x3b,
-	0xf5, 0xa0, 0xe3, 0x09, 0x3c, 0x6e, 0x3a, 0x79, 0xac, 0xfd, 0xe3, 0x0b, 0x78, 0xb2, 0xe7, 0xe2,
-	0x51, 0xd1, 0x6f, 0x0f, 0xce, 0x04, 0xce, 0x51, 0xe5, 0x74, 0xca, 0x9c, 0x6d, 0x67, 0xc1, 0x3f,
-	0x32, 0x0b, 0xc1, 0xbe, 0x45, 0x3b, 0x11, 0xb4, 0x1b, 0x11, 0xc4, 0xef, 0xe0, 0xfc, 0xcb, 0x0a,
-	0x4d, 0x71, 0xf2, 0xfb, 0x17, 0xf0, 0x42, 0x60, 0x9e, 0x14, 0x0f, 0x52, 0xb3, 0x11, 0x9c, 0xc9,
-	0x5b, 0xa9, 0x12, 0x39, 0x4b, 0xf0, 0xd2, 0x45, 0xe2, 0xbe, 0x90, 0x26, 0x3c, 0x8b, 0xec, 0x0f,
-	0x75, 0xf1, 0x3f, 0x00, 0x00, 0xff, 0xff, 0xb1, 0x2c, 0x93, 0xab, 0xb3, 0x04, 0x00, 0x00,
+	// 557 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xc1, 0x6e, 0xd3, 0x4c,
+	0x10, 0x8e, 0xed, 0x3a, 0x8d, 0x27, 0xfa, 0xd3, 0xfe, 0x2b, 0x0a, 0x2b, 0x84, 0x50, 0x64, 0x71,
+	0xc8, 0x29, 0xa0, 0x54, 0x08, 0x24, 0x0e, 0x28, 0x2d, 0xa0, 0x20, 0xa1, 0x02, 0x26, 0x88, 0xf3,
+	0x26, 0x99, 0x90, 0x15, 0xf6, 0xae, 0xb5, 0xde, 0xb4, 0x35, 0x2f, 0xc1, 0x03, 0xf0, 0x3c, 0x9c,
+	0x78, 0x29, 0xe4, 0xb5, 0x63, 0x27, 0x0e, 0x25, 0x6a, 0x8e, 0xf3, 0xcd, 0x7c, 0xdf, 0xcc, 0x7a,
+	0x3e, 0x0f, 0x74, 0x96, 0x62, 0xae, 0x10, 0xbf, 0x63, 0x3f, 0x56, 0x52, 0x4b, 0xe2, 0xea, 0x34,
+	0xc6, 0xc4, 0xff, 0xe9, 0x40, 0xeb, 0x73, 0x91, 0x21, 0x0f, 0x01, 0x56, 0x55, 0x6f, 0x5f, 0x51,
+	0xab, 0x6b, 0xf5, 0xbc, 0x60, 0x0d, 0x21, 0x0f, 0xc0, 0x4b, 0x34, 0x53, 0x7a, 0xcc, 0x23, 0xa4,
+	0x76, 0xd7, 0xea, 0x39, 0x41, 0x05, 0x64, 0x59, 0x96, 0x24, 0xa8, 0x5f, 0x5f, 0xe3, 0x94, 0x3a,
+	0x86, 0x5c, 0x01, 0xa4, 0x0b, 0x6d, 0x13, 0x7c, 0x4a, 0xa3, 0x89, 0x0c, 0xe9, 0x81, 0xc9, 0xaf,
+	0x43, 0x59, 0x77, 0x2d, 0x35, 0x0b, 0xcf, 0xe5, 0x52, 0x68, 0xea, 0x1a, 0xf9, 0x35, 0x24, 0xd3,
+	0xe7, 0x82, 0x6b, 0xce, 0xb4, 0x54, 0xb4, 0x99, 0xeb, 0x97, 0x40, 0xa6, 0x3f, 0x41, 0x81, 0x73,
+	0x3e, 0xe5, 0x4c, 0xa5, 0xf4, 0x30, 0xd7, 0x5f, 0x83, 0x32, 0xbe, 0xc2, 0x88, 0x71, 0xc1, 0xc5,
+	0x57, 0xda, 0xca, 0xa7, 0x2f, 0x01, 0x72, 0x07, 0xdc, 0x08, 0x99, 0x48, 0xa8, 0x67, 0x98, 0x79,
+	0x40, 0x9e, 0x80, 0x37, 0xe7, 0xd7, 0xc3, 0xc8, 0x8c, 0x04, 0x5d, 0xab, 0xd7, 0x1e, 0x1c, 0xf7,
+	0xcd, 0x97, 0xeb, 0xbf, 0x59, 0xe1, 0xa3, 0x46, 0x50, 0x15, 0x91, 0x97, 0xd0, 0x09, 0x71, 0xae,
+	0x3f, 0x28, 0x19, 0x4b, 0xa5, 0xb9, 0x14, 0xb4, 0x6d, 0x68, 0x27, 0x05, 0xed, 0xdd, 0x46, 0x72,
+	0xd4, 0x08, 0x6a, 0xe5, 0x67, 0x00, 0x2d, 0xd3, 0xfb, 0x7d, 0xac, 0xfd, 0x17, 0xe0, 0x95, 0x6d,
+	0xc8, 0x5d, 0x68, 0xc6, 0xa8, 0xb8, 0x9c, 0x99, 0xcd, 0x38, 0x41, 0x11, 0x65, 0x38, 0xcb, 0x07,
+	0xcc, 0x57, 0x52, 0x44, 0xfe, 0x05, 0x74, 0x36, 0x9b, 0xdd, 0xa8, 0xf0, 0x08, 0xfe, 0xd3, 0x28,
+	0xc6, 0x0b, 0xb9, 0x4c, 0x98, 0x98, 0xe9, 0x45, 0x21, 0xb4, 0x09, 0xfa, 0xbf, 0x2d, 0xe8, 0xac,
+	0xac, 0x32, 0x9c, 0x1a, 0xc1, 0xc7, 0xd0, 0x9c, 0x2a, 0x64, 0x1a, 0x8d, 0x60, 0xf5, 0xc8, 0x55,
+	0xd9, 0xb9, 0x49, 0x8e, 0x1a, 0x41, 0x51, 0x46, 0x9e, 0x42, 0xeb, 0x8a, 0xeb, 0xc5, 0x4c, 0xb1,
+	0x2b, 0xd3, 0xa4, 0x3d, 0xb8, 0x57, 0xa3, 0x7c, 0x29, 0xd2, 0xa3, 0x46, 0x50, 0x96, 0x92, 0xe7,
+	0xe0, 0x69, 0x54, 0x11, 0x17, 0x59, 0x2b, 0xc7, 0xf0, 0x68, 0x8d, 0x37, 0x5e, 0xe5, 0xb3, 0x75,
+	0x94, 0xc5, 0xa4, 0x03, 0xb6, 0x4e, 0x8d, 0xdb, 0xdc, 0xc0, 0xd6, 0xe9, 0xd9, 0x21, 0xb8, 0x97,
+	0x2c, 0x5c, 0xa2, 0xff, 0xcb, 0xae, 0x5e, 0x93, 0x8f, 0xb9, 0x69, 0x6f, 0xeb, 0x9f, 0xf6, 0xb6,
+	0x77, 0xd8, 0xdb, 0xd9, 0x65, 0xef, 0x83, 0x2d, 0x7b, 0xd7, 0x0c, 0xec, 0x6e, 0x1b, 0xb8, 0xb4,
+	0x68, 0xf3, 0x46, 0x8b, 0x1e, 0xee, 0x67, 0xd1, 0xd6, 0xfe, 0x16, 0x1d, 0xc0, 0x71, 0x7d, 0x75,
+	0xbb, 0xee, 0x88, 0x7f, 0x0a, 0xff, 0x6f, 0xad, 0x6d, 0x27, 0xe9, 0x87, 0x05, 0x47, 0x01, 0x4e,
+	0x91, 0xc7, 0xfa, 0x36, 0x07, 0xab, 0x3a, 0x19, 0xf6, 0x8e, 0x93, 0xe1, 0xfc, 0xf5, 0x64, 0x68,
+	0xf9, 0x0d, 0xc5, 0x05, 0x8b, 0xb0, 0x38, 0x59, 0x15, 0xe0, 0x3f, 0x83, 0x93, 0x8f, 0x4b, 0x54,
+	0xe9, 0xad, 0xdf, 0x3f, 0x87, 0xfb, 0x01, 0xc6, 0x61, 0xba, 0x17, 0x9b, 0xf4, 0xe0, 0x88, 0x5d,
+	0x32, 0x1e, 0xb2, 0x49, 0x88, 0xc3, 0xf5, 0x1f, 0xbf, 0x0e, 0x4f, 0x9a, 0xe6, 0xd4, 0x9f, 0xfe,
+	0x09, 0x00, 0x00, 0xff, 0xff, 0x2c, 0x7a, 0x09, 0xb2, 0xfc, 0x05, 0x00, 0x00,
 }
