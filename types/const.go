@@ -31,3 +31,5 @@ const (
 const (
 	FuncName_QueryUnfreezeWithdraw = "QueryUnfreezeWithdraw"
 )
+
+var SupportMeans = []string{"FixAmount", "LeftProportion"}
