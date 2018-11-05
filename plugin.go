@@ -2,8 +2,8 @@ package unfreeze
 
 import (
 	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/commands"
-	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/executor"
+	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/pluginmgr"
 )
 
