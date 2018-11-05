@@ -72,10 +72,8 @@ message UnfreezeTerminate {
 
 // receipt
 message ReceiptUnfreeze {
-    string unfreezeID = 1;
-    string initiator = 2;
-	string beneficiary = 3;
-	string tokenName = 4;
+    Unfreeze prev = 1;
+    Unfreeze cur = 2;
 }
 
 // query
