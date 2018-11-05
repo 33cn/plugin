@@ -43,16 +43,16 @@ func (u *Unfreeze) GetDriverName() string {
 
 func (u *Unfreeze) saveUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
-	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Initiator, res.Beneficiary, res.TokenName))
-	kv.Value = []byte(res.UnfreezeID)
+	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
+	kv.Value = []byte(res.Cur.UnfreezeID)
 	kvs = append(kvs, kv)
 	return kvs
 }
 
 func (u *Unfreeze) rollbackUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
-	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Initiator, res.Beneficiary, res.TokenName))
-	kv.Value = []byte(res.UnfreezeID)
+	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
+	kv.Value = []byte(res.Cur.UnfreezeID)
 	kvs = append(kvs, kv)
 	return kvs
 }
