@@ -99,6 +99,10 @@ func CreateUnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
 		tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
+	if !supportMeans(parm.Means) {
+		tlog.Error("CreateUnfreezeCreateTx not support means", "parm", parm)
+		return nil, types.ErrInvalidParam
+	}
 	create := &UnfreezeAction{
 		Ty:    UnfreezeActionCreate,
 		Value: &UnfreezeAction_Create{parm},
@@ -155,4 +159,13 @@ func CreateUnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, err
 	}
 	tx.SetRealFee(types.MinFee)
 	return tx, nil
+}
+
+func supportMeans(means string) bool {
+	for _, m := range SupportMeans {
+		if m == means {
+			return true
+		}
+	}
+	return false
 }
