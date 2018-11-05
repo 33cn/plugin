@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"fmt"
+
 	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
@@ -38,3 +40,21 @@ func (u *Unfreeze) ExecLocal_Withdraw(payload *uf.UnfreezeWithdraw, tx *types.Tr
 func (u *Unfreeze) ExecLocal_Terminate(payload *uf.UnfreezeTerminate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return u.execLocal(receiptData)
 }
+
+
+func (u *Unfreeze) saveUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
+	kv := &types.KeyValue{}
+	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
+	kv.Value = []byte(res.Cur.UnfreezeID)
+	kvs = append(kvs, kv)
+	return kvs
+}
+
+func (u *Unfreeze) rollbackUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
+	kv := &types.KeyValue{}
+	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
+	kv.Value = []byte(res.Cur.UnfreezeID)
+	kvs = append(kvs, kv)
+	return kvs
+}
+

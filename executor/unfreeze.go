@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"fmt"
-
 	log "github.com/inconshreveable/log15"
 	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
@@ -39,20 +37,4 @@ func GetName() string {
 
 func (u *Unfreeze) GetDriverName() string {
 	return driverName
-}
-
-func (u *Unfreeze) saveUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
-	kv.Value = []byte(res.Cur.UnfreezeID)
-	kvs = append(kvs, kv)
-	return kvs
-}
-
-func (u *Unfreeze) rollbackUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = []byte(fmt.Sprintf("mavl-unfreeze-"+"%s-"+"%s-"+"%s", res.Cur.Initiator, res.Cur.Beneficiary, res.Cur.AssetSymbol))
-	kv.Value = []byte(res.Cur.UnfreezeID)
-	kvs = append(kvs, kv)
-	return kvs
 }
