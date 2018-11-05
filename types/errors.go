@@ -8,4 +8,5 @@ var (
 	ErrUnfreezeMeans     = errors.New("ErrUnfreezeMeans")
 	ErrUnfreezeID        = errors.New("ErrUnfreezeID")
 	ErrNoUnfreezeItem    = errors.New("ErrNoUnfreezeItem")
+	ErrNoPrivilege       = errors.New("ErrNoPrivilege")
 )

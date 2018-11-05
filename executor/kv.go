@@ -1,9 +1,13 @@
 package executor
 
-import "fmt"
+import (
+	"fmt"
+
+	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
+)
 
 var (
-	id = "mavl-unfreeze-"
+	id = "mavl-" + pty.UnfreezeX + "-"
 )
 
 func unfreezeID(txHash string) []byte {
