@@ -17,8 +17,9 @@ var tlog = log.New("module", name)
 
 func init() {
 	name = UnfreezeX
+	types.AllowUserExec = append(types.AllowUserExec, []byte(UnfreezeX))
 	// init executor type
-	types.RegistorExecutor(name, &UnfreezeType{})
+	types.RegistorExecutor(name, NewType())
 }
 
 //getRealExecName
