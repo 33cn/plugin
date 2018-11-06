@@ -7,7 +7,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 )
 
-func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transaction, index int32) (*types.Receipt, error) {
+func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.AssetSymbol == "" || payload.AssetSymbol == "" || payload.TotalCount <= 0 || payload.Means == "" {
 		return nil, types.ErrInvalidParam
 	}
@@ -40,7 +40,7 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 	return MergeReceipt(receipt, receipt1)
 }
 
-func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int32) (*types.Receipt, error) {
+func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	value, err := u.GetStateDB().Get([]byte(payload.UnfreezeID))
 	if err != nil {
 		uflog.Error("unfreeze withdraw get", "id", payload.UnfreezeID, "err", err)
@@ -77,7 +77,7 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 	return MergeReceipt(receipt, receipt1)
 }
 
-func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int32) (*types.Receipt, error) {
+func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int) (*types.Receipt, error) {
 	value, err := u.GetStateDB().Get([]byte(payload.UnfreezeID))
 	if err != nil {
 		uflog.Error("unfreeze terminate get", "id", payload.UnfreezeID, "err", err)

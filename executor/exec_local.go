@@ -44,6 +44,7 @@ func localKeys(res *uf.ReceiptUnfreeze, value []byte) (kvs []*types.KeyValue) {
 	kvs = append(kvs, &types.KeyValue{beneficiaryKey(res.Cur.Beneficiary), value})
 	return
 }
+
 func (u *Unfreeze) saveUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
 	kvs = localKeys(res, []byte(res.Cur.UnfreezeID))
 	return
