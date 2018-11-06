@@ -56,6 +56,10 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 		uflog.Error("unfreeze withdraw no privilege", "beneficiary", unfreeze.Beneficiary, "txFrom", tx.From())
 		return nil, pty.ErrNoPrivilege
 	}
+	if unfreeze.Remaining <= 0 {
+		uflog.Error("unfreeze withdraw no asset")
+		return nil, pty.ErrUnfreezeEmptied
+	}
 
 	amount, receipt1, err := u.withdraw(&unfreeze)
 	if err != nil {
@@ -93,7 +97,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 	if tx.From() != unfreeze.Initiator {
 		uflog.Error("unfreeze terminate no privilege", "err", pty.ErrUnfreezeID, "initiator",
 			unfreeze.Initiator, "from", tx.From())
-		return nil, pty.ErrUnfreezeID
+		return nil, pty.ErrNoPrivilege
 	}
 
 	amount, receipt1, err := u.terminator(&unfreeze)
