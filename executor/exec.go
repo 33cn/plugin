@@ -70,7 +70,8 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 	execAddr := dapp.ExecAddress(string(tx.Execer))
 	receipt, err := acc.ExecTransferFrozen(unfreeze.Initiator, tx.From(), execAddr, amount)
 	if err != nil {
-		uflog.Error("unfreeze withdraw transfer", "execaddr", execAddr, "err", err)
+		uflog.Error("unfreeze withdraw transfer", "execaddr", execAddr, "err", err, "from", unfreeze.Initiator,
+			"remain", unfreeze.Remaining, "withdraw", amount)
 		return nil, err
 	}
 
@@ -122,6 +123,7 @@ func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction)
 		AssetExec:   payload.AssetExec,
 		AssetSymbol: payload.AssetSymbol,
 		TotalCount:  payload.TotalCount,
+		Remaining:   payload.TotalCount,
 		Initiator:   tx.From(),
 		Beneficiary: payload.Beneficiary,
 		Means:       payload.Means,
