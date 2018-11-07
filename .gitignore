@@ -1,0 +1,10 @@
+consensus/raft/tools/scripts/grpc33.log
+consensus/raft/tools/scripts/logs/
+*.orig
+store/kvmvcc/1.png
+store/kvmvcc/cpu.pprof
+store/kvmvcc/kvmvcc.test
+store/mpt/1.png
+store/mpt/cpu.pprof
+store/mpt/mpt.test
+
