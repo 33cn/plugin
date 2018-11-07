@@ -9,7 +9,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/log"
 	"gitlab.33.cn/chain33/chain33/mempool"
-	ty "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
+	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/queue"
 	"gitlab.33.cn/chain33/chain33/store"
 	"gitlab.33.cn/chain33/chain33/types"
@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	privacy "gitlab.33.cn/chain33/plugin/dapp/privacy/wallet"
+	privacy "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/wallet"
 )
 
 var (

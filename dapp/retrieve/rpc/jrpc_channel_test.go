@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	commonlog "gitlab.33.cn/chain33/chain33/common/log"
-	"gitlab.33.cn/chain33/plugin/dapp/retrieve/rpc"
-	pty "gitlab.33.cn/chain33/plugin/dapp/retrieve/types"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/retrieve/rpc"
+	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/retrieve/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
 
-	_ "gitlab.33.cn/chain33/plugin"
+	_ "gitlab.33.cn/chain33/chain33/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
 )
 

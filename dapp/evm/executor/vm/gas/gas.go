@@ -3,7 +3,7 @@ package gas
 import (
 	"math/big"
 
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/model"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/model"
 )
 
 const (

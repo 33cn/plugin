@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"gitlab.33.cn/chain33/chain33/common/address"
-	pt "gitlab.33.cn/chain33/plugin/dapp/paracross/types"
+	pt "gitlab.33.cn/chain33/chain33/plugin/dapp/paracross/types"
 )
 
 var (

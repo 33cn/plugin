@@ -22,7 +22,7 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
-	"gitlab.33.cn/chain33/plugin/store/mpt/db2/rlp"
+	"gitlab.33.cn/chain33/chain33/plugin/store/mpt/db2/rlp"
 )
 
 type hasher struct {

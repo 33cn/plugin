@@ -3,7 +3,7 @@ package runtime
 import (
 	"math/big"
 
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
 )
 
 // Destinations 存储合约以及代码对应的位向量对象

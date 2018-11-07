@@ -3,7 +3,7 @@ package mm
 import (
 	"math/big"
 
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
 )
 
 // 本文件中定义各种操作下计算内存大小的逻辑

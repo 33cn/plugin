@@ -11,7 +11,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/db"
-	pty "gitlab.33.cn/chain33/plugin/dapp/hashlock/types"
+	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/hashlock/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

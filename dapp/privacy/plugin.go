@@ -1,13 +1,13 @@
 package privacy
 
 import (
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/commands"
+	_ "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/crypto"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/executor"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/rpc"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
+	_ "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/wallet"
 	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/dapp/privacy/commands"
-	_ "gitlab.33.cn/chain33/plugin/dapp/privacy/crypto"
-	"gitlab.33.cn/chain33/plugin/dapp/privacy/executor"
-	"gitlab.33.cn/chain33/plugin/dapp/privacy/rpc"
-	"gitlab.33.cn/chain33/plugin/dapp/privacy/types"
-	_ "gitlab.33.cn/chain33/plugin/dapp/privacy/wallet"
 )
 
 func init() {

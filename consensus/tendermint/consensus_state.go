@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	ttypes "gitlab.33.cn/chain33/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
+	ttypes "gitlab.33.cn/chain33/chain33/plugin/consensus/tendermint/types"
+	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

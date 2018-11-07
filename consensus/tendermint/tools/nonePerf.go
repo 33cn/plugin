@@ -16,7 +16,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	ty "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
+	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )

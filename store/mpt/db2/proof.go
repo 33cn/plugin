@@ -22,7 +22,7 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/plugin/store/mpt/db2/rlp"
+	"gitlab.33.cn/chain33/chain33/plugin/store/mpt/db2/rlp"
 )
 
 // Prove constructs a merkle proof for key. The result contains all encoded nodes

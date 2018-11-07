@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
-	pb "gitlab.33.cn/chain33/plugin/dapp/pokerbull/types"
+	pb "gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

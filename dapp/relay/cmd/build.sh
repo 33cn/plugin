@@ -5,7 +5,7 @@ strcmd=${strpwd##*dapp/}
 strapp=${strcmd%/cmd*}
 
 OUT_DIR="${1}/$strapp"
-SRC_RELAYD=gitlab.33.cn/chain33/plugin/dapp/relay/cmd/relayd
+SRC_RELAYD=gitlab.33.cn/chain33/chain33/plugin/dapp/relay/cmd/relayd
 FLAG=$2
 
 # shellcheck disable=SC2086

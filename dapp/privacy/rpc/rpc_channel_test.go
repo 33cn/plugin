@@ -8,13 +8,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	commonlog "gitlab.33.cn/chain33/chain33/common/log"
-	pty "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
+	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
 
-	_ "gitlab.33.cn/chain33/plugin"
+	_ "gitlab.33.cn/chain33/chain33/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
 )
 

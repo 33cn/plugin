@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
+	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
 )
 
 type RoundVoteSet struct {

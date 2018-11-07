@@ -4,7 +4,7 @@ package rpc_test
 import (
 	"testing"
 
-	_ "gitlab.33.cn/chain33/plugin"
+	_ "gitlab.33.cn/chain33/chain33/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
 )

@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	bw "gitlab.33.cn/chain33/plugin/dapp/blackwhite/types"
+	bw "gitlab.33.cn/chain33/chain33/plugin/dapp/blackwhite/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )

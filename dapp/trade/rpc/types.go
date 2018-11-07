@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	ptypes "gitlab.33.cn/chain33/plugin/dapp/trade/types"
+	ptypes "gitlab.33.cn/chain33/chain33/plugin/dapp/trade/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )

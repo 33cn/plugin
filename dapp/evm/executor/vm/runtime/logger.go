@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/mm"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/mm"
 )
 
 // Tracer接口用来在合约执行过程中收集跟踪数据。

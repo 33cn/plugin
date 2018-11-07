@@ -1,7 +1,7 @@
 package relayd
 
 import (
-	ty "gitlab.33.cn/chain33/plugin/dapp/relay/types"
+	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/relay/types"
 )
 
 var (

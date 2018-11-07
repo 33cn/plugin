@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.33.cn/chain33/chain33/common"
-	gt "gitlab.33.cn/chain33/plugin/dapp/blackwhite/types"
+	gt "gitlab.33.cn/chain33/chain33/plugin/dapp/blackwhite/types"
 	jsonrpc "gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
 )

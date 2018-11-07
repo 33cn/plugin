@@ -1,7 +1,7 @@
 package executor
 
 import (
-	pkt "gitlab.33.cn/chain33/plugin/dapp/pokerbull/types"
+	pkt "gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

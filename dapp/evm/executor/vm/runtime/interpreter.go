@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/gas"
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/mm"
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/params"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/gas"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/mm"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/model"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/params"
 )
 
 // 解释器的配置模型

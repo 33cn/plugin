@@ -6,7 +6,7 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
-	privacytypes "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
+	privacytypes "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
 )
 
 type OneTimeEd25519 struct{}

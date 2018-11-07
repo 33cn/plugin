@@ -1,7 +1,7 @@
 package executor
 
 import (
-	gt "gitlab.33.cn/chain33/plugin/dapp/blackwhite/types"
+	gt "gitlab.33.cn/chain33/chain33/plugin/dapp/blackwhite/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 
