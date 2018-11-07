@@ -1,12 +1,12 @@
 package ticket
 
 import (
+	"gitlab.33.cn/chain33/chain33/pluginmgr"
 	"gitlab.33.cn/chain33/plugin/dapp/ticket/commands"
 	"gitlab.33.cn/chain33/plugin/dapp/ticket/executor"
 	"gitlab.33.cn/chain33/plugin/dapp/ticket/rpc"
 	"gitlab.33.cn/chain33/plugin/dapp/ticket/types"
 	_ "gitlab.33.cn/chain33/plugin/dapp/ticket/wallet"
-	"gitlab.33.cn/chain33/pluginmgr"
 )
 
 func init() {
