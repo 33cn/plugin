@@ -9,7 +9,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/hashlock/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/hashlock/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

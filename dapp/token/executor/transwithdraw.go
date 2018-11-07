@@ -4,7 +4,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	tokenty "gitlab.33.cn/chain33/chain33/plugin/dapp/token/types"
+	tokenty "gitlab.33.cn/chain33/plugin/dapp/token/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

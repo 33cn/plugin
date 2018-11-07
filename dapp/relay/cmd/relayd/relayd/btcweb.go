@@ -10,7 +10,7 @@ import (
 	log "github.com/inconshreveable/log15"
 	"github.com/valyala/fasthttp"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/relay/types"
+	ty "gitlab.33.cn/chain33/plugin/dapp/relay/types"
 )
 
 type btcWeb struct {

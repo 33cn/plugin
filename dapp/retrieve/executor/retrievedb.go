@@ -9,7 +9,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 
 	//log "github.com/inconshreveable/log15"
-	rt "gitlab.33.cn/chain33/chain33/plugin/dapp/retrieve/types"
+	rt "gitlab.33.cn/chain33/plugin/dapp/retrieve/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 )
 

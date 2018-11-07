@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/ticket/types"
-	ticketwallet "gitlab.33.cn/chain33/chain33/plugin/dapp/ticket/wallet"
+	ty "gitlab.33.cn/chain33/plugin/dapp/ticket/types"
+	ticketwallet "gitlab.33.cn/chain33/plugin/dapp/ticket/wallet"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
 
-	_ "gitlab.33.cn/chain33/chain33/plugin"
+	_ "gitlab.33.cn/chain33/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
 )
 

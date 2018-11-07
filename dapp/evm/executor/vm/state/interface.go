@@ -1,8 +1,8 @@
 package state
 
 import (
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/model"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/model"
 )
 
 // 状态数据库封装，面向EVM业务执行逻辑；

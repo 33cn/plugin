@@ -9,7 +9,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/client"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/lottery/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/lottery/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 	"google.golang.org/grpc"

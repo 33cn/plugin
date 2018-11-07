@@ -4,8 +4,8 @@ import (
 	"unsafe"
 
 	"gitlab.33.cn/chain33/chain33/common"
-	privacy "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/crypto"
-	privacytypes "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
+	privacy "gitlab.33.cn/chain33/plugin/dapp/privacy/crypto"
+	privacytypes "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

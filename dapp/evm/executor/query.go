@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"strings"
 
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/runtime"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/state"
-	evmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/evm/types"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/model"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/runtime"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/state"
+	evmtypes "gitlab.33.cn/chain33/plugin/dapp/evm/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

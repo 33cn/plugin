@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/params"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/params"
 )
 
 // 栈对象封装，提供常用的栈操作

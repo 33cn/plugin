@@ -1,10 +1,10 @@
 package evm
 
 import (
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/commands"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/types"
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/commands"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/types"
+	"gitlab.33.cn/chain33/pluginmgr"
 )
 
 func init() {

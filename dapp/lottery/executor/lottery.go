@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	log "github.com/inconshreveable/log15"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/lottery/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/lottery/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

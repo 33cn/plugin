@@ -6,7 +6,7 @@ import (
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"gitlab.33.cn/chain33/chain33/common"
-	pt "gitlab.33.cn/chain33/chain33/plugin/dapp/paracross/types"
+	pt "gitlab.33.cn/chain33/plugin/dapp/paracross/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util"

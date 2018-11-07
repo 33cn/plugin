@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"gitlab.33.cn/chain33/chain33/client"
 	"gitlab.33.cn/chain33/chain33/client/mocks"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 )
 
