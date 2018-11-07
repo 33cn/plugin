@@ -73,7 +73,7 @@ message UnfreezeTerminate {
 // receipt
 message ReceiptUnfreeze {
     Unfreeze prev = 1;
-    Unfreeze cur  = 2;
+    Unfreeze current  = 2;
 }
 
 // query

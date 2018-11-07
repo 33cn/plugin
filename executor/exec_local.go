@@ -40,13 +40,13 @@ func (u *Unfreeze) ExecLocal_Terminate(payload *uf.UnfreezeTerminate, tx *types.
 }
 
 func localKeys(res *uf.ReceiptUnfreeze, value []byte) (kvs []*types.KeyValue) {
-	kvs = append(kvs, &types.KeyValue{initKey(res.Cur.Initiator), value})
-	kvs = append(kvs, &types.KeyValue{beneficiaryKey(res.Cur.Beneficiary), value})
+	kvs = append(kvs, &types.KeyValue{initKey(res.Current.Initiator), value})
+	kvs = append(kvs, &types.KeyValue{beneficiaryKey(res.Current.Beneficiary), value})
 	return
 }
 
 func (u *Unfreeze) saveUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types.KeyValue) {
-	kvs = localKeys(res, []byte(res.Cur.UnfreezeID))
+	kvs = localKeys(res, []byte(res.Current.UnfreezeID))
 	return
 }
 

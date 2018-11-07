@@ -167,7 +167,7 @@ func MergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) 
 func getUnfreezeLog(prev, cur *pty.Unfreeze) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCreateUnfreeze
-	r := &pty.ReceiptUnfreeze{Prev: prev, Cur: cur}
+	r := &pty.ReceiptUnfreeze{Prev: prev, Current: cur}
 	log.Log = types.Encode(r)
 	return log
 }
