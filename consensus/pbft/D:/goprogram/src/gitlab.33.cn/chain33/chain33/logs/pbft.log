@@ -1,0 +1,33 @@
+t=2018-09-05T17:07:56+0800 lvl=info msg="init::LoadBlockStoreHeight::database may be crash" module=blockchain err=ErrHeightNotExist
+t=2018-09-05T17:07:56+0800 lvl=info msg="load block height error, may be init database" module=blockchain height=-1
+t=2018-09-05T17:07:56+0800 lvl=info msg=InitIndexAndBestView module=blockchain cost=485.295µs
+t=2018-09-05T17:07:56+0800 lvl=info msg=GetDbVersion module=blockchain submodule=store err=ErrNotFoundInDb
+t=2018-09-05T17:07:56+0800 lvl=info msg=SetDbVersion module=blockchain submodule=store blcokchain db version=1
+t=2018-09-05T17:07:56+0800 lvl=info msg="mempool piple line start" module=mempool
+t=2018-09-05T17:07:56+0800 lvl=info msg="pollLastHeader quit" module=mempool
+t=2018-09-05T17:08:29+0800 lvl=info msg="init::LoadBlockStoreHeight::database may be crash" module=blockchain err=ErrHeightNotExist
+t=2018-09-05T17:08:29+0800 lvl=info msg="load block height error, may be init database" module=blockchain height=-1
+t=2018-09-05T17:08:29+0800 lvl=info msg=InitIndexAndBestView module=blockchain cost=1.503171ms
+t=2018-09-05T17:08:29+0800 lvl=info msg=GetDbVersion module=blockchain submodule=store blockchain db version=1
+t=2018-09-05T17:08:29+0800 lvl=info msg="mempool piple line start" module=mempool
+t=2018-09-05T17:08:29+0800 lvl=info msg="pollLastHeader quit" module=mempool
+t=2018-09-05T17:08:29+0800 lvl=info msg="Enter store mavl" module=store
+t=2018-09-05T17:08:29+0800 lvl=info msg="start to creat pbft node" module=Pbft
+t=2018-09-05T17:08:29+0800 lvl=info msg="Enter consensus pbft"
+t=2018-09-05T17:08:29+0800 lvl=info msg="Enter SetQueue method of pbft consensus" module=Pbft
+t=2018-09-05T17:08:29+0800 lvl=info msg="Enter SetQueueClient method of consensus"
+t=2018-09-05T17:08:29+0800 lvl=info msg=ExecBlock module=util height=0 ntx=1 writebatchsync=false cost=411.009µs
+t=2018-09-05T17:08:29+0800 lvl=info msg=EventAddBlockDetail module=blockchain height=0 hash=935cb32d5a24e56967c7a0a9bf357e447fcaa082d703159ccb3a04bf9ae8ec32
+t=2018-09-05T17:08:29+0800 lvl=info msg=p2p module=p2p Version=118
+t=2018-09-05T17:08:29+0800 lvl=info msg=p2p module=p2p InnerBounds=500
+t=2018-09-05T17:08:29+0800 lvl=info msg=p2p module=p2p setqueuecliet=ok
+t=2018-09-05T17:08:29+0800 lvl=info msg=DetectNodeAddr module=p2p addr:=192.168.0.141
+t=2018-09-05T17:08:29+0800 lvl=info msg=detectNodeAddr module=p2p LocalAddr=192.168.0.141
+t=2018-09-05T17:08:29+0800 lvl=info msg=ShowTaskCapcity module=p2p Capcity=1000
+t=2018-09-05T17:08:29+0800 lvl=eror msg=GetFeeAmount module=wallet submodule=store Get from db error=ErrNotFoundInDb
+t=2018-09-05T17:08:29+0800 lvl=eror msg=getVersion module=wallet.privacy db.Get error=ErrNotFoundInDb
+t=2018-09-05T17:08:29+0800 lvl=eror msg="GetAccountByPrefix addr not exist" wallet=store
+t=2018-09-05T17:08:29+0800 lvl=info msg=GetWalletAccounts module=wallet GetAccountByPrefix:err=ErrAccountNotExist
+t=2018-09-05T17:08:29+0800 lvl=eror msg=rescanAllTxToUpdateUTXOs module=wallet.privacy walletOperate.GetWalletAccounts error=ErrAccountNotExist
+t=2018-09-05T17:08:29+0800 lvl=eror msg=GetAutoMinerFlag module=wallet.ticket Get error=ErrNotFoundInDb
+t=2018-09-05T17:08:29+0800 lvl=info msg="Begin auto mining" module=wallet.ticket
