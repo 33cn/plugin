@@ -13,7 +13,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/ticket/types"
+	ty "gitlab.33.cn/chain33/plugin/dapp/ticket/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

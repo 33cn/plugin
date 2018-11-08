@@ -16,8 +16,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
-	ttypes "gitlab.33.cn/chain33/chain33/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
+	ttypes "gitlab.33.cn/chain33/plugin/consensus/tendermint/types"
+	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
 )
 
 // ID is a hex-encoded crypto.Address

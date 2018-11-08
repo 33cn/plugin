@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	ttypes "gitlab.33.cn/chain33/chain33/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
+	ttypes "gitlab.33.cn/chain33/plugin/consensus/tendermint/types"
+	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
 )
 
 /*

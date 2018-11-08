@@ -10,7 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
+	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
 )
 
 // ErrEvidenceInvalid wraps a piece of evidence and the error denoting how or why it is invalid.

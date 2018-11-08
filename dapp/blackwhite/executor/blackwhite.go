@@ -5,7 +5,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	gt "gitlab.33.cn/chain33/chain33/plugin/dapp/blackwhite/types"
+	gt "gitlab.33.cn/chain33/plugin/dapp/blackwhite/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

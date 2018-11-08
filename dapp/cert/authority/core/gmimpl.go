@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/tjfoc/gmsm/sm2"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/utils"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/utils"
 	sm2_util "gitlab.33.cn/chain33/chain33/system/crypto/sm2"
 	"gitlab.33.cn/chain33/chain33/types"
 )

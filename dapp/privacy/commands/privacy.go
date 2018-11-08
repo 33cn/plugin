@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.33.cn/chain33/chain33/common"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	cmdtypes "gitlab.33.cn/chain33/chain33/system/dapp/commands/types"

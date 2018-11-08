@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/trade/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/trade/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

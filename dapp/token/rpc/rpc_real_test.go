@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	_ "gitlab.33.cn/chain33/chain33/plugin"
-	tokenty "gitlab.33.cn/chain33/chain33/plugin/dapp/token/types"
+	tokenty "gitlab.33.cn/chain33/plugin/dapp/token/types"
 	_ "gitlab.33.cn/chain33/chain33/system"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util"

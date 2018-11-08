@@ -15,10 +15,10 @@ import (
 	"fmt"
 
 	"github.com/tjfoc/gmsm/sm2"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/tools/cryptogen/generator"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/tools/cryptogen/generator/utils"
-	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/cert/types"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/tools/cryptogen/generator"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/tools/cryptogen/generator/utils"
+	ty "gitlab.33.cn/chain33/plugin/dapp/cert/types"
 )
 
 type EcdsaCA struct {

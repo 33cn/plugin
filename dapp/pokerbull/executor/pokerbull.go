@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/inconshreveable/log15"
-	pkt "gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/types"
+	pkt "gitlab.33.cn/chain33/plugin/dapp/pokerbull/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

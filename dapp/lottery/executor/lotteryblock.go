@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/lottery/types"
-	tickettypes "gitlab.33.cn/chain33/chain33/plugin/dapp/ticket/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/lottery/types"
+	tickettypes "gitlab.33.cn/chain33/plugin/dapp/ticket/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	evmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/evm/types"
+	evmtypes "gitlab.33.cn/chain33/plugin/dapp/evm/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

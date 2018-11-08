@@ -3,8 +3,8 @@ package executor
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority"
-	ct "gitlab.33.cn/chain33/chain33/plugin/dapp/cert/types"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority"
+	ct "gitlab.33.cn/chain33/plugin/dapp/cert/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 
