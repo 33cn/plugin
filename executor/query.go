@@ -8,29 +8,24 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 )
 
-func (u *Unfreeze) Query_QueryUnfreezeWithdraw(in *pty.QueryUnfreezeWithdraw) (types.Message, error) {
-	return QueryUnfreezeWithdraw(u.GetStateDB(), in)
+func (u *Unfreeze) Query_GetUnfreezeWithdraw(in *types.ReqString) (types.Message, error) {
+	return QueryWithdraw(u.GetStateDB(), in.GetData())
+}
+
+func (u *Unfreeze) Query_GetUnfreeze(in *types.ReqString) (types.Message, error) {
+	return QueryUnfreeze(u.GetStateDB(), in.GetData())
 }
 
 //查询可提币状态
-func QueryUnfreezeWithdraw(stateDB dbm.KV, param *pty.QueryUnfreezeWithdraw) (types.Message, error) {
-	//查询提币次数
-	//计算当前可否提币
-	unfreezeID := param.UnfreezeID
-	value, err := stateDB.Get([]byte(unfreezeID))
-	if err != nil {
-		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
-		return nil, err
-	}
-	var unfreeze pty.Unfreeze
-	err = types.Decode(value, &unfreeze)
+func QueryWithdraw(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
+	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
 	if err != nil {
 		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
 		return nil, err
 	}
 	currentTime := time.Now().Unix()
 	reply := &pty.ReplyQueryUnfreezeWithdraw{UnfreezeID: unfreezeID}
-	available, err := getWithdrawAvailable(&unfreeze, currentTime)
+	available, err := getWithdrawAvailable(unfreeze, currentTime)
 	if err != nil {
 		return nil, err
 	}
@@ -50,4 +45,14 @@ func getWithdrawAvailable(unfreeze *pty.Unfreeze, calcTime int64) (int64, error)
 	}
 	_, amount := withdraw(unfreeze, frozen)
 	return amount, nil
+}
+
+func QueryUnfreeze(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
+	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
+	if err != nil {
+		uflog.Error("QueryUnfreeze ", "unfreezeID", unfreezeID, "err", err)
+		return nil, err
+	}
+
+	return unfreeze, nil
 }
