@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "common.proto";
+
 package types;
 
 message Unfreeze {
@@ -77,11 +79,13 @@ message ReceiptUnfreeze {
 }
 
 // query
-message QueryUnfreezeWithdraw {
-    string unfreezeID = 1;
-}
-
 message ReplyQueryUnfreezeWithdraw {
     string unfreezeID      = 1;
     int64  availableAmount = 2;
+}
+
+// TODO 类型应该大写还是小写
+service unfreeze {
+    rpc GetUnfreezeWithdraw(ReqString) returns (ReplyQueryUnfreezeWithdraw) {}
+    rpc QueryUnfreeze(ReqString) returns (Unfreeze) {}
 }
