@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	id = "mavl-" + pty.UnfreezeX + "-"
-	initLocal = "LODB-" + pty.UnfreezeX + "-init-"
+	id               = "mavl-" + pty.UnfreezeX + "-"
+	initLocal        = "LODB-" + pty.UnfreezeX + "-init-"
 	beneficiaryLocal = "LODB-" + pty.UnfreezeX + "-beneficiary-"
 )
 

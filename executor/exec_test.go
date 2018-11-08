@@ -4,14 +4,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"gitlab.33.cn/chain33/chain33/account"
+	"gitlab.33.cn/chain33/chain33/common"
+	"gitlab.33.cn/chain33/chain33/common/address"
+	"gitlab.33.cn/chain33/chain33/common/crypto"
+	dbm "gitlab.33.cn/chain33/chain33/common/db"
 	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/types"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/account"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-
 )
 
 type execEnv struct {
@@ -21,11 +20,11 @@ type execEnv struct {
 }
 
 type orderArgs struct {
-	total   int64
-	startTs int64
-	period  int64
+	total    int64
+	startTs  int64
+	period   int64
 	duration int64
-	except  int64
+	except   int64
 }
 
 var (
@@ -81,7 +80,7 @@ func TestUnfreeze(t *testing.T) {
 		TotalCount:  10000,
 		Beneficiary: string(Nodes[1]),
 		Means:       "FixAmount",
-		MeansOpt: &pty.UnfreezeCreate_FixAmount{FixAmount: opt},
+		MeansOpt:    &pty.UnfreezeCreate_FixAmount{FixAmount: opt},
 	}
 	createTx, err := pty.CreateUnfreezeCreateTx(p1)
 	if err != nil {
@@ -99,9 +98,8 @@ func TestUnfreeze(t *testing.T) {
 	assert.NotNil(t, receipt)
 	//t.Log(receipt)
 	accTmp := accA.LoadExecAccount(accountA.Addr, execAddr)
-	assert.Equal(t, total - p1.TotalCount, accTmp.Balance)
+	assert.Equal(t, total-p1.TotalCount, accTmp.Balance)
 	assert.Equal(t, p1.TotalCount, accTmp.Frozen)
-
 
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
@@ -123,14 +121,13 @@ func TestUnfreeze(t *testing.T) {
 	//t.Log(receipt)
 	accATmp := accA.LoadExecAccount(accountA.Addr, execAddr)
 	accBTmp := accB.LoadExecAccount(accountB.Addr, execAddr)
-	assert.Equal(t, total - p1.TotalCount, accATmp.Balance)
+	assert.Equal(t, total-p1.TotalCount, accATmp.Balance)
 
 	u := pty.Unfreeze{}
 	e := types.Decode(receipt.KV[2].Value, &u)
 	assert.Nil(t, e)
 	assert.Equal(t, u.Remaining, accATmp.Frozen)
-	assert.Equal(t, accountB.Balance + p1.TotalCount - u.Remaining, accBTmp.Balance)
-
+	assert.Equal(t, accountB.Balance+p1.TotalCount-u.Remaining, accBTmp.Balance)
 
 	// 不是受益人提币
 	{
@@ -187,7 +184,7 @@ func TestUnfreeze(t *testing.T) {
 	assert.NotNil(t, receipt)
 	//t.Log(receipt)
 	accATmp = accA.LoadExecAccount(accountA.Addr, execAddr)
-	assert.Equal(t, total + total, accATmp.Balance + accBTmp.Balance)
+	assert.Equal(t, total+total, accATmp.Balance+accBTmp.Balance)
 	assert.Equal(t, int64(0), accATmp.Frozen)
 
 	// 终止后不能继续提币
@@ -231,4 +228,3 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
-
