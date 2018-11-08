@@ -92,6 +92,10 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 }
 
 func (u UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
+	return CreateUnfreezeCreateTx(types.GetParaName(), parm)
+}
+
+func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -109,7 +113,7 @@ func (u UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transac
 		Value: &UnfreezeAction_Create{parm},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(title)),
 		Payload: types.Encode(create),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
@@ -119,6 +123,10 @@ func (u UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transac
 }
 
 func (u UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
+	return CreateUnfreezeWithdrawTx(types.GetParaName(), parm)
+}
+
+func CreateUnfreezeWithdrawTx(title string, parm *UnfreezeWithdraw) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeWithdrawTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -131,7 +139,7 @@ func (u UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Tra
 		Value: &UnfreezeAction_Withdraw{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(title)),
 		Payload: types.Encode(withdraw),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
@@ -141,6 +149,10 @@ func (u UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Tra
 }
 
 func (u UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
+	return CreateUnfreezeTerminateTx(types.GetParaName(), parm)
+}
+
+func CreateUnfreezeTerminateTx(title string, parm *UnfreezeTerminate) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeTerminateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -153,7 +165,7 @@ func (u UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.T
 		Value: &UnfreezeAction_Terminate{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(title)),
 		Payload: types.Encode(terminate),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
