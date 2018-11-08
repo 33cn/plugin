@@ -54,4 +54,3 @@ func (u *Unfreeze) rollbackUnfreezeCreate(res *uf.ReceiptUnfreeze) (kvs []*types
 	kvs = localKeys(res, nil)
 	return
 }
-
