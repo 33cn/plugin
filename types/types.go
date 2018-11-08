@@ -68,7 +68,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateUnfreezeCreateTx(&param)
+		return u.RPC_UnfreezeCreateTx(&param)
 	} else if action == Action_WithdrawUnfreeze {
 		var param UnfreezeWithdraw
 		err := json.Unmarshal(message, &param)
@@ -76,7 +76,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateUnfreezeWithdrawTx(&param)
+		return u.RPC_UnfreezeWithdrawTx(&param)
 	} else if action == Action_TerminateUnfreeze {
 		var param UnfreezeTerminate
 		err := json.Unmarshal(message, &param)
@@ -84,24 +84,24 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateUnfreezeTerminateTx(&param)
+		return u.RPC_UnfreezeTerminateTx(&param)
 	} else {
 		return nil, types.ErrNotSupport
 	}
 	return nil, nil
 }
 
-func CreateUnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
+func (u UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
 	if parm == nil {
-		tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
+		tlog.Error("RPC_UnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	if parm.AssetExec == "" || parm.AssetSymbol == "" || parm.TotalCount <= 0 || parm.Means == "" {
-		tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
+		tlog.Error("RPC_UnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	if !supportMeans(parm.Means) {
-		tlog.Error("CreateUnfreezeCreateTx not support means", "parm", parm)
+		tlog.Error("RPC_UnfreezeCreateTx not support means", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	create := &UnfreezeAction{
@@ -118,9 +118,9 @@ func CreateUnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
 	return tx, nil
 }
 
-func CreateUnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
+func (u UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
 	if parm == nil {
-		tlog.Error("CreateUnfreezeWithdrawTx", "parm", parm)
+		tlog.Error("RPC_UnfreezeWithdrawTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	v := &UnfreezeWithdraw{
@@ -140,9 +140,9 @@ func CreateUnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error
 	return tx, nil
 }
 
-func CreateUnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
+func (u UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
 	if parm == nil {
-		tlog.Error("CreateUnfreezeTerminateTx", "parm", parm)
+		tlog.Error("RPC_UnfreezeTerminateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	v := &UnfreezeTerminate{

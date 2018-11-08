@@ -70,6 +70,7 @@ func TestUnfreeze(t *testing.T) {
 		2,
 		1539918074,
 	}
+	ty := pty.UnfreezeType{}
 
 	// 创建
 	opt := &pty.FixAmount{Period: 10, Amount: 2}
@@ -82,13 +83,13 @@ func TestUnfreeze(t *testing.T) {
 		Means:       "FixAmount",
 		MeansOpt:    &pty.UnfreezeCreate_FixAmount{FixAmount: opt},
 	}
-	createTx, err := pty.CreateUnfreezeCreateTx(p1)
+	createTx, err := ty.RPC_UnfreezeCreateTx(p1)
 	if err != nil {
-		t.Error("CreateUnfreezeCreateTx", "err", err)
+		t.Error("RPC_UnfreezeCreateTx", "err", err)
 	}
 	createTx, err = signTx(createTx, PrivKeyA)
 	if err != nil {
-		t.Error("CreateUnfreezeCreateTx sign", "err", err)
+		t.Error("RPC_UnfreezeCreateTx sign", "err", err)
 	}
 	exec := newUnfreeze()
 	exec.SetStateDB(stateDB)
@@ -105,13 +106,13 @@ func TestUnfreeze(t *testing.T) {
 	p2 := &pty.UnfreezeWithdraw{
 		UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
 	}
-	withdrawTx, err := pty.CreateUnfreezeWithdrawTx(p2)
+	withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 	if err != nil {
-		t.Error("CreateUnfreezeWithdrawTx", "err", err)
+		t.Error("RPC_UnfreezeWithdrawTx", "err", err)
 	}
 	withdrawTx, err = signTx(withdrawTx, PrivKeyB)
 	if err != nil {
-		t.Error("CreateUnfreezeWithdrawTx sign", "err", err)
+		t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 	}
 	blockTime := int64(10)
 	exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty)
@@ -134,13 +135,13 @@ func TestUnfreeze(t *testing.T) {
 		p2 := &pty.UnfreezeWithdraw{
 			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
 		}
-		withdrawTx, err := pty.CreateUnfreezeWithdrawTx(p2)
+		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {
-			t.Error("CreateUnfreezeWithdrawTx", "err", err)
+			t.Error("RPC_UnfreezeWithdrawTx", "err", err)
 		}
 		withdrawTx, err = signTx(withdrawTx, PrivKeyC)
 		if err != nil {
-			t.Error("CreateUnfreezeWithdrawTx sign", "err", err)
+			t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 		}
 		blockTime := int64(10)
 		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty)
@@ -154,13 +155,13 @@ func TestUnfreeze(t *testing.T) {
 		p3 := &pty.UnfreezeTerminate{
 			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
 		}
-		terminateTx, err := pty.CreateUnfreezeTerminateTx(p3)
+		terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 		if err != nil {
-			t.Error("CreateUnfreezeTerminateTx", "err", err)
+			t.Error("RPC_UnfreezeTerminateTx", "err", err)
 		}
 		terminateTx, err = signTx(terminateTx, PrivKeyC)
 		if err != nil {
-			t.Error("CreateUnfreezeTerminateTx sign", "err", err)
+			t.Error("RPC_UnfreezeTerminateTx sign", "err", err)
 		}
 		receipt, err = exec.Exec(terminateTx, 1)
 		assert.Equal(t, pty.ErrNoPrivilege, err)
@@ -171,13 +172,13 @@ func TestUnfreeze(t *testing.T) {
 	p3 := &pty.UnfreezeTerminate{
 		UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
 	}
-	terminateTx, err := pty.CreateUnfreezeTerminateTx(p3)
+	terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 	if err != nil {
-		t.Error("CreateUnfreezeTerminateTx", "err", err)
+		t.Error("RPC_UnfreezeTerminateTx", "err", err)
 	}
 	terminateTx, err = signTx(terminateTx, PrivKeyA)
 	if err != nil {
-		t.Error("CreateUnfreezeTerminateTx sign", "err", err)
+		t.Error("RPC_UnfreezeTerminateTx sign", "err", err)
 	}
 	receipt, err = exec.Exec(terminateTx, 1)
 	assert.Nil(t, err)
@@ -192,13 +193,13 @@ func TestUnfreeze(t *testing.T) {
 		p2 := &pty.UnfreezeWithdraw{
 			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
 		}
-		withdrawTx, err := pty.CreateUnfreezeWithdrawTx(p2)
+		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {
-			t.Error("CreateUnfreezeWithdrawTx", "err", err)
+			t.Error("RPC_UnfreezeWithdrawTx", "err", err)
 		}
 		withdrawTx, err = signTx(withdrawTx, PrivKeyB)
 		if err != nil {
-			t.Error("CreateUnfreezeWithdrawTx sign", "err", err)
+			t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 		}
 		blockTime := int64(10)
 		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime+blockTime, env.difficulty)
