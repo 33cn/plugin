@@ -3,7 +3,7 @@ package executor
 import (
 	"github.com/pkg/errors"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pt "gitlab.33.cn/chain33/chain33/plugin/dapp/paracross/types"
+	pt "gitlab.33.cn/chain33/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
 )
 
 // 合约对象引用

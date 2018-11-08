@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/trade/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/trade/types"
 	jsonrpc "gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
 )

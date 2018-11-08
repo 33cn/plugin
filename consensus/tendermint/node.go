@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	ttypes "gitlab.33.cn/chain33/chain33/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/valnode/types"
+	ttypes "gitlab.33.cn/chain33/plugin/consensus/tendermint/types"
+	tmtypes "gitlab.33.cn/chain33/plugin/dapp/valnode/types"
 )
 
 const (

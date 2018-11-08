@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"github.com/inconshreveable/log15"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/privacy/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/rpc/types"
 )
 

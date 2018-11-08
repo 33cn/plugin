@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/executor"
-	pb "gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/types"
+	"gitlab.33.cn/chain33/plugin/dapp/pokerbull/executor"
+	pb "gitlab.33.cn/chain33/plugin/dapp/pokerbull/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

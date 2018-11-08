@@ -9,7 +9,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pkt "gitlab.33.cn/chain33/chain33/plugin/dapp/pokerbull/types"
+	pkt "gitlab.33.cn/chain33/plugin/dapp/pokerbull/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 )

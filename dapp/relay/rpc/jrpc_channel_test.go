@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	commonlog "gitlab.33.cn/chain33/chain33/common/log"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/relay/types"
+	pty "gitlab.33.cn/chain33/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"

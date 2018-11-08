@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
 	"gitlab.33.cn/chain33/chain33/types"
 	"golang.org/x/crypto/sha3"
 )

@@ -2,7 +2,7 @@ package executor
 
 import (
 	"gitlab.33.cn/chain33/chain33/common/db"
-	tokenty "gitlab.33.cn/chain33/chain33/plugin/dapp/token/types"
+	tokenty "gitlab.33.cn/chain33/plugin/dapp/token/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

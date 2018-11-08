@@ -1,7 +1,7 @@
 package executor
 
 import (
-	rTy "gitlab.33.cn/chain33/chain33/plugin/dapp/relay/types"
+	rTy "gitlab.33.cn/chain33/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

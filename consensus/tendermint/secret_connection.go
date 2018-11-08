@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/plugin/consensus/tendermint/types"
+	"gitlab.33.cn/chain33/plugin/consensus/tendermint/types"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/ripemd160"

@@ -11,9 +11,9 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/core"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/cert/authority/utils"
-	ty "gitlab.33.cn/chain33/chain33/plugin/dapp/cert/types"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/core"
+	"gitlab.33.cn/chain33/plugin/dapp/cert/authority/utils"
+	ty "gitlab.33.cn/chain33/plugin/dapp/cert/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

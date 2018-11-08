@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gitlab.33.cn/chain33/chain33/common"
-	gt "gitlab.33.cn/chain33/chain33/plugin/dapp/blackwhite/types"
+	gt "gitlab.33.cn/chain33/plugin/dapp/blackwhite/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

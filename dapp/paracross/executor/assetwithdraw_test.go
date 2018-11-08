@@ -12,7 +12,7 @@ import (
 	"gitlab.33.cn/chain33/chain33/common/address"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
 	dbmock "gitlab.33.cn/chain33/chain33/common/db/mocks"
-	pt "gitlab.33.cn/chain33/chain33/plugin/dapp/paracross/types"
+	pt "gitlab.33.cn/chain33/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

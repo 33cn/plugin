@@ -3,7 +3,7 @@ package executor
 import (
 	"bytes"
 
-	evmtypes "gitlab.33.cn/chain33/chain33/plugin/dapp/evm/types"
+	evmtypes "gitlab.33.cn/chain33/plugin/dapp/evm/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

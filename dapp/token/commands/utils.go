@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	tokenty "gitlab.33.cn/chain33/chain33/plugin/dapp/token/types"
+	tokenty "gitlab.33.cn/chain33/plugin/dapp/token/types"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

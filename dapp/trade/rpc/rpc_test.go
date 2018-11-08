@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.33.cn/chain33/chain33/client/mocks"
-	ptypes "gitlab.33.cn/chain33/chain33/plugin/dapp/trade/types"
+	ptypes "gitlab.33.cn/chain33/plugin/dapp/trade/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 )
 

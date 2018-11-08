@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/inconshreveable/log15"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/evm/executor/vm/common"
+	"gitlab.33.cn/chain33/plugin/dapp/evm/executor/vm/common"
 )
 
 // 合约在日志，对应EVM中的Log指令，可以生成指定的日志信息
