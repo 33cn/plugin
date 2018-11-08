@@ -1,4 +1,4 @@
-package system
+package plugin
 
 import (
 	_ "gitlab.33.cn/chain33/plugin/consensus/init"
