@@ -125,6 +125,22 @@ func showCmd() *cobra.Command {
 	return cmd
 }
 
+func queryWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "show",
+		Short: "show available withdraw amount of one unfreeze construct",
+		Run: queryWithdraw,
+	}
+	cmd.Flags().StringP("id", "", "", "unfreeze construct id")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func queryWithdraw(cmd *cobra.Command, args []string) {
+
+}
+
 func show(cmd *cobra.Command, args []string) {
 
 }
