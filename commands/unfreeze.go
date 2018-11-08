@@ -98,7 +98,8 @@ func fixAmount(cmd *cobra.Command, args []string) {
 	create.Means = pty.FixAmountX
 	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amount}}
 
-	tx, err := pty.UnfreezeType{}.RPC_UnfreezeCreateTx(create)
+	paraName, _ := cmd.Flags().GetString("paraName")
+	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
 	if err != nil {
 		fmt.Printf("Create Tx frailed: %s", err)
 		return
@@ -135,7 +136,8 @@ func left(cmd *cobra.Command, args []string) {
 	create.MeansOpt = &pty.UnfreezeCreate_LeftProportion{
 		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
 
-	tx, err := pty.UnfreezeType{}.RPC_UnfreezeCreateTx(create)
+	paraName, _ := cmd.Flags().GetString("paraName")
+	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
 	if err != nil {
 		fmt.Printf("Create Tx frailed: %s", err)
 		return
@@ -193,7 +195,8 @@ func queryWithdrawCmd() *cobra.Command {
 
 func withdraw(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
-	tx, err := pty.UnfreezeType{}.RPC_UnfreezeWithdrawTx(&pty.UnfreezeWithdraw{UnfreezeID: id})
+	paraName, _ := cmd.Flags().GetString("paraName")
+	tx, err := pty.CreateUnfreezeWithdrawTx(paraName, &pty.UnfreezeWithdraw{UnfreezeID: id})
 	if err != nil {
 		fmt.Printf("Create Tx frailed: %s", err)
 		return
@@ -203,7 +206,8 @@ func withdraw(cmd *cobra.Command, args []string) {
 
 func terminate(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
-	tx, err := pty.UnfreezeType{}.RPC_UnfreezeTerminateTx(&pty.UnfreezeTerminate{UnfreezeID: id})
+	paraName, _ := cmd.Flags().GetString("paraName")
+	tx, err := pty.CreateUnfreezeTerminateTx(paraName, &pty.UnfreezeTerminate{UnfreezeID: id})
 	if err != nil {
 		fmt.Printf("Create Tx frailed: %s", err)
 		return
