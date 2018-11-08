@@ -1,6 +1,6 @@
 package init
 
 import (
-	_ "./crypto/ecdsa"
-	_ "./crypto/sm2"
+	_ "gitlab.33.cn/chain33/plugin/crypto/ecdsa"
+	_ "gitlab.33.cn/chain33/plugin/crypto/sm2"
 )
