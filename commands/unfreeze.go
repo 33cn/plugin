@@ -1,26 +1,35 @@
 package commands
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
+	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
+	"os"
+	"strings"
+
+	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
+	"gitlab.33.cn/chain33/chain33/types"
 )
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                        "unfreeze",
-		Short:                      "Unfreeze construct management",
-		Args:                       cobra.MinimumNArgs(1),
+		Use:   "unfreeze",
+		Short: "Unfreeze construct management",
+		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(createCmd())
 	cmd.AddCommand(withdrawCmd())
 	cmd.AddCommand(terminateCmd())
 	cmd.AddCommand(showCmd())
+	cmd.AddCommand(queryWithdrawCmd())
 	return cmd
 }
 
 func createCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "create",
+		Use:   "create",
 		Short: "create unfreeze construct",
 	}
 
@@ -48,11 +57,29 @@ func createFlag(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
+func getCreateFlags(cmd *cobra.Command) *pty.UnfreezeCreate {
+	beneficiary, _ := cmd.Flags().GetString("beneficiary")
+	exec, _ := cmd.Flags().GetString("asset_exec")
+	symbol, _ := cmd.Flags().GetString("asset_symbol")
+	total, _ := cmd.Flags().GetInt64("total")
+	startTs, _ := cmd.Flags().GetInt64("start_ts")
+
+	unfreeze := &pty.UnfreezeCreate{
+		StartTime:   startTs,
+		AssetExec:   exec,
+		AssetSymbol: symbol,
+		TotalCount:  total,
+		Beneficiary: beneficiary,
+		Means:       "",
+	}
+	return unfreeze
+}
+
 func fixAmountCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "fix_amount",
+		Use:   "fix_amount",
 		Short: "create fix amount means unfreeze construct",
-		Run: fixAmount,
+		Run:   fixAmount,
 	}
 	cmd = createFlag(cmd)
 	cmd.Flags().Int64P("amount", "a", 0, "amount every period")
@@ -64,15 +91,31 @@ func fixAmountCmd() *cobra.Command {
 }
 
 func fixAmount(cmd *cobra.Command, args []string) {
-	beneficiary, _ := cmd.Flags().GetString("beneficiary")
-	fmt.Printf("%s\n", beneficiary)
+	create := getCreateFlags(cmd)
+
+	amount, _ := cmd.Flags().GetInt64("amount")
+	period, _ := cmd.Flags().GetInt64("period")
+	create.Means = pty.FixAmountX
+	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amount}}
+
+	tx, err := pty.UnfreezeType{}.RPC_UnfreezeCreateTx(create)
+	if err != nil {
+		fmt.Printf("Create Tx frailed: %s", err)
+		return
+	}
+	outputTx(tx)
+}
+
+func outputTx(tx *types.Transaction) {
+	txHex := types.Encode(tx)
+	fmt.Println(hex.EncodeToString(txHex))
 }
 
 func leftCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "left_proportion",
+		Use:   "left_proportion",
 		Short: "create left proportion means unfreeze construct",
-		Run: left,
+		Run:   left,
 	}
 	cmd = createFlag(cmd)
 	cmd.Flags().Int64P("ten_thousandth", "", 0, "input/10000 of total")
@@ -84,15 +127,27 @@ func leftCmd() *cobra.Command {
 }
 
 func left(cmd *cobra.Command, args []string) {
-	beneficiary, _ := cmd.Flags().GetString("beneficiary")
-	fmt.Printf("%s\n", beneficiary)
+	create := getCreateFlags(cmd)
+
+	tenThousandth, _ := cmd.Flags().GetInt64("ten_thousandth")
+	period, _ := cmd.Flags().GetInt64("period")
+	create.Means = pty.FixAmountX
+	create.MeansOpt = &pty.UnfreezeCreate_LeftProportion{
+		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
+
+	tx, err := pty.UnfreezeType{}.RPC_UnfreezeCreateTx(create)
+	if err != nil {
+		fmt.Printf("Create Tx frailed: %s", err)
+		return
+	}
+	outputTx(tx)
 }
 
 func withdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "withdraw",
+		Use:   "withdraw",
 		Short: "withdraw asset from construct",
-		Run: withdraw,
+		Run:   withdraw,
 	}
 	cmd.Flags().StringP("id", "", "", "unfreeze construct id")
 	cmd.MarkFlagRequired("id")
@@ -100,12 +155,11 @@ func withdrawCmd() *cobra.Command {
 	return cmd
 }
 
-
 func terminateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "terminate",
+		Use:   "terminate",
 		Short: "terminate construct",
-		Run: terminate,
+		Run:   terminate,
 	}
 	cmd.Flags().StringP("id", "", "", "unfreeze construct id")
 	cmd.MarkFlagRequired("id")
@@ -115,9 +169,9 @@ func terminateCmd() *cobra.Command {
 
 func showCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "show",
+		Use:   "show",
 		Short: "show construct",
-		Run: show,
+		Run:   show,
 	}
 	cmd.Flags().StringP("id", "", "", "unfreeze construct id")
 	cmd.MarkFlagRequired("id")
@@ -127,9 +181,9 @@ func showCmd() *cobra.Command {
 
 func queryWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "show",
+		Use:   "show",
 		Short: "show available withdraw amount of one unfreeze construct",
-		Run: queryWithdraw,
+		Run:   queryWithdraw,
 	}
 	cmd.Flags().StringP("id", "", "", "unfreeze construct id")
 	cmd.MarkFlagRequired("id")
@@ -137,18 +191,89 @@ func queryWithdrawCmd() *cobra.Command {
 	return cmd
 }
 
-func queryWithdraw(cmd *cobra.Command, args []string) {
-
-}
-
-func show(cmd *cobra.Command, args []string) {
-
-}
-
 func withdraw(cmd *cobra.Command, args []string) {
-
+	id, _ := cmd.Flags().GetString("id")
+	tx, err := pty.UnfreezeType{}.RPC_UnfreezeWithdrawTx(&pty.UnfreezeWithdraw{UnfreezeID: id})
+	if err != nil {
+		fmt.Printf("Create Tx frailed: %s", err)
+		return
+	}
+	outputTx(tx)
 }
 
 func terminate(cmd *cobra.Command, args []string) {
+	id, _ := cmd.Flags().GetString("id")
+	tx, err := pty.UnfreezeType{}.RPC_UnfreezeTerminateTx(&pty.UnfreezeTerminate{UnfreezeID: id})
+	if err != nil {
+		fmt.Printf("Create Tx frailed: %s", err)
+		return
+	}
+	outputTx(tx)
+}
 
+func queryWithdraw(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	id, _ := cmd.Flags().GetString("id")
+	cli, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	param := &types.Query4Cli{
+		Execer:   getRealExecName(paraName, pty.UnfreezeX),
+		FuncName: "QueryWithdraw",
+		Payload:  types.ReqString{Data: id},
+	}
+	var resp pty.ReplyQueryUnfreezeWithdraw
+	err = cli.Call("Chain33.Query", param, &resp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	data, err := json.MarshalIndent(resp, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(data))
+}
+
+func show(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	id, _ := cmd.Flags().GetString("id")
+	cli, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	param := &types.Query4Cli{
+		Execer:   getRealExecName(paraName, pty.UnfreezeX),
+		FuncName: "GetUnfreeze",
+		Payload:  types.ReqString{Data: id},
+	}
+	var resp pty.Unfreeze
+	err = cli.Call("Chain33.Query", param, &resp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	data, err := json.MarshalIndent(resp, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(data))
+}
+
+func getRealExecName(paraName string, name string) string {
+	if strings.HasPrefix(name, "user.p.") {
+		return name
+	}
+	return paraName + name
 }
