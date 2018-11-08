@@ -2,6 +2,7 @@ package executor
 
 import (
 	"gitlab.33.cn/chain33/chain33/account"
+	dbm "gitlab.33.cn/chain33/chain33/common/db"
 	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
@@ -41,15 +42,8 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 }
 
 func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
-	value, err := u.GetStateDB().Get([]byte(payload.UnfreezeID))
+	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
-		uflog.Error("unfreeze withdraw get", "id", payload.UnfreezeID, "err", err)
-		return nil, err
-	}
-	var unfreeze pty.Unfreeze
-	err = types.Decode(value, &unfreeze)
-	if err != nil {
-		uflog.Error("unfreeze withdraw decode", "err", err)
 		return nil, err
 	}
 	if unfreeze.Beneficiary != tx.From() {
@@ -61,7 +55,7 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 		return nil, pty.ErrUnfreezeEmptied
 	}
 
-	amount, receipt1, err := u.withdraw(&unfreeze)
+	amount, receipt1, err := u.withdraw(unfreeze)
 	if err != nil {
 		uflog.Error("unfreeze withdraw withdraw", "err", err, "unfreeze", unfreeze)
 		return nil, err
@@ -83,15 +77,8 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 }
 
 func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	value, err := u.GetStateDB().Get([]byte(payload.UnfreezeID))
+	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
-		uflog.Error("unfreeze terminate get", "id", payload.UnfreezeID, "err", err)
-		return nil, err
-	}
-	var unfreeze pty.Unfreeze
-	err = types.Decode(value, &unfreeze)
-	if err != nil {
-		uflog.Error("unfreeze terminate decode", "err", err)
 		return nil, err
 	}
 	if tx.From() != unfreeze.Initiator {
@@ -100,7 +87,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 		return nil, pty.ErrNoPrivilege
 	}
 
-	amount, receipt1, err := u.terminator(&unfreeze)
+	amount, receipt1, err := u.terminator(unfreeze)
 	if err != nil {
 		uflog.Error("unfreeze terminate ", "err", err, "unfreeze", unfreeze)
 		return nil, err
@@ -219,4 +206,19 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 	return amount, &types.Receipt{Ty: types.ExecOk, KV: []*types.KeyValue{{k, v}},
 		Logs: []*types.ReceiptLog{receiptLog}}, nil
 
+}
+
+func loadUnfreeze(id string, db dbm.KV) (*pty.Unfreeze, error) {
+	value, err := db.Get([]byte(id))
+	if err != nil {
+		uflog.Error("unfreeze terminate get", "id", id, "err", err)
+		return nil, err
+	}
+	var unfreeze pty.Unfreeze
+	err = types.Decode(value, &unfreeze)
+	if err != nil {
+		uflog.Error("unfreeze terminate decode", "err", err)
+		return nil, err
+	}
+	return &unfreeze, nil
 }
