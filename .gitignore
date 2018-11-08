@@ -7,4 +7,5 @@ store/kvmvcc/kvmvcc.test
 store/mpt/1.png
 store/mpt/cpu.pprof
 store/mpt/mpt.test
-
+plugin
+tool

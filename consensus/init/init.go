@@ -1,9 +1,9 @@
 package init
 
 import (
-	_ "gitlab.33.cn/chain33/plugin/consensus/para"
-	_ "gitlab.33.cn/chain33/plugin/consensus/pbft"
-	_ "gitlab.33.cn/chain33/plugin/consensus/raft"
-	_ "gitlab.33.cn/chain33/plugin/consensus/tendermint"
-	_ "gitlab.33.cn/chain33/plugin/consensus/ticket"
+	_ "./consensus/para"
+	_ "./consensus/pbft"
+	_ "./consensus/raft"
+	_ "./consensus/tendermint"
+	_ "./consensus/ticket"
 )

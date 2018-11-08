@@ -1,0 +1,129 @@
+[consensus-para]
+  Type = "consensus"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/consensus/para"
+  Version = ""
+
+[consensus-pbft]
+  Type = "consensus"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/consensus/pbft"
+  Version = ""
+
+[consensus-raft]
+  Type = "consensus"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/consensus/raft"
+  Version = ""
+
+[consensus-tendermint]
+  Type = "consensus"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/consensus/tendermint"
+  Version = ""
+
+[consensus-ticket]
+  Type = "consensus"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/consensus/ticket"
+  Version = ""
+
+[crypto-ecdsa]
+  Type = "crypto"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/crypto/ecdsa"
+  Version = ""
+
+[crypto-sm2]
+  Type = "crypto"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/crypto/sm2"
+  Version = ""
+
+[dapp-blackwhite]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/blackwhite"
+  Version = ""
+
+[dapp-cert]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/cert"
+  Version = ""
+
+[dapp-evm]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/evm"
+  Version = ""
+
+[dapp-game]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/game"
+  Version = ""
+
+[dapp-hashlock]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/hashlock"
+  Version = ""
+
+[dapp-lottery]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/lottery"
+  Version = ""
+
+[dapp-norm]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/norm"
+  Version = ""
+
+[dapp-paracross]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/paracross"
+  Version = ""
+
+[dapp-pokerbull]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/pokerbull"
+  Version = ""
+
+[dapp-privacy]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/privacy"
+  Version = ""
+
+[dapp-relay]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/relay"
+  Version = ""
+
+[dapp-retrieve]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/retrieve"
+  Version = ""
+
+[dapp-ticket]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/ticket"
+  Version = ""
+
+[dapp-token]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/token"
+  Version = ""
+
+[dapp-trade]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/trade"
+  Version = ""
+
+[dapp-valnode]
+  Type = "dapp"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/dapp/valnode"
+  Version = ""
+
+[store-kvdb]
+  Type = "store"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/store/kvdb"
+  Version = ""
+
+[store-kvmvcc]
+  Type = "store"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/store/kvmvcc"
+  Version = ""
+
+[store-mpt]
+  Type = "store"
+  Gitrepo = "gitlab.33.cn/chain33/plugin/store/mpt"
+  Version = ""
