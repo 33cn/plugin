@@ -3,6 +3,7 @@ package unfreeze
 import (
 	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/commands"
 	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/executor"
+	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/rpc"
 	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
 	"gitlab.33.cn/chain33/chain33/pluginmgr"
 )
@@ -13,6 +14,6 @@ func init() {
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.Cmd,
-		RPC:      nil,
+		RPC:      rpc.Init,
 	})
 }
