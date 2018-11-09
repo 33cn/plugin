@@ -1,6 +1,7 @@
 CHAIN33=gitlab.33.cn/chain33/chain33
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
+PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 
 all: build
 
@@ -34,3 +35,7 @@ clean:
 	@rm -rf plugin/dapp/init
 	@rm -rf plugin/crypto/init
 	@rm -rf plugin/store/init
+
+test: ## Run unittests
+	@go test -race $(PKG_LIST)
+

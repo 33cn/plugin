@@ -387,7 +387,7 @@ func (b *btcdClient) GetBlockHeader(height uint64) (*ty.BtcHeader, error) {
 
 	h := &ty.BtcHeader{
 		Hash:          header.Hash,
-		Confirmations: header.Confirmations,
+		Confirmations: uint64(header.Confirmations),
 		Height:        uint64(header.Height),
 		MerkleRoot:    header.MerkleRoot,
 		Time:          header.Time,
