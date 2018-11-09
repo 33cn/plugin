@@ -1,4 +1,4 @@
-bityuan 系统
+chain33 官方插件系统
 
 ### 安装
 
@@ -11,21 +11,13 @@ go get -u -v github.com/kardianos/govendor
 #### 支持make file的平台
 
 ```
-go get gitlab.33.cn/chain33/bityuan
 make
 ```
 就可以完成编译安装
 
-#### 不支持的平台，可以手工执行下面的命令
+## 注意:
 
-```
-go get gitlab.33.cn/chain33/bityuan
-govendor init
-govendor fetch +m
-govendor add +e
-go build -i -o tool gitlab.33.cn/chain33/chain33/cmd/tools
-./tool updateinit --path "plugin" --packname "gitlab.33.cn/chain33/bityuan"
-./tool import -path "plugin" --packname "gitlab.33.cn/chain33/bityuan" --conf "plugin/plugin.toml"
-go build -i -o bityuan
-go build -i -o bityuan-cli gitlab.33.cn/chain33/bityuan/cli
-```
+从头开始安装vendor 有非常大的难度，主要问题是带宽 和 翻墙问题
+为了解决包依赖等问题，我们直接提供了vendor目录。
+
+
