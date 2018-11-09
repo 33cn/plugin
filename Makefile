@@ -1,8 +1,8 @@
-all: vendor build
+CHAIN33=gitlab.33.cn/chain33/chain33
 
-build:
-	go build -i -o tool gitlab.33.cn/chain33/chain33/cmd/tools
-	./tool import --path "plugin" --packname "gitlab.33.cn/chain33/plugin/plugin" --conf ""
+all: build
+
+build:vendor
 	go build -i -o chain33
 	go build -i -o chain33-cli gitlab.33.cn/chain33/plugin/cli
 updatevendor:
@@ -10,10 +10,17 @@ updatevendor:
 	govendor add +e
 
 vendor:
-	go get -v -u gitlab.33.cn/chain33/chain33
+	git clone --depth 1 -b master https://${CHAIN33}.git vendor/${CHAIN33}
+	rm -rf vendor/${CHAIN33}/.git
+	cp -R vendor/${CHAIN33}/vendor/* vendor/
 	govendor init
+	go build -i -o tool gitlab.33.cn/chain33/chain33/cmd/tools
+	./tool import --path "plugin" --packname "gitlab.33.cn/chain33/plugin/plugin" --conf ""
 	govendor add +e
-	govendor fetch +m
+	govendor fetch -v +m
+dep:
+	dep init -v
+
 clean:
 	@rm -rf chain33
 	@rm -rf chain33-cli

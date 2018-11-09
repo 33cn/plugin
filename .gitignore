@@ -9,3 +9,4 @@ store/mpt/cpu.pprof
 store/mpt/mpt.test
 plugin
 tool
+.vscode

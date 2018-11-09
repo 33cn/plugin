@@ -1,0 +1,87 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "github.com/btcsuite/btcd/chaincfg",
+			"revision": ""
+		},
+		{
+			"path": "github.com/btcsuite/btcd/chaincfg/chainhash",
+			"revision": ""
+		},
+		{
+			"path": "github.com/btcsuite/btcd/rpcclient",
+			"revision": ""
+		},
+		{
+			"path": "github.com/btcsuite/btcd/wire",
+			"revision": ""
+		},
+		{
+			"path": "github.com/coreos/etcd/lease",
+			"revision": ""
+		},
+		{
+			"path": "github.com/coreos/etcd/pkg/adt",
+			"revision": ""
+		},
+		{
+			"path": "github.com/coreos/etcd/pkg/fileutil",
+			"revision": ""
+		},
+		{
+			"path": "github.com/coreos/etcd/pkg/schedule",
+			"revision": ""
+		},
+		{
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gogo/protobuf/gogoproto",
+			"revision": ""
+		},
+		{
+			"path": "github.com/google/btree",
+			"revision": ""
+		},
+		{
+			"path": "github.com/grpc-ecosystem/grpc-gateway/runtime",
+			"revision": ""
+		},
+		{
+			"path": "github.com/grpc-ecosystem/grpc-gateway/utilities",
+			"revision": ""
+		},
+		{
+			"path": "github.com/pkg/sftp",
+			"revision": ""
+		},
+		{
+			"path": "github.com/prometheus/client_golang/prometheus",
+			"revision": ""
+		},
+		{
+			"path": "github.com/stretchr/testify/suite",
+			"revision": ""
+		},
+		{
+			"path": "github.com/valyala/fasthttp",
+			"revision": ""
+		},
+		{
+			"path": "github.com/xiang90/probing",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/crypto/bcrypt",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/time/rate",
+			"revision": ""
+		}
+	],
+	"rootPath": "gitlab.33.cn/chain33/plugin"
+}
