@@ -10,9 +10,6 @@ updatevendor:
 	govendor add +e
 
 vendor:
-	git clone --depth 1 -b master https://${CHAIN33}.git vendor/${CHAIN33}
-	rm -rf vendor/${CHAIN33}/.git
-	cp -R vendor/${CHAIN33}/vendor/* vendor/
 	govendor init
 	go build -i -o tool gitlab.33.cn/chain33/chain33/cmd/tools
 	./tool import --path "plugin" --packname "gitlab.33.cn/chain33/plugin/plugin" --conf ""
