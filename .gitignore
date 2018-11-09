@@ -9,3 +9,5 @@ store/mpt/cpu.pprof
 store/mpt/mpt.test
 tool
 .vscode
+chain33
+chain33-cli
