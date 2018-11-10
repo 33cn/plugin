@@ -126,7 +126,6 @@ function start() {
     #echo "=========== # create seed for wallet ============="
     #seed=$(${CLI} seed generate -l 0 | jq ".seed")
     #if [ -z "${seed}" ]; then
-    #    echo "create seed error"
     #    exit 1
     #fi
 
