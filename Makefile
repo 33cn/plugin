@@ -219,7 +219,9 @@ auto_ci: clean fmt_proto fmt_shell protobuf
 	@${auto_fmt}
 	@git add *.go *.sh *.proto
 	@git status
-	@files=$$(git status -suno);if [ -n "$$files" ]; then \
+	@echo "branch"
+	@echo $(branch)
+	@files=$$(git status -suno); if [ -n "$$files" ]; then \
 		  git add *.go *.sh *.proto; \
 		  git status; \
 		  git commit -m "auto ci"; \
