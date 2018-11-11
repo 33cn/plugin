@@ -49,7 +49,8 @@ update:
 	rm -rf ${CHAIN33_PATH}
 	git clone --depth 1 -b master https://${CHAIN33}.git ${CHAIN33_PATH}
 	rm -rf vendor/${CHAIN33}/.git
-	cp -R vendor/${CHAIN33}/vendor/* vendor/
+	rm -rf vendor/${CHAIN33}/vendor/github.com/apache/thrift/tutorial/erl/
+	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
 	rm -rf vendor/${CHAIN33}/vendor
 	govendor init
 	go build -i -o tool gitlab.33.cn/chain33/plugin/vendor/gitlab.33.cn/chain33/chain33/cmd/tools

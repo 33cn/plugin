@@ -1,6 +1,7 @@
 package mpt
 
 import (
+	lru "github.com/hashicorp/golang-lru"
 	"gitlab.33.cn/chain33/chain33/common"
 	clog "gitlab.33.cn/chain33/chain33/common/log"
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
