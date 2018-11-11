@@ -205,9 +205,8 @@ auto_ci_after: clean fmt protobuf
 	@git add *.go *.sh *.proto
 	@git status
 	@files=$$(git status -suno);if [ -n "$$files" ]; then \
-		  git add *.go *.sh *.proto; \
 		  git status; \
-		  git commit -m "auto ci [ci-skip]"; \
+		  git commit -a -m "auto ci [ci-skip]"; \
 		  git push origin HEAD:$(branch); \
 		  fi;
 
