@@ -61,13 +61,7 @@ go_test:
 #        - develop
 #        - bty_develop
 
-code_coverage:
-    stage: test
-    script:
-        - make coverage
-    only:
-        - master
-        - bty_develop
+
 
 #code_coverage_report:
 #    stage: test
@@ -111,6 +105,16 @@ deploy_paracross:
         - make docker-compose-down PROJ=paracross DAPP=paracross
     only:
         - master
+
+code_coverage:
+    stage: fork_test
+    script:
+        - if [ -n "${onceEveryday}" ]; then
+        - make coverage
+        - fi
+    only:
+        - master
+        - bty_develop
 
 fork_test:
     stage: fork_test
