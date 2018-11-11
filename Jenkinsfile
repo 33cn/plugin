@@ -23,6 +23,7 @@ pipeline {
             steps {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'check'){
+                        sh "git branch;git status"
                         sh "make auto_ci branch=${env.gitlabSourceBranch}"
                     }
                 }
