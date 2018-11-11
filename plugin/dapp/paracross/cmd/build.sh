@@ -8,7 +8,7 @@ OUT_DIR="${1}/$strapp"
 
 PARACLI="${OUT_DIR}/chain33-para-cli"
 PARANAME=para
-SRC_CLI=gitlab.33.cn/chain33/plugin/cli
+SRC_CLI=github.com/33cn/plugin/cli
 
 go build -v -o "${PARACLI}" -ldflags "-X ${SRC_CLI}/buildflags.ParaName=user.p.${PARANAME}. -X ${SRC_CLI}/buildflags.RPCAddr=http://localhost:8901" "${SRC_CLI}"
 # shellcheck disable=SC2086

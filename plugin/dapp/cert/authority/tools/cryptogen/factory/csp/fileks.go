@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/utils"
-	auth "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/utils"
+	auth "github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
 )
 
 var logger = log.New("tools", "cryptogen")

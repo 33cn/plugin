@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	"github.com/33cn/chain33/types"
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
 func (t *token) Query_GetTokens(in *tokenty.ReqTokens) (types.Message, error) {

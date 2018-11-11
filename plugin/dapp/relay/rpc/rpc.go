@@ -3,8 +3,8 @@ package rpc
 import (
 	"encoding/hex"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
 func CreateRawRelayOrderTx(parm *ty.RelayCreate) ([]byte, error) {

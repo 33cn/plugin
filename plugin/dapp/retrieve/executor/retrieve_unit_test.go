@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/db"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/db"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
 var (

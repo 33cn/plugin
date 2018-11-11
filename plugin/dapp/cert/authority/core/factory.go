@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
 func GetLocalValidator(authConfig *AuthConfig, signType int) (Validator, error) {

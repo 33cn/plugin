@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/common/merkle"
-	"gitlab.33.cn/chain33/chain33/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/common/merkle"
+	"github.com/33cn/chain33/types"
+	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 var (

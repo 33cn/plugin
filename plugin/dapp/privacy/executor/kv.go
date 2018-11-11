@@ -3,7 +3,7 @@ package executor
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/common"
+	"github.com/33cn/chain33/common"
 )
 
 const (

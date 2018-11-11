@@ -1,11 +1,11 @@
 package retrieve
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/rpc"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/retrieve/commands"
+	"github.com/33cn/plugin/plugin/dapp/retrieve/executor"
+	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
+	"github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
 func init() {

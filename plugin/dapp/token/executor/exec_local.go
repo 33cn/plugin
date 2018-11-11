@@ -1,9 +1,9 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
 func (t *token) ExecLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {

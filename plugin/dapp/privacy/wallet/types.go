@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	privacy "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/crypto"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 type addrAndprivacy struct {

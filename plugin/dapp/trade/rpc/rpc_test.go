@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/chain33/client/mocks"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	ptypes "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	"github.com/33cn/chain33/client/mocks"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 func newTestChannelClient() *Grpc {

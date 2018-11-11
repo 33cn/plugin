@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"sort"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
+	"github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
 var POKER_CARD_NUM = 52 //4 * 13 不带大小王

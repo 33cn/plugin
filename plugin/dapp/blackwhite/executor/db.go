@@ -3,7 +3,7 @@ package executor
 import (
 	"fmt"
 
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 var (

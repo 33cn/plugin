@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.33.cn/chain33/chain33/common"
-	jsonrpc "gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	"gitlab.33.cn/chain33/chain33/types"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	"github.com/33cn/chain33/common"
+	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/types"
+	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 func BlackwhiteCmd() *cobra.Command {

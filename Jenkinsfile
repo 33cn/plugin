@@ -6,7 +6,7 @@ pipeline {
 
     environment {
         GOPATH = "${WORKSPACE}"
-        PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/plugin"
+        PROJ_DIR = "${WORKSPACE}/src/github.com/33cn/plugin"
     }
 
     options {
@@ -15,7 +15,7 @@ pipeline {
         timestamps()
         gitLabConnection('gitlab33')
         gitlabBuilds(builds: ['check', 'build', 'test', 'deploy'])
-        checkoutToSubdirectory "src/gitlab.33.cn/chain33/plugin"
+        checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
 
     stages {
@@ -50,7 +50,7 @@ pipeline {
 
             environment {
                 GOPATH = "${WORKSPACE}"
-                PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/plugin"
+                PROJ_DIR = "${WORKSPACE}/src/github.com/33cn/plugin"
             }
 
             steps {

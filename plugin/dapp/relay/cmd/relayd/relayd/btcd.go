@@ -9,9 +9,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/common/merkle"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/common/merkle"
+	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
 type BtcClient interface {

@@ -1,11 +1,11 @@
 package trade
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/trade/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/trade/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/trade/rpc"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/trade/commands"
+	"github.com/33cn/plugin/plugin/dapp/trade/executor"
+	"github.com/33cn/plugin/plugin/dapp/trade/rpc"
+	"github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 func init() {

@@ -9,10 +9,10 @@ import (
 	"runtime"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common/limits"
-	clog "gitlab.33.cn/chain33/chain33/common/log"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/relay/cmd/relayd/relayd"
+	"github.com/33cn/chain33/common/limits"
+	clog "github.com/33cn/chain33/common/log"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/plugin/plugin/dapp/relay/cmd/relayd/relayd"
 )
 
 var (

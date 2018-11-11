@@ -13,15 +13,15 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	common2 "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto/sha3"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	"github.com/33cn/chain33/types"
+	common2 "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 func EvmCmd() *cobra.Command {

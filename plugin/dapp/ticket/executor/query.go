@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 func (this *Ticket) Query_TicketInfos(param *pty.TicketInfos) (types.Message, error) {

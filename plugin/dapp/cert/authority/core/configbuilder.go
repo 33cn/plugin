@@ -7,7 +7,7 @@ import (
 
 	"os"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
 )
 
 func getPemMaterialFromDir(dir string) ([][]byte, error) {

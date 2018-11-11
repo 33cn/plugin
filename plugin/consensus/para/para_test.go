@@ -5,13 +5,13 @@ import (
 	//"github.com/stretchr/testify/mock"
 	"testing"
 
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/types"
 
 	"math/rand"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common/address"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/common/address"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 var (

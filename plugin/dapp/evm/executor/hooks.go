@@ -1,11 +1,11 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/client"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
+	"github.com/33cn/chain33/client"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 )
 
 // 检查合约调用账户是否有充足的金额进行转账交易操作

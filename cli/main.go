@@ -3,11 +3,11 @@
 package main
 
 import (
-	_ "gitlab.33.cn/chain33/chain33/system"
-	"gitlab.33.cn/chain33/plugin/cli/buildflags"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/plugin/cli/buildflags"
+	_ "github.com/33cn/plugin/plugin"
 
-	"gitlab.33.cn/chain33/chain33/util/cli"
+	"github.com/33cn/chain33/util/cli"
 )
 
 func main() {

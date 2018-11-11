@@ -15,10 +15,10 @@ EventTransfer -> 转移资产
 import (
 	"fmt"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 var clog = log.New("module", "execs.ticket")

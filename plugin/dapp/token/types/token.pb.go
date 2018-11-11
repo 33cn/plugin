@@ -31,8 +31,8 @@ package types
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import types2 "gitlab.33.cn/chain33/chain33/types"
-import types3 "gitlab.33.cn/chain33/chain33/types"
+import types2 "github.com/33cn/chain33/types"
+import types3 "github.com/33cn/chain33/types"
 
 import (
 	context "golang.org/x/net/context"

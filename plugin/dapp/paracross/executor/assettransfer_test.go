@@ -7,13 +7,13 @@ import (
 	//"github.com/stretchr/testify/mock"
 	"testing"
 
-	"gitlab.33.cn/chain33/chain33/account"
-	apimock "gitlab.33.cn/chain33/chain33/client/mocks"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	dbmock "gitlab.33.cn/chain33/chain33/common/db/mocks"
-	"gitlab.33.cn/chain33/chain33/types"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/account"
+	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
+	dbmock "github.com/33cn/chain33/common/db/mocks"
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 // para-exec addr on main 1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe

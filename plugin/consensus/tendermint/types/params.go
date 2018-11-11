@@ -5,7 +5,7 @@ import (
 
 	"encoding/json"
 
-	"gitlab.33.cn/chain33/chain33/common/crypto"
+	"github.com/33cn/chain33/common/crypto"
 )
 
 const (

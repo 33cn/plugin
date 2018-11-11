@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/types"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 func (evm *EVMExecutor) ExecDelLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {

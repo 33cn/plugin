@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
-	auth "gitlab.33.cn/chain33/plugin/plugin/crypto/ecdsa"
+	auth "github.com/33cn/plugin/plugin/crypto/ecdsa"
 )
 
 type ecdsaSigner struct{}

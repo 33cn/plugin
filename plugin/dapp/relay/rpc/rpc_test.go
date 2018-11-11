@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"gitlab.33.cn/chain33/chain33/client/mocks"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
+	"github.com/33cn/chain33/client/mocks"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 )
 
 func newTestChannelClient() *channelClient {

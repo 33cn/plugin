@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/tjfoc/gmsm/sm2"
-	ecdsa_util "gitlab.33.cn/chain33/plugin/plugin/crypto/ecdsa"
+	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
 )
 
 type validity struct {

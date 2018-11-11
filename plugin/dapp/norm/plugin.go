@@ -1,9 +1,9 @@
 package norm
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/norm/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/norm/executor"
+	"github.com/33cn/plugin/plugin/dapp/norm/types"
 )
 
 func init() {

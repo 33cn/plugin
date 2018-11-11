@@ -3,8 +3,8 @@ package rpc
 import (
 	context "golang.org/x/net/context"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	bw "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	"github.com/33cn/chain33/types"
+	bw "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 func (c *channelClient) Create(ctx context.Context, head *bw.BlackwhiteCreate) (*types.UnsignTx, error) {

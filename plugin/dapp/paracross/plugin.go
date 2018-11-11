@@ -1,11 +1,11 @@
 package paracross
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/rpc"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/paracross/commands"
+	"github.com/33cn/plugin/plugin/dapp/paracross/executor"
+	"github.com/33cn/plugin/plugin/dapp/paracross/rpc"
+	"github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 func init() {

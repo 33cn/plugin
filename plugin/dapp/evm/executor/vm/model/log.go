@@ -1,8 +1,8 @@
 package model
 
 import (
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 // 合约在日志，对应EVM中的Log指令，可以生成指定的日志信息

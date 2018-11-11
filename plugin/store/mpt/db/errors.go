@@ -19,7 +19,7 @@ package mpt
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/common"
+	"github.com/33cn/chain33/common"
 )
 
 // MissingNodeError is returned by the trie functions (TryGet, TryUpdate, TryDelete)
