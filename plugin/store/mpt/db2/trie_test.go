@@ -35,8 +35,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/plugin/plugin/store/mpt/db2/rlp"
 	comTy "gitlab.33.cn/chain33/chain33/types"
+	"gitlab.33.cn/chain33/plugin/plugin/store/mpt/db2/rlp"
 )
 
 var (

@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 )
 
 func (l *Lottery) Exec_Create(payload *pty.LotteryCreate, tx *types.Transaction, index int) (*types.Receipt, error) {

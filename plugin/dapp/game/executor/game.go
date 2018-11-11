@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 )
 
 var glog = log.New("module", "execs.game")

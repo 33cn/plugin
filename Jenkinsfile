@@ -6,7 +6,7 @@ pipeline {
 
     environment {
         GOPATH = "${WORKSPACE}"
-        PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/chain33"
+        PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/plugin"
     }
 
     options {
@@ -15,7 +15,7 @@ pipeline {
         timestamps()
         gitLabConnection('gitlab33')
         gitlabBuilds(builds: ['check', 'build', 'test', 'deploy'])
-        checkoutToSubdirectory "src/gitlab.33.cn/chain33/chain33"
+        checkoutToSubdirectory "src/gitlab.33.cn/chain33/plugin"
     }
 
     stages {
@@ -23,6 +23,7 @@ pipeline {
             steps {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'check'){
+                        sh "git branch;git status"
                         sh "make auto_ci branch=${env.gitlabSourceBranch}"
                     }
                 }
@@ -49,7 +50,7 @@ pipeline {
 
             environment {
                 GOPATH = "${WORKSPACE}"
-                PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/chain33"
+                PROJ_DIR = "${WORKSPACE}/src/gitlab.33.cn/chain33/plugin"
             }
 
             steps {

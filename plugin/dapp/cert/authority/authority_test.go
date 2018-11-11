@@ -8,15 +8,15 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
-	ct "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority"
+	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
+	ct "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
 
-	_ "gitlab.33.cn/chain33/plugin/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
+	_ "gitlab.33.cn/chain33/plugin/plugin"
 )
 
 var (

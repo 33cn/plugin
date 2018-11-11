@@ -15,9 +15,9 @@ trade执行器支持trade的创建和交易，
 import (
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 )
 
 var (

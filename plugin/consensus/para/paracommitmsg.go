@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
+	"gitlab.33.cn/chain33/chain33/types"
 	paracross "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 var (

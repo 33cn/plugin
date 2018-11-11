@@ -2,9 +2,9 @@ package kvdb
 
 import (
 	"github.com/golang/protobuf/proto"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
 	clog "gitlab.33.cn/chain33/chain33/common/log"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/queue"
 	drivers "gitlab.33.cn/chain33/chain33/system/store"
 	"gitlab.33.cn/chain33/chain33/types"

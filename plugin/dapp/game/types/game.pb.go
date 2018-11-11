@@ -64,7 +64,8 @@ type Game struct {
 	HashValue []byte `protobuf:"bytes,10,opt,name=hashValue,proto3" json:"hashValue,omitempty"`
 	// 用来公布庄家出拳结果的私钥
 	Secret string `protobuf:"bytes,11,opt,name=secret" json:"secret,omitempty"`
-	// 1 平局，2 庄家获胜，3 matcher获胜，4 庄家开奖超时，matcher获胜，并获得本局所有赌资
+	// 1 平局，2 庄家获胜，3 matcher获胜，4
+	// 庄家开奖超时，matcher获胜，并获得本局所有赌资
 	Result int32 `protobuf:"varint,12,opt,name=result" json:"result,omitempty"`
 	// matcher 出拳结果
 	MatcherGuess int32 `protobuf:"varint,13,opt,name=matcherGuess" json:"matcherGuess,omitempty"`

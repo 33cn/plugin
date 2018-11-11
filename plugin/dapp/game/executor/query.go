@@ -1,8 +1,8 @@
 package executor
 
 import (
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 )
 
 func (g *Game) Query_QueryGameListByIds(in *gt.QueryGameInfos) (types.Message, error) {

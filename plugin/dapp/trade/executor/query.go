@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"gitlab.33.cn/chain33/chain33/common"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 )
 
 // 目前设计trade 的query， 有两个部分的大分类

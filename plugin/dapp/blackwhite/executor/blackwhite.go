@@ -3,11 +3,11 @@ package executor
 import (
 	"fmt"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
 )
 
 var clog = log.New("module", "execs.blackwhite")

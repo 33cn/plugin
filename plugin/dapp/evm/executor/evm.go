@@ -9,12 +9,12 @@ import (
 	"reflect"
 
 	"gitlab.33.cn/chain33/chain33/common/address"
+	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
+	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/runtime"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 var (

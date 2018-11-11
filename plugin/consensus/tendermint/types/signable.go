@@ -8,8 +8,8 @@ import (
 	"io"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
+	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
 )
 

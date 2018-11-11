@@ -15,8 +15,8 @@ import (
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
 	"gitlab.33.cn/chain33/chain33/common/difficulty"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 type btcStore struct {

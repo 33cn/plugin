@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	pkt "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
 	jsonrpc "gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
+	pkt "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
 )
 
 func PokerBullCmd() *cobra.Command {

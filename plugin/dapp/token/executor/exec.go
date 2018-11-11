@@ -2,8 +2,8 @@ package executor
 
 import (
 	"gitlab.33.cn/chain33/chain33/account"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
 )
 
 func (t *token) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {

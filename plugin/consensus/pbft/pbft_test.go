@@ -23,9 +23,9 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/wallet"
 
+	_ "gitlab.33.cn/chain33/chain33/system"
 	_ "gitlab.33.cn/chain33/plugin/plugin/dapp/init"
 	_ "gitlab.33.cn/chain33/plugin/plugin/store/init"
-	_ "gitlab.33.cn/chain33/chain33/system"
 )
 
 var (

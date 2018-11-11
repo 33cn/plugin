@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 	"gitlab.33.cn/chain33/chain33/rpc/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 )
 
 type Jrpc struct {

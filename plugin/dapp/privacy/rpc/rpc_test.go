@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"gitlab.33.cn/chain33/chain33/client"
 	"gitlab.33.cn/chain33/chain33/client/mocks"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 func newGrpc(api client.QueueProtocolAPI) *channelClient {

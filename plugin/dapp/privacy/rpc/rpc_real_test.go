@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.33.cn/chain33/chain33/client/mocks"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 
 	_ "gitlab.33.cn/chain33/chain33/system"
 )

@@ -1,8 +1,8 @@
 package executor
 
 import (
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 )
 
 func (r *Retrieve) Query_GetRetrieveInfo(in *rt.ReqRetrieveInfo) (types.Message, error) {

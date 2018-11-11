@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
+	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
 	"gitlab.33.cn/chain33/chain33/queue"
 	drivers "gitlab.33.cn/chain33/chain33/system/consensus"
 	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util"
+	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
+	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
 )
 
 const tendermint_version = "0.1.0"

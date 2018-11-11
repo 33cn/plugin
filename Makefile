@@ -189,7 +189,7 @@ mock:
 
 
 .PHONY: auto_ci_before auto_ci_after auto_ci
-auto_ci_before: clean fmt protobuf mock
+auto_ci_before: clean fmt protobuf
 	@echo "auto_ci"
 	@go version
 	@protoc --version
@@ -200,7 +200,7 @@ auto_ci_before: clean fmt protobuf mock
 	@git status
 
 .PHONY: auto_ci_after
-auto_ci_after: clean fmt protobuf mock
+auto_ci_after: clean fmt protobuf
 	@git add *.go *.sh *.proto
 	@git status
 	@files=$$(git status -suno);if [ -n "$$files" ]; then \
@@ -212,14 +212,17 @@ auto_ci_after: clean fmt protobuf mock
 
 .PHONY: auto_ci
 auto_fmt := find . -name '*.go' -not -path './vendor/*' | xargs goimports -l -w
-auto_ci: clean fmt_proto fmt_shell protobuf mock
-	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
-	@-${auto_fmt}
-	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
-	@${auto_fmt}
-	@git add *.go *.sh *.proto
-	@git status
-	@files=$$(git status -suno);if [ -n "$$files" ]; then \
+auto_ci: clean fmt_proto fmt_shell protobuf
+	git branch
+	git status
+	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	-${auto_fmt}
+	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	${auto_fmt}
+	git add *.go *.sh *.proto
+	git status
+	echo $(branch)
+	files=$$(git status -suno); if [ -n "$$files" ]; then \
 		  git add *.go *.sh *.proto; \
 		  git status; \
 		  git commit -m "auto ci"; \

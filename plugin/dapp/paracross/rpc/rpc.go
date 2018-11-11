@@ -3,8 +3,8 @@ package rpc
 import (
 	"context"
 
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 )
 
 func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt.ParacrossStatus, error) {

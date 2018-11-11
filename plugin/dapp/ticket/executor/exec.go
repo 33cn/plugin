@@ -1,8 +1,8 @@
 package executor
 
 import (
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 )
 
 func (t *Ticket) Exec_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, index int) (*types.Receipt, error) {

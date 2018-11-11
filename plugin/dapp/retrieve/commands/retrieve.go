@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/rpc"
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 	jsonrpc "gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
+	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/rpc"
+	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 )
 
 type RetrieveResult struct {

@@ -18,8 +18,8 @@ import (
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	rlog "gitlab.33.cn/chain33/chain33/common/log"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 	"google.golang.org/grpc"
 )
 

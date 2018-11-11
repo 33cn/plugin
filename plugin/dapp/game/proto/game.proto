@@ -25,7 +25,8 @@ message Game {
     bytes hashValue = 10;
     //用来公布庄家出拳结果的私钥
     string secret = 11;
-    // 1 平局，2 庄家获胜，3 matcher获胜，4 庄家开奖超时，matcher获胜，并获得本局所有赌资
+    // 1 平局，2 庄家获胜，3 matcher获胜，4
+    // 庄家开奖超时，matcher获胜，并获得本局所有赌资
     int32 result = 12;
     // matcher 出拳结果
     int32 matcherGuess = 13;

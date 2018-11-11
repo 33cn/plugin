@@ -1174,9 +1174,10 @@ func (m *ReqAddrAssets) GetFromKey() string {
 }
 
 // 获取Token未完成卖单的交易列表
-// 	 fromKey : 第一次传参为空，获取卖单单价最低的列表。 当要获得下一页时， 传当前页最后一个；当要获得上一页时， 传当前页第一个。
-// 	 count :获取交易列表的个数。
-// 	 direction :查找方式；0，上一页；1，下一页。  越靠后的也单价越贵
+// 	 fromKey : 第一次传参为空，获取卖单单价最低的列表。 当要获得下一页时，
+// 传当前页最后一个；当要获得上一页时， 传当前页第一个。 	 count
+// :获取交易列表的个数。 	 direction :查找方式；0，上一页；1，下一页。
+// 越靠后的也单价越贵
 type ReqTokenSellOrder struct {
 	TokenSymbol string `protobuf:"bytes,1,opt,name=tokenSymbol" json:"tokenSymbol,omitempty"`
 	FromKey     string `protobuf:"bytes,2,opt,name=fromKey" json:"fromKey,omitempty"`

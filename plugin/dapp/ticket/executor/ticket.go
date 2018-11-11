@@ -16,9 +16,9 @@ import (
 	"fmt"
 
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
 )
 
 var clog = log.New("module", "execs.ticket")

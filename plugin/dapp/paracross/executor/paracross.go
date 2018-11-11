@@ -3,13 +3,13 @@ package executor
 import (
 	"bytes"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"github.com/pkg/errors"
 	"gitlab.33.cn/chain33/chain33/common"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 )
 
 var (

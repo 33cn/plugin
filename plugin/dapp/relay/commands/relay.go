@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 func RelayCmd() *cobra.Command {

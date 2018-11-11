@@ -15,9 +15,9 @@ import (
 	"crypto/ecdsa"
 
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
+	"gitlab.33.cn/chain33/chain33/types"
 	ecdsa_util "gitlab.33.cn/chain33/plugin/plugin/crypto/ecdsa"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 var authLogger = log.New("module", "authority")

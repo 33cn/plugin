@@ -4,13 +4,13 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/db"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/types"
 	wcom "gitlab.33.cn/chain33/chain33/wallet/common"
+	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 var (

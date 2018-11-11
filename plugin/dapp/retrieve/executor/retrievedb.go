@@ -9,8 +9,8 @@ import (
 	"gitlab.33.cn/chain33/chain33/types"
 
 	//log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
+	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 )
 
 const (

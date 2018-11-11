@@ -1,11 +1,11 @@
 package pokerbull
 
 import (
+	"gitlab.33.cn/chain33/chain33/pluginmgr"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/commands"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/executor"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/rpc"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
 )
 
 func init() {

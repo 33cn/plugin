@@ -16,9 +16,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
+	sm2_util "gitlab.33.cn/chain33/chain33/system/crypto/sm2"
 	ecdsa_util "gitlab.33.cn/chain33/plugin/plugin/crypto/ecdsa"
 	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
-	sm2_util "gitlab.33.cn/chain33/chain33/system/crypto/sm2"
 )
 
 func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {

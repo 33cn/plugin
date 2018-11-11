@@ -1,8 +1,8 @@
 package executor
 
 import (
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
 )
 
 func (c *Blackwhite) execLocal(receiptData *types.ReceiptData) ([]*types.KeyValue, error) {

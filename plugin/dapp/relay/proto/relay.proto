@@ -100,7 +100,8 @@ message BtcHeader {
     int64  difficulty    = 9;
     string previousHash  = 10;
     string nextHash      = 11;
-    bool   isReset       = 12; // 0: nomal btc headers sync (default), 1: set the base head (may not from 1)
+    bool   isReset       = 12; // 0: nomal btc headers sync (default), 1: set the base
+                               // head (may not from 1)
 }
 
 message BtcHeaders {
@@ -207,5 +208,6 @@ message ReqRelayQryBTCHeadHeight {
 
 message ReplayRelayQryBTCHeadHeight {
     int64 curHeight  = 1; // current height in chain
-    int64 baseHeight = 2; // base height means the the 1st head record in chain db (base height can be change)
+    int64 baseHeight = 2; // base height means the the 1st head record in chain db
+                          // (base height can be change)
 }

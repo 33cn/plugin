@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
 )
 
 func (val *ValNode) Query_GetValNodeByHeight(in *pty.ReqNodeInfo) (types.Message, error) {

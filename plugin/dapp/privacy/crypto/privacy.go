@@ -7,11 +7,11 @@ import (
 	"unsafe"
 
 	sccrypto "github.com/NebulousLabs/Sia/crypto"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
 	. "gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
 	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 
 	//"gitlab.33.cn/chain33/chain33/types"
 	"fmt"

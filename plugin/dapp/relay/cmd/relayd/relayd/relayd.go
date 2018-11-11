@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 type Relayd struct {
