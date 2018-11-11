@@ -108,6 +108,8 @@ deploy_paracross:
 
 code_coverage:
     stage: fork_test
+    tags:
+        - 33cn
     script:
         - if [ -n "${onceEveryday}" ]; then
         - make coverage
