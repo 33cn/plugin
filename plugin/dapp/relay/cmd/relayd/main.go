@@ -63,7 +63,7 @@ func watching() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	log.Info("watching:", "NumGoroutine:", runtime.NumGoroutine())
-	 log.Info("watching:", "Mem:", m.Sys/(1024*1024))
+	log.Info("watching:", "Mem:", m.Sys/(1024*1024))
 }
 
 func pwd() string {
