@@ -214,6 +214,7 @@ auto_ci_after: clean fmt protobuf
 auto_fmt := find . -name '*.go' -not -path './vendor/*' | xargs goimports -l -w
 auto_ci: clean fmt_proto fmt_shell protobuf
 	git branch
+	git status
 	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
 	-${auto_fmt}
 	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
