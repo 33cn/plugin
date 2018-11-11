@@ -1,4 +1,8 @@
-chain33 官方插件系统
+[![pipeline status](https://api.travis-ci.org/33cn/plugin.svg?branch=master)](https://travis-ci.org/33cn/plugin/)
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/33cn/plugin)](https://goreportcard.com/report/github.com/33cn/plugin)
+
+# chain33 官方插件系统
 
 ### 安装
 
@@ -14,6 +18,13 @@ go get -u -v github.com/kardianos/govendor
 make
 ```
 就可以完成编译安装
+
+## 运行
+
+```
+./chain33 -f chain33.toml
+```
+注意，默认配置会连接chain33 测试网络
 
 ## 注意:
 
