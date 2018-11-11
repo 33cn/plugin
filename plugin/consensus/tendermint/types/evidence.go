@@ -8,9 +8,9 @@ import (
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/merkle"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/merkle"
+	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 // ErrEvidenceInvalid wraps a piece of evidence and the error denoting how or why it is invalid.

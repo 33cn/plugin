@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
-	ticketwallet "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/wallet"
+	"github.com/33cn/chain33/util/testnode"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	ticketwallet "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func Test_WalletTicket(t *testing.T) {

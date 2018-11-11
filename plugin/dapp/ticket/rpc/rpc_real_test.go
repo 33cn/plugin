@@ -4,9 +4,9 @@ package rpc_test
 import (
 	"testing"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/chain33/util/testnode"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func TestNewTicket(t *testing.T) {

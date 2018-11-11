@@ -22,7 +22,7 @@ import (
 	"errors"
 
 	proto "github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common"
+	"github.com/33cn/chain33/common"
 )
 
 // Iterator is a key-value trie iterator that traverses a Trie.

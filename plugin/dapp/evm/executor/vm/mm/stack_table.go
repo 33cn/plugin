@@ -3,7 +3,7 @@ package mm
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 type (

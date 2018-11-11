@@ -5,10 +5,10 @@ import (
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"golang.org/x/crypto/sha3"
 )
 

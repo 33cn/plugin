@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
+	"github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
 func (c *Jrpc) CreateRawRetrieveBackupTx(in *RetrieveBackupTx, result *interface{}) error {

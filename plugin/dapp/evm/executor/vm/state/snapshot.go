@@ -3,9 +3,9 @@ package state
 import (
 	"sort"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // 数据状态变更接口

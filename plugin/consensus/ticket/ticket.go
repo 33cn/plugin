@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/difficulty"
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/queue"
-	drivers "gitlab.33.cn/chain33/chain33/system/consensus"
-	driver "gitlab.33.cn/chain33/chain33/system/dapp"
-	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/difficulty"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/queue"
+	drivers "github.com/33cn/chain33/system/consensus"
+	driver "github.com/33cn/chain33/system/dapp"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 var (

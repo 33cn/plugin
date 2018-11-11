@@ -9,12 +9,12 @@ import (
 
 	"bytes"
 
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/core"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	"github.com/33cn/chain33/common/crypto"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/core"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
+	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
 var (

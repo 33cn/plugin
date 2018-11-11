@@ -11,12 +11,12 @@ import (
 
 	"math/big"
 
-	"gitlab.33.cn/chain33/chain33/common"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/common/difficulty"
-	"gitlab.33.cn/chain33/chain33/common/merkle"
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/difficulty"
+	"github.com/33cn/chain33/common/merkle"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
 type btcStore struct {

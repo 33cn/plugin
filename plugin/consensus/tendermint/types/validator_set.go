@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/common/merkle"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/common/merkle"
 )
 
 var validatorsetlog = log15.New("module", "tendermint-val")

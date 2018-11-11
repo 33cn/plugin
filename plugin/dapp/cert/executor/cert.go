@@ -1,11 +1,11 @@
 package executor
 
 import (
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority"
-	ct "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority"
+	ct "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
 var clog = log.New("module", "execs.cert")

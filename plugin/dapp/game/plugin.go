@@ -1,10 +1,10 @@
 package game
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/game/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/game/executor"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/game/commands"
+	"github.com/33cn/plugin/plugin/dapp/game/executor"
+	gt "github.com/33cn/plugin/plugin/dapp/game/types"
 )
 
 func init() {

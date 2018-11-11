@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	bw "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	bw "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 type Jrpc struct {

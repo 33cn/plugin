@@ -2,12 +2,12 @@ package executor
 
 import (
 	"github.com/pkg/errors"
-	"gitlab.33.cn/chain33/chain33/account"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {

@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 func (policy *ticketPolicy) On_CloseTickets(req *types.ReqNil) (types.Message, error) {

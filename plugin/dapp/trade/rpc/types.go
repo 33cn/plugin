@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	ptypes "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 type channelClient struct {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	lccsp "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/utils"
+	lccsp "github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/utils"
 )
 
 type cspCryptoSigner struct {

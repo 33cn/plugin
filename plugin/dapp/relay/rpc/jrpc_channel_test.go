@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	commonlog "gitlab.33.cn/chain33/chain33/common/log"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	commonlog "github.com/33cn/chain33/common/log"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util/testnode"
+	pty "github.com/33cn/plugin/plugin/dapp/relay/types"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func init() {

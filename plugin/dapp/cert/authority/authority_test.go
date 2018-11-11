@@ -5,18 +5,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
-	ct "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	drivers "github.com/33cn/chain33/system/dapp"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
+	ct "github.com/33cn/plugin/plugin/dapp/cert/types"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 var (

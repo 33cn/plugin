@@ -1,6 +1,6 @@
 package types
 
-import "gitlab.33.cn/chain33/chain33/types"
+import "github.com/33cn/chain33/types"
 
 //retrieve
 const (

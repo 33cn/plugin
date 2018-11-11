@@ -3,8 +3,8 @@ package executor
 import (
 	"errors"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 func (val *ValNode) ExecLocal_Node(node *pty.ValNode, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {

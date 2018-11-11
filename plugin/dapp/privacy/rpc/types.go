@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/rpc/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/rpc/types"
+	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 var log = log15.New("module", "privacy.rpc")

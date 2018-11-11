@@ -1,9 +1,9 @@
 package lottery
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/lottery/executor"
+	"github.com/33cn/plugin/plugin/dapp/lottery/types"
 )
 
 func init() {

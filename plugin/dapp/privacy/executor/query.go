@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 func (this *privacy) Query_ShowAmountsOfUTXO(param *pty.ReqPrivacyToken) (types.Message, error) {

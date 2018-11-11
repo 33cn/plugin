@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/common"
-	. "gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/types"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/common"
+	. "github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/types"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 type PubKeyPrivacy [PublicKeyLen]byte

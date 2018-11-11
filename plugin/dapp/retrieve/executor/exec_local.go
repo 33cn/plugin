@@ -1,9 +1,9 @@
 package executor
 
 import (
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
+	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
 func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.KeyValue, error) {

@@ -3,10 +3,10 @@ package wallet
 import (
 	"unsafe"
 
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/types"
-	privacy "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/crypto"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/types"
+	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 func checkAmountValid(amount int64) bool {

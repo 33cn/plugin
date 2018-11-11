@@ -2,9 +2,9 @@ package executor
 
 import (
 	"github.com/pkg/errors"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 func (e *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {

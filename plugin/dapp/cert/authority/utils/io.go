@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"gitlab.33.cn/chain33/chain33/util"
+	"github.com/33cn/chain33/util"
 )
 
 func DirMissingOrEmpty(path string) (bool, error) {

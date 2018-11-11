@@ -1,7 +1,7 @@
 package init
 
 import (
-	_ "gitlab.33.cn/chain33/plugin/plugin/store/kvdb"
-	_ "gitlab.33.cn/chain33/plugin/plugin/store/kvmvcc"
-	_ "gitlab.33.cn/chain33/plugin/plugin/store/mpt"
+	_ "github.com/33cn/plugin/plugin/store/kvdb"
+	_ "github.com/33cn/plugin/plugin/store/kvmvcc"
+	_ "github.com/33cn/plugin/plugin/store/mpt"
 )

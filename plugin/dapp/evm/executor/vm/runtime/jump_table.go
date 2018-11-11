@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/gas"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/mm"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/gas"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 type (

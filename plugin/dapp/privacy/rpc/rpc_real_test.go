@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.33.cn/chain33/chain33/client/mocks"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/util/testnode"
+	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
+	_ "github.com/33cn/chain33/system"
 )
 
 func TestRPC_Call(t *testing.T) {

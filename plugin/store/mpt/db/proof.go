@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	proto "github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
+	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 )
 
 // Prove constructs a merkle proof for key. The result contains all encoded nodes

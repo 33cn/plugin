@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/types"
 )
 
 var PrivacyX = "privacy"

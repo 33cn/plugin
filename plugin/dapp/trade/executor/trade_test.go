@@ -3,8 +3,8 @@ package executor
 import (
 	"testing"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 //----------------------------- data for testing ---------------------------------

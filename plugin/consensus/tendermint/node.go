@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	"github.com/33cn/chain33/common/crypto"
+	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
+	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 const (
