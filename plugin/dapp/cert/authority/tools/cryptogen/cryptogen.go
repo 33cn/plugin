@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator"
+	ca "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator/impl"
 )
 
 const (
