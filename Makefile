@@ -49,7 +49,8 @@ update:
 	rm -rf ${CHAIN33_PATH}
 	git clone --depth 1 -b master https://${CHAIN33}.git ${CHAIN33_PATH}
 	rm -rf vendor/${CHAIN33}/.git
-	cp -R vendor/${CHAIN33}/vendor/* vendor/
+	rm -rf vendor/${CHAIN33}/vendor/github.com/apache/thrift/tutorial/erl/
+	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
 	rm -rf vendor/${CHAIN33}/vendor
 	govendor init
 	go build -i -o tool gitlab.33.cn/chain33/plugin/vendor/gitlab.33.cn/chain33/chain33/cmd/tools
@@ -204,9 +205,8 @@ auto_ci_after: clean fmt protobuf
 	@git add *.go *.sh *.proto
 	@git status
 	@files=$$(git status -suno);if [ -n "$$files" ]; then \
-		  git add *.go *.sh *.proto; \
 		  git status; \
-		  git commit -m "auto ci [ci-skip]"; \
+		  git commit -a -m "auto ci [ci-skip]"; \
 		  git push origin HEAD:$(branch); \
 		  fi;
 
@@ -219,13 +219,12 @@ auto_ci: clean fmt_proto fmt_shell protobuf
 	-${auto_fmt}
 	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
 	${auto_fmt}
-	git add *.go *.sh *.proto
 	git status
 	echo $(branch)
 	files=$$(git status -suno); if [ -n "$$files" ]; then \
 		  git add *.go *.sh *.proto; \
 		  git status; \
-		  git commit -m "auto ci"; \
+		  git commit -a -m "auto ci"; \
 		  git push origin HEAD:$(branch); \
 		  exit 1; \
 		  fi;
