@@ -1,5 +1,4 @@
 [![pipeline status](https://api.travis-ci.org/33cn/plugin.svg?branch=master)](https://travis-ci.org/33cn/plugin/)
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/33cn/plugin)](https://goreportcard.com/report/github.com/33cn/plugin)
 
 # chain33 官方插件系统
