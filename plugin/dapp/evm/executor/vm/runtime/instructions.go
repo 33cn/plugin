@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common/crypto"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/mm"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 // 加法操作

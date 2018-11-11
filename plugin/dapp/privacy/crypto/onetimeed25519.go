@@ -4,9 +4,9 @@ import (
 	"errors"
 	"unsafe"
 
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/ed25519/edwards25519"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 type OneTimeEd25519 struct{}

@@ -1,10 +1,10 @@
 package gas
 
 import (
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/mm"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 // 本文件中定义各种操作中需要花费的Gas逻辑

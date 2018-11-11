@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	"github.com/stretchr/testify/require"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/types"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/types"
+	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 func newAddressResult(Addr string, blackwhite []int) *gt.AddressResult {

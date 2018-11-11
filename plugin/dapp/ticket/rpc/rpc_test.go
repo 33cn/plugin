@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.33.cn/chain33/chain33/client/mocks"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util/testnode"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

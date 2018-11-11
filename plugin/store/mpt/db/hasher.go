@@ -21,8 +21,8 @@ import (
 	"sync"
 
 	proto "github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto/sha3"
 )
 
 type hasher struct {

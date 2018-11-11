@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
+	"github.com/33cn/chain33/types"
+	gt "github.com/33cn/plugin/plugin/dapp/game/types"
 )
 
 func (g *Game) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {

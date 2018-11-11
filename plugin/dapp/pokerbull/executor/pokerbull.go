@@ -3,10 +3,10 @@ package executor
 import (
 	"fmt"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	pkt "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
 var logger = log.New("module", "execs.pokerbull")

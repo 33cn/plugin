@@ -13,11 +13,11 @@ trade执行器支持trade的创建和交易，
 */
 
 import (
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
+	log "github.com/33cn/chain33/common/log/log15"
 
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 var (

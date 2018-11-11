@@ -5,11 +5,11 @@ import (
 	"math"
 	"math/big"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common/crypto"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"golang.org/x/crypto/ripemd160"
 )
 

@@ -1,9 +1,9 @@
 package cert
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/cert/executor"
+	"github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
 func init() {

@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	dbm "github.com/33cn/chain33/common/db"
+	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
+	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 /*

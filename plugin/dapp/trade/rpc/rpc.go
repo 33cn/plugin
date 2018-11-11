@@ -3,8 +3,8 @@ package rpc
 import (
 	"context"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	ptypes "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
+	"github.com/33cn/chain33/types"
+	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 func (this *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.TradeForSell) (*types.UnsignTx, error) {

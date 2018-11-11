@@ -3,11 +3,11 @@ package pbft
 import (
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common/merkle"
-	"gitlab.33.cn/chain33/chain33/queue"
-	drivers "gitlab.33.cn/chain33/chain33/system/consensus"
-	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/common/merkle"
+	"github.com/33cn/chain33/queue"
+	drivers "github.com/33cn/chain33/system/consensus"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	"github.com/33cn/chain33/types"
 )
 
 func init() {

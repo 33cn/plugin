@@ -7,21 +7,21 @@ import (
 	//"github.com/stretchr/testify/mock"
 	"testing"
 
-	apimock "gitlab.33.cn/chain33/chain33/client/mocks"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	dbmock "gitlab.33.cn/chain33/chain33/common/db/mocks"
-	"gitlab.33.cn/chain33/chain33/types"
+	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/crypto"
+	dbm "github.com/33cn/chain33/common/db"
+	dbmock "github.com/33cn/chain33/common/db/mocks"
+	"github.com/33cn/chain33/types"
 
 	"bytes"
 	"math/rand"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/log"
-	mty "gitlab.33.cn/chain33/chain33/system/dapp/manage/types"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/log"
+	mty "github.com/33cn/chain33/system/dapp/manage/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试

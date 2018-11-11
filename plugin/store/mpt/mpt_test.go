@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/chain33/common"
-	drivers "gitlab.33.cn/chain33/chain33/system/store"
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/common"
+	drivers "github.com/33cn/chain33/system/store"
+	"github.com/33cn/chain33/types"
 )
 
 const MaxKeylenth int = 64

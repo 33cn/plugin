@@ -1,10 +1,10 @@
 package hashlock
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/hashlock/commands"
+	"github.com/33cn/plugin/plugin/dapp/hashlock/executor"
+	"github.com/33cn/plugin/plugin/dapp/hashlock/types"
 )
 
 func init() {

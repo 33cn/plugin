@@ -7,13 +7,13 @@ import (
 	"unsafe"
 
 	sccrypto "github.com/NebulousLabs/Sia/crypto"
-	"gitlab.33.cn/chain33/chain33/common"
-	. "gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
-	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
+	"github.com/33cn/chain33/common"
+	. "github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/crypto/sha3"
+	"github.com/33cn/chain33/common/ed25519/edwards25519"
+	log "github.com/33cn/chain33/common/log/log15"
 
-	//"gitlab.33.cn/chain33/chain33/types"
+	//"github.com/33cn/chain33/types"
 	"fmt"
 )
 

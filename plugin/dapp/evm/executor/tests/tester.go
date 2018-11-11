@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 type Tester struct {

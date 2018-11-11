@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
-	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
+	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
 //-----------------------------------------------------------------------------

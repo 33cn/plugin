@@ -3,11 +3,11 @@ package executor
 import (
 	"fmt"
 
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
+	dbm "github.com/33cn/chain33/common/db"
+	log "github.com/33cn/chain33/common/log/log15"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
 var (

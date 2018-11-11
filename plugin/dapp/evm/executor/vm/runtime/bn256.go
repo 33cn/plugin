@@ -4,9 +4,9 @@ import (
 	"errors"
 	"math/big"
 
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common/crypto/bn256"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto/bn256"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 // newCurvePoint unmarshals a binary blob into a bn256 elliptic curve point,

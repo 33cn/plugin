@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	"gitlab.33.cn/chain33/chain33/common/db"
-	wcom "gitlab.33.cn/chain33/chain33/wallet/common"
+	"github.com/33cn/chain33/common/db"
+	wcom "github.com/33cn/chain33/wallet/common"
 )
 
 func NewStore(db db.DB) *ticketStore {

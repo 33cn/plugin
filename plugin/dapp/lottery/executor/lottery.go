@@ -3,10 +3,10 @@ package executor
 import (
 	"sort"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/lottery/types"
 )
 
 var llog = log.New("module", "execs.lottery")

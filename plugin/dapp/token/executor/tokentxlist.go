@@ -3,10 +3,10 @@ package executor
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
-	tp "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	tp "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
 const (

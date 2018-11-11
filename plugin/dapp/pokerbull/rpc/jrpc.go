@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	pb "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
+	"github.com/33cn/chain33/types"
+	pb "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
 func (c *Jrpc) PokerBullStartTx(parm *pb.PBStartTxReq, result *interface{}) error {

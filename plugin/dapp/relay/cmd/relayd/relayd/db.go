@@ -3,9 +3,9 @@ package relayd
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
 // Store hash and blockHeader

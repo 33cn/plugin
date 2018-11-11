@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/executor"
-	pb "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/pokerbull/executor"
+	pb "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
 func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types.UnsignTx, error) {

@@ -3,9 +3,9 @@ package executor
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority"
-	ct "gitlab.33.cn/chain33/plugin/plugin/dapp/cert/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority"
+	ct "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
 func calcCertHeightKey(height int64) []byte {

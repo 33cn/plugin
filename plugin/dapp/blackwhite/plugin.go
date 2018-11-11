@@ -1,11 +1,11 @@
 package blackwhite
 
 import (
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/commands"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/rpc"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
+	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/blackwhite/commands"
+	"github.com/33cn/plugin/plugin/dapp/blackwhite/executor"
+	"github.com/33cn/plugin/plugin/dapp/blackwhite/rpc"
+	"github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
 func init() {

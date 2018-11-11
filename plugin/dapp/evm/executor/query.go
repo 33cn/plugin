@@ -5,12 +5,12 @@ import (
 	"math/big"
 	"strings"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/runtime"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // 检查合约地址是否存在，此操作不会改变任何状态，所以可以直接从statedb查询

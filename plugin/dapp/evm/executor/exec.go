@@ -5,13 +5,13 @@ import (
 
 	"strings"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/runtime"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {

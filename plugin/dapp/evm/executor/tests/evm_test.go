@@ -11,14 +11,14 @@ import (
 
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/account"
-	"gitlab.33.cn/chain33/chain33/common/db"
-	"gitlab.33.cn/chain33/chain33/types"
-	evm "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common/crypto"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/runtime"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
+	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 )
 
 func TestVM(t *testing.T) {

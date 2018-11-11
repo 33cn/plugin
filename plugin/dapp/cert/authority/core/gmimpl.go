@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/tjfoc/gmsm/sm2"
-	sm2_util "gitlab.33.cn/chain33/chain33/system/crypto/sm2"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/cert/authority/utils"
+	sm2_util "github.com/33cn/chain33/system/crypto/sm2"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
 )
 
 type gmValidator struct {

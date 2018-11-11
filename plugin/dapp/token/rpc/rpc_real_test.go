@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	_ "gitlab.33.cn/chain33/chain33/system"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/chain33/util"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
+	"github.com/33cn/chain33/util/testnode"
+	_ "github.com/33cn/plugin/plugin"
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
 func TestRPCTokenPreCreate(t *testing.T) {

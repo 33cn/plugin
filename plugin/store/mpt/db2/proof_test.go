@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.33.cn/chain33/chain33/common"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
+	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 )
 
 func init() {

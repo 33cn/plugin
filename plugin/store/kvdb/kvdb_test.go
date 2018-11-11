@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	drivers "gitlab.33.cn/chain33/chain33/system/store"
-	"gitlab.33.cn/chain33/chain33/types"
+	drivers "github.com/33cn/chain33/system/store"
+	"github.com/33cn/chain33/types"
 )
 
 func newStoreCfg(dir string) *types.Store {

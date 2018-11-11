@@ -3,9 +3,9 @@ package state
 import (
 	"fmt"
 
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
-	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // 本文件用来存储硬分叉中需要用到的数据

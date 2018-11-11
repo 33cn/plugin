@@ -6,16 +6,16 @@
 # ...
 
 CLI := build/chain33-cli
-SRC_CLI := gitlab.33.cn/chain33/plugin/cli
+SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-CHAIN33=gitlab.33.cn/chain33/chain33
-CHAIN33_PATH=vendor/gitlab.33.cn/chain33/chain33
+CHAIN33=github.com/33cn/chain33
+CHAIN33_PATH=vendor/${CHAIN33}
 AUTO_TEST := build/tools/autotest/autotest
-SRC_AUTO_TEST := gitlab.33.cn/chain33/chain/cmd/autotest
+SRC_AUTO_TEST := ${CHAIN33}/cmd/autotest
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
-BUILD_FLAGS = -ldflags "-X gitlab.33.cn/chain33/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
+BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 DAPP := ""
@@ -53,8 +53,8 @@ update:
 	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
 	rm -rf vendor/${CHAIN33}/vendor
 	govendor init
-	go build -i -o tool gitlab.33.cn/chain33/plugin/vendor/gitlab.33.cn/chain33/chain33/cmd/tools
-	./tool import --path "plugin" --packname "gitlab.33.cn/chain33/plugin/plugin" --conf ""
+	go build -i -o tool github.com/33cn/plugin/vendor/github.com/33cn/chain33/cmd/tools
+	./tool import --path "plugin" --packname "github.com/33cn/plugin/plugin" --conf ""
 
 updatevendor:
 	govendor add +e
@@ -154,7 +154,7 @@ protobuf: ## Generate protbuf file of types package
 
 depends: ## Generate depends file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
-	@find ./vendor/gitlab.33.cn/chain33/chain33/system/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
+	@find ./vendor/github.com/33cn/chain33/system/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
 
 help: ## Display this help screen
 	@printf "Help doc:\nUsage: make [command]\n"

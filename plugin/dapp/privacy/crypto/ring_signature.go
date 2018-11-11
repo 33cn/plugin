@@ -3,10 +3,10 @@ package privacy
 import (
 	"unsafe"
 
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
-	"gitlab.33.cn/chain33/chain33/types"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/ed25519/edwards25519"
+	"github.com/33cn/chain33/types"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 type Sign [64]byte

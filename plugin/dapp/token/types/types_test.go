@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/types"
 
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 )
 
 func TestDecodeLogTokenTransfer(t *testing.T) {

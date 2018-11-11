@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
-	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
-	"gitlab.33.cn/chain33/chain33/types"
-	"gitlab.33.cn/chain33/chain33/util/testnode"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util/testnode"
+	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 
-	_ "gitlab.33.cn/chain33/chain33/system"
-	_ "gitlab.33.cn/chain33/plugin/plugin"
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func TestJRPCChannel(t *testing.T) {
