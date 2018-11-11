@@ -17,12 +17,12 @@ import (
 	//_ "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross"
 	pp "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/executor"
 	//"gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/rpc"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/queue"
 	"gitlab.33.cn/chain33/chain33/store"
 	_ "gitlab.33.cn/chain33/chain33/system"
 	"gitlab.33.cn/chain33/chain33/types"
 	typesmocks "gitlab.33.cn/chain33/chain33/types/mocks"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 )
 
 var random *rand.Rand

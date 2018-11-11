@@ -4,9 +4,9 @@ import (
 	"sort"
 
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 )
 
 var llog = log.New("module", "execs.lottery")

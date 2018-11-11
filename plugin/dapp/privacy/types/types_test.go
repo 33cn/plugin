@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 	"gitlab.33.cn/chain33/chain33/types"
+	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 func TestReplyPrivacyAccount(t *testing.T) {

@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 )
 
 func (n *Norm) Query_NormGet(in *pty.NormGetKey) (types.Message, error) {

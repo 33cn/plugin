@@ -1,8 +1,8 @@
 package executor
 
 import (
-	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	gt "gitlab.33.cn/chain33/plugin/plugin/dapp/game/types"
 )
 
 func (g *Game) Exec_Create(payload *gt.GameCreate, tx *types.Transaction, index int) (*types.Receipt, error) {

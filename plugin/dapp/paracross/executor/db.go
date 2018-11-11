@@ -4,8 +4,8 @@ import (
 	"gitlab.33.cn/chain33/chain33/client"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 )
 
 func getTitle(db dbm.KV, key []byte) (*pt.ParacrossStatus, error) {

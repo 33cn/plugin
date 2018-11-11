@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/types"
 )
 
 var hlog = log.New("module", "hashlock.db")

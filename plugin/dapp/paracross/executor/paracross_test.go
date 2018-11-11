@@ -20,8 +20,8 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/log"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	mty "gitlab.33.cn/chain33/chain33/system/dapp/manage/types"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试

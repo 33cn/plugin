@@ -2,8 +2,8 @@ package executor
 
 import (
 	"gitlab.33.cn/chain33/chain33/common"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/hashlock/types"
 )
 
 func (h *Hashlock) ExecDelLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {

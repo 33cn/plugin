@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/lottery/types"
 )
 
 func (l *Lottery) Query_GetLotteryNormalInfo(param *pty.ReqLotteryInfo) (types.Message, error) {

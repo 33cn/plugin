@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common/db"
+	"gitlab.33.cn/chain33/chain33/common/log/log15"
+	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/model"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 // 内存状态数据库，保存在区块操作时内部的数据变更操作

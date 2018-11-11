@@ -21,10 +21,10 @@ import (
 	"bytes"
 	"fmt"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto/sha3"
 	dbm "gitlab.33.cn/chain33/chain33/common/db"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/types"
 )
 

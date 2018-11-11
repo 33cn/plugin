@@ -1,8 +1,8 @@
 package executor
 
 import (
-	rTy "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	rTy "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 func (r *relay) Query_GetRelayOrderByStatus(in *rTy.ReqRelayAddrCoins) (types.Message, error) {

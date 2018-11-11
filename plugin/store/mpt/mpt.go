@@ -1,14 +1,13 @@
 package mpt
 
 import (
-	"github.com/hashicorp/golang-lru"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
 	clog "gitlab.33.cn/chain33/chain33/common/log"
-	mpt "gitlab.33.cn/chain33/plugin/plugin/store/mpt/db"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/queue"
 	drivers "gitlab.33.cn/chain33/chain33/system/store"
 	"gitlab.33.cn/chain33/chain33/types"
+	mpt "gitlab.33.cn/chain33/plugin/plugin/store/mpt/db"
 )
 
 var mlog = log.New("module", "mpt")

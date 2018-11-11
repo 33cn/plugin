@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"github.com/valyala/fasthttp"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
 	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )

@@ -13,12 +13,12 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common/db"
+	"gitlab.33.cn/chain33/chain33/types"
 	evm "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common/crypto"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/runtime"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/state"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 func TestVM(t *testing.T) {

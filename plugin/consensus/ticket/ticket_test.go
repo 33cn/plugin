@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	_ "gitlab.33.cn/chain33/plugin/plugin/dapp/init"
-	_ "gitlab.33.cn/chain33/plugin/plugin/store/init"
 	_ "gitlab.33.cn/chain33/chain33/system"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
+	_ "gitlab.33.cn/chain33/plugin/plugin/dapp/init"
+	_ "gitlab.33.cn/chain33/plugin/plugin/store/init"
 )
 
 // 执行： go test -cover

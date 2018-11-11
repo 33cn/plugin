@@ -6,10 +6,10 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/db"
-	privacy "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/crypto"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/types"
 	wcom "gitlab.33.cn/chain33/chain33/wallet/common"
+	privacy "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/crypto"
+	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 
 	"github.com/golang/protobuf/proto"
 )

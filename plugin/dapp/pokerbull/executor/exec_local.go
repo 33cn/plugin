@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pkt "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pkt "gitlab.33.cn/chain33/plugin/plugin/dapp/pokerbull/types"
 )
 
 func (c *PokerBull) updateIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue) {

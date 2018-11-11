@@ -10,14 +10,14 @@ token执行器支持token的创建，
 */
 
 import (
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"github.com/pkg/errors"
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/system/dapp"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
 )
 
 var tokenlog = log.New("module", "execs.token")

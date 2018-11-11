@@ -15,12 +15,12 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/merkle"
-	paracross "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
-	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	"gitlab.33.cn/chain33/chain33/queue"
 	drivers "gitlab.33.cn/chain33/chain33/system/consensus"
 	cty "gitlab.33.cn/chain33/chain33/system/dapp/coins/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	paracross "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
+	pt "gitlab.33.cn/chain33/plugin/plugin/dapp/paracross/types"
 	"google.golang.org/grpc"
 )
 

@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	commonlog "gitlab.33.cn/chain33/chain33/common/log"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
 	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/blackwhite/types"
 
-	_ "gitlab.33.cn/chain33/plugin/plugin"
 	_ "gitlab.33.cn/chain33/chain33/system"
+	_ "gitlab.33.cn/chain33/plugin/plugin"
 )
 
 func init() {

@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"time"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/limits"
 	clog "gitlab.33.cn/chain33/chain33/common/log"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/relay/cmd/relayd/relayd"
 )
 

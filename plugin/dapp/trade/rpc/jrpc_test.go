@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.33.cn/chain33/chain33/client/mocks"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 )
 
 func newTestChain33(api *mocks.QueueProtocolAPI) *Jrpc {

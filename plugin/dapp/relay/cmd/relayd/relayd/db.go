@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"gitlab.33.cn/chain33/chain33/common/db"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 // Store hash and blockHeader

@@ -13,9 +13,9 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
+	"gitlab.33.cn/chain33/chain33/types"
 	ttypes "gitlab.33.cn/chain33/plugin/plugin/consensus/tendermint/types"
 	tmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/valnode/types"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 const fee = 1e6

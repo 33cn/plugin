@@ -21,11 +21,11 @@ import (
 	"sort"
 	"time"
 
-	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
+	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 var privacylog = log.New("module", "execs.privacy")

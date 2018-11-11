@@ -3,8 +3,8 @@ package rpc
 import (
 	"context"
 
-	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	rt "gitlab.33.cn/chain33/plugin/plugin/dapp/retrieve/types"
 )
 
 func (c *channelClient) Backup(ctx context.Context, v *rt.BackupRetrieve) (*types.UnsignTx, error) {

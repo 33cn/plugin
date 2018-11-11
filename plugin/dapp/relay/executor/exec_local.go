@@ -1,8 +1,8 @@
 package executor
 
 import (
-	rty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	rty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 func (r *relay) execLocal(receipt *types.ReceiptData) ([]*types.KeyValue, error) {

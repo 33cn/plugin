@@ -4,9 +4,9 @@ import (
 	"unsafe"
 
 	"gitlab.33.cn/chain33/chain33/common"
+	"gitlab.33.cn/chain33/chain33/types"
 	privacy "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/crypto"
 	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 func checkAmountValid(amount int64) bool {

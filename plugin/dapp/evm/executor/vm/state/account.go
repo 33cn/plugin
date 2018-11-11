@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	"gitlab.33.cn/chain33/chain33/common/log/log15"
 	"gitlab.33.cn/chain33/chain33/common/db"
+	"gitlab.33.cn/chain33/chain33/common/log/log15"
+	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "gitlab.33.cn/chain33/plugin/plugin/dapp/evm/types"
-	"gitlab.33.cn/chain33/chain33/types"
 )
 
 // 合约账户对象

@@ -8,9 +8,9 @@ import (
 	"gitlab.33.cn/chain33/chain33/common/address"
 	"gitlab.33.cn/chain33/chain33/common/db"
 	"gitlab.33.cn/chain33/chain33/common/db/mocks"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	"gitlab.33.cn/chain33/chain33/types"
 	"gitlab.33.cn/chain33/chain33/util/testnode"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 
 	_ "gitlab.33.cn/chain33/chain33/system"
 )

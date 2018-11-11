@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 func (policy *privacyPolicy) On_ShowPrivacyAccountSpend(req *privacytypes.ReqPrivBal4AddrToken) (types.Message, error) {

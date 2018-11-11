@@ -2,8 +2,8 @@ package executor
 
 import (
 	"gitlab.33.cn/chain33/chain33/common"
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {

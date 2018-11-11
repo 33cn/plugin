@@ -11,8 +11,8 @@ import (
 	"gitlab.33.cn/chain33/chain33/common"
 	"gitlab.33.cn/chain33/chain33/common/crypto"
 	"gitlab.33.cn/chain33/chain33/common/ed25519/edwards25519"
-	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	privacytypes "gitlab.33.cn/chain33/plugin/plugin/dapp/privacy/types"
 )
 
 func init() {

@@ -18,16 +18,16 @@ import (
 	"gitlab.33.cn/chain33/chain33/executor"
 	"gitlab.33.cn/chain33/chain33/mempool"
 	"gitlab.33.cn/chain33/chain33/p2p"
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 	"gitlab.33.cn/chain33/chain33/queue"
 	"gitlab.33.cn/chain33/chain33/rpc"
 	"gitlab.33.cn/chain33/chain33/store"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/norm/types"
 	"google.golang.org/grpc"
 
+	_ "gitlab.33.cn/chain33/chain33/system"
 	_ "gitlab.33.cn/chain33/plugin/plugin/dapp/init"
 	_ "gitlab.33.cn/chain33/plugin/plugin/store/init"
-	_ "gitlab.33.cn/chain33/chain33/system"
 )
 
 var (

@@ -1,8 +1,8 @@
 package executor
 
 import (
-	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	pty "gitlab.33.cn/chain33/plugin/plugin/dapp/trade/types"
 )
 
 func (t *trade) Exec_SellLimit(sell *pty.TradeForSell, tx *types.Transaction, index int) (*types.Receipt, error) {

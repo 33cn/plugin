@@ -5,9 +5,9 @@ import (
 
 	"gitlab.33.cn/chain33/chain33/account"
 	"gitlab.33.cn/chain33/chain33/common/address"
-	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
 	rpctypes "gitlab.33.cn/chain33/chain33/rpc/types"
 	"gitlab.33.cn/chain33/chain33/types"
+	tokenty "gitlab.33.cn/chain33/plugin/plugin/dapp/token/types"
 	context "golang.org/x/net/context"
 )
 

@@ -3,9 +3,9 @@ package executor
 import (
 	log "gitlab.33.cn/chain33/chain33/common/log/log15"
 
-	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
 	"gitlab.33.cn/chain33/chain33/types"
+	ty "gitlab.33.cn/chain33/plugin/plugin/dapp/relay/types"
 )
 
 var relaylog = log.New("module", "execs.relay")
