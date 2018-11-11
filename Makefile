@@ -213,16 +213,14 @@ auto_ci_after: clean fmt protobuf
 .PHONY: auto_ci
 auto_fmt := find . -name '*.go' -not -path './vendor/*' | xargs goimports -l -w
 auto_ci: clean fmt_proto fmt_shell protobuf
-	git branch
-	git status
-	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
-	-${auto_fmt}
-	-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
-	${auto_fmt}
-	git status
-	echo $(branch)
-	files=$$(git status -suno); if [ -n "$$files" ]; then \
-		  git add *.go *.sh *.proto; \
+	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	@-${auto_fmt}
+	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	@${auto_fmt}
+	@git add -u
+	@git status
+	@files=$$(git status -suno); if [ -n "$$files" ]; then \
+		  git add -u; \
 		  git status; \
 		  git commit -a -m "auto ci"; \
 		  git push origin HEAD:$(branch); \

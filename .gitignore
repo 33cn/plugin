@@ -1,6 +1,5 @@
 chain33
 chain33-cli
-
 tool
 datadir*
 *.log
