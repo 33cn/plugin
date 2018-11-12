@@ -10,10 +10,10 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/pkg/errors"
 	dbm "github.com/33cn/chain33/common/db"
 	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/pkg/errors"
 )
 
 /*

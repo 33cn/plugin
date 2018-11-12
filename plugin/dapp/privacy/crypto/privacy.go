@@ -10,12 +10,12 @@ import (
 	"io"
 	"unsafe"
 
-	sccrypto "github.com/NebulousLabs/Sia/crypto"
 	"github.com/33cn/chain33/common"
 	. "github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/crypto/sha3"
 	"github.com/33cn/chain33/common/ed25519/edwards25519"
 	log "github.com/33cn/chain33/common/log/log15"
+	sccrypto "github.com/NebulousLabs/Sia/crypto"
 
 	//"github.com/33cn/chain33/types"
 	"fmt"

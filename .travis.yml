@@ -19,7 +19,7 @@ jobs:
         - "1.9"
         - master
       script:
-#        - make checkgofmt
+        - make checkgofmt
         - make fmt_go
         - make linter
         - make test

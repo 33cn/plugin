@@ -22,9 +22,9 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 
+	privacy "github.com/33cn/plugin/plugin/dapp/privacy/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	privacy "github.com/33cn/plugin/plugin/dapp/privacy/wallet"
 )
 
 var (

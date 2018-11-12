@@ -9,11 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator"
 	ca "github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator/impl"
+	"github.com/BurntSushi/toml"
+	"github.com/spf13/cobra"
 )
 
 const (

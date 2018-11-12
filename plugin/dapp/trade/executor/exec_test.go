@@ -7,7 +7,6 @@ package executor
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -15,6 +14,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/stretchr/testify/assert"
 )
 
 type execEnv struct {

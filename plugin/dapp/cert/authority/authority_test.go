@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -18,6 +17,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cert/authority"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
 	ct "github.com/33cn/plugin/plugin/dapp/cert/types"
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin"

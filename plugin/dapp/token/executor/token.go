@@ -14,7 +14,6 @@ token执行器支持token的创建，
 */
 
 import (
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -22,6 +21,7 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/pkg/errors"
 )
 
 var tokenlog = log.New("module", "execs.token")

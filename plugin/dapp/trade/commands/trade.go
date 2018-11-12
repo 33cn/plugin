@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/cobra"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/spf13/cobra"
 )
 
 func TradeCmd() *cobra.Command {

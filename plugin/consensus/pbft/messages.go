@@ -11,8 +11,8 @@ import (
 	"io"
 	"net"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 // Digest

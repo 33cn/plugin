@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/spf13/cobra"
 )
 
 var (

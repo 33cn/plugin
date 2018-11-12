@@ -7,11 +7,11 @@ package ticket
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/util/testnode"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
 	_ "github.com/33cn/plugin/plugin/store/init"
+	"github.com/stretchr/testify/assert"
 )
 
 // 执行： go test -cover

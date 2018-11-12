@@ -12,9 +12,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tjfoc/gmsm/sm2"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/signer"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func getCSPFromOpts(KeyStorePath string) (csp.CSP, error) {

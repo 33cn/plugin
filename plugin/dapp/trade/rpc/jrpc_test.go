@@ -12,10 +12,10 @@ import (
 
 	"github.com/33cn/chain33/types"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func newTestChain33(api *mocks.QueueProtocolAPI) *Jrpc {

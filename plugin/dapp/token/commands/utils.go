@@ -10,10 +10,10 @@ import (
 	"math"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/spf13/cobra"
 )
 
 func CreateRawTx(cmd *cobra.Command, to string, amount float64, note string, isWithdraw bool, tokenSymbol, execName string) (string, error) {

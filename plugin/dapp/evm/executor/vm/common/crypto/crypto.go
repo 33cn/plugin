@@ -8,11 +8,11 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/btcsuite/btcd/btcec"
 	"golang.org/x/crypto/sha3"
 )
 

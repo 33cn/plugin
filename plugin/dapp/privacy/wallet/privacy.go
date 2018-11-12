@@ -14,7 +14,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -23,6 +22,7 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
+	"github.com/golang/protobuf/proto"
 )
 
 func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {

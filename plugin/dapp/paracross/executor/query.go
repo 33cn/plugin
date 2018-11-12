@@ -5,10 +5,10 @@
 package executor
 
 import (
-	"github.com/pkg/errors"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 )
 
 func (e *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {

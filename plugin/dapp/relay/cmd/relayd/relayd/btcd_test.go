@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/33cn/chain33/common/merkle"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/33cn/chain33/common/merkle"
 )
 
 type suiteBctd struct {
