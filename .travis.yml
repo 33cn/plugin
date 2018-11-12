@@ -5,7 +5,7 @@ notifications:
 jobs:
   include:
     - stage: test
-      go_import_path: github.com/mdj33/plugin
+    go_import_path: github.com/mdj33/plugin
     install: skip
     os: linux
     go:
