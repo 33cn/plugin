@@ -107,7 +107,9 @@ fmt_proto: ## go fmt protobuf file
 fmt_shell: ## check shell file
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shfmt -w -s -i 4 -ci -bn
 
-
+fmt_go: fmt_shell ## go fmt
+	@go fmt ./...
+	@find . -name '*.go' -not -path "./vendor/*" | xargs goimports -l -w
 
 
 coverage: ## Generate global code coverage report
