@@ -95,7 +95,6 @@ race: ## Run data race detector
 test: ## Run unittests
 	@go test -race $(PKG_LIST)
 
-
 fmt: fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
 	@find . -name '*.go' -not -path "./vendor/*" | xargs goimports -l -w
