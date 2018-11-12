@@ -5,11 +5,11 @@ notifications:
 jobs:
   include:
     - stage: test
-    go_import_path: github.com/mdj33/plugin
-    install: skip
-    os: linux
-    go:
-      - "1.9"
-      - master
-    script:
-      - make test
+      go_import_path: github.com/mdj33/plugin
+      install: skip
+      os: linux
+      go:
+        - "1.9"
+        - master
+      script:
+        - make test
