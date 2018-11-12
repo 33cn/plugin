@@ -1,20 +1,15 @@
 language: go
-
 sudo: false
 notifications:
   email: false
-
 jobs:
   include:
     - stage: test
-      go_import_path: github.com/33cn/chain33
+      go_import_path: github.com/mdj33/plugin
     install: skip
     os: linux
     go:
       - "1.9"
       - master
     script:
-      - make checkgofmt
-      - make fmt
-      - make linter
       - make test
