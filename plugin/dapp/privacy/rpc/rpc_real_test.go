@@ -10,12 +10,12 @@ import (
 
 	"github.com/33cn/chain33/types"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/util/testnode"
 	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	_ "github.com/33cn/chain33/system"
 )

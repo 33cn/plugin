@@ -15,8 +15,6 @@ import (
 
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto/sha3"
@@ -26,6 +24,8 @@ import (
 	"github.com/33cn/chain33/types"
 	common2 "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/golang/protobuf/proto"
+	"github.com/spf13/cobra"
 )
 
 func EvmCmd() *cobra.Command {

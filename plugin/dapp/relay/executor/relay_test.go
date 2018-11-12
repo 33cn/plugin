@@ -7,14 +7,14 @@ package executor
 import (
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
 	_ "github.com/33cn/chain33/system"
 )

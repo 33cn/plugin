@@ -17,12 +17,12 @@ import (
 
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 	"github.com/33cn/chain33/common/crypto"
 	sm2_util "github.com/33cn/chain33/system/crypto/sm2"
 	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
 	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
+	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {

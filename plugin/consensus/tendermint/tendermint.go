@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
@@ -20,6 +19,7 @@ import (
 	"github.com/33cn/chain33/util"
 	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/golang/protobuf/proto"
 )
 
 const tendermint_version = "0.1.0"

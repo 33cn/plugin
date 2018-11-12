@@ -8,10 +8,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func newTestChannelClient() *Grpc {

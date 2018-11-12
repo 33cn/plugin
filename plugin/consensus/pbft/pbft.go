@@ -9,8 +9,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	pb "github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 const (

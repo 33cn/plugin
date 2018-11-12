@@ -7,13 +7,13 @@ package executor
 import (
 	"bytes"
 
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 )
 
 var (

@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/assert"
 )
 
 const MaxKeylenth int = 64

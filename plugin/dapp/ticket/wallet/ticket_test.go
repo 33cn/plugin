@@ -7,11 +7,11 @@ package wallet_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	ticketwallet "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin"

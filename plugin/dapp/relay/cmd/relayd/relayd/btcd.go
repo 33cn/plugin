@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/rpcclient"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 type BtcClient interface {

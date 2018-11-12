@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func newStoreCfg(dir string) *types.Store {

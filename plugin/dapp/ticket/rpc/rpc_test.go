@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

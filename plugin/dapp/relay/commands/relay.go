@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/spf13/cobra"
 )
 
 func RelayCmd() *cobra.Command {

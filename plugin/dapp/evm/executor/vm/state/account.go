@@ -7,12 +7,12 @@ package state
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/golang/protobuf/proto"
 )
 
 // 合约账户对象

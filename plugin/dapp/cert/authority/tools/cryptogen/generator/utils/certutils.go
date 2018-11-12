@@ -7,8 +7,8 @@ package utils
 import (
 	"crypto/x509"
 
-	"github.com/tjfoc/gmsm/sm2"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func CreateCertificateToMem(template, parent *sm2.Certificate, key csp.Key) (cert []byte, err error) {

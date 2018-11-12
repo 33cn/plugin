@@ -5,13 +5,13 @@
 package executor
 
 import (
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 )
 
 func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {

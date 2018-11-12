@@ -8,12 +8,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func newGrpc(api client.QueueProtocolAPI) *channelClient {

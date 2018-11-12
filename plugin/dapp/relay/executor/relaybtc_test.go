@@ -7,13 +7,13 @@ package executor
 import (
 	"testing"
 
+	"github.com/33cn/chain33/common/db/mocks"
+	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/33cn/chain33/common/db/mocks"
-	"github.com/33cn/chain33/types"
-	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
 type suiteBtcStore struct {

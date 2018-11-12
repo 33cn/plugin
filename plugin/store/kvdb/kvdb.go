@@ -5,13 +5,13 @@
 package kvdb
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	clog "github.com/33cn/chain33/common/log"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var klog = log.New("module", "kvdb")

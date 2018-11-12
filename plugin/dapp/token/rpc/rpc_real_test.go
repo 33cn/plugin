@@ -7,13 +7,13 @@ package rpc_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	_ "github.com/33cn/plugin/plugin"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRPCTokenPreCreate(t *testing.T) {

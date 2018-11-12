@@ -5,10 +5,10 @@
 package executor
 
 import (
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 )
 
 func (e *Paracross) Exec_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, index int) (*types.Receipt, error) {

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/pkg/errors"
 )
 
 /*
