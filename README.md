@@ -38,3 +38,35 @@ make
 为了解决包依赖等问题，我们直接提供了vendor目录。
 
 
+## 贡献代码：
+
+详细的细节步骤可以见 https://github.com/33cn/chain33
+这里只是简单的步骤：
+
+#### 准备阶段:
+
+* 首先点击 右上角的 fork 图标， 把chain33 fork 到自己的分支 比如我的是 vipwzw/plugin
+* `git clone https://github.com/vipwzw/chain33.git $GOPATH/src/github.com/33cn/plugin`
+
+```
+注意：这里要 clone 到 $GOPATH/src/github.com/33cn/chain33, 否则go 包路径会找不到
+```
+
+clone 完成后，执行
+```
+make addupstream
+```
+
+#### 创建分支准备开发新功能
+
+```
+make branch b=branch_dev_name
+```
+
+#### 提交代码
+
+```
+make push b=branch_dev_name m="hello world"
+```
+如果m不设置，那么不会执行 git commit 的命令
+
