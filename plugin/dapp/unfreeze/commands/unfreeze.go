@@ -9,12 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
-	"gitlab.33.cn/chain33/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/rpc/jsonclient"
 	"os"
 	"strings"
 
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	"gitlab.33.cn/chain33/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/types"
 )
 
 func Cmd() *cobra.Command {

@@ -5,8 +5,8 @@
 package rpc
 
 import (
-	"github.com/inconshreveable/log15"
-	"gitlab.33.cn/chain33/chain33/rpc/types"
+	log15 "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/rpc/types"
 )
 
 var log = log15.New("module", "unfreeze.rpc")

@@ -5,8 +5,8 @@
 package executor
 
 import (
-	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	"gitlab.33.cn/chain33/chain33/types"
+	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/types"
 )
 
 func (u *Unfreeze) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {

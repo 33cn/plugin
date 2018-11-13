@@ -5,10 +5,10 @@
 package executor
 
 import (
-	log "github.com/inconshreveable/log15"
-	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
 )
 
 var uflog = log.New("module", "execs.unfreeze")

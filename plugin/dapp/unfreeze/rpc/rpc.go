@@ -7,8 +7,8 @@ package rpc
 import (
 	"context"
 	"encoding/hex"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	"gitlab.33.cn/chain33/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/types"
 )
 
 func (c *channelClient) GetUnfreeze(ctx context.Context, in *types.ReqString) (*pty.Unfreeze, error) {

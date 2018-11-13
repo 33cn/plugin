@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"gitlab.33.cn/chain33/chain33/account"
-	"gitlab.33.cn/chain33/chain33/common"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/common/crypto"
-	dbm "gitlab.33.cn/chain33/chain33/common/db"
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	dbm "github.com/33cn/chain33/common/db"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/types"
 )
 
 type execEnv struct {

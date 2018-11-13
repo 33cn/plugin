@@ -7,7 +7,7 @@ package executor
 import (
 	"fmt"
 
-	pty "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 var (

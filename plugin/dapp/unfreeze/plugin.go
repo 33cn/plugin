@@ -5,11 +5,11 @@
 package unfreeze
 
 import (
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/commands"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/executor"
-	"gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/rpc"
-	uf "gitlab.33.cn/chain33/chain33/plugin/dapp/unfreeze/types"
-	"gitlab.33.cn/chain33/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/unfreeze/commands"
+	"github.com/33cn/plugin/plugin/dapp/unfreeze/executor"
+	"github.com/33cn/plugin/plugin/dapp/unfreeze/rpc"
+	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/pluginmgr"
 )
 
 func init() {

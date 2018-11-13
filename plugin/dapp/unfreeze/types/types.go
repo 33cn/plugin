@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"time"
 
-	log "github.com/inconshreveable/log15"
-	"gitlab.33.cn/chain33/chain33/common/address"
-	"gitlab.33.cn/chain33/chain33/types"
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/types"
 )
 
 var name string
@@ -122,7 +122,7 @@ func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transact
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
 	}
-	tx.SetRealFee(types.MinFee)
+	tx.SetRealFee(types.GInt("MinFee"))
 	return tx, nil
 }
 
@@ -148,7 +148,7 @@ func CreateUnfreezeWithdrawTx(title string, parm *UnfreezeWithdraw) (*types.Tran
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
 	}
-	tx.SetRealFee(types.MinFee)
+	tx.SetRealFee(types.GInt("MinFee"))
 	return tx, nil
 }
 
@@ -174,7 +174,7 @@ func CreateUnfreezeTerminateTx(title string, parm *UnfreezeTerminate) (*types.Tr
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
 	}
-	tx.SetRealFee(types.MinFee)
+	tx.SetRealFee(types.GInt("MinFee"))
 	return tx, nil
 }
 
