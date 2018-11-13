@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/etcdserver/stats"
 	"github.com/coreos/etcd/pkg/fileutil"
 	typec "github.com/coreos/etcd/pkg/types"
@@ -24,7 +25,6 @@ import (
 	"github.com/coreos/etcd/wal"
 	"github.com/coreos/etcd/wal/walpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/33cn/chain33/types"
 )
 
 var (

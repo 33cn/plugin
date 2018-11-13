@@ -11,10 +11,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
+	"github.com/pkg/errors"
 )
 
 var validatorsetlog = log15.New("module", "tendermint-val")

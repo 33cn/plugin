@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	_ "github.com/33cn/plugin/plugin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJRPCChannel(t *testing.T) {

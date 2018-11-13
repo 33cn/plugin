@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	proto "github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	proto "github.com/golang/protobuf/proto"
 )
 
 // secureKeyPrefix is the database key prefix used to store trie node preimages.

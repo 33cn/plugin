@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/mempool"
 	"github.com/33cn/chain33/p2p"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
 	//_ "github.com/33cn/plugin/plugin/dapp/paracross"
 	pp "github.com/33cn/plugin/plugin/dapp/paracross/executor"

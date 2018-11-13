@@ -25,8 +25,8 @@ import (
 	"container/heap"
 	"errors"
 
-	proto "github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
+	proto "github.com/golang/protobuf/proto"
 )
 
 // Iterator is a key-value trie iterator that traverses a Trie.

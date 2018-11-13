@@ -11,10 +11,10 @@ import (
 
 	"reflect"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/golang/protobuf/proto"
 )
 
 // ErrEvidenceInvalid wraps a piece of evidence and the error denoting how or why it is invalid.

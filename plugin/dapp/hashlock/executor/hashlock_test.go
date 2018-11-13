@@ -15,13 +15,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	hlt "github.com/33cn/plugin/plugin/dapp/hashlock/types"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
 

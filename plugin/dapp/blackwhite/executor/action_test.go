@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
+	"github.com/stretchr/testify/require"
 )
 
 func newAddressResult(Addr string, blackwhite []int) *gt.AddressResult {

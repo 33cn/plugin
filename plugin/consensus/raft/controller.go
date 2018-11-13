@@ -7,10 +7,10 @@ package raft
 import (
 	"strings"
 
-	"github.com/coreos/etcd/raft/raftpb"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
+	"github.com/coreos/etcd/raft/raftpb"
 )
 
 var (

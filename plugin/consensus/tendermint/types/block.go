@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var (

@@ -7,9 +7,9 @@ package wallet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_checkAmountValid(t *testing.T) {

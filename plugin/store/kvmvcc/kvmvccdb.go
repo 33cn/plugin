@@ -5,7 +5,6 @@
 package kvmvccdb
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	clog "github.com/33cn/chain33/common/log"
@@ -13,6 +12,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var klog = log.New("module", "kvmvccdb")

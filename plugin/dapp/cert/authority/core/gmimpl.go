@@ -15,10 +15,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/tjfoc/gmsm/sm2"
 	sm2_util "github.com/33cn/chain33/system/crypto/sm2"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 type gmValidator struct {

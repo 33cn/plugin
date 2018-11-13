@@ -18,10 +18,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/pkg/errors"
 	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/golang/protobuf/proto"
+	"github.com/pkg/errors"
 )
 
 // ID is a hex-encoded crypto.Address

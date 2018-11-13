@@ -7,12 +7,12 @@ package rpc
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	context "golang.org/x/net/context"
 )
 

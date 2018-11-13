@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/33cn/chain33/types"
 	"github.com/BurntSushi/toml"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/33cn/chain33/types"
 )
 
 type Config struct {

@@ -11,9 +11,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/spf13/cobra"
 )
 
 func ParcCmd() *cobra.Command {

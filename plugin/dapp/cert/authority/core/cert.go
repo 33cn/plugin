@@ -14,8 +14,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/tjfoc/gmsm/sm2"
 	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 type validity struct {
