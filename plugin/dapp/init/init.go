@@ -16,5 +16,6 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/ticket"
 	_ "github.com/33cn/plugin/plugin/dapp/token"
 	_ "github.com/33cn/plugin/plugin/dapp/trade"
+	_ "github.com/33cn/plugin/plugin/dapp/unfreeze"
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"
 )
