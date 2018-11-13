@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package sm2
 
 import (
@@ -9,8 +13,8 @@ import (
 	"encoding/asn1"
 	"math/big"
 
-	"github.com/tjfoc/gmsm/sm2"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 const (

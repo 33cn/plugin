@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package blockchain_test
 
 import (
@@ -8,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
@@ -21,6 +23,8 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func init() {
@@ -109,7 +113,7 @@ func TestBlockChain(t *testing.T) {
 
 	testDelBlock(t, blockchain)
 
-	testLoadBlockBySequence(t, blockchain)
+	//testLoadBlockBySequence(t, blockchain)
 
 	testProcDelParaChainBlockMsg(t, mock33, blockchain)
 

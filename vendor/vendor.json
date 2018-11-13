@@ -4,7 +4,6 @@
 	"package": [
 		{
 			"checksumSHA1": "9nFAHnq3561K/UwKtHr4YbIdKug=",
-			"origin": "github.com/33cn/plugin/vendor/github.com/33cn/chain33",
 			"path": "github.com/33cn/chain33",
 			"revision": "3c62e17cdbdcfc1e01e98bb15b6bfff52264f42e",
 			"revisionTime": "2018-11-12T15:36:56Z"

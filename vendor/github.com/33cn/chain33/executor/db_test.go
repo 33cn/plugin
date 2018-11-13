@@ -1,11 +1,15 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package executor
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func newStateDbForTest(height int64) db.KV {

@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package wallet
 
 import (
@@ -10,7 +14,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -20,6 +23,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/wallet/bipwallet"
 	wcom "github.com/33cn/chain33/wallet/common"
+	"github.com/golang/protobuf/proto"
 )
 
 func (wallet *Wallet) parseExpire(expire string) (int64, error) {
