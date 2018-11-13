@@ -229,3 +229,24 @@ auto_ci: clean fmt_proto fmt_shell protobuf
 		  fi;
 
 
+addupstream:
+	git remote add upstream https://github.com/33cn/plugin.git
+	git remote -v
+
+sync:
+	git fetch upstream
+	git checkout master
+	git merge upstream/master
+
+branch:
+	make sync
+	git checkout -b ${b}
+
+push:
+	@if [ -n "$$m" ]; then \
+	git commit -a -m "${m}" ; \
+	fi;
+	make sync
+	git checkout ${b}
+	git merge master
+	git push origin ${b}
