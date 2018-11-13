@@ -1,6 +1,10 @@
+[![API Reference](
+https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
+)](https://godoc.org/github.com/33cn/chain33)
 [![pipeline status](https://api.travis-ci.org/33cn/chain33.svg?branch=master)](https://travis-ci.org/33cn/chain33/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/33cn/chain33)](https://goreportcard.com/report/github.com/33cn/chain33)
- 
+ [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/33cn/chain33?svg=true&branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20failed&pendingText=Windows%20-%20pending)](https://ci.appveyor.com/project/33cn/chain33)
+
 # Chain33 区块链开发框架
 
 高度模块化, 遵循 KISS原则的区块链开发框架
@@ -17,8 +21,8 @@
 编译:
 
 ```shell
-go get -v -u github.com/33cn/chain33
-cd $GOPATH/github.com/33cn/chain33
+git clone https://github.com/33cn/chain33.git $GOPATH/src/github.com/33cn/chain33
+cd $GOPATH/src/github.com/33cn/chain33
 make
 ```
 
