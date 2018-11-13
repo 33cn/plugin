@@ -32,23 +32,26 @@ jobs:
       go:
         - "1.9"
         - master
+
+      name "check fmt"
       script:
         - make checkgofmt
         - make fmt_go
         - make linter
+      name "unit test"
       script:
         - make test
+      name "coverage"
       script:
         - make coverage
+    - stage: deploy
+      before_script: make build_ci
       script:
-        - make build_ci
         - make docker-compose PROJ=deploy DAPP=all
         - make docker-compose-down PROJ=deploy DAPP=all
       script:
-        - make build_ci
         - make docker-compose PROJ=relay DAPP=relay
         - make docker-compose-down PROJ=relay DAPP=relay
       script:
-        - make build_ci
         - make docker-compose PROJ=paracross DAPP=paracross
         - make docker-compose-down PROJ=paracross DAPP=paracross
