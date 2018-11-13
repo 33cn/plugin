@@ -7,6 +7,9 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 # chain33 官方插件系统
 
+* chain33地址: https://github.com/33cn/chain33
+* chain33官网: https://chain.33.cn
+
 ## 安装
 
 ##### 1. 安装govendor 工具
