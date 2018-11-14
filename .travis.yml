@@ -44,8 +44,15 @@ jobs:
         - sudo mv docker-compose /usr/local/bin
       before_script: make build_ci
       script:
-        - basepath=$(cd `dirname $0`; pwd) && \
-          make docker-compose && make docker-compose-down && cd $basepath &&\
-          make docker-compose PROJ=relay DAPP=relay && make docker-compose-down PROJ=relay DAPP=relay && cd $basepath &&\
-          make docker-compose PROJ=paracross DAPP=paracross && make docker-compose-down PROJ=paracross DAPP=paracross && cd $basepath &&\
-          make docker-compose PROJ=all DAPP=all && make docker-compose-down PROJ=all DAPP=all
+        - make docker-compose && make docker-compose-down
+
+    - stage: deploy-paracross
+      sudo: required
+      services:
+        - docker
+      env:
+        - DOCKER_COMPOSE_VERSION=1.21.2
+      install: skip
+      before_script: make build_ci
+      script:
+        - make docker-compose PROJ=paracross DAPP=paracross && make docker-compose-down PROJ=paracross DAPP=paracross
