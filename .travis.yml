@@ -6,6 +6,12 @@ services:
 env:
   - DOCKER_COMPOSE_VERSION=1.21.2
 
+os: linux
+dist: xenial
+go:
+  - "1.9"
+  - master
+
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -27,25 +33,17 @@ jobs:
         - gometalinter.v2 -i
         - go get -u mvdan.cc/sh/cmd/shfmt
         - go get -u mvdan.cc/sh/cmd/gosh
-      os: linux
-      dist: xenial
-      go:
-        - "1.9"
-        - master
-
-      name "check fmt"
       script:
         - make checkgofmt
         - make fmt_go
         - make linter
-      name "unit test"
       script:
         - make test
-      name "coverage"
       script:
         - make coverage
     - stage: deploy
-      name "deploy"
+      sudo: false
+      install: skip
       before_script: make build_ci
       script:
         - make docker-compose PROJ=deploy DAPP=all
