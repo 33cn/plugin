@@ -45,6 +45,7 @@ jobs:
       script:
         - make coverage
     - stage: deploy
+      name "deploy"
       before_script: make build_ci
       script:
         - make docker-compose PROJ=deploy DAPP=all
