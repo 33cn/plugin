@@ -1,17 +1,21 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package db
 
 import (
 	"bytes"
 	"path"
 
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	log "github.com/33cn/chain33/common/log/log15"
-	"github.com/33cn/chain33/types"
 )
 
 var llog = log.New("module", "db.goleveldb")

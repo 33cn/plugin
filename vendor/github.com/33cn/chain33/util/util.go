@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package util
 
 import (
@@ -9,13 +13,13 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
+	"github.com/pkg/errors"
 )
 
 func init() {

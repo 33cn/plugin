@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package address
 
 import (
@@ -7,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/33cn/chain33/system/crypto/init"
 )

@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package mempool
 
 import (
@@ -5,12 +9,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
 	"github.com/33cn/chain33/common"
 	clog "github.com/33cn/chain33/common/log"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
+	"github.com/hashicorp/golang-lru"
 )
 
 func SetLogLevel(level string) {
