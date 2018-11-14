@@ -201,7 +201,7 @@ function block_wait() {
     fi
     cur_height=$(${1} block last_header | jq ".height")
     expect=$((cur_height + ${2}))
-    count=0
+    local count=0
     while true; do
         new_height=$(${1} block last_header | jq ".height")
         if [ "${new_height}" -ge "${expect}" ]; then
