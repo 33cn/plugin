@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package types
 
 import (
@@ -124,6 +128,7 @@ type TransactionDetail struct {
 	Amount     int64              `json:"amount"`
 	Fromaddr   string             `json:"fromAddr"`
 	ActionName string             `json:"actionName"`
+	Assets     []*types.Asset     `json:"assets"`
 }
 
 type ReplyTxInfos struct {

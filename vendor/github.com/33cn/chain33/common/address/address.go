@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package address
 
 import (
@@ -5,9 +9,9 @@ import (
 	"encoding/hex"
 	"errors"
 
+	. "github.com/33cn/chain33/common"
 	"github.com/decred/base58"
 	lru "github.com/hashicorp/golang-lru"
-	. "github.com/33cn/chain33/common"
 )
 
 var addrSeed = []byte("address seed bytes for public key")

@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package types
 
 import (
@@ -510,6 +514,14 @@ func (tx *Transaction) Amount() (int64, error) {
 		return 0, nil
 	}
 	return exec.Amount(tx)
+}
+
+func (tx *Transaction) Assets() ([]*Asset, error) {
+	exec := LoadExecutorType(string(tx.Execer))
+	if exec == nil {
+		return nil, nil
+	}
+	return exec.GetAssets(tx)
 }
 
 //解析tx的payload获取real to值
