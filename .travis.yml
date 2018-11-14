@@ -18,14 +18,14 @@ jobs:
         - gometalinter.v2 -i
         - go get -u mvdan.cc/sh/cmd/shfmt
         - go get -u mvdan.cc/sh/cmd/gosh
-      script: skip
-#        - make checkgofmt && make fmt_go
-#        - make linter
+      script:
+        - make checkgofmt && make fmt_go
+        - make linter
 
     - stage: test
       install: skip
       script: skip
-#        - make test && make coverage
+        - make test && make coverage
 
     - stage: deploy
       sudo: required
