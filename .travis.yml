@@ -53,6 +53,15 @@ jobs:
       env:
         - DOCKER_COMPOSE_VERSION=1.21.2
       install: skip
-      before_script: make build_ci
       script:
-        - make docker-compose PROJ=paracross DAPP=paracross && make docker-compose-down PROJ=paracross DAPP=paracross
+        - make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross
+
+    - stage: deploy-relay
+      sudo: required
+      services:
+        - docker
+      env:
+        - DOCKER_COMPOSE_VERSION=1.21.2
+      install: skip
+      script:
+        - make docker-compose DAPP=relay && make docker-compose-down DAPP=relay && make clean
