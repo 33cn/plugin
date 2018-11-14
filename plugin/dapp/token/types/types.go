@@ -82,3 +82,25 @@ func (t *TokenType) RPC_Default_Process(action string, msg interface{}) (*types.
 	}
 	return tx, err
 }
+
+func (t *TokenType) GetAssets(tx *types.Transaction) ([]*types.Asset, error) {
+	_, v, err := t.DecodePayloadValue(tx)
+	if err != nil {
+		return nil, err
+	}
+	payload := v.Interface()
+	asset := &types.Asset{Exec: string(tx.Execer)}
+	if a, ok := payload.(*types.AssetsTransfer); ok {
+		asset.Symbol = a.Cointoken
+		asset.Amount = a.Amount
+	} else if a, ok := payload.(*types.AssetsWithdraw); ok {
+		asset.Symbol = a.Cointoken
+		asset.Amount = a.Amount
+	} else if a, ok := payload.(*types.AssetsTransferToExec); ok {
+		asset.Symbol = a.Cointoken
+		asset.Amount = a.Amount
+	} else {
+		return nil, nil
+	}
+	return []*types.Asset{asset}, nil
+}
