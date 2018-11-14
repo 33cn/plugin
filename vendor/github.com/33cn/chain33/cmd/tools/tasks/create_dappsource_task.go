@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package tasks
 
 import (
@@ -5,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/33cn/chain33/cmd/tools/types"
 	"github.com/33cn/chain33/util"
+	"github.com/pkg/errors"
 )
 
 type actionInfoItem struct {

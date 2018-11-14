@@ -1,11 +1,15 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package dapp
 
 import (
 	"errors"
 	"reflect"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 //通过addr前缀查找本地址参与的所有交易

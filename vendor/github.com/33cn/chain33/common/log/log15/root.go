@@ -1,10 +1,14 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package log15
 
 import (
 	"os"
 
-	"github.com/mattn/go-colorable"
 	"github.com/33cn/chain33/common/log/log15/term"
+	"github.com/mattn/go-colorable"
 )
 
 // Predefined handlers

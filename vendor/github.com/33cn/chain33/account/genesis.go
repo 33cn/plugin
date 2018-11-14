@@ -1,8 +1,12 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package account
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 func (acc *DB) GenesisInit(addr string, amount int64) (*types.Receipt, error) {

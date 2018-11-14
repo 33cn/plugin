@@ -1,12 +1,16 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package db
 
 import (
 	"bytes"
 
-	"github.com/dgraph-io/badger"
-	"github.com/dgraph-io/badger/options"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/options"
 )
 
 var blog = log.New("module", "db.gobadgerdb")

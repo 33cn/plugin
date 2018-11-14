@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -12,9 +16,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	l "github.com/33cn/chain33/common/log/log15"
 	tml "github.com/BurntSushi/toml"
 	"github.com/rs/cors"
-	l "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/cmd/miner_accounts/accounts"
 )
