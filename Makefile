@@ -10,8 +10,8 @@ SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_PATH=vendor/${CHAIN33}
-AUTO_TEST := build/tools/autotest/autotest
-SRC_AUTO_TEST := ${CHAIN33}/cmd/autotest
+AUTOTEST := build/autotest/autotest
+SRC_AUTOTEST_PLUGIN := ${CHAIN33_PATH}/cmd/autotest/pluginversion
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
@@ -39,7 +39,8 @@ para:
 
 
 autotest:## build autotest binary
-	@go build -v -i -o $(AUTO_TEST) $(SRC_AUTO_TEST)
+	@cp -r $(CHAIN33_PATH)/build/autotest build/
+	@go build -v -i -o $(AUTOTEST) $(SRC_AUTOTEST_PLUGIN)
 	@cp cmd/autotest/*.toml build/tools/autotest/
 	@if [ -n "$(dapp)" ]; then \
 		cd build/tools/autotest && bash ./local-autotest.sh $(dapp) && cd ../../../; \
