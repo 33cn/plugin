@@ -47,4 +47,5 @@ jobs:
         - sudo mv docker-compose /usr/local/bin
       before_script: make build_ci
       script:
-        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
+#        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
+        - make docker-compose DAPP=all && make docker-compose-down DAPP=all && make clean
