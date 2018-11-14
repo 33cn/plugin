@@ -20,12 +20,12 @@ jobs:
         - go get -u mvdan.cc/sh/cmd/gosh
       script:
         - make checkgofmt && make fmt_go
-        - make linter
+#        - make linter
 
     - stage: test
       install: skip
-      script:
-        - make test && make coverage
+      script: skip
+#        - make test && make coverage
 
     - stage: deploy
       sudo: required
