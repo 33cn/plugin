@@ -6,6 +6,7 @@ package token
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
+	_ "github.com/33cn/plugin/plugin/dapp/token/autotest"
 	"github.com/33cn/plugin/plugin/dapp/token/commands"
 	"github.com/33cn/plugin/plugin/dapp/token/executor"
 	"github.com/33cn/plugin/plugin/dapp/token/rpc"
