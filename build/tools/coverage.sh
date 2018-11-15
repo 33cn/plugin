@@ -3,13 +3,9 @@
 # Code coverage generation
 set -e -o pipefail
 
-echo "cov=$COVERAGE_DIR"
 COVERAGE_DIR="${COVERAGE_DIR:-build/coverage}"
-echo "cov=$COVERAGE_DIR"
-go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mock" | grep -v "mocks" \
-    | grep -v "types" | grep -v "cmd" | grep -v "nat" | grep -v "pbft"
-PKG_LIST=$(go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mock" | grep -v "mocks" \
-    | grep -v "types" | grep -v "cmd" | grep -v "nat" | grep -v "pbft")
+
+PKG_LIST=$(go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mock" | grep -v "mocks")
 
 # Create the coverage files directory
 mkdir -p "$COVERAGE_DIR"

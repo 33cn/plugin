@@ -44,7 +44,7 @@ function relay_config() {
 # [WRN] BTCW: Can't listen on [::1]:18554: listen tcp6 [::1]:18554: bind: cannot assign requested address
 # shellcheck disable=SC2068
 function wait_btcd_up() {
-    count=20
+    local count=20
     while [ $count -gt 0 ]; do
         status=$(docker-compose ps | grep btcd | awk '{print $5}')
         if [ "${status}" == "Up" ]; then
@@ -77,7 +77,7 @@ function wait_btc_height() {
         echo "wrong wait_btc_height params"
         exit 1
     fi
-    count=100
+    local count=100
     wait_sec=0
     while [ $count -gt 0 ]; do
         cur=$(${1} relay btc_cur_height | jq ".curHeight")
@@ -361,9 +361,10 @@ function relay_test() {
     echo "=========== # wait relayd verify order ======="
     ## for relayd verify tick 5s
     block_wait "${1}" 3
+    #    sleep 10
 
     echo "=========== # check finish order ============="
-    count=30
+    local count=30
     while true; do
         id=$(${1} relay status -s 4 | jq -sr '.[] | select(.coinoperation=="buy")|.orderid')
         if [ "${id}" == "${realbuy_id}" ]; then
