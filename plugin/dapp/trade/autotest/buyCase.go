@@ -6,8 +6,9 @@ package autotest
 import (
 	"errors"
 	"fmt"
-	. "github.com/33cn/chain33/cmd/autotest/types"
 	"strconv"
+
+	. "github.com/33cn/chain33/cmd/autotest/types"
 )
 
 type BuyCase struct {

@@ -4,10 +4,11 @@
 package autotest
 
 import (
+	"reflect"
+
 	. "github.com/33cn/chain33/cmd/autotest/types"
 	. "github.com/33cn/chain33/system/dapp/coins/autotest"
 	. "github.com/33cn/plugin/plugin/dapp/token/autotest"
-	"reflect"
 )
 
 type privacyAutoTest struct {

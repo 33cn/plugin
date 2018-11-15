@@ -4,8 +4,9 @@
 package autotest
 
 import (
-	. "github.com/33cn/chain33/cmd/autotest/types"
 	"strconv"
+
+	. "github.com/33cn/chain33/cmd/autotest/types"
 )
 
 //pub2priv case
