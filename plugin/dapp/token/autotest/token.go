@@ -4,9 +4,10 @@
 package autotest
 
 import (
+	"reflect"
+
 	. "github.com/33cn/chain33/cmd/autotest/types"
 	. "github.com/33cn/chain33/system/dapp/coins/autotest"
-	"reflect"
 )
 
 type tokenAutoTest struct {
