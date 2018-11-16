@@ -36,7 +36,7 @@ para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
 
 
-autotest:## build autotest binary
+autotest: ## build autotest binary
 	@cd build/autotest && bash ./build.sh && cd ../../
 	@if [ -n "$(dapp)" ]; then \
 		rm -rf build/autotest/local \
