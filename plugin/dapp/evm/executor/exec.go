@@ -98,8 +98,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	// 从状态机中获取数据变更和变更日志
 	data, logs := evm.mStateDB.GetChangedData(curVer.GetId())
 
-	contractReceipt := &evmtypes.ReceiptEVMContract{msg.From().String(), execName, contractAddr.String(), usedGas, ret}
-
+	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 	logs = append(logs, &types.ReceiptLog{evmtypes.TyLogCallContract, types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
 
