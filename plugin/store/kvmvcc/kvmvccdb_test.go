@@ -260,7 +260,7 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
-	store_cfg, sub := newStoreCfgIter(dir)
+	storeCfg, sub := newStoreCfgIter(dir)
 	store := New(storeCfg, sub).(*KVMVCCStore)
 	assert.NotNil(t, store)
 
@@ -771,11 +771,9 @@ func isDirExists(path string) bool {
 
 	if err != nil {
 		return os.IsExist(err)
-	} else {
-		return fi.IsDir()
 	}
-
-	panic("not reached")
+	
+	return fi.IsDir()
 }
 
 //一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
