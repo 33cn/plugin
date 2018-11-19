@@ -22,7 +22,7 @@ pipeline {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'check'){
                         sh "git branch"
-                        sh "make auto_ci branch=${env.gitlabSourceBranch} originx=${env.ghprbAuthorRepoGitUrl}"
+                        sh "make auto_ci branch=${env.ghprbSourceBranch} originx=${env.ghprbAuthorRepoGitUrl}"
                     }
                 }
             }
