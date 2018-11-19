@@ -27,7 +27,7 @@ const (
 
 // 0->not start, 1->on sale, 2->sold out, 3->revoke, 4->expired
 const (
-	TradeOrderStatusNotStart = iota
+	TradeOrderStatusNotStart = iota //TradeOrderStatusNotStart :
 	TradeOrderStatusOnSale
 	TradeOrderStatusSoldOut
 	TradeOrderStatusRevoked
@@ -36,7 +36,7 @@ const (
 	TradeOrderStatusBoughtOut
 	TradeOrderStatusBuyRevoked
 )
-
+//SellOrderStatus : sell order status map
 var SellOrderStatus = map[int32]string{
 	TradeOrderStatusNotStart:   "NotStart",
 	TradeOrderStatusOnSale:     "OnSale",
@@ -47,7 +47,7 @@ var SellOrderStatus = map[int32]string{
 	TradeOrderStatusBoughtOut:  "BoughtOut",
 	TradeOrderStatusBuyRevoked: "BuyRevoked",
 }
-
+//SellOrderStatus2Int : SellOrderStatus info to value in int32
 var SellOrderStatus2Int = map[string]int32{
 	"NotStart":   TradeOrderStatusNotStart,
 	"OnSale":     TradeOrderStatusOnSale,
@@ -58,13 +58,13 @@ var SellOrderStatus2Int = map[string]int32{
 	"BoughtOut":  TradeOrderStatusBoughtOut,
 	"BuyRevoked": TradeOrderStatusBuyRevoked,
 }
-
+//MapSellOrderStatusStr2Int :
 var MapSellOrderStatusStr2Int = map[string]int32{
 	"onsale":  TradeOrderStatusOnSale,
 	"soldout": TradeOrderStatusSoldOut,
 	"revoked": TradeOrderStatusRevoked,
 }
-
+//MapBuyOrderStatusStr2Int :
 var MapBuyOrderStatusStr2Int = map[string]int32{
 	"onbuy":      TradeOrderStatusOnBuy,
 	"boughtout":  TradeOrderStatusBoughtOut,
@@ -72,5 +72,6 @@ var MapBuyOrderStatusStr2Int = map[string]int32{
 }
 
 const (
+	//InvalidStartTime :
 	InvalidStartTime = 0
 )

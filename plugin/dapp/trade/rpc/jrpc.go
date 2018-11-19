@@ -13,7 +13,8 @@ import (
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
-func (this *Jrpc) CreateRawTradeSellTx(in *ptypes.TradeSellTx, result *interface{}) error {
+//CreateRawTradeSellTx : 创建出售token的未签名交易
+func (jrpc *Jrpc) CreateRawTradeSellTx(in *ptypes.TradeSellTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -29,15 +30,15 @@ func (this *Jrpc) CreateRawTradeSellTx(in *ptypes.TradeSellTx, result *interface
 		AssetExec:         in.AssetExec,
 	}
 
-	reply, err := this.cli.CreateRawTradeSellTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeSellTx(context.Background(), param)
 	if err != nil {
 		return err
 	}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
-func (this *Jrpc) CreateRawTradeBuyTx(in *ptypes.TradeBuyTx, result *interface{}) error {
+//CreateRawTradeBuyTx : 创建购买token的未签名交易,向指定卖单发起购买
+func (jrpc *Jrpc) CreateRawTradeBuyTx(in *ptypes.TradeBuyTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -46,15 +47,15 @@ func (this *Jrpc) CreateRawTradeBuyTx(in *ptypes.TradeBuyTx, result *interface{}
 		BoardlotCnt: in.BoardlotCnt,
 	}
 
-	reply, err := this.cli.CreateRawTradeBuyTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeBuyTx(context.Background(), param)
 	if err != nil {
 		return err
 	}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
-func (this *Jrpc) CreateRawTradeRevokeTx(in *ptypes.TradeRevokeTx, result *interface{}) error {
+//CreateRawTradeRevokeTx : 取消指定卖单
+func (jrpc *Jrpc) CreateRawTradeRevokeTx(in *ptypes.TradeRevokeTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -62,15 +63,15 @@ func (this *Jrpc) CreateRawTradeRevokeTx(in *ptypes.TradeRevokeTx, result *inter
 		SellID: in.SellID,
 	}
 
-	reply, err := this.cli.CreateRawTradeRevokeTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeRevokeTx(context.Background(), param)
 	if err != nil {
 		return err
 	}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
-func (this *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *interface{}) error {
+//CreateRawTradeBuyLimitTx : 挂买单购买token
+func (jrpc *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -83,15 +84,15 @@ func (this *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *i
 		AssetExec:         in.AssetExec,
 	}
 
-	reply, err := this.cli.CreateRawTradeBuyLimitTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeBuyLimitTx(context.Background(), param)
 	if err != nil {
 		return err
 	}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
-func (this *Jrpc) CreateRawTradeSellMarketTx(in *ptypes.TradeSellMarketTx, result *interface{}) error {
+//CreateRawTradeSellMarketTx : 向指定买单出售token
+func (jrpc *Jrpc) CreateRawTradeSellMarketTx(in *ptypes.TradeSellMarketTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -100,15 +101,15 @@ func (this *Jrpc) CreateRawTradeSellMarketTx(in *ptypes.TradeSellMarketTx, resul
 		BoardlotCnt: in.BoardlotCnt,
 	}
 
-	reply, err := this.cli.CreateRawTradeSellMarketTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeSellMarketTx(context.Background(), param)
 	if err != nil {
 		return err
 	}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
-func (this *Jrpc) CreateRawTradeRevokeBuyTx(in *ptypes.TradeRevokeBuyTx, result *interface{}) error {
+//CreateRawTradeRevokeBuyTx : 取消指定买单
+func (jrpc *Jrpc) CreateRawTradeRevokeBuyTx(in *ptypes.TradeRevokeBuyTx, result *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
 	}
@@ -116,7 +117,7 @@ func (this *Jrpc) CreateRawTradeRevokeBuyTx(in *ptypes.TradeRevokeBuyTx, result 
 		BuyID: in.BuyID,
 	}
 
-	reply, err := this.cli.CreateRawTradeRevokeBuyTx(context.Background(), param)
+	reply, err := jrpc.cli.CreateRawTradeRevokeBuyTx(context.Background(), param)
 	if err != nil {
 		return err
 	}

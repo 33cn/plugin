@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 )
 
-// trade order
-type RpcReplyTradeOrder struct {
+// RPCReplyTradeOrder : trade order
+type RPCReplyTradeOrder struct {
 	TokenSymbol       string `protobuf:"bytes,1,opt,name=tokenSymbol" json:"tokenSymbol"`
 	Owner             string `protobuf:"bytes,2,opt,name=owner" json:"owner"`
 	AmountPerBoardlot int64  `protobuf:"varint,3,opt,name=amountPerBoardlot" json:"amountPerBoardlot"`
@@ -27,8 +27,8 @@ type RpcReplyTradeOrder struct {
 	IsSellOrder       bool   `protobuf:"varint,15,opt,name=isSellOrder" json:"isSellOrder"`
 	AssetExec         string `protobuf:"bytes,16,opt,name=assetExec" json:"assetExec"`
 }
-
+//MarshalJSON :
 func (reply *ReplyTradeOrder) MarshalJSON() ([]byte, error) {
-	r := (*RpcReplyTradeOrder)(reply)
+	r := (*RPCReplyTradeOrder)(reply)
 	return json.Marshal(r)
 }
