@@ -7,5 +7,6 @@ package kvmvccdb
 import "errors"
 
 var (
+	//Err for StateHash lost
 	ErrStateHashLost = errors.New("ErrStateHashLost")
 )
