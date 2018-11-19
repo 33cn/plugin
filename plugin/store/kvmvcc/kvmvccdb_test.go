@@ -429,7 +429,7 @@ func BenchmarkGet(b *testing.B) {
 		datas := &types.StoreSet{hash, kv, 0}
 		hash, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	assert.Nil(b, err)
 	start := time.Now()
@@ -643,7 +643,7 @@ func BenchmarkGetIter(b *testing.B) {
 		datas := &types.StoreSet{hash, kv, 0}
 		hash, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	assert.Nil(b, err)
 	start := time.Now()
@@ -686,9 +686,9 @@ func BenchmarkSet(b *testing.B) {
 	}
 	if kv != nil {
 		datas := &types.StoreSet{hash, kv, 0}
-		hash, err = store.Set(datas, true)
+		_, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	end := time.Now()
 	fmt.Println("mpt BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
@@ -758,9 +758,9 @@ func BenchmarkSetIter(b *testing.B) {
 	}
 	if kv != nil {
 		datas := &types.StoreSet{hash, kv, 0}
-		hash, err = store.Set(datas, true)
+		_, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	end := time.Now()
 	fmt.Println("kvmvcc BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
