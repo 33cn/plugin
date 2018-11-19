@@ -772,7 +772,7 @@ func isDirExists(path string) bool {
 	if err != nil {
 		return os.IsExist(err)
 	}
-	
+
 	return fi.IsDir()
 }
 
