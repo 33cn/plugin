@@ -1,5 +1,4 @@
 language: go
-go_import_path: github.com/33cn/plugin
 os: linux
 dist: xenial
 
@@ -10,6 +9,7 @@ jobs:
     - stage: check_fmt
       sudo: require
       go: "1.9.x"
+      go_import_path: github.com/33cn/plugin
       install:
         - go get -u golang.org/x/tools/cmd/goimports
         - go get -u gopkg.in/alecthomas/gometalinter.v2

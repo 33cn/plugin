@@ -91,17 +91,10 @@ pipeline {
         success {
             echo 'I succeeeded!'
             echo "email user: ${gitlabUserEmail}"
-            mail to: "${gitlabUserEmail}",
-                 subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "this is success with ${env.BUILD_URL}"
         }
 
         failure {
             echo 'I failed '
-            echo "email user: ${gitlabUserEmail}"
-            mail to: "${gitlabUserEmail}",
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Something is wrong with ${env.BUILD_URL}"
         }
     }
 }
