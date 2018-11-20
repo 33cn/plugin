@@ -16,6 +16,7 @@ jobs:
         - gometalinter.v2 -i
         - go get -u mvdan.cc/sh/cmd/shfmt
         - go get -u mvdan.cc/sh/cmd/gosh
+        - sudo apt-get intall jq
       script:
         - jq --version
 #        - make checkgofmt && make fmt_go
