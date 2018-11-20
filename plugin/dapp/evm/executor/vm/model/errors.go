@@ -7,24 +7,38 @@ package model
 import "errors"
 
 var (
-	ErrOutOfGas                 = errors.New("out of gas")
-	ErrCodeStoreOutOfGas        = errors.New("contract creation code storage out of gas")
-	ErrDepth                    = errors.New("max call depth exceeded")
-	ErrTraceLimitReached        = errors.New("the number of logs reached the specified limit")
-	ErrInsufficientBalance      = errors.New("insufficient balance for transfer")
+	// ErrOutOfGas                 out of gas
+	ErrOutOfGas = errors.New("out of gas")
+	// ErrCodeStoreOutOfGas        contract creation code storage out of gas
+	ErrCodeStoreOutOfGas = errors.New("contract creation code storage out of gas")
+	// ErrDepth                    max call depth exceeded
+	ErrDepth = errors.New("max call depth exceeded")
+	// ErrInsufficientBalance      insufficient balance for transfer
+	ErrInsufficientBalance = errors.New("insufficient balance for transfer")
+	// ErrContractAddressCollision contract address collision
 	ErrContractAddressCollision = errors.New("contract address collision")
-	ErrGasLimitReached          = errors.New("gas limit reached")
-	ErrGasUintOverflow          = errors.New("gas uint64 overflow")
-	ErrAddrNotExists            = errors.New("address not exists")
+	// ErrGasUintOverflow          gas uint64 overflow
+	ErrGasUintOverflow = errors.New("gas uint64 overflow")
+	// ErrAddrNotExists            address not exists
+	ErrAddrNotExists = errors.New("address not exists")
+	// ErrTransferBetweenContracts transferring between contracts not supports
 	ErrTransferBetweenContracts = errors.New("transferring between contracts not supports")
-	ErrTransferBetweenEOA       = errors.New("transferring between external accounts not supports")
-	ErrNoCreator                = errors.New("contract has no creator information")
-	ErrDestruct                 = errors.New("contract has been destructed")
+	// ErrTransferBetweenEOA       transferring between external accounts not supports
+	ErrTransferBetweenEOA = errors.New("transferring between external accounts not supports")
+	// ErrNoCreator                contract has no creator information
+	ErrNoCreator = errors.New("contract has no creator information")
+	// ErrDestruct                 contract has been destructed
+	ErrDestruct = errors.New("contract has been destructed")
 
-	ErrWriteProtection       = errors.New("evm: write protection")
+	// ErrWriteProtection       evm: write protection
+	ErrWriteProtection = errors.New("evm: write protection")
+	// ErrReturnDataOutOfBounds evm: return data out of bounds
 	ErrReturnDataOutOfBounds = errors.New("evm: return data out of bounds")
-	ErrExecutionReverted     = errors.New("evm: execution reverted")
-	ErrMaxCodeSizeExceeded   = errors.New("evm: max code size exceeded")
+	// ErrExecutionReverted     evm: execution reverted
+	ErrExecutionReverted = errors.New("evm: execution reverted")
+	// ErrMaxCodeSizeExceeded   evm: max code size exceeded
+	ErrMaxCodeSizeExceeded = errors.New("evm: max code size exceeded")
 
-	NoCoinsAccount = errors.New("no coins account in executor!")
+	// ErrNoCoinsAccount no coins account in executor!
+	ErrNoCoinsAccount = errors.New("no coins account in executor")
 )

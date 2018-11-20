@@ -186,7 +186,7 @@ func BenchmarkGet(b *testing.B) {
 		datas := &types.StoreSet{hash, kv, 0}
 		hash, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	start := time.Now()
 	b.ResetTimer()
@@ -227,9 +227,9 @@ func BenchmarkSet(b *testing.B) {
 	}
 	if kv != nil {
 		datas := &types.StoreSet{hash, kv, 0}
-		hash, err = store.Set(datas, true)
+		_, err = store.Set(datas, true)
 		assert.Nil(b, err)
-		kv = nil
+		//kv = nil
 	}
 	end := time.Now()
 	fmt.Println("mpt BenchmarkSet cost time is", end.Sub(start), "num is", b.N)

@@ -24,7 +24,7 @@ import (
 var (
 	evmDebug = false
 
-	// 本合约地址
+	// EvmAddress 本合约地址
 	EvmAddress = address.ExecAddress(types.ExecName(evmtypes.ExecutorName))
 )
 
@@ -35,6 +35,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&EVMExecutor{}))
 }
 
+// Init 初始化本合约对象
 func Init(name string, sub []byte) {
 	driverName = name
 	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, "Enable"))
@@ -43,6 +44,7 @@ func Init(name string, sub []byte) {
 	state.InitForkData()
 }
 
+// GetName 返回本合约名称
 func GetName() string {
 	return newEVMDriver().GetName()
 }
@@ -53,13 +55,14 @@ func newEVMDriver() drivers.Driver {
 	return evm
 }
 
-// EVM执行器结构
+// EVMExecutor EVM执行器结构
 type EVMExecutor struct {
 	drivers.DriverBase
 	vmCfg    *runtime.Config
 	mStateDB *state.MemoryStateDB
 }
 
+// NewEVMExecutor 新创建执行器对象
 func NewEVMExecutor() *EVMExecutor {
 	exec := &EVMExecutor{}
 
@@ -70,15 +73,18 @@ func NewEVMExecutor() *EVMExecutor {
 	return exec
 }
 
+// GetFuncMap 获取方法列表
 func (evm *EVMExecutor) GetFuncMap() map[string]reflect.Method {
 	ety := types.LoadExecutorType(driverName)
 	return ety.GetExecFuncMap()
 }
 
+// GetDriverName 获取本合约驱动名称
 func (evm *EVMExecutor) GetDriverName() string {
 	return evmtypes.ExecutorName
 }
 
+// Allow 允许哪些交易在本命执行器执行
 func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 	err := evm.DriverBase.Allow(tx, index)
 	if err == nil {
@@ -94,6 +100,7 @@ func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 	return types.ErrNotAllow
 }
 
+// IsFriend 是否允许对应的KEY
 func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
 	if othertx == nil {
 		return false
@@ -115,11 +122,12 @@ func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
 	return common.NewAddress(txHash)
 }
 
+// CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-//获取运行状态名
+// GetActionName 获取运行状态名
 func (evm *EVMExecutor) GetActionName(tx *types.Transaction) string {
 	if bytes.Equal(tx.Execer, []byte(types.ExecName(evmtypes.ExecutorName))) {
 		return types.ExecName(evmtypes.ExecutorName)
@@ -127,15 +135,17 @@ func (evm *EVMExecutor) GetActionName(tx *types.Transaction) string {
 	return tx.ActionName()
 }
 
+// GetMStateDB 获取内部状态数据库
 func (evm *EVMExecutor) GetMStateDB() *state.MemoryStateDB {
 	return evm.mStateDB
 }
 
+// GetVMConfig 获取VM配置
 func (evm *EVMExecutor) GetVMConfig() *runtime.Config {
 	return evm.vmCfg
 }
 
-// 构造一个新的EVM上下文对象
+// NewEVMContext 构造一个新的EVM上下文对象
 func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
