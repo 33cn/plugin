@@ -52,7 +52,7 @@ func TestKvmvccdbSetGet(t *testing.T) {
 	assert.NotNil(t, store)
 
 	keys0 := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get0 := &types.StoreGet{drivers.EmptyRoot[:], keys0}
+	get0 := &types.StoreGet{ StateHash: drivers.EmptyRoot[:], Keys: keys0}
 	values0 := store.Get(get0)
 	//klog.Info("info", "info", values0)
 	// Get exist key, result nil
@@ -61,16 +61,16 @@ func TestKvmvccdbSetGet(t *testing.T) {
 	assert.Equal(t, []byte(nil), values0[1])
 
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{[]byte("k1"), []byte("v1")})
-	kv = append(kv, &types.KeyValue{[]byte("k2"), []byte("v2")})
+	kv = append(kv, &types.KeyValue{Key: []byte("k1"), Value: []byte("v1")})
+	kv = append(kv, &types.KeyValue{Key: []byte("k2"), Value: []byte("v2")})
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	hash, err := store.Set(datas, true)
 	assert.Nil(t, err)
 	keys := [][]byte{[]byte("k1"), []byte("k2")}
-	get1 := &types.StoreGet{hash, keys}
+	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
 
 	values := store.Get(get1)
 	assert.Len(t, values, 2)
@@ -78,12 +78,12 @@ func TestKvmvccdbSetGet(t *testing.T) {
 	assert.Equal(t, []byte("v2"), values[1])
 
 	keys = [][]byte{[]byte("k1")}
-	get2 := &types.StoreGet{hash, keys}
+	get2 := &types.StoreGet{StateHash: hash, Keys: keys}
 	values2 := store.Get(get2)
 	assert.Len(t, values2, 1)
 	assert.Equal(t, []byte("v1"), values2[0])
 
-	get3 := &types.StoreGet{drivers.EmptyRoot[:], keys}
+	get3 := &types.StoreGet{StateHash: drivers.EmptyRoot[:], Keys: keys}
 	values3 := store.Get(get3)
 	assert.Len(t, values3, 1)
 }
@@ -98,26 +98,26 @@ func TestKvmvccdbMemSet(t *testing.T) {
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{[]byte("mk1"), []byte("v1")})
-	kv = append(kv, &types.KeyValue{[]byte("mk2"), []byte("v2")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk1"), Value: []byte("v1")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk2"), Value: []byte("v2")})
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	hash, err := store.MemSet(datas, true)
 	assert.Nil(t, err)
 	keys := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get1 := &types.StoreGet{hash, keys}
+	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
 
 	values := store.Get(get1)
 	assert.Len(t, values, 2)
 	assert.Nil(t, values[0])
 	assert.Nil(t, values[1])
 
-	actHash, _ := store.Commit(&types.ReqHash{hash})
+	actHash, _ := store.Commit(&types.ReqHash{Hash: hash})
 	assert.Equal(t, hash, actHash)
 
-	notExistHash, _ := store.Commit(&types.ReqHash{drivers.EmptyRoot[:]})
+	notExistHash, _ := store.Commit(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
 	assert.Nil(t, notExistHash)
 
 	values = store.Get(get1)
@@ -136,25 +136,25 @@ func TestKvmvccdbRollback(t *testing.T) {
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{[]byte("mk1"), []byte("v1")})
-	kv = append(kv, &types.KeyValue{[]byte("mk2"), []byte("v2")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk1"),Value:  []byte("v1")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk2"),Value: []byte("v2")})
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	hash, err := store.MemSet(datas, true)
 	assert.Nil(t, err)
 	keys := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get1 := &types.StoreGet{hash, keys}
+	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
 	values := store.Get(get1)
 	assert.Len(t, values, 2)
 	assert.Nil(t, values[0])
 	assert.Nil(t, values[1])
 
-	actHash, _ := store.Rollback(&types.ReqHash{hash})
+	actHash, _ := store.Rollback(&types.ReqHash{Hash: hash})
 	assert.Equal(t, hash, actHash)
 
-	notExistHash, err := store.Rollback(&types.ReqHash{drivers.EmptyRoot[:]})
+	notExistHash, err := store.Rollback(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
 	assert.Nil(t, notExistHash)
 	assert.Equal(t, types.ErrHashNotFound.Error(), err.Error())
 }
@@ -169,22 +169,22 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{[]byte("mk1"), []byte("v1")})
-	kv = append(kv, &types.KeyValue{[]byte("mk2"), []byte("v2")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk1"), Value: []byte("v1")})
+	kv = append(kv, &types.KeyValue{Key: []byte("mk2"), Value: []byte("v2")})
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	hash, err := store.MemSet(datas, true)
 	assert.Nil(t, err)
 	var kvset []*types.KeyValue
-	req := &types.ReqHash{hash}
+	req := &types.ReqHash{Hash: hash}
 	hash1 := make([]byte, len(hash))
 	copy(hash1, hash)
 	store.Commit(req)
 	for i := 1; i <= 202; i++ {
 		kvset = nil
-		datas1 := &types.StoreSet{hash1, datas.KV, datas.Height + int64(i)}
+		datas1 := &types.StoreSet{StateHash: hash1, KV: datas.KV, Height: datas.Height + int64(i)}
 		s1 := fmt.Sprintf("v1-%03d", datas.Height+int64(i))
 		s2 := fmt.Sprintf("v2-%03d", datas.Height+int64(i))
 		datas.KV[0].Value = []byte(s1)
@@ -203,7 +203,7 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 			kvset = append(kvset, kvlist...)
 		}
 		store.kvsetmap[string(hash1)] = kvset
-		req := &types.ReqHash{hash1}
+		req := &types.ReqHash{Hash: hash1}
 		store.Commit(req)
 	}
 
@@ -212,37 +212,37 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 	assert.Equal(t, int64(202), maxVersion)
 
 	keys := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get1 := &types.StoreGet{hash, keys}
+	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
 	values := store.Get(get1)
 	assert.Len(t, values, 2)
 	assert.Equal(t, []byte("v1"), values[0])
 	assert.Equal(t, []byte("v2"), values[1])
 
 	var kv2 []*types.KeyValue
-	kv2 = append(kv2, &types.KeyValue{[]byte("mk1"), []byte("v11")})
-	kv2 = append(kv2, &types.KeyValue{[]byte("mk2"), []byte("v22")})
+	kv2 = append(kv2, &types.KeyValue{Key: []byte("mk1"),Value: []byte("v11")})
+	kv2 = append(kv2, &types.KeyValue{Key: []byte("mk2"),Value: []byte("v22")})
 
 	//触发批量回滚
-	datas2 := &types.StoreSet{hash, kv2, 1}
+	datas2 := &types.StoreSet{StateHash: hash, KV: kv2, Height: 1}
 	hash, err = store.MemSet(datas2, true)
 	assert.Nil(t, err)
-	req = &types.ReqHash{hash}
+	req = &types.ReqHash{Hash: hash}
 	store.Commit(req)
 
 	maxVersion, err = store.mvcc.GetMaxVersion()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(3), maxVersion)
 
-	get2 := &types.StoreGet{hash, keys}
+	get2 := &types.StoreGet{StateHash: hash, Keys: keys}
 	values2 := store.Get(get2)
 	assert.Len(t, values, 2)
 	assert.Equal(t, values2[0], kv2[0].Value)
 	assert.Equal(t, values2[1], kv2[1].Value)
 
-	datas3 := &types.StoreSet{hash, kv2, 2}
+	datas3 := &types.StoreSet{StateHash: hash, KV: kv2, Height: 2}
 	hash, err = store.MemSet(datas3, true)
 	assert.Nil(t, err)
-	req = &types.ReqHash{hash}
+	req = &types.ReqHash{Hash: hash}
 	store.Commit(req)
 
 	maxVersion, err = store.mvcc.GetMaxVersion()
@@ -308,11 +308,11 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	for i := 0; i < len(kv); i++ {
 		fmt.Println("key:", string(kv[i].Key), "value:", string(kv[i].Value))
 	}
-	datas := &types.StoreSet{drivers.EmptyRoot[:], kv, 0}
+	datas := &types.StoreSet{StateHash: drivers.EmptyRoot[:], KV: kv, Height: 0}
 	hash, err := store.MemSet(datas, true)
 	assert.Nil(t, err)
 	var kvset []*types.KeyValue
-	req := &types.ReqHash{hash}
+	req := &types.ReqHash{Hash: hash}
 	hash1 := make([]byte, len(hash))
 	copy(hash1, hash)
 	store.Commit(req)
@@ -339,11 +339,11 @@ func TestIterateRangeByStateHash(t *testing.T) {
 		}
 		set := accCoin.GetKVSet(account)
 		fmt.Println("key:", string(set[0].GetKey()), "value:", set[0].GetValue())
-		kvset = append(kvset, &types.KeyValue{set[0].GetKey(), set[0].GetValue()})
-		datas1 := &types.StoreSet{hash1, kvset, datas.Height + int64(i)}
+		kvset = append(kvset, &types.KeyValue{Key: set[0].GetKey(), Value: set[0].GetValue()})
+		datas1 := &types.StoreSet{StateHash: hash1, KV: kvset, Height: datas.Height + int64(i)}
 		hash1, err = store.MemSet(datas1, true)
 		assert.Nil(t, err)
-		req := &types.ReqHash{hash1}
+		req := &types.ReqHash{Hash: hash1}
 		store.Commit(req)
 	}
 
@@ -417,16 +417,16 @@ func BenchmarkGet(b *testing.B) {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 		if i%10000 == 0 {
-			datas := &types.StoreSet{hash, kv, 0}
+			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
 			assert.Nil(b, err)
 			kv = nil
 		}
 	}
 	if kv != nil {
-		datas := &types.StoreSet{hash, kv, 0}
+		datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 		hash, err = store.Set(datas, true)
 		assert.Nil(b, err)
 		//kv = nil
@@ -436,8 +436,8 @@ func BenchmarkGet(b *testing.B) {
 	b.ResetTimer()
 	for _, key := range keys {
 		getData := &types.StoreGet{
-			hash,
-			[][]byte{key}}
+			StateHash: hash,
+			Keys: [][]byte{key}}
 		store.Get(getData)
 	}
 	end := time.Now()
@@ -464,17 +464,17 @@ func BenchmarkStoreGetKvs4N(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	hash, err := store.Set(datas, true)
 	assert.Nil(b, err)
 	getData := &types.StoreGet{
-		hash,
-		keys}
+		StateHash: hash,
+		Keys: keys}
 
 	start := time.Now()
 	b.ResetTimer()
@@ -508,12 +508,12 @@ func BenchmarkStoreGetKvsForNN(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 
 	var hashes [][]byte
 	for i := 0; i < b.N; i++ {
@@ -537,8 +537,8 @@ func BenchmarkStoreGetKvsForNN(b *testing.B) {
 	b.ResetTimer()
 
 	getData := &types.StoreGet{
-		hashes[0],
-		keys}
+		StateHash: hashes[0],
+		Keys: keys}
 
 	for i := 0; i < b.N; i++ {
 		getData.StateHash = hashes[i]
@@ -568,12 +568,12 @@ func BenchmarkStoreGetKvsFor10000(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 
 	var hashes [][]byte
 	blocks := 10000
@@ -601,8 +601,8 @@ func BenchmarkStoreGetKvsFor10000(b *testing.B) {
 	b.ResetTimer()
 
 	getData := &types.StoreGet{
-		hashes[0],
-		keys}
+		StateHash: hashes[0],
+		Keys: keys}
 
 	for i := 0; i < times; i++ {
 		getData.StateHash = hashes[i]
@@ -631,16 +631,16 @@ func BenchmarkGetIter(b *testing.B) {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 		if i%10000 == 0 {
-			datas := &types.StoreSet{hash, kv, 0}
+			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
 			assert.Nil(b, err)
 			kv = nil
 		}
 	}
 	if kv != nil {
-		datas := &types.StoreSet{hash, kv, 0}
+		datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 		hash, err = store.Set(datas, true)
 		assert.Nil(b, err)
 		//kv = nil
@@ -650,8 +650,8 @@ func BenchmarkGetIter(b *testing.B) {
 	b.ResetTimer()
 	for _, key := range keys {
 		getData := &types.StoreGet{
-			hash,
-			[][]byte{key}}
+			StateHash: hash,
+			Keys: [][]byte{key}}
 		store.Get(getData)
 	}
 	end := time.Now()
@@ -676,16 +676,16 @@ func BenchmarkSet(b *testing.B) {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 		if i%10000 == 0 {
-			datas := &types.StoreSet{hash, kv, 0}
+			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
 			assert.Nil(b, err)
 			kv = nil
 		}
 	}
 	if kv != nil {
-		datas := &types.StoreSet{hash, kv, 0}
+		datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 		_, err = store.Set(datas, true)
 		assert.Nil(b, err)
 		//kv = nil
@@ -713,12 +713,12 @@ func BenchmarkStoreSet(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash:drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	start := time.Now()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -748,16 +748,16 @@ func BenchmarkSetIter(b *testing.B) {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 		if i%10000 == 0 {
-			datas := &types.StoreSet{hash, kv, 0}
+			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
 			assert.Nil(b, err)
 			kv = nil
 		}
 	}
 	if kv != nil {
-		datas := &types.StoreSet{hash, kv, 0}
+		datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 		_, err = store.Set(datas, true)
 		assert.Nil(b, err)
 		//kv = nil
@@ -795,12 +795,12 @@ func BenchmarkMemSet(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	start := time.Now()
 	b.ResetTimer()
 	hash, err := store.MemSet(datas, true)
@@ -829,12 +829,12 @@ func BenchmarkStoreMemSet(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	start := time.Now()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -842,7 +842,7 @@ func BenchmarkStoreMemSet(b *testing.B) {
 		assert.Nil(b, err)
 		assert.NotNil(b, hash)
 		req := &types.ReqHash{
-			hash}
+			Hash: hash}
 		store.Rollback(req)
 	}
 	end := time.Now()
@@ -867,12 +867,12 @@ func BenchmarkCommit(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 
 	start := time.Now()
 	b.ResetTimer()
@@ -908,12 +908,12 @@ func BenchmarkStoreCommit(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 
 	start := time.Now()
 	b.ResetTimer()
@@ -952,12 +952,12 @@ func BenchmarkIterMemSet(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 	start := time.Now()
 	b.ResetTimer()
 	hash, err := store.MemSet(datas, true)
@@ -985,12 +985,12 @@ func BenchmarkIterCommit(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{[]byte(string(key)), []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{
-		drivers.EmptyRoot[:],
-		kv,
-		0}
+		StateHash: drivers.EmptyRoot[:],
+		KV: kv,
+		Height: 0}
 
 	start := time.Now()
 	b.ResetTimer()
