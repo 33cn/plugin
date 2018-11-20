@@ -12,10 +12,8 @@ const (
 	CertActionUpdate = 2
 	CertActionNormal = 3
 
-	SignNameAuthECDSA = "auth_ecdsa"
-	AUTH_ECDSA        = 257
-	SignNameAuthSM2   = "auth_sm2"
-	AUTH_SM2          = 258
+	AuthECDSA        = 257
+	AuthSM2          = 258
 )
 
 func init() {
@@ -25,28 +23,34 @@ func init() {
 	types.RegisterDappFork(CertX, "Enable", 0)
 }
 
+// cert执行器类型结构
 type CertType struct {
 	types.ExecTypeBase
 }
 
+// NewType
 func NewType() *CertType {
 	c := &CertType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload
 func (b *CertType) GetPayload() types.Message {
 	return &CertAction{}
 }
 
+// GetName
 func (b *CertType) GetName() string {
 	return CertX
 }
 
+// GetLogMap
 func (b *CertType) GetLogMap() map[int64]*types.LogInfo {
 	return nil
 }
 
+// GetTypeMap
 func (b *CertType) GetTypeMap() map[string]int32 {
 	return actionName
 }

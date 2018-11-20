@@ -44,8 +44,8 @@ type tbsCertificate struct {
 	Validity           validity
 	Subject            asn1.RawValue
 	PublicKey          publicKeyInfo
-	UniqueId           asn1.BitString   `asn1:"optional,tag:1"`
-	SubjectUniqueId    asn1.BitString   `asn1:"optional,tag:2"`
+	UniqueID           asn1.BitString   `asn1:"optional,tag:1"`
+	SubjectUniqueID    asn1.BitString   `asn1:"optional,tag:2"`
 	Extensions         []pkix.Extension `asn1:"optional,explicit,tag:3"`
 }
 
@@ -58,10 +58,10 @@ func isECDSASignedCert(cert *x509.Certificate) bool {
 
 func sanitizeECDSASignedCert(cert *x509.Certificate, parentCert *x509.Certificate) (*x509.Certificate, error) {
 	if cert == nil {
-		return nil, errors.New("Certificate must be different from nil.")
+		return nil, errors.New("Certificate must be different from nil")
 	}
 	if parentCert == nil {
-		return nil, errors.New("Parent certificate must be different from nil.")
+		return nil, errors.New("Parent certificate must be different from nil")
 	}
 
 	expectedSig, err := signatureToLowS(parentCert.PublicKey.(*ecdsa.PublicKey), cert.Signature)
@@ -109,6 +109,7 @@ func certFromX509Cert(cert *x509.Certificate) (certificate, error) {
 	return newCert, nil
 }
 
+// 将ECDSA的公钥转成SM2公钥
 func ParseECDSAPubKey2SM2PubKey(key *ecdsa.PublicKey) *sm2.PublicKey {
 	sm2Key := &sm2.PublicKey{
 		key.Curve,

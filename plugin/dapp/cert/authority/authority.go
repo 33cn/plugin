@@ -23,12 +23,19 @@ import (
 
 var (
 	alog         = log.New("module", "authority")
-	OrgName      = "Chain33"
 	cpuNum       = runtime.NumCPU()
+
+	// 默认证书组织名
+	OrgName      = "Chain33"
+
+	// 全局证书校验器
 	Author       = &Authority{}
+
+	// 是否开启全局校验开关
 	IsAuthEnable = false
 )
 
+// 证书校验器主要结构
 type Authority struct {
 	// 证书文件路径
 	cryptoPath string
@@ -44,16 +51,14 @@ type Authority struct {
 	HistoryCertCache *HistoryCertData
 }
 
-/** 历史变更记录 **/
+// 历史变更记录
 type HistoryCertData struct {
 	CryptoCfg *core.AuthConfig
 	CurHeight int64
 	NxtHeight int64
 }
 
-/**
-初始化auth
-*/
+// 初始化auth
 func (auth *Authority) Init(conf *ty.Authority) error {
 	if conf == nil || !conf.Enable {
 		return nil
@@ -93,9 +98,7 @@ func (auth *Authority) Init(conf *ty.Authority) error {
 	return nil
 }
 
-/**
-store数据转成authConfig数据
-*/
+// store数据转成authConfig数据
 func newAuthConfig(store *types.HistoryCertStore) *core.AuthConfig {
 	ret := &core.AuthConfig{}
 	ret.RootCerts = make([][]byte, len(store.Rootcerts))
@@ -116,9 +119,7 @@ func newAuthConfig(store *types.HistoryCertStore) *core.AuthConfig {
 	return ret
 }
 
-/**
-从数据库中的记录数据恢复证书，用于证书回滚
-*/
+// 从数据库中的记录数据恢复证书，用于证书回滚
 func (auth *Authority) ReloadCert(store *types.HistoryCertStore) error {
 	if !IsAuthEnable {
 		return nil
@@ -147,9 +148,7 @@ func (auth *Authority) ReloadCert(store *types.HistoryCertStore) error {
 	return nil
 }
 
-/**
-从新的authdir下的文件更新证书，用于证书更新
-*/
+// 从新的authdir下的文件更新证书，用于证书更新
 func (auth *Authority) ReloadCertByHeght(currentHeight int64) error {
 	if !IsAuthEnable {
 		return nil
@@ -178,9 +177,7 @@ func (auth *Authority) ReloadCertByHeght(currentHeight int64) error {
 	return nil
 }
 
-/**
-并发校验证书
-*/
+// 并发校验证书
 func (auth *Authority) ValidateCerts(task []*types.Signature) bool {
 	//FIXME 有并发校验的场景需要考虑竞争，暂时没有并发校验的场景
 	done := make(chan struct{})
@@ -242,9 +239,7 @@ func (auth *Authority) task(done <-chan struct{}, taskes <-chan *types.Signature
 	}
 }
 
-/**
-检验证书
-*/
+// 检验证书
 func (auth *Authority) Validate(signature *types.Signature) error {
 	// 从proto中解码signature
 	cert, err := auth.validator.GetCertFromSignature(signature.Signature)
@@ -270,9 +265,7 @@ func (auth *Authority) Validate(signature *types.Signature) error {
 	return nil
 }
 
-/**
-历史数据转成store可存储的历史数据
-*/
+// 历史数据转成store可存储的历史数据
 func (certdata *HistoryCertData) ToHistoryCertStore(store *types.HistoryCertStore) {
 	if store == nil {
 		alog.Error("Convert cert data to cert store failed")
@@ -298,19 +291,21 @@ func (certdata *HistoryCertData) ToHistoryCertStore(store *types.HistoryCertStor
 	store.NxtHeight = certdata.NxtHeight
 }
 
+// 用户关联的证书私钥信息
 type User struct {
-	Id   string
+	ID   string
 	Cert []byte
 	Key  crypto.PrivKey
 }
 
-//userloader, SKD加载user使用
+// userloader, SKD加载user使用
 type UserLoader struct {
 	configPath string
 	userMap    map[string]*User
 	signType   int
 }
 
+// userloader初始化
 func (loader *UserLoader) Init(configPath string, signType string) error {
 	loader.configPath = configPath
 	loader.userMap = make(map[string]*User)
@@ -381,9 +376,10 @@ func (loader *UserLoader) genCryptoPriv(keyBytes []byte) (crypto.PrivKey, error)
 	return priv, nil
 }
 
-func (load *UserLoader) Get(userName string) (*User, error) {
+// 根据用户名获取user结构
+func (loader *UserLoader) Get(userName string) (*User, error) {
 	keyvalue := fmt.Sprintf("%s@%s-cert.pem", userName, OrgName)
-	user, ok := load.userMap[keyvalue]
+	user, ok := loader.userMap[keyvalue]
 	if !ok {
 		return nil, types.ErrInvalidParam
 	}

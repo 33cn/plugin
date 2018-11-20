@@ -44,18 +44,19 @@ func oidFromNamedCurve(curve elliptic.Curve) (asn1.ObjectIdentifier, bool) {
 	return nil, false
 }
 
+// PrivateKeyToPEM
 func PrivateKeyToPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 	if len(pwd) != 0 {
 		return privateKeyToEncryptedPEM(privateKey, pwd)
 	}
 	if privateKey == nil {
-		return nil, errors.New("Invalid key. It must be different from nil.")
+		return nil, errors.New("Invalid key. It must be different from nil")
 	}
 
 	switch k := privateKey.(type) {
 	case *ecdsa.PrivateKey:
 		if k == nil {
-			return nil, errors.New("Invalid ecdsa private key. It must be different from nil.")
+			return nil, errors.New("Invalid ecdsa private key. It must be different from nil")
 		}
 
 		oidNamedCurve, ok := oidFromNamedCurve(k.Curve)
@@ -95,7 +96,7 @@ func PrivateKeyToPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 		), nil
 	case *sm2.PrivateKey:
 		if k == nil {
-			return nil, errors.New("Invalid sm2 private key. It must be different from nil.")
+			return nil, errors.New("Invalid sm2 private key. It must be different from nil")
 		}
 		return sm2.WritePrivateKeytoMem(k, nil)
 	default:
@@ -105,13 +106,13 @@ func PrivateKeyToPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 
 func privateKeyToEncryptedPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 	if privateKey == nil {
-		return nil, errors.New("Invalid private key. It must be different from nil.")
+		return nil, errors.New("Invalid private key. It must be different from nil")
 	}
 
 	switch k := privateKey.(type) {
 	case *ecdsa.PrivateKey:
 		if k == nil {
-			return nil, errors.New("Invalid ecdsa private key. It must be different from nil.")
+			return nil, errors.New("Invalid ecdsa private key. It must be different from nil")
 		}
 		raw, err := x509.MarshalECPrivateKey(k)
 
@@ -137,19 +138,20 @@ func privateKeyToEncryptedPEM(privateKey interface{}, pwd []byte) ([]byte, error
 	}
 }
 
+// PublicKeyToPEM
 func PublicKeyToPEM(publicKey interface{}, pwd []byte) ([]byte, error) {
 	if len(pwd) != 0 {
 		return publicKeyToEncryptedPEM(publicKey, pwd)
 	}
 
 	if publicKey == nil {
-		return nil, errors.New("Invalid public key. It must be different from nil.")
+		return nil, errors.New("Invalid public key. It must be different from nil")
 	}
 
 	switch k := publicKey.(type) {
 	case *ecdsa.PublicKey:
 		if k == nil {
-			return nil, errors.New("Invalid ecdsa public key. It must be different from nil.")
+			return nil, errors.New("Invalid ecdsa public key. It must be different from nil")
 		}
 		PubASN1, err := x509.MarshalPKIXPublicKey(k)
 		if err != nil {
@@ -164,7 +166,7 @@ func PublicKeyToPEM(publicKey interface{}, pwd []byte) ([]byte, error) {
 		), nil
 	case *sm2.PublicKey:
 		if k == nil {
-			return nil, errors.New("Invalid sm2 public key. It must be different from nil.")
+			return nil, errors.New("Invalid sm2 public key. It must be different from nil")
 		}
 
 		return sm2.WritePublicKeytoMem(k, nil)
@@ -175,16 +177,16 @@ func PublicKeyToPEM(publicKey interface{}, pwd []byte) ([]byte, error) {
 
 func publicKeyToEncryptedPEM(publicKey interface{}, pwd []byte) ([]byte, error) {
 	if publicKey == nil {
-		return nil, errors.New("Invalid public key. It must be different from nil.")
+		return nil, errors.New("Invalid public key. It must be different from nil")
 	}
 	if len(pwd) == 0 {
-		return nil, errors.New("Invalid password. It must be different from nil.")
+		return nil, errors.New("Invalid password. It must be different from nil")
 	}
 
 	switch k := publicKey.(type) {
 	case *ecdsa.PublicKey:
 		if k == nil {
-			return nil, errors.New("Invalid ecdsa public key. It must be different from nil.")
+			return nil, errors.New("Invalid ecdsa public key. It must be different from nil")
 		}
 		raw, err := x509.MarshalPKIXPublicKey(k)
 		if err != nil {
@@ -209,9 +211,10 @@ func publicKeyToEncryptedPEM(publicKey interface{}, pwd []byte) ([]byte, error) 
 	}
 }
 
+// DER字符转成公钥
 func DERToPublicKey(raw []byte) (pub interface{}, err error) {
 	if len(raw) == 0 {
-		return nil, errors.New("Invalid DER. It must be different from nil.")
+		return nil, errors.New("Invalid DER. It must be different from nil")
 	}
 
 	key, err := x509.ParsePKIXPublicKey(raw)
@@ -222,6 +225,7 @@ func DERToPublicKey(raw []byte) (pub interface{}, err error) {
 	return key, err
 }
 
+// Clone
 func Clone(src []byte) []byte {
 	clone := make([]byte, len(src))
 	copy(clone, src)

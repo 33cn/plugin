@@ -25,12 +25,14 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
+// EcdsaCA
 type EcdsaCA struct {
 	Name     string
 	Signer   crypto.Signer
 	SignCert *x509.Certificate
 }
 
+// SM2CA
 type SM2CA struct {
 	Name     string
 	Signer   crypto.Signer
@@ -38,10 +40,11 @@ type SM2CA struct {
 	Sm2Key   csp.Key
 }
 
+// NewCA
 func NewCA(baseDir, name string, signType int) (generator.CAGenerator, error) {
-	if signType == ty.AUTH_ECDSA {
+	if signType == ty.AuthECDSA {
 		return newEcdsaCA(baseDir, name)
-	} else if signType == ty.AUTH_SM2 {
+	} else if signType == ty.AuthSM2 {
 		return newSM2CA(baseDir, name)
 	} else {
 		return nil, fmt.Errorf("Invalid sign type")
@@ -92,6 +95,7 @@ func newEcdsaCA(baseDir, name string) (*EcdsaCA, error) {
 	return ca, nil
 }
 
+// 证书签名
 func (ca *EcdsaCA) SignCertificate(baseDir, name string, sans []string, pub interface{}) (*x509.Certificate, error) {
 	template := x509Template()
 	template.KeyUsage = x509.KeyUsageDigitalSignature
@@ -112,6 +116,7 @@ func (ca *EcdsaCA) SignCertificate(baseDir, name string, sans []string, pub inte
 	return cert, nil
 }
 
+// 生成本地用户
 func (ca *EcdsaCA) GenerateLocalUser(baseDir, name string) error {
 	err := createFolderStructure(baseDir, true)
 	if err != nil {
@@ -229,6 +234,7 @@ func newSM2CA(baseDir, name string) (*SM2CA, error) {
 	return ca, nil
 }
 
+// 证书签名
 func (ca *SM2CA) SignCertificate(baseDir, name string, sans []string, pub interface{}) (*x509.Certificate, error) {
 	template := x509Template()
 	template.KeyUsage = x509.KeyUsageDigitalSignature
@@ -250,6 +256,7 @@ func (ca *SM2CA) SignCertificate(baseDir, name string, sans []string, pub interf
 	return utils.ParseSm2CertificateToX509(cert), nil
 }
 
+// 生成本地用户
 func (ca *SM2CA) GenerateLocalUser(baseDir, name string) error {
 	err := createFolderStructure(baseDir, true)
 	if err != nil {

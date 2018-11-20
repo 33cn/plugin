@@ -5,16 +5,14 @@
 package utils
 
 import (
-	"bufio"
 	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-
-	"github.com/33cn/chain33/util"
 )
 
+// DirMissingOrEmpty
 func DirMissingOrEmpty(path string) (bool, error) {
 	dirExists, err := DirExists(path)
 	if err != nil {
@@ -34,6 +32,7 @@ func DirMissingOrEmpty(path string) (bool, error) {
 	return false, nil
 }
 
+// DirExists
 func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -45,6 +44,7 @@ func DirExists(path string) (bool, error) {
 	return false, err
 }
 
+// DirEmpty
 func DirEmpty(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -59,6 +59,7 @@ func DirEmpty(path string) (bool, error) {
 	return false, err
 }
 
+// ReadFile
 func ReadFile(file string) ([]byte, error) {
 	fileCont, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -68,6 +69,7 @@ func ReadFile(file string) ([]byte, error) {
 	return fileCont, nil
 }
 
+// ReadPemFile
 func ReadPemFile(file string) ([]byte, error) {
 	bytes, err := ReadFile(file)
 	if err != nil {
@@ -82,35 +84,7 @@ func ReadPemFile(file string) ([]byte, error) {
 	return bytes, nil
 }
 
-func CheckFileIsExist(filename string) bool {
-	var exist = true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		exist = false
-	}
-	return exist
-}
-
+// DeleteFile
 func DeleteFile(file string) error {
 	return os.Remove(file)
-}
-
-func WriteStringToFile(file, content string) (writeLen int, err error) {
-	var f *os.File
-	if err = util.MakeDir(file); err != nil {
-		return
-	}
-	util.DeleteFile(file)
-	if CheckFileIsExist(file) {
-		f, err = os.OpenFile(file, os.O_APPEND, 0666)
-	} else {
-		f, err = os.Create(file)
-	}
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	writeLen, err = w.WriteString(content)
-	w.Flush()
-	return
 }

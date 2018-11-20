@@ -6,6 +6,7 @@ package generator
 
 import "crypto/x509"
 
+// CAGenerator
 type CAGenerator interface {
 	SignCertificate(baseDir, name string, sans []string, pub interface{}) (*x509.Certificate, error)
 
