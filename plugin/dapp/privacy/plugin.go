@@ -6,6 +6,7 @@ package privacy
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
+	_ "github.com/33cn/plugin/plugin/dapp/privacy/autotest"
 	"github.com/33cn/plugin/plugin/dapp/privacy/commands"
 	_ "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	"github.com/33cn/plugin/plugin/dapp/privacy/executor"
