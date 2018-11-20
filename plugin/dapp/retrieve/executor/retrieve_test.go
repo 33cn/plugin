@@ -647,7 +647,7 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 		return nil, errors.New(string(reply.GetMsg()))
 	}
 	return tx.Hash(), nil
-	
+
 }
 
 func getAccounts() (*types.WalletAccounts, error) {
