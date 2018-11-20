@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	// 隐私交易数据库版本号
+	// PRIVACYDBVERSION 隐私交易数据库版本号
 	PRIVACYDBVERSION int64 = 1
 )
 
-func NewStore(db db.DB) *privacyStore {
+func newStore(db db.DB) *privacyStore {
 	return &privacyStore{Store: wcom.NewStore(db)}
 }
 

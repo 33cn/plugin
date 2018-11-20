@@ -9,7 +9,7 @@ import (
 	. "github.com/33cn/chain33/cmd/autotest/types"
 )
 
-//pub2priv case
+//PubToPrivCase pub2priv case
 type PubToPrivCase struct {
 	BaseCase
 	From   string `toml:"from"`
@@ -17,15 +17,18 @@ type PubToPrivCase struct {
 	Amount string `toml:"amount"`
 }
 
+// PubToPrivPack public to privacy package
 type PubToPrivPack struct {
 	BaseCasePack
 }
 
+// SendCommand send command
 func (testCase *PubToPrivCase) SendCommand(packID string) (PackFunc, error) {
 
 	return DefaultSend(testCase, &PubToPrivPack{}, packID)
 }
 
+// GetCheckHandlerMap get check handler map
 func (pack *PubToPrivPack) GetCheckHandlerMap() interface{} {
 
 	funcMap := make(CheckHandlerMapDiscard, 2)
