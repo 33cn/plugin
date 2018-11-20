@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	//TradeX :
 	TradeX = "trade"
 	tlog   = log.New("module", TradeX)
 
@@ -43,13 +44,13 @@ func (t *tradeType) GetTypeMap() map[string]int32 {
 	return actionName
 }
 
-func (at *tradeType) GetLogMap() map[int64]*types.LogInfo {
+func (t *tradeType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TradeX))
-	types.RegistorExecutor(TradeX, NewType())
+	types.RegistorExecutor(TradeX, newType())
 	types.RegisterDappFork(TradeX, "Enable", 100899)
 	types.RegisterDappFork(TradeX, "ForkTradeBuyLimit", 301000)
 	types.RegisterDappFork(TradeX, "ForkTradeAsset", 1010000)
@@ -59,17 +60,18 @@ type tradeType struct {
 	types.ExecTypeBase
 }
 
-func NewType() *tradeType {
+func newType() *tradeType {
 	c := &tradeType{}
 	c.SetChild(c)
 	return c
 }
 
-func (at *tradeType) GetPayload() types.Message {
+func (t *tradeType) GetPayload() types.Message {
 	return &Trade{}
 }
 
-func (trade tradeType) ActionName(tx *types.Transaction) string {
+//ActionName :
+func (t *tradeType) ActionName(tx *types.Transaction) string {
 	var action Trade
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
@@ -91,7 +93,7 @@ func (trade tradeType) ActionName(tx *types.Transaction) string {
 	return "unknown"
 }
 
-func (t tradeType) Amount(tx *types.Transaction) (int64, error) {
+func (t *tradeType) Amount(tx *types.Transaction) (int64, error) {
 	//TODO: 补充和完善token和trade分支的amount的计算, added by hzj
 	var trade Trade
 	err := types.Decode(tx.GetPayload(), &trade)
@@ -109,7 +111,7 @@ func (t tradeType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-func (trade tradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	var tx *types.Transaction
 	if action == "TradeSellLimit" {
 		var param TradeSellTx
@@ -166,6 +168,7 @@ func (trade tradeType) CreateTx(action string, message json.RawMessage) (*types.
 	return tx, nil
 }
 
+//CreateRawTradeSellTx : 创建卖单交易
 func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -188,6 +191,7 @@ func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(sell))
 }
 
+//CreateRawTradeBuyTx :创建想指定卖单发起的买单交易
 func CreateRawTradeBuyTx(parm *TradeBuyTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -200,6 +204,7 @@ func CreateRawTradeBuyTx(parm *TradeBuyTx) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buy))
 }
 
+//CreateRawTradeRevokeTx :创建取消卖单的交易
 func CreateRawTradeRevokeTx(parm *TradeRevokeTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -213,6 +218,7 @@ func CreateRawTradeRevokeTx(parm *TradeRevokeTx) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buy))
 }
 
+//CreateRawTradeBuyLimitTx :创建买单交易
 func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -232,6 +238,7 @@ func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error)
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buyLimit))
 }
 
+//CreateRawTradeSellMarketTx : 创建向指定买单出售token的卖单交易
 func CreateRawTradeSellMarketTx(parm *TradeSellMarketTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -244,6 +251,7 @@ func CreateRawTradeSellMarketTx(parm *TradeSellMarketTx) (*types.Transaction, er
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(sellMarket))
 }
 
+//CreateRawTradeRevokeBuyTx : 取消发起的买单交易
 func CreateRawTradeRevokeBuyTx(parm *TradeRevokeBuyTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -255,101 +263,4 @@ func CreateRawTradeRevokeBuyTx(parm *TradeRevokeBuyTx) (*types.Transaction, erro
 		Value: &Trade_RevokeBuy{v},
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buy))
-}
-
-// log
-type TradeSellLimitLog struct {
-}
-
-func (l TradeSellLimitLog) Name() string {
-	return "LogTradeSell"
-}
-
-func (l TradeSellLimitLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptTradeSellLimit
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type TradeSellMarketLog struct {
-}
-
-func (l TradeSellMarketLog) Name() string {
-	return "LogTradeSellMarket"
-}
-
-func (l TradeSellMarketLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptSellMarket
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type TradeBuyMarketLog struct {
-}
-
-func (l TradeBuyMarketLog) Name() string {
-	return "LogTradeBuyMarket"
-}
-
-func (l TradeBuyMarketLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptTradeBuyMarket
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type TradeBuyLimitLog struct {
-}
-
-func (l TradeBuyLimitLog) Name() string {
-	return "LogTradeBuyLimit"
-}
-
-func (l TradeBuyLimitLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptTradeBuyLimit
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type TradeBuyRevokeLog struct {
-}
-
-func (l TradeBuyRevokeLog) Name() string {
-	return "LogTradeBuyRevoke"
-}
-
-func (l TradeBuyRevokeLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptTradeBuyRevoke
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type TradeSellRevokeLog struct {
-}
-
-func (l TradeSellRevokeLog) Name() string {
-	return "LogTradeSellRevoke"
-}
-
-func (l TradeSellRevokeLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptTradeSellRevoke
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
 }

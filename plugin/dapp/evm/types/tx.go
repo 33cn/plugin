@@ -4,14 +4,24 @@
 
 package types
 
+// CreateCallTx 创建或调用合约交易结构
 type CreateCallTx struct {
-	Amount   uint64 `json:"amount"`
-	Code     string `json:"code"`
+	// Amount 金额
+	Amount uint64 `json:"amount"`
+	// Code 合约代码
+	Code string `json:"code"`
+	// GasLimit gas限制
 	GasLimit uint64 `json:"gasLimit"`
+	// GasPrice gas定价
 	GasPrice uint32 `json:"gasPrice"`
-	Note     string `json:"note"`
-	Alias    string `json:"alias"`
-	Fee      int64  `json:"fee"`
-	Name     string `json:"name"`
-	IsCreate bool   `json:"isCreate"`
+	// Note 备注
+	Note string `json:"note"`
+	// Alias 合约别名
+	Alias string `json:"alias"`
+	// Fee 交易手续费
+	Fee int64 `json:"fee"`
+	// Name 交易名称
+	Name string `json:"name"`
+	// IsCreate 是否创建合约
+	IsCreate bool `json:"isCreate"`
 }

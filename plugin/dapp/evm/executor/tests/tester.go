@@ -10,10 +10,12 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
+// Tester 测试执行对象
 type Tester struct {
 	t *testing.T
 }
 
+// NewTester 新创建测试执行对象
 func NewTester(t *testing.T) *Tester {
 	return &Tester{t: t}
 }

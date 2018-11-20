@@ -10,8 +10,6 @@ SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_PATH=vendor/${CHAIN33}
-AUTO_TEST := build/tools/autotest/autotest
-SRC_AUTO_TEST := ${CHAIN33}/cmd/autotest
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
@@ -38,12 +36,17 @@ para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
 
 
-autotest:## build autotest binary
-	@go build -v -i -o $(AUTO_TEST) $(SRC_AUTO_TEST)
-	@cp cmd/autotest/*.toml build/tools/autotest/
+autotest: ## build autotest binary
+	@cd build/autotest && bash ./build.sh && cd ../../
 	@if [ -n "$(dapp)" ]; then \
-		cd build/tools/autotest && bash ./local-autotest.sh $(dapp) && cd ../../../; \
-	fi
+		rm -rf build/autotest/local \
+		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
+		&& cd build/autotest && bash ./copy-autotest.sh local && cd local && bash ./local-autotest.sh $(dapp) && cd ../../../; fi
+autotest_ci: autotest ## autotest ci
+	@rm -rf build/autotest/jerkinsci \
+	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
+	&& cd build/autotest && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
+	&& cd jerkinsci && bash ./jerkins-ci-autotest.sh $(proj) && cd ../../../
 
 update:
 	rm -rf ${CHAIN33_PATH}
@@ -142,7 +145,7 @@ clean: ## Remove previous build
 	@rm -rf build/relayd*
 	@rm -rf build/*.log
 	@rm -rf build/logs
-	@rm -rf build/tools/autotest/autotest
+	@rm -rf build/autotest/autotest
 	@rm -rf build/ci
 	@rm -rf tool
 	@go clean

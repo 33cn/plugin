@@ -67,9 +67,12 @@ func NewRelayd(config *Config) *Relayd {
 	}
 
 	currentHeight, err := db.Get(currentBtcBlockheightKey[:])
+	if err != nil {
+		log.Warn("NewRelayd", "db get error: ", err.Error())
+	}
 	height, err := strconv.Atoi(string(currentHeight))
 	if err != nil {
-		log.Warn("NewRelayd", "atoi height error: ", err)
+		log.Warn("NewRelayd", "atoi height error: ", err.Error())
 	}
 
 	if height < firstHeight || isResetBtcHeight {
