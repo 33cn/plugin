@@ -34,12 +34,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0
 	var (
-		ret          = []byte("")
+		ret          []byte
 		vmerr        error
-		leftOverGas  = uint64(0)
+		leftOverGas  uint64
 		contractAddr common.Address
-		snapshot     = -1
-		execName     = ""
+		snapshot     int
+		execName     string
 	)
 
 	// 为了方便计费，即使合约为新生成，也将地址的初始化放到外面操作
