@@ -22,6 +22,7 @@ import (
 
 var logger = log.New("tools", "cryptogen")
 
+// 创建key存储器
 func NewFileBasedKeyStore(pwd []byte, path string, readOnly bool) (KeyStore, error) {
 	ks := &fileBasedKeyStore{}
 	return ks, ks.Init(pwd, path, readOnly)
@@ -40,14 +41,14 @@ type fileBasedKeyStore struct {
 
 func (ks *fileBasedKeyStore) Init(pwd []byte, path string, readOnly bool) error {
 	if len(path) == 0 {
-		return errors.New("An invalid KeyStore path provided. Path cannot be an empty string.")
+		return errors.New("An invalid KeyStore path provided. Path cannot be an empty string")
 	}
 
 	ks.m.Lock()
 	defer ks.m.Unlock()
 
 	if ks.isOpen {
-		return errors.New("KeyStore already initilized.")
+		return errors.New("KeyStore already initilized")
 	}
 
 	ks.path = path
@@ -74,11 +75,11 @@ func (ks *fileBasedKeyStore) ReadOnly() bool {
 
 func (ks *fileBasedKeyStore) StoreKey(k Key) (err error) {
 	if ks.readOnly {
-		return errors.New("Read only KeyStore.")
+		return errors.New("Read only KeyStore")
 	}
 
 	if k == nil {
-		return errors.New("Invalid key. It must be different from nil.")
+		return errors.New("Invalid key. It must be different from nil")
 	}
 	switch k.(type) {
 	case *ecdsaPrivateKey:

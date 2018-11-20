@@ -19,7 +19,7 @@ import (
 
 func getCSPFromOpts(KeyStorePath string) (csp.CSP, error) {
 	if KeyStorePath == "" {
-		return nil, errors.New("Invalid config. It must not be nil.")
+		return nil, errors.New("Invalid config. It must not be nil")
 	}
 
 	fks, err := csp.NewFileBasedKeyStore(nil, KeyStorePath, false)
@@ -30,6 +30,7 @@ func getCSPFromOpts(KeyStorePath string) (csp.CSP, error) {
 	return csp.New(fks)
 }
 
+// GeneratePrivateKey
 func GeneratePrivateKey(keystorePath string, opt int) (csp.Key, crypto.Signer, error) {
 	var err error
 	var priv csp.Key
@@ -48,6 +49,7 @@ func GeneratePrivateKey(keystorePath string, opt int) (csp.Key, crypto.Signer, e
 	return priv, s, err
 }
 
+// GetECPublicKey
 func GetECPublicKey(priv csp.Key) (*ecdsa.PublicKey, error) {
 	pubKey, err := priv.PublicKey()
 	if err != nil {
@@ -66,6 +68,7 @@ func GetECPublicKey(priv csp.Key) (*ecdsa.PublicKey, error) {
 	return ecPubKey.(*ecdsa.PublicKey), nil
 }
 
+// GetSM2PublicKey
 func GetSM2PublicKey(priv csp.Key) (*sm2.PublicKey, error) {
 	pubKey, err := priv.PublicKey()
 	if err != nil {

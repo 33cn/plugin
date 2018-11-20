@@ -5,6 +5,7 @@
 package types
 
 var (
+	// cert执行器名
 	CertX      = "cert"
 	ExecerCert = []byte(CertX)
 	actionName = map[string]int32{
