@@ -8,33 +8,33 @@ import "errors"
 
 var (
 	//ErrTSellBalanceNotEnough :
-	ErrTSellBalanceNotEnough   = errors.New("ErrTradeSellBalanceNotEnough")
+	ErrTSellBalanceNotEnough = errors.New("ErrTradeSellBalanceNotEnough")
 	//ErrTSellOrderNotExist :
-	ErrTSellOrderNotExist      = errors.New("ErrTradeSellOrderNotExist")
+	ErrTSellOrderNotExist = errors.New("ErrTradeSellOrderNotExist")
 	//ErrTSellOrderNotStart :
-	ErrTSellOrderNotStart      = errors.New("ErrTradeSellOrderNotStart")
+	ErrTSellOrderNotStart = errors.New("ErrTradeSellOrderNotStart")
 	//ErrTSellOrderNotEnough :
-	ErrTSellOrderNotEnough     = errors.New("ErrTradeSellOrderNotEnough")
+	ErrTSellOrderNotEnough = errors.New("ErrTradeSellOrderNotEnough")
 	//ErrTSellOrderSoldout :
-	ErrTSellOrderSoldout       = errors.New("ErrTradeSellOrderSoldout")
+	ErrTSellOrderSoldout = errors.New("ErrTradeSellOrderSoldout")
 	//ErrTSellOrderRevoked :
-	ErrTSellOrderRevoked       = errors.New("ErrTradeSellOrderRevoked")
+	ErrTSellOrderRevoked = errors.New("ErrTradeSellOrderRevoked")
 	//ErrTSellOrderExpired :
-	ErrTSellOrderExpired       = errors.New("ErrTradeSellOrderExpired")
+	ErrTSellOrderExpired = errors.New("ErrTradeSellOrderExpired")
 	//ErrTSellOrderRevoke :
-	ErrTSellOrderRevoke        = errors.New("ErrTradeSellOrderRevokeNotAllowed")
+	ErrTSellOrderRevoke = errors.New("ErrTradeSellOrderRevokeNotAllowed")
 	//ErrTSellNoSuchOrder :
-	ErrTSellNoSuchOrder        = errors.New("ErrTradeSellNoSuchOrder")
+	ErrTSellNoSuchOrder = errors.New("ErrTradeSellNoSuchOrder")
 	//ErrTBuyOrderNotExist :
-	ErrTBuyOrderNotExist       = errors.New("ErrTradeBuyOrderNotExist")
+	ErrTBuyOrderNotExist = errors.New("ErrTradeBuyOrderNotExist")
 	//ErrTBuyOrderNotEnough :
-	ErrTBuyOrderNotEnough      = errors.New("ErrTradeBuyOrderNotEnough")
+	ErrTBuyOrderNotEnough = errors.New("ErrTradeBuyOrderNotEnough")
 	//ErrTBuyOrderSoldout :
-	ErrTBuyOrderSoldout        = errors.New("ErrTradeBuyOrderSoldout")
+	ErrTBuyOrderSoldout = errors.New("ErrTradeBuyOrderSoldout")
 	//ErrTBuyOrderRevoked :
-	ErrTBuyOrderRevoked        = errors.New("ErrTradeBuyOrderRevoked")
+	ErrTBuyOrderRevoked = errors.New("ErrTradeBuyOrderRevoked")
 	//ErrTBuyOrderRevoke :
-	ErrTBuyOrderRevoke         = errors.New("ErrTradeBuyOrderRevokeNotAllowed")
+	ErrTBuyOrderRevoke = errors.New("ErrTradeBuyOrderRevokeNotAllowed")
 	//ErrTCntLessThanMinBoardlot :
 	ErrTCntLessThanMinBoardlot = errors.New("ErrTradeCountLessThanMinBoardlot")
 )

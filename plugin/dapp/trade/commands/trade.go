@@ -15,6 +15,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/spf13/cobra"
 )
+
 // TradeCmd : cmd related to trade,安装trade合约相关命令
 func TradeCmd() *cobra.Command {
 	cmd := &cobra.Command{

@@ -13,14 +13,17 @@ import (
 type channelClient struct {
 	rpctypes.ChannelClient
 }
+
 //Jrpc : Jrpc struct definition
 type Jrpc struct {
 	cli *channelClient
 }
+
 //Grpc : Grpc struct definition
 type Grpc struct {
 	*channelClient
 }
+
 //Init : do the init operation
 func Init(name string, s rpctypes.RPCServer) {
 	cli := &channelClient{}
@@ -28,6 +31,7 @@ func Init(name string, s rpctypes.RPCServer) {
 	cli.Init(name, s, &Jrpc{cli: cli}, grpc)
 	ptypes.RegisterTradeServer(s.GRPC(), grpc)
 }
+
 //GetLastMemPool : get the last memory pool
 func (jrpc *Jrpc) GetLastMemPool(in types.ReqNil, result *interface{}) error {
 	reply, err := jrpc.cli.GetLastMempool()

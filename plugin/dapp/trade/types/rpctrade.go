@@ -27,6 +27,7 @@ type RPCReplyTradeOrder struct {
 	IsSellOrder       bool   `protobuf:"varint,15,opt,name=isSellOrder" json:"isSellOrder"`
 	AssetExec         string `protobuf:"bytes,16,opt,name=assetExec" json:"assetExec"`
 }
+
 //MarshalJSON :
 func (reply *ReplyTradeOrder) MarshalJSON() ([]byte, error) {
 	r := (*RPCReplyTradeOrder)(reply)
