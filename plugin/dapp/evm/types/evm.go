@@ -54,7 +54,6 @@ func (evm EvmType) ActionName(tx *types.Transaction) string {
 	} else {
 		return "callEvmContract"
 	}
-	return "unknown"
 }
 
 func (evm *EvmType) GetTypeMap() map[string]int32 {
@@ -79,7 +78,6 @@ func (evm EvmType) Amount(tx *types.Transaction) (int64, error) {
 
 func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	elog.Debug("evm.CreateTx", "action", action)
-	var tx *types.Transaction
 	if action == "CreateCall" {
 		var param CreateCallTx
 		err := json.Unmarshal(message, &param)
@@ -91,8 +89,6 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 	} else {
 		return nil, types.ErrNotSupport
 	}
-
-	return tx, nil
 }
 
 func (evm *EvmType) GetLogMap() map[int64]*types.LogInfo {

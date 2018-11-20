@@ -27,7 +27,7 @@ func Transfer(db state.StateDB, sender, recipient common.Address, amount uint64)
 func GetHashFn(api client.QueueProtocolAPI) func(blockHeight uint64) common.Hash {
 	return func(blockHeight uint64) common.Hash {
 		if api != nil {
-			reply, err := api.GetBlockHash(&types.ReqInt{int64(blockHeight)})
+			reply, err := api.GetBlockHash(&types.ReqInt{Height: int64(blockHeight)})
 			if nil != err {
 				log.Error("Call GetBlockHash Failed.", err)
 			}

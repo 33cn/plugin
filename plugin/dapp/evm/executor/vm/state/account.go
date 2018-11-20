@@ -248,7 +248,7 @@ func (self *ContractAccount) BuildDataLog() (log *types.ReceiptLog) {
 		log15.Error("marshal contract data error!", "addr", self.Addr, "error", err)
 		return
 	}
-	return &types.ReceiptLog{evmtypes.TyLogContractData, datas}
+	return &types.ReceiptLog{Ty: evmtypes.TyLogContractData, Log: datas}
 }
 
 // 构建变更日志
@@ -259,7 +259,7 @@ func (self *ContractAccount) BuildStateLog() (log *types.ReceiptLog) {
 		return
 	}
 
-	return &types.ReceiptLog{evmtypes.TyLogContractState, datas}
+	return &types.ReceiptLog{Ty: evmtypes.TyLogContractState, Log: datas}
 }
 
 func (self *ContractAccount) GetDataKey() []byte {

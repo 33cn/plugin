@@ -201,7 +201,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 // 目前只按需构造必要的参数，理论上GasFun进行Gas计算时可以使用Contract中的所有参数
 // 后继视需要修改GasParam结构
 func buildGasParam(contract *Contract) *params.GasParam {
-	return &params.GasParam{contract.Gas, contract.Address()}
+	return &params.GasParam{Gas: contract.Gas, Address: contract.Address()}
 }
 
 // 从EVM构造参数传递给GasFunc逻辑使用
