@@ -30,6 +30,7 @@ func init() {
 	wcom.RegisterPolicy(ty.TicketX, New())
 }
 
+// New new instance
 func New() wcom.WalletBizPolicy {
 	return &ticketPolicy{mtx: &sync.Mutex{}}
 }
@@ -82,17 +83,20 @@ func (policy *ticketPolicy) getAPI() client.QueueProtocolAPI {
 	return policy.walletOperate.GetAPI()
 }
 
+// IsAutoMining check auto mining
 func (policy *ticketPolicy) IsAutoMining() bool {
 	return policy.isAutoMining()
 }
 
+// IsTicketLocked check lock status
 func (policy *ticketPolicy) IsTicketLocked() bool {
 	return atomic.LoadInt32(&policy.isTicketLocked) != 0
 }
 
+// Init initial
 func (policy *ticketPolicy) Init(walletBiz wcom.WalletOperate, sub []byte) {
 	policy.setWalletOperate(walletBiz)
-	policy.store = NewStore(walletBiz.GetDBStore())
+	policy.store = newStore(walletBiz.GetDBStore())
 	policy.needFlush = false
 	policy.isTicketLocked = 1
 	policy.autoMinerFlag = policy.store.GetAutoMinerFlag()
@@ -110,19 +114,23 @@ func (policy *ticketPolicy) Init(walletBiz wcom.WalletOperate, sub []byte) {
 	go policy.autoMining()
 }
 
+// OnClose close
 func (policy *ticketPolicy) OnClose() {
 	policy.getMingTicketTicker().Stop()
 }
 
-func (this *ticketPolicy) OnSetQueueClient() {
+// OnSetQueueClient on set queue client
+func (policy *ticketPolicy) OnSetQueueClient() {
 
 }
 
-func (this *ticketPolicy) Call(funName string, in types.Message) (ret types.Message, err error) {
+// Call call
+func (policy *ticketPolicy) Call(funName string, in types.Message) (ret types.Message, err error) {
 	err = types.ErrNotSupport
 	return
 }
 
+// OnAddBlockTx add Block tx
 func (policy *ticketPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	receipt := block.Receipts[index]
 	amount, _ := tx.Amount()
@@ -158,6 +166,7 @@ func (policy *ticketPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 	return wtxdetail
 }
 
+// OnDeleteBlockTx on delete block
 func (policy *ticketPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	receipt := block.Receipts[index]
 	amount, _ := tx.Amount()
@@ -193,11 +202,13 @@ func (policy *ticketPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.
 	return wtxdetail
 }
 
+// SignTransaction sign tx
 func (policy *ticketPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtx string, err error) {
 	needSysSign = true
 	return
 }
 
+// OnWalletLocked process lock event
 func (policy *ticketPolicy) OnWalletLocked() {
 	// 钱包锁住时，不允许挖矿
 	atomic.CompareAndSwapInt32(&policy.isTicketLocked, 0, 1)
@@ -215,6 +226,7 @@ func (policy *ticketPolicy) resetTimeout(Timeout int64) {
 	}
 }
 
+// OnWalletUnlocked process unlock event
 func (policy *ticketPolicy) OnWalletUnlocked(param *types.WalletUnLock) {
 	if param.WalletOrTicket {
 		atomic.CompareAndSwapInt32(&policy.isTicketLocked, 1, 0)
@@ -226,14 +238,16 @@ func (policy *ticketPolicy) OnWalletUnlocked(param *types.WalletUnLock) {
 	FlushTicket(policy.getAPI())
 }
 
+// OnCreateNewAccount process create new account event
 func (policy *ticketPolicy) OnCreateNewAccount(acc *types.Account) {
 }
 
-//导入key的时候flush ticket
+// OnImportPrivateKey 导入key的时候flush ticket
 func (policy *ticketPolicy) OnImportPrivateKey(acc *types.Account) {
 	FlushTicket(policy.getAPI())
 }
 
+// OnAddBlockFinish process finish block
 func (policy *ticketPolicy) OnAddBlockFinish(block *types.BlockDetail) {
 	if policy.needFlush {
 		// 新增区块，由于ticket具有锁定期，所以这里不需要刷新
@@ -242,6 +256,7 @@ func (policy *ticketPolicy) OnAddBlockFinish(block *types.BlockDetail) {
 	policy.needFlush = false
 }
 
+// OnDeleteBlockFinish process finish block
 func (policy *ticketPolicy) OnDeleteBlockFinish(block *types.BlockDetail) {
 	if policy.needFlush {
 		FlushTicket(policy.getAPI())
@@ -249,6 +264,7 @@ func (policy *ticketPolicy) OnDeleteBlockFinish(block *types.BlockDetail) {
 	policy.needFlush = false
 }
 
+// FlushTicket flush ticket
 func FlushTicket(api client.QueueProtocolAPI) {
 	bizlog.Info("wallet FLUSH TICKET")
 	api.Notify("consensus", types.EventConsensusQuery, &types.ChainExecutor{
