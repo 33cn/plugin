@@ -33,7 +33,7 @@ type gmValidator struct {
 	CRL []*pkix.CertificateList
 }
 
-// 创建国密证书校验器
+// NewGmValidator 创建国密证书校验器
 func NewGmValidator() Validator {
 	return &gmValidator{}
 }

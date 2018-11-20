@@ -95,7 +95,7 @@ func newEcdsaCA(baseDir, name string) (*EcdsaCA, error) {
 	return ca, nil
 }
 
-// 证书签名
+// SignCertificate 证书签名
 func (ca *EcdsaCA) SignCertificate(baseDir, name string, sans []string, pub interface{}) (*x509.Certificate, error) {
 	template := x509Template()
 	template.KeyUsage = x509.KeyUsageDigitalSignature
@@ -116,7 +116,7 @@ func (ca *EcdsaCA) SignCertificate(baseDir, name string, sans []string, pub inte
 	return cert, nil
 }
 
-// 生成本地用户
+// GenerateLocalUser 生成本地用户
 func (ca *EcdsaCA) GenerateLocalUser(baseDir, name string) error {
 	err := createFolderStructure(baseDir, true)
 	if err != nil {
@@ -234,7 +234,7 @@ func newSM2CA(baseDir, name string) (*SM2CA, error) {
 	return ca, nil
 }
 
-// 证书签名
+// SignCertificate 证书签名
 func (ca *SM2CA) SignCertificate(baseDir, name string, sans []string, pub interface{}) (*x509.Certificate, error) {
 	template := x509Template()
 	template.KeyUsage = x509.KeyUsageDigitalSignature
@@ -256,7 +256,7 @@ func (ca *SM2CA) SignCertificate(baseDir, name string, sans []string, pub interf
 	return utils.ParseSm2CertificateToX509(cert), nil
 }
 
-// 生成本地用户
+// GenerateLocalUser 生成本地用户
 func (ca *SM2CA) GenerateLocalUser(baseDir, name string) error {
 	err := createFolderStructure(baseDir, true)
 	if err != nil {

@@ -7,7 +7,7 @@ package types
 import "errors"
 
 var (
-	// cert校验失败
+	// ErrValidateCertFailed cert校验失败
 	ErrValidateCertFailed  = errors.New("ErrValidateCertFailed")
 	ErrGetHistoryCertData  = errors.New("ErrGetHistoryCertData")
 	ErrUnknowAuthSignType  = errors.New("ErrUnknowAuthSignType")
