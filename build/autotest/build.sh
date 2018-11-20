@@ -11,7 +11,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 AutoTestMain="../../vendor/github.com/33cn/chain33/cmd/autotest/main.go"
-ImportPlugin="\"github.com/33cn/plugin/plugin\""
+ImportPlugin='"github.com/33cn/plugin/plugin"'
 
 function build_auto_test() {
 
