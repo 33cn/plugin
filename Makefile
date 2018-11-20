@@ -47,6 +47,11 @@ autotest_ci: autotest ## autotest ci
 	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
 	&& cd build/autotest && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
 	&& cd jerkinsci && bash ./jerkins-ci-autotest.sh $(proj) && cd ../../../
+autotest_tick: autotest ## run with ticket mining
+	@rm -rf build/autotest/gitlabci \
+	&& cp -r $(CHAIN33_PATH)/build/autotest/gitlabci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
+	&& cd build/autotest && bash ./copy-autotest.sh gitlabci \
+	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
 
 update:
 	rm -rf ${CHAIN33_PATH}
