@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//EvmCmd 是Evm命令行入口
 func EvmCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "evm",
@@ -36,32 +37,32 @@ func EvmCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CreateContractCmd(),
-		CallContractCmd(),
-		EstimateContractCmd(),
-		CheckContractAddrCmd(),
-		EvmDebugCmd(),
-		EvmTransferCmd(),
-		EvmWithdrawCmd(),
-		GetEvmBalanceCmd(),
-		EvmToolsCmd(),
+		createContractCmd(),
+		callContractCmd(),
+		estimateContractCmd(),
+		checkContractAddrCmd(),
+		evmDebugCmd(),
+		evmTransferCmd(),
+		evmWithdrawCmd(),
+		getEvmBalanceCmd(),
+		evmToolsCmd(),
 	)
 
 	return cmd
 }
 
 // some tools for evm op
-func EvmToolsCmd() *cobra.Command {
+func evmToolsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tool",
 		Short: "Some tools for evm op",
 	}
-	cmd.AddCommand(EvmToolsAddressCmd())
+	cmd.AddCommand(evmToolsAddressCmd())
 	return cmd
 }
 
 // transfer address format between ethereum and chain33
-func EvmToolsAddressCmd() *cobra.Command {
+func evmToolsAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "address",
 		Short: "Transfer address format between ethereum and local (you should input one address of them)",
@@ -105,7 +106,7 @@ func transferAddress(cmd *cobra.Command, args []string) {
 			addr = *addrP
 			fmt.Println(fmt.Sprintf("Local Address: %v", local))
 		}
-		fmt.Println(fmt.Sprintf("Ethereum Address: %v", ChecksumAddr(addr.Bytes())))
+		fmt.Println(fmt.Sprintf("Ethereum Address: %v", checksumAddr(addr.Bytes())))
 
 		return
 	}
@@ -113,7 +114,7 @@ func transferAddress(cmd *cobra.Command, args []string) {
 }
 
 // get balance of an execer
-func GetEvmBalanceCmd() *cobra.Command {
+func getEvmBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
 		Short: "Get balance of a evm contract address",
@@ -161,11 +162,16 @@ func evmBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+// AccountResult 账户余额查询出来之后进行单位转换
 type AccountResult struct {
-	Currency int32  `json:"currency,omitempty"`
-	Balance  string `json:"balance,omitempty"`
-	Frozen   string `json:"frozen,omitempty"`
-	Addr     string `json:"addr,omitempty"`
+	// 货币
+	Currency int32 `json:"currency,omitempty"`
+	// 余额
+	Balance string `json:"balance,omitempty"`
+	// 冻结余额
+	Frozen string `json:"frozen,omitempty"`
+	// 账户地址
+	Addr string `json:"addr,omitempty"`
 }
 
 func parseGetBalanceRes(arg interface{}) (interface{}, error) {
@@ -182,7 +188,7 @@ func parseGetBalanceRes(arg interface{}) (interface{}, error) {
 }
 
 // 创建EVM合约
-func CreateContractCmd() *cobra.Command {
+func createContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new EVM contract",
@@ -319,7 +325,7 @@ func createEvmTransferTx(cmd *cobra.Command, caller, execName, expire, rpcLaddr 
 }
 
 // 调用EVM合约
-func CallContractCmd() *cobra.Command {
+func callContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
 		Short: "Call the EVM contract",
@@ -431,7 +437,7 @@ func addEstimateFlags(cmd *cobra.Command) {
 }
 
 // 估算合约消耗
-func EstimateContractCmd() *cobra.Command {
+func estimateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "estimate",
 		Short: "Estimate the gas cost of calling or creating a contract",
@@ -442,7 +448,7 @@ func EstimateContractCmd() *cobra.Command {
 }
 
 // 检查地址是否为EVM合约
-func CheckContractAddrCmd() *cobra.Command {
+func checkContractAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Check if the address is a valid EVM contract",
@@ -485,34 +491,34 @@ func checkContractAddr(cmd *cobra.Command, args []string) {
 }
 
 // 查询或设置EVM调试开关
-func EvmDebugCmd() *cobra.Command {
+func evmDebugCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "debug",
 		Short: "Query or set evm debug status",
 	}
 	cmd.AddCommand(
-		EvmDebugQueryCmd(),
-		EvmDebugSetCmd(),
-		EvmDebugClearCmd())
+		evmDebugQueryCmd(),
+		evmDebugSetCmd(),
+		evmDebugClearCmd())
 
 	return cmd
 }
 
-func EvmDebugQueryCmd() *cobra.Command {
+func evmDebugQueryCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "query",
 		Short: "Query evm debug status",
 		Run:   evmDebugQuery,
 	}
 }
-func EvmDebugSetCmd() *cobra.Command {
+func evmDebugSetCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "set",
 		Short: "Set evm debug to ON",
 		Run:   evmDebugSet,
 	}
 }
-func EvmDebugClearCmd() *cobra.Command {
+func evmDebugClearCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "clear",
 		Short: "Set evm debug to OFF",
@@ -521,17 +527,17 @@ func EvmDebugClearCmd() *cobra.Command {
 }
 
 func evmDebugQuery(cmd *cobra.Command, args []string) {
-	evmDebugRpc(cmd, 0)
+	evmDebugRPC(cmd, 0)
 }
 
 func evmDebugSet(cmd *cobra.Command, args []string) {
-	evmDebugRpc(cmd, 1)
+	evmDebugRPC(cmd, 1)
 }
 
 func evmDebugClear(cmd *cobra.Command, args []string) {
-	evmDebugRpc(cmd, -1)
+	evmDebugRPC(cmd, -1)
 }
-func evmDebugRpc(cmd *cobra.Command, flag int32) {
+func evmDebugRPC(cmd *cobra.Command, flag int32) {
 	var debugReq = evmtypes.EvmDebugReq{Optype: flag}
 	var debugResp evmtypes.EvmDebugResp
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -545,7 +551,7 @@ func evmDebugRpc(cmd *cobra.Command, flag int32) {
 }
 
 // 向EVM合约地址转账
-func EvmTransferCmd() *cobra.Command {
+func evmTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
 		Short: "Transfer to evm contract address",
@@ -593,7 +599,7 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 }
 
 // 向EVM合约地址转账
-func EvmWithdrawCmd() *cobra.Command {
+func evmWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",
 		Short: "Withdraw from evm contract address to caller's balance",
@@ -662,7 +668,7 @@ func sendQuery(rpcAddr, funcName string, request interface{}, result proto.Messa
 }
 
 // 这里实现 EIP55中提及的以太坊地址表示方式（增加Checksum）
-func ChecksumAddr(address []byte) string {
+func checksumAddr(address []byte) string {
 	unchecksummed := hex.EncodeToString(address[:])
 	sha := sha3.NewKeccak256()
 	sha.Write([]byte(unchecksummed))

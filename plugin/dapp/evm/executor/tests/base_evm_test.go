@@ -23,7 +23,7 @@ func TestCreateContract1(t *testing.T) {
 	gasLimit := gas
 	tx := createTx(privKey, deployCode, gas, 10000000)
 	mdb := buildStateDB(getAddr(privKey).String(), 500000000)
-	ret, addr, leftGas, err, statedb := createContract(mdb, tx, 0)
+	ret, addr, leftGas, statedb, err := createContract(mdb, tx, 0)
 
 	test := NewTester(t)
 	test.assertNil(err)
@@ -33,7 +33,7 @@ func TestCreateContract1(t *testing.T) {
 	test.assertNotEqualsI(common.Address(addr), common.EmptyAddress())
 
 	// 检查返回数据是否正确
-	test.assertEqualsV(statedb.GetLastSnapshot().GetId(), 0)
+	test.assertEqualsV(statedb.GetLastSnapshot().GetID(), 0)
 }
 
 // 创建合约gas不足
@@ -46,7 +46,7 @@ func TestCreateContract2(t *testing.T) {
 	gas := uint64(30)
 	tx := createTx(privKey, deployCode, gas, 0)
 	mdb := buildStateDB(getAddr(privKey).String(), 100000000)
-	ret, _, leftGas, err, _ := createContract(mdb, tx, 0)
+	ret, _, leftGas, _, err := createContract(mdb, tx, 0)
 
 	test := NewTester(t)
 
@@ -72,7 +72,7 @@ func TestCreateContract3(t *testing.T) {
 	gasLimit := gas
 	tx := createTx(privKey, deployCode, gas, 0)
 	mdb := buildStateDB(getAddr(privKey).String(), 100000000)
-	ret, _, leftGas, err, _ := createContract(mdb, tx, 0)
+	ret, _, leftGas, _, err := createContract(mdb, tx, 0)
 
 	test := NewTester(t)
 
@@ -98,7 +98,7 @@ func TestCreateContract4(t *testing.T) {
 	gasLimit := gas
 	tx := createTx(privKey, deployCode, gas, 0)
 	mdb := buildStateDB(getAddr(privKey).String(), 100000000)
-	ret, _, leftGas, err, _ := createContract(mdb, tx, 50)
+	ret, _, leftGas, _, err := createContract(mdb, tx, 50)
 
 	test := NewTester(t)
 
