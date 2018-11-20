@@ -107,7 +107,7 @@ func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Tran
 
 		return CreateRawGamePreCloseTx(&param)
 	}
-		return nil, types.ErrNotSupport
+	return nil, types.ErrNotSupport
 }
 
 // CreateRawGamePreCreateTx  unused,just empty implementation
