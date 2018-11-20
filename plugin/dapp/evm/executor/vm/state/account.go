@@ -15,24 +15,24 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// 合约账户对象
+// ContractAccount 合约账户对象
 type ContractAccount struct {
 	mdb *MemoryStateDB
 
-	// 合约代码地址
+	// Addr 合约代码地址
 	Addr string
 
-	// 合约固定数据
+	// Data 合约固定数据
 	Data evmtypes.EVMContractData
 
-	// 合约状态数据
+	// State 合约状态数据
 	State evmtypes.EVMContractState
 
 	// 当前的状态数据缓存
 	stateCache map[string]common.Hash
 }
 
-// 创建一个新的合约对象
+// NewContractAccount 创建一个新的合约对象
 // 注意，此时合约对象有可能已经存在也有可能不存在
 // 需要通过LoadContract进行判断
 func NewContractAccount(addr string, db *MemoryStateDB) *ContractAccount {
@@ -46,74 +46,73 @@ func NewContractAccount(addr string, db *MemoryStateDB) *ContractAccount {
 	return ca
 }
 
-// 获取状态数据；
+// GetState 获取状态数据；
 // 获取数据分为两层，一层是从当前的缓存中获取，如果获取不到，再从localdb中获取
-func (self *ContractAccount) GetState(key common.Hash) common.Hash {
+func (ca *ContractAccount) GetState(key common.Hash) common.Hash {
 	// 从ForkV19开始，状态数据使用单独的KEY存储
-	if types.IsDappFork(self.mdb.blockHeight, "evm", "ForkEVMState") {
-		if val, ok := self.stateCache[key.Hex()]; ok {
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
+		if val, ok := ca.stateCache[key.Hex()]; ok {
 			return val
 		}
-		keyStr := getStateItemKey(self.Addr, key.Hex())
+		keyStr := getStateItemKey(ca.Addr, key.Hex())
 		// 如果缓存中取不到数据，则只能到本地数据库中查询
-		val, err := self.mdb.LocalDB.Get([]byte(keyStr))
+		val, err := ca.mdb.LocalDB.Get([]byte(keyStr))
 		if err != nil {
 			log15.Debug("GetState error!", "key", key, "error", err)
 			return common.Hash{}
 		}
 		valHash := common.BytesToHash(val)
-		self.stateCache[key.Hex()] = valHash
+		ca.stateCache[key.Hex()] = valHash
 		return valHash
-	} else {
-		return common.BytesToHash(self.State.GetStorage()[key.Hex()])
 	}
+	return common.BytesToHash(ca.State.GetStorage()[key.Hex()])
 }
 
-// 设置状态数据
-func (self *ContractAccount) SetState(key, value common.Hash) {
-	self.mdb.addChange(storageChange{
+// SetState 设置状态数据
+func (ca *ContractAccount) SetState(key, value common.Hash) {
+	ca.mdb.addChange(storageChange{
 		baseChange: baseChange{},
-		account:    self.Addr,
+		account:    ca.Addr,
 		key:        key,
-		prevalue:   self.GetState(key),
+		prevalue:   ca.GetState(key),
 	})
-	if types.IsDappFork(self.mdb.blockHeight, "evm", "ForkEVMState") {
-		self.stateCache[key.Hex()] = value
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
+		ca.stateCache[key.Hex()] = value
 		//需要设置到localdb中，以免同一个区块中同一个合约多次调用时，状态数据丢失
-		keyStr := getStateItemKey(self.Addr, key.Hex())
-		self.mdb.LocalDB.Set([]byte(keyStr), value.Bytes())
+		keyStr := getStateItemKey(ca.Addr, key.Hex())
+		ca.mdb.LocalDB.Set([]byte(keyStr), value.Bytes())
 	} else {
-		self.State.GetStorage()[key.Hex()] = value.Bytes()
-		self.updateStorageHash()
+		ca.State.GetStorage()[key.Hex()] = value.Bytes()
+		ca.updateStorageHash()
 	}
 }
 
-// 从原有的存储在一个对象，将状态数据分散存储到多个KEY，保证合约可以支撑大量状态数据
-func (self *ContractAccount) TransferState() {
-	if len(self.State.Storage) > 0 {
-		storage := self.State.Storage
+// TransferState 从原有的存储在一个对象，将状态数据分散存储到多个KEY，保证合约可以支撑大量状态数据
+func (ca *ContractAccount) TransferState() {
+	if len(ca.State.Storage) > 0 {
+		storage := ca.State.Storage
 		// 为了保证不会造成新、旧数据并存的情况，需要将旧的状态数据清空
-		self.State.Storage = make(map[string][]byte)
-		self.State.StorageHash = common.ToHash([]byte{}).Bytes()
+		ca.State.Storage = make(map[string][]byte)
+		ca.State.StorageHash = common.ToHash([]byte{}).Bytes()
 
 		// 从旧的区块迁移状态数据到新的区块，模拟状态数据变更的操作
 		for key, value := range storage {
-			self.SetState(common.BytesToHash(common.FromHex(key)), common.BytesToHash(value))
+			ca.SetState(common.BytesToHash(common.FromHex(key)), common.BytesToHash(value))
 		}
 		// 更新本合约的状态数据（删除旧的map存储信息）
-		self.mdb.UpdateState(self.Addr)
+		ca.mdb.UpdateState(ca.Addr)
 		return
 	}
 }
 
-func (self *ContractAccount) updateStorageHash() {
+func (ca *ContractAccount) updateStorageHash() {
 	// 从ForkV20开始，状态数据使用单独KEY存储
-	if types.IsDappFork(self.mdb.blockHeight, "evm", "ForkEVMState") {
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
 		return
 	}
-	var state = &evmtypes.EVMContractState{Suicided: self.State.Suicided, Nonce: self.State.Nonce}
+	var state = &evmtypes.EVMContractState{Suicided: ca.State.Suicided, Nonce: ca.State.Nonce}
 	state.Storage = make(map[string][]byte)
-	for k, v := range self.State.GetStorage() {
+	for k, v := range ca.State.GetStorage() {
 		state.Storage[k] = v
 	}
 	ret, err := proto.Marshal(state)
@@ -122,152 +121,160 @@ func (self *ContractAccount) updateStorageHash() {
 		return
 	}
 
-	self.State.StorageHash = common.ToHash(ret).Bytes()
+	ca.State.StorageHash = common.ToHash(ret).Bytes()
 }
 
 // 从外部恢复合约数据
-func (self *ContractAccount) resotreData(data []byte) {
+func (ca *ContractAccount) resotreData(data []byte) {
 	var content evmtypes.EVMContractData
 	err := proto.Unmarshal(data, &content)
 	if err != nil {
-		log15.Error("read contract data error", self.Addr)
+		log15.Error("read contract data error", ca.Addr)
 		return
 	}
 
-	self.Data = content
+	ca.Data = content
 }
 
 // 从外部恢复合约状态
-func (self *ContractAccount) resotreState(data []byte) {
+func (ca *ContractAccount) resotreState(data []byte) {
 	var content evmtypes.EVMContractState
 	err := proto.Unmarshal(data, &content)
 	if err != nil {
-		log15.Error("read contract state error", self.Addr)
+		log15.Error("read contract state error", ca.Addr)
 		return
 	}
-	self.State = content
-	if self.State.Storage == nil {
-		self.State.Storage = make(map[string][]byte)
+	ca.State = content
+	if ca.State.Storage == nil {
+		ca.State.Storage = make(map[string][]byte)
 	}
 }
 
-// 从数据库中加载合约信息（在只有合约地址的情况下）
-func (self *ContractAccount) LoadContract(db db.KV) {
+// LoadContract 从数据库中加载合约信息（在只有合约地址的情况下）
+func (ca *ContractAccount) LoadContract(db db.KV) {
 	// 加载代码数据
-	data, err := db.Get(self.GetDataKey())
+	data, err := db.Get(ca.GetDataKey())
 	if err != nil {
 		return
 	}
-	self.resotreData(data)
+	ca.resotreData(data)
 
 	// 加载状态数据
-	data, err = db.Get(self.GetStateKey())
+	data, err = db.Get(ca.GetStateKey())
 	if err != nil {
 		return
 	}
-	self.resotreState(data)
+	ca.resotreState(data)
 }
 
-// 设置合约二进制代码
+// SetCode 设置合约二进制代码
 // 会同步生成代码哈希
-func (self *ContractAccount) SetCode(code []byte) {
-	prevcode := self.Data.GetCode()
-	self.mdb.addChange(codeChange{
+func (ca *ContractAccount) SetCode(code []byte) {
+	prevcode := ca.Data.GetCode()
+	ca.mdb.addChange(codeChange{
 		baseChange: baseChange{},
-		account:    self.Addr,
-		prevhash:   self.Data.GetCodeHash(),
+		account:    ca.Addr,
+		prevhash:   ca.Data.GetCodeHash(),
 		prevcode:   prevcode,
 	})
-	self.Data.Code = code
-	self.Data.CodeHash = common.ToHash(code).Bytes()
+	ca.Data.Code = code
+	ca.Data.CodeHash = common.ToHash(code).Bytes()
 }
 
-func (self *ContractAccount) SetCreator(creator string) {
+// SetCreator 设置创建者
+func (ca *ContractAccount) SetCreator(creator string) {
 	if len(creator) == 0 {
 		log15.Error("SetCreator error", "creator", creator)
 		return
 	}
-	self.Data.Creator = creator
+	ca.Data.Creator = creator
 }
 
-func (self *ContractAccount) SetExecName(execName string) {
+// SetExecName 设置合约名称
+func (ca *ContractAccount) SetExecName(execName string) {
 	if len(execName) == 0 {
 		log15.Error("SetExecName error", "execName", execName)
 		return
 	}
-	self.Data.Name = execName
+	ca.Data.Name = execName
 }
 
-func (self *ContractAccount) SetAliasName(alias string) {
+// SetAliasName 设置合约别名
+func (ca *ContractAccount) SetAliasName(alias string) {
 	if len(alias) == 0 {
 		log15.Error("SetAliasName error", "aliasName", alias)
 		return
 	}
-	self.Data.Alias = alias
+	ca.Data.Alias = alias
 }
 
-func (self *ContractAccount) GetAliasName() string {
-	return self.Data.Alias
+// GetAliasName 获取合约别名
+func (ca *ContractAccount) GetAliasName() string {
+	return ca.Data.Alias
 }
 
-func (self *ContractAccount) GetCreator() string {
-	return self.Data.Creator
+// GetCreator 获取创建者
+func (ca *ContractAccount) GetCreator() string {
+	return ca.Data.Creator
 }
 
-func (self *ContractAccount) GetExecName() string {
-	return self.Data.Name
+// GetExecName 获取合约明名称
+func (ca *ContractAccount) GetExecName() string {
+	return ca.Data.Name
 }
 
-// 合约固定数据，包含合约代码，以及代码哈希
-func (self *ContractAccount) GetDataKV() (kvSet []*types.KeyValue) {
-	self.Data.Addr = self.Addr
-	datas, err := proto.Marshal(&self.Data)
+// GetDataKV 合约固定数据，包含合约代码，以及代码哈希
+func (ca *ContractAccount) GetDataKV() (kvSet []*types.KeyValue) {
+	ca.Data.Addr = ca.Addr
+	datas, err := proto.Marshal(&ca.Data)
 	if err != nil {
-		log15.Error("marshal contract data error!", "addr", self.Addr, "error", err)
+		log15.Error("marshal contract data error!", "addr", ca.Addr, "error", err)
 		return
 	}
-	kvSet = append(kvSet, &types.KeyValue{Key: self.GetDataKey(), Value: datas})
+	kvSet = append(kvSet, &types.KeyValue{Key: ca.GetDataKey(), Value: datas})
 	return
 }
 
-// 获取合约状态数据，包含nonce、是否自杀、存储哈希、存储数据
-func (self *ContractAccount) GetStateKV() (kvSet []*types.KeyValue) {
-	datas, err := proto.Marshal(&self.State)
+// GetStateKV 获取合约状态数据，包含nonce、是否自杀、存储哈希、存储数据
+func (ca *ContractAccount) GetStateKV() (kvSet []*types.KeyValue) {
+	datas, err := proto.Marshal(&ca.State)
 	if err != nil {
-		log15.Error("marshal contract state error!", "addr", self.Addr, "error", err)
+		log15.Error("marshal contract state error!", "addr", ca.Addr, "error", err)
 		return
 	}
-	kvSet = append(kvSet, &types.KeyValue{Key: self.GetStateKey(), Value: datas})
+	kvSet = append(kvSet, &types.KeyValue{Key: ca.GetStateKey(), Value: datas})
 	return
 }
 
-// 构建变更日志
-func (self *ContractAccount) BuildDataLog() (log *types.ReceiptLog) {
-	datas, err := proto.Marshal(&self.Data)
+// BuildDataLog 构建变更日志
+func (ca *ContractAccount) BuildDataLog() (log *types.ReceiptLog) {
+	datas, err := proto.Marshal(&ca.Data)
 	if err != nil {
-		log15.Error("marshal contract data error!", "addr", self.Addr, "error", err)
+		log15.Error("marshal contract data error!", "addr", ca.Addr, "error", err)
 		return
 	}
 	return &types.ReceiptLog{Ty: evmtypes.TyLogContractData, Log: datas}
 }
 
-// 构建变更日志
-func (self *ContractAccount) BuildStateLog() (log *types.ReceiptLog) {
-	datas, err := proto.Marshal(&self.State)
+// BuildStateLog 构建变更日志
+func (ca *ContractAccount) BuildStateLog() (log *types.ReceiptLog) {
+	datas, err := proto.Marshal(&ca.State)
 	if err != nil {
-		log15.Error("marshal contract state log error!", "addr", self.Addr, "error", err)
+		log15.Error("marshal contract state log error!", "addr", ca.Addr, "error", err)
 		return
 	}
 
 	return &types.ReceiptLog{Ty: evmtypes.TyLogContractState, Log: datas}
 }
 
-func (self *ContractAccount) GetDataKey() []byte {
-	return []byte("mavl-" + evmtypes.ExecutorName + "-data: " + self.Addr)
+// GetDataKey 获取数据KEY
+func (ca *ContractAccount) GetDataKey() []byte {
+	return []byte("mavl-" + evmtypes.ExecutorName + "-data: " + ca.Addr)
 }
 
-func (self *ContractAccount) GetStateKey() []byte {
-	return []byte("mavl-" + evmtypes.ExecutorName + "-state: " + self.Addr)
+// GetStateKey 获取状态key
+func (ca *ContractAccount) GetStateKey() []byte {
+	return []byte("mavl-" + evmtypes.ExecutorName + "-state: " + ca.Addr)
 }
 
 // 这份数据是存在LocalDB中的
@@ -275,28 +282,33 @@ func getStateItemKey(addr, key string) string {
 	return fmt.Sprintf("LODB-"+evmtypes.ExecutorName+"-state:%v:%v", addr, key)
 }
 
-func (self *ContractAccount) Suicide() bool {
-	self.State.Suicided = true
+// Suicide 自杀
+func (ca *ContractAccount) Suicide() bool {
+	ca.State.Suicided = true
 	return true
 }
 
-func (self *ContractAccount) HasSuicided() bool {
-	return self.State.GetSuicided()
+// HasSuicided 是否已经自杀
+func (ca *ContractAccount) HasSuicided() bool {
+	return ca.State.GetSuicided()
 }
 
-func (self *ContractAccount) Empty() bool {
-	return self.Data.GetCodeHash() == nil || len(self.Data.GetCodeHash()) == 0
+// Empty 是否为空对象
+func (ca *ContractAccount) Empty() bool {
+	return ca.Data.GetCodeHash() == nil || len(ca.Data.GetCodeHash()) == 0
 }
 
-func (self *ContractAccount) SetNonce(nonce uint64) {
-	self.mdb.addChange(nonceChange{
+// SetNonce 设置nonce值
+func (ca *ContractAccount) SetNonce(nonce uint64) {
+	ca.mdb.addChange(nonceChange{
 		baseChange: baseChange{},
-		account:    self.Addr,
-		prev:       self.State.GetNonce(),
+		account:    ca.Addr,
+		prev:       ca.State.GetNonce(),
 	})
-	self.State.Nonce = nonce
+	ca.State.Nonce = nonce
 }
 
-func (self *ContractAccount) GetNonce() uint64 {
-	return self.State.GetNonce()
+// GetNonce 获取nonce值
+func (ca *ContractAccount) GetNonce() uint64 {
+	return ca.State.GetNonce()
 }

@@ -79,11 +79,11 @@ func scanTestData(basePath string) {
 
 			// 检查两个文件是否都存在
 			if _, err := os.Stat(keyFile); os.IsNotExist(err) {
-				fmt.Println(fmt.Errorf("test template file:%s, not exists!", keyFile))
+				fmt.Println(fmt.Errorf("test template file:%s, not exists", keyFile))
 				return nil
 			}
 			if _, err := os.Stat(dataFile); os.IsNotExist(err) {
-				fmt.Println(fmt.Errorf("test data file:%s, not exists!", dataFile))
+				fmt.Println(fmt.Errorf("test data file:%s, not exists", dataFile))
 				return nil
 			}
 			testmap[keyFile] = dataFile

@@ -4,10 +4,10 @@
 
 package runtime
 
-// EVM操作码定义，本质上就是一个字节，所以操作码最多只支持256个
+// OpCode EVM操作码定义，本质上就是一个字节，所以操作码最多只支持256个
 type OpCode byte
 
-// 是否为压栈操作
+// IsPush 是否为压栈操作
 func (op OpCode) IsPush() bool {
 	if op >= PUSH1 && op <= PUSH32 {
 		return true
@@ -15,14 +15,14 @@ func (op OpCode) IsPush() bool {
 	return false
 }
 
-// 是否为跳转操作
+// IsStaticJump 是否为跳转操作
 func (op OpCode) IsStaticJump() bool {
 	return op == JUMP
 }
 
 var opmap map[OpCode]string
 
-// 是否为跳转操作
+// String 打印字符串形式
 func (op OpCode) String() string {
 	if opmap == nil {
 		initMap()
@@ -197,178 +197,310 @@ func initMap() {
 
 // unofficial opcodes used for parsing
 const (
+	// PUSH 压栈操作
 	PUSH OpCode = 0xb0 + iota
+	// DUP 操作
 	DUP
+	// SWAP 操作
 	SWAP
 )
 
 const (
-	// 0x0 算术操作
+	// STOP 0x0 算术操作
 	STOP OpCode = iota
+	// ADD 操作
 	ADD
+	// MUL op
 	MUL
+	// SUB op
 	SUB
+	// DIV op
 	DIV
+	// SDIV op
 	SDIV
+	// MOD op
 	MOD
+	// SMOD op
 	SMOD
+	// ADDMOD op
 	ADDMOD
+	// MULMOD op
 	MULMOD
+	// EXP op
 	EXP
+	// SIGNEXTEND op
 	SIGNEXTEND
 )
 
 const (
-	// 比较、位操作
+	// LT 比较、位操作
 	LT OpCode = iota + 0x10
+	// GT op
 	GT
+	// SLT op
 	SLT
+	// SGT op
 	SGT
+	// EQ op
 	EQ
+	// ISZERO op
 	ISZERO
+	// AND op
 	AND
+	// OR op
 	OR
+	// XOR op
 	XOR
+	// NOT op
 	NOT
+	// BYTE op
 	BYTE
+	// SHL op
 	SHL
+	// SHR op
 	SHR
+	// SAR op
 	SAR
 
+	// SHA3 op
 	SHA3 = 0x20
 )
 
 const (
-	// 0x30 合约数据操作
+	// ADDRESS 0x30 合约数据操作
 	ADDRESS OpCode = 0x30 + iota
+	// BALANCE op
 	BALANCE
+	// ORIGIN op
 	ORIGIN
+	// CALLER op
 	CALLER
+	// CALLVALUE op
 	CALLVALUE
+	// CALLDATALOAD op
 	CALLDATALOAD
+	// CALLDATASIZE op
 	CALLDATASIZE
+	// CALLDATACOPY op
 	CALLDATACOPY
+	// CODESIZE op
 	CODESIZE
+	// CODECOPY op
 	CODECOPY
+	// GASPRICE op
 	GASPRICE
+	// EXTCODESIZE op
 	EXTCODESIZE
+	// EXTCODECOPY op
 	EXTCODECOPY
+	// RETURNDATASIZE op
 	RETURNDATASIZE
+	// RETURNDATACOPY op
 	RETURNDATACOPY
 )
 
 const (
-	// 0x40 区块相关操作
+	// BLOCKHASH 0x40 区块相关操作
 	BLOCKHASH OpCode = 0x40 + iota
+	// COINBASE op
 	COINBASE
+	// TIMESTAMP op
 	TIMESTAMP
+	// NUMBER op
 	NUMBER
+	// DIFFICULTY op
 	DIFFICULTY
+	// GASLIMIT op
 	GASLIMIT
 )
 
 const (
-	// 0x50 存储相关操作
+	// POP 0x50 存储相关操作
 	POP OpCode = 0x50 + iota
+	// MLOAD op
 	MLOAD
+	// MSTORE op
 	MSTORE
+	// MSTORE8 op
 	MSTORE8
+	// SLOAD op
 	SLOAD
+	// SSTORE op
 	SSTORE
+	// JUMP op
 	JUMP
+	// JUMPI op
 	JUMPI
+	// PC op
 	PC
+	// MSIZE op
 	MSIZE
+	// GAS op
 	GAS
+	// JUMPDEST op
 	JUMPDEST
 )
 
 const (
-	// 0x60 栈操作
+	// PUSH1 0x60 栈操作
 	PUSH1 OpCode = 0x60 + iota
+	// PUSH2 op
 	PUSH2
+	// PUSH3 op
 	PUSH3
+	// PUSH4 op
 	PUSH4
+	// PUSH5 op
 	PUSH5
+	// PUSH6 op
 	PUSH6
+	// PUSH7 op
 	PUSH7
+	// PUSH8 op
 	PUSH8
+	// PUSH9 op
 	PUSH9
+	// PUSH10 op
 	PUSH10
+	// PUSH11 op
 	PUSH11
+	// PUSH12 op
 	PUSH12
+	// PUSH13 op
 	PUSH13
+	// PUSH14 op
 	PUSH14
+	// PUSH15 op
 	PUSH15
+	// PUSH16 op
 	PUSH16
+	// PUSH17 op
 	PUSH17
+	// PUSH18 op
 	PUSH18
+	// PUSH19 op
 	PUSH19
+	// PUSH20 op
 	PUSH20
+	// PUSH21 op
 	PUSH21
+	// PUSH22 op
 	PUSH22
+	// PUSH23 op
 	PUSH23
+	// PUSH24 op
 	PUSH24
+	// PUSH25 op
 	PUSH25
+	// PUSH26 op
 	PUSH26
+	// PUSH27 op
 	PUSH27
+	// PUSH28 op
 	PUSH28
+	// PUSH29 op
 	PUSH29
+	// PUSH30 op
 	PUSH30
+	// PUSH31 op
 	PUSH31
+	// PUSH32 op
 	PUSH32
+	// DUP1 op
 	DUP1
+	// DUP2 op
 	DUP2
+	// DUP3 op
 	DUP3
+	// DUP4 op
 	DUP4
+	// DUP5 op
 	DUP5
+	// DUP6 op
 	DUP6
+	// DUP7 op
 	DUP7
+	// DUP8 op
 	DUP8
+	// DUP9 op
 	DUP9
+	// DUP10 op
 	DUP10
+	// DUP11 op
 	DUP11
+	// DUP12 op
 	DUP12
+	// DUP13 op
 	DUP13
+	// DUP14 op
 	DUP14
+	// DUP15 op
 	DUP15
+	// DUP16 op
 	DUP16
+	// SWAP1 op
 	SWAP1
+	// SWAP2 op
 	SWAP2
+	// SWAP3 op
 	SWAP3
+	// SWAP4 op
 	SWAP4
+	// SWAP5 op
 	SWAP5
+	// SWAP6 op
 	SWAP6
+	// SWAP7 op
 	SWAP7
+	// SWAP8 op
 	SWAP8
+	// SWAP9 op
 	SWAP9
+	// SWAP10 op
 	SWAP10
+	// SWAP11 op
 	SWAP11
+	// SWAP12 op
 	SWAP12
+	// SWAP13 op
 	SWAP13
+	// SWAP14 op
 	SWAP14
+	// SWAP15 op
 	SWAP15
+	// SWAP16 op
 	SWAP16
 )
 
 const (
-	// 生成日志
+	// LOG0 生成日志
 	LOG0 OpCode = 0xa0 + iota
+	// LOG1 op
 	LOG1
+	// LOG2 op
 	LOG2
+	// LOG3 op
 	LOG3
+	// LOG4 op
 	LOG4
 )
 
 const (
-	// 过程调用
+	// CREATE 过程调用
 	CREATE OpCode = 0xf0 + iota
+	// CALL op
 	CALL
+	// CALLCODE op
 	CALLCODE
+	// RETURN op
 	RETURN
+	// DELEGATECALL op
 	DELEGATECALL
+	// STATICCALL  op
 	STATICCALL = 0xfa
 
-	REVERT       = 0xfd
+	// REVERT op
+	REVERT = 0xfd
+	// SELFDESTRUCT  op
 	SELFDESTRUCT = 0xff
 )

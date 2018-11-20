@@ -17,7 +17,7 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
-// 检查合约地址是否存在，此操作不会改变任何状态，所以可以直接从statedb查询
+// Query_CheckAddrExists 检查合约地址是否存在，此操作不会改变任何状态，所以可以直接从statedb查询
 func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (types.Message, error) {
 	evm.CheckInit()
 	addrStr := in.Addr
@@ -51,7 +51,7 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 	return ret, nil
 }
 
-// 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
+// Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
 func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types.Message, error) {
 	evm.CheckInit()
 	var (
@@ -100,7 +100,7 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 	return result, vmerr
 }
 
-// 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
+// Query_EvmDebug 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
 func (evm *EVMExecutor) Query_EvmDebug(in *evmtypes.EvmDebugReq) (types.Message, error) {
 	evm.CheckInit()
 	optype := in.Optype

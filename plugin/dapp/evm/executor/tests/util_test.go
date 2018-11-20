@@ -68,9 +68,9 @@ func parseVMCase(data interface{}, ut *VMCase) {
 	}
 }
 
-func parseEnv(data interface{}) EnvJson {
+func parseEnv(data interface{}) EnvJSON {
 	m := data.(map[string]interface{})
-	ut := EnvJson{}
+	ut := EnvJSON{}
 	for k, v := range m {
 		switch k {
 		case "currentCoinbase":
@@ -90,9 +90,9 @@ func parseEnv(data interface{}) EnvJson {
 	return ut
 }
 
-func parseExec(data interface{}) ExecJson {
+func parseExec(data interface{}) ExecJSON {
 	m := data.(map[string]interface{})
-	ut := ExecJson{}
+	ut := ExecJSON{}
 	for k, v := range m {
 		switch k {
 		case "address":
@@ -118,8 +118,8 @@ func parseExec(data interface{}) ExecJson {
 	return ut
 }
 
-func parseAccount(data interface{}) map[string]AccountJson {
-	ret := make(map[string]AccountJson)
+func parseAccount(data interface{}) map[string]AccountJSON {
+	ret := make(map[string]AccountJSON)
 	m := data.(map[string]interface{})
 	for k, v := range m {
 		ret[unpre(k)] = parseAccount2(v)
@@ -127,9 +127,9 @@ func parseAccount(data interface{}) map[string]AccountJson {
 	return ret
 }
 
-func parseAccount2(data interface{}) AccountJson {
+func parseAccount2(data interface{}) AccountJSON {
 	m := data.(map[string]interface{})
-	ut := AccountJson{}
+	ut := AccountJSON{}
 	for k, v := range m {
 		switch k {
 		case "balance":
@@ -215,7 +215,7 @@ func addAccount(mdb *db.GoMemDB, execAddr string, acc1 *types.Account) {
 	}
 }
 
-func addContractAccount(db *state.MemoryStateDB, mdb *db.GoMemDB, addr string, a AccountJson, creator string) {
+func addContractAccount(db *state.MemoryStateDB, mdb *db.GoMemDB, addr string, a AccountJSON, creator string) {
 	acc := state.NewContractAccount(addr, db)
 	acc.SetCreator(creator)
 	code, err := hex.DecodeString(a.code)
@@ -247,7 +247,7 @@ func buildStateDB(addr string, balance int64) *db.GoMemDB {
 	return mdb
 }
 
-func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret []byte, contractAddr common.Address, leftOverGas uint64, err error, statedb *state.MemoryStateDB) {
+func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret []byte, contractAddr common.Address, leftOverGas uint64, statedb *state.MemoryStateDB, err error) {
 	inst := evm.NewEVMExecutor()
 	inst.CheckInit()
 	msg, _ := inst.GetMessage(&tx)
@@ -273,5 +273,5 @@ func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret
 	addr := *crypto2.RandomContractAddress()
 	ret, _, leftGas, err := env.Create(runtime.AccountRef(msg.From()), addr, msg.Data(), msg.GasLimit(), fmt.Sprintf("%s%s", evmtypes.EvmPrefix, common.BytesToHash(tx.Hash()).Hex()), "")
 
-	return ret, addr, leftGas, err, statedb
+	return ret, addr, leftGas, statedb, err
 }

@@ -18,6 +18,7 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
+// Exec 本合约执行逻辑
 func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {
 	evm.CheckInit()
 	// 先转换消息
@@ -76,17 +77,17 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	if vmerr != nil {
 		log.Error("evm contract exec error", "error info", vmerr)
 		return nil, vmerr
-	} else {
-		// 计算消耗了多少费用（实际消耗的费用）
-		usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
-		// 费用消耗溢出，执行失败
-		if overflow || usedFee > uint64(tx.Fee) {
-			// 如果操作没有回滚，则在这里处理
-			if curVer != nil && snapshot >= curVer.GetId() && curVer.GetId() > -1 {
-				evm.mStateDB.RevertToSnapshot(snapshot)
-			}
-			return nil, model.ErrOutOfGas
+	}
+
+	// 计算消耗了多少费用（实际消耗的费用）
+	usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
+	// 费用消耗溢出，执行失败
+	if overflow || usedFee > uint64(tx.Fee) {
+		// 如果操作没有回滚，则在这里处理
+		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
+			evm.mStateDB.RevertToSnapshot(snapshot)
 		}
+		return nil, model.ErrOutOfGas
 	}
 
 	// 打印合约中生成的日志
@@ -96,7 +97,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		return nil, nil
 	}
 	// 从状态机中获取数据变更和变更日志
-	data, logs := evm.mStateDB.GetChangedData(curVer.GetId())
+	data, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 
@@ -125,13 +126,14 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	return receipt, nil
 }
 
+// CheckInit 检查是否初始化数据库
 func (evm *EVMExecutor) CheckInit() {
 	if evm.mStateDB == nil {
 		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight())
 	}
 }
 
-// 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
+// GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
 func (evm *EVMExecutor) GetMessage(tx *types.Transaction) (msg *common.Message, err error) {
 	var action evmtypes.EVMContractAction
 	err = types.Decode(tx.Payload, &action)

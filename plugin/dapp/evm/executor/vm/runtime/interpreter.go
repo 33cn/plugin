@@ -15,26 +15,27 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
-// 解释器的配置模型
+// Config 解释器的配置模型
 type Config struct {
-	// 调试开关
+	// Debug 调试开关
 	Debug bool
-	// 记录操作日志
+	// Tracer 记录操作日志
 	Tracer Tracer
-	// 不允许使用Call, CallCode, DelegateCall
+	// NoRecursion 不允许使用Call, CallCode, DelegateCall
 	NoRecursion bool
-	// SHA3/keccak 操作时是否保存数据
+	// EnablePreimageRecording SHA3/keccak 操作时是否保存数据
 	EnablePreimageRecording bool
-	// 指令跳转表
+	// JumpTable 指令跳转表
 	JumpTable [256]Operation
 }
 
-// 解释器接结构定义
+// Interpreter 解释器接结构定义
 type Interpreter struct {
 	evm      *EVM
 	cfg      Config
-	gasTable gas.GasTable
-	IntPool  *mm.IntPool
+	gasTable gas.Table
+	// IntPool 整数内存池
+	IntPool *mm.IntPool
 
 	// 是否允许修改数据
 	readOnly bool
@@ -42,6 +43,7 @@ type Interpreter struct {
 	ReturnData []byte
 }
 
+// NewInterpreter 新创建一个解释器
 func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 	// 使用是否包含第一个STOP指令判断jump table是否完成初始化
 	// 需要注意，后继如果新增指令，需要在这里判断硬分叉，指定不同的指令集
@@ -67,7 +69,7 @@ func (in *Interpreter) enforceRestrictions(op OpCode, operation Operation, stack
 	return nil
 }
 
-// 合约代码的解释执行主逻辑
+// Run 合约代码的解释执行主逻辑
 // 需要注意的是，如果返回执行出错，依然会扣除剩余的Gas
 // （除非返回的是ErrExecutionReverted，这种情况下会保留剩余的Gas）
 func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err error) {
