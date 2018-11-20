@@ -450,11 +450,7 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 	}
 
 	//report Error if coinTxHash has been used and not same orderId, if same orderId, means to modify the txHash
-	coinTxOrder, err := action.getOrderByCoinHash([]byte(calcCoinHash(confirm.TxHash)))
-	if err != nil {
-		relaylog.Error("confirmTx getOrderByCoinHash", "orderid", confirm.OrderId, "err", err.Error())
-		return nil, err
-	}
+	coinTxOrder, _ := action.getOrderByCoinHash([]byte(calcCoinHash(confirm.TxHash)))
 	if coinTxOrder != nil {
 		if coinTxOrder.Id != confirm.OrderId {
 			relaylog.Error("confirmTx", "coinTxHash", confirm.TxHash, "has been used in other order", coinTxOrder.Id)
