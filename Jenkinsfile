@@ -1,5 +1,3 @@
-// ci server: http://39.98.41.13:8080
-// user/pass: jenkins/33fuzamei123
 
 pipeline {
     agent any
@@ -14,7 +12,7 @@ pipeline {
         retry(1)
         timestamps()
         gitLabConnection('gitlab33')
-        gitlabBuilds(builds: ['check', 'build', 'test', 'deploy'])
+        gitlabBuilds(builds: ['check'])
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
 
@@ -23,64 +21,13 @@ pipeline {
             steps {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'check'){
-                        sh "git branch;git status"
-                        sh "make auto_ci branch=${env.gitlabSourceBranch}"
+                        sh "git branch"
+                        sh "make auto_ci branch=${env.ghprbSourceBranch} originx=${env.ghprbAuthorRepoGitUrl}"
                     }
                 }
             }
         }
 
-        stage('build') {
-            steps {
-                dir("${env.PROJ_DIR}"){
-                    gitlabCommitStatus(name: 'build'){
-                        sh 'make checkgofmt'
-                        sh 'make linter'
-                    }
-                }
-            }
-        }
-
-        stage('test'){
-            agent {
-                docker{
-                    image 'suyanlong/chain33-run:latest'
-                }
-            }
-
-            environment {
-                GOPATH = "${WORKSPACE}"
-                PROJ_DIR = "${WORKSPACE}/src/github.com/33cn/plugin"
-            }
-
-            steps {
-                dir("${env.PROJ_DIR}"){
-                    gitlabCommitStatus(name: 'test'){
-                        sh 'make test'
-                        //sh 'export CC=clang-5.0 && make msan'
-                    }
-                }
-            }
-        }
-
-        stage('deploy') {
-            steps {
-                dir("${PROJ_DIR}"){
-                    gitlabCommitStatus(name: 'deploy'){
-                        sh 'make build_ci'
-                        sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
-                    }
-                }
-            }
-
-            post {
-                always {
-                    dir("${PROJ_DIR}"){
-                        sh "cd build/${env.BUILD_NUMBER} && ./docker-compose-pre.sh down ${env.BUILD_NUMBER} all && cd .. && rm -rf ${env.BUILD_NUMBER} && cd .. && make clean "
-                    }
-                }
-            }
-        }
     }
 
     post {
@@ -92,16 +39,16 @@ pipeline {
 
         success {
             echo 'I succeeeded!'
-            echo "email user: ${gitlabUserEmail}"
-            mail to: "${gitlabUserEmail}",
+            echo "email user: ${ghprbActualCommitAuthorEmail}"
+            mail to: "${ghprbActualCommitAuthorEmail}",
                  subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
                  body: "this is success with ${env.BUILD_URL}"
         }
 
         failure {
             echo 'I failed '
-            echo "email user: ${gitlabUserEmail}"
-            mail to: "${gitlabUserEmail}",
+            echo "email user: ${ghprbActualCommitAuthorEmail}"
+            mail to: "${ghprbActualCommitAuthorEmail}",
                  subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
                  body: "Something is wrong with ${env.BUILD_URL}"
         }
