@@ -9,6 +9,7 @@ import (
 	gt "github.com/33cn/plugin/plugin/dapp/game/types"
 )
 
+// roll back local db data
 func (g *Game) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
@@ -28,18 +29,22 @@ func (g *Game) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, 
 	return dbSet, nil
 }
 
+// ExecDelLocal_Create roll back local db data for create
 func (g *Game) ExecDelLocal_Create(payload *gt.GameCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Cancel roll back local db data for cancel
 func (g *Game) ExecDelLocal_Cancel(payload *gt.GameCancel, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Close roll back local db data for close
 func (g *Game) ExecDelLocal_Close(payload *gt.GameClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Match roll back local db data for match
 func (g *Game) ExecDelLocal_Match(payload *gt.GameMatch, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execDelLocal(receiptData)
 }
