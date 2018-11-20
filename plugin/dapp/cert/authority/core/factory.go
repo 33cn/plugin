@@ -10,7 +10,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
-// 根据类型获取校验器
+// GetLocalValidator 根据类型获取校验器
 func GetLocalValidator(authConfig *AuthConfig, signType int) (Validator, error) {
 	var lclValidator Validator
 	var err error

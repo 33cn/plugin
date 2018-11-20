@@ -64,7 +64,7 @@ func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 	return hex.EncodeToString(ski), nil
 }
 
-// 证书编码进签名
+// EncodeCertToSignature 证书编码进签名
 func EncodeCertToSignature(signByte []byte, cert []byte) ([]byte, error) {
 	certSign := crypto.CertSignature{}
 	certSign.Signature = append(certSign.Signature, signByte...)
@@ -72,7 +72,7 @@ func EncodeCertToSignature(signByte []byte, cert []byte) ([]byte, error) {
 	return asn1.Marshal(certSign)
 }
 
-// 从签名中解码证书
+// DecodeCertFromSignature 从签名中解码证书
 func DecodeCertFromSignature(signByte []byte) ([]byte, []byte, error) {
 	var certSignature crypto.CertSignature
 	_, err := asn1.Unmarshal(signByte, &certSignature)
@@ -83,7 +83,7 @@ func DecodeCertFromSignature(signByte []byte) ([]byte, []byte, error) {
 	return certSignature.Cert, certSignature.Signature, nil
 }
 
-// pem结构转成byte类型私钥
+// PrivKeyByteFromRaw pem结构转成byte类型私钥
 func PrivKeyByteFromRaw(raw []byte, signType int) ([]byte, error) {
 	block, _ := pem.Decode(raw)
 	if block == nil {

@@ -20,7 +20,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Cert{}))
 }
 
-// 初始化
+// Init 初始化
 func Init(name string, sub []byte) {
 	driverName = name
 	var cfg ct.Authority
@@ -31,12 +31,12 @@ func Init(name string, sub []byte) {
 	drivers.Register(driverName, newCert, types.GetDappFork(driverName, "Enable"))
 }
 
-// 获取cert执行器名
+// GetName 获取cert执行器名
 func GetName() string {
 	return newCert().GetName()
 }
 
-// cert执行器
+// Cert cert执行器
 type Cert struct {
 	drivers.DriverBase
 }
@@ -48,12 +48,12 @@ func newCert() drivers.Driver {
 	return c
 }
 
-// 获取cert执行器名
+// GetDriverName 获取cert执行器名
 func (c *Cert) GetDriverName() string {
 	return driverName
 }
 
-// cert执行器tx证书校验
+// CheckTx cert执行器tx证书校验
 func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 	// 基类检查
 	err := c.DriverBase.CheckTx(tx, index)

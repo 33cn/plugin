@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// 创建新的证书生成结构
+// New 创建新的证书生成结构
 func New(keyStore KeyStore) (CSP, error) {
 	signers := make(map[reflect.Type]Signer)
 	signers[reflect.TypeOf(&ecdsaPrivateKey{})] = &ecdsaSigner{}

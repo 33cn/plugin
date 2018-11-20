@@ -32,12 +32,12 @@ func signECDSA(k *ecdsa.PrivateKey, digest []byte, opts SignerOpts) (signature [
 	return MarshalECDSASignature(r, s)
 }
 
-// ECDSA签名结构
+// ECDSASignature ECDSA签名结构
 type ECDSASignature struct {
 	R, S *big.Int
 }
 
-// 编码ECDSA类型签名
+// MarshalECDSASignature 编码ECDSA类型签名
 func MarshalECDSASignature(r, s *big.Int) ([]byte, error) {
 	return asn1.Marshal(ECDSASignature{r, s})
 }

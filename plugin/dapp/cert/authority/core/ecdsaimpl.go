@@ -38,7 +38,7 @@ type ecdsaValidator struct {
 	CRL []*pkix.CertificateList
 }
 
-// 创建ecdsa校验器
+// NewEcdsaValidator 创建ecdsa校验器
 func NewEcdsaValidator() Validator {
 	return &ecdsaValidator{}
 }

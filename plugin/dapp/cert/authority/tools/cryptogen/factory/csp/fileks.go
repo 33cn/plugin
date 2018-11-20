@@ -22,7 +22,7 @@ import (
 
 var logger = log.New("tools", "cryptogen")
 
-// 创建key存储器
+// NewFileBasedKeyStore 创建key存储器
 func NewFileBasedKeyStore(pwd []byte, path string, readOnly bool) (KeyStore, error) {
 	ks := &fileBasedKeyStore{}
 	return ks, ks.Init(pwd, path, readOnly)

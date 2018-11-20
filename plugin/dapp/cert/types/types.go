@@ -23,7 +23,7 @@ func init() {
 	types.RegisterDappFork(CertX, "Enable", 0)
 }
 
-// cert执行器类型结构
+// CertType cert执行器类型结构
 type CertType struct {
 	types.ExecTypeBase
 }
