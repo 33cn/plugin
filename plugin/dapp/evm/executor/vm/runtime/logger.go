@@ -72,7 +72,6 @@ func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost
 func formatStack(data []*big.Int) (res []string) {
 	for _, v := range data {
 		res = append(res, v.Text(16))
-		v.String()
 	}
 	return
 }

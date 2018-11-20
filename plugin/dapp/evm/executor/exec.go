@@ -98,9 +98,9 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	// 从状态机中获取数据变更和变更日志
 	data, logs := evm.mStateDB.GetChangedData(curVer.GetId())
 
-	contractReceipt := &evmtypes.ReceiptEVMContract{msg.From().String(), execName, contractAddr.String(), usedGas, ret}
+	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 
-	logs = append(logs, &types.ReceiptLog{evmtypes.TyLogCallContract, types.Encode(contractReceipt)})
+	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
 
 	if types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMKVHash") {
@@ -190,7 +190,7 @@ func (evm *EVMExecutor) calcKVHash(addr common.Address, logs []*types.ReceiptLog
 
 	if len(hashes) > 0 {
 		hash := common.ToHash(hashes)
-		return &types.KeyValue{getDataHashKey(addr), hash.Bytes()}
+		return &types.KeyValue{Key: getDataHashKey(addr), Value: hash.Bytes()}
 	}
 	return nil
 }

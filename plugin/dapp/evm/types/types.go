@@ -42,9 +42,9 @@ var (
 	UserPrefix = []byte(EvmPrefix)
 
 	logInfo = map[int64]*types.LogInfo{
-		TyLogCallContract:       {reflect.TypeOf(ReceiptEVMContract{}), "LogCallContract"},
-		TyLogContractData:       {reflect.TypeOf(EVMContractData{}), "LogContractData"},
-		TyLogContractState:      {reflect.TypeOf(EVMContractState{}), "LogContractState"},
-		TyLogEVMStateChangeItem: {reflect.TypeOf(EVMStateChangeItem{}), "LogEVMStateChangeItem"},
+		TyLogCallContract:       {Ty: reflect.TypeOf(ReceiptEVMContract{}), Name: "LogCallContract"},
+		TyLogContractData:       {Ty: reflect.TypeOf(EVMContractData{}), Name: "LogContractData"},
+		TyLogContractState:      {Ty: reflect.TypeOf(EVMContractState{}), Name: "LogContractState"},
+		TyLogEVMStateChangeItem: {Ty: reflect.TypeOf(EVMStateChangeItem{}), Name: "LogEVMStateChangeItem"},
 	}
 )
