@@ -33,14 +33,17 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Ticket{}))
 }
 
+// Init initial
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newTicket, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName get name
 func GetName() string {
 	return newTicket().GetName()
 }
 
+// Ticket driver type
 type Ticket struct {
 	drivers.DriverBase
 }
@@ -52,6 +55,7 @@ func newTicket() drivers.Driver {
 	return t
 }
 
+// GetDriverName ...
 func (t *Ticket) GetDriverName() string {
 	return driverName
 }
@@ -160,12 +164,14 @@ func delticket(addr string, ticketID string, status int32) *types.KeyValue {
 	return kv
 }
 
+// IsFriend check is fri
 func (t *Ticket) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
 	clog.Error("ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
 	//不允许平行链
 	return false
 }
 
+// CheckTx check tx
 func (t *Ticket) CheckTx(tx *types.Transaction, index int) error {
 	//index == -1 only when check in mempool
 	if index == -1 {

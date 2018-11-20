@@ -27,11 +27,13 @@ var tlog = log.New("module", "ticket.db")
 //var genesisKey = []byte("mavl-acc-genesis")
 //var addrSeed = []byte("address seed bytes for public key")
 
+// DB db
 type DB struct {
 	ty.Ticket
 	prevstatus int32
 }
 
+// NewDB new instance
 func NewDB(id, minerAddress, returnWallet string, blocktime int64, isGenesis bool) *DB {
 	t := &DB{}
 	t.TicketId = id
@@ -52,6 +54,8 @@ func NewDB(id, minerAddress, returnWallet string, blocktime int64, isGenesis boo
 //add prevStatus:  便于回退状态，以及删除原来状态
 //list 保存的方法:
 //minerAddress:status:ticketId=ticketId
+
+// GetReceiptLog get receipt
 func (t *DB) GetReceiptLog() *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	if t.Status == 1 {
@@ -70,12 +74,14 @@ func (t *DB) GetReceiptLog() *types.ReceiptLog {
 	return log
 }
 
+// GetKVSet get kv set
 func (t *DB) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&t.Ticket)
 	kvset = append(kvset, &types.KeyValue{Key(t.TicketId), value})
 	return kvset
 }
 
+// Save save
 func (t *DB) Save(db dbm.KV) {
 	set := t.GetKVSet()
 	for i := 0; i < len(set); i++ {
@@ -83,19 +89,21 @@ func (t *DB) Save(db dbm.KV) {
 	}
 }
 
-//address to save key
+//Key address to save key
 func Key(id string) (key []byte) {
 	key = append(key, []byte("mavl-ticket-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
 
+// BindKey bind key
 func BindKey(id string) (key []byte) {
 	key = append(key, []byte("mavl-ticket-tbind-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
 
+// Action action type
 type Action struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -106,6 +114,7 @@ type Action struct {
 	execaddr     string
 }
 
+// NewAction new action type
 func NewAction(t *Ticket, tx *types.Transaction) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -113,6 +122,7 @@ func NewAction(t *Ticket, tx *types.Transaction) *Action {
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
 }
 
+// GenesisInit init genesis
 func (action *Action) GenesisInit(genesis *ty.TicketGenesis) (*types.Receipt, error) {
 	prefix := common.ToHex(action.txhash)
 	prefix = genesis.MinerAddress + ":" + prefix + ":"
@@ -175,9 +185,9 @@ func (action *Action) getBind(addr string) string {
 	return bind.MinerAddress
 }
 
-//授权某个地址进行挖矿
-//todo: query address is a minered address
+//TicketBind 授权某个地址进行挖矿
 func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
+	//todo: query address is a minered address
 	if action.fromaddr != tbind.ReturnAddress {
 		return nil, types.ErrFromAddr
 	}
@@ -199,6 +209,7 @@ func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
 	return receipt, nil
 }
 
+// TicketOpen ticket open
 func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 	prefix := common.ToHex(action.txhash)
 	prefix = topen.MinerAddress + ":" + prefix + ":"
@@ -267,6 +278,7 @@ func genPubHash(tid string) string {
 	return pubHash
 }
 
+// TicketMiner ticket miner
 func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Receipt, error) {
 	if index != 0 {
 		return nil, types.ErrCoinBaseIndex
@@ -330,6 +342,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	return &types.Receipt{types.ExecOk, kv, logs}, nil
 }
 
+// TicketClose close tick
 func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error) {
 	tickets := make([]*DB, len(tclose.TicketId))
 	cfg := types.GetP(action.height)
@@ -397,6 +410,7 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 	return receipt, nil
 }
 
+// List list db
 func List(db dbm.Lister, db2 dbm.KV, tlist *ty.TicketList) (types.Message, error) {
 	values, err := db.List(calcTicketPrefix(tlist.Addr, tlist.Status), nil, 0, 0)
 	if err != nil {
@@ -412,6 +426,7 @@ func List(db dbm.Lister, db2 dbm.KV, tlist *ty.TicketList) (types.Message, error
 	return Infos(db2, &ids)
 }
 
+// Infos info
 func Infos(db dbm.KV, tinfos *ty.TicketInfos) (types.Message, error) {
 	var tickets []*ty.Ticket
 	for i := 0; i < len(tinfos.TicketIds); i++ {

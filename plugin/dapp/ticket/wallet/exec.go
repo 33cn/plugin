@@ -9,6 +9,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
+// On_CloseTickets close ticket
 func (policy *ticketPolicy) On_CloseTickets(req *types.ReqNil) (types.Message, error) {
 	operater := policy.getWalletOperate()
 	reply, err := policy.forceCloseTicket(operater.GetBlockHeight() + 1)
@@ -25,12 +26,14 @@ func (policy *ticketPolicy) On_CloseTickets(req *types.ReqNil) (types.Message, e
 	return reply, err
 }
 
+// On_WalletGetTickets get ticket
 func (policy *ticketPolicy) On_WalletGetTickets(req *types.ReqNil) (types.Message, error) {
 	tickets, privs, err := policy.getTicketsByStatus(1)
 	tks := &ty.ReplyWalletTickets{tickets, privs}
 	return tks, err
 }
 
+// On_WalletAutoMiner auto mine
 func (policy *ticketPolicy) On_WalletAutoMiner(req *ty.MinerFlag) (types.Message, error) {
 	policy.store.SetAutoMinerFlag(req.Flag)
 	policy.setAutoMining(req.Flag)
