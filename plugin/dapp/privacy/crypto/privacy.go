@@ -50,10 +50,10 @@ type sigcommArray [32 * 3]byte
 type KeyImage [32]byte
 
 var (
-	errViewPub       = errors.New("ErrViewPub")
-	errSpendPub      = errors.New("ErrSpendPub")
-	errViewSecret    = errors.New("ErrViewSecret")
-	errSpendSecret   = errors.New("ErrSpendSecret")
+	errViewPub    = errors.New("ErrViewPub")
+	errSpendPub   = errors.New("ErrSpendPub")
+	errViewSecret = errors.New("ErrViewSecret")
+	//errSpendSecret   = errors.New("ErrSpendSecret")
 	errNullRandInput = errors.New("ErrNullRandInput")
 )
 
