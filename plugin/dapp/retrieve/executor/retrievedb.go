@@ -24,12 +24,15 @@ const (
 	retrieveCancel  = 4
 )
 
+// MaxRelation when backup
 const MaxRelation = 10
 
+// DB def
 type DB struct {
 	rt.Retrieve
 }
 
+// NewDB instance
 func NewDB(backupaddress string) *DB {
 	r := &DB{}
 	r.BackupAddress = backupaddress
@@ -37,22 +40,25 @@ func NewDB(backupaddress string) *DB {
 	return r
 }
 
+// RelateDB on retrieve action
 func (r *DB) RelateDB(defaultAddress string, createTime int64, delayPeriod int64) bool {
 	if len(r.RetPara) >= MaxRelation {
 		return false
 	}
 	rlog.Debug("RetrieveBackup", "RelateDB", defaultAddress)
-	para := &rt.RetrievePara{defaultAddress, retrieveBackup, createTime, 0, delayPeriod}
+	para := &rt.RetrievePara{DefaultAddress: defaultAddress, Status: retrieveBackup, CreateTime: createTime, PrepareTime: 0, DelayPeriod: delayPeriod}
 	r.RetPara = append(r.RetPara, para)
 
 	return true
 }
 
+// UnRelateDB on retrieve action
 func (r *DB) UnRelateDB(index int) bool {
 	r.RetPara = append(r.RetPara[:index], r.RetPara[index+1:]...)
 	return true
 }
 
+// CheckRelation on retrieve action
 func (r *DB) CheckRelation(defaultAddress string) (int, bool) {
 	for i := 0; i < len(r.RetPara); i++ {
 		if r.RetPara[i].DefaultAddress == defaultAddress {
@@ -62,12 +68,14 @@ func (r *DB) CheckRelation(defaultAddress string) (int, bool) {
 	return MaxRelation, false
 }
 
+// GetKVSet for retrieve
 func (r *DB) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&r.Retrieve)
-	kvset = append(kvset, &types.KeyValue{Key(r.BackupAddress), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(r.BackupAddress), Value: value})
 	return kvset
 }
 
+// Save KV
 func (r *DB) Save(db dbm.KV) {
 	set := r.GetKVSet()
 	for i := 0; i < len(set); i++ {
@@ -75,12 +83,14 @@ func (r *DB) Save(db dbm.KV) {
 	}
 }
 
+// Key for retrieve
 func Key(address string) (key []byte) {
 	key = append(key, []byte("mavl-retrieve-")...)
 	key = append(key, address...)
 	return key
 }
 
+// Action def
 type Action struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -91,6 +101,7 @@ type Action struct {
 	execaddr     string
 }
 
+// NewRetrieveAcction gen instance
 func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -98,7 +109,7 @@ func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
 }
 
-//wait for valuable comment
+// RetrieveBackup Action
 func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -149,10 +160,11 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	r.Save(action.db)
 	kv = append(kv, r.GetKVSet()...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
+// RetrievePrepare Action
 func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -187,10 +199,11 @@ func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receip
 	r.Save(action.db)
 	kv = append(kv, r.GetKVSet()...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
+// RetrievePerform Action
 func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -246,10 +259,11 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, r.GetKVSet()...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
+// RetrieveCancel Action
 func (action *Action) RetrieveCancel(cancel *rt.CancelRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -285,7 +299,7 @@ func (action *Action) RetrieveCancel(cancel *rt.CancelRetrieve) (*types.Receipt,
 	r.Save(action.db)
 	kv = append(kv, r.GetKVSet()...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// HashlockCmd cmds
 func HashlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hashlock",
@@ -31,7 +32,7 @@ func HashlockCmd() *cobra.Command {
 	return cmd
 }
 
-// 锁定
+// HashlockLockCmd construct lock tx
 func HashlockLockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock",
@@ -96,7 +97,7 @@ func hashlockLockCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 解锁
+// HashlockUnlockCmd construct unlock tx
 func HashlockUnlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unlock",
@@ -139,7 +140,7 @@ func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 发送
+// HashlockSendCmd construct send tx
 func HashlockSendCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send",
