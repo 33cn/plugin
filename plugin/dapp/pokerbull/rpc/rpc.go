@@ -14,7 +14,7 @@ import (
 )
 
 func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types.UnsignTx, error) {
-	if head.PlayerNum > executor.MAX_PLAYER_NUM {
+	if head.PlayerNum > executor.MaxPlayerNum {
 		return nil, errors.New("Player number should be maximum 5")
 	}
 

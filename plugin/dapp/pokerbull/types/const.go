@@ -13,12 +13,13 @@ const (
 )
 
 const (
+	// PlayStyleDefault 游戏类型
 	PlayStyleDefault = iota + 1
 	PlayStyleDealer
 )
 
 const (
-	//log for PBgame
+	// TyLogPBGameStart log for PBgame
 	TyLogPBGameStart    = 721
 	TyLogPBGameContinue = 722
 	TyLogPBGameQuit     = 723
@@ -35,9 +36,10 @@ var (
 )
 
 const (
-	//查询方法名
-	FuncName_QueryGameListByIds = "QueryGameListByIds"
-	FuncName_QueryGameById      = "QueryGameById"
-	FuncName_QueryGameByAddr    = "QueryGameByAddr"
-	FuncName_QueryGameByStatus  = "QueryGameByStatus"
+	// FuncNameQueryGameListByIds 根据id列表查询game列表
+	FuncNameQueryGameListByIds = "QueryGameListByIds"
+	// FuncNameQueryGameById 根据id查询game
+	FuncNameQueryGameById      = "QueryGameById"
+	FuncNameQueryGameByAddr    = "QueryGameByAddr"
+	FuncNameQueryGameByStatus  = "QueryGameByStatus"
 )
