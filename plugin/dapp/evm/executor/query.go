@@ -80,9 +80,9 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 
 	var (
 		vmerr        error
-		leftOverGas  = uint64(0)
+		leftOverGas  uint64
 		contractAddr common.Address
-		execName     = "estimateGas"
+		execName     string
 	)
 
 	if isCreate {

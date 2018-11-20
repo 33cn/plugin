@@ -169,8 +169,7 @@ func (evm *EVM) preCheck(caller ContractRef, recipient common.Address, value uin
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	pass := false
-	pass, err = evm.preCheck(caller, addr, value)
+	pass, err := evm.preCheck(caller, addr, value)
 	if !pass {
 		return nil, -1, gas, err
 	}
@@ -243,8 +242,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 // 执行逻辑同Call方法，但是有以下几点不同：
 // 在创建合约对象时，合约对象的上下文地址（合约对象的self属性）被设置为caller的地址
 func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, leftOverGas uint64, err error) {
-	pass := false
-	pass, err = evm.preCheck(caller, addr, value)
+	pass, err := evm.preCheck(caller, addr, value)
 	if !pass {
 		return nil, gas, err
 	}
@@ -278,8 +276,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 // 不支持向合约转账
 // 和CallCode不同的是，它会把合约的外部调用地址设置成caller的caller
 func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []byte, gas uint64) (ret []byte, leftOverGas uint64, err error) {
-	pass := false
-	pass, err = evm.preCheck(caller, addr, 0)
+	pass, err := evm.preCheck(caller, addr, 0)
 	if !pass {
 		return nil, gas, err
 	}
@@ -314,8 +311,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 // 不支持向合约转账
 // 在合约逻辑中，可以指定其它的合约地址以及输入参数进行合约调用，但是，这种情况下禁止修改MemoryStateDB中的任何数据，否则执行会出错
 func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte, gas uint64) (ret []byte, leftOverGas uint64, err error) {
-	pass := false
-	pass, err = evm.preCheck(caller, addr, 0)
+	pass, err := evm.preCheck(caller, addr, 0)
 	if !pass {
 		return nil, gas, err
 	}
@@ -361,8 +357,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 // 目前chain33为了保证账户安全，不允许合约中涉及到外部账户的转账操作，
 // 所以，本步骤不接收转账金额参数
 func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	pass := false
-	pass, err = evm.preCheck(caller, contractAddr, 0)
+	pass, err := evm.preCheck(caller, contractAddr, 0)
 	if !pass {
 		return nil, -1, gas, err
 	}
