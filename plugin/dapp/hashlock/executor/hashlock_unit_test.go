@@ -103,7 +103,7 @@ func ConstructLockTx() *types.Transaction {
 	var locktime int64 = 70
 	var fee int64 = 1e6
 
-	vlock := &pty.HashlockAction_Hlock{&pty.HashlockLock{Amount: lockAmount, Time: locktime, Hash: common.Sha256(secret), ToAddress: toAddr, ReturnAddress: returnAddr}}
+	vlock := &pty.HashlockAction_Hlock{Hlock: &pty.HashlockLock{Amount: lockAmount, Time: locktime, Hash: common.Sha256(secret), ToAddress: toAddr, ReturnAddress: returnAddr}}
 	transfer := &pty.HashlockAction{Value: vlock, Ty: pty.HashlockActionLock}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: toAddr}
 	tx.Nonce = r.Int63()
@@ -116,7 +116,7 @@ func ConstructUnlockTx() *types.Transaction {
 
 	var fee int64 = 1e6
 
-	vunlock := &pty.HashlockAction_Hunlock{&pty.HashlockUnlock{Secret: secret}}
+	vunlock := &pty.HashlockAction_Hunlock{Hunlock: &pty.HashlockUnlock{Secret: secret}}
 	transfer := &pty.HashlockAction{Value: vunlock, Ty: pty.HashlockActionUnlock}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: toAddr}
 	tx.Nonce = r.Int63()
@@ -128,7 +128,7 @@ func ConstructSendTx() *types.Transaction {
 
 	var fee int64 = 1e6
 
-	vsend := &pty.HashlockAction_Hsend{&pty.HashlockSend{Secret: secret}}
+	vsend := &pty.HashlockAction_Hsend{Hsend: &pty.HashlockSend{Secret: secret}}
 	transfer := &pty.HashlockAction{Value: vsend, Ty: pty.HashlockActionSend}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: toAddr}
 	tx.Nonce = r.Int63()
@@ -174,11 +174,11 @@ func (e *TestDB) Set(key []byte, value []byte) error {
 	return nil
 }
 
-func (db *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
+func (e *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
 	return nil, types.ErrNotFound
 }
 
 //从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (l *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
+func (e *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
 	return nil, types.ErrNotFound
 }

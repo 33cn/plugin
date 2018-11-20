@@ -21,14 +21,17 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Hashlock{}))
 }
 
+// Init hashlock
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newHashlock, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName for hashlock
 func GetName() string {
 	return newHashlock().GetName()
 }
 
+// Hashlock driver
 type Hashlock struct {
 	drivers.DriverBase
 }
@@ -40,10 +43,12 @@ func newHashlock() drivers.Driver {
 	return h
 }
 
+// GetDriverName driverName
 func (h *Hashlock) GetDriverName() string {
 	return driverName
 }
 
+// CheckTx nil
 func (h *Hashlock) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
