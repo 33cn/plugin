@@ -69,6 +69,7 @@ func newType() *tradeType {
 func (t *tradeType) GetPayload() types.Message {
 	return &Trade{}
 }
+
 //ActionName :
 func (t *tradeType) ActionName(tx *types.Transaction) string {
 	var action Trade
@@ -166,6 +167,7 @@ func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Tra
 
 	return tx, nil
 }
+
 //CreateRawTradeSellTx : 创建卖单交易
 func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -188,6 +190,7 @@ func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(sell))
 }
+
 //CreateRawTradeBuyTx :创建想指定卖单发起的买单交易
 func CreateRawTradeBuyTx(parm *TradeBuyTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -200,6 +203,7 @@ func CreateRawTradeBuyTx(parm *TradeBuyTx) (*types.Transaction, error) {
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buy))
 }
+
 //CreateRawTradeRevokeTx :创建取消卖单的交易
 func CreateRawTradeRevokeTx(parm *TradeRevokeTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -213,6 +217,7 @@ func CreateRawTradeRevokeTx(parm *TradeRevokeTx) (*types.Transaction, error) {
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buy))
 }
+
 //CreateRawTradeBuyLimitTx :创建买单交易
 func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -232,6 +237,7 @@ func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error)
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(buyLimit))
 }
+
 //CreateRawTradeSellMarketTx : 创建向指定买单出售token的卖单交易
 func CreateRawTradeSellMarketTx(parm *TradeSellMarketTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -244,6 +250,7 @@ func CreateRawTradeSellMarketTx(parm *TradeSellMarketTx) (*types.Transaction, er
 	}
 	return types.CreateFormatTx(types.ExecName(TradeX), types.Encode(sellMarket))
 }
+
 //CreateRawTradeRevokeBuyTx : 取消发起的买单交易
 func CreateRawTradeRevokeBuyTx(parm *TradeRevokeBuyTx) (*types.Transaction, error) {
 	if parm == nil {
@@ -261,10 +268,12 @@ func CreateRawTradeRevokeBuyTx(parm *TradeRevokeBuyTx) (*types.Transaction, erro
 // TradeSellLimitLog :
 type TradeSellLimitLog struct {
 }
+
 //Name : get name string of TradeSellLimitLog
 func (l TradeSellLimitLog) Name() string {
 	return "LogTradeSell"
 }
+
 //Decode : decode the log
 func (l TradeSellLimitLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptTradeSellLimit
@@ -274,13 +283,16 @@ func (l TradeSellLimitLog) Decode(msg []byte) (interface{}, error) {
 	}
 	return logTmp, err
 }
+
 //TradeSellMarketLog :
 type TradeSellMarketLog struct {
 }
+
 //Name :
 func (l TradeSellMarketLog) Name() string {
 	return "LogTradeSellMarket"
 }
+
 //Decode :
 func (l TradeSellMarketLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptSellMarket
@@ -290,13 +302,16 @@ func (l TradeSellMarketLog) Decode(msg []byte) (interface{}, error) {
 	}
 	return logTmp, err
 }
+
 //TradeBuyMarketLog :
 type TradeBuyMarketLog struct {
 }
+
 //Name :
 func (l TradeBuyMarketLog) Name() string {
 	return "LogTradeBuyMarket"
 }
+
 //Decode :
 func (l TradeBuyMarketLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptTradeBuyMarket
@@ -306,13 +321,16 @@ func (l TradeBuyMarketLog) Decode(msg []byte) (interface{}, error) {
 	}
 	return logTmp, err
 }
+
 //TradeBuyLimitLog :
 type TradeBuyLimitLog struct {
 }
+
 //Name :
 func (l TradeBuyLimitLog) Name() string {
 	return "LogTradeBuyLimit"
 }
+
 //Decode :
 func (l TradeBuyLimitLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptTradeBuyLimit
@@ -322,13 +340,16 @@ func (l TradeBuyLimitLog) Decode(msg []byte) (interface{}, error) {
 	}
 	return logTmp, err
 }
+
 //TradeBuyRevokeLog :
 type TradeBuyRevokeLog struct {
 }
+
 //Name :
 func (l TradeBuyRevokeLog) Name() string {
 	return "LogTradeBuyRevoke"
 }
+
 //Decode :
 func (l TradeBuyRevokeLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptTradeBuyRevoke
@@ -338,13 +359,16 @@ func (l TradeBuyRevokeLog) Decode(msg []byte) (interface{}, error) {
 	}
 	return logTmp, err
 }
+
 //TradeSellRevokeLog :
 type TradeSellRevokeLog struct {
 }
+
 //Name :
 func (l TradeSellRevokeLog) Name() string {
 	return "LogTradeSellRevoke"
 }
+
 //Decode :
 func (l TradeSellRevokeLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp ReceiptTradeSellRevoke

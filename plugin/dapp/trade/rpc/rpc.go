@@ -10,6 +10,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
+
 //CreateRawTradeSellTx :
 func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.TradeForSell) (*types.UnsignTx, error) {
 	if in == nil {
@@ -26,6 +27,7 @@ func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.Tr
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }
+
 //CreateRawTradeBuyTx :
 func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.TradeForBuy) (*types.UnsignTx, error) {
 	if in == nil {
@@ -42,6 +44,7 @@ func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.Tra
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }
+
 //CreateRawTradeRevokeTx :
 func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.TradeForRevokeSell) (*types.UnsignTx, error) {
 	if in == nil {
@@ -58,6 +61,7 @@ func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }
+
 //CreateRawTradeBuyLimitTx :
 func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptypes.TradeForBuyLimit) (*types.UnsignTx, error) {
 	if in == nil {
@@ -74,6 +78,7 @@ func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptype
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }
+
 //CreateRawTradeSellMarketTx :
 func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *ptypes.TradeForSellMarket) (*types.UnsignTx, error) {
 	if in == nil {
@@ -90,6 +95,7 @@ func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *pty
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }
+
 //CreateRawTradeRevokeBuyTx :
 func (cc *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptypes.TradeForRevokeBuy) (*types.UnsignTx, error) {
 	if in == nil {

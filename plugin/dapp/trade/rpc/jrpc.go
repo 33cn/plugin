@@ -37,6 +37,7 @@ func (jrpc *Jrpc) CreateRawTradeSellTx(in *ptypes.TradeSellTx, result *interface
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
 //CreateRawTradeBuyTx : 创建购买token的未签名交易,向指定卖单发起购买
 func (jrpc *Jrpc) CreateRawTradeBuyTx(in *ptypes.TradeBuyTx, result *interface{}) error {
 	if in == nil {
@@ -54,6 +55,7 @@ func (jrpc *Jrpc) CreateRawTradeBuyTx(in *ptypes.TradeBuyTx, result *interface{}
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
 //CreateRawTradeRevokeTx : 取消指定卖单
 func (jrpc *Jrpc) CreateRawTradeRevokeTx(in *ptypes.TradeRevokeTx, result *interface{}) error {
 	if in == nil {
@@ -70,6 +72,7 @@ func (jrpc *Jrpc) CreateRawTradeRevokeTx(in *ptypes.TradeRevokeTx, result *inter
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
 //CreateRawTradeBuyLimitTx : 挂买单购买token
 func (jrpc *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *interface{}) error {
 	if in == nil {
@@ -91,6 +94,7 @@ func (jrpc *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *i
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
 //CreateRawTradeSellMarketTx : 向指定买单出售token
 func (jrpc *Jrpc) CreateRawTradeSellMarketTx(in *ptypes.TradeSellMarketTx, result *interface{}) error {
 	if in == nil {
@@ -108,6 +112,7 @@ func (jrpc *Jrpc) CreateRawTradeSellMarketTx(in *ptypes.TradeSellMarketTx, resul
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
 //CreateRawTradeRevokeBuyTx : 取消指定买单
 func (jrpc *Jrpc) CreateRawTradeRevokeBuyTx(in *ptypes.TradeRevokeBuyTx, result *interface{}) error {
 	if in == nil {
