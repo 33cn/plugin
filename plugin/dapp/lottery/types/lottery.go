@@ -23,17 +23,20 @@ func init() {
 	types.RegisterDappFork(LotteryX, "Enable", 0)
 }
 
+// LotteryType def
 type LotteryType struct {
 	types.ExecTypeBase
 }
 
+// NewType method
 func NewType() *LotteryType {
 	c := &LotteryType{}
 	c.SetChild(c)
 	return c
 }
 
-func (at *LotteryType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap method
+func (lottery *LotteryType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogLotteryCreate: {reflect.TypeOf(ReceiptLottery{}), "LogLotteryCreate"},
 		TyLogLotteryBuy:    {reflect.TypeOf(ReceiptLottery{}), "LogLotteryBuy"},
@@ -42,10 +45,12 @@ func (at *LotteryType) GetLogMap() map[int64]*types.LogInfo {
 	}
 }
 
-func (at *LotteryType) GetPayload() types.Message {
+// GetPayload method
+func (lottery *LotteryType) GetPayload() types.Message {
 	return &LotteryAction{}
 }
 
+// CreateTx method
 func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	llog.Debug("lottery.CreateTx", "action", action)
 	var tx *types.Transaction
@@ -88,7 +93,8 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 	return tx, nil
 }
 
-func (lott LotteryType) GetTypeMap() map[string]int32 {
+// GetTypeMap method
+func (lottery LotteryType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create": LotteryActionCreate,
 		"Buy":    LotteryActionBuy,
@@ -97,6 +103,7 @@ func (lott LotteryType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// CreateRawLotteryCreateTx method
 func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryCreateTx", "parm", parm)
@@ -125,6 +132,7 @@ func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error)
 	return tx, nil
 }
 
+// CreateRawLotteryBuyTx method
 func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryBuyTx", "parm", parm)
@@ -132,7 +140,7 @@ func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
 	}
 
 	v := &LotteryBuy{
-		LotteryId: parm.LotteryId,
+		LotteryId: parm.LotteryID,
 		Amount:    parm.Amount,
 		Number:    parm.Number,
 		Way:       parm.Way,
@@ -155,6 +163,7 @@ func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
 	return tx, nil
 }
 
+// CreateRawLotteryDrawTx method
 func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryDrawTx", "parm", parm)
@@ -162,7 +171,7 @@ func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
 	}
 
 	v := &LotteryDraw{
-		LotteryId: parm.LotteryId,
+		LotteryId: parm.LotteryID,
 	}
 	draw := &LotteryAction{
 		Ty:    LotteryActionDraw,
@@ -182,6 +191,7 @@ func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
 	return tx, nil
 }
 
+// CreateRawLotteryCloseTx method
 func CreateRawLotteryCloseTx(parm *LotteryCloseTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryCloseTx", "parm", parm)
@@ -189,7 +199,7 @@ func CreateRawLotteryCloseTx(parm *LotteryCloseTx) (*types.Transaction, error) {
 	}
 
 	v := &LotteryClose{
-		LotteryId: parm.LotteryId,
+		LotteryId: parm.LotteryID,
 	}
 	close := &LotteryAction{
 		Ty:    LotteryActionClose,

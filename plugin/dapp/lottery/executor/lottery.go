@@ -27,6 +27,7 @@ type subConfig struct {
 
 var cfg subConfig
 
+// Init lottery
 func Init(name string, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
@@ -38,10 +39,12 @@ func Init(name string, sub []byte) {
 	drivers.Register(driverName, newLottery, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName for lottery
 func GetName() string {
 	return newLottery().GetName()
 }
 
+// Lottery driver
 type Lottery struct {
 	drivers.DriverBase
 }
@@ -53,7 +56,8 @@ func newLottery() drivers.Driver {
 	return l
 }
 
-func (l *Lottery) GetDriverName() string {
+// GetDriverName for lottery
+func (lott *Lottery) GetDriverName() string {
 	return pty.LotteryX
 }
 
@@ -210,20 +214,21 @@ func (lott *Lottery) deleteLottery(lotterylog *pty.ReceiptLottery) (kvs []*types
 	return kvs
 }
 
-func addlottery(lotteryId string, status int32) *types.KeyValue {
+func addlottery(lotteryID string, status int32) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcLotteryKey(lotteryId, status)
-	kv.Value = []byte(lotteryId)
+	kv.Key = calcLotteryKey(lotteryID, status)
+	kv.Value = []byte(lotteryID)
 	return kv
 }
 
-func dellottery(lotteryId string, status int32) *types.KeyValue {
+func dellottery(lotteryID string, status int32) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcLotteryKey(lotteryId, status)
+	kv.Key = calcLotteryKey(lotteryID, status)
 	kv.Value = nil
 	return kv
 }
 
+// GetPayloadValue lotteryAction
 func (lott *Lottery) GetPayloadValue() types.Message {
 	return &pty.LotteryAction{}
 }
