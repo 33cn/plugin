@@ -11,6 +11,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
+// Exec_Public2Privacy execute public to privacy
 func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
@@ -50,6 +51,7 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 	return receipt, nil
 }
 
+// Exec_Privacy2Privacy execute privacy to privacy transaction
 func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
@@ -58,7 +60,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	receipt := &types.Receipt{KV: make([]*types.KeyValue, 0)}
 	privacyInput := payload.Input
 	for _, keyInput := range privacyInput.Keyinput {
-		value := []byte{KeyImageSpentAlready}
+		value := []byte{keyImageSpentAlready}
 		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)
@@ -91,6 +93,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	return receipt, nil
 }
 
+// Exec_Privacy2Public execute privacy to public transaction
 func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
@@ -104,7 +107,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	}
 	privacyInput := payload.Input
 	for _, keyInput := range privacyInput.Keyinput {
-		value := []byte{KeyImageSpentAlready}
+		value := []byte{keyImageSpentAlready}
 		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)

@@ -87,14 +87,17 @@ func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.Receipt
 	return dbSet, nil
 }
 
+// ExecDelLocal_Public2Privacy local delete execute public to privacy transaction
 func (p *privacy) ExecDelLocal_Public2Privacy(payload *ty.Public2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return p.execDelLocal(tx, receiptData, index)
 }
 
+// ExecDelLocal_Privacy2Privacy local delete execute privacy to privacy transaction
 func (p *privacy) ExecDelLocal_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return p.execDelLocal(tx, receiptData, index)
 }
 
+// ExecDelLocal_Privacy2Public local delete execute public to public transaction
 func (p *privacy) ExecDelLocal_Privacy2Public(payload *ty.Privacy2Public, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return p.execDelLocal(tx, receiptData, index)
 }
