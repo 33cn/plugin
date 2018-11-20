@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// PokerBullCmd 斗牛游戏命令行
 func PokerBullCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pokerbull",
@@ -31,6 +32,7 @@ func PokerBullCmd() *cobra.Command {
 	return cmd
 }
 
+// PokerBullStartRawTxCmd 生成开始交易命令行
 func PokerBullStartRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
@@ -69,6 +71,7 @@ func pokerbullStart(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// PokerBullContinueRawTxCmd 生成继续游戏命令行
 func PokerBullContinueRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "continue",
@@ -101,6 +104,7 @@ func pokerbullContinue(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// PokerBullQuitRawTxCmd 生成继续游戏命令行
 func PokerBullQuitRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "quit",
@@ -133,6 +137,7 @@ func pokerbullQuit(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// PokerBullQueryResultRawTxCmd 查询命令行
 func PokerBullQueryResultRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
@@ -171,22 +176,22 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	}
 	params.Payload = req
 	if gameID != "" {
-		params.FuncName = pkt.FuncName_QueryGameById
+		params.FuncName = pkt.FuncNameQueryGameById
 		var res pkt.ReplyPBGame
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if address != "" {
-		params.FuncName = pkt.FuncName_QueryGameByAddr
+		params.FuncName = pkt.FuncNameQueryGameByAddr
 		var res pkt.PBGameRecords
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if statusStr != "" {
-		params.FuncName = pkt.FuncName_QueryGameByStatus
+		params.FuncName = pkt.FuncNameQueryGameByStatus
 		var res pkt.PBGameRecords
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if gameIDs != "" {
-		params.FuncName = pkt.FuncName_QueryGameListByIds
+		params.FuncName = pkt.FuncNameQueryGameListByIds
 		var gameIDsS []string
 		gameIDsS = append(gameIDsS, gameIDs)
 		gameIDsS = append(gameIDsS, gameIDs)

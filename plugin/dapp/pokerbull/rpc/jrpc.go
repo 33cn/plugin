@@ -12,6 +12,7 @@ import (
 	pb "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
+// PokerBullStartTx 创建游戏开始交易
 func (c *Jrpc) PokerBullStartTx(parm *pb.PBStartTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -28,6 +29,7 @@ func (c *Jrpc) PokerBullStartTx(parm *pb.PBStartTxReq, result *interface{}) erro
 	return nil
 }
 
+// PokerBullContinueTx 创建游戏继续交易
 func (c *Jrpc) PokerBullContinueTx(parm *pb.PBContinueTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -46,6 +48,7 @@ func (c *Jrpc) PokerBullContinueTx(parm *pb.PBContinueTxReq, result *interface{}
 	return nil
 }
 
+// PokerBullQuitTx 创建游戏推出交易
 func (c *Jrpc) PokerBullQuitTx(parm *pb.PBQuitTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -63,6 +66,7 @@ func (c *Jrpc) PokerBullQuitTx(parm *pb.PBQuitTxReq, result *interface{}) error 
 	return nil
 }
 
+// PokerBullQueryTx 创建游戏查询交易
 func (c *Jrpc) PokerBullQueryTx(parm *pb.PBQueryReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
