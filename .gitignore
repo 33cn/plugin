@@ -21,10 +21,8 @@ build/main.sh
 build/main*
 build/para.sh
 build/ci
-build/tools/autotest/autotest
-build/tools/autotest/*.toml
-build/tools/autotest/chain33
-build/tools/autotest/chain33-cli
+build/autotest/*
+!build/autotest/build.sh
 .DS_Store
 logs/
 build/wallet
