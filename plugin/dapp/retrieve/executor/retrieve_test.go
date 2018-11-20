@@ -576,9 +576,9 @@ func showOrCheckAcc(c types.Chain33Client, addr string, sorc int, balance int64)
 	}
 	if sorc != onlyshow {
 		return false
-	} else {
-		return true
 	}
+	return true
+
 }
 
 func genaddress() (string, crypto.PrivKey) {
@@ -630,24 +630,24 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 			return nil, errors.New(string(reply.GetMsg()))
 		}
 		return tx.Hash(), nil
-	} else {
-		v := &cty.CoinsAction_Withdraw{&types.AssetsWithdraw{Amount: -amount}}
-		withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
-		tx.Nonce = r.Int63()
-		tx.Sign(types.SECP256K1, priv)
-		// Contact the server and print out its response.
-		reply, err := c.SendTransaction(context.Background(), tx)
-		if err != nil {
-			fmt.Println("err", err)
-			return nil, err
-		}
-		if !reply.IsOk {
-			fmt.Println("err = ", reply.GetMsg())
-			return nil, errors.New(string(reply.GetMsg()))
-		}
-		return tx.Hash(), nil
 	}
+	v := &cty.CoinsAction_Withdraw{&types.AssetsWithdraw{Amount: -amount}}
+	withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
+	tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, priv)
+	// Contact the server and print out its response.
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Println("err", err)
+		return nil, err
+	}
+	if !reply.IsOk {
+		fmt.Println("err = ", reply.GetMsg())
+		return nil, errors.New(string(reply.GetMsg()))
+	}
+	return tx.Hash(), nil
+	
 }
 
 func getAccounts() (*types.WalletAccounts, error) {

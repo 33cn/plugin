@@ -4,6 +4,7 @@
 
 package rpc
 
+//RetrieveBackupTx ...
 type RetrieveBackupTx struct {
 	BackupAddr  string `json:"backupAddr"`
 	DefaultAddr string `json:"defaultAddr"`
@@ -11,18 +12,21 @@ type RetrieveBackupTx struct {
 	Fee         int64  `json:"fee"`
 }
 
+//RetrievePrepareTx ...
 type RetrievePrepareTx struct {
 	BackupAddr  string `json:"backupAddr"`
 	DefaultAddr string `json:"defaultAddr"`
 	Fee         int64  `json:"fee"`
 }
 
+//RetrievePerformTx ...
 type RetrievePerformTx struct {
 	BackupAddr  string `json:"backupAddr"`
 	DefaultAddr string `json:"defaultAddr"`
 	Fee         int64  `json:"fee"`
 }
 
+//RetrieveCancelTx ...
 type RetrieveCancelTx struct {
 	BackupAddr  string `json:"backupAddr"`
 	DefaultAddr string `json:"defaultAddr"`

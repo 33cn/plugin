@@ -22,6 +22,7 @@ const (
 	RetrieveActionCancel  = 4
 )
 
+//var
 var (
 	JRPCName       = "Retrieve"
 	RetrieveX      = "retrieve"

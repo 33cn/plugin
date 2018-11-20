@@ -142,17 +142,17 @@ func NewTestDB() *TestDB {
 	return &TestDB{cache: make(map[string][]byte)}
 }
 
-func (e *TestDB) Get(key []byte) (value []byte, err error) {
-	if value, ok := e.cache[string(key)]; ok {
+func (db *TestDB) Get(key []byte) (value []byte, err error) {
+	if value, ok := db.cache[string(key)]; ok {
 		//elog.Error("getkey", "key", string(key), "value", string(value))
 		return value, nil
 	}
 	return nil, types.ErrNotFound
 }
 
-func (e *TestDB) Set(key []byte, value []byte) error {
+func (db *TestDB) Set(key []byte, value []byte) error {
 	//elog.Error("setkey", "key", string(key), "value", string(value))
-	e.cache[string(key)] = value
+	db.cache[string(key)] = value
 	return nil
 }
 
@@ -161,6 +161,6 @@ func (db *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
 }
 
 //从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (l *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
+func (db *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
 	return nil, types.ErrNotFound
 }

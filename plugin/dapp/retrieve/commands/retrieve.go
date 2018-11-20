@@ -14,12 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//RetrieveResult 结果
 type RetrieveResult struct {
 	DelayPeriod int64 `json:"delayPeriod"`
 	//RemainTime  int64  `json:"remainTime"`
 	Status string `json:"status"`
 }
 
+//RetrieveCmd command
 func RetrieveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve",
@@ -38,7 +40,7 @@ func RetrieveCmd() *cobra.Command {
 	return cmd
 }
 
-// 备份
+//BackupCmd 备份
 func BackupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "backup",
@@ -83,7 +85,7 @@ func backupCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 准备
+//PrepareCmd 准备
 func PrepareCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prepare",
@@ -120,7 +122,7 @@ func prepareCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 执行
+//PerformCmd 执行
 func PerformCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "perform",
@@ -147,7 +149,7 @@ func performCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 取消
+//CancelCmd 取消
 func CancelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancel",
@@ -174,7 +176,7 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// 查询
+//RetrieveQueryCmd 查询
 func RetrieveQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",

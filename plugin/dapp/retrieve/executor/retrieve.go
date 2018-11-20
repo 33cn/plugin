@@ -32,15 +32,17 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Retrieve{}))
 }
 
-//const maxTimeWeight = 2
+//Init const maxTimeWeight = 2
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newRetrieve, types.GetDappFork(driverName, "Enable"))
 }
 
+//GetName 获取name
 func GetName() string {
 	return newRetrieve().GetName()
 }
 
+//Retrieve retrieve
 type Retrieve struct {
 	drivers.DriverBase
 }
@@ -52,10 +54,12 @@ func newRetrieve() drivers.Driver {
 	return r
 }
 
+//GetDriverName 获取driver name
 func (r *Retrieve) GetDriverName() string {
 	return driverName
 }
 
+//CheckTx 检查交易
 func (r *Retrieve) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }

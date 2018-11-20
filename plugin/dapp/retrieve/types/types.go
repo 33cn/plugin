@@ -18,17 +18,19 @@ func init() {
 	types.RegisterDappFork(RetrieveX, "ForkRetrive", 180000)
 }
 
+//RetrieveType retrieve
 type RetrieveType struct {
 	types.ExecTypeBase
 }
 
+//NewType new retrieve
 func NewType() *RetrieveType {
 	c := &RetrieveType{}
 	c.SetChild(c)
 	return c
 }
 
-//GetRealToAddr，避免老的，没有To字段的交易分叉
+//GetRealToAddr 避免老的，没有To字段的交易分叉
 func (r RetrieveType) GetRealToAddr(tx *types.Transaction) string {
 	if len(tx.To) == 0 {
 		return address.ExecAddress(string(tx.Execer))
@@ -36,22 +38,27 @@ func (r RetrieveType) GetRealToAddr(tx *types.Transaction) string {
 	return tx.To
 }
 
-func (at *RetrieveType) GetPayload() types.Message {
+//GetPayload 获取payload
+func (r *RetrieveType) GetPayload() types.Message {
 	return &RetrieveAction{}
 }
 
-func (at *RetrieveType) GetName() string {
+//GetName 获取name
+func (r *RetrieveType) GetName() string {
 	return RetrieveX
 }
 
-func (at *RetrieveType) GetLogMap() map[int64]*types.LogInfo {
+//GetLogMap 获取log map
+func (r *RetrieveType) GetLogMap() map[int64]*types.LogInfo {
 	return nil
 }
 
-func (at *RetrieveType) GetTypeMap() map[string]int32 {
+//GetTypeMap 获取type map
+func (r *RetrieveType) GetTypeMap() map[string]int32 {
 	return actionName
 }
 
+//ActionName action name
 func (r RetrieveType) ActionName(tx *types.Transaction) string {
 	var action RetrieveAction
 	err := types.Decode(tx.Payload, &action)
@@ -70,21 +77,26 @@ func (r RetrieveType) ActionName(tx *types.Transaction) string {
 	return "unknown"
 }
 
+//Amount 数量
 func (r RetrieveType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-func (retrieve RetrieveType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+//CreateTx 构造交易
+func (r RetrieveType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	return nil, nil
 }
 
+//CoinsDepositLog ...
 type CoinsDepositLog struct {
 }
 
+//Name name
 func (l CoinsDepositLog) Name() string {
 	return "LogDeposit"
 }
 
+//Decode 解码
 func (l CoinsDepositLog) Decode(msg []byte) (interface{}, error) {
 	var logTmp types.ReceiptAccountTransfer
 	err := types.Decode(msg, &logTmp)
@@ -94,10 +106,12 @@ func (l CoinsDepositLog) Decode(msg []byte) (interface{}, error) {
 	return logTmp, err
 }
 
+//RetrieveGetInfo ...
 type RetrieveGetInfo struct {
 }
 
-func (t *RetrieveGetInfo) JsonToProto(message json.RawMessage) ([]byte, error) {
+//JSONToProto json -> proto
+func (t *RetrieveGetInfo) JSONToProto(message json.RawMessage) ([]byte, error) {
 	var req ReqRetrieveInfo
 	err := json.Unmarshal(message, &req)
 	if err != nil {
@@ -106,6 +120,7 @@ func (t *RetrieveGetInfo) JsonToProto(message json.RawMessage) ([]byte, error) {
 	return types.Encode(&req), nil
 }
 
-func (t *RetrieveGetInfo) ProtoToJson(reply *types.Message) (interface{}, error) {
+//ProtoToJSON proto -> json
+func (t *RetrieveGetInfo) ProtoToJSON(reply *types.Message) (interface{}, error) {
 	return reply, nil
 }

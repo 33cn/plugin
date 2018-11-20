@@ -10,6 +10,7 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+//DelRetrieveInfo 删除
 func DelRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.KeyValue, error) {
 	switch Status {
 	case retrieveBackup:
@@ -58,6 +59,7 @@ func (c *Retrieve) execDelLocal(tx *types.Transaction, receipt *types.ReceiptDat
 	return set, nil
 }
 
+//ExecDelLocal_Backup ...
 func (c *Retrieve) ExecDelLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := c.execDelLocal(tx, receiptData, index)
 
@@ -74,6 +76,7 @@ func (c *Retrieve) ExecDelLocal_Backup(backup *rt.BackupRetrieve, tx *types.Tran
 	return set, nil
 }
 
+//ExecDelLocal_Prepare ...
 func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := c.execDelLocal(tx, receiptData, index)
 
@@ -90,6 +93,7 @@ func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Trans
 	return set, nil
 }
 
+//ExecDelLocal_Perform ...
 func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := c.execDelLocal(tx, receiptData, index)
 
@@ -106,6 +110,7 @@ func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Tran
 	return set, nil
 }
 
+//ExecDelLocal_Cancel ...
 func (c *Retrieve) ExecDelLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := c.execDelLocal(tx, receiptData, index)
 

@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+//CreateRawRetrieveBackupTx 构造backup
 func (c *Jrpc) CreateRawRetrieveBackupTx(in *RetrieveBackupTx, result *interface{}) error {
 	head := &types.BackupRetrieve{
 		BackupAddress:  in.BackupAddr,
@@ -27,6 +28,7 @@ func (c *Jrpc) CreateRawRetrieveBackupTx(in *RetrieveBackupTx, result *interface
 	return nil
 }
 
+//CreateRawRetrievePrepareTx 构造prepare
 func (c *Jrpc) CreateRawRetrievePrepareTx(in *RetrievePrepareTx, result *interface{}) error {
 	head := &types.PrepareRetrieve{
 		BackupAddress:  in.BackupAddr,
@@ -42,6 +44,7 @@ func (c *Jrpc) CreateRawRetrievePrepareTx(in *RetrievePrepareTx, result *interfa
 	return nil
 }
 
+//CreateRawRetrievePerformTx 构造perform
 func (c *Jrpc) CreateRawRetrievePerformTx(in *RetrievePerformTx, result *interface{}) error {
 	head := &types.PerformRetrieve{
 		BackupAddress:  in.BackupAddr,
@@ -56,6 +59,7 @@ func (c *Jrpc) CreateRawRetrievePerformTx(in *RetrievePerformTx, result *interfa
 	return nil
 }
 
+//CreateRawRetrieveCancelTx 构造cancel
 func (c *Jrpc) CreateRawRetrieveCancelTx(in *RetrieveCancelTx, result *interface{}) error {
 	head := &types.CancelRetrieve{
 		BackupAddress:  in.BackupAddr,

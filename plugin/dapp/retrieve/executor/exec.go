@@ -9,6 +9,7 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+//Exec_Backup ...
 func (c *Retrieve) Exec_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewRetrieveAcction(c, tx)
 	if backup.DelayPeriod < minPeriod {
@@ -18,18 +19,21 @@ func (c *Retrieve) Exec_Backup(backup *rt.BackupRetrieve, tx *types.Transaction,
 	return actiondb.RetrieveBackup(backup)
 }
 
+//Exec_Perform ...
 func (c *Retrieve) Exec_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewRetrieveAcction(c, tx)
 	rlog.Debug("PerformRetrieve action")
 	return actiondb.RetrievePerform(perf)
 }
 
+//Exec_Prepare ...
 func (c *Retrieve) Exec_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewRetrieveAcction(c, tx)
 	rlog.Debug("PreRetrieve action")
 	return actiondb.RetrievePrepare(pre)
 }
 
+//Exec_Cancel ...
 func (c *Retrieve) Exec_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewRetrieveAcction(c, tx)
 	rlog.Debug("PreRetrieve action")

@@ -10,6 +10,7 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+//SaveRetrieveInfo 保存
 func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.KeyValue, error) {
 	rlog.Debug("Retrieve SaveRetrieveInfo", "backupaddr", info.BackupAddress, "defaddr", info.DefaultAddress)
 	switch Status {
@@ -59,6 +60,7 @@ func (c *Retrieve) execLocal(receipt types.ExecTypeGet) (*types.LocalDBSet, erro
 	return dbSet, nil
 }
 
+//ExecLocal_Backup ...
 func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	set, err := c.execLocal(receiptData)
 
@@ -75,6 +77,7 @@ func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transac
 	return set, nil
 }
 
+//ExecLocal_Prepare ...
 func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	set, err := c.execLocal(receiptData)
 
@@ -91,6 +94,7 @@ func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transact
 	return set, nil
 }
 
+//ExecLocal_Perf ...
 func (c *Retrieve) ExecLocal_Perf(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	set, err := c.execLocal(receiptData)
 
@@ -107,6 +111,7 @@ func (c *Retrieve) ExecLocal_Perf(perf *rt.PerformRetrieve, tx *types.Transactio
 	return set, nil
 }
 
+//ExecLocal_Cancel ...
 func (c *Retrieve) ExecLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	set, err := c.execLocal(receiptData)
 

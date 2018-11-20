@@ -737,7 +737,7 @@ func ExampleDecode_structTagNil() {
 	Decode(bytes.NewReader(input), &withEmptyOK)
 	fmt.Printf("with nil tag: String = %v\n", withEmptyOK.String)
 
-	// ProtoToJson:
+	// ProtoToJSON:
 	// normal: String = ""
 	// with nil tag: String = <nil>
 }

@@ -22,14 +22,16 @@ const (
 	retrievePrepare = 2
 	retrievePerform = 3
 	retrieveCancel  = 4
+	//MaxRelation 最大relation
+	MaxRelation = 10
 )
 
-const MaxRelation = 10
-
+//DB db
 type DB struct {
 	rt.Retrieve
 }
 
+//NewDB 新建db
 func NewDB(backupaddress string) *DB {
 	r := &DB{}
 	r.BackupAddress = backupaddress
@@ -37,6 +39,7 @@ func NewDB(backupaddress string) *DB {
 	return r
 }
 
+//RelateDB relate db
 func (r *DB) RelateDB(defaultAddress string, createTime int64, delayPeriod int64) bool {
 	if len(r.RetPara) >= MaxRelation {
 		return false
@@ -48,11 +51,13 @@ func (r *DB) RelateDB(defaultAddress string, createTime int64, delayPeriod int64
 	return true
 }
 
+//UnRelateDB unrelate db
 func (r *DB) UnRelateDB(index int) bool {
 	r.RetPara = append(r.RetPara[:index], r.RetPara[index+1:]...)
 	return true
 }
 
+//CheckRelation 检查
 func (r *DB) CheckRelation(defaultAddress string) (int, bool) {
 	for i := 0; i < len(r.RetPara); i++ {
 		if r.RetPara[i].DefaultAddress == defaultAddress {
@@ -62,12 +67,14 @@ func (r *DB) CheckRelation(defaultAddress string) (int, bool) {
 	return MaxRelation, false
 }
 
+//GetKVSet ...
 func (r *DB) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&r.Retrieve)
 	kvset = append(kvset, &types.KeyValue{Key(r.BackupAddress), value})
 	return kvset
 }
 
+//Save 保存
 func (r *DB) Save(db dbm.KV) {
 	set := r.GetKVSet()
 	for i := 0; i < len(set); i++ {
@@ -75,12 +82,14 @@ func (r *DB) Save(db dbm.KV) {
 	}
 }
 
+//Key 键值
 func Key(address string) (key []byte) {
 	key = append(key, []byte("mavl-retrieve-")...)
 	key = append(key, address...)
 	return key
 }
 
+//Action action
 type Action struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -91,6 +100,7 @@ type Action struct {
 	execaddr     string
 }
 
+//NewRetrieveAcction ...
 func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -98,7 +108,7 @@ func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
 }
 
-//wait for valuable comment
+//RetrieveBackup wait for valuable comment
 func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -153,6 +163,7 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	return receipt, nil
 }
 
+//RetrievePrepare ...
 func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -191,6 +202,7 @@ func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receip
 	return receipt, nil
 }
 
+//RetrievePerform ...
 func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -250,6 +262,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	return receipt, nil
 }
 
+//RetrieveCancel ...
 func (action *Action) RetrieveCancel(cancel *rt.CancelRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
