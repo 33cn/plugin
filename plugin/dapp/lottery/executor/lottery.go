@@ -124,9 +124,8 @@ func (lott *Lottery) findLotteryDrawRecord(key []byte) (*pty.LotteryDrawRecord, 
 
 func (lott *Lottery) saveLotteryBuy(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryBuyKey(lotterylog.LotteryId, lotterylog.Addr, lotterylog.Round, lotterylog.Index)
-	kv := &types.KeyValue{}
-	record := &pty.LotteryBuyRecord{lotterylog.Number, lotterylog.Amount, lotterylog.Round, 0, lotterylog.Way, lotterylog.Index, lotterylog.Time, lotterylog.TxHash}
-	kv = &types.KeyValue{key, types.Encode(record)}
+	record := &pty.LotteryBuyRecord{Number: lotterylog.Number, Amount: lotterylog.Amount, Round: lotterylog.Round, Type: 0, Way: lotterylog.Way, Index: lotterylog.Index, Time: lotterylog.Time, TxHash: lotterylog.TxHash}
+	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
 	kvs = append(kvs, kv)
 	return kvs
@@ -135,7 +134,7 @@ func (lott *Lottery) saveLotteryBuy(lotterylog *pty.ReceiptLottery) (kvs []*type
 func (lott *Lottery) deleteLotteryBuy(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryBuyKey(lotterylog.LotteryId, lotterylog.Addr, lotterylog.Round, lotterylog.Index)
 
-	kv := &types.KeyValue{key, nil}
+	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
@@ -162,7 +161,6 @@ func (lott *Lottery) updateLotteryBuy(lotterylog *pty.ReceiptLottery, isAdd bool
 				if err != nil || record == nil {
 					return kvs
 				}
-				kv := &types.KeyValue{}
 
 				if isAdd {
 					llog.Debug("updateLotteryBuy update key")
@@ -171,7 +169,7 @@ func (lott *Lottery) updateLotteryBuy(lotterylog *pty.ReceiptLottery, isAdd bool
 					record.Type = 0
 				}
 
-				kv = &types.KeyValue{key, types.Encode(record)}
+				kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 				kvs = append(kvs, kv)
 			}
 		}
@@ -182,16 +180,15 @@ func (lott *Lottery) updateLotteryBuy(lotterylog *pty.ReceiptLottery, isAdd bool
 
 func (lott *Lottery) saveLotteryDraw(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryDrawKey(lotterylog.LotteryId, lotterylog.Round)
-	kv := &types.KeyValue{}
-	record := &pty.LotteryDrawRecord{lotterylog.LuckyNumber, lotterylog.Round, lotterylog.Time, lotterylog.TxHash}
-	kv = &types.KeyValue{key, types.Encode(record)}
+	record := &pty.LotteryDrawRecord{Number: lotterylog.LuckyNumber, Round: lotterylog.Round, Time: lotterylog.Time, TxHash: lotterylog.TxHash}
+	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
 func (lott *Lottery) deleteLotteryDraw(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryDrawKey(lotterylog.LotteryId, lotterylog.Round)
-	kv := &types.KeyValue{key, nil}
+	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }

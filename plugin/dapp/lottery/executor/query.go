@@ -15,10 +15,10 @@ func (l *Lottery) Query_GetLotteryNormalInfo(param *pty.ReqLotteryInfo) (types.M
 	if err != nil {
 		return nil, err
 	}
-	return &pty.ReplyLotteryNormalInfo{lottery.CreateHeight,
-		lottery.PurBlockNum,
-		lottery.DrawBlockNum,
-		lottery.CreateAddr}, nil
+	return &pty.ReplyLotteryNormalInfo{CreateHeight: lottery.CreateHeight,
+		PurBlockNum:  lottery.PurBlockNum,
+		DrawBlockNum: lottery.DrawBlockNum,
+		CreateAddr:   lottery.CreateAddr}, nil
 }
 
 // Query_GetLotteryPurchaseAddr for current round

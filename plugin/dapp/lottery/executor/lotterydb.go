@@ -79,7 +79,7 @@ func NewLotteryDB(lotteryID string, purBlock int64, drawBlock int64,
 	lott.MissingRecords = make([]*pty.MissingRecord, 5)
 	for index := range lott.MissingRecords {
 		tempTimes := make([]int32, 10)
-		lott.MissingRecords[index] = &pty.MissingRecord{tempTimes}
+		lott.MissingRecords[index] = &pty.MissingRecord{Times: tempTimes}
 	}
 	return lott
 }
@@ -87,7 +87,7 @@ func NewLotteryDB(lotteryID string, purBlock int64, drawBlock int64,
 // GetKVSet for LotteryDB
 func (lott *LotteryDB) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&lott.Lottery)
-	kvset = append(kvset, &types.KeyValue{Key(lott.LotteryId), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(lott.LotteryId), Value: value})
 	return kvset
 }
 
@@ -230,7 +230,7 @@ func (action *Action) LotteryCreate(create *pty.LotteryCreate) (*types.Receipt, 
 	receiptLog := action.GetReceiptLog(&lott.Lottery, 0, pty.TyLogLotteryCreate, 0, 0, 0, 0, 0, nil)
 	logs = append(logs, receiptLog)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -316,7 +316,7 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 		lott.Records = make(map[string]*pty.PurchaseRecords)
 	}
 
-	newRecord := &pty.PurchaseRecord{buy.GetAmount(), buy.GetNumber(), action.GetIndex(), buy.GetWay()}
+	newRecord := &pty.PurchaseRecord{Amount: buy.GetAmount(), Number: buy.GetNumber(), Index: action.GetIndex(), Way: buy.GetWay()}
 	llog.Debug("LotteryBuy", "amount", buy.GetAmount(), "number", buy.GetNumber())
 
 	/**********
@@ -360,7 +360,7 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 	receiptLog := action.GetReceiptLog(&lott.Lottery, preStatus, pty.TyLogLotteryBuy, lott.Round, buy.GetNumber(), buy.GetAmount(), buy.GetWay(), 0, nil)
 	logs = append(logs, receiptLog)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -424,7 +424,7 @@ func (action *Action) LotteryDraw(draw *pty.LotteryDraw) (*types.Receipt, error)
 	receiptLog := action.GetReceiptLog(&lott.Lottery, preStatus, pty.TyLogLotteryDraw, lott.Round, 0, 0, 0, lott.LuckyNumber, updateInfo)
 	logs = append(logs, receiptLog)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -502,7 +502,7 @@ func (action *Action) LotteryClose(draw *pty.LotteryClose) (*types.Receipt, erro
 	receiptLog := action.GetReceiptLog(&lott.Lottery, preStatus, pty.TyLogLotteryClose, 0, 0, 0, 0, 0, nil)
 	logs = append(logs, receiptLog)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // GetCalculableHash return hash for calculation
@@ -513,7 +513,7 @@ func (action *Action) GetCalculableHash(beg, end int64, randMolNum int64) ([]byt
 	//last := []byte("last")
 	newmodify := ""
 	for i := beg; i < end; i += randMolNum {
-		req := &types.ReqBlocks{i, i, false, []string{""}}
+		req := &types.ReqBlocks{Start: i, End: i, IsDetail: false, Pid: []string{""}}
 		blocks, err := action.api.GetBlocks(req)
 		if err != nil {
 			return []byte{}, err
@@ -617,7 +617,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 		for _, rec := range lott.Records[addr].Record {
 			fund, fundType := checkFundAmount(luckynum, rec.Number, rec.Way)
 			if fund != 0 {
-				newUpdateRec := &pty.LotteryUpdateRec{rec.Index, fundType}
+				newUpdateRec := &pty.LotteryUpdateRec{Index: rec.Index, Type: fundType}
 				if update, ok := updateInfo.BuyInfo[addr]; ok {
 					update.Records = append(update.Records, newUpdateRec)
 				} else {
@@ -693,7 +693,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 		lott.LastTransToDrawStateOnMain = mainHeight
 	}
 
-	return &types.Receipt{types.ExecOk, kv, logs}, &updateInfo, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, &updateInfo, nil
 }
 func (action *Action) recordMissing(lott *LotteryDB) {
 	temp := int32(lott.LuckyNumber)

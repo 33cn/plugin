@@ -53,7 +53,7 @@ func (lottery *LotteryType) GetPayload() types.Message {
 // CreateTx method
 func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	llog.Debug("lottery.CreateTx", "action", action)
-	var tx *types.Transaction
+
 	if action == "LotteryCreate" {
 		var param LotteryCreateTx
 		err := json.Unmarshal(message, &param)
@@ -89,8 +89,6 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 	} else {
 		return nil, types.ErrNotSupport
 	}
-
-	return tx, nil
 }
 
 // GetTypeMap method
