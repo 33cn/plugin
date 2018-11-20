@@ -17,20 +17,20 @@ type GamePreCreateTx struct {
 
 // GamePreMatchTx pre match game,unused
 type GamePreMatchTx struct {
-	GameID string `json:"game_i_d"`
+	GameID string `json:"gameID"`
 	Guess  int32  `json:"guess"`
 	Fee    int64  `json:"fee"`
 }
 
 // GamePreCancelTx pre cancel tx,unused
 type GamePreCancelTx struct {
-	GameID string `json:"game_i_d"`
+	GameID string `json:"gameID"`
 	Fee    int64  `json:"fee"`
 }
 
 // GamePreCloseTx pre close game, unused
 type GamePreCloseTx struct {
-	GameID string `json:"game_i_d"`
+	GameID string `json:"gameID"`
 	Secret string `json:"secret"`
 	Result int32  `json:"result"`
 	Fee    int64  `json:"fee"`
