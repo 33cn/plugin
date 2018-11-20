@@ -12,19 +12,20 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
-// 内存操作封装，在EVM中使用此对象模拟物理内存
+// Memory 内存操作封装，在EVM中使用此对象模拟物理内存
 type Memory struct {
-	// 内存中存储的数据
+	// Store 内存中存储的数据
 	Store []byte
-	// 上次开辟内存消耗的Gas
+	// LastGasCost 上次开辟内存消耗的Gas
 	LastGasCost uint64
 }
 
+// NewMemory 创建内存对象结构
 func NewMemory() *Memory {
 	return &Memory{}
 }
 
-// 设置内存中的值， value => offset:offset + size
+// Set 设置内存中的值， value => offset:offset + size
 func (m *Memory) Set(offset, size uint64, value []byte) (err error) {
 	if size > 0 {
 		// 偏移量+大小一定不会大于内存长度
@@ -39,7 +40,7 @@ func (m *Memory) Set(offset, size uint64, value []byte) (err error) {
 	return nil
 }
 
-// 从offset开始设置32个字节的内存值，如果值长度不足32个字节，左零值填充
+// Set32 从offset开始设置32个字节的内存值，如果值长度不足32个字节，左零值填充
 func (m *Memory) Set32(offset uint64, val *big.Int) (err error) {
 
 	// 确保长度足够设置值
@@ -58,14 +59,14 @@ func (m *Memory) Set32(offset uint64, val *big.Int) (err error) {
 	return nil
 }
 
-// 扩充内存到指定大小
+// Resize 扩充内存到指定大小
 func (m *Memory) Resize(size uint64) {
 	if uint64(m.Len()) < size {
 		m.Store = append(m.Store, make([]byte, size-uint64(m.Len()))...)
 	}
 }
 
-// 获取内存中制定偏移量开始的指定长度的数据，返回数据的拷贝而非引用
+// Get 获取内存中制定偏移量开始的指定长度的数据，返回数据的拷贝而非引用
 func (m *Memory) Get(offset, size int64) (cpy []byte) {
 	if size == 0 {
 		return nil
@@ -81,7 +82,7 @@ func (m *Memory) Get(offset, size int64) (cpy []byte) {
 	return
 }
 
-// 同Get操作，不过这里返回的是数据引用
+// GetPtr 同Get操作，不过这里返回的是数据引用
 func (m *Memory) GetPtr(offset, size int64) []byte {
 	if size == 0 {
 		return nil
@@ -94,17 +95,17 @@ func (m *Memory) GetPtr(offset, size int64) []byte {
 	return nil
 }
 
-// 返回内存中已开辟空间的大小（以字节计算）
+// Len 返回内存中已开辟空间的大小（以字节计算）
 func (m *Memory) Len() int {
 	return len(m.Store)
 }
 
-// 返回内存中的原始数据引用
+// Data 返回内存中的原始数据引用
 func (m *Memory) Data() []byte {
 	return m.Store
 }
 
-// 打印内存中的数据（调试用）
+// Print 打印内存中的数据（调试用）
 func (m *Memory) Print() {
 	fmt.Printf("### mem %d bytes ###\n", len(m.Store))
 	if len(m.Store) > 0 {

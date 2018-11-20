@@ -4,19 +4,21 @@
 
 package tests
 
+// VMCase 一个测试用例
 type VMCase struct {
 	name string
-	env  EnvJson
-	exec ExecJson
+	env  EnvJSON
+	exec ExecJSON
 	gas  int64
 	logs string
 	out  string
 	err  string
-	pre  map[string]AccountJson
-	post map[string]AccountJson
+	pre  map[string]AccountJSON
+	post map[string]AccountJSON
 }
 
-type EnvJson struct {
+// EnvJSON 上下文信息
+type EnvJSON struct {
 	currentCoinbase   string
 	currentDifficulty int64
 	currentGasLimit   int64
@@ -24,7 +26,8 @@ type EnvJson struct {
 	currentTimestamp  int64
 }
 
-type ExecJson struct {
+// ExecJSON 调用信息
+type ExecJSON struct {
 	address  string
 	caller   string
 	code     string
@@ -35,7 +38,8 @@ type ExecJson struct {
 	value    int64
 }
 
-type AccountJson struct {
+// AccountJSON 账户信息
+type AccountJSON struct {
 	balance int64
 	code    string
 	nonce   int64
