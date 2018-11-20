@@ -27,6 +27,7 @@ jobs:
         - make test
 
     - stage: coverage
+      if: branch = master
       go: "1.9.x"
       before_install:
         - go get -t -v ./...
@@ -35,8 +36,7 @@ jobs:
         - make coverage
       after_success:
         - bash <(curl -s https://codecov.io/bash)
-      branches:
-        only: master
+
 
     - stage: deploy
       sudo: required
