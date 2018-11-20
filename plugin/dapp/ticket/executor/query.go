@@ -25,7 +25,7 @@ func (ticket *Ticket) Query_MinerAddress(param *types.ReqString) (types.Message,
 	if value == nil || err != nil {
 		return nil, types.ErrNotFound
 	}
-	return &types.ReplyString{string(value)}, nil
+	return &types.ReplyString{Data: string(value)}, nil
 }
 
 // Query_MinerSourceList query miner src list

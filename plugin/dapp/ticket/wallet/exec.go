@@ -29,7 +29,7 @@ func (policy *ticketPolicy) On_CloseTickets(req *types.ReqNil) (types.Message, e
 // On_WalletGetTickets get ticket
 func (policy *ticketPolicy) On_WalletGetTickets(req *types.ReqNil) (types.Message, error) {
 	tickets, privs, err := policy.getTicketsByStatus(1)
-	tks := &ty.ReplyWalletTickets{tickets, privs}
+	tks := &ty.ReplyWalletTickets{Tickets: tickets, Privkeys: privs}
 	return tks, err
 }
 

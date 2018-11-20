@@ -71,7 +71,7 @@ func (t *Ticket) saveTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue)
 		kvs = append(kvs, kv)
 	}
 
-	kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), []byte(b.NewMinerAddress)}
+	kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: []byte(b.NewMinerAddress)}
 	//tlog.Warn("tb:add", "key", string(kv.Key), "value", string(kv.Value))
 	kvs = append(kvs, kv)
 	kv = &types.KeyValue{
@@ -92,7 +92,7 @@ func (t *Ticket) delTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue) 
 	kvs = append(kvs, kv)
 	if len(b.OldMinerAddress) > 0 {
 		//恢复旧的绑定
-		kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), []byte(b.OldMinerAddress)}
+		kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: []byte(b.OldMinerAddress)}
 		kvs = append(kvs, kv)
 		kv = &types.KeyValue{
 			Key:   calcBindMinerKey(b.OldMinerAddress, b.ReturnAddress),
@@ -101,7 +101,7 @@ func (t *Ticket) delTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue) 
 		kvs = append(kvs, kv)
 	} else {
 		//删除旧的数据
-		kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), nil}
+		kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: nil}
 		kvs = append(kvs, kv)
 	}
 	return kvs

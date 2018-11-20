@@ -13,6 +13,7 @@ import (
 type Jrpc struct {
 	cli *channelClient
 }
+
 // Grpc grpc type
 type Grpc struct {
 	*channelClient
