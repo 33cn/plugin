@@ -77,7 +77,7 @@ func (t *DB) GetReceiptLog() *types.ReceiptLog {
 // GetKVSet get kv set
 func (t *DB) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&t.Ticket)
-	kvset = append(kvset, &types.KeyValue{Key(t.TicketId), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(t.TicketId), Value: value})
 	return kvset
 }
 
@@ -144,7 +144,7 @@ func (action *Action) GenesisInit(genesis *ty.TicketGenesis) (*types.Receipt, er
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -157,7 +157,7 @@ func saveBind(db dbm.KV, tbind *ty.TicketBind) {
 
 func getBindKV(tbind *ty.TicketBind) (kvset []*types.KeyValue) {
 	value := types.Encode(tbind)
-	kvset = append(kvset, &types.KeyValue{BindKey(tbind.ReturnAddress), value})
+	kvset = append(kvset, &types.KeyValue{Key: BindKey(tbind.ReturnAddress), Value: value})
 	return kvset
 }
 
@@ -205,7 +205,7 @@ func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
 	saveBind(action.db, tbind)
 	kv := getBindKV(tbind)
 	kvs = append(kvs, kv...)
-	receipt := &types.Receipt{types.ExecOk, kvs, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
 
@@ -251,7 +251,7 @@ func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -339,7 +339,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	kv = append(kv, receipt1.KV...)
 	logs = append(logs, receipt2.Logs...)
 	kv = append(kv, receipt2.KV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // TicketClose close tick
@@ -406,7 +406,7 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 		}
 		t.Save(action.db)
 	}
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -438,5 +438,5 @@ func Infos(db dbm.KV, tinfos *ty.TicketInfos) (types.Message, error) {
 		}
 		tickets = append(tickets, ticket)
 	}
-	return &ty.ReplyTicketList{tickets}, nil
+	return &ty.ReplyTicketList{Tickets: tickets}, nil
 }

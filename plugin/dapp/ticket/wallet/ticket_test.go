@@ -26,11 +26,11 @@ func Test_WalletTicket(t *testing.T) {
 	defer mock33.Close()
 	err := mock33.WaitHeight(0)
 	assert.Nil(t, err)
-	msg, err := mock33.GetAPI().Query(ty.TicketX, "TicketList", &ty.TicketList{"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 1})
+	msg, err := mock33.GetAPI().Query(ty.TicketX, "TicketList", &ty.TicketList{Addr: "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", Status: 1})
 	assert.Nil(t, err)
 	ticketList := msg.(*ty.ReplyTicketList)
 	assert.NotNil(t, ticketList)
-	return
+	//return
 	ticketwallet.FlushTicket(mock33.GetAPI())
 	err = mock33.WaitHeight(2)
 	assert.Nil(t, err)

@@ -17,13 +17,13 @@ const (
 	//log for ticket
 
 	//TyLogNewTicket new ticket log type
-	TyLogNewTicket   = 111
+	TyLogNewTicket = 111
 	// TyLogCloseTicket close ticket log type
 	TyLogCloseTicket = 112
 	// TyLogMinerTicket miner ticket log type
 	TyLogMinerTicket = 113
 	// TyLogTicketBind bind ticket log type
-	TyLogTicketBind  = 114
+	TyLogTicketBind = 114
 )
 
 //ticket
@@ -31,21 +31,22 @@ const (
 	// TicketActionGenesis action type
 	TicketActionGenesis = 11
 	// TicketActionOpen action type
-	TicketActionOpen    = 12
+	TicketActionOpen = 12
 	// TicketActionClose action type
-	TicketActionClose   = 13
+	TicketActionClose = 13
 	// TicketActionList  action type
-	TicketActionList    = 14 //读的接口不直接经过transaction
+	TicketActionList = 14 //读的接口不直接经过transaction
 	// TicketActionInfos action type
-	TicketActionInfos   = 15 //读的接口不直接经过transaction
+	TicketActionInfos = 15 //读的接口不直接经过transaction
 	// TicketActionMiner action miner
-	TicketActionMiner   = 16
+	TicketActionMiner = 16
 	// TicketActionBind action bind
-	TicketActionBind    = 17
+	TicketActionBind = 17
 )
 
 // TicketOldParts old tick type
 const TicketOldParts = 3
+
 // TicketCountOpenOnce count open once
 const TicketCountOpenOnce = 1000
 

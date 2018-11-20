@@ -312,7 +312,7 @@ func (policy *ticketPolicy) forceCloseAllTicket(height int64) (*types.ReplyHashe
 }
 
 func (policy *ticketPolicy) getTickets(addr string, status int32) ([]*ty.Ticket, error) {
-	reqaddr := &ty.TicketList{addr, status}
+	reqaddr := &ty.TicketList{Addr: addr, Status: status}
 	api := policy.getAPI()
 	msg, err := api.Query(ty.TicketX, "TicketList", reqaddr)
 	if err != nil {
@@ -369,8 +369,8 @@ func (policy *ticketPolicy) closeTickets(priv crypto.PrivKey, ids []string) ([]b
 	}
 	bizlog.Info("closeTickets", "ids", ids[0:end])
 	ta := &ty.TicketAction{}
-	tclose := &ty.TicketClose{ids[0:end]}
-	ta.Value = &ty.TicketAction_Tclose{tclose}
+	tclose := &ty.TicketClose{TicketId: ids[0:end]}
+	ta.Value = &ty.TicketAction_Tclose{Tclose: tclose}
 	ta.Ty = ty.TicketActionClose
 	return policy.getWalletOperate().SendTransaction(ta, []byte(ty.TicketX), priv, "")
 }
@@ -551,7 +551,7 @@ func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto
 		hashList[i] = pubHash
 	}
 	topen.PubHashes = hashList
-	ta.Value = &ty.TicketAction_Topen{topen}
+	ta.Value = &ty.TicketAction_Topen{Topen: topen}
 	ta.Ty = ty.TicketActionOpen
 	return policy.walletOperate.SendTransaction(ta, []byte(ty.TicketX), priv, "")
 }
@@ -626,7 +626,7 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 }
 
 func (policy *ticketPolicy) getMinerColdAddr(addr string) ([]string, error) {
-	reqaddr := &types.ReqString{addr}
+	reqaddr := &types.ReqString{Data: addr}
 	api := policy.walletOperate.GetAPI()
 	msg, err := api.Query(ty.TicketX, "MinerSourceList", reqaddr)
 	if err != nil {
