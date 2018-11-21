@@ -39,7 +39,7 @@ jobs:
 
 
     - stage: deploy
-      if: env(DAPP) IS present
+      if: env(DAPP) IS NOT blank
       sudo: required
       services:
         - docker
@@ -58,4 +58,8 @@ jobs:
       script:
 #        - make autotest_ci proj=build
 #        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
+        - echo env(DAPP)
+        - |
+          if [ env(DAPP) IS present ];then
+          make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
+          fi
