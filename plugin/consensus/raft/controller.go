@@ -20,17 +20,17 @@ var (
 	defaultSnapCount        uint64 = 1000
 	snapshotCatchUpEntriesN uint64 = 1000
 	writeBlockSeconds       int64  = 1
-	heartbeatTick           int    = 1
-	isLeader                bool   = false
+	heartbeatTick                  = 1
+	isLeader                       = false
 	confChangeC             chan raftpb.ConfChange
 )
 
 type subConfig struct {
 	Genesis           string `json:"genesis"`
 	GenesisBlockTime  int64  `json:"genesisBlockTime"`
-	NodeId            int64  `json:"nodeId"`
+	NodeID            int64  `json:"nodeID"`
 	PeersURL          string `json:"peersURL"`
-	RaftApiPort       int64  `json:"raftApiPort"`
+	RaftAPIPort       int64  `json:"raftAPIPort"`
 	IsNewJoinNode     bool   `json:"isNewJoinNode"`
 	ReadOnlyPeersURL  string `json:"readOnlyPeersURL"`
 	AddPeersURL       string `json:"addPeersURL"`
@@ -39,6 +39,7 @@ type subConfig struct {
 	HeartbeatTick     int32  `json:"heartbeatTick"`
 }
 
+// NewRaftCluster create raft cluster
 func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	rlog.Info("Start to create raft cluster")
 	var subcfg subConfig
@@ -52,7 +53,7 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.GenesisBlockTime > 0 {
 		genesisBlockTime = subcfg.GenesisBlockTime
 	}
-	if int(subcfg.NodeId) == 0 || strings.Compare(subcfg.PeersURL, "") == 0 {
+	if int(subcfg.NodeID) == 0 || strings.Compare(subcfg.PeersURL, "") == 0 {
 		rlog.Error("Please check whether the configuration of nodeId and peersURL is empty!")
 		//TODO 当传入的参数异常时，返回给主函数的是个nil,这时候需要做异常处理
 		return nil
@@ -74,7 +75,7 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	proposeC := make(chan *types.Block)
 	confChangeC = make(chan raftpb.ConfChange)
 
-	var b *RaftClient
+	var b *Client
 	getSnapshot := func() ([]byte, error) { return b.getSnapshot() }
 	// raft集群的建立,1. 初始化两条channel： propose channel用于客户端和raft底层交互, commit channel用于获取commit消息
 	// 2. raft集群中的节点之间建立http连接
@@ -90,9 +91,9 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	if len(addPeers) == 1 && addPeers[0] == "" {
 		addPeers = []string{}
 	}
-	commitC, errorC, snapshotterReady, validatorC, stopC := NewRaftNode(int(subcfg.NodeId), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
+	commitC, errorC, snapshotterReady, validatorC, stopC := NewRaftNode(int(subcfg.NodeID), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
 	//启动raft删除节点操作监听
-	go serveHttpRaftAPI(int(subcfg.RaftApiPort), confChangeC, errorC)
+	go serveHTTPRaftAPI(int(subcfg.RaftAPIPort), confChangeC, errorC)
 	// 监听commit channel,取block
 	b = NewBlockstore(cfg, <-snapshotterReady, proposeC, commitC, errorC, validatorC, stopC)
 	return b

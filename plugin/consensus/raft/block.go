@@ -24,10 +24,11 @@ var (
 
 func init() {
 	drivers.Reg("raft", NewRaftCluster)
-	drivers.QueryData.Register("raft", &RaftClient{})
+	drivers.QueryData.Register("raft", &Client{})
 }
 
-type RaftClient struct {
+// Client Raft implementation
+type Client struct {
 	*drivers.BaseClient
 	proposeC    chan<- *types.Block
 	commitC     <-chan *types.Block
@@ -38,18 +39,21 @@ type RaftClient struct {
 	once        sync.Once
 }
 
-func NewBlockstore(cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- *types.Block, commitC <-chan *types.Block, errorC <-chan error, validatorC <-chan bool, stopC chan<- struct{}) *RaftClient {
+// NewBlockstore create Raft Client
+func NewBlockstore(cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- *types.Block, commitC <-chan *types.Block, errorC <-chan error, validatorC <-chan bool, stopC chan<- struct{}) *Client {
 	c := drivers.NewBaseClient(cfg)
-	client := &RaftClient{BaseClient: c, proposeC: proposeC, snapshotter: snapshotter, validatorC: validatorC, commitC: commitC, errorC: errorC, stopC: stopC}
+	client := &Client{BaseClient: c, proposeC: proposeC, snapshotter: snapshotter, validatorC: validatorC, commitC: commitC, errorC: errorC, stopC: stopC}
 	c.SetChild(client)
 	return client
 }
 
-func (client *RaftClient) GetGenesisBlockTime() int64 {
+// GetGenesisBlockTime get genesis blocktime
+func (client *Client) GetGenesisBlockTime() int64 {
 	return genesisBlockTime
 }
 
-func (client *RaftClient) CreateGenesisTx() (ret []*types.Transaction) {
+// CreateGenesisTx get genesis tx
+func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	tx.Execer = []byte(cty.CoinsX)
 	tx.To = genesis
@@ -62,20 +66,22 @@ func (client *RaftClient) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-func (client *RaftClient) ProcEvent(msg queue.Message) bool {
+// ProcEvent method
+func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-func (client *RaftClient) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+// CheckBlock method
+func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return nil
 }
 
-func (client *RaftClient) getSnapshot() ([]byte, error) {
+func (client *Client) getSnapshot() ([]byte, error) {
 	//这里可能导致死锁
 	return proto.Marshal(client.GetCurrentBlock())
 }
 
-func (client *RaftClient) recoverFromSnapshot(snapshot []byte) error {
+func (client *Client) recoverFromSnapshot(snapshot []byte) error {
 	var block types.Block
 	if err := proto.Unmarshal(snapshot, &block); err != nil {
 		return err
@@ -84,7 +90,8 @@ func (client *RaftClient) recoverFromSnapshot(snapshot []byte) error {
 	return nil
 }
 
-func (client *RaftClient) SetQueueClient(c queue.Client) {
+// SetQueueClient method
+func (client *Client) SetQueueClient(c queue.Client) {
 	rlog.Info("Enter SetQueue method of raft consensus")
 	client.InitClient(c, func() {
 	})
@@ -93,12 +100,14 @@ func (client *RaftClient) SetQueueClient(c queue.Client) {
 	go client.pollingTask(c)
 }
 
-func (client *RaftClient) Close() {
+// Close method
+func (client *Client) Close() {
 	client.stopC <- struct{}{}
 	rlog.Info("consensus raft closed")
 }
 
-func (client *RaftClient) CreateBlock() {
+// CreateBlock method
+func (client *Client) CreateBlock() {
 	issleep := true
 	retry := 0
 	infoflag := 0
@@ -187,12 +196,12 @@ func (client *RaftClient) CreateBlock() {
 }
 
 // 向raft底层发送block
-func (client *RaftClient) propose(block *types.Block) {
+func (client *Client) propose(block *types.Block) {
 	client.proposeC <- block
 }
 
 // 从receive channel中读leader发来的block
-func (client *RaftClient) readCommits(commitC <-chan *types.Block, errorC <-chan error) {
+func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan error) {
 	var data *types.Block
 	var ok bool
 	for {
@@ -216,7 +225,7 @@ func (client *RaftClient) readCommits(commitC <-chan *types.Block, errorC <-chan
 }
 
 //轮询任务，去检测本机器是否为validator节点，如果是，则执行打包任务
-func (client *RaftClient) pollingTask(c queue.Client) {
+func (client *Client) pollingTask(c queue.Client) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	for {

@@ -9,10 +9,11 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 )
 
+// Query_NormGet get value
 func (n *Norm) Query_NormGet(in *pty.NormGetKey) (types.Message, error) {
 	value, err := n.GetStateDB().Get(Key(in.Key))
 	if err != nil {
 		return nil, types.ErrNotFound
 	}
-	return &types.ReplyString{string(value)}, nil
+	return &types.ReplyString{Data: string(value)}, nil
 }

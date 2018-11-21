@@ -98,6 +98,7 @@ func main() {
 	}
 }
 
+// LoadHelp show available commands
 func LoadHelp() {
 	fmt.Println("Available Commands:")
 	fmt.Println("[ip] transferperf [from, to, amount, txNum, duration]            : 转账性能测试")
@@ -108,6 +109,7 @@ func LoadHelp() {
 	fmt.Println("[ip] normreadperf [num, interval, duration]                      : 常规读数据性能测试")
 }
 
+// TransferPerf run transfer performance
 func TransferPerf(from string, to string, amount string, txNum string, duration string) {
 	txNumInt, err := strconv.Atoi(txNum)
 	if err != nil {
@@ -139,6 +141,7 @@ func TransferPerf(from string, to string, amount string, txNum string, duration 
 	}
 }
 
+// SendToAddress run transfer
 func SendToAddress(from string, to string, amount string, note string) {
 	amountFloat64, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
@@ -162,6 +165,7 @@ func SendToAddress(from string, to string, amount string, note string) {
 	fmt.Println(string(data))
 }
 
+// NormPerf run norm performance
 func NormPerf(size string, num string, interval string, duration string) {
 	var key string
 	var value string
@@ -197,7 +201,7 @@ func NormPerf(size string, num string, interval string, duration string) {
 	ch := make(chan struct{}, numThread)
 	for i := 0; i < numThread; i++ {
 		go func() {
-			var result int64 = 0
+			var result int64
 			totalCount := 0
 			txCount := 0
 			_, priv := genaddress()
@@ -228,7 +232,7 @@ func NormPerf(size string, num string, interval string, duration string) {
 	}
 }
 
-//zzh
+// NormReadPerf run read performance
 func NormReadPerf(num string, interval string, duration string) {
 	var numThread int
 	numInt, err := strconv.Atoi(num)
@@ -260,7 +264,6 @@ func NormReadPerf(num string, interval string, duration string) {
 			f, err := os.Open("normperf.log")
 			if err != nil {
 				panic("open file failed.")
-				return
 			}
 			buf := bufio.NewReader(f)
 			cnt := 0
@@ -277,7 +280,6 @@ func NormReadPerf(num string, interval string, duration string) {
 							f, err := os.Open("normperf.log")
 							if err != nil {
 								panic("open file failed.")
-								return
 							}
 							buf = bufio.NewReader(f)
 						}
@@ -315,6 +317,7 @@ func NormReadPerf(num string, interval string, duration string) {
 	}
 }
 
+// RandStringBytes create random string
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	rand.Seed(types.Now().UnixNano())
@@ -324,9 +327,10 @@ func RandStringBytes(n int) string {
 	return string(b)
 }
 
+// NormPut run put action
 func NormPut(privkey string, key string, value string) {
 	fmt.Println(key, "=", value)
-	nput := &pty.NormAction_Nput{&pty.NormPut{Key: key, Value: []byte(value)}}
+	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: key, Value: []byte(value)}}
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
@@ -344,6 +348,7 @@ func NormPut(privkey string, key string, value string) {
 	}
 }
 
+// NormGet run query action
 func NormGet(key string) {
 	in := &pty.NormGetKey{Key: key}
 	data, err := proto.Marshal(in)
