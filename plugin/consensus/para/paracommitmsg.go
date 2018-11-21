@@ -21,8 +21,8 @@ var (
 	consensusInterval = 16 //about 1 new block interval
 )
 
-type CommitMsgClient struct {
-	paraClient         *ParaClient
+type commitMsgClient struct {
+	paraClient         *client
 	waitMainBlocks     int32
 	commitMsgNotify    chan int64
 	delMsgNotify       chan int64
@@ -33,7 +33,7 @@ type CommitMsgClient struct {
 	quit               chan struct{}
 }
 
-func (client *CommitMsgClient) handler() {
+func (client *commitMsgClient) handler() {
 	var isSync bool
 	var notification []int64 //记录每次系统重启后 min and current height
 	var finishHeight int64
@@ -185,7 +185,7 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *CommitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int64, error) {
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int64, error) {
 	txs, count, err := client.batchCalcTxGroup(notifications)
 	if err != nil {
 		txs, err = client.singleCalcTx((notifications)[0])
@@ -199,7 +199,7 @@ func (client *CommitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNod
 	return txs, int64(count), nil
 }
 
-func (client *CommitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.Transaction, error) {
+func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.Transaction, error) {
 	if len(txsArr.Txs) < 2 {
 		tx := txsArr.Txs[0]
 		tx.Sign(types.SECP256K1, client.privateKey)
@@ -224,7 +224,7 @@ func (client *CommitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 	return newtx, nil
 }
 
-func (client *CommitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
+func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		tx, err := paracross.CreateRawCommitTx4MainChain(status, pt.ParaX, 0)
@@ -242,7 +242,7 @@ func (client *CommitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	return txs, len(notifications), nil
 }
 
-func (client *CommitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
+func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
 	tx, err := paracross.CreateRawCommitTx4MainChain(status, pt.ParaX, 0)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
@@ -258,7 +258,7 @@ func (client *CommitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 // if sendCommitMsgTx block quite long, write channel will be block in handle(), addBlock will not send new msg until rpc send over
 // if sendCommitMsgTx block quite long, if delMsg occur, after send over, ignore previous tx succ or fail, new msg will be rcv and sent
 // if sendCommitMsgTx fail, wait 1s resend the failed tx, if new tx rcv from ch, send the new one.
-func (client *CommitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
+func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
 	var err error
 	var tx *types.Transaction
 	resendTimer := time.After(time.Second * 1)
@@ -286,7 +286,7 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *CommitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
+func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 	if tx == nil {
 		return nil
 	}
@@ -319,7 +319,7 @@ func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) 
 
 //当前未考虑获取key非常多失败的场景， 如果获取height非常多，block模块会比较大，但是使用完了就释放了
 //如果有必要也可以考虑每次最多取20个一个txgroup，发送共识部分循环获取发送也没问题
-func (client *CommitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossNodeStatus, error) {
+func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossNodeStatus, error) {
 	var ret []*pt.ParacrossNodeStatus
 	if start == 0 {
 		geneStatus, err := client.getGenesisNodeStatus()
@@ -402,7 +402,7 @@ func (client *CommitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 
 }
 
-func (client *CommitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, error) {
+func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, error) {
 	var status pt.ParacrossNodeStatus
 	req := &types.ReqBlocks{Start: 0, End: 0}
 	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, req)
@@ -425,7 +425,7 @@ func (client *CommitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, 
 	return &status, nil
 }
 
-func (client *CommitMsgClient) onBlockAdded(height int64) error {
+func (client *commitMsgClient) onBlockAdded(height int64) error {
 	select {
 	case client.commitMsgNotify <- height:
 	case <-client.quit:
@@ -434,14 +434,14 @@ func (client *CommitMsgClient) onBlockAdded(height int64) error {
 	return nil
 }
 
-func (client *CommitMsgClient) onBlockDeleted(height int64) {
+func (client *commitMsgClient) onBlockDeleted(height int64) {
 	select {
 	case client.delMsgNotify <- height:
 	case <-client.quit:
 	}
 }
 
-func (client *CommitMsgClient) onMainBlockAdded(block *types.BlockDetail) {
+func (client *commitMsgClient) onMainBlockAdded(block *types.BlockDetail) {
 	select {
 	case client.mainBlockAdd <- block:
 	case <-client.quit:
@@ -449,7 +449,7 @@ func (client *CommitMsgClient) onMainBlockAdded(block *types.BlockDetail) {
 }
 
 //only sync once, as main usually sync, here just need the first sync status after start up
-func (client *CommitMsgClient) mainSync() error {
+func (client *commitMsgClient) mainSync() error {
 	req := &types.ReqNil{}
 	reply, err := client.paraClient.grpcClient.IsSync(context.Background(), req)
 	if err != nil {
@@ -466,7 +466,7 @@ func (client *CommitMsgClient) mainSync() error {
 
 }
 
-func (client *CommitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
+func (client *commitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
 	defer ticker.Stop()
@@ -486,7 +486,7 @@ out:
 			}
 
 			ret, err := client.paraClient.paraClient.GetTitle(context.Background(),
-				&types.ReqString{types.GetTitle()})
+				&types.ReqString{Data: types.GetTitle()})
 			if err != nil {
 				plog.Error("getConsensusHeight ", "err", err.Error())
 				continue
@@ -499,7 +499,7 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *CommitMsgClient) fetchPrivacyKey(ch chan crypto.PrivKey) {
+func (client *commitMsgClient) fetchPrivacyKey(ch chan crypto.PrivKey) {
 	defer client.paraClient.wg.Done()
 	if client.paraClient.authAccount == "" {
 		close(ch)
@@ -544,7 +544,7 @@ out:
 
 }
 
-func CheckMinerTx(current *types.BlockDetail) error {
+func checkMinerTx(current *types.BlockDetail) error {
 	//检查第一个笔交易的execs, 以及执行状态
 	if len(current.Block.Txs) == 0 {
 		return types.ErrEmptyTx

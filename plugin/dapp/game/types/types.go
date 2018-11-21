@@ -30,18 +30,20 @@ func getRealExecName(paraName string) string {
 	return types.ExecName(paraName + GameX)
 }
 
+// NewType  new type
 func NewType() *GameType {
 	c := &GameType{}
 	c.SetChild(c)
 	return c
 }
 
-// exec
+// GameType execType
 type GameType struct {
 	types.ExecTypeBase
 }
 
-func (at *GameType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap get log
+func (gt *GameType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogCreateGame: {reflect.TypeOf(ReceiptGame{}), "LogLotteryCreate"},
 		TyLogCancleGame: {reflect.TypeOf(ReceiptGame{}), "LogCancleGame"},
@@ -50,11 +52,13 @@ func (at *GameType) GetLogMap() map[int64]*types.LogInfo {
 	}
 }
 
-func (g *GameType) GetPayload() types.Message {
+// GetPayload get payload
+func (gt *GameType) GetPayload() types.Message {
 	return &GameAction{}
 }
 
-func (g *GameType) GetTypeMap() map[string]int32 {
+// GetTypeMap get typeMap
+func (gt *GameType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create": GameActionCreate,
 		"Cancel": GameActionCancel,
@@ -63,11 +67,10 @@ func (g *GameType) GetTypeMap() map[string]int32 {
 	}
 }
 
-// TODO createTx接口暂时没法用，作为一个预留接口
-func (game GameType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+// CreateTx  unused,just empty implementation
+func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	tlog.Debug("Game.CreateTx", "action", action)
-	var tx *types.Transaction
-	if action == Action_CreateGame {
+	if action == ActionCreateGame {
 		var param GamePreCreateTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -76,7 +79,7 @@ func (game GameType) CreateTx(action string, message json.RawMessage) (*types.Tr
 		}
 
 		return CreateRawGamePreCreateTx(&param)
-	} else if action == Action_MatchGame {
+	} else if action == ActionMatchGame {
 		var param GamePreMatchTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -85,7 +88,7 @@ func (game GameType) CreateTx(action string, message json.RawMessage) (*types.Tr
 		}
 
 		return CreateRawGamePreMatchTx(&param)
-	} else if action == Action_CancelGame {
+	} else if action == ActionCancelGame {
 		var param GamePreCancelTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -94,7 +97,7 @@ func (game GameType) CreateTx(action string, message json.RawMessage) (*types.Tr
 		}
 
 		return CreateRawGamePreCancelTx(&param)
-	} else if action == Action_CloseGame {
+	} else if action == ActionCloseGame {
 		var param GamePreCloseTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -103,13 +106,11 @@ func (game GameType) CreateTx(action string, message json.RawMessage) (*types.Tr
 		}
 
 		return CreateRawGamePreCloseTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
-
-	return tx, nil
+	return nil, types.ErrNotSupport
 }
 
+// CreateRawGamePreCreateTx  unused,just empty implementation
 func CreateRawGamePreCreateTx(parm *GamePreCreateTx) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("CreateRawGamePreCreateTx", "parm", parm)
@@ -139,13 +140,14 @@ func CreateRawGamePreCreateTx(parm *GamePreCreateTx) (*types.Transaction, error)
 	return tx, nil
 }
 
+// CreateRawGamePreMatchTx  unused,just empty implementation
 func CreateRawGamePreMatchTx(parm *GamePreMatchTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 
 	v := &GameMatch{
-		GameId: parm.GameId,
+		GameId: parm.GameID,
 		Guess:  parm.Guess,
 	}
 	game := &GameAction{
@@ -166,12 +168,13 @@ func CreateRawGamePreMatchTx(parm *GamePreMatchTx) (*types.Transaction, error) {
 	return tx, nil
 }
 
+// CreateRawGamePreCancelTx  unused,just empty implementation
 func CreateRawGamePreCancelTx(parm *GamePreCancelTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	v := &GameCancel{
-		GameId: parm.GameId,
+		GameId: parm.GameID,
 	}
 	cancel := &GameAction{
 		Ty:    GameActionCancel,
@@ -191,13 +194,13 @@ func CreateRawGamePreCancelTx(parm *GamePreCancelTx) (*types.Transaction, error)
 	return tx, nil
 }
 
-//CreateRawGamePreCloseTx
+// CreateRawGamePreCloseTx  unused,just empty implementation
 func CreateRawGamePreCloseTx(parm *GamePreCloseTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	v := &GameClose{
-		GameId: parm.GameId,
+		GameId: parm.GameID,
 		Secret: parm.Secret,
 	}
 	close := &GameAction{

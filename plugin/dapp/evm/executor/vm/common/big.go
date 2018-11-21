@@ -11,28 +11,34 @@ import (
 
 // 常用的大整数常量定义
 var (
-	Big0   = big.NewInt(0)
-	Big1   = big.NewInt(1)
-	Big32  = big.NewInt(32)
+	// Big0 大数字0
+	Big0 = big.NewInt(0)
+	// Big1 大数字1
+	Big1 = big.NewInt(1)
+	// Big32 大数字32
+	Big32 = big.NewInt(32)
+	// Big256 大数字256
 	Big256 = big.NewInt(256)
+	// Big257 大数字257
 	Big257 = big.NewInt(257)
 )
 
 // 2的各种常用取幂结果
 var (
+	// TT255 2的255次幂
 	TT255   = BigPow(2, 255)
 	tt256   = BigPow(2, 256)
 	tt256m1 = new(big.Int).Sub(tt256, big.NewInt(1))
 )
 
 const (
-	// 一个big.Word类型取值占用多少个位
+	// WordBits 一个big.Word类型取值占用多少个位
 	WordBits = 32 << (uint64(^big.Word(0)) >> 63)
-	// 一个big.Word类型取值占用多少个字节
+	// WordBytes 一个big.Word类型取值占用多少个字节
 	WordBytes = WordBits / 8
 )
 
-// 返回两者之中的较大值
+// BigMax 返回两者之中的较大值
 func BigMax(x, y *big.Int) *big.Int {
 	if x.Cmp(y) < 0 {
 		return y
@@ -40,7 +46,7 @@ func BigMax(x, y *big.Int) *big.Int {
 	return x
 }
 
-// 返回两者之中的较小值
+// BigMin 返回两者之中的较小值
 func BigMin(x, y *big.Int) *big.Int {
 	if x.Cmp(y) > 0 {
 		return y
@@ -48,13 +54,13 @@ func BigMin(x, y *big.Int) *big.Int {
 	return x
 }
 
-// 返回a的b次幂
+// BigPow 返回a的b次幂
 func BigPow(a, b int64) *big.Int {
 	r := big.NewInt(a)
 	return r.Exp(r, big.NewInt(b), nil)
 }
 
-// 求补
+// U256 求补
 func U256(x *big.Int) *big.Int {
 	return x.And(x, tt256m1)
 }
@@ -68,12 +74,11 @@ func U256(x *big.Int) *big.Int {
 func S256(x *big.Int) *big.Int {
 	if x.Cmp(TT255) < 0 {
 		return x
-	} else {
-		return new(big.Int).Sub(x, tt256)
 	}
+	return new(big.Int).Sub(x, tt256)
 }
 
-// 指数函数，可以指定底数，结果被截断为256位长度
+// Exp 指数函数，可以指定底数，结果被截断为256位长度
 func Exp(base, exponent *big.Int) *big.Int {
 	result := big.NewInt(1)
 
@@ -89,7 +94,7 @@ func Exp(base, exponent *big.Int) *big.Int {
 	return result
 }
 
-// big.Int以小端编码时，第n个位置的字节取值
+// Byte big.Int以小端编码时，第n个位置的字节取值
 // 例如: bigint '5', padlength 32, n=31 => 5
 func Byte(bigint *big.Int, padlength, n int) byte {
 	if n >= padlength {
@@ -117,17 +122,7 @@ func bigEndianByteAt(bigint *big.Int, n int) byte {
 	return byte(word >> shift)
 }
 
-// 以大端方式将big.Int编码为字节数组，结果数组长度为n
-func PaddedBigBytes(bigint *big.Int, n int) []byte {
-	if bigint.BitLen()/8 >= n {
-		return bigint.Bytes()
-	}
-	ret := make([]byte, n)
-	ReadBits(bigint, ret)
-	return ret
-}
-
-// 以大端方式将big.Int编码为字节数组
+// ReadBits 以大端方式将big.Int编码为字节数组
 func ReadBits(bigint *big.Int, buf []byte) {
 	i := len(buf)
 	for _, d := range bigint.Bits() {
@@ -139,17 +134,12 @@ func ReadBits(bigint *big.Int, buf []byte) {
 	}
 }
 
-// 减法运算，返回是否溢出
-func SafeSub(x, y uint64) (uint64, bool) {
-	return x - y, x < y
-}
-
-// 加法运算，返回是否溢出
+// SafeAdd 加法运算，返回是否溢出
 func SafeAdd(x, y uint64) (uint64, bool) {
 	return x + y, y > math.MaxUint64-x
 }
 
-// 乘法运算，返回是否溢出
+// SafeMul 乘法运算，返回是否溢出
 func SafeMul(x, y uint64) (uint64, bool) {
 	if x == 0 || y == 0 {
 		return 0, false
@@ -157,6 +147,7 @@ func SafeMul(x, y uint64) (uint64, bool) {
 	return x * y, y > math.MaxUint64/x
 }
 
+// Zero 检查数字是否为0
 func Zero(value *big.Int) bool {
 	if value == nil || value.Sign() == 0 {
 		return true
