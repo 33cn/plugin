@@ -12,8 +12,8 @@ const (
 	CertActionUpdate = 2
 	CertActionNormal = 3
 
-	AuthECDSA        = 257
-	AuthSM2          = 258
+	AuthECDSA = 257
+	AuthSM2   = 258
 )
 
 func init() {
