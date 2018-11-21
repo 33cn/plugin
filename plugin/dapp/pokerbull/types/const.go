@@ -21,13 +21,13 @@ const (
 
 const (
 	// TyLogPBGameStart log for start PBgame
-	TyLogPBGameStart    = 721
-    // TyLogPBGameContinue log for continue PBgame
+	TyLogPBGameStart = 721
+	// TyLogPBGameContinue log for continue PBgame
 	TyLogPBGameContinue = 722
 	// TyLogPBGameQuit log for quit PBgame
-	TyLogPBGameQuit     = 723
+	TyLogPBGameQuit = 723
 	// TyLogPBGameQuery log for query PBgame
-	TyLogPBGameQuery    = 724
+	TyLogPBGameQuery = 724
 )
 
 //包的名字可以通过配置文件来配置
@@ -43,9 +43,9 @@ const (
 	// FuncNameQueryGameListByIDs 根据id列表查询game列表
 	FuncNameQueryGameListByIDs = "QueryGameListByIDs"
 	// FuncNameQueryGameByID 根据id查询game
-	FuncNameQueryGameByID      = "QueryGameByID"
+	FuncNameQueryGameByID = "QueryGameByID"
 	// FuncNameQueryGameByAddr 根据地址查询game
-	FuncNameQueryGameByAddr    = "QueryGameByAddr"
+	FuncNameQueryGameByAddr = "QueryGameByAddr"
 	// FuncNameQueryGameByStatus 根据status查询game
-	FuncNameQueryGameByStatus  = "QueryGameByStatus"
+	FuncNameQueryGameByStatus = "QueryGameByStatus"
 )
