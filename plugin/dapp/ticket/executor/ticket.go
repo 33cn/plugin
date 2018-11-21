@@ -33,14 +33,17 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Ticket{}))
 }
 
+// Init initial
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newTicket, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName get name
 func GetName() string {
 	return newTicket().GetName()
 }
 
+// Ticket driver type
 type Ticket struct {
 	drivers.DriverBase
 }
@@ -52,6 +55,7 @@ func newTicket() drivers.Driver {
 	return t
 }
 
+// GetDriverName ...
 func (t *Ticket) GetDriverName() string {
 	return driverName
 }
@@ -67,7 +71,7 @@ func (t *Ticket) saveTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue)
 		kvs = append(kvs, kv)
 	}
 
-	kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), []byte(b.NewMinerAddress)}
+	kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: []byte(b.NewMinerAddress)}
 	//tlog.Warn("tb:add", "key", string(kv.Key), "value", string(kv.Value))
 	kvs = append(kvs, kv)
 	kv = &types.KeyValue{
@@ -88,7 +92,7 @@ func (t *Ticket) delTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue) 
 	kvs = append(kvs, kv)
 	if len(b.OldMinerAddress) > 0 {
 		//恢复旧的绑定
-		kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), []byte(b.OldMinerAddress)}
+		kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: []byte(b.OldMinerAddress)}
 		kvs = append(kvs, kv)
 		kv = &types.KeyValue{
 			Key:   calcBindMinerKey(b.OldMinerAddress, b.ReturnAddress),
@@ -97,7 +101,7 @@ func (t *Ticket) delTicketBind(b *ty.ReceiptTicketBind) (kvs []*types.KeyValue) 
 		kvs = append(kvs, kv)
 	} else {
 		//删除旧的数据
-		kv := &types.KeyValue{calcBindReturnKey(b.ReturnAddress), nil}
+		kv := &types.KeyValue{Key: calcBindReturnKey(b.ReturnAddress), Value: nil}
 		kvs = append(kvs, kv)
 	}
 	return kvs
@@ -160,12 +164,14 @@ func delticket(addr string, ticketID string, status int32) *types.KeyValue {
 	return kv
 }
 
+// IsFriend check is fri
 func (t *Ticket) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
 	clog.Error("ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
 	//不允许平行链
 	return false
 }
 
+// CheckTx check tx
 func (t *Ticket) CheckTx(tx *types.Transaction, index int) error {
 	//index == -1 only when check in mempool
 	if index == -1 {

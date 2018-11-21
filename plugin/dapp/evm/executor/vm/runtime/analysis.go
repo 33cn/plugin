@@ -15,7 +15,7 @@ import (
 // JUMPDEST指令会使用此对象进行跳转位置判断
 type Destinations map[common.Hash]bitvec
 
-// 检查PC只想的代码是否存在JUMPDEST指令，并且跳转目标有效
+// Has 检查PC只想的代码是否存在JUMPDEST指令，并且跳转目标有效
 func (d Destinations) Has(codehash common.Hash, code []byte, dest *big.Int) bool {
 	// 首先需要检查PC（指令指针），它不可能比代码长度还大，也不可能大于63位
 	// 注意，这里的参数dest就是PC指针
