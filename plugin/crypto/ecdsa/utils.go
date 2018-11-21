@@ -13,12 +13,14 @@ import (
 	"math/big"
 )
 
+// MarshalECDSASignature marshal ECDSA signature
 func MarshalECDSASignature(r, s *big.Int) ([]byte, error) {
-	return asn1.Marshal(ECDSASignature{r, s})
+	return asn1.Marshal(signatureECDSA{r, s})
 }
 
+// UnmarshalECDSASignature unmarshal ECDSA signature
 func UnmarshalECDSASignature(raw []byte) (*big.Int, *big.Int, error) {
-	sig := new(ECDSASignature)
+	sig := new(signatureECDSA)
 	_, err := asn1.Unmarshal(raw, sig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed unmashalling signature [%s]", err)
@@ -41,6 +43,7 @@ func UnmarshalECDSASignature(raw []byte) (*big.Int, *big.Int, error) {
 	return sig.R, sig.S, nil
 }
 
+// ToLowS convert to low int
 func ToLowS(k *ecdsa.PublicKey, s *big.Int) *big.Int {
 	lowS := IsLowS(s)
 	if !lowS {
@@ -52,6 +55,7 @@ func ToLowS(k *ecdsa.PublicKey, s *big.Int) *big.Int {
 	return s
 }
 
+// IsLowS check is low int
 func IsLowS(s *big.Int) bool {
 	return s.Cmp(new(big.Int).Rsh(elliptic.P256().Params().N, 1)) != 1
 }
@@ -78,16 +82,18 @@ func parsePubKey(pubKeyStr []byte, curve elliptic.Curve) (key *ecdsa.PublicKey, 
 	return &pubkey, nil
 }
 
+// SerializePublicKey serialize public key
 func SerializePublicKey(p *ecdsa.PublicKey) []byte {
-	b := make([]byte, 0, ECDSA_PUBLICKEY_LENGTH)
+	b := make([]byte, 0, publicKeyECDSALength)
 	b = append(b, 0x4)
 	b = paddedAppend(32, b, p.X.Bytes())
 	return paddedAppend(32, b, p.Y.Bytes())
 }
 
+// SerializePrivateKey serialize private key
 func SerializePrivateKey(p *ecdsa.PrivateKey) []byte {
-	b := make([]byte, 0, ECDSA_RPIVATEKEY_LENGTH)
-	return paddedAppend(ECDSA_RPIVATEKEY_LENGTH, b, p.D.Bytes())
+	b := make([]byte, 0, privateKeyECDSALength)
+	return paddedAppend(privateKeyECDSALength, b, p.D.Bytes())
 }
 
 func paddedAppend(size uint, dst, src []byte) []byte {
