@@ -62,15 +62,10 @@ jobs:
 
 
     - stage: deploy
-      if: env(DAPP) IS blank
+      if: env(DAPP) IS NOT blank
       sudo: required
       install: skip
       script:
 #        - make autotest_ci proj=build
 #        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - |
-          if [ env(DAPP) IS blank ];then
-            echo "DAPP is null"
-          else
-            echo "DAPP=$DAPP"
-          fi
+        - echo "DAPP is ${DAPP}"
