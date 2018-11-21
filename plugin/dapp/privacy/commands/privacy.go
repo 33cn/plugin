@@ -726,7 +726,7 @@ func enablePrivacy(cmd *cobra.Command, args []string) {
 	}
 
 	var res pty.RepEnablePrivacy
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.enablePrivacy", params, &res)
+	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.EnablePrivacy", params, &res)
 	ctx.SetResultCb(parseEnablePrivacy)
 	ctx.Run()
 }
