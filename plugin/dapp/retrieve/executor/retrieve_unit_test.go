@@ -12,6 +12,7 @@ import (
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/executor"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
@@ -33,6 +34,9 @@ func init() {
 	retrieve = constructRetrieveInstance()
 }
 
+func NewTestDB() db.KV {
+	return executor.NewStateDB(nil, nil, nil, &executor.StateDBOption{Height: types.GetFork("ForkExecRollback")})
+}
 func TestExecBackup(t *testing.T) {
 	var targetReceipt types.Receipt
 	var targetErr error
@@ -359,36 +363,4 @@ func (e *TestLDB) List(prefix, key []byte, count, direction int32) ([][]byte, er
 
 func (e *TestLDB) PrefixCount(prefix []byte) int64 {
 	return 0
-}
-
-type TestDB struct {
-	db.TransactionDB
-	cache map[string][]byte
-}
-
-func NewTestDB() *TestDB {
-	return &TestDB{cache: make(map[string][]byte)}
-}
-
-func (e *TestDB) Get(key []byte) (value []byte, err error) {
-	if value, ok := e.cache[string(key)]; ok {
-		//elog.Error("getkey", "key", string(key), "value", string(value))
-		return value, nil
-	}
-	return nil, types.ErrNotFound
-}
-
-func (e *TestDB) Set(key []byte, value []byte) error {
-	//elog.Error("setkey", "key", string(key), "value", string(value))
-	e.cache[string(key)] = value
-	return nil
-}
-
-func (e *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
-	return nil, types.ErrNotFound
-}
-
-//从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (e *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
-	return nil, types.ErrNotFound
 }
