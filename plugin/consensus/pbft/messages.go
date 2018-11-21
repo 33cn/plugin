@@ -15,8 +15,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// Digest
-
+// EQ Digest
 func EQ(d1 []byte, d2 []byte) bool {
 	if len(d1) != len(d2) {
 		return false
@@ -29,90 +28,91 @@ func EQ(d1 []byte, d2 []byte) bool {
 	return true
 }
 
-// Checkpoint
-
+// ToCheckpoint method
 func ToCheckpoint(sequence uint32, digest []byte) *types.Checkpoint {
-	return &types.Checkpoint{sequence, digest}
+	return &types.Checkpoint{Sequence: sequence, Digest: digest}
 }
 
-// Entry
-
+// ToEntry method
 func ToEntry(sequence uint32, digest []byte, view uint32) *types.Entry {
-	return &types.Entry{sequence, digest, view}
+	return &types.Entry{Sequence: sequence, Digest: digest, View: view}
 }
 
-// ViewChange
-
+// ToViewChange method
 func ToViewChange(viewchanger uint32, digest []byte) *types.ViewChange {
-	return &types.ViewChange{viewchanger, digest}
+	return &types.ViewChange{Viewchanger: viewchanger, Digest: digest}
 }
 
-// Summary
-
+// ToSummary method
 func ToSummary(sequence uint32, digest []byte) *types.Summary {
-	return &types.Summary{sequence, digest}
+	return &types.Summary{Sequence: sequence, Digest: digest}
 }
 
-// Request
-
+// ToRequestClient method
 func ToRequestClient(op *types.Operation, timestamp, client string) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Client{
-			&types.RequestClient{op, timestamp, client}},
+			Client: &types.RequestClient{Op: op, Timestamp: timestamp, Client: client}},
 	}
 }
 
+// ToRequestPreprepare method
 func ToRequestPreprepare(view, sequence uint32, digest []byte, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Preprepare{
-			&types.RequestPrePrepare{view, sequence, digest, replica}},
+			Preprepare: &types.RequestPrePrepare{View: view, Sequence: sequence, Digest: digest, Replica: replica}},
 	}
 }
 
+// ToRequestPrepare method
 func ToRequestPrepare(view, sequence uint32, digest []byte, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Prepare{
-			&types.RequestPrepare{view, sequence, digest, replica}},
+			Prepare: &types.RequestPrepare{View: view, Sequence: sequence, Digest: digest, Replica: replica}},
 	}
 }
 
+// ToRequestCommit method
 func ToRequestCommit(view, sequence, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Commit{
-			&types.RequestCommit{view, sequence, replica}},
+			Commit: &types.RequestCommit{View: view, Sequence: sequence, Replica: replica}},
 	}
 }
 
+// ToRequestCheckpoint method
 func ToRequestCheckpoint(sequence uint32, digest []byte, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Checkpoint{
-			&types.RequestCheckpoint{sequence, digest, replica}},
+			Checkpoint: &types.RequestCheckpoint{Sequence: sequence, Digest: digest, Replica: replica}},
 	}
 }
 
+// ToRequestViewChange method
 func ToRequestViewChange(view, sequence uint32, checkpoints []*types.Checkpoint, preps, prePreps []*types.Entry, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Viewchange{
-			&types.RequestViewChange{view, sequence, checkpoints, preps, prePreps, replica}},
+			Viewchange: &types.RequestViewChange{View: view, Sequence: sequence, Checkpoints: checkpoints, Preps: preps, Prepreps: prePreps, Replica: replica}},
 	}
 }
 
+// ToRequestAck method
 func ToRequestAck(view, replica, viewchanger uint32, digest []byte) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Ack{
-			&types.RequestAck{view, replica, viewchanger, digest}},
+			Ack: &types.RequestAck{View: view, Replica: replica, Viewchanger: viewchanger, Digest: digest}},
 	}
 }
 
+// ToRequestNewView method
 func ToRequestNewView(view uint32, viewChanges []*types.ViewChange, summaries []*types.Summary, replica uint32) *types.Request {
 	return &types.Request{
 		Value: &types.Request_Newview{
-			&types.RequestNewView{view, viewChanges, summaries, replica}},
+			Newview: &types.RequestNewView{View: view, Viewchanges: viewChanges, Summaries: summaries, Replica: replica}},
 	}
 }
 
-// Request Methods
-
+// ReqDigest method
 func ReqDigest(req *types.Request) []byte {
 	if req == nil {
 		return nil
@@ -130,14 +130,12 @@ func ReqDigest(req *types.Request) []byte {
 	return lwm
 }*/
 
-// Reply
-
+// ToReply method
 func ToReply(view uint32, timestamp, client string, replica uint32, result *types.Result) *types.ClientReply {
-	return &types.ClientReply{view, timestamp, client, replica, result}
+	return &types.ClientReply{View: view, Timestamp: timestamp, Client: client, Replica: replica, Result: result}
 }
 
-// Reply Methods
-
+// RepDigest method
 func RepDigest(reply fmt.Stringer) []byte {
 	if reply == nil {
 		return nil
@@ -146,8 +144,7 @@ func RepDigest(reply fmt.Stringer) []byte {
 	return bytes[:]
 }
 
-// Write proto message
-
+// WriteMessage write proto message
 func WriteMessage(addr string, msg proto.Message) error {
 	conn, err := net.Dial("tcp", addr)
 	defer conn.Close()
@@ -163,8 +160,7 @@ func WriteMessage(addr string, msg proto.Message) error {
 	return err
 }
 
-// Read proto message
-
+// ReadMessage read proto message
 func ReadMessage(conn io.Reader, msg proto.Message) error {
 	var buf bytes.Buffer
 	n, err := io.Copy(&buf, conn)
