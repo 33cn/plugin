@@ -176,7 +176,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	}
 	params.Payload = req
 	if gameID != "" {
-		params.FuncName = pkt.FuncNameQueryGameById
+		params.FuncName = pkt.FuncNameQueryGameByID
 		var res pkt.ReplyPBGame
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
@@ -191,7 +191,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if gameIDs != "" {
-		params.FuncName = pkt.FuncNameQueryGameListByIds
+		params.FuncName = pkt.FuncNameQueryGameListByIDs
 		var gameIDsS []string
 		gameIDsS = append(gameIDsS, gameIDs)
 		gameIDsS = append(gameIDsS, gameIDs)

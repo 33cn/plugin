@@ -41,9 +41,9 @@ var (
 
 const (
 	// FuncNameQueryGameListByIds 根据id列表查询game列表
-	FuncNameQueryGameListByIds = "QueryGameListByIds"
+	FuncNameQueryGameListByIDs = "QueryGameListByIDs"
 	// FuncNameQueryGameById 根据id查询game
-	FuncNameQueryGameById      = "QueryGameById"
+	FuncNameQueryGameByID      = "QueryGameByID"
 	// FuncNameQueryGameByAddr 根据地址查询game
 	FuncNameQueryGameByAddr    = "QueryGameByAddr"
 	// FuncNameQueryGameByStatus 根据status查询game
