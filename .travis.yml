@@ -65,7 +65,7 @@ jobs:
 #          fi
 
     - stage: deploy
-      if: "${DAPP}" != ""
+      if: env(DAPP) IS blank
       sudo: required
       install: skip
       script:
