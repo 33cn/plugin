@@ -80,7 +80,7 @@ func (s *suiteBtcStore) TestSaveBlockHead() {
 		Time:         1231731025,
 		Height:       2,
 	}
-	val, err := proto.Marshal(head)
+	val, _ := proto.Marshal(head)
 	key := calcBtcHeaderKeyHash(head.Hash)
 	kv = append(kv, &types.KeyValue{key, val})
 	key = calcBtcHeaderKeyHeight(int64(head.Height))

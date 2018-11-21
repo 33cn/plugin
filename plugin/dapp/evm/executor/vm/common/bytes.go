@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-// 右填充字节数组
+// RightPadBytes 右填充字节数组
 func RightPadBytes(slice []byte, l int) []byte {
 	if l <= len(slice) {
 		return slice
@@ -21,7 +21,7 @@ func RightPadBytes(slice []byte, l int) []byte {
 	return padded
 }
 
-// 左填充字节数组
+// LeftPadBytes 左填充字节数组
 func LeftPadBytes(slice []byte, l int) []byte {
 	if l <= len(slice) {
 		return slice
@@ -33,7 +33,7 @@ func LeftPadBytes(slice []byte, l int) []byte {
 	return padded
 }
 
-// 十六进制的字符串转换为字节数组
+// FromHex 十六进制的字符串转换为字节数组
 func FromHex(s string) []byte {
 	if len(s) > 1 {
 		if s[0:2] == "0x" || s[0:2] == "0X" {
@@ -46,13 +46,13 @@ func FromHex(s string) []byte {
 	return Hex2Bytes(s)
 }
 
-// 十六进制字符串转换为字节数组
+// Hex2Bytes 十六进制字符串转换为字节数组
 func Hex2Bytes(str string) []byte {
 	h, _ := hex.DecodeString(str)
 	return h
 }
 
-// 将字节数组转换为16进制的字符串表示
+// Bytes2Hex 将字节数组转换为16进制的字符串表示
 func Bytes2Hex(b []byte) string {
 	enc := make([]byte, len(b)*2+2)
 	copy(enc, "0x")
@@ -60,7 +60,7 @@ func Bytes2Hex(b []byte) string {
 	return string(enc)
 }
 
-// 将字节数组转换为16进制的字符串表示
+// Bytes2HexTrim 将字节数组转换为16进制的字符串表示
 // 并且将前面多余的0去除
 func Bytes2HexTrim(b []byte) string {
 	// 获取字节数组中第一个非零字节位置

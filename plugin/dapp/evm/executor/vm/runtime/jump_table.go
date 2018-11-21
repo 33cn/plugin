@@ -11,42 +11,45 @@ import (
 )
 
 type (
-	// 指令执行函数，每个操作指令对应一个实现，它实现了指令的具体操作逻辑
+	// ExecutionFunc 指令执行函数，每个操作指令对应一个实现，它实现了指令的具体操作逻辑
 	ExecutionFunc func(pc *uint64, env *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error)
 )
 
-// 定义指令操作的结构提
+// Operation 定义指令操作的结构提
 type Operation struct {
-	// 指令的具体操作逻辑
+	// Execute 指令的具体操作逻辑
 	Execute ExecutionFunc
 
-	// 计算当前指令执行所需消耗的Gas
-	GasCost gas.GasFunc
+	// GasCost 计算当前指令执行所需消耗的Gas
+	GasCost gas.CalcGasFunc
 
-	// 检查内存栈中的数据是否满足本操作执行的要求
+	// ValidateStack 检查内存栈中的数据是否满足本操作执行的要求
 	ValidateStack mm.StackValidationFunc
 
-	// 计算本次操作所需要的内存大小
+	// MemorySize 计算本次操作所需要的内存大小
 	MemorySize mm.MemorySizeFunc
 
-	Halts   bool // 是否需要暂停（将会结束本合约后面操作的执行）
-	Jumps   bool // 是否需要执行跳转（此种情况下PC不递增）
-	Writes  bool // 是否涉及到修改状态操作（在合约委托调用的情况下，此操作非法，将会抛异常）
-	Valid   bool // 是否为有效操作
-	Reverts bool // 是否恢复原始状态（强制暂停，将会结束本合约后面操作的执行）
-	Returns bool // 是否返回
+	// Halts   是否需要暂停（将会结束本合约后面操作的执行）
+	Halts bool
+	// Jumps   是否需要执行跳转（此种情况下PC不递增）
+	Jumps bool
+	// Writes  是否涉及到修改状态操作（在合约委托调用的情况下，此操作非法，将会抛异常）
+	Writes bool
+	// Valid   是否为有效操作
+	Valid bool
+	// Reverts 是否恢复原始状态（强制暂停，将会结束本合约后面操作的执行）
+	Reverts bool
+	// Returns 是否返回
+	Returns bool
 }
 
 var (
-	// 对应EVM不同版本的指令集，从上往下，从旧版本到新版本，
+	// ConstantinopleInstructionSet 对应EVM不同版本的指令集，从上往下，从旧版本到新版本，
 	// 新版本包含旧版本的指令集（目前直接使用康士坦丁堡指令集）
-	FrontierInstructionSet       = NewFrontierInstructionSet()
-	HomesteadInstructionSet      = NewHomesteadInstructionSet()
-	ByzantiumInstructionSet      = NewByzantiumInstructionSet()
 	ConstantinopleInstructionSet = NewConstantinopleInstructionSet()
 )
 
-// 康士坦丁堡 版本支持的指令集
+// NewConstantinopleInstructionSet 康士坦丁堡 版本支持的指令集
 func NewConstantinopleInstructionSet() [256]Operation {
 	instructionSet := NewByzantiumInstructionSet()
 	instructionSet[SHL] = Operation{
@@ -70,12 +73,12 @@ func NewConstantinopleInstructionSet() [256]Operation {
 	return instructionSet
 }
 
-// 拜占庭 版本支持的指令集
+// NewByzantiumInstructionSet 拜占庭 版本支持的指令集
 func NewByzantiumInstructionSet() [256]Operation {
 	instructionSet := NewHomesteadInstructionSet()
 	instructionSet[STATICCALL] = Operation{
 		Execute:       opStaticCall,
-		GasCost:       gas.GasStaticCall,
+		GasCost:       gas.StaticCall,
 		ValidateStack: mm.MakeStackFunc(6, 1),
 		MemorySize:    mm.MemoryStaticCall,
 		Valid:         true,
@@ -89,14 +92,14 @@ func NewByzantiumInstructionSet() [256]Operation {
 	}
 	instructionSet[RETURNDATACOPY] = Operation{
 		Execute:       opReturnDataCopy,
-		GasCost:       gas.GasReturnDataCopy,
+		GasCost:       gas.ReturnDataCopy,
 		ValidateStack: mm.MakeStackFunc(3, 0),
 		MemorySize:    mm.MemoryReturnDataCopy,
 		Valid:         true,
 	}
 	instructionSet[REVERT] = Operation{
 		Execute:       opRevert,
-		GasCost:       gas.GasRevert,
+		GasCost:       gas.Revert,
 		ValidateStack: mm.MakeStackFunc(2, 0),
 		MemorySize:    mm.MemoryRevert,
 		Valid:         true,
@@ -106,12 +109,12 @@ func NewByzantiumInstructionSet() [256]Operation {
 	return instructionSet
 }
 
-// 家园 版本支持的指令集
+// NewHomesteadInstructionSet 家园 版本支持的指令集
 func NewHomesteadInstructionSet() [256]Operation {
 	instructionSet := NewFrontierInstructionSet()
 	instructionSet[DELEGATECALL] = Operation{
 		Execute:       opDelegateCall,
-		GasCost:       gas.GasDelegateCall,
+		GasCost:       gas.DelegateCall,
 		ValidateStack: mm.MakeStackFunc(6, 1),
 		MemorySize:    mm.MemoryDelegateCall,
 		Valid:         true,
@@ -120,7 +123,7 @@ func NewHomesteadInstructionSet() [256]Operation {
 	return instructionSet
 }
 
-// 边境 版本支持的指令集
+// NewFrontierInstructionSet 边境 版本支持的指令集
 func NewFrontierInstructionSet() [256]Operation {
 	return [256]Operation{
 		STOP: {
@@ -186,7 +189,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		EXP: {
 			Execute:       opExp,
-			GasCost:       gas.GasExp,
+			GasCost:       gas.Exp,
 			ValidateStack: mm.MakeStackFunc(2, 1),
 			Valid:         true,
 		},
@@ -264,7 +267,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		SHA3: {
 			Execute:       opSha3,
-			GasCost:       gas.GasSha3,
+			GasCost:       gas.Sha3,
 			ValidateStack: mm.MakeStackFunc(2, 1),
 			MemorySize:    mm.MemorySha3,
 			Valid:         true,
@@ -277,7 +280,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		BALANCE: {
 			Execute:       opBalance,
-			GasCost:       gas.GasBalance,
+			GasCost:       gas.Balance,
 			ValidateStack: mm.MakeStackFunc(1, 1),
 			Valid:         true,
 		},
@@ -313,7 +316,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		CALLDATACOPY: {
 			Execute:       opCallDataCopy,
-			GasCost:       gas.GasCallDataCopy,
+			GasCost:       gas.CallDataCopy,
 			ValidateStack: mm.MakeStackFunc(3, 0),
 			MemorySize:    mm.MemoryCallDataCopy,
 			Valid:         true,
@@ -326,7 +329,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		CODECOPY: {
 			Execute:       opCodeCopy,
-			GasCost:       gas.GasCodeCopy,
+			GasCost:       gas.CodeCopy,
 			ValidateStack: mm.MakeStackFunc(3, 0),
 			MemorySize:    mm.MemoryCodeCopy,
 			Valid:         true,
@@ -339,13 +342,13 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		EXTCODESIZE: {
 			Execute:       opExtCodeSize,
-			GasCost:       gas.GasExtCodeSize,
+			GasCost:       gas.ExtCodeSize,
 			ValidateStack: mm.MakeStackFunc(1, 1),
 			Valid:         true,
 		},
 		EXTCODECOPY: {
 			Execute:       opExtCodeCopy,
-			GasCost:       gas.GasExtCodeCopy,
+			GasCost:       gas.ExtCodeCopy,
 			ValidateStack: mm.MakeStackFunc(4, 0),
 			MemorySize:    mm.MemoryExtCodeCopy,
 			Valid:         true,
@@ -394,21 +397,21 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		MLOAD: {
 			Execute:       opMload,
-			GasCost:       gas.GasMLoad,
+			GasCost:       gas.MLoad,
 			ValidateStack: mm.MakeStackFunc(1, 1),
 			MemorySize:    mm.MemoryMLoad,
 			Valid:         true,
 		},
 		MSTORE: {
 			Execute:       opMstore,
-			GasCost:       gas.GasMStore,
+			GasCost:       gas.MStore,
 			ValidateStack: mm.MakeStackFunc(2, 0),
 			MemorySize:    mm.MemoryMStore,
 			Valid:         true,
 		},
 		MSTORE8: {
 			Execute:       opMstore8,
-			GasCost:       gas.GasMStore8,
+			GasCost:       gas.MStore8,
 			MemorySize:    mm.MemoryMStore8,
 			ValidateStack: mm.MakeStackFunc(2, 0),
 
@@ -416,13 +419,13 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		SLOAD: {
 			Execute:       opSload,
-			GasCost:       gas.GasSLoad,
+			GasCost:       gas.SLoad,
 			ValidateStack: mm.MakeStackFunc(1, 1),
 			Valid:         true,
 		},
 		SSTORE: {
 			Execute:       opSstore,
-			GasCost:       gas.GasSStore,
+			GasCost:       gas.SStore,
 			ValidateStack: mm.MakeStackFunc(2, 0),
 			Valid:         true,
 			Writes:        true,
@@ -467,385 +470,385 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		PUSH1: {
 			Execute:       makePush(1, 1),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH2: {
 			Execute:       makePush(2, 2),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH3: {
 			Execute:       makePush(3, 3),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH4: {
 			Execute:       makePush(4, 4),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH5: {
 			Execute:       makePush(5, 5),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH6: {
 			Execute:       makePush(6, 6),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH7: {
 			Execute:       makePush(7, 7),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH8: {
 			Execute:       makePush(8, 8),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH9: {
 			Execute:       makePush(9, 9),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH10: {
 			Execute:       makePush(10, 10),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH11: {
 			Execute:       makePush(11, 11),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH12: {
 			Execute:       makePush(12, 12),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH13: {
 			Execute:       makePush(13, 13),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH14: {
 			Execute:       makePush(14, 14),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH15: {
 			Execute:       makePush(15, 15),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH16: {
 			Execute:       makePush(16, 16),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH17: {
 			Execute:       makePush(17, 17),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH18: {
 			Execute:       makePush(18, 18),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH19: {
 			Execute:       makePush(19, 19),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH20: {
 			Execute:       makePush(20, 20),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH21: {
 			Execute:       makePush(21, 21),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH22: {
 			Execute:       makePush(22, 22),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH23: {
 			Execute:       makePush(23, 23),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH24: {
 			Execute:       makePush(24, 24),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH25: {
 			Execute:       makePush(25, 25),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH26: {
 			Execute:       makePush(26, 26),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH27: {
 			Execute:       makePush(27, 27),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH28: {
 			Execute:       makePush(28, 28),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH29: {
 			Execute:       makePush(29, 29),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH30: {
 			Execute:       makePush(30, 30),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH31: {
 			Execute:       makePush(31, 31),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		PUSH32: {
 			Execute:       makePush(32, 32),
-			GasCost:       gas.GasPush,
+			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
 		},
 		DUP1: {
 			Execute:       makeDup(1),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(1),
 			Valid:         true,
 		},
 		DUP2: {
 			Execute:       makeDup(2),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(2),
 			Valid:         true,
 		},
 		DUP3: {
 			Execute:       makeDup(3),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(3),
 			Valid:         true,
 		},
 		DUP4: {
 			Execute:       makeDup(4),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(4),
 			Valid:         true,
 		},
 		DUP5: {
 			Execute:       makeDup(5),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(5),
 			Valid:         true,
 		},
 		DUP6: {
 			Execute:       makeDup(6),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(6),
 			Valid:         true,
 		},
 		DUP7: {
 			Execute:       makeDup(7),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(7),
 			Valid:         true,
 		},
 		DUP8: {
 			Execute:       makeDup(8),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(8),
 			Valid:         true,
 		},
 		DUP9: {
 			Execute:       makeDup(9),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(9),
 			Valid:         true,
 		},
 		DUP10: {
 			Execute:       makeDup(10),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(10),
 			Valid:         true,
 		},
 		DUP11: {
 			Execute:       makeDup(11),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(11),
 			Valid:         true,
 		},
 		DUP12: {
 			Execute:       makeDup(12),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(12),
 			Valid:         true,
 		},
 		DUP13: {
 			Execute:       makeDup(13),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(13),
 			Valid:         true,
 		},
 		DUP14: {
 			Execute:       makeDup(14),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(14),
 			Valid:         true,
 		},
 		DUP15: {
 			Execute:       makeDup(15),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(15),
 			Valid:         true,
 		},
 		DUP16: {
 			Execute:       makeDup(16),
-			GasCost:       gas.GasDup,
+			GasCost:       gas.Dup,
 			ValidateStack: mm.MakeDupStackFunc(16),
 			Valid:         true,
 		},
 		SWAP1: {
 			Execute:       makeSwap(1),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(2),
 			Valid:         true,
 		},
 		SWAP2: {
 			Execute:       makeSwap(2),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(3),
 			Valid:         true,
 		},
 		SWAP3: {
 			Execute:       makeSwap(3),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(4),
 			Valid:         true,
 		},
 		SWAP4: {
 			Execute:       makeSwap(4),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(5),
 			Valid:         true,
 		},
 		SWAP5: {
 			Execute:       makeSwap(5),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(6),
 			Valid:         true,
 		},
 		SWAP6: {
 			Execute:       makeSwap(6),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(7),
 			Valid:         true,
 		},
 		SWAP7: {
 			Execute:       makeSwap(7),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(8),
 			Valid:         true,
 		},
 		SWAP8: {
 			Execute:       makeSwap(8),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(9),
 			Valid:         true,
 		},
 		SWAP9: {
 			Execute:       makeSwap(9),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(10),
 			Valid:         true,
 		},
 		SWAP10: {
 			Execute:       makeSwap(10),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(11),
 			Valid:         true,
 		},
 		SWAP11: {
 			Execute:       makeSwap(11),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(12),
 			Valid:         true,
 		},
 		SWAP12: {
 			Execute:       makeSwap(12),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(13),
 			Valid:         true,
 		},
 		SWAP13: {
 			Execute:       makeSwap(13),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(14),
 			Valid:         true,
 		},
 		SWAP14: {
 			Execute:       makeSwap(14),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(15),
 			Valid:         true,
 		},
 		SWAP15: {
 			Execute:       makeSwap(15),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(16),
 			Valid:         true,
 		},
 		SWAP16: {
 			Execute:       makeSwap(16),
-			GasCost:       gas.GasSwap,
+			GasCost:       gas.Swap,
 			ValidateStack: mm.MakeSwapStackFunc(17),
 			Valid:         true,
 		},
@@ -891,7 +894,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		CREATE: {
 			Execute:       opCreate,
-			GasCost:       gas.GasCreate,
+			GasCost:       gas.Create,
 			ValidateStack: mm.MakeStackFunc(3, 1),
 			MemorySize:    mm.MemoryCreate,
 			Valid:         true,
@@ -900,7 +903,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		CALL: {
 			Execute:       opCall,
-			GasCost:       gas.GasCall,
+			GasCost:       gas.Call,
 			ValidateStack: mm.MakeStackFunc(7, 1),
 			MemorySize:    mm.MemoryCall,
 			Valid:         true,
@@ -908,7 +911,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		CALLCODE: {
 			Execute:       opCallCode,
-			GasCost:       gas.GasCallCode,
+			GasCost:       gas.CallCode,
 			ValidateStack: mm.MakeStackFunc(7, 1),
 			MemorySize:    mm.MemoryCall,
 			Valid:         true,
@@ -916,7 +919,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		RETURN: {
 			Execute:       opReturn,
-			GasCost:       gas.GasReturn,
+			GasCost:       gas.Return,
 			ValidateStack: mm.MakeStackFunc(2, 0),
 			MemorySize:    mm.MemoryReturn,
 			Halts:         true,
@@ -924,7 +927,7 @@ func NewFrontierInstructionSet() [256]Operation {
 		},
 		SELFDESTRUCT: {
 			Execute:       opSuicide,
-			GasCost:       gas.GasSuicide,
+			GasCost:       gas.Suicide,
 			ValidateStack: mm.MakeStackFunc(1, 0),
 			Halts:         true,
 			Valid:         true,
