@@ -574,10 +574,7 @@ func showOrCheckAcc(c types.Chain33Client, addr string, sorc int, balance int64)
 			return true
 		}
 	}
-	if sorc != onlyshow {
-		return false
-	}
-	return true
+	return sorc == onlyshow
 }
 
 func genaddress() (string, crypto.PrivKey) {
