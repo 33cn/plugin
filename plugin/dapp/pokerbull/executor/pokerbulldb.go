@@ -21,10 +21,13 @@ import (
 const (
 	// ListDESC 降序
 	ListDESC = int32(0)
-
-	DefaultCount   = int32(20) //默认一次取多少条记录
+	// DefaultCount 默认一次取多少条记录
+	DefaultCount   = int32(20)
+	// MaxPlayerNum 最大玩家数
 	MaxPlayerNum = 5
+	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
+	// DefaultStyle 默认游戏类型
 	DefaultStyle   = pkt.PlayStyleDefault
 )
 

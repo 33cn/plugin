@@ -12,27 +12,33 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
-// 牌数，4 * 13 不带大小王
+// PokerCardNum 牌数，4 * 13 不带大小王
 var PokerCardNum = 52
 
-// 牌花色偏移
+// ColorOffset 牌花色偏移
 var ColorOffset uint32 = 8
 
-// 牌花色bit掩码
+// ColorBitMask 牌花色bit掩码
 var ColorBitMask = 0xFF
 
-// 每种花色的牌数
+// CardNumPerColor 每种花色的牌数
 var CardNumPerColor = 13
 
-// 一手牌的牌数
+// CardNumPerGame 一手牌的牌数
 var CardNumPerGame = 5
 
 const (
+	// PokerbullResultX1 赌注倍数1倍
 	PokerbullResultX1    = 1
+	// PokerbullResultX2 赌注倍数2倍
 	PokerbullResultX2    = 2
+	// PokerbullResultX3 赌注倍数3倍
 	PokerbullResultX3    = 3
+	// PokerbullResultX4 赌注倍数4倍
 	PokerbullResultX4    = 4
+	// PokerbullResultX5 赌注倍数5倍
 	PokerbullResultX5    = 5
+	// PokerbullLeverageMax 赌注倍数最大倍数
 	PokerbullLeverageMax = PokerbullResultX1
 )
 
