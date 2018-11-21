@@ -38,28 +38,42 @@ jobs:
 #        - bash <(curl -s https://codecov.io/bash)
 
 
+#    - stage: deploy
+#      if: env(DAPP) IS NOT blank
+#      sudo: required
+#      services:
+#        - docker
+#      env:
+#        - DOCKER_COMPOSE_VERSION=1.21.2
+#      install:
+#        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+#        - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+#        - sudo apt-get update
+#        - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+#        - sudo rm /usr/local/bin/docker-compose
+#        - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+#        - chmod +x docker-compose
+#        - sudo mv docker-compose /usr/local/bin
+#      before_script: make build_ci
+#      script:
+##        - make autotest_ci proj=build
+##        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
+#        - echo env(DAPP)
+#        - |
+#          if [ env(DAPP) IS present ];then
+#          make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
+#          fi
+
     - stage: deploy
       if: env(DAPP) IS NOT blank
       sudo: required
-      services:
-        - docker
-      env:
-        - DOCKER_COMPOSE_VERSION=1.21.2
-      install:
-        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        - sudo apt-get update
-        - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
-        - sudo rm /usr/local/bin/docker-compose
-        - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-        - chmod +x docker-compose
-        - sudo mv docker-compose /usr/local/bin
-      before_script: make build_ci
+      install: skip
       script:
 #        - make autotest_ci proj=build
 #        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - echo env(DAPP)
         - |
-          if [ env(DAPP) IS present ];then
-          make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
+          if [ -n ${DAPP} ];then
+            echo "DAPP=$DAPP"
+          else
+            echo "DAPP is null"
           fi
