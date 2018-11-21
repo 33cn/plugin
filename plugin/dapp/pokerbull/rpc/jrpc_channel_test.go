@@ -40,7 +40,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testStartRawTxCmd},
 		{fn: testContinueRawTxCmd},
 		{fn: testQuitRawTxCmd},
-		{fn: testQueryGameById},
+		{fn: testQueryGameByID},
 		{fn: testQueryGameByAddr},
 	}
 	for index, testCase := range testCases {
@@ -73,12 +73,12 @@ func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("pokerbull.PokerBullQuitTx", params, &res)
 }
 
-func testQueryGameById(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params types.Query4Cli
 	req := &pty.QueryPBGameInfo{}
 	params.Execer = "pokerbull"
-	params.FuncName = "QueryGameById"
+	params.FuncName = "QueryGameByID"
 	params.Payload = req
 	rep = &pty.ReplyPBGame{}
 	return jrpc.Call("Chain33.Query", params, rep)
