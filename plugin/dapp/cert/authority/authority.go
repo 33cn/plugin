@@ -22,14 +22,14 @@ import (
 )
 
 var (
-	alog         = log.New("module", "authority")
-	cpuNum       = runtime.NumCPU()
+	alog   = log.New("module", "authority")
+	cpuNum = runtime.NumCPU()
 
 	// OrgName 默认证书组织名
-	OrgName      = "Chain33"
+	OrgName = "Chain33"
 
 	// Author 全局证书校验器
-	Author       = &Authority{}
+	Author = &Authority{}
 
 	// IsAuthEnable 是否开启全局校验开关
 	IsAuthEnable = false

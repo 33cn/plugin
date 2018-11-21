@@ -29,15 +29,15 @@ var CardNumPerGame = 5
 
 const (
 	// PokerbullResultX1 赌注倍数1倍
-	PokerbullResultX1    = 1
+	PokerbullResultX1 = 1
 	// PokerbullResultX2 赌注倍数2倍
-	PokerbullResultX2    = 2
+	PokerbullResultX2 = 2
 	// PokerbullResultX3 赌注倍数3倍
-	PokerbullResultX3    = 3
+	PokerbullResultX3 = 3
 	// PokerbullResultX4 赌注倍数4倍
-	PokerbullResultX4    = 4
+	PokerbullResultX4 = 4
 	// PokerbullResultX5 赌注倍数5倍
-	PokerbullResultX5    = 5
+	PokerbullResultX5 = 5
 	// PokerbullLeverageMax 赌注倍数最大倍数
 	PokerbullLeverageMax = PokerbullResultX1
 )

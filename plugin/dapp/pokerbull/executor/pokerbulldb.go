@@ -22,13 +22,13 @@ const (
 	// ListDESC 降序
 	ListDESC = int32(0)
 	// DefaultCount 默认一次取多少条记录
-	DefaultCount   = int32(20)
+	DefaultCount = int32(20)
 	// MaxPlayerNum 最大玩家数
 	MaxPlayerNum = 5
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
 	// DefaultStyle默认游戏类型
-	DefaultStyle   = pkt.PlayStyleDefault
+	DefaultStyle = pkt.PlayStyleDefault
 )
 
 // Action 斗牛action结构
@@ -43,6 +43,7 @@ type Action struct {
 	localDB      dbm.Lister
 	index        int
 }
+
 // NewAction 创建action
 func NewAction(pb *PokerBull, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
@@ -614,7 +615,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
-	return &types.Receipt{Ty:types.ExecOk, KV: kv, Logs: logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func getReadyPlayerNum(players []*pkt.PBPlayer) int {
