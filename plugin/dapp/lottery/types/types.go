@@ -19,6 +19,7 @@ const (
 	TyLogLotteryClose  = 804
 )
 
+// Lottery name
 const (
 	LotteryX = "lottery"
 )

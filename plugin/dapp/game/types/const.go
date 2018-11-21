@@ -26,16 +26,18 @@ var (
 	ExecerGame = []byte(GameX)
 )
 
+// action name
 const (
-	Action_CreateGame = "createGame"
-	Action_MatchGame  = "matchGame"
-	Action_CancelGame = "cancelGame"
-	Action_CloseGame  = "closeGame"
+	ActionCreateGame = "createGame"
+	ActionMatchGame  = "matchGame"
+	ActionCancelGame = "cancelGame"
+	ActionCloseGame  = "closeGame"
 )
 
+// query func name
 const (
-	FuncName_QueryGameListByIds           = "QueryGameListByIds"
-	FuncName_QueryGameListCount           = "QueryGameListCount"
-	FuncName_QueryGameListByStatusAndAddr = "QueryGameListByStatusAndAddr"
-	FuncName_QueryGameById                = "QueryGameById"
+	FuncNameQueryGameListByIds           = "QueryGameListByIds"
+	FuncNameQueryGameListCount           = "QueryGameListCount"
+	FuncNameQueryGameListByStatusAndAddr = "QueryGameListByStatusAndAddr"
+	FuncNameQueryGameByID                = "QueryGameById"
 )

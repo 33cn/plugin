@@ -6,6 +6,7 @@ package commands
 
 import "github.com/spf13/cobra"
 
+// Cmd The command line is not used.
 func Cmd() *cobra.Command {
 	return nil
 }

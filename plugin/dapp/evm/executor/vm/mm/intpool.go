@@ -12,15 +12,17 @@ import (
 // 整数池允许的最大长度
 const poolLimit = 256
 
-// big.Int组成的内存池
+// IntPool big.Int组成的内存池
 type IntPool struct {
 	pool *Stack
 }
 
+// NewIntPool 创建新的内存池
 func NewIntPool() *IntPool {
 	return &IntPool{pool: NewStack()}
 }
 
+// Get 取数据
 func (p *IntPool) Get() *big.Int {
 	if p.pool.Len() > 0 {
 		return p.pool.Pop()
@@ -28,6 +30,7 @@ func (p *IntPool) Get() *big.Int {
 	return new(big.Int)
 }
 
+// Put 存数据
 func (p *IntPool) Put(is ...*big.Int) {
 	if len(p.pool.Items) > poolLimit {
 		return
@@ -38,7 +41,7 @@ func (p *IntPool) Put(is ...*big.Int) {
 	}
 }
 
-// 返回一个零值的big.Int
+// GetZero 返回一个零值的big.Int
 func (p *IntPool) GetZero() *big.Int {
 	if p.pool.Len() > 0 {
 		return p.pool.Pop().SetUint64(0)
@@ -49,17 +52,18 @@ func (p *IntPool) GetZero() *big.Int {
 // 默认容量
 const poolDefaultCap = 25
 
-// 用于管理IntPool的Pool
+// IntPoolPool 用于管理IntPool的Pool
 type IntPoolPool struct {
 	pools []*IntPool
 	lock  sync.Mutex
 }
 
+// PoolOfIntPools 内存缓冲池
 var PoolOfIntPools = &IntPoolPool{
 	pools: make([]*IntPool, 0, poolDefaultCap),
 }
 
-// get is looking for an available pool to return.
+// Get 返回一个可用的内存池
 func (ipp *IntPoolPool) Get() *IntPool {
 	ipp.lock.Lock()
 	defer ipp.lock.Unlock()
@@ -72,7 +76,7 @@ func (ipp *IntPoolPool) Get() *IntPool {
 	return NewIntPool()
 }
 
-// put a pool that has been allocated with get.
+// Put 放入一个初始化过的内存池
 func (ipp *IntPoolPool) Put(ip *IntPool) {
 	ipp.lock.Lock()
 	defer ipp.lock.Unlock()

@@ -40,18 +40,22 @@ func (l *Lottery) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (
 	return set, nil
 }
 
+// ExecLocal_Create Action
 func (l *Lottery) ExecLocal_Create(payload *pty.LotteryCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return l.execLocal(tx, receiptData)
 }
 
+// ExecLocal_Buy Action
 func (l *Lottery) ExecLocal_Buy(payload *pty.LotteryBuy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return l.execLocal(tx, receiptData)
 }
 
+// ExecLocal_Draw Action
 func (l *Lottery) ExecLocal_Draw(payload *pty.LotteryDraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return l.execLocal(tx, receiptData)
 }
 
+// ExecLocal_Close Action
 func (l *Lottery) ExecLocal_Close(payload *pty.LotteryClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return l.execLocal(tx, receiptData)
 }
