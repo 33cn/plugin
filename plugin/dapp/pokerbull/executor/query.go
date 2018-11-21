@@ -9,13 +9,13 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
-// Query_QueryGameListByIds 根据id列表查询游戏
-func (g *PokerBull) Query_QueryGameListByIds(in *pkt.QueryPBGameInfos) (types.Message, error) {
+// Query_QueryGameListByIDs 根据id列表查询游戏
+func (g *PokerBull) Query_QueryGameListByIDs(in *pkt.QueryPBGameInfos) (types.Message, error) {
 	return Infos(g.GetStateDB(), in)
 }
 
-// Query_QueryGameById 根据id查询游戏
-func (g *PokerBull) Query_QueryGameById(in *pkt.QueryPBGameInfo) (types.Message, error) {
+// Query_QueryGameByID 根据id查询游戏
+func (g *PokerBull) Query_QueryGameByID(in *pkt.QueryPBGameInfo) (types.Message, error) {
 	game, err := readGame(g.GetStateDB(), in.GetGameId())
 	if err != nil {
 		return nil, err
