@@ -19,12 +19,12 @@ jobs:
 #      script:
 #        - make checkgofmt && make fmt_go
 #        - make linter
-
-#    - stage: unit-test
-#      go: "1.9.x"
-#      install: skip
-#      script:
-#        - make test
+#
+    - stage: unit-test
+      go: "1.9.x"
+      install: skip
+      script:
+        - echo "unit test"
 #
 #    - stage: coverage
 #      if: branch = master
@@ -36,8 +36,8 @@ jobs:
 #        - make coverage
 #      after_success:
 #        - bash <(curl -s https://codecov.io/bash)
-
-
+#
+#
 #    - stage: deploy
 #      if: env(DAPP) IS present
 #      sudo: required
@@ -56,13 +56,13 @@ jobs:
 #        - sudo mv docker-compose /usr/local/bin
 #      before_script: make build_ci
 #      script:
-##        - make autotest_ci proj=build
+#        - make autotest_ci proj=build
 ##        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
 #          make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
 
 
     - stage: deploy
-      if: env(DAPP) IS NOT blank
+      if: env(DAPP) IS present
       sudo: required
       install: skip
       script:
