@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TradeCmd : cmd related to trade,安装trade合约相关命令
 func TradeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "trade",
@@ -42,7 +43,7 @@ func TradeCmd() *cobra.Command {
 	return cmd
 }
 
-// show one's sell order
+// ShowOnesSellOrdersCmd : show one's sell order
 func ShowOnesSellOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sell_order",
@@ -81,7 +82,7 @@ func showOnesSellOrders(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// show one's sell order with status
+// ShowOnesSellOrdersStatusCmd : show one's sell order with status
 func ShowOnesSellOrdersStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status_sell_order",
@@ -122,7 +123,7 @@ func showOnesSellOrdersStatus(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// show token sell order with status
+// ShowTokenSellOrdersStatusCmd : show token sell order with status
 func ShowTokenSellOrdersStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status_token_sell_order",
@@ -177,9 +178,9 @@ func showTokenSellOrdersStatus(cmd *cobra.Command, args []string) {
 
 func parseSellOrders(arg interface{}) (interface{}, error) {
 	res := arg.(*pty.ReplyTradeOrders)
-	var result ReplySellOrdersResult
+	var result replySellOrdersResult
 	for _, o := range res.Orders {
-		order := &TradeOrderResult{
+		order := &tradeOrderResult{
 			TokenSymbol:    o.TokenSymbol,
 			Owner:          o.Owner,
 			BuyID:          o.BuyID,
@@ -201,7 +202,7 @@ func parseSellOrders(arg interface{}) (interface{}, error) {
 	return result, nil
 }
 
-// show one's buy order
+// ShowOnesBuyOrderCmd : show one's buy order
 func ShowOnesBuyOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "buy_order",
@@ -238,7 +239,7 @@ func showOnesBuyOrders(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// show one's buy order with status
+// ShowOnesBuyOrdersStatusCmd : show one's buy order with status
 func ShowOnesBuyOrdersStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status_buy_order",
@@ -278,7 +279,7 @@ func showOnesBuyOrdersStatus(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// show token buy order with status
+// ShowTokenBuyOrdersStatusCmd : show token buy order with status
 func ShowTokenBuyOrdersStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status_token_buy_order",
@@ -333,9 +334,9 @@ func showTokenBuyOrdersStatus(cmd *cobra.Command, args []string) {
 
 func parseBuyOrders(arg interface{}) (interface{}, error) {
 	res := arg.(*pty.ReplyTradeOrders)
-	var result ReplyBuyOrdersResult
+	var result replyBuyOrdersResult
 	for _, o := range res.Orders {
-		order := &TradeOrderResult{
+		order := &tradeOrderResult{
 			TokenSymbol:    o.TokenSymbol,
 			Owner:          o.Owner,
 			BuyID:          o.BuyID,
@@ -357,7 +358,7 @@ func parseBuyOrders(arg interface{}) (interface{}, error) {
 	return result, nil
 }
 
-//
+// ShowOnesOrdersStatusCmd : show one's order with status specified
 func ShowOnesOrdersStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status_order",
@@ -407,9 +408,9 @@ func showOnesOrdersStatus(cmd *cobra.Command, args []string) {
 
 func parseTradeOrders(arg interface{}) (interface{}, error) {
 	res := arg.(*pty.ReplyTradeOrders)
-	var result ReplyTradeOrdersResult
+	var result replyTradeOrdersResult
 	for _, o := range res.Orders {
-		order := &TradeOrderResult{
+		order := &tradeOrderResult{
 			TokenSymbol:    o.TokenSymbol,
 			Owner:          o.Owner,
 			BuyID:          o.BuyID,
@@ -433,7 +434,7 @@ func parseTradeOrders(arg interface{}) (interface{}, error) {
 
 /************* create trade transactions *************/
 
-// create raw sell token transaction
+// CreateRawTradeSellTxCmd : create raw sell token transaction
 func CreateRawTradeSellTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sell",
@@ -485,7 +486,7 @@ func tokenSell(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// create raw buy token transaction
+// CreateRawTradeBuyTxCmd : create raw buy token transaction
 func CreateRawTradeBuyTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "buy",
@@ -521,7 +522,7 @@ func tokenBuy(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// create raw revoke token transaction
+// CreateRawTradeRevokeTxCmd : create raw revoke token transaction
 func CreateRawTradeRevokeTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke",

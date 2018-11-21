@@ -86,7 +86,7 @@ func ConstructBackupTx() *types.Transaction {
 	var delayPeriod int64 = 70
 	var fee int64 = 1e6
 
-	vbackup := &rt.RetrieveAction_Backup{&rt.BackupRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr, DelayPeriod: delayPeriod}}
+	vbackup := &rt.RetrieveAction_Backup{Backup: &rt.BackupRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr, DelayPeriod: delayPeriod}}
 	//fmt.Println(vlock)
 	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveBackup}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
@@ -97,7 +97,7 @@ func ConstructBackupTx() *types.Transaction {
 
 func ConstructPrepareTx() *types.Transaction {
 	var fee int64 = 1e6
-	vprepare := &rt.RetrieveAction_Prepare{&rt.PrepareRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
+	vprepare := &rt.RetrieveAction_Prepare{Prepare: &rt.PrepareRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
 	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrievePreapre}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
 	tx.Nonce = r.Int63()
@@ -109,7 +109,7 @@ func ConstructPrepareTx() *types.Transaction {
 func ConstructPerformTx() *types.Transaction {
 	var fee int64 = 1e6
 
-	vperform := &rt.RetrieveAction_Perform{&rt.PerformRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
+	vperform := &rt.RetrieveAction_Perform{Perform: &rt.PerformRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
 	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrievePerform}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
 	tx.Nonce = r.Int63()
@@ -156,11 +156,11 @@ func (e *TestDB) Set(key []byte, value []byte) error {
 	return nil
 }
 
-func (db *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
+func (e *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
 	return nil, types.ErrNotFound
 }
 
 //从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (l *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
+func (e *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
 	return nil, types.ErrNotFound
 }

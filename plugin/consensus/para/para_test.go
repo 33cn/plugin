@@ -112,7 +112,7 @@ func TestFilterTxsForPara(t *testing.T) {
 		Receipts: receipts,
 	}
 
-	para := &ParaClient{}
+	para := &client{}
 	rst := para.FilterTxsForPara(detail)
 	filterTxs := []*types.Transaction{tx3, tx4, tx5, tx6, txA, txB, txC}
 	assert.Equal(t, filterTxs, rst)

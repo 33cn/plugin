@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/ripemd160"
 )
 
-// 系统内置合约实现的接口，只包含两个操作：
+// PrecompiledContract 系统内置合约实现的接口，只包含两个操作：
 // 1 根据合约自身逻辑和入参，计算所需Gas；
 // 2 执行合约。
 type PrecompiledContract interface {
@@ -28,7 +28,7 @@ type PrecompiledContract interface {
 	Run(input []byte) ([]byte, error)
 }
 
-// chain33平台支持君士坦丁堡版本支持的所有预编译合约指令，并从此版本开始同步支持EVM黄皮书中的新增指令；
+// PrecompiledContractsByzantium chain33平台支持君士坦丁堡版本支持的所有预编译合约指令，并从此版本开始同步支持EVM黄皮书中的新增指令；
 // 保存拜占庭版本支持的所有预编译合约（包括之前版本的合约）；
 // 后面如果有硬分叉，需要在此处考虑分叉逻辑，根据区块高度分别处理；
 // 下面的8个预编译指令，直接引用go-ethereum中的EVM实现
@@ -46,7 +46,7 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
 }
 
-// 调用预编译的合约逻辑并返回结果
+// RunPrecompiledContract 调用预编译的合约逻辑并返回结果
 func RunPrecompiledContract(p PrecompiledContract, input []byte, contract *Contract) (ret []byte, err error) {
 	gas := p.RequiredGas(input)
 	if contract.UseGas(gas) {
@@ -58,10 +58,12 @@ func RunPrecompiledContract(p PrecompiledContract, input []byte, contract *Contr
 // 预编译合约 ECRECOVER 椭圆曲线算法支持
 type ecrecover struct{}
 
+// RequiredGas 需要消耗多少Gas
 func (c *ecrecover) RequiredGas(input []byte) uint64 {
 	return params.EcrecoverGas
 }
 
+// Run 运算
 func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	const ecRecoverInputLength = 128
 
@@ -98,6 +100,8 @@ type sha256hash struct{}
 func (c *sha256hash) RequiredGas(input []byte) uint64 {
 	return uint64(len(input)+31)/32*params.Sha256PerWordGas + params.Sha256BaseGas
 }
+
+// Run run
 func (c *sha256hash) Run(input []byte) ([]byte, error) {
 	h := sha256.Sum256(input)
 	return h[:], nil
@@ -113,6 +117,8 @@ type ripemd160hash struct{}
 func (c *ripemd160hash) RequiredGas(input []byte) uint64 {
 	return uint64(len(input)+31)/32*params.Ripemd160PerWordGas + params.Ripemd160BaseGas
 }
+
+// Run run
 func (c *ripemd160hash) Run(input []byte) ([]byte, error) {
 	ripemd := ripemd160.New()
 	ripemd.Write(input)
@@ -129,6 +135,8 @@ type dataCopy struct{}
 func (c *dataCopy) RequiredGas(input []byte) uint64 {
 	return uint64(len(input)+31)/32*params.IdentityPerWordGas + params.IdentityBaseGas
 }
+
+// Run run
 func (c *dataCopy) Run(in []byte) ([]byte, error) {
 	return in, nil
 }
@@ -210,6 +218,7 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 	return gas.Uint64()
 }
 
+// Run run
 func (c *bigModExp) Run(input []byte) ([]byte, error) {
 	var (
 		baseLen = new(big.Int).SetBytes(common.GetData(input, 0, 32)).Uint64()

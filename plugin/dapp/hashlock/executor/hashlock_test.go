@@ -387,7 +387,7 @@ func estHashsend(t *testing.T) {
 }
 
 func lock(secret []byte) error {
-	vlock := &hlt.HashlockAction_Hlock{&hlt.HashlockLock{Amount: lockAmount, Time: int64(locktime), Hash: common.Sha256(secret), ToAddress: addr[accountindexB], ReturnAddress: addr[accountindexA]}}
+	vlock := &hlt.HashlockAction_Hlock{Hlock: &hlt.HashlockLock{Amount: lockAmount, Time: int64(locktime), Hash: common.Sha256(secret), ToAddress: addr[accountindexB], ReturnAddress: addr[accountindexA]}}
 	//fmt.Println(vlock)
 	transfer := &hlt.HashlockAction{Value: vlock, Ty: hlt.HashlockActionLock}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: addr[accountindexB]}
@@ -406,7 +406,7 @@ func lock(secret []byte) error {
 }
 func unlock(secret []byte) error {
 
-	vunlock := &hlt.HashlockAction_Hunlock{&hlt.HashlockUnlock{Secret: secret}}
+	vunlock := &hlt.HashlockAction_Hunlock{Hunlock: &hlt.HashlockUnlock{Secret: secret}}
 	transfer := &hlt.HashlockAction{Value: vunlock, Ty: hlt.HashlockActionUnlock}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: addr[accountindexB]}
 	tx.Nonce = r.Int63()
@@ -424,7 +424,7 @@ func unlock(secret []byte) error {
 
 func send(secret []byte) error {
 
-	vsend := &hlt.HashlockAction_Hsend{&hlt.HashlockSend{Secret: secret}}
+	vsend := &hlt.HashlockAction_Hsend{Hsend: &hlt.HashlockSend{Secret: secret}}
 	transfer := &hlt.HashlockAction{Value: vsend, Ty: hlt.HashlockActionSend}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: addr[accountindexB]}
 	tx.Nonce = r.Int63()
@@ -461,11 +461,7 @@ func showOrCheckAcc(c types.Chain33Client, addr string, sorc int, balance int64)
 			return true
 		}
 	}
-	if sorc != onlyshow {
-		return false
-	} else {
-		return true
-	}
+	return sorc == onlyshow
 }
 
 func showAccount(c types.Chain33Client, addr string) {
@@ -520,7 +516,7 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 	//defer conn.Close()
 	//fmt.Println("sign key privkey: ", common.ToHex(priv.Bytes()))
 	if amount > 0 {
-		v := &cty.CoinsAction_Transfer{&types.AssetsTransfer{Amount: amount}}
+		v := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 		transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: fee, To: to}
 		tx.Nonce = r.Int63()
@@ -536,24 +532,25 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 			return errors.New(string(reply.GetMsg()))
 		}
 		return nil
-	} else {
-		v := &cty.CoinsAction_Withdraw{&types.AssetsWithdraw{Amount: -amount}}
-		withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
-		tx.Nonce = r.Int63()
-		tx.Sign(types.SECP256K1, priv)
-		// Contact the server and print out its response.
-		reply, err := c.SendTransaction(context.Background(), tx)
-		if err != nil {
-			fmt.Println("err", err)
-			return err
-		}
-		if !reply.IsOk {
-			fmt.Println("err = ", reply.GetMsg())
-			return errors.New(string(reply.GetMsg()))
-		}
-		return nil
 	}
+
+	v := &cty.CoinsAction_Withdraw{Withdraw: &types.AssetsWithdraw{Amount: -amount}}
+	withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
+	tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, priv)
+	// Contact the server and print out its response.
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Println("err", err)
+		return err
+	}
+	if !reply.IsOk {
+		fmt.Println("err = ", reply.GetMsg())
+		return errors.New(string(reply.GetMsg()))
+	}
+	return nil
+
 }
 
 func getAccounts() (*types.WalletAccounts, error) {

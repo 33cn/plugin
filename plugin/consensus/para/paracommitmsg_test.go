@@ -42,7 +42,7 @@ func init() {
 type suiteParaCommitMsg struct {
 	// Include our basic suite logic.
 	suite.Suite
-	para    *ParaClient
+	para    *client
 	grpcCli *typesmocks.Chain33Client
 	q       queue.Queue
 	block   *blockchain.BlockChain
@@ -70,7 +70,7 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 
 	s.store = store.New(cfg.Store, sub.Store)
 	s.store.SetQueueClient(q.Client())
-	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*ParaClient)
+	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 	//data := &types.Int64{1}
 	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(nil, errors.New("nil"))
@@ -97,7 +97,7 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 
 }
 
-func walletProcess(q queue.Queue, para *ParaClient) {
+func walletProcess(q queue.Queue, para *client) {
 	defer para.wg.Done()
 
 	client := q.Client()
@@ -109,7 +109,7 @@ func walletProcess(q queue.Queue, para *ParaClient) {
 			return
 		case msg := <-client.Recv():
 			if msg.Ty == types.EventDumpPrivkey {
-				msg.Reply(client.NewMessage("", types.EventHeader, &types.ReplyString{"6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"}))
+				msg.Reply(client.NewMessage("", types.EventHeader, &types.ReplyString{Data: "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"}))
 			}
 		}
 	}

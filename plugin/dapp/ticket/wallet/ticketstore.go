@@ -9,7 +9,8 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 )
 
-func NewStore(db db.DB) *ticketStore {
+//newStore new storage
+func newStore(db db.DB) *ticketStore {
 	return &ticketStore{Store: wcom.NewStore(db)}
 }
 
@@ -29,6 +30,7 @@ func (store *ticketStore) checkAddrIsInWallet(addr string) bool {
 	return true
 }
 
+// SetAutoMinerFlag set auto mine flag
 func (store *ticketStore) SetAutoMinerFlag(flag int32) {
 	if flag == 1 {
 		store.Set(CalcWalletAutoMiner(), []byte("1"))
@@ -37,6 +39,7 @@ func (store *ticketStore) SetAutoMinerFlag(flag int32) {
 	}
 }
 
+// GetAutoMinerFlag get auto miner flag
 func (store *ticketStore) GetAutoMinerFlag() int32 {
 	flag := int32(0)
 	value, err := store.Get(CalcWalletAutoMiner())
