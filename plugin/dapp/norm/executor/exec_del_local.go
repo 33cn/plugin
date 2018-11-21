@@ -9,6 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 )
 
+// ExecDelLocal_Nput Action
 func (n *Norm) ExecDelLocal_Nput(nput *pty.NormPut, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
