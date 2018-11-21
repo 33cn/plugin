@@ -70,3 +70,10 @@ make push b=branch_dev_name m="hello world"
 ```
 如果m不设置，那么不会执行 git commit 的命令
 
+#### 测试代码
+类似plugin/dapp/relay,在cmd目录下编写自己插件的Makefile和build.sh
+在build目录下写testcase和相关的Dockerfile和docker-compose配置文件,
+testcase的规则参考plugin/dapp/testcase_compose_rule.md
+
+用户可以在travis自己工程里面设置自己plugin的DAPP变量，如DAPP设置为relay，则travis里面run relay的testcase
+
