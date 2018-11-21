@@ -27,7 +27,7 @@ const (
 	MaxPlayerNum = 5
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
-	// DefaultStyle 默认游戏类型
+	// DefaultStyle默认游戏类型
 	DefaultStyle   = pkt.PlayStyleDefault
 )
 
@@ -125,7 +125,7 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{gameIds}, nil
+	return &pkt.PBGameRecords{Records: gameIds}, nil
 }
 
 func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Message, error) {
@@ -150,7 +150,7 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{gameIds}, nil
+	return &pkt.PBGameRecords{Records: gameIds}, nil
 }
 
 func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, value int64) ([]string, error) {
@@ -175,7 +175,7 @@ func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, val
 func (action *Action) saveGame(game *pkt.PokerBull) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
 	action.db.Set(Key(game.GetGameId()), value)
-	kvset = append(kvset, &types.KeyValue{Key(game.GameId), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
 	return kvset
 }
 
@@ -614,7 +614,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func getReadyPlayerNum(players []*pkt.PBPlayer) int {
@@ -712,7 +712,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // GameQuit 退出游戏
@@ -768,7 +768,7 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // HandSlice 一手牌
