@@ -68,4 +68,4 @@ jobs:
       script:
 #        - make autotest_ci proj=build
 #        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - echo "DAPP is ${DAPP}"
+        - echo "DAPP i ${DAPP}"
