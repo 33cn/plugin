@@ -11,6 +11,7 @@ import (
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
@@ -18,6 +19,7 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
+// Exec 本合约执行逻辑
 func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {
 	evm.CheckInit()
 	// 先转换消息
@@ -33,12 +35,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0
 	var (
-		ret          = []byte("")
+		ret          []byte
 		vmerr        error
-		leftOverGas  = uint64(0)
+		leftOverGas  uint64
 		contractAddr common.Address
-		snapshot     = -1
-		execName     = ""
+		snapshot     int
+		execName     string
 	)
 
 	// 为了方便计费，即使合约为新生成，也将地址的初始化放到外面操作
@@ -60,6 +62,8 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	if isCreate {
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias())
 	} else {
+		//TODO 在这里进行ABI和十六进制的调用参数转换
+
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), msg.Data(), context.GasLimit, msg.Value())
 	}
 
@@ -76,17 +80,17 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	if vmerr != nil {
 		log.Error("evm contract exec error", "error info", vmerr)
 		return nil, vmerr
-	} else {
-		// 计算消耗了多少费用（实际消耗的费用）
-		usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
-		// 费用消耗溢出，执行失败
-		if overflow || usedFee > uint64(tx.Fee) {
-			// 如果操作没有回滚，则在这里处理
-			if curVer != nil && snapshot >= curVer.GetId() && curVer.GetId() > -1 {
-				evm.mStateDB.RevertToSnapshot(snapshot)
-			}
-			return nil, model.ErrOutOfGas
+	}
+
+	// 计算消耗了多少费用（实际消耗的费用）
+	usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
+	// 费用消耗溢出，执行失败
+	if overflow || usedFee > uint64(tx.Fee) {
+		// 如果操作没有回滚，则在这里处理
+		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
+			evm.mStateDB.RevertToSnapshot(snapshot)
 		}
+		return nil, model.ErrOutOfGas
 	}
 
 	// 打印合约中生成的日志
@@ -96,11 +100,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		return nil, nil
 	}
 	// 从状态机中获取数据变更和变更日志
-	data, logs := evm.mStateDB.GetChangedData(curVer.GetId())
+	data, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 
-	contractReceipt := &evmtypes.ReceiptEVMContract{msg.From().String(), execName, contractAddr.String(), usedGas, ret}
+	// TODO 在这里进行调用结果的转换
 
-	logs = append(logs, &types.ReceiptLog{evmtypes.TyLogCallContract, types.Encode(contractReceipt)})
+	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
+	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
 
 	if types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMKVHash") {
@@ -108,6 +113,14 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		hashKV := evm.calcKVHash(contractAddr, logs)
 		if hashKV != nil {
 			data = append(data, hashKV)
+		}
+	}
+
+	// 尝试从交易备注中获取ABI数据
+	if isCreate && types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMABI") {
+		_, err = abi.JSON(strings.NewReader(msg.ABI()))
+		if err == nil {
+			data = append(data, evm.getABIKV(contractAddr, msg.ABI()))
 		}
 	}
 
@@ -125,13 +138,14 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	return receipt, nil
 }
 
+// CheckInit 检查是否初始化数据库
 func (evm *EVMExecutor) CheckInit() {
 	if evm.mStateDB == nil {
 		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight())
 	}
 }
 
-// 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
+// GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
 func (evm *EVMExecutor) GetMessage(tx *types.Transaction) (msg *common.Message, err error) {
 	var action evmtypes.EVMContractAction
 	err = types.Decode(tx.Payload, &action)
@@ -160,7 +174,7 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction) (msg *common.Message, 
 	}
 
 	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
-	msg = common.NewMessage(from, to, tx.Nonce, amount, gasLimit, gasPrice, code, action.GetAlias())
+	msg = common.NewMessage(from, to, tx.Nonce, amount, gasLimit, gasPrice, code, action.GetAlias(), action.Note)
 	return msg, nil
 }
 
@@ -190,13 +204,21 @@ func (evm *EVMExecutor) calcKVHash(addr common.Address, logs []*types.ReceiptLog
 
 	if len(hashes) > 0 {
 		hash := common.ToHash(hashes)
-		return &types.KeyValue{getDataHashKey(addr), hash.Bytes()}
+		return &types.KeyValue{Key: getDataHashKey(addr), Value: hash.Bytes()}
 	}
 	return nil
 }
 
+func (evm *EVMExecutor) getABIKV(addr common.Address, data string) (kv *types.KeyValue) {
+	return &types.KeyValue{Key: getABIKey(addr), Value: []byte(data)}
+}
+
 func getDataHashKey(addr common.Address) []byte {
 	return []byte(fmt.Sprintf("mavl-%v-data-hash:%v", evmtypes.ExecutorName, addr))
+}
+
+func getABIKey(addr common.Address) []byte {
+	return []byte(fmt.Sprintf("mavl-%v-data-abi:%v", evmtypes.ExecutorName, addr))
 }
 
 // 从交易信息中获取交易发起人地址

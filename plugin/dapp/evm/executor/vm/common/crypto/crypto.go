@@ -16,7 +16,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// 校验签名信息是否正确
+// ValidateSignatureValues 校验签名信息是否正确
 func ValidateSignatureValues(r, s *big.Int) bool {
 	if r.Cmp(common.Big1) < 0 || s.Cmp(common.Big1) < 0 {
 		return false
@@ -24,7 +24,7 @@ func ValidateSignatureValues(r, s *big.Int) bool {
 	return true
 }
 
-// 根据压缩消息和签名，返回未压缩的公钥信息
+// Ecrecover 根据压缩消息和签名，返回未压缩的公钥信息
 func Ecrecover(hash, sig []byte) ([]byte, error) {
 	pub, err := SigToPub(hash, sig)
 	if err != nil {
@@ -34,7 +34,7 @@ func Ecrecover(hash, sig []byte) ([]byte, error) {
 	return bytes, err
 }
 
-// 根据签名返回公钥信息
+// SigToPub 根据签名返回公钥信息
 func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
 	btcsig := make([]byte, 65)
 	btcsig[0] = sig[64] + 27
@@ -44,7 +44,7 @@ func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
 	return (*ecdsa.PublicKey)(pub), err
 }
 
-// 随机生成一个新的地址，给新创建的合约地址使用
+// RandomContractAddress 随机生成一个新的地址，给新创建的合约地址使用
 func RandomContractAddress() *common.Address {
 	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
@@ -67,4 +67,16 @@ func Keccak256(data ...[]byte) []byte {
 		d.Write(b)
 	}
 	return d.Sum(nil)
+}
+
+
+// NewKeccak256Hash calculates and returns the Keccak256 hash of the input data,
+// converting it to an internal Hash data structure.
+func Keccak256Hash(data ...[]byte) (h common.Hash) {
+	d := sha3.NewLegacyKeccak256()
+	for _, b := range data {
+		d.Write(b)
+	}
+	d.Sum(h[:0])
+	return h
 }
