@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-// DirMissingOrEmpty
+// DirMissingOrEmpty 路径是否为空
 func DirMissingOrEmpty(path string) (bool, error) {
 	dirExists, err := DirExists(path)
 	if err != nil {
@@ -32,7 +32,7 @@ func DirMissingOrEmpty(path string) (bool, error) {
 	return false, nil
 }
 
-// DirExists
+// DirExists 目录是否存在
 func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -44,7 +44,7 @@ func DirExists(path string) (bool, error) {
 	return false, err
 }
 
-// DirEmpty
+// DirEmpty 目录是否为空
 func DirEmpty(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -59,7 +59,7 @@ func DirEmpty(path string) (bool, error) {
 	return false, err
 }
 
-// ReadFile
+// ReadFile 读取文件
 func ReadFile(file string) ([]byte, error) {
 	fileCont, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -69,7 +69,7 @@ func ReadFile(file string) ([]byte, error) {
 	return fileCont, nil
 }
 
-// ReadPemFile
+// ReadPemFile 读取pem文件
 func ReadPemFile(file string) ([]byte, error) {
 	bytes, err := ReadFile(file)
 	if err != nil {
@@ -84,7 +84,7 @@ func ReadPemFile(file string) ([]byte, error) {
 	return bytes, nil
 }
 
-// DeleteFile
+// DeleteFile 删除文件
 func DeleteFile(file string) error {
 	return os.Remove(file)
 }
