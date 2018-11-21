@@ -25,7 +25,7 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
-// SKI
+// SKI 计算ski
 func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {
 	raw := elliptic.Marshal(curve, x, y)
 
@@ -34,7 +34,7 @@ func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {
 	return hash.Sum(nil)
 }
 
-// GetPublicKeySKIFromCert
+// GetPublicKeySKIFromCert 从cert字节中获取公钥ski
 func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 	dcert, _ := pem.Decode(cert)
 	if dcert == nil {

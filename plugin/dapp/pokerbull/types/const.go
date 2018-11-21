@@ -13,16 +13,20 @@ const (
 )
 
 const (
-	// PlayStyleDefault 游戏类型
+	// PlayStyleDefault 默认游戏类型
 	PlayStyleDefault = iota + 1
+	// PlayStyleDealer 庄家玩法
 	PlayStyleDealer
 )
 
 const (
-	// TyLogPBGameStart log for PBgame
+	// TyLogPBGameStart log for start PBgame
 	TyLogPBGameStart    = 721
+    // TyLogPBGameContinue log for continue PBgame
 	TyLogPBGameContinue = 722
+	// TyLogPBGameQuit log for quit PBgame
 	TyLogPBGameQuit     = 723
+	// TyLogPBGameQuery log for query PBgame
 	TyLogPBGameQuery    = 724
 )
 
@@ -40,6 +44,8 @@ const (
 	FuncNameQueryGameListByIds = "QueryGameListByIds"
 	// FuncNameQueryGameById 根据id查询game
 	FuncNameQueryGameById      = "QueryGameById"
+	// FuncNameQueryGameByAddr 根据地址查询game
 	FuncNameQueryGameByAddr    = "QueryGameByAddr"
+	// FuncNameQueryGameByStatus 根据status查询game
 	FuncNameQueryGameByStatus  = "QueryGameByStatus"
 )

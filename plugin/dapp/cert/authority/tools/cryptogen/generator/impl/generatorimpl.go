@@ -25,14 +25,14 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
-// EcdsaCA
+// EcdsaCA ecdsa CA结构
 type EcdsaCA struct {
 	Name     string
 	Signer   crypto.Signer
 	SignCert *x509.Certificate
 }
 
-// SM2CA
+// SM2CA SM2 CA结构
 type SM2CA struct {
 	Name     string
 	Signer   crypto.Signer
@@ -40,7 +40,7 @@ type SM2CA struct {
 	Sm2Key   csp.Key
 }
 
-// NewCA
+// NewCA 根据类型生成CA生成器
 func NewCA(baseDir, name string, signType int) (generator.CAGenerator, error) {
 	if signType == ty.AuthECDSA {
 		return newEcdsaCA(baseDir, name)

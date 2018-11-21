@@ -28,29 +28,29 @@ type CertType struct {
 	types.ExecTypeBase
 }
 
-// NewType
+// NewType 新建cert类型结构
 func NewType() *CertType {
 	c := &CertType{}
 	c.SetChild(c)
 	return c
 }
 
-// GetPayload
+// GetPayload 获取payload
 func (b *CertType) GetPayload() types.Message {
 	return &CertAction{}
 }
 
-// GetName
+// GetName 获取执行器名
 func (b *CertType) GetName() string {
 	return CertX
 }
 
-// GetLogMap
+// GetLogMap 获取logmap
 func (b *CertType) GetLogMap() map[int64]*types.LogInfo {
 	return nil
 }
 
-// GetTypeMap
+// GetTypeMap 获取类型map
 func (b *CertType) GetTypeMap() map[string]int32 {
 	return actionName
 }

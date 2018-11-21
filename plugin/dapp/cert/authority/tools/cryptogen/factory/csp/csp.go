@@ -9,6 +9,7 @@ import "crypto"
 const (
 	// ECDSAP256KeyGen ECDSA类型
 	ECDSAP256KeyGen = 1
+	// SM2P256KygGen SM2类型
 	SM2P256KygGen   = 2
 )
 

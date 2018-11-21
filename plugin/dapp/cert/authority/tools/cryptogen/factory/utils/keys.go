@@ -44,7 +44,7 @@ func oidFromNamedCurve(curve elliptic.Curve) (asn1.ObjectIdentifier, bool) {
 	return nil, false
 }
 
-// PrivateKeyToPEM
+// PrivateKeyToPEM 私钥转pem
 func PrivateKeyToPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 	if len(pwd) != 0 {
 		return privateKeyToEncryptedPEM(privateKey, pwd)
@@ -138,7 +138,7 @@ func privateKeyToEncryptedPEM(privateKey interface{}, pwd []byte) ([]byte, error
 	}
 }
 
-// PublicKeyToPEM
+// PublicKeyToPEM 公钥转pem
 func PublicKeyToPEM(publicKey interface{}, pwd []byte) ([]byte, error) {
 	if len(pwd) != 0 {
 		return publicKeyToEncryptedPEM(publicKey, pwd)
@@ -225,7 +225,7 @@ func DERToPublicKey(raw []byte) (pub interface{}, err error) {
 	return key, err
 }
 
-// Clone
+// Clone 克隆结构
 func Clone(src []byte) []byte {
 	clone := make([]byte, len(src))
 	copy(clone, src)
