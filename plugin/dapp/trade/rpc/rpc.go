@@ -11,7 +11,8 @@ import (
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
-func (this *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.TradeForSell) (*types.UnsignTx, error) {
+//CreateRawTradeSellTx :
+func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.TradeForSell) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -27,7 +28,8 @@ func (this *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (this *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.TradeForBuy) (*types.UnsignTx, error) {
+//CreateRawTradeBuyTx :
+func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.TradeForBuy) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -43,7 +45,8 @@ func (this *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.T
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (this *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.TradeForRevokeSell) (*types.UnsignTx, error) {
+//CreateRawTradeRevokeTx :
+func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.TradeForRevokeSell) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -59,7 +62,8 @@ func (this *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptype
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (this *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptypes.TradeForBuyLimit) (*types.UnsignTx, error) {
+//CreateRawTradeBuyLimitTx :
+func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptypes.TradeForBuyLimit) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -75,7 +79,8 @@ func (this *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *pty
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (this *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *ptypes.TradeForSellMarket) (*types.UnsignTx, error) {
+//CreateRawTradeSellMarketTx :
+func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *ptypes.TradeForSellMarket) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -91,7 +96,8 @@ func (this *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *p
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (this *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptypes.TradeForRevokeBuy) (*types.UnsignTx, error) {
+//CreateRawTradeRevokeBuyTx :
+func (cc *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptypes.TradeForRevokeBuy) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}

@@ -35,10 +35,12 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&trade{}))
 }
 
+// Init : 注册当前trade合约
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newTrade, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName : 获取trade合约名字
 func GetName() string {
 	return newTrade().GetName()
 }

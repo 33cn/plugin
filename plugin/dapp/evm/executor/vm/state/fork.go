@@ -12,8 +12,7 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
-// 本文件用来存储硬分叉中需要用到的数据
-
+// BlockData 本文件用来存储硬分叉中需要用到的数据
 type BlockData struct {
 	blockHeight int64
 	testnet     bool
@@ -21,9 +20,11 @@ type BlockData struct {
 	txs map[string]*TxData
 }
 
+// TxData 交易数据
 type TxData struct {
+	// KV 交易生成的KV数据
 	KV map[string][]byte
-	// Key 为logType_logIndex
+	// Logs Key 为logType_logIndex
 	Logs map[string][]byte
 }
 
@@ -47,6 +48,7 @@ func makeLogReceiptKey(logType int32, logIndex int) string {
 	return fmt.Sprintf("%v_%v", logType, logIndex)
 }
 
+// InitForkData 初始化硬分叉数据
 func InitForkData() {
 	forkData = make(map[int64]*BlockData)
 
@@ -72,6 +74,7 @@ func InitForkData() {
 	forkData[556294] = data
 }
 
+// ProcessFork 处理硬分叉逻辑
 func ProcessFork(blockHeight int64, txHash []byte, receipt *types.Receipt) {
 	if types.IsLocal() {
 		return

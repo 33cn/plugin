@@ -397,7 +397,7 @@ func opSha3(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *
 	data := memory.Get(offset.Int64(), size.Int64())
 	hash := crypto.Keccak256(data)
 
-	if evm.VmConfig.EnablePreimageRecording {
+	if evm.VMConfig.EnablePreimageRecording {
 		evm.StateDB.AddPreimage(common.BytesToHash(hash), data)
 	}
 

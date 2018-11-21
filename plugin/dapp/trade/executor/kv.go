@@ -155,15 +155,15 @@ func calcOnesOrderPrefixStatus(addr string, status int32) []byte {
 func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase,
 	status int32, height int64, value []byte) []*types.KeyValue {
 
-	keyId := receipt.TxHash
+	keyID := receipt.TxHash
 
-	newkey := calcTokenBuyOrderKey(receipt.TokenSymbol, receipt.Owner, status, keyId, height)
+	newkey := calcTokenBuyOrderKey(receipt.TokenSymbol, receipt.Owner, status, keyID, height)
 	kv = append(kv, &types.KeyValue{newkey, value})
 
-	newkey = calcOnesBuyOrderKeyStatus(receipt.TokenSymbol, receipt.Owner, status, keyId)
+	newkey = calcOnesBuyOrderKeyStatus(receipt.TokenSymbol, receipt.Owner, status, keyID)
 	kv = append(kv, &types.KeyValue{newkey, value})
 
-	newkey = calcOnesBuyOrderKeyToken(receipt.TokenSymbol, receipt.Owner, status, keyId)
+	newkey = calcOnesBuyOrderKeyToken(receipt.TokenSymbol, receipt.Owner, status, keyID)
 	kv = append(kv, &types.KeyValue{newkey, value})
 
 	priceBoardlot, err := strconv.ParseFloat(receipt.PricePerBoardlot, 64)
@@ -179,11 +179,11 @@ func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase
 	price := calcPriceOfToken(priceBoardlotInt64, AmountPerBoardlotInt64)
 
 	newkey = calcTokensBuyOrderKeyStatus(receipt.TokenSymbol, status,
-		price, receipt.Owner, keyId)
+		price, receipt.Owner, keyID)
 	kv = append(kv, &types.KeyValue{newkey, value})
 
 	st, ty := fromStatus(status)
-	newkey = calcOnesOrderKey(receipt.Owner, st, ty, height, keyId)
+	newkey = calcOnesOrderKey(receipt.Owner, st, ty, height, keyID)
 	kv = append(kv, &types.KeyValue{newkey, value})
 
 	return kv

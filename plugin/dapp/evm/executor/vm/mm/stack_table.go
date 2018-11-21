@@ -11,11 +11,11 @@ import (
 )
 
 type (
-	// 校验栈中数据是否满足计算要求
+	// StackValidationFunc 校验栈中数据是否满足计算要求
 	StackValidationFunc func(*Stack) error
 )
 
-// 栈校验的通用逻辑封装（主要就是检查栈的深度和空间是否够用）
+// MakeStackFunc 栈校验的通用逻辑封装（主要就是检查栈的深度和空间是否够用）
 func MakeStackFunc(pop, push int) StackValidationFunc {
 	return func(stack *Stack) error {
 		if err := stack.Require(pop); err != nil {
@@ -29,10 +29,12 @@ func MakeStackFunc(pop, push int) StackValidationFunc {
 	}
 }
 
+// MakeDupStackFunc 创建栈大小计算方法对象
 func MakeDupStackFunc(n int) StackValidationFunc {
 	return MakeStackFunc(n, n+1)
 }
 
+// MakeSwapStackFunc 创建栈大小计算方法对象
 func MakeSwapStackFunc(n int) StackValidationFunc {
 	return MakeStackFunc(n, n)
 }
