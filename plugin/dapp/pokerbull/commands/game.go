@@ -195,7 +195,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		var gameIDsS []string
 		gameIDsS = append(gameIDsS, gameIDs)
 		gameIDsS = append(gameIDsS, gameIDs)
-		req := &pkt.QueryPBGameInfos{gameIDsS}
+		req := &pkt.QueryPBGameInfos{GameIds: gameIDsS}
 		params.Payload = req
 		var res pkt.ReplyPBGameList
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)

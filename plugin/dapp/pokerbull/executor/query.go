@@ -20,7 +20,7 @@ func (g *PokerBull) Query_QueryGameByID(in *pkt.QueryPBGameInfo) (types.Message,
 	if err != nil {
 		return nil, err
 	}
-	return &pkt.ReplyPBGame{game}, nil
+	return &pkt.ReplyPBGame{Game: game}, nil
 }
 
 // Query_QueryGameByAddr 根据地址查询游戏

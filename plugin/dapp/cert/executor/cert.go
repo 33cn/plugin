@@ -91,7 +91,12 @@ func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 根据前缀查找证书变更记录，cert回滚、重启、同步用到
 */
 func (c *Cert) loadHistoryByPrefix() error {
-	parm := &types.LocalDBList{[]byte("LODB-cert-"), nil, 0, 0}
+	parm := &types.LocalDBList{
+		Prefix:    []byte("LODB-cert-"),
+		Key:       nil,
+		Direction: 0,
+		Count:     0,
+	}
 	result, err := c.DriverBase.GetApi().LocalList(parm)
 	if err != nil {
 		return err
@@ -120,7 +125,7 @@ func (c *Cert) loadHistoryByPrefix() error {
 */
 func (c *Cert) loadHistoryByHeight() error {
 	key := calcCertHeightKey(c.GetHeight())
-	parm := &types.LocalDBGet{[][]byte{key}}
+	parm := &types.LocalDBGet{Keys: [][]byte{key}}
 	result, err := c.DriverBase.GetApi().LocalGet(parm)
 	if err != nil {
 		return err

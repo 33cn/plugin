@@ -112,9 +112,9 @@ func certFromX509Cert(cert *x509.Certificate) (certificate, error) {
 // ParseECDSAPubKey2SM2PubKey 将ECDSA的公钥转成SM2公钥
 func ParseECDSAPubKey2SM2PubKey(key *ecdsa.PublicKey) *sm2.PublicKey {
 	sm2Key := &sm2.PublicKey{
-		key.Curve,
-		key.X,
-		key.Y,
+		Curve: key.Curve,
+		X:     key.X,
+		Y:     key.Y,
 	}
 
 	return sm2Key
