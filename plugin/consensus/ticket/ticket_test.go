@@ -7,9 +7,9 @@ package ticket
 import (
 	"fmt"
 	"testing"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -100,5 +100,34 @@ func TestTicketMap(t *testing.T) {
 	assert.Equal(t, c.getTicketCount(), int64(4))
 	c.delTicket("3333")
 	assert.Equal(t, c.getTicketCount(), int64(3))
+}
 
+func TestProcEvent(t *testing.T) {
+	c := Client{}
+	ret := c.ProcEvent(queue.Message{})
+	assert.Equal(t, ret, true)
+
+}
+
+func Test_genPrivHash(t *testing.T) {
+	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	assert.NoError(t, err)
+	priv, err := c.GenKey()
+
+	bt, err := genPrivHash(priv, "AA:BB:CC:DD")
+	assert.NotNil(t, err)
+	assert.Equal(t, 0, len(bt))
+
+	bt, err = genPrivHash(priv, "111:222:333:444")
+	assert.NoError(t, err)
+	assert.Equal(t, 32, len(bt))
+}
+
+func Test_getNextRequiredDifficulty(t *testing.T) {
+	c := &Client{}
+
+	bits, bt, err := c.getNextRequiredDifficulty(nil, 1)
+	assert.NoError(t, err)
+	assert.Equal(t, bt, defaultModify)
+	assert.Equal(t, bits, types.GetP(0).PowLimitBits)
 }
