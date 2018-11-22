@@ -10,11 +10,11 @@ import (
 )
 
 func (val *ValNode) Exec_Node(node *pty.ValNode, tx *types.Transaction, index int) (*types.Receipt, error) {
-	receipt := &types.Receipt{types.ExecOk, nil, nil}
+	receipt := &types.Receipt{Ty:types.ExecOk, KV:nil, Logs:nil}
 	return receipt, nil
 }
 
 func (val *ValNode) Exec_BlockInfo(blockInfo *pty.TendermintBlockInfo, tx *types.Transaction, index int) (*types.Receipt, error) {
-	receipt := &types.Receipt{types.ExecOk, nil, nil}
+	receipt := &types.Receipt{Ty:types.ExecOk, KV:nil, Logs:nil}
 	return receipt, nil
 }
