@@ -11,6 +11,7 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
+// ExecLocal 处理本地区块新增逻辑
 func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := evm.DriverBase.ExecLocal(tx, receipt, index)
 	if err != nil {

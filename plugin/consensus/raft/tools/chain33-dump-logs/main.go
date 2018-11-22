@@ -45,7 +45,7 @@ func main() {
 
 	if isIndex {
 		fmt.Printf("Start dumping log entries from index %s.\n", *index)
-		walsnap.Index, err = strconv.ParseUint(*index, 10, 64)
+		walsnap.Index, _ = strconv.ParseUint(*index, 10, 64)
 	} else {
 		if *snapfile == "" {
 			ss := raftsnap.New(snapDir(dataDir))
@@ -133,6 +133,7 @@ func genIDSlice(a []uint64) []types.ID {
 	return ids
 }
 
+// Block struct
 type Block struct {
 	Version    int64  `protobuf:"varint,1,opt,name=version" json:"version,omitempty"`
 	ParentHash []byte `protobuf:"bytes,2,opt,name=parentHash,proto3" json:"parentHash,omitempty"`
@@ -144,6 +145,9 @@ type Block struct {
 	//Txs        []*Transaction `protobuf:"bytes,7,rep,name=txs" json:"txs,omitempty"`
 }
 
+// Reset method
 func (m *Block) Reset()         { *m = Block{} }
 func (m *Block) String() string { return proto.CompactTextString(m) }
-func (*Block) ProtoMessage()    {}
+
+// ProtoMessage method
+func (*Block) ProtoMessage() {}

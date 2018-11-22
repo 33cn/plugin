@@ -16,37 +16,44 @@ import (
 
 func init() {
 	drivers.Reg("pbft", NewPbft)
-	drivers.QueryData.Register("pbft", &PbftClient{})
+	drivers.QueryData.Register("pbft", &Client{})
 }
 
-type PbftClient struct {
+// Client Pbft implementation
+type Client struct {
 	*drivers.BaseClient
 	replyChan   chan *types.ClientReply
 	requestChan chan *types.Request
 	isPrimary   bool
 }
 
-func NewBlockstore(cfg *types.Consensus, replyChan chan *types.ClientReply, requestChan chan *types.Request, isPrimary bool) *PbftClient {
+// NewBlockstore create Pbft Client
+func NewBlockstore(cfg *types.Consensus, replyChan chan *types.ClientReply, requestChan chan *types.Request, isPrimary bool) *Client {
 	c := drivers.NewBaseClient(cfg)
-	client := &PbftClient{BaseClient: c, replyChan: replyChan, requestChan: requestChan, isPrimary: isPrimary}
+	client := &Client{BaseClient: c, replyChan: replyChan, requestChan: requestChan, isPrimary: isPrimary}
 	c.SetChild(client)
 	return client
 }
-func (client *PbftClient) ProcEvent(msg queue.Message) bool {
+
+// ProcEvent method
+func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-func (client *PbftClient) Propose(block *types.Block) {
-	op := &types.Operation{block}
+// Propose method
+func (client *Client) Propose(block *types.Block) {
+	op := &types.Operation{Value: block}
 	req := ToRequestClient(op, types.Now().String(), clientAddr)
 	client.requestChan <- req
 }
 
-func (client *PbftClient) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+// CheckBlock method
+func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return nil
 }
 
-func (client *PbftClient) SetQueueClient(c queue.Client) {
+// SetQueueClient method
+func (client *Client) SetQueueClient(c queue.Client) {
 	plog.Info("Enter SetQueue method of pbft consensus")
 	client.InitClient(c, func() {
 
@@ -57,7 +64,8 @@ func (client *PbftClient) SetQueueClient(c queue.Client) {
 	go client.CreateBlock()
 }
 
-func (client *PbftClient) CreateBlock() {
+// CreateBlock method
+func (client *Client) CreateBlock() {
 	issleep := true
 	if !client.isPrimary {
 		return
@@ -95,11 +103,13 @@ func (client *PbftClient) CreateBlock() {
 	}
 }
 
-func (client *PbftClient) GetGenesisBlockTime() int64 {
+// GetGenesisBlockTime get genesis blocktime
+func (client *Client) GetGenesisBlockTime() int64 {
 	return genesisBlockTime
 }
 
-func (client *PbftClient) CreateGenesisTx() (ret []*types.Transaction) {
+// CreateGenesisTx get genesis tx
+func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	tx.Execer = []byte("coins")
 	tx.To = genesis
@@ -112,7 +122,7 @@ func (client *PbftClient) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-func (client *PbftClient) readReply() {
+func (client *Client) readReply() {
 
 	data := <-client.replyChan
 	if data == nil {

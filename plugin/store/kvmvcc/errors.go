@@ -7,5 +7,6 @@ package kvmvccdb
 import "errors"
 
 var (
+	//ErrStateHashLost means err happened when query with StateHash
 	ErrStateHashLost = errors.New("ErrStateHashLost")
 )

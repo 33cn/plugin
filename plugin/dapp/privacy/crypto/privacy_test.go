@@ -73,7 +73,7 @@ func TestPrivacySignWithFixInput(t *testing.T) {
 		Signature: sig.Bytes(),
 	}
 
-	c := &OneTimeEd25519{}
+	c := &oneTimeEd25519{}
 
 	pub, err := c.PubKeyFromBytes(sign.Pubkey)
 	if err != nil {
@@ -156,7 +156,7 @@ func TestPrivacySignWithFixInput(t *testing.T) {
 //		Signature:sig.Bytes(),
 //	}
 //
-//	c := &OneTimeEd25519{}
+//	c := &oneTimeEd25519{}
 //
 //	pub, err := c.PubKeyFromBytes(sign.Pubkey)
 //	if err != nil {

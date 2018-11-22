@@ -9,6 +9,7 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+// Query_GetRetrieveInfo get retrieve state
 func (r *Retrieve) Query_GetRetrieveInfo(in *rt.ReqRetrieveInfo) (types.Message, error) {
 	rlog.Debug("Retrieve Query", "backupaddr", in.BackupAddress, "defaddr", in.DefaultAddress)
 	info, err := getRetrieveInfo(r.GetLocalDB(), in.BackupAddress, in.DefaultAddress)

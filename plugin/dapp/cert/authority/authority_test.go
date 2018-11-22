@@ -42,7 +42,7 @@ var (
 	txs      = []*types.Transaction{tx1, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9, tx10, tx11, tx12}
 
 	privRaw, _  = common.FromHex("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
-	tr          = &cty.CoinsAction_Transfer{&types.AssetsTransfer{Amount: int64(1e8)}}
+	tr          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: int64(1e8)}}
 	secpp256, _ = crypto.New(types.GetSignName("", types.SECP256K1))
 	privKey, _  = secpp256.PrivKeyFromBytes(privRaw)
 	tx14        = &types.Transaction{
@@ -55,7 +55,7 @@ var (
 )
 
 var USERNAME = "User"
-var SIGNTYPE = ct.AUTH_SM2
+var SIGNTYPE = ct.AuthSM2
 
 func signtx(tx *types.Transaction, priv crypto.PrivKey, cert []byte) {
 	tx.Sign(int32(SIGNTYPE), priv)
@@ -197,7 +197,7 @@ func TestChckSignWithNoneAuth(t *testing.T) {
 TestCase04 不带证书，SM2签名验证
 */
 func TestChckSignWithSm2(t *testing.T) {
-	sm2, err := crypto.New(types.GetSignName("cert", ct.AUTH_SM2))
+	sm2, err := crypto.New(types.GetSignName("cert", ct.AuthSM2))
 	assert.Nil(t, err)
 	privKeysm2, _ := sm2.PrivKeyFromBytes(privRaw)
 	tx15 := &types.Transaction{Execer: []byte("coins"),
@@ -213,7 +213,7 @@ func TestChckSignWithSm2(t *testing.T) {
 	types.SetMinFee(0)
 	defer types.SetMinFee(prev)
 
-	tx15.Sign(ct.AUTH_SM2, privKeysm2)
+	tx15.Sign(ct.AuthSM2, privKeysm2)
 	if !tx15.CheckSign() {
 		t.Error("check signature failed")
 		return
@@ -224,7 +224,7 @@ func TestChckSignWithSm2(t *testing.T) {
 TestCase05 不带证书，secp256r1签名验证
 */
 func TestChckSignWithEcdsa(t *testing.T) {
-	ecdsacrypto, _ := crypto.New(types.GetSignName("cert", ct.AUTH_ECDSA))
+	ecdsacrypto, _ := crypto.New(types.GetSignName("cert", ct.AuthECDSA))
 	privKeyecdsa, _ := ecdsacrypto.PrivKeyFromBytes(privRaw)
 	tx16 := &types.Transaction{Execer: []byte("coins"),
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
@@ -239,7 +239,7 @@ func TestChckSignWithEcdsa(t *testing.T) {
 	types.SetMinFee(0)
 	defer types.SetMinFee(prev)
 
-	tx16.Sign(ct.AUTH_ECDSA, privKeyecdsa)
+	tx16.Sign(ct.AuthECDSA, privKeyecdsa)
 	if !tx16.CheckSign() {
 		t.Error("check signature failed")
 		return

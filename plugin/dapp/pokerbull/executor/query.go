@@ -9,18 +9,21 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
-func (g *PokerBull) Query_QueryGameListByIds(in *pkt.QueryPBGameInfos) (types.Message, error) {
+// Query_QueryGameListByIDs 根据id列表查询游戏
+func (g *PokerBull) Query_QueryGameListByIDs(in *pkt.QueryPBGameInfos) (types.Message, error) {
 	return Infos(g.GetStateDB(), in)
 }
 
-func (g *PokerBull) Query_QueryGameById(in *pkt.QueryPBGameInfo) (types.Message, error) {
+// Query_QueryGameByID 根据id查询游戏
+func (g *PokerBull) Query_QueryGameByID(in *pkt.QueryPBGameInfo) (types.Message, error) {
 	game, err := readGame(g.GetStateDB(), in.GetGameId())
 	if err != nil {
 		return nil, err
 	}
-	return &pkt.ReplyPBGame{game}, nil
+	return &pkt.ReplyPBGame{Game: game}, nil
 }
 
+// Query_QueryGameByAddr 根据地址查询游戏
 func (g *PokerBull) Query_QueryGameByAddr(in *pkt.QueryPBGameInfo) (types.Message, error) {
 	gameIds, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
 	if err != nil {
@@ -30,6 +33,7 @@ func (g *PokerBull) Query_QueryGameByAddr(in *pkt.QueryPBGameInfo) (types.Messag
 	return gameIds, nil
 }
 
+// Query_QueryGameByStatus 根据状态查询游戏
 func (g *PokerBull) Query_QueryGameByStatus(in *pkt.QueryPBGameInfo) (types.Message, error) {
 	gameIds, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
 	if err != nil {

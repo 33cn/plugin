@@ -26,7 +26,15 @@ jobs:
       script:
         - make test
 
+    - stage: auto-test
+      go: "1.9.x"
+      install: skip
+      before_script: make build_ci
+      script:
+        - make autotest dapp=all
+
     - stage: coverage
+      if: branch = master
       go: "1.9.x"
       before_install:
         - go get -t -v ./...
@@ -35,10 +43,10 @@ jobs:
         - make coverage
       after_success:
         - bash <(curl -s https://codecov.io/bash)
-      branches:
-        only: master
+
 
     - stage: deploy
+      if: env(DAPP) IS present
       sudo: required
       services:
         - docker
@@ -55,5 +63,4 @@ jobs:
         - sudo mv docker-compose /usr/local/bin
       before_script: make build_ci
       script:
-#        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - make docker-compose DAPP=all && make docker-compose-down DAPP=all && make clean
+        - make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean

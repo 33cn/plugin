@@ -11,27 +11,42 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+// PrivacyX privacy executor name
 var PrivacyX = "privacy"
 
 const (
+	// InvalidAction invalid action type
 	InvalidAction = 0
 	//action type for privacy
+
+	// ActionPublic2Privacy public to privacy action type
 	ActionPublic2Privacy = iota + 100
+	// ActionPrivacy2Privacy privacy to privacy action type
 	ActionPrivacy2Privacy
+	// ActionPrivacy2Public privacy to public action type
 	ActionPrivacy2Public
 
 	// log for privacy
-	TyLogPrivacyFee    = 500
-	TyLogPrivacyInput  = 501
+
+	// TyLogPrivacyFee privacy fee log type
+	TyLogPrivacyFee = 500
+	// TyLogPrivacyInput privacy input type
+	TyLogPrivacyInput = 501
+	// TyLogPrivacyOutput privacy output type
 	TyLogPrivacyOutput = 502
 
-	//privacy name of crypto
+	//SignNameOnetimeED25519 privacy name of crypto
 	SignNameOnetimeED25519 = "privacy.onetimeed25519"
-	SignNameRing           = "privacy.RingSignatue"
-	OnetimeED25519         = 4
-	RingBaseonED25519      = 5
-	PrivacyMaxCount        = 16
-	PrivacyTxFee           = types.Coin
+	// SignNameRing signature name ring
+	SignNameRing = "privacy.RingSignatue"
+	// OnetimeED25519 one time ED25519
+	OnetimeED25519 = 4
+	// RingBaseonED25519 ring raseon ED25519
+	RingBaseonED25519 = 5
+	// PrivacyMaxCount max mix utxo cout
+	PrivacyMaxCount = 16
+	// PrivacyTxFee privacy tx fee
+	PrivacyTxFee = types.Coin
 )
 
 // RescanUtxoFlag
@@ -41,6 +56,7 @@ const (
 	UtxoFlagScanEnd int32 = 2
 )
 
+// RescanFlagMapint2string 常量字符串转换关系表
 var RescanFlagMapint2string = map[int32]string{
 	UtxoFlagNoScan:  "UtxoFlagNoScan",
 	UtxoFlagScaning: "UtxoFlagScaning",
@@ -64,25 +80,30 @@ func init() {
 	types.RegisterDappFork(PrivacyX, "Enable", 980000)
 }
 
+// PrivacyType declare PrivacyType class
 type PrivacyType struct {
 	types.ExecTypeBase
 }
 
+// NewType create PrivacyType object
 func NewType() *PrivacyType {
 	c := &PrivacyType{}
 	c.SetChild(c)
 	return c
 }
 
-func (at *PrivacyType) GetPayload() types.Message {
+// GetPayload get PrivacyType payload
+func (t *PrivacyType) GetPayload() types.Message {
 	return &PrivacyAction{}
 }
 
-func (at *PrivacyType) GetName() string {
+// GetName get PrivacyType name
+func (t *PrivacyType) GetName() string {
 	return PrivacyX
 }
 
-func (at *PrivacyType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap get PrivacyType log map
+func (t *PrivacyType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogPrivacyFee:    {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogPrivacyFee"},
 		TyLogPrivacyInput:  {reflect.TypeOf(PrivacyInput{}), "LogPrivacyInput"},
@@ -90,7 +111,8 @@ func (at *PrivacyType) GetLogMap() map[int64]*types.LogInfo {
 	}
 }
 
-func (c *PrivacyType) GetTypeMap() map[string]int32 {
+// GetTypeMap get PrivacyType type map
+func (t *PrivacyType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Public2Privacy":  ActionPublic2Privacy,
 		"Privacy2Privacy": ActionPrivacy2Privacy,
@@ -98,7 +120,8 @@ func (c *PrivacyType) GetTypeMap() map[string]int32 {
 	}
 }
 
-func (coins PrivacyType) ActionName(tx *types.Transaction) string {
+// ActionName get PrivacyType action name
+func (t PrivacyType) ActionName(tx *types.Transaction) string {
 	var action PrivacyAction
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
@@ -108,29 +131,35 @@ func (coins PrivacyType) ActionName(tx *types.Transaction) string {
 }
 
 // TODO 暂时不修改实现， 先完成结构的重构
+
+// CreateTx create transaction
 func (t *PrivacyType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	var tx *types.Transaction
 	return tx, nil
 }
 
+// Amount get amout
 func (t *PrivacyType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-func (base *PrivacyType) GetCryptoDriver(ty int) (string, error) {
+// GetCryptoDriver get crypto driver
+func (t *PrivacyType) GetCryptoDriver(ty int) (string, error) {
 	if name, ok := mapSignType2name[ty]; ok {
 		return name, nil
 	}
 	return "", types.ErrNotSupport
 }
 
-func (base *PrivacyType) GetCryptoType(name string) (int, error) {
+// GetCryptoType get crypto type
+func (t *PrivacyType) GetCryptoType(name string) (int, error) {
 	if ty, ok := mapSignName2Type[name]; ok {
 		return ty, nil
 	}
 	return 0, types.ErrNotSupport
 }
 
+// GetInput get action input information
 func (action *PrivacyAction) GetInput() *PrivacyInput {
 	if action.GetTy() == ActionPrivacy2Privacy && action.GetPrivacy2Privacy() != nil {
 		return action.GetPrivacy2Privacy().GetInput()
@@ -141,6 +170,7 @@ func (action *PrivacyAction) GetInput() *PrivacyInput {
 	return nil
 }
 
+// GetOutput get action output information
 func (action *PrivacyAction) GetOutput() *PrivacyOutput {
 	if action.GetTy() == ActionPublic2Privacy && action.GetPublic2Privacy() != nil {
 		return action.GetPublic2Privacy().GetOutput()
@@ -152,6 +182,7 @@ func (action *PrivacyAction) GetOutput() *PrivacyOutput {
 	return nil
 }
 
+// GetActionName get action name
 func (action *PrivacyAction) GetActionName() string {
 	if action.Ty == ActionPrivacy2Privacy && action.GetPrivacy2Privacy() != nil {
 		return "Privacy2Privacy"
@@ -163,6 +194,7 @@ func (action *PrivacyAction) GetActionName() string {
 	return "unknow-privacy"
 }
 
+// GetTokenName get action token name
 func (action *PrivacyAction) GetTokenName() string {
 	if action.GetTy() == ActionPublic2Privacy && action.GetPublic2Privacy() != nil {
 		return action.GetPublic2Privacy().GetTokenname()

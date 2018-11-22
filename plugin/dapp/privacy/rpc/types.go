@@ -12,10 +12,12 @@ import (
 
 var log = log15.New("module", "privacy.rpc")
 
+// Jrpc json rpc class
 type Jrpc struct {
 	cli *channelClient
 }
 
+// Grpc grpc class
 type Grpc struct {
 	*channelClient
 }
@@ -24,6 +26,7 @@ type channelClient struct {
 	types.ChannelClient
 }
 
+// Init init rpc server
 func Init(name string, s types.RPCServer) {
 	cli := &channelClient{}
 	grpc := &Grpc{channelClient: cli}

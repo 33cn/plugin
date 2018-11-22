@@ -23,24 +23,27 @@ func init() {
 	types.RegisterDappFork(HashlockX, "Enable", 0)
 }
 
+// HashlockType def
 type HashlockType struct {
 	types.ExecTypeBase
 }
 
+// NewType method
 func NewType() *HashlockType {
 	c := &HashlockType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload method
 func (hashlock *HashlockType) GetPayload() types.Message {
 	return &HashlockAction{}
 }
 
-// TODO 暂时不修改实现， 先完成结构的重构
+// CreateTx method
 func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	hlog.Debug("hashlock.CreateTx", "action", action)
-	var tx *types.Transaction
+
 	if action == "HashlockLock" {
 		var param HashlockLockTx
 		err := json.Unmarshal(message, &param)
@@ -68,9 +71,9 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 	} else {
 		return nil, types.ErrNotSupport
 	}
-	return tx, nil
 }
 
+// GetTypeMap method
 func (hashlock *HashlockType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Hlock":   HashlockActionLock,
@@ -79,42 +82,12 @@ func (hashlock *HashlockType) GetTypeMap() map[string]int32 {
 	}
 }
 
-func (at *HashlockType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap method
+func (hashlock *HashlockType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{}
 }
 
-type CoinsDepositLog struct {
-}
-
-func (l CoinsDepositLog) Name() string {
-	return "LogDeposit"
-}
-
-func (l CoinsDepositLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp types.ReceiptAccountTransfer
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type CoinsGetTxsByAddr struct {
-}
-
-func (t *CoinsGetTxsByAddr) JsonToProto(message json.RawMessage) ([]byte, error) {
-	var req types.ReqAddr
-	err := json.Unmarshal(message, &req)
-	if err != nil {
-		return nil, err
-	}
-	return types.Encode(&req), nil
-}
-
-func (t *CoinsGetTxsByAddr) ProtoToJson(reply *types.Message) (interface{}, error) {
-	return reply, nil
-}
-
+// CreateRawHashlockLockTx method
 func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockLockTx", "parm", parm)
@@ -145,6 +118,7 @@ func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
 	return tx, nil
 }
 
+// CreateRawHashlockUnlockTx method
 func CreateRawHashlockUnlockTx(parm *HashlockUnlockTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockUnlockTx", "parm", parm)
@@ -173,6 +147,7 @@ func CreateRawHashlockUnlockTx(parm *HashlockUnlockTx) (*types.Transaction, erro
 	return tx, nil
 }
 
+// CreateRawHashlockSendTx method
 func CreateRawHashlockSendTx(parm *HashlockSendTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockSendTx", "parm", parm)

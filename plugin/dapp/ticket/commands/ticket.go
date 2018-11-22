@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TicketCmd ticket command type
 func TicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ticket",
@@ -34,7 +35,7 @@ func TicketCmd() *cobra.Command {
 	return cmd
 }
 
-// bind miner
+// BindMinerCmd bind miner
 func BindMinerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bind_miner",
@@ -77,7 +78,7 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	fmt.Println(hex.EncodeToString(txHex))
 }
 
-// get ticket count
+// CountTicketCmd get ticket count
 func CountTicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
@@ -94,7 +95,7 @@ func countTicket(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// close all accessible tickets
+// CloseTicketCmd close all accessible tickets
 func CloseTicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close",
@@ -159,7 +160,7 @@ func getWalletStatus(rpcAddr string) (interface{}, error) {
 	return res, nil
 }
 
-// get cold address by miner
+// GetColdAddrByMinerCmd get cold address by miner
 func GetColdAddrByMinerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cold",

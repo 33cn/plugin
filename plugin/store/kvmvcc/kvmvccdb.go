@@ -18,10 +18,12 @@ import (
 var klog = log.New("module", "kvmvccdb")
 var maxRollbackNum = 200
 
+// SetLogLevel set log level
 func SetLogLevel(level string) {
 	clog.SetLogLevel(level)
 }
 
+// DisableLog disable log output
 func DisableLog() {
 	klog.SetHandler(log.DiscardHandler())
 }
@@ -30,6 +32,7 @@ func init() {
 	drivers.Reg("kvmvcc", New)
 }
 
+// KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
 	*drivers.BaseStore
 	mvcc           dbm.MVCC
@@ -41,6 +44,7 @@ type subConfig struct {
 	EnableMVCCIter bool `json:"enableMVCCIter"`
 }
 
+// New construct KVMVCCStore module
 func New(cfg *types.Store, sub []byte) queue.Module {
 	bs := drivers.NewBaseStore(cfg)
 	var kvs *KVMVCCStore
@@ -59,11 +63,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	return kvs
 }
 
+// Close the KVMVCCStore module
 func (mvccs *KVMVCCStore) Close() {
 	mvccs.BaseStore.Close()
 	klog.Info("store kvdb closed")
 }
 
+// Set kvs with statehash to KVMVCCStore
 func (mvccs *KVMVCCStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	hash := calcHash(datas)
 	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, hash, datas.StateHash, datas.Height)
@@ -74,6 +80,7 @@ func (mvccs *KVMVCCStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) 
 	return hash, nil
 }
 
+// Get kvs with statehash from KVMVCCStore
 func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	values := make([][]byte, len(datas.Keys))
 	version, err := mvccs.mvcc.GetVersion(datas.StateHash)
@@ -92,6 +99,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	return values
 }
 
+// MemSet set kvs to the mem of KVMVCCStore module and return the StateHash
 func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
@@ -110,6 +118,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, erro
 	return hash, nil
 }
 
+// Commit kvs in the mem of KVMVCCStore module to state db and return the StateHash
 func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
@@ -122,6 +131,7 @@ func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// Rollback kvs in the mem of KVMVCCStore module and return the StateHash
 func (mvccs *KVMVCCStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
@@ -135,6 +145,7 @@ func (mvccs *KVMVCCStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// IterateRangeByStateHash travel with Prefix by StateHash  to get the latest version kvs.
 func (mvccs *KVMVCCStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
 	if !mvccs.enableMVCCIter {
 		panic("call IterateRangeByStateHash when disable mvcc iter")
@@ -162,10 +173,12 @@ func (mvccs *KVMVCCStore) IterateRangeByStateHash(statehash []byte, start []byte
 	listhelper.IteratorCallback(start, end, 0, 1, fn)
 }
 
+// ProcEvent handles supported events
 func (mvccs *KVMVCCStore) ProcEvent(msg queue.Message) {
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 
+// Del set kvs to nil with StateHash
 func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
 	kvset, err := mvccs.mvcc.DelMVCC(req.StateHash, req.Height, true)
 	if err != nil {

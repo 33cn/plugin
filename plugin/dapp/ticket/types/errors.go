@@ -7,13 +7,22 @@ package types
 import "errors"
 
 var (
-	ErrNoTicket       = errors.New("ErrNoTicket")
-	ErrTicketCount    = errors.New("ErrTicketCount")
-	ErrTime           = errors.New("ErrTime")
-	ErrTicketClosed   = errors.New("ErrTicketClosed")
-	ErrEmptyMinerTx   = errors.New("ErrEmptyMinerTx")
+	// ErrNoTicket error type
+	ErrNoTicket = errors.New("ErrNoTicket")
+	// ErrTicketCount error type
+	ErrTicketCount = errors.New("ErrTicketCount")
+	// ErrTime error type
+	ErrTime = errors.New("ErrTime")
+	// ErrTicketClosed err type
+	ErrTicketClosed = errors.New("ErrTicketClosed")
+	// ErrEmptyMinerTx err type
+	ErrEmptyMinerTx = errors.New("ErrEmptyMinerTx")
+	// ErrMinerNotPermit err type
 	ErrMinerNotPermit = errors.New("ErrMinerNotPermit")
-	ErrMinerAddr      = errors.New("ErrMinerAddr")
-	ErrModify         = errors.New("ErrModify")
-	ErrMinerTx        = errors.New("ErrMinerTx")
+	// ErrMinerAddr err type
+	ErrMinerAddr = errors.New("ErrMinerAddr")
+	// ErrModify err type
+	ErrModify = errors.New("ErrModify")
+	// ErrMinerTx err type
+	ErrMinerTx = errors.New("ErrMinerTx")
 )

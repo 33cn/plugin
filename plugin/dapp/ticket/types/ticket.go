@@ -5,7 +5,6 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 
@@ -15,28 +14,45 @@ import (
 
 const (
 	//log for ticket
-	TyLogNewTicket   = 111
+
+	//TyLogNewTicket new ticket log type
+	TyLogNewTicket = 111
+	// TyLogCloseTicket close ticket log type
 	TyLogCloseTicket = 112
+	// TyLogMinerTicket miner ticket log type
 	TyLogMinerTicket = 113
-	TyLogTicketBind  = 114
+	// TyLogTicketBind bind ticket log type
+	TyLogTicketBind = 114
 )
 
 //ticket
 const (
+	// TicketActionGenesis action type
 	TicketActionGenesis = 11
-	TicketActionOpen    = 12
-	TicketActionClose   = 13
-	TicketActionList    = 14 //读的接口不直接经过transaction
-	TicketActionInfos   = 15 //读的接口不直接经过transaction
-	TicketActionMiner   = 16
-	TicketActionBind    = 17
+	// TicketActionOpen action type
+	TicketActionOpen = 12
+	// TicketActionClose action type
+	TicketActionClose = 13
+	// TicketActionList  action type
+	TicketActionList = 14 //读的接口不直接经过transaction
+	// TicketActionInfos action type
+	TicketActionInfos = 15 //读的接口不直接经过transaction
+	// TicketActionMiner action miner
+	TicketActionMiner = 16
+	// TicketActionBind action bind
+	TicketActionBind = 17
 )
 
+// TicketOldParts old tick type
 const TicketOldParts = 3
+
+// TicketCountOpenOnce count open once
 const TicketCountOpenOnce = 1000
 
+// ErrOpenTicketPubHash err type
 var ErrOpenTicketPubHash = errors.New("ErrOpenTicketPubHash")
 
+// TicketX dapp name
 var TicketX = "ticket"
 
 func init() {
@@ -46,21 +62,25 @@ func init() {
 	types.RegisterDappFork(TicketX, "ForkTicketId", 1200000)
 }
 
+// TicketType ticket exec type
 type TicketType struct {
 	types.ExecTypeBase
 }
 
+// NewType new type
 func NewType() *TicketType {
 	c := &TicketType{}
 	c.SetChild(c)
 	return c
 }
 
-func (at *TicketType) GetPayload() types.Message {
+// GetPayload get payload
+func (ticket *TicketType) GetPayload() types.Message {
 	return &TicketAction{}
 }
 
-func (t *TicketType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap get log map
+func (ticket *TicketType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogNewTicket:   {reflect.TypeOf(ReceiptTicket{}), "LogNewTicket"},
 		TyLogCloseTicket: {reflect.TypeOf(ReceiptTicket{}), "LogCloseTicket"},
@@ -69,6 +89,7 @@ func (t *TicketType) GetLogMap() map[int64]*types.LogInfo {
 	}
 }
 
+// Amount get amount
 func (ticket TicketType) Amount(tx *types.Transaction) (int64, error) {
 	var action TicketAction
 	err := types.Decode(tx.GetPayload(), &action)
@@ -82,16 +103,12 @@ func (ticket TicketType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-// TODO 暂时不修改实现， 先完成结构的重构
-func (ticket *TicketType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	var tx *types.Transaction
-	return tx, nil
-}
-
+// GetName get name
 func (ticket *TicketType) GetName() string {
 	return TicketX
 }
 
+// GetTypeMap get type map
 func (ticket *TicketType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Genesis": TicketActionGenesis,

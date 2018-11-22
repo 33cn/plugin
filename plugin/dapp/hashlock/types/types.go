@@ -11,4 +11,5 @@ const (
 	HashlockActionUnlock = 3
 )
 
+// HashlockX name
 var HashlockX = "hashlock"

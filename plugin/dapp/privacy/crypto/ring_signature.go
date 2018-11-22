@@ -13,6 +13,7 @@ import (
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
+// Sign signature data struct type
 type Sign [64]byte
 
 func randomScalar(res *[32]byte) {
@@ -38,16 +39,16 @@ func generateKeyImage(pub *PubKeyPrivacy, sec *PrivKeyPrivacy, image *KeyImage) 
 
 func generateRingSignature(data []byte, image *KeyImage, pubs []*PubKeyPrivacy, sec *PrivKeyPrivacy, signs []*Sign, index int) error {
 	var sum, k, h, tmp [32]byte
-	var image_pre edwards25519.DsmPreCompGroupElement
-	var image_unp edwards25519.ExtendedGroupElement
+	var imagePre edwards25519.DsmPreCompGroupElement
+	var imageUnp edwards25519.ExtendedGroupElement
 	var buf []byte
 	buf = append(buf, data...)
 
-	if !edwards25519.GeFromBytesVartime(&image_unp, (*[32]byte)(unsafe.Pointer(image))) {
+	if !edwards25519.GeFromBytesVartime(&imageUnp, (*[32]byte)(unsafe.Pointer(image))) {
 		privacylog.Error("generateRingSignature", "from image failed.")
 		return privacytypes.ErrGeFromBytesVartime
 	}
-	edwards25519.GeDsmPrecomp(&image_pre, &image_unp)
+	edwards25519.GeDsmPrecomp(&imagePre, &imageUnp)
 	for i := 0; i < len(pubs); i++ {
 		var tmp2 edwards25519.ProjectiveGroupElement
 		var tmp3 edwards25519.ExtendedGroupElement
@@ -93,7 +94,7 @@ func generateRingSignature(data []byte, image *KeyImage, pubs []*PubKeyPrivacy, 
 			// r = a  * A   + b   * B
 			//    Wi * Hp(Pi) + q_i  * I
 			// (r, Wi, Hp(Pi), q_i, I)
-			edwards25519.GeDoubleScalarmultPrecompVartime(&tmp2, pb, &tmp3, pa, &image_pre)
+			edwards25519.GeDoubleScalarmultPrecompVartime(&tmp2, pb, &tmp3, pa, &imagePre)
 			// save q_i*Hp(Pi) + Wi*I
 			tmp2.ToBytes(&tmp)
 			buf = append(buf, tmp[:]...)
@@ -115,17 +116,17 @@ func generateRingSignature(data []byte, image *KeyImage, pubs []*PubKeyPrivacy, 
 	return nil
 }
 
-func checkRingSignature(prefix_hash []byte, image *KeyImage, pubs []*PubKeyPrivacy, signs []*Sign) bool {
+func checkRingSignature(prefixHash []byte, image *KeyImage, pubs []*PubKeyPrivacy, signs []*Sign) bool {
 	var sum, h, tmp [32]byte
-	var image_unp edwards25519.ExtendedGroupElement
-	var image_pre edwards25519.DsmPreCompGroupElement
+	var imageUnp edwards25519.ExtendedGroupElement
+	var imagePre edwards25519.DsmPreCompGroupElement
 	var buf []byte
-	buf = append(buf, prefix_hash...)
+	buf = append(buf, prefixHash...)
 
-	if !edwards25519.GeFromBytesVartime(&image_unp, (*[32]byte)(unsafe.Pointer(image))) {
+	if !edwards25519.GeFromBytesVartime(&imageUnp, (*[32]byte)(unsafe.Pointer(image))) {
 		return false
 	}
-	edwards25519.GeDsmPrecomp(&image_pre, &image_unp)
+	edwards25519.GeDsmPrecomp(&imagePre, &imageUnp)
 	for i := 0; i < len(pubs); i++ {
 		var tmp2 edwards25519.ProjectiveGroupElement
 		var tmp3 edwards25519.ExtendedGroupElement
@@ -147,7 +148,7 @@ func checkRingSignature(prefix_hash []byte, image *KeyImage, pubs []*PubKeyPriva
 		//Hp(Pi)
 		edwards25519.HashToEc(pub[:], &tmp3)
 		//R'_i = r_i * Hp(Pi) + c_i * I
-		edwards25519.GeDoubleScalarmultPrecompVartime(&tmp2, pb, &tmp3, pa, &image_pre)
+		edwards25519.GeDoubleScalarmultPrecompVartime(&tmp2, pb, &tmp3, pa, &imagePre)
 		//save: R'_i = r_i * Hp(Pi) + c_i * I
 		tmp2.ToBytes(&tmp)
 		buf = append(buf, tmp[:]...)
@@ -161,6 +162,7 @@ func checkRingSignature(prefix_hash []byte, image *KeyImage, pubs []*PubKeyPriva
 	return edwards25519.ScIsNonZero(&h) == 0
 }
 
+// GenerateRingSignature create ring signature object
 func GenerateRingSignature(datahash []byte, utxos []*privacytypes.UTXOBasic, privKey []byte, realUtxoIndex int, keyImage []byte) (*types.RingSignatureItem, error) {
 	count := len(utxos)
 	signs := make([]*Sign, count)

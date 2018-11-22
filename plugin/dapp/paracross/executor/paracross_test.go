@@ -226,11 +226,11 @@ func commitOnce(suite *CommitTestSuite, privkeyStr string) (receipt *types.Recei
 }
 
 func commitOnceImpl(suite suite.Suite, exec *Paracross, privkeyStr string) (receipt *types.Receipt) {
-	tx, err := fillRawCommitTx(suite)
-	tx, err = signTx(suite, tx, privkeyStr)
+	tx, _ := fillRawCommitTx(suite)
+	tx, _ = signTx(suite, tx, privkeyStr)
 
 	suite.T().Log(tx.From())
-	receipt, err = exec.Exec(tx, 0)
+	receipt, err := exec.Exec(tx, 0)
 	suite.T().Log(receipt)
 	assert.NotNil(suite.T(), receipt)
 	assert.Nil(suite.T(), err)
@@ -526,7 +526,7 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	if err != nil {
 		return nil, err
 	}
-	privKey, err := getPrivKey(s, PrivKeyA)
+	privKey, _ := getPrivKey(s, PrivKeyA)
 	for i := range group.Txs {
 		group.SignN(i, int32(types.SECP256K1), privKey)
 	}

@@ -27,10 +27,12 @@ func signSM2(k *sm2.PrivateKey, digest []byte, opts SignerOpts) (signature []byt
 	return MarshalSM2Signature(r, s)
 }
 
+// SM2Signature SM2签名结构
 type SM2Signature struct {
 	R, S *big.Int
 }
 
+// MarshalSM2Signature 编码SM2起签名
 func MarshalSM2Signature(r, s *big.Int) ([]byte, error) {
 	return asn1.Marshal(SM2Signature{r, s})
 }
