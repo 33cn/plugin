@@ -19,43 +19,47 @@ import (
 )
 
 const (
-	ECDSA_RPIVATEKEY_LENGTH = 32
-	ECDSA_PUBLICKEY_LENGTH  = 65
+	privateKeyECDSALength = 32
+	publicKeyECDSALength  = 65
 )
 
+// Driver driver
 type Driver struct{}
 
-// Ctypto
+// GenKey create private key
 func (d Driver) GenKey() (crypto.PrivKey, error) {
-	privKeyBytes := [ECDSA_RPIVATEKEY_LENGTH]byte{}
-	copy(privKeyBytes[:], crypto.CRandBytes(ECDSA_RPIVATEKEY_LENGTH))
+	privKeyBytes := [privateKeyECDSALength]byte{}
+	copy(privKeyBytes[:], crypto.CRandBytes(privateKeyECDSALength))
 	priv, _ := privKeyFromBytes(elliptic.P256(), privKeyBytes[:])
 	copy(privKeyBytes[:], SerializePrivateKey(priv))
 	return PrivKeyECDSA(privKeyBytes), nil
 }
 
+// PrivKeyFromBytes create private key from bytes
 func (d Driver) PrivKeyFromBytes(b []byte) (privKey crypto.PrivKey, err error) {
-	if len(b) != ECDSA_RPIVATEKEY_LENGTH {
+	if len(b) != privateKeyECDSALength {
 		return nil, errors.New("invalid priv key byte")
 	}
 
-	privKeyBytes := new([ECDSA_RPIVATEKEY_LENGTH]byte)
-	copy(privKeyBytes[:], b[:ECDSA_RPIVATEKEY_LENGTH])
+	privKeyBytes := new([privateKeyECDSALength]byte)
+	copy(privKeyBytes[:], b[:privateKeyECDSALength])
 	priv, _ := privKeyFromBytes(elliptic.P256(), privKeyBytes[:])
 
 	copy(privKeyBytes[:], SerializePrivateKey(priv))
 	return PrivKeyECDSA(*privKeyBytes), nil
 }
 
+// PubKeyFromBytes create public key from bytes
 func (d Driver) PubKeyFromBytes(b []byte) (pubKey crypto.PubKey, err error) {
-	if len(b) != ECDSA_PUBLICKEY_LENGTH {
+	if len(b) != publicKeyECDSALength {
 		return nil, errors.New("invalid pub key byte")
 	}
-	pubKeyBytes := new([ECDSA_PUBLICKEY_LENGTH]byte)
+	pubKeyBytes := new([publicKeyECDSALength]byte)
 	copy(pubKeyBytes[:], b[:])
 	return PubKeyECDSA(*pubKeyBytes), nil
 }
 
+// SignatureFromBytes create signature from bytes
 func (d Driver) SignatureFromBytes(b []byte) (sig crypto.Signature, err error) {
 	var certSignature crypto.CertSignature
 	_, err = asn1.Unmarshal(b, &certSignature)
@@ -70,15 +74,17 @@ func (d Driver) SignatureFromBytes(b []byte) (sig crypto.Signature, err error) {
 	return SignatureECDSA(certSignature.Signature), nil
 }
 
-// PrivKey
-type PrivKeyECDSA [ECDSA_RPIVATEKEY_LENGTH]byte
+// PrivKeyECDSA PrivKey
+type PrivKeyECDSA [privateKeyECDSALength]byte
 
+// Bytes convert to bytes
 func (privKey PrivKeyECDSA) Bytes() []byte {
-	s := make([]byte, ECDSA_RPIVATEKEY_LENGTH)
+	s := make([]byte, privateKeyECDSALength)
 	copy(s, privKey[:])
 	return s
 }
 
+// Sign create signature
 func (privKey PrivKeyECDSA) Sign(msg []byte) crypto.Signature {
 	priv, pub := privKeyFromBytes(elliptic.P256(), privKey[:])
 	r, s, err := ecdsa.Sign(rand.Reader, priv, crypto.Sha256(msg))
@@ -91,6 +97,7 @@ func (privKey PrivKeyECDSA) Sign(msg []byte) crypto.Signature {
 	return SignatureECDSA(ecdsaSigByte)
 }
 
+// PubKey convert to public key
 func (privKey PrivKeyECDSA) PubKey() crypto.PubKey {
 	_, pub := privKeyFromBytes(elliptic.P256(), privKey[:])
 	var pubECDSA PubKeyECDSA
@@ -98,6 +105,7 @@ func (privKey PrivKeyECDSA) PubKey() crypto.PubKey {
 	return pubECDSA
 }
 
+// Equals check privkey is equal
 func (privKey PrivKeyECDSA) Equals(other crypto.PrivKey) bool {
 	if otherSecp, ok := other.(PrivKeyECDSA); ok {
 		return bytes.Equal(privKey[:], otherSecp[:])
@@ -106,20 +114,23 @@ func (privKey PrivKeyECDSA) Equals(other crypto.PrivKey) bool {
 	return false
 }
 
+// String convert to string
 func (privKey PrivKeyECDSA) String() string {
 	return fmt.Sprintf("PrivKeyECDSA{*****}")
 }
 
-// PubKey
+// PubKeyECDSA PubKey
 // prefixed with 0x02 or 0x03, depending on the y-cord.
-type PubKeyECDSA [ECDSA_PUBLICKEY_LENGTH]byte
+type PubKeyECDSA [publicKeyECDSALength]byte
 
+// Bytes convert to bytes
 func (pubKey PubKeyECDSA) Bytes() []byte {
-	s := make([]byte, ECDSA_PUBLICKEY_LENGTH)
+	s := make([]byte, publicKeyECDSALength)
 	copy(s, pubKey[:])
 	return s
 }
 
+// VerifyBytes verify signature
 func (pubKey PubKeyECDSA) VerifyBytes(msg []byte, sig crypto.Signature) bool {
 	// unwrap if needed
 	if wrap, ok := sig.(SignatureS); ok {
@@ -148,43 +159,48 @@ func (pubKey PubKeyECDSA) VerifyBytes(msg []byte, sig crypto.Signature) bool {
 	return ecdsa.Verify(pub, crypto.Sha256(msg), r, s)
 }
 
+// String convert to string
 func (pubKey PubKeyECDSA) String() string {
 	return fmt.Sprintf("PubKeyECDSA{%X}", pubKey[:])
 }
 
-// Must return the full bytes in hex.
+// KeyString Must return the full bytes in hex.
 // Used for map keying, etc.
 func (pubKey PubKeyECDSA) KeyString() string {
 	return fmt.Sprintf("%X", pubKey[:])
 }
 
+// Equals check public key is equal
 func (pubKey PubKeyECDSA) Equals(other crypto.PubKey) bool {
 	if otherSecp, ok := other.(PubKeyECDSA); ok {
 		return bytes.Equal(pubKey[:], otherSecp[:])
-	} else {
-		return false
 	}
+	return false
 }
 
-type ECDSASignature struct {
+type signatureECDSA struct {
 	R, S *big.Int
 }
 
-// Signature
+// SignatureECDSA Signature
 type SignatureECDSA []byte
 
+// SignatureS signature struct
 type SignatureS struct {
 	crypto.Signature
 }
 
+// Bytes convert signature to bytes
 func (sig SignatureECDSA) Bytes() []byte {
 	s := make([]byte, len(sig))
 	copy(s, sig[:])
 	return s
 }
 
+// IsZero check signature is zero
 func (sig SignatureECDSA) IsZero() bool { return len(sig) == 0 }
 
+// String convert signature to string
 func (sig SignatureECDSA) String() string {
 	fingerprint := make([]byte, len(sig[:]))
 	copy(fingerprint, sig[:])
@@ -192,6 +208,7 @@ func (sig SignatureECDSA) String() string {
 
 }
 
+// Equals check signature equals
 func (sig SignatureECDSA) Equals(other crypto.Signature) bool {
 	if otherEd, ok := other.(SignatureECDSA); ok {
 		return bytes.Equal(sig[:], otherEd[:])
@@ -199,7 +216,10 @@ func (sig SignatureECDSA) Equals(other crypto.Signature) bool {
 	return false
 }
 
+// Name name
 const Name = "auth_ecdsa"
+
+// ID id
 const ID = 257
 
 func init() {

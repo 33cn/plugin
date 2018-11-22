@@ -4,5 +4,8 @@
 
 package buildflags
 
+// ParaName para name
 var ParaName string
+
+// RPCAddr  rpc address
 var RPCAddr string

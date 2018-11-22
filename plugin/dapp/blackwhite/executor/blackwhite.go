@@ -25,7 +25,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Blackwhite{}))
 }
 
-//黑白配可以被重命名执行器名称
+// Init 重命名执行器名称
 func Init(name string, sub []byte) {
 	driverName = name
 	gt.BlackwhiteX = driverName
@@ -33,6 +33,7 @@ func Init(name string, sub []byte) {
 	drivers.Register(name, newBlackwhite, types.GetDappFork(driverName, "Enable"))
 }
 
+// Blackwhite 几类执行器结构体
 type Blackwhite struct {
 	drivers.DriverBase
 }
@@ -44,10 +45,12 @@ func newBlackwhite() drivers.Driver {
 	return c
 }
 
+// GetName 获取执行器别名
 func GetName() string {
 	return newBlackwhite().GetName()
 }
 
+// GetDriverName 获取执行器名字
 func (c *Blackwhite) GetDriverName() string {
 	return driverName
 }
@@ -118,9 +121,10 @@ func (c *Blackwhite) delHeightIndex(res *gt.ReceiptBlackwhiteStatus) (kvs []*typ
 	return kvs
 }
 
+// GetBlackwhiteRoundInfo 获取当前游戏信息
 func (c *Blackwhite) GetBlackwhiteRoundInfo(req *gt.ReqBlackwhiteRoundInfo) (types.Message, error) {
-	gameId := req.GameID
-	key := calcMavlRoundKey(gameId)
+	gameID := req.GameID
+	key := calcMavlRoundKey(gameID)
 	values, err := c.GetStateDB().Get(key)
 	if err != nil {
 		return nil, err
@@ -157,6 +161,7 @@ func (c *Blackwhite) GetBlackwhiteRoundInfo(req *gt.ReqBlackwhiteRoundInfo) (typ
 	return &rep, nil
 }
 
+// GetBwRoundListInfo 根据要求获取游戏信息，包括游戏所处状态，或者参与者地址
 func (c *Blackwhite) GetBwRoundListInfo(req *gt.ReqBlackwhiteRoundList) (types.Message, error) {
 	var key []byte
 	var values [][]byte
@@ -234,6 +239,7 @@ func (c *Blackwhite) GetBwRoundListInfo(req *gt.ReqBlackwhiteRoundList) (types.M
 	return &rep, nil
 }
 
+// GetBwRoundLoopResult 获取游戏中每轮的胜负结果
 func (c *Blackwhite) GetBwRoundLoopResult(req *gt.ReqLoopResult) (types.Message, error) {
 	localDb := c.GetLocalDB()
 	values, err := localDb.Get(calcRoundKey4LoopResult(req.GameID))
@@ -275,6 +281,7 @@ func heightIndexToIndex(height int64, index int32) int64 {
 	return height*types.MaxTxsPerBlock + int64(index)
 }
 
+// GetPayloadValue 获取执行器action结构体
 func (c *Blackwhite) GetPayloadValue() types.Message {
 	return &gt.BlackwhiteAction{}
 }

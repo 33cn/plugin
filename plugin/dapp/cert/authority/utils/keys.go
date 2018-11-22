@@ -25,6 +25,7 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
+// SKI 计算ski
 func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {
 	raw := elliptic.Marshal(curve, x, y)
 
@@ -33,6 +34,7 @@ func SKI(curve elliptic.Curve, x, y *big.Int) (ski []byte) {
 	return hash.Sum(nil)
 }
 
+// GetPublicKeySKIFromCert 从cert字节中获取公钥ski
 func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 	dcert, _ := pem.Decode(cert)
 	if dcert == nil {
@@ -41,14 +43,14 @@ func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 
 	var ski []byte
 	switch signType {
-	case ty.AUTH_ECDSA:
+	case ty.AuthECDSA:
 		x509Cert, err := x509.ParseCertificate(dcert.Bytes)
 		if err != nil {
 			return "", errors.Errorf("Unable to parse cert from decoded bytes: %s", err)
 		}
 		ecdsaPk := x509Cert.PublicKey.(*ecdsa.PublicKey)
 		ski = SKI(ecdsaPk.Curve, ecdsaPk.X, ecdsaPk.Y)
-	case ty.AUTH_SM2:
+	case ty.AuthSM2:
 		sm2Cert, err := sm2.ParseCertificate(dcert.Bytes)
 		if err != nil {
 			return "", errors.Errorf("Unable to parse cert from decoded bytes: %s", err)
@@ -62,6 +64,7 @@ func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 	return hex.EncodeToString(ski), nil
 }
 
+// EncodeCertToSignature 证书编码进签名
 func EncodeCertToSignature(signByte []byte, cert []byte) ([]byte, error) {
 	certSign := crypto.CertSignature{}
 	certSign.Signature = append(certSign.Signature, signByte...)
@@ -69,6 +72,7 @@ func EncodeCertToSignature(signByte []byte, cert []byte) ([]byte, error) {
 	return asn1.Marshal(certSign)
 }
 
+// DecodeCertFromSignature 从签名中解码证书
 func DecodeCertFromSignature(signByte []byte) ([]byte, []byte, error) {
 	var certSignature crypto.CertSignature
 	_, err := asn1.Unmarshal(signByte, &certSignature)
@@ -79,6 +83,7 @@ func DecodeCertFromSignature(signByte []byte) ([]byte, []byte, error) {
 	return certSignature.Cert, certSignature.Signature, nil
 }
 
+// PrivKeyByteFromRaw pem结构转成byte类型私钥
 func PrivKeyByteFromRaw(raw []byte, signType int) ([]byte, error) {
 	block, _ := pem.Decode(raw)
 	if block == nil {
@@ -86,13 +91,13 @@ func PrivKeyByteFromRaw(raw []byte, signType int) ([]byte, error) {
 	}
 
 	switch signType {
-	case ty.AUTH_ECDSA:
+	case ty.AuthECDSA:
 		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, err
 		}
 		return ecdsa_util.SerializePrivateKey(key.(*ecdsa.PrivateKey)), nil
-	case ty.AUTH_SM2:
+	case ty.AuthSM2:
 		key, err := sm2.ParsePKCS8PrivateKey(block.Bytes, nil)
 		if err != nil {
 			return nil, err

@@ -13,19 +13,19 @@ import (
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
-type OneTimeEd25519 struct{}
+type oneTimeEd25519 struct{}
 
 func init() {
-	crypto.Register(privacytypes.SignNameOnetimeED25519, &OneTimeEd25519{})
+	crypto.Register(privacytypes.SignNameOnetimeED25519, &oneTimeEd25519{})
 }
 
-func (onetime *OneTimeEd25519) GenKey() (crypto.PrivKey, error) {
+func (onetime *oneTimeEd25519) GenKey() (crypto.PrivKey, error) {
 	privKeyPrivacyPtr := &PrivKeyPrivacy{}
 	pubKeyPrivacyPtr := &PubKeyPrivacy{}
-	copy(privKeyPrivacyPtr[:PrivateKeyLen], crypto.CRandBytes(PrivateKeyLen))
+	copy(privKeyPrivacyPtr[:privateKeyLen], crypto.CRandBytes(privateKeyLen))
 
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(privKeyPrivacyPtr))
-	addr64 := (*[PrivateKeyLen]byte)(unsafe.Pointer(privKeyPrivacyPtr))
+	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(privKeyPrivacyPtr))
 	edwards25519.ScReduce(addr32, addr64)
 
 	//to generate the publickey
@@ -38,16 +38,16 @@ func (onetime *OneTimeEd25519) GenKey() (crypto.PrivKey, error) {
 	return *privKeyPrivacyPtr, nil
 }
 
-func (onetime *OneTimeEd25519) PrivKeyFromBytes(b []byte) (privKey crypto.PrivKey, err error) {
+func (onetime *oneTimeEd25519) PrivKeyFromBytes(b []byte) (privKey crypto.PrivKey, err error) {
 	if len(b) != 64 {
 		return nil, errors.New("invalid priv key byte")
 	}
-	privKeyBytes := new([PrivateKeyLen]byte)
-	pubKeyBytes := new([PublicKeyLen]byte)
+	privKeyBytes := new([privateKeyLen]byte)
+	pubKeyBytes := new([publicKeyLen]byte)
 	copy(privKeyBytes[:KeyLen32], b[:KeyLen32])
 
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(privKeyBytes))
-	addr64 := (*[PrivateKeyLen]byte)(unsafe.Pointer(privKeyBytes))
+	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(privKeyBytes))
 
 	//to generate the publickey
 	var A edwards25519.ExtendedGroupElement
@@ -59,7 +59,7 @@ func (onetime *OneTimeEd25519) PrivKeyFromBytes(b []byte) (privKey crypto.PrivKe
 	return PrivKeyPrivacy(*privKeyBytes), nil
 }
 
-func (onetime *OneTimeEd25519) PubKeyFromBytes(b []byte) (pubKey crypto.PubKey, err error) {
+func (onetime *oneTimeEd25519) PubKeyFromBytes(b []byte) (pubKey crypto.PubKey, err error) {
 	if len(b) != 32 {
 		return nil, errors.New("invalid pub key byte")
 	}
@@ -68,7 +68,7 @@ func (onetime *OneTimeEd25519) PubKeyFromBytes(b []byte) (pubKey crypto.PubKey, 
 	return PubKeyPrivacy(*pubKeyBytes), nil
 }
 
-func (onetime *OneTimeEd25519) SignatureFromBytes(b []byte) (sig crypto.Signature, err error) {
+func (onetime *oneTimeEd25519) SignatureFromBytes(b []byte) (sig crypto.Signature, err error) {
 	sigBytes := new([64]byte)
 	copy(sigBytes[:], b[:])
 	return SignatureOnetime(*sigBytes), nil

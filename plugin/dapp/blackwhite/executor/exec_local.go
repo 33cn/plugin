@@ -44,6 +44,7 @@ func (c *Blackwhite) execLocal(receiptData *types.ReceiptData) ([]*types.KeyValu
 	return set, nil
 }
 
+// ExecLocal_Create 执行生成创建游戏产生的本地数据库
 func (c *Blackwhite) ExecLocal_Create(payload *gt.BlackwhiteCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execLocal(receiptData)
 	if err != nil {
@@ -52,6 +53,7 @@ func (c *Blackwhite) ExecLocal_Create(payload *gt.BlackwhiteCreate, tx *types.Tr
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecLocal_Play 执行生成参与游戏产生的本地数据库
 func (c *Blackwhite) ExecLocal_Play(payload *gt.BlackwhitePlay, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execLocal(receiptData)
 	if err != nil {
@@ -60,6 +62,7 @@ func (c *Blackwhite) ExecLocal_Play(payload *gt.BlackwhitePlay, tx *types.Transa
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecLocal_Show 执行生成出示密钥产生的本地数据库
 func (c *Blackwhite) ExecLocal_Show(payload *gt.BlackwhiteShow, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execLocal(receiptData)
 	if err != nil {
@@ -68,6 +71,7 @@ func (c *Blackwhite) ExecLocal_Show(payload *gt.BlackwhiteShow, tx *types.Transa
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecLocal_TimeoutDone 执行生成超时产生的本地数据库
 func (c *Blackwhite) ExecLocal_TimeoutDone(payload *gt.BlackwhiteTimeoutDone, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execLocal(receiptData)
 	if err != nil {

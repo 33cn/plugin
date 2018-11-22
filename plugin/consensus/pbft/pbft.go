@@ -13,11 +13,13 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// constant
 const (
-	CHECKPOINT_PERIOD uint32 = 128
-	CONSTANT_FACTOR   uint32 = 2
+	CheckPointPeriod uint32 = 128
+	ConstantFactor   uint32 = 2
 )
 
+// Replica struct
 type Replica struct {
 	ID          uint32
 	replicas    map[uint32]string
@@ -36,6 +38,7 @@ type Replica struct {
 	checkpoints []*pb.Checkpoint
 }
 
+// NewReplica create Replica instance
 func NewReplica(id uint32, PeersURL string, addr string) (chan *pb.ClientReply, chan *pb.Request, bool) {
 	replyChan := make(chan *pb.ClientReply)
 	requestChan := make(chan *pb.Request)
@@ -65,6 +68,7 @@ func NewReplica(id uint32, PeersURL string, addr string) (chan *pb.ClientReply, 
 
 }
 
+// Startnode method
 func (rep *Replica) Startnode(addr string) {
 	rep.acceptConnections(addr)
 }
@@ -104,7 +108,7 @@ func (rep *Replica) lowWaterMark() uint32 {
 }
 
 func (rep *Replica) highWaterMark() uint32 {
-	return rep.lowWaterMark() + CHECKPOINT_PERIOD*CONSTANT_FACTOR
+	return rep.lowWaterMark() + CheckPointPeriod*ConstantFactor
 }
 
 func (rep *Replica) sequenceInRange(sequence uint32) bool {
@@ -133,9 +137,8 @@ func (rep *Replica) theLastReply() *pb.ClientReply {
 func (rep *Replica) lastReplyToClient(client string) *pb.ClientReply {
 	if v, ok := rep.replies[client]; ok {
 		return v[len(rep.replies[client])-1]
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (rep *Replica) stateDigest() []byte {
@@ -143,7 +146,7 @@ func (rep *Replica) stateDigest() []byte {
 }
 
 func (rep *Replica) isCheckpoint(sequence uint32) bool {
-	return sequence%CHECKPOINT_PERIOD == 0
+	return sequence%CheckPointPeriod == 0
 }
 
 func (rep *Replica) addCheckpoint(checkpoint *pb.Checkpoint) {
@@ -735,7 +738,7 @@ func (rep *Replica) handleRequestCommit(REQ *pb.Request) {
 		op := req.GetClient().Op
 		timestamp := req.GetClient().Timestamp
 		client := req.GetClient().Client
-		result := &pb.Result{op.Value}
+		result := &pb.Result{Value: op.Value}
 
 		rep.executed = append(rep.executed, sequence)
 		reply := ToReply(view, timestamp, client, rep.ID, result)
@@ -1036,7 +1039,7 @@ func (rep *Replica) correctSummaries(requests []*pb.Request, summaries []*pb.Sum
 		return
 	}
 
-	end := start + CHECKPOINT_PERIOD*CONSTANT_FACTOR
+	end := start + CheckPointPeriod*ConstantFactor
 
 	for seq := start; seq <= end; seq++ {
 
@@ -1516,7 +1519,7 @@ FOR_LOOP_1:
 	summaries = append(summaries, summary)
 
 	start = summary.Sequence
-	end = start + CHECKPOINT_PERIOD*CONSTANT_FACTOR
+	end = start + CheckPointPeriod*ConstantFactor
 
 	// select summaries
 	// TODO: optimize

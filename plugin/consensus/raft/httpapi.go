@@ -30,7 +30,7 @@ func (h *httpRaftAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		nodeId, err := strconv.ParseUint(key[1:], 0, 64)
+		nodeID, err := strconv.ParseUint(key[1:], 0, 64)
 		if err != nil {
 			rlog.Error(fmt.Sprintf("Failed to convert ID for conf change (%v)", err.Error()))
 			http.Error(w, "Failed on POST", http.StatusBadRequest)
@@ -39,14 +39,14 @@ func (h *httpRaftAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		cc := raftpb.ConfChange{
 			Type:    raftpb.ConfChangeAddNode,
-			NodeID:  nodeId,
+			NodeID:  nodeID,
 			Context: url,
 		}
 		h.confChangeC <- cc
 		// As above, optimistic that raft will apply the conf change
 		w.WriteHeader(http.StatusCreated)
 	case r.Method == "DELETE":
-		nodeId, err := strconv.ParseUint(key[1:], 0, 64)
+		nodeID, err := strconv.ParseUint(key[1:], 0, 64)
 		if err != nil {
 			rlog.Error(fmt.Sprintf("Failed to convert ID for conf change (%v)", err.Error()))
 			http.Error(w, "Failed on DELETE", http.StatusBadRequest)
@@ -54,7 +54,7 @@ func (h *httpRaftAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		cc := raftpb.ConfChange{
 			Type:   raftpb.ConfChangeRemoveNode,
-			NodeID: nodeId,
+			NodeID: nodeID,
 		}
 		h.confChangeC <- cc
 		// As above, optimistic that raft will apply the conf change
@@ -66,7 +66,7 @@ func (h *httpRaftAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func serveHttpRaftAPI(port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
+func serveHTTPRaftAPI(port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
 	srv := http.Server{
 		Addr: "localhost:" + strconv.Itoa(port),
 		Handler: &httpRaftAPI{

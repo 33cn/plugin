@@ -34,8 +34,8 @@ import (
 
 var (
 	random    *rand.Rand
-	txNumber  int = 10
-	loopCount int = 10
+	txNumber  = 10
+	loopCount = 10
 )
 
 func init() {
@@ -132,7 +132,7 @@ func sendReplyList(q queue.Queue) {
 		if msg.Ty == types.EventTxList {
 			count++
 			msg.Reply(client.NewMessage("consensus", types.EventReplyTxList,
-				&types.ReplyTxList{getReplyList(txNumber)}))
+				&types.ReplyTxList{Txs: getReplyList(txNumber)}))
 			if count >= loopCount {
 				time.Sleep(4 * time.Second)
 				break
@@ -149,7 +149,7 @@ func prepareTxList() *types.Transaction {
 	key = generateKey(i, 32)
 	value = generateValue(i, 180)
 
-	nput := &pty.NormAction_Nput{&pty.NormPut{Key: key, Value: []byte(value)}}
+	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: key, Value: []byte(value)}}
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: 0}
 	tx.To = address.ExecAddress("norm")

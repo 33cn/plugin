@@ -33,6 +33,7 @@ type gmValidator struct {
 	CRL []*pkix.CertificateList
 }
 
+// NewGmValidator 创建国密证书校验器
 func NewGmValidator() Validator {
 	return &gmValidator{}
 }
@@ -90,7 +91,7 @@ func (validator *gmValidator) Validate(certByte []byte, pubKey []byte) error {
 	}
 
 	if !bytes.Equal(pubKey, sm2_util.SerializePublicKey(ParseECDSAPubKey2SM2PubKey(certPubKey))) {
-		return fmt.Errorf("Invalid public key.")
+		return fmt.Errorf("Invalid public key")
 	}
 
 	validationChain, err := validator.getCertificationChain(cert)
@@ -150,7 +151,7 @@ func (validator *gmValidator) getValidationChain(cert *sm2.Certificate, isInterm
 		parentPosition = 0
 	}
 	if validator.certificationTreeInternalNodesMap[string(validationChain[parentPosition].Raw)] {
-		return nil, fmt.Errorf("Invalid validation chain. Parent certificate should be a leaf of the certification tree [%v].", cert.Raw)
+		return nil, fmt.Errorf("Invalid validation chain. Parent certificate should be a leaf of the certification tree [%v]", cert.Raw)
 	}
 	return validationChain, nil
 }
@@ -335,7 +336,7 @@ func (validator *gmValidator) getValidityOptsForCert(cert *sm2.Certificate) sm2.
 	return tempOpts
 }
 
-func (Validator *gmValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
+func (validator *gmValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
 	// 从proto中解码signature
 	cert, _, err := utils.DecodeCertFromSignature(signature)
 	if err != nil {

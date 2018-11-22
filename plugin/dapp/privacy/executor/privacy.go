@@ -41,12 +41,14 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&privacy{}))
 }
 
+// Init initialize executor driver
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newPrivacy, types.GetDappFork(driverName, "Enable"))
 	// 如果需要在开发环境下使用隐私交易，则需要使用下面这行代码，否则用上面的代码
 	//drivers.Register(newPrivacy().GetName(), newPrivacy, 0)
 }
 
+// GetName get privacy name
 func GetName() string {
 	return newPrivacy().GetName()
 }
@@ -62,6 +64,7 @@ func newPrivacy() drivers.Driver {
 	return t
 }
 
+// GetDriverName get driver name
 func (p *privacy) GetDriverName() string {
 	return driverName
 }
@@ -142,7 +145,7 @@ func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (t
 	return utxoGlobalIndexResp, nil
 }
 
-//获取指定amount下的所有utxo，这样就可以查询当前系统不同amout下存在的UTXO,可以帮助查询用于混淆用的资源
+//ShowAmountsOfUTXO 获取指定amount下的所有utxo，这样就可以查询当前系统不同amout下存在的UTXO,可以帮助查询用于混淆用的资源
 //也可以确认币种的碎片化问题
 //显示存在的各种不同的额度的UTXO,如1,3,5,10,20,30,100...
 func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
@@ -171,7 +174,7 @@ func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Messag
 	return replyAmounts, nil
 }
 
-//显示在指定额度下的UTXO的具体信息，如区块高度，交易hash，输出索引等具体信息
+//ShowUTXOs4SpecifiedAmount 显示在指定额度下的UTXO的具体信息，如区块高度，交易hash，输出索引等具体信息
 func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
 	querydb := p.GetLocalDB()
 
@@ -193,6 +196,7 @@ func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (type
 	return &replyUTXOsOfAmount, nil
 }
 
+// CheckTx check transaction
 func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	txhashstr := common.Bytes2Hex(tx.Hash())
 	var action pty.PrivacyAction
@@ -288,11 +292,11 @@ func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 	values, err := stateDB.BatchGet(keyImages)
 	if err != nil {
 		privacylog.Error("exec module", "checkUTXOValid failed to get value from statDB")
-		return false, Invalid_index
+		return false, invalidIndex
 	}
 	if len(values) != len(keyImages) {
 		privacylog.Error("exec module", "checkUTXOValid return different count value with keys")
-		return false, Invalid_index
+		return false, invalidIndex
 	}
 	for i, value := range values {
 		if value != nil {
@@ -301,19 +305,19 @@ func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 		}
 	}
 
-	return true, Invalid_index
+	return true, invalidIndex
 }
 
 func (p *privacy) checkPubKeyValid(keys [][]byte, pubkeys [][]byte) (bool, int32) {
 	values, err := p.GetStateDB().BatchGet(keys)
 	if err != nil {
 		privacylog.Error("exec module", "checkPubKeyValid failed to get value from statDB with err", err)
-		return false, Invalid_index
+		return false, invalidIndex
 	}
 
 	if len(values) != len(pubkeys) {
 		privacylog.Error("exec module", "checkPubKeyValid return different count value with keys")
-		return false, Invalid_index
+		return false, invalidIndex
 	}
 
 	for i, value := range values {
@@ -325,5 +329,5 @@ func (p *privacy) checkPubKeyValid(keys [][]byte, pubkeys [][]byte) (bool, int32
 		}
 	}
 
-	return true, Invalid_index
+	return true, invalidIndex
 }

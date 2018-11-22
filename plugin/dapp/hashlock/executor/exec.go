@@ -11,6 +11,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
 )
 
+// Exec_Hlock Action
 func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, index int) (*types.Receipt, error) {
 	clog.Debug("hashlocklock action")
 	if hlock.Amount <= 0 {
@@ -38,6 +39,7 @@ func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, in
 	return actiondb.Hashlocklock(hlock)
 }
 
+// Exec_Hsend Action
 func (h *Hashlock) Exec_Hsend(transfer *pty.HashlockSend, tx *types.Transaction, index int) (*types.Receipt, error) {
 	//unlock 有两个条件： 1. 时间已经过期 2. 密码是对的，返回原来的账户
 	clog.Debug("hashlockunlock action")
@@ -45,6 +47,7 @@ func (h *Hashlock) Exec_Hsend(transfer *pty.HashlockSend, tx *types.Transaction,
 	return actiondb.Hashlocksend(transfer)
 }
 
+// Exec_Hunlock Action
 func (h *Hashlock) Exec_Hunlock(transfer *pty.HashlockUnlock, tx *types.Transaction, index int) (*types.Receipt, error) {
 	//send 有两个条件：1. 时间没有过期 2. 密码是对的，币转移到 ToAddress
 	clog.Debug("hashlocksend action")

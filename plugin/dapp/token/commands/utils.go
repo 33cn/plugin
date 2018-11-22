@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CreateRawTx 创建交易
 func CreateRawTx(cmd *cobra.Command, to string, amount float64, note string, isWithdraw bool, tokenSymbol, execName string) (string, error) {
 	if amount < 0 {
 		return "", types.ErrAmount
@@ -51,6 +52,7 @@ func CreateRawTx(cmd *cobra.Command, to string, amount float64, note string, isW
 	return hex.EncodeToString(txHex), nil
 }
 
+// GetExecAddr 获取执行器地址
 func GetExecAddr(exec string) (string, error) {
 	if ok := types.IsAllowExecName([]byte(exec), []byte(exec)); !ok {
 		return "", types.ErrExecNameNotAllow

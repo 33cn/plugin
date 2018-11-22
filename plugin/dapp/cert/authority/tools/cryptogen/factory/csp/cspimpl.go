@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// New 创建新的证书生成结构
 func New(keyStore KeyStore) (CSP, error) {
 	signers := make(map[reflect.Type]Signer)
 	signers[reflect.TypeOf(&ecdsaPrivateKey{})] = &ecdsaSigner{}
@@ -58,10 +59,10 @@ func (csp *cspimpl) KeyGen(opts int) (k Key, err error) {
 
 func (csp *cspimpl) Sign(k Key, digest []byte, opts SignerOpts) (signature []byte, err error) {
 	if k == nil {
-		return nil, errors.New("Invalid Key. It must not be nil.")
+		return nil, errors.New("Invalid Key. It must not be nil")
 	}
 	if len(digest) == 0 {
-		return nil, errors.New("Invalid digest. Cannot be empty.")
+		return nil, errors.New("Invalid digest. Cannot be empty")
 	}
 
 	keyType := reflect.TypeOf(k)

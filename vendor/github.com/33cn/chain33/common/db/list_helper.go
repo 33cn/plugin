@@ -6,7 +6,6 @@ package db
 
 import (
 	"bytes"
-	"fmt"
 
 	log "github.com/33cn/chain33/common/log/log15"
 )
@@ -173,22 +172,22 @@ func (db *ListHelper) IteratorCallback(start []byte, end []byte, count int32, di
 		if end != nil {
 			cmp := bytes.Compare(key, end)
 			if !reserse && cmp > 0 {
-				fmt.Println("break1")
+				listlog.Debug("break1")
 				break
 			}
 			if reserse && cmp < 0 {
-				fmt.Println("break2")
+				listlog.Debug("break2")
 				break
 			}
 		}
 		if fn(cloneByte(key), cloneByte(value)) {
-			fmt.Println("break3")
+			listlog.Debug("break3")
 			break
 		}
 		//count 到数目了
 		i++
 		if i == count {
-			fmt.Println("break4")
+			listlog.Debug("break4")
 			break
 		}
 	}

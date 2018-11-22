@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package trie implements Merkle Patricia Tries.
+// Package mpt implements Merkle Patricia Tries.
 package mpt
 
 import (
@@ -468,6 +468,7 @@ func (t *Trie) hashRoot(db *Database, onleaf LeafCallback) (node, node, error) {
 	return h.hash(t.root, db, true)
 }
 
+// Commit2Db 保存tire数据到db
 func (t *Trie) Commit2Db(node common.Hash, report bool) error {
 	err := t.db.Commit(node, report)
 	if nil != err {
@@ -477,10 +478,12 @@ func (t *Trie) Commit2Db(node common.Hash, report bool) error {
 	return nil
 }
 
+// TrieEx Trie扩展，可以相应enableSecure
 type TrieEx struct {
 	*Trie
 }
 
+// NewEx creates a trie
 func NewEx(root common.Hash, db *Database) (*TrieEx, error) {
 	trie, err := New(root, db)
 	if nil == err {
@@ -492,6 +495,7 @@ func NewEx(root common.Hash, db *Database) (*TrieEx, error) {
 	return trieEx, err
 }
 
+// Get returns the value for key stored in the trie
 func (t *TrieEx) Get(key []byte) []byte {
 	res, err := t.TryGet(key)
 	if err != nil {
@@ -500,6 +504,7 @@ func (t *TrieEx) Get(key []byte) []byte {
 	return res
 }
 
+// TryGet returns the value for key stored in the trie.
 func (t *TrieEx) TryGet(key []byte) ([]byte, error) {
 	if enableSecure {
 		key = common.ShaKeccak256(key)
@@ -507,12 +512,14 @@ func (t *TrieEx) TryGet(key []byte) ([]byte, error) {
 	return t.Trie.TryGet(key)
 }
 
+// Update set key with value in the trie
 func (t *TrieEx) Update(key, value []byte) {
 	if err := t.TryUpdate(key, value); err != nil {
 		mptlog.Error(fmt.Sprintf("Unhandled trie error: %v", err))
 	}
 }
 
+// TryUpdate set key with value in the trie
 func (t *TrieEx) TryUpdate(key, value []byte) error {
 	if enableSecure {
 		key = common.ShaKeccak256(key)
@@ -520,12 +527,14 @@ func (t *TrieEx) TryUpdate(key, value []byte) error {
 	return t.Trie.TryUpdate(key, value)
 }
 
+// Delete removes any existing value for key from the trie.
 func (t *TrieEx) Delete(key []byte) {
 	if err := t.TryDelete(key); err != nil {
 		mptlog.Error(fmt.Sprintf("Unhandled trie error: %v", err))
 	}
 }
 
+// TryDelete removes any existing value for key from the trie.
 func (t *TrieEx) TryDelete(key []byte) error {
 	if enableSecure {
 		key = common.ShaKeccak256(key)
@@ -533,15 +542,17 @@ func (t *TrieEx) TryDelete(key []byte) error {
 	return t.Trie.TryDelete(key)
 }
 
+// Commit writes all nodes to the trie's memory database
 func (t *TrieEx) Commit(onleaf LeafCallback) (root common.Hash, err error) {
 	return t.Trie.Commit(onleaf)
 }
 
+// Commit2Db writes all nodes to the trie's database
 func (t *TrieEx) Commit2Db(node common.Hash, report bool) error {
 	return t.Trie.Commit2Db(node, report)
 }
 
-//对外接口
+// SetKVPair set key value 的对外接口
 func SetKVPair(db dbm.DB, storeSet *types.StoreSet, sync bool) ([]byte, error) {
 	var err error
 	var trie *TrieEx
@@ -567,6 +578,7 @@ func SetKVPair(db dbm.DB, storeSet *types.StoreSet, sync bool) ([]byte, error) {
 	return hashByte, nil
 }
 
+// GetKVPair get values by keys, return values and error
 func GetKVPair(db dbm.DB, storeGet *types.StoreGet) ([][]byte, error) {
 	var err error
 	var trie *TrieEx
@@ -585,6 +597,7 @@ func GetKVPair(db dbm.DB, storeGet *types.StoreGet) ([][]byte, error) {
 	return values, nil
 }
 
+// GetKVPairProof 获取指定k:v pair的proof证明
 func GetKVPairProof(db dbm.DB, roothash []byte, key []byte) []byte {
 	if enableSecure {
 		key = common.ShaKeccak256(key)
@@ -596,7 +609,7 @@ func GetKVPairProof(db dbm.DB, roothash []byte, key []byte) []byte {
 	return value
 }
 
-//剔除key对应的节点在本次tree中，返回新的roothash和key对应的value
+// DelKVPair 剔除key对应的节点在本次tree中，返回新的roothash和key对应的value
 func DelKVPair(db dbm.DB, storeDel *types.StoreGet) ([]byte, [][]byte, error) {
 	var err error
 	var trie *TrieEx
@@ -626,6 +639,7 @@ func DelKVPair(db dbm.DB, storeDel *types.StoreGet) ([]byte, [][]byte, error) {
 	return hashByte, values, nil
 }
 
+// VerifyKVPairProof 验证KVPair 的证明
 func VerifyKVPairProof(db dbm.DB, roothash []byte, keyvalue types.KeyValue, proof []byte) bool {
 	if enableSecure {
 		keyvalue.Key = common.ShaKeccak256(keyvalue.Key)
@@ -634,6 +648,7 @@ func VerifyKVPairProof(db dbm.DB, roothash []byte, keyvalue types.KeyValue, proo
 	return nil == err
 }
 
+// IterateRangeByStateHash 迭代实现功能； statehash：当前状态hash, start：开始查找的key, end: 结束的key, ascending：升序，降序, fn 迭代回调函数
 func IterateRangeByStateHash(db dbm.DB, statehash, start, end []byte, ascending bool, fn func([]byte, []byte) bool) {
 	var err error
 	var trie *TrieEx

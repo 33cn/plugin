@@ -17,21 +17,24 @@ func init() {
 	types.RegisterDappFork(PokerBullX, "Enable", 0)
 }
 
-// exec
+// PokerBullType 斗牛执行器类型
 type PokerBullType struct {
 	types.ExecTypeBase
 }
 
+// NewType 创建pokerbull执行器类型
 func NewType() *PokerBullType {
 	c := &PokerBullType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload 获取payload
 func (t *PokerBullType) GetPayload() types.Message {
 	return &PBGameAction{}
 }
 
+// GetTypeMap 获取类型map
 func (t *PokerBullType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Start":    PBGameActionStart,
@@ -41,6 +44,7 @@ func (t *PokerBullType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// GetLogMap 获取日志map
 func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogPBGameStart:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameStart"},

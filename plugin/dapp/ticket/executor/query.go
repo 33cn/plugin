@@ -9,25 +9,29 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
-func (this *Ticket) Query_TicketInfos(param *pty.TicketInfos) (types.Message, error) {
-	return Infos(this.GetStateDB(), param)
+// Query_TicketInfos query tick info
+func (ticket *Ticket) Query_TicketInfos(param *pty.TicketInfos) (types.Message, error) {
+	return Infos(ticket.GetStateDB(), param)
 }
 
-func (this *Ticket) Query_TicketList(param *pty.TicketList) (types.Message, error) {
-	return List(this.GetLocalDB(), this.GetStateDB(), param)
+// Query_TicketList query tick list
+func (ticket *Ticket) Query_TicketList(param *pty.TicketList) (types.Message, error) {
+	return List(ticket.GetLocalDB(), ticket.GetStateDB(), param)
 }
 
-func (this *Ticket) Query_MinerAddress(param *types.ReqString) (types.Message, error) {
-	value, err := this.GetLocalDB().Get(calcBindReturnKey(param.Data))
+// Query_MinerAddress query miner addr
+func (ticket *Ticket) Query_MinerAddress(param *types.ReqString) (types.Message, error) {
+	value, err := ticket.GetLocalDB().Get(calcBindReturnKey(param.Data))
 	if value == nil || err != nil {
 		return nil, types.ErrNotFound
 	}
-	return &types.ReplyString{string(value)}, nil
+	return &types.ReplyString{Data: string(value)}, nil
 }
 
-func (this *Ticket) Query_MinerSourceList(param *types.ReqString) (types.Message, error) {
+// Query_MinerSourceList query miner src list
+func (ticket *Ticket) Query_MinerSourceList(param *types.ReqString) (types.Message, error) {
 	key := calcBindMinerKeyPrefix(param.Data)
-	values, err := this.GetLocalDB().List(key, nil, 0, 1)
+	values, err := ticket.GetLocalDB().List(key, nil, 0, 1)
 	if err != nil {
 		return nil, err
 	}

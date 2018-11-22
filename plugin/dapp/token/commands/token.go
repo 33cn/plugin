@@ -22,6 +22,7 @@ var (
 	tokenSymbol string
 )
 
+// TokenCmd token 命令行
 func TokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
@@ -44,7 +45,7 @@ func TokenCmd() *cobra.Command {
 	return cmd
 }
 
-// create raw transfer tx
+// CreateTokenTransferCmd create raw transfer tx
 func CreateTokenTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -81,7 +82,7 @@ func createTokenTransfer(cmd *cobra.Command, args []string) {
 	fmt.Println(txHex)
 }
 
-// create raw withdraw tx
+// CreateTokenWithdrawCmd create raw withdraw tx
 func CreateTokenWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",
@@ -125,7 +126,7 @@ func createTokenWithdraw(cmd *cobra.Command, args []string) {
 	fmt.Println(txHex)
 }
 
-// get precreated tokens
+// GetTokensPreCreatedCmd get precreated tokens
 func GetTokensPreCreatedCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get_precreated",
@@ -171,7 +172,7 @@ func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	}
 }
 
-// get finish created tokens
+// GetTokensFinishCreatedCmd get finish created tokens
 func GetTokensFinishCreatedCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get_finish_created",
@@ -218,7 +219,7 @@ func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 	}
 }
 
-// get token assets
+// GetTokenAssetsCmd get token assets
 func GetTokenAssetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token_assets",
@@ -277,7 +278,7 @@ func parseTokenAssetsRes(arg interface{}) (interface{}, error) {
 	return result, nil
 }
 
-// get token balance
+// GetTokenBalanceCmd get token balance
 func GetTokenBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token_balance",
@@ -336,7 +337,7 @@ func parseTokenBalanceRes(arg interface{}) (interface{}, error) {
 	return result, nil
 }
 
-// create raw token precreate transaction
+// CreateRawTokenPreCreateTxCmd create raw token precreate transaction
 func CreateRawTokenPreCreateTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "precreate",
@@ -391,7 +392,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// create raw token finish create transaction
+// CreateRawTokenFinishTxCmd create raw token finish create transaction
 func CreateRawTokenFinishTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "finish",
@@ -425,7 +426,7 @@ func tokenFinish(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// create raw token revoke transaction
+// CreateRawTokenRevokeTxCmd create raw token revoke transaction
 func CreateRawTokenRevokeTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke",

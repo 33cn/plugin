@@ -232,13 +232,13 @@ func (policy *privacyPolicy) getPrivacykeyPair(addr string) (*privacy.Privacy, e
 		copy(privacyInfo.SpendPrivKey[:], decrypteredSpend)
 
 		return privacyInfo, nil
-	} else {
-		_, err := policy.getPrivKeyByAddr(addr)
-		if err != nil {
-			return nil, err
-		}
-		return nil, privacytypes.ErrPrivacyNotEnabled
 	}
+	_, err := policy.getPrivKeyByAddr(addr)
+	if err != nil {
+		return nil, err
+	}
+	return nil, privacytypes.ErrPrivacyNotEnabled
+
 }
 
 func (policy *privacyPolicy) savePrivacykeyPair(addr string) (*privacy.Privacy, error) {

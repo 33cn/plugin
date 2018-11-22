@@ -13,10 +13,10 @@ type sm2Driver struct {
 	sm2.Driver
 }
 
-const Name = "auth_sm2"
-const ID = 258
+const name = "auth_sm2"
+const id = 258
 
 func init() {
-	crypto.Register(Name, &sm2Driver{})
-	crypto.RegisterType(Name, ID)
+	crypto.Register(name, &sm2Driver{})
+	crypto.RegisterType(name, id)
 }

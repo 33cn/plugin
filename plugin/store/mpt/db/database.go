@@ -36,10 +36,6 @@ var secureKeyPrefix = []byte("secure-key-")
 // secureKeyLength is the length of the above prefix + 32byte hash.
 const secureKeyLength = 11 + 32
 
-// Code using batches should try to add this much data to the batch.
-// The value was determined empirically.
-const IdealBatchSize = 100 * 1024
-
 // rawNode is a simple binary blob used to differentiate between collapsed trie
 // nodes and already encoded RLP binary blobs (while at the same time store them
 // in the same cache fields).

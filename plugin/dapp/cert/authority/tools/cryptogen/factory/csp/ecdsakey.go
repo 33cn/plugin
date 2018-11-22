@@ -18,7 +18,7 @@ type ecdsaPrivateKey struct {
 }
 
 func (k *ecdsaPrivateKey) Bytes() (raw []byte, err error) {
-	return nil, errors.New("Not supported.")
+	return nil, errors.New("Not supported")
 }
 
 func (k *ecdsaPrivateKey) SKI() (ski []byte) {

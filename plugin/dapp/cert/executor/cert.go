@@ -20,6 +20,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Cert{}))
 }
 
+// Init 初始化
 func Init(name string, sub []byte) {
 	driverName = name
 	var cfg ct.Authority
@@ -30,10 +31,12 @@ func Init(name string, sub []byte) {
 	drivers.Register(driverName, newCert, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName 获取cert执行器名
 func GetName() string {
 	return newCert().GetName()
 }
 
+// Cert cert执行器
 type Cert struct {
 	drivers.DriverBase
 }
@@ -45,10 +48,12 @@ func newCert() drivers.Driver {
 	return c
 }
 
+// GetDriverName 获取cert执行器名
 func (c *Cert) GetDriverName() string {
 	return driverName
 }
 
+// CheckTx cert执行器tx证书校验
 func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 	// 基类检查
 	err := c.DriverBase.CheckTx(tx, index)
@@ -86,7 +91,12 @@ func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 根据前缀查找证书变更记录，cert回滚、重启、同步用到
 */
 func (c *Cert) loadHistoryByPrefix() error {
-	parm := &types.LocalDBList{[]byte("LODB-cert-"), nil, 0, 0}
+	parm := &types.LocalDBList{
+		Prefix:    []byte("LODB-cert-"),
+		Key:       nil,
+		Direction: 0,
+		Count:     0,
+	}
 	result, err := c.DriverBase.GetApi().LocalList(parm)
 	if err != nil {
 		return err
@@ -115,7 +125,7 @@ func (c *Cert) loadHistoryByPrefix() error {
 */
 func (c *Cert) loadHistoryByHeight() error {
 	key := calcCertHeightKey(c.GetHeight())
-	parm := &types.LocalDBGet{[][]byte{key}}
+	parm := &types.LocalDBGet{Keys: [][]byte{key}}
 	result, err := c.DriverBase.GetApi().LocalGet(parm)
 	if err != nil {
 		return err
