@@ -39,12 +39,12 @@ func init() {
 // Client export ticket client struct
 type Client struct {
 	*drivers.BaseClient
-	//ticket list for miner
-	tlist    *ty.ReplyTicketList
-	privmap  map[string]crypto.PrivKey
-	ticketmu sync.Mutex
-	done     chan struct{}
-	subcfg   *subConfig
+	//ticket map for miner
+	ticketsMap map[string]*ty.Ticket
+	privmap    map[string]crypto.PrivKey
+	ticketmu   sync.Mutex
+	done       chan struct{}
+	subcfg     *subConfig
 }
 
 type genesisTicket struct {
@@ -68,7 +68,13 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.GenesisBlockTime > 0 {
 		cfg.GenesisBlockTime = subcfg.GenesisBlockTime
 	}
-	t := &Client{c, &ty.ReplyTicketList{}, nil, sync.Mutex{}, make(chan struct{}), &subcfg}
+	t := &Client{
+		BaseClient: c,
+		ticketsMap: make(map[string]*ty.Ticket),
+		privmap:    nil,
+		ticketmu:   sync.Mutex{},
+		done:       make(chan struct{}),
+		subcfg:     &subcfg}
 	c.SetChild(t)
 	go t.flushTicketBackend()
 	return t
@@ -188,16 +194,17 @@ func (client *Client) getTickets() ([]*ty.Ticket, []crypto.PrivKey, error) {
 func (client *Client) getTicketCount() int64 {
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
-	if client.tlist == nil {
-		return 0
-	}
-	return int64(len(client.tlist.Tickets))
+	return int64(len(client.ticketsMap))
 }
 
 func (client *Client) setTicket(tlist *ty.ReplyTicketList, privmap map[string]crypto.PrivKey) {
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
-	client.tlist = tlist
+	client.ticketsMap = make(map[string]*ty.Ticket)
+	for _, ticket := range tlist.Tickets {
+		client.ticketsMap[ticket.GetTicketId()] = ticket
+	}
+	//client.tlist = tlist
 	client.privmap = privmap
 	tlog.Debug("setTicket", "n", len(tlist.GetTickets()))
 }
@@ -464,27 +471,32 @@ func printBInt(data *big.Int) string {
 	return strings.Repeat("0", 64-len(txt)) + txt
 }
 
-func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket, crypto.PrivKey, *big.Int, []byte, int, error) {
+func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket, crypto.PrivKey, *big.Int, []byte, string, error) {
 	bits := parent.Difficulty
 	diff, modify, err := client.getNextTarget(parent, bits)
 	if err != nil {
-		return nil, nil, nil, nil, 0, err
+		return nil, nil, nil, nil, "", err
 	}
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
-	for i := 0; i < len(client.tlist.Tickets); i++ {
-		ticket := client.tlist.Tickets[i]
+	for ticketID, ticket := range client.ticketsMap {
 		if ticket == nil {
+			tlog.Warn("Client searchTargetTicket ticket is nil", "ticketID", ticketID)
 			continue
 		}
-		//已经到成熟器
-		if !ticket.IsGenesis && block.BlockTime-ticket.CreateTime <= types.GetP(block.Height).TicketFrozenTime {
+		//已经到成熟期
+		if !ticket.GetIsGenesis() && (block.BlockTime-ticket.GetCreateTime() <= types.GetP(block.Height).TicketFrozenTime) {
 			continue
 		}
-		//find priv key
-		priv := client.privmap[ticket.MinerAddress]
-		privHash, err := genPrivHash(priv, ticket.TicketId)
+		// 查找私钥
+		priv, ok := client.privmap[ticket.MinerAddress]
+		if !ok {
+			tlog.Error("Client searchTargetTicket can't find private key", "MinerAddress", ticket.MinerAddress)
+			continue
+		}
+		privHash, err := genPrivHash(priv, ticketID)
 		if err != nil {
+			tlog.Error("Client searchTargetTicket genPrivHash ", "error", err)
 			continue
 		}
 		currentdiff := client.getCurrentTarget(block.BlockTime, ticket.TicketId, modify, privHash)
@@ -493,36 +505,26 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 		}
 		tlog.Info("currentdiff", "hex", printBInt(currentdiff))
 		tlog.Info("FindBlock", "height------->", block.Height, "ntx", len(block.Txs))
-		return ticket, priv, diff, modify, i, nil
+		return ticket, priv, diff, modify, ticketID, nil
 	}
-	return nil, nil, nil, nil, 0, nil
+	return nil, nil, nil, nil, "", nil
 }
 
-func (client *Client) delTicket(ticket *ty.Ticket, index int) {
+func (client *Client) delTicket(ticketID string) {
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
-	//1. 结构体没有被重新调整过
-	oldticket := client.tlist.Tickets[index]
-	if oldticket.TicketId == ticket.TicketId {
-		client.tlist.Tickets[index] = nil
+	if client.ticketsMap == nil || len(ticketID) == 0 {
+		return
 	}
-	//2. 全表search
-	for i := 0; i < len(client.tlist.Tickets); i++ {
-		oldticket = client.tlist.Tickets[i]
-		if oldticket == nil {
-			continue
-		}
-		if oldticket.TicketId == ticket.TicketId {
-			client.tlist.Tickets[i] = nil
-			return
-		}
+	if _, ok := client.ticketsMap[ticketID]; ok {
+		delete(client.ticketsMap, ticketID)
 	}
 }
 
 // Miner ticket miner function
 func (client *Client) Miner(parent, block *types.Block) bool {
 	//add miner address
-	ticket, priv, diff, modify, index, err := client.searchTargetTicket(parent, block)
+	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parent, block)
 	if err != nil {
 		tlog.Error("Miner", "err", err)
 		newblock, err := client.RequestLastBlock()
@@ -543,7 +545,7 @@ func (client *Client) Miner(parent, block *types.Block) bool {
 	if err != nil {
 		return false
 	}
-	client.delTicket(ticket, index)
+	client.delTicket(ticketID)
 	return true
 }
 
