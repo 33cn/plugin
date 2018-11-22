@@ -26,7 +26,7 @@ import (
 
 */
 
-// return exec, symbol
+//GetExecSymbol : return exec, symbol
 func GetExecSymbol(order *pt.SellOrder) (string, string) {
 	if order.AssetExec == "" {
 		return defaultAssetExec, defaultAssetExec + "." + order.TokenSymbol
@@ -50,7 +50,7 @@ func checkAsset(height int64, exec, symbol string) bool {
 func createAccountDB(height int64, db db.KV, exec, symbol string) (*account.DB, error) {
 	if types.IsDappFork(height, pt.TradeX, "ForkTradeAsset") {
 		return account.NewAccountDB(exec, symbol, db)
-	} else {
-		return account.NewAccountDB(defaultAssetExec, symbol, db)
 	}
+
+	return account.NewAccountDB(defaultAssetExec, symbol, db)
 }

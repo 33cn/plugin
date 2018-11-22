@@ -4,7 +4,7 @@
 
 package commands
 
-type TradeOrderResult struct {
+type tradeOrderResult struct {
 	TokenSymbol       string `json:"tokenSymbol"`
 	Owner             string `json:"owner"`
 	AmountPerBoardlot string `json:"amountPerBoardlot"`
@@ -22,14 +22,14 @@ type TradeOrderResult struct {
 	IsSellOrder       bool   `json:"isSellOrder"`
 }
 
-type ReplySellOrdersResult struct {
-	SellOrders []*TradeOrderResult `json:"sellOrders"`
+type replySellOrdersResult struct {
+	SellOrders []*tradeOrderResult `json:"sellOrders"`
 }
 
-type ReplyBuyOrdersResult struct {
-	BuyOrders []*TradeOrderResult `json:"buyOrders"`
+type replyBuyOrdersResult struct {
+	BuyOrders []*tradeOrderResult `json:"buyOrders"`
 }
 
-type ReplyTradeOrdersResult struct {
-	Orders []*TradeOrderResult `json:"orders"`
+type replyTradeOrdersResult struct {
+	Orders []*tradeOrderResult `json:"orders"`
 }

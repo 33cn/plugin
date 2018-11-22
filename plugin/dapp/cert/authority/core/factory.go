@@ -10,13 +10,14 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
 )
 
+// GetLocalValidator 根据类型获取校验器
 func GetLocalValidator(authConfig *AuthConfig, signType int) (Validator, error) {
 	var lclValidator Validator
 	var err error
 
-	if signType == ty.AUTH_ECDSA {
+	if signType == ty.AuthECDSA {
 		lclValidator = NewEcdsaValidator()
-	} else if signType == ty.AUTH_SM2 {
+	} else if signType == ty.AuthSM2 {
 		lclValidator = NewGmValidator()
 	} else {
 		return nil, ty.ErrUnknowAuthSignType

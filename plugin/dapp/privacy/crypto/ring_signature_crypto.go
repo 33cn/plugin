@@ -5,6 +5,7 @@
 /*
 基于框架中Crypto接口，实现签名、验证的处理
 */
+
 package privacy
 
 import (
@@ -28,18 +29,22 @@ type RingSignature struct {
 	sign types.RingSignature
 }
 
+// Bytes convert to bytest
 func (r *RingSignature) Bytes() []byte {
 	return types.Encode(&r.sign)
 }
 
+// IsZero check is zero
 func (r *RingSignature) IsZero() bool {
 	return len(r.sign.GetItems()) == 0
 }
 
+// String convert to string
 func (r *RingSignature) String() string {
 	return r.sign.String()
 }
 
+// Equals check equals
 func (r *RingSignature) Equals(other crypto.Signature) bool {
 	if _, ok := other.(*RingSignature); ok {
 		this := types.Encode(&r.sign)
@@ -50,13 +55,15 @@ func (r *RingSignature) Equals(other crypto.Signature) bool {
 
 // RingSignPrivateKey 环签名中对于crypto.PrivKey接口实现
 type RingSignPrivateKey struct {
-	key [PrivateKeyLen]byte
+	key [privateKeyLen]byte
 }
 
+// Bytes convert key to bytest
 func (privkey *RingSignPrivateKey) Bytes() []byte {
 	return privkey.key[:]
 }
 
+// Sign signature trasaction
 func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
 	emptySign := &RingSignature{}
 	if len(msg) <= 0 {
@@ -107,10 +114,11 @@ func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
 	return emptySign
 }
 
+// PubKey convert to public key
 func (privkey *RingSignPrivateKey) PubKey() crypto.PubKey {
 	publicKey := new(RingSignPublicKey)
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(&privkey.key))
-	addr64 := (*[PrivateKeyLen]byte)(unsafe.Pointer(&privkey.key))
+	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(&privkey.key))
 
 	A := new(edwards25519.ExtendedGroupElement)
 	edwards25519.GeScalarMultBase(A, addr32)
@@ -120,6 +128,7 @@ func (privkey *RingSignPrivateKey) PubKey() crypto.PubKey {
 	return publicKey
 }
 
+// Equals check key equal
 func (privkey *RingSignPrivateKey) Equals(other crypto.PrivKey) bool {
 	if otherPrivKey, ok := other.(*RingSignPrivateKey); ok {
 		return bytes.Equal(privkey.key[:], otherPrivKey.key[:])
@@ -129,13 +138,15 @@ func (privkey *RingSignPrivateKey) Equals(other crypto.PrivKey) bool {
 
 // RingSignPublicKey 环签名中对于crypto.PubKey接口实现
 type RingSignPublicKey struct {
-	key [PublicKeyLen]byte
+	key [publicKeyLen]byte
 }
 
+// Bytes convert key to bytes
 func (pubkey *RingSignPublicKey) Bytes() []byte {
 	return pubkey.key[:]
 }
 
+// VerifyBytes verify bytes
 func (pubkey *RingSignPublicKey) VerifyBytes(msg []byte, sign crypto.Signature) bool {
 	if len(msg) <= 0 {
 		return false
@@ -170,10 +181,12 @@ func (pubkey *RingSignPublicKey) VerifyBytes(msg []byte, sign crypto.Signature) 
 	return true
 }
 
+// KeyString convert  key to string
 func (pubkey *RingSignPublicKey) KeyString() string {
 	return fmt.Sprintf("%X", pubkey.key[:])
 }
 
+// Equals check key is equal
 func (pubkey *RingSignPublicKey) Equals(other crypto.PubKey) bool {
 	if otherPubKey, ok := other.(*RingSignPublicKey); ok {
 		return bytes.Equal(pubkey.key[:], otherPubKey.key[:])
@@ -185,13 +198,14 @@ func (pubkey *RingSignPublicKey) Equals(other crypto.PubKey) bool {
 type RingSignED25519 struct {
 }
 
+// GenKey create privacy key
 func (r *RingSignED25519) GenKey() (crypto.PrivKey, error) {
 	privKeyPrivacyPtr := &PrivKeyPrivacy{}
 	pubKeyPrivacyPtr := &PubKeyPrivacy{}
-	copy(privKeyPrivacyPtr[:PrivateKeyLen], crypto.CRandBytes(PrivateKeyLen))
+	copy(privKeyPrivacyPtr[:privateKeyLen], crypto.CRandBytes(privateKeyLen))
 
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(privKeyPrivacyPtr))
-	addr64 := (*[PrivateKeyLen]byte)(unsafe.Pointer(privKeyPrivacyPtr))
+	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(privKeyPrivacyPtr))
 	edwards25519.ScReduce(addr32, addr64)
 
 	//to generate the publickey
@@ -204,6 +218,7 @@ func (r *RingSignED25519) GenKey() (crypto.PrivKey, error) {
 	return *privKeyPrivacyPtr, nil
 }
 
+// PrivKeyFromBytes create private key from bytes
 func (r *RingSignED25519) PrivKeyFromBytes(b []byte) (crypto.PrivKey, error) {
 	if len(b) <= 0 {
 		return nil, types.ErrInvalidParam
@@ -216,11 +231,12 @@ func (r *RingSignED25519) PrivKeyFromBytes(b []byte) (crypto.PrivKey, error) {
 	return privateKey, nil
 }
 
+// PubKeyFromBytes create publick key from bytes
 func (r *RingSignED25519) PubKeyFromBytes(b []byte) (crypto.PubKey, error) {
 	if len(b) <= 0 {
 		return nil, types.ErrInvalidParam
 	}
-	if len(b) != PublicKeyLen {
+	if len(b) != publicKeyLen {
 		return nil, types.ErrPubKeyLen
 	}
 	publicKey := new(RingSignPublicKey)
@@ -228,6 +244,7 @@ func (r *RingSignED25519) PubKeyFromBytes(b []byte) (crypto.PubKey, error) {
 	return publicKey, nil
 }
 
+// SignatureFromBytes create signature from bytes
 func (r *RingSignED25519) SignatureFromBytes(b []byte) (crypto.Signature, error) {
 	if len(b) <= 0 {
 		return nil, types.ErrInvalidParam

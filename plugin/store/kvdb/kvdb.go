@@ -16,10 +16,12 @@ import (
 
 var klog = log.New("module", "kvdb")
 
+// SetLogLevel set log level
 func SetLogLevel(level string) {
 	clog.SetLogLevel(level)
 }
 
+// DisableLog disable log output
 func DisableLog() {
 	klog.SetHandler(log.DiscardHandler())
 }
@@ -28,11 +30,13 @@ func init() {
 	drivers.Reg("kvdb", New)
 }
 
+// KVStore implementation
 type KVStore struct {
 	*drivers.BaseStore
 	cache map[string]map[string]*types.KeyValue
 }
 
+// New KVStore module
 func New(cfg *types.Store, sub []byte) queue.Module {
 	bs := drivers.NewBaseStore(cfg)
 	kvs := &KVStore{bs, make(map[string]map[string]*types.KeyValue)}
@@ -40,11 +44,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	return kvs
 }
 
+// Close KVStore module
 func (kvs *KVStore) Close() {
 	kvs.BaseStore.Close()
 	klog.Info("store kvdb closed")
 }
 
+// Set kvs with statehash to KVStore
 func (kvs *KVStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	hash := calcHash(datas)
 	kvmap := make(map[string]*types.KeyValue)
@@ -55,6 +61,7 @@ func (kvs *KVStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	return hash, nil
 }
 
+// Get kvs with statehash from KVStore
 func (kvs *KVStore) Get(datas *types.StoreGet) [][]byte {
 	values := make([][]byte, len(datas.Keys))
 	if kvmap, ok := kvs.cache[string(datas.StateHash)]; ok {
@@ -76,6 +83,7 @@ func (kvs *KVStore) Get(datas *types.StoreGet) [][]byte {
 	return values
 }
 
+// MemSet set kvs to the mem of KVStore
 func (kvs *KVStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	if len(datas.KV) == 0 {
 		klog.Info("store kv memset,use preStateHash as stateHash for kvset is null")
@@ -96,6 +104,7 @@ func (kvs *KVStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	return hash, nil
 }
 
+// Commit kvs in the mem of KVStore
 func (kvs *KVStore) Commit(req *types.ReqHash) ([]byte, error) {
 	kvmap, ok := kvs.cache[string(req.Hash)]
 	if !ok {
@@ -112,6 +121,7 @@ func (kvs *KVStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// Rollback kvs in the mem of KVStore
 func (kvs *KVStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := kvs.cache[string(req.Hash)]
 	if !ok {
@@ -122,16 +132,19 @@ func (kvs *KVStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// IterateRangeByStateHash method
 func (kvs *KVStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
 	panic("empty")
 	//TODO:
 	//kvs.IterateRangeByStateHash(mavls.GetDB(), statehash, start, end, ascending, fn)
 }
 
+// ProcEvent handles supported events
 func (kvs *KVStore) ProcEvent(msg queue.Message) {
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 
+// Del set kvs to nil with StateHash
 func (kvs *KVStore) Del(req *types.StoreDel) ([]byte, error) {
 	//not support
 	return nil, nil

@@ -37,22 +37,27 @@ func (t *Ticket) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, e
 	return dbSet, nil
 }
 
+// ExecLocal_Genesis exec local genesis
 func (t *Ticket) ExecLocal_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
+// ExecLocal_Topen exec local open
 func (t *Ticket) ExecLocal_Topen(payload *ty.TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
+// ExecLocal_Tbind exec local bind
 func (t *Ticket) ExecLocal_Tbind(payload *ty.TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
+// ExecLocal_Tclose exec local close
 func (t *Ticket) ExecLocal_Tclose(payload *ty.TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
+// ExecLocal_Miner exec local miner
 func (t *Ticket) ExecLocal_Miner(payload *ty.TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }

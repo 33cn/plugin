@@ -20,15 +20,16 @@ type cspCryptoSigner struct {
 	pk  interface{}
 }
 
+// New 创建签名器
 func New(csp lccsp.CSP, key lccsp.Key) (crypto.Signer, error) {
 	if csp == nil {
-		return nil, errors.New("bccsp instance must be different from nil.")
+		return nil, errors.New("bccsp instance must be different from nil")
 	}
 	if key == nil {
-		return nil, errors.New("key must be different from nil.")
+		return nil, errors.New("key must be different from nil")
 	}
 	if key.Symmetric() {
-		return nil, errors.New("key must be asymmetric.")
+		return nil, errors.New("key must be asymmetric")
 	}
 
 	pub, err := key.PublicKey()

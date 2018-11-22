@@ -25,23 +25,3 @@ type CreateCallTx struct {
 	// IsCreate 是否创建合约
 	IsCreate bool `json:"isCreate"`
 }
-
-// BindABI  绑定ABI的RPC请求结构
-type BindABI struct {
-	// Data 要绑定的ABI数据
-	Data string `json:"data"`
-	// Name 要绑定的EVM合约名称
-	Name string `json:"name"`
-	// Note 备注
-	Note string `json:"note"`
-}
-
-// ABICall ABI方式调用的RPC请求结构
-type ABICall struct {
-	// Data ABI调用信息
-	Data string `json:"data"`
-	// Name 调用的合约名称
-	Name string `json:"name"`
-	// Amount 调用时传递的金额信息
-	Amount uint64 `json:"amount"`
-}

@@ -17,12 +17,17 @@ import (
 )
 
 const (
-	CANAME         = "ca"
+	// CANAME 默认CA名称
+	CANAME = "ca"
+	// CONFIGFILENAME 配置文件名
 	CONFIGFILENAME = "chain33.cryptogen.toml"
-	OUTPUTDIR      = "./authdir/crypto"
-	ORGNAME        = "Chain33"
+	// OUTPUTDIR 证书文件输出路径
+	OUTPUTDIR = "./authdir/crypto"
+	// ORGNAME 默认组织名
+	ORGNAME = "Chain33"
 )
 
+// Config 证书生成工具配置
 type Config struct {
 	Name     []string
 	SignType string

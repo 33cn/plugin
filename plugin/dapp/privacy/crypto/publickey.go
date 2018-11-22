@@ -9,24 +9,28 @@ import (
 	"fmt"
 
 	"github.com/33cn/chain33/common"
-	. "github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
-type PubKeyPrivacy [PublicKeyLen]byte
+// PubKeyPrivacy key struct types
+type PubKeyPrivacy [publicKeyLen]byte
 
+// Bytes convert to bytes
 func (pubKey PubKeyPrivacy) Bytes() []byte {
 	return pubKey[:]
 }
 
+// Bytes2PubKeyPrivacy convert bytes to PubKeyPrivacy
 func Bytes2PubKeyPrivacy(in []byte) PubKeyPrivacy {
 	var temp PubKeyPrivacy
 	copy(temp[:], in)
 	return temp
 }
 
-func (pubKey PubKeyPrivacy) VerifyBytes(msg []byte, sig_ Signature) bool {
+// VerifyBytes verify bytes
+func (pubKey PubKeyPrivacy) VerifyBytes(msg []byte, sig crypto.Signature) bool {
 	var tx types.Transaction
 	if err := types.Decode(msg, &tx); err != nil {
 		return false
@@ -47,7 +51,7 @@ func (pubKey PubKeyPrivacy) VerifyBytes(msg []byte, sig_ Signature) bool {
 		return false
 	}
 	var ringSign types.RingSignature
-	if err := types.Decode(sig_.Bytes(), &ringSign); err != nil {
+	if err := types.Decode(sig.Bytes(), &ringSign); err != nil {
 		return false
 	}
 
@@ -99,14 +103,15 @@ func (pubKey PubKeyPrivacy) VerifyBytes(msg []byte, sig_ Signature) bool {
 //	return subtle.ConstantTimeCompare(sigAddr32a[:], out32[:]) == 1
 //}
 
+// KeyString convert to string
 func (pubKey PubKeyPrivacy) KeyString() string {
 	return fmt.Sprintf("%X", pubKey[:])
 }
 
-func (pubKey PubKeyPrivacy) Equals(other PubKey) bool {
+// Equals check equals
+func (pubKey PubKeyPrivacy) Equals(other crypto.PubKey) bool {
 	if otherEd, ok := other.(PubKeyPrivacy); ok {
 		return bytes.Equal(pubKey[:], otherEd[:])
-	} else {
-		return false
 	}
+	return false
 }

@@ -101,14 +101,17 @@ func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transactio
 	return dbSet, nil
 }
 
-func (g *privacy) ExecLocal_Public2Privacy(payload *ty.Public2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execLocal(receiptData, tx, index)
+// ExecLocal_Public2Privacy local execute public to privacy transaction
+func (p *privacy) ExecLocal_Public2Privacy(payload *ty.Public2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return p.execLocal(receiptData, tx, index)
 }
 
-func (g *privacy) ExecLocal_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execLocal(receiptData, tx, index)
+// ExecLocal_Privacy2Privacy local execute privacy to privacy transaction
+func (p *privacy) ExecLocal_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return p.execLocal(receiptData, tx, index)
 }
 
-func (g *privacy) ExecLocal_Privacy2Public(payload *ty.Privacy2Public, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execLocal(receiptData, tx, index)
+// ExecLocal_Privacy2Public local execute privacy to public trasaction
+func (p *privacy) ExecLocal_Privacy2Public(payload *ty.Privacy2Public, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return p.execLocal(receiptData, tx, index)
 }

@@ -6,6 +6,7 @@ package types
 
 import "errors"
 
+// retrieve errors
 var (
 	ErrRetrieveRepeatAddress   = errors.New("ErrRetrieveRepeatAddress")
 	ErrRetrieveDefaultAddress  = errors.New("ErrRetrieveDefaultAddress")

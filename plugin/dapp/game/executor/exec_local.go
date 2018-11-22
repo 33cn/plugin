@@ -9,6 +9,7 @@ import (
 	gt "github.com/33cn/plugin/plugin/dapp/game/types"
 )
 
+// save receiptData to local db
 func (g *Game) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
@@ -28,18 +29,22 @@ func (g *Game) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, err
 	return dbSet, nil
 }
 
+// ExecLocal_Create save receiptData for create
 func (g *Game) ExecLocal_Create(payload *gt.GameCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+// ExecLocal_Cancel save receiptData for cancel
 func (g *Game) ExecLocal_Cancel(payload *gt.GameCancel, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+// ExecLocal_Close save receiptData for close
 func (g *Game) ExecLocal_Close(payload *gt.GameClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+// ExecLocal_Match save receiptData for Match
 func (g *Game) ExecLocal_Match(payload *gt.GameMatch, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

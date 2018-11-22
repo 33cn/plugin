@@ -103,7 +103,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	data, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 
 	// TODO 在这里进行调用结果的转换
-
+	
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)

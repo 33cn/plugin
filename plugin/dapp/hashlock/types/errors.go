@@ -6,6 +6,7 @@ package types
 
 import "errors"
 
+// hashlock errors
 var (
 	ErrHashlockAmount       = errors.New("ErrHashlockAmount")
 	ErrHashlockHash         = errors.New("ErrHashlockHash")
