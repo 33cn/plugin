@@ -6,7 +6,10 @@ package privacy
 
 import (
 	"bytes"
+	"encoding/hex"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"math/rand"
 	"time"
@@ -456,5 +459,49 @@ func Benchmark_RingSignature(b *testing.B) {
 func Benchmark_RingSignatureAllStep(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 
+	}
+}
+
+func TestRingSignatureCrypto(t *testing.T) {
+	{
+		sig := &RingSignature{}
+		bytes := hex.EncodeToString(sig.Bytes())
+		assert.Equal(t, bytes, "")
+		assert.Equal(t, true, sig.IsZero())
+		assert.Equal(t, sig.String(), "")
+		assert.Equal(t, sig.Equals(sig), true)
+	}
+	{
+		key := &RingSignPrivateKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+		assert.NotNil(t, key.PubKey())
+		assert.Equal(t, key.Equals(key), true)
+		sig := key.Sign([]byte("Messages"))
+		assert.NotNil(t, sig)
+	}
+	{
+		ringsig := &RingSignature{}
+		key := &RingSignPublicKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.KeyString(), "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.Equals(key), true)
+		assert.Equal(t, key.VerifyBytes([]byte("Message"), ringsig), false)
+	}
+	{
+		ring := &RingSignED25519{}
+		privKey, err := ring.GenKey()
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		privKey, err = ring.PrivKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		pubKey, err := ring.PubKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, pubKey)
+		sig, err := ring.SignatureFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, sig)
 	}
 }
