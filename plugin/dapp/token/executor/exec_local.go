@@ -25,7 +25,7 @@ func (t *token) ExecLocal_Transfer(payload *types.AssetsTransfer, tx *types.Tran
 		tokenAction := tokenty.TokenAction{
 			Ty: tokenty.ActionTransfer,
 			Value: &tokenty.TokenAction_Transfer{
-				payload,
+				Transfer: payload,
 			},
 		}
 		kvs, err := t.makeTokenTxKvs(tx, &tokenAction, receiptData, index, false)
@@ -51,7 +51,7 @@ func (t *token) ExecLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.Tran
 		tokenAction := tokenty.TokenAction{
 			Ty: tokenty.ActionWithdraw,
 			Value: &tokenty.TokenAction_Withdraw{
-				payload,
+				Withdraw: payload,
 			},
 		}
 		kvs, err := t.makeTokenTxKvs(tx, &tokenAction, receiptData, index, false)
@@ -72,7 +72,7 @@ func (t *token) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec, tx
 		tokenAction := tokenty.TokenAction{
 			Ty: tokenty.TokenActionTransferToExec,
 			Value: &tokenty.TokenAction_TransferToExec{
-				payload,
+				TransferToExec: payload,
 			},
 		}
 		kvs, err := t.makeTokenTxKvs(tx, &tokenAction, receiptData, index, false)

@@ -19,7 +19,7 @@ const (
 	tokenTxAddrDirPrefix = "LODB-token-txAddrDirHash:"
 )
 
-func TokenTxKvs(tx *types.Transaction, symbol string, height, index int64, isDel bool) ([]*types.KeyValue, error) {
+func tokenTxKvs(tx *types.Transaction, symbol string, height, index int64, isDel bool) ([]*types.KeyValue, error) {
 	var kv []*types.KeyValue
 
 	from := address.PubKeyToAddress(tx.GetSignature().GetPubkey()).String()
@@ -31,45 +31,45 @@ func TokenTxKvs(tx *types.Transaction, symbol string, height, index int64, isDel
 		txInfo = makeReplyTxInfo(tx, height, index, symbol)
 	}
 	for _, k := range keys {
-		kv = append(kv, &types.KeyValue{k, txInfo})
+		kv = append(kv, &types.KeyValue{Key: k, Value: txInfo})
 	}
 	return kv, nil
 }
 
 func tokenTxkeys(symbol, from, to string, height, index int64) (result [][]byte) {
-	key := CalcTokenTxKey(symbol, height, index)
+	key := calcTokenTxKey(symbol, height, index)
 	result = append(result, key)
 	if len(from) > 0 {
-		fromKey1 := CalcTokenAddrTxKey(symbol, from, height, index)
-		fromKey2 := CalcTokenAddrTxDirKey(symbol, from, dapp.TxIndexFrom, height, index)
+		fromKey1 := calcTokenAddrTxKey(symbol, from, height, index)
+		fromKey2 := calcTokenAddrTxDirKey(symbol, from, dapp.TxIndexFrom, height, index)
 		result = append(result, fromKey1)
 		result = append(result, fromKey2)
 	}
 	if len(to) > 0 {
-		toKey1 := CalcTokenAddrTxKey(symbol, to, height, index)
-		toKey2 := CalcTokenAddrTxDirKey(symbol, to, dapp.TxIndexTo, height, index)
+		toKey1 := calcTokenAddrTxKey(symbol, to, height, index)
+		toKey2 := calcTokenAddrTxDirKey(symbol, to, dapp.TxIndexTo, height, index)
 		result = append(result, toKey1)
 		result = append(result, toKey2)
 	}
 	return
 }
 
-// token transaction entities in local DB
-func CalcTokenTxKey(symbol string, height, index int64) []byte {
+// calcTokenTxKey token transaction entities in local DB
+func calcTokenTxKey(symbol string, height, index int64) []byte {
 	if height == -1 {
 		return []byte(fmt.Sprintf(tokenTxPrefix+"%s:%s", symbol, ""))
 	}
 	return []byte(fmt.Sprintf(tokenTxPrefix+"%s:%s", symbol, dapp.HeightIndexStr(height, index)))
 }
 
-func CalcTokenAddrTxKey(symbol, addr string, height, index int64) []byte {
+func calcTokenAddrTxKey(symbol, addr string, height, index int64) []byte {
 	if height == -1 {
 		return []byte(fmt.Sprintf(tokenTxAddrPrefix+"%s:%s:%s", symbol, addr, ""))
 	}
 	return []byte(fmt.Sprintf(tokenTxAddrPrefix+"%s:%s:%s", symbol, addr, dapp.HeightIndexStr(height, index)))
 }
 
-func CalcTokenAddrTxDirKey(symbol, addr string, flag int32, height, index int64) []byte {
+func calcTokenAddrTxDirKey(symbol, addr string, flag int32, height, index int64) []byte {
 	if height == -1 {
 		return []byte(fmt.Sprintf(tokenTxAddrDirPrefix+"%s:%s:%d:%s", symbol, addr, flag, ""))
 	}

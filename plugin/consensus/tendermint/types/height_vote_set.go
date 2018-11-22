@@ -171,7 +171,6 @@ func (hvs *HeightVoteSet) getVoteSet(round int, type_ byte) *VoteSet {
 		return rvs.Precommits
 	default:
 		panic(Fmt("Panicked on a Sanity Check: %v", Fmt("Unexpected vote type %X", type_)))
-		return nil
 	}
 }
 
