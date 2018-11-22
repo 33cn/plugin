@@ -32,7 +32,6 @@ pipeline {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'deploy'){
                         sh 'make build_ci'
-                        sh 'echo $blueOcean'
                         sh 'echo $BUILD_NUMBER'
                         sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
                     }
