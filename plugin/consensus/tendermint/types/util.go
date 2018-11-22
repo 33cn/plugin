@@ -189,7 +189,7 @@ func PanicQ(v interface{}) {
 //--------------------BitArray------------------------
 type BitArray struct {
 	*tmtypes.TendermintBitArray
-	mtx sync.Mutex `json:"-"`
+	mtx sync.Mutex
 }
 
 // There is no BitArray whose Size is 0.  Use nil instead.

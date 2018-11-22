@@ -408,7 +408,7 @@ func (node *Node) addInboundPeer(conn net.Conn) error {
 // peer to the switch and to all registered reactors.
 // NOTE: This performs a blocking handshake before the peer is added.
 // NOTE: If error is returned, caller is responsible for calling peer.CloseConn()
-func (node *Node) addPeer(pc peerConn) error {
+func (node *Node) addPeer(pc *peerConn) error {
 	addr := pc.conn.RemoteAddr()
 	if err := node.FilterConnByAddr(addr); err != nil {
 		return err
@@ -472,7 +472,7 @@ func (node *Node) addPeer(pc peerConn) error {
 	// All good. Start peer
 	if node.IsRunning() {
 		pc.SetTransferChannel(node.state.peerMsgQueue)
-		if err = node.startInitPeer(&pc); err != nil {
+		if err = node.startInitPeer(pc); err != nil {
 			return err
 		}
 	}
@@ -480,7 +480,7 @@ func (node *Node) addPeer(pc peerConn) error {
 	// Add the peer to .peers.
 	// We start it first so that a peer in the list is safe to Stop.
 	// It should not err since we already checked peers.Has().
-	if err := node.peerSet.Add(&pc); err != nil {
+	if err := node.peerSet.Add(pc); err != nil {
 		return err
 	}
 	//node.metrics.Peers.Add(float64(1))
@@ -686,18 +686,18 @@ func dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState, evpool *EvidencePool) (peerConn, error) {
+func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState, evpool *EvidencePool) (*peerConn, error) {
 	conn, err := dial(addr)
 	if err != nil {
-		return peerConn{}, fmt.Errorf("Error creating peer:%v", err)
+		return &peerConn{}, fmt.Errorf("Error creating peer:%v", err)
 	}
 
 	pc, err := newPeerConn(conn, true, true, ourNodePrivKey, onPeerError, state, evpool)
 	if err != nil {
 		if cerr := conn.Close(); cerr != nil {
-			return peerConn{}, fmt.Errorf("newPeerConn failed:%v, connection close failed:%v", err, cerr)
+			return &peerConn{}, fmt.Errorf("newPeerConn failed:%v, connection close failed:%v", err, cerr)
 		}
-		return peerConn{}, err
+		return &peerConn{}, err
 	}
 
 	return pc, nil
@@ -709,7 +709,7 @@ func newInboundPeerConn(
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
 	evpool *EvidencePool,
-) (peerConn, error) {
+) (*peerConn, error) {
 
 	// TODO: issue PoW challenge
 
@@ -723,7 +723,7 @@ func newPeerConn(
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
 	evpool *EvidencePool,
-) (pc peerConn, err error) {
+) (pc *peerConn, err error) {
 	conn := rawConn
 
 	// Set deadline for secret handshake
@@ -739,7 +739,7 @@ func newPeerConn(
 	}
 
 	// Only the information we already have
-	return peerConn{
+	return &peerConn{
 		outbound:    outbound,
 		persistent:  persistent,
 		conn:        conn,
