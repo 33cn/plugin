@@ -40,9 +40,8 @@ func (t *token) ExecTransWithdraw(accountDB *account.DB, tx *types.Transaction, 
 				return accountDB.GenesisInitExec(genesis.ReturnAddress, genesis.Amount, tx.GetRealToAddr())
 			}
 			return accountDB.GenesisInit(tx.GetRealToAddr(), genesis.Amount)
-		} else {
-			return nil, types.ErrReRunGenesis
 		}
+		return nil, types.ErrReRunGenesis
 	} else if action.Ty == tokenty.TokenActionTransferToExec && action.GetTransferToExec() != nil {
 		if !types.IsFork(t.GetHeight(), "ForkTransferExec") {
 			return nil, types.ErrActionNotSupport
@@ -136,9 +135,9 @@ func (t *token) ExecDelLocalLocalTransWithdraw(tx *types.Transaction, receipt *t
 }
 
 func getAddrReciverKV(token string, addr string, reciverAmount int64) *types.KeyValue {
-	reciver := &types.Int64{reciverAmount}
+	reciver := &types.Int64{Data:reciverAmount}
 	amountbytes := types.Encode(reciver)
-	kv := &types.KeyValue{calcAddrKey(token, addr), amountbytes}
+	kv := &types.KeyValue{Key:calcAddrKey(token, addr), Value:amountbytes}
 	return kv
 }
 

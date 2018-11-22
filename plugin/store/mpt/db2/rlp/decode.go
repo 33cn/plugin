@@ -33,17 +33,23 @@ import (
 )
 
 var (
-	// EOL is returned when the end of the current list
+	// ErrFoo is returned when the end of the current list
 	// has been reached during streaming.
-	EOL = errors.New("rlp: end of list")
+	ErrFoo = errors.New("rlp: end of list")
 
-	// Actual Errors
+	// ErrExpectedString expected String or Byte
 	ErrExpectedString   = errors.New("rlp: expected String or Byte")
+	// ErrExpectedList expected List
 	ErrExpectedList     = errors.New("rlp: expected List")
+	// ErrCanonInt non-canonical integer format
 	ErrCanonInt         = errors.New("rlp: non-canonical integer format")
+	// ErrCanonSize non-canonical size information
 	ErrCanonSize        = errors.New("rlp: non-canonical size information")
+	// ErrElemTooLarge element is larger than containing list
 	ErrElemTooLarge     = errors.New("rlp: element is larger than containing list")
+	// ErrValueTooLarge value size exceeds available input length
 	ErrValueTooLarge    = errors.New("rlp: value size exceeds available input length")
+	// ErrMoreThanOneValue input contains more than one value
 	ErrMoreThanOneValue = errors.New("rlp: input contains more than one value")
 
 	// internal errors
@@ -356,7 +362,7 @@ func decodeSliceElems(s *Stream, val reflect.Value, elemdec decoder) error {
 			val.SetLen(i + 1)
 		}
 		// decode into element
-		if err := elemdec(s, val.Index(i)); err == EOL {
+		if err := elemdec(s, val.Index(i)); err == ErrFoo {
 			break
 		} else if err != nil {
 			return addErrorContext(err, fmt.Sprint("[", i, "]"))
@@ -375,7 +381,7 @@ func decodeListArray(s *Stream, val reflect.Value, elemdec decoder) error {
 	vlen := val.Len()
 	i := 0
 	for ; i < vlen; i++ {
-		if err := elemdec(s, val.Index(i)); err == EOL {
+		if err := elemdec(s, val.Index(i)); err == ErrFoo {
 			break
 		} else if err != nil {
 			return addErrorContext(err, fmt.Sprint("[", i, "]"))
@@ -444,7 +450,7 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 		}
 		for _, f := range fields {
 			err := f.info.decoder(s, val.Field(f.index))
-			if err == EOL {
+			if err == ErrFoo {
 				return &decodeError{msg: "too few elements", typ: typ}
 			} else if err != nil {
 				return addErrorContext(err, "."+typ.Field(f.index).Name)
@@ -557,8 +563,11 @@ func decodeDecoder(s *Stream, val reflect.Value) error {
 type Kind int
 
 const (
+	// Byte RLP 编码类型 byte
 	Byte Kind = iota
+	// String RLP 编码类型 string
 	String
+	// List RLP 编码类型 list
 	List
 )
 
@@ -880,7 +889,7 @@ func (s *Stream) Kind() (kind Kind, size uint64, err error) {
 		// Don't read further if we're at the end of the
 		// innermost list.
 		if tos != nil && tos.pos == tos.size {
-			return 0, 0, EOL
+			return 0, 0, ErrFoo
 		}
 		s.kind, s.size, s.kinderr = s.readKind()
 		if s.kinderr == nil {

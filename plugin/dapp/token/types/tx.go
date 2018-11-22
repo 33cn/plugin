@@ -4,6 +4,7 @@
 
 package types
 
+// TokenAccountResult about token account result
 type TokenAccountResult struct {
 	Token    string `json:"Token,omitempty"`
 	Currency int32  `json:"currency,omitempty"`

@@ -29,9 +29,11 @@ import (
 )
 
 var (
+	// EmptyString rlp definition
 	// Common encoded values.
 	// These are useful when implementing EncodeRLP.
 	EmptyString = []byte{0x80}
+	// EmptyList rlp definition
 	EmptyList   = []byte{0xC0}
 )
 

@@ -14,7 +14,7 @@ import (
 func (c *channelClient) Create(ctx context.Context, head *bw.BlackwhiteCreate) (*types.UnsignTx, error) {
 	val := &bw.BlackwhiteAction{
 		Ty:    bw.BlackwhiteActionCreate,
-		Value: &bw.BlackwhiteAction_Create{head},
+		Value: &bw.BlackwhiteAction_Create{Create:head},
 	}
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
@@ -29,7 +29,7 @@ func (c *channelClient) Create(ctx context.Context, head *bw.BlackwhiteCreate) (
 func (c *channelClient) Show(ctx context.Context, head *bw.BlackwhiteShow) (*types.UnsignTx, error) {
 	val := &bw.BlackwhiteAction{
 		Ty:    bw.BlackwhiteActionShow,
-		Value: &bw.BlackwhiteAction_Show{head},
+		Value: &bw.BlackwhiteAction_Show{Show:head},
 	}
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
@@ -44,7 +44,7 @@ func (c *channelClient) Show(ctx context.Context, head *bw.BlackwhiteShow) (*typ
 func (c *channelClient) Play(ctx context.Context, head *bw.BlackwhitePlay) (*types.UnsignTx, error) {
 	val := &bw.BlackwhiteAction{
 		Ty:    bw.BlackwhiteActionPlay,
-		Value: &bw.BlackwhiteAction_Play{head},
+		Value: &bw.BlackwhiteAction_Play{Play:head},
 	}
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
@@ -59,7 +59,7 @@ func (c *channelClient) Play(ctx context.Context, head *bw.BlackwhitePlay) (*typ
 func (c *channelClient) TimeoutDone(ctx context.Context, head *bw.BlackwhiteTimeoutDone) (*types.UnsignTx, error) {
 	val := &bw.BlackwhiteAction{
 		Ty:    bw.BlackwhiteActionTimeoutDone,
-		Value: &bw.BlackwhiteAction_TimeoutDone{head},
+		Value: &bw.BlackwhiteAction_TimeoutDone{TimeoutDone:head},
 	}
 	tx := &types.Transaction{
 		Payload: types.Encode(val),

@@ -39,9 +39,13 @@ type node interface {
 }
 
 const (
+	// TyFullNode 全节点类型
 	TyFullNode  = 1
+	// TyShortNode 扩展节点类型
 	TyShortNode = 2
+	// TyHashNode hash节点类型
 	TyHashNode  = 3
+	// TyValueNode value节点类型
 	TyValueNode = 4
 )
 
