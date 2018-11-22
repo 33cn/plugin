@@ -45,10 +45,10 @@ func TestRPC_Call(t *testing.T) {
 		Token:       "token",
 		Displaymode: 3,
 	}
-	var utxo1 = &pty.UTXO{10, &pty.UTXOBasic{&pty.UTXOGlobalIndex{[]byte("hash1"), 1}, []byte("hello")}}
-	var utxo2 = &pty.UTXO{11, &pty.UTXOBasic{&pty.UTXOGlobalIndex{[]byte("hash2"), 2}, []byte("world")}}
+	var utxo1 = &pty.UTXO{Amount: 10, UtxoBasic: &pty.UTXOBasic{UtxoGlobalIndex: &pty.UTXOGlobalIndex{Txhash: []byte("hash1"), Outindex: 1}, OnetimePubkey: []byte("hello")}}
+	var utxo2 = &pty.UTXO{Amount: 11, UtxoBasic: &pty.UTXOBasic{UtxoGlobalIndex: &pty.UTXOGlobalIndex{Txhash: []byte("hash2"), Outindex: 2}, OnetimePubkey: []byte("world")}}
 	var res = pty.ReplyPrivacyAccount{
-		Utxos: &pty.UTXOs{[]*pty.UTXO{utxo1, utxo2}},
+		Utxos: &pty.UTXOs{Utxos: []*pty.UTXO{utxo1, utxo2}},
 	}
 	api.On("ExecWalletFunc", "privacy", "ShowPrivacyAccountInfo", &params).Return(&res, nil)
 	var result pty.ReplyPrivacyAccount

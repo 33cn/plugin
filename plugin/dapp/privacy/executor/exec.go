@@ -34,14 +34,14 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 	for index, keyOutput := range output {
 		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
-		receipt.KV = append(receipt.KV, &types.KeyValue{key, value})
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
 	receiptPrivacyOutput := &ty.ReceiptPrivacyOutput{
 		Token:     payload.Tokenname,
 		Keyoutput: payload.GetOutput().Keyoutput,
 	}
-	execlog := &types.ReceiptLog{ty.TyLogPrivacyOutput, types.Encode(receiptPrivacyOutput)}
+	execlog := &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptPrivacyOutput)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
 	//////////////////debug code begin///////////////
@@ -64,10 +64,10 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)
-		receipt.KV = append(receipt.KV, &types.KeyValue{key, value})
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
-	execlog := &types.ReceiptLog{ty.TyLogPrivacyInput, types.Encode(payload.GetInput())}
+	execlog := &types.ReceiptLog{Ty: ty.TyLogPrivacyInput, Log: types.Encode(payload.GetInput())}
 	receipt.Logs = append(receipt.Logs, execlog)
 
 	txhash := common.ToHex(tx.Hash())
@@ -75,14 +75,14 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	for index, keyOutput := range output {
 		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
-		receipt.KV = append(receipt.KV, &types.KeyValue{key, value})
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
 	receiptPrivacyOutput := &ty.ReceiptPrivacyOutput{
 		Token:     payload.Tokenname,
 		Keyoutput: payload.GetOutput().Keyoutput,
 	}
-	execlog = &types.ReceiptLog{ty.TyLogPrivacyOutput, types.Encode(receiptPrivacyOutput)}
+	execlog = &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptPrivacyOutput)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
 	receipt.Ty = types.ExecOk
@@ -111,10 +111,10 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)
-		receipt.KV = append(receipt.KV, &types.KeyValue{key, value})
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
-	execlog := &types.ReceiptLog{ty.TyLogPrivacyInput, types.Encode(payload.GetInput())}
+	execlog := &types.ReceiptLog{Ty: ty.TyLogPrivacyInput, Log: types.Encode(payload.GetInput())}
 	receipt.Logs = append(receipt.Logs, execlog)
 
 	txhash := common.ToHex(tx.Hash())
@@ -122,14 +122,14 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	for index, keyOutput := range output {
 		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
-		receipt.KV = append(receipt.KV, &types.KeyValue{key, value})
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
 	receiptPrivacyOutput := &ty.ReceiptPrivacyOutput{
 		Token:     payload.Tokenname,
 		Keyoutput: payload.GetOutput().Keyoutput,
 	}
-	execlog = &types.ReceiptLog{ty.TyLogPrivacyOutput, types.Encode(receiptPrivacyOutput)}
+	execlog = &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptPrivacyOutput)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
 	receipt.Ty = types.ExecOk
