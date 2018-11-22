@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"golang.org/x/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
