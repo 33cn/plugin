@@ -187,7 +187,7 @@ func testStore_getPrivacyTokenUTXOs(t *testing.T) {
 		data := &pt.PrivacyDBStore{Txindex: int32(n)}
 		bt, err := proto.Marshal(data)
 		assert.NoError(t, err)
-		key := fmt.Sprint("Key%d", n)
+		key := fmt.Sprintf("Key%d", n)
 		err = store.Set(calcUTXOKey4TokenAddr(token, addr, "txhash", n), []byte(key))
 		assert.NoError(t, err)
 		err = store.Set([]byte(key), bt)

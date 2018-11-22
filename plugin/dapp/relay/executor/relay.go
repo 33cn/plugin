@@ -200,20 +200,20 @@ func getCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status i
 	OrderId := []byte(order.Id)
 
 	key := calcOrderKeyStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: OrderId})
 
 	key = calcOrderKeyCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: OrderId})
 
 	key = calcOrderKeyAddrStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: OrderId})
 
 	key = calcOrderKeyAddrCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: OrderId})
 
 	key = calcAcceptKeyAddr(order, status)
 	if key != nil {
-		kv = append(kv, &types.KeyValue{key, OrderId})
+		kv = append(kv, &types.KeyValue{Key: key, Value: OrderId})
 	}
 
 	return kv

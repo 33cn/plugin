@@ -297,7 +297,7 @@ func (r *Relayd) syncBlockHeaders() {
 			initIterHeight = breakHeight
 			log.Info("syncBlockHeaders", "len: ", len(headers))
 			btcHeaders := &ty.BtcHeaders{BtcHeader: headers}
-			relayHeaders := &ty.RelayAction_BtcHeaders{btcHeaders}
+			relayHeaders := &ty.RelayAction_BtcHeaders{BtcHeaders: btcHeaders}
 			action := &ty.RelayAction{
 				Value: relayHeaders,
 				Ty:    ty.RelayActionRcvBTCHeaders,
@@ -352,7 +352,7 @@ func (r *Relayd) dealOrder() {
 			Spv:     spv,
 		}
 		rr := &ty.RelayAction_Verify{
-			verify,
+			Verify: verify,
 		}
 		action := &ty.RelayAction{
 			Value: rr,
