@@ -7,6 +7,7 @@ package ticket
 import (
 	"fmt"
 	"testing"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/queue"
