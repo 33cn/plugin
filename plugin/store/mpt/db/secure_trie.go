@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	// HashLength hash长度32字节
 	HashLength = 32
 )
 
