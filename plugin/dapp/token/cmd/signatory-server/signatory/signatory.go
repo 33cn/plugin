@@ -52,7 +52,7 @@ func (signatory *Signatory) SignApprove(in *TokenFinish, out *interface{}) error
 	v := &tokenty.TokenFinishCreate{Symbol: in.Symbol, Owner: in.OwnerAddr}
 	finish := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionFinishCreate,
-		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate:v},
+		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
 
 	tx := &types.Transaction{
@@ -93,7 +93,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	}
 	transfer := &cty.CoinsAction{
 		Ty:    cty.CoinsActionTransfer,
-		Value: &cty.CoinsAction_Transfer{Transfer:v},
+		Value: &cty.CoinsAction_Transfer{Transfer: v},
 	}
 
 	tx := &types.Transaction{

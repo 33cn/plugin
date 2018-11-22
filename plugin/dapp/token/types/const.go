@@ -6,17 +6,17 @@ package types
 
 const (
 	// ActionTransfer for transfer
-	ActionTransfer            = 4
+	ActionTransfer = 4
 	// ActionGenesis for genesis
-	ActionGenesis             = 5
+	ActionGenesis = 5
 	// ActionWithdraw for Withdraw
-	ActionWithdraw            = 6
+	ActionWithdraw = 6
 	// TokenActionPreCreate for token pre create
-	TokenActionPreCreate      = 7
+	TokenActionPreCreate = 7
 	// TokenActionFinishCreate for token finish create
-	TokenActionFinishCreate   = 8
+	TokenActionFinishCreate = 8
 	// TokenActionRevokeCreate for token revoke create
-	TokenActionRevokeCreate   = 9
+	TokenActionRevokeCreate = 9
 	// TokenActionTransferToExec for token transfer to exec
 	TokenActionTransferToExec = 11
 )
@@ -38,38 +38,38 @@ var (
 
 const (
 	// TyLogPreCreateToken log for pre create token
-	TyLogPreCreateToken       = 211
+	TyLogPreCreateToken = 211
 	// TyLogFinishCreateToken log for finish create token
-	TyLogFinishCreateToken    = 212
+	TyLogFinishCreateToken = 212
 	// TyLogRevokeCreateToken log for revoke create token
-	TyLogRevokeCreateToken    = 213
+	TyLogRevokeCreateToken = 213
 	// TyLogTokenTransfer log for token tranfer
-	TyLogTokenTransfer        = 313
+	TyLogTokenTransfer = 313
 	// TyLogTokenGenesis log for token genesis
-	TyLogTokenGenesis         = 314
+	TyLogTokenGenesis = 314
 	// TyLogTokenDeposit log for token deposit
-	TyLogTokenDeposit         = 315
+	TyLogTokenDeposit = 315
 	// TyLogTokenExecTransfer log for token exec transfer
-	TyLogTokenExecTransfer    = 316
+	TyLogTokenExecTransfer = 316
 	// TyLogTokenExecWithdraw log for token exec withdraw
-	TyLogTokenExecWithdraw    = 317
+	TyLogTokenExecWithdraw = 317
 	// TyLogTokenExecDeposit log for token exec deposit
-	TyLogTokenExecDeposit     = 318
+	TyLogTokenExecDeposit = 318
 	// TyLogTokenExecFrozen log for token exec frozen
-	TyLogTokenExecFrozen      = 319
+	TyLogTokenExecFrozen = 319
 	// TyLogTokenExecActive log for token exec active
-	TyLogTokenExecActive      = 320
+	TyLogTokenExecActive = 320
 	// TyLogTokenGenesisTransfer log for token genesis rransfer
 	TyLogTokenGenesisTransfer = 321
 	// TyLogTokenGenesisDeposit log for token genesis deposit
-	TyLogTokenGenesisDeposit  = 322
+	TyLogTokenGenesisDeposit = 322
 )
 
 const (
 	// TokenNameLenLimit token name length limit
-	TokenNameLenLimit   = 128
+	TokenNameLenLimit = 128
 	// TokenSymbolLenLimit token symbol length limit
 	TokenSymbolLenLimit = 16
 	// TokenIntroLenLimit token introduction length limit
-	TokenIntroLenLimit  = 1024
+	TokenIntroLenLimit = 1024
 )

@@ -38,17 +38,17 @@ var (
 	ErrFoo = errors.New("rlp: end of list")
 
 	// ErrExpectedString expected String or Byte
-	ErrExpectedString   = errors.New("rlp: expected String or Byte")
+	ErrExpectedString = errors.New("rlp: expected String or Byte")
 	// ErrExpectedList expected List
-	ErrExpectedList     = errors.New("rlp: expected List")
+	ErrExpectedList = errors.New("rlp: expected List")
 	// ErrCanonInt non-canonical integer format
-	ErrCanonInt         = errors.New("rlp: non-canonical integer format")
+	ErrCanonInt = errors.New("rlp: non-canonical integer format")
 	// ErrCanonSize non-canonical size information
-	ErrCanonSize        = errors.New("rlp: non-canonical size information")
+	ErrCanonSize = errors.New("rlp: non-canonical size information")
 	// ErrElemTooLarge element is larger than containing list
-	ErrElemTooLarge     = errors.New("rlp: element is larger than containing list")
+	ErrElemTooLarge = errors.New("rlp: element is larger than containing list")
 	// ErrValueTooLarge value size exceeds available input length
-	ErrValueTooLarge    = errors.New("rlp: value size exceeds available input length")
+	ErrValueTooLarge = errors.New("rlp: value size exceeds available input length")
 	// ErrMoreThanOneValue input contains more than one value
 	ErrMoreThanOneValue = errors.New("rlp: input contains more than one value")
 

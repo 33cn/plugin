@@ -92,12 +92,12 @@ func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
 
 	key := calcMavlRoundKey(round.GameID)
 	value := types.Encode(round)
-	kv = append(kv, &types.KeyValue{Key:key, Value:value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: value})
 
 	receiptLog := a.GetReceiptLog(round, round.GetCreateAddr())
 	logs = append(logs, receiptLog)
 
-	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) Play(play *gt.BlackwhitePlay) (*types.Receipt, error) {
@@ -184,9 +184,9 @@ func (a *action) Play(play *gt.BlackwhitePlay) (*types.Receipt, error) {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{Key:key1, Value:value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
-	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) Show(show *gt.BlackwhiteShow) (*types.Receipt, error) {
@@ -268,9 +268,9 @@ func (a *action) Show(show *gt.BlackwhiteShow) (*types.Receipt, error) {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{Key:key1, Value:value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
-	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, error) {
@@ -364,7 +364,7 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{Key:key1, Value:value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
 	// 需要更新全部地址状态
 	for _, addr := range round.AddrResult {
@@ -376,7 +376,7 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 	receiptLog := a.GetReceiptLog(&round, round.CreateAddr)
 	logs = append(logs, receiptLog)
 
-	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 
 }
 
@@ -514,9 +514,9 @@ func (a *action) StatTransfer(round *gt.BlackwhiteRound) (*types.Receipt, error)
 	kv = append(kv, receipt.KV...)
 
 	// 将每一轮次的结果保存
-	logs = append(logs, &types.ReceiptLog{Ty:gt.TyLogBlackwhiteLoopInfo, Log:types.Encode(loopResults)})
+	logs = append(logs, &types.ReceiptLog{Ty: gt.TyLogBlackwhiteLoopInfo, Log: types.Encode(loopResults)})
 
-	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 
 }
 

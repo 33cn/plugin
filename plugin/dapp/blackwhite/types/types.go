@@ -42,7 +42,7 @@ func NewType() *BlackwhiteType {
 	return c
 }
 
-// GetPayload 获取blackwhite action 
+// GetPayload 获取blackwhite action
 func (b *BlackwhiteType) GetPayload() types.Message {
 	return &BlackwhiteAction{}
 }

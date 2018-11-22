@@ -135,9 +135,9 @@ func (t *token) ExecDelLocalLocalTransWithdraw(tx *types.Transaction, receipt *t
 }
 
 func getAddrReciverKV(token string, addr string, reciverAmount int64) *types.KeyValue {
-	reciver := &types.Int64{Data:reciverAmount}
+	reciver := &types.Int64{Data: reciverAmount}
 	amountbytes := types.Encode(reciver)
-	kv := &types.KeyValue{Key:calcAddrKey(token, addr), Value:amountbytes}
+	kv := &types.KeyValue{Key: calcAddrKey(token, addr), Value: amountbytes}
 	return kv
 }
 

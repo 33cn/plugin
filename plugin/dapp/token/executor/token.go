@@ -117,7 +117,7 @@ func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 		if acc1 == nil {
 			continue
 		}
-		tokenAsset := &tokenty.TokenAsset{Symbol:asset, Account:acc1}
+		tokenAsset := &tokenty.TokenAsset{Symbol: asset, Account: acc1}
 		reply.TokenAssets = append(reply.TokenAssets, tokenAsset)
 	}
 	return reply, nil
@@ -137,7 +137,7 @@ func (t *token) getAddrReceiverforTokens(addrTokens *tokenty.ReqAddrTokens) (typ
 			continue
 		}
 
-		recv := &tokenty.TokenRecv{Token:token, Recv:reciver.Data}
+		recv := &tokenty.TokenRecv{Token: token, Recv: reciver.Data}
 		reply.TokenRecvs = append(reply.TokenRecvs, recv)
 	}
 
@@ -244,11 +244,11 @@ func (t *token) saveLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	} else {
 		value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)
 	}
-	kv = append(kv, &types.KeyValue{Key:key, Value:value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: value})
 	//如果当前需要被更新的状态不是Status_PreCreated，则认为之前的状态是precreate，且其对应的key需要被删除
 	if receipt.Status != tokenty.TokenStatusPreCreated {
 		key = calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, tokenty.TokenStatusPreCreated)
-		kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+		kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	}
 	return kv
 }
@@ -257,7 +257,7 @@ func (t *token) deleteLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	var kv []*types.KeyValue
 
 	key := calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, receipt.Status)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	//如果当前需要被更新的状态不是Status_PreCreated，则认为之前的状态是precreate，且其对应的key需要被恢复
 	if receipt.Status != tokenty.TokenStatusPreCreated {
 		key = calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, tokenty.TokenStatusPreCreated)
@@ -267,7 +267,7 @@ func (t *token) deleteLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 		} else {
 			value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)
 		}
-		kv = append(kv, &types.KeyValue{Key:key, Value:value})
+		kv = append(kv, &types.KeyValue{Key: key, Value: value})
 	}
 	return kv
 }

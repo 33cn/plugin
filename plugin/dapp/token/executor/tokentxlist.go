@@ -31,7 +31,7 @@ func tokenTxKvs(tx *types.Transaction, symbol string, height, index int64, isDel
 		txInfo = makeReplyTxInfo(tx, height, index, symbol)
 	}
 	for _, k := range keys {
-		kv = append(kv, &types.KeyValue{Key:k, Value:txInfo})
+		kv = append(kv, &types.KeyValue{Key: k, Value: txInfo})
 	}
 	return kv, nil
 }

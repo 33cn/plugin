@@ -55,9 +55,9 @@ const (
 
 //for token
 var (
-	tokenName         = "NEW"
-	tokenSym          = "NEW"
-	tokenIntro        = "newtoken"
+	tokenName   = "NEW"
+	tokenSym    = "NEW"
+	tokenIntro  = "newtoken"
 	tokenPrice  int64
 	tokenAmount int64 = 1000 * 1e4 * 1e4
 	execName          = "user.p.guodun.token"
@@ -164,7 +164,7 @@ func TestPrecreate(t *testing.T) {
 	}
 	precreate := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionPreCreate,
-		Value: &tokenty.TokenAction_TokenPreCreate{TokenPreCreate:v},
+		Value: &tokenty.TokenAction_TokenPreCreate{TokenPreCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
@@ -205,7 +205,7 @@ func TestFinish(t *testing.T) {
 	v := &tokenty.TokenFinishCreate{Symbol: tokenSym, Owner: addr}
 	finish := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionFinishCreate,
-		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate:v},
+		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),

@@ -19,7 +19,7 @@ func (t *token) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transacti
 	tokenAction := tokenty.TokenAction{
 		Ty: tokenty.ActionTransfer,
 		Value: &tokenty.TokenAction_Transfer{
-			Transfer:payload,
+			Transfer: payload,
 		},
 	}
 	return t.ExecTransWithdraw(db, tx, &tokenAction, index)
@@ -34,7 +34,7 @@ func (t *token) Exec_Withdraw(payload *types.AssetsWithdraw, tx *types.Transacti
 	tokenAction := tokenty.TokenAction{
 		Ty: tokenty.ActionWithdraw,
 		Value: &tokenty.TokenAction_Withdraw{
-			Withdraw:payload,
+			Withdraw: payload,
 		},
 	}
 	return t.ExecTransWithdraw(db, tx, &tokenAction, index)
@@ -64,7 +64,7 @@ func (t *token) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *typ
 	tokenAction := tokenty.TokenAction{
 		Ty: tokenty.TokenActionTransferToExec,
 		Value: &tokenty.TokenAction_TransferToExec{
-			TransferToExec:payload,
+			TransferToExec: payload,
 		},
 	}
 	return t.ExecTransWithdraw(db, tx, &tokenAction, index)

@@ -43,8 +43,8 @@ func (t *tokenDB) save(db dbm.KV, key []byte) {
 
 func (t *tokenDB) getLogs(ty int32, status int32) []*types.ReceiptLog {
 	var log []*types.ReceiptLog
-	value := types.Encode(&pty.ReceiptToken{Symbol:t.token.Symbol, Owner:t.token.Owner, Status:t.token.Status})
-	log = append(log, &types.ReceiptLog{Ty:ty, Log:value})
+	value := types.Encode(&pty.ReceiptToken{Symbol: t.token.Symbol, Owner: t.token.Owner, Status: t.token.Status})
+	log = append(log, &types.ReceiptLog{Ty: ty, Log: value})
 
 	return log
 }
@@ -52,7 +52,7 @@ func (t *tokenDB) getLogs(ty int32, status int32) []*types.ReceiptLog {
 //key:mavl-create-token-addr-xxx or mavl-token-xxx <-----> value:token
 func (t *tokenDB) getKVSet(key []byte) (kvset []*types.KeyValue) {
 	value := types.Encode(&t.token)
-	kvset = append(kvset, &types.KeyValue{Key:key, Value:value})
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: value})
 	return kvset
 }
 
@@ -167,7 +167,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	//tokenlog.Info("func token preCreate", "token:", tokendb.token.Symbol, "owner:", tokendb.token.Owner,
 	//	"key:", key, "key string", string(key), "value:", tokendb.getKVSet(key)[0].Value)
 
-	receipt := &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -242,7 +242,7 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 	//因为该token已经被创建，需要保存一个全局的token，防止其他用户再次创建
 	tokendb.save(action.db, key)
 	kv = append(kv, tokendb.getKVSet(key)...)
-	receipt := &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -297,7 +297,7 @@ func (action *tokenAction) revokeCreate(tokenRevoke *pty.TokenRevokeCreate) (*ty
 	logs = append(logs, tokendb.getLogs(pty.TyLogRevokeCreateToken, pty.TokenStatusCreateRevoked)...)
 	kv = append(kv, tokendb.getKVSet(key)...)
 
-	receipt := &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -410,7 +410,7 @@ func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue
 		tokenAssets.Datas = append(tokenAssets.Datas, symbol)
 	}
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{Key:calcTokenAssetsKey(addr), Value:types.Encode(tokenAssets)})
+	kv = append(kv, &types.KeyValue{Key: calcTokenAssetsKey(addr), Value: types.Encode(tokenAssets)})
 	return kv
 }
 

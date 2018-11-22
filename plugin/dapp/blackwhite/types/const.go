@@ -22,26 +22,26 @@ const (
 
 const (
 	// TyLogBlackwhiteCreate log for blackwhite create game
-	TyLogBlackwhiteCreate   = 750
+	TyLogBlackwhiteCreate = 750
 	// TyLogBlackwhitePlay log for blackwhite play game
-	TyLogBlackwhitePlay     = 751
+	TyLogBlackwhitePlay = 751
 	// TyLogBlackwhiteShow log for blackwhite show game
-	TyLogBlackwhiteShow     = 752
+	TyLogBlackwhiteShow = 752
 	// TyLogBlackwhiteTimeout log for blackwhite timeout game
-	TyLogBlackwhiteTimeout  = 753
+	TyLogBlackwhiteTimeout = 753
 	// TyLogBlackwhiteDone log for blackwhite down game
-	TyLogBlackwhiteDone     = 754
+	TyLogBlackwhiteDone = 754
 	// TyLogBlackwhiteLoopInfo log for blackwhite LoopInfo game
 	TyLogBlackwhiteLoopInfo = 755
 )
 
 const (
 	// GetBlackwhiteRoundInfo 用于在cmd里面的区分不同的查询
-	GetBlackwhiteRoundInfo       = "GetBlackwhiteRoundInfo"
+	GetBlackwhiteRoundInfo = "GetBlackwhiteRoundInfo"
 	// GetBlackwhiteByStatusAndAddr 用于在cmd里面的区分不同的查询
 	GetBlackwhiteByStatusAndAddr = "GetBlackwhiteByStatusAndAddr"
 	// GetBlackwhiteloopResult 用于在cmd里面的区分不同的查询
-	GetBlackwhiteloopResult      = "GetBlackwhiteloopResult"
+	GetBlackwhiteloopResult = "GetBlackwhiteloopResult"
 )
 
 var (
@@ -49,7 +49,7 @@ var (
 	BlackwhiteX = "blackwhite"
 	glog        = log15.New("module", BlackwhiteX)
 	// JRPCName json RPC name
-	JRPCName         = "Blackwhite"
+	JRPCName = "Blackwhite"
 	// ExecerBlackwhite 执行器名字byte形式
 	ExecerBlackwhite = []byte(BlackwhiteX)
 	actionName       = map[string]int32{
