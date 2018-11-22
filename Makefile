@@ -11,6 +11,7 @@ APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_PATH=vendor/${CHAIN33}
 LDFLAGS := -ldflags "-w -s"
+PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
@@ -35,6 +36,8 @@ build_ci: depends ## Build the binary file for CI
 para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
 
+vet:
+	@go vet ${PKG_LIST_VET}
 
 autotest: ## build autotest binary
 	@cd build/autotest && bash ./build.sh && cd ../../
@@ -55,7 +58,7 @@ autotest_tick: autotest ## run with ticket mining
 
 update:
 	rm -rf ${CHAIN33_PATH}
-	git clone --depth 1 -b master https://${CHAIN33}.git ${CHAIN33_PATH}
+	git clone --depth 1 -b ${b} https://${CHAIN33}.git ${CHAIN33_PATH}
 	rm -rf vendor/${CHAIN33}/.git
 	rm -rf vendor/${CHAIN33}/vendor/github.com/apache/thrift/tutorial/erl/
 	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
@@ -261,3 +264,22 @@ push:
 	git checkout ${b}
 	git merge master
 	git push origin ${b}
+
+pull:
+	@remotelist=$$(git remote | grep ${name});if [ -z $$remotelist ]; then \
+		echo ${remotelist}; \
+		git remote add ${name} https://github.com/${name}/plugin.git ; \
+	fi;
+	git fetch ${name}
+	git checkout ${name}/${b}
+	git checkout -b ${name}-${b}
+pullsync:
+	git fetch ${name}
+	git checkout ${name}-${b}
+	git merge ${name}/${b}
+pullpush:
+	@if [ -n "$$m" ]; then \
+	git commit -a -m "${m}" ; \
+	fi;
+	make pullsync
+	git push ${name} ${name}-${b}:${b}

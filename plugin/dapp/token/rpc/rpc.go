@@ -57,6 +57,7 @@ func (c *channelClient) getTokenBalance(in *tokenty.ReqTokenBalance) ([]*types.A
 	}
 }
 
+// GetTokenBalance 获取token金额（channelClient）
 func (c *channelClient) GetTokenBalance(ctx context.Context, in *tokenty.ReqTokenBalance) (*types.Accounts, error) {
 	reply, err := c.getTokenBalance(in)
 	if err != nil {
@@ -65,6 +66,7 @@ func (c *channelClient) GetTokenBalance(ctx context.Context, in *tokenty.ReqToke
 	return &types.Accounts{Acc: reply}, nil
 }
 
+// GetTokenBalance 获取token金额 (Jrpc)
 func (c *Jrpc) GetTokenBalance(in tokenty.ReqTokenBalance, result *interface{}) error {
 	balances, err := c.cli.GetTokenBalance(context.Background(), &in)
 	if err != nil {
@@ -81,6 +83,7 @@ func (c *Jrpc) GetTokenBalance(in tokenty.ReqTokenBalance, result *interface{}) 
 	return nil
 }
 
+// CreateRawTokenPreCreateTx 创建未签名的创建Token交易
 func (c *Jrpc) CreateRawTokenPreCreateTx(param *tokenty.TokenPreCreate, result *interface{}) error {
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam
@@ -93,6 +96,7 @@ func (c *Jrpc) CreateRawTokenPreCreateTx(param *tokenty.TokenPreCreate, result *
 	return nil
 }
 
+// CreateRawTokenFinishTx 创建未签名的结束Token交易
 func (c *Jrpc) CreateRawTokenFinishTx(param *tokenty.TokenFinishCreate, result *interface{}) error {
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam
@@ -105,6 +109,7 @@ func (c *Jrpc) CreateRawTokenFinishTx(param *tokenty.TokenFinishCreate, result *
 	return nil
 }
 
+// CreateRawTokenRevokeTx 创建未签名的撤销Token交易
 func (c *Jrpc) CreateRawTokenRevokeTx(param *tokenty.TokenRevokeCreate, result *interface{}) error {
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam

@@ -174,7 +174,7 @@ func MakeGenesisState(genDoc *ttypes.GenesisDoc) (State, error) {
 	for i, val := range genDoc.Validators {
 		pubKey, err := ttypes.PubKeyFromString(val.PubKey.Data)
 		if err != nil {
-			return State{}, fmt.Errorf("Error validate[i] in genesis file: %v", i, err)
+			return State{}, fmt.Errorf("Error validate[%v] in genesis file: %v", i, err)
 		}
 
 		// Make validator

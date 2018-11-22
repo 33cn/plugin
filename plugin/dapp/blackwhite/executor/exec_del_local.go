@@ -59,6 +59,7 @@ func (c *Blackwhite) execDelLocal(receiptData *types.ReceiptData) ([]*types.KeyV
 	return retKV, nil
 }
 
+// ExecDelLocal_Create 执行删除创建游戏产生的本地数据库
 func (c *Blackwhite) ExecDelLocal_Create(payload *gt.BlackwhiteCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execDelLocal(receiptData)
 	if err != nil {
@@ -67,6 +68,7 @@ func (c *Blackwhite) ExecDelLocal_Create(payload *gt.BlackwhiteCreate, tx *types
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecDelLocal_Play 执行删除参与游戏产生的本地数据库
 func (c *Blackwhite) ExecDelLocal_Play(payload *gt.BlackwhitePlay, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execDelLocal(receiptData)
 	if err != nil {
@@ -75,6 +77,7 @@ func (c *Blackwhite) ExecDelLocal_Play(payload *gt.BlackwhitePlay, tx *types.Tra
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecDelLocal_Show 执行删除出示密钥产生的本地数据库
 func (c *Blackwhite) ExecDelLocal_Show(payload *gt.BlackwhiteShow, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execDelLocal(receiptData)
 	if err != nil {
@@ -83,6 +86,7 @@ func (c *Blackwhite) ExecDelLocal_Show(payload *gt.BlackwhiteShow, tx *types.Tra
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
+// ExecDelLocal_TimeoutDone 执行删除超时产生的本地数据库
 func (c *Blackwhite) ExecDelLocal_TimeoutDone(payload *gt.BlackwhiteTimeoutDone, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kv, err := c.execDelLocal(receiptData)
 	if err != nil {
