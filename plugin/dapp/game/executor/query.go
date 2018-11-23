@@ -30,5 +30,5 @@ func (g *Game) Query_QueryGameById(in *gt.QueryGameInfo) (types.Message, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &gt.ReplyGame{Game:game}, nil
+	return &gt.ReplyGame{Game: game}, nil
 }
