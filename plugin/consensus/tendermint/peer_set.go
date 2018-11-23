@@ -537,7 +537,7 @@ FOR_LOOP:
 						tendermintlog.Debug("Receiving vote", "vote-height", vote.Height, "peerip", pc.ip.String())
 						pc.state.SetHasVote(vote)
 					} else if pkt.TypeID == ttypes.ProposalBlockID {
-						block := &ttypes.TendermintBlock{realMsg.(*tmtypes.TendermintBlock)}
+						block := &ttypes.TendermintBlock{TendermintBlock: realMsg.(*tmtypes.TendermintBlock)}
 						tendermintlog.Debug("Receiving proposal block", "block-height", block.Header.Height, "peerip", pc.ip.String())
 						pc.state.SetHasProposalBlock(block)
 					}

@@ -11,7 +11,7 @@ APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_PATH=vendor/${CHAIN33}
 LDFLAGS := -ldflags "-w -s"
-PKG_LIST_VET := `go list ./... | grep -v "vendor"`
+PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
@@ -58,7 +58,7 @@ autotest_tick: autotest ## run with ticket mining
 
 update:
 	rm -rf ${CHAIN33_PATH}
-	git clone --depth 1 -b master https://${CHAIN33}.git ${CHAIN33_PATH}
+	git clone --depth 1 -b ${b} https://${CHAIN33}.git ${CHAIN33_PATH}
 	rm -rf vendor/${CHAIN33}/.git
 	rm -rf vendor/${CHAIN33}/vendor/github.com/apache/thrift/tutorial/erl/
 	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
