@@ -13,6 +13,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 )
 
+// Config relayd toml config
 type Config struct {
 	Title          string
 	Watch          bool
@@ -28,8 +29,9 @@ type Config struct {
 	Auth           Auth
 }
 
+// Btcd adapt to btcd
 type Btcd struct {
-	Id                   string
+	ID                   string
 	Host                 string
 	Endpoint             string
 	User                 string
@@ -46,12 +48,14 @@ type Btcd struct {
 	ReconnectAttempts    int
 }
 
+// Auth auth key struct
 type Auth struct {
 	PrivateKey string `json:"privateKey"`
 	PublicKey  string `json:"publicKey"`
 	Address    string `json:"address"`
 }
 
+// BitConnConfig btc connect config
 func (b *Btcd) BitConnConfig() *rpcclient.ConnConfig {
 	conn := &rpcclient.ConnConfig{}
 	conn.Host = b.Host
@@ -74,8 +78,9 @@ func (b *Btcd) BitConnConfig() *rpcclient.ConnConfig {
 	return conn
 }
 
+// Chain33 define adapt to chain33 relay exec
 type Chain33 struct {
-	Id                   string
+	ID                   string
 	Host                 string
 	User                 string
 	Pass                 string
@@ -83,6 +88,7 @@ type Chain33 struct {
 	ReconnectAttempts    int
 }
 
+// NewConfig create a new config
 func NewConfig(path string) *Config {
 	var cfg Config
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {

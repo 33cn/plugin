@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// RelayCmd relay exec cmd register
 func RelayCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "relay",
@@ -41,6 +42,7 @@ func RelayCmd() *cobra.Command {
 	return cmd
 }
 
+// ShowBTCHeadHeightListCmd show btc head height list cmd
 func ShowBTCHeadHeightListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc_height_list",
@@ -94,6 +96,7 @@ func showBtcHeadHeightList(cmd *cobra.Command, args []string) {
 	parseRelayBtcHeadHeightList(res)
 }
 
+// ShowBTCHeadCurHeightCmd show BTC head current height in chain33
 func ShowBTCHeadCurHeightCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc_cur_height",
@@ -137,6 +140,7 @@ func showBtcHeadCurHeight(cmd *cobra.Command, args []string) {
 	parseRelayBtcCurHeight(res)
 }
 
+// ShowOnesCreateRelayOrdersCmd show ones created orders
 func ShowOnesCreateRelayOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "creator_orders",
@@ -187,6 +191,7 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	parseRelayOrders(res)
 }
 
+// ShowOnesAcceptRelayOrdersCmd show ones accepted orders
 func ShowOnesAcceptRelayOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "acceptor_orders",
@@ -236,6 +241,7 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 	parseRelayOrders(res)
 }
 
+// ShowOnesStatusOrdersCmd show ones order's status
 func ShowOnesStatusOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
@@ -292,8 +298,8 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 
 func parseRelayOrders(res ty.ReplyRelayOrders) {
 	for _, order := range res.Relayorders {
-		var show RelayOrder2Show
-		show.OrderId = order.Id
+		var show relayOrder2Show
+		show.OrderID = order.Id
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
 		show.CoinOperation = ty.RelayOrderOperation[order.CoinOperation]
@@ -334,6 +340,7 @@ func parseRelayBtcCurHeight(res ty.ReplayRelayQryBTCHeadHeight) {
 	fmt.Println(string(data))
 }
 
+// CreateRawRelayOrderTxCmd create relay order, buy or sell
 func CreateRawRelayOrderTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -395,6 +402,7 @@ func relayOrder(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayAcceptTxCmd accept order
 func CreateRawRelayAcceptTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accept",
@@ -437,6 +445,7 @@ func relayAccept(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRevokeTxCmd revoke order
 func CreateRawRevokeTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke",
@@ -476,6 +485,7 @@ func relayRevoke(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayConfirmTxCmd confirm tx
 func CreateRawRelayConfirmTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "confirm",
@@ -498,11 +508,11 @@ func addConfirmFlags(cmd *cobra.Command) {
 
 func relayConfirm(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	orderId, _ := cmd.Flags().GetString("order_id")
+	orderID, _ := cmd.Flags().GetString("order_id")
 	txHash, _ := cmd.Flags().GetString("tx_hash")
 
 	params := &ty.RelayConfirmTx{
-		OrderId: orderId,
+		OrderId: orderID,
 		TxHash:  txHash,
 	}
 	var res string
@@ -510,6 +520,7 @@ func relayConfirm(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayBtcHeaderCmd save btc header from cli
 func CreateRawRelayBtcHeaderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "save_header",
@@ -559,6 +570,7 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayVerifyBTCTxCmd verify btc tx from cli
 func CreateRawRelayVerifyBTCTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify",
