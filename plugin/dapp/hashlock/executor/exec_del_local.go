@@ -11,7 +11,7 @@ import (
 )
 
 // ExecDelLocal_Hlock Action
-func (h *Hashlock) ExecDelLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecDelLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	if receipt.GetTy() != types.ExecOk {
 		return &types.LocalDBSet{}, nil
 	}
@@ -24,7 +24,7 @@ func (h *Hashlock) ExecDelLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transac
 }
 
 // ExecDelLocal_Hsend Action
-func (h *Hashlock) ExecDelLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecDelLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	if receipt.GetTy() != types.ExecOk {
 		return &types.LocalDBSet{}, nil
 	}
@@ -37,7 +37,7 @@ func (h *Hashlock) ExecDelLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transac
 }
 
 // ExecDelLocal_Hunlock Action
-func (h *Hashlock) ExecDelLocal_Hunlock(hunlock *pty.HashlockUnlock, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecDelLocal_Hunlock(hunlock *pty.HashlockUnlock, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
 	if receipt.GetTy() != types.ExecOk {
 		return &types.LocalDBSet{}, nil
 	}
