@@ -612,7 +612,7 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 	}
 	count := 0
 	var hashes [][]byte
-	bizlog.Info("ticketPolicy buyTicket begin")
+	bizlog.Debug("ticketPolicy buyTicket begin")
 	for _, priv := range privs {
 		hash, n, err := policy.buyTicketOne(height, priv)
 		if err != nil {
@@ -623,9 +623,9 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 		if hash != nil {
 			hashes = append(hashes, hash)
 		}
-		bizlog.Info("ticketPolicy buyTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "txhash", hex.EncodeToString(hash), "n", n)
+		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "txhash", hex.EncodeToString(hash), "n", n)
 	}
-	bizlog.Info("ticketPolicy buyTicket end")
+	bizlog.Debug("ticketPolicy buyTicket end")
 	return hashes, count, nil
 }
 
@@ -709,7 +709,7 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 	}
 	count := 0
 	var hashes [][]byte
-	bizlog.Info("ticketPolicy buyMinerAddrTicket begin")
+	bizlog.Debug("ticketPolicy buyMinerAddrTicket begin")
 	for _, priv := range privs {
 		hashlist, n, err := policy.buyMinerAddrTicketOne(height, priv)
 		if err != nil {
@@ -722,9 +722,9 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 		if hashlist != nil {
 			hashes = append(hashes, hashlist...)
 		}
-		bizlog.Info("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "n", n)
+		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "n", n)
 	}
-	bizlog.Info("ticketPolicy buyMinerAddrTicket end")
+	bizlog.Debug("ticketPolicy buyMinerAddrTicket end")
 	return hashes, count, nil
 }
 
