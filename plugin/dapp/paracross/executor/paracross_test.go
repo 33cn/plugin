@@ -73,8 +73,8 @@ func makeNodeInfo(key, addr string, cnt int) *types.ConfigItem {
 	item.Key = key
 	item.Addr = addr
 	item.Ty = mty.ConfigItemArrayConfig
-	emptyValue := &types.ArrayConfig{make([]string, 0)}
-	arr := types.ConfigItem_Arr{emptyValue}
+	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
+	arr := types.ConfigItem_Arr{Arr: emptyValue}
 	item.Value = &arr
 	for i, n := range Nodes {
 		if i >= cnt {
@@ -132,13 +132,13 @@ func (suite *CommitTestSuite) SetupSuite() {
 	saveTitle(suite.stateDB, calcTitleKey(Title), &titleStatus)
 
 	// setup api
-	hashes := &types.ReqHashes{[][]byte{MainBlockHash10}}
+	hashes := &types.ReqHashes{Hashes: [][]byte{MainBlockHash10}}
 	suite.api.On("GetBlockByHashes", hashes).Return(
 		&types.BlockDetails{
 			Items: []*types.BlockDetail{blockDetail},
 		}, nil)
-	suite.api.On("GetBlockHash", &types.ReqInt{MainBlockHeight}).Return(
-		&types.ReplyHash{MainBlockHash10}, nil)
+	suite.api.On("GetBlockHash", &types.ReqInt{Height: MainBlockHeight}).Return(
+		&types.ReplyHash{Hash: MainBlockHash10}, nil)
 }
 
 func (suite *CommitTestSuite) TestSetup() {
@@ -153,19 +153,19 @@ func (suite *CommitTestSuite) TestSetup() {
 
 func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 	st1 := pt.ParacrossNodeStatus{
-		MainBlockHash10,
-		MainBlockHeight,
-		Title,
-		TitleHeight,
-		[]byte("block-hash-9"),
-		[]byte("block-hash-10"),
-		[]byte("state-hash-9"),
-		[]byte("state-hash-10"),
-		10,
-		[]byte("abc"),
-		[][]byte{},
-		[]byte("abc"),
-		[][]byte{},
+		MainBlockHash:   MainBlockHash10,
+		MainBlockHeight: MainBlockHeight,
+		Title:           Title,
+		Height:          TitleHeight,
+		PreBlockHash:    []byte("block-hash-9"),
+		BlockHash:       []byte("block-hash-10"),
+		PreStateHash:    []byte("state-hash-9"),
+		StateHash:       []byte("state-hash-10"),
+		TxCounts:        10,
+		TxResult:        []byte("abc"),
+		TxHashs:         [][]byte{},
+		CrossTxResult:   []byte("abc"),
+		CrossTxHashs:    [][]byte{},
 	}
 	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.ParaX, 0)
 	if err != nil {
@@ -370,9 +370,9 @@ type VoteTestSuite struct {
 	exec *Paracross
 }
 
-func (suite *VoteTestSuite) SetupSuite() {
+func (s *VoteTestSuite) SetupSuite() {
 	types.Init(Title, nil)
-	suite.exec = newParacross().(*Paracross)
+	s.exec = newParacross().(*Paracross)
 }
 
 func (s *VoteTestSuite) TestVoteTx() {

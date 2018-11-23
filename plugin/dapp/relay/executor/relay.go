@@ -225,20 +225,20 @@ func getCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status i
 func deleteCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status int32) []*types.KeyValue {
 
 	key := calcOrderKeyStatus(order, status)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyCoin(order, status)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyAddrStatus(order, status)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyAddrCoin(order, status)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcAcceptKeyAddr(order, status)
 	if key != nil {
-		kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+		kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	}
 
 	return kv

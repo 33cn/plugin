@@ -45,8 +45,8 @@ func (s *suiteRelayLog) TestSave() {
 	value := types.Encode(&s.log.RelayOrder)
 	keyID := []byte(s.log.Id)
 	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
-	kvSet = append(kvSet, &types.KeyValue{Key:keyID,Value: value})
-	kvSet = append(kvSet, &types.KeyValue{Key:keyCoinTxHash, Value:value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
 	for i := 0; i < len(kvSet); i++ {
 		s.db.On("Set", kvSet[i].GetKey(), kvSet[i].Value).Return(nil).Once()
@@ -61,8 +61,8 @@ func (s *suiteRelayLog) TestGetKVSet() {
 	value := types.Encode(&s.log.RelayOrder)
 	keyID := []byte(s.log.Id)
 	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
-	kvSet = append(kvSet, &types.KeyValue{Key:keyID, Value:value})
-	kvSet = append(kvSet, &types.KeyValue{Key:keyCoinTxHash, Value:value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
 	rst := s.log.getKVSet()
 	s.Assert().Equal(kvSet, rst)
@@ -176,7 +176,7 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -208,7 +208,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -229,7 +229,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1bCancel() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -309,7 +309,7 @@ func (s *suiteAccept) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -357,7 +357,7 @@ func (s *suiteAccept) TestRelayAccept() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -388,7 +388,7 @@ func (s *suiteAccept) TestRevokeAccept_1() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(22)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(22)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -409,7 +409,7 @@ func (s *suiteAccept) TestRevokeAccept_2() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -430,7 +430,7 @@ func (s *suiteAccept) TestRevokeAccept_3() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -507,7 +507,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -556,7 +556,7 @@ func (s *suiteConfirm) setupAccept() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -605,7 +605,7 @@ func (s *suiteConfirm) TestConfirm_2() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)
@@ -636,7 +636,7 @@ func (s *suiteConfirm) TestRevokeConfirm_1() {
 
 	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -657,7 +657,7 @@ func (s *suiteConfirm) TestRevokeConfirm_2() {
 
 	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30 + 4*lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30 + 4*lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -734,7 +734,7 @@ func (s *suiteVerify) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -765,7 +765,7 @@ func (s *suiteVerify) setupAccept() {
 
 	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -796,7 +796,7 @@ func (s *suiteVerify) setupConfirm() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)
@@ -860,7 +860,7 @@ func (s *suiteVerify) TestVerify() {
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
@@ -965,7 +965,7 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -996,7 +996,7 @@ func (s *suiteVerifyCli) setupAccept() {
 
 	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -1027,7 +1027,7 @@ func (s *suiteVerifyCli) setupConfirm() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)

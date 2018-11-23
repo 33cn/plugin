@@ -55,7 +55,7 @@ func TestProcEvent(t *testing.T) {
 func Test_genPrivHash(t *testing.T) {
 	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	assert.NoError(t, err)
-	priv, err := c.GenKey()
+	priv, _ := c.GenKey()
 
 	bt, err := genPrivHash(priv, "AA:BB:CC:DD")
 	assert.NotNil(t, err)

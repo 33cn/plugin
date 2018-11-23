@@ -7,12 +7,20 @@ package types
 import "errors"
 
 var (
-	ErrInvalidTitle         = errors.New("ErrInvalidTitle")
-	ErrTitleNotExist        = errors.New("ErrTitleNotExist")
-	ErrNodeNotForTheTitle   = errors.New("ErrNodeNotForTheTitle")
+	// ErrInvalidTitle invalid commit msg title
+	ErrInvalidTitle = errors.New("ErrInvalidTitle")
+	// ErrTitleNotExist commit msg title not exist
+	ErrTitleNotExist = errors.New("ErrTitleNotExist")
+	// ErrNodeNotForTheTitle the node not match with title
+	ErrNodeNotForTheTitle = errors.New("ErrNodeNotForTheTitle")
+	// ErrParaBlockHashNoMatch block hash not match with before
 	ErrParaBlockHashNoMatch = errors.New("ErrParaBlockHashNoMatch")
-	ErrParaMinerBaseIndex   = errors.New("ErrParaMinerBaseIndex")
-	ErrParaMinerTxType      = errors.New("ErrParaMinerTxType")
-	ErrParaEmptyMinerTx     = errors.New("ErrParaEmptyMinerTx")
-	ErrParaMinerExecErr     = errors.New("ErrParaMinerExecErr")
+	// ErrParaMinerBaseIndex miner base index not 0
+	ErrParaMinerBaseIndex = errors.New("ErrParaMinerBaseIndex")
+	// ErrParaMinerTxType the 0 tx is not miner tx
+	ErrParaMinerTxType = errors.New("ErrParaMinerTxType")
+	// ErrParaEmptyMinerTx block no miner tx
+	ErrParaEmptyMinerTx = errors.New("ErrParaEmptyMinerTx")
+	// ErrParaMinerExecErr miner tx exec error
+	ErrParaMinerExecErr = errors.New("ErrParaMinerExecErr")
 )

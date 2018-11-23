@@ -26,7 +26,6 @@ type relaydDB struct {
 	db db.DB
 }
 
-
 func newRelayDB(name string, dir string, cache int32) *relaydDB {
 	d := db.NewDB(name, "goleveldb", dir, cache)
 	return &relaydDB{d}

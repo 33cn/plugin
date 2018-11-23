@@ -66,7 +66,8 @@ func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "BtcHeaders", v)
 }
 
-func (c *jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) error {
+//CreateRawRelayOrderTx jrpc create raw relay order
+func (c *Jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) error {
 	reply, err := createRawRelayOrderTx(in)
 	if err != nil {
 		return err
@@ -75,7 +76,8 @@ func (c *jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) er
 	return nil
 }
 
-func (c *jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) error {
+//CreateRawRelayAcceptTx jrpc creat relay accept tx
+func (c *Jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) error {
 	reply, err := createRawRelayAcceptTx(in)
 	if err != nil {
 		return err
@@ -85,7 +87,8 @@ func (c *jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) e
 	return nil
 }
 
-func (c *jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) error {
+//CreateRawRelayRevokeTx jrpc create revoke tx
+func (c *Jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) error {
 	reply, err := createRawRelayRevokeTx(in)
 	if err != nil {
 		return err
@@ -95,7 +98,8 @@ func (c *jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) e
 	return nil
 }
 
-func (c *jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{}) error {
+//CreateRawRelayConfirmTx jrpc create confirm tx
+func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{}) error {
 	reply, err := createRawRelayConfirmTx(in)
 	if err != nil {
 		return err
@@ -105,7 +109,8 @@ func (c *jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{
 	return nil
 }
 
-func (c *jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interface{}) error {
+//CreateRawRelayVerifyBTCTx jrpc create veirfy btc tx
+func (c *Jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interface{}) error {
 	reply, err := createRawRelayVerifyBTCTx(in)
 	if err != nil {
 		return err
@@ -114,7 +119,8 @@ func (c *jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interfac
 	return nil
 }
 
-func (c *jrpc) CreateRawRelaySaveBTCHeadTx(in *ty.BtcHeader, result *interface{}) error {
+//CreateRawRelaySaveBTCHeadTx jrpc save btc header
+func (c *Jrpc) CreateRawRelaySaveBTCHeadTx(in *ty.BtcHeader, result *interface{}) error {
 	reply, err := createRawRelaySaveBTCHeadTx(in)
 	if err != nil {
 		return err

@@ -129,7 +129,7 @@ func (s *suiteRelay) TestExec_1() {
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionCreate,
-		Value: &ty.RelayAction_Create{Create:order},
+		Value: &ty.RelayAction_Create{Create: order},
 	}
 
 	tx := &types.Transaction{}
@@ -140,7 +140,7 @@ func (s *suiteRelay) TestExec_1() {
 	tx.Sign(types.SECP256K1, privFrom)
 
 	s.relay.SetEnv(10, 1000, 1)
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relay.Exec(tx, 0)
@@ -172,7 +172,7 @@ func (s *suiteRelay) TestExec_2() {
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionAccept,
-		Value: &ty.RelayAction_Accept{Accept:order},
+		Value: &ty.RelayAction_Accept{Accept: order},
 	}
 
 	tx := &types.Transaction{}
@@ -181,7 +181,7 @@ func (s *suiteRelay) TestExec_2() {
 	tx.Sign(types.SECP256K1, privTo)
 
 	s.relay.SetEnv(20, 2000, 1)
-	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
 	s.Nil(err)
@@ -208,7 +208,7 @@ func (s *suiteRelay) TestExec_3() {
 	}
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionConfirmTx,
-		Value: &ty.RelayAction_ConfirmTx{ConfirmTx:order},
+		Value: &ty.RelayAction_ConfirmTx{ConfirmTx: order},
 	}
 
 	tx := &types.Transaction{}
@@ -217,7 +217,7 @@ func (s *suiteRelay) TestExec_3() {
 	tx.Sign(types.SECP256K1, privFrom)
 
 	s.relay.SetEnv(30, 3000, 1)
-	heightBytes := types.Encode(&types.Int64{Data:int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
 	s.Nil(err)
@@ -264,7 +264,7 @@ func (s *suiteRelay) TestExec_4() {
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
@@ -280,7 +280,7 @@ func (s *suiteRelay) TestExec_4() {
 	}
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionVerifyTx,
-		Value: &ty.RelayAction_Verify{Verify:order},
+		Value: &ty.RelayAction_Verify{Verify: order},
 	}
 	tx := &types.Transaction{}
 	tx.To = s.addrRelay
@@ -374,7 +374,7 @@ func (s *suiteRelay) TestExec_9_QryStatus5() {
 		BaseHeight: 10,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Twice()
 	msg, err := s.relay.Query_GetBTCHeaderCurHeight(addrCoins)
 	s.Nil(err)
@@ -505,7 +505,7 @@ func (s *suiteBtcHeader) TestSaveBtcHead_1() {
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionRcvBTCHeaders,
-		Value: &ty.RelayAction_BtcHeaders{BtcHeaders:headers},
+		Value: &ty.RelayAction_BtcHeaders{BtcHeaders: headers},
 	}
 
 	tx := &types.Transaction{}

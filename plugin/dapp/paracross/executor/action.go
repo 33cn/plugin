@@ -448,7 +448,7 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 
 	log.Log = types.Encode(receipt)
 	logs = append(logs, log)
-	return &types.Receipt{types.ExecOk, nil, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}, nil
 
 }
 
