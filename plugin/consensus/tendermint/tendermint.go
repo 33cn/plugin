@@ -22,7 +22,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-const tendermint_version = "0.1.0"
+const tendermintVersion = "0.1.0"
 
 var (
 	tendermintlog               = log15.New("module", "tendermint")
@@ -36,9 +36,9 @@ var (
 	timeoutPrecommit            int32 = 1000
 	timeoutPrecommitDelta       int32 = 500
 	timeoutCommit               int32 = 1000
-	skipTimeoutCommit           bool  = false
-	createEmptyBlocks           bool  = false
-	createEmptyBlocksInterval   int32 = 0 // second
+	skipTimeoutCommit                 = false
+	createEmptyBlocks                 = false
+	createEmptyBlocksInterval   int32       // second
 	validatorNodes                    = []string{"127.0.0.1:46656"}
 	peerGossipSleepDuration     int32 = 100
 	peerQueryMaj23SleepDuration int32 = 2000
@@ -47,10 +47,11 @@ var (
 
 func init() {
 	drivers.Reg("tendermint", New)
-	drivers.QueryData.Register("tendermint", &TendermintClient{})
+	drivers.QueryData.Register("tendermint", &Client{})
 }
 
-type TendermintClient struct {
+// Client Tendermint implementation
+type Client struct {
 	//config
 	*drivers.BaseClient
 	genesisDoc    *ttypes.GenesisDoc // initial validator set
@@ -82,7 +83,7 @@ type subConfig struct {
 	ValidatorNodes            []string `json:"validatorNodes"`
 }
 
-func (client *TendermintClient) applyConfig(sub []byte) {
+func (client *Client) applyConfig(sub []byte) {
 	var subcfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
@@ -133,6 +134,7 @@ func DefaultDBProvider(ID string) (dbm.DB, error) {
 	return dbm.NewDB(ID, "leveldb", "./datadir", 0), nil
 }
 
+// New ...
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	tendermintlog.Info("Start to create tendermint client")
 	//init rand
@@ -175,7 +177,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	pubkey := privValidator.GetPubKey().KeyString()
 	c := drivers.NewBaseClient(cfg)
-	client := &TendermintClient{
+	client := &Client{
 		BaseClient:    c,
 		genesisDoc:    genDoc,
 		privValidator: privValidator,
@@ -194,21 +196,24 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 // PrivValidator returns the Node's PrivValidator.
 // XXX: for convenience only!
-func (client *TendermintClient) PrivValidator() ttypes.PrivValidator {
+func (client *Client) PrivValidator() ttypes.PrivValidator {
 	return client.privValidator
 }
 
 // GenesisDoc returns the Node's GenesisDoc.
-func (client *TendermintClient) GenesisDoc() *ttypes.GenesisDoc {
+func (client *Client) GenesisDoc() *ttypes.GenesisDoc {
 	return client.genesisDoc
 }
 
-func (client *TendermintClient) Close() {
+// Close TODO:may need optimize
+func (client *Client) Close() {
+	client.node.Stop()
 	client.stopC <- struct{}{}
 	tendermintlog.Info("consensus tendermint closed")
 }
 
-func (client *TendermintClient) SetQueueClient(q queue.Client) {
+// SetQueueClient ...
+func (client *Client) SetQueueClient(q queue.Client) {
 	client.InitClient(q, func() {
 		//call init block
 		client.InitBlock()
@@ -218,14 +223,16 @@ func (client *TendermintClient) SetQueueClient(q queue.Client) {
 	go client.StartConsensus()
 }
 
-const DEBUG_CATCHUP = false
+// DebugCatchup define whether catch up now
+const DebugCatchup = false
 
-func (client *TendermintClient) StartConsensus() {
+// StartConsensus a routine that make the consensus start
+func (client *Client) StartConsensus() {
 	//进入共识前先同步到最大高度
 	hint := time.NewTicker(5 * time.Second)
 	beg := time.Now()
 OuterLoop:
-	for !DEBUG_CATCHUP {
+	for !DebugCatchup {
 		select {
 		case <-hint.C:
 			tendermintlog.Info("Still catching up max height......", "Height", client.GetCurrentHeight(), "cost", time.Since(beg))
@@ -320,7 +327,7 @@ OuterLoop:
 
 	// Create & add listener
 	protocol, listeningAddress := "tcp", "0.0.0.0:46656"
-	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermint_version, csState, evidencePool)
+	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermintVersion, csState, evidencePool)
 
 	client.node = node
 	node.Start()
@@ -328,11 +335,13 @@ OuterLoop:
 	go client.CreateBlock()
 }
 
-func (client *TendermintClient) GetGenesisBlockTime() int64 {
+// GetGenesisBlockTime ...
+func (client *Client) GetGenesisBlockTime() int64 {
 	return genesisBlockTime
 }
 
-func (client *TendermintClient) CreateGenesisTx() (ret []*types.Transaction) {
+// CreateGenesisTx ...
+func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	tx.Execer = []byte("coins")
 	tx.To = genesis
@@ -345,16 +354,18 @@ func (client *TendermintClient) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-//暂不检查任何的交易
-func (client *TendermintClient) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+// CheckBlock 暂不检查任何的交易
+func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return nil
 }
 
-func (client *TendermintClient) ProcEvent(msg queue.Message) bool {
+// ProcEvent ...
+func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-func (client *TendermintClient) CreateBlock() {
+// CreateBlock a routine monitor whether some transactions available and tell client by available channel
+func (client *Client) CreateBlock() {
 	issleep := true
 
 	for {
@@ -378,21 +389,25 @@ func (client *TendermintClient) CreateBlock() {
 	}
 }
 
-func (client *TendermintClient) TxsAvailable() <-chan int64 {
+// TxsAvailable check available channel
+func (client *Client) TxsAvailable() <-chan int64 {
 	return client.txsAvailable
 }
 
-func (client *TendermintClient) StopC() <-chan struct{} {
+// StopC stop client
+func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
 }
 
-func (client *TendermintClient) CheckTxsAvailable() bool {
+// CheckTxsAvailable check whether some new transactions arriving
+func (client *Client) CheckTxsAvailable() bool {
 	txs := client.RequestTx(10, nil)
 	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
 	return len(txs) != 0
 }
 
-func (client *TendermintClient) CheckTxDup(txs []*types.Transaction, height int64) (transactions []*types.Transaction) {
+// CheckTxDup check transactions that duplicate
+func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transactions []*types.Transaction) {
 	cacheTxs := types.TxsToCache(txs)
 	var err error
 	cacheTxs, err = util.CheckTxDup(client.GetQueueClient(), cacheTxs, height)
@@ -402,7 +417,8 @@ func (client *TendermintClient) CheckTxDup(txs []*types.Transaction, height int6
 	return types.CacheToTxs(cacheTxs)
 }
 
-func (client *TendermintClient) BuildBlock() *types.Block {
+// BuildBlock build a new block contains some transactions
+func (client *Client) BuildBlock() *types.Block {
 	lastHeight := client.GetCurrentHeight()
 	txs := client.RequestTx(int(types.GetP(lastHeight+1).MaxTxNumber)-1, nil)
 	newblock := &types.Block{}
@@ -411,7 +427,8 @@ func (client *TendermintClient) BuildBlock() *types.Block {
 	return newblock
 }
 
-func (client *TendermintClient) CommitBlock(propBlock *types.Block) error {
+// CommitBlock call WriteBlock to real commit to chain
+func (client *Client) CommitBlock(propBlock *types.Block) error {
 	newblock := *propBlock
 	lastBlock, err := client.RequestBlock(newblock.Height - 1)
 	if err != nil {
@@ -438,7 +455,8 @@ func (client *TendermintClient) CommitBlock(propBlock *types.Block) error {
 	return nil
 }
 
-func (client *TendermintClient) CheckCommit(height int64) bool {
+// CheckCommit by height
+func (client *Client) CheckCommit(height int64) bool {
 	retry := 0
 	newHeight := int64(1)
 	for {
@@ -456,7 +474,8 @@ func (client *TendermintClient) CheckCommit(height int64) bool {
 	}
 }
 
-func (client *TendermintClient) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, error) {
+// QueryValidatorsByHeight ...
+func (client *Client) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, error) {
 	if height <= 0 {
 		return nil, types.ErrInvalidParam
 	}
@@ -475,7 +494,8 @@ func (client *TendermintClient) QueryValidatorsByHeight(height int64) (*tmtypes.
 	return msg.GetData().(types.Message).(*tmtypes.ValNodes), nil
 }
 
-func (client *TendermintClient) QueryBlockInfoByHeight(height int64) (*tmtypes.TendermintBlockInfo, error) {
+// QueryBlockInfoByHeight ...
+func (client *Client) QueryBlockInfoByHeight(height int64) (*tmtypes.TendermintBlockInfo, error) {
 	if height <= 0 {
 		return nil, types.ErrInvalidParam
 	}
@@ -494,7 +514,8 @@ func (client *TendermintClient) QueryBlockInfoByHeight(height int64) (*tmtypes.T
 	return msg.GetData().(types.Message).(*tmtypes.TendermintBlockInfo), nil
 }
 
-func (client *TendermintClient) LoadSeenCommit(height int64) *tmtypes.TendermintCommit {
+// LoadSeenCommit by height
+func (client *Client) LoadSeenCommit(height int64) *tmtypes.TendermintCommit {
 	blockInfo, err := client.QueryBlockInfoByHeight(height)
 	if err != nil {
 		panic(fmt.Sprintf("LoadSeenCommit GetBlockInfo failed:%v", err))
@@ -506,7 +527,8 @@ func (client *TendermintClient) LoadSeenCommit(height int64) *tmtypes.Tendermint
 	return blockInfo.GetSeenCommit()
 }
 
-func (client *TendermintClient) LoadBlockCommit(height int64) *tmtypes.TendermintCommit {
+// LoadBlockCommit by height
+func (client *Client) LoadBlockCommit(height int64) *tmtypes.TendermintCommit {
 	blockInfo, err := client.QueryBlockInfoByHeight(height)
 	if err != nil {
 		panic(fmt.Sprintf("LoadBlockCommit GetBlockInfo failed:%v", err))
@@ -518,7 +540,8 @@ func (client *TendermintClient) LoadBlockCommit(height int64) *tmtypes.Tendermin
 	return blockInfo.GetLastCommit()
 }
 
-func (client *TendermintClient) LoadProposalBlock(height int64) *tmtypes.TendermintBlock {
+// LoadProposalBlock by height
+func (client *Client) LoadProposalBlock(height int64) *tmtypes.TendermintBlock {
 	block, err := client.RequestBlock(height)
 	if err != nil {
 		tendermintlog.Error("LoadProposal by height failed", "curHeight", client.GetCurrentHeight(), "requestHeight", height, "error", err)

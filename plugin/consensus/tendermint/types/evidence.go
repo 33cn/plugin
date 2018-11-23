@@ -23,6 +23,7 @@ type ErrEvidenceInvalid struct {
 	ErrorValue error
 }
 
+// NewEvidenceInvalidErr ...
 func NewEvidenceInvalidErr(ev Evidence, err error) *ErrEvidenceInvalid {
 	return &ErrEvidenceInvalid{ev, err}
 }
@@ -39,8 +40,11 @@ const (
 	MockBad       = "MockBad"
 )
 
-var EvidenceType2Type map[string]reflect.Type
-var EvidenceType2Obj map[string]Evidence
+// EvidenceType map define
+var (
+	EvidenceType2Type map[string]reflect.Type
+    EvidenceType2Obj map[string]Evidence
+)
 
 // Evidence represents any provable malicious activity by a validator
 type Evidence interface {
@@ -205,22 +209,27 @@ func (dve *DuplicateVoteEvidence) Equal(ev Evidence) bool {
 	return bytes.Equal(SimpleHashFromBinary(dve), SimpleHashFromBinary(ev.(*DuplicateVoteEvidence)))
 }
 
+// TypeName ...
 func (dve *DuplicateVoteEvidence) TypeName() string {
 	return DuplicateVote
 }
 
+// Copy ...
 func (dve *DuplicateVoteEvidence) Copy() Evidence {
 	return &DuplicateVoteEvidence{}
 }
 
+// SetChild ...
 func (dve *DuplicateVoteEvidence) SetChild(child proto.Message) {
 	dve.DuplicateVoteEvidence = child.(*tmtypes.DuplicateVoteEvidence)
 }
 
+// Child ...
 func (dve *DuplicateVoteEvidence) Child() proto.Message {
 	return dve.DuplicateVoteEvidence
 }
 
+// SimpleHashFromBinary ...
 func SimpleHashFromBinary(item *DuplicateVoteEvidence) []byte {
 	bytes, e := json.Marshal(item)
 	if e != nil {
@@ -231,6 +240,7 @@ func SimpleHashFromBinary(item *DuplicateVoteEvidence) []byte {
 
 }
 
+// EvidenceEnvelope2Evidence ...
 func EvidenceEnvelope2Evidence(envelope *tmtypes.EvidenceEnvelope) Evidence {
 	if v, ok := EvidenceType2Type[envelope.TypeName]; ok {
 		realMsg2 := reflect.New(v).Interface()
@@ -247,69 +257,98 @@ func EvidenceEnvelope2Evidence(envelope *tmtypes.EvidenceEnvelope) Evidence {
 	return nil
 }
 
-//-----------------------------------------------------------------
-
-// UNSTABLE
+// MockGoodEvidence UNSTABLE
 type MockGoodEvidence struct {
-	Height_  int64
-	Address_ []byte
-	Index_   int
+	MGHeight  int64
+	MGAddress []byte
+	MGIndex   int
 }
 
-// UNSTABLE
+// NewMockGoodEvidence UNSTABLE
 func NewMockGoodEvidence(height int64, index int, address []byte) MockGoodEvidence {
 	return MockGoodEvidence{height, address, index}
 }
 
-func (e MockGoodEvidence) Height() int64   { return e.Height_ }
-func (e MockGoodEvidence) Address() []byte { return e.Address_ }
-func (e MockGoodEvidence) Index() int      { return e.Index_ }
+// Height ...
+func (e MockGoodEvidence) Height() int64   { return e.MGHeight }
+
+// Address ...
+func (e MockGoodEvidence) Address() []byte { return e.MGAddress }
+
+// Index ...
+func (e MockGoodEvidence) Index() int      { return e.MGIndex }
+
+// Hash ...
 func (e MockGoodEvidence) Hash() []byte {
-	return []byte(Fmt("%d-%d", e.Height_, e.Index_))
+	return []byte(Fmt("%d-%d", e.MGHeight, e.MGIndex))
 }
+
+// Verify ...
 func (e MockGoodEvidence) Verify(chainID string) error { return nil }
+
+// Equal ...
 func (e MockGoodEvidence) Equal(ev Evidence) bool {
 	e2 := ev.(MockGoodEvidence)
-	return e.Height_ == e2.Height_ &&
-		bytes.Equal(e.Address_, e2.Address_) &&
-		e.Index_ == e2.Index_
+	return e.MGHeight == e2.MGHeight &&
+		bytes.Equal(e.MGAddress, e2.MGAddress) &&
+		e.MGIndex == e2.MGIndex
 }
 func (e MockGoodEvidence) String() string {
-	return Fmt("GoodEvidence: %d/%s/%d", e.Height_, e.Address_, e.Index_)
+	return Fmt("GoodEvidence: %d/%s/%d", e.MGHeight, e.MGAddress, e.MGIndex)
 }
+
+// TypeName ...
 func (e MockGoodEvidence) TypeName() string {
 	return MockGood
 }
+
+// Copy ...
 func (e MockGoodEvidence) Copy() Evidence {
 	return &MockGoodEvidence{}
 }
+
+// SetChild ...
 func (e MockGoodEvidence) SetChild(proto.Message) {}
+
+// Child ...
 func (e MockGoodEvidence) Child() proto.Message {
 	return nil
 }
 
-// UNSTABLE
+// MockBadEvidence UNSTABLE
 type MockBadEvidence struct {
 	MockGoodEvidence
 }
 
+// Verify ...
 func (e MockBadEvidence) Verify(chainID string) error { return fmt.Errorf("MockBadEvidence") }
+
+// Equal ...
 func (e MockBadEvidence) Equal(ev Evidence) bool {
 	e2 := ev.(MockBadEvidence)
-	return e.Height_ == e2.Height_ &&
-		bytes.Equal(e.Address_, e2.Address_) &&
-		e.Index_ == e2.Index_
+	return e.MGHeight == e2.MGHeight &&
+		bytes.Equal(e.MGAddress, e2.MGAddress) &&
+		e.MGIndex == e2.MGIndex
 }
+
 func (e MockBadEvidence) String() string {
-	return Fmt("BadEvidence: %d/%s/%d", e.Height_, e.Address_, e.Index_)
+	return Fmt("BadEvidence: %d/%s/%d", e.MGHeight, e.MGAddress, e.MGIndex)
 }
+
+// TypeName ...
 func (e MockBadEvidence) TypeName() string {
 	return MockBad
 }
+
+// Copy ...
 func (e MockBadEvidence) Copy() Evidence {
 	return &MockBadEvidence{}
 }
+
+// SetChild ...
 func (e MockBadEvidence) SetChild(proto.Message) {}
+
+// Child ...
 func (e MockBadEvidence) Child() proto.Message {
 	return nil
 }
@@ -325,11 +364,16 @@ type EvidencePool interface {
 	Update(*TendermintBlock)
 }
 
-// MockMempool is an empty implementation of a Mempool, useful for testing.
+// MockEvidencePool is an empty implementation of a Mempool, useful for testing.
 // UNSTABLE
 type MockEvidencePool struct {
 }
 
+// PendingEvidence ...
 func (m MockEvidencePool) PendingEvidence() []Evidence { return nil }
+
+// AddEvidence ...
 func (m MockEvidencePool) AddEvidence(Evidence) error  { return nil }
+
+// Update ...
 func (m MockEvidencePool) Update(*TendermintBlock)     {}
