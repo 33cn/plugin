@@ -284,20 +284,20 @@ func (t *trade) replyReplyBuyOrderfromID(key []byte) *pty.ReplyBuyOrder {
 
 func sellOrder2reply(sellOrder *pty.SellOrder) *pty.ReplySellOrder {
 	reply := &pty.ReplySellOrder{
-		sellOrder.TokenSymbol,
-		sellOrder.Address,
-		sellOrder.AmountPerBoardlot,
-		sellOrder.MinBoardlot,
-		sellOrder.PricePerBoardlot,
-		sellOrder.TotalBoardlot,
-		sellOrder.SoldBoardlot,
-		"",
-		sellOrder.Status,
-		sellOrder.SellID,
-		strings.Replace(sellOrder.SellID, sellIDPrefix, "0x", 1),
-		sellOrder.Height,
-		sellOrder.SellID,
-		sellOrder.AssetExec,
+		TokenSymbol:       sellOrder.TokenSymbol,
+		Owner:             sellOrder.Address,
+		AmountPerBoardlot: sellOrder.AmountPerBoardlot,
+		MinBoardlot:       sellOrder.MinBoardlot,
+		PricePerBoardlot:  sellOrder.PricePerBoardlot,
+		TotalBoardlot:     sellOrder.TotalBoardlot,
+		SoldBoardlot:      sellOrder.SoldBoardlot,
+		BuyID:             "",
+		Status:            sellOrder.Status,
+		SellID:            sellOrder.SellID,
+		TxHash:            strings.Replace(sellOrder.SellID, sellIDPrefix, "0x", 1),
+		Height:            sellOrder.Height,
+		Key:               sellOrder.SellID,
+		AssetExec:         sellOrder.AssetExec,
 	}
 	return reply
 }
@@ -327,20 +327,20 @@ func txResult2sellOrderReply(txResult *types.TxResult) *pty.ReplySellOrder {
 
 			txhash := common.ToHex(txResult.GetTx().Hash())
 			reply := &pty.ReplySellOrder{
-				receipt.Base.TokenSymbol,
-				receipt.Base.Owner,
-				int64(amount * float64(types.TokenPrecision)),
-				receipt.Base.MinBoardlot,
-				int64(price * float64(types.Coin)),
-				receipt.Base.TotalBoardlot,
-				receipt.Base.SoldBoardlot,
-				receipt.Base.BuyID,
-				pty.SellOrderStatus2Int[receipt.Base.Status],
-				"",
-				txhash,
-				receipt.Base.Height,
-				txhash,
-				receipt.Base.AssetExec,
+				TokenSymbol:       receipt.Base.TokenSymbol,
+				Owner:             receipt.Base.Owner,
+				AmountPerBoardlot: int64(amount * float64(types.TokenPrecision)),
+				MinBoardlot:       receipt.Base.MinBoardlot,
+				PricePerBoardlot:  int64(price * float64(types.Coin)),
+				TotalBoardlot:     receipt.Base.TotalBoardlot,
+				SoldBoardlot:      receipt.Base.SoldBoardlot,
+				BuyID:             receipt.Base.BuyID,
+				Status:            pty.SellOrderStatus2Int[receipt.Base.Status],
+				SellID:            "",
+				TxHash:            txhash,
+				Height:            receipt.Base.Height,
+				Key:               txhash,
+				AssetExec:         receipt.Base.AssetExec,
 			}
 			tradelog.Debug("txResult2sellOrderReply", "show reply", reply)
 			return reply
@@ -351,20 +351,20 @@ func txResult2sellOrderReply(txResult *types.TxResult) *pty.ReplySellOrder {
 
 func buyOrder2reply(buyOrder *pty.BuyLimitOrder) *pty.ReplyBuyOrder {
 	reply := &pty.ReplyBuyOrder{
-		buyOrder.TokenSymbol,
-		buyOrder.Address,
-		buyOrder.AmountPerBoardlot,
-		buyOrder.MinBoardlot,
-		buyOrder.PricePerBoardlot,
-		buyOrder.TotalBoardlot,
-		buyOrder.BoughtBoardlot,
-		buyOrder.BuyID,
-		buyOrder.Status,
-		"",
-		strings.Replace(buyOrder.BuyID, buyIDPrefix, "0x", 1),
-		buyOrder.Height,
-		buyOrder.BuyID,
-		buyOrder.AssetExec,
+		TokenSymbol:       buyOrder.TokenSymbol,
+		Owner:             buyOrder.Address,
+		AmountPerBoardlot: buyOrder.AmountPerBoardlot,
+		MinBoardlot:       buyOrder.MinBoardlot,
+		PricePerBoardlot:  buyOrder.PricePerBoardlot,
+		TotalBoardlot:     buyOrder.TotalBoardlot,
+		BoughtBoardlot:    buyOrder.BoughtBoardlot,
+		BuyID:             buyOrder.BuyID,
+		Status:            buyOrder.Status,
+		SellID:            "",
+		TxHash:            strings.Replace(buyOrder.BuyID, buyIDPrefix, "0x", 1),
+		Height:            buyOrder.Height,
+		Key:               buyOrder.BuyID,
+		AssetExec:         buyOrder.AssetExec,
 	}
 	return reply
 }
@@ -393,20 +393,20 @@ func txResult2buyOrderReply(txResult *types.TxResult) *pty.ReplyBuyOrder {
 			}
 			txhash := common.ToHex(txResult.GetTx().Hash())
 			reply := &pty.ReplyBuyOrder{
-				receipt.Base.TokenSymbol,
-				receipt.Base.Owner,
-				int64(amount * float64(types.TokenPrecision)),
-				receipt.Base.MinBoardlot,
-				int64(price * float64(types.Coin)),
-				receipt.Base.TotalBoardlot,
-				receipt.Base.BoughtBoardlot,
-				"",
-				pty.SellOrderStatus2Int[receipt.Base.Status],
-				receipt.Base.SellID,
-				txhash,
-				receipt.Base.Height,
-				txhash,
-				receipt.Base.AssetExec,
+				TokenSymbol:       receipt.Base.TokenSymbol,
+				Owner:             receipt.Base.Owner,
+				AmountPerBoardlot: int64(amount * float64(types.TokenPrecision)),
+				MinBoardlot:       receipt.Base.MinBoardlot,
+				PricePerBoardlot:  int64(price * float64(types.Coin)),
+				TotalBoardlot:     receipt.Base.TotalBoardlot,
+				BoughtBoardlot:    receipt.Base.BoughtBoardlot,
+				BuyID:             "",
+				Status:            pty.SellOrderStatus2Int[receipt.Base.Status],
+				SellID:            receipt.Base.SellID,
+				TxHash:            txhash,
+				Height:            receipt.Base.Height,
+				Key:               txhash,
+				AssetExec:         receipt.Base.AssetExec,
 			}
 			tradelog.Debug("txResult2sellOrderReply", "show reply", reply)
 			return reply
@@ -466,22 +466,22 @@ func buyBase2Order(base *pty.ReceiptBuyBase, txHash string, blockTime int64) *pt
 	}
 	//txhash := common.ToHex(txResult.GetTx().Hash())
 	reply := &pty.ReplyTradeOrder{
-		base.TokenSymbol,
-		base.Owner,
-		int64(amount * float64(types.TokenPrecision)),
-		base.MinBoardlot,
-		int64(price * float64(types.Coin)),
-		base.TotalBoardlot,
-		base.BoughtBoardlot,
-		base.BuyID,
-		pty.SellOrderStatus2Int[base.Status],
-		base.SellID,
-		txHash,
-		base.Height,
-		key,
-		blockTime,
-		false,
-		base.AssetExec,
+		TokenSymbol:       base.TokenSymbol,
+		Owner:             base.Owner,
+		AmountPerBoardlot: int64(amount * float64(types.TokenPrecision)),
+		MinBoardlot:       base.MinBoardlot,
+		PricePerBoardlot:  int64(price * float64(types.Coin)),
+		TotalBoardlot:     base.TotalBoardlot,
+		TradedBoardlot:    base.BoughtBoardlot,
+		BuyID:             base.BuyID,
+		Status:            pty.SellOrderStatus2Int[base.Status],
+		SellID:            base.SellID,
+		TxHash:            txHash,
+		Height:            base.Height,
+		Key:               key,
+		BlockTime:         blockTime,
+		IsSellOrder:       false,
+		AssetExec:         base.AssetExec,
 	}
 	tradelog.Debug("txResult2sellOrderReply", "show reply", reply)
 	return reply
@@ -504,22 +504,22 @@ func sellBase2Order(base *pty.ReceiptSellBase, txHash string, blockTime int64) *
 		key = base.SellID
 	}
 	reply := &pty.ReplyTradeOrder{
-		base.TokenSymbol,
-		base.Owner,
-		int64(amount * float64(types.TokenPrecision)),
-		base.MinBoardlot,
-		int64(price * float64(types.Coin)),
-		base.TotalBoardlot,
-		base.SoldBoardlot,
-		base.BuyID,
-		pty.SellOrderStatus2Int[base.Status],
-		base.SellID,
-		txHash,
-		base.Height,
-		key,
-		blockTime,
-		true,
-		base.AssetExec,
+		TokenSymbol:       base.TokenSymbol,
+		Owner:             base.Owner,
+		AmountPerBoardlot: int64(amount * float64(types.TokenPrecision)),
+		MinBoardlot:       base.MinBoardlot,
+		PricePerBoardlot:  int64(price * float64(types.Coin)),
+		TotalBoardlot:     base.TotalBoardlot,
+		TradedBoardlot:    base.SoldBoardlot,
+		BuyID:             base.BuyID,
+		Status:            pty.SellOrderStatus2Int[base.Status],
+		SellID:            base.SellID,
+		TxHash:            txHash,
+		Height:            base.Height,
+		Key:               key,
+		BlockTime:         blockTime,
+		IsSellOrder:       true,
+		AssetExec:         base.AssetExec,
 	}
 	tradelog.Debug("txResult2sellOrderReply", "show reply", reply)
 	return reply
@@ -630,15 +630,13 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 		}
 		reply.TradedBoardlot = buyOrder.BoughtBoardlot
 		return reply
-	} else { // txhash as key
-		txResult, err := getTx(key, t.GetLocalDB())
-		tradelog.Debug("loadOrderFromKey ", "load txhash", string(key))
-		if err != nil {
-			return nil
-		}
-		return txResult2OrderReply(txResult)
 	}
-	return nil
+	txResult, err := getTx(key, t.GetLocalDB())
+	tradelog.Debug("loadOrderFromKey ", "load txhash", string(key))
+	if err != nil {
+		return nil
+	}
+	return txResult2OrderReply(txResult)
 }
 
 func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
