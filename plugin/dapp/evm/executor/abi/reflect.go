@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-// indirect recursively dereferences the value until it either gets the value
+// indirect recursively dereferences the Value until it either gets the Value
 // or finds a big.Int
 func indirect(v reflect.Value) reflect.Value {
 	if v.Kind() == reflect.Ptr && v.Elem().Type() != derefbigT {
@@ -59,8 +59,8 @@ func reflectIntKindAndType(unsigned bool, size int) (reflect.Kind, reflect.Type)
 	return reflect.Ptr, bigT
 }
 
-// mustArrayToBytesSlice creates a new byte slice with the exact same size as value
-// and copies the bytes in value to the new slice.
+// mustArrayToBytesSlice creates a new byte slice with the exact same size as Value
+// and copies the bytes in Value to the new slice.
 func mustArrayToByteSlice(value reflect.Value) reflect.Value {
 	slice := reflect.MakeSlice(reflect.TypeOf([]byte{}), value.Len(), value.Len())
 	reflect.Copy(slice, value)
@@ -114,7 +114,7 @@ func requireUnpackKind(v reflect.Value, t reflect.Type, k reflect.Kind,
 
 // mapAbiToStringField maps abi to struct fields.
 // first round: for each Exportable field that contains a `abi:""` tag
-//   and this field name exists in the arguments, pair them together.
+//   and this field Name exists in the arguments, pair them together.
 // second round: for each argument field that has not been already linked,
 //   find what variable is expected to be mapped into, if it exists and has not been
 //   used, pair them.
@@ -178,9 +178,9 @@ func mapAbiToStructFields(args Arguments, value reflect.Value) (map[string]strin
 		}
 
 		// this abi has already been paired, skip it... unless there exists another, yet unassigned
-		// struct field with the same field name. If so, raise an error:
-		//    abi: [ { "name": "value" } ]
-		//    struct { Value  *big.Int , Value1 *big.Int `abi:"value"`}
+		// struct field with the same field Name. If so, raise an error:
+		//    abi: [ { "Name": "Value" } ]
+		//    struct { Value  *big.Int , Value1 *big.Int `abi:"Value"`}
 		if abi2struct[abiFieldName] != "" {
 			if abi2struct[abiFieldName] != structFieldName &&
 				struct2abi[structFieldName] == "" &&
@@ -201,7 +201,7 @@ func mapAbiToStructFields(args Arguments, value reflect.Value) (map[string]strin
 			struct2abi[structFieldName] = abiFieldName
 		} else {
 			// not paired, but annotate as used, to detect cases like
-			//   abi : [ { "name": "value" }, { "name": "_value" } ]
+			//   abi : [ { "Name": "Value" }, { "Name": "_value" } ]
 			//   struct { Value *big.Int }
 			struct2abi[structFieldName] = abiFieldName
 		}

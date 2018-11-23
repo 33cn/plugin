@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-// Argument holds the name of the argument and the corresponding type.
+// Argument holds the Name of the argument and the corresponding type.
 // Types are used when packing and testing arguments.
 type Argument struct {
 	Name    string
@@ -86,7 +86,7 @@ func (arguments Arguments) isTuple() bool {
 // Unpack performs the operation hexdata -> Go format
 func (arguments Arguments) Unpack(v interface{}, data []byte) error {
 
-	// make sure the passed value is arguments pointer
+	// make sure the passed Value is arguments pointer
 	if reflect.Ptr != reflect.ValueOf(v).Kind() {
 		return fmt.Errorf("abi: Unpack(non-pointer %T)", v)
 	}
@@ -152,10 +152,10 @@ func (arguments Arguments) unpackTuple(v interface{}, marshalledValues []interfa
 	return nil
 }
 
-// unpackAtomic unpacks ( hexdata -> go ) a single value
+// unpackAtomic unpacks ( hexdata -> go ) a single Value
 func (arguments Arguments) unpackAtomic(v interface{}, marshalledValues []interface{}) error {
 	if len(marshalledValues) != 1 {
-		return fmt.Errorf("abi: wrong length, expected single value, got %d", len(marshalledValues))
+		return fmt.Errorf("abi: wrong length, expected single Value, got %d", len(marshalledValues))
 	}
 
 	elem := reflect.ValueOf(v).Elem()
@@ -267,7 +267,7 @@ func (arguments Arguments) Pack(args ...interface{}) ([]byte, error) {
 			// will be appended at the end of the input.
 			variableInput = append(variableInput, packed...)
 		} else {
-			// append the packed value to the input
+			// append the packed Value to the input
 			ret = append(ret, packed...)
 		}
 	}

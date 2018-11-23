@@ -44,7 +44,7 @@ func JSON(reader io.Reader) (ABI, error) {
 	return abi, nil
 }
 
-// Pack the given method name to conform the ABI. Method call's data
+// Pack the given method Name to conform the ABI. Method call's data
 // will consist of method_id, args0, arg1, ... argN. Method id consists
 // of 4 bytes and arguments are all 32 bytes.
 // Method ids are created from the first 4 bytes of the hash of the

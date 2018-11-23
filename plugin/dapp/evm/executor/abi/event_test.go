@@ -35,39 +35,39 @@ var jsonEventTransfer = []byte(`{
   "anonymous": false,
   "inputs": [
     {
-      "indexed": true, "name": "from", "type": "address"
+      "indexed": true, "Name": "from", "type": "address"
     }, {
-      "indexed": true, "name": "to", "type": "address"
+      "indexed": true, "Name": "to", "type": "address"
     }, {
-      "indexed": false, "name": "value", "type": "uint256"
+      "indexed": false, "Name": "Value", "type": "uint256"
   }],
-  "name": "Transfer",
+  "Name": "Transfer",
   "type": "event"
 }`)
 
 var jsonEventPledge = []byte(`{
   "anonymous": false,
   "inputs": [{
-      "indexed": false, "name": "who", "type": "address"
+      "indexed": false, "Name": "who", "type": "address"
     }, {
-      "indexed": false, "name": "wad", "type": "uint128"
+      "indexed": false, "Name": "wad", "type": "uint128"
     }, {
-      "indexed": false, "name": "currency", "type": "bytes3"
+      "indexed": false, "Name": "currency", "type": "bytes3"
   }],
-  "name": "Pledge",
+  "Name": "Pledge",
   "type": "event"
 }`)
 
 var jsonEventMixedCase = []byte(`{
 	"anonymous": false,
 	"inputs": [{
-		"indexed": false, "name": "value", "type": "uint256"
+		"indexed": false, "Name": "Value", "type": "uint256"
 	  }, {
-		"indexed": false, "name": "_value", "type": "uint256"
+		"indexed": false, "Name": "_value", "type": "uint256"
 	  }, {
-		"indexed": false, "name": "Value", "type": "uint256"
+		"indexed": false, "Name": "Value", "type": "uint256"
 	}],
-	"name": "MixedCase",
+	"Name": "MixedCase",
 	"type": "event"
   }`)
 
@@ -87,8 +87,8 @@ func TestEventId(t *testing.T) {
 	}{
 		{
 			definition: `[
-			{ "type" : "event", "name" : "balance", "inputs": [{ "name" : "in", "type": "uint256" }] },
-			{ "type" : "event", "name" : "check", "inputs": [{ "name" : "t", "type": "address" }, { "name": "b", "type": "uint256" }] }
+			{ "type" : "event", "Name" : "balance", "inputs": [{ "Name" : "in", "type": "uint256" }] },
+			{ "type" : "event", "Name" : "check", "inputs": [{ "Name" : "t", "type": "address" }, { "Name": "b", "type": "uint256" }] }
 			]`,
 			expectations: map[string]common.Hash{
 				"balance": crypto.Keccak256Hash([]byte("balance(uint256)")),
@@ -113,7 +113,7 @@ func TestEventId(t *testing.T) {
 
 // TestEventMultiValueWithArrayUnpack verifies that array fields will be counted after parsing array.
 func TestEventMultiValueWithArrayUnpack(t *testing.T) {
-	definition := `[{"name": "test", "type": "event", "inputs": [{"indexed": false, "name":"value1", "type":"uint8[2]"},{"indexed": false, "name":"value2", "type":"uint8"}]}]`
+	definition := `[{"Name": "test", "type": "event", "inputs": [{"indexed": false, "Name":"value1", "type":"uint8[2]"},{"indexed": false, "Name":"value2", "type":"uint8"}]}]`
 	type testStruct struct {
 		Value1 [2]uint8
 		Value2 uint8
@@ -138,20 +138,20 @@ func TestEventTupleUnpack(t *testing.T) {
 	}
 
 	type EventTransferWithTag struct {
-		// this is valid because `value` is not exportable,
-		// so value is only unmarshalled into `Value1`.
+		// this is valid because `Value` is not exportable,
+		// so Value is only unmarshalled into `Value1`.
 		value  *big.Int
-		Value1 *big.Int `abi:"value"`
+		Value1 *big.Int `abi:"Value"`
 	}
 
 	type BadEventTransferWithSameFieldAndTag struct {
 		Value  *big.Int
-		Value1 *big.Int `abi:"value"`
+		Value1 *big.Int `abi:"Value"`
 	}
 
 	type BadEventTransferWithDuplicatedTag struct {
-		Value1 *big.Int `abi:"value"`
-		Value2 *big.Int `abi:"value"`
+		Value1 *big.Int `abi:"Value"`
+		Value2 *big.Int `abi:"Value"`
 	}
 
 	type BadEventTransferWithEmptyTag struct {
@@ -171,7 +171,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	}
 
 	type EventMixedCase struct {
-		Value1 *big.Int `abi:"value"`
+		Value1 *big.Int `abi:"Value"`
 		Value2 *big.Int `abi:"_value"`
 		Value3 *big.Int `abi:"Value"`
 	}
@@ -221,7 +221,7 @@ func TestEventTupleUnpack(t *testing.T) {
 		&BadEventTransferWithSameFieldAndTag{},
 		&BadEventTransferWithSameFieldAndTag{},
 		jsonEventTransfer,
-		"abi: multiple variables maps to the same abi field 'value'",
+		"abi: multiple variables maps to the same abi field 'Value'",
 		"Can not unpack ERC20 Transfer event with a field and a tag mapping to the same abi variable",
 	}, {
 		transferData1,
@@ -357,7 +357,7 @@ func (tc testCase) encoded(intType, arrayType Type) []byte {
 
 // TestEventUnpackIndexed verifies that indexed field will be skipped by event decoder.
 func TestEventUnpackIndexed(t *testing.T) {
-	definition := `[{"name": "test", "type": "event", "inputs": [{"indexed": true, "name":"value1", "type":"uint8"},{"indexed": false, "name":"value2", "type":"uint8"}]}]`
+	definition := `[{"Name": "test", "type": "event", "inputs": [{"indexed": true, "Name":"value1", "type":"uint8"},{"indexed": false, "Name":"value2", "type":"uint8"}]}]`
 	type testStruct struct {
 		Value1 uint8
 		Value2 uint8
@@ -374,7 +374,7 @@ func TestEventUnpackIndexed(t *testing.T) {
 
 // TestEventIndexedWithArrayUnpack verifies that decoder will not overlow when static array is indexed input.
 func TestEventIndexedWithArrayUnpack(t *testing.T) {
-	definition := `[{"name": "test", "type": "event", "inputs": [{"indexed": true, "name":"value1", "type":"uint8[2]"},{"indexed": false, "name":"value2", "type":"string"}]}]`
+	definition := `[{"Name": "test", "type": "event", "inputs": [{"indexed": true, "Name":"value1", "type":"uint8[2]"},{"indexed": false, "Name":"value2", "type":"string"}]}]`
 	type testStruct struct {
 		Value1 [2]uint8
 		Value2 string

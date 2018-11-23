@@ -33,26 +33,26 @@ import (
 
 const jsondata = `
 [
-	{ "type" : "function", "name" : "balance", "constant" : true },
-	{ "type" : "function", "name" : "send", "constant" : false, "inputs" : [ { "name" : "amount", "type" : "uint256" } ] }
+	{ "type" : "function", "Name" : "balance", "constant" : true },
+	{ "type" : "function", "Name" : "send", "constant" : false, "inputs" : [ { "Name" : "amount", "type" : "uint256" } ] }
 ]`
 
 const jsondata2 = `
 [
-	{ "type" : "function", "name" : "balance", "constant" : true },
-	{ "type" : "function", "name" : "send", "constant" : false, "inputs" : [ { "name" : "amount", "type" : "uint256" } ] },
-	{ "type" : "function", "name" : "test", "constant" : false, "inputs" : [ { "name" : "number", "type" : "uint32" } ] },
-	{ "type" : "function", "name" : "string", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "string" } ] },
-	{ "type" : "function", "name" : "bool", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "bool" } ] },
-	{ "type" : "function", "name" : "address", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "address" } ] },
-	{ "type" : "function", "name" : "uint64[2]", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint64[2]" } ] },
-	{ "type" : "function", "name" : "uint64[]", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint64[]" } ] },
-	{ "type" : "function", "name" : "foo", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint32" } ] },
-	{ "type" : "function", "name" : "bar", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint32" }, { "name" : "string", "type" : "uint16" } ] },
-	{ "type" : "function", "name" : "slice", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint32[2]" } ] },
-	{ "type" : "function", "name" : "slice256", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "uint256[2]" } ] },
-	{ "type" : "function", "name" : "sliceAddress", "constant" : false, "inputs" : [ { "name" : "inputs", "type" : "address[]" } ] },
-	{ "type" : "function", "name" : "sliceMultiAddress", "constant" : false, "inputs" : [ { "name" : "a", "type" : "address[]" }, { "name" : "b", "type" : "address[]" } ] }
+	{ "type" : "function", "Name" : "balance", "constant" : true },
+	{ "type" : "function", "Name" : "send", "constant" : false, "inputs" : [ { "Name" : "amount", "type" : "uint256" } ] },
+	{ "type" : "function", "Name" : "test", "constant" : false, "inputs" : [ { "Name" : "number", "type" : "uint32" } ] },
+	{ "type" : "function", "Name" : "string", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "string" } ] },
+	{ "type" : "function", "Name" : "bool", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "bool" } ] },
+	{ "type" : "function", "Name" : "address", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "address" } ] },
+	{ "type" : "function", "Name" : "uint64[2]", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint64[2]" } ] },
+	{ "type" : "function", "Name" : "uint64[]", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint64[]" } ] },
+	{ "type" : "function", "Name" : "foo", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint32" } ] },
+	{ "type" : "function", "Name" : "bar", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint32" }, { "Name" : "string", "type" : "uint16" } ] },
+	{ "type" : "function", "Name" : "slice", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint32[2]" } ] },
+	{ "type" : "function", "Name" : "slice256", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "uint256[2]" } ] },
+	{ "type" : "function", "Name" : "sliceAddress", "constant" : false, "inputs" : [ { "Name" : "inputs", "type" : "address[]" } ] },
+	{ "type" : "function", "Name" : "sliceMultiAddress", "constant" : false, "inputs" : [ { "Name" : "a", "type" : "address[]" }, { "Name" : "b", "type" : "address[]" } ] }
 ]`
 
 func TestReader(t *testing.T) {
@@ -221,7 +221,7 @@ func TestMultiPack(t *testing.T) {
 }
 
 func ExampleJSON() {
-	const definition = `[{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"isBar","outputs":[{"name":"","type":"bool"}],"type":"function"}]`
+	const definition = `[{"constant":true,"inputs":[{"Name":"","type":"address"}],"Name":"isBar","outputs":[{"Name":"","type":"bool"}],"type":"function"}]`
 
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
@@ -239,9 +239,9 @@ func ExampleJSON() {
 
 func TestInputVariableInputLength(t *testing.T) {
 	const definition = `[
-	{ "type" : "function", "name" : "strOne", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" } ] },
-	{ "type" : "function", "name" : "bytesOne", "constant" : true, "inputs" : [ { "name" : "str", "type" : "bytes" } ] },
-	{ "type" : "function", "name" : "strTwo", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" }, { "name" : "str1", "type" : "string" } ] }
+	{ "type" : "function", "Name" : "strOne", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" } ] },
+	{ "type" : "function", "Name" : "bytesOne", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "bytes" } ] },
+	{ "type" : "function", "Name" : "strTwo", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" }, { "Name" : "str1", "type" : "string" } ] }
 	]`
 
 	abi, err := JSON(strings.NewReader(definition))
@@ -367,11 +367,11 @@ func TestInputVariableInputLength(t *testing.T) {
 
 func TestInputFixedArrayAndVariableInputLength(t *testing.T) {
 	const definition = `[
-	{ "type" : "function", "name" : "fixedArrStr", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" }, { "name" : "fixedArr", "type" : "uint256[2]" } ] },
-	{ "type" : "function", "name" : "fixedArrBytes", "constant" : true, "inputs" : [ { "name" : "str", "type" : "bytes" }, { "name" : "fixedArr", "type" : "uint256[2]" } ] },
-    { "type" : "function", "name" : "mixedArrStr", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" }, { "name" : "fixedArr", "type": "uint256[2]" }, { "name" : "dynArr", "type": "uint256[]" } ] },
-    { "type" : "function", "name" : "doubleFixedArrStr", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" }, { "name" : "fixedArr1", "type": "uint256[2]" }, { "name" : "fixedArr2", "type": "uint256[3]" } ] },
-    { "type" : "function", "name" : "multipleMixedArrStr", "constant" : true, "inputs" : [ { "name" : "str", "type" : "string" }, { "name" : "fixedArr1", "type": "uint256[2]" }, { "name" : "dynArr", "type" : "uint256[]" }, { "name" : "fixedArr2", "type" : "uint256[3]" } ] }
+	{ "type" : "function", "Name" : "fixedArrStr", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" }, { "Name" : "fixedArr", "type" : "uint256[2]" } ] },
+	{ "type" : "function", "Name" : "fixedArrBytes", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "bytes" }, { "Name" : "fixedArr", "type" : "uint256[2]" } ] },
+    { "type" : "function", "Name" : "mixedArrStr", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" }, { "Name" : "fixedArr", "type": "uint256[2]" }, { "Name" : "dynArr", "type": "uint256[]" } ] },
+    { "type" : "function", "Name" : "doubleFixedArrStr", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" }, { "Name" : "fixedArr1", "type": "uint256[2]" }, { "Name" : "fixedArr2", "type": "uint256[3]" } ] },
+    { "type" : "function", "Name" : "multipleMixedArrStr", "constant" : true, "inputs" : [ { "Name" : "str", "type" : "string" }, { "Name" : "fixedArr1", "type": "uint256[2]" }, { "Name" : "dynArr", "type" : "uint256[]" }, { "Name" : "fixedArr2", "type" : "uint256[3]" } ] }
 	]`
 
 	abi, err := JSON(strings.NewReader(definition))
@@ -548,7 +548,7 @@ func TestInputFixedArrayAndVariableInputLength(t *testing.T) {
 }
 
 func TestDefaultFunctionParsing(t *testing.T) {
-	const definition = `[{ "name" : "balance" }]`
+	const definition = `[{ "Name" : "balance" }]`
 
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
@@ -562,9 +562,9 @@ func TestDefaultFunctionParsing(t *testing.T) {
 
 func TestBareEvents(t *testing.T) {
 	const definition = `[
-	{ "type" : "event", "name" : "balance" },
-	{ "type" : "event", "name" : "anon", "anonymous" : true},
-	{ "type" : "event", "name" : "args", "inputs" : [{ "indexed":false, "name":"arg0", "type":"uint256" }, { "indexed":true, "name":"arg1", "type":"address" }] }
+	{ "type" : "event", "Name" : "balance" },
+	{ "type" : "event", "Name" : "anon", "anonymous" : true},
+	{ "type" : "event", "Name" : "args", "inputs" : [{ "indexed":false, "Name":"arg0", "type":"uint256" }, { "indexed":true, "Name":"arg1", "type":"address" }] }
 	]`
 
 	arg0, _ := NewType("uint256")
@@ -606,7 +606,7 @@ func TestBareEvents(t *testing.T) {
 		}
 		for i, arg := range exp.Args {
 			if arg.Name != got.Inputs[i].Name {
-				t.Errorf("events[%s].Input[%d] has an invalid name, want %s, got %s", name, i, arg.Name, got.Inputs[i].Name)
+				t.Errorf("events[%s].Input[%d] has an invalid Name, want %s, got %s", name, i, arg.Name, got.Inputs[i].Name)
 			}
 			if arg.Indexed != got.Inputs[i].Indexed {
 				t.Errorf("events[%s].Input[%d] has an invalid indexed indication, want %v, got %v", name, i, arg.Indexed, got.Inputs[i].Indexed)
@@ -623,14 +623,14 @@ func TestBareEvents(t *testing.T) {
 //      event received(address sender, uint amount, bytes memo);
 //      event receivedAddr(address sender);
 //      function receive(bytes memo) external payable {
-//        received(msg.sender, msg.value, memo);
+//        received(msg.sender, msg.Value, memo);
 //        receivedAddr(msg.sender);
 //      }
 //    }
-// When receive("X") is called with sender 0x00... and value 1, it produces this tx receipt:
+// When receive("X") is called with sender 0x00... and Value 1, it produces this tx receipt:
 //   receipt{status=1 cgas=23949 bloom=00000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000040200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 logs=[log: b6818c8064f645cd82d99b59a1a267d6d61117ef [75fd880d39c1daf53b6547ab6cb59451fc6452d27caa90e5b6649dd8293b9eed] 000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158 9ae378b6d4409eada347a5dc0c180f186cb62dc68fcc0f043425eb917335aa28 0 95d429d309bb9d753954195fe2d69bd140b4ae731b9b5b605c34323de162cf00 0]}
 func TestUnpackEvent(t *testing.T) {
-	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
+	const abiJSON = `[{"constant":false,"inputs":[{"Name":"memo","type":"bytes"}],"Name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"Name":"sender","type":"address"},{"indexed":false,"Name":"amount","type":"uint256"},{"indexed":false,"Name":"memo","type":"bytes"}],"Name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"Name":"sender","type":"address"}],"Name":"receivedAddr","type":"event"}]`
 	abi, err := JSON(strings.NewReader(abiJSON))
 	if err != nil {
 		t.Fatal(err)
@@ -673,27 +673,27 @@ func TestUnpackEvent(t *testing.T) {
 
 func TestABI_MethodById(t *testing.T) {
 	const abiJSON = `[
-		{"type":"function","name":"receive","constant":false,"inputs":[{"name":"memo","type":"bytes"}],"outputs":[],"payable":true,"stateMutability":"payable"},
-		{"type":"event","name":"received","anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}]},
-		{"type":"function","name":"fixedArrStr","constant":true,"inputs":[{"name":"str","type":"string"},{"name":"fixedArr","type":"uint256[2]"}]},
-		{"type":"function","name":"fixedArrBytes","constant":true,"inputs":[{"name":"str","type":"bytes"},{"name":"fixedArr","type":"uint256[2]"}]},
-		{"type":"function","name":"mixedArrStr","constant":true,"inputs":[{"name":"str","type":"string"},{"name":"fixedArr","type":"uint256[2]"},{"name":"dynArr","type":"uint256[]"}]},
-		{"type":"function","name":"doubleFixedArrStr","constant":true,"inputs":[{"name":"str","type":"string"},{"name":"fixedArr1","type":"uint256[2]"},{"name":"fixedArr2","type":"uint256[3]"}]},
-		{"type":"function","name":"multipleMixedArrStr","constant":true,"inputs":[{"name":"str","type":"string"},{"name":"fixedArr1","type":"uint256[2]"},{"name":"dynArr","type":"uint256[]"},{"name":"fixedArr2","type":"uint256[3]"}]},
-		{"type":"function","name":"balance","constant":true},
-		{"type":"function","name":"send","constant":false,"inputs":[{"name":"amount","type":"uint256"}]},
-		{"type":"function","name":"test","constant":false,"inputs":[{"name":"number","type":"uint32"}]},
-		{"type":"function","name":"string","constant":false,"inputs":[{"name":"inputs","type":"string"}]},
-		{"type":"function","name":"bool","constant":false,"inputs":[{"name":"inputs","type":"bool"}]},
-		{"type":"function","name":"address","constant":false,"inputs":[{"name":"inputs","type":"address"}]},
-		{"type":"function","name":"uint64[2]","constant":false,"inputs":[{"name":"inputs","type":"uint64[2]"}]},
-		{"type":"function","name":"uint64[]","constant":false,"inputs":[{"name":"inputs","type":"uint64[]"}]},
-		{"type":"function","name":"foo","constant":false,"inputs":[{"name":"inputs","type":"uint32"}]},
-		{"type":"function","name":"bar","constant":false,"inputs":[{"name":"inputs","type":"uint32"},{"name":"string","type":"uint16"}]},
-		{"type":"function","name":"_slice","constant":false,"inputs":[{"name":"inputs","type":"uint32[2]"}]},
-		{"type":"function","name":"__slice256","constant":false,"inputs":[{"name":"inputs","type":"uint256[2]"}]},
-		{"type":"function","name":"sliceAddress","constant":false,"inputs":[{"name":"inputs","type":"address[]"}]},
-		{"type":"function","name":"sliceMultiAddress","constant":false,"inputs":[{"name":"a","type":"address[]"},{"name":"b","type":"address[]"}]}
+		{"type":"function","Name":"receive","constant":false,"inputs":[{"Name":"memo","type":"bytes"}],"outputs":[],"payable":true,"stateMutability":"payable"},
+		{"type":"event","Name":"received","anonymous":false,"inputs":[{"indexed":false,"Name":"sender","type":"address"},{"indexed":false,"Name":"amount","type":"uint256"},{"indexed":false,"Name":"memo","type":"bytes"}]},
+		{"type":"function","Name":"fixedArrStr","constant":true,"inputs":[{"Name":"str","type":"string"},{"Name":"fixedArr","type":"uint256[2]"}]},
+		{"type":"function","Name":"fixedArrBytes","constant":true,"inputs":[{"Name":"str","type":"bytes"},{"Name":"fixedArr","type":"uint256[2]"}]},
+		{"type":"function","Name":"mixedArrStr","constant":true,"inputs":[{"Name":"str","type":"string"},{"Name":"fixedArr","type":"uint256[2]"},{"Name":"dynArr","type":"uint256[]"}]},
+		{"type":"function","Name":"doubleFixedArrStr","constant":true,"inputs":[{"Name":"str","type":"string"},{"Name":"fixedArr1","type":"uint256[2]"},{"Name":"fixedArr2","type":"uint256[3]"}]},
+		{"type":"function","Name":"multipleMixedArrStr","constant":true,"inputs":[{"Name":"str","type":"string"},{"Name":"fixedArr1","type":"uint256[2]"},{"Name":"dynArr","type":"uint256[]"},{"Name":"fixedArr2","type":"uint256[3]"}]},
+		{"type":"function","Name":"balance","constant":true},
+		{"type":"function","Name":"send","constant":false,"inputs":[{"Name":"amount","type":"uint256"}]},
+		{"type":"function","Name":"test","constant":false,"inputs":[{"Name":"number","type":"uint32"}]},
+		{"type":"function","Name":"string","constant":false,"inputs":[{"Name":"inputs","type":"string"}]},
+		{"type":"function","Name":"bool","constant":false,"inputs":[{"Name":"inputs","type":"bool"}]},
+		{"type":"function","Name":"address","constant":false,"inputs":[{"Name":"inputs","type":"address"}]},
+		{"type":"function","Name":"uint64[2]","constant":false,"inputs":[{"Name":"inputs","type":"uint64[2]"}]},
+		{"type":"function","Name":"uint64[]","constant":false,"inputs":[{"Name":"inputs","type":"uint64[]"}]},
+		{"type":"function","Name":"foo","constant":false,"inputs":[{"Name":"inputs","type":"uint32"}]},
+		{"type":"function","Name":"bar","constant":false,"inputs":[{"Name":"inputs","type":"uint32"},{"Name":"string","type":"uint16"}]},
+		{"type":"function","Name":"_slice","constant":false,"inputs":[{"Name":"inputs","type":"uint32[2]"}]},
+		{"type":"function","Name":"__slice256","constant":false,"inputs":[{"Name":"inputs","type":"uint256[2]"}]},
+		{"type":"function","Name":"sliceAddress","constant":false,"inputs":[{"Name":"inputs","type":"address[]"}]},
+		{"type":"function","Name":"sliceMultiAddress","constant":false,"inputs":[{"Name":"a","type":"address[]"},{"Name":"b","type":"address[]"}]}
 	]
 `
 	abi, err := JSON(strings.NewReader(abiJSON))

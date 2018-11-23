@@ -30,7 +30,7 @@ func packBytesSlice(bytes []byte, l int) []byte {
 	return append(len, common.RightPadBytes(bytes, (l+31)/32*32)...)
 }
 
-// packElement packs the given reflect value according to the abi specification in
+// packElement packs the given reflect Value according to the abi specification in
 // t.
 func packElement(t Type, reflectValue reflect.Value) []byte {
 	switch t.T {
@@ -64,7 +64,7 @@ func packElement(t Type, reflectValue reflect.Value) []byte {
 	}
 }
 
-// packNum packs the given number (using the reflect value) and will cast it to appropriate number representation
+// packNum packs the given number (using the reflect Value) and will cast it to appropriate number representation
 func packNum(value reflect.Value) []byte {
 	switch kind := value.Kind(); kind {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:

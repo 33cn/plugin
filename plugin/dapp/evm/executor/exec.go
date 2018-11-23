@@ -9,6 +9,7 @@ import (
 
 	"strings"
 
+	"bytes"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
@@ -41,6 +42,9 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		contractAddr common.Address
 		snapshot     int
 		execName     string
+		abiCall      bool
+		abiData      string
+		methodName   string
 	)
 
 	// 为了方便计费，即使合约为新生成，也将地址的初始化放到外面操作
@@ -62,9 +66,24 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	if isCreate {
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias())
 	} else {
+		inData := msg.Data()
 		//TODO 在这里进行ABI和十六进制的调用参数转换
-
-		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), msg.Data(), context.GasLimit, msg.Value())
+		if bytes.HasPrefix(msg.Data(), evmtypes.ABICallPrefix) {
+			abiCall = true
+			callData := msg.Data()[len(evmtypes.ABICallPrefix):]
+			abiDataBin, err := evm.GetStateDB().Get(getABIKey(*msg.To()))
+			if err != nil {
+				return nil, err
+			}
+			abiData = string(abiDataBin)
+			funcName, packData, err := abi.Pack(string(callData), abiData)
+			if err != nil {
+				return nil, err
+			}
+			methodName = funcName
+			inData = packData
+		}
+		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
 	}
 
 	log.Debug("call(create) contract ", "input", common.Bytes2Hex(msg.Data()))
@@ -103,7 +122,9 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	data, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 
 	// TODO 在这里进行调用结果的转换
-	
+	if abiCall {
+
+	}
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
@@ -121,6 +142,8 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		_, err = abi.JSON(strings.NewReader(msg.ABI()))
 		if err == nil {
 			data = append(data, evm.getABIKV(contractAddr, msg.ABI()))
+		} else {
+			log.Debug("invalid abi data in transaction note", "note", msg.ABI())
 		}
 	}
 

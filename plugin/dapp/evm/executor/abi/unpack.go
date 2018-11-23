@@ -135,7 +135,7 @@ func forEachUnpack(t Type, output []byte, start, size int) (interface{}, error) 
 		return nil, fmt.Errorf("abi: cannot marshal in to go array: offset %d would go over slice boundary (len=%d)", len(output), start+32*size)
 	}
 
-	// this value will become our slice or our array, depending on the type
+	// this Value will become our slice or our array, depending on the type
 	var refSlice reflect.Value
 
 	if t.T == SliceTy {
@@ -170,7 +170,7 @@ func forEachUnpack(t Type, output []byte, start, size int) (interface{}, error) 
 	return refSlice.Interface(), nil
 }
 
-// toGoType parses the output bytes and recursively assigns the value of these bytes
+// toGoType parses the output bytes and recursively assigns the Value of these bytes
 // into a go type with accordance with the ABI spec.
 func toGoType(index int, t Type, output []byte) (interface{}, error) {
 	if index+32 > len(output) {

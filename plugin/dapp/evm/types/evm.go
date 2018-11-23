@@ -23,8 +23,7 @@ var (
 		"EvmCall":   EvmCallAction,
 	}
 
-	BindABIPrefix = ecommon.FromHex("0x00000000")
-	ABICallPrefix = ecommon.FromHex("0xffffffff")
+	ABICallPrefix = ecommon.FromHex("0x00000000")
 )
 
 func init() {
@@ -214,9 +213,9 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 		return createRawTx(action, "")
 	} else {
 		if err != nil {
-			elog.Debug("create evm call Tx as abi", "param.Code", param.Code)
+			elog.Info("evm call data is invalid hex data, process it as abi data", "param.Code", param.Code)
 			bCode = []byte(param.Code)
-			bCode = append(BindABIPrefix, bCode...)
+			bCode = append(ABICallPrefix, bCode...)
 		}
 		return createRawTx(action, param.Name)
 	}

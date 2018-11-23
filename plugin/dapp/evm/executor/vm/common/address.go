@@ -84,6 +84,11 @@ func (h Hash160Address) Hex() string {
 	return "0x" + string(result)
 }
 
+// ToAddress 返回Chain33格式的地址
+func (h Hash160Address) ToAddress() Address {
+	return BytesToAddress(h[:])
+}
+
 // NewAddress xHash生成EVM合约地址
 func NewAddress(txHash []byte) Address {
 	execAddr := address.GetExecAddress(types.ExecName("user.evm.") + BytesToHash(txHash).Hex())

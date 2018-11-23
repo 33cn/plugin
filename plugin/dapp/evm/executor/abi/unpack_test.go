@@ -65,13 +65,13 @@ var unpackTests = []unpackTest{
 		def:  `[{ "type": "bool" }]`,
 		enc:  "0000000000000000000000000000000000000000000000000001000000000001",
 		want: false,
-		err:  "abi: improperly encoded boolean value",
+		err:  "abi: improperly encoded boolean Value",
 	},
 	{
 		def:  `[{ "type": "bool" }]`,
 		enc:  "0000000000000000000000000000000000000000000000000000000000000003",
 		want: false,
-		err:  "abi: improperly encoded boolean value",
+		err:  "abi: improperly encoded boolean Value",
 	},
 	{
 		def:  `[{"type": "uint32"}]`,
@@ -288,7 +288,7 @@ var unpackTests = []unpackTest{
 	},
 	// struct outputs
 	{
-		def: `[{"name":"int1","type":"int256"},{"name":"int2","type":"int256"}]`,
+		def: `[{"Name":"int1","type":"int256"},{"Name":"int2","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -296,7 +296,7 @@ var unpackTests = []unpackTest{
 		}{big.NewInt(1), big.NewInt(2)},
 	},
 	{
-		def: `[{"name":"int","type":"int256"},{"name":"Int","type":"int256"}]`,
+		def: `[{"Name":"int","type":"int256"},{"Name":"Int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -305,7 +305,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"name":"int","type":"int256"},{"name":"_int","type":"int256"}]`,
+		def: `[{"Name":"int","type":"int256"},{"Name":"_int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -314,7 +314,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"name":"Int","type":"int256"},{"name":"_int","type":"int256"}]`,
+		def: `[{"Name":"Int","type":"int256"},{"Name":"_int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -323,7 +323,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"name":"Int","type":"int256"},{"name":"_","type":"int256"}]`,
+		def: `[{"Name":"Int","type":"int256"},{"Name":"_","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -336,7 +336,7 @@ var unpackTests = []unpackTest{
 func TestUnpack(t *testing.T) {
 	for i, test := range unpackTests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			def := fmt.Sprintf(`[{ "name" : "method", "outputs": %s}]`, test.def)
+			def := fmt.Sprintf(`[{ "Name" : "method", "outputs": %s}]`, test.def)
 			abi, err := JSON(strings.NewReader(def))
 			if err != nil {
 				t.Fatalf("invalid ABI definition %s: %v", def, err)
@@ -366,7 +366,7 @@ type methodMultiOutput struct {
 
 func methodMultiReturn(require *require.Assertions) (ABI, []byte, methodMultiOutput) {
 	const definition = `[
-	{ "name" : "multi", "constant" : false, "outputs": [ { "name": "Int", "type": "uint256" }, { "name": "String", "type": "string" } ] }]`
+	{ "Name" : "multi", "constant" : false, "outputs": [ { "Name": "Int", "type": "uint256" }, { "Name": "String", "type": "string" } ] }]`
 	var expected = methodMultiOutput{big.NewInt(1), "hello"}
 
 	abi, err := JSON(strings.NewReader(definition))
@@ -440,7 +440,7 @@ func TestMethodMultiReturn(t *testing.T) {
 }
 
 func TestMultiReturnWithArray(t *testing.T) {
-	const definition = `[{"name" : "multi", "outputs": [{"type": "uint64[3]"}, {"type": "uint64"}]}]`
+	const definition = `[{"Name" : "multi", "outputs": [{"type": "uint64[3]"}, {"type": "uint64"}]}]`
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
 		t.Fatal(err)
@@ -467,7 +467,7 @@ func TestMultiReturnWithDeeplyNestedArray(t *testing.T) {
 	//  values of nested static arrays count towards the size as well, and any element following
 	//  after such nested array argument should be read with the correct offset,
 	//  so that it does not read content from the previous array argument.
-	const definition = `[{"name" : "multi", "outputs": [{"type": "uint64[3][2][4]"}, {"type": "uint64"}]}]`
+	const definition = `[{"Name" : "multi", "outputs": [{"type": "uint64[3][2][4]"}, {"type": "uint64"}]}]`
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
 		t.Fatal(err)
@@ -504,15 +504,15 @@ func TestMultiReturnWithDeeplyNestedArray(t *testing.T) {
 
 func TestUnmarshal(t *testing.T) {
 	const definition = `[
-	{ "name" : "int", "constant" : false, "outputs": [ { "type": "uint256" } ] },
-	{ "name" : "bool", "constant" : false, "outputs": [ { "type": "bool" } ] },
-	{ "name" : "bytes", "constant" : false, "outputs": [ { "type": "bytes" } ] },
-	{ "name" : "fixed", "constant" : false, "outputs": [ { "type": "bytes32" } ] },
-	{ "name" : "multi", "constant" : false, "outputs": [ { "type": "bytes" }, { "type": "bytes" } ] },
-	{ "name" : "intArraySingle", "constant" : false, "outputs": [ { "type": "uint256[3]" } ] },
-	{ "name" : "addressSliceSingle", "constant" : false, "outputs": [ { "type": "address[]" } ] },
-	{ "name" : "addressSliceDouble", "constant" : false, "outputs": [ { "name": "a", "type": "address[]" }, { "name": "b", "type": "address[]" } ] },
-	{ "name" : "mixedBytes", "constant" : true, "outputs": [ { "name": "a", "type": "bytes" }, { "name": "b", "type": "bytes32" } ] }]`
+	{ "Name" : "int", "constant" : false, "outputs": [ { "type": "uint256" } ] },
+	{ "Name" : "bool", "constant" : false, "outputs": [ { "type": "bool" } ] },
+	{ "Name" : "bytes", "constant" : false, "outputs": [ { "type": "bytes" } ] },
+	{ "Name" : "fixed", "constant" : false, "outputs": [ { "type": "bytes32" } ] },
+	{ "Name" : "multi", "constant" : false, "outputs": [ { "type": "bytes" }, { "type": "bytes" } ] },
+	{ "Name" : "intArraySingle", "constant" : false, "outputs": [ { "type": "uint256[3]" } ] },
+	{ "Name" : "addressSliceSingle", "constant" : false, "outputs": [ { "type": "address[]" } ] },
+	{ "Name" : "addressSliceDouble", "constant" : false, "outputs": [ { "Name": "a", "type": "address[]" }, { "Name": "b", "type": "address[]" } ] },
+	{ "Name" : "mixedBytes", "constant" : true, "outputs": [ { "Name": "a", "type": "bytes" }, { "Name": "b", "type": "bytes32" } ] }]`
 
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
@@ -535,11 +535,11 @@ func TestUnmarshal(t *testing.T) {
 		t.Error(err)
 	} else {
 		if !bytes.Equal(p0, p0Exp) {
-			t.Errorf("unexpected value unpacked: want %x, got %x", p0Exp, p0)
+			t.Errorf("unexpected Value unpacked: want %x, got %x", p0Exp, p0)
 		}
 
 		if !bytes.Equal(p1[:], p1Exp) {
-			t.Errorf("unexpected value unpacked: want %x, got %x", p1Exp, p1)
+			t.Errorf("unexpected Value unpacked: want %x, got %x", p1Exp, p1)
 		}
 	}
 
@@ -805,7 +805,7 @@ func TestOOMMaliciousInput(t *testing.T) {
 		},
 	}
 	for i, test := range oomTests {
-		def := fmt.Sprintf(`[{ "name" : "method", "outputs": %s}]`, test.def)
+		def := fmt.Sprintf(`[{ "Name" : "method", "outputs": %s}]`, test.def)
 		abi, err := JSON(strings.NewReader(def))
 		if err != nil {
 			t.Fatalf("invalid ABI definition %s: %v", def, err)
