@@ -34,14 +34,14 @@ func (s *suiteBtcStore) SetupSuite() {
 }
 
 func (s *suiteBtcStore) TestGetBtcHeadHeightFromDb() {
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	val, _ := s.btc.getBtcHeadHeightFromDb([]byte("key"))
 	s.Assert().Equal(val, int64(10))
 }
 
 func (s *suiteBtcStore) TestGetLastBtcHeadHeight() {
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	val, _ := s.btc.getLastBtcHeadHeight()
 	s.Assert().Equal(val, int64(10))
@@ -58,7 +58,7 @@ func (s *suiteBtcStore) TestGetBtcHeadByHeight() {
 }
 
 func (s *suiteBtcStore) TestGetLastBtcHead() {
-	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	head := &ty.BtcHeader{}
 
 	header := types.Encode(head)
@@ -82,12 +82,12 @@ func (s *suiteBtcStore) TestSaveBlockHead() {
 	}
 	val, _ := proto.Marshal(head)
 	key := calcBtcHeaderKeyHash(head.Hash)
-	kv = append(kv, &types.KeyValue{Key:key, Value:val})
+	kv = append(kv, &types.KeyValue{Key: key, Value: val})
 	key = calcBtcHeaderKeyHeight(int64(head.Height))
-	kv = append(kv, &types.KeyValue{Key:key,Value: val})
+	kv = append(kv, &types.KeyValue{Key: key, Value: val})
 	key = calcBtcHeaderKeyHeightList(int64(head.Height))
-	heightBytes := types.Encode(&types.Int64{Data:int64(head.Height)})
-	kv = append(kv, &types.KeyValue{Key:key,Value: heightBytes})
+	heightBytes := types.Encode(&types.Int64{Data: int64(head.Height)})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	res, err := s.btc.saveBlockHead(head)
 	s.Nil(err)
@@ -104,13 +104,13 @@ func (s *suiteBtcStore) TestSaveBlockLastHead() {
 		NewBaseHeight:  150,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(lastHead.NewHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(lastHead.NewHeight)})
 	key := relayBTCHeaderLastHeight
-	kv = append(kv, &types.KeyValue{Key:key, Value:heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
-	heightBytes = types.Encode(&types.Int64{Data:int64(lastHead.NewBaseHeight)})
+	heightBytes = types.Encode(&types.Int64{Data: int64(lastHead.NewBaseHeight)})
 	key = relayBTCHeaderBaseHeight
-	kv = append(kv, &types.KeyValue{Key:key, Value:heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	res, err := s.btc.saveBlockLastHead(lastHead)
 	s.Nil(err)
@@ -131,14 +131,14 @@ func (s *suiteBtcStore) TestDelBlockHead() {
 	}
 
 	key := calcBtcHeaderKeyHash(head.Hash)
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	// height:header
 	key = calcBtcHeaderKeyHeight(int64(head.Height))
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	// prefix-height:height
 	key = calcBtcHeaderKeyHeightList(int64(head.Height))
-	kv = append(kv, &types.KeyValue{Key:key, Value:nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	res, err := s.btc.delBlockHead(head)
 	s.Nil(err)
@@ -155,13 +155,13 @@ func (s *suiteBtcStore) TestDelBlockLastHead() {
 		NewBaseHeight:  150,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(lastHead.LastHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(lastHead.LastHeight)})
 	key := relayBTCHeaderLastHeight
-	kv = append(kv, &types.KeyValue{Key:key, Value:heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
-	heightBytes = types.Encode(&types.Int64{Data:int64(lastHead.LastBaseHeight)})
+	heightBytes = types.Encode(&types.Int64{Data: int64(lastHead.LastBaseHeight)})
 	key = relayBTCHeaderBaseHeight
-	kv = append(kv, &types.KeyValue{Key:key, Value:heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	res, err := s.btc.delBlockLastHead(lastHead)
 	s.Nil(err)
@@ -241,7 +241,7 @@ func (s *suiteBtcStore) TestVerifyBtcTx() {
 		Spv: spv,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data:int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
@@ -290,7 +290,7 @@ func (s *suiteBtcStore) TestGetHeadHeightList() {
 	heightArry := make([][]byte, 10)
 	for i := 0; i < 10; i++ {
 		height := int64(1000 + i)
-		heightBytes := types.Encode(&types.Int64{Data:height})
+		heightBytes := types.Encode(&types.Int64{Data: height})
 		heightArry[i] = heightBytes
 		replay.Heights = append(replay.Heights, height)
 	}

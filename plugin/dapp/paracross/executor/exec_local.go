@@ -12,6 +12,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
+//ExecLocal_Commit commit tx local db process
 func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
@@ -21,16 +22,16 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			var r pt.ParacrossTx
 			r.TxHash = string(tx.Hash())
-			set.KV = append(set.KV, &types.KeyValue{calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), types.Encode(&r)})
+			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
 
 			key := calcLocalTitleKey(g.Title)
-			set.KV = append(set.KV, &types.KeyValue{key, types.Encode(&g)})
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
 
 			key = calcLocalHeightKey(g.Title, g.Height)
-			set.KV = append(set.KV, &types.KeyValue{key, types.Encode(&g)})
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
 
 			r, err := e.saveLocalParaTxs(tx, false)
 			if err != nil {
@@ -43,12 +44,13 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			var r pt.ParacrossTx
 			r.TxHash = string(tx.Hash())
-			set.KV = append(set.KV, &types.KeyValue{calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), types.Encode(&r)})
+			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		}
 	}
 	return &set, nil
 }
 
+//ExecLocal_AssetTransfer asset transfer local proc
 func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 
@@ -63,10 +65,12 @@ func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *t
 	return &set, nil
 }
 
+//ExecLocal_AssetWithdraw asset withdraw process
 func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
+//ExecLocal_Miner miner tx local db process
 func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if index != 0 {
 		return nil, pt.ErrParaMinerBaseIndex
@@ -108,20 +112,23 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	payload.Status.CrossTxResult = util.CalcSubBitMap(mixTxHashs, crossTxHashs, e.GetReceipt()[1:])
 
 	set.KV = append(set.KV, &types.KeyValue{
-		pt.CalcMinerHeightKey(payload.Status.Title, payload.Status.Height),
-		types.Encode(payload.Status)})
+		Key:   pt.CalcMinerHeightKey(payload.Status.Title, payload.Status.Height),
+		Value: types.Encode(payload.Status)})
 
 	return &set, nil
 }
 
+// ExecLocal_Transfer asset transfer local db process
 func (e *Paracross) ExecLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
+//ExecLocal_Withdraw asset withdraw local db process
 func (e *Paracross) ExecLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
+//ExecLocal_TransferToExec transfer asset to exec local db process
 func (e *Paracross) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }

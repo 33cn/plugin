@@ -37,7 +37,7 @@ const (
 
 const (
 	// RelayOrderBuy define relay buy order
-	RelayOrderBuy    = iota
+	RelayOrderBuy = iota
 	// RelayOrderSell define relay sell order
 	RelayOrderSell
 )
@@ -98,7 +98,7 @@ func (r *RelayType) GetLogMap() map[int64]*types.LogInfo {
 
 const (
 	// RelayActionCreate relay create order action
-	RelayActionCreate                = iota
+	RelayActionCreate = iota
 	// RelayActionAccept accept order action
 	RelayActionAccept
 	// RelayActionRevoke revoke order action
@@ -166,7 +166,6 @@ func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 	}
 	return 0, nil
 }
-
 
 // CreateTx relay create tx TODO 暂时不修改实现， 先完成结构的重构
 func (r *RelayType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {

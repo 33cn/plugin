@@ -13,6 +13,7 @@ import (
 
 // 注： 在计算帐号地址时， 平行链paracross合约地址需要带上title前缀，才能表现出和主链一致, 但是现在不带，
 
+//NewParaAccount create new paracross account
 // 其中带{}, 都表示变量， 用需要用真实的地址， 符号代替
 // 构建主链资产在平行链paracross帐号
 // execName:  user.p.{guodun}.paracross
@@ -28,6 +29,7 @@ func NewParaAccount(paraTitle, mainExecName, mainSymbol string, db db.KV) (*acco
 	return account.NewAccountDB(paraExec, paraSymbol, db)
 }
 
+//NewMainAccount create new Main account
 // 以后如果支持从平行链资产转移到主链， 构建平行链资产在主链的paracross帐号
 // execName: paracross
 // symbol: user.p.{guodun}.coins.{guodun}  user.p.{guodun}.token.{TEST}

@@ -53,8 +53,9 @@ func saveTitleHeight(db dbm.KV, key []byte, heightStatus types.Message /* height
 	return db.Set(key, val)
 }
 
+//GetBlock get block detail by block hash
 func GetBlock(api client.QueueProtocolAPI, blockHash []byte) (*types.BlockDetail, error) {
-	blockDetails, err := api.GetBlockByHashes(&types.ReqHashes{[][]byte{blockHash}})
+	blockDetails, err := api.GetBlockByHashes(&types.ReqHashes{Hashes: [][]byte{blockHash}})
 	if err != nil {
 		clog.Error("paracross.Commit getBlockHeader", "db", err,
 			"commit tx hash", common.Bytes2Hex(blockHash))
@@ -88,8 +89,9 @@ func isNotFound(err error) bool {
 	return false
 }
 
+//GetTx get tx by tx hash
 func GetTx(api client.QueueProtocolAPI, txHash []byte) (*types.TransactionDetail, error) {
-	txs, err := api.GetTransactionByHash(&types.ReqHashes{[][]byte{txHash}})
+	txs, err := api.GetTransactionByHash(&types.ReqHashes{Hashes: [][]byte{txHash}})
 	if err != nil {
 		clog.Error("paracross.Commit GetTx", "db", err,
 			"commit tx hash", common.Bytes2Hex(txHash))
