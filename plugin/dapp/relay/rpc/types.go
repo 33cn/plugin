@@ -8,11 +8,11 @@ import (
 	"github.com/33cn/chain33/rpc/types"
 )
 
-type Jrpc struct {
+type jrpc struct {
 	cli *channelClient
 }
 
-type Grpc struct {
+type grpc struct {
 	*channelClient
 }
 
@@ -20,8 +20,9 @@ type channelClient struct {
 	types.ChannelClient
 }
 
+// Init relay rpc register
 func Init(name string, s types.RPCServer) {
 	cli := &channelClient{}
-	grpc := &Grpc{channelClient: cli}
-	cli.Init(name, s, &Jrpc{cli: cli}, grpc)
+	grpc := &grpc{channelClient: cli}
+	cli.Init(name, s, &jrpc{cli: cli}, grpc)
 }

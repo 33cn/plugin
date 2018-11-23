@@ -43,11 +43,11 @@ func (r *relayLog) save(db dbm.KV) []*types.KeyValue {
 func (r *relayLog) getKVSet() (kvSet []*types.KeyValue) {
 	value := types.Encode(&r.RelayOrder)
 	key := []byte(r.Id)
-	kvSet = append(kvSet, &types.KeyValue{key, value})
+	kvSet = append(kvSet, &types.KeyValue{Key:key, Value:value})
 
 	if r.CoinTxHash != "" {
 		key = []byte(calcCoinHash(r.CoinTxHash))
-		kvSet = append(kvSet, &types.KeyValue{key, value})
+		kvSet = append(kvSet, &types.KeyValue{Key:key, Value:value})
 	}
 
 	return kvSet
@@ -100,8 +100,8 @@ func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
 		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(r.GetName()), btc}
 }
 
-func (action *relayDB) getOrderByID(orderId []byte) (*ty.RelayOrder, error) {
-	value, err := action.db.Get(orderId)
+func (action *relayDB) getOrderByID(orderID []byte) (*ty.RelayOrder, error) {
+	value, err := action.db.Get(orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayCreate))
 	kv = append(kv, sellOrderKV...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 }
 
 func (action *relayDB) checkRevokeOrder(order *ty.RelayOrder) error {
@@ -216,8 +216,8 @@ func (action *relayDB) checkRevokeOrder(order *ty.RelayOrder) error {
 }
 
 func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, error) {
-	orderId := []byte(revoke.OrderId)
-	order, err := action.getOrderByID(orderId)
+	orderID := []byte(revoke.OrderId)
+	order, err := action.getOrderByID(orderID)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -290,12 +290,12 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 	}
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayRevokeCreate))
 	kv = append(kv, orderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv,Logs: logs}, nil
 }
 
 func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
-	orderId := []byte(accept.OrderId)
-	order, err := action.getOrderByID(orderId)
+	orderID := []byte(accept.OrderId)
+	order, err := action.getOrderByID(orderID)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -355,7 +355,7 @@ func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayAccept))
 	kv = append(kv, sellOrderKV...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 
 }
 
@@ -368,8 +368,8 @@ func (action *relayDB) relayRevoke(revoke *ty.RelayRevoke) (*types.Receipt, erro
 }
 
 func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, error) {
-	orderIdByte := []byte(revoke.OrderId)
-	order, err := action.getOrderByID(orderIdByte)
+	orderIDByte := []byte(revoke.OrderId)
+	order, err := action.getOrderByID(orderIDByte)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -429,12 +429,12 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayRevokeAccept))
 	kv = append(kv, sellOrderKV...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 }
 
 func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, error) {
-	orderId := []byte(confirm.OrderId)
-	order, err := action.getOrderByID(orderId)
+	orderID := []byte(confirm.OrderId)
+	order, err := action.getOrderByID(orderID)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -449,7 +449,7 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 		return nil, ty.ErrRelayOrderRevoked
 	}
 
-	//report Error if coinTxHash has been used and not same orderId, if same orderId, means to modify the txHash
+	//report Error if coinTxHash has been used and not same orderID, if same orderID, means to modify the txHash
 	coinTxOrder, _ := action.getOrderByCoinHash([]byte(calcCoinHash(confirm.TxHash)))
 	if coinTxOrder != nil {
 		if coinTxOrder.Id != confirm.OrderId {
@@ -487,14 +487,14 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayConfirmTx))
 	kv = append(kv, sellOrderKV...)
 
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty:types.ExecOk,KV: kv, Logs:logs}
 	return receipt, nil
 
 }
 
 func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) {
-	orderId := []byte(verify.OrderId)
-	order, err := action.getOrderByID(orderId)
+	orderID := []byte(verify.OrderId)
+	order, err := action.getOrderByID(orderID)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -562,13 +562,13 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, receiptTransfer.KV...)
 	kv = append(kv, orderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 
 }
 
 func (action *relayDB) verifyCmdTx(verify *ty.RelayVerifyCli) (*types.Receipt, error) {
-	orderId := []byte(verify.OrderId)
-	order, err := action.getOrderByID(orderId)
+	orderID := []byte(verify.OrderId)
+	order, err := action.getOrderByID(orderID)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -637,7 +637,7 @@ func (action *relayDB) verifyCmdTx(verify *ty.RelayVerifyCli) (*types.Receipt, e
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, receiptTransfer.KV...)
 	kv = append(kv, orderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 
 }
 
@@ -648,7 +648,7 @@ func saveBtcLastHead(db dbm.KV, head *ty.RelayLastRcvBtcHeader) (set []*types.Ke
 
 	value := types.Encode(head)
 	key := []byte(btcLastHead)
-	set = append(set, &types.KeyValue{key, value})
+	set = append(set, &types.KeyValue{Key:key,Value: value})
 
 	for i := 0; i < len(set); i++ {
 		db.Set(set[i].GetKey(), set[i].Value)
@@ -714,5 +714,5 @@ func (action *relayDB) saveBtcHeader(headers *ty.BtcHeaders, localDb dbm.KVDB) (
 	log.Log = types.Encode(receipt)
 	logs = append(logs, log)
 	kv = saveBtcLastHead(action.db, preHead)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty:types.ExecOk, KV:kv, Logs:logs}, nil
 }

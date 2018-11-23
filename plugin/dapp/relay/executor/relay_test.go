@@ -30,7 +30,7 @@ type suiteRelay struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	//relayDb   *relayDB
 }
 
@@ -92,7 +92,7 @@ func (s *suiteRelay) testExecLocal(tx *types.Transaction, receipt *types.Receipt
 
 	set, err := s.relay.ExecLocal(tx, rData, 0)
 	s.Nil(err)
-	order, _ := s.relay.getSellOrderFromDb([]byte(s.orderId))
+	order, _ := s.relay.getSellOrderFromDb([]byte(s.orderID))
 	var kv []*types.KeyValue
 	kv = deleteCreateOrderKeyValue(kv, order, int32(order.PreStatus))
 	kv = getCreateOrderKeyValue(kv, order, int32(order.Status))
@@ -109,7 +109,7 @@ func (s *suiteRelay) testExecDelLocal(tx *types.Transaction, receipt *types.Rece
 
 	set, err := s.relay.ExecDelLocal(tx, rData, 0)
 	s.Nil(err)
-	order, _ := s.relay.getSellOrderFromDb([]byte(s.orderId))
+	order, _ := s.relay.getSellOrderFromDb([]byte(s.orderID))
 	var kv []*types.KeyValue
 	kv = deleteCreateOrderKeyValue(kv, order, int32(order.Status))
 	kv = getCreateOrderKeyValue(kv, order, int32(order.PreStatus))
@@ -129,7 +129,7 @@ func (s *suiteRelay) TestExec_1() {
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionCreate,
-		Value: &ty.RelayAction_Create{order},
+		Value: &ty.RelayAction_Create{Create:order},
 	}
 
 	tx := &types.Transaction{}
@@ -140,7 +140,7 @@ func (s *suiteRelay) TestExec_1() {
 	tx.Sign(types.SECP256K1, privFrom)
 
 	s.relay.SetEnv(10, 1000, 1)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relay.Exec(tx, 0)
@@ -156,7 +156,7 @@ func (s *suiteRelay) TestExec_1() {
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
 
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 
 	//s.testExecLocal(tx, receipt)
 	//s.testExecDelLocal(tx, receipt)
@@ -166,13 +166,13 @@ func (s *suiteRelay) TestExec_1() {
 //accept
 func (s *suiteRelay) TestExec_2() {
 	order := &ty.RelayAccept{
-		OrderId:  s.orderId,
+		OrderId:  s.orderID,
 		CoinAddr: addrBtc,
 	}
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionAccept,
-		Value: &ty.RelayAction_Accept{order},
+		Value: &ty.RelayAction_Accept{Accept:order},
 	}
 
 	tx := &types.Transaction{}
@@ -181,7 +181,7 @@ func (s *suiteRelay) TestExec_2() {
 	tx.Sign(types.SECP256K1, privTo)
 
 	s.relay.SetEnv(20, 2000, 1)
-	heightBytes := types.Encode(&types.Int64{int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data:int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
 	s.Nil(err)
@@ -203,12 +203,12 @@ func (s *suiteRelay) TestExec_2() {
 func (s *suiteRelay) TestExec_3() {
 
 	order := &ty.RelayConfirmTx{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		TxHash:  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionConfirmTx,
-		Value: &ty.RelayAction_ConfirmTx{order},
+		Value: &ty.RelayAction_ConfirmTx{ConfirmTx:order},
 	}
 
 	tx := &types.Transaction{}
@@ -217,7 +217,7 @@ func (s *suiteRelay) TestExec_3() {
 	tx.Sign(types.SECP256K1, privFrom)
 
 	s.relay.SetEnv(30, 3000, 1)
-	heightBytes := types.Encode(&types.Int64{int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data:int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
 	s.Nil(err)
@@ -248,11 +248,11 @@ func (s *suiteRelay) TestExec_4() {
 		BlockHeight: 1000,
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
-	str_merkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
+	strMerkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
 		"ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"}
 
-	proofs := make([][]byte, len(str_merkleproof))
-	for i, kk := range str_merkleproof {
+	proofs := make([][]byte, len(strMerkleproof))
+	for i, kk := range strMerkleproof {
 		proofs[i], _ = btcHashStrRevers(kk)
 	}
 
@@ -264,7 +264,7 @@ func (s *suiteRelay) TestExec_4() {
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
-	heightBytes := types.Encode(&types.Int64{int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data:int64(1006)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
@@ -274,13 +274,13 @@ func (s *suiteRelay) TestExec_4() {
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
 
 	order := &ty.RelayVerify{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Tx:      transaction,
 		Spv:     spv,
 	}
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionVerifyTx,
-		Value: &ty.RelayAction_Verify{order},
+		Value: &ty.RelayAction_Verify{Verify:order},
 	}
 	tx := &types.Transaction{}
 	tx.To = s.addrRelay
@@ -314,7 +314,7 @@ func (s *suiteRelay) TestExec_9_QryStatus1() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderId))
+	OrderIds = append(OrderIds, []byte(s.orderID))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetRelayOrderByStatus(addrCoins)
 	s.Nil(err)
@@ -331,7 +331,7 @@ func (s *suiteRelay) TestExec_9_QryStatus2() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderId))
+	OrderIds = append(OrderIds, []byte(s.orderID))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetSellRelayOrder(addrCoins)
 	s.Nil(err)
@@ -346,7 +346,7 @@ func (s *suiteRelay) TestExec_9_QryStatus3() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderId))
+	OrderIds = append(OrderIds, []byte(s.orderID))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetBuyRelayOrder(addrCoins)
 	s.Nil(err)
@@ -361,7 +361,7 @@ func (s *suiteRelay) TestExec_9_QryStatus4() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderId))
+	OrderIds = append(OrderIds, []byte(s.orderID))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetBTCHeaderList(addrCoins)
 	s.Nil(err)
@@ -374,7 +374,7 @@ func (s *suiteRelay) TestExec_9_QryStatus5() {
 		BaseHeight: 10,
 	}
 
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data:int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Twice()
 	msg, err := s.relay.Query_GetBTCHeaderCurHeight(addrCoins)
 	s.Nil(err)
@@ -505,7 +505,7 @@ func (s *suiteBtcHeader) TestSaveBtcHead_1() {
 
 	sell := &ty.RelayAction{
 		Ty:    ty.RelayActionRcvBTCHeaders,
-		Value: &ty.RelayAction_BtcHeaders{headers},
+		Value: &ty.RelayAction_BtcHeaders{BtcHeaders:headers},
 	}
 
 	tx := &types.Transaction{}

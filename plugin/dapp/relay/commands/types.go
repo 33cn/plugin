@@ -4,8 +4,8 @@
 
 package commands
 
-type RelayOrder2Show struct {
-	OrderId       string `json:"orderid"`
+type relayOrder2Show struct {
+	OrderID       string `json:"orderid"`
 	Status        string `json:"status"`
 	Creator       string `json:"address"`
 	Amount        string `json:"amount"`

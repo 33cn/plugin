@@ -18,6 +18,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 )
 
+// BtcClient interface
 type BtcClient interface {
 	Start() error
 	Stop() error
@@ -29,28 +30,28 @@ type BtcClient interface {
 }
 
 type (
-	BlockStamp struct {
+	blockStamp struct {
 		Height int32
 		Hash   chainhash.Hash
 	}
 
-	BlockMeta struct {
-		BlockStamp
+	blockMeta struct {
+		blockStamp
 		Time time.Time
 	}
 
-	ClientConnected   struct{}
-	BlockConnected    BlockMeta
-	BlockDisconnected BlockMeta
+	clientConnected   struct{}
+	blockConnected    blockMeta
+	blockDisconnected blockMeta
 )
 
-type Params struct {
+type params struct {
 	*chaincfg.Params
 	RPCClientPort string
 	RPCServerPort string
 }
 
-var MainNetParams = Params{
+var mainNetParams = params{
 	Params:        &chaincfg.MainNetParams,
 	RPCClientPort: "8334",
 	RPCServerPort: "8332",
@@ -63,24 +64,24 @@ type btcdClient struct {
 	reconnectAttempts   int
 	enqueueNotification chan interface{}
 	dequeueNotification chan interface{}
-	currentBlock        chan *BlockStamp
+	currentBlock        chan *blockStamp
 	quit                chan struct{}
 	wg                  sync.WaitGroup
 	started             bool
 	quitMtx             sync.Mutex
 }
 
-func NewBtcd(config *rpcclient.ConnConfig, reconnectAttempts int) (BtcClient, error) {
+func newBtcd(config *rpcclient.ConnConfig, reconnectAttempts int) (BtcClient, error) {
 	if reconnectAttempts < 0 {
 		return nil, errors.New("ReconnectAttempts must be positive")
 	}
 	client := &btcdClient{
 		connConfig:          config,
-		chainParams:         MainNetParams.Params,
+		chainParams:         mainNetParams.Params,
 		reconnectAttempts:   reconnectAttempts,
 		enqueueNotification: make(chan interface{}),
 		dequeueNotification: make(chan interface{}),
-		currentBlock:        make(chan *BlockStamp),
+		currentBlock:        make(chan *blockStamp),
 		quit:                make(chan struct{}),
 	}
 	ntfnCallbacks := &rpcclient.NotificationHandlers{
@@ -147,7 +148,7 @@ func (b *btcdClient) Notifications() <-chan interface{} {
 	return b.dequeueNotification
 }
 
-func (b *btcdClient) BlockStamp() (*BlockStamp, error) {
+func (b *btcdClient) BlockStamp() (*blockStamp, error) {
 	select {
 	case bs := <-b.currentBlock:
 		return bs, nil
@@ -158,15 +159,15 @@ func (b *btcdClient) BlockStamp() (*BlockStamp, error) {
 
 func (b *btcdClient) onClientConnect() {
 	select {
-	case b.enqueueNotification <- ClientConnected{}:
+	case b.enqueueNotification <- clientConnected{}:
 	case <-b.quit:
 	}
 }
 
 func (b *btcdClient) onBlockConnected(hash *chainhash.Hash, height int32, time time.Time) {
 	select {
-	case b.enqueueNotification <- BlockConnected{
-		BlockStamp: BlockStamp{
+	case b.enqueueNotification <- blockConnected{
+		blockStamp: blockStamp{
 			Hash:   *hash,
 			Height: height,
 		},
@@ -178,8 +179,8 @@ func (b *btcdClient) onBlockConnected(hash *chainhash.Hash, height int32, time t
 
 func (b *btcdClient) onBlockDisconnected(hash *chainhash.Hash, height int32, time time.Time) {
 	select {
-	case b.enqueueNotification <- BlockDisconnected{
-		BlockStamp: BlockStamp{
+	case b.enqueueNotification <- blockDisconnected{
+		blockStamp: blockStamp{
 			Hash:   *hash,
 			Height: height,
 		},
@@ -197,7 +198,7 @@ func (b *btcdClient) handler() {
 		return
 	}
 
-	bs := &BlockStamp{Hash: *hash, Height: height}
+	bs := &blockStamp{Hash: *hash, Height: height}
 	var notifications []interface{}
 	enqueue := b.enqueueNotification
 	var dequeue chan interface{}
@@ -225,8 +226,8 @@ out:
 			pingChan = time.After(time.Minute)
 
 		case dequeue <- next:
-			if n, ok := next.(BlockConnected); ok {
-				bs = &BlockStamp{
+			if n, ok := next.(blockConnected); ok {
+				bs = &blockStamp{
 					Height: n.Height,
 					Hash:   n.Hash,
 				}

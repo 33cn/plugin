@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Client33 to connect with chain33
 type Client33 struct {
 	config     *Chain33
 	isSyncing  bool
@@ -25,6 +26,7 @@ type Client33 struct {
 	closer io.Closer
 }
 
+// NewClient33 new client instance
 func NewClient33(cfg *Chain33) *Client33 {
 	conn, err := grpc.Dial(cfg.Host, grpc.WithInsecure())
 	if err != nil {
@@ -53,7 +55,7 @@ out:
 			err := c.ping(ctx)
 			if err != nil {
 				log.Error("heartbeat", "heartbeat chain33 error: ", err.Error(), "reconnectAttempts: ", reconnectAttempts)
-				c.AutoReconnect(ctx)
+				c.autoReconnect(ctx)
 				reconnectAttempts--
 			} else {
 				reconnectAttempts = c.config.ReconnectAttempts
@@ -66,6 +68,7 @@ out:
 	}
 }
 
+// Start begin heartbeat to chain33
 func (c *Client33) Start(ctx context.Context) {
 	go c.heartbeat(ctx)
 }
@@ -93,7 +96,7 @@ func (c *Client33) ping(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client33) AutoReconnect(ctx context.Context) {
+func (c *Client33) autoReconnect(ctx context.Context) {
 	if c.isClosed && !c.config.DisableAutoReconnect {
 		c.closer.Close()
 		conn, err := grpc.Dial(c.config.Host, grpc.WithInsecure())
@@ -109,6 +112,7 @@ func (c *Client33) AutoReconnect(ctx context.Context) {
 	}
 }
 
+// SendTransaction send tx to chain33
 func (c *Client33) SendTransaction(ctx context.Context, in *types.Transaction) (*types.Reply, error) {
 	if c.isSyncing {
 		return nil, errors.New("node is syncing")
@@ -116,6 +120,7 @@ func (c *Client33) SendTransaction(ctx context.Context, in *types.Transaction) (
 	return c.Chain33Client.SendTransaction(ctx, in)
 }
 
+// Close chain33 close
 func (c *Client33) Close() error {
 	return c.closer.Close()
 }

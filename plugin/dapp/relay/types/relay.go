@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+// RelayX name for executor
 var RelayX = "relay"
 
 //var tlog = log.New("module", name)
@@ -28,22 +29,29 @@ const (
 
 // relay
 const (
+	// RelayRevokeCreate revoke created order
 	RelayRevokeCreate = iota
+	// RelayRevokeAccept revoke accept order
 	RelayRevokeAccept
 )
 
 const (
-	RelayOrderBuy = iota
+	// RelayOrderBuy define relay buy order
+	RelayOrderBuy    = iota
+	// RelayOrderSell define relay sell order
 	RelayOrderSell
 )
 
+// RelayOrderOperation buy or sell operation
 var RelayOrderOperation = map[uint32]string{
 	RelayOrderBuy:  "buy",
 	RelayOrderSell: "sell",
 }
 
 const (
+	// RelayUnlock revoke order
 	RelayUnlock = iota
+	// RelayCancel order owner cancel order
 	RelayCancel
 )
 
@@ -53,25 +61,30 @@ func init() {
 	types.RegisterDappFork(RelayX, "Enable", 570000)
 }
 
+// NewType new relay type
 func NewType() *RelayType {
 	c := &RelayType{}
 	c.SetChild(c)
 	return c
 }
 
-func (at *RelayType) GetPayload() types.Message {
+// GetPayload return relay action msg
+func (r *RelayType) GetPayload() types.Message {
 	return &RelayAction{}
 }
 
+// RelayType relay exec type
 type RelayType struct {
 	types.ExecTypeBase
 }
 
-func (b *RelayType) GetName() string {
+// GetName return relay name
+func (r *RelayType) GetName() string {
 	return RelayX
 }
 
-func (t *RelayType) GetLogMap() map[int64]*types.LogInfo {
+// GetLogMap return receipt log map function
+func (r *RelayType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogRelayCreate:       {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayCreate"},
 		TyLogRelayRevokeCreate: {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayRevokeCreate"},
@@ -84,16 +97,24 @@ func (t *RelayType) GetLogMap() map[int64]*types.LogInfo {
 }
 
 const (
-	RelayActionCreate = iota
+	// RelayActionCreate relay create order action
+	RelayActionCreate                = iota
+	// RelayActionAccept accept order action
 	RelayActionAccept
+	// RelayActionRevoke revoke order action
 	RelayActionRevoke
+	// RelayActionConfirmTx confirm tx action
 	RelayActionConfirmTx
+	// RelayActionVerifyTx relayd send this tx to verify btc tx
 	RelayActionVerifyTx
+	// RelayActionVerifyCmdTx verify tx by cli action
 	RelayActionVerifyCmdTx
+	// RelayActionRcvBTCHeaders relay rcv BTC headers by this
 	RelayActionRcvBTCHeaders
 )
 
-func (t *RelayType) GetTypeMap() map[string]int32 {
+// GetTypeMap get relay action type map
+func (r *RelayType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create":     RelayActionCreate,
 		"Accept":     RelayActionAccept,
@@ -105,6 +126,7 @@ func (t *RelayType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// ActionName return action name
 func (r RelayType) ActionName(tx *types.Transaction) string {
 	var relay RelayAction
 	err := types.Decode(tx.Payload, &relay)
@@ -132,6 +154,7 @@ func (r RelayType) ActionName(tx *types.Transaction) string {
 	return "unknown"
 }
 
+// Amount return relay create bty amount
 func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 	data, err := r.DecodePayload(tx)
 	if err != nil {
@@ -144,120 +167,9 @@ func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-// TODO 暂时不修改实现， 先完成结构的重构
+
+// CreateTx relay create tx TODO 暂时不修改实现， 先完成结构的重构
 func (r *RelayType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	var tx *types.Transaction
 	return tx, nil
-}
-
-type RelayCreateLog struct {
-}
-
-func (l RelayCreateLog) Name() string {
-	return "LogRelayCreate"
-}
-
-func (l RelayCreateLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayRevokeCreateLog struct {
-}
-
-func (l RelayRevokeCreateLog) Name() string {
-	return "LogRelayRevokeCreate"
-}
-
-func (l RelayRevokeCreateLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayAcceptLog struct {
-}
-
-func (l RelayAcceptLog) Name() string {
-	return "LogRelayAccept"
-}
-
-func (l RelayAcceptLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayRevokeAcceptLog struct {
-}
-
-func (l RelayRevokeAcceptLog) Name() string {
-	return "LogRelayRevokeAccept"
-}
-
-func (l RelayRevokeAcceptLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayConfirmTxLog struct {
-}
-
-func (l RelayConfirmTxLog) Name() string {
-	return "LogRelayConfirmTx"
-}
-
-func (l RelayConfirmTxLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayFinishTxLog struct {
-}
-
-func (l RelayFinishTxLog) Name() string {
-	return "LogRelayFinishTx"
-}
-
-func (l RelayFinishTxLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayLog
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
-}
-
-type RelayRcvBTCHeadLog struct {
-}
-
-func (l RelayRcvBTCHeadLog) Name() string {
-	return "LogRelayRcvBTCHead"
-}
-
-func (l RelayRcvBTCHeadLog) Decode(msg []byte) (interface{}, error) {
-	var logTmp ReceiptRelayRcvBTCHeaders
-	err := types.Decode(msg, &logTmp)
-	if err != nil {
-		return nil, err
-	}
-	return logTmp, err
 }

@@ -16,6 +16,6 @@ func newTestChannelClient() *channelClient {
 	}
 }
 
-func newTestJrpcClient() *Jrpc {
-	return &Jrpc{cli: newTestChannelClient()}
+func newTestJrpcClient() *jrpc {
+	return &jrpc{cli: newTestChannelClient()}
 }
