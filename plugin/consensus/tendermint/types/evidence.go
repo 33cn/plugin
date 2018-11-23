@@ -43,7 +43,7 @@ const (
 // EvidenceType map define
 var (
 	EvidenceType2Type map[string]reflect.Type
-    EvidenceType2Obj map[string]Evidence
+	EvidenceType2Obj  map[string]Evidence
 )
 
 // Evidence represents any provable malicious activity by a validator
@@ -270,13 +270,13 @@ func NewMockGoodEvidence(height int64, index int, address []byte) MockGoodEviden
 }
 
 // Height ...
-func (e MockGoodEvidence) Height() int64   { return e.MGHeight }
+func (e MockGoodEvidence) Height() int64 { return e.MGHeight }
 
 // Address ...
 func (e MockGoodEvidence) Address() []byte { return e.MGAddress }
 
 // Index ...
-func (e MockGoodEvidence) Index() int      { return e.MGIndex }
+func (e MockGoodEvidence) Index() int { return e.MGIndex }
 
 // Hash ...
 func (e MockGoodEvidence) Hash() []byte {
@@ -373,7 +373,7 @@ type MockEvidencePool struct {
 func (m MockEvidencePool) PendingEvidence() []Evidence { return nil }
 
 // AddEvidence ...
-func (m MockEvidencePool) AddEvidence(Evidence) error  { return nil }
+func (m MockEvidencePool) AddEvidence(Evidence) error { return nil }
 
 // Update ...
-func (m MockEvidencePool) Update(*TendermintBlock)     {}
+func (m MockEvidencePool) Update(*TendermintBlock) {}
