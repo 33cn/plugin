@@ -12,7 +12,7 @@ pipeline {
         retry(1)
         timestamps()
         gitLabConnection('gitlab33')
-        gitlabBuilds(builds: ['deploy'])
+        gitlabBuilds(builds: ['check'])
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
 

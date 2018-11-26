@@ -265,3 +265,20 @@ pullpush:
 	fi;
 	make pullsync
 	git push ${name} ${name}-${b}:${b}
+
+webhook_auto_ci: clean fmt_proto fmt_shell protobuf mock
+	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	@-${auto_fmt}
+	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
+	@${auto_fmt}
+	@git status
+	@files=$$(git status -suno);if [ -n "$$files" ]; then \
+		  git status; \
+		  git commit -a -m "auto ci"; \
+		  git push origin ${b}; \
+		  exit 0; \
+		  fi;
+
+webhook:
+	git checkout ${b}
+	make webhook_auto_ci name=${name} b=${b}
