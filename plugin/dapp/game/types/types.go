@@ -45,7 +45,7 @@ type GameType struct {
 // GetLogMap get log
 func (gt *GameType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogCreateGame: {reflect.TypeOf(ReceiptGame{}), "LogLotteryCreate"},
+		TyLogCreateGame: {reflect.TypeOf(ReceiptGame{}), "LogCreateGame"},
 		TyLogCancleGame: {reflect.TypeOf(ReceiptGame{}), "LogCancleGame"},
 		TyLogMatchGame:  {reflect.TypeOf(ReceiptGame{}), "LogMatchGame"},
 		TyLogCloseGame:  {reflect.TypeOf(ReceiptGame{}), "LogCloseGame"},
