@@ -27,9 +27,7 @@ const (
 	proposalHeartbeatIntervalSeconds = 1
 )
 
-//-----------------------------------------------------------------------------
-// Errors
-
+// Errors define
 var (
 	ErrInvalidProposalSignature = errors.New("Error invalid proposal signature")
 	ErrInvalidProposalPOLRound  = errors.New("Error invalid proposal POL round")
@@ -61,7 +59,7 @@ func (ti *timeoutInfo) String() string {
 // The internal state machine receives input from peers, the internal validator, and from a timer.
 type ConsensusState struct {
 	// config details
-	client        *TendermintClient
+	client        *Client
 	privValidator ttypes.PrivValidator // for signing votes
 
 	// services for creating and executing blocks
@@ -90,7 +88,7 @@ type ConsensusState struct {
 	setProposal    func(proposal *tmtypes.Proposal) error
 
 	broadcastChannel chan<- MsgInfo
-	ourId            ID
+	ourID            ID
 	started          uint32 // atomic
 	stopped          uint32 // atomic
 	Quit             chan struct{}
@@ -101,7 +99,7 @@ type ConsensusState struct {
 }
 
 // NewConsensusState returns a new ConsensusState.
-func NewConsensusState(client *TendermintClient, state State, blockExec *BlockExecutor, evpool ttypes.EvidencePool) *ConsensusState {
+func NewConsensusState(client *Client, state State, blockExec *BlockExecutor, evpool ttypes.EvidencePool) *ConsensusState {
 	cs := &ConsensusState{
 		client:           client,
 		blockExec:        blockExec,
@@ -127,14 +125,17 @@ func NewConsensusState(client *TendermintClient, state State, blockExec *BlockEx
 	return cs
 }
 
+// SetOurID method
 func (cs *ConsensusState) SetOurID(id ID) {
-	cs.ourId = id
+	cs.ourID = id
 }
 
+// SetBroadcastChannel method
 func (cs *ConsensusState) SetBroadcastChannel(broadcastChannel chan<- MsgInfo) {
 	cs.broadcastChannel = broadcastChannel
 }
 
+// IsRunning method
 func (cs *ConsensusState) IsRunning() bool {
 	return atomic.LoadUint32(&cs.started) == 1 && atomic.LoadUint32(&cs.stopped) == 0
 }
@@ -194,8 +195,7 @@ func (cs *ConsensusState) LoadCommit(height int64) *tmtypes.TendermintCommit {
 	return cs.client.LoadBlockCommit(height + 1)
 }
 
-// OnStart implements cmn.Service.
-// It loads the latest state via the WAL, and starts the timeout and receive routines.
+// Start It start first time starts the timeout checkTxsAvailable routine and receive routines.
 func (cs *ConsensusState) Start() {
 	if atomic.CompareAndSwapUint32(&cs.started, 0, 1) {
 		if atomic.LoadUint32(&cs.stopped) == 1 {
@@ -213,9 +213,10 @@ func (cs *ConsensusState) Start() {
 	}
 }
 
-// OnStop implements cmn.Service. It stops all routines and waits for the WAL to finish.
+// Stop timer and receive routine
 func (cs *ConsensusState) Stop() {
 	cs.timeoutTicker.Stop()
+	cs.Quit <- struct{}{}
 }
 
 //------------------------------------------------------------
@@ -348,7 +349,7 @@ func (cs *ConsensusState) updateToState(state State) {
 
 func (cs *ConsensusState) newStep() {
 	if cs.broadcastChannel != nil {
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourId, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
 	}
 	cs.nSteps++
 }
@@ -563,7 +564,7 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	cs.Votes.SetRound(round + 1) // also track next round (round+1) to allow round-skipping
 
 	//cs.eventBus.PublishEventNewRound(cs.RoundStateEvent())
-	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourId, PeerIP: ""}
+	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
 
 	// Wait for txs to be available in the mempool
 	// before we enterPropose in round 0.
@@ -598,8 +599,8 @@ func (cs *ConsensusState) proposalHeartbeat(height int64, round int) {
 		}
 		heartbeatMsg := &ttypes.Heartbeat{Heartbeat: heartbeat}
 		cs.privValidator.SignHeartbeat(chainID, heartbeatMsg)
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ProposalHeartbeatID, Msg: heartbeat, PeerID: cs.ourId, PeerIP: ""}
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: cs.ourId, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ProposalHeartbeatID, Msg: heartbeat, PeerID: cs.ourID, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
 		counter++
 		time.Sleep(proposalHeartbeatIntervalSeconds * time.Second)
 	}
@@ -680,8 +681,8 @@ func (cs *ConsensusState) defaultDecideProposal(height int64, round int) {
 	proposal := ttypes.NewProposal(height, round, block.Hash(), polRound, polBlockID.BlockID)
 	if err := cs.privValidator.SignProposal(cs.state.ChainID, proposal); err == nil {
 		// send proposal and block on internal msg queue
-		cs.sendInternalMessage(MsgInfo{ttypes.ProposalID, &proposal.Proposal, cs.ourId, ""})
-		cs.sendInternalMessage(MsgInfo{ttypes.ProposalBlockID, block.TendermintBlock, cs.ourId, ""})
+		cs.sendInternalMessage(MsgInfo{ttypes.ProposalID, &proposal.Proposal, cs.ourID, ""})
+		cs.sendInternalMessage(MsgInfo{ttypes.ProposalBlockID, block.TendermintBlock, cs.ourID, ""})
 		tendermintlog.Info("Signed proposal", "height", height, "round", round, "proposal", proposal)
 	} else {
 		tendermintlog.Error("enterPropose: Error signing proposal", "height", height, "round", round, "err", err)
@@ -1179,7 +1180,7 @@ func (cs *ConsensusState) defaultSetProposal(proposal *tmtypes.Proposal) error {
 // NOTE: block is not necessarily valid.
 // Asynchronously triggers either enterPrevote (before we timeout of propose) or tryFinalizeCommit, once we have the full block.
 func (cs *ConsensusState) addProposalBlock(proposalBlock *tmtypes.TendermintBlock) (err error) {
-	block := &ttypes.TendermintBlock{proposalBlock}
+	block := &ttypes.TendermintBlock{TendermintBlock: proposalBlock}
 	height, round := block.Header.Height, block.Header.Round
 	tendermintlog.Debug(fmt.Sprintf("Consensus receive proposal block. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
 		"block(H/R/hash)", fmt.Sprintf("%v/%v/%X", height, round, block.Hash()))
@@ -1267,14 +1268,14 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 		height := cs.Height
 		added, err = cs.Votes.AddVote(vote, peerID)
 		if added {
-			//cs.broadcastChannel <- MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.ourId, PeerIP: ""}
+			//cs.broadcastChannel <- MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.ourID, PeerIP: ""}
 			hasVoteMsg := &tmtypes.HasVoteMsg{
 				Height: vote.Height,
 				Round:  vote.Round,
 				Type:   int32(vote.Type),
 				Index:  vote.ValidatorIndex,
 			}
-			cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: cs.ourId, PeerIP: ""}
+			cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: cs.ourID, PeerIP: ""}
 
 			switch vote.Type {
 			case uint32(ttypes.VoteTypePrevote):
@@ -1358,7 +1359,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 	return
 }
 
-func (cs *ConsensusState) signVote(type_ byte, hash []byte) (*ttypes.Vote, error) {
+func (cs *ConsensusState) signVote(voteType byte, hash []byte) (*ttypes.Vote, error) {
 
 	addr := cs.privValidator.GetAddress()
 	valIndex, _ := cs.Validators.GetByAddress(addr)
@@ -1371,7 +1372,7 @@ func (cs *ConsensusState) signVote(type_ byte, hash []byte) (*ttypes.Vote, error
 			Height:           cs.Height,
 			Round:            int32(cs.Round),
 			Timestamp:        time.Now().UnixNano(),
-			Type:             uint32(type_),
+			Type:             uint32(voteType),
 			BlockID:          &tmtypes.BlockID{Hash: hash},
 			Signature:        nil,
 		},
@@ -1383,14 +1384,14 @@ func (cs *ConsensusState) signVote(type_ byte, hash []byte) (*ttypes.Vote, error
 }
 
 // sign the vote and publish on internalMsgQueue
-func (cs *ConsensusState) signAddVote(type_ byte, hash []byte) *ttypes.Vote {
+func (cs *ConsensusState) signAddVote(voteType byte, hash []byte) *ttypes.Vote {
 	// if we don't have a key or we're not in the validator set, do nothing
 	if cs.privValidator == nil || !cs.Validators.HasAddress(cs.privValidator.GetAddress()) {
 		return nil
 	}
-	vote, err := cs.signVote(type_, hash)
+	vote, err := cs.signVote(voteType, hash)
 	if err == nil {
-		cs.sendInternalMessage(MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.ourId, PeerIP: ""})
+		cs.sendInternalMessage(MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.ourID, PeerIP: ""})
 		tendermintlog.Info("Signed and pushed vote", "height", cs.Height, "round", cs.Round, "vote", vote, "err", err)
 		return vote
 	}
@@ -1400,8 +1401,7 @@ func (cs *ConsensusState) signAddVote(type_ byte, hash []byte) *ttypes.Vote {
 
 }
 
-//---------------------------------------------------------
-
+// CompareHRS method
 func CompareHRS(h1 int64, r1 int, s1 ttypes.RoundStepType, h2 int64, r2 int, s2 ttypes.RoundStepType) int {
 	if h1 < h2 {
 		return -1
@@ -1446,7 +1446,7 @@ func (cs *ConsensusState) WaitForTxs() bool {
 	return !createEmptyBlocks || createEmptyBlocksInterval > 0
 }
 
-// EmptyBlocks returns the amount of time to wait before proposing an empty block or starting the propose timer if there are no txs available
+// EmptyBlocksInterval returns the amount of time to wait before proposing an empty block or starting the propose timer if there are no txs available
 func (cs *ConsensusState) EmptyBlocksInterval() time.Duration {
 	return time.Duration(createEmptyBlocksInterval) * time.Second
 }
@@ -1461,10 +1461,12 @@ func (cs *ConsensusState) PeerQueryMaj23Sleep() time.Duration {
 	return time.Duration(peerQueryMaj23SleepDuration) * time.Millisecond
 }
 
+// IsProposer method
 func (cs *ConsensusState) IsProposer() bool {
 	return cs.isProposer()
 }
 
+// GetPrevotesState method
 func (cs *ConsensusState) GetPrevotesState(height int64, round int, blockID *tmtypes.BlockID) *ttypes.BitArray {
 	if height != cs.Height {
 		return nil
@@ -1472,6 +1474,7 @@ func (cs *ConsensusState) GetPrevotesState(height int64, round int, blockID *tmt
 	return cs.Votes.Prevotes(round).BitArrayByBlockID(blockID)
 }
 
+// GetPrecommitsState method
 func (cs *ConsensusState) GetPrecommitsState(height int64, round int, blockID *tmtypes.BlockID) *ttypes.BitArray {
 	if height != cs.Height {
 		return nil
@@ -1479,8 +1482,9 @@ func (cs *ConsensusState) GetPrecommitsState(height int64, round int, blockID *t
 	return cs.Votes.Precommits(round).BitArrayByBlockID(blockID)
 }
 
-func (cs *ConsensusState) SetPeerMaj23(height int64, round int, type_ byte, peerID ID, blockID *tmtypes.BlockID) {
+// SetPeerMaj23 when reach maj 2/3
+func (cs *ConsensusState) SetPeerMaj23(height int64, round int, voteType byte, peerID ID, blockID *tmtypes.BlockID) {
 	if height == cs.Height {
-		cs.Votes.SetPeerMaj23(round, type_, string(peerID), blockID)
+		cs.Votes.SetPeerMaj23(round, voteType, string(peerID), blockID)
 	}
 }

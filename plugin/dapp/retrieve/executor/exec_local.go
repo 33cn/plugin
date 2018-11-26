@@ -52,7 +52,7 @@ func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types
 }
 
 // ExecLocal_Backup Action
-func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
 		return set, nil
@@ -72,7 +72,7 @@ func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transac
 }
 
 // ExecLocal_Prepare Action
-func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
 		return set, nil
@@ -93,7 +93,7 @@ func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transact
 }
 
 // ExecLocal_Perform Action
-func (c *Retrieve) ExecLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Retrieve) ExecLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
 		return set, nil
@@ -114,7 +114,7 @@ func (c *Retrieve) ExecLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transac
 }
 
 // ExecLocal_Cancel Action
-func (c *Retrieve) ExecLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Retrieve) ExecLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
 		return set, nil

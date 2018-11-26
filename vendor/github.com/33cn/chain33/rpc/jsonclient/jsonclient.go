@@ -16,6 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// JSONClient a object of jsonclient
 type JSONClient struct {
 	url    string
 	prefix string
@@ -28,10 +29,12 @@ func addPrefix(prefix, name string) string {
 	return prefix + "." + name
 }
 
+// NewJSONClient produce a json object
 func NewJSONClient(url string) (*JSONClient, error) {
 	return &JSONClient{url: url, prefix: "Chain33"}, nil
 }
 
+// New produce a jsonclient by perfix and url
 func New(prefix, url string) (*JSONClient, error) {
 	return &JSONClient{url: url, prefix: prefix}, nil
 }
@@ -48,6 +51,7 @@ type clientResponse struct {
 	Error  interface{}      `json:"error"`
 }
 
+// Call jsonclinet call method
 func (client *JSONClient) Call(method string, params, resp interface{}) error {
 	method = addPrefix(client.prefix, method)
 	req := &clientRequest{}
@@ -85,19 +89,19 @@ func (client *JSONClient) Call(method string, params, resp interface{}) error {
 	}
 	if cresp.Result == nil {
 		return types.ErrEmpty
-	} else {
-		if msg, ok := resp.(proto.Message); ok {
-			var str json.RawMessage
-			err = json.Unmarshal(*cresp.Result, &str)
-			if err != nil {
-				return err
-			}
-			b, err := str.MarshalJSON()
-			if err != nil {
-				return err
-			}
-			return types.JsonToPB(b, msg)
-		}
-		return json.Unmarshal(*cresp.Result, resp)
 	}
+	if msg, ok := resp.(proto.Message); ok {
+		var str json.RawMessage
+		err = json.Unmarshal(*cresp.Result, &str)
+		if err != nil {
+			return err
+		}
+		b, err := str.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		return types.JSONToPB(b, msg)
+	}
+	return json.Unmarshal(*cresp.Result, resp)
+
 }

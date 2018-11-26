@@ -12,16 +12,15 @@ import (
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
-//-----------------------------------------------------------------------------
-// RoundStepType enum type
-
 // RoundStepType enumerates the state of the consensus state machine
 type RoundStepType uint8 // These must be numeric, ordered.
 
 var (
+	// MsgMap define
 	MsgMap map[byte]reflect.Type
 )
 
+// step and message id define
 const (
 	RoundStepNewHeight     = RoundStepType(0x01) // Wait til CommitTime + timeoutCommit
 	RoundStepNewRound      = RoundStepType(0x02) // Setup new round and go to RoundStepPropose
@@ -49,6 +48,7 @@ const (
 	PacketTypePong = byte(0xfe)
 )
 
+// InitMessageMap ...
 func InitMessageMap() {
 	MsgMap = map[byte]reflect.Type{
 		EvidenceListID:      reflect.TypeOf(tmtypes.EvidenceData{}),
@@ -114,11 +114,12 @@ type RoundState struct {
 	LastValidators *ValidatorSet
 }
 
+// RoundStateMessage ...
 func (rs *RoundState) RoundStateMessage() *tmtypes.NewRoundStepMsg {
 	return &tmtypes.NewRoundStepMsg{
-		Height: rs.Height,
-		Round:  int32(rs.Round),
-		Step:   int32(rs.Step),
+		Height:                rs.Height,
+		Round:                 int32(rs.Round),
+		Step:                  int32(rs.Step),
 		SecondsSinceStartTime: int32(time.Since(rs.StartTime).Seconds()),
 		LastCommitRound:       int32(rs.LastCommit.Round()),
 	}
@@ -164,7 +165,7 @@ func (rs *RoundState) StringShort() string {
 		rs.Height, rs.Round, rs.Step, rs.StartTime)
 }
 
-//---------------------PeerRoundState----------------------------
+// PeerRoundState ...
 type PeerRoundState struct {
 	Height             int64         // Height peer is at
 	Round              int           // Round peer is at, -1 if unknown.
@@ -211,16 +212,20 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 }
 
 //---------------------Canonical json-----------------------------------
+
+// CanonicalJSONBlockID ...
 type CanonicalJSONBlockID struct {
 	Hash        []byte                     `json:"hash,omitempty"`
 	PartsHeader CanonicalJSONPartSetHeader `json:"parts,omitempty"`
 }
 
+// CanonicalJSONPartSetHeader ...
 type CanonicalJSONPartSetHeader struct {
 	Hash  []byte `json:"hash"`
 	Total int    `json:"total"`
 }
 
+// CanonicalJSONProposal ...
 type CanonicalJSONProposal struct {
 	BlockBytes []byte               `json:"block_parts_header"`
 	Height     int64                `json:"height"`
@@ -230,6 +235,7 @@ type CanonicalJSONProposal struct {
 	Timestamp  string               `json:"timestamp"`
 }
 
+// CanonicalJSONVote ...
 type CanonicalJSONVote struct {
 	BlockID   CanonicalJSONBlockID `json:"block_id"`
 	Height    int64                `json:"height"`
@@ -238,6 +244,7 @@ type CanonicalJSONVote struct {
 	Type      byte                 `json:"type"`
 }
 
+// CanonicalJSONHeartbeat ...
 type CanonicalJSONHeartbeat struct {
 	Height           int64  `json:"height"`
 	Round            int    `json:"round"`
@@ -246,33 +253,36 @@ type CanonicalJSONHeartbeat struct {
 	ValidatorIndex   int    `json:"validator_index"`
 }
 
-//------------------------------------
 // Messages including a "chain id" can only be applied to one chain, hence "Once"
 
+// CanonicalJSONOnceProposal ...
 type CanonicalJSONOnceProposal struct {
 	ChainID  string                `json:"chain_id"`
 	Proposal CanonicalJSONProposal `json:"proposal"`
 }
 
+// CanonicalJSONOnceVote ...
 type CanonicalJSONOnceVote struct {
 	ChainID string            `json:"chain_id"`
 	Vote    CanonicalJSONVote `json:"vote"`
 }
 
+// CanonicalJSONOnceHeartbeat ...
 type CanonicalJSONOnceHeartbeat struct {
 	ChainID   string                 `json:"chain_id"`
 	Heartbeat CanonicalJSONHeartbeat `json:"heartbeat"`
 }
 
-//-----------------------------------
 // Canonicalize the structs
 
+// CanonicalBlockID ...
 func CanonicalBlockID(blockID BlockID) CanonicalJSONBlockID {
 	return CanonicalJSONBlockID{
 		Hash: blockID.Hash,
 	}
 }
 
+// CanonicalProposal ...
 func CanonicalProposal(proposal *Proposal) CanonicalJSONProposal {
 	return CanonicalJSONProposal{
 		//BlockBytes: proposal.BlockBytes,
@@ -286,6 +296,7 @@ func CanonicalProposal(proposal *Proposal) CanonicalJSONProposal {
 	}
 }
 
+// CanonicalVote ...
 func CanonicalVote(vote *Vote) CanonicalJSONVote {
 	return CanonicalJSONVote{
 		BlockID:   CanonicalJSONBlockID{Hash: vote.BlockID.Hash},
@@ -296,6 +307,7 @@ func CanonicalVote(vote *Vote) CanonicalJSONVote {
 	}
 }
 
+// CanonicalHeartbeat ...
 func CanonicalHeartbeat(heartbeat *Heartbeat) CanonicalJSONHeartbeat {
 	return CanonicalJSONHeartbeat{
 		heartbeat.Height,
@@ -306,6 +318,7 @@ func CanonicalHeartbeat(heartbeat *Heartbeat) CanonicalJSONHeartbeat {
 	}
 }
 
+// CanonicalTime ...
 func CanonicalTime(t time.Time) string {
 	// note that sending time over go-wire resets it to
 	// local time, we need to force UTC here, so the

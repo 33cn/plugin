@@ -167,7 +167,7 @@ func (policy *privacyPolicy) createUTXOsByPub2Priv(priv crypto.PrivKey, reqCreat
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPublic2Privacy,
-		Value: &privacytypes.PrivacyAction_Public2Privacy{value},
+		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
 	}
 
 	tx := &types.Transaction{
@@ -177,7 +177,7 @@ func (policy *privacyPolicy) createUTXOsByPub2Priv(priv crypto.PrivKey, reqCreat
 		To:      address.ExecAddress(privacytypes.PrivacyX),
 	}
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	tx.Sign(int32(operater.GetSignType()), priv)
 
@@ -610,7 +610,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	}
 
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	return tx, nil
 }
@@ -1013,7 +1013,7 @@ func (policy *privacyPolicy) transPub2PriV2(priv crypto.PrivKey, reqPub2Pri *pri
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPublic2Privacy,
-		Value: &privacytypes.PrivacyAction_Public2Privacy{value},
+		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte("privacy"),
@@ -1024,7 +1024,7 @@ func (policy *privacyPolicy) transPub2PriV2(priv crypto.PrivKey, reqPub2Pri *pri
 	}
 	tx.SetExpire(time.Duration(reqPub2Pri.GetExpire()))
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	tx.Sign(int32(operater.GetSignType()), priv)
 
@@ -1111,7 +1111,7 @@ func (policy *privacyPolicy) transPri2PriV2(privacykeyParirs *privacy.Privacy, r
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPrivacy2Privacy,
-		Value: &privacytypes.PrivacyAction_Privacy2Privacy{value},
+		Value: &privacytypes.PrivacyAction_Privacy2Privacy{Privacy2Privacy: value},
 	}
 
 	tx := &types.Transaction{
@@ -1237,7 +1237,7 @@ func (policy *privacyPolicy) transPri2PubV2(privacykeyParirs *privacy.Privacy, r
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPrivacy2Public,
-		Value: &privacytypes.PrivacyAction_Privacy2Public{value},
+		Value: &privacytypes.PrivacyAction_Privacy2Public{Privacy2Public: value},
 	}
 
 	tx := &types.Transaction{

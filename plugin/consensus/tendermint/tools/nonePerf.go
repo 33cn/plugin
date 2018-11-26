@@ -29,7 +29,9 @@ const fee = 1e6
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var r *rand.Rand
-var TxHeightOffset int64 = 0
+
+// TxHeightOffset needed
+var TxHeightOffset int64
 
 func main() {
 	if len(os.Args) == 1 || os.Args[1] == "-h" {
@@ -69,6 +71,7 @@ func main() {
 	}
 }
 
+// LoadHelp ...
 func LoadHelp() {
 	fmt.Println("Available Commands:")
 	fmt.Println("perf [ip, size, num, interval, duration] {offset}            : 写数据性能测试")
@@ -77,6 +80,7 @@ func LoadHelp() {
 	fmt.Println("valnode [ip, pubkey, power]                                  : 增加/删除/修改tendermint节点")
 }
 
+// Perf ...
 func Perf(ip, size, num, interval, duration string) {
 	var numThread int
 	numInt, err := strconv.Atoi(num)
@@ -128,6 +132,7 @@ func Perf(ip, size, num, interval, duration string) {
 	}
 }
 
+// Put ...
 func Put(ip string, size string, privkey string) {
 	sizeInt, err := strconv.Atoi(size)
 	if err != nil {
@@ -164,6 +169,7 @@ func Put(ip string, size string, privkey string) {
 	fmt.Printf("returned JSON: %s\n", string(b))
 }
 
+// Get ...
 func Get(ip string, hash string) {
 	url := "http://" + ip + ":8801"
 	fmt.Println("transaction hash:", hash)
@@ -209,8 +215,9 @@ func setTxHeight(ip string) {
 	fmt.Println("TxHeightOffset:", TxHeightOffset)
 }
 
+// RespMsg ...
 type RespMsg struct {
-	Id     int64           `json:"id"`
+	ID     int64           `json:"id"`
 	Result rpctypes.Header `json:"result"`
 	Err    string          `json:"error"`
 }
@@ -245,6 +252,7 @@ func genaddress() (string, crypto.PrivKey) {
 	return addrto.String(), privto
 }
 
+// RandStringBytes ...
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	rand.Seed(time.Now().UnixNano())
@@ -254,6 +262,7 @@ func RandStringBytes(n int) string {
 	return string(b)
 }
 
+// ValNode ...
 func ValNode(ip, pubkey, power string) {
 	url := "http://" + ip + ":8801"
 

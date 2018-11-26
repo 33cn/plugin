@@ -11,41 +11,45 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (e *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
+// Query_GetTitle query paracross title
+func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return e.ParacrossGetHeight(in.GetData())
+	return p.paracrossGetHeight(in.GetData())
 }
 
-func (e *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
-	return e.ParacrossListTitles()
+//Query_ListTitles query paracross titles list
+func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
+	return p.paracrossListTitles()
 }
 
-func (e *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
+// Query_GetTitleHeight query title height
+func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return e.ParacrossGetTitleHeight(in.Title, in.Height)
+	return p.paracrossGetTitleHeight(in.Title, in.Height)
 }
 
-func (e *Paracross) Query_GetAssetTxResult(in *types.ReqHash) (types.Message, error) {
+// Query_GetAssetTxResult query get asset tx reseult
+func (p *Paracross) Query_GetAssetTxResult(in *types.ReqHash) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return e.ParacrossGetAssetTxResult(in.Hash)
+	return p.paracrossGetAssetTxResult(in.Hash)
 }
 
-func (c *Paracross) ParacrossGetHeight(title string) (types.Message, error) {
-	ret, err := getTitle(c.GetStateDB(), calcTitleKey(title))
+func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
+	ret, err := getTitle(p.GetStateDB(), calcTitleKey(title))
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
 	return ret, nil
 }
 
-func (c *Paracross) ParacrossListTitles() (types.Message, error) {
-	return listLocalTitles(c.GetLocalDB())
+func (p *Paracross) paracrossListTitles() (types.Message, error) {
+	return listLocalTitles(p.GetLocalDB())
 }
 
 func listLocalTitles(db dbm.KVDB) (types.Message, error) {
@@ -80,17 +84,17 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 	return &resp, nil
 }
 
-func (c *Paracross) ParacrossGetTitleHeight(title string, height int64) (types.Message, error) {
-	return loadLocalTitle(c.GetLocalDB(), title, height)
+func (p *Paracross) paracrossGetTitleHeight(title string, height int64) (types.Message, error) {
+	return loadLocalTitle(p.GetLocalDB(), title, height)
 }
 
-func (c *Paracross) ParacrossGetAssetTxResult(hash []byte) (types.Message, error) {
+func (p *Paracross) paracrossGetAssetTxResult(hash []byte) (types.Message, error) {
 	if len(hash) == 0 {
 		return nil, types.ErrInvalidParam
 	}
 
 	key := calcLocalAssetKey(hash)
-	value, err := c.GetLocalDB().Get(key)
+	value, err := p.GetLocalDB().Get(key)
 	if err != nil {
 		return nil, err
 	}

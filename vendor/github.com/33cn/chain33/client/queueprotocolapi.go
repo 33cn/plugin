@@ -9,7 +9,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-// 消息通道交互API接口定义
+// QueueProtocolAPI 消息通道交互API接口定义
 type QueueProtocolAPI interface {
 	Version() (*types.Reply, error)
 	Close()
@@ -117,6 +117,7 @@ type QueueProtocolAPI interface {
 	// +++++++++++++++ store interfaces begin
 	StoreGet(*types.StoreGet) (*types.StoreReplyValue, error)
 	StoreGetTotalCoins(*types.IterateRangeByStateHash) (*types.ReplyGetTotalCoins, error)
+	StoreList(param *types.StoreList) (*types.StoreListReply, error)
 	// --------------- store interfaces end
 
 	// +++++++++++++++ other interfaces begin

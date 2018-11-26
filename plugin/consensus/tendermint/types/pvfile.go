@@ -22,6 +22,7 @@ var (
 	pvFile        = "priv_validator_"
 )
 
+// KeyFileCmd ...
 func KeyFileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keyfile",
@@ -34,6 +35,7 @@ func KeyFileCmd() *cobra.Command {
 	return cmd
 }
 
+// CreateCmd ...
 func CreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -49,6 +51,7 @@ func addCreateCmdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("num")
 }
 
+// RandStr ...
 func RandStr(length int) string {
 	chars := []byte{}
 MAIN_LOOP:

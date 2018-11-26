@@ -104,6 +104,7 @@ func (na *NetAddress) Equals(other interface{}) bool {
 	return false
 }
 
+// Less reports whether na and other are the less addresses
 func (na *NetAddress) Less(other interface{}) bool {
 	if o, ok := other.(*NetAddress); ok {
 		return na.String() < o.String()
@@ -124,6 +125,7 @@ func (na *NetAddress) String() string {
 	return na.str
 }
 
+// Copy na address
 func (na *NetAddress) Copy() *NetAddress {
 	copytmp := *na
 	return &copytmp
@@ -138,6 +140,7 @@ func isCompressSupport(err error) bool {
 	return true
 }
 
+// DialTimeout dial timeout
 func (na *NetAddress) DialTimeout(version int32) (*grpc.ClientConn, error) {
 	ch := make(chan grpc.ServiceConfig, 1)
 	ch <- P2pComm.GrpcConfig()
@@ -185,7 +188,7 @@ func (na *NetAddress) Routable() bool {
 		na.RFC4193() || na.RFC4843() || na.Local())
 }
 
-// For IPv4 these are either a 0 or all bits set address. For IPv6 a zero
+// Valid For IPv4 these are either a 0 or all bits set address. For IPv6 a zero
 // address or one that matches the RFC3849 documentation address format.
 func (na *NetAddress) Valid() bool {
 	return na.IP != nil && !(na.IP.IsUnspecified() || na.RFC3849() ||
@@ -270,17 +273,36 @@ var (
 	zero4       = net.IPNet{IP: net.ParseIP("0.0.0.0"), Mask: net.CIDRMask(8, 32)}
 )
 
+// RFC1918 defines ipv4 private network function
 func (na *NetAddress) RFC1918() bool {
 	return rfc1918_10.Contains(na.IP) ||
 		rfc1918_192.Contains(na.IP) ||
 		rfc1918_172.Contains(na.IP)
 }
+
+// RFC3849 defines ipv6 network function
 func (na *NetAddress) RFC3849() bool { return rfc3849.Contains(na.IP) }
+
+// RFC3927 defines ipv4 network function
 func (na *NetAddress) RFC3927() bool { return rfc3927.Contains(na.IP) }
+
+// RFC3964 defines ipv6 6to4 function
 func (na *NetAddress) RFC3964() bool { return rfc3964.Contains(na.IP) }
+
+// RFC4193 defines ipv6 unique local function
 func (na *NetAddress) RFC4193() bool { return rfc4193.Contains(na.IP) }
+
+// RFC4380 defines ipv6 teredo tunneling function
 func (na *NetAddress) RFC4380() bool { return rfc4380.Contains(na.IP) }
+
+// RFC4843 defines ipv6 orchid function
 func (na *NetAddress) RFC4843() bool { return rfc4843.Contains(na.IP) }
+
+// RFC4862 defines ipv6 autoconfig function
 func (na *NetAddress) RFC4862() bool { return rfc4862.Contains(na.IP) }
+
+// RFC6052 defines ipv6 well know prefix function
 func (na *NetAddress) RFC6052() bool { return rfc6052.Contains(na.IP) }
+
+// RFC6145 defines ipv6 ipv4 translated addredd function
 func (na *NetAddress) RFC6145() bool { return rfc6145.Contains(na.IP) }

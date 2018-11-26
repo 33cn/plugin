@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+// ValNodeX define
 var ValNodeX = "valnode"
 
 func init() {
@@ -16,21 +17,24 @@ func init() {
 	types.RegisterDappFork(ValNodeX, "Enable", 0)
 }
 
-// exec
+// ValNodeType stuct
 type ValNodeType struct {
 	types.ExecTypeBase
 }
 
+// NewType method
 func NewType() *ValNodeType {
 	c := &ValNodeType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload method
 func (t *ValNodeType) GetPayload() types.Message {
 	return &ValNodeAction{}
 }
 
+// GetTypeMap method
 func (t *ValNodeType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Node":      ValNodeActionUpdate,
@@ -38,6 +42,7 @@ func (t *ValNodeType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// GetLogMap method
 func (t *ValNodeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{}
 }

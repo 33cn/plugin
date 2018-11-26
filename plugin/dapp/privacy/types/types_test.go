@@ -30,7 +30,6 @@ func TestReplyPrivacyAccount(t *testing.T) {
 		reply.Utxos.Utxos = append(reply.Utxos.Utxos, utxo)
 		reply.Ftxos.Utxos = append(reply.Ftxos.Utxos, utxo)
 	}
-
-	_, err := types.PBToJson(reply)
+	_, err := types.PBToJSON(reply)
 	assert.NoError(t, err)
 }
