@@ -10,6 +10,7 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
