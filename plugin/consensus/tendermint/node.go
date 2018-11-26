@@ -22,12 +22,12 @@ import (
 )
 
 const (
-	numBufferedConnections             = 10
-	maxNumPeers                        = 50
-	tryListenSeconds                   = 5
-	handshakeTimeout                   = 20 // * time.Second,
-	maxSendQueueSize                   = 1024
-	defaultSendTimeout                 = 60 * time.Second
+	numBufferedConnections = 10
+	maxNumPeers            = 50
+	tryListenSeconds       = 5
+	handshakeTimeout       = 20 // * time.Second,
+	maxSendQueueSize       = 1024
+	defaultSendTimeout     = 60 * time.Second
 	//MaxMsgPacketPayloadSize define
 	MaxMsgPacketPayloadSize            = 10 * 1024 * 1024
 	defaultDialTimeout                 = 3 * time.Second

@@ -38,7 +38,7 @@ var (
 	timeoutCommit               int32 = 1000
 	skipTimeoutCommit                 = false
 	createEmptyBlocks                 = false
-	createEmptyBlocksInterval   int32       // second
+	createEmptyBlocksInterval   int32 // second
 	validatorNodes                    = []string{"127.0.0.1:46656"}
 	peerGossipSleepDuration     int32 = 100
 	peerQueryMaj23SleepDuration int32 = 2000

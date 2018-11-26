@@ -320,7 +320,7 @@ func (voteSet *VoteSet) SetPeerMaj23(peerID string, blockID *tmtypes.BlockID) {
 		if votesByBlock.peerMaj23 {
 			return // Nothing to do
 		}
-		votesByBlock.peerMaj23 = true	// No need to copy votes, already there.
+		votesByBlock.peerMaj23 = true // No need to copy votes, already there.
 	} else {
 		votesByBlock = newBlockVotes(true, voteSet.valSet.Size())
 		voteSet.votesByBlock[blockKey] = votesByBlock

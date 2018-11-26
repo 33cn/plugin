@@ -216,7 +216,7 @@ func (cs *ConsensusState) Start() {
 // Stop timer and receive routine
 func (cs *ConsensusState) Stop() {
 	cs.timeoutTicker.Stop()
-	cs.Quit <-struct{}{}
+	cs.Quit <- struct{}{}
 }
 
 //------------------------------------------------------------

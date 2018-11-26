@@ -182,13 +182,13 @@ func (sc *SecretConnection) Read(data []byte) (n int, err error) {
 }
 
 // Close Implements net.Conn
-func (sc *SecretConnection) Close() error                  { return sc.conn.Close() }
+func (sc *SecretConnection) Close() error { return sc.conn.Close() }
 
 // LocalAddr ...
-func (sc *SecretConnection) LocalAddr() net.Addr           { return sc.conn.(net.Conn).LocalAddr() }
+func (sc *SecretConnection) LocalAddr() net.Addr { return sc.conn.(net.Conn).LocalAddr() }
 
 // RemoteAddr ...
-func (sc *SecretConnection) RemoteAddr() net.Addr          { return sc.conn.(net.Conn).RemoteAddr() }
+func (sc *SecretConnection) RemoteAddr() net.Addr { return sc.conn.(net.Conn).RemoteAddr() }
 
 // SetDeadline ...
 func (sc *SecretConnection) SetDeadline(t time.Time) error { return sc.conn.(net.Conn).SetDeadline(t) }
@@ -352,7 +352,7 @@ func incr2Nonce(nonce *[24]byte) {
 // increment nonce big-endian by 1 with wraparound.
 func incrNonce(nonce *[24]byte) {
 	for i := 23; 0 <= i; i-- {
-		nonce[i] ++
+		nonce[i]++
 		if nonce[i] != 0 {
 			return
 		}

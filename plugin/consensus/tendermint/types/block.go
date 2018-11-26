@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	blocklog        = log15.New("module", "tendermint-block")
+	blocklog = log15.New("module", "tendermint-block")
 	// ConsensusCrypto define
 	ConsensusCrypto crypto.Crypto
 )

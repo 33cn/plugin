@@ -31,7 +31,7 @@ var (
 	randgen *rand.Rand
 	randMux sync.Mutex
 	// Fmt ...
-	Fmt     = fmt.Sprintf
+	Fmt = fmt.Sprintf
 )
 
 // Init ...
@@ -143,6 +143,7 @@ func MinInt(a, b int) int {
 	}
 	return b
 }
+
 // MaxInt ...
 func MaxInt(a, b int) int {
 	if a > b {

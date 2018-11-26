@@ -29,6 +29,7 @@ const fee = 1e6
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var r *rand.Rand
+
 // TxHeightOffset needed
 var TxHeightOffset int64
 
