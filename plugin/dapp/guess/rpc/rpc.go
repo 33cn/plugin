@@ -20,7 +20,7 @@ func (c *channelClient) GuessStart(ctx context.Context, head *pb.GuessGameStart)
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionStart,
-		Value: &pb.GuessGameAction_Start{head},
+			Value: &pb.GuessGameAction_Start{head},
 	}
 	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
 	if err != nil {

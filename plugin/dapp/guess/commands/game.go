@@ -50,30 +50,37 @@ func addGuessStartFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("options", "o", "", "options")
 	cmd.MarkFlagRequired("options")
 
-	cmd.Flags().Uint32P("maxHeight", "h", 0, "max height to bet")
+	cmd.Flags().StringP("maxTime", "mt", "", "max time to bet, after this bet is forbidden")
+
+	cmd.Flags().Uint32P("maxHeight", "h", 0, "max height to bet, after this bet is forbidden")
 	cmd.MarkFlagRequired("maxHeight")
 
 	cmd.Flags().StringP("symbol", "s", "bty", "token symbol")
 	cmd.Flags().StringP("exec", "e", "coins", "excutor name")
 
-	cmd.Flags().Uint32P("oneBet", "b", 0, "one bet number")
-	cmd.MarkFlagRequired("oneBet")
+	cmd.Flags().Uint32P("oneBet", "b", 10, "one bet number, eg:10 bty / 10 token")
+	//cmd.MarkFlagRequired("oneBet")
 
-	cmd.Flags().Uint32P("maxBets", "m", 0, "max bets one time")
-	cmd.MarkFlagRequired("maxBets")
+	cmd.Flags().Uint32P("maxBets", "m", 10000, "max bets one time")
+	//cmd.MarkFlagRequired("maxBets")
 
-	cmd.Flags().Uint32P("maxBetsNumber", "n", 100, "max bets number")
-	cmd.MarkFlagRequired("maxBetsNumber")
-
+	cmd.Flags().Uint32P("maxBetsNumber", "n", 100000, "max bets number")
+	//cmd.MarkFlagRequired("maxBetsNumber")
 
 	cmd.Flags().Float64P("fee", "f", 0, "fee")
+
 	cmd.Flags().StringP("feeAddr", "a", "", "fee address")
+
+	cmd.Flags().StringP("expire", "ex", "", "expire time of the game, after this any addr can abort it")
+
+	cmd.Flags().Uint32P("expireHeight", "eh", 0, "expire height of the game, after this any addr can abort it")
 }
 
 func guessStart(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	topic, _ := cmd.Flags().GetString("topic")
 	options, _ := cmd.Flags().GetString("options")
+	maxTime, _ := cmd.Flags().GetString("maxTime")
 	maxHeight, _ := cmd.Flags().GetUint32("maxHeight")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	exec, _ := cmd.Flags().GetString("exec")
@@ -82,12 +89,15 @@ func guessStart(cmd *cobra.Command, args []string) {
 	maxBetsNumber, _ := cmd.Flags().GetUint32("maxBetsNumber")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	feeAddr, _ := cmd.Flags().GetString("feeAddr")
+	expire, _ := cmd.Flags().GetString("expire")
+	expireHeight, _ := cmd.Flags().GetUint32("expireHeight")
 
 	feeInt64 := uint64(fee * 1e4)
 
 	params := &pkt.GuessStartTxReq{
 		Topic:         topic,
 		Options:       options,
+		MaxTime:       maxTime,
 		MaxHeight:     maxHeight,
 		Symbol:        symbol,
 		Exec:          exec,
@@ -96,6 +106,8 @@ func guessStart(cmd *cobra.Command, args []string) {
 		MaxBetsNumber: maxBetsNumber,
 		Fee:           feeInt64,
 		FeeAddr:       feeAddr,
+		Expire:        expire,
+		ExpireHeight:  expireHeight,
 	}
 
 	var res string

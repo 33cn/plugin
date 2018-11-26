@@ -7,25 +7,28 @@ package types;
 //竞猜游戏内容
 message GuessGame {
     string gameId        = 1;  //游戏ID
-    uint32  status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
+    uint32 status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
     int64  startTime     = 3;  //创建游戏的时间
     string startTxHash   = 4;  //创建游戏的交易hash
     string topic         = 5;  //主题
-    string options       = 6;  //选项
-    int64  stopTime      = 7;  //截止下注时间
-    uint32  maxHeight     = 8;  //截止下注的块高
-    string symbol        = 9;  //bty或者具体token
-    string exec          = 10; //coins或者token
-    uint32  oneBet        = 11; //一注等于多少bty或者token
-    uint32  maxBets       = 12; //单次可以下多少注，默认100
-    uint32  maxBetsNumber = 13; //最多可以下多少注
-    uint32  fee           = 14; //收取费用，不带则表示不收费
-    string feeAddr       = 15; //收费地址
-    string adminAddr     = 16; //游戏创建者地址,只有该地址可以开奖
-    uint32    betsNumber  = 17; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
-    repeated GuessPlayer plays = 18; //参与游戏下注的玩家投注信息
-    string result = 19;
-    repeated GuessBet bets = 20;
+    string category      = 6;  //分类
+    string options       = 7;  //选项
+    string maxTime       = 8;  //截止下注时间
+    uint32 maxHeight     = 9;  //截止下注的块高
+    string symbol        = 10;  //bty或者具体token
+    string exec          = 11; //coins或者token
+    uint32 oneBet        = 12; //一注等于多少bty或者token
+    uint32 maxBets       = 13; //单次可以下多少注，默认100
+    uint32 maxBetsNumber = 14; //最多可以下多少注
+    uint32 fee           = 15; //收取费用，不带则表示不收费
+    string feeAddr       = 16; //收费地址
+    string expire        = 17; //游戏过期时间
+    uint32 expireHeight  = 18; //游戏过期区块高度
+    string adminAddr     = 19; //游戏创建者地址,只有该地址可以开奖
+    uint32 betsNumber    = 20; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 21; //参与游戏下注的玩家投注信息
+    string result = 22;
+    repeated GuessBet bets = 23;
 }
 
 message GuessPlayer {
@@ -140,14 +143,18 @@ message GuessGameAction {
 message GuessGameStart{
     string topic     = 1;
     string options   = 2;
-    uint32  maxHeight = 3;
-    string symbol    = 4;
-    string exec      = 5;
-    uint32  oneBet    = 6;
-    uint32  maxBets   = 7;
-    uint32  maxBetsNumber = 8;
-    uint64  fee       = 9;
-    string feeAddr   = 10;
+    string category  = 3;
+    string maxTime   = 4;
+    uint32 maxHeight = 5;
+    string symbol    = 6;
+    string exec      = 7;
+    uint32 oneBet    = 8;
+    uint32 maxBets   = 9;
+    uint32 maxBetsNumber = 10;
+    uint64 fee       = 11;
+    string feeAddr   = 12;
+    string expire    = 13;
+    uint32 expireHeight = 14;
 }
 
 //参与游戏下注
@@ -229,19 +236,29 @@ message ReceiptPBGame {
     int32           preStatus = 10;
 }
 
+message ReceiptGuessGame {
+    string   gameId           = 1;
+    uint32   status           = 2;
+    string   addr             = 3;
+    int64    index            = 4;
+}
+
+
 message GuessStartTxReq {
     string topic              = 1;
     string options            = 2;
     int64  startTime          = 3;
-    int64  stopTime           = 4;
-    uint32  maxHeight         = 5;
+    string maxTime            = 4;
+    uint32 maxHeight          = 5;
     string symbol             = 6;
     string exec               = 7;
-    uint32  oneBet            = 8;
-    uint32  maxBets           = 9;
-    uint32  maxBetsNumber     = 10;
-    uint64  fee               = 11;
+    uint32 oneBet             = 8;
+    uint32 maxBets            = 9;
+    uint32 maxBetsNumber      = 10;
+    uint64 fee                = 11;
     string feeAddr            = 12;
+    string expire             = 13;
+    uint32 expireHeight       = 14;
 }
 
 message GuessBetTxReq {
@@ -275,7 +292,25 @@ message PBQueryReq {
     int64  fee    = 2;
 }
 
-// pokerbull 对外提供服务的接口
+
+// 索引value值
+message GuessGameRecord {
+    string gameId = 1;
+    int32  status = 2;
+    int64  index  = 3;
+}
+
+message GuessGameIndexRecord {
+    string gameId = 1;
+    int64  index  = 2;
+}
+
+message GuessGameRecords {
+    repeated GuessGameRecord records = 1;
+}
+
+
+// guess 对外提供服务的接口
 service guess {
     //游戏开始
     rpc GuessStart(GuessGameStart) returns (UnsignTx) {}

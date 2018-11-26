@@ -31,8 +31,8 @@ const (
 
 	TyLogGuessGameStart = 901
 	TyLogGuessGameBet   = 902
-	TyLogGuessGameDraw  = 903
-	TyLogGuessGameClose = 904
+	TyLogGuessGameAbort  = 903
+	TyLogGuessGamePublish = 904
 )
 
 //包的名字可以通过配置文件来配置

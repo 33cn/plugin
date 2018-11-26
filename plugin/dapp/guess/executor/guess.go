@@ -45,22 +45,22 @@ func (g *Guess) GetDriverName() string {
 	return pkt.GuessX
 }
 
-func calcPBGameAddrPrefix(addr string) []byte {
+func calcGuessGameAddrPrefix(addr string) []byte {
 	key := fmt.Sprintf("LODB-guess-addr:%s:", addr)
 	return []byte(key)
 }
 
-func calcPBGameAddrKey(addr string, index int64) []byte {
+func calcGuessGameAddrKey(addr string, index int64) []byte {
 	key := fmt.Sprintf("LODB-guess-addr:%s:%018d", addr, index)
 	return []byte(key)
 }
 
-func calcPBGameStatusPrefix(status int32) []byte {
+func calcGuessGameStatusPrefix(status int32) []byte {
 	key := fmt.Sprintf("LODB-guess-status-index:%d:", status)
 	return []byte(key)
 }
 
-func calcPBGameStatusKey(status int32, index int64) []byte {
+func calcGuessGameStatusKey(status int32, index int64) []byte {
 	key := fmt.Sprintf("LODB-guess-status-index:%d:%018d", status, index)
 	return []byte(key)
 }

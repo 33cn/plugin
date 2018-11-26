@@ -7,6 +7,7 @@ package executor
 import (
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/client"
 	"sort"
 	"strconv"
 
@@ -23,7 +24,8 @@ const (
 	ListASC  = int32(1)
 
 	DefaultCount   = int32(20) //默认一次取多少条记录
-	MAX_PLAYER_NUM = 5
+	MaxBetsNumber = 100000
+	MaxHeight = 1000000000
 	MIN_PLAY_VALUE = 10 * types.Coin
 	//DefaultStyle   = pkt.PlayStyleDefault
 )
@@ -38,6 +40,7 @@ type Action struct {
 	execaddr     string
 	localDB      dbm.Lister
 	index        int
+	api          client.QueueProtocolAPI
 }
 
 func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
@@ -54,6 +57,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		execaddr: dapp.ExecAddress(string(tx.Execer)),
 		localDB: guess.GetLocalDB(),
 		index: index,
+		api: guess.GetApi(),
 	}
 }
 
@@ -122,17 +126,17 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 	var values [][]byte
 	var err error
 	if index == 0 {
-		values, err = db.List(calcPBGameAddrPrefix(addr), nil, DefaultCount, ListDESC)
+		values, err = db.List(calcGuessGameAddrPrefix(addr), nil, DefaultCount, ListDESC)
 	} else {
-		values, err = db.List(calcPBGameAddrPrefix(addr), calcPBGameAddrKey(addr, index), DefaultCount, ListDESC)
+		values, err = db.List(calcGuessGameAddrPrefix(addr), calcGuessGameAddrKey(addr, index), DefaultCount, ListDESC)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	var gameIds []*pkt.PBGameRecord
+	var gameIds []*pkt.GuessGameRecord
 	for _, value := range values {
-		var record pkt.PBGameRecord
+		var record pkt.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -140,24 +144,24 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{gameIds}, nil
+	return &pkt.GuessGameRecords{Records: gameIds}, nil
 }
 
 func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Message, error) {
 	var values [][]byte
 	var err error
 	if index == 0 {
-		values, err = db.List(calcPBGameStatusPrefix(status), nil, DefaultCount, ListDESC)
+		values, err = db.List(calcGuessGameStatusPrefix(status), nil, DefaultCount, ListDESC)
 	} else {
-		values, err = db.List(calcPBGameStatusPrefix(status), calcPBGameStatusKey(status, index), DefaultCount, ListDESC)
+		values, err = db.List(calcGuessGameStatusPrefix(status), calcGuessGameStatusKey(status, index), DefaultCount, ListDESC)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	var gameIds []*pkt.PBGameRecord
+	var gameIds []*pkt.GuessGameRecord
 	for _, value := range values {
-		var record pkt.PBGameRecord
+		var record pkt.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -165,7 +169,7 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{gameIds}, nil
+	return &pkt.GuessGameRecords{Records: gameIds}, nil
 }
 
 func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, value int64) ([]string, error) {
@@ -187,10 +191,10 @@ func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, val
 	return gameIds, nil
 }
 
-func (action *Action) saveGame(game *pkt.PokerBull) (kvset []*types.KeyValue) {
+func (action *Action) saveGame(game *pkt.GuessGame) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
 	action.db.Set(Key(game.GetGameId()), value)
-	kvset = append(kvset, &types.KeyValue{Key(game.GameId), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), value})
 	return kvset
 }
 
@@ -198,31 +202,22 @@ func (action *Action) getIndex(game *pkt.PokerBull) int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-func (action *Action) GetReceiptLog(game *pkt.PokerBull) *types.ReceiptLog {
+func (action *Action) GetReceiptLog(game *pkt.GuessGame) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
-	r := &pkt.ReceiptPBGame{}
+	r := &pkt.ReceiptGuessGame{}
 	r.Addr = action.fromaddr
-	if game.Status == pkt.PBGameActionStart {
-		log.Ty = pkt.TyLogPBGameStart
-	} else if game.Status == pkt.PBGameActionContinue {
-		log.Ty = pkt.TyLogPBGameContinue
-	} else if game.Status == pkt.PBGameActionQuit {
-		log.Ty = pkt.TyLogPBGameQuit
+	if game.Status == pkt.GuessGameActionStart {
+		log.Ty = pkt.TyLogGuessGameStart
+	} else if game.Status == pkt.GuessGameActionBet {
+		log.Ty = pkt.TyLogGuessGameBet
+	} else if game.Status == pkt.GuessGameActionAbort {
+		log.Ty = pkt.TyLogGuessGameAbort
+	} else if game.Status == pkt.GuessGameActionPublish {
+		log.Ty = pkt.TyLogGuessGamePublish
 	}
 
 	r.GameId = game.GameId
 	r.Status = game.Status
-	r.Index = game.GetIndex()
-	r.PrevIndex = game.GetPrevIndex()
-	r.PlayerNum = game.PlayerNum
-	r.Value = game.Value
-	r.IsWaiting = game.IsWaiting
-	if !r.IsWaiting {
-		for _, v := range game.Players {
-			r.Players = append(r.Players, v.Address)
-		}
-	}
-	r.PreStatus = game.PreStatus
 	log.Log = types.Encode(r)
 	return log
 }
@@ -462,38 +457,31 @@ func (action *Action) checkDupPlayerAddress(id string, pbPlayers []*pkt.PBPlayer
 }
 
 // 新建一局游戏
-func (action *Action) newGame(gameId string, start *pkt.PBGameStart) (*pkt.PokerBull, error) {
-	var game *pkt.PokerBull
-
-	// 不指定赌注，默认按照最低赌注
-	if start.GetValue() == 0 {
-		start.Value = MIN_PLAY_VALUE
-	}
-
-	//TODO 庄家检查闲家数量倍数的资金
-	if DefaultStyle == pkt.PlayStyleDealer {
-		if !action.CheckExecAccountBalance(action.fromaddr, start.GetValue()*POKERBULL_LEVERAGE_MAX*int64(start.PlayerNum-1), 0) {
-			logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
-				gameId, "err", types.ErrNoBalance)
-			return nil, types.ErrNoBalance
-		}
-	}
-
-	game = &pkt.PokerBull{
+func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
+	var game *pkt.GuessGame
+	game = &pkt.GuessGame{
 		GameId:      gameId,
-		Status:      pkt.PBGameActionStart,
-		StartTime:   action.blocktime,
+		Status:      pkt.GuessGameActionStart,
+		//StartTime:   action.blocktime,
 		StartTxHash: gameId,
-		Value:       start.GetValue(),
-		Poker:       NewPoker(),
-		PlayerNum:   start.PlayerNum,
-		Index:       action.getIndex(game),
-		DealerAddr:  action.fromaddr,
-		IsWaiting:   true,
-		PreStatus:   0,
-	}
+		Topic:       start.Topic,
+		Category:    start.Category,
+		Options:     start.Options,
+		MaxTime:     start.MaxTime,
+		MaxHeight:   start.MaxHeight,
+		Symbol:      start.Symbol,
+		Exec:        start.Exec,
+		OneBet:      start.OneBet,
+		MaxBets:     start.MaxBets,
+		MaxBetsNumber: start.MaxBetsNumber,
+		Fee: start.Fee,
+		FeeAddr: start.FeeAddr,
+		Expire: start.Expire,
+		ExpireHeight: start.ExpireHeight,
+		//AdminAddr: action.fromaddr,
 
-	Shuffle(game.Poker, action.blocktime) //洗牌
+		//Index:       action.getIndex(game),
+	}
 
 	return game, nil
 }
@@ -545,17 +533,24 @@ func (action *Action) checkPlayerExistInGame() bool {
 	return true
 }
 
-func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) {
+func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	if start.PlayerNum > MAX_PLAYER_NUM {
+	if start.MaxHeight >= MaxHeight {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("The maximum player number is %d", MAX_PLAYER_NUM))
+			"err", fmt.Sprintf("The maximum height number is %d", MaxHeight))
+		return nil, types.ErrInvalidParam
+	}
+
+	if start.MaxBetsNumber >= MaxBetsNumber {
+		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"err", fmt.Sprintf("The maximum bets number is %d", MaxBetsNumber))
 		return nil, types.ErrInvalidParam
 	}
 
 	gameId := common.ToHex(action.txhash)
+	/*
 	if !action.CheckExecAccountBalance(action.fromaddr, start.GetValue()*POKERBULL_LEVERAGE_MAX, 0) {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "id", gameId, "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
@@ -564,9 +559,10 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	if action.checkPlayerExistInGame() {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Address is already in a game")
 		return nil, fmt.Errorf("Address is already in a game")
-	}
+	}*/
 
-	var game *pkt.PokerBull = nil
+	var game *pkt.GuessGame = nil
+	/*
 	ids, err := queryGameListByStatusAndPlayer(action.localDB, pkt.PBGameActionStart, start.PlayerNum, start.Value)
 	if err != nil || len(ids) == 0 {
 		if err != types.ErrNotFound {
@@ -586,20 +582,14 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 				return nil, err
 			}
 		}
-	}
-
-	//发牌随机数取txhash
-	txrng, err := action.genTxRnd(action.txhash)
+	}*/
+	game, err := action.newGame(gameId, start)
 	if err != nil {
 		return nil, err
 	}
+	game.StartTime = action.blocktime
+	game.AdminAddr = action.fromaddr
 
-	//加入当前玩家信息
-	game.Players = append(game.Players, &pkt.PBPlayer{
-		Address: action.fromaddr,
-		TxHash:  txrng,
-		Ready:   false,
-	})
 
 	// 如果人数达标，则发牌计算斗牛结果
 	if len(game.Players) == int(game.PlayerNum) {
@@ -628,7 +618,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func getReadyPlayerNum(players []*pkt.PBPlayer) int {
