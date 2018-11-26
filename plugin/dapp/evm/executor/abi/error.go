@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	errBadBool = errors.New("abi: improperly encoded boolean Value")
+	errBadBool = errors.New("abi: improperly encoded boolean value")
 )
 
 // formatSliceString formats the reflection kind with the given slice size
@@ -60,7 +60,7 @@ func sliceTypeCheck(t Type, val reflect.Value) error {
 	return nil
 }
 
-// typeCheck checks that the given reflection Value can be assigned to the reflection
+// typeCheck checks that the given reflection value can be assigned to the reflection
 // type in t.
 func typeCheck(t Type, value reflect.Value) error {
 	if t.T == SliceTy || t.T == ArrayTy {

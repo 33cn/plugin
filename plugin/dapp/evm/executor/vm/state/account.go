@@ -165,6 +165,14 @@ func (ca *ContractAccount) LoadContract(db db.KV) {
 		return
 	}
 	ca.resotreState(data)
+
+	// 加载 ABI (如果有的话)
+	if types.IsDappFork(ca.mdb.GetBlockHeight(), "evm", "ForkEVMABI") {
+		data, err := db.Get(ca.GetAbiKey())
+		if err == nil {
+			ca.Data.Abi = string(data)
+		}
+	}
 }
 
 // SetCode 设置合约二进制代码
@@ -179,6 +187,18 @@ func (ca *ContractAccount) SetCode(code []byte) {
 	})
 	ca.Data.Code = code
 	ca.Data.CodeHash = common.ToHash(code).Bytes()
+}
+
+// SetAbi 设置合约绑定的ABI数据
+func (ca *ContractAccount) SetAbi(abi string) {
+	if types.IsDappFork(ca.mdb.GetBlockHeight(), "evm", "ForkEVMABI") {
+		ca.mdb.addChange(abiChange{
+			baseChange: baseChange{},
+			account:    ca.Addr,
+			prevabi:    ca.Data.Abi,
+		})
+		ca.Data.Abi = abi
+	}
 }
 
 // SetCreator 设置创建者
@@ -270,6 +290,11 @@ func (ca *ContractAccount) BuildStateLog() (log *types.ReceiptLog) {
 // GetDataKey 获取数据KEY
 func (ca *ContractAccount) GetDataKey() []byte {
 	return []byte("mavl-" + evmtypes.ExecutorName + "-data: " + ca.Addr)
+}
+
+// GetAbiKey 获取Abi数据KEY，ABI数据使用单独的KEY存储
+func (ca *ContractAccount) GetAbiKey() []byte {
+	return []byte("mavl-" + evmtypes.ExecutorName + "-abi: " + ca.Addr)
 }
 
 // GetStateKey 获取状态key

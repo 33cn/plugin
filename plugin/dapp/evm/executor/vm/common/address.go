@@ -7,11 +7,12 @@ package common
 import (
 	"math/big"
 
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto/sha3"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
-	"encoding/hex"
-	"github.com/33cn/chain33/common/crypto/sha3"
 )
 
 // Address 封装地址结构体，并提供各种常用操作封装
@@ -114,14 +115,6 @@ func BytesToHash160Address(b []byte) Hash160Address {
 	var h Hash160Address
 	h.SetBytes(b)
 	return h
-}
-
-// BytesToAddress 字节向地址转换
-func Hash160ToAddress(h Hash160Address) Address {
-	a := new(address.Address)
-	a.Version = 0
-	a.Hash160 = copyBytes(h[:])
-	return Address{addr: a}
 }
 
 // StringToAddress 字符串转换为地址

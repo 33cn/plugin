@@ -65,13 +65,13 @@ var unpackTests = []unpackTest{
 		def:  `[{ "type": "bool" }]`,
 		enc:  "0000000000000000000000000000000000000000000000000001000000000001",
 		want: false,
-		err:  "abi: improperly encoded boolean Value",
+		err:  "abi: improperly encoded boolean value",
 	},
 	{
 		def:  `[{ "type": "bool" }]`,
 		enc:  "0000000000000000000000000000000000000000000000000000000000000003",
 		want: false,
-		err:  "abi: improperly encoded boolean Value",
+		err:  "abi: improperly encoded boolean value",
 	},
 	{
 		def:  `[{"type": "uint32"}]`,
@@ -125,7 +125,7 @@ var unpackTests = []unpackTest{
 	{
 		def:  `[{"type": "address"}]`,
 		enc:  "0000000000000000000000000100000000000000000000000000000000000000",
-		want:  common.Hash160Address{1},
+		want: common.Hash160Address{1},
 	},
 	{
 		def:  `[{"type": "bytes32"}]`,
@@ -288,7 +288,7 @@ var unpackTests = []unpackTest{
 	},
 	// struct outputs
 	{
-		def: `[{"Name":"int1","type":"int256"},{"Name":"int2","type":"int256"}]`,
+		def: `[{"name":"int1","type":"int256"},{"name":"int2","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -296,7 +296,7 @@ var unpackTests = []unpackTest{
 		}{big.NewInt(1), big.NewInt(2)},
 	},
 	{
-		def: `[{"Name":"int","type":"int256"},{"Name":"Int","type":"int256"}]`,
+		def: `[{"name":"int","type":"int256"},{"name":"Int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -305,7 +305,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"Name":"int","type":"int256"},{"Name":"_int","type":"int256"}]`,
+		def: `[{"name":"int","type":"int256"},{"name":"_int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -314,7 +314,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"Name":"Int","type":"int256"},{"Name":"_int","type":"int256"}]`,
+		def: `[{"name":"Int","type":"int256"},{"name":"_int","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -323,7 +323,7 @@ var unpackTests = []unpackTest{
 		err: "abi: multiple outputs mapping to the same struct field 'Int'",
 	},
 	{
-		def: `[{"Name":"Int","type":"int256"},{"Name":"_","type":"int256"}]`,
+		def: `[{"name":"Int","type":"int256"},{"name":"_","type":"int256"}]`,
 		enc: "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
 		want: struct {
 			Int1 *big.Int
@@ -336,7 +336,7 @@ var unpackTests = []unpackTest{
 func TestUnpack(t *testing.T) {
 	for i, test := range unpackTests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			def := fmt.Sprintf(`[{ "Name" : "method", "outputs": %s}]`, test.def)
+			def := fmt.Sprintf(`[{ "name" : "method", "outputs": %s}]`, test.def)
 			abi, err := JSON(strings.NewReader(def))
 			if err != nil {
 				t.Fatalf("invalid ABI definition %s: %v", def, err)
@@ -366,7 +366,7 @@ type methodMultiOutput struct {
 
 func methodMultiReturn(require *require.Assertions) (ABI, []byte, methodMultiOutput) {
 	const definition = `[
-	{ "Name" : "multi", "constant" : false, "outputs": [ { "Name": "Int", "type": "uint256" }, { "Name": "String", "type": "string" } ] }]`
+	{ "name" : "multi", "constant" : false, "outputs": [ { "name": "Int", "type": "uint256" }, { "name": "String", "type": "string" } ] }]`
 	var expected = methodMultiOutput{big.NewInt(1), "hello"}
 
 	abi, err := JSON(strings.NewReader(definition))
@@ -440,7 +440,7 @@ func TestMethodMultiReturn(t *testing.T) {
 }
 
 func TestMultiReturnWithArray(t *testing.T) {
-	const definition = `[{"Name" : "multi", "outputs": [{"type": "uint64[3]"}, {"type": "uint64"}]}]`
+	const definition = `[{"name" : "multi", "outputs": [{"type": "uint64[3]"}, {"type": "uint64"}]}]`
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
 		t.Fatal(err)
@@ -467,7 +467,7 @@ func TestMultiReturnWithDeeplyNestedArray(t *testing.T) {
 	//  values of nested static arrays count towards the size as well, and any element following
 	//  after such nested array argument should be read with the correct offset,
 	//  so that it does not read content from the previous array argument.
-	const definition = `[{"Name" : "multi", "outputs": [{"type": "uint64[3][2][4]"}, {"type": "uint64"}]}]`
+	const definition = `[{"name" : "multi", "outputs": [{"type": "uint64[3][2][4]"}, {"type": "uint64"}]}]`
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
 		t.Fatal(err)
@@ -504,15 +504,15 @@ func TestMultiReturnWithDeeplyNestedArray(t *testing.T) {
 
 func TestUnmarshal(t *testing.T) {
 	const definition = `[
-	{ "Name" : "int", "constant" : false, "outputs": [ { "type": "uint256" } ] },
-	{ "Name" : "bool", "constant" : false, "outputs": [ { "type": "bool" } ] },
-	{ "Name" : "bytes", "constant" : false, "outputs": [ { "type": "bytes" } ] },
-	{ "Name" : "fixed", "constant" : false, "outputs": [ { "type": "bytes32" } ] },
-	{ "Name" : "multi", "constant" : false, "outputs": [ { "type": "bytes" }, { "type": "bytes" } ] },
-	{ "Name" : "intArraySingle", "constant" : false, "outputs": [ { "type": "uint256[3]" } ] },
-	{ "Name" : "addressSliceSingle", "constant" : false, "outputs": [ { "type": "address[]" } ] },
-	{ "Name" : "addressSliceDouble", "constant" : false, "outputs": [ { "Name": "a", "type": "address[]" }, { "Name": "b", "type": "address[]" } ] },
-	{ "Name" : "mixedBytes", "constant" : true, "outputs": [ { "Name": "a", "type": "bytes" }, { "Name": "b", "type": "bytes32" } ] }]`
+	{ "name" : "int", "constant" : false, "outputs": [ { "type": "uint256" } ] },
+	{ "name" : "bool", "constant" : false, "outputs": [ { "type": "bool" } ] },
+	{ "name" : "bytes", "constant" : false, "outputs": [ { "type": "bytes" } ] },
+	{ "name" : "fixed", "constant" : false, "outputs": [ { "type": "bytes32" } ] },
+	{ "name" : "multi", "constant" : false, "outputs": [ { "type": "bytes" }, { "type": "bytes" } ] },
+	{ "name" : "intArraySingle", "constant" : false, "outputs": [ { "type": "uint256[3]" } ] },
+	{ "name" : "addressSliceSingle", "constant" : false, "outputs": [ { "type": "address[]" } ] },
+	{ "name" : "addressSliceDouble", "constant" : false, "outputs": [ { "name": "a", "type": "address[]" }, { "name": "b", "type": "address[]" } ] },
+	{ "name" : "mixedBytes", "constant" : true, "outputs": [ { "name": "a", "type": "bytes" }, { "name": "b", "type": "bytes32" } ] }]`
 
 	abi, err := JSON(strings.NewReader(definition))
 	if err != nil {
@@ -535,11 +535,11 @@ func TestUnmarshal(t *testing.T) {
 		t.Error(err)
 	} else {
 		if !bytes.Equal(p0, p0Exp) {
-			t.Errorf("unexpected Value unpacked: want %x, got %x", p0Exp, p0)
+			t.Errorf("unexpected value unpacked: want %x, got %x", p0Exp, p0)
 		}
 
 		if !bytes.Equal(p1[:], p1Exp) {
-			t.Errorf("unexpected Value unpacked: want %x, got %x", p1Exp, p1)
+			t.Errorf("unexpected value unpacked: want %x, got %x", p1Exp, p1)
 		}
 	}
 
@@ -689,7 +689,7 @@ func TestUnmarshal(t *testing.T) {
 	buff.Write(common.Hex2Bytes("0000000000000000000000000000000000000000000000000000000000000001")) // size
 	buff.Write(common.Hex2Bytes("0000000000000000000000000100000000000000000000000000000000000000"))
 
-	var outAddr [] common.Hash160Address
+	var outAddr []common.Hash160Address
 	err = abi.Unpack(&outAddr, "addressSliceSingle", buff.Bytes())
 	if err != nil {
 		t.Fatal("didn't expect error:", err)
@@ -699,8 +699,8 @@ func TestUnmarshal(t *testing.T) {
 		t.Fatal("expected 1 item, got", len(outAddr))
 	}
 
-	if outAddr[0] != ( common.Hash160Address{1}) {
-		t.Errorf("expected %x, got %x",  common.Hash160Address{1}, outAddr[0])
+	if outAddr[0] != (common.Hash160Address{1}) {
+		t.Errorf("expected %x, got %x", common.Hash160Address{1}, outAddr[0])
 	}
 
 	// marshal multiple address slice
@@ -714,8 +714,8 @@ func TestUnmarshal(t *testing.T) {
 	buff.Write(common.Hex2Bytes("0000000000000000000000000300000000000000000000000000000000000000"))
 
 	var outAddrStruct struct {
-		A [] common.Hash160Address
-		B [] common.Hash160Address
+		A []common.Hash160Address
+		B []common.Hash160Address
 	}
 	err = abi.Unpack(&outAddrStruct, "addressSliceDouble", buff.Bytes())
 	if err != nil {
@@ -726,19 +726,19 @@ func TestUnmarshal(t *testing.T) {
 		t.Fatal("expected 1 item, got", len(outAddrStruct.A))
 	}
 
-	if outAddrStruct.A[0] != ( common.Hash160Address{1}) {
-		t.Errorf("expected %x, got %x",  common.Hash160Address{1}, outAddrStruct.A[0])
+	if outAddrStruct.A[0] != (common.Hash160Address{1}) {
+		t.Errorf("expected %x, got %x", common.Hash160Address{1}, outAddrStruct.A[0])
 	}
 
 	if len(outAddrStruct.B) != 2 {
 		t.Fatal("expected 1 item, got", len(outAddrStruct.B))
 	}
 
-	if outAddrStruct.B[0] != ( common.Hash160Address{2}) {
-		t.Errorf("expected %x, got %x",  common.Hash160Address{2}, outAddrStruct.B[0])
+	if outAddrStruct.B[0] != (common.Hash160Address{2}) {
+		t.Errorf("expected %x, got %x", common.Hash160Address{2}, outAddrStruct.B[0])
 	}
-	if outAddrStruct.B[1] != ( common.Hash160Address{3}) {
-		t.Errorf("expected %x, got %x",  common.Hash160Address{3}, outAddrStruct.B[1])
+	if outAddrStruct.B[1] != (common.Hash160Address{3}) {
+		t.Errorf("expected %x, got %x", common.Hash160Address{3}, outAddrStruct.B[1])
 	}
 
 	// marshal invalid address slice
@@ -805,7 +805,7 @@ func TestOOMMaliciousInput(t *testing.T) {
 		},
 	}
 	for i, test := range oomTests {
-		def := fmt.Sprintf(`[{ "Name" : "method", "outputs": %s}]`, test.def)
+		def := fmt.Sprintf(`[{ "name" : "method", "outputs": %s}]`, test.def)
 		abi, err := JSON(strings.NewReader(def))
 		if err != nil {
 			t.Fatalf("invalid ABI definition %s: %v", def, err)

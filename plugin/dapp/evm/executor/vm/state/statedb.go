@@ -193,6 +193,24 @@ func (mdb *MemoryStateDB) SetCode(addr string, code []byte) {
 	}
 }
 
+// SetAbi 设置ABI内容
+func (mdb *MemoryStateDB) SetAbi(addr, abi string) {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		mdb.dataDirty[addr] = true
+		acc.SetAbi(abi)
+	}
+}
+
+// GetAbi 获取ABI
+func (mdb *MemoryStateDB) GetAbi(addr string) string {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		return acc.Data.GetAbi()
+	}
+	return ""
+}
+
 // GetCodeSize 获取合约代码自身的大小
 // 对应 EXTCODESIZE 操作码
 func (mdb *MemoryStateDB) GetCodeSize(addr string) int {
@@ -685,4 +703,9 @@ func (mdb *MemoryStateDB) WritePreimages(number int64) {
 func (mdb *MemoryStateDB) ResetDatas() {
 	mdb.currentVer = nil
 	mdb.snapshots = mdb.snapshots[:0]
+}
+
+// GetBlockHeight 返回当前区块高度
+func (mdb *MemoryStateDB) GetBlockHeight() int64 {
+	return mdb.blockHeight
 }

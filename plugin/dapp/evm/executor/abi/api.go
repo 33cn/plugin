@@ -3,19 +3,22 @@ package abi
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/golang-collections/collections/stack"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/golang-collections/collections/stack"
+	"github.com/kataras/iris/core/errors"
 )
 
 // Pack 使用ABI方式调用时，将调用方式转换为EVM底层处理的十六进制编码
 // abiData 完整的ABI定义
 // param 调用方法及参数
+// readOnly 是否只读，如果调用的方法不为只读，则报错
 // 调用方式： foo(param1,param2)
-func Pack(param, abiData string) (methodName string, packData []byte, err error) {
+func Pack(param, abiData string, readOnly bool) (methodName string, packData []byte, err error) {
 	// 首先解析参数字符串，分析出方法名以及个参数取值
 	methodName, params, err := procFuncCall(param)
 	if err != nil {
@@ -35,6 +38,13 @@ func Pack(param, abiData string) (methodName string, packData []byte, err error)
 		return methodName, packData, err
 	}
 
+	if readOnly && !method.Const {
+		return methodName, packData, errors.New("method is not readonly")
+	}
+	if len(params) != method.Inputs.LengthNonIndexed() {
+		err = fmt.Errorf("function params error:%v", params)
+		return methodName, packData, err
+	}
 	// 获取方法参数对象，遍历解析各参数，获得参数的Go取值
 	paramVals := []interface{}{}
 	if len(params) != 0 {
@@ -62,7 +72,9 @@ func Pack(param, abiData string) (methodName string, packData []byte, err error)
 // data 合约方法返回值
 // abiData 完整的ABI定义
 func Unpack(data []byte, methodName, abiData string) (output string, err error) {
-
+	if len(data) == 0 {
+		return output, err
+	}
 	// 解析ABI数据结构，获取本次调用的方法对象
 	abi, err := JSON(strings.NewReader(abiData))
 	if err != nil {
@@ -73,6 +85,10 @@ func Unpack(data []byte, methodName, abiData string) (output string, err error) 
 	var ok bool
 	if method, ok = abi.Methods[methodName]; !ok {
 		return output, fmt.Errorf("function %v not exists", methodName)
+	}
+
+	if method.Outputs.LengthNonIndexed() == 0 {
+		return output, err
 	}
 
 	values, err := method.Outputs.UnpackValues(data)
@@ -95,9 +111,13 @@ func Unpack(data []byte, methodName, abiData string) (output string, err error) 
 	return string(jsondata), err
 }
 
+// Param 返回值参数结构定义
 type Param struct {
-	Name  string      `json:"name"`
-	Type  string      `json:"type"`
+	// Name 参数名称
+	Name string `json:"name"`
+	// Type 参数类型
+	Type string `json:"type"`
+	// Value 参数取值
 	Value interface{} `json:"value"`
 }
 
@@ -143,11 +163,10 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 				return res, err
 			}
 			return convertInt(x, typ.Kind), nil
-		} else {
-			b := new(big.Int)
-			b.SetString(val, 10)
-			return b, err
 		}
+		b := new(big.Int)
+		b.SetString(val, 10)
+		return b, err
 	case UintTy:
 		if typ.Size < 256 {
 			x, err := strconv.ParseUint(val, 10, typ.Size)
@@ -155,11 +174,10 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 				return res, err
 			}
 			return convertUint(x, typ.Kind), nil
-		} else {
-			b := new(big.Int)
-			b.SetString(val, 10)
-			return b, err
 		}
+		b := new(big.Int)
+		b.SetString(val, 10)
+		return b, err
 	case BoolTy:
 		x, err := strconv.ParseBool(val)
 		if err != nil {
@@ -230,7 +248,6 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 	default:
 		return res, fmt.Errorf("not support type: %v", typ.stringKind)
 	}
-	return res, nil
 }
 
 // 本方法可以将一个表示数组的字符串，经过处理后，返回数组内的字面元素；

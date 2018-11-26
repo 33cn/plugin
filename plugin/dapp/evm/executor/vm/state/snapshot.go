@@ -123,6 +123,13 @@ type (
 		prevcode, prevhash []byte
 	}
 
+	// 合约ABI变更事件
+	abiChange struct {
+		baseChange
+		account string
+		prevabi string
+	}
+
 	// 返还金额变更事件
 	refundChange struct {
 		baseChange
@@ -231,6 +238,22 @@ func (ch codeChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
 	if acc != nil {
 		kvset = append(kvset, acc.GetDataKV()...)
 		kvset = append(kvset, acc.GetStateKV()...)
+		return kvset
+	}
+	return nil
+}
+
+func (ch abiChange) revert(mdb *MemoryStateDB) {
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		acc.Data.Abi = ch.prevabi
+	}
+}
+
+func (ch abiChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		kvset = append(kvset, acc.GetDataKV()...)
 		return kvset
 	}
 	return nil

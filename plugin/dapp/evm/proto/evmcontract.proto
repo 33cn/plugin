@@ -17,6 +17,8 @@ message EVMContractData {
     string addr     = 4;
     bytes  code     = 5;
     bytes  codeHash = 6;
+    // 绑定ABI数据 ForkEVMABI
+    string abi = 7;
 }
 
 // 存放合约变化数据
@@ -41,6 +43,8 @@ message EVMContractAction {
     string alias = 5;
     // 交易备注
     string note = 6;
+    // 创建或调用合约时携带的ABI数据 ForkEVMABI
+    string abi = 7;
 }
 
 // 合约创建/调用日志
@@ -51,6 +55,8 @@ message ReceiptEVMContract {
     uint64 usedGas      = 4;
     // 创建合约返回的代码
     bytes ret = 5;
+    // json格式化后的返回值
+    string jsonRet = 6;
 }
 
 // 用于保存EVM只能合约中的状态数据变更
@@ -104,6 +110,7 @@ message EstimateEVMGasReq {
     bytes  code   = 2;
     string caller = 3;
     uint64 amount = 4;
+    string abi    = 5;
 }
 message EstimateEVMGasResp {
     uint64 gas = 1;
@@ -116,4 +123,27 @@ message EvmDebugReq {
 
 message EvmDebugResp {
     string debugStatus = 1;
+}
+
+message EvmQueryAbiReq {
+    string address = 1;
+}
+
+message EvmQueryAbiResp {
+    string address = 1;
+    string abi     = 2;
+}
+
+message EvmQueryReq {
+    string address = 1;
+    string input   = 2;
+    string caller  = 3;
+}
+
+message EvmQueryResp {
+    string address  = 1;
+    string input    = 2;
+    string caller   = 3;
+    bytes  rawData  = 4;
+    string jsonData = 5;
 }

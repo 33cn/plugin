@@ -12,7 +12,6 @@ import (
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
-	ecommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 var (
@@ -22,8 +21,6 @@ var (
 		"EvmCreate": EvmCreateAction,
 		"EvmCall":   EvmCallAction,
 	}
-
-	ABICallPrefix = ecommon.FromHex("0x00000000")
 )
 
 func init() {
@@ -102,23 +99,6 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 		}
 		return createEvmTx(&param)
 	}
-	//else if action == "BindABI" {
-	//	var param BindABI
-	//	err := json.Unmarshal(message, &param)
-	//	if err != nil {
-	//		elog.Error("Create BindABI", "Error", err)
-	//		return nil, types.ErrInvalidParam
-	//	}
-	//	return createBindABITx(&param)
-	//} else if action == "ABICall" {
-	//	var param ABICall
-	//	err := json.Unmarshal(message, &param)
-	//	if err != nil {
-	//		elog.Error("Create ABICall", "Error", err)
-	//		return nil, types.ErrInvalidParam
-	//	}
-	//	return createABICallTx(&param)
-	//}
 	return nil, types.ErrNotSupport
 }
 
@@ -127,41 +107,40 @@ func (evm *EvmType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
 
-//func createBindABITx(param *BindABI) (*types.Transaction, error) {
-//	if param == nil {
-//		elog.Error("createBindABITx", "param", param)
-//		return nil, types.ErrInvalidParam
-//	}
-//
-//	code := []byte(param.Data)
-//	code = append(BindABIPrefix, code...)
-//
-//	action := &EVMContractAction{
-//		Code: code,
-//		Note: param.Note,
-//	}
-//
-//	return createRawTx(action, param.Name)
-//}
-//
-//func createABICallTx(param *ABICall) (*types.Transaction, error) {
-//	if param == nil {
-//		elog.Error("createABICallTx", "param", param)
-//		return nil, types.ErrInvalidParam
-//	}
-//
-//	code := []byte(param.Data)
-//	code = append(ABICallPrefix, code...)
-//
-//	action := &EVMContractAction{
-//		Code:   code,
-//		Amount: param.Amount,
-//	}
-//
-//	return createRawTx(action, param.Name)
-//
-//	return nil, nil
-//}
+func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
+	if param == nil {
+		elog.Error("createEvmTx", "param", param)
+		return nil, types.ErrInvalidParam
+	}
+
+	// 调用格式判断规则：
+	// 十六进制格式默认使用原方式调用，其它格式，使用ABI方式调用
+	// 为了方便区分，在ABI格式前加0x00000000
+
+	action := &EVMContractAction{
+		Amount:   param.Amount,
+		GasLimit: param.GasLimit,
+		GasPrice: param.GasPrice,
+		Note:     param.Note,
+		Alias:    param.Alias,
+	}
+	// Abi数据和二进制代码必须指定一个，优先判断ABI
+	if len(param.Abi) > 0 {
+		action.Abi = strings.TrimSpace(param.Abi)
+	} else {
+		bCode, err := common.FromHex(param.Code)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Code = bCode
+	}
+
+	if param.IsCreate {
+		return createRawTx(action, "")
+	}
+	return createRawTx(action, param.Name)
+}
 
 func createRawTx(action *EVMContractAction, name string) (*types.Transaction, error) {
 	tx := &types.Transaction{}
@@ -183,40 +162,4 @@ func createRawTx(action *EVMContractAction, name string) (*types.Transaction, er
 		return nil, err
 	}
 	return tx, nil
-}
-
-func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
-	if param == nil {
-		elog.Error("createEvmTx", "param", param)
-		return nil, types.ErrInvalidParam
-	}
-
-	// 调用格式判断规则：
-	// 十六进制格式默认使用原方式调用，其它格式，使用ABI方式调用
-	// 为了方便区分，在ABI格式前加0x00000000
-	bCode, err := common.FromHex(param.Code)
-
-	action := &EVMContractAction{
-		Amount:   param.Amount,
-		GasLimit: param.GasLimit,
-		GasPrice: param.GasPrice,
-		Note:     param.Note,
-		Alias:    param.Alias,
-	}
-
-	if param.IsCreate {
-		if err != nil {
-			elog.Error("create evm create Tx", "param.Code", param.Code)
-			return nil, err
-		}
-		action.Code = bCode
-		return createRawTx(action, "")
-	} else {
-		if err != nil {
-			elog.Info("evm call data is invalid hex data, process it as abi data", "param.Code", param.Code)
-			bCode = []byte(param.Code)
-			bCode = append(ABICallPrefix, bCode...)
-		}
-		return createRawTx(action, param.Name)
-	}
 }

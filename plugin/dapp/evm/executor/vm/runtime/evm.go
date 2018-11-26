@@ -356,7 +356,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 // 使用传入的部署代码创建新的合约；
 // 目前chain33为了保证账户安全，不允许合约中涉及到外部账户的转账操作，
 // 所以，本步骤不接收转账金额参数
-func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias, abi string) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	pass, err := evm.preCheck(caller, contractAddr, 0)
 	if !pass {
 		return nil, -1, gas, err
@@ -386,6 +386,10 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		createDataGas := uint64(len(ret)) * params.CreateDataGas
 		if contract.UseGas(createDataGas) {
 			evm.StateDB.SetCode(contractAddr.String(), ret)
+			// 设置 ABI (如果有的话)，这个动作不单独计费
+			if len(abi) > 0 && types.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", "ForkEVMKVHash") {
+				evm.StateDB.SetAbi(contractAddr.String(), abi)
+			}
 		} else {
 			// 如果Gas不足，返回这个错误，让外部程序处理
 			err = model.ErrCodeStoreOutOfGas

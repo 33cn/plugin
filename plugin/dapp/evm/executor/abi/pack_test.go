@@ -306,7 +306,7 @@ func TestPack(t *testing.T) {
 		},
 		{
 			"address[]",
-			[] common.Hash160Address{{1}, {2}},
+			[]common.Hash160Address{{1}, {2}},
 			common.Hex2Bytes("000000000000000000000000000000000000000000000000000000000000000200000000000000000000000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000"),
 		},
 		{
@@ -347,7 +347,7 @@ func TestMethodPack(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sig := abi.Methods["slice"].Id()
+	sig := abi.Methods["slice"].ID()
 	sig = append(sig, common.LeftPadBytes([]byte{1}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{2}, 32)...)
 
@@ -360,14 +360,14 @@ func TestMethodPack(t *testing.T) {
 		t.Errorf("expected %x got %x", sig, packed)
 	}
 
-	var addrA, addrB =  common.Hash160Address{1},  common.Hash160Address{2}
-	sig = abi.Methods["sliceAddress"].Id()
+	var addrA, addrB = common.Hash160Address{1}, common.Hash160Address{2}
+	sig = abi.Methods["sliceAddress"].ID()
 	sig = append(sig, common.LeftPadBytes([]byte{32}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{2}, 32)...)
 	sig = append(sig, common.LeftPadBytes(addrA[:], 32)...)
 	sig = append(sig, common.LeftPadBytes(addrB[:], 32)...)
 
-	packed, err = abi.Pack("sliceAddress", [] common.Hash160Address{addrA, addrB})
+	packed, err = abi.Pack("sliceAddress", []common.Hash160Address{addrA, addrB})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -375,8 +375,8 @@ func TestMethodPack(t *testing.T) {
 		t.Errorf("expected %x got %x", sig, packed)
 	}
 
-	var addrC, addrD =  common.Hash160Address{3},  common.Hash160Address{4}
-	sig = abi.Methods["sliceMultiAddress"].Id()
+	var addrC, addrD = common.Hash160Address{3}, common.Hash160Address{4}
+	sig = abi.Methods["sliceMultiAddress"].ID()
 	sig = append(sig, common.LeftPadBytes([]byte{64}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{160}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{2}, 32)...)
@@ -386,7 +386,7 @@ func TestMethodPack(t *testing.T) {
 	sig = append(sig, common.LeftPadBytes(addrC[:], 32)...)
 	sig = append(sig, common.LeftPadBytes(addrD[:], 32)...)
 
-	packed, err = abi.Pack("sliceMultiAddress", [] common.Hash160Address{addrA, addrB}, [] common.Hash160Address{addrC, addrD})
+	packed, err = abi.Pack("sliceMultiAddress", []common.Hash160Address{addrA, addrB}, []common.Hash160Address{addrC, addrD})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -394,7 +394,7 @@ func TestMethodPack(t *testing.T) {
 		t.Errorf("expected %x got %x", sig, packed)
 	}
 
-	sig = abi.Methods["slice256"].Id()
+	sig = abi.Methods["slice256"].ID()
 	sig = append(sig, common.LeftPadBytes([]byte{1}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{2}, 32)...)
 

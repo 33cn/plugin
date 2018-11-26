@@ -3,10 +3,11 @@ package abi
 import (
 	"bytes"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestABI_Pack(t *testing.T) {
@@ -33,7 +34,7 @@ func TestABI_Pack(t *testing.T) {
 			"0x60fe47b10000000000000000000000000000000000000000000000000000000000000064",
 		},
 	} {
-		data, err := Pack(test.input, abiData)
+		_, data, err := Pack(test.input, abiData, false)
 		assert.NoError(t, err)
 		assert.EqualValues(t, test.output, common.Bytes2Hex(data))
 	}

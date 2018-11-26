@@ -84,8 +84,8 @@ func TestTypeRegexp(t *testing.T) {
 		{"string[]", Type{T: SliceTy, Kind: reflect.Slice, Type: reflect.TypeOf([]string{}), Elem: &Type{Kind: reflect.String, Type: reflect.TypeOf(""), T: StringTy, stringKind: "string"}, stringKind: "string[]"}},
 		{"string[2]", Type{Kind: reflect.Array, T: ArrayTy, Size: 2, Type: reflect.TypeOf([2]string{}), Elem: &Type{Kind: reflect.String, T: StringTy, Type: reflect.TypeOf(""), stringKind: "string"}, stringKind: "string[2]"}},
 		{"address", Type{Kind: reflect.Array, Type: addressT, Size: 20, T: AddressTy, stringKind: "address"}},
-		{"address[]", Type{T: SliceTy, Kind: reflect.Slice, Type: reflect.TypeOf([] common.Hash160Address{}), Elem: &Type{Kind: reflect.Array, Type: addressT, Size: 20, T: AddressTy, stringKind: "address"}, stringKind: "address[]"}},
-		{"address[2]", Type{Kind: reflect.Array, T: ArrayTy, Size: 2, Type: reflect.TypeOf([2] common.Hash160Address{}), Elem: &Type{Kind: reflect.Array, Type: addressT, Size: 20, T: AddressTy, stringKind: "address"}, stringKind: "address[2]"}},
+		{"address[]", Type{T: SliceTy, Kind: reflect.Slice, Type: reflect.TypeOf([]common.Hash160Address{}), Elem: &Type{Kind: reflect.Array, Type: addressT, Size: 20, T: AddressTy, stringKind: "address"}, stringKind: "address[]"}},
+		{"address[2]", Type{Kind: reflect.Array, T: ArrayTy, Size: 2, Type: reflect.TypeOf([2]common.Hash160Address{}), Elem: &Type{Kind: reflect.Array, Type: addressT, Size: 20, T: AddressTy, stringKind: "address"}, stringKind: "address[2]"}},
 		// TODO when fixed types are implemented properly
 		// {"fixed", Type{}},
 		// {"fixed128x128", Type{}},
@@ -102,7 +102,7 @@ func TestTypeRegexp(t *testing.T) {
 		}
 		if !reflect.DeepEqual(typ, tt.kind) {
 			//t.Errorf("type %q: parsed type mismatch:\nGOT %s\nWANT %s ", tt.blob, spew.Sdump(typeWithoutStringer(typ)), spew.Sdump(typeWithoutStringer(tt.kind)))
-			t.Errorf("type %q: parsed type mismatch:\nGOT %s\nWANT %s ", tt.blob, typeWithoutStringer(typ), typeWithoutStringer(tt.kind))
+			t.Errorf("type %q: parsed type mismatch:\nGOT %s\nWANT %s ", tt.blob, typ, tt.kind)
 		}
 	}
 }
@@ -201,10 +201,10 @@ func TestTypeCheck(t *testing.T) {
 		{"uint16[3]", [4]uint16{1, 2, 3}, "abi: cannot use [4]uint16 as type [3]uint16 as argument"},
 		{"uint16[3]", []uint16{1, 2, 3}, ""},
 		{"uint16[3]", []uint16{1, 2, 3, 4}, "abi: cannot use [4]uint16 as type [3]uint16 as argument"},
-		{"address[]", [] common.Hash160Address{{1}}, ""},
-		{"address[1]", [] common.Hash160Address{{1}}, ""},
-		{"address[1]", [1] common.Hash160Address{{1}}, ""},
-		{"address[2]", [1] common.Hash160Address{{1}}, "abi: cannot use [1]array as type [2]array as argument"},
+		{"address[]", []common.Hash160Address{{1}}, ""},
+		{"address[1]", []common.Hash160Address{{1}}, ""},
+		{"address[1]", [1]common.Hash160Address{{1}}, ""},
+		{"address[2]", [1]common.Hash160Address{{1}}, "abi: cannot use [1]array as type [2]array as argument"},
 		{"bytes32", [32]byte{}, ""},
 		{"bytes31", [31]byte{}, ""},
 		{"bytes30", [30]byte{}, ""},
@@ -249,9 +249,9 @@ func TestTypeCheck(t *testing.T) {
 		{"string", []byte{}, "abi: cannot use slice as type string as argument"},
 		{"bytes32[]", [][32]byte{{}}, ""},
 		{"function", [24]byte{}, ""},
-		{"bytes20",  common.Hash160Address{}, ""},
+		{"bytes20", common.Hash160Address{}, ""},
 		{"address", [20]byte{}, ""},
-		{"address",  common.Hash160Address{}, ""},
+		{"address", common.Hash160Address{}, ""},
 		{"bytes32[]]", "", "invalid arg type in abi"},
 		{"invalidType", "", "unsupported arg type: invalidType"},
 		{"invalidSlice[]", "", "unsupported arg type: invalidSlice"},
