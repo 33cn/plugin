@@ -40,13 +40,13 @@ func TestQueueProtocolAPI(t *testing.T) {
 	option.SendTimeout = 100
 	option.WaitTimeout = 200
 
-	qc, err := client.New(nil, nil)
+	_, err := client.New(nil, nil)
 	if err == nil {
 		t.Error("client.New(nil, nil) need return error")
 	}
 
 	var q = queue.New("channel")
-	qc, err = client.New(q.Client(), &option)
+	qc, err := client.New(q.Client(), &option)
 	if err != nil {
 		t.Errorf("client.New() cause error %v", err)
 	}
@@ -93,6 +93,7 @@ func TestQueueProtocol(t *testing.T) {
 	testGetLastHeader(t, api)
 	testSignRawTx(t, api)
 	testStoreGetTotalCoins(t, api)
+	testStoreList(t, api)
 	testBlockChainQuery(t, api)
 }
 
@@ -129,6 +130,18 @@ func testStoreGetTotalCoins(t *testing.T, api client.QueueProtocolAPI) {
 	_, err = api.StoreGetTotalCoins(&types.IterateRangeByStateHash{Count: 10})
 	if err == nil {
 		t.Error("StoreGetTotalCoins(&types.IterateRangeByStateHash{Count:10}) need return error.")
+	}
+}
+
+func testStoreList(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreList(&types.StoreList{})
+	if err == nil {
+		t.Error("Call StoreList Failed.", err)
+	}
+
+	_, err = api.StoreList(nil)
+	if err == nil {
+		t.Error("StoreList(nil) need return error.")
 	}
 }
 
@@ -474,7 +487,7 @@ func testNewAccount(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testWalletGetAccountList(t *testing.T, api client.QueueProtocolAPI) {
-	req := types.ReqAccountList{true}
+	req := types.ReqAccountList{WithoutBalance: true}
 	_, err := api.WalletGetAccountList(&req)
 	if err != nil {
 		t.Error("Call WalletGetAccountList Failed.", err)

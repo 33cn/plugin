@@ -234,7 +234,7 @@ func testStore_listFrozenUTXOs(t *testing.T) {
 	txs, err = store.listFrozenUTXOs(token, addr)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(txs))
-	assert.Equal(t, tx, txs[0])
+	assert.Equal(t, true, proto.Equal(tx, txs[0]))
 }
 
 func testStore_listAvailableUTXOs(t *testing.T) {
@@ -260,7 +260,7 @@ func testStore_listAvailableUTXOs(t *testing.T) {
 	utxos, err = store.listAvailableUTXOs(token, addr)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(utxos))
-	assert.Equal(t, utxo, utxos[0])
+	assert.Equal(t, true, proto.Equal(utxo, utxos[0]))
 }
 
 func testStore_setWalletAccountPrivacy(t *testing.T) {
@@ -291,7 +291,7 @@ func testStore_getAccountByAddr(t *testing.T) {
 	assert.NoError(t, err)
 	err = store.Set(calcAddrKey(addr), bt)
 	was, err = store.getAccountByAddr(addr)
-	assert.Equal(t, was, account)
+	assert.Equal(t, true, proto.Equal(was, account))
 	assert.NoError(t, err)
 }
 
@@ -325,7 +325,7 @@ func testStore_getAccountByPrefix(t *testing.T) {
 	assert.NoError(t, err)
 	was, err = store.getAccountByAddr(addr)
 	assert.NoError(t, err)
-	assert.Equal(t, was, account)
+	assert.Equal(t, true, proto.Equal(was, account))
 }
 
 func testStore_setVersion(t *testing.T) {

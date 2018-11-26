@@ -17,17 +17,6 @@ pipeline {
     }
 
     stages {
-        stage('check') {
-            steps {
-                dir("${PROJ_DIR}"){
-                    gitlabCommitStatus(name: 'check'){
-                        sh "git branch"
-                        sh "make auto_ci branch=${env.ghprbSourceBranch} originx=${env.ghprbAuthorRepoGitUrl}"
-                    }
-                }
-            }
-        }
-
         stage('deploy') {
             steps {
                 dir("${PROJ_DIR}"){

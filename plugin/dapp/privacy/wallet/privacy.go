@@ -177,7 +177,7 @@ func (policy *privacyPolicy) createUTXOsByPub2Priv(priv crypto.PrivKey, reqCreat
 		To:      address.ExecAddress(privacytypes.PrivacyX),
 	}
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	tx.Sign(int32(operater.GetSignType()), priv)
 
@@ -610,7 +610,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	}
 
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	return tx, nil
 }
@@ -1024,7 +1024,7 @@ func (policy *privacyPolicy) transPub2PriV2(priv crypto.PrivKey, reqPub2Pri *pri
 	}
 	tx.SetExpire(time.Duration(reqPub2Pri.GetExpire()))
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	tx.Sign(int32(operater.GetSignType()), priv)
 
