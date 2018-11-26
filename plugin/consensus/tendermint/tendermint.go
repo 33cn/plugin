@@ -458,7 +458,7 @@ func (client *Client) CommitBlock(propBlock *types.Block) error {
 // CheckCommit by height
 func (client *Client) CheckCommit(height int64) bool {
 	retry := 0
-	newHeight := int64(1)
+	var newHeight int64
 	for {
 		newHeight = client.GetCurrentHeight()
 		if newHeight >= height {
