@@ -31,7 +31,7 @@ func TestJRPCChannel(t *testing.T) {
 	}()
 	mocker.Listen()
 
-	jrpcClient := mocker.GetJsonC()
+	jrpcClient := mocker.GetJSONC()
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {

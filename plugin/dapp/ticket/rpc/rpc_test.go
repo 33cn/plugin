@@ -141,7 +141,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 	}
 	api.On("IsSync").Return(ret, nil)
 	api.On("Close").Return()
-	rpcCfg := mock33.GetCfg().Rpc
+	rpcCfg := mock33.GetCfg().RPC
 	jsonClient, err := jsonclient.NewJSONClient("http://" + rpcCfg.JrpcBindAddr + "/")
 	assert.Nil(t, err)
 	assert.NotNil(t, jsonClient)

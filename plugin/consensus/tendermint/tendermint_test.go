@@ -99,7 +99,7 @@ func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, *me
 
 	network.SetQueueClient(q.Client())
 
-	rpc.InitCfg(cfg.Rpc)
+	rpc.InitCfg(cfg.RPC)
 	gapi := rpc.NewGRpcServer(q.Client(), nil)
 	go gapi.Listen()
 	return q, chain, s, mem, exec, cs, network
