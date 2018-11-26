@@ -327,7 +327,7 @@ func parseRelayBtcHeadHeightList(res ty.ReplyRelayBtcHeadHeightList) {
 func parseRelayBtcCurHeight(res ty.ReplayRelayQryBTCHeadHeight) {
 	data, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
-		fmt.Println(os.Stderr, err)
+		fmt.Println(err)
 		return
 	}
 

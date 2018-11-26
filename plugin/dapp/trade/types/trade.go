@@ -112,7 +112,7 @@ func (t *tradeType) Amount(tx *types.Transaction) (int64, error) {
 }
 
 func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	var tx *types.Transaction
+	//var tx *types.Transaction
 	if action == "TradeSellLimit" {
 		var param TradeSellTx
 		err := json.Unmarshal(message, &param)
@@ -161,11 +161,9 @@ func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Tra
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawTradeRevokeBuyTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
 
-	return tx, nil
+	return nil, types.ErrNotSupport
 }
 
 //CreateRawTradeSellTx : 创建卖单交易
