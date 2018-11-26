@@ -25,9 +25,6 @@ func (g *PokerBull) rollbackIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue
 
 func (g *PokerBull) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for _, log := range receiptData.Logs {
 		switch log.GetTy() {
 		case pkt.TyLogPBGameStart, pkt.TyLogPBGameContinue, pkt.TyLogPBGameQuit:

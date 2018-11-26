@@ -22,9 +22,6 @@ func (c *Cert) ExecLocal_New(payload *ct.CertNew, tx *types.Transaction, receipt
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority
 	}
-	if receiptData.GetTy() != types.ExecOk {
-		return &types.LocalDBSet{}, nil
-	}
 	var set types.LocalDBSet
 
 	historityCertdata := &types.HistoryCertStore{}
@@ -53,9 +50,6 @@ func (c *Cert) ExecLocal_Update(payload *ct.CertUpdate, tx *types.Transaction, r
 	if !authority.IsAuthEnable {
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority
-	}
-	if receiptData.GetTy() != types.ExecOk {
-		return &types.LocalDBSet{}, nil
 	}
 	var set types.LocalDBSet
 
@@ -86,9 +80,6 @@ func (c *Cert) ExecLocal_Normal(payload *ct.CertNormal, tx *types.Transaction, r
 	if !authority.IsAuthEnable {
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority
-	}
-	if receiptData.GetTy() != types.ExecOk {
-		return &types.LocalDBSet{}, nil
 	}
 	var set types.LocalDBSet
 

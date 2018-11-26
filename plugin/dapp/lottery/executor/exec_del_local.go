@@ -12,9 +12,6 @@ import (
 
 func (l *Lottery) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	for _, item := range receiptData.Logs {
 		switch item.Ty {
 		case pty.TyLogLotteryCreate, pty.TyLogLotteryBuy, pty.TyLogLotteryDraw, pty.TyLogLotteryClose:

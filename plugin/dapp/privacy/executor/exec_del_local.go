@@ -13,10 +13,6 @@ import (
 func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	txhashstr := common.Bytes2Hex(tx.Hash())
 	dbSet := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		privacylog.Error("execDelLocal", "txhash", txhashstr, "receipt.GetTy() = ", receiptData.GetTy())
-		return dbSet, nil
-	}
 	localDB := p.GetLocalDB()
 	for i, item := range receiptData.Logs {
 		if item.Ty != ty.TyLogPrivacyOutput {
