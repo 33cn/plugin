@@ -74,7 +74,7 @@ updatevendor:
 dep:
 	dep init -v
 
-linter: ## Use gometalinter check code, ignore some unserious warning
+linter: vet ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
