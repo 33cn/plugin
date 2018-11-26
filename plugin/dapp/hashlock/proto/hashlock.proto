@@ -34,7 +34,7 @@ message Hashlockquery {
 
 message HashRecv {
     bytes         HashlockId = 1;
-    Hashlockquery Infomation = 2;
+    Hashlockquery Information = 2;
 }
 
 message HashlockUnlock {

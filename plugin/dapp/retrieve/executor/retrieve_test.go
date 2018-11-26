@@ -344,7 +344,7 @@ func estRetrievePerform(t *testing.T) {
 
 func estRetrieveCancel(t *testing.T) {
 	fmt.Println("\nTestRetrieveCancel start")
-	fmt.Println("*This case is used for checking cancel operation\n*Cancel action is done with privkey of account A/B, although the cancel action for A could succeed, but the balance have been transfered by last action with backup a\n*currBalanceA = currBalanceA - 2*fee currBalanceB = currBalanceB + 1e8 - 2*fee")
+	fmt.Println("*This case is used for checking cancel operation\n*Cancel action is done with privkey of account A/B, although the cancel action for A could succeed, but the balance have been transferred by last action with backup a\n*currBalanceA = currBalanceA - 2*fee currBalanceB = currBalanceB + 1e8 - 2*fee")
 	defer fmt.Println("TestRetrieveCancel end")
 	var hashes [][]byte
 

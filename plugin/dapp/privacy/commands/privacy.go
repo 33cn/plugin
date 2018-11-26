@@ -499,7 +499,7 @@ func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().StringP("token", "t", types.BTY, "coins token, BTY supported.")
-	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display avaliable detail. 2:display frozen detail. 3:display all")
+	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display available detail. 2:display frozen detail. 3:display all")
 }
 
 func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
