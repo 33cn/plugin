@@ -5,6 +5,7 @@
 package wallet
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -611,17 +612,20 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 	}
 	count := 0
 	var hashes [][]byte
+	bizlog.Debug("ticketPolicy buyTicket begin")
 	for _, priv := range privs {
 		hash, n, err := policy.buyTicketOne(height, priv)
 		if err != nil {
-			bizlog.Error("buyTicketOne", "err", err)
+			bizlog.Error("ticketPolicy buyTicket buyTicketOne", "err", err)
 			continue
 		}
 		count += n
 		if hash != nil {
 			hashes = append(hashes, hash)
 		}
+		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "txhash", hex.EncodeToString(hash), "n", n)
 	}
+	bizlog.Debug("ticketPolicy buyTicket end")
 	return hashes, count, nil
 }
 
@@ -705,6 +709,7 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 	}
 	count := 0
 	var hashes [][]byte
+	bizlog.Debug("ticketPolicy buyMinerAddrTicket begin")
 	for _, priv := range privs {
 		hashlist, n, err := policy.buyMinerAddrTicketOne(height, priv)
 		if err != nil {
@@ -717,7 +722,9 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 		if hashlist != nil {
 			hashes = append(hashes, hashlist...)
 		}
+		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "n", n)
 	}
+	bizlog.Debug("ticketPolicy buyMinerAddrTicket end")
 	return hashes, count, nil
 }
 
