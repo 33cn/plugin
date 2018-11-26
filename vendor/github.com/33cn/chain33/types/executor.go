@@ -251,7 +251,7 @@ type ExecutorType interface {
 	GetAssets(tx *Transaction) ([]*Asset, error)
 }
 
-type ExecTypeGet interface {
+type execTypeGet interface {
 	GetTy() int32
 }
 
@@ -466,7 +466,7 @@ func (base *ExecTypeBase) ActionName(tx *Transaction) string {
 		return "unknown-err"
 	}
 	tm := base.child.GetTypeMap()
-	if get, ok := payload.(ExecTypeGet); ok {
+	if get, ok := payload.(execTypeGet); ok {
 		ty := get.GetTy()
 		for k, v := range tm {
 			if v == ty {

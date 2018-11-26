@@ -19,6 +19,7 @@ import (
 
 var validatorsetlog = log15.New("module", "tendermint-val")
 
+// Validator ...
 type Validator struct {
 	Address     []byte `json:"address"`
 	PubKey      []byte `json:"pub_key"`
@@ -27,6 +28,7 @@ type Validator struct {
 	Accum int64 `json:"accum"`
 }
 
+// NewValidator ...
 func NewValidator(pubKey crypto.PubKey, votingPower int64) *Validator {
 	return &Validator{
 		Address:     GenAddressByPubKey(pubKey),
@@ -36,14 +38,14 @@ func NewValidator(pubKey crypto.PubKey, votingPower int64) *Validator {
 	}
 }
 
-// Creates a new copy of the validator so we can mutate accum.
+// Copy Creates a new copy of the validator so we can mutate accum.
 // Panics if the validator is nil.
 func (v *Validator) Copy() *Validator {
 	vCopy := *v
 	return &vCopy
 }
 
-// Returns the one with higher Accum.
+// CompareAccum Returns the one with higher Accum.
 func (v *Validator) CompareAccum(other *Validator) *Validator {
 	if v == nil {
 		return other
@@ -105,6 +107,7 @@ type ValidatorSet struct {
 	totalVotingPower int64
 }
 
+// NewValidatorSet ...
 func NewValidatorSet(vals []*Validator) *ValidatorSet {
 	validators := make([]*Validator, len(vals))
 	for i, val := range vals {
@@ -122,7 +125,7 @@ func NewValidatorSet(vals []*Validator) *ValidatorSet {
 	return vs
 }
 
-// incrementAccum and update the proposer
+// IncrementAccum incrementAccum and update the proposer
 // TODO: mind the overflow when times and votingPower shares too large.
 func (valSet *ValidatorSet) IncrementAccum(times int) {
 	// Add VotingPower * times to each validator and order into heap.
@@ -143,6 +146,7 @@ func (valSet *ValidatorSet) IncrementAccum(times int) {
 	}
 }
 
+// Copy ...
 func (valSet *ValidatorSet) Copy() *ValidatorSet {
 	validators := make([]*Validator, len(valSet.Validators))
 	for i, val := range valSet.Validators {
@@ -156,6 +160,7 @@ func (valSet *ValidatorSet) Copy() *ValidatorSet {
 	}
 }
 
+// HasAddress ...
 func (valSet *ValidatorSet) HasAddress(address []byte) bool {
 	idx := sort.Search(len(valSet.Validators), func(i int) bool {
 		return bytes.Compare(address, valSet.Validators[i].Address) <= 0
@@ -163,15 +168,15 @@ func (valSet *ValidatorSet) HasAddress(address []byte) bool {
 	return idx != len(valSet.Validators) && bytes.Equal(valSet.Validators[idx].Address, address)
 }
 
+// GetByAddress ...
 func (valSet *ValidatorSet) GetByAddress(address []byte) (index int, val *Validator) {
 	idx := sort.Search(len(valSet.Validators), func(i int) bool {
 		return bytes.Compare(address, valSet.Validators[i].Address) <= 0
 	})
 	if idx != len(valSet.Validators) && bytes.Equal(valSet.Validators[idx].Address, address) {
 		return idx, valSet.Validators[idx].Copy()
-	} else {
-		return -1, nil
 	}
+	return -1, nil
 }
 
 // GetByIndex returns the validator by index.
@@ -185,10 +190,12 @@ func (valSet *ValidatorSet) GetByIndex(index int) (address []byte, val *Validato
 	return val.Address, val.Copy()
 }
 
+// Size ...
 func (valSet *ValidatorSet) Size() int {
 	return len(valSet.Validators)
 }
 
+// TotalVotingPower ...
 func (valSet *ValidatorSet) TotalVotingPower() int64 {
 	if valSet.totalVotingPower == 0 {
 		for _, val := range valSet.Validators {
@@ -198,6 +205,7 @@ func (valSet *ValidatorSet) TotalVotingPower() int64 {
 	return valSet.totalVotingPower
 }
 
+// GetProposer ...
 func (valSet *ValidatorSet) GetProposer() (proposer *Validator) {
 	if len(valSet.Validators) == 0 {
 		return nil
@@ -218,6 +226,7 @@ func (valSet *ValidatorSet) findProposer() *Validator {
 	return proposer
 }
 
+// Hash ...
 func (valSet *ValidatorSet) Hash() []byte {
 	if len(valSet.Validators) == 0 {
 		return nil
@@ -229,6 +238,7 @@ func (valSet *ValidatorSet) Hash() []byte {
 	return merkle.GetMerkleRoot(hashables)
 }
 
+// Add ...
 func (valSet *ValidatorSet) Add(val *Validator) (added bool) {
 	val = val.Copy()
 	idx := sort.Search(len(valSet.Validators), func(i int) bool {
@@ -255,39 +265,40 @@ func (valSet *ValidatorSet) Add(val *Validator) (added bool) {
 	}
 }
 
+// Update ...
 func (valSet *ValidatorSet) Update(val *Validator) (updated bool) {
 	index, sameVal := valSet.GetByAddress(val.Address)
 	if sameVal == nil {
 		return false
-	} else {
-		valSet.Validators[index] = val.Copy()
-		// Invalidate cache
-		valSet.Proposer = nil
-		valSet.totalVotingPower = 0
-		return true
 	}
+	valSet.Validators[index] = val.Copy()
+	// Invalidate cache
+	valSet.Proposer = nil
+	valSet.totalVotingPower = 0
+	return true
 }
 
+// Remove ...
 func (valSet *ValidatorSet) Remove(address []byte) (val *Validator, removed bool) {
 	idx := sort.Search(len(valSet.Validators), func(i int) bool {
 		return bytes.Compare(address, valSet.Validators[i].Address) <= 0
 	})
 	if idx == len(valSet.Validators) || !bytes.Equal(valSet.Validators[idx].Address, address) {
 		return nil, false
-	} else {
-		removedVal := valSet.Validators[idx]
-		newValidators := valSet.Validators[:idx]
-		if idx+1 < len(valSet.Validators) {
-			newValidators = append(newValidators, valSet.Validators[idx+1:]...)
-		}
-		valSet.Validators = newValidators
-		// Invalidate cache
-		valSet.Proposer = nil
-		valSet.totalVotingPower = 0
-		return removedVal, true
 	}
+	removedVal := valSet.Validators[idx]
+	newValidators := valSet.Validators[:idx]
+	if idx+1 < len(valSet.Validators) {
+		newValidators = append(newValidators, valSet.Validators[idx+1:]...)
+	}
+	valSet.Validators = newValidators
+	// Invalidate cache
+	valSet.Proposer = nil
+	valSet.totalVotingPower = 0
+	return removedVal, true
 }
 
+// Iterate ...
 func (valSet *ValidatorSet) Iterate(fn func(index int, val *Validator) bool) {
 	for i, val := range valSet.Validators {
 		stop := fn(i, val.Copy())
@@ -297,7 +308,7 @@ func (valSet *ValidatorSet) Iterate(fn func(index int, val *Validator) bool) {
 	}
 }
 
-// Verify that +2/3 of the set had signed the given signBytes
+// VerifyCommit Verify that +2/3 of the set had signed the given signBytes
 func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height int64, commit *Commit) error {
 	if valSet.Size() != len(commit.Precommits) {
 		return fmt.Errorf("Invalid commit -- wrong set size: %v vs %v", valSet.Size(), len(commit.Precommits))
@@ -350,10 +361,9 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 
 	if talliedVotingPower > valSet.TotalVotingPower()*2/3 {
 		return nil
-	} else {
-		return fmt.Errorf("Invalid commit -- insufficient voting power: got %v, needed %v",
-			talliedVotingPower, (valSet.TotalVotingPower()*2/3 + 1))
 	}
+	return fmt.Errorf("Invalid commit -- insufficient voting power: got %v, needed %v",
+		talliedVotingPower, (valSet.TotalVotingPower()*2/3 + 1))
 }
 
 // VerifyCommitAny will check to see if the set would
@@ -453,6 +463,7 @@ func (valSet *ValidatorSet) String() string {
 	return valSet.StringIndented("")
 }
 
+// StringIndented ...
 func (valSet *ValidatorSet) StringIndented(indent string) string {
 	if valSet == nil {
 		return "nil-ValidatorSet"
@@ -474,9 +485,9 @@ func (valSet *ValidatorSet) StringIndented(indent string) string {
 
 }
 
-//-------------------------------------
 // Implements sort for sorting validators by address.
 
+// ValidatorsByAddress ...
 type ValidatorsByAddress []*Validator
 
 func (vs ValidatorsByAddress) Len() int {

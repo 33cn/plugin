@@ -33,6 +33,7 @@ type msgPacket struct {
 	Bytes  []byte
 }
 
+// MsgInfo struct
 type MsgInfo struct {
 	TypeID byte
 	Msg    proto.Message
@@ -40,6 +41,7 @@ type MsgInfo struct {
 	PeerIP string
 }
 
+// Peer interface
 type Peer interface {
 	ID() ID
 	RemoteIP() (net.IP, error) // remote IP of the connection
@@ -57,6 +59,7 @@ type Peer interface {
 	//Get(string) interface{}
 }
 
+// PeerConnState struct
 type PeerConnState struct {
 	mtx sync.Mutex
 	ip  net.IP
@@ -98,6 +101,7 @@ type peerConn struct {
 	heartbeatQueue   chan proto.Message
 }
 
+// PeerSet struct
 type PeerSet struct {
 	mtx    sync.Mutex
 	lookup map[ID]*peerSetItem
@@ -109,6 +113,7 @@ type peerSetItem struct {
 	index int
 }
 
+// NewPeerSet method
 func NewPeerSet() *PeerSet {
 	return &PeerSet{
 		lookup: make(map[ID]*peerSetItem),
@@ -164,6 +169,7 @@ func (ps *PeerSet) hasIP(peerIP net.IP) bool {
 	return false
 }
 
+// Size of list
 func (ps *PeerSet) Size() int {
 	ps.mtx.Lock()
 	defer ps.mtx.Unlock()
@@ -279,14 +285,11 @@ func (pc *peerConn) HandshakeTimeout(
 			if err1 != nil {
 				tendermintlog.Error("Peer handshake peerNodeInfo failed", "err", err1)
 				return
-			} else {
-				frame := make([]byte, 4)
-				binary.BigEndian.PutUint32(frame, uint32(len(info)))
-				_, err1 = pc.conn.Write(frame)
-				_, err1 = pc.conn.Write(info[:])
 			}
-			//var n int
-			//wire.WriteBinary(ourNodeInfo, p.conn, &n, &err1)
+			frame := make([]byte, 4)
+			binary.BigEndian.PutUint32(frame, uint32(len(info)))
+			_, err1 = pc.conn.Write(frame)
+			_, err1 = pc.conn.Write(info[:])
 		},
 		func() {
 			readBuffer := make([]byte, 4)
@@ -304,9 +307,6 @@ func (pc *peerConn) HandshakeTimeout(
 			if err2 != nil {
 				return
 			}
-
-			//var n int
-			//wire.ReadBinary(peerNodeInfo, p.conn, maxNodeInfoSize, &n, &err2)
 			tendermintlog.Info("Peer handshake", "peerNodeInfo", peerNodeInfo)
 		},
 	)
@@ -956,6 +956,7 @@ OUTER_LOOP:
 	}
 }
 
+// StackError struct
 type StackError struct {
 	Err   interface{}
 	Stack []byte
@@ -969,7 +970,6 @@ func (se StackError) Error() string {
 	return se.String()
 }
 
-//-----------------------------------------------------------------
 // GetRoundState returns an atomic snapshot of the PeerRoundState.
 // There's no point in mutating it since it won't change PeerState.
 func (ps *PeerConnState) GetRoundState() *ttypes.PeerRoundState {
@@ -1034,7 +1034,7 @@ func (ps *PeerConnState) PickVoteToSend(votes ttypes.VoteSetReader) (vote *ttype
 		return nil, false
 	}
 
-	height, round, type_, size := votes.Height(), votes.Round(), votes.Type(), votes.Size()
+	height, round, voteType, size := votes.Height(), votes.Round(), votes.Type(), votes.Size()
 
 	// Lazily set data using 'votes'.
 	if votes.IsCommit() {
@@ -1042,28 +1042,28 @@ func (ps *PeerConnState) PickVoteToSend(votes ttypes.VoteSetReader) (vote *ttype
 	}
 	ps.ensureVoteBitArrays(height, size)
 
-	psVotes := ps.getVoteBitArray(height, round, type_)
+	psVotes := ps.getVoteBitArray(height, round, voteType)
 	if psVotes == nil {
 		return nil, false // Not something worth sending
 	}
 
 	if index, ok := votes.BitArray().Sub(psVotes).PickRandom(); ok {
-		tendermintlog.Debug("PickVoteToSend", "height", height, "index", index, "type", type_, "selfVotes", votes.BitArray().String(),
+		tendermintlog.Debug("PickVoteToSend", "height", height, "index", index, "type", voteType, "selfVotes", votes.BitArray().String(),
 			"peerVotes", psVotes.String(), "peerip", ps.ip.String())
-		ps.setHasVote(height, round, type_, index)
+		ps.setHasVote(height, round, voteType, index)
 		return votes.GetByIndex(index), true
 	}
 	return nil, false
 }
 
-func (ps *PeerConnState) getVoteBitArray(height int64, round int, type_ byte) *ttypes.BitArray {
-	if !ttypes.IsVoteTypeValid(type_) {
+func (ps *PeerConnState) getVoteBitArray(height int64, round int, voteType byte) *ttypes.BitArray {
+	if !ttypes.IsVoteTypeValid(voteType) {
 		return nil
 	}
 
 	if ps.Height == height {
 		if ps.Round == round {
-			switch type_ {
+			switch voteType {
 			case ttypes.VoteTypePrevote:
 				return ps.Prevotes
 			case ttypes.VoteTypePrecommit:
@@ -1071,7 +1071,7 @@ func (ps *PeerConnState) getVoteBitArray(height int64, round int, type_ byte) *t
 			}
 		}
 		if ps.CatchupCommitRound == round {
-			switch type_ {
+			switch voteType {
 			case ttypes.VoteTypePrevote:
 				return nil
 			case ttypes.VoteTypePrecommit:
@@ -1079,7 +1079,7 @@ func (ps *PeerConnState) getVoteBitArray(height int64, round int, type_ byte) *t
 			}
 		}
 		if ps.ProposalPOLRound == round {
-			switch type_ {
+			switch voteType {
 			case ttypes.VoteTypePrevote:
 				return ps.ProposalPOL
 			case ttypes.VoteTypePrecommit:
@@ -1090,7 +1090,7 @@ func (ps *PeerConnState) getVoteBitArray(height int64, round int, type_ byte) *t
 	}
 	if ps.Height == height+1 {
 		if ps.LastCommitRound == round {
-			switch type_ {
+			switch voteType {
 			case ttypes.VoteTypePrevote:
 				return nil
 			case ttypes.VoteTypePrecommit:
@@ -1127,7 +1127,7 @@ func (ps *PeerConnState) ensureCatchupCommitRound(height int64, round int, numVa
 	}
 }
 
-// EnsureVoteVitArrays ensures the bit-arrays have been allocated for tracking
+// EnsureVoteBitArrays ensures the bit-arrays have been allocated for tracking
 // what votes this peer has received.
 // NOTE: It's important to make sure that numValidators actually matches
 // what the node sees as the number of validators for height.
@@ -1166,14 +1166,14 @@ func (ps *PeerConnState) SetHasVote(vote *ttypes.Vote) {
 	ps.setHasVote(vote.Height, int(vote.Round), byte(vote.Type), int(vote.ValidatorIndex))
 }
 
-func (ps *PeerConnState) setHasVote(height int64, round int, type_ byte, index int) {
+func (ps *PeerConnState) setHasVote(height int64, round int, voteType byte, index int) {
 	// NOTE: some may be nil BitArrays -> no side effects.
-	psVotes := ps.getVoteBitArray(height, round, type_)
+	psVotes := ps.getVoteBitArray(height, round, voteType)
 	tendermintlog.Debug("setHasVote before", "height", height, "psVotes", psVotes.String(), "peerip", ps.ip.String())
 	if psVotes != nil {
 		psVotes.SetIndex(index, true)
 	}
-	tendermintlog.Debug("setHasVote after", "height", height, "index", index, "type", type_, "peerVotes", psVotes.String(), "peerip", ps.ip.String())
+	tendermintlog.Debug("setHasVote after", "height", height, "index", index, "type", voteType, "peerVotes", psVotes.String(), "peerip", ps.ip.String())
 }
 
 // ApplyNewRoundStepMessage updates the peer state for the new round.

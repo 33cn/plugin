@@ -36,7 +36,7 @@ import (
 
 var (
 	random    *rand.Rand
-	loopCount int = 10
+	loopCount = 10
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 )

@@ -17,7 +17,7 @@ func calcCertHeightKey(height int64) []byte {
 }
 
 // ExecLocal_New 启用证书交易执行
-func (c *Cert) ExecLocal_New(payload *ct.CertNew, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Cert) ExecLocal_New(payload *ct.CertNew, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if !authority.IsAuthEnable {
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority
@@ -49,7 +49,7 @@ func (c *Cert) ExecLocal_New(payload *ct.CertNew, tx *types.Transaction, receipt
 }
 
 // ExecLocal_Update 更新证书交易执行
-func (c *Cert) ExecLocal_Update(payload *ct.CertUpdate, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Cert) ExecLocal_Update(payload *ct.CertUpdate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if !authority.IsAuthEnable {
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority
@@ -82,7 +82,7 @@ func (c *Cert) ExecLocal_Update(payload *ct.CertUpdate, tx *types.Transaction, r
 }
 
 // ExecLocal_Normal 非证书变更交易执行
-func (c *Cert) ExecLocal_Normal(payload *ct.CertNormal, tx *types.Transaction, receiptData types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+func (c *Cert) ExecLocal_Normal(payload *ct.CertNormal, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if !authority.IsAuthEnable {
 		clog.Error("Authority is not available. Please check the authority config or authority initialize error logs.")
 		return nil, ct.ErrInitializeAuthority

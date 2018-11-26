@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	// RFC3339Millis ...
 	RFC3339Millis = "2006-01-02T15:04:05.000Z" // forced microseconds
 	timeFormat    = RFC3339Millis
 )
@@ -29,9 +30,11 @@ const (
 var (
 	randgen *rand.Rand
 	randMux sync.Mutex
-	Fmt     = fmt.Sprintf
+	// Fmt ...
+	Fmt = fmt.Sprintf
 )
 
+// Init ...
 func Init() {
 	if randgen == nil {
 		randMux.Lock()
@@ -40,10 +43,12 @@ func Init() {
 	}
 }
 
+// WriteFile ...
 func WriteFile(filePath string, contents []byte, mode os.FileMode) error {
 	return ioutil.WriteFile(filePath, contents, mode)
 }
 
+// WriteFileAtomic ...
 func WriteFileAtomic(filePath string, newBytes []byte, mode os.FileMode) error {
 	dir := filepath.Dir(filePath)
 	f, err := ioutil.TempFile(dir, "")
@@ -70,7 +75,7 @@ func WriteFileAtomic(filePath string, newBytes []byte, mode os.FileMode) error {
 	return err
 }
 
-//----------------------------------------------------------
+// Tempfile ...
 func Tempfile(prefix string) (*os.File, string) {
 	file, err := ioutil.TempFile("", prefix)
 	if err != nil {
@@ -79,12 +84,14 @@ func Tempfile(prefix string) (*os.File, string) {
 	return file, file.Name()
 }
 
+// Fingerprint ...
 func Fingerprint(slice []byte) []byte {
 	fingerprint := make([]byte, 6)
 	copy(fingerprint, slice)
 	return fingerprint
 }
 
+// Kill ...
 func Kill() error {
 	p, err := os.FindProcess(os.Getpid())
 	if err != nil {
@@ -93,12 +100,13 @@ func Kill() error {
 	return p.Signal(syscall.SIGTERM)
 }
 
+// Exit ...
 func Exit(s string) {
 	fmt.Printf(s + "\n")
 	os.Exit(1)
 }
 
-//-----------------------------------------------------------
+// Parallel ...
 func Parallel(tasks ...func()) {
 	var wg sync.WaitGroup
 	wg.Add(len(tasks))
@@ -114,6 +122,7 @@ func Parallel(tasks ...func()) {
 // Percent represents a percentage in increments of 1/1000th of a percent.
 type Percent uint32
 
+// Float ...
 func (p Percent) Float() float64 {
 	return float64(p) * 1e-3
 }
@@ -127,7 +136,7 @@ func (p Percent) String() string {
 	return string(append(b, '%'))
 }
 
-//-------------------------------------------------------------------
+// MinInt ...
 func MinInt(a, b int) int {
 	if a < b {
 		return a
@@ -135,6 +144,7 @@ func MinInt(a, b int) int {
 	return b
 }
 
+// MaxInt ...
 func MaxInt(a, b int) int {
 	if a > b {
 		return a
@@ -142,7 +152,7 @@ func MaxInt(a, b int) int {
 	return b
 }
 
-//--------------------------------------------------------------
+// RandIntn ...
 func RandIntn(n int) int {
 	if n <= 0 {
 		panic("invalid argument to Intn")
@@ -159,6 +169,7 @@ func RandIntn(n int) int {
 	return int(i64)
 }
 
+// RandUint32 ...
 func RandUint32() uint32 {
 	randMux.Lock()
 	u32 := randgen.Uint32()
@@ -166,6 +177,7 @@ func RandUint32() uint32 {
 	return u32
 }
 
+// RandInt63n ...
 func RandInt63n(n int64) int64 {
 	randMux.Lock()
 	i64 := randgen.Int63n(n)
@@ -173,26 +185,28 @@ func RandInt63n(n int64) int64 {
 	return i64
 }
 
-//-------------------------------------------------------------
+// PanicSanity ...
 func PanicSanity(v interface{}) {
 	panic(Fmt("Panicked on a Sanity Check: %v", v))
 }
 
+// PanicCrisis ...
 func PanicCrisis(v interface{}) {
 	panic(Fmt("Panicked on a Crisis: %v", v))
 }
 
+// PanicQ ...
 func PanicQ(v interface{}) {
 	panic(Fmt("Panicked questionably: %v", v))
 }
 
-//--------------------BitArray------------------------
+// BitArray ...
 type BitArray struct {
 	*tmtypes.TendermintBitArray
 	mtx sync.Mutex
 }
 
-// There is no BitArray whose Size is 0.  Use nil instead.
+// NewBitArray There is no BitArray whose Size is 0.  Use nil instead.
 func NewBitArray(bits int) *BitArray {
 	if bits <= 0 {
 		return nil
@@ -205,6 +219,7 @@ func NewBitArray(bits int) *BitArray {
 	}
 }
 
+// Size ...
 func (bA *BitArray) Size() int {
 	if bA == nil {
 		return 0
@@ -212,7 +227,7 @@ func (bA *BitArray) Size() int {
 	return int(bA.Bits)
 }
 
-// NOTE: behavior is undefined if i >= bA.Bits
+// GetIndex NOTE: behavior is undefined if i >= bA.Bits
 func (bA *BitArray) GetIndex(i int) bool {
 	if bA == nil {
 		return false
@@ -229,7 +244,7 @@ func (bA *BitArray) getIndex(i int) bool {
 	return bA.Elems[i/64]&(uint64(1)<<uint(i%64)) > 0
 }
 
-// NOTE: behavior is undefined if i >= bA.Bits
+// SetIndex NOTE: behavior is undefined if i >= bA.Bits
 func (bA *BitArray) SetIndex(i int, v bool) bool {
 	if bA == nil {
 		return false
@@ -251,6 +266,7 @@ func (bA *BitArray) setIndex(i int, v bool) bool {
 	return true
 }
 
+// Copy ...
 func (bA *BitArray) Copy() *BitArray {
 	if bA == nil {
 		return nil
@@ -280,7 +296,7 @@ func (bA *BitArray) copyBits(bits int) *BitArray {
 	}
 }
 
-// Returns a BitArray of larger bits size.
+// Or Returns a BitArray of larger bits size.
 func (bA *BitArray) Or(o *BitArray) *BitArray {
 	if bA == nil && o.TendermintBitArray == nil {
 		return nil
@@ -300,7 +316,7 @@ func (bA *BitArray) Or(o *BitArray) *BitArray {
 	return c
 }
 
-// Returns a BitArray of smaller bit size.
+// And Returns a BitArray of smaller bit size.
 func (bA *BitArray) And(o *BitArray) *BitArray {
 	if bA == nil || o.TendermintBitArray == nil {
 		return nil
@@ -318,6 +334,7 @@ func (bA *BitArray) and(o *BitArray) *BitArray {
 	return c
 }
 
+// Not ...
 func (bA *BitArray) Not() *BitArray {
 	if bA == nil {
 		return nil // Degenerate
@@ -331,6 +348,7 @@ func (bA *BitArray) Not() *BitArray {
 	return c
 }
 
+// Sub ...
 func (bA *BitArray) Sub(o *BitArray) *BitArray {
 	if bA == nil || o.TendermintBitArray == nil {
 		return nil
@@ -354,6 +372,7 @@ func (bA *BitArray) Sub(o *BitArray) *BitArray {
 	return bA.and(o.Not()) // Note degenerate case where o == nil
 }
 
+// IsEmpty ...
 func (bA *BitArray) IsEmpty() bool {
 	if bA == nil {
 		return true // should this be opposite?
@@ -368,6 +387,7 @@ func (bA *BitArray) IsEmpty() bool {
 	return true
 }
 
+// IsFull ...
 func (bA *BitArray) IsFull() bool {
 	if bA == nil {
 		return true
@@ -388,6 +408,7 @@ func (bA *BitArray) IsFull() bool {
 	return (lastElem+1)&((uint64(1)<<uint(lastElemBits))-1) == 0
 }
 
+// PickRandom ...
 func (bA *BitArray) PickRandom() (int, bool) {
 	if bA == nil {
 		return 0, false
@@ -440,6 +461,7 @@ func (bA *BitArray) String() string {
 	return bA.stringIndented("")
 }
 
+// StringIndented ...
 func (bA *BitArray) StringIndented(indent string) string {
 	if bA == nil {
 		return "nil-BitArray"
@@ -476,6 +498,7 @@ func (bA *BitArray) stringIndented(indent string) string {
 	return fmt.Sprintf("BA{%v:%v}", bA.Bits, strings.Join(lines, indent))
 }
 
+// Bytes ...
 func (bA *BitArray) Bytes() []byte {
 	bA.mtx.Lock()
 	defer bA.mtx.Unlock()
@@ -490,7 +513,7 @@ func (bA *BitArray) Bytes() []byte {
 	return bytes
 }
 
-// NOTE: other bitarray o is not locked when reading,
+// Update NOTE: other bitarray o is not locked when reading,
 // so if necessary, caller must copy or lock o prior to calling Update.
 // If bA is nil, does nothing.
 func (bA *BitArray) Update(o *BitArray) {
@@ -503,11 +526,11 @@ func (bA *BitArray) Update(o *BitArray) {
 }
 
 //------------------Heap----------------------
+
+// Comparable ...
 type Comparable interface {
 	Less(o interface{}) bool
 }
-
-//-----------------------------------------------------------------------------
 
 /*
 Example usage:
@@ -522,22 +545,27 @@ Example usage:
 	fmt.Println(h.Pop())
 */
 
+// Heap ...
 type Heap struct {
 	pq priorityQueue
 }
 
+// NewHeap ...
 func NewHeap() *Heap {
 	return &Heap{pq: make([]*pqItem, 0)}
 }
 
+// Len ...
 func (h *Heap) Len() int64 {
 	return int64(len(h.pq))
 }
 
+// Push ...
 func (h *Heap) Push(value interface{}, priority Comparable) {
 	heap.Push(&h.pq, &pqItem{value: value, priority: priority})
 }
 
+// Peek ...
 func (h *Heap) Peek() interface{} {
 	if len(h.pq) == 0 {
 		return nil
@@ -545,10 +573,12 @@ func (h *Heap) Peek() interface{} {
 	return h.pq[0].value
 }
 
+// Update ...
 func (h *Heap) Update(value interface{}, priority Comparable) {
 	h.pq.Update(h.pq[0], value, priority)
 }
 
+// Pop ...
 func (h *Heap) Pop() interface{} {
 	item := heap.Pop(&h.pq).(*pqItem)
 	return item.value

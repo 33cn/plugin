@@ -9,6 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
+// Query_GetValNodeByHeight method
 func (val *ValNode) Query_GetValNodeByHeight(in *pty.ReqNodeInfo) (types.Message, error) {
 	height := in.GetHeight()
 
@@ -36,6 +37,7 @@ func (val *ValNode) Query_GetValNodeByHeight(in *pty.ReqNodeInfo) (types.Message
 	return reply, nil
 }
 
+// Query_GetBlockInfoByHeight method
 func (val *ValNode) Query_GetBlockInfoByHeight(in *pty.ReqBlockInfo) (types.Message, error) {
 	height := in.GetHeight()
 
