@@ -47,9 +47,9 @@ func (t *PokerBullType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取日志map
 func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogPBGameStart:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameStart"},
-		TyLogPBGameContinue: {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameContinue"},
-		TyLogPBGameQuit:     {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuit"},
-		TyLogPBGameQuery:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuery"},
+		TyLogPBGameStart:    {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameStart"},
+		TyLogPBGameContinue: {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameContinue"},
+		TyLogPBGameQuit:     {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuit"},
+		TyLogPBGameQuery:    {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuery"},
 	}
 }
