@@ -117,7 +117,7 @@ func (action *Action) GetIndex(game *gt.Game) int64 {
 //GetKVSet get kv set
 func (action *Action) GetKVSet(game *gt.Game) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
-	kvset = append(kvset, &types.KeyValue{Key(game.GameId), value})
+	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
 	return kvset
 }
 
@@ -126,7 +126,7 @@ func (action *Action) updateCount(status int32, addr string) (kvset []*types.Key
 	if err != nil {
 		glog.Error("updateCount", "Query count have err:", err.Error())
 	}
-	kvset = append(kvset, &types.KeyValue{calcCountKey(status, addr), []byte(strconv.FormatInt(count+1, 10))})
+	kvset = append(kvset, &types.KeyValue{Key: calcCountKey(status, addr), Value: []byte(strconv.FormatInt(count+1, 10))})
 	return kvset
 }
 
@@ -231,7 +231,7 @@ func (action *Action) GameCreate(create *gt.GameCreate) (*types.Receipt, error) 
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, action.updateCount(game.GetStatus(), "")...)
 	kv = append(kv, action.updateCount(game.GetStatus(), game.GetCreateAddress())...)
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -286,7 +286,7 @@ func (action *Action) GameMatch(match *gt.GameMatch) (*types.Receipt, error) {
 	kvs = append(kvs, action.updateCount(game.GetStatus(), "")...)
 	kvs = append(kvs, action.updateCount(game.GetStatus(), game.GetCreateAddress())...)
 	kvs = append(kvs, action.updateCount(game.GetStatus(), game.GetMatchAddress())...)
-	receipts := &types.Receipt{types.ExecOk, kvs, logs}
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
@@ -338,7 +338,7 @@ func (action *Action) GameCancel(cancel *gt.GameCancel) (*types.Receipt, error) 
 	kv = append(kv, action.updateCount(game.GetStatus(), "")...)
 	kv = append(kv, action.updateCount(game.GetStatus(), game.GetCreateAddress())...)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // GameClose close game
@@ -480,7 +480,7 @@ func (action *Action) GameClose(close *gt.GameClose) (*types.Receipt, error) {
 	kv = append(kv, action.updateCount(game.GetStatus(), "")...)
 	kv = append(kv, action.updateCount(game.GetStatus(), game.GetCreateAddress())...)
 	kv = append(kv, action.updateCount(game.GetStatus(), game.GetMatchAddress())...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // 检查开奖是否超时，若超过一天，则不让庄家开奖，但其他人可以开奖，
@@ -602,7 +602,7 @@ func queryGameListByStatusAndAddr(db dbm.Lister, stateDB dbm.KV, param *gt.Query
 		}
 		gameIds = append(gameIds, record.GetGameId())
 	}
-	return &gt.ReplyGameList{GetGameList(stateDB, gameIds)}, nil
+	return &gt.ReplyGameList{Games: GetGameList(stateDB, gameIds)}, nil
 }
 
 // QueryGameListCount count数查询
@@ -610,7 +610,7 @@ func QueryGameListCount(stateDB dbm.KV, param *gt.QueryGameListCount) (types.Mes
 	if param.Status < 1 || param.Status > 4 {
 		return nil, fmt.Errorf("%s", "the status only fill in 1,2,3,4!")
 	}
-	return &gt.ReplyGameListCount{QueryCountByStatusAndAddr(stateDB, param.GetStatus(), param.GetAddress())}, nil
+	return &gt.ReplyGameListCount{Count: QueryCountByStatusAndAddr(stateDB, param.GetStatus(), param.GetAddress())}, nil
 }
 
 // QueryCountByStatusAndAddr query game count by status and addr

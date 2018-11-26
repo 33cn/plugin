@@ -1180,7 +1180,7 @@ func (cs *ConsensusState) defaultSetProposal(proposal *tmtypes.Proposal) error {
 // NOTE: block is not necessarily valid.
 // Asynchronously triggers either enterPrevote (before we timeout of propose) or tryFinalizeCommit, once we have the full block.
 func (cs *ConsensusState) addProposalBlock(proposalBlock *tmtypes.TendermintBlock) (err error) {
-	block := &ttypes.TendermintBlock{proposalBlock}
+	block := &ttypes.TendermintBlock{TendermintBlock: proposalBlock}
 	height, round := block.Header.Height, block.Header.Round
 	tendermintlog.Debug(fmt.Sprintf("Consensus receive proposal block. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
 		"block(H/R/hash)", fmt.Sprintf("%v/%v/%X", height, round, block.Hash()))
