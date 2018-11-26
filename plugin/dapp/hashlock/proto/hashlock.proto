@@ -33,7 +33,7 @@ message Hashlockquery {
 }
 
 message HashRecv {
-    bytes         HashlockId = 1;
+    bytes         HashlockId  = 1;
     Hashlockquery Information = 2;
 }
 
