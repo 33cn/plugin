@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Uses nacl's secret_box to encrypt a net.Conn.
+// Package tendermint Uses nacl's secret_box to encrypt a net.Conn.
 // It is (meant to be) an implementation of the STS protocol.
 // Note we do not (yet) assume that a remote peer's pubkey
 // is known ahead of time, and thus we are technically
@@ -36,7 +36,7 @@ const (
 	authSigMsgSize  = (32) + (64)
 ) // fixed size (length prefixed) byte arrays
 
-// Implements net.Conn
+// SecretConnection Implements net.Conn
 type SecretConnection struct {
 	conn       io.ReadWriteCloser
 	recvBuffer []byte
@@ -46,7 +46,7 @@ type SecretConnection struct {
 	shrSecret  *[32]byte // shared secret
 }
 
-// Performs handshake and returns a new authenticated SecretConnection.
+// MakeSecretConnection Performs handshake and returns a new authenticated SecretConnection.
 // Returns nil if error in handshake.
 // Caller should call conn.Close()
 // See docs/sts-final.pdf for more information.
@@ -108,7 +108,7 @@ func MakeSecretConnection(conn io.ReadWriteCloser, locPrivKey crypto.PrivKey) (*
 	return sc, nil
 }
 
-// Returns authenticated remote pubkey
+// RemotePubKey Returns authenticated remote pubkey
 func (sc *SecretConnection) RemotePubKey() crypto.PubKey {
 	return sc.remPubKey
 }
@@ -140,9 +140,8 @@ func (sc *SecretConnection) Write(data []byte) (n int, err error) {
 		_, err := sc.conn.Write(sealedFrame)
 		if err != nil {
 			return n, err
-		} else {
-			n += len(chunk)
 		}
+		n += len(chunk)
 	}
 	return
 }
@@ -150,8 +149,8 @@ func (sc *SecretConnection) Write(data []byte) (n int, err error) {
 // CONTRACT: data smaller than dataMaxSize is read atomically.
 func (sc *SecretConnection) Read(data []byte) (n int, err error) {
 	if 0 < len(sc.recvBuffer) {
-		n_ := copy(data, sc.recvBuffer)
-		sc.recvBuffer = sc.recvBuffer[n_:]
+		count := copy(data, sc.recvBuffer)
+		sc.recvBuffer = sc.recvBuffer[count:]
 		return
 	}
 
@@ -182,14 +181,24 @@ func (sc *SecretConnection) Read(data []byte) (n int, err error) {
 	return
 }
 
-// Implements net.Conn
-func (sc *SecretConnection) Close() error                  { return sc.conn.Close() }
-func (sc *SecretConnection) LocalAddr() net.Addr           { return sc.conn.(net.Conn).LocalAddr() }
-func (sc *SecretConnection) RemoteAddr() net.Addr          { return sc.conn.(net.Conn).RemoteAddr() }
+// Close Implements net.Conn
+func (sc *SecretConnection) Close() error { return sc.conn.Close() }
+
+// LocalAddr ...
+func (sc *SecretConnection) LocalAddr() net.Addr { return sc.conn.(net.Conn).LocalAddr() }
+
+// RemoteAddr ...
+func (sc *SecretConnection) RemoteAddr() net.Addr { return sc.conn.(net.Conn).RemoteAddr() }
+
+// SetDeadline ...
 func (sc *SecretConnection) SetDeadline(t time.Time) error { return sc.conn.(net.Conn).SetDeadline(t) }
+
+// SetReadDeadline ...
 func (sc *SecretConnection) SetReadDeadline(t time.Time) error {
 	return sc.conn.(net.Conn).SetReadDeadline(t)
 }
+
+// SetWriteDeadline ...
 func (sc *SecretConnection) SetWriteDeadline(t time.Time) error {
 	return sc.conn.(net.Conn).SetWriteDeadline(t)
 }
@@ -343,7 +352,7 @@ func incr2Nonce(nonce *[24]byte) {
 // increment nonce big-endian by 1 with wraparound.
 func incrNonce(nonce *[24]byte) {
 	for i := 23; 0 <= i; i-- {
-		nonce[i] += 1
+		nonce[i]++
 		if nonce[i] != 0 {
 			return
 		}

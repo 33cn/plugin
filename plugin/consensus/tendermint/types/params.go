@@ -82,7 +82,7 @@ func DefaultBlockGossip() BlockGossip {
 	}
 }
 
-// DefaultEvidence Params returns a default EvidenceParams.
+// DefaultEvidenceParams returns a default EvidenceParams.
 func DefaultEvidenceParams() EvidenceParams {
 	return EvidenceParams{
 		MaxAge: 100000, // 27.8 hrs at 1block/s

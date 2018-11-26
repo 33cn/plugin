@@ -22,7 +22,7 @@ func TestRunSuiteWeb(t *testing.T) {
 }
 
 func (s *suiteWeb) SetupSuite() {
-	s.btc, _ = NewBtcWeb()
+	s.btc, _ = newBtcWeb()
 }
 
 func (s *suiteWeb) TestGetBlockHeader() {

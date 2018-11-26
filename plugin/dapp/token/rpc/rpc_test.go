@@ -27,7 +27,7 @@ func newTestJrpcClient() *Jrpc {
 	return &Jrpc{cli: newTestChannelClient()}
 }
 
-func testChannelClient_GetTokenBalanceToken(t *testing.T) {
+func testChannelClientGetTokenBalanceToken(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 
 	client := &channelClient{
@@ -57,7 +57,7 @@ func testChannelClient_GetTokenBalanceToken(t *testing.T) {
 
 }
 
-func testChannelClient_GetTokenBalanceOther(t *testing.T) {
+func testChannelClientGetTokenBalanceOther(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	client := &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -86,13 +86,13 @@ func testChannelClient_GetTokenBalanceOther(t *testing.T) {
 
 }
 
-func TestChannelClient_GetTokenBalance(t *testing.T) {
-	testChannelClient_GetTokenBalanceToken(t)
-	testChannelClient_GetTokenBalanceOther(t)
+func TestChannelClientGetTokenBalance(t *testing.T) {
+	testChannelClientGetTokenBalanceToken(t)
+	testChannelClientGetTokenBalanceOther(t)
 
 }
 
-func TestChannelClient_CreateRawTokenPreCreateTx(t *testing.T) {
+func TestChannelClientCreateRawTokenPreCreateTx(t *testing.T) {
 	client := newTestJrpcClient()
 	var data interface{}
 	err := client.CreateRawTokenPreCreateTx(nil, &data)
@@ -108,7 +108,7 @@ func TestChannelClient_CreateRawTokenPreCreateTx(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestChannelClient_CreateRawTokenRevokeTx(t *testing.T) {
+func TestChannelClientCreateRawTokenRevokeTx(t *testing.T) {
 	client := newTestJrpcClient()
 	var data interface{}
 	err := client.CreateRawTokenRevokeTx(nil, &data)
@@ -124,7 +124,7 @@ func TestChannelClient_CreateRawTokenRevokeTx(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestChannelClient_CreateRawTokenFinishTx(t *testing.T) {
+func TestChannelClientCreateRawTokenFinishTx(t *testing.T) {
 	client := newTestJrpcClient()
 	var data interface{}
 	err := client.CreateRawTokenFinishTx(nil, &data)

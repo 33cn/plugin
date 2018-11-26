@@ -88,19 +88,19 @@ func (b *btcStore) saveBlockHead(head *ty.BtcHeader) ([]*types.KeyValue, error) 
 		relaylog.Error("saveBlockHead", "height", head.Height, "hash", head.Hash)
 		return nil, err
 
-	} else {
-		// hash:header
-		key = calcBtcHeaderKeyHash(head.Hash)
-		kv = append(kv, &types.KeyValue{key, val})
-		// height:header
-		key = calcBtcHeaderKeyHeight(int64(head.Height))
-		kv = append(kv, &types.KeyValue{key, val})
 	}
+
+	// hash:header
+	key = calcBtcHeaderKeyHash(head.Hash)
+	kv = append(kv, &types.KeyValue{Key: key, Value: val})
+	// height:header
+	key = calcBtcHeaderKeyHeight(int64(head.Height))
+	kv = append(kv, &types.KeyValue{Key: key, Value: val})
 
 	// prefix-height:height
 	key = calcBtcHeaderKeyHeightList(int64(head.Height))
-	heightBytes := types.Encode(&types.Int64{int64(head.Height)})
-	kv = append(kv, &types.KeyValue{key, heightBytes})
+	heightBytes := types.Encode(&types.Int64{Data: int64(head.Height)})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	return kv, nil
 }
@@ -108,13 +108,13 @@ func (b *btcStore) saveBlockHead(head *ty.BtcHeader) ([]*types.KeyValue, error) 
 func (b *btcStore) saveBlockLastHead(head *ty.ReceiptRelayRcvBTCHeaders) ([]*types.KeyValue, error) {
 	var kv []*types.KeyValue
 
-	heightBytes := types.Encode(&types.Int64{int64(head.NewHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(head.NewHeight)})
 	key := relayBTCHeaderLastHeight
-	kv = append(kv, &types.KeyValue{key, heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
-	heightBytes = types.Encode(&types.Int64{int64(head.NewBaseHeight)})
+	heightBytes = types.Encode(&types.Int64{Data: int64(head.NewBaseHeight)})
 	key = relayBTCHeaderBaseHeight
-	kv = append(kv, &types.KeyValue{key, heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	return kv, nil
 }
@@ -123,14 +123,14 @@ func (b *btcStore) delBlockHead(head *ty.BtcHeader) ([]*types.KeyValue, error) {
 	var kv []*types.KeyValue
 
 	key := calcBtcHeaderKeyHash(head.Hash)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	// height:header
 	key = calcBtcHeaderKeyHeight(int64(head.Height))
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	// prefix-height:height
 	key = calcBtcHeaderKeyHeightList(int64(head.Height))
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	return kv, nil
 }
@@ -139,13 +139,13 @@ func (b *btcStore) delBlockLastHead(head *ty.ReceiptRelayRcvBTCHeaders) ([]*type
 	var kv []*types.KeyValue
 	var key []byte
 
-	heightBytes := types.Encode(&types.Int64{int64(head.LastHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(head.LastHeight)})
 	key = relayBTCHeaderLastHeight
-	kv = append(kv, &types.KeyValue{key, heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
-	heightBytes = types.Encode(&types.Int64{int64(head.LastBaseHeight)})
+	heightBytes = types.Encode(&types.Int64{Data: int64(head.LastBaseHeight)})
 	key = relayBTCHeaderBaseHeight
-	kv = append(kv, &types.KeyValue{key, heightBytes})
+	kv = append(kv, &types.KeyValue{Key: key, Value: heightBytes})
 
 	return kv, nil
 }

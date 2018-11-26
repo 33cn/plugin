@@ -14,72 +14,97 @@ import (
 
 var tlog = log15.New("module", ParaX)
 
+// paracross 执行器的日志类型
 const (
-	// paracross 执行器的日志类型
-	TyLogParacrossCommit     = 650
+
+	// TyLogParacrossCommit commit log key
+	TyLogParacrossCommit = 650
+	// TyLogParacrossCommitDone commit down key
 	TyLogParacrossCommitDone = 651
 	// record 和 commit 不一样， 对应高度完成共识后收到commit 交易
 	// 这个交易就不参与共识, 只做记录
+	// TyLogParacrossCommitRecord commit record key
 	TyLogParacrossCommitRecord = 652
-	TyLogParaAssetTransfer     = 653
-	TyLogParaAssetWithdraw     = 654
+	// TyLogParaAssetTransfer asset transfer log key
+	TyLogParaAssetTransfer = 653
+	// TyLogParaAssetWithdraw asset withdraw log key
+	TyLogParaAssetWithdraw = 654
 	//在平行链上保存节点参与共识的数据
-	TyLogParacrossMiner   = 655
+	// TyLogParacrossMiner miner log key
+	TyLogParacrossMiner = 655
+	// TyLogParaAssetDeposit asset deposit log key
 	TyLogParaAssetDeposit = 656
 )
 
-type ParacrossCommitTx struct {
+type paracrossCommitTx struct {
 	Fee    int64               `json:"fee"`
 	Status ParacrossNodeStatus `json:"status"`
 }
 
 // action type
 const (
+	// ParacrossActionCommit paracross consensus commit action
 	ParacrossActionCommit = iota
+	// ParacrossActionMiner paracross consensus miner action
 	ParacrossActionMiner
+	// ParacrossActionTransfer paracross asset transfer action
 	ParacrossActionTransfer
+	// ParacrossActionWithdraw paracross asset withdraw action
 	ParacrossActionWithdraw
+	// ParacrossActionTransferToExec asset transfer to exec
 	ParacrossActionTransferToExec
 )
 
 const (
-	ParaCrossTransferActionTypeStart = 10000
-	ParaCrossTransferActionTypeEnd   = 10100
+	paraCrossTransferActionTypeStart = 10000
+	//paraCrossTransferActionTypeEnd   = 10100
 )
 
 const (
-	ParacrossActionAssetTransfer = iota + ParaCrossTransferActionTypeStart
+	// ParacrossActionAssetTransfer paracross asset transfer key
+	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
+	// ParacrossActionAssetWithdraw paracross asset withdraw key
 	ParacrossActionAssetWithdraw
 )
 
 // status
 const (
+	// ParacrossStatusCommiting commit status
 	ParacrossStatusCommiting = iota
+	// ParacrossStatusCommitDone commit done status
 	ParacrossStatusCommitDone
 )
 
 var (
-	ParacrossActionCommitStr         = string("Commit")
-	ParacrossTransferPerfix          = "crossPara."
-	ParacrossActionAssetTransferStr  = ParacrossTransferPerfix + string("AssetTransfer")
-	ParacrossActionAssetWithdrawStr  = ParacrossTransferPerfix + string("AssetWithdraw")
-	ParacrossActionTransferStr       = ParacrossTransferPerfix + string("Transfer")
-	ParacrossActionTransferToExecStr = ParacrossTransferPerfix + string("TransferToExec")
-	ParacrossActionWithdrawStr       = ParacrossTransferPerfix + string("Withdraw")
+	// ParacrossActionCommitStr Commit string
+	ParacrossActionCommitStr = string("Commit")
+	paracrossTransferPerfix  = "crossPara."
+	// ParacrossActionAssetTransferStr asset transfer key
+	ParacrossActionAssetTransferStr = paracrossTransferPerfix + string("AssetTransfer")
+	// ParacrossActionAssetWithdrawStr asset withdraw key
+	ParacrossActionAssetWithdrawStr = paracrossTransferPerfix + string("AssetWithdraw")
+	// ParacrossActionTransferStr trasfer key
+	ParacrossActionTransferStr = paracrossTransferPerfix + string("Transfer")
+	// ParacrossActionTransferToExecStr transfer to exec key
+	ParacrossActionTransferToExecStr = paracrossTransferPerfix + string("TransferToExec")
+	// ParacrossActionWithdrawStr withdraw key
+	ParacrossActionWithdrawStr = paracrossTransferPerfix + string("Withdraw")
 )
 
+// CalcMinerHeightKey get miner key
 func CalcMinerHeightKey(title string, height int64) []byte {
 	paraVoteHeightKey := "LODB-paracross-titleVoteHeight-"
 	return []byte(fmt.Sprintf(paraVoteHeightKey+"%s-%012d", title, height))
 }
 
+// CreateRawCommitTx4MainChain create commit tx to main chain
 func CreateRawCommitTx4MainChain(status *ParacrossNodeStatus, name string, fee int64) (*types.Transaction, error) {
 	return createRawCommitTx(status, name, fee)
 }
 
-func CreateRawParacrossCommitTx(parm *ParacrossCommitTx) (*types.Transaction, error) {
+func createRawParacrossCommitTx(parm *paracrossCommitTx) (*types.Transaction, error) {
 	if parm == nil {
-		tlog.Error("CreateRawParacrossCommitTx", "parm", parm)
+		tlog.Error("createRawParacrossCommitTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 	return createRawCommitTx(&parm.Status, types.ExecName(ParaX), parm.Fee)
@@ -106,6 +131,7 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 	return tx, nil
 }
 
+// CreateRawAssetTransferTx create asset transfer tx
 func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error) {
 	// 跨链交易需要在主链和平行链上执行， 所以应该可以在主链和平行链上构建
 	if !types.IsParaExecName(param.GetExecName()) {
@@ -138,6 +164,7 @@ func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error)
 	return tx, nil
 }
 
+// CreateRawMinerTx create miner tx
 func CreateRawMinerTx(status *ParacrossNodeStatus) (*types.Transaction, error) {
 	v := &ParacrossMinerAction{
 		Status: status,
@@ -159,6 +186,7 @@ func CreateRawMinerTx(status *ParacrossNodeStatus) (*types.Transaction, error) {
 	return tx, nil
 }
 
+// CreateRawTransferTx create paracross asset transfer tx with transfer and withdraw
 func CreateRawTransferTx(param *types.CreateTx) (*types.Transaction, error) {
 	if !types.IsParaExecName(param.GetExecName()) {
 		tlog.Error("CreateRawTransferTx", "exec", param.GetExecName())

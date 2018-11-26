@@ -6,7 +6,10 @@ package privacy
 
 import (
 	"bytes"
+	"encoding/hex"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"math/rand"
 	"time"
@@ -161,11 +164,11 @@ func TestCheckRingSignatureAPI1(t *testing.T) {
 	publickeys := make([][]byte, maxCount)
 	prefixHash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 	if err != nil {
-		t.Errorf("common.FromHex.", err)
+		t.Errorf("common.FromHex. error %v", err)
 	}
 	keyimage, err := common.FromHex("e7d85d6e81512c5650adce0499d6c17a83e2e29a05c1166cd2171b6b9288b3c4")
 	if err != nil {
-		t.Errorf("common.FromHex.", err)
+		t.Errorf("common.FromHex. error %v", err)
 	}
 
 	tmp, err := common.FromHex("15e3cc7cdb904d62f7c20d7fa51923fa2839f9e0a92ff0eddf8c12bd09089c15")
@@ -334,7 +337,7 @@ func testRingSignatureOncetime(maxCount int, t *testing.T) {
 			copy(sec[:], privkey.Bytes())
 			err = generateKeyImage(&pub, &sec, &image)
 			if err != nil {
-				t.Errorf("generateKeyImage() failed. error ", err)
+				t.Errorf("generateKeyImage() failed. error %v", err)
 			}
 		}
 	}
@@ -395,7 +398,7 @@ func TestGenerateRingSignatureAPI(t *testing.T) {
 	var signaturedata *types.RingSignatureItem
 	// step2. generate ring signature
 	if signaturedata, err = GenerateRingSignature(prefixHash, utxos, sec[:], realUtxoIndex, keyImage); err != nil {
-		t.Errorf("GenerateRingSignature() failed. ", err)
+		t.Errorf("GenerateRingSignature() failed. error %v", err)
 	}
 
 	publickeys := make([][]byte, maxCount)
@@ -456,5 +459,49 @@ func Benchmark_RingSignature(b *testing.B) {
 func Benchmark_RingSignatureAllStep(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 
+	}
+}
+
+func TestRingSignatureCrypto(t *testing.T) {
+	{
+		sig := &RingSignature{}
+		bytes := hex.EncodeToString(sig.Bytes())
+		assert.Equal(t, bytes, "")
+		assert.Equal(t, true, sig.IsZero())
+		assert.Equal(t, sig.String(), "")
+		assert.Equal(t, sig.Equals(sig), true)
+	}
+	{
+		key := &RingSignPrivateKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+		assert.NotNil(t, key.PubKey())
+		assert.Equal(t, key.Equals(key), true)
+		sig := key.Sign([]byte("Messages"))
+		assert.NotNil(t, sig)
+	}
+	{
+		ringsig := &RingSignature{}
+		key := &RingSignPublicKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.KeyString(), "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.Equals(key), true)
+		assert.Equal(t, key.VerifyBytes([]byte("Message"), ringsig), false)
+	}
+	{
+		ring := &RingSignED25519{}
+		privKey, err := ring.GenKey()
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		privKey, err = ring.PrivKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		pubKey, err := ring.PubKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, pubKey)
+		sig, err := ring.SignatureFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, sig)
 	}
 }

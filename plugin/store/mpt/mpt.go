@@ -17,14 +17,17 @@ import (
 
 var mlog = log.New("module", "mpt")
 
+// SetLogLevel set log level
 func SetLogLevel(level string) {
 	clog.SetLogLevel(level)
 }
 
+// DisableLog disable log
 func DisableLog() {
 	mlog.SetHandler(log.DiscardHandler())
 }
 
+// Store mpt store struct
 type Store struct {
 	*drivers.BaseStore
 	trees map[string]*mpt.TrieEx
@@ -35,6 +38,7 @@ func init() {
 	drivers.Reg("mpt", New)
 }
 
+// New new mpt store module
 func New(cfg *types.Store, sub []byte) queue.Module {
 	bs := drivers.NewBaseStore(cfg)
 	mpts := &Store{bs, make(map[string]*mpt.TrieEx), nil}
@@ -43,11 +47,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	return mpts
 }
 
+// Close close mpt store
 func (mpts *Store) Close() {
 	mpts.BaseStore.Close()
 	mlog.Info("store mavl closed")
 }
 
+// Set set k v to mpt store db; sync is true represent write sync
 func (mpts *Store) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	hash, err := mpt.SetKVPair(mpts.GetDB(), datas, sync)
 	if err != nil {
@@ -57,6 +63,7 @@ func (mpts *Store) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	return hash, nil
 }
 
+// Get get values by keys
 func (mpts *Store) Get(datas *types.StoreGet) [][]byte {
 	var tree *mpt.TrieEx
 	var err error
@@ -87,6 +94,7 @@ func (mpts *Store) Get(datas *types.StoreGet) [][]byte {
 	return values
 }
 
+// MemSet set keys values to memcory mpt, return root hash and error
 func (mpts *Store) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	var err error
 	var tree *mpt.TrieEx
@@ -111,6 +119,7 @@ func (mpts *Store) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	return hash, nil
 }
 
+// Commit convert memcory mpt to storage db
 func (mpts *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	tree, ok := mpts.trees[string(req.Hash)]
 	if !ok {
@@ -126,6 +135,7 @@ func (mpts *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// Rollback 回退将缓存的mpt树删除掉
 func (mpts *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mpts.trees[string(req.Hash)]
 	if !ok {
@@ -136,15 +146,18 @@ func (mpts *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// Del ...
 func (mpts *Store) Del(req *types.StoreDel) ([]byte, error) {
 	//not support
 	return nil, nil
 }
 
+// IterateRangeByStateHash 迭代实现功能； statehash：当前状态hash, start：开始查找的key, end: 结束的key, ascending：升序，降序, fn 迭代回调函数
 func (mpts *Store) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
 	mpt.IterateRangeByStateHash(mpts.GetDB(), statehash, start, end, ascending, fn)
 }
 
+// ProcEvent not support message
 func (mpts *Store) ProcEvent(msg queue.Message) {
 	msg.ReplyErr("Store", types.ErrActionNotSupport)
 }

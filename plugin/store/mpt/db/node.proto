@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package mpt;
 
+// Node mpt涉及到的node类型由四种基本类型
 message Node {
     oneof value {
         FullNode full   = 2;
@@ -13,19 +14,23 @@ message Node {
     int32 index = 6;
 }
 
+// FullNode 分支节点
 message FullNode {
     repeated Node nodes = 1;
 }
 
+// ShortNode  扩展/叶子节点
 message ShortNode {
     bytes key = 1;
     Node  val = 2;
 }
 
+// HashNode hash节点
 message HashNode {
     bytes hash = 1;
 }
 
+// ValueNode value节点
 message ValueNode {
     bytes value = 1;
 }

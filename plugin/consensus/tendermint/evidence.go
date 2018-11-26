@@ -43,6 +43,7 @@ type envelope struct {
 	Data *json.RawMessage `json:"data"`
 }
 
+// EvidenceInfo struct
 type EvidenceInfo struct {
 	Committed bool     `json:"committed"`
 	Priority  int64    `json:"priority"`
@@ -77,8 +78,8 @@ func keyPending(evidence ttypes.Evidence) []byte {
 	return _key("%s/%s/%X", baseKeyPending, bE(evidence.Height()), evidence.Hash())
 }
 
-func _key(fmt_ string, o ...interface{}) []byte {
-	return []byte(fmt.Sprintf(fmt_, o...))
+func _key(s string, o ...interface{}) []byte {
+	return []byte(fmt.Sprintf(s, o...))
 }
 
 // EvidenceStore is a store of all the evidence we've seen, including
@@ -88,6 +89,7 @@ type EvidenceStore struct {
 	db dbm.DB
 }
 
+// NewEvidenceStore method
 func NewEvidenceStore(db dbm.DB) *EvidenceStore {
 	if len(ttypes.EvidenceType2Type) == 0 {
 		ttypes.EvidenceType2Type = map[string]reflect.Type{
@@ -160,8 +162,8 @@ func (store *EvidenceStore) GetEvidence(height int64, hash []byte) *EvidenceInfo
 // It returns false if the evidence is already stored.
 func (store *EvidenceStore) AddNewEvidence(evidence ttypes.Evidence, priority int64) bool {
 	// check if we already have seen it
-	ei_ := store.GetEvidence(evidence.Height(), evidence.Hash())
-	if ei_ != nil && len(ei_.Evidence.Kind) == 0 {
+	ei := store.GetEvidence(evidence.Height(), evidence.Hash())
+	if ei != nil && len(ei.Evidence.Kind) == 0 {
 		return false
 	}
 
@@ -191,7 +193,7 @@ func (store *EvidenceStore) MarkEvidenceAsBroadcasted(evidence ttypes.Evidence) 
 	store.db.Delete(key)
 }
 
-// MarkEvidenceAsPending removes evidence from pending and outqueue and sets the state to committed.
+// MarkEvidenceAsCommitted removes evidence from pending and outqueue and sets the state to committed.
 func (store *EvidenceStore) MarkEvidenceAsCommitted(evidence ttypes.Evidence) {
 	// if its committed, its been broadcast
 	store.MarkEvidenceAsBroadcasted(evidence)
@@ -227,6 +229,7 @@ func (store *EvidenceStore) getEvidenceInfo(evidence ttypes.Evidence) EvidenceIn
 	return ei
 }
 
+// EvidenceToInfoBytes method
 func EvidenceToInfoBytes(evidence ttypes.Evidence, priority int64) ([]byte, error) {
 	evi, err := json.Marshal(evidence)
 	if err != nil {
@@ -250,6 +253,7 @@ func EvidenceToInfoBytes(evidence ttypes.Evidence, priority int64) ([]byte, erro
 	return eiBytes, nil
 }
 
+// EvidenceFromInfoBytes method
 func (store *EvidenceStore) EvidenceFromInfoBytes(data []byte) (ttypes.Evidence, error) {
 	vote2 := EvidenceInfo{}
 	err := json.Unmarshal(data, &vote2)
@@ -268,7 +272,6 @@ func (store *EvidenceStore) EvidenceFromInfoBytes(data []byte) (ttypes.Evidence,
 
 }
 
-//-------------------------evidence pool----------------------------
 // EvidencePool maintains a pool of valid evidence
 // in an EvidenceStore.
 type EvidencePool struct {
@@ -285,6 +288,7 @@ type EvidencePool struct {
 	evidenceChan chan ttypes.Evidence
 }
 
+// NewEvidencePool method
 func NewEvidencePool(stateDB *CSStateDB, state State, evidenceStore *EvidenceStore) *EvidencePool {
 	evpool := &EvidencePool{
 		stateDB:       stateDB,

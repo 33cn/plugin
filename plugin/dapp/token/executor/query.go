@@ -9,25 +9,28 @@ import (
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
+// Query_GetTokens 获取token
 func (t *token) Query_GetTokens(in *tokenty.ReqTokens) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return t.GetTokens(in)
+	return t.getTokens(in)
 }
 
+// Query_GetTokenInfo 获取token信息
 func (t *token) Query_GetTokenInfo(in *types.ReqString) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return t.GetTokenInfo(in.GetData())
+	return t.getTokenInfo(in.GetData())
 }
 
+// Query_GetTotalAmount 获取token总量
 func (t *token) Query_GetTotalAmount(in *types.ReqString) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	ret, err := t.GetTokenInfo(in.GetData())
+	ret, err := t.getTokenInfo(in.GetData())
 	if err != nil {
 		return nil, err
 	}
@@ -40,20 +43,23 @@ func (t *token) Query_GetTotalAmount(in *types.ReqString) (types.Message, error)
 	}, nil
 }
 
+// Query_GetAddrReceiverforTokens 获取token接受人数据
 func (t *token) Query_GetAddrReceiverforTokens(in *tokenty.ReqAddrTokens) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return t.GetAddrReceiverforTokens(in)
+	return t.getAddrReceiverforTokens(in)
 }
 
+// Query_GetAccountTokenAssets 获取账户的token资产
 func (t *token) Query_GetAccountTokenAssets(in *tokenty.ReqAccountTokenAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return t.GetAccountTokenAssets(in)
+	return t.getAccountTokenAssets(in)
 }
 
+// Query_GetTxByToken 获取token相关交易
 func (t *token) Query_GetTxByToken(in *tokenty.ReqTokenTx) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -61,5 +67,5 @@ func (t *token) Query_GetTxByToken(in *tokenty.ReqTokenTx) (types.Message, error
 	if !cfg.SaveTokenTxList {
 		return nil, types.ErrActionNotSupport
 	}
-	return t.GetTxByToken(in)
+	return t.getTxByToken(in)
 }

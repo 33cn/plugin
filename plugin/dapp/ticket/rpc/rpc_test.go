@@ -43,8 +43,8 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	storevalue.Values = append(storevalue.Values, accv)
 	api.On("StoreGet", mock.Anything).Return(storevalue, nil)
 
-	var addrs = make([]string, 1)
-	addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
+	//var addrs = make([]string, 1)
+	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
 	var in = &ty.ReqBindMiner{
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
