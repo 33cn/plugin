@@ -46,7 +46,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		contractAddr common.Address
 		snapshot     int
 		execName     string
-		abiData      string
 		methodName   string
 	)
 
@@ -69,7 +68,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	if isCreate {
 		// 如果携带ABI数据，则对数据合法性进行检查
 		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMABI") {
-			_, err = abi.JSON(strings.NewReader(abiData))
+			_, err = abi.JSON(strings.NewReader(msg.ABI()))
 			if err != nil {
 				return receipt, err
 			}

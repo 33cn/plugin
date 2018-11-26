@@ -87,16 +87,18 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 }
 
 // 从日志中查找调用结果
-func getCallReceipt(logs []*types.ReceiptLog) (res *evmtypes.ReceiptEVMContract) {
+func getCallReceipt(logs []*types.ReceiptLog) *evmtypes.ReceiptEVMContract {
 	if len(logs) == 0 {
-		return res
+		return nil
 	}
 	for _, v := range logs {
 		if v.Ty == evmtypes.TyLogCallContract {
-			types.Decode(v.Log, res)
+			var res evmtypes.ReceiptEVMContract
+			types.Decode(v.Log, &res)
+			return &res
 		}
 	}
-	return res
+	return nil
 }
 
 // Query_EvmDebug 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
@@ -153,7 +155,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	if receipt.Ty == types.ExecOk {
 		callData := getCallReceipt(receipt.GetLogs())
 		if callData != nil {
-			ret.RawData = callData.Ret
+			ret.RawData = common.Bytes2Hex(callData.Ret)
 			ret.JsonData = callData.JsonRet
 			return ret, nil
 		}

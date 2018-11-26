@@ -144,6 +144,6 @@ message EvmQueryResp {
     string address  = 1;
     string input    = 2;
     string caller   = 3;
-    bytes  rawData  = 4;
+    string rawData  = 4;
     string jsonData = 5;
 }
