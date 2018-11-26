@@ -105,9 +105,9 @@ func (t *PrivacyType) GetName() string {
 // GetLogMap get PrivacyType log map
 func (t *PrivacyType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogPrivacyFee:    {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogPrivacyFee"},
-		TyLogPrivacyInput:  {reflect.TypeOf(PrivacyInput{}), "LogPrivacyInput"},
-		TyLogPrivacyOutput: {reflect.TypeOf(PrivacyOutput{}), "LogPrivacyOutput"},
+		TyLogPrivacyFee:    {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogPrivacyFee"},
+		TyLogPrivacyInput:  {Ty: reflect.TypeOf(PrivacyInput{}), Name: "LogPrivacyInput"},
+		TyLogPrivacyOutput: {Ty: reflect.TypeOf(PrivacyOutput{}), Name: "LogPrivacyOutput"},
 	}
 }
 

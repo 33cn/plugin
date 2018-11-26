@@ -13,7 +13,6 @@ CHAIN33_PATH=vendor/${CHAIN33}
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
-PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
@@ -88,13 +87,16 @@ race: ## Run data race detector
 test: ## Run unittests
 	@go test -race $(PKG_LIST)
 
+testq: ## Run unittests
+	@go test $(PKG_LIST)
+
 fmt: fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
 	@find . -name '*.go' -not -path "./vendor/*" | xargs goimports -l -w
 
 .PHONY: fmt_proto fmt_shell
 fmt_proto: ## go fmt protobuf file
-	@find . -name '*.proto' -not -path "./vendor/*" | xargs clang-format -i
+	#@find . -name '*.proto' -not -path "./vendor/*" | xargs clang-format -i
 
 fmt_shell: ## check shell file
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shfmt -w -s -i 4 -ci -bn
@@ -173,15 +175,6 @@ checkgofmt: ## get all go files and run go fmt on them
 		  echo "${files}"; \
 		  exit 1; \
 		  fi;
-
-.PHONY: mock
-mock:
-	@cd client && mockery -name=QueueProtocolAPI && mv mocks/QueueProtocolAPI.go mocks/api.go && cd -
-	@cd queue && mockery -name=Client && mv mocks/Client.go mocks/client.go && cd -
-	@cd common/db && mockery -name=KV && mv mocks/KV.go mocks/kv.go && cd -
-	@cd common/db && mockery -name=KVDB && mv mocks/KVDB.go mocks/kvdb.go && cd -
-	@cd types/ && mockery -name=Chain33Client && mv mocks/Chain33Client.go mocks/chain33client.go && cd -
-
 
 .PHONY: auto_ci_before auto_ci_after auto_ci
 auto_ci_before: clean fmt protobuf
@@ -266,7 +259,7 @@ pullpush:
 	make pullsync
 	git push ${name} ${name}-${b}:${b}
 
-webhook_auto_ci: clean fmt_proto fmt_shell protobuf mock
+webhook_auto_ci: clean fmt_proto fmt_shell protobuf
 	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
 	@-${auto_fmt}
 	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s

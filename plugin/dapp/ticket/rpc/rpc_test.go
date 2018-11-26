@@ -148,7 +148,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 	var result = ""
 	err = jsonClient.Call("Chain33.Version", nil, &result)
 	assert.Nil(t, err)
-	assert.Equal(t, "5.3.0", result)
+	assert.Equal(t, "6.0.1", result)
 
 	var isSnyc bool
 	err = jsonClient.Call("Chain33.IsSync", &types.ReqNil{}, &isSnyc)

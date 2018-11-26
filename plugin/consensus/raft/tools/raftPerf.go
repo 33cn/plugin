@@ -330,7 +330,7 @@ func RandStringBytes(n int) string {
 // NormPut run put action
 func NormPut(privkey string, key string, value string) {
 	fmt.Println(key, "=", value)
-	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: key, Value: []byte(value)}}
+	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: []byte(key), Value: []byte(value)}}
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
@@ -350,7 +350,7 @@ func NormPut(privkey string, key string, value string) {
 
 // NormGet run query action
 func NormGet(key string) {
-	in := &pty.NormGetKey{Key: key}
+	in := &pty.NormGetKey{Key: []byte(key)}
 	data, err := proto.Marshal(in)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
