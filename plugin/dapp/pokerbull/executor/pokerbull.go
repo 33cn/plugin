@@ -70,7 +70,7 @@ func calcPBGameStatusKey(status int32, index int64) []byte {
 }
 
 func calcPBGameStatusAndPlayerKey(status, player int32, value, index int64) []byte {
-	key := fmt.Sprintf("LODB-pokerbull-status:%d:%d:%d:%018d", status, player, value, index)
+	key := fmt.Sprintf("LODB-pokerbull-status:%d:%d:%015d:%018d", status, player, value, index)
 	return []byte(key)
 }
 
@@ -79,7 +79,7 @@ func calcPBGameStatusAndPlayerPrefix(status, player int32, value int64) []byte {
 	if value == 0 {
 		key = fmt.Sprintf("LODB-pokerbull-status:%d:%d:", status, player)
 	} else {
-		key = fmt.Sprintf("LODB-pokerbull-status:%d:%d:%d", status, player, value)
+		key = fmt.Sprintf("LODB-pokerbull-status:%d:%d:%015d", status, player, value)
 	}
 
 	return []byte(key)

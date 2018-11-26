@@ -69,7 +69,7 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 
 // Key 获取key值
 func Key(id string) (key []byte) {
-	key = append(key, []byte("mavl-"+types.ExecName(pkt.PokerBullX)+"-")...)
+	key = append(key, []byte("mavl-"+pkt.PokerBullX+"-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
@@ -141,9 +141,9 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		return nil, err
 	}
 
-	var gameIds []*pkt.PBGameRecord
+	var gameIds []*pkt.PBGameIndexRecord
 	for _, value := range values {
-		var record pkt.PBGameRecord
+		var record pkt.PBGameIndexRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -151,7 +151,7 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{Records: gameIds}, nil
+	return &pkt.PBGameIndexRecords{Records: gameIds}, nil
 }
 
 func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, value int64) ([]string, error) {
@@ -480,6 +480,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 	}
 
 	Shuffle(game.Poker, action.blocktime) //洗牌
+	logger.Debug(fmt.Sprintf("Start a new game %s for player %s", game.GameId, action.fromaddr))
 
 	return game, nil
 }
@@ -536,6 +537,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
+	logger.Debug(fmt.Sprintf("Pokerbull game start for %s", action.fromaddr))
 	if start.PlayerNum > MaxPlayerNum {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
 			"err", fmt.Sprintf("The maximum player number is %d", MaxPlayerNum))
@@ -573,6 +575,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 				return nil, err
 			}
 		}
+		logger.Debug(fmt.Sprintf("Match a new game %s for player %s", game.GameId, game.GameId))
 	}
 
 	//发牌随机数取txhash
@@ -590,6 +593,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 
 	// 如果人数达标，则发牌计算斗牛结果
 	if len(game.Players) == int(game.PlayerNum) {
+		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -603,6 +607,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		game.PreStatus = pkt.PBGameActionStart
 		game.IsWaiting = false
 	} else {
+		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, start.GetValue()*PokerbullLeverageMax) //冻结子账户资金, 最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", start.GetValue(), "err", err.Error())
@@ -654,6 +659,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 			pbcontinue.GetGameId())
 		return nil, err
 	}
+	logger.Debug(fmt.Sprintf("Pokerbull game %s continue for %s", game.GameId, action.fromaddr))
 
 	// 检查余额，庄家检查闲家数量倍数的资金
 	checkValue := game.GetValue() * PokerbullLeverageMax
@@ -688,6 +694,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 	pbplayer.Ready = true
 
 	if getReadyPlayerNum(game.Players) == int(game.PlayerNum) {
+		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -699,6 +706,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 		game.IsWaiting = false
 		game.PreStatus = pkt.PBGameActionContinue
 	} else {
+		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, game.GetValue()*PokerbullLeverageMax) //冻结子账户资金,最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", game.GetValue(), "err", err.Error())

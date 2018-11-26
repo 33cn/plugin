@@ -22,7 +22,7 @@ func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types
 		Ty:    pb.PBGameActionStart,
 		Value: &pb.PBGameAction_Start{Start: head},
 	}
-	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
+	tx, err := types.CreateFormatTx(types.ExecName(pb.PokerBullX), types.Encode(val))
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (c *channelClient) Continue(ctx context.Context, head *pb.PBGameContinue) (
 		Ty:    pb.PBGameActionContinue,
 		Value: &pb.PBGameAction_Continue{Continue: head},
 	}
-	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
+	tx, err := types.CreateFormatTx(types.ExecName(pb.PokerBullX), types.Encode(val))
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *channelClient) Quit(ctx context.Context, head *pb.PBGameQuit) (*types.U
 		Ty:    pb.PBGameActionQuit,
 		Value: &pb.PBGameAction_Quit{Quit: head},
 	}
-	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
+	tx, err := types.CreateFormatTx(types.ExecName(pb.PokerBullX), types.Encode(val))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *channelClient) Show(ctx context.Context, head *pb.PBGameQuery) (*types.
 		Ty:    pb.PBGameActionQuery,
 		Value: &pb.PBGameAction_Query{Query: head},
 	}
-	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
+	tx, err := types.CreateFormatTx(types.ExecName(pb.PokerBullX), types.Encode(val))
 	if err != nil {
 		return nil, err
 	}

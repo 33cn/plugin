@@ -111,6 +111,10 @@ message PBGameRecords {
     repeated PBGameRecord records = 1;
 }
 
+message PBGameIndexRecords {
+    repeated PBGameIndexRecord records = 1;
+}
+
 message QueryPBGameInfo {
     string gameId = 1;
     string addr   = 2;
