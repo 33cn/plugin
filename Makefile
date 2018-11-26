@@ -74,30 +74,12 @@ updatevendor:
 dep:
 	dep init -v
 
-
 linter: ## Use gometalinter check code, ignore some unserious warning
-	@res=$$(gometalinter.v2 -t --sort=linter --enable-gc --deadline=2m --disable-all \
-	--enable=gofmt \
-	--enable=gosimple \
-	--enable=deadcode \
-	--enable=unconvert \
-	--enable=interfacer \
-	--enable=varcheck \
-	--enable=structcheck \
-	--enable=goimports \
-	--vendor ./...) \
-#	--enable=vet \
-#	--enable=staticcheck \
-#	--enable=gocyclo \
-#	--enable=staticcheck \
-#	--enable=golint \
-#	--enable=unused \
-#	--enable=gotype \
-#	--enable=gotypex \
-	if [ -n "$$res" ]; then \
-		echo "$${res}"; \
-		exit 1; \
-		fi;
+	@./golinter.sh "filter"
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
+
+linter_test: ## Use gometalinter check code, for local test
+	@./golinter.sh "test" "${p}"
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
 race: ## Run data race detector
