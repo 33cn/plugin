@@ -174,15 +174,6 @@ checkgofmt: ## get all go files and run go fmt on them
 		  exit 1; \
 		  fi;
 
-.PHONY: mock
-mock:
-	@cd client && mockery -name=QueueProtocolAPI && mv mocks/QueueProtocolAPI.go mocks/api.go && cd -
-	@cd queue && mockery -name=Client && mv mocks/Client.go mocks/client.go && cd -
-	@cd common/db && mockery -name=KV && mv mocks/KV.go mocks/kv.go && cd -
-	@cd common/db && mockery -name=KVDB && mv mocks/KVDB.go mocks/kvdb.go && cd -
-	@cd types/ && mockery -name=Chain33Client && mv mocks/Chain33Client.go mocks/chain33client.go && cd -
-
-
 .PHONY: auto_ci_before auto_ci_after auto_ci
 auto_ci_before: clean fmt protobuf
 	@echo "auto_ci"
@@ -266,7 +257,7 @@ pullpush:
 	make pullsync
 	git push ${name} ${name}-${b}:${b}
 
-webhook_auto_ci: clean fmt_proto fmt_shell protobuf mock
+webhook_auto_ci: clean fmt_proto fmt_shell protobuf
 	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
 	@-${auto_fmt}
 	@-find . -name '*.go' -not -path './vendor/*' | xargs gofmt -l -w -s
