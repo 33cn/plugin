@@ -12,22 +12,11 @@ pipeline {
         retry(1)
         timestamps()
         gitLabConnection('gitlab33')
-        gitlabBuilds(builds: ['check'])
+        gitlabBuilds(builds: ['deploy'])
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
 
     stages {
-        stage('check') {
-            steps {
-                dir("${PROJ_DIR}"){
-                    gitlabCommitStatus(name: 'check'){
-                        sh "git branch"
-                        sh "make auto_ci branch=${env.ghprbSourceBranch} originx=${env.ghprbAuthorRepoGitUrl}"
-                    }
-                }
-            }
-        }
-
         stage('deploy') {
             steps {
                 dir("${PROJ_DIR}"){
