@@ -88,13 +88,13 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	driver.SetStateDB(stateDB)
 
 	sell := &pty.TradeSellTx{
-		Symbol,
-		sellArgs.amount,
-		sellArgs.min,
-		sellArgs.price,
-		sellArgs.total,
-		0,
-		AssetExecToken,
+		TokenSymbol:       Symbol,
+		AmountPerBoardlot: sellArgs.amount,
+		MinBoardlot:       sellArgs.min,
+		PricePerBoardlot:  sellArgs.price,
+		TotalBoardlot:     sellArgs.total,
+		Fee:               0,
+		AssetExec:         AssetExecToken,
 	}
 	tx, _ := pty.CreateRawTradeSellTx(sell)
 	tx, _ = signTx(tx, PrivKeyA)
@@ -125,9 +125,9 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	assert.Equal(t, string(Nodes[0]), sellOrder.Address)
 
 	buy := &pty.TradeBuyTx{
-		sellOrder.SellID,
-		buyArgs.total,
-		0,
+		SellID:      sellOrder.SellID,
+		BoardlotCnt: buyArgs.total,
+		Fee:         0,
 	}
 	tx, _ = pty.CreateRawTradeBuyTx(buy)
 	tx, _ = signTx(tx, PrivKeyB)
@@ -197,13 +197,13 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	driver.SetStateDB(stateDB)
 
 	buy := &pty.TradeBuyLimitTx{
-		Symbol,
-		buyArgs.amount,
-		buyArgs.min,
-		buyArgs.price,
-		buyArgs.total,
-		0,
-		AssetExecPara,
+		TokenSymbol:       Symbol,
+		AmountPerBoardlot: buyArgs.amount,
+		MinBoardlot:       buyArgs.min,
+		PricePerBoardlot:  buyArgs.price,
+		TotalBoardlot:     buyArgs.total,
+		Fee:               0,
+		AssetExec:         AssetExecPara,
 	}
 	tx, _ := pty.CreateRawTradeBuyLimitTx(buy)
 	tx, _ = signTx(tx, PrivKeyB)
@@ -234,9 +234,9 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	assert.Equal(t, string(Nodes[1]), buyLimitOrder.Address)
 
 	sell := &pty.TradeSellMarketTx{
-		buyLimitOrder.BuyID,
-		sellArgs.total,
-		0,
+		BuyID:       buyLimitOrder.BuyID,
+		BoardlotCnt: sellArgs.total,
+		Fee:         0,
 	}
 	tx, _ = pty.CreateRawTradeSellMarketTx(sell)
 	tx, _ = signTx(tx, PrivKeyA)

@@ -7,7 +7,8 @@
 共识 加密 dapp 存储
 这个go 包提供了 官方提供的 插件。
 */
-// +build go1.8
+
+// +build go1.9
 
 package main
 

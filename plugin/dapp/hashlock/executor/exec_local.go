@@ -11,7 +11,10 @@ import (
 )
 
 // ExecLocal_Hlock Action
-func (h *Hashlock) ExecLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+	if receipt.GetTy() != types.ExecOk {
+		return &types.LocalDBSet{}, nil
+	}
 	info := pty.Hashlockquery{Time: hlock.Time, Status: hashlockLocked, Amount: hlock.Amount, CreateTime: h.GetBlockTime(), CurrentTime: 0}
 	clog.Error("ExecLocal", "info", info)
 	kv, err := UpdateHashReciver(h.GetLocalDB(), hlock.Hash, info)
@@ -22,7 +25,10 @@ func (h *Hashlock) ExecLocal_Hlock(hlock *pty.HashlockLock, tx *types.Transactio
 }
 
 // ExecLocal_Hsend Action
-func (h *Hashlock) ExecLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+	if receipt.GetTy() != types.ExecOk {
+		return &types.LocalDBSet{}, nil
+	}
 	info := pty.Hashlockquery{Time: 0, Status: hashlockSent, Amount: 0, CreateTime: 0, CurrentTime: 0}
 	clog.Error("ExecLocal", "info", info)
 	kv, err := UpdateHashReciver(h.GetLocalDB(), common.Sha256(hsend.Secret), info)
@@ -33,7 +39,10 @@ func (h *Hashlock) ExecLocal_Hsend(hsend *pty.HashlockSend, tx *types.Transactio
 }
 
 // ExecLocal_Hunlock Action
-func (h *Hashlock) ExecLocal_Hunlock(hunlock *pty.HashlockUnlock, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (h *Hashlock) ExecLocal_Hunlock(hunlock *pty.HashlockUnlock, tx *types.Transaction, receipt types.ExecTypeGet, index int) (*types.LocalDBSet, error) {
+	if receipt.GetTy() != types.ExecOk {
+		return &types.LocalDBSet{}, nil
+	}
 	info := pty.Hashlockquery{Time: 0, Status: hashlockUnlocked, Amount: 0, CreateTime: 0, CurrentTime: 0}
 	clog.Error("ExecLocal", "info", info)
 	kv, err := UpdateHashReciver(h.GetLocalDB(), common.Sha256(hunlock.Secret), info)
