@@ -283,28 +283,39 @@ func (pc *peerConn) HandshakeTimeout(
 		func() {
 			info, err1 := json.Marshal(ourNodeInfo)
 			if err1 != nil {
-				tendermintlog.Error("Peer handshake peerNodeInfo failed", "err", err1)
+				tendermintlog.Error("Peer handshake Marshal ourNodeInfo failed", "err", err1)
 				return
 			}
 			frame := make([]byte, 4)
 			binary.BigEndian.PutUint32(frame, uint32(len(info)))
 			_, err1 = pc.conn.Write(frame)
+			if err1 != nil {
+				tendermintlog.Error("Peer handshake write info size failed", "err", err1)
+				return
+			}
 			_, err1 = pc.conn.Write(info[:])
+			if err1 != nil {
+				tendermintlog.Error("Peer handshake write info failed", "err", err1)
+				return
+			}
 		},
 		func() {
 			readBuffer := make([]byte, 4)
 			_, err2 = io.ReadFull(pc.conn, readBuffer[:])
 			if err2 != nil {
+				tendermintlog.Error("Peer handshake read info size failed", "err", err1)
 				return
 			}
 			len := binary.BigEndian.Uint32(readBuffer)
 			readBuffer = make([]byte, len)
 			_, err2 = io.ReadFull(pc.conn, readBuffer[:])
 			if err2 != nil {
+				tendermintlog.Error("Peer handshake read info failed", "err", err1)
 				return
 			}
 			err2 = json.Unmarshal(readBuffer, &peerNodeInfo)
 			if err2 != nil {
+				tendermintlog.Error("Peer handshake Unmarshal failed", "err", err1)
 				return
 			}
 			tendermintlog.Info("Peer handshake", "peerNodeInfo", peerNodeInfo)
