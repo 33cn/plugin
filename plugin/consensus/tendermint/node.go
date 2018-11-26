@@ -296,7 +296,7 @@ func (node *Node) listenRoutine() {
 func (node *Node) StartConsensusRoutine() {
 	for {
 		//TODO:the peer count need be optimized
-		if node.peerSet.Size() >= 1 {
+		if node.peerSet.Size() >= 0 {
 			node.state.Start()
 			break
 		}

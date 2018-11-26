@@ -20,15 +20,18 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&ValNode{}))
 }
 
+// Init method
 func Init(name string, sub []byte) {
 	clog.Debug("register valnode execer")
 	drivers.Register(GetName(), newValNode, 0)
 }
 
+// GetName method
 func GetName() string {
 	return newValNode().GetName()
 }
 
+// ValNode strucyt
 type ValNode struct {
 	drivers.DriverBase
 }
@@ -41,22 +44,27 @@ func newValNode() drivers.Driver {
 	return n
 }
 
+// GetDriverName method
 func (val *ValNode) GetDriverName() string {
 	return driverName
 }
 
+// CheckTx method
 func (val *ValNode) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
+// CalcValNodeUpdateHeightIndexKey method
 func CalcValNodeUpdateHeightIndexKey(height int64, index int) []byte {
 	return []byte(fmt.Sprintf("LODB-valnode-Update:%18d:%18d", height, int64(index)))
 }
 
+// CalcValNodeUpdateHeightKey method
 func CalcValNodeUpdateHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("LODB-valnode-Update:%18d:", height))
 }
 
+// CalcValNodeBlockInfoHeightKey method
 func CalcValNodeBlockInfoHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("LODB-valnode-BlockInfo:%18d:", height))
 }
