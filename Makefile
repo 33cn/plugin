@@ -13,7 +13,6 @@ CHAIN33_PATH=vendor/${CHAIN33}
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
-PKG_LIST_Q := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "blockchain" | grep -v "pbft"`
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
@@ -87,6 +86,9 @@ race: ## Run data race detector
 
 test: ## Run unittests
 	@go test -race $(PKG_LIST)
+
+testq: ## Run unittests
+	@go test $(PKG_LIST)
 
 fmt: fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
