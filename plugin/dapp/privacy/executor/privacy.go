@@ -331,3 +331,8 @@ func (p *privacy) checkPubKeyValid(keys [][]byte, pubkeys [][]byte) (bool, int32
 
 	return true, invalidIndex
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (p *privacy) CheckReceiptExecOk() bool {
+	return true
+}

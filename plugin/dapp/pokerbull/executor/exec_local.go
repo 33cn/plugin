@@ -55,9 +55,6 @@ func (c *PokerBull) updateIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue) 
 
 func (c *PokerBull) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receipt.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
 		if item.Ty == pkt.TyLogPBGameStart || item.Ty == pkt.TyLogPBGameContinue || item.Ty == pkt.TyLogPBGameQuit {

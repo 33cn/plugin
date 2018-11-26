@@ -52,3 +52,8 @@ func (h *Hashlock) GetDriverName() string {
 func (h *Hashlock) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (h *Hashlock) CheckReceiptExecOk() bool {
+	return true
+}

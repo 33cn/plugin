@@ -58,3 +58,8 @@ func Key(str []byte) (key []byte) {
 	key = append(key, str...)
 	return key
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (n *Norm) CheckReceiptExecOk() bool {
+	return true
+}

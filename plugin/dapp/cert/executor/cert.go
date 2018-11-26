@@ -139,3 +139,8 @@ func (c *Cert) loadHistoryByHeight() error {
 	}
 	return ct.ErrGetHistoryCertData
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Cert) CheckReceiptExecOk() bool {
+	return true
+}
