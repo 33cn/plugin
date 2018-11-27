@@ -18,40 +18,6 @@ func init() {
 }
 
 // exec
-type PokerBullType struct {
-	types.ExecTypeBase
-}
-
-func NewType() *PokerBullType {
-	c := &PokerBullType{}
-	c.SetChild(c)
-	return c
-}
-
-func (t *PokerBullType) GetPayload() types.Message {
-	return &PBGameAction{}
-}
-
-func (t *PokerBullType) GetTypeMap() map[string]int32 {
-	return map[string]int32{
-		"Start":    PBGameActionStart,
-		"Continue": PBGameActionContinue,
-		"Quit":     PBGameActionQuit,
-		"Query":    PBGameActionQuery,
-	}
-}
-
-func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
-	return map[int64]*types.LogInfo{
-		TyLogPBGameStart:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameStart"},
-		TyLogPBGameContinue: {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameContinue"},
-		TyLogPBGameQuit:     {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuit"},
-		TyLogPBGameQuery:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuery"},
-	}
-}
-
-
-// exec
 type GuessType struct {
 	types.ExecTypeBase
 }
@@ -68,20 +34,23 @@ func (t *GuessType) GetPayload() types.Message {
 
 func (t *GuessType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Start":    PBGameActionStart,
-		"Continue": PBGameActionContinue,
-		"Quit":     PBGameActionQuit,
-		"Query":    PBGameActionQuery,
+		"Start": GuessGameActionStart,
+		"Bet": GuessGameActionBet,
+		"Abort": GuessGameActionAbort,
+		"Publish": GuessGameActionPublish,
 	}
 }
 
-func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
+func (t *GuessType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogPBGameStart:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameStart"},
-		TyLogPBGameContinue: {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameContinue"},
-		TyLogPBGameQuit:     {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuit"},
-		TyLogPBGameQuery:    {reflect.TypeOf(ReceiptPBGame{}), "TyLogPBGameQuery"},
+		TyLogGuessGameStart:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStart"},
+		TyLogGuessGameBet: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameBet"},
+		TyLogGuessGameStopBet:     {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStopBet"},
+		TyLogGuessGameAbort:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameAbort"},
+		TyLogGuessGamePublish:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGamePublish"},
+		TyLogGuessGameTimeout:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameTimeout"},
 	}
 }
+
 
 

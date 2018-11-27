@@ -14,7 +14,7 @@ message GuessGame {
     string category      = 6;  //分类
     string options       = 7;  //选项
     string maxTime       = 8;  //截止下注时间
-    uint32 maxHeight     = 9;  //截止下注的块高
+    int64 maxHeight     = 9;  //截止下注的块高
     string symbol        = 10;  //bty或者具体token
     string exec          = 11; //coins或者token
     uint32 oneBet        = 12; //一注等于多少bty或者token
@@ -23,17 +23,18 @@ message GuessGame {
     uint32 fee           = 15; //收取费用，不带则表示不收费
     string feeAddr       = 16; //收费地址
     string expire        = 17; //游戏过期时间
-    uint32 expireHeight  = 18; //游戏过期区块高度
+    int64 expireHeight  = 18; //游戏过期区块高度
     string adminAddr     = 19; //游戏创建者地址,只有该地址可以开奖
     uint32 betsNumber    = 20; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
     repeated GuessPlayer plays = 21; //参与游戏下注的玩家投注信息
     string result = 22;
     repeated GuessBet bets = 23;
+    int64 index          = 24;
 }
 
 message GuessPlayer {
     string addr = 1;
-    repeated GuessBet bets = 2;
+    GuessBet bet = 2;
 }
 
 message GuessBet {
@@ -145,7 +146,7 @@ message GuessGameStart{
     string options   = 2;
     string category  = 3;
     string maxTime   = 4;
-    uint32 maxHeight = 5;
+    int64 maxHeight = 5;
     string symbol    = 6;
     string exec      = 7;
     uint32 oneBet    = 8;
@@ -154,7 +155,7 @@ message GuessGameStart{
     uint64 fee       = 11;
     string feeAddr   = 12;
     string expire    = 13;
-    uint32 expireHeight = 14;
+    int64 expireHeight = 14;
 }
 
 //参与游戏下注

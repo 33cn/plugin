@@ -14,12 +14,17 @@ func (c *Guess) Exec_Start(payload *pkt.GuessGameStart, tx *types.Transaction, i
 	return action.GameStart(payload)
 }
 
-func (c *Guess) Exec_Continue(payload *pkt.PBGameContinue, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (c *Guess) Exec_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(c, tx, index)
-	return action.GameContinue(payload)
+	return action.GameBet(payload)
 }
 
-func (c *Guess) Exec_Quit(payload *pkt.PBGameQuit, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (c *Guess) Exec_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(c, tx, index)
-	return action.GameQuit(payload)
+	return action.GamePublish(payload)
+}
+
+func (c *Guess) Exec_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(c, tx, index)
+	return action.GameAbort(payload)
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/33cn/chain33/types"
 	pb "github.com/33cn/plugin/plugin/dapp/guess/types"
-	"github.com/33cn/plugin/plugin/dapp/pokerbull/executor"
+	"github.com/33cn/plugin/plugin/dapp/guess/executor"
 )
 
 func (c *channelClient) GuessStart(ctx context.Context, head *pb.GuessGameStart) (*types.UnsignTx, error) {

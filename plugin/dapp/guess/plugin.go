@@ -14,7 +14,7 @@ import (
 
 func init() {
 	pluginmgr.Register(&pluginmgr.PluginBase{
-		Name:     types.PokerBullX,
+		Name:     types.GuessX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.GuessCmd,

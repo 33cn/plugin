@@ -13,8 +13,10 @@ const (
 
 	GuessGameActionStart = iota + 1
 	GuessGameActionBet
+	GuessGameActionStopBet
 	GuessGameActionAbort
 	GuessGameActionPublish
+	GuessGameActionTimeOut
 )
 
 const (
@@ -31,8 +33,10 @@ const (
 
 	TyLogGuessGameStart = 901
 	TyLogGuessGameBet   = 902
-	TyLogGuessGameAbort  = 903
-	TyLogGuessGamePublish = 904
+	TyLogGuessGameStopBet = 903
+	TyLogGuessGameAbort  = 904
+	TyLogGuessGamePublish = 905
+	TyLogGuessGameTimeout = 906
 )
 
 //包的名字可以通过配置文件来配置
