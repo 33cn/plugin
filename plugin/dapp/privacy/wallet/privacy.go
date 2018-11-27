@@ -312,8 +312,8 @@ func (policy *privacyPolicy) showPrivacyKeyPair(reqAddr *types.ReqString) (*priv
 		return nil, err
 	}
 
-	pair := privacyInfo.ViewPubkey[:]
-	pair = append(pair, privacyInfo.SpendPubkey[:]...)
+	//pair := privacyInfo.ViewPubkey[:]
+	//pair = append(pair, privacyInfo.SpendPubkey[:]...)
 
 	replyPrivacyPkPair := &privacytypes.ReplyPrivacyPkPair{
 		ShowSuccessful: true,
@@ -333,6 +333,10 @@ func (policy *privacyPolicy) getPrivacyAccountInfo(req *privacytypes.ReqPPrivacy
 
 	// 搜索可用余额
 	privacyDBStore, err := policy.store.listAvailableUTXOs(token, addr)
+	if err != nil {
+		bizlog.Error("getPrivacyAccountInfo", "listAvailableUTXOs")
+		return nil, err
+	}
 	utxos := make([]*privacytypes.UTXO, 0)
 	for _, ele := range privacyDBStore {
 		utxoBasic := &privacytypes.UTXOBasic{

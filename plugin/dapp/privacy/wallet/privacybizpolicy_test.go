@@ -118,7 +118,7 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 	defer wallet.GetMutex().Unlock()
 
 	ok, err := wallet.CheckWalletStatus()
-	if !ok {
+	if !ok || err != nil {
 		return
 	}
 
@@ -128,7 +128,7 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 
 	//校验label是否已经被使用
 	Account, err := wallet.GetAccountByLabel(PrivKey.GetLabel())
-	if Account != nil {
+	if Account != nil || err != nil  {
 		return
 	}
 
@@ -161,7 +161,7 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 	Encrypteredstr := common.ToHex(Encryptered)
 	//校验PrivKey对应的addr是否已经存在钱包中
 	Account, err = wallet.GetAccountByAddr(addr)
-	if Account != nil {
+	if Account != nil || err != nil {
 		if Account.Privkey == Encrypteredstr {
 			return
 		} else {
