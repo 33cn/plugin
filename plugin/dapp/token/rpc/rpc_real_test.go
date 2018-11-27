@@ -44,7 +44,7 @@ func TestRPCTokenPreCreate(t *testing.T) {
 		Owner:  mock33.GetHotAddress(),
 	}
 	var txhex string
-	err = mock33.GetJsonC().Call("token.CreateRawTokenPreCreateTx", param, &txhex)
+	err = mock33.GetJSONC().Call("token.CreateRawTokenPreCreateTx", param, &txhex)
 	assert.Nil(t, err)
 	hash, err := mock33.SendAndSign(mock33.GetHotKey(), txhex)
 	assert.Nil(t, err)

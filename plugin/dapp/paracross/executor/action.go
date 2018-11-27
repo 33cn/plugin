@@ -113,7 +113,7 @@ func makeCommitReceipt(addr string, commit *pt.ParacrossCommitAction, prev, curr
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{key, types.Encode(current)},
+			{Key: key, Value: types.Encode(current)},
 		},
 		Logs: []*types.ReceiptLog{
 			{
@@ -163,7 +163,7 @@ func makeDoneReceipt(addr string, commit *pt.ParacrossCommitAction, current *pt.
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{key, types.Encode(stat)},
+			{Key: key, Value: types.Encode(stat)},
 		},
 		Logs: []*types.ReceiptLog{
 			{

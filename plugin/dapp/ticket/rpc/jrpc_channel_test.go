@@ -22,7 +22,7 @@ func TestJRPCChannel(t *testing.T) {
 	defer mocker.Close()
 	mocker.Listen()
 
-	jrpcClient := mocker.GetJsonC()
+	jrpcClient := mocker.GetJSONC()
 
 	testCases := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
