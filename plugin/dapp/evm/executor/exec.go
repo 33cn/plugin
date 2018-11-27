@@ -67,7 +67,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 
 	if isCreate {
 		// 如果携带ABI数据，则对数据合法性进行检查
-		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMABI") {
+		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 			_, err = abi.JSON(strings.NewReader(msg.ABI()))
 			if err != nil {
 				return receipt, err
@@ -77,7 +77,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	} else {
 		inData := msg.Data()
 		// 在这里进行ABI和十六进制的调用参数转换
-		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMABI") {
+		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 			funcName, packData, err := abi.Pack(msg.ABI(), evm.mStateDB.GetAbi(msg.To().String()), readOnly)
 			if err != nil {
 				return receipt, err
@@ -126,7 +126,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 	// 这里进行ABI调用结果格式化
-	if len(methodName) > 0 && len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMABI") {
+	if len(methodName) > 0 && len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 		jsonRet, err := abi.Unpack(ret, methodName, evm.mStateDB.GetAbi(msg.To().String()))
 		if err != nil {
 			// 这里出错不影响整体执行，只打印错误信息
@@ -137,7 +137,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
 
-	if types.IsDappFork(evm.GetHeight(), "evm", "ForkEVMKVHash") {
+	if types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMKVHash) {
 		// 将执行时生成的合约状态数据变更信息也计算哈希并保存
 		hashKV := evm.calcKVHash(contractAddr, logs)
 		if hashKV != nil {

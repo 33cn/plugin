@@ -28,13 +28,13 @@ func init() {
 	// init executor type
 	types.RegistorExecutor(ExecutorName, NewType())
 
-	types.RegisterDappFork(ExecutorName, "Enable", 500000)
+	types.RegisterDappFork(ExecutorName, EVMEnable, 500000)
 	// EVM合约中的数据分散存储，支持大数据量
-	types.RegisterDappFork(ExecutorName, "ForkEVMState", 650000)
+	types.RegisterDappFork(ExecutorName, ForkEVMState, 650000)
 	// EVM合约状态数据生成哈希，保存在主链的StateDB中
-	types.RegisterDappFork(ExecutorName, "ForkEVMKVHash", 1000000)
+	types.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
 	// EVM合约支持ABI绑定和调用
-	types.RegisterDappFork(ExecutorName, "ForkEVMABI", 1500000)
+	types.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
 }
 
 // EvmType EVM类型定义

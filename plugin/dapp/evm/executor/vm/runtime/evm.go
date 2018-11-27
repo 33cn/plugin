@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 type (
@@ -222,7 +223,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
-	if types.IsDappFork(evm.BlockNumber.Int64(), "evm", "ForkEVMState") {
+	if types.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
 
@@ -387,7 +388,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		if contract.UseGas(createDataGas) {
 			evm.StateDB.SetCode(contractAddr.String(), ret)
 			// 设置 ABI (如果有的话)，这个动作不单独计费
-			if len(abi) > 0 && types.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", "ForkEVMKVHash") {
+			if len(abi) > 0 && types.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMABI) {
 				evm.StateDB.SetAbi(contractAddr.String(), abi)
 			}
 		} else {
