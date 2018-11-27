@@ -275,3 +275,4 @@ webhook_auto_ci: clean fmt_proto fmt_shell protobuf
 webhook:
 	git checkout ${b}
 	make webhook_auto_ci name=${name} b=${b}
+
