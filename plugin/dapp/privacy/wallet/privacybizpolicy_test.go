@@ -128,7 +128,7 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 
 	//校验label是否已经被使用
 	Account, err := wallet.GetAccountByLabel(PrivKey.GetLabel())
-	if Account != nil || err != nil  {
+	if Account != nil || err != nil {
 		return
 	}
 
@@ -277,7 +277,7 @@ func Test_EnablePrivacy(t *testing.T) {
 			req: &ty.ReqEnablePrivacy{Addrs: []string{testAddrs[0]}},
 			needReply: &ty.RepEnablePrivacy{
 				Results: []*ty.PriAddrResult{
-					{ Addr: testAddrs[0],Msg:"ErrAddrNotExist"}},
+					{Addr: testAddrs[0], Msg: "ErrAddrNotExist"}},
 			},
 		},
 	}
@@ -313,7 +313,7 @@ func Test_ShowPrivacyKey(t *testing.T) {
 				ShowSuccessful: true,
 				Pubkeypair:     "92fe6cfec2e19cd15f203f83b5d440ddb63d0cb71559f96dc81208d819fea85886b08f6e874fca15108d244b40f9086d8c03260d4b954a40dfb3cbe41ebc7389",
 			},*/
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 
@@ -350,7 +350,7 @@ func Test_CreateUTXOs(t *testing.T) {
 				Sender:     testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
 			},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 
@@ -381,7 +381,7 @@ func Test_SendPublic2PrivacyTransaction(t *testing.T) {
 				Pubkeypair: testPubkeyPairs[0],
 			},
 			needReply: &types.Reply{IsOk: true},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 
@@ -421,7 +421,7 @@ func Test_SendPrivacy2PrivacyTransaction(t *testing.T) {
 				Pubkeypair: testPubkeyPairs[1],
 			},
 			needReply: &types.Reply{IsOk: true},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 
@@ -461,7 +461,7 @@ func Test_SendPrivacy2PublicTransaction(t *testing.T) {
 				Receiver:  testAddrs[0],
 			},
 			needReply: &types.Reply{IsOk: true},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 
@@ -511,7 +511,7 @@ func Test_CreateTransaction(t *testing.T) {
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[1],
 			},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 		{ // 私对公测试
 			req: &types.ReqCreateTransaction{
@@ -521,7 +521,7 @@ func Test_CreateTransaction(t *testing.T) {
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
 			},
-			needError:types.ErrAddrNotExist,
+			needError: types.ErrAddrNotExist,
 		},
 	}
 	for index, testCase := range testCases {
