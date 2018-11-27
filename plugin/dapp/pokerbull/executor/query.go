@@ -42,3 +42,31 @@ func (g *PokerBull) Query_QueryGameByStatus(in *pkt.QueryPBGameInfo) (types.Mess
 
 	return gameIds, nil
 }
+
+// Query_QueryGameByRound 查询某一回合游戏结果
+func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Message, error) {
+	game, err := readGame(g.GetStateDB(), in.GetGameId())
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Round > game.Round {
+		return nil, types.ErrInvalidParam
+	}
+
+	var result *pkt.PBResult
+	if len(game.Results) < int(in.Round) {
+		result = nil
+	} else {
+		result = game.Results[in.Round-1]
+	}
+	gameInfo := &pkt.ReplyPBGameByRound{
+		GameId:    game.GameId,
+		Status:    game.Status,
+		Result:    result,
+		Round:     game.Round,
+		IsWaiting: game.IsWaiting,
+	}
+
+	return gameInfo, nil
+}

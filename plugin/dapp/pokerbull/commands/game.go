@@ -154,6 +154,7 @@ func addPokerbullQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("index", "i", "", "index")
 	cmd.Flags().StringP("status", "s", "", "status")
 	cmd.Flags().StringP("gameIDs", "d", "", "gameIDs")
+	cmd.Flags().StringP("round", "r", "", "round")
 }
 
 func pokerbullQuery(cmd *cobra.Command, args []string) {
@@ -165,6 +166,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	indexstr, _ := cmd.Flags().GetString("index")
 	index, _ := strconv.ParseInt(indexstr, 10, 64)
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
+	round,_ := cmd.Flags().GetString("round")
 
 	var params types.Query4Cli
 	params.Execer = pkt.PokerBullX
@@ -176,10 +178,27 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	}
 	params.Payload = req
 	if gameID != "" {
-		params.FuncName = pkt.FuncNameQueryGameByID
-		var res pkt.ReplyPBGame
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
-		ctx.Run()
+		if round == "" {
+			params.FuncName = pkt.FuncNameQueryGameByID
+			var res pkt.ReplyPBGame
+			ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+			ctx.Run()
+		} else {
+			params.FuncName = pkt.FuncNameQueryGameByRound
+			roundInt,err := strconv.ParseInt(round, 10, 32)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			req := &pkt.QueryPBGameByRound{
+				GameId:gameID,
+				Round:int32(roundInt),
+			}
+			params.Payload = req
+			var res pkt.ReplyPBGameByRound
+			ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+			ctx.Run()
+		}
 	} else if address != "" {
 		params.FuncName = pkt.FuncNameQueryGameByAddr
 		var res pkt.PBGameRecords

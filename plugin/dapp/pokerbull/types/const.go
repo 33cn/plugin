@@ -48,4 +48,6 @@ const (
 	FuncNameQueryGameByAddr = "QueryGameByAddr"
 	// FuncNameQueryGameByStatus 根据status查询game
 	FuncNameQueryGameByStatus = "QueryGameByStatus"
+	// FuncNameQueryGameByRound 查询某一回合游戏结果
+	FuncNameQueryGameByRound = "QueryGameByRound"
 )

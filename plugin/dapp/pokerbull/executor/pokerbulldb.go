@@ -210,6 +210,7 @@ func (action *Action) GetReceiptLog(game *pkt.PokerBull) *types.ReceiptLog {
 		}
 	}
 	r.PreStatus = game.PreStatus
+	r.Round = game.Round
 	log.Log = types.Encode(r)
 	return log
 }
@@ -477,6 +478,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 		DealerAddr:  action.fromaddr,
 		IsWaiting:   true,
 		PreStatus:   0,
+		Round:       1,
 	}
 
 	Shuffle(game.Poker, action.blocktime) //洗牌
@@ -707,6 +709,10 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 		game.PreStatus = pkt.PBGameActionContinue
 	} else {
 		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
+		// 回合数加一次
+		if !game.IsWaiting {
+			game.Round++
+		}
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, game.GetValue()*PokerbullLeverageMax) //冻结子账户资金,最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", game.GetValue(), "err", err.Error())
