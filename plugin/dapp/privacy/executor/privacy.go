@@ -272,7 +272,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		totalOutput += output.Amount
 	}
 
-	feeAmount := int64(0)
+	var feeAmount int64
 	if action.Ty == pty.ActionPrivacy2Privacy {
 		feeAmount = totalInput - totalOutput
 	} else {
