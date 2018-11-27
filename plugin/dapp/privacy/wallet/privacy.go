@@ -38,7 +38,7 @@ func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {
 		go policy.rescanReqTxDetailByAddr(acc.Addr, policy.rescanwg)
 	}
 	policy.rescanwg.Wait()
-	bizlog.Debug("rescanAllTxToUpdateUTXOs sucess!")
+	bizlog.Debug("rescanAllTxToUpdateUTXOs success!")
 }
 
 //从blockchain模块同步addr参与的所有交易详细信息
@@ -820,7 +820,7 @@ func (policy *privacyPolicy) rescanReqUtxosByAddr(addrs []string) {
 	defer policy.getWalletOperate().GetWaitGroup().Done()
 	bizlog.Debug("RescanAllUTXO begin!")
 	policy.reqUtxosByAddr(addrs)
-	bizlog.Debug("RescanAllUTXO sucess!")
+	bizlog.Debug("RescanAllUTXO success!")
 }
 
 func (policy *privacyPolicy) reqUtxosByAddr(addrs []string) {
