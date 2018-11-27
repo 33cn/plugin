@@ -145,9 +145,10 @@ message QueryPBGameByRound {
 message ReplyPBGameByRound {
     string   gameId    = 1;
     int32    status    = 2;
-    PBResult result   = 3;
+    PBResult result    = 3;
     bool     isWaiting = 4;
     int32    round     = 5;
+    int64    value     = 6;
 }
 
 message ReceiptPBGame {

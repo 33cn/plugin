@@ -66,6 +66,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		Result:    result,
 		Round:     game.Round,
 		IsWaiting: game.IsWaiting,
+		Value:     game.Value,
 	}
 
 	return gameInfo, nil
