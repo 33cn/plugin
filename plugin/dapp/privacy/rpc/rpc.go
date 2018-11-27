@@ -178,7 +178,7 @@ func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interfac
 		return err
 	}
 	var txdetails rpctypes.WalletTxDetails
-	err = rpctypes.ConvertWalletTxDetailToJson(reply.(*types.WalletTxDetails), &txdetails)
+	err = rpctypes.ConvertWalletTxDetailToJSON(reply.(*types.WalletTxDetails), &txdetails)
 	if err != nil {
 		return err
 	}
