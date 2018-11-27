@@ -74,7 +74,7 @@ func (s *suiteRelay) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	relay.SetExecutorType(types.LoadExecutorType(driverName))
 	s.relay = relay
@@ -406,7 +406,7 @@ func (s *suiteBtcHeader) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	relay.SetExecutorType(types.LoadExecutorType(driverName))
 	s.relay = relay

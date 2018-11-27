@@ -150,7 +150,7 @@ func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
-		GetHash:     GetHashFn(evm.GetApi()),
+		GetHash:     GetHashFn(evm.GetAPI()),
 		Origin:      msg.From(),
 		Coinbase:    nil,
 		BlockNumber: new(big.Int).SetInt64(evm.GetHeight()),

@@ -67,7 +67,7 @@ func pokerbullStart(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "pokerbull.PokerBullStartTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullStartTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -100,7 +100,7 @@ func pokerbullContinue(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "pokerbull.PokerBullContinueTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullContinueTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -133,7 +133,7 @@ func pokerbullQuit(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "pokerbull.PokerBullQuitTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullQuitTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -178,17 +178,17 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	if gameID != "" {
 		params.FuncName = pkt.FuncNameQueryGameByID
 		var res pkt.ReplyPBGame
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if address != "" {
 		params.FuncName = pkt.FuncNameQueryGameByAddr
 		var res pkt.PBGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if statusStr != "" {
 		params.FuncName = pkt.FuncNameQueryGameByStatus
 		var res pkt.PBGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if gameIDs != "" {
 		params.FuncName = pkt.FuncNameQueryGameListByIDs
@@ -198,7 +198,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		req := &pkt.QueryPBGameInfos{GameIds: gameIDsS}
 		params.Payload = req
 		var res pkt.ReplyPBGameList
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else {
 		fmt.Println("Error: requeres at least one of gameID, address or status")

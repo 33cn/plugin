@@ -93,7 +93,7 @@ func hashlockLockCmd(cmd *cobra.Command, args []string) {
 		ActionName: "HashlockLock",
 		Payload:    payLoad,
 	}
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -136,7 +136,7 @@ func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
 		ActionName: "HashlockUnlock",
 		Payload:    payLoad,
 	}
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -171,6 +171,6 @@ func hashlockSendCmd(cmd *cobra.Command, args []string) {
 		ActionName: "HashlockSend",
 		Payload:    payLoad,
 	}
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", paramWithExecAction, nil)
 	ctx.RunWithoutMarshal()
 }
