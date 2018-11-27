@@ -81,7 +81,7 @@ func blackwhiteCreate(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteCreateTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteCreateTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -141,7 +141,7 @@ func blackwhitePlay(cmd *cobra.Command, args []string) {
 		Fee:        feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhitePlayTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhitePlayTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -180,7 +180,7 @@ func blackwhiteShow(cmd *cobra.Command, args []string) {
 		Fee:    feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteShowTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteShowTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -213,7 +213,7 @@ func blackwhiteTimeoutDone(cmd *cobra.Command, args []string) {
 		Fee:    feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteTimeoutDoneTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteTimeoutDoneTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -290,6 +290,6 @@ func showBlackwhiteInfo(cmd *cobra.Command, args []string) {
 		rep = &gt.ReplyLoopResults{}
 	}
 
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
 }

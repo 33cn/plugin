@@ -103,7 +103,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetApi(suite.api)
+	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
 	// TODO, more fields
@@ -355,7 +355,7 @@ func TestCrossLimits(t *testing.T) {
 	exec.SetLocalDB(localDB)
 	exec.SetStateDB(stateDB)
 	exec.SetEnv(0, 0, 0)
-	exec.SetApi(api)
+	exec.SetAPI(api)
 
 
 	tx := &types.Transaction{Execer: []byte("p.user.test.paracross")}
