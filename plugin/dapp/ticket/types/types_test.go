@@ -121,10 +121,8 @@ func TestProtoNewEncodeOldDecode(t *testing.T) {
 	told := &TicketMinerOld{}
 	err := types.Decode(data, told)
 	assert.Nil(t, err)
-	assert.Equal(t, &TicketMinerOld{
-		Bits:     1,
-		Reward:   1,
-		TicketId: "id",
-		Modify:   []byte("modify"),
-	}, told)
+	assert.Equal(t, told.Bits, uint32(1))
+	assert.Equal(t, told.Reward, int64(1))
+	assert.Equal(t, told.TicketId, "id")
+	assert.Equal(t, told.Modify, []byte("modify"))
 }

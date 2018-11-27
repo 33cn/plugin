@@ -82,10 +82,10 @@ func (ticket *TicketType) GetPayload() types.Message {
 // GetLogMap get log map
 func (ticket *TicketType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogNewTicket:   {reflect.TypeOf(ReceiptTicket{}), "LogNewTicket"},
-		TyLogCloseTicket: {reflect.TypeOf(ReceiptTicket{}), "LogCloseTicket"},
-		TyLogMinerTicket: {reflect.TypeOf(ReceiptTicket{}), "LogMinerTicket"},
-		TyLogTicketBind:  {reflect.TypeOf(ReceiptTicketBind{}), "LogTicketBind"},
+		TyLogNewTicket:   {Ty: reflect.TypeOf(ReceiptTicket{}), Name: "LogNewTicket"},
+		TyLogCloseTicket: {Ty: reflect.TypeOf(ReceiptTicket{}), Name: "LogCloseTicket"},
+		TyLogMinerTicket: {Ty: reflect.TypeOf(ReceiptTicket{}), Name: "LogMinerTicket"},
+		TyLogTicketBind:  {Ty: reflect.TypeOf(ReceiptTicketBind{}), Name: "LogTicketBind"},
 	}
 }
 

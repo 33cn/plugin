@@ -59,7 +59,7 @@ func execBlock(client queue.Client, prevStateRoot []byte, block *types.Block, er
 			continue
 		}
 
-		rdata = append(rdata, &types.ReceiptData{receipt.Ty, receipt.Logs})
+		rdata = append(rdata, &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs})
 		//处理KV
 		kvs := receipt.KV
 		for _, kv := range kvs {
@@ -117,7 +117,11 @@ func execBlock(client queue.Client, prevStateRoot []byte, block *types.Block, er
 	}
 	//println("3")
 	//save to db
-	util.ExecKVSetCommit(client, block.StateHash)
+	// 写数据库失败时需要及时返回错误，防止错误数据被写入localdb中CHAIN33-567
+	err = util.ExecKVSetCommit(client, block.StateHash)
+	if err != nil {
+		return nil, nil, err
+	}
 	detail.KV = kvset
 	detail.PrevStatusHash = prevStateRoot
 	//get receipts

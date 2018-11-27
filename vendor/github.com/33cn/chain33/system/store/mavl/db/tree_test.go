@@ -408,7 +408,7 @@ func kindsSet(t *Tree, mvccdb *db.MVCCHelper, key []byte, value []byte, version 
 		if mvccdb != nil {
 			err := mvccdb.SetV(key, value, version)
 			if err != nil {
-				panic(fmt.Errorf("mvccdb cant setv", err))
+				panic(fmt.Errorf("mvccdb cant setv %s", err.Error()))
 			}
 		}
 	}
@@ -661,7 +661,6 @@ func TestGetAndVerifyKVPairProof(t *testing.T) {
 	storeSet.StateHash = emptyRoot[:]
 	newhash, err := SetKVPair(db, &storeSet, true)
 	assert.Nil(t, err)
-	i = 0
 	for i = 0; i < total; i++ {
 		var keyvalue types.KeyValue
 

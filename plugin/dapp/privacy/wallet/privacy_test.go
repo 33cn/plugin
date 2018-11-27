@@ -218,9 +218,8 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *types.ReqCreateTransaction)
 		To:      address.ExecAddress(ty.PrivacyX),
 	}
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size_1K_shiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
 	tx.Fee = realFee
 	tx.SetExpire(time.Hour)
-
 	return tx
 }

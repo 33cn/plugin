@@ -32,7 +32,7 @@ func TestJRPCChannel(t *testing.T) {
 	}()
 	mocker.Listen()
 
-	jrpcClient := mocker.GetJsonC()
+	jrpcClient := mocker.GetJSONC()
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {
@@ -145,7 +145,7 @@ func testCreateRawRelayBtcHeaderCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 func testGetBTCHeaderCurHeight(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayBtcHeaderHeightList{}
-	js, err := types.PBToJson(req)
+	js, err := types.PBToJSON(req)
 	assert.Nil(t, err)
 	params.Execer = "relay"
 	params.FuncName = "GetBTCHeaderCurHeight"
