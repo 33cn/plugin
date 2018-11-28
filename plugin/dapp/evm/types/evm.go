@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -142,7 +143,7 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 	return createRawTx(action, param.Name, param.Fee)
 }
 
-func createRawTx(action *EVMContractAction, name string, fee int64) (*types.Transaction, error) {
+func createRawTx(action proto.Message, name string, fee int64) (*types.Transaction, error) {
 	tx := &types.Transaction{}
 	if len(name) == 0 {
 		tx = &types.Transaction{

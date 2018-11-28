@@ -133,7 +133,7 @@ func convertUint(val uint64, kind reflect.Kind) interface{} {
 	case reflect.Uint32:
 		return uint32(val)
 	case reflect.Uint64:
-		return uint64(val)
+		return val
 	}
 	return val
 }
@@ -149,7 +149,7 @@ func convertInt(val int64, kind reflect.Kind) interface{} {
 	case reflect.Int32:
 		return int32(val)
 	case reflect.Int64:
-		return int64(val)
+		return val
 	}
 	return val
 }
