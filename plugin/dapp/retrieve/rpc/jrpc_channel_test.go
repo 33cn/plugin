@@ -77,7 +77,7 @@ func testCancelCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testRetrieveQueryCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRetrieveInfo{}
 	params.Execer = "retrieve"
 	params.FuncName = "GetRetrieveInfo"

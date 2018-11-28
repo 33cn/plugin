@@ -142,10 +142,10 @@ func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusPreCreated
 	reqtokens.QueryAll = true
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetTokens"
-	params.Payload = reqtokens
+	params.Payload = types.MustPBToJSON(&reqtokens)
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -188,10 +188,10 @@ func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusCreated
 	reqtokens.QueryAll = true
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetTokens"
-	params.Payload = reqtokens
+	params.Payload = types.MustPBToJSON(&reqtokens)
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -249,10 +249,10 @@ func tokenAssets(cmd *cobra.Command, args []string) {
 		Execer:  execer,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetAccountTokenAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 
 	var res tokenty.ReplyAccountTokenAssets
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

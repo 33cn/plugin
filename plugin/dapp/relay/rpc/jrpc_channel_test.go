@@ -64,7 +64,7 @@ func TestJRPCChannel(t *testing.T) {
 
 func testShowOnesCreateRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetSellRelayOrder"
@@ -75,7 +75,7 @@ func testShowOnesCreateRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 
 func testShowOnesAcceptRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetBuyRelayOrder"
@@ -86,7 +86,7 @@ func testShowOnesAcceptRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 
 func testShowOnesStatusOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetRelayOrderByStatus"
@@ -97,7 +97,7 @@ func testShowOnesStatusOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) erro
 
 func testShowBTCHeadHeightListCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayBtcHeaderHeightList{}
 	params.Execer = "relay"
 	params.FuncName = "GetBTCHeaderList"

@@ -56,7 +56,7 @@ func testCloseTicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testGetColdAddrByMinerCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &types.ReqString{}
 	params.Execer = "ticket"
 	params.FuncName = "MinerSourceList"

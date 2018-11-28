@@ -145,7 +145,7 @@ func testPrivacy2Public(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testShowAmountsOfUTXO(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowAmountsOfUTXO"
 	params.Payload = reqPrivacyToken
@@ -160,7 +160,7 @@ func testShowUTXOs4SpecifiedAmount(t *testing.T, jrpc *jsonclient.JSONClient) er
 		Token:  types.BTY,
 		Amount: 123456,
 	}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowUTXOs4SpecifiedAmount"
 	params.Payload = reqPrivacyToken

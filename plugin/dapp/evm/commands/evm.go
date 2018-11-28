@@ -416,7 +416,7 @@ func estimateContract(cmd *cobra.Command, args []string) {
 	var estGasReq = evmtypes.EstimateEVMGasReq{To: toAddr, Code: bCode, Caller: caller, Amount: amountInt64}
 	var estGasResp evmtypes.EstimateEVMGasResp
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	query := sendQuery(rpcLaddr, "EstimateGas", estGasReq, &estGasResp)
+	query := sendQuery(rpcLaddr, "EstimateGas", &estGasReq, &estGasResp)
 
 	if query {
 		fmt.Fprintf(os.Stdout, "gas cost estimate %v\n", estGasResp.Gas)
@@ -481,7 +481,7 @@ func checkContractAddr(cmd *cobra.Command, args []string) {
 	var checkAddrReq = evmtypes.CheckEVMAddrReq{Addr: toAddr}
 	var checkAddrResp evmtypes.CheckEVMAddrResp
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	query := sendQuery(rpcLaddr, "CheckAddrExists", checkAddrReq, &checkAddrResp)
+	query := sendQuery(rpcLaddr, "CheckAddrExists", &checkAddrReq, &checkAddrResp)
 
 	if query && checkAddrResp.Contract {
 		proto.MarshalText(os.Stdout, &checkAddrResp)
@@ -541,7 +541,7 @@ func evmDebugRPC(cmd *cobra.Command, flag int32) {
 	var debugReq = evmtypes.EvmDebugReq{Optype: flag}
 	var debugResp evmtypes.EvmDebugResp
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	query := sendQuery(rpcLaddr, "EvmDebug", debugReq, &debugResp)
+	query := sendQuery(rpcLaddr, "EvmDebug", &debugReq, &debugResp)
 
 	if query {
 		proto.MarshalText(os.Stdout, &debugResp)
@@ -646,11 +646,11 @@ func evmWithdraw(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func sendQuery(rpcAddr, funcName string, request interface{}, result proto.Message) bool {
-	params := types.Query4Cli{
+func sendQuery(rpcAddr, funcName string, request types.Message, result proto.Message) bool {
+	params := rpctypes.Query4Jrpc{
 		Execer:   "evm",
 		FuncName: funcName,
-		Payload:  request,
+		Payload:  types.MustPBToJSON(request),
 	}
 
 	jsonrpc, err := jsonclient.NewJSONClient(rpcAddr)

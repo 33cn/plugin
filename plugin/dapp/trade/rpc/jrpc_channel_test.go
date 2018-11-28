@@ -75,7 +75,7 @@ func testCreateRawTradeRevokeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 }
 
 func testShowOnesSellOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "trade",
 		FuncName: "GetOnesSellOrder",
 		Payload:  pty.ReqAddrAssets{},
@@ -86,7 +86,7 @@ func testShowOnesSellOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error 
 
 func testShowOnesSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesSellOrderWithStatus"
@@ -97,7 +97,7 @@ func testShowOnesSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 
 func testShowTokenSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqTokenSellOrder{}
 	params.Execer = "trade"
 	params.FuncName = "GetTokenSellOrderByStatus"
@@ -109,7 +109,7 @@ func testShowTokenSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 
 func testShowOnesBuyOrderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrder"
@@ -121,7 +121,7 @@ func testShowOnesBuyOrderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testShowOnesBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrderWithStatus"
@@ -133,7 +133,7 @@ func testShowOnesBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 
 func testShowTokenBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqTokenBuyOrder{}
 	params.Execer = "trade"
 	params.FuncName = "GetTokenBuyOrderByStatus"
@@ -145,7 +145,7 @@ func testShowTokenBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 
 func testShowOnesOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesOrderWithStatus"

@@ -364,10 +364,10 @@ func showAmountOfUTXO(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowAmountsOfUTXO"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyPrivacyAmounts
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -407,10 +407,10 @@ func showUTXOs4SpecifiedAmount(cmd *cobra.Command, args []string) {
 		Token:  types.BTY,
 		Amount: amountInt64,
 	}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowUTXOs4SpecifiedAmount"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyUTXOsOfAmount
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

@@ -75,7 +75,7 @@ func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
 	params.Execer = "pokerbull"
 	params.FuncName = "QueryGameByID"
@@ -86,7 +86,7 @@ func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testQueryGameByAddr(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
 	params.Execer = "pokerbull"
 	params.FuncName = "QueryGameByAddr"
