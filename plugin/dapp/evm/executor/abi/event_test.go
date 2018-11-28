@@ -140,7 +140,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	type EventTransferWithTag struct {
 		// this is valid because `value` is not exportable,
 		// so value is only unmarshalled into `Value1`.
-		Value  *big.Int
+		// value  *big.Int
 		Value1 *big.Int `abi:"value"`
 	}
 
