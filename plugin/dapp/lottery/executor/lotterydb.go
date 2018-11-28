@@ -511,7 +511,6 @@ func (action *Action) GetCalculableHash(beg, end int64, randMolNum int64) ([]byt
 	timeSource := int64(0)
 	total := int64(0)
 	//last := []byte("last")
-	newmodify := ""
 	for i := beg; i < end; i += randMolNum {
 		req := &types.ReqBlocks{Start: i, End: i, IsDetail: false, Pid: []string{""}}
 		blocks, err := action.api.GetBlocks(req)
@@ -542,7 +541,7 @@ func (action *Action) GetCalculableHash(beg, end int64, randMolNum int64) ([]byt
 		ticketIds += ticketAction.GetMiner().GetTicketId()
 	}
 
-	newmodify = fmt.Sprintf("%s:%s:%d:%d", string(modifies), ticketIds, total, bits)
+	newmodify := fmt.Sprintf("%s:%s:%d:%d", string(modifies), ticketIds, total, bits)
 
 	modify := common.Sha256([]byte(newmodify))
 	return modify, nil
