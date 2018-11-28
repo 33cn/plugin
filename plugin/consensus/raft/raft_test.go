@@ -175,5 +175,5 @@ func clearTestData() {
 	if err != nil {
 		fmt.Println("delete chain33_raft dir have a err:", err.Error())
 	}
-	fmt.Println("test data clear sucessfully!")
+	fmt.Println("test data clear successfully!")
 }

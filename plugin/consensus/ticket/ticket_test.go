@@ -51,7 +51,7 @@ func TestTicket(t *testing.T) {
 	//js, _ := json.MarshalIndent(detail, "", " ")
 	//fmt.Println(string(js))
 	assert.Equal(t, int32(2), detail.Receipt.Ty)
-	reply, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
+	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
 	err = mock33.WaitHeight(100)
 	assert.Nil(t, err)

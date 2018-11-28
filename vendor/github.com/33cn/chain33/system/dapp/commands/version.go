@@ -26,5 +26,4 @@ func version(cmd *cobra.Command, args []string) {
 	var res types.NodeVersion
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Version", nil, &res)
 	ctx.Run()
-
 }

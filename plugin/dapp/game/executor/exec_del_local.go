@@ -12,9 +12,6 @@ import (
 // roll back local db data
 func (g *Game) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for _, log := range receiptData.Logs {
 		switch log.GetTy() {
 		case gt.TyLogCreateGame, gt.TyLogMatchGame, gt.TyLogCloseGame, gt.TyLogCancleGame:

@@ -354,3 +354,8 @@ func (c *Paracross) allowIsParaAssetTx(execer []byte) bool {
 	}
 	return false
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Paracross) CheckReceiptExecOk() bool {
+	return true
+}

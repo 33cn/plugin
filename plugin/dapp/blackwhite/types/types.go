@@ -67,7 +67,7 @@ func (b BlackwhiteType) ActionName(tx *types.Transaction) string {
 	var g BlackwhiteAction
 	err := types.Decode(tx.Payload, &g)
 	if err != nil {
-		return "unkown-Blackwhite-action-err"
+		return "unknown-Blackwhite-action-err"
 	}
 	if g.Ty == BlackwhiteActionCreate && g.GetCreate() != nil {
 		return "BlackwhiteCreate"
@@ -78,7 +78,7 @@ func (b BlackwhiteType) ActionName(tx *types.Transaction) string {
 	} else if g.Ty == BlackwhiteActionTimeoutDone && g.GetTimeoutDone() != nil {
 		return "BlackwhiteTimeoutDone"
 	}
-	return "unkown"
+	return "unknown"
 }
 
 // Amount ...

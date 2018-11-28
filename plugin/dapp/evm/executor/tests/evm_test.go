@@ -106,7 +106,7 @@ func runDir(tt *testing.T, basePath string) {
 }
 
 func runCase(tt *testing.T, c VMCase, file string) {
-	tt.Logf("runing test case:%s in file:%s", c.name, file)
+	tt.Logf("running test case:%s in file:%s", c.name, file)
 
 	// 1 构建预置环境 pre
 	inst := evm.NewEVMExecutor()

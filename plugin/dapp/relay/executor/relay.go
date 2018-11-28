@@ -243,3 +243,8 @@ func deleteCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, statu
 
 	return kv
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (r *relay) CheckReceiptExecOk() bool {
+	return true
+}
