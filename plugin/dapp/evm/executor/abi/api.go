@@ -10,7 +10,7 @@ import (
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/golang-collections/collections/stack"
-	"github.com/kataras/iris/core/errors"
+	"errors"
 )
 
 // Pack 使用ABI方式调用时，将调用方式转换为EVM底层处理的十六进制编码
