@@ -8,13 +8,12 @@ import (
 	"context"
 
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/pokerbull/executor"
 	pb "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 	"github.com/pkg/errors"
 )
 
 func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types.UnsignTx, error) {
-	if head.PlayerNum > executor.MaxPlayerNum {
+	if head.PlayerNum > pb.MaxPlayerNum {
 		return nil, errors.New("Player number should be maximum 5")
 	}
 

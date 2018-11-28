@@ -8,6 +8,13 @@ import (
 	"reflect"
 
 	"github.com/33cn/chain33/types"
+	"encoding/json"
+	log "github.com/33cn/chain33/common/log/log15"
+	"errors"
+)
+
+var (
+	llog = log.New("module", "exectype."+PokerBullX)
 )
 
 func init() {
@@ -52,4 +59,80 @@ func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogPBGameQuit:     {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuit"},
 		TyLogPBGameQuery:    {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuery"},
 	}
+}
+
+// CreateTx method
+func (t *PokerBullType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+	llog.Debug("pokerbull.CreateTx", "action", action)
+
+	if action == CreateStartTx {
+		var param PBGameStart
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			llog.Error("CreateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawPBStartTx(&param)
+	} else if action == CreateContinueTx {
+		var param PBGameContinue
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			llog.Error("CreateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawPBContinueTx(&param)
+	} else if action == CreatequitTx {
+		var param PBGameQuit
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			llog.Error("CreateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawPBQuitTx(&param)
+	} else {
+		return nil, types.ErrNotSupport
+	}
+}
+
+// CreateTx method
+func CreateRawPBStartTx(head *PBGameStart) (*types.Transaction, error) {
+	if head.PlayerNum > MaxPlayerNum {
+		return nil, errors.New("Player number should be maximum 5")
+	}
+
+	val := &PBGameAction{
+		Ty:    PBGameActionStart,
+		Value: &PBGameAction_Start{Start: head},
+	}
+	tx, err := types.CreateFormatTx(types.ExecName(PokerBullX), types.Encode(val))
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateTx method
+func CreateRawPBContinueTx(head *PBGameContinue) (*types.Transaction, error) {
+	val := &PBGameAction{
+		Ty:    PBGameActionContinue,
+		Value: &PBGameAction_Continue{Continue: head},
+	}
+	tx, err := types.CreateFormatTx(types.ExecName(PokerBullX), types.Encode(val))
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateTx method
+func CreateRawPBQuitTx(head *PBGameQuit) (*types.Transaction, error) {
+	val := &PBGameAction{
+		Ty:    PBGameActionQuit,
+		Value: &PBGameAction_Quit{Quit: head},
+	}
+	tx, err := types.CreateFormatTx(types.ExecName(PokerBullX), types.Encode(val))
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
 }

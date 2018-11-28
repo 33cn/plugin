@@ -4,6 +4,8 @@
 
 package types
 
+import "github.com/33cn/chain33/types"
+
 //game action ty
 const (
 	PBGameActionStart = iota + 1
@@ -50,4 +52,24 @@ const (
 	FuncNameQueryGameByStatus = "QueryGameByStatus"
 	// FuncNameQueryGameByRound 查询某一回合游戏结果
 	FuncNameQueryGameByRound = "QueryGameByRound"
+	// CreateStartTx 创建开始交易
+	CreateStartTx = "CreateStartTx"
+	// CreateContinueTx 创建继续交易
+	CreateContinueTx = "CreateContinueTx"
+	// CreatequitTx 创建退出交易
+	CreatequitTx = "CreatequitTx"
+)
+
+
+const (
+	// ListDESC 降序
+	ListDESC = int32(0)
+	// DefaultCount 默认一次取多少条记录
+	DefaultCount = int32(20)
+	// MaxPlayerNum 最大玩家数
+	MaxPlayerNum = 5
+	// MinPlayValue 最小赌注
+	MinPlayValue = 10 * types.Coin
+	// DefaultStyle默认游戏类型
+	DefaultStyle = PlayStyleDefault
 )

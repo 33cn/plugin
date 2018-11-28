@@ -149,6 +149,7 @@ message ReplyPBGameByRound {
     bool     isWaiting = 4;
     int32    round     = 5;
     int64    value     = 6;
+   repeated PBPlayer players   = 7;
 }
 
 message ReceiptPBGame {
