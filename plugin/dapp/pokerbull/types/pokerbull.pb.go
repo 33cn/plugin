@@ -21,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 //斗牛游戏内容
 type PokerBull struct {
@@ -556,14 +556,116 @@ func (m *PBGameAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*PBGameAction) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*PBGameAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _PBGameAction_OneofMarshaler, _PBGameAction_OneofUnmarshaler, _PBGameAction_OneofSizer, []interface{}{
 		(*PBGameAction_Start)(nil),
 		(*PBGameAction_Continue)(nil),
 		(*PBGameAction_Quit)(nil),
 		(*PBGameAction_Query)(nil),
 	}
+}
+
+func _PBGameAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*PBGameAction)
+	// value
+	switch x := m.Value.(type) {
+	case *PBGameAction_Start:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Start); err != nil {
+			return err
+		}
+	case *PBGameAction_Continue:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Continue); err != nil {
+			return err
+		}
+	case *PBGameAction_Quit:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Quit); err != nil {
+			return err
+		}
+	case *PBGameAction_Query:
+		b.EncodeVarint(4<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Query); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("PBGameAction.Value has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _PBGameAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*PBGameAction)
+	switch tag {
+	case 1: // value.start
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PBGameStart)
+		err := b.DecodeMessage(msg)
+		m.Value = &PBGameAction_Start{msg}
+		return true, err
+	case 2: // value.continue
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PBGameContinue)
+		err := b.DecodeMessage(msg)
+		m.Value = &PBGameAction_Continue{msg}
+		return true, err
+	case 3: // value.quit
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PBGameQuit)
+		err := b.DecodeMessage(msg)
+		m.Value = &PBGameAction_Quit{msg}
+		return true, err
+	case 4: // value.query
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PBGameQuery)
+		err := b.DecodeMessage(msg)
+		m.Value = &PBGameAction_Query{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _PBGameAction_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*PBGameAction)
+	// value
+	switch x := m.Value.(type) {
+	case *PBGameAction_Start:
+		s := proto.Size(x.Start)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PBGameAction_Continue:
+		s := proto.Size(x.Continue)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PBGameAction_Quit:
+		s := proto.Size(x.Quit)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PBGameAction_Query:
+		s := proto.Size(x.Query)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
 }
 
 //游戏启动
