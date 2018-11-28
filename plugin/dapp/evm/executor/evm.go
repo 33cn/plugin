@@ -118,7 +118,7 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 }
 
 // CheckReceiptExecOk return true to check if receipt ty is ok
-func (c *EVMExecutor) CheckReceiptExecOk() bool {
+func (evm *EVMExecutor) CheckReceiptExecOk() bool {
 	return true
 }
 
