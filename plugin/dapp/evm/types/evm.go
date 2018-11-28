@@ -137,12 +137,12 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 	}
 
 	if param.IsCreate {
-		return createRawTx(action, "")
+		return createRawTx(action, "", param.Fee)
 	}
-	return createRawTx(action, param.Name)
+	return createRawTx(action, param.Name, param.Fee)
 }
 
-func createRawTx(action *EVMContractAction, name string) (*types.Transaction, error) {
+func createRawTx(action *EVMContractAction, name string, fee int64) (*types.Transaction, error) {
 	tx := &types.Transaction{}
 	if len(name) == 0 {
 		tx = &types.Transaction{
@@ -161,5 +161,10 @@ func createRawTx(action *EVMContractAction, name string) (*types.Transaction, er
 	if err != nil {
 		return nil, err
 	}
+
+	if tx.Fee < fee {
+		tx.Fee = fee
+	}
+
 	return tx, nil
 }
