@@ -13,6 +13,7 @@ CHAIN33_PATH=vendor/${CHAIN33}
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
+PKG_LIST_INEFFASSIGN= `go list -f {{.Dir}} ./... | grep -v "vendor"`
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
@@ -73,13 +74,16 @@ updatevendor:
 dep:
 	dep init -v
 
-linter: vet ## Use gometalinter check code, ignore some unserious warning
+linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
+
+ineffassign:
+	@ineffassign -n ${PKG_LIST_INEFFASSIGN}
 
 race: ## Run data race detector
 	@go test -race -short $(PKG_LIST)

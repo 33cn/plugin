@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package bipwallet 比特币改进协议钱包相关定义
 package bipwallet
 
 import (
@@ -119,7 +120,7 @@ var CoinName = map[uint32]string{
 	TypeEtherClassic: "ETC",
 	TypeBitcoin:      "BTC",
 	TypeLitecoin:     "LTC",
-	TypeZayedcoin:    "ZEC",
+	TypeZcash:        "ZEC",
 	TypeBty:          "BTY",
 	TypeYcc:          "YCC",
 }

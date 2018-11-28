@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package types rpc相关的一些结构体定义以及转化函数
 package types
 
 import (
@@ -303,14 +304,6 @@ type NodeNetinfo struct {
 	Service      bool   `json:"service"`
 	Outbounds    int32  `json:"outbounds"`
 	Inbounds     int32  `json:"inbounds"`
-}
-
-// NodeVersion node version
-type NodeVersion struct {
-	Title   string `json:"title"`
-	App     string `json:"app"`
-	Chain33 string `json:"chain33"`
-	LocalDb string `json:"localDb"`
 }
 
 // ReplyPrivacyPkPair   reply privekey pubkey pair
