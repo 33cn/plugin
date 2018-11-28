@@ -68,7 +68,7 @@ func testShowOnesCreateRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetSellRelayOrder"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
@@ -79,7 +79,7 @@ func testShowOnesAcceptRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetBuyRelayOrder"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
@@ -90,7 +90,7 @@ func testShowOnesStatusOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) erro
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetRelayOrderByStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
@@ -101,7 +101,7 @@ func testShowBTCHeadHeightListCmd(t *testing.T, jrpc *jsonclient.JSONClient) err
 	req := &pty.ReqRelayBtcHeaderHeightList{}
 	params.Execer = "relay"
 	params.FuncName = "GetBTCHeaderList"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayBtcHeadHeightList{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

@@ -148,7 +148,7 @@ func testShowAmountsOfUTXO(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowAmountsOfUTXO"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyPrivacyAmounts
 	err := jrpc.Call("Chain33.Query", params, &res)
@@ -163,7 +163,7 @@ func testShowUTXOs4SpecifiedAmount(t *testing.T, jrpc *jsonclient.JSONClient) er
 	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowUTXOs4SpecifiedAmount"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyUTXOsOfAmount
 	err := jrpc.Call("Chain33.Query", params, &res)

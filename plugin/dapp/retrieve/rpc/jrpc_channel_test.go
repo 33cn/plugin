@@ -10,6 +10,7 @@ import (
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
@@ -81,7 +82,7 @@ func testRetrieveQueryCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	req := &pty.ReqRetrieveInfo{}
 	params.Execer = "retrieve"
 	params.FuncName = "GetRetrieveInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.RetrieveQuery{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

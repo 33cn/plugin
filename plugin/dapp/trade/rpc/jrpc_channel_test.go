@@ -10,6 +10,7 @@ import (
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
@@ -78,7 +79,7 @@ func testShowOnesSellOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error 
 	params := rpctypes.Query4Jrpc{
 		Execer:   "trade",
 		FuncName: "GetOnesSellOrder",
-		Payload:  pty.ReqAddrAssets{},
+		Payload:  types.MustPBToJSON(&pty.ReqAddrAssets{}),
 	}
 	var res pty.ReplySellOrders
 	return jrpc.Call("Chain33.Query", params, &res)
@@ -90,7 +91,7 @@ func testShowOnesSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesSellOrderWithStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplySellOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
@@ -101,7 +102,7 @@ func testShowTokenSellOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 	req := &pty.ReqTokenSellOrder{}
 	params.Execer = "trade"
 	params.FuncName = "GetTokenSellOrderByStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplySellOrders{}
 
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -113,7 +114,7 @@ func testShowOnesBuyOrderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrder"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBuyOrders{}
 
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -125,7 +126,7 @@ func testShowOnesBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrderWithStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBuyOrders{}
 
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -137,7 +138,7 @@ func testShowTokenBuyOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 	req := &pty.ReqTokenBuyOrder{}
 	params.Execer = "trade"
 	params.FuncName = "GetTokenBuyOrderByStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBuyOrders{}
 
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -149,7 +150,7 @@ func testShowOnesOrdersStatusCmd(t *testing.T, jrpc *jsonclient.JSONClient) erro
 	req := &pty.ReqAddrAssets{}
 	params.Execer = "trade"
 	params.FuncName = "GetOnesOrderWithStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyTradeOrders{}
 
 	return jrpc.Call("Chain33.Query", params, rep)

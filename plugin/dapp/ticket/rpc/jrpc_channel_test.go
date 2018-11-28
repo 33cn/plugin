@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
@@ -60,7 +61,7 @@ func testGetColdAddrByMinerCmd(t *testing.T, jrpc *jsonclient.JSONClient) error 
 	req := &types.ReqString{}
 	params.Execer = "ticket"
 	params.FuncName = "MinerSourceList"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &types.ReplyStrings{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

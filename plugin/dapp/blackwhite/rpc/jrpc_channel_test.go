@@ -87,7 +87,7 @@ func testRoundInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var params rpctypes.Query4Jrpc
 	req := &pty.ReqBlackwhiteRoundInfo{}
 	params.FuncName = pty.GetBlackwhiteRoundInfo
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBlackwhiteRoundInfo{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
