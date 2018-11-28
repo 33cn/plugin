@@ -13,12 +13,12 @@ import (
 )
 
 type tradeAutoTest struct {
-	SimpleCaseArr            []types.SimpleCase            `toml:"SimpleCase,omitempty"`
+	SimpleCaseArr            []types.SimpleCase                    `toml:"SimpleCase,omitempty"`
 	TokenPreCreateCaseArr    []tokenautotest.TokenPreCreateCase    `toml:"TokenPreCreateCase,omitempty"`
 	TokenFinishCreateCaseArr []tokenautotest.TokenFinishCreateCase `toml:"TokenFinishCreateCase,omitempty"`
-	TransferCaseArr          []coinautotest.TransferCase          `toml:"TransferCase,omitempty"`
-	SellCaseArr              []SellCase              `toml:"SellCase,omitempty"`
-	DependBuyCaseArr         []DependBuyCase         `toml:"DependBuyCase,omitempty"`
+	TransferCaseArr          []coinautotest.TransferCase           `toml:"TransferCase,omitempty"`
+	SellCaseArr              []SellCase                            `toml:"SellCase,omitempty"`
+	DependBuyCaseArr         []DependBuyCase                       `toml:"DependBuyCase,omitempty"`
 }
 
 func init() {

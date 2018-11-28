@@ -12,11 +12,11 @@ import (
 )
 
 type tokenAutoTest struct {
-	SimpleCaseArr            []types.SimpleCase            `toml:"SimpleCase,omitempty"`
+	SimpleCaseArr            []types.SimpleCase      `toml:"SimpleCase,omitempty"`
 	TokenPreCreateCaseArr    []TokenPreCreateCase    `toml:"TokenPreCreateCase,omitempty"`
 	TokenFinishCreateCaseArr []TokenFinishCreateCase `toml:"TokenFinishCreateCase,omitempty"`
-	TransferCaseArr          []autotest.TransferCase          `toml:"TransferCase,omitempty"`
-	WithdrawCaseArr          []autotest.WithdrawCase          `toml:"WithdrawCase,omitempty"`
+	TransferCaseArr          []autotest.TransferCase `toml:"TransferCase,omitempty"`
+	WithdrawCaseArr          []autotest.WithdrawCase `toml:"WithdrawCase,omitempty"`
 	TokenRevokeCaseArr       []TokenRevokeCase       `toml:"TokenRevokeCase,omitempty"`
 }
 

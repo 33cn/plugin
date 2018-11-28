@@ -11,6 +11,7 @@ import (
 
 	"github.com/33cn/chain33/cmd/autotest/types"
 )
+
 // BuyCase defines buycase command
 type BuyCase struct {
 	types.BaseCase
@@ -19,19 +20,23 @@ type BuyCase struct {
 	TokenAmount string `toml:"tokenAmount"`
 	BtyAmount   string `toml:"btyAmount"`
 }
+
 // BuyPack defines buypack command
 type BuyPack struct {
 	types.BaseCasePack
 }
+
 // DependBuyCase defines depend buycase command
 type DependBuyCase struct {
 	BuyCase
 	SellID string `toml:"sellID,omitempty"`
 }
+
 // DependBuyPack defines depend buy pack command
 type DependBuyPack struct {
 	BuyPack
 }
+
 // SendCommand defines send command function of dependbuycase
 func (testCase *DependBuyCase) SendCommand(packID string) (types.PackFunc, error) {
 
@@ -42,6 +47,7 @@ func (testCase *DependBuyCase) SendCommand(packID string) (types.PackFunc, error
 
 	return types.DefaultSend(&testCase.BuyCase, &BuyPack{}, packID)
 }
+
 // SetDependData defines set depend data function
 func (testCase *DependBuyCase) SetDependData(depData interface{}) {
 
@@ -50,6 +56,7 @@ func (testCase *DependBuyCase) SetDependData(depData interface{}) {
 		testCase.SellID = orderInfo.sellID
 	}
 }
+
 // GetCheckHandlerMap defines get check handler for map
 func (pack *BuyPack) GetCheckHandlerMap() interface{} {
 

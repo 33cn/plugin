@@ -9,26 +9,31 @@ import (
 
 	"github.com/33cn/chain33/cmd/autotest/types"
 )
+
 // SellCase defines sell case command
 type SellCase struct {
 	types.BaseCase
 	From   string `toml:"from"`
 	Amount string `toml:"amount"`
 }
+
 // SellPack defines sell pack command
 type SellPack struct {
 	types.BaseCasePack
 	orderInfo *SellOrderInfo
 }
+
 // SellOrderInfo sell order information
 type SellOrderInfo struct {
 	sellID string
 }
+
 // SendCommand send command of sellcase
 func (testCase *SellCase) SendCommand(packID string) (types.PackFunc, error) {
 
 	return types.DefaultSend(testCase, &SellPack{}, packID)
 }
+
 // GetCheckHandlerMap defines get check handle for map
 func (pack *SellPack) GetCheckHandlerMap() interface{} {
 
@@ -38,6 +43,7 @@ func (pack *SellPack) GetCheckHandlerMap() interface{} {
 
 	return funcMap
 }
+
 // GetDependData defines get depend data function
 func (pack *SellPack) GetDependData() interface{} {
 
