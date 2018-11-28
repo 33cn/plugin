@@ -58,7 +58,7 @@ func testGetTokensPreCreatedCmd(t *testing.T, jrpc *jsonclient.JSONClient) error
 	req := &pty.ReqTokens{}
 	params.Execer = "token"
 	params.FuncName = "GetTokens"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyTokens{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
@@ -67,7 +67,7 @@ func testGetTokensFinishCreatedCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 	params := rpctypes.Query4Jrpc{
 		Execer:   "token",
 		FuncName: "GetTokens",
-		Payload:  pty.ReqTokens{},
+		Payload:  types.MustPBToJSON(&pty.ReqTokens{}),
 	}
 	var res pty.ReplyTokens
 	return jrpc.Call("Chain33.Query", params, &res)
@@ -79,7 +79,7 @@ func testGetTokenAssetsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	req := &pty.ReqAccountTokenAssets{}
 	params.Execer = "token"
 	params.FuncName = "GetAccountTokenAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyAccountTokenAssets{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
