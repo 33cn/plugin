@@ -13,7 +13,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	"github.com/kataras/iris/core/errors"
+	"errors"
 )
 
 // Query_CheckAddrExists 检查合约地址是否存在，此操作不会改变任何状态，所以可以直接从statedb查询
