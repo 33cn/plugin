@@ -217,7 +217,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 		Loop: 4,
 	}
 
-	addres := &gt.AddressResult{
+	address := &gt.AddressResult{
 		Addr: "1",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -225,9 +225,9 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(3) + showSecret + white))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
-	addres = &gt.AddressResult{
+	address = &gt.AddressResult{
 		Addr: "2",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -235,9 +235,9 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(3) + showSecret + white))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
-	addres = &gt.AddressResult{
+	address = &gt.AddressResult{
 		Addr: "3",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -245,7 +245,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(3) + showSecret + black))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
 	round.AddrResult = addrRes
 
@@ -257,7 +257,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 	//t.Logf("winers1 is %v", winers)
 	//t.Logf("losers1 is %v", losers)
 
-	addres = &gt.AddressResult{
+	address = &gt.AddressResult{
 		Addr: "4",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -265,9 +265,9 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(3) + showSecret + black))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
-	addres = &gt.AddressResult{
+	address = &gt.AddressResult{
 		Addr: "5",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -275,7 +275,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(3) + showSecret + white))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
 	round.AddrResult = addrRes
 
@@ -286,7 +286,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 	//t.Logf("winers2 is %v", winers)
 	//t.Logf("losers2 is %v", losers)
 
-	addres = &gt.AddressResult{
+	address = &gt.AddressResult{
 		Addr: "6",
 		HashValues: [][]byte{common.Sha256([]byte(strconv.Itoa(0) + showSecret + black)),
 			common.Sha256([]byte(strconv.Itoa(1) + showSecret + white)),
@@ -298,7 +298,7 @@ func Test_getWinnerAndLoser(t *testing.T) {
 			common.Sha256([]byte(strconv.Itoa(7) + showSecret + white))},
 		ShowSecret: showSecret,
 	}
-	addrRes = append(addrRes, addres)
+	addrRes = append(addrRes, address)
 
 	round.AddrResult = addrRes
 

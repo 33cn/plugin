@@ -117,6 +117,11 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 	return false
 }
 
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *EVMExecutor) CheckReceiptExecOk() bool {
+	return true
+}
+
 // 生成一个新的合约对象地址
 func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
 	return common.NewAddress(txHash)

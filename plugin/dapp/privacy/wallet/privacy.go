@@ -38,7 +38,7 @@ func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {
 		go policy.rescanReqTxDetailByAddr(acc.Addr, policy.rescanwg)
 	}
 	policy.rescanwg.Wait()
-	bizlog.Debug("rescanAllTxToUpdateUTXOs sucess!")
+	bizlog.Debug("rescanAllTxToUpdateUTXOs success!")
 }
 
 //从blockchain模块同步addr参与的所有交易详细信息
@@ -312,8 +312,8 @@ func (policy *privacyPolicy) showPrivacyKeyPair(reqAddr *types.ReqString) (*priv
 		return nil, err
 	}
 
-	pair := privacyInfo.ViewPubkey[:]
-	pair = append(pair, privacyInfo.SpendPubkey[:]...)
+	//pair := privacyInfo.ViewPubkey[:]
+	//pair = append(pair, privacyInfo.SpendPubkey[:]...)
 
 	replyPrivacyPkPair := &privacytypes.ReplyPrivacyPkPair{
 		ShowSuccessful: true,
@@ -333,6 +333,10 @@ func (policy *privacyPolicy) getPrivacyAccountInfo(req *privacytypes.ReqPPrivacy
 
 	// 搜索可用余额
 	privacyDBStore, err := policy.store.listAvailableUTXOs(token, addr)
+	if err != nil {
+		bizlog.Error("getPrivacyAccountInfo", "listAvailableUTXOs")
+		return nil, err
+	}
 	utxos := make([]*privacytypes.UTXO, 0)
 	for _, ele := range privacyDBStore {
 		utxoBasic := &privacytypes.UTXOBasic{
@@ -820,7 +824,7 @@ func (policy *privacyPolicy) rescanReqUtxosByAddr(addrs []string) {
 	defer policy.getWalletOperate().GetWaitGroup().Done()
 	bizlog.Debug("RescanAllUTXO begin!")
 	policy.reqUtxosByAddr(addrs)
-	bizlog.Debug("RescanAllUTXO sucess!")
+	bizlog.Debug("RescanAllUTXO success!")
 }
 
 func (policy *privacyPolicy) reqUtxosByAddr(addrs []string) {

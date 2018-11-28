@@ -202,3 +202,8 @@ func saveBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBas
 func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
 	return genBuyMarketOrderKeyValue(kv, receipt, status, height, nil)
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (t *trade) CheckReceiptExecOk() bool {
+	return true
+}

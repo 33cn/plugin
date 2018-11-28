@@ -68,3 +68,8 @@ func CalcValNodeUpdateHeightKey(height int64) []byte {
 func CalcValNodeBlockInfoHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("LODB-valnode-BlockInfo:%18d:", height))
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (val *ValNode) CheckReceiptExecOk() bool {
+	return true
+}

@@ -51,9 +51,6 @@ func DelRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.
 // ExecDelLocal_Backup Action
 func (c *Retrieve) ExecDelLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	rlog.Debug("Retrieve ExecDelLocal_Backup")
 
 	info := rt.RetrieveQuery{BackupAddress: backup.BackupAddress, DefaultAddress: backup.DefaultAddress, DelayPeriod: backup.DelayPeriod, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveBackup}
@@ -72,9 +69,6 @@ func (c *Retrieve) ExecDelLocal_Backup(backup *rt.BackupRetrieve, tx *types.Tran
 // ExecDelLocal_Prepare Action
 func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	rlog.Debug("Retrieve ExecDelLocal_Prepare")
 
 	info := rt.RetrieveQuery{BackupAddress: pre.BackupAddress, DefaultAddress: pre.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: c.GetBlockTime(), RemainTime: zeroRemainTime, Status: retrievePrepare}
@@ -93,9 +87,6 @@ func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Trans
 // ExecDelLocal_Perform Action
 func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	rlog.Debug("Retrieve ExecDelLocal_Perform")
 
 	info := rt.RetrieveQuery{BackupAddress: perf.BackupAddress, DefaultAddress: perf.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrievePerform}
@@ -114,9 +105,6 @@ func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Tran
 // ExecDelLocal_Cancel Action
 func (c *Retrieve) ExecDelLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	rlog.Debug("Retrieve ExecDelLocal_Cancel")
 
 	info := rt.RetrieveQuery{BackupAddress: cancel.BackupAddress, DefaultAddress: cancel.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveCancel}

@@ -11,9 +11,6 @@ import (
 
 func (t *Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for _, item := range receiptData.Logs {
 		//这三个是ticket 的log
 		if item.Ty == ty.TyLogNewTicket || item.Ty == ty.TyLogMinerTicket || item.Ty == ty.TyLogCloseTicket {

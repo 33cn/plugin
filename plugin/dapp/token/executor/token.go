@@ -338,3 +338,8 @@ func (t *token) getTxByToken(req *tokenty.ReqTokenTx) (types.Message, error) {
 	}
 	return &replyTxInfos, nil
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (t *token) CheckReceiptExecOk() bool {
+	return true
+}
