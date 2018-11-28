@@ -136,7 +136,7 @@ func NewLotteryAction(l *Lottery, tx *types.Transaction, index int) *Action {
 	grpcClient := types.NewChain33Client(conn)
 
 	return &Action{l.GetCoinsAccount(), l.GetStateDB(), hash, fromaddr, l.GetBlockTime(),
-		l.GetHeight(), dapp.ExecAddress(string(tx.Execer)), l.GetDifficulty(), l.GetApi(), conn, grpcClient, index}
+		l.GetHeight(), dapp.ExecAddress(string(tx.Execer)), l.GetDifficulty(), l.GetAPI(), conn, grpcClient, index}
 }
 
 // GetReceiptLog generate logs for all lottery action
@@ -548,11 +548,11 @@ func (action *Action) GetCalculableHash(beg, end int64, randMolNum int64) ([]byt
 	return modify, nil
 }
 
-//random used for verfication in solo
+//random used for verification in solo
 func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 	var num int64
 	if isSolo {
-		//used for internal verfication
+		//used for internal verification
 		num = 12345
 	} else {
 		randMolNum := (lott.TotalPurchasedTxNum+action.height-lott.LastTransToPurState)%3 + 2 //3~5

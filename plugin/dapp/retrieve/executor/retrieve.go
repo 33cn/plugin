@@ -82,3 +82,8 @@ func getRetrieveInfo(db dbm.KVDB, backupAddr string, defaultAddr string) (*rt.Re
 	}
 	return &info, nil
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (r *Retrieve) CheckReceiptExecOk() bool {
+	return true
+}

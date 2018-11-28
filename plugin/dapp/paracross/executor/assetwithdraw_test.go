@@ -50,7 +50,7 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetApi(suite.api)
+	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = true
 
 	// setup block

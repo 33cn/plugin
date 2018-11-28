@@ -9,7 +9,7 @@ jobs:
   include:
     - stage: check_fmt
       sudo: require
-      go: "1.9.x"
+      go: "1.11.x"
       install:
         - go get -u golang.org/x/tools/cmd/goimports
         - go get -u gopkg.in/alecthomas/gometalinter.v2

@@ -92,7 +92,7 @@ func (c *Jrpc) ShowPrivacyAccountInfo(in *pty.ReqPPrivacyAccount, result *json.R
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
@@ -108,7 +108,7 @@ func (c *Jrpc) ShowPrivacyAccountSpend(in *pty.ReqPrivBal4AddrToken, result *jso
 		log.Info("ShowPrivacyAccountSpend", "return err info", err)
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
@@ -118,7 +118,7 @@ func (c *Jrpc) ShowPrivacykey(in *types.ReqString, result *json.RawMessage) erro
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
@@ -178,7 +178,7 @@ func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interfac
 		return err
 	}
 	var txdetails rpctypes.WalletTxDetails
-	err = rpctypes.ConvertWalletTxDetailToJson(reply.(*types.WalletTxDetails), &txdetails)
+	err = rpctypes.ConvertWalletTxDetailToJSON(reply.(*types.WalletTxDetails), &txdetails)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (c *Jrpc) RescanUtxos(in *pty.ReqRescanUtxos, result *json.RawMessage) erro
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
@@ -202,7 +202,7 @@ func (c *Jrpc) EnablePrivacy(in *pty.ReqEnablePrivacy, result *json.RawMessage) 
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 

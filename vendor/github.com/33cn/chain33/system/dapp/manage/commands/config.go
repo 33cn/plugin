@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ConfigCmd config command
 func ConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -32,7 +33,7 @@ func ConfigCmd() *cobra.Command {
 	return cmd
 }
 
-// config transaction
+// ConfigTxCmd config transaction
 func ConfigTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config_tx",
@@ -68,7 +69,7 @@ func configTx(cmd *cobra.Command, args []string) {
 	}
 	tx := &types.Transaction{Payload: types.Encode(modify)}
 	var err error
-	tx, err = types.FormatTx(util.GetRealExecName(paraName, "manage"), tx)
+	tx, err = types.FormatTx(util.GetParaExecName(paraName, "manage"), tx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -77,7 +78,7 @@ func configTx(cmd *cobra.Command, args []string) {
 	fmt.Println(hex.EncodeToString(txHex))
 }
 
-// query config
+// QueryConfigCmd  query config
 func QueryConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query_config",
@@ -101,11 +102,11 @@ func queryConfig(cmd *cobra.Command, args []string) {
 		Data: key,
 	}
 	var params types.Query4Cli
-	params.Execer = util.GetRealExecName(paraName, "manage")
+	params.Execer = util.GetParaExecName(paraName, "manage")
 	params.FuncName = "GetConfigItem"
 	params.Payload = req
 
 	var res types.ReplyConfig
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

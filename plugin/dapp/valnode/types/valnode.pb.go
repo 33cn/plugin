@@ -3,24 +3,56 @@
 
 package types
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 type ValNode struct {
-	PubKey []byte `protobuf:"bytes,1,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
-	Power  int64  `protobuf:"varint,2,opt,name=power" json:"power,omitempty"`
+	PubKey               []byte   `protobuf:"bytes,1,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
+	Power                int64    `protobuf:"varint,2,opt,name=power,proto3" json:"power,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ValNode) Reset()                    { *m = ValNode{} }
-func (m *ValNode) String() string            { return proto.CompactTextString(m) }
-func (*ValNode) ProtoMessage()               {}
-func (*ValNode) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (m *ValNode) Reset()         { *m = ValNode{} }
+func (m *ValNode) String() string { return proto.CompactTextString(m) }
+func (*ValNode) ProtoMessage()    {}
+func (*ValNode) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38e9a3523ca7e0ea, []int{0}
+}
+
+func (m *ValNode) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ValNode.Unmarshal(m, b)
+}
+func (m *ValNode) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ValNode.Marshal(b, m, deterministic)
+}
+func (m *ValNode) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNode.Merge(m, src)
+}
+func (m *ValNode) XXX_Size() int {
+	return xxx_messageInfo_ValNode.Size(m)
+}
+func (m *ValNode) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValNode.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValNode proto.InternalMessageInfo
 
 func (m *ValNode) GetPubKey() []byte {
 	if m != nil {
@@ -37,13 +69,36 @@ func (m *ValNode) GetPower() int64 {
 }
 
 type ValNodes struct {
-	Nodes []*ValNode `protobuf:"bytes,1,rep,name=nodes" json:"nodes,omitempty"`
+	Nodes                []*ValNode `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *ValNodes) Reset()                    { *m = ValNodes{} }
-func (m *ValNodes) String() string            { return proto.CompactTextString(m) }
-func (*ValNodes) ProtoMessage()               {}
-func (*ValNodes) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+func (m *ValNodes) Reset()         { *m = ValNodes{} }
+func (m *ValNodes) String() string { return proto.CompactTextString(m) }
+func (*ValNodes) ProtoMessage()    {}
+func (*ValNodes) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38e9a3523ca7e0ea, []int{1}
+}
+
+func (m *ValNodes) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ValNodes.Unmarshal(m, b)
+}
+func (m *ValNodes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ValNodes.Marshal(b, m, deterministic)
+}
+func (m *ValNodes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNodes.Merge(m, src)
+}
+func (m *ValNodes) XXX_Size() int {
+	return xxx_messageInfo_ValNodes.Size(m)
+}
+func (m *ValNodes) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValNodes.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValNodes proto.InternalMessageInfo
 
 func (m *ValNodes) GetNodes() []*ValNode {
 	if m != nil {
@@ -56,27 +111,52 @@ type ValNodeAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*ValNodeAction_Node
 	//	*ValNodeAction_BlockInfo
-	Value isValNodeAction_Value `protobuf_oneof:"value"`
-	Ty    int32                 `protobuf:"varint,3,opt,name=Ty" json:"Ty,omitempty"`
+	Value                isValNodeAction_Value `protobuf_oneof:"value"`
+	Ty                   int32                 `protobuf:"varint,3,opt,name=Ty,proto3" json:"Ty,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
 }
 
-func (m *ValNodeAction) Reset()                    { *m = ValNodeAction{} }
-func (m *ValNodeAction) String() string            { return proto.CompactTextString(m) }
-func (*ValNodeAction) ProtoMessage()               {}
-func (*ValNodeAction) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+func (m *ValNodeAction) Reset()         { *m = ValNodeAction{} }
+func (m *ValNodeAction) String() string { return proto.CompactTextString(m) }
+func (*ValNodeAction) ProtoMessage()    {}
+func (*ValNodeAction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38e9a3523ca7e0ea, []int{2}
+}
+
+func (m *ValNodeAction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ValNodeAction.Unmarshal(m, b)
+}
+func (m *ValNodeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ValNodeAction.Marshal(b, m, deterministic)
+}
+func (m *ValNodeAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNodeAction.Merge(m, src)
+}
+func (m *ValNodeAction) XXX_Size() int {
+	return xxx_messageInfo_ValNodeAction.Size(m)
+}
+func (m *ValNodeAction) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValNodeAction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValNodeAction proto.InternalMessageInfo
 
 type isValNodeAction_Value interface {
 	isValNodeAction_Value()
 }
 
 type ValNodeAction_Node struct {
-	Node *ValNode `protobuf:"bytes,1,opt,name=node,oneof"`
-}
-type ValNodeAction_BlockInfo struct {
-	BlockInfo *TendermintBlockInfo `protobuf:"bytes,2,opt,name=blockInfo,oneof"`
+	Node *ValNode `protobuf:"bytes,1,opt,name=node,proto3,oneof"`
 }
 
-func (*ValNodeAction_Node) isValNodeAction_Value()      {}
+type ValNodeAction_BlockInfo struct {
+	BlockInfo *TendermintBlockInfo `protobuf:"bytes,2,opt,name=blockInfo,proto3,oneof"`
+}
+
+func (*ValNodeAction_Node) isValNodeAction_Value() {}
+
 func (*ValNodeAction_BlockInfo) isValNodeAction_Value() {}
 
 func (m *ValNodeAction) GetValue() isValNodeAction_Value {
@@ -166,12 +246,12 @@ func _ValNodeAction_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Value.(type) {
 	case *ValNodeAction_Node:
 		s := proto.Size(x.Node)
-		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *ValNodeAction_BlockInfo:
 		s := proto.Size(x.BlockInfo)
-		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case nil:
@@ -182,13 +262,36 @@ func _ValNodeAction_OneofSizer(msg proto.Message) (n int) {
 }
 
 type ReqNodeInfo struct {
-	Height int64 `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
+	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqNodeInfo) Reset()                    { *m = ReqNodeInfo{} }
-func (m *ReqNodeInfo) String() string            { return proto.CompactTextString(m) }
-func (*ReqNodeInfo) ProtoMessage()               {}
-func (*ReqNodeInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
+func (m *ReqNodeInfo) Reset()         { *m = ReqNodeInfo{} }
+func (m *ReqNodeInfo) String() string { return proto.CompactTextString(m) }
+func (*ReqNodeInfo) ProtoMessage()    {}
+func (*ReqNodeInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38e9a3523ca7e0ea, []int{3}
+}
+
+func (m *ReqNodeInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqNodeInfo.Unmarshal(m, b)
+}
+func (m *ReqNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqNodeInfo.Marshal(b, m, deterministic)
+}
+func (m *ReqNodeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqNodeInfo.Merge(m, src)
+}
+func (m *ReqNodeInfo) XXX_Size() int {
+	return xxx_messageInfo_ReqNodeInfo.Size(m)
+}
+func (m *ReqNodeInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqNodeInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqNodeInfo proto.InternalMessageInfo
 
 func (m *ReqNodeInfo) GetHeight() int64 {
 	if m != nil {
@@ -198,13 +301,36 @@ func (m *ReqNodeInfo) GetHeight() int64 {
 }
 
 type ReqBlockInfo struct {
-	Height int64 `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
+	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqBlockInfo) Reset()                    { *m = ReqBlockInfo{} }
-func (m *ReqBlockInfo) String() string            { return proto.CompactTextString(m) }
-func (*ReqBlockInfo) ProtoMessage()               {}
-func (*ReqBlockInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
+func (m *ReqBlockInfo) Reset()         { *m = ReqBlockInfo{} }
+func (m *ReqBlockInfo) String() string { return proto.CompactTextString(m) }
+func (*ReqBlockInfo) ProtoMessage()    {}
+func (*ReqBlockInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_38e9a3523ca7e0ea, []int{4}
+}
+
+func (m *ReqBlockInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqBlockInfo.Unmarshal(m, b)
+}
+func (m *ReqBlockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqBlockInfo.Marshal(b, m, deterministic)
+}
+func (m *ReqBlockInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqBlockInfo.Merge(m, src)
+}
+func (m *ReqBlockInfo) XXX_Size() int {
+	return xxx_messageInfo_ReqBlockInfo.Size(m)
+}
+func (m *ReqBlockInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqBlockInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqBlockInfo proto.InternalMessageInfo
 
 func (m *ReqBlockInfo) GetHeight() int64 {
 	if m != nil {
@@ -221,9 +347,9 @@ func init() {
 	proto.RegisterType((*ReqBlockInfo)(nil), "types.ReqBlockInfo")
 }
 
-func init() { proto.RegisterFile("valnode.proto", fileDescriptor1) }
+func init() { proto.RegisterFile("valnode.proto", fileDescriptor_38e9a3523ca7e0ea) }
 
-var fileDescriptor1 = []byte{
+var fileDescriptor_38e9a3523ca7e0ea = []byte{
 	// 261 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x90, 0x41, 0x4b, 0xc3, 0x30,
 	0x14, 0xc7, 0x97, 0xd6, 0x74, 0xfa, 0xba, 0x0d, 0x09, 0x32, 0xca, 0x4e, 0x25, 0x4c, 0xe9, 0xa9,

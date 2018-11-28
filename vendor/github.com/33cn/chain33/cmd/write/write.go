@@ -26,18 +26,20 @@ import (
 )
 
 var (
-	configPath          = flag.String("f", "write.toml", "configfile")
-	receiveAddr         = "1MHkgR4uUg1ksssR5NFzU6zkzyCqxqjg2Z"
-	rpcAddr             = "http://localhost:8801"
-	currentHeight int64 = 0
-	currentIndex  int64 = 0
-	heightFile          = "height.txt"
+	configPath    = flag.String("f", "write.toml", "configfile")
+	receiveAddr   = "1MHkgR4uUg1ksssR5NFzU6zkzyCqxqjg2Z"
+	rpcAddr       = "http://localhost:8801"
+	currentHeight int64
+	currentIndex  int64
+	heightFile    = "height.txt"
 )
 
+//Config 配置
 type Config struct {
 	UserWriteConf *UserWriteConf
 }
 
+//UserWriteConf 用户配置
 type UserWriteConf struct {
 	ReceiveAddr   string
 	CurrentHeight int64
@@ -193,12 +195,12 @@ func scanWrite() {
 				Expire: "0",
 			}
 			var signed string
-			err = rpc.Call("Chain33.SignRawTx", paramsReqSignRawTx, &signed)
+			rpc.Call("Chain33.SignRawTx", paramsReqSignRawTx, &signed)
 			paramsRaw := rpctypes.RawParm{
 				Data: signed,
 			}
 			var sent string
-			err = rpc.Call("Chain33.SendTransaction", paramsRaw, &sent)
+			rpc.Call("Chain33.SendTransaction", paramsRaw, &sent)
 			f, _ := os.OpenFile(heightFile, os.O_RDWR, 0666)
 			height := strconv.FormatInt(currentHeight, 10)
 			index := strconv.FormatInt(currentIndex, 10)

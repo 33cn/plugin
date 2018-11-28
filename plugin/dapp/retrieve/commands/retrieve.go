@@ -81,7 +81,7 @@ func backupCmd(cmd *cobra.Command, args []string) {
 		DelayPeriod: delay,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -118,7 +118,7 @@ func prepareCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -145,7 +145,7 @@ func performCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -172,7 +172,7 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -232,7 +232,7 @@ func queryRetrieveCmd(cmd *cobra.Command, args []string) {
 	params.Payload = req
 
 	var res rt.RetrieveQuery
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseRerieveDetail)
 	ctx.Run()
 }

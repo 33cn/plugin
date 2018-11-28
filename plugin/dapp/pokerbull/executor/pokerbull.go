@@ -139,3 +139,8 @@ func delPBGameStatusAndPlayer(status int32, player int32, value, index int64) *t
 	kv.Value = nil
 	return kv
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (g *PokerBull) CheckReceiptExecOk() bool {
+	return true
+}

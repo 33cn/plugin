@@ -16,25 +16,6 @@ var (
 	// ParaX paracross exec name
 	ParaX = "paracross"
 	glog  = log.New("module", ParaX)
-
-	/*
-		logInfo = map[int64]*types.LogInfo{
-			TyLogParacrossCommit:  {reflect.TypeOf(ReceiptParacrossCommit{}), "LogParacrossCommit"},
-			TyLogParacrossCommitDone:  {reflect.TypeOf(ReceiptParacrossDone{}), "LogParacrossDone"},
-			TyLogParacrossCommitRecord: {reflect.TypeOf(ReceiptParacrossRecord{}), "LogParacrossCommitRecord"},
-			TyLogParaAssetTransfer: {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParacrossAssetTransfer"},
-			TyLogParaAssetWithdraw:   {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParacrossAssetWithdraw"},
-			TyLogParacrossMiner:  {reflect.TypeOf(ReceiptParacrossMiner{}), "LogParacrossMiner"},
-			TyLogParaAssetDeposit: {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParacrossAssetDeposit"},
-		}*/
-
-	// init query rpc
-	/* TODO-TODO
-	types.RegisterRPCQueryHandle("ParacrossGetTitle", &ParacrossGetTitle{})
-	types.RegisterRPCQueryHandle("paracrossListTitles", &paracrossListTitles{})
-	types.RegisterRPCQueryHandle("paracrossGetTitleHeight", &paracrossGetTitleHeight{})
-	types.RegisterRPCQueryHandle("paracrossGetAssetTxResult", &paracrossGetAssetTxResult{})
-	*/
 )
 
 func init() {
@@ -64,13 +45,13 @@ func NewType() *ParacrossType {
 // GetLogMap get receipt log map
 func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogParacrossCommit:       {reflect.TypeOf(ReceiptParacrossCommit{}), "LogParacrossCommit"},
-		TyLogParacrossCommitDone:   {reflect.TypeOf(ReceiptParacrossDone{}), "LogParacrossCommitDone"},
-		TyLogParacrossCommitRecord: {reflect.TypeOf(ReceiptParacrossRecord{}), "LogParacrossCommitRecord"},
-		TyLogParaAssetWithdraw:     {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParaAssetWithdraw"},
-		TyLogParaAssetTransfer:     {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParaAssetTransfer"},
-		TyLogParaAssetDeposit:      {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogParaAssetDeposit"},
-		TyLogParacrossMiner:        {reflect.TypeOf(ReceiptParacrossMiner{}), "LogParacrossMiner"},
+		TyLogParacrossCommit:       {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
+		TyLogParacrossCommitDone:   {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
+		TyLogParacrossCommitRecord: {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
+		TyLogParaAssetWithdraw:     {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
+		TyLogParaAssetTransfer:     {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
+		TyLogParaAssetDeposit:      {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParacrossMiner:        {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
 	}
 }
 

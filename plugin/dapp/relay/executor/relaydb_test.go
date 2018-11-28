@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -153,7 +154,7 @@ func (s *suiteRelayDB) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -336,7 +337,7 @@ func (s *suiteAccept) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -534,7 +535,7 @@ func (s *suiteConfirm) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -823,7 +824,7 @@ func (s *suiteVerify) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1054,7 +1055,7 @@ func (s *suiteVerifyCli) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1129,7 +1130,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1197,8 +1198,10 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_1() {
 	s.Zero(log.LastBaseHeight)
 	s.Equal(head2.Height, log.NewHeight)
 	s.Zero(log.NewBaseHeight)
-	s.Equal(headers.BtcHeader, log.Headers)
-
+	s.Equal(len(headers.BtcHeader), len(log.Headers))
+	for i, h := range headers.BtcHeader {
+		s.Equal(true, proto.Equal(h, log.Headers[i]))
+	}
 }
 
 //not continuous
@@ -1325,8 +1328,10 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_4() {
 	s.Zero(log.LastBaseHeight)
 	s.Equal(head5.Height, log.NewHeight)
 	s.Equal(head4.Height, log.NewBaseHeight)
-	s.Equal(headers.BtcHeader, log.Headers)
-
+	s.Equal(len(headers.BtcHeader), len(log.Headers))
+	for i, h := range headers.BtcHeader {
+		s.Equal(true, proto.Equal(h, log.Headers[i]))
+	}
 }
 
 func TestRunSuiteSaveBtcHeader(t *testing.T) {

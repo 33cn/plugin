@@ -53,8 +53,13 @@ func (n *Norm) CheckTx(tx *types.Transaction, index int) error {
 }
 
 // Key for norm
-func Key(str string) (key []byte) {
+func Key(str []byte) (key []byte) {
 	key = append(key, []byte("mavl-norm-")...)
 	key = append(key, str...)
 	return key
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (n *Norm) CheckReceiptExecOk() bool {
+	return true
 }

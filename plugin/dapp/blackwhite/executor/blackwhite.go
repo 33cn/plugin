@@ -285,3 +285,8 @@ func heightIndexToIndex(height int64, index int32) int64 {
 func (c *Blackwhite) GetPayloadValue() types.Message {
 	return &gt.BlackwhiteAction{}
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Blackwhite) CheckReceiptExecOk() bool {
+	return true
+}
