@@ -1,27 +1,28 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package autotest
 
 import (
 	"reflect"
 
-	. "github.com/33cn/chain33/cmd/autotest/types"
-	. "github.com/33cn/chain33/system/dapp/coins/autotest"
+	"github.com/33cn/chain33/cmd/autotest/types"
+	"github.com/33cn/chain33/system/dapp/coins/autotest"
 )
 
 type tokenAutoTest struct {
-	SimpleCaseArr            []SimpleCase            `toml:"SimpleCase,omitempty"`
+	SimpleCaseArr            []types.SimpleCase            `toml:"SimpleCase,omitempty"`
 	TokenPreCreateCaseArr    []TokenPreCreateCase    `toml:"TokenPreCreateCase,omitempty"`
 	TokenFinishCreateCaseArr []TokenFinishCreateCase `toml:"TokenFinishCreateCase,omitempty"`
-	TransferCaseArr          []TransferCase          `toml:"TransferCase,omitempty"`
-	WithdrawCaseArr          []WithdrawCase          `toml:"WithdrawCase,omitempty"`
+	TransferCaseArr          []autotest.TransferCase          `toml:"TransferCase,omitempty"`
+	WithdrawCaseArr          []autotest.WithdrawCase          `toml:"WithdrawCase,omitempty"`
 	TokenRevokeCaseArr       []TokenRevokeCase       `toml:"TokenRevokeCase,omitempty"`
 }
 
 func init() {
 
-	RegisterAutoTest(tokenAutoTest{})
+	types.RegisterAutoTest(tokenAutoTest{})
 
 }
 

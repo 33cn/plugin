@@ -68,9 +68,9 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawHashlockSendTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
+	return nil, types.ErrNotSupport
+
 }
 
 // GetTypeMap method
