@@ -113,7 +113,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 	for i := 0; i < len(commit.Status.CrossTxHashs); i++ {
 		success := util.BitMapBit(commit.Status.CrossTxResult, uint32(i))
 
-		paraTx, err := GetTx(c.GetApi(), commit.Status.CrossTxHashs[i])
+		paraTx, err := GetTx(c.GetAPI(), commit.Status.CrossTxHashs[i])
 		if err != nil {
 			clog.Crit("paracross.Commit Load Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
@@ -353,4 +353,9 @@ func (c *Paracross) allowIsParaAssetTx(execer []byte) bool {
 		return true
 	}
 	return false
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Paracross) CheckReceiptExecOk() bool {
+	return true
 }

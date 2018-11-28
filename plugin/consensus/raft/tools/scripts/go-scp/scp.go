@@ -181,7 +181,7 @@ func remoteScp(si *ScpInfo, reqnum chan struct{}) {
 	}()
 	ScpFileFromLocalToRemote(si)
 	//session, err := sshconnect("ubuntu", "Fuzamei#123456", "raft15258.chinacloudapp.cn", 22)
-	fmt.Println("remoteScp file sucessfully!:")
+	fmt.Println("remoteScp file successfully!:")
 
 }
 

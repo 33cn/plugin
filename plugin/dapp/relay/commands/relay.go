@@ -398,7 +398,7 @@ func relayOrder(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -441,7 +441,7 @@ func relayAccept(cmd *cobra.Command, args []string) {
 		CoinWaits: coinwait,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -481,7 +481,7 @@ func relayRevoke(cmd *cobra.Command, args []string) {
 		Action:  act,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -516,7 +516,7 @@ func relayConfirm(cmd *cobra.Command, args []string) {
 		TxHash:  txHash,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -566,7 +566,7 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -617,6 +617,6 @@ func relayVerifyBTC(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
 	ctx.RunWithoutMarshal()
 }

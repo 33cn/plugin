@@ -97,7 +97,7 @@ func (c *Cert) loadHistoryByPrefix() error {
 		Direction: 0,
 		Count:     0,
 	}
-	result, err := c.DriverBase.GetApi().LocalList(parm)
+	result, err := c.DriverBase.GetAPI().LocalList(parm)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (c *Cert) loadHistoryByPrefix() error {
 func (c *Cert) loadHistoryByHeight() error {
 	key := calcCertHeightKey(c.GetHeight())
 	parm := &types.LocalDBGet{Keys: [][]byte{key}}
-	result, err := c.DriverBase.GetApi().LocalGet(parm)
+	result, err := c.DriverBase.GetAPI().LocalGet(parm)
 	if err != nil {
 		return err
 	}
@@ -138,4 +138,9 @@ func (c *Cert) loadHistoryByHeight() error {
 		}
 	}
 	return ct.ErrGetHistoryCertData
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Cert) CheckReceiptExecOk() bool {
+	return true
 }

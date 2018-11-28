@@ -520,9 +520,9 @@ func (action *Action) checkPlayerExistInGame() bool {
 	}
 
 	var value pkt.PBGameRecord
-	lenght := len(values)
-	if lenght != 0 {
-		valueBytes := values[lenght-1]
+	length := len(values)
+	if length != 0 {
+		valueBytes := values[length-1]
 		err := types.Decode(valueBytes, &value)
 		if err == nil && value.Status == pkt.PBGameActionQuit {
 			return false

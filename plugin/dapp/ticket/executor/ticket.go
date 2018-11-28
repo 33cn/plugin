@@ -186,3 +186,8 @@ func (t *Ticket) CheckTx(tx *types.Transaction, index int) error {
 	}
 	return nil
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (t *Ticket) CheckReceiptExecOk() bool {
+	return true
+}

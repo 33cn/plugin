@@ -160,7 +160,7 @@ func evmBalance(cmd *cobra.Command, args []string) {
 		StateHash: "",
 	}
 	var res []*rpctypes.Account
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.GetBalance", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetBalance", params, &res)
 	ctx.SetResultCb(parseGetBalanceRes)
 	ctx.Run()
 }
@@ -240,7 +240,7 @@ func createContract(cmd *cobra.Command, args []string) {
 		Data: data,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -376,7 +376,7 @@ func callContract(cmd *cobra.Command, args []string) {
 		Data: data,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -681,7 +681,7 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 		Data: data,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -729,7 +729,7 @@ func evmWithdraw(cmd *cobra.Command, args []string) {
 		Data: data,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
 

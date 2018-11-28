@@ -154,7 +154,7 @@ func (s *suiteRelayDB) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -337,7 +337,7 @@ func (s *suiteAccept) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -535,7 +535,7 @@ func (s *suiteConfirm) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -824,7 +824,7 @@ func (s *suiteVerify) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1055,7 +1055,7 @@ func (s *suiteVerifyCli) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1130,7 +1130,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
