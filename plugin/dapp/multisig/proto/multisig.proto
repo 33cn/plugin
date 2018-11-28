@@ -1,0 +1,331 @@
+syntax = "proto3";
+import "account.proto";
+package types;
+
+//////////////////////////////////////////////////////////////////////////////
+// message for multisig start/////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//多重签名账户的状态信息，存在在statedb中，通过多重签名账户作为key值
+//createaddr: 创建多重签名地址的创建者账户
+//multisigaddr: 多重签名地址
+//owners: 可以操作此多重签名地址的owner账户列表
+//DailyLimit: 不同资产的每日限额，通过symbol来区分，本连的原生币，以及跨链过来的其他链的原生币
+//txCount:记录此多重签名地址上提交的withdraw交易数
+//requiredweight:确认一笔withdraw交易需要的权重。
+message MultiSig {
+    string 								createAddr        	= 1;
+    string 								multiSigAddr      	= 2;
+    repeated Owner           			owners				= 3;
+    repeated DailyLimit          		dailyLimits   		= 4;
+    uint64           					txCount				= 5;
+	uint64           					requiredWeight		= 6;
+}
+
+//这个地址是否已经确认某个交易
+message ConfirmedOwner {
+    repeated Owner  confirmedOwner = 1;
+}
+
+//记录提交的交易详情，在满足确认条件后执行data中的交易
+//txHash:用于存贮提交的确认交易。存贮在localdb中，通过txhash可以获取
+message MultiSigTx {
+	uint64			txid			= 1;
+    string			txHash			= 2;
+    bool			executed		= 3;
+	uint64			txType			= 4;
+	string 			multiSigAddr    = 5;
+	repeated Owner  confirmedOwner 	= 6;
+	
+}
+// owner 结构体：owner账户地址，以及权重
+message Owner {
+	string ownerAddr =1;
+    uint64 weight=2;
+}
+
+// 资产symbol的定义，可能存在不同的平行链上发布相同名字的token,
+//或者在主链发布一个token：HYB 而在guodun的平行链上也会发布一个token：HYB
+// coins.bty和coins.guodun
+//1:原始数据
+//主链上：原始币symbol：BTY,token.symbol(例如：TEST)
+//guodun平行链上的原始币symbol：guodun，token.symbol(例如：TEST)
+//2:主链原始币转移到平行链上：
+//guodun平行链上的现有原始币symbol：guodun，token.symbol(例如：TEST)
+//以及主链转移过来的symbol： coins.BTY和token.TEST (主链转移过来的资产在平行链上的symbol)
+
+//每日资产限额，不同的资产价格不一致，需要设置各自的每日限额。没有设置或者限额是0时，表示不能取币
+//spentToday今天已经花费的额度。用于和dailyLimit做对比，超过每日限额时需要多重签名
+//lastDay记录当天开始的时间戳，新的一天需要重置spentToday为初始值0，并修改lastDay的时间戳
+message DailyLimit {
+	string symbol 		=1;
+	string execer 		=2;
+    uint64 dailyLimit	=3;
+	uint64 spentToday	=4;
+	int64  lastDay 		=5;
+}
+
+message SymbolDailyLimit {
+	string symbol 		=1;
+	string execer 		=2;
+    uint64 dailyLimit	=3;
+}
+
+//MultiSig 所有可能的交易action	
+message MultiSigAction {
+    oneof value {
+        MultiSigAccCreate       	multiSigAccCreate   	= 1;
+        MultiSigOwnerOperate    	multiSigOwnerOperate 	= 2;
+        MultiSigAccOperate    		multiSigAccOperate 		= 3;
+        MultiSigConfirmTx        	multiSigConfirmTx       = 4;//确认或者撤销已确认
+		MultiSigExecTransfer     	multiSigExecTransferTo 	= 5;//合约中外部账户转账到多重签名账户，Addr --->multiSigAddr
+		MultiSigExecTransfer     	multiSigExecTransferFrom = 6;//合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
+
+    }
+    int32 Ty = 7;
+}
+
+//创建多重签名账户时需要的信息：创建时最少初始化两个owners，资产的每日限额初始时可以不设置
+message MultiSigAccCreate {
+    repeated Owner						owners				= 1;
+	uint64          					requiredWeight		= 2;
+    SymbolDailyLimit          			dailyLimit			= 3;
+}
+
+//对MultiSigAccount账户owner的操作：add/del/replace/modify
+message MultiSigOwnerOperate {
+	string multiSigAccAddr	= 1;
+    string oldOwner 		= 2;
+    string newOwner			= 3;
+	uint64 newWeight		= 4;
+	uint64 operateFlag		= 5;
+}
+
+//对MultiSigAccount账户的操作：modify/add:SymbolDailyLimit,requiredweight
+//修改或者添加每日限额，或者请求权重的值。
+message MultiSigAccOperate {
+	string 				multiSigAccAddr		= 1;
+	SymbolDailyLimit 	dailyLimit 			= 2;
+	uint64 				newRequiredWeight 	= 3;
+	bool 				operateFlag			= 4;
+}
+
+//多重签名合约中账户之间转币操作:增加一个from的字段实现MultiSigAddr<--->addr之间的转账
+//需要判断from地址是否是多重签名地址
+//将MultiSig合约中from地址上execname+symbol的资产转移到to地址
+message MultiSigExecTransfer {
+	string symbol		= 1;
+	int64  amount		= 2;
+	string note			= 3;
+	string execname		= 4;
+	string to			= 5;
+	string from			= 6;
+}
+
+//多重签名账户withdraw交易的确认或者取消确认
+//multisigaccaddr:多重签名账户地址
+//transactionid:多重签名账户上的withdraw交易的内部id
+message MultiSigConfirmTx {
+	string multiSigAccAddr	= 1;
+	uint64 txId				= 2;
+	bool   confirmOrRevoke	= 3;
+}
+
+
+
+//query的接口：
+//第一步:获取所有多重签名账号
+//第二步:获取指定多重签名账号的状态信息：包含创建者，owners，weight权重，以及各个资产的每日限量
+//第三步:获取指定多重签名账户下的peding或者executed的交易id
+//第四步:获取指定txid的详细信息：已经确认此交易的owners以及交易的详细信息
+//第五步:获取指定多重签名账户当日的免多重签名的可用余额
+
+//获取所有多重签名账号
+message ReqMultiSigAccs {
+	int64	start	= 1;
+	int64	end		= 2;
+}
+
+message ReplyMultiSigAccs {
+    repeated string address = 1;
+}
+
+//获取指定多重签名账号的状态信息
+message ReqMultiSigAccInfo {
+	string     multiSigAccAddr = 1;
+}
+
+//指定多重签名账号的状态信息
+message ReplyMultiSigAccInfo {
+    string 								createAddr        	= 1;
+    string 								multiSigAddr      	= 2;
+    repeated Owner           			owners				= 3;
+    repeated DailyLimit          		dailyLimits   		= 4;
+    uint64           					txCount				= 5;
+	uint64           					requiredWeight		= 6;
+}
+
+//获取txids设置过滤条件和区间，pending, executed
+message ReqMultiSigTxids {
+    string	multiSigAddr	= 1;
+	uint64	fromTxId		= 2;
+	uint64	toTxId			= 3;
+	bool   	pending			= 4;
+	bool   	executed		= 5;
+}
+message ReplyMultiSigTxids {
+    string			multiSigAddr	= 1;
+	repeated uint64	txids			= 2;
+}
+
+
+//获取txid交易的信息，以及参与确认的owner信息
+message ReqMultiSigTxInfo {
+    string	multiSigAddr	= 1;
+	uint64	txId			= 2;
+}
+
+message ReplyMultiSigTxInfo {
+    MultiSigTx			multiSigTxInfo	= 1;
+}
+
+//获取指定资产当日剩余的免多重签名的余额
+message ReqMultiSigAccUnSpentToday {
+	string multiSigAddr = 1;
+	string execer 		= 2;
+	string symbol 		= 3;
+}
+
+message ReplyUnSpentAssets {
+	repeated UnSpentAssets  unSpentAssets = 3;
+}
+
+message UnSpentAssets {
+	Assets assets = 1; 
+	uint64 amount = 2;
+}
+		
+//交易执行结果的Receipt信息:
+
+//TyLogMultiSigAccCreate交易的执行Receipt
+message ReceiptMultiSig  {
+	string multiSigAddr = 1;
+}
+
+//owner的操作:
+//TyLogMultiSigOwnerAdd     = 10001 //输出add的owner：addr和weight
+//TyLogMultiSigOwnerDel     = 10002 //输出del的owner：addr和weight
+
+message ReceiptOwnerAddOrDel  {
+	string  multiSigAddr 	= 1;
+	Owner   owner 			= 2;
+	bool    addOrDel	 	= 3;
+}
+
+//TyLogMultiSigOwnerModify  = 10003 //输出modify的owner：preweight以及currentweight
+//TyLogMultiSigOwnerReplace = 10004 //输出old的owner的信息：以及当前的owner信息：addr+weight
+message ReceiptOwnerModOrRep  {
+	string multiSigAddr 	= 1;
+	Owner  prevOwner 		= 2;
+	Owner  currentOwner 	= 3;
+	bool   modOrRep	 		= 4;
+}	
+
+//多重签名账户的操作：ReqWeight，AssetDailyLimit
+//TyLogMultiSigAccWeightModify     = 10005 //输出修改前后确认权重的值：preReqWeight和curReqWeight
+message ReceiptWeightModify  {
+	string  multiSigAddr 	= 1;
+	uint64  prevWeight 		= 2;
+	uint64  currentWeight 	= 3;
+}
+//TyLogMultiSigAccDailyLimitAdd    = 10006 //输出add的DailyLimit：Symbol和DailyLimit
+//TyLogMultiSigAccDailyLimitModify = 10007 //输出modify的DailyLimit：preDailyLimit以及currentDailyLimit
+message ReceiptDailyLimitOperate  {
+	string  		multiSigAddr 		= 1;
+	DailyLimit		prevDailyLimit 		= 2;
+	DailyLimit  	curDailyLimit	= 3;
+	bool 			addOrModify 		= 4;
+}		
+	
+//交易确认或者撤销（撤销值针对未执行的交易）
+//TyLogMultiSigConfirmTx       = 10008 //输出确认的交易id，以及owner信息：addr+weight
+//TyLogMultiSigConfirmTxRevoke = 10009 //输出撤销确认的交易id，以及owner信息：addr+weight
+message ReceiptConfirmTx  {
+	MultiSigTxOwner multiSigTxOwner		= 1;
+	bool 			confirmeOrRevoke 	= 2;
+}
+//可能会修改dailyLimit的相关属性
+message ReceiptAccDailyLimitUpdate  {
+	string  		multiSigAddr	= 1;
+	DailyLimit  	prevDailyLimit	= 2;
+	DailyLimit  	curDailyLimit	= 3;
+}
+//执行MultiSigAcc相关的交易可能会修改tx的执行状态和增加确认owner
+message ReceiptMultiSigTx  {
+	MultiSigTxOwner multiSigTxOwner	= 1;
+	bool  			prevExecuted 	= 2;
+	bool  			curExecuted 	= 3;
+	bool  			submitOrConfirm = 4;
+	string			txHash			= 5;
+	uint64			txType			= 6;
+
+}
+
+message ReceiptTxCountUpdate  {
+	string  		multiSigAddr	= 1;
+	uint64          curTxCount		= 2;
+}
+
+message MultiSigTxOwner  {
+	string  		multiSigAddr	= 1;
+	uint64          txid			= 2;
+	Owner      		confirmedOwner	= 3;
+}
+
+//具体转币的处理;
+//TyLogMultiSigExecTransfer = 10010 
+//入币：将from地址在MultiSig合约中的币转移到指定的多重签名账户ExecTransfer中，并将其冻结ExecFrozen
+//注释：使用chain33/types中定义的ReceiptExecAccountTransfer即可
+
+//TyLogMultiSigWithdraw     = 10011 
+//出币：将多重签名地址上冻结的币转给MultiSig合约中TO地址上ExecTransferFrozen
+//注释：使用chain33/types中定义的ReceiptExecAccountTransfer即可	
+
+
+message Uint64 {
+	uint64	data	= 1;
+}
+
+//记录账户收到固定资产的数量
+message AccountAssets {
+	string multiSigAddr = 1;
+	Assets assets 		= 2;
+	int64  amount 		= 3;
+}
+
+//获取多重签名账户上的指定资产或者所有资产
+message ReqAccAssets {
+	string multiSigAddr = 1;
+	Assets assets 		= 2;
+	bool   isAll 		= 3;
+}
+
+message ReplyAccAssets {
+	repeated AccAssets accAssets = 1;
+}
+
+//账户资产信息
+message AccAssets {
+	Assets 		assets 		= 1;
+	int64   	recvAmount 	= 2;
+    Account 	account 	= 3;
+}
+
+message Assets {
+	string execer 		= 1;
+	string symbol 		= 2;
+}
+
+//账户地址列表
+message AccAddress {
+	repeated string address = 1;
+}

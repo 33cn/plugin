@@ -7,6 +7,7 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/game"
 	_ "github.com/33cn/plugin/plugin/dapp/hashlock"
 	_ "github.com/33cn/plugin/plugin/dapp/lottery"
+	_ "github.com/33cn/plugin/plugin/dapp/multisig"
 	_ "github.com/33cn/plugin/plugin/dapp/norm"
 	_ "github.com/33cn/plugin/plugin/dapp/paracross"
 	_ "github.com/33cn/plugin/plugin/dapp/pokerbull"

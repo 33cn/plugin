@@ -1,0 +1,155 @@
+
+cli seed save -p heyubin -s "voice leisure mechanic tape cluster grunt receive joke nurse between monkey lunch save useful cruise"
+
+cli wallet unlock -p heyubin
+
+cli account import_key  -l miner -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
+
+cli account create -l heyubin
+cli account create -l heyubin1
+cli account create -l heyubin2
+cli account create -l heyubin3
+cli account create -l heyubin4
+cli account create -l heyubin5
+cli account create -l heyubin6
+cli account create -l heyubin7
+cli account create -l heyubin8
+
+	
+cli send bty transfer -a 100 -n test  -t 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+
+cli send bty transfer -a 100 -n test  -t "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "17a5NQTf9M2Dz9qBS8KiQ8VUg8qhoYeQbA" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "1DeGvSFX8HAFsuHxhaVkLX56Ke3FzFbdct" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+
+
+				
+第四步：1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd地址创建多重签名的账户，owner：1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF  1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv
+//构建交易
+cli multisig create -d 10 -e coins -s bty -a "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -w "20 10" -r 15				
+
+//交易签名
+cli wallet sign -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -d
+//发送签名后的交易
+cli wallet send -d
+
+//查看创建的账户个数
+cli multisig get_account_count
+
+
+//通过账户index获取账户地址
+cli multisig get_accounts -e 0 -s 0
+
+//通过账户addr获取账户详情
+cli multisig get_acc_info -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc"
+
+
+第五步，向multisig合约中转账 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+cli exec addr -e "multisig"
+14uBEP6LSHKdFvy97pTYRPVPAqij6bteee
+
+// 转账
+cli send bty transfer -a 50 -n test  -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd 
+
+cli account balance -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+
+第六步：从指定账户转账到多重签名地址 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd   --》 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
+
+cli multisig transfer_in -a 40 -e coins -s bty -f 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -t 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -n test
+
+cli wallet sign -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -d 
+
+cli wallet send -d 
+
+//查看1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd地上有40被转出了
+cli account balance -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+            
+//多重签名地址转入40并冻结
+cli account balance -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
+
+cli multisig  get_assets  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
+
+
+第七步：从多重签名账户传出  142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc  --》1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+cli multisig  transfer_out  -a 11 -e coins -s bty -f 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test
+
+//owner 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF 签名发送交易
+cli wallet sign -a 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -d 
+cli wallet send -d 			
+				
+查询账户信息				
+cli multisig get_acc_info -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc"
+
+cli multisig  get_assets  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
+			
+				
+
+// 查询交易计数
+cli multisig  get_tx_count  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
+{
+    "data": 1
+}
+// 查询交易txid
+cli multisig  get_txids  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -s 0 -e 0
+
+// 查询交易信息
+cli multisig  get_tx_info  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 0
+
+
+查询接受地址是否收到币
+cli account balance -a 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+
+
+//接受地址提币
+cli send bty transfer -a 100 -n test  -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+
+owner "1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv" 转账5个币到1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+
+cli multisig  transfer_out  -a 11 -e coins -s bty -f 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test
+
+//owner 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv 签名发送交易
+cli wallet sign -a 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv -d 
+cli wallet send -d 	
+
+第八步：测试add/del owner  使用高权重的owner添加交易 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF  add """"1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo"""" 
+
+cli multisig owner_add  -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc" -o 1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo -w 5
+
+cli wallet sign -a 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -d 
+cli wallet send -d 
+
+查看owner的添加
+cli multisig get_acc_info -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc"
+
+cli multisig  get_tx_info  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 0
+
+//获取指定地址创建的所有多重签名账户
+cli multisig get_cre_accounts -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+// 获取指定账户上指定资产的每日余额
+cli multisig get_unspent  -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc" -e coins -s bty
+
+//del owner
+cli multisig  owner_del  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -o "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
+// modify  dailylimit 
+cli multisig  dailylimit -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -e coins -s bty -d 11
+// modify weight
+cli multisig  weight_modify -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -w 16
+//replace owner
+cli multisig  owner_replace  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -n 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -o 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+// modify owner
+cli multisig  owner_modify  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -o "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -w 11
+
+//确认某笔交易
+cli multisig confirm  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 9
+
+//撤销对某笔交易的确认
+cli multisig confirm  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 9 -c f
