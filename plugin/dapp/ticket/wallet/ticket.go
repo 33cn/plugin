@@ -552,10 +552,8 @@ func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto
 	ta := &ty.TicketAction{}
 	topen := &ty.TicketOpen{MinerAddress: mineraddr, ReturnAddress: returnaddr, Count: count, RandSeed: types.Now().UnixNano()}
 	hashList := make([][]byte, int(count))
-	privStr := ""
 	for i := 0; i < int(count); i++ {
-		privStr = fmt.Sprintf("%x:%d:%d", priv.Bytes(), i, topen.RandSeed)
-		privHash := common.Sha256([]byte(privStr))
+		privHash := common.Sha256([]byte(fmt.Sprintf("%x:%d:%d", priv.Bytes(), i, topen.RandSeed)))
 		pubHash := common.Sha256(privHash)
 		hashList[i] = pubHash
 	}

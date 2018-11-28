@@ -37,6 +37,10 @@ type EVMStateDB interface {
 	SetCode(string, []byte)
 	// GetCodeSize 获取指定地址合约代码大小
 	GetCodeSize(string) int
+	// SetAbi 设置ABI内容
+	SetAbi(addr, abi string)
+	// GetAbi 获取ABI
+	GetAbi(addr string) string
 
 	// AddRefund 合约Gas奖励回馈
 	AddRefund(uint64)
@@ -74,4 +78,7 @@ type EVMStateDB interface {
 	CanTransfer(sender, recipient string, amount uint64) bool
 	// Transfer 转账交易
 	Transfer(sender, recipient string, amount uint64) bool
+
+	// GetBlockHeight 返回当前区块高度
+	GetBlockHeight() int64
 }

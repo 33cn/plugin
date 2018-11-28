@@ -119,6 +119,12 @@
 			"revisionTime": "2018-11-04T16:40:17Z"
 		},
 		{
+			"checksumSHA1": "06pu4WTqbWBAHCJhCLZaI1droeM=",
+			"path": "github.com/golang-collections/collections/stack",
+			"revision": "604e922904d35e97f98a774db7881f049cd8d970",
+			"revisionTime": "2013-07-29T18:54:59Z"
+		},
+		{
 			"checksumSHA1": "BP2buXHHOKxI5eYS2xELVng2kf4=",
 			"path": "github.com/golang/protobuf/jsonpb",
 			"revision": "951a149f90371fb8858c6c979d03bb2583611052",
