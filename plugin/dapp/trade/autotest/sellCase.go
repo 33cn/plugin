@@ -1,43 +1,44 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package autotest
 
 import (
 	"strconv"
 
-	. "github.com/33cn/chain33/cmd/autotest/types"
+	"github.com/33cn/chain33/cmd/autotest/types"
 )
-
+// SellCase defines sell case command
 type SellCase struct {
-	BaseCase
+	types.BaseCase
 	From   string `toml:"from"`
 	Amount string `toml:"amount"`
 }
-
+// SellPack defines sell pack command
 type SellPack struct {
-	BaseCasePack
+	types.BaseCasePack
 	orderInfo *SellOrderInfo
 }
-
+// SellOrderInfo sell order information
 type SellOrderInfo struct {
 	sellID string
 }
+// SendCommand send command of sellcase
+func (testCase *SellCase) SendCommand(packID string) (types.PackFunc, error) {
 
-func (testCase *SellCase) SendCommand(packID string) (PackFunc, error) {
-
-	return DefaultSend(testCase, &SellPack{}, packID)
+	return types.DefaultSend(testCase, &SellPack{}, packID)
 }
-
+// GetCheckHandlerMap defines get check handle for map
 func (pack *SellPack) GetCheckHandlerMap() interface{} {
 
-	funcMap := make(CheckHandlerMapDiscard, 2)
+	funcMap := make(types.CheckHandlerMapDiscard, 2)
 	funcMap["frozen"] = pack.checkFrozen
 	funcMap["balance"] = pack.checkBalance
 
 	return funcMap
 }
-
+// GetDependData defines get depend data function
 func (pack *SellPack) GetDependData() interface{} {
 
 	return pack.orderInfo
@@ -65,8 +66,8 @@ func (pack *SellPack) checkBalance(txInfo map[string]interface{}) bool {
 	pack.orderInfo = &SellOrderInfo{}
 	pack.orderInfo.sellID = sellOrderInfo["sellID"].(string)
 
-	return CheckBalanceDeltaWithAddr(logFee, interCase.From, -fee) &&
-		CheckBalanceDeltaWithAddr(logSend, interCase.From, -amount)
+	return types.CheckBalanceDeltaWithAddr(logFee, interCase.From, -fee) &&
+		types.CheckBalanceDeltaWithAddr(logSend, interCase.From, -amount)
 
 }
 
@@ -82,6 +83,6 @@ func (pack *SellPack) checkFrozen(txInfo map[string]interface{}) bool {
 		"SellerFrozenPrev", logSend["prev"].(map[string]interface{})["frozen"].(string),
 		"SellerFrozenCurr", logSend["current"].(map[string]interface{})["frozen"].(string))
 
-	return CheckFrozenDeltaWithAddr(logSend, interCase.From, amount)
+	return types.CheckFrozenDeltaWithAddr(logSend, interCase.From, amount)
 
 }
