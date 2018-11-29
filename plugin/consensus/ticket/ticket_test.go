@@ -50,9 +50,17 @@ func TestTicket(t *testing.T) {
 	//debug:
 	//js, _ := json.MarshalIndent(detail, "", " ")
 	//fmt.Println(string(js))
+	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 0})
+	assert.Nil(t, err)
+	status, err := mock33.GetAPI().GetWalletStatus()
+	assert.Nil(t, err)
+	assert.Equal(t, false, status.IsAutoMining)
 	assert.Equal(t, int32(2), detail.Receipt.Ty)
 	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
+	status, err = mock33.GetAPI().GetWalletStatus()
+	assert.Nil(t, err)
+	assert.Equal(t, true, status.IsAutoMining)
 	err = mock33.WaitHeight(100)
 	assert.Nil(t, err)
 	//查询票是否自动close，并且购买了新的票
