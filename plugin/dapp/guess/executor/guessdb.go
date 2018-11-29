@@ -207,7 +207,7 @@ func (action *Action) getIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-func (action *Action) GetReceiptLog(game *pkt.GuessGame) *types.ReceiptLog {
+func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	r := &pkt.ReceiptGuessGame{}
 	r.Addr = action.fromaddr
@@ -225,8 +225,13 @@ func (action *Action) GetReceiptLog(game *pkt.GuessGame) *types.ReceiptLog {
 		log.Ty = pkt.TyLogGuessGameTimeout
 	}
 
+	r.Index = game.Index
 	r.GameId = game.GameId
 	r.Status = game.Status
+	r.AdminAddr = game.AdminAddr
+	r.PreStatus = game.PreStatus
+	r.StatusChange = statusChange
+	r.PreIndex = game.PreIndex
 	log.Log = types.Encode(r)
 	return log
 }
@@ -456,8 +461,7 @@ func (action *Action) genTxRnd(txhash []byte) (int64, error) {
 
 // 新建一局游戏
 func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
-	var game *pkt.GuessGame
-	game = &pkt.GuessGame{
+	game := &pkt.GuessGame{
 		GameId:      gameId,
 		Status:      pkt.GuessGameActionStart,
 		//StartTime:   action.blocktime,
@@ -507,7 +511,8 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 		return nil, types.ErrInvalidParam
 	}
 
-	if _, ok := getOptions(start.Options); !ok {
+	options, ok := GetOptions(start.Options)
+	if !ok {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
 			"err", fmt.Sprintf("The options is illegal:%s", start.Options))
 		return nil, types.ErrInvalidParam
@@ -536,16 +541,23 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	}
 
 	gameId := common.ToHex(action.txhash)
-	var game *pkt.GuessGame = nil
 	game, err := action.newGame(gameId, start)
 	if err != nil {
 		return nil, err
 	}
 	game.StartTime = action.blocktime
 	game.AdminAddr = action.fromaddr
+	game.PreIndex = 0
 	game.Index = action.getIndex()
 	game.Status = pkt.GuessGameStatusStart
-	receiptLog := action.GetReceiptLog(game)
+	game.BetStat.TotalBetTimes = 0
+	game.BetStat.TotalBetsNumber = 0
+    for i := 0; i < len(options); i++ {
+		item := &pkt.GuessBetStatItem{Option: options[i], BetsNumber: 0, BetsTimes: 0}
+		game.BetStat.Items = append(game.BetStat.Items, item)
+	}
+
+	receiptLog := action.GetReceiptLog(game, false)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
@@ -582,6 +594,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		return nil, err
 	}
 
+	prevStatus := game.Status
 	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
@@ -591,25 +604,28 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	canBet := action.RefreshStatusByTime(game)
 
 	if canBet == false {
-		receiptLog := action.GetReceiptLog(game)
+		var receiptLog *types.ReceiptLog
+		if prevStatus != game.Status {
+			receiptLog = action.GetReceiptLog(game, true)
+		} else {
+			receiptLog = action.GetReceiptLog(game, false)
+		}
+
 		logs = append(logs, receiptLog)
 		kv = append(kv, action.saveGame(game)...)
 
 		return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 	}
 
-	//如果当前游戏状态可以下注，统一设定游戏状态为GuessGameStatusBet
-	game.Status = pkt.GuessGameStatusBet
-
 	//检查竞猜选项是否合法
-	options, legal := getOptions(game.GetOptions())
+	options, legal := GetOptions(game.GetOptions())
 	if !legal || len(options) == 0{
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
 			game.GetOptions())
 		return nil, types.ErrInvalidParam
 	}
 
-	if !isLegalOption(options, pbBet.GetOption()) {
+	if !IsLegalOption(options, pbBet.GetOption()) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Option illegal",
 			pbBet.GetOption())
 		return nil, types.ErrInvalidParam
@@ -639,33 +655,44 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", checkValue, "err", err.Error())
 		return nil, err
 	}
-
-	bet := &pkt.GuessBet{ Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum}
-	player := &pkt.GuessPlayer{ Addr: action.fromaddr, Bet: bet}
-	game.Plays = append(game.Plays, player)
-
-	exist := false
-	for i := 0; i < len(game.Bets); i ++ {
-		if game.Bets[i].Option == pbBet.GetOption() {
-			exist = true
-			game.Bets[i].BetsNumber += pbBet.GetBetsNum()
-		}
-	}
-
-	if !exist {
-		game.Bets = append(game.Bets, bet)
-	}
-
-	game.BetsNumber += pbBet.GetBetsNum()
-
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	receiptLog := action.GetReceiptLog(game)
+	//如果当前游戏状态可以下注，统一设定游戏状态为GuessGameStatusBet
+	action.ChangeStatus(game, pkt.GuessGameStatusBet)
+	action.AddGuessBet(game, pbBet)
+
+	var receiptLog *types.ReceiptLog
+	if prevStatus != game.Status {
+		receiptLog = action.GetReceiptLog(game, true)
+	} else {
+		receiptLog = action.GetReceiptLog(game, false)
+	}
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) {
+	bet := &pkt.GuessBet{ Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
+	player := &pkt.GuessPlayer{ Addr: action.fromaddr, Bet: bet}
+	game.Plays = append(game.Plays, player)
+
+	for i := 0; i < len(game.BetStat.Items); i ++ {
+		if game.BetStat.Items[i].Option == pbBet.GetOption() {
+			//针对具体选项更新统计项
+			game.BetStat.Items[i].BetsNumber += pbBet.GetBetsNum()
+			game.BetStat.Items[i].BetsTimes++
+
+			//更新整体统计
+			game.BetStat.TotalBetsNumber += pbBet.GetBetsNum()
+			game.BetStat.TotalBetTimes++
+			break
+		}
+	}
+
+	game.BetsNumber += pbBet.GetBetsNum()
 }
 
 func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt, error) {
@@ -686,6 +713,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		return nil, types.ErrInvalidParam
 	}
 
+	prevStatus := game.Status
 	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
@@ -693,20 +721,19 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	//检查竞猜选项是否合法
-	options, legal := getOptions(game.GetOptions())
+	options, legal := GetOptions(game.GetOptions())
 	if !legal || len(options) == 0{
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
 			game.GetOptions())
 		return nil, types.ErrInvalidParam
 	}
 
-	if !isLegalOption(options, publish.GetResult()) {
+	if !IsLegalOption(options, publish.GetResult()) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Option illegal",
 			publish.GetResult())
 		return nil, types.ErrInvalidParam
 	}
 
-	game.Status = pkt.GuessGameStatusPublish
 	game.Result = publish.Result
 
 	//先遍历所有下注数据，对于输家，转移资金到Admin账户合约地址；
@@ -723,14 +750,15 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
+
+	action.ChangeStatus(game, pkt.GuessGameStatusPublish)
 	//计算竞猜正确的筹码总数
-	totalBetsNumber := uint32(0)
+	totalBetsNumber := game.BetStat.TotalBetsNumber
 	winBetsNumber := uint32(0)
-	for j := 0; j < len(game.Bets); j++ {
-		if game.Bets[j].Option == game.Result {
-			winBetsNumber = game.Bets[j].BetsNumber
+	for j := 0; j < len(game.BetStat.Items); j++ {
+		if game.BetStat.Items[j].Option == game.Result {
+			winBetsNumber = game.BetStat.Items[j].BetsNumber
 		}
-		totalBetsNumber += game.Bets[j].BetsNumber
 	}
 
 	//再遍历赢家，按照投注占比分配所有筹码
@@ -763,7 +791,12 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		kv = append(kv, receipt.KV...)
 	}
 
-	receiptLog := action.GetReceiptLog(game)
+	var receiptLog *types.ReceiptLog
+	if prevStatus != game.Status {
+		receiptLog = action.GetReceiptLog(game, true)
+	} else {
+		receiptLog = action.GetReceiptLog(game, false)
+	}
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
@@ -781,6 +814,14 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 		return nil, err
 	}
 
+	if game.Status == pkt.GuessGameStatusPublish ||  game.Status == pkt.GuessGameStatusAbort{
+
+		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "game status not allow abort",
+			game.Status)
+		return nil, err
+	}
+
+	preStatus := game.Status
 	//根据区块链高度或时间刷新游戏状态。
 	action.RefreshStatusByTime(game)
 
@@ -805,16 +846,21 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
-	game.Status = pkt.GuessGameStatusAbort
-	game.Index = action.getIndex(game)
 
-	receiptLog := action.GetReceiptLog(game)
+	if game.Status != preStatus {
+		//说明action.RefreshStatusByTime(game)调用时已经更新过状态和index了，这里直接再改状态就行了。
+		game.Status = pkt.GuessGameStatusAbort
+	} else {
+		action.ChangeStatus(game, pkt.GuessGameStatusAbort)
+	}
+
+	receiptLog := action.GetReceiptLog(game, true)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-func getOptions(strOptions string) (options []string, legal bool){
+func GetOptions(strOptions string) (options []string, legal bool){
 	legal = true
 	items := strings.Split(strOptions, ";")
 	for i := 0 ; i < len(items); i++ {
@@ -832,7 +878,7 @@ func getOptions(strOptions string) (options []string, legal bool){
 	return options, legal
 }
 
-func isLegalOption(options []string, option string) bool {
+func IsLegalOption(options []string, option string) bool {
 	for i := 0; i < len(options); i++ {
 		if options[i] == option {
 			return true
@@ -842,15 +888,25 @@ func isLegalOption(options []string, option string) bool {
 	return false
 }
 
+func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus uint32) {
+	if game.Status != destStatus {
+		game.PreStatus = game.Status
+		game.PreIndex = game.Index
+		game.Status = destStatus
+		game.Index = action.getIndex()
+	}
+
+	return
+}
 func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 	// 检查区块高度是否超过最大下注高度限制，看是否可以下注
 	if game.GetMaxHeight() <= action.height {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Height over limit",
 			action.height, "MaxHeight", game.GetMaxHeight())
 		if game.GetExpireHeight() > action.height {
-			game.Status = pkt.GuessGameStatusStopBet
+			action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
 		} else {
-			game.Status = pkt.GuessGameStatusTimeOut
+			action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
 		}
 
 		canBet = false
@@ -881,9 +937,9 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 				game.GetMaxTime())
 
 			if tNow.After(tExpire) {
-				game.Status = pkt.GuessGameStatusTimeOut
+				action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
 			} else {
-				game.Status = pkt.GuessGameStatusStopBet
+				action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
 			}
 
 			canBet = false
@@ -896,16 +952,13 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 }
 
 func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {
-	MinBetTimeInterval = 2  //2h
-	MinBetTimeoutInterval = 24 //24h
-
 	if action.height + MinBetBlockNum > start.MaxHeight || start.MaxHeight + MinBetTimeoutNum > start.ExpireHeight {
 		return false
 	}
 
 	tNow := time.Now()
-	d1, _ := time.ParseDuration(MinBetTimeInterval)
-	d2, _ := time.ParseDuration(MinBetTimeoutInterval)
+	d1, _ := time.ParseDuration(MinBetTimeInterval)      //最短开奖时间
+	d2, _ := time.ParseDuration(MinBetTimeoutInterval)   //最短游戏过期时间
 	if len(start.GetMaxTime()) == 0 {
 		tNow.Add(d1)
 		start.MaxTime = tNow.Format("2006-01-02 15:04:05")

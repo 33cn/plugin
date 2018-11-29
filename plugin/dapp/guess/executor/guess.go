@@ -45,60 +45,80 @@ func (g *Guess) GetDriverName() string {
 	return pkt.GuessX
 }
 
+//addr prefix
 func calcGuessGameAddrPrefix(addr string) []byte {
 	key := fmt.Sprintf("LODB-guess-addr:%s:", addr)
 	return []byte(key)
 }
 
+//addr index
 func calcGuessGameAddrKey(addr string, index int64) []byte {
 	key := fmt.Sprintf("LODB-guess-addr:%s:%018d", addr, index)
 	return []byte(key)
 }
 
+//status prefix
 func calcGuessGameStatusPrefix(status int32) []byte {
 	key := fmt.Sprintf("LODB-guess-status-index:%d:", status)
 	return []byte(key)
 }
 
+//status index
 func calcGuessGameStatusKey(status int32, index int64) []byte {
 	key := fmt.Sprintf("LODB-guess-status-index:%d:%018d", status, index)
 	return []byte(key)
 }
 
-func calcGuessGameStatusAndPlayerKey(category string, status, index int64) []byte {
-	key := fmt.Sprintf("LODB-guess-category-status:%s:%d:%018d", category, status, index)
+//addr status prefix
+func calcGuessGameAddrStatusPrefix(addr string, status int32) []byte {
+	key := fmt.Sprintf("LODB-guess-addr-status-index:%s:%d:", addr, status)
 	return []byte(key)
 }
 
-func calcGuessGameStatusAndPlayerPrefix(category string, status int32) []byte {
-	var key string
-	key = fmt.Sprintf("LODB-guess-category-status:%s:%d", category, status)
-
+//addr status index
+func calcGuessGameAddrStatusKey(addr string, status int32, index int64) []byte {
+	key := fmt.Sprintf("LODB-guess-addr-status-index:%s:%d:%018d", addr, status, index)
 	return []byte(key)
 }
 
-func addGuessGameStatusIndexKey(status int32, gameID string, index int64) *types.KeyValue {
-	kv := &types.KeyValue{}
-	kv.Key = calcGuessGameStatusKey(status, index)
-	record := &pkt.PBGameIndexRecord{
-		GameId: gameID,
-		Index:  index,
-	}
-	kv.Value = types.Encode(record)
-	return kv
+//admin prefix
+func calcGuessGameAdminPrefix(addr string) []byte {
+	key := fmt.Sprintf("LODB-guess-admin:%s:", addr)
+	return []byte(key)
 }
 
-func delGuessGameStatusIndexKey(status int32, index int64) *types.KeyValue {
-	kv := &types.KeyValue{}
-	kv.Key = calcGuessGameStatusKey(status, index)
-	kv.Value = nil
-	return kv
+//admin index
+func calcGuessGameAdminKey(addr string, index int64) []byte {
+	key := fmt.Sprintf("LODB-guess-admin:%s:%018d", addr, index)
+	return []byte(key)
+}
+
+//admin status prefix
+func calcGuessGameAdminStatusPrefix(admin string, status int32) []byte {
+	key := fmt.Sprintf("LODB-guess-admin-status-index:%s:%d:", admin, status)
+	return []byte(key)
+}
+
+//admin status index
+func calcGuessGameAdminStatusKey(admin string, status int32, index int64) []byte {
+	key := fmt.Sprintf("LODB-guess-admin-status-index:%s:%d:%018d", admin, status, index)
+	return []byte(key)
+}
+
+func calcGuessGameCategoryStatusPrefix(category string, status int32) []byte {
+	key := fmt.Sprintf("LODB-guess-category-status-index:%s:%d:", category, status)
+	return []byte(key)
+}
+
+func calcGuessGameCategoryStatusKey(category string, status int32, index int64) []byte {
+	key := fmt.Sprintf("LODB-guess-category-status-index:%s:%d:%018d", category, status, index)
+	return []byte(key)
 }
 
 func addGuessGameAddrIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAddrKey(addr, index)
-	record := &pkt.PBGameRecord{
+	record := &pkt.GuessGameRecord{
 		GameId: gameID,
 		Status: status,
 		Index:  index,
@@ -114,20 +134,97 @@ func delGuessGameAddrIndexKey(addr string, index int64) *types.KeyValue {
 	return kv
 }
 
-func addPBGameStatusAndPlayer(status int32, player int32, value, index int64, gameId string) *types.KeyValue {
+func addGuessGameStatusIndexKey(status int32, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcGuessGameStatusAndPlayerKey(status, player, value, index)
-	record := &pkt.PBGameIndexRecord{
-		GameId: gameId,
+	kv.Key = calcGuessGameStatusKey(status, index)
+	record := &pkt.GuessGameRecord{
+		GameId: gameID,
+		Status: status,
 		Index:  index,
 	}
 	kv.Value = types.Encode(record)
 	return kv
 }
 
-func delPBGameStatusAndPlayer(status int32, player int32, value, index int64) *types.KeyValue {
+func delGuessGameStatusIndexKey(status int32, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcGuessGameStatusAndPlayerKey(status, player, value, index)
+	kv.Key = calcGuessGameStatusKey(status, index)
+	kv.Value = nil
+	return kv
+}
+
+func addGuessGameAddrStatusIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAddrStatusKey(addr, status, index)
+	record := &pkt.GuessGameRecord{
+		GameId: gameID,
+		Status: status,
+		Index:  index,
+	}
+	kv.Value = types.Encode(record)
+	return kv
+}
+
+func delGuessGameAddrStatusIndexKey(status int32, addr string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAddrStatusKey(addr, status, index)
+	kv.Value = nil
+	return kv
+}
+
+func addGuessGameAdminIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAdminKey(addr, index)
+	record := &pkt.GuessGameRecord{
+		GameId: gameID,
+		Status: status,
+		Index:  index,
+	}
+	kv.Value = types.Encode(record)
+	return kv
+}
+
+func delGuessGameAdminIndexKey(addr string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAdminKey(addr, index)
+	kv.Value = nil
+	return kv
+}
+
+func addGuessGameAdminStatusIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAdminStatusKey(addr, status, index)
+	record := &pkt.GuessGameRecord{
+		GameId: gameID,
+		Status: status,
+		Index:  index,
+	}
+	kv.Value = types.Encode(record)
+	return kv
+}
+
+func delGuessGameAdminStatusIndexKey(status int32, addr string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameAdminStatusKey(addr, status, index)
+	kv.Value = nil
+	return kv
+}
+
+func addGuessGameCategoryStatusIndexKey(status int32, category, gameID string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameCategoryStatusKey(category, status, index)
+	record := &pkt.GuessGameRecord{
+		GameId: gameID,
+		Status: status,
+		Index:  index,
+	}
+	kv.Value = types.Encode(record)
+	return kv
+}
+
+func delGuessGameCategoryStatusIndexKey(status int32, category string, index int64) *types.KeyValue {
+	kv := &types.KeyValue{}
+	kv.Key = calcGuessGameCategoryStatusKey(category, status, index)
 	kv.Value = nil
 	return kv
 }

@@ -21,15 +21,15 @@ message GuessGame {
     uint32 oneBet        = 13; //一注等于多少bty或者token
     uint32 maxBets       = 14; //单次可以下多少注，默认100
     uint32 maxBetsNumber = 15; //最多可以下多少注
-    uint32 fee           = 16; //收取费用，不带则表示不收费
+    uint64 fee           = 16; //收取费用，不带则表示不收费
     string feeAddr       = 17; //收费地址
     string expire        = 18; //游戏过期时间
     int64 expireHeight   = 19; //游戏过期区块高度
     string adminAddr     = 20; //游戏创建者地址,只有该地址可以开奖
     uint32 betsNumber    = 21; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
     repeated GuessPlayer plays = 22; //参与游戏下注的玩家投注信息
-    string result = 23;
-    repeated GuessBet bets = 24;
+    string result = 23;        //公布的中奖结果
+    GuessBetStat betStat = 24;
     int64 index          = 25;
     int64 preIndex       = 26;
 }
@@ -48,7 +48,17 @@ message GuessBet {
     int64 preIndex = 6;
 }
 
+message GuessBetStat {
+    uint32 totalBetTimes = 1;
+    uint32 totalBetsNumber = 2;
+    repeated GuessBetStatItem items = 3;
+}
 
+message GuessBetStatItem {
+    string option = 1;
+    uint32 betsNumber = 2;
+    uint32 betsTimes = 3;
+}
 
 //斗牛游戏内容
 message PokerBull {
@@ -264,11 +274,15 @@ message ReceiptPBGame {
 
 message ReceiptGuessGame {
     string   gameId           = 1;
-    uint32   status           = 2;
-    string   addr             = 3;
-    int64    index            = 4;
+    uint32   preStatus        = 2;
+    uint32   status           = 3;
+    string   addr             = 4;
+    string   adminAddr        = 5;
+    int64    preIndex         = 6;
+    int64    index            = 7;
+    string   category         = 8;
+    bool     statusChange     = 9;
 }
-
 
 message GuessStartTxReq {
     string topic              = 1;
