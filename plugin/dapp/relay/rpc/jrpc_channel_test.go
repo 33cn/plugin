@@ -64,44 +64,44 @@ func TestJRPCChannel(t *testing.T) {
 
 func testShowOnesCreateRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetSellRelayOrder"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testShowOnesAcceptRelayOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetBuyRelayOrder"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testShowOnesStatusOrdersCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayAddrCoins{}
 	params.Execer = "relay"
 	params.FuncName = "GetRelayOrderByStatus"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayOrders{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testShowBTCHeadHeightListCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqRelayBtcHeaderHeightList{}
 	params.Execer = "relay"
 	params.FuncName = "GetBTCHeaderList"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayBtcHeadHeightList{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

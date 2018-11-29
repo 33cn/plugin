@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 	"github.com/spf13/cobra"
@@ -166,7 +167,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	index, _ := strconv.ParseInt(indexstr, 10, 64)
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.PokerBullX
 	req := &pkt.QueryPBGameInfo{
 		GameId: gameID,
@@ -174,7 +175,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		Status: int32(status),
 		Index:  index,
 	}
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	if gameID != "" {
 		params.FuncName = pkt.FuncNameQueryGameByID
 		var res pkt.ReplyPBGame
@@ -196,7 +197,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		gameIDsS = append(gameIDsS, gameIDs)
 		gameIDsS = append(gameIDsS, gameIDs)
 		req := &pkt.QueryPBGameInfos{GameIds: gameIDsS}
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyPBGameList
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()

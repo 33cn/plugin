@@ -733,16 +733,11 @@ func evmWithdraw(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func sendQuery(rpcAddr, funcName string, request, result proto.Message) bool {
-	js, err := types.PBToJSON(request)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return false
-	}
+func sendQuery(rpcAddr, funcName string, request types.Message, result proto.Message) bool {
 	params := rpctypes.Query4Jrpc{
 		Execer:   "evm",
 		FuncName: funcName,
-		Payload:  js,
+		Payload:  types.MustPBToJSON(request),
 	}
 
 	jsonrpc, err := jsonclient.NewJSONClient(rpcAddr)
