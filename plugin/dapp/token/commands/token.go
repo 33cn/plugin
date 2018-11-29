@@ -248,7 +248,6 @@ func tokenAssets(cmd *cobra.Command, args []string) {
 		Address: addr,
 		Execer:  execer,
 	}
-
 	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetAccountTokenAssets"
