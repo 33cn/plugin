@@ -54,21 +54,21 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		return nil, types.ErrInvalidParam
 	}
 
+	var roundPlayers []*pkt.PBPlayer
 	var result *pkt.PBResult
 	if len(game.Results) < int(in.Round) {
 		result = nil
+		for _, player := range game.Players {
+			roundPlayer := &pkt.PBPlayer{
+				Address: player.Address,
+				Ready  : player.Ready,
+			}
+			roundPlayers = append(roundPlayers, roundPlayer)
+		}
 	} else {
 		result = game.Results[in.Round-1]
 	}
 
-	var roundPlayers []*pkt.PBPlayer
-	for _, player := range game.Players {
-		roundPlayer := &pkt.PBPlayer{
-			Address: player.Address,
-			Ready  : player.Ready,
-		}
-		roundPlayers = append(roundPlayers, roundPlayer)
-	}
 
 	gameInfo := &pkt.ReplyPBGameByRound{
 		GameId:    game.GameId,
@@ -78,6 +78,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		IsWaiting: game.IsWaiting,
 		Value:     game.Value,
 		Players:   roundPlayers,
+		Return:    (game.Value/types.Coin) * pkt.WinnerReturn,
 	}
 
 	return gameInfo, nil

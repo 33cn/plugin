@@ -70,6 +70,12 @@ const (
 	MaxPlayerNum = 5
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
-	// DefaultStyle默认游戏类型
+	// DefaultStyle 默认游戏类型
 	DefaultStyle = PlayStyleDefault
+	// DeveloperAddress 开发和地址
+	DeveloperAddress = "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7"
+	// DeveloperFee 佣金
+	DeveloperFee = int64(0.005 * float64(types.Coin))
+	// WinnerReturn 赢家回报率
+	WinnerReturn = types.Coin - DeveloperFee
 )

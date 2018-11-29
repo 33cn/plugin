@@ -399,6 +399,18 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 		}
 	}
 
+	// 佣金扣除
+	receipt, err := action.coinsAccount.ExecTransfer(result.Winner, pkt.DeveloperAddress, action.execaddr,
+		(game.GetValue()/types.Coin) * pkt.DeveloperFee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
+	if err != nil {
+		action.coinsAccount.ExecFrozen(result.Winner, action.execaddr, (game.GetValue()/types.Coin)*pkt.DeveloperFee) // rollback
+		logger.Error("GameSettleDefault.ExecTransfer", "addr", result.Winner, "execaddr", action.execaddr,
+			"amount", (game.GetValue()/types.Coin)*pkt.DeveloperFee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
+		return nil, nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
+
 	return logs, kv, nil
 }
 
