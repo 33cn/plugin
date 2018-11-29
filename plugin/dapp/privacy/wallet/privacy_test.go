@@ -204,7 +204,7 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *types.ReqCreateTransaction)
 	value := &ty.Public2Privacy{
 		Tokenname: req.Tokenname,
 		Amount:    amount,
-		Note:      req.GetNote(),
+		Note:      string(req.GetNote()),
 		Output:    privacyOutput,
 	}
 	action := &ty.PrivacyAction{
