@@ -3,10 +3,11 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+	"testing"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // TestEvmType_CreateTx 测试RPC创建交易逻辑
