@@ -72,9 +72,13 @@ const (
 	MinPlayValue = 10 * types.Coin
 	// DefaultStyle 默认游戏类型
 	DefaultStyle = PlayStyleDefault
-	// DeveloperAddress 开发和地址
+	// PlatformAddress 平台地址
+	PlatformAddress = "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"
+	// PlatformFee 平台佣金
+	PlatformFee = int64(0.005 * float64(types.Coin))
+	// DeveloperAddress 开发着地址
 	DeveloperAddress = "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7"
-	// DeveloperFee 佣金
+	// DeveloperFee 开发者佣金
 	DeveloperFee = int64(0.005 * float64(types.Coin))
 	// WinnerReturn 赢家回报率
 	WinnerReturn = types.Coin - DeveloperFee

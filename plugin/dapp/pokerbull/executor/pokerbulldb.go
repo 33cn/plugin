@@ -399,19 +399,34 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 		}
 	}
 
-	// 佣金扣除
-	receipt, err := action.coinsAccount.ExecTransfer(result.Winner, pkt.DeveloperAddress, action.execaddr,
-		(game.GetValue()/types.Coin) * pkt.DeveloperFee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
-	if err != nil {
-		action.coinsAccount.ExecFrozen(result.Winner, action.execaddr, (game.GetValue()/types.Coin)*pkt.DeveloperFee) // rollback
-		logger.Error("GameSettleDefault.ExecTransfer", "addr", result.Winner, "execaddr", action.execaddr,
-			"amount", (game.GetValue()/types.Coin)*pkt.DeveloperFee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
-		return nil, nil, err
+	// 扣除开发者佣金
+	receipt := action.defaultFeeTransfer(result.Winner, pkt.DeveloperAddress, pkt.DeveloperFee, game.GetValue())
+	if receipt != nil {
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
+
+	// 扣除平台佣金
+	receipt = action.defaultFeeTransfer(result.Winner, pkt.PlatformAddress, pkt.PlatformFee, game.GetValue())
+	if receipt != nil {
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
 
 	return logs, kv, nil
+}
+
+// 佣金扣除
+func (action *Action) defaultFeeTransfer(winner string, feeAddr string, fee int64, value int64) *types.Receipt {
+	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/types.Coin) * fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
+	if err != nil {
+		action.coinsAccount.ExecFrozen(winner, action.execaddr, (value/types.Coin)*fee) // rollback
+		logger.Error("GameSettleDefault.ExecTransfer", "addr", winner, "execaddr", action.execaddr, "amount",
+			(value/types.Coin)*fee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
+		return nil
+	}
+
+	return receipt
 }
 
 func (action *Action) settleAccount(lastAddress string, game *pkt.PokerBull) ([]*types.ReceiptLog, []*types.KeyValue, error) {
@@ -650,13 +665,13 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 
 	game, err := action.readGame(pbcontinue.GetGameId())
 	if err != nil {
-		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
+		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed, gameID",
 			pbcontinue.GetGameId(), "err", err)
 		return nil, err
 	}
 
 	if game.Status != pkt.PBGameActionContinue {
-		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
+		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error, gameID",
 			pbcontinue.GetGameId())
 		return nil, err
 	}
