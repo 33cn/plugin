@@ -41,7 +41,7 @@ func (c *PokerBull) updateIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue) 
 	if !log.IsWaiting {
 		for _, v := range log.Players {
 			if v != log.Addr {
-				kvs = append(kvs, addPBGameAddrIndexKey(log.Status, v, log.GameId, log.Index))
+				kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, v, log.GameId, log.Index))
 			}
 			kvs = append(kvs, delPBGameAddrIndexKey(v, log.PrevIndex))
 		}

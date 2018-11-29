@@ -26,14 +26,14 @@ const (
 	ListASC  = int32(1)
 
 	DefaultCount   = int32(20) //默认一次取多少条记录
-	MaxBets = 10000
-	MaxBetsNumber = 100000
-	MaxHeight = 10000000000
+	MaxBets = 10000            //一次最多下多少注
+	MaxBetsNumber = 100000     //一局游戏最多接受多少注
+	MaxHeight = 10000000000    //最大区块高度
 
-	MinBetBlockNum = 720
-	MinBetTimeInterval = "2h"  //2h
-	MinBetTimeoutNum = 8640
-	MinBetTimeoutInterval = "24h" //24h
+	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
+	MinBetTimeInterval = "2h"     //从创建游戏开始，一局游戏最短的可下注时间
+	MinBetTimeoutNum = 8640       //从游戏结束下注开始，一局游戏最少的超时块数
+	MinBetTimeoutInterval = "24h" //从游戏结束下注开始，一局游戏最短的超时时间
 
 	MIN_PLAY_VALUE = 10 * types.Coin
 	//DefaultStyle   = pkt.PlayStyleDefault
@@ -72,11 +72,6 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 }
 
 func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActive int64) bool {
-	// 赌注为零，按照最小赌注冻结
-	if ToFrozen == 0 {
-		ToFrozen = MIN_PLAY_VALUE
-	}
-
 	acc := action.coinsAccount.LoadExecAccount(fromAddr, action.execaddr)
 	if acc.GetBalance() >= ToFrozen && acc.GetFrozen() >= ToActive {
 		return true
@@ -119,8 +114,8 @@ func GetGameList(db dbm.KV, values []string) []*pkt.GuessGame {
 	return games
 }
 
-func Infos(db dbm.KV, infos *pkt.QueryPBGameInfos) (types.Message, error) {
-	var games []*pkt.PokerBull
+func Infos(db dbm.KV, infos *pkt.QueryGuessGameInfos) (types.Message, error) {
+	var games []*pkt.GuessGame
 	for i := 0; i < len(infos.GameIds); i++ {
 		id := infos.GameIds[i]
 		game, err := readGame(db, id)
@@ -129,7 +124,7 @@ func Infos(db dbm.KV, infos *pkt.QueryPBGameInfos) (types.Message, error) {
 		}
 		games = append(games, game)
 	}
-	return &pkt.ReplyPBGameList{Games: games}, nil
+	return &pkt.ReplyGuessGameInfos{Games: games}, nil
 }
 
 func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, error) {
@@ -216,17 +211,17 @@ func (action *Action) GetReceiptLog(game *pkt.GuessGame) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	r := &pkt.ReceiptGuessGame{}
 	r.Addr = action.fromaddr
-	if game.Status == pkt.GuessGameActionStart {
+	if game.Status == pkt.GuessGameStatusStart {
 		log.Ty = pkt.TyLogGuessGameStart
-	} else if game.Status == pkt.GuessGameActionBet {
+	} else if game.Status == pkt.GuessGameStatusBet {
 		log.Ty = pkt.TyLogGuessGameBet
-	} else if game.Status == pkt.GuessGameActionStopBet {
+	} else if game.Status == pkt.GuessGameStatusStopBet {
 		log.Ty = pkt.TyLogGuessGameStopBet
-	} else if game.Status == pkt.GuessGameActionAbort {
+	} else if game.Status == pkt.GuessGameStatusAbort {
 		log.Ty = pkt.TyLogGuessGameAbort
-	} else if game.Status == pkt.GuessGameActionPublish {
+	} else if game.Status == pkt.GuessGameStatusPublish {
 		log.Ty = pkt.TyLogGuessGamePublish
-	} else if game.Status == pkt.GuessGameActionTimeOut {
+	} else if game.Status == pkt.GuessGameStatusTimeOut {
 		log.Ty = pkt.TyLogGuessGameTimeout
 	}
 
@@ -459,17 +454,6 @@ func (action *Action) genTxRnd(txhash []byte) (int64, error) {
 	return randint, nil
 }
 
-func (action *Action) checkDupPlayerAddress(id string, pbPlayers []*pkt.PBPlayer) error {
-	for _, player := range pbPlayers {
-		if action.fromaddr == player.Address {
-			logger.Error("Poker bull game start", "addr", action.fromaddr, "execaddr", action.execaddr, "Already in a game", id)
-			return errors.New("Address is already in a game")
-		}
-	}
-
-	return nil
-}
-
 // 新建一局游戏
 func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
 	var game *pkt.GuessGame
@@ -500,52 +484,6 @@ func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.Gu
 	return game, nil
 }
 
-// 筛选合适的牌局
-func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBull {
-	var gameRet *pkt.PokerBull = nil
-	for _, id := range ids {
-		game, err := action.readGame(id)
-		if err != nil {
-			logger.Error("Poker bull game start", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed", id, "err", err)
-			continue
-		}
-
-		//不能自己和自己玩
-		if action.checkDupPlayerAddress(id, game.Players) != nil {
-			continue
-		}
-
-		//选择合适赌注的游戏
-		if value == 0 && game.GetValue() != MIN_PLAY_VALUE {
-			if !action.CheckExecAccountBalance(action.fromaddr, game.GetValue(), 0) {
-				logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "id", id, "err", types.ErrNoBalance)
-				continue
-			}
-		}
-
-		gameRet = game
-		break
-	}
-	return gameRet
-}
-
-func (action *Action) checkPlayerExistInGame() bool {
-	values, err := action.localDB.List(calcPBGameAddrPrefix(action.fromaddr), nil, DefaultCount, ListDESC)
-	if err == types.ErrNotFound {
-		return false
-	}
-
-	var value pkt.PBGameRecord
-	lenght := len(values)
-	if lenght != 0 {
-		valueBytes := values[lenght-1]
-		err := types.Decode(valueBytes, &value)
-		if err == nil && value.Status == pkt.PBGameActionQuit {
-			return false
-		}
-	}
-	return true
-}
 
 func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -606,7 +544,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	game.StartTime = action.blocktime
 	game.AdminAddr = action.fromaddr
 	game.Index = action.getIndex()
-	game.Status = pkt.GuessGameActionStart
+	game.Status = pkt.GuessGameStatusStart
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
@@ -644,13 +582,15 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	if game.Status != pkt.GuessGameActionStart && game.Status != pkt.GuessGameActionBet && game.Status != pkt.GuessGameActionStopBet{
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
 		return nil, errors.New("ErrGameStatus")
 	}
 
-	if action.RefreshStatusByTime(game) {
+	canBet := action.RefreshStatusByTime(game)
+
+	if canBet == false {
 		receiptLog := action.GetReceiptLog(game)
 		logs = append(logs, receiptLog)
 		kv = append(kv, action.saveGame(game)...)
@@ -658,8 +598,8 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 	}
 
-	//更新游戏状态
-	game.Status = pkt.GuessGameActionBet
+	//如果当前游戏状态可以下注，统一设定游戏状态为GuessGameStatusBet
+	game.Status = pkt.GuessGameStatusBet
 
 	//检查竞猜选项是否合法
 	options, legal := getOptions(game.GetOptions())
@@ -687,7 +627,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	}
 
 	// 检查余额账户余额
-	checkValue := int64(game.GetOneBet() * pbBet.BetsNum)
+	checkValue := int64(game.GetOneBet() * pbBet.BetsNum + game.Fee)
 	if !action.CheckExecAccountBalance(action.fromaddr, checkValue, 0) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
 			pbBet.GetGameId(), "err", types.ErrNoBalance)
@@ -746,7 +686,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		return nil, types.ErrInvalidParam
 	}
 
-	if game.Status != pkt.GuessGameActionStart && game.Status != pkt.GuessGameActionBet && game.Status != pkt.GuessGameActionStopBet{
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
 		return nil, errors.New("ErrGameStatus")
@@ -766,24 +706,22 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		return nil, types.ErrInvalidParam
 	}
 
-	game.Status = pkt.GuessGameActionPublish
+	game.Status = pkt.GuessGameStatusPublish
 	game.Result = publish.Result
 
 	//先遍历所有下注数据，对于输家，转移资金到Admin账户合约地址；
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
-		//if player.Bet.Option != game.Result {
-			value := int64(player.Bet.BetsNumber * game.OneBet)
-			receipt, err := action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
-			if err != nil {
-				action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
-				logger.Error("GamePublish", "addr", game.AdminAddr, "execaddr", action.execaddr,
-					"amount", value, "err", err)
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kv = append(kv, receipt.KV...)
-		//}
+		value := int64(player.Bet.BetsNumber * game.OneBet + game.Fee)
+		receipt, err := action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
+		if err != nil {
+			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
+			logger.Error("GamePublish", "addr", game.AdminAddr, "execaddr", action.execaddr,
+				"amount", value, "err", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
 	//计算竞猜正确的筹码总数
 	totalBetsNumber := uint32(0)
@@ -812,6 +750,19 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		}
 	}
 
+	//如果设置了手续费专用地址，则将本局游戏收取的手续费转移到专用地址
+	if game.Fee > 0 && len(game.FeeAddr) != 0 && game.FeeAddr != game.AdminAddr {
+		value := int64(game.Fee * uint32(len(game.Plays))
+		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, game.FeeAddr, action.execaddr, value)
+		if err != nil {
+			action.coinsAccount.ExecFrozen(game.FeeAddr, action.execaddr, value) // rollback
+			logger.Error("GamePublish", "addr", game.FeeAddr, "execaddr", action.execaddr, "amount", value, "err", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
@@ -834,7 +785,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	action.RefreshStatusByTime(game)
 
 	//如果游戏超时，则任何地址都可以Abort，否则只有创建游戏的地址可以Abort
-	if game.Status != pkt.GuessGameActionTimeOut {
+	if game.Status != pkt.GuessGameStatusTimeOut {
 		if game.AdminAddr != action.fromaddr {
 			logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "Only admin can abort",
 				action.fromaddr, "status", game.Status)
@@ -845,8 +796,8 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	//激活冻结账户
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
-		value := int64(player.Bet.BetsNumber * game.OneBet)
-		receipt, err := action.coinsAccount.ExecActive(player.Addr, action.execaddr, )
+		value := int64(player.Bet.BetsNumber * game.OneBet + game.Fee)
+		receipt, err := action.coinsAccount.ExecActive(player.Addr, action.execaddr, value)
 		if err != nil {
 			logger.Error("GameAbort", "addr", player.Addr, "execaddr", action.execaddr, "amount", value, "err", err)
 			continue
@@ -854,7 +805,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
-	game.Status = pkt.GuessGameActionAbort
+	game.Status = pkt.GuessGameStatusAbort
 	game.Index = action.getIndex(game)
 
 	receiptLog := action.GetReceiptLog(game)
@@ -891,18 +842,19 @@ func isLegalOption(options []string, option string) bool {
 	return false
 }
 
-func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) bool {
+func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 	// 检查区块高度是否超过最大下注高度限制，看是否可以下注
 	if game.GetMaxHeight() <= action.height {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Height over limit",
 			action.height, "MaxHeight", game.GetMaxHeight())
 		if game.GetExpireHeight() > action.height {
-			game.Status = pkt.GuessGameActionStopBet
+			game.Status = pkt.GuessGameStatusStopBet
 		} else {
-			game.Status = pkt.GuessGameActionTimeOut
+			game.Status = pkt.GuessGameStatusTimeOut
 		}
 
-        return true
+		canBet = false
+        return  canBet
 	}
 
 	// 检查区块高度是否超过下注时间限制，看是否可以下注
@@ -911,14 +863,16 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) bool {
 		if err != nil {
 			logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse MaxTime failed",
 				game.GetMaxTime())
-			return false
+			canBet = true
+			return canBet
 		}
 
 		tExpire, err := time.Parse("2006-01-02 15:04:05", game.GetExpire())
 		if err != nil {
 			logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse Expire failed",
 				game.GetExpire())
-			return false
+			canBet = true
+			return canBet
 		}
 
 		tNow := time.Now()
@@ -927,16 +881,18 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) bool {
 				game.GetMaxTime())
 
 			if tNow.After(tExpire) {
-				game.Status = pkt.GuessGameActionTimeOut
+				game.Status = pkt.GuessGameStatusTimeOut
 			} else {
-				game.Status = pkt.GuessGameActionStopBet
+				game.Status = pkt.GuessGameStatusStopBet
 			}
 
-			return true
+			canBet = false
+			return canBet
 		}
 	}
 
-	return false
+	canBet = true
+	return canBet
 }
 
 func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {

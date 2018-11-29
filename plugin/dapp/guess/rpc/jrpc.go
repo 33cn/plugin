@@ -93,11 +93,11 @@ func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) e
 	return nil
 }
 
-func (c *Jrpc) PokerBullQueryTx(parm *pb.PBQueryReq, result *interface{}) error {
+func (c *Jrpc) GuessQueryTx(parm *pb.PBQueryReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-	head := &pb.PBGameQuery{
+	head := &pb.GuessGameQuery{
 		GameId: parm.GameId,
 	}
 	reply, err := c.cli.Show(context.Background(), head)

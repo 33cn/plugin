@@ -65,25 +65,21 @@ func calcGuessGameStatusKey(status int32, index int64) []byte {
 	return []byte(key)
 }
 
-func calcPBGameStatusAndPlayerKey(status, player int32, value, index int64) []byte {
-	key := fmt.Sprintf("LODB-guess-status:%d:%d:%d:%018d", status, player, value, index)
+func calcGuessGameStatusAndPlayerKey(category string, status, index int64) []byte {
+	key := fmt.Sprintf("LODB-guess-category-status:%s:%d:%018d", category, status, index)
 	return []byte(key)
 }
 
-func calcPBGameStatusAndPlayerPrefix(status, player int32, value int64) []byte {
+func calcGuessGameStatusAndPlayerPrefix(category string, status int32) []byte {
 	var key string
-	if value == 0 {
-		key = fmt.Sprintf("LODB-guess-status:%d:%d:", status, player)
-	} else {
-		key = fmt.Sprintf("LODB-guess-status:%d:%d:%d", status, player, value)
-	}
+	key = fmt.Sprintf("LODB-guess-category-status:%s:%d", category, status)
 
 	return []byte(key)
 }
 
-func addPBGameStatusIndexKey(status int32, gameID string, index int64) *types.KeyValue {
+func addGuessGameStatusIndexKey(status int32, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameStatusKey(status, index)
+	kv.Key = calcGuessGameStatusKey(status, index)
 	record := &pkt.PBGameIndexRecord{
 		GameId: gameID,
 		Index:  index,
@@ -92,16 +88,16 @@ func addPBGameStatusIndexKey(status int32, gameID string, index int64) *types.Ke
 	return kv
 }
 
-func delPBGameStatusIndexKey(status int32, index int64) *types.KeyValue {
+func delGuessGameStatusIndexKey(status int32, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameStatusKey(status, index)
+	kv.Key = calcGuessGameStatusKey(status, index)
 	kv.Value = nil
 	return kv
 }
 
-func addPBGameAddrIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
+func addGuessGameAddrIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameAddrKey(addr, index)
+	kv.Key = calcGuessGameAddrKey(addr, index)
 	record := &pkt.PBGameRecord{
 		GameId: gameID,
 		Status: status,
@@ -111,16 +107,16 @@ func addPBGameAddrIndexKey(status int32, addr, gameID string, index int64) *type
 	return kv
 }
 
-func delPBGameAddrIndexKey(addr string, index int64) *types.KeyValue {
+func delGuessGameAddrIndexKey(addr string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameAddrKey(addr, index)
+	kv.Key = calcGuessGameAddrKey(addr, index)
 	kv.Value = nil
 	return kv
 }
 
 func addPBGameStatusAndPlayer(status int32, player int32, value, index int64, gameId string) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameStatusAndPlayerKey(status, player, value, index)
+	kv.Key = calcGuessGameStatusAndPlayerKey(status, player, value, index)
 	record := &pkt.PBGameIndexRecord{
 		GameId: gameId,
 		Index:  index,
@@ -131,7 +127,7 @@ func addPBGameStatusAndPlayer(status int32, player int32, value, index int64, ga
 
 func delPBGameStatusAndPlayer(status int32, player int32, value, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
-	kv.Key = calcPBGameStatusAndPlayerKey(status, player, value, index)
+	kv.Key = calcGuessGameStatusAndPlayerKey(status, player, value, index)
 	kv.Value = nil
 	return kv
 }

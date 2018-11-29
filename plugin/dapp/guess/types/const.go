@@ -13,10 +13,16 @@ const (
 
 	GuessGameActionStart = iota + 1
 	GuessGameActionBet
-	GuessGameActionStopBet
 	GuessGameActionAbort
 	GuessGameActionPublish
-	GuessGameActionTimeOut
+	GuessGameActionQuery
+
+	GuessGameStatusStart = iota + 1
+	GuessGameStatusBet
+	GuessGameStatusStopBet
+	GuessGameStatusAbort
+	GuessGameStatusPublish
+	GuessGameStatusTimeOut
 )
 
 const (
@@ -43,10 +49,6 @@ const (
 //建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
 //如果发生重名，可以通过配置文件修改这些名字
 var (
-	JRPCName        = "pokerbull"
-	PokerBullX      = "pokerbull"
-	ExecerPokerBull = []byte(PokerBullX)
-
 	JRPCName        = "guess"
 	GuessX           = "guess"
 	ExecerGuess = []byte(GuessX)
@@ -58,4 +60,6 @@ const (
 	FuncName_QueryGameById      = "QueryGameById"
 	FuncName_QueryGameByAddr    = "QueryGameByAddr"
 	FuncName_QueryGameByStatus  = "QueryGameByStatus"
+	//FuncName_QueryGameByAdminAddr = "QueryGameByAdminAddr"
+	//FuncName_QueryGameByCategory  = "QueryGameByCategory"
 )

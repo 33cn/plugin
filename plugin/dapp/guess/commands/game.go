@@ -242,8 +242,8 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 
 	var params types.Query4Cli
-	params.Execer = pkt.PokerBullX
-	req := &pkt.QueryPBGameInfo{
+	params.Execer = pkt.GuessX
+	req := &pkt.QueryGuessGameInfo{
 		GameId: gameID,
 		Addr:   address,
 		Status: int32(status),
@@ -252,7 +252,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	params.Payload = req
 	if gameID != "" {
 		params.FuncName = pkt.FuncName_QueryGameById
-		var res pkt.ReplyPBGame
+		var res pkt.ReplyGuessGameInfo
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if address != "" {
@@ -272,7 +272,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		gameIDsS = append(gameIDsS, gameIDs)
 		req := &pkt.QueryPBGameInfos{gameIDsS}
 		params.Payload = req
-		var res pkt.ReplyPBGameList
+		var res pkt.ReplyGuessGameInfos
 		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else {

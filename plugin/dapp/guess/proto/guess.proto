@@ -8,28 +8,30 @@ package types;
 message GuessGame {
     string gameId        = 1;  //游戏ID
     uint32 status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
-    int64  startTime     = 3;  //创建游戏的时间
-    string startTxHash   = 4;  //创建游戏的交易hash
-    string topic         = 5;  //主题
-    string category      = 6;  //分类
-    string options       = 7;  //选项
-    string maxTime       = 8;  //截止下注时间
-    int64 maxHeight     = 9;  //截止下注的块高
-    string symbol        = 10;  //bty或者具体token
-    string exec          = 11; //coins或者token
-    uint32 oneBet        = 12; //一注等于多少bty或者token
-    uint32 maxBets       = 13; //单次可以下多少注，默认100
-    uint32 maxBetsNumber = 14; //最多可以下多少注
-    uint32 fee           = 15; //收取费用，不带则表示不收费
-    string feeAddr       = 16; //收费地址
-    string expire        = 17; //游戏过期时间
-    int64 expireHeight  = 18; //游戏过期区块高度
-    string adminAddr     = 19; //游戏创建者地址,只有该地址可以开奖
-    uint32 betsNumber    = 20; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
-    repeated GuessPlayer plays = 21; //参与游戏下注的玩家投注信息
-    string result = 22;
-    repeated GuessBet bets = 23;
-    int64 index          = 24;
+    uint32 preStatus     = 3;
+    int64  startTime     = 4;  //创建游戏的时间
+    string startTxHash   = 5;  //创建游戏的交易hash
+    string topic         = 6;  //主题
+    string category      = 7;  //分类
+    string options       = 8;  //选项
+    string maxTime       = 9;  //截止下注时间
+    int64 maxHeight      = 10;  //截止下注的块高
+    string symbol        = 11;  //bty或者具体token
+    string exec          = 12; //coins或者token
+    uint32 oneBet        = 13; //一注等于多少bty或者token
+    uint32 maxBets       = 14; //单次可以下多少注，默认100
+    uint32 maxBetsNumber = 15; //最多可以下多少注
+    uint32 fee           = 16; //收取费用，不带则表示不收费
+    string feeAddr       = 17; //收费地址
+    string expire        = 18; //游戏过期时间
+    int64 expireHeight   = 19; //游戏过期区块高度
+    string adminAddr     = 20; //游戏创建者地址,只有该地址可以开奖
+    uint32 betsNumber    = 21; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 22; //参与游戏下注的玩家投注信息
+    string result = 23;
+    repeated GuessBet bets = 24;
+    int64 index          = 25;
+    int64 preIndex       = 26;
 }
 
 message GuessPlayer {
@@ -40,6 +42,10 @@ message GuessPlayer {
 message GuessBet {
     string option = 1;
     uint32  betsNumber = 2;
+    bool    isWinner = 3;
+    uint32  profit = 4;
+    int64 index = 5;
+    int64 preIndex = 6;
 }
 
 
@@ -222,6 +228,25 @@ message QueryPBGameInfos {
 
 message ReplyPBGameList {
     repeated PokerBull games = 1;
+}
+
+message QueryGuessGameInfo {
+    string gameId = 1;
+    string addr   = 2;
+    int32  status = 3;
+    int64  index  = 4;
+}
+
+message ReplyGuessGameInfo {
+    GuessGame game = 1;
+}
+
+message QueryGuessGameInfos {
+    repeated string gameIds = 1;
+}
+
+message ReplyGuessGameInfos {
+    repeated GuessGame games = 1;
 }
 
 message ReceiptPBGame {

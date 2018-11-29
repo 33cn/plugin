@@ -6,21 +6,14 @@ package rpc
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	pb "github.com/33cn/plugin/plugin/dapp/guess/types"
-	"github.com/33cn/plugin/plugin/dapp/guess/executor"
 )
 
 func (c *channelClient) GuessStart(ctx context.Context, head *pb.GuessGameStart) (*types.UnsignTx, error) {
-	if head.MaxBetsNumber > executor.MaxBetsNumber {
-		return nil, fmt.Errorf("Max Bets Number Should Be Maximum %d", executor.MaxBetsNumber)
-	}
-
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionStart,
-			Value: &pb.GuessGameAction_Start{head},
+		Value: &pb.GuessGameAction_Start{head},
 	}
 	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
 	if err != nil {
@@ -69,12 +62,12 @@ func (c *channelClient) GuessPublish(ctx context.Context, head *pb.GuessGamePubl
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (c *channelClient) Show(ctx context.Context, head *pb.PBGameQuery) (*types.UnsignTx, error) {
-	val := &pb.PBGameAction{
-		Ty:    pb.PBGameActionQuery,
-		Value: &pb.PBGameAction_Query{head},
+func (c *channelClient) Show(ctx context.Context, head *pb.GuessGameQuery) (*types.UnsignTx, error) {
+	val := &pb.GuessGameAction{
+		Ty:    pb.GuessGameActionQuery,
+		Value: &pb.GuessGameAction_Query{head},
 	}
-	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
+	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
 	if err != nil {
 		return nil, err
 	}

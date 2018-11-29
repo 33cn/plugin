@@ -38,6 +38,7 @@ func (t *GuessType) GetTypeMap() map[string]int32 {
 		"Bet": GuessGameActionBet,
 		"Abort": GuessGameActionAbort,
 		"Publish": GuessGameActionPublish,
+		"Query": GuessGameActionQuery,
 	}
 }
 

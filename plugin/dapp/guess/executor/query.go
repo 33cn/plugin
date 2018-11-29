@@ -6,22 +6,22 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
+	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *PokerBull) Query_QueryGameListByIds(in *pkt.QueryPBGameInfos) (types.Message, error) {
+func (g *Guess) Query_QueryGameListByIds(in *pkt.QueryGuessGameInfos) (types.Message, error) {
 	return Infos(g.GetStateDB(), in)
 }
 
-func (g *PokerBull) Query_QueryGameById(in *pkt.QueryPBGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGameById(in *pkt.QueryGuessGameInfo) (types.Message, error) {
 	game, err := readGame(g.GetStateDB(), in.GetGameId())
 	if err != nil {
 		return nil, err
 	}
-	return &pkt.ReplyPBGame{game}, nil
+	return &pkt.ReplyGuessGameInfo{game}, nil
 }
 
-func (g *PokerBull) Query_QueryGameByAddr(in *pkt.QueryPBGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGameByAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
 	gameIds, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (g *PokerBull) Query_QueryGameByAddr(in *pkt.QueryPBGameInfo) (types.Messag
 	return gameIds, nil
 }
 
-func (g *PokerBull) Query_QueryGameByStatus(in *pkt.QueryPBGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGameByStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
 	gameIds, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
 	if err != nil {
 		return nil, err
