@@ -13,6 +13,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
+	"errors"
 )
 
 var (
@@ -139,6 +140,11 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 	}
 
 	if param.IsCreate {
+		if len(action.Abi) > 0 && len(action.Code) == 0 {
+			elog.Error("create evm Tx error, code is empty")
+			return nil, errors.New("code must be set in create tx")
+		}
+
 		return createRawTx(action, "", param.Fee)
 	}
 	return createRawTx(action, param.Name, param.Fee)
