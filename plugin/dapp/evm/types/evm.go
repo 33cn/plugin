@@ -128,7 +128,8 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 	// Abi数据和二进制代码必须指定一个，优先判断ABI
 	if len(param.Abi) > 0 {
 		action.Abi = strings.TrimSpace(param.Abi)
-	} else {
+	}
+	if len(param.Code) > 0 {
 		bCode, err := common.FromHex(param.Code)
 		if err != nil {
 			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
