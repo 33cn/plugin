@@ -59,11 +59,6 @@ func (ticket *Ticket) getTxActions(height int64, blockNum int64) ([]*tickettypes
 
 	tlog.Debug("getTxActions", "height", height, "blockNum", blockNum)
 
-	// take attention
-	// the user query the height, but maybe the block is not accept yet
-	// so the height--
-	height--
-
 	req := &types.ReqBlocks{Start: height - blockNum + 1, End: height, IsDetail: false, Pid: []string{""}}
 
 	blockDetails, err := ticket.GetAPI().GetBlocks(req)
