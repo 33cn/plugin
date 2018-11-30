@@ -252,7 +252,7 @@ func createAssetWithdrawTx(s suite.Suite, privFrom string, to []byte) (*types.Tr
 		To:          string(to),
 		Amount:      Amount,
 		Fee:         0,
-		Note:        "test asset transfer",
+		Note:        []byte("test asset transfer"),
 		IsWithdraw:  true,
 		IsToken:     false,
 		TokenSymbol: "",

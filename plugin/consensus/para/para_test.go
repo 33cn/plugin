@@ -7,14 +7,12 @@ package para
 import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
-	"testing"
-
-	"github.com/33cn/chain33/types"
-
 	"math/rand"
+	"testing"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
@@ -124,7 +122,7 @@ func createMainTx(exec string, to string) (*types.Transaction, error) {
 		To:          to,
 		Amount:      Amount,
 		Fee:         0,
-		Note:        "test",
+		Note:        []byte("test"),
 		TokenSymbol: "",
 		ExecName:    exec,
 	}
@@ -150,7 +148,7 @@ func createCrossMainTx(to string) (*types.Transaction, error) {
 		To:          string(to),
 		Amount:      Amount,
 		Fee:         0,
-		Note:        "test asset transfer",
+		Note:        []byte("test asset transfer"),
 		IsWithdraw:  false,
 		IsToken:     false,
 		TokenSymbol: "",
@@ -178,7 +176,7 @@ func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
 		To:          string(to),
 		Amount:      amount,
 		Fee:         0,
-		Note:        "test asset transfer",
+		Note:        []byte("test asset transfer"),
 		IsWithdraw:  false,
 		IsToken:     false,
 		TokenSymbol: "",

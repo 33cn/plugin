@@ -38,7 +38,7 @@ func init() {
 // Init 初始化本合约对象
 func Init(name string, sub []byte) {
 	driverName = name
-	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, evmtypes.EVMEnable))
 	EvmAddress = address.ExecAddress(types.ExecName(name))
 	// 初始化硬分叉数据
 	state.InitForkData()

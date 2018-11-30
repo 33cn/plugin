@@ -6,18 +6,13 @@ package executor
 
 import (
 	"context"
-	//crand "crypto/rand"
-	//"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
-
 	"strconv"
-	//"strings"
 	"testing"
 	"time"
 
-	//"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -243,7 +238,7 @@ func TestTransferToken(t *testing.T) {
 	fmt.Println("TestTransferToken start")
 	defer fmt.Println("TestTransferToken end")
 
-	v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: "", To: transToAddr}}
+	v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: []byte(""), To: transToAddr}}
 	transfer := &tokenty.TokenAction{Value: v, Ty: tokenty.ActionTransfer}
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}

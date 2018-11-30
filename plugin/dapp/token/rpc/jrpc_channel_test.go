@@ -54,20 +54,20 @@ func TestJRPCChannel(t *testing.T) {
 
 func testGetTokensPreCreatedCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqTokens{}
 	params.Execer = "token"
 	params.FuncName = "GetTokens"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyTokens{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testGetTokensFinishCreatedCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "token",
 		FuncName: "GetTokens",
-		Payload:  pty.ReqTokens{},
+		Payload:  types.MustPBToJSON(&pty.ReqTokens{}),
 	}
 	var res pty.ReplyTokens
 	return jrpc.Call("Chain33.Query", params, &res)
@@ -75,11 +75,11 @@ func testGetTokensFinishCreatedCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 
 func testGetTokenAssetsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqAccountTokenAssets{}
 	params.Execer = "token"
 	params.FuncName = "GetAccountTokenAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyAccountTokenAssets{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
