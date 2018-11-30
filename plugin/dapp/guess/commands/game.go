@@ -5,12 +5,7 @@
 package commands
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-	"strconv"
-
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
-	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 	"github.com/spf13/cobra"
 )
@@ -231,7 +226,9 @@ func addGuessQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("gameIDs", "d", "", "gameIDs")
 }
 
+
 func guessQuery(cmd *cobra.Command, args []string) {
+	/*
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
 	address, _ := cmd.Flags().GetString("address")
@@ -279,4 +276,5 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		fmt.Println("Error: requeres at least one of gameID, address or status")
 		cmd.Help()
 	}
+	*/
 }

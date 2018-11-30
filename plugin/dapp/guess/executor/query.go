@@ -9,7 +9,7 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *Guess) Query_QueryGameListByIds(in *pkt.QueryGuessGameInfos) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByIds(in *pkt.QueryGuessGameInfos) (types.Message, error) {
 	return Infos(g.GetStateDB(), in)
 }
 
@@ -18,7 +18,7 @@ func (g *Guess) Query_QueryGameById(in *pkt.QueryGuessGameInfo) (types.Message, 
 	if err != nil {
 		return nil, err
 	}
-	return &pkt.ReplyGuessGameInfo{game}, nil
+	return &pkt.ReplyGuessGameInfo{Game: game}, nil
 }
 
 func (g *Guess) Query_QueryGameByAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {

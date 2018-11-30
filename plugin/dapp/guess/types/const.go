@@ -26,17 +26,6 @@ const (
 )
 
 const (
-	PlayStyleDefault = iota + 1
-	PlayStyleDealer
-)
-
-const (
-	//log for PBgame
-	TyLogPBGameStart    = 721
-	TyLogPBGameContinue = 722
-	TyLogPBGameQuit     = 723
-	TyLogPBGameQuery    = 724
-
 	TyLogGuessGameStart = 901
 	TyLogGuessGameBet   = 902
 	TyLogGuessGameStopBet = 903

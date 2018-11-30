@@ -6,32 +6,66 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
+	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *PokerBull) rollbackIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue) {
-	kvs = append(kvs, delPBGameStatusAndPlayer(log.Status, log.PlayerNum, log.Value, log.Index))
-	kvs = append(kvs, addPBGameStatusAndPlayer(log.PreStatus, log.PlayerNum, log.PrevIndex, log.Value, log.GameId))
-	kvs = append(kvs, delPBGameStatusIndexKey(log.Status, log.Index))
-	kvs = append(kvs, addPBGameStatusIndexKey(log.PreStatus, log.GameId, log.PrevIndex))
+func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
+	//新创建游戏，将增加的记录都删除掉
+	if log.Status == pkt.GuessGameStatusStart{
+		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
+		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
+		kvs = append(kvs, delGuessGameAdminIndexKey(log.AdminAddr,log.Index))
+		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
+		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
+	} else if log.Status == pkt.GuessGameStatusBet {
+		//如果是下注状态，则有用户进行了下注操作，对这些记录进行删除
+		kvs = append(kvs, delGuessGameAddrIndexKey(log.Addr, log.Index))
+		kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.Index))
 
-	for _, v := range log.Players {
-		kvs = append(kvs, delPBGameAddrIndexKey(v, log.Index))
-		kvs = append(kvs, addPBGameAddrIndexKey(log.PreStatus, v, log.GameId, log.PrevIndex))
+		//如果发生了状态变化，恢复老状态的记录，删除新添加的状态记录
+		if log.StatusChange {
+			kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameId, log.PreIndex))
+			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameId, log.PreIndex))
+			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameId, log.PreIndex))
+
+			kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
+			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
+			kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
+		}
+	}else if log.StatusChange {
+		//其他状态时的状态发生变化的情况,要将老状态对应的记录恢复，同时删除新加的状态记录；对于每个地址的下注记录也需要遍历处理。
+		kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameId, log.PreIndex))
+		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameId, log.PreIndex))
+		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameId, log.PreIndex))
+
+		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
+		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
+		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
+
+		//从game中遍历每个地址的记录进行删除新增记录，回复老记录
+		game, err := readGame(g.GetStateDB(), log.GameId)
+		if err == nil {
+			for i := 0; i < len(game.Plays); i++ {
+				player := game.Plays[i]
+				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, log.GameId, player.Bet.PreIndex))
+				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.Index)
+			}
+		}
 	}
 
 	return kvs
 }
 
-func (g *PokerBull) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (g *Guess) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.GetTy() != types.ExecOk {
 		return dbSet, nil
 	}
+
 	for _, log := range receiptData.Logs {
 		switch log.GetTy() {
-		case pkt.TyLogPBGameStart, pkt.TyLogPBGameContinue, pkt.TyLogPBGameQuit:
-			receiptGame := &pkt.ReceiptPBGame{}
+		case pkt.TyLogGuessGameStart, pkt.TyLogGuessGameBet, pkt.TyLogGuessGameStopBet, pkt.TyLogGuessGameAbort, pkt.TyLogGuessGamePublish, pkt.TyLogGuessGameTimeout:
+			receiptGame := &pkt.ReceiptGuessGame{}
 			if err := types.Decode(log.Log, receiptGame); err != nil {
 				return nil, err
 			}
@@ -42,14 +76,18 @@ func (g *PokerBull) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDB
 	return dbSet, nil
 }
 
-func (g *PokerBull) ExecDelLocal_Start(payload *pkt.PBGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execDelLocal(receiptData)
+func (g *Guess) ExecDelLocal_Start(payload *pkt.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }
 
-func (g *PokerBull) ExecDelLocal_Continue(payload *pkt.PBGameContinue, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execDelLocal(receiptData)
+func (g *Guess) ExecDelLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }
 
-func (g *PokerBull) ExecDelLocal_Quit(payload *pkt.PBGameQuit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return g.execDelLocal(receiptData)
+func (g *Guess) ExecDelLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
+}
+
+func (g *Guess) ExecDelLocal_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }

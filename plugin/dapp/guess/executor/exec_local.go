@@ -9,27 +9,28 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (c *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
+func (g *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	//新创建游戏
 	if log.Status == pkt.GuessGameStatusStart{
 		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
 		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.Addr, log.GameId, log.Index))
+		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
 		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
 		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
 	} else if log.Status == pkt.GuessGameStatusBet {
 		//如果是下注状态，则有用户进行了下注操作
 		kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
 		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameId, log.Index))
+		//如果发生了状态变化，则是从start->bet，对于老状态的记录进行删除操作，并增加新状态记录
+		if log.StatusChange {
+			kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
+			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
+			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
 
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
-		//对于老状态进行删除
-		kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
-		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
-		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
+			kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
+			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
+			kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
+		}
 	}else if log.StatusChange {
 		//其他状态时的状态发生变化,要将老状态对应的记录删除，同时加入新状态记录；对于每个地址的下注记录也需要遍历处理。
 		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
@@ -40,17 +41,21 @@ func (c *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
 		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
 
-		
-		//从game中遍历每个地址的记录进行新增和删除
-		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.Index))
+		//从game中遍历每个地址的记录进行新状态记录的增和老状态记录的删除
+		game, err := readGame(g.GetStateDB(), log.GameId)
+		if err == nil {
+			for i := 0; i < len(game.Plays); i++ {
+				player := game.Plays[i]
+				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.GameId, log.Index))
+				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, player.Bet.PreIndex)
+			}
+		}
 	}
-
 
 	return kvs
 }
 
-func (c *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
+func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receipt.GetTy() != types.ExecOk {
 		return dbSet, nil
@@ -63,21 +68,25 @@ func (c *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := c.updateIndex(&Gamelog)
+			kv := g.updateIndex(&Gamelog)
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
 	}
 	return dbSet, nil
 }
 
-func (c *Guess) ExecLocal_Start(payload *pkt.PBGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return c.execLocal(receiptData)
+func (g *Guess) ExecLocal_Start(payload *pkt.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }
 
-func (c *Guess) ExecLocal_Continue(payload *pkt.PBGameContinue, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return c.execLocal(receiptData)
+func (g *Guess) ExecLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }
 
-func (c *Guess) ExecLocal_Quit(payload *pkt.PBGameQuit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return c.execLocal(receiptData)
+func (g *Guess) ExecLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
+}
+
+func (g *Guess) ExecLocal_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
 }

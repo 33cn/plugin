@@ -93,7 +93,8 @@ func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) e
 	return nil
 }
 
-func (c *Jrpc) GuessQueryTx(parm *pb.PBQueryReq, result *interface{}) error {
+/*
+func (c *Jrpc) GuessQueryTx(parm *pb.GuessQueryReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
@@ -107,4 +108,4 @@ func (c *Jrpc) GuessQueryTx(parm *pb.PBQueryReq, result *interface{}) error {
 
 	*result = hex.EncodeToString(reply.Data)
 	return nil
-}
+}*/

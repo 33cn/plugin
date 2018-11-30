@@ -7,8 +7,8 @@ package types;
 //竞猜游戏内容
 message GuessGame {
     string gameId        = 1;  //游戏ID
-    uint32 status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
-    uint32 preStatus     = 3;
+    int32 status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
+    int32 preStatus     = 3;
     int64  startTime     = 4;  //创建游戏的时间
     string startTxHash   = 5;  //创建游戏的交易hash
     string topic         = 6;  //主题
@@ -21,7 +21,7 @@ message GuessGame {
     uint32 oneBet        = 13; //一注等于多少bty或者token
     uint32 maxBets       = 14; //单次可以下多少注，默认100
     uint32 maxBetsNumber = 15; //最多可以下多少注
-    uint64 fee           = 16; //收取费用，不带则表示不收费
+    int64 fee           = 16; //收取费用，不带则表示不收费
     string feeAddr       = 17; //收费地址
     string expire        = 18; //游戏过期时间
     int64 expireHeight   = 19; //游戏过期区块高度
@@ -60,90 +60,6 @@ message GuessBetStatItem {
     uint32 betsTimes = 3;
 }
 
-//斗牛游戏内容
-message PokerBull {
-    string   gameId              = 1;  //默认是由创建这局游戏的txHash作为gameId
-    int32    status              = 2;  // Start 1 -> Continue 2 -> Quit 3
-    int64    startTime           = 3;  //开始时间
-    string   startTxHash         = 4;  //游戏启动交易hash
-    int64    value               = 5;  //赌注
-    PBPoker  poker               = 6;  //扑克牌
-    repeated PBPlayer players    = 7;  //玩家历史牌和结果集
-    int32             playerNum  = 8;  //玩家数
-    repeated PBResult results    = 9;  //游戏结果集
-    int64             index      = 10; //索引
-    int64             prevIndex  = 11; //上级索引
-    int64             quitTime   = 12; //游戏结束时间
-    string            quitTxHash = 13; //游戏结束交易hash
-    string            dealerAddr = 14; //下局庄家地址
-    bool              isWaiting  = 15; //游戏是否处于等待状态
-    int32             preStatus  = 16; //上一index的状态
-}
-
-//一把牌
-message PBHand {
-    repeated int32 cards    = 1; //一把牌，五张
-    int32          result   = 2; //斗牛结果 (没牛：0， 牛1-9：1-9， 牛牛：10)
-    string         address  = 3; //玩家地址
-    bool           isWin    = 4; //是否赢庄家
-    int32          leverage = 5; //赌注倍数
-}
-
-//玩家
-message PBPlayer {
-    repeated PBHand hands   = 1; //历史发牌和斗牛结果
-    string          address = 2; //玩家地址
-    int64           txHash  = 3; //发牌随机数因子txhash的整数格式
-    bool            ready   = 4; // continue状态下，是否ready
-}
-
-//本局游戏结果
-message PBResult {
-    repeated PBHand hands          = 1; //本局所有玩家的牌和结果，按牛大小升序排序
-    string          winner         = 2; //赢家地址
-    int32           leverage       = 3; //赢得赌注倍数
-    string          dealer         = 4; //庄家
-    int32           dealerLeverage = 5; //庄家赌注倍数
-}
-
-//扑克牌
-message PBPoker {
-    repeated int32 cards   = 1; // 52张牌
-    int32          pointer = 2; //已发牌偏移
-}
-
-//游戏状态
-message PBGameAction {
-    oneof value {
-        PBGameStart start       = 1;
-        PBGameContinue continue = 2;
-        PBGameQuit  quit        = 3;
-        PBGameQuery query       = 4;
-    }
-    int32 ty = 10;
-}
-
-//游戏启动
-message PBGameStart {
-    int64 value     = 1;
-    int32 playerNum = 2;
-}
-
-//游戏继续
-message PBGameContinue {
-    string gameId = 1;
-}
-
-//游戏结束
-message PBGameQuit {
-    string gameId = 1;
-}
-
-//查询游戏结果
-message PBGameQuery {
-    string gameId = 1;
-}
-
 //游戏状态
 message GuessGameAction {
     oneof value {
@@ -168,7 +84,7 @@ message GuessGameStart{
     uint32 oneBet    = 8;
     uint32 maxBets   = 9;
     uint32 maxBetsNumber = 10;
-    uint64 fee       = 11;
+    int64 fee       = 11;
     string feeAddr   = 12;
     string expire    = 13;
     int64 expireHeight = 14;
@@ -179,66 +95,29 @@ message GuessGameBet{
     string gameId     = 1;
     string option     = 2;
     uint32  betsNum    = 3;
+    int64 fee = 4;
 }
 
 //游戏异常终止,退还下注
 message GuessGameAbort{
     string gameId     = 1;
+    int64 fee = 2;
 }
 
 //游戏结果揭晓
 message GuessGamePublish{
     string gameId     = 1;
     string result     = 2;
+    int64 fee = 3;
 }
 
 //查询游戏结果
 message GuessGameQuery{
     string gameId     = 1;
     uint32 ty          = 2;
+    int64 fee = 3;
 }
 
-//根据状态和游戏人数查找
-message QueryPBGameListByStatusAndPlayerNum {
-    int32 status    = 1;
-    int32 playerNum = 2;
-    int64 index     = 3;
-}
-
-// 索引value值
-message PBGameRecord {
-    string gameId = 1;
-    int32  status = 2;
-    int64  index  = 3;
-}
-
-message PBGameIndexRecord {
-    string gameId = 1;
-    int64  index  = 2;
-}
-
-message PBGameRecords {
-    repeated PBGameRecord records = 1;
-}
-
-message QueryPBGameInfo {
-    string gameId = 1;
-    string addr   = 2;
-    int32  status = 3;
-    int64  index  = 4;
-}
-
-message ReplyPBGame {
-    PokerBull game = 1;
-}
-
-message QueryPBGameInfos {
-    repeated string gameIds = 1;
-}
-
-message ReplyPBGameList {
-    repeated PokerBull games = 1;
-}
 
 message QueryGuessGameInfo {
     string gameId = 1;
@@ -259,23 +138,10 @@ message ReplyGuessGameInfos {
     repeated GuessGame games = 1;
 }
 
-message ReceiptPBGame {
-    string   gameId           = 1;
-    int32    status           = 2;
-    string   addr             = 3;
-    int64    index            = 4;
-    int64    prevIndex        = 5;
-    int32    playerNum        = 6;
-    int64    value            = 7;
-    bool     isWaiting        = 8;
-    repeated string players   = 9;
-    int32           preStatus = 10;
-}
-
 message ReceiptGuessGame {
     string   gameId           = 1;
-    uint32   preStatus        = 2;
-    uint32   status           = 3;
+    int32   preStatus        = 2;
+    int32   status           = 3;
     string   addr             = 4;
     string   adminAddr        = 5;
     int64    preIndex         = 6;
@@ -315,23 +181,6 @@ message GuessPublishTxReq {
     string gameId    = 1;
     string result    = 2;
 }
-
-
-message PBContinueTxReq {
-    string gameId = 1;
-    int64  fee    = 2;
-}
-
-message PBQuitTxReq {
-    string gameId = 1;
-    int64  fee    = 2;
-}
-
-message PBQueryReq {
-    string gameId = 1;
-    int64  fee    = 2;
-}
-
 
 // 索引value值
 message GuessGameRecord {

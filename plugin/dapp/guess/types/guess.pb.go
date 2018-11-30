@@ -26,8 +26,8 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 //竞猜游戏内容
 type GuessGame struct {
 	GameId               string         `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Status               uint32         `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	PreStatus            uint32         `protobuf:"varint,3,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
+	Status               int32          `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
+	PreStatus            int32          `protobuf:"varint,3,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
 	StartTime            int64          `protobuf:"varint,4,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	StartTxHash          string         `protobuf:"bytes,5,opt,name=startTxHash,proto3" json:"startTxHash,omitempty"`
 	Topic                string         `protobuf:"bytes,6,opt,name=topic,proto3" json:"topic,omitempty"`
@@ -40,7 +40,7 @@ type GuessGame struct {
 	OneBet               uint32         `protobuf:"varint,13,opt,name=oneBet,proto3" json:"oneBet,omitempty"`
 	MaxBets              uint32         `protobuf:"varint,14,opt,name=maxBets,proto3" json:"maxBets,omitempty"`
 	MaxBetsNumber        uint32         `protobuf:"varint,15,opt,name=maxBetsNumber,proto3" json:"maxBetsNumber,omitempty"`
-	Fee                  uint64         `protobuf:"varint,16,opt,name=fee,proto3" json:"fee,omitempty"`
+	Fee                  int64          `protobuf:"varint,16,opt,name=fee,proto3" json:"fee,omitempty"`
 	FeeAddr              string         `protobuf:"bytes,17,opt,name=feeAddr,proto3" json:"feeAddr,omitempty"`
 	Expire               string         `protobuf:"bytes,18,opt,name=expire,proto3" json:"expire,omitempty"`
 	ExpireHeight         int64          `protobuf:"varint,19,opt,name=expireHeight,proto3" json:"expireHeight,omitempty"`
@@ -88,14 +88,14 @@ func (m *GuessGame) GetGameId() string {
 	return ""
 }
 
-func (m *GuessGame) GetStatus() uint32 {
+func (m *GuessGame) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *GuessGame) GetPreStatus() uint32 {
+func (m *GuessGame) GetPreStatus() int32 {
 	if m != nil {
 		return m.PreStatus
 	}
@@ -186,7 +186,7 @@ func (m *GuessGame) GetMaxBetsNumber() uint32 {
 	return 0
 }
 
-func (m *GuessGame) GetFee() uint64 {
+func (m *GuessGame) GetFee() int64 {
 	if m != nil {
 		return m.Fee
 	}
@@ -499,811 +499,6 @@ func (m *GuessBetStatItem) GetBetsTimes() uint32 {
 	return 0
 }
 
-//斗牛游戏内容
-type PokerBull struct {
-	GameId               string      `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Status               int32       `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	StartTime            int64       `protobuf:"varint,3,opt,name=startTime,proto3" json:"startTime,omitempty"`
-	StartTxHash          string      `protobuf:"bytes,4,opt,name=startTxHash,proto3" json:"startTxHash,omitempty"`
-	Value                int64       `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`
-	Poker                *PBPoker    `protobuf:"bytes,6,opt,name=poker,proto3" json:"poker,omitempty"`
-	Players              []*PBPlayer `protobuf:"bytes,7,rep,name=players,proto3" json:"players,omitempty"`
-	PlayerNum            int32       `protobuf:"varint,8,opt,name=playerNum,proto3" json:"playerNum,omitempty"`
-	Results              []*PBResult `protobuf:"bytes,9,rep,name=results,proto3" json:"results,omitempty"`
-	Index                int64       `protobuf:"varint,10,opt,name=index,proto3" json:"index,omitempty"`
-	PrevIndex            int64       `protobuf:"varint,11,opt,name=prevIndex,proto3" json:"prevIndex,omitempty"`
-	QuitTime             int64       `protobuf:"varint,12,opt,name=quitTime,proto3" json:"quitTime,omitempty"`
-	QuitTxHash           string      `protobuf:"bytes,13,opt,name=quitTxHash,proto3" json:"quitTxHash,omitempty"`
-	DealerAddr           string      `protobuf:"bytes,14,opt,name=dealerAddr,proto3" json:"dealerAddr,omitempty"`
-	IsWaiting            bool        `protobuf:"varint,15,opt,name=isWaiting,proto3" json:"isWaiting,omitempty"`
-	PreStatus            int32       `protobuf:"varint,16,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *PokerBull) Reset()         { *m = PokerBull{} }
-func (m *PokerBull) String() string { return proto.CompactTextString(m) }
-func (*PokerBull) ProtoMessage()    {}
-func (*PokerBull) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{5}
-}
-
-func (m *PokerBull) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PokerBull.Unmarshal(m, b)
-}
-func (m *PokerBull) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PokerBull.Marshal(b, m, deterministic)
-}
-func (m *PokerBull) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PokerBull.Merge(m, src)
-}
-func (m *PokerBull) XXX_Size() int {
-	return xxx_messageInfo_PokerBull.Size(m)
-}
-func (m *PokerBull) XXX_DiscardUnknown() {
-	xxx_messageInfo_PokerBull.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PokerBull proto.InternalMessageInfo
-
-func (m *PokerBull) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PokerBull) GetStatus() int32 {
-	if m != nil {
-		return m.Status
-	}
-	return 0
-}
-
-func (m *PokerBull) GetStartTime() int64 {
-	if m != nil {
-		return m.StartTime
-	}
-	return 0
-}
-
-func (m *PokerBull) GetStartTxHash() string {
-	if m != nil {
-		return m.StartTxHash
-	}
-	return ""
-}
-
-func (m *PokerBull) GetValue() int64 {
-	if m != nil {
-		return m.Value
-	}
-	return 0
-}
-
-func (m *PokerBull) GetPoker() *PBPoker {
-	if m != nil {
-		return m.Poker
-	}
-	return nil
-}
-
-func (m *PokerBull) GetPlayers() []*PBPlayer {
-	if m != nil {
-		return m.Players
-	}
-	return nil
-}
-
-func (m *PokerBull) GetPlayerNum() int32 {
-	if m != nil {
-		return m.PlayerNum
-	}
-	return 0
-}
-
-func (m *PokerBull) GetResults() []*PBResult {
-	if m != nil {
-		return m.Results
-	}
-	return nil
-}
-
-func (m *PokerBull) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-func (m *PokerBull) GetPrevIndex() int64 {
-	if m != nil {
-		return m.PrevIndex
-	}
-	return 0
-}
-
-func (m *PokerBull) GetQuitTime() int64 {
-	if m != nil {
-		return m.QuitTime
-	}
-	return 0
-}
-
-func (m *PokerBull) GetQuitTxHash() string {
-	if m != nil {
-		return m.QuitTxHash
-	}
-	return ""
-}
-
-func (m *PokerBull) GetDealerAddr() string {
-	if m != nil {
-		return m.DealerAddr
-	}
-	return ""
-}
-
-func (m *PokerBull) GetIsWaiting() bool {
-	if m != nil {
-		return m.IsWaiting
-	}
-	return false
-}
-
-func (m *PokerBull) GetPreStatus() int32 {
-	if m != nil {
-		return m.PreStatus
-	}
-	return 0
-}
-
-//一把牌
-type PBHand struct {
-	Cards                []int32  `protobuf:"varint,1,rep,packed,name=cards,proto3" json:"cards,omitempty"`
-	Result               int32    `protobuf:"varint,2,opt,name=result,proto3" json:"result,omitempty"`
-	Address              string   `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
-	IsWin                bool     `protobuf:"varint,4,opt,name=isWin,proto3" json:"isWin,omitempty"`
-	Leverage             int32    `protobuf:"varint,5,opt,name=leverage,proto3" json:"leverage,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBHand) Reset()         { *m = PBHand{} }
-func (m *PBHand) String() string { return proto.CompactTextString(m) }
-func (*PBHand) ProtoMessage()    {}
-func (*PBHand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{6}
-}
-
-func (m *PBHand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBHand.Unmarshal(m, b)
-}
-func (m *PBHand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBHand.Marshal(b, m, deterministic)
-}
-func (m *PBHand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBHand.Merge(m, src)
-}
-func (m *PBHand) XXX_Size() int {
-	return xxx_messageInfo_PBHand.Size(m)
-}
-func (m *PBHand) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBHand.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBHand proto.InternalMessageInfo
-
-func (m *PBHand) GetCards() []int32 {
-	if m != nil {
-		return m.Cards
-	}
-	return nil
-}
-
-func (m *PBHand) GetResult() int32 {
-	if m != nil {
-		return m.Result
-	}
-	return 0
-}
-
-func (m *PBHand) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
-func (m *PBHand) GetIsWin() bool {
-	if m != nil {
-		return m.IsWin
-	}
-	return false
-}
-
-func (m *PBHand) GetLeverage() int32 {
-	if m != nil {
-		return m.Leverage
-	}
-	return 0
-}
-
-//玩家
-type PBPlayer struct {
-	Hands                []*PBHand `protobuf:"bytes,1,rep,name=hands,proto3" json:"hands,omitempty"`
-	Address              string    `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	TxHash               int64     `protobuf:"varint,3,opt,name=txHash,proto3" json:"txHash,omitempty"`
-	Ready                bool      `protobuf:"varint,4,opt,name=ready,proto3" json:"ready,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *PBPlayer) Reset()         { *m = PBPlayer{} }
-func (m *PBPlayer) String() string { return proto.CompactTextString(m) }
-func (*PBPlayer) ProtoMessage()    {}
-func (*PBPlayer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{7}
-}
-
-func (m *PBPlayer) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBPlayer.Unmarshal(m, b)
-}
-func (m *PBPlayer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBPlayer.Marshal(b, m, deterministic)
-}
-func (m *PBPlayer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBPlayer.Merge(m, src)
-}
-func (m *PBPlayer) XXX_Size() int {
-	return xxx_messageInfo_PBPlayer.Size(m)
-}
-func (m *PBPlayer) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBPlayer.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBPlayer proto.InternalMessageInfo
-
-func (m *PBPlayer) GetHands() []*PBHand {
-	if m != nil {
-		return m.Hands
-	}
-	return nil
-}
-
-func (m *PBPlayer) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
-func (m *PBPlayer) GetTxHash() int64 {
-	if m != nil {
-		return m.TxHash
-	}
-	return 0
-}
-
-func (m *PBPlayer) GetReady() bool {
-	if m != nil {
-		return m.Ready
-	}
-	return false
-}
-
-//本局游戏结果
-type PBResult struct {
-	Hands                []*PBHand `protobuf:"bytes,1,rep,name=hands,proto3" json:"hands,omitempty"`
-	Winner               string    `protobuf:"bytes,2,opt,name=winner,proto3" json:"winner,omitempty"`
-	Leverage             int32     `protobuf:"varint,3,opt,name=leverage,proto3" json:"leverage,omitempty"`
-	Dealer               string    `protobuf:"bytes,4,opt,name=dealer,proto3" json:"dealer,omitempty"`
-	DealerLeverage       int32     `protobuf:"varint,5,opt,name=dealerLeverage,proto3" json:"dealerLeverage,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *PBResult) Reset()         { *m = PBResult{} }
-func (m *PBResult) String() string { return proto.CompactTextString(m) }
-func (*PBResult) ProtoMessage()    {}
-func (*PBResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{8}
-}
-
-func (m *PBResult) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBResult.Unmarshal(m, b)
-}
-func (m *PBResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBResult.Marshal(b, m, deterministic)
-}
-func (m *PBResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBResult.Merge(m, src)
-}
-func (m *PBResult) XXX_Size() int {
-	return xxx_messageInfo_PBResult.Size(m)
-}
-func (m *PBResult) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBResult.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBResult proto.InternalMessageInfo
-
-func (m *PBResult) GetHands() []*PBHand {
-	if m != nil {
-		return m.Hands
-	}
-	return nil
-}
-
-func (m *PBResult) GetWinner() string {
-	if m != nil {
-		return m.Winner
-	}
-	return ""
-}
-
-func (m *PBResult) GetLeverage() int32 {
-	if m != nil {
-		return m.Leverage
-	}
-	return 0
-}
-
-func (m *PBResult) GetDealer() string {
-	if m != nil {
-		return m.Dealer
-	}
-	return ""
-}
-
-func (m *PBResult) GetDealerLeverage() int32 {
-	if m != nil {
-		return m.DealerLeverage
-	}
-	return 0
-}
-
-//扑克牌
-type PBPoker struct {
-	Cards                []int32  `protobuf:"varint,1,rep,packed,name=cards,proto3" json:"cards,omitempty"`
-	Pointer              int32    `protobuf:"varint,2,opt,name=pointer,proto3" json:"pointer,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBPoker) Reset()         { *m = PBPoker{} }
-func (m *PBPoker) String() string { return proto.CompactTextString(m) }
-func (*PBPoker) ProtoMessage()    {}
-func (*PBPoker) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{9}
-}
-
-func (m *PBPoker) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBPoker.Unmarshal(m, b)
-}
-func (m *PBPoker) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBPoker.Marshal(b, m, deterministic)
-}
-func (m *PBPoker) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBPoker.Merge(m, src)
-}
-func (m *PBPoker) XXX_Size() int {
-	return xxx_messageInfo_PBPoker.Size(m)
-}
-func (m *PBPoker) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBPoker.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBPoker proto.InternalMessageInfo
-
-func (m *PBPoker) GetCards() []int32 {
-	if m != nil {
-		return m.Cards
-	}
-	return nil
-}
-
-func (m *PBPoker) GetPointer() int32 {
-	if m != nil {
-		return m.Pointer
-	}
-	return 0
-}
-
-//游戏状态
-type PBGameAction struct {
-	// Types that are valid to be assigned to Value:
-	//	*PBGameAction_Start
-	//	*PBGameAction_Continue
-	//	*PBGameAction_Quit
-	//	*PBGameAction_Query
-	Value                isPBGameAction_Value `protobuf_oneof:"value"`
-	Ty                   int32                `protobuf:"varint,10,opt,name=ty,proto3" json:"ty,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
-}
-
-func (m *PBGameAction) Reset()         { *m = PBGameAction{} }
-func (m *PBGameAction) String() string { return proto.CompactTextString(m) }
-func (*PBGameAction) ProtoMessage()    {}
-func (*PBGameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{10}
-}
-
-func (m *PBGameAction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameAction.Unmarshal(m, b)
-}
-func (m *PBGameAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameAction.Marshal(b, m, deterministic)
-}
-func (m *PBGameAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameAction.Merge(m, src)
-}
-func (m *PBGameAction) XXX_Size() int {
-	return xxx_messageInfo_PBGameAction.Size(m)
-}
-func (m *PBGameAction) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameAction.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameAction proto.InternalMessageInfo
-
-type isPBGameAction_Value interface {
-	isPBGameAction_Value()
-}
-
-type PBGameAction_Start struct {
-	Start *PBGameStart `protobuf:"bytes,1,opt,name=start,proto3,oneof"`
-}
-
-type PBGameAction_Continue struct {
-	Continue *PBGameContinue `protobuf:"bytes,2,opt,name=continue,proto3,oneof"`
-}
-
-type PBGameAction_Quit struct {
-	Quit *PBGameQuit `protobuf:"bytes,3,opt,name=quit,proto3,oneof"`
-}
-
-type PBGameAction_Query struct {
-	Query *PBGameQuery `protobuf:"bytes,4,opt,name=query,proto3,oneof"`
-}
-
-func (*PBGameAction_Start) isPBGameAction_Value() {}
-
-func (*PBGameAction_Continue) isPBGameAction_Value() {}
-
-func (*PBGameAction_Quit) isPBGameAction_Value() {}
-
-func (*PBGameAction_Query) isPBGameAction_Value() {}
-
-func (m *PBGameAction) GetValue() isPBGameAction_Value {
-	if m != nil {
-		return m.Value
-	}
-	return nil
-}
-
-func (m *PBGameAction) GetStart() *PBGameStart {
-	if x, ok := m.GetValue().(*PBGameAction_Start); ok {
-		return x.Start
-	}
-	return nil
-}
-
-func (m *PBGameAction) GetContinue() *PBGameContinue {
-	if x, ok := m.GetValue().(*PBGameAction_Continue); ok {
-		return x.Continue
-	}
-	return nil
-}
-
-func (m *PBGameAction) GetQuit() *PBGameQuit {
-	if x, ok := m.GetValue().(*PBGameAction_Quit); ok {
-		return x.Quit
-	}
-	return nil
-}
-
-func (m *PBGameAction) GetQuery() *PBGameQuery {
-	if x, ok := m.GetValue().(*PBGameAction_Query); ok {
-		return x.Query
-	}
-	return nil
-}
-
-func (m *PBGameAction) GetTy() int32 {
-	if m != nil {
-		return m.Ty
-	}
-	return 0
-}
-
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*PBGameAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _PBGameAction_OneofMarshaler, _PBGameAction_OneofUnmarshaler, _PBGameAction_OneofSizer, []interface{}{
-		(*PBGameAction_Start)(nil),
-		(*PBGameAction_Continue)(nil),
-		(*PBGameAction_Quit)(nil),
-		(*PBGameAction_Query)(nil),
-	}
-}
-
-func _PBGameAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*PBGameAction)
-	// value
-	switch x := m.Value.(type) {
-	case *PBGameAction_Start:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Start); err != nil {
-			return err
-		}
-	case *PBGameAction_Continue:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Continue); err != nil {
-			return err
-		}
-	case *PBGameAction_Quit:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Quit); err != nil {
-			return err
-		}
-	case *PBGameAction_Query:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Query); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("PBGameAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _PBGameAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*PBGameAction)
-	switch tag {
-	case 1: // value.start
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PBGameStart)
-		err := b.DecodeMessage(msg)
-		m.Value = &PBGameAction_Start{msg}
-		return true, err
-	case 2: // value.continue
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PBGameContinue)
-		err := b.DecodeMessage(msg)
-		m.Value = &PBGameAction_Continue{msg}
-		return true, err
-	case 3: // value.quit
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PBGameQuit)
-		err := b.DecodeMessage(msg)
-		m.Value = &PBGameAction_Quit{msg}
-		return true, err
-	case 4: // value.query
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PBGameQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &PBGameAction_Query{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _PBGameAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*PBGameAction)
-	// value
-	switch x := m.Value.(type) {
-	case *PBGameAction_Start:
-		s := proto.Size(x.Start)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PBGameAction_Continue:
-		s := proto.Size(x.Continue)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PBGameAction_Quit:
-		s := proto.Size(x.Quit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PBGameAction_Query:
-		s := proto.Size(x.Query)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
-}
-
-//游戏启动
-type PBGameStart struct {
-	Value                int64    `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
-	PlayerNum            int32    `protobuf:"varint,2,opt,name=playerNum,proto3" json:"playerNum,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameStart) Reset()         { *m = PBGameStart{} }
-func (m *PBGameStart) String() string { return proto.CompactTextString(m) }
-func (*PBGameStart) ProtoMessage()    {}
-func (*PBGameStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{11}
-}
-
-func (m *PBGameStart) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameStart.Unmarshal(m, b)
-}
-func (m *PBGameStart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameStart.Marshal(b, m, deterministic)
-}
-func (m *PBGameStart) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameStart.Merge(m, src)
-}
-func (m *PBGameStart) XXX_Size() int {
-	return xxx_messageInfo_PBGameStart.Size(m)
-}
-func (m *PBGameStart) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameStart.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameStart proto.InternalMessageInfo
-
-func (m *PBGameStart) GetValue() int64 {
-	if m != nil {
-		return m.Value
-	}
-	return 0
-}
-
-func (m *PBGameStart) GetPlayerNum() int32 {
-	if m != nil {
-		return m.PlayerNum
-	}
-	return 0
-}
-
-//游戏继续
-type PBGameContinue struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameContinue) Reset()         { *m = PBGameContinue{} }
-func (m *PBGameContinue) String() string { return proto.CompactTextString(m) }
-func (*PBGameContinue) ProtoMessage()    {}
-func (*PBGameContinue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{12}
-}
-
-func (m *PBGameContinue) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameContinue.Unmarshal(m, b)
-}
-func (m *PBGameContinue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameContinue.Marshal(b, m, deterministic)
-}
-func (m *PBGameContinue) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameContinue.Merge(m, src)
-}
-func (m *PBGameContinue) XXX_Size() int {
-	return xxx_messageInfo_PBGameContinue.Size(m)
-}
-func (m *PBGameContinue) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameContinue.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameContinue proto.InternalMessageInfo
-
-func (m *PBGameContinue) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-//游戏结束
-type PBGameQuit struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameQuit) Reset()         { *m = PBGameQuit{} }
-func (m *PBGameQuit) String() string { return proto.CompactTextString(m) }
-func (*PBGameQuit) ProtoMessage()    {}
-func (*PBGameQuit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{13}
-}
-
-func (m *PBGameQuit) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameQuit.Unmarshal(m, b)
-}
-func (m *PBGameQuit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameQuit.Marshal(b, m, deterministic)
-}
-func (m *PBGameQuit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameQuit.Merge(m, src)
-}
-func (m *PBGameQuit) XXX_Size() int {
-	return xxx_messageInfo_PBGameQuit.Size(m)
-}
-func (m *PBGameQuit) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameQuit.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameQuit proto.InternalMessageInfo
-
-func (m *PBGameQuit) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-//查询游戏结果
-type PBGameQuery struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameQuery) Reset()         { *m = PBGameQuery{} }
-func (m *PBGameQuery) String() string { return proto.CompactTextString(m) }
-func (*PBGameQuery) ProtoMessage()    {}
-func (*PBGameQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{14}
-}
-
-func (m *PBGameQuery) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameQuery.Unmarshal(m, b)
-}
-func (m *PBGameQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameQuery.Marshal(b, m, deterministic)
-}
-func (m *PBGameQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameQuery.Merge(m, src)
-}
-func (m *PBGameQuery) XXX_Size() int {
-	return xxx_messageInfo_PBGameQuery.Size(m)
-}
-func (m *PBGameQuery) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameQuery.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameQuery proto.InternalMessageInfo
-
-func (m *PBGameQuery) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
 //游戏状态
 type GuessGameAction struct {
 	// Types that are valid to be assigned to Value:
@@ -1323,7 +518,7 @@ func (m *GuessGameAction) Reset()         { *m = GuessGameAction{} }
 func (m *GuessGameAction) String() string { return proto.CompactTextString(m) }
 func (*GuessGameAction) ProtoMessage()    {}
 func (*GuessGameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{15}
+	return fileDescriptor_7574406c5d3430e8, []int{5}
 }
 
 func (m *GuessGameAction) XXX_Unmarshal(b []byte) error {
@@ -1570,7 +765,7 @@ type GuessGameStart struct {
 	OneBet               uint32   `protobuf:"varint,8,opt,name=oneBet,proto3" json:"oneBet,omitempty"`
 	MaxBets              uint32   `protobuf:"varint,9,opt,name=maxBets,proto3" json:"maxBets,omitempty"`
 	MaxBetsNumber        uint32   `protobuf:"varint,10,opt,name=maxBetsNumber,proto3" json:"maxBetsNumber,omitempty"`
-	Fee                  uint64   `protobuf:"varint,11,opt,name=fee,proto3" json:"fee,omitempty"`
+	Fee                  int64    `protobuf:"varint,11,opt,name=fee,proto3" json:"fee,omitempty"`
 	FeeAddr              string   `protobuf:"bytes,12,opt,name=feeAddr,proto3" json:"feeAddr,omitempty"`
 	Expire               string   `protobuf:"bytes,13,opt,name=expire,proto3" json:"expire,omitempty"`
 	ExpireHeight         int64    `protobuf:"varint,14,opt,name=expireHeight,proto3" json:"expireHeight,omitempty"`
@@ -1583,7 +778,7 @@ func (m *GuessGameStart) Reset()         { *m = GuessGameStart{} }
 func (m *GuessGameStart) String() string { return proto.CompactTextString(m) }
 func (*GuessGameStart) ProtoMessage()    {}
 func (*GuessGameStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{16}
+	return fileDescriptor_7574406c5d3430e8, []int{6}
 }
 
 func (m *GuessGameStart) XXX_Unmarshal(b []byte) error {
@@ -1674,7 +869,7 @@ func (m *GuessGameStart) GetMaxBetsNumber() uint32 {
 	return 0
 }
 
-func (m *GuessGameStart) GetFee() uint64 {
+func (m *GuessGameStart) GetFee() int64 {
 	if m != nil {
 		return m.Fee
 	}
@@ -1707,6 +902,7 @@ type GuessGameBet struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Option               string   `protobuf:"bytes,2,opt,name=option,proto3" json:"option,omitempty"`
 	BetsNum              uint32   `protobuf:"varint,3,opt,name=betsNum,proto3" json:"betsNum,omitempty"`
+	Fee                  int64    `protobuf:"varint,4,opt,name=fee,proto3" json:"fee,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1716,7 +912,7 @@ func (m *GuessGameBet) Reset()         { *m = GuessGameBet{} }
 func (m *GuessGameBet) String() string { return proto.CompactTextString(m) }
 func (*GuessGameBet) ProtoMessage()    {}
 func (*GuessGameBet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{17}
+	return fileDescriptor_7574406c5d3430e8, []int{7}
 }
 
 func (m *GuessGameBet) XXX_Unmarshal(b []byte) error {
@@ -1758,9 +954,17 @@ func (m *GuessGameBet) GetBetsNum() uint32 {
 	return 0
 }
 
+func (m *GuessGameBet) GetFee() int64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
 //游戏异常终止,退还下注
 type GuessGameAbort struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
+	Fee                  int64    `protobuf:"varint,2,opt,name=fee,proto3" json:"fee,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1770,7 +974,7 @@ func (m *GuessGameAbort) Reset()         { *m = GuessGameAbort{} }
 func (m *GuessGameAbort) String() string { return proto.CompactTextString(m) }
 func (*GuessGameAbort) ProtoMessage()    {}
 func (*GuessGameAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{18}
+	return fileDescriptor_7574406c5d3430e8, []int{8}
 }
 
 func (m *GuessGameAbort) XXX_Unmarshal(b []byte) error {
@@ -1798,10 +1002,18 @@ func (m *GuessGameAbort) GetGameId() string {
 	return ""
 }
 
+func (m *GuessGameAbort) GetFee() int64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
 //游戏结果揭晓
 type GuessGamePublish struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Result               string   `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
+	Fee                  int64    `protobuf:"varint,3,opt,name=fee,proto3" json:"fee,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1811,7 +1023,7 @@ func (m *GuessGamePublish) Reset()         { *m = GuessGamePublish{} }
 func (m *GuessGamePublish) String() string { return proto.CompactTextString(m) }
 func (*GuessGamePublish) ProtoMessage()    {}
 func (*GuessGamePublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{19}
+	return fileDescriptor_7574406c5d3430e8, []int{9}
 }
 
 func (m *GuessGamePublish) XXX_Unmarshal(b []byte) error {
@@ -1846,10 +1058,18 @@ func (m *GuessGamePublish) GetResult() string {
 	return ""
 }
 
+func (m *GuessGamePublish) GetFee() int64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
 //查询游戏结果
 type GuessGameQuery struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Ty                   uint32   `protobuf:"varint,2,opt,name=ty,proto3" json:"ty,omitempty"`
+	Fee                  int64    `protobuf:"varint,3,opt,name=fee,proto3" json:"fee,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1859,7 +1079,7 @@ func (m *GuessGameQuery) Reset()         { *m = GuessGameQuery{} }
 func (m *GuessGameQuery) String() string { return proto.CompactTextString(m) }
 func (*GuessGameQuery) ProtoMessage()    {}
 func (*GuessGameQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{20}
+	return fileDescriptor_7574406c5d3430e8, []int{10}
 }
 
 func (m *GuessGameQuery) XXX_Unmarshal(b []byte) error {
@@ -1894,382 +1114,11 @@ func (m *GuessGameQuery) GetTy() uint32 {
 	return 0
 }
 
-//根据状态和游戏人数查找
-type QueryPBGameListByStatusAndPlayerNum struct {
-	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	PlayerNum            int32    `protobuf:"varint,2,opt,name=playerNum,proto3" json:"playerNum,omitempty"`
-	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *QueryPBGameListByStatusAndPlayerNum) Reset()         { *m = QueryPBGameListByStatusAndPlayerNum{} }
-func (m *QueryPBGameListByStatusAndPlayerNum) String() string { return proto.CompactTextString(m) }
-func (*QueryPBGameListByStatusAndPlayerNum) ProtoMessage()    {}
-func (*QueryPBGameListByStatusAndPlayerNum) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{21}
-}
-
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Unmarshal(m, b)
-}
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Marshal(b, m, deterministic)
-}
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Merge(m, src)
-}
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Size() int {
-	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Size(m)
-}
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum proto.InternalMessageInfo
-
-func (m *QueryPBGameListByStatusAndPlayerNum) GetStatus() int32 {
+func (m *GuessGameQuery) GetFee() int64 {
 	if m != nil {
-		return m.Status
+		return m.Fee
 	}
 	return 0
-}
-
-func (m *QueryPBGameListByStatusAndPlayerNum) GetPlayerNum() int32 {
-	if m != nil {
-		return m.PlayerNum
-	}
-	return 0
-}
-
-func (m *QueryPBGameListByStatusAndPlayerNum) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-// 索引value值
-type PBGameRecord struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Status               int32    `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameRecord) Reset()         { *m = PBGameRecord{} }
-func (m *PBGameRecord) String() string { return proto.CompactTextString(m) }
-func (*PBGameRecord) ProtoMessage()    {}
-func (*PBGameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{22}
-}
-
-func (m *PBGameRecord) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameRecord.Unmarshal(m, b)
-}
-func (m *PBGameRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameRecord.Marshal(b, m, deterministic)
-}
-func (m *PBGameRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameRecord.Merge(m, src)
-}
-func (m *PBGameRecord) XXX_Size() int {
-	return xxx_messageInfo_PBGameRecord.Size(m)
-}
-func (m *PBGameRecord) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameRecord.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameRecord proto.InternalMessageInfo
-
-func (m *PBGameRecord) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PBGameRecord) GetStatus() int32 {
-	if m != nil {
-		return m.Status
-	}
-	return 0
-}
-
-func (m *PBGameRecord) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-type PBGameIndexRecord struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Index                int64    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBGameIndexRecord) Reset()         { *m = PBGameIndexRecord{} }
-func (m *PBGameIndexRecord) String() string { return proto.CompactTextString(m) }
-func (*PBGameIndexRecord) ProtoMessage()    {}
-func (*PBGameIndexRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{23}
-}
-
-func (m *PBGameIndexRecord) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameIndexRecord.Unmarshal(m, b)
-}
-func (m *PBGameIndexRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameIndexRecord.Marshal(b, m, deterministic)
-}
-func (m *PBGameIndexRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameIndexRecord.Merge(m, src)
-}
-func (m *PBGameIndexRecord) XXX_Size() int {
-	return xxx_messageInfo_PBGameIndexRecord.Size(m)
-}
-func (m *PBGameIndexRecord) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameIndexRecord.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameIndexRecord proto.InternalMessageInfo
-
-func (m *PBGameIndexRecord) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PBGameIndexRecord) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-type PBGameRecords struct {
-	Records              []*PBGameRecord `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
-}
-
-func (m *PBGameRecords) Reset()         { *m = PBGameRecords{} }
-func (m *PBGameRecords) String() string { return proto.CompactTextString(m) }
-func (*PBGameRecords) ProtoMessage()    {}
-func (*PBGameRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{24}
-}
-
-func (m *PBGameRecords) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBGameRecords.Unmarshal(m, b)
-}
-func (m *PBGameRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBGameRecords.Marshal(b, m, deterministic)
-}
-func (m *PBGameRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameRecords.Merge(m, src)
-}
-func (m *PBGameRecords) XXX_Size() int {
-	return xxx_messageInfo_PBGameRecords.Size(m)
-}
-func (m *PBGameRecords) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBGameRecords.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBGameRecords proto.InternalMessageInfo
-
-func (m *PBGameRecords) GetRecords() []*PBGameRecord {
-	if m != nil {
-		return m.Records
-	}
-	return nil
-}
-
-type QueryPBGameInfo struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	Status               int32    `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
-	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *QueryPBGameInfo) Reset()         { *m = QueryPBGameInfo{} }
-func (m *QueryPBGameInfo) String() string { return proto.CompactTextString(m) }
-func (*QueryPBGameInfo) ProtoMessage()    {}
-func (*QueryPBGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{25}
-}
-
-func (m *QueryPBGameInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryPBGameInfo.Unmarshal(m, b)
-}
-func (m *QueryPBGameInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryPBGameInfo.Marshal(b, m, deterministic)
-}
-func (m *QueryPBGameInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameInfo.Merge(m, src)
-}
-func (m *QueryPBGameInfo) XXX_Size() int {
-	return xxx_messageInfo_QueryPBGameInfo.Size(m)
-}
-func (m *QueryPBGameInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPBGameInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPBGameInfo proto.InternalMessageInfo
-
-func (m *QueryPBGameInfo) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *QueryPBGameInfo) GetAddr() string {
-	if m != nil {
-		return m.Addr
-	}
-	return ""
-}
-
-func (m *QueryPBGameInfo) GetStatus() int32 {
-	if m != nil {
-		return m.Status
-	}
-	return 0
-}
-
-func (m *QueryPBGameInfo) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-type ReplyPBGame struct {
-	Game                 *PokerBull `protobuf:"bytes,1,opt,name=game,proto3" json:"game,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
-}
-
-func (m *ReplyPBGame) Reset()         { *m = ReplyPBGame{} }
-func (m *ReplyPBGame) String() string { return proto.CompactTextString(m) }
-func (*ReplyPBGame) ProtoMessage()    {}
-func (*ReplyPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{26}
-}
-
-func (m *ReplyPBGame) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyPBGame.Unmarshal(m, b)
-}
-func (m *ReplyPBGame) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyPBGame.Marshal(b, m, deterministic)
-}
-func (m *ReplyPBGame) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPBGame.Merge(m, src)
-}
-func (m *ReplyPBGame) XXX_Size() int {
-	return xxx_messageInfo_ReplyPBGame.Size(m)
-}
-func (m *ReplyPBGame) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyPBGame.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReplyPBGame proto.InternalMessageInfo
-
-func (m *ReplyPBGame) GetGame() *PokerBull {
-	if m != nil {
-		return m.Game
-	}
-	return nil
-}
-
-type QueryPBGameInfos struct {
-	GameIds              []string `protobuf:"bytes,1,rep,name=gameIds,proto3" json:"gameIds,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *QueryPBGameInfos) Reset()         { *m = QueryPBGameInfos{} }
-func (m *QueryPBGameInfos) String() string { return proto.CompactTextString(m) }
-func (*QueryPBGameInfos) ProtoMessage()    {}
-func (*QueryPBGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{27}
-}
-
-func (m *QueryPBGameInfos) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryPBGameInfos.Unmarshal(m, b)
-}
-func (m *QueryPBGameInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryPBGameInfos.Marshal(b, m, deterministic)
-}
-func (m *QueryPBGameInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameInfos.Merge(m, src)
-}
-func (m *QueryPBGameInfos) XXX_Size() int {
-	return xxx_messageInfo_QueryPBGameInfos.Size(m)
-}
-func (m *QueryPBGameInfos) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPBGameInfos.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPBGameInfos proto.InternalMessageInfo
-
-func (m *QueryPBGameInfos) GetGameIds() []string {
-	if m != nil {
-		return m.GameIds
-	}
-	return nil
-}
-
-type ReplyPBGameList struct {
-	Games                []*PokerBull `protobuf:"bytes,1,rep,name=games,proto3" json:"games,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
-}
-
-func (m *ReplyPBGameList) Reset()         { *m = ReplyPBGameList{} }
-func (m *ReplyPBGameList) String() string { return proto.CompactTextString(m) }
-func (*ReplyPBGameList) ProtoMessage()    {}
-func (*ReplyPBGameList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{28}
-}
-
-func (m *ReplyPBGameList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyPBGameList.Unmarshal(m, b)
-}
-func (m *ReplyPBGameList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyPBGameList.Marshal(b, m, deterministic)
-}
-func (m *ReplyPBGameList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPBGameList.Merge(m, src)
-}
-func (m *ReplyPBGameList) XXX_Size() int {
-	return xxx_messageInfo_ReplyPBGameList.Size(m)
-}
-func (m *ReplyPBGameList) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyPBGameList.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReplyPBGameList proto.InternalMessageInfo
-
-func (m *ReplyPBGameList) GetGames() []*PokerBull {
-	if m != nil {
-		return m.Games
-	}
-	return nil
 }
 
 type QueryGuessGameInfo struct {
@@ -2286,7 +1135,7 @@ func (m *QueryGuessGameInfo) Reset()         { *m = QueryGuessGameInfo{} }
 func (m *QueryGuessGameInfo) String() string { return proto.CompactTextString(m) }
 func (*QueryGuessGameInfo) ProtoMessage()    {}
 func (*QueryGuessGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{29}
+	return fileDescriptor_7574406c5d3430e8, []int{11}
 }
 
 func (m *QueryGuessGameInfo) XXX_Unmarshal(b []byte) error {
@@ -2346,7 +1195,7 @@ func (m *ReplyGuessGameInfo) Reset()         { *m = ReplyGuessGameInfo{} }
 func (m *ReplyGuessGameInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyGuessGameInfo) ProtoMessage()    {}
 func (*ReplyGuessGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{30}
+	return fileDescriptor_7574406c5d3430e8, []int{12}
 }
 
 func (m *ReplyGuessGameInfo) XXX_Unmarshal(b []byte) error {
@@ -2385,7 +1234,7 @@ func (m *QueryGuessGameInfos) Reset()         { *m = QueryGuessGameInfos{} }
 func (m *QueryGuessGameInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryGuessGameInfos) ProtoMessage()    {}
 func (*QueryGuessGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{31}
+	return fileDescriptor_7574406c5d3430e8, []int{13}
 }
 
 func (m *QueryGuessGameInfos) XXX_Unmarshal(b []byte) error {
@@ -2424,7 +1273,7 @@ func (m *ReplyGuessGameInfos) Reset()         { *m = ReplyGuessGameInfos{} }
 func (m *ReplyGuessGameInfos) String() string { return proto.CompactTextString(m) }
 func (*ReplyGuessGameInfos) ProtoMessage()    {}
 func (*ReplyGuessGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{32}
+	return fileDescriptor_7574406c5d3430e8, []int{14}
 }
 
 func (m *ReplyGuessGameInfos) XXX_Unmarshal(b []byte) error {
@@ -2472,7 +1321,7 @@ func (m *ReceiptPBGame) Reset()         { *m = ReceiptPBGame{} }
 func (m *ReceiptPBGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPBGame) ProtoMessage()    {}
 func (*ReceiptPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{33}
+	return fileDescriptor_7574406c5d3430e8, []int{15}
 }
 
 func (m *ReceiptPBGame) XXX_Unmarshal(b []byte) error {
@@ -2565,8 +1414,8 @@ func (m *ReceiptPBGame) GetPreStatus() int32 {
 
 type ReceiptGuessGame struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	PreStatus            uint32   `protobuf:"varint,2,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
-	Status               uint32   `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
+	PreStatus            int32    `protobuf:"varint,2,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
+	Status               int32    `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
 	Addr                 string   `protobuf:"bytes,4,opt,name=addr,proto3" json:"addr,omitempty"`
 	AdminAddr            string   `protobuf:"bytes,5,opt,name=adminAddr,proto3" json:"adminAddr,omitempty"`
 	PreIndex             int64    `protobuf:"varint,6,opt,name=preIndex,proto3" json:"preIndex,omitempty"`
@@ -2582,7 +1431,7 @@ func (m *ReceiptGuessGame) Reset()         { *m = ReceiptGuessGame{} }
 func (m *ReceiptGuessGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptGuessGame) ProtoMessage()    {}
 func (*ReceiptGuessGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{34}
+	return fileDescriptor_7574406c5d3430e8, []int{16}
 }
 
 func (m *ReceiptGuessGame) XXX_Unmarshal(b []byte) error {
@@ -2610,14 +1459,14 @@ func (m *ReceiptGuessGame) GetGameId() string {
 	return ""
 }
 
-func (m *ReceiptGuessGame) GetPreStatus() uint32 {
+func (m *ReceiptGuessGame) GetPreStatus() int32 {
 	if m != nil {
 		return m.PreStatus
 	}
 	return 0
 }
 
-func (m *ReceiptGuessGame) GetStatus() uint32 {
+func (m *ReceiptGuessGame) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
@@ -2690,7 +1539,7 @@ func (m *GuessStartTxReq) Reset()         { *m = GuessStartTxReq{} }
 func (m *GuessStartTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessStartTxReq) ProtoMessage()    {}
 func (*GuessStartTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{35}
+	return fileDescriptor_7574406c5d3430e8, []int{17}
 }
 
 func (m *GuessStartTxReq) XXX_Unmarshal(b []byte) error {
@@ -2822,7 +1671,7 @@ func (m *GuessBetTxReq) Reset()         { *m = GuessBetTxReq{} }
 func (m *GuessBetTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessBetTxReq) ProtoMessage()    {}
 func (*GuessBetTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{36}
+	return fileDescriptor_7574406c5d3430e8, []int{18}
 }
 
 func (m *GuessBetTxReq) XXX_Unmarshal(b []byte) error {
@@ -2875,7 +1724,7 @@ func (m *GuessAbortTxReq) Reset()         { *m = GuessAbortTxReq{} }
 func (m *GuessAbortTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessAbortTxReq) ProtoMessage()    {}
 func (*GuessAbortTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{37}
+	return fileDescriptor_7574406c5d3430e8, []int{19}
 }
 
 func (m *GuessAbortTxReq) XXX_Unmarshal(b []byte) error {
@@ -2915,7 +1764,7 @@ func (m *GuessPublishTxReq) Reset()         { *m = GuessPublishTxReq{} }
 func (m *GuessPublishTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessPublishTxReq) ProtoMessage()    {}
 func (*GuessPublishTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{38}
+	return fileDescriptor_7574406c5d3430e8, []int{20}
 }
 
 func (m *GuessPublishTxReq) XXX_Unmarshal(b []byte) error {
@@ -2950,147 +1799,6 @@ func (m *GuessPublishTxReq) GetResult() string {
 	return ""
 }
 
-type PBContinueTxReq struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Fee                  int64    `protobuf:"varint,2,opt,name=fee,proto3" json:"fee,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBContinueTxReq) Reset()         { *m = PBContinueTxReq{} }
-func (m *PBContinueTxReq) String() string { return proto.CompactTextString(m) }
-func (*PBContinueTxReq) ProtoMessage()    {}
-func (*PBContinueTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{39}
-}
-
-func (m *PBContinueTxReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBContinueTxReq.Unmarshal(m, b)
-}
-func (m *PBContinueTxReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBContinueTxReq.Marshal(b, m, deterministic)
-}
-func (m *PBContinueTxReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBContinueTxReq.Merge(m, src)
-}
-func (m *PBContinueTxReq) XXX_Size() int {
-	return xxx_messageInfo_PBContinueTxReq.Size(m)
-}
-func (m *PBContinueTxReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBContinueTxReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBContinueTxReq proto.InternalMessageInfo
-
-func (m *PBContinueTxReq) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PBContinueTxReq) GetFee() int64 {
-	if m != nil {
-		return m.Fee
-	}
-	return 0
-}
-
-type PBQuitTxReq struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Fee                  int64    `protobuf:"varint,2,opt,name=fee,proto3" json:"fee,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBQuitTxReq) Reset()         { *m = PBQuitTxReq{} }
-func (m *PBQuitTxReq) String() string { return proto.CompactTextString(m) }
-func (*PBQuitTxReq) ProtoMessage()    {}
-func (*PBQuitTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{40}
-}
-
-func (m *PBQuitTxReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBQuitTxReq.Unmarshal(m, b)
-}
-func (m *PBQuitTxReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBQuitTxReq.Marshal(b, m, deterministic)
-}
-func (m *PBQuitTxReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBQuitTxReq.Merge(m, src)
-}
-func (m *PBQuitTxReq) XXX_Size() int {
-	return xxx_messageInfo_PBQuitTxReq.Size(m)
-}
-func (m *PBQuitTxReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBQuitTxReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBQuitTxReq proto.InternalMessageInfo
-
-func (m *PBQuitTxReq) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PBQuitTxReq) GetFee() int64 {
-	if m != nil {
-		return m.Fee
-	}
-	return 0
-}
-
-type PBQueryReq struct {
-	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
-	Fee                  int64    `protobuf:"varint,2,opt,name=fee,proto3" json:"fee,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PBQueryReq) Reset()         { *m = PBQueryReq{} }
-func (m *PBQueryReq) String() string { return proto.CompactTextString(m) }
-func (*PBQueryReq) ProtoMessage()    {}
-func (*PBQueryReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{41}
-}
-
-func (m *PBQueryReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PBQueryReq.Unmarshal(m, b)
-}
-func (m *PBQueryReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PBQueryReq.Marshal(b, m, deterministic)
-}
-func (m *PBQueryReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBQueryReq.Merge(m, src)
-}
-func (m *PBQueryReq) XXX_Size() int {
-	return xxx_messageInfo_PBQueryReq.Size(m)
-}
-func (m *PBQueryReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBQueryReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PBQueryReq proto.InternalMessageInfo
-
-func (m *PBQueryReq) GetGameId() string {
-	if m != nil {
-		return m.GameId
-	}
-	return ""
-}
-
-func (m *PBQueryReq) GetFee() int64 {
-	if m != nil {
-		return m.Fee
-	}
-	return 0
-}
-
 // 索引value值
 type GuessGameRecord struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
@@ -3105,7 +1813,7 @@ func (m *GuessGameRecord) Reset()         { *m = GuessGameRecord{} }
 func (m *GuessGameRecord) String() string { return proto.CompactTextString(m) }
 func (*GuessGameRecord) ProtoMessage()    {}
 func (*GuessGameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{42}
+	return fileDescriptor_7574406c5d3430e8, []int{21}
 }
 
 func (m *GuessGameRecord) XXX_Unmarshal(b []byte) error {
@@ -3159,7 +1867,7 @@ func (m *GuessGameIndexRecord) Reset()         { *m = GuessGameIndexRecord{} }
 func (m *GuessGameIndexRecord) String() string { return proto.CompactTextString(m) }
 func (*GuessGameIndexRecord) ProtoMessage()    {}
 func (*GuessGameIndexRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{43}
+	return fileDescriptor_7574406c5d3430e8, []int{22}
 }
 
 func (m *GuessGameIndexRecord) XXX_Unmarshal(b []byte) error {
@@ -3205,7 +1913,7 @@ func (m *GuessGameRecords) Reset()         { *m = GuessGameRecords{} }
 func (m *GuessGameRecords) String() string { return proto.CompactTextString(m) }
 func (*GuessGameRecords) ProtoMessage()    {}
 func (*GuessGameRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7574406c5d3430e8, []int{44}
+	return fileDescriptor_7574406c5d3430e8, []int{23}
 }
 
 func (m *GuessGameRecords) XXX_Unmarshal(b []byte) error {
@@ -3239,30 +1947,12 @@ func init() {
 	proto.RegisterType((*GuessBet)(nil), "types.GuessBet")
 	proto.RegisterType((*GuessBetStat)(nil), "types.GuessBetStat")
 	proto.RegisterType((*GuessBetStatItem)(nil), "types.GuessBetStatItem")
-	proto.RegisterType((*PokerBull)(nil), "types.PokerBull")
-	proto.RegisterType((*PBHand)(nil), "types.PBHand")
-	proto.RegisterType((*PBPlayer)(nil), "types.PBPlayer")
-	proto.RegisterType((*PBResult)(nil), "types.PBResult")
-	proto.RegisterType((*PBPoker)(nil), "types.PBPoker")
-	proto.RegisterType((*PBGameAction)(nil), "types.PBGameAction")
-	proto.RegisterType((*PBGameStart)(nil), "types.PBGameStart")
-	proto.RegisterType((*PBGameContinue)(nil), "types.PBGameContinue")
-	proto.RegisterType((*PBGameQuit)(nil), "types.PBGameQuit")
-	proto.RegisterType((*PBGameQuery)(nil), "types.PBGameQuery")
 	proto.RegisterType((*GuessGameAction)(nil), "types.GuessGameAction")
 	proto.RegisterType((*GuessGameStart)(nil), "types.GuessGameStart")
 	proto.RegisterType((*GuessGameBet)(nil), "types.GuessGameBet")
 	proto.RegisterType((*GuessGameAbort)(nil), "types.GuessGameAbort")
 	proto.RegisterType((*GuessGamePublish)(nil), "types.GuessGamePublish")
 	proto.RegisterType((*GuessGameQuery)(nil), "types.GuessGameQuery")
-	proto.RegisterType((*QueryPBGameListByStatusAndPlayerNum)(nil), "types.QueryPBGameListByStatusAndPlayerNum")
-	proto.RegisterType((*PBGameRecord)(nil), "types.PBGameRecord")
-	proto.RegisterType((*PBGameIndexRecord)(nil), "types.PBGameIndexRecord")
-	proto.RegisterType((*PBGameRecords)(nil), "types.PBGameRecords")
-	proto.RegisterType((*QueryPBGameInfo)(nil), "types.QueryPBGameInfo")
-	proto.RegisterType((*ReplyPBGame)(nil), "types.ReplyPBGame")
-	proto.RegisterType((*QueryPBGameInfos)(nil), "types.QueryPBGameInfos")
-	proto.RegisterType((*ReplyPBGameList)(nil), "types.ReplyPBGameList")
 	proto.RegisterType((*QueryGuessGameInfo)(nil), "types.QueryGuessGameInfo")
 	proto.RegisterType((*ReplyGuessGameInfo)(nil), "types.ReplyGuessGameInfo")
 	proto.RegisterType((*QueryGuessGameInfos)(nil), "types.QueryGuessGameInfos")
@@ -3273,9 +1963,6 @@ func init() {
 	proto.RegisterType((*GuessBetTxReq)(nil), "types.GuessBetTxReq")
 	proto.RegisterType((*GuessAbortTxReq)(nil), "types.GuessAbortTxReq")
 	proto.RegisterType((*GuessPublishTxReq)(nil), "types.GuessPublishTxReq")
-	proto.RegisterType((*PBContinueTxReq)(nil), "types.PBContinueTxReq")
-	proto.RegisterType((*PBQuitTxReq)(nil), "types.PBQuitTxReq")
-	proto.RegisterType((*PBQueryReq)(nil), "types.PBQueryReq")
 	proto.RegisterType((*GuessGameRecord)(nil), "types.GuessGameRecord")
 	proto.RegisterType((*GuessGameIndexRecord)(nil), "types.GuessGameIndexRecord")
 	proto.RegisterType((*GuessGameRecords)(nil), "types.GuessGameRecords")
@@ -3284,120 +1971,87 @@ func init() {
 func init() { proto.RegisterFile("guess.proto", fileDescriptor_7574406c5d3430e8) }
 
 var fileDescriptor_7574406c5d3430e8 = []byte{
-	// 1808 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x59, 0x4b, 0x6f, 0xdb, 0xca,
-	0x15, 0xb6, 0x1e, 0xd4, 0xe3, 0xc8, 0x92, 0xec, 0x71, 0xe2, 0xcb, 0x1a, 0x17, 0x85, 0xcb, 0xeb,
-	0xde, 0x28, 0x45, 0x93, 0x16, 0x32, 0x90, 0x36, 0x29, 0x5a, 0xc0, 0x4a, 0x80, 0xd8, 0x40, 0x10,
-	0x28, 0xe3, 0x14, 0xe9, 0x96, 0x92, 0xc6, 0x32, 0x11, 0x89, 0x94, 0x49, 0x2a, 0xb1, 0x76, 0x45,
-	0xdb, 0x6d, 0x17, 0x5d, 0xf4, 0x17, 0x74, 0xd3, 0x3f, 0xd5, 0x75, 0x81, 0xfe, 0x81, 0x6e, 0x8b,
-	0x39, 0x67, 0x86, 0x1c, 0x52, 0x94, 0x1c, 0x07, 0xed, 0xaa, 0xbb, 0x39, 0x0f, 0xcd, 0x9c, 0xf7,
-	0x7c, 0x43, 0x41, 0x6b, 0xba, 0x14, 0x51, 0xf4, 0x74, 0x11, 0x06, 0x71, 0xc0, 0xac, 0x78, 0xb5,
-	0x10, 0xd1, 0xd1, 0x7e, 0x1c, 0xba, 0x7e, 0xe4, 0x8e, 0x63, 0x2f, 0xf0, 0x49, 0xe2, 0xfc, 0xcb,
-	0x82, 0xe6, 0x6b, 0xa9, 0xf9, 0xda, 0x9d, 0x0b, 0x76, 0x08, 0xb5, 0xa9, 0x3b, 0x17, 0x17, 0x13,
-	0xbb, 0x74, 0x5c, 0xea, 0x35, 0xb9, 0xa2, 0x24, 0x3f, 0x8a, 0xdd, 0x78, 0x19, 0xd9, 0xe5, 0xe3,
-	0x52, 0xaf, 0xcd, 0x15, 0xc5, 0xbe, 0x85, 0xe6, 0x22, 0x14, 0x97, 0x24, 0xaa, 0xa0, 0x28, 0x65,
-	0x48, 0x69, 0x14, 0xbb, 0x61, 0xfc, 0xde, 0x9b, 0x0b, 0xbb, 0x7a, 0x5c, 0xea, 0x55, 0x78, 0xca,
-	0x60, 0xc7, 0xd0, 0x22, 0xe2, 0xf6, 0xdc, 0x8d, 0xae, 0x6d, 0x0b, 0x0f, 0x34, 0x59, 0xec, 0x01,
-	0x58, 0x71, 0xb0, 0xf0, 0xc6, 0x76, 0x0d, 0x65, 0x44, 0xb0, 0x23, 0x68, 0x8c, 0xdd, 0x58, 0x4c,
-	0x83, 0x70, 0x65, 0xd7, 0x51, 0x90, 0xd0, 0xcc, 0x86, 0x7a, 0xb0, 0x90, 0xde, 0x45, 0x76, 0x03,
-	0x45, 0x9a, 0x94, 0x92, 0xb9, 0x7b, 0x8b, 0x96, 0x34, 0x49, 0xa2, 0x48, 0x69, 0xe5, 0xdc, 0xbd,
-	0x3d, 0x17, 0xde, 0xf4, 0x3a, 0xb6, 0x81, 0xac, 0x4c, 0x18, 0xe8, 0xf9, 0x6a, 0x3e, 0x0a, 0x66,
-	0x76, 0x8b, 0x22, 0x42, 0x14, 0x63, 0x50, 0x15, 0xb7, 0x62, 0x6c, 0xef, 0x22, 0x17, 0xd7, 0x52,
-	0x37, 0xf0, 0xc5, 0x40, 0xc4, 0x76, 0x9b, 0xa2, 0x44, 0x94, 0x3a, 0x7b, 0x20, 0xe2, 0xc8, 0xee,
-	0xa0, 0x40, 0x93, 0xec, 0x04, 0xda, 0x6a, 0xf9, 0x76, 0x39, 0x1f, 0x89, 0xd0, 0xee, 0xa2, 0x3c,
-	0xcb, 0x64, 0x7b, 0x50, 0xb9, 0x12, 0xc2, 0xde, 0x3b, 0x2e, 0xf5, 0xaa, 0x5c, 0x2e, 0xe5, 0x8e,
-	0x57, 0x42, 0x9c, 0x4d, 0x26, 0xa1, 0xbd, 0x4f, 0xde, 0x28, 0x52, 0xda, 0x20, 0x6e, 0x17, 0x5e,
-	0x28, 0x6c, 0x46, 0xf6, 0x12, 0xc5, 0x1c, 0xd8, 0xa5, 0x95, 0x72, 0xf4, 0x00, 0x1d, 0xcd, 0xf0,
-	0x64, 0x24, 0xdc, 0xc9, 0xdc, 0xf3, 0x71, 0xdf, 0x07, 0xf8, 0xf3, 0x94, 0xc1, 0x7e, 0x08, 0x30,
-	0x4a, 0x0d, 0x7d, 0x88, 0x86, 0x1a, 0x1c, 0xd6, 0x03, 0x6b, 0x31, 0x73, 0x57, 0x91, 0x7d, 0x78,
-	0x5c, 0xe9, 0xb5, 0xfa, 0xec, 0x29, 0xd6, 0xdc, 0x53, 0x2c, 0xae, 0xe1, 0xcc, 0x5d, 0x89, 0x90,
-	0x93, 0x82, 0xb4, 0x31, 0x14, 0xd1, 0x72, 0x16, 0xdb, 0xdf, 0x90, 0x8d, 0x44, 0xb1, 0x27, 0x50,
-	0x1f, 0x89, 0x58, 0x16, 0x8f, 0x6d, 0x1f, 0x97, 0x7a, 0xad, 0xfe, 0x81, 0xb9, 0xc7, 0x80, 0x44,
-	0x5c, 0xeb, 0xc8, 0xf2, 0xf0, 0xfc, 0x89, 0xb8, 0xb5, 0x7f, 0x80, 0xbe, 0x10, 0x21, 0xcb, 0x63,
-	0x11, 0x8a, 0x0b, 0x14, 0x1c, 0xa1, 0x20, 0xa1, 0x9d, 0x57, 0xd0, 0x32, 0xcc, 0x91, 0x39, 0x74,
-	0xa5, 0xab, 0x54, 0xeb, 0xb8, 0x66, 0x3f, 0x82, 0xca, 0x48, 0xc4, 0x58, 0xe6, 0xad, 0x7e, 0x37,
-	0x77, 0x3e, 0x97, 0x32, 0xe7, 0xef, 0x25, 0x68, 0x68, 0x0e, 0xe6, 0x1c, 0x4b, 0x4c, 0x77, 0x0c,
-	0x51, 0xb9, 0x68, 0x95, 0xd7, 0xa2, 0x75, 0x04, 0x0d, 0x2f, 0xfa, 0xe0, 0xf9, 0xbe, 0x08, 0xb1,
-	0x71, 0x1a, 0x3c, 0xa1, 0xe5, 0x9e, 0x8b, 0x30, 0xb8, 0xf2, 0x62, 0x6c, 0x9a, 0x36, 0x57, 0x54,
-	0xea, 0xb0, 0xb5, 0xc9, 0xe1, 0x5a, 0xce, 0xe1, 0x3f, 0x97, 0x60, 0xd7, 0x0c, 0x9e, 0x2c, 0xb8,
-	0x38, 0x88, 0xdd, 0xd9, 0x40, 0x60, 0x13, 0x46, 0x68, 0x75, 0x9b, 0x67, 0x99, 0xac, 0x07, 0x5d,
-	0xcd, 0xc8, 0x7a, 0x90, 0x67, 0xb3, 0x27, 0x60, 0x79, 0xb1, 0x98, 0xcb, 0xe6, 0x97, 0x49, 0xff,
-	0xa6, 0x20, 0x61, 0x17, 0xb1, 0x98, 0x73, 0xd2, 0x72, 0xae, 0x61, 0x2f, 0x2f, 0xfa, 0xea, 0x08,
-	0x7e, 0x0b, 0x4d, 0x49, 0x91, 0x1b, 0x6a, 0xf6, 0x24, 0x0c, 0xe7, 0xdf, 0x15, 0x68, 0x0e, 0x83,
-	0x8f, 0x22, 0x1c, 0x2c, 0x67, 0xb3, 0x2f, 0x9c, 0x6b, 0x96, 0x39, 0xd7, 0xd2, 0xc9, 0x55, 0xb9,
-	0x63, 0x72, 0x55, 0x0b, 0x27, 0xd7, 0x27, 0x77, 0xb6, 0x14, 0x3a, 0x53, 0x48, 0xb0, 0x13, 0xb0,
-	0x16, 0xd2, 0x24, 0x4c, 0x53, 0xab, 0xdf, 0x51, 0xc1, 0x1a, 0x0e, 0xd0, 0x50, 0x4e, 0x42, 0xf6,
-	0x18, 0xea, 0x0b, 0xac, 0xcf, 0xc8, 0xae, 0x63, 0x50, 0xbb, 0xa9, 0x1e, 0xb5, 0x91, 0x96, 0xe3,
-	0xf8, 0xc5, 0xe5, 0xdb, 0xe5, 0x1c, 0x07, 0x9e, 0xc5, 0x53, 0x86, 0xdc, 0x88, 0x1a, 0x2b, 0xb2,
-	0x9b, 0xb9, 0x8d, 0x38, 0xf2, 0xb9, 0x96, 0xa7, 0x95, 0x05, 0x66, 0x65, 0xd1, 0x74, 0xff, 0x44,
-	0xa5, 0xd5, 0xa2, 0x28, 0x24, 0x0c, 0x59, 0x77, 0x37, 0x4b, 0x8f, 0x42, 0xb4, 0x4b, 0x75, 0xa7,
-	0x69, 0x99, 0x3b, 0x5c, 0x53, 0x80, 0xda, 0x18, 0x20, 0x83, 0x23, 0xe5, 0x13, 0xe1, 0xce, 0x44,
-	0x88, 0xa3, 0xa6, 0x43, 0xf2, 0x94, 0x23, 0x4f, 0xf6, 0xa2, 0x0f, 0xae, 0x17, 0x7b, 0xfe, 0x14,
-	0x67, 0x62, 0x83, 0xa7, 0x8c, 0xec, 0xad, 0xb3, 0xa7, 0xdc, 0xd6, 0x0c, 0xe7, 0x0f, 0x25, 0xa8,
-	0x0d, 0x07, 0xe7, 0xae, 0x3f, 0x91, 0x6e, 0x8d, 0xdd, 0x70, 0x22, 0xab, 0xbc, 0xd2, 0xb3, 0x38,
-	0x11, 0xc6, 0xf8, 0x51, 0x49, 0x57, 0xe3, 0xc7, 0x86, 0xba, 0x1c, 0x01, 0x22, 0xa2, 0x72, 0x6a,
-	0x72, 0x4d, 0x62, 0x78, 0x64, 0x73, 0x62, 0xaa, 0x1b, 0x9c, 0x08, 0x19, 0x80, 0x99, 0xf8, 0x24,
-	0x42, 0x77, 0x4a, 0x79, 0xb6, 0x78, 0x42, 0x3b, 0x9f, 0xa1, 0xa1, 0xd3, 0xc5, 0xbe, 0x03, 0xeb,
-	0xda, 0xf5, 0x95, 0x15, 0xad, 0x7e, 0x3b, 0xc9, 0x82, 0xb4, 0x91, 0x93, 0xcc, 0x3c, 0xbc, 0x9c,
-	0x3d, 0xfc, 0x10, 0x6a, 0x31, 0xc5, 0x91, 0x0a, 0x51, 0x51, 0xd2, 0xa8, 0x50, 0xb8, 0x93, 0x95,
-	0x36, 0x0a, 0x09, 0xe7, 0x6f, 0x25, 0x79, 0x32, 0xe5, 0xf7, 0xcb, 0x4e, 0x3e, 0x84, 0xda, 0x67,
-	0x9a, 0x43, 0x74, 0xb0, 0xa2, 0x32, 0xee, 0x55, 0xb2, 0xee, 0xc9, 0xdf, 0x50, 0xb6, 0x54, 0xf1,
-	0x2b, 0x8a, 0x7d, 0x0f, 0x1d, 0x5a, 0xbd, 0xc9, 0x06, 0x26, 0xc7, 0x75, 0x9e, 0x43, 0x5d, 0x55,
-	0xfd, 0x86, 0x1c, 0xd9, 0x50, 0x5f, 0x04, 0x9e, 0x1f, 0x2b, 0xab, 0x2c, 0xae, 0x49, 0xe7, 0x1f,
-	0x25, 0xd8, 0x1d, 0x0e, 0x24, 0x5a, 0x39, 0x43, 0x1c, 0xc3, 0x7e, 0x02, 0x16, 0xb6, 0x1e, 0xb6,
-	0x76, 0x7a, 0xef, 0x90, 0xce, 0xa5, 0x94, 0x9c, 0xef, 0x70, 0x52, 0x61, 0xa7, 0xd0, 0x18, 0x07,
-	0x7e, 0xec, 0xf9, 0x4b, 0xa1, 0x46, 0xfc, 0xc3, 0x8c, 0xfa, 0x4b, 0x25, 0x3c, 0xdf, 0xe1, 0x89,
-	0x22, 0x7b, 0x04, 0x55, 0x59, 0xba, 0x18, 0x84, 0x56, 0x7f, 0x3f, 0xf3, 0x83, 0x77, 0x4b, 0x4f,
-	0x6e, 0x8f, 0x0a, 0xd2, 0x92, 0x9b, 0xa5, 0x08, 0x29, 0x23, 0x79, 0x4b, 0xde, 0x49, 0x89, 0xb4,
-	0x04, 0x55, 0x58, 0x07, 0xca, 0xf1, 0x0a, 0xdb, 0xcd, 0xe2, 0xe5, 0x78, 0x35, 0xa8, 0xab, 0x89,
-	0xe1, 0x9c, 0x41, 0xcb, 0x30, 0x3d, 0x9d, 0x24, 0x25, 0x73, 0x92, 0x64, 0x1a, 0xbf, 0x9c, 0x6b,
-	0x7c, 0xa7, 0x07, 0x9d, 0xac, 0x3b, 0x9b, 0xe6, 0x9f, 0x73, 0x02, 0x90, 0xfa, 0xb1, 0x51, 0xeb,
-	0xc7, 0xda, 0x24, 0xf4, 0x61, 0xa3, 0xda, 0x5f, 0xcb, 0xd0, 0x4d, 0xa0, 0xa4, 0x4a, 0xce, 0x93,
-	0x6c, 0x72, 0x1e, 0x9a, 0xf7, 0x43, 0x41, 0x7e, 0x1e, 0x99, 0xb7, 0xef, 0x41, 0x5e, 0x79, 0x20,
-	0xa4, 0xaa, 0xd4, 0x90, 0xfb, 0xba, 0xa3, 0x20, 0xd4, 0x49, 0x59, 0xdb, 0xf7, 0x4c, 0x0a, 0xe5,
-	0xbe, 0xa8, 0xc5, 0x4e, 0xa1, 0xbe, 0x58, 0x8e, 0x66, 0x9e, 0x9a, 0xd6, 0xb9, 0x8b, 0x4a, 0xfe,
-	0x60, 0x48, 0xe2, 0xf3, 0x1d, 0xae, 0x35, 0xe5, 0x19, 0x94, 0x4e, 0xab, 0xf8, 0x8c, 0xc2, 0x8c,
-	0xd6, 0xf0, 0x22, 0xca, 0x64, 0xf4, 0xf7, 0x15, 0xe8, 0x64, 0x1d, 0x4e, 0x91, 0x6d, 0xc9, 0x44,
-	0xb6, 0x06, 0x7a, 0x2d, 0x67, 0xd1, 0xab, 0x89, 0x79, 0x2b, 0xeb, 0x98, 0x57, 0x23, 0xdb, 0xea,
-	0x16, 0x64, 0x6b, 0x6d, 0x46, 0xb6, 0xb5, 0x42, 0x64, 0x5b, 0x2f, 0x44, 0xb6, 0x8d, 0x4d, 0xc8,
-	0xb6, 0x79, 0x07, 0xb2, 0x85, 0x2d, 0xc8, 0xb6, 0x55, 0x88, 0x6c, 0x77, 0x37, 0x21, 0xdb, 0xf6,
-	0x56, 0x64, 0xdb, 0x59, 0x47, 0xb6, 0xce, 0xef, 0x14, 0x0c, 0x52, 0x55, 0xb4, 0x0d, 0x0f, 0x28,
-	0x2c, 0x52, 0xce, 0x60, 0x11, 0x1b, 0x91, 0xa9, 0xb4, 0x5a, 0x21, 0x0d, 0x4d, 0xca, 0x5e, 0xcb,
-	0x16, 0xdd, 0xc6, 0xf6, 0x18, 0x28, 0xec, 0x63, 0x54, 0xdb, 0x36, 0x3b, 0x8c, 0x2b, 0x2a, 0x41,
-	0xc8, 0xce, 0x2f, 0x8d, 0xd3, 0xb6, 0x36, 0xa3, 0xaa, 0xc6, 0xb2, 0xae, 0x46, 0xe7, 0x06, 0xbe,
-	0xc3, 0x1f, 0x50, 0x23, 0xbf, 0xf1, 0xa2, 0x78, 0xb0, 0xa2, 0x0b, 0xf3, 0xcc, 0x9f, 0x0c, 0x13,
-	0xcc, 0x90, 0x02, 0xa2, 0x52, 0x1e, 0x10, 0x6d, 0x1e, 0x38, 0x29, 0x7c, 0xa8, 0x18, 0xf0, 0xc1,
-	0x79, 0xaf, 0x07, 0x35, 0x17, 0xe3, 0x20, 0x9c, 0xdc, 0x1b, 0x84, 0x15, 0xef, 0x7a, 0x06, 0xfb,
-	0xb4, 0x2b, 0xa2, 0x90, 0x3b, 0xb6, 0x4e, 0xb6, 0x28, 0x9b, 0x5b, 0xfc, 0x06, 0xda, 0xa6, 0x61,
-	0x91, 0x7c, 0x78, 0x84, 0xb4, 0x54, 0x37, 0xe5, 0x41, 0x66, 0x74, 0x93, 0x1a, 0xd7, 0x3a, 0xce,
-	0x47, 0xe8, 0x1a, 0xb1, 0xbc, 0xf0, 0xaf, 0x82, 0x8d, 0x06, 0xe8, 0x27, 0x46, 0xd9, 0x78, 0x62,
-	0xa4, 0xfe, 0x56, 0x8a, 0xfd, 0xad, 0x9a, 0xc6, 0x9e, 0x42, 0x8b, 0x8b, 0xc5, 0x4c, 0x1d, 0xc6,
-	0x4e, 0xa0, 0x2a, 0xb7, 0x56, 0xf3, 0x74, 0x4f, 0xdb, 0xa9, 0x91, 0x2e, 0x47, 0xa9, 0xf3, 0x53,
-	0xd8, 0xcb, 0x59, 0x88, 0x57, 0x2a, 0x19, 0x45, 0x4e, 0x36, 0xb9, 0x26, 0x9d, 0xe7, 0xd0, 0x35,
-	0x8e, 0x90, 0xb5, 0xc1, 0xbe, 0x07, 0x4b, 0x4a, 0x75, 0x3c, 0xd6, 0xcf, 0x21, 0xb1, 0xe3, 0x03,
-	0xc3, 0x83, 0x92, 0xaa, 0xfc, 0x1f, 0x47, 0xe3, 0x05, 0x30, 0x34, 0x35, 0x7b, 0x5e, 0x71, 0x50,
-	0x12, 0x1d, 0x15, 0x94, 0x9f, 0xc1, 0xc1, 0xba, 0xad, 0xdb, 0xe2, 0xf2, 0x6b, 0x38, 0x58, 0x3f,
-	0x2c, 0xda, 0x14, 0x9b, 0xf4, 0x38, 0x15, 0x9b, 0xbf, 0x94, 0xa1, 0xcd, 0xc5, 0x58, 0x78, 0x8b,
-	0x58, 0x25, 0xef, 0xbe, 0x1d, 0xa0, 0xe3, 0x55, 0x31, 0xe2, 0x55, 0x18, 0x97, 0x2c, 0x54, 0xb7,
-	0xf2, 0x50, 0x3d, 0xd3, 0xbd, 0xb5, 0x82, 0xee, 0x25, 0x88, 0x51, 0xcf, 0x41, 0x8c, 0x14, 0x82,
-	0x37, 0xf2, 0x10, 0xdc, 0x4e, 0x1f, 0x29, 0x4d, 0x0a, 0x9a, 0xf9, 0x26, 0x49, 0xc0, 0x39, 0xe4,
-	0xc1, 0xf9, 0x9f, 0xca, 0xb0, 0xa7, 0x62, 0x72, 0xf7, 0x57, 0xa7, 0xcc, 0x56, 0xe5, 0xfc, 0xd7,
-	0xa5, 0x6c, 0xe1, 0xb4, 0xd7, 0x82, 0x56, 0x35, 0x82, 0x96, 0xf9, 0xb2, 0x61, 0xe5, 0xbf, 0x6c,
-	0x6c, 0x79, 0x41, 0xa7, 0xe1, 0xae, 0xe7, 0xde, 0xdc, 0xc9, 0x7d, 0xdc, 0xc8, 0xdd, 0xc7, 0x0e,
-	0xec, 0x92, 0x25, 0x2f, 0xaf, 0x5d, 0x7f, 0x4a, 0x9f, 0x9b, 0x1a, 0x3c, 0xc3, 0x73, 0xfe, 0x58,
-	0x51, 0x50, 0xe9, 0x92, 0x1e, 0x8d, 0x5c, 0xdc, 0xdc, 0x1b, 0x13, 0x6c, 0x7f, 0xa3, 0xde, 0x03,
-	0x15, 0xb4, 0xff, 0x5f, 0x50, 0x41, 0x3b, 0x87, 0x0a, 0x2e, 0xa1, 0xad, 0xbf, 0x46, 0x50, 0x0a,
-	0xee, 0x0b, 0x0b, 0x18, 0x54, 0x25, 0x0e, 0x50, 0x05, 0x88, 0x6b, 0xe7, 0xb1, 0xca, 0x2c, 0x82,
-	0x81, 0xad, 0xdb, 0x3a, 0x2f, 0x61, 0x9f, 0x3e, 0x47, 0x11, 0x1a, 0xb8, 0xd3, 0x86, 0x42, 0x48,
-	0xf0, 0x2b, 0xe8, 0x0e, 0x07, 0x1a, 0xe8, 0x6f, 0xdf, 0x42, 0xc5, 0x95, 0xee, 0x42, 0xb9, 0x74,
-	0x7e, 0x21, 0x91, 0xfd, 0x3b, 0x7c, 0x97, 0xdf, 0xef, 0x87, 0xcf, 0xe4, 0xc3, 0x01, 0xa7, 0xe9,
-	0xfd, 0x7e, 0xf7, 0xc1, 0x78, 0x22, 0xfc, 0x57, 0x61, 0xc1, 0x2b, 0x78, 0x60, 0x8c, 0xe9, 0xaf,
-	0x45, 0x06, 0xaf, 0x0c, 0x8c, 0xa6, 0xc1, 0xc1, 0xcf, 0xf3, 0xe0, 0xe0, 0x70, 0x6d, 0xe0, 0x67,
-	0xf1, 0x41, 0xff, 0x9f, 0x25, 0xb0, 0xf0, 0xeb, 0x3b, 0x7b, 0x06, 0x90, 0xb6, 0x39, 0x2b, 0x7e,
-	0xfd, 0x1c, 0xe9, 0xcf, 0x32, 0xbf, 0xf5, 0x23, 0x6f, 0xea, 0xbf, 0xbf, 0x75, 0x76, 0x58, 0xdf,
-	0xf8, 0xc2, 0x58, 0xf4, 0x0c, 0x2a, 0xfa, 0x8d, 0x3e, 0x8b, 0x50, 0x68, 0xf1, 0x8b, 0xa8, 0xe8,
-	0x77, 0x2f, 0x14, 0x36, 0xd6, 0x98, 0x74, 0xd3, 0xd3, 0xa8, 0xe0, 0xb7, 0xa3, 0x1a, 0xfe, 0x89,
-	0x70, 0xfa, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6c, 0x1e, 0x01, 0xe9, 0x6d, 0x18, 0x00, 0x00,
+	// 1267 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0x4b, 0x6f, 0xdb, 0xc6,
+	0x13, 0x8f, 0x48, 0x51, 0x8f, 0x91, 0x65, 0x2b, 0xeb, 0x3c, 0xf6, 0x6f, 0x04, 0x7f, 0xa8, 0x44,
+	0xd0, 0xaa, 0x87, 0xa4, 0x85, 0x02, 0xf4, 0x60, 0xa0, 0x07, 0x2b, 0x01, 0x62, 0xf7, 0x50, 0xb8,
+	0x6b, 0x17, 0x3e, 0x53, 0xd2, 0x5a, 0x66, 0x21, 0x91, 0x0c, 0xb9, 0x0a, 0xa4, 0x5b, 0x81, 0xf6,
+	0xda, 0x43, 0x0f, 0xfd, 0x0e, 0xfd, 0x66, 0x05, 0xfa, 0x29, 0x8a, 0x99, 0x5d, 0x8a, 0x0f, 0x51,
+	0x32, 0x1c, 0xf4, 0xd0, 0x1b, 0xe7, 0xb1, 0xb3, 0x33, 0xb3, 0x33, 0xbf, 0x19, 0x09, 0x3a, 0xb3,
+	0xa5, 0x4c, 0x92, 0xd7, 0x51, 0x1c, 0xaa, 0x90, 0x39, 0x6a, 0x1d, 0xc9, 0xe4, 0xe4, 0xb1, 0x8a,
+	0xbd, 0x20, 0xf1, 0x26, 0xca, 0x0f, 0x03, 0x2d, 0x71, 0xff, 0x76, 0xa0, 0xfd, 0x1e, 0x35, 0xdf,
+	0x7b, 0x0b, 0xc9, 0x9e, 0x41, 0x63, 0xe6, 0x2d, 0xe4, 0xc5, 0x94, 0xd7, 0xfa, 0xb5, 0x41, 0x5b,
+	0x18, 0x0a, 0xf9, 0x89, 0xf2, 0xd4, 0x32, 0xe1, 0x56, 0xbf, 0x36, 0x70, 0x84, 0xa1, 0xd8, 0x0b,
+	0x68, 0x47, 0xb1, 0xbc, 0xd2, 0x22, 0x9b, 0x44, 0x19, 0x03, 0xa5, 0x89, 0xf2, 0x62, 0x75, 0xed,
+	0x2f, 0x24, 0xaf, 0xf7, 0x6b, 0x03, 0x5b, 0x64, 0x0c, 0xd6, 0x87, 0x8e, 0x26, 0x56, 0xe7, 0x5e,
+	0x72, 0xc7, 0x1d, 0xba, 0x30, 0xcf, 0x62, 0x4f, 0xc0, 0x51, 0x61, 0xe4, 0x4f, 0x78, 0x83, 0x64,
+	0x9a, 0x60, 0x27, 0xd0, 0x9a, 0x78, 0x4a, 0xce, 0xc2, 0x78, 0xcd, 0x9b, 0x24, 0xd8, 0xd0, 0x8c,
+	0x43, 0x33, 0x8c, 0x30, 0xba, 0x84, 0xb7, 0x48, 0x94, 0x92, 0x28, 0x59, 0x78, 0x2b, 0xf2, 0xa4,
+	0xad, 0x25, 0x86, 0x44, 0x2f, 0x17, 0xde, 0xea, 0x5c, 0xfa, 0xb3, 0x3b, 0xc5, 0x41, 0x7b, 0xb9,
+	0x61, 0x50, 0xe4, 0xeb, 0xc5, 0x38, 0x9c, 0xf3, 0x8e, 0xce, 0x88, 0xa6, 0x18, 0x83, 0xba, 0x5c,
+	0xc9, 0x09, 0x3f, 0x20, 0x2e, 0x7d, 0xa3, 0x6e, 0x18, 0xc8, 0x91, 0x54, 0xbc, 0xdb, 0xaf, 0x0d,
+	0xba, 0xc2, 0x50, 0xe6, 0xee, 0x91, 0x54, 0x09, 0x3f, 0x24, 0x41, 0x4a, 0xb2, 0x97, 0xd0, 0x35,
+	0x9f, 0xdf, 0x2f, 0x17, 0x63, 0x19, 0xf3, 0x23, 0x92, 0x17, 0x99, 0xac, 0x07, 0xf6, 0xad, 0x94,
+	0xbc, 0x47, 0xbe, 0xe1, 0x27, 0x5a, 0xbc, 0x95, 0xf2, 0x6c, 0x3a, 0x8d, 0xf9, 0x63, 0x1d, 0x8d,
+	0x21, 0xd1, 0x07, 0xb9, 0x8a, 0xfc, 0x58, 0x72, 0xa6, 0xfd, 0xd5, 0x14, 0x73, 0xe1, 0x40, 0x7f,
+	0x99, 0x40, 0x8f, 0xc9, 0x58, 0x81, 0x87, 0x99, 0xf0, 0xa6, 0x0b, 0x3f, 0x20, 0xbb, 0x4f, 0xe8,
+	0x78, 0xc6, 0x60, 0xff, 0x07, 0x18, 0x67, 0x8e, 0x3e, 0x25, 0x47, 0x73, 0x1c, 0x36, 0x00, 0x27,
+	0x9a, 0x7b, 0xeb, 0x84, 0x3f, 0xeb, 0xdb, 0x83, 0xce, 0x90, 0xbd, 0xa6, 0x9a, 0x7b, 0x4d, 0xc5,
+	0x75, 0x39, 0xf7, 0xd6, 0x32, 0x16, 0x5a, 0x01, 0x7d, 0x8c, 0x65, 0xb2, 0x9c, 0x2b, 0xfe, 0x5c,
+	0xfb, 0xa8, 0x29, 0xf6, 0x0a, 0x9a, 0x63, 0xa9, 0xb0, 0x78, 0x38, 0xef, 0xd7, 0x06, 0x9d, 0xe1,
+	0x71, 0xde, 0xc6, 0x48, 0x8b, 0x44, 0xaa, 0x83, 0xe5, 0xe1, 0x07, 0x53, 0xb9, 0xe2, 0xff, 0xa3,
+	0x58, 0x34, 0x81, 0xe5, 0x11, 0xc5, 0xf2, 0x82, 0x04, 0x27, 0x24, 0xd8, 0xd0, 0xee, 0x3b, 0xe8,
+	0xe4, 0xdc, 0xc1, 0x37, 0xf4, 0x30, 0x54, 0x5d, 0xeb, 0xf4, 0xcd, 0x3e, 0x03, 0x7b, 0x2c, 0x15,
+	0x95, 0x79, 0x67, 0x78, 0x54, 0xba, 0x5f, 0xa0, 0xcc, 0xfd, 0xb3, 0x06, 0xad, 0x94, 0x43, 0x6f,
+	0x4e, 0x25, 0x96, 0x76, 0x8c, 0xa6, 0x4a, 0xd9, 0xb2, 0xb6, 0xb2, 0x75, 0x02, 0x2d, 0x3f, 0xb9,
+	0xf1, 0x83, 0x40, 0xc6, 0xd4, 0x38, 0x2d, 0xb1, 0xa1, 0xd1, 0x66, 0x14, 0x87, 0xb7, 0xbe, 0xa2,
+	0xa6, 0xe9, 0x0a, 0x43, 0x65, 0x01, 0x3b, 0xbb, 0x02, 0x6e, 0x94, 0x02, 0xfe, 0xad, 0x06, 0x07,
+	0xf9, 0xe4, 0x61, 0xc1, 0xa9, 0x50, 0x79, 0xf3, 0x91, 0xa4, 0x26, 0x4c, 0xc8, 0xeb, 0xae, 0x28,
+	0x32, 0xd9, 0x00, 0x8e, 0x52, 0x46, 0x31, 0x82, 0x32, 0x9b, 0xbd, 0x02, 0xc7, 0x57, 0x72, 0x81,
+	0xcd, 0x8f, 0x8f, 0xfe, 0xbc, 0xe2, 0xc1, 0x2e, 0x94, 0x5c, 0x08, 0xad, 0xe5, 0xde, 0x41, 0xaf,
+	0x2c, 0xfa, 0xe4, 0x0c, 0xbe, 0x80, 0x36, 0x52, 0x3a, 0x0c, 0x9b, 0xc4, 0x19, 0xc3, 0xfd, 0xc3,
+	0x82, 0xa3, 0x0d, 0xae, 0x9d, 0x11, 0xe2, 0xa1, 0xb3, 0x04, 0x2f, 0x74, 0x51, 0x67, 0xf8, 0x34,
+	0xef, 0x2c, 0xaa, 0x5d, 0xa1, 0xf0, 0xfc, 0x91, 0xd0, 0x5a, 0xec, 0x8b, 0x7c, 0x29, 0x1c, 0x97,
+	0x95, 0x47, 0x12, 0x55, 0x51, 0x03, 0xed, 0x7a, 0xe3, 0x30, 0x56, 0xe4, 0x45, 0x85, 0xdd, 0x33,
+	0x14, 0xa2, 0x5d, 0xd2, 0x62, 0x6f, 0xa0, 0x19, 0x2d, 0xc7, 0x73, 0x3f, 0xb9, 0xa3, 0xf7, 0x2d,
+	0x65, 0x0d, 0x0f, 0x5c, 0x6a, 0xf1, 0xf9, 0x23, 0x91, 0x6a, 0xe2, 0x1d, 0x1f, 0x96, 0x32, 0x5e,
+	0xd3, 0xdb, 0x57, 0xdc, 0xf1, 0x03, 0x0a, 0xf1, 0x0e, 0xd2, 0x62, 0x87, 0x60, 0xa9, 0x35, 0x95,
+	0x43, 0x57, 0x58, 0x6a, 0x3d, 0x6a, 0x82, 0xf3, 0xd1, 0x9b, 0x2f, 0xa5, 0xfb, 0xb3, 0x0d, 0x87,
+	0xc5, 0x80, 0x33, 0x98, 0xad, 0xe5, 0x61, 0x36, 0x07, 0xa5, 0x56, 0x11, 0x4a, 0xf3, 0x00, 0x6c,
+	0x6f, 0x03, 0x70, 0x0a, 0xb3, 0xf5, 0x3d, 0x30, 0xeb, 0xec, 0x86, 0xd9, 0x46, 0x25, 0xcc, 0x36,
+	0x2b, 0x61, 0xb6, 0xb5, 0x0b, 0x66, 0xdb, 0xf7, 0xc0, 0x2c, 0xec, 0x81, 0xd9, 0x4e, 0x25, 0xcc,
+	0x1e, 0xec, 0x82, 0xd9, 0xee, 0x5e, 0x98, 0x3d, 0xdc, 0x86, 0x59, 0xf7, 0x27, 0xd3, 0x93, 0xa6,
+	0x8a, 0xf6, 0x0d, 0x5d, 0xd3, 0x18, 0x56, 0xa1, 0x31, 0x38, 0xc1, 0x24, 0x7a, 0x6d, 0xca, 0x3e,
+	0x25, 0xd3, 0x08, 0xea, 0x9b, 0x08, 0xdc, 0xd3, 0xdc, 0x6b, 0x53, 0x19, 0xee, 0xbc, 0xcd, 0x9c,
+	0xb5, 0xb2, 0xb3, 0xd7, 0xa6, 0x59, 0x73, 0x15, 0xb9, 0xcf, 0x57, 0x03, 0xe9, 0x56, 0x01, 0xd2,
+	0x8d, 0x55, 0x3b, 0xb3, 0xfa, 0x5d, 0xce, 0x23, 0x2a, 0xda, 0x9d, 0x36, 0x75, 0x0d, 0x5b, 0x69,
+	0x0d, 0x57, 0xd8, 0x0a, 0x80, 0x91, 0x89, 0x8d, 0xc1, 0x8b, 0xe0, 0x36, 0xdc, 0x69, 0x2f, 0x85,
+	0x7b, 0x2b, 0x07, 0xf7, 0xd9, 0x62, 0x63, 0x17, 0x16, 0x9b, 0x0d, 0xd4, 0xd6, 0x73, 0x50, 0xeb,
+	0x9e, 0x02, 0x13, 0x32, 0x9a, 0x97, 0xee, 0x7b, 0x09, 0x75, 0xbc, 0xc1, 0xa0, 0x4a, 0xaf, 0xdc,
+	0x99, 0x82, 0xa4, 0xee, 0x57, 0x70, 0xbc, 0xed, 0x2b, 0xed, 0x25, 0xda, 0x3d, 0x84, 0x62, 0x1b,
+	0x4b, 0xcc, 0x90, 0xee, 0xb7, 0x70, 0xbc, 0x7d, 0x59, 0xc2, 0x3e, 0x07, 0x07, 0x35, 0xb4, 0x7a,
+	0xd5, 0x75, 0x5a, 0xec, 0xfe, 0x6e, 0x41, 0x57, 0xc8, 0x89, 0xf4, 0x23, 0x75, 0x39, 0xfa, 0xa4,
+	0xe5, 0x2e, 0xcd, 0x97, 0x9d, 0xcb, 0x57, 0x65, 0x5e, 0xcc, 0x1a, 0xf8, 0xf1, 0x22, 0x37, 0x9c,
+	0x32, 0x06, 0x49, 0x69, 0xe0, 0x62, 0xc5, 0x36, 0xcc, 0x92, 0x98, 0x32, 0xd0, 0x22, 0x21, 0x13,
+	0xb5, 0xb8, 0x2d, 0x34, 0x81, 0x67, 0xfc, 0xe4, 0xc6, 0xf3, 0x95, 0x1f, 0xcc, 0xa8, 0xcd, 0x5b,
+	0x22, 0x63, 0x60, 0xd2, 0xb4, 0x01, 0xec, 0x74, 0x4a, 0x9a, 0x21, 0x8b, 0x0b, 0x29, 0x94, 0x16,
+	0x52, 0xf7, 0x57, 0x0b, 0x7a, 0x26, 0x27, 0xf7, 0xef, 0xbc, 0x05, 0x53, 0x56, 0x79, 0xb7, 0xdd,
+	0x55, 0x38, 0x69, 0xd2, 0xea, 0xb9, 0xa4, 0x15, 0xf6, 0x2a, 0xa7, 0xbc, 0x57, 0xed, 0x99, 0xdf,
+	0x59, 0xba, 0x9b, 0xa5, 0x89, 0xbf, 0x01, 0xe0, 0x56, 0x09, 0x80, 0x5d, 0x38, 0xd0, 0x9e, 0xbc,
+	0xbd, 0xf3, 0x82, 0x99, 0x5e, 0x76, 0x5b, 0xa2, 0xc0, 0x73, 0x7f, 0xb1, 0xcd, 0x6c, 0xbc, 0xd2,
+	0xcb, 0xb6, 0x90, 0x1f, 0x1e, 0x3c, 0x04, 0x0a, 0xbb, 0xbd, 0x5d, 0xde, 0xed, 0x1f, 0x30, 0x06,
+	0xba, 0xff, 0xe1, 0x31, 0x50, 0xff, 0x37, 0xc7, 0x40, 0xb7, 0x34, 0x06, 0xae, 0xa0, 0x9b, 0xee,
+	0x42, 0xfa, 0x09, 0x1e, 0x3a, 0x07, 0x18, 0xd4, 0x11, 0xf8, 0xcd, 0x10, 0xa0, 0x6f, 0xf7, 0x4b,
+	0xf3, 0xb2, 0x84, 0xf5, 0x7b, 0xcd, 0xba, 0x6f, 0xe1, 0xb1, 0x5e, 0x86, 0x35, 0xb4, 0xdf, 0xeb,
+	0x43, 0x15, 0xbe, 0xbb, 0x37, 0xb9, 0x2d, 0x4b, 0xc8, 0x49, 0x18, 0x4f, 0x1f, 0x0c, 0x33, 0x9b,
+	0x1a, 0xb7, 0xf3, 0x50, 0xfb, 0x0e, 0x9e, 0xe4, 0x80, 0x6f, 0x2a, 0x57, 0xf7, 0x58, 0xdf, 0x58,
+	0xb1, 0x8a, 0x56, 0x7a, 0x25, 0xf7, 0x12, 0xf6, 0x35, 0x34, 0x63, 0xfd, 0x69, 0x20, 0xf4, 0xd9,
+	0x16, 0x84, 0x92, 0x58, 0xa4, 0x6a, 0xc3, 0xbf, 0x6a, 0xe0, 0xd0, 0xaf, 0x69, 0xf6, 0x0d, 0x40,
+	0xd6, 0x38, 0xac, 0x7a, 0x81, 0x3c, 0x49, 0x7f, 0x35, 0xfc, 0x18, 0x24, 0xfe, 0x2c, 0xb8, 0x5e,
+	0xb9, 0x8f, 0xd8, 0x30, 0xf7, 0x8b, 0xa1, 0x6a, 0x93, 0xac, 0x3a, 0x93, 0xde, 0xa5, 0xc7, 0x76,
+	0xf5, 0x52, 0x59, 0x75, 0xee, 0xd4, 0xac, 0x17, 0xe9, 0xc8, 0xde, 0xb5, 0x5d, 0x56, 0x9c, 0x1d,
+	0x37, 0xe8, 0x4f, 0x81, 0x37, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x19, 0x3c, 0x77, 0xc4, 0x3d,
+	0x10, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
