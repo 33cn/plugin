@@ -35,7 +35,7 @@ func TestTicket(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, accounts[0].Balance, int64(0))
 	hotaddr := mock33.GetHotAddress()
-	accounts, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "coins", Addresses: []string{hotaddr}})
+	_, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "coins", Addresses: []string{hotaddr}})
 	assert.Nil(t, err)
 	//assert.Equal(t, accounts[0].Balance, int64(1000000000000))
 	//send to address
