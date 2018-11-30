@@ -14,7 +14,7 @@ import (
 
 const (
 	minBlockNum = 3
-	maxBlockNum = 5
+	maxBlockNum = 10
 )
 
 // GetRandNum for ticket executor
