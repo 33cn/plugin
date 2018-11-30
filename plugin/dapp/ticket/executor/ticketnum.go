@@ -26,6 +26,10 @@ func (ticket *Ticket) GetRandNum(height int64, blockNum int64) (types.Message, e
 		blockNum = maxBlockNum
 	}
 
+	if blockNum >= height {
+		return nil, types.ErrNotFound
+	}
+
 	txActions, err := ticket.getTxActions(height, blockNum)
 	if err != nil {
 		return nil, err
