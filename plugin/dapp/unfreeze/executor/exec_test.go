@@ -24,14 +24,6 @@ type execEnv struct {
 	difficulty  uint64
 }
 
-type orderArgs struct {
-	total    int64
-	startTs  int64
-	period   int64
-	duration int64
-	except   int64
-}
-
 var (
 	Symbol         = "TEST"
 	AssetExecToken = "token"

@@ -12,6 +12,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// GetUnfreeze 获得冻结合约
 func (c *channelClient) GetUnfreeze(ctx context.Context, in *types.ReqString) (*pty.Unfreeze, error) {
 	v, err := c.Query(pty.UnfreezeX, "GetUnfreeze", in)
 	if err != nil {
@@ -23,6 +24,7 @@ func (c *channelClient) GetUnfreeze(ctx context.Context, in *types.ReqString) (*
 	return nil, types.ErrDecode
 }
 
+// GetUnfreezeWithdraw 获得冻结合约可提币量
 func (c *channelClient) GetUnfreezeWithdraw(ctx context.Context, in *types.ReqString) (*pty.ReplyQueryUnfreezeWithdraw, error) {
 	v, err := c.Query(pty.UnfreezeX, "GetUnfreezeWithdraw", in)
 	if err != nil {
@@ -34,6 +36,7 @@ func (c *channelClient) GetUnfreezeWithdraw(ctx context.Context, in *types.ReqSt
 	return nil, types.ErrDecode
 }
 
+// GetUnfreeze 获得冻结合约
 func (c *Jrpc) GetUnfreeze(in *types.ReqString, result *interface{}) error {
 	v, err := c.cli.GetUnfreeze(context.Background(), in)
 	if err != nil {
@@ -44,6 +47,7 @@ func (c *Jrpc) GetUnfreeze(in *types.ReqString, result *interface{}) error {
 	return nil
 }
 
+// GetUnfreezeWithdraw 获得冻结合约可提币量
 func (c *Jrpc) GetUnfreezeWithdraw(in *types.ReqString, result *interface{}) error {
 	v, err := c.cli.GetUnfreezeWithdraw(context.Background(), in)
 	if err != nil {
@@ -54,6 +58,7 @@ func (c *Jrpc) GetUnfreezeWithdraw(in *types.ReqString, result *interface{}) err
 	return nil
 }
 
+// CreateRawUnfreezeCreate 创建冻结合约
 func (c *Jrpc) CreateRawUnfreezeCreate(param *pty.UnfreezeCreate, result *interface{}) error {
 	if param == nil {
 		return types.ErrInvalidParam
@@ -66,6 +71,7 @@ func (c *Jrpc) CreateRawUnfreezeCreate(param *pty.UnfreezeCreate, result *interf
 	return nil
 }
 
+// CreateRawUnfreezeWithdraw 创建提币交易
 func (c *Jrpc) CreateRawUnfreezeWithdraw(param *pty.UnfreezeWithdraw, result *interface{}) error {
 	if param == nil {
 		return types.ErrInvalidParam
@@ -78,6 +84,7 @@ func (c *Jrpc) CreateRawUnfreezeWithdraw(param *pty.UnfreezeWithdraw, result *in
 	return nil
 }
 
+// CreateRawUnfreezeTerminate 终止冻结合约
 func (c *Jrpc) CreateRawUnfreezeTerminate(param *pty.UnfreezeTerminate, result *interface{}) error {
 	if param == nil {
 		return types.ErrInvalidParam

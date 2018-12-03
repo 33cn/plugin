@@ -9,6 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// Means 解冻算法接口
 type Means interface {
 	setOpt(unfreeze *pty.Unfreeze, from *pty.UnfreezeCreate) (*pty.Unfreeze, error)
 	calcFrozen(unfreeze *pty.Unfreeze, now int64) (int64, error)

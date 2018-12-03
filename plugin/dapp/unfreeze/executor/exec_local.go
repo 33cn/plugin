@@ -31,14 +31,17 @@ func (u *Unfreeze) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet,
 	return dbSet, nil
 }
 
+// ExecLocal_Create 本地执行创建冻结合约
 func (u *Unfreeze) ExecLocal_Create(payload *uf.UnfreezeCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return u.execLocal(receiptData)
 }
 
+// ExecLocal_Withdraw 本地执行提币
 func (u *Unfreeze) ExecLocal_Withdraw(payload *uf.UnfreezeWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return u.execLocal(receiptData)
 }
 
+// ExecLocal_Terminate 本地执行终止冻结合约
 func (u *Unfreeze) ExecLocal_Terminate(payload *uf.UnfreezeTerminate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return u.execLocal(receiptData)
 }

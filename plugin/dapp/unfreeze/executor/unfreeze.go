@@ -20,10 +20,12 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Unfreeze{}))
 }
 
+// Init 重命名执行器名称
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newUnfreeze, 0)
 }
 
+// Unfreeze 执行器结构体
 type Unfreeze struct {
 	drivers.DriverBase
 }
@@ -35,10 +37,12 @@ func newUnfreeze() drivers.Driver {
 	return t
 }
 
+// GetName 获得执行器名字
 func GetName() string {
 	return newUnfreeze().GetName()
 }
 
+// GetDriverName 获得驱动名字
 func (u *Unfreeze) GetDriverName() string {
 	return driverName
 }

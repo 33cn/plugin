@@ -7,10 +7,12 @@ package types
 import "errors"
 
 var (
-	ErrUnfreezeBeforeDue = errors.New("ErrUnfreezeBeforeDue")
-	ErrUnfreezeEmptied   = errors.New("ErrUnfreezeEmptied")
-	ErrUnfreezeMeans     = errors.New("ErrUnfreezeMeans")
-	ErrUnfreezeID        = errors.New("ErrUnfreezeID")
-	ErrNoUnfreezeItem    = errors.New("ErrNoUnfreezeItem")
-	ErrNoPrivilege       = errors.New("ErrNoPrivilege")
+	// ErrUnfreezeEmptied 没有可提币量
+	ErrUnfreezeEmptied = errors.New("ErrUnfreezeEmptied")
+	// ErrUnfreezeMeans 解冻币算法错误
+	ErrUnfreezeMeans = errors.New("ErrUnfreezeMeans")
+	// ErrUnfreezeID 冻结合约ID错误
+	ErrUnfreezeID = errors.New("ErrUnfreezeID")
+	// ErrNoPrivilege 没有权限
+	ErrNoPrivilege = errors.New("ErrNoPrivilege")
 )

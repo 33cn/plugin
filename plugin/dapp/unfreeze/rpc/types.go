@@ -5,16 +5,15 @@
 package rpc
 
 import (
-	log15 "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/types"
 )
 
-var log = log15.New("module", "unfreeze.rpc")
-
+// Jrpc json rpc struct
 type Jrpc struct {
 	cli *channelClient
 }
 
+// Grpc grpc struct
 type Grpc struct {
 	*channelClient
 }
@@ -23,6 +22,7 @@ type channelClient struct {
 	types.ChannelClient
 }
 
+// Init init grpc param
 func Init(name string, s types.RPCServer) {
 	cli := &channelClient{}
 	grpc := &Grpc{channelClient: cli}

@@ -12,15 +12,17 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// Query_GetUnfreezeWithdraw 查询合约可提币量
 func (u *Unfreeze) Query_GetUnfreezeWithdraw(in *types.ReqString) (types.Message, error) {
 	return QueryWithdraw(u.GetStateDB(), in.GetData())
 }
 
+// Query_GetUnfreeze 查询合约状态
 func (u *Unfreeze) Query_GetUnfreeze(in *types.ReqString) (types.Message, error) {
 	return QueryUnfreeze(u.GetStateDB(), in.GetData())
 }
 
-//查询可提币状态
+// QueryWithdraw 查询可提币状态
 func QueryWithdraw(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
 	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
 	if err != nil {
@@ -51,6 +53,7 @@ func getWithdrawAvailable(unfreeze *pty.Unfreeze, calcTime int64) (int64, error)
 	return amount, nil
 }
 
+// QueryUnfreeze 查询合约状态
 func QueryUnfreeze(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
 	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
 	if err != nil {

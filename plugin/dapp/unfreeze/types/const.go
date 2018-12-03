@@ -17,12 +17,16 @@ const (
 )
 
 const (
-	Action_CreateUnfreeze    = "createUnfreeze"
-	Action_WithdrawUnfreeze  = "withdrawUnfreeze"
+	// Action_CreateUnfreeze Action 名字
+	Action_CreateUnfreeze = "createUnfreeze"
+	// Action_WithdrawUnfreeze Action 名字
+	Action_WithdrawUnfreeze = "withdrawUnfreeze"
+	// Action_TerminateUnfreeze Action 名字
 	Action_TerminateUnfreeze = "terminateUnfreeze"
 )
 
 const (
+	// FuncName_QueryUnfreezeWithdraw 查询方法名
 	FuncName_QueryUnfreezeWithdraw = "QueryUnfreezeWithdraw"
 )
 
@@ -31,7 +35,7 @@ const (
 //如果发生重名，可以通过配置文件修改这些名字
 var (
 	PackageName    = "chain33.unfreeze"
-	RpcName        = "Chain33.Unfreeze"
+	RPCName        = "Chain33.Unfreeze"
 	UnfreezeX      = "unfreeze"
 	ExecerUnfreeze = []byte(UnfreezeX)
 

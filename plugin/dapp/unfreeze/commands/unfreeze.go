@@ -19,6 +19,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// Cmd unfreeze 客户端主程序
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unfreeze",

@@ -12,8 +12,9 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// Exec_Create 执行创建冻结合约
 func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if payload.AssetSymbol == "" || payload.AssetSymbol == "" || payload.TotalCount <= 0 || payload.Means == "" {
+	if payload.AssetExec == "" || payload.AssetSymbol == "" || payload.TotalCount <= 0 || payload.Means == "" {
 		return nil, types.ErrInvalidParam
 	}
 
@@ -42,9 +43,10 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 		return nil, err
 	}
 
-	return MergeReceipt(receipt, receipt1)
+	return mergeReceipt(receipt, receipt1)
 }
 
+// Exec_Withdraw 执行冻结合约中提币
 func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
@@ -77,9 +79,10 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 		return nil, err
 	}
 
-	return MergeReceipt(receipt, receipt1)
+	return mergeReceipt(receipt, receipt1)
 }
 
+// Exec_Terminate 执行终止冻结合约
 func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int) (*types.Receipt, error) {
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
@@ -107,7 +110,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 		uflog.Error("unfreeze terminate ", "addr", unfreeze.Initiator, "execaddr", execAddr, "err", err)
 		return nil, err
 	}
-	return MergeReceipt(receipt, receipt1)
+	return mergeReceipt(receipt, receipt1)
 }
 
 func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction) (*pty.Unfreeze, error) {
@@ -149,7 +152,7 @@ func (u *Unfreeze) create(unfreeze *pty.Unfreeze) (*types.Receipt, error) {
 		KV: []*types.KeyValue{{Key: k, Value: v}}, Logs: []*types.ReceiptLog{receiptLog}}, nil
 }
 
-func MergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) {
+func mergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) {
 	r1.Logs = append(r1.Logs, r2.Logs...)
 	r1.KV = append(r1.KV, r2.KV...)
 	r1.Ty = types.ExecOk
