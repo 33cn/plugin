@@ -5,11 +5,11 @@
 package unfreeze
 
 import (
+	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/unfreeze/commands"
 	"github.com/33cn/plugin/plugin/dapp/unfreeze/executor"
 	"github.com/33cn/plugin/plugin/dapp/unfreeze/rpc"
 	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
-	"github.com/33cn/chain33/pluginmgr"
 )
 
 func init() {

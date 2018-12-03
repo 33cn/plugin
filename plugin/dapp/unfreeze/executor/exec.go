@@ -7,9 +7,9 @@ package executor
 import (
 	"github.com/33cn/chain33/account"
 	dbm "github.com/33cn/chain33/common/db"
-	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -145,7 +145,8 @@ func (u *Unfreeze) create(unfreeze *pty.Unfreeze) (*types.Receipt, error) {
 	}
 
 	receiptLog := getUnfreezeLog(nil, unfreeze)
-	return &types.Receipt{KV: []*types.KeyValue{{k, v}}, Logs: []*types.ReceiptLog{receiptLog}}, nil
+	return &types.Receipt{Ty: types.ExecOk,
+		KV: []*types.KeyValue{{Key: k, Value: v}}, Logs: []*types.ReceiptLog{receiptLog}}, nil
 }
 
 func MergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) {
@@ -185,7 +186,7 @@ func (u *Unfreeze) withdraw(unfreeze *pty.Unfreeze) (int64, *types.Receipt, erro
 		return 0, nil, err
 	}
 
-	return amount, &types.Receipt{Ty: types.ExecOk, KV: []*types.KeyValue{{k, v}},
+	return amount, &types.Receipt{Ty: types.ExecOk, KV: []*types.KeyValue{{Key: k, Value: v}},
 		Logs: []*types.ReceiptLog{receiptLog}}, nil
 }
 
@@ -207,7 +208,7 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 		return 0, nil, err
 	}
 
-	return amount, &types.Receipt{Ty: types.ExecOk, KV: []*types.KeyValue{{k, v}},
+	return amount, &types.Receipt{Ty: types.ExecOk, KV: []*types.KeyValue{{Key: k, Value: v}},
 		Logs: []*types.ReceiptLog{receiptLog}}, nil
 
 }

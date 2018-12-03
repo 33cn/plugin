@@ -5,8 +5,8 @@
 package executor
 
 import (
-	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/types"
+	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func (u *Unfreeze) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -44,8 +44,8 @@ func (u *Unfreeze) ExecLocal_Terminate(payload *uf.UnfreezeTerminate, tx *types.
 }
 
 func localKeys(res *uf.ReceiptUnfreeze, value []byte) (kvs []*types.KeyValue) {
-	kvs = append(kvs, &types.KeyValue{initKey(res.Current.Initiator), value})
-	kvs = append(kvs, &types.KeyValue{beneficiaryKey(res.Current.Beneficiary), value})
+	kvs = append(kvs, &types.KeyValue{Key: initKey(res.Current.Initiator), Value: value})
+	kvs = append(kvs, &types.KeyValue{Key: beneficiaryKey(res.Current.Beneficiary), Value: value})
 	return
 }
 

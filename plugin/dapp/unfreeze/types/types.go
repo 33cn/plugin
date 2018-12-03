@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"time"
 
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/address"
+	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
 

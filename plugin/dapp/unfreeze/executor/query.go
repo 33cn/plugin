@@ -8,8 +8,8 @@ import (
 	"time"
 
 	dbm "github.com/33cn/chain33/common/db"
-	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func (u *Unfreeze) Query_GetUnfreezeWithdraw(in *types.ReqString) (types.Message, error) {

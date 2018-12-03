@@ -8,13 +8,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/33cn/chain33/rpc/jsonclient"
 	"os"
 	"strings"
 
-	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/spf13/cobra"
+
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func Cmd() *cobra.Command {
@@ -230,10 +232,10 @@ func queryWithdraw(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	param := &types.Query4Cli{
+	param := &rpctypes.Query4Jrpc{
 		Execer:   getRealExecName(paraName, pty.UnfreezeX),
 		FuncName: "QueryWithdraw",
-		Payload:  types.ReqString{Data: id},
+		Payload:  types.MustPBToJSON(&types.ReqString{Data: id}),
 	}
 	var resp pty.ReplyQueryUnfreezeWithdraw
 	err = cli.Call("Chain33.Query", param, &resp)
@@ -260,10 +262,10 @@ func show(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	param := &types.Query4Cli{
+	param := &rpctypes.Query4Jrpc{
 		Execer:   getRealExecName(paraName, pty.UnfreezeX),
 		FuncName: "GetUnfreeze",
-		Payload:  types.ReqString{Data: id},
+		Payload:  types.MustPBToJSON(&types.ReqString{Data: id}),
 	}
 	var resp pty.Unfreeze
 	err = cli.Call("Chain33.Query", param, &resp)

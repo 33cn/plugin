@@ -5,8 +5,8 @@
 package executor
 
 import (
-	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/types"
+	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func (u *Unfreeze) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
