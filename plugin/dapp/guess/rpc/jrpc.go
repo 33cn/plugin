@@ -25,10 +25,11 @@ func (c *Jrpc) GuessStartTx(parm *pb.GuessStartTxReq, result *interface{}) error
 		OneBet: parm.OneBet,
 		MaxBets: parm.MaxBets,
 		MaxBetsNumber: parm.MaxBetsNumber,
-		Fee: parm.Fee,
-		FeeAddr: parm.FeeAddr,
+		DevFeeFactor: parm.DevFeeFactor,
+		DevFeeAddr: parm.DevFeeAddr,
+		PlatFeeFactor: parm.PlatFeeFactor,
+		PlatFeeAddr: parm.PlatFeeAddr,
 	}
-
 
 	reply, err := c.cli.GuessStart(context.Background(), head)
 	if err != nil {

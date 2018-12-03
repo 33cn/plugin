@@ -21,17 +21,19 @@ message GuessGame {
     uint32 oneBet        = 13; //一注等于多少bty或者token
     uint32 maxBets       = 14; //单次可以下多少注，默认100
     uint32 maxBetsNumber = 15; //最多可以下多少注
-    int64 fee           = 16; //收取费用，不带则表示不收费
-    string feeAddr       = 17; //收费地址
-    string expire        = 18; //游戏过期时间
-    int64 expireHeight   = 19; //游戏过期区块高度
-    string adminAddr     = 20; //游戏创建者地址,只有该地址可以开奖
-    uint32 betsNumber    = 21; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
-    repeated GuessPlayer plays = 22; //参与游戏下注的玩家投注信息
-    string result = 23;        //公布的中奖结果
-    GuessBetStat betStat = 24;
-    int64 index          = 25;
-    int64 preIndex       = 26;
+    int64 devFeeFactor   = 16; //开发者抽成比例
+    string devFeeAddr    = 17; //开发者地址
+    int64 platFeeFactor   = 18; //平台抽成比例
+    string platFeeAddr    = 19; //平台地址
+    string expire        = 20; //游戏过期时间
+    int64 expireHeight   = 21; //游戏过期区块高度
+    string adminAddr     = 22; //游戏创建者地址,只有该地址可以开奖
+    uint32 betsNumber    = 23; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 24; //参与游戏下注的玩家投注信息
+    string result = 25;        //公布的中奖结果
+    GuessBetStat betStat = 26;
+    int64 index          = 27;
+    int64 preIndex       = 28;
 }
 
 message GuessPlayer {
@@ -43,7 +45,7 @@ message GuessBet {
     string option = 1;
     uint32  betsNumber = 2;
     bool    isWinner = 3;
-    uint32  profit = 4;
+    int64  profit = 4;
     int64 index = 5;
     int64 preIndex = 6;
 }
@@ -65,11 +67,12 @@ message GuessGameAction {
     oneof value {
         GuessGameStart start     = 1;
         GuessGameBet bet         = 2;
-        GuessGameAbort  abort    = 3;
-        GuessGamePublish publish = 4;
-        GuessGameQuery query     = 5;
+        GuessGameStopBet stopBet = 3;
+        GuessGameAbort  abort    = 4;
+        GuessGamePublish publish = 5;
+        GuessGameQuery query     = 6;
     }
-    uint32 ty = 6;
+    uint32 ty = 7;
 }
 
 //游戏启动
@@ -78,16 +81,19 @@ message GuessGameStart{
     string options   = 2;
     string category  = 3;
     string maxTime   = 4;
-    int64 maxHeight = 5;
+    int64 maxHeight  = 5;
     string symbol    = 6;
     string exec      = 7;
     uint32 oneBet    = 8;
     uint32 maxBets   = 9;
     uint32 maxBetsNumber = 10;
-    int64 fee       = 11;
-    string feeAddr   = 12;
-    string expire    = 13;
-    int64 expireHeight = 14;
+    int64 devFeeFactor   = 11; //开发者抽成比例
+    string devFeeAddr    = 12; //开发者地址
+    int64 platFeeFactor  = 13; //平台抽成比例
+    string platFeeAddr   = 14; //平台地址
+    string expire        = 15;
+    int64 expireHeight   = 16;
+    int64 fee            = 17;
 }
 
 //参与游戏下注
@@ -96,6 +102,12 @@ message GuessGameBet{
     string option     = 2;
     uint32  betsNum    = 3;
     int64 fee = 4;
+}
+
+//游戏停止下注
+message GuessGameStopBet{
+    string gameId     = 1;
+    int64 fee = 2;
 }
 
 //游戏异常终止,退还下注
@@ -124,6 +136,8 @@ message QueryGuessGameInfo {
     string addr   = 2;
     int32  status = 3;
     int64  index  = 4;
+    string adminAddr = 5;
+    string category = 6;
 }
 
 message ReplyGuessGameInfo {
@@ -161,10 +175,13 @@ message GuessStartTxReq {
     uint32 oneBet             = 8;
     uint32 maxBets            = 9;
     uint32 maxBetsNumber      = 10;
-    uint64 fee                = 11;
-    string feeAddr            = 12;
-    string expire             = 13;
-    uint32 expireHeight       = 14;
+    int64  devFeeFactor       = 11;
+    string devFeeAddr         = 12;
+    int64  platFeeFactor      = 13;
+    string platFeeAddr        = 14;
+    string feeAddr            = 15;
+    string expire             = 16;
+    uint32 expireHeight       = 17;
 }
 
 message GuessBetTxReq {

@@ -5,11 +5,11 @@
 package executor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/33cn/chain33/client"
-	"sort"
-	"strconv"
+	"google.golang.org/grpc"
 	"strings"
 	"time"
 
@@ -36,6 +36,10 @@ const (
 	MinBetTimeoutInterval = "24h" //从游戏结束下注开始，一局游戏最短的超时时间
 
 	MinOneBet = 1
+
+    grpcRecSize int = 5 * 30 * 1024 * 1024
+
+    retryNum = 10
 )
 
 type Action struct {
@@ -49,11 +53,21 @@ type Action struct {
 	localDB      dbm.Lister
 	index        int
 	api          client.QueueProtocolAPI
+	conn         *grpc.ClientConn
+	grpcClient   types.Chain33Client
 }
 
 func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromAddr := tx.From()
+
+	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
+	conn, err := grpc.Dial(cfg.ParaRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
+
+	if err != nil {
+		panic(err)
+	}
+	grpcClient := types.NewChain33Client(conn)
 
 	return &Action{
 		coinsAccount: guess.GetCoinsAccount(),
@@ -66,6 +80,8 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		localDB: guess.GetLocalDB(),
 		index: index,
 		api: guess.GetApi(),
+		conn: conn,
+		grpcClient: grpcClient,
 	}
 }
 
@@ -124,17 +140,42 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		return nil, err
 	}
 
-	var gameIds []*pkt.GuessGameRecord
+	var records []*pkt.GuessGameRecord
 	for _, value := range values {
 		var record pkt.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
 		}
-		gameIds = append(gameIds, &record)
+		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: gameIds}, nil
+	return &pkt.GuessGameRecords{Records: records}, nil
+}
+
+func getGameListByAdminAddr(db dbm.Lister, addr string, index int64) (types.Message, error) {
+	var values [][]byte
+	var err error
+	if index == 0 {
+		values, err = db.List(calcGuessGameAdminPrefix(addr), nil, DefaultCount, ListDESC)
+	} else {
+		values, err = db.List(calcGuessGameAdminPrefix(addr), calcGuessGameAdminKey(addr, index), DefaultCount, ListDESC)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var records []*pkt.GuessGameRecord
+	for _, value := range values {
+		var record pkt.GuessGameRecord
+		err := types.Decode(value, &record)
+		if err != nil {
+			continue
+		}
+		records = append(records, &record)
+	}
+
+	return &pkt.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Message, error) {
@@ -149,19 +190,93 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		return nil, err
 	}
 
-	var gameIds []*pkt.GuessGameRecord
+	var records []*pkt.GuessGameRecord
 	for _, value := range values {
 		var record pkt.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
 		}
-		gameIds = append(gameIds, &record)
+		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: gameIds}, nil
+	return &pkt.GuessGameRecords{Records: records}, nil
 }
 
+func getGameListByAddrStatus(db dbm.Lister, addr string, status int32, index int64) (types.Message, error) {
+	var values [][]byte
+	var err error
+	if index == 0 {
+		values, err = db.List(calcGuessGameAddrStatusPrefix(addr, status), nil, DefaultCount, ListDESC)
+	} else {
+		values, err = db.List(calcGuessGameAddrStatusPrefix(addr, status), calcGuessGameAddrStatusKey(addr, status, index), DefaultCount, ListDESC)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var records []*pkt.GuessGameRecord
+	for _, value := range values {
+		var record pkt.GuessGameRecord
+		err := types.Decode(value, &record)
+		if err != nil {
+			continue
+		}
+		records = append(records, &record)
+	}
+
+	return &pkt.GuessGameRecords{Records: records}, nil
+}
+
+func getGameListByAdminStatus(db dbm.Lister, admin string, status int32, index int64) (types.Message, error) {
+	var values [][]byte
+	var err error
+	if index == 0 {
+		values, err = db.List(calcGuessGameAdminStatusPrefix(admin, status), nil, DefaultCount, ListDESC)
+	} else {
+		values, err = db.List(calcGuessGameAdminStatusPrefix(admin, status), calcGuessGameAdminStatusKey(admin, status, index), DefaultCount, ListDESC)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var records []*pkt.GuessGameRecord
+	for _, value := range values {
+		var record pkt.GuessGameRecord
+		err := types.Decode(value, &record)
+		if err != nil {
+			continue
+		}
+		records = append(records, &record)
+	}
+
+	return &pkt.GuessGameRecords{Records: records}, nil
+}
+
+func getGameListByCategoryStatus(db dbm.Lister, category string, status int32, index int64) (types.Message, error) {
+	var values [][]byte
+	var err error
+	if index == 0 {
+		values, err = db.List(calcGuessGameCategoryStatusPrefix(category, status), nil, DefaultCount, ListDESC)
+	} else {
+		values, err = db.List(calcGuessGameCategoryStatusPrefix(category, status), calcGuessGameCategoryStatusKey(category, status, index), DefaultCount, ListDESC)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var records []*pkt.GuessGameRecord
+	for _, value := range values {
+		var record pkt.GuessGameRecord
+		err := types.Decode(value, &record)
+		if err != nil {
+			continue
+		}
+		records = append(records, &record)
+	}
+
+	return &pkt.GuessGameRecords{Records: records}, nil
+}
 
 func (action *Action) saveGame(game *pkt.GuessGame) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
@@ -234,8 +349,10 @@ func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.Gu
 		OneBet:      start.OneBet,
 		MaxBets:     start.MaxBets,
 		MaxBetsNumber: start.MaxBetsNumber,
-		Fee: start.Fee,
-		FeeAddr: start.FeeAddr,
+		DevFeeFactor: start.DevFeeFactor,
+		DevFeeAddr: start.DevFeeAddr,
+		PlatFeeFactor: start.PlatFeeFactor,
+		PlatFeeAddr: start.PlatFeeAddr,
 		Expire: start.Expire,
 		ExpireHeight: start.ExpireHeight,
 		//AdminAddr: action.fromaddr,
@@ -417,6 +534,47 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	game, err := action.readGame(pbBet.GetGameId())
+	if err != nil {
+		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
+			pbBet.GetGameId(), "err", err)
+		return nil, err
+	}
+
+	prevStatus := game.Status
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet{
+		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
+			game.GetStatus())
+		return nil, errors.New("ErrGameStatus")
+	}
+
+	//只有adminAddr可以发起publish
+	if game.AdminAddr != action.fromaddr {
+		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
+			action.fromaddr, "adminAddr", game.AdminAddr)
+		return nil, types.ErrInvalidParam
+	}
+
+	action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
+
+	var receiptLog *types.ReceiptLog
+	if prevStatus != game.Status {
+		//状态发生变化，更新所有addr对应记录的index
+		action.ChangeAllAddrIndex(game)
+		receiptLog = action.GetReceiptLog(game, true)
+	} else {
+		receiptLog = action.GetReceiptLog(game, false)
+	}
+	logs = append(logs, receiptLog)
+	kv = append(kv, action.saveGame(game)...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
 func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) {
 	bet := &pkt.GuessBet{ Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
 	player := &pkt.GuessPlayer{ Addr: action.fromaddr, Bet: bet}
@@ -479,14 +637,14 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 
 	game.Result = publish.Result
 
-	//先遍历所有下注数据，对于输家，转移资金到Admin账户合约地址；
+	//先遍历所有下注数据，转移资金到Admin账户合约地址；
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
 		value := int64(player.Bet.BetsNumber * game.OneBet)
 		receipt, err := action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
 		if err != nil {
 			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
-			logger.Error("GamePublish", "addr", game.AdminAddr, "execaddr", action.execaddr,
+			logger.Error("GamePublish", "addr", player.Addr, "execaddr", action.execaddr,
 				"amount", value, "err", err)
 			return nil, err
 		}
@@ -504,11 +662,51 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		}
 	}
 
+	//按创建游戏时设定的比例，转移佣金到开发者账户和平台账户
+	devAddr := pkt.DevShareAddr
+	platAddr := pkt.PlatformShareAddr
+	devFee := int64(0)
+	platFee := int64(0)
+	if len(game.DevFeeAddr) > 0 {
+		devAddr = game.DevFeeAddr
+	}
+
+	if len(game.PlatFeeAddr) > 0 {
+		platAddr = game.PlatFeeAddr
+	}
+
+	if game.DevFeeFactor > 0 {
+		devFee = int64(totalBetsNumber) * game.DevFeeFactor * int64(game.OneBet)/ 1000
+		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
+		if err != nil {
+			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
+			logger.Error("GamePublish", "adminAddr", game.AdminAddr, "execaddr", action.execaddr,
+				"amount", devFee, "err", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
+	if game.PlatFeeFactor > 0 {
+		platFee = int64(totalBetsNumber) * game.PlatFeeFactor * int64(game.OneBet) / 1000
+		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
+		if err != nil {
+			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
+			logger.Error("GamePublish", "adminAddr", game.AdminAddr, "execaddr", action.execaddr,
+				"amount", platFee, "err", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
 	//再遍历赢家，按照投注占比分配所有筹码
+	winValue := int64(totalBetsNumber * game.OneBet) - devFee - platFee
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
 		if player.Bet.Option == game.Result {
-			value := int64(player.Bet.BetsNumber * totalBetsNumber * game.OneBet/ winBetsNumber)
+			value := int64(player.Bet.BetsNumber * uint32(winValue) / winBetsNumber)
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
 				action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback
@@ -518,20 +716,9 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 			}
 			logs = append(logs, receipt.Logs...)
 			kv = append(kv, receipt.KV...)
+			player.Bet.IsWinner = true
+			player.Bet.Profit = value
 		}
-	}
-
-	//如果设置了手续费专用地址，则将本局游戏收取的手续费转移到专用地址
-	if game.Fee > 0 && len(game.FeeAddr) != 0 && game.FeeAddr != game.AdminAddr {
-		value := int64(uint32(game.Fee) * uint32(len(game.Plays))
-		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, game.FeeAddr, action.execaddr, value)
-		if err != nil {
-			action.coinsAccount.ExecFrozen(game.FeeAddr, action.execaddr, value) // rollback
-			logger.Error("GamePublish", "addr", game.FeeAddr, "execaddr", action.execaddr, "amount", value, "err", err)
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kv = append(kv, receipt.KV...)
 	}
 
 	var receiptLog *types.ReceiptLog
@@ -581,7 +768,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	//激活冻结账户
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
-		value := int64(player.Bet.BetsNumber * game.OneBet + uint32(game.Fee))
+		value := int64(player.Bet.BetsNumber * game.OneBet)
 		receipt, err := action.coinsAccount.ExecActive(player.Addr, action.execaddr, value)
 		if err != nil {
 			logger.Error("GameAbort", "addr", player.Addr, "execaddr", action.execaddr, "amount", value, "err", err)
@@ -745,4 +932,19 @@ func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {
 	}
 
 	return false
+}
+
+// GetMainHeightByTxHash get Block height
+func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
+	for i := 0; i < retryNum; i++ {
+		req := &types.ReqHash{Hash: txHash}
+		txDetail, err := action.grpcClient.QueryTransaction(context.Background(), req)
+		if err != nil {
+			time.Sleep(time.Second)
+		} else {
+			return txDetail.GetHeight()
+		}
+	}
+
+	return -1
 }

@@ -43,6 +43,7 @@ func (t *GuessType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Start": GuessGameActionStart,
 		"Bet": GuessGameActionBet,
+		"StopBet":GuessGameActionStopBet,
 		"Abort": GuessGameActionAbort,
 		"Publish": GuessGameActionPublish,
 		"Query": GuessGameActionQuery,
@@ -137,6 +138,32 @@ func CreateRawGuessBetTx(parm *GuessGameBet) (*types.Transaction, error) {
 	val := &GuessGameAction{
 		Ty:    GuessGameActionBet,
 		Value: &GuessGameAction_Bet{Bet: parm},
+	}
+	name := types.ExecName(GuessX)
+	tx := &types.Transaction{
+		Execer:  []byte(types.ExecName(GuessX)),
+		Payload: types.Encode(val),
+		Fee:     parm.Fee,
+		To:      address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateRawGuessStopBetTx method
+func CreateRawGuessBetTx(parm *GuessGameStopBet) (*types.Transaction, error) {
+	if parm == nil {
+		llog.Error("CreateRawGuessBet", "parm", parm)
+		return nil, types.ErrInvalidParam
+	}
+
+	val := &GuessGameAction{
+		Ty:    GuessGameActionStopBet,
+		Value: &GuessGameAction_StopBet{StopBet: parm},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{

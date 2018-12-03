@@ -13,6 +13,7 @@ const (
 
 	GuessGameActionStart = iota + 1
 	GuessGameActionBet
+	GuessGameActionStopBet
 	GuessGameActionAbort
 	GuessGameActionPublish
 	GuessGameActionQuery
@@ -51,4 +52,9 @@ const (
 	FuncName_QueryGameByStatus  = "QueryGameByStatus"
 	//FuncName_QueryGameByAdminAddr = "QueryGameByAdminAddr"
 	//FuncName_QueryGameByCategory  = "QueryGameByCategory"
+)
+
+const (
+	DevShareAddr = "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7"
+	PlatformShareAddr = "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"
 )

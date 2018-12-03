@@ -22,19 +22,64 @@ func (g *Guess) Query_QueryGameById(in *pkt.QueryGuessGameInfo) (types.Message, 
 }
 
 func (g *Guess) Query_QueryGameByAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
-	gameIds, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
+	records, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
 	if err != nil {
 		return nil, err
 	}
 
-	return gameIds, nil
+	return records, nil
+}
+
+func (g *Guess) Query_QueryGameByAddrStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+	records, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
 }
 
 func (g *Guess) Query_QueryGameByStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
-	gameIds, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
+	records, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
 	if err != nil {
 		return nil, err
 	}
 
-	return gameIds, nil
+	return records, nil
+}
+
+func (g *Guess) Query_QueryGameByAdminAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+	records, err := getGameListByAdminAddr(g.GetLocalDB(), in.AdminAddr, in.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (g *Guess) Query_QueryGameByAddrStatusAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+	records, err := getGameListByAddrStatus(g.GetLocalDB(), in.Addr, in.Status, in.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (g *Guess) Query_QueryGameByAdminStatusAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+	records, err := getGameListByAdminStatus(g.GetLocalDB(), in.AdminAddr, in.Status, in.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (g *Guess) Query_QueryGameByCategoryStatusAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+	records, err := getGameListByCategoryStatus(g.GetLocalDB(), in.Category, in.Status, in.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
 }
