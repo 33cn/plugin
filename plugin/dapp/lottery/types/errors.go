@@ -25,4 +25,5 @@ var (
 	ErrLotteryErrUnableClose    = errors.New("ErrLotteryErrUnableClose")
 	ErrNodeNotExist             = errors.New("ErrNodeNotExist")
 	ErrEmptyMinerTx             = errors.New("ErrEmptyMinerTx")
+	ErrRewardFactor             = errors.New("ErrRewardFactor")
 )
