@@ -261,7 +261,7 @@ func queryWithdraw(cmd *cobra.Command, args []string) {
 
 	param := &rpctypes.Query4Jrpc{
 		Execer:   getRealExecName(paraName, pty.UnfreezeX),
-		FuncName: "QueryWithdraw",
+		FuncName: "GetUnfreezeWithdraw",
 		Payload:  types.MustPBToJSON(&types.ReqString{Data: id}),
 	}
 	var resp pty.ReplyQueryUnfreezeWithdraw
