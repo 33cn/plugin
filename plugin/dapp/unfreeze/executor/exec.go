@@ -126,6 +126,9 @@ func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction)
 		Beneficiary: payload.Beneficiary,
 		Means:       payload.Means,
 	}
+	if unfreeze.StartTime == 0 {
+		unfreeze.StartTime = u.GetBlockTime()
+	}
 	means, err := newMeans(payload.Means)
 	if err != nil {
 		return nil, err
