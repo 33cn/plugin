@@ -81,6 +81,9 @@ func (opt *leftProportion) calcFrozen(unfreeze *pty.Unfreeze, now int64) (int64,
 }
 
 func withdraw(unfreeze *pty.Unfreeze, frozen int64) (*pty.Unfreeze, int64) {
+	if unfreeze.Remaining == 0 {
+		return unfreeze, 0
+	}
 	amount := unfreeze.Remaining - frozen
 	unfreeze.Remaining = frozen
 	return unfreeze, amount
