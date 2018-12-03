@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -64,22 +65,34 @@ func createFlag(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
-func getCreateFlags(cmd *cobra.Command) *pty.UnfreezeCreate {
+func checkAmount(amount float64) error {
+	if amount < 0 || amount > float64(types.MaxCoin/types.Coin) {
+		return types.ErrAmount
+	}
+	return nil
+}
+
+func getCreateFlags(cmd *cobra.Command) (*pty.UnfreezeCreate, error) {
 	beneficiary, _ := cmd.Flags().GetString("beneficiary")
 	exec, _ := cmd.Flags().GetString("asset_exec")
 	symbol, _ := cmd.Flags().GetString("asset_symbol")
-	total, _ := cmd.Flags().GetInt64("total")
+	total, _ := cmd.Flags().GetFloat64("total")
 	startTs, _ := cmd.Flags().GetInt64("start_ts")
+
+	if err := checkAmount(total); err != nil {
+		return nil, types.ErrAmount
+	}
+	totalInt64 := int64(math.Trunc((total+0.0000001)*1e4)) * 1e4
 
 	unfreeze := &pty.UnfreezeCreate{
 		StartTime:   startTs,
 		AssetExec:   exec,
 		AssetSymbol: symbol,
-		TotalCount:  total,
+		TotalCount:  totalInt64,
 		Beneficiary: beneficiary,
 		Means:       "",
 	}
-	return unfreeze
+	return unfreeze, nil
 }
 
 func fixAmountCmd() *cobra.Command {
@@ -89,7 +102,7 @@ func fixAmountCmd() *cobra.Command {
 		Run:   fixAmount,
 	}
 	cmd = createFlag(cmd)
-	cmd.Flags().Int64P("amount", "a", 0, "amount every period")
+	cmd.Flags().Float64P("amount", "a", 0, "amount every period")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().Int64P("period", "p", 0, "period in second")
@@ -98,12 +111,21 @@ func fixAmountCmd() *cobra.Command {
 }
 
 func fixAmount(cmd *cobra.Command, args []string) {
-	create := getCreateFlags(cmd)
+	create, err := getCreateFlags(cmd)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 
-	amount, _ := cmd.Flags().GetInt64("amount")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+	if err = checkAmount(amount); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
 	period, _ := cmd.Flags().GetInt64("period")
 	create.Means = pty.FixAmountX
-	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amount}}
+	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amountInt64}}
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
@@ -135,7 +157,11 @@ func leftCmd() *cobra.Command {
 }
 
 func left(cmd *cobra.Command, args []string) {
-	create := getCreateFlags(cmd)
+	create, err := getCreateFlags(cmd)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 
 	tenThousandth, _ := cmd.Flags().GetInt64("ten_thousandth")
 	period, _ := cmd.Flags().GetInt64("period")
@@ -190,7 +216,7 @@ func showCmd() *cobra.Command {
 
 func queryWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show",
+		Use:   "show_withdraw",
 		Short: "show available withdraw amount of one unfreeze construct",
 		Run:   queryWithdraw,
 	}
