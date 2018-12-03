@@ -101,7 +101,7 @@ func TestUnfreeze(t *testing.T) {
 
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
-		UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
+		UnfreezeID: string(unfreezeID(createTx.Hash())),
 	}
 	withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 	if err != nil {
@@ -130,7 +130,7 @@ func TestUnfreeze(t *testing.T) {
 	// 不是受益人提币
 	{
 		p2 := &pty.UnfreezeWithdraw{
-			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
+			UnfreezeID: string(unfreezeID(createTx.Hash())),
 		}
 		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {
@@ -150,7 +150,7 @@ func TestUnfreeze(t *testing.T) {
 	// 不是创建者终止
 	{
 		p3 := &pty.UnfreezeTerminate{
-			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
+			UnfreezeID: string(unfreezeID(createTx.Hash())),
 		}
 		terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 		if err != nil {
@@ -167,7 +167,7 @@ func TestUnfreeze(t *testing.T) {
 
 	// 终止
 	p3 := &pty.UnfreezeTerminate{
-		UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
+		UnfreezeID: string(unfreezeID(createTx.Hash())),
 	}
 	terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 	if err != nil {
@@ -188,7 +188,7 @@ func TestUnfreeze(t *testing.T) {
 	// 终止后不能继续提币
 	{
 		p2 := &pty.UnfreezeWithdraw{
-			UnfreezeID: string(unfreezeID(string(createTx.Hash()))),
+			UnfreezeID: string(unfreezeID(createTx.Hash())),
 		}
 		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {

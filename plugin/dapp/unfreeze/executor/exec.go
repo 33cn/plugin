@@ -114,7 +114,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 }
 
 func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction) (*pty.Unfreeze, error) {
-	id := unfreezeID(string(tx.Hash()))
+	id := unfreezeID(tx.Hash())
 	unfreeze := &pty.Unfreeze{
 		UnfreezeID:  string(id),
 		StartTime:   payload.StartTime,

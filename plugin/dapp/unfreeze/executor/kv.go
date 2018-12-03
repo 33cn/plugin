@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
+	"github.com/33cn/chain33/common"
 )
 
 var (
@@ -16,8 +17,8 @@ var (
 	beneficiaryLocal = "LODB-" + pty.UnfreezeX + "-beneficiary-"
 )
 
-func unfreezeID(txHash string) []byte {
-	return []byte(fmt.Sprintf("%s%s", id, txHash))
+func unfreezeID(txHash []byte) []byte {
+	return []byte(fmt.Sprintf("%s%s", id, common.Bytes2Hex(txHash)))
 }
 
 func initKey(init string) []byte {
