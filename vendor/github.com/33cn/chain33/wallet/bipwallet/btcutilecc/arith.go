@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package btcutil Utility functions for Bitcoin elliptic curve cryptography.
 package btcutil
 
 import "crypto/ecdsa"
 import "math/big"
 
-// Multiplies the base G by a large integer.  The resulting
+// ScalarBaseMult Multiplies the base G by a large integer.  The resulting
 // point is represented as an ECDSA public key since that's
 // typically how they're used.
 func ScalarBaseMult(k *big.Int) *ecdsa.PublicKey {
@@ -17,7 +18,7 @@ func ScalarBaseMult(k *big.Int) *ecdsa.PublicKey {
 	return key
 }
 
-// Multiply a large integer and a point.  The resulting point
+// ScalarMult Multiply a large integer and a point.  The resulting point
 // is represented as an ECDSA public key.
 func ScalarMult(k *big.Int, B *ecdsa.PublicKey) *ecdsa.PublicKey {
 	key := new(ecdsa.PublicKey)
@@ -26,7 +27,7 @@ func ScalarMult(k *big.Int, B *ecdsa.PublicKey) *ecdsa.PublicKey {
 	return key
 }
 
-// Adds two points to create a third.  Points are represented as
+// Add Adds two points to create a third.  Points are represented as
 // ECDSA public keys.
 func Add(a, b *ecdsa.PublicKey) *ecdsa.PublicKey {
 	key := new(ecdsa.PublicKey)

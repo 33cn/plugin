@@ -294,7 +294,7 @@ func (rc *raftNode) updateValidator() {
 			rlog.Debug(fmt.Sprintf("==============This is %s node!==============", status.RaftState.String()))
 			continue
 		} else {
-			// 获取到leader Id,选主成功
+			// 获取到leader ID,选主成功
 			if rc.id == int(status.Lead) {
 				//leader选举出来之后即可添加addReadOnlyPeers
 				if !flag && !isRestart {

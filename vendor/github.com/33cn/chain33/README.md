@@ -16,6 +16,10 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 典型案例: https://github.com/bityuan/bityuan
 
+chain33背后故事: [chain33诞生记](https://mp.weixin.qq.com/s/9g5ZFDKJi9uzR_NFxfeuAA)
+
+视频教程: [视频教程](https://chain.33.cn/document/90)
+
 ## Building from source
 
 环境要求: Go (version 1.9 or later)
@@ -41,6 +45,11 @@ $ make test
 ```shell
 $ chain33 -f chain33.toml
 ```
+
+## 使用chain33 开发插件注意点
+
+* 不可以使用 master 分支，要使用 发布分支
+* vendor 依赖不要重建，未来我们可能会支持自己下载vendor目录，但是目前，我们不支持这样做。
 
 ## 贡献代码
 
@@ -120,10 +129,28 @@ make push b=mydevbranchname m="这个提交的信息"
 
 如果m不设置，那么不会执行 git commit 的命令
 
+## 修改别人的pull requset
+
+比如我要修改 name=libangzhu branch chain33-p2p-listenPort 的pr
+
+##### step1: 拉取要修改的分支
+
+```
+make pull name=libangzhu b=chain33-p2p-listenPort
+```
+
+然后修改代码，修改完成后,并且在本地commit
+
+###### step2: push已经修改好的内容
+
+```
+make pullpush name=libangzhu b=chain33-p2p-listenPort
+```
+
 ## License
 
 ```
-BSD 2-Clause License
+BSD 3-Clause License
 
 Copyright (c) 2018, 33.cn
 All rights reserved.
@@ -137,6 +164,10 @@ modification, are permitted provided that the following conditions are met:
 * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

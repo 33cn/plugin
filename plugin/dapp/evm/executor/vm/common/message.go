@@ -15,10 +15,11 @@ type Message struct {
 	gasLimit uint64
 	gasPrice uint32
 	data     []byte
+	abi      string
 }
 
 // NewMessage 新建消息结构
-func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit uint64, gasPrice uint32, data []byte, alias string) *Message {
+func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit uint64, gasPrice uint32, data []byte, alias, abi string) *Message {
 	return &Message{
 		from:     from,
 		to:       to,
@@ -28,6 +29,7 @@ func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit 
 		gasPrice: gasPrice,
 		data:     data,
 		alias:    alias,
+		abi:      abi,
 	}
 }
 
@@ -54,3 +56,6 @@ func (m Message) GasLimit() uint64 { return m.gasLimit }
 
 // Alias 合约别名
 func (m Message) Alias() string { return m.alias }
+
+// ABI 合约ABI
+func (m Message) ABI() string { return m.abi }

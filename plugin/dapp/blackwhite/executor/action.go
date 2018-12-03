@@ -528,26 +528,26 @@ func (a *action) getWinner(round *gt.BlackwhiteRound) ([]*addrResult, *gt.ReplyL
 	addrRes := round.AddrResult
 	loop := int(round.Loop)
 
-	for _, addres := range addrRes {
-		if len(addres.ShowSecret) > 0 && len(addres.HashValues) == loop {
+	for _, address := range addrRes {
+		if len(address.ShowSecret) > 0 && len(address.HashValues) == loop {
 			var isBlack []bool
 			// 加入分叉高度判断：分叉高度在ForkV25BlackWhite到ForkV25BlackWhiteV2之间的执行原来逻辑，大于ForkV25BlackWhiteV2执行新逻辑，
 			// 小于ForkV25BlackWhite则无法进入
 			if !types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
-				for _, hash := range addres.HashValues {
-					if bytes.Equal(common.Sha256([]byte(addres.ShowSecret+black)), hash) {
+				for _, hash := range address.HashValues {
+					if bytes.Equal(common.Sha256([]byte(address.ShowSecret+black)), hash) {
 						isBlack = append(isBlack, true)
-					} else if bytes.Equal(common.Sha256([]byte(addres.ShowSecret+white)), hash) {
+					} else if bytes.Equal(common.Sha256([]byte(address.ShowSecret+white)), hash) {
 						isBlack = append(isBlack, false)
 					} else {
 						isBlack = append(isBlack, false)
 					}
 				}
 			} else {
-				for i, hash := range addres.HashValues {
-					if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+addres.ShowSecret+black)), hash) {
+				for i, hash := range address.HashValues {
+					if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+address.ShowSecret+black)), hash) {
 						isBlack = append(isBlack, true)
-					} else if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+addres.ShowSecret+white)), hash) {
+					} else if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+address.ShowSecret+white)), hash) {
 						isBlack = append(isBlack, false)
 					} else {
 						isBlack = append(isBlack, false)
@@ -555,8 +555,8 @@ func (a *action) getWinner(round *gt.BlackwhiteRound) ([]*addrResult, *gt.ReplyL
 				}
 			}
 			addresX := &resultCalc{
-				Addr:    addres.Addr,
-				amount:  addres.Amount,
+				Addr:    address.Addr,
+				amount:  address.Amount,
 				IsWin:   true,
 				IsBlack: isBlack,
 			}

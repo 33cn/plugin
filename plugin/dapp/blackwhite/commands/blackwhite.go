@@ -10,6 +10,7 @@ import (
 
 	"github.com/33cn/chain33/common"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 	"github.com/spf13/cobra"
@@ -81,7 +82,7 @@ func blackwhiteCreate(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteCreateTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteCreateTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -141,7 +142,7 @@ func blackwhitePlay(cmd *cobra.Command, args []string) {
 		Fee:        feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhitePlayTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhitePlayTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -180,7 +181,7 @@ func blackwhiteShow(cmd *cobra.Command, args []string) {
 		Fee:    feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteShowTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteShowTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -213,7 +214,7 @@ func blackwhiteTimeoutDone(cmd *cobra.Command, args []string) {
 		Fee:    feeInt64,
 	}
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "blackwhite.BlackwhiteTimeoutDoneTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "blackwhite.BlackwhiteTimeoutDoneTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -257,7 +258,7 @@ func showBlackwhiteInfo(cmd *cobra.Command, args []string) {
 
 	loopSeq, _ := cmd.Flags().GetUint32("loopSeq")
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 
 	var rep interface{}
 
@@ -267,7 +268,7 @@ func showBlackwhiteInfo(cmd *cobra.Command, args []string) {
 			GameID: gameID,
 		}
 		params.FuncName = gt.GetBlackwhiteRoundInfo
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(&req)
 		rep = &gt.ReplyBlackwhiteRoundInfo{}
 	} else if 1 == typ {
 		req := gt.ReqBlackwhiteRoundList{
@@ -278,7 +279,7 @@ func showBlackwhiteInfo(cmd *cobra.Command, args []string) {
 			Index:     index,
 		}
 		params.FuncName = gt.GetBlackwhiteByStatusAndAddr
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(&req)
 		rep = &gt.ReplyBlackwhiteRoundList{}
 	} else if 2 == typ {
 		req := gt.ReqLoopResult{
@@ -286,10 +287,10 @@ func showBlackwhiteInfo(cmd *cobra.Command, args []string) {
 			LoopSeq: int32(loopSeq),
 		}
 		params.FuncName = gt.GetBlackwhiteloopResult
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(&req)
 		rep = &gt.ReplyLoopResults{}
 	}
 
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
 }

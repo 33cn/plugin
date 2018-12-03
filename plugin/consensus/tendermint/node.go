@@ -396,7 +396,7 @@ func (node *Node) stopAndRemovePeer(peer Peer, reason interface{}) {
 	peer.Stop()
 }
 
-// StopPeerForError called if error occured
+// StopPeerForError called if error occurred
 func (node *Node) StopPeerForError(peer Peer, reason interface{}) {
 	tendermintlog.Error("Stopping peer for error", "peer", peer, "err", reason)
 	addr, err := peer.RemoteAddr()

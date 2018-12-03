@@ -188,7 +188,7 @@ func estHashlock(t *testing.T) {
 func estHashunlock(t *testing.T) {
 	fmt.Println("TestHashunlock start")
 	defer fmt.Println("TestHashunlock end")
-	//not sucess as time not enough
+	//not success as time not enough
 	time.Sleep(5 * time.Second)
 	err := unlock(secret)
 	if err != nil {

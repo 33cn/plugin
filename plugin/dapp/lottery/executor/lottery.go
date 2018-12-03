@@ -229,3 +229,8 @@ func dellottery(lotteryID string, status int32) *types.KeyValue {
 func (lott *Lottery) GetPayloadValue() types.Message {
 	return &pty.LotteryAction{}
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (lott *Lottery) CheckReceiptExecOk() bool {
+	return true
+}

@@ -174,3 +174,8 @@ func (g *Game) GetTypeMap() map[string]int32 {
 		"Close":  gt.GameActionClose,
 	}
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (g *Game) CheckReceiptExecOk() bool {
+	return true
+}

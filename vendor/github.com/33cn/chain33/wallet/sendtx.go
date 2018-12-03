@@ -21,7 +21,11 @@ func init() {
 	rand.Seed(types.Now().UnixNano())
 }
 
+// GetBalance 根据地址和执行器类型获取对应的金额
 func (wallet *Wallet) GetBalance(addr string, execer string) (*types.Account, error) {
+	if !wallet.isInited() {
+		return nil, types.ErrNotInited
+	}
 	return wallet.getBalance(addr, execer)
 }
 
@@ -34,7 +38,11 @@ func (wallet *Wallet) getBalance(addr string, execer string) (*types.Account, er
 	return reply[0], nil
 }
 
+// GetAllPrivKeys 获取所有私钥信息
 func (wallet *Wallet) GetAllPrivKeys() ([]crypto.PrivKey, error) {
+	if !wallet.isInited() {
+		return nil, types.ErrNotInited
+	}
 	return wallet.getAllPrivKeys()
 }
 
@@ -60,7 +68,11 @@ func (wallet *Wallet) getAllPrivKeys() ([]crypto.PrivKey, error) {
 	return privs, nil
 }
 
+// GetHeight 获取当前区块最新高度
 func (wallet *Wallet) GetHeight() int64 {
+	if !wallet.isInited() {
+		return 0
+	}
 	msg := wallet.client.NewMessage("blockchain", types.EventGetBlockHeight, nil)
 	wallet.client.Send(msg, true)
 	replyHeight, err := wallet.client.Wait(msg)
@@ -84,7 +96,11 @@ func (wallet *Wallet) sendTransactionWait(payload types.Message, execer []byte, 
 	return nil
 }
 
+// SendTransaction 发送一笔交易
 func (wallet *Wallet) SendTransaction(payload types.Message, execer []byte, priv crypto.PrivKey, to string) (hash []byte, err error) {
+	if !wallet.isInited() {
+		return nil, types.ErrNotInited
+	}
 	return wallet.sendTransaction(payload, execer, priv, to)
 }
 
@@ -118,6 +134,7 @@ func (wallet *Wallet) sendTx(tx *types.Transaction) (*types.Reply, error) {
 	return wallet.api.SendTx(tx)
 }
 
+// WaitTx 等待交易确认
 func (wallet *Wallet) WaitTx(hash []byte) *types.TransactionDetail {
 	return wallet.waitTx(hash)
 }
@@ -143,6 +160,7 @@ func (wallet *Wallet) waitTx(hash []byte) *types.TransactionDetail {
 	}
 }
 
+// WaitTxs 等待多个交易确认
 func (wallet *Wallet) WaitTxs(hashes [][]byte) (ret []*types.TransactionDetail) {
 	return wallet.waitTxs(hashes)
 }
@@ -156,7 +174,7 @@ func (wallet *Wallet) waitTxs(hashes [][]byte) (ret []*types.TransactionDetail) 
 }
 
 func (wallet *Wallet) queryTx(hash []byte) (*types.TransactionDetail, error) {
-	msg := wallet.client.NewMessage("blockchain", types.EventQueryTx, &types.ReqHash{hash})
+	msg := wallet.client.NewMessage("blockchain", types.EventQueryTx, &types.ReqHash{Hash: hash})
 	err := wallet.client.Send(msg, true)
 	if err != nil {
 		walletlog.Error("QueryTx", "Error", err.Error())
@@ -168,6 +186,8 @@ func (wallet *Wallet) queryTx(hash []byte) (*types.TransactionDetail, error) {
 	}
 	return resp.Data.(*types.TransactionDetail), nil
 }
+
+// SendToAddress 想合约地址转账
 func (wallet *Wallet) SendToAddress(priv crypto.PrivKey, addrto string, amount int64, note string, Istoken bool, tokenSymbol string) (*types.ReplyHash, error) {
 	return wallet.sendToAddress(priv, addrto, amount, note, Istoken, tokenSymbol)
 }
@@ -182,7 +202,7 @@ func (wallet *Wallet) createSendToAddress(addrto string, amount int64, note stri
 	create := &types.CreateTx{
 		To:          addrto,
 		Amount:      amount,
-		Note:        note,
+		Note:        []byte(note),
 		IsWithdraw:  isWithdraw,
 		IsToken:     Istoken,
 		TokenSymbol: tokenSymbol,
@@ -272,7 +292,7 @@ func (wallet *Wallet) queryBalance(in *types.ReqBalance) ([]*types.Account, erro
 }
 
 func (wallet *Wallet) getMinerColdAddr(addr string) ([]string, error) {
-	reqaddr := &types.ReqString{addr}
+	reqaddr := &types.ReqString{Data: addr}
 	req := types.ChainExecutor{
 		Driver:   "ticket",
 		FuncName: "MinerSourceList",
@@ -289,7 +309,11 @@ func (wallet *Wallet) getMinerColdAddr(addr string) ([]string, error) {
 	return reply.Datas, nil
 }
 
+// IsCaughtUp 检测当前区块是否已经同步完成
 func (wallet *Wallet) IsCaughtUp() bool {
+	if !wallet.isInited() {
+		return false
+	}
 	if wallet.client == nil {
 		panic("wallet client not bind message queue.")
 	}

@@ -27,7 +27,7 @@ const (
 	MaxPlayerNum = 5
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
-	// DefaultStyle默认游戏类型
+	// DefaultStyle 默认游戏类型
 	DefaultStyle = pkt.PlayStyleDefault
 )
 
@@ -520,9 +520,9 @@ func (action *Action) checkPlayerExistInGame() bool {
 	}
 
 	var value pkt.PBGameRecord
-	lenght := len(values)
-	if lenght != 0 {
-		valueBytes := values[lenght-1]
+	length := len(values)
+	if length != 0 {
+		valueBytes := values[length-1]
 		err := types.Decode(valueBytes, &value)
 		if err == nil && value.Status == pkt.PBGameActionQuit {
 			return false

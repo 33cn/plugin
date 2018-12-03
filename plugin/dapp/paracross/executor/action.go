@@ -36,7 +36,7 @@ func newAction(t *Paracross, tx *types.Transaction) *action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &action{t.GetCoinsAccount(), t.GetStateDB(), t.GetLocalDB(), hash, fromaddr,
-		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer)), t.GetApi(), tx, t}
+		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer)), t.GetAPI(), tx, t}
 }
 
 func getNodes(db dbm.KV, title string) (map[string]struct{}, error) {
@@ -113,7 +113,7 @@ func makeCommitReceipt(addr string, commit *pt.ParacrossCommitAction, prev, curr
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{key, types.Encode(current)},
+			{Key: key, Value: types.Encode(current)},
 		},
 		Logs: []*types.ReceiptLog{
 			{
@@ -163,7 +163,7 @@ func makeDoneReceipt(addr string, commit *pt.ParacrossCommitAction, current *pt.
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{key, types.Encode(stat)},
+			{Key: key, Value: types.Encode(stat)},
 		},
 		Logs: []*types.ReceiptLog{
 			{

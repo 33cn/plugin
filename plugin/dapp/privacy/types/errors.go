@@ -6,6 +6,7 @@ package types
 
 import "errors"
 
+// ErrXXX defines error message
 var (
 	ErrGeFromBytesVartime    = errors.New("ErrGeFromBytesVartime")
 	ErrPrivacyNotEnabled     = errors.New("ErrPrivacyNotEnabled")

@@ -86,13 +86,13 @@ func (r *RelayType) GetName() string {
 // GetLogMap return receipt log map function
 func (r *RelayType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogRelayCreate:       {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayCreate"},
-		TyLogRelayRevokeCreate: {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayRevokeCreate"},
-		TyLogRelayAccept:       {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayAccept"},
-		TyLogRelayRevokeAccept: {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayRevokeAccept"},
-		TyLogRelayConfirmTx:    {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayConfirmTx"},
-		TyLogRelayFinishTx:     {reflect.TypeOf(ReceiptRelayLog{}), "LogRelayFinishTx"},
-		TyLogRelayRcvBTCHead:   {reflect.TypeOf(ReceiptRelayRcvBTCHeaders{}), "LogRelayRcvBTCHead"},
+		TyLogRelayCreate:       {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayCreate"},
+		TyLogRelayRevokeCreate: {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayRevokeCreate"},
+		TyLogRelayAccept:       {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayAccept"},
+		TyLogRelayRevokeAccept: {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayRevokeAccept"},
+		TyLogRelayConfirmTx:    {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayConfirmTx"},
+		TyLogRelayFinishTx:     {Ty: reflect.TypeOf(ReceiptRelayLog{}), Name: "LogRelayFinishTx"},
+		TyLogRelayRcvBTCHead:   {Ty: reflect.TypeOf(ReceiptRelayRcvBTCHeaders{}), Name: "LogRelayRcvBTCHead"},
 	}
 }
 

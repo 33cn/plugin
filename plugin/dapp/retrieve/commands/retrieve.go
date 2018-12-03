@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
@@ -81,7 +82,7 @@ func backupCmd(cmd *cobra.Command, args []string) {
 		DelayPeriod: delay,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -118,7 +119,7 @@ func prepareCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -145,7 +146,7 @@ func performCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -172,7 +173,7 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -226,13 +227,13 @@ func queryRetrieveCmd(cmd *cobra.Command, args []string) {
 		DefaultAddress: defaultAddr,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = "retrieve"
 	params.FuncName = "GetRetrieveInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 
 	var res rt.RetrieveQuery
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseRerieveDetail)
 	ctx.Run()
 }

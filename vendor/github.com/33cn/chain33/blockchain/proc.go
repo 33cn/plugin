@@ -14,12 +14,12 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//blockchain模块的消息接收处理
+//ProcRecvMsg blockchain模块的消息接收处理
 func (chain *BlockChain) ProcRecvMsg() {
 	defer chain.recvwg.Done()
 	reqnum := make(chan struct{}, 1000)
 	for msg := range chain.client.Recv() {
-		chainlog.Debug("blockchain recv", "msg", types.GetEventName(int(msg.Ty)), "id", msg.Id, "cap", len(reqnum))
+		chainlog.Debug("blockchain recv", "msg", types.GetEventName(int(msg.Ty)), "id", msg.ID, "cap", len(reqnum))
 		msgtype := msg.Ty
 		reqnum <- struct{}{}
 		atomic.AddInt32(&chain.runcount, 1)
@@ -83,6 +83,8 @@ func (chain *BlockChain) ProcRecvMsg() {
 			go chain.processMsg(msg, reqnum, chain.getSeqByHash)
 		case types.EventLocalPrefixCount:
 			go chain.processMsg(msg, reqnum, chain.localPrefixCount)
+		case types.EventAddBlockSeqCB:
+			go chain.processMsg(msg, reqnum, chain.addBlockSeqCB)
 		default:
 			go chain.processMsg(msg, reqnum, chain.unknowMsg)
 		}
@@ -91,6 +93,21 @@ func (chain *BlockChain) ProcRecvMsg() {
 
 func (chain *BlockChain) unknowMsg(msg queue.Message) {
 	chainlog.Warn("ProcRecvMsg unknow msg", "msgtype", msg.Ty)
+}
+
+func (chain *BlockChain) addBlockSeqCB(msg queue.Message) {
+	if chain.blockStore.seqCBNum() >= MaxSeqCB {
+		msg.Reply(chain.client.NewMessage("rpc", types.EventAddBlockSeqCB, types.ErrTooManySeqCB))
+		return
+	}
+	cb := (msg.Data).(*types.BlockSeqCB)
+	err := chain.blockStore.addBlockSeqCB(cb)
+	if err != nil {
+		msg.Reply(chain.client.NewMessage("rpc", types.EventAddBlockSeqCB, err))
+		return
+	}
+	chain.pushseq.addTask(cb)
+	msg.ReplyErr("EventAddBlockSeqCB", nil)
 }
 
 func (chain *BlockChain) queryTx(msg queue.Message) {
@@ -167,7 +184,7 @@ func (chain *BlockChain) getHeaders(msg queue.Message) {
 
 func (chain *BlockChain) isSync(msg queue.Message) {
 	ok := chain.IsCaughtUp()
-	msg.Reply(chain.client.NewMessage("", types.EventReplyIsSync, &types.IsCaughtUp{ok}))
+	msg.Reply(chain.client.NewMessage("", types.EventReplyIsSync, &types.IsCaughtUp{Iscaughtup: ok}))
 }
 
 func (chain *BlockChain) getLastHeader(msg queue.Message) {
@@ -332,7 +349,7 @@ func (chain *BlockChain) getLastBlock(msg queue.Message) {
 
 func (chain *BlockChain) isNtpClockSync(msg queue.Message) {
 	ok := GetNtpClockSyncStatus()
-	msg.Reply(chain.client.NewMessage("", types.EventReplyIsNtpClockSync, &types.IsNtpClockSync{ok}))
+	msg.Reply(chain.client.NewMessage("", types.EventReplyIsNtpClockSync, &types.IsNtpClockSync{Isntpclocksync: ok}))
 }
 
 type funcProcess func(msg queue.Message)

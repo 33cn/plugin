@@ -142,10 +142,10 @@ func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusPreCreated
 	reqtokens.QueryAll = true
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetTokens"
-	params.Payload = reqtokens
+	params.Payload = types.MustPBToJSON(&reqtokens)
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -188,10 +188,10 @@ func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusCreated
 	reqtokens.QueryAll = true
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetTokens"
-	params.Payload = reqtokens
+	params.Payload = types.MustPBToJSON(&reqtokens)
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -248,14 +248,13 @@ func tokenAssets(cmd *cobra.Command, args []string) {
 		Address: addr,
 		Execer:  execer,
 	}
-
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetAccountTokenAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 
 	var res tokenty.ReplyAccountTokenAssets
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseTokenAssetsRes)
 	ctx.Run()
 }
@@ -314,7 +313,7 @@ func tokenBalance(cmd *cobra.Command, args []string) {
 		Execer:      execer,
 	}
 	var res []*rpctypes.Account
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "token.GetTokenBalance", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.GetTokenBalance", params, &res)
 	ctx.SetResultCb(parseTokenBalanceRes)
 	ctx.Run()
 }
@@ -388,7 +387,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 		Owner:        ownerAddr,
 		Total:        total * types.TokenPrecision,
 	}
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "token.CreateRawTokenPreCreateTx", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenPreCreateTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -422,7 +421,7 @@ func tokenFinish(cmd *cobra.Command, args []string) {
 		Owner:  ownerAddr,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "token.CreateRawTokenFinishTx", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenFinishTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
@@ -457,6 +456,6 @@ func tokenRevoke(cmd *cobra.Command, args []string) {
 		Owner:  ownerAddr,
 	}
 
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "token.CreateRawTokenRevokeTx", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenRevokeTx", params, nil)
 	ctx.RunWithoutMarshal()
 }

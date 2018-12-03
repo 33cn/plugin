@@ -149,7 +149,7 @@ func prepareTxList() *types.Transaction {
 	key = generateKey(i, 32)
 	value = generateValue(i, 180)
 
-	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: key, Value: []byte(value)}}
+	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: []byte(key), Value: []byte(value)}}
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: 0}
 	tx.To = address.ExecAddress("norm")
@@ -175,5 +175,5 @@ func clearTestData() {
 	if err != nil {
 		fmt.Println("delete chain33_raft dir have a err:", err.Error())
 	}
-	fmt.Println("test data clear sucessfully!")
+	fmt.Println("test data clear successfully!")
 }

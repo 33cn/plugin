@@ -73,7 +73,7 @@ func main() {
 		panic(err)
 	}
 
-	approver := signatory.Signatory{cfg.Privkey}
+	approver := signatory.Signatory{Privkey: cfg.Privkey}
 	server := rpc.NewServer()
 	server.Register(&approver)
 

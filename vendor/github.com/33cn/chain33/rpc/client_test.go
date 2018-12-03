@@ -67,6 +67,7 @@ func testCreateRawTransactionTo(t *testing.T) {
 
 	client := newTestChannelClient()
 	rawtx, err := client.CreateRawTransaction(&tx)
+	assert.Nil(t, err)
 	var mytx types.Transaction
 	err = types.Decode(rawtx, &mytx)
 	assert.Nil(t, err)
@@ -84,7 +85,7 @@ func testCreateRawTransactionCoinTransfer(t *testing.T) {
 		IsToken:    false,
 		IsWithdraw: false,
 		To:         "to",
-		Note:       "note",
+		Note:       []byte("note"),
 	}
 
 	//v := &cty.CoinsAction_Transfer{
@@ -124,7 +125,7 @@ func testCreateRawTransactionCoinTransferExec(t *testing.T) {
 		IsToken:    false,
 		IsWithdraw: false,
 		To:         "to",
-		Note:       "note",
+		Note:       []byte("note"),
 	}
 
 	client := newTestChannelClient()
@@ -151,7 +152,7 @@ func testCreateRawTransactionCoinWithdraw(t *testing.T) {
 		IsToken:    false,
 		IsWithdraw: true,
 		To:         "to",
-		Note:       "note",
+		Note:       []byte("note"),
 	}
 
 	client := newTestChannelClient()

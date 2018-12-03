@@ -49,15 +49,17 @@ type ticketPolicy struct {
 }
 
 type subConfig struct {
+	MinerWaitTime  string   `json:"minerWaitTime"`
 	ForceMining    bool     `json:"forceMining"`
 	Minerdisable   bool     `json:"minerdisable"`
 	Minerwhitelist []string `json:"minerwhitelist"`
 }
 
-func (policy *ticketPolicy) initMingTicketTicker() {
+func (policy *ticketPolicy) initMingTicketTicker(wait time.Duration) {
 	policy.mtx.Lock()
 	defer policy.mtx.Unlock()
-	policy.miningTicketTicker = time.NewTicker(2 * time.Minute)
+	bizlog.Info("initMingTicketTicker", "Duration", wait)
+	policy.miningTicketTicker = time.NewTicker(wait)
 }
 
 func (policy *ticketPolicy) getMingTicketTicker() *time.Ticker {
@@ -107,8 +109,14 @@ func (policy *ticketPolicy) Init(walletBiz wcom.WalletOperate, sub []byte) {
 	}
 	policy.cfg = &subcfg
 	policy.initMinerWhiteList(walletBiz.GetConfig())
-
-	policy.initMingTicketTicker()
+	wait := 2 * time.Minute
+	if subcfg.MinerWaitTime != "" {
+		d, err := time.ParseDuration(subcfg.MinerWaitTime)
+		if err == nil {
+			wait = d
+		}
+	}
+	policy.initMingTicketTicker(wait)
 	walletBiz.RegisterMineStatusReporter(policy)
 	// 启动自动挖矿
 	walletBiz.GetWaitGroup().Add(1)
@@ -544,10 +552,8 @@ func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto
 	ta := &ty.TicketAction{}
 	topen := &ty.TicketOpen{MinerAddress: mineraddr, ReturnAddress: returnaddr, Count: count, RandSeed: types.Now().UnixNano()}
 	hashList := make([][]byte, int(count))
-	privStr := ""
 	for i := 0; i < int(count); i++ {
-		privStr = fmt.Sprintf("%x:%d:%d", priv.Bytes(), i, topen.RandSeed)
-		privHash := common.Sha256([]byte(privStr))
+		privHash := common.Sha256([]byte(fmt.Sprintf("%x:%d:%d", priv.Bytes(), i, topen.RandSeed)))
 		pubHash := common.Sha256(privHash)
 		hashList[i] = pubHash
 	}

@@ -50,7 +50,7 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetApi(suite.api)
+	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = true
 
 	// setup block
@@ -252,7 +252,7 @@ func createAssetWithdrawTx(s suite.Suite, privFrom string, to []byte) (*types.Tr
 		To:          string(to),
 		Amount:      Amount,
 		Fee:         0,
-		Note:        "test asset transfer",
+		Note:        []byte("test asset transfer"),
 		IsWithdraw:  true,
 		IsToken:     false,
 		TokenSymbol: "",

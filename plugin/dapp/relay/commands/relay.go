@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/spf13/cobra"
@@ -75,10 +76,10 @@ func showBtcHeadHeightList(cmd *cobra.Command, args []string) {
 	reqList.Counts = count
 	reqList.Direction = direct
 
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBTCHeaderList",
-		Payload:  reqList,
+		Payload:  types.MustPBToJSON(&reqList),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -119,10 +120,10 @@ func showBtcHeadCurHeight(cmd *cobra.Command, args []string) {
 	var reqList ty.ReqRelayQryBTCHeadHeight
 	reqList.BaseHeight = base
 
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBTCHeaderCurHeight",
-		Payload:  reqList,
+		Payload:  types.MustPBToJSON(&reqList),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -170,10 +171,10 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetSellRelayOrder",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -220,10 +221,10 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBuyRelayOrder",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -275,10 +276,10 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetRelayOrderByStatus",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -398,7 +399,7 @@ func relayOrder(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -441,7 +442,7 @@ func relayAccept(cmd *cobra.Command, args []string) {
 		CoinWaits: coinwait,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -481,7 +482,7 @@ func relayRevoke(cmd *cobra.Command, args []string) {
 		Action:  act,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -516,7 +517,7 @@ func relayConfirm(cmd *cobra.Command, args []string) {
 		TxHash:  txHash,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -566,7 +567,7 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -617,6 +618,6 @@ func relayVerifyBTC(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
 	ctx.RunWithoutMarshal()
 }

@@ -13,6 +13,9 @@ import (
 const (
 	// HashLength 哈希长度
 	HashLength = 32
+
+	// Hash160Length Hash160格式的地址长度
+	Hash160Length = 20
 )
 
 // Hash 重定义哈希类型

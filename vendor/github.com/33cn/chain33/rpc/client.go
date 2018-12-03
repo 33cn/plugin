@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package rpc chain33 RPC模块包含JSONRpc以及grpc
 package rpc
 
 import (
@@ -18,7 +19,6 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//提供系统rpc接口
 var log = log15.New("module", "rpc")
 
 type channelClient struct {
@@ -26,6 +26,7 @@ type channelClient struct {
 	accountdb *account.DB
 }
 
+// Init channel client
 func (c *channelClient) Init(q queue.Client, api client.QueueProtocolAPI) {
 	if api == nil {
 		api, _ = client.New(q, nil)
@@ -34,6 +35,7 @@ func (c *channelClient) Init(q queue.Client, api client.QueueProtocolAPI) {
 	c.accountdb = account.NewCoinsAccount()
 }
 
+// CreateRawTransaction create rawtransaction
 func (c *channelClient) CreateRawTransaction(param *types.CreateTx) ([]byte, error) {
 	if param == nil {
 		log.Error("CreateRawTransaction", "Error", types.ErrInvalidParam)
@@ -48,6 +50,7 @@ func (c *channelClient) CreateRawTransaction(param *types.CreateTx) ([]byte, err
 	return types.CallCreateTx(execer, "", param)
 }
 
+// CreateRawTxGroup create rawtransaction for group
 func (c *channelClient) CreateRawTxGroup(param *types.CreateTransactionGroup) ([]byte, error) {
 	if param == nil || len(param.Txs) <= 1 {
 		return nil, types.ErrTxGroupCountLessThanTwo
@@ -75,6 +78,7 @@ func (c *channelClient) CreateRawTxGroup(param *types.CreateTransactionGroup) ([
 	return txHex, nil
 }
 
+// CreateNoBalanceTransaction create the transaction with no balance
 func (c *channelClient) CreateNoBalanceTransaction(in *types.NoBalanceTx) (*types.Transaction, error) {
 	txNone := &types.Transaction{Execer: []byte(types.ExecName(types.NoneX)), Payload: []byte("no-fee-transaction")}
 	txNone.To = address.ExecAddress(string(txNone.Execer))
@@ -122,6 +126,7 @@ func decodeTx(hexstr string) (*types.Transaction, error) {
 	return &tx, nil
 }
 
+// SendRawTransaction send rawtransaction by p2p
 func (c *channelClient) SendRawTransaction(param *types.SignedTx) (*types.Reply, error) {
 	if param == nil {
 		err := types.ErrInvalidParam
@@ -131,12 +136,17 @@ func (c *channelClient) SendRawTransaction(param *types.SignedTx) (*types.Reply,
 	var tx types.Transaction
 	err := types.Decode(param.GetUnsign(), &tx)
 	if err == nil {
-		tx.Signature = &types.Signature{param.GetTy(), param.GetPubkey(), param.GetSign()}
+		tx.Signature = &types.Signature{
+			Ty:        param.GetTy(),
+			Pubkey:    param.GetPubkey(),
+			Signature: param.GetSign(),
+		}
 		return c.SendTx(&tx)
 	}
 	return nil, err
 }
 
+// GetAddrOverview get overview of address
 func (c *channelClient) GetAddrOverview(parm *types.ReqAddr) (*types.AddrOverview, error) {
 	err := address.CheckAddress(parm.Addr)
 	if err != nil {
@@ -161,10 +171,12 @@ func (c *channelClient) GetAddrOverview(parm *types.ReqAddr) (*types.AddrOvervie
 	return reply, nil
 }
 
+// GetBalance get balance
 func (c *channelClient) GetBalance(in *types.ReqBalance) ([]*types.Account, error) {
 	return c.accountdb.GetBalance(c.QueueProtocolAPI, in)
 }
 
+// GetAllExecBalance get balance of exec
 func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBalance, error) {
 	addr := in.Addr
 	err := address.CheckAddress(addr)
@@ -175,7 +187,7 @@ func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBala
 	addrs = append(addrs, addr)
 	allBalance := &types.AllExecBalance{Addr: addr}
 	for _, exec := range types.AllowUserExec {
-		execer := string(exec)
+		execer := types.ExecName(string(exec))
 		params := &types.ReqBalance{
 			Addresses: addrs,
 			Execer:    execer,
@@ -197,6 +209,7 @@ func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBala
 	return allBalance, nil
 }
 
+// GetTotalCoins get total of coins
 func (c *channelClient) GetTotalCoins(in *types.ReqGetTotalCoins) (*types.ReplyGetTotalCoins, error) {
 	//获取地址账户的余额通过account模块
 	resp, err := c.accountdb.GetTotalCoins(c.QueueProtocolAPI, in)
@@ -206,6 +219,7 @@ func (c *channelClient) GetTotalCoins(in *types.ReqGetTotalCoins) (*types.ReplyG
 	return resp, nil
 }
 
+// DecodeRawTransaction decode rawtransaction
 func (c *channelClient) DecodeRawTransaction(param *types.ReqDecodeRawTransaction) (*types.Transaction, error) {
 	var tx types.Transaction
 	bytes, err := common.FromHex(param.TxHex)
@@ -219,6 +233,7 @@ func (c *channelClient) DecodeRawTransaction(param *types.ReqDecodeRawTransactio
 	return &tx, nil
 }
 
+// GetTimeStatus get status of time
 func (c *channelClient) GetTimeStatus() (*types.TimeStatus, error) {
 	ntpTime := common.GetRealTimeRetry(types.NtpHosts, 10)
 	local := types.Now()
@@ -227,4 +242,14 @@ func (c *channelClient) GetTimeStatus() (*types.TimeStatus, error) {
 	}
 	diff := local.Sub(ntpTime) / time.Second
 	return &types.TimeStatus{NtpTime: ntpTime.Format("2006-01-02 15:04:05"), LocalTime: local.Format("2006-01-02 15:04:05"), Diff: int64(diff)}, nil
+}
+
+// GetExecBalance get balance with exec by channelclient
+func (c *channelClient) GetExecBalance(in *types.ReqGetExecBalance) (*types.ReplyGetExecBalance, error) {
+	//通过account模块获取地址账户在合约中的余额
+	resp, err := c.accountdb.GetExecBalance(c.QueueProtocolAPI, in)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

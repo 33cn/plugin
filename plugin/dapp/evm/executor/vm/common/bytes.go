@@ -6,7 +6,9 @@ package common
 
 import (
 	"encoding/hex"
+	"math/big"
 	"sort"
+	"strings"
 )
 
 // RightPadBytes 右填充字节数组
@@ -33,6 +35,17 @@ func LeftPadBytes(slice []byte, l int) []byte {
 	return padded
 }
 
+// PaddedBigBytes encodes a big integer as a big-endian byte slice. The length
+// of the slice is at least n bytes.
+func PaddedBigBytes(bigint *big.Int, n int) []byte {
+	if bigint.BitLen()/8 >= n {
+		return bigint.Bytes()
+	}
+	ret := make([]byte, n)
+	ReadBits(bigint, ret)
+	return ret
+}
+
 // FromHex 十六进制的字符串转换为字节数组
 func FromHex(s string) []byte {
 	if len(s) > 1 {
@@ -50,6 +63,14 @@ func FromHex(s string) []byte {
 func Hex2Bytes(str string) []byte {
 	h, _ := hex.DecodeString(str)
 	return h
+}
+
+// HexToBytes 十六进制字符串转换为字节数组
+func HexToBytes(str string) ([]byte, error) {
+	if len(str) > 1 && (strings.HasPrefix(str, "0x") || strings.HasPrefix(str, "0X")) {
+		str = str[2:]
+	}
+	return hex.DecodeString(str)
 }
 
 // Bytes2Hex 将字节数组转换为16进制的字符串表示

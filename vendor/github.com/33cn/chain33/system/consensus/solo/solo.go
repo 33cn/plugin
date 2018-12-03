@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package solo solo共识挖矿
 package solo
 
 import (
@@ -18,6 +19,7 @@ import (
 
 var slog = log.New("module", "solo")
 
+//Client 客户端
 type Client struct {
 	*drivers.BaseClient
 	subcfg    *subConfig
@@ -35,6 +37,7 @@ type subConfig struct {
 	WaitTxMs         int64  `json:"waitTxMs"`
 }
 
+//New new
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	c := drivers.NewBaseClient(cfg)
 	var subcfg subConfig
@@ -49,14 +52,17 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	return solo
 }
 
+//Close close
 func (client *Client) Close() {
 	slog.Info("consensus solo closed")
 }
 
+//GetGenesisBlockTime 获取创世区块时间
 func (client *Client) GetGenesisBlockTime() int64 {
 	return client.subcfg.GenesisBlockTime
 }
 
+//CreateGenesisTx 创建创世交易
 func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	tx.Execer = []byte("coins")
@@ -70,15 +76,17 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
+//ProcEvent false
 func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-//solo 不检查任何的交易
+//CheckBlock solo不检查任何的交易
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return nil
 }
 
+//CreateBlock 创建区块
 func (client *Client) CreateBlock() {
 	issleep := true
 	for {

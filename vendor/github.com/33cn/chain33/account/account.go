@@ -2,9 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-/*
-实现chain33 区块链资产操作
-*/
+// Package account 实现chain33 区块链资产操作
 package account
 
 //package for account manger
@@ -41,11 +39,13 @@ type DB struct {
 	symbol               string
 }
 
+// NewCoinsAccount 新建账户
 func NewCoinsAccount() *DB {
 	prefix := "mavl-coins-bty-"
 	return newAccountDB(prefix)
 }
 
+// NewAccountDB 新建DB账户
 func NewAccountDB(execer string, symbol string, db dbm.KV) (*DB, error) {
 	//如果execer 和  symbol 中存在 "-", 那么创建失败
 	if strings.ContainsRune(execer, '-') {
@@ -54,7 +54,7 @@ func NewAccountDB(execer string, symbol string, db dbm.KV) (*DB, error) {
 	if strings.ContainsRune(symbol, '-') {
 		return nil, types.ErrSymbolNameNotAllow
 	}
-	accDB := newAccountDB(SymbolPrefix(execer, symbol))
+	accDB := newAccountDB(symbolPrefix(execer, symbol))
 	accDB.execer = execer
 	accDB.symbol = symbol
 	accDB.SetDB(db)
@@ -69,11 +69,13 @@ func newAccountDB(prefix string) *DB {
 	return acc
 }
 
+// SetDB set db
 func (acc *DB) SetDB(db dbm.KV) *DB {
 	acc.db = db
 	return acc
 }
 
+// LoadAccount 根据地址载入账户
 func (acc *DB) LoadAccount(addr string) *types.Account {
 	value, err := acc.db.Get(acc.AccountKey(addr))
 	if err != nil {
@@ -87,6 +89,7 @@ func (acc *DB) LoadAccount(addr string) *types.Account {
 	return &acc1
 }
 
+// CheckTransfer 检查交易
 func (acc *DB) CheckTransfer(from, to string, amount int64) error {
 	if !types.CheckAmount(amount) {
 		return types.ErrAmount
@@ -99,6 +102,7 @@ func (acc *DB) CheckTransfer(from, to string, amount int64) error {
 	return nil
 }
 
+// Transfer 执行交易
 func (acc *DB) Transfer(from, to string, amount int64) (*types.Receipt, error) {
 	if !types.CheckAmount(amount) {
 		return nil, types.ErrAmount
@@ -144,10 +148,8 @@ func (acc *DB) depositBalance(execaddr string, amount int64) (*types.Receipt, er
 		Current: acc1,
 	}
 	acc.SaveAccount(acc1)
-	ty := int32(types.TyLogDeposit)
-	ty = types.TyLogDeposit
 	log1 := &types.ReceiptLog{
-		Ty:  ty,
+		Ty:  int32(types.TyLogDeposit),
 		Log: types.Encode(receiptBalance),
 	}
 	kv := acc.GetKVSet(acc1)
@@ -177,6 +179,7 @@ func (acc *DB) transferReceipt(accFrom, accTo *types.Account, receiptFrom, recei
 	}
 }
 
+// SaveAccount 保存账户到数据库
 func (acc *DB) SaveAccount(acc1 *types.Account) {
 	set := acc.GetKVSet(acc1)
 	for i := 0; i < len(set); i++ {
@@ -184,6 +187,7 @@ func (acc *DB) SaveAccount(acc1 *types.Account) {
 	}
 }
 
+// GetKVSet 将账户数据转为数据库存储kv
 func (acc *DB) GetKVSet(acc1 *types.Account) (kvset []*types.KeyValue) {
 	value := types.Encode(acc1)
 	kvset = append(kvset, &types.KeyValue{
@@ -193,15 +197,17 @@ func (acc *DB) GetKVSet(acc1 *types.Account) (kvset []*types.KeyValue) {
 	return kvset
 }
 
+// LoadAccounts 从stateDB中载入若干账户
 // TODO:使用API的方式访问,暂时与LoadAccounts()共存,后续将删除LoadAccounts()
 func (acc *DB) LoadAccounts(api client.QueueProtocolAPI, addrs []string) (accs []*types.Account, err error) {
 	header, err := api.GetLastHeader()
 	if err != nil {
 		return nil, err
 	}
-	return acc.LoadAccountsHistory(api, addrs, header.GetStateHash())
+	return acc.loadAccountsHistory(api, addrs, header.GetStateHash())
 }
 
+// LoadAccountsDB 载入账户
 func (acc *DB) LoadAccountsDB(addrs []string) (accs []*types.Account, err error) {
 	for i := 0; i < len(addrs); i++ {
 		acc1 := acc.LoadAccount(addrs[i])
@@ -217,20 +223,21 @@ func (acc *DB) AccountKey(address string) (key []byte) {
 	return key
 }
 
-func SymbolPrefix(execer string, symbol string) string {
+func symbolPrefix(execer string, symbol string) string {
 	return fmt.Sprintf("mavl-%s-%s-", execer, symbol)
 }
 
-func SymbolExecPrefix(execer string, symbol string) string {
+func symbolExecPrefix(execer string, symbol string) string {
 	return fmt.Sprintf("mavl-%s-%s-exec", execer, symbol)
 }
 
+// GetTotalCoins 获取代币总量
 func (acc *DB) GetTotalCoins(api client.QueueProtocolAPI, in *types.ReqGetTotalCoins) (reply *types.ReplyGetTotalCoins, err error) {
 	req := types.IterateRangeByStateHash{}
 	req.StateHash = in.StateHash
 	req.Count = in.Count
-	start := SymbolPrefix(in.Execer, in.Symbol)
-	end := SymbolExecPrefix(in.Execer, in.Symbol)
+	start := symbolPrefix(in.Execer, in.Symbol)
+	end := symbolExecPrefix(in.Execer, in.Symbol)
 	if in.StartKey == nil {
 		req.Start = []byte(start)
 	} else {
@@ -240,7 +247,7 @@ func (acc *DB) GetTotalCoins(api client.QueueProtocolAPI, in *types.ReqGetTotalC
 	return api.StoreGetTotalCoins(&req)
 }
 
-func (acc *DB) LoadAccountsHistory(api client.QueueProtocolAPI, addrs []string, stateHash []byte) (accs []*types.Account, err error) {
+func (acc *DB) loadAccountsHistory(api client.QueueProtocolAPI, addrs []string, stateHash []byte) (accs []*types.Account, err error) {
 	get := types.StoreGet{StateHash: stateHash}
 	for i := 0; i < len(addrs); i++ {
 		get.Keys = append(get.Keys, acc.AccountKey(addrs[i]))
@@ -267,7 +274,8 @@ func (acc *DB) LoadAccountsHistory(api client.QueueProtocolAPI, addrs []string, 
 	return accs, nil
 }
 
-func (accountdb *DB) GetBalance(api client.QueueProtocolAPI, in *types.ReqBalance) ([]*types.Account, error) {
+// GetBalance 获取某个状态下账户余额
+func (acc *DB) GetBalance(api client.QueueProtocolAPI, in *types.ReqBalance) ([]*types.Account, error) {
 	switch in.GetExecer() {
 	case types.ExecName("coins"):
 		addrs := in.GetAddresses()
@@ -281,17 +289,21 @@ func (accountdb *DB) GetBalance(api client.QueueProtocolAPI, in *types.ReqBalanc
 		var accounts []*types.Account
 		var err error
 		if len(in.StateHash) == 0 {
-			accounts, err = accountdb.LoadAccounts(api, exaddrs)
+			accounts, err = acc.LoadAccounts(api, exaddrs)
+			if err != nil {
+				log.Error("GetBalance", "err", err.Error())
+				return nil, err
+			}
 		} else {
 			hash, err := common.FromHex(in.StateHash)
 			if err != nil {
 				return nil, err
 			}
-			accounts, err = accountdb.LoadAccountsHistory(api, exaddrs, hash)
-		}
-		if err != nil {
-			log.Error("GetBalance", "err", err.Error())
-			return nil, err
+			accounts, err = acc.loadAccountsHistory(api, exaddrs, hash)
+			if err != nil {
+				log.Error("GetBalance", "err", err.Error())
+				return nil, err
+			}
 		}
 		return accounts, nil
 	default:
@@ -299,23 +311,106 @@ func (accountdb *DB) GetBalance(api client.QueueProtocolAPI, in *types.ReqBalanc
 		addrs := in.GetAddresses()
 		var accounts []*types.Account
 		for _, addr := range addrs {
-			var acc *types.Account
+			var account *types.Account
 			var err error
 			if len(in.StateHash) == 0 {
-				acc, err = accountdb.LoadExecAccountQueue(api, addr, execaddress)
+				account, err = acc.LoadExecAccountQueue(api, addr, execaddress)
+				if err != nil {
+					log.Error("GetBalance", "err", err.Error())
+					continue
+				}
 			} else {
 				hash, err := common.FromHex(in.StateHash)
 				if err != nil {
 					return nil, err
 				}
-				acc, err = accountdb.LoadExecAccountHistoryQueue(api, addr, execaddress, hash)
+				account, err = acc.LoadExecAccountHistoryQueue(api, addr, execaddress, hash)
+				if err != nil {
+					log.Error("GetBalance", "err", err.Error())
+					continue
+				}
 			}
-			if err != nil {
-				log.Error("GetBalance", "err", err.Error())
-				continue
-			}
-			accounts = append(accounts, acc)
+			accounts = append(accounts, account)
 		}
 		return accounts, nil
 	}
+}
+
+// GetExecBalance 通过account模块获取地址账户在合约中的余额
+func (acc *DB) GetExecBalance(api client.QueueProtocolAPI, in *types.ReqGetExecBalance) (reply *types.ReplyGetExecBalance, err error) {
+	req := types.StoreList{}
+	req.StateHash = in.StateHash
+
+	prefix := symbolExecPrefix(in.Execer, in.Symbol)
+	if len(in.ExecAddr) > 0 {
+		prefix = prefix + "-" + string(in.ExecAddr) + ":"
+	} else {
+		prefix = prefix + "-"
+	}
+
+	req.Start = []byte(prefix)
+	req.End = genPrefixEdge(req.Start)
+	req.Suffix = in.Addr
+	req.Mode = 2 //1：为[start,end）模式，按前缀或者范围进行查找。2：为prefix + suffix遍历模式，先按前缀查找，再判断后缀是否满足条件。
+	req.Count = in.Count
+
+	if len(in.NextKey) > 0 {
+		req.Start = in.NextKey
+	}
+
+	reply = &types.ReplyGetExecBalance{}
+	//log.Info("DB.GetExecBalance", "hash", common.ToHex(req.StateHash), "Prefix", string(req.Start), "End", string(req.End), "Addr", string(req.Suffix))
+
+	res, err := api.StoreList(&req)
+	if err != nil {
+		err = types.ErrTypeAsset
+		return nil, err
+	}
+
+	for i := 0; i < len(res.Keys); i++ {
+		strKey := string(res.Keys[i])
+		log.Info("DB.GetExecBalance process one record", "key", strKey)
+		if !strings.HasPrefix(strKey, prefix) {
+			log.Error("accountDB.GetExecBalance key does not match prefix", "key", strKey, "prefix", prefix)
+			return nil, types.ErrTypeAsset
+		}
+		//如果prefix形如：mavl-coins-bty-exec-16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp:  ,则是查找addr在一个合约地址上的余额，找到一个值即可结束。
+		if strings.HasSuffix(prefix, ":") {
+			addr := strKey[len(prefix):]
+			execAddr := []byte(prefix[(len(prefix) - len(addr) - 1):(len(prefix) - 1)])
+			log.Info("DB.GetExecBalance record for specific exec addr", "execAddr", string(execAddr), "addr", addr)
+			reply.AddItem(execAddr, res.Values[i])
+		} else {
+			combinAddr := strKey[len(prefix):]
+			addrs := strings.Split(combinAddr, ":")
+			if 2 != len(addrs) {
+				log.Error("accountDB.GetExecBalance key does not contain exec-addr & addr", "key", strKey, "combinAddr", combinAddr)
+				return nil, types.ErrTypeAsset
+			}
+			//log.Info("DB.GetExecBalance", "execAddr", addrs[0], "addr", addrs[1])
+			reply.AddItem([]byte(addrs[0]), res.Values[i])
+		}
+	}
+
+	reply.NextKey = res.NextKey
+
+	return reply, nil
+}
+
+func genPrefixEdge(prefix []byte) (r []byte) {
+	for j := 0; j < len(prefix); j++ {
+		r = append(r, prefix[j])
+	}
+
+	i := len(prefix) - 1
+	for i >= 0 {
+		if r[i] < 0xff {
+			r[i]++
+			break
+		} else {
+			i--
+		}
+	}
+
+	return r
 }

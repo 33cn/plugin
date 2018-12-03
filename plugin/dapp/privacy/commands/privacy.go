@@ -74,7 +74,7 @@ func showPrivacyKey(cmd *cobra.Command, args []string) {
 		Data: addr,
 	}
 	var res pty.ReplyPrivacyPkPair
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.ShowPrivacykey", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacykey", params, &res)
 	ctx.Run()
 }
 
@@ -138,7 +138,7 @@ func public2Privacy(cmd *cobra.Command, args []string) {
 	}
 
 	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.MakeTxPublic2privacy", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPublic2privacy", params, &res)
 	ctx.Run()
 }
 
@@ -204,7 +204,7 @@ func privacy2Privacy(cmd *cobra.Command, args []string) {
 	}
 
 	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.MakeTxPrivacy2privacy", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPrivacy2privacy", params, &res)
 	ctx.Run()
 }
 
@@ -271,7 +271,7 @@ func privacy2Public(cmd *cobra.Command, args []string) {
 	}
 
 	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.MakeTxPrivacy2public", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPrivacy2public", params, &res)
 	ctx.Run()
 }
 
@@ -300,7 +300,7 @@ func showPrivacyAccountSpend(cmd *cobra.Command, args []string) {
 	}
 
 	var res pty.UTXOHaveTxHashs
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.ShowPrivacyAccountSpend", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacyAccountSpend", params, &res)
 	ctx.SetResultCb(parseShowPrivacyAccountSpendRes)
 	ctx.Run()
 }
@@ -364,13 +364,13 @@ func showAmountOfUTXO(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowAmountsOfUTXO"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyPrivacyAmounts
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseShowAmountOfUTXORes)
 	ctx.Run()
 }
@@ -407,13 +407,13 @@ func showUTXOs4SpecifiedAmount(cmd *cobra.Command, args []string) {
 		Token:  types.BTY,
 		Amount: amountInt64,
 	}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowUTXOs4SpecifiedAmount"
-	params.Payload = reqPrivacyToken
+	params.Payload = types.MustPBToJSON(&reqPrivacyToken)
 
 	var res pty.ReplyUTXOsOfAmount
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseShowUTXOs4SpecifiedAmountRes)
 	ctx.Run()
 }
@@ -479,7 +479,7 @@ func createUTXOs(cmd *cobra.Command, args []string) {
 	}
 
 	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.CreateUTXOs", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateUTXOs", params, &res)
 	ctx.Run()
 }
 
@@ -499,7 +499,7 @@ func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().StringP("token", "t", types.BTY, "coins token, BTY supported.")
-	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display avaliable detail. 2:display frozen detail. 3:display all")
+	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display available detail. 2:display frozen detail. 3:display all")
 }
 
 func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
@@ -519,7 +519,7 @@ func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
 	}
 
 	var res pty.ReplyPrivacyAccount
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.ShowPrivacyAccountInfo", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacyAccountInfo", params, &res)
 	ctx.SetResultCb(parseshowPrivacyAccountInfo)
 	ctx.Run()
 }
@@ -612,7 +612,7 @@ func listPrivacyTxsFlags(cmd *cobra.Command, args []string) {
 		Seedtxhash:   []byte(seedtxhash),
 	}
 	var res rpctypes.WalletTxDetails
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.PrivacyTxList", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.PrivacyTxList", params, &res)
 	ctx.SetResultCb(parseWalletTxListRes)
 	ctx.Run()
 }
@@ -671,7 +671,7 @@ func rescanUtxosOpt(cmd *cobra.Command, args []string) {
 	}
 
 	var res pty.RepRescanUtxos
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.RescanUtxos", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.RescanUtxos", params, &res)
 	ctx.SetResultCb(parseRescanUtxosOpt)
 	ctx.Run()
 }
@@ -726,7 +726,7 @@ func enablePrivacy(cmd *cobra.Command, args []string) {
 	}
 
 	var res pty.RepEnablePrivacy
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "privacy.EnablePrivacy", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.EnablePrivacy", params, &res)
 	ctx.SetResultCb(parseEnablePrivacy)
 	ctx.Run()
 }
