@@ -10,6 +10,7 @@ import (
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	pty "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
@@ -83,20 +84,20 @@ func testTimeoutDoneTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testRoundInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqBlackwhiteRoundInfo{}
 	params.FuncName = pty.GetBlackwhiteRoundInfo
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBlackwhiteRoundInfo{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testRoundListCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqBlackwhiteRoundList{}
 	params.FuncName = pty.GetBlackwhiteByStatusAndAddr
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyBlackwhiteRoundList{}
 
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -104,10 +105,10 @@ func testRoundListCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testLoopResultCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.ReqLoopResult{}
 	params.FuncName = pty.GetBlackwhiteloopResult
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyLoopResults{}
 
 	return jrpc.Call("Chain33.Query", params, rep)

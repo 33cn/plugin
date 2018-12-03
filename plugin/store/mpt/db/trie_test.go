@@ -37,6 +37,7 @@ import (
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/log"
 	comTy "github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,6 +55,7 @@ var (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	log.SetLogLevel("err")
 	spew.Config.Indent = "    "
 	spew.Config.DisableMethods = false
 }

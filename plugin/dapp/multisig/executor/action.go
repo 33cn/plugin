@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package executor
 
 import (
@@ -136,7 +140,7 @@ func (a *action) MultiSigAccOperate(AccountOperate *mty.MultiSigAccOperate) (*ty
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.AccountOperate
 	newMultiSigTx.MultiSigAddr = multiSigAccAddr
-	confirmOwner := &mty.Owner{owneraddr, ownerWeight}
+	confirmOwner := &mty.Owner{OwnerAddr: owneraddr, Weight: ownerWeight}
 	newMultiSigTx.ConfirmedOwner = append(newMultiSigTx.ConfirmedOwner, confirmOwner)
 
 	return a.executeAccOperateTx(multiSigAccount, newMultiSigTx, AccountOperate, confirmOwner, true)
@@ -173,7 +177,7 @@ func (a *action) MultiSigOwnerOperate(AccOwnerOperate *mty.MultiSigOwnerOperate)
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.OwnerOperate
 	newMultiSigTx.MultiSigAddr = multiSigAccAddr
-	confirmOwner := &mty.Owner{owneraddr, ownerWeight}
+	confirmOwner := &mty.Owner{OwnerAddr: owneraddr, Weight: ownerWeight}
 	newMultiSigTx.ConfirmedOwner = append(newMultiSigTx.ConfirmedOwner, confirmOwner)
 
 	return a.executeOwnerOperateTx(multiSigAccount, newMultiSigTx, AccOwnerOperate, confirmOwner, true)
@@ -214,7 +218,7 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.TransferOperate
 	newMultiSigTx.MultiSigAddr = multiSigAccAddr
-	confirmOwner := &mty.Owner{owneraddr, ownerWeight}
+	confirmOwner := &mty.Owner{OwnerAddr: owneraddr, Weight: ownerWeight}
 	newMultiSigTx.ConfirmedOwner = append(newMultiSigTx.ConfirmedOwner, confirmOwner)
 
 	//确认并执行此交易
@@ -315,7 +319,7 @@ func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Rec
 		return nil, mty.ErrConfirmNotExist
 	}
 
-	owner := &mty.Owner{owneraddr, ownerWeight}
+	owner := &mty.Owner{OwnerAddr: owneraddr, Weight: ownerWeight}
 
 	//首先处理撤销确认交易，将owneraddr的确认信息从交易确认列表中删除
 	if exist && !ConfirmTx.ConfirmOrRevoke {
@@ -543,16 +547,16 @@ func (a *action) receiptOwnerAddOrDel(multiSigAccAddr string, owner *mty.Owner, 
 //多重签名账户owner的修改,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerModify(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 
-	prev := &mty.Owner{AccOwnerOperate.OldOwner, 0}
-	cur := &mty.Owner{AccOwnerOperate.OldOwner, AccOwnerOperate.NewWeight}
+	prev := &mty.Owner{OwnerAddr: AccOwnerOperate.OldOwner, Weight: 0}
+	cur := &mty.Owner{OwnerAddr: AccOwnerOperate.OldOwner, Weight: AccOwnerOperate.NewWeight}
 	return a.receiptOwnerModOrRep(multiSigAccAddr, prev, cur, true)
 }
 
 //多重签名账户owner的替换,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerReplace(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 
-	prev := &mty.Owner{AccOwnerOperate.OldOwner, 0}
-	cur := &mty.Owner{AccOwnerOperate.NewOwner, 0}
+	prev := &mty.Owner{OwnerAddr: AccOwnerOperate.OldOwner, Weight: 0}
+	cur := &mty.Owner{OwnerAddr: AccOwnerOperate.NewOwner, Weight: 0}
 	return a.receiptOwnerModOrRep(multiSigAccAddr, prev, cur, false)
 }
 

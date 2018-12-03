@@ -29,6 +29,17 @@ const (
 	MaxGasLimit = 10000000
 )
 
+const (
+	// EVMEnable 启用EVM
+	EVMEnable = "Enable"
+	// ForkEVMState EVM合约中的数据分散存储，支持大数据量
+	ForkEVMState = "ForkEVMState"
+	// ForkEVMKVHash EVM合约状态数据生成哈希，保存在主链的StateDB中
+	ForkEVMKVHash = "ForkEVMKVHash"
+	// ForkEVMABI EVM合约支持ABI绑定和调用
+	ForkEVMABI = "ForkEVMABI"
+)
+
 var (
 	// EvmPrefix  本执行器前缀
 	EvmPrefix = "user.evm."

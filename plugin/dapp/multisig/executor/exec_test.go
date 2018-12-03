@@ -1,3 +1,6 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 package executor
 
 import (
@@ -101,7 +104,7 @@ func TestMultiSigAccCreate(t *testing.T) {
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(stateDB)
 	driver.SetLocalDB(localDB)
-	driver.SetApi(api)
+	driver.SetAPI(api)
 
 	//add create MultiSigAcc
 	multiSigAddr, err := testMultiSigAccCreate(t, driver, env, localDB)
@@ -110,35 +113,35 @@ func TestMultiSigAccCreate(t *testing.T) {
 		return
 	}
 	//add addrB
-	t.Log("------testMultiSigOwnerAdd------")
+	//t.Log("------testMultiSigOwnerAdd------")
 	testMultiSigOwnerAdd(t, driver, env, multiSigAddr, AddrB, AddrBWeight)
 	//del addrB
-	t.Log("------testMultiSigOwnerDel------")
+	//t.Log("------testMultiSigOwnerDel------")
 	testMultiSigOwnerDel(t, driver, env, multiSigAddr)
 	//modify addrC
-	t.Log("------testMultiSigOwnerModify------")
+	//t.Log("------testMultiSigOwnerModify------")
 	testMultiSigOwnerModify(t, driver, env, multiSigAddr)
 	//replace addrC with addrB
-	t.Log("------testMultiSigOwnerReplace------")
+	//t.Log("------testMultiSigOwnerReplace------")
 	testMultiSigOwnerReplace(t, driver, env, multiSigAddr)
 	//modify NewRequiredweight
-	t.Log("------testMultiSigAccWeightModify------")
+	//t.Log("------testMultiSigAccWeightModify------")
 	testMultiSigAccWeightModify(t, driver, env, multiSigAddr)
 
 	//modify assets DailyLimit NewCoinsBtyDailylimit
-	t.Log("------testMultiSigAccDailyLimitModify------")
+	//t.Log("------testMultiSigAccDailyLimitModify------")
 	testMultiSigAccDailyLimitModify(t, driver, env, multiSigAddr)
 
 	//confirmtx  assets DailyLimit NewCoinsBtyDailylimit
-	t.Log("------testMultiSigAccConfirmTx------")
+	//t.Log("------testMultiSigAccConfirmTx------")
 	testMultiSigAccConfirmTx(t, driver, env, api, multiSigAddr)
 
 	//从外部账户转账到多重签名账户
-	t.Log("------testMultiSigAccExecTransferTo------")
+	//t.Log("------testMultiSigAccExecTransferTo------")
 	testMultiSigAccExecTransferTo(t, driver, env, multiSigAddr)
 
 	//从多重签名账户转账到外部账户
-	t.Log("------testMultiSigAccExecTransferFrom------")
+	//t.Log("------testMultiSigAccExecTransferFrom------")
 	testMultiSigAccExecTransferFrom(t, driver, env, multiSigAddr)
 
 }
@@ -146,9 +149,9 @@ func TestMultiSigAccCreate(t *testing.T) {
 func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, localDB *dbmock.KVDB) (string, error) {
 	//---------测试账户创建--------------------
 	var owners []*mty.Owner
-	owmer1 := &mty.Owner{AddrC, AddrCWeight}
+	owmer1 := &mty.Owner{OwnerAddr: AddrC, Weight: AddrCWeight}
 	owners = append(owners, owmer1)
-	owmer2 := &mty.Owner{AddrD, AddrDWeight}
+	owmer2 := &mty.Owner{OwnerAddr: AddrD, Weight: AddrDWeight}
 	owners = append(owners, owmer2)
 
 	symboldailylimit := &mty.SymbolDailyLimit{
@@ -179,15 +182,15 @@ func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, loc
 	var multiSigAccount mty.MultiSig
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	//t.Log(multiSigAccount)
+	////t.Log(multiSigAccount)
 
 	//解析log
 	var receiptMultiSig mty.MultiSig
 	ty := receipt.Logs[0].Ty
-	//t.Log(ty)
+	////t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSig)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSig)
+	//t.Log(receiptMultiSig)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigAccCreate)
 
 	return receiptMultiSig.MultiSigAddr, nil
@@ -213,49 +216,49 @@ func testMultiSigOwnerAdd(t *testing.T, driver drivers.Driver, env execEnv, mult
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigOwnerAdd kv & log ")
+	//t.Log("TyLogMultiSigOwnerAdd kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log0
 	var receiptMultiSigOwnerAddOrDel mty.ReceiptOwnerAddOrDel
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigOwnerAddOrDel)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigOwnerAddOrDel)
+	//t.Log(receiptMultiSigOwnerAddOrDel)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigOwnerAdd)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 
@@ -277,49 +280,49 @@ func testMultiSigOwnerDel(t *testing.T, driver drivers.Driver, env execEnv, mult
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigOwnerDel kv & log ")
+	//t.Log("TyLogMultiSigOwnerDel kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log0
 	var receiptMultiSigOwnerAddOrDel mty.ReceiptOwnerAddOrDel
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigOwnerAddOrDel)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigOwnerAddOrDel)
+	//t.Log(receiptMultiSigOwnerAddOrDel)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigOwnerDel)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 func testMultiSigOwnerModify(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
@@ -340,18 +343,18 @@ func testMultiSigOwnerModify(t *testing.T, driver drivers.Driver, env execEnv, m
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigOwnerModify kv & log ")
+	//t.Log("TyLogMultiSigOwnerModify kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log0
 	var receiptMultiSigOwnerModOrRep mty.ReceiptOwnerModOrRep
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigOwnerModOrRep)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigOwnerModOrRep)
+	//t.Log(receiptMultiSigOwnerModOrRep)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigOwnerModify)
 
 	assert.Equal(t, receiptMultiSigOwnerModOrRep.PrevOwner.OwnerAddr, AddrC)
@@ -362,35 +365,35 @@ func testMultiSigOwnerModify(t *testing.T, driver drivers.Driver, env execEnv, m
 	assert.Equal(t, receiptMultiSigOwnerModOrRep.ModOrRep, true)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 	assert.Equal(t, uint64(3), receiptTxCountUpdate.CurTxCount)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 func testMultiSigOwnerReplace(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
@@ -412,50 +415,50 @@ func testMultiSigOwnerReplace(t *testing.T, driver drivers.Driver, env execEnv, 
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigOwnerReplace kv & log ")
+	//t.Log("TyLogMultiSigOwnerReplace kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log0
 	var receiptMultiSigOwnerModOrRep mty.ReceiptOwnerModOrRep
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigOwnerModOrRep)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigOwnerModOrRep)
+	//t.Log(receiptMultiSigOwnerModOrRep)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigOwnerReplace)
 	assert.Equal(t, receiptMultiSigOwnerModOrRep.PrevOwner.OwnerAddr, AddrC)
 	assert.Equal(t, receiptMultiSigOwnerModOrRep.CurrentOwner.OwnerAddr, AddrB)
 	assert.Equal(t, receiptMultiSigOwnerModOrRep.ModOrRep, false)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 	assert.Equal(t, uint64(4), receiptTxCountUpdate.CurTxCount)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 
@@ -478,17 +481,17 @@ func testMultiSigAccWeightModify(t *testing.T, driver drivers.Driver, env execEn
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigAccWeightModify kv & log ")
+	//t.Log("TyLogMultiSigAccWeightModify kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log0
 	var receiptMultiSigWeightModify mty.ReceiptWeightModify
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigWeightModify)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigWeightModify)
+	//t.Log(receiptMultiSigWeightModify)
 
 	assert.Equal(t, int(ty), mty.TyLogMultiSigAccWeightModify)
 
@@ -496,33 +499,33 @@ func testMultiSigAccWeightModify(t *testing.T, driver drivers.Driver, env execEn
 	assert.Equal(t, NewRequiredweight, receiptMultiSigWeightModify.CurrentWeight)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 	assert.Equal(t, uint64(5), receiptTxCountUpdate.CurTxCount)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 func testMultiSigAccDailyLimitModify(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
@@ -548,17 +551,17 @@ func testMultiSigAccDailyLimitModify(t *testing.T, driver drivers.Driver, env ex
 
 	var multiSigAccount mty.MultiSig
 	//解析kv0
-	t.Log("TyLogMultiSigAccDailyLimitModify kv & log ")
+	//t.Log("TyLogMultiSigAccDailyLimitModify kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log0
 	var receiptMultiSigDailyLimitOperate mty.ReceiptDailyLimitOperate
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigDailyLimitOperate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigDailyLimitOperate)
+	//t.Log(receiptMultiSigDailyLimitOperate)
 
 	assert.Equal(t, int(ty), mty.TyLogMultiSigAccDailyLimitModify)
 
@@ -571,33 +574,33 @@ func testMultiSigAccDailyLimitModify(t *testing.T, driver drivers.Driver, env ex
 	assert.Equal(t, receiptMultiSigDailyLimitOperate.CurDailyLimit.DailyLimit, NewCoinsBtyDailylimit)
 
 	//解析kv1
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log1
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 	assert.Equal(t, uint64(6), receiptTxCountUpdate.CurTxCount)
 
 	//解析kv2
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[2].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 	//解析log2
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 
 }
@@ -631,33 +634,33 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 	var multiSigAccount mty.MultiSig
 
 	//解析kv&log0
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 	assert.Equal(t, uint64(7), receiptTxCountUpdate.CurTxCount)
 
 	//解析kv&log[1]
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	var multiSigTx mty.MultiSigTx
 	err = types.Decode(receipt.KV[1].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 	assert.Equal(t, false, receiptAccExecTransferTx.CurExecuted)
 
@@ -669,10 +672,10 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 		Tx: tx,
 	}
 	txDetails.Txs = append(txDetails.Txs, txDetail)
-	api.On("GetTransactionByHash", &types.ReqHashes{[][]byte{tx.Hash()}}).Return(txDetails, nil)
+	api.On("GetTransactionByHash", &types.ReqHashes{Hashes: [][]byte{tx.Hash()}}).Return(txDetails, nil)
 
 	//让addrB owner撤销此确认交易
-	t.Log("-----MultiSigConfirmTx Revoke  -----")
+	//t.Log("-----MultiSigConfirmTx Revoke  -----")
 	param := &mty.MultiSigConfirmTx{
 		MultiSigAccAddr: multiSigAddr,
 		TxId:            txid,
@@ -689,23 +692,23 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 	}
 
 	//解析kv0
-	t.Log("ReceiptConfirmTx kv & log ")
+	//t.Log("ReceiptConfirmTx kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 	//解析log0
 	var receiptMultiSigConfirmTx mty.ReceiptConfirmTx
 	ty = receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigConfirmTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigConfirmTx)
+	//t.Log(receiptMultiSigConfirmTx)
 
 	assert.Equal(t, int(ty), mty.TyLogMultiSigConfirmTxRevoke)
 	assert.Equal(t, false, receiptMultiSigConfirmTx.ConfirmeOrRevoke)
 	assert.Equal(t, AddrB, receiptMultiSigConfirmTx.MultiSigTxOwner.ConfirmedOwner.OwnerAddr)
 
-	t.Log("-----MultiSigConfirmTx Confirm  -----")
+	//t.Log("-----MultiSigConfirmTx Confirm  -----")
 	//让addrD owner来确认此交易
 	para := &mty.MultiSigConfirmTx{
 		MultiSigAccAddr: multiSigAddr,
@@ -723,17 +726,17 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 	}
 
 	//解析kv0
-	t.Log("TyLogMultiSigAccWeightModify kv & log ")
+	//t.Log("TyLogMultiSigAccWeightModify kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &multiSigAccount)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAccount)
+	//t.Log(multiSigAccount)
 	//解析log0
 	var receiptMultiSigWeightModify mty.ReceiptWeightModify
 	ty = receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptMultiSigWeightModify)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptMultiSigWeightModify)
+	//t.Log(receiptMultiSigWeightModify)
 
 	assert.Equal(t, int(ty), mty.TyLogMultiSigAccWeightModify)
 
@@ -741,16 +744,16 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 	assert.Equal(t, Requiredweight, receiptMultiSigWeightModify.CurrentWeight)
 
 	//解析kv&log[1]
-	t.Log("TyLogMultiSigTx kv & log ")
+	//t.Log("TyLogMultiSigTx kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 	assert.Equal(t, true, receiptAccExecTransferTx.CurExecuted)
 
@@ -779,16 +782,16 @@ func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env exec
 	var receiptExecAccountTransfer types.ReceiptExecAccountTransfer
 
 	//解析kv0
-	t.Log("TyLogExecTransfer kv & log ")
+	//t.Log("TyLogExecTransfer kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &acc)
 	assert.Nil(t, err, "decode account")
-	t.Log(acc)
+	//t.Log(acc)
 	//解析log0
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptExecAccountTransfer)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptExecAccountTransfer)
+	//t.Log(receiptExecAccountTransfer)
 
 	assert.Equal(t, int(ty), types.TyLogExecTransfer)
 
@@ -796,31 +799,31 @@ func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env exec
 	//assert.Equal(t, NewRequiredweight, receiptMultiSigWeightModify.CurrentWeight)
 
 	//解析kv1
-	t.Log("TyLogExecTransfer kv & log ")
+	//t.Log("TyLogExecTransfer kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &acc)
 	assert.Nil(t, err, "decode account")
-	t.Log(acc)
+	//t.Log(acc)
 	//解析log0
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptExecAccountTransfer)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptExecAccountTransfer)
+	//t.Log(receiptExecAccountTransfer)
 
 	assert.Equal(t, int(ty), types.TyLogExecTransfer)
 	assert.Equal(t, receiptExecAccountTransfer.Current.Balance, receiptExecAccountTransfer.Prev.Balance+InAmount)
 
 	//解析kv2
-	t.Log("TyLogExecFrozen kv & log ")
+	//t.Log("TyLogExecFrozen kv & log ")
 	err = types.Decode(receipt.KV[2].Value, &acc)
 	assert.Nil(t, err, "decode account")
-	t.Log(acc)
+	//t.Log(acc)
 	//解析log0
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptExecAccountTransfer)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptExecAccountTransfer)
+	//t.Log(receiptExecAccountTransfer)
 
 	assert.Equal(t, int(ty), types.TyLogExecFrozen)
 	assert.Equal(t, receiptExecAccountTransfer.Prev.Balance, InAmount)
@@ -853,72 +856,72 @@ func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env ex
 	var receiptExecAccountTransfer types.ReceiptExecAccountTransfer
 
 	//解析kv0
-	t.Log("TyLogExecTransfer kv & log ")
+	//t.Log("TyLogExecTransfer kv & log ")
 	err = types.Decode(receipt.KV[0].Value, &acc)
 	assert.Nil(t, err, "decode account")
-	t.Log(acc)
+	//t.Log(acc)
 	//解析log0
 	ty := receipt.Logs[0].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[0].Log, &receiptExecAccountTransfer)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptExecAccountTransfer)
+	//t.Log(receiptExecAccountTransfer)
 	assert.Equal(t, int(ty), types.TyLogExecTransfer)
 	assert.Equal(t, receiptExecAccountTransfer.Current.Frozen, receiptExecAccountTransfer.Prev.Frozen-OutAmount)
 
 	//解析kv1
-	t.Log("TyLogExecTransfer kv & log ")
+	//t.Log("TyLogExecTransfer kv & log ")
 	err = types.Decode(receipt.KV[1].Value, &acc)
 	assert.Nil(t, err, "decode account")
-	t.Log(acc)
+	//t.Log(acc)
 	ty = receipt.Logs[1].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[1].Log, &receiptExecAccountTransfer)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptExecAccountTransfer)
+	//t.Log(receiptExecAccountTransfer)
 
 	assert.Equal(t, int(ty), types.TyLogExecTransfer)
 	assert.Equal(t, receiptExecAccountTransfer.Current.Balance, receiptExecAccountTransfer.Prev.Balance+OutAmount)
 
 	//解析kv2
 	var receiptTxCountUpdate mty.ReceiptTxCountUpdate
-	t.Log("TyLogTxCountUpdate kv & log ")
+	//t.Log("TyLogTxCountUpdate kv & log ")
 	err = types.Decode(receipt.KV[2].Value, &multiSigAcc)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAcc)
+	//t.Log(multiSigAcc)
 	ty = receipt.Logs[2].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[2].Log, &receiptTxCountUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptTxCountUpdate)
+	//t.Log(receiptTxCountUpdate)
 	assert.Equal(t, int(ty), mty.TyLogTxCountUpdate)
 
 	//解析kv3
 	var receiptAccDailyLimitUpdate mty.ReceiptAccDailyLimitUpdate
-	t.Log("TyLogDailyLimitUpdate kv & log ")
+	//t.Log("TyLogDailyLimitUpdate kv & log ")
 	err = types.Decode(receipt.KV[3].Value, &multiSigAcc)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigAcc)
+	//t.Log(multiSigAcc)
 	ty = receipt.Logs[3].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[3].Log, &receiptAccDailyLimitUpdate)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccDailyLimitUpdate)
+	//t.Log(receiptAccDailyLimitUpdate)
 	assert.Equal(t, int(ty), mty.TyLogDailyLimitUpdate)
 
 	//解析kv4
 	var receiptAccExecTransferTx mty.ReceiptMultiSigTx
 	var multiSigTx mty.MultiSigTx
-	t.Log("TyLogExecTransfer kv & log ")
+	//t.Log("TyLogExecTransfer kv & log ")
 	err = types.Decode(receipt.KV[4].Value, &multiSigTx)
 	assert.Nil(t, err, "decode account")
-	t.Log(multiSigTx)
+	//t.Log(multiSigTx)
 	//解析log0
 	ty = receipt.Logs[4].Ty
-	t.Log(ty)
+	//t.Log(ty)
 	err = types.Decode(receipt.Logs[4].Log, &receiptAccExecTransferTx)
 	assert.Nil(t, err, "decode Logs")
-	t.Log(receiptAccExecTransferTx)
+	//t.Log(receiptAccExecTransferTx)
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 
 }
@@ -950,7 +953,7 @@ func multiSigAccCreate(parm *mty.MultiSigAccCreate) (*types.Transaction, error) 
 	}
 	multiSig := &mty.MultiSigAction{
 		Ty:    mty.ActionMultiSigAccCreate,
-		Value: &mty.MultiSigAction_MultiSigAccCreate{parm},
+		Value: &mty.MultiSigAction_MultiSigAccCreate{MultiSigAccCreate: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
@@ -961,7 +964,7 @@ func multiSigOwnerOperate(parm *mty.MultiSigOwnerOperate) (*types.Transaction, e
 	}
 	multiSig := &mty.MultiSigAction{
 		Ty:    mty.ActionMultiSigOwnerOperate,
-		Value: &mty.MultiSigAction_MultiSigOwnerOperate{parm},
+		Value: &mty.MultiSigAction_MultiSigOwnerOperate{MultiSigOwnerOperate: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
@@ -972,7 +975,7 @@ func multiSigAccOperate(parm *mty.MultiSigAccOperate) (*types.Transaction, error
 	}
 	multiSig := &mty.MultiSigAction{
 		Ty:    mty.ActionMultiSigAccOperate,
-		Value: &mty.MultiSigAction_MultiSigAccOperate{parm},
+		Value: &mty.MultiSigAction_MultiSigAccOperate{MultiSigAccOperate: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
@@ -983,7 +986,7 @@ func multiSigConfirmTx(parm *mty.MultiSigConfirmTx) (*types.Transaction, error) 
 	}
 	multiSig := &mty.MultiSigAction{
 		Ty:    mty.ActionMultiSigConfirmTx,
-		Value: &mty.MultiSigAction_MultiSigConfirmTx{parm},
+		Value: &mty.MultiSigAction_MultiSigConfirmTx{MultiSigConfirmTx: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
@@ -994,13 +997,13 @@ func multiSigExecTransfer(parm *mty.MultiSigExecTransfer, fromOrTo bool) (*types
 	if fromOrTo {
 		multiSig := &mty.MultiSigAction{
 			Ty:    mty.ActionMultiSigExecTransferFrom,
-			Value: &mty.MultiSigAction_MultiSigExecTransferFrom{parm},
+			Value: &mty.MultiSigAction_MultiSigExecTransferFrom{MultiSigExecTransferFrom: parm},
 		}
 		return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 	} else {
 		multiSig := &mty.MultiSigAction{
 			Ty:    mty.ActionMultiSigExecTransferTo,
-			Value: &mty.MultiSigAction_MultiSigExecTransferTo{parm},
+			Value: &mty.MultiSigAction_MultiSigExecTransferTo{MultiSigExecTransferTo: parm},
 		}
 		return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 	}

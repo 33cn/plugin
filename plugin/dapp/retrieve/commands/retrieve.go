@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
@@ -226,10 +227,10 @@ func queryRetrieveCmd(cmd *cobra.Command, args []string) {
 		DefaultAddress: defaultAddr,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = "retrieve"
 	params.FuncName = "GetRetrieveInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 
 	var res rt.RetrieveQuery
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

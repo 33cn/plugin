@@ -44,3 +44,8 @@ func (ticket *Ticket) Query_MinerSourceList(param *types.ReqString) (types.Messa
 	}
 	return reply, nil
 }
+
+// Query_RandNumHash query randnumhash
+func (ticket *Ticket) Query_RandNumHash(param *types.ReqRandHash) (types.Message, error) {
+	return ticket.GetRandNum(param.Height, param.BlockNum)
+}
