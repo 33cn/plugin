@@ -46,7 +46,7 @@ func init() {
 
 func TestExecCreateLottery(t *testing.T) {
 	var targetReceipt types.Receipt
-	var targetErr error = rt.ErrNoPrivilege
+	var targetErr = rt.ErrNoPrivilege
 	var receipt *types.Receipt
 	var err error
 	targetReceipt.Ty = 2
@@ -85,7 +85,7 @@ func TestExecCreateLottery(t *testing.T) {
 
 func TestExecBuyLottery(t *testing.T) {
 	var targetReceipt types.Receipt
-	var targetErr error = types.ErrNoBalance
+	var targetErr = types.ErrNoBalance
 	var receipt *types.Receipt
 	var err error
 	targetReceipt.Ty = 2
@@ -111,7 +111,7 @@ func TestExecBuyLottery(t *testing.T) {
 
 func TestExecDrawLottery(t *testing.T) {
 	var targetReceipt types.Receipt
-	var targetErr error = rt.ErrLotteryStatus
+	var targetErr = rt.ErrLotteryStatus
 	var receipt *types.Receipt
 	var err error
 	targetReceipt.Ty = 2
