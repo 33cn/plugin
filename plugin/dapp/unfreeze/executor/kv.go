@@ -7,8 +7,8 @@ package executor
 import (
 	"fmt"
 
-	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/common"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 var (

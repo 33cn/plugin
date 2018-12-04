@@ -319,5 +319,5 @@ func jsonOutput(resp types.Message) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	fmt.Println(string(buf.Bytes()))
+	fmt.Println(buf.String())
 }
