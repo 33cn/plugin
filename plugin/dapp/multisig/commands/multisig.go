@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 	"github.com/spf13/cobra"
@@ -555,13 +556,13 @@ func GetMultiSigAccCountCmd() *cobra.Command {
 func getMultiSigAccCount(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccCount"
-	params.Payload = types.ReqNil{}
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 	rep = &types.Int64{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -602,12 +603,12 @@ func getMultiSigAccounts(cmd *cobra.Command, args []string) {
 		End:   end,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccounts"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyMultiSigAccs{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -637,12 +638,12 @@ func getMultiSigAccountInfo(cmd *cobra.Command, args []string) {
 		MultiSigAccAddr: addr,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccountInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.MultiSig{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.SetResultCb(parseAccInfo)
@@ -702,12 +703,12 @@ func getMultiSigAccTxCount(cmd *cobra.Command, args []string) {
 		MultiSigAccAddr: addr,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccTxCount"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.Uint64{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -773,12 +774,12 @@ func getMultiSigTxids(cmd *cobra.Command, args []string) {
 		Executed:     executedBool,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigTxids"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyMultiSigTxids{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -813,12 +814,12 @@ func getMultiSigTxInfo(cmd *cobra.Command, args []string) {
 		TxId:         txid,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigTxInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.MultiSigTx{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -853,12 +854,12 @@ func getGetMultiSigTxConfirmedWeight(cmd *cobra.Command, args []string) {
 		TxId:         txid,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigTxConfirmedWeight"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.Uint64{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
@@ -914,12 +915,12 @@ func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
 		IsAll:        isallBool,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccUnSpentToday"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyUnSpentAssets{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.SetResultCb(parseUnSpentToday)
@@ -994,12 +995,12 @@ func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
 		IsAll:        isallBool,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyAccAssets{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.SetResultCb(parseAccAssets)
@@ -1049,14 +1050,14 @@ func getMultiSigAccAllAddress(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	createAddr, _ := cmd.Flags().GetString("addr")
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	var rep interface{}
 	req := mty.ReqMultiSigAccInfo{
 		MultiSigAccAddr: createAddr,
 	}
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccAllAddress"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.AccAddress{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()

@@ -710,7 +710,9 @@ func (m *MultiSig) saveMultiSigTxCountUpdate(accTxCount mty.ReceiptTxCountUpdate
 
 //获取多重签名账户的指定资产
 func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets) (*types.Account, error) {
-	acc, err := account.NewAccountDB(assets.Execer, assets.Symbol, m.GetStateDB())
+	symbol := getRealSymbol(assets.Symbol)
+
+	acc, err := account.NewAccountDB(assets.Execer, symbol, m.GetStateDB())
 	if err != nil {
 		return &types.Account{}, err
 	}
@@ -777,7 +779,7 @@ func isUnderLimit(blocktime int64, amount uint64, dailyLimit *mty.DailyLimit) (b
 		newSpentToday = 0
 	}
 
-	if newSpentToday+amount > dailyLimit.DailyLimit {
+	if newSpentToday+amount > dailyLimit.DailyLimit || newSpentToday+amount < newSpentToday {
 		return false, lastDay
 	} else {
 		return true, lastDay
@@ -868,4 +870,12 @@ func getMultiSigTxPayload(tx *types.TransactionDetail) (*mty.MultiSigAction, err
 	}
 	multisiglog.Error("GetMultiSigTx:Decode Payload", "payload", payload)
 	return &payload, nil
+}
+
+//bty 显示是大写，在底层mavl数据库中对应key值时使用小写
+func getRealSymbol(symbol string) string {
+	if symbol == types.BTY {
+		return "bty"
+	}
+	return symbol
 }
