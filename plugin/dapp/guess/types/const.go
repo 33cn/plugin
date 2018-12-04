@@ -46,12 +46,14 @@ var (
 
 const (
 	//查询方法名
-	FuncName_QueryGameListByIds = "QueryGameListByIds"
-	FuncName_QueryGameById      = "QueryGameById"
-	FuncName_QueryGameByAddr    = "QueryGameByAddr"
-	FuncName_QueryGameByStatus  = "QueryGameByStatus"
-	//FuncName_QueryGameByAdminAddr = "QueryGameByAdminAddr"
-	//FuncName_QueryGameByCategory  = "QueryGameByCategory"
+	FuncName_QueryGamesByIds = "QueryGamesByIds"
+	FuncName_QueryGameById = "QueryGameById"
+	FuncName_QueryGameByAddr = "QueryGameByAddr"
+	FuncName_QueryGameByStatus = "QueryGameByStatus"
+	FuncName_QueryGameByAdminAddr = "QueryGameByAdminAddr"
+	FuncName_QueryGameByAddrStatus = "QueryGameByAddrStatus"
+	FuncName_QueryGameByAdminStatus = "QueryGameByAdminStatus"
+	FuncName_QueryGameByCategoryStatus="QueryGameByCategoryStatus"
 )
 
 const (

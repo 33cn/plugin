@@ -66,7 +66,7 @@ func (t *GuessType) CreateTx(action string, message json.RawMessage) (*types.Tra
 	llog.Debug("Guess.CreateTx", "action", action)
 
 	if action == "GuessStart" {
-		var param GuessStartTxReq
+		var param GuessGameStartTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			llog.Error("CreateTx.GuessStart", "Error", err)
@@ -74,15 +74,23 @@ func (t *GuessType) CreateTx(action string, message json.RawMessage) (*types.Tra
 		}
 		return CreateRawGuessStartTx(&param)
 	} else if action == "GuessBet" {
-		var param GuessBetTxReq
+		var param GuessGameBetTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			llog.Error("CreateTx.GuessBet", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawGuessBetTx(&param)
+	} else if action == "GuessStopBet" {
+		var param GuessGameStopBetTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			llog.Error("CreateTx.GuessStopBet", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawGuessStopBetTx(&param)
 	} else if action == "GuessPublish" {
-		var param GuessPublishTxReq
+		var param GuessGamePublishTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			llog.Error("CreateTx.GuessPublish", "Error", err)
@@ -90,7 +98,7 @@ func (t *GuessType) CreateTx(action string, message json.RawMessage) (*types.Tra
 		}
 		return CreateRawGuessPublishTx(&param)
 	} else if action == "GuessAbort" {
-		var param GuessAbortTxReq
+		var param GuessGameAbortTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			llog.Error("CreateTx.GuessAbort", "Error", err)
@@ -103,15 +111,33 @@ func (t *GuessType) CreateTx(action string, message json.RawMessage) (*types.Tra
 }
 
 // CreateRawLotteryCreateTx method
-func CreateRawGuessStartTx(parm *GuessGameStart) (*types.Transaction, error) {
+func CreateRawGuessStartTx(parm *GuessGameStartTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessStartTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
+	v := &GuessGameStart {
+		Topic: parm.Topic,
+		Options: parm.Options,
+		Category: parm.Category,
+		MaxBetTime: parm.MaxBetTime,
+		MaxBetHeight: parm.MaxBetHeight,
+		Symbol: parm.Symbol,
+		Exec: parm.Exec,
+		MaxBetsOneTime: parm.MaxBets,
+		MaxBetsNumber: parm.MaxBetsNumber,
+		DevFeeFactor: parm.DevFeeFactor,
+		DevFeeAddr: parm.DevFeeAddr,
+		PlatFeeFactor: parm.PlatFeeFactor,
+		PlatFeeAddr: parm.PlatFeeAddr,
+		Expire: parm.Expire,
+		ExpireHeight: parm.ExpireHeight,
+	}
+
 	val := &GuessGameAction{
 		Ty:    GuessGameActionStart,
-		Value: &GuessGameAction_Start{Start: parm},
+		Value: &GuessGameAction_Start{Start: v},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{
@@ -129,15 +155,20 @@ func CreateRawGuessStartTx(parm *GuessGameStart) (*types.Transaction, error) {
 }
 
 // CreateRawGuessBetTx method
-func CreateRawGuessBetTx(parm *GuessGameBet) (*types.Transaction, error) {
+func CreateRawGuessBetTx(parm *GuessGameBetTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessBet", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
+	v := &GuessGameBet{
+		GameId: parm.GameId,
+		Option: parm.Option,
+		BetsNum: parm.BetsNum,
+	}
 	val := &GuessGameAction{
 		Ty:    GuessGameActionBet,
-		Value: &GuessGameAction_Bet{Bet: parm},
+		Value: &GuessGameAction_Bet{Bet: v},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{
@@ -155,15 +186,18 @@ func CreateRawGuessBetTx(parm *GuessGameBet) (*types.Transaction, error) {
 }
 
 // CreateRawGuessStopBetTx method
-func CreateRawGuessBetTx(parm *GuessGameStopBet) (*types.Transaction, error) {
+func CreateRawGuessStopBetTx(parm *GuessGameStopBetTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessBet", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
+	v := &GuessGameStopBet{
+		GameId: parm.GameId,
+	}
 	val := &GuessGameAction{
 		Ty:    GuessGameActionStopBet,
-		Value: &GuessGameAction_StopBet{StopBet: parm},
+		Value: &GuessGameAction_StopBet{StopBet: v},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{
@@ -181,15 +215,20 @@ func CreateRawGuessBetTx(parm *GuessGameStopBet) (*types.Transaction, error) {
 }
 
 // CreateRawGuessPublishTx method
-func CreateRawGuessPublishTx(parm *GuessGamePublish) (*types.Transaction, error) {
+func CreateRawGuessPublishTx(parm *GuessGamePublishTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessPublish", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
+	v := &GuessGamePublish{
+		GameId: parm.GameId,
+		Result: parm.Result,
+	}
+
 	val := &GuessGameAction{
 		Ty:    GuessGameActionPublish,
-		Value: &GuessGameAction_Publish{Publish: parm},
+		Value: &GuessGameAction_Publish{Publish: v},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{
@@ -207,15 +246,19 @@ func CreateRawGuessPublishTx(parm *GuessGamePublish) (*types.Transaction, error)
 }
 
 // CreateRawGuessAbortTx method
-func CreateRawGuessAbortTx(parm *GuessGameAbort) (*types.Transaction, error) {
+func CreateRawGuessAbortTx(parm *GuessGameAbortTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessAbortTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
+	v := &GuessGameAbort {
+		GameId: parm.GameId,
+	}
+
 	val := &GuessGameAction{
 		Ty:    GuessGameActionAbort,
-		Value: &GuessGameAction_Abort{Abort: parm},
+		Value: &GuessGameAction_Abort{Abort: v},
 	}
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{

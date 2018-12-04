@@ -48,7 +48,7 @@ func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue)
 			for i := 0; i < len(game.Plays); i++ {
 				player := game.Plays[i]
 				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, log.GameId, player.Bet.PreIndex))
-				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.Index)
+				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.Index))
 			}
 		}
 	}

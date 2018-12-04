@@ -47,7 +47,7 @@ func (g *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 			for i := 0; i < len(game.Plays); i++ {
 				player := game.Plays[i]
 				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.GameId, log.Index))
-				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, player.Bet.PreIndex)
+				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, player.Bet.PreIndex))
 			}
 		}
 	}

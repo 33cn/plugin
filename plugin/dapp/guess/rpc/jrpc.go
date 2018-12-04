@@ -19,16 +19,18 @@ func (c *Jrpc) GuessStartTx(parm *pb.GuessStartTxReq, result *interface{}) error
 	head := &pb.GuessGameStart{
 		Topic: parm.Topic,
 		Options: parm.Options,
-		MaxHeight: parm.MaxHeight,
+		MaxBetTime: parm.MaxBetTime,
+		MaxBetHeight: parm.MaxBetHeight,
 		Symbol: parm.Symbol,
 		Exec: parm.Exec,
-		OneBet: parm.OneBet,
-		MaxBets: parm.MaxBets,
+		MaxBetsOneTime: parm.MaxBetsOneTime,
 		MaxBetsNumber: parm.MaxBetsNumber,
 		DevFeeFactor: parm.DevFeeFactor,
 		DevFeeAddr: parm.DevFeeAddr,
 		PlatFeeFactor: parm.PlatFeeFactor,
 		PlatFeeAddr: parm.PlatFeeAddr,
+		Expire: parm.Expire,
+		ExpireHeight: parm.ExpireHeight,
 	}
 
 	reply, err := c.cli.GuessStart(context.Background(), head)

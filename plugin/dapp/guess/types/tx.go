@@ -2,17 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package rpc
+package types
 
-type GuessGameStart struct {
+type GuessGameStartTx struct {
 	Topic                string   `json:"topic,omitempty"`
 	Options              string   `json:"options,omitempty"`
 	Category             string   `json:"category,omitempty"`
-	MaxTime              string   `json:"maxTime,omitempty"`
-	MaxHeight            int64    `json:"maxHeight,omitempty"`
+	MaxBetTime              string   `json:"maxTime,omitempty"`
+	MaxBetHeight            int64    `json:"maxHeight,omitempty"`
 	Symbol               string   `json:"symbol,omitempty"`
 	Exec                 string   `json:"exec,omitempty"`
-	OneBet               uint32   `json:"oneBet,omitempty"`
 	MaxBets              uint32   `json:"maxBets,omitempty"`
 	MaxBetsNumber        uint32   `json:"maxBetsNumber,omitempty"`
 	DevFeeFactor         int64    `json:"devFeeFactor,omitempty"`
@@ -24,25 +23,25 @@ type GuessGameStart struct {
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
-type GuessGameBet struct {
+type GuessGameBetTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Option               string   `json:"option,omitempty"`
 	BetsNum              uint32   `json:"betsNum,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
-type GuessGameStopBet struct {
+type GuessGameStopBetTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
-type GuessGamePublish struct {
+type GuessGamePublishTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Result               string   `json:"result,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
-type GuessGameAbort struct {
+type GuessGameAbortTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
