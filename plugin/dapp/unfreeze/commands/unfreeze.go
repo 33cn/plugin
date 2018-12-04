@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -270,12 +271,8 @@ func queryWithdraw(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	data, err := json.MarshalIndent(resp, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(string(data))
+
+	jsonOutput(&resp)
 }
 
 func show(cmd *cobra.Command, args []string) {
@@ -300,12 +297,7 @@ func show(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	data, err := json.MarshalIndent(resp, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(string(data))
+	jsonOutput(&resp)
 }
 
 func getRealExecName(paraName string, name string) string {
@@ -313,4 +305,19 @@ func getRealExecName(paraName string, name string) string {
 		return name
 	}
 	return paraName + name
+}
+
+func jsonOutput(resp types.Message) {
+	data, err := types.PBToJSON(resp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	var buf bytes.Buffer
+	err = json.Indent(&buf, data, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(buf.Bytes()))
 }
