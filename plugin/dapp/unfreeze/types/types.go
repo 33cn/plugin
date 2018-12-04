@@ -46,9 +46,9 @@ type UnfreezeType struct {
 // GetLogMap 获得日志类型列表
 func (u *UnfreezeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogCreateUnfreeze:    {reflect.TypeOf(ReceiptUnfreeze{}), "LogCreateUnfreeze"},
-		TyLogWithdrawUnfreeze:  {reflect.TypeOf(ReceiptUnfreeze{}), "LogWithdrawUnfreeze"},
-		TyLogTerminateUnfreeze: {reflect.TypeOf(ReceiptUnfreeze{}), "LogTerminateUnfreeze"},
+		TyLogCreateUnfreeze:    {Ty: reflect.TypeOf(ReceiptUnfreeze{}), Name: "LogCreateUnfreeze"},
+		TyLogWithdrawUnfreeze:  {Ty: reflect.TypeOf(ReceiptUnfreeze{}), Name: "LogWithdrawUnfreeze"},
+		TyLogTerminateUnfreeze: {Ty: reflect.TypeOf(ReceiptUnfreeze{}), Name: "LogTerminateUnfreeze"},
 	}
 }
 
