@@ -23,7 +23,7 @@ function unfreeze_test() {
     block_wait "${CLI}" 2
 
     echo "=== 3 create unfreeze tx"
-    tx_hash=$(${CLI} send unfreeze  create fix_amount -a 0.01 -e coins -s bty -b  ${beneficiary} -p 20 -t 2 -k ${owner_key})
+    tx_hash=$(${CLI} send unfreeze create fix_amount -a 0.01 -e coins -s bty -b ${beneficiary} -p 20 -t 2 -k ${owner_key})
     block_wait "${CLI}" 2
     unfreeze_id=$(${CLI} tx query -s "${tx_hash}" | jq ".receipt.logs[2].log.current.unfreezeID")
     unfreeze_id2=${unfreeze_id#\"}
@@ -31,7 +31,7 @@ function unfreeze_test() {
 
     echo "==== 4 check some message "
     sleep 20
-    withdraw=$(${CLI} unfreeze show_withdraw  --id `echo "${uid}"` | jq ".availableAmount")
+    withdraw=$(${CLI} unfreeze show_withdraw --id "${uid}" | jq ".availableAmount")
     if [ "${withdraw}" = "0" ]; then
         echo "create unfreeze failed, expect withdraw shoult >0 "
         exit 1
@@ -41,7 +41,7 @@ function unfreeze_test() {
     ${CLI} send unfreeze withdraw --id "${uid}" -k "${beneficiary_key}"
     block_wait "${CLI}" 2
     remaining=$(${CLI} unfreeze show --id "${uid}" | jq ".remaining")
-    if [ "${remaining}" = "\"200000000\"" ]; then
+    if [ "${remaining}" = '"200000000"' ]; then
         echo "withdraw failed, expect remaining < 200000000, result ${remaining}"
         exit 1
     fi
@@ -50,7 +50,7 @@ function unfreeze_test() {
     ${CLI} send unfreeze terminate --id "${uid}" -k "${owner_key}"
     block_wait "${CLI}" 2
     remaining=$(${CLI} unfreeze show --id "${uid}" | jq ".remaining")
-    if [ "${remaining}" != "\"0"\" ]; then
+    if [ "${remaining}" != '"0"' ]; then
         echo "terminate failed, expect remaining 0, result ${remaining}"
         exit 1
     fi
