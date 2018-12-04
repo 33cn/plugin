@@ -51,9 +51,9 @@ const (
 )
 
 const (
-	luckyNumMol     = 100000
-	decimal         = 100000000 //1e8
-	randMolNum      = 5
+	luckyNumMol = 100000
+	decimal     = 100000000 //1e8
+	//randMolNum      = 5
 	grpcRecSize int = 5 * 30 * 1024 * 1024
 	blockNum        = 5
 )
@@ -521,14 +521,14 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 	var err error
 	var hash []byte
 	if isSolo {
-		//used for internal verfication
+		//used for internal verification
 		num = 12345
 	} else {
 		//发消息给randnum模块
 		//在主链上，当前高度查询不到，如果要保证区块个数，高度传入action.height-1
 		llog.Debug("findLuckyNum on randnum module")
 		if !types.IsPara() {
-			req := &types.ReqRandHash{ExecName: "ticket", Height: action.height - 1, BlockNum: 5}
+			req := &types.ReqRandHash{ExecName: "ticket", Height: action.height - 1, BlockNum: blockNum}
 			msg, err = action.api.Query("ticket", "RandNumHash", req)
 			if err != nil {
 				return -1
@@ -541,7 +541,7 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 				llog.Error("findLuckyNum", "mainHeight", mainHeight)
 				return -1
 			}
-			req := &types.ReqRandHash{ExecName: "ticket", Height: mainHeight, BlockNum: 5}
+			req := &types.ReqRandHash{ExecName: "ticket", Height: mainHeight, BlockNum: blockNum}
 			reply, err := action.grpcClient.QueryRandNum(context.Background(), req)
 			if err != nil {
 				return -1
