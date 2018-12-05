@@ -26,7 +26,7 @@ const (
 
 	DefaultCount   = int32(20) //默认一次取多少条记录
 	MaxBetsOneTime = 10000            //一次最多下多少注
-	MaxBetsNumber = 100000     //一局游戏最多接受多少注
+	MaxBetsNumber = 1000000     //一局游戏最多接受多少注
 	MaxBetHeight = 10000000000    //最大区块高度
 
 	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
@@ -541,7 +541,7 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 		return nil, pkt.ErrGuessStatus
 	}
 
-	//只有adminAddr可以发起publish
+	//只有adminAddr可以发起stopBet
 	if game.AdminAddr != action.fromaddr {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
 			action.fromaddr, "adminAddr", game.AdminAddr)
@@ -731,7 +731,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "game status not allow abort",
 			game.Status)
-		return nil, err
+		return nil, pkt.ErrGuessStatus
 	}
 
 	preStatus := game.Status
