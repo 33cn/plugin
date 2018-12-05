@@ -99,6 +99,11 @@ func TestUnfreeze(t *testing.T) {
 	assert.Equal(t, total-p1.TotalCount, accTmp.Balance)
 	assert.Equal(t, p1.TotalCount, accTmp.Frozen)
 
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(createTx, receiptDate, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
 		UnfreezeID: string(unfreezeID(createTx.Hash())),
@@ -126,6 +131,11 @@ func TestUnfreeze(t *testing.T) {
 	assert.Nil(t, e)
 	assert.Equal(t, u.Remaining, accATmp.Frozen)
 	assert.Equal(t, accountB.Balance+p1.TotalCount-u.Remaining, accBTmp.Balance)
+
+	receiptDate2 := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(withdrawTx, receiptDate2, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
 
 	// 不是受益人提币
 	{
@@ -185,6 +195,11 @@ func TestUnfreeze(t *testing.T) {
 	assert.Equal(t, total+total, accATmp.Balance+accBTmp.Balance)
 	assert.Equal(t, int64(0), accATmp.Frozen)
 
+	receiptDate3 := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(terminateTx, receiptDate3, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+
 	// 终止后不能继续提币
 	{
 		p2 := &pty.UnfreezeWithdraw{
@@ -204,6 +219,22 @@ func TestUnfreeze(t *testing.T) {
 		assert.Equal(t, pty.ErrUnfreezeEmptied, err)
 		assert.Nil(t, receipt)
 	}
+
+	req := types.ReqString{Data: string(unfreezeID(createTx.Hash()))}
+	_, err = exec.Query("GetUnfreeze", types.Encode(&req))
+	assert.Nil(t, err)
+
+	_, err = exec.Query("GetUnfreezeWithdraw", types.Encode(&req))
+	assert.Nil(t, err)
+
+	_, err = exec.ExecDelLocal(terminateTx, receiptDate3, int(1))
+	assert.Nil(t, err)
+
+	_, err = exec.ExecDelLocal(withdrawTx, receiptDate2, int(1))
+	assert.Nil(t, err)
+
+	_, err = exec.ExecDelLocal(createTx, receiptDate, int(1))
+	assert.Nil(t, err)
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {

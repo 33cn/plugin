@@ -24,8 +24,6 @@ func (u *Unfreeze) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBS
 			}
 			kv := u.rollbackUnfreezeCreate(&receipt)
 			dbSet.KV = append(dbSet.KV, kv...)
-		default:
-			return nil, types.ErrNotSupport
 		}
 	}
 	return dbSet, nil

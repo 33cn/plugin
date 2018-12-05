@@ -25,7 +25,6 @@ func (u *Unfreeze) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet,
 			kv := u.saveUnfreezeCreate(&receipt)
 			dbSet.KV = append(dbSet.KV, kv...)
 		default:
-			return nil, types.ErrNotSupport
 		}
 	}
 	return dbSet, nil
