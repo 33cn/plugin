@@ -7,6 +7,7 @@ package commands
 import (
 	"fmt"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 	"github.com/spf13/cobra"
@@ -107,7 +108,7 @@ func guessStart(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "guess.GuessStartTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessStartTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -143,7 +144,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "guess.GuessBetTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessBetTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -171,7 +172,7 @@ func guessAbort(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "guess.GuessAbortTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessAbortTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -204,7 +205,7 @@ func guessPublish(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "guess.GuessPublishTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessPublishTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -242,7 +243,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	category, _ := cmd.Flags().GetString("category")
 
 	fmt.Println("ooo")
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.GuessX
 
 	//query type,
@@ -261,9 +262,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			GameIds: gameIds,
 		}
 		params.FuncName = pkt.FuncName_QueryGamesByIds
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfos
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 2:
@@ -271,9 +272,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			GameId: gameId,
 		}
 		params.FuncName = pkt.FuncName_QueryGameById
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfo
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 3:
@@ -282,9 +283,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByAddr
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 4:
@@ -293,9 +294,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByStatus
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 5:
@@ -304,9 +305,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByAdminAddr
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 6:
@@ -316,9 +317,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByAddrStatus
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 
@@ -329,9 +330,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByAdminStatus
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 8:
@@ -341,9 +342,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Index: index,
 		}
 		params.FuncName = pkt.FuncName_QueryGameByCategoryStatus
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
-		ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	}
 }

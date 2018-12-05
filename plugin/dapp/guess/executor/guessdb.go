@@ -76,7 +76,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		execaddr: dapp.ExecAddress(string(tx.Execer)),
 		localDB: guess.GetLocalDB(),
 		index: index,
-		api: guess.GetApi(),
+		api: guess.GetAPI(),
 		conn: conn,
 		grpcClient: grpcClient,
 	}
