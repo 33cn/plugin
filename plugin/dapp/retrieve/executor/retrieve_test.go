@@ -344,7 +344,7 @@ func estRetrievePerform(t *testing.T) {
 
 func estRetrieveCancel(t *testing.T) {
 	fmt.Println("\nTestRetrieveCancel start")
-	fmt.Println("*This case is used for checking cancel operation\n*Cancel action is done with privkey of account A/B, although the cancel action for A could succeed, but the balance have been transfered by last action with backup a\n*currBalanceA = currBalanceA - 2*fee currBalanceB = currBalanceB + 1e8 - 2*fee")
+	fmt.Println("*This case is used for checking cancel operation\n*Cancel action is done with privkey of account A/B, although the cancel action for A could succeed, but the balance have been transferred by last action with backup a\n*currBalanceA = currBalanceA - 2*fee currBalanceB = currBalanceB + 1e8 - 2*fee")
 	defer fmt.Println("TestRetrieveCancel end")
 	var hashes [][]byte
 
@@ -447,7 +447,7 @@ func estRetrievePerformB(t *testing.T) {
 }
 
 func backup(backupaddrindex int, defaultaddrindex int, privkeyindex int, delayperiod int64) ([]byte, error) {
-	vbackup := &rt.RetrieveAction_Backup{&rt.BackupRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex], DelayPeriod: delayperiod}}
+	vbackup := &rt.RetrieveAction_Backup{Backup: &rt.BackupRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex], DelayPeriod: delayperiod}}
 	//fmt.Println(vlock)
 	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveBackup}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
@@ -466,7 +466,7 @@ func backup(backupaddrindex int, defaultaddrindex int, privkeyindex int, delaype
 }
 
 func prepare(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byte, error) {
-	vprepare := &rt.RetrieveAction_Prepare{&rt.PrepareRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
+	vprepare := &rt.RetrieveAction_Prepare{Prepare: &rt.PrepareRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
 	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrievePreapre}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
@@ -483,7 +483,7 @@ func prepare(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byt
 }
 
 func perform(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byte, error) {
-	vperform := &rt.RetrieveAction_Perform{&rt.PerformRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
+	vperform := &rt.RetrieveAction_Perform{Perform: &rt.PerformRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
 	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrievePerform}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
@@ -500,7 +500,7 @@ func perform(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byt
 }
 
 func cancel(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byte, error) {
-	vcancel := &rt.RetrieveAction_Cancel{&rt.CancelRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
+	vcancel := &rt.RetrieveAction_Cancel{Cancel: &rt.CancelRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
 	transfer := &rt.RetrieveAction{Value: vcancel, Ty: rt.RetrieveCancel}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
@@ -574,11 +574,7 @@ func showOrCheckAcc(c types.Chain33Client, addr string, sorc int, balance int64)
 			return true
 		}
 	}
-	if sorc != onlyshow {
-		return false
-	} else {
-		return true
-	}
+	return sorc == onlyshow
 }
 
 func genaddress() (string, crypto.PrivKey) {
@@ -614,7 +610,7 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 	//defer conn.Close()
 	//fmt.Println("sign key privkey: ", common.ToHex(priv.Bytes()))
 	if amount > 0 {
-		v := &cty.CoinsAction_Transfer{&types.AssetsTransfer{Amount: amount}}
+		v := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 		transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: fee, To: to}
 		tx.Nonce = r.Int63()
@@ -630,24 +626,24 @@ func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount
 			return nil, errors.New(string(reply.GetMsg()))
 		}
 		return tx.Hash(), nil
-	} else {
-		v := &cty.CoinsAction_Withdraw{&types.AssetsWithdraw{Amount: -amount}}
-		withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
-		tx.Nonce = r.Int63()
-		tx.Sign(types.SECP256K1, priv)
-		// Contact the server and print out its response.
-		reply, err := c.SendTransaction(context.Background(), tx)
-		if err != nil {
-			fmt.Println("err", err)
-			return nil, err
-		}
-		if !reply.IsOk {
-			fmt.Println("err = ", reply.GetMsg())
-			return nil, errors.New(string(reply.GetMsg()))
-		}
-		return tx.Hash(), nil
 	}
+	v := &cty.CoinsAction_Withdraw{Withdraw: &types.AssetsWithdraw{Amount: -amount}}
+	withdraw := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionWithdraw}
+	tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(withdraw), Fee: fee, To: to}
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, priv)
+	// Contact the server and print out its response.
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Println("err", err)
+		return nil, err
+	}
+	if !reply.IsOk {
+		fmt.Println("err = ", reply.GetMsg())
+		return nil, errors.New(string(reply.GetMsg()))
+	}
+	return tx.Hash(), nil
+
 }
 
 func getAccounts() (*types.WalletAccounts, error) {

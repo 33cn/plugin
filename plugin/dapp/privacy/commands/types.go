@@ -4,6 +4,7 @@
 
 package commands
 
+// PrivacyAccountResult display privacy account result
 type PrivacyAccountResult struct {
 	Token         string `json:"Token,omitempty"`
 	Txhash        string `json:"Txhash,omitempty"`
@@ -12,6 +13,7 @@ type PrivacyAccountResult struct {
 	OnetimePubKey string `json:"OnetimePubKey,omitempty"`
 }
 
+// PrivacyAccountInfoResult display privacy account information result
 type PrivacyAccountInfoResult struct {
 	AvailableDetail []*PrivacyAccountResult `json:"AvailableDetail,omitempty"`
 	FrozenDetail    []*PrivacyAccountResult `json:"FrozenDetail,omitempty"`
@@ -20,11 +22,13 @@ type PrivacyAccountInfoResult struct {
 	TotalAmount     string                  `json:"TotalAmount,omitempty"`
 }
 
+// PrivacyAccountSpendResult display privacy account spend result
 type PrivacyAccountSpendResult struct {
 	Txhash string                  `json:"Txhash,omitempty"`
 	Res    []*PrivacyAccountResult `json:"Spend,omitempty"`
 }
 
+// ShowRescanResult display rescan utxos result
 type ShowRescanResult struct {
 	Addr       string `json:"addr"`
 	FlagString string `json:"FlagString"`
@@ -34,10 +38,12 @@ type showRescanResults struct {
 	RescanResults []*ShowRescanResult `json:"ShowRescanResults,omitempty"`
 }
 
+// ShowEnablePrivacy display enable privacy
 type ShowEnablePrivacy struct {
 	Results []*ShowPriAddrResult `json:"results"`
 }
 
+// ShowPriAddrResult display privacy address result
 type ShowPriAddrResult struct {
 	Addr string `json:"addr"`
 	IsOK bool   `json:"IsOK"`

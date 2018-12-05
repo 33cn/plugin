@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	// 隐私交易数据库版本号
+	// PRIVACYDBVERSION 隐私交易数据库版本号
 	PRIVACYDBVERSION int64 = 1
 )
 
-func NewStore(db db.DB) *privacyStore {
+func newStore(db db.DB) *privacyStore {
 	return &privacyStore{Store: wcom.NewStore(db)}
 }
 
@@ -390,15 +390,15 @@ func (store *privacyStore) getRescanUtxosFlag4Addr(req *privacytypes.ReqRescanUt
 	for _, addr := range storeAddrs {
 		value, err := store.Get(calcRescanUtxosFlagKey(addr))
 		if err != nil {
-			continue
 			bizlog.Error("getRescanUtxosFlag4Addr", "Failed to get calcRescanUtxosFlagKey(addr) for value", addr)
+			continue
 		}
 
 		var data types.Int64
 		err = types.Decode(value, &data)
 		if nil != err {
-			continue
 			bizlog.Error("getRescanUtxosFlag4Addr", "Failed to decode types.Int64 for value", value)
+			continue
 		}
 		result := &privacytypes.RepRescanResult{
 			Addr: addr,

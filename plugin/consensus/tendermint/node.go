@@ -22,14 +22,15 @@ import (
 )
 
 const (
-	numBufferedConnections             = 10
-	MaxNumPeers                        = 50
-	tryListenSeconds                   = 5
-	HandshakeTimeout                   = 20 // * time.Second,
-	maxSendQueueSize                   = 1024
-	defaultSendTimeout                 = 60 * time.Second
+	numBufferedConnections = 10
+	maxNumPeers            = 50
+	tryListenSeconds       = 5
+	handshakeTimeout       = 20 // * time.Second,
+	maxSendQueueSize       = 1024
+	defaultSendTimeout     = 60 * time.Second
+	//MaxMsgPacketPayloadSize define
 	MaxMsgPacketPayloadSize            = 10 * 1024 * 1024
-	DefaultDialTimeout                 = 3 * time.Second
+	defaultDialTimeout                 = 3 * time.Second
 	dialRandomizerIntervalMilliseconds = 3000
 	// repeatedly try to reconnect for a few minutes
 	// ie. 5 * 20 = 100s
@@ -47,6 +48,7 @@ const (
 	broadcastEvidenceIntervalS = 60 // broadcast uncommitted evidence this often
 )
 
+// Parallel method
 func Parallel(tasks ...func()) {
 	var wg sync.WaitGroup
 	wg.Add(len(tasks))
@@ -59,23 +61,27 @@ func Parallel(tasks ...func()) {
 	wg.Wait()
 }
 
+// GenAddressByPubKey method
 func GenAddressByPubKey(pubkey crypto.PubKey) []byte {
 	//must add 3 bytes ahead to make compatibly
 	typeAddr := append([]byte{byte(0x01), byte(0x01), byte(0x20)}, pubkey.Bytes()...)
 	return crypto.Ripemd160(typeAddr)
 }
 
+// IP2IPPort struct
 type IP2IPPort struct {
 	mutex   sync.RWMutex
 	mapList map[string]string
 }
 
+// NewMutexMap method
 func NewMutexMap() *IP2IPPort {
 	return &IP2IPPort{
 		mapList: make(map[string]string),
 	}
 }
 
+// Has method
 func (ipp *IP2IPPort) Has(ip string) bool {
 	ipp.mutex.RLock()
 	defer ipp.mutex.RUnlock()
@@ -83,18 +89,21 @@ func (ipp *IP2IPPort) Has(ip string) bool {
 	return ok
 }
 
+// Set method
 func (ipp *IP2IPPort) Set(ip string, ipport string) {
 	ipp.mutex.Lock()
 	defer ipp.mutex.Unlock()
 	ipp.mapList[ip] = ipport
 }
 
+// Delete method
 func (ipp *IP2IPPort) Delete(ip string) {
 	ipp.mutex.Lock()
 	defer ipp.mutex.Unlock()
 	delete(ipp.mapList, ip)
 }
 
+// NodeInfo struct
 type NodeInfo struct {
 	ID      ID     `json:"id"`
 	Network string `json:"network"`
@@ -102,6 +111,7 @@ type NodeInfo struct {
 	IP      string `json:"ip,omitempty"`
 }
 
+// Node struct
 type Node struct {
 	listener    net.Listener
 	connections chan net.Conn
@@ -129,6 +139,7 @@ type Node struct {
 	quit             chan struct{}
 }
 
+// NewNode method
 func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivKey, network string, version string, state *ConsensusState, evpool *EvidencePool) *Node {
 	address := GenAddressByPubKey(privKey.PubKey())
 
@@ -163,6 +174,7 @@ func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivK
 	return node
 }
 
+// Start node
 func (node *Node) Start() {
 	if atomic.CompareAndSwapUint32(&node.started, 0, 1) {
 		// Create listener
@@ -211,6 +223,7 @@ func (node *Node) Start() {
 	}
 }
 
+// DialPeerWithAddress ...
 func (node *Node) DialPeerWithAddress(addr string) error {
 	ip, _ := splitHostPort(addr)
 	node.dialing.Set(ip, addr)
@@ -234,6 +247,7 @@ func (node *Node) addOutboundPeerWithConfig(addr string) error {
 	return nil
 }
 
+// Stop ...
 func (node *Node) Stop() {
 	atomic.CompareAndSwapUint32(&node.stopped, 0, 1)
 	node.listener.Close()
@@ -245,10 +259,11 @@ func (node *Node) Stop() {
 		peer.Stop()
 		node.peerSet.Remove(peer)
 	}
-	// Stop reactors
-	tendermintlog.Debug("Switch: Stopping reactors")
+	//stop consensus
+	node.state.Stop()
 }
 
+// IsRunning ...
 func (node *Node) IsRunning() bool {
 	return atomic.LoadUint32(&node.started) == 1 && atomic.LoadUint32(&node.stopped) == 0
 }
@@ -277,8 +292,10 @@ func (node *Node) listenRoutine() {
 	}
 }
 
+// StartConsensusRoutine if peers reached the threshold start consensus routine
 func (node *Node) StartConsensusRoutine() {
 	for {
+		//TODO:the peer count need be optimized
 		if node.peerSet.Size() >= 0 {
 			node.state.Start()
 			break
@@ -347,6 +364,7 @@ func (node *Node) evidenceBroadcastRoutine() {
 	}
 }
 
+// BroadcastRoutine receive to broadcast
 func (node *Node) BroadcastRoutine() {
 	for {
 		msg, ok := <-node.broadcastChannel
@@ -359,7 +377,7 @@ func (node *Node) BroadcastRoutine() {
 }
 
 func (node *Node) connectComming(inConn net.Conn) {
-	maxPeers := MaxNumPeers
+	maxPeers := maxNumPeers
 	if maxPeers <= node.peerSet.Size() {
 		tendermintlog.Debug("Ignoring inbound connection: already have enough peers", "address", inConn.RemoteAddr().String(), "numPeers", node.peerSet.Size(), "max", maxPeers)
 		return
@@ -378,6 +396,7 @@ func (node *Node) stopAndRemovePeer(peer Peer, reason interface{}) {
 	peer.Stop()
 }
 
+// StopPeerForError called if error occurred
 func (node *Node) StopPeerForError(peer Peer, reason interface{}) {
 	tendermintlog.Error("Stopping peer for error", "peer", peer, "err", reason)
 	addr, err := peer.RemoteAddr()
@@ -408,7 +427,7 @@ func (node *Node) addInboundPeer(conn net.Conn) error {
 // peer to the switch and to all registered reactors.
 // NOTE: This performs a blocking handshake before the peer is added.
 // NOTE: If error is returned, caller is responsible for calling peer.CloseConn()
-func (node *Node) addPeer(pc peerConn) error {
+func (node *Node) addPeer(pc *peerConn) error {
 	addr := pc.conn.RemoteAddr()
 	if err := node.FilterConnByAddr(addr); err != nil {
 		return err
@@ -422,7 +441,7 @@ func (node *Node) addPeer(pc peerConn) error {
 		Version: node.Version,
 	}
 	// Exchange NodeInfo on the conn
-	peerNodeInfo, err := pc.HandshakeTimeout(nodeinfo, HandshakeTimeout*time.Second)
+	peerNodeInfo, err := pc.HandshakeTimeout(nodeinfo, handshakeTimeout*time.Second)
 	if err != nil {
 		return err
 	}
@@ -472,7 +491,7 @@ func (node *Node) addPeer(pc peerConn) error {
 	// All good. Start peer
 	if node.IsRunning() {
 		pc.SetTransferChannel(node.state.peerMsgQueue)
-		if err = node.startInitPeer(&pc); err != nil {
+		if err = node.startInitPeer(pc); err != nil {
 			return err
 		}
 	}
@@ -480,7 +499,7 @@ func (node *Node) addPeer(pc peerConn) error {
 	// Add the peer to .peers.
 	// We start it first so that a peer in the list is safe to Stop.
 	// It should not err since we already checked peers.Has().
-	if err := node.peerSet.Add(&pc); err != nil {
+	if err := node.peerSet.Add(pc); err != nil {
 		return err
 	}
 	//node.metrics.Peers.Add(float64(1))
@@ -489,6 +508,7 @@ func (node *Node) addPeer(pc peerConn) error {
 	return nil
 }
 
+// Broadcast to peers in set
 func (node *Node) Broadcast(msg MsgInfo) chan bool {
 	successChan := make(chan bool, len(node.peerSet.List()))
 	tendermintlog.Debug("Broadcast", "msgtype", msg.TypeID)
@@ -519,13 +539,12 @@ func (node *Node) startInitPeer(peer *peerConn) error {
 	return nil
 }
 
+// FilterConnByAddr TODO:can make fileter by addr
 func (node *Node) FilterConnByAddr(addr net.Addr) error {
-	//if node.filterConnByAddr != nil {
-	//	return node.filterConnByAddr(addr)
-	//}
 	return nil
 }
 
+// CompatibleWith one node by nodeInfo
 func (node *Node) CompatibleWith(other NodeInfo) error {
 	iMajor, iMinor, _, iErr := splitVersion(node.Version)
 	oMajor, oMinor, _, oErr := splitVersion(other.Version)
@@ -679,25 +698,25 @@ func splitHostPort(addr string) (host string, port int) {
 }
 
 func dial(addr string) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", addr, DefaultDialTimeout)
+	conn, err := net.DialTimeout("tcp", addr, defaultDialTimeout)
 	if err != nil {
 		return nil, err
 	}
 	return conn, nil
 }
 
-func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState, evpool *EvidencePool) (peerConn, error) {
+func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState, evpool *EvidencePool) (*peerConn, error) {
 	conn, err := dial(addr)
 	if err != nil {
-		return peerConn{}, fmt.Errorf("Error creating peer:%v", err)
+		return &peerConn{}, fmt.Errorf("Error creating peer:%v", err)
 	}
 
 	pc, err := newPeerConn(conn, true, true, ourNodePrivKey, onPeerError, state, evpool)
 	if err != nil {
 		if cerr := conn.Close(); cerr != nil {
-			return peerConn{}, fmt.Errorf("newPeerConn failed:%v, connection close failed:%v", err, cerr)
+			return &peerConn{}, fmt.Errorf("newPeerConn failed:%v, connection close failed:%v", err, cerr)
 		}
-		return peerConn{}, err
+		return &peerConn{}, err
 	}
 
 	return pc, nil
@@ -709,7 +728,7 @@ func newInboundPeerConn(
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
 	evpool *EvidencePool,
-) (peerConn, error) {
+) (*peerConn, error) {
 
 	// TODO: issue PoW challenge
 
@@ -723,11 +742,11 @@ func newPeerConn(
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
 	evpool *EvidencePool,
-) (pc peerConn, err error) {
+) (pc *peerConn, err error) {
 	conn := rawConn
 
 	// Set deadline for secret handshake
-	dl := time.Now().Add(HandshakeTimeout * time.Second)
+	dl := time.Now().Add(handshakeTimeout * time.Second)
 	if err := conn.SetDeadline(dl); err != nil {
 		return pc, fmt.Errorf("Error setting deadline while encrypting connection:%v", err)
 	}
@@ -739,7 +758,7 @@ func newPeerConn(
 	}
 
 	// Only the information we already have
-	return peerConn{
+	return &peerConn{
 		outbound:    outbound,
 		persistent:  persistent,
 		conn:        conn,

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package queue chain33底层消息队列模块
 package queue
 
 import (
@@ -31,6 +32,7 @@ const (
 	defaultLowChanBuffer = 40960
 )
 
+// DisableLog disable log
 func DisableLog() {
 	qlog.SetHandler(log.DiscardHandler())
 }
@@ -41,9 +43,9 @@ type chanSub struct {
 	isClose int32
 }
 
-/// Queue only one obj in project
-/// Queue only generate Client and start、Close operate,
-/// if you send massage or receive massage on Queue, please use Client.
+// Queue only one obj in project
+// Queue only generate Client and start、Close operate,
+// if you send massage or receive massage on Queue, please use Client.
 type Queue interface {
 	Close()
 	Start()
@@ -52,23 +54,26 @@ type Queue interface {
 }
 
 type queue struct {
-	chanSubs map[string]*chanSub
-	mu       sync.Mutex
-	done     chan struct{}
-	interupt chan struct{}
-	isClose  int32
-	name     string
+	chanSubs  map[string]*chanSub
+	mu        sync.Mutex
+	done      chan struct{}
+	interrupt chan struct{}
+	isClose   int32
+	name      string
 }
 
+// New new queue struct
 func New(name string) Queue {
-	q := &queue{chanSubs: make(map[string]*chanSub), name: name, done: make(chan struct{}, 1), interupt: make(chan struct{}, 1)}
+	q := &queue{chanSubs: make(map[string]*chanSub), name: name, done: make(chan struct{}, 1), interrupt: make(chan struct{}, 1)}
 	return q
 }
 
+// Name return the queue name
 func (q *queue) Name() string {
 	return q.name
 }
 
+// Start 开始运行消息队列
 func (q *queue) Start() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -77,7 +82,7 @@ func (q *queue) Start() {
 	case <-q.done:
 		atomic.StoreInt32(&q.isClose, 1)
 		break
-	case <-q.interupt:
+	case <-q.interrupt:
 		fmt.Println("closing chain33")
 		//atomic.StoreInt32(&q.isClose, 1)
 		break
@@ -92,6 +97,7 @@ func (q *queue) isClosed() bool {
 	return atomic.LoadInt32(&q.isClose) == 1
 }
 
+// Close 关闭消息队列
 func (q *queue) Close() {
 	if q.isClosed() {
 		return
@@ -214,20 +220,23 @@ func (q *queue) sendLowTimeout(msg Message, timeout time.Duration) error {
 	}
 }
 
+// Client new client
 func (q *queue) Client() Client {
 	return newClient(q)
 }
 
+// Message message struct
 type Message struct {
 	Topic   string
 	Ty      int64
-	Id      int64
+	ID      int64
 	Data    interface{}
 	chReply chan Message
 }
 
+// NewMessage new message
 func NewMessage(id int64, topic string, ty int64, data interface{}) (msg Message) {
-	msg.Id = id
+	msg.ID = id
 	msg.Ty = ty
 	msg.Data = data
 	msg.Topic = topic
@@ -235,6 +244,7 @@ func NewMessage(id int64, topic string, ty int64, data interface{}) (msg Message
 	return msg
 }
 
+// GetData get message data
 func (msg Message) GetData() interface{} {
 	if _, ok := msg.Data.(error); ok {
 		return nil
@@ -242,6 +252,7 @@ func (msg Message) GetData() interface{} {
 	return msg.Data
 }
 
+// Err if err return error msg, or return nil
 func (msg Message) Err() error {
 	if err, ok := msg.Data.(error); ok {
 		return err
@@ -249,6 +260,7 @@ func (msg Message) Err() error {
 	return nil
 }
 
+// Reply reply message to reply chan
 func (msg Message) Reply(replyMsg Message) {
 	if msg.chReply == nil {
 		qlog.Debug("reply a empty chreply", "msg", msg)
@@ -260,11 +272,13 @@ func (msg Message) Reply(replyMsg Message) {
 	}
 }
 
+// String print the message information
 func (msg Message) String() string {
 	return fmt.Sprintf("{topic:%s, Ty:%s, Id:%d, Err:%v, Ch:%v}", msg.Topic,
-		types.GetEventName(int(msg.Ty)), msg.Id, msg.Err(), msg.chReply != nil)
+		types.GetEventName(int(msg.Ty)), msg.ID, msg.Err(), msg.chReply != nil)
 }
 
+// ReplyErr reply error
 func (msg Message) ReplyErr(title string, err error) {
 	var reply types.Reply
 	if err != nil {

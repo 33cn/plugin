@@ -10,6 +10,7 @@ import (
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	pty "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
@@ -31,7 +32,7 @@ func TestJRPCChannel(t *testing.T) {
 	}()
 	mocker.Listen()
 
-	jrpcClient := mocker.GetJsonC()
+	jrpcClient := mocker.GetJSONC()
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {
@@ -40,7 +41,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testStartRawTxCmd},
 		{fn: testContinueRawTxCmd},
 		{fn: testQuitRawTxCmd},
-		{fn: testQueryGameById},
+		{fn: testQueryGameByID},
 		{fn: testQueryGameByAddr},
 	}
 	for index, testCase := range testCases {
@@ -73,24 +74,24 @@ func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("pokerbull.PokerBullQuitTx", params, &res)
 }
 
-func testQueryGameById(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
 	params.Execer = "pokerbull"
-	params.FuncName = "QueryGameById"
-	params.Payload = req
+	params.FuncName = "QueryGameByID"
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyPBGame{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testQueryGameByAddr(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
 	params.Execer = "pokerbull"
 	params.FuncName = "QueryGameByAddr"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.PBGameRecords{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

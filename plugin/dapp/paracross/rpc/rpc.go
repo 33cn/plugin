@@ -22,6 +22,7 @@ func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt
 	return nil, types.ErrDecode
 }
 
+// GetHeight jrpc get consensus height
 func (c *Jrpc) GetHeight(req *types.ReqString, result *interface{}) error {
 	if req == nil {
 		return types.ErrInvalidParam
@@ -42,6 +43,7 @@ func (c *channelClient) ListTitles(ctx context.Context, req *types.ReqNil) (*pt.
 	return nil, types.ErrDecode
 }
 
+// ListTitles get paracross consensus titles list
 func (c *Jrpc) ListTitles(req *types.ReqNil, result *interface{}) error {
 	data, err := c.cli.ListTitles(context.Background(), req)
 	*result = data
@@ -59,6 +61,7 @@ func (c *channelClient) GetTitleHeight(ctx context.Context, req *pt.ReqParacross
 	return nil, types.ErrDecode
 }
 
+// GetTitleHeight get consensus title height
 func (c *Jrpc) GetTitleHeight(req *pt.ReqParacrossTitleHeight, result *interface{}) error {
 	if req == nil {
 		return types.ErrInvalidParam
@@ -79,6 +82,7 @@ func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqHash
 	return nil, types.ErrDecode
 }
 
+// GetAssetTxResult get asset tx result
 func (c *Jrpc) GetAssetTxResult(req *types.ReqHash, result *interface{}) error {
 	if req == nil {
 		return types.ErrInvalidParam

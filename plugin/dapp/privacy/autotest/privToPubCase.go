@@ -1,34 +1,38 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package autotest
 
 import (
 	"strconv"
 
-	. "github.com/33cn/chain33/cmd/autotest/types"
+	"github.com/33cn/chain33/cmd/autotest/types"
 )
 
-//pub2priv case
+//PrivToPubCase pub2priv case
 type PrivToPubCase struct {
-	BaseCase
+	types.BaseCase
 	From   string `toml:"from"`
 	To     string `toml:"to"`
 	Amount string `toml:"amount"`
 }
 
+// PrivToPubPack privacy to public package
 type PrivToPubPack struct {
-	BaseCasePack
+	types.BaseCasePack
 }
 
-func (testCase *PrivToPubCase) SendCommand(packID string) (PackFunc, error) {
+// SendCommand send command
+func (testCase *PrivToPubCase) SendCommand(packID string) (types.PackFunc, error) {
 
-	return DefaultSend(testCase, &PrivToPubPack{}, packID)
+	return types.DefaultSend(testCase, &PrivToPubPack{}, packID)
 }
 
+// GetCheckHandlerMap get check handler map
 func (pack *PrivToPubPack) GetCheckHandlerMap() interface{} {
 
-	funcMap := make(CheckHandlerMapDiscard, 2)
+	funcMap := make(types.CheckHandlerMapDiscard, 2)
 	funcMap["balance"] = pack.checkBalance
 	funcMap["utxo"] = pack.checkUtxo
 	return funcMap
@@ -52,8 +56,8 @@ func (pack *PrivToPubPack) checkBalance(txInfo map[string]interface{}) bool {
 		"ToPrev", logPub["prev"].(map[string]interface{})["balance"].(string),
 		"ToCurr", logPub["current"].(map[string]interface{})["balance"].(string))
 
-	return CheckBalanceDeltaWithAddr(logFee, from, -fee) &&
-		CheckBalanceDeltaWithAddr(logPub, interCase.To, amount)
+	return types.CheckBalanceDeltaWithAddr(logFee, from, -fee) &&
+		types.CheckBalanceDeltaWithAddr(logPub, interCase.To, amount)
 }
 
 func (pack *PrivToPubPack) checkUtxo(txInfo map[string]interface{}) bool {
@@ -65,19 +69,19 @@ func (pack *PrivToPubPack) checkUtxo(txInfo map[string]interface{}) bool {
 	amount, _ := strconv.ParseFloat(interCase.Amount, 64)
 	fee, _ := strconv.ParseFloat(txInfo["tx"].(map[string]interface{})["fee"].(string), 64)
 
-	utxoInput := CalcTxUtxoAmount(inputLog, "keyinput")
-	utxoOutput := CalcTxUtxoAmount(outputLog, "keyoutput")
+	utxoInput := types.CalcTxUtxoAmount(inputLog, "keyinput")
+	utxoOutput := types.CalcTxUtxoAmount(outputLog, "keyoutput")
 	//get available utxo with addr
-	availUtxo, err1 := CalcUtxoAvailAmount(interCase.From, pack.TxHash)
+	availUtxo, err1 := types.CalcUtxoAvailAmount(interCase.From, pack.TxHash)
 	//get spend utxo with addr
-	spendUtxo, err2 := CalcUtxoSpendAmount(interCase.From, pack.TxHash)
+	spendUtxo, err2 := types.CalcUtxoSpendAmount(interCase.From, pack.TxHash)
 
-	utxoCheck := IsBalanceEqualFloat(availUtxo, utxoOutput) && IsBalanceEqualFloat(spendUtxo, utxoInput)
+	utxoCheck := types.IsBalanceEqualFloat(availUtxo, utxoOutput) && types.IsBalanceEqualFloat(spendUtxo, utxoInput)
 
 	pack.FLog.Info("Private2PubUtxoDetail", "TestID", pack.PackID, "Fee", fee,
 		"TransferAmount", interCase.Amount, "UtxoInput", utxoInput, "UtxoOutput", utxoOutput,
 		"FromAddr", interCase.From, "UtxoAvailable", availUtxo, "UtxoSpend", spendUtxo,
 		"CalcAvailErr", err1, "CalcSpendErr", err2)
 
-	return IsBalanceEqualFloat(amount, utxoInput-utxoOutput-fee) && utxoCheck
+	return types.IsBalanceEqualFloat(amount, utxoInput-utxoOutput-fee) && utxoCheck
 }

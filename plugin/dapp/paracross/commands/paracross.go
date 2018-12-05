@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//ParcCmd paracross cmd register
 func ParcCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "para",
@@ -32,7 +33,7 @@ func ParcCmd() *cobra.Command {
 	return cmd
 }
 
-// create raw asset transfer tx
+// CreateRawAssetTransferCmd create raw asset transfer tx
 func CreateRawAssetTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "asset_transfer",
@@ -67,7 +68,7 @@ func createAssetTransfer(cmd *cobra.Command, args []string) {
 	fmt.Println(txHex)
 }
 
-// create raw asset withdraw tx
+// CreateRawAssetWithdrawCmd create raw asset withdraw tx
 func CreateRawAssetWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "asset_withdraw",
@@ -124,7 +125,7 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 		To:          toAddr,
 		Amount:      amountInt64,
 		Fee:         0,
-		Note:        note,
+		Note:        []byte(note),
 		IsWithdraw:  isWithdraw,
 		IsToken:     false,
 		TokenSymbol: symbol,
@@ -139,7 +140,7 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	return hex.EncodeToString(txHex), nil
 }
 
-// create raw transfer tx
+//CreateRawTransferCmd  create raw transfer tx
 func CreateRawTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -174,7 +175,7 @@ func createTransfer(cmd *cobra.Command, args []string) {
 	fmt.Println(txHex)
 }
 
-// create raw transfer to exec tx
+//CreateRawTransferToExecCmd create raw transfer to exec tx
 func CreateRawTransferToExecCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer_exec",
@@ -209,7 +210,7 @@ func createTransferToExec(cmd *cobra.Command, args []string) {
 	fmt.Println(txHex)
 }
 
-// create raw withdraw tx
+//CreateRawWithdrawCmd create raw withdraw tx
 func CreateRawWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",
@@ -266,7 +267,7 @@ func createTransferTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 		To:          toAddr,
 		Amount:      amountInt64,
 		Fee:         0,
-		Note:        note,
+		Note:        []byte(note),
 		IsWithdraw:  isWithdraw,
 		IsToken:     false,
 		TokenSymbol: symbol,

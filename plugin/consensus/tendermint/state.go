@@ -174,7 +174,7 @@ func MakeGenesisState(genDoc *ttypes.GenesisDoc) (State, error) {
 	for i, val := range genDoc.Validators {
 		pubKey, err := ttypes.PubKeyFromString(val.PubKey.Data)
 		if err != nil {
-			return State{}, fmt.Errorf("Error validate[i] in genesis file: %v", i, err)
+			return State{}, fmt.Errorf("Error validate[%v] in genesis file: %v", i, err)
 		}
 
 		// Make validator
@@ -204,14 +204,15 @@ func MakeGenesisState(genDoc *ttypes.GenesisDoc) (State, error) {
 	}, nil
 }
 
-//-------------------stateDB------------------------
+// CSStateDB just for EvidencePool and BlockExecutor
 type CSStateDB struct {
-	client *TendermintClient
+	client *Client
 	state  State
 	mtx    sync.Mutex
 }
 
-func NewStateDB(client *TendermintClient, state State) *CSStateDB {
+// NewStateDB make a new one
+func NewStateDB(client *Client, state State) *CSStateDB {
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return &CSStateDB{
 		client: client,
@@ -219,6 +220,7 @@ func NewStateDB(client *TendermintClient, state State) *CSStateDB {
 	}
 }
 
+// LoadState convert external state to internal state
 func LoadState(state *tmtypes.State) State {
 	stateTmp := State{
 		ChainID:                          state.GetChainID(),
@@ -286,18 +288,21 @@ func LoadState(state *tmtypes.State) State {
 	return stateTmp
 }
 
+// SaveState to state cache
 func (csdb *CSStateDB) SaveState(state State) {
 	csdb.mtx.Lock()
 	defer csdb.mtx.Unlock()
 	csdb.state = state.Copy()
 }
 
+// LoadState from state cache
 func (csdb *CSStateDB) LoadState() State {
 	csdb.mtx.Lock()
 	defer csdb.mtx.Unlock()
 	return csdb.state
 }
 
+// LoadValidators by height
 func (csdb *CSStateDB) LoadValidators(height int64) (*ttypes.ValidatorSet, error) {
 	if height == 0 {
 		return nil, nil
@@ -363,6 +368,7 @@ func saveProposer(dest *tmtypes.Validator, source *ttypes.Validator) {
 	}
 }
 
+// SaveState convert internal state to external state
 func SaveState(state State) *tmtypes.State {
 	newState := tmtypes.State{
 		ChainID:                          state.ChainID,
@@ -405,6 +411,7 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
+// LoadValidators convert all external validators to internal validators
 func LoadValidators(des []*ttypes.Validator, source []*tmtypes.Validator) {
 	for i, item := range source {
 		if item.GetAddress() == nil || len(item.GetAddress()) == 0 {
@@ -427,6 +434,7 @@ func LoadValidators(des []*ttypes.Validator, source []*tmtypes.Validator) {
 	}
 }
 
+// LoadProposer convert external proposer to internal proposer
 func LoadProposer(source *tmtypes.Validator) (*ttypes.Validator, error) {
 	if source.GetAddress() == nil || len(source.GetAddress()) == 0 {
 		tendermintlog.Warn("LoadProposer get address is nil or empty")
@@ -449,6 +457,7 @@ func LoadProposer(source *tmtypes.Validator) (*ttypes.Validator, error) {
 	return des, nil
 }
 
+// CreateBlockInfoTx make blockInfo to the first transaction of the block and execer is valnode
 func CreateBlockInfoTx(pubkey string, lastCommit *tmtypes.TendermintCommit, seenCommit *tmtypes.TendermintCommit, state *tmtypes.State, proposal *tmtypes.Proposal, block *tmtypes.TendermintBlock) *types.Transaction {
 	blockNoTxs := *block
 	blockNoTxs.Txs = make([]*types.Transaction, 0)

@@ -50,7 +50,7 @@ func NewContractAccount(addr string, db *MemoryStateDB) *ContractAccount {
 // 获取数据分为两层，一层是从当前的缓存中获取，如果获取不到，再从localdb中获取
 func (ca *ContractAccount) GetState(key common.Hash) common.Hash {
 	// 从ForkV19开始，状态数据使用单独的KEY存储
-	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 		if val, ok := ca.stateCache[key.Hex()]; ok {
 			return val
 		}
@@ -76,7 +76,7 @@ func (ca *ContractAccount) SetState(key, value common.Hash) {
 		key:        key,
 		prevalue:   ca.GetState(key),
 	})
-	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 		ca.stateCache[key.Hex()] = value
 		//需要设置到localdb中，以免同一个区块中同一个合约多次调用时，状态数据丢失
 		keyStr := getStateItemKey(ca.Addr, key.Hex())
@@ -107,7 +107,7 @@ func (ca *ContractAccount) TransferState() {
 
 func (ca *ContractAccount) updateStorageHash() {
 	// 从ForkV20开始，状态数据使用单独KEY存储
-	if types.IsDappFork(ca.mdb.blockHeight, "evm", "ForkEVMState") {
+	if types.IsDappFork(ca.mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 		return
 	}
 	var state = &evmtypes.EVMContractState{Suicided: ca.State.Suicided, Nonce: ca.State.Nonce}
@@ -179,6 +179,18 @@ func (ca *ContractAccount) SetCode(code []byte) {
 	})
 	ca.Data.Code = code
 	ca.Data.CodeHash = common.ToHash(code).Bytes()
+}
+
+// SetAbi 设置合约绑定的ABI数据
+func (ca *ContractAccount) SetAbi(abi string) {
+	if types.IsDappFork(ca.mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMABI) {
+		ca.mdb.addChange(abiChange{
+			baseChange: baseChange{},
+			account:    ca.Addr,
+			prevabi:    ca.Data.Abi,
+		})
+		ca.Data.Abi = abi
+	}
 }
 
 // SetCreator 设置创建者

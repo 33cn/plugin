@@ -14,7 +14,7 @@ var (
 	privateKey               = []byte("privateKey-relayd")
 )
 
-type LatestBlock struct {
+type latestBlock struct {
 	Hash       string   `json:"hash"`
 	Time       int64    `json:"time"`
 	BlockIndex uint64   `json:"block_index"`
@@ -22,7 +22,7 @@ type LatestBlock struct {
 	TxIndexes  []uint64 `json:"txIndexes"`
 }
 
-type Header struct {
+type header struct {
 	Hash         string  `json:"hash"`
 	Ver          uint64  `json:"ver"`
 	PrevBlock    string  `json:"prev_block"`
@@ -40,7 +40,7 @@ type Header struct {
 	RelayedBy    string  `json:"relayed_by"`
 }
 
-func (b *Block) BtcHeader() *ty.BtcHeader {
+func (b *block) BtcHeader() *ty.BtcHeader {
 	return &ty.BtcHeader{
 		Hash:         b.Hash,
 		Height:       b.Height,
@@ -53,8 +53,8 @@ func (b *Block) BtcHeader() *ty.BtcHeader {
 	}
 }
 
-type Block struct {
-	// Header
+type block struct {
+	// header
 	Hash         string               `json:"hash"`
 	Ver          uint64               `json:"ver"`
 	PrevBlock    string               `json:"prev_block"`
@@ -70,14 +70,14 @@ type Block struct {
 	Height       uint64               `json:"height"`
 	ReceivedTime int64                `json:"received_time"`
 	RelayedBy    string               `json:"relayed_by"`
-	Tx           []TransactionDetails `json:"tx"`
+	Tx           []transactionDetails `json:"tx"`
 }
 
-type TransactionDetails struct {
+type transactionDetails struct {
 	LockTime  int64     `json:"lock_time"`
 	Ver       uint64    `json:"ver"`
 	Size      uint64    `json:"size"`
-	Inputs    []TxInput `json:"inputs"`
+	Inputs    []txInput `json:"inputs"`
 	Weight    int64     `json:"weight"`
 	Time      int64     `json:"time"`
 	TxIndex   uint64    `json:"tx_index"`
@@ -85,16 +85,16 @@ type TransactionDetails struct {
 	Hash      string    `json:"hash"`
 	VoutSz    uint64    `json:"vout_sz"`
 	RelayedBy string    `json:"relayed_by"`
-	Outs      []TxOut   `json:"out"`
+	Outs      []txOut   `json:"out"`
 }
 
-type TxInput struct {
+type txInput struct {
 	Sequence int64  `json:"sequence"`
 	Witness  string `json:"witness"`
 	Script   string `json:"script"`
 }
 
-type TxOut struct {
+type txOut struct {
 	Spent   bool   `json:"spent"`
 	TxIndex uint64 `json:"tx_index"`
 	Type    int    `json:"type"`
@@ -104,17 +104,17 @@ type TxOut struct {
 	Script  string `json:"script"`
 }
 
-type Blocks struct {
-	Blocks []Block `json:"blocks"`
+type blocks struct {
+	Blocks []block `json:"blocks"`
 }
 
-type TransactionResult struct {
+type transactionResult struct {
 	Ver         uint     `json:"ver"`
-	Inputs      []Inputs `json:"inputs"`
+	Inputs      []inputs `json:"inputs"`
 	Weight      int64    `json:"weight"`
 	BlockHeight uint64   `json:"block_height"`
 	RelayedBy   string   `json:"relayed_by"`
-	Out         []TxOut  `json:"out"`
+	Out         []txOut  `json:"out"`
 	LockTime    int64    `json:"lock_time"`
 	Size        uint64   `json:"size"`
 	DoubleSpend bool     `json:"double_spend"`
@@ -125,14 +125,14 @@ type TransactionResult struct {
 	VoutSz      uint64   `json:"vout_sz"`
 }
 
-type Inputs struct {
+type inputs struct {
 	Sequence uint   `json:"sequence"`
 	Witness  string `json:"witness"`
-	PrevOut  TxOut  `json:"prev_out"`
+	PrevOut  txOut  `json:"prev_out"`
 	Script   string `json:"script"`
 }
 
-func (t *TransactionResult) BtcTransaction() *ty.BtcTransaction {
+func (t *transactionResult) BtcTransaction() *ty.BtcTransaction {
 	btcTx := &ty.BtcTransaction{}
 	btcTx.Hash = t.Hash
 	btcTx.Time = t.Time

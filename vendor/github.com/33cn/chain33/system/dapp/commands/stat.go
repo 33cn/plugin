@@ -19,11 +19,12 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/difficulty"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	. "github.com/33cn/chain33/system/dapp/commands/types"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/33cn/chain33/types"
 	"github.com/spf13/cobra"
 )
 
+// StatCmd stat command
 func StatCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stat",
@@ -37,12 +38,13 @@ func StatCmd() *cobra.Command {
 		GetTicketInfoCmd(),
 		GetTicketInfoListCmd(),
 		GetMinerStatCmd(),
+		GetExecBalanceCmd(),
 	)
 
 	return cmd
 }
 
-// get total coins
+// GetTotalCoinsCmd get total coins
 func GetTotalCoinsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "total_coins",
@@ -109,11 +111,11 @@ func totalCoins(cmd *cobra.Command, args []string) {
 
 	// 查询高度哈希对应数据
 	var totalAmount int64
-	resp := GetTotalCoinsResult{}
+	resp := commandtypes.GetTotalCoinsResult{}
 
 	if symbol == "bty" {
 		//查询高度blockhash
-		params := types.ReqInt{height}
+		params := types.ReqInt{Height: height}
 		var res1 rpctypes.ReplyHash
 		err = rpc.Call("Chain33.GetBlockHash", params, &res1)
 		if err != nil {
@@ -143,11 +145,11 @@ func totalCoins(cmd *cobra.Command, args []string) {
 	} else {
 		var req types.ReqString
 		req.Data = symbol
-		var params types.Query4Cli
+		var params rpctypes.Query4Jrpc
 		params.Execer = "token"
 		// 查询Token的总量
 		params.FuncName = "GetTotalAmount"
-		params.Payload = req
+		params.Payload = types.MustPBToJSON(&req)
 		var res types.TotalAmount
 
 		//查询Token总量
@@ -211,7 +213,7 @@ func totalCoins(cmd *cobra.Command, args []string) {
 	fmt.Println(string(data))
 }
 
-// get ticket stat
+// GetTicketStatCmd get ticket stat
 func GetTicketStatCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ticket_stat",
@@ -247,7 +249,7 @@ func ticketStat(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var resp GetTicketStatisticResult
+	var resp commandtypes.GetTicketStatisticResult
 	resp.CurrentOpenCount = res.CurrentOpenCount
 	resp.TotalMinerCount = res.TotalMinerCount
 	resp.TotalCloseCount = res.TotalCancleCount
@@ -261,6 +263,7 @@ func ticketStat(cmd *cobra.Command, args []string) {
 	fmt.Println(string(data))
 }
 
+// GetTicketInfoCmd get a ticket information
 func GetTicketInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ticket_info",
@@ -278,7 +281,7 @@ func addTicketInfoCmdFlags(cmd *cobra.Command) {
 
 func ticketInfo(cmd *cobra.Command, args []string) {
 	rpcAddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ticketId, _ := cmd.Flags().GetString("ticket_id")
+	ticketID, _ := cmd.Flags().GetString("ticket_id")
 
 	rpc, err := jsonclient.NewJSONClient(rpcAddr)
 	if err != nil {
@@ -286,7 +289,7 @@ func ticketInfo(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	key := []byte("Statistics:TicketInfo:TicketId:" + ticketId)
+	key := []byte("Statistics:TicketInfo:TicketId:" + ticketID)
 	fmt.Println(string(key))
 	params := types.LocalDBGet{Keys: [][]byte{key}}
 	var res types.TicketMinerInfo
@@ -296,8 +299,8 @@ func ticketInfo(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var resp GetTicketMinerInfoResult
-	resp.TicketId = res.TicketId
+	var resp commandtypes.GetTicketMinerInfoResult
+	resp.TicketID = res.TicketId
 	switch res.Status {
 	case 1:
 		resp.Status = "openTicket"
@@ -330,6 +333,7 @@ func ticketInfo(cmd *cobra.Command, args []string) {
 	fmt.Println(string(data))
 }
 
+// GetTicketInfoListCmd get ticket information list
 func GetTicketInfoListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ticket_info_list",
@@ -356,7 +360,7 @@ func ticketInfoList(cmd *cobra.Command, args []string) {
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
 	createTime, _ := cmd.Flags().GetString("create_time")
-	ticketId, _ := cmd.Flags().GetString("ticket_id")
+	ticketID, _ := cmd.Flags().GetString("ticket_id")
 
 	if count <= 0 {
 		fmt.Fprintln(os.Stderr, fmt.Errorf("input err, count:%v", count))
@@ -371,8 +375,8 @@ func ticketInfoList(cmd *cobra.Command, args []string) {
 
 	var key []byte
 	prefix := []byte("Statistics:TicketInfoOrder:Addr:" + addr)
-	if ticketId != "" && createTime != "" {
-		key = []byte("Statistics:TicketInfoOrder:Addr:" + addr + ":CreateTime:" + createTime + ":TicketId:" + ticketId)
+	if ticketID != "" && createTime != "" {
+		key = []byte("Statistics:TicketInfoOrder:Addr:" + addr + ":CreateTime:" + createTime + ":TicketId:" + ticketID)
 	}
 	fmt.Println(string(prefix))
 	fmt.Println(string(key))
@@ -384,10 +388,10 @@ func ticketInfoList(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var resp []GetTicketMinerInfoResult
+	var resp []commandtypes.GetTicketMinerInfoResult
 	for _, v := range res {
-		var ticket GetTicketMinerInfoResult
-		ticket.TicketId = v.TicketId
+		var ticket commandtypes.GetTicketMinerInfoResult
+		ticket.TicketID = v.TicketId
 
 		switch v.Status {
 		case 1:
@@ -428,6 +432,7 @@ func ticketInfoList(cmd *cobra.Command, args []string) {
 	fmt.Println(string(data))
 }
 
+// GetMinerStatCmd get miner stat
 func GetMinerStatCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "miner",
@@ -608,7 +613,7 @@ diffListLoop:
 					}
 				}
 
-				resp.Actual += 1
+				resp.Actual++
 			}
 		}
 
@@ -633,7 +638,165 @@ type difficultyRange struct {
 	diff      *big.Int
 }
 
+// MinerResult defiles miner command
 type MinerResult struct {
 	Expect *big.Float
 	Actual int64
+}
+
+// GetExecBalanceCmd get exec-addr balance of specific addr
+func GetExecBalanceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "exec_balance",
+		Short: "Get the exec amount of a token of one address (default: all exec-addr bty of current height of one addr)",
+		Run:   execBalance,
+	}
+	addExecBalanceCmdFlags(cmd)
+	return cmd
+}
+
+func addExecBalanceCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "bty", "token symbol")
+	cmd.Flags().StringP("exec", "e", "coins", "excutor name")
+	cmd.Flags().StringP("addr", "a", "", "address")
+	cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("exec_addr", "x", "", "exec address")
+	cmd.Flags().Int64P("height", "t", -1, `block height, "-1" stands for current height`)
+}
+
+func execBalance(cmd *cobra.Command, args []string) {
+	rpcAddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	exec, _ := cmd.Flags().GetString("exec")
+	addr, _ := cmd.Flags().GetString("addr")
+	execAddr, _ := cmd.Flags().GetString("exec_addr")
+	height, _ := cmd.Flags().GetInt64("height")
+
+	if height == -1 {
+		rpc, err := jsonclient.NewJSONClient(rpcAddr)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		var res rpctypes.Header
+		err = rpc.Call("Chain33.GetLastHeader", nil, &res)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		height = res.Height
+	}
+
+	// 获取高度statehash
+	params := rpctypes.BlockParam{
+		Start: height,
+		End:   height,
+		//Isdetail: false,
+		Isdetail: true,
+	}
+
+	rpc, err := jsonclient.NewJSONClient(rpcAddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	var res rpctypes.BlockDetails
+	err = rpc.Call("Chain33.GetBlocks", params, &res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	stateHash, err := common.FromHex(res.Items[0].Block.StateHash)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	resp := commandtypes.GetExecBalanceResult{}
+
+	if symbol == "bty" {
+		exec = "coins"
+	}
+
+	reqParam := types.ReqGetExecBalance{
+		Symbol:    symbol,
+		StateHash: stateHash,
+		Addr:      []byte(addr),
+		ExecAddr:  []byte(execAddr),
+		Execer:    exec,
+	}
+	reqParam.StateHash = stateHash
+
+	if len(execAddr) > 0 {
+		reqParam.Count = 1 //由于精确匹配一条记录，所以这里设定为1
+	} else {
+		reqParam.Count = 100 //每次最多读取100条
+	}
+
+	var replys types.ReplyGetExecBalance
+	for {
+		var reply types.ReplyGetExecBalance
+		var str string
+		err = rpc.Call("Chain33.GetExecBalance", reqParam, &str)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+
+		data, err := common.Hex2Bytes(str)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		err = types.Decode(data, &reply)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+
+		replys.Amount += reply.Amount
+		replys.AmountActive += reply.AmountActive
+		replys.AmountFrozen += reply.AmountFrozen
+		replys.Items = append(replys.Items, reply.Items...)
+
+		if reqParam.Count == 1 {
+			break
+		}
+
+		if len(reply.NextKey) > 0 {
+			reqParam.NextKey = reply.NextKey
+		} else {
+			break
+		}
+	}
+
+	if symbol == "bty" {
+		convertReplyToResult(&replys, &resp, types.Coin)
+	} else {
+		convertReplyToResult(&replys, &resp, types.TokenPrecision)
+	}
+
+	data, err := json.MarshalIndent(resp, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	fmt.Println(string(data))
+}
+
+func convertReplyToResult(reply *types.ReplyGetExecBalance, result *commandtypes.GetExecBalanceResult, precision int64) {
+	result.Amount = strconv.FormatFloat(float64(reply.Amount)/float64(precision), 'f', 4, 64)
+	result.AmountFrozen = strconv.FormatFloat(float64(reply.AmountFrozen)/float64(precision), 'f', 4, 64)
+	result.AmountActive = strconv.FormatFloat(float64(reply.AmountActive)/float64(precision), 'f', 4, 64)
+
+	for i := 0; i < len(reply.Items); i++ {
+		item := &commandtypes.ExecBalance{}
+		item.ExecAddr = string(reply.Items[i].ExecAddr)
+		item.Frozen = strconv.FormatFloat(float64(reply.Items[i].Frozen)/float64(precision), 'f', 4, 64)
+		item.Active = strconv.FormatFloat(float64(reply.Items[i].Active)/float64(precision), 'f', 4, 64)
+		result.ExecBalances = append(result.ExecBalances, item)
+	}
 }

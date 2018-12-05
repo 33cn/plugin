@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package common contains various helper functions.
 package common
 
 import (
@@ -15,6 +16,7 @@ func init() {
 	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
+//MinInt32 min
 func MinInt32(left, right int32) int32 {
 	if left > right {
 		return right
@@ -22,6 +24,7 @@ func MinInt32(left, right int32) int32 {
 	return left
 }
 
+//MaxInt32 max
 func MaxInt32(left, right int32) int32 {
 	if left > right {
 		return left
@@ -29,6 +32,7 @@ func MaxInt32(left, right int32) int32 {
 	return right
 }
 
+//GetRandBytes 获取随机字节
 func GetRandBytes(min, max int) []byte {
 	length := max
 	if min < max {
@@ -41,12 +45,14 @@ func GetRandBytes(min, max int) []byte {
 	return result
 }
 
+//GetRandString 获取随机字符串
 func GetRandString(length int) string {
 	return string(GetRandBytes(length, length))
 }
 
 var printString = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+//GetRandPrintString 获取随机可打印字符串
 func GetRandPrintString(min, max int) string {
 	l := max
 	if min < max {

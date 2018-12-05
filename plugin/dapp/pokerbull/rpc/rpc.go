@@ -14,13 +14,13 @@ import (
 )
 
 func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types.UnsignTx, error) {
-	if head.PlayerNum > executor.MAX_PLAYER_NUM {
+	if head.PlayerNum > executor.MaxPlayerNum {
 		return nil, errors.New("Player number should be maximum 5")
 	}
 
 	val := &pb.PBGameAction{
 		Ty:    pb.PBGameActionStart,
-		Value: &pb.PBGameAction_Start{head},
+		Value: &pb.PBGameAction_Start{Start: head},
 	}
 	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
 	if err != nil {
@@ -33,7 +33,7 @@ func (c *channelClient) Start(ctx context.Context, head *pb.PBGameStart) (*types
 func (c *channelClient) Continue(ctx context.Context, head *pb.PBGameContinue) (*types.UnsignTx, error) {
 	val := &pb.PBGameAction{
 		Ty:    pb.PBGameActionContinue,
-		Value: &pb.PBGameAction_Continue{head},
+		Value: &pb.PBGameAction_Continue{Continue: head},
 	}
 	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *channelClient) Continue(ctx context.Context, head *pb.PBGameContinue) (
 func (c *channelClient) Quit(ctx context.Context, head *pb.PBGameQuit) (*types.UnsignTx, error) {
 	val := &pb.PBGameAction{
 		Ty:    pb.PBGameActionQuit,
-		Value: &pb.PBGameAction_Quit{head},
+		Value: &pb.PBGameAction_Quit{Quit: head},
 	}
 	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
 	if err != nil {
@@ -59,7 +59,7 @@ func (c *channelClient) Quit(ctx context.Context, head *pb.PBGameQuit) (*types.U
 func (c *channelClient) Show(ctx context.Context, head *pb.PBGameQuery) (*types.UnsignTx, error) {
 	val := &pb.PBGameAction{
 		Ty:    pb.PBGameActionQuery,
-		Value: &pb.PBGameAction_Query{head},
+		Value: &pb.PBGameAction_Query{Query: head},
 	}
 	tx, err := types.CreateFormatTx(pb.PokerBullX, types.Encode(val))
 	if err != nil {

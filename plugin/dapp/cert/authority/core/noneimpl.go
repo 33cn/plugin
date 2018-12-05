@@ -7,6 +7,7 @@ package core
 type noneValidator struct {
 }
 
+// NewNoneValidator 创建none校验器
 func NewNoneValidator() (Validator, error) {
 	return &noneValidator{}, nil
 }
@@ -19,6 +20,6 @@ func (validator *noneValidator) Validate(certByte []byte, pubKey []byte) error {
 	return nil
 }
 
-func (Validator *noneValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
+func (validator *noneValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
 	return []byte(""), nil
 }

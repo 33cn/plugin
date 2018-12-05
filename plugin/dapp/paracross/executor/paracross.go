@@ -22,6 +22,7 @@ var (
 	driverName              = pt.ParaX
 )
 
+// Paracross exec
 type Paracross struct {
 	drivers.DriverBase
 }
@@ -31,11 +32,13 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Paracross{}))
 }
 
+//Init paracross exec register
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newParacross, types.GetDappFork(driverName, "Enable"))
 	setPrefix()
 }
 
+//GetName return paracross name
 func GetName() string {
 	return newParacross().GetName()
 }
@@ -47,6 +50,7 @@ func newParacross() drivers.Driver {
 	return c
 }
 
+// GetDriverName return paracross driver name
 func (c *Paracross) GetDriverName() string {
 	return pt.ParaX
 }
@@ -109,7 +113,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 	for i := 0; i < len(commit.Status.CrossTxHashs); i++ {
 		success := util.BitMapBit(commit.Status.CrossTxResult, uint32(i))
 
-		paraTx, err := GetTx(c.GetApi(), commit.Status.CrossTxHashs[i])
+		paraTx, err := GetTx(c.GetAPI(), commit.Status.CrossTxHashs[i])
 		if err != nil {
 			clog.Crit("paracross.Commit Load Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
@@ -157,11 +161,11 @@ func getCommitHeight(payload []byte) (int64, error) {
 }
 
 func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
-	clog.Debug("para execLocal", "tx hash", common.Bytes2Hex(tx.Hash()), "action name", log.Lazy{tx.ActionName})
+	clog.Debug("para execLocal", "tx hash", common.Bytes2Hex(tx.Hash()), "action name", log.Lazy{Fn: tx.ActionName})
 	key := calcLocalAssetKey(tx.Hash())
 	if isDel {
 		c.GetLocalDB().Set(key, nil)
-		return &types.KeyValue{key, nil}, nil
+		return &types.KeyValue{Key: key, Value: nil}, nil
 	}
 
 	var payload pt.ParacrossAction
@@ -200,14 +204,14 @@ func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel
 	if err != nil {
 		clog.Error("para execLocal", "set", common.Bytes2Hex(tx.Hash()), "failed", err)
 	}
-	return &types.KeyValue{key, types.Encode(&asset)}, nil
+	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
 }
 
 func (c *Paracross) initLocalAssetWithdraw(txCommit, tx *types.Transaction, isWithdraw, success, isDel bool) (*types.KeyValue, error) {
 	key := calcLocalAssetKey(tx.Hash())
 	if isDel {
 		c.GetLocalDB().Set(key, nil)
-		return &types.KeyValue{key, nil}, nil
+		return &types.KeyValue{Key: key, Value: nil}, nil
 	}
 
 	var asset pt.ParacrossAsset
@@ -254,7 +258,7 @@ func (c *Paracross) initLocalAssetWithdraw(txCommit, tx *types.Transaction, isWi
 	if err != nil {
 		clog.Error("para execLocal", "set", "", "failed", err)
 	}
-	return &types.KeyValue{key, types.Encode(&asset)}, nil
+	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
 }
 
 func (c *Paracross) updateLocalAssetTransfer(txCommit, tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
@@ -283,9 +287,10 @@ func (c *Paracross) updateLocalAssetTransfer(txCommit, tx *types.Transaction, su
 		asset.Success = false
 	}
 	c.GetLocalDB().Set(key, types.Encode(&asset))
-	return &types.KeyValue{key, types.Encode(&asset)}, nil
+	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
 }
 
+//IsFriend call exec is same seariase exec
 func (c *Paracross) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
 	//不允许平行链
 	if types.IsPara() {
@@ -320,6 +325,7 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 	return types.ErrNotAllow
 }
 
+// Allow add paracross allow rule
 func (c *Paracross) Allow(tx *types.Transaction, index int) error {
 	//默认规则
 	err := c.DriverBase.Allow(tx, index)
@@ -347,4 +353,9 @@ func (c *Paracross) allowIsParaAssetTx(execer []byte) bool {
 		return true
 	}
 	return false
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Paracross) CheckReceiptExecOk() bool {
+	return true
 }

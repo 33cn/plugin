@@ -36,7 +36,7 @@ func TestCreateGroupTx(t *testing.T) {
 	err = group.Check(0, GInt("MinFee"))
 	if err != nil {
 		for i := 0; i < len(group.Txs); i++ {
-			t.Log(group.Txs[i].Json())
+			t.Log(group.Txs[i].JSON())
 		}
 		t.Error(err)
 		return
@@ -124,4 +124,14 @@ func TestSignGroupTx(t *testing.T) {
 	newtx := group.Tx()
 	signedtx := hex.EncodeToString(Encode(newtx))
 	t.Log(signedtx)
+}
+
+func BenchmarkTxHash(b *testing.B) {
+	tx1 := "0a05636f696e73120e18010a0a1080c2d72f1a036f746520a08d0630f1cdebc8f7efa5e9283a22313271796f6361794e46374c7636433971573461767873324537553431664b536676"
+	tx11, _ := hex.DecodeString(tx1)
+	var tx12 Transaction
+	Decode(tx11, &tx12)
+	for i := 0; i < b.N; i++ {
+		tx12.Hash()
+	}
 }

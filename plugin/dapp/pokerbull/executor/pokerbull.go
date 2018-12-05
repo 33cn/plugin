@@ -15,6 +15,7 @@ import (
 
 var logger = log.New("module", "execs.pokerbull")
 
+// Init 执行器初始化
 func Init(name string, sub []byte) {
 	drivers.Register(newPBGame().GetName(), newPBGame, types.GetDappFork(driverName, "Enable"))
 }
@@ -26,6 +27,7 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&PokerBull{}))
 }
 
+// PokerBull 斗牛执行器结构
 type PokerBull struct {
 	drivers.DriverBase
 }
@@ -37,10 +39,12 @@ func newPBGame() drivers.Driver {
 	return t
 }
 
+// GetName 获取斗牛执行器名
 func GetName() string {
 	return newPBGame().GetName()
 }
 
+// GetDriverName 获取斗牛执行器名
 func (g *PokerBull) GetDriverName() string {
 	return pkt.PokerBullX
 }
@@ -118,11 +122,11 @@ func delPBGameAddrIndexKey(addr string, index int64) *types.KeyValue {
 	return kv
 }
 
-func addPBGameStatusAndPlayer(status int32, player int32, value, index int64, gameId string) *types.KeyValue {
+func addPBGameStatusAndPlayer(status int32, player int32, value, index int64, gameID string) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcPBGameStatusAndPlayerKey(status, player, value, index)
 	record := &pkt.PBGameIndexRecord{
-		GameId: gameId,
+		GameId: gameID,
 		Index:  index,
 	}
 	kv.Value = types.Encode(record)
@@ -134,4 +138,9 @@ func delPBGameStatusAndPlayer(status int32, player int32, value, index int64) *t
 	kv.Key = calcPBGameStatusAndPlayerKey(status, player, value, index)
 	kv.Value = nil
 	return kv
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (g *PokerBull) CheckReceiptExecOk() bool {
+	return true
 }

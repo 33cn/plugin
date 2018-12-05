@@ -11,6 +11,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
+// ExecLocal_Node method
 func (val *ValNode) ExecLocal_Node(node *pty.ValNode, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	if len(node.GetPubKey()) == 0 {
@@ -25,6 +26,7 @@ func (val *ValNode) ExecLocal_Node(node *pty.ValNode, tx *types.Transaction, rec
 	return set, nil
 }
 
+// ExecLocal_BlockInfo method
 func (val *ValNode) ExecLocal_BlockInfo(blockInfo *pty.TendermintBlockInfo, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	key := CalcValNodeBlockInfoHeightKey(val.GetHeight())

@@ -8,22 +8,25 @@ import (
 	"bytes"
 	"unsafe"
 
-	. "github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/crypto/sha3"
 	"github.com/33cn/chain33/common/ed25519/edwards25519"
 )
 
-type PrivKeyPrivacy [PrivateKeyLen]byte
+// PrivKeyPrivacy struct data type
+type PrivKeyPrivacy [privateKeyLen]byte
 
+// Bytes convert to bytes
 func (privKey PrivKeyPrivacy) Bytes() []byte {
 	return privKey[:]
 }
 
-func (privKey PrivKeyPrivacy) Sign(msg []byte) Signature {
+// Sign signature trasaction
+func (privKey PrivKeyPrivacy) Sign(msg []byte) crypto.Signature {
 
 	temp := new([64]byte)
 	randomScalar := new([32]byte)
-	copy(temp[:], CRandBytes(64))
+	copy(temp[:], crypto.CRandBytes(64))
 	edwards25519.ScReduce(randomScalar, temp)
 
 	var sigcommdata sigcommArray
@@ -47,12 +50,13 @@ func (privKey PrivKeyPrivacy) Sign(msg []byte) Signature {
 	return sigOnetime
 }
 
-func (privKey PrivKeyPrivacy) PubKey() PubKey {
+// PubKey get public key
+func (privKey PrivKeyPrivacy) PubKey() crypto.PubKey {
 
 	var pubKeyPrivacy PubKeyPrivacy
 
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(&privKey.Bytes()[0]))
-	addr64 := (*[PrivateKeyLen]byte)(unsafe.Pointer(&privKey.Bytes()[0]))
+	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(&privKey.Bytes()[0]))
 
 	var A edwards25519.ExtendedGroupElement
 	pubKeyAddr32 := (*[KeyLen32]byte)(unsafe.Pointer(&pubKeyPrivacy))
@@ -63,10 +67,10 @@ func (privKey PrivKeyPrivacy) PubKey() PubKey {
 	return pubKeyPrivacy
 }
 
-func (privKey PrivKeyPrivacy) Equals(other PrivKey) bool {
+// Equals check equals
+func (privKey PrivKeyPrivacy) Equals(other crypto.PrivKey) bool {
 	if otherEd, ok := other.(PrivKeyPrivacy); ok {
 		return bytes.Equal(privKey[:], otherEd[:])
-	} else {
-		return false
 	}
+	return false
 }

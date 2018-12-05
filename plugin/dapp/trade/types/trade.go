@@ -27,12 +27,12 @@ var (
 	}
 
 	logInfo = map[int64]*types.LogInfo{
-		TyLogTradeSellLimit:  {reflect.TypeOf(ReceiptTradeSellLimit{}), "LogTradeSell"},
-		TyLogTradeBuyMarket:  {reflect.TypeOf(ReceiptTradeBuyMarket{}), "LogTradeBuyMarket"},
-		TyLogTradeSellRevoke: {reflect.TypeOf(ReceiptTradeSellRevoke{}), "LogTradeSellRevoke"},
-		TyLogTradeSellMarket: {reflect.TypeOf(ReceiptSellMarket{}), "LogTradeSellMarket"},
-		TyLogTradeBuyLimit:   {reflect.TypeOf(ReceiptTradeBuyLimit{}), "LogTradeBuyLimit"},
-		TyLogTradeBuyRevoke:  {reflect.TypeOf(ReceiptTradeBuyRevoke{}), "LogTradeBuyRevoke"},
+		TyLogTradeSellLimit:  {Ty: reflect.TypeOf(ReceiptTradeSellLimit{}), Name: "LogTradeSell"},
+		TyLogTradeBuyMarket:  {Ty: reflect.TypeOf(ReceiptTradeBuyMarket{}), Name: "LogTradeBuyMarket"},
+		TyLogTradeSellRevoke: {Ty: reflect.TypeOf(ReceiptTradeSellRevoke{}), Name: "LogTradeSellRevoke"},
+		TyLogTradeSellMarket: {Ty: reflect.TypeOf(ReceiptSellMarket{}), Name: "LogTradeSellMarket"},
+		TyLogTradeBuyLimit:   {Ty: reflect.TypeOf(ReceiptTradeBuyLimit{}), Name: "LogTradeBuyLimit"},
+		TyLogTradeBuyRevoke:  {Ty: reflect.TypeOf(ReceiptTradeBuyRevoke{}), Name: "LogTradeBuyRevoke"},
 	}
 )
 
@@ -112,7 +112,7 @@ func (t *tradeType) Amount(tx *types.Transaction) (int64, error) {
 }
 
 func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	var tx *types.Transaction
+	//var tx *types.Transaction
 	if action == "TradeSellLimit" {
 		var param TradeSellTx
 		err := json.Unmarshal(message, &param)
@@ -161,11 +161,9 @@ func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Tra
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawTradeRevokeBuyTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
 
-	return tx, nil
+	return nil, types.ErrNotSupport
 }
 
 //CreateRawTradeSellTx : 创建卖单交易

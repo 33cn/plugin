@@ -9,6 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
+// ExecDelLocal_Node method
 func (val *ValNode) ExecDelLocal_Node(node *pty.ValNode, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	key := CalcValNodeUpdateHeightIndexKey(val.GetHeight(), index)
@@ -16,6 +17,7 @@ func (val *ValNode) ExecDelLocal_Node(node *pty.ValNode, tx *types.Transaction, 
 	return set, nil
 }
 
+// ExecDelLocal_BlockInfo method
 func (val *ValNode) ExecDelLocal_BlockInfo(blockInfo *pty.TendermintBlockInfo, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	key := CalcValNodeBlockInfoHeightKey(val.GetHeight())

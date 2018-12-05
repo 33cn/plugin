@@ -8,18 +8,21 @@ import (
 	"fmt"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 	"github.com/spf13/cobra"
 )
 
+// RetrieveResult response
 type RetrieveResult struct {
 	DelayPeriod int64 `json:"delayPeriod"`
 	//RemainTime  int64  `json:"remainTime"`
 	Status string `json:"status"`
 }
 
+// RetrieveCmd cmds
 func RetrieveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve",
@@ -38,7 +41,7 @@ func RetrieveCmd() *cobra.Command {
 	return cmd
 }
 
-// 备份
+// BackupCmd construct backup tx
 func BackupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "backup",
@@ -79,11 +82,11 @@ func backupCmd(cmd *cobra.Command, args []string) {
 		DelayPeriod: delay,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveBackupTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
-// 准备
+// PrepareCmd construct prepare tx
 func PrepareCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prepare",
@@ -116,11 +119,11 @@ func prepareCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePrepareTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
-// 执行
+// PerformCmd construct perform tx
 func PerformCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "perform",
@@ -143,11 +146,11 @@ func performCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
-// 取消
+// CancelCmd construct cancel tx
 func CancelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancel",
@@ -170,11 +173,11 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 		DefaultAddr: defaultAddr,
 		Fee:         feeInt64,
 	}
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrieveCancelTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
-// 查询
+// RetrieveQueryCmd cmds
 func RetrieveQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
@@ -224,13 +227,13 @@ func queryRetrieveCmd(cmd *cobra.Command, args []string) {
 		DefaultAddress: defaultAddr,
 	}
 
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = "retrieve"
 	params.FuncName = "GetRetrieveInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 
 	var res rt.RetrieveQuery
-	ctx := jsonrpc.NewRpcCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseRerieveDetail)
 	ctx.Run()
 }

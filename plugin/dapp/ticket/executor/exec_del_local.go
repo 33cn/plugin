@@ -11,9 +11,6 @@ import (
 
 func (t *Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for _, item := range receiptData.Logs {
 		//这三个是ticket 的log
 		if item.Ty == ty.TyLogNewTicket || item.Ty == ty.TyLogMinerTicket || item.Ty == ty.TyLogCloseTicket {
@@ -37,22 +34,27 @@ func (t *Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet
 	return dbSet, nil
 }
 
+// ExecDelLocal_Genesis exec del local genesis
 func (t *Ticket) ExecDelLocal_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return t.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Topen exec del local open
 func (t *Ticket) ExecDelLocal_Topen(payload *ty.TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return t.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Tbind exec del local bind
 func (t *Ticket) ExecDelLocal_Tbind(payload *ty.TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return t.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Tclose exec del local close
 func (t *Ticket) ExecDelLocal_Tclose(payload *ty.TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return t.execDelLocal(receiptData)
 }
 
+// ExecDelLocal_Miner exec del local miner
 func (t *Ticket) ExecDelLocal_Miner(payload *ty.TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return t.execDelLocal(receiptData)
 }

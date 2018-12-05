@@ -12,11 +12,13 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/spf13/cobra"
 )
 
+// RelayCmd relay exec cmd register
 func RelayCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "relay",
@@ -41,6 +43,7 @@ func RelayCmd() *cobra.Command {
 	return cmd
 }
 
+// ShowBTCHeadHeightListCmd show btc head height list cmd
 func ShowBTCHeadHeightListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc_height_list",
@@ -73,10 +76,10 @@ func showBtcHeadHeightList(cmd *cobra.Command, args []string) {
 	reqList.Counts = count
 	reqList.Direction = direct
 
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBTCHeaderList",
-		Payload:  reqList,
+		Payload:  types.MustPBToJSON(&reqList),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -94,6 +97,7 @@ func showBtcHeadHeightList(cmd *cobra.Command, args []string) {
 	parseRelayBtcHeadHeightList(res)
 }
 
+// ShowBTCHeadCurHeightCmd show BTC head current height in chain33
 func ShowBTCHeadCurHeightCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc_cur_height",
@@ -116,10 +120,10 @@ func showBtcHeadCurHeight(cmd *cobra.Command, args []string) {
 	var reqList ty.ReqRelayQryBTCHeadHeight
 	reqList.BaseHeight = base
 
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBTCHeaderCurHeight",
-		Payload:  reqList,
+		Payload:  types.MustPBToJSON(&reqList),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -137,6 +141,7 @@ func showBtcHeadCurHeight(cmd *cobra.Command, args []string) {
 	parseRelayBtcCurHeight(res)
 }
 
+// ShowOnesCreateRelayOrdersCmd show ones created orders
 func ShowOnesCreateRelayOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "creator_orders",
@@ -166,10 +171,10 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetSellRelayOrder",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -187,6 +192,7 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	parseRelayOrders(res)
 }
 
+// ShowOnesAcceptRelayOrdersCmd show ones accepted orders
 func ShowOnesAcceptRelayOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "acceptor_orders",
@@ -215,10 +221,10 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetBuyRelayOrder",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -236,6 +242,7 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 	parseRelayOrders(res)
 }
 
+// ShowOnesStatusOrdersCmd show ones order's status
 func ShowOnesStatusOrdersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
@@ -269,10 +276,10 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 	if 0 != len(coins) {
 		reqAddrCoins.Coins = append(reqAddrCoins.Coins, coins...)
 	}
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   "relay",
 		FuncName: "GetRelayOrderByStatus",
-		Payload:  reqAddrCoins,
+		Payload:  types.MustPBToJSON(&reqAddrCoins),
 	}
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
@@ -292,8 +299,8 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 
 func parseRelayOrders(res ty.ReplyRelayOrders) {
 	for _, order := range res.Relayorders {
-		var show RelayOrder2Show
-		show.OrderId = order.Id
+		var show relayOrder2Show
+		show.OrderID = order.Id
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
 		show.CoinOperation = ty.RelayOrderOperation[order.CoinOperation]
@@ -327,13 +334,14 @@ func parseRelayBtcHeadHeightList(res ty.ReplyRelayBtcHeadHeightList) {
 func parseRelayBtcCurHeight(res ty.ReplayRelayQryBTCHeadHeight) {
 	data, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
-		fmt.Println(os.Stderr, err)
+		fmt.Println(err)
 		return
 	}
 
 	fmt.Println(string(data))
 }
 
+// CreateRawRelayOrderTxCmd create relay order, buy or sell
 func CreateRawRelayOrderTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -391,10 +399,11 @@ func relayOrder(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayOrderTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayAcceptTxCmd accept order
 func CreateRawRelayAcceptTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accept",
@@ -433,10 +442,11 @@ func relayAccept(cmd *cobra.Command, args []string) {
 		CoinWaits: coinwait,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRevokeTxCmd revoke order
 func CreateRawRevokeTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke",
@@ -472,10 +482,11 @@ func relayRevoke(cmd *cobra.Command, args []string) {
 		Action:  act,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayRevokeTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayConfirmTxCmd confirm tx
 func CreateRawRelayConfirmTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "confirm",
@@ -498,18 +509,19 @@ func addConfirmFlags(cmd *cobra.Command) {
 
 func relayConfirm(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	orderId, _ := cmd.Flags().GetString("order_id")
+	orderID, _ := cmd.Flags().GetString("order_id")
 	txHash, _ := cmd.Flags().GetString("tx_hash")
 
 	params := &ty.RelayConfirmTx{
-		OrderId: orderId,
+		OrderId: orderID,
 		TxHash:  txHash,
 	}
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayConfirmTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayBtcHeaderCmd save btc header from cli
 func CreateRawRelayBtcHeaderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "save_header",
@@ -555,10 +567,11 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
+// CreateRawRelayVerifyBTCTxCmd verify btc tx from cli
 func CreateRawRelayVerifyBTCTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify",
@@ -605,6 +618,6 @@ func relayVerifyBTC(cmd *cobra.Command, args []string) {
 	}
 
 	var res string
-	ctx := jsonclient.NewRpcCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
 	ctx.RunWithoutMarshal()
 }

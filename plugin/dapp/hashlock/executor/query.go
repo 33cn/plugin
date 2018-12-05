@@ -6,6 +6,7 @@ package executor
 
 import "github.com/33cn/chain33/types"
 
+// Query_GetHashlocKById get hashlock instance
 func (h *Hashlock) Query_GetHashlocKById(in []byte) (types.Message, error) {
 	differTime := types.Now().UnixNano()/1e9 - h.GetBlockTime()
 	clog.Error("Query action")

@@ -27,6 +27,7 @@ const (
 	stepPrecommit = 3
 )
 
+// KeyText ...
 type KeyText struct {
 	Kind string `json:"type"`
 	Data string `json:"data"`
@@ -78,6 +79,7 @@ type PrivValidatorFS struct {
 	PrivKey KeyText `json:"priv_key"`
 }
 
+// PrivValidatorImp ...
 type PrivValidatorImp struct {
 	Address       []byte
 	PubKey        crypto.PubKey
@@ -135,12 +137,14 @@ func (pv *PrivValidatorImp) GetPubKey() crypto.PubKey {
 	return pv.PubKey
 }
 
+// GenAddressByPubKey ...
 func GenAddressByPubKey(pubkey crypto.PubKey) []byte {
 	//must add 3 bytes ahead to make compatibly
 	typeAddr := append([]byte{byte(0x01), byte(0x01), byte(0x20)}, pubkey.Bytes()...)
 	return crypto.Ripemd160(typeAddr)
 }
 
+// PubKeyFromString ...
 func PubKeyFromString(pubkeystring string) (crypto.PubKey, error) {
 	pub, err := hex.DecodeString(pubkeystring)
 	if err != nil {
@@ -154,6 +158,7 @@ func PubKeyFromString(pubkeystring string) (crypto.PubKey, error) {
 	return pubkey, nil
 }
 
+// SignatureFromString ...
 func SignatureFromString(sigString string) (crypto.Signature, error) {
 	sigbyte, err := hex.DecodeString(sigString)
 	if err != nil {
@@ -203,7 +208,7 @@ func LoadOrGenPrivValidatorFS(filePath string) *PrivValidatorImp {
 	return privVal
 }
 
-// LoadPrivValidatorWithSigner loads a PrivValidatorFS with a custom
+// LoadPrivValidatorFSWithSigner loads a PrivValidatorFS with a custom
 // signer object. The PrivValidatorFS handles double signing prevention by persisting
 // data to the filePath, while the Signer handles the signing.
 // If the filePath does not exist, the PrivValidatorFS must be created manually and saved.
@@ -272,33 +277,33 @@ func LoadPrivValidatorFSWithSigner(filePath string, signerFunc func(PrivValidato
 }
 
 // Save persists the PrivValidatorFS to disk.
-func (privVal *PrivValidatorImp) Save() {
-	privVal.mtx.Lock()
-	defer privVal.mtx.Unlock()
-	privVal.save()
+func (pv *PrivValidatorImp) Save() {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+	pv.save()
 }
 
-func (privVal *PrivValidatorImp) save() {
-	if privVal.filePath == "" {
+func (pv *PrivValidatorImp) save() {
+	if pv.filePath == "" {
 		PanicSanity("Cannot save PrivValidator: filePath not set")
 	}
-	addr := Fmt("%X", privVal.Address[:])
+	addr := Fmt("%X", pv.Address[:])
 
 	privValFS := &PrivValidatorFS{
 		Address:       addr,
-		LastHeight:    privVal.LastHeight,
-		LastRound:     privVal.LastRound,
-		LastStep:      privVal.LastStep,
+		LastHeight:    pv.LastHeight,
+		LastRound:     pv.LastRound,
+		LastStep:      pv.LastStep,
 		LastSignature: nil,
 	}
-	privValFS.PrivKey = KeyText{Kind: "ed25519", Data: Fmt("%X", privVal.PrivKey.Bytes()[:])}
-	privValFS.PubKey = KeyText{Kind: "ed25519", Data: privVal.PubKey.KeyString()}
-	if len(privVal.LastSignBytes) != 0 {
-		tmp := Fmt("%X", privVal.LastSignBytes[:])
+	privValFS.PrivKey = KeyText{Kind: "ed25519", Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
+	privValFS.PubKey = KeyText{Kind: "ed25519", Data: pv.PubKey.KeyString()}
+	if len(pv.LastSignBytes) != 0 {
+		tmp := Fmt("%X", pv.LastSignBytes[:])
 		privValFS.LastSignBytes = tmp
 	}
-	if privVal.LastSignature != nil {
-		sig := Fmt("%X", privVal.LastSignature.Bytes()[:])
+	if pv.LastSignature != nil {
+		sig := Fmt("%X", pv.LastSignature.Bytes()[:])
 		privValFS.LastSignature = &KeyText{Kind: "ed25519", Data: sig}
 	}
 	jsonBytes, err := json.Marshal(privValFS)
@@ -306,7 +311,7 @@ func (privVal *PrivValidatorImp) save() {
 		// `@; BOOM!!!
 		PanicCrisis(err)
 	}
-	err = WriteFileAtomic(privVal.filePath, jsonBytes, 0600)
+	err = WriteFileAtomic(pv.filePath, jsonBytes, 0600)
 	if err != nil {
 		// `@; BOOM!!!
 		PanicCrisis(err)
@@ -315,21 +320,21 @@ func (privVal *PrivValidatorImp) save() {
 
 // Reset resets all fields in the PrivValidatorFS.
 // NOTE: Unsafe!
-func (privVal *PrivValidatorImp) Reset() {
-	privVal.LastHeight = 0
-	privVal.LastRound = 0
-	privVal.LastStep = 0
-	privVal.LastSignature = nil
-	privVal.LastSignBytes = nil
-	privVal.Save()
+func (pv *PrivValidatorImp) Reset() {
+	pv.LastHeight = 0
+	pv.LastRound = 0
+	pv.LastStep = 0
+	pv.LastSignature = nil
+	pv.LastSignBytes = nil
+	pv.Save()
 }
 
 // SignVote signs a canonical representation of the vote, along with the
 // chainID. Implements PrivValidator.
-func (privVal *PrivValidatorImp) SignVote(chainID string, vote *Vote) error {
-	privVal.mtx.Lock()
-	defer privVal.mtx.Unlock()
-	signature, err := privVal.signBytesHRS(vote.Height, int(vote.Round), voteToStep(vote),
+func (pv *PrivValidatorImp) SignVote(chainID string, vote *Vote) error {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+	signature, err := pv.signBytesHRS(vote.Height, int(vote.Round), voteToStep(vote),
 		SignBytes(chainID, vote), checkVotesOnlyDifferByTimestamp)
 	if err != nil {
 		return errors.New(Fmt("Error signing vote: %v", err))
@@ -340,10 +345,10 @@ func (privVal *PrivValidatorImp) SignVote(chainID string, vote *Vote) error {
 
 // SignProposal signs a canonical representation of the proposal, along with
 // the chainID. Implements PrivValidator.
-func (privVal *PrivValidatorImp) SignProposal(chainID string, proposal *Proposal) error {
-	privVal.mtx.Lock()
-	defer privVal.mtx.Unlock()
-	signature, err := privVal.signBytesHRS(proposal.Height, int(proposal.Round), stepPropose,
+func (pv *PrivValidatorImp) SignProposal(chainID string, proposal *Proposal) error {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+	signature, err := pv.signBytesHRS(proposal.Height, int(proposal.Round), stepPropose,
 		SignBytes(chainID, proposal), checkProposalsOnlyDifferByTimestamp)
 	if err != nil {
 		return fmt.Errorf("Error signing proposal: %v", err)
@@ -353,23 +358,23 @@ func (privVal *PrivValidatorImp) SignProposal(chainID string, proposal *Proposal
 }
 
 // returns error if HRS regression or no LastSignBytes. returns true if HRS is unchanged
-func (privVal *PrivValidatorImp) checkHRS(height int64, round int, step int8) (bool, error) {
-	if privVal.LastHeight > height {
+func (pv *PrivValidatorImp) checkHRS(height int64, round int, step int8) (bool, error) {
+	if pv.LastHeight > height {
 		return false, errors.New("Height regression")
 	}
 
-	if privVal.LastHeight == height {
-		if privVal.LastRound > round {
+	if pv.LastHeight == height {
+		if pv.LastRound > round {
 			return false, errors.New("Round regression")
 		}
 
-		if privVal.LastRound == round {
-			if privVal.LastStep > step {
+		if pv.LastRound == round {
+			if pv.LastStep > step {
 				return false, errors.New("Step regression")
-			} else if privVal.LastStep == step {
-				if privVal.LastSignBytes != nil {
-					if privVal.LastSignature == nil {
-						panic("privVal: LastSignature is nil but LastSignBytes is not!")
+			} else if pv.LastStep == step {
+				if pv.LastSignBytes != nil {
+					if pv.LastSignature == nil {
+						panic("pv: LastSignature is nil but LastSignBytes is not!")
 					}
 					return true, nil
 				}
@@ -383,10 +388,10 @@ func (privVal *PrivValidatorImp) checkHRS(height int64, round int, step int8) (b
 // signBytesHRS signs the given signBytes if the height/round/step (HRS) are
 // greater than the latest state. If the HRS are equal and the only thing changed is the timestamp,
 // it returns the privValidator.LastSignature. Else it returns an error.
-func (privVal *PrivValidatorImp) signBytesHRS(height int64, round int, step int8,
+func (pv *PrivValidatorImp) signBytesHRS(height int64, round int, step int8,
 	signBytes []byte, checkFn checkOnlyDifferByTimestamp) (crypto.Signature, error) {
 
-	sameHRS, err := privVal.checkHRS(height, round, step)
+	sameHRS, err := pv.checkHRS(height, round, step)
 	if err != nil {
 		return nil, err
 	}
@@ -396,68 +401,71 @@ func (privVal *PrivValidatorImp) signBytesHRS(height int64, round int, step int8
 	if sameHRS {
 		// if they're the same or only differ by timestamp,
 		// return the LastSignature. Otherwise, error
-		if bytes.Equal(signBytes, privVal.LastSignBytes) ||
-			checkFn(privVal.LastSignBytes, signBytes) {
-			return privVal.LastSignature, nil
+		if bytes.Equal(signBytes, pv.LastSignBytes) ||
+			checkFn(pv.LastSignBytes, signBytes) {
+			return pv.LastSignature, nil
 		}
 		return nil, fmt.Errorf("Conflicting data")
 	}
 
-	sig, err := privVal.Sign(signBytes)
+	sig, err := pv.Sign(signBytes)
 	if err != nil {
 		return nil, err
 	}
-	//privVal.saveSigned(height, round, step, signBytes, sig)
+	//pv.saveSigned(height, round, step, signBytes, sig)
 	return sig, nil
 }
 
 // Persist height/round/step and signature
-func (privVal *PrivValidatorImp) saveSigned(height int64, round int, step int8,
+func (pv *PrivValidatorImp) saveSigned(height int64, round int, step int8,
 	signBytes []byte, sig crypto.Signature) {
 
-	privVal.LastHeight = height
-	privVal.LastRound = round
-	privVal.LastStep = step
-	privVal.LastSignature = sig
-	privVal.LastSignBytes = signBytes
-	privVal.save()
+	pv.LastHeight = height
+	pv.LastRound = round
+	pv.LastStep = step
+	pv.LastSignature = sig
+	pv.LastSignBytes = signBytes
+	pv.save()
 }
 
 // SignHeartbeat signs a canonical representation of the heartbeat, along with the chainID.
 // Implements PrivValidator.
-func (privVal *PrivValidatorImp) SignHeartbeat(chainID string, heartbeat *Heartbeat) error {
-	privVal.mtx.Lock()
-	defer privVal.mtx.Unlock()
-	sig, err := privVal.Sign(SignBytes(chainID, heartbeat))
+func (pv *PrivValidatorImp) SignHeartbeat(chainID string, heartbeat *Heartbeat) error {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+	sig, err := pv.Sign(SignBytes(chainID, heartbeat))
 	heartbeat.Signature = sig.Bytes()
 	return err
 }
 
 // String returns a string representation of the PrivValidatorImp.
-func (privVal *PrivValidatorImp) String() string {
-	return Fmt("PrivValidator{%v LH:%v, LR:%v, LS:%v}", privVal.GetAddress(), privVal.LastHeight, privVal.LastRound, privVal.LastStep)
+func (pv *PrivValidatorImp) String() string {
+	return Fmt("PrivValidator{%v LH:%v, LR:%v, LS:%v}", pv.GetAddress(), pv.LastHeight, pv.LastRound, pv.LastStep)
 }
 
-func (privVal *PrivValidatorImp) GetLastHeight() int64 {
-	return privVal.LastHeight
+// GetLastHeight ...
+func (pv *PrivValidatorImp) GetLastHeight() int64 {
+	return pv.LastHeight
 }
 
-func (privVal *PrivValidatorImp) GetLastRound() int {
-	return privVal.LastRound
+// GetLastRound ...
+func (pv *PrivValidatorImp) GetLastRound() int {
+	return pv.LastRound
 }
 
-func (privVal *PrivValidatorImp) GetLastStep() int8 {
-	return privVal.LastStep
+// GetLastStep ...
+func (pv *PrivValidatorImp) GetLastStep() int8 {
+	return pv.LastStep
 }
 
-func (privVal *PrivValidatorImp) ResetLastHeight(height int64) {
-	privVal.LastHeight = height
-	privVal.LastRound = 0
-	privVal.LastStep = 0
+// ResetLastHeight ...
+func (pv *PrivValidatorImp) ResetLastHeight(height int64) {
+	pv.LastHeight = height
+	pv.LastRound = 0
+	pv.LastStep = 0
 }
 
-//-------------------------------------
-
+// PrivValidatorsByAddress ...
 type PrivValidatorsByAddress []*PrivValidatorImp
 
 func (pvs PrivValidatorsByAddress) Len() int {

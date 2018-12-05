@@ -6,18 +6,13 @@ package executor
 
 import (
 	"context"
-	//crand "crypto/rand"
-	//"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
-
 	"strconv"
-	//"strings"
 	"testing"
 	"time"
 
-	//"github.com/golang/protobuf/proto"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -28,8 +23,8 @@ import (
 )
 
 var (
-	isMainNetTest bool = false
-	isParaNetTest bool = false
+	isMainNetTest bool
+	isParaNetTest bool
 )
 
 var (
@@ -55,10 +50,10 @@ const (
 
 //for token
 var (
-	tokenName         = "NEW"
-	tokenSym          = "NEW"
-	tokenIntro        = "newtoken"
-	tokenPrice  int64 = 0
+	tokenName   = "NEW"
+	tokenSym    = "NEW"
+	tokenIntro  = "newtoken"
+	tokenPrice  int64
 	tokenAmount int64 = 1000 * 1e4 * 1e4
 	execName          = "user.p.guodun.token"
 	feeForToken int64 = 1e6
@@ -164,7 +159,7 @@ func TestPrecreate(t *testing.T) {
 	}
 	precreate := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionPreCreate,
-		Value: &tokenty.TokenAction_TokenPreCreate{v},
+		Value: &tokenty.TokenAction_TokenPreCreate{TokenPreCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
@@ -205,7 +200,7 @@ func TestFinish(t *testing.T) {
 	v := &tokenty.TokenFinishCreate{Symbol: tokenSym, Owner: addr}
 	finish := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionFinishCreate,
-		Value: &tokenty.TokenAction_TokenFinishCreate{v},
+		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
@@ -243,7 +238,7 @@ func TestTransferToken(t *testing.T) {
 	fmt.Println("TestTransferToken start")
 	defer fmt.Println("TestTransferToken end")
 
-	v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: "", To: transToAddr}}
+	v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: []byte(""), To: transToAddr}}
 	transfer := &tokenty.TokenAction{Value: v, Ty: tokenty.ActionTransfer}
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
@@ -320,7 +315,7 @@ func TestQueryAsset(t *testing.T) {
 //**************common actions for Test**************
 //***************************************************
 func sendtoaddress(c types.Chain33Client, priv crypto.PrivKey, to string, amount int64) ([]byte, error) {
-	v := &cty.CoinsAction_Transfer{&types.AssetsTransfer{Amount: amount}}
+	v := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 	transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 	tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: fee, To: to}
 	tx.Nonce = r.Int63()

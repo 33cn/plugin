@@ -11,6 +11,7 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
+// CreateCertificateToMem 证书转mem
 func CreateCertificateToMem(template, parent *sm2.Certificate, key csp.Key) (cert []byte, err error) {
 	pk := key.(*csp.SM2PrivateKey).PrivKey
 
@@ -25,6 +26,7 @@ func CreateCertificateToMem(template, parent *sm2.Certificate, key csp.Key) (cer
 	return
 }
 
+// CreateCertificateToPem 证书转pem
 func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, key csp.Key) (bool, error) {
 	pk := key.(*csp.SM2PrivateKey).PrivKey
 
@@ -44,6 +46,7 @@ func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, 
 	return result, err
 }
 
+// ParseX509CertificateToSm2 解析x509格式为sm2格式证书
 func ParseX509CertificateToSm2(x509Cert *x509.Certificate) *sm2.Certificate {
 	sm2cert := &sm2.Certificate{
 		Raw:                     x509Cert.Raw,
@@ -75,9 +78,9 @@ func ParseX509CertificateToSm2(x509Cert *x509.Certificate) *sm2.Certificate {
 		UnknownExtKeyUsage: x509Cert.UnknownExtKeyUsage,
 
 		BasicConstraintsValid: x509Cert.BasicConstraintsValid,
-		IsCA:           x509Cert.IsCA,
-		MaxPathLen:     x509Cert.MaxPathLen,
-		MaxPathLenZero: x509Cert.MaxPathLenZero,
+		IsCA:                  x509Cert.IsCA,
+		MaxPathLen:            x509Cert.MaxPathLen,
+		MaxPathLenZero:        x509Cert.MaxPathLenZero,
 
 		SubjectKeyId:   x509Cert.SubjectKeyId,
 		AuthorityKeyId: x509Cert.AuthorityKeyId,
@@ -103,6 +106,7 @@ func ParseX509CertificateToSm2(x509Cert *x509.Certificate) *sm2.Certificate {
 	return sm2cert
 }
 
+// ParseSm2CertificateToX509 解析sm2格式证书为x509格式
 func ParseSm2CertificateToX509(sm2Cert *sm2.Certificate) *x509.Certificate {
 	if sm2Cert == nil {
 		return nil
@@ -137,9 +141,9 @@ func ParseSm2CertificateToX509(sm2Cert *sm2.Certificate) *x509.Certificate {
 		UnknownExtKeyUsage: sm2Cert.UnknownExtKeyUsage,
 
 		BasicConstraintsValid: sm2Cert.BasicConstraintsValid,
-		IsCA:           sm2Cert.IsCA,
-		MaxPathLen:     sm2Cert.MaxPathLen,
-		MaxPathLenZero: sm2Cert.MaxPathLenZero,
+		IsCA:                  sm2Cert.IsCA,
+		MaxPathLen:            sm2Cert.MaxPathLen,
+		MaxPathLenZero:        sm2Cert.MaxPathLenZero,
 
 		SubjectKeyId:   sm2Cert.SubjectKeyId,
 		AuthorityKeyId: sm2Cert.AuthorityKeyId,

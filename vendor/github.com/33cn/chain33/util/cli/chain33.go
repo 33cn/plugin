@@ -4,20 +4,19 @@
 
 // +build go1.8
 
-package cli
-
-//说明：
-//main 函数会加载各个模块，组合成区块链程序
+// package cli RunChain33函数会加载各个模块，组合成区块链程序
 //主循环由消息队列驱动。
 //消息队列本身可插拔，可以支持各种队列
 //同时共识模式也是可以插拔的。
 //rpc 服务也是可以插拔的
 
+package cli
+
 import (
 	"flag"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" //
 	"os"
 	"os/user"
 	"path/filepath"
@@ -54,6 +53,7 @@ var (
 	fixtime    = flag.Bool("fixtime", false, "fix time")
 )
 
+//RunChain33 : run Chain33
 func RunChain33(name string) {
 	flag.Parse()
 	if *versionCmd {
@@ -121,18 +121,11 @@ func RunChain33(name string) {
 	go startTrace()
 	//set maxprocs
 	runtime.GOMAXPROCS(cpuNum)
-	//check mvcc switch，if use kvmvcc then cfg.Exec.EnableMVCC should be always false.
-	/*todo
-	if cfg.Store.Name == "kvmvcc" {
-		if cfg.Exec.EnableMVCC {
-			log.Error("store type is kvmvcc but enableMVCC is configured true.")
-			panic("store type is kvmvcc, configure item enableMVCC should be false.please check it.")
-		}
-	}
-	*/
 	//开始区块链模块加载
 	//channel, rabitmq 等
-	log.Info(cfg.Title + " " + version.GetVersion())
+	version.SetLocalDBVersion(cfg.Store.LocalDBVersion)
+	version.SetAppVersion(cfg.Version)
+	log.Info(cfg.Title + "-app:" + version.GetAppVersion() + " chain33:" + version.GetVersion() + " localdb:" + version.GetLocalDBVersion())
 	log.Info("loading queue")
 	q := queue.New("channel")
 
@@ -151,7 +144,6 @@ func RunChain33(name string) {
 	log.Info("loading blockchain module")
 	chain := blockchain.New(cfg.BlockChain)
 	chain.SetQueueClient(q.Client())
-
 	chain.UpgradeChain()
 
 	log.Info("loading consensus module")
@@ -165,7 +157,7 @@ func RunChain33(name string) {
 		network.SetQueueClient(q.Client())
 	}
 	//jsonrpc, grpc, channel 三种模式
-	rpcapi := rpc.New(cfg.Rpc)
+	rpcapi := rpc.New(cfg.RPC)
 	rpcapi.SetQueueClient(q.Client())
 
 	log.Info("loading wallet module")

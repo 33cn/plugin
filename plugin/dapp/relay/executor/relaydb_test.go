@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -43,10 +44,10 @@ func (s *suiteRelayLog) SetupSuite() {
 func (s *suiteRelayLog) TestSave() {
 	kvSet := []*types.KeyValue{}
 	value := types.Encode(&s.log.RelayOrder)
-	keyId := []byte(s.log.Id)
+	keyID := []byte(s.log.Id)
 	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
-	kvSet = append(kvSet, &types.KeyValue{keyId, value})
-	kvSet = append(kvSet, &types.KeyValue{keyCoinTxHash, value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
 	for i := 0; i < len(kvSet); i++ {
 		s.db.On("Set", kvSet[i].GetKey(), kvSet[i].Value).Return(nil).Once()
@@ -59,10 +60,10 @@ func (s *suiteRelayLog) TestSave() {
 func (s *suiteRelayLog) TestGetKVSet() {
 	kvSet := []*types.KeyValue{}
 	value := types.Encode(&s.log.RelayOrder)
-	keyId := []byte(s.log.Id)
+	keyID := []byte(s.log.Id)
 	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
-	kvSet = append(kvSet, &types.KeyValue{keyId, value})
-	kvSet = append(kvSet, &types.KeyValue{keyCoinTxHash, value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
+	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
 	rst := s.log.getKVSet()
 	s.Assert().Equal(kvSet, rst)
@@ -111,7 +112,7 @@ type suiteRelayDB struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	relayDb   *relayDB
 }
 
@@ -153,7 +154,7 @@ func (s *suiteRelayDB) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -176,7 +177,7 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -190,14 +191,14 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 }
 
 // the test suite function name need sequence so here aUnlock, bCancel
 // unlock error
 func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeCreate,
 		Action:  ty.RelayUnlock,
 	}
@@ -208,7 +209,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -218,7 +219,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 
 func (s *suiteRelayDB) TestRevokeCreate_1bCancel() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeCreate,
 		Action:  ty.RelayCancel,
 	}
@@ -229,7 +230,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1bCancel() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -258,7 +259,7 @@ type suiteAccept struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	relayDb   *relayDB
 }
 
@@ -309,7 +310,7 @@ func (s *suiteAccept) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -324,7 +325,7 @@ func (s *suiteAccept) setupRelayCreate() {
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
 
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 }
 
 func (s *suiteAccept) SetupSuite() {
@@ -336,7 +337,7 @@ func (s *suiteAccept) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -347,7 +348,7 @@ func (s *suiteAccept) SetupSuite() {
 func (s *suiteAccept) TestRelayAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderId,
+		OrderId:  s.orderID,
 		CoinAddr: "BTC",
 	}
 
@@ -357,7 +358,7 @@ func (s *suiteAccept) TestRelayAccept() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -377,7 +378,7 @@ func (s *suiteAccept) TestRelayAccept() {
 
 func (s *suiteAccept) TestRevokeAccept_1() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeAccept,
 		Action:  ty.RelayUnlock,
 	}
@@ -388,7 +389,7 @@ func (s *suiteAccept) TestRevokeAccept_1() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(22)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(22)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -398,7 +399,7 @@ func (s *suiteAccept) TestRevokeAccept_1() {
 
 func (s *suiteAccept) TestRevokeAccept_2() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeAccept,
 		Action:  ty.RelayUnlock,
 	}
@@ -409,7 +410,7 @@ func (s *suiteAccept) TestRevokeAccept_2() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -419,7 +420,7 @@ func (s *suiteAccept) TestRevokeAccept_2() {
 
 func (s *suiteAccept) TestRevokeAccept_3() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeAccept,
 		Action:  ty.RelayUnlock,
 	}
@@ -430,7 +431,7 @@ func (s *suiteAccept) TestRevokeAccept_3() {
 
 	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -456,7 +457,7 @@ type suiteConfirm struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	relayDb   *relayDB
 }
 
@@ -507,7 +508,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -522,7 +523,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
 
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 }
 
 func (s *suiteConfirm) SetupSuite() {
@@ -534,7 +535,7 @@ func (s *suiteConfirm) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -546,7 +547,7 @@ func (s *suiteConfirm) SetupSuite() {
 func (s *suiteConfirm) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderId,
+		OrderId:  s.orderID,
 		CoinAddr: "BTC",
 	}
 
@@ -556,7 +557,7 @@ func (s *suiteConfirm) setupAccept() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -577,7 +578,7 @@ func (s *suiteConfirm) setupAccept() {
 func (s *suiteConfirm) TestConfirm_1() {
 
 	order := &ty.RelayConfirmTx{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		TxHash:  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
@@ -595,7 +596,7 @@ func (s *suiteConfirm) TestConfirm_1() {
 func (s *suiteConfirm) TestConfirm_2() {
 
 	order := &ty.RelayConfirmTx{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		TxHash:  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
@@ -605,7 +606,7 @@ func (s *suiteConfirm) TestConfirm_2() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)
@@ -625,7 +626,7 @@ func (s *suiteConfirm) TestConfirm_2() {
 
 func (s *suiteConfirm) TestRevokeConfirm_1() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeCreate,
 		Action:  ty.RelayUnlock,
 	}
@@ -636,7 +637,7 @@ func (s *suiteConfirm) TestRevokeConfirm_1() {
 
 	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(30 + lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	_, err := s.relayDb.relayRevoke(order)
@@ -646,7 +647,7 @@ func (s *suiteConfirm) TestRevokeConfirm_1() {
 
 func (s *suiteConfirm) TestRevokeConfirm_2() {
 	order := &ty.RelayRevoke{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Target:  ty.RelayRevokeCreate,
 		Action:  ty.RelayUnlock,
 	}
@@ -657,7 +658,7 @@ func (s *suiteConfirm) TestRevokeConfirm_2() {
 
 	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(30 + 4*lockBtcHeight)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30 + 4*lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	receipt, err := s.relayDb.relayRevoke(order)
@@ -683,7 +684,7 @@ type suiteVerify struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	relayDb   *relayDB
 }
 
@@ -734,7 +735,7 @@ func (s *suiteVerify) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -749,13 +750,13 @@ func (s *suiteVerify) setupRelayCreate() {
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
 
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 }
 
 func (s *suiteVerify) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderId,
+		OrderId:  s.orderID,
 		CoinAddr: "BTC",
 	}
 
@@ -765,7 +766,7 @@ func (s *suiteVerify) setupAccept() {
 
 	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -786,7 +787,7 @@ func (s *suiteVerify) setupAccept() {
 func (s *suiteVerify) setupConfirm() {
 
 	order := &ty.RelayConfirmTx{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		TxHash:  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
@@ -796,7 +797,7 @@ func (s *suiteVerify) setupConfirm() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)
@@ -823,7 +824,7 @@ func (s *suiteVerify) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -844,11 +845,11 @@ func (s *suiteVerify) TestVerify() {
 		BlockHeight: 1000,
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
-	str_merkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
+	strMerkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
 		"ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"}
 
-	proofs := make([][]byte, len(str_merkleproof))
-	for i, kk := range str_merkleproof {
+	proofs := make([][]byte, len(strMerkleproof))
+	for i, kk := range strMerkleproof {
 		proofs[i], _ = btcHashStrRevers(kk)
 	}
 
@@ -860,7 +861,7 @@ func (s *suiteVerify) TestVerify() {
 		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
-	heightBytes := types.Encode(&types.Int64{int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
@@ -870,7 +871,7 @@ func (s *suiteVerify) TestVerify() {
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
 
 	order := &ty.RelayVerify{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		Tx:      transaction,
 		Spv:     spv,
 	}
@@ -915,7 +916,7 @@ type suiteVerifyCli struct {
 	kvdb      *mocks.KVDB
 	relay     *relay
 	addrRelay string
-	orderId   string
+	orderID   string
 	relayDb   *relayDB
 }
 
@@ -965,7 +966,7 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 
 	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(10)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.create(order)
 	s.Nil(err)
@@ -980,13 +981,13 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 	s.Equal("200.0000", log.TxAmount)
 	s.Equal(uint64(10), log.CoinHeight)
 
-	s.orderId = log.OrderId
+	s.orderID = log.OrderId
 }
 
 func (s *suiteVerifyCli) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderId,
+		OrderId:  s.orderID,
 		CoinAddr: "BTC",
 	}
 
@@ -996,7 +997,7 @@ func (s *suiteVerifyCli) setupAccept() {
 
 	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(20)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.accept(order)
 	s.Nil(err)
@@ -1017,7 +1018,7 @@ func (s *suiteVerifyCli) setupAccept() {
 func (s *suiteVerifyCli) setupConfirm() {
 
 	order := &ty.RelayConfirmTx{
-		OrderId: s.orderId,
+		OrderId: s.orderID,
 		TxHash:  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
 	}
 
@@ -1027,7 +1028,7 @@ func (s *suiteVerifyCli) setupConfirm() {
 
 	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
-	heightBytes := types.Encode(&types.Int64{int64(30)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relayDb.confirmTx(order)
 	s.Nil(err)
@@ -1054,7 +1055,7 @@ func (s *suiteVerifyCli) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1073,7 +1074,7 @@ func (s *suiteVerifyCli) TestVerify() {
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
 
 	order := &ty.RelayVerifyCli{
-		OrderId:    s.orderId,
+		OrderId:    s.orderID,
 		RawTx:      "0100000001c33ebff2a709f13d9f9a7569ab16a32786af7d7e2de09265e41c61d078294ecf010000008a4730440220032d30df5ee6f57fa46cddb5eb8d0d9fe8de6b342d27942ae90a3231e0ba333e02203deee8060fdc70230a7f5b4ad7d7bc3e628cbe219a886b84269eaeb81e26b4fe014104ae31c31bf91278d99b8377a35bbce5b27d9fff15456839e919453fc7b3f721f0ba403ff96c9deeb680e5fd341c0fc3a7b90da4631ee39560639db462e9cb850fffffffff0240420f00000000001976a914b0dcbf97eabf4404e31d952477ce822dadbe7e1088acc060d211000000001976a9146b1281eec25ab4e1e0793ff4e08ab1abb3409cd988ac00000000",
 		TxIndex:    2,
 		MerkBranch: "e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d-ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815",
@@ -1129,7 +1130,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetApi(nil)
+	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1197,8 +1198,10 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_1() {
 	s.Zero(log.LastBaseHeight)
 	s.Equal(head2.Height, log.NewHeight)
 	s.Zero(log.NewBaseHeight)
-	s.Equal(headers.BtcHeader, log.Headers)
-
+	s.Equal(len(headers.BtcHeader), len(log.Headers))
+	for i, h := range headers.BtcHeader {
+		s.Equal(true, proto.Equal(h, log.Headers[i]))
+	}
 }
 
 //not continuous
@@ -1325,8 +1328,10 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_4() {
 	s.Zero(log.LastBaseHeight)
 	s.Equal(head5.Height, log.NewHeight)
 	s.Equal(head4.Height, log.NewBaseHeight)
-	s.Equal(headers.BtcHeader, log.Headers)
-
+	s.Equal(len(headers.BtcHeader), len(log.Headers))
+	for i, h := range headers.BtcHeader {
+		s.Equal(true, proto.Equal(h, log.Headers[i]))
+	}
 }
 
 func TestRunSuiteSaveBtcHeader(t *testing.T) {

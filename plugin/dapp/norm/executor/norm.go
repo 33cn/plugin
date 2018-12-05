@@ -18,15 +18,18 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Norm{}))
 }
 
+// Init norm
 func Init(name string, sub []byte) {
 	clog.Debug("register norm execer")
 	drivers.Register(GetName(), newNorm, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName for norm
 func GetName() string {
 	return newNorm().GetName()
 }
 
+// Norm driver
 type Norm struct {
 	drivers.DriverBase
 }
@@ -39,16 +42,24 @@ func newNorm() drivers.Driver {
 	return n
 }
 
+// GetDriverName for norm
 func (n *Norm) GetDriverName() string {
 	return driverName
 }
 
+// CheckTx for norm
 func (n *Norm) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-func Key(str string) (key []byte) {
+// Key for norm
+func Key(str []byte) (key []byte) {
 	key = append(key, []byte("mavl-norm-")...)
 	key = append(key, str...)
 	return key
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (n *Norm) CheckReceiptExecOk() bool {
+	return true
 }

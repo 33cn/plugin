@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package consensus 系统基础共识包
 package consensus
 
 import (
@@ -9,12 +10,16 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-type ConsensusCreate func(cfg *types.Consensus, sub []byte) queue.Module
+//Create 创建共识
+type Create func(cfg *types.Consensus, sub []byte) queue.Module
 
-var regConsensus = make(map[string]ConsensusCreate)
+var regConsensus = make(map[string]Create)
+
+//QueryData 检索数据
 var QueryData = types.NewQueryData("Query_")
 
-func Reg(name string, create ConsensusCreate) {
+//Reg ...
+func Reg(name string, create Create) {
 	if create == nil {
 		panic("Consensus: Register driver is nil")
 	}
@@ -24,7 +29,8 @@ func Reg(name string, create ConsensusCreate) {
 	regConsensus[name] = create
 }
 
-func Load(name string) (create ConsensusCreate, err error) {
+//Load 加载
+func Load(name string) (create Create, err error) {
 	if driver, ok := regConsensus[name]; ok {
 		return driver, nil
 	}

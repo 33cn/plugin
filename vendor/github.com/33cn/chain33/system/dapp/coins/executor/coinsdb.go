@@ -11,9 +11,9 @@ coins 是一个货币的exec。内置货币的执行器。
 EventTransfer -> 转移资产
 */
 
-//package none execer for unknow execer
-//all none transaction exec ok, execept nofee
-//nofee transaction will not pack into block
+// package none execer for unknow execer
+// all none transaction exec ok, execept nofee
+// nofee transaction will not pack into block
 
 import (
 	"fmt"
@@ -22,15 +22,15 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//存储地址上收币的信息
+// calcAddrKey store information on the receiving address
 func calcAddrKey(addr string) []byte {
 	return []byte(fmt.Sprintf("LODB-coins-Addr:%s", addr))
 }
 
 func geAddrReciverKV(addr string, reciverAmount int64) *types.KeyValue {
-	reciver := &types.Int64{reciverAmount}
+	reciver := &types.Int64{Data: reciverAmount}
 	amountbytes := types.Encode(reciver)
-	kv := &types.KeyValue{calcAddrKey(addr), amountbytes}
+	kv := &types.KeyValue{Key: calcAddrKey(addr), Value: amountbytes}
 	return kv
 }
 

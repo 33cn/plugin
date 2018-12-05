@@ -86,16 +86,19 @@ func (g *channelClient) CreateRawTransaction(ctx context.Context, in *types.ReqC
 	return data.(*types.Transaction), nil
 }
 
+// ShowPrivacyAccountInfo display privacy account information for json rpc
 func (c *Jrpc) ShowPrivacyAccountInfo(in *pty.ReqPPrivacyAccount, result *json.RawMessage) error {
 	reply, err := c.cli.ExecWalletFunc(pty.PrivacyX, "ShowPrivacyAccountInfo", in)
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
 /////////////////privacy///////////////
+
+// ShowPrivacyAccountSpend display spend privacy account for json rpc
 func (c *Jrpc) ShowPrivacyAccountSpend(in *pty.ReqPrivBal4AddrToken, result *json.RawMessage) error {
 	if 0 == len(in.Addr) {
 		return types.ErrInvalidParam
@@ -105,19 +108,21 @@ func (c *Jrpc) ShowPrivacyAccountSpend(in *pty.ReqPrivBal4AddrToken, result *jso
 		log.Info("ShowPrivacyAccountSpend", "return err info", err)
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
+// ShowPrivacykey display privacy key for json rpc
 func (c *Jrpc) ShowPrivacykey(in *types.ReqString, result *json.RawMessage) error {
 	reply, err := c.cli.ShowPrivacyKey(context.Background(), in)
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
+// MakeTxPublic2privacy create public to privacy trasaction for json rpc
 func (c *Jrpc) MakeTxPublic2privacy(in *pty.ReqPub2Pri, result *interface{}) error {
 	reply, err := c.cli.MakeTxPublic2Privacy(context.Background(), in)
 	if err != nil {
@@ -129,6 +134,7 @@ func (c *Jrpc) MakeTxPublic2privacy(in *pty.ReqPub2Pri, result *interface{}) err
 	return nil
 }
 
+// MakeTxPrivacy2privacy create privacy to privacy transaction
 func (c *Jrpc) MakeTxPrivacy2privacy(in *pty.ReqPri2Pri, result *interface{}) error {
 	reply, err := c.cli.MakeTxPrivacy2Privacy(context.Background(), in)
 	if err != nil {
@@ -140,6 +146,7 @@ func (c *Jrpc) MakeTxPrivacy2privacy(in *pty.ReqPri2Pri, result *interface{}) er
 	return nil
 }
 
+// MakeTxPrivacy2public make privacy to public trasaction
 func (c *Jrpc) MakeTxPrivacy2public(in *pty.ReqPri2Pub, result *interface{}) error {
 	reply, err := c.cli.MakeTxPrivacy2Public(context.Background(), in)
 	if err != nil {
@@ -150,6 +157,7 @@ func (c *Jrpc) MakeTxPrivacy2public(in *pty.ReqPri2Pub, result *interface{}) err
 	return nil
 }
 
+// CreateUTXOs create utxos for json rpc
 func (c *Jrpc) CreateUTXOs(in *pty.ReqCreateUTXOs, result *interface{}) error {
 
 	reply, err := c.cli.CreateUTXOs(context.Background(), in)
@@ -170,7 +178,7 @@ func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interfac
 		return err
 	}
 	var txdetails rpctypes.WalletTxDetails
-	err = rpctypes.ConvertWalletTxDetailToJson(reply.(*types.WalletTxDetails), &txdetails)
+	err = rpctypes.ConvertWalletTxDetailToJSON(reply.(*types.WalletTxDetails), &txdetails)
 	if err != nil {
 		return err
 	}
@@ -178,26 +186,29 @@ func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interfac
 	return nil
 }
 
+// RescanUtxos rescan utxosl for json rpc
 func (c *Jrpc) RescanUtxos(in *pty.ReqRescanUtxos, result *json.RawMessage) error {
 	reply, err := c.cli.RescanUtxos(context.Background(), in)
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
+// EnablePrivacy enable privacy for json rpc
 func (c *Jrpc) EnablePrivacy(in *pty.ReqEnablePrivacy, result *json.RawMessage) error {
 	reply, err := c.cli.EnablePrivacy(context.Background(), in)
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJson(reply)
+	*result, err = types.PBToJSON(reply)
 	return err
 }
 
-func (this *Jrpc) CreateRawTransaction(in *types.ReqCreateTransaction, result *interface{}) error {
-	reply, err := this.cli.CreateRawTransaction(context.Background(), in)
+// CreateRawTransaction create raw trasaction for json rpc
+func (c *Jrpc) CreateRawTransaction(in *types.ReqCreateTransaction, result *interface{}) error {
+	reply, err := c.cli.CreateRawTransaction(context.Background(), in)
 	if err != nil {
 		return err
 	}

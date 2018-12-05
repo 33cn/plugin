@@ -11,7 +11,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
-func CreateRawRelayOrderTx(parm *ty.RelayCreate) ([]byte, error) {
+func createRawRelayOrderTx(parm *ty.RelayCreate) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -19,21 +19,21 @@ func CreateRawRelayOrderTx(parm *ty.RelayCreate) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "Create", &v)
 }
 
-func CreateRawRelayAcceptTx(parm *ty.RelayAccept) ([]byte, error) {
+func createRawRelayAcceptTx(parm *ty.RelayAccept) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "Accept", parm)
 }
 
-func CreateRawRelayRevokeTx(parm *ty.RelayRevoke) ([]byte, error) {
+func createRawRelayRevokeTx(parm *ty.RelayRevoke) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "Revoke", parm)
 }
 
-func CreateRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
+func createRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -41,7 +41,7 @@ func CreateRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "ConfirmTx", parm)
 }
 
-func CreateRawRelayVerifyBTCTx(parm *ty.RelayVerifyCli) ([]byte, error) {
+func createRawRelayVerifyBTCTx(parm *ty.RelayVerifyCli) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -49,7 +49,7 @@ func CreateRawRelayVerifyBTCTx(parm *ty.RelayVerifyCli) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "VerifyCli", &v)
 }
 
-func CreateRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
+func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -66,8 +66,9 @@ func CreateRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "BtcHeaders", v)
 }
 
+//CreateRawRelayOrderTx jrpc create raw relay order
 func (c *Jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) error {
-	reply, err := CreateRawRelayOrderTx(in)
+	reply, err := createRawRelayOrderTx(in)
 	if err != nil {
 		return err
 	}
@@ -75,8 +76,9 @@ func (c *Jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) er
 	return nil
 }
 
+//CreateRawRelayAcceptTx jrpc creat relay accept tx
 func (c *Jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) error {
-	reply, err := CreateRawRelayAcceptTx(in)
+	reply, err := createRawRelayAcceptTx(in)
 	if err != nil {
 		return err
 	}
@@ -85,8 +87,9 @@ func (c *Jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) e
 	return nil
 }
 
+//CreateRawRelayRevokeTx jrpc create revoke tx
 func (c *Jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) error {
-	reply, err := CreateRawRelayRevokeTx(in)
+	reply, err := createRawRelayRevokeTx(in)
 	if err != nil {
 		return err
 	}
@@ -95,8 +98,9 @@ func (c *Jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) e
 	return nil
 }
 
+//CreateRawRelayConfirmTx jrpc create confirm tx
 func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{}) error {
-	reply, err := CreateRawRelayConfirmTx(in)
+	reply, err := createRawRelayConfirmTx(in)
 	if err != nil {
 		return err
 	}
@@ -105,8 +109,9 @@ func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{
 	return nil
 }
 
+//CreateRawRelayVerifyBTCTx jrpc create veirfy btc tx
 func (c *Jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interface{}) error {
-	reply, err := CreateRawRelayVerifyBTCTx(in)
+	reply, err := createRawRelayVerifyBTCTx(in)
 	if err != nil {
 		return err
 	}
@@ -114,8 +119,9 @@ func (c *Jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interfac
 	return nil
 }
 
+//CreateRawRelaySaveBTCHeadTx jrpc save btc header
 func (c *Jrpc) CreateRawRelaySaveBTCHeadTx(in *ty.BtcHeader, result *interface{}) error {
-	reply, err := CreateRawRelaySaveBTCHeadTx(in)
+	reply, err := createRawRelaySaveBTCHeadTx(in)
 	if err != nil {
 		return err
 	}

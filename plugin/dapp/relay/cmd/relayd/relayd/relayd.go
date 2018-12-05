@@ -22,6 +22,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
+// Relayd define
 type Relayd struct {
 	config            *Config
 	db                *relaydDB
@@ -40,13 +41,14 @@ type Relayd struct {
 	isResetBtcHeight  bool
 }
 
+// NewRelayd create relayd instance
 func NewRelayd(config *Config) *Relayd {
 	ctx, cancel := context.WithCancel(context.Background())
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	db := NewRelayDB("relayd", dir, 256)
+	db := newRelayDB("relayd", dir, 256)
 
 	var firstHeight int
 	var isResetBtcHeight bool
@@ -84,9 +86,9 @@ func NewRelayd(config *Config) *Relayd {
 	client33 := NewClient33(&config.Chain33)
 	var btc BtcClient
 	if config.BtcdOrWeb == 0 {
-		btc, err = NewBtcd(config.Btcd.BitConnConfig(), config.Btcd.ReconnectAttempts)
+		btc, err = newBtcd(config.Btcd.BitConnConfig(), config.Btcd.ReconnectAttempts)
 	} else {
-		btc, err = NewBtcWeb()
+		btc, err = newBtcWeb()
 	}
 	if err != nil {
 		panic(err)
@@ -140,11 +142,13 @@ func NewRelayd(config *Config) *Relayd {
 	}
 }
 
+// Close relayd close
 func (r *Relayd) Close() {
 	r.client33.Close()
 	r.cancel()
 }
 
+// Start relayd start up
 func (r *Relayd) Start() {
 	r.btcClient.Start()
 	r.client33.Start(r.ctx)
@@ -297,7 +301,7 @@ func (r *Relayd) syncBlockHeaders() {
 			initIterHeight = breakHeight
 			log.Info("syncBlockHeaders", "len: ", len(headers))
 			btcHeaders := &ty.BtcHeaders{BtcHeader: headers}
-			relayHeaders := &ty.RelayAction_BtcHeaders{btcHeaders}
+			relayHeaders := &ty.RelayAction_BtcHeaders{BtcHeaders: btcHeaders}
 			action := &ty.RelayAction{
 				Value: relayHeaders,
 				Ty:    ty.RelayActionRcvBTCHeaders,
@@ -352,7 +356,7 @@ func (r *Relayd) dealOrder() {
 			Spv:     spv,
 		}
 		rr := &ty.RelayAction_Verify{
-			verify,
+			Verify: verify,
 		}
 		action := &ty.RelayAction{
 			Value: rr,

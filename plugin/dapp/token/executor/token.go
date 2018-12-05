@@ -46,6 +46,7 @@ type subConfig struct {
 
 var cfg subConfig
 
+// Init 重命名执行器名称
 func Init(name string, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &cfg)
@@ -53,6 +54,7 @@ func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newToken, types.GetDappFork(driverName, "Enable"))
 }
 
+// GetName 获取执行器别名
 func GetName() string {
 	return newToken().GetName()
 }
@@ -68,16 +70,18 @@ func newToken() drivers.Driver {
 	return t
 }
 
+// GetDriverName 获取执行器名字
 func (t *token) GetDriverName() string {
 	return driverName
 }
 
-func (c *token) CheckTx(tx *types.Transaction, index int) error {
+// CheckTx ...
+func (t *token) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-func (t *token) QueryTokenAssetsKey(addr string) (*types.ReplyStrings, error) {
-	key := CalcTokenAssetsKey(addr)
+func (t *token) queryTokenAssetsKey(addr string) (*types.ReplyStrings, error) {
+	key := calcTokenAssetsKey(addr)
 	value, err := t.GetLocalDB().Get(key)
 	if value == nil || err != nil {
 		tokenlog.Error("tokendb", "GetTokenAssetsKey", types.ErrNotFound)
@@ -92,9 +96,9 @@ func (t *token) QueryTokenAssetsKey(addr string) (*types.ReplyStrings, error) {
 	return &assets, nil
 }
 
-func (t *token) GetAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types.Message, error) {
+func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types.Message, error) {
 	var reply = &tokenty.ReplyAccountTokenAssets{}
-	assets, err := t.QueryTokenAssetsKey(req.Address)
+	assets, err := t.queryTokenAssetsKey(req.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +117,13 @@ func (t *token) GetAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 		if acc1 == nil {
 			continue
 		}
-		tokenAsset := &tokenty.TokenAsset{asset, acc1}
+		tokenAsset := &tokenty.TokenAsset{Symbol: asset, Account: acc1}
 		reply.TokenAssets = append(reply.TokenAssets, tokenAsset)
 	}
 	return reply, nil
 }
 
-func (t *token) GetAddrReceiverforTokens(addrTokens *tokenty.ReqAddrTokens) (types.Message, error) {
+func (t *token) getAddrReceiverforTokens(addrTokens *tokenty.ReqAddrTokens) (types.Message, error) {
 	var reply = &tokenty.ReplyAddrRecvForTokens{}
 	db := t.GetLocalDB()
 	reciver := types.Int64{}
@@ -133,14 +137,14 @@ func (t *token) GetAddrReceiverforTokens(addrTokens *tokenty.ReqAddrTokens) (typ
 			continue
 		}
 
-		recv := &tokenty.TokenRecv{token, reciver.Data}
+		recv := &tokenty.TokenRecv{Token: token, Recv: reciver.Data}
 		reply.TokenRecvs = append(reply.TokenRecvs, recv)
 	}
 
 	return reply, nil
 }
 
-func (t *token) GetTokenInfo(symbol string) (types.Message, error) {
+func (t *token) getTokenInfo(symbol string) (types.Message, error) {
 	if symbol == "" {
 		return nil, types.ErrInvalidParam
 	}
@@ -160,7 +164,7 @@ func (t *token) GetTokenInfo(symbol string) (types.Message, error) {
 	return &tokenInfo, nil
 }
 
-func (t *token) GetTokens(reqTokens *tokenty.ReqTokens) (types.Message, error) {
+func (t *token) getTokens(reqTokens *tokenty.ReqTokens) (types.Message, error) {
 	replyTokens := &tokenty.ReplyTokens{}
 	tokens, err := t.listTokenKeys(reqTokens)
 	if err != nil {
@@ -212,22 +216,21 @@ func (t *token) listTokenKeys(reqTokens *tokenty.ReqTokens) ([][]byte, error) {
 		}
 		tokenlog.Debug("token Query GetTokens", "get count", len(keys))
 		return keys, nil
-	} else {
-		var keys [][]byte
-		for _, token := range reqTokens.Tokens {
-			keys1, err := querydb.List(calcTokenStatusTokenKeyPrefixLocal(reqTokens.Status, token), nil, 0, 0)
-			if err != nil && err != types.ErrNotFound {
-				return nil, err
-			}
-			keys = append(keys, keys1...)
-
-			tokenlog.Debug("token Query GetTokens", "get count", len(keys))
-		}
-		if len(keys) == 0 {
-			return nil, types.ErrNotFound
-		}
-		return keys, nil
 	}
+	var keys [][]byte
+	for _, token := range reqTokens.Tokens {
+		keys1, err := querydb.List(calcTokenStatusTokenKeyPrefixLocal(reqTokens.Status, token), nil, 0, 0)
+		if err != nil && err != types.ErrNotFound {
+			return nil, err
+		}
+		keys = append(keys, keys1...)
+
+		tokenlog.Debug("token Query GetTokens", "get count", len(keys))
+	}
+	if len(keys) == 0 {
+		return nil, types.ErrNotFound
+	}
+	return keys, nil
 }
 
 // value 对应 statedb 的key
@@ -241,11 +244,11 @@ func (t *token) saveLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	} else {
 		value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)
 	}
-	kv = append(kv, &types.KeyValue{key, value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: value})
 	//如果当前需要被更新的状态不是Status_PreCreated，则认为之前的状态是precreate，且其对应的key需要被删除
 	if receipt.Status != tokenty.TokenStatusPreCreated {
 		key = calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, tokenty.TokenStatusPreCreated)
-		kv = append(kv, &types.KeyValue{key, nil})
+		kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	}
 	return kv
 }
@@ -254,7 +257,7 @@ func (t *token) deleteLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	var kv []*types.KeyValue
 
 	key := calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, receipt.Status)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	//如果当前需要被更新的状态不是Status_PreCreated，则认为之前的状态是precreate，且其对应的key需要被恢复
 	if receipt.Status != tokenty.TokenStatusPreCreated {
 		key = calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, tokenty.TokenStatusPreCreated)
@@ -264,7 +267,7 @@ func (t *token) deleteLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 		} else {
 			value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)
 		}
-		kv = append(kv, &types.KeyValue{key, value})
+		kv = append(kv, &types.KeyValue{Key: key, Value: value})
 	}
 	return kv
 }
@@ -282,7 +285,7 @@ func (t *token) makeTokenTxKvs(tx *types.Transaction, action *tokenty.TokenActio
 		return kvs, nil
 	}
 
-	kvs, err := TokenTxKvs(tx, symbol, t.GetHeight(), int64(index), isDel)
+	kvs, err := tokenTxKvs(tx, symbol, t.GetHeight(), int64(index), isDel)
 	return kvs, err
 }
 
@@ -290,15 +293,15 @@ func findTokenTxListUtil(req *tokenty.ReqTokenTx) ([]byte, []byte) {
 	var key, prefix []byte
 	if len(req.Addr) > 0 {
 		if req.Flag == 0 {
-			prefix = CalcTokenAddrTxKey(req.Symbol, req.Addr, -1, 0)
-			key = CalcTokenAddrTxKey(req.Symbol, req.Addr, req.Height, req.Index)
+			prefix = calcTokenAddrTxKey(req.Symbol, req.Addr, -1, 0)
+			key = calcTokenAddrTxKey(req.Symbol, req.Addr, req.Height, req.Index)
 		} else {
-			prefix = CalcTokenAddrTxDirKey(req.Symbol, req.Addr, req.Flag, -1, 0)
-			key = CalcTokenAddrTxDirKey(req.Symbol, req.Addr, req.Flag, req.Height, req.Index)
+			prefix = calcTokenAddrTxDirKey(req.Symbol, req.Addr, req.Flag, -1, 0)
+			key = calcTokenAddrTxDirKey(req.Symbol, req.Addr, req.Flag, req.Height, req.Index)
 		}
 	} else {
-		prefix = CalcTokenTxKey(req.Symbol, -1, 0)
-		key = CalcTokenTxKey(req.Symbol, req.Height, req.Index)
+		prefix = calcTokenTxKey(req.Symbol, -1, 0)
+		key = calcTokenTxKey(req.Symbol, req.Height, req.Index)
 	}
 	if req.Height == -1 {
 		key = nil
@@ -306,7 +309,7 @@ func findTokenTxListUtil(req *tokenty.ReqTokenTx) ([]byte, []byte) {
 	return key, prefix
 }
 
-func (t *token) GetTxByToken(req *tokenty.ReqTokenTx) (types.Message, error) {
+func (t *token) getTxByToken(req *tokenty.ReqTokenTx) (types.Message, error) {
 	if req.Flag != 0 && req.Flag != dapp.TxIndexFrom && req.Flag != dapp.TxIndexTo {
 		err := types.ErrInvalidParam
 		return nil, errors.Wrap(err, "flag unknown")
@@ -334,4 +337,9 @@ func (t *token) GetTxByToken(req *tokenty.ReqTokenTx) (types.Message, error) {
 		replyTxInfos.TxInfos[index] = &replyTxInfo
 	}
 	return &replyTxInfos, nil
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (t *token) CheckReceiptExecOk() bool {
+	return true
 }

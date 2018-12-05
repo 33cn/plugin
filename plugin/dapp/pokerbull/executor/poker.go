@@ -12,58 +12,73 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
-var POKER_CARD_NUM = 52 //4 * 13 不带大小王
-var COLOR_OFFSET uint32 = 8
-var COLOR_BIT_MAST = 0xFF
-var COLOR_NUM = 4
-var CARD_NUM_PER_COLOR = 13
-var CARD_NUM_PER_GAME = 5
+// PokerCardNum 牌数，4 * 13 不带大小王
+var PokerCardNum = 52
+
+// ColorOffset 牌花色偏移
+var ColorOffset uint32 = 8
+
+// ColorBitMask 牌花色bit掩码
+var ColorBitMask = 0xFF
+
+// CardNumPerColor 每种花色的牌数
+var CardNumPerColor = 13
+
+// CardNumPerGame 一手牌的牌数
+var CardNumPerGame = 5
 
 const (
-	POKERBULL_RESULT_X1    = 1
-	POKERBULL_RESULT_X2    = 2
-	POKERBULL_RESULT_X3    = 3
-	POKERBULL_RESULT_X4    = 4
-	POKERBULL_RESULT_X5    = 5
-	POKERBULL_LEVERAGE_MAX = POKERBULL_RESULT_X1
+	// PokerbullResultX1 赌注倍数1倍
+	PokerbullResultX1 = 1
+	// PokerbullResultX2 赌注倍数2倍
+	PokerbullResultX2 = 2
+	// PokerbullResultX3 赌注倍数3倍
+	PokerbullResultX3 = 3
+	// PokerbullResultX4 赌注倍数4倍
+	PokerbullResultX4 = 4
+	// PokerbullResultX5 赌注倍数5倍
+	PokerbullResultX5 = 5
+	// PokerbullLeverageMax 赌注倍数最大倍数
+	PokerbullLeverageMax = PokerbullResultX1
 )
 
+// NewPoker 创建一副牌
 func NewPoker() *types.PBPoker {
 	poker := new(types.PBPoker)
-	poker.Cards = make([]int32, POKER_CARD_NUM)
-	poker.Pointer = int32(POKER_CARD_NUM - 1)
+	poker.Cards = make([]int32, PokerCardNum)
+	poker.Pointer = int32(PokerCardNum - 1)
 
-	for i := 0; i < POKER_CARD_NUM; i++ {
-		color := i / CARD_NUM_PER_COLOR
-		num := i%CARD_NUM_PER_COLOR + 1
-		poker.Cards[i] = int32(color<<COLOR_OFFSET + num)
+	for i := 0; i < PokerCardNum; i++ {
+		color := i / CardNumPerColor
+		num := i%CardNumPerColor + 1
+		poker.Cards[i] = int32(color<<ColorOffset + num)
 	}
 	return poker
 }
 
-// 洗牌
+// Shuffle 洗牌
 func Shuffle(poker *types.PBPoker, rng int64) {
 	rndn := rand.New(rand.NewSource(rng))
 
-	for i := 0; i < POKER_CARD_NUM; i++ {
-		idx := rndn.Intn(POKER_CARD_NUM - 1)
+	for i := 0; i < PokerCardNum; i++ {
+		idx := rndn.Intn(PokerCardNum - 1)
 		tmpV := poker.Cards[idx]
-		poker.Cards[idx] = poker.Cards[POKER_CARD_NUM-i-1]
-		poker.Cards[POKER_CARD_NUM-i-1] = tmpV
+		poker.Cards[idx] = poker.Cards[PokerCardNum-i-1]
+		poker.Cards[PokerCardNum-i-1] = tmpV
 	}
-	poker.Pointer = int32(POKER_CARD_NUM - 1)
+	poker.Pointer = int32(PokerCardNum - 1)
 }
 
-// 发牌
+// Deal 发牌
 func Deal(poker *types.PBPoker, rng int64) []int32 {
-	if poker.Pointer < int32(CARD_NUM_PER_GAME) {
-		logger.Error(fmt.Sprintf("Wait to be shuffled: deal cards [%d], left [%d]", CARD_NUM_PER_GAME, poker.Pointer+1))
+	if poker.Pointer < int32(CardNumPerGame) {
+		logger.Error(fmt.Sprintf("Wait to be shuffled: deal cards [%d], left [%d]", CardNumPerGame, poker.Pointer+1))
 		Shuffle(poker, rng+int64(poker.Cards[0]))
 	}
 
 	rndn := rand.New(rand.NewSource(rng))
-	res := make([]int32, CARD_NUM_PER_GAME)
-	for i := 0; i < CARD_NUM_PER_GAME; i++ {
+	res := make([]int32, CardNumPerGame)
+	for i := 0; i < CardNumPerGame; i++ {
 		idx := rndn.Intn(int(poker.Pointer))
 		tmpV := poker.Cards[poker.Pointer]
 		res[i] = poker.Cards[idx]
@@ -75,7 +90,7 @@ func Deal(poker *types.PBPoker, rng int64) []int32 {
 	return res
 }
 
-// 计算斗牛结果
+// Result 计算斗牛结果
 func Result(cards []int32) int32 {
 	temp := 0
 	r := -1 //是否有牛标志
@@ -125,45 +140,45 @@ func Result(cards []int32) int32 {
 	return int32(result[0])
 }
 
-// 计算结果倍数
+// Leverage 计算结果倍数
 func Leverage(hand *types.PBHand) int32 {
 	result := hand.Result
 
 	// 小牛 [1, 6]
 	if result < 7 {
-		return POKERBULL_RESULT_X1
+		return PokerbullResultX1
 	}
 
 	// 大牛 [7, 9]
 	if result >= 7 && result < 10 {
-		return POKERBULL_RESULT_X2
+		return PokerbullResultX2
 	}
 
 	var flowers = 0
 	if result == 10 {
 		for _, card := range hand.Cards {
-			if (int(card) & COLOR_BIT_MAST) > 10 {
+			if (int(card) & ColorBitMask) > 10 {
 				flowers++
 			}
 		}
 
 		// 牛牛
 		if flowers < 4 {
-			return POKERBULL_RESULT_X3
+			return PokerbullResultX3
 		}
 
 		// 四花
 		if flowers == 4 {
-			return POKERBULL_RESULT_X4
+			return PokerbullResultX4
 		}
 
 		// 五花
 		if flowers == 5 {
-			return POKERBULL_RESULT_X5
+			return PokerbullResultX5
 		}
 	}
 
-	return POKERBULL_RESULT_X1
+	return PokerbullResultX1
 }
 
 type pokerCard struct {
@@ -193,14 +208,15 @@ func (p colorCardSlice) Less(i, j int) bool {
 func newcolorCard(a []int32) colorCardSlice {
 	var cardS []*pokerCard
 	for i := 0; i < len(a); i++ {
-		num := int(a[i]) & COLOR_BIT_MAST
-		color := int(a[i]) >> COLOR_OFFSET
+		num := int(a[i]) & ColorBitMask
+		color := int(a[i]) >> ColorOffset
 		cardS = append(cardS, &pokerCard{num, color})
 	}
 
 	return cardS
 }
 
+// CompareResult 两手牌比较结果
 func CompareResult(i, j *types.PBHand) bool {
 	if i.Result < j.Result {
 		return true
@@ -213,6 +229,7 @@ func CompareResult(i, j *types.PBHand) bool {
 	return false
 }
 
+// Compare 比较两手牌的斗牛结果
 func Compare(a []int32, b []int32) bool {
 	cardA := newcolorCard(a)
 	cardB := newcolorCard(b)

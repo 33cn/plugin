@@ -6,7 +6,10 @@ package privacy
 
 import (
 	"bytes"
+	"encoding/hex"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"math/rand"
 	"time"
@@ -18,8 +21,8 @@ import (
 )
 
 var (
-	pubs_byte [10][]byte
-	secs_byte [10][]byte
+	pubsByte [10][]byte
+	secsByte [10][]byte
 )
 
 func init() {
@@ -48,8 +51,8 @@ func init() {
 	}
 
 	for i := 0; i < 10; i++ {
-		pubs_byte[i], _ = common.FromHex(pubstrs[i])
-		secs_byte[i], _ = common.FromHex(secstrs[i])
+		pubsByte[i], _ = common.FromHex(pubstrs[i])
+		secsByte[i], _ = common.FromHex(secstrs[i])
 	}
 }
 
@@ -104,22 +107,27 @@ func TestGenerateRingSignature1(t *testing.T) {
 	var sec PrivKeyPrivacy
 	var signs [maxCount]*Sign
 	index := 0
-	prefix_hash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	assert.Nil(t, err)
 	tmp, err := common.FromHex("e7d85d6e81512c5650adce0499d6c17a83e2e29a05c1166cd2171b6b9288b3c4")
+	assert.Nil(t, err)
 	copy(image[:], tmp)
 	tmp, err = common.FromHex("15e3cc7cdb904d62f7c20d7fa51923fa2839f9e0a92ff0eddf8c12bd09089c15")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		copy(pub[:], tmp[32*i:32*(i+1)])
 		pubs[i] = &pub
 	}
 	tmp, err = common.FromHex("fd8de2e12410e3da20350e6f4083b73cc3396b4812c09af633d7c223bfb2560b")
+	assert.Nil(t, err)
 	copy(sec[:], tmp)
 	tmp, err = common.FromHex("b5c0a53bce99106e74284ee1d2c64a68a14e8b4c1735e8ab9ca7215a414f97084749935d87d516b5659a01e84b08279c42e649b2e500e2ede443fe68885b0206")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		signs[i] = &Sign{}
 	}
-	err = generateRingSignature(prefix_hash, &image, pubs[:], &sec, signs[:], index)
+	err = generateRingSignature(prefixHash, &image, pubs[:], &sec, signs[:], index)
 	if err != nil {
 		t.Error("generateRingSignature() cause error ", err)
 	}
@@ -131,26 +139,29 @@ func TestCheckRingSignature1(t *testing.T) {
 	var pubs [maxCount]*PubKeyPrivacy
 	var signs [maxCount]*Sign
 
-	prefix_hash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 	if err != nil {
 		t.Error("initialize public key from hex failed.")
 	}
 	tmp, err := common.FromHex("e7d85d6e81512c5650adce0499d6c17a83e2e29a05c1166cd2171b6b9288b3c4")
+	assert.Nil(t, err)
 	copy(image[:], tmp)
 	tmp, err = common.FromHex("15e3cc7cdb904d62f7c20d7fa51923fa2839f9e0a92ff0eddf8c12bd09089c15")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		copy(pub[:], tmp[32*i:32*(i+1)])
 		pubs[i] = &pub
 	}
 	tmp, err = common.FromHex("a142d0180a6047cf883125a83617c7dd56e9d8153ec04a96b3c5d9a5e03cd70cfd6827b200d6c2f4b41fb5b0162117a5447e327c29482c358a0a3c82db88fb0f")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		sign := Sign{}
 		copy(sign[:], tmp[64*i:64*(i+1)])
 		signs[i] = &sign
 	}
 
-	if !checkRingSignature(prefix_hash, &image, pubs[:], signs[:]) {
+	if !checkRingSignature(prefixHash, &image, pubs[:], signs[:]) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -159,21 +170,23 @@ func TestCheckRingSignatureAPI1(t *testing.T) {
 	const maxCount = 1
 	var signatures types.RingSignatureItem
 	publickeys := make([][]byte, maxCount)
-	prefix_hash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, err := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 	if err != nil {
-		t.Errorf("common.FromHex.", err)
+		t.Errorf("common.FromHex. error %v", err)
 	}
 	keyimage, err := common.FromHex("e7d85d6e81512c5650adce0499d6c17a83e2e29a05c1166cd2171b6b9288b3c4")
 	if err != nil {
-		t.Errorf("common.FromHex.", err)
+		t.Errorf("common.FromHex. error %v", err)
 	}
 
 	tmp, err := common.FromHex("15e3cc7cdb904d62f7c20d7fa51923fa2839f9e0a92ff0eddf8c12bd09089c15")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		publickeys[i] = append(publickeys[i], tmp...)
 	}
 
 	tmp, err = common.FromHex("a142d0180a6047cf883125a83617c7dd56e9d8153ec04a96b3c5d9a5e03cd70cfd6827b200d6c2f4b41fb5b0162117a5447e327c29482c358a0a3c82db88fb0f")
+	assert.Nil(t, err)
 	data := make([][]byte, maxCount)
 	for i := 0; i < maxCount; i++ {
 		data[i] = make([]byte, 0)
@@ -181,7 +194,7 @@ func TestCheckRingSignatureAPI1(t *testing.T) {
 	}
 	signatures.Signature = data
 
-	if !CheckRingSignature(prefix_hash, &signatures, publickeys, keyimage) {
+	if !CheckRingSignature(prefixHash, &signatures, publickeys, keyimage) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -192,26 +205,29 @@ func TestCheckRingSignature3(t *testing.T) {
 	var pubs [maxCount]*PubKeyPrivacy
 	var signs [maxCount]*Sign
 
-	prefix_hash, err := common.FromHex("9e7ff8bde0e318543dcedbe34c51c6b25a850578adae2e7930bbda5224c77ef5")
+	prefixHash, err := common.FromHex("9e7ff8bde0e318543dcedbe34c51c6b25a850578adae2e7930bbda5224c77ef5")
 	if err != nil {
 		t.Error("initialize public key from hex failed.")
 	}
 	tmp, err := common.FromHex("04e593e5e4028ce1c1194eb473efc21359b114737e5a64f14420b3cf5b22204b")
+	assert.Nil(t, err)
 	copy(image[:], tmp)
 	tmp, err = common.FromHex("6bfc9654082a7da3055121aa69ddb46852577be71d6c9a204aae3492f0db7e41194f27c9fe4d81cc8421bf8256374edf660806d78b4ed7914a3b74359c8ac0bd65ff1bca674607f7948ea0ae8e83b6d9c5092942b52d2847b6cf44c9c609264d")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		copy(pub[:], tmp[32*i:32*(i+1)])
 		pubs[i] = &pub
 	}
 	tmp, err = common.FromHex("30041e9694c3184980c3bb87f817eab3f973cd969810ec9df4d2feeee907970693eba4bc5436dc7cf49ce476e091bf74d20003f0f73f6d0412909ed8c1a10701c9c4ec11623dd3c50980ead83865a03dfa27614e5e9fb875d75667c11ced390d438f5dd04a137c73a0ec9ca36dfab62c948ce596722067de0315b570db1f720bab7fb7ea1b124f55c9633548f06d1bb403d7e2e15a1fed70ab2865e324ef340327f6d0ad0a7129b272ce12a5a63836a4e96e95897ee44cc22a7048023f438006")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		sign := Sign{}
 		copy(sign[:], tmp[64*i:64*(i+1)])
 		signs[i] = &sign
 	}
 
-	if !checkRingSignature(prefix_hash, &image, pubs[:], signs[:]) {
+	if !checkRingSignature(prefixHash, &image, pubs[:], signs[:]) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -242,27 +258,30 @@ func TestCheckRingSignature17(t *testing.T) {
 		"c618c6b0e328886be15e2c92052dcf74cf4745a4e5e53f6d2417a9c9d139c167",
 	}
 
-	prefix_hash, err := common.FromHex("1c909782c70567e9968ded1c05a4226a3e04a07ae9db48e0153a56b2a4684779")
+	prefixHash, err := common.FromHex("1c909782c70567e9968ded1c05a4226a3e04a07ae9db48e0153a56b2a4684779")
 	if err != nil {
 		t.Error("initialize public key from hex failed.")
 	}
 	tmp, err := common.FromHex("199c5e78a71b320b704e01850a67c371fed3aca11a04077a36e10c808fdc5f57")
+	assert.Nil(t, err)
 	copy(image[:], tmp)
 
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		tmp, err = common.FromHex(pubstrs[i])
+		assert.Nil(t, err)
 		copy(pub[:], tmp)
 		pubs[i] = &pub
 	}
 	tmp, err = common.FromHex("f5b1a5079f6122d2370da403efc2e5504b07d67ade7ca57ad3720c7e00a676096ad418262cd9f8c9afee8e58be894cb2bf6387a5018f67d629bf8845bdc9b307aee86f85f8612f74ed870abc81d54cb38f2f9108c20dbf81eb7c1160935bc801cdca5d3f09f1d4bac810cb03ec32753f65a2071a97ba787c2d550ea5ff4d890ac398a1576d108ee67138e7596af54199247c6413e06124af8db76c0ad67c160f351e53029cac4a073c8b188eb8b5151ebf1f34a6693ddbf467ac8c20eec51204c3ca29fd5814f0848b966d2bca9543fc953a0d04bb4782950123d87bd378f60d3cdc5e44160ed4265b7cd84a8200244fa24bac86c50c35b885a15f1bc1de9909fabab87d504fc0cb0b263564e606505477ded1f89543bd4d6ed87ce61918f705359c525c0e0a4cc1d77043c71dfdf9c6834e2623197af1629e34962d940eb4080d06dddaa6e12953232595906289e4712f6aa8c1189f336b823a6a38ac95390b63c508a3409256f0c4df687d4b49990d9878fc5c97af32aa99bc9ffa1215860f69fc141c763fe1f4ed3ccc72e6817e926164752686d55238e74032c47c8c580f7042a62bd74858768815a05b58887f9828bf0f184eceba1416ac294abe453105a0de353316374b1c0560acc0f98181e3229084721a0d2a6ed891d57b805984044372cbb566c91696f5d63e7e5d8cc906c5fb029e71e87a339fcbaee9502f3d01dfd203dbd04797c33370dd0626baabfb9577ca1c294d1d8c6b82ac9624496f04893ad6b2222799cfd1d4ec525b011ecf72b01f6f3b8a6a165f0169fa7cc0960025787d4253e1064e71190d36965605adb850e72e17685e35772cdd3fdfb3d505e96e5eb0ecf8c11bcef62c79e0d49e3ebc76e56d18753403a880b7d7ed399c0e143df235ac8b0748d99e1b0cdcc511abc079c1bdbfead04265d9ad44e5dd7c0e97e4afbacba478539071db02315cc9326c8edb3d8530c7fc78af9ca12b241c04f87bffab95d85f8486ff01aec75e7e38a75ff023e4b2b0f59999c4ac067b500863a63de803da2c89de74878879a39aec6cf800b117ef89ea068a71db5ef70200163d1b4beaeea8c642430e15a64baefd350cb16ca5dae6563c13162904908301485d2c4e5bac6d55dd947a169a38df2848d5e227482760f6d818c45f66a6380507d691ef87e3550626254da3ec65411e8e5aa2ab4846222e208c9ba18cd5ee09617398af31b9eac38b59180bfaec538e5542d698da20016720ced6edb7ba270059c1e1e7107d71524e4a9cf562b5da263b52368f477c5205c768ac36975a250310c37d1f40f5a6eac857ed6082c12f5cf20a0403afcde3f1ea2e4743cb1ba10fd5d92038b1fc65d09467aeac9fe7cd24f78b9376d47d2ef1d3677ede62b2640544dd1b301292b8d082a97bd910ca24fbb5eea878f2cfa4e983bb25a8a66a25065988477eec0c1815a3fa2ff421621707954e9eacdf823eea02c2e3742797c6097e570479b36ca4580c5be9bab187de6a1fa6609768b3fa6448b5bc56d6de820d")
+	assert.Nil(t, err)
 	for i := 0; i < maxCount; i++ {
 		sign := Sign{}
 		copy(sign[:], tmp[64*i:64*(i+1)])
 		signs[i] = &sign
 	}
 
-	if !checkRingSignature(prefix_hash, &image, pubs[:], signs[:]) {
+	if !checkRingSignature(prefixHash, &image, pubs[:], signs[:]) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -276,27 +295,27 @@ func TestRingSignatere1(t *testing.T) {
 	index := 0
 
 	// 初始化测试数据
-	prefix_hash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		sign := Sign{}
 		pubs[i] = &pub
 		signs[i] = &sign
 
-		copy(pub[:], pubs_byte[i])
+		copy(pub[:], pubsByte[i])
 		if i == index {
 			// 创建 KeyImage
-			copy(sec[:], secs_byte[i])
+			copy(sec[:], secsByte[i])
 			generateKeyImage(&pub, &sec, &image)
 		}
 	}
 	// 创建环签名
-	err := generateRingSignature(prefix_hash, &image, pubs[:], &sec, signs[:], index)
+	err := generateRingSignature(prefixHash, &image, pubs[:], &sec, signs[:], index)
 	if err != nil {
 		t.Fatal("generateRingSignature() failed. error ", err)
 	}
 	// 消炎环签名
-	if !checkRingSignature(prefix_hash, &image, pubs[:], signs[:]) {
+	if !checkRingSignature(prefixHash, &image, pubs[:], signs[:]) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -309,7 +328,7 @@ func testRingSignatureOncetime(maxCount int, t *testing.T) {
 	signs := make([]*Sign, maxCount)
 
 	// 初始化测试数据
-	prefix_hash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 
 	c, err := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
 	if err != nil {
@@ -334,17 +353,17 @@ func testRingSignatureOncetime(maxCount int, t *testing.T) {
 			copy(sec[:], privkey.Bytes())
 			err = generateKeyImage(&pub, &sec, &image)
 			if err != nil {
-				t.Errorf("generateKeyImage() failed. error ", err)
+				t.Errorf("generateKeyImage() failed. error %v", err)
 			}
 		}
 	}
 	// 创建环签名
-	err = generateRingSignature(prefix_hash, &image, pubs[:], &sec, signs[:], index)
+	err = generateRingSignature(prefixHash, &image, pubs[:], &sec, signs[:], index)
 	if err != nil {
 		t.Fatal("generateRingSignature() failed. error ", err)
 	}
 	// 消炎环签名
-	if !checkRingSignature(prefix_hash, &image, pubs[:], signs[:]) {
+	if !checkRingSignature(prefixHash, &image, pubs[:], signs[:]) {
 		t.Fatal("checkRingSignature() failed.")
 	}
 }
@@ -371,12 +390,12 @@ func TestGenerateRingSignatureAPI(t *testing.T) {
 	}
 
 	realUtxoIndex := rand.Int() % maxCount
-	prefix_hash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 	utxos = make([]*privacytypes.UTXOBasic, maxCount)
 	for i := 0; i < maxCount; i++ {
 		utxo := privacytypes.UTXOBasic{}
 		utxos[i] = &utxo
-		utxo.OnetimePubkey = append(utxo.OnetimePubkey[:], pubs_byte[i]...)
+		utxo.OnetimePubkey = append(utxo.OnetimePubkey[:], pubsByte[i]...)
 		if i == realUtxoIndex {
 			pubKey := privkey.PubKey().Bytes()
 			// 增加指定的密钥对
@@ -394,8 +413,8 @@ func TestGenerateRingSignatureAPI(t *testing.T) {
 
 	var signaturedata *types.RingSignatureItem
 	// step2. generate ring signature
-	if signaturedata, err = GenerateRingSignature(prefix_hash, utxos, sec[:], realUtxoIndex, keyImage); err != nil {
-		t.Errorf("GenerateRingSignature() failed. ", err)
+	if signaturedata, err = GenerateRingSignature(prefixHash, utxos, sec[:], realUtxoIndex, keyImage); err != nil {
+		t.Errorf("GenerateRingSignature() failed. error %v", err)
 	}
 
 	publickeys := make([][]byte, maxCount)
@@ -403,7 +422,7 @@ func TestGenerateRingSignatureAPI(t *testing.T) {
 		publickeys[i] = append(publickeys[i], utxos[i].OnetimePubkey...)
 	}
 	// step3. checksignature
-	if !CheckRingSignature(prefix_hash, signaturedata, publickeys, keyImage) {
+	if !CheckRingSignature(prefixHash, signaturedata, publickeys, keyImage) {
 		t.Error("CheckRingSignature() failed.")
 	}
 }
@@ -416,7 +435,7 @@ func benchRingSignatureOncetime(maxCount int) {
 	signs := make([]*Sign, maxCount)
 
 	// 初始化测试数据
-	prefix_hash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
+	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 
 	c, _ := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
 	for i := 0; i < maxCount; i++ {
@@ -437,9 +456,9 @@ func benchRingSignatureOncetime(maxCount int) {
 		}
 	}
 	// 创建环签名
-	generateRingSignature(prefix_hash, &image, pubs[:], &sec, signs[:], index)
+	generateRingSignature(prefixHash, &image, pubs[:], &sec, signs[:], index)
 	// 效验环签名
-	checkRingSignature(prefix_hash, &image, pubs[:], signs[:])
+	checkRingSignature(prefixHash, &image, pubs[:], signs[:])
 }
 
 func Benchmark_RingSignature(b *testing.B) {
@@ -456,5 +475,49 @@ func Benchmark_RingSignature(b *testing.B) {
 func Benchmark_RingSignatureAllStep(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 
+	}
+}
+
+func TestRingSignatureCrypto(t *testing.T) {
+	{
+		sig := &RingSignature{}
+		bytes := hex.EncodeToString(sig.Bytes())
+		assert.Equal(t, bytes, "")
+		assert.Equal(t, true, sig.IsZero())
+		assert.Equal(t, sig.String(), "")
+		assert.Equal(t, sig.Equals(sig), true)
+	}
+	{
+		key := &RingSignPrivateKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+		assert.NotNil(t, key.PubKey())
+		assert.Equal(t, key.Equals(key), true)
+		sig := key.Sign([]byte("Messages"))
+		assert.NotNil(t, sig)
+	}
+	{
+		ringsig := &RingSignature{}
+		key := &RingSignPublicKey{}
+		bytes := hex.EncodeToString(key.Bytes())
+		assert.Equal(t, bytes, "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.KeyString(), "0000000000000000000000000000000000000000000000000000000000000000")
+		assert.Equal(t, key.Equals(key), true)
+		assert.Equal(t, key.VerifyBytes([]byte("Message"), ringsig), false)
+	}
+	{
+		ring := &RingSignED25519{}
+		privKey, err := ring.GenKey()
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		privKey, err = ring.PrivKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, privKey)
+		pubKey, err := ring.PubKeyFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, pubKey)
+		sig, err := ring.SignatureFromBytes([]byte("00000000000000000000000000000000"))
+		assert.NoError(t, err)
+		assert.NotNil(t, sig)
 	}
 }

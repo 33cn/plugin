@@ -38,7 +38,7 @@ func init() {
 // Init 初始化本合约对象
 func Init(name string, sub []byte) {
 	driverName = name
-	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, evmtypes.EVMEnable))
 	EvmAddress = address.ExecAddress(types.ExecName(name))
 	// 初始化硬分叉数据
 	state.InitForkData()
@@ -117,6 +117,11 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 	return false
 }
 
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (evm *EVMExecutor) CheckReceiptExecOk() bool {
+	return true
+}
+
 // 生成一个新的合约对象地址
 func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
 	return common.NewAddress(txHash)
@@ -150,7 +155,7 @@ func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
-		GetHash:     GetHashFn(evm.GetApi()),
+		GetHash:     GetHashFn(evm.GetAPI()),
 		Origin:      msg.From(),
 		Coinbase:    nil,
 		BlockNumber: new(big.Int).SetInt64(evm.GetHeight()),

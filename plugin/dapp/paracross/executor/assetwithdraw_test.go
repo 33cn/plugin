@@ -50,7 +50,7 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetApi(suite.api)
+	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = true
 
 	// setup block
@@ -78,13 +78,13 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 	saveTitle(suite.stateDB, calcTitleKey(Title), &titleStatus)
 
 	// setup api
-	hashes := &types.ReqHashes{[][]byte{MainBlockHash10}}
+	hashes := &types.ReqHashes{Hashes: [][]byte{MainBlockHash10}}
 	suite.api.On("GetBlockByHashes", hashes).Return(
 		&types.BlockDetails{
 			Items: []*types.BlockDetail{blockDetail},
 		}, nil)
-	suite.api.On("GetBlockHash", &types.ReqInt{MainBlockHeight}).Return(
-		&types.ReplyHash{MainBlockHash10}, nil)
+	suite.api.On("GetBlockHash", &types.ReqInt{Height: MainBlockHeight}).Return(
+		&types.ReplyHash{Hash: MainBlockHash10}, nil)
 }
 
 // 主链先不执行
@@ -252,7 +252,7 @@ func createAssetWithdrawTx(s suite.Suite, privFrom string, to []byte) (*types.Tr
 		To:          string(to),
 		Amount:      Amount,
 		Fee:         0,
-		Note:        "test asset transfer",
+		Note:        []byte("test asset transfer"),
 		IsWithdraw:  true,
 		IsToken:     false,
 		TokenSymbol: "",

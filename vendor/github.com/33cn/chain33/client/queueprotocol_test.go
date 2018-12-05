@@ -8,13 +8,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/33cn/chain33/pluginmgr"
-	_ "github.com/33cn/chain33/system"
-
 	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/common/version"
+	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/chain33/queue"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,13 +41,13 @@ func TestQueueProtocolAPI(t *testing.T) {
 	option.SendTimeout = 100
 	option.WaitTimeout = 200
 
-	qc, err := client.New(nil, nil)
+	_, err := client.New(nil, nil)
 	if err == nil {
 		t.Error("client.New(nil, nil) need return error")
 	}
 
 	var q = queue.New("channel")
-	qc, err = client.New(q.Client(), &option)
+	qc, err := client.New(q.Client(), &option)
 	if err != nil {
 		t.Errorf("client.New() cause error %v", err)
 	}
@@ -93,6 +94,7 @@ func TestQueueProtocol(t *testing.T) {
 	testGetLastHeader(t, api)
 	testSignRawTx(t, api)
 	testStoreGetTotalCoins(t, api)
+	testStoreList(t, api)
 	testBlockChainQuery(t, api)
 }
 
@@ -129,6 +131,18 @@ func testStoreGetTotalCoins(t *testing.T, api client.QueueProtocolAPI) {
 	_, err = api.StoreGetTotalCoins(&types.IterateRangeByStateHash{Count: 10})
 	if err == nil {
 		t.Error("StoreGetTotalCoins(&types.IterateRangeByStateHash{Count:10}) need return error.")
+	}
+}
+
+func testStoreList(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreList(&types.StoreList{})
+	if err == nil {
+		t.Error("Call StoreList Failed.", err)
+	}
+
+	_, err = api.StoreList(nil)
+	if err == nil {
+		t.Error("StoreList(nil) need return error.")
 	}
 }
 
@@ -422,7 +436,7 @@ func testWalletSendToAddress(t *testing.T, api client.QueueProtocolAPI) {
 	if err == nil {
 		t.Error("WalletSendToAddress(nil) need return error.")
 	}
-	_, err = api.WalletSendToAddress(&types.ReqWalletSendToAddress{Note: "case1"})
+	_, err = api.WalletSendToAddress(&types.ReqWalletSendToAddress{Note: []byte("case1")})
 	if err == nil {
 		t.Error("WalletSendToAddress(&types.ReqWalletSendToAddress{Note:\"case1\"}) need return error.")
 	}
@@ -474,7 +488,7 @@ func testNewAccount(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testWalletGetAccountList(t *testing.T, api client.QueueProtocolAPI) {
-	req := types.ReqAccountList{true}
+	req := types.ReqAccountList{WithoutBalance: true}
 	_, err := api.WalletGetAccountList(&req)
 	if err != nil {
 		t.Error("Call WalletGetAccountList Failed.", err)
@@ -830,11 +844,12 @@ func testIsSyncGRPC(t *testing.T, rpc *mockGRPCSystem) {
 }
 
 func testVersionGRPC(t *testing.T, rpc *mockGRPCSystem) {
-	var res types.Reply
+	var res types.VersionInfo
 	err := rpc.newRpcCtx("Version", &types.ReqNil{}, &res)
 	if err != nil {
 		t.Error("Call Version Failed.", err)
 	}
+	assert.Equal(t, version.GetVersion(), res.Chain33)
 }
 
 func testDumpPrivkeyGRPC(t *testing.T, rpc *mockGRPCSystem) {

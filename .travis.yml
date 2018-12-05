@@ -9,7 +9,7 @@ jobs:
   include:
     - stage: check_fmt
       sudo: require
-      go: "1.9.x"
+      go: "1.11.x"
       install:
         - go get -u golang.org/x/tools/cmd/goimports
         - go get -u gopkg.in/alecthomas/gometalinter.v2
@@ -26,6 +26,13 @@ jobs:
       script:
         - make test
 
+    - stage: auto-test
+      go: "1.9.x"
+      install: skip
+      before_script: make build_ci
+      script:
+        - make autotest dapp=all
+
     - stage: coverage
       if: branch = master
       go: "1.9.x"
@@ -39,6 +46,7 @@ jobs:
 
 
     - stage: deploy
+      if: env(DAPP) IS present
       sudo: required
       services:
         - docker
@@ -55,6 +63,4 @@ jobs:
         - sudo mv docker-compose /usr/local/bin
       before_script: make build_ci
       script:
-        - make autotest_ci proj=build
-#        - make docker-compose && make docker-compose-down && make docker-compose DAPP=paracross && make docker-compose-down DAPP=paracross && make docker-compose DAPP=relay && make docker-compose-down DAPP=relay
-        - make docker-compose DAPP=all && make docker-compose-down DAPP=all && make clean
+        - make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean

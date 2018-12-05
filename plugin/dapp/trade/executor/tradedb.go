@@ -40,29 +40,29 @@ func (selldb *sellDB) getSellLogs(tradeType int32, txhash string) *types.Receipt
 	log := &types.ReceiptLog{}
 	log.Ty = tradeType
 	base := &pty.ReceiptSellBase{
-		selldb.TokenSymbol,
-		selldb.Address,
-		strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
-		selldb.MinBoardlot,
-		strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
-		selldb.TotalBoardlot,
-		selldb.SoldBoardlot,
-		selldb.Starttime,
-		selldb.Stoptime,
-		selldb.Crowdfund,
-		selldb.SellID,
-		pty.SellOrderStatus[selldb.Status],
-		"",
-		txhash,
-		selldb.Height,
-		selldb.AssetExec,
+		TokenSymbol:       selldb.TokenSymbol,
+		Owner:             selldb.Address,
+		AmountPerBoardlot: strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		MinBoardlot:       selldb.MinBoardlot,
+		PricePerBoardlot:  strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		TotalBoardlot:     selldb.TotalBoardlot,
+		SoldBoardlot:      selldb.SoldBoardlot,
+		Starttime:         selldb.Starttime,
+		Stoptime:          selldb.Stoptime,
+		Crowdfund:         selldb.Crowdfund,
+		SellID:            selldb.SellID,
+		Status:            pty.SellOrderStatus[selldb.Status],
+		BuyID:             "",
+		TxHash:            txhash,
+		Height:            selldb.Height,
+		AssetExec:         selldb.AssetExec,
 	}
 	if pty.TyLogTradeSellLimit == tradeType {
-		receiptTrade := &pty.ReceiptTradeSellLimit{base}
+		receiptTrade := &pty.ReceiptTradeSellLimit{Base: base}
 		log.Log = types.Encode(receiptTrade)
 
 	} else if pty.TyLogTradeSellRevoke == tradeType {
-		receiptTrade := &pty.ReceiptTradeSellRevoke{base}
+		receiptTrade := &pty.ReceiptTradeSellRevoke{Base: base}
 		log.Log = types.Encode(receiptTrade)
 	}
 
@@ -73,22 +73,22 @@ func (selldb *sellDB) getBuyLogs(buyerAddr string, boardlotcnt int64, txhash str
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogTradeBuyMarket
 	base := &pty.ReceiptBuyBase{
-		selldb.TokenSymbol,
-		buyerAddr,
-		strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
-		selldb.MinBoardlot,
-		strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
-		boardlotcnt,
-		boardlotcnt,
-		"",
-		pty.SellOrderStatus[pty.TradeOrderStatusBoughtOut],
-		selldb.SellID,
-		txhash,
-		selldb.Height,
-		selldb.AssetExec,
+		TokenSymbol:       selldb.TokenSymbol,
+		Owner:             buyerAddr,
+		AmountPerBoardlot: strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		MinBoardlot:       selldb.MinBoardlot,
+		PricePerBoardlot:  strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		TotalBoardlot:     boardlotcnt,
+		BoughtBoardlot:    boardlotcnt,
+		BuyID:             "",
+		Status:            pty.SellOrderStatus[pty.TradeOrderStatusBoughtOut],
+		SellID:            selldb.SellID,
+		TxHash:            txhash,
+		Height:            selldb.Height,
+		AssetExec:         selldb.AssetExec,
 	}
 
-	receipt := &pty.ReceiptTradeBuyMarket{base}
+	receipt := &pty.ReceiptTradeBuyMarket{Base: base}
 	log.Log = types.Encode(receipt)
 	return log
 }
@@ -131,7 +131,7 @@ func getTx(txHash []byte, db dbm.KV) (*types.TxResult, error) {
 func (selldb *sellDB) getKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&selldb.SellOrder)
 	key := []byte(selldb.SellID)
-	kvset = append(kvset, &types.KeyValue{key, value})
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: value})
 	return kvset
 }
 
@@ -156,7 +156,7 @@ func (buydb *buyDB) save(db dbm.KV) []*types.KeyValue {
 func (buydb *buyDB) getKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(&buydb.BuyLimitOrder)
 	key := []byte(buydb.BuyID)
-	kvset = append(kvset, &types.KeyValue{key, value})
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: value})
 	return kvset
 }
 
@@ -164,26 +164,26 @@ func (buydb *buyDB) getBuyLogs(tradeType int32, txhash string) *types.ReceiptLog
 	log := &types.ReceiptLog{}
 	log.Ty = tradeType
 	base := &pty.ReceiptBuyBase{
-		buydb.TokenSymbol,
-		buydb.Address,
-		strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
-		buydb.MinBoardlot,
-		strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
-		buydb.TotalBoardlot,
-		buydb.BoughtBoardlot,
-		buydb.BuyID,
-		pty.SellOrderStatus[buydb.Status],
-		"",
-		txhash,
-		buydb.Height,
-		buydb.AssetExec,
+		TokenSymbol:       buydb.TokenSymbol,
+		Owner:             buydb.Address,
+		AmountPerBoardlot: strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		MinBoardlot:       buydb.MinBoardlot,
+		PricePerBoardlot:  strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		TotalBoardlot:     buydb.TotalBoardlot,
+		BoughtBoardlot:    buydb.BoughtBoardlot,
+		BuyID:             buydb.BuyID,
+		Status:            pty.SellOrderStatus[buydb.Status],
+		SellID:            "",
+		TxHash:            txhash,
+		Height:            buydb.Height,
+		AssetExec:         buydb.AssetExec,
 	}
 	if pty.TyLogTradeBuyLimit == tradeType {
-		receiptTrade := &pty.ReceiptTradeBuyLimit{base}
+		receiptTrade := &pty.ReceiptTradeBuyLimit{Base: base}
 		log.Log = types.Encode(receiptTrade)
 
 	} else if pty.TyLogTradeBuyRevoke == tradeType {
-		receiptTrade := &pty.ReceiptTradeBuyRevoke{base}
+		receiptTrade := &pty.ReceiptTradeBuyRevoke{Base: base}
 		log.Log = types.Encode(receiptTrade)
 	}
 
@@ -209,22 +209,22 @@ func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt in
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogTradeSellMarket
 	base := &pty.ReceiptSellBase{
-		buydb.TokenSymbol,
-		sellerAddr,
-		strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
-		buydb.MinBoardlot,
-		strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
-		boardlotCnt,
-		boardlotCnt,
-		0,
-		0,
-		false,
-		"",
-		pty.SellOrderStatus[pty.TradeOrderStatusSoldOut],
-		buydb.BuyID,
-		txhash,
-		buydb.Height,
-		buydb.AssetExec,
+		TokenSymbol:       buydb.TokenSymbol,
+		Owner:             sellerAddr,
+		AmountPerBoardlot: strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		MinBoardlot:       buydb.MinBoardlot,
+		PricePerBoardlot:  strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		TotalBoardlot:     boardlotCnt,
+		SoldBoardlot:      boardlotCnt,
+		Starttime:         0,
+		Stoptime:          0,
+		Crowdfund:         false,
+		SellID:            "",
+		Status:            pty.SellOrderStatus[pty.TradeOrderStatusSoldOut],
+		BuyID:             buydb.BuyID,
+		TxHash:            txhash,
+		Height:            buydb.Height,
+		AssetExec:         buydb.AssetExec,
 	}
 	receiptSellMarket := &pty.ReceiptSellMarket{Base: base}
 	log.Log = types.Encode(receiptSellMarket)
@@ -272,20 +272,20 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	sellOrder := pty.SellOrder{
-		sell.GetTokenSymbol(),
-		action.fromaddr,
-		sell.GetAmountPerBoardlot(),
-		sell.GetMinBoardlot(),
-		sell.GetPricePerBoardlot(),
-		sell.GetTotalBoardlot(),
-		0,
-		sell.GetStarttime(),
-		sell.GetStoptime(),
-		sell.GetCrowdfund(),
-		calcTokenSellID(action.txhash),
-		pty.TradeOrderStatusOnSale,
-		action.height,
-		sell.AssetExec,
+		TokenSymbol:       sell.GetTokenSymbol(),
+		Address:           action.fromaddr,
+		AmountPerBoardlot: sell.GetAmountPerBoardlot(),
+		MinBoardlot:       sell.GetMinBoardlot(),
+		PricePerBoardlot:  sell.GetPricePerBoardlot(),
+		TotalBoardlot:     sell.GetTotalBoardlot(),
+		SoldBoardlot:      0,
+		Starttime:         sell.GetStarttime(),
+		Stoptime:          sell.GetStoptime(),
+		Crowdfund:         sell.GetCrowdfund(),
+		SellID:            calcTokenSellID(action.txhash),
+		Status:            pty.TradeOrderStatusOnSale,
+		Height:            action.height,
+		AssetExec:         sell.AssetExec,
 	}
 
 	tokendb := newSellDB(sellOrder)
@@ -295,7 +295,7 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, sellOrderKV...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -366,7 +366,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 	kv = append(kv, receiptFromAcc.KV...)
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*types.Receipt, error) {
@@ -409,7 +409,7 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 	logs = append(logs, tokendb.getSellLogs(pty.TyLogTradeSellRevoke, action.txhash))
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Receipt, error) {
@@ -432,17 +432,17 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	buyOrder := pty.BuyLimitOrder{
-		buy.GetTokenSymbol(),
-		action.fromaddr,
-		buy.GetAmountPerBoardlot(),
-		buy.GetMinBoardlot(),
-		buy.GetPricePerBoardlot(),
-		buy.GetTotalBoardlot(),
-		0,
-		calcTokenBuyID(action.txhash),
-		pty.TradeOrderStatusOnBuy,
-		action.height,
-		buy.AssetExec,
+		TokenSymbol:       buy.GetTokenSymbol(),
+		Address:           action.fromaddr,
+		AmountPerBoardlot: buy.GetAmountPerBoardlot(),
+		MinBoardlot:       buy.GetMinBoardlot(),
+		PricePerBoardlot:  buy.GetPricePerBoardlot(),
+		TotalBoardlot:     buy.GetTotalBoardlot(),
+		BoughtBoardlot:    0,
+		BuyID:             calcTokenBuyID(action.txhash),
+		Status:            pty.TradeOrderStatusOnBuy,
+		Height:            action.height,
+		AssetExec:         buy.AssetExec,
 	}
 
 	tokendb := newBuyDB(buyOrder)
@@ -452,7 +452,7 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, buyOrderKV...)
 
-	receipt = &types.Receipt{types.ExecOk, kv, logs}
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -523,7 +523,7 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	kv = append(kv, receiptFromAcc.KV...)
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*types.Receipt, error) {
@@ -562,5 +562,5 @@ func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*
 	logs = append(logs, tokendb.getBuyLogs(pty.TyLogTradeBuyRevoke, action.txhash))
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }

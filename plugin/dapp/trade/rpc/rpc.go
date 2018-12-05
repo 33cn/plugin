@@ -35,7 +35,7 @@ func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.Tra
 	}
 	buy := &ptypes.Trade{
 		Ty:    ptypes.TradeBuyMarket,
-		Value: &ptypes.Trade_BuyMarket{in},
+		Value: &ptypes.Trade_BuyMarket{BuyMarket: in},
 	}
 	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
@@ -52,7 +52,7 @@ func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.
 	}
 	buy := &ptypes.Trade{
 		Ty:    ptypes.TradeRevokeSell,
-		Value: &ptypes.Trade_RevokeSell{in},
+		Value: &ptypes.Trade_RevokeSell{RevokeSell: in},
 	}
 	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
@@ -69,7 +69,7 @@ func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptype
 	}
 	buy := &ptypes.Trade{
 		Ty:    ptypes.TradeBuyLimit,
-		Value: &ptypes.Trade_BuyLimit{in},
+		Value: &ptypes.Trade_BuyLimit{BuyLimit: in},
 	}
 	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
@@ -86,7 +86,7 @@ func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *pty
 	}
 	buy := &ptypes.Trade{
 		Ty:    ptypes.TradeSellMarket,
-		Value: &ptypes.Trade_SellMarket{in},
+		Value: &ptypes.Trade_SellMarket{SellMarket: in},
 	}
 	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
@@ -103,7 +103,7 @@ func (cc *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptyp
 	}
 	buy := &ptypes.Trade{
 		Ty:    ptypes.TradeRevokeBuy,
-		Value: &ptypes.Trade_RevokeBuy{in},
+		Value: &ptypes.Trade_RevokeBuy{RevokeBuy: in},
 	}
 	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {

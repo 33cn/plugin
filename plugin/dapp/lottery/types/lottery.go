@@ -38,10 +38,10 @@ func NewType() *LotteryType {
 // GetLogMap method
 func (lottery *LotteryType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogLotteryCreate: {reflect.TypeOf(ReceiptLottery{}), "LogLotteryCreate"},
-		TyLogLotteryBuy:    {reflect.TypeOf(ReceiptLottery{}), "LogLotteryBuy"},
-		TyLogLotteryDraw:   {reflect.TypeOf(ReceiptLottery{}), "LogLotteryDraw"},
-		TyLogLotteryClose:  {reflect.TypeOf(ReceiptLottery{}), "LogLotteryClose"},
+		TyLogLotteryCreate: {Ty: reflect.TypeOf(ReceiptLottery{}), Name: "LogLotteryCreate"},
+		TyLogLotteryBuy:    {Ty: reflect.TypeOf(ReceiptLottery{}), Name: "LogLotteryBuy"},
+		TyLogLotteryDraw:   {Ty: reflect.TypeOf(ReceiptLottery{}), Name: "LogLotteryDraw"},
+		TyLogLotteryClose:  {Ty: reflect.TypeOf(ReceiptLottery{}), Name: "LogLotteryClose"},
 	}
 }
 
@@ -109,8 +109,10 @@ func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error)
 	}
 
 	v := &LotteryCreate{
-		PurBlockNum:  parm.PurBlockNum,
-		DrawBlockNum: parm.DrawBlockNum,
+		PurBlockNum:    parm.PurBlockNum,
+		DrawBlockNum:   parm.DrawBlockNum,
+		OpRewardRatio:  parm.OpRewardRatio,
+		DevRewardRatio: parm.DevRewardRatio,
 	}
 	create := &LotteryAction{
 		Ty:    LotteryActionCreate,

@@ -21,12 +21,12 @@ import (
 )
 
 var (
-	blocklog        = log15.New("module", "tendermint-block")
+	blocklog = log15.New("module", "tendermint-block")
+	// ConsensusCrypto define
 	ConsensusCrypto crypto.Crypto
 )
 
-//-----------------------------------------------------------------------------
-//BlockID
+// BlockID struct
 type BlockID struct {
 	tmtypes.BlockID
 }
@@ -51,8 +51,7 @@ func (blockID BlockID) String() string {
 	return Fmt(`%v`, blockID.Hash)
 }
 
-//-----------------------------------------------------------------------------
-//TendermintBlock
+//TendermintBlock struct
 type TendermintBlock struct {
 	*tmtypes.TendermintBlock
 }
@@ -186,12 +185,10 @@ func (b *TendermintBlock) StringIndented(indent string) string {
 func (b *TendermintBlock) StringShort() string {
 	if b == nil {
 		return "nil-Block"
-	} else {
-		return Fmt("Block#%v", b.Hash())
 	}
+	return Fmt("Block#%v", b.Hash())
 }
 
-//-----------------------------------------------------------------------------
 // Header defines the structure of a Tendermint block header
 // TODO: limit header size
 // NOTE: changes to the Header should be duplicated in the abci Header
@@ -247,8 +244,7 @@ func (h *Header) StringIndented(indent string) string {
 		indent, h.Hash())
 }
 
-//-----------------------------------------------------------------------------
-//Commit
+// Commit struct
 type Commit struct {
 	*tmtypes.TendermintCommit
 
@@ -393,21 +389,21 @@ func (commit *Commit) StringIndented(indent string) string {
 		indent, commit.hash)
 }
 
-//-----------------------------------------------------------------------------
 // SignedHeader is a header along with the commits that prove it
 type SignedHeader struct {
 	Header *Header `json:"header"`
 	Commit *Commit `json:"commit"`
 }
 
-//-----------------------------------------------------------------------------
+// EvidenceEnvelope ...
 type EvidenceEnvelope struct {
 	*tmtypes.EvidenceEnvelope
 }
 
-// EvidenceData contains any evidence of malicious wrong-doing by validators
+// EvidenceEnvelopeList contains any evidence of malicious wrong-doing by validators
 type EvidenceEnvelopeList []EvidenceEnvelope
 
+// Hash ...
 func (env EvidenceEnvelope) Hash() []byte {
 	penv := env.EvidenceEnvelope
 	evidence := EvidenceEnvelope2Evidence(penv)
@@ -464,6 +460,7 @@ func (evl EvidenceEnvelopeList) Has(evidence Evidence) bool {
 	return false
 }
 
+// EvidenceData ...
 type EvidenceData struct {
 	*tmtypes.EvidenceData
 	hash []byte
@@ -505,5 +502,4 @@ func (data *EvidenceData) StringIndented(indent string) string {
 %s}#%v`,
 		indent, strings.Join(evStrings, "\n"+indent+"  "),
 		indent, data.hash)
-	return ""
 }

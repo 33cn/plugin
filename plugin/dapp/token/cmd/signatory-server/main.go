@@ -47,14 +47,15 @@ var (
 //      |
 //      V
 //     tcp
-type HTTPConn struct {
+
+type httpConn struct {
 	in  io.Reader
 	out io.Writer
 }
 
-func (c *HTTPConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
-func (c *HTTPConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
-func (c *HTTPConn) Close() error                      { return nil }
+func (c *httpConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
+func (c *httpConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
+func (c *httpConn) Close() error                      { return nil }
 
 func main() {
 	d, _ := os.Getwd()
@@ -72,7 +73,7 @@ func main() {
 		panic(err)
 	}
 
-	approver := signatory.Signatory{cfg.Privkey}
+	approver := signatory.Signatory{Privkey: cfg.Privkey}
 	server := rpc.NewServer()
 	server.Register(&approver)
 
@@ -87,7 +88,7 @@ func main() {
 			}
 
 			if r.URL.Path == "/" {
-				serverCodec := jsonrpc.NewServerCodec(&HTTPConn{in: r.Body, out: w})
+				serverCodec := jsonrpc.NewServerCodec(&httpConn{in: r.Body, out: w})
 				w.Header().Set("Content-type", "application/json")
 				w.WriteHeader(200)
 
@@ -112,6 +113,7 @@ func main() {
 
 }
 
+// InitCfg 初始化配置
 func InitCfg(path string) *signatory.Config {
 	var cfg signatory.Config
 	if _, err := tml.DecodeFile(path, &cfg); err != nil {
@@ -122,6 +124,7 @@ func InitCfg(path string) *signatory.Config {
 	return &cfg
 }
 
+// InitWhiteList 初始化白名单
 func InitWhiteList(cfg *signatory.Config) map[string]bool {
 	whitelist := map[string]bool{}
 	if len(cfg.Whitelist) == 1 && cfg.Whitelist[0] == "*" {

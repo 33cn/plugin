@@ -64,6 +64,7 @@ type raftNode struct {
 	restartC chan struct{}
 }
 
+// NewRaftNode create raft node
 func NewRaftNode(id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan *types.Block,
 	confChangeC <-chan raftpb.ConfChange) (<-chan *types.Block, <-chan error, <-chan *snap.Snapshotter, <-chan bool, chan<- struct{}) {
 
@@ -212,7 +213,7 @@ func (rc *raftNode) serveChannels() {
 	defer ticker.Stop()
 
 	go func() {
-		var confChangeCount uint64 = 0
+		var confChangeCount uint64
 		// 通过propose和proposeConfchange方法往RaftNode发通知
 		for rc.proposeC != nil && rc.confChangeC != nil {
 			select {
@@ -231,7 +232,7 @@ func (rc *raftNode) serveChannels() {
 				if !ok {
 					rc.confChangeC = nil
 				} else {
-					confChangeCount += 1
+					confChangeCount++
 					cc.ID = confChangeCount
 					rc.node.ProposeConfChange(context.TODO(), cc)
 				}
@@ -293,7 +294,7 @@ func (rc *raftNode) updateValidator() {
 			rlog.Debug(fmt.Sprintf("==============This is %s node!==============", status.RaftState.String()))
 			continue
 		} else {
-			// 获取到leader Id,选主成功
+			// 获取到leader ID,选主成功
 			if rc.id == int(status.Lead) {
 				//leader选举出来之后即可添加addReadOnlyPeers
 				if !flag && !isRestart {

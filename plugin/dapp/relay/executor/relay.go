@@ -22,10 +22,12 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&relay{}))
 }
 
+// Init relay register driver
 func Init(name string, sub []byte) {
 	drivers.Register(GetName(), newRelay, types.GetDappFork(driverName, "Enable")) //TODO: ForkV18Relay
 }
 
+// GetName relay get driver name
 func GetName() string {
 	return newRelay().GetName()
 }
@@ -45,7 +47,7 @@ func (r *relay) GetDriverName() string {
 	return driverName
 }
 
-func (c *relay) GetPayloadValue() types.Message {
+func (r *relay) GetPayloadValue() types.Message {
 	return &ty.RelayAction{}
 }
 
@@ -119,16 +121,16 @@ func (r *relay) GetSellOrder(prefixs [][]byte) (types.Message, error) {
 
 }
 
-func (r *relay) getRelayOrderReply(OrderIds [][]byte) (types.Message, error) {
-	OrderIdGot := make(map[string]bool)
+func (r *relay) getRelayOrderReply(OrderIDs [][]byte) (types.Message, error) {
+	orderIDGot := make(map[string]bool)
 
 	var reply ty.ReplyRelayOrders
-	for _, OrderId := range OrderIds {
-		if !OrderIdGot[string(OrderId)] {
-			if order, err := r.getSellOrderFromDb(OrderId); err == nil {
+	for _, orderID := range OrderIDs {
+		if !orderIDGot[string(orderID)] {
+			if order, err := r.getSellOrderFromDb(orderID); err == nil {
 				reply.Relayorders = insertOrderDescending(order, reply.Relayorders)
 			}
-			OrderIdGot[string(OrderId)] = true
+			orderIDGot[string(orderID)] = true
 		}
 	}
 	return &reply, nil
@@ -157,8 +159,8 @@ func insertOrderDescending(toBeInserted *ty.RelayOrder, orders []*ty.RelayOrder)
 	return orders
 }
 
-func (r *relay) getSellOrderFromDb(OrderId []byte) (*ty.RelayOrder, error) {
-	value, err := r.GetStateDB().Get(OrderId)
+func (r *relay) getSellOrderFromDb(OrderID []byte) (*ty.RelayOrder, error) {
+	value, err := r.GetStateDB().Get(OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +179,8 @@ func (r *relay) getBTCHeaderFromDb(hash []byte) (*ty.BtcHeader, error) {
 	return &header, nil
 }
 
-func (r *relay) getOrderKv(OrderId []byte, ty int32) []*types.KeyValue {
-	order, _ := r.getSellOrderFromDb(OrderId)
+func (r *relay) getOrderKv(OrderID []byte, ty int32) []*types.KeyValue {
+	order, _ := r.getSellOrderFromDb(OrderID)
 
 	var kv []*types.KeyValue
 	kv = deleteCreateOrderKeyValue(kv, order, int32(order.PreStatus))
@@ -187,8 +189,8 @@ func (r *relay) getOrderKv(OrderId []byte, ty int32) []*types.KeyValue {
 	return kv
 }
 
-func (r *relay) getDeleteOrderKv(OrderId []byte, ty int32) []*types.KeyValue {
-	order, _ := r.getSellOrderFromDb(OrderId)
+func (r *relay) getDeleteOrderKv(OrderID []byte, ty int32) []*types.KeyValue {
+	order, _ := r.getSellOrderFromDb(OrderID)
 	var kv []*types.KeyValue
 	kv = deleteCreateOrderKeyValue(kv, order, int32(order.Status))
 	kv = getCreateOrderKeyValue(kv, order, int32(order.PreStatus))
@@ -197,23 +199,23 @@ func (r *relay) getDeleteOrderKv(OrderId []byte, ty int32) []*types.KeyValue {
 }
 
 func getCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status int32) []*types.KeyValue {
-	OrderId := []byte(order.Id)
+	orderID := []byte(order.Id)
 
 	key := calcOrderKeyStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: orderID})
 
 	key = calcOrderKeyCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: orderID})
 
 	key = calcOrderKeyAddrStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: orderID})
 
 	key = calcOrderKeyAddrCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, OrderId})
+	kv = append(kv, &types.KeyValue{Key: key, Value: orderID})
 
 	key = calcAcceptKeyAddr(order, status)
 	if key != nil {
-		kv = append(kv, &types.KeyValue{key, OrderId})
+		kv = append(kv, &types.KeyValue{Key: key, Value: orderID})
 	}
 
 	return kv
@@ -223,21 +225,26 @@ func getCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status i
 func deleteCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, status int32) []*types.KeyValue {
 
 	key := calcOrderKeyStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyAddrStatus(order, status)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcOrderKeyAddrCoin(order, status)
-	kv = append(kv, &types.KeyValue{key, nil})
+	kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 
 	key = calcAcceptKeyAddr(order, status)
 	if key != nil {
-		kv = append(kv, &types.KeyValue{key, nil})
+		kv = append(kv, &types.KeyValue{Key: key, Value: nil})
 	}
 
 	return kv
+}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (r *relay) CheckReceiptExecOk() bool {
+	return true
 }

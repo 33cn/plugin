@@ -32,7 +32,7 @@ var (
 	mainPriv   crypto.PrivKey
 	toAddr     = address.PubKeyToAddress(privKey.PubKey().Bytes()).String()
 	amount     = int64(1e8)
-	v          = &cty.CoinsAction_Transfer{&types.AssetsTransfer{Amount: amount}}
+	v          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 	transfer   = &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 	tx1        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 2, To: toAddr}
 	tx2        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000000, Expire: 0, To: toAddr}
@@ -74,7 +74,7 @@ func init() {
 	}
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
 	queue.DisableLog()
-	DisableLog() // 不输出任何log
+	//  DisableLog() // 不输出任何log
 	//	SetLogLevel("debug") // 输出DBUG(含)以下log
 	//	SetLogLevel("info") // 输出INFO(含)以下log
 	SetLogLevel("info") // 输出WARN(含)以下log
@@ -517,7 +517,7 @@ func TestAddBlockedTx(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	msg1, err = mem.client.Wait(msg1)
+	_, err = mem.client.Wait(msg1)
 	if err != nil {
 		t.Error(err)
 		return
@@ -733,7 +733,7 @@ func TestGetAddrTxs(t *testing.T) {
 	for _, i := range txsExpect {
 		for _, j := range txsFact {
 			if j.Tx == i.Tx {
-				same += 1
+				same++
 				break
 			}
 		}
@@ -744,8 +744,6 @@ func TestGetAddrTxs(t *testing.T) {
 }
 
 func TestDelBlock(t *testing.T) {
-	//TODO:存在bug，可以考虑用 testnode 代替initEnv，先在测试中忽略
-	t.Skip()
 	q, mem := initEnv(0)
 	defer q.Close()
 	defer mem.Close()
@@ -754,7 +752,7 @@ func TestDelBlock(t *testing.T) {
 
 	mem.setHeader(&types.Header{Height: 2, BlockTime: 1e9 + 1})
 	msg1 := mem.client.NewMessage("mempool", types.EventDelBlock, blockDetail)
-	mem.client.Send(msg1, false)
+	mem.client.Send(msg1, true)
 
 	msg2 := mem.client.NewMessage("mempool", types.EventGetMempoolSize, nil)
 	mem.client.Send(msg2, true)
@@ -765,8 +763,8 @@ func TestDelBlock(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
-	if reply.GetData().(*types.MempoolSize).Size != 2 {
+	size := reply.GetData().(*types.MempoolSize).Size
+	if size != 2 {
 		t.Error("TestDelBlock failed")
 	}
 }

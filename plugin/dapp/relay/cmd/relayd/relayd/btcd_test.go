@@ -36,7 +36,7 @@ func (s *suiteBctd) SetupSuite() {
 		HTTPPostMode: true,
 		Certificates: certs,
 	}
-	s.btc, _ = NewBtcd(connCfg, reconnectAttempts)
+	s.btc, _ = newBtcd(connCfg, reconnectAttempts)
 }
 
 func (s *suiteBctd) TestGetBlockHeader() {

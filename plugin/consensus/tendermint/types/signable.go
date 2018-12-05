@@ -17,6 +17,7 @@ import (
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
+// error defines
 var (
 	ErrVoteUnexpectedStep            = errors.New("Unexpected step")
 	ErrVoteInvalidValidatorIndex     = errors.New("Invalid validator index")
@@ -44,7 +45,6 @@ func SignBytes(chainID string, o Signable) []byte {
 	return buf.Bytes()
 }
 
-//----------------------Proposal----------------------
 // Proposal defines a block proposal for the consensus.
 // It refers to the block only by its PartSetHeader.
 // It must be signed by the correct proposer for the given Height/Round
@@ -89,12 +89,12 @@ func (p *Proposal) WriteSignBytes(chainID string, w io.Writer, n *int, err *erro
 		*err = e
 		return
 	}
-	n_, err_ := w.Write(byteOnceProposal)
-	*n = n_
-	*err = err_
+	number, writeErr := w.Write(byteOnceProposal)
+	*n = number
+	*err = writeErr
 }
 
-//-------------------heartbeat-------------------------
+// Heartbeat ...
 type Heartbeat struct {
 	*tmtypes.Heartbeat
 }
@@ -114,12 +114,12 @@ func (heartbeat *Heartbeat) WriteSignBytes(chainID string, w io.Writer, n *int, 
 		*err = e
 		return
 	}
-	n_, err_ := w.Write(byteHeartbeat)
-	*n = n_
-	*err = err_
+	number, writeErr := w.Write(byteHeartbeat)
+	*n = number
+	*err = writeErr
 }
 
-//----------------------vote-----------------------------
+// ErrVoteConflictingVotes ...
 type ErrVoteConflictingVotes struct {
 	*DuplicateVoteEvidence
 }
@@ -133,6 +133,7 @@ func (err *ErrVoteConflictingVotes) Error() string {
 	return fmt.Sprintf("Conflicting votes from validator %v", addr)
 }
 
+// NewConflictingVoteError ...
 func NewConflictingVoteError(val *Validator, voteA, voteB *tmtypes.Vote) *ErrVoteConflictingVotes {
 	keyString := fmt.Sprintf("%X", val.PubKey)
 	return &ErrVoteConflictingVotes{
@@ -153,8 +154,9 @@ const (
 	VoteTypePrecommit = byte(0x02)
 )
 
-func IsVoteTypeValid(type_ byte) bool {
-	switch type_ {
+// IsVoteTypeValid ...
+func IsVoteTypeValid(voteType byte) bool {
+	switch voteType {
 	case VoteTypePrevote:
 		return true
 	case VoteTypePrecommit:
@@ -164,11 +166,12 @@ func IsVoteTypeValid(type_ byte) bool {
 	}
 }
 
-// Represents a prevote, precommit, or commit vote from validators for consensus.
+// Vote Represents a prevote, precommit, or commit vote from validators for consensus.
 type Vote struct {
 	*tmtypes.Vote
 }
 
+// WriteSignBytes ...
 func (vote *Vote) WriteSignBytes(chainID string, w io.Writer, n *int, err *error) {
 	if *err != nil {
 		return
@@ -183,11 +186,12 @@ func (vote *Vote) WriteSignBytes(chainID string, w io.Writer, n *int, err *error
 		votelog.Error("vote WriteSignBytes marshal failed", "err", e)
 		return
 	}
-	n_, err_ := w.Write(byteVote)
-	*n = n_
-	*err = err_
+	number, writeErr := w.Write(byteVote)
+	*n = number
+	*err = writeErr
 }
 
+// Copy ...
 func (vote *Vote) Copy() *Vote {
 	voteCopy := *vote
 	return &voteCopy
@@ -214,6 +218,7 @@ func (vote *Vote) String() string {
 		CanonicalTime(time.Unix(0, vote.Timestamp)))
 }
 
+// Verify ...
 func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
 	addr := GenAddressByPubKey(pubKey)
 	if !bytes.Equal(addr, vote.ValidatorAddress) {
@@ -232,6 +237,7 @@ func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
 	return nil
 }
 
+// Hash ...
 func (vote *Vote) Hash() []byte {
 	if vote == nil {
 		//votelog.Error("vote hash is nil")

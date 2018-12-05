@@ -98,33 +98,33 @@ func Test_decomAmount2Nature(t *testing.T) {
 
 func Test_decomposeAmount2digits(t *testing.T) {
 	testCase := []struct {
-		amount         int64
-		dust_threshold int64
-		actual         []int64
+		amount        int64
+		dustThreshold int64
+		actual        []int64
 	}{
 		{
-			amount:         0,
-			dust_threshold: 0,
-			actual:         []int64{},
+			amount:        0,
+			dustThreshold: 0,
+			actual:        []int64{},
 		},
 		{
-			amount:         -1,
-			dust_threshold: 0,
-			actual:         []int64{},
+			amount:        -1,
+			dustThreshold: 0,
+			actual:        []int64{},
 		},
 		{
-			amount:         2,
-			dust_threshold: 1,
-			actual:         []int64{2},
+			amount:        2,
+			dustThreshold: 1,
+			actual:        []int64{2},
 		},
 		{
-			amount:         62387455827,
-			dust_threshold: types.BTYDustThreshold,
-			actual:         []int64{87455827, 1e8, 2e8, 2e9, 5e10, 1e10},
+			amount:        62387455827,
+			dustThreshold: types.BTYDustThreshold,
+			actual:        []int64{87455827, 1e8, 2e8, 2e9, 5e10, 1e10},
 		},
 	}
 	for _, test := range testCase {
-		res := decomposeAmount2digits(test.amount, test.dust_threshold)
+		res := decomposeAmount2digits(test.amount, test.dustThreshold)
 		require.Equal(t, res, test.actual)
 	}
 }

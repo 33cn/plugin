@@ -20,10 +20,12 @@ import (
 
 var log = l.New("module", "signatory")
 
+// Signatory 签名密钥
 type Signatory struct {
 	Privkey string
 }
 
+// Echo echo
 func (*Signatory) Echo(in *string, out *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
@@ -32,12 +34,14 @@ func (*Signatory) Echo(in *string, out *interface{}) error {
 	return nil
 }
 
+// TokenFinish token创建完成
 type TokenFinish struct {
 	OwnerAddr string `json:"ownerAddr"`
 	Symbol    string `json:"symbol"`
 	//	Fee       int64  `json:"fee"`
 }
 
+// SignApprove 完成签名
 func (signatory *Signatory) SignApprove(in *TokenFinish, out *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
@@ -48,7 +52,7 @@ func (signatory *Signatory) SignApprove(in *TokenFinish, out *interface{}) error
 	v := &tokenty.TokenFinishCreate{Symbol: in.Symbol, Owner: in.OwnerAddr}
 	finish := &tokenty.TokenAction{
 		Ty:    tokenty.TokenActionFinishCreate,
-		Value: &tokenty.TokenAction_TokenFinishCreate{v},
+		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
 
 	tx := &types.Transaction{
@@ -73,6 +77,7 @@ func (signatory *Signatory) SignApprove(in *TokenFinish, out *interface{}) error
 	return nil
 }
 
+// SignTransfer 签名交易，in 输入要数据 签名out 签名之后数据
 func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	if in == nil {
 		return types.ErrInvalidParam
@@ -84,11 +89,11 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	amount := 1 * types.Coin
 	v := &types.AssetsTransfer{
 		Amount: amount,
-		Note:   "transfer 1 bty by signatory-server",
+		Note:   []byte("transfer 1 bty by signatory-server"),
 	}
 	transfer := &cty.CoinsAction{
 		Ty:    cty.CoinsActionTransfer,
-		Value: &cty.CoinsAction_Transfer{v},
+		Value: &cty.CoinsAction_Transfer{Transfer: v},
 	}
 
 	tx := &types.Transaction{
@@ -116,7 +121,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) error {
-	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	c, _ := crypto.New(types.GetSignName("", types.SECP256K1))
 
 	bytes, err := common.FromHex(hexPrivKey)
 	if err != nil {

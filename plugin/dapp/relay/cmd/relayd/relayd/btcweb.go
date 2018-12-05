@@ -22,7 +22,7 @@ type btcWeb struct {
 	httpClient *fasthttp.Client
 }
 
-func NewBtcWeb() (BtcClient, error) {
+func newBtcWeb() (BtcClient, error) {
 	b := &btcWeb{
 		urlRoot:    "https://blockchain.info",
 		httpClient: &fasthttp.Client{TLSConfig: &tls.Config{InsecureSkipVerify: true}},
@@ -46,16 +46,16 @@ func (b *btcWeb) GetBlockHeader(height uint64) (*ty.BtcHeader, error) {
 	return block.BtcHeader(), nil
 }
 
-func (b *btcWeb) getBlock(height uint64) (*Block, error) {
+func (b *btcWeb) getBlock(height uint64) (*block, error) {
 	if height < 0 {
 		return nil, errors.New("height < 0")
 	}
 	url := fmt.Sprintf("%s/block-height/%d?format=json", b.urlRoot, height)
-	data, err := b.requestUrl(url)
+	data, err := b.requestURL(url)
 	if err != nil {
 		return nil, err
 	}
-	var blocks = Blocks{}
+	var blocks = blocks{}
 	err = json.Unmarshal(data, &blocks)
 	if err != nil {
 		return nil, err
@@ -66,11 +66,11 @@ func (b *btcWeb) getBlock(height uint64) (*Block, error) {
 
 func (b *btcWeb) GetLatestBlock() (*chainhash.Hash, uint64, error) {
 	url := b.urlRoot + "/latestblock"
-	data, err := b.requestUrl(url)
+	data, err := b.requestURL(url)
 	if err != nil {
 		return nil, 0, err
 	}
-	var blocks = LatestBlock{}
+	var blocks = latestBlock{}
 	err = json.Unmarshal(data, &blocks)
 	if err != nil {
 		return nil, 0, err
@@ -94,11 +94,11 @@ func (b *btcWeb) Ping() {
 
 func (b *btcWeb) GetTransaction(hash string) (*ty.BtcTransaction, error) {
 	url := b.urlRoot + "/rawtx/" + hash
-	data, err := b.requestUrl(url)
+	data, err := b.requestURL(url)
 	if err != nil {
 		return nil, err
 	}
-	var tx = TransactionResult{}
+	var tx = transactionResult{}
 	err = json.Unmarshal(data, &tx)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (b *btcWeb) GetSPV(height uint64, txHash string) (*ty.BtcSpv, error) {
 	return spv, nil
 }
 
-func (b *btcWeb) requestUrl(url string) ([]byte, error) {
+func (b *btcWeb) requestURL(url string) ([]byte, error) {
 	status, body, err := b.httpClient.Get(nil, url)
 	if err != nil {
 		return nil, err

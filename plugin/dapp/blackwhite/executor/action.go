@@ -19,14 +19,14 @@ import (
 )
 
 const (
-	MaxAmount      int64 = 100 * types.Coin
-	MinAmount      int64 = 1 * types.Coin
-	MinPlayerCount int32 = 3
-	MaxPlayerCount int32 = 100000
+	maxAmount      int64 = 100 * types.Coin
+	minAmount      int64 = 1 * types.Coin
+	minPlayerCount int32 = 3
+	maxPlayerCount int32 = 100000
 	lockAmount     int64 = types.Coin / 100 //创建者锁定金额
 	showTimeout    int64 = 60 * 5           // 公布密钥超时时间
-	MaxPlayTimeout int64 = 60 * 60 * 24     // 创建交易之后最大超时时间
-	MinPlayTimeout int64 = 60 * 10          // 创建交易之后最小超时时间
+	maxPlayTimeout int64 = 60 * 60 * 24     // 创建交易之后最大超时时间
+	minPlayTimeout int64 = 60 * 10          // 创建交易之后最小超时时间
 
 	white = "0"
 	black = "1"
@@ -63,13 +63,13 @@ func newAction(t *Blackwhite, tx *types.Transaction, index int32) *action {
 }
 
 func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
-	if create.PlayAmount < MinAmount || create.PlayAmount > MaxAmount {
+	if create.PlayAmount < minAmount || create.PlayAmount > maxAmount {
 		return nil, types.ErrAmount
 	}
-	if create.PlayerCount < MinPlayerCount || create.PlayerCount > MaxPlayerCount {
+	if create.PlayerCount < minPlayerCount || create.PlayerCount > maxPlayerCount {
 		return nil, types.ErrInvalidParam
 	}
-	if create.Timeout < MinPlayTimeout || create.Timeout > MaxPlayTimeout {
+	if create.Timeout < minPlayTimeout || create.Timeout > maxPlayTimeout {
 		return nil, types.ErrInvalidParam
 	}
 
@@ -92,12 +92,12 @@ func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
 
 	key := calcMavlRoundKey(round.GameID)
 	value := types.Encode(round)
-	kv = append(kv, &types.KeyValue{key, value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: value})
 
 	receiptLog := a.GetReceiptLog(round, round.GetCreateAddr())
 	logs = append(logs, receiptLog)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) Play(play *gt.BlackwhitePlay) (*types.Receipt, error) {
@@ -184,9 +184,9 @@ func (a *action) Play(play *gt.BlackwhitePlay) (*types.Receipt, error) {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{key1, value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) Show(show *gt.BlackwhiteShow) (*types.Receipt, error) {
@@ -268,9 +268,9 @@ func (a *action) Show(show *gt.BlackwhiteShow) (*types.Receipt, error) {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{key1, value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, error) {
@@ -364,7 +364,7 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
-	kv = append(kv, &types.KeyValue{key1, value1})
+	kv = append(kv, &types.KeyValue{Key: key1, Value: value1})
 
 	// 需要更新全部地址状态
 	for _, addr := range round.AddrResult {
@@ -376,7 +376,7 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 	receiptLog := a.GetReceiptLog(&round, round.CreateAddr)
 	logs = append(logs, receiptLog)
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 
 }
 
@@ -514,9 +514,9 @@ func (a *action) StatTransfer(round *gt.BlackwhiteRound) (*types.Receipt, error)
 	kv = append(kv, receipt.KV...)
 
 	// 将每一轮次的结果保存
-	logs = append(logs, &types.ReceiptLog{gt.TyLogBlackwhiteLoopInfo, types.Encode(loopResults)})
+	logs = append(logs, &types.ReceiptLog{Ty: gt.TyLogBlackwhiteLoopInfo, Log: types.Encode(loopResults)})
 
-	return &types.Receipt{types.ExecOk, kv, logs}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 
 }
 
@@ -528,26 +528,26 @@ func (a *action) getWinner(round *gt.BlackwhiteRound) ([]*addrResult, *gt.ReplyL
 	addrRes := round.AddrResult
 	loop := int(round.Loop)
 
-	for _, addres := range addrRes {
-		if len(addres.ShowSecret) > 0 && len(addres.HashValues) == loop {
+	for _, address := range addrRes {
+		if len(address.ShowSecret) > 0 && len(address.HashValues) == loop {
 			var isBlack []bool
 			// 加入分叉高度判断：分叉高度在ForkV25BlackWhite到ForkV25BlackWhiteV2之间的执行原来逻辑，大于ForkV25BlackWhiteV2执行新逻辑，
 			// 小于ForkV25BlackWhite则无法进入
 			if !types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
-				for _, hash := range addres.HashValues {
-					if bytes.Equal(common.Sha256([]byte(addres.ShowSecret+black)), hash) {
+				for _, hash := range address.HashValues {
+					if bytes.Equal(common.Sha256([]byte(address.ShowSecret+black)), hash) {
 						isBlack = append(isBlack, true)
-					} else if bytes.Equal(common.Sha256([]byte(addres.ShowSecret+white)), hash) {
+					} else if bytes.Equal(common.Sha256([]byte(address.ShowSecret+white)), hash) {
 						isBlack = append(isBlack, false)
 					} else {
 						isBlack = append(isBlack, false)
 					}
 				}
 			} else {
-				for i, hash := range addres.HashValues {
-					if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+addres.ShowSecret+black)), hash) {
+				for i, hash := range address.HashValues {
+					if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+address.ShowSecret+black)), hash) {
 						isBlack = append(isBlack, true)
-					} else if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+addres.ShowSecret+white)), hash) {
+					} else if bytes.Equal(common.Sha256([]byte(strconv.Itoa(i)+address.ShowSecret+white)), hash) {
 						isBlack = append(isBlack, false)
 					} else {
 						isBlack = append(isBlack, false)
@@ -555,8 +555,8 @@ func (a *action) getWinner(round *gt.BlackwhiteRound) ([]*addrResult, *gt.ReplyL
 				}
 			}
 			addresX := &resultCalc{
-				Addr:    addres.Addr,
-				amount:  addres.Amount,
+				Addr:    address.Addr,
+				amount:  address.Amount,
 				IsWin:   true,
 				IsBlack: isBlack,
 			}
@@ -646,14 +646,14 @@ func (a *action) getLoser(round *gt.BlackwhiteRound) []*addrResult {
 	return results
 }
 
-//状态变化：
+// GetReceiptLog 根据游戏信息获取log
+// 状态变化：
 // staus == BlackwhiteStatusCreate  (创建，开始游戏）
 // status == BlackwhiteStatusPlay (参与)
 // status == BlackwhiteStatusShow (展示密钥)
 // status == BlackwhiteStatusTime (超时退出情况)
 // status == BlackwhiteStatusDone (结束情况)
-
-func (action *action) GetReceiptLog(round *gt.BlackwhiteRound, addr string) *types.ReceiptLog {
+func (a *action) GetReceiptLog(round *gt.BlackwhiteRound, addr string) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	r := &gt.ReceiptBlackwhiteStatus{}
 	if round.Status == gt.BlackwhiteStatusCreate {

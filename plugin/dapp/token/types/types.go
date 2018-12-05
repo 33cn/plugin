@@ -19,21 +19,24 @@ func init() {
 	types.RegisterDappFork(TokenX, "ForkTokenPrice", 560000)
 }
 
-// exec
+// TokenType 执行器基类结构体
 type TokenType struct {
 	types.ExecTypeBase
 }
 
+// NewType 创建执行器类型
 func NewType() *TokenType {
 	c := &TokenType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload 获取token action
 func (t *TokenType) GetPayload() types.Message {
 	return &TokenAction{}
 }
 
+// GetTypeMap 根据action的name获取type
 func (t *TokenType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Transfer":          ActionTransfer,
@@ -46,23 +49,25 @@ func (t *TokenType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// GetLogMap 获取log的映射对应关系
 func (t *TokenType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogTokenTransfer:        {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogTokenTransfer"},
-		TyLogTokenDeposit:         {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogTokenDeposit"},
-		TyLogTokenExecTransfer:    {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenExecTransfer"},
-		TyLogTokenExecWithdraw:    {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenExecWithdraw"},
-		TyLogTokenExecDeposit:     {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenExecDeposit"},
-		TyLogTokenExecFrozen:      {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenExecFrozen"},
-		TyLogTokenExecActive:      {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenExecActive"},
-		TyLogTokenGenesisTransfer: {reflect.TypeOf(types.ReceiptAccountTransfer{}), "LogTokenGenesisTransfer"},
-		TyLogTokenGenesisDeposit:  {reflect.TypeOf(types.ReceiptExecAccountTransfer{}), "LogTokenGenesisDeposit"},
-		TyLogPreCreateToken:       {reflect.TypeOf(ReceiptToken{}), "LogPreCreateToken"},
-		TyLogFinishCreateToken:    {reflect.TypeOf(ReceiptToken{}), "LogFinishCreateToken"},
-		TyLogRevokeCreateToken:    {reflect.TypeOf(ReceiptToken{}), "LogRevokeCreateToken"},
+		TyLogTokenTransfer:        {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogTokenTransfer"},
+		TyLogTokenDeposit:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogTokenDeposit"},
+		TyLogTokenExecTransfer:    {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecTransfer"},
+		TyLogTokenExecWithdraw:    {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecWithdraw"},
+		TyLogTokenExecDeposit:     {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecDeposit"},
+		TyLogTokenExecFrozen:      {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecFrozen"},
+		TyLogTokenExecActive:      {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecActive"},
+		TyLogTokenGenesisTransfer: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogTokenGenesisTransfer"},
+		TyLogTokenGenesisDeposit:  {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenGenesisDeposit"},
+		TyLogPreCreateToken:       {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogPreCreateToken"},
+		TyLogFinishCreateToken:    {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogFinishCreateToken"},
+		TyLogRevokeCreateToken:    {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogRevokeCreateToken"},
 	}
 }
 
+// RPC_Default_Process rpc 默认处理
 func (t *TokenType) RPC_Default_Process(action string, msg interface{}) (*types.Transaction, error) {
 	var create *types.CreateTx
 	if _, ok := msg.(*types.CreateTx); !ok {

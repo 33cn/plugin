@@ -2,7 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package buildflags build flags
 package buildflags
 
-var ParaName string
-var RPCAddr string
+//var
+var (
+	ParaName string
+	RPCAddr  string
+)

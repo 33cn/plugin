@@ -43,8 +43,8 @@ func (t *tokenDB) save(db dbm.KV, key []byte) {
 
 func (t *tokenDB) getLogs(ty int32, status int32) []*types.ReceiptLog {
 	var log []*types.ReceiptLog
-	value := types.Encode(&pty.ReceiptToken{t.token.Symbol, t.token.Owner, t.token.Status})
-	log = append(log, &types.ReceiptLog{ty, value})
+	value := types.Encode(&pty.ReceiptToken{Symbol: t.token.Symbol, Owner: t.token.Owner, Status: t.token.Status})
+	log = append(log, &types.ReceiptLog{Ty: ty, Log: value})
 
 	return log
 }
@@ -52,7 +52,7 @@ func (t *tokenDB) getLogs(ty int32, status int32) []*types.ReceiptLog {
 //key:mavl-create-token-addr-xxx or mavl-token-xxx <-----> value:token
 func (t *tokenDB) getKVSet(key []byte) (kvset []*types.KeyValue) {
 	value := types.Encode(&t.token)
-	kvset = append(kvset, &types.KeyValue{key, value})
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: value})
 	return kvset
 }
 
@@ -109,12 +109,12 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 		return nil, pty.ErrTokenTotalOverflow
 	}
 
-	if !ValidSymbolWithHeight([]byte(token.GetSymbol()), action.height) {
+	if !validSymbolWithHeight([]byte(token.GetSymbol()), action.height) {
 		tokenlog.Error("token precreate ", "symbol need be upper", token.GetSymbol())
 		return nil, pty.ErrTokenSymbolUpper
 	}
 
-	if CheckTokenExist(token.GetSymbol(), action.db) {
+	if checkTokenExist(token.GetSymbol(), action.db) {
 		return nil, pty.ErrTokenExist
 	}
 
@@ -167,7 +167,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	//tokenlog.Info("func token preCreate", "token:", tokendb.token.Symbol, "owner:", tokendb.token.Owner,
 	//	"key:", key, "key string", string(key), "value:", tokendb.getKVSet(key)[0].Value)
 
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -242,7 +242,7 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 	//因为该token已经被创建，需要保存一个全局的token，防止其他用户再次创建
 	tokendb.save(action.db, key)
 	kv = append(kv, tokendb.getKVSet(key)...)
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
@@ -297,11 +297,11 @@ func (action *tokenAction) revokeCreate(tokenRevoke *pty.TokenRevokeCreate) (*ty
 	logs = append(logs, tokendb.getLogs(pty.TyLogRevokeCreateToken, pty.TokenStatusCreateRevoked)...)
 	kv = append(kv, tokendb.getKVSet(key)...)
 
-	receipt := &types.Receipt{types.ExecOk, kv, logs}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
 
-func CheckTokenExist(token string, db dbm.KV) bool {
+func checkTokenExist(token string, db dbm.KV) bool {
 	_, err := db.Get(calcTokenKey(token))
 	return err == nil
 }
@@ -366,12 +366,12 @@ func validOperator(addr, key string, db dbm.KV) (bool, error) {
 	return false, nil
 }
 
-func CalcTokenAssetsKey(addr string) []byte {
+func calcTokenAssetsKey(addr string) []byte {
 	return []byte(fmt.Sprintf(tokenAssetsPrefix+"%s", addr))
 }
 
-func GetTokenAssetsKey(addr string, db dbm.KVDB) (*types.ReplyStrings, error) {
-	key := CalcTokenAssetsKey(addr)
+func getTokenAssetsKey(addr string, db dbm.KVDB) (*types.ReplyStrings, error) {
+	key := calcTokenAssetsKey(addr)
 	value, err := db.Get(key)
 	if err != nil && err != types.ErrNotFound {
 		tokenlog.Error("tokendb", "GetTokenAssetsKey", err)
@@ -389,8 +389,9 @@ func GetTokenAssetsKey(addr string, db dbm.KVDB) (*types.ReplyStrings, error) {
 	return &assets, nil
 }
 
+// AddTokenToAssets 添加个人资产列表
 func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue {
-	tokenAssets, err := GetTokenAssetsKey(addr, db)
+	tokenAssets, err := getTokenAssetsKey(addr, db)
 	if err != nil {
 		return nil
 	}
@@ -409,7 +410,7 @@ func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue
 		tokenAssets.Datas = append(tokenAssets.Datas, symbol)
 	}
 	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{CalcTokenAssetsKey(addr), types.Encode(tokenAssets)})
+	kv = append(kv, &types.KeyValue{Key: calcTokenAssetsKey(addr), Value: types.Encode(tokenAssets)})
 	return kv
 }
 
@@ -418,25 +419,25 @@ func inBlacklist(symbol, key string, db dbm.KV) (bool, error) {
 	return found, err
 }
 
-func IsUpperChar(a byte) bool {
+func isUpperChar(a byte) bool {
 	res := (a <= 'Z' && a >= 'A')
 	return res
 }
 
-func ValidSymbol(cs []byte) bool {
+func validSymbol(cs []byte) bool {
 	for _, c := range cs {
-		if !IsUpperChar(c) {
+		if !isUpperChar(c) {
 			return false
 		}
 	}
 	return true
 }
 
-func ValidSymbolWithHeight(cs []byte, height int64) bool {
+func validSymbolWithHeight(cs []byte, height int64) bool {
 	if !types.IsDappFork(height, pty.TokenX, "ForkBadTokenSymbol") {
 		symbol := string(cs)
 		upSymbol := strings.ToUpper(symbol)
 		return upSymbol == symbol
 	}
-	return ValidSymbol(cs)
+	return validSymbol(cs)
 }

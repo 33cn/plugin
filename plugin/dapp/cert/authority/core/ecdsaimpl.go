@@ -38,6 +38,7 @@ type ecdsaValidator struct {
 	CRL []*pkix.CertificateList
 }
 
+// NewEcdsaValidator 创建ecdsa校验器
 func NewEcdsaValidator() Validator {
 	return &ecdsaValidator{}
 }
@@ -148,7 +149,7 @@ func (validator *ecdsaValidator) Validate(certByte []byte, pubKey []byte) error 
 	}
 
 	if !bytes.Equal(pubKey, ecdsa_util.SerializePublicKey(certPubKey)) {
-		return fmt.Errorf("Invalid public key.")
+		return fmt.Errorf("Invalid public key")
 	}
 
 	cert, err = validator.sanitizeCert(cert)
@@ -212,7 +213,7 @@ func (validator *ecdsaValidator) getValidationChain(cert *x509.Certificate, isIn
 		parentPosition = 0
 	}
 	if validator.certificationTreeInternalNodesMap[string(validationChain[parentPosition].Raw)] {
-		return nil, fmt.Errorf("Invalid validation chain. Parent certificate should be a leaf of the certification tree [%v].", cert.Raw)
+		return nil, fmt.Errorf("Invalid validation chain. Parent certificate should be a leaf of the certification tree [%v]", cert.Raw)
 	}
 	return validationChain, nil
 }
@@ -403,7 +404,7 @@ func (validator *ecdsaValidator) getValidityOptsForCert(cert *x509.Certificate) 
 	return tempOpts
 }
 
-func (Validator *ecdsaValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
+func (validator *ecdsaValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
 	cert, _, err := utils.DecodeCertFromSignature(signature)
 	if err != nil {
 		authLogger.Error(fmt.Sprintf("unmashal certificate from signature failed. %s", err.Error()))

@@ -25,25 +25,28 @@ import (
 
 var configPath = flag.String("f", "servers.toml", "configfile")
 
+// ScpInfo struct
 type ScpInfo struct {
 	UserName      string
 	PassWord      string
-	HostIp        string
+	HostIP        string
 	Port          int
 	LocalFilePath string
 	RemoteDir     string
 }
 
+// CmdInfo struct
 type CmdInfo struct {
 	userName  string
 	passWord  string
-	hostIp    string
+	hostIP    string
 	port      int
 	cmd       string
 	remoteDir string
 }
 
-type tomlConfig struct {
+// TomlConfig struct
+type TomlConfig struct {
 	Title   string
 	Servers map[string]ScpInfo
 }
@@ -117,8 +120,9 @@ func sftpconnect(user, password, host string, port int) (*sftp.Client, error) {
 	return sftpClient, nil
 }
 
+// ScpFileFromLocalToRemote copy local file to remote
 func ScpFileFromLocalToRemote(si *ScpInfo) {
-	sftpClient, err := sftpconnect(si.UserName, si.PassWord, si.HostIp, si.Port)
+	sftpClient, err := sftpconnect(si.UserName, si.PassWord, si.HostIP, si.Port)
 	if err != nil {
 		fmt.Println("sftconnect have a err!")
 		log.Fatal(err)
@@ -157,9 +161,10 @@ func ScpFileFromLocalToRemote(si *ScpInfo) {
 	fmt.Println("copy file to remote server finished!")
 }
 
+// RemoteExec run cmd in remote
 func RemoteExec(cmdInfo *CmdInfo) error {
 	//A Session only accepts one call to Run, Start or Shell.
-	session, err := sshconnect(cmdInfo.userName, cmdInfo.passWord, cmdInfo.hostIp, cmdInfo.port)
+	session, err := sshconnect(cmdInfo.userName, cmdInfo.passWord, cmdInfo.hostIP, cmdInfo.port)
 	if err != nil {
 		return err
 	}
@@ -176,12 +181,13 @@ func remoteScp(si *ScpInfo, reqnum chan struct{}) {
 	}()
 	ScpFileFromLocalToRemote(si)
 	//session, err := sshconnect("ubuntu", "Fuzamei#123456", "raft15258.chinacloudapp.cn", 22)
-	fmt.Println("remoteScp file sucessfully!:")
+	fmt.Println("remoteScp file successfully!:")
 
 }
 
-func InitCfg(path string) *tomlConfig {
-	var cfg tomlConfig
+// InitCfg init config
+func InitCfg(path string) *TomlConfig {
+	var cfg TomlConfig
 	if _, err := tml.DecodeFile(path, &cfg); err != nil {
 		fmt.Println(err)
 		os.Exit(0)
@@ -230,7 +236,7 @@ func main() {
 	}
 
 	////读取当前目录下的文件
-	//dir_list, e := ioutil.ReadDir("D:/Repository/src/github.com/33cn/chain33/consensus/drivers/raft/tools/scripts")
+	//dir_list, e := ioutil.ReadDir("ID:/Repository/src/github.com/33cn/chain33/consensus/drivers/raft/tools/scripts")
 	//if e != nil {
 	//	fmt.Println("read dir error")
 	//	return
@@ -243,6 +249,7 @@ func main() {
 	log.Printf("read common cost time %v\n", timeCommon.Sub(start))
 }
 
+// LoadHelp show available commands
 func LoadHelp() {
 	fmt.Println("Available Commands:")
 	fmt.Println(" start  : 启动服务 ")
@@ -250,14 +257,14 @@ func LoadHelp() {
 	fmt.Println(" clear  : 清空数据")
 }
 
-func startAll(conf *tomlConfig) {
+func startAll(conf *TomlConfig) {
 	//fmt.Println(getCurrentDirectory())
 	arrMap := make(map[string]*CmdInfo)
 	//多协程启动部署
 	reqC := make(chan struct{}, len(conf.Servers))
 	for index, sc := range conf.Servers {
 		cmdInfo := &CmdInfo{}
-		cmdInfo.hostIp = sc.HostIp
+		cmdInfo.hostIP = sc.HostIP
 		cmdInfo.userName = sc.UserName
 		cmdInfo.port = sc.Port
 		cmdInfo.passWord = sc.PassWord
@@ -276,11 +283,11 @@ func startAll(conf *tomlConfig) {
 	}
 }
 
-func stopAll(conf *tomlConfig) {
+func stopAll(conf *TomlConfig) {
 	//执行速度快，不需要多起多协程工作
 	for _, sc := range conf.Servers {
 		cmdInfo := &CmdInfo{}
-		cmdInfo.hostIp = sc.HostIp
+		cmdInfo.hostIP = sc.HostIP
 		cmdInfo.userName = sc.UserName
 		cmdInfo.port = sc.Port
 		cmdInfo.passWord = sc.PassWord
@@ -290,10 +297,10 @@ func stopAll(conf *tomlConfig) {
 	}
 }
 
-func clearAll(conf *tomlConfig) {
+func clearAll(conf *TomlConfig) {
 	for _, sc := range conf.Servers {
 		cmdInfo := &CmdInfo{}
-		cmdInfo.hostIp = sc.HostIp
+		cmdInfo.hostIP = sc.HostIP
 		cmdInfo.userName = sc.UserName
 		cmdInfo.port = sc.Port
 		cmdInfo.passWord = sc.PassWord

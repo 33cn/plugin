@@ -4,6 +4,7 @@
 
 package types
 
+// HashlockLockTx for construction
 type HashlockLockTx struct {
 	Secret     string `json:"secret"`
 	Amount     int64  `json:"amount"`
@@ -13,11 +14,13 @@ type HashlockLockTx struct {
 	Fee        int64  `json:"fee"`
 }
 
+// HashlockUnlockTx for construction
 type HashlockUnlockTx struct {
 	Secret string `json:"secret"`
 	Fee    int64  `json:"fee"`
 }
 
+// HashlockSendTx for construction
 type HashlockSendTx struct {
 	Secret string `json:"secret"`
 	Fee    int64  `json:"fee"`

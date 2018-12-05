@@ -12,9 +12,6 @@ import (
 
 func (l *Lottery) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
-	if receiptData.GetTy() != types.ExecOk {
-		return set, nil
-	}
 	for _, item := range receiptData.Logs {
 		switch item.Ty {
 		case pty.TyLogLotteryCreate, pty.TyLogLotteryBuy, pty.TyLogLotteryDraw, pty.TyLogLotteryClose:
@@ -43,20 +40,20 @@ func (l *Lottery) execDelLocal(tx *types.Transaction, receiptData *types.Receipt
 
 // ExecDelLocal_Create Action
 func (l *Lottery) ExecDelLocal_Create(payload *pty.LotteryCreate, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return l.execDelLocal(tx, receiptData)
 }
 
 // ExecDelLocal_Buy Action
 func (l *Lottery) ExecDelLocal_Buy(payload *pty.LotteryBuy, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return l.execDelLocal(tx, receiptData)
 }
 
 // ExecDelLocal_Draw Action
 func (l *Lottery) ExecDelLocal_Draw(payload *pty.LotteryDraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return l.execDelLocal(tx, receiptData)
 }
 
 // ExecDelLocal_Close Action
 func (l *Lottery) ExecDelLocal_Close(payload *pty.LotteryClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	return l.execDelLocal(tx, receiptData)
 }

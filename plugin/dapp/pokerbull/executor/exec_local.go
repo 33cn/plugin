@@ -55,9 +55,6 @@ func (c *PokerBull) updateIndex(log *pkt.ReceiptPBGame) (kvs []*types.KeyValue) 
 
 func (c *PokerBull) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	if receipt.GetTy() != types.ExecOk {
-		return dbSet, nil
-	}
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
 		if item.Ty == pkt.TyLogPBGameStart || item.Ty == pkt.TyLogPBGameContinue || item.Ty == pkt.TyLogPBGameQuit {
@@ -73,14 +70,17 @@ func (c *PokerBull) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, er
 	return dbSet, nil
 }
 
+// ExecLocal_Start 开始游戏交易local执行
 func (c *PokerBull) ExecLocal_Start(payload *pkt.PBGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(receiptData)
 }
 
+// ExecLocal_Continue 继续游戏交易local执行
 func (c *PokerBull) ExecLocal_Continue(payload *pkt.PBGameContinue, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(receiptData)
 }
 
+// ExecLocal_Quit 退出游戏交易local执行
 func (c *PokerBull) ExecLocal_Quit(payload *pkt.PBGameQuit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(receiptData)
 }
