@@ -4,8 +4,13 @@
 package types
 
 import (
+	"strings"
+
 	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
 )
+
+var multisiglog = log15.New("module", "execs.multisig")
 
 var (
 	//OwnerAdd owner操作类型
@@ -100,4 +105,31 @@ type UnSpentAssetsResult struct {
 	Symbol  string `json:"symbol,omitempty"`
 	Execer  string `json:"execer,omitempty"`
 	UnSpent string `json:"unspent,omitempty"`
+}
+
+//IsAssetsInvalid 资产的合法性检测，Symbol：必须全部大写，例如：BTY,coins.BTY。exec：必须在types.AllowUserExec中存在
+func IsAssetsInvalid(exec, symbol string) error {
+
+	//exec检测
+	allowExeName := types.AllowUserExec
+	nameLen := len(allowExeName)
+	execValid := false
+	for i := 0; i < nameLen; i++ {
+		if exec == string(allowExeName[i]) {
+			execValid = true
+			break
+		}
+	}
+	if !execValid {
+		multisiglog.Error("IsAssetsInvalid", "exec", exec)
+		return ErrInvalidExec
+	}
+	//Symbol检测
+	symbolstr := strings.Split(symbol, ".")[len(strings.Split(symbol, "."))-1]
+	upperSymbol := strings.ToUpper(symbolstr)
+	if symbolstr != upperSymbol {
+		multisiglog.Error("IsAssetsInvalid", "symbol", symbol)
+		return ErrInvalidSymbol
+	}
+	return nil
 }

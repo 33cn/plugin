@@ -30,7 +30,7 @@ type execEnv struct {
 }
 
 var (
-	Symbol = "bty"
+	Symbol = "BTY"
 	Asset  = "coins"
 
 	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
@@ -57,6 +57,8 @@ var (
 
 func init() {
 	commonlog.SetLogLevel("debug")
+	types.AllowUserExec = append(types.AllowUserExec, []byte("coins"))
+
 }
 
 //创建一个多重签名的账户
@@ -155,7 +157,7 @@ func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, loc
 	owners = append(owners, owmer2)
 
 	symboldailylimit := &mty.SymbolDailyLimit{
-		Symbol:     "bty",
+		Symbol:     Symbol,
 		Execer:     "coins",
 		DailyLimit: CoinsBtyDailylimit,
 	}

@@ -78,8 +78,14 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 
 	//获取资产的每日限额设置
 	if accountCreate.DailyLimit != nil {
-		dailyLimit.Symbol = accountCreate.DailyLimit.Symbol
-		dailyLimit.Execer = accountCreate.DailyLimit.Execer
+		symbol := accountCreate.DailyLimit.Symbol
+		execer := accountCreate.DailyLimit.Execer
+		err := mty.IsAssetsInvalid(execer, symbol)
+		if err != nil {
+			return nil, err
+		}
+		dailyLimit.Symbol = symbol
+		dailyLimit.Execer = execer
 		dailyLimit.DailyLimit = accountCreate.DailyLimit.DailyLimit
 		dailyLimit.SpentToday = 0
 		dailyLimit.LastDay = a.blocktime //types.Now().Unix()
@@ -132,6 +138,15 @@ func (a *action) MultiSigAccOperate(AccountOperate *mty.MultiSigAccOperate) (*ty
 		return nil, mty.ErrIsNotOwner
 	}
 
+	//dailylimit每日限额属性的修改需要校验assets资产的合法性
+	if !AccountOperate.OperateFlag {
+		execer := AccountOperate.DailyLimit.Execer
+		symbol := AccountOperate.DailyLimit.Symbol
+		err := mty.IsAssetsInvalid(execer, symbol)
+		if err != nil {
+			return nil, err
+		}
+	}
 	//生成新的txid,并将此交易信息添加到Txs列表中
 	txId := multiSigAccount.TxCount
 	newMultiSigTx := &mty.MultiSigTx{}
@@ -210,6 +225,11 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 		return nil, mty.ErrIsNotOwner
 	}
 
+	//assete资产合法性校验
+	err = mty.IsAssetsInvalid(multiSigAccTransfer.Execname, multiSigAccTransfer.Symbol)
+	if err != nil {
+		return nil, err
+	}
 	//生成新的txid,并将此交易信息添加到Txs列表中
 	txId := multiSigAcc.TxCount
 	newMultiSigTx := &mty.MultiSigTx{}
@@ -240,6 +260,11 @@ func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransfer) 
 	if multiSigAccTo == nil {
 		multisiglog.Error("MultiSigExecTransferTo", "ToAddr", execTransfer.To)
 		return nil, mty.ErrAddrNotSupport
+	}
+	//assete资产合法性校验
+	err := mty.IsAssetsInvalid(execTransfer.Execname, execTransfer.Symbol)
+	if err != nil {
+		return nil, err
 	}
 
 	//将指定账户上的资产从balance转账到多重签名账户的balance上

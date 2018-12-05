@@ -14,6 +14,7 @@ import (
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 	"github.com/stretchr/testify/assert"
 	// 注册system和plugin 包
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin"
 )
@@ -30,7 +31,7 @@ func TestJRPCChannel(t *testing.T) {
 	}()
 	mocker.Listen()
 
-	jrpcClient := mocker.GetJsonC()
+	jrpcClient := mocker.GetJSONC()
 
 	testCases := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
@@ -115,50 +116,50 @@ func testCreateMultiSigAccTransferOutCmd(t *testing.T, jrpc *jsonclient.JSONClie
 
 //get 多重签名账户信息
 func testGetMultiSigAccCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccCount",
-		Payload:  types.ReqNil{},
+		Payload:  types.MustPBToJSON(&types.ReqNil{}),
 	}
 	var res types.Int64
 	return jrpc.Call("Chain33.Query", params, &res)
 }
 
 func testGetMultiSigAccountsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccounts",
-		Payload:  mty.ReqMultiSigAccs{},
+		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccs{}),
 	}
 	var res mty.ReplyMultiSigAccs
 	return jrpc.Call("Chain33.Query", params, &res)
 }
 
 func testGetMultiSigAccountInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccountInfo",
-		Payload:  mty.ReqMultiSigAccInfo{},
+		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccInfo{}),
 	}
 	var res mty.MultiSig
 	return jrpc.Call("Chain33.Query", params, &res)
 }
 
 func testGetMultiSigAccTxCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccTxCount",
-		Payload:  mty.ReqMultiSigAccInfo{},
+		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccInfo{}),
 	}
 	var res mty.Uint64
 	return jrpc.Call("Chain33.Query", params, &res)
 }
 
 func testGetMultiSigTxidsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := types.Query4Cli{
+	params := rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigTxids",
-		Payload:  mty.ReqMultiSigTxids{},
+		Payload:  types.MustPBToJSON(&mty.ReqMultiSigTxids{}),
 	}
 	var res mty.ReplyMultiSigTxids
 	return jrpc.Call("Chain33.Query", params, &res)
@@ -166,54 +167,54 @@ func testGetMultiSigTxidsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testGetMultiSigTxInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &mty.ReqMultiSigTxInfo{}
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigTxInfo"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.MultiSigTx{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testGetGetMultiSigTxConfirmedWeightCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &mty.ReqMultiSigTxInfo{}
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigTxConfirmedWeight"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.Uint64{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testGetGetMultiSigAccUnSpentTodayCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	req := &mty.ReqAccAssets{}
 	req.IsAll = true
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccUnSpentToday"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.ReplyUnSpentAssets{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testGetMultiSigAccAssetsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 
 	req := &mty.ReqAccAssets{}
 	req.IsAll = true
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccAssets"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.ReplyAccAssets{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
 func testGetMultiSigAccAllAddressCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 
 	req := mty.ReqMultiSigAccInfo{
 		MultiSigAccAddr: "14jv8WB7CwNQSnh4qo9WDBgRPRBjM5LQo6",
@@ -221,7 +222,7 @@ func testGetMultiSigAccAllAddressCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 
 	params.Execer = mty.MultiSigX
 	params.FuncName = "MultiSigAccAllAddress"
-	params.Payload = req
+	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.AccAddress{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

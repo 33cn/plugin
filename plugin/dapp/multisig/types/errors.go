@@ -36,4 +36,6 @@ var (
 	ErrOwnerLessThanTwo     = errors.New("ErrOwnerLessThanTwo")
 	ErrAddrNotSupport       = errors.New("ErrAddrNotSupport")
 	ErrMaxOwnerCount        = errors.New("ErrMaxOwnerCount")
+	ErrInvalidSymbol        = errors.New("ErrInvalidSymbol")
+	ErrInvalidExec          = errors.New("ErrInvalidExec")
 )

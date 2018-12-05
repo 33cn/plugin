@@ -136,6 +136,12 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
+
+	err := mty.IsAssetsInvalid(execer, symbol)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
 
 	if dailylimit < 0 {
@@ -375,6 +381,13 @@ func createMultiSigAccDailyLimitModifyTransfer(cmd *cobra.Command, args []string
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
+
+	err := mty.IsAssetsInvalid(execer, symbol)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
 	if dailylimit < 0 {
 		fmt.Fprintln(os.Stderr, "DailyLimitLessThanZero")
 		return
@@ -475,6 +488,11 @@ func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
+	err := mty.IsAssetsInvalid(execer, symbol)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigExecTransfer{
 		Symbol:   symbol,
 		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
@@ -529,6 +547,11 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
+	err := mty.IsAssetsInvalid(execer, symbol)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigExecTransfer{
 		Symbol:   symbol,
 		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
@@ -882,8 +905,6 @@ func getMultiSigAccUnSpentTodayFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("execer", "e", "", "assets execer name")
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
-	cmd.Flags().StringP("isall", "i", "t", "whether get all assets (0/f/false for No; 1/t/true for Yes)")
-
 }
 
 func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
@@ -892,21 +913,18 @@ func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	isall, _ := cmd.Flags().GetString("isall")
-	isallBool, err := strconv.ParseBool(isall)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	isallBool := true
 	assets := &mty.Assets{}
 	//获取指定资产信息时，execer和symbol不能为空
-	if !isallBool {
-		if len(execer) == 0 || len(symbol) == 0 {
-			fmt.Fprintln(os.Stderr, "input execer or symbol parameter invalid!")
+	if len(execer) != 0 && len(symbol) != 0 {
+		err := mty.IsAssetsInvalid(execer, symbol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 		assets.Execer = execer
 		assets.Symbol = symbol
+		isallBool = false
 	}
 
 	req := mty.ReqAccAssets{
@@ -959,11 +977,7 @@ func getMultiSigAccAssetsFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().StringP("execer", "e", "coins", "assets execer name ")
-
-	cmd.Flags().StringP("symbol", "s", "bty", "assets symbol")
-
-	cmd.Flags().StringP("isall", "i", "t", "whether get all assets (0/f/false for No; 1/t/true for Yes)")
-
+	cmd.Flags().StringP("symbol", "s", "BTY", "assets symbol")
 }
 
 func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
@@ -972,21 +986,18 @@ func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	isall, _ := cmd.Flags().GetString("isall")
-	isallBool, err := strconv.ParseBool(isall)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	isallBool := true
 	assets := &mty.Assets{}
 	//获取指定资产信息时，execer和symbol不能为空
-	if !isallBool {
-		if len(execer) == 0 || len(symbol) == 0 {
-			fmt.Fprintln(os.Stderr, "input execer or symbol parameter invalid!")
+	if len(execer) != 0 && len(symbol) != 0 {
+		err := mty.IsAssetsInvalid(execer, symbol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 		assets.Execer = execer
 		assets.Symbol = symbol
+		isallBool = false
 	}
 
 	req := mty.ReqAccAssets{

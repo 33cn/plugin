@@ -247,6 +247,12 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 			replyUnSpentAssets.UnSpentAssets = append(replyUnSpentAssets.UnSpentAssets, &unSpentAssets)
 		}
 	} else {
+		//assets资产合法性校验
+		err := mty.IsAssetsInvalid(in.Assets.Execer, in.Assets.Symbol)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, dailyLimit := range multiSigAcc.DailyLimits {
 			var unSpentAssets mty.UnSpentAssets
 
@@ -310,7 +316,11 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 		}
 	} else { //获取账户上的指定资产数据
 		accAssets := &mty.AccAssets{}
-
+		//assets资产合法性校验
+		err := mty.IsAssetsInvalid(in.Assets.Execer, in.Assets.Symbol)
+		if err != nil {
+			return nil, err
+		}
 		account, _ := m.getMultiSigAccAssets(in.MultiSigAddr, in.Assets)
 		accAssets.Account = account
 		accAssets.Assets = in.Assets
