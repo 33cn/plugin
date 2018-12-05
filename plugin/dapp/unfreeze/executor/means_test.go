@@ -1,8 +1,9 @@
 package executor
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
