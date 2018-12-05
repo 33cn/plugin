@@ -141,7 +141,7 @@ func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction)
 	return unfreeze, nil
 }
 
-// 创建解冻交易
+// 创建解冻状态
 func (u *Unfreeze) create(unfreeze *pty.Unfreeze) (*types.Receipt, error) {
 	k := []byte(unfreeze.UnfreezeID)
 	v := types.Encode(unfreeze)
