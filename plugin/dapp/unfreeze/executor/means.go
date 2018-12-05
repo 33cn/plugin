@@ -73,11 +73,11 @@ func (opt *leftProportion) calcFrozen(unfreeze *pty.Unfreeze, now int64) (int64,
 		return 0, types.ErrInvalidParam
 	}
 	unfreezeTimes := (now + means.Period - unfreeze.StartTime) / means.Period
-	frozen := unfreeze.TotalCount
+	frozen := float64(unfreeze.TotalCount)
 	for i := int64(0); i < unfreezeTimes; i++ {
-		frozen = frozen * (10000 - means.TenThousandth) / 10000
+		frozen = frozen * float64(10000-means.TenThousandth) / 10000
 	}
-	return frozen, nil
+	return int64(frozen), nil
 }
 
 func withdraw(unfreeze *pty.Unfreeze, frozen int64) (*pty.Unfreeze, int64) {
