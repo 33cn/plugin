@@ -19,7 +19,7 @@ import (
 var (
 	Amount = int64(1 * types.Coin)
 	Title  = string("user.p.para.")
-	Title2  = string("user.p.test.")
+	Title2 = string("user.p.test.")
 )
 
 func TestFilterTxsForPara(t *testing.T) {
@@ -203,7 +203,7 @@ func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) 
 		IsWithdraw:  false,
 		IsToken:     false,
 		TokenSymbol: "",
-		ExecName:    Title2 +pt.ParaX,
+		ExecName:    Title2 + pt.ParaX,
 	}
 	tx, err := pt.CreateRawAssetTransferTx(&param)
 
