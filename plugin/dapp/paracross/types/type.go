@@ -42,6 +42,11 @@ func NewType() *ParacrossType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (p *ParacrossType) GetName() string {
+	return ParaX
+}
+
 // GetLogMap get receipt log map
 func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{

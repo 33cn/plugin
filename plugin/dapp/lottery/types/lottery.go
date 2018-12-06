@@ -35,6 +35,11 @@ func NewType() *LotteryType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (lottery *LotteryType) GetName() string {
+	return LotteryX
+}
+
 // GetLogMap method
 func (lottery *LotteryType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
@@ -109,8 +114,10 @@ func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error)
 	}
 
 	v := &LotteryCreate{
-		PurBlockNum:  parm.PurBlockNum,
-		DrawBlockNum: parm.DrawBlockNum,
+		PurBlockNum:    parm.PurBlockNum,
+		DrawBlockNum:   parm.DrawBlockNum,
+		OpRewardRatio:  parm.OpRewardRatio,
+		DevRewardRatio: parm.DevRewardRatio,
 	}
 	create := &LotteryAction{
 		Ty:    LotteryActionCreate,

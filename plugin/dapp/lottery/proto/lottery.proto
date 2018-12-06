@@ -13,6 +13,7 @@ message PurchaseRecords {
     repeated PurchaseRecord record         = 1;
     int64                   fundWin        = 2;
     int64                   amountOneRound = 3;
+    string                  addr           = 4;
 }
 
 message Lottery {
@@ -24,7 +25,7 @@ message Lottery {
     int64                        drawBlockNum               = 6;
     int64                        lastTransToPurState        = 7;
     int64                        lastTransToDrawState       = 8;
-    map<string, PurchaseRecords> records                    = 9;
+    //map<string, PurchaseRecords> records                    = 9;
     int64                        totalPurchasedTxNum        = 10;
     string                       createAddr                 = 11;
     int64                        round                      = 12;
@@ -33,6 +34,9 @@ message Lottery {
     int64                        lastTransToPurStateOnMain  = 15;
     int64                        lastTransToDrawStateOnMain = 16;
     repeated MissingRecord missingRecords                   = 17;
+    int64                        opRewardRatio              = 18;
+    int64                        devRewardRatio             = 19;
+    repeated PurchaseRecords     purRecords                 = 20;
 }
 
 message MissingRecord {
@@ -50,8 +54,10 @@ message LotteryAction {
 }
 
 message LotteryCreate {
-    int64 purBlockNum  = 1;
-    int64 drawBlockNum = 2;
+    int64 purBlockNum    = 1;
+    int64 drawBlockNum   = 2;
+    int64 opRewardRatio  = 3;
+    int64 devRewardRatio = 4;
 }
 
 message LotteryBuy {
@@ -117,10 +123,12 @@ message ReqLotteryLuckyHistory {
 }
 
 message ReplyLotteryNormalInfo {
-    int64  createHeight = 1;
-    int64  purBlockNum  = 2;
-    int64  drawBlockNum = 3;
-    string createAddr   = 4;
+    int64  createHeight   = 1;
+    int64  purBlockNum    = 2;
+    int64  drawBlockNum   = 3;
+    string createAddr     = 4;
+    int64  opRewardRatio  = 5;
+    int64  devRewardRatio = 6;
 }
 
 message ReplyLotteryCurrentInfo {

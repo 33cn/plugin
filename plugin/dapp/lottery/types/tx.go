@@ -6,9 +6,11 @@ package types
 
 // LotteryCreateTx for construction
 type LotteryCreateTx struct {
-	PurBlockNum  int64 `json:"purBlockNum"`
-	DrawBlockNum int64 `json:"drawBlockNum"`
-	Fee          int64 `json:"fee"`
+	PurBlockNum    int64 `json:"purBlockNum"`
+	DrawBlockNum   int64 `json:"drawBlockNum"`
+	Fee            int64 `json:"fee"`
+	OpRewardRatio  int64 `json:"opRewardRatio"`
+	DevRewardRatio int64 `json:"devRewardRatio"`
 }
 
 // LotteryBuyTx for construction

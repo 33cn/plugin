@@ -29,6 +29,11 @@ func NewType() *NormType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (norm *NormType) GetName() string {
+	return NormX
+}
+
 // GetPayload method
 func (norm *NormType) GetPayload() types.Message {
 	return &NormAction{}
