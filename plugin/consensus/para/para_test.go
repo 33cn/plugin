@@ -19,6 +19,7 @@ import (
 var (
 	Amount = int64(1 * types.Coin)
 	Title  = string("user.p.para.")
+	Title2  = string("user.p.test.")
 )
 
 func TestFilterTxsForPara(t *testing.T) {
@@ -72,6 +73,10 @@ func TestFilterTxsForPara(t *testing.T) {
 	txGroupBC, err := createTxsGroup(txBC)
 	assert.Nil(t, err)
 
+	//single para tx
+	txD, err := createCrossParaTempTx("toB", 10)
+	assert.Nil(t, err)
+
 	txs := []*types.Transaction{tx0}
 	txs = append(txs, txGroup12...)
 	txs = append(txs, txGroup34...)
@@ -79,6 +84,7 @@ func TestFilterTxsForPara(t *testing.T) {
 	txs = append(txs, txGroup78...)
 	txs = append(txs, tx9, txA)
 	txs = append(txs, txGroupBC...)
+	txs = append(txs, txD)
 
 	//for i, tx := range txs {
 	//	t.Log("tx exec name", "i", i, "name", string(tx.Execer))
@@ -101,8 +107,9 @@ func TestFilterTxsForPara(t *testing.T) {
 	recptA := &types.ReceiptData{Ty: types.ExecPack}
 	recptB := &types.ReceiptData{Ty: types.ExecPack}
 	recptC := &types.ReceiptData{Ty: types.ExecPack}
+	recptD := &types.ReceiptData{Ty: types.ExecPack}
 	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5,
-		recpt6, recpt7, recpt8, recpt9, recptA, recptB, recptC}
+		recpt6, recpt7, recpt8, recpt9, recptA, recptB, recptC, recptD}
 
 	block := &types.Block{Txs: txs}
 	detail := &types.BlockDetail{
@@ -181,6 +188,22 @@ func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
 		IsToken:     false,
 		TokenSymbol: "",
 		ExecName:    types.ExecName(pt.ParaX),
+	}
+	tx, err := pt.CreateRawAssetTransferTx(&param)
+
+	return tx, err
+}
+
+func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) {
+	param := types.CreateTx{
+		To:          string(to),
+		Amount:      amount,
+		Fee:         0,
+		Note:        []byte("test asset transfer"),
+		IsWithdraw:  false,
+		IsToken:     false,
+		TokenSymbol: "",
+		ExecName:    Title2 +pt.ParaX,
 	}
 	tx, err := pt.CreateRawAssetTransferTx(&param)
 
