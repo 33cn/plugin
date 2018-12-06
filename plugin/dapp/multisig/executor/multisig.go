@@ -19,6 +19,7 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/system/dapp"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -65,12 +66,166 @@ func (m *MultiSig) GetDriverName() string {
 // CheckTx 检测multisig合约交易,转账交易amount不能为负数
 func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 	ety := m.GetExecutorType()
+
+	//amount check
 	amount, err := ety.Amount(tx)
 	if err != nil {
 		return err
 	}
 	if amount < 0 {
 		return types.ErrAmount
+	}
+
+	_, v, err := ety.DecodePayloadValue(tx)
+	if err != nil {
+		return err
+	}
+	payload := v.Interface()
+
+	//MultiSigAccCreate 交易校验
+	if ato, ok := payload.(*mty.MultiSigAccCreate); ok {
+		err := checkAccountCreateTx(ato)
+		if err != nil {
+			return err
+		}
+	}
+	//MultiSigExecTransfer to 地址检测
+	if ato, ok := payload.(*mty.MultiSigExecTransfer); ok {
+		if err := address.CheckAddress(ato.GetTo()); err != nil {
+			return types.ErrInvalidAddress
+		}
+		//assets check
+		if err := mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol()); err != nil {
+			return err
+		}
+	}
+	//MultiSigOwnerOperate 交易的检测
+	if ato, ok := payload.(*mty.MultiSigOwnerOperate); ok {
+		err := checkOwnerOperateTx(ato)
+		if err != nil {
+			return err
+		}
+	}
+	//MultiSigAccOperate to 地址检测
+	if ato, ok := payload.(*mty.MultiSigAccOperate); ok {
+		err := checkAccountOperateTx(ato)
+		if err != nil {
+			return err
+		}
+	}
+	//MultiSigConfirmTx  multiSigAccAddr地址检测
+	if ato, ok := payload.(*mty.MultiSigConfirmTx); ok {
+		if err := address.CheckAddress(ato.GetMultiSigAccAddr()); err != nil {
+			return types.ErrInvalidAddress
+		}
+	}
+
+	return nil
+}
+func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
+	var totalweight uint64 = 0
+	var ownerCount int = 0
+
+	requiredWeight := ato.GetRequiredWeight()
+	if requiredWeight == 0 {
+		return mty.ErrInvalidWeight
+	}
+	owners := ato.GetOwners()
+	//创建时requiredweight权重的值不能大于所有owner权重之和
+	for _, owner := range owners {
+		if owner != nil {
+			if err := address.CheckAddress(owner.OwnerAddr); err != nil {
+				return types.ErrInvalidAddress
+			}
+			if owner.Weight == 0 {
+				return mty.ErrInvalidWeight
+			}
+			totalweight += owner.Weight
+			ownerCount = ownerCount + 1
+		}
+	}
+
+	if ato.RequiredWeight > totalweight {
+		return mty.ErrRequiredweight
+	}
+
+	//创建时最少设置两个owner
+	if ownerCount < mty.MinOwnersInit {
+		return mty.ErrOwnerLessThanTwo
+	}
+	//owner总数不能大于最大值
+	if ownerCount > mty.MaxOwnersCount {
+		return mty.ErrMaxOwnerCount
+	}
+
+	dailyLimit := ato.GetDailyLimit()
+	//assets check
+	if err := mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
+
+	OldOwner := ato.GetOldOwner()
+	NewOwner := ato.GetNewOwner()
+	NewWeight := ato.GetNewWeight()
+	MultiSigAccAddr := ato.GetMultiSigAccAddr()
+	if err := address.CheckAddress(MultiSigAccAddr); err != nil {
+		return types.ErrInvalidAddress
+	}
+
+	if ato.OperateFlag == mty.OwnerAdd {
+		if err := address.CheckAddress(NewOwner); err != nil {
+			return types.ErrInvalidAddress
+		}
+		if NewWeight <= 0 {
+			return mty.ErrInvalidWeight
+		}
+	}
+	if ato.OperateFlag == mty.OwnerDel {
+		if err := address.CheckAddress(OldOwner); err != nil {
+			return types.ErrInvalidAddress
+		}
+	}
+	if ato.OperateFlag == mty.OwnerModify {
+		if err := address.CheckAddress(OldOwner); err != nil {
+			return types.ErrInvalidAddress
+		}
+		if NewWeight <= 0 {
+			return mty.ErrInvalidWeight
+		}
+	}
+	if ato.OperateFlag == mty.OwnerReplace {
+		if err := address.CheckAddress(OldOwner); err != nil {
+			return types.ErrInvalidAddress
+		}
+		if err := address.CheckAddress(NewOwner); err != nil {
+			return types.ErrInvalidAddress
+		}
+	}
+	return nil
+}
+func checkAccountOperateTx(ato *mty.MultiSigAccOperate) error {
+	//MultiSigAccOperate to 地址检测
+	MultiSigAccAddr := ato.GetMultiSigAccAddr()
+	if err := address.CheckAddress(MultiSigAccAddr); err != nil {
+		return types.ErrInvalidAddress
+	}
+
+	if ato.OperateFlag == mty.AccWeightOp {
+		NewWeight := ato.GetNewRequiredWeight()
+		if NewWeight <= 0 {
+			return mty.ErrInvalidWeight
+		}
+	}
+	if ato.OperateFlag == mty.AccDailyLimitOp {
+		dailyLimit := ato.GetDailyLimit()
+		//assets check
+		if err := mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol()); err != nil {
+			return err
+		}
 	}
 	return nil
 }

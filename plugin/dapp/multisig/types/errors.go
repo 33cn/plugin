@@ -38,4 +38,5 @@ var (
 	ErrMaxOwnerCount        = errors.New("ErrMaxOwnerCount")
 	ErrInvalidSymbol        = errors.New("ErrInvalidSymbol")
 	ErrInvalidExec          = errors.New("ErrInvalidExec")
+	ErrInvalidWeight        = errors.New("ErrInvalidWeight")
 )

@@ -105,8 +105,8 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 	var ownerCount int = 0
 	for _, weight := range weightsArr {
 		ownerweight, err := strconv.ParseInt(weight, 10, 64)
-		if err != nil || ownerweight < 0 {
-			fmt.Fprintln(os.Stderr, err)
+		if err != nil || ownerweight <= 0 {
+			fmt.Fprintln(os.Stderr, "weight invalid")
 			return
 		}
 		weights = append(weights, uint64(ownerweight))
@@ -121,8 +121,11 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	requiredweight, _ := cmd.Flags().GetUint64("required_weight")
-
+	requiredweight, err := cmd.Flags().GetUint64("required_weight")
+	if err != nil || requiredweight == 0 {
+		fmt.Fprintln(os.Stderr, "required weight invalid")
+		return
+	}
 	if requiredweight > totalweight {
 		fmt.Fprintln(os.Stderr, "Requiredweight more than totalweight")
 		return
@@ -137,7 +140,7 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	err := mty.IsAssetsInvalid(execer, symbol)
+	err = mty.IsAssetsInvalid(execer, symbol)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -474,7 +477,6 @@ func createMultiSigAccTransferInFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
-	cmd.MarkFlagRequired("note")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
@@ -532,7 +534,6 @@ func createMultiSigAccTransferOutFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
-	cmd.MarkFlagRequired("note")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
