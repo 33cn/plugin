@@ -89,16 +89,7 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 			return err
 		}
 	}
-	//MultiSigExecTransfer to 地址检测
-	if ato, ok := payload.(*mty.MultiSigExecTransfer); ok {
-		if err := address.CheckAddress(ato.GetTo()); err != nil {
-			return types.ErrInvalidAddress
-		}
-		//assets check
-		if err := mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol()); err != nil {
-			return err
-		}
-	}
+
 	//MultiSigOwnerOperate 交易的检测
 	if ato, ok := payload.(*mty.MultiSigOwnerOperate); ok {
 		err := checkOwnerOperateTx(ato)
@@ -120,6 +111,16 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 		}
 	}
 
+	//MultiSigExecTransfer to 地址检测
+	if ato, ok := payload.(*mty.MultiSigExecTransfer); ok {
+		if err := address.CheckAddress(ato.GetTo()); err != nil {
+			return types.ErrInvalidAddress
+		}
+		//assets check
+		if err := mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol()); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
@@ -131,6 +132,8 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 		return mty.ErrInvalidWeight
 	}
 	owners := ato.GetOwners()
+	ownersMap := make(map[string]bool)
+
 	//创建时requiredweight权重的值不能大于所有owner权重之和
 	for _, owner := range owners {
 		if owner != nil {
@@ -140,6 +143,10 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 			if owner.Weight == 0 {
 				return mty.ErrInvalidWeight
 			}
+			if ownersMap[owner.OwnerAddr] {
+				return mty.ErrOwnerExist
+			}
+			ownersMap[owner.OwnerAddr] = true
 			totalweight += owner.Weight
 			ownerCount = ownerCount + 1
 		}
@@ -167,7 +174,6 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 }
 
 func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
-
 	OldOwner := ato.GetOldOwner()
 	NewOwner := ato.GetNewOwner()
 	NewWeight := ato.GetNewWeight()

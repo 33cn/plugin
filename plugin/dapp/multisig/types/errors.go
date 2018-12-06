@@ -39,4 +39,5 @@ var (
 	ErrInvalidSymbol        = errors.New("ErrInvalidSymbol")
 	ErrInvalidExec          = errors.New("ErrInvalidExec")
 	ErrInvalidWeight        = errors.New("ErrInvalidWeight")
+	ErrInvalidDailyLimit    = errors.New("ErrInvalidDailyLimit")
 )

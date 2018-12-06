@@ -88,10 +88,10 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	address, _ := cmd.Flags().GetString("owners_addr")
-	addressArr := strings.Split(address, " ")
+	addressArr := strings.Fields(address)
 
 	weightstr, _ := cmd.Flags().GetString("owners_weight")
-	weightsArr := strings.Split(weightstr, " ")
+	weightsArr := strings.Fields(weightstr)
 
 	//校验owner和权重数量要一致
 	if len(addressArr) != len(weightsArr) {
@@ -131,24 +131,13 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	//创建时最少设置两个owner
-	if ownerCount < mty.MinOwnersInit {
-		fmt.Fprintln(os.Stderr, "OwnerLessThanTwo")
-		return
-	}
-
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	err = mty.IsAssetsInvalid(execer, symbol)
+	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
+	err = isValidDailylimit(dailylimit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
-
-	if dailylimit < 0 {
-		fmt.Fprintln(os.Stderr, "DailyLimitLessThanZero")
 		return
 	}
 	symboldailylimit := &mty.SymbolDailyLimit{
@@ -385,14 +374,9 @@ func createMultiSigAccDailyLimitModifyTransfer(cmd *cobra.Command, args []string
 	symbol, _ := cmd.Flags().GetString("symbol")
 	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
 
-	err := mty.IsAssetsInvalid(execer, symbol)
+	err := isValidDailylimit(dailylimit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	if dailylimit < 0 {
-		fmt.Fprintln(os.Stderr, "DailyLimitLessThanZero")
 		return
 	}
 	assetsDailyLimit := &mty.SymbolDailyLimit{
@@ -490,9 +474,8 @@ func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	err := mty.IsAssetsInvalid(execer, symbol)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if float64(types.MaxCoin/types.Coin) < amount {
+		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
 	params := &mty.MultiSigExecTransfer{
@@ -548,9 +531,8 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	err := mty.IsAssetsInvalid(execer, symbol)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if float64(types.MaxCoin/types.Coin) < amount {
+		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
 	params := &mty.MultiSigExecTransfer{
@@ -681,6 +663,7 @@ func parseAccInfo(view interface{}) (interface{}, error) {
 	for _, dailyLimit := range res.DailyLimits {
 		dailyLimt := strconv.FormatFloat(float64(dailyLimit.DailyLimit)/float64(types.Coin), 'f', 4, 64)
 		spentToday := strconv.FormatFloat(float64(dailyLimit.SpentToday)/float64(types.Coin), 'f', 4, 64)
+		fmt.Println("parseAccInfo dailyLimt", dailyLimt)
 		dailyLimitResult := &mty.DailyLimitResult{
 			Symbol:     dailyLimit.Symbol,
 			Execer:     dailyLimit.Execer,
@@ -1073,4 +1056,11 @@ func getMultiSigAccAllAddress(cmd *cobra.Command, args []string) {
 	rep = &mty.AccAddress{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
+}
+
+func isValidDailylimit(dailylimit float64) error {
+	if dailylimit < 0 || float64(types.MaxCoin/types.Coin) < dailylimit {
+		return mty.ErrInvalidDailyLimit
+	}
+	return nil
 }

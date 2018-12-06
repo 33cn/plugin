@@ -33,7 +33,7 @@ var (
 	OneDaySecond   int64 = 24 * 3600
 	MinOwnersInit  int   = 2
 	MinOwnersCount int   = 1  //一个多重签名的账户最少要保留一个owner
-	MaxOwnersCount int   = 50 //一个多重签名的账户最多拥有50个owner
+	MaxOwnersCount int   = 20 //一个多重签名的账户最多拥有20个owner
 
 	Multisiglog = log15.New("module", MultiSigX)
 )
@@ -126,10 +126,24 @@ func IsAssetsInvalid(exec, symbol string) error {
 	}
 	//Symbol检测
 	symbolstr := strings.Split(symbol, ".")[len(strings.Split(symbol, "."))-1]
-	upperSymbol := strings.ToUpper(symbolstr)
-	if symbolstr != upperSymbol {
+	valid := validSymbol([]byte(symbolstr))
+	if !valid {
 		multisiglog.Error("IsAssetsInvalid", "symbol", symbol)
 		return ErrInvalidSymbol
 	}
 	return nil
+}
+
+func isUpperChar(a byte) bool {
+	res := (a <= 'Z' && a >= 'A')
+	return res
+}
+
+func validSymbol(cs []byte) bool {
+	for _, c := range cs {
+		if !isUpperChar(c) {
+			return false
+		}
+	}
+	return true
 }
