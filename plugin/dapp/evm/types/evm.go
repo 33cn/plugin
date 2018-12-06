@@ -52,6 +52,11 @@ func NewType() *EvmType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (evm *EvmType) GetName() string {
+	return ExecutorName
+}
+
 // GetPayload 获取消息负载结构
 func (evm *EvmType) GetPayload() types.Message {
 	return &EVMContractAction{}

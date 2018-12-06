@@ -43,6 +43,11 @@ type UnfreezeType struct {
 	types.ExecTypeBase
 }
 
+// GetName 获取执行器名称
+func (u *UnfreezeType) GetName() string {
+	return UnfreezeX
+}
+
 // GetLogMap 获得日志类型列表
 func (u *UnfreezeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
