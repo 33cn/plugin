@@ -251,7 +251,7 @@ func calcParaCrossTxGroup(tx *types.Transaction, main *types.BlockDetail, index 
 
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
-		if types.IsParaExecName(string(main.Block.Txs[i].Execer)) {
+		if types.IsParaTitleTx(string(main.Block.Txs[i].Execer)) {
 			continue
 		}
 		if main.Receipts[i].Ty == types.ExecOk {
@@ -272,7 +272,7 @@ func (client *client) FilterTxsForPara(main *types.BlockDetail) []*types.Transac
 	var txs []*types.Transaction
 	for i := 0; i < len(main.Block.Txs); i++ {
 		tx := main.Block.Txs[i]
-		if types.IsParaExecName(string(tx.Execer)) {
+		if types.IsParaTitleTx(string(tx.Execer)) {
 			if tx.GroupCount >= paraCrossTxCount {
 				mainTxs, endIdx := calcParaCrossTxGroup(tx, main, i)
 				txs = append(txs, mainTxs...)
