@@ -84,9 +84,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		emptyBlockInterval = cfg.EmptyBlockInterval
 	}
 
-	if cfg.searchHashMatchBlockDepth > 0 {
-		searchHashMatchBlockDepth = cfg.searchHashMatchBlockDepth
-	}
+	//if cfg.searchHashMatchBlockDepth > 0 {
+	//	searchHashMatchBlockDepth = cfg.searchHashMatchBlockDepth
+	//}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
 	if err != nil {
@@ -384,15 +384,6 @@ func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
 	return seq.Data, nil
 }
 
-func (client *client) GetHashByHeightFromMainChain(height int64) ([]byte, error) {
-	req := &types.ReqInt{Height: height}
-	hash, err := client.grpcClient.GetBlockHash(context.Background(), req)
-	if err != nil {
-		plog.Error("GetBlocksByHashesFromMainChain", "Error", err.Error())
-		return nil, err
-	}
-	return hash, nil
-}
 
 func (client *client) GetBlocksByHashesFromMainChain(hashes [][]byte) (*types.BlockDetails, error) {
 	req := &types.ReqHashes{Hashes: hashes}
@@ -440,7 +431,7 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, int64,
 }
 
 // preBlockHash to identify the same main node
-func (client *client) RequestTx(seq *int64, lastBlock *types.Block, preMainBlockHash *[]byte) ([]*types.Transaction, *types.Block, int64, error) {
+func (client *client) RequestTx(seq *int64, preMainBlockHash *[]byte) ([]*types.Transaction, *types.Block, int64, error) {
 	plog.Debug("Para consensus RequestTx")
 	currSeq := *seq
 	lastSeq, err := client.GetLastSeqOnMainChain()
@@ -453,8 +444,8 @@ func (client *client) RequestTx(seq *int64, lastBlock *types.Block, preMainBlock
 		if err != nil {
 			return nil, nil, -1, err
 		}
-		//genesis block not check
-		if lastBlock.Height == 0 ||
+		//genesis block with seq=-1 not check
+		if currSeq == 0 ||
 			(bytes.Equal(*preMainBlockHash, blockDetail.Block.ParentHash) && seqTy == addAct) ||
 			(bytes.Equal(*preMainBlockHash, blockDetail.Block.Hash()) && seqTy == delAct) {
 
@@ -486,14 +477,18 @@ func (client *client) RequestTx(seq *int64, lastBlock *types.Block, preMainBlock
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	// to search base on para block but not preMainBlock, preMainBlock can not back tracking
 	// whether found matched block or not, return err to re-requestTx
-	client.findHashMatchedBlock(seq, lastBlock, preMainBlockHash)
+	client.findHashMatchedBlock(seq, preMainBlockHash)
 	return nil, nil, -1, errors.New("hash not matched")
 }
 
-//
-func (client *client) findHashMatchedBlock(currSeq *int64, lastBlock *types.Block, preMainBlockHash *[]byte) {
+// search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
+func (client *client) findHashMatchedBlock(currSeq *int64, preMainBlockHash *[]byte) {
+	lastBlock, err := client.RequestLastBlock()
+	if err != nil {
+		plog.Error("Parachain RequestLastBlock fail", "err", err)
+		return
+	}
 	findDepth := searchHashMatchBlockDepth
 	for height := lastBlock.Height; height > 0 && findDepth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
@@ -515,15 +510,11 @@ func (client *client) findHashMatchedBlock(currSeq *int64, lastBlock *types.Bloc
 			continue
 		}
 
-		//try 100 times for remove fail case, if >100, panic to restart system to keep lastblock and sequence unify
-		for i := 0; i < 100; i++ {
-			err = client.removeBlocks(height)
-			if err == nil {
-				break
-			}
-			if i >= 100 {
-				panic("findHashMatchedBlock del blocks fail, restart and retry")
-			}
+		//remove fail, set the preMainBlockHash to nil, to match nothing, force to search again
+		err = client.removeBlocks(height)
+		if err != nil {
+			*preMainBlockHash = nil
+			return
 		}
 
 		*currSeq = mainSeq + 1
@@ -532,16 +523,44 @@ func (client *client) findHashMatchedBlock(currSeq *int64, lastBlock *types.Bloc
 	}
 }
 
+func (client *client) removeBlocks(endHeight int64) error {
+	for {
+		lastBlock, err := client.RequestLastBlock()
+		if err != nil {
+			plog.Error("Parachain RequestLastBlock fail", "err", err)
+			return err
+		}
+		if lastBlock.Height == endHeight {
+			return nil
+		}
+
+		blockedSeq, err := client.GetBlockedSeq(lastBlock.Hash())
+		if err != nil {
+			plog.Error("Parachain GetBlockedSeq fail", "err", err)
+			return err
+		}
+
+		err = client.DelBlock(lastBlock, blockedSeq)
+		if err != nil {
+			plog.Error("Parachain GetBlockedSeq fail", "err", err)
+			return err
+		}
+
+	}
+}
+
 //正常情况下，打包交易
 func (client *client) CreateBlock() {
 	incSeqFlag := true
+	//system startup, take the last added block's seq is ok
 	currSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
 	if err != nil {
 		plog.Error("Parachain GetLastSeq fail", "err", err)
 		return
 	}
 	for {
-		lastSeq, lastBlock, _, lastBlockMainHeight, err := client.getLastBlockInfo()
+		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
+		lastSeq, err := client.GetLastSeq()
 		if err != nil {
 			plog.Error("Parachain GetLastSeq fail", "err", err)
 			time.Sleep(time.Second)
@@ -552,7 +571,7 @@ func (client *client) CreateBlock() {
 			currSeq++
 		}
 
-		txs, blockOnMain, seqTy, err := client.RequestTx(&currSeq, lastBlock, &lastSeqMainHash)
+		txs, blockOnMain, seqTy, err := client.RequestTx(&currSeq, &lastSeqMainHash)
 		if err != nil {
 			incSeqFlag = false
 			time.Sleep(time.Second)
@@ -560,6 +579,14 @@ func (client *client) CreateBlock() {
 		}
 		lastSeqMainHash = blockOnMain.Hash()
 		lastSeqMainHeight := blockOnMain.Height
+
+		_, lastBlock, _, lastBlockMainHeight, err := client.getLastBlockInfo()
+		if err != nil {
+			plog.Error("Parachain GetLastSeq fail", "err", err)
+			time.Sleep(time.Second)
+			continue
+		}
+
 		plog.Info("Parachain process block", "lastSeq", lastSeq, "curSeq", currSeq, "lastSeqMainHeight", lastSeqMainHeight, "lastBlockMainHeight", lastBlockMainHeight)
 
 		if seqTy == delAct {
@@ -670,29 +697,6 @@ func (client *client) WriteBlock(prev []byte, paraBlock *types.Block, seq int64)
 	return nil
 }
 
-func (client *client) removeBlocks(endHeight int64) error {
-	for {
-		lastBlock, err := client.RequestLastBlock()
-		if err != nil {
-			plog.Error("Parachain RequestLastBlock fail", "err", err)
-			return err
-		}
-		if lastBlock.Height == endHeight {
-			return nil
-		}
-
-		blockedSeq, err := client.GetBlockedSeq(lastBlock.Hash())
-		if err != nil {
-			plog.Error("Parachain GetBlockedSeq fail", "err", err)
-			return err
-		}
-		err = client.DelBlock(lastBlock, blockedSeq)
-		if err != nil {
-			plog.Error("Parachain GetBlockedSeq fail", "err", err)
-			return err
-		}
-	}
-}
 
 // 向blockchain删区块
 func (client *client) DelBlock(block *types.Block, seq int64) error {
