@@ -439,6 +439,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender, recipient string, amount uint64) b
 	case NoNeed:
 		return true
 	case ToExec:
+		// 无论其它账户还是创建者向合约地址转账，都需要检查其当前合约账户活动余额是否充足
 		accFrom := mdb.CoinsAccount.LoadExecAccount(sender, recipient)
 		b := accFrom.GetBalance() - value
 		if b < 0 {
@@ -452,7 +453,6 @@ func (mdb *MemoryStateDB) CanTransfer(sender, recipient string, amount uint64) b
 		return false
 	}
 }
-
 func (mdb *MemoryStateDB) checkExecAccount(addr string, value int64) bool {
 	var err error
 	defer func() {
@@ -477,8 +477,15 @@ func (mdb *MemoryStateDB) checkExecAccount(addr string, value int64) bool {
 	}
 
 	accFrom := mdb.CoinsAccount.LoadExecAccount(contract.GetCreator(), addr)
-	b := accFrom.GetBalance() - value
-	if b < 0 {
+	var balance int64
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		// 分叉后，需要检查合约创建者在合约地址下冻结的金额是否足够
+		balance = accFrom.GetFrozen()
+	} else {
+		balance = accFrom.GetBalance()
+	}
+	remain := balance - value
+	if remain < 0 {
 		err = types.ErrNoBalance
 		return false
 	}
@@ -600,11 +607,21 @@ func (mdb *MemoryStateDB) transfer2Contract(sender, recipient string, amount int
 	}
 	execAddr := recipient
 
-	// 从自己的合约账户到创建者的合约账户
-	// 有可能是外部账户调用自己创建的合约，这种情况下这一步可以省略
 	ret = &types.Receipt{}
 	if strings.Compare(sender, creator) != 0 {
+		// 用户向合约转账时，首先将钱转到创建者合约地址下
 		rs, err := mdb.CoinsAccount.ExecTransfer(sender, creator, execAddr, amount)
+		if err != nil {
+			return nil, err
+		}
+
+		ret.KV = append(ret.KV, rs.KV...)
+		ret.Logs = append(ret.Logs, rs.Logs...)
+	}
+
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		// 将钱冻结在合约创建者的合约地址下
+		rs, err := mdb.CoinsAccount.ExecFrozen(creator, execAddr, amount)
 		if err != nil {
 			return nil, err
 		}
@@ -631,24 +648,30 @@ func (mdb *MemoryStateDB) transfer2External(sender, recipient string, amount int
 
 	execAddr := sender
 
-	// 第一步先从创建者的合约账户到接受者的合约账户
-	// 如果是自己调用自己创建的合约，这一步也可以省略
-	if strings.Compare(creator, recipient) != 0 {
-		ret, err = mdb.CoinsAccount.ExecTransfer(creator, recipient, execAddr, amount)
-		if err != nil {
-			return nil, err
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		if strings.Compare(creator, recipient) != 0 {
+			// 合约向用户地址转账时，从创建者合约地址下冻结的钱中转出到用户合约地址
+			ret, err = mdb.CoinsAccount.ExecTransferFrozen(creator, recipient, execAddr, amount)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// 合约向创建者地址转账时，直接从创建者合约地址下冻结的钱中解冻
+			ret, err = mdb.CoinsAccount.ExecActive(creator, execAddr, amount)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		// 第一步先从创建者的合约账户到接受者的合约账户
+		// 如果是自己调用自己创建的合约，这一步也可以省略
+		if strings.Compare(creator, recipient) != 0 {
+			ret, err = mdb.CoinsAccount.ExecTransfer(creator, recipient, execAddr, amount)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-
-	// 第二步再从接收者的合约账户取款到接受者账户
-	// 本操作不允许，需要外部操作coins账户
-	//rs, err := mdb.CoinsAccount.TransferWithdraw(recipient.String(), sender.String(), amount)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//ret = mdb.mergeResult(ret, rs)
-
 	return ret, nil
 }
 
