@@ -489,6 +489,18 @@ func (client *client) findHashMatchedBlock(currSeq *int64, preMainBlockHash *[]b
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
 		return
 	}
+	//genesis block scenario, get new main node's blockHash as preMainHash, genesis sequence as currSeq
+	if lastBlock.Height ==0 {
+		lastSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
+		if err != nil {
+			plog.Error("Parachain GetLastSeq fail", "err", err)
+			return
+		}
+		*currSeq = lastSeq
+		*preMainBlockHash = lastSeqMainHash
+		return
+	}
+
 	findDepth := searchHashMatchBlockDepth
 	for height := lastBlock.Height; height > 0 && findDepth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
