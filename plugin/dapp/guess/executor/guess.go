@@ -58,8 +58,13 @@ func (g *Guess) GetDriverName() string {
 	return pkt.GuessX
 }
 
-
+/*
 // GetPayloadValue GuessAction
 func (g *Guess) GetPayloadValue() types.Message {
 	return &pkt.GuessGameAction{}
+}*/
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (g *Guess) CheckReceiptExecOk() bool {
+	return true
 }

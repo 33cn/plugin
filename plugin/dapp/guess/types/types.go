@@ -139,6 +139,7 @@ func CreateRawGuessStartTx(parm *GuessGameStartTx) (*types.Transaction, error) {
 		Ty:    GuessGameActionStart,
 		Value: &GuessGameAction_Start{Start: v},
 	}
+	llog.Info("CreateRawGuessStartTx", "Ty", val.Ty, "GuessGameActionStart", GuessGameActionStart)
 	name := types.ExecName(GuessX)
 	tx := &types.Transaction{
 		Execer:  []byte(types.ExecName(GuessX)),

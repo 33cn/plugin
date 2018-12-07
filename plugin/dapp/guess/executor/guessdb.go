@@ -91,7 +91,8 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 }
 
 func Key(id string) (key []byte) {
-	key = append(key, []byte("mavl-"+types.ExecName(pkt.GuessX)+"-")...)
+	//key = append(key, []byte("mavl-"+types.ExecName(pkt.GuessX)+"-")...)
+	key = append(key, []byte("mavl-"+pkt.GuessX+"-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
@@ -415,8 +416,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	game.PreIndex = 0
 	game.Index = action.getIndex()
 	game.Status = pkt.GuessGameStatusStart
-	game.BetStat.TotalBetTimes = 0
-	game.BetStat.TotalBetsNumber = 0
+	game.BetStat = &pkt.GuessBetStat{TotalBetTimes:0, TotalBetsNumber:0}
     for i := 0; i < len(options); i++ {
 		item := &pkt.GuessBetStatItem{Option: options[i], BetsNumber: 0, BetsTimes: 0}
 		game.BetStat.Items = append(game.BetStat.Items, item)

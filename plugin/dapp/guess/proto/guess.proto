@@ -72,7 +72,7 @@ message GuessGameAction {
         GuessGamePublish publish = 5;
         GuessGameQuery query     = 6;
     }
-    uint32 ty = 7;
+    int32 ty = 7;
 }
 
 //游戏启动
