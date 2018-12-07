@@ -393,13 +393,9 @@ func (policy *ticketPolicy) getTicketsByStatus(status int32) ([]*ty.Ticket, [][]
 	}
 	operater.GetMutex().Lock()
 	defer operater.GetMutex().Unlock()
-
 	ok, err := operater.CheckWalletStatus()
 	if !ok && err != types.ErrOnlyTicketUnLocked {
 		return nil, nil, err
-	}
-	if !policy.IsAutoMining() {
-		return nil, nil, types.ErrMinerNotStared
 	}
 	//循环遍历所有的账户-->保证钱包已经解锁
 	var tickets []*ty.Ticket
