@@ -25,29 +25,62 @@ func MultiSigCmd() *cobra.Command {
 		Short: "multisig management",
 		Args:  cobra.MinimumNArgs(1),
 	}
-
+	cmd.AddCommand(
+		MultiSigAccountCmd(),
+		MultiSigOwnerCmd(),
+		MultiSigTxCmd(),
+	)
+	return cmd
+}
+func MultiSigAccountCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account",
+		Short: "multisig account",
+		Args:  cobra.MinimumNArgs(1),
+	}
 	cmd.AddCommand(
 		CreateMultiSigAccCreateCmd(),
+		CreateMultiSigAccWeightModifyCmd(),
+		CreateMultiSigAccDailyLimitModifyCmd(),
+		GetMultiSigAccCountCmd(),
+		GetMultiSigAccountsCmd(),
+		GetMultiSigAccountInfoCmd(),
+		GetMultiSigAccUnSpentTodayCmd(),
+		GetMultiSigAccAssetsCmd(),
+		GetMultiSigAccAllAddressCmd(),
+	)
+	return cmd
+}
+
+func MultiSigOwnerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "owner",
+		Short: "multisig owner",
+		Args:  cobra.MinimumNArgs(1),
+	}
+	cmd.AddCommand(
 		CreateMultiSigAccOwnerAddCmd(),
 		CreateMultiSigAccOwnerDelCmd(),
 		CreateMultiSigAccOwnerModifyCmd(),
 		CreateMultiSigAccOwnerReplaceCmd(),
-		CreateMultiSigAccWeightModifyCmd(),
-		CreateMultiSigAccDailyLimitModifyCmd(),
+	)
+	return cmd
+}
+
+func MultiSigTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tx",
+		Short: "multisig tx",
+		Args:  cobra.MinimumNArgs(1),
+	}
+	cmd.AddCommand(
 		CreateMultiSigConfirmTxCmd(),
 		CreateMultiSigAccTransferInCmd(),
 		CreateMultiSigAccTransferOutCmd(),
-
-		GetMultiSigAccCountCmd(),
-		GetMultiSigAccountsCmd(),
-		GetMultiSigAccountInfoCmd(),
 		GetMultiSigAccTxCountCmd(),
 		GetMultiSigTxidsCmd(),
 		GetMultiSigTxInfoCmd(),
 		GetMultiSigTxConfirmedWeightCmd(),
-		GetMultiSigAccUnSpentTodayCmd(),
-		GetMultiSigAccAssetsCmd(),
-		GetMultiSigAccAllAddressCmd(),
 	)
 	return cmd
 }
@@ -159,7 +192,7 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 // CreateMultiSigAccOwnerAddCmd create raw MultiSigAccOwnerAdd transaction
 func CreateMultiSigAccOwnerAddCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "owner_add",
+		Use:   "add",
 		Short: "Create a add owner  transaction",
 		Run:   createOwnerAddTransfer,
 	}
@@ -200,7 +233,7 @@ func createOwnerAddTransfer(cmd *cobra.Command, args []string) {
 // CreateMultiSigAccOwnerDelCmd create raw MultiSigAccOwnerDel transaction
 func CreateMultiSigAccOwnerDelCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "owner_del",
+		Use:   "del",
 		Short: "Create a del owner transaction",
 		Run:   createOwnerDelTransfer,
 	}
@@ -235,7 +268,7 @@ func createOwnerDelTransfer(cmd *cobra.Command, args []string) {
 // CreateMultiSigAccOwnerModifyCmd create raw MultiSigAccOwnerDel transaction
 func CreateMultiSigAccOwnerModifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "owner_modify",
+		Use:   "modify",
 		Short: "Create a modify owner weight transaction",
 		Run:   createOwnerModifyTransfer,
 	}
@@ -273,7 +306,7 @@ func createOwnerModifyTransfer(cmd *cobra.Command, args []string) {
 // CreateMultiSigAccOwnerReplaceCmd create raw MultiSigAccOwnerReplace transaction
 func CreateMultiSigAccOwnerReplaceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "owner_replace",
+		Use:   "replace",
 		Short: "Create a replace owner transaction",
 		Run:   createOwnerReplaceTransfer,
 	}
@@ -311,7 +344,7 @@ func createOwnerReplaceTransfer(cmd *cobra.Command, args []string) {
 // CreateMultiSigAccWeightModifyCmd create raw CreateMultiSigAccWeightModifyCmd transaction
 func CreateMultiSigAccWeightModifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "weight_modify",
+		Use:   "weight",
 		Short: "Create a modify required weight transaction",
 		Run:   createMultiSigAccWeightModifyTransfer,
 	}
@@ -552,7 +585,7 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 //GetMultiSigAccCountCmd 获取已经创建的多重签名账户数量
 func GetMultiSigAccCountCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_account_count",
+		Use:   "count",
 		Short: "get multisig account count",
 		Run:   getMultiSigAccCount,
 	}
@@ -577,8 +610,8 @@ func getMultiSigAccCount(cmd *cobra.Command, args []string) {
 //GetMultiSigAccountsCmd 获取已经创建的多重签名账户地址，通过转入的index
 func GetMultiSigAccountsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_accounts",
-		Short: "get multisig accounts",
+		Use:   "address",
+		Short: "get multisig account address",
 		Run:   getMultiSigAccounts,
 	}
 	addgetMultiSigAccountsFlags(cmd)
@@ -623,7 +656,7 @@ func getMultiSigAccounts(cmd *cobra.Command, args []string) {
 //GetMultiSigAccountInfoCmd 获取已经创建的多重签名账户信息
 func GetMultiSigAccountInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_acc_info",
+		Use:   "info",
 		Short: "get multisig account info",
 		Run:   getMultiSigAccountInfo,
 	}
@@ -689,7 +722,7 @@ func parseAccInfo(view interface{}) (interface{}, error) {
 //GetMultiSigAccTxCountCmd 获取多重签名账户上的tx交易数量
 func GetMultiSigAccTxCountCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_tx_count",
+		Use:   "count",
 		Short: "get multisig tx count",
 		Run:   getMultiSigAccTxCount,
 	}
@@ -724,7 +757,7 @@ func getMultiSigAccTxCount(cmd *cobra.Command, args []string) {
 //GetMultiSigTxidsCmd 获取多重签名账户上的tx交易数量
 func GetMultiSigTxidsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_txids",
+		Use:   "txids",
 		Short: "get multisig txids",
 		Run:   getMultiSigTxids,
 	}
@@ -795,7 +828,7 @@ func getMultiSigTxids(cmd *cobra.Command, args []string) {
 //GetMultiSigTxInfoCmd 获取已经创建的多重签名账户的交易信息
 func GetMultiSigTxInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_tx_info",
+		Use:   "info",
 		Short: "get multisig account tx info",
 		Run:   getMultiSigTxInfo,
 	}
@@ -835,7 +868,7 @@ func getMultiSigTxInfo(cmd *cobra.Command, args []string) {
 //GetMultiSigTxConfirmedWeightCmd 获取交易已经被确认的总权重
 func GetMultiSigTxConfirmedWeightCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_confirmed_weight",
+		Use:   "confirmed_weight",
 		Short: "get the weight of the transaction confirmed.",
 		Run:   getGetMultiSigTxConfirmedWeight,
 	}
@@ -875,7 +908,7 @@ func getGetMultiSigTxConfirmedWeight(cmd *cobra.Command, args []string) {
 //GetMultiSigAccUnSpentTodayCmd 获取多重签名账户今日免多重签名的余额
 func GetMultiSigAccUnSpentTodayCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_unspent",
+		Use:   "unspent",
 		Short: "get assets unspent today amount",
 		Run:   getMultiSigAccUnSpentToday,
 	}
@@ -948,7 +981,7 @@ func parseUnSpentToday(view interface{}) (interface{}, error) {
 //GetMultiSigAccAssetsCmd 获取多重签名账户上的资产信息
 func GetMultiSigAccAssetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_assets",
+		Use:   "assets",
 		Short: "get assets of multisig account",
 		Run:   getMultiSigAccAssets,
 	}
@@ -1028,7 +1061,7 @@ func parseAccAssets(view interface{}) (interface{}, error) {
 //GetMultiSigAccAllAddressCmd 获取指定地址创建的所有多重签名账户
 func GetMultiSigAccAllAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_cre_accounts",
+		Use:   "creater",
 		Short: "get all multisig accounts created by the address",
 		Run:   getMultiSigAccAllAddress,
 	}

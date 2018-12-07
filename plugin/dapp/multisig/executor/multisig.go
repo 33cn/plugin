@@ -84,42 +84,32 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 
 	//MultiSigAccCreate 交易校验
 	if ato, ok := payload.(*mty.MultiSigAccCreate); ok {
-		err := checkAccountCreateTx(ato)
-		if err != nil {
-			return err
-		}
+		return checkAccountCreateTx(ato)
 	}
 
 	//MultiSigOwnerOperate 交易的检测
 	if ato, ok := payload.(*mty.MultiSigOwnerOperate); ok {
-		err := checkOwnerOperateTx(ato)
-		if err != nil {
-			return err
-		}
+		return checkOwnerOperateTx(ato)
 	}
-	//MultiSigAccOperate to 地址检测
+	//MultiSigAccOperate 交易的检测
 	if ato, ok := payload.(*mty.MultiSigAccOperate); ok {
-		err := checkAccountOperateTx(ato)
-		if err != nil {
-			return err
-		}
+		return checkAccountOperateTx(ato)
 	}
-	//MultiSigConfirmTx  multiSigAccAddr地址检测
+	//MultiSigConfirmTx  交易的检测
 	if ato, ok := payload.(*mty.MultiSigConfirmTx); ok {
 		if err := address.CheckAddress(ato.GetMultiSigAccAddr()); err != nil {
 			return types.ErrInvalidAddress
 		}
+		return nil
 	}
 
-	//MultiSigExecTransfer to 地址检测
+	//MultiSigExecTransfer 交易的检测
 	if ato, ok := payload.(*mty.MultiSigExecTransfer); ok {
 		if err := address.CheckAddress(ato.GetTo()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//assets check
-		if err := mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol()); err != nil {
-			return err
-		}
+		return mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol())
 	}
 	return nil
 }
@@ -167,10 +157,7 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 
 	dailyLimit := ato.GetDailyLimit()
 	//assets check
-	if err := mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol()); err != nil {
-		return err
-	}
-	return nil
+	return mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol())
 }
 
 func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
@@ -229,9 +216,7 @@ func checkAccountOperateTx(ato *mty.MultiSigAccOperate) error {
 	if ato.OperateFlag == mty.AccDailyLimitOp {
 		dailyLimit := ato.GetDailyLimit()
 		//assets check
-		if err := mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol()); err != nil {
-			return err
-		}
+		return mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol())
 	}
 	return nil
 }
