@@ -31,6 +31,11 @@ func NewType() *TokenType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (t *TokenType) GetName() string {
+	return TokenX
+}
+
 // GetPayload 获取token action
 func (t *TokenType) GetPayload() types.Message {
 	return &TokenAction{}
