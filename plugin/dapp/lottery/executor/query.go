@@ -55,7 +55,8 @@ func (l *Lottery) Query_GetLotteryCurrentInfo(param *pty.ReqLotteryInfo) (types.
 		PurBlockNum:                lottery.PurBlockNum,
 		DrawBlockNum:               lottery.DrawBlockNum,
 		MissingRecords:             lottery.MissingRecords,
-	}
+		TotalAddrNum:               lottery.TotalAddrNum,
+		BuyAmount:                  lottery.BuyAmount}
 	return reply, nil
 }
 
