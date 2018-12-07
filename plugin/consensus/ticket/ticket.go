@@ -26,7 +26,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-
 var (
 	tlog          = log15.New("module", "ticket")
 	defaultModify = []byte("modify")
