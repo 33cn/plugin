@@ -20,6 +20,7 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"strings"
 )
 
 var (
@@ -28,7 +29,14 @@ var (
 )
 
 func init() {
-	wcom.RegisterPolicy(ty.TicketX, New())
+	// 只有ticket共识下ticket相关的操作才有效
+	q := types.Conf("config.consensus")
+	if q != nil {
+		cons := q.GStr("name")
+		if strings.Compare(strings.TrimSpace(cons), ty.TicketX) == 0 {
+			wcom.RegisterPolicy(ty.TicketX, New())
+		}
+	}
 }
 
 // New new instance
