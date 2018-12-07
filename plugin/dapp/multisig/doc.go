@@ -14,124 +14,183 @@
 账户交易的确认和撤销：当交易提交者的权重不能满足权重要求时，需要其余的owner来一起确认。owner可以撤销自己对某笔交易的确认，但此交易必须是没有被执行。已执行的不应许撤销
 
 多重签名账户的转入和转出：转入时，to地址必须是多重签名地址，from地址必须是非多重签名地址；
-						 转出时，from地址必须是多重签名地址，to地址必须是非多重签名地址； 传出交易需要校验权重
+					 转出时，from地址必须是多重签名地址，to地址必须是非多重签名地址； 传出交易需要校验权重
+
+cli 命令行主要分三块：account 账户相关的，owner 相关的以及tx交易相关的
+cli multisig
+Available Commands:
+  account     multisig account
+  owner       multisig owner
+  tx          multisig tx
+
+cli multisig  account
+Available Commands:
+  address     get multisig account address
+  assets      get assets of multisig account
+  count       get multisig account count
+  create      Create a multisig account transaction
+  creater     get all multisig accounts created by the address
+  dailylimit  Create a modify assets dailylimit transaction
+  info        get multisig account info
+  unspent     get assets unspent today amount
+  weight      Create a modify required weight transaction
+
+cli multisig  owner
+Available Commands:
+  add         Create a add owner  transaction
+  del         Create a del owner transaction
+  modify      Create a modify owner weight transaction
+  replace     Create a replace owner transaction
+
+cli multisig  tx
+Available Commands:
+  confirm          Create a confirm transaction
+  confirmed_weight get the weight of the transaction confirmed.
+  count            get multisig tx count
+  info             get multisig account tx info
+  transfer_in      Create a transfer to multisig account transaction
+  transfer_out     Create a transfer from multisig account transaction
+  txids            get multisig txids
+
+
+测试步骤如下：
+cli seed save -p heyubin -s "voice leisure mechanic tape cluster grunt receive joke nurse between monkey lunch save useful cruise"
+
+cli wallet unlock -p heyubin
+
+cli account import_key  -l miner -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
+
+cli account create -l heyubin
+cli account create -l heyubin1
+cli account create -l heyubin2
+cli account create -l heyubin3
+cli account create -l heyubin4
+cli account create -l heyubin5
+cli account create -l heyubin6
+cli account create -l heyubin7
+cli account create -l heyubin8
+
+
+cli send bty transfer -a 100 -n test  -t 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+
+cli send bty transfer -a 100 -n test  -t "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "17a5NQTf9M2Dz9qBS8KiQ8VUg8qhoYeQbA" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "1DeGvSFX8HAFsuHxhaVkLX56Ke3FzFbdct" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send bty transfer -a 100 -n test  -t "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 
 
 
-第一：创建一个多重签名的账户地址（创建交易的txhash 生成对应的addr），创建时必须指定两个初始的owner 以及requiredWeight权重，owner的权重之和必须不能小于requiredWeight
-
-此多重签名账户拥有的属性：
-
-owner列表：owner 地址已经weight
-
-assets dailyLimit ： "execer": 和"symbol": 以及对应"dailyLimit" 。
-	注释：当从此账户转出的额度小于每日限额时，不需要校验owner的权重是否大于requiredWeight权重。
-		当转出额度超过每日限额时，需要多个owner一起来确认此交易，并且确认此交易的owner的权重之和必须大于requiredWeight权重，校验才能被执行。
-
-"requiredWeight":  交易额度超过每日限额只有需要的权重。
-
-//cli命令行：构造交易并签名发送
-cli multisig create -d 10 -e coins -s bty -a "1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -w "20 10" -r 15
-
-cli wallet sign -a “创建者地址” -d
-cli wallet send -d
-
+第一步：1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd地址创建多重签名的账户，owner：1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF  1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv
+//构建交易
+cli send multisig account create -d 10 -e coins -s BTY -a "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -w "20 10" -r 15 -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
 //查看创建的账户个数
-cli multisig get_account_count
+cli multisig account count
+
+//通过账户index获取账户地址
+cli multisig account address -e 0 -s 0
+
+//通过账户addr获取账户详情
+cli multisig account info -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
 
 
-//通过账户index获取账户地址，此时的index就是上面get_account_count的返回值。index从0开始的。为了以后分区间获取账户信息
-cli multisig get_accounts -e 0 -s 0
+第二步，向multisig合约中转账 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
-//通过账户addr获取账户详情，142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc 多重签名账户地址
-cli multisig get_acc_info -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc"
+cli exec addr -e "multisig"
+14uBEP6LSHKdFvy97pTYRPVPAqij6bteee
 
+// 转账
+cli send bty transfer -a 50 -n test  -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
-第二步：给指定的多重签名账户142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc添加owner：1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo 。使用已存在的owner 提交交易1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF
-cli multisig owner_add  -a "142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc" -o 1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo -w 5
-
-//del owner
-cli multisig  owner_del  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -o "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
-
-//replace owner
-cli multisig  owner_replace  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -n 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -o 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
-// modify owner
-cli multisig  owner_modify  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -o "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -w 11
-
-cli wallet sign -a 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -d
-cli wallet send -d
+cli account balance -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
 
-第三步：多重签名账户交易查询：
+第三步：从指定账户转账到多重签名地址 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd   --》 "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
 
-// 查询多重签名账户上的交易计数，需要指定多重签名账户地址
-cli multisig  get_tx_count  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
-{
-    "data": 1
-}
-// 查询多重签名账户交易，需要指定多重签名账户地址以及txid  索引区间，可以指定查询交易的执行状态
-cli multisig  get_txids  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -s 0 -e 0
+cli send multisig tx transfer_in -a 40 -e coins -s BTY  -t "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -n test -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+
+//查看1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd地上有40被转出了
+cli account balance -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+
+//多重签名地址转入40并冻结
+cli account balance -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
+
+cli multisig  account assets  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
+
+
+第四步：从多重签名账户传出  "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"  --》1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj  owner:1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK签名
+cli send multisig  tx transfer_out  -a 11 -e coins -s BTY -f "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
+
+
+查询账户信息
+cli multisig account info -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
+
+cli multisig  account assets  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
+
+查询接受地址是否收到币
+cli multisig  account assets  -a 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+
+
+// 查询交易计数
+cli multisig  tx count  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47"
+
+// 查询交易txid
+cli multisig   tx txids  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -s 0 -e 0
 
 // 查询交易信息
-cli multisig  get_tx_info  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 0
+cli multisig  tx info  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 0
 
 
-
-第四部：请求权重和资产每日限额的修改：
-// modify  dailylimit  修改coins：bty的每日限额为11个
-cli multisig  dailylimit -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -e coins -s bty -d 11
-//增加token：TEST的资产每日限额为11个
-cli multisig  dailylimit -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -e token -s TEST -d 11
-
-// modify weight 修改请求权重的值。
-cli multisig  weight_modify -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -w 16
+//owner "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj," 转账5个币到1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj    owner:1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj签名
+cli send multisig  tx transfer_out  -a 5 -e coins -s BTY -f "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test -k "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj"
 
 
+第五步：测试add/del owner  使用高权重的owner添加交易 "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK",  add 1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo
 
-第五步：账户交易的确认和撤销
-//确认某笔交易，只能确认没有被执行的交易
-cli multisig confirm  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 9
-
-//撤销对某笔交易的确认，只能撤销没有被执行的交易
-cli multisig confirm  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -i 9 -c f
+cli send multisig owner add  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -o 1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo -w 5 -k  "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
 
 
+查看owner的添加
+cli multisig  account info -a 13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47
+
+cli multisig  tx info  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 0
+
+//del owner
+cli send multisig  owner del  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -o "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo"  -k 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
+// modify  dailylimit
+cli send multisig  account dailylimit -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -e coins -s BTY -d 12 -k 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
+// modify weight
+cli send multisig  account weight -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -w 16 -k 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
+//replace owner
+cli send multisig  owner replace  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -n 166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf -o 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -k  1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
+// modify owner
+cli send multisig  owner modify  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -o "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -w 11 -k 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
+
+//获取指定地址创建的所有多重签名账户
+cli multisig account creater -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+
+// 获取指定账户上指定资产的每日余额
+cli multisig  account unspent  -a 13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47 -e coins -s BTY
+
+第五步：测试交易的确认和撤销
+//权重低的转账，owner：166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
+cli send multisig  transfer_out  -a 10 -e coins -s BTY -f "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
 
 
-第六步：多重签名账户的资产转入和转出
-	//转入：
-	//首先1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd账户需要向 multisig合约中转币
-	cli exec addr -e "multisig"
-	14uBEP6LSHKdFvy97pTYRPVPAqij6bteee
-
-	cli send bty transfer -a 50 -n test  -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
-
-	//然后才能在multisig合约中从1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd账户转币到多重签名账户142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
-	cli multisig transfer_in -a 40 -e coins -s bty  -t 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -n test
-
-	cli wallet sign -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -d
-
-	cli wallet send -d
-
-	//此时可以查看多重签名账户142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc的资产，转入的币都被冻结
-	cli multisig  get_assets  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
-
-	//转出：在multisig合约中从多重签名账户142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc转币到1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj账户。由owner 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF提交交易
-	cli multisig  transfer_out  -a 11 -e coins -s bty -f 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test
-	cli wallet sign -a 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -d
-	cli wallet send -d
-
-	//此时可以查看多重签名账户142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc的资产，冻结币有减少
-	cli multisig  get_assets  -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
-	cli account balance -a 142YMLZKZr3aBeiQcNqbSGkcj48ctka1tc
-
-	//查看1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj账户在multisig合约中的余额有增加
-	cli multisig  get_assets  -a 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
-	cli account balance -a 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
+//撤销对某笔交易的确认
+cli send   multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -c f  -k 166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
 
 
-	//从 multisig合约中取出1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj账户上的币
-	cli bty withdraw  -a 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -e multisig
+//确认某笔交易
+cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
+
+cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
+
 */
 package multisig

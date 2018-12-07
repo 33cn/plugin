@@ -4,6 +4,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 )
@@ -73,6 +74,10 @@ func (m *MultiSig) Query_MultiSigAccountInfo(in *mty.ReqMultiSigAccInfo) (types.
 	}
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
 	if err != nil {
 		return nil, err
@@ -95,6 +100,11 @@ func (m *MultiSig) Query_MultiSigAccTxCount(in *mty.ReqMultiSigAccInfo) (types.M
 	}
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
+
 	multiSigAcc, err := getMultiSigAccount(db, addr)
 	if err != nil {
 		return nil, err
@@ -124,6 +134,10 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
 	if err != nil {
 		return nil, err
@@ -167,6 +181,11 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
 	txid := in.TxId
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
+
 	multiSigTx, err := getMultiSigTx(db, addr, txid)
 	if err != nil {
 		return nil, err
@@ -191,6 +210,11 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
 	txid := in.TxId
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
+
 	multiSigTx, err := getMultiSigTx(db, addr, txid)
 	if err != nil {
 		return nil, err
@@ -223,6 +247,10 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
 	isAll := in.IsAll
+
+	if err := address.CheckAddress(addr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
 	if err != nil {
 		return nil, err
@@ -291,6 +319,10 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 		return nil, types.ErrInvalidParam
 	}
 
+	if err := address.CheckAddress(in.MultiSigAddr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
+
 	replyAccAssets := &mty.ReplyAccAssets{}
 	//获取账户上的所有资产数据
 	if in.IsAll {
@@ -344,6 +376,8 @@ func (m *MultiSig) Query_MultiSigAccAllAddress(in *mty.ReqMultiSigAccInfo) (type
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-
+	if err := address.CheckAddress(in.MultiSigAccAddr); err != nil {
+		return nil, types.ErrInvalidAddress
+	}
 	return getMultiSigAccAllAddress(m.GetLocalDB(), in.MultiSigAccAddr)
 }
