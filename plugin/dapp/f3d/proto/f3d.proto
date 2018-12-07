@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package types;
+
+message RoundInfo {
+    // 游戏轮次
+    int64 round = 1;
+    // 本轮游戏开始事件
+    int64 beginTime  = 2;
+    // 本轮游戏结束时间
+    int64 endTime    = 3;
+    // 本轮游戏目前为止最后一把钥匙持有人（游戏开奖时，这个就是中奖人）
+    string lastOwner   = 4;
+    // 最后一把钥匙的购买时间
+    int64 lastKeyTime = 5;
+    // 最后一把钥匙的价格
+    int64 lastKeyPrice = 6;
+    // 本轮游戏奖金池总额
+    int64 bonusPool  = 7;
+    // 本轮游戏参与地址数
+    int64 userCount = 8;
+    // 本轮游戏募集到的key个数
+    int64 keyCount = 9;
+    //距离开奖剩余时间
+    int64 remainTime = 10;
+}
+
+message KeyInfo {
+    // 游戏轮次  (是由系统合约填写后存储）
+    int64 round = 1;
+      
+    // 本次购买key的价格 (是由系统合约填写后存储）
+    int64 keyPrice = 2;  
+    
+    // 用户本次买的key的数量
+    int64 keyNum = 3;
+    
+    // 用户地址 (是由系统合约填写后存储）
+    string addr = 4;
+    
+    // 交易确认存储时间（被打包的时间）
+    int64 buyKeyTime = 7;
+    
+    
+    //买票的txHash
+    string buyKeyTxHash = 9;
+    
+}
+ 
+// message for execs.f3d
+message F3dAction {
+    oneof value {
+        F3dStart start = 1;
+        F3dLuckyDraw draw = 2;
+        F3dBuyKey  buy  = 3;
+    }
+    int32 ty = 4;
+}
+
+message F3dStart {
+    //轮次，这个填不填不重要，合约里面会自动校验的
+    int64 Round  = 1;
+}
+
+message F3dLuckyDraw {
+    //轮次，这个填不填不重要，合约里面会自动校验的
+    int64 Round  = 1;
+}
+
+message F3dBuyKey {
+    // 用户本次买的key的数量
+    int64 keyNum = 3;
+}
+
+// 查询f3d 游戏信息,这里面其实包含了key的最新价格信息
+message QueryF3dByRound {
+    //轮次，默认查询最新的
+    int64 round = 1;
+}
+
+message QueryF3dListByRound {
+    //轮次，默认查询最新的
+    int64 startRound = 1;
+    //单页返回多少条记录，默认返回10条，单次最多返回50条
+    int32 count = 2;
+    // 0降序，1升序，默认降序
+    int32 direction = 5;
+}
+
+// key 信息查询
+message QueryKeysByRoundAndAddr {
+    //轮次,必填参数
+    int64 round = 1;
+    //用户地址
+    string addr = 2;
+}
+// 用户key数量查询
+message QueryKeyCountByRoundAndAddr {
+    //轮次,必填参数
+    int64 round = 1;
+    //用户地址
+    string addr = 2;
+}
+
+message F3dRecord {
+    //用户地址
+    string addr = 1;
+    //index
+    int64  index  = 2;
+    //round
+    int64  round = 3;
+}
+
+//f3d round查询返回数据 
+message ReplyF3dList {
+    repeated RoundInfo rounds = 1;
+}
+
+message ReplyF3d {
+    RoundInfo round = 1;
+}
+
+//用户查询买的key信息返回数据
+message ReplyKeyList {
+    repeated KeyInfo keys = 1;
+}
+
+message ReplyKey {
+    KeyInfo key = 1;
+}
+
+message ReplyKeyCount {
+    int64 count = 1;
+}
+
+//合约内部日志记录，待补全
+message ReceiptF3d {
+    string addr = 1;
+    int64  round = 2;
+    int64  index      = 3;
+}
