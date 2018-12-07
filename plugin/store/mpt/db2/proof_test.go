@@ -29,10 +29,12 @@ import (
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/log"
 )
 
 func init() {
 	mrand.Seed(time.Now().UnixNano())
+	log.SetLogLevel("err")
 }
 
 // makeProvers creates Merkle trie provers based on different implementations to

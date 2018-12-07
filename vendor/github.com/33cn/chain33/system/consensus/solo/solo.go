@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package solo solo共识挖矿
 package solo
 
 import (
@@ -45,6 +46,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	if subcfg.WaitTxMs == 0 {
 		subcfg.WaitTxMs = 1000
+	}
+	if subcfg.Genesis == "" {
+		subcfg.Genesis = cfg.Genesis
+	}
+	if subcfg.GenesisBlockTime == 0 {
+		subcfg.GenesisBlockTime = cfg.GenesisBlockTime
 	}
 	solo := &Client{c, &subcfg, time.Duration(subcfg.WaitTxMs) * time.Millisecond}
 	c.SetChild(solo)

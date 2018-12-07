@@ -8,10 +8,13 @@ import (
 	"encoding/json"
 	"strings"
 
+	"errors"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -27,9 +30,14 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, ExecerEvm)
 	// init executor type
 	types.RegistorExecutor(ExecutorName, NewType())
-	types.RegisterDappFork(ExecutorName, "ForkEVMState", 650000)
-	types.RegisterDappFork(ExecutorName, "ForkEVMKVHash", 1000000)
-	types.RegisterDappFork(ExecutorName, "Enable", 500000)
+
+	types.RegisterDappFork(ExecutorName, EVMEnable, 500000)
+	// EVM合约中的数据分散存储，支持大数据量
+	types.RegisterDappFork(ExecutorName, ForkEVMState, 650000)
+	// EVM合约状态数据生成哈希，保存在主链的StateDB中
+	types.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
+	// EVM合约支持ABI绑定和调用
+	types.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
 }
 
 // EvmType EVM类型定义
@@ -42,6 +50,11 @@ func NewType() *EvmType {
 	c := &EvmType{}
 	c.SetChild(c)
 	return c
+}
+
+// GetName 获取执行器名称
+func (evm *EvmType) GetName() string {
+	return ExecutorName
 }
 
 // GetPayload 获取消息负载结构
@@ -92,7 +105,7 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			elog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return createRawEvmCreateCallTx(&param)
+		return createEvmTx(&param)
 	}
 	return nil, types.ErrNotSupport
 }
@@ -102,28 +115,50 @@ func (evm *EvmType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
 
-func createRawEvmCreateCallTx(parm *CreateCallTx) (*types.Transaction, error) {
-	if parm == nil {
-		elog.Error("createRawEvmCreateCallTx", "parm", parm)
+func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
+	if param == nil {
+		elog.Error("createEvmTx", "param", param)
 		return nil, types.ErrInvalidParam
 	}
 
-	bCode, err := common.FromHex(parm.Code)
-	if err != nil {
-		elog.Error("createRawEvmCreateCallTx", "parm.Code", parm.Code)
-		return nil, err
-	}
+	// 调用格式判断规则：
+	// 十六进制格式默认使用原方式调用，其它格式，使用ABI方式调用
+	// 为了方便区分，在ABI格式前加0x00000000
 
 	action := &EVMContractAction{
-		Amount:   parm.Amount,
-		Code:     bCode,
-		GasLimit: parm.GasLimit,
-		GasPrice: parm.GasPrice,
-		Note:     parm.Note,
-		Alias:    parm.Alias,
+		Amount:   param.Amount,
+		GasLimit: param.GasLimit,
+		GasPrice: param.GasPrice,
+		Note:     param.Note,
+		Alias:    param.Alias,
 	}
+	// Abi数据和二进制代码必须指定一个，优先判断ABI
+	if len(param.Abi) > 0 {
+		action.Abi = strings.TrimSpace(param.Abi)
+	}
+	if len(param.Code) > 0 {
+		bCode, err := common.FromHex(param.Code)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Code = bCode
+	}
+
+	if param.IsCreate {
+		if len(action.Abi) > 0 && len(action.Code) == 0 {
+			elog.Error("create evm Tx error, code is empty")
+			return nil, errors.New("code must be set in create tx")
+		}
+
+		return createRawTx(action, "", param.Fee)
+	}
+	return createRawTx(action, param.Name, param.Fee)
+}
+
+func createRawTx(action proto.Message, name string, fee int64) (*types.Transaction, error) {
 	tx := &types.Transaction{}
-	if parm.IsCreate {
+	if len(name) == 0 {
 		tx = &types.Transaction{
 			Execer:  []byte(types.ExecName(ExecutorName)),
 			Payload: types.Encode(action),
@@ -131,17 +166,19 @@ func createRawEvmCreateCallTx(parm *CreateCallTx) (*types.Transaction, error) {
 		}
 	} else {
 		tx = &types.Transaction{
-			Execer:  []byte(types.ExecName(parm.Name)),
+			Execer:  []byte(types.ExecName(name)),
 			Payload: types.Encode(action),
-			To:      address.ExecAddress(types.ExecName(parm.Name)),
+			To:      address.ExecAddress(types.ExecName(name)),
 		}
 	}
-	tx, err = types.FormatTx(string(tx.Execer), tx)
+	tx, err := types.FormatTx(string(tx.Execer), tx)
 	if err != nil {
 		return nil, err
 	}
-	if tx.Fee < parm.Fee {
-		tx.Fee += parm.Fee
+
+	if tx.Fee < fee {
+		tx.Fee = fee
 	}
+
 	return tx, nil
 }

@@ -1,6 +1,7 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package autotest
 
 import (
@@ -8,40 +9,46 @@ import (
 	"fmt"
 	"strconv"
 
-	. "github.com/33cn/chain33/cmd/autotest/types"
+	"github.com/33cn/chain33/cmd/autotest/types"
 )
 
+// BuyCase defines buycase command
 type BuyCase struct {
-	BaseCase
+	types.BaseCase
 	From        string `toml:"from"`
 	To          string `toml:"to"`
 	TokenAmount string `toml:"tokenAmount"`
 	BtyAmount   string `toml:"btyAmount"`
 }
 
+// BuyPack defines buypack command
 type BuyPack struct {
-	BaseCasePack
+	types.BaseCasePack
 }
 
+// DependBuyCase defines depend buycase command
 type DependBuyCase struct {
 	BuyCase
 	SellID string `toml:"sellID,omitempty"`
 }
 
+// DependBuyPack defines depend buy pack command
 type DependBuyPack struct {
 	BuyPack
 }
 
-func (testCase *DependBuyCase) SendCommand(packID string) (PackFunc, error) {
+// SendCommand defines send command function of dependbuycase
+func (testCase *DependBuyCase) SendCommand(packID string) (types.PackFunc, error) {
 
 	if len(testCase.SellID) == 0 {
 		return nil, errors.New("depend sell case failed, Can't buy without sell id")
 	}
 	testCase.Command = fmt.Sprintf("%s -s %s", testCase.Command, testCase.SellID)
 
-	return DefaultSend(&testCase.BuyCase, &BuyPack{}, packID)
+	return types.DefaultSend(&testCase.BuyCase, &BuyPack{}, packID)
 }
 
+// SetDependData defines set depend data function
 func (testCase *DependBuyCase) SetDependData(depData interface{}) {
 
 	if orderInfo, ok := depData.(*SellOrderInfo); ok && orderInfo != nil {
@@ -50,9 +57,10 @@ func (testCase *DependBuyCase) SetDependData(depData interface{}) {
 	}
 }
 
+// GetCheckHandlerMap defines get check handler for map
 func (pack *BuyPack) GetCheckHandlerMap() interface{} {
 
-	funcMap := make(CheckHandlerMapDiscard, 2)
+	funcMap := make(types.CheckHandlerMapDiscard, 2)
 	funcMap["frozen"] = pack.checkFrozen
 	funcMap["balance"] = pack.checkBalance
 
@@ -85,10 +93,10 @@ func (pack *BuyPack) checkBalance(txInfo map[string]interface{}) bool {
 		"BuyerTokenPrev", logBuyToken["prev"].(map[string]interface{})["balance"].(string),
 		"BuyerTokenCurr", logBuyToken["current"].(map[string]interface{})["balance"].(string))
 
-	return CheckBalanceDeltaWithAddr(logFee, interCase.From, -fee) &&
-		CheckBalanceDeltaWithAddr(logBuyBty, interCase.From, -btyAmount) &&
-		CheckBalanceDeltaWithAddr(logSellBty, interCase.To, btyAmount) &&
-		CheckBalanceDeltaWithAddr(logBuyToken, interCase.From, tokenAmount)
+	return types.CheckBalanceDeltaWithAddr(logFee, interCase.From, -fee) &&
+		types.CheckBalanceDeltaWithAddr(logBuyBty, interCase.From, -btyAmount) &&
+		types.CheckBalanceDeltaWithAddr(logSellBty, interCase.To, btyAmount) &&
+		types.CheckBalanceDeltaWithAddr(logBuyToken, interCase.From, tokenAmount)
 
 }
 
@@ -104,6 +112,6 @@ func (pack *BuyPack) checkFrozen(txInfo map[string]interface{}) bool {
 		"SellerTokenPrev", logSellToken["prev"].(map[string]interface{})["frozen"].(string),
 		"SellerTokenCurr", logSellToken["current"].(map[string]interface{})["frozen"].(string))
 
-	return CheckFrozenDeltaWithAddr(logSellToken, interCase.To, -tokenAmount)
+	return types.CheckFrozenDeltaWithAddr(logSellToken, interCase.To, -tokenAmount)
 
 }

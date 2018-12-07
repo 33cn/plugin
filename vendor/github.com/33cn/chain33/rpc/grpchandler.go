@@ -47,6 +47,11 @@ func (g *Grpc) CreateTransaction(ctx context.Context, in *pb.CreateTxIn) (*pb.Un
 	if err != nil {
 		return nil, err
 	}
+	//decode protocol buffer
+	err = pb.Decode(in.Payload, msg)
+	if err != nil {
+		return nil, err
+	}
 	reply, err := pb.CallCreateTx(string(in.Execer), in.ActionName, msg)
 	if err != nil {
 		return nil, err
@@ -286,7 +291,7 @@ func (g *Grpc) DumpPrivkey(ctx context.Context, in *pb.ReqString) (*pb.ReplyStri
 }
 
 // Version version
-func (g *Grpc) Version(ctx context.Context, in *pb.ReqNil) (*pb.Reply, error) {
+func (g *Grpc) Version(ctx context.Context, in *pb.ReqNil) (*pb.VersionInfo, error) {
 
 	return g.cli.Version()
 }
@@ -342,4 +347,13 @@ func (g *Grpc) GetBlockByHashes(ctx context.Context, in *pb.ReqHashes) (*pb.Bloc
 // SignRawTx signature rawtransaction
 func (g *Grpc) SignRawTx(ctx context.Context, in *pb.ReqSignRawTx) (*pb.ReplySignRawTx, error) {
 	return g.cli.SignRawTx(in)
+}
+
+// QueryRandNum query randHash from ticket
+func (g *Grpc) QueryRandNum(ctx context.Context, in *pb.ReqRandHash) (*pb.ReplyHash, error) {
+	reply, err := g.cli.Query(in.ExecName, "RandNumHash", in)
+	if err != nil {
+		return nil, err
+	}
+	return reply.(*pb.ReplyHash), nil
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // MemoryStateDB 内存状态数据库，保存在区块操作时内部的数据变更操作
@@ -193,6 +194,24 @@ func (mdb *MemoryStateDB) SetCode(addr string, code []byte) {
 	}
 }
 
+// SetAbi 设置ABI内容
+func (mdb *MemoryStateDB) SetAbi(addr, abi string) {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		mdb.dataDirty[addr] = true
+		acc.SetAbi(abi)
+	}
+}
+
+// GetAbi 获取ABI
+func (mdb *MemoryStateDB) GetAbi(addr string) string {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		return acc.Data.GetAbi()
+	}
+	return ""
+}
+
 // GetCodeSize 获取合约代码自身的大小
 // 对应 EXTCODESIZE 操作码
 func (mdb *MemoryStateDB) GetCodeSize(addr string) int {
@@ -245,7 +264,7 @@ func (mdb *MemoryStateDB) SetState(addr string, key common.Hash, value common.Ha
 	if acc != nil {
 		acc.SetState(key, value)
 		// 新的分叉中状态数据变更不需要单独进行标识
-		if !types.IsDappFork(mdb.blockHeight, "evm", "ForkEVMState") {
+		if !types.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 			mdb.stateDirty[addr] = true
 		}
 	}
@@ -685,4 +704,9 @@ func (mdb *MemoryStateDB) WritePreimages(number int64) {
 func (mdb *MemoryStateDB) ResetDatas() {
 	mdb.currentVer = nil
 	mdb.snapshots = mdb.snapshots[:0]
+}
+
+// GetBlockHeight 返回当前区块高度
+func (mdb *MemoryStateDB) GetBlockHeight() int64 {
+	return mdb.blockHeight
 }

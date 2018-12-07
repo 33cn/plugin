@@ -176,7 +176,7 @@ func (h *hasher) store(n node, db *Database, force bool) (node, error) {
 	//这个不用非常精确，只要保持确定性就可以了
 	size := n.size()
 	if size < 64 && !force {
-		return n, nil // Nodes smaller than 32 bytes are stored inside their parent
+		return n, nil // Nodes smaller than 64 bytes are stored inside their parent
 	}
 	nn := n.create()
 	data, err := proto.Marshal(nn)

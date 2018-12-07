@@ -16,9 +16,11 @@ func (l *Lottery) Query_GetLotteryNormalInfo(param *pty.ReqLotteryInfo) (types.M
 		return nil, err
 	}
 	return &pty.ReplyLotteryNormalInfo{CreateHeight: lottery.CreateHeight,
-		PurBlockNum:  lottery.PurBlockNum,
-		DrawBlockNum: lottery.DrawBlockNum,
-		CreateAddr:   lottery.CreateAddr}, nil
+		PurBlockNum:    lottery.PurBlockNum,
+		DrawBlockNum:   lottery.DrawBlockNum,
+		CreateAddr:     lottery.CreateAddr,
+		OpRewardRatio:  lottery.OpRewardRatio,
+		DevRewardRatio: lottery.DevRewardRatio}, nil
 }
 
 // Query_GetLotteryPurchaseAddr for current round
@@ -28,8 +30,8 @@ func (l *Lottery) Query_GetLotteryPurchaseAddr(param *pty.ReqLotteryInfo) (types
 		return nil, err
 	}
 	reply := &pty.ReplyLotteryPurchaseAddr{}
-	for addr := range lottery.Records {
-		reply.Address = append(reply.Address, addr)
+	for _, recs := range lottery.PurRecords {
+		reply.Address = append(reply.Address, recs.Addr)
 	}
 	//lottery.Records
 	return reply, nil

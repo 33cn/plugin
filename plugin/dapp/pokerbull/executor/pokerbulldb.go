@@ -27,7 +27,7 @@ const (
 	MaxPlayerNum = 5
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
-	// DefaultStyle默认游戏类型
+	// DefaultStyle 默认游戏类型
 	DefaultStyle = pkt.PlayStyleDefault
 )
 
