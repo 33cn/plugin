@@ -173,7 +173,6 @@ func TestRPC_CallTestNode(t *testing.T) {
 	assert.Equal(t, res.IsOk, true)
 
 	//test  grpc
-
 	ctx := context.Background()
 	c, err := grpc.DialContext(ctx, rpcCfg.GrpcBindAddr, grpc.WithInsecure())
 	assert.Nil(t, err)
