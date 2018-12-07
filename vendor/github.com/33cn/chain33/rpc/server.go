@@ -14,18 +14,19 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"golang.org/x/net/context"
-
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	_ "google.golang.org/grpc/encoding/gzip" // register gzip
 )
 
 var (
-	remoteIPWhitelist = make(map[string]bool)
-	rpcCfg            *types.RPC
-	jrpcFuncWhitelist = make(map[string]bool)
-	grpcFuncWhitelist = make(map[string]bool)
-	jrpcFuncBlacklist = make(map[string]bool)
-	grpcFuncBlacklist = make(map[string]bool)
+	remoteIPWhitelist           = make(map[string]bool)
+	rpcCfg                      *types.RPC
+	jrpcFuncWhitelist           = make(map[string]bool)
+	grpcFuncWhitelist           = make(map[string]bool)
+	jrpcFuncBlacklist           = make(map[string]bool)
+	grpcFuncBlacklist           = make(map[string]bool)
+	rpcFilterPrintFuncBlacklist = make(map[string]bool)
 )
 
 // Chain33  a channel client
@@ -149,6 +150,14 @@ func NewGRpcServer(c queue.Client, api client.QueueProtocolAPI) *Grpcserver {
 		return handler(ctx, req)
 	}
 	opts = append(opts, grpc.UnaryInterceptor(interceptor))
+	if rpcCfg.EnableTLS {
+		creds, err := credentials.NewServerTLSFromFile(rpcCfg.CertFile, rpcCfg.KeyFile)
+		if err != nil {
+			panic(err)
+		}
+		credsOps := grpc.Creds(creds)
+		opts = append(opts, credsOps)
+	}
 	server := grpc.NewServer(opts...)
 	s.s = server
 	types.RegisterChain33Server(server, s.grpc)
@@ -182,6 +191,7 @@ func InitCfg(cfg *types.RPC) {
 	InitGrpcFuncWhitelist(cfg)
 	InitJrpcFuncBlacklist(cfg)
 	InitGrpcFuncBlacklist(cfg)
+	InitFilterPrintFuncBlacklist()
 }
 
 // New produce a rpc by cfg
@@ -345,4 +355,20 @@ func InitGrpcFuncBlacklist(cfg *types.RPC) {
 	for _, funcName := range cfg.GrpcFuncBlacklist {
 		grpcFuncBlacklist[funcName] = true
 	}
+}
+
+// InitFilterPrintFuncBlacklist rpc模块打印requet信息时需要过滤掉一些敏感接口的入参打印，比如钱包密码相关的
+func InitFilterPrintFuncBlacklist() {
+	rpcFilterPrintFuncBlacklist["UnLock"] = true
+	rpcFilterPrintFuncBlacklist["SetPasswd"] = true
+	rpcFilterPrintFuncBlacklist["GetSeed"] = true
+	rpcFilterPrintFuncBlacklist["SaveSeed"] = true
+	rpcFilterPrintFuncBlacklist["ImportPrivkey"] = true
+}
+
+func checkFilterPrintFuncBlacklist(funcName string) bool {
+	if _, ok := rpcFilterPrintFuncBlacklist[funcName]; ok {
+		return true
+	}
+	return false
 }

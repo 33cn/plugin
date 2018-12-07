@@ -30,15 +30,17 @@ func (wallet *Wallet) parseExpire(expire string) (int64, error) {
 	if len(expire) == 0 {
 		return 0, errors.New("Expire string should not be empty")
 	}
-
 	if expire[0] == 'H' && expire[1] == ':' {
 		txHeight, err := strconv.ParseInt(expire[2:], 10, 64)
 		if err != nil {
 			return 0, err
 		}
 		if txHeight <= 0 {
-			fmt.Printf("txHeight should be grate to 0")
+			//fmt.Printf("txHeight should be grate to 0")
 			return 0, errors.New("txHeight should be grate to 0")
+		}
+		if txHeight+types.TxHeightFlag < txHeight {
+			return 0, errors.New("txHeight overflow")
 		}
 
 		return txHeight + types.TxHeightFlag, nil
@@ -538,8 +540,12 @@ func (wallet *Wallet) ProcSendToAddress(SendToAddress *types.ReqWalletSendToAddr
 	}
 	Balance := accounts[0].Balance
 	amount := SendToAddress.GetAmount()
+	//amount必须大于等于0
+	if amount < 0 {
+		return nil, types.ErrAmount
+	}
 	if !SendToAddress.IsToken {
-		if Balance < amount+wallet.FeeAmount {
+		if Balance-amount < wallet.FeeAmount {
 			return nil, types.ErrInsufficientBalance
 		}
 	} else {
@@ -547,7 +553,6 @@ func (wallet *Wallet) ProcSendToAddress(SendToAddress *types.ReqWalletSendToAddr
 		if Balance < wallet.FeeAmount {
 			return nil, types.ErrInsufficientBalance
 		}
-
 		if nil == accTokenMap[SendToAddress.TokenSymbol] {
 			tokenAccDB, err := account.NewAccountDB("token", SendToAddress.TokenSymbol, nil)
 			if err != nil {
