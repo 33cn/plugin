@@ -498,7 +498,7 @@ func (client *client) switchHashMatchedBlock(currSeq *int64, preMainBlockHash *[
 			plog.Error("Parachain GetLastSeq fail", "err", err)
 			return
 		}
-		*currSeq = lastSeq
+		*currSeq = lastSeq+1
 		*preMainBlockHash = lastSeqMainHash
 		plog.Error("switchHashMatchedBlock sync from height 0")
 		return
@@ -537,7 +537,7 @@ func (client *client) switchHashMatchedBlock(currSeq *int64, preMainBlockHash *[
 					plog.Error("Parachain GetLastSeq fail", "err", err)
 					return
 				}
-				*currSeq = lastSeq
+				*currSeq = lastSeq+1
 				*preMainBlockHash = lastSeqMainHash
 				plog.Error("switchHashMatchedBlock sync from height 0")
 				return
