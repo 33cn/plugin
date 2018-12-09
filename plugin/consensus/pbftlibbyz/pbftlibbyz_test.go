@@ -60,7 +60,6 @@ func TestPbftlibbyz(t *testing.T) {
 	time.Sleep(5 * time.Second)
 	
 	if index == "5" {
-		time.Sleep(1 * time.Second)
 		sendReplyList(q)
 	} else {
 		time.Sleep(60 * time.Second)
@@ -70,7 +69,6 @@ func TestPbftlibbyz(t *testing.T) {
 
 func initEnvPbftlibbyz(index string) (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module, *mempool.Mempool, queue.Module, queue.Module, queue.Module) {
 	Conf := "chain33.test" + index + ".toml"
-	// fmt.Println(Conf)
 	var q = queue.New("channel")
 	flag.Parse()
 	cfg, sub := types.InitCfg(Conf)
