@@ -58,7 +58,7 @@ func TestPbftlibbyz(t *testing.T) {
 	defer q.Close()
 	defer wallet.Close()
 	time.Sleep(5 * time.Second)
-	
+
 	if index == "5" {
 		sendReplyList(q)
 	} else {

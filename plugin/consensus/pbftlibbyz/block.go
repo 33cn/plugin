@@ -18,16 +18,17 @@ package pbftlibbyz
 // typedef int (*service)(Byz_req *inb, Byz_rep *outb, Byz_buffer *non_det, int client, bool ro);
 import "C"
 import (
-	"time"
-	"unsafe"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
+	"time"
+	"unsafe"
 )
 
 const Simple_size int = 4096
+
 var option = 0
 
 func init() {
@@ -62,7 +63,7 @@ func (client *Client) ProposeAndReadReply(block *types.Block) {
 
 	C.Byz_alloc_request(&req, C.int(Simple_size))
 	if req.size < C.int(Simple_size) {
-		plog.Error("Request is too big")  // ???
+		plog.Error("Request is too big") // ???
 	}
 	for i := 0; i < Simple_size; i++ {
 		*(*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(req.contents)) + uintptr(i))) = C.char(option)
@@ -134,7 +135,7 @@ func (client *Client) CreateBlock() {
 	} else {
 		C.dump_handler()
 
-		var mem_size int = 205*8192
+		var mem_size int = 205 * 8192
 		c_mem := (*C.char)(C.malloc(C.ulong(mem_size)))
 		for i := 0; i < mem_size; i++ {
 			*(*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(c_mem)) + uintptr(i))) = C.char(0)
@@ -196,4 +197,3 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	ret = append(ret, &tx)
 	return
 }
-

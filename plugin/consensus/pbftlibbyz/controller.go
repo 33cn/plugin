@@ -50,7 +50,7 @@ func NewPbftlibbyz(cfg *pb.Consensus, sub []byte) queue.Module {
 	var c *Client
 	isClient := false
 	peers := strings.Split(subcfg.PeersURL, ",")
-	if peers[int(subcfg.NodeID) - 1] == subcfg.ClientAddr {
+	if peers[int(subcfg.NodeID)-1] == subcfg.ClientAddr {
 		isClient = true
 	}
 	c = NewBlockstore(cfg, isClient)
