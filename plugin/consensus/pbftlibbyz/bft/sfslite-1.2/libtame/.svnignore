@@ -1,0 +1,4 @@
+lock.C
+pipeline.C
+Makefile.am
+Makefile.in

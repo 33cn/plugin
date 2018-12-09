@@ -1,0 +1,70 @@
+
+TAME(static foo (cbv ceocc))
+{
+
+}
+
+=>
+
+void foo (cbv ceocc)
+{
+#undef  FUNCTION_NAME_MANGLED
+#define FUNCTION_NAME_MANGLED foo
+#undef  CEOCC
+#define CEOCC ceocc
+
+	__cls->has_ceocc (true);
+
+
+  foo__return:
+	__global_int = __ceocc_sentinal_var;
+ 	__cls->enforce_ceocc ();
+
+	// by the time we return to the event loop, this closure
+	// should be destroyed. Use this if there were no NONBLOCK
+	// calls.
+        delaycb (0, 0, wrap (check_closure_destroyed, 
+ 	 strbuf ("%s:%d: function %s", __FILE__, __LINE__, "foo"),
+	 __cls->destroyed_flag ()));
+
+	return;	
+}
+
+	return; =>
+
+	goto foo__return;
+
+
+	UNBLOCK(a,b,c);  =>
+
+	{
+	   __cls->inc_ceocc_count ();
+	   __ceocc_sentinel_var = 0;
+	   (* CEOCC) (a,b,c);
+	}
+
+or
+	RESUME(a,b,c) =>
+	{
+	   UNBLOCK(a,b,c);
+	   goto FUNCTION_NAME ## __return;
+
+	}
+
+
+	RESUME(a,b,c);  =>
+
+	{
+	  UNBLOCK(a,b,c);
+	  goto foo__return;
+	}
+
+
+question: dynamic analysis: what happens when a function keeps ahold of a
+callback after it calls it?  will result in a memory leak since the 
+callback will persist past the frame of the function.
+
+alternatively, can bump refcount per wrap, decref per cal, and delete at the
+end of the function.  i.e., don't use ptr/ref, now that we're disallowing
+explicity 'return' (since it's now a goto foo__return).
+

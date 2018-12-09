@@ -1,0 +1,182 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+my $VERSION = '0.5';
+my $DIRS = "bin etc include info lib sbin";
+
+open (F, '>./+DESC') || die "+DESC: $!";
+print F <<"EOF;";
+SFS is a secure, global file system with completely decentralized
+control. SFS lets you access your files from anywhere and share them
+with anyone, anywhere. Anyone can set up an SFS server, and any user
+can access any server from any client. SFS lets you share files across
+administrative realms without involving administrators or
+certification authorities.
+EOF;
+close (F);
+
+open (F, '>./+COMMENT') || die "+COMMENT: $!";
+print F <<"EOF;";
+Self-certifying File System
+EOF;
+close (F);
+
+open (F, '>./+INSTALL') || die "+INSTALL: $!";
+print F <<'EOFI;';
+#!/bin/sh
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+PREFIX=${PKG_PREFIX:-/usr/local}
+
+# verify proper execution
+#
+if [ $# -ne 2 ]; then
+    echo "usage: $0 distname { PRE-INSTALL | POST-INSTALL }" >&2
+    exit 1
+fi
+
+# Verify/process the command
+#
+case $2 in
+    PRE-INSTALL)
+	cp -p $PREFIX/etc/sfs/sfs_config \
+		$PREFIX/etc/sfs/sfs_config.save 2>/dev/null
+	exit 0
+        ;;
+    POST-INSTALL)
+	;;
+    *)
+        echo "usage: $0 distname { PRE-INSTALL | POST-INSTALL }" >&2
+        exit 1
+        ;;
+esac
+
+
+#
+# Installing SFS...
+#
+
+sfsuser_line=`egrep '^sfsuser ' $PREFIX/etc/sfs/sfs_config.save 2> /dev/null`
+set ""`echo $sfsuser_line`
+sfs_defuser=$2
+sfs_defgroup=$3
+
+resvgids_line=`egrep '^resvgids ' $PREFIX/etc/sfs/sfs_config.save 2> /dev/null`
+test "$resvgids_line" \
+    || resvgids_line=`egrep '^#resvgids ' $PREFIX/etc/sfs/sfs_config`
+
+echo "SFS needs a its own user and group IDs."
+test -z "$sfs_defuser" && sfs_defuser=sfs
+echo -n "What username do you want to use? [$sfs_defuser] "
+read sfs_user
+test -z "$sfs_user" && sfs_user=$sfs_defuser
+
+if id "$sfs_user" > /dev/null; then
+	:
+else
+    echo "User $sfs_defuser does not exist.  You must create the account."
+fi
+
+test -z "$sfs_defgroup" && sfs_defgroup=`id -ng $sfs_user 2>/dev/null`
+test -z "$sfs_defgroup" && sfs_defgroup=$sfs_user
+echo -n "What groupname do you want to use? [$sfs_defgroup] "
+read sfs_group
+test -z "$sfs_group" && sfs_group="$sfs_defgroup"
+
+echo Editing $PREFIX/etc/sfs/sfs_config...
+rm -f $PREFIX/etc/sfs/sfs_config~
+sed -e "s/^sfsuser.*/sfsuser $sfs_user $sfs_group/" \
+	-e "s/^#resvgids .*/$resvgids_line/" \
+	$PREFIX/etc/sfs/sfs_config > $PREFIX/etc/sfs/sfs_config~
+mv -f $PREFIX/etc/sfs/sfs_config~ $PREFIX/etc/sfs/sfs_config
+
+echo chmod 04555 $PREFIX/lib/sfs/newaid
+chmod 04555 $PREFIX/lib/sfs/newaid
+
+echo chgrp $sfs_group $PREFIX/lib/sfs/suidconnect
+if chgrp $sfs_group $PREFIX/lib/sfs/suidconnect; then
+	echo chmod 02555 $PREFIX/lib/sfs/suidconnect
+	chmod 02555 $PREFIX/lib/sfs/suidconnect
+else
+	cat <<EOF
+** Warning: could not put $PREFIX/lib/sfs/suidconnect
+** in the $sfs_group group.  You must create this group, then run:
+	chgrp $sfs_group $PREFIX/lib/sfs/suidconnect
+	chmod 02555 $sfs_group $PREFIX/lib/sfs/suidconnect
+EOF
+fi
+
+exit 0
+
+EOFI;
+close (F);
+
+open (F, '>./+CONTENTS') || die "+CONTENTS: $!";
+#  if (`uname -s` eq "FreeBSD\n") {
+#      print F '@srcdir .' . "\n";
+#  }
+#  else {
+#      print F '@src .' . "\n";
+#  }
+print F "\@name sfs-$VERSION\n";
+
+print F <<'EOF;';
+@cwd /usr/local
+@unexec install-info --delete %D/info/sfs.info %D/info/dir
+@comment
+@comment  == File list goes here ==
+@comment
+EOF;
+
+open (L, "find $DIRS -type f -a ! -name dir -print |") || die "find: $!";
+while (<L>) {
+    print F $_;
+}
+
+print F <<"EOF;";
+\@unexec rmdir %D/include/sfs-$VERSION %D/lib/sfs-$VERSION
+\@exec rm -f %D/include/sfs %D/lib/sfs
+\@exec ln -s sfs-$VERSION %D/include/sfs
+\@exec ln -s sfs-$VERSION %D/lib/sfs
+\@unexec rm %D/include/sfs %D/lib/sfs
+EOF;
+
+print F <<'EOF;';
+@exec install-info %D/info/sfs.info %D/info/dir
+@comment
+@comment  I guess this stuff is necessary?
+@comment
+@cwd .
+@ignore
+info/dir
+@ignore
+include/sfs
+@ignore
+lib/sfs
+@ignore
++CONTENTS
+@ignore
++COMMENT
+@ignore
++DESC
+@ignore
++INSTALL
+
+EOF;
+close (F);
+
+my $PKGNAME = "sfs-$VERSION";
+chomp ($PKGNAME .= '-' . `uname -m`);
+chomp ($PKGNAME .= '-' . `uname -s | tr '[A-Z]' '[a-z]'`);
+chomp ($PKGNAME .= `uname -r | sed -e 's/-.*//'`);
+$PKGNAME .= ".tgz";
+
+$ENV{'GZIP'} = '--best';
+#my $cmd = "pkg_create -i +INSTALL -c +COMMENT -d +DESC -f +CONTENTS $PKGNAME";
+my $cmd = "tar czf $PKGNAME +COMMENT +CONTENTS +DESC +INSTALL $DIRS ";
+
+print "$cmd\n";
+system ($cmd);
+

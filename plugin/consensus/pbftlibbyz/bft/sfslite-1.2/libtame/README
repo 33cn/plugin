@@ -1,0 +1,57 @@
+
+What's here: runtime support for tame programs that have been preprocesses
+ with the tame preprocessor.
+
+Tame Core:
+
+ - tame_closure.h, closure.C: code for managing the closures that tame
+   creates 
+ - tame_event.h, event.C: internals for what's in an event, how they
+   are cancelled and how they are triggered.
+ - leak.C: runtime leak-checking and error-reporting
+ - mkevent.C, mkevent.pl: templated routines for creating new events,
+   either with implicit or explicit rendezous. mkevent.pl generates
+   tame_event_ag.h, which has the templated event creation routines
+   for multiple trigger and/or wait values.
+ - tame.h: wrapper header that includes lots of other headers
+ - tame_slotset.h: A slotset is a simple data structure that stores
+   slots, into which trigger values are assigned after a trigger
+   occurs.
+ - tame_weakref.h: there are weakrefs between events and rendezvous,
+   implemented here.
+ - tame_rendezvous.h: runtime support for explicit rendezvous, and
+   actions based on rejoining them.
+ - tame_recycle.h, recycle.C: objects in tame can be recycled for
+   performance, especially the shared "flag" field in weakreferences;
+   this file implements recycling.
+ - tame_run.h, run.C, init.C: runtime initialization and error 
+   checking routines for tame.
+ - tame_thread.h, thread.C: runtime support for threading (via the PTH
+   library).
+ - tame_tfork.h, mktfork_ag.pl, tfork.C: support for the tfork-style
+   of launching new threads from within Tame.
+ - tame_event_green.h, event_green.C: experimental support for 
+   recyclable (i.e., "green") events, that doesn't make performance
+   much faster on Linux and therefore might be phased out eventually.
+
+Tame Library: the rest of the files in this directory are all part of 
+the Tame Library -- nonessentials that are useful in writing
+applications.  All libraries are in the tame:: namespace (except
+for connectors) and most are written with tame translations.
+
+ - tame_aio.h, aio.T: wrappers around sfs's AIOD-style I/O
+ - tame_io.h, io.T: wrappers around standard C library I/O in a way
+   that's tame-friendly.
+ - tame_lock.h, lock.T: simple tame locks
+ - tame_nlock.Th: named locking for tame (store multiple locks in
+   a hash table, hashed by a templated key type).
+ - tame_autocb.h: convenience; fire an event as it goes out of scope.
+ - tame_connectors.Th: connectors for easy handling of timeouts
+   and other cancellation events.
+ - tame_trigger.h, trigger.C: utilities for triggering triggers, just
+   from the event loop as opposed to the current call frame.
+ - tame_pipeline.h, pipeline.C: a library that implementat generic
+   pipelined (i.e., windowed) commands.
+ - tame_pc.h: Producer/consumer Q, with only 1 slot.
+ - tame_typedefs.h: some common typedefs for Tame programs.
+  

@@ -1,0 +1,506 @@
+/* config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Define if last argument of authunix_create is a gid_t *. */
+#undef AUTHUNIX_GID_T
+
+/* Define if you must run \"df -k\" to get BSD-formatted output */
+#undef DF_NEEDS_DASH_K
+
+/* Define if compiling with dmalloc. */
+#undef DMALLOC
+
+/* Define to the type of elements in the array set by `getgroups'. Usually
+   this is either `int' or `gid_t'. */
+#undef GETGROUPS_T
+
+/* Define to be the size of GMP's mp_limb_t type. */
+#undef GMP_LIMB_SIZE
+
+/* Type pointed to by 3rd argument of getgrouplist. */
+#undef GROUPLIST_T
+
+/* Define if msghdr has msg_accrights field for passing file descriptors. */
+#undef HAVE_ACCRIGHTS
+
+/* Define to 1 if you have the `arc4random' function. */
+#undef HAVE_ARC4RANDOM
+
+/* Define to 1 if you have the <arpa/nameser_compat.h> header file. */
+#undef HAVE_ARPA_NAMESER_COMPAT_H
+
+/* Define to 1 if you have the `auth_userresponse' function. */
+#undef HAVE_AUTH_USERRESPONSE
+
+/* Define to 1 if you have the `bindresvport' function. */
+#undef HAVE_BINDRESVPORT
+
+/* Define if SO_REUSEADDR allows same user to bind non-SO_REUSEADDR port */
+#undef HAVE_BSD_REUSEADDR
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define if system headers declare clock_gettime. */
+#undef HAVE_CLOCK_GETTIME_DECL
+
+/* Define if system has cmsghdr structure for passing file descriptors. */
+#undef HAVE_CMSGHDR
+
+/* Define if you have SYSV-style /dev/ptmx and /dev/pts/. */
+#undef HAVE_DEV_PTMX
+
+/* Define if you have /dev/pts and /dev/ptc devices (as in AIX). */
+#undef HAVE_DEV_PTS_AND_PTC
+
+/* Define if your kernel has the Arla file system's XFS device */
+#undef HAVE_DEV_XFS
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define if the first element of a grouplist is the effective gid */
+#undef HAVE_EGID_IN_GROUPLIST
+
+/* Define if this machine has Linux epoll support */
+#undef HAVE_EPOLL
+
+/* Define to 1 if you have the `flock' function. */
+#undef HAVE_FLOCK
+
+/* Define to 1 if you have the `getdtablesize' function. */
+#undef HAVE_GETDTABLESIZE
+
+/* Define to 1 if you have the `getegid' function. */
+#undef HAVE_GETEGID
+
+/* Define to 1 if you have the `geteuid' function. */
+#undef HAVE_GETEUID
+
+/* Define to 1 if you have the `getgrouplist' function. */
+#undef HAVE_GETGROUPLIST
+
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getspnam' function. */
+#undef HAVE_GETSPNAM
+
+/* Define if gmp.h overloads C++ operators */
+#undef HAVE_GMP_CXX_OPS
+
+/* Define to 1 if you have the `inet_aton' function. */
+#undef HAVE_INET_ATON
+
+/* Define if system headers declare a int32_t type. */
+#undef HAVE_INT32_T
+
+/* Define if system headers declare a int64_t type. */
+#undef HAVE_INT64_T
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `issetugid' function. */
+#undef HAVE_ISSETUGID
+
+/* Define if this machine has FreeBSD kqueue support */
+#undef HAVE_KQUEUE
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the <libutil.h> header file. */
+#undef HAVE_LIBUTIL_H
+
+/* Define to 1 if you have the <login_cap.h> header file. */
+#undef HAVE_LOGIN_CAP_H
+
+/* Define if the MAP_NOSYNC option for mmap is available */
+#undef HAVE_MAP_NOSYNC
+
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mlockall' function. */
+#undef HAVE_MLOCKALL
+
+/* Define if system headers declare a mode_t type. */
+#undef HAVE_MODE_T
+
+/* Define if you have mpz_xor in your GMP library. */
+#undef HAVE_MPZ_XOR
+
+/* Define if off_t is 64 bits wide. */
+#undef HAVE_OFF_T_64
+
+/* Define if you have the openpty function. */
+#undef HAVE_OPENPTY
+
+/* Define to 1 if you have the <pam/pam_appl.h> header file. */
+#undef HAVE_PAM_PAM_APPL_H
+
+/* Define if struct passwd has pw_expire field */
+#undef HAVE_PASSWD_PW_EXPIRE
+
+/* Define to 1 if you have the `pread' function. */
+#undef HAVE_PREAD
+
+/* Define to 1 if you have the <pty.h> header file. */
+#undef HAVE_PTY_H
+
+/* Define to 1 if you have the `pwrite' function. */
+#undef HAVE_PWRITE
+
+/* Define if system headers declare a rlim_t type. */
+#undef HAVE_RLIM_T
+
+/* Define if struct sockaddr has sa_len field. */
+#undef HAVE_SA_LEN
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define to 1 if you have the `setlogin' function. */
+#undef HAVE_SETLOGIN
+
+/* Define if you have the setusercontext function */
+#undef HAVE_SETUSERCONTEXT
+
+/* Define if we're compiling with full sfsmisc library */
+#undef HAVE_SFSMISC
+
+/* Define if system headers declare a socklen_t type. */
+#undef HAVE_SOCKLEN_T
+
+/* Define if system headers declare a ssize_t type. */
+#undef HAVE_SSIZE_T
+
+/* Define if struct sockaddr_storage has __ss_len field */
+#undef HAVE_SS_LEN_UNDERSCORES
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strchr' function. */
+#undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if system headers declare a struct sockaddr_storage type. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
+
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/filio.h> header file. */
+#undef HAVE_SYS_FILIO_H
+
+/* Define to 1 if you have the <sys/mkdev.h> header file. */
+#undef HAVE_SYS_MKDEV_H
+
+/* Define to 1 if you have the <sys/rusage.h> header file. */
+#undef HAVE_SYS_RUSAGE_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/stropts.h> header file. */
+#undef HAVE_SYS_STROPTS_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Allow tame to use the GNU Pth library */
+#undef HAVE_TAME_PTH
+
+/* Define if sys/time.h defines a struct timespec. */
+#undef HAVE_TIMESPEC
+
+/* Define to 1 if you have the <time.h> header file. */
+#undef HAVE_TIME_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `unsetenv' function. */
+#undef HAVE_UNSETENV
+
+/* Define to 1 if you have the <util.h> header file. */
+#undef HAVE_UTIL_H
+
+/* Define if system headers declare a u_char type. */
+#undef HAVE_U_CHAR
+
+/* Define if system headers declare a u_int type. */
+#undef HAVE_U_INT
+
+/* Define if system headers declare a u_int16_t type. */
+#undef HAVE_U_INT16_T
+
+/* Define if system headers declare a u_int32_t type. */
+#undef HAVE_U_INT32_T
+
+/* Define if system headers declare a u_int64_t type. */
+#undef HAVE_U_INT64_T
+
+/* Define if system headers declare a u_int8_t type. */
+#undef HAVE_U_INT8_T
+
+/* Define if system headers declare a u_long type. */
+#undef HAVE_U_LONG
+
+/* Define if select can take file descriptors >= FD_SETSIZE */
+#undef HAVE_WIDE_SELECT
+
+/* Define to 1 if you have the `xdr_int64_t' function. */
+#undef HAVE_XDR_INT64_T
+
+/* Define to 1 if you have the `xdr_longlong_t' function. */
+#undef HAVE_XDR_LONGLONG_T
+
+/* Define to 1 if you have the `xdr_u_int64_t' function. */
+#undef HAVE_XDR_U_INT64_T
+
+/* Define to 1 if you have the `_getpty' function. */
+#undef HAVE__GETPTY
+
+/* Define to 1 if you have the `__seterr_reply' function. */
+#undef HAVE___SETERR_REPLY
+
+/* Define is lsof supports the -D option */
+#undef LSOF_DEVCACHE
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Define to be the directory where mail spools are stored (for REX server) */
+#undef MAILPATH
+
+/* Define if system headers do not declare bindresvport. */
+#undef NEED_BINDRESVPORT_DECL
+
+/* Define if system headers do not declare dn_expand. */
+#undef NEED_DN_EXPAND_DECL
+
+/* Define if system headers do not declare dn_skipname. */
+#undef NEED_DN_SKIPNAME_DECL
+
+/* Define if system headers do not declare fchdir. */
+#undef NEED_FCHDIR_DECL
+
+/* Define if system headers do not declare flock. */
+#undef NEED_FLOCK_DECL
+
+/* Define if system headers do not declare getrusage. */
+#undef NEED_GETRUSAGE_DECL
+
+/* Define if system headers do not declare mkstemp. */
+#undef NEED_MKSTEMP_DECL
+
+/* Define if system headers do not declare pread. */
+#undef NEED_PREAD_DECL
+
+/* Define if system headers do not declare pwrite. */
+#undef NEED_PWRITE_DECL
+
+/* Define if system headers do not declare res_init. */
+#undef NEED_RES_INIT_DECL
+
+/* Define if system headers do not declare res_mkquery. */
+#undef NEED_RES_MKQUERY_DECL
+
+/* Define if system headers do not declare sys_signame. */
+#undef NEED_SYS_SIGNAME_DECL
+
+/* Define if system headers do not declare xdr_callmsg. */
+#undef NEED_XDR_CALLMSG_DECL
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Path for the C preprocessor command */
+#undef PATH_CPP
+
+/* Full path of df command */
+#undef PATH_DF
+
+/* Full path of dmesg command */
+#undef PATH_DMESG
+
+/* Full path of fstat command */
+#undef PATH_FSTAT
+
+/* Full path of logger command */
+#undef PATH_LOGGER
+
+/* Full path of ls command */
+#undef PATH_LS
+
+/* Full path of lsof command */
+#undef PATH_LSOF
+
+/* Full path of netstat command */
+#undef PATH_NETSTAT
+
+/* Full path of nfsstat command */
+#undef PATH_NFSSTAT
+
+/* Full path of ntpq command */
+#undef PATH_NTPQ
+
+/* Full path of ps command */
+#undef PATH_PS
+
+/* Full path of sessreg command */
+#undef PATH_SESSREG
+
+/* Full path of su command */
+#undef PATH_SU
+
+/* Full path of vmstat command */
+#undef PATH_VMSTAT
+
+/* Full path of w command */
+#undef PATH_W
+
+/* Full path of xauth command */
+#undef PATH_XAUTH
+
+/* Define if putenv makes a copy of its argument */
+#undef PUTENV_COPIES_ARGUMENT
+
+/* Use Python memory alloc funcs */
+#undef PYMALLOC
+
+/* Define if setgroups is declared in <grp.h>. */
+#undef SETGROUPS_NEEDS_GRP_H
+
+/* Define if SO_SNDBUF/SO_RCVBUF can exceed 64K. */
+#undef SFS_ALLOW_LARGE_BUFFER
+
+/* Path to the strongest random number device, if any. */
+#undef SFS_DEV_RANDOM
+
+/* Toggle callback2.h with CB signaling */
+#undef SFS_HAVE_CALLBACK2
+
+/* Define if the stat structure has a st_atimespec field. */
+#undef SFS_HAVE_STAT_ST_ATIMESPEC
+
+/* Define if the stat structure has a st_mtim field. */
+#undef SFS_HAVE_STAT_ST_MTIM
+
+/* Define if the stat structure has a st_mtimespec field. */
+#undef SFS_HAVE_STAT_ST_MTIMESPEC
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
+
+/* Define if utmp must be managed with BSD-style ttyent functions */
+#undef USE_TTYENT
+
+/* Define if system header files typedef u_int64_t as unsigned long long */
+#undef U_INT64_T_IS_LONG_LONG
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define to 1 if the X Window System is missing or not being used. */
+#undef X_DISPLAY_MISSING
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `long int' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* The C++ type name of the x_ops field in struct XDR. */
+#undef xdr_ops_t
+
+/* What the second argument of xdr_getlong points to */
+#undef xdrlong_t

@@ -1,0 +1,201 @@
+
+// -*-c++-*-
+/* $Id: tame.h 2077 2006-07-07 18:24:23Z max $ */
+
+#ifndef _LIBTAME_CONNECTORS_H_
+#define _LIBTAME_CONNECTORS_H_
+
+#include "tame.h"
+
+//
+// Connectors that combine different events in useful ways.
+//
+
+typedef enum { OUTCOME_SUCC = 0,
+	       OUTCOME_TIMEDOUT = 1,
+	       OUTCOME_CANCELLED = 2,
+	       OUTCOME_SIGNALED = 3,
+	       OUTCOME_DISCARDED = 4 } outcome_t;
+
+inline bool valid_timeout (int s, int ns)
+{
+  return (s >= 0 && ns >= 0 && (s > 0 || ns > 0));
+}
+
+template<class T1=void, class T2=void, class T3=void>
+class connector_t {
+public:
+
+  connector_t () {}
+
+  static typename event<T1,T2,T3>::ptr
+  cnc (typename event<T1,T2,T3>::ref in, 
+       _event_cancel_base *cobj,
+       int to_s,
+       int to_ns,
+       outcome_t *ocp = NULL)
+  {
+    typename event<T1,T2,T3>::ptr  ncb;
+    connector_t<T1,T2,T3> c;
+    c.__cnc (&ncb, in, cobj, to_s, to_ns, ocp);
+    return ncb;
+  }
+
+  static typename event<T1,T2,T3>::ptr
+  sig (typename event<T1,T2,T3>::ref in, 
+       vec<int> sigv,
+       int *res,
+       _event_cancel_base *cobj)
+  {
+    typename event<T1,T2,T3>::ptr  ncb;
+    connector_t<T1,T2,T3> c;
+    c.__sig (&ncb, in, sigv, res, cobj);
+    return ncb;
+  }
+
+  static typename event<T1,T2,T3>::ptr
+  first (typename event<T1,T2,T3>::ref *es, size_t sz)
+  {
+    typename event<T1,T2,T3>::ptr ncb;
+    connector_t<T1,T2,T3> c;
+    c.__first (es, sz);
+    return ncb;
+  }
+
+private:
+  void __cnc (typename event<T1,T2,T3>::ptr *out, 
+	      typename event<T1,T2,T3>::ref in, 
+	      _event_cancel_base *c, 
+	      int to_s, 
+	      int to_ns,
+	      outcome_t *ocp,
+	      CLOSURE);
+
+  void __sig (typename event<T1,T2,T3>::ptr *out, 
+	      typename event<T1,T2,T3>::ref in, 
+	      vec<int> sigs,
+	      int *sigp,
+	      _event_cancel_base *cobj, 
+	      CLOSURE);
+
+};
+
+tamed template<class T1, class T2, class T3> void 
+connector_t<T1,T2,T3>::__sig (typename event<T1,T2,T3>::ptr *out, 
+			      typename event<T1,T2,T3>::ref in, 
+			      vec<int> sigs,
+			      int *sigp,
+			      _event_cancel_base *cobj)
+{
+  tvars {
+    rendezvous_t<int> rv (__FILE__, __LINE__);
+    int i;
+    int sig;
+  }
+
+  if (cobj) {
+    cobj->set_cancel_notifier (mkevent (rv, -1));
+  }
+  for (i = 0; i < sigs.size (); i++) {
+    sigcb (sigs[i], mkevent (rv, sigs[i]));
+  }
+  *out = mkevent_rs (in->slot_set (), rv, 0);
+  (*out)->set_cancel_notifier (mkevent (rv, -2));
+
+  twait (rv, sig);
+
+  for (i = 0; i < sigs.size (); i++) {
+    sigcb (sigs[i], NULL);
+  }
+
+  rv.cancel ();
+  if (sigp) *sigp = sig;
+
+  in->trigger_no_assign ();
+}
+
+
+tamed template<class T1, class T2, class T3> void 
+connector_t<T1,T2,T3>::__cnc (typename event<T1,T2,T3>::ptr *out, 
+			      typename event<T1,T2,T3>::ref in, 
+			      _event_cancel_base *cobj, 
+			      int to_s, 
+			      int to_ns,
+			      outcome_t *ocp)
+{
+  tvars {
+    rendezvous_t<outcome_t> rv (__FILE__, __LINE__);
+    outcome_t outc;
+    timecb_t *tcb (NULL);
+  }
+
+  if (cobj) {
+    cobj->set_cancel_notifier (mkevent (rv, OUTCOME_CANCELLED)); 
+  }
+
+  if (valid_timeout (to_s, to_ns)) {
+    tcb = delaycb (to_s, to_ns, mkevent (rv, OUTCOME_TIMEDOUT));
+  }
+
+  *out = mkevent_rs (in->slot_set (), rv, OUTCOME_SUCC);
+  (*out)->set_cancel_notifier (mkevent (rv, OUTCOME_DISCARDED));
+  twait (rv, outc);
+
+  if (outc != OUTCOME_TIMEDOUT && tcb) {
+    timecb_remove (tcb);
+  }
+  tcb = NULL;
+
+  // Cancel before issuing the trigger, for safety's sake.
+  rv.cancel ();
+
+  if (ocp) *ocp = outc;
+
+  in->trigger_no_assign ();
+}
+
+namespace connector {
+
+  template<typename T1, typename T2, typename T3>
+  ref<_event<T1,T2,T3> >
+  cnc (ref<_event<T1,T2,T3> > in, _event_cancel_base *cobj, 
+	outcome_t *ocp = NULL)
+  {
+    return connector_t<T1,T2,T3>::cnc (in, cobj, -1, -1, ocp);
+  }
+
+  template<typename T1, typename T2, typename T3>
+  ref<_event<T1,T2,T3> >
+  cnc (ref<_event<T1,T2,T3> > in, _event_cancel_base *cobj, 
+       int to_s, int to_ns,
+	outcome_t *ocp = NULL)
+  {
+    return connector_t<T1,T2,T3>::cnc (in, cobj, to_s, to_ns, ocp);
+  }
+
+  template<typename T1, typename T2, typename T3>
+  ref<_event<T1,T2,T3> >
+  timeout (ref<_event<T1,T2,T3> > in, int to_s, int to_ns = 0, 
+	   outcome_t *ocp = NULL)
+  {
+    return connector_t<T1,T2,T3>::cnc (in, NULL, to_s, to_ns, ocp);
+  }
+
+  template<typename T1, typename T2, typename T3>
+  ref<_event<T1,T2,T3> >
+  sig (ref<_event<T1,T2,T3> > in, vec<int> sigs, int *sigp = NULL,
+       _event_cancel_base *cobj = NULL)
+  {
+    return connector_t<T1,T2,T3>::sig (in, sigs, sigp, cobj);
+  }
+
+  template<typename T1, typename T2, typename T3>
+  ref<_event<T1,T2,T3> >
+  first (ref<_event<T1,T2,T3> > *es, size_t sz)
+  {
+    return connector_t<T1,T2,T3>::first (es, sz);
+  }
+
+};
+
+#endif /* _LIBTAME_CONNECTORS_H_ */

@@ -1,0 +1,6 @@
+*.la
+*.lo
+.deps
+Makefile
+Makefile.in
+stamp-sfsmisc-repo

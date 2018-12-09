@@ -1,0 +1,197 @@
+=head1 NAME
+
+SFS - Self Certifying Filesystem
+
+=head1 DOCUMENTATION
+
+This manpage was written as short description and as pointer to 
+more complete documentation. Up to date documentation can be 
+found as Info-pages of SFS (or from /usr/share/doc/sfs-common 
+in Debian systems). You can access the Info pages with command
+"info sfs".
+
+=head1 DESCRIPTION
+
+SFS is a secure, global network filesystem with comple-
+tedly decentralized control. It takes NFS shares expor-
+ted from localhost and transports them securely to other 
+hosts; NFS services do not need to be exposed to network. 
+
+SFS features key management and authorization separated from 
+filesystem with key revokation separated from key distribution.
+
+More information and new versions can be found from:
+ 
+http://www.fs.net
+
+=head1 GLOBAL NAMESPACE
+
+SFS mounts directories from fileservers under a directory in the
+form:
+
+/sfs/@B<Location>,I<HostID>
+
+B<Location> is either ip address or hostname of the server.
+
+I<HostID> is a collision-resistant cryptographic hash of 
+the file server's public key.
+
+=head1 CLIENT DESCRIPTION
+
+Client side operation of SFS consists of following prog-
+rams:
+
+=over 2
+
+=item B<sfscd>
+
+creates and serves /sfs directory on client machine. Also
+starts nfsmounter and sfsrwcd as needed. 
+
+=item B<nfsmounter>
+
+mounts and unmounts NFS filesystems as kernel NFS client accesses them.
+
+=item B<sfsrwcd>
+
+is a daemon that implements normal read/write filesystem protocol.
+It acts as a NFS server to local NFS client.
+
+=back
+
+=head1 USER PROGRAMS
+
+On client machine user normally uses the following prog-
+rams:
+
+=over 2
+
+=item B<sfsagent>
+
+handles authentication as user moves to new filesystems.
+It also can fetch new HostIDs and perform revocation checks on them.
+
+=item B<sfskey>
+
+manages user and server keys and is used to configure sfsagent for
+different situations.
+
+=back
+
+=head1 SERVER DESCRIPTION
+
+Server side consists of following programs:
+
+=over 2
+
+=item B<sfssd>
+
+handles incoming connections and spawns sfsrwcd and sfsrwcd as needed.
+
+=item B<sfsrwcd>
+
+is a daemon that implements normal read/write filesystem protocol and 
+talks to local NFS server.
+
+=item B<sfsauthd>
+
+handles user authentication. It communicates directly with sfsrwsd 
+to authenticate users of the file system. It also accepts connections 
+over the network from sfskey to let users download their private keys 
+or change their public keys.
+
+=back
+
+=head1 HELPER BINARIES
+
+There are few small programs to help with misc tasks:
+
+=item B<rpcc>
+
+To be documented.
+
+=item B<funmount>
+
+To be documented.
+
+=item B<dirsearch>
+
+can be used with B<sfskey certprog> command to configure certification paths --lists of directories in which to look for symbolic links to I<HostID>s.
+
+Usage is:
+
+=over 4
+
+=item B<dirsearch> [B<-clpq>] dir1 [dir2 ...] name
+
+B<dirsearch> searches through dir1-x untill it finds the file "name" and
+prints "dir/name". Following options affect this:
+
+=item B<-c>
+
+Print the contents of the file to standard output, instead of its pathname. 
+
+=item B<-l>
+
+Require that "dir/name" be a symbolic link, and print the path of the link's destination, rather than the path of the link itself. 
+
+=item B<-p>
+
+Print the path "dir/name". This is the default behavior anyway, so the option B<-p> has no effect.
+
+=item B<-q>
+
+Do not print anything. Exit abnormally if "name" is not found in any of the directories.
+
+=back
+
+=item B<ssu>
+
+The B<ssu> command allows an unprivileged user to become root on the local machine without changing his SFS credentials. B<ssu> invokes the command B<su> to become root. Thus, the access and password checks needed to become root are identical to those of the local operating system's B<su> command. B<ssu> also runs B<newaid> to alter the group list so that SFS can recognize the root shell as belonging to the original user.
+
+=over 4
+
+Usage:
+
+=item B<ssu> [B<-f> | B<-m> | B<-l> | B<-c> command]
+
+=item B<-f>
+
+=item B<-m>
+
+this and B<-f> command are passed through to the B<su> command.
+
+=item B<-l>
+
+This option causes the newly spawned root shell to behave like a login shell.
+
+=item B<-c> command
+
+Tells ssu to tell su to run command rather than running a shell.
+
+=back
+
+=head1 SEE ALSO
+
+L<sfskey(1)|sfskey(1)>, L<nfs(5)|nfs(5)>, L<info(1)|info(1)>,
+L<sfsagent(1)|sfsagent(1)>
+
+=head1 NOTES
+
+Solid NFSv3 support is required from kernel and supporting utilities.
+
+=head1 CAVEATS
+
+You really do not want to kill nfsmounter, as it is responsible for
+cleaning up and unmounting filesystems on the client side, if sfscd
+has died or something else happened.
+
+=head1 BUGS
+
+/sfs is not FHS compliant. FHS on the other hand is lack-
+ing mount points for system mounts.
+
+=head1 AUTHOR
+
+This manpage was written by Jaakko Niemi for sfs packaging in 
+Debian/GNU Operating System.

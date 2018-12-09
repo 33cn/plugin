@@ -1,0 +1,599 @@
+$Id: STANDARDS 2 2003-09-24 14:35:33Z max $
+
+
+		 Coding Standards for the SFS Project
+
+
+1. Indentation and formating
+
+All code should basically be indented as described in the GNU coding
+standards, with the single exception that opening braces should go on
+the same line as an if, then, for, while, or do operator.  For the C
+subset of C++, this should be identical to the result of running code
+through GNU indent with the '-br' option.  Indentation should also
+match the result of M-C-h in the C++ mode of a completely uncustomized
+emacs.
+
+The following are the most important indentation requirements for SFS
+code.  They are an extension of the GNU coding standards.  Some of the
+text and some examples are taken from there.
+
+  * Tab stops are every 8 characters.  You don't have to use TAB
+    characters, but if you do the code must look properly indented
+    with 8 character tab stops.
+
+  * Indentation increments by two spaces, as emacs does by default:
+
+      if (!n)
+        return NULL;
+      else {
+        try (n);
+        tryagain (++n);
+      }
+
+
+  * Case statements and goto labels are leftwards indented by two
+    spaces unless this would put them in the first column, in which
+    case they are only leftwards indented by one space:
+
+      int
+      function ()
+      {
+	// ...
+	switch (n) {
+	case 3:
+	  h = h << 8 | *p++;
+	case 2:
+	  h = h << 8 | *p++;
+	case 1:
+	  h = h << 8 | *p++;
+	}
+ 
+	if (!n)
+	  goto leave;
+	else {
+	  if (n > 99)
+	    goto dontleave;
+	  goto leave;
+	dontleave:
+	  abort ();
+	}
+ 
+       leave:
+        return 0;
+      }
+
+
+  * Function names and opening braces must always start in the
+    leftmost column.  For example:
+
+      static char *
+      concat (char *s1, char *s2)
+      {
+     	...
+      }
+ 
+      int
+      lots_of_args (int an_integer, long a_long, short a_short,
+     		    double a_double, float a_float)
+      {
+     	...
+      }
+
+      int
+      myclass::fn (int x)
+      {
+     	...
+      }
+ 
+      template<class T> inline T *
+      function (const T &a)
+      {
+     	...
+      }
+
+      template<class T> template<class U> inline bool
+      ref<T>::cmp (U &u)
+      {
+     	...
+      }
+
+
+  * Within parentheses, always indent continuation lines one space
+    after the innermost opening paren for the curent scope.
+
+      else if (very_long_function_name (&long_variable_name_x,
+					&long_variable_name_y),
+	       long_variable_name_x == long_variable_name_y)
+        return;
+
+
+  * For inline functions defined within classes, the starting brace
+    should go on the same line as the function name.  As an exception,
+    however, functions that fit on a single line can have both braces
+    on that line.
+
+      class blah {
+        // ...
+        bool short_function () const { return true; }
+
+        template<class U> ref<U> medium_function (const ref<U> &r)
+          { mytext = r->description (); }
+
+        int long_function (const str &s) {
+          if (int r = memcmp (cstr (), s.cstr (), min (len (), s.len ())))
+            return r;
+          return len () - s.len ();
+        }
+      };
+
+
+  * Indent colons two spaces.  Lines in the scope of a colon should
+    also be indented the normal two spaces:
+
+      struct acallrpcobj {
+        // ...
+        acallrpcobj (u_int32_t prog, u_int32_t vers,
+	             u_int32_t proc, xdrproc_t inxdr, void *inmem,
+	             xdrproc_t outxdr, void *outmem,
+	             aclnt_cb cb, AUTH *auth = NULL)
+          : rpc2sin (prog, vers, IPPROTO_UDP),
+            used (false), proc (proc),
+            outxdr (outxdr), outmem (outmem), cb (cb), auth (auth)
+          { setmsg (inxdr, inmem); }
+      };
+
+      class fookeeper
+        : public ihash_core<qhash_slot<foo_number, foo>, &foo::link>,
+          virtual public refcount {
+        // ...
+      };
+
+
+  * Within template parameters, indent as best you can.  Emacs doesn't
+    help much here.  It's fine just to indent two spaces and not match
+    the opening '<'.  When breaking a line before '=', as for the
+    kludge argument below, the '=' character must be manually indented
+    in defiance of emacs.
+
+      template<class K, class V, class H = hashfn<K>, class E = equals<K>,
+	class R = qhash_lookup_return<V>,
+	ihash_entry<qhash_slot<K, V> > qhash_slot<K,V>::*kludge
+	      = &qhash_slot<K,V>::link>
+      class qhash
+	: public ihash_core<qhash_slot<K, V>, kludge> {
+	// ...
+      };
+
+
+  * Put a space between a function name and function call parentheses.
+    Put a space after any commas that don't end lines.  Put spaces
+    around binary operators wherever possible.  Don't put spaces
+    between unary operators and their operands.  Don't put spaces
+    around brackets, '::', '.', '.*', '->', or '->*'.  Don't put
+    spaces before a '<' character introducing a template argument.
+
+      int res = function (arg1, arg2);
+      x = *ip++;
+      x = y * z + t[5];
+      s = fp->select (1)->name;
+      typedef callback<void, const char *>::ref mycb_t;
+      ref<int> ri;
+      ri = mkobj<int> ();
+
+
+  * Use the same rules of operator spacing when declaring variables,
+    types, or functions.  Put spaces between identifiers and following
+    '*' or '&' characters, but not between two of these characters or
+    between '*', '&', or 'type::*' and the following identifier.
+    Never put a space between the reference operator '&' and the name
+    of the reference.
+
+      int *ip;
+      char *a, *b;
+      char **argv;
+      char **&argvref = argv;
+      int &i = *ip;
+      int (*x)[5];
+      void (myclass::*fn) (int &a, char *);
+      extern int &getreftoint ();
+      extern int *getptrtoint ();
+
+
+  * Never put an unnecessary space between the keyword 'operator' and
+    the corresponding operator.
+
+      class myclass {
+        int operator++ (int);
+        bool operator() (int x, int y) const;
+        template<class U> myclass &operator= (const U &);
+      };
+
+      bool
+      myclass::operator() (int x, int y) const
+      {
+        ...
+        this->operator++ (0);
+      }
+
+
+  * Never, ever have more than 79 characters on a line (not including
+    the final new line, but counting any actual TAB characters as
+    advancing to the next multiple of 8 characters). Generated source
+    code is obviously an exception to this, though where possible code
+    generators should obey the other formatting rules.
+
+
+  * Split lines before a binary operator other than comma, never
+    after.  Split after the comma operator or any other use of comma
+    such as in function call or template arguments.  Never split
+    between a unary operator and its operand.  Never split between a
+    function name, function object, or cast and the opening paren that
+    follows, unless you absolutely, absolutely need to.
+
+      if (foo_this_is_long && bar > win (x, y, z)
+          && remaining_condition)
+        do_it ();
+      else if (very_long_function_name (&long_variable_name_x,
+					&long_variable_name_y),
+	       long_variable_name_x == long_variable_name_y)
+        return;
+
+      /* It's probably worth a typedef or temporary variable to avoid
+       * this kind of monstrosity: */
+      shmobject = reinterpret_cast<my_long_object_name::byte_type *>
+        (mmap (NULL, implicit_cast<size_t> (shmlen), PROT_READ|PROT_WRITE,
+               MAP_FILE|MAP_SHARED, shmfd, 0));
+
+
+  * Avoid having two operators of different precedence at the same
+    level of indentation.  For example, don't write this:
+
+      mode = (inmode[j] == VOIDmode
+              || GET_MODE_SIZE (outmode[j]) > GET_MODE_SIZE (inmode[j])
+              ? outmode[j] : inmode[j]);
+
+    Instead, use extra parentheses so that the indentation shows the
+    nesting:
+
+      mode = ((inmode[j] == VOIDmode
+               || (GET_MODE_SIZE (outmode[j]) > GET_MODE_SIZE (inmode[j])))
+              ? outmode[j] : inmode[j]);
+
+
+  * Insert extra parentheses so that Emacs will indent code
+    properly. For example, the following indentation looks nice if you
+    do it by hand, but Emacs would mess it up:
+
+     v = rup->ru_utime.tv_sec*1000 + rup->ru_utime.tv_usec/1000
+         + rup->ru_stime.tv_sec*1000 + rup->ru_stime.tv_usec/1000;
+
+    But adding a set of parentheses solves the problem:
+
+     v = (rup->ru_utime.tv_sec*1000 + rup->ru_utime.tv_usec/1000
+          + rup->ru_stime.tv_sec*1000 + rup->ru_stime.tv_usec/1000);
+
+
+2. Coding style
+
+  * All code must compile with gcc -Wall -Werror on OpenBSD and
+    Linux.  On OpenBSD, code must additionally compile with -ansi
+    -Wall -Werror.  (Unfortunately -ansi makes linux even less Posix
+    conformant, so it is not required.)  -Wall implies -Wparentheses.
+    That means the following valid code will be rejected.
+
+      int x;
+      if (x = function ())  // Need extra parentheses
+        if (be_careful)
+          return;
+        else                // Need extra braces
+          doit (x);
+
+    You must rewrite this as follows:
+
+      int x;
+      if ((x = function ())) {
+        if (be_careful)
+          return;
+        else
+          doit (x);
+      }
+
+  * Beyond compliance with -Wall -Werror, and parentheses needed for
+    emacs to indent code properly, do not add too many gratuitous
+    parentheses and braces.  In particular, return doesn't need
+    parentheses around the result you are returning, particularly if
+    that result fits on one line of code.
+
+  * Declare variables close to their use.  Don't declare int x at the
+    top of the function when you only use it at the bottom.  (This is
+    a no brainer in C++.)
+
+  * Include variable names in function prototypes whenever they might
+    be useful.  Someone familiar with a function who doesn't quite
+    remember the order of the arguments should be able to figure it
+    out from looking at the header file.  For example, this prototype:
+
+      int tryit (int udpsock, int ntries, int timeout, int msgsize);
+
+    is a lot more useful than this one:
+
+      int tryit (int, int, int, int);
+
+  * Always use "New" with a capital N for allocating objects through
+    the default allocator.  This lets the debugging malloc be most
+    useful.  Use "new" with a lower-case n when invoking placement new
+    or other specialized new operators.
+
+  * Try to avoid old-style C casts like:
+
+      char *p = (char *) malloc (5);
+
+    Use static_cast, const_cast, and reinterpret_cast instead.  You
+    can also conceivably use dynamic_cast, but be aware that it can be
+    surprisingly expensive (like 400 cycles compared to as little as 0
+    for a static_cast).
+
+  * Don't use old-style C++ constructor casts with anything but
+    built-in types or types defined in your code.  For instance, don't
+    say:
+
+      if (size_t (n) > lim)
+        panic ("overflow!\n");
+
+    Autoconf replaces missing system types with #defines instead of
+    typedefs.  Thus, even though the above code works on your system,
+    it might on another system expand to the illegal code:
+
+      if (unsigned int (n) > lim)
+        panic ("overflow!\n");
+
+    To save typing in cases like this, a C cast is probably
+    reasonable, though implicit_cast would be better.
+
+  * Don't cast to get an implicit conversion.  If one type can
+    implicitly be converted to another, use the template function
+    implicit_cast (defined in stllike.h) to trigger the conversion (if
+    necessary).  This ensures your code will stop compiling if any
+    source change breaks the implicit conversion.  For example:
+
+      template<class T> void
+      vector<T>::construct (vector<T>::ptr_type p)
+      {
+        new (implicit_cast<void *> (p)) T;
+      }
+
+    This code is guaranteed not to compile if ptr_type ever becomes
+    something one cannot implicitly convert to void *.  Note for the
+    record that the implicit cast is required because some overloaded
+    ::operator new might do something quite unexpected on a
+    vector<T>::ptr_type.
+
+  * Avoid cast operators (member functions like "operator bool ()")
+    wherever possible.  When you need implicit conversions, use
+    constructors in the converted to class, not operator casts in the
+    converted from class.  This sometimes means not being able to cast
+    objects to built in types implicitly.  Given the complexity of
+    casting interacting with built-in operators and conversions, this
+    loss is usually worth it nontheless.
+
+  * Never overload the unary operator&.
+
+  * An assert can be far more useful than a comment, because one knows
+    the assert is actually true.
+
+  * Avoid cluttering up code with a lot of comments.  Try to make code
+    self explanatory.  If things get hard to follow, break parts of a
+    complicated function off into suggestively named inline functions.
+
+  * Never put a comment in a function to explain what code does.  Here
+    is a made up example of a worse than useless comment:
+
+      struct dirent *dp = readdir (mydir);
+      if (!dp)
+        return;
+      char *name = dp->d_name;;
+
+      /* Null-terminate the file name if the kernel didn't */
+      char namebuf[sizeof (dp->d_name) + 1];
+      if (!memchr (dp->d_name, 0, sizeof (dp->d_name))) {
+        memcpy (namebuf, dp->d_name, sizeof (dp->d_name));
+	namebuf[sizeof (dp->d_name)] = '\0';
+	name = namebuf;
+      }
+      else
+        name = dp->d_name;
+	
+    Well no shit, Sherlock.  I can see you are null-terminating the
+    string.  Just why the hell would you do that when the POSIX manual
+    clearly states dp->d_name must already be null-terminated?
+
+  * Do put comments in functions if you need to explain why code does
+    what it does:
+
+      /* Pre-POSIX systems (notably Ultrix) don't null-terminate
+       * filenames of MAXNAMLEN characters. */
+      char namebuf[sizeof (dp->d_name) + 1];
+      if (dp->d_namlen == sizeof (dp->d_name)) {
+        // ...
+      }
+
+    Ah, now I understand the code and I won't introduce a bug on
+    Ultrix when I change things.  (Note:  This readdir example is
+    completely made up.  I know nothing about pre-POSIX readdir.)
+
+  * Sometimes you do want to describe what code does and possibly give
+    high-level motivation for the structure of a large amount of code.
+    Put such comments at the top of files, where you can go on at
+    length about the design of the system, the reasoning behind it,
+    and papers to consult for reference.  The point of such a comment
+    is to save someone from having to read the code or to ensure they
+    have the big picture before having to get into the details.
+    Sprinkling such reasoning in comments throughout the code is
+    therefore not helpful.
+
+  * Put a comment after every '#else' stating the condition under
+    which the subsequent code will be compiled.  Put a comment after
+    every '#endif' stating the condition under which the preceeding
+    code was compiled.  Thus:
+
+      #ifdef HAVE_CLOCK_GETTIME
+      /* ... */
+      #endif /* HAVE_CLOCK_GETTIME */
+
+      #ifndef _KERNEL
+      /* ... */
+      #else /* _KERNEL */
+      /* ... */
+      #endif /* _KERNEL */
+
+      #ifdef USE_UVFS
+      /* ... */
+      #else /* !USE_UVFS */
+      /* ... */
+      #endif /* !USE_UVFS */
+
+  * When ifdefs don't surround much code, indent other preprocessor
+    directives to the level of nested conditionals.
+
+      #if __GNUC__ == 2
+      # ifdef __cplusplus
+      #  if __GNUC_MINOR__ < 91 /* !egcs */
+      #   define NO_TEMPLATE_FRIENDS 1
+      #  endif /* !egcs */
+      #  define PRIVDEST friend class stupid_gcc_disallows_private_destructors;
+      # endif /* __cplusplus */
+      #else /* !gcc2 */
+      # ifdef HAVE_SYS_CDEFS_H
+      #  include <sys/cdefs.h>
+      # endif /* HAVE_SYS_CDEFS_H */
+      # ifndef __attribute__
+      #  define __attribute__(x)
+      # endif /* !__attribute__ */
+      # define PRIVDEST
+      #endif /* !gcc 2 */
+
+  * Guard header files against multiple inclusion.  Make each header
+    file include whatever header files it needs to compile.
+
+
+3. Robustness and quality control
+
+  * All code must be tested with dmalloc.  Developers should normally
+    configure --with-dmalloc.
+
+  * Design your code so that simple mistakes and typos cause
+    compilation errors.  Use the fact that duplicate case labels are
+    illegal in C/C++ to check for errors.  For example inline
+    functions can check constraints at compile time:
+
+      #define N 2
+      // ...
+      inline void
+      check_n_is_even ()
+      {
+        switch (0) case (N&1): case 1:;
+      }
+
+  * Never write boring or repetitive code.  Not only are you far more
+    likely to introduce bugs when writing such code, the bugs will be
+    harder to find as they will occur less frequently.  Use templates
+    to make code more concise.  If necessary, use perl or write a
+    little language to generate repetitive code--even if developing
+    code-generating code seems like more work.  Try to ensure that any
+    possible bug will show up in every possible case.
+
+  * Try to avoid complex manipulations of raw bytes--such code is
+    error-prone and hard to audit.  Use the str, suio, and rxx classes
+    wherever possible to try to avoid such manipulations.  Sometimes
+    you really have to do something horrible like manipulate a region
+    of memory full of variable length streams of unaligned doubles.
+    Build a nice abstraction around such code, put it in an
+    appropriate library, and write a regression test for it.  The
+    regression test will probably take as much effort to write as the
+    code.
+
+
+4. C++ portability and language features
+
+  * Use bzero rather than memset to clear memory, since bzero can be
+    implemented in terms of memset but not vice versa.
+
+  * Use memcpy and memmove rather than bcopy.  (Recall that memmove
+    handles overlapping regions, while memcpy does not.)  Except for
+    bzero, always use ANSI functions rather than old BSD ones---use
+    memcmp, strchr, strrchr rather than bcmp, index, and rindex.
+
+  * Do not use exceptions under any circumstances.
+
+  * Do not use template template parameters.  These should not be
+    confused with class template arguments which are themselves
+    template classes.  Those are okay.  In other words, avoid code
+    like this:
+
+      template<class E, template<class C> T> class supervec { ... };
+
+    But you can use template classes as class arguments to templates:
+
+      template<class E> class vector { ... };
+      vector<vector<int> > vvi;
+
+  * Do not use the 'export' keyword.
+
+  * Do not use anything from the standard template library.  You may
+    use the <new>, <typeinfo>, and <exception> headers, however, as
+    these are more part of the compiler than the standard library.
+    All programs should link properly without libstdc++.
+
+  * Do not use namespaces or 'using' declarations.  It's okay,
+    however, to use the std:: prefix to get symbols out of the few
+    permitted standard header files--for instance std::type_info.
+
+  * Do not use static variables in inline functions.  They don't work
+    under egcs on all platforms.  For instance, the following code
+    will compile and sometimes do the wrong thing:
+
+      template<class T> struct typectr {
+        static int &ctr () { static int v; return v; }
+      };
+
+  * All code must compile under G++ 2.8.1 at optimization levels -O1
+    and -O2.  (-O0 will not work and is not required).  All SFS code
+    must also compile under egcs 1.1.1 at optimization level -O1.
+
+  * All code must also compile with the KAI KCC compiler.  You don't
+    have to test this if you don't have access to the compiler, but
+    you must avoid using any GNU extensions.  In particular, code like
+    this is not valid C++ code, even if g++ -ansi accepts it without
+    warning (c.f. section 14.5.4 of the standard):
+
+      template <int I, int J> struct A {};
+      template <int I> struct A<I+5, I*2> {};
+
+  * Do not return void expressions, as KCC cannot handle this.  The
+    following valid C++ code will break KCC.
+
+      void f ();
+      void
+      g ()
+      {
+        return f ();
+      }
+
+  * On a 200 MHz Pentium Pro with 128 Megabytes, any file in the
+    source tree must compile (and assemble) in under 10 minutes at g++
+    optimization level -O2.  Sometimes this means putting a big effort
+    into optimizing compilation time.  It's unfortunate, but we have
+    to draw the line somewhere, and 10 minutes is already pushing it.
+
+
+5. Peculiar requirements of SFS
+
+  * Don't use any floating point in SFS.  SFS doesn't need floating
+    point arithmetic.  It needs fast context switch times.
+
+  * Scrub (bzero) any memory that might contain cleartext private key
+    material as soon as you are done with it.  Use the function
+    str2wstr in wmstr.h.  It modifies a string so that its contents
+    will be bzeroed before freeing the data when the reference count
+    goes to zero.

@@ -1,0 +1,78 @@
+
+Automatic Manpage Generation
+----------------------------
+$Id: README 2 2003-09-24 14:35:33Z max $
+
+Manpages are generated via manpager.pl in the directory.  It takes
+as input sfs.texi and output a series of manpages for the various
+commands therein.  
+
+manpager.pl understands the following native texi commands:
+
+	- Document Sectioning: @table, @item, @itemx, @itemize, 
+		@example, @diplay
+
+	- Character Formatting: @command, @file, @option, @var,
+		@samp, @env, @strong
+
+	- Linking and Referencing: @xref, @uref, @ref
+
+
+manpager.pl ignores the following commands within its auspices:
+
+	@cindex, @anchor, @table, @noident, @cindex
+
+
+manpager.pl needs the following commands in the sfs.tex file to 
+understand how to break the file up into separate files, and how
+to section those given files:
+
+	@c @mp 
+	@c @mp @end
+		
+		Manpager will only read contents of the input file
+		between these two commands.  Hence, most of the
+		the input file will be ignore except where otherwise
+		indicated
+
+
+	@c @mp @command{<name>}{<desc>}{<section>}
+	@c @mp @end commands
+
+		Denotes a command in the input file.  The given parameters
+		are for the name of the command, a short description
+		of the command, and the manual section of the 
+		command, respectively.  Should contain other
+		subsection commands such as synopsis, description,
+		options, and so on.
+
+	@c @mp @conffile{<name>}{<desc>}
+	@c @mp @end conffile
+
+		As above but for a configuration file.  Note that the
+		man section of configuration files is by default 5.
+
+	@c @mp @<subsection>
+	@c @mp @end <subsection>
+
+		Where <subsection> is one of synopsis, description,
+		options, or bugs.  This is used to indicated a subsection
+		of a manual page.
+
+	@c @mp @ingore
+	@c @mp @end ignore
+
+		Ignore all text between these two markers.
+
+	@c @mpp <text>
+
+		Manpager pass-through.  <text> will be used only in
+		the generation of manpages.
+
+	@c @mp @indent
+	@c @mp @end indent
+	
+		Move all text between these markers over one indent.
+		These commands are roughly synonymous with the texi
+		commands for @table and @end table.
+		

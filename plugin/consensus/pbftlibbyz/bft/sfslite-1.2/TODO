@@ -1,0 +1,3 @@
+
+* Complie on linux (MAP_NOSYNC)
+* Refactor tame internals.  Put a rendezvous in the closure, more or less.

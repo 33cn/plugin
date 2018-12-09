@@ -4,9 +4,22 @@
 
 package pbftlibbyz
 
+// #cgo CFLAGS: -I./bft/gmp -I./bft/libbyz -I./bft/sfs/include/sfslite -O3 -fno-exceptions -DNDEBUG
+// #cgo LDFLAGS: -L./bft/gmp -L./bft/libbyz -L./bft/sfs/lib/sfslite -lbyz -lsfscrypt -lasync -lgmp -lstdc++
+// #include<stdio.h>
+// #include<stdlib.h>
+// #include<string.h>
+// #include<signal.h>
+// #include<unistd.h>
+// #include<sys/param.h>
+// #include"libbyz.h"
+// int exec_command_cgo(Byz_req *inb, Byz_rep *outb, Byz_buffer *non_det, int client, bool ro);
+// void dump_handler();
+// typedef int (*service)(Byz_req *inb, Byz_rep *outb, Byz_buffer *non_det, int client, bool ro);
+import "C"
 import (
 	"time"
-
+	"unsafe"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
@@ -14,23 +27,24 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+const Simple_size int = 4096
+var option = 0
+
 func init() {
-	drivers.Reg("pbftlibbyz", Newpbftlibbyz)
+	drivers.Reg("pbftlibbyz", NewPbftlibbyz)
 	drivers.QueryData.Register("pbftlibbyz", &Client{})
 }
 
 // Client pbftlibbyz implementation
 type Client struct {
 	*drivers.BaseClient
-	replyChan   chan *types.ClientReply
-	requestChan chan *types.Request
-	isPrimary   bool
+	isClient bool
 }
 
 // NewBlockstore create pbftlibbyz Client
-func NewBlockstore(cfg *types.Consensus, replyChan chan *types.ClientReply, requestChan chan *types.Request, isPrimary bool) *Client {
+func NewBlockstore(cfg *types.Consensus, isClient bool) *Client {
 	c := drivers.NewBaseClient(cfg)
-	client := &Client{BaseClient: c, replyChan: replyChan, requestChan: requestChan, isPrimary: isPrimary}
+	client := &Client{BaseClient: c, isClient: isClient}
 	c.SetChild(client)
 	return client
 }
@@ -40,11 +54,47 @@ func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-// Propose method
-func (client *Client) Propose(block *types.Block) {
-	op := &types.Operation{Value: block}
-	req := ToRequestClient(op, types.Now().String(), clientAddr)
-	client.requestChan <- req
+// Propose and set the block method
+func (client *Client) ProposeAndReadReply(block *types.Block) {
+	read_only := 0
+	req := C.struct__Byz_buffer{}
+	rep := C.struct__Byz_buffer{}
+
+	C.Byz_alloc_request(&req, C.int(Simple_size))
+	if req.size < C.int(Simple_size) {
+		plog.Error("Request is too big")  // ???
+	}
+	for i := 0; i < Simple_size; i++ {
+		*(*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(req.contents)) + uintptr(i))) = C.char(option)
+	}
+	if option != 2 {
+		req.size = 8
+	} else {
+		req.size = C.int(Simple_size)
+	}
+
+	// invoke request and get reply
+	C.Byz_invoke(&req, &rep, C.ulong(read_only))
+
+	// check reply
+	if !(((option == 2 || option == 0) && rep.size == 8) || (option == 1 && rep.size == C.int(Simple_size))) {
+		plog.Error("Invalid reply")
+	}
+
+	// free reply
+	C.Byz_free_reply(&rep)
+
+	C.Byz_free_request(&req)
+
+	plog.Info("===============Get block from reply===========")
+	lastBlock := client.GetCurrentBlock()
+	err := client.WriteBlock(lastBlock.StateHash, block)
+
+	if err != nil {
+		plog.Error("********************err:", err)
+		return
+	}
+	client.SetCurrentBlock(block)
 }
 
 // CheckBlock method
@@ -67,7 +117,32 @@ func (client *Client) SetQueueClient(c queue.Client) {
 // CreateBlock method
 func (client *Client) CreateBlock() {
 	issleep := true
-	if !client.isPrimary {
+	// if !client.isPrimary {
+	// 	return
+	// }
+	var config string = "./bft/config"
+	// fmt.Println(config)
+	var config_priv string = "./bft/config_private/template"
+	var port int = 0
+	c_config := C.CString(config)
+	c_config_priv := C.CString(config_priv)
+	defer C.free(unsafe.Pointer(c_config))
+	defer C.free(unsafe.Pointer(c_config_priv))
+
+	if client.isClient {
+		C.Byz_init_client(c_config, c_config_priv, C.short(port))
+	} else {
+		C.dump_handler()
+
+		var mem_size int = 205*8192
+		c_mem := (*C.char)(C.malloc(C.ulong(mem_size)))
+		for i := 0; i < mem_size; i++ {
+			*(*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(c_mem)) + uintptr(i))) = C.char(0)
+		}
+		defer C.free(unsafe.Pointer(c_mem))
+
+		C.Byz_init_replica(c_config, c_config_priv, c_mem, C.uint(mem_size), (C.service)(unsafe.Pointer(C.exec_command_cgo)), nil, 0)
+		C.Byz_replica_run()
 		return
 	}
 	for {
@@ -96,9 +171,9 @@ func (client *Client) CreateBlock() {
 		if lastBlock.BlockTime >= newblock.BlockTime {
 			newblock.BlockTime = lastBlock.BlockTime + 1
 		}
-		client.Propose(&newblock)
+		client.ProposeAndReadReply(&newblock)
 		//time.Sleep(time.Second)
-		client.readReply()
+		// client.readReply()
 		plog.Info("===============readreply and writeblock done===============")
 	}
 }
@@ -122,22 +197,3 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-func (client *Client) readReply() {
-
-	data := <-client.replyChan
-	if data == nil {
-		plog.Error("block is nil")
-		return
-	}
-	plog.Info("===============Get block from reply channel===========")
-	//client.SetCurrentBlock(data.Result.Value)
-	lastBlock := client.GetCurrentBlock()
-	err := client.WriteBlock(lastBlock.StateHash, data.Result.Value)
-
-	if err != nil {
-		plog.Error("********************err:", err)
-		return
-	}
-	client.SetCurrentBlock(data.Result.Value)
-
-}

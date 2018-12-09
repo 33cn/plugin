@@ -1,0 +1,14 @@
+
+How To Update the FreeBSD Port
+------------------------------
+0. cp -r sfslite sfslite.orig
+1. Change the Makefile to reflect new version
+2. Change pkg-plist if there are new files, etc.
+3. Run 'make makesum' to make a new checksum file.
+4. cd /usr/port; diff -u devel/sfslite.orig devel/sfslite > /tmp/sfslite-patch
+5. run 'send-pr' with Category:ports and Class:maintainter-upgrade
+6. Attach the patch as the body of the PR
+7. send
+
+Note the other two ports don't need to be upgraded, since they mainly
+point to the main port.

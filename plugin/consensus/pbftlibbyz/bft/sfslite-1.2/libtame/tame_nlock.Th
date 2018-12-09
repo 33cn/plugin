@@ -1,0 +1,117 @@
+
+
+// -*-c++-*-
+/* $Id: tame.h 2077 2006-07-07 18:24:23Z max $ */
+
+#ifndef _LIBTAME_NLOCK_H_
+#define _LIBTAME_NLOCK_H_
+
+#include "async.h"
+#include "list.h"
+#include "tame.h"
+#include "tame_lock.h"
+
+//
+// Named locks.  Kept in a table, indexed by the type T.
+//
+namespace tame {
+
+  template<class T> class lock_table_t;
+  
+  template<class T>
+  class named_lock_t : public lock_t {
+  public:
+    named_lock_t (T i, lock_t::mode_t m = lock_t::OPEN) 
+      : lock_t (m), _name (i), _refcnt (0) {}
+    
+    void incref () { _refcnt ++; }
+    
+    void decref (lock_table_t<T> *t) 
+    {
+      -- _refcnt ;
+      assert (_refcnt >= 0);
+      if (_refcnt == 0) {
+	assert (_mode == OPEN);
+	t->remove (this);
+	delete this;
+      }
+    }
+    
+    T _name;
+    ihash_entry<named_lock_t> _lnk;
+  private:
+    int _refcnt;
+  };
+  
+  template<class T>
+  class lock_handle_t : public virtual refcount {
+  public:
+    lock_handle_t (lock_table_t<T> *t, named_lock_t<T> *l)
+      : _tab (t), _lock (l), _released (false) { l->incref (); }
+    
+    ~lock_handle_t ()
+    {
+      if (!_released) release ();
+      _lock->decref (_tab);
+    }
+    
+    void cancel () { _released = true; _lock->cancel (_waiter); }
+    void release () { _released = true; _lock->release (); }
+    void set_waiter (lock_t::waiter_t *w) { _waiter = w; }
+    
+  private:
+    lock_table_t<T> *_tab;
+    named_lock_t<T> *_lock;
+    lock_t::waiter_t *_waiter;
+    bool _released;
+  };
+  
+  template<class T>
+  class lock_table_t {
+  public:
+    lock_table_t () {}
+    void remove (named_lock_t<T> *l) { _locks.remove (l); }
+    void acquire (ptr<lock_handle_t<T> > *out,
+		  T n, lock_t::mode_t mode, cbv cb,
+		  CLOSURE);
+  private:
+    ihash<T, named_lock_t<T>, &named_lock_t<T>::_name, 
+	  &named_lock_t<T>::_lnk> _locks;
+  };
+  
+  
+  tamed template<class T> void
+  lock_table_t<T>::acquire (ptr<lock_handle_t<T> > *out,
+			    T n, lock_t::mode_t mode, cbv cb)
+  {
+    tvars {
+      named_lock_t<T> *l (NULL);
+      ptr<lock_handle_t<T> > ret;
+      lock_t::waiter_t *w (NULL);
+      bool do_acquire (true);
+    }
+    
+    l = _locks[n];
+    if (!l) {
+      l = New named_lock_t<T> (n, mode);
+      _locks.insert (l);
+      do_acquire = false;
+    } 
+    ret = New refcounted<lock_handle_t<T> > (this, l);
+    *out = ret;
+    if (do_acquire) {
+      twait { 
+	w = l->acquire (mode, mkevent ()); 
+	ret->set_waiter (w);
+      }
+      ret->set_waiter (NULL);
+    } 
+    (*cb) ();
+  }
+
+};
+  
+  
+#endif /* _LIBTAME_LOCK_H_ */
+  
+  

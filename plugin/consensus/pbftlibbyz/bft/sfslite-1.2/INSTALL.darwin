@@ -1,0 +1,272 @@
+$Id: INSTALL.darwin 2 2003-09-24 14:35:33Z max $
+
+SFS compiles on Darwin.  It will not run on versions older than 1.4
+because file descriptor passing is broken in older versions of the
+operating system.  The file system works on Darwin 1.4 (MacOS 10.1).
+Thanks to Pravir Chandra and John Viega for submitting patches and for
+the following information:
+
+
+Installing SFS on Mac OS X
+==========================
+
+As of version 0.6 of SFS, OS X should be supported as a client
+architecture.  If you're just running Darwin, everything works fine if
+you follow the standard installation instructions.  Unfortunately, the
+default install doesn't work in any application that makes use of the
+Finder without some kludgery.  We're working on a permanent solution
+(the kludge is slow, primarily because the SMB client on OS X is
+incredibly slow... perhaps performance will improve in 10.1.4).
+
+Our goal here is to walk you through all the steps for setting up SFS.
+We've tested everything we present here on Mac OS X version 10.1.3.
+It should probably work on any computer running 10.1 and later.
+
+SFS requires the Gnu Multi-Precision library in order for it to work
+on OS X.  The library can be obtained from ftp.gnu.org in gnu/gmp (and
+can be installed from Fink).  We have tested with version 4.0.1, but
+any later version should work.  If you need to install it yourself:
+
+tar  xzvf gmp-4.0.1.tar.gz
+cd gmp-4.0.1
+./configure
+make
+sudo make install
+
+Next, you need to obtain the SFS source.  Currently, 0.6 is not an
+official release, so you'll have to use the most current CVS check-in.
+
+Next, you need to add a user and a group for SFS.  The easiest way to
+do this is to run the following commands as root or from sudo:
+
+echo "sfs:*:7878:7878::0:0:SFS User:/Users/sfs:/bin/false" | niload -p passwd /
+echo "sfs:*:7878:" | niload -p group /
+
+You can obviously use a different UID and GID.  Here, we use 7878 for
+both the UID and the GID, which should be a safe bet on most machines.
+
+Now, you can build the SFS source:
+
+cd sfs-0.6
+./configure
+make
+sudo make install
+
+Once you've run "sudo make install", SFS is technically working, and
+everything should work absolutely fine from the Terminal.  You should
+test at this point, though.  Run the following commands:
+
+sudo  /usr/local/sbin/sfscd
+cat /sfs/sfs.fs.net:eu4cvv6wcnzscer98yn4qjpjnn9iv6pi/CONGRATULATIONS
+
+Then you should see:
+
+You have set up a working SFS client.
+
+Getting things to work with anything that uses the Finder is another
+matter.  That includes most all Carbon and Cocoa apps as far as we can
+tell.  Even the "open" command goes through the finder, and fails.
+
+We've explored various methods for circumventing this problem until a
+permanent solution is available.  The most reliable solution we have
+come across is using the SMB protocol to a Samba server running over
+the loopback interface (127.0.0.1). NOTE THAT SMB IS PRETTY SLOW ON OS
+X, so don't blame the delays you'll inevitably see with many file
+operations on SFS.
+
+While OSX has a built-in SMB client, it doesn't have a built-in SMB
+server, so you need to download and install Samba.  (start at
+www.samba.org, or just install it all from Fink).  We used version
+2.2.3a in our testing.
+
+If you need to install it yourself:
+
+cd samba-2.2.3a/source
+./configure
+make
+sudo make install
+ 
+Once you have it installed, you need to make a configuration file.
+
+By default, the configuration file is /usr/local/samba/lib/smb.conf.
+You'll need to edit it as root. Here's a smb.conf that will work for
+our uses:
+
+[global]
+  workgroup = MYGROUP
+  mangled names = false
+  interfaces = 127.0.0.1
+
+[sfs]
+  path = /sfs
+  writeable = true
+
+Once we have the config file, we can start the Samba infrastructure.
+As root, run the following:
+
+/usr/local/samba/bin/smbd -D
+/usr/local/samba/bin/nmbd -D  # Not actually necessary, but hey!
+
+Now that we have SMB exporting an SFS share, we actually have to
+connect to it.  We're going to mount the Samba share to /Volumes.  You
+don't want to be root when you're performing the rest of these steps.
+
+First, create /Volumes/sfs-smb:
+
+mkdir /Volumes/sfs-smb/
+
+Now, we need to actually mount the SMB share.  Assuming your username
+is 'viega':
+
+/sbin/mount_smbfs //viega@127.0.0.1/sfs /Volumes/sfs-smb
+
+Now we're all done.  If you run the following command:
+
+open /Volumes/sfs-smb/
+
+A Finder window will pop up.  Unfortunately, there are still two minor
+issues:
+
+1. The Finder won't display files with ":" in the name. 
+2. The /Volumes directory isn't easily browsable from the top level of
+the Finder.
+
+The first issue isn't such a big deal, because usually SFS will create
+a symbolic link for you (though, our boxes do not automatically create
+such a link for the SFS test server).  For example, our local server
+is available on our own OS X machines at:
+
+/Volumes/sfs-smb/shell.zork.org:6gxa3yt4aw4yc48hmemq9pt7uexhcmec
+
+And, due to the symbolic link SFS creates, it's also available at:
+
+/Volumes/sfs-smb/shell.zork.org
+
+To make this directory easily browsable from the Finder, we can just
+symbolically link to the directory from anyplace that shows up fine in
+the browser.  For example:
+
+
+ln -s /Volumes/sfs-smb/shell.zork.org:6gxa3yt4aw4yc48hmemq9pt7uexhcmec /Users/viega/shell
+
+This command will effectively create a folder called "shell" in
+viega's home directory that accesses the remote SFS server.
+
+
+Startup Configuration
+
+Now you'll probably want everything to start up on boot.  You can
+start the SMB services and the SFS Client Daemon (sfscd) automatically
+on boot.  We'll assume that you have an SFS login to shell.zork.org,
+and that you wish to authenticate only once when you log in.  Note
+that (unless your password is already set, etc) you will need to log
+into the server once and set your SFS password using the command:
+
+sfskey register
+
+As root, perform the following steps:
+
+1. mkdir /Library/StartupItems/SFS
+2. Edit the file /Library/StartupItems/SFS/SFS, and insert the following:
+
+#!/bin/sh
+
+. /etc/rc.common
+
+CheckForNetwork 
+
+if [ "${NETWORKUP}" = "-NO-" ]; then exit; fi
+
+ConsoleMessage "Setting up SFS client"
+
+# First we'll start SMB services:
+/usr/local/samba/bin/smbd  -D
+/usr/local/samba/bin/nmbd  -D # Not strictly necessary
+
+# Now start the SFS Client Daemon
+/usr/local/sbin/sfscd
+
+
+3. chmod +x /Library/StartupItems/SFS/SFS
+4. Edit the file /Library/StartupItems/SFS/StartupParameters.plist and
+insert the following:
+
+{
+  Description     = "Self-certifying File System";
+  Provides        = ("SFS");
+  Requires        = ("NFS");
+  OrderPreference = "None";
+  Messages =
+  {
+    start = "Starting SFS file system";
+    stop  = "Stopping SFS file system";
+  };
+}
+
+Now everything you need to do as root in order to run SFS will start
+automatically on boot.
+
+When you log in after a reboot, you will still have a few things to do
+before going about your business.  First, you must mount the SMB file
+system.  Then, you must run sfsagent if you need to authenticate to
+any servers.  Check the SFS documentation on instructions for that.
+Finally, you need to cause the directory to mount.  That is, don't get
+confused if you browse to /Volumes/sfs-smb/ and don't see your server
+directory under there.  SFS mounts those directories on-demand.  If
+you created a symbolic link, just "cd" to it.  There might be a slight
+delay, but the server's contents will show up (assuming you're
+authenticated).  Additionally, if you are using Microsoft Word, or
+some other GUI-based program, if you do "Open Recent" on a file that
+lives on the SFS share, the directory will automatically appear then,
+too.
+
+The easiest way to automate all of the things you need to do when you
+log in is to do the following:
+
+1. Add Terminal to your login items (which you can do from the Login
+pane under System Preferences).
+2. Add some shell code to your shell startup that automatically
+initializes everything SFS-related the first time you log in.
+
+For example, on login, the below script checks to see if our server is
+mounted.  It's meant to be put in your ~/.login file.
+
+setenv SFS_SERVER shell.zork.org: 
+setenv SFS_CREDS  viega@shell.zork.org
+
+if (! {( ls /sfs/ | grep ${SFS_SERVER} > /dev/null )}) then
+  echo "Setting up Samba mount for SFS..."
+  /sbin/mount_smbfs //`whoami`@127.0.0.1/sfs/ /Volumes/sfs-smb/
+  echo "Running 'sfs-agent'..."
+  if (/usr/local/bin/sfsagent ${SFS_CREDS}) then
+    pushd /sfs/${SFS_SERVER}
+    popd
+    echo "SFS initialized!"
+  else
+    echo "SFS server auth failed.  Please initialize manually."
+  endif
+endif
+
+Bash users can use the following script (which will normally place
+this code in ~/.profile):
+
+SFS_SERVER=shell.zork.org
+SFS_CREDS=viega@shell.zork.org
+if test ! "`ls /sfs/ | grep ${SFS_SERVER}`"; then 
+  echo "Setting up Samba mount for SFS..."
+  /sbin/mount_smbfs //`whoami`@127.0.0.1/sfs/ /Volumes/sfs-smb/
+  echo "Running 'sfsagent'..."
+  if /usr/local/bin/sfsagent ${SFS_CREDS}; then
+    pushd /sfs/${SFS_SERVER}
+    popd
+    echo "SFS initialized!"
+  else
+    echo "SFS server auth failed.  Please initialize manually."
+  fi
+fi
+
+Now, the first time you open an SFS file from some GUI-based programs,
+you may get a popup asking you to authenticate again.  Generally, you
+can ignore the dialog, and just hit "Cancel", and your file will still
+load.
+

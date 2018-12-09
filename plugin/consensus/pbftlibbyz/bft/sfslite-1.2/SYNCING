@@ -1,0 +1,42 @@
+$Id: SYNCING 1699 2006-04-30 03:40:22Z max $
+
+When Syncing from SFS to SFSlite: A Checklist
+---------------------------------------------
+ - acinclude.m4
+    - copy over SFS_TAG macro
+    - ditto for SFS_MMAP and INSTALL_C
+    - ditto for SFS_TUTORIAL
+    - ditto for SFS_GMP
+ - configure.in
+    - copy block of code from begin sfslite to end sfslite
+    - meaning, we need new rules for sfsincludedir, sfslibdir, etc, that
+      contain mention of the SFS tag.
+    - also make sure the m4 macro SFS_TAG is being called from here.
+    - dnl the SFS_CHECK_NFSMNT macro
+    - dnl the SFS_USER macro
+    - prune the AC_OUTPUT list, and add the tutorial conditional build, too
+    - delete all berkeley DB stuff
+ - Makefile.am
+    - David usually doesn't update this; Needs a bunch of syncs.
+ - async/Makefile.am
+    - change sfsexec_PROGRAMS to contain mmcd
+    - add litetime.C to libasync_la_SOURCES
+    - add litetime.h to sfsinclude_HEADERS
+    - add mmcd_SOURCES, mmcd_LDADD, and mmcd_DEPENDENCIES
+    - remove if STATIC lines for different compiling aiod for
+      shared libraries.  was breaking builds under gcc 3.4
+ - async/core.C
+    - add #include "litetime.h"
+    - s/clock_gettime (a,b)/my_clock_gettime ($b)/g
+ - async/
+    - add mmcd.c, litetime.[Ch]
+ - async/async.h
+    - add #include "litetime.h"
+    - update SFS_PATCHLEVEL #defines
+ - rpcc/Makefile.am
+    - delete dependency of scan.o on parse.h
+ - crypt/Makefile.am
+    - remove if STATIC lines for different compiling tst for
+      shared libraries.  was breaking builds under gcc 3.4
+    - do not build umac.c or srp.c or serial.c or homoenc.h/pailler.c/pm.[ch]
+    

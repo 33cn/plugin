@@ -1,0 +1,3728 @@
+\input texinfo   @c -*-texinfo-*-
+@c $Id: sfs.texi 2 2003-09-24 14:35:33Z max $
+@c %**start of header
+@setfilename sfs.info
+@include version.texi
+@include dirs.texi
+@settitle SFS @value{VERSION} Manual
+@setchapternewpage off
+
+@iftex
+@alias dslash = slash
+@end iftex
+
+@ifnottex
+@macro dslash
+/
+@end macro
+@end ifnottex
+
+@macro hslash
+/
+@end macro
+
+@c %**end of header
+
+@direntry
+* SFS: (sfs).		Self-certifying file system
+@end direntry
+
+@ifinfo
+This file documents SFS, the self-certifying file system.
+
+Copyright 1999--2002 David Mazi@`eres
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+@end ifinfo
+
+@c  This title page illustrates only one of the
+@c  two methods of forming a title page.
+
+@titlepage
+@title SFS @value{VERSION} Manual
+@c @subtitle SUBTITLE-IF-ANY
+@author David Mazi@`eres
+
+@c  The following two commands
+@c  start the copyright page.
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1999--2002 David Mazi@`eres
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+@end titlepage
+
+@contents
+
+@node Top, Overview, (dir), (dir)
+@comment node-name,     next,           previous, up
+@top SFS
+
+@ifinfo
+This file documents SFS, the self-certifying file system.
+
+This document applies to version @value{VERSION} of the SFS
+distribution.
+@end ifinfo
+
+@menu
+* Overview::                    Introduction to SFS
+* Installation::                Building and installing the SFS software
+* Getting Started::             Play with SFS as quickly as possible
+* Administering SFS::           Guid to common administrative tasks
+* SFS configuration::           SFS configuration files
+* Command reference::           Command usage reference guide
+* Security::                    Security implications of running SFS
+* Contacts::                    How to contact the authors, report bugs
+* Concept Index::               Index of concepts
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Installation
+
+* Requirements::                Requirements for building and running SFS
+* Building::                    How to build and install the SFS distribution
+* Build Problems::              Common problems compiling the source
+
+Getting Started
+
+* Quick client setup::          How to set up an SFS client
+* Quick server setup::          How to set up an SFS server
+* Quick user setup::            How to get started as an SFS user
+
+Administering SFS
+
+* System overview::             Overview of the SFS's various components
+* Managing user keys::          Managing your accounts on different servers
+* Administrative realms::       Setting up multiple servers in one realm
+* Sharing @file{sfs_users} files::  Same users recognized by multiple servers
+
+SFS configuration files
+
+* @file{sfs_config}::           System-wide configuration parameters
+* @file{sfsrwsd_config}::       File server configuration
+* @file{sfsauthd_config}::      User-authentication daemon configuration
+* @file{sfs_users}::            User-authentication database
+* @file{sfssd_config}::         Meta-server configuration
+* @file{sfs_srp_params}::       Default parameters for SRP protocol
+* @file{sfscd_config}::         Meta-client configuration
+
+Command reference guide
+
+* sfsagent::                    Run by each user for authentication to servers
+* sfskey::                      Controls the agent
+* rex::                         Remote execution facility
+* dirsearch::                   Search for file name in directories
+* newaid::                      Run processes with different sfsagents
+* ssu::                         Become root without changing sfsagents
+* sfscd::                       Daemon run by root on all client machines
+* sfssd::                       Daemon run by root on all server machines
+* vidb::                        Manually edit user-authentication database
+* funmount::                    Forcibly unmount file systems
+* sfsrwsd::                     Daemon implementing read-write file server
+* sfsauthd::                    User-authentication server
+
+Security considerations
+
+* new vulnerabilities::         Vulnerabilities created by SFS
+* exposed vulnerabilities::     Vulnerabilities exploitable because of SFS
+* implementation vulnerabilities::  Vulnerabilities in the SFS implementation
+
+@end detailmenu
+@end menu
+
+@node    Overview, Installation, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Introduction
+
+SFS is a network file system that lets you access your files from
+anywhere and share them with anyone anywhere.  SFS was designed with
+three goals in mind:
+
+@itemize @bullet
+@item
+@strong{Security.}  SFS assumes that malicious parties entirely control
+the network.  It ensures that control of the network only lets them
+delay the file system's operation or conceal the existence of servers
+until reliable network communication is reestablished.
+
+@item
+@strong{A global namespace.}  SFS mounts all remote file systems under
+the directory @file{/sfs}.  The contents of that directory is identical
+on every client in the world.  Clients have no notion of administrative
+realm and no site-specific configuration options.  Servers grant access
+to users, not to clients.  Thus, users can access their files wherever
+they go, from any machine they trust that runs the SFS client software.
+
+@item
+@strong{Decentralized control.}  SFS does not rely on any privileged
+authority to manage the global namespace.  Anyone with a machine on the
+Internet can set up an SFS file server without needing to obtain any
+kind of certificates.  New servers are instantly accessible from all
+clients in the world.
+@end itemize
+
+@cindex @var{HostID}
+SFS achieves these goals by separating key management from file system
+security.  It names file systems by the equivalent of their public keys.
+Every remote file server is mounted under a directory of the form:
+
+@display
+@t{/sfs/}@t{@@}@var{Location}@t{,}@var{HostID}
+@end display
+
+or:
+
+@display
+@t{/sfs/}@t{@@}@var{Location}@t{%}@var{port}@t{,}@var{HostID}
+@end display
+
+
+
+@cindex Self-certifying pathname
+@noindent
+@var{Location} is a DNS hostname or an IP address.  @var{HostID} is a
+collision-resistant cryptographic hash of the file server's public
+key.  @var{port} is an optional TCP port number (the default is 4).
+This naming scheme lets an SFS client authenticate a server given only
+a file name, freeing the client from any reliance on external key
+management mechanisms.  SFS calls the directories on which it mounts
+file servers @dfn{self-certifying pathnames}.
+
+Self-certifying pathnames let users authenticate servers through a
+number of different techniques.  As a secure, global file system, SFS
+itself provides a convenient key management infrastructure.  Symbolic
+links let the file namespace double as a key certification namespace.
+Thus, users can realize many key management schemes using only standard
+file utilities.  Moreover, self-certifying pathnames let people
+bootstrap one key management mechanism using another, making SFS far
+more versatile than any file system with built-in key management.
+
+Through a modular implementation, SFS also pushes user authentication
+out of the file system.  Untrusted user processes transparently
+authenticate users to remote file servers as needed, using protocols
+opaque to the file system itself.
+
+Finally, SFS separates key revocation from key distribution.  Thus, the
+flexibility SFS provides in key management in no way hinders recovery
+from compromised keys.
+
+@cindex Caffeine
+No caffeine was used in the original production of the SFS software.
+
+@node    Installation, Getting Started, Overview, Top
+@comment  node-name,  next,  previous,  up
+@chapter Installation
+
+This section describes how to build and install the SFS on your system.
+If you are too impatient to read the details, be aware of the two most
+important points:
+
+@itemize @bullet
+@item
+You must create an @samp{sfs} user and an @samp{sfs} group on your
+system.  @xref{--with-sfsuser}, to use a name other than @samp{sfs}.
+
+@item
+You must use gcc version 2.95.2 or later to compile SFS.
+@end itemize
+
+
+@menu
+* Requirements::                Requirements for building and running SFS
+* Building::                    How to build and install the SFS distribution
+* Build Problems::              Common problems compiling the source
+@end menu
+
+@node Requirements, Building, Installation, Installation
+@comment  node-name,  next,  previous,  up
+@section Requirements
+
+SFS should run with minimal porting on any system that has solid NFS3
+support.  We have run SFS successfully on OpenBSD, FreeBSD, Linux,
+OSF/1 4.0, and Solaris 5.7.
+
+@ignore
+@cindex Linux
+We have also run SFS with some success on Linux.  However, you need a
+kernel with NFS3 support to run SFS on Linux.  The
+@uref{http:/@dslash{}www.fs.net@dslash{}linux@dslash{}, SFS on linux web
+page} has information on installing an SFS-capable Linux kernel.
+@end ignore
+
+In order to compile SFS, you will need the following:
+
+@enumerate
+@item
+gcc-2.95.2 or more recent.  You can obtain this from
+@uref{ftp:/@dslash{}ftp.gnu.org@dslash{}pub@dslash{}gnu@dslash{}gcc}.
+Don't waste your time trying to compile SFS with an earlier version of
+gcc.
+
+@item
+gmp-2.0.2 or more recent.  You can obtain this from
+@uref{ftp:/@dslash{}ftp.gnu.org@dslash{}pub@dslash{}gnu@dslash{}gmp}.  Many
+operating systems already ship with gmp.  Note, however, that some Linux
+distributions do not include the @file{gmp.h} header file.  Even if you
+have libgmp.so, if you don't have /usr/include/gmp.h, you need to
+install gmp on your system.  Note that more recent versions (4.0 and above)
+allow SFS to run significantly faster than it did with previous ones.
+
+@item
+Header files in @file{/usr/include} that match the kernel you are
+running.  Particularly on Linux where the kernel and user-land utilities
+are separately maintained, it is easy to patch the kernel without
+installing the correspondingly patched system header files in
+@file{/usr/include}.  SFS needs to see the patched header files to
+compile properly.
+
+@item
+128 MB of RAM.  The C++ compiler really needs a lot of memory.
+
+@item
+550 MB of free disk space to build SFS.  (Note that on ELF targets, you
+may be able to get away with considerably less.  A build tree on FreeBSD
+only consumes about 200 MB.)
+@end enumerate
+
+@node Building, Build Problems, Requirements, Installation
+@comment  node-name,  next,  previous,  up
+@section Building SFS
+
+Once you have setup your system as described in @ref{Requirements}, you
+are ready to build SFS.
+
+@enumerate
+@item
+Create a user, @var{sfs-user}, and group, @var{sfs-group}, for SFS on
+your system.  By default, SFS expects the both @var{sfs-user} and
+@var{sfs-group} to be called @samp{sfs}.  For instance, you might add
+the following line to @file{/etc/passwd}:
+
+@example
+sfs:*:71:71:Self-certifying file system:/:/bin/true
+@end example
+
+And the following line to @file{/etc/group}:
+
+@example
+sfs:*:71:
+@end example
+
+Do not put any users in @var{sfs-group}, not even @code{root}.  Any
+user in @var{sfs-group} will not be able to make regular use of the
+SFS file system.  Moreover, having any unprivileged users in
+@var{sfs-group} causes a security hole.
+
+@item
+Unpack the SFS sources.  For instance, run the commands:
+
+@example
+% gzip -dc sfs-@value{VERSION}.tar.gz | tar xvf -
+% cd sfs-@value{VERSION}
+@end example
+
+If you determined that you need gmp (@pxref{Requirements}), you should
+unpack gmp into the top-level of the SFS source tree:
+
+@example
+% gzip -dc ../gmp-2.0.2.tar.gz | tar xvf -
+@end example
+
+@item
+Set your @env{CC} and @env{CXX} environment variables to point to the C
+and C++ compilers you wish to use to compile SFS. Some operating systems do
+not come with a recent enough version of gcc @ref{Requirements}.
+
+@anchor{configure}
+@cindex @command{configure}
+@item
+Configure the sources for your system with the command
+@command{./configure}.  You may additionally specify the following
+options:
+
+@table @option
+@anchor{--with-sfsuser}
+@item --with-sfsuser=@var{sfs-user}
+If the user you created for SFS is not called @samp{sfs}.  Do not use an
+existing account for @var{sfs-user}---even a trusted account---as
+processes running with that user ID will not be able to access SFS.
+[Note:  If you later change your mind about @var{user-name}, you do not
+need to recompile SFS, @ref{sfs_config}.]
+
+@item --with-sfsgroup=@var{sfs-group}
+@anchor{--with-sfsgroup}
+If the user you created for SFS does not have the same name as
+@var{sfs-user}.  [Note:  If you later change your mind about
+@var{sfs-group}, you do not need to recompile SFS.]
+
+@item --with-gmp=@var{gmp-path}
+To specify where @command{configure} should look for gmp (for example,
+@var{gmp-path} might be @file{/usr/local}).  Note, if you unpacked gmp
+into a subdirectory of the SFS source code, you do not need to specify
+this option.  @command{configure} should notice the directory and
+compile gmp automatically.
+
+@item --with-sfsdir=@var{sfsdir}
+To specify a location for SFS to put its working files.  The default is
+@file{/var/sfs}.  [You can change this later, @ref{sfs_config}.]
+
+@item --with-etcdir=@var{etcdir}
+To specify where SFS should search for host-specific configuration
+files.  The default is @file{/etc/sfs}.
+
+@item --datadir=@var{datadir}
+Where SFS places its data files.  The default is
+@file{/usr/local/share}.
+@end table
+
+@command{configure} accepts all the traditional GNU configuration
+options such as @option{--prefix}.  It also has several options that
+are only for developers.  @strong{Do not use the
+@option{--enable-repo} or @option{--enable-shlib} options} (unless you
+are a gcc maintainer looking for some wicked test cases for your
+compiler).  Also, @strong{Do not use the @option{--with-openssl}
+option}--it is only for use by the developers in compiling some
+benchmark code that is not part of the release.
+
+@item
+Build the sources by running @samp{make}. Note that a GNU-comptabile
+@samp{make} may be required to build SFS.
+
+@item
+Install the binaries by running @samp{make install}.  If you are short
+on disk space, you can alternatively install stripped binaries by
+running @samp{make install-strip}.
+
+@item
+That's it.  Fire up the client daemon by running @command{sfscd}.
+@end enumerate
+
+@node Build Problems,  , Building, Installation
+@comment  node-name,  next,  previous,  up
+@section Problems building SFS
+
+@cindex Internal compiler error
+The most common problem you will encounter is an internal compiler error
+from gcc.  If you are not running gcc-2.95.2 or later, you will very
+likely experience internal compiler errors when building SFS and need to
+upgrade the compiler.  You must @code{make clean} after upgrading the
+compiler.  You cannot link object files together if they have been
+created by different versions of the C++ compiler.
+
+On OSF/1 for the alpha, certain functions using a gcc extension called
+@code{__attribute__((noreturn))} tend to cause internal compiler errors.
+If you experience internal compiler errors when compiling SFS for the
+alpha, try building with the command @code{make
+ECXXFLAGS='-D__attribute__\(x\)='} instead of simply @code{make}.
+
+Sometimes, a particular source file will give particularly stubborn
+internal compiler errors on some architectures.  These can be very hard
+to work around by just modifying the SFS source code.  If you get an
+internal compiler error you cannot obviously fix, try compiling the
+particular source file with a different level of debugging.  (For
+example, using a command like @code{make sfsagent.o CXXDEBUG=-g} in the
+appropriate subdirectory.)
+
+@cindex Disk Full
+If your @file{/tmp} file system is too small, you may also end up
+running out of temporary disk space while compiling SFS.  Set your
+@env{TMPDIR} environment variable to point to a directory on a file
+system with more free space (e.g., @file{/var/tmp}).
+
+@cindex Virtual memory exhausted
+You may need to increase your heap size for the compiler to work.  If
+you use a csh-derived shell, run the command @code{unlimit datasize}.
+If you use a Bourne-like shell, run @code{ulimit -d `ulimit -H -d`}.
+
+@cindex @code{___gmp_default_allocate}
+On some operating systems, some versions of GMP do not install the
+library properly.  If you get linker errors about symbols with names
+like @code{___gmp_default_allocate}, try running the command
+@code{ranlib @hslash{}usr@dslash{}local@dslash{}lib@dslash{}libgmp.a}
+(substituting wherever your GMP library is installed for
+@code{@hslash{}usr@dslash{}local}).
+
+@node Getting Started, Administering SFS, Installation, Top
+@comment  node-name,  next,  previous,  up
+@chapter Getting Started
+
+This chapter gives a brief overview of how to set up an SFS client and
+server once you have compiled and installed the software.
+
+@menu
+* Quick client setup::          How to set up an SFS client
+* Quick server setup::          How to set up an SFS server
+* Quick user setup::            How to get started as an SFS user
+@end menu
+
+@node Quick client setup, Quick server setup, Getting Started, Getting Started
+@comment  node-name,  next,  previous,  up
+@section Quick client setup
+
+SFS clients require no configuration.  Simply run the program
+@command{sfscd}, and a directory @file{/sfs} should appear on your
+system.  To test your client, access our SFS test server.  Type the
+following commands:
+
+@example
+% cd /sfs/@@sfs.fs.net,uzwadtctbjb3dg596waiyru8cx5kb4an
+% cat CONGRATULATIONS
+You have set up a working SFS client.
+%
+@end example
+
+@noindent
+Note that the @file{/sfs/@@sfs.fs.net,@dots{}} directory does not need to
+exist before you run the @command{cd} command.  SFS transparently mounts
+new servers as you access them.
+
+@node Quick server setup, Quick user setup, Quick client setup, Getting Started
+@comment  node-name,  next,  previous,  up
+@section Quick server setup
+
+Setting up an SFS server is a slightly more complicated process.  You
+must perform at least three steps:
+
+@enumerate
+@item
+Create a public/private key pair for your server.
+
+@item
+Create an @file{/etc/sfs/sfsrwsd_config} configuration file.
+
+@item
+Configure your machine as an NFS server and export all necessary
+directories to @samp{localhost}.
+@end enumerate
+
+To create a public/private key pair for your server, run the commands:
+@example
+mkdir /etc/sfs
+sfskey gen -P /etc/sfs/sfs_host_key
+@end example
+
+Then you must create an @file{/etc/sfs/sfsrwsd_config} file based on
+which local directories you wish to export and what names those
+directories should have on clients.  This information takes the form of
+one or more @command{Export} directives in the configuration file.  Each
+export directive is a line of the form:
+
+@example
+Export @var{local-directory} @var{sfs-name}
+@end example
+
+@var{local-directory} is the name of a local directory on your system
+you wish to export.  @var{sfs-name} is the name you wish that directory
+to have in SFS, relative to the previous @command{Export} directives.
+The @var{sfs-name} of the first @command{Export} directive must be
+@file{/}.  Subsequent @var{sfs-name}s must correspond to pathnames that
+already exist in the previously exported directories.
+
+Suppose, for instance, that you wish to export two directories,
+@file{/disk/u1} and @file{/disk/u2} as @file{/usr1} and @file{/usr2},
+respectively.  You should create a directory to be the root of the
+exported namespace, say @file{@value{SFSDIR}@dslash{}root}, create the
+necessary @var{sfs-name} subdirectories, and create a corresponding
+@file{sfsrwsd_config} file.  You might run the following commands to
+do this:
+
+@example
+% mkdir @value{SFSDIR}/root
+% mkdir @value{SFSDIR}/root/usr1
+% mkdir @value{SFSDIR}/root/usr2
+@end example
+
+@noindent
+and create the following @file{sfsrwsd_config} file:
+
+@example
+Export @value{SFSDIR}/root /
+Export /disk/u1 /usr1
+Export /disk/u2 /usr2
+@end example
+
+@cindex @file{/etc/exports}
+Finally, you must export all the @var{local-directory}s in your
+@file{sfsrwsd_config} to @samp{localhost} via NFS version 3.  The
+details of doing this depend heavily on your operating system.  For
+instance, in OpenBSD you must add the following lines to the file
+@file{/etc/exports} and run the command @samp{kill -HUP `cat
+/var/run/mountd.pid`}:
+
+@example
+@value{SFSDIR}/root localhost
+/disk/u1 localhost
+/disk/u2 localhost
+@end example
+
+On Linux, the syntax for the exports file is:
+
+@example
+@value{SFSDIR}/root localhost(rw)
+/disk/u1 localhost(rw)
+/disk/u2 localhost(rw)
+@end example
+
+On Solaris, add the following lines to the file @file{/etc/dfs/dfstab}
+and run @samp{exportfs -a}:
+
+@example
+share -F nfs -o -rw=localhost @value{SFSDIR}/root
+share -F nfs -o -rw=localhost /disk/u1
+share -F nfs -o -rw=localhost /disk/u2
+@end example
+
+In general, the procedure for exporting NFS file systems varies greatly
+between operating systems.  Check your operating system's NFS
+documentation for details.  (The manual page for @command{mountd} is a
+good place to start.)
+
+Once you have generated a host key, created an @file{sfsrwsd_config}
+file, and reconfigured your NFS server, you can start the SFS server by
+running @command{sfssd}.  Note that a lot can go wrong in setting up an
+SFS server.  Thus, we recommend that you first run @samp{sfssd -d}.  The
+@option{-d} switch will leave @command{sfssd} in the foreground and send
+error messages to your terminal.  If there are problems, you can then
+easily kill @command{sfssd} from your terminal, fix the problems, and
+start again.  Once things are working, omit the @option{-d} flag;
+@command{sfssd} will run in the background and send its output to the
+system log.
+
+Note: @strong{You will not be able to access an SFS server running on
+the same machine as the client} unless you run @command{sfscd} with
+the @option{-l} flag, @ref{sfscd}.  Attempts to SFS mount a machine on
+itself will return the error @code{EDEADLK} (Resource deadlock
+avoided).
+
+@node Quick user setup,  , Quick server setup, Getting Started
+@comment  node-name,  next,  previous,  up
+@section Getting started as an SFS user
+
+To access an SFS server, you must first register a public key with the
+server, then run the program @command{sfsagent} on your SFS client to
+authenticate you.
+
+To register a public key, log into the file server and run the command:
+
+@example
+sfskey register
+@end example
+
+This should produce something similar to the following output:
+
+@example
+% sfskey register
+sfskey: /home/user/.sfs/random_seed: No such file or directory
+sfskey: creating directory /home/user/.sfs
+sfskey: creating directory /home/user/.sfs/authkeys
+Creating new key: user@@server.com#1 (Rabin)
+       Key Label: user@@server.com#1
+@end example
+
+Press @key{RET} to accept the default key label.  You will then see:
+
+@example
+Enter passphrase: 
+           Again: 
+
+sfskey needs secret bits with which to seed the random number generator.
+Please type some random or unguessable text until you hear a beep:
+  64            
+@end example
+
+At this point, type 64 random characters to seed the random number
+generator, until you hear a bell.  You will then be prompted for your
+UNIX password.  If all goes well you should see a message line:
+
+@example
+  UNIX password: 
+wrote key: /home/user/.sfs/authkeys/user@@server.com#1
+%
+@end example
+
+@noindent
+The above procedure creates a public/private key pair for you and
+registers it with the server.  (Note that if you already have a public
+key on another server, you can reuse that public key by giving
+@command{sfskey} your address at that server, e.g., @samp{sfskey
+register user@@other.server.com}.)
+
+After registering your public key with an SFS server, you can use the
+@samp{sfskey login} command to access the server.  Get a shell on a
+different client machine from the server, and run the command:
+
+@example
+sfskey login @var{usr}@@@var{server}
+@end example
+
+@c @command{sfsagent} program on an SFS client to access the server.  On
+@c the client, run the command:
+
+@c @example
+@c sfsagent @var{user}@@@var{server}
+@c @end example
+
+@noindent
+@var{server} is the name of the server on which you registered, and
+@var{user} is your logname on that server.  You should be prompted for
+a password, and see something like the following:
+
+@example
+Passphrase for dm@@server.com/1024: 
+SFS Login as dm@@server.com
+@end example
+
+@noindent
+The @samp{sfskey login} command does three things:  It starts the
+@command{sfsagent} program, which persists in the background to
+authenticate you to file servers as needed.  It fetches your private
+key from @var{server} and decrypts it using your passphrase.  Finally,
+it fetches the server's public key, and creates a symbolic link from
+@file{/sfs/@var{server}} to @file{/sfs/@@@var{server},@var{HostID}}.
+(The passphrase you type is also used to authenticate the server to
+the client, so that @command{sfskey} can fetch the server's public key
+securely.)
+
+If, after your agent is already running, you wish to fetch a private
+key from another server or download another server's public key, you
+can run @samp{sfskey login} multiple times.  You will be able to
+access all the servers you have logged into simultaneously.
+
+@c However, in general you need not explicitly log in to every server you
+@c wish to access.  If you register the same public key on every server,
+@c you can access all servers after logging into any one of them---so
+@c long as you have some secure way of retrieving the self-certifying
+@c pathname of the server.
+
+While @command{sfskey} provides a convenient way of authenticating
+oneself to servers and obtaining their self-certifying pathnames, it
+is by no means the only way.  If you use the same public key on all
+servers, you will only need to type your password once to download
+your private key; @command{sfsagent} will automatically authenticate
+you to whatever file servers you touch.  Moreover, once you have
+access to one SFS file server, you can store on it symbolic links
+pointing to other servers' self-certifying pathnames.
+
+When you are done using SFS, you should run the command
+
+@example
+sfskey kill
+@end example
+
+@noindent
+before logging out.  This will kill your @command{sfsagent} process
+running in the background and get rid of the private keys it was holding
+for you in memory.
+
+
+@node Administering SFS, SFS configuration, Getting Started, Top
+@comment  node-name,  next,  previous,  up
+@chapter Administering SFS
+
+@menu
+* System overview::             Overview of the SFS's various components
+* Managing user keys::          Managing your accounts on different servers
+* Administrative realms::       Setting up multiple servers in one realm
+* Sharing @file{sfs_users} files::  Same users recognized by multiple servers
+@end menu
+
+@node System overview, Managing user keys, Administering SFS, Administering SFS
+@comment  node-name,  next,  previous,  up
+@section System overview
+
+@iftex
+@vbox to 2in{@vskip -1.2in@image{components,6in,}@vss}
+@end iftex
+@ifnottex
+@example
+   sfskey--+---------------- - - - -----------+
+           |                                  |
+         agent--+                             |
+     agent------+                             |
+                |                             |
+   +---------------+                       +-------------+
+   |         sfscd |-------- - - - --------| sfssd       |
+   |            |  |                       |  |          |
+   |    sfsrwcd-+  |                       |  +-sfsrwsd--+-+
+   | nfsmounter-+  |                       |  +-sfsauthd | |
+   +---------------+                       +-------------+ |
+                |                                          V
++--------+      |                                   +--------+
+| kernel |      |                                   | kernel |
+|  NFS3  |<-----+                                   |  NFS3  |
+| client |                                          | server |
++--------+                                          +--------+
+
+          CLIENT                               SERVER
+@end example
+@end ifnottex
+SFS consists of a number interacting programs on both the client and the
+server side.
+
+On the client side, SFS implements a file system by pretending to be an
+NFS server and talking to the local operating system's NFS3 client.  The
+program @command{sfscd} gets run by root (typically at boot time).
+@command{sfscd} spawns two other daemons---@command{nfsmounter} and
+@command{sfsrwcd}.
+
+@cindex @command{nfsmounter}
+@command{nfsmounter} handles the mounting and unmounting of NFS file
+systems.  In the event that @command{sfscd} dies, @command{nfsmounter}
+takes over being the NFS server to prevent file system operations from
+blocking as it tries to unmount all file systems.  @strong{Never send
+@command{nfsmounter} a @code{SIGKILL} signal (i.e., @samp{kill -9}).}
+@command{nfsmounter}'s main purpose is to clean up the mess if any
+other part of the SFS client software fails.  Whatever bad situation
+SFS has gotten your machine into, killing @command{nfsmounter} will
+likely only make matters worse.
+
+@command{sfsrwcd} implements the ordinary read-write file system
+protocol.  As other dialects of the SFS protocol become available, they
+will be implemented as daemons running alongside @command{sfsrwcd}.
+
+Each user of an SFS client machine must run an instance of the
+@command{sfsagent} command.  @command{sfsagent} serves several purposes.
+It handles user authentication as the user touches new file systems.  It
+can fetch @var{HostID}s on the fly, a mechanism called @dfn{Dynamic
+server authentication}.  Finally, it can perform revocation checks on
+the @var{HostID}s of servers the user accesses, to ensure the user does
+not access @var{HostID}s corresponding to compromised private keys.
+
+The @command{sfskey} utility manages both user and server keys.  It lets
+users control and configure their agents.  Users can hand new private
+keys to their agents using @command{sfskey}, list keys the agent holds,
+and delete keys.  @command{sfskey} will fetch keys from remote servers
+using SRP, @ref{SRP}.  It lets users change their public keys on remote
+servers.  Finally, @command{sfskey} can configure the agent for dynamic
+server authentication and revocation checking.
+
+On the server side, the program @command{sfssd} spawns two subsidiary
+daemons, @command{sfsrwsd} and @command{sfsauthd}.  If virtual hosts or
+multiple versions of the software are running, @command{sfssd} may spawn
+multiple instances of each daemon.  @command{sfssd} listens for TCP
+connections on port 4.  It then hands each connection off to one of the
+subsidiary daemons, depending on the self-certifying pathname and
+service requested by the client.
+
+@command{sfsrwsd} is the server-side counterpart to @command{sfsrwcd}.
+It communicates with client side @command{sfsrwcd} processes using the
+SFS file system protocol, and accesses the local disk by acting as a
+client of the local operating system's NFS server.  @command{sfsrwsd} is
+the one program in sfs that @emph{must be configured} before you run it,
+@ref{sfsrwsd_config}.
+
+@command{sfsauthd} handles user authentication.  It communicates
+directly with @command{sfsrwsd} to authenticate users of the file system.
+It also accepts connections over the network from @command{sfskey} to
+let users download their private keys or change their public keys.
+
+
+@node Managing user keys, Administrative realms, System overview, Administering SFS
+@comment  node-name,  next,  previous,  up
+@section Managing user keys
+
+
+@node Administrative realms, Sharing @file{sfs_users} files, Managing user keys, Administering SFS
+@comment  node-name,  next,  previous,  up
+@section Administrative realms
+@cindex realms
+
+It is inconvenient for users to run @samp{sfskey login} once for every
+server they wish to access.  Though users can register the same public
+key on multiple servers, they still cannot access a server without its
+self-certifying pathname.
+
+SFS's @emph{realm} mechanism allows one trusted server to store and
+serve the self-certifying pathnames of many other servers.  By
+default, SFS servers are not configured to support administrative
+realms.  When a user runs @samp{sfskey login} to a server without a
+realm, a symbolic link is created from
+@file{sfs@dslash{}@var{server-name}} to the server's self-certifying
+pathname.  If, instead, the server is configured to be part of an
+administrative realm, @file{sfs@dslash{}@var{server-name}} will be a
+directory, and references to names in that directory will
+transparently create symbolic links to self-certifying pathnames.
+
+To set up a realm server, you must first create a publicly-readable
+directory of symbolic links to self-certifing pathnames of other
+servers.  For example, suppose your @file{sfsrwsd_config} file's root
+directory is publicly readable with this configuration:
+
+@example
+Export @value{SFSDIR}/root / R
+@end example
+
+Create a directory @file{@value{SFSDIR}@dslash{}root@dslash{}servers}.
+Now populate this directory with symbolic links to self-certifying
+pathnames.  For example, a server for the realm of machines in DNS
+zone @samp{scs.cs.nyu.edu} might contain the following links:
+
+@example
+pitt -> /sfs/@@pitt.scs.cs.nyu.edu,rexmmr795q6enmhsemr5xt5f6jjhjm6h
+fdr -> /sfs/@@fdr.scs.cs.nyu.edu,hki6vgn6gwkuknve7xqrv4a5mbv76uui
+ludlow -> /sfs/@@ludlow.scs.cs.nyu.edu,hcbafipmin3eqmsgak2m6heequppitiz
+orchard -> /sfs/@@orchard.scs.cs.nyu.edu,4ttg7gvinyxrfe2zgv8mefmjbb3z7iur
+@end example
+
+These links should now also be available in the subdirectory
+@file{servers} of the server's self-certifying pathname.
+
+Finally, to configure your server to support realms, you must add the
+following two lines to @file{@value{ETCDIR}@dslash{}sfsauthd_config}.
+(If that file does not exist, copy the default file
+@file{@value{PKGDATADIR}@dslash{}sfsauthd_config} to
+@file{@value{ETCDIR}} to add the lines.)
+
+@example
+realm @var{realm-name}
+certpath /servers
+@end example
+
+The @var{realm-name} can be the name of your primary server, or it
+might be your domain name instead (e.g., in the example you can chose
+realm name @samp{scs.cs.nyu.edu} to authenticate a bunch of servers
+ending @samp{.scs.cs.nyu.edu}).
+
+After editing @file{sfsauthd_config}, you must restart
+@command{sfsauthd} on the server.  The easiest way to do this is to
+run the following command as root:
+
+@example
+# kill -1 `cat /var/run/sfssd.pid`
+@end example
+
+Note that if the new @var{realm-name} is not the same as the server
+name (or if you ever change @var{realm-name}), then users who have
+already registered will see a message like the following when they
+next log in:
+
+@example
+sfskey: Warning: host for dm@@ludlow.scs.cs.nyu.edu is actually server
+        @@ludlow.scs.cs.nyu.edu,hcbafipmin3eqmsgak2m6heequppitiz
+        This server is claiming to serve host (or realm) scs.cs.nyu.edu,
+        but you originally registered on host (or in realm) ludlow.scs.cs.nyu.edu
+sfskey: fatal: Invalid connection to authserver.
+@end example
+
+The reason for this error is that, unfortunately, users often chose
+the same passwords in multiple administrative realms.  To prevent one
+realm from impersonating another in the event that users have recycled
+passwords, SFS cryptographically embeds the realm name in the SRP
+password information stored at the server.
+
+To correct the problem after changing @var{realm-name}, users need
+only run the command:
+
+@example
+% sfskey update -r [@var{user}]@var{server-name}
+@end example
+
+This command will prompt users for their passwords and then ask them
+to confirm the change of realm name.
+
+Once your realm is configured and you have updated your account at the
+server, you can log into the server with @samp{sfskey login}.  You
+should now see @file{/sfs@dslash{}@var{realm-name}} as an empty
+directory on your system.  However, if you access a file name like
+@file{/sfs@dslash{}@var{realm-name}@dslash{}ludlow} and @file{ludlow}
+is a symbolic link in the @file{servers} directory, then name
+@file{/sfs@dslash{}@var{realm-name}@dslash{}ludlow} will automatically
+spring into existence as the appropriate symbolic link.
+
+Note that SFS could immediately populate the directory
+@file{/sfs@dslash{}@var{realm-name}} with symbolic links before users
+even access the names.  However, many users alias the @command{ls}
+command to @command{ls -F}, and many versions of Linux ship with an
+@command{ls} command that colorizes output by default.  These
+@command{ls} commands execute a @code{stat} system call for every file
+in a directory, which would be quite expensive in a directory of links
+to self-certifying pathnames, as each @code{stat} call would trigger a
+file system mount (and unavailable servers would introduce serious
+delays).
+
+
+@node Sharing @file{sfs_users} files,  , Administrative realms, Administering SFS
+@comment  node-name,  next,  previous,  up
+@section Sharing @file{sfs_users} files
+
+One often wishes to set up multiple servers to be part of a single
+administrative realm and recognize the same set of users.  In such
+cases, users can access all servers in the realm by executing a single
+@samp{sfs login} command.  Moreover, users only need to change their
+public keys and passwords on a single server for the changes to
+propagate to the other ones.
+
+Within an administrative realm, one can classify servers as either
+trusted or untrusted.  A trusted server is a machine that all servers
+trust to specify the identities of users and servers in the realm.  In
+each realm, one of the trusted servers, designated the @emph{primary},
+is the one on which users update their accounts.  Every administrative
+realm must have a primary server.  An untrusted server recognizes all
+users in the realm, but is not necessarily trusted by users or other
+servers in the realm.
+
+As a concrete example, consider a research group with two central file
+servers, A and B, and a number of clients C1, C2, @dots{}, on users'
+desks.  Everyone in the group may trust the administrators of servers
+A and B, but individual users may have superuser privileges on their
+own clients and not be trusted by the rest of the realm.  In
+particular, the user of client C1 may wish to set up a file server
+accessible to other users in the realm (and possibly also accessible
+to some local maintained guest accounts on C1).  C1's owner must be
+able to set up this server without it being trusted by the rest of the
+realm.
+
+To configure SFS servers as part of a realm, you must first understand
+what information a server stores about users.  Each SFS server has one
+or more @file{sfs_users} databases of users on the system.  A database
+may contain, among other things, the following information for each
+user:
+
+@itemize @bullet
+@item
+The user's name.
+
+@item
+The user's numeric user ID and login group ID.
+
+@item
+The user's public key.
+
+@cindex SRP
+@item
+The user's ``SRP information.''
+@uref{http:/@dslash{}srp.stanford.edu@dslash{},SRP} is the password
+authentication protocol used by the @samp{sfskey login} command.  The
+SRP information stored by the server serves two purposes.  First, it
+allows the server to verify that a user running @samp{sfskey login}
+knows the right password to access the account.  Second, and equally
+important, it allows the server to prove its own identity to the
+client executing @samp{sfskey login}.  Thus, though not equivalent to
+the user's password, the SRP information is a secret derived from the
+password with which the server can prove its own identity.
+
+@item
+An encrypted copy of the user's private key.
+@end itemize
+
+The first three pieces of information
+
+
+
+
+
+@node SFS configuration, Command reference, Administering SFS, Top
+@comment  node-name,  next,  previous,  up
+@chapter SFS configuration files
+
+SFS comprises a number of programs, many of which have configuration
+files.  All programs look for configuration files in two
+directories---first @file{@value{ETCDIR}}, then, if they don't find the file
+there, in @file{@value{PKGDATADIR}}.  You can change these locations
+using the @option{--with-etcdir} and @option{--datadir} options to
+the @command{configure} command, @ref{configure}.
+
+The SFS software distribution installs reasonable defaults in
+@file{@value{PKGDATADIR}} for all configuration files except
+@file{sfsrwsd_config}.  On particular hosts where you wish to change the
+default behavior, you can override the default configuration file by
+creating a new file of the same name in @file{@value{ETCDIR}}.
+
+The @file{sfs_config} file contains system-wide configuration
+parameters for most of the programs comprising SFS.  Note that
+@file{@value{PKGDATADIR}@dslash{}sfs_config} is always parsed, even if
+@file{@value{ETCDIR}@dslash{}sfs_config} exists.  Options in
+@file{@value{ETCDIR}@dslash{}sfs_config} simply override the defaults
+in @file{@value{PKGDATADIR}@dslash{}sfs_config}.  For all other
+configuration files, a file in @file{@value{ETCDIR}} entirely
+overrides the version in @file{@file{PKGDATADIR}}.
+
+If you are running a server, you will need to create an
+@file{sfsrwsd_config} file to tell SFS what directories to export, and
+possibly an @file{sfsauthd_config} if you wish to share the database of
+user public keys across several file servers.
+
+The @file{sfssd_config} file contains information about which protocols
+and services to route to which daemons on an SFS server, including
+support for backwards compatibility across several versions of SFS.  You
+probably don't need to change this file.
+
+@file{sfs_srp_params} contains some cryptographic parameters for
+retrieving keys securely over the network with a passphrase (as with the
+@samp{sfskey add @var{usr}@@@var{server}} command).
+
+@file{sfscd_config} Contains information about extensions to the SFS
+protocol and which kinds of file servers to route to which daemons.  You
+almost certainly should not touch this file unless you are developing
+new versions of the SFS software.
+
+Note that configuration command names are case-insensitive in all
+configuration files (though the arguments are not).
+
+@menu
+* @file{sfs_config}::           System-wide configuration parameters
+* @file{sfsrwsd_config}::       File server configuration
+* @file{sfsauthd_config}::      User-authentication daemon configuration
+* @file{sfs_users}::            User-authentication database
+* @file{sfssd_config}::         Meta-server configuration
+* @file{sfs_srp_params}::       Default parameters for SRP protocol
+* @file{sfscd_config}::         Meta-client configuration
+@end menu
+
+
+@node @file{sfs_config}, @file{sfsrwsd_config}, SFS configuration, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfs_config}---system-wide configuration parameters
+@cindex @file{sfs_config}
+@anchor{sfs_config}
+
+@c @mp
+@c @mp @conffile{sfs_config}{system-wide configuration parameters}
+@c @mp @description
+The @file{sfs_config} file lets you set the following system-wide
+parameters:
+
+@table @samp
+@item sfsdir @var{directory}
+The directory in which SFS stores its working files.  The default is
+@file{/var/sfs}, unless you changed this with the @option{--with-sfsdir}
+option to @command{configure}.
+
+@item sfsuser @var{sfs-user} [@var{sfs-group}]
+As described in @ref{Building}, SFS needs its own user and group to
+run.  This configuration directive lets you set the user and group IDs
+SFS should use. By default, @var{sfs-user} is @samp{sfs} and
+@var{sfs-group} is the same as @var{sfs-user}.  The @samp{sfsuser}
+directive lets you supply either a user and group name, or numeric IDs
+to change the default.  Note:  @strong{If you change @var{sfs-group},
+you must make sure the the program
+@file{@value{SFSLIBDIR}@dslash{}suidconnect} is setgid to the new
+@var{sfs-group}.}
+
+@item anonuser @{@var{user} | @var{uid} @var{gid}@}
+Specifies an unprivileged user id to be used for anonymous file access.
+If specified as @var{user}, the name @var{user} will be looked up in the
+password file, and the login group of that user used as the group id.
+Can alternatively be specified as a numeric @var{uid} and @var{gid}.
+The default is to use -1 for both the @var{uid} and @var{gid}, though
+the default @file{sfs_config} file specifies the user name nobody.
+
+@item ResvGids @var{low-gid} @var{high-gid}
+@anchor{resvgids}
+SFS lets users run multiple instances of the @command{sfsagent} program.
+However, it needs to modify processes' group lists so as to know which
+file system requests correspond to which agents.  The @samp{ResvGids}
+directive gives SFS a range of group IDs it can use to tag processes
+corresponding to a particular agent.  (Typically, a range of 16 gids
+should be plenty.)  Note that the range is inclusive---both
+@var{low-gid} and @var{high-gid} are considered reserved gids.
+
+The setuid root program @command{newaid} lets users take on any of
+these group IDs, @ref{newaid}.  Thus, make sure these groups are not
+used for anything else, or you will create a security hole.  There is
+no default for @samp{ResvGids}.
+
+Note that after changing @samp{ResvGids}, you must kill and restart
+@command{sfscd} for things to work properly.
+
+@item RSASize @var{bits}
+Sets the default size of public keys for cryptosystems that are based
+on the diffculty of factoring integers.  The Rabin public keys used in
+self-certifying pathnames are affected by this paremeter.  The default
+value of @var{bits} is 1280.
+
+@item DlogSize @var{bits}
+Sets the default size of public keys for cryptosystems that are based
+on the diffculty of taking discrete logs in subgroups of
+@strong{Z}@emph{p}*.  This parameter affects SRP paremeter and
+2-Schnorr key generation.  The default value of @var{bits} is 1024.
+
+@item PwdCost @var{cost}
+@anchor{pwdcost}
+Sets the computational cost of processing a user-chosen password.  SFS
+uses passwords to encrypt users' private keys.  Unfortunately, users
+tend to choose poor passwords.  As computers get faster, guessing
+passwords gets easier.  By increasing the @var{cost} parameter, you
+can maintain the cost of guessing passwords as hardware improves.  The
+change will apply to new keys, and to old keys after people run
+@samp{sfskey edit}.
+
+The default value is 11.  @var{cost} is an exponential parameter.
+Thus, you probably don't want anything too much larger.  The maximum
+value is 32---at which point password hashing will not terminate in
+any tractable amount of time and the @command{sfskey} command will be
+unusable.
+
+@item LogPriority @var{facility}.@var{level}
+Sets the syslog facility and level at which SFS should log activity.
+The default is @samp{daemon.notice}.
+@end table
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end
+
+
+@node @file{sfsrwsd_config}, @file{sfsauthd_config}, @file{sfs_config}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfsrwsd_config}---File server configuration
+@cindex @file{sfsrwsd_config}
+@anchor{sfsrwsd_config}
+
+@c @mp 
+@c @mp @conffile{sfsrwsd_config}{file server configuration}
+@c @mp @description
+@table @samp
+@item Hostname @var{name}
+Set the @var{Location} part of the server's self-certifying pathname.
+The default is the current host's fully-qualified hostname.
+
+@item Keyfile @var{path}
+Tells @command{sfsrwsd} to look for its private key in file @var{path}.
+The default is @file{sfs_host_key}.  SFS looks for file names that do
+not start with @file{/} in @file{@value{ETCDIR}}, or whatever directory you
+specified if you used the @option{--with-etcdir} option to
+@command{configure} (@pxref{configure}).
+
+@item Export @var{local-directory} @var{sfs-name} [R|W]
+@anchor{export}
+Tells @command{sfsrwsd} to export @var{local-directory}, giving it the
+name @var{sfs-name} with respect to the server's self-certifying
+pathname.  Appending @samp{R} to an export directive gives anonymous
+users read-only access to the file system (under user ID -2 and group ID
+-2).  Appending @samp{W} gives anonymous users both read and write
+access.  @xref{Quick server setup}, for an example of the @samp{Export}
+directive.
+
+There is almost no reason to use the @samp{W} flag.  The @samp{R} flag
+lets anyone on the Internet issue NFS calls to your kernel as user -2.
+SFS filters these calls; it makes sure that they operate on files
+covered by the export directive, and it blocks any calls that would
+modify the file system.  This approach is safe given a perfect NFS3
+implementation.  If, however, there are bugs in your NFS code, attackers
+may exploit them if you have the @samp{R} option---probably just
+crashing your server but possibly doing worse.
+
+@item LeaseTime @var{seconds}
+@end table
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end
+
+@node @file{sfsauthd_config}, @file{sfs_users}, @file{sfsrwsd_config}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfsauthd_config}---User-authentication daemon configuration
+@cindex @file{sfsauthd_config}
+@anchor{sfsauthd_config}
+
+@c @mp
+@c @mp @conffile{sfsauthd_config}{user-authentication daemon confiuration}
+@c @mp @description
+@table @samp
+@item Hostname @var{name}
+Set the @var{Location} part of the server's self-certifying pathname.
+The default is the current host's fully-qualified hostname.
+
+@item Keyfile @var{path}
+Tells @command{sfsrwsd} to look for its private key in file @var{path}.
+The default is @file{sfs_host_key}.  SFS looks for file names that do
+not start with @file{/} in @file{@value{ETCDIR}}, or whatever directory you
+specified if you used the @option{--with-etcdir} option to
+@command{configure} (@pxref{configure}).
+
+@item Userfile [-update] [-create] [-passwd] [-admin] [-hideusers] [-prefix=@var{prefix}] [-uid=@var{uid} | -uidmap=@var{u1}-@var{u2}+@var{u3}] [-gid=@var{gid} | -gidmap=@var{g1}-@var{g2}+@var{g3}] [-groups=@var{g1}-@var{g2}] [-pub=@var{pubpath}] @var{path}
+This specifies a file in which @command{sfsauthd} should look for user
+public keys when authenticating users.  You can specify multiple
+@samp{Userfile} directives to use multiple files.  This can be useful in
+an environment where most user accounts are centrally maintained, but a
+particular server has a few locally-maintained guest (or root) accounts.
+
+Userfile has the following options:
+
+@table @option
+@item -update
+Specifies a user database as updatable.  Users can register new public
+keys, update their public keys, and change their server key
+information on writable databases.  If this command is not given, the
+database is assumed to read-only and possibly on a remote machine.
+Thus, @command{sfsauthd} maintains local copies of read-only databases
+in @file{@value{SFSDIR}/authdb}.  This process ensures that
+temporarily unavailable file servers never disrupt
+@command{sfsauthd}'s operation.
+
+@item -create
+Create an empty @file{sfs_users} file if no such file exists.
+
+@item -passwd
+
+Treat the Unix passwd file (@file{/etc/passwd} on most machines) as
+part of this userfile.  Use password, shell and home directory
+information.  Allows users who do not exist in the database to log
+into @command{sfsauthd} with their UNIX password, so that they
+might register an SFS key (note this allso requires the
+@option{-update} flag).  @xref{sfskey register}, for details on
+this. Also important for proper functioning of @command{rexd}.
+
+@item -admin
+Allow an SFS administrator to make changes to user records that have
+the admin flag set in their @option{privs} field.
+
+@item -hideusers
+When replying to group queries, replace local user names (that appear in
+the ownership or membership lists) with a hash of the user's public key.
+
+@item -prefix=@var{prefix}
+Prepend the prefix @var{prefix} to usernames in the given userfile.
+
+@item -uid=@var{uid} 
+@itemx -uidmap=@var{u1}-@var{u2}+@var{u3}
+These options are mutually exclusive.  The first maps every user's credentials
+in the given file to the given UID, @var{uid}.  The second maps users in
+the UID range (@var{u1} to @var{u2}) to the offset @var{u3}.  For example, if
+you wanted to map users to 1000-2520 to 61000-62520, you would supply
+-uidmap=1000-2520+60000.
+
+@item -gid=@var{gid}
+@itemx -gidmap=@var{g1}-@var{g2}+@var{g3}
+See above.  Functions the same as @option{gid} and @option{gidmap}, but 
+applies to group IDs, rather than user IDs.  Again, these options
+are mutually exclusive.
+
+@item -groups=@var{g1}-@var{g2}
+This option tells @command{sfsauthd} to allow regular (non-admin) users
+to add groups.  New group IDs will be in the range @var{g1} to @var{g2}.
+Administrators can establish per-user quotas to limit the number of
+groups that a particular user can create.  User quotas are listed in
+the @var{privs} field of user records as "groupquota"=@var{quota} where
+@var{quota} is an unsigned integer.
+
+@item -pub=@var{pubpath}
+@command{sfsauthd} supports the secure remote password protocol, or SRP.
+SRP lets users connect securely to @command{sfsauthd} with their
+passwords, without needing to remember the server's public key.  To
+prove its identity through SRP, the server must store secret data
+derived from a user's password.  The file @var{path} specified in
+@samp{Userfile} contains these secrets for users opting to use SRP.  The
+@option{-pub} option tells @command{sfsauthd} to maintain in
+@var{pubpath} a separate copy of the database without secret
+information.  @var{pubpath} might reside on an anonymously readable SFS
+file system---other machines can then import the file as a read-only
+database using a @command{Userfile} line with the @option{-update}
+flag.
+@end table
+
+If no @samp{Userfile} directive is specified, @command{sfsauthd} uses
+the following default (again, unqualified names are assumed to be in
+@file{@value{ETCDIR}}):
+
+@example
+Userfile -update -passwd -pub=sfs_users.pub sfs_users
+@end example
+
+@item DBcache @var{path}
+The @var{path} to the database that holds the authentication server's
+cache.  If unspecified, it defaults to one of the two entries shown
+below.  The first applies if Sleepycat (BerkeleyDB) support was compiled
+in; otherwise, the second entry applies.  If @var{path} begins with a
+"/" (slash), it is taken to be an absolute path.  If not, it is a path
+relative to @file{@value{SFSDIR}/authdb}.
+
+@example
+dbcache dbcache.db/
+dbcache dbcache
+@end example
+
+@item Logfile @var{path}
+Use the logfile given by @var{path} to output the signature log
+generated by @command{sfsauthd}.  The default logfile is
+@file{@value{SFSDIR}/sign_log}.
+
+@item SRPfile @var{path}
+Where to find default parameters for the SRP protocol.  Generate such a
+file using the @command{sfskey gensrp} command. The default is
+@file{sfs_srp_params}.  If the default file does not exist, serving
+pre-generated SRP parameters is disabled.
+
+@item Denyfile @var{path}
+Specify a file containing a list of users that are to be explicitly
+denied the ability to register and update keys on the authserver.  The
+default is @file{sfs_deny}.  If the default file does not exist, we
+assume an empty list.
+
+@item Realm @var{name}
+@anchor{Realm}
+@cindex realms
+Define the realm to which this authserver will belong.  Authentication
+information (including SRP) can be shared amongst authservers that are
+in the same realm.  Thus, a user that wants to authenticate to a realm,
+can contact any authserver in that realm.
+
+If the realm directive does NOT appear in this file, the authserver will
+not join any realm.  This behavior is the default.  If the realm
+directive does appear, @var{name} cannot be empty.
+
+NOTE: Changing an authserver's realm after users have already registered
+using SRP requires all users to update their authentication data because
+the realm is bound into the stored SRP information.  Specifically, each
+user will need to run
+
+@example
+sfskey update -r username@@authserver
+@end example
+
+A user logged on to the authserver can use the hostname @var{-} to
+signify the local host:
+
+@example
+sfskey update -r -
+@end example
+
+@item Certpath @var{dir} [@var{dir} ...]
+Specify a certification path to return to the client as a result of an
+@command{sfskey login} command; this list of directories will become the
+arguments to a dirsearch certprog.  That is, for a certpath "@var{dir1}
+@var{dir2}" the client will add a certprog "dirsearch @var{dir1}
+@var{dir2}" to the user's agent.  The certification path will be tagged
+with a prefix equal to the authserver's realm (see above).
+
+NOTE: The certpath directive only makes sense if the authserver is
+part of a realm.  The certpath will be ignored if the realm directive
+isn't specified.
+
+There are three ways to specify a certpath directory:
+
+@example
+certpath //dir1 /dir2 @@sfs.host.domain,HOSTID/dir2
+@end example
+
+which can also be written
+
+@example
+certpath //dir1
+certpath /dir2
+certpath @@sfs.host.domain,HOSTID/dir2
+@end example
+
+A directory starting with two slashes ("//") is considered relative
+to the client machine's root ("/").  A directory starting with one
+slash ("/") is relative to the authserver's self-certifying pathname
+(the authserver performs the substitution before is sends the dir).
+The third form is a fully specified directory on SFS.
+
+The default certpath is empty.
+@end table
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end
+
+
+@node @file{sfs_users}, @file{sfssd_config}, @file{sfsauthd_config}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfs_users}---User-authentication database
+@cindex @file{sfs_users}
+@anchor{sfs_users}
+
+@c @mp
+@c @mp @conffile{sfs_users}{user-authentication database}
+@c @mp @description
+The @file{sfs_users} file, maintained and used by the
+@command{sfsauthd} program, maps public keys to local users and
+groups. It is roughly analogous to the Unix @file{/etc/passwd} file.
+Each line of @file{sfs_users} has the following format (split into two
+lines here only for clarity of presentation):
+
+@example
+[USER|GROUP]:@var{user}:@var{uid}:@var{version}:@var{gid}:@var{owner}:@var{pubkey}:@var{privs}
+                          :@var{srp}:@var{privkey}:@var{srvprivkey}:@var{audit}
+@end example
+
+@table @var
+@item user
+@var{user} is the unique name of a public key in the database.
+Ordinarily it is the same as a username in the local password file.
+However, in certain cases it may be useful to map multiple public keys
+to the same local account (for instance if several people have an
+account with root privileges).  In such cases, each key should be given
+a unique name (e.g., @samp{dm/root}, @samp{kaminsky/root}, etc.).
+
+@item uid
+@var{uid} is the user's user ID on the given server.
+
+@item version
+@var{version} is the version number of this record in the users database.
+Upon registration, this value is set to 1.  Upon every subsequent update,
+this value is incremented by 1.
+
+@item gid
+@var{gid} is the users's group ID on the given server.
+
+@item owner
+This field is ignored as of SFS 0.7.
+
+@item pubkey
+@var{pubkey} is an ASCII, human-readable representation of the user's public
+key.  Can be either a Rabin or 2-Schnorr public key as of SFS 0.7.
+
+@item privs
+The @var{privs} field indicates whether a field can be updated by 
+the SFS admin---given of course that a Userfile is included with the
+@option{-admin} option.
+
+@item srp
+@var{srp} is the server-side information for the SRP protocol,
+@ref{SRP}.  Unlike the previous fields, this information must be kept
+secret.  If the information is disclosed, an attacker may be able to
+impersonate the server by causing the @command{sfskey add} command to
+fetch the wrong @var{HostID}.  Note also that @var{SRP-info} is specific
+to a particular hostname.  If you change the @var{Location} of a file
+server, users will need to register new @var{SRP-info}.
+
+@item privkey
+@var{privkey} is actually opaque to @command{sfsauthd}.  It is
+private, per-user data that @command{sfsauthd} will return to users who
+successfully complete the SRP protocol.  Currently, @command{sfskey}
+users this field to store an encrypted copy of a user's private key,
+allowing the user to retrieve the private key over the network.
+
+@item srvprivkey
+If a user has chosen 2-Schnorr proactive signatures, the server's half
+of the private key is kept in this field.
+
+@item audit
+@var{audit} contains the time, source IP address, and description of the
+last update to this field.  Useful in recovering from a compromised key.
+
+@end table
+
+@noindent
+Note if you edit @file{sfs_users} files by hand, you risk overwriting
+concurrent updates by @command{sfsauthd}.  Use the @command{vidb}
+@pxref{vidb} command to lock @file{sfs_users} files while you edit
+them.
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end
+
+
+@node @file{sfssd_config}, @file{sfs_srp_params}, @file{sfs_users}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfssd_config}---Meta-server configuration
+@cindex @file{sfssd_config}
+@anchor{sfssd_config}
+
+@c @mp
+@c @mp @conffile{sfssd_config}{meta-server configuration}
+@c @mp @description
+@file{sfssd_config} configures @command{sfssd}, the server that accepts
+connections for @command{sfsrwsd} and @command{sfsauthd}.
+@file{sfssd_config} can be used to run multiple ``virtual servers'', or
+to run several versions of the server software for compatibility with
+old clients.
+
+Directives are:
+
+@table @samp
+@item BindAddr @var{ip-addr} [@var{port}]
+Specifies the IP address and port on which @command{sfssd} should listen
+for TCP connections.  The default is @code{INADDR_ANY} for the address
+and port 4.
+
+@item RevocationDir @var{path}
+Specifies the directory in which @command{sfssd} should search for
+revocation/redirection certificates when clients connect to unknown
+(potentially revoked) self-certifying pathnames.  The default value is
+@file{@value{SFSDIR}/srvrevoke}.  Use the command @samp{sfskey
+revokegen} to generate revocation certificates.
+
+@item HashCost @var{bits}
+@anchor{HashCost}
+Specifies that clients must pay for connections by burning CPU time.
+This can help reduce the effectiveness of denial-of-service attacks.
+The default value is 0.  The maximum value is 22.
+
+@item Server @{* | @@@var{Location}[,@var{HostID}]@}
+Specifies a section of the file that applies connection requests for the
+self-certifying pathname @@@var{Location}@samp{,}@var{HostID}.  If
+@samp{,}@var{HostID} is omitted, then the following lines apply to any
+connection that does not match an explicit @var{HostID} in another
+@samp{Server}.  The argument @samp{*} applies to all clients who do not
+have a better match for either @var{Location} or @var{HostID}.
+
+@item Release @{* | @var{sfs-version}@}
+Begins a section of the file that applies to clients running SFS release
+@var{sfs-version} or older.  @samp{*} signifies arbitrarily large SFS
+release numbers.  The @samp{Release} directive does not do anything on
+its own, but applies to all subsequent @samp{Service} directives until
+the next @samp{Release} or @samp{Server} directive.
+
+@item Extensions @var{ext1} [@var{ext2} @dots{}]
+Specifies that subsequent @samp{Service} directives apply only to
+clients that supply all of the listed extension strings (@var{ext1},
+@dots{}).  @samp{Extensions} applies until the next @samp{Extensions},
+@samp{Release} or @samp{Server} directive
+
+@item Service @var{srvno} @var{daemon} [@var{arg} @dots{}]
+Specifies the daemon that should handle clients seeking service number
+@var{srvno}.  SFS defines the following values of @var{srvno}:
+
+@display
+1. File server
+2. Authentication server
+3. Remote execution
+4. SFS/HTTP (not yet released)
+@end display
+
+@item Service @var{srvno} -u @var{path}
+Operates as the above syntax of @samp{Service}, only instead of
+spawning a daemon, connects to the unix-domain socket specified by
+@samp{path} to communicate with an already running daemon.  This
+option may be useful when debugging SFS servers, as the server for a
+particular service on a particular self-certifying pathname can be run
+under the debugger and receive connections on the usual SFS port
+without interfering with other servers on the same machine.
+
+@item Service @var{srvno} -t @var{host} [@var{port}]
+Specifies that @command{sfssd} should act as a ``TCP proxy'' for this
+particular service, relaying any incoming connections to TCP port
+@var{port} on @var{host}.  If unspecified, @var{port} is the default
+SFS TCP port 4.
+
+This syntax is useful in a NATted environment.  For instance, suppose
+you have two SFS servers with addresses 10.0.0.2 and 10.0.0.3 on a
+private network, and one machine 10.0.0.1 with an externally visible
+interface 4.3.2.1.  You can use this proxy syntax to export the
+internal file systems.  The easiest way is to pick two DNS names for
+the new servers, but point them at your outside server.  For example:
+
+@example
+server-a.mydomain.com.  IN A    4.3.2.1
+server-b.mydomain.com.  IN A    4.3.2.1
+@end example
+
+Then, on your outside machine, you might have the following
+@file{sfssd_config} file:
+
+@example
+Server server-a.mydomain.com
+  Release *
+      Service 1 -t 10.0.0.2
+      Service 2 -t 10.0.0.2
+      Service 3 -t 10.0.0.2
+Server server-b.mydomain.com
+  Release *
+      Service 1 -t 10.0.0.3
+      Service 2 -t 10.0.0.3
+      Service 3 -t 10.0.0.3
+@end example
+
+Then on each of the internal machines, be sure to specify
+@samp{Hostname server-A.mydomain.com} and @samp{Hostname
+server-B.mydomain.com} in @file{sfsrwsd_config}.
+
+@end table
+
+@noindent
+The default contents of @file{sfssd_config} is:
+
+@example
+Server *
+  Release *
+      Service 1 sfsrwsd
+      Service 2 sfsauthd
+      Service 3 rexd
+@end example
+
+@noindent
+To disable the file server, you can copy this file to
+@file{/etc@dslash{}sfs@dslash{}sfssd_config} and comment out the
+line @samp{Service 1 sfsrwsd}.  To disable the remote login server,
+comment out the line for @samp{rexd}.
+
+@noindent
+To run a different server for sfs-0.6 and older clients, you could add
+the lines:
+
+@example
+  Release 0.6
+    Service 1 /usr/local/lib/sfs-0.6/sfsrwsd
+@end example
+
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end 
+
+
+@node @file{sfs_srp_params}, @file{sfscd_config}, @file{sfssd_config}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfs_srp_params}---Default parameters for SRP protocol
+@cindex @file{sfs_srp_params}
+@anchor{sfs_srp_params}
+
+@c @mp 
+@c @mp @conffile{sfs_srp_params}{default parameters for SRP protocol}
+@c @mp @description
+Specifies a ``strong prime'' and a generator for use in the SRP
+protocol.  SFS ships with a particular set of parameters because
+generating new ones can take a considerable amount of CPU time.  You can
+replace these parameters with randomly generated ones using the
+@samp{sfskey srpgen -b @var{bits}} command.
+
+Note that SRP parameters can afford to be slightly shorter than Rabin
+public keys, both because SRP is based on discrete logs rather than
+factoring, and because SRP is used for authentication, not secrecy.
+1,024 is a good value for @var{bits} even if @samp{PubKeySize} is
+slightly larger in @file{sfs_config}.
+@c @mp @end description
+@c @mp @end conffile
+@c @mp @end 
+
+
+@node @file{sfscd_config},  , @file{sfs_srp_params}, SFS configuration
+@comment  node-name,  next,  previous,  up
+@section @file{sfscd_config}---Meta-client configuration
+@cindex @file{sfscd_config}
+@anchor{sfscd_config}
+
+@c @mp
+@c @mp @conffile{sfscd_config}{meta-client configuration}
+@c @mp @description
+The @file{sfscd_config} is really part of the SFS protocol
+specification.  If you change it, you will no longer be executing the
+SFS protocol.  Nonetheless, you need to do this to innovate, and SFS was
+designed to make implementing new kinds of file systems easy.
+
+@file{sfscd_config} takes the following directives:
+
+@table @samp
+@item Extension @var{string}
+Specifies that @command{sfscd} should send @var{string} to all servers
+to advertise that it runs an extension of the protocol.  Most servers
+will ignore @var{string}, but those that support the extension can
+pass off the connection to a new ``extended'' server daemon.  You can
+specify multiple @samp{Extension} directives.
+
+@item Protocol @var{name} @var{daemon} [@var{arg} @dots{}]
+Specifies that pathnames of the form
+@file{/sfs@dslash{}@var{name}:@var{anything}} should be handled by the
+client daemon @var{daemon}.  @var{name} may not contain any
+non-alphanumeric characters.  The @samp{Protocol} directive is useful
+for implementing file systems that are not mounted on self-certifying
+file systems.
+
+@item Release @{* | @var{sfs-version}@}
+Begins a section of the file that applies to servers running SFS release
+@var{sfs-version} or older.  @samp{*} signifies arbitrarily large SFS
+release numbers.  The @samp{Release} directive does not do anything on
+its own, but applies to all subsequent @samp{Program} directives until
+the next @samp{Release} directive.
+
+@item Libdir @var{path}
+Specifies where SFS should look for daemon programs when their
+pathnames do not begin with @file{/}.  The default is
+@file{/usr/local/lib/sfs-@value{VERSION}}.  The @samp{Libdir}
+directive does not do anything on its own, but applies to all
+subsequent @samp{Program} directives until the next @samp{Libdir} or
+@samp{Release} directive.
+
+@item Program @var{prog}.@var{vers} @var{daemon} [@var{arg} @dots{}]
+Specifies that connections to servers running Sun RPC program number
+@var{prog} and version @var{vers} should be handed off to the the local
+daemon @var{daemon}.  SFS currently defines two RPC program numbers.
+Ordinary read-write servers use program number 344444, version 3 (a
+protocol very similar to NFS3), while read-only servers use program
+344446, version 1.  The read-only code has not been released yet.  The
+@samp{Program} directive must be preceded by a @samp{Release} directive.
+@end table
+
+@noindent
+The default @file{sfscd_config} file is:
+
+@example
+Release *
+  Program 344444.3 sfsrwcd
+@end example
+
+@noindent
+To run a different set of daemons when talking to sfs-0.3 or older
+servers, you could add the following lines:
+
+@example
+Release 0.3
+  Libdir /usr/local/lib/sfs-0.3
+  Program 344444.3 sfsrwcd
+@end example
+@c @mp @end description
+@c @mp @end conffile
+@c @mp
+
+@node Command reference, Security, SFS configuration, Top
+@comment  node-name,  next,  previous,  up
+@chapter Command reference guide
+
+@menu
+* sfsagent::                    Run by each user for authentication to servers
+* sfskey::                      Controls the agent
+* rex::                         Remote execution facility
+* dirsearch::                   Search for file name in directories
+* newaid::                      Run processes with different sfsagents
+* ssu::                         Become root without changing sfsagents
+* sfscd::                       Daemon run by root on all client machines
+* sfssd::                       Daemon run by root on all server machines
+* vidb::                        Manually edit user-authentication database
+* funmount::                    Forcibly unmount file systems
+* sfsrwsd::                     Daemon implementing read-write file server
+* sfsauthd::                    User-authentication server
+@end menu
+
+@node sfsagent, sfskey, Command reference, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfsagent} reference guide
+@c @mp 
+@c @mp @command{sfsagent}{SFS authentication agent}{1}
+@c @mp @description
+@command{sfsagent} is the program users run to authenticate themselves
+to remote file servers, to create symbolic links in @file{/sfs} on the
+fly, and to look for revocation certificates.  Many of the features in
+@command{sfsagent} are controlled by the @command{sfskey} program and
+described in the @command{sfskey} documentation.
+
+Ordinarily, a user runs @command{sfsagent} at the start of a session.
+@command{sfsagent} runs @command{sfskey add} to obtain a private key.
+As the user touches each SFS file server for the first time, the agent
+authenticates the user to the file server transparently using the
+private key it has.  At the end of the session, the user should run
+@command{sfskey kill} to kill the agent.
+@c @mp @end description
+
+@c @mp @ignore
+The usage is as follows:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+sfsagent [-dnkF] -S @var{sock} [-c [@var{prog} [@var{arg} @dots{}]] | @var{keyname}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @options
+@table @option
+@item -d
+Stay in the foreground rather than forking and going into the background
+
+@item -n
+Do not attempt to communicate with the SFS file system.  This can be
+useful for debugging, or for running an agent on a machine that is not
+running an SFS client.  If you specify @option{-n}, you must also use
+the @option{-S} option, otherwise your agent will be useless as there
+will be no way to communicate with it.
+
+@item -k
+Atomically kill and replace any existing agent.  Otherwise, if your
+agent is already running, @command{sfsagent} will refuse to run again.
+
+@item -F
+Turn off forwarding.  By default programs other than the file system
+can ask the agent to authenticate the user.  Specifying this option
+disables this functionality.
+
+@item -S @var{sock}
+Listen for connections from programs like @command{sfskey} on the Unix
+domain socket @var{sock}.  Ordinarily @command{sfskey} connects to the
+agent through the client file system software, but it can use a named
+Unix domain socket as well.
+
+@item -c [@var{prog} [@var{arg} @dots{}]]
+By default, @command{sfsagent} on startup runs the command @samp{sfskey
+add} giving it whatever @option{-t} option and @var{keyname} you
+specified.  This allows you to fetch your first key as you start or
+restart the agent.  If you wish to run a different program, you can
+specify it using @option{-c}.  You might, for instance, wish to run a
+shell-script that executes a @samp{sfskey add} followed by several
+@samp{sfskey certprog} commands.
+
+@command{sfsagent} runs the program with the environment variable
+@env{SFS_AGENTSOCK} set to @samp{-0} and a Unix domain socket on
+standard input.  Thus, when atomically killing and restarting the agent
+using @option{-k}, the commands run by @command{sfsagent} talk to the
+new agent and not the old.
+
+If you don't wish to run any program at all when starting
+@command{sfsagent}, simply supply the @option{-c} option with no
+@var{prog}.  This will start an new agent that has no private keys.
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp 
+
+@node sfskey, rex, sfsagent, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfskey} reference guide
+
+@c @mp 
+@c @mp @command{sfskey}{SFS key manager}{1}
+@c @mp @synopsis
+@c @mpp sfskey [-S @var{sock}] [-p @var{pwfd}] 
+@c @mpp @var{command} [@var{arg} @dots{}]
+@c @mp @end synopsis
+@c @mp @description
+The @command{sfskey} command performs a variety of key management tasks,
+from generating and updating keys to controlling users' SFS agents.  The
+general usage for @command{sfskey} is:
+
+@example
+sfskey [-S @var{sock}] [-p @var{pwfd}] @var{command} [@var{arg} @dots{}]
+@end example
+
+@noindent
+@option{-S} specifies a UNIX domain socket @command{sfskey} can use to
+communicate with your @command{sfsagent} socket.  If @var{sock} begins
+with @samp{-}, the remainder is interpreted as a file descriptor number.
+The default is to use the environment variable @env{SFS_AGENTSOCK} if
+that exists.  If not, @command{sfskey} asks the file system for a
+connection to the agent.
+
+The @option{-p} option specifies a file descriptor from which
+@command{sfskey} should read a passphrase, if it needs one, instead of
+attempting to read it from the user's terminal.  This option may be
+convenient for scripts that invoke @command{sfskey}.  For operations
+that need multiple passphrases, you must specify the @option{-p} option
+multiple times, once for each passphrase.
+
+In SFS 0.7, two-party proactive Schnorr signatures (2-Schnorr for short)
+are supported in addition to Rabin signatures.  One half of the  2-Schnorr
+key is stored on the designated signature sever, while the other is stored
+locally to file, or remotely via SRP.  Unlike Rabin keys, 2-Schnorr keys
+can fail to load when a signature server becomes unavailable.  For this 
+reason, @command{sfskey} supports multiple private-key shares that correspond
+to the same public key; this way, a user can maintain a series of backup
+signature servers in case his primary server becomes unavailabe.  By
+default, @command{sfskey} never stores both halves of a 2-Schnorr key
+to the same machine, so as to enforce key sharing.  To this effect,
+2-Schnorr employs special @command{sfskey} commands---@command{sfskey 2gen} 
+and @command{sfskey 2edit}. 
+
+As of SFS 0.7, there is a new convention for saving and naming private
+keys.  By default, keys will be stored locally in @file{$HOME/.sfs/authkeys},
+and will be in the following forms:
+
+@example
+    @var{user}@@@var{host1}#@var{n}
+    @var{user}@@@var{host1}#@var{n},@var{p}.@var{host2},@var{m}
+@end example
+
+The first form is for standard Rabin keys.  The second is for 2-Schnorr
+proactive signature keys.  In the above examples, @var{host1} is the
+the full hostname of the generating host, @var{n} is the public key
+version, @var{p} is the priority of the signing host (1 is the highest)
+@var{host2} is the full hostname of the signing host, and @var{m} is the
+private key version.  
+
+In general, these details can remain hidden, in that the symbolic link
+@file{$HOME/.sfs/identity} points to the most recent key generated in
+@file{$HOME/.sfs/authkeys}, and most @command{sfskey} commands have
+reasonable defaults.  However, there is a command-line system for
+accessing and generating specific keys.  A blank keyname and the
+special keyname @file{#} refer to the default key
+@file{$HOME/.sfs/identity} during key access and the next available
+key during key generation.  Keynames containing a @file{#} character
+but not containing a @file{/} character are assumed to refer to keys
+in the @file{$HOME/.sfs/authkeys} directory.  When given files of the
+form @file{@var{prefix}#}, @command{sfskey} looks in the default
+directory for the most recent key with the given @var{prefix} during key
+access, and the next available key with the given @var{prefix} during key
+generation.  For keys of the form @file{@var{name}#@var{suffix}},
+@command{sfskey} will look in the @file{$HOME/.sfs/authkeys} directory
+for keys that match the given name exactly. @command{sfskey} treats
+keys with @file{/} characters as regular files; it treats keys that
+contain @file{@@} characters but no @file{#} characters as keys stored
+on remote machines.
+
+Finally, one should note that SFS keys have both a @var{keyname} 
+and also a @var{keylabel}.  @command{sfskey} uses the former to
+retrieve keys from the local file system or from remote servers.  The latter
+is less important; the @var{keylabel} is stored internally in the 
+private key, and is shown in the output of the @command{sfskey list}
+command.
+
+@c @mp @end description
+
+@c @mp @options
+@table @samp
+@item sfskey add [-t [hrs:]min] [@var{keyname}]
+@itemx sfskey add [-t [hrs:]min] [@var{user}]@@@var{hostname}
+The @command{add} command loads and decrypts a private key, and gives
+the key to your agent.  Your agent will use it to try to authenticate
+you to any file systems you reference.  The @option{-t} option specifies
+a timeout after which the agent should forget the private key.
+
+In the first form of the command, the key indicated by @var{keyname}
+is loaded.  If @var{keyname} is omitted, or @var{#} is supplied, then
+the default key is @file{$HOME@dslash{}.sfs@dslash{}identity}. If the
+key supplied is a 2-Schnorr key, then @command{sfskey add} will
+attempt to load backup keys should the primary key fail due to an
+unavailable signature server.
+
+@cindex SRP
+@anchor{SRP} The second form of the command fetches a private key over
+the network using the
+@uref{http:/@dslash{}srp.stanford.edu@dslash{},SRP} protocol.  SRP
+lets users establish a secure connection to a server without remembering
+its public key.  Instead, to prove their identities to each other, the
+user remembers a secret password and the server stores a one-way
+function of the password (also a secret).  SRP addresses the fact that
+passwords are often poorly chosen; it ensures that an attacker
+impersonating one of the two parties cannot learn enough information to
+mount an off-line password guessing attack---in other words, the
+attacker must interact with the server or user on every attempt to guess
+the password.
+
+The @command{sfskey update}, @command{sfskey register}, 
+@command{sfskey 2gen} and @command{sfskey 2edit} commands let users
+store their private keys on servers, and retrieve them using the
+@command{add} command.  The private key is stored in encrypted form,
+using the same password as the SRP protocol (a safe design as the server
+never sees any password-equivalent data).
+
+Because the second form of @command{sfskey add} establishes a secure
+connection to a server, it also downloads the servers HostID securely
+and creates a symbolic link from @file{/sfs/}@var{hostname} to the
+server's self-certifying pathname.
+
+When invoking @command{sfskey add} with the SRP syntax, @command{sfskey}
+will ask for the user's password with a prompt of the following form:
+
+@example
+Passphrase for @var{user}@@@var{servername}/@var{nbits}:
+@end example
+
+@var{user} is simply the username of the key being fetched from the
+server.  @var{servername} is the name of the server on which the user
+registerd his SRP information.  It may not be the same as the
+@var{hostname} argument to @command{sfskey} if the user has supplied a
+hostname alias (or CNAME) to @command{sfskey add}.  Finally, @var{nbits}
+is the size of the prime number used in the SRP protocol.  Higher values
+are more secure; 1,024 bits should be adequate.  However, users should
+expect always to see the same value for @var{nbits} (otherwise, someone
+may be trying to impersonate the server).
+
+@item sfskey certclear
+Clears the list of certification programs the agent runs.
+@xref{certprog}, for more details on certification programs.
+
+@item sfskey certlist [-q]
+Prints the list of certification programs the agent runs.
+@xref{certprog}, for more details on certification programs.
+
+@cindex Dynamic server authentication
+@anchor{certprog}
+@item sfskey certprog [-p @var{prefix}] [-f @var{filter}] [-e @var{exclude}] @var{prog} [@var{arg} @dots{}]
+The @command{certprog} command registers a command to be run to lookup
+@var{HostID}s on the fly in the @file{/sfs} directory.  This mechanism can be
+used for @dfn{dynamic server authentication}---running code to lookup
+@var{HostID}s on-demand.  When you reference the file
+@file{/sfs/@var{prefix}/@var{name}}, your agent will run the command:
+
+@example
+@var{prog} @var{arg} @dots{} @var{name}
+@end example
+
+If the program succeeds and prints @var{dest} to its standard output,
+the agent will then create a symbolic link:
+
+@example
+/sfs/@var{prefix}/@var{name} -> @var{dest}
+@end example
+
+The @option{-p} flag can be omitted, and the link is
+@samp{/sfs/@var{name} -> @var{dest}}.  @var{prefix} can be more than one
+directory deep (i.e., a series of path components separated by
+@samp{/}).  If so, the first certification program whose prefix matches
+at the beginning of @var{prefix} is run.  The remaining path components
+are passed to @var{prog}.  For example:
+
+@example
+NEED EXAMPLE
+@end example
+
+@var{filter} is a perl-style regular expression.  If it is specified,
+then @var{name} must contain it for the agent to run @var{prog}.
+@var{exclude} is another regular expression, which, if specified,
+prevents the agent from running @var{prog} on @var{name}s that contain
+it (regardless of @var{filter}).
+
+@cindex Certification paths
+@cindex @command{dirsearch}
+The program @command{dirsearch} can be used with @command{certprog} to
+configure @dfn{certification paths}---lists of directories in which to
+look for symbolic links to @var{HostID}s.  The usage is:
+
+@example
+dirsearch [-clpq] @var{dir1} [@var{dir2} @dots{}] @var{name}
+@end example
+
+@command{dirsearch} searches through a list of directories @var{dir1},
+@var{dir2}, @dots{} until it finds one containing a file called
+@var{name}, then prints the pathname @samp{@var{dir}/@var{name}}.  If it
+does not find a file, @command{dirsearch} exits with a non-zero exit
+code.  The following options affect @command{dirsearch}'s behavior:
+
+@table @option
+@item -c
+Print the contents of the file to standard output, instead of its
+pathname.
+
+@item -l
+Require that @samp{@var{dir}/@var{name}} be a symbolic link, and print
+the path of the link's destination, rather than the path of the link
+itself.
+
+@item -p
+Print the path @samp{@var{dir}/@var{name}}.  This is the default
+behavior anyway, so the option @option{-p} has no effect.
+
+@item -q
+Do not print anything.  Exit abnormally if @var{name} is not found in
+any of the directories.
+@end table
+
+As an example, to lookup self-certifying pathnames in the directories
+@file{$HOME/.sfs/known_hosts} and @file{/mit}, but only accepting links
+in @file{/mit} with names ending @file{.mit.edu}, you might execute the
+following commands:
+
+@example
+% sfskey certprog dirsearch $HOME/.sfs/known_hosts
+% sfskey certprog -f '\.mit\.edu$' /mnt/links
+@end example
+
+@item sfskey delete @var{keyname}
+Deletes private key @var{keyname} from the agent (reversing the effect
+of an @command{add} command).
+
+@item sfskey deleteall
+Deletes all private keys from the agent.
+
+@item sfskey edit [-LP] [-o @var{keyname}] [-c @var{cost}] [-l @var{label}] [@var{keyname}]
+Changes the passphrase, passphrase ``cost'', or name of a public key.
+Can also download a key from a remote server via SRP and store it in a
+file.
+
+@var{keyname} can be a file name, or it can be of the form
+@samp{[@var{user}]@@@var{server}}, in which case @command{sfskey} will
+fetch the key remotely and @var{outfile} must be specified.  If
+@var{keyname} is unspecified the default is @file{$HOME/.sfs/identity}.
+If @var{keyname} is @file{#}, then @command{sfskey edit} will search
+for the next appropraite keyname in @file{$HOME/.sfs/authkeys}.  In this case,
+@command{sfskey edit} will update @file{$HOME/.sfs/identity} to point to
+this new key by default.
+
+The options are:
+
+@table @option
+@item -L
+Does not set symlink in the case that @var{keyname} is @file{#}.
+
+@item -P
+Removes any password from the key, so that the password is stored on
+disk in unencrypted form.
+
+@item -o @var{keyname}
+Specifies the file to which the edited key should be written.  A
+@var{keyname} of @file{#} implies that @command{sfskey edit} should
+generate the next availabe default key in @file{$HOME/.sfs/authkeys}.
+A @var{keyname} of ther form @file{@var{prefix}#} implies that
+@command{sfskey edit} should generate the next available key in
+@file{$HOME/.sfs/authkeys} with the prefix @var{prefix}.  A @var{keyname}
+of the form @file{@var{prefix}#@var{suffix}} implies that 
+@command{sfskey edit} should make a key named 
+@file{$HOME/.sfs/authkeys/@var{prefix}#@var{suffix}}.
+
+@item -c @var{cost}
+Override the default computational cost of processing a password, or
+@samp{PwdCost}, @ref{pwdcost}.
+
+@item -l @var{label}
+Specifies the label of the key that shows up in @command{sfskey list}.
+@end table
+
+@item sfskey 2edit -[Smp] [-l @var{label}] [-S | -s @var{srpfile}] [@var{keyname1} @var{keyname2} ...]
+Refreshes a 2-Schnorr key by resharing a secret between a server
+and a client. In the case of a compromised client or server, it is 
+recommended to refresh a 2-Schnorr key with this command.  If both
+the client and the server have been compromised, a refresh will be 
+of little use.
+
+Use @command{sfskey 2edit} by supplying the keys that you wish to have
+updated.  Keynames are given in standard @command{sfskey} style.  Keynames
+must be either remote keynames (i.e., contain a @file{@@} but no @file{#}
+character) or stored in the standard keys directory (i.e., contain a @file{#}
+but no @file{/} character).  For remote keys, SRP will be used to 
+download the key from the server, and the updated, encrypted client private
+keyhalf will be written back to the server along with the new server
+keyhalf.  No file will be saved locally.  For keys stored in 
+@file{$HOME/.sfs/authkeys}, @command{sfskey 2edit} will update the
+server private keyhalf, and write the corresponding client private
+keyhalf out to @file{$HOME/.sfs/authkeys} under a new filename.  By default,
+@command{sfskey 2edit} will also write the new encrypted client private
+keyhalf back to the server for later SRP retrieval.
+
+If no key is specified, the default key, @file{$HOME/.sfs/identity} is 
+assumed.
+
+@table @option
+@item -E
+Do not update the encrypted private client key stored on the server.
+
+@item -S
+Do not update SRP information on the server.  This option cannot be used
+if some of the keynames specified are for remote keys.
+
+@item -m
+Refresh multiple keys.  If you have multiple private splits of the same
+private key, this flag will automatically update them all, given that
+you've specified one of them.  If you run @command{sfskey 2edit -m},
+with no additional arguments or keynames, @command{sfskey} will refresh
+all current default keys.
+
+@item -p
+Change password before writing keys out to disk or server.
+
+@item -l @var{label}
+Specifies the label of the key that shows up in @command{sfskey list}.
+
+@item -s @var{srpfile}
+Get SRP parameters from the file @var{srpfile}.
+@end table
+
+@item sfskey gen [-KP] [-b @var{nbits}] [-c @var{cost}] [-l @var{label}] [@var{keyname}]
+Generates a new Rabin public/private key pair and stores it in @var{keyname}.
+It omitted @var{keyname} defaults to the next available Rabin key
+in @file{$HOME/.sfs/authkeys}.  If @var{keyname} contains a @file{/} 
+character, it will be treated as a regular Unix file.  If @var{keyname}
+is of the form @file{@var{prefix}#}, @command{sfskey gen} will look for
+the next avaible Rabin key in @file{$HOME/.sfs/authkeys} with the
+prefix @var{prefix}.  If @var{keyname} contains a non-termainl @file{#}
+character, it will be treated as a fully-specified keyname to be saved in 
+@file{$HOME/.sfs/authkeys}.
+
+Note that @command{sfskey gen} is only useful for generating Rabin keys.
+Use either @command{sfskey register} or @command{sfskey 2gen} to
+generate 2-Schnorr keys.
+
+@table @option
+@item -K
+By default, @command{sfskey gen} asks the user to type random text with
+which to seed the random number generator.  The @option{-K} option
+suppresses that behavior.
+
+@item -P
+Specifies that @command{sfskey gen} should not ask for a passphrase and
+the new key should be written to disk in unencrypted form.
+
+@item -b @var{nbits}
+Specifies that the public key should be @var{nbits} long.
+
+@item -c @var{cost}
+Override the default computational cost of processing a password, or
+@samp{PwdCost}, @ref{pwdcost}.
+
+@item -l @var{label}
+Specifies the label of the key that shows up in @command{sfskey list}.
+Otherwise, the user will be prompted for a name.
+@end table
+
+@item sfskey 2gen [-BEKP] [-a @{@var{hostid} | -@}] [-b @var{nbits}] [-c @var{cost}] [-k @var{okeyname}] [-l @var{label}] [-S | -s @var{srpfile}] [-w @var{wkeyfile}] [@var{nkeyname}] 
+Generates a new 2-Schnorr keypair for each of the servers specified by
+the @option{-a} flag.  All keypairs will correspond to the same
+public key.  The new keys will be saved locally to the files given
+by @var{nkeyname} in the usual fashion: if @var{nkeyname} is of the
+form @var{prefix}#, then @command{sfskey 2gen} will look for the next
+available 2-Schnorr key in @file{$HOME/.sfs/authkeys} with the prefix
+@var{prefix}.  If no @var{nkeyname} is given, it will find the next
+available keyname in @file{$HOME/.sfs.authkeys} with the default
+prefix (@var{user}@@@var{host}).
+
+Note that by default, this operation will update the public key, the
+encrypted private key, the SRP information, and the server private key
+share on all of the servers given.  Specify @option{-BES} to suppress
+updates of these fields.
+
+@table @option
+@item -a -
+@item -a @var{hostid}
+Can be specified arbitrarily many times, once for each server that will
+accept the server private half of the 2-Schnorr key being generated.  Note
+that the same public key will be used for all servers.  To specify the local
+host, use the first syntax.  If SRP is used to download a key from host 
+@var{host} (e.g., @option{-k @var{user}@@@var{host}}), then you can specify
+that host by its simple hostname (e.g., @option{-a @var{host}}).  If SRP 
+was not used to connect to a host @var{host}, then @option{-a} requires
+a complete SFS host identifier (i.e., @@@var{Location},@var{HostID}).
+
+@item -B
+Do not update the public key on the given servers.
+
+@item -E
+Do not update the encrypted private key field on the given servers.
+
+@item -K
+@itemx -P
+@itemx -c @var{cost}
+@itemx -l @var{label}
+@itemx -s @var{srpfile}
+See @command{sfskey gen}.  These options behave similarly.
+
+@item -S
+Do not update the SRP information on the server.
+
+@item -b @var{nbits}
+Speficies the number of bits for the 2-Schnorr modulus p.  The security of
+2-Schnorr is related to the discrete log problem over Z_p*; values over 1024
+are suggested for this parameter, and reasonable defaults are chosen if
+this parameter is not specified.
+
+@item -k @var{keyname}
+Specify this option arbitrarily many times to keys into memory for
+@command{sfskey}.  By default, all keys from @file{$HOME/.sfs/authkeys}
+are loaded and hashed.  Remote keys and local keys in non-standard 
+locations can be loaded into the hash with this option.  The keys
+will in turn be used to authenticate you to the servers that you 
+intend to update.
+
+@item -w @var{wkeyfile}
+Save the complete Schnorr key (both halves) to the file given.  Note
+that it is possible to non-interactively sign with this key, so it is
+advised that it not be stored on network-accessible media.  The
+intended use for this option is to allow saving of both halves to a 
+floppy disk or to a CD-R, so that in a worst case scenario, the original
+key is still recoverable.
+@end table
+
+@item sfskey gethash [-6] @var{keyname}
+Retrieves a public key specified by @var{keyname}, which can be local (from
+a local file) or remote (from an authentication server).  Remote @var{keyname}s
+can contain fully-specified self-certifying hostnames, or simple DNS names.  In
+the latter case, @command{sfskey} uses SRP to establish a secure connection to
+the authentication server.
+
+@item sfskey group [-a @var{key}] [-C] [-m @{+|-@}@var{membername}] [-o @{+|-@}@var{ownername}] @var{groupname}
+Retrieves, creates, and modifies group lists on an authentication
+server.  If none of @option{-C}, @option{-m}, and @option{-o} is given,
+@command{sfskey} will query the authentication server for the group and
+print out the result.  The @option{-C}, @option{-m}, and @option{-o}
+options imply group creation and/or update.  @var{groupname} can be
+local (contact the local @command{sfsauthd}) or remote (contact a
+remote @command{sfsauthd} using a user-specified self-certifying hostname
+or SRP).
+
+@table @option
+@item -a @var{key}
+This arugment can be supplied arbitrarily many times, once for each
+key that should be loaded into @command{sfskey} for this session.
+Keynames are specified as described above, and can be remote or
+local filenames. Usually it will not be necessary to specify keys in the
+keys directory (@file{$HOME/.sfs/authkeys}) as they are considered
+automatically. 
+
+@item -C
+This arugment tells @command{sfskey} to create a new group called
+@var{groupname} if it does not already exists.  If the group does exist,
+it it modified.
+
+@item -m @{+|-@}@var{membername}
+@itemx -o @{+|-@}@var{ownername}
+This arugment tells @command{sfskey} to add (+) or subtract (-) the given
+member or owner name to or from the given group.  @var{membername}s and 
+@var{ownername}s must be of the form "u=<user>", "g=<group>" or 
+"p=<pkhash>".  The "<user>" and "<group>" names can be local or remote,
+but remote names must contain the fully-qualified self-certifying hostname.
+Duplicate member names and owner names are removed from the group before
+it is updated.  Removals of names that don't exists on the given list
+are ignored.
+@end table
+
+@item sfskey help
+Lists all of the various @command{sfskey} commands and their usage.
+
+@item sfskey hostid @var{hostname}
+@itemx sfskey hostid -
+Retrieves a self-certifying pathname insecurely over the network and
+prints @samp{@@@var{Location},@var{HostID}} to standard output.  If
+@var{hostname} is simply @samp{-}, returns the name of the current
+machine, which is not insecure.
+
+@table @option
+@item -s @var{service}
+The default service is file service, @samp{sfs} (except when using
+@samp{-}).  This option selects a different SFS service.  Possible
+values for @var{service} are @samp{sfs}, @samp{authserv}, and
+@samp{rex}.
+@end table
+
+@item sfskey kill
+Kill the agent.
+
+@item sfskey list [-ql]
+List the public keys whose private halves the the agent holds.
+
+@table @option
+@item -q
+Suppresses the banner line explaining the output.
+
+@item -l
+Lists the actual value of public keys, in addition the the names of the
+keys.
+@end table
+
+@item sfskey norevokeset @var{HostID} @dots{}
+
+@item sfskey norevokelist
+
+@item sfskey passwd [-Kp] [-S | -s @var{srpfile}] [-b @var{nbits}] [-c @var{cost}] [-l @var{label}] [@var{arg1}] [@var{arg2}] ...
+@anchor{sfskey passwd}
+The @command{sfskey passwd} command is a high-level command for ``changing
+passwords'' in SFS.  In the case of proactive keys, @command{sfskey passwd}
+will simply refresh keys via @command{sfskey 2edit} functionality.  In
+the case of Rabin keys, @command{sfskey passwd} generates a new Rabin
+key and updates the given servers. By default, @command{sfskey passwd}
+assumes standard Rabin keys, and thus treats @var{arg-i} as 
+[@var{user}][@@]@var{host} arguments.  If @var{host} is a regular 
+hostname, then SRP will be required to authenticate the host.  If @var{host}
+is a full SFS pathname, then @command{sfskey passwd} will look for keys
+in @file{$HOME/.sfs/authkeys} that can authenticate the user to that particular
+server.  In the case of proactive 2-Schnorr keys, @command{sfskey passwd}
+will treat @var{arg-i} as local or remote keynames.
+
+If no options or arguments are given, @command{sfskey passwd} will look
+to the default key given by @file{$HOME/.sfs/identity}.  If the default key
+is a procative 2-Schnorr key, then all current 2-Schnorr keys in 
+@file{.sfs/authkeys} are refreshed.  If the default key is a Rabin key,
+then the users key on the local machine is updated.
+
+@table @option
+
+@item -p
+Specifies proactive mode.  Will treat arguments @var{arg1} through 
+@var{arg-n} as keynames, whether local or remote.  By default,
+@command{sfskey passwd} operates under the assumption that the key to 
+update is a Rabin key.
+
+@item -K
+@itemx -S
+@itemx -s @var{srpfile}
+@itemx -b @var{nbits}
+@itemx -c @var{cost}
+@itemx -l @var{label}
+These options are the same as for @command{sfskey gen}.  Briefly,
+@option{-S} turns of SRP, @option{-K} disables keyboard randomness 
+query, @option{-s} is used to supply an SRP parameters file and is
+mutually exclusive with @option{-S}, @option{-b} specifies the 
+size of the key in bits, @option{-c} specifies the secret key 
+encryption cost, and @option{-l} specifies the label for the key,
+as seen in @command{sfskey list}.
+@end table
+
+
+@item sfskey register [-fgpPK] [-S | -s @var{srpfile}] [-b @var{nbits}] [-c @var{cost}] [-u @var{user}] [-l @var{label}] [-w @var{filename}] [@var{keyname}]
+@anchor{sfskey register}
+The @command{sfskey register} command lets users who are logged into an
+SFS file server register their public keys with the file server for the
+first time.  Subsequent changes to their public keys can be
+authenticated with the old key, and must be performed using
+@command{sfskey update} or @command{sfskey 2gen}.  The superuser can also use
+@command{sfskey register} when creating accounts.
+
+@var{keyname} is the private key to use.  If @var{keyname} does not exist and 
+is a pathname, @command{sfskey} will create it.  The default @var{keyname} is
+@file{$HOME/.sfs/identity}, unless @option{-u} is used, in which case
+the default is to generate a new key in the current directory.  For keys
+that contain the special trailing character @file{#}, @command{sfskey}
+will implicitly determine whether the user intends to generate or access
+a key.  If the command is invoked as root with the @option{-u} flag, then
+generation is assumed.  Similarly, if any of the options @option{-bcgp}
+are used, generation is assumed.  Otherwise, @command{sfskey} will first
+attempt to access the most recent key matching @var{keyname}, and then will 
+revert to generation if the access fails.
+
+If a user wishes to reuse a public key already registered with another
+server, the user can specify @samp{@var{user}@@@var{server}} for
+@var{keyname}.
+
+@table @option
+@item -f
+Force reregistration.  Ordinarily, @command{sfskey gen} will fail if a 
+record for the given user already exists on the server.  
+
+@item -g
+Force key generation.  When using keynames of the form
+@file{@var{prefix}#}, @command{sfskey register} will always generate
+then next available key with the prefix @var{prefx} in the standard
+keys direcotry (@file{$HOME/.sfs/authkeys}).  If @command{sfskey
+register} is being run as root with the @option{-u} option, then
+access to the standard keys directory @file{$HOME/.sfs/authkeys} will
+not be allowed.  Hence, the key will simply be generated in the
+current directory.
+
+@item -p
+Generate a new proctive 2-Schnorr key.  Implies the @option{-g} flag.
+
+@item -K
+@itemx -P
+@itemx -l @var{label}
+@itemx -b @var{nbits}
+@itemx -c @var{cost}
+@itemx -s @var{srpfile}
+These options are the same as for @command{sfskey gen}.  @option{-K} and
+@option{-b} have no effect if the key already exists.  They all imply the
+@option{-g} flag. If @option{-p} is given, then @var{-b} will specify
+the size of the modulus @var{p} used in 2-Schnorr.  Without @option{-p},
+@option{-b} will specify the size of @var{pq} in Rabin.
+
+@item -S
+Do not register any SRP information with the server---this will prevent
+the user from using SRP to connect to the server, but will also prevent
+the server from gaining any information that could be used by an
+attacker to mount an off-line guessing attack on the user's password.
+
+@item -u @var{user}
+When @command{sfskey register} is run as root, specifies a particular
+user to register.  
+
+@item -w @var{filename}
+When generating a proactive key, saves the complete key out to 
+the given file.  Will raise an error if supplied without the @option{-p}
+flag.  For security reasons, this should only be used when saving to
+removable media (e.g., @file{/floppy/complete-key-2}).  It is a susbstantial
+security risk to leave the complete key on a file system that might
+be compromised.
+@end table
+
+@file{sfsauthd_config} must have a @samp{Userfile} with the
+@option{-update} and @option{-passwd} options to enable use of the 
+@command{sfskey register}, @ref{sfsauthd_config}.
+
+@item sfskey reset
+Clear the contents of the @file{/sfs} directory, including all symbolic
+links created by @command{sfskey certprog} and @command{sfskey add}, and
+log the user out of all file systems.
+
+Note that this is not the same as deleting private keys held by the
+agent (use @command{deleteall} for that).  In particular, the effect of
+logging the user out of all file systems will likely not be
+visible---the user will automatically be logged in again on-demand.
+
+@item sfskey revokegen [-r @var{newkeyfile} [-n @var{newhost}]] [-o @var{oldhost}] @var{oldkeyfile}
+
+@item sfskey revokelist
+
+@item sfskey revokeclear
+
+@item sfskey revokeprog [-b [-f @var{filter}] [-e @var{exclude}]] @var{prog} [@var{arg} @dots{}]
+
+@item sfskey select [-f] @var{keyname}
+Select the given key as the default key; set @file{$HOME/.sfs/identity}
+to point to the key given by @var{keyname}.  It cannot be an SRP key.
+
+@table @option
+@item -f
+Force overwrite.  If current @file{$HOME/.sfs/identity} is a regular
+file, @command{sfskey select} will overwrite it.
+@end table
+
+
+@item sfskey sesskill @var{remotehost}
+Kill the @command{rex} session to the server specified by @var{remotehost},
+where @var{remotehost} is any unique prefix of the remote host's
+self-certifying hostname (found under the "TO" column in the output to
+@command{sfskey sesslist}).
+
+@item sfskey sesslist
+List the @command{rex} sessions that the agent is maintaining.
+
+@item sfskey srpgen [-b @var{nbits}] file
+Generate a new @file{sfs_srp_params} file, @ref{sfs_srp_params}.
+
+@item sfskey update [-fE] [-S | -s @var{srp_params}] [-r @var{srpkey}] [-a @var{okeyname}] [-k @var{nkeyname}] @var{server1} @var{server2} ...
+Change a user's public key and SRP information on an SFS file server.
+To change public keys, typically you should generate a new public key
+and store it in @file{$HOME/.sfs/identity}.  Then you can run
+@samp{sfskey update [@var{user}]@@@var{host}} for each server on which
+you need to change your public key.
+
+To authenticate you to the servers on which updates are requested,
+@command{sfskey update} will first use the keys given via @option{-a}
+arguments; it will then search keys in the standard key 
+directory---@file{$HOME/.sfs/authkeys}.
+
+At least one @var{server} argument is required.  As usual, the string 
+``-'' denotes the localhost. The servers specified can be either 
+full SFS hostnames of the form [@var{user}]@@@var{Location},@var{HostId},
+or standard hostnames of the form [@var{user}@@]@var{Location}.  In the
+latter case, SRP is assumed, and the corresponding private key is 
+automatically loaded into @command{sfskey}.
+
+The new key that is being pushed to the server is given by the
+@option{-k} flag.  If this is not provided, the default key
+@file{$HOME/.sfs/identity} will be assumed.
+
+The @option{-r} provides a shortcut for updating SRP information, if, 
+for instance, the auth server has changed its realm information.  Invoking
+@command{sfskey update @option{-r} [@var{user}]@@@var{host}} is
+equivalent to @command{sfskey update -k [@var{user}]@@@var{host} @var{host}}.
+
+Several options control @command{sfskey update}'s behavior:
+
+@table @option
+@item -E
+Do not send encrypted secret key information to the server.
+
+@item -S
+Do not send SRP information to the server---this will prevent the user
+from using SRP to connect to the server, but will also prevent the
+server from gaining any information that could be used by an attacker to
+mount an off-line guessing attack on the user's password.  Implies 
+@option{-E}
+
+@item -a @var{okeyname}
+This arugment can be supplied arbitrarily many times, once for each
+key that should be loaded into @command{sfskey} for this session.
+Keynames are specified as described above, and can be remote or
+local filenames. Usually it will not be necessary to specify keys in the
+keys directory (@file{$HOME/.sfs/authkeys}) as they are considered
+automatically. 
+
+@item -f
+If there is a change in SRP realm information, the @option{-f} flag
+will force an update.  Normally, the user is prompted to verify.
+
+@item -k @var{nkeyname}
+Specifies the new key to push to the server. Can be an SRP key,
+a local file, or a keyname with a '#' sign, signifyin a key
+stored in the keys directory, @file{$HOME/.sfs/authkeys}. If this
+flag is not specified, @file{$HOME/.sfs/identity} is assumed.
+Note that the @option{-k} flag can be specified only once.
+
+@item -r [@var{user}][@@]@var{host}
+Update SRP information of a key on a remote host. Equivalent to
+@command{sfskey update -k [@var{user}]@@@var{host} [@var{user}@@]@var{host}}.
+Cannot be used with the @option{-akS} options.
+
+@item -s
+@var{srp_params} is the path of a file generated by @command{sfskey
+srpgen}, and specifies the parameters to use in generating SRP
+information for the server.  The default is to get SRP parameters from
+the server, or look in
+@file{@value{PKGDATADIR}@dslash{}sfs_srp_params}.
+@end table
+
+
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp
+
+@node rex, dirsearch, sfskey, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{rex} reference guide
+
+@c @mp
+@c @mp @command{rex}{remote execution}{1}
+@c @mp @synopsis
+@c @mpp rex [-TAXpv] [-R @var{port}:@var{lport}] 
+@c @mpp @var{destination} [@var{command}]
+@c @mp @end synopsis
+@c @mp @description
+@command{rex} is a remote execution facility which is integrated with
+SFS.  The program allows users run to run programs on a remote machine
+or obtain a shell.  Like SFS file systems, remote execution servers can
+be named by self-certifying path names.
+
+@noindent
+The usage is as follows:
+
+@example
+rex [-TAXpv] [-R @var{port}:@var{lport}] @var{destination} [@var{command}]
+@end example
+
+@noindent
+@var{destination} is one of the following:
+@itemize @bullet
+@item a self-certifying hostname (location:hostid)
+@item a self-certifying pathname (/sfs/... or /symlink-to-sfs/...)
+@item any identifier which when processed through certification programs
+will yield a self-certifying pathname
+@end itemize
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -T
+Disable pseudo-tty allocation.
+
+@item -A
+Disable SFS agent forwarding.  By default, if there is no
+@command{sfsagent} running on the remote machine, @command{rex} will
+forward agent requests back the @command{sfsagent} running on the
+local machine (e.g., when a user accesses an SFS file system or runs
+@command{sfskey}).
+
+@item -X
+Disable X forwarding.  By default, the @command{rex} client will set up
+a dummy X server which receives connections from clients on the remote
+machine.  These connections are forwarded over the encrypted
+@command{rex} channel to the local X server.  @command{rex} sets the
+@env{DISPLAY} environment variable appropriately on the remote side.
+Furthermore, X connections are authenticated using a `spoofed'
+@var{MIT-MAGIC-COOKIE-1}.
+
+@item -p
+Force @command{rex} to connect to the @var{destination} even if
+it cannot be resolved into a valid self-certifying path name.
+
+@item -v
+Verbose mode.
+
+@item -R @var{port}:@var{lport}
+Forward TCP connections made to @var{port} on the remote host to 
+@var{lport} on the local machine.
+@end table
+
+The @command{rex} command supports the escape sequences listed below.
+Rex only recognizes the escape character `~' after a newline.
+@itemize
+@item . terminate connection
+@item ^Z suspend connection
+@item ? help message
+@item ~ send the escape character
+@end itemize
+@c @mp @end options
+@c @mp @end command
+@c @mp @end
+
+@node dirsearch, newaid, rex, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{dirsearch} command
+@cindex @command{dirsearch}
+
+@c @mp
+@c @mp @command{dirsearch}{search for file in directories}{1}
+@c @mp @description
+@command{dirsearch} looks for a file name in one or more directories.
+@c @mp @end description
+@c @mp @ignore
+The usage is as follows:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+dirsearch [-c | -l | -p | -q] @var{dir1} [@var{dir2} ...] @var{name}
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+Starting with @var{dir1}, the command searches each directory
+specified for a file called @var{name}.  If such a file is found,
+@command{dirsearch} exits with code 0 and, depending on its options,
+may print the file's pathname, contents, or expanded symbolic link
+contents.  If none of the directories specified contain a file
+@var{name}, @command{dirsearch} exits with code 1 and prints no
+output.
+@c @mp @end description
+
+@c @mp @examples
+@command{dirsearch} is particularly useful for SFS certificaton
+@pxref{certprog} and revocation programs.  As an example, suppose you
+have a directory of symbolic links in your home directory called
+@file{.sfs@dslash{}bookmarks}.  The directory might contain the
+following links:
+@example
+sfs.fs.net -> /sfs/@@sfs.fs.net,uzwadtctbjb3dg596waiyru8cx5kb4an
+sfs.nyu.edu -> /sfs/@@sfs.nyu.edu,hcbafipmin3eqmsgak2m6heequppitiz
+@end example
+@noindent
+If you execute the command:
+@example
+sfskey certprog dirsearch -l ~/.sfs/bookmarks
+@end example
+@noindent
+Then the next time you access @file{/sfs@dslash{}sfs.fs.net}, that
+pathname will automaticlaly become a symbolic link to your bookmark.
+Moreover, the same will happen on remote machines to which you log in
+with the @command{rex} command.
+@c @mp @end examples
+
+@c @mp @options
+The following mutually exclusive options affect the behavior of
+@command{dirsearch}.  If more than one option is specified, only the
+last will have an effect.
+
+@table @option
+@item -c
+This option prints the contents of the file when it is found, instead
+of its pathname.
+
+@item -l
+This option looks for symbolic links.  The file @var{name} will be
+ignored if it is not a symbolic link.  Furthermore, in its output
+@command{dirsearch} will expand the symbolic link.
+
+@item -p
+This option says to print the pathname, which is the default anyway.
+Thus, the only effect of @option{-p} is to undo any previous
+@option{-c}, @option{-l}, or @option{-q} option.
+
+@item -q
+This option suppresses any output @command{dirsearch} would print.
+The exit code still indicates whether or not the file exists.
+@end table
+@c @mp @end options
+
+
+@c @mp @end command
+@c @mp @end
+
+@node newaid, ssu, dirsearch, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{newaid} command
+
+@c @mp
+@c @mp @command{newaid}{Run processes with different sfsagents}{1}
+@c @mp @description
+The @command{newaid} command allows root-owned processes to access SFS
+file systems using the @command{sfsagent} of a non-root user.
+Additionally, if a system is configured to allow this,
+@command{newaid} permits non-root users to run multiple
+@command{sfsagent} processes, so that different processes owned by
+that user access the SFS file system with different agents.  (When
+used in The latter mode, @command{newaid} is similar in function to
+the AFS program @command{pagsh}.)
+
+@cindex aid
+SFS maps file system requests to particular @command{sfsagent}
+processes using the notion of agent ID, or @dfn{aid}.  Every process
+has a 64-bit aid associated with it.  Ordinarily, a process's aid is
+simply its 32-bit user ID.  Thus, when a user runs @command{sfsagent},
+both the agent and all of the users' processes have the same aid.
+
+To allow different processes owned by the same user to have different
+agents, a system administrator can reserve a range of group IDs for
+the purpose of flagging different aids, @ref{resvgids}.
+@ignore
+See the ResvGids directive described in the @file{sfs_config} man
+page for a description of how to do this.
+@end ignore
+(Note that after changing @samp{ResvGids}, you must kill and restart
+@command{sfscd} for things to work properly.)  If the range of
+reserved group IDs is @var{min}@dots{}@var{max}, and the @emph{first}
+element of a process's grouplist, @var{g0}, is at least @var{min} and
+not more than @var{max}, then a process's aid is computed as
+((@var{g0} - @var{min} + 1) << 32) | @var{uid}).  The @command{newaid}
+command therefore lets people insert any of the reserved group IDs at
+the start of a process's group list.
+
+For root-owned processes, it is also possible for processes to be
+associated with a non-root agent.  In this case, the reserved
+@var{sfs-group} (as a marker) and target user's uid are actually
+placed in the process's grouplist, as well as any reserved group ID to
+select amongst multiple agents of the same user.
+@c @mp @end description
+
+@c @mp @ignore
+The usage is:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+newaid [-l] [-@{u|U@} @var{uid}] [-G | -g @var{gid}] [-C @var{dir}] [@var{program} @var{arg} ...]
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+
+After making appropriate changes to its user ID and/or grouplists,
+@command{newaid} executes the @var{program} specified on the command
+line.  If no @var{program} is specified, the program specified by the
+environment variable @env{SHELL} is used by default.
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -l
+Run the command as a login shell.  This argument simply prepends a
+@samp{-} character to @code{argv[0]} when executing @var{program}.
+Command shells interpret this to mean that they are being being run as
+login shells, and usually exhibit slightly different behavior.  (For
+example @command{csh} will execute the commands in a user's
+@file{.login} file.)
+
+@item -u @var{uid}
+For root-owned process, specifies that the @var{program} should be run
+as root, but should be associated with the non-root agent of user
+@var{uid}.
+
+@item -U @var{uid}
+When @command{newaid} is invoked by a root-owned processes, this
+option sets the real uid to @var{uid} to run @var{program}, instead of
+running it with uid 0.  This is in itself is not sufficient to ``drop
+privileges.''  In particular, @command{newaid} still does not make any
+changes to the process gid or grouplist, beyond manipulating
+aid-specific groups.  Since many root-owned processes also have
+privileged groups in their grouplist, it is in general
+@strong{insecure} to use @option{-U} unless you set both the gid and
+the whole grouplist to something sensible (i.e., appropriately
+unprivileged) before invoking @command{newaid}.
+
+This option is mostly of use for @command{login}-like programs that
+wish to create a session with a new aid, and do not wish to make the
+@code{setuid} system call themselves.  As an example, the
+@command{rexd} daemon has the server's private key, yet must spawn the
+@command{proxy} program as an unprivileged user.  If it dropped
+privileges before executing @command{proxy}, unprivileged users could
+send it signals, risking core dumps.  Moreover, attackers might be
+able to exploit weaknesses in the operating systems @code{ptrace}
+system call or proc file system to learn the private key.
+@command{rexd} therefore runs @command{proxy} through
+@command{newaid}, giving it the @option{-U} option.
+
+@item -g @var{gid}
+@itemx -G
+By default @command{newaid} simply picks the first aid under which no
+agent is yet running.  The @option{-g} option explicitly specifies
+that @var{gid} should be added to the start of the process's group
+list (and any previous reserved gid should be removed).  @option{-G}
+says to remove any reserved gid, so that the aid of the resulting
+process will just be the user's uid.
+
+@item -C @var{dir}
+Changes directory to @var{dir} before running @var{program}.
+@end table
+@c @mp @end options
+
+@c @mp @end command
+@c @mp @end
+
+
+@node ssu, sfscd, newaid, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{ssu} command
+
+@c @mp
+@c @mp @command{ssu}{allow unprivileged user to become root}{1}
+@c @mp @description
+The @command{ssu} command allows an unprivileged user to become root
+on the local machine without changing his SFS credentials.
+@command{ssu} invokes the command @command{su} to become root.  Thus,
+the access and password checks needed to become root are identical to
+those of the local operating system's @command{su} command.
+@command{ssu} also runs @file{@value{SFSLIBDIR}@dslash{}newaid} to
+alter the group list so that SFS can recognize the root shell as
+belonging to the original user.
+@c @mp @end description
+
+@c @mp @ignore
+The usage is as follows:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+ssu [-f | -m | -l | -c @var{command}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @options
+@table @option
+@item -f
+@itemx -m
+These options are passed through to the @command{su} command.
+
+@item -l
+This option causes the newly spawned root shell to behave like a login
+shell.
+
+@item -c @var{command}
+Tells @command{ssu} to tell @command{su} to run @var{command} rather
+than running a shell.
+@end table
+@c @mp @end options
+
+@c @mp @bugs
+Note, @command{ssu} does not work on some versions of Linux because of a
+bug in Linux.  To see if this bug is present, run the command @samp{su
+root -c ps}.  If this command stops with a signal, your @command{su}
+command is broken and you cannot use @command{ssu}.
+@c @mp @end bugs
+@c @mp @end command
+@c @mp @end
+
+@node sfscd, sfssd, ssu, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfscd} command
+
+@c @mp 
+@c @mp @command{sfscd}{SFS client daemon}{8}
+@c @mp @synopsis
+@example
+sfscd [-d] [-l] [-L] [-f @var{config-file}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+@command{sfscd} is the program to create and serve the @file{/sfs}
+directory on a client machine.  Ordinarily, you should not need to
+configure @command{sfscd} or give it any command-line options.
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -d
+Stay in the foreground and print messages to standard error rather than
+redirecting them to the system log.
+
+@item -l
+@cindex @code{EDEADLK}
+@cindex @code{Resource deadlock avoided}
+Ordinarily, @command{sfscd} will disallow access to a server running on
+the same host.  If the @var{Location} in a self-certifying pathname
+resolves to an IP address of the local machine, any accesses to that
+pathname will fail with the error @code{EDEADLK} (``Resource deadlock
+avoided'').
+
+The reason for this behavior is that SFS is implemented using NFS.  Many
+operating systems can deadlock when there is a cycle in the mount
+graph---in other words when two machines NFS mount each other, or, more
+importantly when a machine NFS mounts itself.  To allow a machine to
+mount itself, you can run @command{sfscd} with the @option{-l} flag.
+This may in fact work fine and not cause deadlock on non-BSD systems.
+
+@item -L
+On Linux, the @option{-L} option disables a number of kludges that work
+around bugs in the kernel.  @option{-L} is useful for people interested
+in improving Linux's NFS support.
+
+@item -f @var{config-file}
+Specify an alternate @command{sfscd} configuration file,
+@ref{sfscd_config}.  The default, if @option{-f} is unspecified, is
+first to look for @file{@value{ETCDIR}@dslash{}sfscd_config}, then
+@file{@value{PKGDATADIR}@dslash{}sfscd_config}.
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp @end
+
+@node sfssd, vidb, sfscd, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfssd} command
+
+@c @mp 
+@c @mp @command{sfssd}{SFS server daemon}{8}
+@c @mp @synopsis
+@example
+sfssd [-d] [-S @var{sfs-config-file}] [-f @var{config-file}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+@command{sfssd} is the main server daemon run on SFS servers.
+@command{sfssd} itself does not serve any file systems.  Rather, it acts
+as a meta-server, accepting connections on TCP port 4 and passing them
+off to the appropriate daemon.  Ordinarily, @command{sfssd} passes all
+file system connections to @command{sfsrwsd}, and all user-key
+management connections to @command{sfsauthd}.  However, the
+@file{sfssd_config} file (@pxref{sfssd_config}) allows a great deal of
+customization, including support for ``virtual servers,'' multiple
+versions of the SFS software coexisting, and new SFS-related services
+other than the file system and user authentication.
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -d
+Stay in the foreground and print messages to standard error rather than
+redirecting them to the system log.
+
+@item -f @var{config-file}
+Specify an alternate @command{sfssd} configuration file,
+@ref{sfssd_config}.  The default, if @option{-f} is unspecified, is
+first to look for @file{@value{ETCDIR}@dslash{}sfssd_config}, then
+@file{@value{PKGDATADIR}@dslash{}sfssd_config}.
+
+@item -S @var{sfs-config-file}
+Specify an alternate name for the @file{sfs_config} file,
+@ref{sfssd_config}.  If @var{sfs-config-file} begins with a @file{/},
+then only this file is parsed.  Otherwise, all the directories
+@file{@value{PKGDATADIR}} and @file{@value{ETCDIR}} are searched in
+order, and if no file named @var{sfs-config-file} is found but a file
+@file{sfs_config} is found, that file is parsed.  However, the process
+does not look in @file{@value{ETCDIR}} if @var{sfs-config-file} is
+found in @var{@value{PKGDATADIR}}.  Thus, if you create a file
+@file{@value{ETCDIR}@dslash{}}@var{sfs-config-file}, it will override
+@file{@value{ETCDIR}@dslash{}sfs_config} while still incorporating the
+defaults from @var{@value{PKGDATADIR}@dslash{}sfs_config}.
+
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp @end
+
+@node vidb, funmount, sfssd, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{vidb} command
+
+@c @mp
+@c @mp @command{vidb}{manually edit SFS user-authentication database file}{8}
+@c @mp @description
+@command{vidb} manually edits an SFS user-authentication file
+@pxref{sfs_users}, acquiring locks to prevent concurrent updates from
+overwriting each other.
+@c @mp @end description
+@c @mp @ignore
+The usage is:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+vidb [-r] [-w] [-e @var{editor}] @var{sfs-users-file}
+@end example
+@c @mp @end synopsis
+
+@c @mp @options
+@command{vidb} has the following options:
+
+@table @option
+@item -r
+Recovers from a previous edit session.  @command{vidb} makes a copy of
+of @var{sfs-users-file} to be edited, named by appending @file{.tmp}
+to the file name.  If an editing session crashes, vidb will refuse to
+run, as the old temporarly file may contain useful data that should
+not be deleted.  With @option{-r}, however, @command{vidb} removes any
+old temporary file.
+
+@item -w
+The point of @command{vidb} is to avoid concurrent edits to the
+database and the corresponding inconsistencies that might result.
+Ordinarily, if the database is already being edited, @command{vidb}
+will just exit with an error message.  The @option{-w} flag tells
+@command{vidb} to wait until it can acquire the lock on the database,
+and then run.
+
+@item -e @var{editor}
+Specifies the editor to use for editing the file.  The default is to
+use the command specified by the enviornment variable @env{EDITOR}.
+If there is no environment variable and @option{-e} is not specified,
+@command{vidb} uses @command{vi}.
+@end table
+@c @mp @end options
+
+@noindent
+Note:
+@c @mp @bugs
+@command{vidb} should really recreate any publicly-readable versions
+of user authentication databases (either by parsing
+@file{sfsauthd_config} for @option{-pub=...} options to
+@samp{Userfile} directives or signaling @command{sfsauthd}).
+Currently you must manually kill @command{sfssd} or @command{sfsauthd}
+for this to happen.
+@c @mp @end bugs
+
+@c @mp @end command
+@c @mp @end
+
+
+@node funmount, sfsrwsd, vidb, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{funmount} command
+
+@c @mp
+@c @mp @command{funmount}{forcibly unmount a file system}{8}
+
+@c @mp @ignore
+The @command{funmount} command is executed as follows:
+@c @mp @end ignore
+
+@c @mp @synopsis
+@example
+funmount @var{path}
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+@command{funmount} forcibly attempts to unmount the file system
+mounted on @var{path}.  It is roughly equivalent to running
+@samp{umount -f @var{path}}.  However, on most operating systems the
+@command{umount} command does a great deal more than simply execute
+the @code{unmount} system call---for instance it may attempt to read
+the attributes of the file system being unmounted and/or contact a
+remote NFS server to notify it of the unmount operation.  These extra
+actions make @code{umount} hang when a remote NFS server is
+unavailable or a loopback server has crashed, which in turn causes the
+client to become ever more wedged.  @command{funmount} can avoid such
+situations when you are trying to salvage a machine with bad NFS
+mounts without rebooting it.
+@c @mp @end description
+
+@c @mp @caveats
+@cindex @command{nfsmounter}
+SFS will get very confused if you ever unmount file systems from
+beneath it.  SFS's @command{nfsmounter} program tries to clean up the
+mess if the client software ever crashes.  Running @command{funmount}
+will generally only make things worse by confusing
+@command{nfsmounter}.
+@c @mp @end caveats
+
+@c @mp @bugs
+If @file{/a} is a mount point, and @file{/a/b} is another mount point,
+unmounting @file{/a} before @file{/a/b} will cause the latter file
+system to become ``lost.''  Once a file system is lost, there is no
+way to unmount it without rebooting.  Worse yet, on some operating
+systems, commands such as @command{df} may hang because of a lost file
+system.
+
+Many operating systems will not let you unmount a file system (even
+forcibly) if a process is using the file system's root directory (for
+instance as a current working directory).  Under such circumstances,
+@command{funmount} may fail.  To unmount the file system you must find
+and kill whatever process is using the directory.  Utilities such as
+@command{fstat} and @command{lsof} may be helpful for identifying
+processes with a particular file system open.
+@c @mp @end bugs
+@c @mp @end command
+@c @mp @end
+
+@node sfsrwsd, sfsauthd, funmount, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfsrwsd} daemon
+
+@c @mp
+@c @mp @command{sfsrwsd}{SFS read-write server}{8}
+@c @mp @synopsis
+@example
+@value{SFSLIBDIR}/sfsrwsd [-f @var{config-file}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+@command{sfsrwsd} is the program implementing the SFS read-write server.
+Ordinarily, you should never run @command{sfsrwsd} directly, but rather
+have @command{sfssd} do so.  Nonetheless, you must create a
+configuration file for @command{sfsrwsd} before running an SFS server.
+@xref{sfsrwsd_config}, for what to put in your @file{sfsrwsd_config}
+file.
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -f @var{config-file}
+Specify an alternate @command{sfsrwsd} configuration file,
+@ref{sfsrwsd_config}.  The default, if @option{-f} is unspecified, is
+@file{@value{ETCDIR}@dslash{}sfsrwsd_config}.
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp @end
+
+@node sfsauthd,  , sfsrwsd, Command reference
+@comment  node-name,  next,  previous,  up
+@section @command{sfsauthd} daemon
+
+@c @mp 
+@c @mp @command{sfsauthd}{SFS authentication daemon}{8}
+@c @mp @synopsis
+@example
+@value{SFSLIBDIR}/sfsauthd [-u @var{sockfile}] [-f @var{config-file}]
+@end example
+@c @mp @end synopsis
+
+@c @mp @description
+@command{sfsauthd} is the program responsible for authenticating
+users.  @command{sfsrwsd} and other daemons communicate with
+@command{sfsauthd}, forwarding it authentication requests from
+@command{sfsagent} processes on remote client machines.
+@command{sfsauthd} informs requesting daemons of whether
+authentication requests are valid, and if so what local credentials to
+associate with the remote user agent.  The @command{sfskey} program
+also communicates directly with remote @command{sfsauthd} processes
+when retrieving and updating users keys (with @command{sfskey add},
+@command{update}, @command{register}, and more).
+@c @mp @end description
+
+@c @mp @options
+@table @option
+@item -f @var{config-file}
+Specify an alternate @command{sfssauthd_config} configuration file,
+@ref{sfsauthd_config}.  The default, if @option{-f} is unspecified, is
+@file{@value{ETCDIR}@dslash{}sfsauthd_config}.
+@item -u @var{path}
+Bind unix domain socket @var{path}, and accept TCP connections passed
+over connections to that socket.  This option allows @command{sfssd}
+to communicate with already running @command{sfsauthd} commands using
+a directive like @samp{Service 2 -u @var{path}} in @file{sfssd_config}
+@ref{sfssd_config}.
+@end table
+@c @mp @end options
+@c @mp @end command
+@c @mp @end
+
+
+@node Security, Contacts, Command reference, Top
+@comment  node-name,  next,  previous,  up
+@chapter Security considerations
+
+SFS shares files between machines using cryptographically protected
+communication.  As such, SFS can help eliminate security holes
+associated with insecure network file systems and let users share files
+where they could not do so before.
+
+That said, there will very likely be security holes attackers can
+exploit because of SFS, that they could not have exploited otherwise.
+This chapter enumerates some of the security consequences of running
+SFS.  The first section describes vulnerabilities that may result from
+the very existence of a global file system.  The next section lists bugs
+potentially present in your operating system that may be much easier for
+attackers to exploit if you run SFS.  Finally the last section attempts
+to point out weak points of the SFS implementation that may lead to
+vulnerabilities in the SFS software itself.
+
+@menu
+* new vulnerabilities::         Vulnerabilities created by SFS
+* exposed vulnerabilities::     Vulnerabilities exploitable because of SFS
+* implementation vulnerabilities::  Vulnerabilities in the SFS implementation
+@end menu
+
+@node new vulnerabilities, exposed vulnerabilities, Security, Security
+@comment  node-name,  next,  previous,  up
+@section Vulnerabilities created by SFS
+
+@subheading Facilitating exploits
+
+Many security holes can be exploited much more easily if the attacker
+can create an arbitrary file on your system.  As a simple example, if a
+bug allows attackers to run any program on your machine, SFS allows them
+to supply the program somewhere under @file{/sfs}.  Moreover, the file
+can have any numeric user and group (though of course, SFS disables
+setuid and devices).
+
+@subheading @file{.} in @env{path}
+
+Another potential problem users putting the current working directory
+@file{.} in their @var{PATH} environment variables.  If you are browsing
+a file system whose owner you do not trust, that owner can run arbitrary
+code as you by creating programs named things like @command{ls} in the
+directories you are browsing.  Putting @file{.} in the @var{PATH} has
+always been a bad idea for security, but a global file system like SFS
+makes it much worse.
+
+@subheading symbolic links from untrusted servers
+
+Users need to be careful about using untrusted file systems as if they
+were trusted file systems.  Any file system can name files in any other
+file system by symbolic links.  Thus, when randomly overwriting files in
+a file system you do not trust, you can be tricked, by symbolic links,
+into overwriting files on the local disk or another SFS file system.
+
+As an example of a seemingly appealing use of SFS that can cause
+problems, consider doing a @command{cvs} checkout from an untrusted CVS
+repository, so as to peruse someone else's source code.  If you run
+@command{cvs} on a repository you do not trust, the person hosting the
+repository could replace the @file{CVSROOT/history} with a symbolic
+link to a file on some other file system, and cause you to append
+garbage to that file.
+
+This @command{cvs} example may or may not be a problem.  For instance,
+if you are about to compile and run the software anyway, you are placing
+quite a bit of trust in the person running the CVS repository anyway.
+The important thing to keep in mind is that for most uses of a file
+system, you are placing some amount of trust in in the file server.
+
+@xref{resvgids}, to see how users can run multiple agents with the
+@command{newaid} command.  One way to cut down on trust is to access
+untrusted file servers under a different agent with different private
+keys.  Nonetheless, this still allows the remote file servers to serve
+symbolic links to the local file system in unexpected places.
+
+@subheading Leaking information
+
+Any user on the Internet can get the attributes of a
+@var{local-directory} listed in an @samp{Export} directive
+(@pxref{export}).  This is so users can run commands like @samp{ls -ld}
+on a self-certifying pathname in @file{/sfs}, even if they cannot change
+directory to that pathname or list files under it.  If you wish to keep
+attribute information secret on a @var{local-directory}, you will need
+to export a higher directory.  We may later reevaluate this design
+decision, though allowing such anonymous users to get attributes
+currently simplifies the client implementation.
+
+@node exposed vulnerabilities, implementation vulnerabilities, new vulnerabilities, Security
+@comment  node-name,  next,  previous,  up
+@section Vulnerabilities exploitable because of SFS
+
+@subheading NFS server security
+@cindex NFS security
+@anchor{NFS security}
+
+The SFS read-write server software requires each SFS server to run an
+NFS server.  Running an NFS server at all can constitute a security
+hole.  In order to understand the full implications of running an SFS
+server, you must also understand NFS security.
+
+NFS security relies on the secrecy of file handles.  Each file on an
+exported file system has associated with it an NFS file handle
+(typically 24 to 32 bytes long).  When mounting an NFS file system, the
+@command{mount} command on the client machine connects to a program
+called @command{mountd} on the server and asks for the file handle of
+the root of the exported file system.  @command{mountd} enforces access
+control by refusing to return this file handle to clients not authorized
+to mount the file system.
+
+Once a client has the file handle of a directory on the server, it sends
+NFS requests directly to the NFS server's kernel.  The kernel performs
+no access control on the request (other than checking that the user the
+client claims to speak for has permission to perform the requested
+operation).  The expectation is that all clients are trusted to speak
+for all users, and no machine can obtain a valid NFS file handle without
+being an authorized NFS client.
+
+To prevent attackers from learning NFS file handles when using SFS, SFS
+encrypts all NFS file handles with a 20-byte key using the Blowfish
+encryption algorithm.  Unfortunately, not all operating systems choose
+particularly good NFS file handles in the first place.  Thus, attackers
+may be able to guess your file handles anyway.  In general, NFS file
+handles contain the following 32-bit words:
+
+@itemize @bullet
+@item A file system ID (containing the device number)
+@item The inode number (i-number) of the file
+@item A generation number that changes when the i-number is recycled
+@end itemize
+
+@noindent
+In addition NFS file handles can contain the following words:
+
+@itemize @bullet
+@item A second file system ID word (for a 64-bit fsid)
+@item The length of the file handle data
+@item The i-number of the exported directory
+@item The generation number of the exported directory
+@item Another copy of the file system ID (for the exported directory?)
+@item One or more unused 0 words
+@end itemize
+
+@noindent
+Many of these words can be guessed outright by attackers without their
+needing to interact with any piece of software on the NFS server.  For
+instance, the file system ID is often just the device number on which
+the physical file system resides.  The i-number of the root directory in
+a file system is always 2.  The i-number and generation number of the
+root directory can also be used as the i-number and generation number of
+the ``exported directory''.
+
+On some operating systems, then, the only hard thing for an attacker to
+guess is the 32-bit generation number of some directory on the system.
+Worse yet, the generation numbers are sometimes not chosen with a good
+random number generator.
+
+To minimize the risks of running an NFS server, you might consider
+taking the following precautions:
+
+@itemize @bullet
+@item
+Many operating systems ship with a program called @command{fsirand} that
+re-randomizes all generation numbers in a file system.  Running
+@command{fsirand} may result in much better generation numbers than,
+say, a factory install of an operating system.
+
+@item
+In general, you should try to block all external NFS traffic from
+reaching your machine.  If you have a firewall, consider filtering ports
+111 and 2049 for both TCP and UDP.  If your server's operating system
+comes with some sort of IP filtering, you might filter any traffic to
+port 2049 that does not come from the loopback interface (though on some
+OSes, this could prevent you from acting as an NFS client if you are
+still using NFS on your local network---try it to see).
+
+@item
+Most operating systems allow you to export NFS file systems
+``read-mostly''---i.e. read-write to a small number of servers and
+read-only to everyone else.  The read-only requirement typically is
+enforced by the kernel.  Thus, if you can export file systems read-write
+to @samp{localhost} for SFS, but read-only to any client on which an
+attacker may have learned an NFS file handle, you may be able to protect
+the integrity of your file system under attack.  (Note, however, that
+unless you filter forged packets at your firewall, the attacker can put
+whatever source address he wants on an NFS UDP packet.)  See the
+@command{mountd} or @command{exports} manual page for more detail.
+@strong{Note:  under no circumstances should you make your file system
+``read-only to the world,'' as this will let anyone find out NFS file
+handles.  You want the kernel to think of the file system as read-only
+for the world, but @command{mountd} to refuse to give out file handles
+to anybody but @samp{localhost}.}
+@end itemize
+
+@subheading @samp{mountd -n}.
+
+The @command{mountd} command takes a flag @option{-n} meaning ``allow
+mount requests from unprivileged ports.''  @strong{Do not ever run use
+this flag}.  Worse yet, some operating systems (notably HP-UX 9) always
+exhibit this behavior regardless of whether they @option{-n} flag has
+been specified.
+
+The @option{-n} option to @command{mountd} allows any user on an NFS
+client to learn file handles and thus act as any other user.  The
+situation gets considerably worse when exporting file systems to
+@samp{localhost}, however, as SFS requires.  Then everybody on the
+Internet can learn your NFS file handles.  The reason is that the
+@command{portmap} command will forward mount requests and make them
+appear to come from @samp{localhost}.
+
+@subheading @command{portmap} forwarding
+
+In order to support broadcast RPCs, the @command{portmap} program will
+relay RPC requests to the machine it is running on, making them appear
+to come from @samp{localhost}.  That can have disastrous consequences in
+conjunction with @samp{mountd -n} as described previously.  It can also
+be used to work around ``read-mostly'' export options by forwarding NFS
+requests to the kernel from @samp{localhost}.
+
+Operating systems are starting to ship with @command{portmap} programs
+that refuse to forward certain RPC calls including mount and NFS
+requests.  Wietse Venema has also written a @command{portmap}
+replacement that has these properties, available from
+@uref{ftp://ftp.porcupine.org/pub/security/index.html}.  It is also a
+good idea to filter TCP and UDP ports 111 (@command{portmap}) at your
+firewall, if you have one.
+
+@subheading Bugs in the NFS implementation
+
+Many NFS implementations have bugs.  Many of those bugs rarely surface
+when clients and servers with similar implementation talk to each other.
+Examples of bugs we've found include servers crashing when the receive a
+write request for an odd number of bytes, clients crashing when they
+receive the error @code{NFS3ERR_JUKEBOX}, and clients using
+uninitialized memory when the server returns a @code{lookup3resok} data
+structure with @code{obj_attributes} having @code{attributes_follow} set
+to false.
+
+SFS allows potentially untrusted users to formulate NFS requests (though
+of course SFS requires file handles to decrypt correctly and stamps the
+request with the appropriate Unix uid/gid credentials).  This may let
+bad users crash your server's kernel (or worse).  Similarly, bad servers
+may be able to crash a client.
+
+As a precaution, you may want to be careful about exporting any portion
+of a file system to anonymous users with the @samp{R} or @samp{W}
+options to @samp{Export} (@pxref{export}).  When analyzing your NFS code
+for security, you should know that even anonymous users can make the
+following NFS RPC's on a @var{local-directory} in your
+@file{sfsrwsd_config} file:  @code{NFSPROC3_GETATTR},
+@code{NFSPROC3_ACCESS}, @code{NFSPROC3_FSINFO}, and
+@code{NFSPROC3_PATHCONF}.
+
+On the client side, a bad, non-root user in collusion with a bad file
+server can possibly crash or deadlock the machine.  Many NFS client
+implementations have inadequate locking that could lead to race
+conditions.  Other implementations make assumptions about the
+hierarchical nature of a file system served by the server.  By violating
+these assumptions (for example having two directories on a server each
+contain the other), a user may be able to deadlock the client and create
+unkillable processes.
+
+@subheading @command{logger} buffer overrun
+
+SFS pipes log messages through the @command{logger} program to get them
+into the system log.  SFS can generate arbitrarily long lines.  If your
+@command{logger} does something stupid like call @command{gets}, it may
+suffer a buffer overrun.  We assume no one does this, but feel the point
+is worth mentioning, since not all logger programs come with source.
+
+To avoid using @command{logger}, you can run @command{sfscd} and
+@command{sfssd} with the @option{-d} flag and redirect standard error
+wherever you wish manually.
+
+
+@node implementation vulnerabilities,  , exposed vulnerabilities, Security
+@comment  node-name,  next,  previous,  up
+@section Vulnerabilities in the SFS implementation
+
+@subheading Resource exhaustion
+
+The best way to attack the SFS software is probably to cause resource
+exhaustion.  You can try to run SFS out of file descriptors, memory, CPU
+time, or mount points.
+
+An attacker can run a server out of file descriptors by opening many
+parallel TCP connections.  Such attacks can be detected using the
+@command{netstat} command to see who is connecting to SFS (which
+accepts connections on port 4).  Users can run the client (also
+@command{sfsauthd}) out of descriptors by connecting many times using
+the setgid program @file{@value{SFSLIBDIR}@dslash{}suidconnect}.
+These attacks can be traced using a tool like lsof, available from
+@uref{ftp://vic.cc.purdue.edu/pub/tools/unix/lsof}.
+
+SFS enforces a maximum size of just over 64 K on all RPC requests.
+Nonetheless, a client could connect 1000 times, on each connection send
+the first 64 K of a slightly larger message, and just sit there.  That
+would obviously consume about 64 Megabytes of memory, as SFS will wait
+patiently for the rest of the request.
+
+A worse problem is that SFS servers do not currently flow-control
+clients.  Thus, an attacker could make many RPCs but not read the
+replies, causing the SFS server to buffer arbitrarily much data and run
+out of memory.  (Obviously the server eventually flushes any buffered
+data when the TCP connection closes.)
+
+Connecting to an SFS server costs the server tens of milliseconds of CPU
+time.  An attacker can try to burn a huge amount of the server's CPU
+time by connecting to the server many times.  The effects of such
+attacks can be mitigated using hashcash, @ref{HashCost}.
+
+Finally, a user on a client can cause a large number of file systems to
+be mounted.  If the operating system has a limit on the number of mount
+points, a user could run the client out of mount points.
+
+@subheading Non-idempotent operations
+
+If a TCP connection is reset, the SFS client will attempt to reconnect
+to the server and retransmit whatever RPCs were pending at the time the
+connection dropped.  Not all NFS RPCs are idempotent however.  Thus, an
+attacker who caused a connection to reset at just the right time could,
+for instance, cause a @command{mkdir} command to return @code{EEXIST}
+when in fact it did just create the directory.
+
+@subheading Injecting packets on the loopback interface
+
+SFS exchanges NFS traffic with the local operating system using the
+loopback interface.  An attacker with physical access to the local
+ethernet may be able to inject arbitrary packets into a machine,
+including packets to 127.0.0.1.  Without packet filtering in place, an
+attacker can also send packets from anywhere making them appear to come
+from 127.0.0.1.
+
+On the client, an attacker can forge NFS requests from the kernel to
+SFS, or forge replies from SFS to the kernel.  The SFS client encrypts
+file handles before giving them to the operating system.  Thus, the
+attacker is unlikely to be able to forge a request from the kernel to
+SFS that contain a valid file handle.  In the other direction however,
+the reply does not need to contain a file handle.  The attacker may well
+be able to convince the kernel of a forged reply from SFS.  The attacker
+only needs to guess a (possibly quite predictable) 32-bit RPC XID
+number.  Such an attack could result, for example, in a user getting the
+wrong data when reading a file.
+
+On the server side, you also must assume the attacker cannot guess a
+valid NFS file handle (otherwise, you already have no
+security---@pxref{NFS security}).  However, the attacker might again
+forge NFS replies, this time from the kernel to the SFS server software.
+
+To prevent such attacks, if your operating system has IP filtering, it
+would be a good idea to block any packets either from or to 127.0.0.1 if
+those packets do not come from the loopback interface.  Blocking traffic
+"from" 127.0.0.1 at your firewall is also a good idea.
+
+@subheading Causing deadlock
+
+On BSD-based systems (and possibly others) the buffer reclaiming policy
+can cause deadlock.  When an operation needs a buffer and there are no
+clean buffers available, the kernel picks some particular dirty buffer
+and won't let the operation complete until it can get that buffer.  This
+can lead to deadlock in the case that two machines mount each other.
+
+@subheading Getting private file data from public workstations
+
+An attacker may be able to read the contents of a private file shortly
+after you log out of a public workstation if the he can then become root
+on the workstation.  There are two attacks possible.
+
+First, the attacker may be able to read data out of physical memory or
+from the swap partition of the local disk.  File data may still be in
+memory if the kernel's NFS3 code has cached it in the buffer cache.
+There may also be fragments of file data in the memory of the
+@command{sfsrwcd} process, or out on disk in the swap partition (though
+@command{sfsrwcd} does its best to avoid getting paged out).  The
+attacker can read any remaining file contents once he gains control of
+the machine.
+
+Alternatively, the attacker may have recorded encrypted session traffic
+between the client and server.  Once he gains control of the client
+machine, he can attach to the @command{sfsrwcd} process with the
+debugger and learn the session key if the session is still open.  This
+will let him read the session he recorded in encrypted form.
+
+To minimize the risks of these attacks, you must kill and restart
+@command{sfscd} before turning control of a public workstation over to
+another user.  Even this is not guaranteed to fix the problem.  It will
+flush file blocks from the buffer cache by unmounting all file systems,
+for example, but the contents of those blocks may persist as
+uninitialized data in buffers sitting on the free list.  Similarly, any
+programs you ran that manipulated private file data may have gotten
+paged out to disk, and the information may live on after the processes
+exit.
+
+In conclusion, if you are paranoid, it is best not to use public
+workstations.
+
+@subheading Setuid programs and devices on remote file systems
+
+SFS does its best to disable setuid programs and devices on remote file
+servers it mounts.  However, we have only tested this on operating
+systems we have access to.  When porting SFS to new platforms, It is
+worth testing that both setuid programs and devices do not work over
+SFS.  Otherwise, any user of an SFS client can become root.
+
+@node Contacts, Concept Index, Security, Top
+@comment  node-name,  next,  previous,  up
+@chapter How to contact people involved with SFS
+
+Please report any bugs you find in SFS to
+@email{sfsbug@@redlab.lcs.mit.edu}.
+
+You can send mail to the authors of SFS at
+@email{sfs-dev@@pdos.lcs.mit.edu}.
+
+There is also a mailing list of SFS users and developers at
+@email{sfs@@sfs.fs.net}.  To subscribe to the list, send mail to
+@email{sfs-subscribe@@sfs.fs.net}.
+
+
+@page
+@node    Concept Index,  , Contacts, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Concept Index
+
+@printindex cp
+
+@bye
+
+@c Local Variables:
+@c makeinfo-options: "--no-split --fill-column=70"
+@c End:

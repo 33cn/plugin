@@ -1,0 +1,8 @@
+
+
+Jan 27, 2005
+ - Handle const refs as function parameters . Should be possible.
+
+Februrary 23, 2005
+ - Un-macroize SIGNAL and UNBLOCK
+    - Can't handle templatized coordvar types 

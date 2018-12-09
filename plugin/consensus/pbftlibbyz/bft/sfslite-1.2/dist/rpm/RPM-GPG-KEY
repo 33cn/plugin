@@ -1,0 +1,38 @@
+The SFS RPMs are signed with the following key:
+
+pub  1024D/4567AD81 2002-11-29 Kevin Fu (RPM Signing) <fubob@mit.edu>
+     Key fingerprint = 2D96 AB35 A16E 81D5 40F8  A5F2 FE0D D12F 4567 AD81
+sub  1024g/0BFF2FD7 2002-11-29
+
+Check http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x4567AD81 for
+up-to-date signatures.  You may be able to establish trust in the key
+via signatures on
+http://pgp.mit.edu:11371/pks/lookup?op=get&search=0xD6354960
+
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: PGPfreeware 5.0i for non-commercial use
+
+mQGiBD3nXFARBACobZl+J/owVP79erzh6vfL3qDjWvEgX6LCGKU2j/+MQ89lNlnD
+Bu15Oj0J+nzmUM4zvzFRgR+Ix22NpdEHc+34GKwUu9b6oN7XYFlPlBmsDkQznCl6
+SdGIp8D5t+/137yxR0h5mO8Lb0Gik4JEzjP1C6a9U6Q7AIPzrZRiZWacZwCgxsBW
+Iy1PK6ECaJZaGNdDBcxBGd0D/A8sKRebMTjdQezFmN/sq7PoHV8TVwAW8bVuuRFZ
+BJl+E2WxV+mh4X2npr3PGYd4CgfRmO/gYMIRXb4cemwZi11ovyR/r7+gzDoShuvW
+00uf1Q9vulImvOJpdLZ/FAE8Xdn49gbS3TzZc/0YqiykDyICeGq+GxBARz7H47MZ
+1iivA/oDUSXJV11/X9X9FiDmNDslN7bjHGJ3K2Sqk3zSsO2wtgjHw7Amcidk6xil
+JGM+owDrR7MIkKDmI8fTcuRW084Q22VTA2V9vAXOUU0YlCLMbDu7ri7h53Ux6c4S
+S/SxCzvNR8kY9k0kHg9VvMk4ZDTiwIp+rY/ErmH7D8Ab+jaFvLQmS2V2aW4gRnUg
+KFJQTSBTaWduaW5nKSA8ZnVib2JAbWl0LmVkdT6JAFcEExECABcFAj3nXFAFCwcK
+AwQDFQMCAxYCAQIXgAAKCRD+DdEvRWetgWItAKCeSpRFZgJSRAn0MckwWb7CtgqQ
+uwCeMFAmm94wHxsMsj5BOqgzEhrVOpGJAD8DBRA956pS6ZJUedY1SWARAqYdAKDF
+2zXzIc61nBH6POGhd72pd9FVcgCgsRa+3JAOB1u2cJcw8u5SBbMuzdC5AQ0EPedc
+URAEANoZpWrUYavuxcm3DU8eFL3ykxeg+ohfZBz/BUWFtSRDivH6UDoK2/joyi8Y
+ywpKpG/KNDxKhGLcRuWV6cmvJz5Jr7JZGjHoPV2g29SoNG+hdNromHVezwP65r7I
+Ry/+t3iGcRhhWqHE4hQ0o/OXdEczbgAU4rioJhqt6Yrs9NCHAAMFA/9yl8mAU+g4
+7hiQXtLiawCjUzw7NfEQhKXy0Za5pA5/nzcISkesidXPf1HEggoycfLam0/wF/sd
+hglValq7PFU7JIm4vVOiwPlzh0e8WVLjARGXNYrftUP93mZFnbHTLoyHKEhPpdp/
+PGAzQOFycgELQzNERTpImHIZ3RzlmeYYQYkARgQYEQIABgUCPedcUQAKCRD+DdEv
+RWetgZ07AJ9C6cirrIlTv9CsPddqXGSpwRQw0QCggUjegREas4kEVCP1S+Fc8TL7
+h9E=
+=t/nI
+-----END PGP PUBLIC KEY BLOCK-----

@@ -1,0 +1,9 @@
+*.la
+*.lo
+.libs
+.deps
+Makefile
+Makefile.in
+crypt_prot.C
+crypt_prot.h
+stamp-sfscrypt-repo

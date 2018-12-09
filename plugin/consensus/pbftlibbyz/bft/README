@@ -1,0 +1,628 @@
+========================================================================
+Updated codebase
+James Cowling (cowling@csail.mit.edu). 9 Dec 2008
+========================================================================
+
+This repository now represents an updated version of the BFT library,
+modified to work with modern compilers (tested up to gcc 4.3) and the
+SFSlite library.  To compile BASE instead of BFT, uncomment
+'#define BASE' in libbyz/State_defs.h.
+
+This code has multicast disabled by default.  To reenable see Node.cc.
+
+Thanks to Petros Maniatis for some bug fixes, and probably other
+people I've forgotten - thanks tho!  I haven't tested the BFS or
+BASEFS code in some time.  If it doesn't work for you let me know.
+
+Compilation instructions (assumes bash shell):
+
+cd sfslite-1.2
+mkdir install
+export SFSHOME=`pwd`
+./configure --prefix=$SFSHOME/install
+make
+make install
+cd ..
+ln -s sfslite-1.2/install sfs
+ln -s /usr/lib gmp
+cd libbyz
+makedepend
+make clobber
+make
+cd ..
+
+To compile a simple BFT test program
+// make sure libbyz was compiled with 'BASE' *undefined* in State_defs.h
+cd bft-simple
+makedepend
+make clobber
+make
+ln -s ../config .
+ln -s ../config_private .
+cd .. 
+
+To compile BFS:
+// make sure libbyz was compiled with 'BASE' *undefined* in State_defs.h
+cd bfs
+makedepend
+make clobber
+make
+ln -s ../config .
+ln -s ../config_private .
+cd ..
+
+To compile a simple BASE test program
+// make sure libbyz was compiled with 'BASE' *defined* in State_defs.h
+cd simple
+makedepend
+make clobber
+make
+ln -s ../config .
+ln -s ../config_private .
+cd .. 
+
+To compile BASEFS:
+// make sure libbyz was compiled with 'BASE' *defined* in State_defs.h
+cd difs
+makedepend
+make clobber
+make
+ln -s ../config .
+ln -s ../config_private .
+cd ..
+
+Execution instructions are way below in this README.  To get a quick
+start:
+
+- Make sure there's a file in config_private/ corresponding to each of
+  your servers and clients.  To get things running quickly you can just
+  copy the 'template' file.
+- Change ./config to match your hosts. The first four machines in the
+  current file are replicas, and the last two are clients. 'farmX' is
+  just the hostname of our machines.
+- Run ./bft-simple/simple-server on each replica
+- Run ./bft-simple/simple-client on the clients
+
+You'll have to look at the bft-simple source to do anything more
+interesting.
+
+========================================================================
+BFT / BASE libraries.
+Rodrigo Rodrigues (rodrigo@lcs.mit.edu). 02 Apr 2003
+========================================================================
+
+This implements the BFT algorithm described in [1,2], and the
+extensions for BASE described in [3].
+
+The generic programming library that implements the algorithm and can
+be used to build new services can be found in the libbyz/
+subdirectory.  It uses cryptographic functions from the SFS library.
+
+BFT and BASE have different programming interfaces as described in
+[3]. To switch from the BASE interface to the BFT interface, edit
+libbyz/State_defs.h, define NO_STATE_TRANSLATION and undefine OBJ_REP.
+
+This distribution includes a simple example service built using
+the BFT library (in bft-simple/) and the BASE library (in simple/)
+
+It also includes the BFS [1] file system (in bfs/), and the BASEFS
+file system [3] (in difs/)
+
+To compile bft-simple or bfs you need to change libbyz/State_defs.h
+as described before, in order to use the original BFT interface.
+
+Two instruction files are presented next. The first one, produced
+by Russ Fink from NAI is a detailed description of how to install
+the library and how to build and run BASEFS (a.k.a. difs).
+
+The second one is the original README file that accompanied the first
+BFT distribution, and explains how to run BFS. This was produced
+by Miguel Castro (mcastro@microsoft.com) who is the primary author
+of the BFT algorithm and code (with the exception of BASE/BASEFS). 
+
+References:
+
+[1] M. Castro and B. Liskov. Practical Byzantine Fault Tolerance.
+In Proceedings of the Third Symposium on Operating Systems Design and
+Implementation (OSDI '99), New Orleans, USA, February 1999.
+
+[2] M. Castro and B. Liskov. Proactive Recovery in a
+Byzantine-Fault-Tolerant System.
+In Proceedings of the Fourth Symposium on Operating Systems Design and
+Implementation (OSDI '00), San Diego, USA, October 2000.
+
+[3] R. Rodrigues, M. Castro, and B. Liskov. BASE: Using Abstraction to
+Improve Fault Tolerance.
+Proceedings of the 18th Symposium on Operating Systems Principles
+(SOSP '01), Banff, Canada, October 2001.
+
+Copying:
+
+  Copyright (C) 1999 Miguel Castro, Barbara Liskov
+  Copyright (C) 2000, 2001 Miguel Castro, Rodrigo Rodrigues, Barbara Liskov
+
+    These programs are free software; you can redistribute them and/or modify
+    them under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    These programs are distributed in the hope that they will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with these programs; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+
+
+========================================================================
+BASE - BFT with Abstraction
+Ultra*Log Notes, NAI
+$Id: README,v 1.3 2002/05/01 20:56:14 rfink Exp $
+========================================================================
+Introduction:
+  This is the BASE extensions to libbyz, and includes an NFS wrapper
+  daemon in the difs directory.  This file contains installation notes,
+  and should generally be followed in order.  Operational instructions
+  are also included.  At the end is the original README contents,
+  preserved for historic reasons.
+
+Dependencies:
+  depends on sfs-0.5k for crypto;
+  sfs-0.5k depends on gmp version 3
+
+Check Your Versions:
+  using RedHat version redhat-release-7.2-1 (rpm -qa | grep 'redhat-release')
+  using GNU Make version 3.79.1 (make --version)
+  must compile using GNU gcc 2.95.3.
+
+Complete Version Map:
+  This is a snapshot of the build machine; probably not all of the versions
+  need to match, but the gcc, sfs, and RedHat releases are the important
+  ones.
+  gcc version 2.95.3 "unicorn" with GCC versions: 
+    GNU C Library stable release version 2.2.4 (/lib/libc.so.6 - run it)
+    Compiled by GNU CC version 2.96 20000731 (Red Hat Linux 7.1 2.96-97).
+    crypt add-on version 2.1 by Michael Glad and others
+    The C stubs add-on version 2.1.2.
+  installed RedHat packages with versions (rpm -qa | grep various):
+    compat-glibc-6.2-2.1.3.2
+    compat-libstdc++-6.2-2.9.0.16
+    gcc-2.96-98 (note - 2.95.3 was installed overtop by hand, not via RPM)
+    gcc3-3.0.1-3
+    gcc3-c++-3.0.1-3
+    gcc3-g77-3.0.1-3
+    gcc3-java-3.0.1-3
+    gcc3-objc-3.0.1-3
+    gcc-c++-2.96-98
+    gcc-chill-2.96-98
+    gcc-g77-2.96-98
+    gcc-java-2.96-98
+    gcc-objc-2.96-98
+    glibc-2.2.4-13
+    glibc-common-2.2.4-13
+    glibc-devel-2.2.4-13
+    glibc-profile-2.2.4-13
+    gmp-3.1.1-4 (stock RedHat 7.2... did not downgrade)
+	gmp-devel-3.1.1-4
+    libgcc-3.0.1-3
+    libstdc++-2.96-98
+    libstdc++3-3.0.1-3
+    libstdc++3-devel-3.0.1-3
+    libstdc++-devel-2.96-98
+
+Preliminary:
+  Unpack the source
+  Create a new directory, call this <top-dir>
+  Uncompress byz-code in that directory (note, this is the CVS archive)
+  Uncompress sfs-0.5k in same directory (obtain from vend directory)
+  Should see BASE + sfs directories at top level:
+    bfs/  config_private/  difs/  libbyz/  sfs-0.5k/	simple/
+
+Building sfs-0.5k:
+  # note - must create user sfs and group sfs or configure will fail
+  # dependencies: 
+  # GMP library: gmp- and gmp-devel (appropriate versions for your OS)
+  cd <sfs-directory>
+  groupadd sfs
+  useradd -d /export/home/sfs -g sfs sfs
+  mkdir ./install
+  setenv SFSHOME `pwd`
+  ./configure --prefix=${SFSHOME}/install
+  make
+    # make takes about 15 minutes on a Dell 1.7Ghz Optiplex
+	# ...  takes forever on other platforms
+	# Note - might get some errors compiling under RH 6.2; edit Makefiles
+	# and remove '-Werror' flag and recompile - also, had to fix some 
+	# problems in template files, expanding a suspicious return statement
+	# near line 1001 of some header file.
+	# 
+	# If all else fails, make sure libsfscrypt.a and libasync.a are built
+  make check
+  make install
+  cd $SFSHOME/install/include ; rm -f sfs ; ln -s sfs-0.5 sfs
+
+Building libbyz:
+  cd <top-dir>
+  # find . -name 'CVS' -exec rm -rf {} \; # ONLY IF NOT USING CVS!!!
+  rm -f sfs ; ln -s sfs-0.5/install sfs
+  rm -f gmp ; ln -s /usr/lib gmp
+  patch sfs/include/sfs/rabin.h as such (somewhat per instructions):
+    add method to rabin_pub:
+	  bool verify (const char *msg, const unsigned sz, const bigint &s) const {
+	    return verify (str (msg, sz), s);
+	  }
+    add method to rabin_priv:
+	  bigint sign (const char *msg, unsigned len) const {
+	    return sign (str (msg, len));
+      }
+  edit Makefiles (vi */Makefile) - 
+    go to INCS, add -I../sfs/include/sfs
+	  (note - simple/Makefile did not have an include to sfs originally)
+	go to LIBDIRS, add -L../sfs/lib/sfs
+  edit libbyz/State_defs.h, undefine NO_STATE_TRANSITION and define OBJ_REP
+  ( cd libbyz ; makedepend ; gmake clobber ; gmake )
+    # If on RH 6.2, getting "cannot find any 64 bit data types,"
+	# install upgraded compiler 2.95.3 
+	# If getting error on /usr/include/assert.h, edit libbyz/th_assert.h,
+	# and comment out line 67, starts with "#define __assert(str, file, line) 
+	# fail("%s %s %d", str, file, line)" - comment that out and rebuild.
+  edit simple/client_main.cc, change num_iter to 1000
+  ( cd simple ; makedepend ; gmake clobber ; gmake )
+    # NOTE: if getting include error on linux/limits.h, make sure
+    # kernel headers and kernel source are installed on machine.
+    # Both the kernel headers and full source are required to build.
+  # ( cd bfs ; makedepend ; gmake clobber ; gmake )
+    # Note - if want to build BFS, edit libbyz/State_defs.h, and 
+	# define NO_STATE_TRANSITION and undefine OBJ_REF - but then simple 
+	# and difs won't build
+  ( cd difs ; makedepend ; gmake clobber ; gmake )
+    # each takes less than 60 seconds on a Dell 1.7Ghz Optiplex
+  ( cd libbyz ; gmake clean ) 
+    # strikes out .o files only
+  ( cd simple ; gmake clean ) 
+  ( cd bfs ; gmake clean ) 
+  ( cd difs ; gmake clean; rm -f *.o core )
+    # clean target broken in difs because a file called 'clean' exists
+  tar -czf base.tgz difs/*.[ch]* simple/*.[ch]* \
+    `find difs/* -perm -0100` `find simple/* -perm -0100`
+    # NOTE: this will zip up source and binaries for debug; if just want bins,
+	# tar -czf bbin.tgz `find difs/* -perm -0100` `find simple/* -perm -0100`
+  tar -czf conf.tgz config_private
+
+Installing on RedHat 7.2 Machines:
+  # Repeat this procedure for both client and server machines.
+  # Need 5 machines - 4 for replicas (3f+1) and one as the client
+  # Create ulog user (password similar to itdos password)
+  # Unpack base.tgz and conf.tgz with the following:
+  cd ~ulog ; tar -xvzf base.tgz ; tar -xvzf conf.tgz
+  # Configure crypto key files:
+    edit config_private/config
+	  choose IP multicast address as 239.255.1.x as site local - see RFC2365
+	  configure 4 hosts (4 servers, 1 client), reuse existing public keys
+	    NOTE: put the replicas first, the clients second.  Set number of
+	    principles = replicas + clients.  Do NOT put the clients in with
+		the replicas, else it will think the client is a replica and not run.
+      don't forget the view chg, status, and watchdog timeout at end
+	  When choosing keys, reuse existing mit machine files, but rename
+	    to names of actual hosts.  
+	  For hosts that cannot resolve FQDN, add symbolic links.  For instance,
+	    link "kirk" -> "kirk.itdos.tislabs.com"
+    cp -f bfs/config bfs/config_private
+    cp -f bfs/config simple
+    cp -f bfs/config simple/config_private
+    edits in bfs/config_private directory
+	  use full DNS name to create files of private keys
+	  pull down a copy of ../config locally, though not sure if needed
+  Create links to config file and config_private directory:
+    ln -s config_private/config .
+	(cd difs ; ln -s ../config . ; ln -s ../config_private .)
+	(cd simple ; ln -s ../config . ; ln -s ../config_private .)
+  Verify GMP library exists: locate libgmp.so.3 
+    if not, disk 1 - rpm -i gmp-3.1.1-4.i386.rpm
+  Verify IP Multicast support - netstat -g (should see some info)
+    Also, do ifconfig -
+	  Should see MULTICAST in Ethernet interface.
+    If don't see multicast, try this fix on RedHat:
+      Edit /etc/sysconfig/network-scripts/ifcfg-eth0 (or 1)
+	  Add the following two lines at the bottom:
+        DEVNAME=`basename $CONFIG | sed 's/^ifcfg-//g'`
+        /sbin/ifconfig $DEVNAME multicast >/dev/null 2>&1
+      Down and up the interface; e.g., ifdown eth0 ; ifup eth0; ifconfig
+  Install NFS - nfs-utils, which requires portmapper (portmap*.rpm)
+  Start NFS - ntsysv, enable NFS, reboot or /etc/init.d/network restart
+
+Running:
+  Running Simple -
+    On the 4 replicas, do cd simple; ./server &
+	Should see "replica ready" message
+	On the client, do cd simple ; ./client
+	Should see "Elapsed time ... for 1000 iterations of operation 0"
+
+  Running BFS -
+    See original NOTES (below)
+
+  Running BASEFS -
+    On server replicas:
+	  ps -ef | grep nfsd
+	    # verify that nfsd daemons are running; if not, /etc/init.d/nfs start
+      su -
+      mkdir -p /tmp/ulog/bfs
+      chmod 1777 /tmp/ulog/bfs
+	  # be careful on this command, run only if no other exports 
+	  /usr/sbin/exportfs -ua
+	  /usr/sbin/exportfs -o rw '*:/tmp/ulog/bfs'
+      function runServer() {  # this line optional, for bash execution
+	    /bin/rm -rf /tmp/ulog/bfs/*
+	    /bin/rm -f /tmp/ulog/bfs/.[^.]*
+        cd /home/ulog/difs ; ./nfsd -d /tmp/ulog/bfs
+      } # this line optional, for bash execution
+	  runServer  # if using bash and above 3 cmds are defined in a fcn
+        # should get "replica ready"
+
+    On client:
+      su -
+	  # make the mount point
+      mkdir -p /tmp/ulog/bfs
+      chmod 1777 /tmp/ulog/bfs
+	  # first, try test-mounting the filesystem from one server replica
+	    umount /tmp/ulog/bfs ; mount uhura:/tmp/ulog/bfs /tmp/ulog/bfs
+	    echo hello > /tmp/ulog/bfs/1
+		  # should not get error message
+		[ -n "/tmp/ulog/bfs/1" -a -r "/tmp/ulog/bfs/1" ] && echo SUCCESS || \
+		  echo FAILURE
+	      # should see SUCCESS message
+        rm -f /tmp/ulog/bfs/1
+        umount /tmp/ulog/bfs
+	  # end of test mounting
+      # Now, run difs/basefs
+      function runClient() { # this line optional, for bash execution
+        cd /home/ulog/difs; ./client & 
+	    sleep 5
+	      # wait for "client ready" message
+		  # If getting "recvfrom() failed or request too big" or other message,
+		  # kill client and restart.  The problem usually corrects itself.
+        ./bfsmount -d /tmp/ulog/bfs
+      } # this line optional, for bash execution
+      runClient # for bash
+	    # If getting "mount: Invalid argument", then faulty NFS implementation
+		# or bug in BFS code in difs/nfsd.c, likely some handler function
+		# missing or providing incorrect data.  Debug using kernel 'dmesg'
+		# command, specially-instrumented kernel, 'strace', other such tools
+      # SHOULD WORK.  One note: mount -v will NOT show the file as mounted.
+	  # I believe this is because the client proxy isn't setting status in
+	  # the local kernel.
+	  #
+	  # To verify that it mounted, run the following test w/root on the client:
+      /bin/cp -f /etc/passwd /tmp/ulog/bfs
+	  [ -s "/tmp/ulog/bfs/passwd" -a -r "/tmp/ulog/bfs/passwd" ] && \
+	    [ `grep ^root /etc/passwd | cut -f1 -d:` = "root" ] && \
+		echo "COPY SUCCESSFUL" || echo "COPY FAILED"
+      # remove the file, if needed
+	  /bin/rm -f /tmp/ulog/bfs/passwd
+	  [ -s "/tmp/ulog/bfs/passwd" -o -r "/tmp/ulog/bfs/passwd" ] && \
+	    echo "DELETE FAILED" || echo "DELETE SUCCESSFUL"
+      umount /tmp/ulog/bfs  # when done
+
+	  # Debug hints...
+	  #	trying strace... if it shows mount returning ENOSYS,
+	  #	not implemented, when trying to mount 127.0.0.1 on
+	  #	/mnt/tmp as "nfs", then NFS not installed or running.
+	  #	  install nfs-utils-0.3.1-13.i386.rpm
+	  #	    needs portmap-4.0-38.i386.rpm
+	  #	  ntsysv, enable nfs
+	  #	    error - does it need rsh, rexec?? Verify (per clarke):
+	  #	    netfs, network, nfs, nfslock, portmap, rexec, rlogin,
+	  #	    rexec, xfs
+      #  With NFS running, if still getting EINVAL, but not NOSYS errors,
+	  #  then faulty nfsd.c implementation.
+
+========================================================================
+CASTRO (original) NOTES -
+
+libbyz
+------
+
+This is version 0.1 of libbyz -- a library to build replicated
+services that tolerate Byzantine faults. This code is not ready for
+production use but the library is mostly complete and it its is
+relatively stable (it can repeatedly run the benchmarks included in
+the distribution).
+
+Files
+-----
+You should have these files and directories:
+
+libbyz -- The library
+
+simple (now called simple-bft) -- A simple service that uses the
+library. It benchmarks multi-RPC performance.
+
+bfs -- A simple Byzantine fault tolerant NFS
+
+config, config_private -- Example configuration files
+
+COPYING -- The GNU General Public License.
+
+README -- This file
+
+How to build
+------------
+
+The current version of the library has been built on Intel P6's with 
+Linux 2.2.16 using egcs-2.91.66. The kernel must be configured with IP
+multicast support. It should be fairly easy to port the library to 
+other machines. An older version of the library ran on DEC Alphas 
+with Digital Unix.  
+
+You will need the GNU gmp library (2.0.2) and SFS (0.2).
+A later version of SFS can be obtained from www.fs.net.
+The code should still work with that later version but I have
+not tested it. The makefiles require gmake.
+
+-- Create a symbolic link at the top level named gmp pointing to the 
+directory where you installed gmp
+
+-- Create a symbolic link at the top level named sfs pointing to the 
+directory where you installed sfs
+
+-- Patch the file sfs/crypt/rabin.h to add the following method
+to rabin_pub:
+
+ bool verify (const char *msg, const unsigned sz, const bigint &s) const {
+    bigint m;
+    E2 (m, s);
+    D1 (m, m);
+    sha1ctx sc;
+    sc.update (msg, sz);
+    return post_verify (&sc, m, nbits);
+  }
+
+and the following method to rabin_priv:
+
+bigint sign (const char *msg, unsigned len) const {
+    sha1ctx sc;
+    sc.update(msg, len);
+    bigint m = pre_sign (&sc, nbits);
+    E1 (m, m);
+    D2 (m, m, rnd.getword ());
+    return m;
+  }
+
+- Edit makefiles in each subdirectory to match your environment
+
+- type gmake in libbyz
+
+- type gmake in simple (now called simple-bft)
+
+- type gmake in bfs
+
+How to run
+----------
+
+Edit the config file to match your environment. The following is an
+example config file:
+ 
+generic
+1
+15000000
+5
+234.5.6.9 3458
+sarod.lcs.mit.edu 18.26.1.241 3458 bfaa873efc926cb91646a89e45f96582041e3eed35cde0ef60b5c006cfad883781ee807411b0df3c74dc3ebbbce59c21d67711c83ecf596357c23dba33da338fb5577179a3b6188c59590aa1301eb852c0e14fa9225c0b377fee944eb9fa110ad7a316269e4b13b153887426a347c7c3c5feb1e3107bac4c6e29327b3343c405
+fado.lcs.mit.edu 18.26.1.243 3458 bfaa873efc926cb91646a89e45f96582041e3eed35cde0ef60b5c006cfad883781ee807411b0df3c74dc3ebbbce59c21d67711c83ecf596357c23dba33da338fb5577179a3b6188c59590aa1301eb852c0e14fa9225c0b377fee944eb9fa110ad7a316269e4b13b153887426a347c7c3c5feb1e3107bac4c6e29327b3343c405
+pipa.lcs.mit.edu 18.26.1.240 3458 bfaa873efc926cb91646a89e45f96582041e3eed35cde0ef60b5c006cfad883781ee807411b0df3c74dc3ebbbce59c21d67711c83ecf596357c23dba33da338fb5577179a3b6188c59590aa1301eb852c0e14fa9225c0b377fee944eb9fa110ad7a316269e4b13b153887426a347c7c3c5feb1e3107bac4c6e29327b3343c405
+sygyt.lcs.mit.edu 18.26.1.242 3458 bfaa873efc926cb91646a89e45f96582041e3eed35cde0ef60b5c006cfad883781ee807411b0df3c74dc3ebbbce59c21d67711c83ecf596357c23dba33da338fb5577179a3b6188c59590aa1301eb852c0e14fa9225c0b377fee944eb9fa110ad7a316269e4b13b153887426a347c7c3c5feb1e3107bac4c6e29327b3343c405
+lirone.lcs.mit.edu 18.26.1.36 3458 bfaa873efc926cb91646a89e45f96582041e3eed35cde0ef60b5c006cfad883781ee807411b0df3c74dc3ebbbce59c21d67711c83ecf596357c23dba33da338fb5577179a3b6188c59590aa1301eb852c0e14fa9225c0b377fee944eb9fa110ad7a316269e4b13b153887426a347c7c3c5feb1e3107bac4c6e29327b3343c405
+5000
+100
+2000000000
+// The format is:
+// Service name
+// Maximum number of faults that can be tolerated (f)
+// Period between key changes (ms)
+// Number of principals (excluding group)
+// IP multicast group address and port
+// DNS_name IP_address port public_key_base16
+// .... (x Number of principals)
+// Then the replica specific portion:
+// view change timeout (ms)
+// status timeout for retransmissions (ms)
+// watchdog timeout (ms)
+
+The first 3f+1 machines in the config file are the replicas (here f is
+in the second line in the file). The remaining principals can be used
+as clients. You need to replace names and IP addresses of the machines
+to match your environment.
+
+There is also a configuration file with a matching private key.
+We supply a set of files that match the example above:
+
+d3bf9ada150474e93d21a4818ccf40e97df94f565c0528973a7799fc3e9ee69e0561fff15631850e2c5b8f9accee851cfc170cd0193052d4f75dfee18ab1d24b e7b8885fa504355a686140181ae956e726e490ac2f905e52a78bea2ef16acef31788b827f35f0de1343766e6f2cbe44f436d7e5eceeb67791ccd296422fb50ef
+
+You can use SFS to generate more keys. 
+
+By default, the programs in this distribution assume the config file
+is in a file named "./config" and the file with the private keys is in
+a file named "./config_private/full.dns.machine.name".  But there are
+command line options to change these.
+
+
+How to run simple (now called simple-bft):
+------------------
+
+After you have these files and you have built the code in simple, you
+can start "server" in the replica machines. Then you can start client
+in the client machine/s. The clients will run for a while and print a
+message saying how long it took to execute a series of operations.
+
+How to run BFS:
+---------------
+
+Create a large file of zeros in each replica machine (these files must
+have the same size in each replica). You can do this by typing:
+
+newbfs filename filesize 
+
+(The file size should be in KB.)
+
+Then you can start a server in each replica by typing:
+
+nfsd -f filename
+
+The next step is to start the client in a client machine by typing:
+
+client &
+
+After starting the client you can call bfsmount to mount BFS in the
+client machine:
+
+bfsmount -d directory_where_to_mount
+
+Then you can do whatever you would do in a normal Unix file system.
+
+How to implement new services:
+------------------------------
+
+You should use the "C" interface in "libbyz/libbyz.h"
+The "replica_main.cc" and "client_main.cc" files in "simple"
+are a simple example of how the library should be used.
+ 
+Contributors
+------------
+
+This implementation was written by Miguel Castro. The library, simple
+(now called simple-bft) and bfs were first described in "Practical
+Byzantine Fault Tolerance", by Miguel Castro and Barbara Liskov, which
+appeared in the Proceedings of the Third Symposium on Operating
+Systems Design and implementation, February 1999.
+
+More information can be found on 
+http://www.pmg.lcs.mit.edu/~castro/byz.html
+
+Copying
+-------
+
+    Copyright (C) 1999,2000 Miguel Castro and Barbara Liskov
+
+    These programs are free software; you can redistribute them and/or modify
+    them under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    These programs are distributed in the hope that they will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with these programs; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+Bugs
+----
+
+Please send bug reports and extensions or improvements you may write
+to Miguel Castro (castro@lcs.mit.edu)

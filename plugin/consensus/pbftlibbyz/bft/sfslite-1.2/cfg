@@ -1,0 +1,53 @@
+#!/bin/sh
+
+#
+# CFG ORIGINAL FILE -- do not delete this line
+#
+#  $Id: cfg 1256 2005-12-08 02:41:26Z max $
+
+CFG=cfg
+
+if [ -f $CFG -a ! -w $CFG ]
+then
+    echo "Not writing over cfg because it's read only."
+    exit 1
+fi
+
+if [ -f $CFG ]
+then
+    grep "CFG ORIGINAL FILE" $CFG > /dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "Please run ./cfg in your build (and not your source!) directory."
+	exit 1
+    fi
+fi
+
+if [ -f $CFG ]
+then
+    rm $CFG
+fi
+
+
+touch $CFG
+
+echo "#!/bin/sh" >> $CFG
+echo "" >> $CFG
+
+if [ "$DEBUG" ]
+then
+    echo "export DEBUG=\"$DEBUG\"" >> $CFG
+fi
+if [ "$CXX" ]
+then
+    echo "export CXX=\"$CXX\"" >> $CFG
+fi
+if [ "$CC" ] 
+then
+    echo "export CC=\"$CC\"" >> $CFG
+fi
+
+CONFIGURE=`echo $0 | sed 's/cfg/configure/' `
+echo "$CONFIGURE $*" >> $CFG
+chmod u+x $CFG
+sh -x $CFG

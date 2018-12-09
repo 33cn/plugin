@@ -1,0 +1,55 @@
+
+$Id: ChangeLog 1754 2006-05-19 20:59:19Z max $
+
+0.8.9
+ - support for callback::signal() within SFS
+ - simplified runtime leak-checking support
+ - added --enable-sfsmisc for building SFSmisc with sfslite; the drawback
+   here is that compilation will be longer, but the advantage is that
+   some the user-level FS libraries from SFS will be compiled, as needed
+   by some software such as Chord.
+
+0.8.8
+ - Some critical path optimizations for tame to reduce the number of 
+   calls to wrap.  Some might be unsafe; needs to be triple-checked.
+ - Internally, tame now uses **references** instead of **pointers** when
+   preparing coordination variables.
+ - Remove pointer_setX, replace with refset_t	
+ - Changed, yet again, the special coordination variable name from 'coordvar'
+   to 'callercv.'
+ - Recycle ptr<bool>'s instead of always throwing them out and reallocating
+   them. Recycle limit by default is 128, but can tune it. 
+ - Support GCC 4.1 compilation
+ - Include PATCHLEVEL #define, so software can specify desired sfslite
+   patchlevel
+ - Nuke NONBLOCK from examples, and use n_signals_left as in the paper.
+
+0.8.7
+ - Fixed bug in _block_cb3
+ - Type2Struct for long long and unsigned long long
+ - Fixed u_int/size_t mismatches in tame/tame.h
+ - Added asrv_delayed_eof
+	
+
+0.8.6
+ - Changed "unwrap" to "tame"
+ - Simplified "tame" syntax; now have NONBLOCK .. JOIN instead of CRCC*
+ - Added line number translation on tame output; can be disabled via the
+	-L flag or by setting the NO_LINE_NUMBER environment variable
+ - Turn compile on tutorial on by configure-time switch '--enable-tutorial'
+ - tame -v now shows a version number.
+ - Compile fixes for GCC 4.0 in rpctypes.h
+ - Now, no need to do TAME(void myfn()) { .. } ; rather
+   TAME void myfn () { ... } works just as well.
+ - Instead of JOIN/join_group use WAIT/coordgroup
+ - No more need for nonblock; use  @[]() instead
+
+0.8.5 (pre-releases only due to versioning bug)
+	
+0.8.4 
+ - Fix warn() statements in paillier.C so that they compile on ia64
+ - Fix bugs in unwrap for trivial input files; was accessing NULL
+   pointers.
+
+0.8.3 and before 
+ - Undocumented

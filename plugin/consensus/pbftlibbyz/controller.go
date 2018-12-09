@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	plog             = log.New("module", "pbftlibbyz")
+	plog             = log.New("module", "Pbftlibbyz")
 	genesis          string
 	genesisBlockTime int64
 	clientAddr       string
@@ -27,8 +27,8 @@ type subConfig struct {
 	ClientAddr       string `json:"clientAddr"`
 }
 
-// Newpbftlibbyz create pbftlibbyz cluster
-func Newpbftlibbyz(cfg *pb.Consensus, sub []byte) queue.Module {
+// NewPbftlibbyz create pbftlibbyz cluster
+func NewPbftlibbyz(cfg *pb.Consensus, sub []byte) queue.Module {
 	plog.Info("start to creat pbftlibbyz node")
 	var subcfg subConfig
 	if sub != nil {
@@ -48,7 +48,11 @@ func Newpbftlibbyz(cfg *pb.Consensus, sub []byte) queue.Module {
 	clientAddr = subcfg.ClientAddr
 
 	var c *Client
-	replyChan, requestChan, isPrimary := NewReplica(uint32(subcfg.NodeID), subcfg.PeersURL, subcfg.ClientAddr)
-	c = NewBlockstore(cfg, replyChan, requestChan, isPrimary)
+	isClient := false
+	peers := strings.Split(subcfg.PeersURL, ",")
+	if peers[int(subcfg.NodeID) - 1] == subcfg.ClientAddr {
+		isClient = true
+	}
+	c = NewBlockstore(cfg, isClient)
 	return c
 }

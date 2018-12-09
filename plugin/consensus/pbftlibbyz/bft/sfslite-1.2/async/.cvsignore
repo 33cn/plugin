@@ -1,0 +1,10 @@
+*.la
+*.lo
+.deps
+.libs
+Makefile
+Makefile.in
+aiod
+chartables.c
+dftables
+stamp-async-repo

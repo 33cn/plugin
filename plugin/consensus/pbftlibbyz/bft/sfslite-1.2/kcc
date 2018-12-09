@@ -1,0 +1,41 @@
+#!/bin/sh
+# $Id: kcc 2 2003-09-24 14:35:33Z max $
+
+# This is a wrapper script around KCC.  To use, install it as kcc and
+# k++, then configure this package with
+#    env CC=kcc CXX=k++ ./configure
+
+KCC=KCC
+
+case $0 in
+    *CC|*xx|*++)
+	cmd="$KCC"
+	xtra=
+	;;
+    *cc)
+	cmd="$KCC --c"
+	xtra='-I/usr/include'
+	;;
+esac
+
+args=
+for arg in $*; do
+    case $arg in
+	-Wp,-MD,*)
+	    arg='--output_dependencies '`expr "$arg" : '-Wp,-MD,\(.*\)'`
+	    ;;
+	-D*)
+	    arg=\'"$arg"\'
+	    ;;
+	*.[sS])
+	    cmd=gcc
+	    ;;
+    esac
+    args="$args${args+ }$arg"
+done
+
+cmd="$cmd $args"
+test "$xtra" && cmd="$cmd $xtra"
+
+#echo "$cmd"
+eval "exec $cmd"

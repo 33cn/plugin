@@ -1,0 +1,380 @@
+--- fileutils-4.0/configure.in	Tue Nov 10 08:54:33 1998
++++ fileutils-4.0-sfs/configure.in	Mon Jan  3 12:11:58 2000
+@@ -337,6 +337,32 @@
+ # the ANSI2KNR-filtering rules.
+ LIBOBJS=`echo $LIBOBJS|sed 's/\.o /\$U.o /g;s/\.o$/\$U.o/'`
+ 
++dnl
++dnl Check for SFS
++dnl
++AC_ARG_WITH(sfs,
++  --with-sfs[[=/usr/local]] Use SFS library)
++if test -z "${with_sfs+set}"; then
++	AC_MSG_CHECKING([for SFS library])
++	for dir in /usr "$prefix" /usr/local; do
++	    if test -f $dir/lib/libsfs.a -a -f $dir/include/sfs.h; then
++		with_sfs=$dir
++		break
++	    fi
++	done
++	if test -z "$with_sfs"; then
++	    AC_MSG_ERROR([Could not find SFS library])
++	fi
++fi
++if test "$with_sfs" != no; then
++	AC_MSG_RESULT([$with_sfs])
++	CPPFLAGS="$CPPFLAGS -I${with_sfs}/include"
++	LIBS="$LIBS -L${with_sfs}/lib -lsfs"
++	AC_DEFINE(HAVE_SFS, 1, Define if you have SFS)
++fi
++
++
++
+ AC_OUTPUT([Makefile
+            doc/Makefile
+ 	   intl/Makefile
+--- fileutils-4.0/lib/userspec.c	Sat May 16 16:43:45 1998
++++ fileutils-4.0-sfs/lib/userspec.c	Mon Jan  3 12:11:58 2000
+@@ -112,7 +112,12 @@
+    Either one might be NULL instead, indicating that it was not
+    given and the corresponding numeric ID was left unchanged.
+ 
+-   Return NULL if successful, a static error message string if not.  */
++   Return NULL if successful, a static error message string if not.
++
++   If using SFS, we only parse the USERNAME and GROUPNAME, not
++   the UID or GID.
++
++  */
+ 
+ const char *
+ parse_user_spec (spec_arg, uid, gid, username_arg, groupname_arg)
+@@ -154,6 +159,25 @@
+ 
+   if (u == NULL && g == NULL)
+     return "can not omit both user and group";
++
++#ifdef HAVE_SFS
++  if (u != NULL)
++    {
++      *username_arg = strdup (u);
++      if (*username_arg == NULL)
++	error_msg = tired;
++    }
++
++
++  if (g != NULL && error_msg == NULL)
++    {
++      *groupname_arg = strdup (g);
++      if (*groupname_arg == NULL)
++	error_msg = tired;
++    }
++
++  return error_msg;
++#endif /* HAVE_SFS */
+ 
+ #ifdef __DJGPP__
+   /* Pretend that we are the user U whose group is G.  This makes
+--- fileutils-4.0/src/chgrp.c	Sat Sep 19 13:09:23 1998
++++ fileutils-4.0-sfs/src/chgrp.c	Mon Jan  3 12:11:58 2000
+@@ -30,6 +30,10 @@
+ #include "savedir.h"
+ #include "group-member.h"
+ 
++#ifdef HAVE_SFS
++#include "sfs.h"
++#endif /* HAVE_SFS */
++
+ /* MAXUID may come from limits.h *or* sys/params.h (via system.h) above. */
+ #ifndef MAXUID
+ # define MAXUID INT_MAX
+@@ -181,6 +185,9 @@
+ {
+   struct stat file_stats;
+   int errors = 0;
++#ifdef HAVE_SFS
++  int oldgroup = group;
++#endif 
+ 
+   if (lstat (file, &file_stats))
+     {
+@@ -189,6 +196,20 @@
+       return 1;
+     }
+ 
++#ifdef HAVE_SFS
++  if ((group == (gid_t) -1))
++    {
++      if (*groupname == '\0')
++	error (1, 0, _("can not change to null group"));
++      
++      group = (gid_t) sfs_gidbyname (groupname, file_stats.st_dev);
++
++      if (group == (gid_t) -1)
++	error (1, 0, _("invalid group name or number `%s'"), groupname);
++
++    }
++#endif
++
+   if (group != file_stats.st_gid)
+     {
+       int fail;
+@@ -231,8 +252,11 @@
+     }
+ 
+   if (recurse && S_ISDIR (file_stats.st_mode))
++#ifdef HAVE_SFS
++    errors |= change_dir_group (file, oldgroup, &file_stats);
++#else
+     errors |= change_dir_group (file, group, &file_stats);
+-
++#endif
+   return errors;
+ }
+ 
+@@ -395,8 +419,14 @@
+       group = ref_stats.st_gid;
+     }
+   else
+-    parse_group (argv[optind++], &group);
+-
++    {
++#ifdef HAVE_SFS
++      groupname = argv[optind++];
++      group = -1;
++#else
++      parse_group (argv[optind++], &group);
++#endif /* HAVE_SFS */
++    }
+   for (; optind < argc; ++optind)
+     errors |= change_file_group (argv[optind], group);
+ 
+--- fileutils-4.0/src/chown.c	Sat Sep 19 13:09:23 1998
++++ fileutils-4.0-sfs/src/chown.c	Mon Jan  3 12:11:58 2000
+@@ -74,8 +74,14 @@
+   V_off
+ };
+ 
++#ifdef HAVE_SFS
++static int change_dir_owner PARAMS ((const char *dir, uid_t user, gid_t group,
++				     struct stat *statp, char *username_arg, 
++				     char *groupname_arg));
++#else
+ static int change_dir_owner PARAMS ((const char *dir, uid_t user, gid_t group,
+ 				     struct stat *statp));
++#endif /* HAVE_SFS */
+ 
+ /* The name the program was run with. */
+ char *program_name;
+@@ -163,9 +169,12 @@
+ /* Change the ownership of FILE to UID USER and GID GROUP.
+    If it is a directory and -R is given, recurse.
+    Return 0 if successful, 1 if errors occurred. */
+-
+ static int
+-change_file_owner (int cmdline_arg, const char *file, uid_t user, gid_t group)
++change_file_owner (int cmdline_arg, const char *file, uid_t user, gid_t group
++#ifdef HAVE_SFS
++		   , char *username_arg, char *groupname_arg
++#endif
++		   )
+ {
+   struct stat file_stats;
+   uid_t newuser;
+@@ -179,8 +188,32 @@
+       return 1;
+     }
+ 
++#ifdef HAVE_SFS
++  if ((user == (uid_t) -1) && username_arg)
++    {
++      newuser = (uid_t) sfs_uidbyname (username_arg, file_stats.st_dev);
++      if (newuser == (uid_t) -1)
++	error (1, 0, _("invalid user name or number `%s'"), username_arg);
++
++    }
++  else
++    newuser = user == (uid_t) -1 ? file_stats.st_uid : user;
++
++  if ((group == (gid_t) -1) && groupname_arg)
++    {
++      newgroup = (gid_t) sfs_gidbyname (groupname_arg, file_stats.st_dev);
++
++      if (newgroup == (gid_t) -1)
++	error (1, 0, _("invalid group name or number `%s'"), groupname_arg);
++      
++    }
++  else
++    newgroup = group == (gid_t) -1 ? file_stats.st_gid : group;
++#else
+   newuser = user == (uid_t) -1 ? file_stats.st_uid : user;
+   newgroup = group == (gid_t) -1 ? file_stats.st_gid : group;
++#endif /* HAVE_SFS */
++
+   if (newuser != file_stats.st_uid || newgroup != file_stats.st_gid)
+     {
+       int fail;
+@@ -223,7 +256,12 @@
+     }
+ 
+   if (recurse && S_ISDIR (file_stats.st_mode))
++#ifdef HAVE_SFS
++    errors |= change_dir_owner (file, user, group, &file_stats,
++				username_arg, groupname_arg);
++#else
+     errors |= change_dir_owner (file, user, group, &file_stats);
++#endif /* HAVE_SFS */
+   return errors;
+ }
+ 
+@@ -233,7 +271,11 @@
+    Return 0 if successful, 1 if errors occurred. */
+ 
+ static int
+-change_dir_owner (const char *dir, uid_t user, gid_t group, struct stat *statp)
++change_dir_owner (const char *dir, uid_t user, gid_t group, struct stat *statp
++#ifdef HAVE_SFS
++		   , char *username_arg, char *groupname_arg
++#endif
++)
+ {
+   char *name_space, *namep;
+   char *path;			/* Full path of each entry to process. */
+@@ -272,7 +314,12 @@
+ 	  path = xrealloc (path, pathlength);
+ 	}
+       strcpy (path + dirlength, namep);
++#ifdef HAVE_SFS
++      errors |= change_file_owner (0, path, user, group, username_arg, groupname_arg);
++#else
+       errors |= change_file_owner (0, path, user, group);
++#endif /* HAVE_SFS */
++
+     }
+   free (path);
+   free (name_space);
+@@ -327,6 +374,9 @@
+   int errors = 0;
+   int optc;
+   char *e;
++#ifdef HAVE_SFS
++  char *user_spec;
++#endif
+ 
+   program_name = argv[0];
+   setlocale (LC_ALL, "");
+@@ -400,14 +450,18 @@
+         error (1, 0, "%s: %s", argv[optind], e);
+       if (username == NULL)
+         username = "";
+-
+       optind++;
+     }
+ 
+   for (; optind < argc; ++optind)
+     {
+       strip_trailing_slashes (argv[optind]);
++#ifdef HAVE_SFS
++      errors |= change_file_owner (1, argv[optind], user, group, 
++				   username, groupname);
++#else
+       errors |= change_file_owner (1, argv[optind], user, group);
++#endif /* HAVE_SFS */
+     }
+ 
+   if (verbosity != V_off)
+--- fileutils-4.0/src/ls.c	Sat Sep 19 13:09:23 1998
++++ fileutils-4.0-sfs/src/ls.c	Thu Jan  6 20:34:33 2000
+@@ -74,6 +74,11 @@
+ #include "quotearg.h"
+ #include "filemode.h"
+ 
++
++#ifdef HAVE_SFS
++# include "sfs.h"
++#endif
++
+ #define obstack_chunk_alloc malloc
+ #define obstack_chunk_free free
+ 
+@@ -1712,6 +1717,7 @@
+ 	  attach (path, dirname, name);
+ 	}
+ 
++
+       if (trace_links)
+ 	{
+ 	  val = stat (path, &files[files_index].stat);
+@@ -2188,6 +2194,9 @@
+   struct tm *when_local;
+   const char *fmt;
+   char *user_name;
++#ifdef HAVE_SFS
++  sfs_names sn;
++#endif
+ 
+ #if HAVE_ST_DM_MODE
+   /* Cray DMF: look at the file's migrated, not real, status */
+@@ -2258,20 +2267,61 @@
+   sprintf (p, "%s %3u ", modebuf, (unsigned int) f->stat.st_nlink);
+   p += strlen (p);
+ 
+-  user_name = (numeric_ids ? NULL : getuser (f->stat.st_uid));
++
++if (numeric_ids)
++  user_name = NULL;
++ else {
++
++#ifdef HAVE_SFS
++   if (sfs_stat2names (&sn, &f->stat) < 0)
++     {
++       snprintf (sn.uidname, sfs_idnamelen, "%u", f->stat.st_uid);
++       sn.uidname[sfs_idnamelen] = '\0';
++
++       snprintf (sn.gidname, sfs_idnamelen, "%u", f->stat.st_gid);
++       sn.gidname[sfs_idnamelen] = '\0';
++
++     }
++   
++   user_name = sn.uidname;
++#else
++   user_name = getuser (f->stat.st_uid);
++#endif /* HAVE_SFS */
++
++ }
++
++
++#ifdef HAVE_SFS
++  /* We prepend a % symbol to sfs usernames and group names */
++  if (user_name)
++    sprintf (p, "%-9.9s ", user_name);
++  else
++    sprintf (p, "%-9u ", (unsigned int) f->stat.st_uid);
++#else
+   if (user_name)
+     sprintf (p, "%-8.8s ", user_name);
+   else
+     sprintf (p, "%-8u ", (unsigned int) f->stat.st_uid);
++
++#endif /* HAVE_SFS */
++
+   p += strlen (p);
+ 
+   if (!inhibit_group)
+     {
++#ifdef HAVE_SFS
++      char *group_name = (numeric_ids ? NULL : sn.gidname);
++      if (group_name)
++	sprintf (p, "%-9.9s ", group_name);
++      else
++	sprintf (p, "%-9u ", (unsigned int) f->stat.st_gid);
++#else
+       char *group_name = (numeric_ids ? NULL : getgroup (f->stat.st_gid));
+       if (group_name)
+ 	sprintf (p, "%-8.8s ", group_name);
+       else
+ 	sprintf (p, "%-8u ", (unsigned int) f->stat.st_gid);
++#endif /* HAVE_SFS */
+       p += strlen (p);
+     }
+ 
