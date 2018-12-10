@@ -14,9 +14,9 @@ message RoundInfo {
     // 最后一把钥匙的购买时间
     int64 lastKeyTime = 5;
     // 最后一把钥匙的价格
-    int64 lastKeyPrice = 6;
+    float lastKeyPrice = 6;
     // 本轮游戏奖金池总额
-    int64 bonusPool  = 7;
+    float bonusPool  = 7;
     // 本轮游戏参与地址数
     int64 userCount = 8;
     // 本轮游戏募集到的key个数
@@ -30,7 +30,7 @@ message KeyInfo {
     int64 round = 1;
       
     // 本次购买key的价格 (是由系统合约填写后存储）
-    int64 keyPrice = 2;  
+    float keyPrice = 2;
     
     // 用户本次买的key的数量
     int64 keyNum = 3;
