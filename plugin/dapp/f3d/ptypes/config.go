@@ -7,7 +7,7 @@ package types
 
 var (
 	// 本游戏合约管理员地址
-	f3dManager = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+	f3dManagerAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 	//本游戏合约平台开发者分成地址
 	f3dDeveloperAddr = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
@@ -41,8 +41,8 @@ func SetConfig() {
 
 }
 
-func GetF3dManager() string {
-	return f3dManager
+func GetF3dManagerAddr() string {
+	return f3dManagerAddr
 }
 
 func GetF3dDeveloperAddr() string {
