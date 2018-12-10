@@ -530,23 +530,23 @@ func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBul
 	return gameRet
 }
 
-func (action *Action) checkPlayerExistInGame() bool {
-	values, err := action.localDB.List(calcPBGameAddrPrefix(action.fromaddr), nil, pkt.DefaultCount, pkt.ListDESC)
-	if err == types.ErrNotFound {
-		return false
-	}
-
-	var value pkt.PBGameRecord
-	length := len(values)
-	if length != 0 {
-		valueBytes := values[length-1]
-		err := types.Decode(valueBytes, &value)
-		if err == nil && value.Status == pkt.PBGameActionQuit {
-			return false
-		}
-	}
-	return true
-}
+//func (action *Action) checkPlayerExistInGame() bool {
+//	values, err := action.localDB.List(calcPBGameAddrPrefix(action.fromaddr), nil, pkt.DefaultCount, pkt.ListDESC)
+//	if err == types.ErrNotFound {
+//		return false
+//	}
+//
+//	var value pkt.PBGameRecord
+//	length := len(values)
+//	if length != 0 {
+//		valueBytes := values[length-1]
+//		err := types.Decode(valueBytes, &value)
+//		if err == nil && value.Status == pkt.PBGameActionQuit {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 // GameStart 游戏开始
 func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) {
@@ -566,10 +566,11 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		return nil, types.ErrNoBalance
 	}
 
-	if action.checkPlayerExistInGame() {
-		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Address is already in a game")
-		return nil, fmt.Errorf("Address is already in a game")
-	}
+	// 由应用平台限制
+	//if action.checkPlayerExistInGame() {
+	//	logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Address is already in a game")
+	//	return nil, fmt.Errorf("Address is already in a game")
+	//}
 
 	var game *pkt.PokerBull
 	ids, err := queryGameListByStatusAndPlayer(action.localDB, pkt.PBGameActionStart, start.PlayerNum, start.Value)
