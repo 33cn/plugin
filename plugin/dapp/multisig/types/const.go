@@ -13,27 +13,26 @@ import (
 var multisiglog = log15.New("module", "execs.multisig")
 
 var (
-	//OwnerAdd owner操作类型
 	OwnerAdd     uint64 = 1
 	OwnerDel     uint64 = 2
 	OwnerModify  uint64 = 3
 	OwnerReplace uint64 = 4
 	//AccWeightOp 账户属性的操作
-	AccWeightOp     bool = true
-	AccDailyLimitOp bool = false
+	AccWeightOp     = true
+	AccDailyLimitOp = false
 	//OwnerOperate 多重签名交易类型：转账，owner操作，account操作
 	OwnerOperate    uint64 = 1
 	AccountOperate  uint64 = 2
 	TransferOperate uint64 = 3
 	//IsSubmit ：
-	IsSubmit  bool = true
-	IsConfirm bool = false
+	IsSubmit  = true
+	IsConfirm = false
 
 	MultiSigX            = "multisig"
 	OneDaySecond   int64 = 24 * 3600
-	MinOwnersInit  int   = 2
-	MinOwnersCount int   = 1  //一个多重签名的账户最少要保留一个owner
-	MaxOwnersCount int   = 20 //一个多重签名的账户最多拥有20个owner
+	MinOwnersInit        = 2
+	MinOwnersCount       = 1  //一个多重签名的账户最少要保留一个owner
+	MaxOwnersCount       = 20 //一个多重签名的账户最多拥有20个owner
 
 	Multisiglog = log15.New("module", MultiSigX)
 )

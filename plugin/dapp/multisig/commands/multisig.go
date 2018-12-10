@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//MultiSigCmd :
 func MultiSigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "multisig",
@@ -32,6 +33,8 @@ func MultiSigCmd() *cobra.Command {
 	)
 	return cmd
 }
+
+//MultiSigAccountCmd :account相关的命令
 func MultiSigAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "account",
@@ -52,6 +55,7 @@ func MultiSigAccountCmd() *cobra.Command {
 	return cmd
 }
 
+//MultiSigOwnerCmd : owner相关的命令
 func MultiSigOwnerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "owner",
@@ -67,6 +71,7 @@ func MultiSigOwnerCmd() *cobra.Command {
 	return cmd
 }
 
+//MultiSigTxCmd : tx交易相关的命令
 func MultiSigTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx",
@@ -134,8 +139,8 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 
 	//将字符转权重转换成uint64的值
 	var weights []uint64
-	var totalweight uint64 = 0
-	var ownerCount int = 0
+	var totalweight uint64
+	var ownerCount int
 	for _, weight := range weightsArr {
 		ownerweight, err := strconv.ParseInt(weight, 10, 64)
 		if err != nil || ownerweight <= 0 {
@@ -149,7 +154,7 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 	var owners []*mty.Owner
 	for index, addr := range addressArr {
 		if addr != "" {
-			owmer := &mty.Owner{addr, weights[index]}
+			owmer := &mty.Owner{OwnerAddr: addr, Weight: weights[index]}
 			owners = append(owners, owmer)
 		}
 	}
@@ -581,7 +586,6 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//query信息
 //GetMultiSigAccCountCmd 获取已经创建的多重签名账户数量
 func GetMultiSigAccCountCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -1061,7 +1065,7 @@ func parseAccAssets(view interface{}) (interface{}, error) {
 //GetMultiSigAccAllAddressCmd 获取指定地址创建的所有多重签名账户
 func GetMultiSigAccAllAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "creater",
+		Use:   "creature",
 		Short: "get all multisig accounts created by the address",
 		Run:   getMultiSigAccAllAddress,
 	}

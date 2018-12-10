@@ -4,18 +4,15 @@
 package rpc
 
 import (
-	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/types"
 )
-
-var log = log15.New("module", "multisig.rpc")
 
 // Jrpc 申明Jrpc结构体
 type Jrpc struct {
 	cli *channelClient
 }
 
-// Jrpc 申明Grpc结构体
+// Grpc 申明Grpc结构体
 type Grpc struct {
 	*channelClient
 }

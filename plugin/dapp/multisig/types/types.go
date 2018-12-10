@@ -12,7 +12,7 @@ import (
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(MultiSigX))
 	types.RegistorExecutor(MultiSigX, NewType())
-	types.RegisterDappFork(MultiSigX, "Enable", 1)
+	types.RegisterDappFork(MultiSigX, "Enable", 0)
 }
 
 // MultiSigType multisig合约结构体
@@ -87,7 +87,7 @@ func (m MultiSigType) ActionName(tx *types.Transaction) string {
 	var g MultiSigAction
 	err := types.Decode(tx.Payload, &g)
 	if err != nil {
-		return "unkown-MultiSig-action-err"
+		return "unknown-MultiSig-action-err"
 	}
 	if g.Ty == ActionMultiSigAccCreate && g.GetMultiSigAccCreate() != nil {
 		return "MultiSigAccCreate"
@@ -102,5 +102,5 @@ func (m MultiSigType) ActionName(tx *types.Transaction) string {
 	} else if g.Ty == ActionMultiSigExecTransferFrom && g.GetMultiSigExecTransferFrom() != nil {
 		return "MultiSigAccExecTransfer"
 	}
-	return "unkown"
+	return "unknown"
 }

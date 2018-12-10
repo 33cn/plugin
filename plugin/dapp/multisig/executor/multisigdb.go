@@ -119,12 +119,12 @@ func updateMultiSigAccCount(cachedb dbm.KVDB, isadd bool) (*types.KeyValue, erro
 		return nil, err
 	}
 	if isadd {
-		count += 1
+		count++
 	} else {
 		if count == 0 {
 			return nil, mty.ErrAccCountNoMatch
 		}
-		count -= 1
+		count--
 	}
 	setMultiSigAccCount(cachedb, count)
 	//keyvalue
@@ -156,9 +156,8 @@ func setMultiSigAccount(db dbm.KVDB, multiSig *mty.MultiSig, isadd bool) error {
 	valuebytes := types.Encode(multiSig)
 	if isadd {
 		return db.Set(calcMultiSigAcc(multiSig.MultiSigAddr), valuebytes)
-	} else {
-		return db.Set(calcMultiSigAcc(multiSig.MultiSigAddr), nil)
 	}
+	return db.Set(calcMultiSigAcc(multiSig.MultiSigAddr), nil)
 }
 
 //获取多重签名账户的kv对
@@ -191,11 +190,11 @@ func updateMultiSigAccList(db dbm.KVDB, addr string, index int64, isadd bool) (*
 		db.Set(calcMultiSigAllAcc(index), []byte(addr))
 		kv := &types.KeyValue{Key: calcMultiSigAllAcc(index), Value: []byte(addr)}
 		return kv, nil
-	} else { // 删除
-		db.Set(calcMultiSigAllAcc(index), nil)
-		kv := &types.KeyValue{Key: calcMultiSigAllAcc(index), Value: nil}
-		return kv, nil
 	}
+	// 删除
+	db.Set(calcMultiSigAllAcc(index), nil)
+	kv := &types.KeyValue{Key: calcMultiSigAllAcc(index), Value: nil}
+	return kv, nil
 }
 
 func getMultiSigAccList(db dbm.KVDB, index int64) (string, error) {
@@ -236,9 +235,8 @@ func setMultiSigTx(db dbm.KVDB, multiSigTx *mty.MultiSigTx, isadd bool) error {
 	valuebytes := types.Encode(multiSigTx)
 	if isadd {
 		return db.Set(calcMultiSigAccTx(multiSigTx.MultiSigAddr, multiSigTx.Txid), valuebytes)
-	} else {
-		return db.Set(calcMultiSigAccTx(multiSigTx.MultiSigAddr, multiSigTx.Txid), nil)
 	}
+	return db.Set(calcMultiSigAccTx(multiSigTx.MultiSigAddr, multiSigTx.Txid), nil)
 }
 
 //获取多重签名账户交易的kv对
@@ -334,7 +332,7 @@ func setMultiSigAddress(db dbm.KVDB, createAddr, multiSigAddr string, isadd bool
 	}
 
 	var found = false
-	var foundindex int = 0
+	var foundindex int
 	for index, addr := range accAddress.Address {
 		if multiSigAddr == addr {
 			found = true

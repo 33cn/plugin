@@ -114,8 +114,8 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
-	var totalweight uint64 = 0
-	var ownerCount int = 0
+	var totalweight uint64
+	var ownerCount int
 
 	requiredWeight := ato.GetRequiredWeight()
 	if requiredWeight == 0 {
@@ -732,9 +732,8 @@ func (m *MultiSig) saveMultiSigTx(execTx mty.ReceiptMultiSigTx, addOrRollback bo
 		if multiSigTx != nil {
 			multisiglog.Error("saveMultiSigTx", "addOrRollback", addOrRollback, "execTx", execTx)
 			return nil, mty.ErrTxidHasExist
-		} else {
-			multiSigTx = temMultiSigTx
 		}
+		multiSigTx = temMultiSigTx
 	}
 
 	index, exist := isOwnerConfirmedTx(multiSigTx, owner.OwnerAddr)
@@ -874,11 +873,11 @@ func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets)
 //获取指定owner的weight权重，owner所在的index，所有owners的weight权重之和，以及owner是否存在
 func getOwnerInfoByAddr(multiSigAcc *mty.MultiSig, oldowner string) (uint64, int, uint64, int, bool) {
 	//首先遍历所有owners，确定对应的owner已近存在.
-	var findindex int = 0
-	var flag bool = false
-	var totalweight uint64 = 0
-	var oldweight uint64 = 0
-	var totalowner int = 0
+	var findindex int
+	var totalweight uint64
+	var oldweight uint64
+	var totalowner int
+	flag := false
 
 	for index, owner := range multiSigAcc.Owners {
 		if owner.OwnerAddr == oldowner {
@@ -892,29 +891,27 @@ func getOwnerInfoByAddr(multiSigAcc *mty.MultiSig, oldowner string) (uint64, int
 	//owner不存在
 	if !flag {
 		return 0, 0, totalweight, totalowner, false
-	} else {
-		return oldweight, findindex, totalweight, totalowner, true
 	}
+	return oldweight, findindex, totalweight, totalowner, true
 }
 
 //确认某笔交易是否已经达到确认需要的权重
 func isConfirmed(requiredWeight uint64, multiSigTx *mty.MultiSigTx) bool {
-	var totalweight uint64 = 0
+	var totalweight uint64
 	for _, owner := range multiSigTx.ConfirmedOwner {
 		totalweight += owner.Weight
 	}
 	if totalweight >= requiredWeight {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 //确认某笔交易的额度是否满足每日限额,返回是否满足，以及新的newLastDay时间
 func isUnderLimit(blocktime int64, amount uint64, dailyLimit *mty.DailyLimit) (bool, int64) {
 
-	var lastDay int64 = 0
-	var newSpentToday uint64 = 0
+	var lastDay int64
+	var newSpentToday uint64
 
 	nowtime := blocktime //types.Now().Unix()
 	newSpentToday = dailyLimit.SpentToday
@@ -927,9 +924,8 @@ func isUnderLimit(blocktime int64, amount uint64, dailyLimit *mty.DailyLimit) (b
 
 	if newSpentToday+amount > dailyLimit.DailyLimit || newSpentToday+amount < newSpentToday {
 		return false, lastDay
-	} else {
-		return true, lastDay
 	}
+	return true, lastDay
 }
 
 //确定这个地址是否是此multiSigAcc多重签名账户的owner,如果是owner的话并返回weight权重

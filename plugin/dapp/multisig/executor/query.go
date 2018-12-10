@@ -154,7 +154,7 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 			multisiglog.Error("Query_MultiSigTxids:getMultiSigTx", "addr", addr, "txid", txid, "err", err)
 			continue
 		}
-		var findTxid uint64 = 0
+		var findTxid uint64
 		findTxid = txid
 		//查找Pending/Executed的交易txid
 		if in.Pending && !multiSigTx.Executed || in.Executed && multiSigTx.Executed {
@@ -222,7 +222,7 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	if multiSigTx == nil {
 		return nil, mty.ErrTxidNotExist
 	}
-	var totalWeight uint64 = 0
+	var totalWeight uint64
 	for _, owner := range multiSigTx.ConfirmedOwner {
 		totalWeight += owner.Weight
 	}
@@ -230,7 +230,7 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	return &mty.Uint64{Data: totalWeight}, nil
 }
 
-//Query_MultiSigAccUnSpentToday 获取指定资产当日还能使用的免多重签名的余额
+//Query_MultiSigAccUnSpentToday  获取指定资产当日还能使用的免多重签名的余额
 //输入:
 //message ReqMultiSigAccUnSpentToday {
 //	string multiSigAddr = 1;
@@ -239,7 +239,6 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 //返回:
 //message ReplyMultiSigAccUnSpentToday {
 //	uint64 	amount = 1;
-
 func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -302,7 +301,7 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 	return replyUnSpentAssets, nil
 }
 
-//Query_MultiSigAccAssets 获取多重签名账户上的所有资产，或者指定资产
+//Query_MultiSigAccAssets  获取多重签名账户上的所有资产，或者指定资产
 //输入:
 //message ReqAccAssets {
 //	string multiSigAddr = 1;
@@ -313,7 +312,6 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 //	Assets 		assets 		= 1;
 //	int64   	recvAmount 	= 2;
 //   Account 	account 	= 3;
-
 func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -371,7 +369,6 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 //createaddr
 //返回:
 //[]string
-
 func (m *MultiSig) Query_MultiSigAccAllAddress(in *mty.ReqMultiSigAccInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam

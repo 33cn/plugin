@@ -41,8 +41,8 @@ func newAction(t *MultiSig, tx *types.Transaction, index int32) *action {
 func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	var totalweight uint64 = 0
-	var ownerCount int = 0
+	var totalweight uint64
+	var ownerCount int
 	var dailyLimit mty.DailyLimit
 
 	//参数校验
@@ -148,9 +148,9 @@ func (a *action) MultiSigAccOperate(AccountOperate *mty.MultiSigAccOperate) (*ty
 		}
 	}
 	//生成新的txid,并将此交易信息添加到Txs列表中
-	txId := multiSigAccount.TxCount
+	txID := multiSigAccount.TxCount
 	newMultiSigTx := &mty.MultiSigTx{}
-	newMultiSigTx.Txid = txId
+	newMultiSigTx.Txid = txID
 	newMultiSigTx.TxHash = hex.EncodeToString(a.txhash)
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.AccountOperate
@@ -185,9 +185,9 @@ func (a *action) MultiSigOwnerOperate(AccOwnerOperate *mty.MultiSigOwnerOperate)
 	}
 
 	//生成新的txid,并将此交易信息添加到Txs列表中
-	txId := multiSigAccount.TxCount
+	txID := multiSigAccount.TxCount
 	newMultiSigTx := &mty.MultiSigTx{}
-	newMultiSigTx.Txid = txId
+	newMultiSigTx.Txid = txID
 	newMultiSigTx.TxHash = hex.EncodeToString(a.txhash)
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.OwnerOperate
@@ -231,9 +231,9 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 		return nil, err
 	}
 	//生成新的txid,并将此交易信息添加到Txs列表中
-	txId := multiSigAcc.TxCount
+	txID := multiSigAcc.TxCount
 	newMultiSigTx := &mty.MultiSigTx{}
-	newMultiSigTx.Txid = txId
+	newMultiSigTx.Txid = txID
 	newMultiSigTx.TxHash = hex.EncodeToString(a.txhash)
 	newMultiSigTx.Executed = false
 	newMultiSigTx.TxType = mty.TransferOperate
@@ -355,37 +355,36 @@ func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Rec
 		multiSigTx.ConfirmedOwner = append(multiSigTx.ConfirmedOwner, owner)
 	}
 
-	multiSigTxOwner := &mty.MultiSigTxOwner{multiSigAccAddr, ConfirmTx.TxId, owner}
+	multiSigTxOwner := &mty.MultiSigTxOwner{MultiSigAddr: multiSigAccAddr, Txid: ConfirmTx.TxId, ConfirmedOwner: owner}
 	isConfirm := isConfirmed(multiSigAcc.RequiredWeight, multiSigTx)
 
 	//权重未达到要求或者撤销确认交易，构造MultiSigConfirmTx的receiptLog
 	if !isConfirm || !ConfirmTx.ConfirmOrRevoke {
 		return a.confirmTransaction(multiSigTx, multiSigTxOwner, ConfirmTx.ConfirmOrRevoke)
-	} else {
-		//获取txhash对应交易详细信息
-		tx, err := getTxByHash(a.api, multiSigTx.TxHash)
-		if err != nil {
-			return nil, err
-		}
-		payload, err := getMultiSigTxPayload(tx)
-		if err != nil {
-			return nil, err
-		}
+	}
+	//获取txhash对应交易详细信息
+	tx, err := getTxByHash(a.api, multiSigTx.TxHash)
+	if err != nil {
+		return nil, err
+	}
+	payload, err := getMultiSigTxPayload(tx)
+	if err != nil {
+		return nil, err
+	}
 
-		//根据不同的交易类型调用各自的处理函数，区分 操作owner/account 和转账的交易
-		if multiSigTx.TxType == mty.OwnerOperate && payload != nil {
-			transfer := payload.GetMultiSigOwnerOperate()
-			return a.executeOwnerOperateTx(multiSigAcc, multiSigTx, transfer, owner, false)
-		} else if multiSigTx.TxType == mty.AccountOperate {
-			transfer := payload.GetMultiSigAccOperate()
-			return a.executeAccOperateTx(multiSigAcc, multiSigTx, transfer, owner, false)
-		} else if multiSigTx.TxType == mty.TransferOperate {
-			transfer := payload.GetMultiSigExecTransferFrom()
-			return a.executeTransferTx(multiSigAcc, multiSigTx, transfer, owner, mty.IsConfirm)
-		} else {
-			multisiglog.Error("MultiSigConfirmTx:GetMultiSigTx", "multiSigAccAddr", multiSigAccAddr, "Confirm TxId", ConfirmTx.TxId, "TxType unkown", multiSigTx.TxType)
-			return nil, mty.ErrTxTypeNoMatch
-		}
+	//根据不同的交易类型调用各自的处理函数，区分 操作owner/account 和转账的交易
+	if multiSigTx.TxType == mty.OwnerOperate && payload != nil {
+		transfer := payload.GetMultiSigOwnerOperate()
+		return a.executeOwnerOperateTx(multiSigAcc, multiSigTx, transfer, owner, false)
+	} else if multiSigTx.TxType == mty.AccountOperate {
+		transfer := payload.GetMultiSigAccOperate()
+		return a.executeAccOperateTx(multiSigAcc, multiSigTx, transfer, owner, false)
+	} else if multiSigTx.TxType == mty.TransferOperate {
+		transfer := payload.GetMultiSigExecTransferFrom()
+		return a.executeTransferTx(multiSigAcc, multiSigTx, transfer, owner, mty.IsConfirm)
+	} else {
+		multisiglog.Error("MultiSigConfirmTx:GetMultiSigTx", "multiSigAccAddr", multiSigAccAddr, "Confirm TxId", ConfirmTx.TxId, "TxType unknown", multiSigTx.TxType)
+		return nil, mty.ErrTxTypeNoMatch
 	}
 }
 
@@ -404,7 +403,7 @@ func (a *action) multiSigWeightModify(multiSigAccAddr string, newRequiredWeight 
 	}
 
 	//首先获取所有owner的权重之和，新设置的newRequiredWeight不能大于owner的权重之和
-	var totalweight uint64 = 0
+	var totalweight uint64
 	receiptLog := &types.ReceiptLog{}
 	for _, owner := range multiSigAccount.Owners {
 		if owner != nil {
@@ -445,17 +444,18 @@ func (a *action) multiSigDailyLimitOperate(multiSigAccAddr string, dailylimit *m
 		return nil, nil, types.ErrAccountNotExist
 	}
 
-	var flag bool = false
-	var addOrModify bool = false
-	var findindex int = 0
+	flag := false
+	var addOrModify bool
+	var findindex int
+	var curDailyLimit *mty.DailyLimit
+
 	receiptLog := &types.ReceiptLog{}
 
 	newSymbol := dailylimit.Symbol
 	newExecer := dailylimit.Execer
 	newDailyLimit := dailylimit.DailyLimit
 
-	prevDailyLimit := &mty.DailyLimit{newSymbol, newExecer, 0, 0, 0}
-	curDailyLimit := &mty.DailyLimit{}
+	prevDailyLimit := &mty.DailyLimit{Symbol: newSymbol, Execer: newExecer, DailyLimit: 0, SpentToday: 0, LastDay: 0}
 	//首先遍历获取需要修改的symbol每日限额,没有找到就添加
 	for index, dailyLimit := range multiSigAccount.DailyLimits {
 		if dailyLimit.Symbol == newSymbol && dailyLimit.Execer == newExecer {
@@ -709,7 +709,7 @@ func (a *action) receiptMultiSigTx(multiSigTx *mty.MultiSigTx, owner *mty.Owner,
 
 	//组装receiptLog
 	receiptLogTx := &mty.ReceiptMultiSigTx{}
-	multiSigTxOwner := &mty.MultiSigTxOwner{multiSigTx.MultiSigAddr, multiSigTx.Txid, owner}
+	multiSigTxOwner := &mty.MultiSigTxOwner{MultiSigAddr: multiSigTx.MultiSigAddr, Txid: multiSigTx.Txid, ConfirmedOwner: owner}
 
 	receiptLogTx.MultiSigTxOwner = multiSigTxOwner
 	receiptLogTx.PrevExecuted = prevExecutes
@@ -732,8 +732,8 @@ func (a *action) receiptMultiSigTx(multiSigTx *mty.MultiSigTx, owner *mty.Owner,
 func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, transfer *mty.MultiSigExecTransfer, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 
 	//获取对应资产的每日限额信息
-	var findindex int = 0
-	curDailyLimit := &mty.DailyLimit{transfer.Symbol, transfer.Execname, 0, 0, 0}
+	var findindex int
+	curDailyLimit := &mty.DailyLimit{Symbol: transfer.Symbol, Execer: transfer.Execname, DailyLimit: 0, SpentToday: 0, LastDay: 0}
 	for Index, dailyLimit := range multiSigAcc.DailyLimits {
 		if dailyLimit.Symbol == transfer.Symbol && dailyLimit.Execer == transfer.Execname {
 			curDailyLimit.DailyLimit = dailyLimit.DailyLimit
@@ -963,7 +963,7 @@ func (a *action) executeOwnerOperateTx(multiSigAccount *mty.MultiSig, newMultiSi
 func (a *action) confirmTransaction(multiSigTx *mty.MultiSigTx, multiSigTxOwner *mty.MultiSigTxOwner, ConfirmOrRevoke bool) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{}
 
-	receiptLogUnConfirmTx := &mty.ReceiptConfirmTx{multiSigTxOwner, ConfirmOrRevoke}
+	receiptLogUnConfirmTx := &mty.ReceiptConfirmTx{MultiSigTxOwner: multiSigTxOwner, ConfirmeOrRevoke: ConfirmOrRevoke}
 	if ConfirmOrRevoke {
 		receiptLog.Ty = mty.TyLogMultiSigConfirmTx
 	} else {

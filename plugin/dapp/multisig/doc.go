@@ -1,6 +1,7 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+package multisig
 
 /*
 多重签名合约实现功能：
@@ -29,7 +30,7 @@ Available Commands:
   assets      get assets of multisig account
   count       get multisig account count
   create      Create a multisig account transaction
-  creater     get all multisig accounts created by the address
+  creature     get all multisig accounts created by the address
   dailylimit  Create a modify assets dailylimit transaction
   info        get multisig account info
   unspent     get assets unspent today amount
@@ -173,7 +174,7 @@ cli send multisig  owner replace  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -n 166
 cli send multisig  owner modify  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -o "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -w 11 -k 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
 
 //获取指定地址创建的所有多重签名账户
-cli multisig account creater -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+cli multisig account creature -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
 // 获取指定账户上指定资产的每日余额
 cli multisig  account unspent  -a 13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47 -e coins -s BTY
@@ -193,4 +194,3 @@ cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "1
 cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
 
 */
-package multisig

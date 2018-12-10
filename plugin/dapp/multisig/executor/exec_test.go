@@ -50,7 +50,7 @@ var (
 	NewRequiredweight     uint64 = 4
 	CoinsBtyDailylimit    uint64 = 100
 	NewCoinsBtyDailylimit uint64 = 10
-	PrintFlag             bool   = false
+	PrintFlag                    = false
 	InAmount              int64  = 10
 	OutAmount             int64  = 5
 )
@@ -168,7 +168,7 @@ func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, loc
 		DailyLimit:     symboldailylimit,
 	}
 
-	tx, err := multiSigAccCreate(param)
+	tx, _ := multiSigAccCreate(param)
 	tx, _ = signTx(tx, PrivKeyA)
 
 	addr := address.PubKeyToAddress(tx.Hash())
@@ -207,7 +207,7 @@ func testMultiSigOwnerAdd(t *testing.T, driver drivers.Driver, env execEnv, mult
 		OperateFlag:     mty.OwnerAdd,
 	}
 
-	tx, err := multiSigOwnerOperate(params)
+	tx, _ := multiSigOwnerOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -271,7 +271,7 @@ func testMultiSigOwnerDel(t *testing.T, driver drivers.Driver, env execEnv, mult
 		OperateFlag:     mty.OwnerDel,
 	}
 
-	tx, err := multiSigOwnerOperate(params)
+	tx, _ := multiSigOwnerOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -334,7 +334,7 @@ func testMultiSigOwnerModify(t *testing.T, driver drivers.Driver, env execEnv, m
 		NewWeight:       NewWeight,
 		OperateFlag:     mty.OwnerModify,
 	}
-	tx, err := multiSigOwnerOperate(params)
+	tx, _ := multiSigOwnerOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -406,7 +406,7 @@ func testMultiSigOwnerReplace(t *testing.T, driver drivers.Driver, env execEnv, 
 		NewOwner:        AddrB,
 		OperateFlag:     mty.OwnerReplace,
 	}
-	tx, err := multiSigOwnerOperate(params)
+	tx, _ := multiSigOwnerOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -472,7 +472,7 @@ func testMultiSigAccWeightModify(t *testing.T, driver drivers.Driver, env execEn
 		OperateFlag:       mty.AccWeightOp,
 	}
 
-	tx, err := multiSigAccOperate(params)
+	tx, _ := multiSigAccOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -542,7 +542,7 @@ func testMultiSigAccDailyLimitModify(t *testing.T, driver drivers.Driver, env ex
 		OperateFlag:     mty.AccDailyLimitOp,
 	}
 
-	tx, err := multiSigAccOperate(params)
+	tx, _ := multiSigAccOperate(params)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -624,7 +624,7 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 		OperateFlag:       mty.AccWeightOp,
 	}
 
-	tx, err := multiSigAccOperate(params)
+	tx, _ := multiSigAccOperate(params)
 	tx, _ = signTx(tx, PrivKeyB)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -684,7 +684,7 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 		ConfirmOrRevoke: false,
 	}
 
-	txConfirm, err := multiSigConfirmTx(param)
+	txConfirm, _ := multiSigConfirmTx(param)
 	txConfirm, _ = signTx(txConfirm, PrivKeyB)
 
 	receipt, err = driver.Exec(txConfirm, env.index)
@@ -718,7 +718,7 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 		ConfirmOrRevoke: true,
 	}
 
-	txConfirm, err = multiSigConfirmTx(para)
+	txConfirm, _ = multiSigConfirmTx(para)
 	txConfirm, _ = signTx(txConfirm, PrivKeyD)
 
 	receipt, err = driver.Exec(txConfirm, env.index)
@@ -772,7 +772,7 @@ func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env exec
 		To:       multiSigAddr,
 	}
 
-	tx, err := multiSigExecTransfer(params, false)
+	tx, _ := multiSigExecTransfer(params, false)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -845,7 +845,7 @@ func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env ex
 		To:       AddrD,
 	}
 
-	tx, err := multiSigExecTransfer(params, true)
+	tx, _ := multiSigExecTransfer(params, true)
 	tx, _ = signTx(tx, PrivKeyB)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -1002,11 +1002,10 @@ func multiSigExecTransfer(parm *mty.MultiSigExecTransfer, fromOrTo bool) (*types
 			Value: &mty.MultiSigAction_MultiSigExecTransferFrom{MultiSigExecTransferFrom: parm},
 		}
 		return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
-	} else {
-		multiSig := &mty.MultiSigAction{
-			Ty:    mty.ActionMultiSigExecTransferTo,
-			Value: &mty.MultiSigAction_MultiSigExecTransferTo{MultiSigExecTransferTo: parm},
-		}
-		return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 	}
+	multiSig := &mty.MultiSigAction{
+		Ty:    mty.ActionMultiSigExecTransferTo,
+		Value: &mty.MultiSigAction_MultiSigExecTransferTo{MultiSigExecTransferTo: parm},
+	}
+	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
