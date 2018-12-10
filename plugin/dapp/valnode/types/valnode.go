@@ -29,6 +29,11 @@ func NewType() *ValNodeType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (t *ValNodeType) GetName() string {
+	return ValNodeX
+}
+
 // GetPayload method
 func (t *ValNodeType) GetPayload() types.Message {
 	return &ValNodeAction{}

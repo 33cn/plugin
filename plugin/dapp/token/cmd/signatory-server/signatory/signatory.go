@@ -89,7 +89,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	amount := 1 * types.Coin
 	v := &types.AssetsTransfer{
 		Amount: amount,
-		Note:   "transfer 1 bty by signatory-server",
+		Note:   []byte("transfer 1 bty by signatory-server"),
 	}
 	transfer := &cty.CoinsAction{
 		Ty:    cty.CoinsActionTransfer,

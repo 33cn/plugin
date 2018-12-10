@@ -80,7 +80,10 @@ func (j *JSONRPCServer) Listen() (int, error) {
 			if err != nil {
 				errstr = err.Error()
 			}
-			log.Debug("JSONRPCServer", "request", string(data), "err", errstr)
+			funcName := strings.Split(client.Method, ".")[len(strings.Split(client.Method, "."))-1]
+			if !checkFilterPrintFuncBlacklist(funcName) {
+				log.Debug("JSONRPCServer", "request", string(data), "err", errstr)
+			}
 			if err != nil {
 				writeError(w, r, 0, fmt.Sprintf(`parse request err %s`, err.Error()))
 				return
@@ -88,7 +91,7 @@ func (j *JSONRPCServer) Listen() (int, error) {
 			//Release local request
 			ipaddr := net.ParseIP(ip)
 			if !ipaddr.IsLoopback() {
-				funcName := strings.Split(client.Method, ".")[len(strings.Split(client.Method, "."))-1]
+				//funcName := strings.Split(client.Method, ".")[len(strings.Split(client.Method, "."))-1]
 				if checkJrpcFuncBlacklist(funcName) || !checkJrpcFuncWhitelist(funcName) {
 					writeError(w, r, client.ID, fmt.Sprintf(`The %s method is not authorized!`, funcName))
 					return
@@ -109,7 +112,11 @@ func (j *JSONRPCServer) Listen() (int, error) {
 	})
 
 	handler = co.Handler(handler)
-	go http.Serve(listener, handler)
+	if !rpcCfg.EnableTLS {
+		go http.Serve(listener, handler)
+	} else {
+		go http.ServeTLS(listener, handler, rpcCfg.CertFile, rpcCfg.KeyFile)
+	}
 	return listener.Addr().(*net.TCPAddr).Port, nil
 }
 

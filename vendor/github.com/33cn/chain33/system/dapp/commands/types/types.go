@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package types commands中结构体定义
 package types
 
 import (
@@ -57,6 +58,7 @@ type TxResult struct {
 	GroupCount int32               `json:"groupCount,omitempty"`
 	Header     string              `json:"header,omitempty"`
 	Next       string              `json:"next,omitempty"`
+	Hash       string              `json:"hash,omitempty"`
 }
 
 // ReceiptAccountTransfer defines receipt account transfer

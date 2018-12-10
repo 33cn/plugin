@@ -735,7 +735,6 @@ func get10000(t assert.TestingT, root common.Hash, db dbm.DB, keys map[string]st
 	database := NewDatabase(db)
 	t1, _ := New(root, database)
 	for k, v := range keys {
-		fmt.Println(k, v)
 		value, err := t1.TryGet([]byte(k))
 		assert.Nil(t, err)
 		assert.Equal(t, string(value), v)

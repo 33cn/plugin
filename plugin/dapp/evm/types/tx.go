@@ -24,4 +24,6 @@ type CreateCallTx struct {
 	Name string `json:"name"`
 	// IsCreate 是否创建合约
 	IsCreate bool `json:"isCreate"`
+	// Abi 创建合约或调用合约时附带的ABI数据
+	Abi string `json:"abi"`
 }

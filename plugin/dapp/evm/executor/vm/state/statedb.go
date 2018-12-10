@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // MemoryStateDB 内存状态数据库，保存在区块操作时内部的数据变更操作
@@ -130,15 +131,19 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	isExec := mdb.Exist(addr)
 	var ac *types.Account
 	if isExec {
-		contract := mdb.GetAccount(addr)
-		if contract == nil {
-			return 0
+		if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+			ac = mdb.CoinsAccount.LoadExecAccount(addr, addr)
+		} else {
+			contract := mdb.GetAccount(addr)
+			if contract == nil {
+				return 0
+			}
+			creator := contract.GetCreator()
+			if len(creator) == 0 {
+				return 0
+			}
+			ac = mdb.CoinsAccount.LoadExecAccount(creator, addr)
 		}
-		creator := contract.GetCreator()
-		if len(creator) == 0 {
-			return 0
-		}
-		ac = mdb.CoinsAccount.LoadExecAccount(creator, addr)
 	} else {
 		ac = mdb.CoinsAccount.LoadAccount(addr)
 	}
@@ -193,6 +198,24 @@ func (mdb *MemoryStateDB) SetCode(addr string, code []byte) {
 	}
 }
 
+// SetAbi 设置ABI内容
+func (mdb *MemoryStateDB) SetAbi(addr, abi string) {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		mdb.dataDirty[addr] = true
+		acc.SetAbi(abi)
+	}
+}
+
+// GetAbi 获取ABI
+func (mdb *MemoryStateDB) GetAbi(addr string) string {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		return acc.Data.GetAbi()
+	}
+	return ""
+}
+
 // GetCodeSize 获取合约代码自身的大小
 // 对应 EXTCODESIZE 操作码
 func (mdb *MemoryStateDB) GetCodeSize(addr string) int {
@@ -245,7 +268,7 @@ func (mdb *MemoryStateDB) SetState(addr string, key common.Hash, value common.Ha
 	if acc != nil {
 		acc.SetState(key, value)
 		// 新的分叉中状态数据变更不需要单独进行标识
-		if !types.IsDappFork(mdb.blockHeight, "evm", "ForkEVMState") {
+		if !types.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 			mdb.stateDirty[addr] = true
 		}
 	}
@@ -420,6 +443,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender, recipient string, amount uint64) b
 	case NoNeed:
 		return true
 	case ToExec:
+		// 无论其它账户还是创建者向合约地址转账，都需要检查其当前合约账户活动余额是否充足
 		accFrom := mdb.CoinsAccount.LoadExecAccount(sender, recipient)
 		b := accFrom.GetBalance() - value
 		if b < 0 {
@@ -433,8 +457,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender, recipient string, amount uint64) b
 		return false
 	}
 }
-
-func (mdb *MemoryStateDB) checkExecAccount(addr string, value int64) bool {
+func (mdb *MemoryStateDB) checkExecAccount(execAddr string, value int64) bool {
 	var err error
 	defer func() {
 		if err != nil {
@@ -446,7 +469,7 @@ func (mdb *MemoryStateDB) checkExecAccount(addr string, value int64) bool {
 		err = types.ErrAmount
 		return false
 	}
-	contract := mdb.GetAccount(addr)
+	contract := mdb.GetAccount(execAddr)
 	if contract == nil {
 		err = model.ErrAddrNotExists
 		return false
@@ -457,9 +480,16 @@ func (mdb *MemoryStateDB) checkExecAccount(addr string, value int64) bool {
 		return false
 	}
 
-	accFrom := mdb.CoinsAccount.LoadExecAccount(contract.GetCreator(), addr)
-	b := accFrom.GetBalance() - value
-	if b < 0 {
+	var accFrom *types.Account
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		// 分叉后，需要检查合约地址下的金额是否足够
+		accFrom = mdb.CoinsAccount.LoadExecAccount(execAddr, execAddr)
+	} else {
+		accFrom = mdb.CoinsAccount.LoadExecAccount(creator, execAddr)
+	}
+	balance := accFrom.GetBalance()
+	remain := balance - value
+	if remain < 0 {
 		err = types.ErrNoBalance
 		return false
 	}
@@ -581,17 +611,28 @@ func (mdb *MemoryStateDB) transfer2Contract(sender, recipient string, amount int
 	}
 	execAddr := recipient
 
-	// 从自己的合约账户到创建者的合约账户
-	// 有可能是外部账户调用自己创建的合约，这种情况下这一步可以省略
 	ret = &types.Receipt{}
-	if strings.Compare(sender, creator) != 0 {
-		rs, err := mdb.CoinsAccount.ExecTransfer(sender, creator, execAddr, amount)
+
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		// 用户向合约转账时，将钱转到合约地址下execAddr:execAddr
+		rs, err := mdb.CoinsAccount.ExecTransfer(sender, execAddr, execAddr, amount)
 		if err != nil {
 			return nil, err
 		}
 
 		ret.KV = append(ret.KV, rs.KV...)
 		ret.Logs = append(ret.Logs, rs.Logs...)
+	} else {
+		if strings.Compare(sender, creator) != 0 {
+			// 用户向合约转账时，首先将钱转到创建者合约地址下
+			rs, err := mdb.CoinsAccount.ExecTransfer(sender, creator, execAddr, amount)
+			if err != nil {
+				return nil, err
+			}
+
+			ret.KV = append(ret.KV, rs.KV...)
+			ret.Logs = append(ret.Logs, rs.Logs...)
+		}
 	}
 
 	return ret, nil
@@ -612,24 +653,22 @@ func (mdb *MemoryStateDB) transfer2External(sender, recipient string, amount int
 
 	execAddr := sender
 
-	// 第一步先从创建者的合约账户到接受者的合约账户
-	// 如果是自己调用自己创建的合约，这一步也可以省略
-	if strings.Compare(creator, recipient) != 0 {
-		ret, err = mdb.CoinsAccount.ExecTransfer(creator, recipient, execAddr, amount)
+	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		// 合约向用户地址转账时，从合约地址下的钱中转出到用户合约地址
+		ret, err = mdb.CoinsAccount.ExecTransfer(execAddr, recipient, execAddr, amount)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		// 第一步先从创建者的合约账户到接受者的合约账户
+		// 如果是自己调用自己创建的合约，这一步也可以省略
+		if strings.Compare(creator, recipient) != 0 {
+			ret, err = mdb.CoinsAccount.ExecTransfer(creator, recipient, execAddr, amount)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
-
-	// 第二步再从接收者的合约账户取款到接受者账户
-	// 本操作不允许，需要外部操作coins账户
-	//rs, err := mdb.CoinsAccount.TransferWithdraw(recipient.String(), sender.String(), amount)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//ret = mdb.mergeResult(ret, rs)
-
 	return ret, nil
 }
 
@@ -685,4 +724,9 @@ func (mdb *MemoryStateDB) WritePreimages(number int64) {
 func (mdb *MemoryStateDB) ResetDatas() {
 	mdb.currentVer = nil
 	mdb.snapshots = mdb.snapshots[:0]
+}
+
+// GetBlockHeight 返回当前区块高度
+func (mdb *MemoryStateDB) GetBlockHeight() int64 {
+	return mdb.blockHeight
 }

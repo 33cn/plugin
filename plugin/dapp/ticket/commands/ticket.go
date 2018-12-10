@@ -182,10 +182,10 @@ func coldAddressOfMiner(cmd *cobra.Command, args []string) {
 	reqaddr := &types.ReqString{
 		Data: addr,
 	}
-	var params types.Query4Cli
+	var params rpctypes.Query4Jrpc
 	params.Execer = "ticket"
 	params.FuncName = "MinerSourceList"
-	params.Payload = reqaddr
+	params.Payload = types.MustPBToJSON(reqaddr)
 
 	var res types.ReplyStrings
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

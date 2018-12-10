@@ -36,6 +36,11 @@ func NewType() *PokerBullType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (t *PokerBullType) GetName() string {
+	return PokerBullX
+}
+
 // GetPayload 获取payload
 func (t *PokerBullType) GetPayload() types.Message {
 	return &PBGameAction{}

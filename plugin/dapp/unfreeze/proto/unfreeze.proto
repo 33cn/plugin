@@ -1,0 +1,95 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "common.proto";
+
+package types;
+
+message Unfreeze {
+    //解冻交易ID（唯一识别码）
+    string unfreezeID = 1;
+    //开始时间
+    int64 startTime = 2;
+    //币种
+    string assetExec   = 3;
+    string assetSymbol = 4;
+    //冻结总额
+    int64 totalCount = 5;
+    //发币人地址
+    string initiator = 6;
+    //收币人地址
+    string beneficiary = 7;
+    //解冻剩余币数
+    int64 remaining = 8;
+    //解冻方式（百分比；固额）
+    string means = 9;
+    oneof  meansOpt {
+        FixAmount      fixAmount      = 10;
+        LeftProportion leftProportion = 11;
+    }
+}
+
+// 按时间固定额度解冻
+message FixAmount {
+    int64 period = 1;
+    int64 amount = 2;
+}
+
+// 固定时间间隔按余量百分比解冻
+message LeftProportion {
+    int64 period        = 1;
+    int64 tenThousandth = 2;
+}
+
+// message for execs.unfreeze
+message UnfreezeAction {
+    oneof value {
+        UnfreezeCreate    create    = 1;
+        UnfreezeWithdraw  withdraw  = 2;
+        UnfreezeTerminate terminate = 3;
+    }
+    int32 ty = 4;
+}
+
+// action
+message UnfreezeCreate {
+    int64  startTime   = 1;
+    string assetExec   = 2;
+    string assetSymbol = 3;
+    int64  totalCount  = 4;
+    string beneficiary = 5;
+    string means       = 6;
+    oneof  meansOpt {
+        FixAmount      fixAmount      = 7;
+        LeftProportion leftProportion = 8;
+    }
+}
+
+message UnfreezeWithdraw {
+    string unfreezeID = 1;
+}
+
+message UnfreezeTerminate {
+    string unfreezeID = 1;
+}
+
+// receipt
+message ReceiptUnfreeze {
+    Unfreeze prev = 1;
+    Unfreeze current  = 2;
+}
+
+// query
+message ReplyQueryUnfreezeWithdraw {
+    string unfreezeID      = 1;
+    int64  availableAmount = 2;
+}
+
+// TODO 类型应该大写还是小写
+service unfreeze {
+    rpc GetUnfreezeWithdraw(ReqString) returns (ReplyQueryUnfreezeWithdraw) {}
+    rpc QueryUnfreeze(ReqString) returns (Unfreeze) {}
+}

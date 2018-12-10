@@ -30,15 +30,17 @@ func (wallet *Wallet) parseExpire(expire string) (int64, error) {
 	if len(expire) == 0 {
 		return 0, errors.New("Expire string should not be empty")
 	}
-
 	if expire[0] == 'H' && expire[1] == ':' {
 		txHeight, err := strconv.ParseInt(expire[2:], 10, 64)
 		if err != nil {
 			return 0, err
 		}
 		if txHeight <= 0 {
-			fmt.Printf("txHeight should be grate to 0")
+			//fmt.Printf("txHeight should be grate to 0")
 			return 0, errors.New("txHeight should be grate to 0")
+		}
+		if txHeight+types.TxHeightFlag < txHeight {
+			return 0, errors.New("txHeight overflow")
 		}
 
 		return txHeight + types.TxHeightFlag, nil
@@ -458,10 +460,10 @@ func (wallet *Wallet) ProcImportPrivKey(PrivKey *types.ReqWalletImportPrivkey) (
 		if Account.Privkey == Encrypteredstr {
 			walletlog.Error("ProcImportPrivKey Privkey is exist in wallet!")
 			return nil, types.ErrPrivkeyExist
-		} else {
-			walletlog.Error("ProcImportPrivKey!", "Account.Privkey", Account.Privkey, "input Privkey", PrivKey.Privkey)
-			return nil, types.ErrPrivkey
 		}
+		walletlog.Error("ProcImportPrivKey!", "Account.Privkey", Account.Privkey, "input Privkey", PrivKey.Privkey)
+		return nil, types.ErrPrivkey
+
 	}
 
 	var walletaccount types.WalletAccount
@@ -538,8 +540,12 @@ func (wallet *Wallet) ProcSendToAddress(SendToAddress *types.ReqWalletSendToAddr
 	}
 	Balance := accounts[0].Balance
 	amount := SendToAddress.GetAmount()
+	//amount必须大于等于0
+	if amount < 0 {
+		return nil, types.ErrAmount
+	}
 	if !SendToAddress.IsToken {
-		if Balance < amount+wallet.FeeAmount {
+		if Balance-amount < wallet.FeeAmount {
 			return nil, types.ErrInsufficientBalance
 		}
 	} else {
@@ -547,7 +553,6 @@ func (wallet *Wallet) ProcSendToAddress(SendToAddress *types.ReqWalletSendToAddr
 		if Balance < wallet.FeeAmount {
 			return nil, types.ErrInsufficientBalance
 		}
-
 		if nil == accTokenMap[SendToAddress.TokenSymbol] {
 			tokenAccDB, err := account.NewAccountDB("token", SendToAddress.TokenSymbol, nil)
 			if err != nil {
@@ -572,7 +577,7 @@ func (wallet *Wallet) ProcSendToAddress(SendToAddress *types.ReqWalletSendToAddr
 	if err != nil {
 		return nil, err
 	}
-	return wallet.sendToAddress(priv, addrto, amount, note, SendToAddress.IsToken, SendToAddress.TokenSymbol)
+	return wallet.sendToAddress(priv, addrto, amount, string(note), SendToAddress.IsToken, SendToAddress.TokenSymbol)
 }
 
 // ProcWalletSetFee 处理设置手续费
@@ -729,7 +734,7 @@ func (wallet *Wallet) ProcMergeBalance(MergeBalance *types.ReqWalletMergeBalance
 		}
 		amount = amount - wallet.FeeAmount
 		v := &cty.CoinsAction_Transfer{
-			Transfer: &types.AssetsTransfer{Amount: amount, Note: note},
+			Transfer: &types.AssetsTransfer{Amount: amount, Note: []byte(note)},
 		}
 		transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 		//初始化随机数

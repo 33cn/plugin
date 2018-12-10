@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package jsonclient 实现JSON rpc客户端请求功能
 package jsonclient
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,8 +20,10 @@ import (
 
 // JSONClient a object of jsonclient
 type JSONClient struct {
-	url    string
-	prefix string
+	url       string
+	prefix    string
+	tlsVerify bool
+	client    *http.Client
 }
 
 func addPrefix(prefix, name string) string {
@@ -31,12 +35,21 @@ func addPrefix(prefix, name string) string {
 
 // NewJSONClient produce a json object
 func NewJSONClient(url string) (*JSONClient, error) {
-	return &JSONClient{url: url, prefix: "Chain33"}, nil
+	return New("Chain33", url, false)
 }
 
 // New produce a jsonclient by perfix and url
-func New(prefix, url string) (*JSONClient, error) {
-	return &JSONClient{url: url, prefix: prefix}, nil
+func New(prefix, url string, tlsVerify bool) (*JSONClient, error) {
+	httpcli := http.DefaultClient
+	if strings.Contains(url, "https") { //暂不校验tls证书
+		httpcli = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: !tlsVerify}}}
+	}
+	return &JSONClient{
+		url:       url,
+		prefix:    prefix,
+		tlsVerify: tlsVerify,
+		client:    httpcli,
+	}, nil
 }
 
 type clientRequest struct {
@@ -62,7 +75,7 @@ func (client *JSONClient) Call(method string, params, resp interface{}) error {
 		return err
 	}
 	//println("request JsonStr", string(data), "")
-	postresp, err := http.Post(client.url, "application/json", bytes.NewBuffer(data))
+	postresp, err := client.client.Post(client.url, "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}

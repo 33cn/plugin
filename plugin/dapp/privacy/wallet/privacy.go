@@ -592,7 +592,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	value := &privacytypes.Public2Privacy{
 		Tokenname: req.Tokenname,
 		Amount:    amount,
-		Note:      req.GetNote(),
+		Note:      string(req.GetNote()),
 		Output:    privacyOutput,
 	}
 
@@ -662,7 +662,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	value := &privacytypes.Privacy2Privacy{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      req.GetNote(),
+		Note:      string(req.GetNote()),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 	}
@@ -731,7 +731,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	value := &privacytypes.Privacy2Public{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      req.GetNote(),
+		Note:      string(req.GetNote()),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 	}

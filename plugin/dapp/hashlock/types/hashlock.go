@@ -35,6 +35,11 @@ func NewType() *HashlockType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (hashlock *HashlockType) GetName() string {
+	return HashlockX
+}
+
 // GetPayload method
 func (hashlock *HashlockType) GetPayload() types.Message {
 	return &HashlockAction{}
@@ -68,9 +73,9 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawHashlockSendTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
+	return nil, types.ErrNotSupport
+
 }
 
 // GetTypeMap method
