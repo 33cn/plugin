@@ -52,23 +52,23 @@ func (m *MultiSigType) GetTypeMap() map[string]int32 {
 //GetLogMap 获取具体执行Receiptlog对应的结构体：
 func (m *MultiSigType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogMultiSigAccCreate: {reflect.TypeOf(MultiSig{}), "LogMultiSigAccCreate"},
+		TyLogMultiSigAccCreate: {Ty: reflect.TypeOf(MultiSig{}), Name: "LogMultiSigAccCreate"},
 
-		TyLogMultiSigOwnerAdd:     {reflect.TypeOf(ReceiptOwnerAddOrDel{}), "LogMultiSigOwnerAdd"},
-		TyLogMultiSigOwnerDel:     {reflect.TypeOf(ReceiptOwnerAddOrDel{}), "LogMultiSigOwnerDel"},
-		TyLogMultiSigOwnerModify:  {reflect.TypeOf(ReceiptOwnerModOrRep{}), "LogMultiSigOwnerModify"},
-		TyLogMultiSigOwnerReplace: {reflect.TypeOf(ReceiptOwnerModOrRep{}), "LogMultiSigOwnerReplace"},
+		TyLogMultiSigOwnerAdd:     {Ty: reflect.TypeOf(ReceiptOwnerAddOrDel{}), Name: "LogMultiSigOwnerAdd"},
+		TyLogMultiSigOwnerDel:     {Ty: reflect.TypeOf(ReceiptOwnerAddOrDel{}), Name: "LogMultiSigOwnerDel"},
+		TyLogMultiSigOwnerModify:  {Ty: reflect.TypeOf(ReceiptOwnerModOrRep{}), Name: "LogMultiSigOwnerModify"},
+		TyLogMultiSigOwnerReplace: {Ty: reflect.TypeOf(ReceiptOwnerModOrRep{}), Name: "LogMultiSigOwnerReplace"},
 
-		TyLogMultiSigAccWeightModify:     {reflect.TypeOf(ReceiptWeightModify{}), "LogMultiSigAccWeightModify"},
-		TyLogMultiSigAccDailyLimitAdd:    {reflect.TypeOf(ReceiptDailyLimitOperate{}), "LogMultiSigAccDailyLimitAdd"},
-		TyLogMultiSigAccDailyLimitModify: {reflect.TypeOf(ReceiptDailyLimitOperate{}), "LogMultiSigAccDailyLimitModify"},
+		TyLogMultiSigAccWeightModify:     {Ty: reflect.TypeOf(ReceiptWeightModify{}), Name: "LogMultiSigAccWeightModify"},
+		TyLogMultiSigAccDailyLimitAdd:    {Ty: reflect.TypeOf(ReceiptDailyLimitOperate{}), Name: "LogMultiSigAccDailyLimitAdd"},
+		TyLogMultiSigAccDailyLimitModify: {Ty: reflect.TypeOf(ReceiptDailyLimitOperate{}), Name: "LogMultiSigAccDailyLimitModify"},
 
-		TyLogMultiSigConfirmTx:       {reflect.TypeOf(ReceiptConfirmTx{}), "LogMultiSigConfirmTx"},
-		TyLogMultiSigConfirmTxRevoke: {reflect.TypeOf(ReceiptConfirmTx{}), "LogMultiSigConfirmTxRevoke"},
+		TyLogMultiSigConfirmTx:       {Ty: reflect.TypeOf(ReceiptConfirmTx{}), Name: "LogMultiSigConfirmTx"},
+		TyLogMultiSigConfirmTxRevoke: {Ty: reflect.TypeOf(ReceiptConfirmTx{}), Name: "LogMultiSigConfirmTxRevoke"},
 
-		TyLogDailyLimitUpdate: {reflect.TypeOf(ReceiptAccDailyLimitUpdate{}), "LogAccDailyLimitUpdate"},
-		TyLogMultiSigTx:       {reflect.TypeOf(ReceiptMultiSigTx{}), "LogMultiSigAccTx"},
-		TyLogTxCountUpdate:    {reflect.TypeOf(ReceiptTxCountUpdate{}), "LogTxCountUpdate"},
+		TyLogDailyLimitUpdate: {Ty: reflect.TypeOf(ReceiptAccDailyLimitUpdate{}), Name: "LogAccDailyLimitUpdate"},
+		TyLogMultiSigTx:       {Ty: reflect.TypeOf(ReceiptMultiSigTx{}), Name: "LogMultiSigAccTx"},
+		TyLogTxCountUpdate:    {Ty: reflect.TypeOf(ReceiptTxCountUpdate{}), Name: "LogTxCountUpdate"},
 	}
 }
 
