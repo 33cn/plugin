@@ -195,7 +195,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 				GameId:gameID,
 				Round:int32(roundInt),
 			}
-			params.Payload = req
+			params.Payload = types.MustPBToJSON(req)
 			var res pkt.ReplyPBGameByRound
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
