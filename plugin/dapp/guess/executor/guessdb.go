@@ -25,8 +25,8 @@ const (
 	ListASC  = int32(1)
 
 	DefaultCount   = int32(20) //默认一次取多少条记录
-	MaxBetsOneTime = 10000            //一次最多下多少注
-	MaxBetsNumber = 1000000     //一局游戏最多接受多少注
+	MaxBetsOneTime = 10000e8            //一次最多下多少注
+	MaxBetsNumber = 10000000e8     //一局游戏最多接受多少注
 	MaxBetHeight = 10000000000    //最大区块高度
 
 	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
@@ -312,6 +312,7 @@ func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *typ
 	r.PreStatus = game.PreStatus
 	r.StatusChange = statusChange
 	r.PreIndex = game.PreIndex
+	r.Category = game.Category
 	log.Log = types.Encode(r)
 	return log
 }
@@ -491,7 +492,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	}
 
 	// 检查余额账户余额
-	checkValue := int64(pbBet.BetsNum)
+	checkValue := pbBet.BetsNum
 	if !action.CheckExecAccountBalance(action.fromaddr, checkValue, 0) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
 			pbBet.GetGameId(), "err", types.ErrNoBalance)
@@ -597,7 +598,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	if game.AdminAddr != action.fromaddr {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
 			action.fromaddr, "adminAddr", game.AdminAddr)
-		return nil, types.ErrInvalidParam
+		return nil, pkt.ErrNoPrivilege
 	}
 
 	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
@@ -640,7 +641,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	action.ChangeStatus(game, pkt.GuessGameStatusPublish)
 	//计算竞猜正确的筹码总数
 	totalBetsNumber := game.BetStat.TotalBetsNumber
-	winBetsNumber := uint32(0)
+	winBetsNumber := int64(0)
 	for j := 0; j < len(game.BetStat.Items); j++ {
 		if game.BetStat.Items[j].Option == game.Result {
 			winBetsNumber = game.BetStat.Items[j].BetsNumber
@@ -687,11 +688,11 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	//再遍历赢家，按照投注占比分配所有筹码
-	winValue := int64(totalBetsNumber) - devFee - platFee
+	winValue := totalBetsNumber - devFee - platFee
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
 		if player.Bet.Option == game.Result {
-			value := int64(player.Bet.BetsNumber * uint32(winValue) / winBetsNumber)
+			value := int64(player.Bet.BetsNumber * winValue / winBetsNumber)
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
 				action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback

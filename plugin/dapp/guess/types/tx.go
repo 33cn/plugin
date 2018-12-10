@@ -12,8 +12,8 @@ type GuessGameStartTx struct {
 	MaxBetHeight            int64    `json:"maxHeight,omitempty"`
 	Symbol               string   `json:"symbol,omitempty"`
 	Exec                 string   `json:"exec,omitempty"`
-	MaxBets              uint32   `json:"maxBets,omitempty"`
-	MaxBetsNumber        uint32   `json:"maxBetsNumber,omitempty"`
+	MaxBets              int64   `json:"maxBets,omitempty"`
+	MaxBetsNumber        int64   `json:"maxBetsNumber,omitempty"`
 	DevFeeFactor         int64    `json:"devFeeFactor,omitempty"`
 	DevFeeAddr           string   `json:"devFeeAddr,omitempty"`
 	PlatFeeFactor        int64    `json:"platFeeFactor,omitempty"`
@@ -26,7 +26,7 @@ type GuessGameStartTx struct {
 type GuessGameBetTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Option               string   `json:"option,omitempty"`
-	BetsNum              uint32   `json:"betsNum,omitempty"`
+	BetsNum              int64   `json:"betsNum,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 

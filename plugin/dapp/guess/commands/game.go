@@ -54,10 +54,10 @@ func addGuessStartFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "bty", "token symbol")
 	cmd.Flags().StringP("exec", "e", "coins", "excutor name")
 
-	cmd.Flags().Uint32P("maxBetsOneTime", "m", 10000, "max bets one time")
+	cmd.Flags().Int64P("maxBetsOneTime", "m", 10000, "max bets one time")
 	//cmd.MarkFlagRequired("maxBets")
 
-	cmd.Flags().Uint32P("maxBetsNumber", "n", 100000, "max bets number")
+	cmd.Flags().Int64P("maxBetsNumber", "n", 100000, "max bets number")
 	//cmd.MarkFlagRequired("maxBetsNumber")
 
 	cmd.Flags().Int64P("devFeeFactor", "d", 0, "dev fee factor, unit: 1/1000")
@@ -81,8 +81,8 @@ func guessStart(cmd *cobra.Command, args []string) {
 	maxBetHeight, _ := cmd.Flags().GetInt64("maxBetHeight")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	exec, _ := cmd.Flags().GetString("exec")
-	maxBets, _ := cmd.Flags().GetUint32("maxBets")
-	maxBetsNumber, _ := cmd.Flags().GetUint32("maxBetsNumber")
+	maxBets, _ := cmd.Flags().GetInt64("maxBets")
+	maxBetsNumber, _ := cmd.Flags().GetInt64("maxBetsNumber")
 	devFeeFactor, _ := cmd.Flags().GetInt64("devFeeFactor")
 	devFeeAddr, _ := cmd.Flags().GetString("devFeeAddr")
 	platFeeFactor, _ := cmd.Flags().GetInt64("platFeeFactor")
@@ -127,7 +127,7 @@ func addGuessBetFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("gameId")
 	cmd.Flags().StringP("option", "o", "", "option")
 	cmd.MarkFlagRequired("option")
-	cmd.Flags().Uint32P("betsNumber", "b", 1, "bets number for one option in a guess game")
+	cmd.Flags().Int64P("betsNumber", "b", 1, "bets number for one option in a guess game")
 	cmd.MarkFlagRequired("betsNumber")
 }
 
@@ -135,7 +135,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameId, _ := cmd.Flags().GetString("gameId")
 	option, _ := cmd.Flags().GetString("option")
-	betsNumber, _ := cmd.Flags().GetUint32("betsNumber")
+	betsNumber, _ := cmd.Flags().GetInt64("betsNumber")
 
 	params := &pkt.GuessBetTxReq{
 		GameId: gameId,

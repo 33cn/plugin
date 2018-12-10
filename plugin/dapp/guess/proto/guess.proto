@@ -18,8 +18,8 @@ message GuessGame {
     int64 maxBetHeight      = 10;  //截止下注的块高
     string symbol        = 11;  //bty或者具体token
     string exec          = 12; //coins或者token
-    uint32 maxBetsOneTime= 14; //单次可以下多少注，默认100
-    uint32 maxBetsNumber = 15; //最多可以下多少注
+    int64 maxBetsOneTime= 14; //单次可以下多少注，默认100
+    int64 maxBetsNumber = 15; //最多可以下多少注
     int64 devFeeFactor   = 16; //开发者抽成比例
     string devFeeAddr    = 17; //开发者地址
     int64 platFeeFactor   = 18; //平台抽成比例
@@ -27,7 +27,7 @@ message GuessGame {
     string expire        = 20; //游戏过期时间
     int64 expireHeight   = 21; //游戏过期区块高度
     string adminAddr     = 22; //游戏创建者地址,只有该地址可以开奖
-    uint32 betsNumber    = 23; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    int64 betsNumber    = 23; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
     repeated GuessPlayer plays = 24; //参与游戏下注的玩家投注信息
     string result = 25;        //公布的中奖结果
     GuessBetStat betStat = 26;
@@ -43,7 +43,7 @@ message GuessPlayer {
 
 message GuessBet {
     string option = 1;
-    uint32  betsNumber = 2;
+    int64  betsNumber = 2;
     bool    isWinner = 3;
     int64  profit = 4;
     int64 index = 5;
@@ -51,15 +51,15 @@ message GuessBet {
 }
 
 message GuessBetStat {
-    uint32 totalBetTimes = 1;
-    uint32 totalBetsNumber = 2;
+    int64 totalBetTimes = 1;
+    int64 totalBetsNumber = 2;
     repeated GuessBetStatItem items = 3;
 }
 
 message GuessBetStatItem {
     string option = 1;
-    uint32 betsNumber = 2;
-    uint32 betsTimes = 3;
+    int64 betsNumber = 2;
+    int64 betsTimes = 3;
 }
 
 //游戏状态
@@ -84,8 +84,8 @@ message GuessGameStart{
     int64 maxBetHeight  = 5;
     string symbol    = 6;
     string exec      = 7;
-    uint32 maxBetsOneTime= 9;
-    uint32 maxBetsNumber = 10;
+    int64 maxBetsOneTime= 9;
+    int64 maxBetsNumber = 10;
     int64 devFeeFactor   = 11; //开发者抽成比例
     string devFeeAddr    = 12; //开发者地址
     int64 platFeeFactor  = 13; //平台抽成比例
@@ -99,7 +99,7 @@ message GuessGameStart{
 message GuessGameBet{
     string gameId     = 1;
     string option     = 2;
-    uint32  betsNum    = 3;
+    int64  betsNum    = 3;
 }
 
 //游戏停止下注
@@ -166,8 +166,8 @@ message GuessStartTxReq {
     int64 maxBetHeight          = 5;
     string symbol             = 6;
     string exec               = 7;
-    uint32 maxBetsOneTime     = 8;
-    uint32 maxBetsNumber      = 9;
+    int64 maxBetsOneTime     = 8;
+    int64 maxBetsNumber      = 9;
     int64  devFeeFactor       = 10;
     string devFeeAddr         = 11;
     int64  platFeeFactor      = 12;
@@ -180,7 +180,7 @@ message GuessStartTxReq {
 message GuessBetTxReq {
     string gameId    = 1;
     string option    = 2;
-    uint32  bets      = 3;
+    int64  bets      = 3;
 }
 
 message GuessAbortTxReq {
