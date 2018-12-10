@@ -181,16 +181,16 @@ cli multisig  account unspent  -a 13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47 -e coins -s
 
 第五步：测试交易的确认和撤销
 //权重低的转账，owner：166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
-cli send multisig  transfer_out  -a 10 -e coins -s BTY -f "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
+cli send multisig  tx transfer_out  -a 10 -e coins -s BTY -f "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -t 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj -n test -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
 
 
 //撤销对某笔交易的确认
-cli send   multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -c f  -k 166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
+cli send   multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 8 -c f  -k 166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
 
 
 //确认某笔交易
-cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
+cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 8 -k "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf"
 
-cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 9 -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
+cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 8 -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
 
 */
