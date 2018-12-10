@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"strings"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -20,7 +22,6 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	"strings"
 )
 
 var (
