@@ -10,9 +10,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
 	"strings"
-
+	
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
