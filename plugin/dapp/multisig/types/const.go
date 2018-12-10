@@ -1,6 +1,7 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package types
 
 import (
@@ -12,6 +13,7 @@ import (
 
 var multisiglog = log15.New("module", "execs.multisig")
 
+// OwnerAdd : 交易操作类型
 var (
 	OwnerAdd     uint64 = 1
 	OwnerDel     uint64 = 2

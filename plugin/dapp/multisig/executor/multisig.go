@@ -1,6 +1,7 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package executor
 
 /*
@@ -901,10 +902,7 @@ func isConfirmed(requiredWeight uint64, multiSigTx *mty.MultiSigTx) bool {
 	for _, owner := range multiSigTx.ConfirmedOwner {
 		totalweight += owner.Weight
 	}
-	if totalweight >= requiredWeight {
-		return true
-	}
-	return false
+	return totalweight >= requiredWeight
 }
 
 //确认某笔交易的额度是否满足每日限额,返回是否满足，以及新的newLastDay时间

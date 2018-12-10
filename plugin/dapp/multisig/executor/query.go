@@ -1,6 +1,7 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package executor
 
 import (
@@ -154,8 +155,7 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 			multisiglog.Error("Query_MultiSigTxids:getMultiSigTx", "addr", addr, "txid", txid, "err", err)
 			continue
 		}
-		var findTxid uint64
-		findTxid = txid
+		findTxid := txid
 		//查找Pending/Executed的交易txid
 		if in.Pending && !multiSigTx.Executed || in.Executed && multiSigTx.Executed {
 			multiSigTxids.Txids = append(multiSigTxids.Txids, findTxid)

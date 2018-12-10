@@ -382,10 +382,9 @@ func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Rec
 	} else if multiSigTx.TxType == mty.TransferOperate {
 		transfer := payload.GetMultiSigExecTransferFrom()
 		return a.executeTransferTx(multiSigAcc, multiSigTx, transfer, owner, mty.IsConfirm)
-	} else {
-		multisiglog.Error("MultiSigConfirmTx:GetMultiSigTx", "multiSigAccAddr", multiSigAccAddr, "Confirm TxId", ConfirmTx.TxId, "TxType unknown", multiSigTx.TxType)
-		return nil, mty.ErrTxTypeNoMatch
 	}
+	multisiglog.Error("MultiSigConfirmTx:GetMultiSigTx", "multiSigAccAddr", multiSigAccAddr, "Confirm TxId", ConfirmTx.TxId, "TxType unknown", multiSigTx.TxType)
+	return nil, mty.ErrTxTypeNoMatch
 }
 
 //多重签名账户请求权重的修改,返回新的KeyValue对和ReceiptLog信息
