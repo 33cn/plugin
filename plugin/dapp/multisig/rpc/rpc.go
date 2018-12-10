@@ -69,7 +69,8 @@ func (c *Jrpc) MultiSigAccTransferInTx(param *mty.MultiSigExecTransferTo, result
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", param)
+	v := *param
+	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", &v)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,8 @@ func (c *Jrpc) MultiSigAccTransferOutTx(param *mty.MultiSigExecTransferFrom, res
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferFrom", param)
+	v := *param
+	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferFrom", &v)
 	if err != nil {
 		return err
 	}
