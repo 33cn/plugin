@@ -229,6 +229,7 @@ func (policy *ticketPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 func (policy *ticketPolicy) OnWalletLocked() {
 	// 钱包锁住时，不允许挖矿
 	atomic.CompareAndSwapInt32(&policy.isTicketLocked, 0, 1)
+	FlushTicket(policy.getAPI())
 }
 
 //解锁超时处理，需要区分整个钱包的解锁或者只挖矿的解锁

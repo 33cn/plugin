@@ -38,6 +38,8 @@ const (
 	ForkEVMKVHash = "ForkEVMKVHash"
 	// ForkEVMABI EVM合约支持ABI绑定和调用
 	ForkEVMABI = "ForkEVMABI"
+	// ForkEVMFrozen EVM合约用户金额冻结
+	ForkEVMFrozen = "ForkEVMFrozen"
 )
 
 var (
