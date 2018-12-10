@@ -38,6 +38,8 @@ func init() {
 	types.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
 	// EVM合约支持ABI绑定和调用
 	types.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
+	// EEVM合约用户金额冻结
+	types.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
 }
 
 // EvmType EVM类型定义
