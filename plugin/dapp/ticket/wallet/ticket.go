@@ -7,7 +7,6 @@ package wallet
 import (
 	"encoding/hex"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +20,7 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"strings"
 )
 
 var (
@@ -29,14 +29,7 @@ var (
 )
 
 func init() {
-	// 只有ticket共识下ticket相关的操作才有效
-	q := types.Conf("config.consensus")
-	if q != nil {
-		cons := q.GStr("name")
-		if strings.Compare(strings.TrimSpace(cons), ty.TicketX) == 0 {
-			wcom.RegisterPolicy(ty.TicketX, New())
-		}
-	}
+	wcom.RegisterPolicy(ty.TicketX, New())
 }
 
 // New new instance
@@ -777,6 +770,17 @@ func (policy *ticketPolicy) autoMining() {
 	defer bizlog.Info("End auto mining")
 	operater := policy.getWalletOperate()
 	defer operater.GetWaitGroup().Done()
+
+	// 只有ticket共识下ticket相关的操作才有效
+	q := types.Conf("config.consensus")
+	if q != nil {
+		cons := q.GStr("name")
+		if strings.Compare(strings.TrimSpace(cons), ty.TicketX) != 0 {
+			bizlog.Info("consensus is not ticket, exit mining")
+			return
+		}
+	}
+
 	lastHeight := int64(0)
 	miningTicketTicker := policy.getMingTicketTicker()
 	for {

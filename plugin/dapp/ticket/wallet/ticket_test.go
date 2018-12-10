@@ -7,14 +7,14 @@ package wallet_test
 import (
 	"testing"
 
-	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/util/testnode"
-	wcom "github.com/33cn/chain33/wallet/common"
-	_ "github.com/33cn/plugin/plugin"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	ticketwallet "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func Test_WalletTicket(t *testing.T) {
@@ -22,7 +22,6 @@ func Test_WalletTicket(t *testing.T) {
 
 	cfg, sub := testnode.GetDefaultConfig()
 	cfg.Consensus.Name = "ticket"
-	wcom.RegisterPolicy(ty.TicketX, ticketwallet.New())
 	mock33 := testnode.NewWithConfig(cfg, sub, nil)
 	defer mock33.Close()
 	err := mock33.WaitHeight(0)
