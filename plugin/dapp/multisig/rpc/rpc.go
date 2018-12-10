@@ -65,11 +65,11 @@ func (c *Jrpc) MultiSigConfirmTx(param *mty.MultiSigConfirmTx, result *interface
 }
 
 // MultiSigAccTransferInTx :构造在多重签名合约中转账到多重签名账户的交易
-func (c *Jrpc) MultiSigAccTransferInTx(param mty.MultiSigExecTransfer, result *interface{}) error {
-	//if param == nil {
-	//	return types.ErrInvalidParam
-	//}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", &param)
+func (c *Jrpc) MultiSigAccTransferInTx(param *mty.MultiSigExecTransfer, result *interface{}) error {
+	if param == nil {
+		return types.ErrInvalidParam
+	}
+	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", param)
 	if err != nil {
 		return err
 	}

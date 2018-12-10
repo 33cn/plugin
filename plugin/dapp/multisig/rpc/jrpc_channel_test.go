@@ -73,51 +73,51 @@ func TestJRPCChannel(t *testing.T) {
 
 //创建交易
 func testCreateMultiSigAccCreateCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigAccCreate{}
+	params := &mty.MultiSigAccCreate{}
 	return jrpc.Call("multisig.MultiSigAccCreateTx", params, nil)
 }
 func testCreateMultiSigAccOwnerAddCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigOwnerOperate{}
+	params := &mty.MultiSigOwnerOperate{}
 	return jrpc.Call("multisig.MultiSigOwnerOperateTx", params, nil)
 }
 func testCreateMultiSigAccOwnerDelCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigOwnerOperate{}
+	params := &mty.MultiSigOwnerOperate{}
 	return jrpc.Call("multisig.MultiSigOwnerOperateTx", params, nil)
 }
 func testCreateMultiSigAccOwnerModifyCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigOwnerOperate{}
+	params := &mty.MultiSigOwnerOperate{}
 	return jrpc.Call("multisig.MultiSigOwnerOperateTx", params, nil)
 }
 func testCreateMultiSigAccOwnerReplaceCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigOwnerOperate{}
+	params := &mty.MultiSigOwnerOperate{}
 	return jrpc.Call("multisig.MultiSigOwnerOperateTx", params, nil)
 }
 func testCreateMultiSigAccWeightModifyCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigAccOperate{}
+	params := &mty.MultiSigAccOperate{}
 	return jrpc.Call("multisig.MultiSigAccOperateTx", params, nil)
 }
 
 func testCreateMultiSigAccDailyLimitModifyCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigAccOperate{}
+	params := &mty.MultiSigAccOperate{}
 	return jrpc.Call("multisig.MultiSigAccOperateTx", params, nil)
 }
 
 func testCreateMultiSigConfirmTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigConfirmTx{}
+	params := &mty.MultiSigConfirmTx{}
 	return jrpc.Call("multisig.MultiSigConfirmTx", params, nil)
 }
 func testCreateMultiSigAccTransferInCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigExecTransfer{}
+	params := &mty.MultiSigExecTransfer{}
 	return jrpc.Call("multisig.MultiSigAccTransferInTx", params, nil)
 }
 func testCreateMultiSigAccTransferOutCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := mty.MultiSigExecTransfer{}
+	params := &mty.MultiSigExecTransfer{}
 	return jrpc.Call("multisig.MultiSigAccTransferOutTx", params, nil)
 }
 
 //get 多重签名账户信息
 func testGetMultiSigAccCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpctypes.Query4Jrpc{
+	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccCount",
 		Payload:  types.MustPBToJSON(&types.ReqNil{}),
@@ -127,7 +127,7 @@ func testGetMultiSigAccCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error
 }
 
 func testGetMultiSigAccountsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpctypes.Query4Jrpc{
+	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccounts",
 		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccs{}),
@@ -137,7 +137,7 @@ func testGetMultiSigAccountsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error
 }
 
 func testGetMultiSigAccountInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpctypes.Query4Jrpc{
+	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccountInfo",
 		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccInfo{}),
@@ -147,7 +147,7 @@ func testGetMultiSigAccountInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 }
 
 func testGetMultiSigAccTxCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpctypes.Query4Jrpc{
+	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigAccTxCount",
 		Payload:  types.MustPBToJSON(&mty.ReqMultiSigAccInfo{}),
@@ -157,7 +157,7 @@ func testGetMultiSigAccTxCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) err
 }
 
 func testGetMultiSigTxidsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpctypes.Query4Jrpc{
+	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,
 		FuncName: "MultiSigTxids",
 		Payload:  types.MustPBToJSON(&mty.ReqMultiSigTxids{}),
@@ -174,7 +174,7 @@ func testGetMultiSigTxInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params.FuncName = "MultiSigTxInfo"
 	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.MultiSigTx{}
-	return jrpc.Call("Chain33.Query", params, rep)
+	return jrpc.Call("Chain33.Query", &params, rep)
 }
 
 func testGetGetMultiSigTxConfirmedWeightCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
@@ -185,7 +185,7 @@ func testGetGetMultiSigTxConfirmedWeightCmd(t *testing.T, jrpc *jsonclient.JSONC
 	params.FuncName = "MultiSigTxConfirmedWeight"
 	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.Uint64{}
-	return jrpc.Call("Chain33.Query", params, rep)
+	return jrpc.Call("Chain33.Query", &params, rep)
 }
 
 func testGetGetMultiSigAccUnSpentTodayCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
@@ -197,7 +197,7 @@ func testGetGetMultiSigAccUnSpentTodayCmd(t *testing.T, jrpc *jsonclient.JSONCli
 	params.FuncName = "MultiSigAccUnSpentToday"
 	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.ReplyUnSpentAssets{}
-	return jrpc.Call("Chain33.Query", params, rep)
+	return jrpc.Call("Chain33.Query", &params, rep)
 }
 
 func testGetMultiSigAccAssetsCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
@@ -210,7 +210,7 @@ func testGetMultiSigAccAssetsCmd(t *testing.T, jrpc *jsonclient.JSONClient) erro
 	params.FuncName = "MultiSigAccAssets"
 	params.Payload = types.MustPBToJSON(req)
 	rep = &mty.ReplyAccAssets{}
-	return jrpc.Call("Chain33.Query", params, rep)
+	return jrpc.Call("Chain33.Query", &params, rep)
 }
 
 func testGetMultiSigAccAllAddressCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
@@ -225,5 +225,5 @@ func testGetMultiSigAccAllAddressCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 	params.FuncName = "MultiSigAccAllAddress"
 	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.AccAddress{}
-	return jrpc.Call("Chain33.Query", params, rep)
+	return jrpc.Call("Chain33.Query", &params, rep)
 }
