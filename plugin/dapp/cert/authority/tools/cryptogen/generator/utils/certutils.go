@@ -78,9 +78,9 @@ func ParseX509CertificateToSm2(x509Cert *x509.Certificate) *sm2.Certificate {
 		UnknownExtKeyUsage: x509Cert.UnknownExtKeyUsage,
 
 		BasicConstraintsValid: x509Cert.BasicConstraintsValid,
-		IsCA:                  x509Cert.IsCA,
-		MaxPathLen:            x509Cert.MaxPathLen,
-		MaxPathLenZero:        x509Cert.MaxPathLenZero,
+		IsCA:           x509Cert.IsCA,
+		MaxPathLen:     x509Cert.MaxPathLen,
+		MaxPathLenZero: x509Cert.MaxPathLenZero,
 
 		SubjectKeyId:   x509Cert.SubjectKeyId,
 		AuthorityKeyId: x509Cert.AuthorityKeyId,
@@ -141,9 +141,9 @@ func ParseSm2CertificateToX509(sm2Cert *sm2.Certificate) *x509.Certificate {
 		UnknownExtKeyUsage: sm2Cert.UnknownExtKeyUsage,
 
 		BasicConstraintsValid: sm2Cert.BasicConstraintsValid,
-		IsCA:                  sm2Cert.IsCA,
-		MaxPathLen:            sm2Cert.MaxPathLen,
-		MaxPathLenZero:        sm2Cert.MaxPathLenZero,
+		IsCA:           sm2Cert.IsCA,
+		MaxPathLen:     sm2Cert.MaxPathLen,
+		MaxPathLenZero: sm2Cert.MaxPathLenZero,
 
 		SubjectKeyId:   sm2Cert.SubjectKeyId,
 		AuthorityKeyId: sm2Cert.AuthorityKeyId,
