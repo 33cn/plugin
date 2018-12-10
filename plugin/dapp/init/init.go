@@ -21,4 +21,5 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/token"
 	_ "github.com/33cn/plugin/plugin/dapp/trade"
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"
+	_ "github.com/33cn/plugin/plugin/dapp/echo"
 )
