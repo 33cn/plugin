@@ -104,8 +104,17 @@ func TestTicketMap(t *testing.T) {
 		{TicketId: "3333"},
 		{TicketId: "4444"},
 	}
+	privmap := make(map[string]crypto.PrivKey)
+	//通过privkey生成一个pubkey然后换算成对应的addr
+	cr, _ := crypto.New("secp256k1")
+	priv, _ := cr.PrivKeyFromBytes([]byte("2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"))
+	privmap["1111"] = priv
+	privmap["2222"] = priv
+	privmap["3333"] = priv
+	privmap["4444"] = priv
+
 	assert.Equal(t, c.getTicketCount(), int64(0))
-	c.setTicket(ticketList, nil)
+	c.setTicket(ticketList, privmap)
 	assert.Equal(t, c.getTicketCount(), int64(4))
 	c.delTicket("3333")
 	assert.Equal(t, c.getTicketCount(), int64(3))
