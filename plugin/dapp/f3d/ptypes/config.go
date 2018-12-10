@@ -5,6 +5,14 @@
  */
 package types
 
+import (
+	"fmt"
+	"flag"
+	"github.com/BurntSushi/toml"
+)
+
+var configPath = flag.String("f3d_conf", "f3d.toml", "config file")
+
 var (
 	// 本游戏合约管理员地址
 	f3dManagerAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
@@ -41,7 +49,25 @@ var (
 )
 
 func SetConfig() {
+	var config Config
+	// 解析配置文件
+	_, err := toml.DecodeFile(*configPath, &config)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
+	f3dManagerAddr = config.GetAddr().GetManager()
+	f3dDeveloperAddr = config.GetAddr().GetDeveloper()
+	f3dBonusWinner = config.GetBonus().GetWinner()
+	f3dBonusKey = config.GetBonus().GetKey()
+	f3dBonusPool = config.GetBonus().GetPool()
+	f3dBonusDeveloper = config.GetBonus().GetDeveloper()
+	f3dTimeLife = config.GetTime().GetLife()
+	f3dTimeKey = config.GetTime().GetKey()
+	f3dTimeMaxkey = config.GetTime().GetMaxkey()
+	f3dKeyPriceIncr = config.GetKey().GetIncr()
+	f3dKeyPriceStart = config.GetKey().GetStart()
 }
 
 func GetF3dManagerAddr() string {
