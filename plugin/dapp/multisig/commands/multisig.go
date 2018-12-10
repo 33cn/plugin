@@ -516,12 +516,11 @@ func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
-	params := &mty.MultiSigExecTransfer{
+	params := &mty.MultiSigExecTransferTo{
 		Symbol:   symbol,
 		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
 		Note:     note,
 		Execname: execer,
-		From:     "",
 		To:       to,
 	}
 	var res string
@@ -573,7 +572,7 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
-	params := &mty.MultiSigExecTransfer{
+	params := &mty.MultiSigExecTransferFrom{
 		Symbol:   symbol,
 		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
 		Note:     note,

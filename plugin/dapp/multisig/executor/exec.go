@@ -34,13 +34,13 @@ func (m *MultiSig) Exec_MultiSigConfirmTx(payload *mty.MultiSigConfirmTx, tx *ty
 }
 
 //Exec_MultiSigExecTransferTo 合约中外部账户转账到多重签名账户，Addr --->multiSigAddr
-func (m *MultiSig) Exec_MultiSigExecTransferTo(payload *mty.MultiSigExecTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (m *MultiSig) Exec_MultiSigExecTransferTo(payload *mty.MultiSigExecTransferTo, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(m, tx, int32(index))
 	return action.MultiSigExecTransferTo(payload)
 }
 
 //Exec_MultiSigExecTransferFrom 合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
-func (m *MultiSig) Exec_MultiSigExecTransferFrom(payload *mty.MultiSigExecTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (m *MultiSig) Exec_MultiSigExecTransferFrom(payload *mty.MultiSigExecTransferFrom, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(m, tx, int32(index))
 	return action.MultiSigExecTransferFrom(payload)
 }

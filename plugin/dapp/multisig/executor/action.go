@@ -201,7 +201,7 @@ func (a *action) MultiSigOwnerOperate(AccOwnerOperate *mty.MultiSigOwnerOperate)
 //MultiSigExecTransferFrom 首先判断转账的额度是否大于每日限量，小于就直接执行交易，调用ExecTransferFrozen进行转账
 //大于每日限量只需要将交易信息记录
 //合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
-func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecTransfer) (*types.Receipt, error) {
+func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecTransferFrom) (*types.Receipt, error) {
 
 	//首先从statedb中获取MultiSigAccAddr的状态信息
 	multiSigAccAddr := multiSigAccTransfer.From
@@ -247,7 +247,7 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 
 //MultiSigExecTransferTo 将合约中外部账户转账上的Execname.Symbol资产转到多重签名账户上，from:Addr --->to:multiSigAddr
 // from地址使用tx中的签名的地址，payload中from地址不使用在 TransferTo交易中
-func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransfer) (*types.Receipt, error) {
+func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransferTo) (*types.Receipt, error) {
 
 	//from地址校验必须不是多重签名账户地址
 	multiSigAccFrom, _ := getMultiSigAccFromDb(a.db, a.fromaddr)
@@ -728,7 +728,7 @@ func (a *action) receiptMultiSigTx(multiSigTx *mty.MultiSigTx, owner *mty.Owner,
 }
 
 //确认并执行转账交易：区分submitTx和confirmtx阶段。
-func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, transfer *mty.MultiSigExecTransfer, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
+func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, transfer *mty.MultiSigExecTransferFrom, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 
 	//获取对应资产的每日限额信息
 	var findindex int

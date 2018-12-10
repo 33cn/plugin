@@ -104,14 +104,23 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 		return nil
 	}
 
-	//MultiSigExecTransfer 交易的检测
-	if ato, ok := payload.(*mty.MultiSigExecTransfer); ok {
+	//MultiSigExecTransferTo 交易的检测
+	if ato, ok := payload.(*mty.MultiSigExecTransferTo); ok {
 		if err := address.CheckAddress(ato.GetTo()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//assets check
 		return mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol())
 	}
+	//MultiSigExecTransferFrom 交易的检测
+	if ato, ok := payload.(*mty.MultiSigExecTransferFrom); ok {
+		if err := address.CheckAddress(ato.GetTo()); err != nil {
+			return types.ErrInvalidAddress
+		}
+		//assets check
+		return mty.IsAssetsInvalid(ato.GetExecname(), ato.GetSymbol())
+	}
+
 	return nil
 }
 func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
@@ -377,16 +386,26 @@ func (m *MultiSig) saveMultiSigTransfer(tx *types.Transaction, SubmitOrConfirm, 
 	if err != nil {
 		panic(err)
 	}
-
-	multiSigTransfer := &mty.MultiSigExecTransfer{}
+	var to string
+	var execname string
+	var symbol string
+	var amount int64
 
 	//addr-->multiSigAccAddr
 	//multiSigAccAddr-->addr
 	if SubmitOrConfirm {
 		if action.Ty == mty.ActionMultiSigExecTransferTo && action.GetMultiSigExecTransferTo() != nil {
-			multiSigTransfer = action.GetMultiSigExecTransferTo()
+			tx := action.GetMultiSigExecTransferTo()
+			to = tx.To
+			execname = tx.Execname
+			symbol = tx.Symbol
+			amount = tx.Amount
 		} else if action.Ty == mty.ActionMultiSigExecTransferFrom && action.GetMultiSigExecTransferFrom() != nil {
-			multiSigTransfer = action.GetMultiSigExecTransferFrom()
+			tx := action.GetMultiSigExecTransferFrom()
+			to = tx.To
+			execname = tx.Execname
+			symbol = tx.Symbol
+			amount = tx.Amount
 		} else {
 			return set, nil
 		}
@@ -409,16 +428,15 @@ func (m *MultiSig) saveMultiSigTransfer(tx *types.Transaction, SubmitOrConfirm, 
 			return nil, err
 		}
 		if multiSigTx.TxType == mty.TransferOperate {
-			multiSigTransfer = payload.GetMultiSigExecTransferFrom()
+			tx := payload.GetMultiSigExecTransferFrom()
+			to = tx.To
+			execname = tx.Execname
+			symbol = tx.Symbol
+			amount = tx.Amount
 		} else {
 			return set, nil
 		}
 	}
-
-	to := multiSigTransfer.To
-	execname := multiSigTransfer.Execname
-	symbol := multiSigTransfer.Symbol
-	amount := multiSigTransfer.Amount
 	kv, err := updateAddrReciver(m.GetLocalDB(), to, execname, symbol, amount, addOrRollback)
 	if err != nil {
 		return set, err

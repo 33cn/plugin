@@ -62,7 +62,7 @@ func (m *MultiSig) ExecDelLocal_MultiSigConfirmTx(payload *mty.MultiSigConfirmTx
 }
 
 //ExecDelLocal_MultiSigExecTransferTo 合约中外部账户转账到多重签名账户，Addr --->multiSigAddr
-func (m *MultiSig) ExecDelLocal_MultiSigExecTransferTo(payload *mty.MultiSigExecTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (m *MultiSig) ExecDelLocal_MultiSigExecTransferTo(payload *mty.MultiSigExecTransferTo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if receiptData.GetTy() != types.ExecOk {
 		return &types.LocalDBSet{}, nil
 	}
@@ -75,7 +75,7 @@ func (m *MultiSig) ExecDelLocal_MultiSigExecTransferTo(payload *mty.MultiSigExec
 }
 
 //ExecDelLocal_MultiSigExecTransferFrom 合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
-func (m *MultiSig) ExecDelLocal_MultiSigExecTransferFrom(payload *mty.MultiSigExecTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (m *MultiSig) ExecDelLocal_MultiSigExecTransferFrom(payload *mty.MultiSigExecTransferFrom, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if receiptData.GetTy() != types.ExecOk {
 		return &types.LocalDBSet{}, nil
 	}

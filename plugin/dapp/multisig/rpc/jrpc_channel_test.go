@@ -107,11 +107,11 @@ func testCreateMultiSigConfirmTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 	return jrpc.Call("multisig.MultiSigConfirmTx", params, nil)
 }
 func testCreateMultiSigAccTransferInCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &mty.MultiSigExecTransfer{}
+	params := &mty.MultiSigExecTransferTo{}
 	return jrpc.Call("multisig.MultiSigAccTransferInTx", params, nil)
 }
 func testCreateMultiSigAccTransferOutCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &mty.MultiSigExecTransfer{}
+	params := &mty.MultiSigExecTransferFrom{}
 	return jrpc.Call("multisig.MultiSigAccTransferOutTx", params, nil)
 }
 

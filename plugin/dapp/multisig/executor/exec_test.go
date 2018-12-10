@@ -764,16 +764,15 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 
 //合约内转账到多重签名账户
 func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
-	params := &mty.MultiSigExecTransfer{
+	params := &mty.MultiSigExecTransferTo{
 		Symbol:   Symbol,
 		Amount:   InAmount,
 		Note:     "testMultiSigAccExecTransferTo",
 		Execname: Asset,
-		From:     AddrD,
 		To:       multiSigAddr,
 	}
 
-	tx, _ := multiSigExecTransfer(params, false)
+	tx, _ := multiSigExecTransferTo(params, false)
 	tx, _ = signTx(tx, PrivKeyD)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -837,7 +836,7 @@ func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env exec
 
 //合约内转账到多重签名账户
 func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
-	params := &mty.MultiSigExecTransfer{
+	params := &mty.MultiSigExecTransferFrom{
 		Symbol:   Symbol,
 		Amount:   OutAmount,
 		Note:     "testMultiSigAccExecTransferFrom",
@@ -846,7 +845,7 @@ func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env ex
 		To:       AddrD,
 	}
 
-	tx, _ := multiSigExecTransfer(params, true)
+	tx, _ := multiSigExecTransferFrom(params, true)
 	tx, _ = signTx(tx, PrivKeyB)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -993,20 +992,24 @@ func multiSigConfirmTx(parm *mty.MultiSigConfirmTx) (*types.Transaction, error) 
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
-func multiSigExecTransfer(parm *mty.MultiSigExecTransfer, fromOrTo bool) (*types.Transaction, error) {
+func multiSigExecTransferTo(parm *mty.MultiSigExecTransferTo, fromOrTo bool) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
-	}
-	if fromOrTo {
-		multiSig := &mty.MultiSigAction{
-			Ty:    mty.ActionMultiSigExecTransferFrom,
-			Value: &mty.MultiSigAction_MultiSigExecTransferFrom{MultiSigExecTransferFrom: parm},
-		}
-		return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 	}
 	multiSig := &mty.MultiSigAction{
 		Ty:    mty.ActionMultiSigExecTransferTo,
 		Value: &mty.MultiSigAction_MultiSigExecTransferTo{MultiSigExecTransferTo: parm},
+	}
+	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+}
+
+func multiSigExecTransferFrom(parm *mty.MultiSigExecTransferFrom, fromOrTo bool) (*types.Transaction, error) {
+	if parm == nil {
+		return nil, types.ErrInvalidParam
+	}
+	multiSig := &mty.MultiSigAction{
+		Ty:    mty.ActionMultiSigExecTransferFrom,
+		Value: &mty.MultiSigAction_MultiSigExecTransferFrom{MultiSigExecTransferFrom: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }

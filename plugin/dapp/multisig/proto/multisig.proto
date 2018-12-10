@@ -77,8 +77,8 @@ message MultiSigAction {
         MultiSigOwnerOperate    	multiSigOwnerOperate 	= 2;
         MultiSigAccOperate    		multiSigAccOperate 		= 3;
         MultiSigConfirmTx        	multiSigConfirmTx       = 4;//确认或者撤销已确认
-		MultiSigExecTransfer     	multiSigExecTransferTo 	= 5;//合约中外部账户转账到多重签名账户，Addr --->multiSigAddr
-		MultiSigExecTransfer     	multiSigExecTransferFrom = 6;//合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
+		MultiSigExecTransferTo     	multiSigExecTransferTo 	= 5;//合约中外部账户转账到多重签名账户，Addr --->multiSigAddr
+		MultiSigExecTransferFrom    multiSigExecTransferFrom = 6;//合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
 
     }
     int32 Ty = 7;
@@ -109,16 +109,26 @@ message MultiSigAccOperate {
 	bool 				operateFlag			= 4;
 }
 
-//多重签名合约中账户之间转币操作:增加一个from的字段实现MultiSigAddr<--->addr之间的转账
+//多重签名合约中账户之间转币操作:增加一个from的字段实现MultiSigAddr--->addr之间的转账
 //需要判断from地址是否是多重签名地址
 //将MultiSig合约中from地址上execname+symbol的资产转移到to地址
-message MultiSigExecTransfer {
+message MultiSigExecTransferFrom {
 	string symbol		= 1;
 	int64  amount		= 2;
 	string note			= 3;
 	string execname		= 4;
 	string to			= 5;
 	string from			= 6;
+}
+//多重签名合约中账户之间转币操作: addr --->MultiSigAddr之间的转账
+//需要判断to地址是否是多重签名地址
+//将MultiSig合约中签名地址上execname+symbol的资产转移到to地址
+message MultiSigExecTransferTo {
+	string symbol		= 1;
+	int64  amount		= 2;
+	string note			= 3;
+	string execname		= 4;
+	string to			= 5;
 }
 
 //多重签名账户withdraw交易的确认或者取消确认
