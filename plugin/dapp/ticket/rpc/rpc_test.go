@@ -15,12 +15,10 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
-	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	"github.com/33cn/plugin/plugin/dapp/ticket/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -129,9 +127,8 @@ func TestJrpc_GetTicketCount(t *testing.T) {
 func TestRPC_CallTestNode(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	cfg, sub := testnode.GetDefaultConfig()
-	// 测试环境下，默认情况是不注册ticket钱包插件的，而且默认配置的共识为solo，需要修改
+	// 测试环境下，默认配置的共识为solo，需要修改
 	cfg.Consensus.Name = "ticket"
-	wcom.RegisterPolicy(ty.TicketX, wallet.New())
 	mock33 := testnode.NewWithConfig(cfg, sub, api)
 	defer func() {
 		mock33.Close()
@@ -173,6 +170,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 	assert.Equal(t, res.IsOk, true)
 
 	//test  grpc
+
 	ctx := context.Background()
 	c, err := grpc.DialContext(ctx, rpcCfg.GrpcBindAddr, grpc.WithInsecure())
 	assert.Nil(t, err)
