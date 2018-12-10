@@ -6,9 +6,7 @@
 package types
 
 import (
-	"fmt"
 	"flag"
-	"github.com/BurntSushi/toml"
 )
 
 var configPath = flag.String("f3d_conf", "f3d.toml", "config file")
@@ -48,26 +46,18 @@ var (
 	f3dKeyPriceStart = float32(0.1)
 )
 
-func SetConfig() {
-	var config Config
-	// 解析配置文件
-	_, err := toml.DecodeFile(*configPath, &config)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	f3dManagerAddr = config.GetAddr().GetManager()
-	f3dDeveloperAddr = config.GetAddr().GetDeveloper()
-	f3dBonusWinner = config.GetBonus().GetWinner()
-	f3dBonusKey = config.GetBonus().GetKey()
-	f3dBonusPool = config.GetBonus().GetPool()
-	f3dBonusDeveloper = config.GetBonus().GetDeveloper()
-	f3dTimeLife = config.GetTime().GetLife()
-	f3dTimeKey = config.GetTime().GetKey()
-	f3dTimeMaxkey = config.GetTime().GetMaxkey()
-	f3dKeyPriceIncr = config.GetKey().GetIncr()
-	f3dKeyPriceStart = config.GetKey().GetStart()
+func SetConfig(config *Config) {
+	f3dManagerAddr = config.GetManagerAddr()
+	f3dDeveloperAddr = config.GetDeveloperAddr()
+	f3dBonusWinner = config.GetWinnerBonus()
+	f3dBonusKey = config.GetKeyBonus()
+	f3dBonusPool = config.GetPoolBonus()
+	f3dBonusDeveloper = config.GetDeveloperBonus()
+	f3dTimeLife = config.GetLifeTime()
+	f3dTimeKey = config.GetKeyIncrTime()
+	f3dTimeMaxkey = config.GetMaxkeyIncrTime()
+	f3dKeyPriceIncr = config.GetIncrKeyPrice()
+	f3dKeyPriceStart = config.GetStartKeyPrice()
 }
 
 func GetF3dManagerAddr() string {

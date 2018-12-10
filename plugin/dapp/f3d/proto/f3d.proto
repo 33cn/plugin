@@ -139,3 +139,19 @@ message ReceiptF3d {
     int64  round = 2;
     int64  index      = 3;
 }
+
+
+message Config {
+    string managerAddr = 1;
+    string developerAddr = 2;
+    float winnerBonus = 3;
+    float keyBonus = 4;
+    float poolBonus = 5;
+    float developerBonus = 6;
+    int64 lifeTime = 7;
+    int64 keyIncrTime = 8;
+    int64 maxkeyIncrTime = 9;
+    int64 nouserDecrTime = 10;
+    float startKeyPrice = 11;
+    float incrKeyPrice = 12;
+}
