@@ -201,6 +201,11 @@ func (client *Client) setTicket(tlist *ty.ReplyTicketList, privmap map[string]cr
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
 	client.ticketsMap = make(map[string]*ty.Ticket)
+	if tlist == nil || privmap == nil {
+		client.ticketsMap = nil
+		client.privmap = nil
+		return
+	}
 	for _, ticket := range tlist.Tickets {
 		client.ticketsMap[ticket.GetTicketId()] = ticket
 	}
