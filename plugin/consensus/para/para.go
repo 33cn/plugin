@@ -46,8 +46,8 @@ var (
 	zeroHash           [32]byte
 	grpcRecSize        = 30 * 1024 * 1024 //the size should be limited in server
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey                 = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchBlockDepth int64 = 100
+	minerPrivateKey            = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	searchHashMatchDepth int32 = 100
 )
 
 func init() {
@@ -84,9 +84,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		emptyBlockInterval = cfg.EmptyBlockInterval
 	}
 
-	//if cfg.searchHashMatchBlockDepth > 0 {
-	//	searchHashMatchBlockDepth = cfg.searchHashMatchBlockDepth
-	//}
+	if cfg.SearchHashMatchedBlockDepth > 0 {
+		searchHashMatchDepth = cfg.SearchHashMatchedBlockDepth
+	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
 	if err != nil {
@@ -508,8 +508,8 @@ func (client *client) switchHashMatchedBlock(currSeq *int64, preMainBlockHash *[
 		return
 	}
 
-	findDepth := searchHashMatchBlockDepth
-	for height := lastBlock.Height; height > 0 && findDepth > 0; height-- {
+	depth := searchHashMatchDepth
+	for height := lastBlock.Height; height > 0 && depth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
 		if err != nil {
 			return
@@ -522,11 +522,12 @@ func (client *client) switchHashMatchedBlock(currSeq *int64, preMainBlockHash *[
 			miner.MainBlockHeight, "mainHash", common.Bytes2Hex(miner.MainBlockHash))
 		mainSeq, err := client.GetSeqByHashOnMainChain(miner.MainBlockHash)
 		if err != nil {
-			findDepth--
-			if findDepth == 0 {
+			depth--
+			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", miner.MainBlockHeight,
-					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search depth", searchHashMatchBlockDepth)
-				panic("switchHashMatchedBlock depth overflow, restart and re-connect main node")
+					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search startHeight",lastBlock.Height,"curHeight",miner.Height,
+					"search depth", searchHashMatchDepth)
+				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
 				plog.Error("switchHashMatchedBlock search to height=1 not found", "lastBlockHeight", lastBlock.Height,
