@@ -15,7 +15,7 @@ func (f *f3d) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, erro
 			if err := types.Decode(log.Log, receipt); err != nil {
 				return nil, err
 			}
-			//kv := f.updateIndex(receipt)
+			kv := f.updateLocalDB(receipt)
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
 	}
