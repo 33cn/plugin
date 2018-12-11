@@ -118,6 +118,15 @@ func TestTicketMap(t *testing.T) {
 	assert.Equal(t, c.getTicketCount(), int64(4))
 	c.delTicket("3333")
 	assert.Equal(t, c.getTicketCount(), int64(3))
+
+	c.setTicket(ticketList, nil)
+	assert.Equal(t, c.getTicketCount(), int64(0))
+
+	c.setTicket(nil, privmap)
+	assert.Equal(t, c.getTicketCount(), int64(0))
+
+	c.setTicket(nil, nil)
+	assert.Equal(t, c.getTicketCount(), int64(0))
 }
 
 func TestProcEvent(t *testing.T) {
