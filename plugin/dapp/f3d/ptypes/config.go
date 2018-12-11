@@ -47,8 +47,8 @@ var (
 )
 
 func SetConfig(config *Config) {
-	f3dManagerAddr = config.GetManagerAddr()
-	f3dDeveloperAddr = config.GetDeveloperAddr()
+	f3dManagerAddr = config.GetManager()
+	f3dDeveloperAddr = config.GetDeveloper()
 	f3dBonusWinner = config.GetWinnerBonus()
 	f3dBonusKey = config.GetKeyBonus()
 	f3dBonusPool = config.GetPoolBonus()

@@ -2,9 +2,9 @@ package executor
 
 import (
 	log "github.com/33cn/chain33/common/log/log15"
-	pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 )
 
 var (
