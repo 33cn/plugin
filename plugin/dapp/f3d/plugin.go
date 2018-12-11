@@ -1,10 +1,10 @@
 package unfreeze
 
 import (
+	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/f3d/commands"
 	"github.com/33cn/plugin/plugin/dapp/f3d/executor"
-pt	"github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
-	"github.com/33cn/chain33/pluginmgr"
+	pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 )
 
 func init() {

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ptylog = log.New("module", "execs.f3d")
+	flog = log.New("module", "execs.f3d")
 )
 
 var driverName = pt.F3DX
@@ -19,11 +19,6 @@ func init() {
 }
 
 func Init(name string, sub []byte) {
-	var cfg pt.Config
-	if sub != nil {
-		types.MustDecode(sub, &cfg)
-	}
-	pt.SetConfig(&cfg)
 	drivers.Register(GetName(), newf3d, types.GetDappFork(driverName, "Enable"))
 }
 
@@ -42,6 +37,27 @@ func GetName() string {
 	return newf3d().GetName()
 }
 
-func (u *f3d) GetDriverName() string {
+func (f *f3d) GetDriverName() string {
 	return driverName
+}
+
+func (f *f3d) updateLocalDB() string {
+	return driverName
+}
+
+// GetPayloadValue get payload value
+func (f *f3d) GetPayloadValue() types.Message {
+	return &pt.F3DAction{}
+}
+
+// GetTypeMap get TypeMap
+//func (f *f3d) GetTypeMap() map[string]int32 {
+//	return map[string]int32{
+//
+//	}
+//}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (f *f3d) CheckReceiptExecOk() bool {
+	return true
 }

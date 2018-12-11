@@ -6,64 +6,66 @@ message RoundInfo {
     // 游戏轮次
     int64 round = 1;
     // 本轮游戏开始事件
-    int64 beginTime = 2;
+    int64 beginTime  = 2;
     // 本轮游戏结束时间
-    int64 endTime = 3;
+    int64 endTime    = 3;
     // 本轮游戏目前为止最后一把钥匙持有人（游戏开奖时，这个就是中奖人）
-    string lastOwner = 4;
+    string lastOwner   = 4;
     // 最后一把钥匙的购买时间
     int64 lastKeyTime = 5;
     // 最后一把钥匙的价格
     float lastKeyPrice = 6;
     // 本轮游戏奖金池总额
-    float bonusPool = 7;
+    float bonusPool  = 7;
     // 本轮游戏参与地址数
     int64 userCount = 8;
     // 本轮游戏募集到的key个数
     int64 keyCount = 9;
     //距离开奖剩余时间
     int64 remainTime = 10;
+    int64 updateTime = 11;
 }
 
 message KeyInfo {
     // 游戏轮次  (是由系统合约填写后存储）
     int64 round = 1;
-
+      
     // 本次购买key的价格 (是由系统合约填写后存储）
     float keyPrice = 2;
-
+    
     // 用户本次买的key的数量
     int64 keyNum = 3;
-
+    
     // 用户地址 (是由系统合约填写后存储）
     string addr = 4;
-
+    
     // 交易确认存储时间（被打包的时间）
     int64 buyKeyTime = 7;
-
+    
+    
     //买票的txHash
     string buyKeyTxHash = 9;
-
+    
 }
-
+ 
 // message for execs.f3d
 message F3dAction {
     oneof value {
         F3dStart start = 1;
         F3dLuckyDraw draw = 2;
-        F3dBuyKey buy = 3;
+        F3dBuyKey  buy  = 3;
     }
     int32 ty = 4;
 }
 
 message F3dStart {
     //轮次，这个填不填不重要，合约里面会自动校验的
-    int64 Round = 1;
+    int64 Round  = 1;
 }
 
 message F3dLuckyDraw {
     //轮次，这个填不填不重要，合约里面会自动校验的
-    int64 Round = 1;
+    int64 Round  = 1;
 }
 
 message F3dBuyKey {
@@ -101,13 +103,20 @@ message QueryKeyCountByRoundAndAddr {
     string addr = 2;
 }
 
+message QueryAddrInfo {
+    int64 round = 1;
+    string addr = 2;
+    int32 count = 3;
+    int32 direction = 4;
+}
+
 message F3dRecord {
     //用户地址
     string addr = 1;
     //index
-    int64 index = 2;
+    int64  index  = 2;
     //round
-    int64 round = 3;
+    int64  round = 3;
 }
 
 //f3d round查询返回数据 
@@ -132,28 +141,38 @@ message ReplyKeyCount {
     int64 count = 1;
 }
 
+message ReplyAddrInfoList {
+    repeated AddrInfo addrInfoList = 1;
+}
+message AddrInfo {
+    string addr  = 1;
+    int64  keyNum = 2;
+    bool  isFirstBuy = 3;
+    int64  round = 4;
+}
 //合约内部日志记录，待补全
 message ReceiptF3d {
     string addr = 1;
-    int64 round = 2;
-    int64 index = 3;
+    int64  round = 2;
+    int64  index      = 3;
+    int64  count = 4;
+    int64  prevCount = 5;
+    bool  isFirstBuy = 6;
+    int64  keyNum = 7;  //totoal num
 }
-
 
 message Config {
     string manager = 1;
     string developer = 2;
-
-    float winnerBonus = 3;
+     float winnerBonus = 3;
     float keyBonus = 4;
     float poolBonus = 5;
     float developerBonus = 6;
-
-    int64 lifeTime = 7;
+     int64 lifeTime = 7;
     int64 keyIncrTime = 8;
     int64 maxkeyIncrTime = 9;
     int64 nouserDecrTime = 10;
-
-    float startKeyPrice = 11;
+     float startKeyPrice = 11;
     float incrKeyPrice = 12;
-}
+} 
+
