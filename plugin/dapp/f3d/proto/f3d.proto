@@ -110,15 +110,19 @@ message QueryAddrInfo {
     int32 direction = 4;
 }
 
-message F3dRecord {
-    //用户地址
-    string addr = 1;
-    //index
-    int64  index  = 2;
+message F3dStartRound {
     //round
-    int64  round = 3;
+    int64  round = 1;
 }
-
+message F3dDrawRound {
+    //round
+    int64  round = 1;
+}
+message F3dBuyRecord {
+    int64 round = 1;
+    string addr = 2;
+    int64  index = 3;
+}
 //f3d round查询返回数据 
 message ReplyF3dList {
     repeated RoundInfo rounds = 1;
@@ -147,18 +151,17 @@ message ReplyAddrInfoList {
 message AddrInfo {
     string addr  = 1;
     int64  keyNum = 2;
-    bool  isFirstBuy = 3;
+    int64  buyCount = 3;
     int64  round = 4;
 }
 //合约内部日志记录，待补全
 message ReceiptF3d {
     string addr = 1;
     int64  round = 2;
-    int64  index      = 3;
-    int64  count = 4;
-    int64  prevCount = 5;
-    bool  isFirstBuy = 6;
-    int64  keyNum = 7;  //totoal num
+    int64  index  = 3;
+    int64  action = 4;
+    int64  buyCount = 5;
+    int64  keyNum = 6;  //totoal num
 }
 
 message Config {
