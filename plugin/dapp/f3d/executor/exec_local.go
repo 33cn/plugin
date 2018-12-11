@@ -1,18 +1,35 @@
 package executor
 
 import (
-	 pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 )
 
-func (c *f3d) ExecLocal_Start(payload *pt.F3DStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+// save receiptData to local db
+func (f *f3d) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	for _, log := range receiptData.Logs {
+		switch log.Ty {
+		case pt.TyLogf3dStart, pt.TyLogf3dBuy, pt.TyLogf3dDraw:
+			receipt := &pt.ReceiptF3D{}
+			if err := types.Decode(log.Log, receipt); err != nil {
+				return nil, err
+			}
+			//kv := f.updateIndex(receipt)
+			dbSet.KV = append(dbSet.KV, kv...)
+		}
+	}
+	return dbSet, nil
+}
+func (f *f3d) ExecLocal_Start(payload *pt.F3DStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+
+	return f.execLocal(receiptData)
 }
 
-func (c *f3d) ExecLocal_Draw(payload *pt.F3DLuckyDraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+func (f *f3d) ExecLocal_Draw(payload *pt.F3DLuckyDraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return f.execLocal(receiptData)
 }
 
-func (c *f3d) ExecLocal_Buy(payload *pt.F3DBuyKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+func (f *f3d) ExecLocal_Buy(payload *pt.F3DBuyKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return f.execLocal(receiptData)
 }

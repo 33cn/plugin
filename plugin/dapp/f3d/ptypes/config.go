@@ -5,12 +5,6 @@
  */
 package types
 
-import (
-	"flag"
-)
-
-var configPath = flag.String("f3d_conf", "f3d.toml", "config file")
-
 var (
 	// 本游戏合约管理员地址
 	f3dManagerAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
@@ -46,18 +40,8 @@ var (
 	f3dKeyPriceStart = float32(0.1)
 )
 
-func SetConfig(config *Config) {
-	f3dManagerAddr = config.GetManager()
-	f3dDeveloperAddr = config.GetDeveloper()
-	f3dBonusWinner = config.GetWinnerBonus()
-	f3dBonusKey = config.GetKeyBonus()
-	f3dBonusPool = config.GetPoolBonus()
-	f3dBonusDeveloper = config.GetDeveloperBonus()
-	f3dTimeLife = config.GetLifeTime()
-	f3dTimeKey = config.GetKeyIncrTime()
-	f3dTimeMaxkey = config.GetMaxkeyIncrTime()
-	f3dKeyPriceIncr = config.GetIncrKeyPrice()
-	f3dKeyPriceStart = config.GetStartKeyPrice()
+func SetConfig() {
+
 }
 
 func GetF3dManagerAddr() string {

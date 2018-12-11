@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ptylog = log.New("module", "execs.f3d")
+	flog = log.New("module", "execs.f3d")
 )
 
 var driverName = pt.F3DX
@@ -19,11 +19,6 @@ func init() {
 }
 
 func Init(name string, sub []byte) {
-	var cfg pt.Config
-	if sub != nil {
-		types.MustDecode(sub, &cfg)
-	}
-	pt.SetConfig(&cfg)
 	drivers.Register(GetName(), newf3d, types.GetDappFork(driverName, "Enable"))
 }
 

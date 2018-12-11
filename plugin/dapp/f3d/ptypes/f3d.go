@@ -19,13 +19,13 @@ const (
 )
 
 var (
-	typeMap = map[string]int32{
+	logMap = map[string]int32{
 		"Start": f3dActionStart,
 		"Draw":  f3dActionDraw,
 		"Buy":   f3dActionBuy,
 	}
 
-	logMap    = map[int64]*types.LogInfo{}
+	typeMap   = map[int64]*types.LogInfo{}
 	F3DX      = "f3d"
 	ExecerF3D = []byte(F3DX)
 )
