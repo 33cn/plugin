@@ -148,6 +148,7 @@ message AddrInfo {
     string addr  = 1;
     int64  keyNum = 2;
     bool  isFirstBuy = 3;
+    int64  round = 4;
 }
 //合约内部日志记录，待补全
 message ReceiptF3d {
@@ -156,6 +157,8 @@ message ReceiptF3d {
     int64  index      = 3;
     int64  count = 4;
     int64  prevCount = 5;
+    bool  isFirstBuy = 6;
+    int64  keyNum = 7;  //totoal num
 }
 
 message Config {
