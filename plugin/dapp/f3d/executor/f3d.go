@@ -19,6 +19,12 @@ func init() {
 }
 
 func Init(name string, sub []byte) {
+	var config pt.Config
+	if sub != nil {
+		types.MustDecode(sub, &config)
+	}
+	pt.SetConfig(&config)
+
 	drivers.Register(GetName(), newf3d, types.GetDappFork(driverName, "Enable"))
 }
 

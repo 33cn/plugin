@@ -208,7 +208,10 @@ lifetime = 3600
 keytime = 30
 
 # 一次购买钥匙最多延长的游戏时间（单位：秒）
-maxkeytime = 300
+maxkeyIncrTime = 300
+
+# 一轮游戏没有玩家购买key时，缩减的游戏时间
+nouserDecrTime = 30
 
 # 钥匙涨价幅度（下一个人购买钥匙时在上一把钥匙基础上浮动幅度百分比），范围1-100
 startKeyPrice= 0.1

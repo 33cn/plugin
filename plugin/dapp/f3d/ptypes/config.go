@@ -40,8 +40,72 @@ var (
 	f3dKeyPriceStart = float32(0.1)
 )
 
-func SetConfig() {
+func SetConfig(config *Config) {
+	// manager 地址
+	managerAddr := config.GetManager()
+	if validAddr(managerAddr) {
+		f3dManagerAddr = managerAddr
+	}
 
+	// developer 地址
+	developerAddr := config.GetDeveloper()
+	if validAddr(developerAddr) {
+		f3dDeveloperAddr = developerAddr
+	}
+
+	// 赢家获取的奖金百分比
+	winnerBonus := config.GetWinnerBonus()
+	if validPercent(winnerBonus) {
+		f3dBonusWinner = winnerBonus
+	}
+
+	// 用户持有key分红百分比
+	keyBonus := config.GetKeyBonus()
+	if validPercent(keyBonus) {
+		f3dBonusKey = keyBonus
+	}
+
+	// 滚动到下期奖金池百分比
+	poolBonus := config.GetPoolBonus()
+	if validPercent(poolBonus) {
+		f3dBonusPool = poolBonus
+	}
+
+	// 平台运营及开发者费用百分比
+	developBonus := config.GetDeveloperBonus()
+	if validPercent(developBonus) {
+		f3dBonusDeveloper = developBonus
+	}
+
+	// 本游戏一轮运行的最长周期（单位：秒）
+	lifeTime := config.GetLifeTime()
+	if validTime(lifeTime) {
+		f3dTimeLife = lifeTime
+	}
+
+	// 一把钥匙延长的游戏时间（单位：秒）
+	keyTime := config.GetKeyIncrTime()
+	if validTime(lifeTime) {
+		f3dTimeKey = keyTime
+	}
+
+	// 一次购买钥匙最多延长的游戏时间（单位：秒）
+	keyMaxTime := config.GetMaxkeyIncrTime()
+	if validTime(keyMaxTime) {
+		f3dTimeMaxkey = keyMaxTime
+	}
+
+	// 钥匙涨价幅度（下一个人购买钥匙时在上一把钥匙基础上浮动幅度百分比），范围1-100
+	keyPriceIncr := config.GetIncrKeyPrice()
+	if validPercent(keyPriceIncr) {
+		f3dKeyPriceIncr = keyPriceIncr
+	}
+
+	// start Key price  o.1 token
+	keyStartPrice := config.GetStartKeyPrice()
+	if keyStartPrice > 0 {
+		f3dKeyPriceStart = keyStartPrice
+	}
 }
 
 func GetF3dManagerAddr() string {
@@ -86,4 +150,25 @@ func GetF3dKeyPriceIncr() float32 {
 
 func GetF3dKeyPriceStart() float32 {
 	return f3dKeyPriceStart
+}
+
+func validAddr(addr string) bool {
+	if addr != "" && len(addr) == 64 {
+		return true
+	}
+	return false
+}
+
+func validPercent(percent float32) bool {
+	if percent >= 0 && percent <= 1 {
+		return true
+	}
+	return false
+}
+
+func validTime(time int64) bool {
+	if time >= 0 {
+		return true
+	}
+	return false
 }
