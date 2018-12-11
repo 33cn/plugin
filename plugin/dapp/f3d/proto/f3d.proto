@@ -40,10 +40,12 @@ message KeyInfo {
     string addr = 4;
 
     // 交易确认存储时间（被打包的时间）
-    int64 buyKeyTime = 7;
+    int64 buyKeyTime = 5;
 
     //买票的txHash
-    string buyKeyTxHash = 9;
+    string buyKeyTxHash = 6;
+
+    int64  index  = 7;
 
 }
 
@@ -78,6 +80,10 @@ message QueryF3dByRound {
     int64 round = 1;
 }
 
+message QueryF3dLastRound{
+
+}
+
 message QueryF3dListByRound {
     //轮次，默认查询最新的
     int64 startRound = 1;
@@ -88,11 +94,12 @@ message QueryF3dListByRound {
 }
 
 // key 信息查询
-message QueryKeysByRoundAndAddr {
+message QueryBuyRecordByRoundAndAddr {
     //轮次,必填参数
     int64 round = 1;
     //用户地址
     string addr = 2;
+    int64 index = 3;
 }
 // 用户key数量查询
 message QueryKeyCountByRoundAndAddr {
@@ -139,8 +146,8 @@ message ReplyF3d {
 }
 
 //用户查询买的key信息返回数据
-message ReplyKeyList {
-    repeated KeyInfo keys = 1;
+message ReplyBuyRecord {
+    repeated KeyInfo recordList = 1;
 }
 
 message ReplyKey {

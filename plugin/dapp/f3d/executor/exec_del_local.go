@@ -22,13 +22,13 @@ func (f *f3d) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, e
 	return dbSet, nil
 }
 func (f *f3d) ExecDelLocal_Start(payload *pt.F3DStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+	return f.execDelLocal(receiptData)
 }
 
 func (f *f3d) ExecDelLocal_Draw(payload *pt.F3DLuckyDraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+	return f.execDelLocal(receiptData)
 }
 
 func (f *f3d) ExecDelLocal_Buy(payload *pt.F3DBuyKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+	return f.execDelLocal(receiptData)
 }

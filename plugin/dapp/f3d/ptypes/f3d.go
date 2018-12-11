@@ -19,6 +19,14 @@ const (
 	TyLogf3dBuy
 )
 
+// query func name
+const (
+	FuncNameQueryLastRoundInfo           = "QueryLastRoundInfo"
+	FuncNameQueryRoundInfoByRound        = "QueryRoundInfoByRound"
+	FuncNameQueryKeyCountByRoundAndAddr  = "QueryKeyCountByRoundAndAddr"
+	FuncNameQueryBuyRecordByRoundAndAddr = "QueryBuyRecordByRoundAndAddr"
+)
+
 var (
 	logMap = map[string]int32{
 		"Start": F3dActionStart,

@@ -288,6 +288,7 @@ func (action *Action) F3dBuyKey(buy *pt.F3DBuyKey) (*types.Receipt, error) {
 	keyInfo.KeyPrice = lastRound.LastKeyPrice
 	keyInfo.BuyKeyTime = action.blocktime
 	keyInfo.BuyKeyTxHash = common.ToHex(action.txhash)
+	keyInfo.Index = action.GetIndex()
 	kvset, v := action.GetKVSet(keyInfo)
 	kv = append(kv, kvset...)
 	if addrInfo, ok := v.(*pt.AddrInfo); ok {
@@ -451,6 +452,21 @@ func getF3dAddrInfo(db dbm.KV, key []byte) (*pt.AddrInfo, error) {
 	return &info, nil
 }
 
+func getF3dBuyRecord(db dbm.KV, key []byte) (*pt.KeyInfo, error) {
+	value, err := db.Get(key)
+	if err != nil {
+		flog.Error("F3D db getF3dBuyRecord", "can't get value from db,key:", key, "err", err.Error())
+		return nil, err
+	}
+
+	var info pt.KeyInfo
+	err = types.Decode(value, &info)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
+
 func queryList(db dbm.Lister, stateDB dbm.KV, param interface{}) (types.Message, error) {
 	direction := ListDESC
 	count := DefaultCount
@@ -484,7 +500,84 @@ func queryList(db dbm.Lister, stateDB dbm.KV, param interface{}) (types.Message,
 		}
 		return &pt.ReplyAddrInfoList{AddrInfoList: addrList}, nil
 	}
+	//TODO open or not open as needed ?
+	//if query, ok := param.(*pt.QueryF3DListByRound); ok {
+	//	direction = query.GetDirection()
+	//	if 0 < query.GetCount() && query.GetCount() <= MaxCount {
+	//		count = query.GetCount()
+	//	}
+	//	if query.StartRound == 0 {
+	//		return nil, fmt.Errorf("round can't be zero!")
+	//	}
+	//
+	//
+	//}
+	//query last round info
+	if _, ok := param.(*pt.QueryF3DLastRound); ok {
+		lastRound, err := getF3dRoundInfo(stateDB, Key(F3dRoundLast))
+		if err != nil {
+			flog.Error("F3D db queryList", "can't get lastRound:err", err.Error())
+			return nil, err
+		}
+		return lastRound, nil
+	}
+	//query round info by round
+	if query, ok := param.(*pt.QueryF3DByRound); ok {
+		if query.Round == 0 {
+			return nil, fmt.Errorf("round can't be zero!")
+		}
+		round, err := getF3dRoundInfo(stateDB, Key(calcF3dByRound(query.Round)))
+		if err != nil {
+			flog.Error("F3D db queryList", "can't get lastRound:err", err.Error())
+			return nil, err
+		}
+		return round, nil
+	}
 
+	//query addr info
+	if query, ok := param.(*pt.QueryKeyCountByRoundAndAddr); ok {
+		if query.Round == 0 || query.Addr == "" {
+			return nil, fmt.Errorf("round can't be zero,addr can't be empty!")
+		}
+		addrInfo, err := getF3dAddrInfo(stateDB, Key(calcF3dUserAddrs(query.Round, query.Addr)))
+		if err != nil {
+			flog.Error("F3D db queryList", "can't get addr Info,err", err.Error())
+			return nil, err
+		}
+		return addrInfo, nil
+	}
+	//query buy record
+	if query, ok := param.(*pt.QueryBuyRecordByRoundAndAddr); ok {
+		if query.Round == 0 || query.Addr == "" {
+			return nil, fmt.Errorf("round can't be zero,addr can't be empty!")
+		}
+
+		var values [][]byte
+		var err error
+		if query.Index == 0 { //第一次查询
+			values, err = db.List(calcF3dBuyPrefix(query.Round, query.Addr), nil, count, direction)
+		} else {
+			values, err = db.List(calcF3dBuyPrefix(query.Round, query.Addr), calcF3dBuyRound(query.Round, query.Addr, query.Index), count, direction)
+		}
+		if err != nil {
+			return nil, err
+		}
+		var recordList []*pt.KeyInfo
+		for _, value := range values {
+			var r pt.F3DBuyRecord
+			err := types.Decode(value, &r)
+			if err != nil {
+				continue
+			}
+			record, err := getF3dBuyRecord(stateDB, calcF3dBuyRound(r.Round, r.Addr, r.Index))
+			if err != nil {
+				flog.Error("F3D db queryList", "can't get buy record,err", err.Error())
+				continue
+			}
+			recordList = append(recordList, record)
+		}
+		return &pt.ReplyBuyRecord{RecordList: recordList}, nil
+	}
 	return nil, fmt.Errorf("this query can't be supported!")
 }
 
