@@ -83,6 +83,10 @@ func (g *Guess) ExecLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, 
 	return g.execLocal(receiptData)
 }
 
+func (g *Guess) ExecLocal_StopBet(payload *pkt.GuessGameStopBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return g.execLocal(receiptData)
+}
+
 func (g *Guess) ExecLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

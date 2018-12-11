@@ -546,7 +546,7 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 	if game.AdminAddr != action.fromaddr {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
 			action.fromaddr, "adminAddr", game.AdminAddr)
-		return nil, types.ErrInvalidParam
+		return nil, pkt.ErrNoPrivilege
 	}
 
 	action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
@@ -610,13 +610,13 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	//检查竞猜选项是否合法
 	options, legal := GetOptions(game.GetOptions())
 	if !legal || len(options) == 0{
-		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
+		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
 			game.GetOptions())
 		return nil, types.ErrInvalidParam
 	}
 
 	if !IsLegalOption(options, publish.GetResult()) {
-		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Option illegal",
+		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Option illegal",
 			publish.GetResult())
 		return nil, types.ErrInvalidParam
 	}
@@ -626,8 +626,17 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	//先遍历所有下注数据，转移资金到Admin账户合约地址；
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
-		value := int64(player.Bet.BetsNumber)
-		receipt, err := action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
+		value := player.Bet.BetsNumber
+		receipt, err := action.coinsAccount.ExecActive(player.Addr, action.execaddr, value)
+		if err != nil {
+			logger.Error("GamePublish.ExecActive", "addr", player.Addr, "execaddr", action.execaddr, "amount", value,
+				"err", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+
+		receipt, err = action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
 		if err != nil {
 			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
 			logger.Error("GamePublish", "addr", player.Addr, "execaddr", action.execaddr,
