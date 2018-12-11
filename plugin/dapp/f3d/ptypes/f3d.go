@@ -2,13 +2,14 @@ package types
 
 import (
 	"github.com/33cn/chain33/types"
+	"reflect"
 )
 
 // action for executor
 const (
-	f3dActionStart = 0
-	f3dActionDraw  = 1
-	f3dActionBuy   = 2
+	f3dActionStart = iota + 1
+	f3dActionDraw
+	f3dActionBuy
 )
 
 const (
@@ -51,9 +52,17 @@ func (t *f3dType) GetPayload() types.Message {
 }
 
 func (t *f3dType) GetTypeMap() map[string]int32 {
-	return typeMap
+	return map[string]int32{
+		"Start": f3dActionStart,
+		"Draw":  f3dActionDraw,
+		"Buy":   f3dActionBuy,
+	}
 }
 
 func (t *f3dType) GetLogMap() map[int64]*types.LogInfo {
-	return logMap
+	return map[int64]*types.LogInfo{
+		TyLogf3dStart: {Ty: reflect.TypeOf(ReceiptF3D{}), Name: "LogStartF3d"},
+		TyLogf3dDraw:  {Ty: reflect.TypeOf(ReceiptF3D{}), Name: "LogDrawF3d"},
+		TyLogf3dBuy:   {Ty: reflect.TypeOf(ReceiptF3D{}), Name: "LogBuyF3d"},
+	}
 }

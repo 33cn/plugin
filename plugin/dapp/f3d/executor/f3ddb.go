@@ -38,19 +38,20 @@ func (action *Action) GetStartReceiptLog(roundInfo *pt.RoundInfo) *types.Receipt
 	r := &pt.ReceiptF3D{
 		Addr:  action.fromaddr,
 		Round: roundInfo.Round,
-		Index: action.GetIndex(roundInfo),
+		Index: action.GetIndex(),
 	}
 	log.Log = types.Encode(r)
 
 	return log
 }
-func (action *Action) GetBuyReceiptLog(roundInfo *pt.RoundInfo) *types.ReceiptLog {
+func (action *Action) GetBuyReceiptLog(addrInfo *pt.AddrInfo) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pt.TyLogf3dBuy
 	r := &pt.ReceiptF3D{
-		Addr:  action.fromaddr,
-		Round: roundInfo.Round,
-		Index: action.GetIndex(roundInfo),
+		Addr:       action.fromaddr,
+		Round:      addrInfo.Round,
+		Index:      action.GetIndex(),
+		IsFirstBuy: addrInfo.IsFirstBuy,
 	}
 	log.Log = types.Encode(r)
 
@@ -62,7 +63,7 @@ func (action *Action) GetDrawReceiptLog(roundInfo *pt.RoundInfo) *types.ReceiptL
 	r := &pt.ReceiptF3D{
 		Addr:  action.fromaddr,
 		Round: roundInfo.Round,
-		Index: action.GetIndex(roundInfo),
+		Index: action.GetIndex(),
 	}
 	log.Log = types.Encode(r)
 
@@ -70,7 +71,7 @@ func (action *Action) GetDrawReceiptLog(roundInfo *pt.RoundInfo) *types.ReceiptL
 }
 
 //GetIndex get index
-func (action *Action) GetIndex(roundInfo *pt.RoundInfo) int64 {
+func (action *Action) GetIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
@@ -89,15 +90,43 @@ func calcF3dUserKeys(round int64, addr string, index int64) string {
 }
 
 //GetKVSet get kv set
-func (action *Action) GetKVSet(param interface{}) (kvset []*types.KeyValue) {
-	//更新stateDB缓存
-	action.updateStateDBCache(param)
+func (action *Action) GetKVSet(param interface{}) (kvset []*types.KeyValue, result interface{}) {
 	if roundInfo, ok := param.(*pt.RoundInfo); ok {
 		value := types.Encode(roundInfo)
+		//更新stateDB缓存
+		action.db.Set(Key(calcF3dByRound(roundInfo.Round)), value)
+		action.db.Set(Key(F3dRoundLast), value)
 		kvset = append(kvset, &types.KeyValue{Key: Key(calcF3dByRound(roundInfo.Round)), Value: value})
 	}
+	if keyInfo, ok := param.(*pt.KeyInfo); ok {
+		value := types.Encode(keyInfo)
+		action.db.Set(Key(calcF3dUserKeys(keyInfo.Round, keyInfo.Addr, action.GetIndex())), value)
+		kvset = append(kvset, &types.KeyValue{Key: Key(calcF3dUserKeys(keyInfo.Round, keyInfo.Addr, action.GetIndex())), Value: value})
+		addrInfo, err := getF3dAddrInfo(action.db, Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)))
+		if err != nil {
+			flog.Warn("F3D db getF3dAddrInfo", "can't get value from db,key:", calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr))
+			var addr pt.AddrInfo
+			addr.Addr = action.fromaddr
+			addr.KeyNum = keyInfo.KeyNum
+			addr.IsFirstBuy = true
+			addr.Round = keyInfo.Round
+			value := types.Encode(&addr)
+			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), value)
+			kvset = append(kvset, &types.KeyValue{Key: Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), Value: value})
+			return kvset, &addr
+		} else {
+			addrInfo.Addr = action.fromaddr
+			addrInfo.IsFirstBuy = false
+			addrInfo.Round = keyInfo.Round
+			addrInfo.KeyNum = addrInfo.KeyNum + keyInfo.KeyNum
+			value := types.Encode(addrInfo)
+			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), value)
+			kvset = append(kvset, &types.KeyValue{Key: Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), Value: value})
+			return kvset, addrInfo
+		}
 
-	return kvset
+	}
+	return kvset, nil
 }
 
 func (action *Action) updateCount(status int32, addr string) (kvset []*types.KeyValue) {
@@ -105,17 +134,32 @@ func (action *Action) updateCount(status int32, addr string) (kvset []*types.Key
 	return kvset
 }
 
-//TODO
-func (action *Action) updateStateDBCache(param interface{}) {
-	if roundInfo, ok := param.(*pt.RoundInfo); ok {
-		action.db.Set(Key(calcF3dByRound(roundInfo.Round)), types.Encode(roundInfo))
-		action.db.Set(Key(F3dRoundLast), types.Encode(roundInfo))
-	}
-	if keyInfo, ok := param.(*pt.KeyInfo); ok {
-		action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), types.Encode(keyInfo))
-	}
-
-}
+//func (action *Action) updateStateDBCache(param interface{}){
+//	if roundInfo, ok := param.(*pt.RoundInfo); ok {
+//		action.db.Set(Key(calcF3dByRound(roundInfo.Round)), types.Encode(roundInfo))
+//		action.db.Set(Key(F3dRoundLast), types.Encode(roundInfo))
+//	}
+//	if keyInfo, ok := param.(*pt.KeyInfo); ok {
+//		addrInfo,err:=getF3dAddrInfo(action.db,Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)))
+//		action.db.Set(Key(calcF3dUserKeys(keyInfo.Round, keyInfo.Addr,action.GetIndex())), types.Encode(keyInfo))
+//		if err !=nil {
+//			flog.Warn("F3D db getF3dAddrInfo", "can't get value from db,key:", calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr))
+//			var addr pt.AddrInfo
+//			addr.Addr=action.fromaddr
+//			addr.KeyNum=keyInfo.KeyNum
+//			addr.IsFirstBuy=true
+//			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), types.Encode(&addr))
+//		}else{
+//			addrInfo.Addr=action.fromaddr
+//			addrInfo.IsFirstBuy=false
+//			addrInfo.KeyNum=addrInfo.KeyNum+keyInfo.KeyNum
+//			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), types.Encode(addrInfo))
+//		}
+//
+//
+//	}
+//
+//}
 
 // Key gameId to save key
 func Key(id string) (key []byte) {
@@ -187,7 +231,8 @@ func (action *Action) F3dStart(f3d *pt.F3DStart) (*types.Receipt, error) {
 
 	receiptLog := action.GetStartReceiptLog(roundInfo)
 	logs = append(logs, receiptLog)
-	kv = append(kv, action.GetKVSet(roundInfo)...)
+	kvset, _ := action.GetKVSet(roundInfo)
+	kv = append(kv, kvset...)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
@@ -233,12 +278,21 @@ func (action *Action) F3dBuyKey(buy *pt.F3DBuyKey) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 	keyInfo := &pt.KeyInfo{}
+	keyInfo.KeyNum = buy.KeyNum
 	keyInfo.Round = lastRound.Round
 	keyInfo.Addr = action.fromaddr
 	keyInfo.KeyPrice = lastRound.LastKeyPrice
 	keyInfo.BuyKeyTime = action.blocktime
 	keyInfo.BuyKeyTxHash = common.ToHex(action.txhash)
-
+	kvset, v := action.GetKVSet(keyInfo)
+	kv = append(kv, kvset...)
+	if addrInfo, ok := v.(*pt.AddrInfo); ok {
+		if addrInfo.IsFirstBuy {
+			lastRound.UserCount = lastRound.UserCount + 1
+		}
+		receiptLog := action.GetBuyReceiptLog(addrInfo)
+		logs = append(logs, receiptLog)
+	}
 	lastRound.BonusPool = lastRound.BonusPool + float32(buy.GetKeyNum())*lastRound.LastKeyPrice
 	lastRound.KeyCount = lastRound.KeyCount + buy.KeyNum
 	lastRound.LastKeyPrice = lastRound.LastKeyPrice + lastRound.LastKeyPrice*pt.GetF3dKeyPriceIncr()
@@ -255,14 +309,19 @@ func (action *Action) F3dBuyKey(buy *pt.F3DBuyKey) (*types.Receipt, error) {
 		lastRound.RemainTime = lastRound.RemainTime + addTime
 	}
 	//Todo  add addr and nums
-
-	//game.Index = action.GetIndex(game)
-	receiptLog := action.GetBuyReceiptLog(lastRound)
-	logs = append(logs, receiptLog)
-	kv = append(kv, action.GetKVSet(lastRound)...)
+	kvset, _ = action.GetKVSet(lastRound)
+	kv = append(kv, kvset...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//F3d luck draws
+func (action *Action) F3dLuckyDraw(buy *pt.F3DLuckyDraw) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+   //TODO:
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
 func getF3dRoundInfo(db dbm.KV, key []byte) (*pt.RoundInfo, error) {
 	value, err := db.Get(key)
 	if err != nil {
@@ -277,6 +336,21 @@ func getF3dRoundInfo(db dbm.KV, key []byte) (*pt.RoundInfo, error) {
 	}
 	return &roundInfo, nil
 
+}
+
+func getF3dAddrInfo(db dbm.KV, key []byte) (*pt.AddrInfo, error) {
+	value, err := db.Get(key)
+	if err != nil {
+		flog.Error("F3D db getF3dAddrInfo", "can't get value from db,key:", key, "err", err.Error())
+		return nil, err
+	}
+
+	var info pt.AddrInfo
+	err = types.Decode(value, &info)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
 }
 
 func queryList(db dbm.Lister, stateDB dbm.KV, param interface{}) (types.Message, error) {

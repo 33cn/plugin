@@ -37,6 +37,27 @@ func GetName() string {
 	return newf3d().GetName()
 }
 
-func (u *f3d) GetDriverName() string {
+func (f *f3d) GetDriverName() string {
 	return driverName
+}
+
+func (f *f3d) updateLocalDB() string {
+	return driverName
+}
+
+// GetPayloadValue get payload value
+func (f *f3d) GetPayloadValue() types.Message {
+	return &pt.F3DAction{}
+}
+
+// GetTypeMap get TypeMap
+//func (f *f3d) GetTypeMap() map[string]int32 {
+//	return map[string]int32{
+//
+//	}
+//}
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (f *f3d) CheckReceiptExecOk() bool {
+	return true
 }
