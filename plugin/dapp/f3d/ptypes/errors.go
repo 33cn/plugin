@@ -15,4 +15,5 @@ var (
 	ErrF3dManageBuyKey  = fmt.Errorf("%s", "You are manager,you don't have permission to buy key")
 	ErrF3dBuyKey        = fmt.Errorf("%s", "the f3d is not start a new round!")
 	ErrF3dBuyKeyTimeOut = fmt.Errorf("%s", "The rest of the time is over,you can't buy any more keys!")
+	ErrF3dDrawRound     = fmt.Errorf("%s", "There's not f3d round to draw!")
 )

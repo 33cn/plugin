@@ -5,14 +5,17 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/f3d/ptypes"
 )
 
-func (c *f3d) Exec_Start(payload *pt.F3DStart, tx *types.Transaction, index int) (*types.Receipt, error) {
-	return &types.Receipt{}, nil
+func (f *f3d) Exec_Start(payload *pt.F3DStart, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(f, tx, index)
+	return action.F3dStart(payload)
 }
 
-func (c *f3d) Exec_Draw(payload *pt.F3DLuckyDraw, tx *types.Transaction, index int) (*types.Receipt, error) {
-	return &types.Receipt{}, nil
+func (f *f3d) Exec_Draw(payload *pt.F3DLuckyDraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(f, tx, index)
+	return action.F3dLuckyDraw(payload)
 }
 
-func (c *f3d) Exec_Buy(payload *pt.F3DBuyKey, tx *types.Transaction, index int) (*types.Receipt, error) {
-	return &types.Receipt{}, nil
+func (f *f3d) Exec_Buy(payload *pt.F3DBuyKey, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(f, tx, index)
+	return action.F3dBuyKey(payload)
 }
