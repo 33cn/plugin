@@ -525,7 +525,7 @@ func (client *client) switchHashMatchedBlock(currSeq *int64, preMainBlockHash *[
 			depth--
 			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", miner.MainBlockHeight,
-					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search startHeight",lastBlock.Height,"curHeight",miner.Height,
+					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search startHeight", lastBlock.Height, "curHeight", miner.Height,
 					"search depth", searchHashMatchDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
