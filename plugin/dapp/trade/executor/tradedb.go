@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/33cn/chain33/account"
@@ -412,9 +414,33 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//不同合约之间查询的需求后面要考虑，现在先重复处理一下，原则上不能直接引用其他合约的代码
+//后面可能会有一套查询规则 和 写规则, 合约对其他合约只读
+func calcTokenKey(token string) (key []byte) {
+	tokenCreated := "mavl-token-"
+	return []byte(fmt.Sprintf(tokenCreated+"%s", token))
+}
+
+func checkTokenExist(token string, db dbm.KV) bool {
+	_, err := db.Get(calcTokenKey(token))
+	return err == nil
+}
+
 func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Receipt, error) {
+	// ErrTokenNotExist error token symbol not exist
+	errTokenNotExist := errors.New("ErrTokenSymbolNotExist")
+
 	if buy.TotalBoardlot < 0 || buy.PricePerBoardlot < 0 || buy.MinBoardlot < 0 || buy.AmountPerBoardlot < 0 {
 		return nil, types.ErrInvalidParam
+	}
+	// 这个检查会比较鸡肋, 按目前的想法的能支持更多的资产， 各种资产检查不一样
+	// 可以先让订单成功, 如果不合适, 自己撤单也行
+	// 或后续跨合约注册一个检测的函数
+	if buy.AssetExec == "" || buy.AssetExec == defaultAssetExec {
+		// check token exist
+		if !checkTokenExist(buy.TokenSymbol, action.db) {
+			return nil, errTokenNotExist
+		}
 	}
 
 	if !checkAsset(action.height, buy.AssetExec, buy.TokenSymbol) {
