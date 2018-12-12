@@ -86,11 +86,11 @@ func (cache *TradeQueue) Push(item *mempool.Item) error {
 	if err != nil {
 		return err
 	}
-	if cache.txList.Len() >= cache.Size() {
-		tail := cache.txList.tail
+	if int64(cache.txList.Len()) >= cache.subConfig.PoolCacheSize {
+		tail := cache.txList.GetIterator().Last()
 		//价格高
-		if sv.Compare(tail.Value) == 1 {
-			cache.Remove(string(tail.Value.Value.(*mempool.Item).Value.Hash()))
+		if sv.Compare(tail) == 1 {
+			cache.Remove(string(tail.Value.(*mempool.Item).Value.Hash()))
 		} else {
 			return types.ErrMemFull
 		}

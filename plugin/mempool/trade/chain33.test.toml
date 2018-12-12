@@ -64,7 +64,7 @@ certFile="cert.pem"
 keyFile="key.pem"
 
 [mempool]
-name="timeline"
+name="trade"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
