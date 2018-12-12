@@ -41,13 +41,15 @@ pipeline {
         success {
             echo 'I succeeeded!'
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            try {
-                mail to: "test",
-                     subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
-                     body: "this is success with ${env.BUILD_URL}"
-            }
-            catch (err){
-                echo err
+            script{
+                try {
+                    mail to: "test",
+                         subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
+                         body: "this is success with ${env.BUILD_URL}"
+                }
+                catch (err){
+                    echo err
+                }
             }
             echo currentBuild.result
 
@@ -56,13 +58,16 @@ pipeline {
         failure {
             echo 'I failed '
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            try {
-                mail to: "test",
-                     subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                     body: "Something is wrong with ${env.BUILD_URL}"
-            }catch (err){
-                echo err
+            script{
+                try {
+                    mail to: "test",
+                         subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                         body: "Something is wrong with ${env.BUILD_URL}"
+                }catch (err){
+                    echo err
+                }
             }
+
             echo currentBuild.result
         }
     }
