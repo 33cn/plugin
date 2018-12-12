@@ -11,7 +11,7 @@ type Config struct {
 	Log        *Log        `protobuf:"bytes,2,opt,name=log" json:"log,omitempty"`
 	Store      *Store      `protobuf:"bytes,3,opt,name=store" json:"store,omitempty"`
 	Consensus  *Consensus  `protobuf:"bytes,5,opt,name=consensus" json:"consensus,omitempty"`
-	MemPool    *MemPool    `protobuf:"bytes,6,opt,name=memPool" json:"memPool,omitempty"`
+	Mempool    *Mempool    `protobuf:"bytes,6,opt,name=mempool" json:"memPool,omitempty"`
 	BlockChain *BlockChain `protobuf:"bytes,7,opt,name=blockChain" json:"blockChain,omitempty"`
 	Wallet     *Wallet     `protobuf:"bytes,8,opt,name=wallet" json:"wallet,omitempty"`
 	P2P        *P2P        `protobuf:"bytes,9,opt,name=p2p" json:"p2p,omitempty"`
@@ -52,28 +52,31 @@ type Log struct {
 	CallerFunction bool `protobuf:"varint,10,opt,name=callerFunction" json:"callerFunction,omitempty"`
 }
 
-// MemPool 配置
-type MemPool struct {
-	PoolCacheSize      int64 `protobuf:"varint,1,opt,name=poolCacheSize" json:"poolCacheSize,omitempty"`
-	MinTxFee           int64 `protobuf:"varint,2,opt,name=minTxFee" json:"minTxFee,omitempty"`
-	ForceAccept        bool  `protobuf:"varint,3,opt,name=forceAccept" json:"forceAccept,omitempty"`
-	MaxTxNumPerAccount int64 `protobuf:"varint,4,opt,name=maxTxNumPerAccount" json:"maxTxNumPerAccount,omitempty"`
+// Mempool 配置
+type Mempool struct {
+	Name               string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	PoolCacheSize      int64  `protobuf:"varint,1,opt,name=poolCacheSize" json:"poolCacheSize,omitempty"`
+	MinTxFee           int64  `protobuf:"varint,2,opt,name=minTxFee" json:"minTxFee,omitempty"`
+	ForceAccept        bool   `protobuf:"varint,3,opt,name=forceAccept" json:"forceAccept,omitempty"`
+	MaxTxNumPerAccount int64  `protobuf:"varint,4,opt,name=maxTxNumPerAccount" json:"maxTxNumPerAccount,omitempty"`
+	MaxTxLast          int64  `protobuf:"varint,4,opt,name=maxTxLast" json:"maxTxLast,omitempty"`
 }
 
 // Consensus 配置
 type Consensus struct {
-	Name                 string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	GenesisBlockTime     int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
-	Minerstart           bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
-	Genesis              string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
-	HotkeyAddr           string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
-	ForceMining          bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
-	WriteBlockSeconds    int64  `protobuf:"varint,20,opt,name=writeBlockSeconds" json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient string `protobuf:"bytes,22,opt,name=paraRemoteGrpcClient" json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight          int64  `protobuf:"varint,23,opt,name=startHeight" json:"startHeight,omitempty"`
-	EmptyBlockInterval   int64  `protobuf:"varint,24,opt,name=emptyBlockInterval" json:"emptyBlockInterval,omitempty"`
-	AuthAccount          string `protobuf:"bytes,25,opt,name=authAccount" json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg int32  `protobuf:"varint,26,opt,name=waitBlocks4CommitMsg" json:"waitBlocks4CommitMsg,omitempty"`
+	Name                        string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	GenesisBlockTime            int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
+	Minerstart                  bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
+	Genesis                     string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
+	HotkeyAddr                  string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
+	ForceMining                 bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
+	WriteBlockSeconds           int64  `protobuf:"varint,20,opt,name=writeBlockSeconds" json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient        string `protobuf:"bytes,22,opt,name=paraRemoteGrpcClient" json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                 int64  `protobuf:"varint,23,opt,name=startHeight" json:"startHeight,omitempty"`
+	EmptyBlockInterval          int64  `protobuf:"varint,24,opt,name=emptyBlockInterval" json:"emptyBlockInterval,omitempty"`
+	AuthAccount                 string `protobuf:"bytes,25,opt,name=authAccount" json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg        int32  `protobuf:"varint,26,opt,name=waitBlocks4CommitMsg" json:"waitBlocks4CommitMsg,omitempty"`
+	SearchHashMatchedBlockDepth int32  `protobuf:"varint,27,opt,name=searchHashMatchedBlockDepth" json:"searchHashMatchedBlockDepth,omitempty"`
 }
 
 // Wallet 配置

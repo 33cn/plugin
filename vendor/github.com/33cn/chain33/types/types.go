@@ -41,6 +41,9 @@ type TxGroup interface {
 
 //ExecName  执行器name
 func ExecName(name string) string {
+	if len(name) > 1 && name[0] == '#' {
+		return name[1:]
+	}
 	if IsParaExecName(name) {
 		return name
 	}
@@ -61,7 +64,7 @@ func IsAllowExecName(name []byte, execer []byte) bool {
 		return false
 	}
 	// name中不允许有 "-"
-	if bytes.Contains(name, slash) {
+	if bytes.Contains(name, slash) || bytes.Contains(name, sharp) {
 		return false
 	}
 	if !bytes.Equal(name, execer) && !bytes.Equal(name, GetRealExecName(execer)) {
@@ -435,6 +438,9 @@ func MustPBToJSON(req Message) []byte {
 
 // MustDecode 数据是否已经编码
 func MustDecode(data []byte, v interface{}) {
+	if data == nil {
+		return
+	}
 	err := json.Unmarshal(data, v)
 	if err != nil {
 		panic(err)
