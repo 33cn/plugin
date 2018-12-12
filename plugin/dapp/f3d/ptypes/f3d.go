@@ -7,8 +7,9 @@
 package types
 
 import (
-	"github.com/33cn/chain33/types"
 	"reflect"
+
+	"github.com/33cn/chain33/types"
 )
 
 // action for executor
