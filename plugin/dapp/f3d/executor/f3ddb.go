@@ -8,7 +8,6 @@ package executor
 
 import (
 	"fmt"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -304,14 +303,14 @@ func (action *Action) F3dBuyKey(buy *pt.F3DBuyKey) (*types.Receipt, error) {
 		receiptLog := action.GetBuyReceiptLog(addrInfo)
 		logs = append(logs, receiptLog)
 	}
+	lastRound.RemainTime = lastRound.RemainTime + lastRound.UpdateTime - action.blocktime
 	lastRound.BonusPool = lastRound.BonusPool + float32(buy.GetKeyNum())*lastRound.LastKeyPrice
 	lastRound.KeyCount = lastRound.KeyCount + buy.KeyNum
 	lastRound.LastKeyPrice = lastRound.LastKeyPrice + lastRound.LastKeyPrice*pt.GetF3dKeyPriceIncr()
 	lastRound.LastKeyTime = action.blocktime
 	lastRound.UpdateTime = action.blocktime
 	lastRound.LastOwner = action.fromaddr
-	lastRound.RemainTime = lastRound.RemainTime + lastRound.UpdateTime - action.blocktime
-	addTime := 30 * buy.KeyNum
+	addTime := pt.GetF3dTimeKey() * buy.KeyNum
 	if addTime >= pt.GetF3dTimeMaxkey() {
 		addTime = pt.GetF3dTimeMaxkey()
 	}
