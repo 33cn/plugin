@@ -211,7 +211,6 @@ func (action *Action) F3dStart(f3d *pt.F3DStart) (*types.Receipt, error) {
 		flog.Error("F3dStart", "manager addr not match.", "err", pt.ErrF3dManageAddr.Error())
 		return nil, pt.ErrF3dManageAddr
 	}
-
 	lastRound, err := getF3dRoundInfo(action.db, Key(F3dRoundLast))
 	if err == nil && lastRound != nil {
 		if lastRound.EndTime == 0 {
@@ -227,7 +226,7 @@ func (action *Action) F3dStart(f3d *pt.F3DStart) (*types.Receipt, error) {
 		BeginTime:    action.blocktime,
 		LastKeyPrice: pt.GetF3dKeyPriceStart(),
 		LastKeyTime:  action.blocktime,
-		RemainTime:   pt.GetF3dTimeKey(),
+		RemainTime:   pt.GetF3dTimeLife(),
 		//TODO is the floating-point precision here accurate?
 		BonusPool:  float32(account.Frozen) / decimal,
 		UpdateTime: action.blocktime,
@@ -250,9 +249,14 @@ func (action *Action) F3dBuyKey(buy *pt.F3DBuyKey) (*types.Receipt, error) {
 		flog.Error("F3dBuyKey", "manager can't buy key.", "err", pt.ErrF3dManageBuyKey.Error())
 		return nil, pt.ErrF3dManageBuyKey
 	}
-	//round game status check
+
 	lastRound, err := getF3dRoundInfo(action.db, Key(F3dRoundLast))
-	if err != nil || lastRound.EndTime != 0 {
+	if err != nil || lastRound == nil {
+		flog.Error("F3dBuyKey", "last round", lastRound.Round, "err", fmt.Errorf("not found the last round info!"))
+		return nil, fmt.Errorf("not found the last round info!")
+	}
+	//round game status check
+	if lastRound.EndTime != 0 {
 		flog.Error("F3dBuyKey", "last round", lastRound.Round, "err", pt.ErrF3dBuyKey.Error())
 		return nil, pt.ErrF3dBuyKey
 	}
@@ -331,17 +335,38 @@ func (action *Action) F3dLuckyDraw(buy *pt.F3DLuckyDraw) (*types.Receipt, error)
 	}
 
 	lastRound, err := getF3dRoundInfo(action.db, Key(F3dRoundLast))
-	if err == nil && lastRound != nil {
-		if lastRound.EndTime == 0 {
-			flog.Error("F3dLuckyDraw", "err", pt.ErrF3dDrawRound)
-			return nil, pt.ErrF3dDrawRound
-		}
+
+	if err != nil || lastRound == nil {
+		flog.Error("F3dLuckyDraw", "last round", lastRound.Round, "err", fmt.Errorf("not found the last round info!"))
+		return nil, fmt.Errorf("not found the last round info!")
+	}
+	// remainTime check
+	if lastRound.UpdateTime+lastRound.RemainTime > action.blocktime {
+		flog.Error("F3dLuckyDraw", "remain time not be zerio", "err", pt.ErrF3dDrawRemainTime.Error())
+		return nil, pt.ErrF3dDrawRemainTime
+	}
+	//round game status check
+	if lastRound.EndTime != 0 {
+		flog.Error("F3dLuckyDraw", "last round", lastRound.Round, "err", pt.ErrF3dDrawRepeat.Error())
+		return nil, pt.ErrF3dDrawRepeat
 	}
 
-	bonus := int64(lastRound.BonusPool * (pt.GetF3dBonusDeveloper() + pt.GetF3dBonusKey() + pt.GetF3dBonusWinner()))
-	winner := int64(lastRound.BonusPool * pt.GetF3dBonusWinner())
-	developer := int64(lastRound.BonusPool * pt.GetF3dBonusDeveloper())
-	Keys := float32(lastRound.BonusPool * pt.GetF3dBonusKey())
+	//round info check,when no one buy keys,just finish the game
+	if lastRound.KeyCount == 0 {
+		lastRound.RemainTime = 0
+		lastRound.EndTime = action.blocktime
+		lastRound.UpdateTime = action.blocktime
+		receiptLog := action.GetDrawReceiptLog(lastRound)
+		logs = append(logs, receiptLog)
+		kvset, _ := action.GetKVSet(lastRound)
+		kv = append(kv, kvset...)
+		return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+	}
+
+	bonus := int64(lastRound.BonusPool * (pt.GetF3dBonusDeveloper() + pt.GetF3dBonusKey() + pt.GetF3dBonusWinner()) * decimal)
+	winner := int64(lastRound.BonusPool * pt.GetF3dBonusWinner() * decimal)
+	developer := int64(lastRound.BonusPool * pt.GetF3dBonusDeveloper() * decimal)
+	Keys := float32(lastRound.BonusPool * pt.GetF3dBonusKey() * decimal)
 	//balance check
 	// balance check
 	if !action.checkExecAccountBalance(action.fromaddr, 0, bonus) {
@@ -569,7 +594,7 @@ func queryList(db dbm.Lister, stateDB dbm.KV, param interface{}) (types.Message,
 			if err != nil {
 				continue
 			}
-			record, err := getF3dBuyRecord(stateDB, calcF3dBuyRound(r.Round, r.Addr, r.Index))
+			record, err := getF3dBuyRecord(stateDB, Key(calcF3dUserKeys(r.Round, r.Addr, r.Index)))
 			if err != nil {
 				flog.Error("F3D db queryList", "can't get buy record,err", err.Error())
 				continue
