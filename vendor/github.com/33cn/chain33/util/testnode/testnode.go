@@ -57,7 +57,7 @@ type Chain33Mock struct {
 	client   queue.Client
 	api      client.QueueProtocolAPI
 	chain    *blockchain.BlockChain
-	mem      *mempool.Mempool
+	mem      queue.Module
 	cs       queue.Module
 	exec     *executor.Executor
 	wallet   queue.Module
@@ -103,10 +103,10 @@ func newWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client
 	mock.cs.SetQueueClient(q.Client())
 	lognode.Info("init consensus " + cfg.Consensus.Name)
 
-	mock.mem = mempool.New(cfg.MemPool)
+	mock.mem = mempool.New(cfg.Mempool, sub.Mempool)
 	mock.mem.SetQueueClient(q.Client())
+	mock.mem.Wait()
 	lognode.Info("init mempool")
-	mock.mem.WaitPollLastHeader()
 	if cfg.P2P.Enable {
 		mock.network = p2p.New(cfg.P2P)
 		mock.network.SetQueueClient(q.Client())
@@ -169,7 +169,7 @@ func (mock *Chain33Mock) GetBlockChain() *blockchain.BlockChain {
 
 func setFee(cfg *types.Config, fee int64) {
 	cfg.Exec.MinExecFee = fee
-	cfg.MemPool.MinTxFee = fee
+	cfg.Mempool.MinTxFee = fee
 	cfg.Wallet.MinFee = fee
 	if fee == 0 {
 		cfg.Exec.IsFree = true
@@ -329,6 +329,14 @@ func (mock *Chain33Mock) GetAccount(stateHash []byte, addr string) *types.Accoun
 	return acc.LoadAccount(addr)
 }
 
+//GetExecAccount :get execer account info
+func (mock *Chain33Mock) GetExecAccount(stateHash []byte, execer, addr string) *types.Account {
+	statedb := executor.NewStateDB(mock.client, stateHash, nil, nil)
+	acc := account.NewCoinsAccount()
+	acc.SetDB(statedb)
+	return acc.LoadExecAccount(addr, address.ExecAddress(execer))
+}
+
 //GetBlock :
 func (mock *Chain33Mock) GetBlock(height int64) *types.Block {
 	blocks, err := mock.api.GetBlocks(&types.ReqBlocks{Start: height, End: height})
@@ -393,6 +401,9 @@ func (m *mockP2P) SetQueueClient(client queue.Client) {
 		}
 	}()
 }
+
+//Wait for ready
+func (m *mockP2P) Wait() {}
 
 //Close :
 func (m *mockP2P) Close() {

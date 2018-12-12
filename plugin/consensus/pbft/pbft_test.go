@@ -62,14 +62,14 @@ func TestPbft(t *testing.T) {
 	clearTestData()
 }
 
-func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module, *mempool.Mempool, queue.Module, queue.Module, queue.Module) {
+func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	var q = queue.New("channel")
 	flag.Parse()
 	cfg, sub := types.InitCfg("chain33.test.toml")
 	types.Init(cfg.Title, cfg)
 	chain := blockchain.New(cfg.BlockChain)
 	chain.SetQueueClient(q.Client())
-	mem := mempool.New(cfg.MemPool)
+	mem := mempool.New(cfg.Mempool, nil)
 	mem.SetQueueClient(q.Client())
 	exec := executor.New(cfg.Exec, sub.Exec)
 	exec.SetQueueClient(q.Client())
