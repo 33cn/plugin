@@ -36,8 +36,6 @@ jobs:
     - stage: coverage
       if: branch = master
       go: "1.9.x"
-      before_install:
-        - go get -t -v ./...
       install: skip
       script:
         - make coverage
