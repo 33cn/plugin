@@ -47,17 +47,34 @@ pipeline {
         success {
             echo 'I succeeeded!'
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            mail to: "${ghprbActualCommitAuthorEmail}",
-                 subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "this is success with ${env.BUILD_URL}"
+            script{
+                try {
+                    mail to: "${ghprbActualCommitAuthorEmail}",
+                         subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
+                         body: "this is success with ${env.BUILD_URL}"
+                }
+                catch (err){
+                    echo "email err"
+                }
+            }
+            echo currentBuild.result
+
         }
 
         failure {
             echo 'I failed '
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            mail to: "${ghprbActualCommitAuthorEmail}",
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Something is wrong with ${env.BUILD_URL}"
+            script{
+                try {
+                    mail to: "${ghprbActualCommitAuthorEmail}",
+                         subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                         body: "Something is wrong with ${env.BUILD_URL}"
+                }catch (err){
+                    echo "email err"
+                }
+            }
+
+            echo currentBuild.result
         }
     }
 }

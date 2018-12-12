@@ -215,7 +215,8 @@ function block_wait() {
 
 function check_docker_status() {
     status=$(docker-compose ps | grep chain33_1 | awk '{print $6}')
-    if [ "${status}" == "Exit" ]; then
+    statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
+    if [ "${status}" == "Exit" or "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
         docker-compose logs chain33
         echo "=========== chain33 service Exit logs End========== "
