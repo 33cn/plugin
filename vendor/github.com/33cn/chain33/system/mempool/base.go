@@ -89,8 +89,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 	go mem.checkSync()
 	mem.wg.Add(1)
 	go mem.removeBlockedTxs()
-	mem.wg.Add(1)
-	go mem.reply()
+
 	mem.wg.Add(1)
 	go mem.eventProcess()
 }
