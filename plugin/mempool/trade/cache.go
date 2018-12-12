@@ -7,6 +7,7 @@ package trade
 import (
 	"bytes"
 	"encoding/gob"
+
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
 )
