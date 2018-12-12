@@ -1,112 +1,112 @@
 syntax = "proto3";
 
 import "blockchain.proto";
+
 package types;
 option go_package = "github.com/33cn/chain33/types";
 
-message Operation {
-    Block value = 1;
+message BlockData {
+	Block value = 1;
 }
-
 message Checkpoint {
-    uint32 sequence = 1;
-    bytes  digest   = 2;
-}
-
-message Entry {
-    uint32 sequence = 1;
-    bytes  digest   = 2;
-    uint32 view     = 3;
-}
-
-message ViewChange {
-    uint32 viewchanger = 1;
-    bytes  digest      = 2;
-}
-
-message Summary {
-    uint32 sequence = 1;
-    bytes  digest   = 2;
-}
-
-message Result {
-    Block value = 1;
+	uint64 sequence = 1;
+	string digest = 2;
 }
 
 // -------------------------------- //
 
 message Request {
-    oneof value {
-        RequestClient     client     = 1;
-        RequestPrePrepare preprepare = 2;
-        RequestPrepare    prepare    = 3;
-        RequestCommit     commit     = 4;
-        RequestCheckpoint checkpoint = 5;
-        RequestViewChange viewchange = 6;
-        RequestAck        ack        = 7;
-        RequestNewView    newview    = 8;
-    }
+	oneof value{
+		RequestClient client = 1;
+		RequestPrePrepare preprepare = 2;
+		RequestPrepare prepare = 3;
+		RequestCommit commit = 4;
+		RequestCheckpoint checkpoint = 5;
+		RequestViewChange viewchange = 6;
+		RequestAck ack = 7;
+		RequestNewView newview = 8;
+		ClientReply reply = 9;
+	}
 }
 
 message RequestClient {
-    Operation op        = 1;
-    string    timestamp = 2;
-    string    client    = 3;
+	BlockData op = 1;
+	string timestamp = 2;
+	string client = 3;
 }
 
 message RequestPrePrepare {
-    uint32 view     = 1;
-    uint32 sequence = 2;
-    bytes  digest   = 3;
-    uint32 replica  = 4;
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	RequestClient request = 4;
+	uint64 replica = 5;
 }
 
 message RequestPrepare {
-    uint32 view     = 1;
-    uint32 sequence = 2;
-    bytes  digest   = 3;
-    uint32 replica  = 4;
-}
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	uint64 replica = 4;
+} 
 
 message RequestCommit {
-    uint32 view     = 1;
-    uint32 sequence = 2;
-    uint32 replica  = 3;
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	uint64 replica = 4;
 }
 
 message RequestCheckpoint {
-    uint32 sequence = 1;
-    bytes  digest   = 2;
-    uint32 replica  = 3;
+	uint64 sequence = 1;
+	string digest = 2;
+	uint64 replica = 3;
 }
 
 message RequestViewChange {
-    uint32   view                   = 1;
-    uint32   sequence               = 2;
-    repeated Checkpoint checkpoints = 3;
-    repeated Entry preps            = 4;
-    repeated Entry prepreps         = 5;
-    uint32         replica          = 6;
+	message C {
+		uint64 sequence = 1;
+		string digest = 2;
+	}
+	message PQ {
+		uint64 sequence = 1;
+		string digest = 2;
+		uint64 view = 3;
+	}
+	
+	uint64 view = 1;
+	uint64 h = 2;
+	repeated C cset = 3;
+	repeated PQ pset = 4;
+	repeated PQ qset = 5;
+	uint64 replica = 6;
 }
 
+message PQset {
+	repeated RequestViewChange.PQ set = 1;
+}
+
+// view: 需要变更的视图, replica: 发送该Ack的节点
+// viewchangeSender: <view-change>的发送者
+// digest: <view-change>的摘要
 message RequestAck {
-    uint32 view        = 1;
-    uint32 replica     = 2;
-    uint32 viewchanger = 3;
-    bytes  digest      = 4;
+	uint64 view = 1;
+	uint64 replica = 2;
+	uint64 viewchangeSender = 3;
+	string digest = 4;
 }
 
 message RequestNewView {
-    uint32   view                   = 1;
-    repeated ViewChange viewchanges = 2;
-    repeated Summary summaries      = 4;
-    uint32           replica        = 5;
+	uint64 view = 1;
+	repeated RequestViewChange vset = 2;
+	map<uint64, string> xset = 3;
+	uint64 replica = 4;
 }
 
 message ClientReply {
-    uint32 view      = 1;
-    string timestamp = 2;
-    string client    = 3;
-    uint32 replica   = 4;
-    Result result    = 5;
+	uint64 view = 1;
+	string timestamp = 2;
+	string client = 3;
+	uint64 replica = 4;
+	BlockData result = 5;
 }

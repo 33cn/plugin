@@ -3,57 +3,25 @@
 
 package types
 
-import (
-	fmt "fmt"
-	math "math"
-
-	proto "github.com/golang/protobuf/proto"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 // assert transfer struct
 type AssetsGenesis struct {
-	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	ReturnAddress        string   `protobuf:"bytes,3,opt,name=returnAddress,proto3" json:"returnAddress,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Amount        int64  `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+	ReturnAddress string `protobuf:"bytes,3,opt,name=returnAddress" json:"returnAddress,omitempty"`
 }
 
-func (m *AssetsGenesis) Reset()         { *m = AssetsGenesis{} }
-func (m *AssetsGenesis) String() string { return proto.CompactTextString(m) }
-func (*AssetsGenesis) ProtoMessage()    {}
-func (*AssetsGenesis) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{0}
-}
-
-func (m *AssetsGenesis) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AssetsGenesis.Unmarshal(m, b)
-}
-func (m *AssetsGenesis) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AssetsGenesis.Marshal(b, m, deterministic)
-}
-func (m *AssetsGenesis) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetsGenesis.Merge(m, src)
-}
-func (m *AssetsGenesis) XXX_Size() int {
-	return xxx_messageInfo_AssetsGenesis.Size(m)
-}
-func (m *AssetsGenesis) XXX_DiscardUnknown() {
-	xxx_messageInfo_AssetsGenesis.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AssetsGenesis proto.InternalMessageInfo
+func (m *AssetsGenesis) Reset()                    { *m = AssetsGenesis{} }
+func (m *AssetsGenesis) String() string            { return proto.CompactTextString(m) }
+func (*AssetsGenesis) ProtoMessage()               {}
+func (*AssetsGenesis) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{0} }
 
 func (m *AssetsGenesis) GetAmount() int64 {
 	if m != nil {
@@ -70,40 +38,17 @@ func (m *AssetsGenesis) GetReturnAddress() string {
 }
 
 type AssetsTransferToExec struct {
-	Cointoken            string   `protobuf:"bytes,1,opt,name=cointoken,proto3" json:"cointoken,omitempty"`
-	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note                 []byte   `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
-	ExecName             string   `protobuf:"bytes,4,opt,name=execName,proto3" json:"execName,omitempty"`
-	To                   string   `protobuf:"bytes,5,opt,name=to,proto3" json:"to,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Cointoken string `protobuf:"bytes,1,opt,name=cointoken" json:"cointoken,omitempty"`
+	Amount    int64  `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+	Note      []byte `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	ExecName  string `protobuf:"bytes,4,opt,name=execName" json:"execName,omitempty"`
+	To        string `protobuf:"bytes,5,opt,name=to" json:"to,omitempty"`
 }
 
-func (m *AssetsTransferToExec) Reset()         { *m = AssetsTransferToExec{} }
-func (m *AssetsTransferToExec) String() string { return proto.CompactTextString(m) }
-func (*AssetsTransferToExec) ProtoMessage()    {}
-func (*AssetsTransferToExec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{1}
-}
-
-func (m *AssetsTransferToExec) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AssetsTransferToExec.Unmarshal(m, b)
-}
-func (m *AssetsTransferToExec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AssetsTransferToExec.Marshal(b, m, deterministic)
-}
-func (m *AssetsTransferToExec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetsTransferToExec.Merge(m, src)
-}
-func (m *AssetsTransferToExec) XXX_Size() int {
-	return xxx_messageInfo_AssetsTransferToExec.Size(m)
-}
-func (m *AssetsTransferToExec) XXX_DiscardUnknown() {
-	xxx_messageInfo_AssetsTransferToExec.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AssetsTransferToExec proto.InternalMessageInfo
+func (m *AssetsTransferToExec) Reset()                    { *m = AssetsTransferToExec{} }
+func (m *AssetsTransferToExec) String() string            { return proto.CompactTextString(m) }
+func (*AssetsTransferToExec) ProtoMessage()               {}
+func (*AssetsTransferToExec) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{1} }
 
 func (m *AssetsTransferToExec) GetCointoken() string {
 	if m != nil {
@@ -141,40 +86,17 @@ func (m *AssetsTransferToExec) GetTo() string {
 }
 
 type AssetsWithdraw struct {
-	Cointoken            string   `protobuf:"bytes,1,opt,name=cointoken,proto3" json:"cointoken,omitempty"`
-	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note                 []byte   `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
-	ExecName             string   `protobuf:"bytes,4,opt,name=execName,proto3" json:"execName,omitempty"`
-	To                   string   `protobuf:"bytes,5,opt,name=to,proto3" json:"to,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Cointoken string `protobuf:"bytes,1,opt,name=cointoken" json:"cointoken,omitempty"`
+	Amount    int64  `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+	Note      []byte `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	ExecName  string `protobuf:"bytes,4,opt,name=execName" json:"execName,omitempty"`
+	To        string `protobuf:"bytes,5,opt,name=to" json:"to,omitempty"`
 }
 
-func (m *AssetsWithdraw) Reset()         { *m = AssetsWithdraw{} }
-func (m *AssetsWithdraw) String() string { return proto.CompactTextString(m) }
-func (*AssetsWithdraw) ProtoMessage()    {}
-func (*AssetsWithdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{2}
-}
-
-func (m *AssetsWithdraw) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AssetsWithdraw.Unmarshal(m, b)
-}
-func (m *AssetsWithdraw) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AssetsWithdraw.Marshal(b, m, deterministic)
-}
-func (m *AssetsWithdraw) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetsWithdraw.Merge(m, src)
-}
-func (m *AssetsWithdraw) XXX_Size() int {
-	return xxx_messageInfo_AssetsWithdraw.Size(m)
-}
-func (m *AssetsWithdraw) XXX_DiscardUnknown() {
-	xxx_messageInfo_AssetsWithdraw.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AssetsWithdraw proto.InternalMessageInfo
+func (m *AssetsWithdraw) Reset()                    { *m = AssetsWithdraw{} }
+func (m *AssetsWithdraw) String() string            { return proto.CompactTextString(m) }
+func (*AssetsWithdraw) ProtoMessage()               {}
+func (*AssetsWithdraw) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{2} }
 
 func (m *AssetsWithdraw) GetCointoken() string {
 	if m != nil {
@@ -212,39 +134,16 @@ func (m *AssetsWithdraw) GetTo() string {
 }
 
 type AssetsTransfer struct {
-	Cointoken            string   `protobuf:"bytes,1,opt,name=cointoken,proto3" json:"cointoken,omitempty"`
-	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note                 []byte   `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
-	To                   string   `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Cointoken string `protobuf:"bytes,1,opt,name=cointoken" json:"cointoken,omitempty"`
+	Amount    int64  `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+	Note      []byte `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	To        string `protobuf:"bytes,4,opt,name=to" json:"to,omitempty"`
 }
 
-func (m *AssetsTransfer) Reset()         { *m = AssetsTransfer{} }
-func (m *AssetsTransfer) String() string { return proto.CompactTextString(m) }
-func (*AssetsTransfer) ProtoMessage()    {}
-func (*AssetsTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{3}
-}
-
-func (m *AssetsTransfer) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AssetsTransfer.Unmarshal(m, b)
-}
-func (m *AssetsTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AssetsTransfer.Marshal(b, m, deterministic)
-}
-func (m *AssetsTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetsTransfer.Merge(m, src)
-}
-func (m *AssetsTransfer) XXX_Size() int {
-	return xxx_messageInfo_AssetsTransfer.Size(m)
-}
-func (m *AssetsTransfer) XXX_DiscardUnknown() {
-	xxx_messageInfo_AssetsTransfer.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AssetsTransfer proto.InternalMessageInfo
+func (m *AssetsTransfer) Reset()                    { *m = AssetsTransfer{} }
+func (m *AssetsTransfer) String() string            { return proto.CompactTextString(m) }
+func (*AssetsTransfer) ProtoMessage()               {}
+func (*AssetsTransfer) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{3} }
 
 func (m *AssetsTransfer) GetCointoken() string {
 	if m != nil {
@@ -275,38 +174,15 @@ func (m *AssetsTransfer) GetTo() string {
 }
 
 type Asset struct {
-	Exec                 string   `protobuf:"bytes,1,opt,name=exec,proto3" json:"exec,omitempty"`
-	Symbol               string   `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Amount               int64    `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Exec   string `protobuf:"bytes,1,opt,name=exec" json:"exec,omitempty"`
+	Symbol string `protobuf:"bytes,2,opt,name=symbol" json:"symbol,omitempty"`
+	Amount int64  `protobuf:"varint,3,opt,name=amount" json:"amount,omitempty"`
 }
 
-func (m *Asset) Reset()         { *m = Asset{} }
-func (m *Asset) String() string { return proto.CompactTextString(m) }
-func (*Asset) ProtoMessage()    {}
-func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{4}
-}
-
-func (m *Asset) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Asset.Unmarshal(m, b)
-}
-func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
-}
-func (m *Asset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Asset.Merge(m, src)
-}
-func (m *Asset) XXX_Size() int {
-	return xxx_messageInfo_Asset.Size(m)
-}
-func (m *Asset) XXX_DiscardUnknown() {
-	xxx_messageInfo_Asset.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Asset proto.InternalMessageInfo
+func (m *Asset) Reset()                    { *m = Asset{} }
+func (m *Asset) String() string            { return proto.CompactTextString(m) }
+func (*Asset) ProtoMessage()               {}
+func (*Asset) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{4} }
 
 func (m *Asset) GetExec() string {
 	if m != nil {
@@ -330,44 +206,21 @@ func (m *Asset) GetAmount() int64 {
 }
 
 type CreateTx struct {
-	To                   string   `protobuf:"bytes,1,opt,name=to,proto3" json:"to,omitempty"`
-	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	Fee                  int64    `protobuf:"varint,3,opt,name=fee,proto3" json:"fee,omitempty"`
-	Note                 []byte   `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
-	IsWithdraw           bool     `protobuf:"varint,5,opt,name=isWithdraw,proto3" json:"isWithdraw,omitempty"`
-	IsToken              bool     `protobuf:"varint,6,opt,name=isToken,proto3" json:"isToken,omitempty"`
-	TokenSymbol          string   `protobuf:"bytes,7,opt,name=tokenSymbol,proto3" json:"tokenSymbol,omitempty"`
-	ExecName             string   `protobuf:"bytes,8,opt,name=execName,proto3" json:"execName,omitempty"`
-	Execer               string   `protobuf:"bytes,9,opt,name=execer,proto3" json:"execer,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	To          string `protobuf:"bytes,1,opt,name=to" json:"to,omitempty"`
+	Amount      int64  `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
+	Fee         int64  `protobuf:"varint,3,opt,name=fee" json:"fee,omitempty"`
+	Note        []byte `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
+	IsWithdraw  bool   `protobuf:"varint,5,opt,name=isWithdraw" json:"isWithdraw,omitempty"`
+	IsToken     bool   `protobuf:"varint,6,opt,name=isToken" json:"isToken,omitempty"`
+	TokenSymbol string `protobuf:"bytes,7,opt,name=tokenSymbol" json:"tokenSymbol,omitempty"`
+	ExecName    string `protobuf:"bytes,8,opt,name=execName" json:"execName,omitempty"`
+	Execer      string `protobuf:"bytes,9,opt,name=execer" json:"execer,omitempty"`
 }
 
-func (m *CreateTx) Reset()         { *m = CreateTx{} }
-func (m *CreateTx) String() string { return proto.CompactTextString(m) }
-func (*CreateTx) ProtoMessage()    {}
-func (*CreateTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{5}
-}
-
-func (m *CreateTx) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateTx.Unmarshal(m, b)
-}
-func (m *CreateTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateTx.Marshal(b, m, deterministic)
-}
-func (m *CreateTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTx.Merge(m, src)
-}
-func (m *CreateTx) XXX_Size() int {
-	return xxx_messageInfo_CreateTx.Size(m)
-}
-func (m *CreateTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateTx.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateTx proto.InternalMessageInfo
+func (m *CreateTx) Reset()                    { *m = CreateTx{} }
+func (m *CreateTx) String() string            { return proto.CompactTextString(m) }
+func (*CreateTx) ProtoMessage()               {}
+func (*CreateTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{5} }
 
 func (m *CreateTx) GetTo() string {
 	if m != nil {
@@ -504,12 +357,10 @@ func (m *ReWriteRawTx) GetFee() int64 {
 }
 
 type CreateTransactionGroup struct {
-	Txs                  []string `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Txs []string `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *CreateTransactionGroup) Reset()         { *m = CreateTransactionGroup{} }
 func (m *CreateTransactionGroup) String() string { return proto.CompactTextString(m) }
 func (*CreateTransactionGroup) ProtoMessage()    {}
@@ -534,6 +385,12 @@ func (m *CreateTransactionGroup) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_CreateTransactionGroup proto.InternalMessageInfo
+=======
+func (m *CreateTransactionGroup) Reset()                    { *m = CreateTransactionGroup{} }
+func (m *CreateTransactionGroup) String() string            { return proto.CompactTextString(m) }
+func (*CreateTransactionGroup) ProtoMessage()               {}
+func (*CreateTransactionGroup) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{6} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *CreateTransactionGroup) GetTxs() []string {
 	if m != nil {
@@ -543,12 +400,10 @@ func (m *CreateTransactionGroup) GetTxs() []string {
 }
 
 type UnsignTx struct {
-	Data                 []byte   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *UnsignTx) Reset()         { *m = UnsignTx{} }
 func (m *UnsignTx) String() string { return proto.CompactTextString(m) }
 func (*UnsignTx) ProtoMessage()    {}
@@ -573,6 +428,12 @@ func (m *UnsignTx) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_UnsignTx proto.InternalMessageInfo
+=======
+func (m *UnsignTx) Reset()                    { *m = UnsignTx{} }
+func (m *UnsignTx) String() string            { return proto.CompactTextString(m) }
+func (*UnsignTx) ProtoMessage()               {}
+func (*UnsignTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{7} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *UnsignTx) GetData() []byte {
 	if m != nil {
@@ -583,6 +444,7 @@ func (m *UnsignTx) GetData() []byte {
 
 // payAddr 可以支持 1. 地址 2. 私钥
 type NoBalanceTx struct {
+<<<<<<< HEAD
 	TxHex                string   `protobuf:"bytes,1,opt,name=txHex,proto3" json:"txHex,omitempty"`
 	PayAddr              string   `protobuf:"bytes,2,opt,name=payAddr,proto3" json:"payAddr,omitempty"`
 	Privkey              string   `protobuf:"bytes,3,opt,name=privkey,proto3" json:"privkey,omitempty"`
@@ -597,25 +459,18 @@ func (m *NoBalanceTx) String() string { return proto.CompactTextString(m) }
 func (*NoBalanceTx) ProtoMessage()    {}
 func (*NoBalanceTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{9}
+=======
+	TxHex   string `protobuf:"bytes,1,opt,name=txHex" json:"txHex,omitempty"`
+	PayAddr string `protobuf:"bytes,2,opt,name=payAddr" json:"payAddr,omitempty"`
+	Privkey string `protobuf:"bytes,3,opt,name=privkey" json:"privkey,omitempty"`
+	Expire  string `protobuf:"bytes,4,opt,name=expire" json:"expire,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-func (m *NoBalanceTx) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NoBalanceTx.Unmarshal(m, b)
-}
-func (m *NoBalanceTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NoBalanceTx.Marshal(b, m, deterministic)
-}
-func (m *NoBalanceTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NoBalanceTx.Merge(m, src)
-}
-func (m *NoBalanceTx) XXX_Size() int {
-	return xxx_messageInfo_NoBalanceTx.Size(m)
-}
-func (m *NoBalanceTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_NoBalanceTx.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NoBalanceTx proto.InternalMessageInfo
+func (m *NoBalanceTx) Reset()                    { *m = NoBalanceTx{} }
+func (m *NoBalanceTx) String() string            { return proto.CompactTextString(m) }
+func (*NoBalanceTx) ProtoMessage()               {}
+func (*NoBalanceTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{8} }
 
 func (m *NoBalanceTx) GetTxHex() string {
 	if m != nil {
@@ -646,6 +501,7 @@ func (m *NoBalanceTx) GetExpire() string {
 }
 
 type SignedTx struct {
+<<<<<<< HEAD
 	Unsign               []byte   `protobuf:"bytes,1,opt,name=unsign,proto3" json:"unsign,omitempty"`
 	Sign                 []byte   `protobuf:"bytes,2,opt,name=sign,proto3" json:"sign,omitempty"`
 	Pubkey               []byte   `protobuf:"bytes,3,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
@@ -676,9 +532,18 @@ func (m *SignedTx) XXX_Size() int {
 }
 func (m *SignedTx) XXX_DiscardUnknown() {
 	xxx_messageInfo_SignedTx.DiscardUnknown(m)
+=======
+	Unsign []byte `protobuf:"bytes,1,opt,name=unsign,proto3" json:"unsign,omitempty"`
+	Sign   []byte `protobuf:"bytes,2,opt,name=sign,proto3" json:"sign,omitempty"`
+	Pubkey []byte `protobuf:"bytes,3,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+	Ty     int32  `protobuf:"varint,4,opt,name=ty" json:"ty,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_SignedTx proto.InternalMessageInfo
+func (m *SignedTx) Reset()                    { *m = SignedTx{} }
+func (m *SignedTx) String() string            { return proto.CompactTextString(m) }
+func (*SignedTx) ProtoMessage()               {}
+func (*SignedTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{9} }
 
 func (m *SignedTx) GetUnsign() []byte {
 	if m != nil {
@@ -711,6 +576,7 @@ func (m *SignedTx) GetTy() int32 {
 type Transaction struct {
 	Execer    []byte     `protobuf:"bytes,1,opt,name=execer,proto3" json:"execer,omitempty"`
 	Payload   []byte     `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+<<<<<<< HEAD
 	Signature *Signature `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
 	Fee       int64      `protobuf:"varint,4,opt,name=fee,proto3" json:"fee,omitempty"`
 	Expire    int64      `protobuf:"varint,5,opt,name=expire,proto3" json:"expire,omitempty"`
@@ -750,6 +616,24 @@ func (m *Transaction) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Transaction proto.InternalMessageInfo
+=======
+	Signature *Signature `protobuf:"bytes,3,opt,name=signature" json:"signature,omitempty"`
+	Fee       int64      `protobuf:"varint,4,opt,name=fee" json:"fee,omitempty"`
+	Expire    int64      `protobuf:"varint,5,opt,name=expire" json:"expire,omitempty"`
+	// 随机ID，可以防止payload 相同的时候，交易重复
+	Nonce int64 `protobuf:"varint,6,opt,name=nonce" json:"nonce,omitempty"`
+	// 对方地址，如果没有对方地址，可以为空
+	To         string `protobuf:"bytes,7,opt,name=to" json:"to,omitempty"`
+	GroupCount int32  `protobuf:"varint,8,opt,name=groupCount" json:"groupCount,omitempty"`
+	Header     []byte `protobuf:"bytes,9,opt,name=header,proto3" json:"header,omitempty"`
+	Next       []byte `protobuf:"bytes,10,opt,name=next,proto3" json:"next,omitempty"`
+}
+
+func (m *Transaction) Reset()                    { *m = Transaction{} }
+func (m *Transaction) String() string            { return proto.CompactTextString(m) }
+func (*Transaction) ProtoMessage()               {}
+func (*Transaction) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{10} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *Transaction) GetExecer() []byte {
 	if m != nil {
@@ -822,12 +706,10 @@ func (m *Transaction) GetNext() []byte {
 }
 
 type Transactions struct {
-	Txs                  []*Transaction `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	Txs []*Transaction `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *Transactions) Reset()         { *m = Transactions{} }
 func (m *Transactions) String() string { return proto.CompactTextString(m) }
 func (*Transactions) ProtoMessage()    {}
@@ -852,6 +734,12 @@ func (m *Transactions) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Transactions proto.InternalMessageInfo
+=======
+func (m *Transactions) Reset()                    { *m = Transactions{} }
+func (m *Transactions) String() string            { return proto.CompactTextString(m) }
+func (*Transactions) ProtoMessage()               {}
+func (*Transactions) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{11} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *Transactions) GetTxs() []*Transaction {
 	if m != nil {
@@ -862,6 +750,7 @@ func (m *Transactions) GetTxs() []*Transaction {
 
 // 环签名类型时，签名字段存储的环签名信息
 type RingSignature struct {
+<<<<<<< HEAD
 	Items                []*RingSignatureItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
@@ -889,9 +778,15 @@ func (m *RingSignature) XXX_Size() int {
 }
 func (m *RingSignature) XXX_DiscardUnknown() {
 	xxx_messageInfo_RingSignature.DiscardUnknown(m)
+=======
+	Items []*RingSignatureItem `protobuf:"bytes,1,rep,name=items" json:"items,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_RingSignature proto.InternalMessageInfo
+func (m *RingSignature) Reset()                    { *m = RingSignature{} }
+func (m *RingSignature) String() string            { return proto.CompactTextString(m) }
+func (*RingSignature) ProtoMessage()               {}
+func (*RingSignature) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{12} }
 
 func (m *RingSignature) GetItems() []*RingSignatureItem {
 	if m != nil {
@@ -902,6 +797,7 @@ func (m *RingSignature) GetItems() []*RingSignatureItem {
 
 // 环签名中的一组签名数据
 type RingSignatureItem struct {
+<<<<<<< HEAD
 	Pubkey               [][]byte `protobuf:"bytes,1,rep,name=pubkey,proto3" json:"pubkey,omitempty"`
 	Signature            [][]byte `protobuf:"bytes,2,rep,name=signature,proto3" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -930,9 +826,16 @@ func (m *RingSignatureItem) XXX_Size() int {
 }
 func (m *RingSignatureItem) XXX_DiscardUnknown() {
 	xxx_messageInfo_RingSignatureItem.DiscardUnknown(m)
+=======
+	Pubkey    [][]byte `protobuf:"bytes,1,rep,name=pubkey,proto3" json:"pubkey,omitempty"`
+	Signature [][]byte `protobuf:"bytes,2,rep,name=signature,proto3" json:"signature,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_RingSignatureItem proto.InternalMessageInfo
+func (m *RingSignatureItem) Reset()                    { *m = RingSignatureItem{} }
+func (m *RingSignatureItem) String() string            { return proto.CompactTextString(m) }
+func (*RingSignatureItem) ProtoMessage()               {}
+func (*RingSignatureItem) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{13} }
 
 func (m *RingSignatureItem) GetPubkey() [][]byte {
 	if m != nil {
@@ -948,26 +851,24 @@ func (m *RingSignatureItem) GetSignature() [][]byte {
 	return nil
 }
 
-//对于一个交易组中的交易，要么全部成功，要么全部失败
-//这个要好好设计一下
-//最好交易构成一个链条[prevhash].独立的交易构成链条
-//只要这个组中有一个执行是出错的，那么就执行不成功
-//三种签名支持
+// 对于一个交易组中的交易，要么全部成功，要么全部失败
+// 这个要好好设计一下
+// 最好交易构成一个链条[prevhash].独立的交易构成链条
+// 只要这个组中有一个执行是出错的，那么就执行不成功
+// 三种签名支持
 // ty = 1 -> secp256k1
 // ty = 2 -> ed25519
 // ty = 3 -> sm2
 // ty = 4 -> OnetimeED25519
 // ty = 5 -> RingBaseonED25519
 type Signature struct {
-	Ty     int32  `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
+	Ty     int32  `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
 	Pubkey []byte `protobuf:"bytes,2,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
-	//当ty为5时，格式应该用RingSignature去解析
-	Signature            []byte   `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	// 当ty为5时，格式应该用RingSignature去解析
+	Signature []byte `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *Signature) Reset()         { *m = Signature{} }
 func (m *Signature) String() string { return proto.CompactTextString(m) }
 func (*Signature) ProtoMessage()    {}
@@ -992,6 +893,12 @@ func (m *Signature) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Signature proto.InternalMessageInfo
+=======
+func (m *Signature) Reset()                    { *m = Signature{} }
+func (m *Signature) String() string            { return proto.CompactTextString(m) }
+func (*Signature) ProtoMessage()               {}
+func (*Signature) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{14} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *Signature) GetTy() int32 {
 	if m != nil {
@@ -1015,14 +922,12 @@ func (m *Signature) GetSignature() []byte {
 }
 
 type AddrOverview struct {
-	Reciver              int64    `protobuf:"varint,1,opt,name=reciver,proto3" json:"reciver,omitempty"`
-	Balance              int64    `protobuf:"varint,2,opt,name=balance,proto3" json:"balance,omitempty"`
-	TxCount              int64    `protobuf:"varint,3,opt,name=txCount,proto3" json:"txCount,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Reciver int64 `protobuf:"varint,1,opt,name=reciver" json:"reciver,omitempty"`
+	Balance int64 `protobuf:"varint,2,opt,name=balance" json:"balance,omitempty"`
+	TxCount int64 `protobuf:"varint,3,opt,name=txCount" json:"txCount,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *AddrOverview) Reset()         { *m = AddrOverview{} }
 func (m *AddrOverview) String() string { return proto.CompactTextString(m) }
 func (*AddrOverview) ProtoMessage()    {}
@@ -1047,6 +952,12 @@ func (m *AddrOverview) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_AddrOverview proto.InternalMessageInfo
+=======
+func (m *AddrOverview) Reset()                    { *m = AddrOverview{} }
+func (m *AddrOverview) String() string            { return proto.CompactTextString(m) }
+func (*AddrOverview) ProtoMessage()               {}
+func (*AddrOverview) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{15} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *AddrOverview) GetReciver() int64 {
 	if m != nil {
@@ -1070,6 +981,7 @@ func (m *AddrOverview) GetTxCount() int64 {
 }
 
 type ReqAddr struct {
+<<<<<<< HEAD
 	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	//表示取所有/from/to/其他的hash列表
 	Flag                 int32    `protobuf:"varint,2,opt,name=flag,proto3" json:"flag,omitempty"`
@@ -1103,9 +1015,21 @@ func (m *ReqAddr) XXX_Size() int {
 }
 func (m *ReqAddr) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqAddr.DiscardUnknown(m)
+=======
+	Addr string `protobuf:"bytes,1,opt,name=addr" json:"addr,omitempty"`
+	// 表示取所有/from/to/其他的hash列表
+	Flag      int32 `protobuf:"varint,2,opt,name=flag" json:"flag,omitempty"`
+	Count     int32 `protobuf:"varint,3,opt,name=count" json:"count,omitempty"`
+	Direction int32 `protobuf:"varint,4,opt,name=direction" json:"direction,omitempty"`
+	Height    int64 `protobuf:"varint,5,opt,name=height" json:"height,omitempty"`
+	Index     int64 `protobuf:"varint,6,opt,name=index" json:"index,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_ReqAddr proto.InternalMessageInfo
+func (m *ReqAddr) Reset()                    { *m = ReqAddr{} }
+func (m *ReqAddr) String() string            { return proto.CompactTextString(m) }
+func (*ReqAddr) ProtoMessage()               {}
+func (*ReqAddr) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{16} }
 
 func (m *ReqAddr) GetAddr() string {
 	if m != nil {
@@ -1150,6 +1074,7 @@ func (m *ReqAddr) GetIndex() int64 {
 }
 
 type ReqPrivacy struct {
+<<<<<<< HEAD
 	Count                int32    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 	Direction            int32    `protobuf:"varint,2,opt,name=direction,proto3" json:"direction,omitempty"`
 	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
@@ -1179,9 +1104,17 @@ func (m *ReqPrivacy) XXX_Size() int {
 }
 func (m *ReqPrivacy) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqPrivacy.DiscardUnknown(m)
+=======
+	Count     int32 `protobuf:"varint,1,opt,name=count" json:"count,omitempty"`
+	Direction int32 `protobuf:"varint,2,opt,name=direction" json:"direction,omitempty"`
+	Height    int64 `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_ReqPrivacy proto.InternalMessageInfo
+func (m *ReqPrivacy) Reset()                    { *m = ReqPrivacy{} }
+func (m *ReqPrivacy) String() string            { return proto.CompactTextString(m) }
+func (*ReqPrivacy) ProtoMessage()               {}
+func (*ReqPrivacy) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{17} }
 
 func (m *ReqPrivacy) GetCount() int32 {
 	if m != nil {
@@ -1205,6 +1138,7 @@ func (m *ReqPrivacy) GetHeight() int64 {
 }
 
 type HexTx struct {
+<<<<<<< HEAD
 	Tx                   string   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1232,9 +1166,15 @@ func (m *HexTx) XXX_Size() int {
 }
 func (m *HexTx) XXX_DiscardUnknown() {
 	xxx_messageInfo_HexTx.DiscardUnknown(m)
+=======
+	Tx string `protobuf:"bytes,1,opt,name=tx" json:"tx,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_HexTx proto.InternalMessageInfo
+func (m *HexTx) Reset()                    { *m = HexTx{} }
+func (m *HexTx) String() string            { return proto.CompactTextString(m) }
+func (*HexTx) ProtoMessage()               {}
+func (*HexTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{18} }
 
 func (m *HexTx) GetTx() string {
 	if m != nil {
@@ -1244,15 +1184,13 @@ func (m *HexTx) GetTx() string {
 }
 
 type ReplyTxInfo struct {
-	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Height               int64    `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	Assets               []*Asset `protobuf:"bytes,4,rep,name=assets,proto3" json:"assets,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Hash   []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Height int64    `protobuf:"varint,2,opt,name=height" json:"height,omitempty"`
+	Index  int64    `protobuf:"varint,3,opt,name=index" json:"index,omitempty"`
+	Assets []*Asset `protobuf:"bytes,4,rep,name=assets" json:"assets,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *ReplyTxInfo) Reset()         { *m = ReplyTxInfo{} }
 func (m *ReplyTxInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyTxInfo) ProtoMessage()    {}
@@ -1277,6 +1215,12 @@ func (m *ReplyTxInfo) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReplyTxInfo proto.InternalMessageInfo
+=======
+func (m *ReplyTxInfo) Reset()                    { *m = ReplyTxInfo{} }
+func (m *ReplyTxInfo) String() string            { return proto.CompactTextString(m) }
+func (*ReplyTxInfo) ProtoMessage()               {}
+func (*ReplyTxInfo) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{19} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *ReplyTxInfo) GetHash() []byte {
 	if m != nil {
@@ -1307,12 +1251,10 @@ func (m *ReplyTxInfo) GetAssets() []*Asset {
 }
 
 type ReqTxList struct {
-	Count                int64    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Count int64 `protobuf:"varint,1,opt,name=count" json:"count,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *ReqTxList) Reset()         { *m = ReqTxList{} }
 func (m *ReqTxList) String() string { return proto.CompactTextString(m) }
 func (*ReqTxList) ProtoMessage()    {}
@@ -1337,6 +1279,12 @@ func (m *ReqTxList) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReqTxList proto.InternalMessageInfo
+=======
+func (m *ReqTxList) Reset()                    { *m = ReqTxList{} }
+func (m *ReqTxList) String() string            { return proto.CompactTextString(m) }
+func (*ReqTxList) ProtoMessage()               {}
+func (*ReqTxList) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{20} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *ReqTxList) GetCount() int64 {
 	if m != nil {
@@ -1346,6 +1294,7 @@ func (m *ReqTxList) GetCount() int64 {
 }
 
 type ReplyTxList struct {
+<<<<<<< HEAD
 	Txs                  []*Transaction `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
@@ -1357,25 +1306,15 @@ func (m *ReplyTxList) String() string { return proto.CompactTextString(m) }
 func (*ReplyTxList) ProtoMessage()    {}
 func (*ReplyTxList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{22}
+=======
+	Txs []*Transaction `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-func (m *ReplyTxList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyTxList.Unmarshal(m, b)
-}
-func (m *ReplyTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyTxList.Marshal(b, m, deterministic)
-}
-func (m *ReplyTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTxList.Merge(m, src)
-}
-func (m *ReplyTxList) XXX_Size() int {
-	return xxx_messageInfo_ReplyTxList.Size(m)
-}
-func (m *ReplyTxList) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyTxList.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReplyTxList proto.InternalMessageInfo
+func (m *ReplyTxList) Reset()                    { *m = ReplyTxList{} }
+func (m *ReplyTxList) String() string            { return proto.CompactTextString(m) }
+func (*ReplyTxList) ProtoMessage()               {}
+func (*ReplyTxList) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{21} }
 
 func (m *ReplyTxList) GetTxs() []*Transaction {
 	if m != nil {
@@ -1385,6 +1324,7 @@ func (m *ReplyTxList) GetTxs() []*Transaction {
 }
 
 type TxHashList struct {
+<<<<<<< HEAD
 	Hashes               [][]byte `protobuf:"bytes,1,rep,name=hashes,proto3" json:"hashes,omitempty"`
 	Count                int64    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
 	Expire               []int64  `protobuf:"varint,3,rep,packed,name=expire,proto3" json:"expire,omitempty"`
@@ -1398,25 +1338,17 @@ func (m *TxHashList) String() string { return proto.CompactTextString(m) }
 func (*TxHashList) ProtoMessage()    {}
 func (*TxHashList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{23}
+=======
+	Hashes [][]byte `protobuf:"bytes,1,rep,name=hashes,proto3" json:"hashes,omitempty"`
+	Count  int64    `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Expire []int64  `protobuf:"varint,3,rep,packed,name=expire" json:"expire,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-func (m *TxHashList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TxHashList.Unmarshal(m, b)
-}
-func (m *TxHashList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TxHashList.Marshal(b, m, deterministic)
-}
-func (m *TxHashList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TxHashList.Merge(m, src)
-}
-func (m *TxHashList) XXX_Size() int {
-	return xxx_messageInfo_TxHashList.Size(m)
-}
-func (m *TxHashList) XXX_DiscardUnknown() {
-	xxx_messageInfo_TxHashList.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TxHashList proto.InternalMessageInfo
+func (m *TxHashList) Reset()                    { *m = TxHashList{} }
+func (m *TxHashList) String() string            { return proto.CompactTextString(m) }
+func (*TxHashList) ProtoMessage()               {}
+func (*TxHashList) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{22} }
 
 func (m *TxHashList) GetHashes() [][]byte {
 	if m != nil {
@@ -1440,12 +1372,10 @@ func (m *TxHashList) GetExpire() []int64 {
 }
 
 type ReplyTxInfos struct {
-	TxInfos              []*ReplyTxInfo `protobuf:"bytes,1,rep,name=txInfos,proto3" json:"txInfos,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	TxInfos []*ReplyTxInfo `protobuf:"bytes,1,rep,name=txInfos" json:"txInfos,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *ReplyTxInfos) Reset()         { *m = ReplyTxInfos{} }
 func (m *ReplyTxInfos) String() string { return proto.CompactTextString(m) }
 func (*ReplyTxInfos) ProtoMessage()    {}
@@ -1470,6 +1400,12 @@ func (m *ReplyTxInfos) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReplyTxInfos proto.InternalMessageInfo
+=======
+func (m *ReplyTxInfos) Reset()                    { *m = ReplyTxInfos{} }
+func (m *ReplyTxInfos) String() string            { return proto.CompactTextString(m) }
+func (*ReplyTxInfos) ProtoMessage()               {}
+func (*ReplyTxInfos) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{23} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *ReplyTxInfos) GetTxInfos() []*ReplyTxInfo {
 	if m != nil {
@@ -1479,13 +1415,11 @@ func (m *ReplyTxInfos) GetTxInfos() []*ReplyTxInfo {
 }
 
 type ReceiptLog struct {
-	Ty                   int32    `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
-	Log                  []byte   `protobuf:"bytes,2,opt,name=log,proto3" json:"log,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Ty  int32  `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
+	Log []byte `protobuf:"bytes,2,opt,name=log,proto3" json:"log,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *ReceiptLog) Reset()         { *m = ReceiptLog{} }
 func (m *ReceiptLog) String() string { return proto.CompactTextString(m) }
 func (*ReceiptLog) ProtoMessage()    {}
@@ -1510,6 +1444,12 @@ func (m *ReceiptLog) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReceiptLog proto.InternalMessageInfo
+=======
+func (m *ReceiptLog) Reset()                    { *m = ReceiptLog{} }
+func (m *ReceiptLog) String() string            { return proto.CompactTextString(m) }
+func (*ReceiptLog) ProtoMessage()               {}
+func (*ReceiptLog) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{24} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *ReceiptLog) GetTy() int32 {
 	if m != nil {
@@ -1529,6 +1469,7 @@ func (m *ReceiptLog) GetLog() []byte {
 // ty = 1 -> CutFee //cut fee ,bug exec not ok
 // ty = 2 -> exec ok
 type Receipt struct {
+<<<<<<< HEAD
 	Ty                   int32         `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
 	KV                   []*KeyValue   `protobuf:"bytes,2,rep,name=KV,proto3" json:"KV,omitempty"`
 	Logs                 []*ReceiptLog `protobuf:"bytes,3,rep,name=logs,proto3" json:"logs,omitempty"`
@@ -1558,9 +1499,17 @@ func (m *Receipt) XXX_Size() int {
 }
 func (m *Receipt) XXX_DiscardUnknown() {
 	xxx_messageInfo_Receipt.DiscardUnknown(m)
+=======
+	Ty   int32         `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
+	KV   []*KeyValue   `protobuf:"bytes,2,rep,name=KV" json:"KV,omitempty"`
+	Logs []*ReceiptLog `protobuf:"bytes,3,rep,name=logs" json:"logs,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_Receipt proto.InternalMessageInfo
+func (m *Receipt) Reset()                    { *m = Receipt{} }
+func (m *Receipt) String() string            { return proto.CompactTextString(m) }
+func (*Receipt) ProtoMessage()               {}
+func (*Receipt) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{25} }
 
 func (m *Receipt) GetTy() int32 {
 	if m != nil {
@@ -1584,6 +1533,7 @@ func (m *Receipt) GetLogs() []*ReceiptLog {
 }
 
 type ReceiptData struct {
+<<<<<<< HEAD
 	Ty                   int32         `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
 	Logs                 []*ReceiptLog `protobuf:"bytes,3,rep,name=logs,proto3" json:"logs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
@@ -1612,9 +1562,16 @@ func (m *ReceiptData) XXX_Size() int {
 }
 func (m *ReceiptData) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReceiptData.DiscardUnknown(m)
+=======
+	Ty   int32         `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
+	Logs []*ReceiptLog `protobuf:"bytes,3,rep,name=logs" json:"logs,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_ReceiptData proto.InternalMessageInfo
+func (m *ReceiptData) Reset()                    { *m = ReceiptData{} }
+func (m *ReceiptData) String() string            { return proto.CompactTextString(m) }
+func (*ReceiptData) ProtoMessage()               {}
+func (*ReceiptData) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{26} }
 
 func (m *ReceiptData) GetTy() int32 {
 	if m != nil {
@@ -1631,17 +1588,15 @@ func (m *ReceiptData) GetLogs() []*ReceiptLog {
 }
 
 type TxResult struct {
-	Height               int64        `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	Index                int32        `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
-	Tx                   *Transaction `protobuf:"bytes,3,opt,name=tx,proto3" json:"tx,omitempty"`
-	Receiptdate          *ReceiptData `protobuf:"bytes,4,opt,name=receiptdate,proto3" json:"receiptdate,omitempty"`
-	Blocktime            int64        `protobuf:"varint,5,opt,name=blocktime,proto3" json:"blocktime,omitempty"`
-	ActionName           string       `protobuf:"bytes,6,opt,name=actionName,proto3" json:"actionName,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Height      int64        `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
+	Index       int32        `protobuf:"varint,2,opt,name=index" json:"index,omitempty"`
+	Tx          *Transaction `protobuf:"bytes,3,opt,name=tx" json:"tx,omitempty"`
+	Receiptdate *ReceiptData `protobuf:"bytes,4,opt,name=receiptdate" json:"receiptdate,omitempty"`
+	Blocktime   int64        `protobuf:"varint,5,opt,name=blocktime" json:"blocktime,omitempty"`
+	ActionName  string       `protobuf:"bytes,6,opt,name=actionName" json:"actionName,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *TxResult) Reset()         { *m = TxResult{} }
 func (m *TxResult) String() string { return proto.CompactTextString(m) }
 func (*TxResult) ProtoMessage()    {}
@@ -1666,6 +1621,12 @@ func (m *TxResult) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_TxResult proto.InternalMessageInfo
+=======
+func (m *TxResult) Reset()                    { *m = TxResult{} }
+func (m *TxResult) String() string            { return proto.CompactTextString(m) }
+func (*TxResult) ProtoMessage()               {}
+func (*TxResult) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{27} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *TxResult) GetHeight() int64 {
 	if m != nil {
@@ -1710,6 +1671,7 @@ func (m *TxResult) GetActionName() string {
 }
 
 type TransactionDetail struct {
+<<<<<<< HEAD
 	Tx                   *Transaction `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
 	Receipt              *ReceiptData `protobuf:"bytes,2,opt,name=receipt,proto3" json:"receipt,omitempty"`
 	Proofs               [][]byte     `protobuf:"bytes,3,rep,name=proofs,proto3" json:"proofs,omitempty"`
@@ -1749,6 +1711,24 @@ func (m *TransactionDetail) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_TransactionDetail proto.InternalMessageInfo
+=======
+	Tx         *Transaction `protobuf:"bytes,1,opt,name=tx" json:"tx,omitempty"`
+	Receipt    *ReceiptData `protobuf:"bytes,2,opt,name=receipt" json:"receipt,omitempty"`
+	Proofs     [][]byte     `protobuf:"bytes,3,rep,name=proofs,proto3" json:"proofs,omitempty"`
+	Height     int64        `protobuf:"varint,4,opt,name=height" json:"height,omitempty"`
+	Index      int64        `protobuf:"varint,5,opt,name=index" json:"index,omitempty"`
+	Blocktime  int64        `protobuf:"varint,6,opt,name=blocktime" json:"blocktime,omitempty"`
+	Amount     int64        `protobuf:"varint,7,opt,name=amount" json:"amount,omitempty"`
+	Fromaddr   string       `protobuf:"bytes,8,opt,name=fromaddr" json:"fromaddr,omitempty"`
+	ActionName string       `protobuf:"bytes,9,opt,name=actionName" json:"actionName,omitempty"`
+	Assets     []*Asset     `protobuf:"bytes,10,rep,name=assets" json:"assets,omitempty"`
+}
+
+func (m *TransactionDetail) Reset()                    { *m = TransactionDetail{} }
+func (m *TransactionDetail) String() string            { return proto.CompactTextString(m) }
+func (*TransactionDetail) ProtoMessage()               {}
+func (*TransactionDetail) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{28} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *TransactionDetail) GetTx() *Transaction {
 	if m != nil {
@@ -1821,6 +1801,7 @@ func (m *TransactionDetail) GetAssets() []*Asset {
 }
 
 type TransactionDetails struct {
+<<<<<<< HEAD
 	Txs                  []*TransactionDetail `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
@@ -1848,9 +1829,15 @@ func (m *TransactionDetails) XXX_Size() int {
 }
 func (m *TransactionDetails) XXX_DiscardUnknown() {
 	xxx_messageInfo_TransactionDetails.DiscardUnknown(m)
+=======
+	Txs []*TransactionDetail `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_TransactionDetails proto.InternalMessageInfo
+func (m *TransactionDetails) Reset()                    { *m = TransactionDetails{} }
+func (m *TransactionDetails) String() string            { return proto.CompactTextString(m) }
+func (*TransactionDetails) ProtoMessage()               {}
+func (*TransactionDetails) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{29} }
 
 func (m *TransactionDetails) GetTxs() []*TransactionDetail {
 	if m != nil {
@@ -1860,6 +1847,7 @@ func (m *TransactionDetails) GetTxs() []*TransactionDetail {
 }
 
 type ReqAddrs struct {
+<<<<<<< HEAD
 	Addrs                []string `protobuf:"bytes,1,rep,name=addrs,proto3" json:"addrs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1887,9 +1875,15 @@ func (m *ReqAddrs) XXX_Size() int {
 }
 func (m *ReqAddrs) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqAddrs.DiscardUnknown(m)
+=======
+	Addrs []string `protobuf:"bytes,1,rep,name=addrs" json:"addrs,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_ReqAddrs proto.InternalMessageInfo
+func (m *ReqAddrs) Reset()                    { *m = ReqAddrs{} }
+func (m *ReqAddrs) String() string            { return proto.CompactTextString(m) }
+func (*ReqAddrs) ProtoMessage()               {}
+func (*ReqAddrs) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{30} }
 
 func (m *ReqAddrs) GetAddrs() []string {
 	if m != nil {
@@ -1899,12 +1893,10 @@ func (m *ReqAddrs) GetAddrs() []string {
 }
 
 type ReqDecodeRawTransaction struct {
-	TxHex                string   `protobuf:"bytes,1,opt,name=txHex,proto3" json:"txHex,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	TxHex string `protobuf:"bytes,1,opt,name=txHex" json:"txHex,omitempty"`
 }
 
+<<<<<<< HEAD
 func (m *ReqDecodeRawTransaction) Reset()         { *m = ReqDecodeRawTransaction{} }
 func (m *ReqDecodeRawTransaction) String() string { return proto.CompactTextString(m) }
 func (*ReqDecodeRawTransaction) ProtoMessage()    {}
@@ -1929,6 +1921,12 @@ func (m *ReqDecodeRawTransaction) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReqDecodeRawTransaction proto.InternalMessageInfo
+=======
+func (m *ReqDecodeRawTransaction) Reset()                    { *m = ReqDecodeRawTransaction{} }
+func (m *ReqDecodeRawTransaction) String() string            { return proto.CompactTextString(m) }
+func (*ReqDecodeRawTransaction) ProtoMessage()               {}
+func (*ReqDecodeRawTransaction) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{31} }
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 
 func (m *ReqDecodeRawTransaction) GetTxHex() string {
 	if m != nil {
@@ -1938,6 +1936,7 @@ func (m *ReqDecodeRawTransaction) GetTxHex() string {
 }
 
 type UserWrite struct {
+<<<<<<< HEAD
 	Topic                string   `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	Content              string   `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1966,9 +1965,16 @@ func (m *UserWrite) XXX_Size() int {
 }
 func (m *UserWrite) XXX_DiscardUnknown() {
 	xxx_messageInfo_UserWrite.DiscardUnknown(m)
+=======
+	Topic   string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
+	Content string `protobuf:"bytes,2,opt,name=content" json:"content,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_UserWrite proto.InternalMessageInfo
+func (m *UserWrite) Reset()                    { *m = UserWrite{} }
+func (m *UserWrite) String() string            { return proto.CompactTextString(m) }
+func (*UserWrite) ProtoMessage()               {}
+func (*UserWrite) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{32} }
 
 func (m *UserWrite) GetTopic() string {
 	if m != nil {
@@ -1985,6 +1991,7 @@ func (m *UserWrite) GetContent() string {
 }
 
 type UpgradeMeta struct {
+<<<<<<< HEAD
 	Indexing             bool     `protobuf:"varint,1,opt,name=indexing,proto3" json:"indexing,omitempty"`
 	Version              string   `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
@@ -2014,9 +2021,17 @@ func (m *UpgradeMeta) XXX_Size() int {
 }
 func (m *UpgradeMeta) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpgradeMeta.DiscardUnknown(m)
+=======
+	Indexing bool   `protobuf:"varint,1,opt,name=indexing" json:"indexing,omitempty"`
+	Version  string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
+	Height   int64  `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 }
 
-var xxx_messageInfo_UpgradeMeta proto.InternalMessageInfo
+func (m *UpgradeMeta) Reset()                    { *m = UpgradeMeta{} }
+func (m *UpgradeMeta) String() string            { return proto.CompactTextString(m) }
+func (*UpgradeMeta) ProtoMessage()               {}
+func (*UpgradeMeta) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{33} }
 
 func (m *UpgradeMeta) GetIndexing() bool {
 	if m != nil {
@@ -2077,10 +2092,15 @@ func init() {
 	proto.RegisterType((*UpgradeMeta)(nil), "types.UpgradeMeta")
 }
 
-func init() { proto.RegisterFile("transaction.proto", fileDescriptor_2cc4e03d2c28c490) }
+func init() { proto.RegisterFile("transaction.proto", fileDescriptor9) }
 
+<<<<<<< HEAD
 var fileDescriptor_2cc4e03d2c28c490 = []byte{
 	// 1332 bytes of a gzipped FileDescriptorProto
+=======
+var fileDescriptor9 = []byte{
+	// 1306 bytes of a gzipped FileDescriptorProto
+>>>>>>> change protobuf file (use protoc-gen-1.0)
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x57, 0xdd, 0x6e, 0x13, 0x47,
 	0x14, 0xd6, 0xee, 0xda, 0x89, 0x7d, 0x6c, 0x28, 0x59, 0x21, 0xb0, 0x10, 0x85, 0x74, 0x44, 0x25,
 	0x84, 0x50, 0x22, 0x25, 0xdc, 0xb5, 0x52, 0x0b, 0xa4, 0x02, 0x14, 0xa0, 0xed, 0x60, 0xa0, 0x6a,
