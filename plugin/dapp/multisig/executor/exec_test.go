@@ -172,8 +172,8 @@ func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, loc
 	tx, _ := multiSigAccCreate(param)
 	tx, _ = signTx(tx, PrivKeyA)
 
-	addr := address.PubKeyToAddress(tx.Hash())
-	localDB.On("Get", calcMultiSigAcc(addr.String())).Return(nil, types.ErrNotFound)
+	addr := address.MultiSignAddress(tx.Hash())
+	localDB.On("Get", calcMultiSigAcc(addr)).Return(nil, types.ErrNotFound)
 
 	receipt, err := driver.Exec(tx, env.index)
 	if err != nil {

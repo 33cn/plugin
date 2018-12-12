@@ -76,7 +76,7 @@ func (m *MultiSig) Query_MultiSigAccountInfo(in *mty.ReqMultiSigAccInfo) (types.
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -102,7 +102,7 @@ func (m *MultiSig) Query_MultiSigAccTxCount(in *mty.ReqMultiSigAccInfo) (types.M
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -136,7 +136,7 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -182,7 +182,7 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	addr := in.MultiSigAddr
 	txid := in.TxId
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -211,7 +211,7 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	addr := in.MultiSigAddr
 	txid := in.TxId
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -247,7 +247,7 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 	addr := in.MultiSigAddr
 	isAll := in.IsAll
 
-	if err := address.CheckAddress(addr); err != nil {
+	if err := address.CheckMultiSignAddress(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -316,9 +316,11 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-
-	if err := address.CheckAddress(in.MultiSigAddr); err != nil {
-		return nil, types.ErrInvalidAddress
+	//多重签名地址或者普通地址
+	if err := address.CheckMultiSignAddress(in.MultiSigAddr); err != nil {
+		if err = address.CheckAddress(in.MultiSigAddr); err != nil {
+			return nil, types.ErrInvalidAddress
+		}
 	}
 
 	replyAccAssets := &mty.ReplyAccAssets{}

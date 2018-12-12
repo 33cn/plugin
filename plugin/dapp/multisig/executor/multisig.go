@@ -98,7 +98,7 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 	}
 	//MultiSigConfirmTx  交易的检测
 	if ato, ok := payload.(*mty.MultiSigConfirmTx); ok {
-		if err := address.CheckAddress(ato.GetMultiSigAccAddr()); err != nil {
+		if err := address.CheckMultiSignAddress(ato.GetMultiSigAccAddr()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		return nil
@@ -106,7 +106,7 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 
 	//MultiSigExecTransferTo 交易的检测
 	if ato, ok := payload.(*mty.MultiSigExecTransferTo); ok {
-		if err := address.CheckAddress(ato.GetTo()); err != nil {
+		if err := address.CheckMultiSignAddress(ato.GetTo()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//assets check
@@ -114,6 +114,11 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 	}
 	//MultiSigExecTransferFrom 交易的检测
 	if ato, ok := payload.(*mty.MultiSigExecTransferFrom); ok {
+		//from addr check
+		if err := address.CheckMultiSignAddress(ato.GetFrom()); err != nil {
+			return types.ErrInvalidAddress
+		}
+		//to addr check
 		if err := address.CheckAddress(ato.GetTo()); err != nil {
 			return types.ErrInvalidAddress
 		}
@@ -175,7 +180,7 @@ func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
 	NewOwner := ato.GetNewOwner()
 	NewWeight := ato.GetNewWeight()
 	MultiSigAccAddr := ato.GetMultiSigAccAddr()
-	if err := address.CheckAddress(MultiSigAccAddr); err != nil {
+	if err := address.CheckMultiSignAddress(MultiSigAccAddr); err != nil {
 		return types.ErrInvalidAddress
 	}
 
@@ -211,9 +216,9 @@ func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
 	return nil
 }
 func checkAccountOperateTx(ato *mty.MultiSigAccOperate) error {
-	//MultiSigAccOperate to 地址检测
+	//MultiSigAccOperate MultiSigAccAddr 地址检测
 	MultiSigAccAddr := ato.GetMultiSigAccAddr()
-	if err := address.CheckAddress(MultiSigAccAddr); err != nil {
+	if err := address.CheckMultiSignAddress(MultiSigAccAddr); err != nil {
 		return types.ErrInvalidAddress
 	}
 

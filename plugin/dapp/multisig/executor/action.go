@@ -92,14 +92,14 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 		multiSigAccount.DailyLimits = append(multiSigAccount.DailyLimits, &dailyLimit)
 	}
 	//通过创建交易的txhash生成一个唯一的多重签名合约 NewAddrFromString
-	addr := address.PubKeyToAddress(a.txhash)
+	addr := address.MultiSignAddress(a.txhash)
 	//账户去重校验
-	multiSig, err := getMultiSigAccount(a.localdb, addr.String())
+	multiSig, err := getMultiSigAccount(a.localdb, addr)
 	if err == nil && multiSig != nil {
 		return nil, mty.ErrAccountHasExist
 	}
 
-	multiSigAccount.MultiSigAddr = addr.String()
+	multiSigAccount.MultiSigAddr = addr
 	receiptLog := &types.ReceiptLog{}
 	receiptLog.Ty = mty.TyLogMultiSigAccCreate
 	receiptLog.Log = types.Encode(multiSigAccount)
