@@ -7,37 +7,8 @@ notifications:
   email: false
 jobs:
   include:
-    - stage: check_fmt
-      sudo: require
-      go: "1.11.x"
-      install:
-        - go get -u golang.org/x/tools/cmd/goimports
-        - go get -u gopkg.in/alecthomas/gometalinter.v2
-        - gometalinter.v2 -i
-        - go get -u mvdan.cc/sh/cmd/shfmt
-        - go get -u mvdan.cc/sh/cmd/gosh
-      script:
-        - make checkgofmt && make fmt_go
-        - make linter
-
-    - stage: unit-test
+     - stage: coverage
       go: "1.9.x"
-      install: skip
-      script:
-        - make test
-
-    - stage: auto-test
-      go: "1.9.x"
-      install: skip
-      before_script: make build_ci
-      script:
-        - make autotest dapp=all
-
-    - stage: coverage
-      if: branch = master
-      go: "1.9.x"
-      before_install:
-        - go get -t -v ./...
       install: skip
       script:
         - make coverage
