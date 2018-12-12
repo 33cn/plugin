@@ -44,7 +44,7 @@ pipeline {
             echo "email user: ${ghprbActualCommitAuthorEmail}"
             script{
                 try {
-                    mail to: "test",
+                    mail to: "",
                          subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
                          body: "this is success with ${env.BUILD_URL}"
                 }
@@ -52,7 +52,7 @@ pipeline {
                     echo err
                 }
             }
-            mail to: "test",
+            mail to: "",
                  subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
                  body: "this is success with ${env.BUILD_URL}"
             echo currentBuild.result
