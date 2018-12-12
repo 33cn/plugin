@@ -442,7 +442,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	}
 
 	prevStatus := game.Status
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
 		return nil, pkt.ErrGuessStatus
@@ -766,6 +766,9 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 			logger.Error("GameAbort", "addr", player.Addr, "execaddr", action.execaddr, "amount", value, "err", err)
 			continue
 		}
+
+		player.Bet.IsWinner = true
+		player.Bet.Profit = value
 
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)

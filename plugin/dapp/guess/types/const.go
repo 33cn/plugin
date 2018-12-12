@@ -48,12 +48,12 @@ const (
 	//查询方法名
 	FuncName_QueryGamesByIds = "QueryGamesByIds"
 	FuncName_QueryGameById = "QueryGameById"
-	FuncName_QueryGameByAddr = "QueryGameByAddr"
-	FuncName_QueryGameByStatus = "QueryGameByStatus"
-	FuncName_QueryGameByAdminAddr = "QueryGameByAdminAddr"
-	FuncName_QueryGameByAddrStatus = "QueryGameByAddrStatus"
-	FuncName_QueryGameByAdminStatus = "QueryGameByAdminStatus"
-	FuncName_QueryGameByCategoryStatus="QueryGameByCategoryStatus"
+	FuncName_QueryGameByAddr = "QueryGamesByAddr"
+	FuncName_QueryGameByStatus = "QueryGamesByStatus"
+	FuncName_QueryGameByAdminAddr = "QueryGamesByAdminAddr"
+	FuncName_QueryGameByAddrStatus = "QueryGamesByAddrStatus"
+	FuncName_QueryGameByAdminStatus = "QueryGamesByAdminStatus"
+	FuncName_QueryGameByCategoryStatus="QueryGamesByCategoryStatus"
 )
 
 const (

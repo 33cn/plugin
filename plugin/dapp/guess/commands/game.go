@@ -5,7 +5,6 @@
 package commands
 
 import (
-	"fmt"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -242,7 +241,6 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 	category, _ := cmd.Flags().GetString("category")
 
-	fmt.Println("ooo")
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.GuessX
 
