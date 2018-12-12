@@ -49,12 +49,10 @@ pipeline {
                          body: "this is success with ${env.BUILD_URL}"
                 }
                 catch (err){
-                    echo err
+                    echo 'mail err: err'
                 }
             }
-            mail to: "",
-                 subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "this is success with ${env.BUILD_URL}"
+
             echo currentBuild.result
 
         }
@@ -64,11 +62,11 @@ pipeline {
             echo "email user: ${ghprbActualCommitAuthorEmail}"
             script{
                 try {
-                    mail to: "test",
+                    mail to: "",
                          subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
                          body: "Something is wrong with ${env.BUILD_URL}"
                 }catch (err){
-                    echo err
+                    echo 'mail err: err'
                 }
             }
 
