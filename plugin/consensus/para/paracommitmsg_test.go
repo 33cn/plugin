@@ -48,7 +48,7 @@ type suiteParaCommitMsg struct {
 	block   *blockchain.BlockChain
 	exec    *executor.Executor
 	store   queue.Module
-	mem     *mempool.Mempool
+	mem     queue.Module
 	network *p2p.P2p
 }
 
@@ -84,17 +84,15 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	s.para.grpcClient = s.grpcCli
 	s.para.SetQueueClient(q.Client())
 
-	s.mem = mempool.New(cfg.MemPool)
+	s.mem = mempool.New(cfg.Mempool, nil)
 	s.mem.SetQueueClient(q.Client())
-	s.mem.SetSync(true)
-	s.mem.WaitPollLastHeader()
+	s.mem.Wait()
 
 	s.network = p2p.New(cfg.P2P)
 	s.network.SetQueueClient(q.Client())
 
 	s.para.wg.Add(1)
 	go walletProcess(q, s.para)
-
 }
 
 func walletProcess(q queue.Queue, para *client) {

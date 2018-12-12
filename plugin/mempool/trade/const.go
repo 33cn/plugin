@@ -24,7 +24,4 @@ var (
 // TODO
 func init() {
 	processNum = runtime.NumCPU()
-	//if processNum >= 2 {
-	//processNum -= 1
-	//}
 }

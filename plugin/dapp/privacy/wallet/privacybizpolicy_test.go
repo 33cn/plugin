@@ -100,9 +100,8 @@ func (mock *testDataMock) initMember() {
 	if mock.mockMempool {
 		mock.mockMempoolProc(q)
 	} else {
-		mempool := mempool.New(cfg.MemPool)
+		mempool := mempool.New(cfg.Mempool, nil)
 		mempool.SetQueueClient(q.Client())
-		mempool.SetMinFee(1e5)
 		mock.modules = append(mock.modules, mempool)
 	}
 
