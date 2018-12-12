@@ -1,27 +1,50 @@
-// Copyright Fuzamei Corp. 2018 All Rights Reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package trade
 
 import (
-	"testing"
-
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	drivers "github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestCache(t *testing.T) {
+var (
+	c, _       = crypto.New(types.GetSignName("", types.SECP256K1))
+	hex        = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+	a, _       = common.FromHex(hex)
+	privKey, _ = c.PrivKeyFromBytes(a)
+	toAddr     = address.PubKeyToAddress(privKey.PubKey().Bytes()).String()
+	amount     = int64(1e8)
+	v          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
+	transfer   = &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
+	tx1        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 1, To: toAddr}
+	tx2        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 2, To: toAddr}
+	tx3        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 3, To: toAddr}
+	tx4        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 2000000, Expire: 2, To: toAddr}
+	item1      = &drivers.Item{Value: tx1, Priority: tx1.Fee, EnterTime: types.Now().Unix()}
+	item2      = &drivers.Item{Value: tx2, Priority: tx2.Fee, EnterTime: types.Now().Unix()}
+	item3      = &drivers.Item{Value: tx3, Priority: tx3.Fee, EnterTime: types.Now().Unix() - 1000}
+	item4      = &drivers.Item{Value: tx4, Priority: tx4.Fee, EnterTime: types.Now().Unix() - 1000}
+)
+
+func initEnv(size int64) *TradeQueue {
+	if size == 0 {
+		size = 100
+	}
 	_, sub := types.InitCfg("chain33.test.toml")
 	var subcfg subConfig
 	types.MustDecode(sub.Mempool["trade"], &subcfg)
-	subcfg.PoolCacheSize = 1
+	subcfg.PoolCacheSize = size
 	cache := NewTradeQueue(subcfg)
-	tx := &types.Transaction{Payload: []byte("123")}
-	hash := string(tx.Hash())
-	assert.Equal(t, false, cache.Exist(hash))
-	item1 := &drivers.Item{Value: tx, Priority: tx.Fee, EnterTime: types.Now().Unix()}
+	return cache
+}
+
+func TestMemFull(t *testing.T) {
+	cache := initEnv(1)
+	hash := string(tx1.Hash())
 	err := cache.Push(item1)
 	assert.Nil(t, err)
 	assert.Equal(t, true, cache.Exist(hash))
@@ -35,16 +58,16 @@ func TestCache(t *testing.T) {
 	err = cache.Push(item1)
 	assert.Equal(t, types.ErrTxExist, err)
 
-	tx2 := &types.Transaction{Payload: []byte("1234")}
-	item2 := &drivers.Item{Value: tx2, Priority: tx.Fee, EnterTime: types.Now().Unix()}
 	err = cache.Push(item2)
 	assert.Equal(t, types.ErrMemFull, err)
 
 	cache.Remove(hash)
 	assert.Equal(t, 0, cache.Size())
+}
+
+func TestWalk(t *testing.T) {
 	//push to item
-	subcfg.PoolCacheSize = 2
-	cache = NewTradeQueue(subcfg)
+	cache := initEnv(2)
 	cache.Push(item1)
 	cache.Push(item2)
 	assert.Equal(t, 2, cache.Size())
@@ -75,4 +98,22 @@ func TestCache(t *testing.T) {
 		return false
 	})
 	assert.Equal(t, 1, i)
+}
+
+func TestTimeCompetition(t *testing.T) {
+	cache := initEnv(1)
+	cache.Push(item1)
+	cache.Push(item3)
+	if cache.Exist(string(item1.Value.Hash())) || !cache.Exist(string(item3.Value.Hash())) {
+		t.Error("queue not by time")
+	}
+}
+
+func TestPriceCompetition(t *testing.T) {
+	cache := initEnv(1)
+	cache.Push(item1)
+	cache.Push(item4)
+	if cache.Exist(string(item1.Value.Hash())) || !cache.Exist(string(item4.Value.Hash())) {
+		t.Error("queue not by price")
+	}
 }

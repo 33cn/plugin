@@ -16,7 +16,7 @@ type SkipValue struct {
 func (v *SkipValue) Compare(value *SkipValue) int {
 	f1 := v.Score
 	f2 := value.Score
-	if f1 > f2 {
+	if f1 < f2 {
 		return 1
 	} else if f1 == f2 {
 		return 0

@@ -41,7 +41,7 @@ func (cache *TradeQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 
 //Exist 是否存在
 func (cache *TradeQueue) Exist(hash string) bool {
-	_, exists := cache.txMap[string(hash)]
+	_, exists := cache.txMap[hash]
 	return exists
 }
 
@@ -81,7 +81,7 @@ func (cache *TradeQueue) Push(item *mempool.Item) error {
 		}
 	}
 
-	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: types.Now().Unix()}
+	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
 	sv, err := cache.newSkipValue(it)
 	if err != nil {
 		return err
