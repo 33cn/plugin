@@ -22,18 +22,12 @@ pipeline {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'deploy'){
                         sh 'make build_ci'
-                        sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
+                        // sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
                     }
                 }
             }
 
-            post {
-                always {
-                    dir("${PROJ_DIR}"){
-                        sh "cd build/${env.BUILD_NUMBER} && ./docker-compose-pre.sh down ${env.BUILD_NUMBER} all && cd .. && rm -rf ${env.BUILD_NUMBER} && cd .. && make clean "
-                    }
-                }
-            }
+
         }
     }
 
@@ -47,17 +41,29 @@ pipeline {
         success {
             echo 'I succeeeded!'
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            mail to: "${ghprbActualCommitAuthorEmail}",
-                 subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "this is success with ${env.BUILD_URL}"
+            try {
+                mail to: "test",
+                     subject: "Successed Pipeline: ${currentBuild.fullDisplayName}",
+                     body: "this is success with ${env.BUILD_URL}"
+            }
+            catch (err){
+                echo err
+            }
+            echo currentBuild.result
+
         }
 
         failure {
             echo 'I failed '
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            mail to: "${ghprbActualCommitAuthorEmail}",
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Something is wrong with ${env.BUILD_URL}"
+            try {
+                mail to: "test",
+                     subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                     body: "Something is wrong with ${env.BUILD_URL}"
+            }catch (err){
+                echo err
+            }
+            echo currentBuild.result
         }
     }
 }
