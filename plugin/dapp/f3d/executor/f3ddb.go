@@ -139,33 +139,6 @@ func (action *Action) updateCount(status int32, addr string) (kvset []*types.Key
 	return kvset
 }
 
-//func (action *Action) updateStateDBCache(param interface{}){
-//	if roundInfo, ok := param.(*pt.RoundInfo); ok {
-//		action.db.Set(Key(calcF3dByRound(roundInfo.Round)), types.Encode(roundInfo))
-//		action.db.Set(Key(F3dRoundLast), types.Encode(roundInfo))
-//	}
-//	if keyInfo, ok := param.(*pt.KeyInfo); ok {
-//		addrInfo,err:=getF3dAddrInfo(action.db,Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)))
-//		action.db.Set(Key(calcF3dUserKeys(keyInfo.Round, keyInfo.Addr,action.GetIndex())), types.Encode(keyInfo))
-//		if err !=nil {
-//			flog.Warn("F3D db getF3dAddrInfo", "can't get value from db,key:", calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr))
-//			var addr pt.AddrInfo
-//			addr.Addr=action.fromaddr
-//			addr.KeyNum=keyInfo.KeyNum
-//			addr.IsFirstBuy=true
-//			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), types.Encode(&addr))
-//		}else{
-//			addrInfo.Addr=action.fromaddr
-//			addrInfo.IsFirstBuy=false
-//			addrInfo.KeyNum=addrInfo.KeyNum+keyInfo.KeyNum
-//			action.db.Set(Key(calcF3dUserAddrs(keyInfo.Round, keyInfo.Addr)), types.Encode(addrInfo))
-//		}
-//
-//
-//	}
-//
-//}
-
 // Key gameId to save key
 func Key(id string) (key []byte) {
 	key = append(key, []byte("mavl-"+pt.F3DX+"-")...)
