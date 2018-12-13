@@ -487,7 +487,7 @@ func (client *client) RequestTx(seq *int64, preMainBlockHash *[]byte) ([]*types.
 func (client *client) syncFromGenesisBlock(currSeq *int64, preMainBlockHash *[]byte) {
 	lastSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
 	if err != nil {
-		plog.Error("Parachain GetLastSeq fail", "err", err)
+		plog.Error("Parachain getLastBlockInfo fail", "err", err)
 		return
 	}
 	*currSeq = lastSeq + 1
@@ -589,14 +589,14 @@ func (client *client) CreateBlock() {
 	//system startup, take the last added block's seq is ok
 	currSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
 	if err != nil {
-		plog.Error("Parachain GetLastSeq fail", "err", err)
+		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
 		return
 	}
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()
 		if err != nil {
-			plog.Error("Parachain GetLastSeq fail", "err", err)
+			plog.Error("Parachain GetLastSeq fail", "err", err.Error())
 			time.Sleep(time.Second)
 			continue
 		}
@@ -620,14 +620,14 @@ func (client *client) CreateBlock() {
 
 		_, lastBlock, lastBlockMainHash, lastBlockMainHeight, err := client.getLastBlockInfo()
 		if err != nil {
-			plog.Error("Parachain GetLastSeq fail", "err", err)
+			plog.Error("Parachain getLastBlockInfo fail", "err", err)
 			time.Sleep(time.Second)
 			continue
 		}
 
 		plog.Info("Parachain process block", "lastBlockSeq", lastSeq, "curSeq", currSeq,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
-			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash))
+			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash),"seqTy",seqTy)
 
 		if seqTy == delAct {
 			if len(txs) == 0 {
