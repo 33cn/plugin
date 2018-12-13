@@ -63,7 +63,7 @@ func RaftPerf() {
 	sendReplyList(q)
 }
 
-func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, *mempool.Mempool, queue.Module, queue.Module, queue.Module) {
+func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	var q = queue.New("channel")
 	flag.Parse()
 	cfg, sub := types.InitCfg("chain33.test.toml")
@@ -80,7 +80,7 @@ func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, *mempool.
 	cs := NewRaftCluster(cfg.Consensus, sub.Consensus["raft"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.MemPool)
+	mem := mempool.New(cfg.Mempool, nil)
 	mem.SetQueueClient(q.Client())
 	network := p2p.New(cfg.P2P)
 
