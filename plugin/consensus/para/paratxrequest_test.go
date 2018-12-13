@@ -6,6 +6,7 @@ package para
 
 import (
 	"testing"
+
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
@@ -14,17 +15,16 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-
 	//"github.com/33cn/plugin/plugin/dapp/paracross/rpc"
+	"time"
+
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"time"
 )
-
 
 func init() {
 	//types.Init("user.p.para.", nil)
@@ -44,7 +44,6 @@ type suiteParaClient struct {
 	network *p2p.P2p
 }
 
-
 func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule) {
 	q := queue.New("channel")
 	s.q = q
@@ -59,8 +58,8 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.store = store.New(cfg.Store, sub.Store)
 	s.store.SetQueueClient(q.Client())
 
-	cfg.Consensus.StartHeight=0
-	cfg.Consensus.EmptyBlockInterval=1
+	cfg.Consensus.StartHeight = 0
+	cfg.Consensus.EmptyBlockInterval = 1
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 	blockHash := &types.BlockSequence{
@@ -70,33 +69,32 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	blockSeqs := &types.BlockSequences{Items: []*types.BlockSequence{blockHash}}
 
 	s.grpcCli.On("GetBlockSequences", mock.Anything, mock.Anything).Return(blockSeqs, nil)
-	block := &types.Block{Height:0}
+	block := &types.Block{Height: 0}
 	blockDetail := &types.BlockDetail{Block: block}
 	blockDetails := &types.BlockDetails{Items: []*types.BlockDetail{blockDetail}}
 	s.grpcCli.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blockDetails, nil).Once()
-	block = &types.Block{Height:6,BlockTime:8888888888}
+	block = &types.Block{Height: 6, BlockTime: 8888888888}
 	blockDetail = &types.BlockDetail{Block: block}
 	blockDetails = &types.BlockDetails{Items: []*types.BlockDetail{blockDetail}}
 	s.grpcCli.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blockDetails, nil).Once()
-	block = &types.Block{Height:0}
+	block = &types.Block{Height: 0}
 	blockDetail = &types.BlockDetail{Block: block}
 	blockDetails = &types.BlockDetails{Items: []*types.BlockDetail{blockDetail}}
 	s.grpcCli.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blockDetails, nil).Once()
-	block = &types.Block{Height:0}
+	block = &types.Block{Height: 0}
 	blockDetail = &types.BlockDetail{Block: block}
 	blockDetails = &types.BlockDetails{Items: []*types.BlockDetail{blockDetail}}
 	s.grpcCli.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blockDetails, nil)
 
-	seq := &types.Int64{Data:1}
+	seq := &types.Int64{Data: 1}
 	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(seq, nil).Once()
-	seq = &types.Int64{Data:2}
+	seq = &types.Int64{Data: 2}
 	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(seq, nil).Once()
-	seq = &types.Int64{Data:3}
+	seq = &types.Int64{Data: 3}
 	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(seq, nil)
 
-	seq = &types.Int64{Data:1}
+	seq = &types.Int64{Data: 1}
 	s.grpcCli.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(seq, nil)
-
 
 	reply := &types.Reply{IsOk: true}
 	s.grpcCli.On("IsSync", mock.Anything, mock.Anything).Return(reply, nil)
@@ -115,16 +113,11 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.network = p2p.New(cfg.P2P)
 	s.network.SetQueueClient(q.Client())
 
-
 }
-
-
 
 func (s *suiteParaClient) SetupSuite() {
 	s.initEnv(types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml"))
 }
-
-
 
 func TestRunSuiteParaClient(t *testing.T) {
 	log := new(suiteParaClient)
@@ -142,9 +135,6 @@ func (s *suiteParaClient) TearDownSuite() {
 	s.q.Close()
 
 }
-
-
-
 
 //func newMockParaNode() *testnode.Chain33Mock {
 //	//_, sub := testnode.GetDefaultConfig()
@@ -174,6 +164,3 @@ func (s *suiteParaClient) TearDownSuite() {
 //	cs.switchHashMatchedBlock(&currSeq,&preMainBlockHash)
 //	assert.Equal(t,1,currSeq)
 //}
-
-
-
