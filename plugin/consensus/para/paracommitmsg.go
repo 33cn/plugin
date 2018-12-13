@@ -342,14 +342,10 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 		keys.Keys = append(keys.Keys, key)
 	}
 
-	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventLocalGet, keys)
-	client.paraClient.GetQueueClient().Send(msg, true)
-	resp, err := client.paraClient.GetQueueClient().Wait(msg)
+	r, err := client.paraClient.GetAPI().LocalGet(keys)
 	if err != nil {
 		return nil, err
 	}
-
-	r := resp.GetData().(*types.LocalReplyValue)
 	if count != int64(len(r.Values)) {
 		plog.Error("paracommitmsg get node status key", "expect count", count, "actual count", len(r.Values))
 		return nil, err
@@ -375,13 +371,10 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 		}
 	}
 
-	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, req)
-	client.paraClient.GetQueueClient().Send(msg, true)
-	resp, err = client.paraClient.GetQueueClient().Wait(msg)
+	v, err := client.paraClient.GetAPI().GetBlocks(req)
 	if err != nil {
 		return nil, err
 	}
-	v := resp.GetData().(*types.BlockDetails)
 	if count != int64(len(v.Items)) {
 		plog.Error("paracommitmsg get node status block", "expect count", count, "actual count", len(v.Items))
 		return nil, err
@@ -405,13 +398,10 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, error) {
 	var status pt.ParacrossNodeStatus
 	req := &types.ReqBlocks{Start: 0, End: 0}
-	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, req)
-	client.paraClient.GetQueueClient().Send(msg, true)
-	resp, err := client.paraClient.GetQueueClient().Wait(msg)
+	v, err := client.paraClient.GetAPI().GetBlocks(req)
 	if err != nil {
 		return nil, err
 	}
-	v := resp.GetData().(*types.BlockDetails)
 	block := v.Items[0].Block
 	if block.Height != 0 {
 		return nil, errors.New("block chain not return 0 height block")
