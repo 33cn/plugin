@@ -1,5 +1,6 @@
 syntax = "proto3";
-package types;
+package echo;
+
 // ping操作action
 message Ping {
     string msg     = 1;

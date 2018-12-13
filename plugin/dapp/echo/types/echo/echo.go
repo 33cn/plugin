@@ -1,12 +1,13 @@
-package types
+package echo
 
 import (
 	"encoding/json"
 	"math/rand"
 	"strings"
 	"time"
-	"github.com/33cn/chain33/types"
+
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/types"
 )
 
 func (e EchoType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
