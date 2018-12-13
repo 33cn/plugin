@@ -1,8 +1,4 @@
-// Copyright Fuzamei Corp. 2018 All Rights Reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package trade
+package price
 
 import (
 	clog "github.com/33cn/chain33/common/log"
@@ -31,13 +27,10 @@ type subConfig struct {
 	PoolCacheSize      int64 `json:"poolCacheSize"`
 	MinTxFee           int64 `json:"minTxFee"`
 	MaxTxNumPerAccount int64 `json:"maxTxNumPerAccount"`
-	TimeParam          int64 `json:"timeParam"`
-	PriceConstant      int64 `json:"priceConstant"`
-	PricePower         int64 `json:"pricePower"`
 }
 
 func init() {
-	drivers.Reg("trade", New)
+	drivers.Reg("price", New)
 }
 
 //New 创建timeline cache 结构的 mempool
@@ -48,6 +41,6 @@ func New(cfg *types.Mempool, sub []byte) queue.Module {
 	if subcfg.PoolCacheSize == 0 {
 		subcfg.PoolCacheSize = cfg.PoolCacheSize
 	}
-	c.SetQueueCache(NewTradeQueue(subcfg))
+	c.SetQueueCache(NewPriceQueue(subcfg))
 	return c
 }

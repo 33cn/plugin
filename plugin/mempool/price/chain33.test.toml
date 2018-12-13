@@ -1,7 +1,5 @@
 Title="chain33"
 TestNet=true
-FixTime=false
-
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
@@ -10,48 +8,50 @@ logConsoleLevel = "info"
 # 日志文件名，可带目录，所有生成的日志文件都放到此目录下
 logFile = "logs/chain33.log"
 # 单个日志文件的最大值（单位：兆）
-maxFileSize = 300
+maxFileSize = 20
 # 最多保存的历史日志文件个数
-maxBackups = 100
+maxBackups = 20
 # 最多保存的历史日志消息（单位：天）
 maxAge = 28
 # 日志文件名是否使用本地事件（否则使用UTC时间）
 localTime = true
 # 历史日志文件是否压缩（压缩格式为gz）
-compress = true
+compress = false
 # 是否打印调用源文件和行号
-callerFile = false
+callerFile = true
 # 是否打印调用方法
-callerFunction = false
+callerFunction = true
 
 [blockchain]
 defCacheSize=128
 maxFetchBlockNum=128
 timeoutSeconds=5
 batchBlockNum=128
-driver="leveldb"
+driver="memdb"
 dbPath="datadir"
 dbCache=64
-isStrongConsistency=false
-singleMode=false
+isStrongConsistency=true
+singleMode=true
 batchsync=false
 isRecordBlockSequence=true
 isParaChain=false
 enableTxQuickIndex=false
 
+
 [p2p]
-seeds=[]
+port=13802
+seeds=["47.104.125.151:13802","47.104.125.97:13802","47.104.125.177:13802"]
 enable=true
-isSeed=false
+isSeed=true
 serverStart=true
-innerSeedEnable=true
-useGithub=true
-innerBounds=300
 msgCacheSize=10240
-driver="leveldb"
+driver="memdb"
 dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
+version=216
+verMix=216
+verMax=217
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -59,10 +59,12 @@ grpcBindAddr="localhost:8802"
 whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
-
+enableTLS=false
+certFile="cert.pem"
+keyFile="key.pem"
 
 [mempool]
-name="timeline"
+name="price"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
@@ -86,7 +88,7 @@ minTxFee=100000
 maxTxNumPerAccount=10000
 
 [consensus]
-name="ticket"
+name="solo"
 minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
@@ -107,16 +109,18 @@ targetTimespan = 2304
 targetTimePerBlock = 16
 
 [mver.consensus.ForkChainParamV1]
-futureBlockTime = 15
-ticketFrozenTime = 43200
-ticketWithdrawTime = 172800
-ticketMinerWaitTime = 7200
-maxTxNumber = 1500
-targetTimespan = 2160
-targetTimePerBlock = 15
+maxTxNumber = 10000
+targetTimespan = 288 #only for test
+targetTimePerBlock = 2
 
 [mver.consensus.ForkChainParamV2]
 powLimitBits = "0x1f2fffff"
+
+[consensus.sub.solo]
+genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+genesisBlockTime=1514533394
+hotkeyAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+waitTxMs=10
 
 [consensus.sub.ticket]
 genesisBlockTime=1514533394
@@ -137,7 +141,7 @@ count=10000
 
 [store]
 name="mavl"
-driver="leveldb"
+driver="memdb"
 dbPath="datadir/mavltree"
 dbCache=128
 
@@ -148,14 +152,13 @@ enableMavlPrune=false
 pruneHeight=10000
 
 [wallet]
-minFee=100000
-driver="leveldb"
-dbPath="wallet"
+minFee=1000000
+driver="memdb"
+dbPath="datadir/wallet"
 dbCache=16
 signType="secp256k1"
 
 [wallet.sub.ticket]
-minerdisable=false
 minerwhitelist=["*"]
 
 [exec]
@@ -163,7 +166,6 @@ isFree=false
 minExecFee=100000
 enableStat=false
 enableMVCC=false
-alias=["token1:token","token2:token","token3:token"]
 
 [exec.sub.token]
 saveTokenTxList=true
@@ -176,6 +178,9 @@ tokenApprs = [
 	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
 ]
 
+[exec.sub.relay]
+genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+
 [exec.sub.cert]
 # 是否启用证书验证和签名
 enable=false
@@ -184,12 +189,9 @@ cryptoPath="authdir/crypto"
 # 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
 signType="auth_ecdsa"
 
-[exec.sub.relay]
-genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-
 [exec.sub.manage]
 superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S", 
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 
+    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 ]

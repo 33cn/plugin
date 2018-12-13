@@ -5,5 +5,5 @@
 package init
 
 import (
-	_ "github.com/33cn/plugin/plugin/mempool/trade"
+	_ "github.com/33cn/plugin/plugin/mempool/score"
 )

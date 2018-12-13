@@ -1,8 +1,4 @@
-// Copyright Fuzamei Corp. 2018 All Rights Reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package trade
+package score
 
 import (
 	"bytes"
@@ -12,23 +8,23 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//TradeQueue 简单队列模式(默认提供一个队列，便于测试)
-type TradeQueue struct {
+//ScoreQueue 简单队列模式(默认提供一个队列，便于测试)
+type ScoreQueue struct {
 	txMap     map[string]*SkipValue
 	txList    *SkipList
 	subConfig subConfig
 }
 
-//NewTradeQueue 创建队列
-func NewTradeQueue(subcfg subConfig) *TradeQueue {
-	return &TradeQueue{
+//NewScoreQueue 创建队列
+func NewScoreQueue(subcfg subConfig) *ScoreQueue {
+	return &ScoreQueue{
 		txMap:     make(map[string]*SkipValue, subcfg.PoolCacheSize),
 		txList:    NewSkipList(&SkipValue{-1, nil}),
 		subConfig: subcfg,
 	}
 }
 
-func (cache *TradeQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
+func (cache *ScoreQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 	//tx := item.value
 	buf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(buf)
@@ -37,25 +33,25 @@ func (cache *TradeQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 		return nil, err
 	}
 	size := len(buf.Bytes())
-	return &SkipValue{Score: cache.subConfig.TimeParam*item.EnterTime - cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower, Value: item}, nil
+	return &SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
 }
 
 //Exist 是否存在
-func (cache *TradeQueue) Exist(hash string) bool {
+func (cache *ScoreQueue) Exist(hash string) bool {
 	_, exists := cache.txMap[hash]
 	return exists
 }
 
 //GetItem 获取数据通过 key
-func (cache *TradeQueue) GetItem(hash string) (*mempool.Item, error) {
+func (cache *ScoreQueue) GetItem(hash string) (*mempool.Item, error) {
 	if k, exist := cache.txMap[string(hash)]; exist {
 		return k.Value.(*mempool.Item), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-// Push 把给定tx添加到TradeQueue；如果tx已经存在TradeQueue中或Mempool已满则返回对应error
-func (cache *TradeQueue) Push(item *mempool.Item) error {
+// Push 把给定tx添加到ScoreQueue；如果tx已经存在ScoreQueue中或Mempool已满则返回对应error
+func (cache *ScoreQueue) Push(item *mempool.Item) error {
 	hash := item.Value.Hash()
 	if cache.Exist(string(hash)) {
 		s := cache.txMap[string(hash)]
@@ -90,7 +86,7 @@ func (cache *TradeQueue) Push(item *mempool.Item) error {
 	if int64(cache.txList.Len()) >= cache.subConfig.PoolCacheSize {
 		tail := cache.txList.GetIterator().Last()
 		//价格高
-		if sv.Compare(tail) == 1 {
+		if sv.Compare(tail) == -1 {
 			cache.Remove(string(tail.Value.(*mempool.Item).Value.Hash()))
 		} else {
 			return types.ErrMemFull
@@ -102,19 +98,19 @@ func (cache *TradeQueue) Push(item *mempool.Item) error {
 }
 
 // Remove 删除数据
-func (cache *TradeQueue) Remove(hash string) error {
+func (cache *ScoreQueue) Remove(hash string) error {
 	cache.txList.Delete(cache.txMap[hash])
 	delete(cache.txMap, hash)
 	return nil
 }
 
 // Size 数据总数
-func (cache *TradeQueue) Size() int {
+func (cache *ScoreQueue) Size() int {
 	return cache.txList.Len()
 }
 
 // Walk 遍历整个队列
-func (cache *TradeQueue) Walk(count int, cb func(value *mempool.Item) bool) {
+func (cache *ScoreQueue) Walk(count int, cb func(value *mempool.Item) bool) {
 	i := 0
 	cache.txList.Walk(func(item interface{}) bool {
 		if !cb(item.(*mempool.Item)) {

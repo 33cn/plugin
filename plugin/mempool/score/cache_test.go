@@ -1,4 +1,4 @@
-package trade
+package score
 
 import (
 	"testing"
@@ -24,22 +24,24 @@ var (
 	tx1        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 1, To: toAddr}
 	tx2        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 2, To: toAddr}
 	tx3        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 3, To: toAddr}
-	tx4        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 2000000, Expire: 2, To: toAddr}
+	tx4        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 2000000, Expire: 4, To: toAddr}
+	tx5        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 5, To: toAddr}
 	item1      = &drivers.Item{Value: tx1, Priority: tx1.Fee, EnterTime: types.Now().Unix()}
 	item2      = &drivers.Item{Value: tx2, Priority: tx2.Fee, EnterTime: types.Now().Unix()}
 	item3      = &drivers.Item{Value: tx3, Priority: tx3.Fee, EnterTime: types.Now().Unix() - 1000}
 	item4      = &drivers.Item{Value: tx4, Priority: tx4.Fee, EnterTime: types.Now().Unix() - 1000}
+	item5      = &drivers.Item{Value: tx5, Priority: tx5.Fee, EnterTime: types.Now().Unix() - 1000}
 )
 
-func initEnv(size int64) *TradeQueue {
+func initEnv(size int64) *ScoreQueue {
 	if size == 0 {
 		size = 100
 	}
 	_, sub := types.InitCfg("chain33.test.toml")
 	var subcfg subConfig
-	types.MustDecode(sub.Mempool["trade"], &subcfg)
+	types.MustDecode(sub.Mempool["score"], &subcfg)
 	subcfg.PoolCacheSize = size
-	cache := NewTradeQueue(subcfg)
+	cache := NewScoreQueue(subcfg)
 	return cache
 }
 
@@ -105,16 +107,32 @@ func TestTimeCompetition(t *testing.T) {
 	cache := initEnv(1)
 	cache.Push(item1)
 	cache.Push(item3)
-	if cache.Exist(string(item1.Value.Hash())) || !cache.Exist(string(item3.Value.Hash())) {
-		t.Error("queue not by time")
-	}
+	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
+	assert.Equal(t, true, cache.Exist(string(item3.Value.Hash())))
 }
 
 func TestPriceCompetition(t *testing.T) {
 	cache := initEnv(1)
 	cache.Push(item1)
 	cache.Push(item4)
-	if cache.Exist(string(item1.Value.Hash())) || !cache.Exist(string(item4.Value.Hash())) {
-		t.Error("queue not by price")
-	}
+	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
+	assert.Equal(t, true, cache.Exist(string(item4.Value.Hash())))
+}
+
+func TestAddDuplicateItem(t *testing.T) {
+	cache := initEnv(1)
+	cache.Push(item1)
+	err := cache.Push(item1)
+	assert.Equal(t, types.ErrTxExist, err)
+}
+
+func TestQueueDirection(t *testing.T) {
+	cache := initEnv(0)
+	cache.Push(item1)
+	cache.Push(item2)
+	cache.Push(item3)
+	cache.Push(item4)
+	cache.Push(item5)
+	cache.txList.Print()
+	assert.Equal(t, true, cache.txList.GetIterator().First().Score >= cache.txList.GetIterator().Last().Score)
 }

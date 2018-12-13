@@ -1,27 +1,30 @@
-package trade
+package price
 
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/33cn/chain33/system/mempool"
 )
 
 const maxLevel = 32
 const prob = 0.35
 
 type SkipValue struct {
-	Score int64
+	Price int64
 	Value interface{}
 }
 
 func (v *SkipValue) Compare(value *SkipValue) int {
-	f1 := v.Score
-	f2 := value.Score
-	if f1 < f2 {
-		return 1
-	} else if f1 == f2 {
+	if v.Price > value.Price {
+		return -1
+	} else if v.Price == value.Price {
+		if v.Value.(*mempool.Item).EnterTime < value.Value.(*mempool.Item).EnterTime {
+			return -1
+		}
 		return 0
 	}
-	return -1
+	return 1
 }
 
 type skipListNode struct {
@@ -237,8 +240,10 @@ func (l *SkipList) Print() {
 			e := r.next[i]
 			//fmt.Print(i)
 			for e != nil {
-				fmt.Print(e.Value)
+				fmt.Print(e.Value.Price)
 				fmt.Print("    ")
+				fmt.Print(e.Value)
+				fmt.Println("")
 				e = e.next[i]
 			}
 			fmt.Println()
