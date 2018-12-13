@@ -627,7 +627,7 @@ func (client *client) CreateBlock() {
 
 		plog.Info("Parachain process block", "lastBlockSeq", lastSeq, "curSeq", currSeq,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
-			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash),"seqTy",seqTy)
+			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash), "seqTy", seqTy)
 
 		if seqTy == delAct {
 			if len(txs) == 0 {
