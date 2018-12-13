@@ -6,13 +6,14 @@ package pbftlibbyz
 
 import (
 	"time"
-	byzcli "github.com/33cn/libbyz-go/client"
-	byzreplica "github.com/33cn/libbyz-go/replica"
+
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
+	byzcli "github.com/33cn/libbyz-go/client"
+	byzreplica "github.com/33cn/libbyz-go/replica"
 )
 
 func init() {
@@ -23,7 +24,7 @@ func init() {
 // Client pbftlibbyz implementation
 type Client struct {
 	*drivers.BaseClient
-	isClient   bool
+	isClient bool
 }
 
 // NewBlockstore create pbftlibbyz Client
@@ -82,7 +83,7 @@ func (client *Client) CreateBlock() {
 	if client.isClient {
 		byzcli.ByzInitClient(config, configPriv)
 	} else {
-		byzreplica.ByzInitReplica(config,configPriv)
+		byzreplica.ByzInitReplica(config, configPriv)
 		return
 	}
 
