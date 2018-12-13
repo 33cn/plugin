@@ -54,7 +54,7 @@ pipeline {
                          body: "this is success with ${env.BUILD_URL}"
                 }
                 catch (err){
-                    echo "email err"
+                    echo 'email  err'
                 }
             }
             echo currentBuild.result
@@ -70,7 +70,7 @@ pipeline {
                          subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
                          body: "Something is wrong with ${env.BUILD_URL}"
                 }catch (err){
-                    echo "email err"
+                    echo 'email err'
                 }
             }
 
