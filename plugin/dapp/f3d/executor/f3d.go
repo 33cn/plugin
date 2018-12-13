@@ -102,7 +102,6 @@ func (f *f3d) rollbackLocalDB(r *pt.ReceiptF3D) (kvs []*types.KeyValue) {
 		kvs = append(kvs, &types.KeyValue{Key: calcF3dDrawRound(r.Round), Value: nil})
 	}
 	return kvs
-	return kvs
 }
 
 // GetPayloadValue get payload value

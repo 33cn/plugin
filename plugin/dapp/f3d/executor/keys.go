@@ -24,7 +24,7 @@ func calcF3dAddrRound(round int64, addr string) []byte {
 }
 
 func calcF3dAddrPrefix(round int64) []byte {
-	key := fmt.Sprintf("LODB-f3d-AddrInfos:%010d", round)
+	key := fmt.Sprintf("LODB-f3d-AddrInfos:%010d:", round)
 	return []byte(key)
 }
 
