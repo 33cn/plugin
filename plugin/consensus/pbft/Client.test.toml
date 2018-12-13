@@ -55,7 +55,7 @@ grpcFuncWhitelist=["*"]
 
 [mempool]
 poolCacheSize=10240
-minTxFee=1000000
+minTxFee=100000
 
 [consensus]
 # 共识驱动名,支持solo/raft/ticket/tendermint/pbft
