@@ -10,7 +10,7 @@ var (
 	f3dManagerAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 	//本游戏合约平台开发者分成地址
-	f3dDeveloperAddr = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+	f3dDeveloperAddr = "16ReZHzMCGtPt8B7XbnZQ2jeXsPG9wEufh"
 
 	// 超级大奖分成百分比
 	f3dBonusWinner = float32(0.4)
