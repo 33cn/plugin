@@ -705,7 +705,6 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-
 //更新索引
 func (g *Fingerguessing) updateIndex(log *gt.ReceiptGame) (kvs []*types.KeyValue) {
 	//先保存本次Action产生的索引

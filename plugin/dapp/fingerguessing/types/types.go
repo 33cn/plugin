@@ -13,7 +13,7 @@ import (
 
 var (
 	// 本执行器的名称
-	FguessX      = "fingerguessing"
+	FguessX    = "fingerguessing"
 	ExecerGame = []byte(FguessX)
 )
 
@@ -24,6 +24,7 @@ const (
 	GameActionCancel
 	GameActionClose
 )
+
 // 定义本执行器生成的log类型,此logID会在交易中返回，用于区块不同的action
 //  建议使用比较大一些数字，避免和系统其它的执行器重合
 const (
@@ -89,4 +90,3 @@ func (g *GameType) GetTypeMap() map[string]int32 {
 		"Match":  GameActionMatch,
 	}
 }
-

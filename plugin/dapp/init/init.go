@@ -7,6 +7,7 @@ package init
 import (
 	_ "github.com/33cn/plugin/plugin/dapp/blackwhite"
 	_ "github.com/33cn/plugin/plugin/dapp/cert"
+	_ "github.com/33cn/plugin/plugin/dapp/echo"
 	_ "github.com/33cn/plugin/plugin/dapp/evm"
 	_ "github.com/33cn/plugin/plugin/dapp/game"
 	_ "github.com/33cn/plugin/plugin/dapp/hashlock"
@@ -21,5 +22,4 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/token"
 	_ "github.com/33cn/plugin/plugin/dapp/trade"
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"
-	_ "github.com/33cn/plugin/plugin/dapp/echo"
 )

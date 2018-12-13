@@ -50,5 +50,3 @@ func GetName() string {
 func (g *Fingerguessing) GetDriverName() string {
 	return driverName
 }
-
-
