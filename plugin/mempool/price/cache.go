@@ -8,14 +8,16 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//PriceQueue 简单队列模式(默认提供一个队列，便于测试)
+var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
+
+// PriceQueue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
 type PriceQueue struct {
 	txMap     map[string]*SkipValue
 	txList    *SkipList
 	subConfig subConfig
 }
 
-//NewPriceQueue 创建队列
+// NewPriceQueue 创建队列
 func NewPriceQueue(subcfg subConfig) *PriceQueue {
 	return &PriceQueue{
 		txMap:     make(map[string]*SkipValue, subcfg.PoolCacheSize),
@@ -44,7 +46,7 @@ func (cache *PriceQueue) Exist(hash string) bool {
 
 //GetItem 获取数据通过 key
 func (cache *PriceQueue) GetItem(hash string) (*mempool.Item, error) {
-	if k, exist := cache.txMap[string(hash)]; exist {
+	if k, exist := cache.txMap[hash]; exist {
 		return k.Value.(*mempool.Item), nil
 	}
 	return nil, types.ErrNotFound
@@ -57,25 +59,23 @@ func (cache *PriceQueue) Push(item *mempool.Item) error {
 		s := cache.txMap[string(hash)]
 		addedItem := s.Value.(*mempool.Item)
 		addedTime := addedItem.EnterTime
-
 		if types.Now().Unix()-addedTime < mempoolDupResendInterval {
 			return types.ErrTxExist
-		} else {
-			// 超过2分钟之后的重发交易返回nil，再次发送给P2P，但是不再次加入mempool
-			// 并修改其enterTime，以避免该交易一直在节点间被重发
-			newEnterTime := types.Now().Unix()
-			resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
-			var err error
-			sv, err := cache.newSkipValue(resendItem)
-			if err != nil {
-				return err
-			}
-			cache.Remove(string(hash))
-			cache.txList.Insert(sv)
-			cache.txMap[string(hash)] = sv
-			// ------------------
-			return nil
 		}
+		// 超过2分钟之后的重发交易返回nil，再次发送给P2P，但是不再次加入mempool
+		// 并修改其enterTime，以避免该交易一直在节点间被重发
+		newEnterTime := types.Now().Unix()
+		resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
+		var err error
+		sv, err := cache.newSkipValue(resendItem)
+		if err != nil {
+			return err
+		}
+		cache.Remove(string(hash))
+		cache.txList.Insert(sv)
+		cache.txMap[string(hash)] = sv
+		// ------------------
+		return nil
 	}
 
 	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
@@ -85,7 +85,7 @@ func (cache *PriceQueue) Push(item *mempool.Item) error {
 	}
 	if int64(cache.txList.Len()) >= cache.subConfig.PoolCacheSize {
 		tail := cache.txList.GetIterator().Last()
-		//价格高
+		//价格高存留
 		if sv.Compare(tail) == -1 {
 			cache.Remove(string(tail.Value.(*mempool.Item).Value.Hash()))
 		} else {

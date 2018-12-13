@@ -8,11 +8,13 @@ import (
 const maxLevel = 32
 const prob = 0.35
 
+// SkipValue 跳跃表节点
 type SkipValue struct {
 	Score int64
 	Value interface{}
 }
 
+// Compare 比较函数
 func (v *SkipValue) Compare(value *SkipValue) int {
 	f1 := v.Score
 	f2 := value.Score
@@ -42,6 +44,7 @@ type SkipListIterator struct {
 	node *skipListNode
 }
 
+// First 获取第一个节点
 func (sli *SkipListIterator) First() *SkipValue {
 	if sli.list.header.next[0] == nil {
 		return nil
@@ -50,6 +53,7 @@ func (sli *SkipListIterator) First() *SkipValue {
 	return sli.node.Value
 }
 
+// Last 获取最后一个节点
 func (sli *SkipListIterator) Last() *SkipValue {
 	if sli.list.tail == nil {
 		return nil
@@ -58,13 +62,7 @@ func (sli *SkipListIterator) Last() *SkipValue {
 	return sli.node.Value
 }
 
-func (sli *SkipListIterator) Current() *SkipValue {
-	if sli.node == nil {
-		return nil
-	}
-	return sli.node.Value
-}
-
+// Prev 获取上一个节点
 func (node *skipListNode) Prev() *skipListNode {
 	if node == nil || node.prev == nil {
 		return nil
@@ -72,20 +70,12 @@ func (node *skipListNode) Prev() *skipListNode {
 	return node.prev
 }
 
+// Next 获取下一个节点
 func (node *skipListNode) Next() *skipListNode {
 	if node == nil || node.next[0] == nil {
 		return nil
 	}
 	return node.next[0]
-}
-
-func (sli *SkipListIterator) Seek(value *SkipValue) *SkipValue {
-	x := sli.list.find(value)
-	if x.next[0] == nil {
-		return nil
-	}
-	sli.node = x.next[0]
-	return sli.node.Value
 }
 
 func newskipListNode(level int, value *SkipValue) *skipListNode {
@@ -95,7 +85,7 @@ func newskipListNode(level int, value *SkipValue) *skipListNode {
 	return node
 }
 
-//构建一个value的最小值
+//NewSkipList 构建一个value的最小值
 func NewSkipList(min *SkipValue) *SkipList {
 	sl := &SkipList{}
 	sl.level = 1
@@ -107,7 +97,7 @@ func randomLevel() int {
 	level := 1
 	t := prob * 0xFFFF
 	for rand.Int()&0xFFFF < int(t) {
-		level += 1
+		level++
 		if level == maxLevel {
 			break
 		}
@@ -115,6 +105,7 @@ func randomLevel() int {
 	return level
 }
 
+// GetIterator 返回第一个节点
 func (sl *SkipList) GetIterator() *SkipListIterator {
 	it := &SkipListIterator{}
 	it.list = sl
@@ -122,12 +113,9 @@ func (sl *SkipList) GetIterator() *SkipListIterator {
 	return it
 }
 
+// Len 返回节点数
 func (sl *SkipList) Len() int {
 	return sl.count
-}
-
-func (sl *SkipList) Level() int {
-	return sl.level
 }
 
 func (sl *SkipList) find(value *SkipValue) *skipListNode {
@@ -141,10 +129,12 @@ func (sl *SkipList) find(value *SkipValue) *skipListNode {
 	return x
 }
 
+// FindCount 返回查询次数
 func (sl *SkipList) FindCount() int {
 	return sl.findcount
 }
 
+// Find 查找skipvalue
 func (sl *SkipList) Find(value *SkipValue) *SkipValue {
 	x := sl.find(value)
 	if x.next[0] != nil && x.next[0].Value.Compare(value) == 0 {
@@ -153,14 +143,7 @@ func (sl *SkipList) Find(value *SkipValue) *SkipValue {
 	return nil
 }
 
-func (sl *SkipList) FindGreaterOrEqual(value *SkipValue) *SkipValue {
-	x := sl.find(value)
-	if x.next[0] != nil {
-		return x.next[0].Value
-	}
-	return nil
-}
-
+// Insert 插入节点
 func (sl *SkipList) Insert(value *SkipValue) int {
 	var update [maxLevel]*skipListNode
 	x := sl.header
@@ -199,6 +182,7 @@ func (sl *SkipList) Insert(value *SkipValue) int {
 	return 1
 }
 
+// Delete 删除节点
 func (sl *SkipList) Delete(value *SkipValue) int {
 	var update [maxLevel]*skipListNode
 	x := sl.header
@@ -229,7 +213,7 @@ func (sl *SkipList) Delete(value *SkipValue) int {
 	return 1
 }
 
-//测试用的输出函数
+// Print 测试用的输出函数
 func (l *SkipList) Print() {
 	if l.count > 0 {
 		r := l.header
