@@ -580,4 +580,3 @@ func queryList(db dbm.Lister, stateDB dbm.KV, param interface{}) (types.Message,
 	}
 	return nil, fmt.Errorf("this query can't be supported!")
 }
-
