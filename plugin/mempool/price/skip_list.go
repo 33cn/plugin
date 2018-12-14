@@ -35,6 +35,7 @@ type skipListNode struct {
 	Value *SkipValue
 }
 
+// SkipList 跳跃表
 type SkipList struct {
 	header, tail *skipListNode
 	findcount    int
@@ -42,6 +43,7 @@ type SkipList struct {
 	level        int
 }
 
+// SkipListIterator 跳跃表迭代器
 type SkipListIterator struct {
 	list *SkipList
 	node *skipListNode
@@ -217,10 +219,10 @@ func (sl *SkipList) Delete(value *SkipValue) int {
 }
 
 // Print 测试用的输出函数
-func (l *SkipList) Print() {
-	if l.count > 0 {
-		r := l.header
-		for i := l.level - 1; i >= 0; i-- {
+func (sl *SkipList) Print() {
+	if sl.count > 0 {
+		r := sl.header
+		for i := sl.level - 1; i >= 0; i-- {
 			e := r.next[i]
 			//fmt.Print(i)
 			for e != nil {
@@ -238,8 +240,8 @@ func (l *SkipList) Print() {
 }
 
 //Walk 遍历整个结构，如果cb 返回false 那么停止遍历
-func (lm *SkipList) Walk(cb func(value interface{}) bool) {
-	for e := lm.header.Next(); e != nil; e = e.Next() {
+func (sl *SkipList) Walk(cb func(value interface{}) bool) {
+	for e := sl.header.Next(); e != nil; e = e.Next() {
 		if cb == nil {
 			return
 		}
