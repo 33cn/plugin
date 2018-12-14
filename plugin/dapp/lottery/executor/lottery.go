@@ -122,6 +122,25 @@ func (lott *Lottery) findLotteryDrawRecord(key []byte) (*pty.LotteryDrawRecord, 
 	return &record, nil
 }
 
+func (lott *Lottery) findLotteryGainRecord(key []byte) (*pty.LotteryGainRecord, error) {
+	value, err := lott.GetLocalDB().Get(key)
+	if err != nil && err != types.ErrNotFound {
+		llog.Error("findLotteryGainRecord", "err", err)
+		return nil, err
+	}
+	if err == types.ErrNotFound {
+		return nil, nil
+	}
+	var record pty.LotteryGainRecord
+
+	err = types.Decode(value, &record)
+	if err != nil {
+		llog.Error("findLotteryGainRecord", "err", err)
+		return nil, err
+	}
+	return &record, nil
+}
+
 func (lott *Lottery) saveLotteryBuy(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryBuyKey(lotterylog.LotteryId, lotterylog.Addr, lotterylog.Round, lotterylog.Index)
 	record := &pty.LotteryBuyRecord{Number: lotterylog.Number, Amount: lotterylog.Amount, Round: lotterylog.Round, Type: 0, Way: lotterylog.Way, Index: lotterylog.Index, Time: lotterylog.Time, TxHash: lotterylog.TxHash}
@@ -233,4 +252,28 @@ func (lott *Lottery) GetPayloadValue() types.Message {
 // CheckReceiptExecOk return true to check if receipt ty is ok
 func (lott *Lottery) CheckReceiptExecOk() bool {
 	return true
+}
+
+func (lott *Lottery) saveLotteryGain(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
+	for _, gain := range lotterylog.GainInfos.Gains {
+		key := calcLotteryGainKey(lotterylog.LotteryId, gain.Addr, lotterylog.Round)
+		record := &pty.LotteryGainRecord{Addr: gain.Addr, BuyAmount: gain.BuyAmount, FundAmount: gain.FundAmount, Round: lotterylog.Round}
+		kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
+
+		kvs = append(kvs, kv)
+	}
+
+	return kvs
+}
+
+func (lott *Lottery) deleteLotteryGain(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
+	for _, gain := range lotterylog.GainInfos.Gains {
+		kv := &types.KeyValue{}
+		kv.Key = calcLotteryGainKey(lotterylog.LotteryId, gain.Addr, lotterylog.Round)
+		kv.Value = nil
+
+		kvs = append(kvs, kv)
+	}
+
+	return kvs
 }

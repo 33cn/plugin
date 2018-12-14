@@ -93,6 +93,7 @@ message ReceiptLottery {
     int64                index        = 13;
     int64                totalAddrNum = 14;
     int64                buyAmount    = 15;
+    LotteryGainInfos     gainInfos    = 16;
 }
 
 message ReqLotteryInfo {
@@ -210,3 +211,39 @@ message LotteryUpdateBuyInfo {
 message ReplyLotteryPurchaseAddr {
     repeated string address = 1;
 }
+
+message LotteryGainInfos{
+    repeated LotteryGainInfo gains = 1;
+}
+
+message LotteryGainInfo{
+    string  addr       = 1;
+    int64   buyAmount  = 2;
+    float   fundAmount = 3;
+}
+
+message LotteryGainRecord{
+    string  addr       = 1;
+    int64   buyAmount  = 2;
+    float   fundAmount = 3;
+    int64   round      = 4;
+}
+
+message LotteryGainRecords {
+    repeated LotteryGainRecord records = 1;
+}
+
+message ReqLotteryGainHistory {
+    string lotteryId = 1;
+    string addr      = 2;
+    int64  round     = 3;
+    int32  count     = 4;
+    int32  direction = 5;
+}
+
+message ReqLotteryGainInfo {
+    string lotteryId = 1;
+    string addr      = 2;
+    int64  round     = 3;
+}
+

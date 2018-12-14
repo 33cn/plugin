@@ -31,6 +31,8 @@ func (l *Lottery) execDelLocal(tx *types.Transaction, receiptData *types.Receipt
 				set.KV = append(set.KV, kv...)
 				kv = l.updateLotteryBuy(&lotterylog, false)
 				set.KV = append(set.KV, kv...)
+				kv = l.deleteLotteryGain(&lotterylog)
+				set.KV = append(set.KV, kv...)
 			}
 		}
 	}

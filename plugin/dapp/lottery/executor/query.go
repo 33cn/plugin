@@ -99,3 +99,18 @@ func (l *Lottery) Query_GetLotteryBuyRoundInfo(param *pty.ReqLotteryBuyInfo) (ty
 	}
 	return record, nil
 }
+
+// Query_GetLotteryHistoryGainInfo for all history
+func (l *Lottery) Query_GetLotteryHistoryGainInfo(param *pty.ReqLotteryGainHistory) (types.Message, error) {
+	return ListLotteryGainRecords(l.GetLocalDB(), l.GetStateDB(), param)
+}
+
+// Query_GetLotteryRoundGainInfo for each round
+func (l *Lottery) Query_GetLotteryRoundGainInfo(param *pty.ReqLotteryGainInfo) (types.Message, error) {
+	key := calcLotteryGainKey(param.LotteryId, param.Addr, param.Round)
+	record, err := l.findLotteryGainRecord(key)
+	if err != nil {
+		return nil, err
+	}
+	return record, nil
+}

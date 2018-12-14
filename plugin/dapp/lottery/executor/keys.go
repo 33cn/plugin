@@ -35,3 +35,13 @@ func calcLotteryKey(lotteryID string, status int32) []byte {
 	key := fmt.Sprintf("LODB-lottery-:%d:%s", status, lotteryID)
 	return []byte(key)
 }
+
+func calcLotteryGainPrefix(lotteryID string, addr string) []byte {
+	key := fmt.Sprintf("LODB-lottery-gain:%s:%s", lotteryID, addr)
+	return []byte(key)
+}
+
+func calcLotteryGainKey(lotteryID string, addr string, round int64) []byte {
+	key := fmt.Sprintf("LODB-lottery-gain:%s:%s:%10d", lotteryID, addr, round)
+	return []byte(key)
+}

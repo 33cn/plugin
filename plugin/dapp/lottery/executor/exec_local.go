@@ -31,6 +31,8 @@ func (l *Lottery) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (
 				set.KV = append(set.KV, kv...)
 				kv = l.updateLotteryBuy(&lotterylog, true)
 				set.KV = append(set.KV, kv...)
+				kv = l.saveLotteryGain(&lotterylog)
+				set.KV = append(set.KV, kv...)
 			}
 		}
 	}
