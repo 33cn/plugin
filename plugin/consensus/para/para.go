@@ -435,7 +435,7 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			return nil, nil, -1, err
 		}
 
-		//genesis block with seq=-1 not check
+		//genesis block start with seq=-1 not check
 		if currSeq == 0 ||
 			(bytes.Equal(preMainBlockHash, blockDetail.Block.ParentHash) && seqTy == addAct) ||
 			(bytes.Equal(preMainBlockHash, blockDetail.Block.Hash()) && seqTy == delAct) {
@@ -473,6 +473,9 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 	return nil, nil, -1, paracross.ErrParaCurHashNotMatch
 }
 
+//genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
+// for genesis seq=-1 scenario, mainHash not care, as the 0 seq instead of -1
+// not seq=-1 scenario, mainHash needed
 func (client *client) syncFromGenesisBlock() (int64, []byte, error) {
 	lastSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
 	if err != nil {
@@ -484,13 +487,13 @@ func (client *client) syncFromGenesisBlock() (int64, []byte, error) {
 }
 
 // search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
-func (client *client) switchHashMatchedBlock(currSeq int64, preMainBlockHash []byte) (int64, []byte, error) {
+func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
 		return -2, nil, err
 	}
-	//genesis block scenario, get new main node's blockHash as preMainHash, genesis sequence as currSeq
+
 	if lastBlock.Height == 0 {
 		return client.syncFromGenesisBlock()
 	}
@@ -535,7 +538,8 @@ func (client *client) switchHashMatchedBlock(currSeq int64, preMainBlockHash []b
 			return currSeq, nil, nil
 		}
 
-		plog.Info("switchHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height, "set new currSeq", currSeq, "new preMainBlockHash", common.Bytes2Hex(preMainBlockHash))
+		plog.Info("switchHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
+			"new currSeq", mainSeq+1, "new preMainBlockHash", common.Bytes2Hex(miner.MainBlockHash))
 		return mainSeq + 1, miner.MainBlockHash, nil
 	}
 	return -2, nil, paracross.ErrParaCurHashNotMatch
@@ -592,7 +596,7 @@ func (client *client) CreateBlock() {
 		txs, blockOnMain, seqTy, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
 			if err == paracross.ErrParaCurHashNotMatch {
-				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq, lastSeqMainHash)
+				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq)
 				if err == nil {
 					currSeq = newSeq
 					lastSeqMainHash = newSeqMainHash
