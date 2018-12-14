@@ -181,5 +181,3 @@ func (s *suiteParaClient) TearDownSuite() {
 	s.q.Close()
 
 }
-
-
