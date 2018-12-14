@@ -15,7 +15,7 @@ import (
 	_ "github.com/33cn/chain33/system"
 	_ "${PROJECTPATH}/plugin"
 
-	"github.com/33cn/chain33/types"
+	 "github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/cli"
 )
 
