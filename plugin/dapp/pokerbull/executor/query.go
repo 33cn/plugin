@@ -29,7 +29,6 @@ func (g *PokerBull) Query_QueryGameByAddr(in *pkt.QueryPBGameInfo) (types.Messag
 	if err != nil {
 		return nil, err
 	}
-
 	return gameIds, nil
 }
 

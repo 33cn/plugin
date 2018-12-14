@@ -64,14 +64,14 @@ func Key(id string) (key []byte) {
 func readGame(db dbm.KV, id string) (*pkt.PokerBull, error) {
 	data, err := db.Get(Key(id))
 	if err != nil {
-		logger.Error("query data have err:", err.Error())
+		logger.Error("query data have err:", "err", err)
 		return nil, err
 	}
 	var game pkt.PokerBull
 	//decode
 	err = types.Decode(data, &game)
 	if err != nil {
-		logger.Error("decode game have err:", err.Error())
+		logger.Error("decode game have err:", "err", err)
 		return nil, err
 	}
 	return &game, nil
@@ -102,7 +102,6 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 	if err != nil {
 		return nil, err
 	}
-
 	var gameIds []*pkt.PBGameRecord
 	for _, value := range values {
 		var record pkt.PBGameRecord
@@ -112,7 +111,9 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		}
 		gameIds = append(gameIds, &record)
 	}
-
+	if len(gameIds) == 0 {
+		return nil, types.ErrNotFound
+	}
 	return &pkt.PBGameRecords{Records: gameIds}, nil
 }
 

@@ -5,7 +5,7 @@
 package rpc_test
 
 import (
-	"strings"
+	"fmt"
 	"testing"
 
 	commonlog "github.com/33cn/chain33/common/log"
@@ -41,51 +41,65 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testStartRawTxCmd},
 		{fn: testContinueRawTxCmd},
 		{fn: testQuitRawTxCmd},
+	}
+	for _, testCase := range testCases {
+		err := testCase.fn(t, jrpcClient)
+		assert.Nil(t, err)
+	}
+
+	testCases = []struct {
+		fn func(*testing.T, *jsonclient.JSONClient) error
+	}{
 		{fn: testQueryGameByID},
 		{fn: testQueryGameByAddr},
-		{fn: testQueryGameByIDs},
 		{fn: testQueryGameByStatus},
 		{fn: testQueryGameByRound},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)
-		if err == nil {
-			continue
-		}
-		assert.NotEqualf(t, err, types.ErrActionNotSupport, "test index %d", index)
-		if strings.Contains(err.Error(), "rpc: can't find") {
-			assert.FailNowf(t, err.Error(), "test index %d", index)
-		}
+		assert.Equal(t, err, types.ErrNotFound, fmt.Sprint(index))
+	}
+
+	testCases = []struct {
+		fn func(*testing.T, *jsonclient.JSONClient) error
+	}{
+		{fn: testQueryGameByIDs},
+	}
+	for index, testCase := range testCases {
+		err := testCase.fn(t, jrpcClient)
+		assert.Equal(t, err, nil, fmt.Sprint(index))
 	}
 }
 
 func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	payload := &pty.PBGameStart{Value: 123}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateStartTx,
-		Payload:    []byte(""),
+		Payload:    types.MustPBToJSON(payload),
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
 func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	payload := &pty.PBGameContinue{GameId: "123"}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateContinueTx,
-		Payload:    []byte(""),
+		Payload:    types.MustPBToJSON(payload),
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
 func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	payload := &pty.PBGameQuit{GameId: "123"}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreatequitTx,
-		Payload:    []byte(""),
+		Payload:    types.MustPBToJSON(payload),
 	}
-
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
