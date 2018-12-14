@@ -115,6 +115,52 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 
 }
 
+func (s *suiteParaClient) TestRun_Test() {
+	//s.testGetBlock()
+	lastBlock, err := s.para.RequestLastBlock()
+	if err != nil {
+		plog.Error("para test", "err", err.Error())
+	}
+	plog.Info("para test---------1", "last height", lastBlock.Height)
+	s.para.createBlock(lastBlock, nil, 0, getMainBlock(2, lastBlock.BlockTime+1))
+	lastBlock, err = s.para.RequestLastBlock()
+	if err != nil {
+		plog.Error("para test--2", "err", err.Error())
+	}
+	plog.Info("para test---------", "last height", lastBlock.Height)
+	s.para.createBlock(lastBlock, nil, 1, getMainBlock(3, lastBlock.BlockTime+1))
+	time.Sleep(time.Second * 1)
+
+	s.testRunGetMinerTxInfo()
+	s.testRunRmvBlock()
+
+}
+
+func (s *suiteParaClient) testRunGetMinerTxInfo() {
+	lastBlock, err := s.para.RequestLastBlock()
+	s.Nil(err)
+	plog.Info("para test testRunGetMinerTxInfo", "last height", lastBlock.Height)
+	s.True(lastBlock.Height > 1)
+	status, err := getMinerTxInfo(lastBlock)
+	s.Nil(err)
+	s.Equal(int64(3), status.MainBlockHeight)
+
+}
+
+func (s *suiteParaClient) testRunRmvBlock() {
+	lastBlock, err := s.para.RequestLastBlock()
+	s.Nil(err)
+	plog.Info("para test testRunGetMinerTxInfo", "last height", lastBlock.Height)
+	s.True(lastBlock.Height > 1)
+	s.para.removeBlocks(1)
+
+	lastBlock, err = s.para.RequestLastBlock()
+	s.Nil(err)
+	plog.Info("para test testRunGetMinerTxInfo", "last height", lastBlock.Height)
+	s.Equal(int64(1), lastBlock.Height)
+
+}
+
 func (s *suiteParaClient) SetupSuite() {
 	s.initEnv(types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml"))
 }
@@ -136,31 +182,4 @@ func (s *suiteParaClient) TearDownSuite() {
 
 }
 
-//func newMockParaNode() *testnode.Chain33Mock {
-//	//_, sub := testnode.GetDefaultConfig()
-//	//cfg.Consensus.Minerstart = false
-//	cfg, sub := types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml")
-//	cfg.Consensus.StartHeight=0
-//	mock33 := testnode.NewWithConfig(cfg, sub, nil)
-//	return mock33
-//}
-//
-//func TestSwitchHashMatchedBlock(t *testing.T) {
-//	mockPara := newMockParaNode()
-//	defer mockPara.Close()
-//	mockPara.WaitHeight(0)
-//	block := mockPara.GetBlock(0)
-//	assert.Equal(t, block.Height, int64(0))
-//
-//	//consens:=mockPara.GetCfg().Consensus
-//	//
-//	//paraCli := New(mockPara.GetCfg().Consensus,nil).(*client)
-//	////paraCli.BaseClient.SetQueueClient(mock33.GetClient())
-//	//paraCli.SetQueueClient(mockPara.GetClient())
-//	var  currSeq int64
-//	var preMainBlockHash []byte
-//	currSeq=2
-//	cs := mockPara.GetConsensClient().(*client)
-//	cs.switchHashMatchedBlock(&currSeq,&preMainBlockHash)
-//	assert.Equal(t,1,currSeq)
-//}
+
