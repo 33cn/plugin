@@ -134,5 +134,18 @@ func TestQueueDirection(t *testing.T) {
 	cache.Push(item4)
 	cache.Push(item5)
 	cache.txList.Print()
-	assert.Equal(t, true, cache.txList.GetIterator().First().Score >= cache.txList.GetIterator().Last().Score)
+	i := 0
+	lastScore := cache.txList.GetIterator().First().Score
+	var tmpScore int64
+	cache.Walk(5, func(value *drivers.Item) bool {
+		tmpScore = cache.txMap[string(value.Value.Hash())].Score
+		if lastScore < tmpScore {
+			return false
+		}
+		lastScore = tmpScore
+		i++
+		return true
+	})
+	assert.Equal(t, 5, i)
+	assert.Equal(t, true, lastScore == cache.txList.GetIterator().Last().Score)
 }
