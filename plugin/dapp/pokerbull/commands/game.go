@@ -58,9 +58,9 @@ func pokerbullStart(cmd *cobra.Command, args []string) {
 	playerCount, _ := cmd.Flags().GetUint32("playerCount")
 
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pkt.PokerBullX),
+		Execer:     types.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreateStartTx,
-		Payload: []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value) * types.Coin, int32(playerCount))),
+		Payload:    []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value)*types.Coin, int32(playerCount))),
 	}
 
 	var res string
@@ -89,9 +89,9 @@ func pokerbullContinue(cmd *cobra.Command, args []string) {
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pkt.PokerBullX),
+		Execer:     types.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreateContinueTx,
-		Payload: []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
+		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
 
 	var res string
@@ -120,9 +120,9 @@ func pokerbullQuit(cmd *cobra.Command, args []string) {
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pkt.PokerBullX),
+		Execer:     types.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreatequitTx,
-		Payload: []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
+		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
 
 	var res string

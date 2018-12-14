@@ -61,9 +61,9 @@ func TestJRPCChannel(t *testing.T) {
 
 func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pty.PokerBullX),
+		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateStartTx,
-		Payload: []byte(""),
+		Payload:    []byte(""),
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
@@ -71,9 +71,9 @@ func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pty.PokerBullX),
+		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateContinueTx,
-		Payload: []byte(""),
+		Payload:    []byte(""),
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
@@ -81,9 +81,9 @@ func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &rpctypes.CreateTxIn{
-		Execer: types.ExecName(pty.PokerBullX),
+		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreatequitTx,
-		Payload: []byte(""),
+		Payload:    []byte(""),
 	}
 
 	var res string
@@ -144,4 +144,3 @@ func testQueryGameByRound(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	rep = &pty.PBGameRecords{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
-
