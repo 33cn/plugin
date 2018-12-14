@@ -95,12 +95,12 @@ func (t *PokerBullType) CreateTx(action string, message json.RawMessage) (*types
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawPBQuitTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
+
+	return nil, types.ErrNotSupport
 }
 
-// CreateTx method
+// CreateRawPBStartTx method
 func CreateRawPBStartTx(head *PBGameStart) (*types.Transaction, error) {
 	if head.PlayerNum > MaxPlayerNum {
 		return nil, errors.New("Player number should be maximum 5")
@@ -117,7 +117,7 @@ func CreateRawPBStartTx(head *PBGameStart) (*types.Transaction, error) {
 	return tx, nil
 }
 
-// CreateTx method
+// CreateRawPBContinueTx method
 func CreateRawPBContinueTx(head *PBGameContinue) (*types.Transaction, error) {
 	val := &PBGameAction{
 		Ty:    PBGameActionContinue,
@@ -130,7 +130,7 @@ func CreateRawPBContinueTx(head *PBGameContinue) (*types.Transaction, error) {
 	return tx, nil
 }
 
-// CreateTx method
+// CreateRawPBQuitTx method
 func CreateRawPBQuitTx(head *PBGameQuit) (*types.Transaction, error) {
 	val := &PBGameAction{
 		Ty:    PBGameActionQuit,
