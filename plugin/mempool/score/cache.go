@@ -27,7 +27,7 @@ func NewQueue(subcfg subConfig) *Queue {
 	}
 }
 
-func (cache *Queue) SkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
+func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
 	//tx := item.value
 	buf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(buf)
@@ -69,7 +69,7 @@ func (cache *Queue) Push(item *mempool.Item) error {
 		newEnterTime := types.Now().Unix()
 		resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
 		var err error
-		sv, err := cache.SkipValue(resendItem)
+		sv, err := cache.newSkipValue(resendItem)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (cache *Queue) Push(item *mempool.Item) error {
 	}
 
 	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
-	sv, err := cache.SkipValue(it)
+	sv, err := cache.newSkipValue(it)
 	if err != nil {
 		return err
 	}
