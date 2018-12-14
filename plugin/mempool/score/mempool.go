@@ -30,6 +30,6 @@ func New(cfg *types.Mempool, sub []byte) queue.Module {
 	if subcfg.PoolCacheSize == 0 {
 		subcfg.PoolCacheSize = cfg.PoolCacheSize
 	}
-	c.SetQueueCache(NewScoreQueue(subcfg))
+	c.SetQueueCache(NewQueue(subcfg))
 	return c
 }

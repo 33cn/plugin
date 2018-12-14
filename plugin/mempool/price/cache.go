@@ -10,23 +10,23 @@ import (
 
 var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
 
-// PriceQueue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
-type PriceQueue struct {
+// Queue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
+type Queue struct {
 	txMap     map[string]*SkipValue
 	txList    *SkipList
 	subConfig subConfig
 }
 
-// NewPriceQueue 创建队列
-func NewPriceQueue(subcfg subConfig) *PriceQueue {
-	return &PriceQueue{
+// NewQueue 创建队列
+func NewQueue(subcfg subConfig) *Queue {
+	return &Queue{
 		txMap:     make(map[string]*SkipValue, subcfg.PoolCacheSize),
 		txList:    NewSkipList(&SkipValue{-1, nil}),
 		subConfig: subcfg,
 	}
 }
 
-func (cache *PriceQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
+func (cache *Queue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 	//tx := item.value
 	buf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(buf)
@@ -39,21 +39,21 @@ func (cache *PriceQueue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 }
 
 //Exist 是否存在
-func (cache *PriceQueue) Exist(hash string) bool {
+func (cache *Queue) Exist(hash string) bool {
 	_, exists := cache.txMap[hash]
 	return exists
 }
 
 //GetItem 获取数据通过 key
-func (cache *PriceQueue) GetItem(hash string) (*mempool.Item, error) {
+func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 	if k, exist := cache.txMap[hash]; exist {
 		return k.Value.(*mempool.Item), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-// Push 把给定tx添加到PriceQueue；如果tx已经存在PriceQueue中或Mempool已满则返回对应error
-func (cache *PriceQueue) Push(item *mempool.Item) error {
+// Push 把给定tx添加到Queue；如果tx已经存在Queue中或Mempool已满则返回对应error
+func (cache *Queue) Push(item *mempool.Item) error {
 	hash := item.Value.Hash()
 	if cache.Exist(string(hash)) {
 		s := cache.txMap[string(hash)]
@@ -98,19 +98,19 @@ func (cache *PriceQueue) Push(item *mempool.Item) error {
 }
 
 // Remove 删除数据
-func (cache *PriceQueue) Remove(hash string) error {
+func (cache *Queue) Remove(hash string) error {
 	cache.txList.Delete(cache.txMap[hash])
 	delete(cache.txMap, hash)
 	return nil
 }
 
 // Size 数据总数
-func (cache *PriceQueue) Size() int {
+func (cache *Queue) Size() int {
 	return cache.txList.Len()
 }
 
 // Walk 遍历整个队列
-func (cache *PriceQueue) Walk(count int, cb func(value *mempool.Item) bool) {
+func (cache *Queue) Walk(count int, cb func(value *mempool.Item) bool) {
 	i := 0
 	cache.txList.Walk(func(item interface{}) bool {
 		if !cb(item.(*mempool.Item)) {

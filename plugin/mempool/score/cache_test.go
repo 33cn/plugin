@@ -33,7 +33,7 @@ var (
 	item5      = &drivers.Item{Value: tx5, Priority: tx5.Fee, EnterTime: types.Now().Unix() - 1000}
 )
 
-func initEnv(size int64) *ScoreQueue {
+func initEnv(size int64) *Queue {
 	if size == 0 {
 		size = 100
 	}
@@ -41,7 +41,7 @@ func initEnv(size int64) *ScoreQueue {
 	var subcfg subConfig
 	types.MustDecode(sub.Mempool["score"], &subcfg)
 	subcfg.PoolCacheSize = size
-	cache := NewScoreQueue(subcfg)
+	cache := NewQueue(subcfg)
 	return cache
 }
 
