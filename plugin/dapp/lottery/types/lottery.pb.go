@@ -3,12 +3,9 @@
 
 package types
 
-import (
-	fmt "fmt"
-	math "math"
-
-	proto "github.com/golang/protobuf/proto"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -35,17 +32,16 @@ func (m *PurchaseRecord) Reset()         { *m = PurchaseRecord{} }
 func (m *PurchaseRecord) String() string { return proto.CompactTextString(m) }
 func (*PurchaseRecord) ProtoMessage()    {}
 func (*PurchaseRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{0}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{0}
 }
-
 func (m *PurchaseRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PurchaseRecord.Unmarshal(m, b)
 }
 func (m *PurchaseRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PurchaseRecord.Marshal(b, m, deterministic)
 }
-func (m *PurchaseRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PurchaseRecord.Merge(m, src)
+func (dst *PurchaseRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PurchaseRecord.Merge(dst, src)
 }
 func (m *PurchaseRecord) XXX_Size() int {
 	return xxx_messageInfo_PurchaseRecord.Size(m)
@@ -98,17 +94,16 @@ func (m *PurchaseRecords) Reset()         { *m = PurchaseRecords{} }
 func (m *PurchaseRecords) String() string { return proto.CompactTextString(m) }
 func (*PurchaseRecords) ProtoMessage()    {}
 func (*PurchaseRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{1}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{1}
 }
-
 func (m *PurchaseRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PurchaseRecords.Unmarshal(m, b)
 }
 func (m *PurchaseRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PurchaseRecords.Marshal(b, m, deterministic)
 }
-func (m *PurchaseRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PurchaseRecords.Merge(m, src)
+func (dst *PurchaseRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PurchaseRecords.Merge(dst, src)
 }
 func (m *PurchaseRecords) XXX_Size() int {
 	return xxx_messageInfo_PurchaseRecords.Size(m)
@@ -156,7 +151,7 @@ type Lottery struct {
 	DrawBlockNum         int64  `protobuf:"varint,6,opt,name=drawBlockNum,proto3" json:"drawBlockNum,omitempty"`
 	LastTransToPurState  int64  `protobuf:"varint,7,opt,name=lastTransToPurState,proto3" json:"lastTransToPurState,omitempty"`
 	LastTransToDrawState int64  `protobuf:"varint,8,opt,name=lastTransToDrawState,proto3" json:"lastTransToDrawState,omitempty"`
-	//map<string, PurchaseRecords> records                    = 9;
+	// map<string, PurchaseRecords> records                    = 9;
 	TotalPurchasedTxNum        int64              `protobuf:"varint,10,opt,name=totalPurchasedTxNum,proto3" json:"totalPurchasedTxNum,omitempty"`
 	CreateAddr                 string             `protobuf:"bytes,11,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	Round                      int64              `protobuf:"varint,12,opt,name=round,proto3" json:"round,omitempty"`
@@ -179,17 +174,16 @@ func (m *Lottery) Reset()         { *m = Lottery{} }
 func (m *Lottery) String() string { return proto.CompactTextString(m) }
 func (*Lottery) ProtoMessage()    {}
 func (*Lottery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{2}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{2}
 }
-
 func (m *Lottery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Lottery.Unmarshal(m, b)
 }
 func (m *Lottery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Lottery.Marshal(b, m, deterministic)
 }
-func (m *Lottery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Lottery.Merge(m, src)
+func (dst *Lottery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Lottery.Merge(dst, src)
 }
 func (m *Lottery) XXX_Size() int {
 	return xxx_messageInfo_Lottery.Size(m)
@@ -358,17 +352,16 @@ func (m *MissingRecord) Reset()         { *m = MissingRecord{} }
 func (m *MissingRecord) String() string { return proto.CompactTextString(m) }
 func (*MissingRecord) ProtoMessage()    {}
 func (*MissingRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{3}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{3}
 }
-
 func (m *MissingRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MissingRecord.Unmarshal(m, b)
 }
 func (m *MissingRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MissingRecord.Marshal(b, m, deterministic)
 }
-func (m *MissingRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MissingRecord.Merge(m, src)
+func (dst *MissingRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MissingRecord.Merge(dst, src)
 }
 func (m *MissingRecord) XXX_Size() int {
 	return xxx_messageInfo_MissingRecord.Size(m)
@@ -403,17 +396,16 @@ func (m *LotteryAction) Reset()         { *m = LotteryAction{} }
 func (m *LotteryAction) String() string { return proto.CompactTextString(m) }
 func (*LotteryAction) ProtoMessage()    {}
 func (*LotteryAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{4}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{4}
 }
-
 func (m *LotteryAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryAction.Unmarshal(m, b)
 }
 func (m *LotteryAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryAction.Marshal(b, m, deterministic)
 }
-func (m *LotteryAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryAction.Merge(m, src)
+func (dst *LotteryAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryAction.Merge(dst, src)
 }
 func (m *LotteryAction) XXX_Size() int {
 	return xxx_messageInfo_LotteryAction.Size(m)
@@ -431,26 +423,20 @@ type isLotteryAction_Value interface {
 type LotteryAction_Create struct {
 	Create *LotteryCreate `protobuf:"bytes,1,opt,name=create,proto3,oneof"`
 }
-
 type LotteryAction_Buy struct {
 	Buy *LotteryBuy `protobuf:"bytes,2,opt,name=buy,proto3,oneof"`
 }
-
 type LotteryAction_Draw struct {
 	Draw *LotteryDraw `protobuf:"bytes,3,opt,name=draw,proto3,oneof"`
 }
-
 type LotteryAction_Close struct {
 	Close *LotteryClose `protobuf:"bytes,4,opt,name=close,proto3,oneof"`
 }
 
 func (*LotteryAction_Create) isLotteryAction_Value() {}
-
-func (*LotteryAction_Buy) isLotteryAction_Value() {}
-
-func (*LotteryAction_Draw) isLotteryAction_Value() {}
-
-func (*LotteryAction_Close) isLotteryAction_Value() {}
+func (*LotteryAction_Buy) isLotteryAction_Value()    {}
+func (*LotteryAction_Draw) isLotteryAction_Value()   {}
+func (*LotteryAction_Close) isLotteryAction_Value()  {}
 
 func (m *LotteryAction) GetValue() isLotteryAction_Value {
 	if m != nil {
@@ -620,17 +606,16 @@ func (m *LotteryCreate) Reset()         { *m = LotteryCreate{} }
 func (m *LotteryCreate) String() string { return proto.CompactTextString(m) }
 func (*LotteryCreate) ProtoMessage()    {}
 func (*LotteryCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{5}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{5}
 }
-
 func (m *LotteryCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryCreate.Unmarshal(m, b)
 }
 func (m *LotteryCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryCreate.Marshal(b, m, deterministic)
 }
-func (m *LotteryCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryCreate.Merge(m, src)
+func (dst *LotteryCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryCreate.Merge(dst, src)
 }
 func (m *LotteryCreate) XXX_Size() int {
 	return xxx_messageInfo_LotteryCreate.Size(m)
@@ -683,17 +668,16 @@ func (m *LotteryBuy) Reset()         { *m = LotteryBuy{} }
 func (m *LotteryBuy) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuy) ProtoMessage()    {}
 func (*LotteryBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{6}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{6}
 }
-
 func (m *LotteryBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuy.Unmarshal(m, b)
 }
 func (m *LotteryBuy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuy.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuy.Merge(m, src)
+func (dst *LotteryBuy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuy.Merge(dst, src)
 }
 func (m *LotteryBuy) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuy.Size(m)
@@ -743,17 +727,16 @@ func (m *LotteryDraw) Reset()         { *m = LotteryDraw{} }
 func (m *LotteryDraw) String() string { return proto.CompactTextString(m) }
 func (*LotteryDraw) ProtoMessage()    {}
 func (*LotteryDraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{7}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{7}
 }
-
 func (m *LotteryDraw) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDraw.Unmarshal(m, b)
 }
 func (m *LotteryDraw) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDraw.Marshal(b, m, deterministic)
 }
-func (m *LotteryDraw) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDraw.Merge(m, src)
+func (dst *LotteryDraw) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDraw.Merge(dst, src)
 }
 func (m *LotteryDraw) XXX_Size() int {
 	return xxx_messageInfo_LotteryDraw.Size(m)
@@ -782,17 +765,16 @@ func (m *LotteryClose) Reset()         { *m = LotteryClose{} }
 func (m *LotteryClose) String() string { return proto.CompactTextString(m) }
 func (*LotteryClose) ProtoMessage()    {}
 func (*LotteryClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{8}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{8}
 }
-
 func (m *LotteryClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryClose.Unmarshal(m, b)
 }
 func (m *LotteryClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryClose.Marshal(b, m, deterministic)
 }
-func (m *LotteryClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryClose.Merge(m, src)
+func (dst *LotteryClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryClose.Merge(dst, src)
 }
 func (m *LotteryClose) XXX_Size() int {
 	return xxx_messageInfo_LotteryClose.Size(m)
@@ -826,6 +808,7 @@ type ReceiptLottery struct {
 	Index                int64                 `protobuf:"varint,13,opt,name=index,proto3" json:"index,omitempty"`
 	TotalAddrNum         int64                 `protobuf:"varint,14,opt,name=totalAddrNum,proto3" json:"totalAddrNum,omitempty"`
 	BuyAmount            int64                 `protobuf:"varint,15,opt,name=buyAmount,proto3" json:"buyAmount,omitempty"`
+	GainInfos            *LotteryGainInfos     `protobuf:"bytes,16,opt,name=gainInfos,proto3" json:"gainInfos,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
 	XXX_unrecognized     []byte                `json:"-"`
 	XXX_sizecache        int32                 `json:"-"`
@@ -835,17 +818,16 @@ func (m *ReceiptLottery) Reset()         { *m = ReceiptLottery{} }
 func (m *ReceiptLottery) String() string { return proto.CompactTextString(m) }
 func (*ReceiptLottery) ProtoMessage()    {}
 func (*ReceiptLottery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{9}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{9}
 }
-
 func (m *ReceiptLottery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptLottery.Unmarshal(m, b)
 }
 func (m *ReceiptLottery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptLottery.Marshal(b, m, deterministic)
 }
-func (m *ReceiptLottery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptLottery.Merge(m, src)
+func (dst *ReceiptLottery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptLottery.Merge(dst, src)
 }
 func (m *ReceiptLottery) XXX_Size() int {
 	return xxx_messageInfo_ReceiptLottery.Size(m)
@@ -961,6 +943,13 @@ func (m *ReceiptLottery) GetBuyAmount() int64 {
 	return 0
 }
 
+func (m *ReceiptLottery) GetGainInfos() *LotteryGainInfos {
+	if m != nil {
+		return m.GainInfos
+	}
+	return nil
+}
+
 type ReqLotteryInfo struct {
 	LotteryId            string   `protobuf:"bytes,1,opt,name=lotteryId,proto3" json:"lotteryId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -972,17 +961,16 @@ func (m *ReqLotteryInfo) Reset()         { *m = ReqLotteryInfo{} }
 func (m *ReqLotteryInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryInfo) ProtoMessage()    {}
 func (*ReqLotteryInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{10}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{10}
 }
-
 func (m *ReqLotteryInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryInfo.Merge(m, src)
+func (dst *ReqLotteryInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryInfo.Merge(dst, src)
 }
 func (m *ReqLotteryInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryInfo.Size(m)
@@ -1013,17 +1001,16 @@ func (m *ReqLotteryBuyInfo) Reset()         { *m = ReqLotteryBuyInfo{} }
 func (m *ReqLotteryBuyInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryBuyInfo) ProtoMessage()    {}
 func (*ReqLotteryBuyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{11}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{11}
 }
-
 func (m *ReqLotteryBuyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryBuyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryBuyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryBuyInfo.Merge(m, src)
+func (dst *ReqLotteryBuyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryBuyInfo.Merge(dst, src)
 }
 func (m *ReqLotteryBuyInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Size(m)
@@ -1071,17 +1058,16 @@ func (m *ReqLotteryBuyHistory) Reset()         { *m = ReqLotteryBuyHistory{} }
 func (m *ReqLotteryBuyHistory) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryBuyHistory) ProtoMessage()    {}
 func (*ReqLotteryBuyHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{12}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{12}
 }
-
 func (m *ReqLotteryBuyHistory) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Unmarshal(m, b)
 }
 func (m *ReqLotteryBuyHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryBuyHistory) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryBuyHistory.Merge(m, src)
+func (dst *ReqLotteryBuyHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryBuyHistory.Merge(dst, src)
 }
 func (m *ReqLotteryBuyHistory) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Size(m)
@@ -1146,17 +1132,16 @@ func (m *ReqLotteryLuckyInfo) Reset()         { *m = ReqLotteryLuckyInfo{} }
 func (m *ReqLotteryLuckyInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryLuckyInfo) ProtoMessage()    {}
 func (*ReqLotteryLuckyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{13}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{13}
 }
-
 func (m *ReqLotteryLuckyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryLuckyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryLuckyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryLuckyInfo.Merge(m, src)
+func (dst *ReqLotteryLuckyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryLuckyInfo.Merge(dst, src)
 }
 func (m *ReqLotteryLuckyInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Size(m)
@@ -1195,17 +1180,16 @@ func (m *ReqLotteryLuckyHistory) Reset()         { *m = ReqLotteryLuckyHistory{}
 func (m *ReqLotteryLuckyHistory) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryLuckyHistory) ProtoMessage()    {}
 func (*ReqLotteryLuckyHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{14}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{14}
 }
-
 func (m *ReqLotteryLuckyHistory) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Unmarshal(m, b)
 }
 func (m *ReqLotteryLuckyHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryLuckyHistory) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryLuckyHistory.Merge(m, src)
+func (dst *ReqLotteryLuckyHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryLuckyHistory.Merge(dst, src)
 }
 func (m *ReqLotteryLuckyHistory) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Size(m)
@@ -1260,17 +1244,16 @@ func (m *ReplyLotteryNormalInfo) Reset()         { *m = ReplyLotteryNormalInfo{}
 func (m *ReplyLotteryNormalInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryNormalInfo) ProtoMessage()    {}
 func (*ReplyLotteryNormalInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{15}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{15}
 }
-
 func (m *ReplyLotteryNormalInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryNormalInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryNormalInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryNormalInfo.Merge(m, src)
+func (dst *ReplyLotteryNormalInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryNormalInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryNormalInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Size(m)
@@ -1347,17 +1330,16 @@ func (m *ReplyLotteryCurrentInfo) Reset()         { *m = ReplyLotteryCurrentInfo
 func (m *ReplyLotteryCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryCurrentInfo) ProtoMessage()    {}
 func (*ReplyLotteryCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{16}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{16}
 }
-
 func (m *ReplyLotteryCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryCurrentInfo.Merge(m, src)
+func (dst *ReplyLotteryCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryCurrentInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Size(m)
@@ -1477,17 +1459,16 @@ func (m *ReplyLotteryHistoryLuckyNumber) Reset()         { *m = ReplyLotteryHist
 func (m *ReplyLotteryHistoryLuckyNumber) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryHistoryLuckyNumber) ProtoMessage()    {}
 func (*ReplyLotteryHistoryLuckyNumber) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{17}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{17}
 }
-
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Unmarshal(m, b)
 }
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryHistoryLuckyNumber) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Merge(m, src)
+func (dst *ReplyLotteryHistoryLuckyNumber) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Merge(dst, src)
 }
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Size(m)
@@ -1516,17 +1497,16 @@ func (m *ReplyLotteryShowInfo) Reset()         { *m = ReplyLotteryShowInfo{} }
 func (m *ReplyLotteryShowInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryShowInfo) ProtoMessage()    {}
 func (*ReplyLotteryShowInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{18}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{18}
 }
-
 func (m *ReplyLotteryShowInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryShowInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryShowInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryShowInfo.Merge(m, src)
+func (dst *ReplyLotteryShowInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryShowInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryShowInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Size(m)
@@ -1556,17 +1536,16 @@ func (m *LotteryNumberRecord) Reset()         { *m = LotteryNumberRecord{} }
 func (m *LotteryNumberRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryNumberRecord) ProtoMessage()    {}
 func (*LotteryNumberRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{19}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{19}
 }
-
 func (m *LotteryNumberRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryNumberRecord.Unmarshal(m, b)
 }
 func (m *LotteryNumberRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryNumberRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryNumberRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryNumberRecord.Merge(m, src)
+func (dst *LotteryNumberRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryNumberRecord.Merge(dst, src)
 }
 func (m *LotteryNumberRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryNumberRecord.Size(m)
@@ -1610,17 +1589,16 @@ func (m *LotteryBuyRecord) Reset()         { *m = LotteryBuyRecord{} }
 func (m *LotteryBuyRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuyRecord) ProtoMessage()    {}
 func (*LotteryBuyRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{20}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{20}
 }
-
 func (m *LotteryBuyRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuyRecord.Unmarshal(m, b)
 }
 func (m *LotteryBuyRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuyRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuyRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuyRecord.Merge(m, src)
+func (dst *LotteryBuyRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuyRecord.Merge(dst, src)
 }
 func (m *LotteryBuyRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuyRecord.Size(m)
@@ -1698,17 +1676,16 @@ func (m *LotteryBuyRecords) Reset()         { *m = LotteryBuyRecords{} }
 func (m *LotteryBuyRecords) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuyRecords) ProtoMessage()    {}
 func (*LotteryBuyRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{21}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{21}
 }
-
 func (m *LotteryBuyRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuyRecords.Unmarshal(m, b)
 }
 func (m *LotteryBuyRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuyRecords.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuyRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuyRecords.Merge(m, src)
+func (dst *LotteryBuyRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuyRecords.Merge(dst, src)
 }
 func (m *LotteryBuyRecords) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuyRecords.Size(m)
@@ -1742,17 +1719,16 @@ func (m *LotteryDrawRecord) Reset()         { *m = LotteryDrawRecord{} }
 func (m *LotteryDrawRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryDrawRecord) ProtoMessage()    {}
 func (*LotteryDrawRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{22}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{22}
 }
-
 func (m *LotteryDrawRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDrawRecord.Unmarshal(m, b)
 }
 func (m *LotteryDrawRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDrawRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryDrawRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDrawRecord.Merge(m, src)
+func (dst *LotteryDrawRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDrawRecord.Merge(dst, src)
 }
 func (m *LotteryDrawRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryDrawRecord.Size(m)
@@ -1816,17 +1792,16 @@ func (m *LotteryDrawRecords) Reset()         { *m = LotteryDrawRecords{} }
 func (m *LotteryDrawRecords) String() string { return proto.CompactTextString(m) }
 func (*LotteryDrawRecords) ProtoMessage()    {}
 func (*LotteryDrawRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{23}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{23}
 }
-
 func (m *LotteryDrawRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDrawRecords.Unmarshal(m, b)
 }
 func (m *LotteryDrawRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDrawRecords.Marshal(b, m, deterministic)
 }
-func (m *LotteryDrawRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDrawRecords.Merge(m, src)
+func (dst *LotteryDrawRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDrawRecords.Merge(dst, src)
 }
 func (m *LotteryDrawRecords) XXX_Size() int {
 	return xxx_messageInfo_LotteryDrawRecords.Size(m)
@@ -1856,17 +1831,16 @@ func (m *LotteryUpdateRec) Reset()         { *m = LotteryUpdateRec{} }
 func (m *LotteryUpdateRec) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateRec) ProtoMessage()    {}
 func (*LotteryUpdateRec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{24}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{24}
 }
-
 func (m *LotteryUpdateRec) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateRec.Unmarshal(m, b)
 }
 func (m *LotteryUpdateRec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateRec.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateRec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateRec.Merge(m, src)
+func (dst *LotteryUpdateRec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateRec.Merge(dst, src)
 }
 func (m *LotteryUpdateRec) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateRec.Size(m)
@@ -1902,17 +1876,16 @@ func (m *LotteryUpdateRecs) Reset()         { *m = LotteryUpdateRecs{} }
 func (m *LotteryUpdateRecs) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateRecs) ProtoMessage()    {}
 func (*LotteryUpdateRecs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{25}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{25}
 }
-
 func (m *LotteryUpdateRecs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateRecs.Unmarshal(m, b)
 }
 func (m *LotteryUpdateRecs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateRecs.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateRecs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateRecs.Merge(m, src)
+func (dst *LotteryUpdateRecs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateRecs.Merge(dst, src)
 }
 func (m *LotteryUpdateRecs) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateRecs.Size(m)
@@ -1941,17 +1914,16 @@ func (m *LotteryUpdateBuyInfo) Reset()         { *m = LotteryUpdateBuyInfo{} }
 func (m *LotteryUpdateBuyInfo) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateBuyInfo) ProtoMessage()    {}
 func (*LotteryUpdateBuyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{26}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{26}
 }
-
 func (m *LotteryUpdateBuyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Unmarshal(m, b)
 }
 func (m *LotteryUpdateBuyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateBuyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateBuyInfo.Merge(m, src)
+func (dst *LotteryUpdateBuyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateBuyInfo.Merge(dst, src)
 }
 func (m *LotteryUpdateBuyInfo) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Size(m)
@@ -1980,17 +1952,16 @@ func (m *ReplyLotteryPurchaseAddr) Reset()         { *m = ReplyLotteryPurchaseAd
 func (m *ReplyLotteryPurchaseAddr) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryPurchaseAddr) ProtoMessage()    {}
 func (*ReplyLotteryPurchaseAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{27}
+	return fileDescriptor_lottery_c7e98509722f908f, []int{27}
 }
-
 func (m *ReplyLotteryPurchaseAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Unmarshal(m, b)
 }
 func (m *ReplyLotteryPurchaseAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryPurchaseAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryPurchaseAddr.Merge(m, src)
+func (dst *ReplyLotteryPurchaseAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryPurchaseAddr.Merge(dst, src)
 }
 func (m *ReplyLotteryPurchaseAddr) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Size(m)
@@ -2006,6 +1977,322 @@ func (m *ReplyLotteryPurchaseAddr) GetAddress() []string {
 		return m.Address
 	}
 	return nil
+}
+
+type LotteryGainInfos struct {
+	Gains                []*LotteryGainInfo `protobuf:"bytes,1,rep,name=gains,proto3" json:"gains,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *LotteryGainInfos) Reset()         { *m = LotteryGainInfos{} }
+func (m *LotteryGainInfos) String() string { return proto.CompactTextString(m) }
+func (*LotteryGainInfos) ProtoMessage()    {}
+func (*LotteryGainInfos) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{28}
+}
+func (m *LotteryGainInfos) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LotteryGainInfos.Unmarshal(m, b)
+}
+func (m *LotteryGainInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LotteryGainInfos.Marshal(b, m, deterministic)
+}
+func (dst *LotteryGainInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainInfos.Merge(dst, src)
+}
+func (m *LotteryGainInfos) XXX_Size() int {
+	return xxx_messageInfo_LotteryGainInfos.Size(m)
+}
+func (m *LotteryGainInfos) XXX_DiscardUnknown() {
+	xxx_messageInfo_LotteryGainInfos.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LotteryGainInfos proto.InternalMessageInfo
+
+func (m *LotteryGainInfos) GetGains() []*LotteryGainInfo {
+	if m != nil {
+		return m.Gains
+	}
+	return nil
+}
+
+type LotteryGainInfo struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	BuyAmount            int64    `protobuf:"varint,2,opt,name=buyAmount,proto3" json:"buyAmount,omitempty"`
+	FundAmount           float32  `protobuf:"fixed32,3,opt,name=fundAmount,proto3" json:"fundAmount,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LotteryGainInfo) Reset()         { *m = LotteryGainInfo{} }
+func (m *LotteryGainInfo) String() string { return proto.CompactTextString(m) }
+func (*LotteryGainInfo) ProtoMessage()    {}
+func (*LotteryGainInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{29}
+}
+func (m *LotteryGainInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LotteryGainInfo.Unmarshal(m, b)
+}
+func (m *LotteryGainInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LotteryGainInfo.Marshal(b, m, deterministic)
+}
+func (dst *LotteryGainInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainInfo.Merge(dst, src)
+}
+func (m *LotteryGainInfo) XXX_Size() int {
+	return xxx_messageInfo_LotteryGainInfo.Size(m)
+}
+func (m *LotteryGainInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_LotteryGainInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LotteryGainInfo proto.InternalMessageInfo
+
+func (m *LotteryGainInfo) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *LotteryGainInfo) GetBuyAmount() int64 {
+	if m != nil {
+		return m.BuyAmount
+	}
+	return 0
+}
+
+func (m *LotteryGainInfo) GetFundAmount() float32 {
+	if m != nil {
+		return m.FundAmount
+	}
+	return 0
+}
+
+type LotteryGainRecord struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	BuyAmount            int64    `protobuf:"varint,2,opt,name=buyAmount,proto3" json:"buyAmount,omitempty"`
+	FundAmount           float32  `protobuf:"fixed32,3,opt,name=fundAmount,proto3" json:"fundAmount,omitempty"`
+	Round                int64    `protobuf:"varint,4,opt,name=round,proto3" json:"round,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LotteryGainRecord) Reset()         { *m = LotteryGainRecord{} }
+func (m *LotteryGainRecord) String() string { return proto.CompactTextString(m) }
+func (*LotteryGainRecord) ProtoMessage()    {}
+func (*LotteryGainRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{30}
+}
+func (m *LotteryGainRecord) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LotteryGainRecord.Unmarshal(m, b)
+}
+func (m *LotteryGainRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LotteryGainRecord.Marshal(b, m, deterministic)
+}
+func (dst *LotteryGainRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainRecord.Merge(dst, src)
+}
+func (m *LotteryGainRecord) XXX_Size() int {
+	return xxx_messageInfo_LotteryGainRecord.Size(m)
+}
+func (m *LotteryGainRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_LotteryGainRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LotteryGainRecord proto.InternalMessageInfo
+
+func (m *LotteryGainRecord) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *LotteryGainRecord) GetBuyAmount() int64 {
+	if m != nil {
+		return m.BuyAmount
+	}
+	return 0
+}
+
+func (m *LotteryGainRecord) GetFundAmount() float32 {
+	if m != nil {
+		return m.FundAmount
+	}
+	return 0
+}
+
+func (m *LotteryGainRecord) GetRound() int64 {
+	if m != nil {
+		return m.Round
+	}
+	return 0
+}
+
+type LotteryGainRecords struct {
+	Records              []*LotteryGainRecord `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *LotteryGainRecords) Reset()         { *m = LotteryGainRecords{} }
+func (m *LotteryGainRecords) String() string { return proto.CompactTextString(m) }
+func (*LotteryGainRecords) ProtoMessage()    {}
+func (*LotteryGainRecords) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{31}
+}
+func (m *LotteryGainRecords) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LotteryGainRecords.Unmarshal(m, b)
+}
+func (m *LotteryGainRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LotteryGainRecords.Marshal(b, m, deterministic)
+}
+func (dst *LotteryGainRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainRecords.Merge(dst, src)
+}
+func (m *LotteryGainRecords) XXX_Size() int {
+	return xxx_messageInfo_LotteryGainRecords.Size(m)
+}
+func (m *LotteryGainRecords) XXX_DiscardUnknown() {
+	xxx_messageInfo_LotteryGainRecords.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LotteryGainRecords proto.InternalMessageInfo
+
+func (m *LotteryGainRecords) GetRecords() []*LotteryGainRecord {
+	if m != nil {
+		return m.Records
+	}
+	return nil
+}
+
+type ReqLotteryGainHistory struct {
+	LotteryId            string   `protobuf:"bytes,1,opt,name=lotteryId,proto3" json:"lotteryId,omitempty"`
+	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Round                int64    `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
+	Count                int32    `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	Direction            int32    `protobuf:"varint,5,opt,name=direction,proto3" json:"direction,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReqLotteryGainHistory) Reset()         { *m = ReqLotteryGainHistory{} }
+func (m *ReqLotteryGainHistory) String() string { return proto.CompactTextString(m) }
+func (*ReqLotteryGainHistory) ProtoMessage()    {}
+func (*ReqLotteryGainHistory) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{32}
+}
+func (m *ReqLotteryGainHistory) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqLotteryGainHistory.Unmarshal(m, b)
+}
+func (m *ReqLotteryGainHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqLotteryGainHistory.Marshal(b, m, deterministic)
+}
+func (dst *ReqLotteryGainHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryGainHistory.Merge(dst, src)
+}
+func (m *ReqLotteryGainHistory) XXX_Size() int {
+	return xxx_messageInfo_ReqLotteryGainHistory.Size(m)
+}
+func (m *ReqLotteryGainHistory) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqLotteryGainHistory.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqLotteryGainHistory proto.InternalMessageInfo
+
+func (m *ReqLotteryGainHistory) GetLotteryId() string {
+	if m != nil {
+		return m.LotteryId
+	}
+	return ""
+}
+
+func (m *ReqLotteryGainHistory) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *ReqLotteryGainHistory) GetRound() int64 {
+	if m != nil {
+		return m.Round
+	}
+	return 0
+}
+
+func (m *ReqLotteryGainHistory) GetCount() int32 {
+	if m != nil {
+		return m.Count
+	}
+	return 0
+}
+
+func (m *ReqLotteryGainHistory) GetDirection() int32 {
+	if m != nil {
+		return m.Direction
+	}
+	return 0
+}
+
+type ReqLotteryGainInfo struct {
+	LotteryId            string   `protobuf:"bytes,1,opt,name=lotteryId,proto3" json:"lotteryId,omitempty"`
+	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Round                int64    `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReqLotteryGainInfo) Reset()         { *m = ReqLotteryGainInfo{} }
+func (m *ReqLotteryGainInfo) String() string { return proto.CompactTextString(m) }
+func (*ReqLotteryGainInfo) ProtoMessage()    {}
+func (*ReqLotteryGainInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_lottery_c7e98509722f908f, []int{33}
+}
+func (m *ReqLotteryGainInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqLotteryGainInfo.Unmarshal(m, b)
+}
+func (m *ReqLotteryGainInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqLotteryGainInfo.Marshal(b, m, deterministic)
+}
+func (dst *ReqLotteryGainInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryGainInfo.Merge(dst, src)
+}
+func (m *ReqLotteryGainInfo) XXX_Size() int {
+	return xxx_messageInfo_ReqLotteryGainInfo.Size(m)
+}
+func (m *ReqLotteryGainInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqLotteryGainInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqLotteryGainInfo proto.InternalMessageInfo
+
+func (m *ReqLotteryGainInfo) GetLotteryId() string {
+	if m != nil {
+		return m.LotteryId
+	}
+	return ""
+}
+
+func (m *ReqLotteryGainInfo) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *ReqLotteryGainInfo) GetRound() int64 {
+	if m != nil {
+		return m.Round
+	}
+	return 0
 }
 
 func init() {
@@ -2038,94 +2325,108 @@ func init() {
 	proto.RegisterType((*LotteryUpdateBuyInfo)(nil), "types.LotteryUpdateBuyInfo")
 	proto.RegisterMapType((map[string]*LotteryUpdateRecs)(nil), "types.LotteryUpdateBuyInfo.BuyInfoEntry")
 	proto.RegisterType((*ReplyLotteryPurchaseAddr)(nil), "types.ReplyLotteryPurchaseAddr")
+	proto.RegisterType((*LotteryGainInfos)(nil), "types.LotteryGainInfos")
+	proto.RegisterType((*LotteryGainInfo)(nil), "types.LotteryGainInfo")
+	proto.RegisterType((*LotteryGainRecord)(nil), "types.LotteryGainRecord")
+	proto.RegisterType((*LotteryGainRecords)(nil), "types.LotteryGainRecords")
+	proto.RegisterType((*ReqLotteryGainHistory)(nil), "types.ReqLotteryGainHistory")
+	proto.RegisterType((*ReqLotteryGainInfo)(nil), "types.ReqLotteryGainInfo")
 }
 
-func init() { proto.RegisterFile("lottery.proto", fileDescriptor_2cce7afd61783b10) }
+func init() { proto.RegisterFile("lottery.proto", fileDescriptor_lottery_c7e98509722f908f) }
 
-var fileDescriptor_2cce7afd61783b10 = []byte{
-	// 1342 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x58, 0x5f, 0x8f, 0xdb, 0x44,
-	0x10, 0x3f, 0xc7, 0x71, 0x72, 0x99, 0xfc, 0x69, 0x6f, 0x2f, 0xbd, 0x9a, 0x82, 0xaa, 0x93, 0x45,
-	0xd1, 0x49, 0x85, 0x08, 0x02, 0x42, 0x08, 0x2a, 0xa4, 0xa6, 0x14, 0xe5, 0xa4, 0xfe, 0xd3, 0xf6,
-	0x10, 0x0f, 0x3c, 0xf9, 0xe2, 0x6d, 0xcf, 0x6a, 0x62, 0x07, 0x7b, 0x7d, 0x77, 0x7e, 0xe3, 0x53,
-	0xf0, 0x05, 0x78, 0xe1, 0x0d, 0x5e, 0x78, 0xe7, 0x4b, 0x80, 0xc4, 0xb7, 0xe0, 0x23, 0xa0, 0x9d,
-	0x5d, 0xc7, 0x6b, 0xc7, 0x89, 0xef, 0xe8, 0xd3, 0x79, 0x67, 0x67, 0x77, 0x67, 0x7e, 0x33, 0xf3,
-	0x9b, 0xc9, 0x41, 0x7f, 0x1e, 0x72, 0xce, 0xa2, 0x74, 0xb4, 0x8c, 0x42, 0x1e, 0x12, 0x8b, 0xa7,
-	0x4b, 0x16, 0x3b, 0x67, 0x30, 0x78, 0x91, 0x44, 0xb3, 0x33, 0x37, 0x66, 0x94, 0xcd, 0xc2, 0xc8,
-	0x23, 0x07, 0xd0, 0x72, 0x17, 0x61, 0x12, 0x70, 0xdb, 0x38, 0x34, 0x8e, 0x4c, 0xaa, 0x56, 0x42,
-	0x1e, 0x24, 0x8b, 0x53, 0x16, 0xd9, 0x0d, 0x29, 0x97, 0x2b, 0x32, 0x04, 0xcb, 0x0f, 0x3c, 0x76,
-	0x69, 0x9b, 0x28, 0x96, 0x0b, 0x72, 0x13, 0xcc, 0x0b, 0x37, 0xb5, 0x9b, 0x28, 0x13, 0x9f, 0xce,
-	0xcf, 0x06, 0xdc, 0x28, 0x3e, 0x15, 0x93, 0x8f, 0xa0, 0x15, 0xe1, 0xa7, 0x6d, 0x1c, 0x9a, 0x47,
-	0xdd, 0xf1, 0xad, 0x11, 0x5a, 0x35, 0x2a, 0xea, 0x51, 0xa5, 0x44, 0x6c, 0x68, 0xbf, 0x4a, 0x02,
-	0xef, 0x7b, 0x3f, 0x50, 0x36, 0x64, 0x4b, 0xf2, 0x01, 0x0c, 0xa4, 0x99, 0xcf, 0x03, 0x46, 0xc3,
-	0x24, 0xf0, 0x94, 0x35, 0x25, 0x29, 0x21, 0xd0, 0x74, 0x3d, 0x2f, 0x42, 0xbb, 0x3a, 0x14, 0xbf,
-	0x9d, 0xbf, 0x5a, 0xd0, 0x7e, 0x22, 0xb1, 0x21, 0xef, 0x41, 0x47, 0xc1, 0x74, 0xec, 0xa1, 0xff,
-	0x1d, 0x9a, 0x0b, 0x04, 0x04, 0x31, 0x77, 0x79, 0x12, 0xe3, 0xf3, 0x16, 0x55, 0x2b, 0xe2, 0x40,
-	0x6f, 0x16, 0x31, 0x97, 0xb3, 0x29, 0xf3, 0x5f, 0x9f, 0x71, 0xf5, 0x76, 0x41, 0x26, 0x5e, 0x16,
-	0xc6, 0x2a, 0x44, 0xf0, 0x9b, 0x1c, 0x42, 0x77, 0x99, 0x44, 0x93, 0x79, 0x38, 0x7b, 0xf3, 0x2c,
-	0x59, 0xd8, 0x16, 0x6e, 0xe9, 0x22, 0x71, 0xb3, 0x17, 0xb9, 0x17, 0x2b, 0x95, 0x96, 0xbc, 0x59,
-	0x97, 0x91, 0x8f, 0x61, 0x7f, 0xee, 0xc6, 0xfc, 0x24, 0x72, 0x83, 0xf8, 0x24, 0x7c, 0x91, 0x44,
-	0x2f, 0xb9, 0xcb, 0x99, 0xdd, 0x46, 0xd5, 0xaa, 0x2d, 0x32, 0x86, 0xa1, 0x26, 0xfe, 0x26, 0x72,
-	0x2f, 0xe4, 0x91, 0x5d, 0x3c, 0x52, 0xb9, 0x27, 0x5e, 0xe1, 0x21, 0x77, 0xe7, 0x59, 0x68, 0xbc,
-	0x93, 0x4b, 0x61, 0x10, 0xc8, 0x57, 0x2a, 0xb6, 0xc8, 0x5d, 0x00, 0x89, 0xc0, 0x43, 0x81, 0x78,
-	0x17, 0xc1, 0xd4, 0x24, 0x22, 0x71, 0x22, 0x0c, 0x55, 0x4f, 0x26, 0x0e, 0x2e, 0x04, 0x26, 0xf3,
-	0x64, 0xf6, 0x26, 0x7d, 0x26, 0x73, 0xad, 0x2f, 0x31, 0xd1, 0x44, 0x39, 0xda, 0xcf, 0x83, 0xa7,
-	0xae, 0x1f, 0xd8, 0x03, 0x1d, 0x6d, 0x29, 0x23, 0x0f, 0xe0, 0x9d, 0x0a, 0xc7, 0xd5, 0x81, 0x1b,
-	0x78, 0x60, 0xb3, 0x02, 0xf9, 0x1a, 0xee, 0x54, 0x61, 0xa0, 0x8e, 0xdf, 0xc4, 0xe3, 0x5b, 0x34,
-	0xc8, 0x03, 0x18, 0x2c, 0xfc, 0x38, 0xf6, 0x83, 0xd7, 0x2a, 0xd1, 0xed, 0x3d, 0x4c, 0xef, 0xa1,
-	0x4a, 0xef, 0xa7, 0xfa, 0x26, 0x2d, 0xe9, 0x92, 0xf7, 0xa1, 0x1f, 0x2e, 0x29, 0xbb, 0x70, 0x23,
-	0x8f, 0xba, 0xdc, 0x0f, 0x6d, 0x82, 0x0f, 0x16, 0x85, 0x22, 0xe3, 0x3d, 0x76, 0xae, 0xab, 0xed,
-	0xcb, 0x8c, 0x2f, 0x4a, 0xc9, 0xe7, 0x00, 0xcb, 0x24, 0xca, 0xec, 0x18, 0xa2, 0x1d, 0x07, 0x95,
-	0x65, 0x16, 0x53, 0x4d, 0x53, 0xa0, 0x8c, 0x41, 0x15, 0xa1, 0x12, 0x81, 0xbe, 0x25, 0x51, 0xd6,
-	0x65, 0xa2, 0x5a, 0x4e, 0x93, 0xf4, 0xa1, 0x64, 0x8b, 0x03, 0x54, 0xc8, 0x05, 0xce, 0x3d, 0xe8,
-	0x17, 0x1c, 0x15, 0x01, 0xe7, 0xfe, 0x82, 0xc5, 0x58, 0xec, 0x16, 0x95, 0x0b, 0xe7, 0x6f, 0x03,
-	0xfa, 0xaa, 0xfc, 0x1e, 0xce, 0xb8, 0x1f, 0x06, 0x64, 0x04, 0x2d, 0x19, 0x4c, 0xac, 0xc0, 0x1c,
-	0x36, 0xa5, 0xf5, 0x48, 0x96, 0xd5, 0x0e, 0x55, 0x5a, 0xe4, 0x1e, 0x98, 0xa7, 0x49, 0x8a, 0x35,
-	0xd9, 0x1d, 0xef, 0x15, 0x95, 0x27, 0x49, 0x3a, 0xdd, 0xa1, 0x62, 0x9f, 0x1c, 0x41, 0x53, 0xd4,
-	0x0d, 0x56, 0x67, 0x77, 0x4c, 0x8a, 0x7a, 0x22, 0x84, 0xd3, 0x1d, 0x8a, 0x1a, 0xe4, 0x3e, 0x58,
-	0xb3, 0x79, 0x18, 0x33, 0x2c, 0xd6, 0xee, 0x78, 0xbf, 0xf4, 0xbe, 0xd8, 0x9a, 0xee, 0x50, 0xa9,
-	0x43, 0x06, 0xd0, 0xe0, 0x29, 0xd6, 0x81, 0x45, 0x1b, 0x3c, 0x9d, 0xb4, 0xc1, 0x3a, 0x77, 0xe7,
-	0x09, 0x73, 0x7e, 0xc9, 0x1d, 0x93, 0x26, 0x97, 0xeb, 0xdd, 0xa8, 0xaf, 0xf7, 0x46, 0x45, 0xbd,
-	0xaf, 0xe5, 0x87, 0x79, 0xb5, 0xfc, 0x68, 0x56, 0xe5, 0x87, 0x33, 0x07, 0xc8, 0xa1, 0xaa, 0xe7,
-	0x3f, 0xd5, 0x1a, 0x1a, 0x1b, 0x5a, 0x83, 0x59, 0x68, 0x0d, 0xeb, 0x4d, 0xe0, 0x3e, 0x74, 0x35,
-	0xc0, 0xb7, 0x3f, 0xe7, 0x7c, 0x08, 0x3d, 0x1d, 0xf2, 0x1a, 0xed, 0x3f, 0x4c, 0x18, 0x50, 0x36,
-	0x63, 0xfe, 0x92, 0xbf, 0x1d, 0x9b, 0xdf, 0x05, 0x58, 0x46, 0xec, 0xfc, 0xa5, 0xdc, 0x33, 0x71,
-	0x4f, 0x93, 0x54, 0xf5, 0x90, 0x9c, 0xcb, 0x2c, 0x9d, 0xcb, 0x72, 0x5c, 0x5a, 0x05, 0x5c, 0x72,
-	0x1c, 0xdb, 0x05, 0x1c, 0x4b, 0xdc, 0xb7, 0xbb, 0xce, 0x7d, 0x04, 0x9a, 0xa2, 0x6a, 0xec, 0x8e,
-	0xec, 0x22, 0xe2, 0x5b, 0xdc, 0xc6, 0x2f, 0xa7, 0x6e, 0x7c, 0x86, 0x49, 0xd8, 0xa1, 0x6a, 0x45,
-	0xbe, 0x02, 0x48, 0x96, 0x9e, 0xcb, 0xd9, 0x71, 0xf0, 0x2a, 0x44, 0xfe, 0xed, 0x8e, 0xdf, 0x2d,
-	0xa6, 0xf2, 0x77, 0xb8, 0x3f, 0x49, 0x52, 0xa1, 0x42, 0x35, 0xf5, 0x2c, 0x74, 0xbd, 0x55, 0xe8,
-	0xf2, 0x3e, 0xdf, 0xd7, 0xfb, 0x7c, 0x99, 0x26, 0x06, 0x75, 0x34, 0x71, 0xa3, 0x4c, 0x13, 0x23,
-	0x11, 0xb6, 0x1f, 0x95, 0x41, 0xf8, 0xf6, 0xf6, 0x38, 0xff, 0x00, 0x7b, 0xb9, 0xbe, 0x32, 0xbd,
-	0x26, 0xd2, 0x59, 0xc4, 0x1a, 0x55, 0x11, 0x33, 0xb5, 0x88, 0x39, 0xbf, 0x1a, 0x30, 0x2c, 0xdc,
-	0x3e, 0xf5, 0x63, 0x1e, 0xd6, 0xa6, 0xd2, 0x95, 0x1f, 0x10, 0xd2, 0x19, 0xe2, 0xd0, 0xc4, 0xbc,
-	0x92, 0x0b, 0x71, 0xbb, 0xe7, 0x47, 0x0c, 0xe9, 0x0f, 0x53, 0xc8, 0xa2, 0xb9, 0x20, 0x47, 0xbe,
-	0xa5, 0x21, 0xef, 0x1c, 0xc3, 0x7e, 0x6e, 0xe9, 0x13, 0x91, 0x23, 0x57, 0x40, 0x62, 0x65, 0x54,
-	0xe3, 0xd0, 0xcc, 0xbd, 0xfe, 0xc9, 0x80, 0x83, 0xd2, 0x5d, 0x57, 0xf3, 0x5b, 0xbb, 0xae, 0xca,
-	0x47, 0x73, 0xa3, 0x8f, 0xcd, 0x92, 0x8f, 0xce, 0xbf, 0x68, 0xc2, 0x72, 0x9e, 0x2a, 0x23, 0x9e,
-	0x85, 0xd1, 0xc2, 0x9d, 0xa3, 0x47, 0xe5, 0xe9, 0xca, 0xa8, 0x98, 0xae, 0x4a, 0xcc, 0xda, 0xa8,
-	0x67, 0x56, 0xb3, 0x82, 0x59, 0x8b, 0x13, 0x4b, 0x73, 0x6d, 0x62, 0x59, 0x63, 0x5e, 0xeb, 0x6a,
-	0xcc, 0xdb, 0xaa, 0x64, 0xde, 0x7f, 0x9a, 0x70, 0x5b, 0x77, 0xf9, 0x51, 0x12, 0x45, 0x2c, 0xe0,
-	0xe8, 0x73, 0xce, 0x4d, 0x46, 0x81, 0x9b, 0xb2, 0x29, 0xb2, 0xa1, 0x4d, 0x91, 0x1b, 0xe6, 0x3f,
-	0xf3, 0xfa, 0xf3, 0x5f, 0xf3, 0xfa, 0xf3, 0x9f, 0xb5, 0x79, 0xfe, 0x5b, 0x25, 0x47, 0x6b, 0xcb,
-	0x7c, 0xd7, 0x5e, 0xe7, 0xb8, 0xad, 0xb3, 0xdb, 0xee, 0xdb, 0xcd, 0x6e, 0x9d, 0xda, 0xd9, 0xad,
-	0x94, 0x49, 0x50, 0x9f, 0x49, 0xdd, 0x8a, 0x4c, 0x5a, 0x9f, 0x00, 0x7b, 0xd7, 0x98, 0x00, 0xcb,
-	0xa4, 0xda, 0xaf, 0x23, 0xd5, 0x41, 0x99, 0x54, 0x27, 0x70, 0x57, 0x4f, 0x2d, 0x55, 0xcd, 0x4f,
-	0x34, 0x94, 0x4b, 0x71, 0x30, 0x90, 0x0f, 0x74, 0x91, 0x73, 0x2c, 0xa8, 0x30, 0xbf, 0xe3, 0xe5,
-	0x59, 0x78, 0x81, 0xb9, 0xf9, 0x09, 0xb4, 0x23, 0xe5, 0x94, 0xfc, 0xd5, 0x76, 0x7b, 0x6d, 0xe4,
-	0x52, 0x7e, 0x65, 0x7a, 0xce, 0x63, 0xd8, 0xcf, 0xea, 0x1a, 0xef, 0xce, 0x7f, 0x6a, 0x06, 0xd9,
-	0xf3, 0xd5, 0xfd, 0xb1, 0x30, 0x67, 0x38, 0x7f, 0x1a, 0x70, 0xb3, 0xfc, 0xc8, 0x75, 0x2f, 0xd9,
-	0xc0, 0xcb, 0xa2, 0xb1, 0xa6, 0xcb, 0xac, 0x04, 0xf0, 0x3b, 0xeb, 0x81, 0x56, 0x45, 0x0f, 0xd4,
-	0x99, 0x78, 0xd5, 0x94, 0xdb, 0x95, 0x4d, 0x79, 0x57, 0x6f, 0xca, 0xce, 0xb7, 0xb0, 0x57, 0xf6,
-	0x20, 0xfe, 0x3f, 0x88, 0xfe, 0x66, 0xac, 0x2e, 0x12, 0x19, 0x5c, 0x83, 0x45, 0x35, 0x4f, 0x67,
-	0x76, 0x9b, 0x95, 0x76, 0x37, 0x0b, 0xc3, 0x44, 0x39, 0x25, 0xad, 0xba, 0x94, 0x6c, 0x95, 0x53,
-	0x72, 0x0a, 0x64, 0xcd, 0xe0, 0x98, 0x8c, 0xcb, 0xae, 0xdb, 0xeb, 0x73, 0x79, 0xd9, 0xf7, 0x07,
-	0xab, 0x2c, 0x90, 0xf3, 0x0b, 0x65, 0xb3, 0x3c, 0x32, 0x46, 0x39, 0x32, 0x22, 0xaa, 0x8d, 0x3c,
-	0xaa, 0x5a, 0x04, 0x56, 0xa7, 0xeb, 0x23, 0xb0, 0x52, 0xcd, 0xad, 0xf8, 0xdd, 0x80, 0x61, 0xd5,
-	0x18, 0x45, 0x26, 0xd0, 0x3e, 0x95, 0x9f, 0xea, 0xae, 0xa3, 0x2d, 0x43, 0xd7, 0x48, 0xfd, 0x7d,
-	0x1c, 0xf0, 0x28, 0xa5, 0xd9, 0xc1, 0x3b, 0x27, 0xd0, 0xd3, 0x37, 0x44, 0x2a, 0xbe, 0x61, 0xa9,
-	0x6a, 0xc0, 0xe2, 0x93, 0x8c, 0xd4, 0xcf, 0x0c, 0xf5, 0xb3, 0xc7, 0xde, 0x60, 0x6f, 0x4c, 0xa5,
-	0xda, 0x97, 0x8d, 0x2f, 0x0c, 0xe7, 0x33, 0xb0, 0xf5, 0x8a, 0xce, 0xf8, 0x1a, 0x7b, 0x9b, 0x0d,
-	0x6d, 0x31, 0xb6, 0xb0, 0x58, 0x22, 0xd0, 0xa1, 0xd9, 0xf2, 0xb4, 0x85, 0xff, 0x30, 0xfa, 0xf4,
-	0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa7, 0x0f, 0x3d, 0x83, 0x41, 0x12, 0x00, 0x00,
+var fileDescriptor_lottery_c7e98509722f908f = []byte{
+	// 1462 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0xdd, 0x6e, 0xdc, 0x44,
+	0x14, 0x8e, 0xff, 0x76, 0xb3, 0x67, 0xb3, 0x9b, 0x66, 0x92, 0xa6, 0xa6, 0xa0, 0x28, 0xb2, 0x28,
+	0x8a, 0xd4, 0xb2, 0x82, 0xe5, 0x47, 0x08, 0x2a, 0x44, 0x53, 0x0a, 0x1b, 0xa9, 0x7f, 0x9a, 0x06,
+	0x71, 0x01, 0x37, 0xce, 0x7a, 0xda, 0x58, 0xdd, 0xd8, 0x8b, 0x3d, 0x6e, 0x62, 0x71, 0xc3, 0x3b,
+	0x20, 0xf1, 0x02, 0xdc, 0x70, 0x07, 0x8f, 0xc0, 0x4b, 0x80, 0xc4, 0x3b, 0x70, 0xc1, 0x23, 0xa0,
+	0xf9, 0xb1, 0x67, 0xec, 0xf5, 0xc6, 0x09, 0xed, 0x05, 0x57, 0xf1, 0x9c, 0x39, 0x33, 0x73, 0x7e,
+	0xbe, 0x73, 0xce, 0xb7, 0x81, 0xc1, 0x2c, 0xa6, 0x94, 0x24, 0xf9, 0x68, 0x9e, 0xc4, 0x34, 0x46,
+	0x0e, 0xcd, 0xe7, 0x24, 0xf5, 0x8e, 0x61, 0xf8, 0x38, 0x4b, 0xa6, 0xc7, 0x7e, 0x4a, 0x30, 0x99,
+	0xc6, 0x49, 0x80, 0xb6, 0xa1, 0xe3, 0x9f, 0xc4, 0x59, 0x44, 0x5d, 0x63, 0xd7, 0xd8, 0xb3, 0xb0,
+	0x5c, 0x31, 0x79, 0x94, 0x9d, 0x1c, 0x91, 0xc4, 0x35, 0x85, 0x5c, 0xac, 0xd0, 0x16, 0x38, 0x61,
+	0x14, 0x90, 0x33, 0xd7, 0xe2, 0x62, 0xb1, 0x40, 0x57, 0xc0, 0x3a, 0xf5, 0x73, 0xd7, 0xe6, 0x32,
+	0xf6, 0xe9, 0xfd, 0x64, 0xc0, 0x7a, 0xf5, 0xa9, 0x14, 0xbd, 0x0d, 0x9d, 0x84, 0x7f, 0xba, 0xc6,
+	0xae, 0xb5, 0xd7, 0x1f, 0x5f, 0x1d, 0x71, 0xab, 0x46, 0x55, 0x3d, 0x2c, 0x95, 0x90, 0x0b, 0xdd,
+	0xa7, 0x59, 0x14, 0x7c, 0x1d, 0x46, 0xd2, 0x86, 0x62, 0x89, 0xde, 0x82, 0xa1, 0x30, 0xf3, 0x51,
+	0x44, 0x70, 0x9c, 0x45, 0x81, 0xb4, 0xa6, 0x26, 0x45, 0x08, 0x6c, 0x3f, 0x08, 0x12, 0x6e, 0x57,
+	0x0f, 0xf3, 0x6f, 0xef, 0x8f, 0x0e, 0x74, 0xef, 0x8b, 0xd8, 0xa0, 0x37, 0xa0, 0x27, 0xc3, 0x74,
+	0x10, 0x70, 0xff, 0x7b, 0x58, 0x09, 0x58, 0x08, 0x52, 0xea, 0xd3, 0x2c, 0xe5, 0xcf, 0x3b, 0x58,
+	0xae, 0x90, 0x07, 0x6b, 0xd3, 0x84, 0xf8, 0x94, 0x4c, 0x48, 0xf8, 0xec, 0x98, 0xca, 0xb7, 0x2b,
+	0x32, 0xf6, 0x32, 0x33, 0x56, 0x46, 0x84, 0x7f, 0xa3, 0x5d, 0xe8, 0xcf, 0xb3, 0x64, 0x7f, 0x16,
+	0x4f, 0x9f, 0x3f, 0xcc, 0x4e, 0x5c, 0x87, 0x6f, 0xe9, 0x22, 0x76, 0x73, 0x90, 0xf8, 0xa7, 0xa5,
+	0x4a, 0x47, 0xdc, 0xac, 0xcb, 0xd0, 0x3b, 0xb0, 0x39, 0xf3, 0x53, 0x7a, 0x98, 0xf8, 0x51, 0x7a,
+	0x18, 0x3f, 0xce, 0x92, 0x27, 0xd4, 0xa7, 0xc4, 0xed, 0x72, 0xd5, 0xa6, 0x2d, 0x34, 0x86, 0x2d,
+	0x4d, 0xfc, 0x79, 0xe2, 0x9f, 0x8a, 0x23, 0xab, 0xfc, 0x48, 0xe3, 0x1e, 0x7b, 0x85, 0xc6, 0xd4,
+	0x9f, 0x15, 0xa9, 0x09, 0x0e, 0xcf, 0x98, 0x41, 0x20, 0x5e, 0x69, 0xd8, 0x42, 0x3b, 0x00, 0x22,
+	0x02, 0x77, 0x58, 0xc4, 0xfb, 0x3c, 0x98, 0x9a, 0x84, 0x01, 0x27, 0xe1, 0xa9, 0x5a, 0x13, 0xc0,
+	0xe1, 0x0b, 0x16, 0x93, 0x59, 0x36, 0x7d, 0x9e, 0x3f, 0x14, 0x58, 0x1b, 0x88, 0x98, 0x68, 0x22,
+	0x15, 0xed, 0x47, 0xd1, 0x03, 0x3f, 0x8c, 0xdc, 0xa1, 0x1e, 0x6d, 0x21, 0x43, 0xb7, 0xe1, 0xb5,
+	0x06, 0xc7, 0xe5, 0x81, 0x75, 0x7e, 0x60, 0xb9, 0x02, 0xfa, 0x14, 0xae, 0x37, 0xc5, 0x40, 0x1e,
+	0xbf, 0xc2, 0x8f, 0x9f, 0xa3, 0x81, 0x6e, 0xc3, 0xf0, 0x24, 0x4c, 0xd3, 0x30, 0x7a, 0x26, 0x81,
+	0xee, 0x6e, 0x70, 0x78, 0x6f, 0x49, 0x78, 0x3f, 0xd0, 0x37, 0x71, 0x4d, 0x17, 0xbd, 0x09, 0x83,
+	0x78, 0x8e, 0xc9, 0xa9, 0x9f, 0x04, 0xd8, 0xa7, 0x61, 0xec, 0x22, 0xfe, 0x60, 0x55, 0xc8, 0x10,
+	0x1f, 0x90, 0x17, 0xba, 0xda, 0xa6, 0x40, 0x7c, 0x55, 0x8a, 0x3e, 0x04, 0x98, 0x67, 0x49, 0x61,
+	0xc7, 0x16, 0xb7, 0x63, 0xbb, 0xb1, 0xcc, 0x52, 0xac, 0x69, 0xb2, 0x28, 0xf3, 0xa4, 0xb2, 0x54,
+	0xb1, 0x44, 0x5f, 0x15, 0x51, 0xd6, 0x65, 0xac, 0x5a, 0x8e, 0xb2, 0xfc, 0x8e, 0xe8, 0x16, 0xdb,
+	0x5c, 0x41, 0x09, 0xbc, 0x1b, 0x30, 0xa8, 0x38, 0xca, 0x12, 0x4e, 0xc3, 0x13, 0x92, 0xf2, 0x62,
+	0x77, 0xb0, 0x58, 0x78, 0x7f, 0x1a, 0x30, 0x90, 0xe5, 0x77, 0x67, 0x4a, 0xc3, 0x38, 0x42, 0x23,
+	0xe8, 0x88, 0x64, 0xf2, 0x0a, 0x54, 0x61, 0x93, 0x5a, 0x77, 0x45, 0x59, 0xad, 0x60, 0xa9, 0x85,
+	0x6e, 0x80, 0x75, 0x94, 0xe5, 0xbc, 0x26, 0xfb, 0xe3, 0x8d, 0xaa, 0xf2, 0x7e, 0x96, 0x4f, 0x56,
+	0x30, 0xdb, 0x47, 0x7b, 0x60, 0xb3, 0xba, 0xe1, 0xd5, 0xd9, 0x1f, 0xa3, 0xaa, 0x1e, 0x4b, 0xe1,
+	0x64, 0x05, 0x73, 0x0d, 0x74, 0x13, 0x9c, 0xe9, 0x2c, 0x4e, 0x09, 0x2f, 0xd6, 0xfe, 0x78, 0xb3,
+	0xf6, 0x3e, 0xdb, 0x9a, 0xac, 0x60, 0xa1, 0x83, 0x86, 0x60, 0xd2, 0x9c, 0xd7, 0x81, 0x83, 0x4d,
+	0x9a, 0xef, 0x77, 0xc1, 0x79, 0xe1, 0xcf, 0x32, 0xe2, 0xfd, 0xac, 0x1c, 0x13, 0x26, 0xd7, 0xeb,
+	0xdd, 0x68, 0xaf, 0x77, 0xb3, 0xa1, 0xde, 0x17, 0xf0, 0x61, 0x5d, 0x0c, 0x1f, 0x76, 0x13, 0x3e,
+	0xbc, 0x19, 0x80, 0x0a, 0x55, 0x7b, 0xff, 0x93, 0xa3, 0xc1, 0x5c, 0x32, 0x1a, 0xac, 0xca, 0x68,
+	0x58, 0x1c, 0x02, 0x37, 0xa1, 0xaf, 0x05, 0xfc, 0xfc, 0xe7, 0xbc, 0x5b, 0xb0, 0xa6, 0x87, 0xbc,
+	0x45, 0xfb, 0x6f, 0x0b, 0x86, 0x98, 0x4c, 0x49, 0x38, 0xa7, 0x2f, 0xd7, 0xcd, 0x77, 0x00, 0xe6,
+	0x09, 0x79, 0xf1, 0x44, 0xec, 0x59, 0x7c, 0x4f, 0x93, 0x34, 0xcd, 0x10, 0xd5, 0xcb, 0x1c, 0xbd,
+	0x97, 0xa9, 0xb8, 0x74, 0x2a, 0x71, 0x51, 0x71, 0xec, 0x56, 0xe2, 0x58, 0xeb, 0x7d, 0xab, 0x8b,
+	0xbd, 0x0f, 0x81, 0xcd, 0xaa, 0xc6, 0xed, 0x89, 0x29, 0xc2, 0xbe, 0xd9, 0x6d, 0xf4, 0x6c, 0xe2,
+	0xa7, 0xc7, 0x1c, 0x84, 0x3d, 0x2c, 0x57, 0xe8, 0x13, 0x80, 0x6c, 0x1e, 0xf8, 0x94, 0x1c, 0x44,
+	0x4f, 0x63, 0xde, 0x7f, 0xfb, 0xe3, 0xd7, 0xab, 0x50, 0xfe, 0x8a, 0xef, 0xef, 0x67, 0x39, 0x53,
+	0xc1, 0x9a, 0x7a, 0x91, 0xba, 0xb5, 0x32, 0x75, 0x6a, 0xce, 0x0f, 0xf4, 0x39, 0x5f, 0x6f, 0x13,
+	0xc3, 0xb6, 0x36, 0xb1, 0x5e, 0x6b, 0x13, 0xe8, 0x03, 0xe8, 0x3d, 0xf3, 0xc3, 0x88, 0xbd, 0x9a,
+	0xf2, 0xde, 0xda, 0x1f, 0x5f, 0xab, 0x5a, 0xf9, 0x65, 0xb1, 0x8d, 0x95, 0xa6, 0x37, 0x62, 0xd9,
+	0xfe, 0x4e, 0x6a, 0x70, 0x93, 0xcf, 0x87, 0xc7, 0x37, 0xb0, 0xa1, 0xf4, 0xa5, 0xc7, 0x2d, 0x00,
+	0x29, 0x12, 0x6d, 0x36, 0x25, 0xda, 0xd2, 0x12, 0xed, 0xfd, 0x62, 0xc0, 0x56, 0xe5, 0xf6, 0x49,
+	0x98, 0xd2, 0xb8, 0x15, 0x81, 0x17, 0x7e, 0x80, 0x49, 0xa7, 0x3c, 0x7c, 0x36, 0x87, 0xa3, 0x58,
+	0xb0, 0xdb, 0x83, 0x30, 0x21, 0xbc, 0x6b, 0x72, 0xe4, 0x39, 0x58, 0x09, 0x54, 0xc2, 0x3a, 0x5a,
+	0xc2, 0xbc, 0x03, 0xd8, 0x54, 0x96, 0xde, 0x67, 0xd0, 0xba, 0x40, 0x24, 0x4a, 0xa3, 0xcc, 0x5d,
+	0x4b, 0x79, 0xfd, 0x83, 0x01, 0xdb, 0xb5, 0xbb, 0x2e, 0xe6, 0xb7, 0x76, 0x5d, 0x93, 0x8f, 0xd6,
+	0x52, 0x1f, 0xed, 0x9a, 0x8f, 0xde, 0x3f, 0xdc, 0x84, 0xf9, 0x2c, 0x97, 0x46, 0x3c, 0x8c, 0x93,
+	0x13, 0x7f, 0xc6, 0x3d, 0xaa, 0x93, 0x32, 0xa3, 0x81, 0x94, 0xd5, 0x1a, 0xb2, 0xd9, 0xde, 0x90,
+	0xad, 0x86, 0x86, 0x5c, 0x25, 0x3a, 0xf6, 0x02, 0xd1, 0x59, 0x68, 0xd8, 0xce, 0xc5, 0x1a, 0x76,
+	0xa7, 0xb1, 0x61, 0xff, 0x65, 0xc3, 0x35, 0xdd, 0xe5, 0xbb, 0x59, 0x92, 0x90, 0x88, 0x72, 0x9f,
+	0x55, 0x4b, 0x33, 0x2a, 0x2d, 0xad, 0x20, 0x9f, 0xa6, 0x46, 0x3e, 0x97, 0xd0, 0x46, 0xeb, 0xf2,
+	0xb4, 0xd1, 0xbe, 0x3c, 0x6d, 0x74, 0x96, 0xd3, 0xc6, 0x12, 0x1c, 0x9d, 0x73, 0x68, 0x61, 0x77,
+	0xb1, 0x35, 0x9e, 0x4b, 0xf9, 0x56, 0x5f, 0x8e, 0xf2, 0xf5, 0x5a, 0x29, 0x5f, 0x0d, 0x49, 0xd0,
+	0x8e, 0xa4, 0x7e, 0x03, 0x92, 0x16, 0x89, 0xe3, 0xda, 0x25, 0x88, 0x63, 0xbd, 0x17, 0x0f, 0xda,
+	0x7a, 0xf1, 0xb0, 0x4e, 0xd9, 0xf6, 0x61, 0x47, 0x87, 0x96, 0xac, 0xe6, 0xfb, 0x5a, 0x94, 0x6b,
+	0x79, 0x30, 0x78, 0x3f, 0xd0, 0x45, 0xde, 0x01, 0x6b, 0x85, 0xea, 0x8e, 0x27, 0xc7, 0xf1, 0x29,
+	0xc7, 0xe6, 0xbb, 0xd0, 0x4d, 0xa4, 0x53, 0xe2, 0xc7, 0xde, 0xb5, 0x05, 0xa6, 0x26, 0xfd, 0x2a,
+	0xf4, 0xbc, 0x7b, 0xb0, 0x59, 0xd4, 0x35, 0xbf, 0x5b, 0xfd, 0x42, 0x8d, 0x8a, 0xe7, 0x9b, 0xc7,
+	0x6a, 0x85, 0x9e, 0x78, 0xbf, 0x1b, 0x70, 0xa5, 0xfe, 0xc8, 0x65, 0x2f, 0x59, 0xd2, 0x97, 0xd9,
+	0x3c, 0xce, 0xe7, 0x45, 0x09, 0xf0, 0xef, 0x62, 0x74, 0x3a, 0x0d, 0xa3, 0x53, 0xef, 0xc4, 0xe5,
+	0x2c, 0xef, 0x36, 0xce, 0xf2, 0x55, 0x7d, 0x96, 0x7b, 0x5f, 0xc0, 0x46, 0xdd, 0x83, 0xf4, 0xbf,
+	0x44, 0xf4, 0x57, 0xa3, 0xbc, 0x88, 0x21, 0xb8, 0x25, 0x16, 0xcd, 0x7d, 0xba, 0xb0, 0xdb, 0x6a,
+	0xb4, 0xdb, 0xae, 0x70, 0x90, 0x3a, 0x24, 0x9d, 0x36, 0x48, 0x76, 0xea, 0x90, 0x9c, 0x00, 0x5a,
+	0x30, 0x38, 0x45, 0xe3, 0xba, 0xeb, 0xee, 0x22, 0x9d, 0xaf, 0xfb, 0x7e, 0xbb, 0x44, 0x81, 0xa0,
+	0x3d, 0x98, 0x4c, 0x55, 0x66, 0x8c, 0x7a, 0x66, 0x58, 0x56, 0x4d, 0x95, 0x55, 0x2d, 0x03, 0xe5,
+	0xe9, 0xf6, 0x0c, 0x94, 0xaa, 0xca, 0x8a, 0xdf, 0x0c, 0xd8, 0x6a, 0x62, 0x5f, 0x68, 0x1f, 0xba,
+	0x47, 0xe2, 0x53, 0xde, 0xb5, 0x77, 0x0e, 0x57, 0x1b, 0xc9, 0xbf, 0xf7, 0x22, 0x9a, 0xe4, 0xb8,
+	0x38, 0x78, 0xfd, 0x10, 0xd6, 0xf4, 0x0d, 0x06, 0xc5, 0xe7, 0x24, 0x97, 0x03, 0x98, 0x7d, 0xa2,
+	0x91, 0xfc, 0x75, 0x22, 0x7f, 0x2d, 0xb9, 0x4b, 0xec, 0x4d, 0xb1, 0x50, 0xfb, 0xd8, 0xfc, 0xc8,
+	0xf0, 0xde, 0x07, 0x57, 0xaf, 0xe8, 0xa2, 0x5f, 0xf3, 0xd9, 0xe6, 0x42, 0x97, 0xd1, 0x16, 0x92,
+	0x8a, 0x08, 0xf4, 0x70, 0xb1, 0xf4, 0x3e, 0x2b, 0xc3, 0x5d, 0xf2, 0x37, 0x74, 0x0b, 0x1c, 0xc6,
+	0xe0, 0x8a, 0x68, 0x6d, 0x37, 0xf3, 0x3c, 0x2c, 0x94, 0xbc, 0x29, 0xac, 0xd7, 0x76, 0x4a, 0xc6,
+	0x64, 0x68, 0x8c, 0xa9, 0x82, 0x1f, 0xb3, 0x4e, 0x2f, 0x77, 0x00, 0xd8, 0xb8, 0x93, 0xdb, 0x0c,
+	0xb3, 0x26, 0xd6, 0x24, 0xde, 0xf7, 0x65, 0x5e, 0xd9, 0x23, 0xb2, 0x20, 0x5e, 0xf9, 0x33, 0xaa,
+	0x94, 0x6c, 0x9d, 0x37, 0x2a, 0x70, 0xab, 0xc7, 0xdb, 0xc1, 0xad, 0x74, 0x15, 0xac, 0x7e, 0x34,
+	0xe0, 0xaa, 0xe2, 0x62, 0x4c, 0xe3, 0x7f, 0x40, 0x41, 0xbd, 0x6f, 0x01, 0x55, 0x8d, 0x7a, 0x95,
+	0xac, 0xfb, 0xa8, 0xc3, 0xff, 0x93, 0xf9, 0xde, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x03, 0xf1,
+	0xae, 0x10, 0xda, 0x14, 0x00, 0x00,
 }
