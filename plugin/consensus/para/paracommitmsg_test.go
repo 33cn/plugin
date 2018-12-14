@@ -72,6 +72,17 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	s.store.SetQueueClient(q.Client())
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
+	blockHash := &types.BlockSequence{
+		Hash: []byte("1"),
+		Type: 1,
+	}
+	blockSeqs := &types.BlockSequences{Items: []*types.BlockSequence{blockHash}}
+
+	s.grpcCli.On("GetBlockSequences", mock.Anything, mock.Anything).Return(blockSeqs, errors.New("nil"))
+	block := &types.Block{}
+	blockDetail := &types.BlockDetail{Block: block}
+	blockDetails := &types.BlockDetails{Items: []*types.BlockDetail{blockDetail}}
+	s.grpcCli.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blockDetails, errors.New("nil"))
 	//data := &types.Int64{1}
 	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(nil, errors.New("nil"))
 	reply := &types.Reply{IsOk: true}

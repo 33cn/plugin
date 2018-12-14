@@ -23,6 +23,7 @@ NODE2="${1}_chain32_1"
 NODE1="${1}_chain31_1"
 
 NODE4="${1}_chain30_1"
+#CLI4="docker exec ${NODE4} /root/chain33-cli"
 
 NODE5="${1}_chain29_1"
 CLI5="docker exec ${NODE5} /root/chain33-cli"
@@ -99,7 +100,7 @@ function start() {
     #docker-compose -f docker-compose.yml -f docker-compose-paracross.yml -f docker-compose-relay.yml up --build -d
     docker-compose up --build -d
 
-    local SLEEP=30
+    local SLEEP=10
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
@@ -111,64 +112,18 @@ function start() {
     ${CLI} net info
 
     ${CLI} net peer_info
-    peersCount=$(${CLI} net peer_info | jq '.[] | length')
-    echo "${peersCount}"
-    if [ "${peersCount}" -lt 2 ]; then
-        sleep 20
+    local count=100
+    while [ $count -gt 0 ]; do
         peersCount=$(${CLI} net peer_info | jq '.[] | length')
-        echo "${peersCount}"
-        if [ "${peersCount}" -lt 2 ]; then
-            echo "peers error"
-            exit 1
+        if [ "${peersCount}" -ge 2 ]; then
+            break
         fi
-    fi
+        sleep 5
+        ((count--))
+        echo "peers error: peersCount=${peersCount}"
+    done
 
-    #echo "=========== # create seed for wallet ============="
-    #seed=$(${CLI} seed generate -l 0 | jq ".seed")
-    #if [ -z "${seed}" ]; then
-    #    exit 1
-    #fi
-
-    echo "=========== # save seed to wallet ============="
-    result=$(${CLI} seed save -p 1314 -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
-    if [ "${result}" = "false" ]; then
-        echo "save seed to wallet error seed, result: ${result}"
-        exit 1
-    fi
-
-    sleep 1
-
-    echo "=========== # unlock wallet ============="
-    result=$(${CLI} wallet unlock -p 1314 -t 0 | jq ".isok")
-    if [ "${result}" = "false" ]; then
-        exit 1
-    fi
-
-    sleep 1
-
-    echo "=========== # import private key returnAddr ============="
-    result=$(${CLI} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr | jq ".label")
-    echo "${result}"
-    if [ -z "${result}" ]; then
-        exit 1
-    fi
-
-    sleep 1
-
-    echo "=========== # import private key mining ============="
-    result=$(${CLI} account import_key -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 -l minerAddr | jq ".label")
-    echo "${result}"
-    if [ -z "${result}" ]; then
-        exit 1
-    fi
-
-    sleep 1
-    echo "=========== # close auto mining ============="
-    result=$(${CLI} wallet auto_mine -f 0 | jq ".isok")
-    if [ "${result}" = "false" ]; then
-        exit 1
-    fi
-
+    miner "${CLI}"
     block_wait "${CLI}" 1
 
     echo "=========== check genesis hash ========== "
@@ -194,6 +149,54 @@ function start() {
     ${CLI} mempool list
 }
 
+function miner() {
+    #echo "=========== # create seed for wallet ============="
+    #seed=$(${1} seed generate -l 0 | jq ".seed")
+    #if [ -z "${seed}" ]; then
+    #    exit 1
+    #fi
+
+    echo "=========== # save seed to wallet ============="
+    result=$(${1} seed save -p 1314 -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
+    if [ "${result}" = "false" ]; then
+        echo "save seed to wallet error seed, result: ${result}"
+        exit 1
+    fi
+
+    sleep 1
+
+    echo "=========== # unlock wallet ============="
+    result=$(${1} wallet unlock -p 1314 -t 0 | jq ".isok")
+    if [ "${result}" = "false" ]; then
+        exit 1
+    fi
+
+    sleep 1
+
+    echo "=========== # import private key returnAddr ============="
+    result=$(${1} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr | jq ".label")
+    echo "${result}"
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
+
+    sleep 1
+
+    echo "=========== # import private key mining ============="
+    result=$(${1} account import_key -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 -l minerAddr | jq ".label")
+    echo "${result}"
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
+
+    sleep 1
+    echo "=========== # close auto mining ============="
+    result=$(${1} wallet auto_mine -f 0 | jq ".isok")
+    if [ "${result}" = "false" ]; then
+        exit 1
+    fi
+
+}
 function block_wait() {
     if [ "$#" -lt 2 ]; then
         echo "wrong block_wait params"
@@ -215,7 +218,8 @@ function block_wait() {
 
 function check_docker_status() {
     status=$(docker-compose ps | grep chain33_1 | awk '{print $6}')
-    if [ "${status}" == "Exit" ]; then
+    statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
+    if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
         docker-compose logs chain33
         echo "=========== chain33 service Exit logs End========== "

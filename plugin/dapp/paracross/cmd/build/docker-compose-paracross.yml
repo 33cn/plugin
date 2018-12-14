@@ -5,6 +5,8 @@ services:
     entrypoint: /root/entrypoint.sh
     environment:
       PARAFILE: "/root/chain33.para33.toml"
+    expose:
+     - "8802"
 
   chain32:
     entrypoint: /root/entrypoint.sh
@@ -20,3 +22,16 @@ services:
     entrypoint: /root/entrypoint.sh
     environment:
       PARAFILE: "/root/chain33.para30.toml"
+    expose:
+     - "8802"
+
+
+  nginx:
+    image: nginx:latest
+    depends_on:
+     - chain33
+     - chain30
+    volumes:
+     - ./nginx.conf:/etc/nginx/nginx.conf
+    expose:
+     - "8803"
