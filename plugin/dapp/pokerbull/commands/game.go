@@ -56,19 +56,15 @@ func pokerbullStart(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	value, _ := cmd.Flags().GetUint64("value")
 	playerCount, _ := cmd.Flags().GetUint32("playerCount")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	feeInt64 := int64(fee * 1e4)
-	amountInt64 := int64(value)
-
-	params := &pkt.PBStartTxReq{
-		Value:     amountInt64 * types.Coin,
-		PlayerNum: int32(playerCount),
-		Fee:       feeInt64,
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pkt.PokerBullX),
+		ActionName: pkt.CreateStartTx,
+		Payload: []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value) * types.Coin, int32(playerCount))),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullStartTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -91,17 +87,15 @@ func addPokerbullContinueFlags(cmd *cobra.Command) {
 func pokerbullContinue(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	feeInt64 := int64(fee * 1e4)
-
-	params := &pkt.PBContinueTxReq{
-		GameId: gameID,
-		Fee:    feeInt64,
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pkt.PokerBullX),
+		ActionName: pkt.CreateContinueTx,
+		Payload: []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullContinueTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -124,17 +118,15 @@ func addPokerbullQuitFlags(cmd *cobra.Command) {
 func pokerbullQuit(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	feeInt64 := int64(fee * 1e4)
-
-	params := &pkt.PBContinueTxReq{
-		GameId: gameID,
-		Fee:    feeInt64,
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pkt.PokerBullX),
+		ActionName: pkt.CreatequitTx,
+		Payload: []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "pokerbull.PokerBullQuitTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 

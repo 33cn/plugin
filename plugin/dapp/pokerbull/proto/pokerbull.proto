@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "transaction.proto";
-
 package types;
 
 //斗牛游戏内容
@@ -187,12 +185,3 @@ message PBQueryReq {
     int64  fee    = 2;
 }
 
-// pokerbull 对外提供服务的接口
-service pokerbull {
-    //游戏开始
-    rpc Start(PBGameStart) returns (UnsignTx) {}
-    //游戏继续
-    rpc Continue(PBGameContinue) returns (UnsignTx) {}
-    //游戏结束
-    rpc Quit(PBGameQuit) returns (UnsignTx) {}
-}

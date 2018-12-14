@@ -43,6 +43,9 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testQuitRawTxCmd},
 		{fn: testQueryGameByID},
 		{fn: testQueryGameByAddr},
+		{fn: testQueryGameByIDs},
+		{fn: testQueryGameByStatus},
+		{fn: testQueryGameByRound},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)
@@ -57,29 +60,42 @@ func TestJRPCChannel(t *testing.T) {
 }
 
 func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.PBStartTxReq{}
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pty.PokerBullX),
+		ActionName: pty.CreateStartTx,
+		Payload: []byte(""),
+	}
 	var res string
-	return jrpc.Call("pokerbull.PokerBullStartTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
 func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.PBContinueTxReq{}
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pty.PokerBullX),
+		ActionName: pty.CreateContinueTx,
+		Payload: []byte(""),
+	}
 	var res string
-	return jrpc.Call("pokerbull.PokerBullContinueTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
 func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.PBContinueTxReq{}
+	params := &rpctypes.CreateTxIn{
+		Execer: types.ExecName(pty.PokerBullX),
+		ActionName: pty.CreatequitTx,
+		Payload: []byte(""),
+	}
+
 	var res string
-	return jrpc.Call("pokerbull.PokerBullQuitTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
 func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
-	params.Execer = "pokerbull"
-	params.FuncName = "QueryGameByID"
+	params.Execer = pty.PokerBullX
+	params.FuncName = pty.FuncNameQueryGameByID
 	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyPBGame{}
 	return jrpc.Call("Chain33.Query", params, rep)
@@ -89,9 +105,43 @@ func testQueryGameByAddr(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
 	req := &pty.QueryPBGameInfo{}
-	params.Execer = "pokerbull"
-	params.FuncName = "QueryGameByAddr"
+	params.Execer = pty.PokerBullX
+	params.FuncName = pty.FuncNameQueryGameByAddr
 	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.PBGameRecords{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
+
+func testQueryGameByIDs(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	var rep interface{}
+	var params rpctypes.Query4Jrpc
+	req := &pty.QueryPBGameInfos{}
+	params.Execer = pty.PokerBullX
+	params.FuncName = pty.FuncNameQueryGameListByIDs
+	params.Payload = types.MustPBToJSON(req)
+	rep = &pty.ReplyPBGameList{}
+	return jrpc.Call("Chain33.Query", params, rep)
+}
+
+func testQueryGameByStatus(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	var rep interface{}
+	var params rpctypes.Query4Jrpc
+	req := &pty.QueryPBGameInfo{}
+	params.Execer = pty.PokerBullX
+	params.FuncName = pty.FuncNameQueryGameByStatus
+	params.Payload = types.MustPBToJSON(req)
+	rep = &pty.PBGameRecords{}
+	return jrpc.Call("Chain33.Query", params, rep)
+}
+
+func testQueryGameByRound(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	var rep interface{}
+	var params rpctypes.Query4Jrpc
+	req := &pty.QueryPBGameByRound{}
+	params.Execer = pty.PokerBullX
+	params.FuncName = pty.FuncNameQueryGameByRound
+	params.Payload = types.MustPBToJSON(req)
+	rep = &pty.PBGameRecords{}
+	return jrpc.Call("Chain33.Query", params, rep)
+}
+
