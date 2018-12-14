@@ -1064,7 +1064,7 @@ func parseAccAssets(view interface{}) (interface{}, error) {
 //GetMultiSigAccAllAddressCmd 获取指定地址创建的所有多重签名账户
 func GetMultiSigAccAllAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "creature",
+		Use:   "creator",
 		Short: "get all multisig accounts created by the address",
 		Run:   getMultiSigAccAllAddress,
 	}
