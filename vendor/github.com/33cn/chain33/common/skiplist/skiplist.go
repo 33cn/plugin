@@ -1,34 +1,30 @@
-package price
+package skiplist
 
 import (
 	"fmt"
 	"math/rand"
-
-	"github.com/33cn/chain33/system/mempool"
 )
 
 const maxLevel = 32
 const prob = 0.35
 
-// SkipValue 跳跃表节点
+// SkipValue 跳跃表节点的Value值
 type SkipValue struct {
-	Price int64
+	Score int64
 	Value interface{}
 }
 
-// Compare 比较函数
+// Compare 比较函数,这样的比较排序是从大到小
 func (v *SkipValue) Compare(value *SkipValue) int {
-	if v.Price > value.Price {
+	if v.Score > value.Score {
 		return -1
-	} else if v.Price == value.Price {
-		if v.Value.(*mempool.Item).EnterTime < value.Value.(*mempool.Item).EnterTime {
-			return -1
-		}
+	} else if v.Score == value.Score {
 		return 0
 	}
 	return 1
 }
 
+// skipListNode 跳跃表节点
 type skipListNode struct {
 	next  []*skipListNode
 	prev  *skipListNode
@@ -49,7 +45,7 @@ type SkipListIterator struct {
 	node *skipListNode
 }
 
-// First 获取第一个节点
+// First 获取第一个节点Value值
 func (sli *SkipListIterator) First() *SkipValue {
 	if sli.list.header.next[0] == nil {
 		return nil
@@ -58,7 +54,7 @@ func (sli *SkipListIterator) First() *SkipValue {
 	return sli.node.Value
 }
 
-// Last 获取最后一个节点
+// Last 获取最后一个节点Value值
 func (sli *SkipListIterator) Last() *SkipValue {
 	if sli.list.tail == nil {
 		return nil
@@ -83,6 +79,16 @@ func (node *skipListNode) Next() *skipListNode {
 	return node.next[0]
 }
 
+// Seek 迭代器在跳跃表中查找某个位置在传参后面或者与传参相等的SkipValue
+func (sli *SkipListIterator) Seek(value *SkipValue) *SkipValue {
+	x := sli.list.find(value)
+	if x.next[0] == nil {
+		return nil
+	}
+	sli.node = x.next[0]
+	return sli.node.Value
+}
+
 func newskipListNode(level int, value *SkipValue) *skipListNode {
 	node := &skipListNode{}
 	node.next = make([]*skipListNode, level)
@@ -90,7 +96,7 @@ func newskipListNode(level int, value *SkipValue) *skipListNode {
 	return node
 }
 
-//NewSkipList 构建一个value的最小值
+//NewSkipList 构建一个跳跃表
 func NewSkipList(min *SkipValue) *SkipList {
 	sl := &SkipList{}
 	sl.level = 1
@@ -110,7 +116,7 @@ func randomLevel() int {
 	return level
 }
 
-// GetIterator 返回第一个节点
+// GetIterator 获取迭代器
 func (sl *SkipList) GetIterator() *SkipListIterator {
 	it := &SkipListIterator{}
 	it.list = sl
@@ -121,6 +127,11 @@ func (sl *SkipList) GetIterator() *SkipListIterator {
 // Len 返回节点数
 func (sl *SkipList) Len() int {
 	return sl.count
+}
+
+// Level 返回跳跃表的层级
+func (sl *SkipList) Level() int {
+	return sl.level
 }
 
 func (sl *SkipList) find(value *SkipValue) *skipListNode {
@@ -139,10 +150,19 @@ func (sl *SkipList) FindCount() int {
 	return sl.findcount
 }
 
-// Find 查找skipvalue
+// Find 查找某个跳跃表中的SkipValue
 func (sl *SkipList) Find(value *SkipValue) *SkipValue {
 	x := sl.find(value)
 	if x.next[0] != nil && x.next[0].Value.Compare(value) == 0 {
+		return x.next[0].Value
+	}
+	return nil
+}
+
+// FindGreaterOrEqual 在跳跃表中查找某个位置在传参后面或者与传参相等的SkipValue
+func (sl *SkipList) FindGreaterOrEqual(value *SkipValue) *SkipValue {
+	x := sl.find(value)
+	if x.next[0] != nil {
 		return x.next[0].Value
 	}
 	return nil
@@ -226,7 +246,7 @@ func (sl *SkipList) Print() {
 			e := r.next[i]
 			//fmt.Print(i)
 			for e != nil {
-				fmt.Print(e.Value.Price)
+				fmt.Print(e.Value.Score)
 				fmt.Print("    ")
 				fmt.Print(e.Value)
 				fmt.Println("")

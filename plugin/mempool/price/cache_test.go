@@ -134,5 +134,5 @@ func TestQueueDirection(t *testing.T) {
 	cache.Push(item4)
 	cache.Push(item5)
 	cache.txList.Print()
-	assert.Equal(t, true, cache.txList.GetIterator().First().Price >= cache.txList.GetIterator().Last().Price)
+	assert.Equal(t, true, cache.txList.GetIterator().First().Score >= cache.txList.GetIterator().Last().Score)
 }

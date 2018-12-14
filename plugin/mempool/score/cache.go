@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
+	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
 )
@@ -12,21 +13,21 @@ var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分
 
 // Queue 分数队列模式(分数=常量a*手续费/交易字节数-常量b*时间*定量c,按分数排队,高的优先,常量a,b和定量c可配置)
 type Queue struct {
-	txMap     map[string]*SkipValue
-	txList    *SkipList
+	txMap     map[string]*skiplist.SkipValue
+	txList    *skiplist.SkipList
 	subConfig subConfig
 }
 
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
-		txMap:     make(map[string]*SkipValue, subcfg.PoolCacheSize),
-		txList:    NewSkipList(&SkipValue{-1, nil}),
+		txMap:     make(map[string]*skiplist.SkipValue, subcfg.PoolCacheSize),
+		txList:    skiplist.NewSkipList(&skiplist.SkipValue{-1, nil}),
 		subConfig: subcfg,
 	}
 }
 
-func (cache *Queue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
+func (cache *Queue) SkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
 	//tx := item.value
 	buf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(buf)
@@ -35,7 +36,7 @@ func (cache *Queue) newSkipValue(item *mempool.Item) (*SkipValue, error) {
 		return nil, err
 	}
 	size := len(buf.Bytes())
-	return &SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
+	return &skiplist.SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
 }
 
 // Exist 是否存在
@@ -68,7 +69,7 @@ func (cache *Queue) Push(item *mempool.Item) error {
 		newEnterTime := types.Now().Unix()
 		resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
 		var err error
-		sv, err := cache.newSkipValue(resendItem)
+		sv, err := cache.SkipValue(resendItem)
 		if err != nil {
 			return err
 		}
@@ -80,7 +81,7 @@ func (cache *Queue) Push(item *mempool.Item) error {
 	}
 
 	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
-	sv, err := cache.newSkipValue(it)
+	sv, err := cache.SkipValue(it)
 	if err != nil {
 		return err
 	}
