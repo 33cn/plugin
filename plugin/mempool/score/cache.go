@@ -22,7 +22,7 @@ type Queue struct {
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
 		txMap:     make(map[string]*skiplist.SkipValue, subcfg.PoolCacheSize),
-		txList:    skiplist.NewSkipList(&skiplist.SkipValue{-1, nil}),
+		txList:    skiplist.NewSkipList(&skiplist.SkipValue{Score: -1, Value: nil}),
 		subConfig: subcfg,
 	}
 }

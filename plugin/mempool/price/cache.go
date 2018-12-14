@@ -21,9 +21,9 @@ type Queue struct {
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
-		txMap:     make(map[string]*skiplist.SkipValue, subcfg.PoolCacheSize),
-		txList:    skiplist.NewSkipList(&skiplist.SkipValue{-1, nil}),
-		subConfig: subcfg,
+		make(map[string]*skiplist.SkipValue, subcfg.PoolCacheSize),
+		skiplist.NewSkipList(&skiplist.SkipValue{Score: -1, Value: nil}),
+		subcfg,
 	}
 }
 
