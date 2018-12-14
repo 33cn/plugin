@@ -167,7 +167,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	indexstr, _ := cmd.Flags().GetString("index")
 	index, _ := strconv.ParseInt(indexstr, 10, 64)
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
-	round,_ := cmd.Flags().GetString("round")
+	round, _ := cmd.Flags().GetString("round")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.PokerBullX
@@ -186,14 +186,14 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 			ctx.Run()
 		} else {
 			params.FuncName = pkt.FuncNameQueryGameByRound
-			roundInt,err := strconv.ParseInt(round, 10, 32)
+			roundInt, err := strconv.ParseInt(round, 10, 32)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 			req := &pkt.QueryPBGameByRound{
-				GameId:gameID,
-				Round:int32(roundInt),
+				GameId: gameID,
+				Round:  int32(roundInt),
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.ReplyPBGameByRound

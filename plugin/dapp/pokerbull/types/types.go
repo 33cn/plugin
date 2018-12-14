@@ -7,10 +7,11 @@ package types
 import (
 	"reflect"
 
-	"github.com/33cn/chain33/types"
 	"encoding/json"
-	log "github.com/33cn/chain33/common/log/log15"
 	"errors"
+
+	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
 )
 
 var (

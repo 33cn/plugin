@@ -64,7 +64,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		}
 		roundPlayer := &pkt.PBPlayer{
 			Address: player.Address,
-			Ready  : isReady,
+			Ready:   isReady,
 		}
 		roundPlayers = append(roundPlayers, roundPlayer)
 	}
@@ -76,7 +76,6 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		result = game.Results[in.Round-1]
 	}
 
-
 	gameInfo := &pkt.ReplyPBGameByRound{
 		GameId:    game.GameId,
 		Status:    game.Status,
@@ -84,7 +83,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		IsWaiting: game.IsWaiting,
 		Value:     game.Value,
 		Players:   roundPlayers,
-		Return:    (game.Value/types.Coin) * pkt.WinnerReturn,
+		Return:    (game.Value / types.Coin) * pkt.WinnerReturn,
 	}
 
 	return gameInfo, nil

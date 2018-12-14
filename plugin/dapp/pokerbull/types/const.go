@@ -60,7 +60,6 @@ const (
 	CreatequitTx = "CreatequitTx"
 )
 
-
 const (
 	// ListDESC 降序
 	ListDESC = int32(0)

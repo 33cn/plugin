@@ -418,7 +418,7 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 
 // 佣金扣除
 func (action *Action) defaultFeeTransfer(winner string, feeAddr string, fee int64, value int64) *types.Receipt {
-	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/types.Coin) * fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
+	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/types.Coin)*fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
 	if err != nil {
 		action.coinsAccount.ExecFrozen(winner, action.execaddr, (value/types.Coin)*fee) // rollback
 		logger.Error("GameSettleDefault.ExecTransfer", "addr", winner, "execaddr", action.execaddr, "amount",
