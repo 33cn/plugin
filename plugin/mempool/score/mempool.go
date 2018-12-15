@@ -19,7 +19,7 @@ type subConfig struct {
 }
 
 func init() {
-	drivers.Reg("trade", New)
+	drivers.Reg("score", New)
 }
 
 //New 创建score cache 结构的 mempool
