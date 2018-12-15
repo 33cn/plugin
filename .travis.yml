@@ -1,4 +1,5 @@
 language: go
+matrix:
 go_import_path: github.com/33cn/plugin
 os: linux
 dist: xenial
