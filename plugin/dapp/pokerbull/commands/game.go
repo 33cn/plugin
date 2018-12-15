@@ -7,7 +7,6 @@ package commands
 import (
 	"fmt"
 	"strconv"
-
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
