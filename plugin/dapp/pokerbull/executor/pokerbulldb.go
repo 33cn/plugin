@@ -18,19 +18,6 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 )
 
-const (
-	// ListDESC 降序
-	ListDESC = int32(0)
-	// DefaultCount 默认一次取多少条记录
-	DefaultCount = int32(20)
-	// MaxPlayerNum 最大玩家数
-	MaxPlayerNum = 5
-	// MinPlayValue 最小赌注
-	MinPlayValue = 10 * types.Coin
-	// DefaultStyle 默认游戏类型
-	DefaultStyle = pkt.PlayStyleDefault
-)
-
 // Action 斗牛action结构
 type Action struct {
 	coinsAccount *account.DB
@@ -57,7 +44,7 @@ func NewAction(pb *PokerBull, tx *types.Transaction, index int) *Action {
 func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActive int64) bool {
 	// 赌注为零，按照最小赌注冻结
 	if ToFrozen == 0 {
-		ToFrozen = MinPlayValue
+		ToFrozen = pkt.MinPlayValue
 	}
 
 	acc := action.coinsAccount.LoadExecAccount(fromAddr, action.execaddr)
@@ -69,7 +56,7 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 
 // Key 获取key值
 func Key(id string) (key []byte) {
-	key = append(key, []byte("mavl-"+types.ExecName(pkt.PokerBullX)+"-")...)
+	key = append(key, []byte("mavl-"+pkt.PokerBullX+"-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
@@ -77,14 +64,14 @@ func Key(id string) (key []byte) {
 func readGame(db dbm.KV, id string) (*pkt.PokerBull, error) {
 	data, err := db.Get(Key(id))
 	if err != nil {
-		logger.Error("query data have err:", err.Error())
+		logger.Error("query data have err:", "err", err)
 		return nil, err
 	}
 	var game pkt.PokerBull
 	//decode
 	err = types.Decode(data, &game)
 	if err != nil {
-		logger.Error("decode game have err:", err.Error())
+		logger.Error("decode game have err:", "err", err)
 		return nil, err
 	}
 	return &game, nil
@@ -108,14 +95,13 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 	var values [][]byte
 	var err error
 	if index == 0 {
-		values, err = db.List(calcPBGameAddrPrefix(addr), nil, DefaultCount, ListDESC)
+		values, err = db.List(calcPBGameAddrPrefix(addr), nil, pkt.DefaultCount, pkt.ListDESC)
 	} else {
-		values, err = db.List(calcPBGameAddrPrefix(addr), calcPBGameAddrKey(addr, index), DefaultCount, ListDESC)
+		values, err = db.List(calcPBGameAddrPrefix(addr), calcPBGameAddrKey(addr, index), pkt.DefaultCount, pkt.ListDESC)
 	}
 	if err != nil {
 		return nil, err
 	}
-
 	var gameIds []*pkt.PBGameRecord
 	for _, value := range values {
 		var record pkt.PBGameRecord
@@ -125,7 +111,9 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		}
 		gameIds = append(gameIds, &record)
 	}
-
+	if len(gameIds) == 0 {
+		return nil, types.ErrNotFound
+	}
 	return &pkt.PBGameRecords{Records: gameIds}, nil
 }
 
@@ -133,17 +121,17 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 	var values [][]byte
 	var err error
 	if index == 0 {
-		values, err = db.List(calcPBGameStatusPrefix(status), nil, DefaultCount, ListDESC)
+		values, err = db.List(calcPBGameStatusPrefix(status), nil, pkt.DefaultCount, pkt.ListDESC)
 	} else {
-		values, err = db.List(calcPBGameStatusPrefix(status), calcPBGameStatusKey(status, index), DefaultCount, ListDESC)
+		values, err = db.List(calcPBGameStatusPrefix(status), calcPBGameStatusKey(status, index), pkt.DefaultCount, pkt.ListDESC)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	var gameIds []*pkt.PBGameRecord
+	var gameIds []*pkt.PBGameIndexRecord
 	for _, value := range values {
-		var record pkt.PBGameRecord
+		var record pkt.PBGameIndexRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -151,11 +139,11 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		gameIds = append(gameIds, &record)
 	}
 
-	return &pkt.PBGameRecords{Records: gameIds}, nil
+	return &pkt.PBGameIndexRecords{Records: gameIds}, nil
 }
 
 func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, value int64) ([]string, error) {
-	values, err := db.List(calcPBGameStatusAndPlayerPrefix(stat, player, value), nil, DefaultCount, ListDESC)
+	values, err := db.List(calcPBGameStatusAndPlayerPrefix(stat, player, value), nil, pkt.DefaultCount, pkt.ListDESC)
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +198,7 @@ func (action *Action) GetReceiptLog(game *pkt.PokerBull) *types.ReceiptLog {
 		}
 	}
 	r.PreStatus = game.PreStatus
+	r.Round = game.Round
 	log.Log = types.Encode(r)
 	return log
 }
@@ -411,11 +400,38 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 		}
 	}
 
+	// 扣除开发者佣金
+	receipt := action.defaultFeeTransfer(result.Winner, pkt.DeveloperAddress, pkt.DeveloperFee, game.GetValue())
+	if receipt != nil {
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
+	// 扣除平台佣金
+	receipt = action.defaultFeeTransfer(result.Winner, pkt.PlatformAddress, pkt.PlatformFee, game.GetValue())
+	if receipt != nil {
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
 	return logs, kv, nil
 }
 
+// 佣金扣除
+func (action *Action) defaultFeeTransfer(winner string, feeAddr string, fee int64, value int64) *types.Receipt {
+	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/types.Coin)*fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
+	if err != nil {
+		action.coinsAccount.ExecFrozen(winner, action.execaddr, (value/types.Coin)*fee) // rollback
+		logger.Error("GameSettleDefault.ExecTransfer", "addr", winner, "execaddr", action.execaddr, "amount",
+			(value/types.Coin)*fee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
+		return nil
+	}
+
+	return receipt
+}
+
 func (action *Action) settleAccount(lastAddress string, game *pkt.PokerBull) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	if DefaultStyle == pkt.PlayStyleDealer {
+	if pkt.DefaultStyle == pkt.PlayStyleDealer {
 		return action.settleDealerAccount(lastAddress, game)
 	}
 	return action.settleDefaultAccount(lastAddress, game)
@@ -453,11 +469,11 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 
 	// 不指定赌注，默认按照最低赌注
 	if start.GetValue() == 0 {
-		start.Value = MinPlayValue
+		start.Value = pkt.MinPlayValue
 	}
 
 	//TODO 庄家检查闲家数量倍数的资金
-	if DefaultStyle == pkt.PlayStyleDealer {
+	if pkt.DefaultStyle == pkt.PlayStyleDealer {
 		if !action.CheckExecAccountBalance(action.fromaddr, start.GetValue()*PokerbullLeverageMax*int64(start.PlayerNum-1), 0) {
 			logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
 				gameID, "err", types.ErrNoBalance)
@@ -477,9 +493,11 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 		DealerAddr:  action.fromaddr,
 		IsWaiting:   true,
 		PreStatus:   0,
+		Round:       1,
 	}
 
 	Shuffle(game.Poker, action.blocktime) //洗牌
+	logger.Debug(fmt.Sprintf("Start a new game %s for player %s", game.GameId, action.fromaddr))
 
 	return game, nil
 }
@@ -500,7 +518,7 @@ func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBul
 		}
 
 		//选择合适赌注的游戏
-		if value == 0 && game.GetValue() != MinPlayValue {
+		if value == 0 && game.GetValue() != pkt.MinPlayValue {
 			if !action.CheckExecAccountBalance(action.fromaddr, game.GetValue(), 0) {
 				logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "id", id, "err", types.ErrNoBalance)
 				continue
@@ -513,32 +531,33 @@ func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBul
 	return gameRet
 }
 
-func (action *Action) checkPlayerExistInGame() bool {
-	values, err := action.localDB.List(calcPBGameAddrPrefix(action.fromaddr), nil, DefaultCount, ListDESC)
-	if err == types.ErrNotFound {
-		return false
-	}
-
-	var value pkt.PBGameRecord
-	length := len(values)
-	if length != 0 {
-		valueBytes := values[length-1]
-		err := types.Decode(valueBytes, &value)
-		if err == nil && value.Status == pkt.PBGameActionQuit {
-			return false
-		}
-	}
-	return true
-}
+//func (action *Action) checkPlayerExistInGame() bool {
+//	values, err := action.localDB.List(calcPBGameAddrPrefix(action.fromaddr), nil, pkt.DefaultCount, pkt.ListDESC)
+//	if err == types.ErrNotFound {
+//		return false
+//	}
+//
+//	var value pkt.PBGameRecord
+//	length := len(values)
+//	if length != 0 {
+//		valueBytes := values[length-1]
+//		err := types.Decode(valueBytes, &value)
+//		if err == nil && value.Status == pkt.PBGameActionQuit {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 // GameStart 游戏开始
 func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	if start.PlayerNum > MaxPlayerNum {
+	logger.Debug(fmt.Sprintf("Pokerbull game start for %s", action.fromaddr))
+	if start.PlayerNum > pkt.MaxPlayerNum {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("The maximum player number is %d", MaxPlayerNum))
+			"err", fmt.Sprintf("The maximum player number is %d", pkt.MaxPlayerNum))
 		return nil, types.ErrInvalidParam
 	}
 
@@ -548,10 +567,11 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		return nil, types.ErrNoBalance
 	}
 
-	if action.checkPlayerExistInGame() {
-		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Address is already in a game")
-		return nil, fmt.Errorf("Address is already in a game")
-	}
+	// 由应用平台限制
+	//if action.checkPlayerExistInGame() {
+	//	logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Address is already in a game")
+	//	return nil, fmt.Errorf("Address is already in a game")
+	//}
 
 	var game *pkt.PokerBull
 	ids, err := queryGameListByStatusAndPlayer(action.localDB, pkt.PBGameActionStart, start.PlayerNum, start.Value)
@@ -573,6 +593,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 				return nil, err
 			}
 		}
+		logger.Debug(fmt.Sprintf("Match a new game %s for player %s", game.GameId, game.GameId))
 	}
 
 	//发牌随机数取txhash
@@ -590,6 +611,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 
 	// 如果人数达标，则发牌计算斗牛结果
 	if len(game.Players) == int(game.PlayerNum) {
+		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -603,6 +625,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		game.PreStatus = pkt.PBGameActionStart
 		game.IsWaiting = false
 	} else {
+		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, start.GetValue()*PokerbullLeverageMax) //冻结子账户资金, 最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", start.GetValue(), "err", err.Error())
@@ -644,16 +667,17 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 
 	game, err := action.readGame(pbcontinue.GetGameId())
 	if err != nil {
-		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
+		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed, gameID",
 			pbcontinue.GetGameId(), "err", err)
 		return nil, err
 	}
 
 	if game.Status != pkt.PBGameActionContinue {
-		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
+		logger.Error("GameContinue", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error, gameID",
 			pbcontinue.GetGameId())
 		return nil, err
 	}
+	logger.Debug(fmt.Sprintf("Pokerbull game %s continue for %s", game.GameId, action.fromaddr))
 
 	// 检查余额，庄家检查闲家数量倍数的资金
 	checkValue := game.GetValue() * PokerbullLeverageMax
@@ -688,6 +712,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 	pbplayer.Ready = true
 
 	if getReadyPlayerNum(game.Players) == int(game.PlayerNum) {
+		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -699,6 +724,11 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 		game.IsWaiting = false
 		game.PreStatus = pkt.PBGameActionContinue
 	} else {
+		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
+		// 回合数加一次
+		if !game.IsWaiting {
+			game.Round++
+		}
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, game.GetValue()*PokerbullLeverageMax) //冻结子账户资金,最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", game.GetValue(), "err", err.Error())
