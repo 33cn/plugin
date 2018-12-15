@@ -5,9 +5,9 @@ dist: xenial
 
 notifications:
   email: false
-jobs:
+matrix:
   include:
-    - stage: check_fmt
+    - name: check_fmt
       sudo: require
       go: "1.11.x"
       install:
@@ -20,30 +20,31 @@ jobs:
         - make checkgofmt && make fmt_go
         - make linter
 
-    - stage: unit-test
+    - name: unit-test
       go: "1.9.x"
       install: skip
       script:
         - make test
 
-    - stage: auto-test
+    - name: auto-test
       go: "1.9.x"
       install: skip
       before_script: make build_ci
       script:
         - make autotest dapp=all
 
-    - stage: coverage
+    - name: coverage
       if: branch = master
       go: "1.9.x"
+      before_install:
+        - go get -t -v ./...
       install: skip
       script:
         - make coverage
       after_success:
         - bash <(curl -s https://codecov.io/bash)
 
-
-    - stage: deploy
+    - name: deploy
       if: env(DAPP) IS present
       sudo: required
       services:
