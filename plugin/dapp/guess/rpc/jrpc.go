@@ -39,6 +39,20 @@ func (c *Jrpc) GuessBetTx(parm *pb.GuessBetTxReq, result *interface{}) error {
 	return nil
 }
 
+func (c *Jrpc) GuessStopBetTx(parm *pb.GuessStopBetTxReq, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+
+	reply, err := c.cli.GuessStopBet(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
+
 func (c *Jrpc) GuessAbortTx(parm *pb.GuessAbortTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam

@@ -26,6 +26,7 @@ func GuessCmd() *cobra.Command {
 		GuessAbortRawTxCmd(),
 		GuessQueryRawTxCmd(),
 		GuessPublishRawTxCmd(),
+		GuessStopBetRawTxCmd(),
 	)
 
 	return cmd
@@ -144,6 +145,38 @@ func guessBet(cmd *cobra.Command, args []string) {
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessBetTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
+
+func GuessStopBetRawTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stop bet",
+		Short: "stop bet for a guess game",
+		Run:   guessStopBet,
+	}
+	addGuessStopBetFlags(cmd)
+	return cmd
+}
+
+func addGuessStopBetFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("gameId", "g", "", "game ID")
+	cmd.MarkFlagRequired("gameId")
+	cmd.Flags().Float64P("fee", "f", 0.01, "tx fee")
+}
+
+func guessStopBet(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	gameId, _ := cmd.Flags().GetString("gameId")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+
+	params := &pkt.GuessStopBetTxReq{
+		GameId: gameId,
+		Fee: int64(fee * float64(1e8)),
+	}
+
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessStopBetTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
 
 func GuessAbortRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{

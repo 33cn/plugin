@@ -75,6 +75,32 @@ func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*
 	return &types.UnsignTx{Data: data}, nil
 }
 
+func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetTxReq) (*types.UnsignTx, error) {
+	v := &pb.GuessGameStopBet{
+		GameId: parm.GameId,
+	}
+
+	val := &pb.GuessGameAction{
+		Ty:    pb.GuessGameActionStopBet,
+		Value: &pb.GuessGameAction_StopBet{v},
+	}
+
+	name := types.ExecName(pb.GuessX)
+	tx := &types.Transaction{
+		Execer: []byte(types.ExecName(pb.GuessX)),
+		Payload: types.Encode(val),
+		Fee: parm.Fee,
+		To: address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
+	if err != nil {
+		return nil, err
+	}
+	data := types.Encode(tx)
+	return &types.UnsignTx{Data: data}, nil
+}
+
 func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameAbort{
 		GameId: parm.GameId,
