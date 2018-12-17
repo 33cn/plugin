@@ -1,0 +1,40 @@
+syntax = "proto3";
+package echo;
+
+// ping操作action
+message Ping {
+    string msg     = 1;
+}
+// pang操作action
+message Pang {
+    string msg     = 1;
+}
+// 本执行器的统一Action结构
+message EchoAction {
+    oneof value {
+        Ping       ping       = 1;
+        Pang       pang       = 2;
+    }
+    int32 ty = 3;
+}
+// ping操作生成的日志结构
+message PingLog {
+    string msg     = 1;
+    string echo    = 2;
+    int32  count    = 3;
+}
+// pang操作生成的日志结构
+message PangLog {
+    string msg     = 1;
+    string echo    = 2;
+    int32  count    = 3;
+}
+// 查询请求结构
+message Query {
+    string msg     = 1;
+}
+// 查询结果结构
+message QueryResult {
+    string msg     = 1;
+    int32  count   = 2;
+}
