@@ -7,33 +7,30 @@ package types;
 //竞猜游戏内容
 message GuessGame {
     string gameId        = 1;  //游戏ID
-    int32 status        = 2;  //游戏的状态：创建->投注->截止投注->开奖
-    int32 preStatus     = 3;
+    int32 status         = 2;  //游戏的状态：创建->投注->截止投注->开奖
+    int32 preStatus      = 3;
     int64  startTime     = 4;  //创建游戏的时间
-    string startTxHash   = 5;  //创建游戏的交易hash
-    string topic         = 6;  //主题
-    string category      = 7;  //分类
-    string options       = 8;  //选项
-    string maxBetTime       = 9;  //截止下注时间
-    int64 maxBetHeight      = 10;  //截止下注的块高
-    string symbol        = 11;  //bty或者具体token
-    string exec          = 12; //coins或者token
-    int64 maxBetsOneTime= 14; //单次可以下多少注，默认100
-    int64 maxBetsNumber = 15; //最多可以下多少注
-    int64 devFeeFactor   = 16; //开发者抽成比例
-    string devFeeAddr    = 17; //开发者地址
-    int64 platFeeFactor   = 18; //平台抽成比例
-    string platFeeAddr    = 19; //平台地址
-    string expire        = 20; //游戏过期时间
-    int64 expireHeight   = 21; //游戏过期区块高度
-    string adminAddr     = 22; //游戏创建者地址,只有该地址可以开奖
-    int64 betsNumber    = 23; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
-    repeated GuessPlayer plays = 24; //参与游戏下注的玩家投注信息
-    string result = 25;        //公布的中奖结果
-    GuessBetStat betStat = 26;
-    int64 index          = 27;
-    int64 preIndex       = 28;
-    bool drivenByAdmin   = 29;
+    int64  startHeight   = 5;  //创建游戏的时间
+    string startTxHash   = 6;  //创建游戏的交易hash
+    string topic         = 7;  //主题
+    string category      = 8;  //分类
+    string options       = 9;  //选项
+    int64 maxBetHeight   = 10;  //截止下注的块高
+    int64 maxBetsOneTime = 11; //单次可以下多少注，默认100
+    int64 maxBetsNumber  = 12; //最多可以下多少注
+    int64 devFeeFactor   = 13; //开发者抽成比例
+    string devFeeAddr    = 14; //开发者地址
+    int64 platFeeFactor  = 15; //平台抽成比例
+    string platFeeAddr   = 16; //平台地址
+    int64 expireHeight   = 17; //游戏过期区块高度
+    string adminAddr     = 18; //游戏创建者地址,只有该地址可以开奖
+    int64 betsNumber     = 19; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 20; //参与游戏下注的玩家投注信息
+    string result        = 21;        //公布的中奖结果
+    GuessBetStat betStat = 22;
+    int64 index          = 23;
+    int64 preIndex       = 24;
+    bool drivenByAdmin   = 25;
 }
 
 message GuessPlayer {
@@ -78,21 +75,17 @@ message GuessGameAction {
 //游戏启动
 message GuessGameStart{
     string topic     = 1;
-    string options   = 2;
-    string category  = 3;
-    string maxBetTime   = 4;
-    int64 maxBetHeight  = 5;
-    string symbol    = 6;
-    string exec      = 7;
-    int64 maxBetsOneTime= 9;
-    int64 maxBetsNumber = 10;
-    int64 devFeeFactor   = 11; //开发者抽成比例
-    string devFeeAddr    = 12; //开发者地址
-    int64 platFeeFactor  = 13; //平台抽成比例
-    string platFeeAddr   = 14; //平台地址
-    string expire        = 15;
-    int64 expireHeight   = 16;
-    bool drivenByAdmin   = 17;
+    string options      = 2;
+    string category     = 3;
+    int64 maxBetHeight  = 4;
+    int64 maxBetsOneTime= 5;
+    int64 maxBetsNumber = 6;
+    int64 devFeeFactor   = 7; //开发者抽成比例
+    string devFeeAddr    = 8; //开发者地址
+    int64 platFeeFactor  = 9; //平台抽成比例
+    string platFeeAddr   = 10; //平台地址
+    int64 expireHeight   = 11;
+    bool drivenByAdmin   = 12;
 }
 
 //参与游戏下注
@@ -161,35 +154,35 @@ message ReceiptGuessGame {
 message GuessStartTxReq {
     string topic              = 1;
     string options            = 2;
-    int64  startTime          = 3;
-    string maxBetTime            = 4;
-    int64 maxBetHeight          = 5;
-    string symbol             = 6;
-    string exec               = 7;
-    int64 maxBetsOneTime     = 8;
-    int64 maxBetsNumber      = 9;
-    int64  devFeeFactor       = 10;
-    string devFeeAddr         = 11;
-    int64  platFeeFactor      = 12;
-    string platFeeAddr        = 13;
-    string feeAddr            = 14;
-    string expire             = 15;
-    int64 expireHeight       = 16;
+    string category           = 3;
+    int64  maxHeight          = 4;
+    int64 maxBetHeight        = 5;
+    int64 maxBetsOneTime      = 6;
+    int64 maxBetsNumber       = 7;
+    int64  devFeeFactor       = 8;
+    string devFeeAddr         = 9;
+    int64  platFeeFactor      = 10;
+    string platFeeAddr        = 11;
+    int64 expireHeight        = 12;
+    int64 fee                 = 13;
 }
 
 message GuessBetTxReq {
     string gameId    = 1;
     string option    = 2;
     int64  bets      = 3;
+    int64 fee        = 4;
 }
 
 message GuessAbortTxReq {
     string gameId    = 1;
+    int64 fee        = 2;
 }
 
 message GuessPublishTxReq {
     string gameId    = 1;
     string result    = 2;
+    int64 fee        = 3;
 }
 
 // 索引value值

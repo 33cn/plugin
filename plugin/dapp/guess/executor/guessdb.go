@@ -25,9 +25,12 @@ const (
 	ListASC  = int32(1)
 
 	DefaultCount   = int32(20) //默认一次取多少条记录
+	DefaultCategory= "default"
+
 	MaxBetsOneTime = 10000e8            //一次最多下多少注
 	MaxBetsNumber = 10000000e8     //一局游戏最多接受多少注
-	MaxBetHeight = 10000000000    //最大区块高度
+	MaxBetHeight = 1000000    //距离游戏创建区块的最大可下注高度差
+	MaxExpireHeight = 1000000    //距离游戏创建区块的最大过期高度差
 
 	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
 	MinBetTimeInterval = "2h"     //从创建游戏开始，一局游戏最短的可下注时间
@@ -59,7 +62,12 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	fromAddr := tx.From()
 
 	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	conn, err := grpc.Dial(cfg.ParaRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
+	paraRemoteGrpcClient := types.Conf("config.consensus").GStr("ParaRemoteGrpcClient")
+	if types.IsPara() && paraRemoteGrpcClient == "" {
+		panic("ParaRemoteGrpcClient error")
+	}
+
+	conn, err := grpc.Dial(paraRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
 
 	if err != nil {
 		panic(err)
@@ -341,17 +349,13 @@ func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.Gu
 		Topic:       start.Topic,
 		Category:    start.Category,
 		Options:     start.Options,
-		MaxBetTime:     start.MaxBetTime,
 		MaxBetHeight:   start.MaxBetHeight,
-		Symbol:      start.Symbol,
-		Exec:        start.Exec,
 		MaxBetsOneTime:     start.MaxBetsOneTime,
 		MaxBetsNumber: start.MaxBetsNumber,
 		DevFeeFactor: start.DevFeeFactor,
 		DevFeeAddr: start.DevFeeAddr,
 		PlatFeeFactor: start.PlatFeeFactor,
 		PlatFeeAddr: start.PlatFeeAddr,
-		Expire: start.Expire,
 		ExpireHeight: start.ExpireHeight,
 		//AdminAddr: action.fromaddr,
 		BetsNumber: 0,
@@ -369,7 +373,13 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 
 	if start.MaxBetHeight >= MaxBetHeight {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("The maximum height number is %d which is less thanstart.MaxHeight %d", MaxBetHeight, start.MaxBetHeight))
+			"err", fmt.Sprintf("The maximum height diff number is %d which is less than start.MaxBetHeight %d", MaxBetHeight, start.MaxBetHeight))
+		return nil, types.ErrInvalidParam
+	}
+
+	if start.ExpireHeight >= MaxExpireHeight {
+		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"err", fmt.Sprintf("The maximum height diff number is %d which is less than start.MaxBetHeight %d", MaxBetHeight, start.MaxBetHeight))
 		return nil, types.ErrInvalidParam
 	}
 
@@ -394,16 +404,12 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 
 	if !action.CheckTime(start) {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("The height and time parameters are illegal:MaxTime %s MaxHeight %d Expire %s, ExpireHeight %d", start.MaxBetTime, start.MaxBetHeight, start.Expire, start.ExpireHeight))
+			"err", fmt.Sprintf("The height and time parameters are illegal:MaxHeight %d ,ExpireHeight %d", start.MaxBetHeight, start.ExpireHeight))
 		return nil, types.ErrInvalidParam
 	}
 
-	if len(start.Symbol) == 0 {
-		start.Symbol = "bty"
-	}
-
-	if len(start.Exec) == 0 {
-		start.Exec = "coins"
+	if len(start.Category) == 0 {
+		start.Category = DefaultCategory
 	}
 
 	if start.MaxBetsOneTime >= MaxBetsOneTime {
@@ -413,6 +419,16 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	gameId := common.ToHex(action.txhash)
 	game, _ := action.newGame(gameId, start)
 	game.StartTime = action.blocktime
+	if types.IsPara() {
+		mainHeight := action.GetMainHeightByTxHash(action.txhash)
+		if mainHeight < 0 {
+			logger.Error("GameStart", "mainHeight", mainHeight)
+			return nil, pkt.ErrGuessStatus
+		}
+		game.StartHeight = mainHeight
+	} else {
+		game.StartHeight = action.height
+	}
 	game.AdminAddr = action.fromaddr
 	game.PreIndex = 0
 	game.Index = action.getIndex()
@@ -491,7 +507,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	// 检查余额账户余额
+	// 检查账户余额
 	checkValue := pbBet.BetsNum
 	if !action.CheckExecAccountBalance(action.fromaddr, checkValue, 0) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
@@ -507,18 +523,16 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	//如果当前游戏状态可以下注，统一设定游戏状态为GuessGameStatusBet
-	action.ChangeStatus(game, pkt.GuessGameStatusBet)
-	action.AddGuessBet(game, pbBet)
-
 	var receiptLog *types.ReceiptLog
-	if prevStatus != game.Status {
-		//状态发生变化，更新所有addr对应记录的index
-		action.ChangeAllAddrIndex(game)
+	if prevStatus != pkt.GuessGameStatusBet {
+		action.ChangeStatus(game, pkt.GuessGameStatusBet)
+		action.AddGuessBet(game, pbBet)
 		receiptLog = action.GetReceiptLog(game, true)
 	} else {
+		action.AddGuessBet(game, pbBet)
 		receiptLog = action.GetReceiptLog(game, false)
 	}
+
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveGame(game)...)
 
@@ -838,16 +852,36 @@ func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
 }
 
 func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
-	//如果完全由管理员驱动状态变化，则不需要做如下判断保护。
+
+	var mainHeight int64
+	if types.IsPara() {
+		mainHeight = action.GetMainHeightByTxHash(action.txhash)
+		if mainHeight < 0 {
+			logger.Error("RefreshStatusByTime", "mainHeight err", mainHeight)
+			return true
+		}
+	} else {
+		mainHeight = action.height
+	}
+
+	//如果完全由管理员驱动状态变化，则除了保护性过期判断外，不需要做其他判断。
 	if game.DrivenByAdmin {
+
+		if (mainHeight - game.StartHeight) >= game.ExpireHeight {
+			action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
+			canBet = false
+			return canBet
+		}
+
 		return true
 	}
 
-	// 检查区块高度是否超过最大下注高度限制，看是否可以下注
-	if game.GetMaxBetHeight() <= action.height {
+	// 检查区块高度是否超过最大可下注高度限制，看是否可以下注
+	heightDiff := mainHeight - game.StartHeight
+	if heightDiff >= game.MaxBetHeight {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Height over limit",
-			action.height, "MaxHeight", game.GetMaxBetHeight())
-		if game.GetExpireHeight() > action.height {
+			mainHeight, "startHeight", game.StartHeight, "MaxHeightDiff", game.GetMaxBetHeight())
+		if game.ExpireHeight > heightDiff {
 			action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
 		} else {
 			action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
@@ -857,84 +891,29 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
         return  canBet
 	}
 
-	// 检查区块高度是否超过下注时间限制，看是否可以下注
-	if len(game.GetMaxBetTime()) > 0 {
-		tMax, err := time.Parse("2006-01-02 15:04:05", game.GetMaxBetTime())
-		if err != nil {
-			logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse MaxTime failed",
-				game.GetMaxBetTime())
-			canBet = true
-			return canBet
-		}
-
-		tExpire, err := time.Parse("2006-01-02 15:04:05", game.GetExpire())
-		if err != nil {
-			logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse Expire failed",
-				game.GetExpire())
-			canBet = true
-			return canBet
-		}
-
-		tNow := time.Now()
-		if tNow.After(tMax) {
-			logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Time over MaxTime",
-				game.GetMaxBetTime())
-
-			if tNow.After(tExpire) {
-				action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
-			} else {
-				action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
-			}
-
-			canBet = false
-			return canBet
-		}
-	}
-
 	canBet = true
 	return canBet
 }
 
 func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {
-	if len(start.MaxBetTime) == 0 && len(start.Expire) == 0 && start.MaxBetHeight == 0 && start.ExpireHeight == 0 {
+	if start.MaxBetHeight == 0 && start.ExpireHeight == 0 {
 		//如果上述字段都不携带，则认为完全由admin的指令驱动。
 		start.DrivenByAdmin = true
+
+		//依然设定最大过期高度差，作为最后的保护
+		start.ExpireHeight = MaxExpireHeight
 		return true
 	}
 
-	if action.height + MinBetBlockNum > start.MaxBetHeight || start.MaxBetHeight + MinBetTimeoutNum > start.ExpireHeight {
-		return false
+	if start.MaxBetHeight == 0 {
+		start.MaxBetHeight = MaxBetHeight
 	}
 
-	tNow := time.Now()
-	d1, _ := time.ParseDuration(MinBetTimeInterval)      //最短开奖时间
-	d2, _ := time.ParseDuration(MinBetTimeoutInterval)   //最短游戏过期时间
-	if len(start.GetMaxBetTime()) == 0 {
-		tNow.Add(d1)
-		start.MaxBetTime = tNow.Format("2006-01-02 15:04:05")
+	if start.ExpireHeight == 0 {
+		start.ExpireHeight = MaxExpireHeight
 	}
 
-	if len(start.GetExpire()) == 0 {
-		tMax, _ := time.Parse("2006-01-02 15:04:05", start.GetMaxBetTime())
-		tMax.Add(d2)
-		start.Expire = tMax.Format("2006-01-02 15:04:05")
-	}
-
-	tMax, err := time.Parse("2006-01-02 15:04:05", start.GetMaxBetTime())
-	if err != nil {
-		logger.Error("CheckTime", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse MaxTime failed",
-			start.GetMaxBetTime())
-		return false
-	}
-
-	tExpire, err := time.Parse("2006-01-02 15:04:05", start.GetExpire())
-	if err != nil {
-		logger.Error("CheckTime", "addr", action.fromaddr, "execaddr", action.execaddr, "Parse Expire failed",
-			start.GetExpire())
-		return false
-	}
-
-	if tMax.After(tNow.Add(d1)) && tExpire.After(tMax.Add(d2)){
+	if start.MaxBetHeight <= start.ExpireHeight {
 		return true
 	}
 

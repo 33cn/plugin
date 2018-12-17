@@ -6,16 +6,40 @@ package rpc
 
 import (
 	"context"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	pb "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (c *channelClient) GuessStart(ctx context.Context, head *pb.GuessGameStart) (*types.UnsignTx, error) {
+func (c *channelClient) GuessStart(ctx context.Context, parm *pb.GuessStartTxReq) (*types.UnsignTx, error) {
+	v := &pb.GuessGameStart{
+		Topic: parm.Topic,
+		Options: parm.Options,
+		Category: parm.Category,
+		MaxBetHeight: parm.MaxBetHeight,
+		MaxBetsOneTime: parm.MaxBetsOneTime,
+		MaxBetsNumber: parm.MaxBetsNumber,
+		DevFeeFactor: parm.DevFeeFactor,
+		DevFeeAddr: parm.DevFeeAddr,
+		PlatFeeFactor: parm.PlatFeeFactor,
+		PlatFeeAddr: parm.PlatFeeAddr,
+		ExpireHeight: parm.ExpireHeight,
+	}
+
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionStart,
-		Value: &pb.GuessGameAction_Start{head},
+		Value: &pb.GuessGameAction_Start{v},
 	}
-	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
+
+	name := types.ExecName(pb.GuessX)
+	tx := &types.Transaction{
+		Execer: []byte(types.ExecName(pb.GuessX)),
+		Payload: types.Encode(val),
+		Fee: parm.Fee,
+		To: address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -23,12 +47,27 @@ func (c *channelClient) GuessStart(ctx context.Context, head *pb.GuessGameStart)
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (c *channelClient) GuessBet(ctx context.Context, head *pb.GuessGameBet) (*types.UnsignTx, error) {
+func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*types.UnsignTx, error) {
+	v := &pb.GuessGameBet{
+		GameId: parm.GameId,
+		Option: parm.Option,
+		BetsNum: parm.Bets,
+	}
+
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionBet,
-		Value: &pb.GuessGameAction_Bet{head},
+		Value: &pb.GuessGameAction_Bet{v},
 	}
-	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
+
+	name := types.ExecName(pb.GuessX)
+	tx := &types.Transaction{
+		Execer: []byte(types.ExecName(pb.GuessX)),
+		Payload: types.Encode(val),
+		Fee: parm.Fee,
+		To: address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +75,24 @@ func (c *channelClient) GuessBet(ctx context.Context, head *pb.GuessGameBet) (*t
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (c *channelClient) GuessAbort(ctx context.Context, head *pb.GuessGameAbort) (*types.UnsignTx, error) {
+func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq) (*types.UnsignTx, error) {
+	v := &pb.GuessGameAbort{
+		GameId: parm.GameId,
+	}
+
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionAbort,
-		Value: &pb.GuessGameAction_Abort{head},
+		Value: &pb.GuessGameAction_Abort{v},
 	}
-	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
+	name := types.ExecName(pb.GuessX)
+	tx := &types.Transaction{
+		Execer: []byte(types.ExecName(pb.GuessX)),
+		Payload: types.Encode(val),
+		Fee: parm.Fee,
+		To: address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +100,26 @@ func (c *channelClient) GuessAbort(ctx context.Context, head *pb.GuessGameAbort)
 	return &types.UnsignTx{Data: data}, nil
 }
 
-func (c *channelClient) GuessPublish(ctx context.Context, head *pb.GuessGamePublish) (*types.UnsignTx, error) {
+func (c *channelClient) GuessPublish(ctx context.Context, parm *pb.GuessPublishTxReq) (*types.UnsignTx, error) {
+	v := &pb.GuessGamePublish{
+		GameId: parm.GameId,
+		Result: parm.Result,
+	}
+
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionPublish,
-		Value: &pb.GuessGameAction_Publish{head},
+		Value: &pb.GuessGameAction_Publish{v},
 	}
-	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
+
+	name := types.ExecName(pb.GuessX)
+	tx := &types.Transaction{
+		Execer: []byte(types.ExecName(pb.GuessX)),
+		Payload: types.Encode(val),
+		Fee: parm.Fee,
+		To: address.ExecAddress(name),
+	}
+
+	tx, err := types.FormatTx(name, tx)
 	if err != nil {
 		return nil, err
 	}

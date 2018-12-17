@@ -121,17 +121,13 @@ func CreateRawGuessStartTx(parm *GuessGameStartTx) (*types.Transaction, error) {
 		Topic: parm.Topic,
 		Options: parm.Options,
 		Category: parm.Category,
-		MaxBetTime: parm.MaxBetTime,
 		MaxBetHeight: parm.MaxBetHeight,
-		Symbol: parm.Symbol,
-		Exec: parm.Exec,
 		MaxBetsOneTime: parm.MaxBets,
 		MaxBetsNumber: parm.MaxBetsNumber,
 		DevFeeFactor: parm.DevFeeFactor,
 		DevFeeAddr: parm.DevFeeAddr,
 		PlatFeeFactor: parm.PlatFeeFactor,
 		PlatFeeAddr: parm.PlatFeeAddr,
-		Expire: parm.Expire,
 		ExpireHeight: parm.ExpireHeight,
 	}
 

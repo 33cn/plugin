@@ -16,24 +16,8 @@ func (c *Jrpc) GuessStartTx(parm *pb.GuessStartTxReq, result *interface{}) error
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-	head := &pb.GuessGameStart{
-		Topic: parm.Topic,
-		Options: parm.Options,
-		MaxBetTime: parm.MaxBetTime,
-		MaxBetHeight: parm.MaxBetHeight,
-		Symbol: parm.Symbol,
-		Exec: parm.Exec,
-		MaxBetsOneTime: parm.MaxBetsOneTime,
-		MaxBetsNumber: parm.MaxBetsNumber,
-		DevFeeFactor: parm.DevFeeFactor,
-		DevFeeAddr: parm.DevFeeAddr,
-		PlatFeeFactor: parm.PlatFeeFactor,
-		PlatFeeAddr: parm.PlatFeeAddr,
-		Expire: parm.Expire,
-		ExpireHeight: parm.ExpireHeight,
-	}
 
-	reply, err := c.cli.GuessStart(context.Background(), head)
+	reply, err := c.cli.GuessStart(context.Background(), parm)
 	if err != nil {
 		return err
 	}
@@ -46,13 +30,7 @@ func (c *Jrpc) GuessBetTx(parm *pb.GuessBetTxReq, result *interface{}) error {
 		return types.ErrInvalidParam
 	}
 
-	head := &pb.GuessGameBet{
-		GameId: parm.GameId,
-		Option: parm.Option,
-		BetsNum: parm.Bets,
-	}
-
-	reply, err := c.cli.GuessBet(context.Background(), head)
+	reply, err := c.cli.GuessBet(context.Background(), parm)
 	if err != nil {
 		return err
 	}
@@ -66,10 +44,7 @@ func (c *Jrpc) GuessAbortTx(parm *pb.GuessAbortTxReq, result *interface{}) error
 		return types.ErrInvalidParam
 	}
 
-	head := &pb.GuessGameAbort{
-		GameId: parm.GameId,
-	}
-	reply, err := c.cli.GuessAbort(context.Background(), head)
+	reply, err := c.cli.GuessAbort(context.Background(), parm)
 	if err != nil {
 		return err
 	}
@@ -83,11 +58,7 @@ func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) e
 		return types.ErrInvalidParam
 	}
 
-	head := &pb.GuessGamePublish{
-		GameId: parm.GameId,
-		Result: parm.Result,
-	}
-	reply, err := c.cli.GuessPublish(context.Background(), head)
+	reply, err := c.cli.GuessPublish(context.Background(), parm)
 	if err != nil {
 		return err
 	}

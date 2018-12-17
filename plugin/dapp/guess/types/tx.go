@@ -8,17 +8,13 @@ type GuessGameStartTx struct {
 	Topic                string   `json:"topic,omitempty"`
 	Options              string   `json:"options,omitempty"`
 	Category             string   `json:"category,omitempty"`
-	MaxBetTime              string   `json:"maxTime,omitempty"`
 	MaxBetHeight            int64    `json:"maxHeight,omitempty"`
-	Symbol               string   `json:"symbol,omitempty"`
-	Exec                 string   `json:"exec,omitempty"`
 	MaxBets              int64   `json:"maxBets,omitempty"`
 	MaxBetsNumber        int64   `json:"maxBetsNumber,omitempty"`
 	DevFeeFactor         int64    `json:"devFeeFactor,omitempty"`
 	DevFeeAddr           string   `json:"devFeeAddr,omitempty"`
 	PlatFeeFactor        int64    `json:"platFeeFactor,omitempty"`
 	PlatFeeAddr          string   `json:"platFeeAddr,omitempty"`
-	Expire               string   `json:"expire,omitempty"`
 	ExpireHeight         int64    `json:"expireHeight,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
