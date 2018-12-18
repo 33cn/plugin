@@ -81,19 +81,3 @@ func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) e
 	return nil
 }
 
-/*
-func (c *Jrpc) GuessQueryTx(parm *pb.GuessQueryReq, result *interface{}) error {
-	if parm == nil {
-		return types.ErrInvalidParam
-	}
-	head := &pb.GuessGameQuery{
-		GameId: parm.GameId,
-	}
-	reply, err := c.cli.Show(context.Background(), head)
-	if err != nil {
-		return err
-	}
-
-	*result = hex.EncodeToString(reply.Data)
-	return nil
-}*/
