@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
@@ -189,4 +190,3 @@ func delGuessGameCategoryStatusIndexKey(status int32, category string, index int
 	kv.Value = nil
 	return kv
 }
-

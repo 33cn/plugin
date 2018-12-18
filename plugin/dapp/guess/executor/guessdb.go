@@ -7,10 +7,11 @@ package executor
 import (
 	"context"
 	"fmt"
-	"github.com/33cn/chain33/client"
-	"google.golang.org/grpc"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/client"
+	"google.golang.org/grpc"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -24,22 +25,22 @@ const (
 	ListDESC = int32(0)
 	ListASC  = int32(1)
 
-	DefaultCount   = int32(20) //默认一次取多少条记录
-	DefaultCategory= "default"
+	DefaultCount    = int32(20) //默认一次取多少条记录
+	DefaultCategory = "default"
 
-	MaxBetsOneTime = 10000e8            //一次最多下多少注
-	MaxBetsNumber = 10000000e8     //一局游戏最多接受多少注
-	MaxBetHeight = 1000000    //距离游戏创建区块的最大可下注高度差
+	MaxBetsOneTime  = 10000e8    //一次最多下多少注
+	MaxBetsNumber   = 10000000e8 //一局游戏最多接受多少注
+	MaxBetHeight    = 1000000    //距离游戏创建区块的最大可下注高度差
 	MaxExpireHeight = 1000000    //距离游戏创建区块的最大过期高度差
 
-	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
-	MinBetTimeInterval = "2h"     //从创建游戏开始，一局游戏最短的可下注时间
-	MinBetTimeoutNum = 8640       //从游戏结束下注开始，一局游戏最少的超时块数
+	MinBetBlockNum        = 720   //从创建游戏开始，一局游戏最少的可下注区块数量
+	MinBetTimeInterval    = "2h"  //从创建游戏开始，一局游戏最短的可下注时间
+	MinBetTimeoutNum      = 8640  //从游戏结束下注开始，一局游戏最少的超时块数
 	MinBetTimeoutInterval = "24h" //从游戏结束下注开始，一局游戏最短的超时时间
 
-    grpcRecSize int = 5 * 30 * 1024 * 1024
+	grpcRecSize int = 5 * 30 * 1024 * 1024
 
-    retryNum = 10
+	retryNum = 10
 )
 
 type Action struct {
@@ -76,17 +77,17 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 
 	return &Action{
 		coinsAccount: guess.GetCoinsAccount(),
-		db: guess.GetStateDB(),
-		txhash: hash,
-		fromaddr: fromAddr,
-		blocktime: guess.GetBlockTime(),
-		height: guess.GetHeight(),
-		execaddr: dapp.ExecAddress(string(tx.Execer)),
-		localDB: guess.GetLocalDB(),
-		index: index,
-		api: guess.GetAPI(),
-		conn: conn,
-		grpcClient: grpcClient,
+		db:           guess.GetStateDB(),
+		txhash:       hash,
+		fromaddr:     fromAddr,
+		blocktime:    guess.GetBlockTime(),
+		height:       guess.GetHeight(),
+		execaddr:     dapp.ExecAddress(string(tx.Execer)),
+		localDB:      guess.GetLocalDB(),
+		index:        index,
+		api:          guess.GetAPI(),
+		conn:         conn,
+		grpcClient:   grpcClient,
 	}
 }
 
@@ -342,21 +343,21 @@ func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
 // 新建一局游戏
 func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
 	game := &pkt.GuessGame{
-		GameId:      gameId,
-		Status:      pkt.GuessGameActionStart,
+		GameId: gameId,
+		Status: pkt.GuessGameActionStart,
 		//StartTime:   action.blocktime,
-		StartTxHash: gameId,
-		Topic:       start.Topic,
-		Category:    start.Category,
-		Options:     start.Options,
+		StartTxHash:    gameId,
+		Topic:          start.Topic,
+		Category:       start.Category,
+		Options:        start.Options,
 		MaxBetHeight:   start.MaxBetHeight,
-		MaxBetsOneTime:     start.MaxBetsOneTime,
-		MaxBetsNumber: start.MaxBetsNumber,
-		DevFeeFactor: start.DevFeeFactor,
-		DevFeeAddr: start.DevFeeAddr,
-		PlatFeeFactor: start.PlatFeeFactor,
-		PlatFeeAddr: start.PlatFeeAddr,
-		ExpireHeight: start.ExpireHeight,
+		MaxBetsOneTime: start.MaxBetsOneTime,
+		MaxBetsNumber:  start.MaxBetsNumber,
+		DevFeeFactor:   start.DevFeeFactor,
+		DevFeeAddr:     start.DevFeeAddr,
+		PlatFeeFactor:  start.PlatFeeFactor,
+		PlatFeeAddr:    start.PlatFeeAddr,
+		ExpireHeight:   start.ExpireHeight,
 		//AdminAddr: action.fromaddr,
 		BetsNumber: 0,
 		//Index:       action.getIndex(game),
@@ -365,7 +366,6 @@ func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.Gu
 
 	return game, nil
 }
-
 
 func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -433,8 +433,8 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	game.PreIndex = 0
 	game.Index = action.getIndex()
 	game.Status = pkt.GuessGameStatusStart
-	game.BetStat = &pkt.GuessBetStat{TotalBetTimes:0, TotalBetsNumber:0}
-    for i := 0; i < len(options); i++ {
+	game.BetStat = &pkt.GuessBetStat{TotalBetTimes: 0, TotalBetsNumber: 0}
+	for i := 0; i < len(options); i++ {
 		item := &pkt.GuessBetStatItem{Option: options[i], BetsNumber: 0, BetsTimes: 0}
 		game.BetStat.Items = append(game.BetStat.Items, item)
 	}
@@ -484,7 +484,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 
 	//检查竞猜选项是否合法
 	options, legal := GetOptions(game.GetOptions())
-	if !legal || len(options) == 0{
+	if !legal || len(options) == 0 {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
 			game.GetOptions())
 		return nil, types.ErrInvalidParam
@@ -501,7 +501,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 		pbBet.BetsNum = game.GetMaxBetsOneTime()
 	}
 
-	if game.BetsNumber + pbBet.GetBetsNum() > game.MaxBetsNumber {
+	if game.BetsNumber+pbBet.GetBetsNum() > game.MaxBetsNumber {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "MaxBetsNumber over limit",
 			game.MaxBetsNumber, "current Bets Number", game.BetsNumber)
 		return nil, types.ErrInvalidParam
@@ -550,7 +550,7 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 		return nil, err
 	}
 
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet{
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
 		return nil, pkt.ErrGuessStatus
@@ -577,11 +577,11 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 }
 
 func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) {
-	bet := &pkt.GuessBet{ Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
-	player := &pkt.GuessPlayer{ Addr: action.fromaddr, Bet: bet}
+	bet := &pkt.GuessBet{Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
+	player := &pkt.GuessPlayer{Addr: action.fromaddr, Bet: bet}
 	game.Plays = append(game.Plays, player)
 
-	for i := 0; i < len(game.BetStat.Items); i ++ {
+	for i := 0; i < len(game.BetStat.Items); i++ {
 		if game.BetStat.Items[i].Option == pbBet.GetOption() {
 			//针对具体选项更新统计项
 			game.BetStat.Items[i].BetsNumber += pbBet.GetBetsNum()
@@ -615,7 +615,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		return nil, pkt.ErrNoPrivilege
 	}
 
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet{
+	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
 		return nil, pkt.ErrGuessStatus
@@ -623,7 +623,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 
 	//检查竞猜选项是否合法
 	options, legal := GetOptions(game.GetOptions())
-	if !legal || len(options) == 0{
+	if !legal || len(options) == 0 {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Game Options illegal",
 			game.GetOptions())
 		return nil, types.ErrInvalidParam
@@ -731,7 +731,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	var receiptLog *types.ReceiptLog
-    action.ChangeAllAddrIndex(game)
+	action.ChangeAllAddrIndex(game)
 	receiptLog = action.GetReceiptLog(game, true)
 
 	logs = append(logs, receiptLog)
@@ -751,7 +751,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 		return nil, err
 	}
 
-	if game.Status == pkt.GuessGameStatusPublish ||  game.Status == pkt.GuessGameStatusAbort{
+	if game.Status == pkt.GuessGameStatusPublish || game.Status == pkt.GuessGameStatusAbort {
 
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "game status not allow abort",
 			game.Status)
@@ -804,11 +804,11 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-func GetOptions(strOptions string) (options []string, legal bool){
+func GetOptions(strOptions string) (options []string, legal bool) {
 	legal = true
 	items := strings.Split(strOptions, ";")
-	for i := 0 ; i < len(items); i++ {
-		item := strings.Split(items[i],":")
+	for i := 0; i < len(items); i++ {
+		item := strings.Split(items[i], ":")
 		for j := 0; j < len(options); j++ {
 			if item[0] == options[j] {
 				legal = false
@@ -844,7 +844,7 @@ func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
 }
 
 func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
-	for i := 0; i < len(game.Plays) ; i++ {
+	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
 		player.Bet.PreIndex = player.Bet.Index
 		player.Bet.Index = game.Index
@@ -888,7 +888,7 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 		}
 
 		canBet = false
-        return  canBet
+		return canBet
 	}
 
 	canBet = true

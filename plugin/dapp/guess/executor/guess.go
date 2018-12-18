@@ -26,7 +26,6 @@ type subConfig struct {
 
 var cfg subConfig
 
-
 // Init Guess
 func Init(name string, sub []byte) {
 	driverName := GetName()

@@ -8,6 +8,6 @@ import "errors"
 
 // Errors for lottery
 var (
-	ErrNoPrivilege              = errors.New("ErrNoPrivilege")
-	ErrGuessStatus              = errors.New("ErrGuessStatus")
+	ErrNoPrivilege = errors.New("ErrNoPrivilege")
+	ErrGuessStatus = errors.New("ErrGuessStatus")
 )

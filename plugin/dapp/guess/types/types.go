@@ -6,15 +6,16 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/33cn/chain33/common/address"
 	"reflect"
 
-	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/common/address"
+
 	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
 )
 
 var (
-	llog = log.New("module", "exectype." + GuessX)
+	llog = log.New("module", "exectype."+GuessX)
 )
 
 func init() {
@@ -41,23 +42,23 @@ func (t *GuessType) GetPayload() types.Message {
 
 func (t *GuessType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Start": GuessGameActionStart,
-		"Bet": GuessGameActionBet,
-		"StopBet":GuessGameActionStopBet,
-		"Abort": GuessGameActionAbort,
+		"Start":   GuessGameActionStart,
+		"Bet":     GuessGameActionBet,
+		"StopBet": GuessGameActionStopBet,
+		"Abort":   GuessGameActionAbort,
 		"Publish": GuessGameActionPublish,
-		"Query": GuessGameActionQuery,
+		"Query":   GuessGameActionQuery,
 	}
 }
 
 func (t *GuessType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogGuessGameStart:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStart"},
-		TyLogGuessGameBet: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameBet"},
-		TyLogGuessGameStopBet:     {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStopBet"},
-		TyLogGuessGameAbort:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameAbort"},
-		TyLogGuessGamePublish:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGamePublish"},
-		TyLogGuessGameTimeout:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameTimeout"},
+		TyLogGuessGameStart:   {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStart"},
+		TyLogGuessGameBet:     {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameBet"},
+		TyLogGuessGameStopBet: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStopBet"},
+		TyLogGuessGameAbort:   {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameAbort"},
+		TyLogGuessGamePublish: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGamePublish"},
+		TyLogGuessGameTimeout: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameTimeout"},
 	}
 }
 
@@ -117,18 +118,18 @@ func CreateRawGuessStartTx(parm *GuessGameStartTx) (*types.Transaction, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	v := &GuessGameStart {
-		Topic: parm.Topic,
-		Options: parm.Options,
-		Category: parm.Category,
-		MaxBetHeight: parm.MaxBetHeight,
+	v := &GuessGameStart{
+		Topic:          parm.Topic,
+		Options:        parm.Options,
+		Category:       parm.Category,
+		MaxBetHeight:   parm.MaxBetHeight,
 		MaxBetsOneTime: parm.MaxBets,
-		MaxBetsNumber: parm.MaxBetsNumber,
-		DevFeeFactor: parm.DevFeeFactor,
-		DevFeeAddr: parm.DevFeeAddr,
-		PlatFeeFactor: parm.PlatFeeFactor,
-		PlatFeeAddr: parm.PlatFeeAddr,
-		ExpireHeight: parm.ExpireHeight,
+		MaxBetsNumber:  parm.MaxBetsNumber,
+		DevFeeFactor:   parm.DevFeeFactor,
+		DevFeeAddr:     parm.DevFeeAddr,
+		PlatFeeFactor:  parm.PlatFeeFactor,
+		PlatFeeAddr:    parm.PlatFeeAddr,
+		ExpireHeight:   parm.ExpireHeight,
 	}
 
 	val := &GuessGameAction{
@@ -159,8 +160,8 @@ func CreateRawGuessBetTx(parm *GuessGameBetTx) (*types.Transaction, error) {
 	}
 
 	v := &GuessGameBet{
-		GameId: parm.GameId,
-		Option: parm.Option,
+		GameId:  parm.GameId,
+		Option:  parm.Option,
 		BetsNum: parm.BetsNum,
 	}
 	val := &GuessGameAction{
@@ -249,7 +250,7 @@ func CreateRawGuessAbortTx(parm *GuessGameAbortTx) (*types.Transaction, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	v := &GuessGameAbort {
+	v := &GuessGameAbort{
 		GameId: parm.GameId,
 	}
 
@@ -271,5 +272,3 @@ func CreateRawGuessAbortTx(parm *GuessGameAbortTx) (*types.Transaction, error) {
 	}
 	return tx, nil
 }
-
-
