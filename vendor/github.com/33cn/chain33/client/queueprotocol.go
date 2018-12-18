@@ -898,6 +898,25 @@ func (q *QueueProtocol) GetLastBlockSequence() (*types.Int64, error) {
 	return nil, types.ErrTypeAsset
 }
 
+// GetSequenceByHash 通过hash获取对应的执行序列号
+func (q *QueueProtocol) GetSequenceByHash(param *types.ReqHash) (*types.Int64, error) {
+	if param == nil {
+		err := types.ErrInvalidParam
+		log.Error("GetSequenceByHash", "Error", err)
+		return nil, err
+	}
+	msg, err := q.query(blockchainKey, types.EventGetSeqByHash, param)
+	if err != nil {
+		log.Error("GetSequenceByHash", "Error", err.Error())
+		return nil, err
+	}
+	if reply, ok := msg.GetData().(*types.Int64); ok {
+
+		return reply, nil
+	}
+	return nil, types.ErrTypeAsset
+}
+
 // WalletCreateTx create transaction
 func (q *QueueProtocol) WalletCreateTx(param *types.ReqCreateTransaction) (*types.Transaction, error) {
 	msg, err := q.query(walletKey, types.EventWalletCreateTx, param)
@@ -976,6 +995,48 @@ func (q *QueueProtocol) GetTicketCount() (*types.Int64, error) {
 	msg, err := q.query(consensusKey, types.EventGetTicketCount, &types.ReqNil{})
 	if err != nil {
 		log.Error("GetTicketCount", "Error", err.Error())
+		return nil, err
+	}
+	if reply, ok := msg.GetData().(*types.Int64); ok {
+		return reply, nil
+	}
+	return nil, types.ErrTypeAsset
+}
+
+// AddSeqCallBack Add Seq CallBack
+func (q *QueueProtocol) AddSeqCallBack(param *types.BlockSeqCB) (*types.Reply, error) {
+
+	msg, err := q.query(blockchainKey, types.EventAddBlockSeqCB, param)
+	if err != nil {
+		log.Error("AddSeqCallBack", "Error", err.Error())
+		return nil, err
+	}
+	if reply, ok := msg.GetData().(*types.Reply); ok {
+		return reply, nil
+	}
+	return nil, types.ErrTypeAsset
+}
+
+// ListSeqCallBack List Seq CallBacks
+func (q *QueueProtocol) ListSeqCallBack() (*types.BlockSeqCBs, error) {
+
+	msg, err := q.query(blockchainKey, types.EventListBlockSeqCB, &types.ReqNil{})
+	if err != nil {
+		log.Error("ListSeqCallBack", "Error", err.Error())
+		return nil, err
+	}
+	if reply, ok := msg.GetData().(*types.BlockSeqCBs); ok {
+		return reply, nil
+	}
+	return nil, types.ErrTypeAsset
+}
+
+// GetSeqCallBackLastNum Get Seq Call Back Last Num
+func (q *QueueProtocol) GetSeqCallBackLastNum(param *types.ReqString) (*types.Int64, error) {
+
+	msg, err := q.query(blockchainKey, types.EventGetSeqCBLastNum, param)
+	if err != nil {
+		log.Error("ListSeqCallBack", "Error", err.Error())
 		return nil, err
 	}
 	if reply, ok := msg.GetData().(*types.Int64); ok {

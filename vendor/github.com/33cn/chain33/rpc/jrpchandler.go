@@ -20,12 +20,26 @@ import (
 )
 
 // CreateRawTransaction create rawtransaction by jrpc
-func (c *Chain33) CreateRawTransaction(in *types.CreateTx, result *interface{}) error {
-	reply, err := c.cli.CreateRawTransaction(in)
+func (c *Chain33) CreateRawTransaction(in *rpctypes.CreateTx, result *interface{}) error {
+	if in == nil {
+		log.Error("CreateRawTransaction", "Error", types.ErrInvalidParam)
+		return types.ErrInvalidParam
+	}
+	inpb := &types.CreateTx{
+		To:          in.To,
+		Amount:      in.Amount,
+		Fee:         in.Fee,
+		Note:        []byte(in.Note),
+		IsWithdraw:  in.IsWithdraw,
+		IsToken:     in.IsToken,
+		TokenSymbol: in.TokenSymbol,
+		ExecName:    in.ExecName,
+		Execer:      in.Execer,
+	}
+	reply, err := c.cli.CreateRawTransaction(inpb)
 	if err != nil {
 		return err
 	}
-
 	*result = hex.EncodeToString(reply)
 	return nil
 }
@@ -165,43 +179,8 @@ func (c *Chain33) GetBlocks(in rpctypes.BlockParam, result *interface{}) error {
 	{
 		var blockDetails rpctypes.BlockDetails
 		items := reply.GetItems()
-		for _, item := range items {
-			var bdtl rpctypes.BlockDetail
-			var block rpctypes.Block
-			block.BlockTime = item.Block.GetBlockTime()
-			block.Height = item.Block.GetHeight()
-			block.Version = item.Block.GetVersion()
-			block.ParentHash = common.ToHex(item.Block.GetParentHash())
-			block.StateHash = common.ToHex(item.Block.GetStateHash())
-			block.TxHash = common.ToHex(item.Block.GetTxHash())
-			txs := item.Block.GetTxs()
-			if in.Isdetail && len(txs) != len(item.Receipts) { //只有获取详情时才需要校验txs和Receipts的数量是否相等CHAIN33-540
-				return types.ErrDecode
-			}
-			for _, tx := range txs {
-				tran, err := rpctypes.DecodeTx(tx)
-				if err != nil {
-					continue
-				}
-				block.Txs = append(block.Txs, tran)
-			}
-			bdtl.Block = &block
-
-			for i, rp := range item.Receipts {
-				var recp rpctypes.ReceiptData
-				recp.Ty = rp.GetTy()
-				for _, log := range rp.Logs {
-					recp.Logs = append(recp.Logs,
-						&rpctypes.ReceiptLog{Ty: log.Ty, Log: common.ToHex(log.GetLog())})
-				}
-				rd, err := rpctypes.DecodeLog(txs[i].Execer, &recp)
-				if err != nil {
-					continue
-				}
-				bdtl.Receipts = append(bdtl.Receipts, rd)
-			}
-
-			blockDetails.Items = append(blockDetails.Items, &bdtl)
+		if err := convertBlockDetails(items, &blockDetails, in.Isdetail); err != nil {
+			return err
 		}
 		*result = &blockDetails
 	}
@@ -439,50 +418,6 @@ func (c *Chain33) ImportPrivkey(in types.ReqWalletImportPrivkey, result *interfa
 
 // SendToAddress send to address of coins
 func (c *Chain33) SendToAddress(in types.ReqWalletSendToAddress, result *interface{}) error {
-	log.Debug("Rpc SendToAddress", "Tx", in)
-	if types.IsPara() {
-		createTx := &types.CreateTx{
-			To:          in.GetTo(),
-			Amount:      in.GetAmount(),
-			Fee:         1e5,
-			Note:        in.GetNote(),
-			IsWithdraw:  false,
-			IsToken:     true,
-			TokenSymbol: in.GetTokenSymbol(),
-			ExecName:    types.ExecName("token"),
-		}
-		tx, err := c.cli.CreateRawTransaction(createTx)
-		if err != nil {
-			log.Debug("ParaChain CreateRawTransaction", "Error", err.Error())
-			return err
-		}
-		//不需要自己去导出私钥，signRawTx 里面只需带入公钥地址，也回优先去查出相应的私钥，前提是私钥已经导入
-		reqSignRawTx := &types.ReqSignRawTx{
-			Addr:    in.From,
-			Privkey: "",
-			TxHex:   hex.EncodeToString(tx),
-			Expire:  "300s",
-			Index:   0,
-			Token:   "",
-		}
-		replySignRawTx, err := c.cli.SignRawTx(reqSignRawTx)
-		if err != nil {
-			log.Debug("ParaChain SignRawTx", "Error", err.Error())
-			return err
-		}
-		rawParm := rpctypes.RawParm{
-			Token: "",
-			Data:  replySignRawTx.GetTxHex(),
-		}
-		var txHash interface{}
-		err = forwardTranToMainNet(rawParm, &txHash)
-		if err != nil {
-			log.Debug("ParaChain forwardTranToMainNet", "Error", err.Error())
-			return err
-		}
-		*result = &rpctypes.ReplyHash{Hash: txHash.(string)}
-		return nil
-	}
 	reply, err := c.cli.WalletSendToAddress(&in)
 	if err != nil {
 		log.Debug("SendToAddress", "Error", err.Error())
@@ -1139,7 +1074,14 @@ func (c *Chain33) GetBlockByHashes(in rpctypes.ReqHashes, result *interface{}) e
 	if err != nil {
 		return err
 	}
-	*result = reply
+	{
+		var blockDetails rpctypes.BlockDetails
+		items := reply.Items
+		if err := convertBlockDetails(items, &blockDetails, !in.DisableDetail); err != nil {
+			return err
+		}
+		*result = &blockDetails
+	}
 	return nil
 }
 
@@ -1148,16 +1090,11 @@ func (c *Chain33) CreateTransaction(in *rpctypes.CreateTxIn, result *interface{}
 	if in == nil {
 		return types.ErrInvalidParam
 	}
-	exec := types.LoadExecutorType(in.Execer)
-	if exec == nil {
-		return types.ErrExecNameNotAllow
-	}
-	tx, err := exec.CreateTx(in.ActionName, in.Payload)
+	btx, err := types.CallCreateTxJSON(types.ExecName(in.Execer), in.ActionName, in.Payload)
 	if err != nil {
-		log.Error("CreateTransaction", "err", err.Error())
 		return err
 	}
-	*result = hex.EncodeToString(types.Encode(tx))
+	*result = hex.EncodeToString(btx)
 	return nil
 }
 
@@ -1175,5 +1112,82 @@ func (c *Chain33) GetExecBalance(in *types.ReqGetExecBalance, result *interface{
 	}
 	//*result = resp
 	*result = hex.EncodeToString(types.Encode(resp))
+	return nil
+}
+
+// AddSeqCallBack  add Seq CallBack
+func (c *Chain33) AddSeqCallBack(in *types.BlockSeqCB, result *interface{}) error {
+	reply, err := c.cli.AddSeqCallBack(in)
+	log.Error("AddSeqCallBack", "err", err, "reply", reply)
+
+	if err != nil {
+		return err
+	}
+	var resp rpctypes.Reply
+	resp.IsOk = reply.GetIsOk()
+	resp.Msg = string(reply.GetMsg())
+	*result = &resp
+	return nil
+}
+
+// ListSeqCallBack  List Seq CallBack
+func (c *Chain33) ListSeqCallBack(in *types.ReqNil, result *interface{}) error {
+	resp, err := c.cli.ListSeqCallBack()
+	if err != nil {
+		return err
+	}
+	*result = resp
+	return nil
+}
+
+// GetSeqCallBackLastNum  Get Seq Call Back Last Num
+func (c *Chain33) GetSeqCallBackLastNum(in *types.ReqString, result *interface{}) error {
+	resp, err := c.cli.GetSeqCallBackLastNum(in)
+	if err != nil {
+		return err
+	}
+	*result = resp
+	return nil
+}
+
+func convertBlockDetails(details []*types.BlockDetail, retDetails *rpctypes.BlockDetails, isDetail bool) error {
+	for _, item := range details {
+		var bdtl rpctypes.BlockDetail
+		var block rpctypes.Block
+		block.BlockTime = item.Block.GetBlockTime()
+		block.Height = item.Block.GetHeight()
+		block.Version = item.Block.GetVersion()
+		block.ParentHash = common.ToHex(item.Block.GetParentHash())
+		block.StateHash = common.ToHex(item.Block.GetStateHash())
+		block.TxHash = common.ToHex(item.Block.GetTxHash())
+		txs := item.Block.GetTxs()
+		if isDetail && len(txs) != len(item.Receipts) { //只有获取详情时才需要校验txs和Receipts的数量是否相等CHAIN33-540
+			return types.ErrDecode
+		}
+		for _, tx := range txs {
+			tran, err := rpctypes.DecodeTx(tx)
+			if err != nil {
+				continue
+			}
+			block.Txs = append(block.Txs, tran)
+		}
+		bdtl.Block = &block
+
+		for i, rp := range item.Receipts {
+			var recp rpctypes.ReceiptData
+			recp.Ty = rp.GetTy()
+			for _, log := range rp.Logs {
+				recp.Logs = append(recp.Logs,
+					&rpctypes.ReceiptLog{Ty: log.Ty, Log: common.ToHex(log.GetLog())})
+			}
+			rd, err := rpctypes.DecodeLog(txs[i].Execer, &recp)
+			if err != nil {
+				continue
+			}
+			bdtl.Receipts = append(bdtl.Receipts, rd)
+		}
+
+		retDetails.Items = append(retDetails.Items, &bdtl)
+	}
 	return nil
 }

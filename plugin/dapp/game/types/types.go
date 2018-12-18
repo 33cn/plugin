@@ -42,6 +42,11 @@ type GameType struct {
 	types.ExecTypeBase
 }
 
+// GetName 获取执行器名称
+func (gt *GameType) GetName() string {
+	return GameX
+}
+
 // GetLogMap get log
 func (gt *GameType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{

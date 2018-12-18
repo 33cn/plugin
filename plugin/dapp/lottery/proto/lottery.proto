@@ -37,6 +37,8 @@ message Lottery {
     int64                        opRewardRatio              = 18;
     int64                        devRewardRatio             = 19;
     repeated PurchaseRecords     purRecords                 = 20;
+    int64                        totalAddrNum               = 21;
+    int64                        buyAmount                  = 22;
 }
 
 message MissingRecord {
@@ -76,19 +78,22 @@ message LotteryClose {
 }
 
 message ReceiptLottery {
-    string               lotteryId   = 1;
-    int32                status      = 2;
-    int32                prevStatus  = 3;
-    string               addr        = 4;
-    int64                round       = 5;
-    int64                number      = 6;
-    int64                amount      = 7;
-    int64                luckyNumber = 8;
-    int64                time        = 9;
-    string               txHash      = 10;
-    LotteryUpdateBuyInfo updateInfo  = 11;
-    int64                way         = 12;
-    int64                index       = 13;
+    string               lotteryId    = 1;
+    int32                status       = 2;
+    int32                prevStatus   = 3;
+    string               addr         = 4;
+    int64                round        = 5;
+    int64                number       = 6;
+    int64                amount       = 7;
+    int64                luckyNumber  = 8;
+    int64                time         = 9;
+    string               txHash       = 10;
+    LotteryUpdateBuyInfo updateInfo   = 11;
+    int64                way          = 12;
+    int64                index        = 13;
+    int64                totalAddrNum = 14;
+    int64                buyAmount    = 15;
+    LotteryGainInfos     gainInfos    = 16;
 }
 
 message ReqLotteryInfo {
@@ -144,6 +149,8 @@ message ReplyLotteryCurrentInfo {
     int64    purBlockNum                  = 10;
     int64    drawBlockNum                 = 11;
     repeated MissingRecord missingRecords = 12;
+    int64    totalAddrNum                 = 13;
+    int64    buyAmount                    = 14;
 }
 
 message ReplyLotteryHistoryLuckyNumber {
@@ -176,10 +183,12 @@ message LotteryBuyRecords {
 }
 
 message LotteryDrawRecord {
-    int64  number = 1;
-    int64  round  = 2;
-    int64  time   = 3;
-    string txHash = 4;
+    int64  number       = 1;
+    int64  round        = 2;
+    int64  time         = 3;
+    string txHash       = 4;
+    int64  totalAddrNum = 5;
+    int64  buyAmount    = 6;
 }
 
 message LotteryDrawRecords {
@@ -202,3 +211,39 @@ message LotteryUpdateBuyInfo {
 message ReplyLotteryPurchaseAddr {
     repeated string address = 1;
 }
+
+message LotteryGainInfos{
+    repeated LotteryGainInfo gains = 1;
+}
+
+message LotteryGainInfo{
+    string  addr       = 1;
+    int64   buyAmount  = 2;
+    float   fundAmount = 3;
+}
+
+message LotteryGainRecord{
+    string  addr       = 1;
+    int64   buyAmount  = 2;
+    float   fundAmount = 3;
+    int64   round      = 4;
+}
+
+message LotteryGainRecords {
+    repeated LotteryGainRecord records = 1;
+}
+
+message ReqLotteryGainHistory {
+    string lotteryId = 1;
+    string addr      = 2;
+    int64  round     = 3;
+    int32  count     = 4;
+    int32  direction = 5;
+}
+
+message ReqLotteryGainInfo {
+    string lotteryId = 1;
+    string addr      = 2;
+    int64  round     = 3;
+}
+

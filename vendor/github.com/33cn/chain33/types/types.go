@@ -41,6 +41,9 @@ type TxGroup interface {
 
 //ExecName  执行器name
 func ExecName(name string) string {
+	if len(name) > 1 && name[0] == '#' {
+		return name[1:]
+	}
 	if IsParaExecName(name) {
 		return name
 	}
@@ -61,7 +64,7 @@ func IsAllowExecName(name []byte, execer []byte) bool {
 		return false
 	}
 	// name中不允许有 "-"
-	if bytes.Contains(name, slash) {
+	if bytes.Contains(name, slash) || bytes.Contains(name, sharp) {
 		return false
 	}
 	if !bytes.Equal(name, execer) && !bytes.Equal(name, GetRealExecName(execer)) {
@@ -139,7 +142,8 @@ func GetParaExec(execer []byte) []byte {
 	return execer[len(GetTitle()):]
 }
 
-func getParaExecName(execer []byte) []byte {
+//GetParaExecName 获取平行链上的执行器
+func GetParaExecName(execer []byte) []byte {
 	if !bytes.HasPrefix(execer, ParaKey) {
 		return execer
 	}
@@ -159,7 +163,7 @@ func getParaExecName(execer []byte) []byte {
 //GetRealExecName  获取真实的执行器name
 func GetRealExecName(execer []byte) []byte {
 	//平行链执行器，获取真实执行器的规则
-	execer = getParaExecName(execer)
+	execer = GetParaExecName(execer)
 	//平行链嵌套平行链是不被允许的
 	if bytes.HasPrefix(execer, ParaKey) {
 		return execer
@@ -435,6 +439,9 @@ func MustPBToJSON(req Message) []byte {
 
 // MustDecode 数据是否已经编码
 func MustDecode(data []byte, v interface{}) {
+	if data == nil {
+		return
+	}
 	err := json.Unmarshal(data, v)
 	if err != nil {
 		panic(err)

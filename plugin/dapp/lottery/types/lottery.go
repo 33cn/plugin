@@ -35,6 +35,11 @@ func NewType() *LotteryType {
 	return c
 }
 
+// GetName 获取执行器名称
+func (lottery *LotteryType) GetName() string {
+	return LotteryX
+}
+
 // GetLogMap method
 func (lottery *LotteryType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{

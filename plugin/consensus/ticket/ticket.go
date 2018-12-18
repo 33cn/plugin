@@ -201,6 +201,11 @@ func (client *Client) setTicket(tlist *ty.ReplyTicketList, privmap map[string]cr
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
 	client.ticketsMap = make(map[string]*ty.Ticket)
+	if tlist == nil || privmap == nil {
+		client.ticketsMap = nil
+		client.privmap = nil
+		return
+	}
 	for _, ticket := range tlist.Tickets {
 		client.ticketsMap[ticket.GetTicketId()] = ticket
 	}
@@ -212,12 +217,12 @@ func (client *Client) setTicket(tlist *ty.ReplyTicketList, privmap map[string]cr
 func (client *Client) flushTicket() error {
 	//list accounts
 	tickets, privs, err := client.getTickets()
-	if err == types.ErrMinerNotStared {
-		tlog.Error("flushTicket error", "err", "wallet miner not start")
+	if err == types.ErrWalletIsLocked {
+		tlog.Error("flushTicket error", "err", "wallet is locked")
 		client.setTicket(nil, nil)
 		return nil
 	}
-	if err != nil && err != types.ErrMinerNotStared {
+	if err != nil {
 		tlog.Error("flushTicket error", "err", err)
 		return err
 	}

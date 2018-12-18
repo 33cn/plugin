@@ -47,6 +47,9 @@ func (c *channelClient) CreateRawTransaction(param *types.CreateTx) ([]byte, err
 	if param.IsToken {
 		execer = types.ExecName("token")
 	}
+	if param.Execer != "" {
+		execer = param.Execer
+	}
 	return types.CallCreateTx(execer, "", param)
 }
 
@@ -181,7 +184,9 @@ func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBala
 	addr := in.Addr
 	err := address.CheckAddress(addr)
 	if err != nil {
-		return nil, types.ErrInvalidAddress
+		if err = address.CheckMultiSignAddress(addr); err != nil {
+			return nil, types.ErrInvalidAddress
+		}
 	}
 	var addrs []string
 	addrs = append(addrs, addr)

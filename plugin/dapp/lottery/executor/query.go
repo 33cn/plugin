@@ -55,7 +55,8 @@ func (l *Lottery) Query_GetLotteryCurrentInfo(param *pty.ReqLotteryInfo) (types.
 		PurBlockNum:                lottery.PurBlockNum,
 		DrawBlockNum:               lottery.DrawBlockNum,
 		MissingRecords:             lottery.MissingRecords,
-	}
+		TotalAddrNum:               lottery.TotalAddrNum,
+		BuyAmount:                  lottery.BuyAmount}
 	return reply, nil
 }
 
@@ -93,6 +94,21 @@ func (l *Lottery) Query_GetLotteryHistoryBuyInfo(param *pty.ReqLotteryBuyHistory
 func (l *Lottery) Query_GetLotteryBuyRoundInfo(param *pty.ReqLotteryBuyInfo) (types.Message, error) {
 	key := calcLotteryBuyRoundPrefix(param.LotteryId, param.Addr, param.Round)
 	record, err := l.findLotteryBuyRecords(key)
+	if err != nil {
+		return nil, err
+	}
+	return record, nil
+}
+
+// Query_GetLotteryHistoryGainInfo for all history
+func (l *Lottery) Query_GetLotteryHistoryGainInfo(param *pty.ReqLotteryGainHistory) (types.Message, error) {
+	return ListLotteryGainRecords(l.GetLocalDB(), l.GetStateDB(), param)
+}
+
+// Query_GetLotteryRoundGainInfo for each round
+func (l *Lottery) Query_GetLotteryRoundGainInfo(param *pty.ReqLotteryGainInfo) (types.Message, error) {
+	key := calcLotteryGainKey(param.LotteryId, param.Addr, param.Round)
+	record, err := l.findLotteryGainRecord(key)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -127,6 +127,8 @@ func TestJrpc_GetTicketCount(t *testing.T) {
 func TestRPC_CallTestNode(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	cfg, sub := testnode.GetDefaultConfig()
+	// 测试环境下，默认配置的共识为solo，需要修改
+	cfg.Consensus.Name = "ticket"
 	mock33 := testnode.NewWithConfig(cfg, sub, api)
 	defer func() {
 		mock33.Close()

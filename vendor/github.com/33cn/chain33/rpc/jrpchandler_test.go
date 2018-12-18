@@ -387,11 +387,11 @@ func TestChain33_CreateRawTransaction(t *testing.T) {
 	assert.Nil(t, testResult)
 	assert.NotNil(t, err)
 
-	tx := &types.CreateTx{
-		To:          "qew",
+	tx := &rpctypes.CreateTx{
+		To:          "184wj4nsgVxKyz2NhM3Yb5RK5Ap6AFRFq2",
 		Amount:      10,
 		Fee:         1,
-		Note:        []byte("12312"),
+		Note:        "12312",
 		IsWithdraw:  false,
 		IsToken:     false,
 		TokenSymbol: "",
@@ -1229,7 +1229,7 @@ func TestChain33_CreateTransaction(t *testing.T) {
 
 	in := &rpctypes.CreateTxIn{Execer: "notExist", ActionName: "x", Payload: []byte("x")}
 	err = client.CreateTransaction(in, &result)
-	assert.Equal(t, types.ErrExecNameNotAllow, err)
+	assert.Equal(t, types.ErrExecNotFound, err)
 
 	in = &rpctypes.CreateTxIn{Execer: types.ExecName("coins"), ActionName: "notExist", Payload: []byte("x")}
 	err = client.CreateTransaction(in, &result)

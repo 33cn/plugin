@@ -5,6 +5,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"math/rand"
 	"reflect"
@@ -12,7 +13,7 @@ import (
 	"unicode"
 
 	"github.com/33cn/chain33/common/address"
-	proto "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 func init() {
@@ -109,21 +110,51 @@ func CallExecNewTx(execName, action string, param interface{}) ([]byte, error) {
 	return FormatTxEncode(execName, tx)
 }
 
-// CallCreateTx 构造交易信息
-func CallCreateTx(execName, action string, param Message) ([]byte, error) {
+//CallCreateTransaction 创建一个交易
+func CallCreateTransaction(execName, action string, param Message) (*Transaction, error) {
 	exec := LoadExecutorType(execName)
 	if exec == nil {
-		tlog.Error("callExecNewTx", "Error", "exec not found")
+		tlog.Error("CallCreateTx", "Error", "exec not found")
 		return nil, ErrNotSupport
 	}
 	// param is interface{type, var-nil}, check with nil always fail
 	if param == nil {
-		tlog.Error("callExecNewTx", "Error", "param in nil")
+		tlog.Error("CallCreateTx", "Error", "param in nil")
 		return nil, ErrInvalidParam
 	}
-	tx, err := exec.Create(action, param)
+	return exec.Create(action, param)
+}
+
+// CallCreateTx 构造交易信息
+func CallCreateTx(execName, action string, param Message) ([]byte, error) {
+	tx, err := CallCreateTransaction(execName, action, param)
 	if err != nil {
-		tlog.Error("callExecNewTx", "Error", err)
+		return nil, err
+	}
+	return FormatTxEncode(execName, tx)
+}
+
+//CallCreateTxJSON create tx by json
+func CallCreateTxJSON(execName, action string, param json.RawMessage) ([]byte, error) {
+	exec := LoadExecutorType(execName)
+	if exec == nil {
+		execer := GetParaExecName([]byte(execName))
+		//找不到执行器，并且是user.xxx 的情况下
+		if bytes.HasPrefix(execer, UserKey) {
+			tx := &Transaction{Payload: param}
+			return FormatTxEncode(execName, tx)
+		}
+		tlog.Error("CallCreateTxJSON", "Error", "exec not found")
+		return nil, ErrExecNotFound
+	}
+	// param is interface{type, var-nil}, check with nil always fail
+	if param == nil {
+		tlog.Error("CallCreateTxJSON", "Error", "param in nil")
+		return nil, ErrInvalidParam
+	}
+	tx, err := exec.CreateTx(action, param)
+	if err != nil {
+		tlog.Error("CallCreateTxJSON", "Error", err)
 		return nil, err
 	}
 	return FormatTxEncode(execName, tx)
@@ -655,7 +686,7 @@ func (base *ExecTypeBase) GetAction(action string) (Message, error) {
 	return nil, ErrActionNotSupport
 }
 
-//CreateTx 构造tx交易重构完成后删除
+//CreateTx 通过json rpc 创建交易
 func (base *ExecTypeBase) CreateTx(action string, msg json.RawMessage) (*Transaction, error) {
 	data, err := base.GetAction(action)
 	if err != nil {
@@ -714,7 +745,10 @@ func (base *ExecTypeBase) CreateTransaction(action string, data Message) (tx *Tr
 	tymap := base.child.GetTypeMap()
 	if tyid, ok := tymap[action]; ok {
 		field.Set(reflect.ValueOf(tyid))
-		return &Transaction{Payload: Encode(value)}, nil
+		tx := &Transaction{
+			Payload: Encode(value),
+		}
+		return tx, nil
 	}
 	return nil, ErrActionNotSupport
 }

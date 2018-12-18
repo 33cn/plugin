@@ -111,6 +111,8 @@ type QueueProtocolAPI interface {
 	GetBlockSequences(param *types.ReqBlocks) (*types.BlockSequences, error)
 	//types.EventGetBlockByHashes:
 	GetBlockByHashes(param *types.ReqHashes) (*types.BlockDetails, error)
+	//types.EventGetSequenceByHash:
+	GetSequenceByHash(param *types.ReqHash) (*types.Int64, error)
 
 	// --------------- blockchain interfaces end
 
@@ -124,4 +126,11 @@ type QueueProtocolAPI interface {
 	// close chain33
 	CloseQueue() (*types.Reply, error)
 	// --------------- other interfaces end
+	// types.EventAddBlockSeqCB
+	AddSeqCallBack(param *types.BlockSeqCB) (*types.Reply, error)
+
+	// types.EventListBlockSeqCB
+	ListSeqCallBack() (*types.BlockSeqCBs, error)
+	// types.EventGetSeqCBLastNum
+	GetSeqCallBackLastNum(param *types.ReqString) (*types.Int64, error)
 }

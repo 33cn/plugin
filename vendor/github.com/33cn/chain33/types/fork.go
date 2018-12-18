@@ -91,7 +91,7 @@ func (f *Forks) GetFork(title, key string) int64 {
 		if title == "local" {
 			panic("title not exisit -> " + title)
 		} else {
-			tlog.Error("getfork title not exisit -> " + title)
+			tlog.Error("getfork title not exisit -> ", "title", title, "key", key)
 		}
 		return MaxHeight
 	}
@@ -205,6 +205,8 @@ func SetTestNetFork() {
 	systemFork.SetFork("chain33", "ForkTxHeight", 806578)
 	systemFork.SetFork("chain33", "ForkTxGroupPara", 806578)
 	systemFork.SetFork("chain33", "ForkCheckBlockTime", 1200000)
+	systemFork.SetFork("chain33", "ForkMultiSignAddress", 1500000)
+
 }
 
 func setLocalFork() {

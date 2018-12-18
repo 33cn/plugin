@@ -1,27 +1,26 @@
 syntax = "proto3";
 
-import "transaction.proto";
-
 package types;
 
 //斗牛游戏内容
 message PokerBull {
-    string   gameId              = 1;  //默认是由创建这局游戏的txHash作为gameId
-    int32    status              = 2;  // Start 1 -> Continue 2 -> Quit 3
-    int64    startTime           = 3;  //开始时间
-    string   startTxHash         = 4;  //游戏启动交易hash
-    int64    value               = 5;  //赌注
-    PBPoker  poker               = 6;  //扑克牌
-    repeated PBPlayer players    = 7;  //玩家历史牌和结果集
-    int32             playerNum  = 8;  //玩家数
-    repeated PBResult results    = 9;  //游戏结果集
-    int64             index      = 10; //索引
-    int64             prevIndex  = 11; //上级索引
-    int64             quitTime   = 12; //游戏结束时间
-    string            quitTxHash = 13; //游戏结束交易hash
-    string            dealerAddr = 14; //下局庄家地址
-    bool              isWaiting  = 15; //游戏是否处于等待状态
-    int32             preStatus  = 16; //上一index的状态
+    string            gameId      = 1;  //默认是由创建这局游戏的txHash作为gameId
+    int32             status      = 2;  // Start 1 -> Continue 2 -> Quit 3
+    int64             startTime   = 3;  //开始时间
+    string            startTxHash = 4;  //游戏启动交易hash
+    int64             value       = 5;  //赌注
+    PBPoker           poker       = 6;  //扑克牌
+    repeated PBPlayer players     = 7;  //玩家历史牌和结果集
+    int32             playerNum   = 8;  //玩家数
+    repeated PBResult results     = 9;  //游戏结果集
+    int64             index       = 10; //索引
+    int64             prevIndex   = 11; //上级索引
+    int64             quitTime    = 12; //游戏结束时间
+    string            quitTxHash  = 13; //游戏结束交易hash
+    string            dealerAddr  = 14; //下局庄家地址
+    bool              isWaiting   = 15; //游戏是否处于等待状态
+    int32             preStatus   = 16; //上一index的状态
+    int32             round       = 17; //当前游戏回合数
 }
 
 //一把牌
@@ -111,6 +110,10 @@ message PBGameRecords {
     repeated PBGameRecord records = 1;
 }
 
+message PBGameIndexRecords {
+    repeated PBGameIndexRecord records = 1;
+}
+
 message QueryPBGameInfo {
     string gameId = 1;
     string addr   = 2;
@@ -130,6 +133,23 @@ message ReplyPBGameList {
     repeated PokerBull games = 1;
 }
 
+// QueryPBGameByRound 根据gameId和回合数查询某回合的游戏结果
+message QueryPBGameByRound {
+    string gameId = 1;
+    int32  round  = 2;
+}
+
+// ReplyPBGameByRound 某一回合游戏结果
+message ReplyPBGameByRound {
+    string   gameId             = 1;
+    int32    status             = 2;
+    PBResult result             = 3;
+    bool     isWaiting          = 4;
+    int64    value              = 5;
+    repeated PBPlayer players   = 6;
+    int64    return             = 7;
+}
+
 message ReceiptPBGame {
     string   gameId           = 1;
     int32    status           = 2;
@@ -140,7 +160,8 @@ message ReceiptPBGame {
     int64    value            = 7;
     bool     isWaiting        = 8;
     repeated string players   = 9;
-    int32           preStatus = 10;
+    int32    preStatus        = 10;
+    int32    round            = 11;
 }
 
 message PBStartTxReq {
@@ -164,12 +185,3 @@ message PBQueryReq {
     int64  fee    = 2;
 }
 
-// pokerbull 对外提供服务的接口
-service pokerbull {
-    //游戏开始
-    rpc Start(PBGameStart) returns (UnsignTx) {}
-    //游戏继续
-    rpc Continue(PBGameContinue) returns (UnsignTx) {}
-    //游戏结束
-    rpc Quit(PBGameQuit) returns (UnsignTx) {}
-}

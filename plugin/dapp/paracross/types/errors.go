@@ -23,4 +23,8 @@ var (
 	ErrParaEmptyMinerTx = errors.New("ErrParaEmptyMinerTx")
 	// ErrParaMinerExecErr miner tx exec error
 	ErrParaMinerExecErr = errors.New("ErrParaMinerExecErr")
+	// ErrParaWaitingNewSeq para waiting main node new seq coming
+	ErrParaWaitingNewSeq = errors.New("ErrParaWaitingNewSeq")
+	// ErrParaCurHashNotMatch para curr main hash not match with pre, main node may switched
+	ErrParaCurHashNotMatch = errors.New("ErrParaCurHashNotMatch")
 )

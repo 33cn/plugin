@@ -220,6 +220,7 @@ ForkResetTx0= 200000
 ForkWithdraw= 200000
 ForkExecRollback= 450000
 ForkCheckBlockTime=1200000
+ForkMultiSignAddress=1500000
 ForkTxHeight= -1
 ForkTxGroupPara= -1
 ForkChainParamV2= -1
@@ -376,8 +377,8 @@ func init() {
 
 import (
 	log "github.com/inconshreveable/log15"
-	drivers "gitlab.33.cn/chain33/chain33/system/dapp"
-	"gitlab.33.cn/chain33/chain33/types"
+	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
 )
 
 var clog = log.New("module", "execs.${EXECNAME}")
@@ -453,7 +454,7 @@ message ${ACTIONNAME}None {
 	CpftDappTypefile = `package types
 
 import (
-	"gitlab.33.cn/chain33/chain33/types"
+	"github.com/33cn/chain33/types"
 )
 
 var (

@@ -51,6 +51,7 @@ verMix=118
 verMax=119
 
 [mempool]
+name="timeline"
 poolCacheSize=10240
 minTxFee=100000
 
