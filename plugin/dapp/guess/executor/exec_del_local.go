@@ -11,10 +11,10 @@ import (
 
 func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	//新创建游戏，将增加的记录都删除掉
-	if log.Status == pkt.GuessGameStatusStart{
+	if log.Status == pkt.GuessGameStatusStart {
 		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
 		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
-		kvs = append(kvs, delGuessGameAdminIndexKey(log.AdminAddr,log.Index))
+		kvs = append(kvs, delGuessGameAdminIndexKey(log.AdminAddr, log.Index))
 		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
 		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
 	} else if log.Status == pkt.GuessGameStatusBet {
@@ -32,7 +32,7 @@ func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue)
 			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
 			kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
 		}
-	}else if log.StatusChange {
+	} else if log.StatusChange {
 		//其他状态时的状态发生变化的情况,要将老状态对应的记录恢复，同时删除新加的状态记录；对于每个地址的下注记录也需要遍历处理。
 		kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameId, log.PreIndex))
 		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameId, log.PreIndex))

@@ -8,7 +8,7 @@ import "errors"
 
 // Errors for lottery
 var (
-	ErrNoPrivilege              = errors.New("ErrNoPrivilege")
-	ErrGuessStatus              = errors.New("ErrGuessStatus")
-	ErrOverBetsLimit            = errors.New("ErrOverBetsLimit")
+	ErrNoPrivilege = errors.New("ErrNoPrivilege")
+	ErrGuessStatus = errors.New("ErrGuessStatus")
+	ErrOverBetsLimit = errors.New("ErrOverBetsLimit")
 )

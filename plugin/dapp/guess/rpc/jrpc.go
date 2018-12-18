@@ -85,4 +85,3 @@ func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) e
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
