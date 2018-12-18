@@ -174,7 +174,7 @@ func guessStopBet(cmd *cobra.Command, args []string) {
 
 	params := &pkt.GuessStopBetTxReq{
 		GameId: gameID,
-		Fee: 	int64(fee * float64(1e8)),
+		Fee:    int64(fee * float64(1e8)),
 	}
 
 	var res string
@@ -205,8 +205,7 @@ func guessAbort(cmd *cobra.Command, args []string) {
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	params := &pkt.GuessAbortTxReq{
 		GameId: gameID,
-		Fee: 	int64(fee * float64(1e8)),
-
+		Fee:    int64(fee * float64(1e8)),
 	}
 
 	var res string

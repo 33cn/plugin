@@ -26,13 +26,13 @@ const (
 	ListDESC = int32(0)
 
 	//ListASC 表示记录升序排列
-	ListASC  = int32(1)
+	ListASC = int32(1)
 
 	//DefaultCount 默认一次获取的记录数
-	DefaultCount   = int32(20)
+	DefaultCount = int32(20)
 
 	//DefaultCategory 默认分类
-	DefaultCategory= "default"
+	DefaultCategory = "default"
 
 	//MaxBetsOneTime 一次最多下多少注
 	MaxBetsOneTime = 10000e8
@@ -47,10 +47,10 @@ const (
 	MaxExpireHeight = 1000000
 
 	//grpcRecSize 接收缓冲大小
-    grpcRecSize int = 30 * 1024 * 1024
+	grpcRecSize int = 30 * 1024 * 1024
 
-    //retryNum 失败时的重试次数
-    retryNum = 10
+	//retryNum 失败时的重试次数
+	retryNum = 10
 )
 
 //Action 具体动作执行
@@ -359,13 +359,13 @@ func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
 // 新建一局游戏
 func (action *Action) newGame(gameID string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
 	game := &pkt.GuessGame{
-		GameId:      	gameID,
-		Status:      	pkt.GuessGameActionStart,
+		GameId: gameID,
+		Status: pkt.GuessGameActionStart,
 		//StartTime:   action.blocktime,
-		StartTxHash: 	gameID,
-		Topic:       	start.Topic,
-		Category:    	start.Category,
-		Options:     	start.Options,
+		StartTxHash:    gameID,
+		Topic:          start.Topic,
+		Category:       start.Category,
+		Options:        start.Options,
 		MaxBetHeight:   start.MaxBetHeight,
 		MaxBetsOneTime: start.MaxBetsOneTime,
 		MaxBetsNumber:  start.MaxBetsNumber,

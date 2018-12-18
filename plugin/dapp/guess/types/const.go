@@ -61,7 +61,7 @@ const (
 	//FuncName_QueryGameByAdminStatus func name
 	FuncName_QueryGameByAdminStatus = "QueryGamesByAdminStatus"
 	//FuncName_QueryGameByCategoryStatus func name
-	FuncName_QueryGameByCategoryStatus="QueryGamesByCategoryStatus"
+	FuncName_QueryGameByCategoryStatus = "QueryGamesByCategoryStatus"
 )
 
 const (
