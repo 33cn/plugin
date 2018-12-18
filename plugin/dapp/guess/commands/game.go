@@ -139,7 +139,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessBetTxReq{
-		GameId: gameID,
+		GameID: gameID,
 		Option: option,
 		Bets:   betsNumber,
 		Fee:    int64(fee * float64(1e8)),
@@ -173,7 +173,7 @@ func guessStopBet(cmd *cobra.Command, args []string) {
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessStopBetTxReq{
-		GameId: gameID,
+		GameID: gameID,
 		Fee:    int64(fee * float64(1e8)),
 	}
 
@@ -204,7 +204,7 @@ func guessAbort(cmd *cobra.Command, args []string) {
 	gameID, _ := cmd.Flags().GetString("gameId")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	params := &pkt.GuessAbortTxReq{
-		GameId: gameID,
+		GameID: gameID,
 		Fee:    int64(fee * float64(1e8)),
 	}
 
@@ -241,7 +241,7 @@ func guessPublish(cmd *cobra.Command, args []string) {
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessPublishTxReq{
-		GameId: gameID,
+		GameID: gameID,
 		Result: result,
 		Fee:    int64(fee * float64(1e8)),
 	}
@@ -300,7 +300,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	case 1:
 		gameIds := strings.Split(gameIDs, ";")
 		req := &pkt.QueryGuessGameInfos{
-			GameIds: gameIds,
+			GameIDs: gameIds,
 		}
 		params.FuncName = pkt.FuncName_QueryGamesByIds
 		params.Payload = types.MustPBToJSON(req)
@@ -310,7 +310,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case 2:
 		req := &pkt.QueryGuessGameInfo{
-			GameId: gameID,
+			GameID: gameID,
 		}
 		params.FuncName = pkt.FuncName_QueryGameById
 		params.Payload = types.MustPBToJSON(req)

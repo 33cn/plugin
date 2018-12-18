@@ -22,7 +22,7 @@ type GuessGameStartTx struct {
 
 //GuessGameBetTx struct
 type GuessGameBetTx struct {
-	GameId  string `json:"gameId,omitempty"`
+	GameID  string `json:"gameId,omitempty"`
 	Option  string `json:"option,omitempty"`
 	BetsNum int64  `json:"betsNum,omitempty"`
 	Fee     int64  `json:"fee,omitempty"`
@@ -30,19 +30,19 @@ type GuessGameBetTx struct {
 
 //GuessGameStopBetTx struct
 type GuessGameStopBetTx struct {
-	GameId string `json:"gameId,omitempty"`
+	GameID string `json:"gameId,omitempty"`
 	Fee    int64  `json:"fee,omitempty"`
 }
 
 //GuessGamePublishTx struct
 type GuessGamePublishTx struct {
-	GameId string `json:"gameId,omitempty"`
+	GameID string `json:"gameId,omitempty"`
 	Result string `json:"result,omitempty"`
 	Fee    int64  `json:"fee,omitempty"`
 }
 
 //GuessGameAbortTx struct
 type GuessGameAbortTx struct {
-	GameId string `json:"gameId,omitempty"`
+	GameID string `json:"gameId,omitempty"`
 	Fee    int64  `json:"fee,omitempty"`
 }

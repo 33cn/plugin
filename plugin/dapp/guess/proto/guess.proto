@@ -6,7 +6,7 @@ package types;
 
 //GuessGame 竞猜游戏详情
 message GuessGame {
-    string gameId        = 1;  //游戏ID
+    string gameID        = 1;  //游戏ID
     int32 status         = 2;  //游戏的状态：创建->投注->截止投注->开奖
     int32 preStatus      = 3;
     int64  startTime     = 4;  //创建游戏的时间
@@ -94,36 +94,36 @@ message GuessGameStart{
 
 //GuessGameBet 参与游戏下注
 message GuessGameBet{
-    string gameId     = 1;
+    string gameID     = 1;
     string option     = 2;
     int64  betsNum    = 3;
 }
 
 //GuessGameStopBet 游戏停止下注
 message GuessGameStopBet{
-    string gameId     = 1;
+    string gameID     = 1;
 }
 
 //GuessGameAbort 游戏异常终止,退还下注
 message GuessGameAbort{
-    string gameId     = 1;
+    string gameID     = 1;
 }
 
 //GuessGamePublish 游戏结果揭晓
 message GuessGamePublish{
-    string gameId     = 1;
+    string gameID     = 1;
     string result     = 2;
 }
 
 //GuessGameQuery 查询游戏结果
 message GuessGameQuery{
-    string gameId     = 1;
+    string gameID     = 1;
     uint32 ty          = 2;
 }
 
 //QueryGuessGameInfo 游戏信息查询消息
 message QueryGuessGameInfo {
-    string gameId = 1;
+    string gameID = 1;
     string addr   = 2;
     int32  status = 3;
     int64  index  = 4;
@@ -138,7 +138,7 @@ message ReplyGuessGameInfo {
 
 //QueryGuessGameInfos 游戏信息列表查询消息
 message QueryGuessGameInfos {
-    repeated string gameIds = 1;
+    repeated string gameIDs = 1;
 }
 
 //ReplyGuessGameInfos 游戏信息列表查询响应消息
@@ -148,7 +148,7 @@ message ReplyGuessGameInfos {
 
 //ReceiptGuessGame 竞猜游戏收据信息
 message ReceiptGuessGame {
-    string   gameId           = 1;
+    string   gameID           = 1;
     int32   preStatus        = 2;
     int32   status           = 3;
     string   addr             = 4;
@@ -178,7 +178,7 @@ message GuessStartTxReq {
 
 //GuessBetTxReq 构造bet交易的请求
 message GuessBetTxReq {
-    string gameId    = 1;
+    string gameID    = 1;
     string option    = 2;
     int64  bets      = 3;
     int64 fee        = 4;
@@ -186,26 +186,26 @@ message GuessBetTxReq {
 
 //GuessStopBetTxReq 构造stopBet交易的请求
 message GuessStopBetTxReq {
-    string gameId    = 1;
+    string gameID    = 1;
     int64 fee        = 2;
 }
 
 //GuessAbortTxReq 构造abort交易的请求
 message GuessAbortTxReq {
-    string gameId    = 1;
+    string gameID    = 1;
     int64 fee        = 2;
 }
 
 //GuessPublishTxReq 构造publish交易的请求
 message GuessPublishTxReq {
-    string gameId    = 1;
+    string gameID    = 1;
     string result    = 2;
     int64 fee        = 3;
 }
 
 // GuessGameRecord game信息查询记录
 message GuessGameRecord {
-    string gameId = 1;
+    string gameID = 1;
     int32  status = 2;
     int64  index  = 3;
 }

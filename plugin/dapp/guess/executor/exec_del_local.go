@@ -24,9 +24,9 @@ func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue)
 
 		//如果发生了状态变化，恢复老状态的记录，删除新添加的状态记录
 		if log.StatusChange {
-			kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameId, log.PreIndex))
-			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameId, log.PreIndex))
-			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameId, log.PreIndex))
+			kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameID, log.PreIndex))
+			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameID, log.PreIndex))
+			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameID, log.PreIndex))
 
 			kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
 			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
@@ -34,20 +34,20 @@ func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue)
 		}
 	} else if log.StatusChange {
 		//其他状态时的状态发生变化的情况,要将老状态对应的记录恢复，同时删除新加的状态记录；对于每个地址的下注记录也需要遍历处理。
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameId, log.PreIndex))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameId, log.PreIndex))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameId, log.PreIndex))
+		kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameID, log.PreIndex))
+		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameID, log.PreIndex))
+		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameID, log.PreIndex))
 
 		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
 		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
 		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
 
 		//从game中遍历每个地址的记录进行删除新增记录，回复老记录
-		game, err := readGame(g.GetStateDB(), log.GameId)
+		game, err := readGame(g.GetStateDB(), log.GameID)
 		if err == nil {
 			for i := 0; i < len(game.Plays); i++ {
 				player := game.Plays[i]
-				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, log.GameId, player.Bet.PreIndex))
+				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, log.GameID, player.Bet.PreIndex))
 				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.Index))
 			}
 		}

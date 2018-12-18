@@ -139,8 +139,8 @@ func readGame(db dbm.KV, id string) (*pkt.GuessGame, error) {
 //Infos 根据游戏id列表查询多个游戏详情信息
 func Infos(db dbm.KV, infos *pkt.QueryGuessGameInfos) (types.Message, error) {
 	var games []*pkt.GuessGame
-	for i := 0; i < len(infos.GameIds); i++ {
-		id := infos.GameIds[i]
+	for i := 0; i < len(infos.GameIDs); i++ {
+		id := infos.GameIDs[i]
 		game, err := readGame(db, id)
 		if err != nil {
 			return nil, err
@@ -302,8 +302,8 @@ func getGameListByCategoryStatus(db dbm.Lister, category string, status int32, i
 
 func (action *Action) saveGame(game *pkt.GuessGame) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
-	action.db.Set(Key(game.GetGameId()), value)
-	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
+	action.db.Set(Key(game.GetGameID()), value)
+	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameID), Value: value})
 	return kvset
 }
 
@@ -331,7 +331,7 @@ func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *typ
 	}
 
 	r.Index = game.Index
-	r.GameId = game.GameId
+	r.GameID = game.GameID
 	r.Status = game.Status
 	r.AdminAddr = game.AdminAddr
 	r.PreStatus = game.PreStatus
@@ -359,7 +359,7 @@ func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
 // 新建一局游戏
 func (action *Action) newGame(gameID string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
 	game := &pkt.GuessGame{
-		GameId: gameID,
+		GameID: gameID,
 		Status: pkt.GuessGameActionStart,
 		//StartTime:   action.blocktime,
 		StartTxHash:    gameID,
@@ -468,10 +468,10 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := action.readGame(pbBet.GetGameId())
+	game, err := action.readGame(pbBet.GetGameID())
 	if err != nil {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
-			pbBet.GetGameId(), "err", err)
+			pbBet.GetGameID(), "err", err)
 		return nil, err
 	}
 
@@ -484,7 +484,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 
 	canBet := action.RefreshStatusByTime(game)
 
-	if canBet == false {
+	if !canBet {
 		var receiptLog *types.ReceiptLog
 		if prevStatus != game.Status {
 			//状态发生了变化，且是变到了不可下注的状态，那么对于所有下注的addr来说，其addr:status主键的数据都需要更新
@@ -529,7 +529,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	checkValue := pbBet.BetsNum
 	if !action.CheckExecAccountBalance(action.fromaddr, checkValue, 0) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "id",
-			pbBet.GetGameId(), "err", types.ErrNoBalance)
+			pbBet.GetGameID(), "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
 
@@ -562,10 +562,10 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := action.readGame(pbBet.GetGameId())
+	game, err := action.readGame(pbBet.GetGameID())
 	if err != nil {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
-			pbBet.GetGameId(), "err", err)
+			pbBet.GetGameID(), "err", err)
 		return nil, err
 	}
 
@@ -622,10 +622,10 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := action.readGame(publish.GetGameId())
+	game, err := action.readGame(publish.GetGameID())
 	if err != nil {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
-			publish.GetGameId(), "err", err)
+			publish.GetGameID(), "err", err)
 		return nil, err
 	}
 
@@ -706,7 +706,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.DevFeeFactor > 0 {
-		devFee = int64(totalBetsNumber) * game.DevFeeFactor / 1000
+		devFee = totalBetsNumber * game.DevFeeFactor / 1000
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
 		if err != nil {
 			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
@@ -719,7 +719,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.PlatFeeFactor > 0 {
-		platFee = int64(totalBetsNumber) * game.PlatFeeFactor / 1000
+		platFee = totalBetsNumber * game.PlatFeeFactor / 1000
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
 		if err != nil {
 			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
@@ -736,7 +736,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
 		if player.Bet.Option == game.Result {
-			value := int64(player.Bet.BetsNumber * winValue / winBetsNumber)
+			value := player.Bet.BetsNumber * winValue / winBetsNumber
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
 				action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback
@@ -766,10 +766,10 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := action.readGame(pbend.GetGameId())
+	game, err := action.readGame(pbend.GetGameID())
 	if err != nil {
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
-			pbend.GetGameId(), "err", err)
+			pbend.GetGameID(), "err", err)
 		return nil, err
 	}
 
@@ -796,7 +796,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	//激活冻结账户
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
-		value := int64(player.Bet.BetsNumber)
+		value := player.Bet.BetsNumber
 		receipt, err := action.coinsAccount.ExecActive(player.Addr, action.execaddr, value)
 		if err != nil {
 			logger.Error("GameAbort", "addr", player.Addr, "execaddr", action.execaddr, "amount", value, "err", err)
@@ -864,8 +864,6 @@ func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
 		game.Status = destStatus
 		game.Index = action.getIndex()
 	}
-
-	return
 }
 
 //ChangeAllAddrIndex 状态更新时，更新下注记录的历史信息

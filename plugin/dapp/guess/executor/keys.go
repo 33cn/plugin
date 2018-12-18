@@ -81,7 +81,7 @@ func addGuessGameAddrIndexKey(status int32, addr, gameID string, index int64) *t
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAddrKey(addr, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}
@@ -100,7 +100,7 @@ func addGuessGameStatusIndexKey(status int32, gameID string, index int64) *types
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameStatusKey(status, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}
@@ -119,7 +119,7 @@ func addGuessGameAddrStatusIndexKey(status int32, addr, gameID string, index int
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAddrStatusKey(addr, status, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}
@@ -138,7 +138,7 @@ func addGuessGameAdminIndexKey(status int32, addr, gameID string, index int64) *
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAdminKey(addr, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}
@@ -157,7 +157,7 @@ func addGuessGameAdminStatusIndexKey(status int32, addr, gameID string, index in
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAdminStatusKey(addr, status, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}
@@ -176,7 +176,7 @@ func addGuessGameCategoryStatusIndexKey(status int32, category, gameID string, i
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameCategoryStatusKey(category, status, index)
 	record := &pkt.GuessGameRecord{
-		GameId: gameID,
+		GameID: gameID,
 		Status: status,
 		Index:  index,
 	}

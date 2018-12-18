@@ -52,7 +52,7 @@ func (c *channelClient) GuessStart(ctx context.Context, parm *pb.GuessStartTxReq
 //构造bet原始交易
 func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameBet{
-		GameId:  parm.GameId,
+		GameID:  parm.GameID,
 		Option:  parm.Option,
 		BetsNum: parm.Bets,
 	}
@@ -81,7 +81,7 @@ func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*
 //构造stopBet原始交易
 func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameStopBet{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 	}
 
 	val := &pb.GuessGameAction{
@@ -108,7 +108,7 @@ func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetT
 //构造abort原始交易
 func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameAbort{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 	}
 
 	val := &pb.GuessGameAction{
@@ -134,7 +134,7 @@ func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq
 //构造publish原始交易
 func (c *channelClient) GuessPublish(ctx context.Context, parm *pb.GuessPublishTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGamePublish{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 		Result: parm.Result,
 	}
 

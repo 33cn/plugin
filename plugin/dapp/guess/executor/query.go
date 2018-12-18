@@ -16,7 +16,7 @@ func (g *Guess) Query_QueryGamesByIds(in *pkt.QueryGuessGameInfos) (types.Messag
 
 //Query_QueryGameById method
 func (g *Guess) Query_QueryGameById(in *pkt.QueryGuessGameInfo) (types.Message, error) {
-	game, err := readGame(g.GetStateDB(), in.GetGameId())
+	game, err := readGame(g.GetStateDB(), in.GetGameID())
 	if err != nil {
 		return nil, err
 	}

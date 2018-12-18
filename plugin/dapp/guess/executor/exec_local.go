@@ -13,19 +13,19 @@ func (g *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	//新创建游戏
 	if log.Status == pkt.GuessGameStatusStart {
 		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
+		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
 	} else if log.Status == pkt.GuessGameStatusBet {
 		//如果是下注状态，则有用户进行了下注操作
-		kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameId, log.Index))
+		kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameID, log.Index))
 		//如果发生了状态变化，则是从start->bet，对于老状态的记录进行删除操作，并增加新状态记录
 		if log.StatusChange {
-			kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
-			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
-			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
+			kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
+			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
+			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
 
 			kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
 			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
@@ -33,20 +33,20 @@ func (g *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
 		}
 	} else if log.StatusChange {
 		//其他状态时的状态发生变化,要将老状态对应的记录删除，同时加入新状态记录；对于每个地址的下注记录也需要遍历处理。
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameId, log.Index))
+		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
+		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
 
 		kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
 		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
 		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
 
 		//从game中遍历每个地址的记录进行新状态记录的增和老状态记录的删除
-		game, err := readGame(g.GetStateDB(), log.GameId)
+		game, err := readGame(g.GetStateDB(), log.GameID)
 		if err == nil {
 			for i := 0; i < len(game.Plays); i++ {
 				player := game.Plays[i]
-				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.GameId, log.Index))
+				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.GameID, log.Index))
 				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, player.Bet.PreIndex))
 			}
 		}

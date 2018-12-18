@@ -164,7 +164,7 @@ func CreateRawGuessBetTx(parm *GuessGameBetTx) (*types.Transaction, error) {
 	}
 
 	v := &GuessGameBet{
-		GameId:  parm.GameId,
+		GameID:  parm.GameID,
 		Option:  parm.Option,
 		BetsNum: parm.BetsNum,
 	}
@@ -195,7 +195,7 @@ func CreateRawGuessStopBetTx(parm *GuessGameStopBetTx) (*types.Transaction, erro
 	}
 
 	v := &GuessGameStopBet{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 	}
 	val := &GuessGameAction{
 		Ty:    GuessGameActionStopBet,
@@ -224,7 +224,7 @@ func CreateRawGuessPublishTx(parm *GuessGamePublishTx) (*types.Transaction, erro
 	}
 
 	v := &GuessGamePublish{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 		Result: parm.Result,
 	}
 
@@ -255,7 +255,7 @@ func CreateRawGuessAbortTx(parm *GuessGameAbortTx) (*types.Transaction, error) {
 	}
 
 	v := &GuessGameAbort{
-		GameId: parm.GameId,
+		GameID: parm.GameID,
 	}
 
 	val := &GuessGameAction{
