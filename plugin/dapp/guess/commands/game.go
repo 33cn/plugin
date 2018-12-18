@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+//GuessCmd Guess合约命令行
 func GuessCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "guess",
@@ -32,6 +33,7 @@ func GuessCmd() *cobra.Command {
 	return cmd
 }
 
+//GuessStartRawTxCmd 构造Guess合约的start原始交易（未签名）的命令行
 func GuessStartRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
@@ -107,6 +109,7 @@ func guessStart(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+//GuessBetRawTxCmd 构造Guess合约的bet原始交易（未签名）的命令行
 func GuessBetRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bet",
@@ -129,13 +132,13 @@ func addGuessBetFlags(cmd *cobra.Command) {
 
 func guessBet(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	gameId, _ := cmd.Flags().GetString("gameId")
+	gameID, _ := cmd.Flags().GetString("gameId")
 	option, _ := cmd.Flags().GetString("option")
 	betsNumber, _ := cmd.Flags().GetInt64("betsNumber")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessBetTxReq{
-		GameId: gameId,
+		GameId: gameID,
 		Option: option,
 		Bets: betsNumber,
 		Fee: int64(fee * float64(1e8)),
@@ -146,6 +149,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+//GuessStopBetRawTxCmd 构造Guess合约的停止下注(stopBet)原始交易（未签名）的命令行
 func GuessStopBetRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stop bet",
@@ -164,11 +168,11 @@ func addGuessStopBetFlags(cmd *cobra.Command) {
 
 func guessStopBet(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	gameId, _ := cmd.Flags().GetString("gameId")
+	gameID, _ := cmd.Flags().GetString("gameId")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessStopBetTxReq{
-		GameId: gameId,
+		GameId: gameID,
 		Fee: int64(fee * float64(1e8)),
 	}
 
@@ -177,7 +181,7 @@ func guessStopBet(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-
+//GuessAbortRawTxCmd 构造Guess合约的撤销(Abort)原始交易（未签名）的命令行
 func GuessAbortRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "abort",
@@ -196,10 +200,10 @@ func addGuessAbortFlags(cmd *cobra.Command) {
 
 func guessAbort(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	gameId, _ := cmd.Flags().GetString("gameId")
+	gameID, _ := cmd.Flags().GetString("gameId")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	params := &pkt.GuessAbortTxReq{
-		GameId: gameId,
+		GameId: gameID,
 		Fee: int64(fee * float64(1e8)),
 	}
 
@@ -208,6 +212,7 @@ func guessAbort(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+//GuessPublishRawTxCmd 构造Guess合约的发布结果(Publish)原始交易（未签名）的命令行
 func GuessPublishRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "publish",
@@ -230,12 +235,12 @@ func addGuessPublishFlags(cmd *cobra.Command) {
 
 func guessPublish(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	gameId, _ := cmd.Flags().GetString("gameId")
+	gameID, _ := cmd.Flags().GetString("gameId")
 	result, _ := cmd.Flags().GetString("result")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	params := &pkt.GuessPublishTxReq{
-		GameId: gameId,
+		GameId: gameID,
 		Result: result,
 		Fee: int64(fee * float64(1e8)),
 	}
@@ -245,7 +250,7 @@ func guessPublish(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-
+//GuessQueryRawTxCmd 构造Guess合约的查询(Query)命令行
 func GuessQueryRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
@@ -270,7 +275,7 @@ func addGuessQueryFlags(cmd *cobra.Command) {
 func guessQuery(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ty, _ := cmd.Flags().GetInt32("type")
-	gameId, _ := cmd.Flags().GetString("gameId")
+	gameID, _ := cmd.Flags().GetString("gameId")
 	addr, _ := cmd.Flags().GetString("addr")
 	adminAddr, _ := cmd.Flags().GetString("adminAddr")
 	status, _ := cmd.Flags().GetInt32("status")
@@ -304,7 +309,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case 2:
 		req := &pkt.QueryGuessGameInfo{
-			GameId: gameId,
+			GameId: gameID,
 		}
 		params.FuncName = pkt.FuncName_QueryGameById
 		params.Payload = types.MustPBToJSON(req)

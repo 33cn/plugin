@@ -4,6 +4,7 @@
 
 package types
 
+//GuessGameStartTx struct
 type GuessGameStartTx struct {
 	Topic                string   `json:"topic,omitempty"`
 	Options              string   `json:"options,omitempty"`
@@ -19,6 +20,7 @@ type GuessGameStartTx struct {
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
+//GuessGameBetTx struct
 type GuessGameBetTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Option               string   `json:"option,omitempty"`
@@ -26,17 +28,20 @@ type GuessGameBetTx struct {
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
+//GuessGameStopBetTx struct
 type GuessGameStopBetTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
+//GuessGamePublishTx struct
 type GuessGamePublishTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Result               string   `json:"result,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`
 }
 
+//GuessGameAbortTx struct
 type GuessGameAbortTx struct {
 	GameId               string   `json:"gameId,omitempty"`
 	Fee                  int64    `json:"fee,omitempty"`

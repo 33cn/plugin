@@ -24,21 +24,24 @@ func init() {
 	types.RegisterDappFork(GuessX, "Enable", 0)
 }
 
-// exec
+// GuessType struct
 type GuessType struct {
 	types.ExecTypeBase
 }
 
+// NewType method
 func NewType() *GuessType {
 	c := &GuessType{}
 	c.SetChild(c)
 	return c
 }
 
+// GetPayload method
 func (t *GuessType) GetPayload() types.Message {
 	return &GuessGameAction{}
 }
 
+// GetTypeMap method
 func (t *GuessType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Start": GuessGameActionStart,
@@ -50,14 +53,15 @@ func (t *GuessType) GetTypeMap() map[string]int32 {
 	}
 }
 
+// GetLogMap method
 func (t *GuessType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogGuessGameStart:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStart"},
-		TyLogGuessGameBet: {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameBet"},
-		TyLogGuessGameStopBet:     {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameStopBet"},
-		TyLogGuessGameAbort:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameAbort"},
-		TyLogGuessGamePublish:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGamePublish"},
-		TyLogGuessGameTimeout:    {reflect.TypeOf(ReceiptGuessGame{}), "TyLogGuessGameTimeout"},
+		TyLogGuessGameStart:   { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGameStart"},
+		TyLogGuessGameBet:     { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGameBet"},
+		TyLogGuessGameStopBet: { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGameStopBet"},
+		TyLogGuessGameAbort:   { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGameAbort"},
+		TyLogGuessGamePublish: { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGamePublish"},
+		TyLogGuessGameTimeout: { Ty: reflect.TypeOf(ReceiptGuessGame{}), Name: "TyLogGuessGameTimeout"},
 	}
 }
 
@@ -105,12 +109,12 @@ func (t *GuessType) CreateTx(action string, message json.RawMessage) (*types.Tra
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawGuessAbortTx(&param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
+
+	return nil, types.ErrNotSupport
 }
 
-// CreateRawLotteryCreateTx method
+// CreateRawGuessStartTx method
 func CreateRawGuessStartTx(parm *GuessGameStartTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawGuessStartTx", "parm", parm)

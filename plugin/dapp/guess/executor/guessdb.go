@@ -21,27 +21,38 @@ import (
 )
 
 const (
+	//ListDESC 表示记录降序排列
 	ListDESC = int32(0)
+
+	//ListASC 表示记录升序排列
 	ListASC  = int32(1)
 
-	DefaultCount   = int32(20) //默认一次取多少条记录
+	//DefaultCount 默认一次获取的记录数
+	DefaultCount   = int32(20)
+
+	//DefaultCategory 默认分类
 	DefaultCategory= "default"
 
-	MaxBetsOneTime = 10000e8            //一次最多下多少注
-	MaxBetsNumber = 10000000e8     //一局游戏最多接受多少注
-	MaxBetHeight = 1000000    //距离游戏创建区块的最大可下注高度差
-	MaxExpireHeight = 1000000    //距离游戏创建区块的最大过期高度差
+	//MaxBetsOneTime 一次最多下多少注
+	MaxBetsOneTime = 10000e8
 
-	MinBetBlockNum = 720          //从创建游戏开始，一局游戏最少的可下注区块数量
-	MinBetTimeInterval = "2h"     //从创建游戏开始，一局游戏最短的可下注时间
-	MinBetTimeoutNum = 8640       //从游戏结束下注开始，一局游戏最少的超时块数
-	MinBetTimeoutInterval = "24h" //从游戏结束下注开始，一局游戏最短的超时时间
+	//MaxBetsNumber 一局游戏最多接受多少注
+	MaxBetsNumber = 10000000e8
 
-    grpcRecSize int = 5 * 30 * 1024 * 1024
+	//MaxBetHeight 距离游戏创建区块的最大可下注高度差
+	MaxBetHeight = 1000000
 
+	//MaxExpireHeight 距离游戏创建区块的最大过期高度差
+	MaxExpireHeight = 1000000
+
+	//grpcRecSize 接收缓冲大小
+    grpcRecSize int = 30 * 1024 * 1024
+
+    //retryNum 失败时的重试次数
     retryNum = 10
 )
 
+//Action 具体动作执行
 type Action struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -57,6 +68,7 @@ type Action struct {
 	grpcClient   types.Chain33Client
 }
 
+//NewAction 生成Action对象
 func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromAddr := tx.From()
@@ -90,6 +102,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	}
 }
 
+//CheckExecAccountBalance 检查地址在Guess合约中的余额是否足够
 func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActive int64) bool {
 	acc := action.coinsAccount.LoadExecAccount(fromAddr, action.execaddr)
 	if acc.GetBalance() >= ToFrozen && acc.GetFrozen() >= ToActive {
@@ -98,6 +111,7 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 	return false
 }
 
+//Key State数据库中存储记录的Key值格式转换
 func Key(id string) (key []byte) {
 	//key = append(key, []byte("mavl-"+types.ExecName(pkt.GuessX)+"-")...)
 	key = append(key, []byte("mavl-"+pkt.GuessX+"-")...)
@@ -121,6 +135,7 @@ func readGame(db dbm.KV, id string) (*pkt.GuessGame, error) {
 	return &game, nil
 }
 
+//Infos 根据游戏id列表查询多个游戏详情信息
 func Infos(db dbm.KV, infos *pkt.QueryGuessGameInfos) (types.Message, error) {
 	var games []*pkt.GuessGame
 	for i := 0; i < len(infos.GameIds); i++ {
@@ -295,6 +310,7 @@ func (action *Action) getIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
+//GetReceiptLog 根据游戏信息生成收据记录
 func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	r := &pkt.ReceiptGuessGame{}
@@ -340,12 +356,12 @@ func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
 }
 
 // 新建一局游戏
-func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
+func (action *Action) newGame(gameID string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
 	game := &pkt.GuessGame{
-		GameId:      gameId,
+		GameId:      gameID,
 		Status:      pkt.GuessGameActionStart,
 		//StartTime:   action.blocktime,
-		StartTxHash: gameId,
+		StartTxHash: gameID,
 		Topic:       start.Topic,
 		Category:    start.Category,
 		Options:     start.Options,
@@ -366,7 +382,7 @@ func (action *Action) newGame(gameId string, start *pkt.GuessGameStart) (*pkt.Gu
 	return game, nil
 }
 
-
+//GameStart 创建游戏动作执行
 func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -385,8 +401,8 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 
 	if start.MaxBetsNumber >= MaxBetsNumber {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("The maximum bets number is %d which is less than start.MaxBetsNumber %d", MaxBetsNumber, start.MaxBetsNumber))
-		return nil, types.ErrInvalidParam
+			"err", fmt.Sprintf("The maximum bets number is %d which is less than start.MaxBetsNumber %d", int64(MaxBetsNumber), start.MaxBetsNumber))
+		return nil, pkt.ErrOverBetsLimit
 	}
 
 	if len(start.Topic) == 0 || len(start.Options) == 0 {
@@ -416,8 +432,8 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 		start.MaxBetsOneTime = MaxBetsOneTime
 	}
 
-	gameId := common.ToHex(action.txhash)
-	game, _ := action.newGame(gameId, start)
+	gameID := common.ToHex(action.txhash)
+	game, _ := action.newGame(gameID, start)
 	game.StartTime = action.blocktime
 	if types.IsPara() {
 		mainHeight := action.GetMainHeightByTxHash(action.txhash)
@@ -446,6 +462,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//GameBet 参与游戏动作执行
 func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -539,6 +556,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//GameStopBet 停止游戏下注动作执行
 func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -576,6 +594,7 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//AddGuessBet 向游戏结构中加入下注信息
 func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) {
 	bet := &pkt.GuessBet{ Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
 	player := &pkt.GuessPlayer{ Addr: action.fromaddr, Bet: bet}
@@ -597,6 +616,7 @@ func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) 
 	game.BetsNumber += pbBet.GetBetsNum()
 }
 
+//GamePublish 公布竞猜游戏结果动作执行
 func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -740,6 +760,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//GameAbort 撤销游戏动作执行
 func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -804,6 +825,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
+//GetOptions 获得竞猜选项，并判断是否符合约定格式，类似"A:xxxx;B:xxxx;C:xxx"，“：”前为选项名称，不能重复，":"后为选项说明。
 func GetOptions(strOptions string) (options []string, legal bool){
 	legal = true
 	items := strings.Split(strOptions, ";")
@@ -822,6 +844,7 @@ func GetOptions(strOptions string) (options []string, legal bool){
 	return options, legal
 }
 
+//IsLegalOption 判断选项是否为合法选项
 func IsLegalOption(options []string, option string) bool {
 	for i := 0; i < len(options); i++ {
 		if options[i] == option {
@@ -832,6 +855,7 @@ func IsLegalOption(options []string, option string) bool {
 	return false
 }
 
+//ChangeStatus 修改游戏状态，同步更新历史记录
 func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
 	if game.Status != destStatus {
 		game.PreStatus = game.Status
@@ -843,6 +867,7 @@ func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
 	return
 }
 
+//ChangeAllAddrIndex 状态更新时，更新下注记录的历史信息
 func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
 	for i := 0; i < len(game.Plays) ; i++ {
 		player := game.Plays[i]
@@ -851,6 +876,7 @@ func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
 	}
 }
 
+//RefreshStatusByTime 检测游戏是否过期，是否可以下注
 func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 
 	var mainHeight int64
@@ -895,6 +921,7 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 	return canBet
 }
 
+//CheckTime 检测游戏的过期设置。
 func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {
 	if start.MaxBetHeight == 0 && start.ExpireHeight == 0 {
 		//如果上述字段都不携带，则认为完全由admin的指令驱动。

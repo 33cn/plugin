@@ -12,6 +12,7 @@ import (
 	pb "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
+//GuessStartTx 构造start原始交易
 func (c *Jrpc) GuessStartTx(parm *pb.GuessStartTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -25,6 +26,7 @@ func (c *Jrpc) GuessStartTx(parm *pb.GuessStartTxReq, result *interface{}) error
 	return nil
 }
 
+//GuessBetTx 构造bet原始交易
 func (c *Jrpc) GuessBetTx(parm *pb.GuessBetTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -39,6 +41,7 @@ func (c *Jrpc) GuessBetTx(parm *pb.GuessBetTxReq, result *interface{}) error {
 	return nil
 }
 
+//GuessStopBetTx 构造stopBet原始交易
 func (c *Jrpc) GuessStopBetTx(parm *pb.GuessStopBetTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -53,6 +56,7 @@ func (c *Jrpc) GuessStopBetTx(parm *pb.GuessStopBetTxReq, result *interface{}) e
 	return nil
 }
 
+//GuessAbortTx 构造abort原始交易
 func (c *Jrpc) GuessAbortTx(parm *pb.GuessAbortTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -67,6 +71,7 @@ func (c *Jrpc) GuessAbortTx(parm *pb.GuessAbortTxReq, result *interface{}) error
 	return nil
 }
 
+//GuessPublishTx 构造publish原始交易
 func (c *Jrpc) GuessPublishTx(parm *pb.GuessPublishTxReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam

@@ -26,6 +26,7 @@ const (
 	GuessGameStatusTimeOut
 )
 
+//game log ty
 const (
 	TyLogGuessGameStart = 901
 	TyLogGuessGameBet   = 902
@@ -45,18 +46,28 @@ var (
 )
 
 const (
-	//查询方法名
+	//FuncName_QueryGamesByIds func name
 	FuncName_QueryGamesByIds = "QueryGamesByIds"
+	//FuncName_QueryGameById func name
 	FuncName_QueryGameById = "QueryGameById"
+	//FuncName_QueryGameByAddr func name
 	FuncName_QueryGameByAddr = "QueryGamesByAddr"
+	//FuncName_QueryGameByStatus func name
 	FuncName_QueryGameByStatus = "QueryGamesByStatus"
+	//FuncName_QueryGameByAdminAddr func name
 	FuncName_QueryGameByAdminAddr = "QueryGamesByAdminAddr"
+	//FuncName_QueryGameByAddrStatus func name
 	FuncName_QueryGameByAddrStatus = "QueryGamesByAddrStatus"
+	//FuncName_QueryGameByAdminStatus func name
 	FuncName_QueryGameByAdminStatus = "QueryGamesByAdminStatus"
+	//FuncName_QueryGameByCategoryStatus func name
 	FuncName_QueryGameByCategoryStatus="QueryGamesByCategoryStatus"
 )
 
 const (
+	//DevShareAddr default value
 	DevShareAddr = "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7"
+
+	//PlatformShareAddr default value
 	PlatformShareAddr = "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"
 )

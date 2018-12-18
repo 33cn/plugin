@@ -75,22 +75,27 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 	return dbSet, nil
 }
 
+//ExecLocal_Start method
 func (g *Guess) ExecLocal_Start(payload *pkt.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+//ExecLocal_Bet method
 func (g *Guess) ExecLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+//ExecLocal_StopBet method
 func (g *Guess) ExecLocal_StopBet(payload *pkt.GuessGameStopBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+//ExecLocal_Publish method
 func (g *Guess) ExecLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
+//ExecLocal_Abort method
 func (g *Guess) ExecLocal_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

@@ -39,6 +39,7 @@ func Init(name string, sub []byte) {
 	drivers.Register(driverName, newGuessGame, types.GetDappFork(driverName, "Enable"))
 }
 
+//Guess 执行器，用于竞猜合约的具体执行
 type Guess struct {
 	drivers.DriverBase
 }
@@ -50,10 +51,12 @@ func newGuessGame() drivers.Driver {
 	return t
 }
 
+//GetName 获取Guess执行器的名称
 func GetName() string {
 	return newGuessGame().GetName()
 }
 
+//GetDriverName 获取Guess执行器的名称
 func (g *Guess) GetDriverName() string {
 	return pkt.GuessX
 }

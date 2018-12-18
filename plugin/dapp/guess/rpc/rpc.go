@@ -11,6 +11,7 @@ import (
 	pb "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
+//构造start原始交易
 func (c *channelClient) GuessStart(ctx context.Context, parm *pb.GuessStartTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameStart{
 		Topic: parm.Topic,
@@ -28,7 +29,7 @@ func (c *channelClient) GuessStart(ctx context.Context, parm *pb.GuessStartTxReq
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionStart,
-		Value: &pb.GuessGameAction_Start{v},
+		Value: &pb.GuessGameAction_Start{Start: v},
 	}
 
 	name := types.ExecName(pb.GuessX)
@@ -47,6 +48,7 @@ func (c *channelClient) GuessStart(ctx context.Context, parm *pb.GuessStartTxReq
 	return &types.UnsignTx{Data: data}, nil
 }
 
+//构造bet原始交易
 func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameBet{
 		GameId: parm.GameId,
@@ -56,7 +58,7 @@ func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionBet,
-		Value: &pb.GuessGameAction_Bet{v},
+		Value: &pb.GuessGameAction_Bet{Bet: v},
 	}
 
 	name := types.ExecName(pb.GuessX)
@@ -75,6 +77,7 @@ func (c *channelClient) GuessBet(ctx context.Context, parm *pb.GuessBetTxReq) (*
 	return &types.UnsignTx{Data: data}, nil
 }
 
+//构造stopBet原始交易
 func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameStopBet{
 		GameId: parm.GameId,
@@ -82,7 +85,7 @@ func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetT
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionStopBet,
-		Value: &pb.GuessGameAction_StopBet{v},
+		Value: &pb.GuessGameAction_StopBet{StopBet: v},
 	}
 
 	name := types.ExecName(pb.GuessX)
@@ -101,6 +104,7 @@ func (c *channelClient) GuessStopBet(ctx context.Context, parm *pb.GuessStopBetT
 	return &types.UnsignTx{Data: data}, nil
 }
 
+//构造abort原始交易
 func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGameAbort{
 		GameId: parm.GameId,
@@ -108,7 +112,7 @@ func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionAbort,
-		Value: &pb.GuessGameAction_Abort{v},
+		Value: &pb.GuessGameAction_Abort{Abort: v},
 	}
 	name := types.ExecName(pb.GuessX)
 	tx := &types.Transaction{
@@ -126,6 +130,7 @@ func (c *channelClient) GuessAbort(ctx context.Context, parm *pb.GuessAbortTxReq
 	return &types.UnsignTx{Data: data}, nil
 }
 
+//构造publish原始交易
 func (c *channelClient) GuessPublish(ctx context.Context, parm *pb.GuessPublishTxReq) (*types.UnsignTx, error) {
 	v := &pb.GuessGamePublish{
 		GameId: parm.GameId,
@@ -134,7 +139,7 @@ func (c *channelClient) GuessPublish(ctx context.Context, parm *pb.GuessPublishT
 
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionPublish,
-		Value: &pb.GuessGameAction_Publish{v},
+		Value: &pb.GuessGameAction_Publish{Publish: v},
 	}
 
 	name := types.ExecName(pb.GuessX)
@@ -153,10 +158,11 @@ func (c *channelClient) GuessPublish(ctx context.Context, parm *pb.GuessPublishT
 	return &types.UnsignTx{Data: data}, nil
 }
 
+//构造查询交易
 func (c *channelClient) Show(ctx context.Context, head *pb.GuessGameQuery) (*types.UnsignTx, error) {
 	val := &pb.GuessGameAction{
 		Ty:    pb.GuessGameActionQuery,
-		Value: &pb.GuessGameAction_Query{head},
+		Value: &pb.GuessGameAction_Query{Query: head},
 	}
 	tx, err := types.CreateFormatTx(pb.GuessX, types.Encode(val))
 	if err != nil {

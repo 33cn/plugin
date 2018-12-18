@@ -4,7 +4,7 @@ import "transaction.proto";
 
 package types;
 
-//竞猜游戏内容
+//GuessGame 竞猜游戏详情
 message GuessGame {
     string gameId        = 1;  //游戏ID
     int32 status         = 2;  //游戏的状态：创建->投注->截止投注->开奖
@@ -33,11 +33,13 @@ message GuessGame {
     bool drivenByAdmin   = 25;
 }
 
+//GuessPlayer 竞猜玩家信息
 message GuessPlayer {
     string addr = 1;
     GuessBet bet = 2;
 }
 
+//GuessBet 竞猜下注信息
 message GuessBet {
     string option = 1;
     int64  betsNumber = 2;
@@ -47,19 +49,21 @@ message GuessBet {
     int64 preIndex = 6;
 }
 
+//GuessBetStat 竞猜下注统计信息
 message GuessBetStat {
     int64 totalBetTimes = 1;
     int64 totalBetsNumber = 2;
     repeated GuessBetStatItem items = 3;
 }
 
+//GuessBetStat 竞猜下注子选项统计信息
 message GuessBetStatItem {
     string option = 1;
     int64 betsNumber = 2;
     int64 betsTimes = 3;
 }
 
-//游戏状态
+//GuessGameAction 竞猜游戏动作
 message GuessGameAction {
     oneof value {
         GuessGameStart start     = 1;
@@ -72,7 +76,7 @@ message GuessGameAction {
     int32 ty = 7;
 }
 
-//游戏启动
+//GuessGameStart 游戏创建
 message GuessGameStart{
     string topic     = 1;
     string options      = 2;
@@ -88,36 +92,36 @@ message GuessGameStart{
     bool drivenByAdmin   = 12;
 }
 
-//参与游戏下注
+//GuessGameBet 参与游戏下注
 message GuessGameBet{
     string gameId     = 1;
     string option     = 2;
     int64  betsNum    = 3;
 }
 
-//游戏停止下注
+//GuessGameStopBet 游戏停止下注
 message GuessGameStopBet{
     string gameId     = 1;
 }
 
-//游戏异常终止,退还下注
+//GuessGameAbort 游戏异常终止,退还下注
 message GuessGameAbort{
     string gameId     = 1;
 }
 
-//游戏结果揭晓
+//GuessGamePublish 游戏结果揭晓
 message GuessGamePublish{
     string gameId     = 1;
     string result     = 2;
 }
 
-//查询游戏结果
+//GuessGameQuery 查询游戏结果
 message GuessGameQuery{
     string gameId     = 1;
     uint32 ty          = 2;
 }
 
-
+//QueryGuessGameInfo 游戏信息查询消息
 message QueryGuessGameInfo {
     string gameId = 1;
     string addr   = 2;
@@ -127,18 +131,22 @@ message QueryGuessGameInfo {
     string category = 6;
 }
 
+//ReplyGuessGameInfo 游戏信息查询响应消息
 message ReplyGuessGameInfo {
     GuessGame game = 1;
 }
 
+//QueryGuessGameInfos 游戏信息列表查询消息
 message QueryGuessGameInfos {
     repeated string gameIds = 1;
 }
 
+//ReplyGuessGameInfos 游戏信息列表查询响应消息
 message ReplyGuessGameInfos {
     repeated GuessGame games = 1;
 }
 
+//ReceiptGuessGame 竞猜游戏收据信息
 message ReceiptGuessGame {
     string   gameId           = 1;
     int32   preStatus        = 2;
@@ -151,6 +159,7 @@ message ReceiptGuessGame {
     bool     statusChange     = 9;
 }
 
+//GuessStartTxReq 构造start交易的请求
 message GuessStartTxReq {
     string topic              = 1;
     string options            = 2;
@@ -167,6 +176,7 @@ message GuessStartTxReq {
     int64 fee                 = 13;
 }
 
+//GuessBetTxReq 构造bet交易的请求
 message GuessBetTxReq {
     string gameId    = 1;
     string option    = 2;
@@ -174,40 +184,39 @@ message GuessBetTxReq {
     int64 fee        = 4;
 }
 
+//GuessStopBetTxReq 构造stopBet交易的请求
 message GuessStopBetTxReq {
     string gameId    = 1;
     int64 fee        = 2;
 }
 
+//GuessAbortTxReq 构造abort交易的请求
 message GuessAbortTxReq {
     string gameId    = 1;
     int64 fee        = 2;
 }
 
+//GuessPublishTxReq 构造publish交易的请求
 message GuessPublishTxReq {
     string gameId    = 1;
     string result    = 2;
     int64 fee        = 3;
 }
 
-// 索引value值
+// GuessGameRecord game信息查询记录
 message GuessGameRecord {
     string gameId = 1;
     int32  status = 2;
     int64  index  = 3;
 }
 
-message GuessGameIndexRecord {
-    string gameId = 1;
-    int64  index  = 2;
-}
-
+// GuessGameRecords game信息查询记录集
 message GuessGameRecords {
     repeated GuessGameRecord records = 1;
 }
 
 
-// guess 对外提供服务的接口
+// service guess　为guess 对外提供服务的接口
 service guess {
     //游戏开始
     rpc GuessStart(GuessGameStart) returns (UnsignTx) {}
