@@ -29,8 +29,8 @@ var (
 	}
 	// 定义本执行器的Log收据解析结构
 	logInfo = map[int64]*types.LogInfo{
-		TyLogPing: {reflect.TypeOf(PingLog{}), "PingLog"},
-		TyLogPang: {reflect.TypeOf(PangLog{}), "PangLog"},
+		TyLogPing: {Ty: reflect.TypeOf(PingLog{}), Name: "PingLog"},
+		TyLogPang: {Ty: reflect.TypeOf(PangLog{}), Name: "PangLog"},
 	}
 )
 var elog = log.New("module", EchoX)
