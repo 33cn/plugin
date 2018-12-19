@@ -25,6 +25,7 @@ default: build depends
 build:
 	@go build $(BUILD_FLAGS) -v -i -o $(APP)
 	@go build -v -i -o $(CLI) $(SRC_CLI)
+	@cp ./plugin/consensus/pbft/pbft*.toml build/
 	@cp chain33.toml build/
 
 build_ci: depends ## Build the binary file for CI
