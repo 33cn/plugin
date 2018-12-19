@@ -7,26 +7,29 @@ import (
 )
 
 var (
-	// 执行交易生成的数据KEY
+	// KeyPrefixPing ping 前缀
 	KeyPrefixPing = "mavl-echo-ping:%s"
+	// KeyPrefixPang pang 前缀
 	KeyPrefixPang = "mavl-echo-pang:%s"
-	// 本地执行生成的数据KEY
+
+	// KeyPrefixPingLocal local ping 前缀
 	KeyPrefixPingLocal = "LODB-echo-ping:%s"
+	// KeyPrefixPangLocal local pang 前缀
 	KeyPrefixPangLocal = "LODB-echo-pang:%s"
 )
 
-// 初始化时通过反射获取本执行器的方法列表
+// init 初始化时通过反射获取本执行器的方法列表
 func init() {
 	ety := types.LoadExecutorType(echotypes.EchoX)
 	ety.InitFuncList(types.ListMethod(&Echo{}))
 }
 
-//本执行器的初始化动作，向系统注册本执行器，这里生效高度暂写为0
+// Init 本执行器的初始化动作，向系统注册本执行器，这里生效高度暂写为0
 func Init(name string, sub []byte) {
 	dapp.Register(echotypes.EchoX, newEcho, 0)
 }
 
-// 定义执行器对象
+// Echo 定义执行器对象
 type Echo struct {
 	dapp.DriverBase
 }
@@ -39,7 +42,7 @@ func newEcho() dapp.Driver {
 	return c
 }
 
-// 返回本执行器驱动名称
+// GetDriverName 返回本执行器驱动名称
 func (h *Echo) GetDriverName() string {
 	return echotypes.EchoX
 }

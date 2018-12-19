@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// 本执行器的命令行初始化总入口
+// EchoCmd 本执行器的命令行初始化总入口
 func EchoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "echo",
@@ -24,6 +24,7 @@ func EchoCmd() *cobra.Command {
 	return cmd
 }
 
+// QueryCmd query 命令
 func QueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",

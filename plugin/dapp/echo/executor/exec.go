@@ -7,6 +7,7 @@ import (
 	echotypes "github.com/33cn/plugin/plugin/dapp/echo/types/echo"
 )
 
+// Exec_Ping 执行 ping 类型交易
 func (h *Echo) Exec_Ping(ping *echotypes.Ping, tx *types.Transaction, index int) (*types.Receipt, error) {
 	msg := ping.Msg
 	res := fmt.Sprintf("%s, ping ping ping!", msg)
@@ -17,6 +18,7 @@ func (h *Echo) Exec_Ping(ping *echotypes.Ping, tx *types.Transaction, index int)
 	return receipt, nil
 }
 
+// Exec_Pang 执行 pang 类型交易
 func (h *Echo) Exec_Pang(ping *echotypes.Pang, tx *types.Transaction, index int) (*types.Receipt, error) {
 	msg := ping.Msg
 	res := fmt.Sprintf("%s, pang pang pang!", msg)
