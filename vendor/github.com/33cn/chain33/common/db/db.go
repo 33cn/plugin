@@ -8,7 +8,6 @@ package db
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/33cn/chain33/types"
@@ -16,7 +15,7 @@ import (
 )
 
 //ErrNotFoundInDb error
-var ErrNotFoundInDb = errors.New("ErrNotFoundInDb")
+var ErrNotFoundInDb = types.ErrNotFound
 
 //Lister 列表接口
 type Lister interface {
