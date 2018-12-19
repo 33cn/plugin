@@ -614,6 +614,7 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 			return nil
 		}
 		reply.TradedBoardlot = sellOrder.SoldBoardlot
+		reply.Status = sellOrder.Status
 		return reply
 	} else if strings.HasPrefix(string(key), buyIDPrefix) {
 		txHash := strings.Replace(string(key), buyIDPrefix, "0x", 1)
@@ -629,6 +630,7 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 			return nil
 		}
 		reply.TradedBoardlot = buyOrder.BoughtBoardlot
+		reply.Status = buyOrder.Status
 		return reply
 	}
 	txResult, err := getTx(key, t.GetLocalDB())
