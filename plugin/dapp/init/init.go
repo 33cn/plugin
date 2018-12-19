@@ -20,4 +20,3 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/unfreeze"   //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"    //auto gen
 )
-     
