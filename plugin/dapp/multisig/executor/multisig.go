@@ -887,7 +887,7 @@ func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets)
 	}
 	var acc1 *types.Account
 
-	execaddress := dapp.ExecAddress(m.GetName())
+	execaddress := dapp.ExecAddress(types.ExecName(m.GetName()))
 	acc1 = acc.LoadExecAccount(multiSigAddr, execaddress)
 	return acc1, nil
 }
