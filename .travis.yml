@@ -26,13 +26,6 @@ matrix:
       script:
         - make test
 
-    - name: auto-test
-      go: "1.9.x"
-      install: skip
-      before_script: make build_ci
-      script:
-        - make autotest dapp=all
-
     - name: coverage
       if: branch = master
       go: "1.9.x"
@@ -43,6 +36,13 @@ matrix:
         - make coverage
       after_success:
         - bash <(curl -s https://codecov.io/bash)
+
+    - name: auto-test
+      go: "1.9.x"
+      install: skip
+      before_script: make build_ci
+      script:
+        - make autotest dapp=all
 
     - name: deploy
       if: env(DAPP) IS present
