@@ -7,7 +7,7 @@ import (
 	echotypes "github.com/33cn/plugin/plugin/dapp/echo/types/echo"
 )
 
-// 交易执行成功，将本消息对应的数值减1
+// ExecDelLocal_Ping 交易执行成功，将本消息对应的数值减1
 func (h *Echo) ExecDelLocal_Ping(ping *echotypes.Ping, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	// 这里简化处理，不做基本的零值及错误检查了
 	var pingLog echotypes.PingLog
@@ -19,7 +19,7 @@ func (h *Echo) ExecDelLocal_Ping(ping *echotypes.Ping, tx *types.Transaction, re
 	}
 	types.Decode(oldValue, &pingLog)
 	if pingLog.Count > 0 {
-		pingLog.Count -= 1
+		pingLog.Count--
 	}
 	val := types.Encode(&pingLog)
 	if pingLog.Count == 0 {
@@ -29,7 +29,7 @@ func (h *Echo) ExecDelLocal_Ping(ping *echotypes.Ping, tx *types.Transaction, re
 	return &types.LocalDBSet{KV: kv}, nil
 }
 
-// 交易执行成功，将本消息对应的数值减1
+// ExecDelLocal_Pang 交易执行成功，将本消息对应的数值减1
 func (h *Echo) ExecDelLocal_Pang(ping *echotypes.Pang, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	// 这里简化处理，不做基本的零值及错误检查了
 	var pangLog echotypes.PangLog
@@ -41,7 +41,7 @@ func (h *Echo) ExecDelLocal_Pang(ping *echotypes.Pang, tx *types.Transaction, re
 	}
 	types.Decode(oldValue, &pangLog)
 	if pangLog.Count > 0 {
-		pangLog.Count -= 1
+		pangLog.Count--
 	}
 	val := types.Encode(&pangLog)
 	if pangLog.Count == 0 {

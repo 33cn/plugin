@@ -10,22 +10,23 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-func (e EchoType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+// CreateTx 创建交易
+func (e *Type) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	elog.Debug("echo.CreateTx", "action", action)
 	// 只接受ping/pang两种交易操作
 	if action == "ping" || action == "pang" {
-		var param EchoTx
+		var param Tx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			elog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
 		return createPingTx(action, &param)
-	} else {
-		return nil, types.ErrNotSupport
 	}
+	return nil, types.ErrNotSupport
 }
-func createPingTx(op string, parm *EchoTx) (*types.Transaction, error) {
+
+func createPingTx(op string, parm *Tx) (*types.Transaction, error) {
 	var action *EchoAction
 	var err error
 	if strings.EqualFold(op, "ping") {
@@ -44,7 +45,8 @@ func createPingTx(op string, parm *EchoTx) (*types.Transaction, error) {
 	}
 	return tx, nil
 }
-func getPingAction(parm *EchoTx) (*EchoAction, error) {
+
+func getPingAction(parm *Tx) (*EchoAction, error) {
 	pingAction := &Ping{Msg: parm.Message}
 	action := &EchoAction{
 		Value: &EchoAction_Ping{Ping: pingAction},
@@ -52,7 +54,8 @@ func getPingAction(parm *EchoTx) (*EchoAction, error) {
 	}
 	return action, nil
 }
-func getPangAction(parm *EchoTx) (*EchoAction, error) {
+
+func getPangAction(parm *Tx) (*EchoAction, error) {
 	pangAction := &Pang{Msg: parm.Message}
 	action := &EchoAction{
 		Value: &EchoAction_Pang{Pang: pangAction},

@@ -8,7 +8,7 @@ import (
 	echotypes "github.com/33cn/plugin/plugin/dapp/echo/types/echo"
 )
 
-// 对外提供服务的RPC接口总体定义
+// Jrpc 对外提供服务的RPC接口总体定义
 type Jrpc struct {
 	cli *channelClient
 }
@@ -18,13 +18,14 @@ type channelClient struct {
 	rpctypes.ChannelClient
 }
 
+// Init 注册 rpc 接口
 func Init(name string, s rpctypes.RPCServer) {
 	cli := &channelClient{}
 	// 为了简单起见，这里只注册Jrpc，如果提供grpc的话也在这里注册
 	cli.Init(name, s, &Jrpc{cli: cli}, nil)
 }
 
-// 本合约的查询操作可以使用通用的Query接口，这里单独封装rpc的Query接口只是为了说明实现方式
+// QueryPing 本合约的查询操作可以使用通用的Query接口，这里单独封装rpc的Query接口只是为了说明实现方式
 // 接收客户端请求，并调用本地具体实现逻辑，然后返回结果
 func (c *Jrpc) QueryPing(param *echotypes.Query, result *interface{}) error {
 	if param == nil {
@@ -39,7 +40,7 @@ func (c *Jrpc) QueryPing(param *echotypes.Query, result *interface{}) error {
 	return nil
 }
 
-// 本地具体实现逻辑
+// QueryPing 本地具体实现逻辑
 func (c *channelClient) QueryPing(ctx context.Context, queryParam *echotypes.Query) (types.Message, error) {
 	return c.Query(echotypes.EchoX, "GetPing", queryParam)
 }
