@@ -29,14 +29,14 @@ func CreateRawTx(cmd *cobra.Command, to string, amount float64, note string, isW
 	}
 	var tx *types.Transaction
 	transfer := &tokenty.TokenAction{}
-	if !isWithdraw {
-		v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSymbol, Amount: amountInt64, Note: []byte(note), To: to}}
-		transfer.Value = v
-		transfer.Ty = tokenty.ActionTransfer
-	} else {
+	if isWithdraw {
 		v := &tokenty.TokenAction_Withdraw{Withdraw: &types.AssetsWithdraw{Cointoken: tokenSymbol, Amount: amountInt64, Note: []byte(note), To: to}}
 		transfer.Value = v
 		transfer.Ty = tokenty.ActionWithdraw
+	} else {
+		v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSymbol, Amount: amountInt64, Note: []byte(note), To: to}}
+		transfer.Value = v
+		transfer.Ty = tokenty.ActionTransfer
 	}
 	execer := []byte(getRealExecName(paraName, "token"))
 	if paraName == "" {
