@@ -24,7 +24,7 @@ func (t *token) ExecTransWithdraw(accountDB *account.DB, tx *types.Transaction, 
 		return accountDB.Transfer(from, tx.GetRealToAddr(), transfer.Amount)
 	} else if (action.Ty == tokenty.ActionWithdraw) && action.GetWithdraw() != nil {
 		withdraw := action.GetWithdraw()
-		if types.IsFork(t.GetHeight(), "ForkWithdraw") {
+		if !types.IsFork(t.GetHeight(), "ForkWithdraw") {
 			withdraw.ExecName = ""
 		}
 		from := tx.From()
