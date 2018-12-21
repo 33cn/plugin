@@ -505,10 +505,16 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 // 筛选合适的牌局
 func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBull {
 	var gameRet *pkt.PokerBull
-	for _, id := range ids {
+	for num := len(ids)-1; num > -1; num-- {
+		id := ids[num]
 		game, err := action.readGame(id)
 		if err != nil {
 			logger.Error("Poker bull game start", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed", id, "err", err)
+			continue
+		}
+
+		// 玩家已经满了，不需要再匹配（防止多交易在同一区块没有刷新localdb的场景）
+		if int32(len(game.Players)) == game.PlayerNum {
 			continue
 		}
 
@@ -593,7 +599,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 				return nil, err
 			}
 		}
-		logger.Debug(fmt.Sprintf("Match a new game %s for player %s", game.GameId, game.GameId))
+		logger.Debug(fmt.Sprintf("Match a new game %s for player %s", game.GameId, action.fromaddr))
 	}
 
 	//发牌随机数取txhash
