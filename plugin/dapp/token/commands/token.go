@@ -40,6 +40,7 @@ func TokenCmd() *cobra.Command {
 		CreateRawTokenPreCreateTxCmd(),
 		CreateRawTokenFinishTxCmd(),
 		CreateRawTokenRevokeTxCmd(),
+		CreateTokenTransferExecCmd(),
 	)
 
 	return cmd
@@ -75,6 +76,43 @@ func createTokenTransfer(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	txHex, err := CreateRawTx(cmd, toAddr, amount, note, false, symbol, "")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(txHex)
+}
+
+// CreateTokenTransferCmd create raw transfer tx
+func CreateTokenTransferExecCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "send_exec",
+		Short: "Create a token send to executor transaction",
+		Run:   createTokenSendToExec,
+	}
+	addCreateTokenSendToExecFlags(cmd)
+	return cmd
+}
+
+func addCreateTokenSendToExecFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "receiver executor address")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createTokenSendToExec(cmd *cobra.Command, args []string) {
+	exec, _ := cmd.Flags().GetString("exec")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+	note, _ := cmd.Flags().GetString("note")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	txHex, err := CreateRawTx(cmd, "", amount, note, false, symbol, exec)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
