@@ -53,7 +53,7 @@ const (
 	// FuncNameQueryGameByRound 查询某一回合游戏结果
 	FuncNameQueryGameByRound = "QueryGameByRound"
 	// CreateStartTx 创建开始交易
-	CreateStartTx = "Start"
+	 CreateStartTx = "Start"
 	// CreateContinueTx 创建继续交易
 	CreateContinueTx = "Continue"
 	// CreatequitTx 创建退出交易

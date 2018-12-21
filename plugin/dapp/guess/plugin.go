@@ -8,7 +8,6 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/guess/commands"
 	"github.com/33cn/plugin/plugin/dapp/guess/executor"
-	"github.com/33cn/plugin/plugin/dapp/guess/rpc"
 	"github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
@@ -18,6 +17,5 @@ func init() {
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.GuessCmd,
-		RPC:      rpc.Init,
 	})
 }

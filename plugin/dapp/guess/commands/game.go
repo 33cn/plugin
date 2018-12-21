@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
@@ -53,26 +54,14 @@ func addGuessStartFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("options")
 
 	cmd.Flags().StringP("category", "c", "default", "options")
-
 	cmd.Flags().Int64P("maxBetHeight", "m", 0, "max height to bet, after this bet is forbidden")
-
 	cmd.Flags().Int64P("maxBetsOneTime", "s", 10000, "max bets one time")
-	//cmd.MarkFlagRequired("maxBets")
-
 	cmd.Flags().Int64P("maxBetsNumber", "n", 100000, "max bets number")
-	//cmd.MarkFlagRequired("maxBetsNumber")
-
 	cmd.Flags().Int64P("devFeeFactor", "d", 0, "dev fee factor, unit: 1/1000")
-
 	cmd.Flags().StringP("devFeeAddr", "f", "", "dev address to receive share")
-
 	cmd.Flags().Int64P("platFeeFactor", "p", 0, "plat fee factor, unit: 1/1000")
-
 	cmd.Flags().StringP("platFeeAddr", "q", "", "plat address to receive share")
-
 	cmd.Flags().Int64P("expireHeight", "e", 0, "expire height of the game, after this any addr can abort it")
-
-	cmd.Flags().Float64P("fee", "g", 0.01, "tx fee")
 }
 
 func guessStart(cmd *cobra.Command, args []string) {
@@ -88,26 +77,18 @@ func guessStart(cmd *cobra.Command, args []string) {
 	platFeeFactor, _ := cmd.Flags().GetInt64("platFeeFactor")
 	platFeeAddr, _ := cmd.Flags().GetString("platFeeAddr")
 	expireHeight, _ := cmd.Flags().GetInt64("expireHeight")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	params := &pkt.GuessStartTxReq{
-		Topic:          topic,
-		Options:        options,
-		Category:       category,
-		MaxBetHeight:   maxBetHeight,
-		MaxBetsOneTime: maxBetsOneTime * 1e8,
-		MaxBetsNumber:  maxBetsNumber * 1e8,
-		DevFeeFactor:   devFeeFactor,
-		DevFeeAddr:     devFeeAddr,
-		PlatFeeFactor:  platFeeFactor,
-		PlatFeeAddr:    platFeeAddr,
-		ExpireHeight:   expireHeight,
-		Fee:            int64(fee * float64(1e8)),
+	payload := fmt.Sprintf("{\"topic\":\"%s\", \"options\":\"%s\", \"category\":\"%s\", \"maxBetHeight\":%d, \"maxBetsOneTime\":%d,\"maxBetsNumber\":%d,\"devFeeFactor\":%d,\"platFeeFactor\":%d,\"expireHeight\":%d,\"devFeeAddr\":\"%s\",\"platFeeAddr\":\"%s\"}", topic, options, category, maxBetHeight, maxBetsOneTime, maxBetsNumber, devFeeFactor, platFeeFactor, expireHeight, devFeeAddr, platFeeAddr)
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.GuessX),
+		ActionName: pkt.CreateStartTx,
+		Payload:    []byte(payload),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessStartTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
+
 }
 
 //GuessBetRawTxCmd 构造Guess合约的bet原始交易（未签名）的命令行
@@ -128,7 +109,6 @@ func addGuessBetFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("option")
 	cmd.Flags().Int64P("betsNumber", "b", 1, "bets number for one option in a guess game")
 	cmd.MarkFlagRequired("betsNumber")
-	cmd.Flags().Float64P("fee", "f", 0.01, "tx fee")
 }
 
 func guessBet(cmd *cobra.Command, args []string) {
@@ -136,17 +116,16 @@ func guessBet(cmd *cobra.Command, args []string) {
 	gameID, _ := cmd.Flags().GetString("gameId")
 	option, _ := cmd.Flags().GetString("option")
 	betsNumber, _ := cmd.Flags().GetInt64("betsNumber")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	params := &pkt.GuessBetTxReq{
-		GameID: gameID,
-		Option: option,
-		Bets:   betsNumber,
-		Fee:    int64(fee * float64(1e8)),
+	payload := fmt.Sprintf("{\"gameID\":\"%s\", \"option\":\"%s\", \"betsNum\":%d}", gameID, option, betsNumber)
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.GuessX),
+		ActionName: pkt.CreateBetTx,
+		Payload:    []byte(payload),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessBetTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -170,15 +149,16 @@ func addGuessStopBetFlags(cmd *cobra.Command) {
 func guessStopBet(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	params := &pkt.GuessStopBetTxReq{
-		GameID: gameID,
-		Fee:    int64(fee * float64(1e8)),
+	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.GuessX),
+		ActionName: pkt.CreateStopBetTx,
+		Payload:    []byte(payload),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessStopBetTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -196,20 +176,21 @@ func GuessAbortRawTxCmd() *cobra.Command {
 func addGuessAbortFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("gameId", "g", "", "game Id")
 	cmd.MarkFlagRequired("gameId")
-	cmd.Flags().Float64P("fee", "f", 0.01, "tx fee")
 }
 
 func guessAbort(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	params := &pkt.GuessAbortTxReq{
-		GameID: gameID,
-		Fee:    int64(fee * float64(1e8)),
+
+	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.GuessX),
+		ActionName: pkt.CreateAbortTx,
+		Payload:    []byte(payload),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessAbortTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -230,24 +211,22 @@ func addGuessPublishFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("result", "r", "", "result of a guess game")
 	cmd.MarkFlagRequired("result")
-
-	cmd.Flags().Float64P("fee", "f", 0.01, "tx fee")
 }
 
 func guessPublish(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	result, _ := cmd.Flags().GetString("result")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	params := &pkt.GuessPublishTxReq{
-		GameID: gameID,
-		Result: result,
-		Fee:    int64(fee * float64(1e8)),
+	payload := fmt.Sprintf("{\"gameID\":\"%s\",\"result\":\"%s\"}", gameID, result)
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.GuessX),
+		ActionName: pkt.CreatePublishTx,
+		Payload:    []byte(payload),
 	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "guess.GuessPublishTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -302,7 +281,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &pkt.QueryGuessGameInfos{
 			GameIDs: gameIds,
 		}
-		params.FuncName = pkt.FuncName_QueryGamesByIds
+		params.FuncName = pkt.FuncNameQueryGamesByIds
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfos
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -312,7 +291,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &pkt.QueryGuessGameInfo{
 			GameID: gameID,
 		}
-		params.FuncName = pkt.FuncName_QueryGameById
+		params.FuncName = pkt.FuncNameQueryGameById
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfo
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -323,7 +302,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Addr:  addr,
 			Index: index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByAddr
+		params.FuncName = pkt.FuncNameQueryGameByAddr
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -334,7 +313,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Status: status,
 			Index:  index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByStatus
+		params.FuncName = pkt.FuncNameQueryGameByStatus
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -345,7 +324,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			AdminAddr: adminAddr,
 			Index:     index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByAdminAddr
+		params.FuncName = pkt.FuncNameQueryGameByAdminAddr
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -357,7 +336,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Status: status,
 			Index:  index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByAddrStatus
+		params.FuncName = pkt.FuncNameQueryGameByAddrStatus
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -369,7 +348,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Status:    status,
 			Index:     index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByAdminStatus
+		params.FuncName = pkt.FuncNameQueryGameByAdminStatus
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -381,7 +360,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Status:   status,
 			Index:    index,
 		}
-		params.FuncName = pkt.FuncName_QueryGameByCategoryStatus
+		params.FuncName = pkt.FuncNameQueryGameByCategoryStatus
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
