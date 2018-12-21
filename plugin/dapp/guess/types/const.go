@@ -83,7 +83,6 @@ const (
 
 	//CreateAbortTx 创建撤销游戏交易
 	CreateAbortTx = "Abort"
-
 )
 
 const (
