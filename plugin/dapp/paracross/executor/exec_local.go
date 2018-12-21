@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -21,7 +22,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 			types.Decode(log.Log, &g)
 
 			var r pt.ParacrossTx
-			r.TxHash = string(tx.Hash())
+			r.TxHash = common.ToHex(tx.Hash())
 			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
@@ -43,7 +44,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 			types.Decode(log.Log, &g)
 
 			var r pt.ParacrossTx
-			r.TxHash = string(tx.Hash())
+			r.TxHash = common.ToHex(tx.Hash())
 			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		}
 	}

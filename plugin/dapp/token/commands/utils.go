@@ -34,7 +34,7 @@ func CreateRawTx(cmd *cobra.Command, to string, amount float64, note string, isW
 		transfer.Value = v
 		transfer.Ty = tokenty.ActionTransfer
 	} else {
-		v := &tokenty.TokenAction_Withdraw{Withdraw: &types.AssetsWithdraw{Cointoken: tokenSymbol, Amount: amountInt64, Note: []byte(note)}}
+		v := &tokenty.TokenAction_Withdraw{Withdraw: &types.AssetsWithdraw{Cointoken: tokenSymbol, Amount: amountInt64, Note: []byte(note), To: to}}
 		transfer.Value = v
 		transfer.Ty = tokenty.ActionWithdraw
 	}

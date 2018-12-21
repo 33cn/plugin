@@ -140,7 +140,7 @@ func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 	kv = saveBuyLimitOrderKeyValue(kv, buyOrder, status)
 	if pty.TradeOrderStatusBoughtOut == status || pty.TradeOrderStatusBuyRevoked == status {
 		tradelog.Debug("trade saveBuyLimit ", "remove old status with Buyid", buyOrder.BuyID)
-		kv = deleteBuyLimitKeyValue(kv, buyOrder, pty.TradeOrderStatusOnSale)
+		kv = deleteBuyLimitKeyValue(kv, buyOrder, pty.TradeOrderStatusOnBuy)
 	}
 	return kv
 }
