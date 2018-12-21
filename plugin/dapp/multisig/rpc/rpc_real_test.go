@@ -21,7 +21,6 @@ import (
 var (
 	Symbol = "BTY"
 	Asset  = "coins"
-
 	PrivKeyA   = "0x06c0fa653c719275d1baa365c7bc0b9306447287499a715b541b930482eaa504" // 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK
 	PrivKeyB   = "0x4c8663cded61093af20339ae038b3c6bfa58a33e65874a655022f82eaf3f2fa0" // 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj
 	PrivKeyC   = "0x9abcf378b397682109c174b37a45bfc8a459c9514dd2ef719e22a9815373047d" // 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
