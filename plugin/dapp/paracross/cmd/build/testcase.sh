@@ -151,13 +151,15 @@ function token_create() {
         echo "wrong finish created total"
         exit 1
     fi
-
     ${1} token token_balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD
     balance=$(${1} token token_balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "10000.0000" ]; then
         echo "wrong para token genesis create, should be 10000.0000"
         exit 1
     fi
+}
+
+function token_transfer {
     echo "=========== # 2.token transfer ============="
     hash=$(${1} send token transfer -a 11 -s GD -t 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
@@ -168,6 +170,34 @@ function token_create() {
     balance=$(${1} token token_balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "11.0000" ]; then
         echo "wrong para token transfer, should be 11.0000"
+        exit 1
+    fi
+
+    echo "=========== # 3.token send exec ============="
+    hash=$(${1} send token send_exec -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    echo "${hash}"
+    block_wait "${1}" 3
+
+    # $ ./build/chain33-cli   exec addr  -e user.p.para.paracross
+    # 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii
+    ${1} tx query -s "${hash}"
+    ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
+    balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
+    if [ "${balance}" != "11.0000" ]; then
+        echo "wrong para token send exec, should be 11.0000"
+        exit 1
+    fi
+
+    echo "=========== # 4.token withdraw ============="
+    hash=$(${1} send token withdraw -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    echo "${hash}"
+    block_wait "${1}" 3
+
+    ${1} tx query -s "${hash}"
+    ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
+    balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
+    if [ "${balance}" != "0.0000" ]; then
+        echo "wrong para token withdraw, should be 0.0000"
         exit 1
     fi
 }
@@ -204,6 +234,7 @@ function para_cross_transfer_withdraw() {
 function para_test() {
     echo "=========== # para chain test ============="
     token_create "${PARA_CLI}"
+    token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
 }
 
