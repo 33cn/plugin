@@ -6,25 +6,25 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
 //Query_QueryGamesByIDs method
-func (g *Guess) Query_QueryGamesByIDs(in *pkt.QueryGuessGameInfos) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByIDs(in *gty.QueryGuessGameInfos) (types.Message, error) {
 	return Infos(g.GetStateDB(), in)
 }
 
 //Query_QueryGameByID method
-func (g *Guess) Query_QueryGameByID(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGameByID(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	game, err := readGame(g.GetStateDB(), in.GetGameID())
 	if err != nil {
 		return nil, err
 	}
-	return &pkt.ReplyGuessGameInfo{Game: game}, nil
+	return &gty.ReplyGuessGameInfo{Game: game}, nil
 }
 
 //Query_QueryGamesByAddr method
-func (g *Guess) Query_QueryGamesByAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (g *Guess) Query_QueryGamesByAddr(in *pkt.QueryGuessGameInfo) (types.Messag
 }
 
 //Query_QueryGamesByStatus method
-func (g *Guess) Query_QueryGamesByStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (g *Guess) Query_QueryGamesByStatus(in *pkt.QueryGuessGameInfo) (types.Mess
 }
 
 //Query_QueryGamesByAdminAddr method
-func (g *Guess) Query_QueryGamesByAdminAddr(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByAdminAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByAdminAddr(g.GetLocalDB(), in.AdminAddr, in.Index)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (g *Guess) Query_QueryGamesByAdminAddr(in *pkt.QueryGuessGameInfo) (types.M
 }
 
 //Query_QueryGamesByAddrStatus method
-func (g *Guess) Query_QueryGamesByAddrStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByAddrStatus(g.GetLocalDB(), in.Addr, in.Status, in.Index)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (g *Guess) Query_QueryGamesByAddrStatus(in *pkt.QueryGuessGameInfo) (types.
 }
 
 //Query_QueryGamesByAdminStatus method
-func (g *Guess) Query_QueryGamesByAdminStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByAdminStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByAdminStatus(g.GetLocalDB(), in.AdminAddr, in.Status, in.Index)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (g *Guess) Query_QueryGamesByAdminStatus(in *pkt.QueryGuessGameInfo) (types
 }
 
 //Query_QueryGamesByCategoryStatus method
-func (g *Guess) Query_QueryGamesByCategoryStatus(in *pkt.QueryGuessGameInfo) (types.Message, error) {
+func (g *Guess) Query_QueryGamesByCategoryStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	records, err := getGameListByCategoryStatus(g.GetLocalDB(), in.Category, in.Status, in.Index)
 	if err != nil {
 		return nil, err

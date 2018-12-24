@@ -6,18 +6,18 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *Guess) updateIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
+func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	//新创建游戏
-	if log.Status == pkt.GuessGameStatusStart {
+	if log.Status == gty.GuessGameStatusStart {
 		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
 		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
 		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
 		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
 		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
-	} else if log.Status == pkt.GuessGameStatusBet {
+	} else if log.Status == gty.GuessGameStatusBet {
 		//如果是下注状态，则有用户进行了下注操作
 		kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameID, log.Index))
 		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameID, log.Index))
@@ -62,8 +62,8 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 	}
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
-		if item.Ty >= pkt.TyLogGuessGameStart && item.Ty <= pkt.TyLogGuessGameTimeout {
-			var Gamelog pkt.ReceiptGuessGame
+		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
+			var Gamelog gty.ReceiptGuessGame
 			err := types.Decode(item.Log, &Gamelog)
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
@@ -76,26 +76,26 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 }
 
 //ExecLocal_Start method
-func (g *Guess) ExecLocal_Start(payload *pkt.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecLocal_Start(payload *gty.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecLocal_Bet method
-func (g *Guess) ExecLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecLocal_Bet(payload *gty.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecLocal_StopBet method
-func (g *Guess) ExecLocal_StopBet(payload *pkt.GuessGameStopBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecLocal_StopBet(payload *gty.GuessGameStopBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecLocal_Publish method
-func (g *Guess) ExecLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecLocal_Publish(payload *gty.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecLocal_Abort method
-func (g *Guess) ExecLocal_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecLocal_Abort(payload *gty.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

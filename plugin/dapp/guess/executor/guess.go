@@ -8,12 +8,12 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
 var logger = log.New("module", "execs.guess")
 
-var driverName = pkt.GuessX
+var driverName = gty.GuessX
 
 func init() {
 	ety := types.LoadExecutorType(driverName)
@@ -57,7 +57,7 @@ func GetName() string {
 
 //GetDriverName 获取Guess执行器的名称
 func (g *Guess) GetDriverName() string {
-	return pkt.GuessX
+	return gty.GuessX
 }
 
 /*

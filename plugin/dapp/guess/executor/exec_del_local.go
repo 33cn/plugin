@@ -6,18 +6,18 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *Guess) rollbackIndex(log *pkt.ReceiptGuessGame) (kvs []*types.KeyValue) {
+func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	//新创建游戏，将增加的记录都删除掉
-	if log.Status == pkt.GuessGameStatusStart {
+	if log.Status == gty.GuessGameStatusStart {
 		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
 		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
 		kvs = append(kvs, delGuessGameAdminIndexKey(log.AdminAddr, log.Index))
 		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
 		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
-	} else if log.Status == pkt.GuessGameStatusBet {
+	} else if log.Status == gty.GuessGameStatusBet {
 		//如果是下注状态，则有用户进行了下注操作，对这些记录进行删除
 		kvs = append(kvs, delGuessGameAddrIndexKey(log.Addr, log.Index))
 		kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.Index))
@@ -64,8 +64,8 @@ func (g *Guess) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet,
 
 	for _, log := range receiptData.Logs {
 		switch log.GetTy() {
-		case pkt.TyLogGuessGameStart, pkt.TyLogGuessGameBet, pkt.TyLogGuessGameStopBet, pkt.TyLogGuessGameAbort, pkt.TyLogGuessGamePublish, pkt.TyLogGuessGameTimeout:
-			receiptGame := &pkt.ReceiptGuessGame{}
+		case gty.TyLogGuessGameStart, gty.TyLogGuessGameBet, gty.TyLogGuessGameStopBet, gty.TyLogGuessGameAbort, gty.TyLogGuessGamePublish, gty.TyLogGuessGameTimeout:
+			receiptGame := &gty.ReceiptGuessGame{}
 			if err := types.Decode(log.Log, receiptGame); err != nil {
 				return nil, err
 			}
@@ -77,21 +77,21 @@ func (g *Guess) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet,
 }
 
 //ExecDelLocal_Start Guess执行器Start交易撤销
-func (g *Guess) ExecDelLocal_Start(payload *pkt.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecDelLocal_Start(payload *gty.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecDelLocal_Bet Guess执行器Bet交易撤销
-func (g *Guess) ExecDelLocal_Bet(payload *pkt.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecDelLocal_Bet(payload *gty.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecDelLocal_Publish Guess执行器Publish交易撤销
-func (g *Guess) ExecDelLocal_Publish(payload *pkt.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecDelLocal_Publish(payload *gty.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
 //ExecDelLocal_Abort Guess执行器Abort交易撤销
-func (g *Guess) ExecDelLocal_Abort(payload *pkt.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (g *Guess) ExecDelLocal_Abort(payload *gty.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

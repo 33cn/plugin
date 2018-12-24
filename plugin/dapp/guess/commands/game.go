@@ -11,7 +11,7 @@ import (
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 	"github.com/spf13/cobra"
 )
 
@@ -80,8 +80,8 @@ func guessStart(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"topic\":\"%s\", \"options\":\"%s\", \"category\":\"%s\", \"maxBetHeight\":%d, \"maxBetsOneTime\":%d,\"maxBetsNumber\":%d,\"devFeeFactor\":%d,\"platFeeFactor\":%d,\"expireHeight\":%d,\"devFeeAddr\":\"%s\",\"platFeeAddr\":\"%s\"}", topic, options, category, maxBetHeight, maxBetsOneTime, maxBetsNumber, devFeeFactor, platFeeFactor, expireHeight, devFeeAddr, platFeeAddr)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.GuessX),
-		ActionName: pkt.CreateStartTx,
+		Execer:     types.ExecName(gty.GuessX),
+		ActionName: gty.CreateStartTx,
 		Payload:    []byte(payload),
 	}
 
@@ -119,8 +119,8 @@ func guessBet(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\", \"option\":\"%s\", \"betsNum\":%d}", gameID, option, betsNumber)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.GuessX),
-		ActionName: pkt.CreateBetTx,
+		Execer:     types.ExecName(gty.GuessX),
+		ActionName: gty.CreateBetTx,
 		Payload:    []byte(payload),
 	}
 
@@ -152,8 +152,8 @@ func guessStopBet(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.GuessX),
-		ActionName: pkt.CreateStopBetTx,
+		Execer:     types.ExecName(gty.GuessX),
+		ActionName: gty.CreateStopBetTx,
 		Payload:    []byte(payload),
 	}
 
@@ -184,8 +184,8 @@ func guessAbort(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.GuessX),
-		ActionName: pkt.CreateAbortTx,
+		Execer:     types.ExecName(gty.GuessX),
+		ActionName: gty.CreateAbortTx,
 		Payload:    []byte(payload),
 	}
 
@@ -220,8 +220,8 @@ func guessPublish(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\",\"result\":\"%s\"}", gameID, result)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.GuessX),
-		ActionName: pkt.CreatePublishTx,
+		Execer:     types.ExecName(gty.GuessX),
+		ActionName: gty.CreatePublishTx,
 		Payload:    []byte(payload),
 	}
 
@@ -264,7 +264,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	category, _ := cmd.Flags().GetString("category")
 
 	var params rpctypes.Query4Jrpc
-	params.Execer = pkt.GuessX
+	params.Execer = gty.GuessX
 
 	//query type,
 	//1:QueryGamesByIds,
@@ -278,91 +278,91 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	switch ty {
 	case 1:
 		gameIds := strings.Split(gameIDs, ";")
-		req := &pkt.QueryGuessGameInfos{
+		req := &gty.QueryGuessGameInfos{
 			GameIDs: gameIds,
 		}
-		params.FuncName = pkt.FuncNameQueryGamesByIDs
+		params.FuncName = gty.FuncNameQueryGamesByIDs
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.ReplyGuessGameInfos
+		var res gty.ReplyGuessGameInfos
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 2:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			GameID: gameID,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByID
+		params.FuncName = gty.FuncNameQueryGameByID
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.ReplyGuessGameInfo
+		var res gty.ReplyGuessGameInfo
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 3:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			Addr:  addr,
 			Index: index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByAddr
+		params.FuncName = gty.FuncNameQueryGameByAddr
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 4:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			Status: status,
 			Index:  index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByStatus
+		params.FuncName = gty.FuncNameQueryGameByStatus
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 5:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			AdminAddr: adminAddr,
 			Index:     index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByAdminAddr
+		params.FuncName = gty.FuncNameQueryGameByAdminAddr
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 6:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			Addr:   addr,
 			Status: status,
 			Index:  index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByAddrStatus
+		params.FuncName = gty.FuncNameQueryGameByAddrStatus
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 7:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			AdminAddr: adminAddr,
 			Status:    status,
 			Index:     index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByAdminStatus
+		params.FuncName = gty.FuncNameQueryGameByAdminStatus
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
 	case 8:
-		req := &pkt.QueryGuessGameInfo{
+		req := &gty.QueryGuessGameInfo{
 			Category: category,
 			Status:   status,
 			Index:    index,
 		}
-		params.FuncName = pkt.FuncNameQueryGameByCategoryStatus
+		params.FuncName = gty.FuncNameQueryGameByCategoryStatus
 		params.Payload = types.MustPBToJSON(req)
-		var res pkt.GuessGameRecords
+		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	}

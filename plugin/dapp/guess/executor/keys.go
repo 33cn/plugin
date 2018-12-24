@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
 //addr prefix
@@ -80,7 +80,7 @@ func calcGuessGameCategoryStatusKey(category string, status int32, index int64) 
 func addGuessGameAddrIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAddrKey(addr, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,
@@ -99,7 +99,7 @@ func delGuessGameAddrIndexKey(addr string, index int64) *types.KeyValue {
 func addGuessGameStatusIndexKey(status int32, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameStatusKey(status, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,
@@ -118,7 +118,7 @@ func delGuessGameStatusIndexKey(status int32, index int64) *types.KeyValue {
 func addGuessGameAddrStatusIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAddrStatusKey(addr, status, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,
@@ -137,7 +137,7 @@ func delGuessGameAddrStatusIndexKey(status int32, addr string, index int64) *typ
 func addGuessGameAdminIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAdminKey(addr, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,
@@ -156,7 +156,7 @@ func delGuessGameAdminIndexKey(addr string, index int64) *types.KeyValue {
 func addGuessGameAdminStatusIndexKey(status int32, addr, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameAdminStatusKey(addr, status, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,
@@ -175,7 +175,7 @@ func delGuessGameAdminStatusIndexKey(status int32, addr string, index int64) *ty
 func addGuessGameCategoryStatusIndexKey(status int32, category, gameID string, index int64) *types.KeyValue {
 	kv := &types.KeyValue{}
 	kv.Key = calcGuessGameCategoryStatusKey(category, status, index)
-	record := &pkt.GuessGameRecord{
+	record := &gty.GuessGameRecord{
 		GameID: gameID,
 		Status: status,
 		Index:  index,

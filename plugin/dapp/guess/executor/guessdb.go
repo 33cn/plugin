@@ -18,7 +18,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	pkt "github.com/33cn/plugin/plugin/dapp/guess/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
 const (
@@ -115,18 +115,18 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 //Key State数据库中存储记录的Key值格式转换
 func Key(id string) (key []byte) {
 	//key = append(key, []byte("mavl-"+types.ExecName(pkt.GuessX)+"-")...)
-	key = append(key, []byte("mavl-"+pkt.GuessX+"-")...)
+	key = append(key, []byte("mavl-"+gty.GuessX+"-")...)
 	key = append(key, []byte(id)...)
 	return key
 }
 
-func readGame(db dbm.KV, id string) (*pkt.GuessGame, error) {
+func readGame(db dbm.KV, id string) (*gty.GuessGame, error) {
 	data, err := db.Get(Key(id))
 	if err != nil {
 		logger.Error("query data have err:", err.Error())
 		return nil, err
 	}
-	var game pkt.GuessGame
+	var game gty.GuessGame
 	//decode
 	err = types.Decode(data, &game)
 	if err != nil {
@@ -137,8 +137,8 @@ func readGame(db dbm.KV, id string) (*pkt.GuessGame, error) {
 }
 
 //Infos 根据游戏id列表查询多个游戏详情信息
-func Infos(db dbm.KV, infos *pkt.QueryGuessGameInfos) (types.Message, error) {
-	var games []*pkt.GuessGame
+func Infos(db dbm.KV, infos *gty.QueryGuessGameInfos) (types.Message, error) {
+	var games []*gty.GuessGame
 	for i := 0; i < len(infos.GameIDs); i++ {
 		id := infos.GameIDs[i]
 		game, err := readGame(db, id)
@@ -147,7 +147,7 @@ func Infos(db dbm.KV, infos *pkt.QueryGuessGameInfos) (types.Message, error) {
 		}
 		games = append(games, game)
 	}
-	return &pkt.ReplyGuessGameInfos{Games: games}, nil
+	return &gty.ReplyGuessGameInfos{Games: games}, nil
 }
 
 func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, error) {
@@ -162,9 +162,9 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -172,7 +172,7 @@ func getGameListByAddr(db dbm.Lister, addr string, index int64) (types.Message, 
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByAdminAddr(db dbm.Lister, addr string, index int64) (types.Message, error) {
@@ -187,9 +187,9 @@ func getGameListByAdminAddr(db dbm.Lister, addr string, index int64) (types.Mess
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -197,7 +197,7 @@ func getGameListByAdminAddr(db dbm.Lister, addr string, index int64) (types.Mess
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Message, error) {
@@ -212,9 +212,9 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -222,7 +222,7 @@ func getGameListByStatus(db dbm.Lister, status int32, index int64) (types.Messag
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByAddrStatus(db dbm.Lister, addr string, status int32, index int64) (types.Message, error) {
@@ -237,9 +237,9 @@ func getGameListByAddrStatus(db dbm.Lister, addr string, status int32, index int
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -247,7 +247,7 @@ func getGameListByAddrStatus(db dbm.Lister, addr string, status int32, index int
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByAdminStatus(db dbm.Lister, admin string, status int32, index int64) (types.Message, error) {
@@ -262,9 +262,9 @@ func getGameListByAdminStatus(db dbm.Lister, admin string, status int32, index i
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -272,7 +272,7 @@ func getGameListByAdminStatus(db dbm.Lister, admin string, status int32, index i
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
 func getGameListByCategoryStatus(db dbm.Lister, category string, status int32, index int64) (types.Message, error) {
@@ -287,9 +287,9 @@ func getGameListByCategoryStatus(db dbm.Lister, category string, status int32, i
 		return nil, err
 	}
 
-	var records []*pkt.GuessGameRecord
+	var records []*gty.GuessGameRecord
 	for _, value := range values {
-		var record pkt.GuessGameRecord
+		var record gty.GuessGameRecord
 		err := types.Decode(value, &record)
 		if err != nil {
 			continue
@@ -297,10 +297,10 @@ func getGameListByCategoryStatus(db dbm.Lister, category string, status int32, i
 		records = append(records, &record)
 	}
 
-	return &pkt.GuessGameRecords{Records: records}, nil
+	return &gty.GuessGameRecords{Records: records}, nil
 }
 
-func (action *Action) saveGame(game *pkt.GuessGame) (kvset []*types.KeyValue) {
+func (action *Action) saveGame(game *gty.GuessGame) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
 	action.db.Set(Key(game.GetGameID()), value)
 	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameID), Value: value})
@@ -312,22 +312,22 @@ func (action *Action) getIndex() int64 {
 }
 
 //GetReceiptLog 根据游戏信息生成收据记录
-func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *types.ReceiptLog {
+func (action *Action) GetReceiptLog(game *gty.GuessGame, statusChange bool) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
-	r := &pkt.ReceiptGuessGame{}
+	r := &gty.ReceiptGuessGame{}
 	r.Addr = action.fromaddr
-	if game.Status == pkt.GuessGameStatusStart {
-		log.Ty = pkt.TyLogGuessGameStart
-	} else if game.Status == pkt.GuessGameStatusBet {
-		log.Ty = pkt.TyLogGuessGameBet
-	} else if game.Status == pkt.GuessGameStatusStopBet {
-		log.Ty = pkt.TyLogGuessGameStopBet
-	} else if game.Status == pkt.GuessGameStatusAbort {
-		log.Ty = pkt.TyLogGuessGameAbort
-	} else if game.Status == pkt.GuessGameStatusPublish {
-		log.Ty = pkt.TyLogGuessGamePublish
-	} else if game.Status == pkt.GuessGameStatusTimeOut {
-		log.Ty = pkt.TyLogGuessGameTimeout
+	if game.Status == gty.GuessGameStatusStart {
+		log.Ty = gty.TyLogGuessGameStart
+	} else if game.Status == gty.GuessGameStatusBet {
+		log.Ty = gty.TyLogGuessGameBet
+	} else if game.Status == gty.GuessGameStatusStopBet {
+		log.Ty = gty.TyLogGuessGameStopBet
+	} else if game.Status == gty.GuessGameStatusAbort {
+		log.Ty = gty.TyLogGuessGameAbort
+	} else if game.Status == gty.GuessGameStatusPublish {
+		log.Ty = gty.TyLogGuessGamePublish
+	} else if game.Status == gty.GuessGameStatusTimeOut {
+		log.Ty = gty.TyLogGuessGameTimeout
 	}
 
 	r.Index = game.Index
@@ -342,12 +342,12 @@ func (action *Action) GetReceiptLog(game *pkt.GuessGame, statusChange bool) *typ
 	return log
 }
 
-func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
+func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 	data, err := action.db.Get(Key(id))
 	if err != nil {
 		return nil, err
 	}
-	var game pkt.GuessGame
+	var game gty.GuessGame
 	//decode
 	err = types.Decode(data, &game)
 	if err != nil {
@@ -357,10 +357,10 @@ func (action *Action) readGame(id string) (*pkt.GuessGame, error) {
 }
 
 // 新建一局游戏
-func (action *Action) newGame(gameID string, start *pkt.GuessGameStart) (*pkt.GuessGame, error) {
-	game := &pkt.GuessGame{
+func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.GuessGame, error) {
+	game := &gty.GuessGame{
 		GameID: gameID,
-		Status: pkt.GuessGameActionStart,
+		Status: gty.GuessGameActionStart,
 		//StartTime:   action.blocktime,
 		StartTxHash:    gameID,
 		Topic:          start.Topic,
@@ -384,7 +384,7 @@ func (action *Action) newGame(gameID string, start *pkt.GuessGameStart) (*pkt.Gu
 }
 
 //GameStart 创建游戏动作执行
-func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, error) {
+func (action *Action) GameStart(start *gty.GuessGameStart) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -403,7 +403,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	if start.MaxBetsNumber >= MaxBetsNumber {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
 			"err", fmt.Sprintf("The maximum bets number is %d which is less than start.MaxBetsNumber %d", int64(MaxBetsNumber), start.MaxBetsNumber))
-		return nil, pkt.ErrOverBetsLimit
+		return nil, gty.ErrOverBetsLimit
 	}
 
 	if len(start.Topic) == 0 || len(start.Options) == 0 {
@@ -440,7 +440,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 		mainHeight := action.GetMainHeightByTxHash(action.txhash)
 		if mainHeight < 0 {
 			logger.Error("GameStart", "mainHeight", mainHeight)
-			return nil, pkt.ErrGuessStatus
+			return nil, gty.ErrGuessStatus
 		}
 		game.StartHeight = mainHeight
 	} else {
@@ -449,10 +449,10 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 	game.AdminAddr = action.fromaddr
 	game.PreIndex = 0
 	game.Index = action.getIndex()
-	game.Status = pkt.GuessGameStatusStart
-	game.BetStat = &pkt.GuessBetStat{TotalBetTimes: 0, TotalBetsNumber: 0}
+	game.Status = gty.GuessGameStatusStart
+	game.BetStat = &gty.GuessBetStat{TotalBetTimes: 0, TotalBetsNumber: 0}
 	for i := 0; i < len(options); i++ {
-		item := &pkt.GuessBetStatItem{Option: options[i], BetsNumber: 0, BetsTimes: 0}
+		item := &gty.GuessBetStatItem{Option: options[i], BetsNumber: 0, BetsTimes: 0}
 		game.BetStat.Items = append(game.BetStat.Items, item)
 	}
 
@@ -464,7 +464,7 @@ func (action *Action) GameStart(start *pkt.GuessGameStart) (*types.Receipt, erro
 }
 
 //GameBet 参与游戏动作执行
-func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
+func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -476,10 +476,10 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	}
 
 	prevStatus := game.Status
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet {
+	if game.Status != gty.GuessGameStatusStart && game.Status != gty.GuessGameStatusBet {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
-		return nil, pkt.ErrGuessStatus
+		return nil, gty.ErrGuessStatus
 	}
 
 	canBet := action.RefreshStatusByTime(game)
@@ -542,8 +542,8 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 	kv = append(kv, receipt.KV...)
 
 	var receiptLog *types.ReceiptLog
-	if prevStatus != pkt.GuessGameStatusBet {
-		action.ChangeStatus(game, pkt.GuessGameStatusBet)
+	if prevStatus != gty.GuessGameStatusBet {
+		action.ChangeStatus(game, gty.GuessGameStatusBet)
 		action.AddGuessBet(game, pbBet)
 		receiptLog = action.GetReceiptLog(game, true)
 	} else {
@@ -558,7 +558,7 @@ func (action *Action) GameBet(pbBet *pkt.GuessGameBet) (*types.Receipt, error) {
 }
 
 //GameStopBet 停止游戏下注动作执行
-func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, error) {
+func (action *Action) GameStopBet(pbBet *gty.GuessGameStopBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -569,20 +569,20 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 		return nil, err
 	}
 
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet {
+	if game.Status != gty.GuessGameStatusStart && game.Status != gty.GuessGameStatusBet {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
-		return nil, pkt.ErrGuessStatus
+		return nil, gty.ErrGuessStatus
 	}
 
 	//只有adminAddr可以发起stopBet
 	if game.AdminAddr != action.fromaddr {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
 			action.fromaddr, "adminAddr", game.AdminAddr)
-		return nil, pkt.ErrNoPrivilege
+		return nil, gty.ErrNoPrivilege
 	}
 
-	action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
+	action.ChangeStatus(game, gty.GuessGameStatusStopBet)
 
 	var receiptLog *types.ReceiptLog
 	//状态发生变化，更新所有addr对应记录的index
@@ -596,9 +596,9 @@ func (action *Action) GameStopBet(pbBet *pkt.GuessGameStopBet) (*types.Receipt, 
 }
 
 //AddGuessBet 向游戏结构中加入下注信息
-func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) {
-	bet := &pkt.GuessBet{Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
-	player := &pkt.GuessPlayer{Addr: action.fromaddr, Bet: bet}
+func (action *Action) AddGuessBet(game *gty.GuessGame, pbBet *gty.GuessGameBet) {
+	bet := &gty.GuessBet{Option: pbBet.GetOption(), BetsNumber: pbBet.BetsNum, Index: game.Index}
+	player := &gty.GuessPlayer{Addr: action.fromaddr, Bet: bet}
 	game.Plays = append(game.Plays, player)
 
 	for i := 0; i < len(game.BetStat.Items); i++ {
@@ -618,7 +618,7 @@ func (action *Action) AddGuessBet(game *pkt.GuessGame, pbBet *pkt.GuessGameBet) 
 }
 
 //GamePublish 公布竞猜游戏结果动作执行
-func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt, error) {
+func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -633,13 +633,13 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	if game.AdminAddr != action.fromaddr {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "fromAddr is not adminAddr",
 			action.fromaddr, "adminAddr", game.AdminAddr)
-		return nil, pkt.ErrNoPrivilege
+		return nil, gty.ErrNoPrivilege
 	}
 
-	if game.Status != pkt.GuessGameStatusStart && game.Status != pkt.GuessGameStatusBet && game.Status != pkt.GuessGameStatusStopBet {
+	if game.Status != gty.GuessGameStatusStart && game.Status != gty.GuessGameStatusBet && game.Status != gty.GuessGameStatusStopBet {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "Status error",
 			game.GetStatus())
-		return nil, pkt.ErrGuessStatus
+		return nil, gty.ErrGuessStatus
 	}
 
 	//检查竞猜选项是否合法
@@ -682,7 +682,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 		kv = append(kv, receipt.KV...)
 	}
 
-	action.ChangeStatus(game, pkt.GuessGameStatusPublish)
+	action.ChangeStatus(game, gty.GuessGameStatusPublish)
 	//计算竞猜正确的筹码总数
 	totalBetsNumber := game.BetStat.TotalBetsNumber
 	winBetsNumber := int64(0)
@@ -693,8 +693,8 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 	}
 
 	//按创建游戏时设定的比例，转移佣金到开发者账户和平台账户
-	devAddr := pkt.DevShareAddr
-	platAddr := pkt.PlatformShareAddr
+	devAddr := gty.DevShareAddr
+	platAddr := gty.PlatformShareAddr
 	devFee := int64(0)
 	platFee := int64(0)
 	if len(game.DevFeeAddr) > 0 {
@@ -762,7 +762,7 @@ func (action *Action) GamePublish(publish *pkt.GuessGamePublish) (*types.Receipt
 }
 
 //GameAbort 撤销游戏动作执行
-func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, error) {
+func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -773,11 +773,11 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 		return nil, err
 	}
 
-	if game.Status == pkt.GuessGameStatusPublish || game.Status == pkt.GuessGameStatusAbort {
+	if game.Status == gty.GuessGameStatusPublish || game.Status == gty.GuessGameStatusAbort {
 
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "game status not allow abort",
 			game.Status)
-		return nil, pkt.ErrGuessStatus
+		return nil, gty.ErrGuessStatus
 	}
 
 	preStatus := game.Status
@@ -785,7 +785,7 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 	action.RefreshStatusByTime(game)
 
 	//如果游戏超时，则任何地址都可以Abort，否则只有创建游戏的地址可以Abort
-	if game.Status != pkt.GuessGameStatusTimeOut {
+	if game.Status != gty.GuessGameStatusTimeOut {
 		if game.AdminAddr != action.fromaddr {
 			logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "Only admin can abort",
 				action.fromaddr, "status", game.Status)
@@ -812,9 +812,9 @@ func (action *Action) GameAbort(pbend *pkt.GuessGameAbort) (*types.Receipt, erro
 
 	if game.Status != preStatus {
 		//说明action.RefreshStatusByTime(game)调用时已经更新过状态和index了，这里直接再改状态就行了。
-		game.Status = pkt.GuessGameStatusAbort
+		game.Status = gty.GuessGameStatusAbort
 	} else {
-		action.ChangeStatus(game, pkt.GuessGameStatusAbort)
+		action.ChangeStatus(game, gty.GuessGameStatusAbort)
 	}
 
 	//状态发生变化，统一更新所有addr记录的index
@@ -857,7 +857,7 @@ func IsLegalOption(options []string, option string) bool {
 }
 
 //ChangeStatus 修改游戏状态，同步更新历史记录
-func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
+func (action *Action) ChangeStatus(game *gty.GuessGame, destStatus int32) {
 	if game.Status != destStatus {
 		game.PreStatus = game.Status
 		game.PreIndex = game.Index
@@ -867,7 +867,7 @@ func (action *Action) ChangeStatus(game *pkt.GuessGame, destStatus int32) {
 }
 
 //ChangeAllAddrIndex 状态更新时，更新下注记录的历史信息
-func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
+func (action *Action) ChangeAllAddrIndex(game *gty.GuessGame) {
 	for i := 0; i < len(game.Plays); i++ {
 		player := game.Plays[i]
 		player.Bet.PreIndex = player.Bet.Index
@@ -876,7 +876,7 @@ func (action *Action) ChangeAllAddrIndex(game *pkt.GuessGame) {
 }
 
 //RefreshStatusByTime 检测游戏是否过期，是否可以下注
-func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
+func (action *Action) RefreshStatusByTime(game *gty.GuessGame) (canBet bool) {
 
 	var mainHeight int64
 	if types.IsPara() {
@@ -893,7 +893,7 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 	if game.DrivenByAdmin {
 
 		if (mainHeight - game.StartHeight) >= game.ExpireHeight {
-			action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
+			action.ChangeStatus(game, gty.GuessGameStatusTimeOut)
 			canBet = false
 			return canBet
 		}
@@ -907,9 +907,9 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "Height over limit",
 			mainHeight, "startHeight", game.StartHeight, "MaxHeightDiff", game.GetMaxBetHeight())
 		if game.ExpireHeight > heightDiff {
-			action.ChangeStatus(game, pkt.GuessGameStatusStopBet)
+			action.ChangeStatus(game, gty.GuessGameStatusStopBet)
 		} else {
-			action.ChangeStatus(game, pkt.GuessGameStatusTimeOut)
+			action.ChangeStatus(game, gty.GuessGameStatusTimeOut)
 		}
 
 		canBet = false
@@ -921,7 +921,7 @@ func (action *Action) RefreshStatusByTime(game *pkt.GuessGame) (canBet bool) {
 }
 
 //CheckTime 检测游戏的过期设置。
-func (action *Action) CheckTime(start *pkt.GuessGameStart) bool {
+func (action *Action) CheckTime(start *gty.GuessGameStart) bool {
 	if start.MaxBetHeight == 0 && start.ExpireHeight == 0 {
 		//如果上述字段都不携带，则认为完全由admin的指令驱动。
 		start.DrivenByAdmin = true
