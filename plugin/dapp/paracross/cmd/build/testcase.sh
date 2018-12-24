@@ -159,7 +159,7 @@ function token_create() {
     fi
 }
 
-function token_transfer {
+function token_transfer() {
     echo "=========== # 2.token transfer ============="
     hash=$(${1} send token transfer -a 11 -s GD -t 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
