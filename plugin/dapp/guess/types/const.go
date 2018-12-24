@@ -45,11 +45,11 @@ var (
 )
 
 const (
-	//FuncNameQueryGamesByIds func name
-	FuncNameQueryGamesByIds = "QueryGamesByIds"
+	//FuncNameQueryGamesByIDs func name
+	FuncNameQueryGamesByIDs = "QueryGamesByIDs"
 
-	//FuncNameQueryGameById func name
-	FuncNameQueryGameById = "QueryGameById"
+	//FuncNameQueryGameByID func name
+	FuncNameQueryGameByID = "QueryGameByID"
 
 	//FuncNameQueryGameByAddr func name
 	FuncNameQueryGameByAddr = "QueryGamesByAddr"

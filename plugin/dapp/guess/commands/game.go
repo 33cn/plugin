@@ -281,7 +281,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &pkt.QueryGuessGameInfos{
 			GameIDs: gameIds,
 		}
-		params.FuncName = pkt.FuncNameQueryGamesByIds
+		params.FuncName = pkt.FuncNameQueryGamesByIDs
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfos
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -291,7 +291,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &pkt.QueryGuessGameInfo{
 			GameID: gameID,
 		}
-		params.FuncName = pkt.FuncNameQueryGameById
+		params.FuncName = pkt.FuncNameQueryGameByID
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.ReplyGuessGameInfo
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
