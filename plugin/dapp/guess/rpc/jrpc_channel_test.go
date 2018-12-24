@@ -77,7 +77,7 @@ func TestJRPCChannel(t *testing.T) {
 }
 
 func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	payload := &pty.GuessGameStart{Topic: "WorldCup Final", Options: "A:France;B:Claodia", Category: "football", MaxBetsOneTime: 100e8, MaxBetsNumber:1000e8, DevFeeFactor: 5, DevFeeAddr: "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7", PlatFeeFactor: 5, PlatFeeAddr: "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"}
+	payload := &pty.GuessGameStart{Topic: "WorldCup Final", Options: "A:France;B:Claodia", Category: "football", MaxBetsOneTime: 100e8, MaxBetsNumber: 1000e8, DevFeeFactor: 5, DevFeeAddr: "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7", PlatFeeFactor: 5, PlatFeeAddr: "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.GuessX),
 		ActionName: pty.CreateStartTx,
@@ -130,7 +130,6 @@ func testAbortRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
-
 
 func testQueryGameByID(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
@@ -187,7 +186,6 @@ func testQueryGamesByAdminAddr(t *testing.T, jrpc *jsonclient.JSONClient) error 
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
-
 func testQueryGamesByAddrStatus(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
@@ -198,7 +196,6 @@ func testQueryGamesByAddrStatus(t *testing.T, jrpc *jsonclient.JSONClient) error
 	rep = &pty.GuessGameRecords{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
-
 
 func testQueryGamesByAdminStatus(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
