@@ -99,6 +99,7 @@ func TestMultiSigAccount(t *testing.T) {
 	testModifyRequestWeight(t, mocker, jrpcClient, multiSigAccAddr)
 	//AddrE ConfirmTx
 	testConfirmTx(t, mocker, jrpcClient, multiSigAccAddr)
+
 	//AddrE ConfirmTx
 	testAbnormal(t, mocker, jrpcClient)
 }
