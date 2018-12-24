@@ -62,6 +62,7 @@ func getRPCClient(t *testing.T, mocker *testnode.Chain33Mock) *jsonclient.JSONCl
 	assert.NotNil(t, jrpcClient)
 	return jrpcClient
 }
+
 func getTx(t *testing.T, hex string) *types.Transaction {
 	data, err := common.FromHex(hex)
 	assert.Nil(t, err)
