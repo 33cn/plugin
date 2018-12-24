@@ -202,18 +202,22 @@ func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 
 	if err != nil {
 		panic(err)
 	}
+	var curHeight int64
 	hint := time.NewTicker(10 * time.Second)
 	defer hint.Stop()
 	for originSeq <= lastSeq {
 		select {
 		case <-hint.C:
-			plog.Info("Still Searching......", "searchAtSeq", originSeq, "lastSeq", lastSeq)
+			plog.Info("Still Searching......", "searchAtSeq", originSeq, "searchAtHeight", curHeight, "lastSeq", lastSeq)
+			//increase search step
+			originSeq += (height - curHeight) / 2
 		default:
 			blockDetail, seqTy, err := client.GetBlockOnMainBySeq(originSeq)
 			if err != nil {
 				panic(err)
 			}
-			if blockDetail.Block.Height == height && seqTy == addAct {
+			curHeight = blockDetail.Block.Height
+			if curHeight == height && seqTy == addAct {
 				plog.Info("the target sequence in mainchain", "heightOnMain", height, "targetSeq", originSeq)
 				return originSeq
 			}
