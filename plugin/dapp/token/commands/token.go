@@ -99,7 +99,7 @@ func createTokenTransfer(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// CreateTokenTransferCmd create raw transfer tx
+// CreateTokenTransferExecCmd create raw transfer tx
 func CreateTokenTransferExecCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send_exec",
