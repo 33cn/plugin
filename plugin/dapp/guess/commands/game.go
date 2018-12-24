@@ -242,7 +242,7 @@ func GuessQueryRawTxCmd() *cobra.Command {
 }
 
 func addGuessQueryFlags(cmd *cobra.Command) {
-	cmd.Flags().Int32P("type", "t", 1, "query type, 1:Ids,2:Id,3:Addr,4:Status,5:AdminAddr,6:AddrStatus,7:AdminStatus,8:CategoryStatus")
+	cmd.Flags().StringP("type", "t", "", "query type:ids,id,addr,status,adminAddr,addrStatus,adminStatus,categoryStatus")
 	cmd.Flags().StringP("gameId", "g", "", "game Id")
 	cmd.Flags().StringP("addr", "a", "", "address")
 	cmd.Flags().StringP("adminAddr", "m", "", "admin address")
@@ -254,7 +254,7 @@ func addGuessQueryFlags(cmd *cobra.Command) {
 
 func guessQuery(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ty, _ := cmd.Flags().GetInt32("type")
+	ty, _ := cmd.Flags().GetString("type")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	addr, _ := cmd.Flags().GetString("addr")
 	adminAddr, _ := cmd.Flags().GetString("adminAddr")
@@ -276,7 +276,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	//7:QueryGameByAdminStatus,
 	//8:QueryGameByCategoryStatus,
 	switch ty {
-	case 1:
+	case "ids":
 		gameIds := strings.Split(gameIDs, ";")
 		req := &gty.QueryGuessGameInfos{
 			GameIDs: gameIds,
@@ -287,7 +287,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 2:
+	case "id":
 		req := &gty.QueryGuessGameInfo{
 			GameID: gameID,
 		}
@@ -297,7 +297,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 3:
+	case "addr":
 		req := &gty.QueryGuessGameInfo{
 			Addr:  addr,
 			Index: index,
@@ -308,7 +308,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 4:
+	case "status":
 		req := &gty.QueryGuessGameInfo{
 			Status: status,
 			Index:  index,
@@ -319,7 +319,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 5:
+	case "adminAddr":
 		req := &gty.QueryGuessGameInfo{
 			AdminAddr: adminAddr,
 			Index:     index,
@@ -330,7 +330,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 6:
+	case "addrStatus":
 		req := &gty.QueryGuessGameInfo{
 			Addr:   addr,
 			Status: status,
@@ -342,7 +342,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 7:
+	case "adminStatus":
 		req := &gty.QueryGuessGameInfo{
 			AdminAddr: adminAddr,
 			Status:    status,
@@ -354,7 +354,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 
-	case 8:
+	case "categoryStatus":
 		req := &gty.QueryGuessGameInfo{
 			Category: category,
 			Status:   status,
@@ -365,5 +365,8 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		var res gty.GuessGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
+
+	default:
+		fmt.Println("Wrong type:", ty, " ,only support: ids,id,addr,status,adminAddr,addrStatus,adminStatus,categoryStatus")
 	}
 }
