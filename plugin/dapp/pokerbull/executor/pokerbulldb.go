@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
+	"time"
 )
 
 // Action 斗牛action结构
@@ -484,7 +485,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 	game = &pkt.PokerBull{
 		GameId:      gameID,
 		Status:      pkt.PBGameActionStart,
-		StartTime:   action.blocktime,
+		StartTime:   time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
 		StartTxHash: gameID,
 		Value:       start.GetValue(),
 		Poker:       NewPoker(),
@@ -497,7 +498,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 	}
 
 	Shuffle(game.Poker, action.blocktime) //洗牌
-	logger.Debug(fmt.Sprintf("Start a new game %s for player %s", game.GameId, action.fromaddr))
+	logger.Info(fmt.Sprintf("Create a new game %s for player %s", game.GameId, action.fromaddr))
 
 	return game, nil
 }
@@ -560,7 +561,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	logger.Debug(fmt.Sprintf("Pokerbull game start for %s", action.fromaddr))
+	logger.Info(fmt.Sprintf("Pokerbull game match for %s", action.fromaddr))
 	if start.PlayerNum > pkt.MaxPlayerNum {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
 			"err", fmt.Sprintf("The maximum player number is %d", pkt.MaxPlayerNum))
@@ -599,7 +600,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 				return nil, err
 			}
 		}
-		logger.Debug(fmt.Sprintf("Match a new game %s for player %s", game.GameId, action.fromaddr))
+		logger.Info(fmt.Sprintf("Match a new game %s for player %s", game.GameId, action.fromaddr))
 	}
 
 	//发牌随机数取txhash
@@ -613,11 +614,12 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		Address: action.fromaddr,
 		TxHash:  txrng,
 		Ready:   false,
+		MatchTime:time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
 	})
 
 	// 如果人数达标，则发牌计算斗牛结果
 	if len(game.Players) == int(game.PlayerNum) {
-		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
+		logger.Info(fmt.Sprintf("Game starting: %s round: %d", game.GameId, game.Round))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -631,7 +633,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		game.PreStatus = pkt.PBGameActionStart
 		game.IsWaiting = false
 	} else {
-		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
+		logger.Info(fmt.Sprintf("Game waiting: %s round: %d", game.GameId, game.Round))
 		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, start.GetValue()*PokerbullLeverageMax) //冻结子账户资金, 最后一位玩家不需要冻结
 		if err != nil {
 			logger.Error("GameCreate.ExecFrozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", start.GetValue(), "err", err.Error())
@@ -683,7 +685,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 			pbcontinue.GetGameId())
 		return nil, err
 	}
-	logger.Debug(fmt.Sprintf("Pokerbull game %s continue for %s", game.GameId, action.fromaddr))
+	logger.Info(fmt.Sprintf("Continue pokerbull game %s from %s", game.GameId, action.fromaddr))
 
 	// 检查余额，庄家检查闲家数量倍数的资金
 	checkValue := game.GetValue() * PokerbullLeverageMax
@@ -716,9 +718,10 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 	}
 	pbplayer.TxHash = txrng
 	pbplayer.Ready = true
+	pbplayer.MatchTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
 
 	if getReadyPlayerNum(game.Players) == int(game.PlayerNum) {
-		logger.Debug(fmt.Sprintf("Game start: %s", game.GameId))
+		logger.Info(fmt.Sprintf("Game starting: %s round: %d", game.GameId, game.Round))
 		logsH, kvH, err := action.settleAccount(action.fromaddr, game)
 		if err != nil {
 			return nil, err
@@ -730,7 +733,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 		game.IsWaiting = false
 		game.PreStatus = pkt.PBGameActionContinue
 	} else {
-		logger.Debug(fmt.Sprintf("Game waiting: %s", game.GameId))
+		logger.Info(fmt.Sprintf("Game waiting: %s round: %d", game.GameId))
 		// 回合数加一次
 		if !game.IsWaiting {
 			game.Round++
@@ -799,7 +802,7 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 	game.Status = pkt.PBGameActionQuit
 	game.PrevIndex = game.Index
 	game.Index = action.getIndex(game)
-	game.QuitTime = action.blocktime
+	game.QuitTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
 	game.QuitTxHash = common.ToHex(action.txhash)
 
 	receiptLog := action.GetReceiptLog(game)
