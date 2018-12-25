@@ -90,7 +90,7 @@ func TestSetAutoMining(t *testing.T) {
 func testCloseTicketsOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	g := newGrpc(api)
-	var in = new(types.ReqNil)
+	var in = &ty.TicketClose{}
 	api.On("ExecWalletFunc", "ticket", "CloseTickets", in).Return(&types.ReplyHashes{}, nil)
 	data, err := g.CloseTickets(context.Background(), in)
 	assert.Nil(t, err, "the error should be nil")
