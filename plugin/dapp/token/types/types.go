@@ -5,10 +5,15 @@
 package types
 
 import (
+	"encoding/json"
 	"reflect"
+
+	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/types"
 )
+
+var tokenlog = log.New("module", "execs.token.types")
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TokenX))
@@ -92,3 +97,28 @@ func (t *TokenType) RPC_Default_Process(action string, msg interface{}) (*types.
 	}
 	return tx, err
 }
+
+func (t *TokenType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	tx, err := t.ExecTypeBase.CreateTx(action, msg)
+	if err != nil {
+		tokenlog.Error("token CreateTx failed", "err", err, "action", action, "msg", string(msg))
+		return nil, err
+	}
+	if !types.IsPara() {
+		var transfer TokenAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			tokenlog.Error("token CreateTx failed", "decode payload err", err, "action", action, "msg", string(msg))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdraw().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+	return tx, nil
+}
+
