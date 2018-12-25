@@ -98,6 +98,7 @@ func (t *TokenType) RPC_Default_Process(action string, msg interface{}) (*types.
 	return tx, err
 }
 
+// CreateTx token 创建合约
 func (t *TokenType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
 	tx, err := t.ExecTypeBase.CreateTx(action, msg)
 	if err != nil {
