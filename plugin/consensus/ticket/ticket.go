@@ -222,7 +222,7 @@ func (client *Client) flushTicket() error {
 		client.setTicket(nil, nil)
 		return nil
 	}
-	if err != nil {
+	if err != nil && err != ty.ErrNoTicket {
 		tlog.Error("flushTicket error", "err", err)
 		return err
 	}
