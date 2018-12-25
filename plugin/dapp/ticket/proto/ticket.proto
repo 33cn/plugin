@@ -79,6 +79,7 @@ message TicketGenesis {
 
 message TicketClose {
     repeated string ticketId = 1;
+    string minerAddress  = 2;
 }
 
 message TicketList {
