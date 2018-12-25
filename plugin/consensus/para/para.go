@@ -203,6 +203,7 @@ func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 
 		panic(err)
 	}
 	var curHeight int64
+	incStep := false
 	hint := time.NewTicker(10 * time.Second)
 	defer hint.Stop()
 	for originSeq <= lastSeq {
@@ -210,7 +211,7 @@ func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 
 		case <-hint.C:
 			plog.Info("Still Searching......", "searchAtSeq", originSeq, "searchAtHeight", curHeight, "lastSeq", lastSeq)
 			//increase search step
-			originSeq += (height - curHeight) / 2
+			incStep = true
 		default:
 			blockDetail, seqTy, err := client.GetBlockOnMainBySeq(originSeq)
 			if err != nil {
@@ -221,7 +222,12 @@ func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 
 				plog.Info("the target sequence in mainchain", "heightOnMain", height, "targetSeq", originSeq)
 				return originSeq
 			}
-			originSeq++
+			if incStep {
+				originSeq += (height - curHeight) / 2
+				incStep = false
+			} else {
+				originSeq++
+			}
 		}
 	}
 	panic("Main chain has not reached the height currently")
