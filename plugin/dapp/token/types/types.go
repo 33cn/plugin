@@ -121,4 +121,3 @@ func (t *TokenType) CreateTx(action string, msg json.RawMessage) (*types.Transac
 	}
 	return tx, nil
 }
-
