@@ -33,6 +33,8 @@ const (
 	delAct int64 = 2 //reference blockstore.go, del para block action
 
 	paraCrossTxCount = 2 //current only support 2 txs for cross
+
+	minBlockNum = 6 //min block number startHeight before lastHeight in mainchain
 )
 
 var (
@@ -40,7 +42,6 @@ var (
 	grpcSite                 = "localhost:8802"
 	genesisBlockTime   int64 = 1514533390
 	startHeight        int64     //parachain sync from startHeight in mainchain
-	searchSeq          int64     //start sequence to search  startHeight in mainchain
 	blockSec           int64 = 5 //write block interval, second
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
@@ -75,7 +76,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	if cfg.StartHeight > 0 {
 		startHeight = cfg.StartHeight
-		searchSeq = calcSearchseq(cfg.StartHeight)
 	}
 	if cfg.WriteBlockSeconds > 0 {
 		blockSec = cfg.WriteBlockSeconds
@@ -138,13 +138,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	return para
 }
 
-func calcSearchseq(height int64) int64 {
-	if height < 1000 {
-		return 0
-	}
-	return height - 1000
-}
-
 //para 不检查任何的交易
 func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	err := checkMinerTx(current)
@@ -178,10 +171,7 @@ func (client *client) InitBlock() {
 	}
 
 	if block == nil {
-		startSeq := int64(0)
-		if searchSeq > 0 {
-			startSeq = client.GetSeqByHeightOnMain(startHeight, searchSeq)
-		}
+		startSeq := client.GetStartSeq(startHeight)
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
@@ -190,37 +180,28 @@ func (client *client) InitBlock() {
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		client.WriteBlock(zeroHash[:], newblock, startSeq-int64(1))
+		client.WriteBlock(zeroHash[:], newblock, startSeq-1)
 	} else {
 		client.SetCurrentBlock(block)
 	}
 }
 
-func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 {
-	lastSeq, err := client.GetLastSeqOnMainChain()
-	plog.Info("Searching for the sequence", "heightOnMain", height, "searchSeq", searchSeq, "lastSeq", lastSeq)
+// GetStartSeq get startSeq in mainchain
+func (client *client) GetStartSeq(height int64) int64 {
+	lastHeight, err := client.GetLastHeightOnMainChain()
 	if err != nil {
 		panic(err)
 	}
-	hint := time.NewTicker(10 * time.Second)
-	defer hint.Stop()
-	for originSeq <= lastSeq {
-		select {
-		case <-hint.C:
-			plog.Info("Still Searching......", "searchAtSeq", originSeq, "lastSeq", lastSeq)
-		default:
-			blockDetail, seqTy, err := client.GetBlockOnMainBySeq(originSeq)
-			if err != nil {
-				panic(err)
-			}
-			if blockDetail.Block.Height == height && seqTy == addAct {
-				plog.Info("the target sequence in mainchain", "heightOnMain", height, "targetSeq", originSeq)
-				return originSeq
-			}
-			originSeq++
-		}
+	if lastHeight-height < minBlockNum {
+		panic(fmt.Sprintf("startHeight(%d) less than %d blocks before lastHeight(%d) in mainchain", height, minBlockNum, lastHeight))
 	}
-	panic("Main chain has not reached the height currently")
+
+	seq, err := client.GetSeqByHeightOnMainChain(height)
+	if err != nil {
+		panic(err)
+	}
+	plog.Info("the start sequence in mainchain", "startHeight", height, "startSeq", seq)
+	return seq
 }
 
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
@@ -356,6 +337,15 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, []byte, int64, er
 
 }
 
+func (client *client) GetLastHeightOnMainChain() (int64, error) {
+	header, err := client.grpcClient.GetLastHeader(context.Background(), &types.ReqNil{})
+	if err != nil {
+		plog.Error("GetLastHeightOnMainChain", "Error", err.Error())
+		return -1, err
+	}
+	return header.Height, nil
+}
+
 func (client *client) GetLastSeqOnMainChain() (int64, error) {
 	seq, err := client.grpcClient.GetLastBlockSequence(context.Background(), &types.ReqNil{})
 	if err != nil {
@@ -364,6 +354,24 @@ func (client *client) GetLastSeqOnMainChain() (int64, error) {
 	}
 	//the reflect checked in grpcHandle
 	return seq.Data, nil
+}
+
+func (client *client) GetSeqByHeightOnMainChain(height int64) (int64, error) {
+	hash, err := client.GetHashByHeightOnMainChain(height)
+	if err != nil {
+		return -1, err
+	}
+	seq, err := client.GetSeqByHashOnMainChain(hash)
+	return seq, err
+}
+
+func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
+	reply, err := client.grpcClient.GetBlockHash(context.Background(), &types.ReqInt{Height: height})
+	if err != nil {
+		plog.Error("GetHashByHeightOnMainChain", "Error", err.Error())
+		return nil, err
+	}
+	return reply.Hash, nil
 }
 
 func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
