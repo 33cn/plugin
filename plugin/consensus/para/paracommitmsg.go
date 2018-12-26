@@ -83,7 +83,7 @@ out:
 			}
 
 		case block := <-client.mainBlockAdd:
-			if client.currentTx != nil && client.paraClient.iscaughtup {
+			if client.currentTx != nil && client.paraClient.isCaughtup {
 				exist := checkTxInMainBlock(client.currentTx, block)
 				if exist {
 					finishHeight = sendingHeight
