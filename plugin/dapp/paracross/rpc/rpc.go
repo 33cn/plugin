@@ -91,3 +91,26 @@ func (c *Jrpc) GetAssetTxResult(req *types.ReqHash, result *interface{}) error {
 	*result = data
 	return err
 }
+
+// IsSync query is sync
+func (g *channelClient) IsSync(ctx context.Context, in *types.ReqNil) (*types.IsCaughtUp, error) {
+	data, err := g.QueryConsensusFunc("para", "IsCaughtUp", &types.ReqNil{})
+	if err != nil {
+		return nil, err
+	}
+	return data.(*types.IsCaughtUp), nil
+}
+
+// IsSync query is sync
+func (c *Jrpc) IsSync(in *types.ReqNil, result *bool) error {
+	//TODO consensus and paracross are not the same registered names ?
+	data, err := c.cli.QueryConsensusFunc("para", "IsCaughtUp", &types.ReqNil{})
+	*result = false
+	if err != nil {
+		return err
+	}
+	if reply, ok := data.(*types.IsCaughtUp); ok {
+		*result = reply.Iscaughtup
+	}
+	return nil
+}
