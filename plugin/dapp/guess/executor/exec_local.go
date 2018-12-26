@@ -60,6 +60,8 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 	if receipt.GetTy() != types.ExecOk {
 		return dbSet, nil
 	}
+
+	/*
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
 		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
@@ -72,6 +74,28 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
 	}
+	*/
+
+	table := gty.NewTable(g.GetLocalDB())
+	for _, item := range receipt.Logs {
+		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
+			var gameLog gty.ReceiptGuessGame
+			err := types.Decode(item.Log, &gameLog)
+			if err != nil {
+				return nil, err
+			}
+			err = table.Replace(&gameLog)
+			if err != nil {
+				return nil, err
+			}
+			kvs, err := table.Save()
+			if err != nil {
+				return nil, err
+			}
+			dbSet.KV = append(dbSet.KV, kvs...)
+		}
+	}
+
 	return dbSet, nil
 }
 
