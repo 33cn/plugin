@@ -62,18 +62,18 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 	}
 
 	/*
-	for i := 0; i < len(receipt.Logs); i++ {
-		item := receipt.Logs[i]
-		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
-			var Gamelog gty.ReceiptGuessGame
-			err := types.Decode(item.Log, &Gamelog)
-			if err != nil {
-				panic(err) //数据错误了，已经被修改了
+		for i := 0; i < len(receipt.Logs); i++ {
+			item := receipt.Logs[i]
+			if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
+				var Gamelog gty.ReceiptGuessGame
+				err := types.Decode(item.Log, &Gamelog)
+				if err != nil {
+					panic(err) //数据错误了，已经被修改了
+				}
+				kv := g.updateIndex(&Gamelog)
+				dbSet.KV = append(dbSet.KV, kv...)
 			}
-			kv := g.updateIndex(&Gamelog)
-			dbSet.KV = append(dbSet.KV, kv...)
 		}
-	}
 	*/
 
 	table := gty.NewTable(g.GetLocalDB())

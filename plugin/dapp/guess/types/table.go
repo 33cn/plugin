@@ -68,7 +68,7 @@ func (tx *GuessRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%s:%2d", tx.Addr, tx.Status)), nil
 	} else if key == "admin" {
 		return []byte(tx.AdminAddr), nil
-	}else if key == "admin_status" {
+	} else if key == "admin_status" {
 		return []byte(fmt.Sprintf("%s:%2d", tx.AdminAddr, tx.Status)), nil
 	} else if key == "category_status" {
 		return []byte(fmt.Sprintf("%s:%2d", tx.Category, tx.Status)), nil

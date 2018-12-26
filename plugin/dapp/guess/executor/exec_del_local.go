@@ -63,17 +63,17 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 	}
 
 	/*
-	for _, log := range receiptData.Logs {
-		switch log.GetTy() {
-		case gty.TyLogGuessGameStart, gty.TyLogGuessGameBet, gty.TyLogGuessGameStopBet, gty.TyLogGuessGameAbort, gty.TyLogGuessGamePublish, gty.TyLogGuessGameTimeout:
-			receiptGame := &gty.ReceiptGuessGame{}
-			if err := types.Decode(log.Log, receiptGame); err != nil {
-				return nil, err
+		for _, log := range receiptData.Logs {
+			switch log.GetTy() {
+			case gty.TyLogGuessGameStart, gty.TyLogGuessGameBet, gty.TyLogGuessGameStopBet, gty.TyLogGuessGameAbort, gty.TyLogGuessGamePublish, gty.TyLogGuessGameTimeout:
+				receiptGame := &gty.ReceiptGuessGame{}
+				if err := types.Decode(log.Log, receiptGame); err != nil {
+					return nil, err
+				}
+				kv := g.rollbackIndex(receiptGame)
+				dbSet.KV = append(dbSet.KV, kv...)
 			}
-			kv := g.rollbackIndex(receiptGame)
-			dbSet.KV = append(dbSet.KV, kv...)
-		}
-	}*/
+		}*/
 	table := gty.NewTable(g.GetLocalDB())
 	for _, item := range receipt.Logs {
 		var gameLog gty.ReceiptGuessGame
@@ -93,7 +93,6 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 		}
 		dbSet.KV = append(dbSet.KV, kvs...)
 	}
-
 
 	return dbSet, nil
 }
