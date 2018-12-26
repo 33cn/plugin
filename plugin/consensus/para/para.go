@@ -60,7 +60,7 @@ type client struct {
 	conn            *grpc.ClientConn
 	grpcClient      types.Chain33Client
 	paraClient      paracross.ParacrossClient
-	isCaughtup      bool
+	isCaughtUp      bool
 	commitMsgClient *commitMsgClient
 	authAccount     string
 	privateKey      crypto.PrivKey
@@ -119,7 +119,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		paraClient:  paraCli,
 		authAccount: cfg.AuthAccount,
 		privateKey:  priKey,
-		isCaughtup:  false,
+		isCaughtUp:  false,
 	}
 
 	if cfg.WaitBlocks4CommitMsg < 2 {
@@ -445,9 +445,9 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", seqTy)
 
 			if lastSeq-currSeq > emptyBlockInterval {
-				client.isCaughtup = false
+				client.isCaughtUp = false
 			} else {
-				client.isCaughtup = true
+				client.isCaughtUp = true
 			}
 
 			if client.authAccount != "" {
@@ -655,7 +655,7 @@ func (client *client) CreateBlock() {
 			plog.Error("Incorrect sequence type")
 			incSeqFlag = false
 		}
-		if client.isCaughtup {
+		if client.isCaughtUp {
 			time.Sleep(time.Second * time.Duration(blockSec))
 		}
 	}
@@ -772,7 +772,7 @@ func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error)
 	if client == nil {
 		return nil, fmt.Errorf("client not bind message queue.")
 	}
-	return &types.IsCaughtUp{Iscaughtup: client.isCaughtup}, nil
+	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp}, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {
