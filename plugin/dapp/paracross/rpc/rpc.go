@@ -102,7 +102,7 @@ func (g *channelClient) IsSync(ctx context.Context, in *types.ReqNil) (*types.Is
 }
 
 // IsSync query is sync
-func (c *Jrpc) IsSync(in *types.ReqNil, result *bool) error {
+func (c *Jrpc) IsSync(in *types.ReqNil, result *interface{}) error {
 	//TODO consensus and paracross are not the same registered names ?
 	data, err := c.cli.QueryConsensusFunc("para", "IsCaughtUp", &types.ReqNil{})
 	*result = false
