@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -134,8 +135,13 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		fmt.Println("no ticket to be close")
 		return
 	}
+	//[][]byte 转换成[]string
+	var hashes rpctypes.ReplyHashes
+	for _, has := range res.Hashes {
+		hashes.Hashes = append(hashes.Hashes, common.ToHex(has))
+	}
 
-	data, err := json.MarshalIndent(res, "", "    ")
+	data, err := json.MarshalIndent(hashes, "", "    ")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
