@@ -135,10 +135,9 @@ func NewLotteryAction(l *Lottery, tx *types.Transaction, index int) *Action {
 	fromaddr := tx.From()
 
 	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	if types.IsPara() && cfg.ParaRemoteGrpcClient == "" {
-		panic("ParaRemoteGrpcClient error")
-	}
-	conn, err := grpc.Dial(cfg.ParaRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
+	paraRemoteGrpcClient := types.Conf("config.consensus").GStr("ParaRemoteGrpcClient")
+
+	conn, err := grpc.Dial(paraRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
 
 	if err != nil {
 		panic(err)
@@ -569,7 +568,6 @@ func (action *Action) LotteryClose(draw *pty.LotteryClose) (*types.Receipt, erro
 func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 	var num int64
 	var msg types.Message
-	var err error
 	var hash []byte
 	if isSolo {
 		//used for internal verification
@@ -579,7 +577,12 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 		//在主链上，当前高度查询不到，如果要保证区块个数，高度传入action.height-1
 		llog.Debug("findLuckyNum on randnum module")
 		if !types.IsPara() {
-			req := &types.ReqRandHash{ExecName: "ticket", Height: action.height - 1, BlockNum: blockNum}
+			blockHash, err := action.api.GetBlockHash(&types.ReqInt{Height: action.height - 1})
+			if err != nil {
+				return -1
+			}
+
+			req := &types.ReqRandHash{ExecName: "ticket", Hash: blockHash.Hash, BlockNum: blockNum}
 			msg, err = action.api.Query("ticket", "RandNumHash", req)
 			if err != nil {
 				return -1
@@ -592,7 +595,14 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 				llog.Error("findLuckyNum", "mainHeight", mainHeight)
 				return -1
 			}
-			req := &types.ReqRandHash{ExecName: "ticket", Height: mainHeight, BlockNum: blockNum}
+
+			mainBlockHash, err := action.GetMainBlockHashByHeight(mainHeight)
+			if err != nil {
+				llog.Error("findLuckyNum", "err", err)
+				return -1
+			}
+
+			req := &types.ReqRandHash{ExecName: "ticket", Hash: mainBlockHash, BlockNum: blockNum}
 			reply, err := action.grpcClient.QueryRandNum(context.Background(), req)
 			if err != nil {
 				return -1
