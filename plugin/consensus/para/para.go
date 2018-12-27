@@ -645,7 +645,7 @@ func (client *client) CreateBlock() {
 				}
 				plog.Info("Create empty block")
 			}
-			err := client.createBlock(lastBlock, txs, currSeq, blockOnMain,seqTy)
+			err := client.createBlock(lastBlock, txs, currSeq, blockOnMain, seqTy)
 			incSeqFlag = false
 			if err != nil {
 				plog.Error(fmt.Sprintf("********************err:%v", err.Error()))
@@ -682,7 +682,7 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 
 }
 
-func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.Block,mainSeq *types.BlockSequence) error {
+func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.Block, mainSeq *types.BlockSequence) error {
 	var newblock types.Block
 	plog.Debug(fmt.Sprintf("the len txs is: %v", len(txs)))
 	newblock.ParentHash = lastBlock.Hash()
@@ -693,7 +693,7 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = mainBlock.BlockTime
 
-	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock,mainSeq)
+	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock, mainSeq)
 	if err != nil {
 		return err
 	}
