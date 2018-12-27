@@ -27,3 +27,18 @@ func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
 
 	return -1
 }
+
+// GetMainBlockHashByHeight get Hash
+func (action *Action) GetMainBlockHashByHeight(height int64) ([]byte, error) {
+	for i := 0; i < retryNum; i++ {
+		req := &types.ReqInt{Height: height}
+		replyHash, err := action.grpcClient.GetBlockHash(context.Background(), req)
+		if err != nil {
+			time.Sleep(time.Second)
+		} else {
+			return replyHash.Hash, nil
+		}
+	}
+
+	return nil, types.ErrBlockNotFound
+}

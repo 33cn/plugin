@@ -18,19 +18,19 @@ const (
 )
 
 // GetRandNum for ticket executor
-func (ticket *Ticket) GetRandNum(height int64, blockNum int64) (types.Message, error) {
-	tlog.Debug("GetRandNum", "height", height, "blockNum", blockNum)
+func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
+	tlog.Debug("GetRandNum", "blockHash", blockHash, "blockNum", blockNum)
 	if blockNum < minBlockNum {
 		blockNum = minBlockNum
 	} else if blockNum > maxBlockNum {
 		blockNum = maxBlockNum
 	}
 
-	if blockNum >= height {
-		return nil, types.ErrNotFound
+	if len(blockHash) == 0 {
+		return nil, types.ErrBlockNotFound
 	}
 
-	txActions, err := ticket.getTxActions(height, blockNum)
+	txActions, err := ticket.getTxActions(blockHash, blockNum)
 	if err != nil {
 		return nil, err
 	}
@@ -54,20 +54,36 @@ func (ticket *Ticket) GetRandNum(height int64, blockNum int64) (types.Message, e
 	return &types.ReplyHash{Hash: modify}, nil
 }
 
-func (ticket *Ticket) getTxActions(height int64, blockNum int64) ([]*tickettypes.TicketAction, error) {
+func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickettypes.TicketAction, error) {
 	var txActions []*tickettypes.TicketAction
+	var reqHashes types.ReqHashes
+	currHash := blockHash
+	tlog.Debug("getTxActions", "blockHash", blockHash, "blockNum", blockNum)
 
-	tlog.Debug("getTxActions", "height", height, "blockNum", blockNum)
+	//根据blockHash，查询block，循环blockNum
+	for blockNum > 0 {
+		req := types.ReqHash{Hash: currHash}
 
-	req := &types.ReqBlocks{Start: height - blockNum + 1, End: height, IsDetail: false, Pid: []string{""}}
+		tempBlock, err := ticket.GetAPI().GetBlockOverview(&req)
+		if err != nil {
+			return txActions, err
+		}
 
-	blockDetails, err := ticket.GetAPI().GetBlocks(req)
+		reqHashes.Hashes = append(reqHashes.Hashes, currHash)
+		currHash = tempBlock.Head.ParentHash
+		if tempBlock.Head.Height < 0 && blockNum > 1 {
+			return txActions, types.ErrBlockNotFound
+		}
+		blockNum--
+	}
+
+	blockDetails, err := ticket.GetAPI().GetBlockByHashes(&reqHashes)
 	if err != nil {
-		tlog.Error("getTxActions", "height", height, "blockNum", blockNum, "err", err)
+		tlog.Error("getTxActions", "blockHash", blockHash, "blockNum", blockNum, "err", err)
 		return txActions, err
 	}
 	for _, block := range blockDetails.Items {
-		//tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", block.Block.Hash())
+		tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", block.Block.Hash())
 		ticketAction, err := ticket.getMinerTx(block.Block)
 		if err != nil {
 			return txActions, err
