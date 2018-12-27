@@ -213,7 +213,7 @@ func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 
 			if err != nil {
 				panic(err)
 			}
-			if blockDetail.Block.Height == height && seqTy == addAct {
+			if blockDetail.Block.Height == height && seqTy.Type == addAct {
 				plog.Info("the target sequence in mainchain", "heightOnMain", height, "targetSeq", originSeq)
 				return originSeq
 			}
@@ -348,11 +348,11 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, []byte, int64, er
 	if seq == -1 {
 		seq = 0
 	}
-	savedBlockOnMain, _, err := client.GetBlockOnMainBySeq(seq)
+	savedBlockOnMain, seqItem, err := client.GetBlockOnMainBySeq(seq)
 	if err != nil {
 		return -2, nil, nil, -2, err
 	}
-	return blockedSeq, lastBlock, savedBlockOnMain.Block.Hash(), savedBlockOnMain.Block.Height, nil
+	return blockedSeq, lastBlock, seqItem.Hash, savedBlockOnMain.Block.Height, nil
 
 }
 
@@ -396,11 +396,11 @@ func (client *client) GetBlockHashFromMainChain(start int64, end int64) (*types.
 	return blockSeqs, nil
 }
 
-func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, int64, error) {
+func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, *types.BlockSequence, error) {
 	blockSeqs, err := client.GetBlockHashFromMainChain(seq, seq)
 	if err != nil {
 		plog.Error("Not found block hash on seq", "start", seq, "end", seq)
-		return nil, -1, err
+		return nil, nil, err
 	}
 
 	var hashes [][]byte
@@ -410,7 +410,7 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, int64,
 
 	blockDetails, err := client.GetBlocksByHashesFromMainChain(hashes)
 	if err != nil {
-		return nil, -1, err
+		return nil, nil, err
 	}
 
 	//protect the boundary
@@ -418,27 +418,27 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, int64,
 		panic("Inconsistency between GetBlockSequences and GetBlockByHashes")
 	}
 
-	return blockDetails.Items[0], blockSeqs.Items[0].Type, nil
+	return blockDetails.Items[0], blockSeqs.Items[0], nil
 }
 
 // preBlockHash to identify the same main node
-func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*types.Transaction, *types.Block, int64, error) {
+func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*types.Transaction, *types.Block, *types.BlockSequence, error) {
 	plog.Debug("Para consensus RequestTx")
 	lastSeq, err := client.GetLastSeqOnMainChain()
 	if err != nil {
-		return nil, nil, -1, err
+		return nil, nil, nil, err
 	}
 	plog.Info("RequestTx", "LastMainSeq", lastSeq, "CurrSeq", currSeq)
 	if lastSeq >= currSeq {
 		blockDetail, seqTy, err := client.GetBlockOnMainBySeq(currSeq)
 		if err != nil {
-			return nil, nil, -1, err
+			return nil, nil, nil, err
 		}
 
 		//genesis block start with seq=-1 not check
 		if currSeq == 0 ||
-			(bytes.Equal(preMainBlockHash, blockDetail.Block.ParentHash) && seqTy == addAct) ||
-			(bytes.Equal(preMainBlockHash, blockDetail.Block.Hash()) && seqTy == delAct) {
+			(bytes.Equal(preMainBlockHash, blockDetail.Block.ParentHash) && seqTy.Type == addAct) ||
+			(bytes.Equal(preMainBlockHash, seqTy.Hash) && seqTy.Type == delAct) {
 
 			txs := client.FilterTxsForPara(blockDetail)
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", seqTy)
@@ -457,20 +457,20 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 		}
 		//not consistent case be processed at below
 		plog.Error("RequestTx", "preMainHash", common.Bytes2Hex(preMainBlockHash), "currSeq preMainHash", common.Bytes2Hex(blockDetail.Block.ParentHash),
-			"currSeq mainHash", common.Bytes2Hex(blockDetail.Block.Hash()), "curr seq", currSeq, "ty", seqTy, "currSeq Mainheight", blockDetail.Block.Height)
-		return nil, nil, -1, paracross.ErrParaCurHashNotMatch
+			"currSeq mainHash", common.Bytes2Hex(seqTy.Hash), "curr seq", currSeq, "ty", seqTy, "currSeq Mainheight", blockDetail.Block.Height)
+		return nil, nil, nil, paracross.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
 		time.Sleep(time.Second * time.Duration(blockSec*2))
-		return nil, nil, -1, paracross.ErrParaWaitingNewSeq
+		return nil, nil, nil, paracross.ErrParaWaitingNewSeq
 	}
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, -1, paracross.ErrParaCurHashNotMatch
+	return nil, nil, nil, paracross.ErrParaCurHashNotMatch
 }
 
 //genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
@@ -608,8 +608,8 @@ func (client *client) CreateBlock() {
 		}
 
 		lastSeqMainHeight := blockOnMain.Height
-		lastSeqMainHash = blockOnMain.Hash()
-		if seqTy == delAct {
+		lastSeqMainHash = seqTy.Hash
+		if seqTy.Type == delAct {
 			lastSeqMainHash = blockOnMain.ParentHash
 		}
 
@@ -624,7 +624,7 @@ func (client *client) CreateBlock() {
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
 			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash), "seqTy", seqTy)
 
-		if seqTy == delAct {
+		if seqTy.Type == delAct {
 			if len(txs) == 0 {
 				if lastSeqMainHeight > lastBlockMainHeight {
 					incSeqFlag = true
@@ -637,7 +637,7 @@ func (client *client) CreateBlock() {
 			if err != nil {
 				plog.Error(fmt.Sprintf("********************err:%v", err.Error()))
 			}
-		} else if seqTy == addAct {
+		} else if seqTy.Type == addAct {
 			if len(txs) == 0 {
 				if lastSeqMainHeight-lastBlockMainHeight < emptyBlockInterval {
 					incSeqFlag = true
@@ -645,7 +645,7 @@ func (client *client) CreateBlock() {
 				}
 				plog.Info("Create empty block")
 			}
-			err := client.createBlock(lastBlock, txs, currSeq, blockOnMain)
+			err := client.createBlock(lastBlock, txs, currSeq, blockOnMain,seqTy)
 			incSeqFlag = false
 			if err != nil {
 				plog.Error(fmt.Sprintf("********************err:%v", err.Error()))
@@ -661,13 +661,13 @@ func (client *client) CreateBlock() {
 }
 
 // miner tx need all para node create, but not all node has auth account, here just not sign to keep align
-func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.Block) error {
+func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.Block, mainSeq *types.BlockSequence) error {
 	status := &pt.ParacrossNodeStatus{
 		Title:           types.GetTitle(),
 		Height:          block.Height,
 		PreBlockHash:    block.ParentHash,
 		PreStateHash:    preStateHash,
-		MainBlockHash:   main.Hash(),
+		MainBlockHash:   mainSeq.Hash,
 		MainBlockHeight: main.Height,
 	}
 
@@ -682,7 +682,7 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 
 }
 
-func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.Block) error {
+func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.Block,mainSeq *types.BlockSequence) error {
 	var newblock types.Block
 	plog.Debug(fmt.Sprintf("the len txs is: %v", len(txs)))
 	newblock.ParentHash = lastBlock.Hash()
@@ -693,7 +693,7 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = mainBlock.BlockTime
 
-	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
+	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock,mainSeq)
 	if err != nil {
 		return err
 	}
