@@ -77,8 +77,9 @@ func (g *channelClient) GetTicketCount(ctx context.Context, in *types.ReqNil) (*
 }
 
 // CloseTickets close ticket
-func (g *channelClient) CloseTickets(ctx context.Context, in *types.ReqNil) (*types.ReplyHashes, error) {
-	data, err := g.ExecWalletFunc(ty.TicketX, "CloseTickets", &types.ReqNil{})
+func (g *channelClient) CloseTickets(ctx context.Context, in *ty.TicketClose) (*types.ReplyHashes, error) {
+	inn := *in
+	data, err := g.ExecWalletFunc(ty.TicketX, "CloseTickets", &inn)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +108,8 @@ func (c *Jrpc) GetTicketCount(in *types.ReqNil, result *int64) error {
 }
 
 // CloseTickets close ticket
-func (c *Jrpc) CloseTickets(in *types.ReqNil, result *interface{}) error {
-	resp, err := c.cli.CloseTickets(context.Background(), &types.ReqNil{})
+func (c *Jrpc) CloseTickets(in *ty.TicketClose, result *interface{}) error {
+	resp, err := c.cli.CloseTickets(context.Background(), in)
 	if err != nil {
 		return err
 	}
