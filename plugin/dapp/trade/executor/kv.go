@@ -138,7 +138,6 @@ func calcOnesBuyOrderPrefixStatus(addr string, status int32) []byte {
 //  revoke:  RevokeSell RevokeBuy
 // buy/sell 两种类型
 //  目前页面是按addr， 状态来
-//
 func calcOnesOrderKey(addr string, status int32, ty int32, height int64, key string) []byte {
 	return []byte(fmt.Sprintf(orderASTHK+"%s:%d:%010d:%d:%s", addr, status, height, ty, key))
 }
