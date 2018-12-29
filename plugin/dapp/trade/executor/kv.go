@@ -133,7 +133,7 @@ func calcOnesBuyOrderPrefixStatus(addr string, status int32) []byte {
 
 // 特定帐号下的订单
 // 这里状态进行转化, 分成 状态和类型， 状态三种， 类型 两种
-//  on:  Onsale Onbuy
+//  on:  OnSale OnBuy
 //  done:  Soldout boughtOut
 //  revoke:  RevokeSell RevokeBuy
 // buy/sell 两种类型
