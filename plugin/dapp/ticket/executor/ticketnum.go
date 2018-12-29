@@ -17,7 +17,6 @@ const (
 	maxBlockNum = 10
 )
 
-
 // GetRandNum for ticket executor
 func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
 	tlog.Debug("GetRandNum", "blockHash", blockHash, "blockNum", blockNum)
