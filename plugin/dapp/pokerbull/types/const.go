@@ -87,7 +87,7 @@ const (
 	// DeveloperFee 开发者佣金
 	DeveloperFee = int64(0.005 * float64(types.Coin))
 	// WinnerReturn 赢家回报率
-	WinnerReturn = types.Coin - DeveloperFee
+	WinnerReturn = types.Coin - DeveloperFee - PlatformFee
 	// PlatformSignAddress 平台签名地址
 	PlatformSignAddress = "1Geb4ppNiAwMKKyrJgcis3JA57FkqsXvdR"
 )
