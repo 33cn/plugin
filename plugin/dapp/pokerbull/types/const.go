@@ -12,6 +12,7 @@ const (
 	PBGameActionContinue
 	PBGameActionQuit
 	PBGameActionQuery
+	PBGameActionPlay
 )
 
 const (
@@ -30,6 +31,8 @@ const (
 	TyLogPBGameQuit = 723
 	// TyLogPBGameQuery log for query PBgame
 	TyLogPBGameQuery = 724
+	// TyLogPBGamePlay log for play PBgame
+	TyLogPBGamePlay = 725
 )
 
 //包的名字可以通过配置文件来配置
@@ -56,8 +59,10 @@ const (
 	CreateStartTx = "Start"
 	// CreateContinueTx 创建继续交易
 	CreateContinueTx = "Continue"
-	// CreatequitTx 创建退出交易
-	CreatequitTx = "Quit"
+	// CreateQuitTx 创建退出交易
+	CreateQuitTx = "Quit"
+	// CreatePlayTx 创建已匹配玩家交易
+	CreatePlayTx = "Play"
 )
 
 const (
@@ -67,6 +72,8 @@ const (
 	DefaultCount = int32(20)
 	// MaxPlayerNum 最大玩家数
 	MaxPlayerNum = 5
+	// MinPlayerNum 最小玩家数
+	MinPlayerNum = 2
 	// MinPlayValue 最小赌注
 	MinPlayValue = 10 * types.Coin
 	// DefaultStyle 默认游戏类型
@@ -81,4 +88,6 @@ const (
 	DeveloperFee = int64(0.005 * float64(types.Coin))
 	// WinnerReturn 赢家回报率
 	WinnerReturn = types.Coin - DeveloperFee
+	// PlatformSignAddress 平台签名地址
+	PlatformSignAddress = "1Geb4ppNiAwMKKyrJgcis3JA57FkqsXvdR"
 )

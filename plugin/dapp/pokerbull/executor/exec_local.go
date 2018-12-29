@@ -57,7 +57,7 @@ func (c *PokerBull) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, er
 	dbSet := &types.LocalDBSet{}
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
-		if item.Ty == pkt.TyLogPBGameStart || item.Ty == pkt.TyLogPBGameContinue || item.Ty == pkt.TyLogPBGameQuit {
+		if item.Ty == pkt.TyLogPBGameStart || item.Ty == pkt.TyLogPBGameContinue || item.Ty == pkt.TyLogPBGameQuit || item.Ty == pkt.TyLogPBGamePlay {
 			var Gamelog pkt.ReceiptPBGame
 			err := types.Decode(item.Log, &Gamelog)
 			if err != nil {
@@ -82,5 +82,10 @@ func (c *PokerBull) ExecLocal_Continue(payload *pkt.PBGameContinue, tx *types.Tr
 
 // ExecLocal_Quit 退出游戏交易local执行
 func (c *PokerBull) ExecLocal_Quit(payload *pkt.PBGameQuit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return c.execLocal(receiptData)
+}
+
+// ExecLocal_Play 已匹配游戏交易local执行
+func (c *PokerBull) ExecLocal_Play(payload *pkt.PBGamePlay, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(receiptData)
 }
