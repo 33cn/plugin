@@ -794,6 +794,11 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 		return nil, err
 	}
 
+	if game.Status == pkt.PBGameActionQuit {
+		logger.Error("Quit pokerbull game","GameID", pbend.GetGameId(), "value", game.Value, "err", "already game over")
+		return nil, fmt.Errorf("already game over")
+	}
+
 	if !action.checkPlayerAddressExist(game.Players) {
 		if action.fromaddr != pkt.PlatformSignAddress {
 			logger.Error("GameEnd", "GameID", pbend.GetGameId(), "addr", action.fromaddr, "execaddr",
@@ -939,8 +944,10 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 			game.Players = append(game.Players, player)
 		}
 
-		game.Status = pkt.PBGameActionContinue // 更新游戏状态
+		game.Status = pkt.PBGameActionQuit // 更新游戏状态
 		game.PreStatus = pkt.PBGameActionStart
+		game.QuitTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
+		game.QuitTxHash = common.ToHex(action.txhash)
 	}
 
 	logger.Info(fmt.Sprintf("Game starting: %s round: %d", game.GameId, game.Round))
