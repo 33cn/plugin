@@ -60,10 +60,11 @@ message PBPoker {
 //游戏状态
 message PBGameAction {
     oneof value {
-        PBGameStart start       = 1;
+        PBGameStart    start    = 1;
         PBGameContinue continue = 2;
-        PBGameQuit  quit        = 3;
-        PBGameQuery query       = 4;
+        PBGameQuit     quit     = 3;
+        PBGameQuery    query    = 4;
+        PBGamePlay     play     = 5;
     }
     int32 ty = 10;
 }
@@ -87,6 +88,14 @@ message PBGameQuit {
 //查询游戏结果
 message PBGameQuery {
     string gameId = 1;
+}
+
+//已匹配玩家直接游戏
+message PBGamePlay {
+    string          gameId  = 1; //游戏id
+    int32           round   = 2; //当前游戏回合数
+    int64           value   = 3; //当前游戏赌注
+    repeated string address = 4; //玩家地址
 }
 
 //根据状态和游戏人数查找
