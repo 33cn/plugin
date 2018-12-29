@@ -14,10 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin"
 )
 
 func Test_WalletTicket(t *testing.T) {
+	minerAddr := "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	t.Log("Begin wallet ticket test")
 
 	cfg, sub := testnode.GetDefaultConfig()
@@ -26,7 +28,7 @@ func Test_WalletTicket(t *testing.T) {
 	defer mock33.Close()
 	err := mock33.WaitHeight(0)
 	assert.Nil(t, err)
-	msg, err := mock33.GetAPI().Query(ty.TicketX, "TicketList", &ty.TicketList{Addr: "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", Status: 1})
+	msg, err := mock33.GetAPI().Query(ty.TicketX, "TicketList", &ty.TicketList{Addr: minerAddr, Status: 1})
 	assert.Nil(t, err)
 	ticketList := msg.(*ty.ReplyTicketList)
 	assert.NotNil(t, ticketList)
@@ -37,5 +39,11 @@ func Test_WalletTicket(t *testing.T) {
 	header, err := mock33.GetAPI().GetLastHeader()
 	require.Equal(t, err, nil)
 	require.Equal(t, header.Height >= 2, true)
+
+	in := &ty.TicketClose{MinerAddress: minerAddr}
+	msg, err = mock33.GetAPI().ExecWalletFunc(ty.TicketX, "CloseTickets", in)
+	assert.Nil(t, err)
+	hashes := msg.(*types.ReplyHashes)
+	assert.NotNil(t, hashes)
 	t.Log("End wallet ticket test")
 }

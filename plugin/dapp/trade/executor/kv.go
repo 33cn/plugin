@@ -133,14 +133,13 @@ func calcOnesBuyOrderPrefixStatus(addr string, status int32) []byte {
 
 // 特定帐号下的订单
 // 这里状态进行转化, 分成 状态和类型， 状态三种， 类型 两种
-//  on:  Onsale Onbuy
+//  on:  OnSale OnBuy
 //  done:  Soldout boughtOut
 //  revoke:  RevokeSell RevokeBuy
 // buy/sell 两种类型
 //  目前页面是按addr， 状态来
-//
 func calcOnesOrderKey(addr string, status int32, ty int32, height int64, key string) []byte {
-	return []byte(fmt.Sprintf(orderASTHK+"%s:%d:%d:%010d:%s", addr, status, ty, height, key))
+	return []byte(fmt.Sprintf(orderASTHK+"%s:%d:%010d:%d:%s", addr, status, height, ty, key))
 }
 
 func calcOnesOrderPrefixStatus(addr string, status int32) []byte {
