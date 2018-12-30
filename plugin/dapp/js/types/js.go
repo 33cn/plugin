@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 )
@@ -27,6 +29,13 @@ var (
 
 //JsX 插件名字
 var JsX = "js"
+
+//错误常量
+var (
+	ErrDupName           = errors.New("ErrDupName")
+	ErrJsReturnNotObject = errors.New("ErrJsReturnNotObject")
+	ErrJsReturnKVSFormat = errors.New("ErrJsReturnKVSFormat")
+)
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(JsX))

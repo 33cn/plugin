@@ -10,5 +10,15 @@ func (c *js) ExecDelLocal_Create(payload *jsproto.Create, tx *types.Transaction,
 }
 
 func (c *js) ExecDelLocal_Call(payload *jsproto.Call, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return &types.LocalDBSet{}, nil
+	jsvalue, err := c.callVM("execdellocal", payload, tx, index)
+	if err != nil {
+		return nil, err
+	}
+	r := &types.LocalDBSet{}
+	kvs, err := parseKVS(jsvalue)
+	if err != nil {
+		return nil, err
+	}
+	r.KV = kvs
+	return r, nil
 }
