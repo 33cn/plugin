@@ -3,9 +3,12 @@
 
 package jsproto
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -31,16 +34,17 @@ func (m *Create) Reset()         { *m = Create{} }
 func (m *Create) String() string { return proto.CompactTextString(m) }
 func (*Create) ProtoMessage()    {}
 func (*Create) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_26fa46fa936181bc, []int{0}
+	return fileDescriptor_d11539bc790542aa, []int{0}
 }
+
 func (m *Create) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Create.Unmarshal(m, b)
 }
 func (m *Create) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Create.Marshal(b, m, deterministic)
 }
-func (dst *Create) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Create.Merge(dst, src)
+func (m *Create) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Create.Merge(m, src)
 }
 func (m *Create) XXX_Size() int {
 	return xxx_messageInfo_Create.Size(m)
@@ -79,16 +83,17 @@ func (m *Call) Reset()         { *m = Call{} }
 func (m *Call) String() string { return proto.CompactTextString(m) }
 func (*Call) ProtoMessage()    {}
 func (*Call) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_26fa46fa936181bc, []int{1}
+	return fileDescriptor_d11539bc790542aa, []int{1}
 }
+
 func (m *Call) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Call.Unmarshal(m, b)
 }
 func (m *Call) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Call.Marshal(b, m, deterministic)
 }
-func (dst *Call) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Call.Merge(dst, src)
+func (m *Call) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Call.Merge(m, src)
 }
 func (m *Call) XXX_Size() int {
 	return xxx_messageInfo_Call.Size(m)
@@ -135,16 +140,17 @@ func (m *JsAction) Reset()         { *m = JsAction{} }
 func (m *JsAction) String() string { return proto.CompactTextString(m) }
 func (*JsAction) ProtoMessage()    {}
 func (*JsAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_26fa46fa936181bc, []int{2}
+	return fileDescriptor_d11539bc790542aa, []int{2}
 }
+
 func (m *JsAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JsAction.Unmarshal(m, b)
 }
 func (m *JsAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JsAction.Marshal(b, m, deterministic)
 }
-func (dst *JsAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JsAction.Merge(dst, src)
+func (m *JsAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JsAction.Merge(m, src)
 }
 func (m *JsAction) XXX_Size() int {
 	return xxx_messageInfo_JsAction.Size(m)
@@ -279,9 +285,9 @@ func init() {
 	proto.RegisterType((*JsAction)(nil), "jsproto.JsAction")
 }
 
-func init() { proto.RegisterFile("js.proto", fileDescriptor_js_26fa46fa936181bc) }
+func init() { proto.RegisterFile("js.proto", fileDescriptor_d11539bc790542aa) }
 
-var fileDescriptor_js_26fa46fa936181bc = []byte{
+var fileDescriptor_d11539bc790542aa = []byte{
 	// 199 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8e, 0xcd, 0xae, 0x82, 0x30,
 	0x10, 0x85, 0x81, 0xcb, 0xdf, 0x1d, 0x72, 0xaf, 0x49, 0x57, 0xc4, 0x95, 0xc1, 0x8d, 0x6e, 0x88,
