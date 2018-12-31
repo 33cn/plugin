@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
@@ -15,8 +16,7 @@ const (
 
 //日志类型
 const (
-	TyLogJsCreate = iota + 1
-	TyLogJsCall
+	TyLogJs = 10000
 )
 
 var (
@@ -24,7 +24,9 @@ var (
 		"Create": jsActionCreate,
 		"Call":   jsActionCall,
 	}
-	logMap = map[int64]*types.LogInfo{}
+	logMap = map[int64]*types.LogInfo{
+		TyLogJs: {Ty: reflect.TypeOf(jsproto.JsLog{}), Name: "TyLogJs"},
+	}
 )
 
 //JsX 插件名字
@@ -32,9 +34,10 @@ var JsX = "js"
 
 //错误常量
 var (
-	ErrDupName           = errors.New("ErrDupName")
-	ErrJsReturnNotObject = errors.New("ErrJsReturnNotObject")
-	ErrJsReturnKVSFormat = errors.New("ErrJsReturnKVSFormat")
+	ErrDupName            = errors.New("ErrDupName")
+	ErrJsReturnNotObject  = errors.New("ErrJsReturnNotObject")
+	ErrJsReturnKVSFormat  = errors.New("ErrJsReturnKVSFormat")
+	ErrJsReturnLogsFormat = errors.New("ErrJsReturnLogsFormat")
 )
 
 func init() {

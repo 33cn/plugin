@@ -49,7 +49,8 @@ func (u *js) GetDriverName() string {
 	return driverName
 }
 
-func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction, index int) (*otto.Object, error) {
+func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
+	index int, receiptData *types.ReceiptData) (*otto.Object, error) {
 	vm, err := u.createVM(tx, index)
 	if err != nil {
 		return nil, err
@@ -59,10 +60,19 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	if err != nil {
 		return nil, err
 	}
+	loglist, err := jslogs(receiptData)
+	if err != nil {
+		return nil, err
+	}
+	vm.Set("loglist", loglist)
 	vm.Set("code", code)
-	vm.Set("f", prefix+"_"+payload.Funcname)
+	if prefix == "init" {
+		vm.Set("f", "init")
+	} else {
+		vm.Set("f", prefix+"_"+payload.Funcname)
+	}
 	vm.Set("args", payload.Args)
-	callfunc := "callcode(context, f, args)"
+	callfunc := "callcode(context, f, args, loglist)"
 	jsvalue, err := vm.Run(callcode + string(code) + "\n" + callfunc)
 	if err != nil {
 		return nil, err
@@ -71,6 +81,26 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 		return nil, ptypes.ErrJsReturnNotObject
 	}
 	return jsvalue.Object(), nil
+}
+
+func jslogs(receiptData *types.ReceiptData) ([]string, error) {
+	data := make([]string, 0)
+	if receiptData == nil {
+		return data, nil
+	}
+	for i := 0; i < len(receiptData.Logs); i++ {
+		logitem := receiptData.Logs[i]
+		if logitem.Ty != ptypes.TyLogJs {
+			continue
+		}
+		var jslog jsproto.JsLog
+		err := types.Decode(logitem.Log, &jslog)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, jslog.Data)
+	}
+	return data, nil
 }
 
 func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {

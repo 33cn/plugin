@@ -6,43 +6,9 @@ import (
 
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
+	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	"github.com/robertkrimen/otto"
 )
-
-//ErrInvalidFuncFormat 错误的函数调用格式(没有_)
-var errInvalidFuncFormat = errors.New("chain33.js: invalid function name format")
-
-//ErrInvalidFuncPrefix not exec_ execloal execdellocal
-var errInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
-
-//ErrFuncNotFound 函数没有找到
-var errFuncNotFound = errors.New("chain33.js: invalid function name not found")
-
-var callcode = `
-function callcode(context, f, args) {
-    var farr = f.split("_", 2)
-    if (farr.length !=  2) {
-        throw new Error("chain33.js: invalid function name format")
-    }
-    var prefix = farr[0]
-    var funcname = farr[1]
-    var runobj = {}
-    if (prefix == "exec") {
-        runobj = new Exec(JSON.parse(context))
-    } else if (prefix == "execlocal") {
-        runobj = new ExecLocal(JSON.parse(context))
-    } else if (prefix == "execdellocal") {
-        runobj = new ExecDelLocal(JSON.parse(context))
-    } else {
-        throw new Error("chain33.js: invalid function prefix format")
-    }
-    var arg = JSON.parse(args)
-    if (typeof runobj[funcname] != "function") {
-        throw new Error("chain33.js: invalid function name not found")
-    }
-    return runobj[funcname](arg)
-}
-`
 
 type blockContext struct {
 	Height     int64  `json:"height"`
@@ -65,30 +31,52 @@ type listdbReturn struct {
 	Err   string   `json:"err"`
 }
 
-func parseKVS(jsvalue *otto.Object) (kvlist []*types.KeyValue, err error) {
+func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*types.ReceiptLog, err error) {
+	//kvs
 	obj, err := getObject(jsvalue, "kvs")
 	if err != nil {
-		return nil, ptypes.ErrJsReturnKVSFormat
+		return nil, nil, ptypes.ErrJsReturnKVSFormat
 	}
 	if obj.Class() != "Array" {
-		return nil, ptypes.ErrJsReturnKVSFormat
+		return nil, nil, ptypes.ErrJsReturnKVSFormat
 	}
 	size, err := getInt(obj, "length")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for i := 0; i < int(size); i++ {
 		data, err := getObject(obj, fmt.Sprint(i))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		kv, err := parseKV(data)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		kvlist = append(kvlist, kv)
 	}
-	return kvlist, nil
+	//logs
+	obj, err = getObject(jsvalue, "logs")
+	if err != nil {
+		return nil, nil, ptypes.ErrJsReturnLogsFormat
+	}
+	if obj.Class() != "Array" {
+		return nil, nil, ptypes.ErrJsReturnLogsFormat
+	}
+	size, err = getInt(obj, "length")
+	if err != nil {
+		return nil, nil, err
+	}
+	for i := 0; i < int(size); i++ {
+		data, err := getString(obj, fmt.Sprint(i))
+		if err != nil {
+			return nil, nil, err
+		}
+		l := &types.ReceiptLog{
+			Ty: ptypes.TyLogJs, Log: types.Encode(&jsproto.JsLog{Data: data})}
+		logs = append(logs, l)
+	}
+	return kvlist, logs, nil
 }
 
 func getString(data *otto.Object, key string) (string, error) {

@@ -21,3 +21,7 @@ message JsAction {
     }
     int32 ty = 3;
 }
+
+message JsLog {
+    string data = 1;
+}
