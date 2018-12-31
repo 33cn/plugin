@@ -3,7 +3,6 @@ package rpc
 import (
 	ptypes "github.com/33cn/chain33/plugin/dapp/js/types"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/chain33/types"
 )
 
 type channelClient struct {
