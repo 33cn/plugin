@@ -33,7 +33,7 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
 	execer := types.ExecName("user.js." + payload.Name)
-	kvc := dapp.NewKVCreator(c.GetStateDB(), []byte(execer), nil)
+	kvc := dapp.NewKVCreator(c.GetStateDB(), calcStatePrefix([]byte(execer)), nil)
 	jsvalue, err := c.callVM("exec", payload, tx, index, nil)
 	if err != nil {
 		return nil, err

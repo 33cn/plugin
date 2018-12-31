@@ -25,9 +25,11 @@ function kvcreator(dbtype) {
 }
 
 kvcreator.prototype.add = function(k, v) {
-    var data = JSON.stringify(v) 
-    this.data[k] = data
-    this.kvs.push({key:k, value: data})
+	if (typeof v != "string") {
+		v = JSON.stringify(v) 
+	}
+    this.data[k] = v
+    this.kvs.push({key:k, value: v})
 }
 
 kvcreator.prototype.get = function(k) {
@@ -58,8 +60,11 @@ kvcreator.prototype.listvalue = function(prefix, key, count, direction) {
 kvcreator.prototype.addlog = function(log) {
     if (this.list) {
         throw new Error("local or dellocal can't set log")
-    }
-    this.logs.push(JSON.stringify(log))
+	}
+	if (typeof v != "string") {
+		log = JSON.stringify(log) 
+	}
+    this.logs.push(log)
 }
 
 kvcreator.prototype.receipt = function() {
@@ -68,7 +73,7 @@ kvcreator.prototype.receipt = function() {
 
 function callcode(context, f, args, loglist) {
 	if (f == "init") {
-		return Init(context)
+		return Init(JSON.parse(context))
 	}
     var farr = f.split("_", 2)
     if (farr.length !=  2) {

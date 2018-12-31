@@ -12,12 +12,15 @@ func (c *js) ExecDelLocal_Create(payload *jsproto.Create, tx *types.Transaction,
 
 func (c *js) ExecDelLocal_Call(payload *jsproto.Call, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	krollback := calcRollbackKey(tx.Hash())
-	kvc := dapp.NewKVCreator(c.GetLocalDB(), calcLocalPrefix(tx.Execer), krollback)
+	execer := types.ExecName("user.js." + payload.Name)
+	kvc := dapp.NewKVCreator(c.GetLocalDB(), calcLocalPrefix([]byte(execer)), krollback)
 	kvs, err := kvc.GetRollbackKVList()
 	if err != nil {
 		return nil, err
 	}
-	kvc.AddKVListOnly(kvs)
+	for _, kv := range kvs {
+		kvc.AddNoPrefix(kv.Key, kv.Value)
+	}
 	kvc.DelRollbackKV()
 	r := &types.LocalDBSet{}
 	r.KV = kvc.KVList()

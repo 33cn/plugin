@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -40,14 +41,14 @@ Exec.prototype.hello = function(args) {
     this.kvc.add("args", args)
     this.kvc.add("action", "exec")
     this.kvc.add("context", this.context)
-    this.kvc.addlog('{"key1": "value1"}')
-    this.kvc.addlog('{"key2": "value2"}')
+    this.kvc.addlog({"key1": "value1"})
+    this.kvc.addlog({"key2": "value2"})
 	return this.kvc.receipt()
 }
 
 ExecLocal.prototype.hello = function(args) {
     this.kvc.add("args", args)
-    this.kvc.add("action", "exec")
+    this.kvc.add("action", "execlocal")
     this.kvc.add("log", this.logs)
     this.kvc.add("context", this.context)
 	return this.kvc.receipt()
@@ -93,7 +94,39 @@ func TestCallcode(t *testing.T) {
 	receipt, err := e.Exec_Call(call, tx, 0)
 	assert.Nil(t, err)
 	util.SaveKVList(ldb, receipt.KV)
-	util.PrintKV(receipt.KV)
+	assert.Equal(t, string(receipt.KV[0].Value), `{"hello":"world"}`)
+	assert.Equal(t, string(receipt.KV[1].Value), "exec")
+	var data blockContext
+	err = json.Unmarshal(receipt.KV[2].Value, &data)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(1), data.Difficulty)
+	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, int64(1), data.Height)
+	assert.Equal(t, int64(0), data.Index)
+
+	kvset, err := e.ExecLocal_Call(call, tx, &types.ReceiptData{Logs: receipt.Logs}, 0)
+	assert.Nil(t, err)
+	util.SaveKVList(ldb, kvset.KV)
+	assert.Equal(t, string(kvset.KV[0].Value), `{"hello":"world"}`)
+	assert.Equal(t, string(kvset.KV[1].Value), "execlocal")
+	//test log is ok
+	assert.Equal(t, string(kvset.KV[2].Value), `[{"key1":"value1"},{"key2":"value2"}]`)
+	//test context
+	err = json.Unmarshal(kvset.KV[3].Value, &data)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(1), data.Difficulty)
+	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, int64(1), data.Height)
+	assert.Equal(t, int64(0), data.Index)
+
+	//call rollback
+	kvset, err = e.ExecDelLocal_Call(call, tx, &types.ReceiptData{Logs: receipt.Logs}, 0)
+	assert.Nil(t, err)
+	util.SaveKVList(ldb, kvset.KV)
+	assert.Equal(t, 5, len(kvset.KV))
+	for i := 0; i < len(kvset.KV); i++ {
+		assert.Equal(t, kvset.KV[i].Value, []byte(nil))
+	}
 }
 
 func TestCallError(t *testing.T) {
@@ -118,4 +151,11 @@ func TestCallError(t *testing.T) {
 	_, ok = err.(*otto.Error)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, true, strings.Contains(err.Error(), errFuncNotFound.Error()))
+}
+
+func TestcalcLocalPrefix(t *testing.T) {
+	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
+	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
+	assert.Equal(t, calcCodeKey("a"), []byte("mavl-js-code-a"))
+	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("mavl-js-rollback-a"))
 }
