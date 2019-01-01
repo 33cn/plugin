@@ -1,0 +1,31 @@
+syntax = "proto3";
+package jsproto;
+
+// create action
+message Create {
+    string code = 1;
+    string name = 2;
+}
+
+// call action
+message Call {
+    string name = 1;     //exec name
+    string funcname = 2; //call function name
+    string args = 3;     //json args
+}
+
+message JsAction {
+    oneof value {
+        Create  create  = 1;
+        Call    call    = 2;
+    }
+    int32 ty = 3;
+}
+
+message JsLog {
+    string data = 1;
+}
+
+message QueryResult {
+    string data = 1;
+}
