@@ -173,7 +173,7 @@ func TestCallError(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(err.Error(), errFuncNotFound.Error()))
 }
 
-func TestcalcLocalPrefix(t *testing.T) {
+func TestCalcLocalPrefix(t *testing.T) {
 	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
 	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
 	assert.Equal(t, calcCodeKey("a"), []byte("mavl-js-code-a"))
