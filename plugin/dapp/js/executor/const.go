@@ -5,23 +5,31 @@ import "errors"
 //ErrInvalidFuncFormat 错误的函数调用格式(没有_)
 var errInvalidFuncFormat = errors.New("chain33.js: invalid function name format")
 
-//ErrInvalidFuncPrefix not exec_ execloal execdellocal
+//ErrInvalidFuncPrefix not exec_ execloal_ query_
 var errInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
 
 //ErrFuncNotFound 函数没有找到
 var errFuncNotFound = errors.New("chain33.js: invalid function name not found")
 
 var callcode = `
+var tojson = JSON.stringify
 function kvcreator(dbtype) {
     this.data = {}
     this.kvs = []
-    this.logs = []
+	this.logs = []
+	this.type = dbtype
+	this.getstate = getstatedb
+	this.getloal = getlocaldb
+	this.list = listdb
     if (dbtype == "exec" || dbtype == "init") {
-        this.get = getstatedb
+		this.get = getstatedb
     } else if (dbtype == "local") {
         this.get = getlocaldb
-        this.list = listdb
-    }
+    } else if (dbtype == "query") {
+		this.get = getlocaldb
+	} else {
+		throw new Error("chain33.js: dbtype error")
+	}
 }
 
 kvcreator.prototype.add = function(k, v) {
@@ -37,7 +45,11 @@ kvcreator.prototype.get = function(k) {
     if (this.data[k]) {
         v = this.data[k]
     } else {
-        v = this.get(k)
+		var dbvalue = this.get(k)
+		if (dbvalue.err != "") {
+			return null
+		}
+		v = dbvalue.value
     }
     if (!v) {
         return null
@@ -46,7 +58,11 @@ kvcreator.prototype.get = function(k) {
 }
 
 kvcreator.prototype.listvalue = function(prefix, key, count, direction) {
-   var values = this.list(prefix, key, count, direction)
+   var dbvalues = this.list(prefix, key, count, direction)
+   if (dbvalues.err != "") {
+	   return []
+   }
+   var values = dbvalues.value
    if (!values || values.length == 0) {
        return []
    }
@@ -58,8 +74,8 @@ kvcreator.prototype.listvalue = function(prefix, key, count, direction) {
 }
 
 kvcreator.prototype.addlog = function(log) {
-    if (this.list) {
-        throw new Error("local or dellocal can't set log")
+    if (this.type != "exec") {
+        throw new Error("local or query can't set log")
 	}
 	if (typeof v != "string") {
 		log = JSON.stringify(log) 
@@ -93,7 +109,9 @@ function callcode(context, f, args, loglist) {
         runobj = new Exec(JSON.parse(context))
     } else if (prefix == "execlocal") {
         runobj = new ExecLocal(JSON.parse(context), logs)
-    } else {
+	} else if (prefix == "query") {
+		runobj = new Query(JSON.parse(context))
+	} else {
         throw new Error("chain33.js: invalid function prefix format")
     }
     var arg = JSON.parse(args)

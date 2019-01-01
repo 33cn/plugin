@@ -13,7 +13,8 @@ func (c *js) ExecLocal_Create(payload *jsproto.Create, tx *types.Transaction, re
 func (c *js) ExecLocal_Call(payload *jsproto.Call, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	k := calcRollbackKey(tx.Hash())
 	execer := types.ExecName("user.js." + payload.Name)
-	kvc := dapp.NewKVCreator(c.GetLocalDB(), calcLocalPrefix([]byte(execer)), k)
+	c.prefix = calcLocalPrefix([]byte(execer))
+	kvc := dapp.NewKVCreator(c.GetLocalDB(), c.prefix, k)
 	jsvalue, err := c.callVM("execlocal", payload, tx, index, receiptData)
 	if err != nil {
 		return nil, err

@@ -21,16 +21,6 @@ type blockContext struct {
 	Index      int64  `json:"index"`
 }
 
-type dbReturn struct {
-	Value string `json:"value"`
-	Err   string `json:"err"`
-}
-
-type listdbReturn struct {
-	Value []string `json:"value"`
-	Err   string   `json:"err"`
-}
-
 func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*types.ReceiptLog, err error) {
 	//kvs
 	obj, err := getObject(jsvalue, "kvs")

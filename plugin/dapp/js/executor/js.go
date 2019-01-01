@@ -30,6 +30,8 @@ func Init(name string, sub []byte) {
 
 type js struct {
 	drivers.DriverBase
+	prefix      []byte
+	localprefix []byte
 }
 
 func newjs() drivers.Driver {
@@ -51,7 +53,7 @@ func (u *js) GetDriverName() string {
 
 func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	index int, receiptData *types.ReceiptData) (*otto.Object, error) {
-	vm, err := u.createVM(tx, index)
+	vm, err := u.createVM(payload.Name, tx, index)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +78,13 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	jsvalue, err := vm.Run(callcode + string(code) + "\n" + callfunc)
 	if err != nil {
 		return nil, err
+	}
+	if prefix == "query" {
+		s, err := jsvalue.ToString()
+		if err != nil {
+			return nil, err
+		}
+		return newObject(vm).setValue("result", s).object(), nil
 	}
 	if !jsvalue.IsObject() {
 		return nil, ptypes.ErrJsReturnNotObject
@@ -104,6 +113,10 @@ func jslogs(receiptData *types.ReceiptData) ([]string, error) {
 }
 
 func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
+	var hash [32]byte
+	if tx != nil {
+		copy(hash[:], tx.Hash())
+	}
 	return &blockContext{
 		Height:     u.GetHeight(),
 		Name:       u.GetName(),
@@ -111,41 +124,44 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 		Curname:    u.GetCurrentExecName(),
 		DriverName: u.GetDriverName(),
 		Difficulty: u.GetDifficulty(),
-		TxHash:     common.ToHex(tx.Hash()),
+		TxHash:     common.ToHex(hash[:]),
 		Index:      index,
 	}
 }
 
-func (u *js) createVM(tx *types.Transaction, index int) (*otto.Otto, error) {
-	data, err := json.Marshal(u.getContext(tx, int64(index)))
-	if err != nil {
-		return nil, err
-	}
-	vm := otto.New()
-	vm.Set("context", string(data))
+func (u *js) getstatedbFunc(vm *otto.Otto, name string) {
+	prefix, _ := calcAllPrefix(name)
 	vm.Set("getstatedb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		v, err := u.getstatedb(key)
+		v, err := u.getstatedb(string(prefix) + key)
 		if err != nil {
 			return errReturn(vm, err)
 		}
 		return okReturn(vm, v)
 	})
+}
+
+func (u *js) getlocaldbFunc(vm *otto.Otto, name string) {
+	_, prefix := calcAllPrefix(name)
 	vm.Set("getlocaldb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		v, err := u.getlocaldb(key)
+		v, err := u.getlocaldb(string(prefix) + key)
 		if err != nil {
 			return errReturn(vm, err)
 		}
 		return okReturn(vm, v)
 	})
+}
+
+func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
+	_, plocal := calcAllPrefix(name)
 	vm.Set("listdb", func(call otto.FunctionCall) otto.Value {
 		prefix, err := call.Argument(0).ToString()
 		if err != nil {
@@ -163,27 +179,73 @@ func (u *js) createVM(tx *types.Transaction, index int) (*otto.Otto, error) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		v, err := u.listdb(prefix, key, int32(count), int32(direction))
+		v, err := u.listdb(string(plocal)+prefix, key, int32(count), int32(direction))
 		if err != nil {
 			return errReturn(vm, err)
 		}
 		return listReturn(vm, v)
 	})
+}
+
+func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto, error) {
+	data, err := json.Marshal(u.getContext(tx, int64(index)))
+	if err != nil {
+		return nil, err
+	}
+	vm := otto.New()
+	vm.Set("context", string(data))
+	u.getstatedbFunc(vm, name)
+	u.getlocaldbFunc(vm, name)
+	u.listdbFunc(vm, name)
 	return vm, nil
 }
 
 func errReturn(vm *otto.Otto, err error) otto.Value {
-	v, _ := vm.ToValue(&dbReturn{Err: err.Error()})
-	return v
+	return newObject(vm).setErr(err).value()
 }
 
 func okReturn(vm *otto.Otto, value string) otto.Value {
-	v, _ := vm.ToValue(&dbReturn{Value: value})
-	return v
+	return newObject(vm).setValue("value", value).value()
 }
 
 func listReturn(vm *otto.Otto, value []string) otto.Value {
-	v, _ := vm.ToValue(&listdbReturn{Value: value})
+	return newObject(vm).setValue("value", value).value()
+}
+
+type object struct {
+	vm  *otto.Otto
+	obj *otto.Object
+}
+
+func newObject(vm *otto.Otto) *object {
+	obj, err := vm.Object("({})")
+	if err != nil {
+		panic(err)
+	}
+	return &object{vm: vm, obj: obj}
+}
+
+func (o *object) setErr(err error) *object {
+	if err != nil {
+		o.obj.Set("err", err.Error())
+	}
+	return o
+}
+
+func (o *object) setValue(key string, value interface{}) *object {
+	o.obj.Set(key, value)
+	return o
+}
+
+func (o *object) object() *otto.Object {
+	return o.obj
+}
+
+func (o *object) value() otto.Value {
+	v, err := otto.ToValue(o.obj)
+	if err != nil {
+		panic(err)
+	}
 	return v
 }
 

@@ -25,3 +25,7 @@ message JsAction {
 message JsLog {
     string data = 1;
 }
+
+message QueryResult {
+    string data = 1;
+}

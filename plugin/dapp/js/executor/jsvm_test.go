@@ -37,6 +37,11 @@ function ExecLocal(context, logs) {
     this.logs = logs
 }
 
+function Query(context) {
+	this.kvc = new kvcreator("query")
+	this.context = context
+}
+
 Exec.prototype.hello = function(args) {
     this.kvc.add("args", args)
     this.kvc.add("action", "exec")
@@ -52,6 +57,12 @@ ExecLocal.prototype.hello = function(args) {
     this.kvc.add("log", this.logs)
     this.kvc.add("context", this.context)
 	return this.kvc.receipt()
+}
+
+//return a json string
+Query.prototype.hello = function(args) {
+	var obj = getlocaldb("context")
+	return tojson(obj)
 }
 `
 
@@ -119,6 +130,15 @@ func TestCallcode(t *testing.T) {
 	assert.Equal(t, int64(1), data.Height)
 	assert.Equal(t, int64(0), data.Index)
 
+	//call query
+	jsondata, err := e.Query_Query(call)
+	assert.Nil(t, err)
+	err = json.Unmarshal([]byte(jsondata.(*jsproto.QueryResult).Data), &data)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(1), data.Difficulty)
+	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, int64(1), data.Height)
+	assert.Equal(t, int64(0), data.Index)
 	//call rollback
 	kvset, err = e.ExecDelLocal_Call(call, tx, &types.ReceiptData{Logs: receipt.Logs}, 0)
 	assert.Nil(t, err)
