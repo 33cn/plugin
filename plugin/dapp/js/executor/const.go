@@ -1,16 +1,5 @@
 package executor
 
-import "errors"
-
-//ErrInvalidFuncFormat 错误的函数调用格式(没有_)
-var errInvalidFuncFormat = errors.New("chain33.js: invalid function name format")
-
-//ErrInvalidFuncPrefix not exec_ execloal_ query_
-var errInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
-
-//ErrFuncNotFound 函数没有找到
-var errFuncNotFound = errors.New("chain33.js: invalid function name not found")
-
 var callcode = `
 var tojson = JSON.stringify
 function kvcreator(dbtype) {

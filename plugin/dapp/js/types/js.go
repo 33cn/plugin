@@ -38,6 +38,12 @@ var (
 	ErrJsReturnNotObject  = errors.New("ErrJsReturnNotObject")
 	ErrJsReturnKVSFormat  = errors.New("ErrJsReturnKVSFormat")
 	ErrJsReturnLogsFormat = errors.New("ErrJsReturnLogsFormat")
+	//ErrInvalidFuncFormat 错误的函数调用格式(没有_)
+	ErrInvalidFuncFormat = errors.New("chain33.js: invalid function name format")
+	//ErrInvalidFuncPrefix not exec_ execloal_ query_
+	ErrInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
+	//ErrFuncNotFound 函数没有找到
+	ErrFuncNotFound = errors.New("chain33.js: invalid function name not found")
 )
 
 func init() {

@@ -4,16 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/33cn/chain33/common"
-	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	"github.com/robertkrimen/otto"
-)
-
-var (
-	ptylog = log.New("module", "execs.js")
 )
 
 var driverName = ptypes.JsX
@@ -30,8 +25,7 @@ func Init(name string, sub []byte) {
 
 type js struct {
 	drivers.DriverBase
-	prefix      []byte
-	localprefix []byte
+	prefix []byte
 }
 
 func newjs() drivers.Driver {

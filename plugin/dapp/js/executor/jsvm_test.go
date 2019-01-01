@@ -9,6 +9,7 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	"github.com/robertkrimen/otto"
 	"github.com/stretchr/testify/assert"
@@ -164,18 +165,18 @@ func TestCallError(t *testing.T) {
 	_, err = e.callVM("hello", call, tx, 0, nil)
 	_, ok = err.(*otto.Error)
 	assert.Equal(t, true, ok)
-	assert.Equal(t, true, strings.Contains(err.Error(), errInvalidFuncPrefix.Error()))
+	assert.Equal(t, true, strings.Contains(err.Error(), ptypes.ErrInvalidFuncPrefix.Error()))
 
 	call, tx = callCodeTx("test", "hello2", `{"hello":"world"}`)
 	_, err = e.callVM("exec", call, tx, 0, nil)
 	_, ok = err.(*otto.Error)
 	assert.Equal(t, true, ok)
-	assert.Equal(t, true, strings.Contains(err.Error(), errFuncNotFound.Error()))
+	assert.Equal(t, true, strings.Contains(err.Error(), ptypes.ErrFuncNotFound.Error()))
 }
 
 func TestCalcLocalPrefix(t *testing.T) {
 	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
 	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
 	assert.Equal(t, calcCodeKey("a"), []byte("mavl-js-code-a"))
-	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("mavl-js-rollback-a"))
+	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("LODB-js-rollback-a"))
 }
