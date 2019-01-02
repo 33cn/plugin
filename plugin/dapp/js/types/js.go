@@ -44,6 +44,8 @@ var (
 	ErrInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
 	//ErrFuncNotFound 函数没有找到
 	ErrFuncNotFound = errors.New("chain33.js: invalid function name not found")
+	ErrSymbolName   = errors.New("chain33.js: ErrSymbolName")
+	ErrExecerName   = errors.New("chain33.js: ErrExecerName")
 )
 
 func init() {
