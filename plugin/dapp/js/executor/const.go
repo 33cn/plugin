@@ -1,5 +1,6 @@
 package executor
 
+//系统内置代码
 var callcode = `
 var tojson = JSON.stringify
 function kvcreator(dbtype) {
