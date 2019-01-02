@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -173,7 +174,7 @@ func (u *js) getlocaldbFunc(vm *otto.Otto, name string) {
 
 func (u *js) execnameFunc(vm *otto.Otto, name string) {
 	vm.Set("execname", func(call otto.FunctionCall) otto.Value {
-		return okReturn(vm, name)
+		return okReturn(vm, types.ExecName("user.js."+name))
 	})
 }
 
@@ -244,13 +245,23 @@ func listReturn(vm *otto.Otto, value []string) otto.Value {
 	return newObject(vm).setValue("value", value).value()
 }
 
+func receiptReturn(vm *otto.Otto, receipt *types.Receipt) otto.Value {
+	kvs := createKVObject(vm, receipt.KV)
+	logs := createLogsObject(vm, receipt.Logs)
+	return newObject(vm).setValue("kvs", kvs).setValue("logs", logs).value()
+}
+
 type object struct {
 	vm  *otto.Otto
 	obj *otto.Object
 }
 
 func newObject(vm *otto.Otto) *object {
-	obj, err := vm.Object("({})")
+	return newObjectString(vm, "({})")
+}
+
+func newObjectString(vm *otto.Otto, value string) *object {
+	obj, err := vm.Object(value)
 	if err != nil {
 		panic(err)
 	}
@@ -279,6 +290,28 @@ func (o *object) value() otto.Value {
 		panic(err)
 	}
 	return v
+}
+
+func createKVObject(vm *otto.Otto, kvs []*types.KeyValue) otto.Value {
+	obj := newObjectString(vm, "([])")
+	for i := 0; i < len(kvs); i++ {
+		item := newObject(vm).setValue("key", string(kvs[i].Key))
+		item.setValue("value", string(kvs[i].Value))
+		item.setValue("prefix", true)
+		obj.setValue(fmt.Sprint(i), item)
+	}
+	return obj.value()
+}
+
+func createLogsObject(vm *otto.Otto, logs []*types.ReceiptLog) otto.Value {
+	obj := newObjectString(vm, "([])")
+	for i := 0; i < len(logs); i++ {
+		item := newObject(vm).setValue("ty", logs[i].Ty)
+		item.setValue("log", string(logs[i].Log))
+		item.setValue("format", "proto")
+		obj.setValue(fmt.Sprint(i), item)
+	}
+	return obj.value()
 }
 
 func (u *js) getstatedb(key string) (value string, err error) {
