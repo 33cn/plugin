@@ -1,8 +1,11 @@
 package executor
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
@@ -106,4 +109,51 @@ func parseKV(data *otto.Object) (kv *types.KeyValue, err error) {
 		return nil, err
 	}
 	return &types.KeyValue{Key: []byte(key), Value: []byte(value)}, nil
+}
+
+func rewriteJSON(data []byte) ([]byte, error) {
+	dat := make(map[string]interface{})
+	d := json.NewDecoder(bytes.NewBuffer(data))
+	d.UseNumber()
+	if err := d.Decode(&dat); err != nil {
+		return nil, err
+	}
+	dat = rewriteString(dat)
+	return json.Marshal(dat)
+}
+
+func rewriteString(dat map[string]interface{}) map[string]interface{} {
+	for k, v := range dat {
+		if n, ok := v.(json.Number); ok {
+			dat[k] = jssafe(n)
+		} else if arr, ok := v.([]interface{}); ok {
+			for i := 0; i < len(arr); i++ {
+				v := arr[i]
+				if n, ok := v.(json.Number); ok {
+					arr[i] = jssafe(n)
+				}
+			}
+			dat[k] = arr
+		} else if d, ok := v.(map[string]interface{}); ok {
+			dat[k] = rewriteString(d)
+		} else {
+			dat[k] = v
+		}
+	}
+	return dat
+}
+
+func jssafe(n json.Number) interface{} {
+	if strings.Contains(string(n), ".") { //float
+		return n
+	}
+	i, err := n.Int64()
+	if err != nil {
+		return n
+	}
+	//javascript can not parse
+	if i >= 9007199254740991 || i <= -9007199254740991 {
+		return string(n)
+	}
+	return n
 }

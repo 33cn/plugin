@@ -8,18 +8,32 @@ import (
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/robertkrimen/otto"
 )
 
 var driverName = ptypes.JsX
+var basevm *otto.Otto
+var codecache *lru.Cache
 
 func init() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&js{}))
+	basevm = otto.New()
+	_, err := basevm.Run(callcode)
+	if err != nil {
+		panic(err)
+	}
 }
 
 //Init 插件初始化
 func Init(name string, sub []byte) {
+	//最新的64个code做cache
+	var err error
+	codecache, err = lru.New(512)
+	if err != nil {
+		panic(err)
+	}
 	drivers.Register(GetName(), newjs, 0)
 }
 
@@ -47,21 +61,24 @@ func (u *js) GetDriverName() string {
 
 func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	index int, receiptData *types.ReceiptData) (*otto.Object, error) {
-	vm, err := u.createVM(payload.Name, tx, index)
-	if err != nil {
-		return nil, err
-	}
-	db := u.GetStateDB()
-	code, err := db.Get(calcCodeKey(payload.Name))
-	if err != nil {
-		return nil, err
+	if payload.Args != "" {
+		newjson, err := rewriteJSON([]byte(payload.Args))
+		if err != nil {
+			return nil, err
+		}
+		payload.Args = string(newjson)
+	} else {
+		payload.Args = "{}"
 	}
 	loglist, err := jslogs(receiptData)
 	if err != nil {
 		return nil, err
 	}
+	vm, err := u.createVM(payload.Name, tx, index)
+	if err != nil {
+		return nil, err
+	}
 	vm.Set("loglist", loglist)
-	vm.Set("code", code)
 	if prefix == "init" {
 		vm.Set("f", "init")
 	} else {
@@ -69,7 +86,7 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	}
 	vm.Set("args", payload.Args)
 	callfunc := "callcode(context, f, args, loglist)"
-	jsvalue, err := vm.Run(callcode + string(code) + "\n" + callfunc)
+	jsvalue, err := vm.Run(callfunc)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +203,20 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	if err != nil {
 		return nil, err
 	}
-	vm := otto.New()
+	var vm *otto.Otto
+	if vmitem, ok := codecache.Get(name); ok {
+		vm = vmitem.(*otto.Otto).Copy()
+	} else {
+		code, err := u.GetStateDB().Get(calcCodeKey(name))
+		if err != nil {
+			return nil, err
+		}
+		//cache 合约代码部分，不会cache 具体执行
+		cachevm := basevm.Copy()
+		cachevm.Run(code)
+		codecache.Add(name, cachevm)
+		vm = cachevm.Copy()
+	}
 	vm.Set("context", string(data))
 	u.getstatedbFunc(vm, name)
 	u.getlocaldbFunc(vm, name)

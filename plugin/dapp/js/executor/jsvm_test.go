@@ -2,6 +2,9 @@ package executor
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -67,12 +70,15 @@ Query.prototype.hello = function(args) {
 }
 `
 
-func initExec(ldb db.DB, kvdb db.KVDB, t *testing.T) *js {
+func init() {
+	Init("js", nil)
+}
+
+func initExec(ldb db.DB, kvdb db.KVDB, t assert.TestingT) *js {
 	e := newjs().(*js)
 	e.SetEnv(1, time.Now().Unix(), 1)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
-
 	c, tx := createCodeTx("test", jscode)
 	receipt, err := e.Exec_Create(c, tx, 0)
 	assert.Nil(t, err)
@@ -158,8 +164,8 @@ func TestCallError(t *testing.T) {
 	call, tx := callCodeTx("test", "hello", `{hello":"world"}`)
 	_, err := e.callVM("exec", call, tx, 0, nil)
 	_, ok := err.(*otto.Error)
-	assert.Equal(t, true, ok)
-	assert.Equal(t, true, strings.Contains(err.Error(), "SyntaxError"))
+	assert.Equal(t, false, ok)
+	assert.Equal(t, true, strings.Contains(err.Error(), "invalid character 'h'"))
 
 	call, tx = callCodeTx("test", "hello", `{"hello":"world"}`)
 	_, err = e.callVM("hello", call, tx, 0, nil)
@@ -174,9 +180,81 @@ func TestCallError(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(err.Error(), ptypes.ErrFuncNotFound.Error()))
 }
 
+//数字非常大的数字的处理
+func TestBigInt(t *testing.T) {
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
+	e := initExec(ldb, kvdb, t)
+	//test call error(invalid json input)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	call, tx := callCodeTx("test", "hello", s)
+	data, err := e.callVM("exec", call, tx, 0, nil)
+	assert.Nil(t, err)
+	kvs, _, err := parseJsReturn(data)
+	assert.Nil(t, err)
+	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
+}
+
+func BenchmarkBigInt(b *testing.B) {
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
+	e := initExec(ldb, kvdb, b)
+	//test call error(invalid json input)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	call, tx := callCodeTx("test", "hello", s)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := e.callVM("exec", call, tx, 0, nil)
+		assert.Nil(b, err)
+	}
+}
+
+func TestRewriteJSON(t *testing.T) {
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	quota := fmt.Sprintf(`{"balance":"%d","balance1":"%d","balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	data, err := rewriteJSON([]byte(s))
+	assert.Nil(t, err)
+	assert.Equal(t, quota, string(data))
+	data2 := make(map[string]interface{})
+	data2["ints"] = []int64{math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990, 1, 0}
+	data2["float"] = []float64{1.1, 1000000000000000000000000000, 10000000000000000}
+	json1, err := json.Marshal(data2)
+	assert.Nil(t, err)
+	//assert.Equal(t, `{"float":[1.1,1100000000000000000000,-1100000000000000000000],"ints":[9223372036854775807,-9223372036854775808,9007199254740990,-9007199254740990,1,0]}`, string(json1))
+	json2, err := rewriteJSON(json1)
+	assert.Nil(t, err)
+	assert.Equal(t, string(json2), `{"float":[1.1,1e+27,"10000000000000000"],"ints":["9223372036854775807","-9223372036854775808",9007199254740990,-9007199254740990,1,0]}`)
+}
+
 func TestCalcLocalPrefix(t *testing.T) {
 	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
 	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
 	assert.Equal(t, calcCodeKey("a"), []byte("mavl-js-code-a"))
 	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("LODB-js-rollback-a"))
+}
+
+func TestCacheMemUsage(t *testing.T) {
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
+	e := initExec(ldb, kvdb, t)
+	vm, err := e.createVM("test", nil, 0)
+	assert.Nil(t, err)
+	vms := make([]*otto.Otto, 1024)
+	for i := 0; i < 1024; i++ {
+		vms[i] = vm.Copy()
+	}
+	printMemUsage()
+}
+
+func printMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("Alloc = %v MiB", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+}
+
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
 }
