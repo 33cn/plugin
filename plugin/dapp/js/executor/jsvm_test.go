@@ -69,7 +69,7 @@ Query.prototype.hello = function(args) {
 }
 `
 
-func initExec(ldb db.DB, kvdb db.KVDB, t *testing.T) *js {
+func initExec(ldb db.DB, kvdb db.KVDB, t assert.TestingT) *js {
 	e := newjs().(*js)
 	e.SetEnv(1, time.Now().Unix(), 1)
 	e.SetLocalDB(kvdb)
@@ -188,6 +188,20 @@ func TestBigInt(t *testing.T) {
 	kvs, _, err := parseJsReturn(data)
 	assert.Nil(t, err)
 	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
+}
+
+func BenchmarkBigInt(b *testing.B) {
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
+	e := initExec(ldb, kvdb, b)
+	//test call error(invalid json input)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	call, tx := callCodeTx("test", "hello", s)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := e.callVM("exec", call, tx, 0, nil)
+		assert.Nil(b, err)
+	}
 }
 
 func TestRewriteJSON(t *testing.T) {

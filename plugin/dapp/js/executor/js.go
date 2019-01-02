@@ -12,10 +12,16 @@ import (
 )
 
 var driverName = ptypes.JsX
+var basevm *otto.Otto
 
 func init() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&js{}))
+	basevm = otto.New()
+	_, err := basevm.Run(callcode)
+	if err != nil {
+		panic(err)
+	}
 }
 
 //Init 插件初始化
@@ -78,7 +84,7 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	}
 	vm.Set("args", payload.Args)
 	callfunc := "callcode(context, f, args, loglist)"
-	jsvalue, err := vm.Run(callcode + string(code) + "\n" + callfunc)
+	jsvalue, err := vm.Run(string(code) + "\n" + callfunc)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +201,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	if err != nil {
 		return nil, err
 	}
-	vm := otto.New()
+	vm := basevm.Copy()
 	vm.Set("context", string(data))
 	u.getstatedbFunc(vm, name)
 	u.getlocaldbFunc(vm, name)
