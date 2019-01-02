@@ -24,6 +24,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	execaddressFunc(basevm)
 }
 
 //Init 插件初始化
@@ -170,6 +171,12 @@ func (u *js) getlocaldbFunc(vm *otto.Otto, name string) {
 	})
 }
 
+func (u *js) execnameFunc(vm *otto.Otto, name string) {
+	vm.Set("execname", func(call otto.FunctionCall) otto.Value {
+		return okReturn(vm, name)
+	})
+}
+
 func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
 	_, plocal := calcAllPrefix(name)
@@ -221,6 +228,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.getstatedbFunc(vm, name)
 	u.getlocaldbFunc(vm, name)
 	u.listdbFunc(vm, name)
+	u.execnameFunc(vm, name)
 	return vm, nil
 }
 
