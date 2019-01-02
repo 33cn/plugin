@@ -189,6 +189,7 @@ func TestBigInt(t *testing.T) {
 	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
 	call, tx := callCodeTx("test", "hello", s)
 	data, err := e.callVM("exec", call, tx, 0, nil)
+	assert.Nil(t, err)
 	kvs, _, err := parseJsReturn(data)
 	assert.Nil(t, err)
 	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
