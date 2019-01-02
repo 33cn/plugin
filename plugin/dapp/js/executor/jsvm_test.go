@@ -69,12 +69,15 @@ Query.prototype.hello = function(args) {
 }
 `
 
+func init() {
+	Init("js", nil)
+}
+
 func initExec(ldb db.DB, kvdb db.KVDB, t assert.TestingT) *js {
 	e := newjs().(*js)
 	e.SetEnv(1, time.Now().Unix(), 1)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
-
 	c, tx := createCodeTx("test", jscode)
 	receipt, err := e.Exec_Create(c, tx, 0)
 	assert.Nil(t, err)
