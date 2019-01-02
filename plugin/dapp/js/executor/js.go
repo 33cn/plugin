@@ -51,6 +51,15 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	if err != nil {
 		return nil, err
 	}
+	if payload.Args != "" {
+		newjson, err := rewriteJSON([]byte(payload.Args))
+		if err != nil {
+			return nil, err
+		}
+		payload.Args = string(newjson)
+	} else {
+		payload.Args = "{}"
+	}
 	db := u.GetStateDB()
 	code, err := db.Get(calcCodeKey(payload.Name))
 	if err != nil {

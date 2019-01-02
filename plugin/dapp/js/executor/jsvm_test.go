@@ -2,6 +2,8 @@ package executor
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -158,8 +160,8 @@ func TestCallError(t *testing.T) {
 	call, tx := callCodeTx("test", "hello", `{hello":"world"}`)
 	_, err := e.callVM("exec", call, tx, 0, nil)
 	_, ok := err.(*otto.Error)
-	assert.Equal(t, true, ok)
-	assert.Equal(t, true, strings.Contains(err.Error(), "SyntaxError"))
+	assert.Equal(t, false, ok)
+	assert.Equal(t, true, strings.Contains(err.Error(), "invalid character 'h'"))
 
 	call, tx = callCodeTx("test", "hello", `{"hello":"world"}`)
 	_, err = e.callVM("hello", call, tx, 0, nil)
@@ -172,6 +174,37 @@ func TestCallError(t *testing.T) {
 	_, ok = err.(*otto.Error)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, true, strings.Contains(err.Error(), ptypes.ErrFuncNotFound.Error()))
+}
+
+//数字非常大的数字的处理
+func TestBigInt(t *testing.T) {
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
+	e := initExec(ldb, kvdb, t)
+	//test call error(invalid json input)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	call, tx := callCodeTx("test", "hello", s)
+	data, err := e.callVM("exec", call, tx, 0, nil)
+	kvs, _, err := parseJsReturn(data)
+	assert.Nil(t, err)
+	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
+}
+
+func TestRewriteJSON(t *testing.T) {
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	quota := fmt.Sprintf(`{"balance":"%d","balance1":"%d","balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	data, err := rewriteJSON([]byte(s))
+	assert.Nil(t, err)
+	assert.Equal(t, quota, string(data))
+	data2 := make(map[string]interface{})
+	data2["ints"] = []int64{math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990, 1, 0}
+	data2["float"] = []float64{1.1, 1000000000000000000000000000, 10000000000000000}
+	json1, err := json.Marshal(data2)
+	assert.Nil(t, err)
+	//assert.Equal(t, `{"float":[1.1,1100000000000000000000,-1100000000000000000000],"ints":[9223372036854775807,-9223372036854775808,9007199254740990,-9007199254740990,1,0]}`, string(json1))
+	json2, err := rewriteJSON(json1)
+	assert.Nil(t, err)
+	assert.Equal(t, string(json2), `{"float":[1.1,1e+27,"10000000000000000"],"ints":["9223372036854775807","-9223372036854775808",9007199254740990,-9007199254740990,1,0]}`)
 }
 
 func TestCalcLocalPrefix(t *testing.T) {
