@@ -770,7 +770,7 @@ func (client *client) DelBlock(block *types.Block, seq int64) error {
 //IsCaughtUp 是否追上最新高度,
 func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
 	if client == nil {
-		return nil, fmt.Errorf("client not bind message queue.")
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
 	}
 	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp}, nil
 }

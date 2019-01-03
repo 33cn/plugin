@@ -93,8 +93,8 @@ func (c *Jrpc) GetAssetTxResult(req *types.ReqHash, result *interface{}) error {
 }
 
 // IsSync query is sync
-func (g *channelClient) IsSync(ctx context.Context, in *types.ReqNil) (*types.IsCaughtUp, error) {
-	data, err := g.QueryConsensusFunc("para", "IsCaughtUp", &types.ReqNil{})
+func (c *channelClient) IsSync(ctx context.Context, in *types.ReqNil) (*types.IsCaughtUp, error) {
+	data, err := c.QueryConsensusFunc("para", "IsCaughtUp", &types.ReqNil{})
 	if err != nil {
 		return nil, err
 	}
