@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo "package executor\n\nvar callcode = \`" >const.go
-cat runtime.js >>const.go
-echo '`' >>const.go
-echo 'var jscode = `' >>const.go
-cat test.js >>const.go
-echo '`' >>const.go
-echo "var _ = jscode" >>const.go
+printf "package executor\n\nvar callcode = \`\n" >const.go
+cat "runtime.js" >>const.go
+printf '`\n' >>const.go
+printf 'var jscode = `\n' >>const.go
+cat "test.js" >>const.go
+printf '`\n' >>const.go
+printf "var _ = jscode\n" >>const.go
