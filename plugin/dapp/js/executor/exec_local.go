@@ -20,11 +20,11 @@ func (c *js) ExecLocal_Call(payload *jsproto.Call, tx *types.Transaction, receip
 	if err != nil {
 		return nil, err
 	}
-	kvs, _, err := parseJsReturn(jsvalue)
+	kvs, _, err := parseJsReturn(c.prefix, jsvalue)
 	if err != nil {
 		return nil, err
 	}
-	kvc.AddList(kvs)
+	kvc.AddListNoPrefix(kvs)
 	kvc.AddRollbackKV()
 	r := &types.LocalDBSet{}
 	r.KV = kvc.KVList()

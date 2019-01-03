@@ -25,8 +25,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	execaddressFunc(basevm)
-	registerTableFunc(basevm)
+	//execaddressFunc(basevm)
+	//registerTableFunc(basevm)
 }
 
 //Init 插件初始化

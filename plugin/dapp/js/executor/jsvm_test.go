@@ -138,7 +138,7 @@ func TestBigInt(t *testing.T) {
 	call, tx := callCodeTx("test", "hello", s)
 	data, err := e.callVM("exec", call, tx, 0, nil)
 	assert.Nil(t, err)
-	kvs, _, err := parseJsReturn(data)
+	kvs, _, err := parseJsReturn([]byte("user.jsvm.test"), data)
 	assert.Nil(t, err)
 	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
 }
