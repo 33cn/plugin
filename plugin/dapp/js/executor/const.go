@@ -334,3 +334,4 @@ Query.prototype.hello = function(args) {
 	return tojson(obj)
 }
 `
+var _ = jscode
