@@ -46,6 +46,7 @@ var (
 	ErrFuncNotFound = errors.New("chain33.js: invalid function name not found")
 	ErrSymbolName   = errors.New("chain33.js: ErrSymbolName")
 	ErrExecerName   = errors.New("chain33.js: ErrExecerName")
+	ErrDBType       = errors.New("chain33.js: ErrDBType")
 )
 
 func init() {

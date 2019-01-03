@@ -26,6 +26,7 @@ func init() {
 		panic(err)
 	}
 	execaddressFunc(basevm)
+	registerTableFunc(basevm)
 }
 
 //Init 插件初始化
@@ -231,6 +232,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
 	u.registerAccountFunc(vm)
+	u.newTableFunc(vm, name)
 	return vm, nil
 }
 
