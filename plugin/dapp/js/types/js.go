@@ -30,7 +30,7 @@ var (
 )
 
 //JsX 插件名字
-var JsX = "js"
+var JsX = "jsvm"
 
 //错误常量
 var (

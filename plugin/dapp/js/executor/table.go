@@ -186,8 +186,7 @@ func tableDelFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-
-		err = tab.DelRow(&jsproto.JsLog{Data: json})
+		err = tab.DelRow(&jsproto.JsLog{Data: row})
 		if err != nil {
 			return errReturn(vm, err)
 		}

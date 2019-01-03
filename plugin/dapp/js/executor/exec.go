@@ -8,7 +8,10 @@ import (
 )
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := types.ExecName("user.js." + payload.Name)
+	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
+	if string(tx.Execer) != execer {
+		return nil, types.ErrExecNameNotMatch
+	}
 	c.prefix = calcStatePrefix([]byte(execer))
 	kvc := dapp.NewKVCreator(c.GetStateDB(), c.prefix, nil)
 	_, err := kvc.GetNoPrefix(calcCodeKey(payload.Name))
@@ -33,7 +36,10 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 }
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := types.ExecName("user.js." + payload.Name)
+	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
+	if string(tx.Execer) != execer {
+		return nil, types.ErrExecNameNotMatch
+	}
 	c.prefix = calcStatePrefix([]byte(execer))
 	kvc := dapp.NewKVCreator(c.GetStateDB(), c.prefix, nil)
 	jsvalue, err := c.callVM("exec", payload, tx, index, nil)

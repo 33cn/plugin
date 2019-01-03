@@ -61,13 +61,34 @@ func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*type
 		return nil, nil, err
 	}
 	for i := 0; i < int(size); i++ {
-		data, err := getString(obj, fmt.Sprint(i))
+		data, err := getObject(obj, fmt.Sprint(i))
 		if err != nil {
 			return nil, nil, err
 		}
-		l := &types.ReceiptLog{
-			Ty: ptypes.TyLogJs, Log: types.Encode(&jsproto.JsLog{Data: data})}
-		logs = append(logs, l)
+		//
+		logdata, err := getString(data, "log")
+		if err != nil {
+			return nil, nil, err
+		}
+		format, err := getString(data, "format")
+		if err != nil {
+			return nil, nil, err
+		}
+		ty, err := getInt(data, "ty")
+		if err != nil {
+			return nil, nil, err
+		}
+		if format == "json" {
+			l := &types.ReceiptLog{
+				Ty: ptypes.TyLogJs, Log: types.Encode(&jsproto.JsLog{Data: logdata})}
+			logs = append(logs, l)
+		} else {
+			l := &types.ReceiptLog{
+				Ty:  int32(ty),
+				Log: []byte(logdata),
+			}
+			logs = append(logs, l)
+		}
 	}
 	return kvlist, logs, nil
 }
