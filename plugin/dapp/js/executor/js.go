@@ -230,6 +230,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.getlocaldbFunc(vm, name)
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
+	u.registerAccountFunc(vm)
 	return vm, nil
 }
 
@@ -311,6 +312,15 @@ func createLogsObject(vm *otto.Otto, logs []*types.ReceiptLog) otto.Value {
 		item.setValue("format", "proto")
 		obj.setValue(fmt.Sprint(i), item)
 	}
+	return obj.value()
+}
+
+func accountReturn(vm *otto.Otto, acc *types.Account) otto.Value {
+	obj := newObject(vm)
+	obj.setValue("currency", acc.Currency)
+	obj.setValue("balance", acc.Balance)
+	obj.setValue("frozen", acc.Frozen)
+	obj.setValue("addr", acc.Addr)
 	return obj.value()
 }
 
