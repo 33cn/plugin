@@ -24,7 +24,7 @@ type blockContext struct {
 	Index      int64  `json:"index"`
 }
 
-func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*types.ReceiptLog, err error) {
+func parseJsReturn(prefix []byte, jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*types.ReceiptLog, err error) {
 	//kvs
 	obj, err := getObject(jsvalue, "kvs")
 	if err != nil {
@@ -42,7 +42,7 @@ func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*type
 		if err != nil {
 			return nil, nil, err
 		}
-		kv, err := parseKV(data)
+		kv, err := parseKV(prefix, data)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -61,13 +61,34 @@ func parseJsReturn(jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*type
 		return nil, nil, err
 	}
 	for i := 0; i < int(size); i++ {
-		data, err := getString(obj, fmt.Sprint(i))
+		data, err := getObject(obj, fmt.Sprint(i))
 		if err != nil {
 			return nil, nil, err
 		}
-		l := &types.ReceiptLog{
-			Ty: ptypes.TyLogJs, Log: types.Encode(&jsproto.JsLog{Data: data})}
-		logs = append(logs, l)
+		//
+		logdata, err := getString(data, "log")
+		if err != nil {
+			return nil, nil, err
+		}
+		format, err := getString(data, "format")
+		if err != nil {
+			return nil, nil, err
+		}
+		ty, err := getInt(data, "ty")
+		if err != nil {
+			return nil, nil, err
+		}
+		if format == "json" {
+			l := &types.ReceiptLog{
+				Ty: ptypes.TyLogJs, Log: types.Encode(&jsproto.JsLog{Data: logdata})}
+			logs = append(logs, l)
+		} else {
+			l := &types.ReceiptLog{
+				Ty:  int32(ty),
+				Log: []byte(logdata),
+			}
+			logs = append(logs, l)
+		}
 	}
 	return kvlist, logs, nil
 }
@@ -78,6 +99,14 @@ func getString(data *otto.Object, key string) (string, error) {
 		return "", err
 	}
 	return v.ToString()
+}
+
+func getBool(data *otto.Object, key string) (bool, error) {
+	v, err := data.Get(key)
+	if err != nil {
+		return false, err
+	}
+	return v.ToBoolean()
 }
 
 func getInt(data *otto.Object, key string) (int64, error) {
@@ -99,7 +128,7 @@ func getObject(data *otto.Object, key string) (*otto.Object, error) {
 	return v.Object(), nil
 }
 
-func parseKV(data *otto.Object) (kv *types.KeyValue, err error) {
+func parseKV(prefix []byte, data *otto.Object) (kv *types.KeyValue, err error) {
 	key, err := getString(data, "key")
 	if err != nil {
 		return nil, err
@@ -107,6 +136,13 @@ func parseKV(data *otto.Object) (kv *types.KeyValue, err error) {
 	value, err := getString(data, "value")
 	if err != nil {
 		return nil, err
+	}
+	hasprefix, err := getBool(data, "prefix")
+	if err != nil {
+		return nil, err
+	}
+	if !hasprefix {
+		key = string(prefix) + key
 	}
 	return &types.KeyValue{Key: []byte(key), Value: []byte(value)}, nil
 }
@@ -143,6 +179,8 @@ func rewriteString(dat map[string]interface{}) map[string]interface{} {
 	return dat
 }
 
+const maxjsint int64 = 9007199254740991
+
 func jssafe(n json.Number) interface{} {
 	if strings.Contains(string(n), ".") { //float
 		return n
@@ -152,7 +190,7 @@ func jssafe(n json.Number) interface{} {
 		return n
 	}
 	//javascript can not parse
-	if i >= 9007199254740991 || i <= -9007199254740991 {
+	if i >= maxjsint || i <= -maxjsint {
 		return string(n)
 	}
 	return n

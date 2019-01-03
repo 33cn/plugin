@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -25,6 +26,7 @@ func init() {
 		panic(err)
 	}
 	execaddressFunc(basevm)
+	registerTableFunc(basevm)
 }
 
 //Init 插件初始化
@@ -104,6 +106,12 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	return jsvalue.Object(), nil
 }
 
+type jslogInfo struct {
+	Log    string `json:"log"`
+	Ty     int32  `json:"ty"`
+	Format string `json:"format"`
+}
+
 func jslogs(receiptData *types.ReceiptData) ([]string, error) {
 	data := make([]string, 0)
 	if receiptData == nil {
@@ -111,6 +119,7 @@ func jslogs(receiptData *types.ReceiptData) ([]string, error) {
 	}
 	for i := 0; i < len(receiptData.Logs); i++ {
 		logitem := receiptData.Logs[i]
+		//只传递 json格式的日子，不传递 二进制的日志
 		if logitem.Ty != ptypes.TyLogJs {
 			continue
 		}
@@ -119,7 +128,11 @@ func jslogs(receiptData *types.ReceiptData) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		data = append(data, jslog.Data)
+		item, err := json.Marshal(&jslogInfo{Log: jslog.Data, Ty: receiptData.Ty, Format: "json"})
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, string(item))
 	}
 	return data, nil
 }
@@ -141,14 +154,21 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 	}
 }
 
-func (u *js) getstatedbFunc(vm *otto.Otto, name string) {
+func (u *js) statedbFunc(vm *otto.Otto, name string) {
 	prefix, _ := calcAllPrefix(name)
 	vm.Set("getstatedb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		v, err := u.getstatedb(string(prefix) + key)
+		hasprefix, err := call.Argument(1).ToBoolean()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		if !hasprefix {
+			key = string(prefix) + key
+		}
+		v, err := u.getstatedb(key)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -156,14 +176,21 @@ func (u *js) getstatedbFunc(vm *otto.Otto, name string) {
 	})
 }
 
-func (u *js) getlocaldbFunc(vm *otto.Otto, name string) {
+func (u *js) localdbFunc(vm *otto.Otto, name string) {
 	_, prefix := calcAllPrefix(name)
 	vm.Set("getlocaldb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		v, err := u.getlocaldb(string(prefix) + key)
+		hasprefix, err := call.Argument(1).ToBoolean()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		if !hasprefix {
+			key = string(prefix) + key
+		}
+		v, err := u.getlocaldb(key)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -173,7 +200,7 @@ func (u *js) getlocaldbFunc(vm *otto.Otto, name string) {
 
 func (u *js) execnameFunc(vm *otto.Otto, name string) {
 	vm.Set("execname", func(call otto.FunctionCall) otto.Value {
-		return okReturn(vm, name)
+		return okReturn(vm, types.ExecName("user.js."+name))
 	})
 }
 
@@ -225,10 +252,12 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 		vm = cachevm.Copy()
 	}
 	vm.Set("context", string(data))
-	u.getstatedbFunc(vm, name)
-	u.getlocaldbFunc(vm, name)
+	u.statedbFunc(vm, name)
+	u.localdbFunc(vm, name)
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
+	u.registerAccountFunc(vm)
+	u.newTableFunc(vm, name)
 	return vm, nil
 }
 
@@ -244,13 +273,23 @@ func listReturn(vm *otto.Otto, value []string) otto.Value {
 	return newObject(vm).setValue("value", value).value()
 }
 
+func receiptReturn(vm *otto.Otto, receipt *types.Receipt) otto.Value {
+	kvs := createKVObject(vm, receipt.KV)
+	logs := createLogsObject(vm, receipt.Logs)
+	return newObject(vm).setValue("kvs", kvs).setValue("logs", logs).value()
+}
+
 type object struct {
 	vm  *otto.Otto
 	obj *otto.Object
 }
 
 func newObject(vm *otto.Otto) *object {
-	obj, err := vm.Object("({})")
+	return newObjectString(vm, "({})")
+}
+
+func newObjectString(vm *otto.Otto, value string) *object {
+	obj, err := vm.Object(value)
 	if err != nil {
 		panic(err)
 	}
@@ -279,6 +318,53 @@ func (o *object) value() otto.Value {
 		panic(err)
 	}
 	return v
+}
+
+// Allow 允许哪些交易在本命执行器执行
+func (u *js) Allow(tx *types.Transaction, index int) error {
+	err := u.DriverBase.Allow(tx, index)
+	if err == nil {
+		return nil
+	}
+	//增加新的规则:
+	//主链: user.jsvm.xxx  执行 jsvm 合约
+	//平行链: user.p.guodun.user.jsvm.xxx 执行 jsvm 合约
+	exec := types.GetParaExec(tx.Execer)
+	if u.AllowIsUserDot2(exec) {
+		return nil
+	}
+	return types.ErrNotAllow
+}
+
+func createKVObject(vm *otto.Otto, kvs []*types.KeyValue) otto.Value {
+	obj := newObjectString(vm, "([])")
+	for i := 0; i < len(kvs); i++ {
+		item := newObject(vm).setValue("key", string(kvs[i].Key))
+		item.setValue("value", string(kvs[i].Value))
+		item.setValue("prefix", true)
+		obj.setValue(fmt.Sprint(i), item)
+	}
+	return obj.value()
+}
+
+func createLogsObject(vm *otto.Otto, logs []*types.ReceiptLog) otto.Value {
+	obj := newObjectString(vm, "([])")
+	for i := 0; i < len(logs); i++ {
+		item := newObject(vm).setValue("ty", logs[i].Ty)
+		item.setValue("log", string(logs[i].Log))
+		item.setValue("format", "proto")
+		obj.setValue(fmt.Sprint(i), item)
+	}
+	return obj.value()
+}
+
+func accountReturn(vm *otto.Otto, acc *types.Account) otto.Value {
+	obj := newObject(vm)
+	obj.setValue("currency", acc.Currency)
+	obj.setValue("balance", acc.Balance)
+	obj.setValue("frozen", acc.Frozen)
+	obj.setValue("addr", acc.Addr)
+	return obj.value()
 }
 
 func (u *js) getstatedb(key string) (value string, err error) {

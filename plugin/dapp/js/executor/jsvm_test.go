@@ -39,7 +39,7 @@ func createCodeTx(name, jscode string) (*jsproto.Create, *types.Transaction) {
 		Code: jscode,
 		Name: name,
 	}
-	return data, &types.Transaction{Execer: []byte("js"), Payload: types.Encode(data)}
+	return data, &types.Transaction{Execer: []byte("user." + ptypes.JsX + "." + name), Payload: types.Encode(data)}
 }
 
 func callCodeTx(name, f, args string) (*jsproto.Call, *types.Transaction) {
@@ -48,7 +48,7 @@ func callCodeTx(name, f, args string) (*jsproto.Call, *types.Transaction) {
 		Name:     name,
 		Args:     args,
 	}
-	return data, &types.Transaction{Execer: []byte("js"), Payload: types.Encode(data)}
+	return data, &types.Transaction{Execer: []byte("user." + ptypes.JsX + "." + name), Payload: types.Encode(data)}
 }
 
 func TestCallcode(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCallcode(t *testing.T) {
 	err = json.Unmarshal(receipt.KV[2].Value, &data)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(1), data.Difficulty)
-	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, ptypes.JsX, data.DriverName)
 	assert.Equal(t, int64(1), data.Height)
 	assert.Equal(t, int64(0), data.Index)
 
@@ -76,12 +76,12 @@ func TestCallcode(t *testing.T) {
 	assert.Equal(t, string(kvset.KV[0].Value), `{"hello":"world"}`)
 	assert.Equal(t, string(kvset.KV[1].Value), "execlocal")
 	//test log is ok
-	assert.Equal(t, string(kvset.KV[2].Value), `[{"key1":"value1"},{"key2":"value2"}]`)
+	assert.Equal(t, string(kvset.KV[2].Value), `[{"format":"json","log":"{\"key1\":\"value1\"}","ty":0},{"format":"json","log":"{\"key2\":\"value2\"}","ty":0}]`)
 	//test context
 	err = json.Unmarshal(kvset.KV[3].Value, &data)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(1), data.Difficulty)
-	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, "jsvm", data.DriverName)
 	assert.Equal(t, int64(1), data.Height)
 	assert.Equal(t, int64(0), data.Index)
 
@@ -91,7 +91,7 @@ func TestCallcode(t *testing.T) {
 	err = json.Unmarshal([]byte(jsondata.(*jsproto.QueryResult).Data), &data)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(1), data.Difficulty)
-	assert.Equal(t, "js", data.DriverName)
+	assert.Equal(t, "jsvm", data.DriverName)
 	assert.Equal(t, int64(1), data.Height)
 	assert.Equal(t, int64(0), data.Index)
 	//call rollback
@@ -100,7 +100,7 @@ func TestCallcode(t *testing.T) {
 	util.SaveKVList(ldb, kvset.KV)
 	assert.Equal(t, 5, len(kvset.KV))
 	for i := 0; i < len(kvset.KV); i++ {
-		assert.Equal(t, kvset.KV[i].Value, []byte(nil))
+		assert.Equal(t, string(kvset.KV[i].Value), "")
 	}
 }
 
@@ -138,7 +138,7 @@ func TestBigInt(t *testing.T) {
 	call, tx := callCodeTx("test", "hello", s)
 	data, err := e.callVM("exec", call, tx, 0, nil)
 	assert.Nil(t, err)
-	kvs, _, err := parseJsReturn(data)
+	kvs, _, err := parseJsReturn([]byte("user.jsvm.test"), data)
 	assert.Nil(t, err)
 	assert.Equal(t, `{"balance":"9223372036854775807","balance1":"-9223372036854775808","balance2":9007199254740990,"balance3":-9007199254740990}`, string(kvs[0].Value))
 }
@@ -177,8 +177,8 @@ func TestRewriteJSON(t *testing.T) {
 func TestCalcLocalPrefix(t *testing.T) {
 	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
 	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
-	assert.Equal(t, calcCodeKey("a"), []byte("mavl-js-code-a"))
-	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("LODB-js-rollback-a"))
+	assert.Equal(t, calcCodeKey("a"), []byte("mavl-jsvm-code-a"))
+	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("LODB-jsvm-rollback-a"))
 }
 
 func TestCacheMemUsage(t *testing.T) {
@@ -206,55 +206,3 @@ func printMemUsage() {
 func bToMb(b uint64) uint64 {
 	return b / 1024 / 1024
 }
-
-var jscode = `
-//数据结构设计
-//kvlist [{key:"key1", value:"value1"},{key:"key2", value:"value2"}]
-//log 设计 {json data}
-function Init(context) {
-    this.kvc = new kvcreator("init")
-    this.context = context
-    this.kvc.add("action", "init")
-    this.kvc.add("context", this.context)
-    return this.kvc.receipt()
-}
-
-function Exec(context) {
-    this.kvc = new kvcreator("exec")
-	this.context = context
-}
-
-function ExecLocal(context, logs) {
-    this.kvc = new kvcreator("local")
-	this.context = context
-    this.logs = logs
-}
-
-function Query(context) {
-	this.kvc = new kvcreator("query")
-	this.context = context
-}
-
-Exec.prototype.hello = function(args) {
-    this.kvc.add("args", args)
-    this.kvc.add("action", "exec")
-    this.kvc.add("context", this.context)
-    this.kvc.addlog({"key1": "value1"})
-    this.kvc.addlog({"key2": "value2"})
-	return this.kvc.receipt()
-}
-
-ExecLocal.prototype.hello = function(args) {
-    this.kvc.add("args", args)
-    this.kvc.add("action", "execlocal")
-    this.kvc.add("log", this.logs)
-    this.kvc.add("context", this.context)
-	return this.kvc.receipt()
-}
-
-//return a json string
-Query.prototype.hello = function(args) {
-	var obj = getlocaldb("context")
-	return tojson(obj)
-}
-`

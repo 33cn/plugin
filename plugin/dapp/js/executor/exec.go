@@ -8,7 +8,10 @@ import (
 )
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := types.ExecName("user.js." + payload.Name)
+	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
+	if string(tx.Execer) != execer {
+		return nil, types.ErrExecNameNotMatch
+	}
 	c.prefix = calcStatePrefix([]byte(execer))
 	kvc := dapp.NewKVCreator(c.GetStateDB(), c.prefix, nil)
 	_, err := kvc.GetNoPrefix(calcCodeKey(payload.Name))
@@ -23,28 +26,31 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 	if err != nil {
 		return nil, err
 	}
-	kvs, logs, err := parseJsReturn(jsvalue)
+	kvs, logs, err := parseJsReturn(c.prefix, jsvalue)
 	if err != nil {
 		return nil, err
 	}
-	kvc.AddList(kvs)
+	kvc.AddListNoPrefix(kvs)
 	r := &types.Receipt{Ty: types.ExecOk, KV: kvc.KVList(), Logs: logs}
 	return r, nil
 }
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := types.ExecName("user.js." + payload.Name)
+	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
+	if string(tx.Execer) != execer {
+		return nil, types.ErrExecNameNotMatch
+	}
 	c.prefix = calcStatePrefix([]byte(execer))
 	kvc := dapp.NewKVCreator(c.GetStateDB(), c.prefix, nil)
 	jsvalue, err := c.callVM("exec", payload, tx, index, nil)
 	if err != nil {
 		return nil, err
 	}
-	kvs, logs, err := parseJsReturn(jsvalue)
+	kvs, logs, err := parseJsReturn(c.prefix, jsvalue)
 	if err != nil {
 		return nil, err
 	}
-	kvc.AddList(kvs)
+	kvc.AddListNoPrefix(kvs)
 	r := &types.Receipt{Ty: types.ExecOk, KV: kvc.KVList(), Logs: logs}
 	return r, nil
 }

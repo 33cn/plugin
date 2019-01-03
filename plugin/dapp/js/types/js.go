@@ -30,7 +30,7 @@ var (
 )
 
 //JsX 插件名字
-var JsX = "js"
+var JsX = "jsvm"
 
 //错误常量
 var (
@@ -44,6 +44,9 @@ var (
 	ErrInvalidFuncPrefix = errors.New("chain33.js: invalid function prefix format")
 	//ErrFuncNotFound 函数没有找到
 	ErrFuncNotFound = errors.New("chain33.js: invalid function name not found")
+	ErrSymbolName   = errors.New("chain33.js: ErrSymbolName")
+	ErrExecerName   = errors.New("chain33.js: ErrExecerName")
+	ErrDBType       = errors.New("chain33.js: ErrDBType")
 )
 
 func init() {
