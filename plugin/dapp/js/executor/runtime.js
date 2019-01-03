@@ -52,6 +52,36 @@ table.prototype.close = function() {
     return ret.err
 }
 
+function JoinTable(lefttable, righttable, index) {
+    if (this.lefttable.kvc != this.righttable.kvc) {
+        throw new Error("the kvc of left and right must same")
+    }
+    this.lefttable = lefttable
+    this.righttable = righttable
+    this.index = index
+    var ret = new_join_table(this.lefttable.id, this.righttable.id, index)
+    if (ret.err) {
+        throw new Error(ret.err)
+    }
+    this.id = ret.id
+    this.kvc = this.lefttable.kvc
+}
+
+JoinTable.prototype.Save = function() {
+    var ret = table_save(this.id)
+    if (!this.kvc) {
+        this.kvc.save(ret)
+    }
+    return ret
+}
+
+JoinTable.prototype.close = function() {
+    table_close(this.lefttable.id)
+    table_close(this.righttable.id)
+    var ret = table_close(this.id)
+    return ret.err
+}
+
 //account warp
 function account(kvc, execer, symbol) {
     this.execer = execer

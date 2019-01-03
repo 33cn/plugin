@@ -3,6 +3,7 @@ package executor
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -120,12 +121,20 @@ func getTable(id int64) (*table.Table, error) {
 	return nil, types.ErrNotFound
 }
 
+func getSaver(id int64) (saver, error) {
+	if value, ok := globalTableHandle.Load(id); ok {
+		return value.(saver), nil
+	}
+	return nil, types.ErrNotFound
+}
+
 func registerTableFunc(vm *otto.Otto) {
 	tableAddFunc(vm)
 	tableReplaceFunc(vm)
 	tableDelFunc(vm)
 	tableCloseFunc(vm)
 	tableSave(vm)
+	tableJoinFunc(vm)
 }
 
 func tableAddFunc(vm *otto.Otto) {
@@ -194,13 +203,17 @@ func tableDelFunc(vm *otto.Otto) {
 	})
 }
 
+type saver interface {
+	Save() (kvs []*types.KeyValue, err error)
+}
+
 func tableSave(vm *otto.Otto) {
 	vm.Set("table_save", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTable(id)
+		tab, err := getSaver(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -226,6 +239,49 @@ func tableCloseFunc(vm *otto.Otto) {
 	})
 }
 
+func tableJoinFunc(vm *otto.Otto) {
+	vm.Set("new_join_table", func(call otto.FunctionCall) otto.Value {
+		left, err := call.Argument(0).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		lefttab, err := getTable(left)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		right, err := call.Argument(1).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		righttab, err := getTable(right)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		index, err := call.Argument(2).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		join, err := table.NewJoinTable(lefttab, righttab, strings.Split(index, ","))
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		var id int64
+		for {
+			id = atomic.AddInt64(&globalHanldeID, 1) % maxjsint
+			if _, ok := globalTableHandle.Load(id); ok {
+				continue
+			}
+			if id < 0 {
+				atomic.StoreInt64(&globalHanldeID, 0)
+				continue
+			}
+			break
+		}
+		globalTableHandle.Store(id, join)
+		return newObject(vm).setValue("id", id).value()
+	})
+}
+
 /*
 table
 要开发一个适合json的table, row 就是一个 js object
@@ -235,6 +291,7 @@ table_replace(handle, row)
 table_del(handle, row)
 table_save(handle)
 table_close(handle)
+handle := new_join_table(left, right, listofjoinindex)
 */
 //join table 的操作(接口完全相同)
 //handle3 := new_table(newcofifg{config1, config2})
