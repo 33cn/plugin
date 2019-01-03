@@ -143,6 +143,8 @@ func rewriteString(dat map[string]interface{}) map[string]interface{} {
 	return dat
 }
 
+const maxjsint int64 = 9007199254740991
+
 func jssafe(n json.Number) interface{} {
 	if strings.Contains(string(n), ".") { //float
 		return n
@@ -152,7 +154,7 @@ func jssafe(n json.Number) interface{} {
 		return n
 	}
 	//javascript can not parse
-	if i >= 9007199254740991 || i <= -9007199254740991 {
+	if i >= maxjsint || i <= -maxjsint {
 		return string(n)
 	}
 	return n

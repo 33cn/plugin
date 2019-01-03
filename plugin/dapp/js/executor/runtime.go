@@ -18,18 +18,6 @@ func execaddressFunc(vm *otto.Otto) {
 }
 
 /*
-//table
-//要开发一个适合json的table, row 就是一个 js object
-//handle := new_table(config)
-//table_add(handle, row)
-//table_replace(handle, row)
-//table_del(handle, row)
-//table_savekvs(handle)
-//table_close(handle)
-
-//join table 的操作(接口完全相同)
-//handle3 := new_table(newcofifg{config1, config2})
-
 //获取系统随机数的接口
 //randnum
 
