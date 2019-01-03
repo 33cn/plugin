@@ -6,3 +6,4 @@ echo '`' >>const.go
 echo 'var jscode = `' >>const.go
 cat test.js >>const.go
 echo '`' >>const.go
+echo "var _ = jscode" >> const.go
