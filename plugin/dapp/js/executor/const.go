@@ -1,6 +1,6 @@
 package executor
 
-var callcode =  `
+var callcode = `
 var tojson = JSON.stringify
 //table warp
 function table(kvc, config, defaultvalue) {
