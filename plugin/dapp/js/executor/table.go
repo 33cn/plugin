@@ -99,7 +99,7 @@ func (u *js) newTableFunc(vm *otto.Otto, name string) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		return newObject(vm).setValue("ids", id).value()
+		return newObject(vm).setValue("id", id).value()
 	})
 }
 
@@ -182,11 +182,12 @@ func tableDelFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		primary, err := call.Argument(1).ToString()
+		row, err := call.Argument(1).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		err = tab.Del([]byte(primary))
+
+		err = tab.DelRow(&jsproto.JsLog{Data: json})
 		if err != nil {
 			return errReturn(vm, err)
 		}
