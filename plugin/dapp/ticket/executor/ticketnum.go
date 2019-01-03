@@ -20,7 +20,7 @@ const (
 // GetRandNum for ticket executor
 func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
 	tlog.Debug("GetRandNum", "blockHash", blockHash, "blockNum", blockNum)
-	
+
 	if blockNum < minBlockNum {
 		blockNum = minBlockNum
 	} else if blockNum > maxBlockNum {
