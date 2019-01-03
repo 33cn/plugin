@@ -9,7 +9,7 @@ import (
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
 	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
-	if string(tx.Execer) != execer {
+	if string(tx.Execer) != ptypes.JsX {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = calcStatePrefix([]byte(execer))
