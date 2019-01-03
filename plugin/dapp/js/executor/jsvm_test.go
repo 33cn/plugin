@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	Init("js", nil)
+	Init(ptypes.JsX, nil)
 }
 
 func initExec(ldb db.DB, kvdb db.KVDB, t assert.TestingT) *js {
@@ -39,7 +39,7 @@ func createCodeTx(name, jscode string) (*jsproto.Create, *types.Transaction) {
 		Code: jscode,
 		Name: name,
 	}
-	return data, &types.Transaction{Execer: []byte("user." + ptypes.JsX + "." + name), Payload: types.Encode(data)}
+	return data, &types.Transaction{Execer: []byte(ptypes.JsX), Payload: types.Encode(data)}
 }
 
 func callCodeTx(name, f, args string) (*jsproto.Call, *types.Transaction) {

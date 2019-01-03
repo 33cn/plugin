@@ -1,8 +1,10 @@
 package executor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -29,15 +31,19 @@ func init() {
 	registerTableFunc(basevm)
 }
 
+var isinit int64
+
 //Init 插件初始化
 func Init(name string, sub []byte) {
-	//最新的64个code做cache
-	var err error
-	codecache, err = lru.New(512)
-	if err != nil {
-		panic(err)
+	if atomic.CompareAndSwapInt64(&isinit, 0, 1) {
+		//最新的64个code做cache
+		var err error
+		codecache, err = lru.New(512)
+		if err != nil {
+			panic(err)
+		}
+		drivers.Register(GetName(), newjs, 0)
 	}
-	drivers.Register(GetName(), newjs, 0)
 }
 
 type js struct {
@@ -60,6 +66,22 @@ func GetName() string {
 //GetDriverName 获取插件的名字
 func (u *js) GetDriverName() string {
 	return driverName
+}
+
+func (u *js) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
+	if othertx == nil {
+		return false
+	}
+	exec := types.GetParaExec(othertx.Execer)
+	if exec == nil || len(bytes.TrimSpace(exec)) == 0 {
+		return false
+	}
+	if string(exec) == ptypes.JsX {
+		if bytes.HasPrefix(writekey, []byte("mavl-"+string(myexec))) {
+			return true
+		}
+	}
+	return false
 }
 
 func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
