@@ -1,28 +1,10 @@
 //数据结构设计
-//kvlist [{key:"key1", value:"value1"},{key:"key2", value:"value2"}]
-//log 设计 {json data}
 function Init(context) {
     this.kvc = new kvcreator("init")
     this.context = context
     this.kvc.add("action", "init")
     this.kvc.add("context", this.context)
     return this.kvc.receipt()
-}
-
-function Exec(context) {
-    this.kvc = new kvcreator("exec")
-	this.context = context
-}
-
-function ExecLocal(context, logs) {
-    this.kvc = new kvcreator("local")
-	this.context = context
-    this.logs = logs
-}
-
-function Query(context) {
-	this.kvc = new kvcreator("query")
-	this.context = context
 }
 
 Exec.prototype.hello = function(args) {

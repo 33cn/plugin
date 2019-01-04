@@ -8,33 +8,26 @@ function Init(context) {
     return this.kvc.receipt()
 }
 
-function Exec(context) {
-    this.kvc = new kvcreator("exec")
-	this.context = context
-}
-
-function ExecLocal(context, logs) {
-    this.kvc = new kvcreator("local")
-	this.context = context
-    this.logs = logs
-}
-
-function Query(context) {
-	this.kvc = new kvcreator("query")
-	this.context = context
+function ExecInit(execthis) {
+    execthis.acc = new account(this.kvc, "coins", "bty")
 }
 
 Exec.prototype.NewGame = function(args) {
     var game = {__type__ : "game"}
     game.id = this.context.txhash
-    game.index = this.context.height * 100000 + this.index
+    game.index = this.txID()
     game.height = this.context.height
     game.randhash = args.hash
     game.bet = args.bet
+    game.obet = game.bet
+    game.addr = this.context.from
     game.status = 1 //open
-    if (game.bet < 10) {
-        throw new Error("bet too low")
+    //最大值是 9000万,否则js到 int 会溢出
+    if (game.bet < 10 * COINS || game.bet > 10000000 * COINS) {
+        throw new Error("bet low than 10 or hight than 10000000")
     }
+    var err = this.acc.execFrozen(this.name, this.context.from, game.bet)
+    throwerr(err)
     this.kvc.add(game.id, game)
     this.kvc.addlog(game)
 	return this.kvc.receipt()
@@ -44,8 +37,7 @@ Exec.prototype.Guess = function(args) {
     var match = {__type__ : "match"}
     match.gameid = args.gameid
     match.bet = args.bet
-    match.id = this.context.txhash
-    match.index = this.context.height * 100000 + this.index
+    match.id = this.txID()
     match.addr = this.context.from
     var game = this.kvc.get(match.gameid)
     if (!game) {
@@ -54,6 +46,11 @@ Exec.prototype.Guess = function(args) {
     if (game.status != 1) {
         throw new Error("game status not open")
     }
+    if (match.bet < 1 * COINS || match.bet > game.bet/10) {
+        throw new Error("match bet litte than 1 or big than game.bet/10")
+    }
+    var err = this.acc.execFrozen(this.name, this.context.from, game.bet)
+    throwerr(err)
     this.kvc.add(match.id, match)
     this.kvc.addlog(match)
 	return this.kvc.receipt()
@@ -63,7 +60,7 @@ Exec.prototype.CloseGame = function(args) {
     var local = new MatchLocalTable(this.kvc)
     var game = this.kvc.get(args.id)
     if (!game) {
-        throw new Error("game id not found")
+        throwerr("game id not found")
     }
     var matches = local.getmath(args.id)
     if (!matches) {
@@ -76,18 +73,24 @@ Exec.prototype.CloseGame = function(args) {
         }
     }
     if (n == -1) {
-        throw new Error("err rand str")
+        throwerr("err rand str")
     }
     if (this.context.height - game.height < 10) {
-        throw new Error("close game must wait 10 block")
+        throwerr("close game must wait 10 block")
     }
     for (var i = 0; i < matches.length; i++) {
         var match = matches[i]
         if (match.num == n) {
-            win(this.kvc, game, match)
+            //不能随便添加辅助函数，因为可以被外界调用到，所以辅助函数都是传递 this
+            win(this, game, match)
         } else {
-            fail(this.kvc, game, match)
+            fail(this, game, match)
         }
+    }
+    if (game.bet > 0) {
+        var err = this.acc.execActive(this.name, game.addr, game.bet)
+        throwerr(err)
+        game.bet = 0
     }
     game.status = 2
     this.kvc.add(game.id, game)
@@ -95,22 +98,49 @@ Exec.prototype.CloseGame = function(args) {
 	return this.kvc.receipt()
 }
 
+function win(this, game, match) {
+    var amount = 9 * match.bet
+    if (game.bet - amount < 0) {
+        amount = game.bet
+    }
+    var err 
+    if (amount > 0) {
+        err = this.acc.execTransFrozenToActive(this.name, game.addr, match.addr, amount)
+        throwerr(err)
+        game.bet -= amount
+    }
+    err = this.acc.execActive(match.addr, match.bet)
+    throwerr(err)
+}
+
+function fail(this, game, match) {
+    var amount = match.bet
+    err = this.acc.execTransFrozenToFrozen(this.name, match.addr, game.addr, amount)
+    throwerr(err)
+    game.bet += amount
+}
+
 Exec.prototype.ForceCloseGame = function(args) {
     var local = new MatchLocalTable(this.kvc)
     var game = this.kvc.get(args.id)
     if (!game) {
-        throw new Error("game id not found")
+        throwerr("game id not found")
     }
     var matches = local.getmath(args.id)
     if (!matches) {
         matches = []
     }
     if (this.context.height - game.height < 100) {
-        throw new Error("force close game must wait 100 block")
+        throwerr("force close game must wait 100 block")
     }
     for (var i = 0; i < matches.length; i++) {
         var match = matches[i]
         win(this.kvc, game, match)
+    }
+    if (game.bet > 0) {
+        var err = this.acc.execActive(this.name, game.addr, game.bet)
+        throwerr(err)
+        game.bet = 0
     }
     game.status = 2
     this.kvc.add(game.id, game)
@@ -154,11 +184,9 @@ Query.prototype.ListGameByAddr = function(args) {
 /*
 game ->(1 : n) match
 game.id -> primary
-game.index -> index
 
 match.gameid -> fk
 match.id -> primary
-match.index -> index
 */
 
 function GameLocalTable(kvc) {
@@ -166,14 +194,14 @@ function GameLocalTable(kvc) {
         "#tablename" : "game",
         "#primary" : "id",
         "#db" : "localdb",
-        "id"    : "%s",
-        "index" : "%18d",
+        "id"    : "%018d",
         "status" : "%d",
+        "addr" : "%s",
     }
     this.defaultvalue = {
         "id" : "0",
-        "index" : 0,
         "status" : 0,
+        "addr" : "",
     }
     this.kvc = kvc
     this.table = new Table(this.kvc, this.config, this.defaultvalue) 
@@ -184,15 +212,13 @@ function MatchLocalTable(kvc) {
         "#tablename" : "match",
         "#primary" : "id",
         "#db" : "localdb",
-        "id"    : "%s",
+        "id"    : "%018d",
         "gameid" : "%s",
-        "index" : "%18d",
         "addr" : "%s",
     }
     this.defaultvalue = {
-        "id" : "0",
-        "index" : 0,
-        "gameid" : "0",
+        "id" : 0,
+        "gameid" : 0,
         "addr" : "",
     }
     this.kvc = kvc
