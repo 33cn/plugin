@@ -29,6 +29,7 @@ func init() {
 	}
 	execaddressFunc(basevm)
 	registerTableFunc(basevm)
+	sha256Func(basevm)
 }
 
 var isinit int64
@@ -173,6 +174,7 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 		Difficulty: u.GetDifficulty(),
 		TxHash:     common.ToHex(hash[:]),
 		Index:      index,
+		From:       tx.From(),
 	}
 }
 
