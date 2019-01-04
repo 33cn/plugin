@@ -179,6 +179,32 @@ account.prototype.execTransfer = function(execer, from, to, amount) {
     return ret.err
 }
 
+//from frozen -> to active
+account.prototype.execTransFrozenToActive = function(execer, from, to, amount) {
+    var err
+    err = this.execActive(execer, from, amount)
+    if (err) {
+        return err
+    }
+    return this.execTransfer(execer, from, to, amount)
+}
+
+//from frozen -> to frozen
+account.prototype.execTransFrozenToFrozen = function(execer, from, to, amount) {
+    var err
+    err = this.execActive(execer, from, amount)
+    if (err) {
+        return err
+    }
+    err = this.execTransfer(execer, from, to, amount)
+    if (err) {
+        return err
+    }
+    return this.execFrozen(execer, to, amount)
+}
+
+COINS = 100000000
+
 function kvcreator(dbtype) {
     this.data = {}
     this.kvs = []
@@ -212,7 +238,7 @@ kvcreator.prototype.get = function(k, prefix) {
         v = this.data[k]
     } else {
 		var dbvalue = this.get(k, !!prefix)
-		if (dbvalue.err != "") {
+		if (dbvalue.err) {
 			return null
 		}
 		v = dbvalue.value
@@ -240,7 +266,7 @@ kvcreator.prototype.save = function(receipt) {
 
 kvcreator.prototype.listvalue = function(prefix, key, count, direction) {
    var dbvalues = this.list(prefix, key, count, direction)
-   if (dbvalues.err != "") {
+   if (dbvalues.err) {
 	   return []
    }
    var values = dbvalues.value
@@ -272,6 +298,44 @@ kvcreator.prototype.addlog = function(log, ty, format) {
 
 kvcreator.prototype.receipt = function() {
     return {kvs: this.kvs, logs: this.logs}
+}
+
+function Exec(context) {
+    this.kvc = new kvcreator("exec")
+    this.context = context
+    this.name = execname()
+    if (typeof ExecInit == "function") {
+        ExecInit(this)
+    }
+}
+
+Exec.prototype.txID = function() {
+    return this.context.height * 100000 + this.index
+}
+
+function ExecLocal(context, logs) {
+    this.kvc = new kvcreator("local")
+	this.context = context
+    this.logs = logs
+    this.name = execname()
+    if (typeof ExecLocalInit == "function") {
+        ExecLocalInit(this)
+    }
+}
+
+function Query(context) {
+	this.kvc = new kvcreator("query")
+    this.context = context
+    this.name = execname()
+    if (typeof QueryInit == "function") {
+        QueryInit(this)
+    }
+}
+
+function throwerr(err) {
+    if (err) {
+        throw new Error(err)
+    }
 }
 
 function callcode(context, f, args, loglist) {
