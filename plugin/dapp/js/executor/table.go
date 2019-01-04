@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -121,9 +122,9 @@ func getTable(id int64) (*table.Table, error) {
 	return nil, types.ErrNotFound
 }
 
-func getSaver(id int64) (saver, error) {
+func getTabler(id int64) (tabler, error) {
 	if value, ok := globalTableHandle.Load(id); ok {
-		return value.(saver), nil
+		return value.(tabler), nil
 	}
 	return nil, types.ErrNotFound
 }
@@ -135,6 +136,24 @@ func registerTableFunc(vm *otto.Otto) {
 	tableCloseFunc(vm)
 	tableSave(vm)
 	tableJoinFunc(vm)
+	tableQueryFunc(vm)
+	tableGetFunc(vm)
+	tableJoinKeyFunc(vm)
+}
+
+func tableJoinKeyFunc(vm *otto.Otto) {
+	vm.Set("table_joinkey", func(call otto.FunctionCall) otto.Value {
+		left, err := call.Argument(0).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		right, err := call.Argument(1).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		key := table.JoinKey([]byte(left), []byte(right))
+		return okReturn(vm, string(key))
+	})
 }
 
 func tableAddFunc(vm *otto.Otto) {
@@ -203,7 +222,37 @@ func tableDelFunc(vm *otto.Otto) {
 	})
 }
 
-type saver interface {
+func tableGetFunc(vm *otto.Otto) {
+	vm.Set("table_get", func(call otto.FunctionCall) otto.Value {
+		id, err := call.Argument(0).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		tab, err := getTabler(id)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		key, err := call.Argument(1).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		row, err := call.Argument(2).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		meta := tab.GetMeta()
+		meta.SetPayload(&jsproto.JsLog{Data: row})
+		result, err := meta.Get(key)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		return okReturn(vm, string(result))
+	})
+}
+
+type tabler interface {
+	GetMeta() table.RowMeta
+	ListIndex(indexName string, prefix []byte, primaryKey []byte, count, direction int32) (rows []*table.Row, err error)
 	Save() (kvs []*types.KeyValue, err error)
 }
 
@@ -213,7 +262,7 @@ func tableSave(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getSaver(id)
+		tab, err := getTabler(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -236,6 +285,86 @@ func tableCloseFunc(vm *otto.Otto) {
 			return errReturn(vm, err)
 		}
 		return okReturn(vm, "ok")
+	})
+}
+
+func tableQueryFunc(vm *otto.Otto) {
+	vm.Set("table_query", func(call otto.FunctionCall) otto.Value {
+		id, err := call.Argument(0).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		tab, err := getTabler(id)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		//参数
+		//List(indexName string, data types.Message, primaryKey []byte, count, direction int32) (rows []*Row, err error)
+		indexName, err := call.Argument(1).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		prefix, err := call.Argument(2).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		primaryKey, err := call.Argument(3).ToString()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		count, err := call.Argument(4).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		direction, err := call.Argument(5).ToInteger()
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		bprefix := []byte(prefix)
+		if prefix == "" {
+			bprefix = nil
+		}
+		bprimaryKey := []byte(primaryKey)
+		if primaryKey == "" {
+			bprimaryKey = nil
+		}
+		rows, err := tab.ListIndex(indexName, bprefix, bprimaryKey, int32(count), int32(direction))
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		_, isjoin := tab.(*table.JoinTable)
+		querylist := make([]*otto.Object, len(rows))
+		for i := 0; i < len(rows); i++ {
+			if isjoin {
+				joindata, ok := rows[i].Data.(*table.JoinData)
+				if !ok {
+					return errReturn(vm, errors.New("jointable has no joindata"))
+				}
+				leftdata, ok := joindata.Left.(*jsproto.JsLog)
+				if !ok {
+					return errReturn(vm, errors.New("leftdata is not JsLog"))
+				}
+				rightdata, ok := joindata.Right.(*jsproto.JsLog)
+				if !ok {
+					return errReturn(vm, errors.New("rightdata is not jslog"))
+				}
+				obj := newObject(vm).setValue("left", leftdata.Data)
+				obj.setValue("right", rightdata.Data)
+				querylist[i] = obj.object()
+			} else {
+				leftdata, ok := rows[i].Data.(*jsproto.JsLog)
+				if !ok {
+					return errReturn(vm, errors.New("data is not JsLog"))
+				}
+				obj := newObject(vm).setValue("left", leftdata.Data)
+				querylist[i] = obj.object()
+			}
+		}
+		retvalue, err := vm.ToValue(querylist)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		return retvalue
 	})
 }
 

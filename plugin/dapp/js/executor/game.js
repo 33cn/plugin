@@ -8,6 +8,9 @@ function Init(context) {
     return this.kvc.receipt()
 }
 
+var MIN_WAIT_BLOCK = 2
+var RAND_MAX = 10
+
 function ExecInit(execthis) {
     execthis.acc = new account(this.kvc, "coins", "bty")
 }
@@ -24,13 +27,13 @@ Exec.prototype.NewGame = function(args) {
     game.status = 1 //open
     //最大值是 9000万,否则js到 int 会溢出
     if (game.bet < 10 * COINS || game.bet > 10000000 * COINS) {
-        throw new Error("bet low than 10 or hight than 10000000")
+        throwerr("bet low than 10 or hight than 10000000")
     }
     var err = this.acc.execFrozen(this.name, this.context.from, game.bet)
     throwerr(err)
     this.kvc.add(game.id, game)
     this.kvc.addlog(game)
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 Exec.prototype.Guess = function(args) {
@@ -41,19 +44,19 @@ Exec.prototype.Guess = function(args) {
     match.addr = this.context.from
     var game = this.kvc.get(match.gameid)
     if (!game) {
-        throw new Error("game id not found")
+        throwerr("game id not found")
     }
     if (game.status != 1) {
-        throw new Error("game status not open")
+        throwerr("game status not open")
     }
-    if (match.bet < 1 * COINS || match.bet > game.bet/10) {
-        throw new Error("match bet litte than 1 or big than game.bet/10")
+    if (match.bet < 1 * COINS || match.bet > game.bet / RAND_MAX) {
+        throwerr("match bet litte than 1 or big than game.bet/10")
     }
     var err = this.acc.execFrozen(this.name, this.context.from, game.bet)
     throwerr(err)
     this.kvc.add(match.id, match)
     this.kvc.addlog(match)
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 Exec.prototype.CloseGame = function(args) {
@@ -67,7 +70,7 @@ Exec.prototype.CloseGame = function(args) {
         matches = []
     }
     var n = -1
-    for (var i = 0; i < 10; i ++) {
+    for (var i = 0; i < RAND_MAX; i ++) {
         if (sha256(args.randstr + i) == game.randhash) {
             n = i
         }
@@ -75,8 +78,9 @@ Exec.prototype.CloseGame = function(args) {
     if (n == -1) {
         throwerr("err rand str")
     }
-    if (this.context.height - game.height < 10) {
-        throwerr("close game must wait 10 block")
+    //必须可以让用户可以有一个区块的竞猜时间
+    if (this.context.height - game.height < MIN_WAIT_BLOCK) {
+        throwerr("close game must wait 2 block")
     }
     for (var i = 0; i < matches.length; i++) {
         var match = matches[i]
@@ -95,11 +99,11 @@ Exec.prototype.CloseGame = function(args) {
     game.status = 2
     this.kvc.add(game.id, game)
     this.kvc.addlog(game)
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 function win(this, game, match) {
-    var amount = 9 * match.bet
+    var amount = (RAND_MAX - 1) * match.bet
     if (game.bet - amount < 0) {
         amount = game.bet
     }
@@ -145,28 +149,28 @@ Exec.prototype.ForceCloseGame = function(args) {
     game.status = 2
     this.kvc.add(game.id, game)
     this.kvc.addlog(game)
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 ExecLocal.prototype.NewGame = function(args) {
     var local = new MatchGameTable(this.kvc)
     local.add(this.logs)
     local.table.save()
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 ExecLocal.prototype.Guess = function(args) {
     var local = new MatchGameTable(this.kvc)
     local.add(this.logs)
     local.table.save()
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 ExecLocal.prototype.CloseGame = function(args) {
     var local = new MatchGameTable(this.kvc)
     local.add(this.logs)
     local.table.save()
-	return this.kvc.receipt()
+    return this.kvc.receipt()
 }
 
 ExecLocal.prototype.ForceCloseGame = function(args) {
@@ -188,7 +192,6 @@ game.id -> primary
 match.gameid -> fk
 match.id -> primary
 */
-
 function GameLocalTable(kvc) {
     this.config = {
         "#tablename" : "game",
