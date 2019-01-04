@@ -6,13 +6,12 @@ package commands
 
 import (
 	"fmt"
-	"strings"
-
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 //GuessCmd Guess合约命令行
@@ -250,6 +249,8 @@ func addGuessQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("status", "s", 0, "status")
 	cmd.Flags().StringP("gameIDs", "d", "", "gameIDs")
 	cmd.Flags().StringP("category", "c", "default", "game category")
+	cmd.Flags().StringP("primary", "p", "", "the primary to query from")
+
 }
 
 func guessQuery(cmd *cobra.Command, args []string) {
@@ -262,6 +263,12 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	index, _ := cmd.Flags().GetInt64("index")
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 	category, _ := cmd.Flags().GetString("category")
+	primary, _ := cmd.Flags().GetString("primary")
+
+	var primaryKey []byte
+	if len(primary) > 0 {
+		primaryKey = []byte(primary)
+	}
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
@@ -301,6 +308,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			Addr:  addr,
 			Index: index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddr
 		params.Payload = types.MustPBToJSON(req)
@@ -312,6 +320,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			Status: status,
 			Index:  index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -323,6 +332,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			AdminAddr: adminAddr,
 			Index:     index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminAddr
 		params.Payload = types.MustPBToJSON(req)
@@ -335,6 +345,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Addr:   addr,
 			Status: status,
 			Index:  index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddrStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -347,6 +358,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			AdminAddr: adminAddr,
 			Status:    status,
 			Index:     index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -359,6 +371,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Category: category,
 			Status:   status,
 			Index:    index,
+			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByCategoryStatus
 		params.Payload = types.MustPBToJSON(req)

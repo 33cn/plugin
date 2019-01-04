@@ -12,25 +12,26 @@ message GuessGame {
     int64  startTime     = 4;  //创建游戏的时间
     int64  startHeight   = 5;  //创建游戏的时间
     string startTxHash   = 6;  //创建游戏的交易hash
-    string topic         = 7;  //主题
-    string category      = 8;  //分类
-    string options       = 9;  //选项
-    int64 maxBetHeight   = 10;  //截止下注的块高
-    int64 maxBetsOneTime = 11; //单次可以下多少注，默认100
-    int64 maxBetsNumber  = 12; //最多可以下多少注
-    int64 devFeeFactor   = 13; //开发者抽成比例
-    string devFeeAddr    = 14; //开发者地址
-    int64 platFeeFactor  = 15; //平台抽成比例
-    string platFeeAddr   = 16; //平台地址
-    int64 expireHeight   = 17; //游戏过期区块高度
-    string adminAddr     = 18; //游戏创建者地址,只有该地址可以开奖
-    int64 betsNumber     = 19; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
-    repeated GuessPlayer plays = 20; //参与游戏下注的玩家投注信息
-    string result        = 21;        //公布的中奖结果
-    GuessBetStat betStat = 22;
-    int64 index          = 23;
-    int64 preIndex       = 24;
-    bool drivenByAdmin   = 25;
+    int64 startIndex     = 7;  //创建游戏的交易index
+    string topic         = 8;  //主题
+    string category      = 9;  //分类
+    string options       = 10;  //选项
+    int64 maxBetHeight   = 11;  //截止下注的块高
+    int64 maxBetsOneTime = 12; //单次可以下多少注，默认100
+    int64 maxBetsNumber  = 13; //最多可以下多少注
+    int64 devFeeFactor   = 14; //开发者抽成比例
+    string devFeeAddr    = 15; //开发者地址
+    int64 platFeeFactor  = 16; //平台抽成比例
+    string platFeeAddr   = 17; //平台地址
+    int64 expireHeight   = 18; //游戏过期区块高度
+    string adminAddr     = 19; //游戏创建者地址,只有该地址可以开奖
+    int64 betsNumber     = 20; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 21; //参与游戏下注的玩家投注信息
+    string result        = 22;        //公布的中奖结果
+    GuessBetStat betStat = 23;
+    int64 index          = 24;
+    int64 preIndex       = 25;
+    bool drivenByAdmin   = 26;
 }
 
 //GuessPlayer 竞猜玩家信息
@@ -129,6 +130,7 @@ message QueryGuessGameInfo {
     int64  index  = 4;
     string adminAddr = 5;
     string category = 6;
+    bytes  primaryKey = 7;
 }
 
 //ReplyGuessGameInfo 游戏信息查询响应消息
@@ -148,15 +150,30 @@ message ReplyGuessGameInfos {
 
 //ReceiptGuessGame 竞猜游戏收据信息
 message ReceiptGuessGame {
-    string   gameID           = 1;
-    int32   preStatus        = 2;
-    int32   status           = 3;
+    int64    startIndex       = 1;
+    string   gameID           = 2;
+    int32   preStatus         = 3;
+    int32   status            = 4;
+    string   addr             = 5;
+    string   adminAddr        = 6;
+    int64    preIndex         = 7;
+    int64    index            = 8;
+    string   category         = 9;
+    bool     statusChange     = 10;
+    bool     bet              = 11;
+    string   option           = 12;
+    int64    betsNumber       = 13;
+    GuessGame game            = 14;
+}
+
+//UserBet 用户下注信息
+message UserBet {
+    int64    startIndex       = 1;
+    int64    index            = 2;
+    string   gameID           = 3;
     string   addr             = 4;
-    string   adminAddr        = 5;
-    int64    preIndex         = 6;
-    int64    index            = 7;
-    string   category         = 8;
-    bool     statusChange     = 9;
+    string   option           = 5;
+    int64    betsNumber       = 6;
 }
 
 //GuessStartTxReq 构造start交易的请求
@@ -206,13 +223,13 @@ message GuessPublishTxReq {
 // GuessGameRecord game信息查询记录
 message GuessGameRecord {
     string gameID = 1;
-    int32  status = 2;
-    int64  index  = 3;
+    int64  startIndex  = 2;
 }
 
 // GuessGameRecords game信息查询记录集
 message GuessGameRecords {
     repeated GuessGameRecord records = 1;
+    bytes primaryKey = 2;
 }
 
 

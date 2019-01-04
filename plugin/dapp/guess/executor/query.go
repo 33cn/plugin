@@ -5,80 +5,79 @@
 package executor
 
 import (
+	"fmt"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
 //Query_QueryGamesByIDs method
 func (g *Guess) Query_QueryGamesByIDs(in *gty.QueryGuessGameInfos) (types.Message, error) {
-	return Infos(g.GetStateDB(), in)
+	return QueryGameInfos(g.GetLocalDB(), in)
 }
 
 //Query_QueryGameByID method
 func (g *Guess) Query_QueryGameByID(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	game, err := readGame(g.GetStateDB(), in.GetGameID())
+	game, err := QueryGameInfo(g.GetLocalDB(), []byte(in.GetGameID()))
 	if err != nil {
 		return nil, err
 	}
+
 	return &gty.ReplyGuessGameInfo{Game: game}, nil
 }
 
 //Query_QueryGamesByAddr method
 func (g *Guess) Query_QueryGamesByAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByAddr(g.GetLocalDB(), in.Addr, in.Index)
-	if err != nil {
-		return nil, err
-	}
+	gameTable := gty.NewGuessUserTable(g.GetLocalDB())
+	query := gameTable.GetQuery(g.GetLocalDB())
 
-	return records, nil
+	return QueryUserTableData(query, "addr", []byte(in.Addr), in.PrimaryKey)
 }
 
 //Query_QueryGamesByStatus method
 func (g *Guess) Query_QueryGamesByStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByStatus(g.GetLocalDB(), in.Status, in.Index)
-	if err != nil {
-		return nil, err
-	}
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	query := gameTable.GetQuery(g.GetLocalDB())
 
-	return records, nil
+	return QueryGameTableData(query, "status", []byte(fmt.Sprintf("%2d", in.Status)), in.PrimaryKey)
 }
 
 //Query_QueryGamesByAdminAddr method
 func (g *Guess) Query_QueryGamesByAdminAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByAdminAddr(g.GetLocalDB(), in.AdminAddr, in.Index)
-	if err != nil {
-		return nil, err
-	}
-
-	return records, nil
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	query := gameTable.GetQuery(g.GetLocalDB())
+	prefix := []byte(in.AdminAddr)
+	return QueryGameTableData(query, "admin", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByAddrStatus method
 func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByAddrStatus(g.GetLocalDB(), in.Addr, in.Status, in.Index)
+	userTable := gty.NewGuessUserTable(g.GetLocalDB())
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	tableJoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
 	if err != nil {
 		return nil, err
 	}
 
-	return records, nil
+	prefix := table.JoinKey([]byte(fmt.Sprintf("%s", in.Addr)), []byte(fmt.Sprintf("%2d", in.Status)))
+
+	return QueryJoinTableData(tableJoin, "addr#status", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByAdminStatus method
 func (g *Guess) Query_QueryGamesByAdminStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByAdminStatus(g.GetLocalDB(), in.AdminAddr, in.Status, in.Index)
-	if err != nil {
-		return nil, err
-	}
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	query := gameTable.GetQuery(g.GetLocalDB())
+	prefix := []byte(fmt.Sprintf("%s:%2d", in.AdminAddr, in.Status))
 
-	return records, nil
+	return QueryGameTableData(query, "admin_status", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByCategoryStatus method
 func (g *Guess) Query_QueryGamesByCategoryStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	records, err := getGameListByCategoryStatus(g.GetLocalDB(), in.Category, in.Status, in.Index)
-	if err != nil {
-		return nil, err
-	}
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	query := gameTable.GetQuery(g.GetLocalDB())
+	prefix := []byte(fmt.Sprintf("%s:%2d", in.Category, in.Status))
 
-	return records, nil
+	return QueryGameTableData(query, "category_status", prefix, in.PrimaryKey)
 }

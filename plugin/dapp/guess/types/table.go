@@ -15,17 +15,17 @@ data:  guess
 index: addr,status,addr_status,admin,admin_status,category_status
 */
 
-var opt = &table.Option{
-	Prefix:  "LODB",
-	Name:    "guess",
-	Primary: "gameid",
-	Index:   []string{"addr", "status", "addr_status", "admin", "admin_status", "category_status"},
+var opt_guess_user = &table.Option{
+	Prefix:  "LODB_guess",
+	Name:    "user",
+	Primary: "index",
+	Index:   []string{"addr", "startindex"},
 }
 
 //NewTable 新建表
-func NewTable(kvdb db.KV) *table.Table {
-	rowmeta := NewGuessRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt)
+func NewGuessUserTable(kvdb db.KV) *table.Table {
+	rowmeta := NewGuessUserRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_guess_user)
 	if err != nil {
 		panic(err)
 	}
@@ -33,39 +33,91 @@ func NewTable(kvdb db.KV) *table.Table {
 }
 
 //OracleRow table meta 结构
-type GuessRow struct {
-	*ReceiptGuessGame
+type GuessUserRow struct {
+	*UserBet
 }
 
 //NewOracleRow 新建一个meta 结构
-func NewGuessRow() *GuessRow {
-	return &GuessRow{ReceiptGuessGame: &ReceiptGuessGame{}}
+func NewGuessUserRow() *GuessUserRow {
+	return &GuessUserRow{UserBet: &UserBet{}}
 }
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
-func (tx *GuessRow) CreateRow() *table.Row {
+func (tx *GuessUserRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ReceiptGuessGame{}}
 }
 
 //SetPayload 设置数据
-func (tx *GuessRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ReceiptGuessGame); ok {
-		tx.ReceiptGuessGame = txdata
+func (tx *GuessUserRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*UserBet); ok {
+		tx.UserBet = txdata
 		return nil
 	}
 	return types.ErrTypeAsset
 }
 
 //Get 按照indexName 查询 indexValue
-func (tx *GuessRow) Get(key string) ([]byte, error) {
-	if key == "gameid" {
-		return []byte(tx.GameID), nil
+func (tx *GuessUserRow) Get(key string) ([]byte, error) {
+	if key == "index" {
+		return []byte(fmt.Sprintf("%018d", tx.Index)), nil
+	} else if key == "addr" {
+		return []byte(fmt.Sprintf("%s", tx.Addr)), nil
+	} else if key == "startindex" {
+		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil
+	}
+
+	return nil, types.ErrNotFound
+}
+
+var opt_guess_game = &table.Option{
+	Prefix:  "LODB_guess",
+	Name:    "game",
+	Primary: "startindex",
+	Index:   []string{"gameid", "status","admin","admin_status", "category_status"},
+}
+
+//NewTable 新建表
+func NewGuessGameTable(kvdb db.KV) *table.Table {
+	rowmeta := NewGuessGameRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_guess_game)
+	if err != nil {
+		panic(err)
+	}
+	return table
+}
+
+//OracleRow table meta 结构
+type GuessGameRow struct {
+	*GuessGame
+}
+
+//NewOracleRow 新建一个meta 结构
+func NewGuessGameRow() *GuessGameRow {
+	return &GuessGameRow{GuessGame: &GuessGame{}}
+}
+
+//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
+func (tx *GuessGameRow) CreateRow() *table.Row {
+	return &table.Row{Data: &GuessGame{}}
+}
+
+//SetPayload 设置数据
+func (tx *GuessGameRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*GuessGame); ok {
+		tx.GuessGame = txdata
+		return nil
+	}
+	return types.ErrTypeAsset
+}
+
+//Get 按照indexName 查询 indexValue
+func (tx *GuessGameRow) Get(key string) ([]byte, error) {
+	if key == "startindex"{
+		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil
+	}else if key == "gameid" {
+		return []byte(fmt.Sprintf("%s", tx.GameID)), nil
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
-	} else if key == "addr" {
-		return []byte(tx.Addr), nil
-	} else if key == "addr_status" {
-		return []byte(fmt.Sprintf("%s:%2d", tx.Addr, tx.Status)), nil
 	} else if key == "admin" {
 		return []byte(tx.AdminAddr), nil
 	}else if key == "admin_status" {
@@ -73,5 +125,6 @@ func (tx *GuessRow) Get(key string) ([]byte, error) {
 	} else if key == "category_status" {
 		return []byte(fmt.Sprintf("%s:%2d", tx.Category, tx.Status)), nil
 	}
+
 	return nil, types.ErrNotFound
 }

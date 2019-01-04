@@ -5,51 +5,75 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
+func (g *Guess) getUserBet(log *gty.ReceiptGuessGame) (userBet *gty.UserBet) {
+	userBet = &gty.UserBet{}
+	userBet.StartIndex = log.StartIndex
+	userBet.Index = log.Index
+	userBet.GameID = log.GameID
+	userBet.Addr = log.Addr
+	if log.Bet {
+		userBet.Option = log.Option
+		userBet.BetsNumber = log.BetsNumber
+	}
+
+	return userBet
+}
+
 func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
-	//新创建游戏
+	userTable := gty.NewGuessUserTable(g.GetLocalDB())
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+	tablejoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
+    if err != nil {
+    	return nil
+	}
+
 	if log.Status == gty.GuessGameStatusStart {
-		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameAdminIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
+		//新创建游戏,game表新增记录
+		game := log.Game
+		log.Game = nil
+
+		err = tablejoin.MustGetTable("game").Replace(game)
+		if err != nil {
+			return nil
+		}
+
+		kvs, _ = tablejoin.Save()
+		return kvs
 	} else if log.Status == gty.GuessGameStatusBet {
-		//如果是下注状态，则有用户进行了下注操作
-		kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.GameID, log.Index))
-		//如果发生了状态变化，则是从start->bet，对于老状态的记录进行删除操作，并增加新状态记录
-		if log.StatusChange {
-			kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
-			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
-			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
+		//用户下注，game表发生更新(game中下注信息有更新)，user表新增下注记录
+		game := log.Game
+		log.Game = nil
+		userBet := g.getUserBet(log)
 
-			kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
-			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
-			kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
+		err = tablejoin.MustGetTable("game").Replace(game)
+		if err != nil {
+			return nil
 		}
+
+		err = tablejoin.MustGetTable("user").Replace(userBet)
+		if err != nil {
+			return nil
+		}
+
+		kvs, _ = tablejoin.Save()
+		return kvs
 	} else if log.StatusChange {
-		//其他状态时的状态发生变化,要将老状态对应的记录删除，同时加入新状态记录；对于每个地址的下注记录也需要遍历处理。
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.Status, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.GameID, log.Index))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.GameID, log.Index))
+		//其他状态，游戏状态变化，只需要更新game表
+		game := log.Game
+		log.Game = nil
 
-		kvs = append(kvs, delGuessGameStatusIndexKey(log.PreStatus, log.PreIndex))
-		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.PreIndex))
-		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.PreIndex))
-
-		//从game中遍历每个地址的记录进行新状态记录的增和老状态记录的删除
-		game, err := readGame(g.GetStateDB(), log.GameID)
-		if err == nil {
-			for i := 0; i < len(game.Plays); i++ {
-				player := game.Plays[i]
-				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.GameID, log.Index))
-				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, player.Bet.PreIndex))
-			}
+		err = tablejoin.MustGetTable("game").Replace(game)
+		if err != nil {
+			return nil
 		}
+
+		kvs, _ = tablejoin.Save()
+		return kvs
 	}
 
 	return kvs
@@ -61,22 +85,6 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 		return dbSet, nil
 	}
 
-	/*
-	for i := 0; i < len(receipt.Logs); i++ {
-		item := receipt.Logs[i]
-		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
-			var Gamelog gty.ReceiptGuessGame
-			err := types.Decode(item.Log, &Gamelog)
-			if err != nil {
-				panic(err) //数据错误了，已经被修改了
-			}
-			kv := g.updateIndex(&Gamelog)
-			dbSet.KV = append(dbSet.KV, kv...)
-		}
-	}
-	*/
-
-	table := gty.NewTable(g.GetLocalDB())
 	for _, item := range receipt.Logs {
 		if item.Ty >= gty.TyLogGuessGameStart && item.Ty <= gty.TyLogGuessGameTimeout {
 			var gameLog gty.ReceiptGuessGame
@@ -84,14 +92,7 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 			if err != nil {
 				return nil, err
 			}
-			err = table.Replace(&gameLog)
-			if err != nil {
-				return nil, err
-			}
-			kvs, err := table.Save()
-			if err != nil {
-				return nil, err
-			}
+			kvs := g.updateIndex(&gameLog)
 			dbSet.KV = append(dbSet.KV, kvs...)
 		}
 	}

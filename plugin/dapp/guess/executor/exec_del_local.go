@@ -5,52 +5,104 @@
 package executor
 
 import (
+	"fmt"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
-	//新创建游戏，将增加的记录都删除掉
-	if log.Status == gty.GuessGameStatusStart {
-		//kvs = append(kvs, addGuessGameAddrIndexKey(log.Status, log.Addr, log.GameId, log.Index))
-		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
-		kvs = append(kvs, delGuessGameAdminIndexKey(log.AdminAddr, log.Index))
-		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
-		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
-	} else if log.Status == gty.GuessGameStatusBet {
-		//如果是下注状态，则有用户进行了下注操作，对这些记录进行删除
-		kvs = append(kvs, delGuessGameAddrIndexKey(log.Addr, log.Index))
-		kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, log.Addr, log.Index))
+func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame){
+	if game == nil || log == nil {
+		return
+	}
 
-		//如果发生了状态变化，恢复老状态的记录，删除新添加的状态记录
-		if log.StatusChange {
-			kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameID, log.PreIndex))
-			kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameID, log.PreIndex))
-			kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameID, log.PreIndex))
+	//如果状态发生了变化，则需要将游戏状态恢复到前一状态
+	if log.StatusChange {
+		game.Status = log.PreStatus
+		game.Index = log.PreIndex
 
-			kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
-			kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
-			kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
+		//玩家信息中的index回滚
+		for i := 0; i < len(game.Plays); i++ {
+			player := game.Plays[i]
+			player.Bet.Index = player.Bet.PreIndex
 		}
-	} else if log.StatusChange {
-		//其他状态时的状态发生变化的情况,要将老状态对应的记录恢复，同时删除新加的状态记录；对于每个地址的下注记录也需要遍历处理。
-		kvs = append(kvs, addGuessGameStatusIndexKey(log.PreStatus, log.GameID, log.PreIndex))
-		kvs = append(kvs, addGuessGameAdminStatusIndexKey(log.PreStatus, log.AdminAddr, log.GameID, log.PreIndex))
-		kvs = append(kvs, addGuessGameCategoryStatusIndexKey(log.PreStatus, log.Category, log.GameID, log.PreIndex))
+	}
 
-		kvs = append(kvs, delGuessGameStatusIndexKey(log.Status, log.Index))
-		kvs = append(kvs, delGuessGameAdminStatusIndexKey(log.Status, log.AdminAddr, log.Index))
-		kvs = append(kvs, delGuessGameCategoryStatusIndexKey(log.Status, log.Category, log.Index))
-
-		//从game中遍历每个地址的记录进行删除新增记录，回复老记录
-		game, err := readGame(g.GetStateDB(), log.GameID)
-		if err == nil {
-			for i := 0; i < len(game.Plays); i++ {
-				player := game.Plays[i]
-				kvs = append(kvs, addGuessGameAddrStatusIndexKey(log.PreStatus, player.Addr, log.GameID, player.Bet.PreIndex))
-				kvs = append(kvs, delGuessGameAddrStatusIndexKey(log.Status, player.Addr, log.Index))
+	//如果下注了，则需要把下注回滚
+	if log.Bet {
+		//统计信息回滚
+		game.BetStat.TotalBetTimes--
+		game.BetStat.TotalBetsNumber -= log.BetsNumber
+		for i := 0; i < len(game.BetStat.Items); i++ {
+			item := game.BetStat.Items[i]
+			if item.Option == log.Option{
+				item.BetsTimes--
+				item.BetsNumber -= log.BetsNumber
+				break
 			}
 		}
+
+		//玩家下注信息回滚
+		for i := 0; i < len(game.Plays); i++ {
+			player := game.Plays[i]
+			if player.Addr == log.Addr &&  player.Bet.Index == log.Index {
+				game.Plays = append(game.Plays[:i], game.Plays[i+1:]...)
+				break
+			}
+		}
+
+	}
+}
+
+func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
+	userTable := gty.NewGuessUserTable(g.GetLocalDB())
+	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
+
+	tablejoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
+	if err != nil {
+		return nil
+	}
+
+	if log.Status == gty.GuessGameStatusStart {
+		//新创建游戏回滚,game表删除记录
+		err = tablejoin.MustGetTable("game").Del([]byte(fmt.Sprintf("%018d", log.StartIndex)))
+		if err != nil {
+			return nil
+		}
+		kvs, _ = tablejoin.Save()
+		return kvs
+	} else if log.Status == gty.GuessGameStatusBet {
+		//下注阶段，需要更新游戏信息，回滚下注信息
+		game := log.Game
+		log.Game = nil
+
+		//先回滚游戏信息，再进行更新
+		g.rollbackGame(game, log)
+
+		err = tablejoin.MustGetTable("game").Replace(game)
+		if err != nil {
+			return nil
+		}
+
+		err = tablejoin.MustGetTable("user").Del([]byte(fmt.Sprintf("%018d", log.Index)))
+		if err != nil {
+			return nil
+		}
+
+		kvs, _ = tablejoin.Save()
+	} else if log.StatusChange {
+		//如果是其他状态下仅发生了状态变化，则需要恢复游戏状态，并更新游戏记录。
+		game := log.Game
+		log.Game = nil
+
+		//先回滚游戏信息，再进行更新
+		g.rollbackGame(game, log)
+
+		err = tablejoin.MustGetTable("game").Replace(game)
+		if err != nil {
+			return nil
+		}
+		kvs, _ = tablejoin.Save()
 	}
 
 	return kvs
@@ -62,8 +114,7 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 		return dbSet, nil
 	}
 
-	/*
-	for _, log := range receiptData.Logs {
+	for _, log := range receipt.Logs {
 		switch log.GetTy() {
 		case gty.TyLogGuessGameStart, gty.TyLogGuessGameBet, gty.TyLogGuessGameStopBet, gty.TyLogGuessGameAbort, gty.TyLogGuessGamePublish, gty.TyLogGuessGameTimeout:
 			receiptGame := &gty.ReceiptGuessGame{}
@@ -73,27 +124,7 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 			kv := g.rollbackIndex(receiptGame)
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
-	}*/
-	table := gty.NewTable(g.GetLocalDB())
-	for _, item := range receipt.Logs {
-		var gameLog gty.ReceiptGuessGame
-		err := types.Decode(item.Log, &gameLog)
-		if err != nil {
-			return nil, err
-		}
-		gameLog.Status = gameLog.PreStatus
-		gameLog.Index = gameLog.PreIndex
-		err = table.Replace(&gameLog)
-		if err != nil {
-			return nil, err
-		}
-		kvs, err := table.Save()
-		if err != nil {
-			return nil, err
-		}
-		dbSet.KV = append(dbSet.KV, kvs...)
 	}
-
 
 	return dbSet, nil
 }
