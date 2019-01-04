@@ -61,7 +61,7 @@ func (tx *GuessUserRow) Get(key string) ([]byte, error) {
 	if key == "index" {
 		return []byte(fmt.Sprintf("%018d", tx.Index)), nil
 	} else if key == "addr" {
-		return []byte(fmt.Sprintf("%s", tx.Addr)), nil
+		return []byte(tx.Addr), nil
 	} else if key == "startindex" {
 		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil
 	}
@@ -115,7 +115,7 @@ func (tx *GuessGameRow) Get(key string) ([]byte, error) {
 	if key == "startindex" {
 		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil
 	} else if key == "gameid" {
-		return []byte(fmt.Sprintf("%s", tx.GameID)), nil
+		return []byte(tx.GameID), nil
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
 	} else if key == "admin" {

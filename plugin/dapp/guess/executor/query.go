@@ -60,7 +60,7 @@ func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.
 		return nil, err
 	}
 
-	prefix := table.JoinKey([]byte(fmt.Sprintf("%s", in.Addr)), []byte(fmt.Sprintf("%2d", in.Status)))
+	prefix := table.JoinKey([]byte(in.Addr), []byte(fmt.Sprintf("%2d", in.Status)))
 
 	return QueryJoinTableData(tableJoin, "addr#status", prefix, in.PrimaryKey)
 }

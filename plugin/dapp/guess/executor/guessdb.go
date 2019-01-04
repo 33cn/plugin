@@ -123,7 +123,7 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-//Infos 根据游戏id列表查询多个游戏详情信息
+//QueryGameInfos 根据游戏id列表查询多个游戏详情信息
 func QueryGameInfos(kvdb db.KVDB, infos *gty.QueryGuessGameInfos) (types.Message, error) {
 	var games []*gty.GuessGame
 	gameTable := gty.NewGuessGameTable(kvdb)
