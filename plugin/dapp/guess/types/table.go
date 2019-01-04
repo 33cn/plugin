@@ -22,7 +22,7 @@ var opt_guess_user = &table.Option{
 	Index:   []string{"addr", "startindex"},
 }
 
-//NewTable 新建表
+//NewGuessUserTable 新建表
 func NewGuessUserTable(kvdb db.KV) *table.Table {
 	rowmeta := NewGuessUserRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_guess_user)
@@ -32,12 +32,12 @@ func NewGuessUserTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//OracleRow table meta 结构
+//GuessUserRow table meta 结构
 type GuessUserRow struct {
 	*UserBet
 }
 
-//NewOracleRow 新建一个meta 结构
+//NewGuessUserRow 新建一个meta 结构
 func NewGuessUserRow() *GuessUserRow {
 	return &GuessUserRow{UserBet: &UserBet{}}
 }
@@ -76,7 +76,7 @@ var opt_guess_game = &table.Option{
 	Index:   []string{"gameid", "status", "admin", "admin_status", "category_status"},
 }
 
-//NewTable 新建表
+//NewGuessGameTable 新建表
 func NewGuessGameTable(kvdb db.KV) *table.Table {
 	rowmeta := NewGuessGameRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_guess_game)
@@ -86,12 +86,12 @@ func NewGuessGameTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//OracleRow table meta 结构
+//GuessGameRow table meta 结构
 type GuessGameRow struct {
 	*GuessGame
 }
 
-//NewOracleRow 新建一个meta 结构
+//NewGuessGameRow 新建一个meta 结构
 func NewGuessGameRow() *GuessGameRow {
 	return &GuessGameRow{GuessGame: &GuessGame{}}
 }
