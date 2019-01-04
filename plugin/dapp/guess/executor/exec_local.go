@@ -28,8 +28,8 @@ func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 	userTable := gty.NewGuessUserTable(g.GetLocalDB())
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	tablejoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
-    if err != nil {
-    	return nil
+	if err != nil {
+		return nil
 	}
 
 	if log.Status == gty.GuessGameStatusStart {

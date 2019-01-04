@@ -73,7 +73,7 @@ var opt_guess_game = &table.Option{
 	Prefix:  "LODB_guess",
 	Name:    "game",
 	Primary: "startindex",
-	Index:   []string{"gameid", "status","admin","admin_status", "category_status"},
+	Index:   []string{"gameid", "status", "admin", "admin_status", "category_status"},
 }
 
 //NewTable 新建表
@@ -112,9 +112,9 @@ func (tx *GuessGameRow) SetPayload(data types.Message) error {
 
 //Get 按照indexName 查询 indexValue
 func (tx *GuessGameRow) Get(key string) ([]byte, error) {
-	if key == "startindex"{
+	if key == "startindex" {
 		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil
-	}else if key == "gameid" {
+	} else if key == "gameid" {
 		return []byte(fmt.Sprintf("%s", tx.GameID)), nil
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
