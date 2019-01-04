@@ -66,7 +66,7 @@ func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue)
 
 	if log.Status == gty.GuessGameStatusStart {
 		//新创建游戏回滚,game表删除记录
-		err = tablejoin.MustGetTable("game").Del([]byte(fmt.Sprintf("%018d", log.StartIndex)))
+		err = gameTable.Del([]byte(fmt.Sprintf("%018d", log.StartIndex)))
 		if err != nil {
 			return nil
 		}

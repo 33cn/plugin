@@ -44,7 +44,7 @@ func NewGuessUserRow() *GuessUserRow {
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (tx *GuessUserRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ReceiptGuessGame{}}
+	return &table.Row{Data: &UserBet{}}
 }
 
 //SetPayload 设置数据
