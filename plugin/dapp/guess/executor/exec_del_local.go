@@ -6,12 +6,13 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame){
+func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame) {
 	if game == nil || log == nil {
 		return
 	}
@@ -35,7 +36,7 @@ func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame){
 		game.BetStat.TotalBetsNumber -= log.BetsNumber
 		for i := 0; i < len(game.BetStat.Items); i++ {
 			item := game.BetStat.Items[i]
-			if item.Option == log.Option{
+			if item.Option == log.Option {
 				item.BetsTimes--
 				item.BetsNumber -= log.BetsNumber
 				break
@@ -45,7 +46,7 @@ func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame){
 		//玩家下注信息回滚
 		for i := 0; i < len(game.Plays); i++ {
 			player := game.Plays[i]
-			if player.Addr == log.Addr &&  player.Bet.Index == log.Index {
+			if player.Addr == log.Addr && player.Bet.Index == log.Index {
 				game.Plays = append(game.Plays[:i], game.Plays[i+1:]...)
 				break
 			}

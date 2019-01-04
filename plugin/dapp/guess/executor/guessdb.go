@@ -7,10 +7,11 @@ package executor
 import (
 	"context"
 	"fmt"
-	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common/db/table"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/client"
 	"google.golang.org/grpc"
@@ -167,7 +168,7 @@ func QueryUserTableData(query *table.Query, indexName string, prefix, primaryKey
 		userBet := rows[i].Data.(*gty.UserBet)
 		var record gty.GuessGameRecord
 		record.GameID = userBet.GameID
-		record.StartIndex  = userBet.StartIndex
+		record.StartIndex = userBet.StartIndex
 		records = append(records, &record)
 	}
 
@@ -194,7 +195,7 @@ func QueryGameTableData(query *table.Query, indexName string, prefix, primaryKey
 		game := rows[i].Data.(*gty.GuessGame)
 		var record gty.GuessGameRecord
 		record.GameID = game.GameID
-		record.StartIndex  = game.StartIndex
+		record.StartIndex = game.StartIndex
 		records = append(records, &record)
 	}
 
@@ -414,7 +415,7 @@ func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 	var kv []*types.KeyValue
 
 	game, err := QueryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
-	if err != nil || game == nil{
+	if err != nil || game == nil {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
 		return nil, err
@@ -464,7 +465,7 @@ func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 		pbBet.BetsNum = game.GetMaxBetsOneTime()
 	}
 
-	if game.BetsNumber + pbBet.GetBetsNum() > game.MaxBetsNumber {
+	if game.BetsNumber+pbBet.GetBetsNum() > game.MaxBetsNumber {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "MaxBetsNumber over limit",
 			game.MaxBetsNumber, "current Bets Number", game.BetsNumber)
 		return nil, types.ErrInvalidParam
@@ -510,7 +511,7 @@ func (action *Action) GameStopBet(pbBet *gty.GuessGameStopBet) (*types.Receipt, 
 	var kv []*types.KeyValue
 
 	game, err := QueryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
-	if err != nil || game == nil{
+	if err != nil || game == nil {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
 		return nil, err
@@ -572,7 +573,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	var kv []*types.KeyValue
 
 	game, err := QueryGameInfo(action.localDB, []byte(publish.GetGameID()))
-	if err != nil || game == nil{
+	if err != nil || game == nil {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			publish.GetGameID(), "err", err)
 		return nil, err
@@ -718,7 +719,7 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 	var kv []*types.KeyValue
 
 	game, err := QueryGameInfo(action.localDB, []byte(pbend.GetGameID()))
-	if err != nil || game == nil{
+	if err != nil || game == nil {
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbend.GetGameID(), "err", err)
 		return nil, err

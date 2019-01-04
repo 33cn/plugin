@@ -6,12 +6,13 @@ package commands
 
 import (
 	"fmt"
+	"strings"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 //GuessCmd Guess合约命令行
@@ -306,8 +307,8 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "addr":
 		req := &gty.QueryGuessGameInfo{
-			Addr:  addr,
-			Index: index,
+			Addr:       addr,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddr
@@ -318,8 +319,8 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "status":
 		req := &gty.QueryGuessGameInfo{
-			Status: status,
-			Index:  index,
+			Status:     status,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByStatus
@@ -330,8 +331,8 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "adminAddr":
 		req := &gty.QueryGuessGameInfo{
-			AdminAddr: adminAddr,
-			Index:     index,
+			AdminAddr:  adminAddr,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminAddr
@@ -342,9 +343,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "addrStatus":
 		req := &gty.QueryGuessGameInfo{
-			Addr:   addr,
-			Status: status,
-			Index:  index,
+			Addr:       addr,
+			Status:     status,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddrStatus
@@ -355,9 +356,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "adminStatus":
 		req := &gty.QueryGuessGameInfo{
-			AdminAddr: adminAddr,
-			Status:    status,
-			Index:     index,
+			AdminAddr:  adminAddr,
+			Status:     status,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminStatus
@@ -368,9 +369,9 @@ func guessQuery(cmd *cobra.Command, args []string) {
 
 	case "categoryStatus":
 		req := &gty.QueryGuessGameInfo{
-			Category: category,
-			Status:   status,
-			Index:    index,
+			Category:   category,
+			Status:     status,
+			Index:      index,
 			PrimaryKey: primaryKey,
 		}
 		params.FuncName = gty.FuncNameQueryGameByCategoryStatus
