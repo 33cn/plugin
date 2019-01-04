@@ -22,6 +22,7 @@ type blockContext struct {
 	Difficulty uint64 `json:"difficulty"`
 	TxHash     string `json:"txhash"`
 	Index      int64  `json:"index"`
+	From       string `json:"from"`
 }
 
 func parseJsReturn(prefix []byte, jsvalue *otto.Object) (kvlist []*types.KeyValue, logs []*types.ReceiptLog, err error) {
