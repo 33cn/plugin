@@ -217,8 +217,8 @@ func (client *Client) setTicket(tlist *ty.ReplyTicketList, privmap map[string]cr
 func (client *Client) flushTicket() error {
 	//list accounts
 	tickets, privs, err := client.getTickets()
-	if err == types.ErrWalletIsLocked {
-		tlog.Error("flushTicket error", "err", "wallet is locked")
+	if err == types.ErrWalletIsLocked || err == ty.ErrNoTicket {
+		tlog.Error("flushTicket error", "err", err.Error())
 		client.setTicket(nil, nil)
 		return nil
 	}

@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -110,22 +111,23 @@ func getSellOrderFromID(sellID []byte, db dbm.KV) (*pty.SellOrder, error) {
 	return &sellOrder, nil
 }
 
-func getTx(txHash []byte, db dbm.KV) (*types.TxResult, error) {
+func getTx(txHash []byte, db dbm.KV, api client.QueueProtocolAPI) (*types.TxResult, error) {
 	hash, err := common.FromHex(string(txHash))
 	if err != nil {
 		return nil, err
 	}
-	value, err := db.Get(hash)
+	value, err := api.QueryTx(&types.ReqHash{Hash: hash})
 	if err != nil {
 		tradelog.Error("getTx", "Failed to get value from db with getTx", string(txHash))
 		return nil, err
 	}
-	var txResult types.TxResult
-	err = types.Decode(value, &txResult)
-
-	if err != nil {
-		tradelog.Error("getTx", "Failed to decode TxResult", string(txHash))
-		return nil, err
+	txResult := types.TxResult{
+		Height:      value.Height,
+		Index:       int32(value.Index),
+		Tx:          value.Tx,
+		Receiptdate: value.Receipt,
+		Blocktime:   value.Blocktime,
+		ActionName:  value.ActionName,
 	}
 	return &txResult, nil
 }

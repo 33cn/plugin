@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package types;
+
+//事件
+message OracleStatus {
+    string eventID      = 1; //事件ID
+    string addr         = 2; //发布者地址
+    string type         = 3; //游戏类别
+    string subType      = 4; //游戏子类别
+    int64  time         = 5; //结果公布参考时间
+    string content      = 6; //事件内容
+    string introduction = 7; //事件描述
+    EventStatus status  = 8; //操作状态
+    string source       = 9; //数据来源
+    string result       = 10; //事件结果
+    EventStatus preStatus=11; //上次操作后状态及操作者地址
+}
+
+// action
+message OracleAction {
+    oneof value {
+        EventPublish      eventPublish = 1;
+        EventAbort        eventAbort = 2;
+        ResultPrePublish  resultPrePublish    = 3;
+        ResultPublish     resultPublish = 4;
+        ResultAbort       resultAbort = 5;
+    }
+    int32 Ty = 7;
+}
+
+message EventStatus {
+    string opAddr = 1; //修改事件状态的地址
+    int32 status = 2;  //事件状态
+}
+
+message EventPublish {
+    string type         = 2; //游戏类别
+    string subType      = 3; //游戏子类别
+    int64  time         = 4; //结果公布参考时间
+    string content      = 5; //事件内容
+    string introduction = 6; //事件描述
+}
+
+message EventAbort {
+    string eventID          = 2; //发布事件的ID
+}
+
+message ResultPrePublish {
+    string eventID      = 2; //发布事件的ID
+    string source       = 3; //数据来源
+    string result       = 4; //发布数据
+}
+
+message ResultPublish {
+    string eventID      = 2; //发布事件的ID
+    string source       = 3; //数据来源
+    string result       = 4; //发布数据
+}
+
+message ResultAbort {
+    string eventID      = 2; //发布事件的ID
+}
+
+// localDB
+message EventRecord {
+    string eventID = 1; //发布的事件的ID
+}
+
+message QueryOracleInfos {
+    repeated string eventID = 1; //发布的事件的ID
+}
+
+message ReplyEventIDs {
+    repeated string eventID       = 1; //发布事件的ID
+}
+
+message QueryEventID {
+    int32 status = 1;        //事件状态
+    string addr = 2;         //事件发布者的地址
+    string type = 3;         //事件类型
+    string eventID = 4;     //事件ID
+}
+
+message ReceiptOracle {
+    string eventID = 1;  //发布事件ID
+    int32  status  = 2;  //事件状态
+    string addr    = 3;  //事件发布者的地址
+    string type    = 4;  //事件类型
+    int32  preStatus = 6;//事件的前一个状态
+}
+
+message ReplyOracleStatusList {
+    repeated OracleStatus status = 1; //状态集
+}
