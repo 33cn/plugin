@@ -448,10 +448,7 @@ func (row *JSONRow) parse() error {
 	row.data = make(map[string]interface{})
 	d := json.NewDecoder(bytes.NewBufferString(row.JsLog.Data))
 	d.UseNumber()
-	if err := d.Decode(&row.data); err != nil {
-		return err
-	}
-	return nil
+	return d.Decode(&row.data)
 }
 
 //SetPayload 设置行的内容
