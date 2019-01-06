@@ -32,7 +32,11 @@ Table.prototype.get = function(key, row) {
     if (!isstring(row)) {
         row = tojson(row)
     }
-    return table_get(this.id, key, row)
+    var ret = table_get(this.id, key, row)
+    if (ret.err) {
+        throwerr(ret.err)
+    }
+    return ret.value
 }
 
 function query_list(indexName, prefix, primaryKey, count, direction) {
@@ -54,6 +58,14 @@ function query_list(indexName, prefix, primaryKey, count, direction) {
     var q = table_query(this.id, indexName, prefix, primaryKey, count, direction)
     if (q.err) {
         return null
+    }
+    for (var i = 0; i < q.length; i++) {
+        if (q[i].left) {
+            q[i].left = JSON.parse(q[i].left)
+        }
+        if (q[i].right) {
+            q[i].right = JSON.parse(q[i].right)
+        }
     }
     return q
 }
@@ -116,7 +128,6 @@ function print(obj) {
 
 JoinTable.prototype.save = function() {
     var ret = table_save(this.id)
-    print(ret)
     if (this.kvc) {
         this.kvc.save(ret)
     }
@@ -127,7 +138,11 @@ JoinTable.prototype.get = function(key, row) {
     if (!isstring(row)) {
         row = tojson(row)
     }
-    return table_get(this.id, key, row)
+    var ret = table_get(this.id, key, row)
+    if (ret.err) {
+        throwerr(ret.err)
+    }
+    return ret.value
 }
 
 JoinTable.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
@@ -270,7 +285,7 @@ account.prototype.execTransFrozenToActive = function(execer, from, to, amount) {
     if (err) {
         return err
     }
-    return this.execTransfer(execer, from, to, amount)
+    err = this.execTransfer(execer, from, to, amount)
 }
 
 //from frozen -> to frozen
@@ -454,9 +469,9 @@ Query.prototype.JoinKey = function(args) {
     return table_joinkey(args.left, args.right).value
 }
 
-function throwerr(err) {
+function throwerr(err, msg) {
     if (err) {
-        throw new Error(err)
+        throw new Error(err + ":" + msg)
     }
 }
 
