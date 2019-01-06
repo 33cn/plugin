@@ -1,13 +1,14 @@
 var tojson = JSON.stringify
 //table warp
-function table(kvc, config, defaultvalue) {
-    var ret = table_new(config, defaultvalue)
+function Table(kvc, config, defaultvalue) {
+    var ret = table_new(tojson(config), tojson(defaultvalue))
     if (ret.err) {
         throw new Error(ret.err)
     }
     this.kvc = kvc
     this.id = ret.id
     this.config = config
+    this.name = config["#tablename"]
     this.defaultvalue = defaultvalue
 }
 
@@ -15,7 +16,7 @@ function isstring(obj) {
     return typeof obj === "string"
 }
 
-table.prototype.add = function(obj) {
+Table.prototype.add = function(obj) {
     if (!isstring(obj)) {
         obj = tojson(obj)
     }
@@ -23,7 +24,35 @@ table.prototype.add = function(obj) {
     return ret.err
 }
 
-table.prototype.replace = function(obj) {
+Table.prototype.joinkey = function(left, right) {
+    return table_joinkey(left, right)
+}
+
+Table.prototype.get = function(key, row) {
+    return table_get(this.id, key, row)
+}
+
+Table.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
+    if (!count) {
+        count = 20
+    }
+    if (!direction) {
+        direction = 0
+    }
+    if (!primaryKey) {
+        primaryKey = ""
+    }
+    if (!prefix) {
+        prefix = ""
+    }
+    if (!indexName) {
+        indexName = ""
+    }
+    var q = table_query(this.id, indexName, prefix, primaryKey, count, direction)
+    return tojson(q)
+}
+
+Table.prototype.replace = function(obj) {
     if (!isstring(obj)) {
         obj = tojson(obj)
     }
@@ -31,7 +60,7 @@ table.prototype.replace = function(obj) {
     return ret.err
 }
 
-table.prototype.del = function(obj) {
+Table.prototype.del = function(obj) {
     if (!isstring(obj)) {
         obj = tojson(obj)
     }
@@ -39,7 +68,7 @@ table.prototype.del = function(obj) {
     return ret.err
 }
 
-table.prototype.save = function() {
+Table.prototype.save = function() {
     var ret = table_save(this.id)
     if (!this.kvc) {
         this.kvc.save(ret)
@@ -47,17 +76,17 @@ table.prototype.save = function() {
     return ret
 }
 
-table.prototype.close = function() {
+Table.prototype.close = function() {
     var ret = table_close(this.id)
     return ret.err
 }
 
 function JoinTable(lefttable, righttable, index) {
+    this.lefttable = lefttable
+    this.righttable = righttable
     if (this.lefttable.kvc != this.righttable.kvc) {
         throw new Error("the kvc of left and right must same")
     }
-    this.lefttable = lefttable
-    this.righttable = righttable
     this.index = index
     var ret = new_join_table(this.lefttable.id, this.righttable.id, index)
     if (ret.err) {
@@ -67,9 +96,17 @@ function JoinTable(lefttable, righttable, index) {
     this.kvc = this.lefttable.kvc
 }
 
-JoinTable.prototype.Save = function() {
+function print(obj) {
+    if (typeof obj === "string") {
+        console.log(obj)
+        return
+    }
+    console.log(tojson(obj))
+}
+
+JoinTable.prototype.save = function() {
     var ret = table_save(this.id)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret
@@ -82,6 +119,24 @@ JoinTable.prototype.close = function() {
     return ret.err
 }
 
+JoinTable.prototype.addlogs = function(data) {
+    var err
+    for (var i = 0; i < data.length; i++) {
+        if (data[i].format != "json") {
+            continue
+        }
+        var log = JSON.parse(data[i].log)
+        if (log.__type__ == this.lefttable.name) {
+            err = this.lefttable.replace(data[i].log)
+            throwerr(err)
+        }
+        if (log.__type__ == this.righttable.name) {
+            err = this.righttable.replace(data[i].log)
+            throwerr(err)
+        }
+    }
+}
+
 //account warp
 function account(kvc, execer, symbol) {
     this.execer = execer
@@ -91,7 +146,7 @@ function account(kvc, execer, symbol) {
 
 account.prototype.genesisInit = function(addr, amount) {
     var ret = genesis_init(this, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -99,7 +154,7 @@ account.prototype.genesisInit = function(addr, amount) {
 
 account.prototype.execGenesisInit = function(execer, addr, amount) {
     var ret = genesis_init_exec(this, execer, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -116,7 +171,7 @@ account.prototype.execGetBalance = function(execer, addr) {
 //本合约转移资产，或者转移到其他合约，或者从其他合约取回资产
 account.prototype.transfer = function(from, to, amount) {
     var ret = transfer(this, from, to, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -124,7 +179,7 @@ account.prototype.transfer = function(from, to, amount) {
 
 account.prototype.transferToExec = function(execer, from, amount) {
     var ret = transfer_to_exec(this, execer, from, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -132,7 +187,7 @@ account.prototype.transferToExec = function(execer, from, amount) {
 
 account.prototype.withdrawFromExec = function(execer, to, amount) {
     var ret = withdraw(this, execer, to, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -141,7 +196,7 @@ account.prototype.withdrawFromExec = function(execer, to, amount) {
 //管理其他合约的资产转移到这个合约中
 account.prototype.execActive = function(execer, addr, amount) {
     var ret = exec_active(this, execer, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -149,7 +204,7 @@ account.prototype.execActive = function(execer, addr, amount) {
 
 account.prototype.execFrozen = function(execer, addr, amount) {
     var ret = exec_frozen(this, execer, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -157,7 +212,7 @@ account.prototype.execFrozen = function(execer, addr, amount) {
 
 account.prototype.execDeposit = function(execer, addr, amount) {
     var ret = exec_deposit(this, execer, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -165,7 +220,7 @@ account.prototype.execDeposit = function(execer, addr, amount) {
 
 account.prototype.execWithdraw = function(execer, addr, amount) {
     var ret = exec_withdraw(this, execer, addr, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -173,7 +228,7 @@ account.prototype.execWithdraw = function(execer, addr, amount) {
 
 account.prototype.execTransfer = function(execer, from, to, amount) {
     var ret = exec_transfer(this, execer, from, to, amount)
-    if (!this.kvc) {
+    if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret.err
@@ -203,6 +258,15 @@ account.prototype.execTransFrozenToFrozen = function(execer, from, to, amount) {
     return this.execFrozen(execer, to, amount)
 }
 
+account.prototype.execTransActiveToFrozen = function(execer, from, to, amount) {
+    var err
+    err = this.execTransfer(execer, from, to, amount)
+    if (err) {
+        return err
+    }
+    return this.execFrozen(execer, to, amount)
+}
+
 COINS = 100000000
 
 function kvcreator(dbtype) {
@@ -214,11 +278,11 @@ function kvcreator(dbtype) {
 	this.getloal = getlocaldb
 	this.list = listdb
     if (dbtype == "exec" || dbtype == "init") {
-        this.get = this.getstatedb
+        this.getdb = this.getstate
     } else if (dbtype == "local") {
-        this.get = this.getlocaldb
+        this.getdb = this.getlocal
     } else if (dbtype == "query") {
-		this.get = this.getlocaldb
+		this.getdb = this.getlocal
 	} else {
 		throw new Error("chain33.js: dbtype error")
 	}
@@ -237,7 +301,7 @@ kvcreator.prototype.get = function(k, prefix) {
     if (this.data[k]) {
         v = this.data[k]
     } else {
-		var dbvalue = this.get(k, !!prefix)
+        var dbvalue = this.getdb(k, !!prefix)
 		if (dbvalue.err) {
 			return null
 		}
@@ -300,35 +364,60 @@ kvcreator.prototype.receipt = function() {
     return {kvs: this.kvs, logs: this.logs}
 }
 
+function GetExecName() {
+    var exec = execname()
+    if (exec.err) {
+        return ""
+    }
+    return exec.value
+}
+
+function ExecAddress(name) {
+    var addr = execaddress(name)
+    if (addr.err) {
+        return ""
+    }
+    console.log(addr.value)
+    return addr.value
+}
+
+function Sha256(data) {
+    var hash = sha256(data)
+    if (hash.err) {
+        return ""
+    }
+    return hash.value
+}
+
 function Exec(context) {
     this.kvc = new kvcreator("exec")
     this.context = context
-    this.name = execname()
-    if (typeof ExecInit == "function") {
-        ExecInit(this)
+    this.name = GetExecName()
+    if (typeof ExecInit === "function") {
+        ExecInit.call(this)
     }
 }
 
 Exec.prototype.txID = function() {
-    return this.context.height * 100000 + this.index
+    return this.context.height * 100000 + this.context.index
 }
 
 function ExecLocal(context, logs) {
     this.kvc = new kvcreator("local")
 	this.context = context
     this.logs = logs
-    this.name = execname()
-    if (typeof ExecLocalInit == "function") {
-        ExecLocalInit(this)
+    this.name = GetExecName()
+    if (typeof ExecLocalInit === "function") {
+        ExecLocalInit.call(this)
     }
 }
 
 function Query(context) {
 	this.kvc = new kvcreator("query")
     this.context = context
-    this.name = execname()
-    if (typeof QueryInit == "function") {
-        QueryInit(this)
+    this.name = GetExecName()
+    if (typeof QueryInit === "function") {
+        QueryInit.call(this)
     }
 }
 
@@ -367,7 +456,7 @@ function callcode(context, f, args, loglist) {
     }
     var arg = JSON.parse(args)
     if (typeof runobj[funcname] != "function") {
-        throw new Error("chain33.js: invalid function name not found")
+        throw new Error("chain33.js: invalid function name not found->" + funcname)
     }
     return runobj[funcname](arg)
 }

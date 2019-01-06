@@ -282,7 +282,7 @@ func (u *js) execFrozenFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		receipt, err := acc.ExecFrozen(address.ExecAddress(execer), addr, amount)
+		receipt, err := acc.ExecFrozen(addr, address.ExecAddress(execer), amount)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -311,7 +311,7 @@ func (u *js) execActiveFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		receipt, err := acc.ExecActive(address.ExecAddress(execer), addr, amount)
+		receipt, err := acc.ExecActive(addr, address.ExecAddress(execer), amount)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -340,7 +340,7 @@ func (u *js) execDepositFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		receipt, err := acc.ExecDeposit(address.ExecAddress(execer), addr, amount)
+		receipt, err := acc.ExecDeposit(addr, address.ExecAddress(execer), amount)
 		if err != nil {
 			return errReturn(vm, err)
 		}
