@@ -35,7 +35,11 @@ Table.prototype.get = function(key, row) {
     if (!isstring(row)) {
         row = tojson(row)
     }
-    return table_get(this.id, key, row)
+    var ret = table_get(this.id, key, row)
+    if (ret.err) {
+        throwerr(ret.err)
+    }
+    return ret.value
 }
 
 function query_list(indexName, prefix, primaryKey, count, direction) {
@@ -57,6 +61,14 @@ function query_list(indexName, prefix, primaryKey, count, direction) {
     var q = table_query(this.id, indexName, prefix, primaryKey, count, direction)
     if (q.err) {
         return null
+    }
+    for (var i = 0; i < q.length; i++) {
+        if (q[i].left) {
+            q[i].left = JSON.parse(q[i].left)
+        }
+        if (q[i].right) {
+            q[i].right = JSON.parse(q[i].right)
+        }
     }
     return q
 }
@@ -119,7 +131,6 @@ function print(obj) {
 
 JoinTable.prototype.save = function() {
     var ret = table_save(this.id)
-    print(ret)
     if (this.kvc) {
         this.kvc.save(ret)
     }
@@ -130,7 +141,11 @@ JoinTable.prototype.get = function(key, row) {
     if (!isstring(row)) {
         row = tojson(row)
     }
-    return table_get(this.id, key, row)
+    var ret = table_get(this.id, key, row)
+    if (ret.err) {
+        throwerr(ret.err)
+    }
+    return ret.value
 }
 
 JoinTable.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
@@ -273,7 +288,7 @@ account.prototype.execTransFrozenToActive = function(execer, from, to, amount) {
     if (err) {
         return err
     }
-    return this.execTransfer(execer, from, to, amount)
+    err = this.execTransfer(execer, from, to, amount)
 }
 
 //from frozen -> to frozen
@@ -457,9 +472,9 @@ Query.prototype.JoinKey = function(args) {
     return table_joinkey(args.left, args.right).value
 }
 
-function throwerr(err) {
+function throwerr(err, msg) {
     if (err) {
-        throw new Error(err)
+        throw new Error(err + ":" + msg)
     }
 }
 
@@ -612,8 +627,6 @@ Exec.prototype.CloseGame = function(args) {
         throwerr("game id not found")
     }
     var querykey = local.get("gameid", args)
-    print("---------")
-    print(querykey)
     var matches = local.query("gameid", querykey, "", 0, 1)
     if (!matches) {
         matches = []
@@ -632,12 +645,12 @@ Exec.prototype.CloseGame = function(args) {
         throwerr("close game must wait "+MIN_WAIT_BLOCK+" block")
     }
     for (var i = 0; i < matches.length; i++) {
-        var match = matches[i]
+        var match = matches[i].left
         if (match.num == n) {
             //不能随便添加辅助函数，因为可以被外界调用到，所以辅助函数都是传递 this
-            win(this, game, match)
+            win.call(this, game, match)
         } else {
-            fail(this, game, match)
+            fail.call(this, game, match)
         }
     }
     if (game.bet > 0) {
@@ -651,24 +664,24 @@ Exec.prototype.CloseGame = function(args) {
     return this.kvc.receipt()
 }
 
-function win(othis, game, match) {
+function win(game, match) {
     var amount = (RAND_MAX - 1) * match.bet
     if (game.bet - amount < 0) {
         amount = game.bet
     }
     var err 
     if (amount > 0) {
-        err = this.acc.execTransFrozenToActive(othis.name, game.addr, match.addr, amount)
-        throwerr(err)
+        err = this.acc.execTransFrozenToActive(this.name, game.addr, match.addr, amount)
+        throwerr(err, "execTransFrozenToActive")
         game.bet -= amount
     }
-    err = othis.acc.execActive(match.addr, match.bet)
-    throwerr(err)
+    err = this.acc.execActive(this.name, match.addr, match.bet)
+    throwerr(err, "execActive")
 }
 
-function fail(othis, game, match) {
+function fail(game, match) {
     var amount = match.bet
-    err = othis.acc.execTransFrozenToFrozen(othis.name, match.addr, game.addr, amount)
+    err = this.acc.execTransFrozenToFrozen(this.name, match.addr, game.addr, amount)
     throwerr(err)
     game.bet += amount
 }
@@ -688,7 +701,7 @@ Exec.prototype.ForceCloseGame = function(args) {
     }
     for (var i = 0; i < matches.length; i++) {
         var match = matches[i]
-        win(this.kvc, game, match)
+        win.call(this.kvc, game, match)
     }
     if (game.bet > 0) {
         var err = this.acc.execActive(this.name, game.addr, game.bet)
