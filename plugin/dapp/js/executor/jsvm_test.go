@@ -22,12 +22,12 @@ func init() {
 	Init(ptypes.JsX, nil)
 }
 
-func initExec(ldb db.DB, kvdb db.KVDB, t assert.TestingT) *js {
+func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e := newjs().(*js)
 	e.SetEnv(1, time.Now().Unix(), 1)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
-	c, tx := createCodeTx("test", jscode)
+	c, tx := createCodeTx("test", code)
 	receipt, err := e.Exec_Create(c, tx, 0)
 	assert.Nil(t, err)
 	util.SaveKVList(ldb, receipt.KV)
@@ -54,7 +54,7 @@ func callCodeTx(name, f, args string) (*jsproto.Call, *types.Transaction) {
 func TestCallcode(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	e := initExec(ldb, kvdb, t)
+	e := initExec(ldb, kvdb, jscode, t)
 
 	call, tx := callCodeTx("test", "hello", `{"hello":"world"}`)
 	receipt, err := e.Exec_Call(call, tx, 0)
@@ -107,7 +107,7 @@ func TestCallcode(t *testing.T) {
 func TestCallError(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	e := initExec(ldb, kvdb, t)
+	e := initExec(ldb, kvdb, jscode, t)
 	//test call error(invalid json input)
 	call, tx := callCodeTx("test", "hello", `{hello":"world"}`)
 	_, err := e.callVM("exec", call, tx, 0, nil)
@@ -132,7 +132,7 @@ func TestCallError(t *testing.T) {
 func TestBigInt(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	e := initExec(ldb, kvdb, t)
+	e := initExec(ldb, kvdb, jscode, t)
 	//test call error(invalid json input)
 	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
 	call, tx := callCodeTx("test", "hello", s)
@@ -146,7 +146,7 @@ func TestBigInt(t *testing.T) {
 func BenchmarkBigInt(b *testing.B) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	e := initExec(ldb, kvdb, b)
+	e := initExec(ldb, kvdb, jscode, b)
 	//test call error(invalid json input)
 	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
 	call, tx := callCodeTx("test", "hello", s)
@@ -184,7 +184,7 @@ func TestCalcLocalPrefix(t *testing.T) {
 func TestCacheMemUsage(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	e := initExec(ldb, kvdb, t)
+	e := initExec(ldb, kvdb, jscode, t)
 	vm, err := e.createVM("test", nil, 0)
 	assert.Nil(t, err)
 	vms := make([]*otto.Otto, 1024)

@@ -1,5 +1,5 @@
 <script src="runtime.js"></script>
-<script src="test.js"></script>
+<script src="game.js"></script>
 <script>
 //demo database function
 var statedb = {}
@@ -34,11 +34,15 @@ function getstatedb(key) {
     return statedb[key]
 }
 
+function execname() {
+    return "user.jsvm.test"
+}
+
 function setstatedb(kvs) {
     for (var i = 0; i < kvs.length; i++) {
         statedb[kvs[i].key] = kvs[i].value
     }
 }
-var ret = callcode("{}", "execlocal_hello", "{}", [])
+var ret = callcode("{}", "exec_NewGame", "{}", [])
 console.log(ret)
 </script>

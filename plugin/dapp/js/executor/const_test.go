@@ -1,3 +1,40 @@
+package executor_test
+
+var jscode = `
+//数据结构设计
+function Init(context) {
+    this.kvc = new kvcreator("init")
+    this.context = context
+    this.kvc.add("action", "init")
+    this.kvc.add("context", this.context)
+    return this.kvc.receipt()
+}
+
+Exec.prototype.hello = function(args) {
+    this.kvc.add("args", args)
+    this.kvc.add("action", "exec")
+    this.kvc.add("context", this.context)
+    this.kvc.addlog({"key1": "value1"})
+    this.kvc.addlog({"key2": "value2"})
+	return this.kvc.receipt()
+}
+
+ExecLocal.prototype.hello = function(args) {
+    this.kvc.add("args", args)
+    this.kvc.add("action", "execlocal")
+    this.kvc.add("log", this.logs)
+    this.kvc.add("context", this.context)
+	return this.kvc.receipt()
+}
+
+//return a json string
+Query.prototype.hello = function(args) {
+	var obj = getlocaldb("context")
+	return tojson(obj)
+}
+`
+var _ = jscode
+var gamecode = `
 //简单的猜数字游戏
 //游戏规则: 庄家出一个 0 - 10 的数字 hash(随机数 + 9) (一共的赔偿金额) NewGame()
 //用户可以猜这个数字，多个用户都可以猜测。 Guess()
@@ -237,4 +274,5 @@ function MatchLocalTable(kvc) {
 
 function MatchGameTable(kvc) {
     return new JoinTable(MatchLocalTable(kvc), GameLocalTable(kvc), "addr#status")
-}
+}`
+var _ = gamecode

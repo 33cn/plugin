@@ -1,12 +1,12 @@
 package executor
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -35,22 +35,11 @@ import (
 	"index2" : "",
 }
 */
-var globalTableHandle sync.Map
-var globalHanldeID int64
 
 //NewTable 创建一个新的表格, 返回handle
 func (u *js) newTable(name, config, defaultvalue string) (id int64, err error) {
-	for {
-		id = atomic.AddInt64(&globalHanldeID, 1) % maxjsint
-		if _, ok := globalTableHandle.Load(id); ok {
-			continue
-		}
-		if id < 0 {
-			atomic.StoreInt64(&globalHanldeID, 0)
-			continue
-		}
-		break
-	}
+	u.globalHanldeID++
+	id = u.globalHanldeID
 	row, err := NewJSONRow(config, defaultvalue)
 	if err != nil {
 		return 0, err
@@ -74,7 +63,7 @@ func (u *js) newTable(name, config, defaultvalue string) (id int64, err error) {
 		indexs = append(indexs, k)
 	}
 	opt := &table.Option{
-		Prefix:  string(prefix),
+		Prefix:  strings.Trim(string(prefix), "-"),
 		Name:    row.config["#tablename"],
 		Primary: row.config["#primary"],
 		Index:   indexs,
@@ -83,7 +72,7 @@ func (u *js) newTable(name, config, defaultvalue string) (id int64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	globalTableHandle.Store(id, t)
+	u.globalTableHandle.Store(id, t)
 	return id, nil
 }
 
@@ -106,42 +95,43 @@ func (u *js) newTableFunc(vm *otto.Otto, name string) {
 }
 
 //CloseTable 关闭表格释放内存
-func closeTable(id int64) error {
-	_, ok := globalTableHandle.Load(id)
+func (u *js) closeTable(id int64) error {
+	_, ok := u.globalTableHandle.Load(id)
 	if !ok {
 		return types.ErrNotFound
 	}
-	globalTableHandle.Delete(id)
+	u.globalTableHandle.Delete(id)
 	return nil
 }
 
-func getTable(id int64) (*table.Table, error) {
-	if value, ok := globalTableHandle.Load(id); ok {
+func (u *js) getTable(id int64) (*table.Table, error) {
+	if value, ok := u.globalTableHandle.Load(id); ok {
 		return value.(*table.Table), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-func getTabler(id int64) (tabler, error) {
-	if value, ok := globalTableHandle.Load(id); ok {
+func (u *js) getTabler(id int64) (tabler, error) {
+	if value, ok := u.globalTableHandle.Load(id); ok {
 		return value.(tabler), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-func registerTableFunc(vm *otto.Otto) {
-	tableAddFunc(vm)
-	tableReplaceFunc(vm)
-	tableDelFunc(vm)
-	tableCloseFunc(vm)
-	tableSave(vm)
-	tableJoinFunc(vm)
-	tableQueryFunc(vm)
-	tableGetFunc(vm)
-	tableJoinKeyFunc(vm)
+func (u *js) registerTableFunc(vm *otto.Otto, name string) {
+	u.newTableFunc(vm, name)
+	u.tableAddFunc(vm)
+	u.tableReplaceFunc(vm)
+	u.tableDelFunc(vm)
+	u.tableCloseFunc(vm)
+	u.tableSave(vm)
+	u.tableJoinFunc(vm)
+	u.tableQueryFunc(vm)
+	u.tableGetFunc(vm)
+	u.tableJoinKeyFunc(vm)
 }
 
-func tableJoinKeyFunc(vm *otto.Otto) {
+func (u *js) tableJoinKeyFunc(vm *otto.Otto) {
 	vm.Set("table_joinkey", func(call otto.FunctionCall) otto.Value {
 		left, err := call.Argument(0).ToString()
 		if err != nil {
@@ -156,13 +146,13 @@ func tableJoinKeyFunc(vm *otto.Otto) {
 	})
 }
 
-func tableAddFunc(vm *otto.Otto) {
+func (u *js) tableAddFunc(vm *otto.Otto) {
 	vm.Set("table_add", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTable(id)
+		tab, err := u.getTable(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -178,13 +168,13 @@ func tableAddFunc(vm *otto.Otto) {
 	})
 }
 
-func tableReplaceFunc(vm *otto.Otto) {
+func (u *js) tableReplaceFunc(vm *otto.Otto) {
 	vm.Set("table_replace", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTable(id)
+		tab, err := u.getTable(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -200,13 +190,13 @@ func tableReplaceFunc(vm *otto.Otto) {
 	})
 }
 
-func tableDelFunc(vm *otto.Otto) {
+func (u *js) tableDelFunc(vm *otto.Otto) {
 	vm.Set("table_del", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTable(id)
+		tab, err := u.getTable(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -222,13 +212,13 @@ func tableDelFunc(vm *otto.Otto) {
 	})
 }
 
-func tableGetFunc(vm *otto.Otto) {
+func (u *js) tableGetFunc(vm *otto.Otto) {
 	vm.Set("table_get", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTabler(id)
+		tab, err := u.getTable(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -256,13 +246,13 @@ type tabler interface {
 	Save() (kvs []*types.KeyValue, err error)
 }
 
-func tableSave(vm *otto.Otto) {
+func (u *js) tableSave(vm *otto.Otto) {
 	vm.Set("table_save", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTabler(id)
+		tab, err := u.getTabler(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -274,13 +264,13 @@ func tableSave(vm *otto.Otto) {
 	})
 }
 
-func tableCloseFunc(vm *otto.Otto) {
+func (u *js) tableCloseFunc(vm *otto.Otto) {
 	vm.Set("table_close", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		err = closeTable(id)
+		err = u.closeTable(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -288,13 +278,13 @@ func tableCloseFunc(vm *otto.Otto) {
 	})
 }
 
-func tableQueryFunc(vm *otto.Otto) {
+func (u *js) tableQueryFunc(vm *otto.Otto) {
 	vm.Set("table_query", func(call otto.FunctionCall) otto.Value {
 		id, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		tab, err := getTabler(id)
+		tab, err := u.getTabler(id)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -333,7 +323,7 @@ func tableQueryFunc(vm *otto.Otto) {
 			return errReturn(vm, err)
 		}
 		_, isjoin := tab.(*table.JoinTable)
-		querylist := make([]*otto.Object, len(rows))
+		querylist := make([]interface{}, len(rows))
 		for i := 0; i < len(rows); i++ {
 			if isjoin {
 				joindata, ok := rows[i].Data.(*table.JoinData)
@@ -348,16 +338,18 @@ func tableQueryFunc(vm *otto.Otto) {
 				if !ok {
 					return errReturn(vm, errors.New("rightdata is not jslog"))
 				}
-				obj := newObject(vm).setValue("left", leftdata.Data)
-				obj.setValue("right", rightdata.Data)
-				querylist[i] = obj.object()
+				obj := make(map[string]interface{})
+				obj["left"] = leftdata.Data
+				obj["right"] = rightdata.Data
+				querylist[i] = obj
 			} else {
 				leftdata, ok := rows[i].Data.(*jsproto.JsLog)
 				if !ok {
 					return errReturn(vm, errors.New("data is not JsLog"))
 				}
-				obj := newObject(vm).setValue("left", leftdata.Data)
-				querylist[i] = obj.object()
+				obj := make(map[string]interface{})
+				obj["left"] = leftdata.Data
+				querylist[i] = obj
 			}
 		}
 		retvalue, err := vm.ToValue(querylist)
@@ -368,13 +360,13 @@ func tableQueryFunc(vm *otto.Otto) {
 	})
 }
 
-func tableJoinFunc(vm *otto.Otto) {
+func (u *js) tableJoinFunc(vm *otto.Otto) {
 	vm.Set("new_join_table", func(call otto.FunctionCall) otto.Value {
 		left, err := call.Argument(0).ToInteger()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		lefttab, err := getTable(left)
+		lefttab, err := u.getTable(left)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -382,7 +374,7 @@ func tableJoinFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		righttab, err := getTable(right)
+		righttab, err := u.getTable(right)
 		if err != nil {
 			return errReturn(vm, err)
 		}
@@ -395,18 +387,9 @@ func tableJoinFunc(vm *otto.Otto) {
 			return errReturn(vm, err)
 		}
 		var id int64
-		for {
-			id = atomic.AddInt64(&globalHanldeID, 1) % maxjsint
-			if _, ok := globalTableHandle.Load(id); ok {
-				continue
-			}
-			if id < 0 {
-				atomic.StoreInt64(&globalHanldeID, 0)
-				continue
-			}
-			break
-		}
-		globalTableHandle.Store(id, join)
+		u.globalHanldeID++
+		id = u.globalHanldeID
+		u.globalTableHandle.Store(id, join)
 		return newObject(vm).setValue("id", id).value()
 	})
 }
@@ -428,18 +411,25 @@ handle := new_join_table(left, right, listofjoinindex)
 //JSONRow meta
 type JSONRow struct {
 	*jsproto.JsLog
-	config map[string]string
-	data   map[string]interface{}
+	config       map[string]string
+	data         map[string]interface{}
+	lastdata     types.Message
+	isint        *regexp.Regexp
+	isfloat      *regexp.Regexp
+	defaultvalue string
 }
 
 //NewJSONRow 创建一个row
 func NewJSONRow(config string, defaultvalue string) (*JSONRow, error) {
 	row := &JSONRow{}
+	row.isint = regexp.MustCompile(`%\d*d`)
+	row.isfloat = regexp.MustCompile(`%[\.\d]*f`)
 	row.config = make(map[string]string)
-	err := json.Unmarshal([]byte(config), row.config)
+	err := json.Unmarshal([]byte(config), &row.config)
 	if err != nil {
 		return nil, err
 	}
+	row.defaultvalue = defaultvalue
 	row.JsLog = &jsproto.JsLog{Data: defaultvalue}
 	err = row.parse()
 	if err != nil {
@@ -450,16 +440,25 @@ func NewJSONRow(config string, defaultvalue string) (*JSONRow, error) {
 
 //CreateRow 创建一行
 func (row *JSONRow) CreateRow() *table.Row {
-	return &table.Row{Data: &jsproto.JsLog{}}
+	return &table.Row{Data: &jsproto.JsLog{Data: row.defaultvalue}}
 }
 
 func (row *JSONRow) parse() error {
 	row.data = make(map[string]interface{})
-	return json.Unmarshal([]byte(row.JsLog.Data), row.data)
+	d := json.NewDecoder(bytes.NewBufferString(row.JsLog.Data))
+	d.UseNumber()
+	if err := d.Decode(&row.data); err != nil {
+		return err
+	}
+	return nil
 }
 
 //SetPayload 设置行的内容
 func (row *JSONRow) SetPayload(data types.Message) error {
+	if row.lastdata == data {
+		return nil
+	}
+	row.lastdata = data
 	if rowdata, ok := data.(*jsproto.JsLog); ok {
 		row.JsLog = rowdata
 		return row.parse()
@@ -471,6 +470,24 @@ func (row *JSONRow) SetPayload(data types.Message) error {
 func (row *JSONRow) Get(key string) ([]byte, error) {
 	if format, ok := row.config[key]; ok {
 		if data, ok := row.data[key]; ok {
+			if n, ok := data.(json.Number); ok {
+				if row.isint.Match([]byte(format)) { //ini
+					num, err := n.Int64()
+					if err != nil {
+						return nil, err
+					}
+					return []byte(fmt.Sprintf(format, num)), nil
+				} else if row.isfloat.Match([]byte(format)) {
+					num, err := n.Float64()
+					if err != nil {
+						return nil, err
+					}
+					return []byte(fmt.Sprintf(format, num)), nil
+				} else {
+					s := n.String()
+					return []byte(fmt.Sprintf(format, s)), nil
+				}
+			}
 			return []byte(fmt.Sprintf(format, data)), nil
 		}
 	}
