@@ -47,17 +47,22 @@ Exec.prototype.Guess = function(args) {
     match.id = this.txID()
     match.addr = this.context.from
     match.hash = this.context.txhash
+    match.num = args.num
     var game = this.kvc.get(match.gameid)
     if (!game) {
-        throwerr("game id not found")
+        throwerr("guess: game id not found")
     }
     if (game.status != 1) {
-        throwerr("game status not open")
+        throwerr("guess: game status not open")
+    }
+    if (this.context.from == game.addr) {
+        throwerr("guess: game addr and match addr is same")
     }
     if (match.bet < 1 * COINS || match.bet > game.bet / RAND_MAX) {
         throwerr("match bet litte than 1 or big than game.bet/10")
     }
-    var err = this.acc.execFrozen(this.name, this.context.from, game.bet)
+    var err = this.acc.execFrozen(this.name, this.context.from, match.bet)
+    console.log(this.name, this.context.from, err)
     throwerr(err)
     this.kvc.add(match.id, match)
     this.kvc.addlog(match)
@@ -65,18 +70,19 @@ Exec.prototype.Guess = function(args) {
 }
 
 Exec.prototype.CloseGame = function(args) {
-    var local = new MatchLocalTable(this.kvc)
-    var game = this.kvc.get(args.id)
+    var local = MatchLocalTable(this.kvc)
+    var game = this.kvc.get(args.gameid)
     if (!game) {
         throwerr("game id not found")
     }
-    var matches = local.getmath(args.id)
+    var querykey = local.get("gameid", args)
+    var matches = local.query("gameid", querykey, "", 0, 1)
     if (!matches) {
         matches = []
     }
     var n = -1
-    for (var i = 0; i < RAND_MAX; i ++) {
-        if (sha256(args.randstr + i) == game.randhash) {
+    for (var i = 0; i < RAND_MAX; i++) {
+        if (Sha256(args.randstr + i) == game.randhash) {
             n = i
         }
     }
@@ -85,7 +91,7 @@ Exec.prototype.CloseGame = function(args) {
     }
     //必须可以让用户可以有一个区块的竞猜时间
     if (this.context.height - game.height < MIN_WAIT_BLOCK) {
-        throwerr("close game must wait 2 block")
+        throwerr("close game must wait "+MIN_WAIT_BLOCK+" block")
     }
     for (var i = 0; i < matches.length; i++) {
         var match = matches[i]
@@ -158,27 +164,22 @@ Exec.prototype.ForceCloseGame = function(args) {
 }
 
 ExecLocal.prototype.NewGame = function(args) {
-    var local = MatchGameTable(this.kvc)
-    local.addlogs(this.logs)
-    local.save()
-    return this.kvc.receipt()
+    return localprocess.call(this, args)
 }
 
 ExecLocal.prototype.Guess = function(args) {
-    var local = MatchGameTable(this.kvc)
-    local.addlogs(this.logs)
-    local.save()
-    return this.kvc.receipt()
+    return localprocess.call(this, args)
 }
 
 ExecLocal.prototype.CloseGame = function(args) {
-    var local = MatchGameTable(this.kvc)
-    local.addlogs(this.logs)
-    local.save()
-    return this.kvc.receipt()
+    return localprocess.call(this, args)
 }
 
 ExecLocal.prototype.ForceCloseGame = function(args) {
+    return localprocess.call(this, args)
+}
+
+function localprocess(args) {
     var local = MatchGameTable(this.kvc)
     local.addlogs(this.logs)
     local.save()
@@ -187,16 +188,16 @@ ExecLocal.prototype.ForceCloseGame = function(args) {
 
 Query.prototype.ListGameByAddr = function(args) {
     var local = GameLocalTable(this.kvc)
-    return local.query("addr", args.addr, args.primaryKey, args.count, args.direction)
+    var q = local.query("addr", args.addr, args.primaryKey, args.count, args.direction)
+    return querytojson(q)
 }
 
-/*
-game ->(1 : n) match
-game.gameid -> primary
+Query.prototype.ListMatchByAddr = function(args) {
+    var local = MatchGameTable(this.kvc)
+    var q= local.query("addr#status", args["addr#status"], args.primaryKey, args.count, args.direction)
+    return querytojson(q)
+}
 
-match.gameid -> fk
-match.id -> primary
-*/
 function GameLocalTable(kvc) {
     this.config = {
         "#tablename" : "game",
