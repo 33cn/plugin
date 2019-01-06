@@ -1,6 +1,7 @@
 package executor_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -134,17 +135,96 @@ func TestJsGame(t *testing.T) {
 	block = mocker.GetLastBlock()
 	balance = mocker.GetExecAccount(block.StateHash, "user.jsvm."+contractName, mocker.GetHotAddress()).Balance
 	assert.Equal(t, 100*types.Coin, balance)
+
+	reqtx = &rpctypes.CreateTx{
+		To:          address.ExecAddress("user.jsvm." + contractName),
+		Amount:      100 * types.Coin,
+		Note:        "12312",
+		IsWithdraw:  false,
+		IsToken:     false,
+		TokenSymbol: "",
+		ExecName:    "user.jsvm." + contractName,
+	}
+	err = mocker.GetJSONC().Call("Chain33.CreateRawTransaction", reqtx, &txhex)
+	assert.Nil(t, err)
+	hash, err = mocker.SendAndSign(mocker.GetGenesisKey(), txhex)
+	assert.Nil(t, err)
+	txinfo, err = mocker.WaitTx(hash)
+	assert.Nil(t, err)
+	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
+	block = mocker.GetLastBlock()
+	balance = mocker.GetExecAccount(block.StateHash, "user.jsvm."+contractName, mocker.GetGenesisAddress()).Balance
+	assert.Equal(t, 100*types.Coin, balance)
+	t.Log(mocker.GetGenesisAddress())
 	//2.2 调用 hello 函数(随机数，用nonce)
 	privhash := common.Sha256(mocker.GetHotKey().Bytes())
 	nonce := rand.Int63()
 	num := rand.Int63() % 10
-	realhash := common.Sha256([]byte(string(privhash) + ":" + fmt.Sprint(nonce)))
-	myhash := common.ToHex(common.Sha256([]byte(string(realhash) + fmt.Sprint(num))))
+	realhash := common.ToHex(common.Sha256([]byte(string(privhash) + ":" + fmt.Sprint(nonce))))
+	myhash := common.ToHex(common.Sha256([]byte(realhash + fmt.Sprint(num))))
 
 	call := &jsproto.Call{
 		Funcname: "NewGame",
 		Name:     contractName,
 		Args:     fmt.Sprintf(`{"bet": %d, "randhash" : "%s"}`, 100*types.Coin, myhash),
+	}
+	req = &rpctypes.CreateTxIn{
+		Execer:     "user." + ptypes.JsX + "." + contractName,
+		ActionName: "Call",
+		Payload:    types.MustPBToJSON(call),
+	}
+	err = mocker.GetJSONC().Call("Chain33.CreateTransaction", req, &txhex)
+	assert.Nil(t, err)
+	hash, err = mocker.SendAndSignNonce(mocker.GetHotKey(), txhex, nonce)
+	assert.Nil(t, err)
+	txinfo, err = mocker.WaitTx(hash)
+	assert.Nil(t, err)
+	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
+	gameid := txinfo.Height*100000 + txinfo.Index
+	//2.3 guess a number (win)
+	call = &jsproto.Call{
+		Funcname: "Guess",
+		Name:     contractName,
+		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.Coin, gameid, num),
+	}
+	req = &rpctypes.CreateTxIn{
+		Execer:     "user." + ptypes.JsX + "." + contractName,
+		ActionName: "Call",
+		Payload:    types.MustPBToJSON(call),
+	}
+	err = mocker.GetJSONC().Call("Chain33.CreateTransaction", req, &txhex)
+	assert.Nil(t, err)
+	hash, err = mocker.SendAndSignNonce(mocker.GetGenesisKey(), txhex, nonce)
+	assert.Nil(t, err)
+	txinfo, err = mocker.WaitTx(hash)
+	assert.Nil(t, err)
+	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
+
+	//2.4 guess a num (failed)
+	call = &jsproto.Call{
+		Funcname: "Guess",
+		Name:     contractName,
+		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.Coin, gameid, num+1),
+	}
+	req = &rpctypes.CreateTxIn{
+		Execer:     "user." + ptypes.JsX + "." + contractName,
+		ActionName: "Call",
+		Payload:    types.MustPBToJSON(call),
+	}
+	err = mocker.GetJSONC().Call("Chain33.CreateTransaction", req, &txhex)
+	assert.Nil(t, err)
+	t.Log(mocker.GetHotAddress())
+	hash, err = mocker.SendAndSignNonce(mocker.GetGenesisKey(), txhex, nonce)
+	assert.Nil(t, err)
+	txinfo, err = mocker.WaitTx(hash)
+	assert.Nil(t, err)
+	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
+
+	//2.5 close the game
+	call = &jsproto.Call{
+		Funcname: "CloseGame",
+		Name:     contractName,
+		Args:     fmt.Sprintf(`{"gameid":%d, "randstr":"%s"}`, gameid, realhash),
 	}
 	req = &rpctypes.CreateTxIn{
 		Execer:     "user." + ptypes.JsX + "." + contractName,
@@ -159,8 +239,7 @@ func TestJsGame(t *testing.T) {
 	txinfo, err = mocker.WaitTx(hash)
 	assert.Nil(t, err)
 	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
-
-	//3. query 函数查询
+	//3.1 query game 函数查询
 	call = &jsproto.Call{
 		Funcname: "ListGameByAddr",
 		Name:     contractName,
@@ -172,6 +251,37 @@ func TestJsGame(t *testing.T) {
 		Payload:  types.MustPBToJSON(call),
 	}
 	var queryresult jsproto.QueryResult
+	err = mocker.GetJSONC().Call("Chain33.Query", query, &queryresult)
+	assert.Nil(t, err)
+	t.Log(queryresult.Data)
+
+	//3.2 query match -> status 函数
+	call = &jsproto.Call{
+		Funcname: "JoinKey",
+		Name:     contractName,
+		Args:     fmt.Sprintf(`{"left":"%s", "right" : "%s"}`, mocker.GetGenesisAddress(), "2"),
+	}
+	query = &rpctypes.Query4Jrpc{
+		Execer:   "user." + ptypes.JsX + "." + contractName,
+		FuncName: "Query",
+		Payload:  types.MustPBToJSON(call),
+	}
+	err = mocker.GetJSONC().Call("Chain33.Query", query, &queryresult)
+	assert.Nil(t, err)
+	joinkey := queryresult.Data
+	reqjson := make(map[string]interface{})
+	reqjson["addr#status"] = joinkey
+	reqdata, _ := json.Marshal(reqjson)
+	call = &jsproto.Call{
+		Funcname: "ListMatchByAddr",
+		Name:     contractName,
+		Args:     string(reqdata),
+	}
+	query = &rpctypes.Query4Jrpc{
+		Execer:   "user." + ptypes.JsX + "." + contractName,
+		FuncName: "Query",
+		Payload:  types.MustPBToJSON(call),
+	}
 	err = mocker.GetJSONC().Call("Chain33.Query", query, &queryresult)
 	assert.Nil(t, err)
 	t.Log(queryresult.Data)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/common/db"
@@ -468,28 +469,34 @@ func (row *JSONRow) SetPayload(data types.Message) error {
 
 //Get value of row
 func (row *JSONRow) Get(key string) ([]byte, error) {
+	v, err := row.get(key)
+	return v, err
+}
+
+func (row *JSONRow) get(key string) ([]byte, error) {
 	if format, ok := row.config[key]; ok {
 		if data, ok := row.data[key]; ok {
-			if n, ok := data.(json.Number); ok {
-				if row.isint.Match([]byte(format)) { //ini
-					num, err := n.Int64()
-					if err != nil {
-						return nil, err
-					}
-					return []byte(fmt.Sprintf(format, num)), nil
-				} else if row.isfloat.Match([]byte(format)) {
-					num, err := n.Float64()
-					if err != nil {
-						return nil, err
-					}
-					return []byte(fmt.Sprintf(format, num)), nil
-				} else {
-					s := n.String()
-					return []byte(fmt.Sprintf(format, s)), nil
+			if row.isint.Match([]byte(format)) { //int
+				s := fmt.Sprint(data)
+				num, err := strconv.ParseInt(s, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				return []byte(fmt.Sprintf(format, num)), nil
+			} else if row.isfloat.Match([]byte(format)) { //float
+				s := fmt.Sprint(data)
+				num, err := strconv.ParseFloat(s, 64)
+				if err != nil {
+					return nil, err
+				}
+				return []byte(fmt.Sprintf(format, num)), nil
+			} else { //string
+				if n, ok := data.(json.Number); ok {
+					data = n.String()
 				}
 			}
 			return []byte(fmt.Sprintf(format, data)), nil
 		}
 	}
-	return nil, types.ErrNotFound
+	return nil, errors.New("get key " + key + "from data err")
 }

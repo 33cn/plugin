@@ -29,11 +29,14 @@ Table.prototype.joinkey = function(left, right) {
 }
 
 Table.prototype.get = function(key, row) {
+    if (!isstring(row)) {
+        row = tojson(row)
+    }
     return table_get(this.id, key, row)
 }
 
-Table.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
-    if (!count) {
+function query_list(indexName, prefix, primaryKey, count, direction) {
+    if (count !== 0 && !count) {
         count = 20
     }
     if (!direction) {
@@ -49,7 +52,14 @@ Table.prototype.query = function(indexName, prefix, primaryKey, count, direction
         indexName = ""
     }
     var q = table_query(this.id, indexName, prefix, primaryKey, count, direction)
-    return tojson(q)
+    if (q.err) {
+        return null
+    }
+    return q
+}
+
+Table.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
+    return query_list.call(this, indexName, prefix, primaryKey, count, direction)
 }
 
 Table.prototype.replace = function(obj) {
@@ -106,10 +116,29 @@ function print(obj) {
 
 JoinTable.prototype.save = function() {
     var ret = table_save(this.id)
+    print(ret)
     if (this.kvc) {
         this.kvc.save(ret)
     }
     return ret
+}
+
+JoinTable.prototype.get = function(key, row) {
+    if (!isstring(row)) {
+        row = tojson(row)
+    }
+    return table_get(this.id, key, row)
+}
+
+JoinTable.prototype.query = function(indexName, prefix, primaryKey, count, direction) {
+    return query_list.call(this, indexName, prefix, primaryKey, count, direction)
+}
+
+function querytojson(data) {
+    if (!data) {
+        return "[]"
+    }
+    return tojson(data)
 }
 
 JoinTable.prototype.close = function() {
@@ -419,6 +448,10 @@ function Query(context) {
     if (typeof QueryInit === "function") {
         QueryInit.call(this)
     }
+}
+
+Query.prototype.JoinKey = function(args) {
+    return table_joinkey(args.left, args.right).value
 }
 
 function throwerr(err) {
