@@ -600,7 +600,7 @@ func (client *client) CreateBlock() {
 				if err == nil {
 					currSeq = newSeq
 					lastSeqMainHash = newSeqMainHash
-					continue;
+					continue
 				}
 			}
 			time.Sleep(time.Second * time.Duration(blockSec))
