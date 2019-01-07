@@ -9,14 +9,15 @@ import (
 	"sort"
 	"strconv"
 
+	"strings"
+	"time"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
-	"time"
-	"strings"
 )
 
 // Action 斗牛action结构
@@ -527,11 +528,11 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 // 筛选合适的牌局
 func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBull {
 	var gameRet *pkt.PokerBull
-	for num := len(ids)-1; num > -1; num-- {
+	for num := len(ids) - 1; num > -1; num-- {
 		id := ids[num]
 		game, err := action.readGame(id)
 		if err != nil {
-			logger.Error("Poker bull game start", "GameID", id,  "addr", action.fromaddr, "execaddr", action.execaddr,
+			logger.Error("Poker bull game start", "GameID", id, "addr", action.fromaddr, "execaddr", action.execaddr,
 				"get game failed", "err", err)
 			continue
 		}
@@ -635,10 +636,10 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 
 	//加入当前玩家信息
 	game.Players = append(game.Players, &pkt.PBPlayer{
-		Address: action.fromaddr,
-		TxHash:  txrng,
-		Ready:   false,
-		MatchTime:time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
+		Address:   action.fromaddr,
+		TxHash:    txrng,
+		Ready:     false,
+		MatchTime: time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
 	})
 
 	// 如果人数达标，则发牌计算斗牛结果
@@ -795,7 +796,7 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 	}
 
 	if game.Status == pkt.PBGameActionQuit {
-		logger.Error("Quit pokerbull game","GameID", pbend.GetGameId(), "value", game.Value, "err", "already game over")
+		logger.Error("Quit pokerbull game", "GameID", pbend.GetGameId(), "value", game.Value, "err", "already game over")
 		return nil, fmt.Errorf("already game over")
 	}
 
@@ -859,15 +860,15 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 	logger.Info(fmt.Sprintf("Play pokerbull game %s, player:%s", pbplay.GameId, strings.Join(pbplay.Address, ",")))
 	// 校验签名地址
 	if action.fromaddr != pkt.PlatformSignAddress {
-		logger.Error("Pokerbull game play","GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
-			pbplay.Value, "players", strings.Join(pbplay.Address, ","),"err", "permission denied")
+		logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+			pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "permission denied")
 		return nil, fmt.Errorf("game signing address not support")
 	}
 
-    // 检查玩家人数
+	// 检查玩家人数
 	if len(pbplay.Address) < pkt.MinPlayerNum || len(pbplay.Address) > pkt.MaxPlayerNum {
-		logger.Error("Pokerbull game play","GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
-			pbplay.Value, "players", strings.Join(pbplay.Address, ","),"err", "invalid player number")
+		logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+			pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "invalid player number")
 		return nil, fmt.Errorf("Invalid player number")
 	}
 
@@ -880,23 +881,23 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 	}
 
 	// 游戏存在则校验游戏状态，不存在则创建游戏
-	game,_ := action.readGame(pbplay.GetGameId())
+	game, _ := action.readGame(pbplay.GetGameId())
 	if game != nil {
 		if game.Status == pkt.PBGameActionQuit {
-			logger.Error("Pokerbull game play","GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
-				pbplay.Value, "players", strings.Join(pbplay.Address, ","),"err", "already game over")
+			logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+				pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "already game over")
 			return nil, fmt.Errorf("already game over")
 		}
 
-		if game.Round + 1 != pbplay.Round {
-			logger.Error("Pokerbull game play","GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
-				pbplay.Value, "players", strings.Join(pbplay.Address, ","),"err", "game round error")
-		    return nil, fmt.Errorf("game round error")
+		if game.Round+1 != pbplay.Round {
+			logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+				pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "game round error")
+			return nil, fmt.Errorf("game round error")
 		}
 
 		if game.Value != pbplay.Value {
-			logger.Error("Pokerbull game play","GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
-				pbplay.Value, "players", strings.Join(pbplay.Address, ","),"err", "game value error")
+			logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+				pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "game value error")
 			return nil, fmt.Errorf("game value error")
 		}
 
@@ -909,7 +910,7 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 		}
 
 		// 更新玩家信息
-		for i,player := range game.Players {
+		for i, player := range game.Players {
 			player.TxHash = rands[i]
 			player.MatchTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
 		}
