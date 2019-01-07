@@ -600,7 +600,16 @@ FOR_LOOP:
 			} else if typeID == ttypes.VoteSetMaj23ID {
 				tmp := msg.Msg.(*tmtypes.VoteSetMaj23Msg)
 				pc.myState.SetPeerMaj23(tmp.Height, int(tmp.Round), byte(tmp.Type), pc.id, tmp.BlockID)
-				myVotes := pc.myState.GetPrevotesState(tmp.Height, int(tmp.Round), tmp.BlockID)
+				var myVotes *ttypes.BitArray
+				switch byte(tmp.Type) {
+				case ttypes.VoteTypePrevote:
+					myVotes = pc.myState.GetPrevotesState(tmp.Height, int(tmp.Round), tmp.BlockID)
+				case ttypes.VoteTypePrecommit:
+					myVotes = pc.myState.GetPrecommitsState(tmp.Height, int(tmp.Round), tmp.BlockID)
+				default:
+					tendermintlog.Error("Bad VoteSetBitsMessage field Type", "type", byte(tmp.Type))
+					return
+				}
 				if myVotes != nil && myVotes.TendermintBitArray != nil {
 					voteSetBitMsg := &tmtypes.VoteSetBitsMsg{
 						Height:  tmp.Height,
@@ -617,7 +626,16 @@ FOR_LOOP:
 			} else if typeID == ttypes.VoteSetBitsID {
 				tmp := msg.Msg.(*tmtypes.VoteSetBitsMsg)
 				if pc.myState.Height == tmp.Height {
-					myVotes := pc.myState.GetPrevotesState(tmp.Height, int(tmp.Round), tmp.BlockID)
+					var myVotes *ttypes.BitArray
+					switch byte(tmp.Type) {
+					case ttypes.VoteTypePrevote:
+						myVotes = pc.myState.GetPrevotesState(tmp.Height, int(tmp.Round), tmp.BlockID)
+					case ttypes.VoteTypePrecommit:
+						myVotes = pc.myState.GetPrecommitsState(tmp.Height, int(tmp.Round), tmp.BlockID)
+					default:
+						tendermintlog.Error("Bad VoteSetBitsMessage field Type", "type", byte(tmp.Type))
+						return
+					}
 					pc.state.ApplyVoteSetBitsMessage(tmp, myVotes)
 				} else {
 					pc.state.ApplyVoteSetBitsMessage(tmp, nil)
@@ -1059,7 +1077,8 @@ func (ps *PeerConnState) PickVoteToSend(votes ttypes.VoteSetReader) (vote *ttype
 	}
 
 	if index, ok := votes.BitArray().Sub(psVotes).PickRandom(); ok {
-		tendermintlog.Debug("PickVoteToSend", "height", height, "index", index, "type", voteType, "selfVotes", votes.BitArray().String(),
+		tendermintlog.Debug("PickVoteToSend", "peer(H/R)", fmt.Sprintf("%v/%v", ps.Height, ps.Round),
+			"vote(H/R)", fmt.Sprintf("%v/%v", height, round), "type", voteType, "selfVotes", votes.BitArray().String(),
 			"peerVotes", psVotes.String(), "peerip", ps.ip.String())
 		ps.setHasVote(height, round, voteType, index)
 		return votes.GetByIndex(index), true
@@ -1211,9 +1230,11 @@ func (ps *PeerConnState) ApplyNewRoundStepMessage(msg *tmtypes.NewRoundStepMsg) 
 	ps.Step = ttypes.RoundStepType(msg.Step)
 	ps.StartTime = startTime
 
+	tendermintlog.Debug("ApplyNewRoundStepMessage", "peerip", ps.ip.String(), "peer(H/R)", fmt.Sprintf("%v/%v", psHeight, psRound),
+		"msg(H/R/S)", fmt.Sprintf("%v/%v/%v", msg.Height, msg.Round, ps.Step))
+
 	if psHeight != msg.Height || psRound != int(msg.Round) {
-		tendermintlog.Debug("Reset Proposal, Prevotes, Precommits", "peerip", ps.ip.String(), "peer(H/R)", fmt.Sprintf("%v/%v", psHeight, psRound),
-			"msg(H/R)", fmt.Sprintf("%v/%v", msg.Height, msg.Round))
+		tendermintlog.Debug("Reset Proposal, Prevotes, Precommits", "peerip", ps.ip.String(), "peer(H/R)", fmt.Sprintf("%v/%v", psHeight, psRound))
 		ps.Proposal = false
 		ps.ProposalBlock = false
 		ps.ProposalPOLRound = -1
@@ -1227,10 +1248,11 @@ func (ps *PeerConnState) ApplyNewRoundStepMessage(msg *tmtypes.NewRoundStepMsg) 
 		// Preserve psCatchupCommit!
 		// NOTE: We prefer to use prs.Precommits if
 		// pr.Round matches pr.CatchupCommitRound.
+		tendermintlog.Debug("Reset Precommits to CatchupCommit", "peerip", ps.ip.String(), "peer(H/R)", fmt.Sprintf("%v/%v", psHeight, psRound))
 		ps.Precommits = psCatchupCommit
 	}
 	if psHeight != msg.Height {
-		tendermintlog.Debug("Reset LastCommit, CatchupCommit", "peerip", ps.ip.String())
+		tendermintlog.Debug("Reset LastCommit, CatchupCommit", "peerip", ps.ip.String(), "peer(H/R)", fmt.Sprintf("%v/%v", psHeight, psRound))
 		// Shift Precommits to LastCommit.
 		if psHeight+1 == msg.Height && psRound == int(msg.LastCommitRound) {
 			ps.LastCommitRound = int(msg.LastCommitRound)

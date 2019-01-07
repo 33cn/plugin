@@ -254,7 +254,7 @@ func (t *trade) replyReplySellOrderfromID(key []byte) *pty.ReplySellOrder {
 			return sellOrder2reply(sellorder)
 		}
 	} else { // txhash as key
-		txResult, err := getTx(key, t.GetLocalDB())
+		txResult, err := getTx(key, t.GetLocalDB(), t.GetAPI())
 		tradelog.Debug("GetOnesSellOrder ", "load txhash", string(key))
 		if err != nil {
 			return nil
@@ -272,7 +272,7 @@ func (t *trade) replyReplyBuyOrderfromID(key []byte) *pty.ReplyBuyOrder {
 			return buyOrder2reply(buyOrder)
 		}
 	} else { // txhash as key
-		txResult, err := getTx(key, t.GetLocalDB())
+		txResult, err := getTx(key, t.GetLocalDB(), t.GetAPI())
 		tradelog.Debug("replyReplyBuyOrderfromID ", "load txhash", string(key))
 		if err != nil {
 			return nil
@@ -601,7 +601,7 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 	tradelog.Debug("trade Query", "id", string(key), "check-prefix", sellIDPrefix)
 	if strings.HasPrefix(string(key), sellIDPrefix) {
 		txHash := strings.Replace(string(key), sellIDPrefix, "0x", 1)
-		txResult, err := getTx([]byte(txHash), t.GetLocalDB())
+		txResult, err := getTx([]byte(txHash), t.GetLocalDB(), t.GetAPI())
 		tradelog.Debug("loadOrderFromKey ", "load txhash", txResult)
 		if err != nil {
 			return nil
@@ -614,10 +614,11 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 			return nil
 		}
 		reply.TradedBoardlot = sellOrder.SoldBoardlot
+		reply.Status = sellOrder.Status
 		return reply
 	} else if strings.HasPrefix(string(key), buyIDPrefix) {
 		txHash := strings.Replace(string(key), buyIDPrefix, "0x", 1)
-		txResult, err := getTx([]byte(txHash), t.GetLocalDB())
+		txResult, err := getTx([]byte(txHash), t.GetLocalDB(), t.GetAPI())
 		tradelog.Debug("loadOrderFromKey ", "load txhash", txResult)
 		if err != nil {
 			return nil
@@ -629,9 +630,10 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 			return nil
 		}
 		reply.TradedBoardlot = buyOrder.BoughtBoardlot
+		reply.Status = buyOrder.Status
 		return reply
 	}
-	txResult, err := getTx(key, t.GetLocalDB())
+	txResult, err := getTx(key, t.GetLocalDB(), t.GetAPI())
 	tradelog.Debug("loadOrderFromKey ", "load txhash", string(key))
 	if err != nil {
 		return nil
@@ -642,7 +644,7 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	fromKey := []byte("")
 	if len(req.FromKey) != 0 {
-		order := t.loadOrderFromKey(fromKey)
+		order := t.loadOrderFromKey([]byte(req.FromKey))
 		if order == nil {
 			tradelog.Error("GetOnesOrderWithStatus", "key not exist", req.FromKey)
 			return nil, types.ErrInvalidParam
