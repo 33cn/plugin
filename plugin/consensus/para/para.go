@@ -594,14 +594,15 @@ func (client *client) CreateBlock() {
 
 		txs, blockOnMain, seqTy, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
+			incSeqFlag = false
 			if err == paracross.ErrParaCurHashNotMatch {
 				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq)
 				if err == nil {
 					currSeq = newSeq
 					lastSeqMainHash = newSeqMainHash
+					continue;
 				}
 			}
-			incSeqFlag = false
 			time.Sleep(time.Second * time.Duration(blockSec))
 			continue
 		}
