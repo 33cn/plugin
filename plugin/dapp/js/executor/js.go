@@ -3,7 +3,7 @@ package executor
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/33cn/chain33/common"
@@ -28,7 +28,7 @@ func init() {
 		panic(err)
 	}
 	execaddressFunc(basevm)
-	registerTableFunc(basevm)
+	sha256Func(basevm)
 }
 
 var isinit int64
@@ -48,7 +48,9 @@ func Init(name string, sub []byte) {
 
 type js struct {
 	drivers.DriverBase
-	prefix []byte
+	prefix            []byte
+	globalTableHandle sync.Map
+	globalHanldeID    int64
 }
 
 func newjs() drivers.Driver {
@@ -173,6 +175,7 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 		Difficulty: u.GetDifficulty(),
 		TxHash:     common.ToHex(hash[:]),
 		Index:      index,
+		From:       tx.From(),
 	}
 }
 
@@ -222,7 +225,7 @@ func (u *js) localdbFunc(vm *otto.Otto, name string) {
 
 func (u *js) execnameFunc(vm *otto.Otto, name string) {
 	vm.Set("execname", func(call otto.FunctionCall) otto.Value {
-		return okReturn(vm, types.ExecName("user.js."+name))
+		return okReturn(vm, types.ExecName("user."+ptypes.JsX+"."+name))
 	})
 }
 
@@ -279,7 +282,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
 	u.registerAccountFunc(vm)
-	u.newTableFunc(vm, name)
+	u.registerTableFunc(vm, name)
 	return vm, nil
 }
 
@@ -358,26 +361,28 @@ func (u *js) Allow(tx *types.Transaction, index int) error {
 	return types.ErrNotAllow
 }
 
-func createKVObject(vm *otto.Otto, kvs []*types.KeyValue) otto.Value {
-	obj := newObjectString(vm, "([])")
+func createKVObject(vm *otto.Otto, kvs []*types.KeyValue) []interface{} {
+	data := make([]interface{}, len(kvs))
 	for i := 0; i < len(kvs); i++ {
-		item := newObject(vm).setValue("key", string(kvs[i].Key))
-		item.setValue("value", string(kvs[i].Value))
-		item.setValue("prefix", true)
-		obj.setValue(fmt.Sprint(i), item)
+		item := make(map[string]interface{})
+		item["key"] = string(kvs[i].Key)
+		item["value"] = string(kvs[i].Value)
+		item["prefix"] = true
+		data[i] = item
 	}
-	return obj.value()
+	return data
 }
 
-func createLogsObject(vm *otto.Otto, logs []*types.ReceiptLog) otto.Value {
-	obj := newObjectString(vm, "([])")
+func createLogsObject(vm *otto.Otto, logs []*types.ReceiptLog) []interface{} {
+	data := make([]interface{}, len(logs))
 	for i := 0; i < len(logs); i++ {
-		item := newObject(vm).setValue("ty", logs[i].Ty)
-		item.setValue("log", string(logs[i].Log))
-		item.setValue("format", "proto")
-		obj.setValue(fmt.Sprint(i), item)
+		item := make(map[string]interface{})
+		item["ty"] = logs[i].Ty
+		item["log"] = string(logs[i].Log)
+		item["format"] = "proto"
+		data[i] = item
 	}
-	return obj.value()
+	return data
 }
 
 func accountReturn(vm *otto.Otto, acc *types.Account) otto.Value {
