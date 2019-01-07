@@ -464,7 +464,6 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
-		time.Sleep(time.Second * time.Duration(blockSec*2))
 		return nil, nil, -1, paracross.ErrParaWaitingNewSeq
 	}
 
@@ -603,7 +602,7 @@ func (client *client) CreateBlock() {
 				}
 			}
 			incSeqFlag = false
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * time.Duration(blockSec))
 			continue
 		}
 
