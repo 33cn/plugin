@@ -14,12 +14,12 @@ import (
 
 //Query_QueryGamesByIDs method
 func (g *Guess) Query_QueryGamesByIDs(in *gty.QueryGuessGameInfos) (types.Message, error) {
-	return QueryGameInfos(g.GetLocalDB(), in)
+	return queryGameInfos(g.GetLocalDB(), in)
 }
 
 //Query_QueryGameByID method
 func (g *Guess) Query_QueryGameByID(in *gty.QueryGuessGameInfo) (types.Message, error) {
-	game, err := QueryGameInfo(g.GetLocalDB(), []byte(in.GetGameID()))
+	game, err := queryGameInfo(g.GetLocalDB(), []byte(in.GetGameID()))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (g *Guess) Query_QueryGamesByAddr(in *gty.QueryGuessGameInfo) (types.Messag
 	gameTable := gty.NewGuessUserTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
 
-	return QueryUserTableData(query, "addr", []byte(in.Addr), in.PrimaryKey)
+	return queryUserTableData(query, "addr", []byte(in.Addr), in.PrimaryKey)
 }
 
 //Query_QueryGamesByStatus method
@@ -40,7 +40,7 @@ func (g *Guess) Query_QueryGamesByStatus(in *gty.QueryGuessGameInfo) (types.Mess
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
 
-	return QueryGameTableData(query, "status", []byte(fmt.Sprintf("%2d", in.Status)), in.PrimaryKey)
+	return queryGameTableData(query, "status", []byte(fmt.Sprintf("%2d", in.Status)), in.PrimaryKey)
 }
 
 //Query_QueryGamesByAdminAddr method
@@ -48,7 +48,7 @@ func (g *Guess) Query_QueryGamesByAdminAddr(in *gty.QueryGuessGameInfo) (types.M
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
 	prefix := []byte(in.AdminAddr)
-	return QueryGameTableData(query, "admin", prefix, in.PrimaryKey)
+	return queryGameTableData(query, "admin", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByAddrStatus method
@@ -62,7 +62,7 @@ func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.
 
 	prefix := table.JoinKey([]byte(in.Addr), []byte(fmt.Sprintf("%2d", in.Status)))
 
-	return QueryJoinTableData(tableJoin, "addr#status", prefix, in.PrimaryKey)
+	return queryJoinTableData(tableJoin, "addr#status", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByAdminStatus method
@@ -71,7 +71,7 @@ func (g *Guess) Query_QueryGamesByAdminStatus(in *gty.QueryGuessGameInfo) (types
 	query := gameTable.GetQuery(g.GetLocalDB())
 	prefix := []byte(fmt.Sprintf("%s:%2d", in.AdminAddr, in.Status))
 
-	return QueryGameTableData(query, "admin_status", prefix, in.PrimaryKey)
+	return queryGameTableData(query, "admin_status", prefix, in.PrimaryKey)
 }
 
 //Query_QueryGamesByCategoryStatus method
@@ -80,5 +80,5 @@ func (g *Guess) Query_QueryGamesByCategoryStatus(in *gty.QueryGuessGameInfo) (ty
 	query := gameTable.GetQuery(g.GetLocalDB())
 	prefix := []byte(fmt.Sprintf("%s:%2d", in.Category, in.Status))
 
-	return QueryGameTableData(query, "category_status", prefix, in.PrimaryKey)
+	return queryGameTableData(query, "category_status", prefix, in.PrimaryKey)
 }

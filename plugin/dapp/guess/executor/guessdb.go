@@ -123,8 +123,8 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-//QueryGameInfos 根据游戏id列表查询多个游戏详情信息
-func QueryGameInfos(kvdb db.KVDB, infos *gty.QueryGuessGameInfos) (types.Message, error) {
+//queryGameInfos 根据游戏id列表查询多个游戏详情信息
+func queryGameInfos(kvdb db.KVDB, infos *gty.QueryGuessGameInfos) (types.Message, error) {
 	var games []*gty.GuessGame
 	gameTable := gty.NewGuessGameTable(kvdb)
 	query := gameTable.GetQuery(kvdb)
@@ -141,8 +141,8 @@ func QueryGameInfos(kvdb db.KVDB, infos *gty.QueryGuessGameInfos) (types.Message
 	return &gty.ReplyGuessGameInfos{Games: games}, nil
 }
 
-//QueryGameInfo 根据gameid查询game信息
-func QueryGameInfo(kvdb db.KVDB, gameID []byte) (*gty.GuessGame, error) {
+//queryGameInfo 根据gameid查询game信息
+func queryGameInfo(kvdb db.KVDB, gameID []byte) (*gty.GuessGame, error) {
 	gameTable := gty.NewGuessGameTable(kvdb)
 	query := gameTable.GetQuery(kvdb)
 	rows, err := query.ListIndex("gameid", gameID, nil, 1, 0)
@@ -155,8 +155,8 @@ func QueryGameInfo(kvdb db.KVDB, gameID []byte) (*gty.GuessGame, error) {
 	return game, nil
 }
 
-//QueryUserTableData 查询user表数据
-func QueryUserTableData(query *table.Query, indexName string, prefix, primaryKey []byte) (types.Message, error) {
+//queryUserTableData 查询user表数据
+func queryUserTableData(query *table.Query, indexName string, prefix, primaryKey []byte) (types.Message, error) {
 	rows, err := query.ListIndex(indexName, prefix, primaryKey, DefaultCount, 0)
 	if err != nil {
 		return nil, err
@@ -182,8 +182,8 @@ func QueryUserTableData(query *table.Query, indexName string, prefix, primaryKey
 	return &gty.GuessGameRecords{Records: records, PrimaryKey: primary}, nil
 }
 
-//QueryGameTableData 查询game表数据
-func QueryGameTableData(query *table.Query, indexName string, prefix, primaryKey []byte) (types.Message, error) {
+//queryGameTableData 查询game表数据
+func queryGameTableData(query *table.Query, indexName string, prefix, primaryKey []byte) (types.Message, error) {
 	rows, err := query.ListIndex(indexName, prefix, primaryKey, DefaultCount, 0)
 	if err != nil {
 		return nil, err
@@ -209,8 +209,8 @@ func QueryGameTableData(query *table.Query, indexName string, prefix, primaryKey
 	return &gty.GuessGameRecords{Records: records, PrimaryKey: primary}, nil
 }
 
-//QueryJoinTableData 查询join表数据
-func QueryJoinTableData(talbeJoin *table.JoinTable, indexName string, prefix, primaryKey []byte) (types.Message, error) {
+//queryJoinTableData 查询join表数据
+func queryJoinTableData(talbeJoin *table.JoinTable, indexName string, prefix, primaryKey []byte) (types.Message, error) {
 	rows, err := talbeJoin.ListIndex(indexName, prefix, primaryKey, DefaultCount, 0)
 	if err != nil {
 		return nil, err
@@ -414,7 +414,7 @@ func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := QueryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
+	game, err := queryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
 	if err != nil || game == nil {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
@@ -510,7 +510,7 @@ func (action *Action) GameStopBet(pbBet *gty.GuessGameStopBet) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := QueryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
+	game, err := queryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
 	if err != nil || game == nil {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
@@ -572,7 +572,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := QueryGameInfo(action.localDB, []byte(publish.GetGameID()))
+	game, err := queryGameInfo(action.localDB, []byte(publish.GetGameID()))
 	if err != nil || game == nil {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			publish.GetGameID(), "err", err)
@@ -718,7 +718,7 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := QueryGameInfo(action.localDB, []byte(pbend.GetGameID()))
+	game, err := queryGameInfo(action.localDB, []byte(pbend.GetGameID()))
 	if err != nil || game == nil {
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbend.GetGameID(), "err", err)
