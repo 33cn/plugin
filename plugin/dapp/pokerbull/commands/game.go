@@ -162,7 +162,7 @@ func pokerbullPlay(cmd *cobra.Command, args []string) {
 
 	payload := &pkt.PBGamePlay{
 		GameId: gameID,
-		Value:  int64(value)*types.Coin,
+		Value:  int64(value) * types.Coin,
 		Round:  int32(round),
 	}
 	payload.Address = make([]string, len(address))
