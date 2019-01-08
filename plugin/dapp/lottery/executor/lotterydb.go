@@ -127,6 +127,7 @@ type Action struct {
 	conn         *grpc.ClientConn
 	grpcClient   types.Chain33Client
 	index        int
+	lottery      *Lottery
 }
 
 // NewLotteryAction generate New Action
@@ -145,7 +146,7 @@ func NewLotteryAction(l *Lottery, tx *types.Transaction, index int) *Action {
 	grpcClient := types.NewChain33Client(conn)
 
 	return &Action{l.GetCoinsAccount(), l.GetStateDB(), hash, fromaddr, l.GetBlockTime(),
-		l.GetHeight(), dapp.ExecAddress(string(tx.Execer)), l.GetDifficulty(), l.GetAPI(), conn, grpcClient, index}
+		l.GetHeight(), dapp.ExecAddress(string(tx.Execer)), l.GetDifficulty(), l.GetAPI(), conn, grpcClient, index, l}
 }
 
 // GetLottCommonRecipt generate logs for lottery common action
@@ -590,18 +591,19 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 			reply := msg.(*types.ReplyHash)
 			hash = reply.Hash
 		} else {
-			mainHeight := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("findLuckyNum", "mainHeight", mainHeight)
+			txs := action.lottery.GetTxs()
+			if len(txs) < action.index+1 {
+				llog.Error("findLuckyNum", "len(txs)", len(txs), "index", action.index)
 				return -1
 			}
 
-			mainBlockHash, err := action.GetMainBlockHashByHeight(mainHeight)
+			msg, err := action.api.Query("paracross", "GetMainBlockHash", txs[0])
 			if err != nil {
-				llog.Error("findLuckyNum", "err", err)
 				return -1
 			}
+			queryReply := msg.(*types.ReplyHash)
 
+			mainBlockHash := queryReply.Hash
 			req := &types.ReqRandHash{ExecName: "ticket", Hash: mainBlockHash, BlockNum: blockNum}
 			reply, err := action.grpcClient.QueryRandNum(context.Background(), req)
 			if err != nil {
