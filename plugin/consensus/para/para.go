@@ -189,13 +189,32 @@ func (client *client) InitBlock() {
 
 // GetStartSeq get startSeq in mainchain
 func (client *client) GetStartSeq(height int64) int64 {
+	if height == 0 {
+		return 0
+	}
 	lastHeight, err := client.GetLastHeightOnMainChain()
 	if err != nil {
 		panic(err)
 	}
-	if lastHeight-height < minBlockNum {
-		panic(fmt.Sprintf("startHeight(%d) less than %d blocks before lastHeight(%d) in mainchain", height, minBlockNum, lastHeight))
+	if lastHeight < height {
+		panic(fmt.Sprintf("lastHeight(%d) less than startHeight(%d) in mainchain", lastHeight, height))
 	}
+
+	hint := time.NewTicker(5 * time.Second)
+	for lastHeight < height+minBlockNum {
+		select {
+		case <-hint.C:
+			plog.Info("Waiting lastHeight increase......", "lastHeight", lastHeight, "startHeight", height)
+		default:
+			lastHeight, err = client.GetLastHeightOnMainChain()
+			if err != nil {
+				panic(err)
+			}
+			time.Sleep(time.Second)
+		}
+	}
+	hint.Stop()
+	plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
 
 	seq, err := client.GetSeqByHeightOnMainChain(height)
 	if err != nil {
