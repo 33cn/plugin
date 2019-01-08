@@ -130,7 +130,7 @@ message QueryGuessGameInfo {
     int64  index  = 4;
     string adminAddr = 5;
     string category = 6;
-    bytes  primaryKey = 7;
+    string  primaryKey = 7;
 }
 
 //ReplyGuessGameInfo 游戏信息查询响应消息
@@ -229,7 +229,7 @@ message GuessGameRecord {
 // GuessGameRecords game信息查询记录集
 message GuessGameRecords {
     repeated GuessGameRecord records = 1;
-    bytes primaryKey = 2;
+    string primaryKey = 2;
 }
 
 

@@ -266,10 +266,10 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	category, _ := cmd.Flags().GetString("category")
 	primary, _ := cmd.Flags().GetString("primary")
 
-	var primaryKey []byte
-	if len(primary) > 0 {
-		primaryKey = []byte(primary)
-	}
+	//var primaryKey []byte
+	//if len(primary) > 0 {
+	//	primaryKey = []byte(primary)
+	//}
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
@@ -309,7 +309,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			Addr:       addr,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddr
 		params.Payload = types.MustPBToJSON(req)
@@ -321,7 +321,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			Status:     status,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -333,7 +333,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 		req := &gty.QueryGuessGameInfo{
 			AdminAddr:  adminAddr,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminAddr
 		params.Payload = types.MustPBToJSON(req)
@@ -346,7 +346,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Addr:       addr,
 			Status:     status,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAddrStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -359,7 +359,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			AdminAddr:  adminAddr,
 			Status:     status,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByAdminStatus
 		params.Payload = types.MustPBToJSON(req)
@@ -372,7 +372,7 @@ func guessQuery(cmd *cobra.Command, args []string) {
 			Category:   category,
 			Status:     status,
 			Index:      index,
-			PrimaryKey: primaryKey,
+			PrimaryKey: primary,
 		}
 		params.FuncName = gty.FuncNameQueryGameByCategoryStatus
 		params.Payload = types.MustPBToJSON(req)

@@ -32,7 +32,7 @@ const (
 	ListASC = int32(1)
 
 	//DefaultCount 默认一次获取的记录数
-	DefaultCount = int32(20)
+	DefaultCount = int32(6)
 
 	//DefaultCategory 默认分类
 	DefaultCategory = "default"
@@ -172,11 +172,9 @@ func queryUserTableData(query *table.Query, indexName string, prefix, primaryKey
 		records = append(records, &record)
 	}
 
-	var primary []byte
+	var primary string
 	if len(rows) == int(DefaultCount) {
-		primary = rows[len(rows)-1].Primary
-	} else {
-		primary = nil
+		primary = string(rows[len(rows)-1].Primary)
 	}
 
 	return &gty.GuessGameRecords{Records: records, PrimaryKey: primary}, nil
@@ -199,11 +197,9 @@ func queryGameTableData(query *table.Query, indexName string, prefix, primaryKey
 		records = append(records, &record)
 	}
 
-	var primary []byte
+	var primary string
 	if len(rows) == int(DefaultCount) {
-		primary = rows[len(rows)-1].Primary
-	} else {
-		primary = nil
+		primary = string(rows[len(rows)-1].Primary)
 	}
 
 	return &gty.GuessGameRecords{Records: records, PrimaryKey: primary}, nil
@@ -226,11 +222,9 @@ func queryJoinTableData(talbeJoin *table.JoinTable, indexName string, prefix, pr
 		records = append(records, &record)
 	}
 
-	var primary []byte
+	var primary string
 	if len(rows) == int(DefaultCount) {
-		primary = rows[len(rows)-1].Primary
-	} else {
-		primary = nil
+		primary = fmt.Sprintf("%018d", rows[len(rows)-1].Data.(*table.JoinData).Left.(*gty.UserBet).Index)
 	}
 
 	return &gty.GuessGameRecords{Records: records, PrimaryKey: primary}, nil
@@ -288,12 +282,14 @@ func (action *Action) getReceiptLog(game *gty.GuessGame, statusChange bool, bet 
 func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 	data, err := action.db.Get(Key(id))
 	if err != nil {
+		logger.Error("readGame have err:", err.Error())
 		return nil, err
 	}
 	var game gty.GuessGame
 	//decode
 	err = types.Decode(data, &game)
 	if err != nil {
+		logger.Error("decode game have err:", err.Error())
 		return nil, err
 	}
 	return &game, nil
@@ -402,8 +398,6 @@ func (action *Action) GameStart(start *gty.GuessGameStart) (*types.Receipt, erro
 
 	receiptLog := action.getReceiptLog(game, false, nil)
 	logs = append(logs, receiptLog)
-	//对于写入statedb中的信息，去除下注信息，只记录主要信息，因为参与用户量大时在不同区块中反复记录这些数据会占用比较多的存储空间，意义不大
-	game.Plays = nil
 	kv = append(kv, action.saveGame(game)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -414,7 +408,7 @@ func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := queryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
+	game, err := action.readGame(pbBet.GetGameID())
 	if err != nil || game == nil {
 		logger.Error("GameBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
@@ -498,8 +492,6 @@ func (action *Action) GameBet(pbBet *gty.GuessGameBet) (*types.Receipt, error) {
 	}
 
 	logs = append(logs, receiptLog)
-	//对于写入statedb中的信息，去除下注信息，只记录主要信息，因为参与用户量大时在不同区块中反复记录这些数据会占用比较多的存储空间，意义不大
-	game.Plays = nil
 	kv = append(kv, action.saveGame(game)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -510,7 +502,7 @@ func (action *Action) GameStopBet(pbBet *gty.GuessGameStopBet) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := queryGameInfo(action.localDB, []byte(pbBet.GetGameID()))
+	game, err := action.readGame(pbBet.GetGameID())
 	if err != nil || game == nil {
 		logger.Error("GameStopBet", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbBet.GetGameID(), "err", err)
@@ -538,8 +530,6 @@ func (action *Action) GameStopBet(pbBet *gty.GuessGameStopBet) (*types.Receipt, 
 	receiptLog = action.getReceiptLog(game, true, nil)
 
 	logs = append(logs, receiptLog)
-	//对于写入statedb中的信息，去除下注信息，只记录主要信息，因为参与用户量大时在不同区块中反复记录这些数据会占用比较多的存储空间，意义不大
-	game.Plays = nil
 	kv = append(kv, action.saveGame(game)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -572,7 +562,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := queryGameInfo(action.localDB, []byte(publish.GetGameID()))
+	game, err := action.readGame(publish.GetGameID())
 	if err != nil || game == nil {
 		logger.Error("GamePublish", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			publish.GetGameID(), "err", err)
@@ -706,8 +696,6 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	receiptLog = action.getReceiptLog(game, true, nil)
 
 	logs = append(logs, receiptLog)
-	//对于写入statedb中的信息，去除下注信息，只记录主要信息，因为参与用户量大时在不同区块中反复记录这些数据会占用比较多的存储空间，意义不大
-	game.Plays = nil
 	kv = append(kv, action.saveGame(game)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -718,7 +706,7 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	game, err := queryGameInfo(action.localDB, []byte(pbend.GetGameID()))
+	game, err := action.readGame(pbend.GetGameID())
 	if err != nil || game == nil {
 		logger.Error("GameAbort", "addr", action.fromaddr, "execaddr", action.execaddr, "get game failed",
 			pbend.GetGameID(), "err", err)
@@ -774,8 +762,6 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 
 	receiptLog := action.getReceiptLog(game, true, nil)
 	logs = append(logs, receiptLog)
-	//对于写入statedb中的信息，去除下注信息，只记录主要信息，因为参与用户量大时在不同区块中反复记录这些数据会占用比较多的存储空间，意义不大
-	game.Plays = nil
 	kv = append(kv, action.saveGame(game)...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
