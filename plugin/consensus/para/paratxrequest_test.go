@@ -58,7 +58,7 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.store = store.New(cfg.Store, sub.Store)
 	s.store.SetQueueClient(q.Client())
 
-	cfg.Consensus.StartHeight = 0
+	//cfg.Consensus.StartHeight = 0
 	cfg.Consensus.EmptyBlockInterval = 1
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
@@ -103,6 +103,8 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	ret := &types.Reply{IsOk: true, Msg: data}
 	s.grpcCli.On("QueryChain", mock.Anything, mock.Anything).Return(ret, nil).Maybe()
 	s.grpcCli.On("SendTransaction", mock.Anything, mock.Anything).Return(reply, nil).Maybe()
+	s.grpcCli.On("GetLastHeader", mock.Anything, mock.Anything).Return(&types.Header{Height:cfg.Consensus.StartHeight+minBlockNum}, nil).Maybe()
+	s.grpcCli.On("GetBlockHash", mock.Anything, mock.Anything).Return(&types.ReplyHash{Hash:[]byte("1")}, nil).Maybe()
 	s.para.grpcClient = s.grpcCli
 	s.para.SetQueueClient(q.Client())
 
