@@ -525,7 +525,7 @@ func (db *Database) dereference(child common.Hash, parent common.Hash) {
 //			//	db.lock.RUnlock()
 //			//	return err
 //			//}
-//			//if batch.ValueSize() > ethdb.IdealBatchSize {
+//			//if batch.ValueLen() > ethdb.IdealBatchSize {
 //			//	if err := batch.Write(); err != nil {
 //			//		db.lock.RUnlock()
 //			//		return err
@@ -545,7 +545,7 @@ func (db *Database) dereference(child common.Hash, parent common.Hash) {
 //		//	return err
 //		//}
 //		//// If we exceeded the ideal batch size, commit and reset
-//		//if batch.ValueSize() >= ethdb.IdealBatchSize {
+//		//if batch.ValueLen() >= ethdb.IdealBatchSize {
 //		//	if err := batch.Write(); err != nil {
 //		//		log.Error("Failed to write flush list to disk", "err", err)
 //		//		db.lock.RUnlock()
@@ -625,7 +625,7 @@ func (db *Database) Commit(node common.Hash, report bool) error {
 		//	db.lock.RUnlock()
 		//	return err
 		//}
-		//if batch.ValueSize() > ethdb.IdealBatchSize {
+		//if batch.ValueLen() > ethdb.IdealBatchSize {
 		//	if err := batch.Write(); err != nil {
 		//		return err
 		//	}
@@ -693,7 +693,7 @@ func (db *Database) commit(hash common.Hash, batch dbm.Batch) error {
 	//println(hex.EncodeToString(hash[:]), len(node.rlp()))
 	batch.Set(hash[:], node.rlp())
 	// If we've reached an optimal batch size, commit and start over
-	if batch.ValueSize() >= IdealBatchSize {
+	if batch.ValueLen() >= IdealBatchSize {
 		if err := batch.Write(); err != nil {
 			return err
 		}

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "transaction.proto";
 import "common.proto";
+import "blockchain.proto";
 
 package types;
 
@@ -130,4 +131,5 @@ service paracross {
     rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
     rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ReceiptParacrossDone) {}
     rpc GetAssetTxResult(ReqHash) returns (ParacrossAsset) {}
+    rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }

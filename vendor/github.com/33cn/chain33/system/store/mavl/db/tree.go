@@ -45,9 +45,8 @@ func EnableMVCC(enable bool) {
 
 // Tree merkle avl tree
 type Tree struct {
-	root *Node
-	ndb  *nodeDB
-	//batch *nodeBatch
+	root        *Node
+	ndb         *nodeDB
 	blockHeight int64
 }
 
@@ -135,7 +134,9 @@ func (t *Tree) Save() []byte {
 	if t.ndb != nil {
 		saveNodeNo := t.root.save(t)
 		treelog.Debug("Tree.Save", "saveNodeNo", saveNodeNo, "tree height", t.blockHeight)
+		beg := types.Now()
 		err := t.ndb.Commit()
+		treelog.Info("tree.commit", "cost", types.Since(beg))
 		if err != nil {
 			return nil
 		}
@@ -268,10 +269,6 @@ type nodeDB struct {
 	orphans map[string]struct{}
 }
 
-type nodeBatch struct {
-	batch dbm.Batch
-}
-
 func newNodeDB(db dbm.DB, sync bool) *nodeDB {
 	ndb := &nodeDB{
 		cache:   db.GetCache(),
@@ -312,9 +309,21 @@ func (ndb *nodeDB) GetNode(t *Tree, hash []byte) (*Node, error) {
 	return node, nil
 }
 
-// GetBatch get db batch handle
-func (ndb *nodeDB) GetBatch(sync bool) *nodeBatch {
-	return &nodeBatch{ndb.db.NewBatch(sync)}
+// 获取叶子节点的所有父节点
+func getHashNode(node *Node) (hashs [][]byte) {
+	for {
+		if node == nil {
+			return
+		}
+		parN := node.parentNode
+		if parN != nil {
+			hashs = append(hashs, parN.hash)
+			node = parN
+		} else {
+			break
+		}
+	}
+	return hashs
 }
 
 // SaveNode 保存节点
@@ -333,10 +342,9 @@ func (ndb *nodeDB) SaveNode(t *Tree, node *Node) {
 	ndb.batch.Set(node.hash, storenode)
 	if enablePrune && node.height == 0 {
 		//save leafnode key&hash
-		k := genLeafCountKey(node.key, node.hash, t.blockHeight)
+		k := genLeafCountKey(node.key, node.hash, t.blockHeight, len(node.hash))
 		data := &types.PruneData{
-			Height: t.blockHeight,
-			Lenth:  int32(len(node.hash)),
+			Hashs: getHashNode(node),
 		}
 		v, err := proto.Marshal(data)
 		if err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/chain33/wallet"
 	"github.com/33cn/chain33/wallet/bipwallet"
@@ -79,7 +80,7 @@ func (mock *testDataMock) init() {
 func (mock *testDataMock) initMember() {
 	var q = queue.New("channel")
 	cfg, sub := testnode.GetDefaultConfig()
-
+	util.ResetDatadir(cfg, "$TEMP/")
 	wallet := wallet.New(cfg.Wallet, sub.Wallet)
 	wallet.SetQueueClient(q.Client())
 	mock.modules = append(mock.modules, wallet)

@@ -15,6 +15,7 @@ import (
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/privacy/types"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ import (
 
 func createStore(t *testing.T) *privacyStore {
 	cfg, _ := testnode.GetDefaultConfig()
+	util.ResetDatadir(cfg, "$TEMP/")
 	cfgWallet := cfg.Wallet
 	walletStoreDB := dbm.NewDB("wallet", cfgWallet.Driver, cfgWallet.DbPath, cfgWallet.DbCache)
 	store := newStore(walletStoreDB)
@@ -56,11 +58,6 @@ func TestPrivacyStore(t *testing.T) {
 	testStore_moveFTXO2UTXO(t)
 	testStore_unsetUTXO(t)
 	testStore_moveSTXO2FTXO(t)
-	testStore_moveFTXO2UTXOWhenFTXOExpire(t)
-}
-
-func testStore_moveFTXO2UTXOWhenFTXOExpire(t *testing.T) {
-
 }
 
 func testStore_moveSTXO2FTXO(t *testing.T) {

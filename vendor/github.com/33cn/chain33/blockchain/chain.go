@@ -222,6 +222,10 @@ func (chain *BlockChain) GetOrphanPool() *OrphanPool {
 
 //InitBlockChain 区块链初始化
 func (chain *BlockChain) InitBlockChain() {
+	//isRecordBlockSequence配置的合法性检测
+	if !chain.cfg.IsParaChain {
+		chain.blockStore.isRecordBlockSequenceValid()
+	}
 	//先缓存最新的128个block信息到cache中
 	curheight := chain.GetBlockHeight()
 	if types.IsEnable("TxHeight") {
@@ -402,9 +406,10 @@ func (chain *BlockChain) InitIndexAndBestView() {
 		height = 0
 	}
 	for ; height <= curheight; height++ {
-		header, _ := chain.blockStore.GetBlockHeaderByHeight(height)
+		header, err := chain.blockStore.GetBlockHeaderByHeight(height)
 		if header == nil {
-			return
+			chainlog.Error("InitIndexAndBestView GetBlockHeaderByHeight", "height", height, "err", err)
+			panic("InitIndexAndBestView fail!")
 		}
 
 		newNode := newBlockNodeByHeader(false, header, "self", -1)
