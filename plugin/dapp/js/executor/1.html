@@ -1,0 +1,48 @@
+<script src="runtime.js"></script>
+<script src="game.js"></script>
+<script>
+//demo database function
+var statedb = {}
+var localdb = {}
+
+function getlocaldb(key) {
+    return localdb[key]
+}
+
+function setlocaldb(kvs) {
+    for (var i = 0; i < kvs.length; i++) {
+        localdb[kvs[i].key] = kvs[i].value
+    }
+}
+
+function listdb(prefix, key, count, direction) {
+    var i = 0
+    var data = []
+    for (k in localdb) {
+        if (k.startsWith(prefix) && typeof localdb[k] == "string") {
+            i++
+            data.push({key: k, value: localdb[k]})
+            if (i == count) {
+                break
+            }
+        }
+    }
+    return data
+}
+
+function getstatedb(key) {
+    return statedb[key]
+}
+
+function execname() {
+    return "user.jsvm.test"
+}
+
+function setstatedb(kvs) {
+    for (var i = 0; i < kvs.length; i++) {
+        statedb[kvs[i].key] = kvs[i].value
+    }
+}
+var ret = callcode("{}", "exec_NewGame", "{}", [])
+console.log(ret)
+</script>

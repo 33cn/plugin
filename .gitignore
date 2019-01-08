@@ -12,6 +12,7 @@ chain33_raft-1
 build/datadir
 build/bityuan*
 build/para
+build/cli
 build/execblock
 build/relayd
 build/relayd.toml

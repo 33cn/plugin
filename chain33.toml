@@ -1,7 +1,7 @@
 Title="chain33"
 TestNet=true
 FixTime=false
-
+version="6.0.181228"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit

@@ -10,9 +10,9 @@ import (
 )
 
 // On_CloseTickets close ticket
-func (policy *ticketPolicy) On_CloseTickets(req *types.ReqNil) (types.Message, error) {
+func (policy *ticketPolicy) On_CloseTickets(req *ty.TicketClose) (types.Message, error) {
 	operater := policy.getWalletOperate()
-	reply, err := policy.forceCloseTicket(operater.GetBlockHeight() + 1)
+	reply, err := policy.forceCloseTicket(operater.GetBlockHeight()+1, req.MinerAddress)
 	if err != nil {
 		bizlog.Error("onCloseTickets", "forceCloseTicket error", err.Error())
 	} else {

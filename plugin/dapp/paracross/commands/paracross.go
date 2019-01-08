@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
@@ -29,6 +30,7 @@ func ParcCmd() *cobra.Command {
 		CreateRawTransferCmd(),
 		CreateRawWithdrawCmd(),
 		CreateRawTransferToExecCmd(),
+		IsSyncCmd(),
 	)
 	return cmd
 }
@@ -280,4 +282,21 @@ func createTransferTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 
 	txHex := types.Encode(tx)
 	return hex.EncodeToString(txHex), nil
+}
+
+// IsSyncCmd query parachain is sync
+func IsSyncCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "is_sync",
+		Short: "query parachain is sync",
+		Run:   isSync,
+	}
+	return cmd
+}
+
+func isSync(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	var res bool
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.IsSync", nil, &res)
+	ctx.Run()
 }
