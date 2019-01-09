@@ -37,12 +37,12 @@ func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 		game := log.Game
 		log.Game = nil
 
-		err = tablejoin.MustGetTable("game").Replace(game)
+		err = gameTable.Add(game)
 		if err != nil {
 			return nil
 		}
 
-		kvs, _ = tablejoin.Save()
+		kvs, _ = gameTable.Save()
 		return kvs
 	} else if log.Status == gty.GuessGameStatusBet {
 		//用户下注，game表发生更新(game中下注信息有更新)，user表新增下注记录

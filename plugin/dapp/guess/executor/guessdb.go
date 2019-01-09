@@ -32,7 +32,7 @@ const (
 	ListASC = int32(1)
 
 	//DefaultCount 默认一次获取的记录数
-	DefaultCount = int32(6)
+	DefaultCount = int32(10)
 
 	//DefaultCategory 默认分类
 	DefaultCategory = "default"
@@ -768,6 +768,10 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 
 //getOptions 获得竞猜选项，并判断是否符合约定格式，类似"A:xxxx;B:xxxx;C:xxx"，“：”前为选项名称，不能重复，":"后为选项说明。
 func getOptions(strOptions string) (options []string, legal bool) {
+	if len(strOptions) == 0 {
+		return nil, false
+	}
+
 	legal = true
 	items := strings.Split(strOptions, ";")
 	for i := 0; i < len(items); i++ {
@@ -779,14 +783,23 @@ func getOptions(strOptions string) (options []string, legal bool) {
 			}
 		}
 
-		options = append(options, item[0])
+		options = append(options, trimStr(item[0]))
 	}
 
 	return options, legal
 }
 
+//trimStr 去除字符串中的空格、制表符、换行符
+func trimStr(str string) string {
+	str = strings.Replace(str, " ", "", -1)
+	str = strings.Replace(str, "\t", "", -1)
+	str = strings.Replace(str, "\n", "", -1)
+
+	return str
+}
 //isLegalOption 判断选项是否为合法选项
 func isLegalOption(options []string, option string) bool {
+	option = trimStr(option)
 	for i := 0; i < len(options); i++ {
 		if options[i] == option {
 			return true
