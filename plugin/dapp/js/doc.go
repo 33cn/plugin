@@ -49,5 +49,4 @@ cli send jsvm  call -a "{\"hello\": \"world\"}" -f hello -n test -k 14KEKbYtKKQm
 
 第四步：query test合约hello函数
 cli jsvm  query -a "{\"hello\": \"world\"}" -f hello -n test
-
 */
