@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
@@ -162,19 +163,12 @@ func addCreateTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
-
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func createTransfer(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, false)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
+	commands.CreateAssetTransfer(cmd, args, pt.ParaX)
 }
 
 //CreateRawTransferToExecCmd create raw transfer to exec tx
@@ -189,27 +183,20 @@ func CreateRawTransferToExecCmd() *cobra.Command {
 }
 
 func addCreateTransferToExecFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("to", "t", "", "receiver exec name")
-	cmd.MarkFlagRequired("to")
-
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
+	cmd.Flags().StringP("symbol", "s", "coins.bty", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
 
-	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	cmd.MarkFlagRequired("exec")
 }
 
 func createTransferToExec(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, false)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
+	commands.CreateAssetSendToExec(cmd, args, pt.ParaX)
 }
 
 //CreateRawWithdrawCmd create raw withdraw tx
@@ -229,59 +216,15 @@ func addCreateWithdrawFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
-
-	cmd.Flags().StringP("from", "t", "", "exec name")
-	cmd.MarkFlagRequired("from")
-
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	cmd.MarkFlagRequired("exec")
 }
 
 func createWithdraw(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, true)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
-}
-
-func createTransferTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	if amount < 0 {
-		return "", types.ErrAmount
-	}
-	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
-
-	toAddr, _ := cmd.Flags().GetString("to")
-	note, _ := cmd.Flags().GetString("note")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	title, _ := cmd.Flags().GetString("title")
-	if !strings.HasPrefix(title, "user.p") {
-		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
-		return "", types.ErrInvalidParam
-	}
-	execName := title + pt.ParaX
-
-	param := types.CreateTx{
-		To:          toAddr,
-		Amount:      amountInt64,
-		Fee:         0,
-		Note:        []byte(note),
-		IsWithdraw:  isWithdraw,
-		IsToken:     false,
-		TokenSymbol: symbol,
-		ExecName:    execName,
-	}
-	tx, err := pt.CreateRawTransferTx(&param)
-	if err != nil {
-		return "", err
-	}
-
-	txHex := types.Encode(tx)
-	return hex.EncodeToString(txHex), nil
+	commands.CreateAssetWithdraw(cmd, args, pt.ParaX)
 }
 
 // IsSyncCmd query parachain is sync
