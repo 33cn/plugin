@@ -438,7 +438,7 @@ func validSymbolForkBadTokenSymbol(cs []byte) bool {
 }
 
 func validSymbolForkTokenSymbolWithNumber(cs []byte) bool {
-	for _, c := range  cs {
+	for _, c := range cs {
 		if !isUpperChar(c) && !isDigit(c) {
 			return false
 		}

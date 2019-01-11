@@ -19,6 +19,7 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
 
@@ -381,4 +382,39 @@ func getprivkey(key string) crypto.PrivKey {
 		panic(err)
 	}
 	return priv
+}
+
+func TestToken_validSymbolWithHeight(t *testing.T) {
+	types.SetTitleOnlyForTest("chain33")
+	forkBadTokenSymbol := types.GetDappFork(tokenty.TokenX, "ForkBadTokenSymbol")
+	forkTokenSymbolWithNumber := types.GetDappFork(tokenty.TokenX, "ForkTokenSymbolWithNumber")
+	t.Log("x", "1", forkBadTokenSymbol, "2", forkTokenSymbolWithNumber)
+	assert.Equal(t, true, (forkTokenSymbolWithNumber >= forkBadTokenSymbol))
+
+	cases := []struct {
+		symbol []byte
+		height int64
+		expect bool
+	}{
+		{[]byte("x"), int64(forkBadTokenSymbol - 1), false},
+		{[]byte("X林"), int64(forkBadTokenSymbol - 1), true},
+
+		{[]byte("x"), int64(forkBadTokenSymbol), false},
+		{[]byte("X林"), int64(forkBadTokenSymbol), false},
+
+		{[]byte("x"), int64(forkTokenSymbolWithNumber - 1), false},
+		{[]byte("X林"), int64(forkTokenSymbolWithNumber - 1), false},
+		{[]byte("X1"), int64(forkTokenSymbolWithNumber - 1), false},
+
+		{[]byte("x"), int64(forkTokenSymbolWithNumber), false},
+		{[]byte("X林"), int64(forkTokenSymbolWithNumber), false},
+		{[]byte("X1"), int64(forkTokenSymbolWithNumber), true},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run("validSymbol", func(t *testing.T) {
+			assert.Equal(t, c.expect, validSymbolWithHeight(c.symbol, c.height))
+		})
+	}
 }
