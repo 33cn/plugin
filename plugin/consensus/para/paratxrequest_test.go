@@ -5,8 +5,9 @@
 package para
 
 import (
+	"errors"
 	"testing"
-	 "errors"
+
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
@@ -41,8 +42,6 @@ type suiteParaClient struct {
 	network *p2p.P2p
 }
 
-
-
 func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule) {
 	q := queue.New("channel")
 	s.q = q
@@ -64,9 +63,7 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 
-
 	s.createBlockMock()
-
 
 	reply := &types.Reply{IsOk: true}
 	s.grpcCli.On("IsSync", mock.Anything, mock.Anything).Return(reply, nil)
@@ -93,10 +90,10 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 
 func (s *suiteParaClient) createBlockMock() {
 	var i, hashdata int64
-	for i=0; i<3;i++{
+	for i = 0; i < 3; i++ {
 		hashdata = i
-		if i>0{
-			hashdata = i-1
+		if i > 0 {
+			hashdata = i - 1
 		}
 
 		block := &types.Block{
