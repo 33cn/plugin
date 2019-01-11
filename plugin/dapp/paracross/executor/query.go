@@ -40,6 +40,38 @@ func (p *Paracross) Query_GetAssetTxResult(in *types.ReqHash) (types.Message, er
 	return p.paracrossGetAssetTxResult(in.Hash)
 }
 
+// Query_GetMainBlockHash query get mainblockHash by tx
+func (p *Paracross) Query_GetMainBlockHash(in *types.Transaction) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	return p.paracrossGetMainBlockHash(in)
+}
+
+func (p *Paracross) paracrossGetMainBlockHash(tx *types.Transaction) (types.Message, error) {
+	var paraAction pt.ParacrossAction
+	err := types.Decode(tx.GetPayload(), &paraAction)
+	if err != nil {
+		return nil, err
+	}
+	if paraAction.GetTy() != pt.ParacrossActionMiner {
+		return nil, types.ErrCoinBaseTxType
+	}
+
+	if paraAction.GetMiner() == nil {
+		return nil, pt.ErrParaEmptyMinerTx
+	}
+
+	paraNodeStatus := paraAction.GetMiner().GetStatus()
+	if paraNodeStatus == nil {
+		return nil, types.ErrCoinBaseTxType
+	}
+
+	mainHashFromNode := paraNodeStatus.MainBlockHash
+
+	return &types.ReplyHash{Hash: mainHashFromNode}, nil
+}
+
 func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	ret, err := getTitle(p.GetStateDB(), calcTitleKey(title))
 	if err != nil {
