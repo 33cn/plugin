@@ -7,7 +7,6 @@ package para
 import (
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/log"
@@ -73,17 +72,10 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 
-	block := &types.Block{}
-	blockSeq := &types.BlockSeq{
-		Seq: &types.BlockSequence{
-			Hash: []byte("1"),
-			Type: 1,
-		},
-		Detail: &types.BlockDetail{Block: block},
-	}
-	s.grpcCli.On("GetBlockBySeq", mock.Anything, mock.Anything).Return(blockSeq, errors.New("nil"))
+	// GetBlockBySeq return error to stop create's for cycle to request tx
+	s.grpcCli.On("GetBlockBySeq", mock.Anything, mock.Anything).Return(nil, errors.New("quit create"))
 	//data := &types.Int64{1}
-	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(nil, errors.New("nil"))
+	s.grpcCli.On("GetLastBlockSequence", mock.Anything, mock.Anything).Return(nil, errors.New("nil")).Maybe()
 	reply := &types.Reply{IsOk: true}
 	s.grpcCli.On("IsSync", mock.Anything, mock.Anything).Return(reply, nil)
 	result := &pt.ParacrossStatus{Height: -1}
@@ -131,45 +123,28 @@ func (s *suiteParaCommitMsg) SetupSuite() {
 	s.initEnv(initConfigFile())
 }
 
-func (s *suiteParaCommitMsg) TestRun_1() {
-	//s.testGetBlock()
-	lastBlock, err := s.para.RequestLastBlock()
-	if err != nil {
-		plog.Error("para test", "err", err.Error())
+func (s *suiteParaCommitMsg) createBlock() {
+	var i int64
+	for i = 0; i < 3; i++ {
+		lastBlock, err := s.para.RequestLastBlock()
+		if err != nil {
+			plog.Error("para test", "err", err.Error())
+		}
+		s.Equal(int64(i), lastBlock.Height)
+		s.para.createBlock(lastBlock, nil, i, getMainBlock(i+1, lastBlock.BlockTime+1))
 	}
-	plog.Info("para test---------", "last height", lastBlock.Height)
-	s.para.createBlock(lastBlock, nil, 0, getMainBlock(1, lastBlock.BlockTime+1))
-	lastBlock, err = s.para.RequestLastBlock()
-	if err != nil {
-		plog.Error("para test--2", "err", err.Error())
-	}
-	plog.Info("para test---------", "last height", lastBlock.Height)
-	s.Equal(int64(1), lastBlock.Height)
-	s.para.createBlock(lastBlock, nil, 1, getMainBlock(2, lastBlock.BlockTime+1))
-	time.Sleep(time.Second * 1)
+}
 
-	lastBlock, err = s.para.RequestLastBlock()
-	if err != nil {
-		plog.Error("para test--2", "err", err.Error())
-	}
-	plog.Info("para test---------", "last height", lastBlock.Height)
-	s.Equal(int64(2), lastBlock.Height)
-	s.para.createBlock(lastBlock, nil, 2, getMainBlock(3, lastBlock.BlockTime+1))
-	time.Sleep(time.Second * 1)
-	lastBlock, err = s.para.RequestLastBlock()
-	if err != nil {
-		plog.Error("para test--3", "err", err.Error())
-	}
-	s.Equal(int64(3), lastBlock.Height)
+func (s *suiteParaCommitMsg) TestRun_1() {
+	s.createBlock()
 
 	s.testRunGetMinerTxInfo()
 	s.testRunRmvBlock()
 
-	time.Sleep(time.Second * 1)
-	lastBlock, err = s.para.RequestLastBlock()
+	lastBlock, _ := s.para.RequestLastBlock()
 	if lastBlock.Height > 0 {
-		s.para.DelBlock(lastBlock, 2)
-		time.Sleep(time.Second * 1)
+		s.para.DelBlock(lastBlock, 1)
+
 	}
 
 }
