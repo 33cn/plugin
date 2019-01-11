@@ -797,6 +797,7 @@ func trimStr(str string) string {
 
 	return str
 }
+
 //isLegalOption 判断选项是否为合法选项
 func isLegalOption(options []string, option string) bool {
 	option = trimStr(option)
