@@ -55,7 +55,7 @@ func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 			return nil
 		}
 
-		err = tablejoin.MustGetTable("user").Replace(userBet)
+		err = tablejoin.MustGetTable("user").Add(userBet)
 		if err != nil {
 			return nil
 		}

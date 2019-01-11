@@ -542,7 +542,7 @@ func (action *Action) addGuessBet(game *gty.GuessGame, pbBet *gty.GuessGameBet) 
 	game.Plays = append(game.Plays, player)
 
 	for i := 0; i < len(game.BetStat.Items); i++ {
-		if game.BetStat.Items[i].Option == pbBet.GetOption() {
+		if game.BetStat.Items[i].Option == trimStr(pbBet.GetOption()) {
 			//针对具体选项更新统计项
 			game.BetStat.Items[i].BetsNumber += pbBet.GetBetsNum()
 			game.BetStat.Items[i].BetsTimes++
@@ -675,7 +675,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	winValue := totalBetsNumber - devFee - platFee
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
-		if player.Bet.Option == game.Result {
+		if trimStr(player.Bet.Option) == trimStr(game.Result) {
 			value := player.Bet.BetsNumber * winValue / winBetsNumber
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
