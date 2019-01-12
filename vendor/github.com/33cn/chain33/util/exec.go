@@ -30,9 +30,11 @@ func CheckBlock(client queue.Client, block *types.BlockDetail) error {
 }
 
 //ExecTx : To send lists of txs within a block to exector for execution
-func ExecTx(client queue.Client, prevStateRoot []byte, block *types.Block) *types.Receipts {
+func ExecTx(client queue.Client, prevStateRoot []byte, block *types.Block) (*types.Receipts, error) {
 	list := &types.ExecTxList{
 		StateHash:  prevStateRoot,
+		ParentHash: block.ParentHash,
+		MainHash:   block.MainHash,
 		Txs:        block.Txs,
 		BlockTime:  block.BlockTime,
 		Height:     block.Height,
@@ -43,14 +45,14 @@ func ExecTx(client queue.Client, prevStateRoot []byte, block *types.Block) *type
 	client.Send(msg, true)
 	resp, err := client.Wait(msg)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	receipts := resp.GetData().(*types.Receipts)
-	return receipts
+	return receipts, nil
 }
 
 //ExecKVMemSet : send kv values to memory store and set it in db
-func ExecKVMemSet(client queue.Client, prevStateRoot []byte, height int64, kvset []*types.KeyValue, sync bool) []byte {
+func ExecKVMemSet(client queue.Client, prevStateRoot []byte, height int64, kvset []*types.KeyValue, sync bool) ([]byte, error) {
 	set := &types.StoreSet{StateHash: prevStateRoot, KV: kvset, Height: height}
 	setwithsync := &types.StoreSetWithSync{Storeset: set, Sync: sync}
 
@@ -58,10 +60,10 @@ func ExecKVMemSet(client queue.Client, prevStateRoot []byte, height int64, kvset
 	client.Send(msg, true)
 	resp, err := client.Wait(msg)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	hash := resp.GetData().(*types.ReplyHash)
-	return hash.GetHash()
+	return hash.GetHash(), nil
 }
 
 //ExecKVSetCommit : commit the data set opetation to db

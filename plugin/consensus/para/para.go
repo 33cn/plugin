@@ -68,24 +68,37 @@ type client struct {
 	wg              sync.WaitGroup
 }
 
+type subConfig struct {
+	WriteBlockSeconds           int64  `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient        string `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                 int64  `json:"startHeight,omitempty"`
+	EmptyBlockInterval          int64  `json:"emptyBlockInterval,omitempty"`
+	AuthAccount                 string `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
+	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+}
+
 // New function to init paracross env
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	c := drivers.NewBaseClient(cfg)
-	if cfg.ParaRemoteGrpcClient != "" {
-		grpcSite = cfg.ParaRemoteGrpcClient
+	var subcfg subConfig
+	if sub != nil {
+		types.MustDecode(sub, &subcfg)
 	}
-	if cfg.StartHeight > 0 {
-		startHeight = cfg.StartHeight
+	if subcfg.ParaRemoteGrpcClient != "" {
+		grpcSite = subcfg.ParaRemoteGrpcClient
 	}
-	if cfg.WriteBlockSeconds > 0 {
-		blockSec = cfg.WriteBlockSeconds
+	if subcfg.StartHeight > 0 {
+		startHeight = subcfg.StartHeight
 	}
-	if cfg.EmptyBlockInterval > 0 {
-		emptyBlockInterval = cfg.EmptyBlockInterval
+	if subcfg.WriteBlockSeconds > 0 {
+		blockSec = subcfg.WriteBlockSeconds
 	}
-
-	if cfg.SearchHashMatchedBlockDepth > 0 {
-		searchHashMatchDepth = cfg.SearchHashMatchedBlockDepth
+	if subcfg.EmptyBlockInterval > 0 {
+		emptyBlockInterval = subcfg.EmptyBlockInterval
+	}
+	if subcfg.SearchHashMatchedBlockDepth > 0 {
+		searchHashMatchDepth = subcfg.SearchHashMatchedBlockDepth
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -121,21 +134,18 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privateKey:  priKey,
 		isCaughtUp:  false,
 	}
-
-	if cfg.WaitBlocks4CommitMsg < 2 {
+	if subcfg.WaitBlocks4CommitMsg < 2 {
 		panic("config WaitBlocks4CommitMsg should not less 2")
 	}
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:      para,
-		waitMainBlocks:  cfg.WaitBlocks4CommitMsg,
+		waitMainBlocks:  subcfg.WaitBlocks4CommitMsg,
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
 		quit:            make(chan struct{}),
 	}
-
 	c.SetChild(para)
-
 	return para
 }
 
@@ -178,6 +188,7 @@ func (client *client) InitBlock() {
 		newblock.Height = 0
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
+		newblock.MainHash = zeroHash[:]
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -661,16 +672,13 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 		MainBlockHash:   main.Seq.Hash,
 		MainBlockHeight: main.Detail.Block.Height,
 	}
-
 	tx, err := paracross.CreateRawMinerTx(status)
 	if err != nil {
 		return err
 	}
 	tx.Sign(types.SECP256K1, client.privateKey)
-
 	block.Txs = append([]*types.Transaction{tx}, block.Txs...)
 	return nil
-
 }
 
 func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.BlockSeq) error {
@@ -682,8 +690,8 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	//挖矿固定难度
 	newblock.Difficulty = types.GetP(0).PowLimitBits
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
-
+	newblock.BlockTime = mainBlock.BlockTime
+	newblock.MainHash = mainBlock.Hash()
 	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
 	if err != nil {
 		return err
