@@ -60,7 +60,10 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	q := queue.New("channel")
 	s.q = q
 	//api, _ = client.New(q.Client(), nil)
-
+	var subcfg subConfig
+	if sub != nil {
+		types.MustDecode(sub.Consensus["para"], &subcfg)
+	}
 	s.block = blockchain.New(cfg.BlockChain)
 	s.block.SetQueueClient(q.Client())
 
@@ -83,9 +86,9 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	ret := &types.Reply{IsOk: true, Msg: data}
 	s.grpcCli.On("QueryChain", mock.Anything, mock.Anything).Return(ret, nil).Maybe()
 	s.grpcCli.On("SendTransaction", mock.Anything, mock.Anything).Return(reply, nil).Maybe()
-	s.grpcCli.On("GetLastHeader", mock.Anything, mock.Anything).Return(&types.Header{Height: cfg.Consensus.StartHeight + minBlockNum}, nil).Maybe()
+	s.grpcCli.On("GetLastHeader", mock.Anything, mock.Anything).Return(&types.Header{Height: subcfg.StartHeight + minBlockNum}, nil).Maybe()
 	s.grpcCli.On("GetBlockHash", mock.Anything, mock.Anything).Return(&types.ReplyHash{Hash: []byte("1")}, nil).Maybe()
-	s.grpcCli.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: cfg.Consensus.StartHeight}, nil).Maybe()
+	s.grpcCli.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: subcfg.StartHeight}, nil).Maybe()
 	s.para.grpcClient = s.grpcCli
 	s.para.SetQueueClient(q.Client())
 
