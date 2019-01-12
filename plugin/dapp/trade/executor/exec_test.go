@@ -84,7 +84,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
 	driver := newTrade()
-	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty, nil, nil)
 	driver.SetStateDB(stateDB)
 
 	sell := &pty.TradeSellTx{
@@ -193,7 +193,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
 	driver := newTrade()
-	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty, nil, nil)
 	driver.SetStateDB(stateDB)
 
 	buy := &pty.TradeBuyLimitTx{

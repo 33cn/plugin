@@ -5,40 +5,17 @@
 package executor
 
 import (
-	"context"
-	"time"
-
 	"github.com/33cn/chain33/types"
 )
 
 const retryNum = 10
 
 // GetMainHeightByTxHash get Block height
-func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
-	for i := 0; i < retryNum; i++ {
-		req := &types.ReqHash{Hash: txHash}
-		txDetail, err := action.grpcClient.QueryTransaction(context.Background(), req)
-		if err != nil {
-			time.Sleep(time.Second)
-		} else {
-			return txDetail.GetHeight()
-		}
+func (action *Action) GetMainHeightByTxHash(txHash []byte) (int64, error) {
+	param := &types.ReqHash{Hash: txHash}
+	txDetail, err := action.lottery.GetExecutorAPI().QueryTx(param)
+	if err != nil {
+		return -1, err
 	}
-
-	return -1
-}
-
-// GetMainBlockHashByHeight get Hash
-func (action *Action) GetMainBlockHashByHeight(height int64) ([]byte, error) {
-	for i := 0; i < retryNum; i++ {
-		req := &types.ReqInt{Height: height}
-		replyHash, err := action.grpcClient.GetBlockHash(context.Background(), req)
-		if err != nil {
-			time.Sleep(time.Second)
-		} else {
-			return replyHash.Hash, nil
-		}
-	}
-
-	return nil, types.ErrBlockNotFound
+	return txDetail.GetHeight(), nil
 }
