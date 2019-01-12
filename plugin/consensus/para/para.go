@@ -130,7 +130,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		conn:        conn,
 		grpcClient:  grpcClient,
 		paraClient:  paraCli,
-		authAccount: cfg.AuthAccount,
+		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
 	}
@@ -690,8 +690,8 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	//挖矿固定难度
 	newblock.Difficulty = types.GetP(0).PowLimitBits
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = mainBlock.BlockTime
-	newblock.MainHash = mainBlock.Hash()
+	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
+	newblock.MainHash = mainBlock.Detail.Block.Hash()
 	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
 	if err != nil {
 		return err
