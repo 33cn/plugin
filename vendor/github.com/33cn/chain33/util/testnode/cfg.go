@@ -9,7 +9,6 @@ Title="local"
 TestNet=true
 FixTime=false
 
-
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"

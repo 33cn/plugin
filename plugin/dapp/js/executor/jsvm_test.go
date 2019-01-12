@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -16,6 +17,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	"github.com/robertkrimen/otto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func init() {
@@ -24,7 +26,10 @@ func init() {
 
 func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e := newjs().(*js)
-	e.SetEnv(1, time.Now().Unix(), 1)
+	e.SetEnv(1, time.Now().Unix(), 1, nil, nil)
+	mockapi := &mocks.QueueProtocolAPI{}
+	mockapi.On("Query", "ticket", "RandNumHash", mock.Anything).Return(&types.ReplyHash{Hash: []byte("hello")}, nil)
+	e.SetAPI(mockapi)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
 	c, tx := createCodeTx("test", code)
