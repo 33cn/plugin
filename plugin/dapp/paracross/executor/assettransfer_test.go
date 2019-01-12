@@ -54,7 +54,7 @@ func (suite *AssetTransferTestSuite) SetupTest() {
 	suite.exec = newParacross().(*Paracross)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
-	suite.exec.SetEnv(0, 0, 0)
+	suite.exec.SetEnv(0, 0, 0, nil, nil)
 	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = true
 
