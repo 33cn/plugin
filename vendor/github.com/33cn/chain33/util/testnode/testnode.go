@@ -83,6 +83,10 @@ func NewWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client
 
 func newWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client.QueueProtocolAPI) *Chain33Mock {
 	chain33globalLock.Lock()
+	return newWithConfigNoLock(cfg, sub, mockapi)
+}
+
+func newWithConfigNoLock(cfg *types.Config, sub *types.ConfigSubModule, mockapi client.QueueProtocolAPI) *Chain33Mock {
 	types.Init(cfg.Title, cfg)
 	q := queue.New("channel")
 	types.Debug = false
@@ -280,6 +284,11 @@ func (mock *Chain33Mock) GetCfg() *types.Config {
 
 //Close :
 func (mock *Chain33Mock) Close() {
+	mock.closeNoLock()
+	chain33globalLock.Unlock()
+}
+
+func (mock *Chain33Mock) closeNoLock() {
 	mock.chain.Close()
 	mock.store.Close()
 	mock.mem.Close()
@@ -290,7 +299,6 @@ func (mock *Chain33Mock) Close() {
 	mock.client.Close()
 	mock.rpc.Close()
 	os.RemoveAll(mock.datadir)
-	chain33globalLock.Unlock()
 }
 
 //WaitHeight :
