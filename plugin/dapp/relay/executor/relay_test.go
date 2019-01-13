@@ -72,7 +72,7 @@ func (s *suiteRelay) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -139,7 +139,7 @@ func (s *suiteRelay) TestExec_1() {
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
@@ -180,7 +180,7 @@ func (s *suiteRelay) TestExec_2() {
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(20, 2000, 1, nil, nil)
+	s.relay.SetEnv(20, 2000, 1)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
@@ -216,7 +216,7 @@ func (s *suiteRelay) TestExec_3() {
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(30, 3000, 1, nil, nil)
+	s.relay.SetEnv(30, 3000, 1)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	receipt, err := s.relay.Exec(tx, 0)
@@ -287,7 +287,7 @@ func (s *suiteRelay) TestExec_4() {
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 
 	_, err := s.relay.Exec(tx, 0)
 	s.Nil(err)
@@ -404,7 +404,7 @@ func (s *suiteBtcHeader) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(s.db)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -515,7 +515,7 @@ func (s *suiteBtcHeader) TestSaveBtcHead_1() {
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 
 	s.db.On("Get", mock.Anything).Return(nil, types.ErrNotFound).Once()
 	s.db.On("Set", mock.Anything, mock.Anything).Return(nil).Once()

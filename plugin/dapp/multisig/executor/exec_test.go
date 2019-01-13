@@ -104,7 +104,7 @@ func TestMultiSigAccCreate(t *testing.T) {
 	//accA.SaveExecAccount(address.ExecAddress("multisig"), &accountA)
 
 	driver := newMultiSig()
-	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty, nil, nil)
+	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(stateDB)
 	driver.SetLocalDB(localDB)
 	driver.SetAPI(api)

@@ -122,7 +122,7 @@ func TestExecDrawLottery(t *testing.T) {
 	if !CompareLotteryExecResult(receipt, err, &targetReceipt, targetErr) {
 		t.Error(testNormErr)
 	}
-	lottery.SetEnv(100, 0, 0, nil, nil)
+	lottery.SetEnv(100, 0, 0)
 	receipt, err = lottery.Exec(tx, 0)
 	targetErr = types.ErrActionNotSupport
 	// ErrActionNotSupport case
