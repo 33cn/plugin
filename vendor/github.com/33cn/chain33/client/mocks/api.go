@@ -200,6 +200,29 @@ func (_m *QueueProtocolAPI) GetBlockByHashes(param *types.ReqHashes) (*types.Blo
 	return r0, r1
 }
 
+// GetBlockBySeq provides a mock function with given fields: param
+func (_m *QueueProtocolAPI) GetBlockBySeq(param *types.Int64) (*types.BlockSeq, error) {
+	ret := _m.Called(param)
+
+	var r0 *types.BlockSeq
+	if rf, ok := ret.Get(0).(func(*types.Int64) *types.BlockSeq); ok {
+		r0 = rf(param)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.BlockSeq)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Int64) error); ok {
+		r1 = rf(param)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBlockHash provides a mock function with given fields: param
 func (_m *QueueProtocolAPI) GetBlockHash(param *types.ReqInt) (*types.ReplyHash, error) {
 	ret := _m.Called(param)
@@ -238,29 +261,6 @@ func (_m *QueueProtocolAPI) GetBlockOverview(param *types.ReqHash) (*types.Block
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(*types.ReqHash) error); ok {
-		r1 = rf(param)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetBlockSequences provides a mock function with given fields: param
-func (_m *QueueProtocolAPI) GetBlockSequences(param *types.ReqBlocks) (*types.BlockSequences, error) {
-	ret := _m.Called(param)
-
-	var r0 *types.BlockSequences
-	if rf, ok := ret.Get(0).(func(*types.ReqBlocks) *types.BlockSequences); ok {
-		r0 = rf(param)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*types.BlockSequences)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*types.ReqBlocks) error); ok {
 		r1 = rf(param)
 	} else {
 		r1 = ret.Error(1)
