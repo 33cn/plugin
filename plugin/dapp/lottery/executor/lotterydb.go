@@ -50,9 +50,7 @@ const (
 const (
 	luckyNumMol = 100000
 	decimal     = 100000000 //1e8
-	//randMolNum      = 5
-	grpcRecSize int = 5 * 30 * 1024 * 1024
-	blockNum        = 5
+	blockNum    = 5
 )
 
 const (
