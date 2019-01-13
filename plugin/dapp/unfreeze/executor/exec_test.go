@@ -90,7 +90,7 @@ func TestUnfreeze(t *testing.T) {
 	}
 	exec := newUnfreeze()
 	exec.SetStateDB(stateDB)
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty, nil, nil)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(createTx, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
@@ -117,7 +117,7 @@ func TestUnfreeze(t *testing.T) {
 		t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 	}
 	blockTime := int64(10)
-	exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty, nil, nil)
+	exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty)
 	receipt, err = exec.Exec(withdrawTx, 1)
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
@@ -151,7 +151,7 @@ func TestUnfreeze(t *testing.T) {
 			t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 		}
 		blockTime := int64(10)
-		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty, nil, nil)
+		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty)
 		receipt, err = exec.Exec(withdrawTx, 1)
 		assert.Equal(t, pty.ErrNoPrivilege, err)
 		assert.Nil(t, receipt)
@@ -214,7 +214,7 @@ func TestUnfreeze(t *testing.T) {
 			t.Error("RPC_UnfreezeWithdrawTx sign", "err", err)
 		}
 		blockTime := int64(10)
-		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime+blockTime, env.difficulty, nil, nil)
+		exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime+blockTime, env.difficulty)
 		receipt, err = exec.Exec(withdrawTx, 1)
 		assert.Equal(t, pty.ErrUnfreezeEmptied, err)
 		assert.Nil(t, receipt)

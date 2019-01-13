@@ -26,7 +26,7 @@ func init() {
 
 func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e := newjs().(*js)
-	e.SetEnv(1, time.Now().Unix(), 1, nil, nil)
+	e.SetEnv(1, time.Now().Unix(), 1)
 	mockapi := &mocks.QueueProtocolAPI{}
 	mockapi.On("Query", "ticket", "RandNumHash", mock.Anything).Return(&types.ReplyHash{Hash: []byte("hello")}, nil)
 	e.SetAPI(mockapi)

@@ -398,6 +398,11 @@ func (d *DriverBase) GetHeight() int64 {
 	return d.height
 }
 
+// GetMainHeight return height
+func (d *DriverBase) GetMainHeight() int64 {
+	return d.mainHeight
+}
+
 // GetBlockTime return block time
 func (d *DriverBase) GetBlockTime() int64 {
 	return d.blocktime

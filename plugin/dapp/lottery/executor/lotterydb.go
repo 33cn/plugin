@@ -261,12 +261,7 @@ func (action *Action) LotteryCreate(create *pty.LotteryCreate) (*types.Receipt, 
 	lott.BuyAmount = 0
 	llog.Debug("LotteryCreate", "OpRewardRatio", lott.OpRewardRatio, "DevRewardRatio", lott.DevRewardRatio)
 	if types.IsPara() {
-		mainHeight, err := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryCreate", "mainHeight", mainHeight)
-			return nil, err
-		}
-		lott.CreateOnMain = mainHeight
+		lott.CreateOnMain = action.lottery.GetMainHeight()
 	}
 
 	llog.Debug("LotteryCreate created", "lotteryID", lotteryID)
@@ -316,22 +311,13 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 		lott.Status = pty.LotteryPurchase
 		lott.Round++
 		if types.IsPara() {
-			mainHeight, err := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("LotteryBuy", "mainHeight", mainHeight)
-				return nil, err
-			}
-			lott.LastTransToPurStateOnMain = mainHeight
+			lott.LastTransToPurStateOnMain = action.lottery.GetMainHeight()
 		}
 	}
 
 	if lott.Status == pty.LotteryPurchase {
 		if types.IsPara() {
-			mainHeight, err := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("LotteryBuy", "mainHeight", mainHeight)
-				return nil, err
-			}
+			mainHeight := action.lottery.GetMainHeight()
 			if mainHeight-lott.LastTransToPurStateOnMain > lott.GetPurBlockNum() {
 				llog.Error("LotteryBuy", "action.height", action.height, "mainHeight", mainHeight, "LastTransToPurStateOnMain", lott.LastTransToPurStateOnMain)
 				return nil, pty.ErrLotteryStatus
@@ -437,11 +423,7 @@ func (action *Action) LotteryDraw(draw *pty.LotteryDraw) (*types.Receipt, error)
 	}
 
 	if types.IsPara() {
-		mainHeight, err := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryBuy", "mainHeight", mainHeight)
-			return nil, err
-		}
+		mainHeight := action.lottery.GetMainHeight()
 		if mainHeight-lott.GetLastTransToPurStateOnMain() < lott.GetDrawBlockNum() {
 			llog.Error("LotteryDraw", "action.height", action.height, "mainHeight", mainHeight, "GetLastTransToPurStateOnMain", lott.GetLastTransToPurState())
 			return nil, pty.ErrLotteryStatus
@@ -711,12 +693,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	action.recordMissing(lott)
 
 	if types.IsPara() {
-		mainHeight, err := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryDraw", "mainHeight", mainHeight)
-			return nil, nil, nil, err
-		}
-		lott.LastTransToDrawStateOnMain = mainHeight
+		lott.LastTransToDrawStateOnMain = action.lottery.GetHeight()
 	}
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, &updateInfo, &gainInfos, nil
 }
