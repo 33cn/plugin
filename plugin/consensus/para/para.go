@@ -692,6 +692,7 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
 	newblock.MainHash = mainBlock.Detail.Block.Hash()
+	newblock.MainHeight = mainBlock.Detail.Block.Height
 	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
 	if err != nil {
 		return err

@@ -152,7 +152,7 @@ func (s *suiteRelayDB) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -175,7 +175,7 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 	tx.Nonce = 1 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -207,7 +207,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(11, 1000, 1, nil, nil)
+	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -228,7 +228,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1bCancel() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(11, 1000, 1, nil, nil)
+	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -308,7 +308,7 @@ func (s *suiteAccept) setupRelayCreate() {
 	tx.Nonce = 2 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -335,7 +335,7 @@ func (s *suiteAccept) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -356,7 +356,7 @@ func (s *suiteAccept) TestRelayAccept() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -387,7 +387,7 @@ func (s *suiteAccept) TestRevokeAccept_1() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(11, 1000, 1, nil, nil)
+	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(22)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -408,7 +408,7 @@ func (s *suiteAccept) TestRevokeAccept_2() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(11, 1000, 1, nil, nil)
+	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -429,7 +429,7 @@ func (s *suiteAccept) TestRevokeAccept_3() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(11, 1000, 1, nil, nil)
+	s.relay.SetEnv(11, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -506,7 +506,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 	tx.Nonce = 3 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -533,7 +533,7 @@ func (s *suiteConfirm) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -555,7 +555,7 @@ func (s *suiteConfirm) setupAccept() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -586,7 +586,7 @@ func (s *suiteConfirm) TestConfirm_1() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(30, 3000, 1, nil, nil)
+	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	_, err := s.relayDb.confirmTx(order)
 	s.Equal(ty.ErrRelayReturnAddr, err)
@@ -604,7 +604,7 @@ func (s *suiteConfirm) TestConfirm_2() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(30, 3000, 1, nil, nil)
+	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -635,7 +635,7 @@ func (s *suiteConfirm) TestRevokeConfirm_1() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30 + lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -656,7 +656,7 @@ func (s *suiteConfirm) TestRevokeConfirm_2() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30 + 4*lockBtcHeight)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -733,7 +733,7 @@ func (s *suiteVerify) setupRelayCreate() {
 	tx.Nonce = 4 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -764,7 +764,7 @@ func (s *suiteVerify) setupAccept() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(20, 2000, 1, nil, nil)
+	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -795,7 +795,7 @@ func (s *suiteVerify) setupConfirm() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(30, 3000, 1, nil, nil)
+	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -822,7 +822,7 @@ func (s *suiteVerify) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -880,7 +880,7 @@ func (s *suiteVerify) TestVerify() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 
 	receipt, err := s.relayDb.verifyTx(order)
@@ -964,7 +964,7 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 	tx.Nonce = 5 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(10, 1000, 1, nil, nil)
+	s.relay.SetEnv(10, 1000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(10)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -995,7 +995,7 @@ func (s *suiteVerifyCli) setupAccept() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(20, 2000, 1, nil, nil)
+	s.relay.SetEnv(20, 2000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(20)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -1026,7 +1026,7 @@ func (s *suiteVerifyCli) setupConfirm() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(30, 3000, 1, nil, nil)
+	s.relay.SetEnv(30, 3000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 	heightBytes := types.Encode(&types.Int64{Data: int64(30)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
@@ -1053,7 +1053,7 @@ func (s *suiteVerifyCli) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -1085,7 +1085,7 @@ func (s *suiteVerifyCli) TestVerify() {
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 
 	receipt, err := s.relayDb.verifyCmdTx(order)
@@ -1128,7 +1128,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay := &relay{}
 	relay.SetStateDB(s.db)
 	relay.SetLocalDB(s.kvdb)
-	relay.SetEnv(10, 100, 1, nil, nil)
+	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
 	relay.SetAPI(nil)
 	relay.SetChild(relay)
@@ -1138,7 +1138,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	tx.To = "addr"
 	tx.Sign(types.SECP256K1, privFrom)
 
-	s.relay.SetEnv(40, 4000, 1, nil, nil)
+	s.relay.SetEnv(40, 4000, 1)
 	s.relayDb = newRelayDB(s.relay, tx)
 
 }
