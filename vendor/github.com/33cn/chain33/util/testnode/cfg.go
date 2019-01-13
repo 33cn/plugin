@@ -130,12 +130,12 @@ count=10000
 [[consensus.sub.ticket.genesis]]
 minerAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
 returnAddr="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
-count=10000
+count=1000
 
 [[consensus.sub.ticket.genesis]]
 minerAddr="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
 returnAddr="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
-count=10000
+count=1000
 
 [store]
 name="mavl"

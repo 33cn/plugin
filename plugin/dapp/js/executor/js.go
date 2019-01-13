@@ -3,7 +3,6 @@ package executor
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -237,7 +236,6 @@ func (u *js) execnameFunc(vm *otto.Otto, name string) {
 func (u *js) randnumFunc(vm *otto.Otto, name string) {
 	vm.Set("randnum", func(call otto.FunctionCall) otto.Value {
 		hash := u.GetLastHash()
-		fmt.Println("-----randnum", common.ToHex(hash))
 		param := &types.ReqRandHash{
 			ExecName: "ticket",
 			BlockNum: 5,

@@ -192,8 +192,9 @@ func TestCacheMemUsage(t *testing.T) {
 	e := initExec(ldb, kvdb, jscode, t)
 	vm, err := e.createVM("test", nil, 0)
 	assert.Nil(t, err)
-	vms := make([]*otto.Otto, 1024)
-	for i := 0; i < 1024; i++ {
+	n := 64
+	vms := make([]*otto.Otto, n)
+	for i := 0; i < n; i++ {
 		vms[i] = vm.Copy()
 	}
 	printMemUsage()
