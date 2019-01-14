@@ -76,7 +76,8 @@ func TestDriverAPI(t *testing.T) {
 	demo := LoadDriverAllow(tx, 0, 1).(*demoApp)
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
-	demo.SetEnv(1, time.Now().Unix(), 1, []byte("parentHash"), []byte("mainHash"))
+	demo.SetEnv(1, time.Now().Unix(), 1)
+	demo.SetBlockInfo([]byte("parentHash"), []byte("mainHash"), 1)
 	demo.SetLocalDB(kvdb)
 	demo.SetStateDB(kvdb)
 	demo.SetAPI(&mocks.QueueProtocolAPI{})
@@ -88,7 +89,7 @@ func TestDriverAPI(t *testing.T) {
 	types.SetTitleOnlyForTest("user.p.wzw.")
 	assert.Equal(t, "parentHash", string(demo.GetParentHash()))
 	assert.Equal(t, "mainHash", string(demo.GetLastHash()))
-
+	assert.Equal(t, int64(1), demo.GetMainHeight())
 	assert.Equal(t, true, IsDriverAddress(ExecAddress("none"), 0))
 	assert.Equal(t, false, IsDriverAddress(ExecAddress("demo"), 0))
 	assert.Equal(t, true, IsDriverAddress(ExecAddress("demo"), 1))
