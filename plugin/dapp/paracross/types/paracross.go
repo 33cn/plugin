@@ -189,7 +189,7 @@ func CreateRawMinerTx(status *ParacrossNodeStatus) (*types.Transaction, error) {
 
 // CreateRawTransferTx create paracross asset transfer tx with transfer and withdraw
 func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage) (*types.Transaction, error) {
-	tlog.Error("ParacrossType CreateTx failed", "action", action, "msg", string(param))
+	tlog.Info("ParacrossType CreateTx", "action", action, "msg", string(param))
 	tx, err := p.ExecTypeBase.CreateTx(action, param)
 	if err != nil {
 		tlog.Error("ParacrossType CreateTx failed", "err", err, "action", action, "msg", string(param))
