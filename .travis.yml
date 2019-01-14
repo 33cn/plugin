@@ -62,4 +62,4 @@ matrix:
         - sudo mv docker-compose /usr/local/bin
       before_script: make build_ci
       script:
-        - make docker-compose DAPP=${DAPP} && make docker-compose-down DAPP=${DAPP} && make clean
+        - make docker-compose dapp=${DAPP} && make docker-compose-down dapp=${DAPP} && make clean

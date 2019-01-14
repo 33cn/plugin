@@ -96,8 +96,7 @@ function para_transfer() {
 
     txhash=$(para_configkey "${PARA_CLI}" "token-blacklist" "BTY")
     echo "txhash=$txhash"
-    block_wait "${PARA_CLI}" 1
-    $PARA_CLI tx query -s "${txhash}"
+    query_tx "${PARA_CLI}" "${txhash}"
 
 }
 
@@ -114,14 +113,34 @@ function para_configkey() {
     echo "${send}"
 }
 
+function query_tx() {
+    block_wait "${1}" 3
+
+    local times=100
+    while true; do
+        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
+        echo "query hash is ${2}, return ${ret} "
+        if [ "${ret}" != "${2}" ]; then
+            block_wait "${1}" 2
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "query tx=$2 failed"
+                exit 1
+            fi
+        else
+            echo "query tx=$2  success"
+            break
+        fi
+    done
+}
+
 function token_create() {
     echo "=========== # para token test ============="
     echo "=========== # 1.token precreate ============="
     hash=$(${1} send token precreate -f 0.001 -i test -n guodunjifen -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -p 0 -s GD -t 10000 -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4)
     echo "${hash}"
-    block_wait "${1}" 3
+    query_tx "${1}" "${hash}"
 
-    ${1} tx query -s "${hash}"
     ${1} token get_precreated
     owner=$(${1} token get_precreated | jq -r ".owner")
     if [ "${owner}" != "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" ]; then
@@ -137,9 +156,8 @@ function token_create() {
     echo "=========== # 2.token finish ============="
     hash=$(${1} send token finish -f 0.001 -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -s GD -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "${hash}"
-    block_wait "${1}" 3
+    query_tx "${1}" "${hash}"
 
-    ${1} tx query -s "${hash}"
     ${1} token get_finish_created
     owner=$(${1} token get_finish_created | jq -r ".owner")
     if [ "${owner}" != "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" ]; then
@@ -163,9 +181,8 @@ function token_transfer() {
     echo "=========== # 2.token transfer ============="
     hash=$(${1} send token transfer -a 11 -s GD -t 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
-    block_wait "${1}" 3
+    query_tx "${1}" "${hash}"
 
-    ${1} tx query -s "${hash}"
     ${1} token token_balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD
     balance=$(${1} token token_balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "11.0000" ]; then
@@ -176,11 +193,10 @@ function token_transfer() {
     echo "=========== # 3.token send exec ============="
     hash=$(${1} send token send_exec -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
-    block_wait "${1}" 3
+    query_tx "${1}" "${hash}"
 
     # $ ./build/chain33-cli   exec addr  -e user.p.para.paracross
     # 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii
-    ${1} tx query -s "${hash}"
     ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
     balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "11.0000" ]; then
@@ -191,9 +207,8 @@ function token_transfer() {
     echo "=========== # 4.token withdraw ============="
     hash=$(${1} send token withdraw -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
-    block_wait "${1}" 3
+    query_tx "${1}" "${hash}"
 
-    ${1} tx query -s "${hash}"
     ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
     balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "0.0000" ]; then
@@ -213,10 +228,10 @@ function para_cross_transfer_withdraw() {
     sleep 15
     ${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
 
-    times=100
+    local times=100
     while true; do
         acc=$(${CLI} account balance -e paracross -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq -r ".balance")
-        echo "account balance is ${acc}, except 9.3 "
+        echo "account balance is ${acc}, expect 9.3 "
         if [ "${acc}" != "9.3000" ]; then
             block_wait "${CLI}" 2
             times=$((times - 1))
