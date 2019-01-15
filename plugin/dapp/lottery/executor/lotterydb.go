@@ -691,7 +691,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	action.recordMissing(lott)
 
 	if types.IsPara() {
-		lott.LastTransToDrawStateOnMain = action.lottery.GetHeight()
+		lott.LastTransToDrawStateOnMain = action.lottery.GetMainHeight()
 	}
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, &updateInfo, &gainInfos, nil
 }
