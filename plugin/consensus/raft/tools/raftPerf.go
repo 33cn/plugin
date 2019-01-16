@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
