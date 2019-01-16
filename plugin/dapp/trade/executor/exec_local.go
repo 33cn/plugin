@@ -47,7 +47,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveSell(receipt.Base, item.Ty, txIndex, tx, table)
+			kv := t.saveSell(receipt.Base, item.Ty, tx, txIndex, table)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeSellRevoke {
 			var receipt pty.ReceiptTradeSellRevoke
@@ -55,7 +55,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveSell(receipt.Base, item.Ty, txIndex, tx, table)
+			kv := t.saveSell(receipt.Base, item.Ty, tx, txIndex, table)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeBuyMarket {
 			var receipt pty.ReceiptTradeBuyMarket

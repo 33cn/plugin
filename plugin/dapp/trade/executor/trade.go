@@ -82,7 +82,7 @@ func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, txIndex string, tx *types.Transaction, ldb *table.Table) []*types.KeyValue {
+func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
 
 	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
