@@ -505,6 +505,7 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 		if err != nil {
 			return -2, nil, err
 		}
+		//当前block结构已经有mainHash和MainHeight但是从blockchain获取的block还没有写入，以后如果获取到，可以替换从minerTx获取
 		miner, err := getMinerTxInfo(block)
 		if err != nil {
 			return -2, nil, err
@@ -684,19 +685,20 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.BlockSeq) error {
 	var newblock types.Block
 	plog.Debug(fmt.Sprintf("the len txs is: %v", len(txs)))
+
 	newblock.ParentHash = lastBlock.Hash()
 	newblock.Height = lastBlock.Height + 1
 	newblock.Txs = txs
-	//挖矿固定难度
-	newblock.Difficulty = types.GetP(0).PowLimitBits
-	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
-	newblock.MainHash = mainBlock.Detail.Block.Hash()
-	newblock.MainHeight = mainBlock.Detail.Block.Height
 	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
 	if err != nil {
 		return err
 	}
+	//挖矿固定难度
+	newblock.Difficulty = types.GetP(0).PowLimitBits
+	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
+	newblock.MainHash = mainBlock.Seq.Hash
+	newblock.MainHeight = mainBlock.Detail.Block.Height
 
 	err = client.WriteBlock(lastBlock.StateHash, &newblock, seq)
 
