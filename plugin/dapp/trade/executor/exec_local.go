@@ -35,6 +35,7 @@ func (t *trade) ExecLocal_RevokeBuy(revoke *pty.TradeForRevokeBuy, tx *types.Tra
 
 func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
+	//table := NewOrderTable(t.GetLocalDB())
 
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
@@ -44,17 +45,16 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveSell([]byte(receipt.Base.SellID), item.Ty)
+			kv := t.saveSell(receipt.Base, item.Ty)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeSellRevoke {
 			var receipt pty.ReceiptTradeSellRevoke
 			err := types.Decode(item.Log, &receipt)
 			if err != nil {
-			panic(err) //数据错误了，已经被修改了
+				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveSell([]byte(receipt.Base.SellID), item.Ty)
+			kv := t.saveSell(receipt.Base, item.Ty)
 			set.KV = append(set.KV, kv...)
-
 		} else if item.Ty == pty.TyLogTradeBuyMarket {
 			var receipt pty.ReceiptTradeBuyMarket
 			err := types.Decode(item.Log, &receipt)

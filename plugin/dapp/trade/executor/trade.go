@@ -22,6 +22,7 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/33cn/chain33/common/db/table"
 )
 
 var (
@@ -81,8 +82,14 @@ func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) saveSell(sellID []byte, ty int32) []*types.KeyValue {
-	sellorder := t.getSellOrderFromDb(sellID)
+func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32) []*types.KeyValue {
+	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
+	//t.genSell(tx, nil, sellorder)
+	//if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
+	//	ldb.Add()
+	//} else {
+	//	ldb.Update()
+	//}
 	return genSaveSellKv(sellorder)
 }
 
