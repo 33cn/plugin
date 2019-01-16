@@ -164,7 +164,6 @@ func SendToAddress(from string, to string, amount string, note string) {
 
 	fmt.Println(string(data))
 }
-
 // NormPerf run norm performance
 func NormPerf(size string, num string, interval string, duration string) {
 	var key string
