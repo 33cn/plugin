@@ -46,7 +46,6 @@ func createConn(ip string) {
 	c = types.NewChain33Client(conn)
 	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 }
-
 func main() {
 	rlog.SetLogLevel("eror")
 	if len(os.Args) == 1 || os.Args[1] == "-h" {
