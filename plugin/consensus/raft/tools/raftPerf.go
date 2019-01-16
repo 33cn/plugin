@@ -29,7 +29,6 @@ import (
 
 const fee = 1e6
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 var conn *grpc.ClientConn
 var c types.Chain33Client
 var r *rand.Rand
