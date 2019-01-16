@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -132,10 +133,15 @@ func CreateAssetSendToExec(cmd *cobra.Command, args []string, fromExec string) {
 		ExecName:  exec,
 	}
 
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &rpcTypes.CreateTxIn{
 		Execer:     types.ExecName(fromExec),
 		ActionName: "TransferToExec",
-		Payload:    types.MustPBToJSON(payload),
+		Payload:    data,
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -165,10 +171,15 @@ func CreateAssetWithdraw(cmd *cobra.Command, args []string, fromExec string) {
 		Cointoken: symbol,
 		ExecName:  exec,
 	}
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &rpcTypes.CreateTxIn{
 		Execer:     types.ExecName(fromExec),
 		ActionName: "Withdraw",
-		Payload:    types.MustPBToJSON(payload),
+		Payload:    data,
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -189,10 +200,15 @@ func CreateAssetTransfer(cmd *cobra.Command, args []string, fromExec string) {
 		Note:      []byte(note),
 		Cointoken: symbol,
 	}
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &rpcTypes.CreateTxIn{
 		Execer:     types.ExecName(fromExec),
 		ActionName: "Transfer",
-		Payload:    types.MustPBToJSON(payload),
+		Payload:    data,
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
