@@ -78,7 +78,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	fromAddr := tx.From()
 
 	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	paraRemoteGrpcClient := types.Conf("config.consensus").GStr("ParaRemoteGrpcClient")
+	paraRemoteGrpcClient := types.Conf("config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
 	if types.IsPara() && paraRemoteGrpcClient == "" {
 		panic("ParaRemoteGrpcClient error")
 	}
