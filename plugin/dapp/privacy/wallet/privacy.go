@@ -82,7 +82,6 @@ func (policy *privacyPolicy) reqTxDetailByAddr(addr string) {
 			return
 		}
 		txcount := len(ReplyTxInfos.TxInfos)
-
 		var ReqHashes types.ReqHashes
 		ReqHashes.Hashes = make([][]byte, len(ReplyTxInfos.TxInfos))
 		for index, ReplyTxInfo := range ReplyTxInfos.TxInfos {
@@ -592,7 +591,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	value := &privacytypes.Public2Privacy{
 		Tokenname: req.Tokenname,
 		Amount:    amount,
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Output:    privacyOutput,
 	}
 
@@ -662,7 +661,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	value := &privacytypes.Privacy2Privacy{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 	}
@@ -731,7 +730,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	value := &privacytypes.Privacy2Public{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 	}
