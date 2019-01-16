@@ -46,7 +46,6 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
-
 	if subcfg.Genesis != "" {
 		genesis = subcfg.Genesis
 	}

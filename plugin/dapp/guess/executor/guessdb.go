@@ -32,7 +32,7 @@ const (
 	ListASC = int32(1)
 
 	//DefaultCount 默认一次获取的记录数
-	DefaultCount = int32(6)
+	DefaultCount = int32(10)
 
 	//DefaultCategory 默认分类
 	DefaultCategory = "default"
@@ -542,7 +542,7 @@ func (action *Action) addGuessBet(game *gty.GuessGame, pbBet *gty.GuessGameBet) 
 	game.Plays = append(game.Plays, player)
 
 	for i := 0; i < len(game.BetStat.Items); i++ {
-		if game.BetStat.Items[i].Option == pbBet.GetOption() {
+		if game.BetStat.Items[i].Option == trimStr(pbBet.GetOption()) {
 			//针对具体选项更新统计项
 			game.BetStat.Items[i].BetsNumber += pbBet.GetBetsNum()
 			game.BetStat.Items[i].BetsTimes++
@@ -675,7 +675,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	winValue := totalBetsNumber - devFee - platFee
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
-		if player.Bet.Option == game.Result {
+		if trimStr(player.Bet.Option) == trimStr(game.Result) {
 			value := player.Bet.BetsNumber * winValue / winBetsNumber
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
@@ -768,6 +768,10 @@ func (action *Action) GameAbort(pbend *gty.GuessGameAbort) (*types.Receipt, erro
 
 //getOptions 获得竞猜选项，并判断是否符合约定格式，类似"A:xxxx;B:xxxx;C:xxx"，“：”前为选项名称，不能重复，":"后为选项说明。
 func getOptions(strOptions string) (options []string, legal bool) {
+	if len(strOptions) == 0 {
+		return nil, false
+	}
+
 	legal = true
 	items := strings.Split(strOptions, ";")
 	for i := 0; i < len(items); i++ {
@@ -779,14 +783,24 @@ func getOptions(strOptions string) (options []string, legal bool) {
 			}
 		}
 
-		options = append(options, item[0])
+		options = append(options, trimStr(item[0]))
 	}
 
 	return options, legal
 }
 
+//trimStr 去除字符串中的空格、制表符、换行符
+func trimStr(str string) string {
+	str = strings.Replace(str, " ", "", -1)
+	str = strings.Replace(str, "\t", "", -1)
+	str = strings.Replace(str, "\n", "", -1)
+
+	return str
+}
+
 //isLegalOption 判断选项是否为合法选项
 func isLegalOption(options []string, option string) bool {
+	option = trimStr(option)
 	for i := 0; i < len(options); i++ {
 		if options[i] == option {
 			return true

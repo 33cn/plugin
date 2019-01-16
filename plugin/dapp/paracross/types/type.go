@@ -98,15 +98,11 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		}
 		return CreateRawAssetTransferTx(&param)
 
-	} else if action == "ParacrossTransfer" || action == "ParacrossWithdraw" || action == "ParacrossTransferToExec" {
-		var param types.CreateTx
-		err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawTransferTx(&param)
+	} else if action == "ParacrossTransfer" || action == "Transfer" ||
+		action == "ParacrossWithdraw" || action == "Withdraw" ||
+		action == "ParacrossTransferToExec" || action == "TransferToExec" {
 
+		return p.CreateRawTransferTx(action, message)
 	}
 
 	return nil, types.ErrNotSupport
