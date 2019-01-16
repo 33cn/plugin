@@ -38,7 +38,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
-		if item.Ty == pty.TyLogTradeSellLimit || item.Ty == pty.TyLogTradeSellRevoke {
+		if item.Ty == pty.TyLogTradeSellLimit {
 			var receipt pty.ReceiptTradeSellLimit
 			err := types.Decode(item.Log, &receipt)
 			if err != nil {
@@ -46,6 +46,15 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			}
 			kv := t.saveSell([]byte(receipt.Base.SellID), item.Ty)
 			set.KV = append(set.KV, kv...)
+		} else if item.Ty == pty.TyLogTradeSellRevoke {
+			var receipt pty.ReceiptTradeSellRevoke
+			err := types.Decode(item.Log, &receipt)
+			if err != nil {
+			panic(err) //数据错误了，已经被修改了
+			}
+			kv := t.saveSell([]byte(receipt.Base.SellID), item.Ty)
+			set.KV = append(set.KV, kv...)
+
 		} else if item.Ty == pty.TyLogTradeBuyMarket {
 			var receipt pty.ReceiptTradeBuyMarket
 			err := types.Decode(item.Log, &receipt)
@@ -54,7 +63,16 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			}
 			kv := t.saveBuy(receipt.Base)
 			set.KV = append(set.KV, kv...)
-		} else if item.Ty == pty.TyLogTradeBuyRevoke || item.Ty == pty.TyLogTradeBuyLimit {
+		} else if item.Ty == pty.TyLogTradeBuyRevoke {
+			var receipt pty.ReceiptTradeBuyRevoke
+			err := types.Decode(item.Log, &receipt)
+			if err != nil {
+				panic(err) //数据错误了，已经被修改了
+			}
+
+			kv := t.saveBuyLimit([]byte(receipt.Base.BuyID), item.Ty)
+			set.KV = append(set.KV, kv...)
+		}else if item.Ty == pty.TyLogTradeBuyLimit {
 			var receipt pty.ReceiptTradeBuyLimit
 			err := types.Decode(item.Log, &receipt)
 			if err != nil {
