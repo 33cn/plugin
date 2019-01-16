@@ -421,6 +421,19 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 		plog.Error("Not found block on main", "seq", seq)
 		return nil, err
 	}
+
+	height, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
+	if err != nil {
+		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
+		return nil, err
+	}
+	hash := blockSeq.Detail.Block.HashByForkHeight(height.Data)
+	if !bytes.Equal(blockSeq.Seq.Hash, hash) {
+		plog.Error("para compare ForkBlockHash fail", "height", height, "seqHash", common.Bytes2Hex(blockSeq.Seq.Hash),
+			"calcHash", common.Bytes2Hex(hash))
+		return nil, types.ErrBlockHashNoMatch
+	}
+
 	return blockSeq, nil
 }
 
