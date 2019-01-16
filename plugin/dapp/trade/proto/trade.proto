@@ -301,6 +301,7 @@ message LocalOrder {
     int64  blockTime         = 14;
     bool   isSellOrder       = 15;
     string assetExec         = 16;
+    string txIndex           = 17;
 }
 
 service trade {
