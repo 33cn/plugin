@@ -45,7 +45,7 @@ func (m *MultiSig) Query_MultiSigAccounts(in *mty.ReqMultiSigAccs) (types.Messag
 	if totalcount == 0 {
 		return accountAddrs, nil
 	}
-	if in.End > totalcount {
+	if in.End >= totalcount {
 		return nil, types.ErrInvalidParam
 	}
 	for index := in.Start; index <= in.End; index++ {
