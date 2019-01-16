@@ -338,28 +338,11 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
   \
    \ ->R
 
-	sellOrderSHTAS = "LODB-trade-sellorder-shtas:"   status, height, token, addr, sellOrderID
-	sellOrderASTS  = "LODB-trade-sellorder-asts:"     addr, status, token, sellOrderID
-	sellOrderATSS  = "LODB-trade-sellorder-atss:"    addr, token, status, sellOrderID
-	sellOrderTSPAS = "LODB-trade-sellorder-tspas:"   token, status, price, addr, orderID
 
-	buyOrderSHTAS  = "LODB-trade-buyorder-shtas:"
-	buyOrderASTS   = "LODB-trade-buyorder-asts:"
-	buyOrderATSS   = "LODB-trade-buyorder-atss:"
-	buyOrderTSPAS  = "LODB-trade-buyorder-tspas:"
-
-	// Addr-Status-Type-Height-Key
-	orderASTHK = "LODB-trade-order-asthk:"    addr, status, height, ty, key
-
-
-)
- */
-
-/*
 状态 1, TradeOrderStatusOnSale, 在售
 状态 2： TradeOrderStatusSoldOut，售完
 状态 3： TradeOrderStatusRevoked， 卖单被撤回
-					  状态 4： TradeOrderStatusExpired， 订单超时(目前不支持订单超时)
+状态 4： TradeOrderStatusExpired， 订单超时(目前不支持订单超时)
 状态 5： TradeOrderStatusOnBuy， 求购
 状态 6： TradeOrderStatusBoughtOut， 购买完成
 状态 7： TradeOrderStatusBuyRevoked， 买单被撤回
