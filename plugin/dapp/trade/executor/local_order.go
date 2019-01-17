@@ -8,11 +8,12 @@ import (
 	"github.com/33cn/chain33/common/db/table"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 
-	"github.com/33cn/chain33/types"
 	"fmt"
-	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common"
 	"strconv"
+
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
 )
 
 /*
@@ -31,8 +32,8 @@ import (
 
 */
 var opt_order_table = &table.Option{
-	Prefix: "LODB_trade",
-	Name: "order",
+	Prefix:  "LODB_trade",
+	Name:    "order",
 	Primary: "txIndex",
 	// asset = asset_exec+asset_symbol
 	//
@@ -41,23 +42,22 @@ var opt_order_table = &table.Option{
 	//      00     10     11          12         1*
 	// 排序过滤条件： 可以组合，status&isSell 和前缀冲突
 	Index: []string{
-		"key", // 内部查询用
-		"asset", // 按资产统计订单
+		"key",                 // 内部查询用
+		"asset",               // 按资产统计订单
 		"asset_isSell_status", // 接口 3
 		// "asset_status", 可能需求， 用于资产的交易历史
 		// "asset_isSell",
-		"owner", // 接口 1.1， 1.3
-		"owner_asset", // 接口 1.2, 1.4, 4, 7
+		"owner",              // 接口 1.1， 1.3
+		"owner_asset",        // 接口 1.2, 1.4, 4, 7
 		"owner_asset_isSell", // 接口 4
 		"owner_asset_status", // 新需求， 在
-		"owner_isSell",  // 接口 6
+		"owner_isSell",       // 接口 6
 		// "owner_isSell_status",  可能需求， 界面分开显示订单
 		// "owner_isSell_statusPrefix", // 状态可以定制组合, 成交历史需求
 		"owner_status", // 接口 2
 		// "owner_statusPrefix", // 状态可以定制组合 , 成交历史需求
 	},
 }
-
 
 type OrderRow struct {
 	*pty.LocalOrder
@@ -89,7 +89,7 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 	case "asset":
 		return []byte(fmt.Sprintf("%s", r.asset())), nil
 	case "asset_isSell_status":
-		return []byte(fmt.Sprintf("%s_%d_", r.asset(), r.isSell(), r.status())), nil
+		return []byte(fmt.Sprintf("%s_%d_%s", r.asset(), r.isSell(), r.status())), nil
 	case "owner":
 		return []byte(fmt.Sprintf("%s", r.Owner)), nil
 	case "owner_asset":
@@ -151,23 +151,23 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 		status = pty.TradeOrderStatusSellHalfRevoked
 	}
 	order := &pty.LocalOrder{
-		AssetSymbol:          sellorder.TokenSymbol,
-		Owner:                sellorder.Address,
-		AmountPerBoardlot:    sellorder.AmountPerBoardlot,
-		MinBoardlot:          sellorder.MinBoardlot,
-		PricePerBoardlot:     sellorder.PricePerBoardlot,
-		TotalBoardlot:        sellorder.TotalBoardlot,
-		TradedBoardlot:       sellorder.SoldBoardlot,
-		BuyID:                "",
-		Status:               status,
-		SellID:               sell.SellID,
-		TxHash:               []string{common.ToHex(tx.Hash())},
-		Height:               sell.Height,
-		Key:                  sell.SellID,
-		BlockTime:            t.GetBlockTime(),
-		IsSellOrder:          true,
-		AssetExec:            sellorder.AssetExec,
-		TxIndex:              txIndex,
+		AssetSymbol:       sellorder.TokenSymbol,
+		Owner:             sellorder.Address,
+		AmountPerBoardlot: sellorder.AmountPerBoardlot,
+		MinBoardlot:       sellorder.MinBoardlot,
+		PricePerBoardlot:  sellorder.PricePerBoardlot,
+		TotalBoardlot:     sellorder.TotalBoardlot,
+		TradedBoardlot:    sellorder.SoldBoardlot,
+		BuyID:             "",
+		Status:            status,
+		SellID:            sell.SellID,
+		TxHash:            []string{common.ToHex(tx.Hash())},
+		Height:            sell.Height,
+		Key:               sell.SellID,
+		BlockTime:         t.GetBlockTime(),
+		IsSellOrder:       true,
+		AssetExec:         sellorder.AssetExec,
+		TxIndex:           txIndex,
 	}
 	return order
 }
@@ -238,27 +238,26 @@ func parseOrderPriceFloat(s string) int64 {
 	return int64(x * float64(types.Coin))
 }
 
-
 func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, txIndex string) *pty.LocalOrder {
 
 	order := &pty.LocalOrder{
-		AssetSymbol:          sell.TokenSymbol,
-		Owner:                sell.Owner,
-		AmountPerBoardlot:    parseOrderAmountFloat(sell.AmountPerBoardlot),
-		MinBoardlot:          sell.MinBoardlot,
-		PricePerBoardlot:     parseOrderPriceFloat(sell.PricePerBoardlot),
-		TotalBoardlot:        sell.TotalBoardlot,
-		TradedBoardlot:       sell.SoldBoardlot,
-		BuyID:                sell.BuyID,
-		Status:               pty.TradeOrderStatusSoldOut,
-		SellID:               calcTokenSellID(common.Bytes2Hex(tx.Hash())),
-		TxHash:               []string{common.ToHex(tx.Hash())},
-		Height:               sell.Height,
-		Key:                  calcTokenSellID(common.Bytes2Hex(tx.Hash())),
-		BlockTime:            t.GetBlockTime(),
-		IsSellOrder:          true,
-		AssetExec:            sell.AssetExec,
-		TxIndex:              txIndex,
+		AssetSymbol:       sell.TokenSymbol,
+		Owner:             sell.Owner,
+		AmountPerBoardlot: parseOrderAmountFloat(sell.AmountPerBoardlot),
+		MinBoardlot:       sell.MinBoardlot,
+		PricePerBoardlot:  parseOrderPriceFloat(sell.PricePerBoardlot),
+		TotalBoardlot:     sell.TotalBoardlot,
+		TradedBoardlot:    sell.SoldBoardlot,
+		BuyID:             sell.BuyID,
+		Status:            pty.TradeOrderStatusSoldOut,
+		SellID:            calcTokenSellID(common.Bytes2Hex(tx.Hash())),
+		TxHash:            []string{common.ToHex(tx.Hash())},
+		Height:            sell.Height,
+		Key:               calcTokenSellID(common.Bytes2Hex(tx.Hash())),
+		BlockTime:         t.GetBlockTime(),
+		IsSellOrder:       true,
+		AssetExec:         sell.AssetExec,
+		TxIndex:           txIndex,
 	}
 	return order
 }
