@@ -302,6 +302,7 @@ message LocalOrder {
     bool   isSellOrder       = 15;
     string assetExec         = 16;
     string txIndex           = 17;
+    bool   isFinished        = 18;
 }
 
 service trade {
