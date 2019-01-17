@@ -641,7 +641,7 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 	return txResult2OrderReply(txResult)
 }
 
-func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
+func (t *trade) GetOnesOrderWithStatusV1(req *pty.ReqAddrAssets) (types.Message, error) {
 	fromKey := []byte("")
 	if len(req.FromKey) != 0 {
 		order := t.loadOrderFromKey([]byte(req.FromKey))
@@ -658,6 +658,7 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 		return nil, types.ErrInvalidParam
 	}
 
+
 	keys, err := t.GetLocalDB().List(calcOnesOrderPrefixStatus(req.Addr, orderStatus), fromKey, req.Count, req.Direction)
 	if err != nil {
 		return nil, err
@@ -673,4 +674,60 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 		}
 	}
 	return &replys, nil
+}
+
+func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
+	orderStatus, orderType := fromStatus(req.Status)
+	if orderStatus == orderStatusInvalid || orderType == orderTypeInvalid {
+		return nil, types.ErrInvalidParam
+	}
+
+	// 使用 owner isFinished 组合
+	var order pty.LocalOrder
+	if orderStatus == orderStatusOn {
+		order.IsFinished = false
+	} else {
+		order.IsFinished = true
+	}
+	order.Owner = req.Addr
+	if len(req.FromKey) > 0 {
+		order.TxIndex = req.FromKey
+	}
+	rows, err := list(t.GetLocalDB(), "owner_isFinished", &order, req.Count, req.Direction)
+	if err != nil {
+		tradelog.Error("GetOnesOrderWithStatus", "err", err)
+		return nil, err
+	}
+	var replys pty.ReplyTradeOrders
+	for _, row := range rows {
+		o, ok := row.Data.(*pty.LocalOrder)
+		if !ok {
+			tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
+			return nil, types.ErrTypeAsset
+		}
+		reply := fmtReply(o)
+		replys.Orders = append(replys.Orders, reply)
+	}
+	return &replys, nil
+}
+
+func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
+	return &pty.ReplyTradeOrder{
+		TokenSymbol:          order.AssetSymbol,
+		Owner:                order.Owner,
+		AmountPerBoardlot:    order.AmountPerBoardlot,
+		MinBoardlot:          order.MinBoardlot,
+		PricePerBoardlot:     order.PricePerBoardlot,
+		TotalBoardlot:        order.TotalBoardlot,
+		TradedBoardlot:       order.TradedBoardlot,
+		BuyID:                order.BuyID,
+		Status:               order.Status,
+		SellID:               order.SellID,
+		TxHash:               order.TxHash[0],
+		Height:               order.Height,
+		Key:                  order.TxIndex,
+		BlockTime:            order.BlockTime,
+		IsSellOrder:          order.IsSellOrder,
+		AssetExec:            order.AssetExec,
+	}
 }
