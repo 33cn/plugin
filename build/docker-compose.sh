@@ -259,7 +259,6 @@ function sync_status() {
     done
     echo "sync wait  ${wait_sec} s"
 
-
 }
 
 function sync() {
