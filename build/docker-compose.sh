@@ -247,7 +247,11 @@ function sync_status() {
     while [ $count -gt 0 ]; do
         sync_status=$(${1} net is_sync)
         if [ "${sync_status}" = "true" ]; then
-            break
+            echo "=========== query clock sync status========== "
+            sync_status=$(${1} net is_clock_sync)
+            if [ "${sync_status}" = "true" ]; then
+                break
+            fi
         fi
         ((count--))
         wait_sec=$((wait_sec + 1))
@@ -255,11 +259,7 @@ function sync_status() {
     done
     echo "sync wait  ${wait_sec} s"
 
-    echo "=========== query clock sync status========== "
-    sync_status=$(${1} net is_clock_sync)
-    if [ "${sync_status}" = "false" ]; then
-        exit 1
-    fi
+
 }
 
 function sync() {
