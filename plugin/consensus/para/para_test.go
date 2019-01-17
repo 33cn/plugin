@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"errors"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
-	"errors"
 )
 
 var (
@@ -236,6 +237,6 @@ func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
 	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
 	ret, err := para.GetBlockHashForkHeightOnMainChain()
 	assert.Nil(t, err)
-	assert.Equal(t, int64(1),ret)
+	assert.Equal(t, int64(1), ret)
 
 }
