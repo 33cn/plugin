@@ -177,6 +177,12 @@ func (client *client) SetQueueClient(c queue.Client) {
 }
 
 func (client *client) InitBlock() {
+	var err error
+	mainBlockHashForkHeight, err = client.GetBlockHashForkHeightOnMainChain()
+	if err != nil {
+		panic(err)
+	}
+
 	block, err := client.RequestLastBlock()
 	if err != nil {
 		panic(err)
@@ -204,13 +210,6 @@ func (client *client) GetStartSeq(height int64) int64 {
 	if height == 0 {
 		return 0
 	}
-
-	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
-	if err != nil {
-		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
-		panic(err)
-	}
-	mainBlockHashForkHeight = ret.Data
 
 	lastHeight, err := client.GetLastHeightOnMainChain()
 	if err != nil {
@@ -375,6 +374,16 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, []byte, int64, er
 	}
 	return blockedSeq, lastBlock, main.Seq.Hash, main.Detail.Block.Height, nil
 
+}
+
+func (client *client) GetBlockHashForkHeightOnMainChain() (int64, error) {
+	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
+	if err != nil {
+		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
+		return -1, err
+	}
+
+	return ret.Data, nil
 }
 
 func (client *client) GetLastHeightOnMainChain() (int64, error) {
