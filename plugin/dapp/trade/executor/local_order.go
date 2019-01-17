@@ -173,10 +173,6 @@ func NewOrderTable(kvdb db.KV) *table.Table {
 func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 	sellorder *pty.SellOrder, txIndex string) *pty.LocalOrder {
 
-	status := sellorder.Status
-	if status == pty.TradeOrderStatusRevoked || sell.SoldBoardlot > 0 {
-		status = pty.TradeOrderStatusSellHalfRevoked
-	}
 	order := &pty.LocalOrder{
 		AssetSymbol:       sellorder.TokenSymbol,
 		Owner:             sellorder.Address,
@@ -186,7 +182,7 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 		TotalBoardlot:     sellorder.TotalBoardlot,
 		TradedBoardlot:    sellorder.SoldBoardlot,
 		BuyID:             "",
-		Status:            status,
+		Status:            sellorder.Status,
 		SellID:            sell.SellID,
 		TxHash:            []string{common.ToHex(tx.Hash())},
 		Height:            sell.Height,
@@ -195,6 +191,7 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 		IsSellOrder:       true,
 		AssetExec:         sellorder.AssetExec,
 		TxIndex:           txIndex,
+		IsFinished:        false,
 	}
 	return order
 }
@@ -218,6 +215,7 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 	order.Status = status
 	order.TxHash = append(order.TxHash, common.ToHex(tx.Hash()))
 	order.TradedBoardlot = sellorder.SoldBoardlot
+	order.IsFinished = (status != pty.TradeOrderStatusOnSale)
 
 	ldb.Replace(order)
 
@@ -241,6 +239,7 @@ func (t *trade) rollBackSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBa
 	order.Status = pty.TradeOrderStatusOnSale
 	order.TxHash = order.TxHash[:len(order.TxHash)-1]
 	order.TradedBoardlot = order.TradedBoardlot - tradedBoardlot
+	order.IsFinished = (order.Status != pty.TradeOrderStatusOnSale)
 
 	ldb.Replace(order)
 
@@ -285,6 +284,7 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 		IsSellOrder:       true,
 		AssetExec:         sell.AssetExec,
 		TxIndex:           txIndex,
+		IsFinished:        true,
 	}
 	return order
 }
@@ -309,6 +309,7 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
 		TxIndex:           txIndex,
+		IsFinished:        false,
 	}
 	return order
 }
@@ -326,12 +327,13 @@ func (t *trade) updateBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 
 	}
 	status := buyorder.Status
-	if status == pty.TradeOrderStatusRevoked && buy.BoughtBoardlot > 0 {
-		status = pty.TradeOrderStatusSellHalfRevoked
+	if status == pty.TradeOrderStatusBuyRevoked && buy.BoughtBoardlot > 0 {
+		status = pty.TradeOrderStatusBuyHalfRevoked
 	}
 	order.Status = status
 	order.TxHash = append(order.TxHash, common.ToHex(tx.Hash()))
 	order.TradedBoardlot = buyorder.BoughtBoardlot
+	order.IsFinished = (status != pty.TradeOrderStatusOnBuy)
 
 	ldb.Replace(order)
 
@@ -348,12 +350,12 @@ func (t *trade) rollbackBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 	order, ok := xs[0].Data.(*pty.LocalOrder)
 	if !ok {
 		return nil
-
 	}
 
 	order.Status = pty.TradeOrderStatusOnBuy
 	order.TxHash = order.TxHash[:len(order.TxHash)-1]
 	order.TradedBoardlot = order.TradedBoardlot - traded
+	order.IsFinished = false
 
 	ldb.Replace(order)
 
@@ -380,6 +382,7 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
 		TxIndex:           txIndex,
+		IsFinished:        true,
 	}
 	return order
 }
