@@ -5,15 +5,14 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/common/db/table"
-	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
-
 	"fmt"
 	"strconv"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
 /*
