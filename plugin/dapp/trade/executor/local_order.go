@@ -211,7 +211,7 @@ func (t *trade) rollBackSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBa
 	}
 	// 撤销订单回滚, 只需要修改状态
 	// 其他的操作需要还修改数量
-	order.Status = pty.TradeOrderStatusOnBuy
+	order.Status = pty.TradeOrderStatusOnSale
 	order.TxHash = order.TxHash[:len(order.TxHash)-1]
 	order.TradedBoardlot = order.TradedBoardlot - tradedBoardlot
 
@@ -306,6 +306,28 @@ func (t *trade) updateBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 	order.Status = status
 	order.TxHash = append(order.TxHash, common.ToHex(tx.Hash()))
 	order.TradedBoardlot = buyorder.BoughtBoardlot
+
+	ldb.Replace(order)
+
+	return order
+}
+
+func (t *trade) rollbackBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
+	buyorder *pty.BuyLimitOrder, txIndex string, ldb *table.Table, traded int64) *pty.LocalOrder {
+
+	xs, err := ldb.ListIndex("key", []byte(buy.SellID), nil, 1, 0)
+	if err != nil || len(xs) != 1 {
+		return nil
+	}
+	order, ok := xs[0].Data.(*pty.LocalOrder)
+	if !ok {
+		return nil
+
+	}
+
+	order.Status = pty.TradeOrderStatusOnBuy
+	order.TxHash = order.TxHash[:len(order.TxHash)-1]
+	order.TradedBoardlot = order.TradedBoardlot - traded
 
 	ldb.Replace(order)
 

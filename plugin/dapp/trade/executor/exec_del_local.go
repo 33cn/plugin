@@ -63,7 +63,7 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.deleteBuy(receipt.Base)
+			kv := t.deleteBuy(receipt.Base, txIndex, table)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeBuyRevoke {
 			var receipt pty.ReceiptTradeBuyRevoke
@@ -71,7 +71,7 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.deleteBuyLimit([]byte(receipt.Base.BuyID), item.Ty)
+			kv := t.deleteBuyLimit(receipt.Base, item.Ty, tx, txIndex, table, tradedBoardlot)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeBuyLimit {
 			var receipt pty.ReceiptTradeBuyLimit
@@ -79,7 +79,7 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.deleteBuyLimit([]byte(receipt.Base.BuyID), item.Ty)
+			kv := t.deleteBuyLimit(receipt.Base, item.Ty, tx, txIndex, table, tradedBoardlot)
 			set.KV = append(set.KV, kv...)
 		} else if item.Ty == pty.TyLogTradeSellMarket {
 			var receipt pty.ReceiptSellMarket
@@ -87,7 +87,7 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.deleteSellMarket(receipt.Base)
+			kv := t.deleteSellMarket(receipt.Base, txIndex, table)
 			set.KV = append(set.KV, kv...)
 		}
 	}
