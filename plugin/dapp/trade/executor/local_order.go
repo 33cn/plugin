@@ -54,6 +54,9 @@ var opt_order_table = &table.Option{
 		// "owner_isSell_status",  可能需求， 界面分开显示订单
 		// "owner_isSell_statusPrefix", // 状态可以定制组合, 成交历史需求
 		"owner_status", // 接口 2
+		"assset_isSell_isFinished", // 用 isFinish, 进行订单是否完成的列表功能
+		"owner_asset_isFinished",
+		"owner_isFinished",
 		// "owner_statusPrefix", // 状态可以定制组合 , 成交历史需求
 	},
 }
@@ -109,7 +112,12 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%s_%s", r.Owner, r.status())), nil
 	//case "owner_statusPrefix":
 	//	return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isSell())), nil
-
+	case "assset_isSell_isFinished":
+		return []byte(fmt.Sprintf("%s_%d_%d", r.Owner, r.isSell(), r.isFinished())), nil
+	case "owner_asset_isFinished":
+		return []byte(fmt.Sprintf("%s_%s_%d", r.Owner, r.asset(), r.isFinished())), nil
+	case "owner_isFinished":
+		return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isFinished())), nil
 	default:
 		return nil, types.ErrNotFound
 	}
@@ -121,6 +129,13 @@ func (r *OrderRow) asset() string {
 
 func (r *OrderRow) isSell() int {
 	if r.IsSellOrder {
+		return 1
+	}
+	return 0
+}
+
+func (r *OrderRow) isFinished() int {
+	if r.IsFinished {
 		return 1
 	}
 	return 0
