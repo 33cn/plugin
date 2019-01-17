@@ -59,18 +59,22 @@ var opt_order_table = &table.Option{
 	},
 }
 
+// OrderRow order row
 type OrderRow struct {
 	*pty.LocalOrder
 }
 
+// NewOrderRew create row
 func NewOrderRew() *OrderRow {
 	return &OrderRow{LocalOrder: nil}
 }
 
+// CreateRow create row
 func (r *OrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &pty.ReplyTradeOrder{}}
 }
 
+// SetPayload set payload
 func (r *OrderRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*pty.LocalOrder); ok {
 		r.LocalOrder = d
@@ -79,19 +83,19 @@ func (r *OrderRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-// TODO more
+// Get get index key
 func (r *OrderRow) Get(key string) ([]byte, error) {
 	switch key {
 	case "txIndex":
-		return []byte(fmt.Sprintf("%s", r.TxIndex)), nil
+		return []byte(r.TxIndex), nil
 	case "key":
-		return []byte(fmt.Sprintf("%s", r.Key)), nil
+		return []byte(r.Key), nil
 	case "asset":
-		return []byte(fmt.Sprintf("%s", r.asset())), nil
+		return []byte(r.asset()), nil
 	case "asset_isSell_status":
 		return []byte(fmt.Sprintf("%s_%d_%s", r.asset(), r.isSell(), r.status())), nil
 	case "owner":
-		return []byte(fmt.Sprintf("%s", r.Owner)), nil
+		return []byte(r.Owner), nil
 	case "owner_asset":
 		return []byte(fmt.Sprintf("%s_%s", r.Owner, r.asset())), nil
 	case "owner_asset_isSell":
@@ -134,6 +138,7 @@ func (r *OrderRow) status() string {
 	return fmt.Sprintf("%02d", r.Status)
 }
 
+// NewOrderTable create order table
 func NewOrderTable(kvdb db.KV) *table.Table {
 	rowMeta := NewOrderRew()
 	t, err := table.NewTable(rowMeta, kvdb, opt_order_table)
