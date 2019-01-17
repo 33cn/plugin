@@ -131,10 +131,19 @@ func (r *OrderRow) isSell() int {
 //      01     10     11          12        19 -> 1*
 func (r *OrderRow) status() string {
 	// if r.Status == 1 || r.Status == 10 || r.Status == 11 || r.Status == 12 {}
-	if r.Status == 19 {
-		return "1" // 试图用1 可以匹配所有完成的
+	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale{
+		return "01" // 试图用1 可以匹配所有完成的
+	} else if r.Status == pty.TradeOrderStatusSoldOut || r.Status == pty.TradeOrderStatusBoughtOut {
+		return "12"
+	} else if r.Status == pty.TradeOrderStatusRevoked || r.Status == pty.TradeOrderStatusBuyRevoked {
+		return "10"
+	} else if r.Status == pty.TradeOrderStatusSellHalfRevoked || r.Status == pty.TradeOrderStatusBuyHalfRevoked {
+		return "11"
+	} else if r.Status == pty.TradeOrderStatusGroupComplete {
+		return "1" // 1* match complete
 	}
-	return fmt.Sprintf("%02d", r.Status)
+
+	return "XX"
 }
 
 // NewOrderTable create order table

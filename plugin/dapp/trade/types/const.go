@@ -37,6 +37,7 @@ const (
 	TradeOrderStatusBuyRevoked
 	TradeOrderStatusSellHalfRevoked
 	TradeOrderStatusBuyHalfRevoked
+	TradeOrderStatusGroupComplete
 )
 
 //SellOrderStatus : sell order status map
