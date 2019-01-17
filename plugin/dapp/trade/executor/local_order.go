@@ -130,7 +130,6 @@ func (r *OrderRow) isSell() int {
 //    进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
 //      01     10     11          12        19 -> 1*
 func (r *OrderRow) status() string {
-	// if r.Status == 1 || r.Status == 10 || r.Status == 11 || r.Status == 12 {}
 	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale{
 		return "01" // 试图用1 可以匹配所有完成的
 	} else if r.Status == pty.TradeOrderStatusSoldOut || r.Status == pty.TradeOrderStatusBoughtOut {
@@ -368,6 +367,30 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		TxIndex:           txIndex,
 	}
 	return order
+}
+
+func list(db db.KVDB, indexName string, data *pty.LocalOrder, count, direction int32) ([]*table.Row, error) {
+	query := NewOrderTable(db)
+	var primary []byte
+	if len(data.TxIndex) > 0 {
+		primary = []byte(data.TxIndex)
+	}
+
+	cur := &OrderRow{LocalOrder: data}
+	index, err := cur.Get(indexName)
+	if err != nil {
+		tradelog.Error("query List failed", "key", string(primary), "param", data)
+		return nil, err
+	}
+	rows, err := query.ListIndex(indexName, index, primary, count, direction)
+	if err != nil {
+		tradelog.Error("query List failed", "key", string(primary), "param", data)
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, types.ErrNotFound
+	}
+	return rows, nil
 }
 
 /*
