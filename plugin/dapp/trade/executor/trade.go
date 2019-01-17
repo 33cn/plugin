@@ -19,10 +19,10 @@ trade执行器支持trade的创建和交易，
 import (
 	log "github.com/33cn/chain33/common/log/log15"
 
+	"github.com/33cn/chain33/common/db/table"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
-	"github.com/33cn/chain33/common/db/table"
 )
 
 var (

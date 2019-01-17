@@ -5,9 +5,9 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
-	"github.com/33cn/chain33/system/dapp"
 )
 
 func (t *trade) ExecLocal_SellLimit(sell *pty.TradeForSell, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -74,7 +74,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 
 			kv := t.saveBuyLimit(receipt.Base, item.Ty, tx, txIndex, table)
 			set.KV = append(set.KV, kv...)
-		}else if item.Ty == pty.TyLogTradeBuyLimit {
+		} else if item.Ty == pty.TyLogTradeBuyLimit {
 			var receipt pty.ReceiptTradeBuyLimit
 			err := types.Decode(item.Log, &receipt)
 			if err != nil {
@@ -89,7 +89,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveSellMarket(receipt.Base,tx, txIndex, table)
+			kv := t.saveSellMarket(receipt.Base, tx, txIndex, table)
 			//tradelog.Info("saveSellMarket", "kv", kv)
 			set.KV = append(set.KV, kv...)
 		}
