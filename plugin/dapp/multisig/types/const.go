@@ -126,17 +126,3 @@ func IsAssetsInvalid(exec, symbol string) error {
 	//Symbol不做检测
 	return nil
 }
-
-func isUpperChar(a byte) bool {
-	res := (a <= 'Z' && a >= 'A')
-	return res
-}
-
-func validSymbol(cs []byte) bool {
-	for _, c := range cs {
-		if !isUpperChar(c) {
-			return false
-		}
-	}
-	return true
-}
