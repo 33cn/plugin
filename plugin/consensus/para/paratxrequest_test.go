@@ -66,7 +66,7 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 
-	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil)
+	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
 	s.createBlockMock()
 
 	reply := &types.Reply{IsOk: true}
