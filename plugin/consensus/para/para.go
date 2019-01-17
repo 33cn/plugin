@@ -47,8 +47,9 @@ var (
 	zeroHash           [32]byte
 	grpcRecSize        = 30 * 1024 * 1024 //the size should be limited in server
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey            = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchDepth int32 = 100
+	minerPrivateKey               = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	searchHashMatchDepth    int32 = 100
+	mainBlockHashForkHeight int64 = types.MaxHeight //calc block hash fork height in main chain
 )
 
 func init() {
@@ -203,6 +204,14 @@ func (client *client) GetStartSeq(height int64) int64 {
 	if height == 0 {
 		return 0
 	}
+
+	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
+	if err != nil {
+		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
+		panic(err)
+	}
+	mainBlockHashForkHeight = ret.Data
+
 	lastHeight, err := client.GetLastHeightOnMainChain()
 	if err != nil {
 		panic(err)
@@ -422,15 +431,10 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 		return nil, err
 	}
 
-	height, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
-	if err != nil {
-		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
-		return nil, err
-	}
-	hash := blockSeq.Detail.Block.HashByForkHeight(height.Data)
+	hash := blockSeq.Detail.Block.HashByForkHeight(mainBlockHashForkHeight)
 	if !bytes.Equal(blockSeq.Seq.Hash, hash) {
-		plog.Error("para compare ForkBlockHash fail", "height", height, "seqHash", common.Bytes2Hex(blockSeq.Seq.Hash),
-			"calcHash", common.Bytes2Hex(hash))
+		plog.Error("para compare ForkBlockHash fail", "forkHeight", mainBlockHashForkHeight,
+			"seqHash", common.Bytes2Hex(blockSeq.Seq.Hash), "calcHash", common.Bytes2Hex(hash))
 		return nil, types.ErrBlockHashNoMatch
 	}
 
