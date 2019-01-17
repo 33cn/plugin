@@ -114,8 +114,13 @@ func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) deleteSell(sellID []byte, ty int32) []*types.KeyValue {
-	sellorder := t.getSellOrderFromDb(sellID)
+func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, tradedBoardlot int64) []*types.KeyValue {
+	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
+	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
+		ldb.Del([]byte(txIndex))
+	} else {
+		t.rollBackSellLimit(tx, base, sellorder, txIndex, ldb, tradedBoardlot)
+	}
 	return genDeleteSellKv(sellorder)
 }
 

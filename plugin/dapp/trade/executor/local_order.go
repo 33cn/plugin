@@ -197,6 +197,29 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 	return order
 }
 
+func (t *trade) rollBackSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
+	sellorder *pty.SellOrder, txIndex string, ldb *table.Table, tradedBoardlot int64) *pty.LocalOrder {
+
+	xs, err := ldb.ListIndex("key", []byte(sell.SellID), nil, 1, 0)
+	if err != nil || len(xs) != 1 {
+		return nil
+	}
+	order, ok := xs[0].Data.(*pty.LocalOrder)
+	if !ok {
+		return nil
+
+	}
+	// 撤销订单回滚, 只需要修改状态
+	// 其他的操作需要还修改数量
+	order.Status = pty.TradeOrderStatusOnBuy
+	order.TxHash = order.TxHash[:len(order.TxHash)-1]
+	order.TradedBoardlot = order.TradedBoardlot - tradedBoardlot
+
+	ldb.Replace(order)
+
+	return order
+}
+
 func parseOrderAmountFloat(s string) int64 {
 	x, err := strconv.ParseFloat(s, 64)
 	if err != nil {
