@@ -6,21 +6,22 @@ package types
 
 // Config 配置信息
 type Config struct {
-	Title      string      `protobuf:"bytes,1,opt,name=title" json:"title,omitempty"`
-	Version    string      `protobuf:"bytes,1,opt,name=version" json:"version,omitempty"`
-	Log        *Log        `protobuf:"bytes,2,opt,name=log" json:"log,omitempty"`
-	Store      *Store      `protobuf:"bytes,3,opt,name=store" json:"store,omitempty"`
-	Consensus  *Consensus  `protobuf:"bytes,5,opt,name=consensus" json:"consensus,omitempty"`
-	Mempool    *Mempool    `protobuf:"bytes,6,opt,name=mempool" json:"memPool,omitempty"`
-	BlockChain *BlockChain `protobuf:"bytes,7,opt,name=blockChain" json:"blockChain,omitempty"`
-	Wallet     *Wallet     `protobuf:"bytes,8,opt,name=wallet" json:"wallet,omitempty"`
-	P2P        *P2P        `protobuf:"bytes,9,opt,name=p2p" json:"p2p,omitempty"`
-	RPC        *RPC        `protobuf:"bytes,10,opt,name=rpc" json:"rpc,omitempty"`
-	Exec       *Exec       `protobuf:"bytes,11,opt,name=exec" json:"exec,omitempty"`
-	TestNet    bool        `protobuf:"varint,12,opt,name=testNet" json:"testNet,omitempty"`
-	FixTime    bool        `protobuf:"varint,13,opt,name=fixTime" json:"fixTime,omitempty"`
-	Pprof      *Pprof      `protobuf:"bytes,14,opt,name=pprof" json:"pprof,omitempty"`
-	Fork       *ForkList   `protobuf:"bytes,15,opt,name=fork" json:"fork,omitempty"`
+	Title      string       `protobuf:"bytes,1,opt,name=title" json:"title,omitempty"`
+	Version    string       `protobuf:"bytes,1,opt,name=version" json:"version,omitempty"`
+	Log        *Log         `protobuf:"bytes,2,opt,name=log" json:"log,omitempty"`
+	Store      *Store       `protobuf:"bytes,3,opt,name=store" json:"store,omitempty"`
+	Consensus  *Consensus   `protobuf:"bytes,5,opt,name=consensus" json:"consensus,omitempty"`
+	Mempool    *Mempool     `protobuf:"bytes,6,opt,name=mempool" json:"memPool,omitempty"`
+	BlockChain *BlockChain  `protobuf:"bytes,7,opt,name=blockChain" json:"blockChain,omitempty"`
+	Wallet     *Wallet      `protobuf:"bytes,8,opt,name=wallet" json:"wallet,omitempty"`
+	P2P        *P2P         `protobuf:"bytes,9,opt,name=p2p" json:"p2p,omitempty"`
+	RPC        *RPC         `protobuf:"bytes,10,opt,name=rpc" json:"rpc,omitempty"`
+	Exec       *Exec        `protobuf:"bytes,11,opt,name=exec" json:"exec,omitempty"`
+	TestNet    bool         `protobuf:"varint,12,opt,name=testNet" json:"testNet,omitempty"`
+	FixTime    bool         `protobuf:"varint,13,opt,name=fixTime" json:"fixTime,omitempty"`
+	Pprof      *Pprof       `protobuf:"bytes,14,opt,name=pprof" json:"pprof,omitempty"`
+	Fork       *ForkList    `protobuf:"bytes,15,opt,name=fork" json:"fork,omitempty"`
+	Health     *HealthCheck `protobuf:"bytes,16,opt,name=health" json:"health,omitempty"`
 }
 
 // ForkList fork列表配置
@@ -64,19 +65,12 @@ type Mempool struct {
 
 // Consensus 配置
 type Consensus struct {
-	Name                        string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	GenesisBlockTime            int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
-	Minerstart                  bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
-	Genesis                     string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
-	HotkeyAddr                  string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
-	ForceMining                 bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
-	WriteBlockSeconds           int64  `protobuf:"varint,20,opt,name=writeBlockSeconds" json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient        string `protobuf:"bytes,22,opt,name=paraRemoteGrpcClient" json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                 int64  `protobuf:"varint,23,opt,name=startHeight" json:"startHeight,omitempty"`
-	EmptyBlockInterval          int64  `protobuf:"varint,24,opt,name=emptyBlockInterval" json:"emptyBlockInterval,omitempty"`
-	AuthAccount                 string `protobuf:"bytes,25,opt,name=authAccount" json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg        int32  `protobuf:"varint,26,opt,name=waitBlocks4CommitMsg" json:"waitBlocks4CommitMsg,omitempty"`
-	SearchHashMatchedBlockDepth int32  `protobuf:"varint,27,opt,name=searchHashMatchedBlockDepth" json:"searchHashMatchedBlockDepth,omitempty"`
+	Name             string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	GenesisBlockTime int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
+	Minerstart       bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
+	Genesis          string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
+	HotkeyAddr       string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
+	ForceMining      bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
 }
 
 // Wallet 配置
@@ -164,4 +158,11 @@ type Exec struct {
 // Pprof 配置
 type Pprof struct {
 	ListenAddr string `protobuf:"bytes,1,opt,name=listenAddr" json:"listenAddr,omitempty"`
+}
+
+// HealthCheck 配置
+type HealthCheck struct {
+	ListenAddr     string `protobuf:"bytes,1,opt,name=listenAddr" json:"listenAddr,omitempty"`
+	CheckInterval  uint32 `protobuf:"varint,2,opt,name=checkInterval" json:"checkInterval,omitempty"`
+	UnSyncMaxTimes uint32 `protobuf:"varint,3,opt,name=unSyncMaxTimes" json:"unSyncMaxTimes,omitempty"`
 }

@@ -10,6 +10,7 @@ import (
 
 	"encoding/hex"
 
+	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -373,6 +374,7 @@ func newTestChain33(api *mocks.QueueProtocolAPI) *Chain33 {
 	return &Chain33{
 		cli: channelClient{
 			QueueProtocolAPI: api,
+			accountdb:        account.NewCoinsAccount(),
 		},
 	}
 }
@@ -401,6 +403,36 @@ func TestChain33_CreateRawTransaction(t *testing.T) {
 	err = testChain33.CreateRawTransaction(tx, &testResult)
 	assert.NotNil(t, testResult)
 	assert.Nil(t, err)
+}
+
+func TestChain33_ReWriteRawTx(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	testChain33 := newTestChain33(api)
+	txHex1 := "0a05636f696e73122c18010a281080c2d72f222131477444795771577233553637656a7663776d333867396e7a6e7a434b58434b7120a08d0630a696c0b3f78dd9ec083a2131477444795771577233553637656a7663776d333867396e7a6e7a434b58434b71"
+	//txHex2 := "0a05636f696e73122d18010a29108084af5f222231484c53426e7437486e486a7857797a636a6f573863663259745550663337594d6320a08d0630dbc4cbf6fbc4e1d0533a2231484c53426e7437486e486a7857797a636a6f573863663259745550663337594d63"
+
+	reTx := &rpctypes.ReWriteRawTx{
+		Tx:     txHex1,
+		Execer: "paracross",
+		Fee:    29977777777,
+		Expire: "130s",
+		To:     "aabbccdd",
+	}
+	var testResult interface{}
+	err := testChain33.ReWriteRawTx(reTx, &testResult)
+	assert.Nil(t, err)
+	assert.NotNil(t, testResult)
+	assert.NotEqual(t, txHex1, testResult)
+	txData, err := hex.DecodeString(testResult.(string))
+	assert.Nil(t, err)
+	tx := &types.Transaction{}
+	err = types.Decode(txData, tx)
+	assert.Nil(t, err)
+	assert.Equal(t, tx.Execer, []byte(reTx.Execer))
+	assert.Equal(t, tx.Fee, reTx.Fee)
+	assert.Equal(t, int64(130000000000), tx.Expire)
+	assert.Equal(t, reTx.To, tx.To)
+
 }
 
 func TestChain33_CreateTxGroup(t *testing.T) {
@@ -1182,26 +1214,6 @@ func TestChain33_GetLastBlockSequence(t *testing.T) {
 	assert.Equal(t, int64(1), result2)
 }
 
-func TestChain33_GetBlockSequences(t *testing.T) {
-	api := new(mocks.QueueProtocolAPI)
-	client := newTestChain33(api)
-	var result interface{}
-	api.On("GetBlockSequences", mock.Anything).Return(nil, types.ErrInvalidParam)
-	err := client.GetBlockSequences(rpctypes.BlockParam{}, &result)
-	assert.NotNil(t, err)
-
-	api = new(mocks.QueueProtocolAPI)
-	client = newTestChain33(api)
-	var result2 interface{}
-	blocks := types.BlockSequences{}
-	blocks.Items = make([]*types.BlockSequence, 0)
-	blocks.Items = append(blocks.Items, &types.BlockSequence{Hash: []byte("h1"), Type: 1})
-	api.On("GetBlockSequences", mock.Anything).Return(&blocks, nil)
-	err = client.GetBlockSequences(rpctypes.BlockParam{}, &result2)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(result2.(*rpctypes.ReplyBlkSeqs).BlkSeqInfos))
-}
-
 func TestChain33_GetBlockByHashes(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	client := newTestChain33(api)
@@ -1229,7 +1241,7 @@ func TestChain33_CreateTransaction(t *testing.T) {
 
 	in := &rpctypes.CreateTxIn{Execer: "notExist", ActionName: "x", Payload: []byte("x")}
 	err = client.CreateTransaction(in, &result)
-	assert.Equal(t, types.ErrNotSupport, err)
+	assert.Equal(t, types.ErrExecNotFound, err)
 
 	in = &rpctypes.CreateTxIn{Execer: types.ExecName("coins"), ActionName: "notExist", Payload: []byte("x")}
 	err = client.CreateTransaction(in, &result)
@@ -1259,4 +1271,59 @@ func TestChain33_GetExecBalance(t *testing.T) {
 	api.On("StoreList", mock.Anything).Return(nil, types.ErrInvalidParam)
 	err = client.GetExecBalance(in, &testResult2)
 	assert.NotNil(t, err)
+}
+
+func TestChain33_GetBalance(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	client := newTestChain33(api)
+
+	var addrs = []string{"1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt"}
+	cases := []struct {
+		In types.ReqBalance
+	}{
+		{In: types.ReqBalance{
+			Execer:    types.ExecName("coins"),
+			Addresses: addrs,
+		}},
+		{In: types.ReqBalance{
+			Execer:    types.ExecName("ticket"),
+			Addresses: addrs,
+		}},
+
+		{In: types.ReqBalance{
+			AssetSymbol: "bty",
+			AssetExec:   "coins",
+			Execer:      types.ExecName("ticket"),
+			Addresses:   addrs,
+		}},
+		{In: types.ReqBalance{
+			AssetSymbol: "bty",
+			AssetExec:   "coins",
+			Execer:      types.ExecName("coins"),
+			Addresses:   addrs,
+		}},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run("test GetBalance", func(t *testing.T) {
+			head := &types.Header{StateHash: []byte("sdfadasds")}
+			api.On("GetLastHeader").Return(head, nil)
+
+			var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100}
+			accv := types.Encode(acc)
+			storevalue := &types.StoreReplyValue{}
+			storevalue.Values = append(storevalue.Values, accv)
+			api.On("StoreGet", mock.Anything).Return(storevalue, nil)
+
+			var data interface{}
+			err := client.GetBalance(c.In, &data)
+			assert.Nil(t, err)
+			result := data.([]*rpctypes.Account)
+			assert.Equal(t, 1, len(result))
+			//t.Error("result", "x", result)
+			assert.Equal(t, acc.Addr, result[0].Addr)
+			assert.Equal(t, int64(100), result[0].Balance)
+		})
+	}
 }

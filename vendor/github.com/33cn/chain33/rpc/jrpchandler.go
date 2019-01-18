@@ -44,6 +44,24 @@ func (c *Chain33) CreateRawTransaction(in *rpctypes.CreateTx, result *interface{
 	return nil
 }
 
+// ReWriteRawTx re-write raw tx by jrpc
+func (c *Chain33) ReWriteRawTx(in *rpctypes.ReWriteRawTx, result *interface{}) error {
+	inpb := &types.ReWriteRawTx{
+		Tx:     in.Tx,
+		Execer: []byte(in.Execer),
+		To:     in.To,
+		Fee:    in.Fee,
+		Expire: in.Expire,
+	}
+
+	reply, err := c.cli.ReWriteRawTx(inpb)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(reply)
+	return nil
+}
+
 // CreateRawTxGroup create rawtransaction with group
 func (c *Chain33) CreateRawTxGroup(in *types.CreateTransactionGroup, result *interface{}) error {
 	reply, err := c.cli.CreateRawTxGroup(in)
@@ -723,19 +741,12 @@ func (c *Chain33) GetWalletStatus(in types.ReqNil, result *interface{}) error {
 
 // GetBalance get balance
 func (c *Chain33) GetBalance(in types.ReqBalance, result *interface{}) error {
-
 	balances, err := c.cli.GetBalance(&in)
 	if err != nil {
 		return err
 	}
-	var accounts []*rpctypes.Account
-	for _, balance := range balances {
-		accounts = append(accounts, &rpctypes.Account{Addr: balance.GetAddr(),
-			Balance:  balance.GetBalance(),
-			Currency: balance.GetCurrency(),
-			Frozen:   balance.GetFrozen()})
-	}
-	*result = accounts
+
+	*result = fmtAccount(balances)
 	return nil
 }
 
@@ -1040,22 +1051,6 @@ func (c *Chain33) GetLastBlockSequence(in *types.ReqNil, result *interface{}) er
 	return nil
 }
 
-// GetBlockSequences get the block loading sequence number information for the specified interval
-func (c *Chain33) GetBlockSequences(in rpctypes.BlockParam, result *interface{}) error {
-	resp, err := c.cli.GetBlockSequences(&types.ReqBlocks{Start: in.Start, End: in.End, IsDetail: in.Isdetail, Pid: []string{""}})
-	if err != nil {
-		return err
-	}
-	var BlkSeqs rpctypes.ReplyBlkSeqs
-	items := resp.GetItems()
-	for _, item := range items {
-		BlkSeqs.BlkSeqInfos = append(BlkSeqs.BlkSeqInfos, &rpctypes.ReplyBlkSeq{Hash: common.ToHex(item.GetHash()),
-			Type: item.GetType()})
-	}
-	*result = &BlkSeqs
-	return nil
-}
-
 // GetBlockByHashes get block information by hashes
 func (c *Chain33) GetBlockByHashes(in rpctypes.ReqHashes, result *interface{}) error {
 	log.Warn("GetBlockByHashes", "hashes", in)
@@ -1190,4 +1185,15 @@ func convertBlockDetails(details []*types.BlockDetail, retDetails *rpctypes.Bloc
 		retDetails.Items = append(retDetails.Items, &bdtl)
 	}
 	return nil
+}
+
+func fmtAccount(balances []*types.Account) []*rpctypes.Account {
+	var accounts []*rpctypes.Account
+	for _, balance := range balances {
+		accounts = append(accounts, &rpctypes.Account{Addr: balance.GetAddr(),
+			Balance:  balance.GetBalance(),
+			Currency: balance.GetCurrency(),
+			Frozen:   balance.GetFrozen()})
+	}
+	return accounts
 }

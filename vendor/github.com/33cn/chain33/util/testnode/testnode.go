@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -65,6 +66,8 @@ type Chain33Mock struct {
 	store    queue.Module
 	rpc      *rpc.RPC
 	cfg      *types.Config
+	sub      *types.ConfigSubModule
+	datadir  string
 	lastsend []byte
 }
 
@@ -80,10 +83,15 @@ func NewWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client
 
 func newWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client.QueueProtocolAPI) *Chain33Mock {
 	chain33globalLock.Lock()
+	return newWithConfigNoLock(cfg, sub, mockapi)
+}
+
+func newWithConfigNoLock(cfg *types.Config, sub *types.ConfigSubModule, mockapi client.QueueProtocolAPI) *Chain33Mock {
 	types.Init(cfg.Title, cfg)
 	q := queue.New("channel")
 	types.Debug = false
-	mock := &Chain33Mock{cfg: cfg, q: q}
+	datadir := util.ResetDatadir(cfg, "$TEMP/")
+	mock := &Chain33Mock{cfg: cfg, sub: sub, q: q, datadir: datadir}
 	mock.random = rand.New(rand.NewSource(types.Now().UnixNano()))
 
 	mock.exec = executor.New(cfg.Exec, sub.Exec)
@@ -160,6 +168,14 @@ func (mock *Chain33Mock) Listen() {
 		l := len(mock.cfg.RPC.GrpcBindAddr)
 		mock.cfg.RPC.GrpcBindAddr = mock.cfg.RPC.GrpcBindAddr[0:l-2] + ":" + fmt.Sprint(portgrpc)
 	}
+	if mock.sub.Consensus["para"] != nil {
+		data, err := types.ModifySubConfig(mock.sub.Consensus["para"], "ParaRemoteGrpcClient", mock.cfg.RPC.GrpcBindAddr)
+		if err != nil {
+			panic(err)
+		}
+		mock.sub.Consensus["para"] = data
+		types.S("config.consensus.sub.para.ParaRemoteGrpcClient", mock.cfg.RPC.GrpcBindAddr)
+	}
 }
 
 //GetBlockChain :
@@ -193,6 +209,27 @@ func (mock *Chain33Mock) SendAndSign(priv crypto.PrivKey, hextx string) ([]byte,
 	if err != nil {
 		return nil, err
 	}
+	tx.Fee = 1e6
+	tx.Sign(types.SECP256K1, priv)
+	reply, err := mock.api.SendTx(tx)
+	if err != nil {
+		return nil, err
+	}
+	return reply.GetMsg(), nil
+}
+
+//SendAndSignNonce 用外部传入的nonce 重写nonce
+func (mock *Chain33Mock) SendAndSignNonce(priv crypto.PrivKey, hextx string, nonce int64) ([]byte, error) {
+	txbytes, err := hex.DecodeString(hextx)
+	if err != nil {
+		return nil, err
+	}
+	tx := &types.Transaction{}
+	err = types.Decode(txbytes, tx)
+	if err != nil {
+		return nil, err
+	}
+	tx.Nonce = nonce
 	tx.Fee = 1e6
 	tx.Sign(types.SECP256K1, priv)
 	reply, err := mock.api.SendTx(tx)
@@ -247,6 +284,11 @@ func (mock *Chain33Mock) GetCfg() *types.Config {
 
 //Close :
 func (mock *Chain33Mock) Close() {
+	mock.closeNoLock()
+	chain33globalLock.Unlock()
+}
+
+func (mock *Chain33Mock) closeNoLock() {
 	mock.chain.Close()
 	mock.store.Close()
 	mock.mem.Close()
@@ -256,7 +298,7 @@ func (mock *Chain33Mock) Close() {
 	mock.network.Close()
 	mock.client.Close()
 	mock.rpc.Close()
-	chain33globalLock.Unlock()
+	os.RemoveAll(mock.datadir)
 }
 
 //WaitHeight :

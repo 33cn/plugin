@@ -7,6 +7,9 @@ package mavl
 import (
 	"bytes"
 
+	"fmt"
+
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 )
@@ -22,7 +25,7 @@ type Node struct {
 	leftNode   *Node
 	rightHash  []byte
 	rightNode  *Node
-	parentHash []byte
+	parentNode *Node
 	persisted  bool
 }
 
@@ -53,7 +56,6 @@ func MakeNode(buf []byte, t *Tree) (node *Node, err error) {
 	node.height = storeNode.Height
 	node.size = storeNode.Size
 	node.key = storeNode.Key
-	node.parentHash = storeNode.ParentHash
 
 	//leaf(叶子节点保存数据)
 	if node.height == 0 {
@@ -78,7 +80,7 @@ func (node *Node) _copy() *Node {
 		leftNode:   node.leftNode,
 		rightHash:  node.rightHash,
 		rightNode:  node.rightNode,
-		parentHash: node.parentHash,
+		parentNode: node.parentNode,
 		persisted:  false, // Going to be mutated, so it can't already be persisted.
 	}
 }
@@ -114,6 +116,26 @@ func (node *Node) get(t *Tree, key []byte) (index int32, value []byte, exists bo
 	index, value, exists = rightNode.get(t, key)
 	index += node.size - rightNode.size
 	return index, value, exists
+}
+
+func (node *Node) getHash(t *Tree, key []byte) (index int32, hash []byte, exists bool) {
+	if node.height == 0 {
+		cmp := bytes.Compare(node.key, key)
+		if cmp == 0 {
+			return 0, node.hash, true
+		} else if cmp == -1 {
+			return 1, nil, false
+		} else {
+			return 0, nil, false
+		}
+	}
+	if bytes.Compare(key, node.key) < 0 {
+		return node.getLeftNode(t).getHash(t, key)
+	}
+	rightNode := node.getRightNode(t)
+	index, hash, exists = rightNode.getHash(t, key)
+	index += node.size - rightNode.size
+	return index, hash, exists
 }
 
 //通过index获取leaf节点信息
@@ -185,12 +207,12 @@ func (node *Node) Hash(t *Tree) []byte {
 		}
 
 		if enablePrune {
-			//加入parentHash、brotherHash
-			if node.leftNode != nil && node.leftNode.height != t.root.height { //只对倒数第二层做裁剪
-				node.leftNode.parentHash = node.hash
+			//加入parentNode
+			if node.leftNode != nil && node.leftNode.height != t.root.height {
+				node.leftNode.parentNode = node
 			}
 			if node.rightNode != nil && node.rightNode.height != t.root.height {
-				node.rightNode.parentHash = node.hash
+				node.rightNode.parentNode = node
 			}
 		}
 	}
@@ -224,6 +246,21 @@ func (node *Node) save(t *Tree) int64 {
 	return leftsaveNodeNo + rightsaveNodeNo + 1
 }
 
+// 保存root节点hash以及区块高度
+func (node *Node) saveRootHash(t *Tree) (err error) {
+	if node.hash == nil || t.ndb == nil || t.ndb.db == nil {
+		return
+	}
+	h := &types.Int64{}
+	h.Data = t.blockHeight
+	value, err := proto.Marshal(h)
+	if err != nil {
+		return err
+	}
+	t.ndb.batch.Set(genRootHashHeight(t.blockHeight, node.hash), value)
+	return nil
+}
+
 //将内存中的node转换成存储到db中的格式
 func (node *Node) storeNode(t *Tree) []byte {
 	var storeNode types.StoreNode
@@ -235,7 +272,6 @@ func (node *Node) storeNode(t *Tree) []byte {
 	storeNode.Value = nil
 	storeNode.LeftHash = nil
 	storeNode.RightHash = nil
-	storeNode.ParentHash = nil
 
 	//leafnode
 	if node.height == 0 {
@@ -254,9 +290,6 @@ func (node *Node) storeNode(t *Tree) []byte {
 			panic("node.rightHash was nil in writePersistBytes")
 		}
 		storeNode.RightHash = node.rightHash
-	}
-	if enablePrune {
-		storeNode.ParentHash = node.parentHash
 	}
 	storeNodebytes, err := proto.Marshal(&storeNode)
 	if err != nil {
@@ -314,7 +347,7 @@ func (node *Node) getLeftNode(t *Tree) *Node {
 	}
 	leftNode, err := t.ndb.GetNode(t, node.leftHash)
 	if err != nil {
-		panic(err) //数据库已经损坏
+		panic(fmt.Sprintln("left hash", common.ToHex(node.leftHash), err)) //数据库已经损坏
 	}
 	return leftNode
 }
@@ -325,7 +358,7 @@ func (node *Node) getRightNode(t *Tree) *Node {
 	}
 	rightNode, err := t.ndb.GetNode(t, node.rightHash)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintln("right hash", common.ToHex(node.rightHash), err))
 	}
 	return rightNode
 }

@@ -436,7 +436,7 @@ func testWalletSendToAddress(t *testing.T, api client.QueueProtocolAPI) {
 	if err == nil {
 		t.Error("WalletSendToAddress(nil) need return error.")
 	}
-	_, err = api.WalletSendToAddress(&types.ReqWalletSendToAddress{Note: []byte("case1")})
+	_, err = api.WalletSendToAddress(&types.ReqWalletSendToAddress{Note: "case1"})
 	if err == nil {
 		t.Error("WalletSendToAddress(&types.ReqWalletSendToAddress{Note:\"case1\"}) need return error.")
 	}
@@ -807,6 +807,7 @@ func TestGRPC(t *testing.T) {
 	testGetAddrOverviewGRPC(t, &grpcMock)
 	testGetBlockHashGRPC(t, &grpcMock)
 	testGetSequenceByHashGRPC(t, &grpcMock)
+	testGetBlockBySeqGRPC(t, &grpcMock)
 	testGenSeedGRPC(t, &grpcMock)
 	testGetSeedGRPC(t, &grpcMock)
 	testSaveSeedGRPC(t, &grpcMock)
@@ -818,6 +819,7 @@ func TestGRPC(t *testing.T) {
 	testIsSyncGRPC(t, &grpcMock)
 	testIsNtpClockSyncGRPC(t, &grpcMock)
 	testNetInfoGRPC(t, &grpcMock)
+
 }
 
 func testNetInfoGRPC(t *testing.T, rpc *mockGRPCSystem) {
@@ -1139,4 +1141,22 @@ func testGetSequenceByHashGRPC(t *testing.T, rpc *mockGRPCSystem) {
 	if err != nil {
 		t.Error("Call GetSequenceByHash Failed.", err)
 	}
+}
+
+func testGetBlockBySeqGRPC(t *testing.T, rpc *mockGRPCSystem) {
+	var res types.BlockSeq
+	//just for coverage
+	err := rpc.newRpcCtx("GetBlockBySeq", &types.Int64{Data: 1}, &res)
+	assert.Nil(t, err)
+
+	err = rpc.newRpcCtx("GetBlockBySeq", &types.Int64{Data: 10}, &res)
+	assert.NotNil(t, err)
+
+}
+
+func TestGetBlockBySeq(t *testing.T) {
+	q := client.QueueProtocol{}
+	_, err := q.GetBlockBySeq(nil)
+	assert.NotNil(t, err)
+
 }

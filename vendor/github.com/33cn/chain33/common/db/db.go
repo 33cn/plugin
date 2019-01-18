@@ -8,7 +8,6 @@ package db
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/33cn/chain33/types"
@@ -16,7 +15,7 @@ import (
 )
 
 //ErrNotFoundInDb error
-var ErrNotFoundInDb = errors.New("ErrNotFoundInDb")
+var ErrNotFoundInDb = types.ErrNotFound
 
 //Lister 列表接口
 type Lister interface {
@@ -86,7 +85,8 @@ type Batch interface {
 	Set(key, value []byte)
 	Delete(key []byte)
 	Write() error
-	ValueSize() int // amount of data in the batch
+	ValueSize() int // size of data in the batch
+	ValueLen() int  // amount of data in the batch
 	Reset()         // Reset resets the batch for reuse
 }
 
