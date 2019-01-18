@@ -5,18 +5,14 @@
 package executor
 
 import (
-	"context"
 	"fmt"
-	"strings"
-	"time"
-
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
-
-	"github.com/33cn/chain33/client"
-	"google.golang.org/grpc"
+	"strings"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -48,12 +44,6 @@ const (
 
 	//MaxExpireHeight 距离游戏创建区块的最大过期高度差
 	MaxExpireHeight = 1000000
-
-	//grpcRecSize 接收缓冲大小
-	grpcRecSize int = 30 * 1024 * 1024
-
-	//retryNum 失败时的重试次数
-	retryNum = 10
 )
 
 //Action 具体动作执行
@@ -68,27 +58,13 @@ type Action struct {
 	localDB      dbm.KVDB
 	index        int
 	api          client.QueueProtocolAPI
-	conn         *grpc.ClientConn
-	grpcClient   types.Chain33Client
+	execApi      api.ExecutorAPI
 }
 
 //NewAction 生成Action对象
 func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromAddr := tx.From()
-
-	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	paraRemoteGrpcClient := types.Conf("config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
-	if types.IsPara() && paraRemoteGrpcClient == "" {
-		panic("ParaRemoteGrpcClient error")
-	}
-
-	conn, err := grpc.Dial(paraRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
-
-	if err != nil {
-		panic(err)
-	}
-	grpcClient := types.NewChain33Client(conn)
 
 	return &Action{
 		coinsAccount: guess.GetCoinsAccount(),
@@ -101,8 +77,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		localDB:      guess.GetLocalDB(),
 		index:        index,
 		api:          guess.GetAPI(),
-		conn:         conn,
-		grpcClient:   grpcClient,
+		execApi:      guess.GetExecutorAPI(),
 	}
 }
 
@@ -902,15 +877,11 @@ func (action *Action) checkTime(start *gty.GuessGameStart) bool {
 
 // GetMainHeightByTxHash get Block height
 func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
-	for i := 0; i < retryNum; i++ {
-		req := &types.ReqHash{Hash: txHash}
-		txDetail, err := action.grpcClient.QueryTransaction(context.Background(), req)
-		if err != nil {
-			time.Sleep(time.Second)
-		} else {
-			return txDetail.GetHeight()
-		}
+	req := &types.ReqHash{Hash: txHash}
+	txDetail, err := action.execApi.QueryTx(req)
+	if err != nil {
+		return -1
 	}
 
-	return -1
+	return txDetail.GetHeight()
 }
