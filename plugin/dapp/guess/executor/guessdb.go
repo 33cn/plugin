@@ -299,7 +299,7 @@ func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.GuessGame, error) {
 	game := &gty.GuessGame{
 		GameID: gameID,
-		Status: gty.GuessGameActionStart,
+		Status: gty.GuessGameStatusStart,
 		//StartTime:   action.blocktime,
 		StartTxHash:    gameID,
 		Topic:          start.Topic,
