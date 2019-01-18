@@ -6,10 +6,11 @@ package executor
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
-	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
