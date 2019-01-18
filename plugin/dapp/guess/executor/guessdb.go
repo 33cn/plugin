@@ -58,7 +58,7 @@ type Action struct {
 	localDB      dbm.KVDB
 	index        int
 	api          client.QueueProtocolAPI
-	execApi      api.ExecutorAPI
+	execAPI      api.ExecutorAPI
 }
 
 //NewAction 生成Action对象
@@ -77,7 +77,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		localDB:      guess.GetLocalDB(),
 		index:        index,
 		api:          guess.GetAPI(),
-		execApi:      guess.GetExecutorAPI(),
+		execAPI:      guess.GetExecutorAPI(),
 	}
 }
 
@@ -878,7 +878,7 @@ func (action *Action) checkTime(start *gty.GuessGameStart) bool {
 // GetMainHeightByTxHash get Block height
 func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
 	req := &types.ReqHash{Hash: txHash}
-	txDetail, err := action.execApi.QueryTx(req)
+	txDetail, err := action.execAPI.QueryTx(req)
 	if err != nil {
 		return -1
 	}
