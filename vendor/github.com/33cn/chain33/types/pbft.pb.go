@@ -3,25 +3,57 @@
 
 package types
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-type BlockData struct {
-	Value *Block `protobuf:"bytes,1,opt,name=value" json:"value,omitempty"`
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
+type Operation struct {
+	Value                *Block   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *BlockData) Reset()                    { *m = BlockData{} }
-func (m *BlockData) String() string            { return proto.CompactTextString(m) }
-func (*BlockData) ProtoMessage()               {}
-func (*BlockData) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
+func (m *Operation) Reset()         { *m = Operation{} }
+func (m *Operation) String() string { return proto.CompactTextString(m) }
+func (*Operation) ProtoMessage()    {}
+func (*Operation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{0}
+}
 
-func (m *BlockData) GetValue() *Block {
+func (m *Operation) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Operation.Unmarshal(m, b)
+}
+func (m *Operation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Operation.Marshal(b, m, deterministic)
+}
+func (m *Operation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Operation.Merge(m, src)
+}
+func (m *Operation) XXX_Size() int {
+	return xxx_messageInfo_Operation.Size(m)
+}
+func (m *Operation) XXX_DiscardUnknown() {
+	xxx_messageInfo_Operation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Operation proto.InternalMessageInfo
+
+func (m *Operation) GetValue() *Block {
 	if m != nil {
 		return m.Value
 	}
@@ -29,27 +61,238 @@ func (m *BlockData) GetValue() *Block {
 }
 
 type Checkpoint struct {
-	Sequence uint64 `protobuf:"varint,1,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,2,opt,name=digest" json:"digest,omitempty"`
+	Sequence             uint32   `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Checkpoint) Reset()                    { *m = Checkpoint{} }
-func (m *Checkpoint) String() string            { return proto.CompactTextString(m) }
-func (*Checkpoint) ProtoMessage()               {}
-func (*Checkpoint) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
+func (m *Checkpoint) Reset()         { *m = Checkpoint{} }
+func (m *Checkpoint) String() string { return proto.CompactTextString(m) }
+func (*Checkpoint) ProtoMessage()    {}
+func (*Checkpoint) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{1}
+}
 
-func (m *Checkpoint) GetSequence() uint64 {
+func (m *Checkpoint) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Checkpoint.Unmarshal(m, b)
+}
+func (m *Checkpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Checkpoint.Marshal(b, m, deterministic)
+}
+func (m *Checkpoint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Checkpoint.Merge(m, src)
+}
+func (m *Checkpoint) XXX_Size() int {
+	return xxx_messageInfo_Checkpoint.Size(m)
+}
+func (m *Checkpoint) XXX_DiscardUnknown() {
+	xxx_messageInfo_Checkpoint.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Checkpoint proto.InternalMessageInfo
+
+func (m *Checkpoint) GetSequence() uint32 {
 	if m != nil {
 		return m.Sequence
 	}
 	return 0
 }
 
-func (m *Checkpoint) GetDigest() string {
+func (m *Checkpoint) GetDigest() []byte {
 	if m != nil {
 		return m.Digest
 	}
-	return ""
+	return nil
+}
+
+type Entry struct {
+	Sequence             uint32   `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	View                 uint32   `protobuf:"varint,3,opt,name=view,proto3" json:"view,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Entry) Reset()         { *m = Entry{} }
+func (m *Entry) String() string { return proto.CompactTextString(m) }
+func (*Entry) ProtoMessage()    {}
+func (*Entry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{2}
+}
+
+func (m *Entry) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Entry.Unmarshal(m, b)
+}
+func (m *Entry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Entry.Marshal(b, m, deterministic)
+}
+func (m *Entry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Entry.Merge(m, src)
+}
+func (m *Entry) XXX_Size() int {
+	return xxx_messageInfo_Entry.Size(m)
+}
+func (m *Entry) XXX_DiscardUnknown() {
+	xxx_messageInfo_Entry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Entry proto.InternalMessageInfo
+
+func (m *Entry) GetSequence() uint32 {
+	if m != nil {
+		return m.Sequence
+	}
+	return 0
+}
+
+func (m *Entry) GetDigest() []byte {
+	if m != nil {
+		return m.Digest
+	}
+	return nil
+}
+
+func (m *Entry) GetView() uint32 {
+	if m != nil {
+		return m.View
+	}
+	return 0
+}
+
+type ViewChange struct {
+	Viewchanger          uint32   `protobuf:"varint,1,opt,name=viewchanger,proto3" json:"viewchanger,omitempty"`
+	Digest               []byte   `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ViewChange) Reset()         { *m = ViewChange{} }
+func (m *ViewChange) String() string { return proto.CompactTextString(m) }
+func (*ViewChange) ProtoMessage()    {}
+func (*ViewChange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{3}
+}
+
+func (m *ViewChange) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ViewChange.Unmarshal(m, b)
+}
+func (m *ViewChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ViewChange.Marshal(b, m, deterministic)
+}
+func (m *ViewChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ViewChange.Merge(m, src)
+}
+func (m *ViewChange) XXX_Size() int {
+	return xxx_messageInfo_ViewChange.Size(m)
+}
+func (m *ViewChange) XXX_DiscardUnknown() {
+	xxx_messageInfo_ViewChange.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ViewChange proto.InternalMessageInfo
+
+func (m *ViewChange) GetViewchanger() uint32 {
+	if m != nil {
+		return m.Viewchanger
+	}
+	return 0
+}
+
+func (m *ViewChange) GetDigest() []byte {
+	if m != nil {
+		return m.Digest
+	}
+	return nil
+}
+
+type Summary struct {
+	Sequence             uint32   `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Summary) Reset()         { *m = Summary{} }
+func (m *Summary) String() string { return proto.CompactTextString(m) }
+func (*Summary) ProtoMessage()    {}
+func (*Summary) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{4}
+}
+
+func (m *Summary) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Summary.Unmarshal(m, b)
+}
+func (m *Summary) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Summary.Marshal(b, m, deterministic)
+}
+func (m *Summary) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Summary.Merge(m, src)
+}
+func (m *Summary) XXX_Size() int {
+	return xxx_messageInfo_Summary.Size(m)
+}
+func (m *Summary) XXX_DiscardUnknown() {
+	xxx_messageInfo_Summary.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Summary proto.InternalMessageInfo
+
+func (m *Summary) GetSequence() uint32 {
+	if m != nil {
+		return m.Sequence
+	}
+	return 0
+}
+
+func (m *Summary) GetDigest() []byte {
+	if m != nil {
+		return m.Digest
+	}
+	return nil
+}
+
+type Result struct {
+	Value                *Block   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Result) Reset()         { *m = Result{} }
+func (m *Result) String() string { return proto.CompactTextString(m) }
+func (*Result) ProtoMessage()    {}
+func (*Result) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{5}
+}
+
+func (m *Result) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Result.Unmarshal(m, b)
+}
+func (m *Result) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Result.Marshal(b, m, deterministic)
+}
+func (m *Result) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Result.Merge(m, src)
+}
+func (m *Result) XXX_Size() int {
+	return xxx_messageInfo_Result.Size(m)
+}
+func (m *Result) XXX_DiscardUnknown() {
+	xxx_messageInfo_Result.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Result proto.InternalMessageInfo
+
+func (m *Result) GetValue() *Block {
+	if m != nil {
+		return m.Value
+	}
+	return nil
 }
 
 type Request struct {
@@ -62,54 +305,88 @@ type Request struct {
 	//	*Request_Viewchange
 	//	*Request_Ack
 	//	*Request_Newview
-	//	*Request_Reply
-	Value isRequest_Value `protobuf_oneof:"value"`
+	Value                isRequest_Value `protobuf_oneof:"value"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *Request) Reset()                    { *m = Request{} }
-func (m *Request) String() string            { return proto.CompactTextString(m) }
-func (*Request) ProtoMessage()               {}
-func (*Request) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{2} }
+func (m *Request) Reset()         { *m = Request{} }
+func (m *Request) String() string { return proto.CompactTextString(m) }
+func (*Request) ProtoMessage()    {}
+func (*Request) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{6}
+}
 
-type isRequest_Value interface{ isRequest_Value() }
+func (m *Request) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Request.Unmarshal(m, b)
+}
+func (m *Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Request.Marshal(b, m, deterministic)
+}
+func (m *Request) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Request.Merge(m, src)
+}
+func (m *Request) XXX_Size() int {
+	return xxx_messageInfo_Request.Size(m)
+}
+func (m *Request) XXX_DiscardUnknown() {
+	xxx_messageInfo_Request.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Request proto.InternalMessageInfo
+
+type isRequest_Value interface {
+	isRequest_Value()
+}
 
 type Request_Client struct {
-	Client *RequestClient `protobuf:"bytes,1,opt,name=client,oneof"`
-}
-type Request_Preprepare struct {
-	Preprepare *RequestPrePrepare `protobuf:"bytes,2,opt,name=preprepare,oneof"`
-}
-type Request_Prepare struct {
-	Prepare *RequestPrepare `protobuf:"bytes,3,opt,name=prepare,oneof"`
-}
-type Request_Commit struct {
-	Commit *RequestCommit `protobuf:"bytes,4,opt,name=commit,oneof"`
-}
-type Request_Checkpoint struct {
-	Checkpoint *RequestCheckpoint `protobuf:"bytes,5,opt,name=checkpoint,oneof"`
-}
-type Request_Viewchange struct {
-	Viewchange *RequestViewChange `protobuf:"bytes,6,opt,name=viewchange,oneof"`
-}
-type Request_Ack struct {
-	Ack *RequestAck `protobuf:"bytes,7,opt,name=ack,oneof"`
-}
-type Request_Newview struct {
-	Newview *RequestNewView `protobuf:"bytes,8,opt,name=newview,oneof"`
-}
-type Request_Reply struct {
-	Reply *ClientReply `protobuf:"bytes,9,opt,name=reply,oneof"`
+	Client *RequestClient `protobuf:"bytes,1,opt,name=client,proto3,oneof"`
 }
 
-func (*Request_Client) isRequest_Value()     {}
+type Request_Preprepare struct {
+	Preprepare *RequestPrePrepare `protobuf:"bytes,2,opt,name=preprepare,proto3,oneof"`
+}
+
+type Request_Prepare struct {
+	Prepare *RequestPrepare `protobuf:"bytes,3,opt,name=prepare,proto3,oneof"`
+}
+
+type Request_Commit struct {
+	Commit *RequestCommit `protobuf:"bytes,4,opt,name=commit,proto3,oneof"`
+}
+
+type Request_Checkpoint struct {
+	Checkpoint *RequestCheckpoint `protobuf:"bytes,5,opt,name=checkpoint,proto3,oneof"`
+}
+
+type Request_Viewchange struct {
+	Viewchange *RequestViewChange `protobuf:"bytes,6,opt,name=viewchange,proto3,oneof"`
+}
+
+type Request_Ack struct {
+	Ack *RequestAck `protobuf:"bytes,7,opt,name=ack,proto3,oneof"`
+}
+
+type Request_Newview struct {
+	Newview *RequestNewView `protobuf:"bytes,8,opt,name=newview,proto3,oneof"`
+}
+
+func (*Request_Client) isRequest_Value() {}
+
 func (*Request_Preprepare) isRequest_Value() {}
-func (*Request_Prepare) isRequest_Value()    {}
-func (*Request_Commit) isRequest_Value()     {}
+
+func (*Request_Prepare) isRequest_Value() {}
+
+func (*Request_Commit) isRequest_Value() {}
+
 func (*Request_Checkpoint) isRequest_Value() {}
+
 func (*Request_Viewchange) isRequest_Value() {}
-func (*Request_Ack) isRequest_Value()        {}
-func (*Request_Newview) isRequest_Value()    {}
-func (*Request_Reply) isRequest_Value()      {}
+
+func (*Request_Ack) isRequest_Value() {}
+
+func (*Request_Newview) isRequest_Value() {}
 
 func (m *Request) GetValue() isRequest_Value {
 	if m != nil {
@@ -174,13 +451,6 @@ func (m *Request) GetNewview() *RequestNewView {
 	return nil
 }
 
-func (m *Request) GetReply() *ClientReply {
-	if x, ok := m.GetValue().(*Request_Reply); ok {
-		return x.Reply
-	}
-	return nil
-}
-
 // XXX_OneofFuncs is for the internal use of the proto package.
 func (*Request) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
 	return _Request_OneofMarshaler, _Request_OneofUnmarshaler, _Request_OneofSizer, []interface{}{
@@ -192,7 +462,6 @@ func (*Request) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error
 		(*Request_Viewchange)(nil),
 		(*Request_Ack)(nil),
 		(*Request_Newview)(nil),
-		(*Request_Reply)(nil),
 	}
 }
 
@@ -238,11 +507,6 @@ func _Request_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 	case *Request_Newview:
 		b.EncodeVarint(8<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.Newview); err != nil {
-			return err
-		}
-	case *Request_Reply:
-		b.EncodeVarint(9<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Reply); err != nil {
 			return err
 		}
 	case nil:
@@ -319,14 +583,6 @@ func _Request_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer
 		err := b.DecodeMessage(msg)
 		m.Value = &Request_Newview{msg}
 		return true, err
-	case 9: // value.reply
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ClientReply)
-		err := b.DecodeMessage(msg)
-		m.Value = &Request_Reply{msg}
-		return true, err
 	default:
 		return false, nil
 	}
@@ -338,47 +594,42 @@ func _Request_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Value.(type) {
 	case *Request_Client:
 		s := proto.Size(x.Client)
-		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Preprepare:
 		s := proto.Size(x.Preprepare)
-		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Prepare:
 		s := proto.Size(x.Prepare)
-		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Commit:
 		s := proto.Size(x.Commit)
-		n += proto.SizeVarint(4<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Checkpoint:
 		s := proto.Size(x.Checkpoint)
-		n += proto.SizeVarint(5<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Viewchange:
 		s := proto.Size(x.Viewchange)
-		n += proto.SizeVarint(6<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Ack:
 		s := proto.Size(x.Ack)
-		n += proto.SizeVarint(7<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Request_Newview:
 		s := proto.Size(x.Newview)
-		n += proto.SizeVarint(8<<3 | proto.WireBytes)
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Request_Reply:
-		s := proto.Size(x.Reply)
-		n += proto.SizeVarint(9<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case nil:
@@ -389,17 +640,40 @@ func _Request_OneofSizer(msg proto.Message) (n int) {
 }
 
 type RequestClient struct {
-	Op        *BlockData `protobuf:"bytes,1,opt,name=op" json:"op,omitempty"`
-	Timestamp string     `protobuf:"bytes,2,opt,name=timestamp" json:"timestamp,omitempty"`
-	Client    string     `protobuf:"bytes,3,opt,name=client" json:"client,omitempty"`
+	Op                   *Operation `protobuf:"bytes,1,opt,name=op,proto3" json:"op,omitempty"`
+	Timestamp            string     `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Client               string     `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *RequestClient) Reset()                    { *m = RequestClient{} }
-func (m *RequestClient) String() string            { return proto.CompactTextString(m) }
-func (*RequestClient) ProtoMessage()               {}
-func (*RequestClient) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{3} }
+func (m *RequestClient) Reset()         { *m = RequestClient{} }
+func (m *RequestClient) String() string { return proto.CompactTextString(m) }
+func (*RequestClient) ProtoMessage()    {}
+func (*RequestClient) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{7}
+}
 
-func (m *RequestClient) GetOp() *BlockData {
+func (m *RequestClient) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestClient.Unmarshal(m, b)
+}
+func (m *RequestClient) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestClient.Marshal(b, m, deterministic)
+}
+func (m *RequestClient) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestClient.Merge(m, src)
+}
+func (m *RequestClient) XXX_Size() int {
+	return xxx_messageInfo_RequestClient.Size(m)
+}
+func (m *RequestClient) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestClient.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestClient proto.InternalMessageInfo
+
+func (m *RequestClient) GetOp() *Operation {
 	if m != nil {
 		return m.Op
 	}
@@ -421,47 +695,62 @@ func (m *RequestClient) GetClient() string {
 }
 
 type RequestPrePrepare struct {
-	View     uint64         `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Sequence uint64         `protobuf:"varint,2,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string         `protobuf:"bytes,3,opt,name=digest" json:"digest,omitempty"`
-	Request  *RequestClient `protobuf:"bytes,4,opt,name=request" json:"request,omitempty"`
-	Replica  uint64         `protobuf:"varint,5,opt,name=replica" json:"replica,omitempty"`
+	View                 uint32   `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Sequence             uint32   `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,3,opt,name=digest,proto3" json:"digest,omitempty"`
+	Replica              uint32   `protobuf:"varint,4,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RequestPrePrepare) Reset()                    { *m = RequestPrePrepare{} }
-func (m *RequestPrePrepare) String() string            { return proto.CompactTextString(m) }
-func (*RequestPrePrepare) ProtoMessage()               {}
-func (*RequestPrePrepare) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{4} }
+func (m *RequestPrePrepare) Reset()         { *m = RequestPrePrepare{} }
+func (m *RequestPrePrepare) String() string { return proto.CompactTextString(m) }
+func (*RequestPrePrepare) ProtoMessage()    {}
+func (*RequestPrePrepare) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{8}
+}
 
-func (m *RequestPrePrepare) GetView() uint64 {
+func (m *RequestPrePrepare) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestPrePrepare.Unmarshal(m, b)
+}
+func (m *RequestPrePrepare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestPrePrepare.Marshal(b, m, deterministic)
+}
+func (m *RequestPrePrepare) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestPrePrepare.Merge(m, src)
+}
+func (m *RequestPrePrepare) XXX_Size() int {
+	return xxx_messageInfo_RequestPrePrepare.Size(m)
+}
+func (m *RequestPrePrepare) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestPrePrepare.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestPrePrepare proto.InternalMessageInfo
+
+func (m *RequestPrePrepare) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestPrePrepare) GetSequence() uint64 {
+func (m *RequestPrePrepare) GetSequence() uint32 {
 	if m != nil {
 		return m.Sequence
 	}
 	return 0
 }
 
-func (m *RequestPrePrepare) GetDigest() string {
+func (m *RequestPrePrepare) GetDigest() []byte {
 	if m != nil {
 		return m.Digest
-	}
-	return ""
-}
-
-func (m *RequestPrePrepare) GetRequest() *RequestClient {
-	if m != nil {
-		return m.Request
 	}
 	return nil
 }
 
-func (m *RequestPrePrepare) GetReplica() uint64 {
+func (m *RequestPrePrepare) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
@@ -469,39 +758,62 @@ func (m *RequestPrePrepare) GetReplica() uint64 {
 }
 
 type RequestPrepare struct {
-	View     uint64 `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Sequence uint64 `protobuf:"varint,2,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,3,opt,name=digest" json:"digest,omitempty"`
-	Replica  uint64 `protobuf:"varint,4,opt,name=replica" json:"replica,omitempty"`
+	View                 uint32   `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Sequence             uint32   `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,3,opt,name=digest,proto3" json:"digest,omitempty"`
+	Replica              uint32   `protobuf:"varint,4,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RequestPrepare) Reset()                    { *m = RequestPrepare{} }
-func (m *RequestPrepare) String() string            { return proto.CompactTextString(m) }
-func (*RequestPrepare) ProtoMessage()               {}
-func (*RequestPrepare) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{5} }
+func (m *RequestPrepare) Reset()         { *m = RequestPrepare{} }
+func (m *RequestPrepare) String() string { return proto.CompactTextString(m) }
+func (*RequestPrepare) ProtoMessage()    {}
+func (*RequestPrepare) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{9}
+}
 
-func (m *RequestPrepare) GetView() uint64 {
+func (m *RequestPrepare) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestPrepare.Unmarshal(m, b)
+}
+func (m *RequestPrepare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestPrepare.Marshal(b, m, deterministic)
+}
+func (m *RequestPrepare) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestPrepare.Merge(m, src)
+}
+func (m *RequestPrepare) XXX_Size() int {
+	return xxx_messageInfo_RequestPrepare.Size(m)
+}
+func (m *RequestPrepare) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestPrepare.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestPrepare proto.InternalMessageInfo
+
+func (m *RequestPrepare) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestPrepare) GetSequence() uint64 {
+func (m *RequestPrepare) GetSequence() uint32 {
 	if m != nil {
 		return m.Sequence
 	}
 	return 0
 }
 
-func (m *RequestPrepare) GetDigest() string {
+func (m *RequestPrepare) GetDigest() []byte {
 	if m != nil {
 		return m.Digest
 	}
-	return ""
+	return nil
 }
 
-func (m *RequestPrepare) GetReplica() uint64 {
+func (m *RequestPrepare) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
@@ -509,39 +821,54 @@ func (m *RequestPrepare) GetReplica() uint64 {
 }
 
 type RequestCommit struct {
-	View     uint64 `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Sequence uint64 `protobuf:"varint,2,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,3,opt,name=digest" json:"digest,omitempty"`
-	Replica  uint64 `protobuf:"varint,4,opt,name=replica" json:"replica,omitempty"`
+	View                 uint32   `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Sequence             uint32   `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Replica              uint32   `protobuf:"varint,3,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RequestCommit) Reset()                    { *m = RequestCommit{} }
-func (m *RequestCommit) String() string            { return proto.CompactTextString(m) }
-func (*RequestCommit) ProtoMessage()               {}
-func (*RequestCommit) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{6} }
+func (m *RequestCommit) Reset()         { *m = RequestCommit{} }
+func (m *RequestCommit) String() string { return proto.CompactTextString(m) }
+func (*RequestCommit) ProtoMessage()    {}
+func (*RequestCommit) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{10}
+}
 
-func (m *RequestCommit) GetView() uint64 {
+func (m *RequestCommit) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestCommit.Unmarshal(m, b)
+}
+func (m *RequestCommit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestCommit.Marshal(b, m, deterministic)
+}
+func (m *RequestCommit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestCommit.Merge(m, src)
+}
+func (m *RequestCommit) XXX_Size() int {
+	return xxx_messageInfo_RequestCommit.Size(m)
+}
+func (m *RequestCommit) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestCommit.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestCommit proto.InternalMessageInfo
+
+func (m *RequestCommit) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestCommit) GetSequence() uint64 {
+func (m *RequestCommit) GetSequence() uint32 {
 	if m != nil {
 		return m.Sequence
 	}
 	return 0
 }
 
-func (m *RequestCommit) GetDigest() string {
-	if m != nil {
-		return m.Digest
-	}
-	return ""
-}
-
-func (m *RequestCommit) GetReplica() uint64 {
+func (m *RequestCommit) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
@@ -549,31 +876,54 @@ func (m *RequestCommit) GetReplica() uint64 {
 }
 
 type RequestCheckpoint struct {
-	Sequence uint64 `protobuf:"varint,1,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,2,opt,name=digest" json:"digest,omitempty"`
-	Replica  uint64 `protobuf:"varint,3,opt,name=replica" json:"replica,omitempty"`
+	Sequence             uint32   `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Digest               []byte   `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	Replica              uint32   `protobuf:"varint,3,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RequestCheckpoint) Reset()                    { *m = RequestCheckpoint{} }
-func (m *RequestCheckpoint) String() string            { return proto.CompactTextString(m) }
-func (*RequestCheckpoint) ProtoMessage()               {}
-func (*RequestCheckpoint) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{7} }
+func (m *RequestCheckpoint) Reset()         { *m = RequestCheckpoint{} }
+func (m *RequestCheckpoint) String() string { return proto.CompactTextString(m) }
+func (*RequestCheckpoint) ProtoMessage()    {}
+func (*RequestCheckpoint) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{11}
+}
 
-func (m *RequestCheckpoint) GetSequence() uint64 {
+func (m *RequestCheckpoint) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestCheckpoint.Unmarshal(m, b)
+}
+func (m *RequestCheckpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestCheckpoint.Marshal(b, m, deterministic)
+}
+func (m *RequestCheckpoint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestCheckpoint.Merge(m, src)
+}
+func (m *RequestCheckpoint) XXX_Size() int {
+	return xxx_messageInfo_RequestCheckpoint.Size(m)
+}
+func (m *RequestCheckpoint) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestCheckpoint.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestCheckpoint proto.InternalMessageInfo
+
+func (m *RequestCheckpoint) GetSequence() uint32 {
 	if m != nil {
 		return m.Sequence
 	}
 	return 0
 }
 
-func (m *RequestCheckpoint) GetDigest() string {
+func (m *RequestCheckpoint) GetDigest() []byte {
 	if m != nil {
 		return m.Digest
 	}
-	return ""
+	return nil
 }
 
-func (m *RequestCheckpoint) GetReplica() uint64 {
+func (m *RequestCheckpoint) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
@@ -581,210 +931,204 @@ func (m *RequestCheckpoint) GetReplica() uint64 {
 }
 
 type RequestViewChange struct {
-	View    uint64                  `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	H       uint64                  `protobuf:"varint,2,opt,name=h" json:"h,omitempty"`
-	Cset    []*RequestViewChange_C  `protobuf:"bytes,3,rep,name=cset" json:"cset,omitempty"`
-	Pset    []*RequestViewChange_PQ `protobuf:"bytes,4,rep,name=pset" json:"pset,omitempty"`
-	Qset    []*RequestViewChange_PQ `protobuf:"bytes,5,rep,name=qset" json:"qset,omitempty"`
-	Replica uint64                  `protobuf:"varint,6,opt,name=replica" json:"replica,omitempty"`
+	View                 uint32        `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Sequence             uint32        `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Checkpoints          []*Checkpoint `protobuf:"bytes,3,rep,name=checkpoints,proto3" json:"checkpoints,omitempty"`
+	Preps                []*Entry      `protobuf:"bytes,4,rep,name=preps,proto3" json:"preps,omitempty"`
+	Prepreps             []*Entry      `protobuf:"bytes,5,rep,name=prepreps,proto3" json:"prepreps,omitempty"`
+	Replica              uint32        `protobuf:"varint,6,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
-func (m *RequestViewChange) Reset()                    { *m = RequestViewChange{} }
-func (m *RequestViewChange) String() string            { return proto.CompactTextString(m) }
-func (*RequestViewChange) ProtoMessage()               {}
-func (*RequestViewChange) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{8} }
+func (m *RequestViewChange) Reset()         { *m = RequestViewChange{} }
+func (m *RequestViewChange) String() string { return proto.CompactTextString(m) }
+func (*RequestViewChange) ProtoMessage()    {}
+func (*RequestViewChange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{12}
+}
 
-func (m *RequestViewChange) GetView() uint64 {
+func (m *RequestViewChange) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestViewChange.Unmarshal(m, b)
+}
+func (m *RequestViewChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestViewChange.Marshal(b, m, deterministic)
+}
+func (m *RequestViewChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestViewChange.Merge(m, src)
+}
+func (m *RequestViewChange) XXX_Size() int {
+	return xxx_messageInfo_RequestViewChange.Size(m)
+}
+func (m *RequestViewChange) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestViewChange.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestViewChange proto.InternalMessageInfo
+
+func (m *RequestViewChange) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestViewChange) GetH() uint64 {
+func (m *RequestViewChange) GetSequence() uint32 {
 	if m != nil {
-		return m.H
+		return m.Sequence
 	}
 	return 0
 }
 
-func (m *RequestViewChange) GetCset() []*RequestViewChange_C {
+func (m *RequestViewChange) GetCheckpoints() []*Checkpoint {
 	if m != nil {
-		return m.Cset
+		return m.Checkpoints
 	}
 	return nil
 }
 
-func (m *RequestViewChange) GetPset() []*RequestViewChange_PQ {
+func (m *RequestViewChange) GetPreps() []*Entry {
 	if m != nil {
-		return m.Pset
+		return m.Preps
 	}
 	return nil
 }
 
-func (m *RequestViewChange) GetQset() []*RequestViewChange_PQ {
+func (m *RequestViewChange) GetPrepreps() []*Entry {
 	if m != nil {
-		return m.Qset
+		return m.Prepreps
 	}
 	return nil
 }
 
-func (m *RequestViewChange) GetReplica() uint64 {
+func (m *RequestViewChange) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
 	return 0
 }
 
-type RequestViewChange_C struct {
-	Sequence uint64 `protobuf:"varint,1,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,2,opt,name=digest" json:"digest,omitempty"`
-}
-
-func (m *RequestViewChange_C) Reset()                    { *m = RequestViewChange_C{} }
-func (m *RequestViewChange_C) String() string            { return proto.CompactTextString(m) }
-func (*RequestViewChange_C) ProtoMessage()               {}
-func (*RequestViewChange_C) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{8, 0} }
-
-func (m *RequestViewChange_C) GetSequence() uint64 {
-	if m != nil {
-		return m.Sequence
-	}
-	return 0
-}
-
-func (m *RequestViewChange_C) GetDigest() string {
-	if m != nil {
-		return m.Digest
-	}
-	return ""
-}
-
-type RequestViewChange_PQ struct {
-	Sequence uint64 `protobuf:"varint,1,opt,name=sequence" json:"sequence,omitempty"`
-	Digest   string `protobuf:"bytes,2,opt,name=digest" json:"digest,omitempty"`
-	View     uint64 `protobuf:"varint,3,opt,name=view" json:"view,omitempty"`
-}
-
-func (m *RequestViewChange_PQ) Reset()                    { *m = RequestViewChange_PQ{} }
-func (m *RequestViewChange_PQ) String() string            { return proto.CompactTextString(m) }
-func (*RequestViewChange_PQ) ProtoMessage()               {}
-func (*RequestViewChange_PQ) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{8, 1} }
-
-func (m *RequestViewChange_PQ) GetSequence() uint64 {
-	if m != nil {
-		return m.Sequence
-	}
-	return 0
-}
-
-func (m *RequestViewChange_PQ) GetDigest() string {
-	if m != nil {
-		return m.Digest
-	}
-	return ""
-}
-
-func (m *RequestViewChange_PQ) GetView() uint64 {
-	if m != nil {
-		return m.View
-	}
-	return 0
-}
-
-type PQset struct {
-	Set []*RequestViewChange_PQ `protobuf:"bytes,1,rep,name=set" json:"set,omitempty"`
-}
-
-func (m *PQset) Reset()                    { *m = PQset{} }
-func (m *PQset) String() string            { return proto.CompactTextString(m) }
-func (*PQset) ProtoMessage()               {}
-func (*PQset) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{9} }
-
-func (m *PQset) GetSet() []*RequestViewChange_PQ {
-	if m != nil {
-		return m.Set
-	}
-	return nil
-}
-
-// view: 需要变更的视图, replica: 发送该Ack的节点
-// viewchangeSender: <view-change>的发送者
-// digest: <view-change>的摘要
 type RequestAck struct {
-	View             uint64 `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Replica          uint64 `protobuf:"varint,2,opt,name=replica" json:"replica,omitempty"`
-	ViewchangeSender uint64 `protobuf:"varint,3,opt,name=viewchangeSender" json:"viewchangeSender,omitempty"`
-	Digest           string `protobuf:"bytes,4,opt,name=digest" json:"digest,omitempty"`
+	View                 uint32   `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Replica              uint32   `protobuf:"varint,2,opt,name=replica,proto3" json:"replica,omitempty"`
+	Viewchanger          uint32   `protobuf:"varint,3,opt,name=viewchanger,proto3" json:"viewchanger,omitempty"`
+	Digest               []byte   `protobuf:"bytes,4,opt,name=digest,proto3" json:"digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RequestAck) Reset()                    { *m = RequestAck{} }
-func (m *RequestAck) String() string            { return proto.CompactTextString(m) }
-func (*RequestAck) ProtoMessage()               {}
-func (*RequestAck) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{10} }
+func (m *RequestAck) Reset()         { *m = RequestAck{} }
+func (m *RequestAck) String() string { return proto.CompactTextString(m) }
+func (*RequestAck) ProtoMessage()    {}
+func (*RequestAck) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{13}
+}
 
-func (m *RequestAck) GetView() uint64 {
+func (m *RequestAck) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestAck.Unmarshal(m, b)
+}
+func (m *RequestAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestAck.Marshal(b, m, deterministic)
+}
+func (m *RequestAck) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestAck.Merge(m, src)
+}
+func (m *RequestAck) XXX_Size() int {
+	return xxx_messageInfo_RequestAck.Size(m)
+}
+func (m *RequestAck) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestAck.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestAck proto.InternalMessageInfo
+
+func (m *RequestAck) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestAck) GetReplica() uint64 {
+func (m *RequestAck) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
 	return 0
 }
 
-func (m *RequestAck) GetViewchangeSender() uint64 {
+func (m *RequestAck) GetViewchanger() uint32 {
 	if m != nil {
-		return m.ViewchangeSender
+		return m.Viewchanger
 	}
 	return 0
 }
 
-func (m *RequestAck) GetDigest() string {
+func (m *RequestAck) GetDigest() []byte {
 	if m != nil {
 		return m.Digest
 	}
-	return ""
+	return nil
 }
 
 type RequestNewView struct {
-	View    uint64               `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Vset    []*RequestViewChange `protobuf:"bytes,2,rep,name=vset" json:"vset,omitempty"`
-	Xset    map[uint64]string    `protobuf:"bytes,3,rep,name=xset" json:"xset,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Replica uint64               `protobuf:"varint,4,opt,name=replica" json:"replica,omitempty"`
+	View                 uint32        `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Viewchanges          []*ViewChange `protobuf:"bytes,2,rep,name=viewchanges,proto3" json:"viewchanges,omitempty"`
+	Summaries            []*Summary    `protobuf:"bytes,4,rep,name=summaries,proto3" json:"summaries,omitempty"`
+	Replica              uint32        `protobuf:"varint,5,opt,name=replica,proto3" json:"replica,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
-func (m *RequestNewView) Reset()                    { *m = RequestNewView{} }
-func (m *RequestNewView) String() string            { return proto.CompactTextString(m) }
-func (*RequestNewView) ProtoMessage()               {}
-func (*RequestNewView) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{11} }
+func (m *RequestNewView) Reset()         { *m = RequestNewView{} }
+func (m *RequestNewView) String() string { return proto.CompactTextString(m) }
+func (*RequestNewView) ProtoMessage()    {}
+func (*RequestNewView) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{14}
+}
 
-func (m *RequestNewView) GetView() uint64 {
+func (m *RequestNewView) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RequestNewView.Unmarshal(m, b)
+}
+func (m *RequestNewView) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RequestNewView.Marshal(b, m, deterministic)
+}
+func (m *RequestNewView) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RequestNewView.Merge(m, src)
+}
+func (m *RequestNewView) XXX_Size() int {
+	return xxx_messageInfo_RequestNewView.Size(m)
+}
+func (m *RequestNewView) XXX_DiscardUnknown() {
+	xxx_messageInfo_RequestNewView.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RequestNewView proto.InternalMessageInfo
+
+func (m *RequestNewView) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
 	return 0
 }
 
-func (m *RequestNewView) GetVset() []*RequestViewChange {
+func (m *RequestNewView) GetViewchanges() []*ViewChange {
 	if m != nil {
-		return m.Vset
+		return m.Viewchanges
 	}
 	return nil
 }
 
-func (m *RequestNewView) GetXset() map[uint64]string {
+func (m *RequestNewView) GetSummaries() []*Summary {
 	if m != nil {
-		return m.Xset
+		return m.Summaries
 	}
 	return nil
 }
 
-func (m *RequestNewView) GetReplica() uint64 {
+func (m *RequestNewView) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
@@ -792,19 +1136,42 @@ func (m *RequestNewView) GetReplica() uint64 {
 }
 
 type ClientReply struct {
-	View      uint64     `protobuf:"varint,1,opt,name=view" json:"view,omitempty"`
-	Timestamp string     `protobuf:"bytes,2,opt,name=timestamp" json:"timestamp,omitempty"`
-	Client    string     `protobuf:"bytes,3,opt,name=client" json:"client,omitempty"`
-	Replica   uint64     `protobuf:"varint,4,opt,name=replica" json:"replica,omitempty"`
-	Result    *BlockData `protobuf:"bytes,5,opt,name=result" json:"result,omitempty"`
+	View                 uint32   `protobuf:"varint,1,opt,name=view,proto3" json:"view,omitempty"`
+	Timestamp            string   `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Client               string   `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
+	Replica              uint32   `protobuf:"varint,4,opt,name=replica,proto3" json:"replica,omitempty"`
+	Result               *Result  `protobuf:"bytes,5,opt,name=result,proto3" json:"result,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClientReply) Reset()                    { *m = ClientReply{} }
-func (m *ClientReply) String() string            { return proto.CompactTextString(m) }
-func (*ClientReply) ProtoMessage()               {}
-func (*ClientReply) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{12} }
+func (m *ClientReply) Reset()         { *m = ClientReply{} }
+func (m *ClientReply) String() string { return proto.CompactTextString(m) }
+func (*ClientReply) ProtoMessage()    {}
+func (*ClientReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6cc19f28ccff0670, []int{15}
+}
 
-func (m *ClientReply) GetView() uint64 {
+func (m *ClientReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ClientReply.Unmarshal(m, b)
+}
+func (m *ClientReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ClientReply.Marshal(b, m, deterministic)
+}
+func (m *ClientReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClientReply.Merge(m, src)
+}
+func (m *ClientReply) XXX_Size() int {
+	return xxx_messageInfo_ClientReply.Size(m)
+}
+func (m *ClientReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClientReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClientReply proto.InternalMessageInfo
+
+func (m *ClientReply) GetView() uint32 {
 	if m != nil {
 		return m.View
 	}
@@ -825,14 +1192,14 @@ func (m *ClientReply) GetClient() string {
 	return ""
 }
 
-func (m *ClientReply) GetReplica() uint64 {
+func (m *ClientReply) GetReplica() uint32 {
 	if m != nil {
 		return m.Replica
 	}
 	return 0
 }
 
-func (m *ClientReply) GetResult() *BlockData {
+func (m *ClientReply) GetResult() *Result {
 	if m != nil {
 		return m.Result
 	}
@@ -840,8 +1207,12 @@ func (m *ClientReply) GetResult() *BlockData {
 }
 
 func init() {
-	proto.RegisterType((*BlockData)(nil), "types.BlockData")
+	proto.RegisterType((*Operation)(nil), "types.Operation")
 	proto.RegisterType((*Checkpoint)(nil), "types.Checkpoint")
+	proto.RegisterType((*Entry)(nil), "types.Entry")
+	proto.RegisterType((*ViewChange)(nil), "types.ViewChange")
+	proto.RegisterType((*Summary)(nil), "types.Summary")
+	proto.RegisterType((*Result)(nil), "types.Result")
 	proto.RegisterType((*Request)(nil), "types.Request")
 	proto.RegisterType((*RequestClient)(nil), "types.RequestClient")
 	proto.RegisterType((*RequestPrePrepare)(nil), "types.RequestPrePrepare")
@@ -849,63 +1220,56 @@ func init() {
 	proto.RegisterType((*RequestCommit)(nil), "types.RequestCommit")
 	proto.RegisterType((*RequestCheckpoint)(nil), "types.RequestCheckpoint")
 	proto.RegisterType((*RequestViewChange)(nil), "types.RequestViewChange")
-	proto.RegisterType((*RequestViewChange_C)(nil), "types.RequestViewChange.C")
-	proto.RegisterType((*RequestViewChange_PQ)(nil), "types.RequestViewChange.PQ")
-	proto.RegisterType((*PQset)(nil), "types.PQset")
 	proto.RegisterType((*RequestAck)(nil), "types.RequestAck")
 	proto.RegisterType((*RequestNewView)(nil), "types.RequestNewView")
 	proto.RegisterType((*ClientReply)(nil), "types.ClientReply")
 }
 
-func init() { proto.RegisterFile("pbft.proto", fileDescriptor6) }
+func init() { proto.RegisterFile("pbft.proto", fileDescriptor_6cc19f28ccff0670) }
 
-var fileDescriptor6 = []byte{
-	// 739 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x4f, 0x6f, 0xd3, 0x4e,
-	0x10, 0x8d, 0xff, 0x24, 0x69, 0x26, 0xfd, 0xfd, 0x94, 0xae, 0x0a, 0xb2, 0x02, 0xa8, 0x95, 0x25,
-	0xa4, 0xa8, 0x02, 0x47, 0x34, 0x12, 0x45, 0x3d, 0x41, 0x03, 0x52, 0x0e, 0x08, 0xa5, 0x8b, 0x84,
-	0x10, 0x37, 0xc7, 0x5d, 0x12, 0x2b, 0x89, 0xed, 0xda, 0x9b, 0x86, 0x5c, 0xf8, 0x22, 0x9c, 0xf9,
-	0x52, 0x5c, 0xb8, 0xf2, 0x31, 0xd0, 0xec, 0xae, 0x63, 0x5b, 0xb1, 0x05, 0x2a, 0x20, 0xe5, 0xe0,
-	0xf5, 0xbc, 0x97, 0x99, 0x37, 0xf3, 0x3c, 0x36, 0x40, 0x34, 0xf9, 0xc8, 0x9d, 0x28, 0x0e, 0x79,
-	0x48, 0xea, 0x7c, 0x13, 0xb1, 0xa4, 0xdb, 0x99, 0x2c, 0x42, 0x6f, 0xee, 0xcd, 0x5c, 0x3f, 0x90,
-	0x01, 0xbb, 0x0f, 0xad, 0x0b, 0xbc, 0xf7, 0xd2, 0xe5, 0x2e, 0xb1, 0xa1, 0x7e, 0xe3, 0x2e, 0x56,
-	0xcc, 0xd2, 0x8e, 0xb5, 0x5e, 0xfb, 0x74, 0xdf, 0x11, 0x2c, 0x47, 0x00, 0xa8, 0x0c, 0xd9, 0xcf,
-	0x01, 0x86, 0x33, 0xe6, 0xcd, 0xa3, 0xd0, 0x0f, 0x38, 0xe9, 0xc2, 0x5e, 0xc2, 0xae, 0x57, 0x2c,
-	0xf0, 0x24, 0xc9, 0xa4, 0xdb, 0x33, 0xb9, 0x0b, 0x8d, 0x2b, 0x7f, 0xca, 0x12, 0x6e, 0xe9, 0xc7,
-	0x5a, 0xaf, 0x45, 0xd5, 0xc9, 0xfe, 0x6e, 0x40, 0x93, 0x22, 0x28, 0xe1, 0xc4, 0x81, 0x86, 0xb7,
-	0xf0, 0x59, 0xc0, 0x55, 0xca, 0x43, 0x95, 0x52, 0xc5, 0x87, 0x22, 0x36, 0xaa, 0x51, 0x85, 0x22,
-	0xe7, 0x00, 0x51, 0xcc, 0xf0, 0xe7, 0xc6, 0x4c, 0xfc, 0x6f, 0xfb, 0xd4, 0x2a, 0x72, 0xc6, 0x31,
-	0x1b, 0xcb, 0xf8, 0xa8, 0x46, 0x73, 0x68, 0xf2, 0x04, 0x9a, 0x29, 0xd1, 0x10, 0xc4, 0x3b, 0x3b,
-	0x44, 0xc5, 0x4a, 0x71, 0xa2, 0xbc, 0x70, 0xb9, 0xf4, 0xb9, 0x65, 0x96, 0x96, 0x27, 0x62, 0xa2,
-	0x3c, 0x71, 0x85, 0xe5, 0x79, 0xdb, 0xe6, 0x58, 0xf5, 0xb2, 0xf2, 0xb2, 0xe6, 0x61, 0x79, 0x19,
-	0x1a, 0xb9, 0x37, 0x3e, 0x5b, 0x7b, 0x33, 0x37, 0x98, 0x32, 0xab, 0x51, 0xc6, 0x7d, 0xe7, 0xb3,
-	0xf5, 0x50, 0xc4, 0x91, 0x9b, 0xa1, 0xc9, 0x43, 0x30, 0x5c, 0x6f, 0x6e, 0x35, 0x05, 0xe9, 0xa0,
-	0x48, 0x7a, 0xe1, 0xcd, 0x47, 0x35, 0x8a, 0x71, 0xec, 0x40, 0xc0, 0xd6, 0xc8, 0xb3, 0xf6, 0xca,
-	0x3a, 0xf0, 0x86, 0xad, 0x31, 0x05, 0x76, 0x40, 0xe1, 0xc8, 0x09, 0xd4, 0x63, 0x16, 0x2d, 0x36,
-	0x56, 0x4b, 0x10, 0x88, 0x22, 0xc8, 0xc1, 0x50, 0x8c, 0x8c, 0x6a, 0x54, 0x42, 0x2e, 0x9a, 0xca,
-	0x3e, 0xf6, 0x14, 0xfe, 0x2b, 0x0c, 0x90, 0x1c, 0x83, 0x1e, 0x46, 0x6a, 0xc4, 0x9d, 0xbc, 0xab,
-	0xd0, 0x76, 0x54, 0x0f, 0x23, 0x72, 0x1f, 0x5a, 0xdc, 0x5f, 0xb2, 0x84, 0xbb, 0xcb, 0x48, 0xf9,
-	0x25, 0xbb, 0x81, 0x56, 0x52, 0x36, 0x31, 0xa4, 0x95, 0xe4, 0xc9, 0xfe, 0xaa, 0xc1, 0xc1, 0xce,
-	0xd8, 0x09, 0x01, 0x53, 0x68, 0x94, 0x86, 0x14, 0xd7, 0x05, 0xa3, 0xea, 0x95, 0x46, 0x35, 0xf2,
-	0x46, 0x25, 0x0e, 0x34, 0x63, 0xf9, 0xe7, 0x15, 0xe3, 0x97, 0x4d, 0x48, 0x41, 0xc4, 0x42, 0x7c,
-	0xb4, 0xf0, 0x3d, 0x57, 0x8c, 0xde, 0xa4, 0xe9, 0xd1, 0x8e, 0xe1, 0xff, 0xa2, 0xc9, 0xfe, 0x5a,
-	0x8d, 0xb9, 0x9c, 0x66, 0x31, 0xe7, 0x75, 0x36, 0x04, 0x69, 0xce, 0x7f, 0x9f, 0xd2, 0xdd, 0x4e,
-	0xe3, 0xcf, 0x56, 0x44, 0x3e, 0x85, 0x51, 0x4c, 0xf1, 0x43, 0xdf, 0xe6, 0xc8, 0x9e, 0x86, 0x52,
-	0x69, 0xfb, 0xa0, 0xcd, 0x94, 0x26, 0x6d, 0x46, 0x1c, 0x30, 0xbd, 0x84, 0xa1, 0x14, 0xa3, 0xd7,
-	0x3e, 0xed, 0x56, 0x3d, 0x57, 0xce, 0x90, 0x0a, 0x1c, 0xe9, 0x83, 0x19, 0x21, 0xde, 0x14, 0xf8,
-	0x7b, 0x95, 0xf8, 0xf1, 0x25, 0x15, 0x40, 0x24, 0x5c, 0x23, 0xa1, 0xfe, 0x1b, 0x04, 0x04, 0xe6,
-	0x35, 0x36, 0x0a, 0x1a, 0xbb, 0x67, 0xa0, 0x0d, 0x6f, 0xd3, 0xb6, 0xee, 0x6b, 0xd0, 0xc7, 0x97,
-	0xb7, 0x6a, 0x78, 0xda, 0x40, 0x23, 0x6b, 0xa0, 0xfd, 0x14, 0xea, 0xe3, 0x4b, 0xac, 0xf4, 0x31,
-	0x18, 0xa8, 0x4c, 0xfb, 0xb5, 0x32, 0xc4, 0xd9, 0x9f, 0x01, 0xb2, 0xd5, 0x53, 0x3a, 0x9a, 0x9c,
-	0x74, 0xbd, 0x20, 0x9d, 0x9c, 0x40, 0x27, 0x5b, 0x6b, 0x6f, 0x59, 0x70, 0xc5, 0x62, 0x55, 0xd3,
-	0xce, 0xfd, 0x9c, 0x16, 0xb3, 0xf0, 0x7e, 0xf9, 0xa6, 0x6d, 0x9f, 0x36, 0xb5, 0xd0, 0x4a, 0x8b,
-	0x78, 0x04, 0xe6, 0x0d, 0xca, 0xd2, 0x85, 0xac, 0xca, 0x4d, 0x4b, 0x05, 0x8a, 0x0c, 0xc0, 0xfc,
-	0x94, 0xf9, 0xe7, 0xa8, 0x74, 0x6f, 0x3a, 0xef, 0x13, 0xc6, 0x5f, 0x05, 0x3c, 0xde, 0x50, 0x01,
-	0xae, 0x7e, 0x52, 0xba, 0x67, 0xd0, 0xda, 0x82, 0x49, 0x07, 0x8c, 0x39, 0xdb, 0xa8, 0xe2, 0xf0,
-	0x92, 0x1c, 0xa6, 0x2f, 0x62, 0x39, 0x25, 0x79, 0x38, 0xd7, 0x9f, 0x69, 0xf6, 0x17, 0x0d, 0xda,
-	0xb9, 0xe5, 0x5b, 0xaa, 0xec, 0x56, 0xbb, 0xb4, 0xba, 0x58, 0xd2, 0x83, 0x46, 0xcc, 0x92, 0xd5,
-	0x22, 0x7d, 0xa3, 0xed, 0x6e, 0x70, 0x15, 0xbf, 0x38, 0xfa, 0xf0, 0x60, 0xea, 0xf3, 0xd9, 0x6a,
-	0xe2, 0x78, 0xe1, 0xb2, 0x3f, 0x18, 0x78, 0x41, 0x5f, 0x7c, 0x6c, 0x0c, 0x06, 0x7d, 0x41, 0x99,
-	0x34, 0xc4, 0x57, 0xc7, 0xe0, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5a, 0x94, 0x4e, 0x4a, 0x9c,
-	0x08, 0x00, 0x00,
+var fileDescriptor_6cc19f28ccff0670 = []byte{
+	// 677 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x5f, 0x6b, 0xdb, 0x30,
+	0x10, 0xaf, 0xe3, 0xc4, 0x69, 0x2e, 0x4d, 0x69, 0xc5, 0x36, 0x44, 0xd9, 0x58, 0x30, 0x14, 0xfa,
+	0x50, 0x12, 0x56, 0xbf, 0x0d, 0x06, 0x5b, 0xcb, 0x46, 0x9f, 0xd6, 0xa2, 0xc1, 0x60, 0x7b, 0x73,
+	0x34, 0x2d, 0x11, 0x89, 0xff, 0xcc, 0x92, 0x1b, 0xfa, 0x4d, 0xf6, 0xba, 0xcf, 0xb0, 0x2f, 0xb4,
+	0x8f, 0x32, 0x24, 0x2b, 0x96, 0xb5, 0xba, 0x65, 0xed, 0x60, 0x90, 0x07, 0x4b, 0x77, 0x3f, 0xdd,
+	0xe9, 0xee, 0x77, 0x3f, 0x05, 0x20, 0x9f, 0x7d, 0x95, 0x93, 0xbc, 0xc8, 0x64, 0x86, 0x7a, 0xf2,
+	0x3a, 0x67, 0xe2, 0x60, 0x6f, 0xb6, 0xca, 0xe8, 0x92, 0x2e, 0x62, 0x9e, 0x56, 0x86, 0x70, 0x0a,
+	0x83, 0x8b, 0x9c, 0x15, 0xb1, 0xe4, 0x59, 0x8a, 0x42, 0xe8, 0x5d, 0xc5, 0xab, 0x92, 0x61, 0x6f,
+	0xec, 0x1d, 0x0d, 0x4f, 0x76, 0x26, 0x1a, 0x35, 0x39, 0x55, 0x20, 0x52, 0x99, 0xc2, 0xd7, 0x00,
+	0x67, 0x0b, 0x46, 0x97, 0x79, 0xc6, 0x53, 0x89, 0x0e, 0x60, 0x5b, 0xb0, 0x6f, 0x25, 0x4b, 0x69,
+	0x05, 0x1a, 0x91, 0x7a, 0x8d, 0x9e, 0x40, 0xf0, 0x85, 0xcf, 0x99, 0x90, 0xb8, 0x33, 0xf6, 0x8e,
+	0x76, 0x88, 0x59, 0x85, 0x17, 0xd0, 0x7b, 0x9b, 0xca, 0xe2, 0xfa, 0x21, 0x60, 0x84, 0xa0, 0x7b,
+	0xc5, 0xd9, 0x1a, 0xfb, 0xda, 0x5f, 0x7f, 0x87, 0xef, 0x00, 0x3e, 0x72, 0xb6, 0x3e, 0x5b, 0xc4,
+	0xe9, 0x9c, 0xa1, 0x31, 0x0c, 0xd5, 0x2e, 0xd5, 0xab, 0xc2, 0x1c, 0xdc, 0xdc, 0xba, 0x35, 0xb1,
+	0x57, 0xd0, 0xff, 0x50, 0x26, 0x49, 0xfc, 0xb0, 0xd4, 0xc2, 0x63, 0x08, 0x08, 0x13, 0xe5, 0x4a,
+	0xfe, 0x55, 0x1d, 0x7f, 0xfa, 0xd0, 0x27, 0xea, 0x48, 0x21, 0xd1, 0x04, 0x02, 0xba, 0xe2, 0x2c,
+	0x95, 0x06, 0xf0, 0xc8, 0x00, 0x8c, 0xfd, 0x4c, 0xdb, 0xce, 0xb7, 0x88, 0xf1, 0x42, 0x2f, 0x01,
+	0xf2, 0x82, 0xa9, 0x5f, 0x5c, 0x30, 0x9d, 0xc5, 0xf0, 0x04, 0xbb, 0x98, 0xcb, 0x82, 0x5d, 0x56,
+	0xf6, 0xf3, 0x2d, 0xd2, 0xf0, 0x46, 0x2f, 0xa0, 0xbf, 0x01, 0xfa, 0x1a, 0xf8, 0xf8, 0x06, 0xd0,
+	0xa0, 0x36, 0x7e, 0x3a, 0xbd, 0x2c, 0x49, 0xb8, 0xc4, 0xdd, 0xd6, 0xf4, 0xb4, 0x4d, 0xa7, 0xa7,
+	0xbf, 0x54, 0x7a, 0xb4, 0xa6, 0x08, 0xee, 0xb5, 0xa5, 0x67, 0x29, 0xa4, 0xd2, 0xb3, 0xde, 0x0a,
+	0x6b, 0x5b, 0x85, 0x83, 0x36, 0xac, 0xed, 0xb5, 0xc2, 0x5a, 0x6f, 0x74, 0x08, 0x7e, 0x4c, 0x97,
+	0xb8, 0xaf, 0x41, 0xfb, 0x2e, 0xe8, 0x0d, 0x5d, 0x9e, 0x6f, 0x11, 0x65, 0x57, 0x15, 0x48, 0xd9,
+	0x5a, 0xb3, 0x68, 0xbb, 0xad, 0x02, 0xef, 0xd9, 0x5a, 0x85, 0x50, 0x15, 0x30, 0x7e, 0xa7, 0x7d,
+	0xd3, 0xd0, 0x70, 0x0e, 0x23, 0xa7, 0x29, 0x68, 0x0c, 0x9d, 0x2c, 0x37, 0x6d, 0xdb, 0x33, 0xe7,
+	0xd4, 0x03, 0x45, 0x3a, 0x59, 0x8e, 0x9e, 0xc2, 0x40, 0xf2, 0x84, 0x09, 0x19, 0x27, 0xb9, 0xee,
+	0xd5, 0x80, 0xd8, 0x0d, 0x45, 0x26, 0xd3, 0x7a, 0x5f, 0x9b, 0xcc, 0x2a, 0x2c, 0x61, 0xff, 0x46,
+	0x27, 0x6b, 0xf2, 0x7b, 0x96, 0xfc, 0x0e, 0x53, 0x3b, 0xb7, 0x32, 0xd5, 0x77, 0x86, 0x08, 0x43,
+	0xbf, 0x60, 0xf9, 0x8a, 0xd3, 0x58, 0x77, 0x74, 0x44, 0x36, 0xcb, 0xb0, 0x80, 0x5d, 0x97, 0x07,
+	0xff, 0x21, 0xe6, 0x27, 0x5b, 0xd3, 0x8a, 0x3f, 0xf7, 0x0d, 0xd9, 0x38, 0xda, 0x77, 0x8f, 0x8e,
+	0xeb, 0x2a, 0xfe, 0x9b, 0x66, 0xdd, 0x11, 0xe2, 0x97, 0x57, 0xc7, 0x68, 0x88, 0xd0, 0x7d, 0xaf,
+	0x10, 0xc1, 0xd0, 0x0e, 0x81, 0xc0, 0xfe, 0xd8, 0x6f, 0x50, 0xd8, 0xe6, 0x4e, 0x9a, 0x5e, 0x4a,
+	0x66, 0xd4, 0x88, 0x0a, 0xdc, 0xd5, 0xee, 0x1b, 0x99, 0xd1, 0xe2, 0x4a, 0x2a, 0x13, 0x3a, 0x82,
+	0x6d, 0x33, 0xfc, 0x02, 0xf7, 0x5a, 0xdc, 0x6a, 0x6b, 0xf3, 0x8a, 0x81, 0x7b, 0x45, 0x09, 0x60,
+	0xa7, 0xa8, 0xf5, 0x6a, 0x0d, 0x6c, 0xc7, 0xc1, 0xfe, 0xa9, 0xc6, 0xfe, 0x5d, 0x6a, 0xdc, 0x75,
+	0xe4, 0xf4, 0x87, 0x57, 0x73, 0xd1, 0x4c, 0x64, 0x6b, 0xe8, 0xa8, 0x19, 0x40, 0xe0, 0x8e, 0x53,
+	0x39, 0xdb, 0x91, 0x66, 0x4c, 0x81, 0x8e, 0x61, 0x20, 0xb4, 0xd2, 0x73, 0xb6, 0xa9, 0xde, 0xae,
+	0x81, 0x98, 0x17, 0x80, 0x58, 0x87, 0xe6, 0xed, 0x7a, 0x6e, 0x65, 0xbe, 0x7b, 0x30, 0xac, 0x84,
+	0x80, 0xb0, 0x7c, 0x75, 0xdd, 0x9a, 0xe0, 0x83, 0xe6, 0xff, 0xf6, 0x71, 0x41, 0x87, 0x10, 0x14,
+	0xfa, 0x99, 0x31, 0xca, 0x3a, 0xaa, 0xd5, 0x4b, 0x6d, 0x12, 0x63, 0x3c, 0x7d, 0xfe, 0xf9, 0xd9,
+	0x9c, 0xcb, 0x45, 0x39, 0x9b, 0xd0, 0x2c, 0x99, 0x46, 0x11, 0x4d, 0xa7, 0xfa, 0xdd, 0x8f, 0xa2,
+	0xa9, 0xf6, 0x9f, 0x05, 0xfa, 0x0f, 0x40, 0xf4, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x03, 0x07, 0x21,
+	0x7a, 0x27, 0x08, 0x00, 0x00,
 }
