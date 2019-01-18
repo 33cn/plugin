@@ -66,8 +66,8 @@ type OrderRow struct {
 	*pty.LocalOrder
 }
 
-// NewOrderRew create row
-func NewOrderRew() *OrderRow {
+// NewOrderRow create row
+func NewOrderRow() *OrderRow {
 	return &OrderRow{LocalOrder: nil}
 }
 
@@ -87,6 +87,7 @@ func (r *OrderRow) SetPayload(data types.Message) error {
 
 // Get get index key
 func (r *OrderRow) Get(key string) ([]byte, error) {
+	tradelog.Error("r.Get", "key", key, "%+v", r)
 	switch key {
 	case "txIndex":
 		return []byte(r.TxIndex), nil
@@ -162,7 +163,8 @@ func (r *OrderRow) status() string {
 
 // NewOrderTable create order table
 func NewOrderTable(kvdb db.KV) *table.Table {
-	rowMeta := NewOrderRew()
+	rowMeta := NewOrderRow()
+	rowMeta.SetPayload(&pty.LocalOrder{})
 	t, err := table.NewTable(rowMeta, kvdb, opt_order_table)
 	if err != nil {
 		panic(err)
