@@ -23,7 +23,7 @@ def RUN(data, log=True):
         print('<<<<< <<<<<')
     return ret
 
-run('docker image inspect go-pbft:latest >/dev/null 2>&1 || \
+run('docker image inspect 33-pbft:latest >/dev/null 2>&1 || \
     docker build -t go-pbft .', shell=True)
 
 run('docker network inspect PBFT >/dev/null 2>&1 || \
@@ -32,15 +32,15 @@ run('docker network inspect PBFT >/dev/null 2>&1 || \
     shell=True)
 
 run('docker run -dit \
-    --net PBFT --ip 172.28.0.6 --name replica-1 -p 127.0.0.1:5001:8801 --rm go-pbft 1', shell=True)
+    --net PBFT --ip 172.28.0.6 --name replica-1 -p 127.0.0.1:5001:8801 --rm 33-pbft pbft1.toml', shell=True)
 run('docker run -dit \
-    --net PBFT --ip 172.28.0.7 --name replica-2 -p 127.0.0.1:5002:8801 --rm go-pbft 2', shell=True)
+    --net PBFT --ip 172.28.0.7 --name replica-2 -p 127.0.0.1:5002:8801 --rm 33-pbft pbft2.toml', shell=True)
 run('docker run -dit \
-    --net PBFT --ip 172.28.0.8 --name replica-3 -p 127.0.0.1:5003:8801 --rm go-pbft 3', shell=True)
+    --net PBFT --ip 172.28.0.8 --name replica-3 -p 127.0.0.1:5003:8801 --rm 33-pbft pbft3.toml', shell=True)
 run('docker run -dit \
-    --net PBFT --ip 172.28.0.9 --name replica-4 -p 127.0.0.1:5004:8801 --rm go-pbft 4', shell=True)
+    --net PBFT --ip 172.28.0.9 --name replica-4 -p 127.0.0.1:5004:8801 --rm 33-pbft pbft4.toml', shell=True)
 run('docker run -dit \
-    --net PBFT --ip 172.28.0.10 --name client -p 127.0.0.1:5005:8801 --rm go-pbft 5', shell=True)
+    --net PBFT --ip 172.28.0.10 --name client -p 127.0.0.1:5005:8801 --rm 33-pbft pbftc.toml', shell=True)
 
 sleep(10)
 
