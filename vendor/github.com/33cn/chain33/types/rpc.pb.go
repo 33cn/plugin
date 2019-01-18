@@ -17,10 +17,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
@@ -99,11 +95,6 @@ var fileDescriptor_77a6da22d6a3feb1 = []byte{
 	0xff, 0xf5, 0xb2, 0x51, 0x39, 0x06, 0x0c, 0x00, 0x00,
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
 var _ grpc.ClientConn
@@ -199,31 +190,13 @@ type Chain33Client interface {
 	//获取系统致命故障信息
 	GetFatalFailure(ctx context.Context, in *ReqNil, opts ...grpc.CallOption) (*Int32, error)
 	GetLastBlockSequence(ctx context.Context, in *ReqNil, opts ...grpc.CallOption) (*Int64, error)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	// 获取指定区间的block加载序列号信息
-	GetBlockSequences(ctx context.Context, in *ReqBlocks, opts ...grpc.CallOption) (*BlockSequences, error)
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 	// get add block's sequence by hash
 	GetSequenceByHash(ctx context.Context, in *ReqHash, opts ...grpc.CallOption) (*Int64, error)
 	//通过block hash 获取对应的blocks信息
 	GetBlockByHashes(ctx context.Context, in *ReqHashes, opts ...grpc.CallOption) (*BlockDetails, error)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	//通过block seq 获取对应的blocks hash 信息
 	GetBlockBySeq(ctx context.Context, in *Int64, opts ...grpc.CallOption) (*BlockSeq, error)
 	//关闭chain33
-=======
-	// 关闭chain33
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-	//通过block seq 获取对应的blocks hash 信息
-	GetBlockBySeq(ctx context.Context, in *Int64, opts ...grpc.CallOption) (*BlockSeq, error)
-	//关闭chain33
->>>>>>> update chain33
 	CloseQueue(ctx context.Context, in *ReqNil, opts ...grpc.CallOption) (*Reply, error)
 	//获取地址所以合约下的余额
 	GetAllExecBalance(ctx context.Context, in *ReqAddr, opts ...grpc.CallOption) (*AllExecBalance, error)
@@ -631,42 +604,18 @@ func (c *chain33Client) GetLastBlockSequence(ctx context.Context, in *ReqNil, op
 	return out, nil
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-func (c *chain33Client) GetBlockSequences(ctx context.Context, in *ReqBlocks, opts ...grpc.CallOption) (*BlockSequences, error) {
-	out := new(BlockSequences)
-	err := grpc.Invoke(ctx, "/types.chain33/GetBlockSequences", in, out, c.cc, opts...)
-=======
 func (c *chain33Client) GetSequenceByHash(ctx context.Context, in *ReqHash, opts ...grpc.CallOption) (*Int64, error) {
 	out := new(Int64)
 	err := c.cc.Invoke(ctx, "/types.chain33/GetSequenceByHash", in, out, opts...)
->>>>>>> update chain33
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-<<<<<<< HEAD
->>>>>>> change protobuf file (use protoc-gen-1.0)
-func (c *chain33Client) GetSequenceByHash(ctx context.Context, in *ReqHash, opts ...grpc.CallOption) (*Int64, error) {
-	out := new(Int64)
-	err := grpc.Invoke(ctx, "/types.chain33/GetSequenceByHash", in, out, c.cc, opts...)
-=======
 func (c *chain33Client) GetBlockByHashes(ctx context.Context, in *ReqHashes, opts ...grpc.CallOption) (*BlockDetails, error) {
 	out := new(BlockDetails)
 	err := c.cc.Invoke(ctx, "/types.chain33/GetBlockByHashes", in, out, opts...)
->>>>>>> update chain33
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chain33Client) GetBlockBySeq(ctx context.Context, in *Int64, opts ...grpc.CallOption) (*BlockSeq, error) {
-	out := new(BlockSeq)
-	err := c.cc.Invoke(ctx, "/types.chain33/GetBlockBySeq", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -727,10 +676,6 @@ func (c *chain33Client) QueryRandNum(ctx context.Context, in *ReqRandHash, opts 
 	return out, nil
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 func (c *chain33Client) GetFork(ctx context.Context, in *ReqKey, opts ...grpc.CallOption) (*Int64, error) {
 	out := new(Int64)
 	err := c.cc.Invoke(ctx, "/types.chain33/GetFork", in, out, opts...)
@@ -739,17 +684,8 @@ func (c *chain33Client) GetFork(ctx context.Context, in *ReqKey, opts ...grpc.Ca
 	}
 	return out, nil
 }
-<<<<<<< HEAD
 
 // Chain33Server is the server API for Chain33 service.
-=======
-// Server API for Chain33 service
-
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-
-// Chain33Server is the server API for Chain33 service.
->>>>>>> update chain33
 type Chain33Server interface {
 	// chain33 对外提供服务的接口
 	//区块链接口
@@ -834,31 +770,13 @@ type Chain33Server interface {
 	//获取系统致命故障信息
 	GetFatalFailure(context.Context, *ReqNil) (*Int32, error)
 	GetLastBlockSequence(context.Context, *ReqNil) (*Int64, error)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	// 获取指定区间的block加载序列号信息
-	GetBlockSequences(context.Context, *ReqBlocks) (*BlockSequences, error)
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 	// get add block's sequence by hash
 	GetSequenceByHash(context.Context, *ReqHash) (*Int64, error)
 	//通过block hash 获取对应的blocks信息
 	GetBlockByHashes(context.Context, *ReqHashes) (*BlockDetails, error)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	//通过block seq 获取对应的blocks hash 信息
 	GetBlockBySeq(context.Context, *Int64) (*BlockSeq, error)
 	//关闭chain33
-=======
-	// 关闭chain33
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-	//通过block seq 获取对应的blocks hash 信息
-	GetBlockBySeq(context.Context, *Int64) (*BlockSeq, error)
-	//关闭chain33
->>>>>>> update chain33
 	CloseQueue(context.Context, *ReqNil) (*Reply, error)
 	//获取地址所以合约下的余额
 	GetAllExecBalance(context.Context, *ReqAddr) (*AllExecBalance, error)

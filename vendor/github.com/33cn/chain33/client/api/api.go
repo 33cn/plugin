@@ -107,22 +107,16 @@ func (api *paraChainAPI) IsErr() bool {
 
 func (api *paraChainAPI) QueryTx(param *types.ReqHash) (*types.TransactionDetail, error) {
 	data, err := api.grpcClient.QueryTransaction(context.Background(), param)
-<<<<<<< HEAD
-=======
 	if err != nil {
 		err = ErrAPIEnv
 	}
->>>>>>> update chain33
 	return data, seterr(err, &api.errflag)
 }
 
 func (api *paraChainAPI) GetRandNum(param *types.ReqRandHash) ([]byte, error) {
 	reply, err := api.grpcClient.QueryRandNum(context.Background(), param)
 	if err != nil {
-<<<<<<< HEAD
-=======
 		err = ErrAPIEnv
->>>>>>> update chain33
 		return nil, seterr(err, &api.errflag)
 	}
 	return reply.Hash, nil
@@ -130,12 +124,9 @@ func (api *paraChainAPI) GetRandNum(param *types.ReqRandHash) ([]byte, error) {
 
 func (api *paraChainAPI) GetBlockByHashes(param *types.ReqHashes) (*types.BlockDetails, error) {
 	data, err := api.grpcClient.GetBlockByHashes(context.Background(), param)
-<<<<<<< HEAD
-=======
 	if err != nil {
 		err = ErrAPIEnv
 	}
->>>>>>> update chain33
 	return data, seterr(err, &api.errflag)
 }
 

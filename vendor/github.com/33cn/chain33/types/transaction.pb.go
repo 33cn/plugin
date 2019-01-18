@@ -533,41 +533,7 @@ func (m *CreateTransactionGroup) XXX_DiscardUnknown() {
 	xxx_messageInfo_CreateTransactionGroup.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *CreateTransactionGroup) Reset()         { *m = CreateTransactionGroup{} }
-func (m *CreateTransactionGroup) String() string { return proto.CompactTextString(m) }
-func (*CreateTransactionGroup) ProtoMessage()    {}
-func (*CreateTransactionGroup) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{7}
-}
-
-func (m *CreateTransactionGroup) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateTransactionGroup.Unmarshal(m, b)
-}
-func (m *CreateTransactionGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateTransactionGroup.Marshal(b, m, deterministic)
-}
-func (m *CreateTransactionGroup) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTransactionGroup.Merge(m, src)
-}
-func (m *CreateTransactionGroup) XXX_Size() int {
-	return xxx_messageInfo_CreateTransactionGroup.Size(m)
-}
-func (m *CreateTransactionGroup) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateTransactionGroup.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_CreateTransactionGroup proto.InternalMessageInfo
-=======
-func (m *CreateTransactionGroup) Reset()                    { *m = CreateTransactionGroup{} }
-func (m *CreateTransactionGroup) String() string            { return proto.CompactTextString(m) }
-func (*CreateTransactionGroup) ProtoMessage()               {}
-func (*CreateTransactionGroup) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{6} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_CreateTransactionGroup proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *CreateTransactionGroup) GetTxs() []string {
 	if m != nil {
@@ -583,10 +549,6 @@ type UnsignTx struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 func (m *UnsignTx) Reset()         { *m = UnsignTx{} }
 func (m *UnsignTx) String() string { return proto.CompactTextString(m) }
 func (*UnsignTx) ProtoMessage()    {}
@@ -611,15 +573,6 @@ func (m *UnsignTx) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_UnsignTx proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-func (m *UnsignTx) Reset()                    { *m = UnsignTx{} }
-func (m *UnsignTx) String() string            { return proto.CompactTextString(m) }
-func (*UnsignTx) ProtoMessage()               {}
-func (*UnsignTx) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{7} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *UnsignTx) GetData() []byte {
 	if m != nil {
@@ -630,10 +583,6 @@ func (m *UnsignTx) GetData() []byte {
 
 // payAddr 可以支持 1. 地址 2. 私钥
 type NoBalanceTx struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	TxHex                string   `protobuf:"bytes,1,opt,name=txHex,proto3" json:"txHex,omitempty"`
 	PayAddr              string   `protobuf:"bytes,2,opt,name=payAddr,proto3" json:"payAddr,omitempty"`
 	Privkey              string   `protobuf:"bytes,3,opt,name=privkey,proto3" json:"privkey,omitempty"`
@@ -648,15 +597,6 @@ func (m *NoBalanceTx) String() string { return proto.CompactTextString(m) }
 func (*NoBalanceTx) ProtoMessage()    {}
 func (*NoBalanceTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{9}
-<<<<<<< HEAD
-=======
-	TxHex   string `protobuf:"bytes,1,opt,name=txHex" json:"txHex,omitempty"`
-	PayAddr string `protobuf:"bytes,2,opt,name=payAddr" json:"payAddr,omitempty"`
-	Privkey string `protobuf:"bytes,3,opt,name=privkey" json:"privkey,omitempty"`
-	Expire  string `protobuf:"bytes,4,opt,name=expire" json:"expire,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 func (m *NoBalanceTx) XXX_Unmarshal(b []byte) error {
@@ -706,10 +646,6 @@ func (m *NoBalanceTx) GetExpire() string {
 }
 
 type SignedTx struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Unsign               []byte   `protobuf:"bytes,1,opt,name=unsign,proto3" json:"unsign,omitempty"`
 	Sign                 []byte   `protobuf:"bytes,2,opt,name=sign,proto3" json:"sign,omitempty"`
 	Pubkey               []byte   `protobuf:"bytes,3,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
@@ -740,15 +676,6 @@ func (m *SignedTx) XXX_Size() int {
 }
 func (m *SignedTx) XXX_DiscardUnknown() {
 	xxx_messageInfo_SignedTx.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Unsign []byte `protobuf:"bytes,1,opt,name=unsign,proto3" json:"unsign,omitempty"`
-	Sign   []byte `protobuf:"bytes,2,opt,name=sign,proto3" json:"sign,omitempty"`
-	Pubkey []byte `protobuf:"bytes,3,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
-	Ty     int32  `protobuf:"varint,4,opt,name=ty" json:"ty,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_SignedTx proto.InternalMessageInfo
@@ -784,10 +711,6 @@ func (m *SignedTx) GetTy() int32 {
 type Transaction struct {
 	Execer    []byte     `protobuf:"bytes,1,opt,name=execer,proto3" json:"execer,omitempty"`
 	Payload   []byte     `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Signature *Signature `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
 	Fee       int64      `protobuf:"varint,4,opt,name=fee,proto3" json:"fee,omitempty"`
 	Expire    int64      `protobuf:"varint,5,opt,name=expire,proto3" json:"expire,omitempty"`
@@ -827,27 +750,6 @@ func (m *Transaction) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Transaction proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-	Signature *Signature `protobuf:"bytes,3,opt,name=signature" json:"signature,omitempty"`
-	Fee       int64      `protobuf:"varint,4,opt,name=fee" json:"fee,omitempty"`
-	Expire    int64      `protobuf:"varint,5,opt,name=expire" json:"expire,omitempty"`
-	// 随机ID，可以防止payload 相同的时候，交易重复
-	Nonce int64 `protobuf:"varint,6,opt,name=nonce" json:"nonce,omitempty"`
-	// 对方地址，如果没有对方地址，可以为空
-	To         string `protobuf:"bytes,7,opt,name=to" json:"to,omitempty"`
-	GroupCount int32  `protobuf:"varint,8,opt,name=groupCount" json:"groupCount,omitempty"`
-	Header     []byte `protobuf:"bytes,9,opt,name=header,proto3" json:"header,omitempty"`
-	Next       []byte `protobuf:"bytes,10,opt,name=next,proto3" json:"next,omitempty"`
-}
-
-func (m *Transaction) Reset()                    { *m = Transaction{} }
-func (m *Transaction) String() string            { return proto.CompactTextString(m) }
-func (*Transaction) ProtoMessage()               {}
-func (*Transaction) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{10} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *Transaction) GetExecer() []byte {
 	if m != nil {
@@ -949,41 +851,7 @@ func (m *Transactions) XXX_DiscardUnknown() {
 	xxx_messageInfo_Transactions.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *Transactions) Reset()         { *m = Transactions{} }
-func (m *Transactions) String() string { return proto.CompactTextString(m) }
-func (*Transactions) ProtoMessage()    {}
-func (*Transactions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{12}
-}
-
-func (m *Transactions) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Transactions.Unmarshal(m, b)
-}
-func (m *Transactions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Transactions.Marshal(b, m, deterministic)
-}
-func (m *Transactions) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Transactions.Merge(m, src)
-}
-func (m *Transactions) XXX_Size() int {
-	return xxx_messageInfo_Transactions.Size(m)
-}
-func (m *Transactions) XXX_DiscardUnknown() {
-	xxx_messageInfo_Transactions.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_Transactions proto.InternalMessageInfo
-=======
-func (m *Transactions) Reset()                    { *m = Transactions{} }
-func (m *Transactions) String() string            { return proto.CompactTextString(m) }
-func (*Transactions) ProtoMessage()               {}
-func (*Transactions) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{11} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_Transactions proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *Transactions) GetTxs() []*Transaction {
 	if m != nil {
@@ -994,10 +862,6 @@ func (m *Transactions) GetTxs() []*Transaction {
 
 // 环签名类型时，签名字段存储的环签名信息
 type RingSignature struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Items                []*RingSignatureItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
@@ -1025,12 +889,6 @@ func (m *RingSignature) XXX_Size() int {
 }
 func (m *RingSignature) XXX_DiscardUnknown() {
 	xxx_messageInfo_RingSignature.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Items []*RingSignatureItem `protobuf:"bytes,1,rep,name=items" json:"items,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_RingSignature proto.InternalMessageInfo
@@ -1044,45 +902,11 @@ func (m *RingSignature) GetItems() []*RingSignatureItem {
 
 // 环签名中的一组签名数据
 type RingSignatureItem struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Pubkey               [][]byte `protobuf:"bytes,1,rep,name=pubkey,proto3" json:"pubkey,omitempty"`
 	Signature            [][]byte `protobuf:"bytes,2,rep,name=signature,proto3" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
-<<<<<<< HEAD
-}
-
-func (m *RingSignatureItem) Reset()         { *m = RingSignatureItem{} }
-func (m *RingSignatureItem) String() string { return proto.CompactTextString(m) }
-func (*RingSignatureItem) ProtoMessage()    {}
-func (*RingSignatureItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{14}
-}
-
-func (m *RingSignatureItem) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RingSignatureItem.Unmarshal(m, b)
-}
-func (m *RingSignatureItem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RingSignatureItem.Marshal(b, m, deterministic)
-}
-func (m *RingSignatureItem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RingSignatureItem.Merge(m, src)
-}
-func (m *RingSignatureItem) XXX_Size() int {
-	return xxx_messageInfo_RingSignatureItem.Size(m)
-}
-func (m *RingSignatureItem) XXX_DiscardUnknown() {
-	xxx_messageInfo_RingSignatureItem.DiscardUnknown(m)
-=======
-	Pubkey    [][]byte `protobuf:"bytes,1,rep,name=pubkey,proto3" json:"pubkey,omitempty"`
-	Signature [][]byte `protobuf:"bytes,2,rep,name=signature,proto3" json:"signature,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 func (m *RingSignatureItem) Reset()         { *m = RingSignatureItem{} }
@@ -1144,10 +968,6 @@ type Signature struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 func (m *Signature) Reset()         { *m = Signature{} }
 func (m *Signature) String() string { return proto.CompactTextString(m) }
 func (*Signature) ProtoMessage()    {}
@@ -1172,15 +992,6 @@ func (m *Signature) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Signature proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-func (m *Signature) Reset()                    { *m = Signature{} }
-func (m *Signature) String() string            { return proto.CompactTextString(m) }
-func (*Signature) ProtoMessage()               {}
-func (*Signature) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{14} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *Signature) GetTy() int32 {
 	if m != nil {
@@ -1235,41 +1046,7 @@ func (m *AddrOverview) XXX_DiscardUnknown() {
 	xxx_messageInfo_AddrOverview.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *AddrOverview) Reset()         { *m = AddrOverview{} }
-func (m *AddrOverview) String() string { return proto.CompactTextString(m) }
-func (*AddrOverview) ProtoMessage()    {}
-func (*AddrOverview) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{16}
-}
-
-func (m *AddrOverview) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AddrOverview.Unmarshal(m, b)
-}
-func (m *AddrOverview) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AddrOverview.Marshal(b, m, deterministic)
-}
-func (m *AddrOverview) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddrOverview.Merge(m, src)
-}
-func (m *AddrOverview) XXX_Size() int {
-	return xxx_messageInfo_AddrOverview.Size(m)
-}
-func (m *AddrOverview) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddrOverview.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_AddrOverview proto.InternalMessageInfo
-=======
-func (m *AddrOverview) Reset()                    { *m = AddrOverview{} }
-func (m *AddrOverview) String() string            { return proto.CompactTextString(m) }
-func (*AddrOverview) ProtoMessage()               {}
-func (*AddrOverview) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{15} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_AddrOverview proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *AddrOverview) GetReciver() int64 {
 	if m != nil {
@@ -1293,10 +1070,6 @@ func (m *AddrOverview) GetTxCount() int64 {
 }
 
 type ReqAddr struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	//表示取所有/from/to/其他的hash列表
 	Flag                 int32    `protobuf:"varint,2,opt,name=flag,proto3" json:"flag,omitempty"`
@@ -1330,18 +1103,6 @@ func (m *ReqAddr) XXX_Size() int {
 }
 func (m *ReqAddr) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqAddr.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Addr string `protobuf:"bytes,1,opt,name=addr" json:"addr,omitempty"`
-	// 表示取所有/from/to/其他的hash列表
-	Flag      int32 `protobuf:"varint,2,opt,name=flag" json:"flag,omitempty"`
-	Count     int32 `protobuf:"varint,3,opt,name=count" json:"count,omitempty"`
-	Direction int32 `protobuf:"varint,4,opt,name=direction" json:"direction,omitempty"`
-	Height    int64 `protobuf:"varint,5,opt,name=height" json:"height,omitempty"`
-	Index     int64 `protobuf:"varint,6,opt,name=index" json:"index,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_ReqAddr proto.InternalMessageInfo
@@ -1389,10 +1150,6 @@ func (m *ReqAddr) GetIndex() int64 {
 }
 
 type ReqPrivacy struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Count                int32    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 	Direction            int32    `protobuf:"varint,2,opt,name=direction,proto3" json:"direction,omitempty"`
 	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
@@ -1422,14 +1179,6 @@ func (m *ReqPrivacy) XXX_Size() int {
 }
 func (m *ReqPrivacy) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqPrivacy.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Count     int32 `protobuf:"varint,1,opt,name=count" json:"count,omitempty"`
-	Direction int32 `protobuf:"varint,2,opt,name=direction" json:"direction,omitempty"`
-	Height    int64 `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_ReqPrivacy proto.InternalMessageInfo
@@ -1456,43 +1205,10 @@ func (m *ReqPrivacy) GetHeight() int64 {
 }
 
 type HexTx struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Tx                   string   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
-<<<<<<< HEAD
-}
-
-func (m *HexTx) Reset()         { *m = HexTx{} }
-func (m *HexTx) String() string { return proto.CompactTextString(m) }
-func (*HexTx) ProtoMessage()    {}
-func (*HexTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{19}
-}
-
-func (m *HexTx) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_HexTx.Unmarshal(m, b)
-}
-func (m *HexTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_HexTx.Marshal(b, m, deterministic)
-}
-func (m *HexTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HexTx.Merge(m, src)
-}
-func (m *HexTx) XXX_Size() int {
-	return xxx_messageInfo_HexTx.Size(m)
-}
-func (m *HexTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_HexTx.DiscardUnknown(m)
-=======
-	Tx string `protobuf:"bytes,1,opt,name=tx" json:"tx,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 func (m *HexTx) Reset()         { *m = HexTx{} }
@@ -1544,17 +1260,6 @@ func (*ReplyTxInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{20}
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *ReplyTxInfo) Reset()         { *m = ReplyTxInfo{} }
-func (m *ReplyTxInfo) String() string { return proto.CompactTextString(m) }
-func (*ReplyTxInfo) ProtoMessage()    {}
-func (*ReplyTxInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{20}
-}
-
-=======
->>>>>>> update chain33
 func (m *ReplyTxInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTxInfo.Unmarshal(m, b)
 }
@@ -1572,15 +1277,6 @@ func (m *ReplyTxInfo) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReplyTxInfo proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-func (m *ReplyTxInfo) Reset()                    { *m = ReplyTxInfo{} }
-func (m *ReplyTxInfo) String() string            { return proto.CompactTextString(m) }
-func (*ReplyTxInfo) ProtoMessage()               {}
-func (*ReplyTxInfo) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{19} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *ReplyTxInfo) GetHash() []byte {
 	if m != nil {
@@ -1640,41 +1336,7 @@ func (m *ReqTxList) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqTxList.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *ReqTxList) Reset()         { *m = ReqTxList{} }
-func (m *ReqTxList) String() string { return proto.CompactTextString(m) }
-func (*ReqTxList) ProtoMessage()    {}
-func (*ReqTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{21}
-}
-
-func (m *ReqTxList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqTxList.Unmarshal(m, b)
-}
-func (m *ReqTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqTxList.Marshal(b, m, deterministic)
-}
-func (m *ReqTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTxList.Merge(m, src)
-}
-func (m *ReqTxList) XXX_Size() int {
-	return xxx_messageInfo_ReqTxList.Size(m)
-}
-func (m *ReqTxList) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqTxList.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_ReqTxList proto.InternalMessageInfo
-=======
-func (m *ReqTxList) Reset()                    { *m = ReqTxList{} }
-func (m *ReqTxList) String() string            { return proto.CompactTextString(m) }
-func (*ReqTxList) ProtoMessage()               {}
-func (*ReqTxList) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{20} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_ReqTxList proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *ReqTxList) GetCount() int64 {
 	if m != nil {
@@ -1684,10 +1346,6 @@ func (m *ReqTxList) GetCount() int64 {
 }
 
 type ReplyTxList struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Txs                  []*Transaction `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
@@ -1699,11 +1357,6 @@ func (m *ReplyTxList) String() string { return proto.CompactTextString(m) }
 func (*ReplyTxList) ProtoMessage()    {}
 func (*ReplyTxList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{22}
-<<<<<<< HEAD
-=======
-	Txs []*Transaction `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
 }
 
 func (m *ReplyTxList) XXX_Unmarshal(b []byte) error {
@@ -1720,7 +1373,6 @@ func (m *ReplyTxList) XXX_Size() int {
 }
 func (m *ReplyTxList) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReplyTxList.DiscardUnknown(m)
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_ReplyTxList proto.InternalMessageInfo
@@ -1733,10 +1385,6 @@ func (m *ReplyTxList) GetTxs() []*Transaction {
 }
 
 type TxHashList struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Hashes               [][]byte `protobuf:"bytes,1,rep,name=hashes,proto3" json:"hashes,omitempty"`
 	Count                int64    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
 	Expire               []int64  `protobuf:"varint,3,rep,packed,name=expire,proto3" json:"expire,omitempty"`
@@ -1750,13 +1398,6 @@ func (m *TxHashList) String() string { return proto.CompactTextString(m) }
 func (*TxHashList) ProtoMessage()    {}
 func (*TxHashList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{23}
-<<<<<<< HEAD
-=======
-	Hashes [][]byte `protobuf:"bytes,1,rep,name=hashes,proto3" json:"hashes,omitempty"`
-	Count  int64    `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
-	Expire []int64  `protobuf:"varint,3,rep,packed,name=expire" json:"expire,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
 }
 
 func (m *TxHashList) XXX_Unmarshal(b []byte) error {
@@ -1773,7 +1414,6 @@ func (m *TxHashList) XXX_Size() int {
 }
 func (m *TxHashList) XXX_DiscardUnknown() {
 	xxx_messageInfo_TxHashList.DiscardUnknown(m)
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_TxHashList proto.InternalMessageInfo
@@ -1806,10 +1446,6 @@ type ReplyTxInfos struct {
 	XXX_sizecache        int32          `json:"-"`
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 func (m *ReplyTxInfos) Reset()         { *m = ReplyTxInfos{} }
 func (m *ReplyTxInfos) String() string { return proto.CompactTextString(m) }
 func (*ReplyTxInfos) ProtoMessage()    {}
@@ -1834,15 +1470,6 @@ func (m *ReplyTxInfos) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReplyTxInfos proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-func (m *ReplyTxInfos) Reset()                    { *m = ReplyTxInfos{} }
-func (m *ReplyTxInfos) String() string            { return proto.CompactTextString(m) }
-func (*ReplyTxInfos) ProtoMessage()               {}
-func (*ReplyTxInfos) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{23} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *ReplyTxInfos) GetTxInfos() []*ReplyTxInfo {
 	if m != nil {
@@ -1866,17 +1493,6 @@ func (*ReceiptLog) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{25}
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *ReceiptLog) Reset()         { *m = ReceiptLog{} }
-func (m *ReceiptLog) String() string { return proto.CompactTextString(m) }
-func (*ReceiptLog) ProtoMessage()    {}
-func (*ReceiptLog) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{25}
-}
-
-=======
->>>>>>> update chain33
 func (m *ReceiptLog) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptLog.Unmarshal(m, b)
 }
@@ -1894,15 +1510,6 @@ func (m *ReceiptLog) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ReceiptLog proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-func (m *ReceiptLog) Reset()                    { *m = ReceiptLog{} }
-func (m *ReceiptLog) String() string            { return proto.CompactTextString(m) }
-func (*ReceiptLog) ProtoMessage()               {}
-func (*ReceiptLog) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{24} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *ReceiptLog) GetTy() int32 {
 	if m != nil {
@@ -1922,10 +1529,6 @@ func (m *ReceiptLog) GetLog() []byte {
 // ty = 1 -> CutFee //cut fee ,bug exec not ok
 // ty = 2 -> exec ok
 type Receipt struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Ty                   int32         `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
 	KV                   []*KeyValue   `protobuf:"bytes,2,rep,name=KV,proto3" json:"KV,omitempty"`
 	Logs                 []*ReceiptLog `protobuf:"bytes,3,rep,name=logs,proto3" json:"logs,omitempty"`
@@ -1955,14 +1558,6 @@ func (m *Receipt) XXX_Size() int {
 }
 func (m *Receipt) XXX_DiscardUnknown() {
 	xxx_messageInfo_Receipt.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Ty   int32         `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
-	KV   []*KeyValue   `protobuf:"bytes,2,rep,name=KV" json:"KV,omitempty"`
-	Logs []*ReceiptLog `protobuf:"bytes,3,rep,name=logs" json:"logs,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_Receipt proto.InternalMessageInfo
@@ -1989,10 +1584,6 @@ func (m *Receipt) GetLogs() []*ReceiptLog {
 }
 
 type ReceiptData struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Ty                   int32         `protobuf:"varint,1,opt,name=ty,proto3" json:"ty,omitempty"`
 	Logs                 []*ReceiptLog `protobuf:"bytes,3,rep,name=logs,proto3" json:"logs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
@@ -2021,13 +1612,6 @@ func (m *ReceiptData) XXX_Size() int {
 }
 func (m *ReceiptData) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReceiptData.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Ty   int32         `protobuf:"varint,1,opt,name=ty" json:"ty,omitempty"`
-	Logs []*ReceiptLog `protobuf:"bytes,3,rep,name=logs" json:"logs,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_ReceiptData proto.InternalMessageInfo
@@ -2081,41 +1665,7 @@ func (m *TxResult) XXX_DiscardUnknown() {
 	xxx_messageInfo_TxResult.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *TxResult) Reset()         { *m = TxResult{} }
-func (m *TxResult) String() string { return proto.CompactTextString(m) }
-func (*TxResult) ProtoMessage()    {}
-func (*TxResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{28}
-}
-
-func (m *TxResult) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TxResult.Unmarshal(m, b)
-}
-func (m *TxResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TxResult.Marshal(b, m, deterministic)
-}
-func (m *TxResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TxResult.Merge(m, src)
-}
-func (m *TxResult) XXX_Size() int {
-	return xxx_messageInfo_TxResult.Size(m)
-}
-func (m *TxResult) XXX_DiscardUnknown() {
-	xxx_messageInfo_TxResult.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_TxResult proto.InternalMessageInfo
-=======
-func (m *TxResult) Reset()                    { *m = TxResult{} }
-func (m *TxResult) String() string            { return proto.CompactTextString(m) }
-func (*TxResult) ProtoMessage()               {}
-func (*TxResult) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{27} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_TxResult proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *TxResult) GetHeight() int64 {
 	if m != nil {
@@ -2160,10 +1710,6 @@ func (m *TxResult) GetActionName() string {
 }
 
 type TransactionDetail struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Tx                   *Transaction `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
 	Receipt              *ReceiptData `protobuf:"bytes,2,opt,name=receipt,proto3" json:"receipt,omitempty"`
 	Proofs               [][]byte     `protobuf:"bytes,3,rep,name=proofs,proto3" json:"proofs,omitempty"`
@@ -2203,27 +1749,6 @@ func (m *TransactionDetail) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_TransactionDetail proto.InternalMessageInfo
-<<<<<<< HEAD
-=======
-	Tx         *Transaction `protobuf:"bytes,1,opt,name=tx" json:"tx,omitempty"`
-	Receipt    *ReceiptData `protobuf:"bytes,2,opt,name=receipt" json:"receipt,omitempty"`
-	Proofs     [][]byte     `protobuf:"bytes,3,rep,name=proofs,proto3" json:"proofs,omitempty"`
-	Height     int64        `protobuf:"varint,4,opt,name=height" json:"height,omitempty"`
-	Index      int64        `protobuf:"varint,5,opt,name=index" json:"index,omitempty"`
-	Blocktime  int64        `protobuf:"varint,6,opt,name=blocktime" json:"blocktime,omitempty"`
-	Amount     int64        `protobuf:"varint,7,opt,name=amount" json:"amount,omitempty"`
-	Fromaddr   string       `protobuf:"bytes,8,opt,name=fromaddr" json:"fromaddr,omitempty"`
-	ActionName string       `protobuf:"bytes,9,opt,name=actionName" json:"actionName,omitempty"`
-	Assets     []*Asset     `protobuf:"bytes,10,rep,name=assets" json:"assets,omitempty"`
-}
-
-func (m *TransactionDetail) Reset()                    { *m = TransactionDetail{} }
-func (m *TransactionDetail) String() string            { return proto.CompactTextString(m) }
-func (*TransactionDetail) ProtoMessage()               {}
-func (*TransactionDetail) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{28} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 
 func (m *TransactionDetail) GetTx() *Transaction {
 	if m != nil {
@@ -2296,43 +1821,10 @@ func (m *TransactionDetail) GetAssets() []*Asset {
 }
 
 type TransactionDetails struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Txs                  []*TransactionDetail `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
-<<<<<<< HEAD
-}
-
-func (m *TransactionDetails) Reset()         { *m = TransactionDetails{} }
-func (m *TransactionDetails) String() string { return proto.CompactTextString(m) }
-func (*TransactionDetails) ProtoMessage()    {}
-func (*TransactionDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{30}
-}
-
-func (m *TransactionDetails) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TransactionDetails.Unmarshal(m, b)
-}
-func (m *TransactionDetails) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TransactionDetails.Marshal(b, m, deterministic)
-}
-func (m *TransactionDetails) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransactionDetails.Merge(m, src)
-}
-func (m *TransactionDetails) XXX_Size() int {
-	return xxx_messageInfo_TransactionDetails.Size(m)
-}
-func (m *TransactionDetails) XXX_DiscardUnknown() {
-	xxx_messageInfo_TransactionDetails.DiscardUnknown(m)
-=======
-	Txs []*TransactionDetail `protobuf:"bytes,1,rep,name=txs" json:"txs,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 func (m *TransactionDetails) Reset()         { *m = TransactionDetails{} }
@@ -2368,10 +1860,6 @@ func (m *TransactionDetails) GetTxs() []*TransactionDetail {
 }
 
 type ReqAddrs struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Addrs                []string `protobuf:"bytes,1,rep,name=addrs,proto3" json:"addrs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2383,28 +1871,6 @@ func (m *ReqAddrs) String() string { return proto.CompactTextString(m) }
 func (*ReqAddrs) ProtoMessage()    {}
 func (*ReqAddrs) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2cc4e03d2c28c490, []int{31}
-<<<<<<< HEAD
-}
-
-func (m *ReqAddrs) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqAddrs.Unmarshal(m, b)
-}
-func (m *ReqAddrs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqAddrs.Marshal(b, m, deterministic)
-}
-func (m *ReqAddrs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqAddrs.Merge(m, src)
-}
-func (m *ReqAddrs) XXX_Size() int {
-	return xxx_messageInfo_ReqAddrs.Size(m)
-}
-func (m *ReqAddrs) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqAddrs.DiscardUnknown(m)
-=======
-	Addrs []string `protobuf:"bytes,1,rep,name=addrs" json:"addrs,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 func (m *ReqAddrs) XXX_Unmarshal(b []byte) error {
@@ -2462,41 +1928,7 @@ func (m *ReqDecodeRawTransaction) XXX_DiscardUnknown() {
 	xxx_messageInfo_ReqDecodeRawTransaction.DiscardUnknown(m)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (m *ReqDecodeRawTransaction) Reset()         { *m = ReqDecodeRawTransaction{} }
-func (m *ReqDecodeRawTransaction) String() string { return proto.CompactTextString(m) }
-func (*ReqDecodeRawTransaction) ProtoMessage()    {}
-func (*ReqDecodeRawTransaction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cc4e03d2c28c490, []int{32}
-}
-
-func (m *ReqDecodeRawTransaction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqDecodeRawTransaction.Unmarshal(m, b)
-}
-func (m *ReqDecodeRawTransaction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqDecodeRawTransaction.Marshal(b, m, deterministic)
-}
-func (m *ReqDecodeRawTransaction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqDecodeRawTransaction.Merge(m, src)
-}
-func (m *ReqDecodeRawTransaction) XXX_Size() int {
-	return xxx_messageInfo_ReqDecodeRawTransaction.Size(m)
-}
-func (m *ReqDecodeRawTransaction) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqDecodeRawTransaction.DiscardUnknown(m)
-}
-
 var xxx_messageInfo_ReqDecodeRawTransaction proto.InternalMessageInfo
-=======
-func (m *ReqDecodeRawTransaction) Reset()                    { *m = ReqDecodeRawTransaction{} }
-func (m *ReqDecodeRawTransaction) String() string            { return proto.CompactTextString(m) }
-func (*ReqDecodeRawTransaction) ProtoMessage()               {}
-func (*ReqDecodeRawTransaction) Descriptor() ([]byte, []int) { return fileDescriptor9, []int{31} }
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var xxx_messageInfo_ReqDecodeRawTransaction proto.InternalMessageInfo
->>>>>>> update chain33
 
 func (m *ReqDecodeRawTransaction) GetTxHex() string {
 	if m != nil {
@@ -2506,10 +1938,6 @@ func (m *ReqDecodeRawTransaction) GetTxHex() string {
 }
 
 type UserWrite struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Topic                string   `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	Content              string   `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -2538,13 +1966,6 @@ func (m *UserWrite) XXX_Size() int {
 }
 func (m *UserWrite) XXX_DiscardUnknown() {
 	xxx_messageInfo_UserWrite.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Topic   string `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
-	Content string `protobuf:"bytes,2,opt,name=content" json:"content,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_UserWrite proto.InternalMessageInfo
@@ -2564,10 +1985,6 @@ func (m *UserWrite) GetContent() string {
 }
 
 type UpgradeMeta struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update chain33
 	Indexing             bool     `protobuf:"varint,1,opt,name=indexing,proto3" json:"indexing,omitempty"`
 	Version              string   `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
@@ -2597,14 +2014,6 @@ func (m *UpgradeMeta) XXX_Size() int {
 }
 func (m *UpgradeMeta) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpgradeMeta.DiscardUnknown(m)
-<<<<<<< HEAD
-=======
-	Indexing bool   `protobuf:"varint,1,opt,name=indexing" json:"indexing,omitempty"`
-	Version  string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
-	Height   int64  `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
->>>>>>> update chain33
 }
 
 var xxx_messageInfo_UpgradeMeta proto.InternalMessageInfo
@@ -2670,18 +2079,8 @@ func init() {
 
 func init() { proto.RegisterFile("transaction.proto", fileDescriptor_2cc4e03d2c28c490) }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 var fileDescriptor_2cc4e03d2c28c490 = []byte{
 	// 1332 bytes of a gzipped FileDescriptorProto
-=======
-var fileDescriptor9 = []byte{
-	// 1306 bytes of a gzipped FileDescriptorProto
->>>>>>> change protobuf file (use protoc-gen-1.0)
-=======
-var fileDescriptor_2cc4e03d2c28c490 = []byte{
-	// 1332 bytes of a gzipped FileDescriptorProto
->>>>>>> update chain33
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x57, 0xdd, 0x6e, 0x13, 0x47,
 	0x14, 0xd6, 0xee, 0xda, 0x89, 0x7d, 0x6c, 0x28, 0x59, 0x21, 0xb0, 0x10, 0x85, 0x74, 0x44, 0x25,
 	0x84, 0x50, 0x22, 0x25, 0xdc, 0xb5, 0x52, 0x0b, 0xa4, 0x02, 0x14, 0xa0, 0xed, 0x60, 0xa0, 0x6a,
