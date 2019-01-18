@@ -139,7 +139,10 @@ func SaveAccountTomavl(client queue.Client, prevStateRoot []byte, accs []*types.
 		kvs := accountdb.GetKVSet(acc)
 		kvset = append(kvset, kvs...)
 	}
-	hash := util.ExecKVMemSet(client, prevStateRoot, 0, kvset, true)
+	hash, err := util.ExecKVMemSet(client, prevStateRoot, 0, kvset, true)
+	if err != nil {
+		panic(err)
+	}
 	Statehash = hash
 	util.ExecKVSetCommit(client, Statehash)
 	return hash
@@ -461,7 +464,7 @@ func testProcSendToAddress(t *testing.T, wallet *Wallet) {
 	transfer := &types.ReqWalletSendToAddress{
 		Amount: 1000,
 		From:   FromAddr,
-		Note:   []byte("test"),
+		Note:   "test",
 		To:     "1L1zEgVcjqdM2KkQixENd7SZTaudKkcyDu",
 	}
 	msg := wallet.client.NewMessage("wallet", types.EventWalletSendToAddress, transfer)
@@ -473,7 +476,7 @@ func testProcSendToAddress(t *testing.T, wallet *Wallet) {
 	withdraw := &types.ReqWalletSendToAddress{
 		Amount: -1000,
 		From:   FromAddr,
-		Note:   []byte("test"),
+		Note:   "test",
 		To:     "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp",
 	}
 	msg = wallet.client.NewMessage("wallet", types.EventWalletSendToAddress, withdraw)
@@ -594,7 +597,7 @@ func testProcWalletLock(t *testing.T, wallet *Wallet) {
 	transfer := &types.ReqWalletSendToAddress{
 		Amount: 1000,
 		From:   FromAddr,
-		Note:   []byte("test"),
+		Note:   "test",
 		To:     "1L1zEgVcjqdM2KkQixENd7SZTaudKkcyDu",
 	}
 	msg = wallet.client.NewMessage("wallet", types.EventWalletSendToAddress, transfer)

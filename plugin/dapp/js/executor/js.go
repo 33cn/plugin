@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -114,6 +115,9 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	vm.Set("args", payload.Args)
 	callfunc := "callcode(context, f, args, loglist)"
 	jsvalue, err := vm.Run(callfunc)
+	if u.GetExecutorAPI().IsErr() {
+		return nil, api.ErrAPIEnv
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +233,22 @@ func (u *js) execnameFunc(vm *otto.Otto, name string) {
 	})
 }
 
+func (u *js) randnumFunc(vm *otto.Otto, name string) {
+	vm.Set("randnum", func(call otto.FunctionCall) otto.Value {
+		hash := u.GetLastHash()
+		param := &types.ReqRandHash{
+			ExecName: "ticket",
+			BlockNum: 5,
+			Hash:     hash,
+		}
+		randhash, err := u.GetExecutorAPI().GetRandNum(param)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		return okReturn(vm, common.ToHex(randhash))
+	})
+}
+
 func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
 	_, plocal := calcAllPrefix(name)
@@ -281,6 +301,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.localdbFunc(vm, name)
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
+	u.randnumFunc(vm, name)
 	u.registerAccountFunc(vm)
 	u.registerTableFunc(vm, name)
 	return vm, nil

@@ -25,7 +25,9 @@ func init() {
 }
 
 func TestJsVM(t *testing.T) {
-	mocker := testnode.New("--free--", nil)
+	cfg, sub := testnode.GetDefaultConfig()
+	cfg.Consensus.Name = "ticket"
+	mocker := testnode.NewWithConfig(cfg, sub, nil)
 	defer mocker.Close()
 	mocker.Listen()
 	//开始部署合约, 测试阶段任何人都可以部署合约

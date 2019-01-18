@@ -7,6 +7,7 @@ function Init(context) {
     this.context = context
     this.kvc.add("action", "init")
     this.kvc.add("context", this.context)
+    this.kvc.add("randnum", GetRandnum())
     return this.kvc.receipt()
 }
 

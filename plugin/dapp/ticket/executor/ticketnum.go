@@ -19,7 +19,7 @@ const (
 
 // GetRandNum for ticket executor
 func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
-	tlog.Debug("GetRandNum", "blockHash", blockHash, "blockNum", blockNum)
+	tlog.Debug("GetRandNum", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
 
 	if blockNum < minBlockNum {
 		blockNum = minBlockNum
@@ -34,6 +34,11 @@ func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Messag
 	txActions, err := ticket.getTxActions(blockHash, blockNum)
 	if err != nil {
 		return nil, err
+	}
+	//如果是genesis block 那么直接返回一个固定值，防止测试的时候出错
+	if txActions == nil && err == nil {
+		modify := common.Sha256([]byte("hello"))
+		return &types.ReplyHash{Hash: modify}, nil
 	}
 	var modifies []byte
 	var bits uint32
@@ -59,7 +64,7 @@ func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickett
 	var txActions []*tickettypes.TicketAction
 	var reqHashes types.ReqHashes
 	currHash := blockHash
-	tlog.Debug("getTxActions", "blockHash", blockHash, "blockNum", blockNum)
+	tlog.Debug("getTxActions", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
 
 	//根据blockHash，查询block，循环blockNum
 	for blockNum > 0 {
@@ -69,22 +74,26 @@ func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickett
 		if err != nil {
 			return txActions, err
 		}
-
+		if tempBlock.Head.Height <= 0 {
+			return nil, nil
+		}
 		reqHashes.Hashes = append(reqHashes.Hashes, currHash)
 		currHash = tempBlock.Head.ParentHash
 		if tempBlock.Head.Height < 0 && blockNum > 1 {
 			return txActions, types.ErrBlockNotFound
 		}
+		if tempBlock.Head.Height <= 1 {
+			break
+		}
 		blockNum--
 	}
-
 	blockDetails, err := ticket.GetAPI().GetBlockByHashes(&reqHashes)
 	if err != nil {
 		tlog.Error("getTxActions", "blockHash", blockHash, "blockNum", blockNum, "err", err)
 		return txActions, err
 	}
 	for _, block := range blockDetails.Items {
-		tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", block.Block.Hash())
+		tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", common.ToHex(block.Block.Hash()))
 		ticketAction, err := ticket.getMinerTx(block.Block)
 		if err != nil {
 			return txActions, err
@@ -92,7 +101,6 @@ func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickett
 		txActions = append(txActions, ticketAction)
 	}
 	return txActions, nil
-
 }
 
 func (ticket *Ticket) getMinerTx(current *types.Block) (*tickettypes.TicketAction, error) {
