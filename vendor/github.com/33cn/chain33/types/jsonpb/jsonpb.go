@@ -521,7 +521,11 @@ func (m *Marshaler) marshalValue(out *errWriter, prop *proto.Properties, v refle
 		return out.err
 	}
 
-	//[]byte
+	//[]byte 写bytes 的情况，默认情况下，转化成 hex
+	//为什么不用base64:
+	//1. 我们的数据都经过压缩(base64带来的字节数的减少有限)
+	//2. hex 是一种最容易解析的格式
+	//3. 我们的hash 默认是 bytes，而且转化成hex
 	if v.Kind() == reflect.Slice && v.Type().Elem().Kind() == reflect.Uint8 {
 		if v.IsNil() {
 			out.write("null")
@@ -1037,7 +1041,7 @@ func (u *Unmarshaler) unmarshalValue(target reflect.Value, inputValue json.RawMe
 		if err != nil {
 			return err
 		}
-		b, err := common.FromHex(hexstr)
+		b, err := parseBytes(hexstr)
 		if err != nil {
 			return err
 		}
@@ -1308,4 +1312,20 @@ func checkRequiredFieldsInValue(v reflect.Value) error {
 		return checkRequiredFields(pm)
 	}
 	return nil
+}
+
+//ErrBytesFormat 错误的bytes 类型
+var ErrBytesFormat = errors.New("ErrBytesFormat")
+
+func parseBytes(jsonstr string) ([]byte, error) {
+	if jsonstr == "" {
+		return []byte{}, nil
+	}
+	if strings.HasPrefix(jsonstr, "str://") {
+		return []byte(jsonstr[len("str://"):]), nil
+	}
+	if strings.HasPrefix(jsonstr, "0x") || strings.HasPrefix(jsonstr, "0X") {
+		return common.FromHex(jsonstr)
+	}
+	return nil, ErrBytesFormat
 }
