@@ -106,7 +106,7 @@ func ExecAddress(execName string) Address {
 func BytesToAddress(b []byte) Address {
 	a := new(address.Address)
 	a.Version = 0
-	a.Hash160 = copyBytes(LeftPadBytes(b, 20))
+	a.SetBytes(copyBytes(LeftPadBytes(b, 20)))
 	return Address{addr: a}
 }
 
@@ -127,12 +127,14 @@ func StringToAddress(s string) *Address {
 	return &Address{addr: addr}
 }
 
-func copyBytes(data []byte) (out [20]byte) {
+func copyBytes(data []byte) (out []byte) {
+	out = make([]byte, 20)
 	copy(out[:], data)
 	return
 }
 
-func bigBytes(b *big.Int) (out [20]byte) {
+func bigBytes(b *big.Int) (out []byte) {
+	out = make([]byte, 20)
 	copy(out[:], b.Bytes())
 	return
 }
@@ -141,7 +143,7 @@ func bigBytes(b *big.Int) (out [20]byte) {
 func BigToAddress(b *big.Int) Address {
 	a := new(address.Address)
 	a.Version = 0
-	a.Hash160 = bigBytes(b)
+	a.SetBytes(bigBytes(b))
 	return Address{addr: a}
 }
 

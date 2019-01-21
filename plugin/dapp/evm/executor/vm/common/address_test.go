@@ -5,8 +5,9 @@
 package common
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddressBig(t *testing.T) {
@@ -21,6 +22,5 @@ func TestAddressBig(t *testing.T) {
 
 func TestAddressBytes(t *testing.T) {
 	addr := BytesToAddress([]byte{1})
-
-	fmt.Println(addr.String())
+	assert.Equal(t, addr.String(), "11111111111111111111BZbvjr")
 }

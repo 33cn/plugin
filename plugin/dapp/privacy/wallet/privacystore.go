@@ -6,9 +6,9 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
@@ -343,7 +343,7 @@ func (store *privacyStore) moveUTXO2FTXO(tx *types.Transaction, token, sender, t
 	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{}
 	newbatch := store.NewBatch(true)
 	for _, txOutputInfo := range selectedUtxos {
-		key := calcUTXOKey4TokenAddr(token, sender, common.Bytes2Hex(txOutputInfo.utxoGlobalIndex.Txhash), int(txOutputInfo.utxoGlobalIndex.Outindex))
+		key := calcUTXOKey4TokenAddr(token, sender, hex.EncodeToString(txOutputInfo.utxoGlobalIndex.Txhash), int(txOutputInfo.utxoGlobalIndex.Outindex))
 		newbatch.Delete(key)
 		utxo := &privacytypes.UTXO{
 			Amount: txOutputInfo.amount,
@@ -470,7 +470,7 @@ func (store *privacyStore) updateScanInputUTXOs(utxoGlobalIndexs []*privacytypes
 	var token string
 	var txhash string
 	for _, utxoGlobal := range utxoGlobalIndexs {
-		accPrivacy, err := store.isUTXOExist(common.Bytes2Hex(utxoGlobal.Txhash), int(utxoGlobal.Outindex))
+		accPrivacy, err := store.isUTXOExist(hex.EncodeToString(utxoGlobal.Txhash), int(utxoGlobal.Outindex))
 		if err == nil && accPrivacy != nil {
 			utxo := &privacytypes.UTXO{
 				Amount: accPrivacy.Amount,
@@ -482,9 +482,9 @@ func (store *privacyStore) updateScanInputUTXOs(utxoGlobalIndexs []*privacytypes
 			utxos = append(utxos, utxo)
 			owner = accPrivacy.Owner
 			token = accPrivacy.Tokenname
-			txhash = common.Bytes2Hex(accPrivacy.Txhash)
+			txhash = hex.EncodeToString(accPrivacy.Txhash)
 		}
-		key := calcScanPrivacyInputUTXOKey(common.Bytes2Hex(utxoGlobal.Txhash), int(utxoGlobal.Outindex))
+		key := calcScanPrivacyInputUTXOKey(hex.EncodeToString(utxoGlobal.Txhash), int(utxoGlobal.Outindex))
 		newbatch.Delete(key)
 	}
 	if len(utxos) > 0 {
@@ -509,7 +509,7 @@ func (store *privacyStore) moveUTXO2STXO(owner, token, txhash string, utxos []*p
 		Txhash := utxo.UtxoBasic.UtxoGlobalIndex.Txhash
 		Outindex := utxo.UtxoBasic.UtxoGlobalIndex.Outindex
 		//删除存在的UTXO索引
-		key := calcUTXOKey4TokenAddr(token, owner, common.Bytes2Hex(Txhash), int(Outindex))
+		key := calcUTXOKey4TokenAddr(token, owner, hex.EncodeToString(Txhash), int(Outindex))
 		newbatch.Delete(key)
 	}
 
@@ -554,7 +554,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 	height := txDetal.Height
 
 	txhashInbytes := tx.Hash()
-	txhash := common.Bytes2Hex(txhashInbytes)
+	txhash := hex.EncodeToString(txhashInbytes)
 	var privateAction privacytypes.PrivacyAction
 	if err := types.Decode(tx.GetPayload(), &privateAction); err != nil {
 		bizlog.Error("selectCurrentWalletPrivacyTx failed to decode payload")
@@ -587,8 +587,8 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 		for _, info := range privacyInfo {
 			bizlog.Debug("SelectCurrentWalletPrivacyTx", "individual privacyInfo's addr", *info.Addr)
 			privacykeyParirs := info.PrivacyKeyPair
-			bizlog.Debug("SelectCurrentWalletPrivacyTx", "individual ViewPubkey", common.Bytes2Hex(privacykeyParirs.ViewPubkey.Bytes()),
-				"individual SpendPubkey", common.Bytes2Hex(privacykeyParirs.SpendPubkey.Bytes()))
+			bizlog.Debug("SelectCurrentWalletPrivacyTx", "individual ViewPubkey", hex.EncodeToString(privacykeyParirs.ViewPubkey.Bytes()),
+				"individual SpendPubkey", hex.EncodeToString(privacykeyParirs.SpendPubkey.Bytes()))
 
 			var utxos []*privacytypes.UTXO
 			for indexoutput, output := range privacyOutput.Keyoutput {
@@ -610,7 +610,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 						if types.ExecOk == txExecRes {
 
 							// 先判断该UTXO的hash是否存在，不存在则写入
-							accPrivacy, err := store.isUTXOExist(common.Bytes2Hex(txhashInbytes), indexoutput)
+							accPrivacy, err := store.isUTXOExist(hex.EncodeToString(txhashInbytes), indexoutput)
 							if err == nil && accPrivacy != nil {
 								continue
 							}
@@ -696,7 +696,7 @@ func (store *privacyStore) setUTXO(addr, txhash *string, outindex int, dbStore *
 
 func (store *privacyStore) storeScanPrivacyInputUTXO(utxoGlobalIndexs []*privacytypes.UTXOGlobalIndex, newbatch db.Batch) {
 	for _, utxoGlobalIndex := range utxoGlobalIndexs {
-		key1 := calcScanPrivacyInputUTXOKey(common.Bytes2Hex(utxoGlobalIndex.Txhash), int(utxoGlobalIndex.Outindex))
+		key1 := calcScanPrivacyInputUTXOKey(hex.EncodeToString(utxoGlobalIndex.Txhash), int(utxoGlobalIndex.Outindex))
 		utxoIndex := &privacytypes.UTXOGlobalIndex{
 			Txhash:   utxoGlobalIndex.Txhash,
 			Outindex: utxoGlobalIndex.Outindex,
@@ -734,7 +734,7 @@ func (store *privacyStore) listSpendUTXOs(token, addr string) (*privacytypes.UTX
 		}
 
 		for _, ftxo := range ftxosInOneTx.Utxos {
-			utxohash := common.Bytes2Hex(ftxo.UtxoBasic.UtxoGlobalIndex.Txhash)
+			utxohash := hex.EncodeToString(ftxo.UtxoBasic.UtxoGlobalIndex.Txhash)
 			value1, err := store.Get(calcUTXOKey(utxohash, int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex)))
 			if err != nil {
 				continue
@@ -879,7 +879,7 @@ func (store *privacyStore) moveFTXO2UTXO(key1 []byte, newbatch db.Batch) {
 		return
 	}
 	for _, ftxo := range ftxosInOneTx.Utxos {
-		utxohash := common.Bytes2Hex(ftxo.UtxoBasic.UtxoGlobalIndex.Txhash)
+		utxohash := hex.EncodeToString(ftxo.UtxoBasic.UtxoGlobalIndex.Txhash)
 		outindex := int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex)
 		key := calcUTXOKey4TokenAddr(ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, utxohash, outindex)
 		value := calcUTXOKey(utxohash, int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex))

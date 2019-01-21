@@ -5,13 +5,15 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	dbSet := &types.LocalDBSet{}
 	localDB := p.GetLocalDB()
 	for i, item := range receiptData.Logs {
