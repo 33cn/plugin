@@ -21,6 +21,7 @@ privacy执行器支持隐私交易的执行，
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/rand"
 	"sort"
 	"time"
@@ -198,7 +199,7 @@ func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (type
 
 // CheckTx check transaction
 func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	var action pty.PrivacyAction
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {

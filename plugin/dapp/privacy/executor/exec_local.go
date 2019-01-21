@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
@@ -12,7 +14,7 @@ import (
 
 func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transaction, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	localDB := p.GetLocalDB()
 	for _, item := range receiptData.Logs {
 		if item.Ty != ty.TyLogPrivacyOutput {

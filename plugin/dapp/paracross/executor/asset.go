@@ -5,8 +5,9 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -28,7 +29,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		}
 		toAddr := address.ExecAddress(string(a.tx.Execer))
 		clog.Debug("paracross.AssetTransfer not isPara", "execer", string(a.tx.Execer),
-			"txHash", common.Bytes2Hex(a.tx.Hash()))
+			"txHash", hex.EncodeToString(a.tx.Hash()))
 		return accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
 	}
 
@@ -46,7 +47,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		return nil, errors.Wrap(err, "assetTransferCoins call NewParaAccount failed")
 	}
 	clog.Debug("paracross.AssetTransfer isPara", "execer", string(a.tx.Execer),
-		"txHash", common.Bytes2Hex(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()))
 	return assetDepositBalance(paraAcc, transfer.To, transfer.Amount)
 }
 
@@ -78,7 +79,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 		return nil, errors.Wrap(err, "assetWithdrawCoins call NewParaAccount failed")
 	}
 	clog.Debug("paracross.assetWithdrawCoins isPara", "execer", string(a.tx.Execer),
-		"txHash", common.Bytes2Hex(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()))
 	return assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
 }
 
