@@ -171,7 +171,7 @@ func (policy *privacyPolicy) createUTXOsByPub2Priv(priv crypto.PrivKey, reqCreat
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte("privacy"),
+		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Nonce:   operater.Nonce(),
 		To:      address.ExecAddress(privacytypes.PrivacyX),
@@ -602,10 +602,10 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(privacytypes.PrivacyX),
+		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      address.ExecAddress(privacytypes.PrivacyX),
+		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
@@ -620,10 +620,16 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 }
 
 func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+
+	//需要燃烧的utxo
+	utxoBurnedAmount := privacytypes.PrivacyTxFee
+	if types.IsPara() {
+		utxoBurnedAmount = 0
+	}
 	buildInfo := &buildInputInfo{
 		tokenname: req.GetTokenname(),
 		sender:    req.GetFrom(),
-		amount:    req.GetAmount() + privacytypes.PrivacyTxFee,
+		amount:    req.GetAmount() + utxoBurnedAmount,
 		mixcount:  req.GetMixcount(),
 	}
 	privacyInfo, err := policy.getPrivacykeyPair(req.GetFrom())
@@ -654,7 +660,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 		selectedAmounTotal += input.Amount
 	}
 	//构造输出UTXO
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, viewPub4chgPtr, spendPub4chgPtr, req.GetAmount(), selectedAmounTotal, privacytypes.PrivacyTxFee)
+	privacyOutput, err := generateOuts(viewPublic, spendPublic, viewPub4chgPtr, spendPub4chgPtr, req.GetAmount(), selectedAmounTotal, utxoBurnedAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -672,11 +678,11 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(privacytypes.PrivacyX),
+		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      address.ExecAddress(privacytypes.PrivacyX),
+		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结
 	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), common.Bytes2Hex(tx.Hash()), selectedUtxo)
@@ -691,10 +697,16 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 }
 
 func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+
+	//需要燃烧的utxo
+	utxoBurnedAmount := privacytypes.PrivacyTxFee
+	if types.IsPara() {
+		utxoBurnedAmount = 0
+	}
 	buildInfo := &buildInputInfo{
 		tokenname: req.GetTokenname(),
 		sender:    req.GetFrom(),
-		amount:    req.GetAmount() + privacytypes.PrivacyTxFee,
+		amount:    req.GetAmount() + utxoBurnedAmount,
 		mixcount:  req.GetMixcount(),
 	}
 	privacyInfo, err := policy.getPrivacykeyPair(req.GetFrom())
@@ -723,7 +735,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	changeAmount := selectedAmounTotal - req.GetAmount()
 	//step 2,generateOuts
 	//构造输出UTXO,只生成找零的UTXO
-	privacyOutput, err := generateOuts(nil, nil, viewPub4chgPtr, spendPub4chgPtr, 0, changeAmount, privacytypes.PrivacyTxFee)
+	privacyOutput, err := generateOuts(nil, nil, viewPub4chgPtr, spendPub4chgPtr, 0, changeAmount, utxoBurnedAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -734,6 +746,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		Note:      string(req.GetNote()),
 		Input:     privacyInput,
 		Output:    privacyOutput,
+		To:		   req.GetTo(),
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPrivacy2Public,
@@ -741,11 +754,11 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(privacytypes.PrivacyX),
+		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      req.GetTo(),
+		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结
 	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), common.Bytes2Hex(tx.Hash()), selectedUtxo)
@@ -960,188 +973,6 @@ func (policy *privacyPolicy) showPrivacyAccountsSpend(req *privacytypes.ReqPrivB
 	return utxoHaveTxHashs, nil
 }
 
-func (policy *privacyPolicy) sendPublic2PrivacyTransaction(public2private *privacytypes.ReqPub2Pri) (*types.Reply, error) {
-	if ok, err := policy.getWalletOperate().CheckWalletStatus(); !ok {
-		bizlog.Error("sendPublic2PrivacyTransaction", "CheckWalletStatus error", err)
-		return nil, err
-	}
-	if ok, err := policy.isRescanUtxosFlagScaning(); ok {
-		bizlog.Error("sendPublic2PrivacyTransaction", "isRescanUtxosFlagScaning error", err)
-		return nil, err
-	}
-	if public2private == nil {
-		bizlog.Error("sendPublic2PrivacyTransaction public2private is nil")
-		return nil, types.ErrInvalidParam
-	}
-	if len(public2private.GetTokenname()) <= 0 {
-		bizlog.Error("sendPublic2PrivacyTransaction tokenname is nil")
-		return nil, types.ErrInvalidParam
-	}
-	if !checkAmountValid(public2private.GetAmount()) {
-		bizlog.Error("sendPublic2PrivacyTransaction", "invalid amount", public2private.GetAmount())
-		return nil, types.ErrAmount
-	}
-
-	priv, err := policy.getPrivKeyByAddr(public2private.GetSender())
-	if err != nil {
-		bizlog.Error("sendPublic2PrivacyTransaction", "getPrivKeyByAddr error", err)
-		return nil, err
-	}
-
-	return policy.transPub2PriV2(priv, public2private)
-}
-
-//公开向隐私账户转账
-func (policy *privacyPolicy) transPub2PriV2(priv crypto.PrivKey, reqPub2Pri *privacytypes.ReqPub2Pri) (*types.Reply, error) {
-	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(reqPub2Pri.Pubkeypair)
-	if err != nil {
-		bizlog.Error("transPub2Pri", "parseViewSpendPubKeyPair error", err)
-		return nil, err
-	}
-
-	viewPublic := (*[32]byte)(unsafe.Pointer(&viewPubSlice[0]))
-	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPubSlice[0]))
-	//因为此时是pub2priv的交易，此时不需要构造找零的输出，同时设置fee为0，也是为了简化计算
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, reqPub2Pri.Amount, reqPub2Pri.Amount, 0)
-	if err != nil {
-		bizlog.Error("transPub2Pri", "generateOuts error", err)
-		return nil, err
-	}
-
-	operater := policy.getWalletOperate()
-	value := &privacytypes.Public2Privacy{
-		Tokenname: reqPub2Pri.Tokenname,
-		Amount:    reqPub2Pri.Amount,
-		Note:      reqPub2Pri.Note,
-		Output:    privacyOutput,
-	}
-	action := &privacytypes.PrivacyAction{
-		Ty:    privacytypes.ActionPublic2Privacy,
-		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
-	}
-	tx := &types.Transaction{
-		Execer:  []byte("privacy"),
-		Payload: types.Encode(action),
-		Nonce:   operater.Nonce(),
-		// TODO: 采用隐私合约地址来设定目标合约接收的目标地址,让验证通过
-		To: address.ExecAddress(privacytypes.PrivacyX),
-	}
-	tx.SetExpire(time.Duration(reqPub2Pri.GetExpire()))
-	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
-	tx.Fee = realFee
-	tx.Sign(int32(operater.GetSignType()), priv)
-
-	reply, err := operater.GetAPI().SendTx(tx)
-	if err != nil {
-		bizlog.Error("transPub2PriV2", "Send err", err)
-		return nil, err
-	}
-	return reply, err
-}
-
-func (policy *privacyPolicy) sendPrivacy2PrivacyTransaction(privacy2privacy *privacytypes.ReqPri2Pri) (*types.Reply, error) {
-	if ok, err := policy.getWalletOperate().CheckWalletStatus(); !ok {
-		bizlog.Error("sendPrivacy2PrivacyTransaction", "CheckWalletStatus error", err)
-		return nil, err
-	}
-	if ok, err := policy.isRescanUtxosFlagScaning(); ok {
-		bizlog.Error("sendPrivacy2PrivacyTransaction", "isRescanUtxosFlagScaning error", err)
-		return nil, err
-	}
-	if privacy2privacy == nil {
-		bizlog.Error("sendPrivacy2PrivacyTransaction input para is nil")
-		return nil, types.ErrInvalidParam
-	}
-	if !checkAmountValid(privacy2privacy.GetAmount()) {
-		bizlog.Error("sendPrivacy2PrivacyTransaction", "invalid amount ", privacy2privacy.GetAmount())
-		return nil, types.ErrAmount
-	}
-
-	privacyInfo, err := policy.getPrivacykeyPair(privacy2privacy.GetSender())
-	if err != nil {
-		bizlog.Error("sendPrivacy2PrivacyTransaction", "getPrivacykeyPair error ", err)
-		return nil, err
-	}
-
-	return policy.transPri2PriV2(privacyInfo, privacy2privacy)
-}
-func (policy *privacyPolicy) transPri2PriV2(privacykeyParirs *privacy.Privacy, reqPri2Pri *privacytypes.ReqPri2Pri) (*types.Reply, error) {
-	buildInfo := &buildInputInfo{
-		tokenname: reqPri2Pri.Tokenname,
-		sender:    reqPri2Pri.Sender,
-		amount:    reqPri2Pri.Amount + privacytypes.PrivacyTxFee,
-		mixcount:  reqPri2Pri.Mixin,
-	}
-
-	//step 1,buildInput
-	privacyInput, utxosInKeyInput, realkeyInputSlice, selectedUtxo, err := policy.buildInput(privacykeyParirs, buildInfo)
-	if err != nil {
-		bizlog.Error("transPri2PriV2", "buildInput error", err)
-		return nil, err
-	}
-
-	//step 2,generateOuts
-	viewPublicSlice, spendPublicSlice, err := parseViewSpendPubKeyPair(reqPri2Pri.Pubkeypair)
-	if err != nil {
-		bizlog.Error("transPub2Pri", "parseViewSpendPubKeyPair  ", err)
-		return nil, err
-	}
-
-	viewPub4change, spendPub4change := privacykeyParirs.ViewPubkey.Bytes(), privacykeyParirs.SpendPubkey.Bytes()
-	viewPublic := (*[32]byte)(unsafe.Pointer(&viewPublicSlice[0]))
-	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPublicSlice[0]))
-	viewPub4chgPtr := (*[32]byte)(unsafe.Pointer(&viewPub4change[0]))
-	spendPub4chgPtr := (*[32]byte)(unsafe.Pointer(&spendPub4change[0]))
-
-	selectedAmounTotal := int64(0)
-	for _, input := range privacyInput.Keyinput {
-		selectedAmounTotal += input.Amount
-	}
-	//构造输出UTXO
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, viewPub4chgPtr, spendPub4chgPtr, reqPri2Pri.Amount, selectedAmounTotal, privacytypes.PrivacyTxFee)
-	if err != nil {
-		bizlog.Error("transPub2Pri", "generateOuts  ", err)
-		return nil, err
-	}
-
-	operater := policy.getWalletOperate()
-	value := &privacytypes.Privacy2Privacy{
-		Tokenname: reqPri2Pri.Tokenname,
-		Amount:    reqPri2Pri.Amount,
-		Note:      reqPri2Pri.Note,
-		Input:     privacyInput,
-		Output:    privacyOutput,
-	}
-	action := &privacytypes.PrivacyAction{
-		Ty:    privacytypes.ActionPrivacy2Privacy,
-		Value: &privacytypes.PrivacyAction_Privacy2Privacy{Privacy2Privacy: value},
-	}
-
-	tx := &types.Transaction{
-		Execer:  []byte(privacytypes.PrivacyX),
-		Payload: types.Encode(action),
-		Fee:     privacytypes.PrivacyTxFee,
-		Nonce:   operater.Nonce(),
-		// TODO: 采用隐私合约地址来设定目标合约接收的目标地址,让验证通过
-		To: address.ExecAddress(privacytypes.PrivacyX),
-	}
-	tx.SetExpire(time.Duration(reqPri2Pri.GetExpire()))
-	//完成了input和output的添加之后，即已经完成了交易基本内容的添加，
-	//这时候就需要进行交易的签名了
-	err = policy.signatureTx(tx, privacyInput, utxosInKeyInput, realkeyInputSlice)
-	if err != nil {
-		return nil, err
-	}
-	reply, err := operater.GetAPI().SendTx(tx)
-	if err != nil {
-		bizlog.Error("transPub2Pri", "SendTx  ", err)
-		return nil, err
-	}
-	policy.saveFTXOInfo(tx, reqPri2Pri.Tokenname, reqPri2Pri.Sender, common.Bytes2Hex(tx.Hash()), selectedUtxo)
-	return reply, nil
-}
-
 func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *privacytypes.PrivacyInput, utxosInKeyInput []*privacytypes.UTXOBasics, realkeyInputSlice []*privacytypes.RealKeyInput) (err error) {
 	tx.Signature = nil
 	data := types.Encode(tx)
@@ -1166,109 +997,11 @@ func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *pr
 		Ty:        privacytypes.RingBaseonED25519,
 		Signature: ringSignData,
 		// 这里填的是隐私合约的公钥，让框架保持一致
-		Pubkey: address.ExecPubKey(privacytypes.PrivacyX),
+		Pubkey: address.ExecPubKey(types.ExecName(privacytypes.PrivacyX)),
 	}
 	return nil
 }
 
-func (policy *privacyPolicy) sendPrivacy2PublicTransaction(privacy2Pub *privacytypes.ReqPri2Pub) (*types.Reply, error) {
-	if ok, err := policy.getWalletOperate().CheckWalletStatus(); !ok {
-		bizlog.Error("sendPrivacy2PublicTransaction", "CheckWalletStatus error", err)
-		return nil, err
-	}
-	if ok, err := policy.isRescanUtxosFlagScaning(); ok {
-		bizlog.Error("sendPrivacy2PublicTransaction", "isRescanUtxosFlagScaning error", err)
-		return nil, err
-	}
-	if privacy2Pub == nil {
-		bizlog.Error("privacy2privacy input para is nil")
-		return nil, types.ErrInvalidParam
-	}
-	if !checkAmountValid(privacy2Pub.GetAmount()) {
-		return nil, types.ErrAmount
-	}
-	//get 'a'
-	privacyInfo, err := policy.getPrivacykeyPair(privacy2Pub.GetSender())
-	if err != nil {
-		bizlog.Error("sendPrivacy2PublicTransaction", "getPrivacykeyPair error", err)
-		return nil, err
-	}
-
-	return policy.transPri2PubV2(privacyInfo, privacy2Pub)
-}
-
-func (policy *privacyPolicy) transPri2PubV2(privacykeyParirs *privacy.Privacy, reqPri2Pub *privacytypes.ReqPri2Pub) (*types.Reply, error) {
-	buildInfo := &buildInputInfo{
-		tokenname: reqPri2Pub.Tokenname,
-		sender:    reqPri2Pub.Sender,
-		amount:    reqPri2Pub.Amount + privacytypes.PrivacyTxFee,
-		mixcount:  reqPri2Pub.Mixin,
-	}
-	//step 1,buildInput
-	privacyInput, utxosInKeyInput, realkeyInputSlice, selectedUtxo, err := policy.buildInput(privacykeyParirs, buildInfo)
-	if err != nil {
-		bizlog.Error("transPri2PubV2", "buildInput error", err)
-		return nil, err
-	}
-
-	viewPub4change, spendPub4change := privacykeyParirs.ViewPubkey.Bytes(), privacykeyParirs.SpendPubkey.Bytes()
-	viewPub4chgPtr := (*[32]byte)(unsafe.Pointer(&viewPub4change[0]))
-	spendPub4chgPtr := (*[32]byte)(unsafe.Pointer(&spendPub4change[0]))
-
-	selectedAmounTotal := int64(0)
-	for _, input := range privacyInput.Keyinput {
-		if input.Amount <= 0 {
-			return nil, types.ErrAmount
-		}
-		selectedAmounTotal += input.Amount
-	}
-	changeAmount := selectedAmounTotal - reqPri2Pub.Amount
-	//step 2,generateOuts
-	//构造输出UTXO,只生成找零的UTXO
-	privacyOutput, err := generateOuts(nil, nil, viewPub4chgPtr, spendPub4chgPtr, 0, changeAmount, privacytypes.PrivacyTxFee)
-	if err != nil {
-		bizlog.Error("transPri2PubV2", "generateOuts error", err)
-		return nil, err
-	}
-
-	operater := policy.getWalletOperate()
-	value := &privacytypes.Privacy2Public{
-		Tokenname: reqPri2Pub.Tokenname,
-		Amount:    reqPri2Pub.Amount,
-		Note:      reqPri2Pub.Note,
-		Input:     privacyInput,
-		Output:    privacyOutput,
-	}
-	action := &privacytypes.PrivacyAction{
-		Ty:    privacytypes.ActionPrivacy2Public,
-		Value: &privacytypes.PrivacyAction_Privacy2Public{Privacy2Public: value},
-	}
-
-	tx := &types.Transaction{
-		Execer:  []byte(privacytypes.PrivacyX),
-		Payload: types.Encode(action),
-		Fee:     privacytypes.PrivacyTxFee,
-		Nonce:   operater.Nonce(),
-		To:      reqPri2Pub.Receiver,
-	}
-	tx.SetExpire(time.Duration(reqPri2Pub.GetExpire()))
-	//step 3,generate ring signature
-	err = policy.signatureTx(tx, privacyInput, utxosInKeyInput, realkeyInputSlice)
-	if err != nil {
-		bizlog.Error("transPri2PubV2", "signatureTx error", err)
-		return nil, err
-	}
-
-	reply, err := operater.GetAPI().SendTx(tx)
-	if err != nil {
-		bizlog.Error("transPri2PubV2", "SendTx error", err)
-		return nil, err
-	}
-	txhashstr := common.Bytes2Hex(tx.Hash())
-	policy.saveFTXOInfo(tx, reqPri2Pub.Tokenname, reqPri2Pub.Sender, txhashstr, selectedUtxo)
-	bizlog.Info("transPri2PubV2", "txhash", txhashstr)
-	return reply, nil
-}
 
 func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWalletTxDetailParam) {
 	blockheight := param.block.Block.Height*maxTxNumPerBlock + int64(param.index)

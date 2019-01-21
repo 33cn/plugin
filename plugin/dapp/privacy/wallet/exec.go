@@ -29,36 +29,6 @@ func (policy *privacyPolicy) On_ShowPrivacyKey(req *types.ReqString) (types.Mess
 	return reply, err
 }
 
-func (policy *privacyPolicy) On_Public2Privacy(req *privacytypes.ReqPub2Pri) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-	reply, err := policy.sendPublic2PrivacyTransaction(req)
-	if err != nil {
-		bizlog.Error("sendPublic2PrivacyTransaction", "err", err.Error())
-	}
-	return reply, err
-}
-
-func (policy *privacyPolicy) On_Privacy2Privacy(req *privacytypes.ReqPri2Pri) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-	reply, err := policy.sendPrivacy2PrivacyTransaction(req)
-	if err != nil {
-		bizlog.Error("sendPrivacy2PrivacyTransaction", "err", err.Error())
-	}
-	return reply, err
-}
-
-func (policy *privacyPolicy) On_Privacy2Public(req *privacytypes.ReqPri2Pub) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-	reply, err := policy.sendPrivacy2PublicTransaction(req)
-	if err != nil {
-		bizlog.Error("sendPrivacy2PublicTransaction", "err", err.Error())
-	}
-	return reply, err
-}
-
 func (policy *privacyPolicy) On_CreateUTXOs(req *privacytypes.ReqCreateUTXOs) (types.Message, error) {
 	policy.getWalletOperate().GetMutex().Lock()
 	defer policy.getWalletOperate().GetMutex().Unlock()

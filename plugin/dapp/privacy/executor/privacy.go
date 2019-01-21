@@ -272,16 +272,20 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		totalOutput += output.Amount
 	}
 
-	var feeAmount int64
-	if action.Ty == pty.ActionPrivacy2Privacy {
-		feeAmount = totalInput - totalOutput
-	} else {
-		feeAmount = totalInput - totalOutput - amount
-	}
+	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
+	if !types.IsPara() {
 
-	if feeAmount < pty.PrivacyTxFee {
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee)
-		return pty.ErrPrivacyTxFeeNotEnough
+		var feeAmount int64
+		if action.Ty == pty.ActionPrivacy2Privacy {
+			feeAmount = totalInput - totalOutput
+		} else {
+			feeAmount = totalInput - totalOutput - amount
+		}
+
+		if feeAmount < pty.PrivacyTxFee {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee)
+			return pty.ErrPrivacyTxFeeNotEnough
+		}
 	}
 	return nil
 }

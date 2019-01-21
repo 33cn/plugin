@@ -38,6 +38,7 @@ message Privacy2Public {
     string        tokenname = 1;
     int64         amount    = 2;
     string        note      = 3;
+    string        to        = 6;
     PrivacyInput  input     = 4;
     PrivacyOutput output    = 5;
 }
