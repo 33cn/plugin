@@ -73,7 +73,7 @@ func NewOrderRow() *OrderRow {
 
 // CreateRow create row
 func (r *OrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &pty.ReplyTradeOrder{}}
+	return &table.Row{Data: &pty.LocalOrder{}}
 }
 
 // SetPayload set payload
@@ -177,6 +177,7 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 
 	order := &pty.LocalOrder{
 		AssetSymbol:       sellorder.TokenSymbol,
+		TxIndex:           txIndex,
 		Owner:             sellorder.Address,
 		AmountPerBoardlot: sellorder.AmountPerBoardlot,
 		MinBoardlot:       sellorder.MinBoardlot,
@@ -192,7 +193,6 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         sellorder.AssetExec,
-		TxIndex:           txIndex,
 		IsFinished:        false,
 	}
 	return order
@@ -206,7 +206,9 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 		return nil
 	}
 	order, ok := xs[0].Data.(*pty.LocalOrder)
+	tradelog.Error("Table dbg", "sell-update", order, "data", xs[0].Data)
 	if !ok {
+		tradelog.Error("Table failed", "sell-update", order)
 		return nil
 
 	}
@@ -218,6 +220,8 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 	order.TxHash = append(order.TxHash, common.ToHex(tx.Hash()))
 	order.TradedBoardlot = sellorder.SoldBoardlot
 	order.IsFinished = (status != pty.TradeOrderStatusOnSale)
+
+	tradelog.Error("Table", "sell-update", order)
 
 	ldb.Replace(order)
 
@@ -270,6 +274,7 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 
 	order := &pty.LocalOrder{
 		AssetSymbol:       sell.TokenSymbol,
+		TxIndex:           txIndex,
 		Owner:             sell.Owner,
 		AmountPerBoardlot: parseOrderAmountFloat(sell.AmountPerBoardlot),
 		MinBoardlot:       sell.MinBoardlot,
@@ -285,7 +290,7 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         sell.AssetExec,
-		TxIndex:           txIndex,
+
 		IsFinished:        true,
 	}
 	return order
@@ -295,6 +300,7 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
+		TxIndex:           txIndex,
 		Owner:             buy.Owner,
 		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot),
 		MinBoardlot:       buy.MinBoardlot,
@@ -310,7 +316,6 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
-		TxIndex:           txIndex,
 		IsFinished:        false,
 	}
 	return order
@@ -368,6 +373,7 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
+		TxIndex:           txIndex,
 		Owner:             buy.Owner,
 		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot),
 		MinBoardlot:       buy.MinBoardlot,
@@ -383,7 +389,6 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
-		TxIndex:           txIndex,
 		IsFinished:        true,
 	}
 	return order
