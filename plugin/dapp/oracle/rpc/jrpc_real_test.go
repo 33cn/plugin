@@ -392,10 +392,7 @@ func sendAddPublisher(t *testing.T, jrpcClient *jsonclient.JSONClient, mocker *t
 }
 
 func sendPublishEvent(t *testing.T, jrpcClient *jsonclient.JSONClient, mocker *testnode.Chain33Mock) (eventID string) {
-	timeString := "2019-01-21 15:30:00"
-	layout := "2006-01-02 15:04:05"
-	ti, err := time.Parse(layout, timeString)
-	assert.Nil(t, err)
+	ti := time.Now().AddDate(0, 0, 1)
 	//1. 调用createrawtransaction 创建交易
 	req := &rpctypes.CreateTxIn{
 		Execer:     oty.OracleX,
@@ -403,7 +400,7 @@ func sendPublishEvent(t *testing.T, jrpcClient *jsonclient.JSONClient, mocker *t
 		Payload:    []byte(fmt.Sprintf("{\"type\":\"football\",\"subType\":\"Premier League\",\"time\":%d, \"content\":\"{\\\"team%d\\\":\\\"ChelSea\\\", \\\"team%d\\\":\\\"Manchester\\\",\\\"resultType\\\":\\\"score\\\"}\", \"introduction\":\"guess the sore result of football game between ChelSea and Manchester in 2019-01-21 14:00:00\"}", ti.Unix(), r.Int()%10, r.Int()%10)),
 	}
 	var res string
-	err = jrpcClient.Call("Chain33.CreateTransaction", req, &res)
+	err := jrpcClient.Call("Chain33.CreateTransaction", req, &res)
 	assert.Nil(t, err)
 	gen := mocker.GetHotKey()
 	tx := getTx(t, res)
