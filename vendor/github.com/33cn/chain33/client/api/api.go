@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"sync/atomic"
-
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc/grpcclient"
