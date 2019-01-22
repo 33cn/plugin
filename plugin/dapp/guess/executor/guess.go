@@ -20,21 +20,13 @@ func init() {
 	ety.InitFuncList(types.ListMethod(&Guess{}))
 }
 
-type subConfig struct {
-	ParaRemoteGrpcClient string `json:"paraRemoteGrpcClient"`
-}
-
-var cfg subConfig
-
 // Init Guess
 func Init(name string, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
 	}
-	if sub != nil {
-		types.MustDecode(sub, &cfg)
-	}
+
 	drivers.Register(driverName, newGuessGame, types.GetDappFork(driverName, "Enable"))
 }
 

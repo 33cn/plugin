@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 
@@ -59,7 +58,7 @@ type Action struct {
 	localDB      dbm.KVDB
 	index        int
 	api          client.QueueProtocolAPI
-	execAPI      api.ExecutorAPI
+	mainHeight   int64
 }
 
 //NewAction 生成Action对象
@@ -77,8 +76,7 @@ func NewAction(guess *Guess, tx *types.Transaction, index int) *Action {
 		execaddr:     dapp.ExecAddress(string(tx.Execer)),
 		localDB:      guess.GetLocalDB(),
 		index:        index,
-		api:          guess.GetAPI(),
-		execAPI:      guess.GetExecutorAPI(),
+		mainHeight:   guess.GetMainHeight(),
 	}
 }
 
@@ -351,16 +349,7 @@ func (action *Action) GameStart(start *gty.GuessGameStart) (*types.Receipt, erro
 	gameID := common.ToHex(action.txhash)
 	game, _ := action.newGame(gameID, start)
 	game.StartTime = action.blocktime
-	if types.IsPara() {
-		mainHeight := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			logger.Error("GameStart", "mainHeight", mainHeight)
-			return nil, gty.ErrGuessStatus
-		}
-		game.StartHeight = mainHeight
-	} else {
-		game.StartHeight = action.height
-	}
+	game.StartHeight = action.mainHeight
 	game.AdminAddr = action.fromaddr
 	game.PreIndex = 0
 	game.Index = action.getIndex()
@@ -807,18 +796,7 @@ func (action *Action) changeAllAddrIndex(game *gty.GuessGame) {
 
 //refreshStatusByTime 检测游戏是否过期，是否可以下注
 func (action *Action) refreshStatusByTime(game *gty.GuessGame) (canBet bool) {
-
-	var mainHeight int64
-	if types.IsPara() {
-		mainHeight = action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			logger.Error("RefreshStatusByTime", "mainHeight err", mainHeight)
-			return true
-		}
-	} else {
-		mainHeight = action.height
-	}
-
+	mainHeight := action.mainHeight
 	//如果完全由管理员驱动状态变化，则除了保护性过期判断外，不需要做其他判断。
 	if game.DrivenByAdmin {
 
@@ -874,15 +852,4 @@ func (action *Action) checkTime(start *gty.GuessGameStart) bool {
 	}
 
 	return false
-}
-
-// GetMainHeightByTxHash get Block height
-func (action *Action) GetMainHeightByTxHash(txHash []byte) int64 {
-	req := &types.ReqHash{Hash: txHash}
-	txDetail, err := action.execAPI.QueryTx(req)
-	if err != nil {
-		return -1
-	}
-
-	return txDetail.GetHeight()
 }
