@@ -349,7 +349,7 @@ func (t *trade) updateBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 func (t *trade) rollbackBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 	buyorder *pty.BuyLimitOrder, txIndex string, ldb *table.Table, traded int64) *pty.LocalOrder {
 
-	xs, err := ldb.ListIndex("key", []byte(buy.SellID), nil, 1, 0)
+	xs, err := ldb.ListIndex("key", []byte(buy.BuyID), nil, 1, 0)
 	if err != nil || len(xs) != 1 {
 		return nil
 	}
