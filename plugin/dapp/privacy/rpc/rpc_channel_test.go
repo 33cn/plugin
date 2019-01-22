@@ -45,10 +45,6 @@ func TestRPCChannel(t *testing.T) {
 		{fn: testShowPrivacyKey},
 		{fn: testShowPrivacyAccountInfo},
 		{fn: testShowPrivacyAccountSpend},
-		{fn: testPublic2Privacy},
-		{fn: testPrivacy2Privacy},
-		{fn: testPrivacy2Public},
-		{fn: testPrivacy2Public},
 		{fn: testShowAmountsOfUTXO},
 		{fn: testShowUTXOs4SpecifiedAmount},
 		{fn: testCreateUTXOs},
@@ -98,50 +94,6 @@ func testShowPrivacyAccountSpend(t *testing.T, jrpc *jsonclient.JSONClient) erro
 	return err
 }
 
-func testPublic2Privacy(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.ReqPub2Pri{
-		Sender:     "13cS5G1BDN2YfGudsxRxr7X25yu6ZdgxMU",
-		Pubkeypair: "92fe6cfec2e19cd15f203f83b5d440ddb63d0cb71559f96dc81208d819fea85886b08f6e874fca15108d244b40f9086d8c03260d4b954a40dfb3cbe41ebc7389",
-		Amount:     1234,
-		Note:       "for test",
-		Tokenname:  types.BTY,
-		Expire:     int64(time.Hour),
-	}
-	var res rpctypes.ReplyHash
-	err := jrpc.Call("privacy.MakeTxPublic2privacy", params, &res)
-	return err
-}
-
-func testPrivacy2Privacy(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.ReqPri2Pri{
-		Sender:     "13cS5G1BDN2YfGudsxRxr7X25yu6ZdgxMU",
-		Pubkeypair: "92fe6cfec2e19cd15f203f83b5d440ddb63d0cb71559f96dc81208d819fea85886b08f6e874fca15108d244b40f9086d8c03260d4b954a40dfb3cbe41ebc7389",
-		Amount:     234567,
-		Mixin:      16,
-		Note:       "for test",
-		Tokenname:  types.BTY,
-		Expire:     int64(time.Hour),
-	}
-	var res rpctypes.ReplyHash
-	err := jrpc.Call("privacy.MakeTxPrivacy2privacy", params, &res)
-	return err
-}
-
-func testPrivacy2Public(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.ReqPri2Pub{
-		Sender:    "13cS5G1BDN2YfGudsxRxr7X25yu6ZdgxMU",
-		Receiver:  "1EDDghAtgBsamrNEtNmYdQzC1QEhLkr87t",
-		Amount:    123456,
-		Note:      "for test",
-		Tokenname: types.BTY,
-		Mixin:     16,
-		Expire:    int64(time.Hour),
-	}
-
-	var res rpctypes.ReplyHash
-	err := jrpc.Call("privacy.MakeTxPrivacy2public", params, &res)
-	return err
-}
 
 func testShowAmountsOfUTXO(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
