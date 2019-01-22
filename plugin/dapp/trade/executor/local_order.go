@@ -313,7 +313,7 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 		Height:            buy.Height,
 		Key:               buy.BuyID,
 		BlockTime:         t.GetBlockTime(),
-		IsSellOrder:       true,
+		IsSellOrder:       false,
 		AssetExec:         buy.AssetExec,
 		IsFinished:        false,
 	}
@@ -323,7 +323,7 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 func (t *trade) updateBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 	buyorder *pty.BuyLimitOrder, txIndex string, ldb *table.Table) *pty.LocalOrder {
 
-	xs, err := ldb.ListIndex("key", []byte(buy.SellID), nil, 1, 0)
+	xs, err := ldb.ListIndex("key", []byte(buy.BuyID), nil, 1, 0)
 	if err != nil || len(xs) != 1 {
 		return nil
 	}
