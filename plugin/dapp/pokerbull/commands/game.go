@@ -28,6 +28,7 @@ func PokerBullCmd() *cobra.Command {
 		PokerBullContinueRawTxCmd(),
 		PokerBullQuitRawTxCmd(),
 		PokerBullQueryResultRawTxCmd(),
+		PokerBullPlayRawTxCmd(),
 	)
 
 	return cmd
@@ -45,7 +46,7 @@ func PokerBullStartRawTxCmd() *cobra.Command {
 }
 
 func addPokerbullStartFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("value", "a", 0, "value")
+	cmd.Flags().Uint64P("value", "v", 0, "value")
 	cmd.MarkFlagRequired("value")
 
 	cmd.Flags().Uint32P("playerCount", "p", 0, "player count")
@@ -121,8 +122,56 @@ func pokerbullQuit(cmd *cobra.Command, args []string) {
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.PokerBullX),
-		ActionName: pkt.CreatequitTx,
+		ActionName: pkt.CreateQuitTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
+	}
+
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// PokerBullPlayRawTxCmd 生成已匹配玩家游戏命令行
+func PokerBullPlayRawTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "play",
+		Short: "Play game",
+		Run:   pokerbullPlay,
+	}
+	addPokerbullPlayFlags(cmd)
+	return cmd
+}
+
+func addPokerbullPlayFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("gameID", "g", "", "game ID")
+	cmd.MarkFlagRequired("gameID")
+	cmd.Flags().Uint32P("round", "r", 0, "round")
+	cmd.MarkFlagRequired("round")
+	cmd.Flags().Uint64P("value", "v", 0, "value")
+	cmd.MarkFlagRequired("value")
+	cmd.Flags().StringArrayP("address", "a", nil, "address")
+	cmd.MarkFlagRequired("address")
+}
+
+func pokerbullPlay(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	gameID, _ := cmd.Flags().GetString("gameID")
+	round, _ := cmd.Flags().GetUint32("round")
+	value, _ := cmd.Flags().GetUint64("value")
+	address, _ := cmd.Flags().GetStringArray("address")
+
+	payload := &pkt.PBGamePlay{
+		GameId: gameID,
+		Value:  int64(value) * types.Coin,
+		Round:  int32(round),
+	}
+	payload.Address = make([]string, len(address))
+	copy(payload.Address, address)
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.PokerBullX),
+		ActionName: pkt.CreatePlayTx,
+		Payload:    types.MustPBToJSON(payload),
 	}
 
 	var res string

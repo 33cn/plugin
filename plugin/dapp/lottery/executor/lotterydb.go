@@ -5,17 +5,14 @@
 package executor
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/lottery/types"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -53,9 +50,7 @@ const (
 const (
 	luckyNumMol = 100000
 	decimal     = 100000000 //1e8
-	//randMolNum      = 5
-	grpcRecSize int = 5 * 30 * 1024 * 1024
-	blockNum        = 5
+	blockNum    = 5
 )
 
 const (
@@ -123,30 +118,19 @@ type Action struct {
 	height       int64
 	execaddr     string
 	difficulty   uint64
-	api          client.QueueProtocolAPI
-	conn         *grpc.ClientConn
-	grpcClient   types.Chain33Client
 	index        int
+	lottery      *Lottery
 }
 
 // NewLotteryAction generate New Action
 func NewLotteryAction(l *Lottery, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-
-	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	if types.IsPara() && cfg.ParaRemoteGrpcClient == "" {
-		panic("ParaRemoteGrpcClient error")
-	}
-	conn, err := grpc.Dial(cfg.ParaRemoteGrpcClient, grpc.WithInsecure(), msgRecvOp)
-
-	if err != nil {
-		panic(err)
-	}
-	grpcClient := types.NewChain33Client(conn)
-
-	return &Action{l.GetCoinsAccount(), l.GetStateDB(), hash, fromaddr, l.GetBlockTime(),
-		l.GetHeight(), dapp.ExecAddress(string(tx.Execer)), l.GetDifficulty(), l.GetAPI(), conn, grpcClient, index}
+	return &Action{
+		coinsAccount: l.GetCoinsAccount(), db: l.GetStateDB(),
+		txhash: hash, fromaddr: fromaddr, blocktime: l.GetBlockTime(),
+		height: l.GetHeight(), execaddr: dapp.ExecAddress(string(tx.Execer)),
+		difficulty: l.GetDifficulty(), index: index, lottery: l}
 }
 
 // GetLottCommonRecipt generate logs for lottery common action
@@ -275,12 +259,7 @@ func (action *Action) LotteryCreate(create *pty.LotteryCreate) (*types.Receipt, 
 	lott.BuyAmount = 0
 	llog.Debug("LotteryCreate", "OpRewardRatio", lott.OpRewardRatio, "DevRewardRatio", lott.DevRewardRatio)
 	if types.IsPara() {
-		mainHeight := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryCreate", "mainHeight", mainHeight)
-			return nil, pty.ErrLotteryStatus
-		}
-		lott.CreateOnMain = mainHeight
+		lott.CreateOnMain = action.lottery.GetMainHeight()
 	}
 
 	llog.Debug("LotteryCreate created", "lotteryID", lotteryID)
@@ -330,22 +309,13 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 		lott.Status = pty.LotteryPurchase
 		lott.Round++
 		if types.IsPara() {
-			mainHeight := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("LotteryBuy", "mainHeight", mainHeight)
-				return nil, pty.ErrLotteryStatus
-			}
-			lott.LastTransToPurStateOnMain = mainHeight
+			lott.LastTransToPurStateOnMain = action.lottery.GetMainHeight()
 		}
 	}
 
 	if lott.Status == pty.LotteryPurchase {
 		if types.IsPara() {
-			mainHeight := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("LotteryBuy", "mainHeight", mainHeight)
-				return nil, pty.ErrLotteryStatus
-			}
+			mainHeight := action.lottery.GetMainHeight()
 			if mainHeight-lott.LastTransToPurStateOnMain > lott.GetPurBlockNum() {
 				llog.Error("LotteryBuy", "action.height", action.height, "mainHeight", mainHeight, "LastTransToPurStateOnMain", lott.LastTransToPurStateOnMain)
 				return nil, pty.ErrLotteryStatus
@@ -451,11 +421,7 @@ func (action *Action) LotteryDraw(draw *pty.LotteryDraw) (*types.Receipt, error)
 	}
 
 	if types.IsPara() {
-		mainHeight := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryBuy", "mainHeight", mainHeight)
-			return nil, pty.ErrLotteryStatus
-		}
+		mainHeight := action.lottery.GetMainHeight()
 		if mainHeight-lott.GetLastTransToPurStateOnMain() < lott.GetDrawBlockNum() {
 			llog.Error("LotteryDraw", "action.height", action.height, "mainHeight", mainHeight, "GetLastTransToPurStateOnMain", lott.GetLastTransToPurState())
 			return nil, pty.ErrLotteryStatus
@@ -566,11 +532,8 @@ func (action *Action) LotteryClose(draw *pty.LotteryClose) (*types.Receipt, erro
 }
 
 //random used for verification in solo
-func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
+func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) (int64, error) {
 	var num int64
-	var msg types.Message
-	var err error
-	var hash []byte
 	if isSolo {
 		//used for internal verification
 		num = 12345
@@ -578,38 +541,23 @@ func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) int64 {
 		//发消息给randnum模块
 		//在主链上，当前高度查询不到，如果要保证区块个数，高度传入action.height-1
 		llog.Debug("findLuckyNum on randnum module")
-		if !types.IsPara() {
-			req := &types.ReqRandHash{ExecName: "ticket", Height: action.height - 1, BlockNum: blockNum}
-			msg, err = action.api.Query("ticket", "RandNumHash", req)
-			if err != nil {
-				return -1
-			}
-			reply := msg.(*types.ReplyHash)
-			hash = reply.Hash
-		} else {
-			mainHeight := action.GetMainHeightByTxHash(action.txhash)
-			if mainHeight < 0 {
-				llog.Error("findLuckyNum", "mainHeight", mainHeight)
-				return -1
-			}
-			req := &types.ReqRandHash{ExecName: "ticket", Height: mainHeight, BlockNum: blockNum}
-			reply, err := action.grpcClient.QueryRandNum(context.Background(), req)
-			if err != nil {
-				return -1
-			}
-			hash = reply.Hash
+		param := &types.ReqRandHash{
+			ExecName: "ticket",
+			BlockNum: blockNum,
+			Hash:     action.lottery.GetLastHash(),
 		}
-
+		hash, err := action.lottery.GetExecutorAPI().GetRandNum(param)
+		if err != nil {
+			return -1, err
+		}
 		baseNum, err := strconv.ParseUint(common.ToHex(hash[0:4]), 0, 64)
 		llog.Debug("findLuckyNum", "baseNum", baseNum)
 		if err != nil {
-			llog.Error("findLuckyNum", "err", err)
-			return -1
+			return -1, err
 		}
-
 		num = int64(baseNum) % luckyNumMol
 	}
-	return num
+	return num, nil
 }
 
 func checkFundAmount(luckynum int64, guessnum int64, way int64) (int64, int64) {
@@ -627,9 +575,9 @@ func checkFundAmount(luckynum int64, guessnum int64, way int64) (int64, int64) {
 }
 
 func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUpdateBuyInfo, *pty.LotteryGainInfos, error) {
-	luckynum := action.findLuckyNum(false, lott)
+	luckynum, err := action.findLuckyNum(false, lott)
 	if luckynum < 0 || luckynum >= luckyNumMol {
-		return nil, nil, nil, pty.ErrLotteryErrLuckyNum
+		return nil, nil, nil, err
 	}
 
 	llog.Debug("checkDraw", "luckynum", luckynum)
@@ -743,14 +691,8 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	action.recordMissing(lott)
 
 	if types.IsPara() {
-		mainHeight := action.GetMainHeightByTxHash(action.txhash)
-		if mainHeight < 0 {
-			llog.Error("LotteryDraw", "mainHeight", mainHeight)
-			return nil, nil, nil, pty.ErrLotteryStatus
-		}
-		lott.LastTransToDrawStateOnMain = mainHeight
+		lott.LastTransToDrawStateOnMain = action.lottery.GetMainHeight()
 	}
-
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, &updateInfo, &gainInfos, nil
 }
 func (action *Action) recordMissing(lott *LotteryDB) {

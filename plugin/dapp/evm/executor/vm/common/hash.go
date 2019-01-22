@@ -44,7 +44,7 @@ func (h *Hash) SetBytes(b []byte) {
 
 // BigToHash 大数字转换为哈希
 func BigToHash(b *big.Int) Hash {
-	return Hash(common.BigToHash(b))
+	return Hash(common.BytesToHash(b.Bytes()))
 }
 
 // BytesToHash 将[]byte直接当做哈希处理

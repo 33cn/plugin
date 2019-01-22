@@ -73,6 +73,9 @@ func (chain *BlockChain) ProcRecvMsg() {
 		case types.EventGetBlockByHashes:
 			go chain.processMsg(msg, reqnum, chain.getBlockByHashes)
 
+		case types.EventGetBlockBySeq:
+			go chain.processMsg(msg, reqnum, chain.getBlockBySeq)
+
 		case types.EventDelParaChainBlockDetail:
 			go chain.processMsg(msg, reqnum, chain.delParaChainBlockDetail)
 
@@ -227,8 +230,7 @@ func (chain *BlockChain) getLastHeader(msg queue.Message) {
 func (chain *BlockChain) addBlockDetail(msg queue.Message) {
 	blockDetail := msg.Data.(*types.BlockDetail)
 	Height := blockDetail.Block.Height
-	chainlog.Info("EventAddBlockDetail", "height", blockDetail.Block.Height, "hash", common.HashHex(blockDetail.Block.Hash()))
-	//首先判断共识过来的block的parenthash是否是当前bestchain链的tip区块，如果不是就直接返回错误给共识模块
+	chainlog.Info("EventAddBlockDetail", "height", blockDetail.Block.Height, "parent", common.ToHex(blockDetail.Block.ParentHash))
 	blockDetail, err := chain.ProcAddBlockMsg(true, blockDetail, "self")
 	if err != nil {
 		chainlog.Error("addBlockDetail", "err", err.Error())
@@ -241,7 +243,6 @@ func (chain *BlockChain) addBlockDetail(msg queue.Message) {
 		msg.Reply(chain.client.NewMessage("consensus", types.EventAddBlockDetail, err))
 		return
 	}
-	//获取此高度区块执行后的区块详情blockdetail返回给共识模块
 	chainlog.Debug("addBlockDetail success ", "Height", Height, "hash", common.HashHex(blockDetail.Block.Hash()))
 	msg.Reply(chain.client.NewMessage("consensus", types.EventAddBlockDetail, blockDetail))
 }
@@ -416,6 +417,32 @@ func (chain *BlockChain) getBlockByHashes(msg queue.Message) {
 	} else {
 		msg.Reply(chain.client.NewMessage("rpc", types.EventBlocks, BlockDetails))
 	}
+}
+
+func (chain *BlockChain) getBlockBySeq(msg queue.Message) {
+	seq := (msg.Data).(*types.Int64)
+	req := &types.ReqBlocks{Start: seq.Data, End: seq.Data, IsDetail: false, Pid: []string{}}
+	sequences, err := chain.GetBlockSequences(req)
+	if err != nil {
+		chainlog.Error("getBlockBySeq", "seq err", err.Error())
+		msg.Reply(chain.client.NewMessage("rpc", types.EventGetBlockBySeq, err))
+		return
+	}
+	reqHashes := &types.ReqHashes{Hashes: [][]byte{sequences.Items[0].Hash}}
+	blocks, err := chain.GetBlockByHashes(reqHashes.Hashes)
+	if err != nil {
+		chainlog.Error("getBlockBySeq", "hash err", err.Error())
+		msg.Reply(chain.client.NewMessage("rpc", types.EventGetBlockBySeq, err))
+		return
+	}
+
+	blockSeq := &types.BlockSeq{
+		Num:    seq.Data,
+		Seq:    sequences.Items[0],
+		Detail: blocks.Items[0],
+	}
+	msg.Reply(chain.client.NewMessage("rpc", types.EventGetBlockBySeq, blockSeq))
+
 }
 
 //平行链del block的处理

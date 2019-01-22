@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"time"
@@ -128,7 +129,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePublic2Privacy,
 		Amount:     amount,
-		Note:       []byte(note),
+		Note:       note,
 		Pubkeypair: pubkeypair,
 		Expire:     expire,
 	}
@@ -190,7 +191,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePrivacy2Privacy,
 		Amount:     amount,
-		Note:       []byte(note),
+		Note:       note,
 		Pubkeypair: pubkeypair,
 		From:       sender,
 		Mixcount:   mixCount,
@@ -254,7 +255,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		Tokenname: tokenname,
 		Type:      types.PrivacyTypePrivacy2Public,
 		Amount:    amount,
-		Note:      []byte(note),
+		Note:      note,
 		From:      from,
 		To:        to,
 		Mixcount:  mixCount,
@@ -414,7 +415,7 @@ func parseShowUTXOs4SpecifiedAmountRes(arg interface{}) (interface{}, error) {
 		result := &PrivacyAccountResult{
 			Txhash:        common.ToHex(item.Txhash),
 			OutIndex:      item.Outindex,
-			OnetimePubKey: common.Bytes2Hex(item.Onetimepubkey),
+			OnetimePubKey: hex.EncodeToString(item.Onetimepubkey),
 		}
 		ret = append(ret, result)
 	}

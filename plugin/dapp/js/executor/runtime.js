@@ -410,10 +410,14 @@ kvcreator.prototype.receipt = function() {
 
 function GetExecName() {
     var exec = execname()
-    if (exec.err) {
-        return ""
-    }
+    throwerr(exec.err)
     return exec.value
+}
+
+function GetRandnum() {
+    var n = randnum()
+    throwerr(n.err)
+    return n.value
 }
 
 function ExecAddress(name) {

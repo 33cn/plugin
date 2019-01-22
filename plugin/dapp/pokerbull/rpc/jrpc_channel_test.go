@@ -97,7 +97,7 @@ func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.PBGameQuit{GameId: "123"}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.PokerBullX),
-		ActionName: pty.CreatequitTx,
+		ActionName: pty.CreateQuitTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
 	var res string

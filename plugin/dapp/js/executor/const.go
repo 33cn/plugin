@@ -413,10 +413,14 @@ kvcreator.prototype.receipt = function() {
 
 function GetExecName() {
     var exec = execname()
-    if (exec.err) {
-        return ""
-    }
+    throwerr(exec.err)
     return exec.value
+}
+
+function GetRandnum() {
+    var n = randnum()
+    throwerr(n.err)
+    return n.value
 }
 
 function ExecAddress(name) {
@@ -521,6 +525,7 @@ function Init(context) {
     this.context = context
     this.kvc.add("action", "init")
     this.kvc.add("context", this.context)
+    this.kvc.add("randnum", GetRandnum())
     return this.kvc.receipt()
 }
 

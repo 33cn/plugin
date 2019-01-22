@@ -46,6 +46,7 @@ func (t *PokerBullType) GetTypeMap() map[string]int32 {
 		"Continue": PBGameActionContinue,
 		"Quit":     PBGameActionQuit,
 		"Query":    PBGameActionQuery,
+		"Play":     PBGameActionPlay,
 	}
 }
 
@@ -56,5 +57,6 @@ func (t *PokerBullType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogPBGameContinue: {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameContinue"},
 		TyLogPBGameQuit:     {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuit"},
 		TyLogPBGameQuery:    {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGameQuery"},
+		TyLogPBGamePlay:     {Ty: reflect.TypeOf(ReceiptPBGame{}), Name: "TyLogPBGamePlay"},
 	}
 }

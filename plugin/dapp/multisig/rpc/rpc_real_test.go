@@ -923,7 +923,7 @@ func testAbnormal(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 		RequiredWeight: 15,
 		DailyLimit:     symboldailylimit,
 	}
-	testAbnormalCreateTx(t, mocker, jrpcClient, req, mty.ErrInvalidSymbol)
+	testAbnormalCreateTx(t, mocker, jrpcClient, req, nil)
 
 	// Execer 错误
 	symboldailylimit = &mty.SymbolDailyLimit{

@@ -1,0 +1,248 @@
+syntax = "proto3";
+
+import "transaction.proto";
+
+package types;
+
+//GuessGame 竞猜游戏详情
+message GuessGame {
+    string gameID        = 1;  //游戏ID
+    int32 status         = 2;  //游戏的状态：创建->投注->截止投注->开奖
+    int32 preStatus      = 3;
+    int64  startTime     = 4;  //创建游戏的时间
+    int64  startHeight   = 5;  //创建游戏的时间
+    string startTxHash   = 6;  //创建游戏的交易hash
+    int64 startIndex     = 7;  //创建游戏的交易index
+    string topic         = 8;  //主题
+    string category      = 9;  //分类
+    string options       = 10;  //选项
+    int64 maxBetHeight   = 11;  //截止下注的块高
+    int64 maxBetsOneTime = 12; //单次可以下多少注，默认100
+    int64 maxBetsNumber  = 13; //最多可以下多少注
+    int64 devFeeFactor   = 14; //开发者抽成比例
+    string devFeeAddr    = 15; //开发者地址
+    int64 platFeeFactor  = 16; //平台抽成比例
+    string platFeeAddr   = 17; //平台地址
+    int64 expireHeight   = 18; //游戏过期区块高度
+    string adminAddr     = 19; //游戏创建者地址,只有该地址可以开奖
+    int64 betsNumber     = 20; //已下注数,如果数量达到maxBetsNumber，则不允许再下注
+    repeated GuessPlayer plays = 21; //参与游戏下注的玩家投注信息
+    string result        = 22;        //公布的中奖结果
+    GuessBetStat betStat = 23;
+    int64 index          = 24;
+    int64 preIndex       = 25;
+    bool drivenByAdmin   = 26;
+}
+
+//GuessPlayer 竞猜玩家信息
+message GuessPlayer {
+    string addr = 1;
+    GuessBet bet = 2;
+}
+
+//GuessBet 竞猜下注信息
+message GuessBet {
+    string option = 1;
+    int64  betsNumber = 2;
+    bool    isWinner = 3;
+    int64  profit = 4;
+    int64 index = 5;
+    int64 preIndex = 6;
+}
+
+//GuessBetStat 竞猜下注统计信息
+message GuessBetStat {
+    int64 totalBetTimes = 1;
+    int64 totalBetsNumber = 2;
+    repeated GuessBetStatItem items = 3;
+}
+
+//GuessBetStat 竞猜下注子选项统计信息
+message GuessBetStatItem {
+    string option = 1;
+    int64 betsNumber = 2;
+    int64 betsTimes = 3;
+}
+
+//GuessGameAction 竞猜游戏动作
+message GuessGameAction {
+    oneof value {
+        GuessGameStart start     = 1;
+        GuessGameBet bet         = 2;
+        GuessGameStopBet stopBet = 3;
+        GuessGameAbort  abort    = 4;
+        GuessGamePublish publish = 5;
+        GuessGameQuery query     = 6;
+    }
+    int32 ty = 7;
+}
+
+//GuessGameStart 游戏创建
+message GuessGameStart{
+    string topic     = 1;
+    string options      = 2;
+    string category     = 3;
+    int64 maxBetHeight  = 4;
+    int64 maxBetsOneTime= 5;
+    int64 maxBetsNumber = 6;
+    int64 devFeeFactor   = 7; //开发者抽成比例
+    string devFeeAddr    = 8; //开发者地址
+    int64 platFeeFactor  = 9; //平台抽成比例
+    string platFeeAddr   = 10; //平台地址
+    int64 expireHeight   = 11;
+    bool drivenByAdmin   = 12;
+}
+
+//GuessGameBet 参与游戏下注
+message GuessGameBet{
+    string gameID     = 1;
+    string option     = 2;
+    int64  betsNum    = 3;
+}
+
+//GuessGameStopBet 游戏停止下注
+message GuessGameStopBet{
+    string gameID     = 1;
+}
+
+//GuessGameAbort 游戏异常终止,退还下注
+message GuessGameAbort{
+    string gameID     = 1;
+}
+
+//GuessGamePublish 游戏结果揭晓
+message GuessGamePublish{
+    string gameID     = 1;
+    string result     = 2;
+}
+
+//GuessGameQuery 查询游戏结果
+message GuessGameQuery{
+    string gameID     = 1;
+    uint32 ty          = 2;
+}
+
+//QueryGuessGameInfo 游戏信息查询消息
+message QueryGuessGameInfo {
+    string gameID = 1;
+    string addr   = 2;
+    int32  status = 3;
+    int64  index  = 4;
+    string adminAddr = 5;
+    string category = 6;
+    string  primaryKey = 7;
+}
+
+//ReplyGuessGameInfo 游戏信息查询响应消息
+message ReplyGuessGameInfo {
+    GuessGame game = 1;
+}
+
+//QueryGuessGameInfos 游戏信息列表查询消息
+message QueryGuessGameInfos {
+    repeated string gameIDs = 1;
+}
+
+//ReplyGuessGameInfos 游戏信息列表查询响应消息
+message ReplyGuessGameInfos {
+    repeated GuessGame games = 1;
+}
+
+//ReceiptGuessGame 竞猜游戏收据信息
+message ReceiptGuessGame {
+    int64    startIndex       = 1;
+    string   gameID           = 2;
+    int32   preStatus         = 3;
+    int32   status            = 4;
+    string   addr             = 5;
+    string   adminAddr        = 6;
+    int64    preIndex         = 7;
+    int64    index            = 8;
+    string   category         = 9;
+    bool     statusChange     = 10;
+    bool     bet              = 11;
+    string   option           = 12;
+    int64    betsNumber       = 13;
+    GuessGame game            = 14;
+}
+
+//UserBet 用户下注信息
+message UserBet {
+    int64    startIndex       = 1;
+    int64    index            = 2;
+    string   gameID           = 3;
+    string   addr             = 4;
+    string   option           = 5;
+    int64    betsNumber       = 6;
+}
+
+//GuessStartTxReq 构造start交易的请求
+message GuessStartTxReq {
+    string topic              = 1;
+    string options            = 2;
+    string category           = 3;
+    int64  maxHeight          = 4;
+    int64 maxBetHeight        = 5;
+    int64 maxBetsOneTime      = 6;
+    int64 maxBetsNumber       = 7;
+    int64  devFeeFactor       = 8;
+    string devFeeAddr         = 9;
+    int64  platFeeFactor      = 10;
+    string platFeeAddr        = 11;
+    int64 expireHeight        = 12;
+    int64 fee                 = 13;
+}
+
+//GuessBetTxReq 构造bet交易的请求
+message GuessBetTxReq {
+    string gameID    = 1;
+    string option    = 2;
+    int64  bets      = 3;
+    int64 fee        = 4;
+}
+
+//GuessStopBetTxReq 构造stopBet交易的请求
+message GuessStopBetTxReq {
+    string gameID    = 1;
+    int64 fee        = 2;
+}
+
+//GuessAbortTxReq 构造abort交易的请求
+message GuessAbortTxReq {
+    string gameID    = 1;
+    int64 fee        = 2;
+}
+
+//GuessPublishTxReq 构造publish交易的请求
+message GuessPublishTxReq {
+    string gameID    = 1;
+    string result    = 2;
+    int64 fee        = 3;
+}
+
+// GuessGameRecord game信息查询记录
+message GuessGameRecord {
+    string gameID = 1;
+    int64  startIndex  = 2;
+}
+
+// GuessGameRecords game信息查询记录集
+message GuessGameRecords {
+    repeated GuessGameRecord records = 1;
+    string primaryKey = 2;
+}
+
+
+// service guess　为guess 对外提供服务的接口
+service guess {
+    //游戏开始
+    rpc GuessStart(GuessGameStart) returns (UnsignTx) {}
+    //游戏下注
+    rpc GuessBet(GuessGameBet) returns (UnsignTx) {}
+    //游戏终止下注
+    rpc GuessStopBet(GuessGameStopBet) returns (UnsignTx) {}
+    //游戏异常终止
+    rpc GuessAbort(GuessGameAbort) returns (UnsignTx) {}
+    //游戏结束
+    rpc GuessPublish(GuessGamePublish) returns (UnsignTx) {}
+}

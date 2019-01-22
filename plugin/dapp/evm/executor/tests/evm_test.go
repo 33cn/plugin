@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
 	"time"
 
 	"github.com/33cn/chain33/account"

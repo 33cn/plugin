@@ -6,6 +6,7 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -82,7 +83,6 @@ func (policy *privacyPolicy) reqTxDetailByAddr(addr string) {
 			return
 		}
 		txcount := len(ReplyTxInfos.TxInfos)
-
 		var ReqHashes types.ReqHashes
 		ReqHashes.Hashes = make([][]byte, len(ReplyTxInfos.TxInfos))
 		for index, ReplyTxInfo := range ReplyTxInfos.TxInfos {
@@ -592,7 +592,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	value := &privacytypes.Public2Privacy{
 		Tokenname: req.Tokenname,
 		Amount:    amount,
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Output:    privacyOutput,
 	}
 
@@ -600,7 +600,6 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 		Ty:    privacytypes.ActionPublic2Privacy,
 		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
 	}
-
 	tx := &types.Transaction{
 		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
@@ -668,7 +667,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	value := &privacytypes.Privacy2Privacy{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 	}
@@ -685,7 +684,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结
-	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), common.Bytes2Hex(tx.Hash()), selectedUtxo)
+	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType:    action.Ty,
@@ -743,7 +742,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	value := &privacytypes.Privacy2Public{
 		Tokenname: req.GetTokenname(),
 		Amount:    req.GetAmount(),
-		Note:      string(req.GetNote()),
+		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
 		To:		   req.GetTo(),
@@ -761,7 +760,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结
-	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), common.Bytes2Hex(tx.Hash()), selectedUtxo)
+	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType:    action.Ty,
@@ -973,6 +972,7 @@ func (policy *privacyPolicy) showPrivacyAccountsSpend(req *privacytypes.ReqPrivB
 	return utxoHaveTxHashs, nil
 }
 
+
 func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *privacytypes.PrivacyInput, utxosInKeyInput []*privacytypes.UTXOBasics, realkeyInputSlice []*privacytypes.RealKeyInput) (err error) {
 	tx.Signature = nil
 	data := types.Encode(tx)
@@ -1086,7 +1086,7 @@ func (policy *privacyPolicy) checkWalletStoreData() {
 
 func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, index int32, block *types.BlockDetail, newbatch db.Batch, addDelType int32) {
 	txhash := tx.Hash()
-	txhashstr := common.Bytes2Hex(txhash)
+	txhashstr := hex.EncodeToString(txhash)
 	_, err := tx.Amount()
 	if err != nil {
 		bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "index", index, "tx.Amount() error", err)

@@ -6,11 +6,11 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"sync"
 	"time"
 	"unsafe"
 
-	//_ "github.com/33cn/plugin/plugin"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -131,7 +131,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 		}
 
 		txhash := tx.Hash()
-		txhashstr := common.Bytes2Hex(txhash)
+		txhashstr := hex.EncodeToString(txhash)
 		var privateAction ty.PrivacyAction
 		if err := types.Decode(tx.GetPayload(), &privateAction); err != nil {
 			return

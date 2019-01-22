@@ -5,7 +5,8 @@
 package types
 
 import (
-	fmt "fmt"
+	"encoding/json"
+	"fmt"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/log/log15"
@@ -187,34 +188,28 @@ func CreateRawMinerTx(status *ParacrossNodeStatus) (*types.Transaction, error) {
 }
 
 // CreateRawTransferTx create paracross asset transfer tx with transfer and withdraw
-func CreateRawTransferTx(param *types.CreateTx) (*types.Transaction, error) {
-	if !types.IsParaExecName(param.GetExecName()) {
-		tlog.Error("CreateRawTransferTx", "exec", param.GetExecName())
-		return nil, types.ErrInvalidParam
-	}
-
-	transfer := &ParacrossAction{}
-	if !param.IsWithdraw {
-		v := &ParacrossAction_Transfer{Transfer: &types.AssetsTransfer{
-			Amount: param.Amount, Note: param.GetNote(), To: param.GetTo(), Cointoken: param.TokenSymbol}}
-		transfer.Value = v
-		transfer.Ty = ParacrossActionTransfer
-	} else {
-		v := &ParacrossAction_Withdraw{Withdraw: &types.AssetsWithdraw{
-			Amount: param.Amount, Note: param.GetNote(), To: param.GetTo(), Cointoken: param.TokenSymbol}}
-		transfer.Value = v
-		transfer.Ty = ParacrossActionWithdraw
-	}
-	tx := &types.Transaction{
-		Execer:  []byte(param.GetExecName()),
-		Payload: types.Encode(transfer),
-		To:      address.ExecAddress(param.GetExecName()),
-		Fee:     param.Fee,
-	}
-	var err error
-	tx, err = types.FormatTx(param.GetExecName(), tx)
+func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage) (*types.Transaction, error) {
+	tlog.Info("ParacrossType CreateTx", "action", action, "msg", string(param))
+	tx, err := p.ExecTypeBase.CreateTx(action, param)
 	if err != nil {
+		tlog.Error("ParacrossType CreateTx failed", "err", err, "action", action, "msg", string(param))
 		return nil, err
 	}
+	if !types.IsPara() {
+		var transfer ParacrossAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			tlog.Error("ParacrossType CreateTx failed", "decode payload err", err, "action", action, "msg", string(param))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdraw().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+
 	return tx, nil
 }

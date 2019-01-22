@@ -53,7 +53,7 @@ func makeProvers(trie *Trie) []func(key []byte) *dbm.GoMemDB {
 		proof, _ := dbm.NewGoMemDB("gomemdb", "", 128)
 		if it := NewIterator(trie.NodeIterator(key)); it.Next() && bytes.Equal(key, it.Key) {
 			for _, p := range it.Prove() {
-				proof.Set(common.ShaKeccak256(p), p)
+				proof.Set(common.Sha3(p), p)
 			}
 		}
 		return proof
@@ -132,7 +132,7 @@ func TestBadProof(t *testing.T) {
 			proof.Delete(key)
 
 			mutateByte(val)
-			proof.Set(common.ShaKeccak256(val), val)
+			proof.Set(common.Sha3(val), val)
 
 			if _, _, err := VerifyProof(root, kv.k, proof); err == nil {
 				t.Fatalf("prover %d: expected proof to fail for key %x", i, kv.k)
