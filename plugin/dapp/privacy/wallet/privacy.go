@@ -745,7 +745,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
-		To:		   req.GetTo(),
+		To:        req.GetTo(),
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPrivacy2Public,
