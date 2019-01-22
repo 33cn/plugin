@@ -79,7 +79,6 @@ func showPrivacyKey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-
 // CreatePub2PrivTxCmd create a public to privacy transaction
 func createPub2PrivTxCmd() *cobra.Command {
 	cmd := &cobra.Command{

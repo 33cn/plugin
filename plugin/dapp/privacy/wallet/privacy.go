@@ -745,7 +745,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		Note:      req.GetNote(),
 		Input:     privacyInput,
 		Output:    privacyOutput,
-		To:		   req.GetTo(),
+		To:        req.GetTo(),
 	}
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPrivacy2Public,
@@ -972,7 +972,6 @@ func (policy *privacyPolicy) showPrivacyAccountsSpend(req *privacytypes.ReqPrivB
 	return utxoHaveTxHashs, nil
 }
 
-
 func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *privacytypes.PrivacyInput, utxosInKeyInput []*privacytypes.UTXOBasics, realkeyInputSlice []*privacytypes.RealKeyInput) (err error) {
 	tx.Signature = nil
 	data := types.Encode(tx)
@@ -1001,7 +1000,6 @@ func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *pr
 	}
 	return nil
 }
-
 
 func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWalletTxDetailParam) {
 	blockheight := param.block.Block.Height*maxTxNumPerBlock + int64(param.index)

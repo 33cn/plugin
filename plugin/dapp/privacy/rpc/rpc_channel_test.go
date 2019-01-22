@@ -94,7 +94,6 @@ func testShowPrivacyAccountSpend(t *testing.T, jrpc *jsonclient.JSONClient) erro
 	return err
 }
 
-
 func testShowAmountsOfUTXO(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
 	var params rpctypes.Query4Jrpc
