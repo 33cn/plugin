@@ -12,7 +12,6 @@ import (
 	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -57,7 +56,6 @@ type Action struct {
 	execaddr     string
 	localDB      dbm.KVDB
 	index        int
-	api          client.QueueProtocolAPI
 	mainHeight   int64
 }
 
