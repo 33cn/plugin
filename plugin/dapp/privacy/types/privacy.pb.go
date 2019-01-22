@@ -3,13 +3,13 @@
 
 package types
 
-import (
-	context "context"
-	fmt "fmt"
-	math "math"
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import types "github.com/33cn/chain33/types"
 
-	types "github.com/33cn/chain33/types"
-	proto "github.com/golang/protobuf/proto"
+import (
+	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
 
@@ -24,10 +24,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-//////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////
 // message for Privacy
 // start/////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////
 type PrivacyAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*PrivacyAction_Public2Privacy
@@ -44,17 +44,16 @@ func (m *PrivacyAction) Reset()         { *m = PrivacyAction{} }
 func (m *PrivacyAction) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction) ProtoMessage()    {}
 func (*PrivacyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{0}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{0}
 }
-
 func (m *PrivacyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction.Unmarshal(m, b)
 }
 func (m *PrivacyAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyAction.Marshal(b, m, deterministic)
 }
-func (m *PrivacyAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyAction.Merge(m, src)
+func (dst *PrivacyAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyAction.Merge(dst, src)
 }
 func (m *PrivacyAction) XXX_Size() int {
 	return xxx_messageInfo_PrivacyAction.Size(m)
@@ -229,17 +228,16 @@ func (m *Public2Privacy) Reset()         { *m = Public2Privacy{} }
 func (m *Public2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy) ProtoMessage()    {}
 func (*Public2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{1}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{1}
 }
-
 func (m *Public2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy.Unmarshal(m, b)
 }
 func (m *Public2Privacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Public2Privacy.Marshal(b, m, deterministic)
 }
-func (m *Public2Privacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Public2Privacy.Merge(m, src)
+func (dst *Public2Privacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Public2Privacy.Merge(dst, src)
 }
 func (m *Public2Privacy) XXX_Size() int {
 	return xxx_messageInfo_Public2Privacy.Size(m)
@@ -293,17 +291,16 @@ func (m *Privacy2Privacy) Reset()         { *m = Privacy2Privacy{} }
 func (m *Privacy2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy) ProtoMessage()    {}
 func (*Privacy2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{2}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{2}
 }
-
 func (m *Privacy2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy.Unmarshal(m, b)
 }
 func (m *Privacy2Privacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Privacy.Marshal(b, m, deterministic)
 }
-func (m *Privacy2Privacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Privacy.Merge(m, src)
+func (dst *Privacy2Privacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Privacy.Merge(dst, src)
 }
 func (m *Privacy2Privacy) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Privacy.Size(m)
@@ -353,6 +350,7 @@ type Privacy2Public struct {
 	Tokenname            string         `protobuf:"bytes,1,opt,name=tokenname,proto3" json:"tokenname,omitempty"`
 	Amount               int64          `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
 	Note                 string         `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	To                   string         `protobuf:"bytes,6,opt,name=to,proto3" json:"to,omitempty"`
 	Input                *PrivacyInput  `protobuf:"bytes,4,opt,name=input,proto3" json:"input,omitempty"`
 	Output               *PrivacyOutput `protobuf:"bytes,5,opt,name=output,proto3" json:"output,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
@@ -364,17 +362,16 @@ func (m *Privacy2Public) Reset()         { *m = Privacy2Public{} }
 func (m *Privacy2Public) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public) ProtoMessage()    {}
 func (*Privacy2Public) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{3}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{3}
 }
-
 func (m *Privacy2Public) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public.Unmarshal(m, b)
 }
 func (m *Privacy2Public) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Public.Marshal(b, m, deterministic)
 }
-func (m *Privacy2Public) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Public.Merge(m, src)
+func (dst *Privacy2Public) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Public.Merge(dst, src)
 }
 func (m *Privacy2Public) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Public.Size(m)
@@ -406,6 +403,13 @@ func (m *Privacy2Public) GetNote() string {
 	return ""
 }
 
+func (m *Privacy2Public) GetTo() string {
+	if m != nil {
+		return m.To
+	}
+	return ""
+}
+
 func (m *Privacy2Public) GetInput() *PrivacyInput {
 	if m != nil {
 		return m.Input
@@ -421,8 +425,8 @@ func (m *Privacy2Public) GetOutput() *PrivacyOutput {
 }
 
 type UTXOGlobalIndex struct {
-	//	int64 height   = 1;
-	//	int32 txindex  = 2;
+	// 	int64 height   = 1;
+	// 	int32 txindex  = 2;
 	Txhash               []byte   `protobuf:"bytes,3,opt,name=txhash,proto3" json:"txhash,omitempty"`
 	Outindex             int32    `protobuf:"varint,4,opt,name=outindex,proto3" json:"outindex,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -434,17 +438,16 @@ func (m *UTXOGlobalIndex) Reset()         { *m = UTXOGlobalIndex{} }
 func (m *UTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex) ProtoMessage()    {}
 func (*UTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{4}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{4}
 }
-
 func (m *UTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *UTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (m *UTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOGlobalIndex.Merge(m, src)
+func (dst *UTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOGlobalIndex.Merge(dst, src)
 }
 func (m *UTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_UTXOGlobalIndex.Size(m)
@@ -483,17 +486,16 @@ func (m *KeyInput) Reset()         { *m = KeyInput{} }
 func (m *KeyInput) String() string { return proto.CompactTextString(m) }
 func (*KeyInput) ProtoMessage()    {}
 func (*KeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{5}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{5}
 }
-
 func (m *KeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput.Unmarshal(m, b)
 }
 func (m *KeyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyInput.Marshal(b, m, deterministic)
 }
-func (m *KeyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyInput.Merge(m, src)
+func (dst *KeyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyInput.Merge(dst, src)
 }
 func (m *KeyInput) XXX_Size() int {
 	return xxx_messageInfo_KeyInput.Size(m)
@@ -536,17 +538,16 @@ func (m *PrivacyInput) Reset()         { *m = PrivacyInput{} }
 func (m *PrivacyInput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput) ProtoMessage()    {}
 func (*PrivacyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{6}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{6}
 }
-
 func (m *PrivacyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput.Unmarshal(m, b)
 }
 func (m *PrivacyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyInput.Marshal(b, m, deterministic)
 }
-func (m *PrivacyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyInput.Merge(m, src)
+func (dst *PrivacyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyInput.Merge(dst, src)
 }
 func (m *PrivacyInput) XXX_Size() int {
 	return xxx_messageInfo_PrivacyInput.Size(m)
@@ -577,17 +578,16 @@ func (m *KeyOutput) Reset()         { *m = KeyOutput{} }
 func (m *KeyOutput) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput) ProtoMessage()    {}
 func (*KeyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{7}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{7}
 }
-
 func (m *KeyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput.Unmarshal(m, b)
 }
 func (m *KeyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyOutput.Marshal(b, m, deterministic)
 }
-func (m *KeyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyOutput.Merge(m, src)
+func (dst *KeyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyOutput.Merge(dst, src)
 }
 func (m *KeyOutput) XXX_Size() int {
 	return xxx_messageInfo_KeyOutput.Size(m)
@@ -624,17 +624,16 @@ func (m *PrivacyOutput) Reset()         { *m = PrivacyOutput{} }
 func (m *PrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput) ProtoMessage()    {}
 func (*PrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{8}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{8}
 }
-
 func (m *PrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput.Unmarshal(m, b)
 }
 func (m *PrivacyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyOutput.Marshal(b, m, deterministic)
 }
-func (m *PrivacyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyOutput.Merge(m, src)
+func (dst *PrivacyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyOutput.Merge(dst, src)
 }
 func (m *PrivacyOutput) XXX_Size() int {
 	return xxx_messageInfo_PrivacyOutput.Size(m)
@@ -671,17 +670,16 @@ func (m *GroupUTXOGlobalIndex) Reset()         { *m = GroupUTXOGlobalIndex{} }
 func (m *GroupUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOGlobalIndex) ProtoMessage()    {}
 func (*GroupUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{9}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{9}
 }
-
 func (m *GroupUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *GroupUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (m *GroupUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GroupUTXOGlobalIndex.Merge(m, src)
+func (dst *GroupUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GroupUTXOGlobalIndex.Merge(dst, src)
 }
 func (m *GroupUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Size(m)
@@ -721,17 +719,16 @@ func (m *LocalUTXOItem) Reset()         { *m = LocalUTXOItem{} }
 func (m *LocalUTXOItem) String() string { return proto.CompactTextString(m) }
 func (*LocalUTXOItem) ProtoMessage()    {}
 func (*LocalUTXOItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{10}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{10}
 }
-
 func (m *LocalUTXOItem) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalUTXOItem.Unmarshal(m, b)
 }
 func (m *LocalUTXOItem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalUTXOItem.Marshal(b, m, deterministic)
 }
-func (m *LocalUTXOItem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalUTXOItem.Merge(m, src)
+func (dst *LocalUTXOItem) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalUTXOItem.Merge(dst, src)
 }
 func (m *LocalUTXOItem) XXX_Size() int {
 	return xxx_messageInfo_LocalUTXOItem.Size(m)
@@ -789,17 +786,16 @@ func (m *ReqUTXOPubKeys) Reset()         { *m = ReqUTXOPubKeys{} }
 func (m *ReqUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOPubKeys) ProtoMessage()    {}
 func (*ReqUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{11}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{11}
 }
-
 func (m *ReqUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOPubKeys.Unmarshal(m, b)
 }
 func (m *ReqUTXOPubKeys) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqUTXOPubKeys.Marshal(b, m, deterministic)
 }
-func (m *ReqUTXOPubKeys) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqUTXOPubKeys.Merge(m, src)
+func (dst *ReqUTXOPubKeys) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqUTXOPubKeys.Merge(dst, src)
 }
 func (m *ReqUTXOPubKeys) XXX_Size() int {
 	return xxx_messageInfo_ReqUTXOPubKeys.Size(m)
@@ -836,17 +832,16 @@ func (m *PublicKeyData) Reset()         { *m = PublicKeyData{} }
 func (m *PublicKeyData) String() string { return proto.CompactTextString(m) }
 func (*PublicKeyData) ProtoMessage()    {}
 func (*PublicKeyData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{12}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{12}
 }
-
 func (m *PublicKeyData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PublicKeyData.Unmarshal(m, b)
 }
 func (m *PublicKeyData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PublicKeyData.Marshal(b, m, deterministic)
 }
-func (m *PublicKeyData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublicKeyData.Merge(m, src)
+func (dst *PublicKeyData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PublicKeyData.Merge(dst, src)
 }
 func (m *PublicKeyData) XXX_Size() int {
 	return xxx_messageInfo_PublicKeyData.Size(m)
@@ -877,17 +872,16 @@ func (m *GroupUTXOPubKey) Reset()         { *m = GroupUTXOPubKey{} }
 func (m *GroupUTXOPubKey) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOPubKey) ProtoMessage()    {}
 func (*GroupUTXOPubKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{13}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{13}
 }
-
 func (m *GroupUTXOPubKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOPubKey.Unmarshal(m, b)
 }
 func (m *GroupUTXOPubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GroupUTXOPubKey.Marshal(b, m, deterministic)
 }
-func (m *GroupUTXOPubKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GroupUTXOPubKey.Merge(m, src)
+func (dst *GroupUTXOPubKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GroupUTXOPubKey.Merge(dst, src)
 }
 func (m *GroupUTXOPubKey) XXX_Size() int {
 	return xxx_messageInfo_GroupUTXOPubKey.Size(m)
@@ -923,17 +917,16 @@ func (m *ResUTXOPubKeys) Reset()         { *m = ResUTXOPubKeys{} }
 func (m *ResUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOPubKeys) ProtoMessage()    {}
 func (*ResUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{14}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{14}
 }
-
 func (m *ResUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOPubKeys.Unmarshal(m, b)
 }
 func (m *ResUTXOPubKeys) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResUTXOPubKeys.Marshal(b, m, deterministic)
 }
-func (m *ResUTXOPubKeys) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResUTXOPubKeys.Merge(m, src)
+func (dst *ResUTXOPubKeys) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResUTXOPubKeys.Merge(dst, src)
 }
 func (m *ResUTXOPubKeys) XXX_Size() int {
 	return xxx_messageInfo_ResUTXOPubKeys.Size(m)
@@ -963,17 +956,16 @@ func (m *ReqPrivacyToken) Reset()         { *m = ReqPrivacyToken{} }
 func (m *ReqPrivacyToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyToken) ProtoMessage()    {}
 func (*ReqPrivacyToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{15}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{15}
 }
-
 func (m *ReqPrivacyToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyToken.Unmarshal(m, b)
 }
 func (m *ReqPrivacyToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyToken.Marshal(b, m, deterministic)
 }
-func (m *ReqPrivacyToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyToken.Merge(m, src)
+func (dst *ReqPrivacyToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyToken.Merge(dst, src)
 }
 func (m *ReqPrivacyToken) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyToken.Size(m)
@@ -1010,17 +1002,16 @@ func (m *AmountDetail) Reset()         { *m = AmountDetail{} }
 func (m *AmountDetail) String() string { return proto.CompactTextString(m) }
 func (*AmountDetail) ProtoMessage()    {}
 func (*AmountDetail) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{16}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{16}
 }
-
 func (m *AmountDetail) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountDetail.Unmarshal(m, b)
 }
 func (m *AmountDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AmountDetail.Marshal(b, m, deterministic)
 }
-func (m *AmountDetail) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AmountDetail.Merge(m, src)
+func (dst *AmountDetail) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AmountDetail.Merge(dst, src)
 }
 func (m *AmountDetail) XXX_Size() int {
 	return xxx_messageInfo_AmountDetail.Size(m)
@@ -1056,17 +1047,16 @@ func (m *ReplyPrivacyAmounts) Reset()         { *m = ReplyPrivacyAmounts{} }
 func (m *ReplyPrivacyAmounts) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAmounts) ProtoMessage()    {}
 func (*ReplyPrivacyAmounts) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{17}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{17}
 }
-
 func (m *ReplyPrivacyAmounts) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyAmounts) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Marshal(b, m, deterministic)
 }
-func (m *ReplyPrivacyAmounts) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyAmounts.Merge(m, src)
+func (dst *ReplyPrivacyAmounts) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyAmounts.Merge(dst, src)
 }
 func (m *ReplyPrivacyAmounts) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Size(m)
@@ -1095,17 +1085,16 @@ func (m *ReplyUTXOsOfAmount) Reset()         { *m = ReplyUTXOsOfAmount{} }
 func (m *ReplyUTXOsOfAmount) String() string { return proto.CompactTextString(m) }
 func (*ReplyUTXOsOfAmount) ProtoMessage()    {}
 func (*ReplyUTXOsOfAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{18}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{18}
 }
-
 func (m *ReplyUTXOsOfAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Unmarshal(m, b)
 }
 func (m *ReplyUTXOsOfAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Marshal(b, m, deterministic)
 }
-func (m *ReplyUTXOsOfAmount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyUTXOsOfAmount.Merge(m, src)
+func (dst *ReplyUTXOsOfAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyUTXOsOfAmount.Merge(dst, src)
 }
 func (m *ReplyUTXOsOfAmount) XXX_Size() int {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Size(m)
@@ -1135,17 +1124,16 @@ func (m *ReceiptPrivacyOutput) Reset()         { *m = ReceiptPrivacyOutput{} }
 func (m *ReceiptPrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPrivacyOutput) ProtoMessage()    {}
 func (*ReceiptPrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{19}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{19}
 }
-
 func (m *ReceiptPrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Unmarshal(m, b)
 }
 func (m *ReceiptPrivacyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Marshal(b, m, deterministic)
 }
-func (m *ReceiptPrivacyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptPrivacyOutput.Merge(m, src)
+func (dst *ReceiptPrivacyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptPrivacyOutput.Merge(dst, src)
 }
 func (m *ReceiptPrivacyOutput) XXX_Size() int {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Size(m)
@@ -1170,7 +1158,7 @@ func (m *ReceiptPrivacyOutput) GetKeyoutput() []*KeyOutput {
 	return nil
 }
 
-//各种amount额度的UTXO在链上的数量
+// 各种amount额度的UTXO在链上的数量
 type AmountsOfUTXO struct {
 	AmountMap            map[int64]int64 `protobuf:"bytes,1,rep,name=amountMap,proto3" json:"amountMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -1182,17 +1170,16 @@ func (m *AmountsOfUTXO) Reset()         { *m = AmountsOfUTXO{} }
 func (m *AmountsOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*AmountsOfUTXO) ProtoMessage()    {}
 func (*AmountsOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{20}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{20}
 }
-
 func (m *AmountsOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountsOfUTXO.Unmarshal(m, b)
 }
 func (m *AmountsOfUTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AmountsOfUTXO.Marshal(b, m, deterministic)
 }
-func (m *AmountsOfUTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AmountsOfUTXO.Merge(m, src)
+func (dst *AmountsOfUTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AmountsOfUTXO.Merge(dst, src)
 }
 func (m *AmountsOfUTXO) XXX_Size() int {
 	return xxx_messageInfo_AmountsOfUTXO.Size(m)
@@ -1221,17 +1208,16 @@ func (m *TokenNamesOfUTXO) Reset()         { *m = TokenNamesOfUTXO{} }
 func (m *TokenNamesOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*TokenNamesOfUTXO) ProtoMessage()    {}
 func (*TokenNamesOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{21}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{21}
 }
-
 func (m *TokenNamesOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenNamesOfUTXO.Unmarshal(m, b)
 }
 func (m *TokenNamesOfUTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenNamesOfUTXO.Marshal(b, m, deterministic)
 }
-func (m *TokenNamesOfUTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenNamesOfUTXO.Merge(m, src)
+func (dst *TokenNamesOfUTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenNamesOfUTXO.Merge(dst, src)
 }
 func (m *TokenNamesOfUTXO) XXX_Size() int {
 	return xxx_messageInfo_TokenNamesOfUTXO.Size(m)
@@ -1262,17 +1248,16 @@ func (m *UTXOGlobalIndex4Print) Reset()         { *m = UTXOGlobalIndex4Print{} }
 func (m *UTXOGlobalIndex4Print) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex4Print) ProtoMessage()    {}
 func (*UTXOGlobalIndex4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{22}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{22}
 }
-
 func (m *UTXOGlobalIndex4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Unmarshal(m, b)
 }
 func (m *UTXOGlobalIndex4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Marshal(b, m, deterministic)
 }
-func (m *UTXOGlobalIndex4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOGlobalIndex4Print.Merge(m, src)
+func (dst *UTXOGlobalIndex4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOGlobalIndex4Print.Merge(dst, src)
 }
 func (m *UTXOGlobalIndex4Print) XXX_Size() int {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Size(m)
@@ -1310,17 +1295,16 @@ func (m *KeyInput4Print) Reset()         { *m = KeyInput4Print{} }
 func (m *KeyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyInput4Print) ProtoMessage()    {}
 func (*KeyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{23}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{23}
 }
-
 func (m *KeyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput4Print.Unmarshal(m, b)
 }
 func (m *KeyInput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyInput4Print.Marshal(b, m, deterministic)
 }
-func (m *KeyInput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyInput4Print.Merge(m, src)
+func (dst *KeyInput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyInput4Print.Merge(dst, src)
 }
 func (m *KeyInput4Print) XXX_Size() int {
 	return xxx_messageInfo_KeyInput4Print.Size(m)
@@ -1364,17 +1348,16 @@ func (m *KeyOutput4Print) Reset()         { *m = KeyOutput4Print{} }
 func (m *KeyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput4Print) ProtoMessage()    {}
 func (*KeyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{24}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{24}
 }
-
 func (m *KeyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput4Print.Unmarshal(m, b)
 }
 func (m *KeyOutput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyOutput4Print.Marshal(b, m, deterministic)
 }
-func (m *KeyOutput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyOutput4Print.Merge(m, src)
+func (dst *KeyOutput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyOutput4Print.Merge(dst, src)
 }
 func (m *KeyOutput4Print) XXX_Size() int {
 	return xxx_messageInfo_KeyOutput4Print.Size(m)
@@ -1410,17 +1393,16 @@ func (m *PrivacyInput4Print) Reset()         { *m = PrivacyInput4Print{} }
 func (m *PrivacyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput4Print) ProtoMessage()    {}
 func (*PrivacyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{25}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{25}
 }
-
 func (m *PrivacyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput4Print.Unmarshal(m, b)
 }
 func (m *PrivacyInput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyInput4Print.Marshal(b, m, deterministic)
 }
-func (m *PrivacyInput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyInput4Print.Merge(m, src)
+func (dst *PrivacyInput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyInput4Print.Merge(dst, src)
 }
 func (m *PrivacyInput4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyInput4Print.Size(m)
@@ -1450,17 +1432,16 @@ func (m *PrivacyOutput4Print) Reset()         { *m = PrivacyOutput4Print{} }
 func (m *PrivacyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput4Print) ProtoMessage()    {}
 func (*PrivacyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{26}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{26}
 }
-
 func (m *PrivacyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput4Print.Unmarshal(m, b)
 }
 func (m *PrivacyOutput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyOutput4Print.Marshal(b, m, deterministic)
 }
-func (m *PrivacyOutput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyOutput4Print.Merge(m, src)
+func (dst *PrivacyOutput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyOutput4Print.Merge(dst, src)
 }
 func (m *PrivacyOutput4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyOutput4Print.Size(m)
@@ -1499,17 +1480,16 @@ func (m *Public2Privacy4Print) Reset()         { *m = Public2Privacy4Print{} }
 func (m *Public2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy4Print) ProtoMessage()    {}
 func (*Public2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{27}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{27}
 }
-
 func (m *Public2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy4Print.Unmarshal(m, b)
 }
 func (m *Public2Privacy4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Public2Privacy4Print.Marshal(b, m, deterministic)
 }
-func (m *Public2Privacy4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Public2Privacy4Print.Merge(m, src)
+func (dst *Public2Privacy4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Public2Privacy4Print.Merge(dst, src)
 }
 func (m *Public2Privacy4Print) XXX_Size() int {
 	return xxx_messageInfo_Public2Privacy4Print.Size(m)
@@ -1563,17 +1543,16 @@ func (m *Privacy2Privacy4Print) Reset()         { *m = Privacy2Privacy4Print{} }
 func (m *Privacy2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy4Print) ProtoMessage()    {}
 func (*Privacy2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{28}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{28}
 }
-
 func (m *Privacy2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy4Print.Unmarshal(m, b)
 }
 func (m *Privacy2Privacy4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Privacy4Print.Marshal(b, m, deterministic)
 }
-func (m *Privacy2Privacy4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Privacy4Print.Merge(m, src)
+func (dst *Privacy2Privacy4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Privacy4Print.Merge(dst, src)
 }
 func (m *Privacy2Privacy4Print) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Privacy4Print.Size(m)
@@ -1634,17 +1613,16 @@ func (m *Privacy2Public4Print) Reset()         { *m = Privacy2Public4Print{} }
 func (m *Privacy2Public4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public4Print) ProtoMessage()    {}
 func (*Privacy2Public4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{29}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{29}
 }
-
 func (m *Privacy2Public4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public4Print.Unmarshal(m, b)
 }
 func (m *Privacy2Public4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Public4Print.Marshal(b, m, deterministic)
 }
-func (m *Privacy2Public4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Public4Print.Merge(m, src)
+func (dst *Privacy2Public4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Public4Print.Merge(dst, src)
 }
 func (m *Privacy2Public4Print) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Public4Print.Size(m)
@@ -1706,17 +1684,16 @@ func (m *PrivacyAction4Print) Reset()         { *m = PrivacyAction4Print{} }
 func (m *PrivacyAction4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction4Print) ProtoMessage()    {}
 func (*PrivacyAction4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{30}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{30}
 }
-
 func (m *PrivacyAction4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction4Print.Unmarshal(m, b)
 }
 func (m *PrivacyAction4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyAction4Print.Marshal(b, m, deterministic)
 }
-func (m *PrivacyAction4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyAction4Print.Merge(m, src)
+func (dst *PrivacyAction4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyAction4Print.Merge(dst, src)
 }
 func (m *PrivacyAction4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyAction4Print.Size(m)
@@ -1877,280 +1854,6 @@ func _PrivacyAction4Print_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
-type ReqPub2Pri struct {
-	//接收人可见公钥A
-	// string viewPublic  = 1;
-	//接收人花费公钥B
-	// string spendPublic = 2;
-	Tokenname string `protobuf:"bytes,3,opt,name=tokenname,proto3" json:"tokenname,omitempty"`
-	Amount    int64  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note      string `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
-	//发送人地址
-	Sender               string   `protobuf:"bytes,6,opt,name=sender,proto3" json:"sender,omitempty"`
-	Mixin                int32    `protobuf:"varint,7,opt,name=mixin,proto3" json:"mixin,omitempty"`
-	Pubkeypair           string   `protobuf:"bytes,8,opt,name=pubkeypair,proto3" json:"pubkeypair,omitempty"`
-	Expire               int64    `protobuf:"varint,9,opt,name=expire,proto3" json:"expire,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ReqPub2Pri) Reset()         { *m = ReqPub2Pri{} }
-func (m *ReqPub2Pri) String() string { return proto.CompactTextString(m) }
-func (*ReqPub2Pri) ProtoMessage()    {}
-func (*ReqPub2Pri) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{31}
-}
-
-func (m *ReqPub2Pri) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqPub2Pri.Unmarshal(m, b)
-}
-func (m *ReqPub2Pri) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqPub2Pri.Marshal(b, m, deterministic)
-}
-func (m *ReqPub2Pri) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPub2Pri.Merge(m, src)
-}
-func (m *ReqPub2Pri) XXX_Size() int {
-	return xxx_messageInfo_ReqPub2Pri.Size(m)
-}
-func (m *ReqPub2Pri) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqPub2Pri.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqPub2Pri proto.InternalMessageInfo
-
-func (m *ReqPub2Pri) GetTokenname() string {
-	if m != nil {
-		return m.Tokenname
-	}
-	return ""
-}
-
-func (m *ReqPub2Pri) GetAmount() int64 {
-	if m != nil {
-		return m.Amount
-	}
-	return 0
-}
-
-func (m *ReqPub2Pri) GetNote() string {
-	if m != nil {
-		return m.Note
-	}
-	return ""
-}
-
-func (m *ReqPub2Pri) GetSender() string {
-	if m != nil {
-		return m.Sender
-	}
-	return ""
-}
-
-func (m *ReqPub2Pri) GetMixin() int32 {
-	if m != nil {
-		return m.Mixin
-	}
-	return 0
-}
-
-func (m *ReqPub2Pri) GetPubkeypair() string {
-	if m != nil {
-		return m.Pubkeypair
-	}
-	return ""
-}
-
-func (m *ReqPub2Pri) GetExpire() int64 {
-	if m != nil {
-		return m.Expire
-	}
-	return 0
-}
-
-type ReqPri2Pri struct {
-	//接收人可见公钥A
-	// string viewPublic  = 1; //A
-	//接收人花费公钥B
-	// string spendPublic = 2; //B
-	Tokenname string `protobuf:"bytes,3,opt,name=tokenname,proto3" json:"tokenname,omitempty"`
-	Amount    int64  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note      string `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
-	//隐私交易发起人地址
-	Sender string `protobuf:"bytes,6,opt,name=sender,proto3" json:"sender,omitempty"`
-	Mixin  int32  `protobuf:"varint,7,opt,name=mixin,proto3" json:"mixin,omitempty"`
-	//	string txhash      = 7;
-	Pubkeypair           string   `protobuf:"bytes,8,opt,name=pubkeypair,proto3" json:"pubkeypair,omitempty"`
-	Expire               int64    `protobuf:"varint,9,opt,name=expire,proto3" json:"expire,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ReqPri2Pri) Reset()         { *m = ReqPri2Pri{} }
-func (m *ReqPri2Pri) String() string { return proto.CompactTextString(m) }
-func (*ReqPri2Pri) ProtoMessage()    {}
-func (*ReqPri2Pri) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{32}
-}
-
-func (m *ReqPri2Pri) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqPri2Pri.Unmarshal(m, b)
-}
-func (m *ReqPri2Pri) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqPri2Pri.Marshal(b, m, deterministic)
-}
-func (m *ReqPri2Pri) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPri2Pri.Merge(m, src)
-}
-func (m *ReqPri2Pri) XXX_Size() int {
-	return xxx_messageInfo_ReqPri2Pri.Size(m)
-}
-func (m *ReqPri2Pri) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqPri2Pri.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqPri2Pri proto.InternalMessageInfo
-
-func (m *ReqPri2Pri) GetTokenname() string {
-	if m != nil {
-		return m.Tokenname
-	}
-	return ""
-}
-
-func (m *ReqPri2Pri) GetAmount() int64 {
-	if m != nil {
-		return m.Amount
-	}
-	return 0
-}
-
-func (m *ReqPri2Pri) GetNote() string {
-	if m != nil {
-		return m.Note
-	}
-	return ""
-}
-
-func (m *ReqPri2Pri) GetSender() string {
-	if m != nil {
-		return m.Sender
-	}
-	return ""
-}
-
-func (m *ReqPri2Pri) GetMixin() int32 {
-	if m != nil {
-		return m.Mixin
-	}
-	return 0
-}
-
-func (m *ReqPri2Pri) GetPubkeypair() string {
-	if m != nil {
-		return m.Pubkeypair
-	}
-	return ""
-}
-
-func (m *ReqPri2Pri) GetExpire() int64 {
-	if m != nil {
-		return m.Expire
-	}
-	return 0
-}
-
-type ReqPri2Pub struct {
-	Receiver  string `protobuf:"bytes,1,opt,name=receiver,proto3" json:"receiver,omitempty"`
-	Tokenname string `protobuf:"bytes,2,opt,name=tokenname,proto3" json:"tokenname,omitempty"`
-	Amount    int64  `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	Note      string `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
-	//隐私交易发起人地址
-	Sender string `protobuf:"bytes,5,opt,name=sender,proto3" json:"sender,omitempty"`
-	Mixin  int32  `protobuf:"varint,6,opt,name=mixin,proto3" json:"mixin,omitempty"`
-	//	string txhash     = 6;
-	Expire               int64    `protobuf:"varint,7,opt,name=expire,proto3" json:"expire,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ReqPri2Pub) Reset()         { *m = ReqPri2Pub{} }
-func (m *ReqPri2Pub) String() string { return proto.CompactTextString(m) }
-func (*ReqPri2Pub) ProtoMessage()    {}
-func (*ReqPri2Pub) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{33}
-}
-
-func (m *ReqPri2Pub) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqPri2Pub.Unmarshal(m, b)
-}
-func (m *ReqPri2Pub) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqPri2Pub.Marshal(b, m, deterministic)
-}
-func (m *ReqPri2Pub) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPri2Pub.Merge(m, src)
-}
-func (m *ReqPri2Pub) XXX_Size() int {
-	return xxx_messageInfo_ReqPri2Pub.Size(m)
-}
-func (m *ReqPri2Pub) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqPri2Pub.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqPri2Pub proto.InternalMessageInfo
-
-func (m *ReqPri2Pub) GetReceiver() string {
-	if m != nil {
-		return m.Receiver
-	}
-	return ""
-}
-
-func (m *ReqPri2Pub) GetTokenname() string {
-	if m != nil {
-		return m.Tokenname
-	}
-	return ""
-}
-
-func (m *ReqPri2Pub) GetAmount() int64 {
-	if m != nil {
-		return m.Amount
-	}
-	return 0
-}
-
-func (m *ReqPri2Pub) GetNote() string {
-	if m != nil {
-		return m.Note
-	}
-	return ""
-}
-
-func (m *ReqPri2Pub) GetSender() string {
-	if m != nil {
-		return m.Sender
-	}
-	return ""
-}
-
-func (m *ReqPri2Pub) GetMixin() int32 {
-	if m != nil {
-		return m.Mixin
-	}
-	return 0
-}
-
-func (m *ReqPri2Pub) GetExpire() int64 {
-	if m != nil {
-		return m.Expire
-	}
-	return 0
-}
-
 type ReqCreateUTXOs struct {
 	// string viewPublic  = 1; //接收人可见公钥A
 	// string spendPublic = 2; //接收人花费公钥B
@@ -2170,17 +1873,16 @@ func (m *ReqCreateUTXOs) Reset()         { *m = ReqCreateUTXOs{} }
 func (m *ReqCreateUTXOs) String() string { return proto.CompactTextString(m) }
 func (*ReqCreateUTXOs) ProtoMessage()    {}
 func (*ReqCreateUTXOs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{34}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{31}
 }
-
 func (m *ReqCreateUTXOs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreateUTXOs.Unmarshal(m, b)
 }
 func (m *ReqCreateUTXOs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCreateUTXOs.Marshal(b, m, deterministic)
 }
-func (m *ReqCreateUTXOs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCreateUTXOs.Merge(m, src)
+func (dst *ReqCreateUTXOs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCreateUTXOs.Merge(dst, src)
 }
 func (m *ReqCreateUTXOs) XXX_Size() int {
 	return xxx_messageInfo_ReqCreateUTXOs.Size(m)
@@ -2254,17 +1956,16 @@ func (m *ReplyPrivacyPkPair) Reset()         { *m = ReplyPrivacyPkPair{} }
 func (m *ReplyPrivacyPkPair) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyPkPair) ProtoMessage()    {}
 func (*ReplyPrivacyPkPair) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{35}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{32}
 }
-
 func (m *ReplyPrivacyPkPair) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyPkPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Marshal(b, m, deterministic)
 }
-func (m *ReplyPrivacyPkPair) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyPkPair.Merge(m, src)
+func (dst *ReplyPrivacyPkPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyPkPair.Merge(dst, src)
 }
 func (m *ReplyPrivacyPkPair) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Size(m)
@@ -2301,17 +2002,16 @@ func (m *ReqPrivBal4AddrToken) Reset()         { *m = ReqPrivBal4AddrToken{} }
 func (m *ReqPrivBal4AddrToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivBal4AddrToken) ProtoMessage()    {}
 func (*ReqPrivBal4AddrToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{36}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{33}
 }
-
 func (m *ReqPrivBal4AddrToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Unmarshal(m, b)
 }
 func (m *ReqPrivBal4AddrToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Marshal(b, m, deterministic)
 }
-func (m *ReqPrivBal4AddrToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivBal4AddrToken.Merge(m, src)
+func (dst *ReqPrivBal4AddrToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivBal4AddrToken.Merge(dst, src)
 }
 func (m *ReqPrivBal4AddrToken) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Size(m)
@@ -2348,17 +2048,16 @@ func (m *ReplyPrivacyBalance) Reset()         { *m = ReplyPrivacyBalance{} }
 func (m *ReplyPrivacyBalance) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyBalance) ProtoMessage()    {}
 func (*ReplyPrivacyBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{37}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{34}
 }
-
 func (m *ReplyPrivacyBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyBalance.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyBalance.Marshal(b, m, deterministic)
 }
-func (m *ReplyPrivacyBalance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyBalance.Merge(m, src)
+func (dst *ReplyPrivacyBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyBalance.Merge(dst, src)
 }
 func (m *ReplyPrivacyBalance) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyBalance.Size(m)
@@ -2403,17 +2102,16 @@ func (m *PrivacyDBStore) Reset()         { *m = PrivacyDBStore{} }
 func (m *PrivacyDBStore) String() string { return proto.CompactTextString(m) }
 func (*PrivacyDBStore) ProtoMessage()    {}
 func (*PrivacyDBStore) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{38}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{35}
 }
-
 func (m *PrivacyDBStore) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyDBStore.Unmarshal(m, b)
 }
 func (m *PrivacyDBStore) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyDBStore.Marshal(b, m, deterministic)
 }
-func (m *PrivacyDBStore) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyDBStore.Merge(m, src)
+func (dst *PrivacyDBStore) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyDBStore.Merge(dst, src)
 }
 func (m *PrivacyDBStore) XXX_Size() int {
 	return xxx_messageInfo_PrivacyDBStore.Size(m)
@@ -2506,17 +2204,16 @@ func (m *UTXO) Reset()         { *m = UTXO{} }
 func (m *UTXO) String() string { return proto.CompactTextString(m) }
 func (*UTXO) ProtoMessage()    {}
 func (*UTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{39}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{36}
 }
-
 func (m *UTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXO.Unmarshal(m, b)
 }
 func (m *UTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXO.Marshal(b, m, deterministic)
 }
-func (m *UTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXO.Merge(m, src)
+func (dst *UTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXO.Merge(dst, src)
 }
 func (m *UTXO) XXX_Size() int {
 	return xxx_messageInfo_UTXO.Size(m)
@@ -2554,17 +2251,16 @@ func (m *UTXOHaveTxHash) Reset()         { *m = UTXOHaveTxHash{} }
 func (m *UTXOHaveTxHash) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHash) ProtoMessage()    {}
 func (*UTXOHaveTxHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{40}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{37}
 }
-
 func (m *UTXOHaveTxHash) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHash.Unmarshal(m, b)
 }
 func (m *UTXOHaveTxHash) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOHaveTxHash.Marshal(b, m, deterministic)
 }
-func (m *UTXOHaveTxHash) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOHaveTxHash.Merge(m, src)
+func (dst *UTXOHaveTxHash) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOHaveTxHash.Merge(dst, src)
 }
 func (m *UTXOHaveTxHash) XXX_Size() int {
 	return xxx_messageInfo_UTXOHaveTxHash.Size(m)
@@ -2607,17 +2303,16 @@ func (m *UTXOs) Reset()         { *m = UTXOs{} }
 func (m *UTXOs) String() string { return proto.CompactTextString(m) }
 func (*UTXOs) ProtoMessage()    {}
 func (*UTXOs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{41}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{38}
 }
-
 func (m *UTXOs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOs.Unmarshal(m, b)
 }
 func (m *UTXOs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOs.Marshal(b, m, deterministic)
 }
-func (m *UTXOs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOs.Merge(m, src)
+func (dst *UTXOs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOs.Merge(dst, src)
 }
 func (m *UTXOs) XXX_Size() int {
 	return xxx_messageInfo_UTXOs.Size(m)
@@ -2646,17 +2341,16 @@ func (m *UTXOHaveTxHashs) Reset()         { *m = UTXOHaveTxHashs{} }
 func (m *UTXOHaveTxHashs) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHashs) ProtoMessage()    {}
 func (*UTXOHaveTxHashs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{42}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{39}
 }
-
 func (m *UTXOHaveTxHashs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHashs.Unmarshal(m, b)
 }
 func (m *UTXOHaveTxHashs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOHaveTxHashs.Marshal(b, m, deterministic)
 }
-func (m *UTXOHaveTxHashs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOHaveTxHashs.Merge(m, src)
+func (dst *UTXOHaveTxHashs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOHaveTxHashs.Merge(dst, src)
 }
 func (m *UTXOHaveTxHashs) XXX_Size() int {
 	return xxx_messageInfo_UTXOHaveTxHashs.Size(m)
@@ -2687,17 +2381,16 @@ func (m *ReqUTXOGlobalIndex) Reset()         { *m = ReqUTXOGlobalIndex{} }
 func (m *ReqUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOGlobalIndex) ProtoMessage()    {}
 func (*ReqUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{43}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{40}
 }
-
 func (m *ReqUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *ReqUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (m *ReqUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqUTXOGlobalIndex.Merge(m, src)
+func (dst *ReqUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqUTXOGlobalIndex.Merge(dst, src)
 }
 func (m *ReqUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Size(m)
@@ -2741,17 +2434,16 @@ func (m *UTXOBasic) Reset()         { *m = UTXOBasic{} }
 func (m *UTXOBasic) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasic) ProtoMessage()    {}
 func (*UTXOBasic) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{44}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{41}
 }
-
 func (m *UTXOBasic) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasic.Unmarshal(m, b)
 }
 func (m *UTXOBasic) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOBasic.Marshal(b, m, deterministic)
 }
-func (m *UTXOBasic) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOBasic.Merge(m, src)
+func (dst *UTXOBasic) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOBasic.Merge(dst, src)
 }
 func (m *UTXOBasic) XXX_Size() int {
 	return xxx_messageInfo_UTXOBasic.Size(m)
@@ -2788,17 +2480,16 @@ func (m *UTXOIndex4Amount) Reset()         { *m = UTXOIndex4Amount{} }
 func (m *UTXOIndex4Amount) String() string { return proto.CompactTextString(m) }
 func (*UTXOIndex4Amount) ProtoMessage()    {}
 func (*UTXOIndex4Amount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{45}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{42}
 }
-
 func (m *UTXOIndex4Amount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOIndex4Amount.Unmarshal(m, b)
 }
 func (m *UTXOIndex4Amount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOIndex4Amount.Marshal(b, m, deterministic)
 }
-func (m *UTXOIndex4Amount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOIndex4Amount.Merge(m, src)
+func (dst *UTXOIndex4Amount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOIndex4Amount.Merge(dst, src)
 }
 func (m *UTXOIndex4Amount) XXX_Size() int {
 	return xxx_messageInfo_UTXOIndex4Amount.Size(m)
@@ -2836,17 +2527,16 @@ func (m *ResUTXOGlobalIndex) Reset()         { *m = ResUTXOGlobalIndex{} }
 func (m *ResUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOGlobalIndex) ProtoMessage()    {}
 func (*ResUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{46}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{43}
 }
-
 func (m *ResUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *ResUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (m *ResUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResUTXOGlobalIndex.Merge(m, src)
+func (dst *ResUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResUTXOGlobalIndex.Merge(dst, src)
 }
 func (m *ResUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Size(m)
@@ -2894,17 +2584,16 @@ func (m *FTXOsSTXOsInOneTx) Reset()         { *m = FTXOsSTXOsInOneTx{} }
 func (m *FTXOsSTXOsInOneTx) String() string { return proto.CompactTextString(m) }
 func (*FTXOsSTXOsInOneTx) ProtoMessage()    {}
 func (*FTXOsSTXOsInOneTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{47}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{44}
 }
-
 func (m *FTXOsSTXOsInOneTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Unmarshal(m, b)
 }
 func (m *FTXOsSTXOsInOneTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Marshal(b, m, deterministic)
 }
-func (m *FTXOsSTXOsInOneTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FTXOsSTXOsInOneTx.Merge(m, src)
+func (dst *FTXOsSTXOsInOneTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FTXOsSTXOsInOneTx.Merge(dst, src)
 }
 func (m *FTXOsSTXOsInOneTx) XXX_Size() int {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Size(m)
@@ -2962,17 +2651,16 @@ func (m *RealKeyInput) Reset()         { *m = RealKeyInput{} }
 func (m *RealKeyInput) String() string { return proto.CompactTextString(m) }
 func (*RealKeyInput) ProtoMessage()    {}
 func (*RealKeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{48}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{45}
 }
-
 func (m *RealKeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RealKeyInput.Unmarshal(m, b)
 }
 func (m *RealKeyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RealKeyInput.Marshal(b, m, deterministic)
 }
-func (m *RealKeyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RealKeyInput.Merge(m, src)
+func (dst *RealKeyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RealKeyInput.Merge(dst, src)
 }
 func (m *RealKeyInput) XXX_Size() int {
 	return xxx_messageInfo_RealKeyInput.Size(m)
@@ -3008,17 +2696,16 @@ func (m *UTXOBasics) Reset()         { *m = UTXOBasics{} }
 func (m *UTXOBasics) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasics) ProtoMessage()    {}
 func (*UTXOBasics) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{49}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{46}
 }
-
 func (m *UTXOBasics) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasics.Unmarshal(m, b)
 }
 func (m *UTXOBasics) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOBasics.Marshal(b, m, deterministic)
 }
-func (m *UTXOBasics) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOBasics.Merge(m, src)
+func (dst *UTXOBasics) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOBasics.Merge(dst, src)
 }
 func (m *UTXOBasics) XXX_Size() int {
 	return xxx_messageInfo_UTXOBasics.Size(m)
@@ -3061,17 +2748,16 @@ func (m *CreateTransactionCache) Reset()         { *m = CreateTransactionCache{}
 func (m *CreateTransactionCache) String() string { return proto.CompactTextString(m) }
 func (*CreateTransactionCache) ProtoMessage()    {}
 func (*CreateTransactionCache) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{50}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{47}
 }
-
 func (m *CreateTransactionCache) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CreateTransactionCache.Unmarshal(m, b)
 }
 func (m *CreateTransactionCache) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CreateTransactionCache.Marshal(b, m, deterministic)
 }
-func (m *CreateTransactionCache) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTransactionCache.Merge(m, src)
+func (dst *CreateTransactionCache) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateTransactionCache.Merge(dst, src)
 }
 func (m *CreateTransactionCache) XXX_Size() int {
 	return xxx_messageInfo_CreateTransactionCache.Size(m)
@@ -3157,17 +2843,16 @@ func (m *ReqCacheTxList) Reset()         { *m = ReqCacheTxList{} }
 func (m *ReqCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReqCacheTxList) ProtoMessage()    {}
 func (*ReqCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{51}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{48}
 }
-
 func (m *ReqCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCacheTxList.Unmarshal(m, b)
 }
 func (m *ReqCacheTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCacheTxList.Marshal(b, m, deterministic)
 }
-func (m *ReqCacheTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCacheTxList.Merge(m, src)
+func (dst *ReqCacheTxList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCacheTxList.Merge(dst, src)
 }
 func (m *ReqCacheTxList) XXX_Size() int {
 	return xxx_messageInfo_ReqCacheTxList.Size(m)
@@ -3203,17 +2888,16 @@ func (m *ReplyCacheTxList) Reset()         { *m = ReplyCacheTxList{} }
 func (m *ReplyCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReplyCacheTxList) ProtoMessage()    {}
 func (*ReplyCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{52}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{49}
 }
-
 func (m *ReplyCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyCacheTxList.Unmarshal(m, b)
 }
 func (m *ReplyCacheTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyCacheTxList.Marshal(b, m, deterministic)
 }
-func (m *ReplyCacheTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyCacheTxList.Merge(m, src)
+func (dst *ReplyCacheTxList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyCacheTxList.Merge(dst, src)
 }
 func (m *ReplyCacheTxList) XXX_Size() int {
 	return xxx_messageInfo_ReplyCacheTxList.Size(m)
@@ -3243,17 +2927,16 @@ func (m *ReqPrivacyAccount) Reset()         { *m = ReqPrivacyAccount{} }
 func (m *ReqPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyAccount) ProtoMessage()    {}
 func (*ReqPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{53}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{50}
 }
-
 func (m *ReqPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyAccount.Unmarshal(m, b)
 }
 func (m *ReqPrivacyAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyAccount.Marshal(b, m, deterministic)
 }
-func (m *ReqPrivacyAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyAccount.Merge(m, src)
+func (dst *ReqPrivacyAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyAccount.Merge(dst, src)
 }
 func (m *ReqPrivacyAccount) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyAccount.Size(m)
@@ -3296,17 +2979,16 @@ func (m *ReqPPrivacyAccount) Reset()         { *m = ReqPPrivacyAccount{} }
 func (m *ReqPPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReqPPrivacyAccount) ProtoMessage()    {}
 func (*ReqPPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{54}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{51}
 }
-
 func (m *ReqPPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPPrivacyAccount.Unmarshal(m, b)
 }
 func (m *ReqPPrivacyAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPPrivacyAccount.Marshal(b, m, deterministic)
 }
-func (m *ReqPPrivacyAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPPrivacyAccount.Merge(m, src)
+func (dst *ReqPPrivacyAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPPrivacyAccount.Merge(dst, src)
 }
 func (m *ReqPPrivacyAccount) XXX_Size() int {
 	return xxx_messageInfo_ReqPPrivacyAccount.Size(m)
@@ -3354,17 +3036,16 @@ func (m *ReplyPrivacyAccount) Reset()         { *m = ReplyPrivacyAccount{} }
 func (m *ReplyPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAccount) ProtoMessage()    {}
 func (*ReplyPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{55}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{52}
 }
-
 func (m *ReplyPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAccount.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyAccount.Marshal(b, m, deterministic)
 }
-func (m *ReplyPrivacyAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyAccount.Merge(m, src)
+func (dst *ReplyPrivacyAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyAccount.Merge(dst, src)
 }
 func (m *ReplyPrivacyAccount) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyAccount.Size(m)
@@ -3408,17 +3089,16 @@ func (m *ReqCreateCacheTxKey) Reset()         { *m = ReqCreateCacheTxKey{} }
 func (m *ReqCreateCacheTxKey) String() string { return proto.CompactTextString(m) }
 func (*ReqCreateCacheTxKey) ProtoMessage()    {}
 func (*ReqCreateCacheTxKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{56}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{53}
 }
-
 func (m *ReqCreateCacheTxKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Unmarshal(m, b)
 }
 func (m *ReqCreateCacheTxKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Marshal(b, m, deterministic)
 }
-func (m *ReqCreateCacheTxKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCreateCacheTxKey.Merge(m, src)
+func (dst *ReqCreateCacheTxKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCreateCacheTxKey.Merge(dst, src)
 }
 func (m *ReqCreateCacheTxKey) XXX_Size() int {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Size(m)
@@ -3463,17 +3143,16 @@ func (m *ReqPrivacyTransactionList) Reset()         { *m = ReqPrivacyTransaction
 func (m *ReqPrivacyTransactionList) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyTransactionList) ProtoMessage()    {}
 func (*ReqPrivacyTransactionList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{57}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{54}
 }
-
 func (m *ReqPrivacyTransactionList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Unmarshal(m, b)
 }
 func (m *ReqPrivacyTransactionList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Marshal(b, m, deterministic)
 }
-func (m *ReqPrivacyTransactionList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyTransactionList.Merge(m, src)
+func (dst *ReqPrivacyTransactionList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyTransactionList.Merge(dst, src)
 }
 func (m *ReqPrivacyTransactionList) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Size(m)
@@ -3545,17 +3224,16 @@ func (m *ReqRescanUtxos) Reset()         { *m = ReqRescanUtxos{} }
 func (m *ReqRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*ReqRescanUtxos) ProtoMessage()    {}
 func (*ReqRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{58}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{55}
 }
-
 func (m *ReqRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRescanUtxos.Unmarshal(m, b)
 }
 func (m *ReqRescanUtxos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRescanUtxos.Marshal(b, m, deterministic)
 }
-func (m *ReqRescanUtxos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRescanUtxos.Merge(m, src)
+func (dst *ReqRescanUtxos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRescanUtxos.Merge(dst, src)
 }
 func (m *ReqRescanUtxos) XXX_Size() int {
 	return xxx_messageInfo_ReqRescanUtxos.Size(m)
@@ -3592,17 +3270,16 @@ func (m *RepRescanResult) Reset()         { *m = RepRescanResult{} }
 func (m *RepRescanResult) String() string { return proto.CompactTextString(m) }
 func (*RepRescanResult) ProtoMessage()    {}
 func (*RepRescanResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{59}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{56}
 }
-
 func (m *RepRescanResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanResult.Unmarshal(m, b)
 }
 func (m *RepRescanResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepRescanResult.Marshal(b, m, deterministic)
 }
-func (m *RepRescanResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepRescanResult.Merge(m, src)
+func (dst *RepRescanResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepRescanResult.Merge(dst, src)
 }
 func (m *RepRescanResult) XXX_Size() int {
 	return xxx_messageInfo_RepRescanResult.Size(m)
@@ -3639,17 +3316,16 @@ func (m *RepRescanUtxos) Reset()         { *m = RepRescanUtxos{} }
 func (m *RepRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*RepRescanUtxos) ProtoMessage()    {}
 func (*RepRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{60}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{57}
 }
-
 func (m *RepRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanUtxos.Unmarshal(m, b)
 }
 func (m *RepRescanUtxos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepRescanUtxos.Marshal(b, m, deterministic)
 }
-func (m *RepRescanUtxos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepRescanUtxos.Merge(m, src)
+func (dst *RepRescanUtxos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepRescanUtxos.Merge(dst, src)
 }
 func (m *RepRescanUtxos) XXX_Size() int {
 	return xxx_messageInfo_RepRescanUtxos.Size(m)
@@ -3685,17 +3361,16 @@ func (m *ReqEnablePrivacy) Reset()         { *m = ReqEnablePrivacy{} }
 func (m *ReqEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*ReqEnablePrivacy) ProtoMessage()    {}
 func (*ReqEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{61}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{58}
 }
-
 func (m *ReqEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqEnablePrivacy.Unmarshal(m, b)
 }
 func (m *ReqEnablePrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqEnablePrivacy.Marshal(b, m, deterministic)
 }
-func (m *ReqEnablePrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqEnablePrivacy.Merge(m, src)
+func (dst *ReqEnablePrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqEnablePrivacy.Merge(dst, src)
 }
 func (m *ReqEnablePrivacy) XXX_Size() int {
 	return xxx_messageInfo_ReqEnablePrivacy.Size(m)
@@ -3726,17 +3401,16 @@ func (m *PriAddrResult) Reset()         { *m = PriAddrResult{} }
 func (m *PriAddrResult) String() string { return proto.CompactTextString(m) }
 func (*PriAddrResult) ProtoMessage()    {}
 func (*PriAddrResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{62}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{59}
 }
-
 func (m *PriAddrResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PriAddrResult.Unmarshal(m, b)
 }
 func (m *PriAddrResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PriAddrResult.Marshal(b, m, deterministic)
 }
-func (m *PriAddrResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PriAddrResult.Merge(m, src)
+func (dst *PriAddrResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PriAddrResult.Merge(dst, src)
 }
 func (m *PriAddrResult) XXX_Size() int {
 	return xxx_messageInfo_PriAddrResult.Size(m)
@@ -3779,17 +3453,16 @@ func (m *RepEnablePrivacy) Reset()         { *m = RepEnablePrivacy{} }
 func (m *RepEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*RepEnablePrivacy) ProtoMessage()    {}
 func (*RepEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{63}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{60}
 }
-
 func (m *RepEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepEnablePrivacy.Unmarshal(m, b)
 }
 func (m *RepEnablePrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepEnablePrivacy.Marshal(b, m, deterministic)
 }
-func (m *RepEnablePrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepEnablePrivacy.Merge(m, src)
+func (dst *RepEnablePrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepEnablePrivacy.Merge(dst, src)
 }
 func (m *RepEnablePrivacy) XXX_Size() int {
 	return xxx_messageInfo_RepEnablePrivacy.Size(m)
@@ -3821,17 +3494,16 @@ func (m *PrivacySignatureParam) Reset()         { *m = PrivacySignatureParam{} }
 func (m *PrivacySignatureParam) String() string { return proto.CompactTextString(m) }
 func (*PrivacySignatureParam) ProtoMessage()    {}
 func (*PrivacySignatureParam) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{64}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{61}
 }
-
 func (m *PrivacySignatureParam) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacySignatureParam.Unmarshal(m, b)
 }
 func (m *PrivacySignatureParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacySignatureParam.Marshal(b, m, deterministic)
 }
-func (m *PrivacySignatureParam) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacySignatureParam.Merge(m, src)
+func (dst *PrivacySignatureParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacySignatureParam.Merge(dst, src)
 }
 func (m *PrivacySignatureParam) XXX_Size() int {
 	return xxx_messageInfo_PrivacySignatureParam.Size(m)
@@ -3877,17 +3549,16 @@ func (m *WalletAccountPrivacy) Reset()         { *m = WalletAccountPrivacy{} }
 func (m *WalletAccountPrivacy) String() string { return proto.CompactTextString(m) }
 func (*WalletAccountPrivacy) ProtoMessage()    {}
 func (*WalletAccountPrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dde03d4df7a6e99a, []int{65}
+	return fileDescriptor_privacy_b2f7ac2056a1b054, []int{62}
 }
-
 func (m *WalletAccountPrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_WalletAccountPrivacy.Unmarshal(m, b)
 }
 func (m *WalletAccountPrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_WalletAccountPrivacy.Marshal(b, m, deterministic)
 }
-func (m *WalletAccountPrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WalletAccountPrivacy.Merge(m, src)
+func (dst *WalletAccountPrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletAccountPrivacy.Merge(dst, src)
 }
 func (m *WalletAccountPrivacy) XXX_Size() int {
 	return xxx_messageInfo_WalletAccountPrivacy.Size(m)
@@ -3960,9 +3631,6 @@ func init() {
 	proto.RegisterType((*Privacy2Privacy4Print)(nil), "types.Privacy2Privacy4Print")
 	proto.RegisterType((*Privacy2Public4Print)(nil), "types.Privacy2Public4Print")
 	proto.RegisterType((*PrivacyAction4Print)(nil), "types.PrivacyAction4Print")
-	proto.RegisterType((*ReqPub2Pri)(nil), "types.ReqPub2Pri")
-	proto.RegisterType((*ReqPri2Pri)(nil), "types.ReqPri2Pri")
-	proto.RegisterType((*ReqPri2Pub)(nil), "types.ReqPri2Pub")
 	proto.RegisterType((*ReqCreateUTXOs)(nil), "types.ReqCreateUTXOs")
 	proto.RegisterType((*ReplyPrivacyPkPair)(nil), "types.ReplyPrivacyPkPair")
 	proto.RegisterType((*ReqPrivBal4AddrToken)(nil), "types.ReqPrivBal4AddrToken")
@@ -3997,162 +3665,6 @@ func init() {
 	proto.RegisterType((*WalletAccountPrivacy)(nil), "types.WalletAccountPrivacy")
 }
 
-func init() { proto.RegisterFile("privacy.proto", fileDescriptor_dde03d4df7a6e99a) }
-
-var fileDescriptor_dde03d4df7a6e99a = []byte{
-	// 2393 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x5a, 0x4f, 0x6f, 0x1c, 0x49,
-	0x15, 0x77, 0xcf, 0x1f, 0xdb, 0xfd, 0x3c, 0xb6, 0x27, 0x9d, 0xb1, 0x77, 0x32, 0x89, 0xa2, 0x50,
-	0xbb, 0x0a, 0x61, 0x41, 0x46, 0x6b, 0x2c, 0xed, 0x26, 0x04, 0x65, 0x3d, 0x8e, 0x93, 0x8c, 0xbc,
-	0x89, 0x4d, 0x79, 0x56, 0x20, 0xb4, 0x48, 0xd4, 0xcc, 0x94, 0xed, 0x96, 0x7b, 0xba, 0xdb, 0xdd,
-	0x3d, 0xf6, 0xcc, 0x69, 0xe1, 0x82, 0x38, 0x70, 0x40, 0x02, 0x71, 0x01, 0x71, 0xe3, 0x8e, 0x04,
-	0x07, 0x0e, 0x1c, 0xb8, 0xc0, 0x89, 0xef, 0xc0, 0x37, 0xe0, 0x33, 0xa0, 0xfa, 0xd3, 0xdd, 0x55,
-	0x35, 0x3d, 0xb6, 0x13, 0x0c, 0x12, 0x17, 0x6b, 0xea, 0xd5, 0xab, 0x57, 0xbf, 0xf7, 0xea, 0xbd,
-	0x57, 0xef, 0x55, 0x1b, 0x96, 0xc3, 0xc8, 0x3d, 0x27, 0xfd, 0xc9, 0x46, 0x18, 0x05, 0x49, 0xe0,
-	0x54, 0x93, 0x49, 0x48, 0xe3, 0x56, 0xad, 0x1f, 0x0c, 0x87, 0x81, 0x2f, 0x88, 0xad, 0x5b, 0x49,
-	0x44, 0xfc, 0x98, 0xf4, 0x13, 0x37, 0x23, 0xd5, 0x2e, 0x88, 0xe7, 0xd1, 0x44, 0x8c, 0xd0, 0xbf,
-	0x2c, 0x58, 0x3e, 0x10, 0x72, 0xb6, 0x39, 0x97, 0xf3, 0x0c, 0x56, 0xc2, 0x51, 0xcf, 0x73, 0xfb,
-	0x9b, 0x52, 0x7e, 0xd3, 0x7a, 0x60, 0x3d, 0x5a, 0xda, 0x5c, 0xdb, 0xe0, 0x1b, 0x6c, 0x1c, 0x88,
-	0x49, 0xb9, 0xe8, 0xd5, 0x1c, 0x36, 0xd8, 0x9d, 0x36, 0xac, 0xca, 0x9f, 0x99, 0x84, 0x12, 0x97,
-	0xb0, 0x9e, 0x4a, 0x90, 0xb3, 0xb9, 0x08, 0x73, 0x01, 0x07, 0x91, 0x92, 0xb8, 0xf4, 0x66, 0x59,
-	0x07, 0x91, 0x8a, 0xe0, 0x93, 0x1c, 0x84, 0xc6, 0xee, 0xac, 0x40, 0x29, 0x99, 0x34, 0x2b, 0x0f,
-	0xac, 0x47, 0x55, 0x5c, 0x4a, 0x26, 0xed, 0x05, 0xa8, 0x9e, 0x13, 0x6f, 0x44, 0xd1, 0xcf, 0x2c,
-	0x58, 0xd1, 0x55, 0x70, 0xee, 0x81, 0x9d, 0x04, 0xa7, 0xd4, 0xf7, 0xc9, 0x90, 0x72, 0x65, 0x6d,
-	0x9c, 0x13, 0x9c, 0x75, 0x98, 0x27, 0xc3, 0x60, 0xe4, 0x27, 0x5c, 0x8b, 0x32, 0x96, 0x23, 0xc7,
-	0x81, 0x8a, 0x1f, 0x24, 0xb4, 0x59, 0xe5, 0x0b, 0xf8, 0x6f, 0xe7, 0x1b, 0x30, 0x1f, 0x8c, 0x92,
-	0x70, 0x94, 0x34, 0x17, 0x38, 0xdc, 0x86, 0x0e, 0x77, 0x9f, 0xcf, 0x61, 0xc9, 0x83, 0xfe, 0x64,
-	0xc1, 0xaa, 0x61, 0x8b, 0x1b, 0xc4, 0xf2, 0x35, 0xa8, 0xba, 0x3e, 0x83, 0x32, 0xcf, 0xa1, 0xdc,
-	0xd6, 0xa1, 0x74, 0xd8, 0x14, 0x16, 0x1c, 0x6f, 0x09, 0xfb, 0x8f, 0xcc, 0x82, 0x9a, 0xfd, 0xff,
-	0x43, 0xd4, 0xe5, 0x22, 0xd4, 0x95, 0xb7, 0x40, 0x5d, 0xbd, 0x06, 0xea, 0x5d, 0x58, 0xfd, 0xbc,
-	0xfb, 0xfd, 0xfd, 0x97, 0x5e, 0xd0, 0x23, 0x5e, 0xc7, 0x1f, 0xd0, 0x31, 0xc3, 0x95, 0x8c, 0x4f,
-	0x48, 0x7c, 0xc2, 0x11, 0xd4, 0xb0, 0x1c, 0x39, 0x2d, 0x58, 0x0c, 0x46, 0x89, 0xcb, 0x78, 0xa4,
-	0x07, 0x65, 0x63, 0xf4, 0x63, 0x0b, 0x16, 0xf7, 0xa8, 0x00, 0xa2, 0x28, 0x66, 0x69, 0x8a, 0x7d,
-	0x0a, 0xab, 0xa3, 0x64, 0x1c, 0x28, 0x7b, 0x35, 0x4b, 0x0f, 0xca, 0x4a, 0x04, 0x18, 0x48, 0xb0,
-	0xc9, 0xce, 0x20, 0x9c, 0xd2, 0x49, 0x67, 0x48, 0x8e, 0xa9, 0x04, 0x97, 0x8d, 0xd1, 0xb7, 0xa1,
-	0xa6, 0x9a, 0xc3, 0xf9, 0x3a, 0xe7, 0x15, 0x56, 0xb3, 0xf8, 0x36, 0xab, 0x72, 0x9b, 0x14, 0x28,
-	0xce, 0x18, 0x50, 0x07, 0xec, 0x53, 0x2a, 0x6d, 0x33, 0x13, 0xff, 0x07, 0xb0, 0x1c, 0xf8, 0x34,
-	0x71, 0x87, 0x34, 0x1c, 0xf5, 0x4e, 0xa9, 0x88, 0xdf, 0x1a, 0xd6, 0x89, 0xe8, 0x87, 0x59, 0xe6,
-	0x90, 0xe2, 0xee, 0x81, 0x8d, 0xc3, 0x51, 0x6f, 0x8f, 0x4e, 0x92, 0x31, 0x97, 0x58, 0xc3, 0x39,
-	0xc1, 0xd9, 0xe0, 0x3b, 0xcb, 0x13, 0x13, 0xe6, 0xa8, 0x4b, 0x9c, 0x19, 0x22, 0x9c, 0xb3, 0xa0,
-	0x10, 0x1a, 0x2f, 0xa3, 0x60, 0x14, 0x16, 0x9c, 0xda, 0x7f, 0xc7, 0xe8, 0xe8, 0x37, 0x16, 0x2c,
-	0x7f, 0x16, 0xf4, 0x89, 0xc7, 0x38, 0x3b, 0x09, 0x1d, 0xb2, 0xbd, 0x4e, 0xa8, 0x7b, 0x7c, 0x92,
-	0xed, 0x25, 0x46, 0x4e, 0x13, 0x16, 0x92, 0xb1, 0x2b, 0xf7, 0x60, 0x0e, 0x92, 0x0e, 0x35, 0xdf,
-	0x29, 0xeb, 0xbe, 0xa3, 0xf8, 0x5b, 0x45, 0xf3, 0xb7, 0x29, 0x73, 0x57, 0x8b, 0xcc, 0xfd, 0x25,
-	0xac, 0x60, 0x7a, 0xc6, 0xa0, 0x1d, 0x70, 0x93, 0xc6, 0x59, 0xd4, 0xbd, 0x31, 0xa3, 0x8e, 0x11,
-	0x9c, 0x7d, 0x68, 0x1c, 0x17, 0xd8, 0x4f, 0x1a, 0xe5, 0xae, 0x34, 0x4a, 0x91, 0x89, 0x71, 0xe1,
-	0x42, 0xf4, 0x3e, 0x2c, 0x8b, 0x70, 0xdf, 0xa3, 0x93, 0xe7, 0x24, 0x21, 0x2c, 0x7e, 0x07, 0x24,
-	0x21, 0xdc, 0xe9, 0x6a, 0x98, 0xff, 0x46, 0xdb, 0xb0, 0x9a, 0x89, 0x14, 0x38, 0x67, 0x1e, 0xd8,
-	0x3a, 0xcc, 0x67, 0xee, 0xc5, 0x04, 0xc8, 0x11, 0xea, 0x32, 0x45, 0x63, 0x55, 0xd1, 0x36, 0xd4,
-	0x8f, 0x75, 0xa1, 0xb1, 0xf4, 0xf4, 0x75, 0x53, 0x0d, 0x31, 0x8d, 0xa7, 0xf8, 0xd1, 0x33, 0x58,
-	0xc5, 0xf4, 0x4c, 0x3a, 0x6c, 0x97, 0x59, 0xc9, 0x69, 0x40, 0x95, 0x9b, 0x4b, 0xda, 0x4e, 0x0c,
-	0x66, 0x65, 0x2b, 0xf4, 0x14, 0x6a, 0xdb, 0xfc, 0xd7, 0x73, 0x9a, 0x10, 0xd7, 0x9b, 0xa9, 0x56,
-	0x03, 0xaa, 0x7d, 0x65, 0xb9, 0x18, 0xa0, 0x37, 0x70, 0x1b, 0xd3, 0xd0, 0x9b, 0xa4, 0x77, 0x2d,
-	0xe7, 0x8d, 0x9d, 0x8f, 0xa1, 0x46, 0x14, 0xa1, 0x52, 0xab, 0x34, 0xeb, 0xa9, 0xfb, 0x61, 0x8d,
-	0x11, 0x61, 0x70, 0x22, 0x26, 0x8f, 0xa9, 0x18, 0xef, 0x1f, 0x09, 0x4e, 0xe7, 0x29, 0xac, 0x78,
-	0xaa, 0x03, 0xa7, 0x66, 0x4a, 0x53, 0xa3, 0xe6, 0xdd, 0xd8, 0xe0, 0x45, 0x5f, 0x40, 0x03, 0xd3,
-	0x3e, 0x75, 0xc3, 0x44, 0x8f, 0xeb, 0x62, 0x3b, 0xbd, 0x6d, 0x3c, 0xff, 0xc2, 0x82, 0x65, 0xa9,
-	0xf6, 0xfe, 0x11, 0xdb, 0xd4, 0xd9, 0x06, 0x5b, 0xe8, 0xf4, 0x9a, 0x84, 0x12, 0xe8, 0xfb, 0x9a,
-	0xe6, 0x92, 0x51, 0x8e, 0x5e, 0x93, 0x70, 0xd7, 0x4f, 0xa2, 0x09, 0xce, 0x57, 0xb5, 0x9e, 0xc2,
-	0x8a, 0x3e, 0xe9, 0xd4, 0xa1, 0xcc, 0x5c, 0x4a, 0x9c, 0x09, 0xfb, 0xc9, 0xe0, 0xf3, 0xab, 0x3f,
-	0x3d, 0x10, 0x3e, 0x78, 0x52, 0xfa, 0xc4, 0x42, 0xbf, 0xb6, 0xa0, 0xde, 0x4d, 0x03, 0x26, 0x45,
-	0xf5, 0x5c, 0x46, 0x55, 0x9c, 0xa3, 0x7a, 0x28, 0x51, 0x99, 0xbc, 0x82, 0x10, 0xe7, 0xc0, 0xb2,
-	0x85, 0x0c, 0x98, 0x3e, 0xa9, 0x02, 0xb3, 0x0b, 0x80, 0xd9, 0x2a, 0xb0, 0x3d, 0x58, 0x33, 0xa2,
-	0x6f, 0xeb, 0x20, 0x72, 0x45, 0xcc, 0xc8, 0x14, 0x22, 0xe4, 0x14, 0x5d, 0x59, 0x25, 0xe3, 0xca,
-	0xfa, 0xb9, 0x05, 0x2b, 0xe9, 0x4d, 0x90, 0x8b, 0x29, 0xf4, 0xdd, 0x17, 0xb3, 0x72, 0xe8, 0xbd,
-	0xe2, 0x1c, 0x2a, 0xc4, 0x5d, 0x7d, 0x7d, 0xd9, 0xca, 0xf5, 0xb5, 0x0f, 0xab, 0x99, 0x7f, 0x5c,
-	0x01, 0xa7, 0xf0, 0x1e, 0xb2, 0xcd, 0xc4, 0xf8, 0x12, 0x1c, 0xf5, 0x3e, 0x94, 0x32, 0x3f, 0x9a,
-	0xba, 0x15, 0xd7, 0x8c, 0x5b, 0x51, 0x82, 0xcf, 0xef, 0x46, 0x17, 0x6e, 0x6b, 0x8e, 0x2f, 0x25,
-	0x4d, 0x5d, 0x6b, 0xb6, 0x7a, 0xad, 0x6d, 0x4d, 0x87, 0xc1, 0xba, 0x19, 0x06, 0x72, 0x27, 0x25,
-	0x18, 0x7e, 0x65, 0x41, 0x43, 0xaf, 0x42, 0xf3, 0xcd, 0x6e, 0xa8, 0xfe, 0xdb, 0x34, 0x8a, 0xba,
-	0x56, 0x51, 0x79, 0x24, 0x91, 0xa5, 0x45, 0xd2, 0xdf, 0x2d, 0x58, 0x33, 0x2a, 0xd2, 0x1b, 0xc7,
-	0xf5, 0x4d, 0xbd, 0x2e, 0xbd, 0x53, 0x50, 0xe1, 0x49, 0x54, 0xb2, 0xce, 0x7b, 0x17, 0x45, 0xfe,
-	0xc6, 0xec, 0xab, 0xd5, 0xa8, 0x37, 0xa2, 0x47, 0xb9, 0x48, 0x8f, 0xca, 0x5b, 0xeb, 0x51, 0xbd,
-	0xb6, 0x1e, 0x3f, 0x2d, 0x65, 0x3e, 0x29, 0xda, 0x33, 0xa9, 0xc6, 0xee, 0x8c, 0x26, 0xed, 0x6e,
-	0x61, 0x93, 0x26, 0x16, 0x15, 0xb4, 0x6a, 0xaf, 0x66, 0xb5, 0x6a, 0xf7, 0x8a, 0x5b, 0xb5, 0x4c,
-	0xd0, 0x54, 0xc3, 0xb6, 0x3b, 0xa3, 0x61, 0xbb, 0x5b, 0xd8, 0xb0, 0x29, 0x80, 0xae, 0xd9, 0xb6,
-	0xfd, 0xc5, 0x02, 0x60, 0xf7, 0xf7, 0xa8, 0xc7, 0xb0, 0xe8, 0xc7, 0x58, 0x9e, 0x7d, 0x8c, 0x95,
-	0x2b, 0xdd, 0x71, 0x1d, 0xe6, 0x63, 0xea, 0x0f, 0x68, 0xc4, 0xfd, 0xd1, 0xc6, 0x72, 0xc4, 0x92,
-	0xf3, 0xd0, 0x1d, 0xbb, 0x3e, 0x77, 0xba, 0x2a, 0x16, 0x03, 0xe7, 0x3e, 0x80, 0xc8, 0x3a, 0x21,
-	0x71, 0xa3, 0xe6, 0x22, 0x5f, 0xa1, 0x50, 0x98, 0x34, 0x3a, 0x0e, 0xdd, 0x88, 0x36, 0x6d, 0xb1,
-	0xb3, 0x18, 0x65, 0xf0, 0x23, 0xf7, 0xff, 0x12, 0xfe, 0x9f, 0x15, 0xf8, 0xa3, 0x1e, 0x4b, 0xef,
-	0x11, 0x2b, 0x14, 0xce, 0x69, 0x24, 0x63, 0x28, 0x1b, 0xeb, 0xaa, 0x95, 0x66, 0xab, 0x56, 0x2e,
-	0x54, 0xad, 0x52, 0xa8, 0x5a, 0xb5, 0x58, 0xb5, 0x79, 0x55, 0xb5, 0x1c, 0xfa, 0x82, 0x06, 0xfd,
-	0xaf, 0x16, 0xaf, 0x9b, 0x77, 0x22, 0x4a, 0x12, 0xca, 0xab, 0xa5, 0xff, 0x8d, 0xf5, 0x45, 0x0d,
-	0x28, 0xad, 0xcf, 0x07, 0xef, 0x6c, 0xfd, 0x2f, 0xc0, 0x51, 0x6b, 0xc7, 0x83, 0xd3, 0x03, 0xc6,
-	0xfd, 0x10, 0x56, 0xe2, 0x93, 0xe0, 0xe2, 0x70, 0xd4, 0xef, 0xd3, 0x38, 0x3e, 0x1a, 0x79, 0xfc,
-	0x28, 0x16, 0xb1, 0x41, 0x35, 0x76, 0xad, 0x98, 0xbb, 0xa2, 0x4f, 0x59, 0xd5, 0xc7, 0x0b, 0xe3,
-	0x36, 0xf1, 0xb6, 0xb6, 0x07, 0x83, 0x48, 0x54, 0xc7, 0x0e, 0x54, 0xc8, 0x60, 0x90, 0x1e, 0x30,
-	0xff, 0x9d, 0x57, 0x82, 0x25, 0xa5, 0x12, 0x44, 0xdf, 0xd5, 0x6b, 0xdb, 0x36, 0xf1, 0x88, 0xdf,
-	0xa7, 0xce, 0x03, 0x58, 0x92, 0x17, 0xb5, 0x22, 0x47, 0x25, 0xb1, 0x36, 0xaa, 0x27, 0x98, 0x65,
-	0xbe, 0x4d, 0x87, 0xe8, 0x0f, 0xa5, 0xec, 0x8d, 0xe1, 0x79, 0xfb, 0x30, 0x09, 0x22, 0x6a, 0x94,
-	0x3e, 0x79, 0xf7, 0xf4, 0x6e, 0x0e, 0x27, 0x0a, 0xa6, 0x8e, 0xd1, 0xe3, 0x8b, 0xea, 0x05, 0x41,
-	0x2d, 0x19, 0x67, 0xad, 0x0e, 0x96, 0xed, 0x98, 0x46, 0x73, 0x3e, 0x84, 0xba, 0xd4, 0x24, 0x23,
-	0x72, 0x1f, 0xa8, 0xe1, 0x29, 0x3a, 0xb3, 0x5a, 0x70, 0xe1, 0xd3, 0x88, 0x7b, 0x83, 0x8d, 0xc5,
-	0x40, 0xe9, 0x2d, 0x17, 0x67, 0xf5, 0x96, 0xb6, 0xde, 0x5b, 0xde, 0x03, 0xbb, 0xe7, 0x05, 0xfd,
-	0x53, 0x6e, 0x04, 0x10, 0xfd, 0x75, 0x46, 0x40, 0x6f, 0xa0, 0xc2, 0xeb, 0xd7, 0x59, 0xc5, 0xd4,
-	0x06, 0xd8, 0xac, 0x4c, 0x6b, 0x93, 0xd8, 0xed, 0xcb, 0x2c, 0x5f, 0x57, 0xaa, 0x3a, 0x4e, 0xc7,
-	0x39, 0x0b, 0x0a, 0x61, 0x85, 0xd1, 0x5f, 0x91, 0x73, 0xda, 0x1d, 0xbf, 0x62, 0x96, 0xbe, 0xa4,
-	0x91, 0x4b, 0x38, 0x87, 0x34, 0xbf, 0x1c, 0xe9, 0x3b, 0x96, 0xaf, 0xde, 0xf1, 0x43, 0xa8, 0x8a,
-	0x00, 0xfd, 0x0a, 0x54, 0x19, 0x35, 0xed, 0x5e, 0x96, 0x94, 0x45, 0x58, 0xcc, 0x20, 0x2c, 0x9e,
-	0x73, 0x72, 0x74, 0xb1, 0xf3, 0x4c, 0x14, 0xaf, 0x0a, 0xc9, 0x28, 0xfc, 0xf4, 0x05, 0xd8, 0xe4,
-	0x46, 0x47, 0x2c, 0xce, 0xce, 0xcc, 0xf7, 0x86, 0xcb, 0x2b, 0x86, 0x16, 0x2c, 0x0e, 0xdd, 0xf1,
-	0x4e, 0x56, 0x33, 0x54, 0x71, 0x36, 0xd6, 0x7c, 0xaf, 0xac, 0x74, 0x92, 0x31, 0xd8, 0x99, 0xfe,
-	0x45, 0xcf, 0x16, 0x96, 0xf6, 0x5a, 0x7a, 0xe5, 0x5b, 0x51, 0x5e, 0x25, 0x1f, 0x14, 0xbd, 0xd6,
-	0x08, 0x22, 0xc2, 0x50, 0xe7, 0x9d, 0x1e, 0x2f, 0xdb, 0xb7, 0x87, 0x06, 0x40, 0xfd, 0x40, 0x1f,
-	0xa6, 0xf6, 0xd7, 0xdb, 0xba, 0xfc, 0xd0, 0xe4, 0x21, 0xfc, 0xd2, 0x62, 0x16, 0x8b, 0x6f, 0xce,
-	0x62, 0x3b, 0x50, 0x67, 0x92, 0x55, 0x90, 0xdc, 0x76, 0x4b, 0x9b, 0xef, 0x29, 0x18, 0xd4, 0x69,
-	0x3c, 0xb5, 0x00, 0xfd, 0xd6, 0x82, 0x5b, 0x2f, 0x98, 0x1f, 0x1d, 0xb2, 0x3f, 0x1d, 0x7f, 0xdf,
-	0xa7, 0xdd, 0xf1, 0xd5, 0x85, 0x9f, 0x4c, 0xe4, 0x25, 0x2d, 0x91, 0xe7, 0x29, 0xb9, 0xac, 0xa6,
-	0x64, 0xe3, 0x29, 0x27, 0xef, 0xc3, 0x32, 0xcf, 0xad, 0xce, 0xf4, 0xdc, 0x1f, 0x40, 0x0d, 0x53,
-	0xe2, 0x65, 0x8f, 0x88, 0x08, 0x6a, 0x11, 0x25, 0x1e, 0xaf, 0x11, 0xd3, 0x06, 0xb1, 0x8a, 0x35,
-	0x1a, 0xcb, 0xf5, 0x69, 0xcf, 0x13, 0xb9, 0xe7, 0xf9, 0x19, 0x1b, 0x54, 0xb4, 0x05, 0x90, 0x1d,
-	0x52, 0x9c, 0x1f, 0xa3, 0x75, 0xf9, 0x31, 0xfe, 0xa3, 0x04, 0xeb, 0xe2, 0x7e, 0xec, 0xe6, 0x5f,
-	0x0b, 0x76, 0x48, 0xff, 0x84, 0xaa, 0x4d, 0x6b, 0x4d, 0x34, 0xad, 0xf7, 0x01, 0xfa, 0x9c, 0x97,
-	0xed, 0x2b, 0xd3, 0xb6, 0x42, 0x61, 0xc7, 0x1b, 0xbb, 0xc7, 0x3e, 0x9f, 0x15, 0x36, 0xcb, 0xc6,
-	0xdc, 0xca, 0x09, 0x49, 0x46, 0xb1, 0x4c, 0xb9, 0x72, 0xe4, 0x6c, 0xc1, 0x92, 0xf2, 0x9d, 0x42,
-	0x96, 0xc7, 0x4e, 0xda, 0x74, 0xe7, 0x33, 0x58, 0x65, 0x9b, 0x79, 0xf9, 0x7e, 0x2c, 0x0c, 0x9a,
-	0x75, 0x7f, 0x0b, 0xda, 0x9b, 0x8a, 0x6a, 0x7b, 0xac, 0x31, 0x3a, 0x5f, 0x4d, 0xed, 0xb5, 0xc8,
-	0x57, 0xdc, 0x32, 0xed, 0x15, 0x4b, 0x83, 0xe9, 0xbe, 0x64, 0x1b, 0xbe, 0x84, 0xda, 0xa2, 0xe0,
-	0x60, 0xf6, 0xeb, 0x8e, 0x3f, 0x73, 0xe3, 0xa4, 0xf0, 0x2a, 0xbd, 0xf4, 0xda, 0x42, 0x9f, 0x40,
-	0x9d, 0x5f, 0xa9, 0xaa, 0x94, 0x0f, 0xa0, 0x9c, 0x8c, 0xd3, 0xc3, 0x2c, 0xb2, 0x0e, 0x9b, 0x46,
-	0xbb, 0x70, 0x2b, 0x7f, 0xe7, 0xda, 0xee, 0x8b, 0xca, 0xe3, 0x72, 0xe7, 0x4f, 0xe1, 0x95, 0x72,
-	0x78, 0xe8, 0x47, 0x3c, 0x17, 0x1e, 0x18, 0x72, 0xae, 0x5d, 0x13, 0xb0, 0xcb, 0x7f, 0xe0, 0xc6,
-	0xa1, 0x47, 0x26, 0xc3, 0x60, 0x40, 0xe5, 0x53, 0xa8, 0x4a, 0x42, 0x5f, 0x1a, 0x2f, 0x62, 0x72,
-	0x0b, 0x94, 0x3b, 0x2d, 0xf3, 0x82, 0x9a, 0x72, 0x08, 0x99, 0xfd, 0x11, 0x54, 0x8f, 0x64, 0x7e,
-	0x2a, 0xe0, 0xe1, 0x53, 0xd7, 0x00, 0xf0, 0x9a, 0x01, 0x90, 0x85, 0xa1, 0xb4, 0x33, 0xbb, 0xad,
-	0x2f, 0xb7, 0x55, 0x13, 0x16, 0x58, 0xa0, 0xe7, 0x21, 0x98, 0x0e, 0xd1, 0x3f, 0x2d, 0xb8, 0xa3,
-	0xbc, 0x30, 0xe6, 0xe7, 0xc2, 0x0f, 0xef, 0x72, 0xa9, 0x08, 0x6a, 0xcc, 0x79, 0x31, 0xed, 0x9f,
-	0xbf, 0xf0, 0xc8, 0xb1, 0xcc, 0x8b, 0x1a, 0x8d, 0x49, 0x18, 0xb8, 0x11, 0x15, 0x21, 0x22, 0xd4,
-	0xc9, 0x09, 0x79, 0xc5, 0x59, 0x51, 0x2b, 0x4e, 0x07, 0x2a, 0x47, 0x51, 0x30, 0x4c, 0x6b, 0x56,
-	0xf6, 0x9b, 0x69, 0xc0, 0xce, 0x8d, 0xc6, 0xb1, 0x8c, 0x9b, 0x74, 0xc8, 0x42, 0x3b, 0xa6, 0x74,
-	0x20, 0x13, 0xdb, 0x02, 0x57, 0x4f, 0xa1, 0xa0, 0x27, 0xdc, 0xb1, 0x31, 0x8d, 0xfb, 0xc4, 0xff,
-	0x9c, 0x1b, 0xb9, 0x01, 0x55, 0xb6, 0x58, 0x38, 0xa5, 0x8d, 0xc5, 0x80, 0xef, 0x9a, 0x6b, 0xc1,
-	0x7f, 0xa3, 0xc7, 0xb0, 0x8a, 0x69, 0x28, 0xd6, 0x62, 0x1a, 0x8f, 0xbc, 0x62, 0x67, 0x2a, 0x5a,
-	0x7a, 0xc2, 0xb6, 0x0d, 0xd5, 0x6d, 0x53, 0x2e, 0x2b, 0xe7, 0x72, 0xda, 0x50, 0x8f, 0xf4, 0x0d,
-	0x62, 0xe3, 0x39, 0xc6, 0xd8, 0x1f, 0x4f, 0xf1, 0xa3, 0x47, 0x2c, 0xea, 0xce, 0x76, 0x7d, 0xd2,
-	0xf3, 0x68, 0xfa, 0x41, 0x2e, 0x53, 0xb1, 0xa4, 0xa8, 0x88, 0x3a, 0xfc, 0xdb, 0x07, 0x2b, 0x96,
-	0x2f, 0x57, 0xa6, 0x13, 0xef, 0xef, 0x71, 0x65, 0x16, 0x31, 0xff, 0xcd, 0x12, 0xea, 0x30, 0x3e,
-	0x96, 0x5d, 0x07, 0xfb, 0x89, 0xda, 0x3c, 0xd4, 0xf5, 0x4d, 0x37, 0x60, 0x21, 0x92, 0x3a, 0xe8,
-	0x0f, 0xb8, 0xda, 0xa6, 0x38, 0x65, 0x42, 0xbf, 0xcf, 0xdf, 0x6d, 0x0e, 0xdd, 0x63, 0x9f, 0x24,
-	0xa3, 0x88, 0x1e, 0x90, 0x88, 0x0c, 0xd9, 0x99, 0x0a, 0x2f, 0xec, 0x4e, 0x42, 0x2a, 0x0d, 0xa6,
-	0x50, 0x9c, 0x8f, 0x00, 0x58, 0x4c, 0xf5, 0x78, 0x7e, 0x93, 0x06, 0x2b, 0x48, 0x7c, 0x0a, 0x93,
-	0xf3, 0x18, 0x96, 0x23, 0x25, 0x89, 0xc6, 0xf2, 0x86, 0x2e, 0x4c, 0xb0, 0x3a, 0x27, 0xfa, 0x9d,
-	0x05, 0x8d, 0xef, 0xf1, 0xcf, 0xcf, 0x32, 0xdc, 0x53, 0x85, 0xef, 0x03, 0x9c, 0xbb, 0xf4, 0x42,
-	0x16, 0x30, 0xe2, 0xba, 0x51, 0x28, 0x2c, 0x9a, 0xf9, 0x28, 0x72, 0xcf, 0xf7, 0xb2, 0xd0, 0x53,
-	0x49, 0x8c, 0x23, 0x0e, 0xa9, 0x3f, 0x90, 0x22, 0xc4, 0x47, 0x33, 0x95, 0xc4, 0x83, 0x8c, 0x0f,
-	0xa5, 0x10, 0xf1, 0x11, 0x46, 0xa3, 0x6d, 0xfe, 0xa4, 0x02, 0x0b, 0xca, 0x37, 0xe8, 0xc3, 0x93,
-	0xe0, 0x42, 0x42, 0x64, 0x7b, 0xd4, 0x33, 0x15, 0xcf, 0x0e, 0x93, 0xc8, 0xf5, 0x8f, 0x5b, 0x77,
-	0x72, 0xdf, 0x32, 0xfa, 0x33, 0x34, 0xc7, 0xae, 0x35, 0xb5, 0xed, 0x5c, 0xcb, 0x57, 0x2b, 0xe4,
-	0x56, 0x4d, 0x15, 0x81, 0xe6, 0x9c, 0xc7, 0xd0, 0x78, 0x4d, 0x4e, 0x69, 0x77, 0x6c, 0x7c, 0xa5,
-	0xbe, 0x95, 0x2f, 0x97, 0xaf, 0x20, 0x53, 0x4b, 0x9f, 0xc0, 0x9a, 0x5c, 0x6a, 0x7c, 0x55, 0x56,
-	0xd7, 0x8a, 0x27, 0x88, 0x4b, 0xb6, 0xd5, 0x3f, 0xed, 0x9a, 0x4b, 0x47, 0xbd, 0xa9, 0xa5, 0xdf,
-	0x81, 0x25, 0x35, 0x3a, 0x15, 0x3d, 0x15, 0x72, 0x6b, 0xcd, 0x0c, 0x43, 0x4e, 0x46, 0x73, 0xce,
-	0x0e, 0x2c, 0xeb, 0xde, 0xff, 0x5e, 0x2e, 0x40, 0x9b, 0x68, 0xe5, 0x13, 0x7a, 0xbc, 0xa0, 0x39,
-	0xa7, 0x03, 0x0d, 0x61, 0x54, 0x4c, 0x2e, 0x94, 0xdc, 0xeb, 0xdc, 0x35, 0x8d, 0xae, 0x4c, 0xb6,
-	0x0a, 0x2e, 0x51, 0x34, 0xd7, 0x9b, 0xe7, 0xff, 0x19, 0xf1, 0xad, 0x7f, 0x07, 0x00, 0x00, 0xff,
-	0xff, 0xe2, 0x8f, 0xf6, 0xab, 0x60, 0x21, 0x00, 0x00,
-}
-
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
 var _ grpc.ClientConn
@@ -4170,12 +3682,6 @@ type PrivacyClient interface {
 	ShowPrivacyKey(ctx context.Context, in *types.ReqString, opts ...grpc.CallOption) (*ReplyPrivacyPkPair, error)
 	// 创建一系列UTXO
 	CreateUTXOs(ctx context.Context, in *ReqCreateUTXOs, opts ...grpc.CallOption) (*types.Reply, error)
-	// 将资金从公开到隐私转移
-	MakeTxPublic2Privacy(ctx context.Context, in *ReqPub2Pri, opts ...grpc.CallOption) (*types.Reply, error)
-	// 将资产从隐私到隐私进行转移
-	MakeTxPrivacy2Privacy(ctx context.Context, in *ReqPri2Pri, opts ...grpc.CallOption) (*types.Reply, error)
-	// 将资产从隐私到公开进行转移
-	MakeTxPrivacy2Public(ctx context.Context, in *ReqPri2Pub, opts ...grpc.CallOption) (*types.Reply, error)
 	// 扫描UTXO以及获取扫描UTXO后的状态
 	RescanUtxos(ctx context.Context, in *ReqRescanUtxos, opts ...grpc.CallOption) (*RepRescanUtxos, error)
 	// 使能隐私账户
@@ -4204,33 +3710,6 @@ func (c *privacyClient) ShowPrivacyKey(ctx context.Context, in *types.ReqString,
 func (c *privacyClient) CreateUTXOs(ctx context.Context, in *ReqCreateUTXOs, opts ...grpc.CallOption) (*types.Reply, error) {
 	out := new(types.Reply)
 	err := c.cc.Invoke(ctx, "/types.privacy/CreateUTXOs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) MakeTxPublic2Privacy(ctx context.Context, in *ReqPub2Pri, opts ...grpc.CallOption) (*types.Reply, error) {
-	out := new(types.Reply)
-	err := c.cc.Invoke(ctx, "/types.privacy/MakeTxPublic2Privacy", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) MakeTxPrivacy2Privacy(ctx context.Context, in *ReqPri2Pri, opts ...grpc.CallOption) (*types.Reply, error) {
-	out := new(types.Reply)
-	err := c.cc.Invoke(ctx, "/types.privacy/MakeTxPrivacy2Privacy", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) MakeTxPrivacy2Public(ctx context.Context, in *ReqPri2Pub, opts ...grpc.CallOption) (*types.Reply, error) {
-	out := new(types.Reply)
-	err := c.cc.Invoke(ctx, "/types.privacy/MakeTxPrivacy2Public", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -4271,12 +3750,6 @@ type PrivacyServer interface {
 	ShowPrivacyKey(context.Context, *types.ReqString) (*ReplyPrivacyPkPair, error)
 	// 创建一系列UTXO
 	CreateUTXOs(context.Context, *ReqCreateUTXOs) (*types.Reply, error)
-	// 将资金从公开到隐私转移
-	MakeTxPublic2Privacy(context.Context, *ReqPub2Pri) (*types.Reply, error)
-	// 将资产从隐私到隐私进行转移
-	MakeTxPrivacy2Privacy(context.Context, *ReqPri2Pri) (*types.Reply, error)
-	// 将资产从隐私到公开进行转移
-	MakeTxPrivacy2Public(context.Context, *ReqPri2Pub) (*types.Reply, error)
 	// 扫描UTXO以及获取扫描UTXO后的状态
 	RescanUtxos(context.Context, *ReqRescanUtxos) (*RepRescanUtxos, error)
 	// 使能隐私账户
@@ -4321,60 +3794,6 @@ func _Privacy_CreateUTXOs_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PrivacyServer).CreateUTXOs(ctx, req.(*ReqCreateUTXOs))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_MakeTxPublic2Privacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqPub2Pri)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).MakeTxPublic2Privacy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/MakeTxPublic2Privacy",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).MakeTxPublic2Privacy(ctx, req.(*ReqPub2Pri))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_MakeTxPrivacy2Privacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqPri2Pri)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).MakeTxPrivacy2Privacy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/MakeTxPrivacy2Privacy",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).MakeTxPrivacy2Privacy(ctx, req.(*ReqPri2Pri))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_MakeTxPrivacy2Public_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqPri2Pub)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).MakeTxPrivacy2Public(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/MakeTxPrivacy2Public",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).MakeTxPrivacy2Public(ctx, req.(*ReqPri2Pub))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -4446,18 +3865,6 @@ var _Privacy_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Privacy_CreateUTXOs_Handler,
 		},
 		{
-			MethodName: "MakeTxPublic2Privacy",
-			Handler:    _Privacy_MakeTxPublic2Privacy_Handler,
-		},
-		{
-			MethodName: "MakeTxPrivacy2Privacy",
-			Handler:    _Privacy_MakeTxPrivacy2Privacy_Handler,
-		},
-		{
-			MethodName: "MakeTxPrivacy2Public",
-			Handler:    _Privacy_MakeTxPrivacy2Public_Handler,
-		},
-		{
 			MethodName: "RescanUtxos",
 			Handler:    _Privacy_RescanUtxos_Handler,
 		},
@@ -4472,4 +3879,153 @@ var _Privacy_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "privacy.proto",
+}
+
+func init() { proto.RegisterFile("privacy.proto", fileDescriptor_privacy_b2f7ac2056a1b054) }
+
+var fileDescriptor_privacy_b2f7ac2056a1b054 = []byte{
+	// 2284 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x39, 0x4d, 0x6f, 0x1c, 0x49,
+	0xd9, 0xee, 0xf9, 0xb0, 0xdd, 0x8f, 0xc7, 0xf6, 0xa4, 0x32, 0xf6, 0x4e, 0x26, 0x56, 0x94, 0xb7,
+	0x76, 0x95, 0x37, 0x2c, 0xc8, 0x68, 0x8d, 0xa5, 0xfd, 0x20, 0x28, 0xeb, 0x71, 0x9c, 0x64, 0xe4,
+	0x4d, 0x6c, 0xca, 0x5e, 0x81, 0xd0, 0x22, 0x51, 0x9e, 0x29, 0xdb, 0x2d, 0xf7, 0x74, 0xb7, 0xbb,
+	0x7b, 0xec, 0x99, 0xd3, 0x72, 0x42, 0x1c, 0x38, 0x20, 0x81, 0xb8, 0x80, 0xb8, 0x71, 0xe7, 0xc0,
+	0x0f, 0x40, 0x42, 0x70, 0x42, 0xe2, 0x27, 0xf0, 0x0f, 0xf8, 0x0d, 0xa8, 0x3e, 0xba, 0xab, 0xaa,
+	0xdd, 0x63, 0x3b, 0x60, 0x2e, 0xa3, 0xae, 0xa7, 0x9e, 0x7a, 0xbe, 0xea, 0xf9, 0xac, 0x81, 0xc5,
+	0x28, 0xf6, 0x2e, 0x68, 0x7f, 0xb2, 0x1e, 0xc5, 0x61, 0x1a, 0xa2, 0x7a, 0x3a, 0x89, 0x58, 0xd2,
+	0x69, 0xf4, 0xc3, 0xe1, 0x30, 0x0c, 0x24, 0xb0, 0x73, 0x2f, 0x8d, 0x69, 0x90, 0xd0, 0x7e, 0xea,
+	0xe5, 0xa0, 0xc6, 0x25, 0xf5, 0x7d, 0x96, 0xca, 0x15, 0xfe, 0x97, 0x03, 0x8b, 0xfb, 0x92, 0xce,
+	0x96, 0xc0, 0x42, 0xcf, 0x61, 0x29, 0x1a, 0x1d, 0xf9, 0x5e, 0x7f, 0x43, 0xd1, 0x6f, 0x3b, 0x8f,
+	0x9d, 0xa7, 0x0b, 0x1b, 0x2b, 0xeb, 0x82, 0xc1, 0xfa, 0xbe, 0xdc, 0x54, 0x87, 0x5e, 0xcf, 0x90,
+	0x02, 0x3a, 0xea, 0xc2, 0xb2, 0xfa, 0xcc, 0x29, 0x54, 0x04, 0x85, 0xd5, 0x8c, 0x82, 0xda, 0xd5,
+	0x24, 0x8a, 0x07, 0x84, 0x10, 0x19, 0x48, 0x50, 0x6f, 0x57, 0x6d, 0x21, 0x32, 0x12, 0x62, 0x53,
+	0x08, 0x61, 0xa1, 0xa3, 0x25, 0xa8, 0xa4, 0x93, 0x76, 0xed, 0xb1, 0xf3, 0xb4, 0x4e, 0x2a, 0xe9,
+	0xa4, 0x3b, 0x07, 0xf5, 0x0b, 0xea, 0x8f, 0x18, 0xfe, 0xb9, 0x03, 0x4b, 0xb6, 0x0a, 0x68, 0x0d,
+	0xdc, 0x34, 0x3c, 0x63, 0x41, 0x40, 0x87, 0x4c, 0x28, 0xeb, 0x12, 0x0d, 0x40, 0xab, 0x30, 0x4b,
+	0x87, 0xe1, 0x28, 0x48, 0x85, 0x16, 0x55, 0xa2, 0x56, 0x08, 0x41, 0x2d, 0x08, 0x53, 0xd6, 0xae,
+	0x8b, 0x03, 0xe2, 0x1b, 0x7d, 0x0b, 0x66, 0xc3, 0x51, 0x1a, 0x8d, 0xd2, 0xf6, 0x9c, 0x10, 0xb7,
+	0x65, 0x8b, 0xbb, 0x27, 0xf6, 0x88, 0xc2, 0xc1, 0x7f, 0x72, 0x60, 0xb9, 0x60, 0x8b, 0x3b, 0x94,
+	0xe5, 0x1b, 0x50, 0xf7, 0x02, 0x2e, 0xca, 0xac, 0x10, 0xe5, 0xbe, 0x2d, 0x4a, 0x8f, 0x6f, 0x11,
+	0x89, 0xf1, 0x8e, 0x62, 0xff, 0x85, 0x5b, 0xd0, 0xb2, 0xff, 0x7f, 0x29, 0x75, 0xd5, 0x90, 0x9a,
+	0xdf, 0x5b, 0x28, 0x44, 0x76, 0x49, 0x25, 0x0d, 0xb5, 0x16, 0xb5, 0x77, 0xd0, 0xa2, 0x7e, 0x0b,
+	0x2d, 0x76, 0x60, 0xf9, 0xcb, 0xc3, 0x1f, 0xee, 0xbd, 0xf2, 0xc3, 0x23, 0xea, 0xf7, 0x82, 0x01,
+	0x1b, 0x73, 0x39, 0xd3, 0xf1, 0x29, 0x4d, 0x4e, 0x85, 0x44, 0x0d, 0xa2, 0x56, 0xa8, 0x03, 0xf3,
+	0xe1, 0x28, 0xf5, 0x38, 0x8e, 0xf2, 0xa8, 0x7c, 0x8d, 0x7f, 0xea, 0xc0, 0xfc, 0x2e, 0x93, 0x82,
+	0x18, 0x8a, 0x3a, 0x96, 0xa2, 0x9f, 0xc3, 0xf2, 0x28, 0x1d, 0x87, 0x06, 0xaf, 0x76, 0xe5, 0x71,
+	0xd5, 0x88, 0x88, 0x82, 0x24, 0xa4, 0x88, 0xce, 0x45, 0x38, 0x63, 0x93, 0xde, 0x90, 0x9e, 0x30,
+	0x25, 0x5c, 0xbe, 0xc6, 0xdf, 0x85, 0x86, 0x69, 0x0e, 0xf4, 0x4d, 0x81, 0x2b, 0xad, 0xe6, 0x08,
+	0x36, 0xcb, 0x8a, 0x4d, 0x26, 0x28, 0xc9, 0x11, 0x70, 0x0f, 0xdc, 0x33, 0xa6, 0x6c, 0x33, 0x55,
+	0xfe, 0x0f, 0x60, 0x31, 0x0c, 0x58, 0xea, 0x0d, 0x59, 0x34, 0x3a, 0x3a, 0x63, 0x32, 0x9e, 0x1b,
+	0xc4, 0x06, 0xe2, 0x1f, 0xe7, 0x99, 0x44, 0x91, 0x5b, 0x03, 0x97, 0x44, 0xa3, 0xa3, 0x5d, 0x36,
+	0x49, 0xc7, 0x82, 0x62, 0x83, 0x68, 0x00, 0x5a, 0x17, 0x9c, 0xd5, 0x8d, 0x49, 0x73, 0x34, 0x95,
+	0x9c, 0xb9, 0x44, 0x44, 0xa3, 0xe0, 0x08, 0x5a, 0xaf, 0xe2, 0x70, 0x14, 0x95, 0xdc, 0xda, 0xff,
+	0xc6, 0xe8, 0xf8, 0xb7, 0x0e, 0x2c, 0x7e, 0x11, 0xf6, 0xa9, 0xcf, 0x31, 0x7b, 0x29, 0x1b, 0x72,
+	0x5e, 0xa7, 0xcc, 0x3b, 0x39, 0xcd, 0x79, 0xc9, 0x15, 0x6a, 0xc3, 0x5c, 0x3a, 0xf6, 0x14, 0x0f,
+	0xee, 0x20, 0xd9, 0xd2, 0xf2, 0x9d, 0xaa, 0xed, 0x3b, 0x86, 0xbf, 0xd5, 0x2c, 0x7f, 0xbb, 0x62,
+	0xee, 0x7a, 0x99, 0xb9, 0xbf, 0x86, 0x25, 0xc2, 0xce, 0xb9, 0x68, 0xfb, 0xc2, 0xa4, 0x49, 0x1e,
+	0x85, 0x6f, 0x8b, 0x51, 0xc8, 0x01, 0x68, 0x0f, 0x5a, 0x27, 0x25, 0xf6, 0x53, 0x46, 0x79, 0xa8,
+	0x8c, 0x52, 0x66, 0x62, 0x52, 0x7a, 0x10, 0xbf, 0x0f, 0x8b, 0x32, 0xfc, 0x77, 0xd9, 0xe4, 0x05,
+	0x4d, 0x29, 0x8f, 0xe7, 0x01, 0x4d, 0xa9, 0x70, 0xba, 0x06, 0x11, 0xdf, 0x78, 0x0b, 0x96, 0x73,
+	0x92, 0x52, 0xce, 0xa9, 0x17, 0xb6, 0x0a, 0xb3, 0xb9, 0x7b, 0x71, 0x02, 0x6a, 0x85, 0x0f, 0xb9,
+	0xa2, 0x89, 0xa9, 0x68, 0x17, 0x9a, 0x27, 0x36, 0xd1, 0x44, 0x79, 0xfa, 0x6a, 0x51, 0x0d, 0xb9,
+	0x4d, 0xae, 0xe0, 0xe3, 0xe7, 0xb0, 0x4c, 0xd8, 0xb9, 0x72, 0xd8, 0x43, 0x6e, 0x25, 0xd4, 0x82,
+	0xba, 0x30, 0x97, 0xb2, 0x9d, 0x5c, 0x4c, 0xcb, 0x5e, 0xf8, 0x19, 0x34, 0xb6, 0xc4, 0xd7, 0x0b,
+	0x96, 0x52, 0xcf, 0x9f, 0xaa, 0x56, 0x0b, 0xea, 0x7d, 0xe3, 0xb8, 0x5c, 0xe0, 0xb7, 0x70, 0x9f,
+	0xb0, 0xc8, 0x9f, 0x64, 0xb5, 0x57, 0xe0, 0x26, 0xe8, 0x63, 0x68, 0x50, 0x83, 0xa8, 0xd2, 0x2a,
+	0xcb, 0x7a, 0x26, 0x3f, 0x62, 0x21, 0x62, 0x02, 0x28, 0xe6, 0xf4, 0xb8, 0x8a, 0xc9, 0xde, 0xb1,
+	0xc4, 0x44, 0xcf, 0x60, 0xc9, 0x37, 0x1d, 0x38, 0x33, 0x53, 0x96, 0x1a, 0x2d, 0xef, 0x26, 0x05,
+	0x5c, 0xfc, 0x15, 0xb4, 0x08, 0xeb, 0x33, 0x2f, 0x4a, 0xed, 0xb8, 0x2e, 0xb7, 0xd3, 0xbb, 0xc6,
+	0xf3, 0x2f, 0x1d, 0x58, 0x54, 0x6a, 0xef, 0x1d, 0x73, 0xa6, 0x68, 0x0b, 0x5c, 0xa9, 0xd3, 0x1b,
+	0x1a, 0x29, 0x41, 0xdf, 0xb7, 0x34, 0x57, 0x88, 0x6a, 0xf5, 0x86, 0x46, 0x3b, 0x41, 0x1a, 0x4f,
+	0x88, 0x3e, 0xd5, 0x79, 0x06, 0x4b, 0xf6, 0x26, 0x6a, 0x42, 0x95, 0xbb, 0x94, 0xbc, 0x13, 0xfe,
+	0xc9, 0xc5, 0x17, 0xad, 0x40, 0x76, 0x21, 0x62, 0xf1, 0x59, 0xe5, 0x13, 0x07, 0xff, 0xc6, 0x81,
+	0xe6, 0x61, 0x16, 0x30, 0x99, 0x54, 0x2f, 0x54, 0x54, 0x25, 0x5a, 0xaa, 0x27, 0x4a, 0xaa, 0x22,
+	0xae, 0x04, 0x24, 0x5a, 0xb0, 0xfc, 0x20, 0x17, 0xcc, 0xde, 0x34, 0x05, 0x73, 0x4b, 0x04, 0x73,
+	0x4d, 0xc1, 0x76, 0x61, 0xa5, 0x10, 0x7d, 0x9b, 0xfb, 0xb1, 0x27, 0x63, 0x46, 0xa5, 0x10, 0x49,
+	0xa7, 0xac, 0x64, 0x55, 0x0a, 0x25, 0xeb, 0x17, 0x0e, 0x2c, 0x65, 0x95, 0x40, 0x93, 0x29, 0xf5,
+	0xdd, 0x97, 0xd3, 0x72, 0xe8, 0x5a, 0x79, 0x0e, 0x95, 0xe4, 0x6e, 0x2e, 0x5f, 0xae, 0x51, 0xbe,
+	0xf6, 0x60, 0x39, 0xf7, 0x8f, 0x1b, 0xc4, 0x29, 0xad, 0x43, 0x6e, 0x31, 0x31, 0xbe, 0x02, 0x64,
+	0xd6, 0x43, 0x45, 0xf3, 0xa3, 0x2b, 0x55, 0x71, 0xa5, 0x50, 0x15, 0x95, 0xf0, 0xba, 0x36, 0x7a,
+	0x70, 0xdf, 0x72, 0x7c, 0x45, 0xe9, 0x4a, 0x59, 0x73, 0xcd, 0xb2, 0xb6, 0x79, 0x35, 0x0c, 0x56,
+	0x8b, 0x61, 0xa0, 0x38, 0x19, 0xc1, 0xf0, 0x6b, 0x07, 0x5a, 0x76, 0x57, 0xaa, 0x99, 0xdd, 0x51,
+	0x3f, 0xb8, 0x51, 0x68, 0xf2, 0x3a, 0x65, 0xed, 0x91, 0x92, 0x2c, 0x6b, 0x92, 0xfe, 0xe6, 0xc0,
+	0x4a, 0xa1, 0x43, 0xbd, 0x73, 0xb9, 0xbe, 0x6d, 0xf7, 0xa9, 0x0f, 0x4a, 0x3a, 0x3c, 0x25, 0x95,
+	0xea, 0xf3, 0xfe, 0x13, 0x45, 0xfe, 0xca, 0xed, 0x6b, 0xf5, 0xac, 0x77, 0xa2, 0x47, 0xb5, 0x4c,
+	0x8f, 0xda, 0x3b, 0xeb, 0x51, 0xbf, 0xb5, 0x1e, 0x3f, 0xab, 0xe4, 0x3e, 0x29, 0xc7, 0x35, 0xa5,
+	0xc6, 0xce, 0x94, 0xa1, 0xed, 0x61, 0xe9, 0xd0, 0x26, 0x0f, 0x95, 0x8c, 0x6e, 0xaf, 0xa7, 0x8d,
+	0x6e, 0x6b, 0xe5, 0xa3, 0x5b, 0x4e, 0xe8, 0xca, 0x00, 0xb7, 0x33, 0x65, 0x80, 0x7b, 0x58, 0x3a,
+	0xc0, 0x19, 0x02, 0xdd, 0x72, 0x8c, 0xfb, 0xb3, 0x23, 0xda, 0x9f, 0xed, 0x98, 0xd1, 0x94, 0x89,
+	0xa2, 0x67, 0x5f, 0x65, 0x75, 0xfa, 0x55, 0xd6, 0x6e, 0x74, 0xc9, 0x55, 0x98, 0x4d, 0x58, 0x30,
+	0x60, 0xb1, 0x1a, 0x44, 0xd4, 0x4a, 0x97, 0xf2, 0x39, 0x21, 0x90, 0x5c, 0xa0, 0x47, 0x00, 0x32,
+	0xf3, 0x44, 0xd4, 0x8b, 0xdb, 0xf3, 0xe2, 0x84, 0x01, 0xe1, 0xd4, 0xd8, 0x38, 0xf2, 0x62, 0xd6,
+	0x76, 0x25, 0x67, 0xb9, 0xc2, 0x5f, 0x01, 0x32, 0x5b, 0x80, 0xfd, 0xb3, 0x7d, 0x8e, 0xfd, 0x04,
+	0x96, 0x92, 0xd3, 0xf0, 0xf2, 0x60, 0xd4, 0xef, 0xb3, 0x24, 0x39, 0x1e, 0xf9, 0xe2, 0x26, 0xe7,
+	0x49, 0x01, 0x5a, 0xe0, 0x5a, 0x2b, 0x72, 0xc5, 0x9f, 0xf3, 0xe2, 0x2d, 0xfa, 0x9b, 0x2e, 0xf5,
+	0x37, 0xb7, 0x06, 0x83, 0x58, 0x36, 0x39, 0x08, 0x6a, 0x74, 0x30, 0x88, 0x95, 0xaf, 0x8b, 0x6f,
+	0x5d, 0xd0, 0x2b, 0x46, 0x41, 0xc7, 0xdf, 0xb7, 0x5b, 0x94, 0x2e, 0xf5, 0x69, 0xd0, 0x67, 0xe8,
+	0x31, 0x2c, 0xa8, 0x7c, 0x6b, 0xd0, 0x31, 0x41, 0xbc, 0x1b, 0x3e, 0x92, 0xc8, 0x2a, 0x6c, 0xb2,
+	0x25, 0xfe, 0x63, 0x25, 0x1f, 0x1d, 0x5f, 0x74, 0x0f, 0xd2, 0x30, 0x66, 0x85, 0x0a, 0xa6, 0x9b,
+	0x60, 0xeb, 0x36, 0x2b, 0xd3, 0x6f, 0xb3, 0x6a, 0xdd, 0xa6, 0xac, 0x7b, 0xbd, 0xc2, 0xa8, 0x26,
+	0x8b, 0x10, 0x86, 0x46, 0x3a, 0xce, 0x3b, 0x56, 0xa2, 0xba, 0x6a, 0x0b, 0x86, 0x3e, 0x84, 0xa6,
+	0xd2, 0x24, 0x07, 0x0a, 0x1f, 0x68, 0x90, 0x2b, 0x70, 0x6e, 0xb5, 0xf0, 0x32, 0x60, 0xb1, 0xf0,
+	0x06, 0x97, 0xc8, 0x85, 0x31, 0x22, 0xcc, 0x4f, 0x1b, 0x11, 0x5c, 0x7b, 0x44, 0x58, 0x03, 0xf7,
+	0xc8, 0x0f, 0xfb, 0x67, 0xc2, 0x08, 0x20, 0xc7, 0xa4, 0x1c, 0x80, 0xdf, 0x42, 0x4d, 0xb4, 0x21,
+	0xd3, 0x6a, 0xe2, 0x3a, 0xb8, 0xbc, 0xda, 0x76, 0x69, 0xe2, 0xf5, 0x55, 0xb0, 0x36, 0x8d, 0xe2,
+	0x2c, 0xe0, 0x44, 0xa3, 0xe0, 0x08, 0x96, 0x38, 0xfc, 0x35, 0xbd, 0x60, 0x87, 0xe3, 0xd7, 0xdc,
+	0xd2, 0xd7, 0xf4, 0xe3, 0xa9, 0xc0, 0x50, 0xe6, 0x57, 0x2b, 0x9b, 0x63, 0xf5, 0x66, 0x8e, 0x1f,
+	0x42, 0x5d, 0x06, 0xe8, 0xff, 0x41, 0x9d, 0x43, 0xb3, 0x26, 0x74, 0xc1, 0x38, 0x44, 0xe4, 0x0e,
+	0x26, 0x72, 0x2a, 0xd7, 0xd2, 0x25, 0xe8, 0xb9, 0xec, 0x41, 0x0c, 0x50, 0xa1, 0x7e, 0xdb, 0x07,
+	0x48, 0x11, 0x1b, 0x1f, 0xf3, 0x38, 0x3b, 0x2f, 0x8e, 0x8d, 0xd7, 0x27, 0xfe, 0x0e, 0xcc, 0x0f,
+	0xbd, 0xf1, 0x76, 0x9e, 0xfa, 0xeb, 0x24, 0x5f, 0x5b, 0xbe, 0x57, 0x35, 0x06, 0x82, 0x04, 0xdc,
+	0x5c, 0xff, 0xb2, 0xe9, 0xd3, 0xb1, 0x1e, 0xc1, 0x6e, 0x1c, 0xf9, 0x75, 0xb3, 0xb3, 0x5f, 0x36,
+	0x74, 0x4b, 0x20, 0x26, 0xd0, 0x14, 0x0d, 0xbb, 0xe8, 0xbe, 0xb6, 0x86, 0x05, 0x01, 0xed, 0x0b,
+	0x7d, 0x92, 0xd9, 0xdf, 0xee, 0xce, 0xf5, 0xa5, 0xa9, 0x4b, 0xf8, 0x95, 0xc3, 0x2d, 0x96, 0xdc,
+	0x9d, 0xc5, 0xb6, 0xa1, 0xc9, 0x29, 0x9b, 0x42, 0x0a, 0xdb, 0x2d, 0x6c, 0xbc, 0x67, 0xc8, 0x60,
+	0x6e, 0x93, 0x2b, 0x07, 0xf0, 0xef, 0x1c, 0xb8, 0xf7, 0x92, 0xfb, 0xd1, 0x01, 0xff, 0xe9, 0x05,
+	0x7b, 0x01, 0x3b, 0x1c, 0xdf, 0x5c, 0xbf, 0x55, 0x22, 0xaf, 0x58, 0x89, 0x5c, 0xa7, 0xe4, 0xaa,
+	0x99, 0x92, 0x0b, 0x13, 0xb9, 0x6e, 0xa7, 0x73, 0xcf, 0xad, 0x4f, 0xf5, 0xdc, 0x1f, 0x41, 0x83,
+	0x30, 0xea, 0xe7, 0x6f, 0x41, 0x18, 0x1a, 0x31, 0xa3, 0xbe, 0x28, 0xf5, 0x59, 0x9f, 0x5f, 0x27,
+	0x16, 0x8c, 0xe7, 0xfa, 0xac, 0x75, 0x8d, 0xbd, 0x0b, 0x7d, 0xc7, 0x05, 0x28, 0xde, 0x04, 0xc8,
+	0x2f, 0x29, 0xd1, 0xd7, 0xe8, 0x5c, 0x7f, 0x8d, 0x7f, 0xaf, 0xc0, 0xaa, 0xac, 0x8f, 0x87, 0xfa,
+	0x11, 0x78, 0x9b, 0xf6, 0x4f, 0x99, 0x39, 0x7b, 0x34, 0xe4, 0xec, 0xf1, 0x08, 0xa0, 0x2f, 0x70,
+	0x39, 0x5f, 0x95, 0xb6, 0x0d, 0x08, 0xbf, 0xde, 0xc4, 0x3b, 0x09, 0xc4, 0xae, 0xb4, 0x59, 0xbe,
+	0x16, 0x56, 0x4e, 0x69, 0x3a, 0x4a, 0x54, 0xca, 0x55, 0x2b, 0xb4, 0x09, 0x0b, 0xc6, 0xf3, 0xb3,
+	0xea, 0x72, 0x50, 0x36, 0x3b, 0xe9, 0x1d, 0x62, 0xa2, 0x4d, 0x2d, 0xbe, 0x1f, 0x4b, 0x83, 0xe6,
+	0x4d, 0xfc, 0x9c, 0x35, 0x1a, 0x9b, 0xb6, 0x27, 0x16, 0x22, 0xfa, 0xff, 0xcc, 0x5e, 0xf3, 0xe2,
+	0xc4, 0xbd, 0xa2, 0xbd, 0x12, 0x65, 0x30, 0xdb, 0x97, 0xdc, 0x82, 0x2f, 0xe1, 0xae, 0x6c, 0x38,
+	0xb8, 0xfd, 0x0e, 0xc7, 0x5f, 0x78, 0x49, 0x5a, 0x5a, 0x4a, 0xaf, 0x2d, 0x5b, 0xf8, 0x13, 0x68,
+	0x8a, 0x92, 0x6a, 0x52, 0xf9, 0x00, 0xaa, 0xe9, 0x38, 0xbb, 0xcc, 0x32, 0xeb, 0xf0, 0x6d, 0xbc,
+	0x03, 0xf7, 0xf4, 0x73, 0xc5, 0x56, 0x5f, 0x76, 0x1e, 0xd7, 0x3b, 0x7f, 0x26, 0x5e, 0x45, 0x8b,
+	0x87, 0x7f, 0x22, 0x72, 0xe1, 0x7e, 0x81, 0xce, 0xad, 0x7b, 0x02, 0x5e, 0xfc, 0x07, 0x5e, 0x12,
+	0xf9, 0x74, 0x32, 0x0c, 0x07, 0x4c, 0xbd, 0x68, 0x99, 0x20, 0xfc, 0x75, 0xe1, 0x61, 0x43, 0xb1,
+	0xc0, 0xda, 0x69, 0xb9, 0x17, 0x34, 0x8c, 0x4b, 0xc8, 0xed, 0x8f, 0xa1, 0x7e, 0xac, 0xf2, 0x53,
+	0x09, 0x8e, 0xd8, 0xba, 0x85, 0x00, 0x6f, 0xb8, 0x00, 0xaa, 0x31, 0x54, 0x76, 0xe6, 0xd5, 0xfa,
+	0x7a, 0x5b, 0xb5, 0x61, 0x8e, 0x07, 0xba, 0x0e, 0xc1, 0x6c, 0x89, 0xff, 0xe9, 0xc0, 0x03, 0xe3,
+	0xa1, 0x48, 0xdf, 0x8b, 0xb8, 0xbc, 0xeb, 0xa9, 0x62, 0x68, 0x70, 0xe7, 0x25, 0xac, 0x7f, 0xf1,
+	0xd2, 0xa7, 0x27, 0x2a, 0x2f, 0x5a, 0x30, 0x4e, 0x61, 0xe0, 0xc5, 0x4c, 0x86, 0x88, 0x54, 0x47,
+	0x03, 0x74, 0xc7, 0x59, 0x33, 0x3b, 0x4e, 0x04, 0xb5, 0xe3, 0x38, 0x1c, 0x66, 0x3d, 0x2b, 0xff,
+	0xe6, 0x1a, 0xf0, 0x7b, 0x63, 0x49, 0xa2, 0xe2, 0x26, 0x5b, 0xf2, 0xd0, 0x4e, 0x18, 0x1b, 0xa8,
+	0xc4, 0x36, 0x27, 0xd4, 0x33, 0x20, 0xf8, 0x33, 0xe1, 0xd8, 0x84, 0x25, 0x7d, 0x1a, 0x7c, 0x29,
+	0x8c, 0xdc, 0x82, 0x3a, 0x3f, 0x2c, 0x9d, 0xd2, 0x25, 0x72, 0x21, 0xb8, 0x6a, 0x2d, 0xc4, 0x37,
+	0xfe, 0x14, 0x96, 0x09, 0x8b, 0xe4, 0x59, 0xc2, 0x92, 0x91, 0x5f, 0xee, 0x4c, 0x65, 0x47, 0x4f,
+	0x39, 0xdb, 0xc8, 0x64, 0x9b, 0x61, 0x39, 0x1a, 0x0b, 0x75, 0xa1, 0x19, 0xdb, 0x0c, 0x92, 0xc2,
+	0x54, 0x5d, 0xe0, 0x4f, 0xae, 0xe0, 0xe3, 0xa7, 0x3c, 0xea, 0xce, 0x77, 0x02, 0x7a, 0xe4, 0xb3,
+	0xec, 0x7f, 0x96, 0x5c, 0xc5, 0x8a, 0xa1, 0x22, 0xee, 0x89, 0x27, 0x6c, 0xde, 0x2c, 0x5f, 0xaf,
+	0x4c, 0x2f, 0xd9, 0xdb, 0x15, 0xca, 0xcc, 0x13, 0xf1, 0xcd, 0x13, 0xea, 0x30, 0x39, 0x51, 0x53,
+	0x07, 0xff, 0xc4, 0x5d, 0x11, 0xea, 0x36, 0xd3, 0x75, 0x98, 0x8b, 0x95, 0x0e, 0xf6, 0x3b, 0x9c,
+	0xc5, 0x94, 0x64, 0x48, 0xf8, 0x0f, 0x7a, 0xfc, 0x3e, 0xf0, 0x4e, 0x02, 0x9a, 0x8e, 0x62, 0xb6,
+	0x4f, 0x63, 0x3a, 0xe4, 0x77, 0x2a, 0xbd, 0xf0, 0x70, 0x12, 0x31, 0x65, 0x30, 0x03, 0x82, 0x3e,
+	0x02, 0xe0, 0x31, 0x75, 0x24, 0xf2, 0x9b, 0x32, 0x58, 0x49, 0xe2, 0x33, 0x90, 0xd0, 0xa7, 0xb0,
+	0x18, 0x1b, 0x49, 0x34, 0x51, 0x15, 0xba, 0x34, 0xc1, 0xda, 0x98, 0xf8, 0xf7, 0x0e, 0xb4, 0x7e,
+	0x20, 0xfe, 0x55, 0x54, 0xe1, 0x9e, 0x29, 0xfc, 0x08, 0xe0, 0xc2, 0x63, 0x97, 0xaa, 0x81, 0x91,
+	0xe5, 0xc6, 0x80, 0xf0, 0x68, 0x16, 0xab, 0xd8, 0xbb, 0xd8, 0xcd, 0x43, 0xcf, 0x04, 0x71, 0x8c,
+	0x24, 0x62, 0xc1, 0x40, 0x91, 0x90, 0xff, 0x7d, 0x98, 0x20, 0x11, 0x64, 0x62, 0xa9, 0x88, 0xc8,
+	0xb7, 0x74, 0x0b, 0xb6, 0xf1, 0x8f, 0x0a, 0xcc, 0x19, 0x7f, 0x2d, 0x1e, 0x9c, 0x86, 0x97, 0x4a,
+	0x44, 0xce, 0xa3, 0x99, 0xab, 0x78, 0x7e, 0x90, 0xc6, 0x5e, 0x70, 0xd2, 0x79, 0xa0, 0x7d, 0xab,
+	0x30, 0x9f, 0xe1, 0x19, 0x5e, 0xd6, 0xcc, 0xb1, 0x73, 0x45, 0x9f, 0x36, 0xc0, 0x9d, 0x86, 0x49,
+	0x02, 0xcf, 0xa0, 0xef, 0xc1, 0x82, 0xe9, 0xeb, 0xc6, 0x29, 0x03, 0xdc, 0x59, 0x29, 0x3a, 0xb5,
+	0x00, 0xe3, 0x19, 0xb4, 0x0d, 0x8b, 0xb6, 0x2f, 0xbd, 0xa7, 0x09, 0x58, 0x1b, 0x1d, 0xbd, 0x61,
+	0x7b, 0x1f, 0x9e, 0x41, 0x3d, 0x68, 0x49, 0x11, 0x09, 0xbd, 0x34, 0x32, 0x19, 0x7a, 0x58, 0x54,
+	0xc1, 0xd8, 0xec, 0x94, 0x94, 0x24, 0x3c, 0x73, 0x34, 0x2b, 0xfe, 0x3e, 0xfe, 0xce, 0xbf, 0x03,
+	0x00, 0x00, 0xff, 0xff, 0x4e, 0x70, 0x4a, 0x03, 0x85, 0x1e, 0x00, 0x00,
 }

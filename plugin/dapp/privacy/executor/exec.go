@@ -102,7 +102,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	}
 	txhashstr := hex.EncodeToString(tx.Hash())
 	coinsAccount := p.GetCoinsAccount()
-	receipt, err := coinsAccount.ExecDeposit(tx.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
+	receipt, err := coinsAccount.ExecDeposit(payload.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
 	if err != nil {
 		privacylog.Error("PrivacyTrading Exec", "ActionPrivacy2Public txhash", txhashstr, "ExecDeposit error ", err)
 		return nil, err
