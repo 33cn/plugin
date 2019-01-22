@@ -38,6 +38,7 @@ message Privacy2Public {
     string        tokenname = 1;
     int64         amount    = 2;
     string        note      = 3;
+    string        to        = 6;
     PrivacyInput  input     = 4;
     PrivacyOutput output    = 5;
 }
@@ -191,49 +192,6 @@ message PrivacyAction4Print {
         Privacy2Public4Print  privacy2public  = 3;
     }
     int32 ty = 4;
-}
-
-message ReqPub2Pri {
-    //接收人可见公钥A
-    // string viewPublic  = 1;
-    //接收人花费公钥B
-    // string spendPublic = 2;
-    string tokenname = 3;
-    int64  amount    = 4;
-    string note      = 5;
-    //发送人地址
-    string sender     = 6;
-    int32  mixin      = 7;
-    string pubkeypair = 8;
-    int64  expire     = 9;
-}
-
-message ReqPri2Pri {
-    //接收人可见公钥A
-    // string viewPublic  = 1; //A
-    //接收人花费公钥B
-    // string spendPublic = 2; //B
-    string tokenname = 3;
-    int64  amount    = 4;
-    string note      = 5;
-    //隐私交易发起人地址
-    string sender = 6;
-    int32  mixin  = 7;
-    //	string txhash      = 7;
-    string pubkeypair = 8;
-    int64  expire     = 9;
-}
-
-message ReqPri2Pub {
-    string receiver  = 1;
-    string tokenname = 2;
-    int64  amount    = 3;
-    string note      = 4;
-    //隐私交易发起人地址
-    string sender = 5;
-    int32  mixin  = 6;
-    //	string txhash     = 6;
-    int64 expire = 7;
 }
 
 message ReqCreateUTXOs {
@@ -456,12 +414,6 @@ service privacy {
     rpc ShowPrivacyKey(ReqString) returns (ReplyPrivacyPkPair) {}
     // 创建一系列UTXO
     rpc CreateUTXOs(ReqCreateUTXOs) returns (Reply) {}
-    // 将资金从公开到隐私转移
-    rpc MakeTxPublic2Privacy(ReqPub2Pri) returns (Reply) {}
-    // 将资产从隐私到隐私进行转移
-    rpc MakeTxPrivacy2Privacy(ReqPri2Pri) returns (Reply) {}
-    // 将资产从隐私到公开进行转移
-    rpc MakeTxPrivacy2Public(ReqPri2Pub) returns (Reply) {}
     // 扫描UTXO以及获取扫描UTXO后的状态
     rpc RescanUtxos(ReqRescanUtxos) returns (RepRescanUtxos) {}
     // 使能隐私账户
