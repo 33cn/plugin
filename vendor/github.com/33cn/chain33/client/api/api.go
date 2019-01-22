@@ -46,9 +46,9 @@ type mainChainAPI struct {
 }
 
 //New 新建接口
-func New(api client.QueueProtocolAPI, grpcaddr string) ExecutorAPI {
+func New(api client.QueueProtocolAPI, grpcClient types.Chain33Client) ExecutorAPI {
 	if types.IsPara() {
-		return newParaChainAPI(api, grpcaddr)
+		return newParaChainAPI(api, grpcClient)
 	}
 	return &mainChainAPI{api: api}
 }
@@ -85,19 +85,7 @@ type paraChainAPI struct {
 	errflag    int32
 }
 
-func newParaChainAPI(api client.QueueProtocolAPI, grpcaddr string) ExecutorAPI {
-	paraRemoteGrpcClient := types.Conf("config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
-	if grpcaddr != "" {
-		paraRemoteGrpcClient = grpcaddr
-	}
-	if paraRemoteGrpcClient == "" {
-		paraRemoteGrpcClient = "127.0.0.1:8002"
-	}
-	conn, err := grpc.Dial(paraRemoteGrpcClient, grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	grpcClient := types.NewChain33Client(conn)
+func newParaChainAPI(api client.QueueProtocolAPI, grpcClient types.Chain33Client) ExecutorAPI {
 	return &paraChainAPI{api: api, grpcClient: grpcClient}
 }
 

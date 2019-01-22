@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/chain33/queue"
+	_ "github.com/33cn/chain33/rpc/grpcclient" // register grpc multiple resolver
 	"github.com/33cn/chain33/types"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -197,6 +198,9 @@ func InitCfg(cfg *types.RPC) {
 // New produce a rpc by cfg
 func New(cfg *types.RPC) *RPC {
 	InitCfg(cfg)
+	if cfg.EnableTrace {
+		grpc.EnableTracing = true
+	}
 	return &RPC{cfg: cfg}
 }
 
