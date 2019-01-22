@@ -60,6 +60,10 @@ func (t *trade) Query_GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Mess
 	return t.GetOnesOrderWithStatus(req)
 }
 
+func (t *trade) Query_GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOneOrder(req)
+}
+
 func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
 	var keys [][]byte
 	if 0 == len(addrTokens.Token) {
@@ -730,4 +734,23 @@ func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
 		IsSellOrder:          order.IsSellOrder,
 		AssetExec:            order.AssetExec,
 	}
+}
+
+func (t *trade) GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
+	query := NewOrderTable(t.GetLocalDB())
+	tradelog.Debug("query GetData dbg", "primary", req.FromKey)
+	row, err := query.GetData([]byte(req.FromKey))
+	if err != nil {
+		tradelog.Error("query GetData failed", "key", req.FromKey, "err", err)
+		return nil, err
+	}
+
+	o, ok := row.Data.(*pty.LocalOrder)
+	if !ok {
+		tradelog.Error("query GetData failed", "err", "bad row type")
+		return nil, types.ErrTypeAsset
+	}
+	reply := fmtReply(o)
+
+	return reply, nil
 }
