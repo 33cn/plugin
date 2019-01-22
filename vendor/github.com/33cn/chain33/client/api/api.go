@@ -37,7 +37,7 @@ type ExecutorAPI interface {
 	GetBlockByHashes(param *types.ReqHashes) (*types.BlockDetails, error)
 	GetRandNum(param *types.ReqRandHash) ([]byte, error)
 	QueryTx(param *types.ReqHash) (*types.TransactionDetail, error)
-	IsErr() bool
+	 IsErr() bool
 }
 
 type mainChainAPI struct {
