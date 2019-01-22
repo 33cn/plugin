@@ -30,6 +30,10 @@ func TradeCmd() *cobra.Command {
 		CreateRawTradeBuyTxCmd(),
 		CreateRawTradeRevokeTxCmd(),
 
+		CreateRawBuyLimitTxCmd(),
+		CreateRawSellMarketTxCmd(),
+		CreateRawBuyRevokeTxCmd(),
+
 		ShowOnesSellOrdersCmd(),
 		ShowOnesSellOrdersStatusCmd(),
 		ShowTokenSellOrdersStatusCmd(),
@@ -553,5 +557,128 @@ func tokenSellRevoke(cmd *cobra.Command, args []string) {
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeRevokeTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// BuyLimit SellMarket BuyRevoke transactions
+
+// CreateRawBuyLimitTxCmd : create raw buy limit token transaction
+func CreateRawBuyLimitTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "buy_limit",
+		Short: "Create a buy limit transaction",
+		Run:   tokenBuyLimit,
+	}
+	addTokenBuyLimitFlags(cmd)
+	return cmd
+}
+
+func addTokenBuyLimitFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Int64P("min", "m", 0, "min boardlot")
+	cmd.MarkFlagRequired("min")
+
+	cmd.Flags().Float64P("price", "p", 0, "price per boardlot")
+	cmd.MarkFlagRequired("price")
+
+	cmd.Flags().Float64P("fee", "f", 0, "transaction fee")
+
+	cmd.Flags().Float64P("total", "t", 0, "total tokens to buy")
+	cmd.MarkFlagRequired("total")
+}
+
+func tokenBuyLimit(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	min, _ := cmd.Flags().GetInt64("min")
+	price, _ := cmd.Flags().GetFloat64("price")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	total, _ := cmd.Flags().GetFloat64("total")
+
+	priceInt64 := int64(price * 1e4)
+	feeInt64 := int64(fee * 1e4)
+	totalInt64 := int64(total * 1e8 / 1e6)
+	params := &pty.TradeBuyLimitTx{
+		TokenSymbol:       symbol,
+		AmountPerBoardlot: 1e6,
+		MinBoardlot:       min,
+		PricePerBoardlot:  priceInt64 * 1e4,
+		TotalBoardlot:     totalInt64,
+		Fee:               feeInt64 * 1e4,
+		AssetExec:         "token",
+	}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeBuyLimitTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// CreateRawSellMarketTxCmd : create raw sell market token transaction
+func CreateRawSellMarketTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sell_market",
+		Short: "Create a sell market transaction",
+		Run:   sellMarket,
+	}
+	addSellMarketFlags(cmd)
+	return cmd
+}
+
+func addSellMarketFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("buy_id", "b", "", "buy id")
+	cmd.MarkFlagRequired("buy_id")
+	cmd.Flags().Int64P("count", "c", 0, "count of selling (boardlot)")
+	cmd.MarkFlagRequired("count")
+	cmd.Flags().Float64P("fee", "f", 0, "transaction fee")
+}
+
+func sellMarket(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	buyID, _ := cmd.Flags().GetString("buy_id")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	count, _ := cmd.Flags().GetInt64("count")
+
+	feeInt64 := int64(fee * 1e4)
+	params := &pty.TradeSellMarketTx{
+		BuyID:       buyID,
+		BoardlotCnt: count,
+		Fee:         feeInt64 * 1e4,
+	}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeSellMarketTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// CreateRawBuyRevokeTxCmd : create raw buy revoke transaction
+func CreateRawBuyRevokeTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "revoke_buy",
+		Short: "Create a revoke buy limit transaction",
+		Run:   buyRevoke,
+	}
+	addBuyRevokeFlags(cmd)
+	return cmd
+}
+
+func addBuyRevokeFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("buy_id", "b", "", "buy id")
+	cmd.MarkFlagRequired("buy_id")
+
+	cmd.Flags().Float64P("fee", "f", 0, "transaction fee")
+}
+
+func buyRevoke(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	buyID, _ := cmd.Flags().GetString("buy_id")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+
+	feeInt64 := int64(fee * 1e4)
+	params := &pty.TradeRevokeBuyTx{
+		BuyID: buyID,
+		Fee:   feeInt64 * 1e4,
+	}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeRevokeBuyTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
