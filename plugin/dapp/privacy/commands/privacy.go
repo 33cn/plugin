@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"time"
@@ -425,7 +426,7 @@ func parseShowUTXOs4SpecifiedAmountRes(arg interface{}) (interface{}, error) {
 		result := &PrivacyAccountResult{
 			Txhash:        common.ToHex(item.Txhash),
 			OutIndex:      item.Outindex,
-			OnetimePubKey: common.Bytes2Hex(item.Onetimepubkey),
+			OnetimePubKey: hex.EncodeToString(item.Onetimepubkey),
 		}
 		ret = append(ret, result)
 	}

@@ -5,9 +5,9 @@
 package executor
 
 import (
+	"encoding/hex"
 	"fmt"
 
-	"github.com/33cn/chain33/common"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
@@ -18,7 +18,7 @@ var (
 )
 
 func unfreezeID(txHash []byte) []byte {
-	return []byte(fmt.Sprintf("%s%s", id, common.Bytes2Hex(txHash)))
+	return []byte(fmt.Sprintf("%s%s", id, hex.EncodeToString(txHash)))
 }
 
 func initKey(init string) []byte {

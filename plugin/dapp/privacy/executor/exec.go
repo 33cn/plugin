@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -16,7 +18,7 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
 	}
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	coinsAccount := p.GetCoinsAccount()
 	from := tx.From()
 	receipt, err := coinsAccount.ExecWithdraw(address.ExecAddress(string(tx.Execer)), from, payload.Amount)
@@ -56,7 +58,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
 	}
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	receipt := &types.Receipt{KV: make([]*types.KeyValue, 0)}
 	privacyInput := payload.Input
 	for _, keyInput := range privacyInput.Keyinput {
@@ -98,7 +100,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	if payload.Tokenname != types.BTY {
 		return nil, types.ErrNotSupport
 	}
-	txhashstr := common.Bytes2Hex(tx.Hash())
+	txhashstr := hex.EncodeToString(tx.Hash())
 	coinsAccount := p.GetCoinsAccount()
 	receipt, err := coinsAccount.ExecDeposit(tx.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
 	if err != nil {
