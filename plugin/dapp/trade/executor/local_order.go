@@ -87,7 +87,6 @@ func (r *OrderRow) SetPayload(data types.Message) error {
 
 // Get get index key
 func (r *OrderRow) Get(key string) ([]byte, error) {
-	tradelog.Error("r.Get", "key", key, "%+v", r)
 	switch key {
 	case "txIndex":
 		return []byte(r.TxIndex), nil
@@ -206,7 +205,7 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 		return nil
 	}
 	order, ok := xs[0].Data.(*pty.LocalOrder)
-	tradelog.Error("Table dbg", "sell-update", order, "data", xs[0].Data)
+	tradelog.Debug("Table dbg", "sell-update", order, "data", xs[0].Data)
 	if !ok {
 		tradelog.Error("Table failed", "sell-update", order)
 		return nil
@@ -221,7 +220,7 @@ func (t *trade) updateSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase
 	order.TradedBoardlot = sellorder.SoldBoardlot
 	order.IsFinished = (status != pty.TradeOrderStatusOnSale)
 
-	tradelog.Error("Table", "sell-update", order)
+	tradelog.Debug("Table", "sell-update", order)
 
 	ldb.Replace(order)
 
@@ -404,12 +403,13 @@ func list(db db.KVDB, indexName string, data *pty.LocalOrder, count, direction i
 	cur := &OrderRow{LocalOrder: data}
 	index, err := cur.Get(indexName)
 	if err != nil {
-		tradelog.Error("query List failed", "key", string(primary), "param", data)
+		tradelog.Error("query List failed", "key", string(primary), "param", data, "err", err)
 		return nil, err
 	}
+	tradelog.Debug("query List dbg", "indexName", indexName, "index", string(index), "primary", primary, "count", count, "direction", direction)
 	rows, err := query.ListIndex(indexName, index, primary, count, direction)
 	if err != nil {
-		tradelog.Error("query List failed", "key", string(primary), "param", data)
+		tradelog.Error("query List failed", "key", string(primary), "param", data, "err", err)
 		return nil, err
 	}
 	if len(rows) == 0 {
