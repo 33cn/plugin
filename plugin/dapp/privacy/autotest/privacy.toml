@@ -10,7 +10,7 @@ dep = ["import1", "import2", "import3"]
 id = "import1"
 command = "account import_key -k 0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb0dddd7df977d4d5477e -l privacy_test1"
 
-#import privacy test addr,17UZr5eJVxDRW1gs7rausQwaSUPtvcpxGT
+#import privacy test addr, 17UZr5eJVxDRW1gs7rausQwaSUPtvcpxGT
 [[SimpleCase]]
 id = "import2"
 command = "account import_key -k 0xa0c6f46de8d275ce21e935afa5363e9b8a087fe604e05f7a9eef1258dc781c3a -l privacy_test2"
