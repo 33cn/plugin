@@ -16,16 +16,17 @@ import (
 	//"github.com/33cn/chain33/common"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -59,9 +60,9 @@ func init() {
 
 type client struct {
 	*drivers.BaseClient
-	conn            *grpc.ClientConn
 	grpcClient      types.Chain33Client
 	paraClient      paracross.ParacrossClient
+	execAPI         api.ExecutorAPI
 	isCaughtUp      bool
 	commitMsgClient *commitMsgClient
 	authAccount     string
@@ -117,20 +118,22 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	plog.Debug("New Para consensus client")
 
-	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	conn, err := grpc.Dial(grpcSite, grpc.WithInsecure(), msgRecvOp)
+	//msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
+	//conn, err := grpc.Dial(grpcSite, grpc.WithInsecure(), msgRecvOp)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//_ = types.NewChain33Client(conn)
 
+	//grpcClient := types.NewChain33Client(conn)
+	grpcCli, err := grpcclient.NewMainChainClient(grpcSite)
 	if err != nil {
 		panic(err)
 	}
-	grpcClient := types.NewChain33Client(conn)
-	paraCli := paracross.NewParacrossClient(conn)
 
 	para := &client{
 		BaseClient:  c,
-		conn:        conn,
-		grpcClient:  grpcClient,
-		paraClient:  paraCli,
+		grpcClient:  grpcCli,
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
@@ -160,7 +163,6 @@ func (client *client) Close() {
 	client.BaseClient.Close()
 	close(client.commitMsgClient.quit)
 	client.wg.Wait()
-	client.conn.Close()
 	plog.Info("consensus para closed")
 }
 
@@ -182,6 +184,8 @@ func (client *client) InitBlock() {
 	if err != nil {
 		panic(err)
 	}
+
+	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
 
 	block, err := client.RequestLastBlock()
 	if err != nil {
