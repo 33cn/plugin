@@ -29,7 +29,6 @@ import (
  5. 显示指定状态下的某地址卖单 （无分页）  -> owner_isSell_status
  6. 显示一个token 指定数量的卖单    -> asset_isSell
  7. 根据状态分页列出某地址的订单（包括买单卖单） owner_status
-
 */
 var opt_order_table = &table.Option{
 	Prefix:  "LODB-trade",
