@@ -10,10 +10,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/system/store/mavl"
-	"github.com/33cn/plugin/plugin/store/kvmvcc"
 	"github.com/hashicorp/golang-lru"
-	"encoding/json"
 	"errors"
 )
 
@@ -41,8 +38,8 @@ func init() {
 // KVMVCCMavlStore provide kvmvcc and mavl store interface implementation
 type KVMVCCMavlStore struct {
 	*drivers.BaseStore
-	*kvmvccdb.KVMVCCStore
-	*mavl.Store
+	*KVMVCCStore
+	*MavlStore
 	cance *lru.Cache
 
 }
@@ -81,29 +78,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMavlPrune  = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight      = subcfg.PruneHeight
 	}
-	mvcVal, _ := json.Marshal(&subKVMVCCcfg)
-	mavlVal, _ := json.Marshal(&subMavlcfg)
 	cance, err := lru.New(1024)
 	if err != nil {
 		panic("new KVMVCCMavlStore fail")
 	}
 
-	mvccCfg := &types.Store{}
-	mvccCfg.Name           = "kvmvcc"
-	mvccCfg.Driver         = cfg.Driver
-	mvccCfg.DbPath         = cfg.DbPath + "/kvmvcc"
-	mvccCfg.DbCache        = cfg.DbCache
-	mvccCfg.LocalDBVersion = cfg.LocalDBVersion
-
-	mavlCfg := &types.Store{}
-	mavlCfg.Name           = "mavl"
-	mavlCfg.Driver         = cfg.Driver
-	mavlCfg.DbPath         = cfg.DbPath + "/mavl"
-	mavlCfg.DbCache        = cfg.DbCache
-	mavlCfg.LocalDBVersion = cfg.LocalDBVersion
-
-	kvms = &KVMVCCMavlStore{bs, kvmvccdb.New(mvccCfg, mvcVal).(*kvmvccdb.KVMVCCStore),
-		mavl.New(mavlCfg, mavlVal).(*mavl.Store), cance}
+	kvms = &KVMVCCMavlStore{bs, NewKVMVCC(cfg, &subKVMVCCcfg, bs.GetDB()),
+		NewMavl(cfg, &subMavlcfg, bs.GetDB()), cance}
 	bs.SetChild(kvms)
 	return kvms
 }
@@ -112,7 +93,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 func (kvmMavls *KVMVCCMavlStore) Close() {
 	kvmMavls.BaseStore.Close()
 	kvmMavls.KVMVCCStore.Close()
-	kvmMavls.Store.Close()
+	kvmMavls.MavlStore.Close()
 	kmlog.Info("store kvdb closed")
 }
 
@@ -120,7 +101,7 @@ func (kvmMavls *KVMVCCMavlStore) Close() {
 func (kvmMavls *KVMVCCMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
 	// 这里后续需要考虑分叉回退
 	if datas.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.Store.Set(datas, sync)
+		hash, err := kvmMavls.MavlStore.Set(datas, sync)
 		if err != nil {
 			return hash, err
 		}
@@ -145,7 +126,7 @@ func (kvmMavls *KVMVCCMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, 
 func (kvmMavls *KVMVCCMavlStore) Get(datas *types.StoreGet) [][]byte {
 	if value, ok := kvmMavls.cance.Get(string(datas.StateHash)); ok {
 		if value.(int64) < kvmvccMavlFork  {
-			return kvmMavls.Store.Get(datas)
+			return kvmMavls.MavlStore.Get(datas)
 		}
 		return kvmMavls.KVMVCCStore.Get(datas)
 	}
@@ -156,7 +137,7 @@ func (kvmMavls *KVMVCCMavlStore) Get(datas *types.StoreGet) [][]byte {
 func (kvmMavls *KVMVCCMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	// 这里后续需要考虑分叉回退
 	if datas.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.Store.MemSet(datas, sync)
+		hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
 		if err != nil {
 			return hash, err
 		}
@@ -181,7 +162,7 @@ func (kvmMavls *KVMVCCMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byt
 func (kvmMavls *KVMVCCMavlStore) Commit(req *types.ReqHash) ([]byte, error) {
 	if value, ok := kvmMavls.cance.Get(string(req.Hash)); ok {
 		if value.(int64) < kvmvccMavlFork  {
-			hash, err :=  kvmMavls.Store.Commit(req)
+			hash, err :=  kvmMavls.MavlStore.Commit(req)
 			if err != nil {
 				return hash, err
 			}
@@ -200,7 +181,7 @@ func (kvmMavls *KVMVCCMavlStore) Commit(req *types.ReqHash) ([]byte, error) {
 func (kvmMavls *KVMVCCMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	if value, ok := kvmMavls.cance.Get(string(req.Hash)); ok {
 		if value.(int64) < kvmvccMavlFork  {
-			hash, err :=  kvmMavls.Store.Rollback(req)
+			hash, err :=  kvmMavls.MavlStore.Rollback(req)
 			if err != nil {
 				return hash, err
 			}
@@ -219,7 +200,7 @@ func (kvmMavls *KVMVCCMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 func (kvmMavls *KVMVCCMavlStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
 	if value, ok := kvmMavls.cance.Get(string(statehash)); ok {
 		if value.(int64) < kvmvccMavlFork  {
-			kvmMavls.Store.IterateRangeByStateHash(statehash, start, end, ascending, fn)
+			kvmMavls.MavlStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
 		}
 		kvmMavls.KVMVCCStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
 	}
@@ -235,7 +216,7 @@ func (kvmMavls *KVMVCCMavlStore) ProcEvent(msg queue.Message) {
 func (kvmMavls *KVMVCCMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 	// 这里后续需要考虑分叉回退
 	if req.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.Store.Del(req)
+		hash, err := kvmMavls.MavlStore.Del(req)
 		if err != nil {
 			return hash, err
 		}

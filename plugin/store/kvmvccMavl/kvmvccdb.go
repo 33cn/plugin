@@ -8,7 +8,6 @@ import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
-	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 )
@@ -28,16 +27,15 @@ type KVMVCCStore struct {
 
 // NewKVMVCC construct KVMVCCStore module
 func NewKVMVCC(cfg *types.Store, sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
-	bs := drivers.NewBaseStore(cfg)
 	var kvs *KVMVCCStore
 	enable := false
 	if sub != nil {
 		enable = sub.EnableMVCCIter
 	}
 	if enable {
-		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(bs.GetDB()), make(map[string][]*types.KeyValue), true}
+		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue), true}
 	} else {
-		kvs = &KVMVCCStore{db, dbm.NewMVCC(bs.GetDB()), make(map[string][]*types.KeyValue), false}
+		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue), false}
 	}
 	return kvs
 }
