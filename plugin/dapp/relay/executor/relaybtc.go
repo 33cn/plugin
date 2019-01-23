@@ -6,14 +6,9 @@ package executor
 
 import (
 	"bytes"
+	"math/big"
 	"strings"
 	"time"
-
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/golang/protobuf/proto"
-
-	"math/big"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -21,6 +16,9 @@ import (
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/golang/protobuf/proto"
 )
 
 type btcStore struct {
@@ -284,8 +282,8 @@ func getRawTxHash(rawtx string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := common.DoubleHashH(data)
-	return h.Bytes(), nil
+	h := common.Sha2Sum(data)
+	return h, nil
 }
 
 func getSiblingHash(sibling string) ([][]byte, error) {
@@ -308,8 +306,15 @@ func btcHashStrRevers(str string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	merkle := common.BytesToHash(data).Revers().Bytes()
+	merkle := reverse(data)
 	return merkle, nil
+}
+
+func reverse(h []byte) []byte {
+	for i := 0; i < common.Sha256Len/2; i++ {
+		h[i], h[common.Sha256Len-1-i] = h[common.Sha256Len-1-i], h[i]
+	}
+	return h
 }
 
 func (b *btcStore) getHeadHeightList(req *ty.ReqRelayBtcHeaderHeightList) (types.Message, error) {

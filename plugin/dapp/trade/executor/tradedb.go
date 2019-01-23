@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -247,7 +248,7 @@ type tradeAction struct {
 }
 
 func newTradeAction(t *trade, tx *types.Transaction) *tradeAction {
-	hash := common.Bytes2Hex(tx.Hash())
+	hash := hex.EncodeToString(tx.Hash())
 	fromaddr := tx.From()
 	return &tradeAction{t.GetCoinsAccount(), t.GetStateDB(), hash, fromaddr,
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer))}

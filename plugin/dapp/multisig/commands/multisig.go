@@ -699,7 +699,7 @@ func parseAccInfo(view interface{}) (interface{}, error) {
 	for _, dailyLimit := range res.DailyLimits {
 		dailyLimt := strconv.FormatFloat(float64(dailyLimit.DailyLimit)/float64(types.Coin), 'f', 4, 64)
 		spentToday := strconv.FormatFloat(float64(dailyLimit.SpentToday)/float64(types.Coin), 'f', 4, 64)
-		fmt.Println("parseAccInfo dailyLimt", dailyLimt)
+
 		dailyLimitResult := &mty.DailyLimitResult{
 			Symbol:     dailyLimit.Symbol,
 			Execer:     dailyLimit.Execer,

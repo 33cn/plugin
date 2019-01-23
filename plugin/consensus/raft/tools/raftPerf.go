@@ -46,7 +46,6 @@ func createConn(ip string) {
 	c = types.NewChain33Client(conn)
 	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 }
-
 func main() {
 	rlog.SetLogLevel("eror")
 	if len(os.Args) == 1 || os.Args[1] == "-h" {
@@ -149,7 +148,7 @@ func SendToAddress(from string, to string, amount string, note string) {
 		return
 	}
 	amountInt64 := int64(amountFloat64 * 1e4)
-	tx := &types.ReqWalletSendToAddress{From: from, To: to, Amount: amountInt64 * 1e4, Note: []byte(note)}
+	tx := &types.ReqWalletSendToAddress{From: from, To: to, Amount: amountInt64 * 1e4, Note: note}
 
 	reply, err := c.SendToAddress(context.Background(), tx)
 	if err != nil {

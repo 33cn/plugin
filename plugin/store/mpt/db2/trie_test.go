@@ -600,14 +600,14 @@ func BenchmarkHash(b *testing.B) {
 			nonce   = uint64(random.Int63())
 			balance = new(big.Int).Rand(random, new(big.Int).Exp(Big2, Big256, nil))
 			root    = emptyRoot
-			code    = common.ShaKeccak256(nil)
+			code    = common.Sha3(nil)
 		)
 		accounts[i], _ = rlp.EncodeToBytes([]interface{}{nonce, balance, root, code})
 	}
 	// Insert the accounts into the trie and hash it
 	trie := newEmpty()
 	for i := 0; i < len(addresses); i++ {
-		trie.Update(common.ShaKeccak256(addresses[i][:]), accounts[i])
+		trie.Update(common.Sha3(addresses[i][:]), accounts[i])
 	}
 	b.ResetTimer()
 	b.ReportAllocs()
