@@ -62,4 +62,5 @@ func TestListAll(t *testing.T) {
 	kvs, err := odb.Save()
 	assert.Nil(t, err)
 	t.Log(kvs)
+	ldb.Close()
 }
