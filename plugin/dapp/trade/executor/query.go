@@ -662,7 +662,6 @@ func (t *trade) GetOnesOrderWithStatusV1(req *pty.ReqAddrAssets) (types.Message,
 		return nil, types.ErrInvalidParam
 	}
 
-
 	keys, err := t.GetLocalDB().List(calcOnesOrderPrefixStatus(req.Addr, orderStatus), fromKey, req.Count, req.Direction)
 	if err != nil {
 		return nil, err
@@ -717,22 +716,22 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 
 func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
 	return &pty.ReplyTradeOrder{
-		TokenSymbol:          order.AssetSymbol,
-		Owner:                order.Owner,
-		AmountPerBoardlot:    order.AmountPerBoardlot,
-		MinBoardlot:          order.MinBoardlot,
-		PricePerBoardlot:     order.PricePerBoardlot,
-		TotalBoardlot:        order.TotalBoardlot,
-		TradedBoardlot:       order.TradedBoardlot,
-		BuyID:                order.BuyID,
-		Status:               order.Status,
-		SellID:               order.SellID,
-		TxHash:               order.TxHash[0],
-		Height:               order.Height,
-		Key:                  order.TxIndex,
-		BlockTime:            order.BlockTime,
-		IsSellOrder:          order.IsSellOrder,
-		AssetExec:            order.AssetExec,
+		TokenSymbol:       order.AssetSymbol,
+		Owner:             order.Owner,
+		AmountPerBoardlot: order.AmountPerBoardlot,
+		MinBoardlot:       order.MinBoardlot,
+		PricePerBoardlot:  order.PricePerBoardlot,
+		TotalBoardlot:     order.TotalBoardlot,
+		TradedBoardlot:    order.TradedBoardlot,
+		BuyID:             order.BuyID,
+		Status:            order.Status,
+		SellID:            order.SellID,
+		TxHash:            order.TxHash[0],
+		Height:            order.Height,
+		Key:               order.TxIndex,
+		BlockTime:         order.BlockTime,
+		IsSellOrder:       order.IsSellOrder,
+		AssetExec:         order.AssetExec,
 	}
 }
 

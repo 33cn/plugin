@@ -5,8 +5,8 @@
 package executor
 
 import (
-	"fmt"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 
 	"github.com/33cn/chain33/common"
@@ -54,7 +54,7 @@ var opt_order_table = &table.Option{
 		"owner_isSell",       // 接口 6
 		// "owner_isSell_status",  可能需求， 界面分开显示订单
 		// "owner_isSell_statusPrefix", // 状态可以定制组合, 成交历史需求
-		"owner_status", // 接口 2
+		"owner_status",             // 接口 2
 		"assset_isSell_isFinished", // 用 isFinish, 进行订单是否完成的列表功能
 		"owner_asset_isFinished",
 		"owner_isFinished",
@@ -146,7 +146,7 @@ func (r *OrderRow) isFinished() int {
 //    进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
 //      01     10     11          12        19 -> 1*
 func (r *OrderRow) status() string {
-	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale{
+	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale {
 		return "01" // 试图用1 可以匹配所有完成的
 	} else if r.Status == pty.TradeOrderStatusSoldOut || r.Status == pty.TradeOrderStatusBoughtOut {
 		return "12"
@@ -291,7 +291,7 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 		IsSellOrder:       true,
 		AssetExec:         sell.AssetExec,
 
-		IsFinished:        true,
+		IsFinished: true,
 	}
 	return order
 }
