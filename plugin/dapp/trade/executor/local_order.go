@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/db"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
@@ -162,7 +162,7 @@ func (r *OrderRow) status() string {
 }
 
 // NewOrderTable create order table
-func NewOrderTable(kvdb db.KV) *table.Table {
+func NewOrderTable(kvdb dbm.KV) *table.Table {
 	rowMeta := NewOrderRow()
 	rowMeta.SetPayload(&pty.LocalOrder{})
 	t, err := table.NewTable(rowMeta, kvdb, opt_order_table)
@@ -394,8 +394,8 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 	return order
 }
 
-func list(db db.KVDB, indexName string, data *pty.LocalOrder, count, direction int32) ([]*table.Row, error) {
-	query := NewOrderTable(db)
+func list(db dbm.KVDB, indexName string, data *pty.LocalOrder, count, direction int32) ([]*table.Row, error) {
+	query := NewOrderTable(db).GetQuery(db)
 	var primary []byte
 	if len(data.TxIndex) > 0 {
 		primary = []byte(data.TxIndex)
