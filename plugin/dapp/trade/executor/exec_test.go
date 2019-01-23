@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -83,9 +84,12 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, stateDB)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
+	_, ldb, kvdb := util.CreateTestDB()
+
 	driver := newTrade()
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(stateDB)
+	driver.SetLocalDB(kvdb)
 
 	sell := &pty.TradeSellTx{
 		TokenSymbol:       Symbol,
@@ -124,6 +128,15 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	assert.Equal(t, int64(0), sellOrder.SoldBoardlot)
 	assert.Equal(t, string(Nodes[0]), sellOrder.Address)
 
+	receiptDataSell := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataSell, env.index)
+	assert.Nil(t, err)
+	kvdb.Commit()
+
+	// test buy market
 	buy := &pty.TradeBuyTx{
 		SellID:      sellOrder.SellID,
 		BoardlotCnt: buyArgs.total,
@@ -157,6 +170,14 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expect.total, sellOrder.TotalBoardlot-sellOrder.SoldBoardlot)
 
+	receiptDataBuy := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataBuy, env.index)
+	assert.Nil(t, err)
+
+	ldb.Close()
 }
 
 func TestTrade_Exec_BuyLimit(t *testing.T) {
@@ -185,6 +206,8 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	}
 
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
+	_, ldb, kvdb := util.CreateTestDB()
+
 	accB := account.NewCoinsAccount()
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
@@ -195,6 +218,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	driver := newTrade()
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(stateDB)
+	driver.SetLocalDB(kvdb)
 
 	buy := &pty.TradeBuyLimitTx{
 		TokenSymbol:       Symbol,
@@ -233,6 +257,13 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	assert.Equal(t, int64(0), buyLimitOrder.BoughtBoardlot)
 	assert.Equal(t, string(Nodes[1]), buyLimitOrder.Address)
 
+	receiptDataBuy := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataBuy, env.index)
+	assert.Nil(t, err)
+
 	sell := &pty.TradeSellMarketTx{
 		BuyID:       buyLimitOrder.BuyID,
 		BoardlotCnt: sellArgs.total,
@@ -266,6 +297,15 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	err = types.Decode(receipt.KV[4].Value, &buyLimitOrder)
 	assert.Nil(t, err)
 	assert.Equal(t, expect.total, buyLimitOrder.TotalBoardlot-buyLimitOrder.BoughtBoardlot)
+
+	receiptDataSell := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataSell, env.index)
+	assert.Nil(t, err)
+
+	ldb.Close()
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
