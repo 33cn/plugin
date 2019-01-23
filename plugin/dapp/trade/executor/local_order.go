@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"encoding/hex"
 	"strconv"
 
 	"github.com/33cn/chain33/common"
@@ -282,10 +283,10 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 		TradedBoardlot:    sell.SoldBoardlot,
 		BuyID:             sell.BuyID,
 		Status:            pty.TradeOrderStatusSoldOut,
-		SellID:            calcTokenSellID(common.Bytes2Hex(tx.Hash())),
+		SellID:            calcTokenSellID(hex.EncodeToString(tx.Hash())),
 		TxHash:            []string{common.ToHex(tx.Hash())},
 		Height:            sell.Height,
-		Key:               calcTokenSellID(common.Bytes2Hex(tx.Hash())),
+		Key:               calcTokenSellID(hex.EncodeToString(tx.Hash())),
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         sell.AssetExec,
@@ -379,12 +380,12 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		PricePerBoardlot:  parseOrderPriceFloat(buy.PricePerBoardlot),
 		TotalBoardlot:     buy.TotalBoardlot,
 		TradedBoardlot:    buy.BoughtBoardlot,
-		BuyID:             calcTokenBuyID(common.Bytes2Hex(tx.Hash())),
+		BuyID:             calcTokenBuyID(hex.EncodeToString(tx.Hash())),
 		Status:            pty.TradeOrderStatusBoughtOut,
 		SellID:            buy.SellID,
 		TxHash:            []string{common.ToHex(tx.Hash())},
 		Height:            buy.Height,
-		Key:               calcTokenBuyID(common.Bytes2Hex(tx.Hash())),
+		Key:               calcTokenBuyID(hex.EncodeToString(tx.Hash())),
 		BlockTime:         t.GetBlockTime(),
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
