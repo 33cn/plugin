@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -130,7 +129,7 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		MinerAddress: bindAddr,
 	}
 
-	var res types.ReplyHashes
+	var res rpctypes.ReplyHashes
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -146,12 +145,7 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var tx txHashes
-	for _, hash := range res.Hashes {
-		tx.Hashes = append(tx.Hashes, common.ToHex(hash))
-	}
-
-	data, err := json.MarshalIndent(tx, "", "    ")
+	data, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

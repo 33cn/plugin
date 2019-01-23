@@ -5,8 +5,6 @@
 package rpc
 
 import (
-	"encoding/hex"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -115,7 +113,7 @@ func (c *Jrpc) CloseTickets(in *ty.TicketClose, result *interface{}) error {
 	}
 	var hashes rpctypes.ReplyHashes
 	for _, has := range resp.Hashes {
-		hashes.Hashes = append(hashes.Hashes, hex.EncodeToString(has))
+		hashes.Hashes = append(hashes.Hashes, common.ToHex(has))
 	}
 	*result = &hashes
 	return nil
