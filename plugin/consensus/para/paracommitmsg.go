@@ -475,14 +475,26 @@ out:
 				isSync = true
 			}
 
-			ret, err := client.paraClient.paraClient.GetTitle(context.Background(),
-				&types.ReqString{Data: types.GetTitle()})
+			//ret, err := client.paraClient.paraClient.GetTitle(context.Background(),
+			//	&types.ReqString{Data: types.GetTitle()})
+			var req types.ChainExecutor
+			req.Driver = "paracross"
+			req.FuncName = "GetTitle"
+			req.Param = types.Encode(&types.ReqString{Data: types.GetTitle()})
+
+			ret, err := client.paraClient.grpcClient.QueryChain(context.Background(), &req)
 			if err != nil {
 				plog.Error("getConsensusHeight ", "err", err.Error())
 				continue
 			}
+			if !ret.GetIsOk() {
+				plog.Info("getConsensusHeight", "error", ret.GetMsg())
+				continue
+			}
+			var result pt.ParacrossStatus
+			types.Decode(ret.Msg, &result)
 
-			consensusRst <- ret
+			consensusRst <- &result
 		}
 	}
 
