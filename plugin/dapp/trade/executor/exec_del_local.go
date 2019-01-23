@@ -97,6 +97,9 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 		return nil, err
 	}
 	set.KV = append(set.KV, newKvs...)
+	for _, kv := range set.KV {
+		t.GetLocalDB().Set(kv.Key, kv.Value)
+	}
 
 	return &set, nil
 }

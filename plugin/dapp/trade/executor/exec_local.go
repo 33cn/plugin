@@ -99,6 +99,10 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 		tradelog.Error("trade table.Save failed", "error", err)
 		return nil, err
 	}
+
 	set.KV = append(set.KV, newKvs...)
+	for _, kv := range set.KV {
+		t.GetLocalDB().Set(kv.Key, kv.Value)
+	}
 	return &set, nil
 }
