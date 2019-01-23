@@ -87,6 +87,7 @@ func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transact
 
 	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
 		newOrder := t.genSellLimit(tx, base, sellorder, txIndex)
+		tradelog.Info("Table", "sell-add", newOrder)
 		ldb.Add(newOrder)
 	} else {
 		t.updateSellLimit(tx, base, sellorder, txIndex, ldb)
@@ -163,8 +164,10 @@ func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 
 func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
-	if ty == pty.TradeOrderStatusOnBuy && buy.BoughtBoardlot == 0 {
+	tradelog.Debug("Table", "buy-add", buyOrder)
+	if buyOrder.Status == pty.TradeOrderStatusOnBuy && buy.BoughtBoardlot == 0 {
 		order := t.genBuyLimit(tx, buy, txIndex)
+		tradelog.Info("Table", "buy-add", order)
 		ldb.Add(order)
 	} else {
 		t.updateBuyLimit(tx, buy, buyOrder, txIndex, ldb)
@@ -195,7 +198,7 @@ func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 
 func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, traded int64) []*types.KeyValue {
 	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
-	if ty == pty.TradeOrderStatusOnBuy && buy.BoughtBoardlot == 0 {
+	if ty == pty.TyLogTradeBuyLimit && buy.BoughtBoardlot == 0 {
 		ldb.Del([]byte(txIndex))
 	} else {
 		t.rollbackBuyLimit(tx, buy, buyOrder, txIndex, ldb, traded)
