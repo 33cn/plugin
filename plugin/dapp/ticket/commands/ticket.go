@@ -24,7 +24,6 @@ func TicketCmd() *cobra.Command {
 		Short: "Ticket management",
 		Args:  cobra.MinimumNArgs(1),
 	}
-
 	cmd.AddCommand(
 		BindMinerCmd(),
 		CountTicketCmd(),
