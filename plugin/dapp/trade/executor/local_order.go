@@ -32,7 +32,7 @@ import (
 
 */
 var opt_order_table = &table.Option{
-	Prefix:  "LODB_trade",
+	Prefix:  "LODB-trade",
 	Name:    "order",
 	Primary: "txIndex",
 	// asset = asset_exec+asset_symbol
