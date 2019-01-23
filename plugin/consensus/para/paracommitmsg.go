@@ -475,8 +475,6 @@ out:
 				isSync = true
 			}
 
-			//ret, err := client.paraClient.paraClient.GetTitle(context.Background(),
-			//	&types.ReqString{Data: types.GetTitle()})
 			var req types.ChainExecutor
 			req.Driver = "paracross"
 			req.FuncName = "GetTitle"

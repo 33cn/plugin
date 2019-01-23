@@ -46,7 +46,6 @@ var (
 	blockSec           int64 = 5 //write block interval, second
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
-	grpcRecSize        = 30 * 1024 * 1024 //the size should be limited in server
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
 	minerPrivateKey               = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	searchHashMatchDepth    int32 = 100
@@ -61,7 +60,6 @@ func init() {
 type client struct {
 	*drivers.BaseClient
 	grpcClient      types.Chain33Client
-	paraClient      paracross.ParacrossClient
 	execAPI         api.ExecutorAPI
 	isCaughtUp      bool
 	commitMsgClient *commitMsgClient
@@ -121,16 +119,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	plog.Debug("New Para consensus client")
-
-	//msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	//conn, err := grpc.Dial(grpcSite, grpc.WithInsecure(), msgRecvOp)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//_ = types.NewChain33Client(conn)
-
-	//grpcClient := types.NewChain33Client(conn)
 	grpcCli, err := grpcclient.NewMainChainClient(grpcSite)
 	if err != nil {
 		panic(err)
