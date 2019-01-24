@@ -224,12 +224,6 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
 		amount = action.GetPrivacy2Public().Amount
 	}
-
-	if tx.Fee < pty.PrivacyTxFee {
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
-		return pty.ErrPrivacyTxFeeNotEnough
-	}
-
 	var ringSignature types.RingSignature
 	if err := types.Decode(tx.Signature.Signature, &ringSignature); err != nil {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "Decode tx.Signature.Signature error ", err)
@@ -276,6 +270,10 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
 	if !types.IsPara() {
 
+		if tx.Fee < pty.PrivacyTxFee {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
+			return pty.ErrPrivacyTxFeeNotEnough
+		}
 		var feeAmount int64
 		if action.Ty == pty.ActionPrivacy2Privacy {
 			feeAmount = totalInput - totalOutput
