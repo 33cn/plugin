@@ -577,7 +577,7 @@ func (policy *privacyPolicy) createTransaction(req *types.ReqCreateTransaction) 
 func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
-		bizlog.Error("parse view spend public key pair failed.  err ", err)
+		bizlog.Error("createPublic2PrivacyTx", "parse view spend public key pair failed.  err ", err)
 		return nil, err
 	}
 	amount := req.GetAmount()
@@ -585,7 +585,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPubSlice[0]))
 	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0)
 	if err != nil {
-		bizlog.Error("generate output failed.  err ", err)
+		bizlog.Error("createPublic2PrivacyTx", "generate output failed.  err ", err)
 		return nil, err
 	}
 
@@ -612,8 +612,12 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 			ActionType: action.Ty,
 		}),
 	}
-	txSize := types.Size(tx) + types.SignatureSize
-	tx.Fee = int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
+	tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+	if err != nil {
+		bizlog.Error("createPublic2PrivacyTx", "calc fee failed", err)
+		return nil, err
+	}
+
 	return tx, nil
 }
 
@@ -685,8 +689,11 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	}
 	tx.SetExpire(time.Duration(req.Expire))
 	if isPara {
-		txSize := types.Size(tx) + types.SignatureSize
-		tx.Fee = int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
+		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+		if err != nil {
+			bizlog.Error("createPrivacy2PrivacyTx", "calc fee failed", err)
+			return nil, err
+		}
 	}
 
 	// 创建交易成功，将已经使用掉的UTXO冻结，需要注意此处获取的txHash和交易发送时的一致
@@ -768,8 +775,11 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	}
 	tx.SetExpire(time.Duration(req.Expire))
 	if isPara {
-		txSize := types.Size(tx) + types.SignatureSize
-		tx.Fee = int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
+		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+		if err != nil {
+			bizlog.Error("createPrivacy2PublicTx", "calc fee failed", err)
+			return nil, err
+		}
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结，需要注意此处获取的txHash和交易发送时的一致
 	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
