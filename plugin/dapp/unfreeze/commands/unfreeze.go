@@ -131,7 +131,7 @@ func fixAmount(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
 	if err != nil {
-		fmt.Printf("Create Tx frailed: %s", err)
+		fmt.Fprintf(os.Stderr,"Create Tx frailed: %s", err)
 		return
 	}
 	outputTx(tx)
@@ -173,7 +173,7 @@ func left(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
 	if err != nil {
-		fmt.Printf("Create Tx frailed: %s", err)
+		fmt.Fprintf(os.Stderr,"Create Tx frailed: %s", err)
 		return
 	}
 	outputTx(tx)
