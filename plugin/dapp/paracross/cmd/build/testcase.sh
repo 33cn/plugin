@@ -107,7 +107,7 @@ function para_transfer2account() {
 }
 
 function para_configkey() {
-    tx=$(${1} config config_tx -o add -k "${2}" -v "${3}")
+    tx=$(${1} config config_tx -o add -c "${2}" -v "${3}")
     sign=$(${CLI} wallet sign -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc -d "${tx}")
     send=$(${CLI} wallet send -d "${sign}")
     echo "${send}"

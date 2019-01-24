@@ -46,13 +46,13 @@ func TestJRPCChannel(t *testing.T) {
 }
 
 func testCountTicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var res types.ReplyHashes
-	return jrpc.Call("ticket.CloseTickets", nil, &res)
+	var res int64
+	return jrpc.Call("ticket.GetTicketCount", nil, &res)
 }
 
 func testCloseTicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var res int64
-	return jrpc.Call("ticket.GetTicketCount", nil, &res)
+	var res types.ReplyHashes
+	return jrpc.Call("ticket.CloseTickets", nil, &res)
 }
 
 func testGetColdAddrByMinerCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
