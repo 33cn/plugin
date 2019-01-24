@@ -99,6 +99,8 @@ emptyBlockInterval=4
 authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
 #等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
 waitBlocks4CommitMsg=2
+#创世地址额度
+genesisAmount=100000000
 
 [store]
 name="mavl"

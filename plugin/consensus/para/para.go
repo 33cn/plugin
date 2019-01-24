@@ -67,6 +67,7 @@ type client struct {
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
+	subCfg          *subConfig
 }
 
 type subConfig struct {
@@ -77,6 +78,7 @@ type subConfig struct {
 	AuthAccount                 string `json:"authAccount,omitempty"`
 	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
 	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount               int64  `json:"genesisAmount,omitempty"`
 }
 
 // New function to init paracross env
@@ -134,6 +136,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
+		subCfg:      &subcfg,
 	}
 	if subcfg.WaitBlocks4CommitMsg < 2 {
 		panic("config WaitBlocks4CommitMsg should not less 2")
@@ -250,7 +253,7 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = client.subCfg.GenesisAmount * types.Coin
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
