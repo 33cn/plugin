@@ -166,7 +166,7 @@ func left(cmd *cobra.Command, args []string) {
 
 	tenThousandth, _ := cmd.Flags().GetInt64("ten_thousandth")
 	period, _ := cmd.Flags().GetInt64("period")
-	create.Means = pty.FixAmountX
+	create.Means = pty.LeftProportionX
 	create.MeansOpt = &pty.UnfreezeCreate_LeftProportion{
 		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
 
