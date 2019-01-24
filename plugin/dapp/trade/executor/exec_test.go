@@ -177,6 +177,19 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	_, err = driver.ExecLocal(tx, receiptDataBuy, env.index)
 	assert.Nil(t, err)
 
+	req := &pty.ReqAddrAssets{
+		Addr:                 string(Nodes[0]),
+		Status:               pty.TradeOrderStatusOnSale,
+		Token:                nil,
+		Direction:            1,
+		Count:                10,
+		FromKey:              "",
+	}
+	resp, err := driver.Query("GetOnesOrderWithStatus", types.Encode(req))
+	assert.Nil(t, err)
+	orders, ok := resp.(*pty.ReplyTradeOrders)
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(orders.Orders))
 	ldb.Close()
 }
 
