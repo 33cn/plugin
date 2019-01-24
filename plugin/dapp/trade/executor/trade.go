@@ -130,6 +130,7 @@ func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transacti
 
 	var kv []*types.KeyValue
 	order := t.genBuyMarket(tx, receiptTradeBuy, txIndex)
+	tradelog.Debug("trade BuyMarket save local", "order", order)
 	ldb.Add(order)
 	return saveBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
 }
