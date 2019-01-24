@@ -178,12 +178,12 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	assert.Nil(t, err)
 
 	req := &pty.ReqAddrAssets{
-		Addr:                 string(Nodes[0]),
-		Status:               pty.TradeOrderStatusOnSale,
-		Token:                nil,
-		Direction:            1,
-		Count:                10,
-		FromKey:              "",
+		Addr:      string(Nodes[0]),
+		Status:    pty.TradeOrderStatusOnSale,
+		Token:     nil,
+		Direction: 1,
+		Count:     10,
+		FromKey:   "",
 	}
 	resp, err := driver.Query("GetOnesOrderWithStatus", types.Encode(req))
 	assert.Nil(t, err)
