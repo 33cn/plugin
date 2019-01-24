@@ -88,6 +88,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
+	if subcfg.GenesisAmount <= 0 {
+		subcfg.GenesisAmount = 1e8
+	}
 	if subcfg.ParaRemoteGrpcClient != "" {
 		grpcSite = subcfg.ParaRemoteGrpcClient
 	}
