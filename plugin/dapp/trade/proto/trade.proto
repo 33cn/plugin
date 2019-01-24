@@ -284,6 +284,27 @@ message ReqBuyToken {
     string      buyer = 2;
 }
 
+message LocalOrder {
+    string assetSymbol       = 1;
+    string owner             = 2;
+    int64  amountPerBoardlot = 3;
+    int64  minBoardlot       = 4;
+    int64  pricePerBoardlot  = 5;
+    int64  totalBoardlot     = 6;
+    int64  tradedBoardlot    = 7;
+    string buyID             = 8;
+    int32  status            = 9;
+    string sellID            = 10;
+    repeated string txHash   = 11;
+    int64  height            = 12;
+    string key               = 13;
+    int64  blockTime         = 14;
+    bool   isSellOrder       = 15;
+    string assetExec         = 16;
+    string txIndex           = 17;
+    bool   isFinished        = 18;
+}
+
 service trade {
     rpc CreateRawTradeSellTx(TradeForSell) returns (UnsignTx) {}
     rpc CreateRawTradeBuyTx(TradeForBuy) returns (UnsignTx) {}
