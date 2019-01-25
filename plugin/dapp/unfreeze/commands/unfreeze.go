@@ -124,6 +124,17 @@ func fixAmount(cmd *cobra.Command, args []string) {
 	}
 	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
 	period, _ := cmd.Flags().GetInt64("period")
+
+	if period <= 0 {
+		fmt.Fprintf(os.Stderr, "period must be positive integer")
+		return
+	}
+
+	if create.TotalCount <= amountInt64 {
+		fmt.Fprintf(os.Stderr, "total must bigger than amount")
+		return
+	}
+
 	create.Means = pty.FixAmountX
 	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amountInt64}}
 
@@ -165,6 +176,16 @@ func left(cmd *cobra.Command, args []string) {
 	create.Means = pty.LeftProportionX
 	create.MeansOpt = &pty.UnfreezeCreate_LeftProportion{
 		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
+
+	if period <= 0 {
+		fmt.Fprintf(os.Stderr, "period must be positive interge")
+		return
+	}
+
+	if tenThousandth <= 0 || tenThousandth >= 10000 {
+		fmt.Fprintf(os.Stderr, "tenThousandth must be 0~10000")
+		return
+	}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.UnfreezeX),
