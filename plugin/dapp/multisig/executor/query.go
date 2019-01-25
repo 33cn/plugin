@@ -192,6 +192,8 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	}
 	if multiSigTx == nil {
 		multiSigTx = &mty.MultiSigTx{}
+	} else { //由于代码中使用hex.EncodeToString()接口转换的，没有加0x，为了方便上层统一处理再次返回时增加0x即可
+		multiSigTx.TxHash = "0x" + multiSigTx.TxHash
 	}
 	return multiSigTx, nil
 }

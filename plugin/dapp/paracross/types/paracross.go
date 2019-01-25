@@ -148,7 +148,7 @@ func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error)
 		transfer.Ty = ParacrossActionAssetTransfer
 	} else {
 		v := &ParacrossAction_AssetWithdraw{AssetWithdraw: &types.AssetsWithdraw{
-			Amount: param.Amount, Note: param.GetNote(), To: param.GetTo(), Cointoken: param.TokenSymbol}}
+			Amount: param.Amount, Note: param.GetNote(), To: param.GetTo(), Cointoken: param.TokenSymbol, ExecName: param.ExecName}}
 		transfer.Value = v
 		transfer.Ty = ParacrossActionAssetWithdraw
 	}

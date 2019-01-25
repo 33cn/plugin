@@ -158,6 +158,9 @@ signType="secp256k1"
 minerdisable=false
 minerwhitelist=["*"]
 
+[wallet.sub.multisig]
+rescanMultisigAddr=false
+
 [exec]
 isFree=false
 minExecFee=100000

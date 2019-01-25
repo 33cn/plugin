@@ -16,16 +16,17 @@ import (
 	//"github.com/33cn/chain33/common"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -45,7 +46,6 @@ var (
 	blockSec           int64 = 5 //write block interval, second
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
-	grpcRecSize        = 30 * 1024 * 1024 //the size should be limited in server
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
 	minerPrivateKey               = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	searchHashMatchDepth    int32 = 100
@@ -59,14 +59,14 @@ func init() {
 
 type client struct {
 	*drivers.BaseClient
-	conn            *grpc.ClientConn
 	grpcClient      types.Chain33Client
-	paraClient      paracross.ParacrossClient
+	execAPI         api.ExecutorAPI
 	isCaughtUp      bool
 	commitMsgClient *commitMsgClient
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
+	subCfg          *subConfig
 }
 
 type subConfig struct {
@@ -77,6 +77,7 @@ type subConfig struct {
 	AuthAccount                 string `json:"authAccount,omitempty"`
 	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
 	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount               int64  `json:"genesisAmount,omitempty"`
 }
 
 // New function to init paracross env
@@ -85,6 +86,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	var subcfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
+	}
+	if subcfg.GenesisAmount <= 0 {
+		subcfg.GenesisAmount = 1e8
 	}
 	if subcfg.ParaRemoteGrpcClient != "" {
 		grpcSite = subcfg.ParaRemoteGrpcClient
@@ -115,25 +119,18 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	plog.Debug("New Para consensus client")
-
-	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	conn, err := grpc.Dial(grpcSite, grpc.WithInsecure(), msgRecvOp)
-
+	grpcCli, err := grpcclient.NewMainChainClient(grpcSite)
 	if err != nil {
 		panic(err)
 	}
-	grpcClient := types.NewChain33Client(conn)
-	paraCli := paracross.NewParacrossClient(conn)
 
 	para := &client{
 		BaseClient:  c,
-		conn:        conn,
-		grpcClient:  grpcClient,
-		paraClient:  paraCli,
+		grpcClient:  grpcCli,
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
+		subCfg:      &subcfg,
 	}
 	if subcfg.WaitBlocks4CommitMsg < 2 {
 		panic("config WaitBlocks4CommitMsg should not less 2")
@@ -160,7 +157,6 @@ func (client *client) Close() {
 	client.BaseClient.Close()
 	close(client.commitMsgClient.quit)
 	client.wg.Wait()
-	client.conn.Close()
 	plog.Info("consensus para closed")
 }
 
@@ -182,6 +178,8 @@ func (client *client) InitBlock() {
 	if err != nil {
 		panic(err)
 	}
+
+	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
 
 	block, err := client.RequestLastBlock()
 	if err != nil {
@@ -250,7 +248,7 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = client.subCfg.GenesisAmount * types.Coin
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
