@@ -64,9 +64,7 @@ func (store *multisigStore) listOwnerAttrs() (*mtypes.OwnerAttrs, error) {
 			bizlog.Error("listOwnerAttrs", "Decode err", err)
 			continue
 		}
-		for _, ownerAttr := range ownerAttrs.Items {
-			replayOwnerAttrs.Items = append(replayOwnerAttrs.Items, ownerAttr)
-		}
+		replayOwnerAttrs.Items = append(replayOwnerAttrs.Items, ownerAttrs.Items...)
 	}
 	return &replayOwnerAttrs, nil
 }
