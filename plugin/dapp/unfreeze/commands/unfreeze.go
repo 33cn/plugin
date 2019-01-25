@@ -378,8 +378,8 @@ func listUnfreeze(cmd *cobra.Command, args []string) {
 	if len(create) > 0 {
 		funcName = "ListUnfreezeByCreator"
 	}
-
-	direction, err := cmd.Flags().GetInt32("direction")
+	
+	direction, _ := cmd.Flags().GetInt32("direction")
 	count, _ := cmd.Flags().GetInt32("count")
 	last_key, _ := cmd.Flags().GetString("last_key")
 
