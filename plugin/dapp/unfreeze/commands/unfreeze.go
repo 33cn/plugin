@@ -128,18 +128,15 @@ func fixAmount(cmd *cobra.Command, args []string) {
 	create.Means = pty.FixAmountX
 	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amountInt64}}
 
-	paraName, _ := cmd.Flags().GetString("paraName")
-	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
-	if err != nil {
-		fmt.Fprintf(os.Stderr,"Create Tx frailed: %s", err)
-		return
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pty.UnfreezeX),
+		ActionName: "createUnfreeze",
+		Payload:    types.MustPBToJSON(create),
 	}
-	outputTx(tx)
-}
 
-func outputTx(tx *types.Transaction) {
-	txHex := types.Encode(tx)
-	fmt.Println(hex.EncodeToString(txHex))
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func leftCmd() *cobra.Command {
@@ -170,13 +167,15 @@ func left(cmd *cobra.Command, args []string) {
 	create.MeansOpt = &pty.UnfreezeCreate_LeftProportion{
 		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
 
-	paraName, _ := cmd.Flags().GetString("paraName")
-	tx, err := pty.CreateUnfreezeCreateTx(paraName, create)
-	if err != nil {
-		fmt.Fprintf(os.Stderr,"Create Tx frailed: %s", err)
-		return
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pty.UnfreezeX),
+		ActionName: pty.Action_CreateUnfreeze,
+		Payload:    types.MustPBToJSON(create),
 	}
-	outputTx(tx)
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func withdrawCmd() *cobra.Command {
@@ -229,24 +228,30 @@ func queryWithdrawCmd() *cobra.Command {
 
 func withdraw(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
-	paraName, _ := cmd.Flags().GetString("paraName")
-	tx, err := pty.CreateUnfreezeWithdrawTx(paraName, &pty.UnfreezeWithdraw{UnfreezeID: id})
-	if err != nil {
-		fmt.Printf("Create Tx frailed: %s", err)
-		return
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pty.UnfreezeX),
+		ActionName: pty.Action_WithdrawUnfreeze,
+		Payload:    types.MustPBToJSON(&pty.UnfreezeWithdraw{UnfreezeID: id}),
 	}
-	outputTx(tx)
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func terminate(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
-	paraName, _ := cmd.Flags().GetString("paraName")
-	tx, err := pty.CreateUnfreezeTerminateTx(paraName, &pty.UnfreezeTerminate{UnfreezeID: id})
-	if err != nil {
-		fmt.Printf("Create Tx frailed: %s", err)
-		return
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pty.UnfreezeX),
+		ActionName: pty.Action_TerminateUnfreeze,
+		Payload:    types.MustPBToJSON(&pty.UnfreezeTerminate{UnfreezeID: id}),
 	}
-	outputTx(tx)
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func queryWithdraw(cmd *cobra.Command, args []string) {
