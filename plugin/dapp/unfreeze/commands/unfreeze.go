@@ -32,6 +32,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(terminateCmd())
 	cmd.AddCommand(showCmd())
 	cmd.AddCommand(queryWithdrawCmd())
+	cmd.AddCommand(listUnfreezeCmd())
 	return cmd
 }
 
@@ -345,4 +346,71 @@ func jsonOutput(resp types.Message) {
 		return
 	}
 	fmt.Println(buf.String())
+}
+
+
+func listUnfreezeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "list unfreeze",
+		Run:   listUnfreeze,
+	}
+	cmd.Flags().StringP("last_key", "l", "", "last key")
+	cmd.Flags().Int32P("count", "", 10, "list count")
+	cmd.Flags().Int32P("direction", "d", 1, "list direction: 0/1")
+
+
+	cmd.Flags().StringP("create", "c", "", "list by creator")
+	cmd.Flags().StringP("beneficiary", "b", "", "list by beneficiary")
+
+	return cmd
+}
+
+func listUnfreeze(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	create, _ := cmd.Flags().GetString("create")
+	beneficiary, _ := cmd.Flags().GetString("beneficiary")
+	if (len(create) == 0 && len(beneficiary) == 0) || (len(create) > 0 && len(beneficiary) > 0) {
+		fmt.Fprintln(os.Stderr, "must assign one of create or beneficiary")
+		return
+	}
+	funcName := "ListUnfreezeByBeneficiary"
+	if len(create) > 0 {
+		funcName = "ListUnfreezeByCreator"
+	}
+
+	direction, _ :=  cmd.Flags().GetInt("direction")
+	count, _ :=  cmd.Flags().GetInt("count")
+	last_key, _ :=  cmd.Flags().GetString("last_key")
+
+	req := &pty.ReqUnfreezes{
+		Direction:           int32( direction),
+		Count:                int32(count),
+		FromKey:              last_key,
+		Initiator:            create,
+		Beneficiary:          beneficiary,
+	}
+
+	param := &rpctypes.Query4Jrpc{
+		Execer:   getRealExecName(paraName, pty.UnfreezeX),
+		FuncName: funcName,
+		Payload:  types.MustPBToJSON(req),
+	}
+
+	cli, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	var resp pty.ReplyQueryUnfreezeWithdraw
+	err = cli.Call("Chain33.Query", param, &resp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	jsonOutput(&resp)
 }
