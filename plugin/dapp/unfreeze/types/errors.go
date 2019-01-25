@@ -15,4 +15,6 @@ var (
 	ErrUnfreezeID = errors.New("ErrUnfreezeID")
 	// ErrNoPrivilege 没有权限
 	ErrNoPrivilege = errors.New("ErrNoPrivilege")
+	// ErrTerminated 已经被取消过了
+	ErrTerminated = errors.New("ErrTerminated")
 )
