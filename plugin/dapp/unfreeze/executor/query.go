@@ -51,7 +51,7 @@ func QueryWithdraw(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
 }
 
 func getWithdrawAvailable(unfreeze *pty.Unfreeze, calcTime int64) (int64, error) {
-	means, err := newMeans(unfreeze.Means)
+	means, err := newMeans(unfreeze.Means, 1500000)
 	if err != nil {
 		return 0, err
 	}
