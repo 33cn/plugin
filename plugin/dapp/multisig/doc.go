@@ -34,6 +34,7 @@ Available Commands:
   creator     get all multisig accounts created by the address
   dailylimit  Create a modify assets dailylimit transaction
   info        get multisig account info
+  owner       get multisig accounts by the owner
   unspent     get assets unspent today amount
   weight      Create a modify required weight transaction
 
@@ -194,4 +195,6 @@ cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 8 -k "1
 
 cli send multisig tx confirm  -a "13q53Ga1kquDCqx7EWF8FU94tLUK18Zd47" -i 8 -k "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK"
 
+// 获取owner拥有的所有多重签名地址，不指定地址时返回的是本钱包拥有的所有多重签名地址
+cli  multisig account owner -a 166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf
 */
