@@ -67,6 +67,7 @@ type client struct {
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
+	subCfg          *subConfig
 }
 
 type subConfig struct {
@@ -77,6 +78,7 @@ type subConfig struct {
 	AuthAccount                 string `json:"authAccount,omitempty"`
 	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
 	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount               int64  `json:"genesisAmount,omitempty"`
 }
 
 // New function to init paracross env
@@ -85,6 +87,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	var subcfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
+	}
+	if subcfg.GenesisAmount <= 0 {
+		subcfg.GenesisAmount = 1e8
 	}
 	if subcfg.ParaRemoteGrpcClient != "" {
 		grpcSite = subcfg.ParaRemoteGrpcClient
@@ -134,6 +139,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
+		subCfg:      &subcfg,
 	}
 	if subcfg.WaitBlocks4CommitMsg < 2 {
 		panic("config WaitBlocks4CommitMsg should not less 2")
@@ -250,7 +256,7 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = client.subCfg.GenesisAmount * types.Coin
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
@@ -443,7 +449,7 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 	hash := blockSeq.Detail.Block.HashByForkHeight(mainBlockHashForkHeight)
 	if !bytes.Equal(blockSeq.Seq.Hash, hash) {
 		plog.Error("para compare ForkBlockHash fail", "forkHeight", mainBlockHashForkHeight,
-			"seqHash", common.Bytes2Hex(blockSeq.Seq.Hash), "calcHash", common.Bytes2Hex(hash))
+			"seqHash", hex.EncodeToString(blockSeq.Seq.Hash), "calcHash", hex.EncodeToString(hash))
 		return nil, types.ErrBlockHashNoMatch
 	}
 
@@ -484,8 +490,8 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			return txs, blockSeq, nil
 		}
 		//not consistent case be processed at below
-		plog.Error("RequestTx", "preMainHash", common.Bytes2Hex(preMainBlockHash), "currSeq preMainHash", common.Bytes2Hex(blockSeq.Detail.Block.ParentHash),
-			"currSeq mainHash", common.Bytes2Hex(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
+		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
+			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
 		return nil, nil, paracross.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
@@ -537,19 +543,19 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 			return -2, nil, err
 		}
 		plog.Info("switchHashMatchedBlock", "lastParaBlock height", miner.Height, "mainHeight",
-			miner.MainBlockHeight, "mainHash", common.Bytes2Hex(miner.MainBlockHash))
+			miner.MainBlockHeight, "mainHash", hex.EncodeToString(miner.MainBlockHash))
 		mainSeq, err := client.GetSeqByHashOnMainChain(miner.MainBlockHash)
 		if err != nil {
 			depth--
 			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", miner.MainBlockHeight,
-					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search startHeight", lastBlock.Height, "curHeight", miner.Height,
+					"mainHash", hex.EncodeToString(miner.MainBlockHash), "search startHeight", lastBlock.Height, "curHeight", miner.Height,
 					"search depth", searchHashMatchDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
 				plog.Error("switchHashMatchedBlock search to height=1 not found", "lastBlockHeight", lastBlock.Height,
-					"height1 mainHash", common.Bytes2Hex(miner.MainBlockHash))
+					"height1 mainHash", hex.EncodeToString(miner.MainBlockHash))
 				err = client.removeBlocks(0)
 				if err != nil {
 					return currSeq, nil, nil
@@ -567,7 +573,7 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 		}
 
 		plog.Info("switchHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
-			"new currSeq", mainSeq+1, "new preMainBlockHash", common.Bytes2Hex(miner.MainBlockHash))
+			"new currSeq", mainSeq+1, "new preMainBlockHash", hex.EncodeToString(miner.MainBlockHash))
 		return mainSeq + 1, miner.MainBlockHash, nil
 	}
 	return -2, nil, paracross.ErrParaCurHashNotMatch

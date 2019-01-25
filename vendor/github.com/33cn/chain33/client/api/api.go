@@ -46,9 +46,9 @@ type mainChainAPI struct {
 }
 
 //New 新建接口
-func New(api client.QueueProtocolAPI, grpcaddr string) ExecutorAPI {
+func New(api client.QueueProtocolAPI, grpcClient types.Chain33Client) ExecutorAPI {
 	if types.IsPara() {
-		return newParaChainAPI(api, grpcaddr)
+		return newParaChainAPI(api, grpcClient)
 	}
 	return &mainChainAPI{api: api}
 }
@@ -85,19 +85,7 @@ type paraChainAPI struct {
 	errflag    int32
 }
 
-func newParaChainAPI(api client.QueueProtocolAPI, grpcaddr string) ExecutorAPI {
-	paraRemoteGrpcClient := types.Conf("config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
-	if grpcaddr != "" {
-		paraRemoteGrpcClient = grpcaddr
-	}
-	if paraRemoteGrpcClient == "" {
-		paraRemoteGrpcClient = "127.0.0.1:8002"
-	}
-	conn, err := grpc.Dial(paraRemoteGrpcClient, grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	grpcClient := types.NewChain33Client(conn)
+func newParaChainAPI(api client.QueueProtocolAPI, grpcClient types.Chain33Client) ExecutorAPI {
 	return &paraChainAPI{api: api, grpcClient: grpcClient}
 }
 
@@ -107,12 +95,16 @@ func (api *paraChainAPI) IsErr() bool {
 
 func (api *paraChainAPI) QueryTx(param *types.ReqHash) (*types.TransactionDetail, error) {
 	data, err := api.grpcClient.QueryTransaction(context.Background(), param)
+	if err != nil {
+		err = ErrAPIEnv
+	}
 	return data, seterr(err, &api.errflag)
 }
 
 func (api *paraChainAPI) GetRandNum(param *types.ReqRandHash) ([]byte, error) {
 	reply, err := api.grpcClient.QueryRandNum(context.Background(), param)
 	if err != nil {
+		err = ErrAPIEnv
 		return nil, seterr(err, &api.errflag)
 	}
 	return reply.Hash, nil
@@ -120,6 +112,9 @@ func (api *paraChainAPI) GetRandNum(param *types.ReqRandHash) ([]byte, error) {
 
 func (api *paraChainAPI) GetBlockByHashes(param *types.ReqHashes) (*types.BlockDetails, error) {
 	data, err := api.grpcClient.GetBlockByHashes(context.Background(), param)
+	if err != nil {
+		err = ErrAPIEnv
+	}
 	return data, seterr(err, &api.errflag)
 }
 

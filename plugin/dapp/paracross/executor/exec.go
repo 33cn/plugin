@@ -5,7 +5,8 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/common"
+	"encoding/hex"
+
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ func (e *Paracross) Exec_Commit(payload *pt.ParacrossCommitAction, tx *types.Tra
 	a := newAction(e, tx)
 	receipt, err := a.Commit(payload)
 	if err != nil {
-		clog.Error("Paracross commit failed", "error", err, "hash", common.Bytes2Hex(tx.Hash()))
+		clog.Error("Paracross commit failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, errors.Cause(err)
 	}
 	return receipt, nil
@@ -27,13 +28,13 @@ func (e *Paracross) Exec_AssetTransfer(payload *types.AssetsTransfer, tx *types.
 	clog.Debug("Paracross.Exec", "transfer", "")
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
-		clog.Error("ParacrossActionAssetTransfer", "get tx group failed", err, "hash", common.Bytes2Hex(tx.Hash()))
+		clog.Error("ParacrossActionAssetTransfer", "get tx group failed", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, err
 	}
 	a := newAction(e, tx)
 	receipt, err := a.AssetTransfer(payload)
 	if err != nil {
-		clog.Error("Paracross AssetTransfer failed", "error", err, "hash", common.Bytes2Hex(tx.Hash()))
+		clog.Error("Paracross AssetTransfer failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, errors.Cause(err)
 	}
 	return receipt, nil
@@ -44,13 +45,13 @@ func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.
 	clog.Debug("Paracross.Exec", "withdraw", "")
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
-		clog.Error("ParacrossActionAssetWithdraw", "get tx group failed", err, "hash", common.Bytes2Hex(tx.Hash()))
+		clog.Error("ParacrossActionAssetWithdraw", "get tx group failed", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, err
 	}
 	a := newAction(e, tx)
 	receipt, err := a.AssetWithdraw(payload)
 	if err != nil {
-		clog.Error("ParacrossActionAssetWithdraw failed", "error", err, "hash", common.Bytes2Hex(tx.Hash()))
+		clog.Error("ParacrossActionAssetWithdraw failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, errors.Cause(err)
 	}
 	return receipt, nil

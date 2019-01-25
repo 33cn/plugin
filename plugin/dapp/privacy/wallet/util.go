@@ -5,6 +5,7 @@
 package wallet
 
 import (
+	"encoding/hex"
 	"unsafe"
 
 	"github.com/33cn/chain33/common"
@@ -28,7 +29,7 @@ func checkAmountValid(amount int64) bool {
 func makeViewSpendPubKeyPairToString(viewPubKey, spendPubKey []byte) string {
 	pair := viewPubKey
 	pair = append(pair, spendPubKey...)
-	return common.Bytes2Hex(pair)
+	return hex.EncodeToString(pair)
 }
 
 //将amount切分为1,2,5的组合，这样在进行amount混淆的时候就能够方便获取相同额度的utxo

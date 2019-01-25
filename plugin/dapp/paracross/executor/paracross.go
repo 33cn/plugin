@@ -6,8 +6,8 @@ package executor
 
 import (
 	"bytes"
+	"encoding/hex"
 
-	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -59,7 +59,7 @@ func (c *Paracross) checkTxGroup(tx *types.Transaction, index int) ([]*types.Tra
 	if tx.GroupCount >= 2 {
 		txs, err := c.GetTxGroup(index)
 		if err != nil {
-			clog.Error("ParacrossActionAssetTransfer", "get tx group failed", err, "hash", common.Bytes2Hex(tx.Hash()))
+			clog.Error("ParacrossActionAssetTransfer", "get tx group failed", err, "hash", hex.EncodeToString(tx.Hash()))
 			return nil, err
 		}
 		return txs, nil
@@ -117,7 +117,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 		if err != nil {
 			clog.Crit("paracross.Commit Load Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
-				common.Bytes2Hex(commit.Status.CrossTxHashs[i]))
+				hex.EncodeToString(commit.Status.CrossTxHashs[i]))
 			return nil, err
 		}
 
@@ -126,7 +126,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 		if err != nil {
 			clog.Crit("paracross.Commit Decode Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
-				common.Bytes2Hex(commit.Status.CrossTxHashs[i]))
+				hex.EncodeToString(commit.Status.CrossTxHashs[i]))
 			return nil, err
 		}
 		if payload.Ty == pt.ParacrossActionAssetTransfer {
@@ -161,7 +161,7 @@ func getCommitHeight(payload []byte) (int64, error) {
 }
 
 func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
-	clog.Debug("para execLocal", "tx hash", common.Bytes2Hex(tx.Hash()), "action name", log.Lazy{Fn: tx.ActionName})
+	clog.Debug("para execLocal", "tx hash", hex.EncodeToString(tx.Hash()), "action name", log.Lazy{Fn: tx.ActionName})
 	key := calcLocalAssetKey(tx.Hash())
 	if isDel {
 		c.GetLocalDB().Set(key, nil)
@@ -202,7 +202,7 @@ func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel
 
 	err = c.GetLocalDB().Set(key, types.Encode(&asset))
 	if err != nil {
-		clog.Error("para execLocal", "set", common.Bytes2Hex(tx.Hash()), "failed", err)
+		clog.Error("para execLocal", "set", hex.EncodeToString(tx.Hash()), "failed", err)
 	}
 	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
 }
@@ -262,7 +262,7 @@ func (c *Paracross) initLocalAssetWithdraw(txCommit, tx *types.Transaction, isWi
 }
 
 func (c *Paracross) updateLocalAssetTransfer(txCommit, tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
-	clog.Debug("para execLocal", "tx hash", common.Bytes2Hex(tx.Hash()))
+	clog.Debug("para execLocal", "tx hash", hex.EncodeToString(tx.Hash()))
 	key := calcLocalAssetKey(tx.Hash())
 
 	var asset pt.ParacrossAsset

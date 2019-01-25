@@ -6,19 +6,17 @@ package privacy
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"unsafe"
 
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/crypto/sha3"
 	"github.com/33cn/chain33/common/ed25519/edwards25519"
 	log "github.com/33cn/chain33/common/log/log15"
 	sccrypto "github.com/NebulousLabs/Sia/crypto"
-
-	//"github.com/33cn/chain33/types"
-	"fmt"
 )
 
 const (
@@ -72,7 +70,7 @@ func NewPrivacy() *Privacy {
 
 // NewPrivacyWithPrivKey create privacy from private key
 func NewPrivacyWithPrivKey(privKey *[KeyLen32]byte) (privacy *Privacy, err error) {
-	privacylog.Info("NewPrivacyWithPrivKey", "input prikey", common.Bytes2Hex(privKey[:]))
+	privacylog.Info("NewPrivacyWithPrivKey", "input prikey", hex.EncodeToString(privKey[:]))
 	hash := sccrypto.HashAll(*privKey)
 	privacy = &Privacy{}
 
@@ -84,8 +82,8 @@ func NewPrivacyWithPrivKey(privKey *[KeyLen32]byte) (privacy *Privacy, err error
 	if err = generateKeyPairWithPrivKey((*[KeyLen32]byte)(unsafe.Pointer(&hashViewPriv[0])), &privacy.ViewPrivKey, &privacy.ViewPubkey); err != nil {
 		return nil, err
 	}
-	privacylog.Info("NewPrivacyWithPrivKey", "the new privacy created with viewpub", common.Bytes2Hex(privacy.ViewPubkey[:]))
-	privacylog.Info("NewPrivacyWithPrivKey", "the new privacy created with spendpub", common.Bytes2Hex(privacy.SpendPubkey[:]))
+	privacylog.Info("NewPrivacyWithPrivKey", "the new privacy created with viewpub", hex.EncodeToString(privacy.ViewPubkey[:]))
+	privacylog.Info("NewPrivacyWithPrivKey", "the new privacy created with spendpub", hex.EncodeToString(privacy.SpendPubkey[:]))
 
 	return privacy, nil
 }

@@ -16,7 +16,7 @@ index: addr,status,addr_status,admin,admin_status,category_status
 */
 
 var opt_guess_user = &table.Option{
-	Prefix:  "LODB_guess",
+	Prefix:  "LODB-guess",
 	Name:    "user",
 	Primary: "index",
 	Index:   []string{"addr", "startindex"},
@@ -70,7 +70,7 @@ func (tx *GuessUserRow) Get(key string) ([]byte, error) {
 }
 
 var opt_guess_game = &table.Option{
-	Prefix:  "LODB_guess",
+	Prefix:  "LODB-guess",
 	Name:    "game",
 	Primary: "startindex",
 	Index:   []string{"gameid", "status", "admin", "admin_status", "category_status"},

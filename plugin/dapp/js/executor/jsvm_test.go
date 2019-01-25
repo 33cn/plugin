@@ -11,6 +11,7 @@ import (
 
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
@@ -30,6 +31,9 @@ func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	mockapi := &mocks.QueueProtocolAPI{}
 	mockapi.On("Query", "ticket", "RandNumHash", mock.Anything).Return(&types.ReplyHash{Hash: []byte("hello")}, nil)
 	e.SetAPI(mockapi)
+	gclient, err := grpcclient.NewMainChainClient("")
+	assert.Nil(t, err)
+	e.SetExecutorAPI(mockapi, gclient)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
 	c, tx := createCodeTx("test", code)

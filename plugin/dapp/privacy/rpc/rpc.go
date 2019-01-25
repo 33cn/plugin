@@ -33,33 +33,6 @@ func (g *channelClient) CreateUTXOs(ctx context.Context, in *pty.ReqCreateUTXOs)
 	return data.(*types.Reply), nil
 }
 
-// 将资金从公开到隐私转移
-func (g *channelClient) MakeTxPublic2Privacy(ctx context.Context, in *pty.ReqPub2Pri) (*types.Reply, error) {
-	data, err := g.ExecWalletFunc(pty.PrivacyX, "Public2Privacy", in)
-	if err != nil {
-		return nil, err
-	}
-	return data.(*types.Reply), nil
-}
-
-// 将资产从隐私到隐私进行转移
-func (g *channelClient) MakeTxPrivacy2Privacy(ctx context.Context, in *pty.ReqPri2Pri) (*types.Reply, error) {
-	data, err := g.ExecWalletFunc(pty.PrivacyX, "Privacy2Privacy", in)
-	if err != nil {
-		return nil, err
-	}
-	return data.(*types.Reply), nil
-}
-
-// 将资产从隐私到公开进行转移
-func (g *channelClient) MakeTxPrivacy2Public(ctx context.Context, in *pty.ReqPri2Pub) (*types.Reply, error) {
-	data, err := g.ExecWalletFunc(pty.PrivacyX, "Privacy2Public", in)
-	if err != nil {
-		return nil, err
-	}
-	return data.(*types.Reply), nil
-}
-
 // 扫描UTXO以及获取扫描UTXO后的状态
 func (g *channelClient) RescanUtxos(ctx context.Context, in *pty.ReqRescanUtxos) (*pty.RepRescanUtxos, error) {
 	data, err := g.ExecWalletFunc(pty.PrivacyX, "RescanUtxos", in)
@@ -120,41 +93,6 @@ func (c *Jrpc) ShowPrivacykey(in *types.ReqString, result *json.RawMessage) erro
 	}
 	*result, err = types.PBToJSON(reply)
 	return err
-}
-
-// MakeTxPublic2privacy create public to privacy trasaction for json rpc
-func (c *Jrpc) MakeTxPublic2privacy(in *pty.ReqPub2Pri, result *interface{}) error {
-	reply, err := c.cli.MakeTxPublic2Privacy(context.Background(), in)
-	if err != nil {
-		return err
-	}
-
-	*result = rpctypes.ReplyHash{Hash: common.ToHex(reply.GetMsg())}
-
-	return nil
-}
-
-// MakeTxPrivacy2privacy create privacy to privacy transaction
-func (c *Jrpc) MakeTxPrivacy2privacy(in *pty.ReqPri2Pri, result *interface{}) error {
-	reply, err := c.cli.MakeTxPrivacy2Privacy(context.Background(), in)
-	if err != nil {
-		return err
-	}
-
-	*result = rpctypes.ReplyHash{Hash: common.ToHex(reply.GetMsg())}
-
-	return nil
-}
-
-// MakeTxPrivacy2public make privacy to public trasaction
-func (c *Jrpc) MakeTxPrivacy2public(in *pty.ReqPri2Pub, result *interface{}) error {
-	reply, err := c.cli.MakeTxPrivacy2Public(context.Background(), in)
-	if err != nil {
-		return err
-	}
-	*result = rpctypes.ReplyHash{Hash: common.ToHex(reply.GetMsg())}
-
-	return nil
 }
 
 // CreateUTXOs create utxos for json rpc

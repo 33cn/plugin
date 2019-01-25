@@ -7,11 +7,10 @@ package para
 import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
-
-	"errors"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"

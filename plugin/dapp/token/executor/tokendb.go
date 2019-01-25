@@ -424,7 +424,11 @@ func isUpperChar(a byte) bool {
 	return res
 }
 
-func validSymbol(cs []byte) bool {
+func isDigit(a byte) bool {
+	return (a <= '9' && a >= '0')
+}
+
+func validSymbolForkBadTokenSymbol(cs []byte) bool {
 	for _, c := range cs {
 		if !isUpperChar(c) {
 			return false
@@ -433,11 +437,27 @@ func validSymbol(cs []byte) bool {
 	return true
 }
 
-func validSymbolWithHeight(cs []byte, height int64) bool {
-	if !types.IsDappFork(height, pty.TokenX, "ForkBadTokenSymbol") {
-		symbol := string(cs)
-		upSymbol := strings.ToUpper(symbol)
-		return upSymbol == symbol
+func validSymbolForkTokenSymbolWithNumber(cs []byte) bool {
+	for _, c := range cs {
+		if !isUpperChar(c) && !isDigit(c) {
+			return false
+		}
 	}
-	return validSymbol(cs)
+	return true
+}
+
+func validSymbolOriginal(cs []byte) bool {
+	symbol := string(cs)
+	upSymbol := strings.ToUpper(symbol)
+	return upSymbol == symbol
+}
+
+func validSymbolWithHeight(cs []byte, height int64) bool {
+	if types.IsDappFork(height, pty.TokenX, "ForkTokenSymbolWithNumber") {
+		return validSymbolForkTokenSymbolWithNumber(cs)
+	} else if types.IsDappFork(height, pty.TokenX, "ForkBadTokenSymbol") {
+		return validSymbolForkBadTokenSymbol(cs)
+	}
+	return validSymbolOriginal(cs)
+
 }
