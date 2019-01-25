@@ -23,11 +23,12 @@ func (u *Unfreeze) Query_GetUnfreeze(in *types.ReqString) (types.Message, error)
 	return QueryUnfreeze(u.GetStateDB(), in.GetData())
 }
 
-// Query_ListUnfreeze 查询合约可提币量
+// Query_ListUnfreezeByCreator 查询列表
 func (u *Unfreeze) Query_ListUnfreezeByCreator(in *pty.ReqUnfreezes) (types.Message, error) {
 	return ListUnfreezeByCreator(u.GetLocalDB(), in)
 }
 
+// Query_ListUnfreezeByBeneficiary 查询列表
 func (u *Unfreeze) Query_ListUnfreezeByBeneficiary(in *pty.ReqUnfreezes) (types.Message, error) {
 	return ListUnfreezeByBeneficiary(u.GetLocalDB(), in)
 }
@@ -74,6 +75,7 @@ func QueryUnfreeze(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
 	return unfreeze, nil
 }
 
+// ListUnfreezeByCreator 查询列表实现
 func ListUnfreezeByCreator(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Message, error) {
 	if len(req.Initiator) == 0 {
 		return nil, types.ErrInvalidParam
@@ -94,6 +96,7 @@ func ListUnfreezeByCreator(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Message, 
 	return fmtLocalUnfreeze(rows)
 }
 
+// ListUnfreezeByBeneficiary 查询列表实现
 func ListUnfreezeByBeneficiary(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Message, error) {
 	if len(req.Beneficiary) == 0 {
 		return nil, types.ErrInvalidParam
@@ -105,6 +108,7 @@ func ListUnfreezeByBeneficiary(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Messa
 		u.TxIndex = req.FromKey
 	}
 
+	uflog.Error("ListUnfreezeByBeneficiary ", "params", req)
 	rows, err := list(ldb, "beneficiary", u, req.Count, req.Direction)
 	if err != nil {
 		uflog.Error("ListUnfreezeByBeneficiary ", "err", err, "params", req)

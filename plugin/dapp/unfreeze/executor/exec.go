@@ -203,7 +203,7 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 	}
 
 	unfreezeOld := *unfreeze
-	amount := int64(0)
+	var amount int64
 	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, "ForkTerminatePart") {
 		if unfreeze.Terminated {
 			return 0, nil, pty.ErrTerminated
