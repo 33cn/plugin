@@ -257,6 +257,40 @@ func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBala
 	return allBalance, nil
 }
 
+// GetAllExecBalanceToHeight get balance of exec in height
+func (c *channelClient) GetAllExecBalanceToHeight(in *types.ReqBalance) (*types.AllExecBalance, error) {
+	addr := in.Addresses[0]
+	err := address.CheckAddress(addr)
+	if err != nil {
+		if err = address.CheckMultiSignAddress(addr); err != nil {
+			return nil, types.ErrInvalidAddress
+		}
+	}
+	allBalance := &types.AllExecBalance{Addr: addr}
+	for _, exec := range types.AllowUserExec {
+		execer := types.ExecName(string(exec))
+		params := &types.ReqBalance{
+			Addresses: in.Addresses,
+			Execer:    execer,
+			StateHash: in.StateHash,
+		}
+		res, err := c.GetBalance(params)
+		if err != nil {
+			continue
+		}
+		if len(res) < 1 {
+			continue
+		}
+		acc := res[0]
+		if acc.Balance == 0 && acc.Frozen == 0 {
+			continue
+		}
+		execAcc := &types.ExecAccount{Execer: execer, Account: acc}
+		allBalance.ExecAccount = append(allBalance.ExecAccount, execAcc)
+	}
+	return allBalance, nil
+}
+
 // GetTotalCoins get total of coins
 func (c *channelClient) GetTotalCoins(in *types.ReqGetTotalCoins) (*types.ReplyGetTotalCoins, error) {
 	//获取地址账户的余额通过account模块

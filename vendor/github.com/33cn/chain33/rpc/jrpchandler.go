@@ -762,6 +762,28 @@ func (c *Chain33) GetAllExecBalance(in types.ReqAddr, result *interface{}) error
 	return nil
 }
 
+// GetAllExecBalanceToHeight get all balance of exec in height
+func (c *Chain33) GetAllExecBalanceToHeight(in types.ReqBalance, result *interface{}) error {
+	balance, err := c.cli.GetAllExecBalanceToHeight(&in)
+	if err != nil {
+		return err
+	}
+
+	allBalance := &rpctypes.AllExecBalance{Addr: in.Addresses[0]}
+	for _, execAcc := range balance.ExecAccount {
+		res := &rpctypes.ExecAccount{Execer: execAcc.Execer}
+		acc := &rpctypes.Account{
+			Balance:  execAcc.Account.GetBalance(),
+			Currency: execAcc.Account.GetCurrency(),
+			Frozen:   execAcc.Account.GetFrozen(),
+		}
+		res.Account = acc
+		allBalance.ExecAccount = append(allBalance.ExecAccount, res)
+	}
+	*result = allBalance
+	return nil
+}
+
 // ExecWallet exec wallet
 func (c *Chain33) ExecWallet(in *rpctypes.ChainExecutor, result *interface{}) error {
 	hash, err := common.FromHex(in.StateHash)
