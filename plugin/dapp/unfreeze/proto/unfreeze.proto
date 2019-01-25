@@ -30,6 +30,7 @@ message Unfreeze {
         FixAmount      fixAmount      = 10;
         LeftProportion leftProportion = 11;
     }
+    bool terminated = 12;
 }
 
 // 按时间固定额度解冻
@@ -80,6 +81,11 @@ message UnfreezeTerminate {
 message ReceiptUnfreeze {
     Unfreeze prev = 1;
     Unfreeze current  = 2;
+}
+
+message LocalUnfreeze {
+    Unfreeze unfreeze = 1;
+    string txIndex = 2;
 }
 
 // query
