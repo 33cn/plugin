@@ -405,7 +405,7 @@ func listUnfreeze(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var resp pty.ReplyQueryUnfreezeWithdraw
+	var resp pty.ReplyUnfreezes
 	err = cli.Call("Chain33.Query", param, &resp)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

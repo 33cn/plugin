@@ -102,7 +102,7 @@ message ReqUnfreezes {
    string beneficiary = 5;
 }
 
-message RespUnfreeze {
+message ReplyUnfreeze {
     //解冻交易ID（唯一识别码）
     string unfreezeID = 1;
     //开始时间
@@ -127,8 +127,8 @@ message RespUnfreeze {
     bool terminated = 12;
     string key = 13;
 }
-message RespUnfreezes {
-    repeated RespUnfreeze unfreeze = 1;
+message ReplyUnfreezes {
+    repeated ReplyUnfreeze unfreeze = 1;
 }
 
 // TODO 类型应该大写还是小写
