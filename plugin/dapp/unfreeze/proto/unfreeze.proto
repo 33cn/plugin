@@ -94,6 +94,43 @@ message ReplyQueryUnfreezeWithdraw {
     int64  availableAmount = 2;
 }
 
+message ReqUnfreezes {
+   int32           direction = 1;
+   int32           count     = 2;
+   string          fromKey   = 3;
+   string initiator = 4;
+   string beneficiary = 5;
+}
+
+message RespUnfreeze {
+    //解冻交易ID（唯一识别码）
+    string unfreezeID = 1;
+    //开始时间
+    int64 startTime = 2;
+    //币种
+    string assetExec   = 3;
+    string assetSymbol = 4;
+    //冻结总额
+    int64 totalCount = 5;
+    //发币人地址
+    string initiator = 6;
+    //收币人地址
+    string beneficiary = 7;
+    //解冻剩余币数
+    int64 remaining = 8;
+    //解冻方式（百分比；固额）
+    string means = 9;
+    oneof  meansOpt {
+        FixAmount      fixAmount      = 10;
+        LeftProportion leftProportion = 11;
+    }
+    bool terminated = 12;
+    string key = 13;
+}
+message RespUnfreezes {
+    repeated RespUnfreeze unfreeze = 1;
+}
+
 // TODO 类型应该大写还是小写
 service unfreeze {
     rpc GetUnfreezeWithdraw(ReqString) returns (ReplyQueryUnfreezeWithdraw) {}
