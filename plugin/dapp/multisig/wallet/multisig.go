@@ -359,7 +359,8 @@ func ModOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAddr string, multiSigAddr 
 
 //batchSet :
 func batchSet(ownerAttrs *mtypes.OwnerAttrs, addr string, newbatch db.Batch) {
-	ownerAttrsbyte := types.Encode(ownerAttrs)
+	v := *ownerAttrs
+	ownerAttrsbyte := types.Encode(&v)
 	newbatch.Set(calcMultisigAddr(addr), ownerAttrsbyte)
 }
 
