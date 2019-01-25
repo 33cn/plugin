@@ -8,9 +8,9 @@ import (
 	"time"
 
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
-	"github.com/33cn/chain33/common/db/table"
 )
 
 // Query_GetUnfreezeWithdraw 查询合约可提币量
@@ -87,7 +87,7 @@ func ListUnfreezeByCreator(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Message, 
 
 	rows, err := list(ldb, "init", u, req.Count, req.Direction)
 	if err != nil {
-		uflog.Error("ListUnfreezeByCreator ",  "err", err, "params", req)
+		uflog.Error("ListUnfreezeByCreator ", "err", err, "params", req)
 		return nil, err
 	}
 
@@ -107,7 +107,7 @@ func ListUnfreezeByBeneficiary(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Messa
 
 	rows, err := list(ldb, "beneficiary", u, req.Count, req.Direction)
 	if err != nil {
-		uflog.Error("ListUnfreezeByBeneficiary ",  "err", err, "params", req)
+		uflog.Error("ListUnfreezeByBeneficiary ", "err", err, "params", req)
 		return nil, err
 	}
 
@@ -119,21 +119,21 @@ func fmtLocalUnfreeze(rows []*table.Row) (*pty.ReplyUnfreezes, error) {
 	for _, row := range rows {
 		r, ok := row.Data.(*pty.LocalUnfreeze)
 		if !ok {
-			uflog.Error("ListUnfreeze",  "err", "bad row type")
+			uflog.Error("ListUnfreeze", "err", "bad row type")
 			return nil, types.ErrDecode
 		}
-		v :=  &pty.ReplyUnfreeze{
-			UnfreezeID:           r.Unfreeze.UnfreezeID,
-			StartTime:            r.Unfreeze.StartTime,
-			AssetExec:            r.Unfreeze.AssetExec,
-			AssetSymbol:          r.Unfreeze.AssetSymbol,
-			TotalCount:           r.Unfreeze.TotalCount,
-			Initiator:            r.Unfreeze.Initiator,
-			Beneficiary:          r.Unfreeze.Beneficiary,
-			Remaining:            r.Unfreeze.Remaining,
-			Means:                r.Unfreeze.Means,
-			Terminated:           r.Unfreeze.Terminated,
-			Key:                  r.TxIndex,
+		v := &pty.ReplyUnfreeze{
+			UnfreezeID:  r.Unfreeze.UnfreezeID,
+			StartTime:   r.Unfreeze.StartTime,
+			AssetExec:   r.Unfreeze.AssetExec,
+			AssetSymbol: r.Unfreeze.AssetSymbol,
+			TotalCount:  r.Unfreeze.TotalCount,
+			Initiator:   r.Unfreeze.Initiator,
+			Beneficiary: r.Unfreeze.Beneficiary,
+			Remaining:   r.Unfreeze.Remaining,
+			Means:       r.Unfreeze.Means,
+			Terminated:  r.Unfreeze.Terminated,
+			Key:         r.TxIndex,
 		}
 		if v.Means == pty.FixAmountX {
 			v.MeansOpt = &pty.ReplyUnfreeze_FixAmount{FixAmount: r.Unfreeze.GetFixAmount()}

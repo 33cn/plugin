@@ -348,7 +348,6 @@ func jsonOutput(resp types.Message) {
 	fmt.Println(buf.String())
 }
 
-
 func listUnfreezeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -358,7 +357,6 @@ func listUnfreezeCmd() *cobra.Command {
 	cmd.Flags().StringP("last_key", "l", "", "last key")
 	cmd.Flags().Int32P("count", "", 10, "list count")
 	cmd.Flags().Int32P("direction", "d", 0, "list direction: 0/1")
-
 
 	cmd.Flags().StringP("create", "c", "", "list by creator")
 	cmd.Flags().StringP("beneficiary", "b", "", "list by beneficiary")
@@ -381,16 +379,16 @@ func listUnfreeze(cmd *cobra.Command, args []string) {
 		funcName = "ListUnfreezeByCreator"
 	}
 
-	direction, err :=  cmd.Flags().GetInt32("direction")
-	count, _ :=  cmd.Flags().GetInt32("count")
-	last_key, _ :=  cmd.Flags().GetString("last_key")
+	direction, err := cmd.Flags().GetInt32("direction")
+	count, _ := cmd.Flags().GetInt32("count")
+	last_key, _ := cmd.Flags().GetString("last_key")
 
 	req := &pty.ReqUnfreezes{
-		Direction:           direction,
-		Count:                count,
-		FromKey:              last_key,
-		Initiator:            create,
-		Beneficiary:          beneficiary,
+		Direction:   direction,
+		Count:       count,
+		FromKey:     last_key,
+		Initiator:   create,
+		Beneficiary: beneficiary,
 	}
 
 	param := &rpctypes.Query4Jrpc{
