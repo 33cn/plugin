@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
@@ -56,6 +57,7 @@ func TestUnfreeze(t *testing.T) {
 
 	execAddr := address.ExecAddress(pty.UnfreezeX)
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
+	_, ldb, kvdb := util.CreateTestDB()
 	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
@@ -90,6 +92,7 @@ func TestUnfreeze(t *testing.T) {
 	}
 	exec := newUnfreeze()
 	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(createTx, int(1))
 	assert.Nil(t, err)
@@ -104,6 +107,15 @@ func TestUnfreeze(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
 
+	req1 := &pty.ReqUnfreezes{
+		Beneficiary: p1.Beneficiary,
+	}
+	reply, err := exec.Query("ListUnfreezeByBeneficiary", types.Encode(req1))
+	assert.Nil(t, err)
+	assert.NotNil(t, reply)
+	resp, ok := reply.(*pty.ReplyUnfreezes)
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(resp.Unfreeze))
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
 		UnfreezeID: string(unfreezeID(createTx.Hash())),
@@ -235,6 +247,8 @@ func TestUnfreeze(t *testing.T) {
 
 	_, err = exec.ExecDelLocal(createTx, receiptDate, int(1))
 	assert.Nil(t, err)
+
+	ldb.Close()
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
