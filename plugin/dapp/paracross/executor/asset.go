@@ -17,6 +17,7 @@ import (
 
 func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {
 	isPara := types.IsPara()
+	//主链处理分支
 	if !isPara {
 		accDB, err := createAccount(a.db, transfer.Cointoken)
 		if err != nil {
@@ -32,7 +33,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 			"txHash", hex.EncodeToString(a.tx.Hash()))
 		return accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
 	}
-
+	//平行链处理分支
 	paraTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
 		return nil, errors.Wrap(err, "assetTransferCoins call getTitleFrom failed")
@@ -53,6 +54,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 
 func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	isPara := types.IsPara()
+	//主链处理分支
 	if !isPara {
 		accDB, err := createAccount(a.db, withdraw.Cointoken)
 		if err != nil {
@@ -64,7 +66,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 			"to", withdraw.To, "exec", execAddr, "withdrawTx execor", string(withdrawTx.Execer))
 		return accDB.ExecTransfer(fromAddr, withdraw.To, execAddr, withdraw.Amount)
 	}
-
+	//平行链处理分支
 	paraTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
 		return nil, errors.Wrap(err, "assetWithdrawCoins call getTitleFrom failed")
