@@ -7,6 +7,7 @@ package wallet
 import (
 	"sync"
 
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
@@ -90,13 +91,13 @@ func (policy *multisigPolicy) OnImportPrivateKey(acc *types.Account) {
 // OnAddBlockTx 响应区块交易添加的处理
 func (policy *multisigPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	policy.filterMultisigTxsFromBlock(tx, index, block, dbbatch, true)
-	return nil
+	return policy.proceWalletTxDetail(block, tx, index)
 }
 
 // OnDeleteBlockTx 响应删除区块交易的处理
 func (policy *multisigPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	policy.filterMultisigTxsFromBlock(tx, index, block, dbbatch, false)
-	return nil
+	return policy.proceWalletTxDetail(block, tx, index)
 }
 
 // OnAddBlockFinish 在区块被添加成功时做一些处理
@@ -496,4 +497,35 @@ func (policy *multisigPolicy) proceMultiSigAcc(multiSigAccs *mtypes.ReplyMultiSi
 			}
 		}
 	}
+}
+
+func (policy *multisigPolicy) proceWalletTxDetail(block *types.BlockDetail, tx *types.Transaction, index int32) *types.WalletTxDetail {
+	receipt := block.Receipts[index]
+	amount, _ := tx.Amount()
+	wtxdetail := &types.WalletTxDetail{
+		Tx:         tx,
+		Height:     block.Block.Height,
+		Index:      int64(index),
+		Receipt:    receipt,
+		Blocktime:  block.Block.BlockTime,
+		ActionName: tx.ActionName(),
+		Amount:     amount,
+		Payload:    nil,
+	}
+	if len(wtxdetail.Fromaddr) <= 0 {
+		pubkey := tx.Signature.GetPubkey()
+		address := address.PubKeyToAddress(pubkey)
+		//from addr
+		fromaddress := address.String()
+		if len(fromaddress) != 0 && policy.walletOperate.AddrInWallet(fromaddress) {
+			wtxdetail.Fromaddr = fromaddress
+		}
+	}
+	if len(wtxdetail.Fromaddr) <= 0 {
+		toaddr := tx.GetTo()
+		if len(toaddr) != 0 && policy.walletOperate.AddrInWallet(toaddr) {
+			wtxdetail.Fromaddr = toaddr
+		}
+	}
+	return wtxdetail
 }
