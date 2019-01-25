@@ -6,7 +6,6 @@ package commands
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
