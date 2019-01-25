@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-
 PARA_CLI="docker exec ${NODE3} /root/chain33-para-cli"
 
 PARA_CLI2="docker exec ${NODE2} /root/chain33-para-cli"
 PARA_CLI1="docker exec ${NODE1} /root/chain33-para-cli"
 PARA_CLI4="docker exec ${NODE4} /root/chain33-para-cli"
+MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
 
@@ -246,11 +246,100 @@ function para_cross_transfer_withdraw() {
     done
 }
 
+function token_create_on_mainChain() {
+    echo "=========== # main chain token test ============="
+    echo "=========== # 0.config token-blacklist ============="
+    hash=$(${CLI} send config config_tx -c token-blacklist -o add -v BTY -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
+    echo "${hash}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    echo "=========== # send bty to token ============="
+    hash=$(${CLI} send bty send_exec -a 500 -e token -n send2exec -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    echo "=========== # 1.token precreate token FZM ============="
+    hash=$(${CLI} send token precreate -f 0.001 -i test -n guodunjifen -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -p 0 -s FZM -t 10000 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "tx hash for token precreate is:" "${hash}"
+    echo "MAIN_CLI is:" "${MAIN_CLI}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    ${CLI} token get_precreated
+    owner=$(${CLI} token get_precreated | jq -r ".owner")
+    if [ "${owner}" != "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" ]; then
+        echo "wrong pre create owner"
+        exit 1
+    fi
+    total=$(${CLI} token get_precreated | jq -r ".total")
+    if [ "${total}" != 10000 ]; then
+        echo "wrong pre create total"
+        exit 1
+    fi
+
+    echo "=========== # 2.token finish ============="
+    hash=$(${CLI} send token finish -f 0.001 -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -s FZM -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
+    echo "${hash}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    ${CLI} token get_finish_created
+    owner=$(${CLI} token get_finish_created | jq -r ".owner")
+    if [ "${owner}" != "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" ]; then
+        echo "wrong finish created owner"
+        exit 1
+    fi
+    total=$(${CLI} token get_finish_created | jq -r ".total")
+    if [ "${total}" != 10000 ]; then
+        echo "wrong finish created total"
+        exit 1
+    fi
+    ${CLI} token token_balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM
+    balance=$(${CLI} token token_balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM | jq -r '.[]|.balance')
+    if [ "${balance}" != "10000.0000" ]; then
+        echo "wrong para token genesis create, should be 10000.0000"
+        exit 1
+    fi
+}
+
+function para_cross_transfer_withdraw_for_token() {
+    token_create_on_mainChain
+
+    echo "=========== # 1.transfer token:FZM to paracross ============="
+    hash=$(${CLI} send token send_exec -a 333 -s FZM -e paracross -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    echo "=========== # 2.transfer asset to para chain ============="
+    hash=$(${CLI} send para asset_transfer --title user.p.para. -s FZM -a 220 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${MAIN_CLI}" "${hash}"
+
+    echo "=========== # 3.asset_withdraw from parachain ============="
+    ${CLI} send para asset_withdraw --title user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+
+    local times=100
+    while true; do
+        acc=$(${CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol FZM --asset_exec token -e paracross | jq -r ".balance")
+        echo "account balance is ${acc}, expect 224 "
+        if [ "${acc}" != "224.0000" ]; then
+            block_wait "${CLI}" 2
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "para_cross_transfer_withdraw failed"
+                exit 1
+            fi
+        else
+            echo "para_cross_transfer_withdraw success"
+            break
+        fi
+    done
+}
+
 function para_test() {
     echo "=========== # para chain test ============="
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
+    para_cross_transfer_withdraw_for_token
 }
 
 function paracross() {

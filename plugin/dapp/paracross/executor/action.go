@@ -414,8 +414,10 @@ func (a *action) AssetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 }
 
 func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, error) {
-	if withdraw.Cointoken != "" {
-		return nil, types.ErrNotSupport
+	if !types.IsDappFork(a.height, pt.ParaX, "ForkParacrossWithdrawFromParachain") {
+		if withdraw.Cointoken != "" {
+			return nil, types.ErrNotSupport
+		}
 	}
 
 	isPara := types.IsPara()
@@ -424,7 +426,7 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 		return nil, nil
 	}
 	clog.Debug("paracross.AssetWithdraw isPara", "execer", string(a.tx.Execer),
-		"txHash", hex.EncodeToString(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()), "token name", withdraw.Cointoken)
 	receipt, err := a.assetWithdraw(withdraw, a.tx)
 	if err != nil {
 		clog.Error("AssetWithdraw failed", "err", err)
