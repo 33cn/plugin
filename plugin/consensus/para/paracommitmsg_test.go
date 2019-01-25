@@ -26,6 +26,7 @@ import (
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"time"
 )
 
 var random *rand.Rand
@@ -34,7 +35,7 @@ func init() {
 	types.Init("user.p.para.", nil)
 	pp.Init("paracross", nil)
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
-	consensusInterval = 2
+	consensusInterval = 1
 	log.SetLogLevel("error")
 }
 
@@ -184,7 +185,7 @@ func TestRunSuiteParaCommitMsg(t *testing.T) {
 }
 
 func (s *suiteParaCommitMsg) TearDownSuite() {
-	//time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 2)
 	s.block.Close()
 	s.para.Close()
 	s.exec.Close()
