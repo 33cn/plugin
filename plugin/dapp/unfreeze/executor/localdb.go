@@ -26,12 +26,12 @@ var opt_addr_table = &table.Option{
 	},
 }
 
-// OrderRow order row
+// AddrRow order row
 type AddrRow struct {
 	*pty.LocalUnfreeze
 }
 
-// NewOrderRow create row
+// NewAddrRow create row
 func NewAddrRow() *AddrRow {
 	return &AddrRow{LocalUnfreeze: nil}
 }
@@ -66,7 +66,7 @@ func (r *AddrRow) Get(key string) ([]byte, error) {
 	}
 }
 
-// NewOrderTable create order table
+// NewAddrTable create order table
 func NewAddrTable(kvdb dbm.KV) *table.Table {
 	rowMeta := NewAddrRow()
 	rowMeta.SetPayload(&pty.LocalUnfreeze{})

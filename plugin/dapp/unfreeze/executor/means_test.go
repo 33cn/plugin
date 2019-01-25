@@ -9,7 +9,7 @@ import (
 )
 
 func TestCalcFrozen(t *testing.T) {
-	m, err := newMeans("LeftProportion")
+	m, err := newMeans("LeftProportion", 1)
 	assert.Nil(t, err)
 	assert.NotNil(t, m)
 
