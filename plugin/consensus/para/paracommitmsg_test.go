@@ -20,13 +20,14 @@ import (
 	//_ "github.com/33cn/plugin/plugin/dapp/paracross"
 	pp "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	//"github.com/33cn/plugin/plugin/dapp/paracross/rpc"
+	"time"
+
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"time"
 )
 
 var random *rand.Rand
