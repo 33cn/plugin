@@ -114,7 +114,8 @@ func ListUnfreezeByBeneficiary(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Messa
 	return fmtLocalUnfreeze(rows)
 }
 
-func fmtLocalUnfreeze(rows []*table.Row) (results *pty.RespUnfreezes, err error) {
+func fmtLocalUnfreeze(rows []*table.Row) (*pty.RespUnfreezes, error) {
+	var results pty.RespUnfreezes
 	for _, row := range rows {
 		r, ok := row.Data.(*pty.LocalUnfreeze)
 		if !ok {
@@ -141,5 +142,5 @@ func fmtLocalUnfreeze(rows []*table.Row) (results *pty.RespUnfreezes, err error)
 		}
 		results.Unfreeze = append(results.Unfreeze, v)
 	}
-	return
+	return &results, nil
 }
