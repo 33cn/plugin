@@ -339,3 +339,14 @@ message Assets {
 message AccAddress {
 	repeated string address = 1;
 }
+
+//owner拥有的多重签名账户信息
+message OwnerAttr {
+	string multiSigAddr = 1;
+	string ownerAddr 	= 2;
+	uint64 weight 		= 3;
+}
+
+message OwnerAttrs {
+	repeated OwnerAttr items = 1;
+}

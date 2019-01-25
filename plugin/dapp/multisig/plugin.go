@@ -6,6 +6,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/multisig/executor"
 	"github.com/33cn/plugin/plugin/dapp/multisig/rpc"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
+	_ "github.com/33cn/plugin/plugin/dapp/multisig/wallet" // register wallet package
 )
 
 func init() {

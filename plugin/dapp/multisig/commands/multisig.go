@@ -51,6 +51,7 @@ func MultiSigAccountCmd() *cobra.Command {
 		GetMultiSigAccUnSpentTodayCmd(),
 		GetMultiSigAccAssetsCmd(),
 		GetMultiSigAccAllAddressCmd(),
+		GetMultiSigAccByOwnerCmd(),
 	)
 	return cmd
 }
@@ -1099,4 +1100,31 @@ func isValidDailylimit(dailylimit float64) error {
 		return mty.ErrInvalidDailyLimit
 	}
 	return nil
+}
+
+//GetMultiSigAccByOwnerCmd 获取指定地址拥有的所有多重签名账户
+func GetMultiSigAccByOwnerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "owner",
+		Short: "get multisig accounts by the owner",
+		Run:   getMultiSigAccByOwner,
+	}
+	getMultiSigAccByOwnerFlags(cmd)
+	return cmd
+}
+
+func getMultiSigAccByOwnerFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "address of owner")
+}
+
+func getMultiSigAccByOwner(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ownerAddr, _ := cmd.Flags().GetString("addr")
+
+	params := &types.ReqString{
+		Data: ownerAddr,
+	}
+	var res mty.OwnerAttrs
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "multisig.MultiSigAddresList", params, &res)
+	ctx.Run()
 }

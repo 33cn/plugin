@@ -193,6 +193,14 @@ func testAccCreateTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jso
 	assert.Equal(t, rep3.Address[0], multiSigAccAddr)
 	//t.Log(rep3)
 
+	//获取owner拥有的多重签名账户地址
+	req4 := &types.ReqString{
+		Data: GenAddr,
+	}
+	var res4 mty.OwnerAttrs
+	err = jrpcClient.Call("multisig.MultiSigAddresList", req4, &res4)
+	assert.Nil(t, err)
+	assert.Equal(t, res4.Items[0].OwnerAddr, GenAddr)
 	return multiSigAccAddr
 }
 
