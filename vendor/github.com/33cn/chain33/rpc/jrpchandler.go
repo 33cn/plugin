@@ -48,7 +48,6 @@ func (c *Chain33) CreateRawTransaction(in *rpctypes.CreateTx, result *interface{
 func (c *Chain33) ReWriteRawTx(in *rpctypes.ReWriteRawTx, result *interface{}) error {
 	inpb := &types.ReWriteRawTx{
 		Tx:     in.Tx,
-		Execer: []byte(in.Execer),
 		To:     in.To,
 		Fee:    in.Fee,
 		Expire: in.Expire,
@@ -874,6 +873,9 @@ func (c *Chain33) IsNtpClockSync(in *types.ReqNil, result *interface{}) error {
 
 // QueryTotalFee query total fee
 func (c *Chain33) QueryTotalFee(in *types.LocalDBGet, result *interface{}) error {
+	if in == nil || len(in.Keys) > 1 {
+		return types.ErrInvalidParam
+	}
 	reply, err := c.cli.LocalGet(in)
 	if err != nil {
 		return err
@@ -923,58 +925,6 @@ func (c *Chain33) GetFatalFailure(in *types.ReqNil, result *interface{}) error {
 	*result = resp.GetData()
 	return nil
 
-}
-
-// QueryTicketStat quert stat of ticket
-func (c *Chain33) QueryTicketStat(in *types.LocalDBGet, result *interface{}) error {
-	reply, err := c.cli.LocalGet(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketStat types.TicketStatistic
-	err = types.Decode(reply.Values[0], &ticketStat)
-	if err != nil {
-		return err
-	}
-	*result = ticketStat
-	return nil
-}
-
-// QueryTicketInfo query ticket information
-func (c *Chain33) QueryTicketInfo(in *types.LocalDBGet, result *interface{}) error {
-	reply, err := c.cli.LocalGet(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketInfo types.TicketMinerInfo
-	err = types.Decode(reply.Values[0], &ticketInfo)
-	if err != nil {
-		return err
-	}
-	*result = ticketInfo
-	return nil
-}
-
-// QueryTicketInfoList query ticket list information
-func (c *Chain33) QueryTicketInfoList(in *types.LocalDBList, result *interface{}) error {
-	reply, err := c.cli.LocalList(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketInfo types.TicketMinerInfo
-	var ticketList []types.TicketMinerInfo
-	for _, v := range reply.Values {
-		err = types.Decode(v, &ticketInfo)
-		if err != nil {
-			return err
-		}
-		ticketList = append(ticketList, ticketInfo)
-	}
-	*result = ticketList
-	return nil
 }
 
 // DecodeRawTransaction decode rawtransaction
@@ -1152,6 +1102,10 @@ func convertBlockDetails(details []*types.BlockDetail, retDetails *rpctypes.Bloc
 	for _, item := range details {
 		var bdtl rpctypes.BlockDetail
 		var block rpctypes.Block
+		if item == nil {
+			retDetails.Items = append(retDetails.Items, nil)
+			continue
+		}
 		block.BlockTime = item.Block.GetBlockTime()
 		block.Height = item.Block.GetHeight()
 		block.Version = item.Block.GetVersion()
