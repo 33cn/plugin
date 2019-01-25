@@ -97,7 +97,6 @@ func withdraw(unfreeze *pty.Unfreeze, frozen int64) (*pty.Unfreeze, int64) {
 	return unfreeze, amount
 }
 
-
 type fixAmountV2 struct {
 }
 

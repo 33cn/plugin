@@ -5,9 +5,9 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	uf "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
-	"github.com/33cn/chain33/system/dapp"
 )
 
 func (u *Unfreeze) execLocal(receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -37,8 +37,8 @@ func (u *Unfreeze) execLocal(receiptData *types.ReceiptData, index int) (*types.
 				return nil, err
 			}
 			u := uf.LocalUnfreeze{
-				Unfreeze:             receipt.Current,
-				TxIndex:              txIndex,
+				Unfreeze: receipt.Current,
+				TxIndex:  txIndex,
 			}
 			err = table.Add(&u)
 			if err != nil {

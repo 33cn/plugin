@@ -77,7 +77,7 @@ func NewAddrTable(kvdb dbm.KV) *table.Table {
 	return t
 }
 
-func update(ldb *table.Table, unfreeze *pty.Unfreeze) (error) {
+func update(ldb *table.Table, unfreeze *pty.Unfreeze) error {
 	xs, err := ldb.ListIndex("id", []byte(unfreeze.UnfreezeID), nil, 1, 0)
 	if err != nil || len(xs) != 1 {
 		return nil
@@ -90,7 +90,6 @@ func update(ldb *table.Table, unfreeze *pty.Unfreeze) (error) {
 	u.Unfreeze = unfreeze
 	return ldb.Update([]byte(u.TxIndex), u)
 }
-
 
 func list(db dbm.KVDB, indexName string, data *pty.LocalUnfreeze, count, direction int32) ([]*table.Row, error) {
 	query := NewAddrTable(db).GetQuery(db)
