@@ -94,10 +94,12 @@ func (c *Jrpc) MultiSigAccTransferOutTx(param *mty.MultiSigExecTransferFrom, res
 
 // MultiSigAddresList 获取owner地址上的多重签名账户列表{multiSigAddr，owneraddr，weight}
 func (c *Jrpc) MultiSigAddresList(in *types.ReqString, result *interface{}) error {
-	reply, err := c.cli.ExecWalletFunc(mty.MultiSigX, "MultiSigAddresList", in)
+	data, err := c.cli.ExecWalletFunc(mty.MultiSigX, "MultiSigAddresList", in)
 	if err != nil {
 		return err
 	}
-	*result = reply
+	var ownerAttrs *mty.OwnerAttrs
+	ownerAttrs = data.(*mty.OwnerAttrs)
+	*result = ownerAttrs
 	return nil
 }

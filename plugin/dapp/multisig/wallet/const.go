@@ -4,6 +4,7 @@
 
 package wallet
 
+// MaxCountPerTime: 每次获取多重签名账户的数量
 const (
 	MaxCountPerTime int64 = 100
 )
