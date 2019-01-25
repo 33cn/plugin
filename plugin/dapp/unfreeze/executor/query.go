@@ -114,15 +114,15 @@ func ListUnfreezeByBeneficiary(ldb dbm.KVDB, req *pty.ReqUnfreezes) (types.Messa
 	return fmtLocalUnfreeze(rows)
 }
 
-func fmtLocalUnfreeze(rows []*table.Row) (*pty.RespUnfreezes, error) {
-	var results pty.RespUnfreezes
+func fmtLocalUnfreeze(rows []*table.Row) (*pty.ReplyUnfreezes, error) {
+	var results pty.ReplyUnfreezes
 	for _, row := range rows {
 		r, ok := row.Data.(*pty.LocalUnfreeze)
 		if !ok {
 			uflog.Error("ListUnfreeze",  "err", "bad row type")
 			return nil, types.ErrDecode
 		}
-		v :=  &pty.RespUnfreeze{
+		v :=  &pty.ReplyUnfreeze{
 			UnfreezeID:           r.Unfreeze.UnfreezeID,
 			StartTime:            r.Unfreeze.StartTime,
 			AssetExec:            r.Unfreeze.AssetExec,
@@ -136,9 +136,9 @@ func fmtLocalUnfreeze(rows []*table.Row) (*pty.RespUnfreezes, error) {
 			Key:                  r.TxIndex,
 		}
 		if v.Means == pty.FixAmountX {
-			v.MeansOpt = &pty.RespUnfreeze_FixAmount{FixAmount: r.Unfreeze.GetFixAmount()}
+			v.MeansOpt = &pty.ReplyUnfreeze_FixAmount{FixAmount: r.Unfreeze.GetFixAmount()}
 		} else if v.Means == pty.LeftProportionX {
-			v.MeansOpt = &pty.RespUnfreeze_LeftProportion{LeftProportion: r.Unfreeze.GetLeftProportion()}
+			v.MeansOpt = &pty.ReplyUnfreeze_LeftProportion{LeftProportion: r.Unfreeze.GetLeftProportion()}
 		}
 		results.Unfreeze = append(results.Unfreeze, v)
 	}
