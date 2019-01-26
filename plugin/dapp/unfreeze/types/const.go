@@ -42,4 +42,6 @@ var (
 	FixAmountX      = "FixAmount"
 	LeftProportionX = "LeftProportion"
 	SupportMeans    = []string{"FixAmount", "LeftProportion"}
+
+	ForkTerminatePartX = "ForkTerminatePart"
 )
