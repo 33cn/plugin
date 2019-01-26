@@ -79,6 +79,7 @@ message LocalToken {
     int64 totalTransferTimes = 14;
     int64 revokedHeight      = 15;
     int64 revokedTime        = 16;
+    int32 category           = 17;
 }
 
 // query
