@@ -43,6 +43,7 @@ var (
 )
 
 func TestUnfreeze(t *testing.T) {
+	types.SetTitleOnlyForTest("chain33")
 	total := int64(100000)
 	accountA := types.Account{
 		Balance: total,
@@ -58,6 +59,7 @@ func TestUnfreeze(t *testing.T) {
 	execAddr := address.ExecAddress(pty.UnfreezeX)
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, ldb, kvdb := util.CreateTestDB()
+
 	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
@@ -66,7 +68,7 @@ func TestUnfreeze(t *testing.T) {
 
 	env := execEnv{
 		10,
-		2,
+		types.GetDappFork(pty.UnfreezeX, pty.ForkTerminatePartX),
 		1539918074,
 	}
 	ty := pty.UnfreezeType{}
@@ -116,6 +118,8 @@ func TestUnfreeze(t *testing.T) {
 	resp, ok := reply.(*pty.ReplyUnfreezes)
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(resp.Unfreeze))
+	assert.Equal(t, string(unfreezeID(createTx.Hash())), resp.Unfreeze[0].UnfreezeID)
+
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
 		UnfreezeID: string(unfreezeID(createTx.Hash())),
@@ -199,6 +203,7 @@ func TestUnfreeze(t *testing.T) {
 	if err != nil {
 		t.Error("RPC_UnfreezeTerminateTx sign", "err", err)
 	}
+	exec.SetEnv(env.blockHeight+2, env.blockTime+blockTime, env.difficulty)
 	receipt, err = exec.Exec(terminateTx, 1)
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
@@ -242,9 +247,11 @@ func TestUnfreeze(t *testing.T) {
 	_, err = exec.ExecDelLocal(terminateTx, receiptDate3, int(1))
 	assert.Nil(t, err)
 
+	exec.SetEnv(env.blockHeight+1, env.blockTime+blockTime, env.difficulty)
 	_, err = exec.ExecDelLocal(withdrawTx, receiptDate2, int(1))
 	assert.Nil(t, err)
 
+	exec.SetEnv(env.blockHeight, env.blockTime+blockTime, env.difficulty)
 	_, err = exec.ExecDelLocal(createTx, receiptDate, int(1))
 	assert.Nil(t, err)
 
