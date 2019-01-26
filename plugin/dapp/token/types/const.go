@@ -35,9 +35,9 @@ var (
 	// TokenX token name
 	TokenX = "token"
 
-	ForkTokenBlackListX = "ForkTokenBlackList"
-	ForkBadTokenSymbolX = "ForkBadTokenSymbol"
-	ForkTokenPriceX = "ForkTokenPrice"
+	ForkTokenBlackListX        = "ForkTokenBlackList"
+	ForkBadTokenSymbolX        = "ForkBadTokenSymbol"
+	ForkTokenPriceX            = "ForkTokenPrice"
 	ForkTokenSymbolWithNumberX = "ForkTokenSymbolWithNumber"
 )
 
