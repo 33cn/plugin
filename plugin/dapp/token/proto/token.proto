@@ -50,6 +50,7 @@ message Token {
     string owner        = 6;
     string creator      = 7;
     int32  status       = 8;
+    int32  category     = 9;
 }
 
 // log
