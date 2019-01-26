@@ -150,7 +150,7 @@ func (u *Unfreeze) create(unfreeze *pty.Unfreeze) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	receiptLog := getUnfreezeLog(nil, unfreeze)
+	receiptLog := getUnfreezeLog(nil, unfreeze, pty.TyLogCreateUnfreeze)
 	return &types.Receipt{Ty: types.ExecOk,
 		KV: []*types.KeyValue{{Key: k, Value: v}}, Logs: []*types.ReceiptLog{receiptLog}}, nil
 }
@@ -162,9 +162,9 @@ func mergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) 
 	return r1, nil
 }
 
-func getUnfreezeLog(prev, cur *pty.Unfreeze) *types.ReceiptLog {
+func getUnfreezeLog(prev, cur *pty.Unfreeze, ty int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
-	log.Ty = pty.TyLogCreateUnfreeze
+	log.Ty = ty
 	r := &pty.ReceiptUnfreeze{Prev: prev, Current: cur}
 	log.Log = types.Encode(r)
 	return log
@@ -183,7 +183,7 @@ func (u *Unfreeze) withdraw(unfreeze *pty.Unfreeze) (int64, *types.Receipt, erro
 	}
 	unfreezeOld := *unfreeze
 	unfreeze, amount := withdraw(unfreeze, frozen)
-	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze)
+	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze, pty.TyLogWithdrawUnfreeze)
 
 	k := []byte(unfreeze.UnfreezeID)
 	v := types.Encode(unfreeze)
@@ -223,7 +223,7 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 		amount = unfreeze.Remaining
 		unfreeze.Remaining = 0
 	}
-	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze)
+	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze, pty.TyLogTerminateUnfreeze)
 
 	k := []byte(unfreeze.UnfreezeID)
 	v := types.Encode(unfreeze)
