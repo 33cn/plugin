@@ -371,6 +371,8 @@ func addTokenPrecreatedFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("total", "t", 0, "total amount of the token")
 	cmd.MarkFlagRequired("total")
 
+	cmd.Flags().Int32P("category", "c", 0, "token category")
+
 	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
 }
 
@@ -382,6 +384,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
 	price, _ := cmd.Flags().GetFloat64("price")
 	total, _ := cmd.Flags().GetInt64("total")
+	category, _ := cmd.Flags().GetInt32("category")
 
 	priceInt64 := int64((price + 0.000001) * 1e4)
 	params := &tokenty.TokenPreCreate{
@@ -391,6 +394,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 		Introduction: introduction,
 		Owner:        ownerAddr,
 		Total:        total * types.TokenPrecision,
+		Category:     category,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenPreCreateTx", params, nil)
 	ctx.RunWithoutMarshal()
