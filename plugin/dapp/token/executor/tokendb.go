@@ -20,7 +20,7 @@ type tokenDB struct {
 	token pty.Token
 }
 
-func newTokenDB(preCreate *pty.TokenPreCreate, creator string) *tokenDB {
+func newTokenDB(preCreate *pty.TokenPreCreate, creator string, height int64) *tokenDB {
 	t := &tokenDB{}
 	t.token.Name = preCreate.GetName()
 	t.token.Symbol = preCreate.GetSymbol()
@@ -31,6 +31,9 @@ func newTokenDB(preCreate *pty.TokenPreCreate, creator string) *tokenDB {
 	t.token.Owner = preCreate.GetOwner()
 	t.token.Creator = creator
 	t.token.Status = pty.TokenStatusPreCreated
+	if types.IsDappFork(height, pty.TokenX, pty.ForkTokenSymbolWithNumberX) {
+		t.token.Category = preCreate.Category
+	}
 	return t
 }
 
@@ -108,6 +111,11 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	} else if token.GetTotal() > types.MaxTokenBalance || token.GetTotal() <= 0 {
 		return nil, pty.ErrTokenTotalOverflow
 	}
+	if !types.IsDappFork(action.height, pty.TokenX, pty.ForkTokenSymbolWithNumberX) {
+		if token.Category != 0 {
+			return nil, types.ErrNotSupport
+		}
+	}
 
 	if !validSymbolWithHeight([]byte(token.GetSymbol()), action.height) {
 		tokenlog.Error("token precreate ", "symbol need be upper", token.GetSymbol())
@@ -147,7 +155,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 		kv = append(kv, receipt.KV...)
 	}
 
-	tokendb := newTokenDB(token, action.fromaddr)
+	tokendb := newTokenDB(token, action.fromaddr, action.height)
 	var statuskey []byte
 	var key []byte
 	if types.IsFork(action.height, "ForkExecKey") {
