@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func TestCalcFrozen(t *testing.T) {
@@ -127,17 +127,17 @@ func TestLeftV1(t *testing.T) {
 
 func TestFixV1(t *testing.T) {
 	cases := []struct {
-		start         int64
-		now           int64
-		period        int64
-		total         int64
-		amount        int64
-		expect        int64
+		start  int64
+		now    int64
+		period int64
+		total  int64
+		amount int64
+		expect int64
 	}{
 		{10000, 10001, 10, 10000, 2, 9998},
 		{10000, 10011, 10, 10000, 2, 9996},
-		{10000, 10001, 10, 1e17, 2, 1e17 -2},
-		{10000, 10011, 10, 1e17, 2, 1e17 -4},
+		{10000, 10001, 10, 1e17, 2, 1e17 - 2},
+		{10000, 10011, 10, 1e17, 2, 1e17 - 4},
 	}
 
 	for _, c := range cases {
