@@ -414,6 +414,7 @@ func (a *action) AssetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 }
 
 func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, error) {
+	//分叉高度之后，支持从平行链提取资产
 	if !types.IsDappFork(a.height, pt.ParaX, "ForkParacrossWithdrawFromParachain") {
 		if withdraw.Cointoken != "" {
 			return nil, types.ErrNotSupport
