@@ -36,12 +36,12 @@ var (
 	TokenX = "token"
 
 	// ForkTokenBlackListX fork const
-	ForkTokenBlackListX        = "ForkTokenBlackList"
+	ForkTokenBlackListX = "ForkTokenBlackList"
 	// ForkBadTokenSymbolX fork const
-	ForkBadTokenSymbolX        = "ForkBadTokenSymbol"
+	ForkBadTokenSymbolX = "ForkBadTokenSymbol"
 	// ForkTokenPriceX fork const
-	ForkTokenPriceX            = "ForkTokenPrice"
-	// ForkTokenSymbolWithNumberX fork const 
+	ForkTokenPriceX = "ForkTokenPrice"
+	// ForkTokenSymbolWithNumberX fork const
 	ForkTokenSymbolWithNumberX = "ForkTokenSymbolWithNumber"
 )
 
