@@ -27,6 +27,7 @@ message TokenPreCreate {
     int64  total        = 4;
     int64  price        = 5;
     string owner        = 6;
+    int32  category     = 7;
 }
 
 message TokenFinishCreate {
