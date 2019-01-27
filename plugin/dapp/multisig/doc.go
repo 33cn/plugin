@@ -89,7 +89,7 @@ cli send bty transfer -a 100 -n test  -t "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -k
 
 第一步：1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd地址创建多重签名的账户，owner：1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF  1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv
 //构建交易
-cli send multisig account create -d 10 -e coins -s BTY -a "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK 1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -w "20 10" -r 15 -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+cli send multisig account create -d 10 -e coins -s BTY -a "1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK-1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -w "20-10" -r 15 -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
 //查看创建的账户个数
 cli multisig account count
