@@ -23,7 +23,7 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(ParaX))
 	types.RegistorExecutor(ParaX, NewType())
 	types.RegisterDappFork(ParaX, "Enable", 0)
-	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1500000)
+	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
 }
 
 // GetExecName get para exec name
