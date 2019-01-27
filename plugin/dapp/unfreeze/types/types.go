@@ -25,7 +25,7 @@ func init() {
 	// init executor type
 	types.RegistorExecutor(name, NewType())
 	types.RegisterDappFork(name, "Enable", 0)
-	types.RegisterDappFork(name, ForkTerminatePartX, 1500000)
+	types.RegisterDappFork(name, ForkTerminatePartX, 1298600)
 }
 
 //getRealExecName

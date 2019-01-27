@@ -22,7 +22,7 @@ func init() {
 	types.RegisterDappFork(TokenX, ForkTokenBlackListX, 190000)
 	types.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 184000)
 	types.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
-	types.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1500000)
+	types.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
 }
 
 // TokenType 执行器基类结构体
