@@ -5,3 +5,4 @@ while IFS='' read -r line || [[ -n $line ]]; do
     ((i++))
     ../chain33-cli --rpc_laddr https://mainnode.bityuan.com:8801 account balance -a "$line" -e ticket
 done <"$1"
+
