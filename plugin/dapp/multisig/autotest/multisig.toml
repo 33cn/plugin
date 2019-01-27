@@ -1,0 +1,106 @@
+
+#import multi sign test, 13P8wznbULh6GWJ9LWNdSp4so3bejZ91YV
+
+
+
+#send to token for precreate
+[[TransferCase]]
+id = "trans"
+command = "send bty transfer -a 20 -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "14uBEP6LSHKdFvy97pTYRPVPAqij6bteee"
+amount = "20"
+checkItem = ["balance"]
+
+[[MultiSigCreateCase]]
+id = "create"
+command = "send multisig account create -d 1 -e coins -s bty -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv-14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -w 20-10 -r 15 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+creator = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+owners = ["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"]
+checkItem = ["create"]
+
+
+[[MultiSigTransInCase]]
+id  ="transIn"
+command = "send multisig tx transfer_in -a 5 -e coins -s bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "5"
+repeat = 2
+dep = ["trans", "create"]
+checkItem = ["balance"]
+
+[[MultiSigTransInCase]]
+id  ="failTransIn"
+command = "send multisig tx transfer_in -a 25 -e coins -s bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "25"
+dep = ["create"]
+checkItem = ["balance"]
+fail = true
+
+
+[[MultiSigTransOutCase]]
+id = "transOut1"
+command = "send multisig tx transfer_out -a 0.1 -e coins -s bty -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "0.1"
+dep = ["create", "transIn"]
+checkItem = ["balance"]
+repeat = 10
+
+
+#allow daily limit
+[[MultiSigTransOutCase]]
+id = "transOut2"
+command = "send multisig tx transfer_out -a 0.1 -e coins -s bty -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "0.1"
+dep = ["create", "transIn"]
+checkItem = ["balance"]
+repeat = 10
+
+
+#not enough weight, need more owner confirm
+[[MultiSigTransOutCase]]
+id = "transOut3"
+command = "send multisig tx transfer_out -a 1.1 -e coins -s bty -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "1.1"
+dep = ["create", "transIn"]
+checkItem = ["balance"]
+
+
+#need fail confirm
+[[MultiSigTransOutCase]]
+id = "transOut4"
+command = "send multisig tx transfer_out -a 10.1 -e coins -s bty -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "10.1"
+dep = ["create", "transIn"]
+checkItem = ["balance"]
+
+
+[[MultiSigTransOutCase]]
+id = "failTransOut"
+command = "send multisig tx transfer_out -a 10.1 -e coins -s bty -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+amount = "10.1"
+dep = ["create", "transIn"]
+checkItem = ["balance"]
+fail = true
+
+
+
+[[MultiSigConfirmCase]]
+id = "confirm"
+command = "send multisig tx confirm -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+dep = ["create", "transOut3"]
+
+
+
+[[MultiSigConfirmCase]]
+id = "failConfirm"
+command = "send multisig tx confirm -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+dep = ["create", "transOut4"]
+fail = true
+
