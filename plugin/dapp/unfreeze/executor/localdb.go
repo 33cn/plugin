@@ -23,6 +23,7 @@ var opt_addr_table = &table.Option{
 	Index: []string{
 		"beneficiary",
 		"init",
+		"id",
 	},
 }
 
@@ -80,10 +81,12 @@ func NewAddrTable(kvdb dbm.KV) *table.Table {
 func update(ldb *table.Table, unfreeze *pty.Unfreeze) error {
 	xs, err := ldb.ListIndex("id", []byte(unfreeze.UnfreezeID), nil, 1, 0)
 	if err != nil || len(xs) != 1 {
+		uflog.Error("update query List failed", "key", unfreeze.UnfreezeID, "err", err, "len", len(xs))
 		return nil
 	}
 	u, ok := xs[0].Data.(*pty.LocalUnfreeze)
 	if !ok {
+		uflog.Error("update decode failed", "data", xs[0].Data)
 		return nil
 
 	}
