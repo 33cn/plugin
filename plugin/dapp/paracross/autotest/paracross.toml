@@ -1,0 +1,68 @@
+
+#paracross exec addr 1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe
+#user.p.test.paracross exec addr 16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR
+
+[[TokenPreCreateCase]]
+id = "tokenPre"
+command = "send token precreate -f 0.01 -i testToken -n testToken -s PT -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t 100000 -p 0.1 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+dep = ["transForPrecreate"]
+
+[[TokenFinishCreateCase]]
+id = "tokenFinish"
+command = "send token finish -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -f 0.01 -s PT -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
+dep = ["tokenPre"]
+
+
+#send to token for precreate
+[[TransferCase]]
+id = "transForPrecreate"
+command = "send bty transfer -a 1 -t 12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa"
+amount = "1"
+checkItem = ["balance"]
+
+[[TransferCase]]
+id = "btyToExec"
+command = "send bty transfer -a 1 -t 1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+amount = "1"
+checkItem = ["balance"]
+
+#send para asset bty
+[[TransferCase]]
+id = "btyParaTrans"
+command = "send para asset_transfer --title user.p.test. -a 0.1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+#复用coins的transfer用例，此处to地址比较特殊，为平行链paracross合约的地址
+to = "16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR"
+amount = "0.1"
+checkItem = ["balance"]
+dep = ["btyToExec"]
+repeat = 10
+
+#send token to paracross
+[[TransferCase]]
+id = "tokenToExec"
+command = "send token send_exec -a 10 -s PT -e paracross -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+amount = "10"
+checkItem = ["balance"]
+dep = ["tokenFinish"]
+
+#send para asset token PT
+[[TransferCase]]
+id = "tokenParaTrans"
+command = "send para asset_transfer --title user.p.test. -s PT -a 1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+#复用coins的transfer用例，此处to地址比较特殊，为平行链paracross合约的地址
+to = "16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR"
+amount = "1"
+checkItem = ["balance"]
+dep = ["tokenToExec"]
+repeat = 10
+
+
+
