@@ -17,6 +17,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"strings"
 )
 
 type sellDB struct {
@@ -305,7 +306,7 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 }
 
 func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, error) {
-	if buyOrder.BoardlotCnt < 0 {
+	if buyOrder.BoardlotCnt < 0 || !strings.HasPrefix(buyOrder.SellID, sellIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}
 
@@ -375,6 +376,9 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 }
 
 func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*types.Receipt, error) {
+	if !strings.HasPrefix(revoke.SellID, sellIDPrefix) {
+		return nil, types.ErrInvalidParam
+	}
 	sellidByte := []byte(revoke.SellID)
 	sellOrder, err := getSellOrderFromID(sellidByte, action.db)
 	if err != nil {
@@ -486,13 +490,14 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 }
 
 func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*types.Receipt, error) {
-	if sellOrder.BoardlotCnt < 0 {
+	if sellOrder.BoardlotCnt < 0 || !strings.HasPrefix(sellOrder.BuyID, buyIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}
 
 	idByte := []byte(sellOrder.BuyID)
 	buyOrder, err := getBuyOrderFromID(idByte, action.db)
 	if err != nil {
+		tradelog.Error("getBuyOrderFromID failed", "err", err)
 		return nil, pty.ErrTBuyOrderNotExist
 	}
 
@@ -509,6 +514,7 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	// 打token
 	accDB, err := createAccountDB(action.height, action.db, buyOrder.AssetExec, buyOrder.TokenSymbol)
 	if err != nil {
+		tradelog.Error("createAccountDB failed", "err", err, "order", buyOrder)
 		return nil, err
 	}
 	amountToken := sellOrder.BoardlotCnt * buyOrder.AmountPerBoardlot
@@ -556,6 +562,9 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 }
 
 func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*types.Receipt, error) {
+	if !strings.HasPrefix(revoke.BuyID, buyIDPrefix) {
+		return nil, types.ErrInvalidParam
+	}
 	buyIDByte := []byte(revoke.BuyID)
 	buyOrder, err := getBuyOrderFromID(buyIDByte, action.db)
 	if err != nil {
