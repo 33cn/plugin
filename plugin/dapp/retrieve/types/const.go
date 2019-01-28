@@ -24,8 +24,9 @@ const (
 
 // retrieve names
 var (
-	JRPCName       = "Retrieve"
-	RetrieveX      = "retrieve"
+	JRPCName  = "Retrieve"
+	RetrieveX = "retrieve"
+
 	ExecerRetrieve = []byte(RetrieveX)
 
 	actionName = map[string]int32{
