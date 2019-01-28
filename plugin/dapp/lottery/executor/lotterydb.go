@@ -49,7 +49,7 @@ const (
 
 const (
 	luckyNumMol = 100000
-	decimal     = 100000000 //1e8
+	decimal     = types.Coin //1e8
 	blockNum    = 5
 )
 
@@ -177,7 +177,7 @@ func (action *Action) GetBuyReceiptLog(lottery *pty.Lottery, preStatus int32, ro
 
 // GetDrawReceiptLog generate logs for lottery draw action
 func (action *Action) GetDrawReceiptLog(lottery *pty.Lottery, preStatus int32, round int64, luckyNum int64, updateInfo *pty.LotteryUpdateBuyInfo, addrNumThisRound int64, buyAmountThisRound int64, gainInfos *pty.LotteryGainInfos,
-	luckyAddrNum int64, totalFund int64, factor float64) *types.ReceiptLog {
+	luckyAddrNum int64, totalFund int64, factor int64) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogLotteryDraw
 
@@ -191,7 +191,7 @@ func (action *Action) GetDrawReceiptLog(lottery *pty.Lottery, preStatus int32, r
 	l.BuyAmount = buyAmountThisRound
 	l.LuckyAddrNum = luckyAddrNum
 	l.TotalFund = totalFund
-	l.Factor = float32(factor)
+	l.Factor = factor
 	if len(updateInfo.BuyInfo) > 0 {
 		l.UpdateInfo = updateInfo
 	}
@@ -578,7 +578,7 @@ func checkFundAmount(luckynum int64, guessnum int64, way int64) (int64, int64) {
 	}
 }
 
-func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUpdateBuyInfo, *pty.LotteryGainInfos, int64, int64, float64, error) {
+func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUpdateBuyInfo, *pty.LotteryGainInfos, int64, int64, int64, error) {
 	luckynum, err := action.findLuckyNum(false, lott)
 	if luckynum < 0 || luckynum >= luckyNumMol {
 		return nil, nil, nil, 0, 0, 0, err
@@ -616,35 +616,27 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	}
 	llog.Debug("checkDraw", "lenofupdate", len(updateInfo.BuyInfo), "update", updateInfo.BuyInfo)
 
-	var factor = 1.0
+	var factor = decimal
 	if totalFund > 0 {
 		if totalFund > lott.GetFund()/2 {
 			llog.Debug("checkDraw ajust fund", "lott.Fund", lott.Fund, "totalFund", totalFund)
-			factor = (float64)(lott.GetFund()) / 2 / (float64)(totalFund)
+			factor = decimal * (lott.GetFund()) / 2 / (totalFund)
 			lott.Fund = lott.Fund / 2
 		} else {
-			factor = 1.0
 			lott.Fund -= totalFund
 		}
 
 		llog.Debug("checkDraw", "factor", factor, "totalFund", totalFund)
 
-		//protection for rollback
-		if factor == 1.0 {
-			if !action.CheckExecAccount(lott.CreateAddr, totalFund, true) {
-				return nil, nil, nil, 0, 0, 0, pty.ErrLotteryFundNotEnough
-			}
-		} else {
-			if !action.CheckExecAccount(lott.CreateAddr, decimal*lott.Fund/2+1, true) {
-				return nil, nil, nil, 0, 0, 0, pty.ErrLotteryFundNotEnough
-			}
+		if !action.CheckExecAccount(lott.CreateAddr, factor*totalFund+1, true) {
+			return nil, nil, nil, 0, 0, 0, pty.ErrLotteryFundNotEnough
 		}
 
 		for _, recs := range lott.PurRecords {
 			if recs.FundWin > 0 {
-				fund := (recs.FundWin * int64(factor*exciting)) * decimal * (rewardBase - lott.OpRewardRatio - lott.DevRewardRatio) / (exciting * rewardBase) //any problem when too little?
+				fund := (recs.FundWin * factor) * (rewardBase - lott.OpRewardRatio - lott.DevRewardRatio) / rewardBase //any problem when too little?
 				llog.Debug("checkDraw", "fund", fund)
-				gain := &pty.LotteryGainInfo{Addr: recs.Addr, BuyAmount: recs.AmountOneRound, FundAmount: float32(fund) / float32(decimal)}
+				gain := &pty.LotteryGainInfo{Addr: recs.Addr, BuyAmount: recs.AmountOneRound, FundAmount: fund}
 				gainInfos.Gains = append(gainInfos.Gains, gain)
 				receipt, err := action.coinsAccount.ExecTransferFrozen(lott.CreateAddr, recs.Addr, action.execaddr, fund)
 				if err != nil {
@@ -660,7 +652,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 		}
 
 		//op reward
-		fundOp := int64(factor*decimal) * totalFund * lott.OpRewardRatio / rewardBase
+		fundOp := factor * totalFund * lott.OpRewardRatio / rewardBase
 		receipt, err := action.coinsAccount.ExecTransferFrozen(lott.CreateAddr, opRewardAddr, action.execaddr, fundOp)
 		if err != nil {
 			return nil, nil, nil, 0, 0, 0, err
@@ -668,7 +660,7 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 		kv = append(kv, receipt.KV...)
 		logs = append(logs, receipt.Logs...)
 		//dev reward
-		fundDev := int64(factor*decimal) * totalFund * lott.DevRewardRatio / rewardBase
+		fundDev := factor * totalFund * lott.DevRewardRatio / rewardBase
 		receipt, err = action.coinsAccount.ExecTransferFrozen(lott.CreateAddr, devRewardAddr, action.execaddr, fundDev)
 		if err != nil {
 			return nil, nil, nil, 0, 0, 0, err
