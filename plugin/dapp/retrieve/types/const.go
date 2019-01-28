@@ -8,9 +8,9 @@ import "github.com/33cn/chain33/types"
 
 //retrieve
 const (
-	RetrievePreapre = iota + 1
+	RetrieveBackup = iota + 1
+	RetrievePreapre
 	RetrievePerform
-	RetrieveBackup
 	RetrieveCancel
 )
 
