@@ -81,7 +81,7 @@ func showOnesSellOrders(cmd *cobra.Command, args []string) {
 		FuncName: "GetOnesSellOrder",
 		Payload:  types.MustPBToJSON(&reqAddrtokens),
 	}
-	var res pty.ReplySellOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseSellOrders)
 	ctx.Run()
@@ -122,7 +122,7 @@ func showOnesSellOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Execer = "trade"
 	params.FuncName = "GetOnesSellOrderWithStatus"
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
-	var res pty.ReplySellOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseSellOrders)
 	ctx.Run()
@@ -175,7 +175,7 @@ func showTokenSellOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Execer = "trade"
 	params.FuncName = "GetTokenSellOrderByStatus"
 	params.Payload = types.MustPBToJSON(&req)
-	var res pty.ReplySellOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseSellOrders)
 	ctx.Run()
@@ -238,7 +238,7 @@ func showOnesBuyOrders(cmd *cobra.Command, args []string) {
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrder"
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
-	var res pty.ReplyBuyOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseBuyOrders)
 	ctx.Run()
@@ -278,7 +278,7 @@ func showOnesBuyOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Execer = "trade"
 	params.FuncName = "GetOnesBuyOrderWithStatus"
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
-	var res pty.ReplyBuyOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseBuyOrders)
 	ctx.Run()
@@ -331,7 +331,7 @@ func showTokenBuyOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Execer = "trade"
 	params.FuncName = "GetTokenBuyOrderByStatus"
 	params.Payload = types.MustPBToJSON(&req)
-	var res pty.ReplyBuyOrders
+	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.SetResultCb(parseBuyOrders)
 	ctx.Run()
