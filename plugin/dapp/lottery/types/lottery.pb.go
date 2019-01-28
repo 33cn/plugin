@@ -494,229 +494,116 @@ func (m *LotteryAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*LotteryAction) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*LotteryAction_Create)(nil),
-		(*LotteryAction_Buy)(nil),
-		(*LotteryAction_Draw)(nil),
-		(*LotteryAction_Close)(nil),
-	}
-}
-
 // XXX_OneofFuncs is for the internal use of the proto package.
-
 func (*LotteryAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-
 	return _LotteryAction_OneofMarshaler, _LotteryAction_OneofUnmarshaler, _LotteryAction_OneofSizer, []interface{}{
-
 		(*LotteryAction_Create)(nil),
-
 		(*LotteryAction_Buy)(nil),
-
 		(*LotteryAction_Draw)(nil),
-
 		(*LotteryAction_Close)(nil),
 	}
-
 }
 
 func _LotteryAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-
 	m := msg.(*LotteryAction)
-
 	// value
-
 	switch x := m.Value.(type) {
-
 	case *LotteryAction_Create:
-
 		b.EncodeVarint(1<<3 | proto.WireBytes)
-
 		if err := b.EncodeMessage(x.Create); err != nil {
-
 			return err
-
 		}
-
 	case *LotteryAction_Buy:
-
 		b.EncodeVarint(2<<3 | proto.WireBytes)
-
 		if err := b.EncodeMessage(x.Buy); err != nil {
-
 			return err
-
 		}
-
 	case *LotteryAction_Draw:
-
 		b.EncodeVarint(3<<3 | proto.WireBytes)
-
 		if err := b.EncodeMessage(x.Draw); err != nil {
-
 			return err
-
 		}
-
 	case *LotteryAction_Close:
-
 		b.EncodeVarint(4<<3 | proto.WireBytes)
-
 		if err := b.EncodeMessage(x.Close); err != nil {
-
 			return err
-
 		}
-
 	case nil:
-
 	default:
-
 		return fmt.Errorf("LotteryAction.Value has unexpected type %T", x)
-
 	}
-
 	return nil
-
 }
 
 func _LotteryAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-
 	m := msg.(*LotteryAction)
-
 	switch tag {
-
 	case 1: // value.create
-
 		if wire != proto.WireBytes {
-
 			return true, proto.ErrInternalBadWireType
-
 		}
-
 		msg := new(LotteryCreate)
-
 		err := b.DecodeMessage(msg)
-
 		m.Value = &LotteryAction_Create{msg}
-
 		return true, err
-
 	case 2: // value.buy
-
 		if wire != proto.WireBytes {
-
 			return true, proto.ErrInternalBadWireType
-
 		}
-
 		msg := new(LotteryBuy)
-
 		err := b.DecodeMessage(msg)
-
 		m.Value = &LotteryAction_Buy{msg}
-
 		return true, err
-
 	case 3: // value.draw
-
 		if wire != proto.WireBytes {
-
 			return true, proto.ErrInternalBadWireType
-
 		}
-
 		msg := new(LotteryDraw)
-
 		err := b.DecodeMessage(msg)
-
 		m.Value = &LotteryAction_Draw{msg}
-
 		return true, err
-
 	case 4: // value.close
-
 		if wire != proto.WireBytes {
-
 			return true, proto.ErrInternalBadWireType
-
 		}
-
 		msg := new(LotteryClose)
-
 		err := b.DecodeMessage(msg)
-
 		m.Value = &LotteryAction_Close{msg}
-
 		return true, err
-
 	default:
-
 		return false, nil
-
 	}
-
 }
 
 func _LotteryAction_OneofSizer(msg proto.Message) (n int) {
-
 	m := msg.(*LotteryAction)
-
 	// value
-
 	switch x := m.Value.(type) {
-
 	case *LotteryAction_Create:
-
 		s := proto.Size(x.Create)
-
 		n += 1 // tag and wire
-
 		n += proto.SizeVarint(uint64(s))
-
 		n += s
-
 	case *LotteryAction_Buy:
-
 		s := proto.Size(x.Buy)
-
 		n += 1 // tag and wire
-
 		n += proto.SizeVarint(uint64(s))
-
 		n += s
-
 	case *LotteryAction_Draw:
-
 		s := proto.Size(x.Draw)
-
 		n += 1 // tag and wire
-
 		n += proto.SizeVarint(uint64(s))
-
 		n += s
-
 	case *LotteryAction_Close:
-
 		s := proto.Size(x.Close)
-
 		n += 1 // tag and wire
-
 		n += proto.SizeVarint(uint64(s))
-
 		n += s
-
 	case nil:
-
 	default:
-
 		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-
 	}
-
 	return n
-
 }
 
 type LotteryCreate struct {
