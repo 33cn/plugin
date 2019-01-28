@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -17,7 +18,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
-	"strings"
 )
 
 type sellDB struct {
