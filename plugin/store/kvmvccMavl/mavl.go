@@ -26,7 +26,7 @@ type MavlStore struct {
 }
 
 // NewMavl new mavl store module
-func NewMavl(cfg *types.Store, sub *subMavlConfig, db dbm.DB) *MavlStore {
+func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 	var subcfg subMavlConfig
 	if sub != nil {
 		subcfg.EnableMavlPrefix = sub.EnableMavlPrefix

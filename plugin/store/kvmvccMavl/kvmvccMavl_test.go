@@ -18,6 +18,7 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const MaxKeylenth int = 64
@@ -30,7 +31,7 @@ func newStoreCfgIter(dir string) (*types.Store, []byte) {
 	return &types.Store{Name: "kvmvccMavl_test", Driver: "leveldb", DbPath: dir, DbCache: 100}, enableConfig()
 }
 
-func TestKvmvccdbNewClose(t *testing.T) {
+func TestKvmvccMavlNewClose(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
@@ -42,7 +43,7 @@ func TestKvmvccdbNewClose(t *testing.T) {
 	store.Close()
 }
 
-func TestKvmvccdbSetGet(t *testing.T) {
+func TestKvmvccMavlSetGet(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
@@ -51,44 +52,31 @@ func TestKvmvccdbSetGet(t *testing.T) {
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(t, store)
 
-	keys0 := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get0 := &types.StoreGet{StateHash: drivers.EmptyRoot[:], Keys: keys0}
-	values0 := store.Get(get0)
-	//kmlog.Info("info", "info", values0)
-	// Get exist key, result nil
-	assert.Len(t, values0, 2)
-	assert.Equal(t, []byte(nil), values0[0])
-	assert.Equal(t, []byte(nil), values0[1])
-
-	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{Key: []byte("k1"), Value: []byte("v1")})
-	kv = append(kv, &types.KeyValue{Key: []byte("k2"), Value: []byte("v2")})
-	datas := &types.StoreSet{
-		StateHash: drivers.EmptyRoot[:],
-		KV:        kv,
-		Height:    0}
-	hash, err := store.Set(datas, true)
-	assert.Nil(t, err)
-	keys := [][]byte{[]byte("k1"), []byte("k2")}
-	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
-
-	values := store.Get(get1)
-	assert.Len(t, values, 2)
-	assert.Equal(t, []byte("v1"), values[0])
-	assert.Equal(t, []byte("v2"), values[1])
-
-	keys = [][]byte{[]byte("k1")}
-	get2 := &types.StoreGet{StateHash: hash, Keys: keys}
-	values2 := store.Get(get2)
-	assert.Len(t, values2, 1)
-	assert.Equal(t, []byte("v1"), values2[0])
-
-	get3 := &types.StoreGet{StateHash: drivers.EmptyRoot[:], Keys: keys}
-	values3 := store.Get(get3)
-	assert.Len(t, values3, 1)
+	kvmvccMavlFork = 50
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+	hash := drivers.EmptyRoot[:]
+	for i := 0; i < 100; i++ {
+		var kvs []*types.KeyValue
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("k%d", i)), Value: []byte(fmt.Sprintf("v%d", i))})
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("key%d", i)), Value: []byte(fmt.Sprintf("value%d", i))})
+		datas := &types.StoreSet{
+			StateHash: hash,
+			KV:        kvs,
+			Height:    int64(i)}
+		hash, err = store.Set(datas, true)
+		assert.Nil(t, err)
+		keys := [][]byte{[]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("key%d", i))}
+		get := &types.StoreGet{StateHash: hash, Keys: keys}
+		values := store.Get(get)
+		assert.Len(t, values, 2)
+		assert.Equal(t, []byte(fmt.Sprintf("v%d", i)), values[0])
+		assert.Equal(t, []byte(fmt.Sprintf("value%d", i)), values[1])
+	}
 }
 
-func TestKvmvccdbMemSet(t *testing.T) {
+func TestKvmvccMavlMemSet(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
@@ -97,36 +85,103 @@ func TestKvmvccdbMemSet(t *testing.T) {
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(t, store)
 
-	var kv []*types.KeyValue
-	kv = append(kv, &types.KeyValue{Key: []byte("mk1"), Value: []byte("v1")})
-	kv = append(kv, &types.KeyValue{Key: []byte("mk2"), Value: []byte("v2")})
-	datas := &types.StoreSet{
-		StateHash: drivers.EmptyRoot[:],
-		KV:        kv,
-		Height:    0}
-	hash, err := store.MemSet(datas, true)
-	assert.Nil(t, err)
-	keys := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
+	kvmvccMavlFork = 50
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+	hash := drivers.EmptyRoot[:]
+	for i := 0; i < 100; i++ {
+		var kvs []*types.KeyValue
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("k%d", i)), Value: []byte(fmt.Sprintf("v%d", i))})
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("key%d", i)), Value: []byte(fmt.Sprintf("value%d", i))})
+		datas := &types.StoreSet{
+			StateHash: hash,
+			KV:        kvs,
+			Height:    int64(i)}
 
-	values := store.Get(get1)
-	assert.Len(t, values, 2)
-	assert.Nil(t, values[0])
-	assert.Nil(t, values[1])
-
-	actHash, _ := store.Commit(&types.ReqHash{Hash: hash})
-	assert.Equal(t, hash, actHash)
-
+		hash, err = store.MemSet(datas, true)
+		assert.Nil(t, err)
+		actHash, _ := store.Commit(&types.ReqHash{Hash: hash})
+		assert.Equal(t, hash, actHash)
+		keys := [][]byte{[]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("key%d", i))}
+		get := &types.StoreGet{StateHash: hash, Keys: keys}
+		values := store.Get(get)
+		assert.Len(t, values, 2)
+		assert.Equal(t, []byte(fmt.Sprintf("v%d", i)), values[0])
+		assert.Equal(t, []byte(fmt.Sprintf("value%d", i)), values[1])
+	}
 	notExistHash, _ := store.Commit(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
 	assert.Nil(t, notExistHash)
-
-	values = store.Get(get1)
-	assert.Len(t, values, 2)
-	assert.Equal(t, values[0], kv[0].Value)
-	assert.Equal(t, values[1], kv[1].Value)
 }
 
-func TestKvmvccdbRollback(t *testing.T) {
+func TestKvmvccMavlCommit(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	var storeCfg = newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	assert.NotNil(t, store)
+
+	var kv []*types.KeyValue
+	var key string
+	var value string
+	var keys [][]byte
+
+	for i := 0; i < 30; i++ {
+		key = GetRandomString(MaxKeylenth)
+		value = fmt.Sprintf("v%d", i)
+		keys = append(keys, []byte(string(key)))
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+	}
+	datas := &types.StoreSet{
+		StateHash: drivers.EmptyRoot[:],
+		KV:        kv,
+		Height:    0}
+
+	// 设置分叉高度
+	forkHeight := 100
+	kvmvccMavlFork = int64(forkHeight)
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+	frontHash := make([]byte, 0, 32)
+	var hash []byte
+	for i := 0; i < 200; i++ {
+		datas.Height = int64(i)
+		hash, err = store.MemSet(datas, true)
+		assert.Nil(t, err)
+		req := &types.ReqHash{
+			Hash: hash,
+		}
+		if i + 1 == forkHeight {
+			frontHash = append(frontHash, hash...)
+		}
+		_, err = store.Commit(req)
+		assert.NoError(t, err, "NoError")
+		datas.StateHash = hash
+	}
+
+	if len(frontHash) > 0 {
+		get := &types.StoreGet{StateHash: frontHash, Keys: keys}
+		values := store.Get(get)
+		require.Equal(t, len(values), len(keys))
+		for i, _ := range keys {
+			require.Equal(t, kv[i].Value, values[i])
+		}
+	}
+
+	if len(hash) > 0 {
+		get := &types.StoreGet{StateHash: hash, Keys: keys}
+		values := store.Get(get)
+		require.Equal(t, len(values), len(keys))
+		for i, _ := range keys {
+			require.Equal(t, kv[i].Value, values[i])
+		}
+	}
+}
+
+func TestKvmvccMavlRollback(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
@@ -145,16 +200,46 @@ func TestKvmvccdbRollback(t *testing.T) {
 	hash, err := store.MemSet(datas, true)
 	assert.Nil(t, err)
 	keys := [][]byte{[]byte("mk1"), []byte("mk2")}
-	get1 := &types.StoreGet{StateHash: hash, Keys: keys}
-	values := store.Get(get1)
+	get := &types.StoreGet{StateHash: hash, Keys: keys}
+	values := store.Get(get)
 	assert.Len(t, values, 2)
-	assert.Nil(t, values[0])
-	assert.Nil(t, values[1])
 
 	actHash, _ := store.Rollback(&types.ReqHash{Hash: hash})
 	assert.Equal(t, hash, actHash)
 
 	notExistHash, err := store.Rollback(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
+	assert.Nil(t, notExistHash)
+	assert.Equal(t, types.ErrHashNotFound.Error(), err.Error())
+
+	// 分叉之后
+	kvmvccMavlFork = 1
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+
+	hash, err = store.MemSet(datas, true)
+	assert.Nil(t, err)
+	actHash, _ = store.Commit(&types.ReqHash{Hash: hash})
+	assert.Equal(t, hash, actHash)
+
+	var kv1 []*types.KeyValue
+	kv1 = append(kv1, &types.KeyValue{Key: []byte("mk3"), Value: []byte("v3")})
+	kv1 = append(kv1, &types.KeyValue{Key: []byte("mk4"), Value: []byte("v4")})
+	datas1 := &types.StoreSet{
+		StateHash: hash,
+		KV:        kv1,
+		Height:    1}
+	hash1, err := store.MemSet(datas1, true)
+	assert.Nil(t, err)
+	keys1 := [][]byte{[]byte("mk3"), []byte("mk4")}
+	get1 := &types.StoreGet{StateHash: hash1, Keys: keys1}
+	values1 := store.Get(get1)
+	assert.Len(t, values1, 2)
+
+	actHash, _ = store.Rollback(&types.ReqHash{Hash: hash1})
+	assert.Equal(t, hash1, actHash)
+
+	notExistHash, err = store.Rollback(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
 	assert.Nil(t, notExistHash)
 	assert.Equal(t, types.ErrHashNotFound.Error(), err.Error())
 }
@@ -387,22 +472,27 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Equal(t, int64(2), resp.Num)
 	assert.Equal(t, int64(201900000000), resp.Amount)
 
-	fmt.Println("---test case1-6 ---")
+	if datas.Height >= kvmvccMavlFork {
+		fmt.Println("---test case1-6 ---")
 
-	resp = &types.ReplyGetTotalCoins{}
-	resp.Count = 10000
-	store.IterateRangeByStateHash(hash, []byte("mavl-coins-bty-"), []byte("mavl-coins-bty-exec"), true, resp.IterateRangeByStateHash)
-	fmt.Println("resp.Num=", resp.Num)
-	fmt.Println("resp.Amount=", resp.Amount)
-	assert.Equal(t, int64(0), resp.Num)
-	assert.Equal(t, int64(0), resp.Amount)
+		resp = &types.ReplyGetTotalCoins{}
+		resp.Count = 10000
+		store.IterateRangeByStateHash(hash, []byte("mavl-coins-bty-"), []byte("mavl-coins-bty-exec"), true, resp.IterateRangeByStateHash)
+		fmt.Println("resp.Num=", resp.Num)
+		fmt.Println("resp.Amount=", resp.Amount)
+		assert.Equal(t, int64(0), resp.Num)
+		assert.Equal(t, int64(0), resp.Amount)
+	}
 }
 
 func GetRandomString(length int) string {
 	return common.GetRandPrintString(20, length)
 }
 
-func BenchmarkGet(b *testing.B) {
+func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
+func BenchmarkGetkmvcc(b *testing.B) { benchmarkGet(b, true) }
+
+func benchmarkGet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -411,6 +501,13 @@ func BenchmarkGet(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var keys [][]byte
@@ -446,11 +543,21 @@ func BenchmarkGet(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkGet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func BenchmarkStoreGetKvs4N(b *testing.B) {
+func BenchmarkStoreGetKvs4NkmvccMavl(b *testing.B) { benchmarkStoreGetKvs4N(b, false) }
+func BenchmarkStoreGetKvs4Nkmvcc(b *testing.B) { benchmarkStoreGetKvs4N(b, true) }
+
+func benchmarkStoreGetKvs4N(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
@@ -491,7 +598,10 @@ func BenchmarkStoreGetKvs4N(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkStoreGetKvsForNN(b *testing.B) {
+func BenchmarkStoreGetKvsForNNkmvccMavl(b *testing.B) { benchmarkStoreGetKvsForNN(b, false) }
+func BenchmarkStoreGetKvsForNNkmvcc(b *testing.B) { benchmarkStoreGetKvsForNN(b, true) }
+
+func benchmarkStoreGetKvsForNN(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -500,6 +610,13 @@ func BenchmarkStoreGetKvsForNN(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -551,7 +668,10 @@ func BenchmarkStoreGetKvsForNN(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkStoreGetKvsFor10000(b *testing.B) {
+func BenchmarkStoreGetKvsFor10000kmvccMavl(b *testing.B) { benchmarkStoreGetKvsFor10000(b, false) }
+func BenchmarkStoreGetKvsFor10000kmvcc(b *testing.B) { benchmarkStoreGetKvsFor10000(b, true) }
+
+func benchmarkStoreGetKvsFor10000(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -560,6 +680,13 @@ func BenchmarkStoreGetKvsFor10000(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -616,7 +743,10 @@ func BenchmarkStoreGetKvsFor10000(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkGetIter(b *testing.B) {
+func BenchmarkGetIterkmvccMavl(b *testing.B) { benchmarkGetIter(b, false) }
+func BenchmarkGetIterkmvcc(b *testing.B) { benchmarkGetIter(b, true) }
+
+func benchmarkGetIter(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -625,6 +755,13 @@ func BenchmarkGetIter(b *testing.B) {
 	storeCfg, sub := newStoreCfgIter(dir)
 	store := New(storeCfg, sub).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var keys [][]byte
@@ -660,7 +797,10 @@ func BenchmarkGetIter(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkGet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func BenchmarkSet(b *testing.B) {
+func BenchmarkSetkmvccMavl(b *testing.B) { benchmarkSet(b, false) }
+func BenchmarkSetkmvcc(b *testing.B) { benchmarkSet(b, true) }
+
+func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -669,6 +809,13 @@ func BenchmarkSet(b *testing.B) {
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
 	b.Log(dir)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var keys [][]byte
@@ -697,7 +844,10 @@ func BenchmarkSet(b *testing.B) {
 }
 
 //上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
-func BenchmarkStoreSet(b *testing.B) {
+func BenchmarkStoreSetkmvccMavl(b *testing.B) { benchmarkStoreSet(b, false) }
+func BenchmarkStoreSetkmvcc(b *testing.B) { benchmarkStoreSet(b, true) }
+
+func benchmarkStoreSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -705,6 +855,13 @@ func BenchmarkStoreSet(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -732,7 +889,10 @@ func BenchmarkStoreSet(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func BenchmarkSetIter(b *testing.B) {
+func BenchmarkSetIterkmvccMavl(b *testing.B) { benchmarkSetIter(b, false) }
+func BenchmarkSetIterkmvcc(b *testing.B) { benchmarkSetIter(b, true) }
+
+func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -741,6 +901,13 @@ func BenchmarkSetIter(b *testing.B) {
 	store := New(storeCfg, sub).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
 	b.Log(dir)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var keys [][]byte
@@ -768,18 +935,11 @@ func BenchmarkSetIter(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func isDirExists(path string) bool {
-	fi, err := os.Stat(path)
-
-	if err != nil {
-		return os.IsExist(err)
-	}
-
-	return fi.IsDir()
-}
-
 //一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
-func BenchmarkMemSet(b *testing.B) {
+func BenchmarkMemSetkmvccMavl(b *testing.B) { benchmarkMemSet(b, false) }
+func BenchmarkMemSetkmvcc(b *testing.B) { benchmarkMemSet(b, true) }
+
+func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -787,6 +947,13 @@ func BenchmarkMemSet(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -813,7 +980,10 @@ func BenchmarkMemSet(b *testing.B) {
 }
 
 //一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
-func BenchmarkStoreMemSet(b *testing.B) {
+func BenchmarkStoreMemSetkmvccMavl(b *testing.B) { benchmarkStoreMemSet(b, false) }
+func BenchmarkStoreMemSetkmvcc(b *testing.B) { benchmarkStoreMemSet(b, true) }
+
+func benchmarkStoreMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -821,6 +991,13 @@ func BenchmarkStoreMemSet(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -851,7 +1028,10 @@ func BenchmarkStoreMemSet(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkStoreMemSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func BenchmarkCommit(b *testing.B) {
+func BenchmarkCommitkmvccMavl(b *testing.B) { benchmarkCommit(b, false) }
+func BenchmarkCommitkmvcc(b *testing.B) { benchmarkCommit(b, true) }
+
+func benchmarkCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -860,6 +1040,12 @@ func BenchmarkCommit(b *testing.B) {
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
 
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 	var kv []*types.KeyValue
 	var key string
 	var value string
@@ -892,7 +1078,10 @@ func BenchmarkCommit(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkStoreCommit(b *testing.B) {
+func BenchmarkStoreCommitkmvccMavl(b *testing.B) { benchmarkStoreCommit(b, false) }
+func BenchmarkStoreCommitkmvcc(b *testing.B) { benchmarkStoreCommit(b, true) }
+
+func benchmarkStoreCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -900,6 +1089,13 @@ func BenchmarkStoreCommit(b *testing.B) {
 	var storeCfg = newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -935,8 +1131,11 @@ func BenchmarkStoreCommit(b *testing.B) {
 	b.StopTimer()
 }
 
+func BenchmarkIterMemSetkmvccMavl(b *testing.B) { benchmarkIterMemSet(b, false) }
+func BenchmarkIterMemSetkmvcc(b *testing.B) { benchmarkIterMemSet(b, true) }
+
 //一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
-func BenchmarkIterMemSet(b *testing.B) {
+func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -944,6 +1143,13 @@ func BenchmarkIterMemSet(b *testing.B) {
 	storeCfg, sub := newStoreCfgIter(dir)
 	store := New(storeCfg, sub).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string
@@ -969,7 +1175,10 @@ func BenchmarkIterMemSet(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkMemSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-func BenchmarkIterCommit(b *testing.B) {
+func BenchmarkIterCommitkmvccMavl(b *testing.B) { benchmarkIterCommit(b, false) }
+func BenchmarkIterCommitkmvcc(b *testing.B) { benchmarkIterCommit(b, true) }
+
+func benchmarkIterCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
 	defer os.RemoveAll(dir) // clean up
@@ -977,6 +1186,13 @@ func BenchmarkIterCommit(b *testing.B) {
 	storeCfg, sub := newStoreCfgIter(dir)
 	store := New(storeCfg, sub).(*KVMVCCMavlStore)
 	assert.NotNil(b, store)
+
+	if isResetForkHeight {
+		kvmvccMavlFork = 0
+		defer func() {
+			kvmvccMavlFork = 200 * 10000
+		}()
+	}
 
 	var kv []*types.KeyValue
 	var key string

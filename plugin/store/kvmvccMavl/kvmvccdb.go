@@ -26,7 +26,7 @@ type KVMVCCStore struct {
 
 
 // NewKVMVCC construct KVMVCCStore module
-func NewKVMVCC(cfg *types.Store, sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
+func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	var kvs *KVMVCCStore
 	enable := false
 	if sub != nil {
@@ -46,8 +46,10 @@ func (mvccs *KVMVCCStore) Close() {
 }
 
 // Set kvs with statehash to KVMVCCStore
-func (mvccs *KVMVCCStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
-	hash := calcHash(datas)
+func (mvccs *KVMVCCStore) Set(datas *types.StoreSet, hash []byte, sync bool) ([]byte, error) {
+	if hash == nil {
+		hash = calcHash(datas)
+	}
 	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, hash, datas.StateHash, datas.Height)
 	if err != nil {
 		return nil, err
@@ -76,12 +78,14 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 }
 
 // MemSet set kvs to the mem of KVMVCCStore module and return the StateHash
-func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
+func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) ([]byte, error) {
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
 		return nil, err
 	}
-	hash := calcHash(datas)
+	if hash == nil {
+		hash = calcHash(datas)
+	}
 	//kmlog.Debug("KVMVCCStore MemSet AddMVCC", "prestatehash", common.ToHex(datas.StateHash), "hash", common.ToHex(hash), "height", datas.Height)
 	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, hash, datas.StateHash, datas.Height)
 	if err != nil {
