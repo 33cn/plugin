@@ -204,7 +204,10 @@ func queryJoinTableData(talbeJoin *table.JoinTable, indexName string, prefix, pr
 
 func (action *Action) saveGame(game *gty.GuessGame) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
-	action.db.Set(Key(game.GetGameID()), value)
+	err := action.db.Set(Key(game.GetGameID()), value)
+	if err != nil {
+		logger.Error("saveGame have err:", err.Error())
+	}
 	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameID), Value: value})
 	return kvset
 }
@@ -268,7 +271,7 @@ func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 }
 
 // 新建一局游戏
-func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.GuessGame, error) {
+func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.GuessGame) {
 	game := &gty.GuessGame{
 		GameID: gameID,
 		Status: gty.GuessGameStatusStart,
@@ -291,7 +294,7 @@ func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.Gu
 		DrivenByAdmin: start.DrivenByAdmin,
 	}
 
-	return game, nil
+	return game
 }
 
 //GameStart 创建游戏动作执行
@@ -345,7 +348,7 @@ func (action *Action) GameStart(start *gty.GuessGameStart) (*types.Receipt, erro
 	}
 
 	gameID := common.ToHex(action.txhash)
-	game, _ := action.newGame(gameID, start)
+	game := action.newGame(gameID, start)
 	game.StartTime = action.blocktime
 	game.StartHeight = action.mainHeight
 	game.AdminAddr = action.fromaddr
@@ -576,7 +579,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 
 		receipt, err = action.coinsAccount.ExecTransfer(player.Addr, game.AdminAddr, action.execaddr, value)
 		if err != nil {
-			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
+			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, value) // rollback
 			logger.Error("GamePublish", "addr", player.Addr, "execaddr", action.execaddr,
 				"amount", value, "err", err)
 			return nil, err
@@ -612,7 +615,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 		devFee = totalBetsNumber * game.DevFeeFactor / 1000
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
 		if err != nil {
-			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
+			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
 			logger.Error("GamePublish", "adminAddr", game.AdminAddr, "execaddr", action.execaddr,
 				"amount", devFee, "err", err)
 			return nil, err
@@ -625,7 +628,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 		platFee = totalBetsNumber * game.PlatFeeFactor / 1000
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
 		if err != nil {
-			action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
+			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
 			logger.Error("GamePublish", "adminAddr", game.AdminAddr, "execaddr", action.execaddr,
 				"amount", platFee, "err", err)
 			return nil, err
@@ -642,7 +645,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 			value := player.Bet.BetsNumber * winValue / winBetsNumber
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
-				action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback
+				//action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback
 				logger.Error("GamePublish", "addr", player.Addr, "execaddr", action.execaddr,
 					"amount", value, "err", err)
 				return nil, err
