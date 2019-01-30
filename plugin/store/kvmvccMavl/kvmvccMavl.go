@@ -243,3 +243,7 @@ func (kvmMavls *KVMVCCMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 	}
 	return hash, err
 }
+
+// TODO 数据库中mavl的清除
+// 达到kvmvccMavlFork + 100000 后触发清除
+// it := db.Iterator(nil, mvccPrefix, true)

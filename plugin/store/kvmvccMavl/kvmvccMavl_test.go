@@ -154,7 +154,7 @@ func TestKvmvccMavlCommit(t *testing.T) {
 		req := &types.ReqHash{
 			Hash: hash,
 		}
-		if i + 1 == forkHeight {
+		if i+1 == forkHeight {
 			frontHash = append(frontHash, hash...)
 		}
 		_, err = store.Commit(req)
@@ -244,7 +244,6 @@ func TestKvmvccMavlRollback(t *testing.T) {
 	assert.Equal(t, types.ErrHashNotFound.Error(), err.Error())
 }
 
-/*
 func TestKvmvccdbRollbackBatch(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
@@ -268,6 +267,11 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 	hash1 := make([]byte, len(hash))
 	copy(hash1, hash)
 	store.Commit(req)
+	// 设置分叉高度
+	kvmvccMavlFork = 50
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
 	for i := 1; i <= 202; i++ {
 		kvset = nil
 		datas1 := &types.StoreSet{StateHash: hash1, KV: datas.KV, Height: datas.Height + int64(i)}
@@ -335,7 +339,6 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(2), maxVersion)
 }
-*/
 
 func enableConfig() []byte {
 	data, _ := json.Marshal(&subConfig{EnableMVCCIter: true})
@@ -414,7 +417,13 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Equal(t, int64(4), resp.Num)
 	assert.Equal(t, int64(340000000000), resp.Amount)
 
+	// 设置分叉高度
+	kvmvccMavlFork = 5
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
 	fmt.Println("---test case1-2 ---")
+	firstForkHash := drivers.EmptyRoot[:]
 	for i := 1; i <= 10; i++ {
 		kvset = nil
 
@@ -432,6 +441,9 @@ func TestIterateRangeByStateHash(t *testing.T) {
 		assert.Nil(t, err)
 		req := &types.ReqHash{Hash: hash1}
 		store.Commit(req)
+		if int(kvmvccMavlFork) == i {
+			firstForkHash = hash1
+		}
 	}
 
 	resp = &types.ReplyGetTotalCoins{}
@@ -472,17 +484,15 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Equal(t, int64(2), resp.Num)
 	assert.Equal(t, int64(201900000000), resp.Amount)
 
-	if datas.Height >= kvmvccMavlFork {
-		fmt.Println("---test case1-6 ---")
+	fmt.Println("---test case1-6 ---")
 
-		resp = &types.ReplyGetTotalCoins{}
-		resp.Count = 10000
-		store.IterateRangeByStateHash(hash, []byte("mavl-coins-bty-"), []byte("mavl-coins-bty-exec"), true, resp.IterateRangeByStateHash)
-		fmt.Println("resp.Num=", resp.Num)
-		fmt.Println("resp.Amount=", resp.Amount)
-		assert.Equal(t, int64(0), resp.Num)
-		assert.Equal(t, int64(0), resp.Amount)
-	}
+	resp = &types.ReplyGetTotalCoins{}
+	resp.Count = 10000
+	store.IterateRangeByStateHash(firstForkHash, []byte("mavl-coins-bty-"), []byte("mavl-coins-bty-exec"), true, resp.IterateRangeByStateHash)
+	fmt.Println("resp.Num=", resp.Num)
+	fmt.Println("resp.Amount=", resp.Amount)
+	assert.Equal(t, int64(0), resp.Num)
+	assert.Equal(t, int64(0), resp.Amount)
 }
 
 func GetRandomString(length int) string {
@@ -490,7 +500,7 @@ func GetRandomString(length int) string {
 }
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
-func BenchmarkGetkmvcc(b *testing.B) { benchmarkGet(b, true) }
+func BenchmarkGetkmvcc(b *testing.B)     { benchmarkGet(b, true) }
 
 func benchmarkGet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -544,7 +554,7 @@ func benchmarkGet(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkStoreGetKvs4NkmvccMavl(b *testing.B) { benchmarkStoreGetKvs4N(b, false) }
-func BenchmarkStoreGetKvs4Nkmvcc(b *testing.B) { benchmarkStoreGetKvs4N(b, true) }
+func BenchmarkStoreGetKvs4Nkmvcc(b *testing.B)     { benchmarkStoreGetKvs4N(b, true) }
 
 func benchmarkStoreGetKvs4N(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -599,7 +609,7 @@ func benchmarkStoreGetKvs4N(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkStoreGetKvsForNNkmvccMavl(b *testing.B) { benchmarkStoreGetKvsForNN(b, false) }
-func BenchmarkStoreGetKvsForNNkmvcc(b *testing.B) { benchmarkStoreGetKvsForNN(b, true) }
+func BenchmarkStoreGetKvsForNNkmvcc(b *testing.B)     { benchmarkStoreGetKvsForNN(b, true) }
 
 func benchmarkStoreGetKvsForNN(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -669,7 +679,7 @@ func benchmarkStoreGetKvsForNN(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkStoreGetKvsFor10000kmvccMavl(b *testing.B) { benchmarkStoreGetKvsFor10000(b, false) }
-func BenchmarkStoreGetKvsFor10000kmvcc(b *testing.B) { benchmarkStoreGetKvsFor10000(b, true) }
+func BenchmarkStoreGetKvsFor10000kmvcc(b *testing.B)     { benchmarkStoreGetKvsFor10000(b, true) }
 
 func benchmarkStoreGetKvsFor10000(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -744,7 +754,7 @@ func benchmarkStoreGetKvsFor10000(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkGetIterkmvccMavl(b *testing.B) { benchmarkGetIter(b, false) }
-func BenchmarkGetIterkmvcc(b *testing.B) { benchmarkGetIter(b, true) }
+func BenchmarkGetIterkmvcc(b *testing.B)     { benchmarkGetIter(b, true) }
 
 func benchmarkGetIter(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -798,7 +808,7 @@ func benchmarkGetIter(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkSetkmvccMavl(b *testing.B) { benchmarkSet(b, false) }
-func BenchmarkSetkmvcc(b *testing.B) { benchmarkSet(b, true) }
+func BenchmarkSetkmvcc(b *testing.B)     { benchmarkSet(b, true) }
 
 func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -845,7 +855,7 @@ func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 
 //上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
 func BenchmarkStoreSetkmvccMavl(b *testing.B) { benchmarkStoreSet(b, false) }
-func BenchmarkStoreSetkmvcc(b *testing.B) { benchmarkStoreSet(b, true) }
+func BenchmarkStoreSetkmvcc(b *testing.B)     { benchmarkStoreSet(b, true) }
 
 func benchmarkStoreSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -890,7 +900,7 @@ func benchmarkStoreSet(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkSetIterkmvccMavl(b *testing.B) { benchmarkSetIter(b, false) }
-func BenchmarkSetIterkmvcc(b *testing.B) { benchmarkSetIter(b, true) }
+func BenchmarkSetIterkmvcc(b *testing.B)     { benchmarkSetIter(b, true) }
 
 func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -937,7 +947,7 @@ func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 
 //一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func BenchmarkMemSetkmvccMavl(b *testing.B) { benchmarkMemSet(b, false) }
-func BenchmarkMemSetkmvcc(b *testing.B) { benchmarkMemSet(b, true) }
+func BenchmarkMemSetkmvcc(b *testing.B)     { benchmarkMemSet(b, true) }
 
 func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -981,7 +991,7 @@ func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 
 //一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
 func BenchmarkStoreMemSetkmvccMavl(b *testing.B) { benchmarkStoreMemSet(b, false) }
-func BenchmarkStoreMemSetkmvcc(b *testing.B) { benchmarkStoreMemSet(b, true) }
+func BenchmarkStoreMemSetkmvcc(b *testing.B)     { benchmarkStoreMemSet(b, true) }
 
 func benchmarkStoreMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -1029,7 +1039,7 @@ func benchmarkStoreMemSet(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkCommitkmvccMavl(b *testing.B) { benchmarkCommit(b, false) }
-func BenchmarkCommitkmvcc(b *testing.B) { benchmarkCommit(b, true) }
+func BenchmarkCommitkmvcc(b *testing.B)     { benchmarkCommit(b, true) }
 
 func benchmarkCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -1079,7 +1089,7 @@ func benchmarkCommit(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkStoreCommitkmvccMavl(b *testing.B) { benchmarkStoreCommit(b, false) }
-func BenchmarkStoreCommitkmvcc(b *testing.B) { benchmarkStoreCommit(b, true) }
+func BenchmarkStoreCommitkmvcc(b *testing.B)     { benchmarkStoreCommit(b, true) }
 
 func benchmarkStoreCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
@@ -1132,7 +1142,7 @@ func benchmarkStoreCommit(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkIterMemSetkmvccMavl(b *testing.B) { benchmarkIterMemSet(b, false) }
-func BenchmarkIterMemSetkmvcc(b *testing.B) { benchmarkIterMemSet(b, true) }
+func BenchmarkIterMemSetkmvcc(b *testing.B)     { benchmarkIterMemSet(b, true) }
 
 //一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
@@ -1176,7 +1186,7 @@ func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
 }
 
 func BenchmarkIterCommitkmvccMavl(b *testing.B) { benchmarkIterCommit(b, false) }
-func BenchmarkIterCommitkmvcc(b *testing.B) { benchmarkIterCommit(b, true) }
+func BenchmarkIterCommitkmvcc(b *testing.B)     { benchmarkIterCommit(b, true) }
 
 func benchmarkIterCommit(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
