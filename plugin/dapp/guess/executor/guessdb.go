@@ -271,7 +271,7 @@ func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 }
 
 // 新建一局游戏
-func (action *Action) newGame(gameID string, start *gty.GuessGameStart) (*gty.GuessGame) {
+func (action *Action) newGame(gameID string, start *gty.GuessGameStart) *gty.GuessGame {
 	game := &gty.GuessGame{
 		GameID: gameID,
 		Status: gty.GuessGameStatusStart,
