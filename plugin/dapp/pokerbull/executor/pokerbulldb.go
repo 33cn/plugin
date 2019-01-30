@@ -163,11 +163,14 @@ func queryGameListByStatusAndPlayer(db dbm.Lister, stat int32, player int32, val
 	return gameIds, nil
 }
 
-func (action *Action) saveGame(game *pkt.PokerBull) (kvset []*types.KeyValue) {
+func (action *Action) saveGame(game *pkt.PokerBull) (kvset []*types.KeyValue, err error) {
 	value := types.Encode(game)
-	action.db.Set(Key(game.GetGameId()), value)
+	err = action.db.Set(Key(game.GetGameId()), value)
+	if err != nil {
+		return nil,err
+	}
 	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
-	return kvset
+	return kvset, nil
 }
 
 func (action *Action) getIndex(game *pkt.PokerBull) int64 {
@@ -588,6 +591,13 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	var kv []*types.KeyValue
 
 	logger.Info(fmt.Sprintf("Pokerbull game match for %s", action.fromaddr))
+	// 参数校验
+	if start.PlayerNum <= 0 || start.Value < 0 {
+		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"err", fmt.Sprintf("Invalid parameter"))
+		return nil, types.ErrInvalidParam
+	}
+
 	if start.PlayerNum > pkt.MaxPlayerNum {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
 			"err", fmt.Sprintf("The maximum player number is %d", pkt.MaxPlayerNum))
@@ -670,7 +680,12 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	}
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	kv = append(kv, action.saveGame(game)...)
+	gamekv,err := action.saveGame(game)
+	if err != nil {
+		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "save game to db failed")
+		return nil, err
+	}
+	kv = append(kv, gamekv...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -777,32 +792,38 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	kv = append(kv, action.saveGame(game)...)
+	gamekv,err := action.saveGame(game)
+	if err != nil {
+		logger.Error("GameContinue", "GameID", pbcontinue.GetGameId(), "addr", action.fromaddr, "execaddr",
+			action.execaddr, "err", "save game to db failed")
+		return nil, err
+	}
+	kv = append(kv, gamekv...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // GameQuit 退出游戏
-func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
+func (action *Action) GameQuit(pbquit *pkt.PBGameQuit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	logger.Info(fmt.Sprintf("Quit pokerbull game %s", pbend.GameId))
-	game, err := action.readGame(pbend.GetGameId())
+	logger.Info(fmt.Sprintf("Quit pokerbull game %s", pbquit.GameId))
+	game, err := action.readGame(pbquit.GetGameId())
 	if err != nil {
-		logger.Error("GameEnd", "GameID", pbend.GetGameId(), "addr", action.fromaddr, "execaddr",
+		logger.Error("GameQuit", "GameID", pbquit.GetGameId(), "addr", action.fromaddr, "execaddr",
 			action.execaddr, "get game failed", "err", err)
 		return nil, err
 	}
 
 	if game.Status == pkt.PBGameActionQuit {
-		logger.Error("Quit pokerbull game", "GameID", pbend.GetGameId(), "value", game.Value, "err", "already game over")
+		logger.Error("Quit pokerbull game", "GameID", pbquit.GetGameId(), "value", game.Value, "err", "already game over")
 		return nil, fmt.Errorf("already game over")
 	}
 
 	if !action.checkPlayerAddressExist(game.Players) {
 		if action.fromaddr != pkt.PlatformSignAddress {
-			logger.Error("GameEnd", "GameID", pbend.GetGameId(), "addr", action.fromaddr, "execaddr",
+			logger.Error("GameQuit", "GameID", pbquit.GetGameId(), "addr", action.fromaddr, "execaddr",
 				action.execaddr, "err", "permission denied")
 			return nil, fmt.Errorf("permission denied")
 		}
@@ -814,7 +835,7 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 			for _, player := range game.Players {
 				receipt, err := action.coinsAccount.ExecActive(player.Address, action.execaddr, game.GetValue()*PokerbullLeverageMax)
 				if err != nil {
-					logger.Error("GameSettleDealer.ExecActive", "GameID", pbend.GetGameId(), "addr", player.Address,
+					logger.Error("GameSettleDealer.ExecActive", "GameID", pbquit.GetGameId(), "addr", player.Address,
 						"execaddr", action.execaddr, "amount", game.GetValue(), "err", err)
 					continue
 				}
@@ -829,7 +850,7 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 
 				receipt, err := action.coinsAccount.ExecActive(player.Address, action.execaddr, game.GetValue()*PokerbullLeverageMax)
 				if err != nil {
-					logger.Error("GameSettleDealer.ExecActive", "GameID", pbend.GetGameId(), "addr", player.Address,
+					logger.Error("GameSettleDealer.ExecActive", "GameID", pbquit.GetGameId(), "addr", player.Address,
 						"execaddr", action.execaddr, "amount", game.GetValue(), "err", err)
 					continue
 				}
@@ -848,7 +869,13 @@ func (action *Action) GameQuit(pbend *pkt.PBGameQuit) (*types.Receipt, error) {
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	kv = append(kv, action.saveGame(game)...)
+	gamekv,err := action.saveGame(game)
+	if err != nil {
+		logger.Error("GameQuit", "GameID", pbquit.GetGameId(), "addr", action.fromaddr, "execaddr",
+			action.execaddr, "err", "save game to db failed")
+		return nil, err
+	}
+	kv = append(kv,gamekv...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
@@ -863,6 +890,13 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 		logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
 			pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "permission denied")
 		return nil, fmt.Errorf("game signing address not support")
+	}
+
+	// 参数校验
+	if pbplay.Round <= 0 || pbplay.Value <= 0 {
+		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"err", fmt.Sprintf("Invalid parameter"))
+		return nil, types.ErrInvalidParam
 	}
 
 	// 检查玩家人数
@@ -964,7 +998,13 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	kv = append(kv, action.saveGame(game)...)
+	gamekv,err := action.saveGame(game)
+	if err != nil {
+		logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
+			pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "save game to db failed")
+		return nil, err
+	}
+	kv = append(kv, gamekv...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }

@@ -14,7 +14,7 @@ import (
 
 // DirMissingOrEmpty 路径是否为空
 func DirMissingOrEmpty(path string) (bool, error) {
-	dirExists, err := DirExists(path)
+	dirExists, err := dirExists(path)
 	if err != nil {
 		return false, err
 	}
@@ -22,7 +22,7 @@ func DirMissingOrEmpty(path string) (bool, error) {
 		return true, nil
 	}
 
-	dirEmpty, err := DirEmpty(path)
+	dirEmpty, err := dirEmpty(path)
 	if err != nil {
 		return false, err
 	}
@@ -33,7 +33,7 @@ func DirMissingOrEmpty(path string) (bool, error) {
 }
 
 // DirExists 目录是否存在
-func DirExists(path string) (bool, error) {
+func dirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -45,7 +45,7 @@ func DirExists(path string) (bool, error) {
 }
 
 // DirEmpty 目录是否为空
-func DirEmpty(path string) (bool, error) {
+func dirEmpty(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return false, err
@@ -82,9 +82,4 @@ func ReadPemFile(file string) ([]byte, error) {
 	}
 
 	return bytes, nil
-}
-
-// DeleteFile 删除文件
-func DeleteFile(file string) error {
-	return os.Remove(file)
 }
