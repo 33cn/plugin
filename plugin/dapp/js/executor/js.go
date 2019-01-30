@@ -6,7 +6,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -14,6 +13,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/robertkrimen/otto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var driverName = ptypes.JsX
@@ -115,8 +116,10 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	vm.Set("args", payload.Args)
 	callfunc := "callcode(context, f, args, loglist)"
 	jsvalue, err := vm.Run(callfunc)
+	//除非你知道怎么做，不要返回这样的操作，这会引起整个区块执行失败，从而引起严重的安全问题。
+	//要保证不能人工的创造这样的条件，也就是调用接口的输入，不能用户可以任意修改的。
 	if u.GetExecutorAPI().IsErr() {
-		return nil, api.ErrAPIEnv
+		return nil, status.New(codes.Aborted, "jsvm operation is abort").Err()
 	}
 	if err != nil {
 		return nil, err
