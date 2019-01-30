@@ -152,7 +152,11 @@ func (rc *raftNode) startRaft() {
 		ErrorC:      make(chan error),
 	}
 
-	rc.transport.Start()
+	err := rc.transport.Start()
+	if err != nil {
+		rlog.Error(fmt.Sprintf("raft:transport.Start()", err.Error()))
+		panic(err)
+	}
 	for i := range rc.bootstrapPeers {
 		if i+1 != rc.id {
 			rc.transport.AddPeer(typec.ID(i+1), []string{rc.bootstrapPeers[i]})
@@ -225,7 +229,10 @@ func (rc *raftNode) serveChannels() {
 					if err != nil {
 						rlog.Error(fmt.Sprintf("failed to marshal block:%v ", err.Error()))
 					}
-					rc.node.Propose(context.TODO(), out)
+					err = rc.node.Propose(context.TODO(), out)
+					if err != nil {
+						rlog.Error(fmt.Sprintf("rc.node.Propose:%v", err.Error()))
+					}
 				}
 
 			case cc, ok := <-rc.confChangeC:
@@ -234,7 +241,10 @@ func (rc *raftNode) serveChannels() {
 				} else {
 					confChangeCount++
 					cc.ID = confChangeCount
-					rc.node.ProposeConfChange(context.TODO(), cc)
+					err = rc.node.ProposeConfChange(context.TODO(), cc)
+					if err != nil {
+						rlog.Error(fmt.Sprintf("rc.node.ProposeConfChange:%v", err.Error()))
+					}
 				}
 			}
 		}
