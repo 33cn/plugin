@@ -8,6 +8,11 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"math/rand"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/limits"
@@ -21,10 +26,6 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/init"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 	_ "github.com/33cn/plugin/plugin/store/init"
-	"math/rand"
-	"os"
-	"testing"
-	"time"
 )
 
 var (
