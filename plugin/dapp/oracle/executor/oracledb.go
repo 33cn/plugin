@@ -8,6 +8,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/common"
@@ -51,7 +52,7 @@ func (o *OracleDB) GetKVSet() (kvset []*types.KeyValue) {
 }
 
 // Save for OracleDB
-func (o *OracleDB) save(db dbm.KV) error{
+func (o *OracleDB) save(db dbm.KV) error {
 	set := o.GetKVSet()
 	for i := 0; i < len(set); i++ {
 		err := db.Set(set[i].GetKey(), set[i].Value)
