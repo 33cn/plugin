@@ -55,23 +55,23 @@ func (g *Guess) rollbackGame(game *gty.GuessGame, log *gty.ReceiptGuessGame) {
 	}
 }
 
-func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
+func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue, err error) {
 	userTable := gty.NewGuessUserTable(g.GetLocalDB())
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 
-	tablejoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
+	tableJoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if log.Status == gty.GuessGameStatusStart {
 		//新创建游戏回滚,game表删除记录
 		err = gameTable.Del([]byte(fmt.Sprintf("%018d", log.StartIndex)))
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		kvs, _ = tablejoin.Save()
-		return kvs
+		kvs, err = tableJoin.Save()
+		return kvs, err
 	} else if log.Status == gty.GuessGameStatusBet {
 		//下注阶段，需要更新游戏信息，回滚下注信息
 		game := log.Game
@@ -80,17 +80,20 @@ func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue)
 		//先回滚游戏信息，再进行更新
 		g.rollbackGame(game, log)
 
-		err = tablejoin.MustGetTable("game").Replace(game)
+		err = tableJoin.MustGetTable("game").Replace(game)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		err = tablejoin.MustGetTable("user").Del([]byte(fmt.Sprintf("%018d", log.Index)))
+		err = tableJoin.MustGetTable("user").Del([]byte(fmt.Sprintf("%018d", log.Index)))
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		kvs, _ = tablejoin.Save()
+		kvs, err = tableJoin.Save()
+		if err != nil {
+			return nil, err
+		}
 	} else if log.StatusChange {
 		//如果是其他状态下仅发生了状态变化，则需要恢复游戏状态，并更新游戏记录。
 		game := log.Game
@@ -99,14 +102,17 @@ func (g *Guess) rollbackIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue)
 		//先回滚游戏信息，再进行更新
 		g.rollbackGame(game, log)
 
-		err = tablejoin.MustGetTable("game").Replace(game)
+		err = tableJoin.MustGetTable("game").Replace(game)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		kvs, _ = tablejoin.Save()
+		kvs, err = tableJoin.Save()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return kvs
+	return kvs, nil
 }
 
 func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -122,7 +128,10 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 			if err := types.Decode(log.Log, receiptGame); err != nil {
 				return nil, err
 			}
-			kv := g.rollbackIndex(receiptGame)
+			kv, err := g.rollbackIndex(receiptGame)
+			if err != nil {
+				return nil, err
+			}
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
 	}

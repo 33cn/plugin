@@ -24,12 +24,12 @@ func (g *Guess) getUserBet(log *gty.ReceiptGuessGame) (userBet *gty.UserBet) {
 	return userBet
 }
 
-func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
+func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue, err error) {
 	userTable := gty.NewGuessUserTable(g.GetLocalDB())
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
-	tablejoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
+	tableJoin, err := table.NewJoinTable(userTable, gameTable, []string{"addr#status"})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if log.Status == gty.GuessGameStatusStart {
@@ -39,44 +39,50 @@ func (g *Guess) updateIndex(log *gty.ReceiptGuessGame) (kvs []*types.KeyValue) {
 
 		err = gameTable.Add(game)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		kvs, _ = gameTable.Save()
-		return kvs
+		kvs, err = gameTable.Save()
+		if err != nil {
+			return nil, err
+		}
 	} else if log.Status == gty.GuessGameStatusBet {
 		//用户下注，game表发生更新(game中下注信息有更新)，user表新增下注记录
 		game := log.Game
 		log.Game = nil
 		userBet := g.getUserBet(log)
 
-		err = tablejoin.MustGetTable("game").Replace(game)
+		err = tableJoin.MustGetTable("game").Replace(game)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		err = tablejoin.MustGetTable("user").Add(userBet)
+		err = tableJoin.MustGetTable("user").Add(userBet)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		kvs, _ = tablejoin.Save()
-		return kvs
+		kvs, err = tableJoin.Save()
+		if err != nil {
+			return nil, err
+		}
 	} else if log.StatusChange {
 		//其他状态，游戏状态变化，只需要更新game表
 		game := log.Game
 		log.Game = nil
 
-		err = tablejoin.MustGetTable("game").Replace(game)
+		err = tableJoin.MustGetTable("game").Replace(game)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		kvs, _ = tablejoin.Save()
-		return kvs
+		kvs, err = tableJoin.Save()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return kvs
+	return kvs, nil
 }
 
 func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -92,7 +98,10 @@ func (g *Guess) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error)
 			if err != nil {
 				return nil, err
 			}
-			kvs := g.updateIndex(&gameLog)
+			kvs, err := g.updateIndex(&gameLog)
+			if err != nil {
+				return nil, err
+			}
 			dbSet.KV = append(dbSet.KV, kvs...)
 		}
 	}
