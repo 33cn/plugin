@@ -7,6 +7,7 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/common"
@@ -50,11 +51,16 @@ func (o *OracleDB) GetKVSet() (kvset []*types.KeyValue) {
 }
 
 // Save for OracleDB
-func (o *OracleDB) save(db dbm.KV) {
+func (o *OracleDB) save(db dbm.KV) error{
 	set := o.GetKVSet()
 	for i := 0; i < len(set); i++ {
-		db.Set(set[i].GetKey(), set[i].Value)
+		err := db.Set(set[i].GetKey(), set[i].Value)
+		if err != nil {
+			fmt.Printf("oracledb save failed:[%v]-%v", i, err)
+			return err
+		}
 	}
+	return nil
 }
 
 // Key for oracle
@@ -105,7 +111,9 @@ func (action *oracleAction) eventPublish(event *oty.EventPublish) (*types.Receip
 	eventStatus := NewOracleDB(eventID, action.fromaddr, event.Type, event.SubType, event.Content, event.Introduction, event.Time, action.GetIndex())
 	olog.Debug("eventPublish", "PublisherAddr", eventStatus.Addr, "EventID", eventStatus.EventID, "Event", eventStatus.Content)
 
-	eventStatus.save(action.db)
+	if err := eventStatus.save(action.db); err != nil {
+		return nil, err
+	}
 	kv = append(kv, eventStatus.GetKVSet()...)
 
 	receiptLog := action.getOracleCommonRecipt(&eventStatus.OracleStatus, oty.TyLogEventPublish)
@@ -140,7 +148,9 @@ func (action *oracleAction) eventAbort(event *oty.EventAbort) (*types.Receipt, e
 
 	updateStatus(ora, action.GetIndex(), action.fromaddr, oty.EventAborted)
 
-	ora.save(action.db)
+	if err := ora.save(action.db); err != nil {
+		return nil, err
+	}
 	kv = append(kv, ora.GetKVSet()...)
 
 	receiptLog := action.getOracleCommonRecipt(&ora.OracleStatus, oty.TyLogEventAbort)
@@ -177,7 +187,9 @@ func (action *oracleAction) resultPrePublish(event *oty.ResultPrePublish) (*type
 	ora.Result = event.Result
 	ora.Source = event.Source
 
-	ora.save(action.db)
+	if err := ora.save(action.db); err != nil {
+		return nil, err
+	}
 	kv = append(kv, ora.GetKVSet()...)
 
 	receiptLog := action.getOracleCommonRecipt(&ora.OracleStatus, oty.TyLogResultPrePublish)
@@ -214,7 +226,9 @@ func (action *oracleAction) resultAbort(event *oty.ResultAbort) (*types.Receipt,
 	ora.Result = ""
 	ora.Source = ""
 
-	ora.save(action.db)
+	if err := ora.save(action.db); err != nil {
+		return nil, err
+	}
 	kv = append(kv, ora.GetKVSet()...)
 
 	receiptLog := action.getOracleCommonRecipt(&ora.OracleStatus, oty.TyLogResultAbort)
@@ -251,7 +265,9 @@ func (action *oracleAction) resultPublish(event *oty.ResultPublish) (*types.Rece
 	ora.Result = event.Result
 	ora.Source = event.Source
 
-	ora.save(action.db)
+	if err := ora.save(action.db); err != nil {
+		return nil, err
+	}
 	kv = append(kv, ora.GetKVSet()...)
 
 	receiptLog := action.getOracleCommonRecipt(&ora.OracleStatus, oty.TyLogResultPublish)

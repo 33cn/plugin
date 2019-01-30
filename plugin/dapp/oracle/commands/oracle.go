@@ -52,28 +52,72 @@ func OraclePublishEventRawTxCmd() *cobra.Command {
 
 func addPublishEventFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("type", "t", "", "event type, such as \"football\"")
-	cmd.MarkFlagRequired("type")
+	err := cmd.MarkFlagRequired("type")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired type Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("subtype", "s", "", "event subtype, such as \"Premier League\"")
-	cmd.MarkFlagRequired("subtype")
+	err = cmd.MarkFlagRequired("subtype")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired subtype Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("time", "m", "", "time that event result may be shown, such as \"2019-01-21 15:30:00\"")
-	cmd.MarkFlagRequired("time")
+	err = cmd.MarkFlagRequired("time")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired time Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("content", "c", "", "event content, such as '{\"team1\":\"ChelSea\", \"team2\":\"Manchester\",\"resultType\":\"score\"}'")
-	cmd.MarkFlagRequired("content")
+	err = cmd.MarkFlagRequired("content")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired content Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("introduction", "i", "", "event introduction, such as \"guess the sore result of football game between ChelSea and Manchester in 2019-01-21 14:00:00\"")
-	cmd.MarkFlagRequired("introduction")
+	err = cmd.MarkFlagRequired("introduction")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired introduction Error: %v", err)
+		return
+	}
 }
 
 func publishEvent(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ty, _ := cmd.Flags().GetString("type")
-	subType, _ := cmd.Flags().GetString("subtype")
-	introduction, _ := cmd.Flags().GetString("introduction")
-	timeString, _ := cmd.Flags().GetString("time")
-	content, _ := cmd.Flags().GetString("content")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("publishEvent get rpc addr Error: %v", err)
+		return
+	}
+	ty, err := cmd.Flags().GetString("type")
+	if err != nil {
+		fmt.Printf("publishEvent get type Error: %v", err)
+		return
+	}
+	subType, err := cmd.Flags().GetString("subtype")
+	if err != nil {
+		fmt.Printf("publishEvent get subtype Error: %v", err)
+		return
+	}
+	introduction, err := cmd.Flags().GetString("introduction")
+	if err != nil {
+		fmt.Printf("publishEvent get introduction Error: %v", err)
+		return
+	}
+	timeString, err := cmd.Flags().GetString("time")
+	if err != nil {
+		fmt.Printf("publishEvent get time Error: %v", err)
+		return
+	}
+	content, err := cmd.Flags().GetString("content")
+	if err != nil {
+		fmt.Printf("publishEvent get content Error: %v", err)
+		return
+	}
 
 	layout := "2006-01-02 15:04:05"
 	t, err := time.Parse(layout, timeString)
@@ -105,12 +149,24 @@ func OracleAbortEventRawTxCmd() *cobra.Command {
 
 func addAbortPublishEventFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("eventID", "e", "", "eventID")
-	cmd.MarkFlagRequired("eventID")
+	err := cmd.MarkFlagRequired("eventID")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired eventID Error: %v", err)
+		return
+	}
 }
 
 func abortPublishEvent(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	eventID, _ := cmd.Flags().GetString("eventID")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("abortPublishEvent rpc_addr Error: %v", err)
+		return
+	}
+	eventID, err := cmd.Flags().GetString("eventID")
+	if err != nil {
+		fmt.Printf("abortPublishEvent eventID Error: %v", err)
+		return
+	}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(oraclety.OracleX),
@@ -135,20 +191,48 @@ func OraclePrePublishResultRawTxCmd() *cobra.Command {
 
 func addPrePublishResultFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("eventID", "e", "", "eventID")
-	cmd.MarkFlagRequired("eventID")
+	err := cmd.MarkFlagRequired("eventID")
+	if err != nil {
+		fmt.Printf("addPrePublishResultFlags eventID Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("source", "s", "", "source where result from")
-	cmd.MarkFlagRequired("source")
+	err = cmd.MarkFlagRequired("source")
+	if err != nil {
+		fmt.Printf("addPrePublishResultFlags source Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("result", "r", "", "result string")
-	cmd.MarkFlagRequired("result")
+	err = cmd.MarkFlagRequired("result")
+	if err != nil {
+		fmt.Printf("addPrePublishResultFlags result Error: %v", err)
+		return
+	}
 }
 
 func prePublishResult(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	eventID, _ := cmd.Flags().GetString("eventID")
-	source, _ := cmd.Flags().GetString("source")
-	result, _ := cmd.Flags().GetString("result")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("prePublishResult rpc_laddr Error: %v", err)
+		return
+	}
+	eventID, err := cmd.Flags().GetString("eventID")
+	if err != nil {
+		fmt.Printf("prePublishResult eventID Error: %v", err)
+		return
+	}
+	source, err := cmd.Flags().GetString("source")
+	if err != nil {
+		fmt.Printf("prePublishResult source Error: %v", err)
+		return
+	}
+	result, err := cmd.Flags().GetString("result")
+	if err != nil {
+		fmt.Printf("prePublishResult result Error: %v", err)
+		return
+	}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(oraclety.OracleX),
@@ -173,12 +257,24 @@ func OracleAbortPrePubResultRawTxCmd() *cobra.Command {
 
 func addAbortPrePubResultFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("eventID", "e", "", "eventID")
-	cmd.MarkFlagRequired("eventID")
+	err := cmd.MarkFlagRequired("eventID")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired eventID Error: %v", err)
+		return
+	}
 }
 
 func abortPrePubResult(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	eventID, _ := cmd.Flags().GetString("eventID")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("abortPrePubResult rpc_laddr Error: %v", err)
+		return
+	}
+	eventID, err := cmd.Flags().GetString("eventID")
+	if err != nil {
+		fmt.Printf("abortPrePubResult eventID Error: %v", err)
+		return
+	}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(oraclety.OracleX),
@@ -203,20 +299,48 @@ func OraclePublishResultRawTxCmd() *cobra.Command {
 
 func addPublishResultFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("eventID", "e", "", "eventID")
-	cmd.MarkFlagRequired("eventID")
+	err := cmd.MarkFlagRequired("eventID")
+	if err != nil {
+		fmt.Printf("addPublishResultFlags rpc_laddr Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("source", "s", "", "source where result from")
-	cmd.MarkFlagRequired("source")
+	err = cmd.MarkFlagRequired("source")
+	if err != nil {
+		fmt.Printf("addPublishResultFlags source Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("result", "r", "", "result string, such as \"{\"team1\":3, \"team2\":2}\"")
-	cmd.MarkFlagRequired("result")
+	err = cmd.MarkFlagRequired("result")
+	if err != nil {
+		fmt.Printf("addPublishResultFlags result Error: %v", err)
+		return
+	}
 }
 
 func publishResult(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	eventID, _ := cmd.Flags().GetString("eventID")
-	source, _ := cmd.Flags().GetString("source")
-	result, _ := cmd.Flags().GetString("result")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("publishResult rpc_laddr Error: %v", err)
+		return
+	}
+	eventID, err := cmd.Flags().GetString("eventID")
+	if err != nil {
+		fmt.Printf("publishResult eventID Error: %v", err)
+		return
+	}
+	source, err := cmd.Flags().GetString("source")
+	if err != nil {
+		fmt.Printf("publishResult source Error: %v", err)
+		return
+	}
+	result, err := cmd.Flags().GetString("result")
+	if err != nil {
+		fmt.Printf("publishResult result Error: %v", err)
+		return
+	}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(oraclety.OracleX),
@@ -241,29 +365,77 @@ func OracleQueryRawTxCmd() *cobra.Command {
 
 func addOracleQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("last_eventID", "l", "", "last eventID, to get next page data")
-	cmd.MarkFlagRequired("last_eventID")
+	err := cmd.MarkFlagRequired("last_eventID")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired last_eventID Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("type", "t", "", "event type, such as \"football\"")
-	cmd.MarkFlagRequired("type")
+	err = cmd.MarkFlagRequired("type")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired type Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("status", "s", "", "status, number 1-5")
-	cmd.MarkFlagRequired("status")
+	err = cmd.MarkFlagRequired("status")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired status Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("addr", "a", "", "address of event creator")
-	cmd.MarkFlagRequired("addr")
+	err = cmd.MarkFlagRequired("addr")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired addr Error: %v", err)
+		return
+	}
 
 	cmd.Flags().StringP("eventIDs", "d", "", "eventIDs, used for query eventInfo, use comma between many ids")
-	cmd.MarkFlagRequired("eventIDs")
+	err = cmd.MarkFlagRequired("eventIDs")
+	if err != nil {
+		fmt.Printf("MarkFlagRequired eventIDs Error: %v", err)
+		return
+	}
 }
 
 func oracleQuery(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	lastEventID, _ := cmd.Flags().GetString("last_eventID")
-	eventIDs, _ := cmd.Flags().GetString("eventIDs")
-	ty, _ := cmd.Flags().GetString("type")
-	statusStr, _ := cmd.Flags().GetString("status")
-	status, _ := strconv.ParseInt(statusStr, 10, 32)
-	addr, _ := cmd.Flags().GetString("addr")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Printf("oracleQuery rpc_laddr Error: %v", err)
+		return
+	}
+	lastEventID, err := cmd.Flags().GetString("last_eventID")
+	if err != nil {
+		fmt.Printf("oracleQuery last_eventID Error: %v", err)
+		return
+	}
+	eventIDs, err := cmd.Flags().GetString("eventIDs")
+	if err != nil {
+		fmt.Printf("oracleQuery eventIDs Error: %v", err)
+		return
+	}
+	ty, err := cmd.Flags().GetString("type")
+	if err != nil {
+		fmt.Printf("oracleQuery type Error: %v", err)
+		return
+	}
+	statusStr, err := cmd.Flags().GetString("status")
+	if err != nil {
+		fmt.Printf("oracleQuery status Error: %v", err)
+		return
+	}
+	status, err := strconv.ParseInt(statusStr, 10, 32)
+	if err != nil {
+		fmt.Printf("oracleQuery status Error: %v", err)
+		return
+	}
+	addr, err := cmd.Flags().GetString("addr")
+	if err != nil {
+		fmt.Printf("oracleQuery addr Error: %v", err)
+		return
+	}
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = oraclety.OracleX
