@@ -27,7 +27,10 @@ func Init(name string, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &cfg)
 	}
-	authority.Author.Init(&cfg)
+	err := authority.Author.Init(&cfg)
+	if err != nil {
+		clog.Error("error to initialize authority", err)
+	}
 	drivers.Register(driverName, newCert, types.GetDappFork(driverName, "Enable"))
 }
 
@@ -69,18 +72,27 @@ func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 
 	// 重启
 	if authority.Author.HistoryCertCache.CurHeight == -1 {
-		c.loadHistoryByPrefix()
+		err := c.loadHistoryByPrefix()
+		if err != nil {
+			return err
+		}
 	}
 
 	// 当前区块<上次证书变更区块，cert回滚
 	if c.GetHeight() <= authority.Author.HistoryCertCache.CurHeight {
-		c.loadHistoryByPrefix()
+		err := c.loadHistoryByPrefix()
+		if err != nil {
+			return err
+		}
 	}
 
 	// 当前区块>上次变更下一区块，下一区块不为-1，即非最新证书变更记录，用于cert回滚时判断是否到了下一变更记录
 	nxtHeight := authority.Author.HistoryCertCache.NxtHeight
 	if nxtHeight != -1 && c.GetHeight() > nxtHeight {
-		c.loadHistoryByHeight()
+		err := c.loadHistoryByHeight()
+		if err != nil {
+			return err
+		}
 	}
 
 	// auth校验
@@ -111,7 +123,10 @@ func (c *Cert) loadHistoryByPrefix() error {
 	// 寻找当前高度使用的证书区间
 	var historyData types.HistoryCertStore
 	for _, v := range result.Values {
-		types.Decode(v, &historyData)
+		err := types.Decode(v, &historyData)
+		if err != nil {
+			return err
+		}
 		if historyData.CurHeigth < c.GetHeight() && (historyData.NxtHeight >= c.GetHeight() || historyData.NxtHeight == -1) {
 			return authority.Author.ReloadCert(&historyData)
 		}
@@ -132,7 +147,10 @@ func (c *Cert) loadHistoryByHeight() error {
 	}
 	var historyData types.HistoryCertStore
 	for _, v := range result.Values {
-		types.Decode(v, &historyData)
+		err := types.Decode(v, &historyData)
+		if err != nil {
+			return err
+		}
 		if historyData.CurHeigth < c.GetHeight() && historyData.NxtHeight >= c.GetHeight() {
 			return authority.Author.ReloadCert(&historyData)
 		}

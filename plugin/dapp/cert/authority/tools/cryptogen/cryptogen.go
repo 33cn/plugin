@@ -74,7 +74,12 @@ func generateUsers(baseDir string, orgName string) {
 	fmt.Printf("generateUsers\n")
 	fmt.Println(baseDir)
 
-	os.RemoveAll(baseDir)
+	err := os.RemoveAll(baseDir)
+	if err != nil {
+		fmt.Println("Clean directory %s error", baseDir)
+		os.Exit(1)
+	}
+
 	caDir := filepath.Join(baseDir, "cacerts")
 
 	signType := types.GetSignType("cert", cfg.SignType)
