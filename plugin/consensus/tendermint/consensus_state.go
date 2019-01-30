@@ -598,7 +598,11 @@ func (cs *ConsensusState) proposalHeartbeat(height int64, round int) {
 			ValidatorIndex:   int32(valIndex),
 		}
 		heartbeatMsg := &ttypes.Heartbeat{Heartbeat: heartbeat}
-		cs.privValidator.SignHeartbeat(chainID, heartbeatMsg)
+		err := cs.privValidator.SignHeartbeat(chainID, heartbeatMsg)
+		if err != nil {
+			tendermintlog.Error("SignHeartbeat failed", "err", err)
+			continue
+		}
 		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ProposalHeartbeatID, Msg: heartbeat, PeerID: cs.ourID, PeerIP: ""}
 		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
 		counter++
@@ -1241,7 +1245,7 @@ func (cs *ConsensusState) tryAddVote(voteRaw *tmtypes.Vote, peerID string, peerI
 				tendermintlog.Error("Found conflicting vote from ourselves. Did you unsafe_reset a validator?", "height", vote.Height, "round", vote.Round, "type", vote.Type)
 				return err
 			}
-			cs.evpool.AddEvidence(voteErr.DuplicateVoteEvidence)
+			err = cs.evpool.AddEvidence(voteErr.DuplicateVoteEvidence)
 			return err
 		} else {
 			// Probably an invalid signature / Bad peer.

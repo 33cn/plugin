@@ -482,12 +482,16 @@ func (client *Client) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, 
 	req := &tmtypes.ReqNodeInfo{Height: height}
 	param, err := proto.Marshal(req)
 	if err != nil {
-		tendermintlog.Error("QueryValidatorsByHeight", "err", err)
+		tendermintlog.Error("QueryValidatorsByHeight marshal", "err", err)
 		return nil, types.ErrInvalidParam
 	}
 	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{Driver: "valnode", FuncName: "GetValNodeByHeight", StateHash: zeroHash[:], Param: param})
-	client.GetQueueClient().Send(msg, true)
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		tendermintlog.Error("QueryValidatorsByHeight send", "err", err)
+		return nil, err
+	}
 	msg, err = client.GetQueueClient().Wait(msg)
 	if err != nil {
 		return nil, err
@@ -503,12 +507,16 @@ func (client *Client) QueryBlockInfoByHeight(height int64) (*tmtypes.TendermintB
 	req := &tmtypes.ReqBlockInfo{Height: height}
 	param, err := proto.Marshal(req)
 	if err != nil {
-		tendermintlog.Error("QueryBlockInfoByHeight", "err", err)
+		tendermintlog.Error("QueryBlockInfoByHeight marshal", "err", err)
 		return nil, types.ErrInvalidParam
 	}
 	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{Driver: "valnode", FuncName: "GetBlockInfoByHeight", StateHash: zeroHash[:], Param: param})
-	client.GetQueueClient().Send(msg, true)
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		tendermintlog.Error("QueryBlockInfoByHeight send", "err", err)
+		return nil, err
+	}
 	msg, err = client.GetQueueClient().Wait(msg)
 	if err != nil {
 		return nil, err
