@@ -500,8 +500,14 @@ func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) bool {
 	now := CanonicalTime(time.Now())
 	lastVote.Vote.Timestamp = now
 	newVote.Vote.Timestamp = now
-	lastVoteBytes, _ := json.Marshal(lastVote)
-	newVoteBytes, _ := json.Marshal(newVote)
+	lastVoteBytes, err := json.Marshal(lastVote)
+	if err != nil {
+		panic(Fmt("Marshal lastVoteBytes failed: %v", err))
+	}
+	newVoteBytes, err := json.Marshal(newVote)
+	if err != nil {
+		panic(Fmt("Marshal newVoteBytes failed: %v", err))
+	}
 
 	return bytes.Equal(newVoteBytes, lastVoteBytes)
 }
@@ -520,8 +526,14 @@ func checkProposalsOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) boo
 	now := CanonicalTime(time.Now())
 	lastProposal.Proposal.Timestamp = now
 	newProposal.Proposal.Timestamp = now
-	lastProposalBytes, _ := json.Marshal(lastProposal)
-	newProposalBytes, _ := json.Marshal(newProposal)
+	lastProposalBytes, err := json.Marshal(lastProposal)
+	if err != nil {
+		panic(Fmt("Marshal lastProposalBytes failed: %v", err))
+	}
+	newProposalBytes, err := json.Marshal(newProposal)
+	if err != nil {
+		panic(Fmt("Marshal newProposalBytes failed: %v", err))
+	}
 
 	return bytes.Equal(newProposalBytes, lastProposalBytes)
 }
