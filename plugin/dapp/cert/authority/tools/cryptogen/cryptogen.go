@@ -77,7 +77,7 @@ func generateUsers(baseDir string, orgName string) {
 
 	err := os.RemoveAll(baseDir)
 	if err != nil {
-		fmt.Println("Clean directory %s error", baseDir)
+		fmt.Printf("Clean directory %s error", baseDir)
 		os.Exit(1)
 	}
 

@@ -30,6 +30,7 @@ func Init(name string, sub []byte) {
 	err := authority.Author.Init(&cfg)
 	if err != nil {
 		clog.Error("error to initialize authority", err)
+		return
 	}
 	drivers.Register(driverName, newCert, types.GetDappFork(driverName, "Enable"))
 }
