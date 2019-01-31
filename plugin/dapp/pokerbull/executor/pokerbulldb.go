@@ -167,7 +167,7 @@ func (action *Action) saveGame(game *pkt.PokerBull) (kvset []*types.KeyValue, er
 	value := types.Encode(game)
 	err = action.db.Set(Key(game.GetGameId()), value)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
 	return kvset, nil
@@ -680,7 +680,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	}
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	gamekv,err := action.saveGame(game)
+	gamekv, err := action.saveGame(game)
 	if err != nil {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr, "err", "save game to db failed")
 		return nil, err
@@ -792,7 +792,7 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	gamekv,err := action.saveGame(game)
+	gamekv, err := action.saveGame(game)
 	if err != nil {
 		logger.Error("GameContinue", "GameID", pbcontinue.GetGameId(), "addr", action.fromaddr, "execaddr",
 			action.execaddr, "err", "save game to db failed")
@@ -869,13 +869,13 @@ func (action *Action) GameQuit(pbquit *pkt.PBGameQuit) (*types.Receipt, error) {
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	gamekv,err := action.saveGame(game)
+	gamekv, err := action.saveGame(game)
 	if err != nil {
 		logger.Error("GameQuit", "GameID", pbquit.GetGameId(), "addr", action.fromaddr, "execaddr",
 			action.execaddr, "err", "save game to db failed")
 		return nil, err
 	}
-	kv = append(kv,gamekv...)
+	kv = append(kv, gamekv...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
@@ -998,7 +998,7 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 
 	receiptLog := action.GetReceiptLog(game)
 	logs = append(logs, receiptLog)
-	gamekv,err := action.saveGame(game)
+	gamekv, err := action.saveGame(game)
 	if err != nil {
 		logger.Error("Pokerbull game play", "GameID", pbplay.GetGameId(), "round", pbplay.Round, "value",
 			pbplay.Value, "players", strings.Join(pbplay.Address, ","), "err", "save game to db failed")
