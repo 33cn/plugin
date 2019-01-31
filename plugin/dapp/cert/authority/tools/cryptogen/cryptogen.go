@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 
 	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin/crypto/init"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator"
 	ca "github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator/impl"
 	"github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
-	_ "github.com/33cn/plugin/plugin/crypto/init"
 )
 
 const (
