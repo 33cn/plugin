@@ -14,6 +14,7 @@ import (
 	ca "github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator/impl"
 	"github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
+	_ "github.com/33cn/plugin/plugin/crypto/init"
 )
 
 const (
