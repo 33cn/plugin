@@ -186,3 +186,7 @@ message Heartbeat {
     int32 sequence         = 5;
     bytes signature        = 6;
 }
+
+message IsHealthy {
+    bool isHealthy = 1;
+}

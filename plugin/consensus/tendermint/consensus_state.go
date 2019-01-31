@@ -729,7 +729,8 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	// Mempool validated transactions
 	beg := time.Now()
 	pblock := cs.client.BuildBlock()
-	tendermintlog.Info(fmt.Sprintf("createProposalBlock BuildBlock. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step), "txs-len", len(pblock.Txs), "cost", types.Since(beg))
+	tendermintlog.Info(fmt.Sprintf("createProposalBlock BuildBlock. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
+		"txs-len", len(pblock.Txs), "cost", types.Since(beg))
 
 	if pblock.Height != cs.Height {
 		tendermintlog.Error("pblock.Height is not equal to cs.Height")
@@ -1097,6 +1098,7 @@ func (cs *ConsensusState) finalizeCommit(height int64) {
 	valNodes, err := cs.client.QueryValidatorsByHeight(block.Header.Height)
 	if err == nil && valNodes != nil {
 		if len(valNodes.Nodes) > 0 {
+			tendermintlog.Info("finalizeCommit validators of statecopy update", "update-valnodes", valNodes)
 			prevValSet := stateCopy.LastValidators.Copy()
 			nextValSet := prevValSet.Copy()
 			err := updateValidators(nextValSet, valNodes.Nodes)
@@ -1107,10 +1109,9 @@ func (cs *ConsensusState) finalizeCommit(height int64) {
 			stateCopy.LastHeightValidatorsChanged = block.Header.Height + 1
 			nextValSet.IncrementAccum(1)
 			stateCopy.Validators = nextValSet
-			tendermintlog.Info("finalizeCommit validators of statecopy updated", "update-valnodes", valNodes)
 		}
 	}
-	tendermintlog.Debug("finalizeCommit real validators of statecopy", "validators", stateCopy.Validators)
+	tendermintlog.Debug("finalizeCommit validators of statecopy", "validators", stateCopy.Validators)
 	// NewHeightStep!
 	cs.updateToState(stateCopy)
 
@@ -1383,7 +1384,7 @@ func (cs *ConsensusState) signVote(voteType byte, hash []byte) (*ttypes.Vote, er
 	}
 	beg := time.Now()
 	err := cs.privValidator.SignVote(cs.state.ChainID, vote)
-	tendermintlog.Info("signVote", "height", cs.Height, "cost", types.Since(beg))
+	tendermintlog.Debug("signVote", "height", cs.Height, "cost", types.Since(beg))
 	return vote, err
 }
 
