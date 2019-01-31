@@ -17,6 +17,11 @@ func init() {
 	types.RegisterDappFork(ValNodeX, "Enable", 0)
 }
 
+// GetExecName get exec name
+func GetExecName() string {
+	return types.ExecName(ValNodeX)
+}
+
 // ValNodeType stuct
 type ValNodeType struct {
 	types.ExecTypeBase

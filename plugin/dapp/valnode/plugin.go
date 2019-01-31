@@ -6,6 +6,8 @@ package valnode
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/valnode/rpc"
+	"github.com/33cn/plugin/plugin/dapp/valnode/commands"
 	"github.com/33cn/plugin/plugin/dapp/valnode/executor"
 	"github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
@@ -15,7 +17,7 @@ func init() {
 		Name:     types.ValNodeX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      nil,
-		RPC:      nil,
+		Cmd:      commands.ValCmd,
+		RPC:      rpc.Init,
 	})
 }

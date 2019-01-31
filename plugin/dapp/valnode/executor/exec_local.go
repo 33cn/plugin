@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"errors"
 
 	"github.com/33cn/chain33/types"
@@ -20,7 +21,7 @@ func (val *ValNode) ExecLocal_Node(node *pty.ValNode, tx *types.Transaction, rec
 	if node.GetPower() < 0 {
 		return nil, errors.New("validator power must not be negative")
 	}
-	clog.Info("update validator", "pubkey", node.GetPubKey(), "power", node.GetPower())
+	clog.Info("update validator", "pubkey", hex.EncodeToString(node.GetPubKey()), "power", node.GetPower())
 	key := CalcValNodeUpdateHeightIndexKey(val.GetHeight(), index)
 	set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(node)})
 	return set, nil
