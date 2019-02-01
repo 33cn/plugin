@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	pb "github.com/33cn/chain33/types"
+	pb "github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/golang/protobuf/proto"
 )
 

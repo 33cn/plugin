@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+import "blockchain.proto";
+
+package types;
+
+message BlockData {
+	Block value = 1;
+}
+
+message Checkpoint {
+	uint64 sequence = 1;
+	string digest = 2;
+}
+
+message Request {
+	oneof value{
+		RequestClient client = 1;
+		RequestPrePrepare preprepare = 2;
+		RequestPrepare prepare = 3;
+		RequestCommit commit = 4;
+		RequestCheckpoint checkpoint = 5;
+		RequestViewChange viewchange = 6;
+		RequestAck ack = 7;
+		RequestNewView newview = 8;
+		ClientReply reply = 9;
+	}
+}
+
+message RequestClient {
+	BlockData op = 1;
+	string timestamp = 2;
+	string client = 3;
+}
+
+message RequestPrePrepare {
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	RequestClient request = 4;
+	uint64 replica = 5;
+}
+
+message RequestPrepare {
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	uint64 replica = 4;
+} 
+
+message RequestCommit {
+	uint64 view = 1;
+	uint64 sequence = 2;
+	string digest = 3;
+	uint64 replica = 4;
+}
+
+message RequestCheckpoint {
+	uint64 sequence = 1;
+	string digest = 2;
+	uint64 replica = 3;
+}
+
+message RequestViewChange {
+	message C {
+		uint64 sequence = 1;
+		string digest = 2;
+	}
+	message PQ {
+		uint64 sequence = 1;
+		string digest = 2;
+		uint64 view = 3;
+	}
+	
+	uint64 view = 1;
+	uint64 h = 2;
+	repeated C cset = 3;
+	repeated PQ pset = 4;
+	repeated PQ qset = 5;
+	uint64 replica = 6;
+}
+
+message PQset {
+	repeated RequestViewChange.PQ set = 1;
+}
+
+// view: 需要变更的视图, replica: 发送该Ack的节点
+// viewchangeSender: <view-change>的发送者
+// digest: <view-change>的摘要
+message RequestAck {
+	uint64 view = 1;
+	uint64 replica = 2;
+	uint64 viewchangeSender = 3;
+	string digest = 4;
+}
+
+message RequestNewView {
+	uint64 view = 1;
+	repeated RequestViewChange vset = 2;
+	map<uint64, string> xset = 3;
+	uint64 replica = 4;
+}
+
+message ClientReply {
+	uint64 view = 1;
+	string timestamp = 2;
+	string client = 3;
+	uint64 replica = 4;
+	BlockData result = 5;
+}

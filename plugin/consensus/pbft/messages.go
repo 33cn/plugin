@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/sha3"
 )
