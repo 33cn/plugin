@@ -26,6 +26,24 @@ message ParacrossStatus {
     bytes  blockHash = 3;
 }
 
+message ParacrossConsensusStatus {
+    string title     = 1;
+    int64  chainHeight = 2;
+    int64  consensHeight  = 3;
+    string  consensBlockHash = 4;
+}
+
+message ParaBlock2MainMap{
+    int64  height       = 1;
+    string blockHash     = 2;
+    int64  mainHeight   = 3;
+    string mainHash     = 4;
+}
+
+message ParaBlock2MainInfo{
+    repeated ParaBlock2MainMap items = 1;
+}
+
 // action
 message ParacrossNodeStatus {
     bytes    mainBlockHash       = 1;
@@ -127,7 +145,7 @@ message ParacrossAsset {
 }
 
 service paracross {
-    rpc GetTitle(ReqString) returns (ParacrossStatus) {}
+    rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}
     rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
     rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ReceiptParacrossDone) {}
     rpc GetAssetTxResult(ReqHash) returns (ParacrossAsset) {}
