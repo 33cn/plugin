@@ -13,8 +13,10 @@ import (
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"
 )
 
@@ -43,7 +45,9 @@ func TestJrpc_GetTitle(t *testing.T) {
 	j := newJrpc(api)
 	req := &types.ReqString{Data: "xxxxxxxxxxx"}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetTitle", req).Return(&pt.ParacrossStatus{}, nil)
+	api.On("Query", pt.GetExecName(), "GetTitle", req).Return(&pt.ParacrossStatus{
+		Title: "user.p.para", Height: int64(64), BlockHash: []byte{177, 17, 9, 106, 247, 117, 90, 242, 221, 160, 157, 31, 33, 51, 10, 99, 77, 47, 245, 223, 59, 64, 121, 121, 215, 167, 152, 17, 223, 218, 173, 83}}, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{}, nil)
 	err := j.GetHeight(req, &result)
 	assert.Nil(t, err)
 }

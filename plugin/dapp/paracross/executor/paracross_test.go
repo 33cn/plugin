@@ -167,7 +167,7 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 		CrossTxResult:   []byte("abc"),
 		CrossTxHashs:    [][]byte{},
 	}
-	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.ParaX, 0)
+	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.GetExecName(), 0)
 	if err != nil {
 		suite.T().Error("TestExec", "create tx failed", err)
 	}
