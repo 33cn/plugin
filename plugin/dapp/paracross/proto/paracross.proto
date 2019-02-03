@@ -27,20 +27,20 @@ message ParacrossStatus {
 }
 
 message ParacrossConsensusStatus {
-    string title     = 1;
-    int64  chainHeight = 2;
-    int64  consensHeight  = 3;
-    string  consensBlockHash = 4;
+    string title            = 1;
+    int64  chainHeight      = 2;
+    int64  consensHeight    = 3;
+    string consensBlockHash = 4;
 }
 
-message ParaBlock2MainMap{
-    int64  height       = 1;
-    string blockHash     = 2;
-    int64  mainHeight   = 3;
-    string mainHash     = 4;
+message ParaBlock2MainMap {
+    int64  height     = 1;
+    string blockHash  = 2;
+    int64  mainHeight = 3;
+    string mainHash   = 4;
 }
 
-message ParaBlock2MainInfo{
+message ParaBlock2MainInfo {
     repeated ParaBlock2MainMap items = 1;
 }
 
