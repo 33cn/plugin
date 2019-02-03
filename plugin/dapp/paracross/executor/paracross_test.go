@@ -57,7 +57,7 @@ var (
 
 	TokenSymbol                = "X"
 	MainBlockHeightForTransfer = int64(9)
-	tempTitle = ""
+	tempTitle                  = ""
 )
 
 type CommitTestSuite struct {
