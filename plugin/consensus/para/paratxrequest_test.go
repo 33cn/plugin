@@ -32,14 +32,14 @@ func init() {
 type suiteParaClient struct {
 	// Include our basic suite logic.
 	suite.Suite
-	para    *client
-	grpcCli *typesmocks.Chain33Client
-	q       queue.Queue
-	block   *blockchain.BlockChain
-	exec    *executor.Executor
-	store   queue.Module
-	mem     queue.Module
-	network *p2p.P2p
+	para          *client
+	grpcCli       *typesmocks.Chain33Client
+	q             queue.Queue
+	block         *blockchain.BlockChain
+	exec          *executor.Executor
+	store         queue.Module
+	mem           queue.Module
+	network       *p2p.P2p
 	mainBlockList []*types.Block
 }
 
@@ -94,7 +94,7 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.createBlock()
 }
 
-func (s *suiteParaClient) createTempBlock(){
+func (s *suiteParaClient) createTempBlock() {
 	var parentHash []byte
 	for i := 0; i < 3; i++ {
 		block := &types.Block{
@@ -194,7 +194,7 @@ func (s *suiteParaClient) getParaMainBlock(height int64, BlockTime int64) *types
 		Seq: &types.BlockSequence{Hash: s.mainBlockList[height-1].HashByForkHeight(1), Type: addAct},
 		Detail: &types.BlockDetail{
 			Block: &types.Block{
-				ParentHash: s.mainBlockList[height - 1].ParentHash,
+				ParentHash: s.mainBlockList[height-1].ParentHash,
 				Height:     height,
 				BlockTime:  BlockTime,
 			},
