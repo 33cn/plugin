@@ -21,8 +21,8 @@ import (
 	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
-	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"

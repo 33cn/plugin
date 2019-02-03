@@ -8,8 +8,8 @@ import (
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
-	pt "github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/golang/protobuf/proto"
 )
 
