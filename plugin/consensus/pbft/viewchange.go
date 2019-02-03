@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	pb "github.com/33cn/plugin/plugin/dapp/pbft/types"
+	pt "github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -16,8 +16,8 @@ import (
 // Q 集合表示那些已经Pre-prepared的Request(节点发送过Pre-prepare 或者是 Prepare消息)
 // 具有序列号n，视图v以及摘要为digest的Pre-prepare消息，并且在后面的view中没有以相同的n
 // 发送过Pre-prepare或者Prepare消息
-func (rep *Replica) calcQset() map[qidx]*pb.RequestViewChange_PQ {
-	qset := make(map[qidx]*pb.RequestViewChange_PQ)
+func (rep *Replica) calcQset() map[qidx]*pt.RequestViewChange_PQ {
+	qset := make(map[qidx]*pt.RequestViewChange_PQ)
 
 	// 获取目前节点的Q集合
 	for n, q := range rep.qset {
@@ -44,7 +44,7 @@ func (rep *Replica) calcQset() map[qidx]*pb.RequestViewChange_PQ {
 		}
 
 		// 满足上述条件后，更新Q集合
-		qset[qi] = &pb.RequestViewChange_PQ{
+		qset[qi] = &pt.RequestViewChange_PQ{
 			View:     idx.v,
 			Sequence: idx.n,
 			Digest:   digest,
@@ -60,8 +60,8 @@ func (rep *Replica) calcQset() map[qidx]*pb.RequestViewChange_PQ {
 // P 集合表示那些已经Prepared的Request(该Request在该节点已经有了prepared certificate)
 // 即收集有超过判定的同视图v同序列号n的相同信息的其他节点的prepare消息，保存在节点的P集合中，同时
 // 该Request没有在后面的view以相同的n获得prepared certificate
-func (rep *Replica) calcPset() map[uint64]*pb.RequestViewChange_PQ {
-	pset := make(map[uint64]*pb.RequestViewChange_PQ)
+func (rep *Replica) calcPset() map[uint64]*pt.RequestViewChange_PQ {
+	pset := make(map[uint64]*pt.RequestViewChange_PQ)
 
 	// 获取目前节点的P集合，如果节点一直正常，则集合为空，因此这时候得到的是nil
 	for n, p := range rep.pset {
@@ -87,7 +87,7 @@ func (rep *Replica) calcPset() map[uint64]*pb.RequestViewChange_PQ {
 		}
 
 		// 满足上述条件后，更新P集合
-		pset[idx.n] = &pb.RequestViewChange_PQ{
+		pset[idx.n] = &pt.RequestViewChange_PQ{
 			View:     idx.v,
 			Sequence: idx.n,
 			Digest:   digest,
@@ -101,7 +101,7 @@ func (rep *Replica) calcPset() map[uint64]*pb.RequestViewChange_PQ {
 
 // 获取更新后的Q集合，然后将其保存下来
 func (rep *Replica) persistQset() {
-	var qset []*pb.RequestViewChange_PQ
+	var qset []*pt.RequestViewChange_PQ
 
 	for _, q := range rep.calcQset() {
 		qset = append(qset, q)
@@ -112,7 +112,7 @@ func (rep *Replica) persistQset() {
 
 // 获取更新后的P集合，然后将其保存下来
 func (rep *Replica) persistPset() {
-	var pset []*pb.RequestViewChange_PQ
+	var pset []*pt.RequestViewChange_PQ
 
 	for _, p := range rep.calcPset() {
 		pset = append(pset, p)
@@ -122,8 +122,8 @@ func (rep *Replica) persistPset() {
 }
 
 // 利用不同的键的值保存P、Q集合，P集合的键为pset，Q集合的键为qset，保存对应的PQ对象(经过protobuf二值化的)
-func (rep *Replica) persistPQset(key string, set []*pb.RequestViewChange_PQ) {
-	raw, err := proto.Marshal(&pb.PQset{set})
+func (rep *Replica) persistPQset(key string, set []*pt.RequestViewChange_PQ) {
+	raw, err := proto.Marshal(&pt.PQset{set})
 	if raw == nil && err != nil {
 		plog.Warn("Proto Marshall has Error")
 	}
@@ -141,7 +141,7 @@ func (rep *Replica) persistPQset(key string, set []*pb.RequestViewChange_PQ) {
 // 判定Viewchange消息是否正确
 // 是否满足P Q集合的view都小于要变更视图的view，且该消息的C集合中的序列都应该在给定的低水位线和低水位线+L之间
 // 因为P Q表示的已经预准备和准备的存储的消息是没有在后面的view中出现的，如果不满足，说明该<View-change>消息已经太旧
-func (rep *Replica) correctViewChange(vc *pb.RequestViewChange) bool {
+func (rep *Replica) correctViewChange(vc *pt.RequestViewChange) bool {
 
 	// 判定<View-change>中的P Q集合是否合理
 	for _, pq := range append(vc.Pset, vc.Qset...) {
@@ -166,7 +166,7 @@ func (rep *Replica) correctViewChange(vc *pb.RequestViewChange) bool {
 }
 
 // 获取节点的ViewChange消息，获取的是节点目前接收到的所有的<View-change>
-func (rep *Replica) getViewChanges() (vset []*pb.RequestViewChange) {
+func (rep *Replica) getViewChanges() (vset []*pt.RequestViewChange) {
 
 	if rep.viewChangeStore == nil {
 		return nil
@@ -178,7 +178,7 @@ func (rep *Replica) getViewChanges() (vset []*pb.RequestViewChange) {
 }
 
 // 获取主节点中S集合已经验证过的<View-change>
-func (rep *Replica) getSsetViewchanges() (vset []*pb.RequestViewChange) {
+func (rep *Replica) getSsetViewchanges() (vset []*pt.RequestViewChange) {
 
 	// S集合为空，返回nil
 	if rep.sset == nil {
@@ -195,8 +195,8 @@ func (rep *Replica) getSsetViewchanges() (vset []*pb.RequestViewChange) {
 // checkpoint 表示能作为检查点的<checkpoint>
 // ok 表示是否能找到这个检查点
 // replicas 表示给这个检查点提交了<view-change>的节点id
-func (rep *Replica) selectInitialCheckpoint(vset []*pb.RequestViewChange) (checkpoint pb.RequestViewChange_C, ok bool, replicas []uint64) {
-	checkpoints := make(map[pb.RequestViewChange_C][]*pb.RequestViewChange)
+func (rep *Replica) selectInitialCheckpoint(vset []*pt.RequestViewChange) (checkpoint pt.RequestViewChange_C, ok bool, replicas []uint64) {
+	checkpoints := make(map[pt.RequestViewChange_C][]*pt.RequestViewChange)
 	for _, vc := range vset {
 		for _, c := range vc.Cset { // TODO, verify that we strip duplicate checkpoints from this set
 			plog.Debug("Appending checkpoint...", "From replica", vc.Replica, "Add seqNo", vc.H, "Add h", c.Sequence)
@@ -253,7 +253,7 @@ func (rep *Replica) selectInitialCheckpoint(vset []*pb.RequestViewChange) (check
 }
 
 // 根据表单，分配SequenceNumber，这里是对应论文中的4.5的图4
-func (rep *Replica) assignSequenceNumbers(vset []*pb.RequestViewChange, h uint64) (msgList map[uint64]string) {
+func (rep *Replica) assignSequenceNumbers(vset []*pt.RequestViewChange, h uint64) (msgList map[uint64]string) {
 
 	// msgList：为序列号在前一步选择的h到h+L分配预准备请求
 	msgList = make(map[uint64]string)
@@ -376,7 +376,7 @@ func (rep *Replica) resubmitRequest() {
 		}
 	*/
 
-	var submissionOrder []*pb.RequestClient
+	var submissionOrder []*pt.RequestClient
 
 	// 这一层循环是为了让新的主节点去重新提交在请求队列中还没有被处理的请求
 outer:
@@ -442,7 +442,7 @@ func (rep *Replica) sendViewChange() {
 	// 根据论文内容，在发送<View-change>之前，会更新这些集合，即P Q C
 
 	// 产生<View-change>消息，不过不是Request类的
-	vc := &pb.RequestViewChange{
+	vc := &pt.RequestViewChange{
 		View:    rep.view,
 		H:       rep.h,
 		Replica: rep.id,
@@ -450,7 +450,7 @@ func (rep *Replica) sendViewChange() {
 
 	// 计算<View-change>的C集合
 	for _, c := range rep.checkpointStore {
-		vc.Cset = append(vc.Cset, &pb.RequestViewChange_C{
+		vc.Cset = append(vc.Cset, &pt.RequestViewChange_C{
 			Sequence: c.Sequence,
 			Digest:   c.Digest,
 		})
@@ -491,7 +491,7 @@ func (rep *Replica) sendViewChange() {
 }
 
 // 接受ViewChange消息
-func (rep *Replica) recvViewChange(vc *pb.Request) {
+func (rep *Replica) recvViewChange(vc *pt.Request) {
 	plog.Info("PBFT-receive Request", "Replica", rep.id, "Type", "<view-change>")
 	vcREQ := vc.GetViewchange()
 
@@ -587,7 +587,7 @@ func (rep *Replica) recvViewChange(vc *pb.Request) {
 //=====================================================
 
 // 发送ViewChangeAck消息
-func (rep *Replica) sendViewChangeAck(vc *pb.RequestViewChange) {
+func (rep *Replica) sendViewChangeAck(vc *pt.RequestViewChange) {
 
 	ackRequest := ToRequestAck(vc.View, rep.id, vc.Replica, DigestViewchange(vc))
 	plog.Info("Sending <View-change-ack>", "Replica", rep.id)
@@ -601,7 +601,7 @@ func (rep *Replica) sendViewChangeAck(vc *pb.RequestViewChange) {
 
 // 接受ViewChangeAck消息
 // <Ack>的作用主要是允许主节点证明由错误节点发送的<View-change>的真实性
-func (rep *Replica) recvViewChangeAck(ackREQ *pb.Request) {
+func (rep *Replica) recvViewChangeAck(ackREQ *pt.Request) {
 	plog.Info("PBFT-receive Request", "Replica", rep.id, "Type", "<view-change-ack>")
 
 	vcAck := ackREQ.GetAck()
@@ -669,7 +669,7 @@ func (rep *Replica) recvViewChangeAck(ackREQ *pb.Request) {
 //=====================================================
 
 // 尝试通过节点的S集合产生<New-View>
-func (rep *Replica) createNewView() (*pb.RequestNewView, bool) {
+func (rep *Replica) createNewView() (*pt.RequestNewView, bool) {
 
 	// 如果不满足论文的S的规模要求，则返回，即论文所说的
 	// 当primary选择了每个号码的请求时,决策过程停止。这可能需要等待超过n-f个消息
@@ -700,7 +700,7 @@ func (rep *Replica) createNewView() (*pb.RequestNewView, bool) {
 	}
 
 	// 产生New-View，Vset，Xset分别对应论文的V和X
-	nv := &pb.RequestNewView{
+	nv := &pt.RequestNewView{
 		View:    rep.view,
 		Vset:    vset,
 		Xset:    msgList,
@@ -711,7 +711,7 @@ func (rep *Replica) createNewView() (*pb.RequestNewView, bool) {
 }
 
 // 发送<New-View>给所有副本
-func (rep *Replica) sendNewView(nv *pb.RequestNewView) {
+func (rep *Replica) sendNewView(nv *pt.RequestNewView) {
 
 	if _, ok := rep.newViewStore[rep.view]; ok {
 		plog.Debug("Already has <new-view>", "Replica", rep.id)
@@ -733,7 +733,7 @@ func (rep *Replica) sendNewView(nv *pb.RequestNewView) {
 }
 
 // 处理<New-View>
-func (rep *Replica) recvNewView(nvREQ *pb.Request) {
+func (rep *Replica) recvNewView(nvREQ *pt.Request) {
 
 	plog.Info("PBFT-receive <New-View>", "Replica", rep.id)
 	// 关闭<New-View>计时器
@@ -826,7 +826,7 @@ func (rep *Replica) processNewView() {
 	// 否则，我们直接处理后面的，即备份会多播<Prepare>
 	rep.processNewView2(nv)
 }
-func (rep *Replica) processNewView2(nv *pb.RequestNewView) {
+func (rep *Replica) processNewView2(nv *pt.RequestNewView) {
 	plog.Info("Accepting new-view", "Replica", rep.id, "To View", rep.view)
 
 	// 停止两个计时器
@@ -854,7 +854,7 @@ func (rep *Replica) processNewView2(nv *pb.RequestNewView) {
 			plog.Error("Missing request, for assigned prepare after fetching, this indicates a serious bug",
 				"Replica", rep.id, "For Sequence", n, "With Digest", d)
 		}
-		preprep := &pb.RequestPrePrepare{
+		preprep := &pt.RequestPrePrepare{
 			View:     rep.view,
 			Sequence: n,
 			Digest:   d,
@@ -876,7 +876,7 @@ func (rep *Replica) processNewView2(nv *pb.RequestNewView) {
 	// 对于非主节点来说，会多播<Prepare>消息
 	if rep.primaryID() != rep.id {
 		for n, d := range nv.Xset {
-			prep := &pb.RequestPrepare{
+			prep := &pt.RequestPrepare{
 				View:     rep.view,
 				Sequence: n,
 				Digest:   d,

@@ -5,7 +5,7 @@ import (
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
-	"github.com/33cn/plugin/plugin/dapp/pbft/types"
+	"github.com/33cn/chain33/types"
 )
 
 var (

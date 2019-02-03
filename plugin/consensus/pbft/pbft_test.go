@@ -21,7 +21,7 @@ import (
 	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
-	"github.com/33cn/plugin/plugin/dapp/pbft/types"
+	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 
 	_ "github.com/33cn/chain33/system"
@@ -44,6 +44,12 @@ func init() {
 	}
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
 	log.SetLogLevel("info")
+}
+
+func TestWindows(t *testing.T) {
+	OnePbft("Windows.test.toml")
+	fmt.Println("=======start clear test data!=======")
+	clearTestData()
 }
 
 func TestClient(t *testing.T) {

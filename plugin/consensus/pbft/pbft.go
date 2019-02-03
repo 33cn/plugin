@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/33cn/plugin/plugin/dapp/pbft/types"
+	pt "github.com/33cn/plugin/plugin/dapp/pbft/types"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -29,25 +29,25 @@ type msgID struct {
 type msgCert struct {
 	digest         string
 	sentPreprepare bool
-	prePrepare     *pb.RequestPrePrepare
+	prePrepare     *pt.RequestPrePrepare
 	sentPrepare    bool
-	prepare        []*pb.RequestPrepare
+	prepare        []*pt.RequestPrepare
 	sentCommit     bool
-	commit         []*pb.RequestCommit
+	commit         []*pt.RequestCommit
 	sentReply      bool
 }
 
 // replyCert为客户端的reply证书(可以同时是客户端和节点)
 // 由时间戳索引
 type replyCert struct {
-	reply    []*pb.ClientReply
+	reply    []*pt.ClientReply
 	sentData bool
 }
 
 // chkpCert为节点的checkpoint证书
 type chkpCert struct {
 	sentCheckpoint bool
-	checkpoints    []*pb.RequestCheckpoint
+	checkpoints    []*pt.RequestCheckpoint
 }
 
 // checkpointMessage记录了checkpoint信息 TODO
@@ -95,7 +95,7 @@ type Replica struct {
 	view             uint64          // 节点目前的视图v
 	lastExec         uint64          // 上一个执行完成后的Request序列号(发送了Reply)
 	stableCheckpoint uint64          // 该节点储存的全网稳定的检查点的序列号
-	lastReply        *pb.ClientReply // 上一个发送的客户端回复
+	lastReply        *pt.ClientReply // 上一个发送的客户端回复
 	// highStateTarget  *stateUpdateTarget // 观察到的最大的弱检查点认证,TODO
 
 	// bool部分
@@ -107,24 +107,24 @@ type Replica struct {
 	// map部分
 	clients         map[uint64]string                   // 目前所有的客户端地址
 	replicas        map[uint64]string                   // 目前所有节点的地址，由id索引
-	reqStore        map[string]*pb.RequestClient        // 客户端的请求
-	outstandingReq  map[string]*pb.RequestClient        // 待完成的客户端请求
-	executedReq     map[uint64]*pb.RequestClient        // 已完成的客户端请求
-	repStore        map[string][]*pb.ClientReply        // 已经发送的回复
-	pset            map[uint64]*pb.RequestViewChange_PQ // 对应论文P
-	qset            map[qidx]*pb.RequestViewChange_PQ   // 对应论文Q
-	sset            map[vcidx]*pb.RequestViewChange     // 对应论文S
-	viewChangeStore map[vcidx]*pb.RequestViewChange     // 发送的视图变更请求
-	ackStore        map[ackidx]*pb.RequestAck           // 发送的ack的请求
-	newViewStore    map[uint64]*pb.RequestNewView       // 用于追踪最新的<new-view> (发送或者接受的)
+	reqStore        map[string]*pt.RequestClient        // 客户端的请求
+	outstandingReq  map[string]*pt.RequestClient        // 待完成的客户端请求
+	executedReq     map[uint64]*pt.RequestClient        // 已完成的客户端请求
+	repStore        map[string][]*pt.ClientReply        // 已经发送的回复
+	pset            map[uint64]*pt.RequestViewChange_PQ // 对应论文P
+	qset            map[qidx]*pt.RequestViewChange_PQ   // 对应论文Q
+	sset            map[vcidx]*pt.RequestViewChange     // 对应论文S
+	viewChangeStore map[vcidx]*pt.RequestViewChange     // 发送的视图变更请求
+	ackStore        map[ackidx]*pt.RequestAck           // 发送的ack的请求
+	newViewStore    map[uint64]*pt.RequestNewView       // 用于追踪最新的<new-view> (发送或者接受的)
 	//chkpts		map[]
-	//checkpointStore map[uint64][]*pb.RequestCheckpoint // 状态检查点，由lastExec索引，结果为digest
+	//checkpointStore map[uint64][]*pt.RequestCheckpoint // 状态检查点，由lastExec索引，结果为digest
 	certStore  map[msgID]*msgCert    // prePrep,prep,commit的证书
 	chkpStore  map[uint64]*chkpCert  // checkpoint的证书
 	replyStore map[string]*replyCert // reply的证书，时间戳索引，客户端独有
 
 	// slice部分
-	checkpointStore []*pb.Checkpoint // 该节点储存的状态检查点
+	checkpointStore []*pt.Checkpoint // 该节点储存的状态检查点
 
 	//checkpointStore	map[]		//TODO
 	//viewChangeStore map[vcidx]		//TODO
@@ -133,8 +133,8 @@ type Replica struct {
 	//hChkpts 		map[uint64]		// 对应每个节点的最大的检查点序列号，TODO
 
 	// channel部分
-	requestChan chan *pb.Request
-	dataChan    chan *pb.BlockData
+	requestChan chan *pt.Request
+	dataChan    chan *pt.BlockData
 
 	// Timer部分
 	vcTimer            *Timer
@@ -147,7 +147,7 @@ type Replica struct {
 }
 
 // NewReplica 创建一个节点，为构造器
-func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, clientURL string, primaryID uint64, f uint64, N uint64, K uint64, logMultiplier uint64, byzantine bool) (chan *pb.Request, chan *pb.BlockData, bool, string) {
+func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, clientURL string, primaryID uint64, f uint64, N uint64, K uint64, logMultiplier uint64, byzantine bool) (chan *pt.Request, chan *pt.BlockData, bool, string) {
 
 	rep := &Replica{}
 	isClient := false
@@ -161,8 +161,8 @@ func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, cl
 		rep.address = rep.clients[clientID-1]        // 然后监听此端口即可，用于接发消息
 		rep.replicasInit(peersURL)                   // 初始化参与共识的节点IP，要向这些地址发送ClientRequest
 		rep.replyStore = make(map[string]*replyCert) //只用初始化回复证书，验证f+1即可
-		rep.requestChan = make(chan *pb.Request)     // 仅仅用于发送ClientRequest
-		rep.dataChan = make(chan *pb.BlockData)      // 用于出块的chan
+		rep.requestChan = make(chan *pt.Request)     // 仅仅用于发送ClientRequest
+		rep.dataChan = make(chan *pt.BlockData)      // 用于出块的chan
 
 		plog.Info("PBFT Client INFO", "Address", rep.address)
 		rep.startReplica(isClient)
@@ -172,22 +172,22 @@ func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, cl
 	// map部分
 	rep.clients = make(map[uint64]string)                       // 网络中的客户端，索引没有意义，值为ip地址
 	rep.replicas = make(map[uint64]string)                      // 网络中的节点，id为索引，值为ip地址
-	rep.reqStore = make(map[string]*pb.RequestClient)           // 客户请求组，消息digest索引，值为客户请求
-	rep.outstandingReq = make(map[string]*pb.RequestClient)     // 待处理组，同上
-	rep.executedReq = make(map[uint64]*pb.RequestClient)        // 已完成请求，同上，消息序列号索引
-	rep.repStore = make(map[string][]*pb.ClientReply)           // 客户回复组，客户端地址索引，可能可以去掉
-	rep.qset = make(map[qidx]*pb.RequestViewChange_PQ)          // P集合
-	rep.pset = make(map[uint64]*pb.RequestViewChange_PQ)        // Q集合
-	rep.sset = make(map[vcidx]*pb.RequestViewChange)            // S集合
-	rep.viewChangeStore = make(map[vcidx]*pb.RequestViewChange) // 视图变更组，由视图与节点id索引
-	rep.ackStore = make(map[ackidx]*pb.RequestAck)              // 变更确认组，由视图，发送视图变更的节点，发送确认的节点索引
-	rep.newViewStore = make(map[uint64]*pb.RequestNewView)      // 新视图组，
+	rep.reqStore = make(map[string]*pt.RequestClient)           // 客户请求组，消息digest索引，值为客户请求
+	rep.outstandingReq = make(map[string]*pt.RequestClient)     // 待处理组，同上
+	rep.executedReq = make(map[uint64]*pt.RequestClient)        // 已完成请求，同上，消息序列号索引
+	rep.repStore = make(map[string][]*pt.ClientReply)           // 客户回复组，客户端地址索引，可能可以去掉
+	rep.qset = make(map[qidx]*pt.RequestViewChange_PQ)          // P集合
+	rep.pset = make(map[uint64]*pt.RequestViewChange_PQ)        // Q集合
+	rep.sset = make(map[vcidx]*pt.RequestViewChange)            // S集合
+	rep.viewChangeStore = make(map[vcidx]*pt.RequestViewChange) // 视图变更组，由视图与节点id索引
+	rep.ackStore = make(map[ackidx]*pt.RequestAck)              // 变更确认组，由视图，发送视图变更的节点，发送确认的节点索引
+	rep.newViewStore = make(map[uint64]*pt.RequestNewView)      // 新视图组，
 	rep.certStore = make(map[msgID]*msgCert)                    // 三阶段请求证书
 	rep.chkpStore = make(map[uint64]*chkpCert)                  // 检查点证书
 	rep.replyStore = make(map[string]*replyCert)                //回复证书
 
 	// slice部分
-	rep.checkpointStore = []*pb.Checkpoint{ToCheckpoint(0, "Gensis")} // 稳定检查点集合
+	rep.checkpointStore = []*pt.Checkpoint{ToCheckpoint(0, "Gensis")} // 稳定检查点集合
 
 	// uint64部分
 	rep.id = nodeID
@@ -222,8 +222,8 @@ func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, cl
 	rep.byzantine = byzantine
 
 	// channel部分
-	rep.requestChan = make(chan *pb.Request)
-	rep.dataChan = make(chan *pb.BlockData)
+	rep.requestChan = make(chan *pt.Request)
+	rep.dataChan = make(chan *pt.BlockData)
 
 	// Timer部分
 	rep.vcTimeout = 60 * time.Second
@@ -301,25 +301,25 @@ func (rep *Replica) closeReplica() {
 }
 
 // 接收REQUEST消息
-func (rep *Replica) recvRequest(REQ *pb.Request) {
+func (rep *Replica) recvRequest(REQ *pt.Request) {
 	switch REQ.Value.(type) {
-	case *pb.Request_Client:
+	case *pt.Request_Client:
 		rep.recvClientRequest(REQ)
-	case *pb.Request_Preprepare:
+	case *pt.Request_Preprepare:
 		rep.recvPreprepare(REQ)
-	case *pb.Request_Prepare:
+	case *pt.Request_Prepare:
 		rep.recvPrepare(REQ)
-	case *pb.Request_Commit:
+	case *pt.Request_Commit:
 		rep.recvCommit(REQ)
-	case *pb.Request_Reply:
+	case *pt.Request_Reply:
 		rep.recvReply(REQ)
-	case *pb.Request_Checkpoint:
+	case *pt.Request_Checkpoint:
 		rep.recvCheckpoint(REQ)
-	case *pb.Request_Viewchange:
+	case *pt.Request_Viewchange:
 		rep.recvViewChange(REQ)
-	case *pb.Request_Ack:
+	case *pt.Request_Ack:
 		rep.recvViewChangeAck(REQ)
-	case *pb.Request_Newview:
+	case *pt.Request_Newview:
 		rep.recvNewView(REQ)
 	default:
 		plog.Debug("Request for unknown type, ignoring")
@@ -571,7 +571,7 @@ func (rep *Replica) stateDigest() string {
 }
 
 // 获得最近一次发送给客户端Client的回复，对于没有回复的情况返回空
-func (rep *Replica) lastReplyToClient(client string) *pb.ClientReply {
+func (rep *Replica) lastReplyToClient(client string) *pt.ClientReply {
 	if reply, ok := rep.repStore[client]; ok {
 		return reply[len(rep.repStore[client])-1]
 	}
@@ -801,7 +801,7 @@ func (rep *Replica) recvMessage() {
 		if err != nil {
 			plog.Error("PBFT Message accept error")
 		}
-		REQ := &pb.Request{}
+		REQ := &pt.Request{}
 		err = ReadMessage(conn, REQ)
 		if err != nil {
 			plog.Error("PBFT Message read error")
@@ -814,7 +814,7 @@ func (rep *Replica) recvMessage() {
 func (rep *Replica) sendMessage() {
 	for req := range rep.requestChan {
 		switch req.Value.(type) {
-		case *pb.Request_Reply:
+		case *pt.Request_Reply:
 			client := req.GetReply().Client
 			err := WriteMessage(client, req)
 			if err != nil {
@@ -845,7 +845,7 @@ func (rep *Replica) multicast(REQ proto.Message) error {
 //=====================================================
 
 // 存储回复信息
-func (rep *Replica) persistReply(Reply *pb.ClientReply) {
+func (rep *Replica) persistReply(Reply *pt.ClientReply) {
 
 	client := Reply.Client
 	// 是否一定需要客户端发送的时间戳顺序呢？
@@ -857,7 +857,7 @@ func (rep *Replica) persistReply(Reply *pb.ClientReply) {
 }
 
 // 存储检查点信息
-func (rep *Replica) persistCheckpoint(Checkpoint *pb.Checkpoint) {
+func (rep *Replica) persistCheckpoint(Checkpoint *pt.Checkpoint) {
 
 	rep.checkpointStore = append(rep.checkpointStore, Checkpoint)
 	//
@@ -873,7 +873,7 @@ func (rep *Replica) clearCertStore() {
 //=====================================================
 
 // 处理客户端请求
-func (rep *Replica) recvClientRequest(REQ *pb.Request) {
+func (rep *Replica) recvClientRequest(REQ *pt.Request) {
 	clientREQ := REQ.GetClient()
 	digest := Hash(REQ)
 	plog.Info("PBFT-receive Request", "Replica", rep.id, "Type", "<client-request>",
@@ -908,7 +908,7 @@ func (rep *Replica) recvClientRequest(REQ *pb.Request) {
 }
 
 // 发送Pre-prepare消息
-func (rep *Replica) sendPreprepare(REQ *pb.RequestClient, digest string) {
+func (rep *Replica) sendPreprepare(REQ *pt.RequestClient, digest string) {
 	// 分配编号
 	n := rep.seqNo + 1
 	// 验证客户端请求
@@ -947,7 +947,7 @@ func (rep *Replica) sendPreprepare(REQ *pb.RequestClient, digest string) {
 }
 
 // 处理Pre-prepare消息(来自主节点)，Pre-prepare消息与论文略有不同，为了能够验证消息正确性，把客户端的请求也加入到了数据之中
-func (rep *Replica) recvPreprepare(REQ *pb.Request) {
+func (rep *Replica) recvPreprepare(REQ *pt.Request) {
 	// plog.Debug("PBFT-receive Request", "Replica", rep.id, "Type", "<pre-prepare>")
 
 	prePrepREQ := REQ.GetPreprepare()
@@ -1053,7 +1053,7 @@ func (rep *Replica) recvPreprepare(REQ *pb.Request) {
 }
 
 // 处理Prepare消息(来自非主节点)
-func (rep *Replica) recvPrepare(REQ *pb.Request) {
+func (rep *Replica) recvPrepare(REQ *pt.Request) {
 
 	prepREQ := REQ.GetPrepare()
 
@@ -1100,7 +1100,7 @@ func (rep *Replica) recvPrepare(REQ *pb.Request) {
 }
 
 // 对于pre-prepared的节点，统计收到的prepare消息，若满足条件，则该消息在该节点准备成功，发送commit消息
-func (rep *Replica) maybeSendCommit(REQ *pb.RequestPrepare) {
+func (rep *Replica) maybeSendCommit(REQ *pt.RequestPrepare) {
 	cert := rep.getCert(REQ.View, REQ.Sequence)
 
 	// 该消息若prepared并且节点未发送过commit
@@ -1114,7 +1114,7 @@ func (rep *Replica) maybeSendCommit(REQ *pb.RequestPrepare) {
 }
 
 // 处理Commit消息(来自所有节点)
-func (rep *Replica) recvCommit(REQ *pb.Request) {
+func (rep *Replica) recvCommit(REQ *pt.Request) {
 
 	commitREQ := REQ.GetCommit()
 
@@ -1161,13 +1161,13 @@ func (rep *Replica) recvCommit(REQ *pb.Request) {
 }
 
 // 发送回复给客户端
-func (rep *Replica) sendReply(REQ *pb.RequestCommit) {
+func (rep *Replica) sendReply(REQ *pt.RequestCommit) {
 
 	clientRequest := rep.reqStore[REQ.Digest]
 	op := clientRequest.Op
 	timestamp := clientRequest.Timestamp
 	client := clientRequest.Client
-	block := &pb.BlockData{Value: op.Value}
+	block := &pt.BlockData{Value: op.Value}
 
 	plog.Info("PBFT-send Reply to Client", "Replica", rep.id, "Client-Address", client)
 
@@ -1183,7 +1183,7 @@ func (rep *Replica) sendReply(REQ *pb.RequestCommit) {
 	rep.maybeSendCheckpoint()
 }
 
-func (rep *Replica) recvReply(REQ *pb.Request) {
+func (rep *Replica) recvReply(REQ *pt.Request) {
 
 	reply := REQ.GetReply()
 	client := reply.Client
@@ -1240,7 +1240,7 @@ func (rep *Replica) maybeSendCheckpoint() {
 }
 
 // 用于处理节点发送的检查点信息
-func (rep *Replica) recvCheckpoint(REQ *pb.Request) {
+func (rep *Replica) recvCheckpoint(REQ *pt.Request) {
 	plog.Debug("PBFT-receive <Checkpoint>", "Replica", rep.id)
 	checkpointREQ := REQ.GetCheckpoint()
 

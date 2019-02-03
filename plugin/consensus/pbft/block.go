@@ -8,7 +8,8 @@ import (
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
-	"github.com/33cn/plugin/plugin/dapp/pbft/types"
+	pt "github.com/33cn/plugin/plugin/dapp/pbft/types"
+	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -20,14 +21,14 @@ func init() {
 // PbftNode 是一个PBFT节点端(可以是客户端，参与共识)
 type PbftNode struct {
 	*drivers.BaseClient
-	requestChan chan *types.Request
-	dataChan    chan *types.BlockData
+	requestChan chan *pt.Request
+	dataChan    chan *pt.BlockData
 	isClient    bool
 	address     string
 }
 
 // NewBlockstore 用于初始化新的Blockstore
-func NewBlockstore(cfg *types.Consensus, requestChan chan *types.Request, dataChan chan *types.BlockData, isClient bool, address string) *PbftNode {
+func NewBlockstore(cfg *types.Consensus, requestChan chan *pt.Request, dataChan chan *pt.BlockData, isClient bool, address string) *PbftNode {
 	c := drivers.NewBaseClient(cfg)
 	client := &PbftNode{BaseClient: c, requestChan: requestChan, dataChan: dataChan, isClient: isClient, address: address}
 	c.SetChild(client)
@@ -84,7 +85,7 @@ func (client *PbftClient) Close() {
 
 // Propose 用于客户端发请求
 func (client *PbftNode) Propose(block *types.Block) {
-	op := &types.BlockData{Value: block}
+	op := &pt.BlockData{Value: block}
 	req := ToRequestClient(op, time.Now().String(), client.address)
 	client.requestChan <- req
 }
@@ -188,7 +189,7 @@ func WriteSnap(block proto.Message, snapdir string) error {
 }
 
 // WriteLog write log to file
-func WriteLog(data []*types.Request, snapdir string) error {
+func WriteLog(data []*pt.Request, snapdir string) error {
 	f, err := os.OpenFile(snapdir, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666) //os.ModeAppend
 	if err != nil {
 		return err
