@@ -154,7 +154,7 @@ func (rc *raftNode) startRaft() {
 
 	err := rc.transport.Start()
 	if err != nil {
-		rlog.Error(fmt.Sprintf("raft:transport.Start()", err.Error()))
+		rlog.Error(fmt.Sprintf("raft:transport.Start (%v)", err.Error()))
 		panic(err)
 	}
 	for i := range rc.bootstrapPeers {
