@@ -645,9 +645,9 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 
 	//加入当前玩家信息
 	game.Players = append(game.Players, &pkt.PBPlayer{
-		Address:   action.fromaddr,
-		TxHash:    txrng,
-		Ready:     false,
+		Address: action.fromaddr,
+		TxHash:  txrng,
+		Ready:   false,
 	})
 
 	// 如果人数达标，则发牌计算斗牛结果
@@ -968,8 +968,8 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 		// 创建玩家信息
 		for i, addr := range pbplay.Address {
 			player := &pkt.PBPlayer{
-				Address:   addr,
-				TxHash:    rands[i],
+				Address: addr,
+				TxHash:  rands[i],
 			}
 			game.Players = append(game.Players, player)
 		}
