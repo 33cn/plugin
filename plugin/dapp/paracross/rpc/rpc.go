@@ -7,28 +7,50 @@ package rpc
 import (
 	"context"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt.ParacrossStatus, error) {
+func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
 	data, err := c.Query(pt.GetExecName(), "GetTitle", req)
 	if err != nil {
 		return nil, err
 	}
+	header, err := c.GetLastHeader()
+	if err != nil {
+		return nil, err
+	}
+	chainHeight := header.Height
+
 	if resp, ok := data.(*pt.ParacrossStatus); ok {
-		return resp, nil
+		// 如果主链上查询平行链的高度，chain height应该是平行链的高度而不是主链高度， 平行链的真实高度需要在平行链侧查询
+		if !types.IsPara() {
+			chainHeight = resp.Height
+		}
+		return &pt.ParacrossConsensusStatus{
+			Title:            resp.Title,
+			ChainHeight:      chainHeight,
+			ConsensHeight:    resp.Height,
+			ConsensBlockHash: common.ToHex(resp.BlockHash),
+		}, nil
 	}
 	return nil, types.ErrDecode
 }
 
 // GetHeight jrpc get consensus height
 func (c *Jrpc) GetHeight(req *types.ReqString, result *interface{}) error {
-	if req == nil {
-		return types.ErrInvalidParam
+	if req == nil || req.Data == "" {
+		if types.IsPara() {
+			req = &types.ReqString{Data: types.GetTitle()}
+		} else {
+			return types.ErrInvalidParam
+		}
 	}
+
 	data, err := c.cli.GetTitle(context.Background(), req)
-	*result = data
+	*result = *data
+
 	return err
 }
 
@@ -113,4 +135,35 @@ func (c *Jrpc) IsSync(in *types.ReqNil, result *interface{}) error {
 		*result = reply.Iscaughtup
 	}
 	return nil
+}
+
+func (c *channelClient) GetBlock2MainInfo(ctx context.Context, req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
+	ret := &pt.ParaBlock2MainInfo{}
+	details, err := c.GetBlocks(req)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range details.Items {
+		data := &pt.ParaBlock2MainMap{
+			Height:     item.Block.Height,
+			BlockHash:  common.ToHex(item.Block.Hash()),
+			MainHeight: item.Block.MainHeight,
+			MainHash:   common.ToHex(item.Block.MainHash),
+		}
+		ret.Items = append(ret.Items, data)
+	}
+
+	return ret, nil
+}
+
+// GetBlock2MainInfo jrpc get para block info with main chain map
+func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) error {
+	if req == nil {
+		return types.ErrInvalidParam
+	}
+
+	ret, err := c.cli.GetBlock2MainInfo(context.Background(), req)
+	*result = *ret
+	return err
 }

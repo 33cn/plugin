@@ -227,7 +227,7 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, pt.ParaX, 0)
+		tx, err := paracross.CreateRawCommitTx4MainChain(status, paracross.GetExecName(), 0)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -243,7 +243,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 }
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, pt.ParaX, 0)
+	tx, err := paracross.CreateRawCommitTx4MainChain(status, paracross.GetExecName(), 0)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -480,19 +480,15 @@ out:
 			req.FuncName = "GetTitle"
 			req.Param = types.Encode(&types.ReqString{Data: types.GetTitle()})
 
-			ret, err := client.paraClient.grpcClient.QueryChain(context.Background(), &req)
+			//从本地查询共识高度
+			ret, err := client.paraClient.GetAPI().QueryChain(&req)
 			if err != nil {
 				plog.Error("getConsensusHeight ", "err", err.Error())
 				continue
 			}
-			if !ret.GetIsOk() {
-				plog.Info("getConsensusHeight", "error", ret.GetMsg())
-				continue
+			if resp, ok := ret.(*pt.ParacrossStatus); ok {
+				consensusRst <- resp
 			}
-			var result pt.ParacrossStatus
-			types.Decode(ret.Msg, &result)
-
-			consensusRst <- &result
 		}
 	}
 

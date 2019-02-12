@@ -70,7 +70,9 @@ func WriteFileAtomic(filePath string, newBytes []byte, mode os.FileMode) error {
 	}
 	// any err should result in full cleanup
 	if err != nil {
-		os.Remove(f.Name())
+		if er := os.Remove(f.Name()); er != nil {
+			fmt.Printf("WriteFileAtomic Remove failed:%v", er)
+		}
 	}
 	return err
 }

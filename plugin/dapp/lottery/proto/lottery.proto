@@ -94,6 +94,9 @@ message ReceiptLottery {
     int64                totalAddrNum = 14;
     int64                buyAmount    = 15;
     LotteryGainInfos     gainInfos    = 16;
+    int64                luckyAddrNum = 17;
+    int64                totalFund    = 18;
+    int64                factor       = 19;
 }
 
 message ReqLotteryInfo {
@@ -189,6 +192,9 @@ message LotteryDrawRecord {
     string txHash       = 4;
     int64  totalAddrNum = 5;
     int64  buyAmount    = 6;
+    int64  luckyAddrNum = 7;
+    int64  totalFund    = 8;
+    int64  factor       = 9;
 }
 
 message LotteryDrawRecords {
@@ -219,13 +225,13 @@ message LotteryGainInfos{
 message LotteryGainInfo{
     string  addr       = 1;
     int64   buyAmount  = 2;
-    float   fundAmount = 3;
+    int64   fundAmount = 3;
 }
 
 message LotteryGainRecord{
     string  addr       = 1;
     int64   buyAmount  = 2;
-    float   fundAmount = 3;
+    int64   fundAmount = 3;
     int64   round      = 4;
 }
 

@@ -154,12 +154,11 @@ func (ks *fileBasedKeyStore) storePublicKey(alias string, publicKey interface{})
 func (ks *fileBasedKeyStore) createKeyStoreIfNotExists() error {
 	ksPath := ks.path
 	missing, _ := auth.DirMissingOrEmpty(ksPath)
-
 	if missing {
 		err := ks.createKeyStore()
 		if err != nil {
 			logger.Error("Failed creating KeyStore At [%s]: [%s]", ksPath, err.Error())
-			return nil
+			return err
 		}
 	}
 
@@ -169,9 +168,8 @@ func (ks *fileBasedKeyStore) createKeyStoreIfNotExists() error {
 func (ks *fileBasedKeyStore) createKeyStore() error {
 	ksPath := ks.path
 
-	os.MkdirAll(ksPath, 0755)
-
-	return nil
+	err := os.MkdirAll(ksPath, 0750)
+	return err
 }
 
 func (ks *fileBasedKeyStore) openKeyStore() error {

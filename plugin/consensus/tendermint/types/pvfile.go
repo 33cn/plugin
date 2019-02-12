@@ -99,7 +99,11 @@ func createFiles(cmd *cobra.Command, args []string) {
 	}
 
 	num, _ := cmd.Flags().GetString("num")
-	n, _ := strconv.Atoi(num)
+	n, err := strconv.Atoi(num)
+	if err != nil {
+		tendermintlog.Error("num parameter is not valid digit")
+		return
+	}
 	for i := 0; i < n; i++ {
 		// create private validator file
 		pvFileName := pvFile + strconv.Itoa(i) + ".json"

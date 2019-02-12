@@ -32,6 +32,8 @@ func ParcCmd() *cobra.Command {
 		CreateRawWithdrawCmd(),
 		CreateRawTransferToExecCmd(),
 		IsSyncCmd(),
+		GetHeightCmd(),
+		GetBlockInfoCmd(),
 	)
 	return cmd
 }
@@ -242,4 +244,62 @@ func isSync(cmd *cobra.Command, args []string) {
 	var res bool
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.IsSync", nil, &res)
 	ctx.Run()
+}
+
+// GetHeightCmd get para chain's chain height and consensus height
+func GetHeightCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "height",
+		Short: "query consensus height",
+		Run:   consusHeight,
+	}
+	addTitleFlags(cmd)
+	return cmd
+}
+
+func addTitleFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("title", "t", "", "parallel chain's title, default null in para chain")
+}
+
+func consusHeight(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	title, _ := cmd.Flags().GetString("title")
+
+	var res pt.ParacrossConsensusStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetHeight", &types.ReqString{Data: title}, &res)
+	ctx.Run()
+}
+
+// GetBlockInfoCmd get blocks hash with main chain hash map
+func GetBlockInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "blocks",
+		Short: "Get blocks with main chain hash map between [start, end], the same in main",
+		Run:   blockInfo,
+	}
+	addBlockBodyCmdFlags(cmd)
+	return cmd
+}
+
+func addBlockBodyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "block start height")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Int64P("end", "e", 0, "block end height")
+	cmd.MarkFlagRequired("end")
+}
+
+func blockInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	startH, _ := cmd.Flags().GetInt64("start")
+	endH, _ := cmd.Flags().GetInt64("end")
+
+	params := types.ReqBlocks{
+		Start: startH,
+		End:   endH,
+	}
+	var res pt.ParaBlock2MainInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetBlock2MainInfo", params, &res)
+	ctx.Run()
+
 }

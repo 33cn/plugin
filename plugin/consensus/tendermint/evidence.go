@@ -175,13 +175,22 @@ func (store *EvidenceStore) AddNewEvidence(evidence ttypes.Evidence, priority in
 
 	// add it to the store
 	key := keyOutqueue(evidence, priority)
-	store.db.Set(key, eiBytes)
+	if err = store.db.Set(key, eiBytes); err != nil {
+		fmt.Printf("AddNewEvidence Set failed:%v\n", err)
+		return false
+	}
 
 	key = keyPending(evidence)
-	store.db.Set(key, eiBytes)
+	if err = store.db.Set(key, eiBytes); err != nil {
+		fmt.Printf("AddNewEvidence Set failed:%v\n", err)
+		return false
+	}
 
 	key = keyLookup(evidence)
-	store.db.SetSync(key, eiBytes)
+	if err = store.db.SetSync(key, eiBytes); err != nil {
+		fmt.Printf("AddNewEvidence SetSync failed:%v\n", err)
+		return false
+	}
 
 	return true
 }
@@ -190,7 +199,9 @@ func (store *EvidenceStore) AddNewEvidence(evidence ttypes.Evidence, priority in
 func (store *EvidenceStore) MarkEvidenceAsBroadcasted(evidence ttypes.Evidence) {
 	ei := store.getEvidenceInfo(evidence)
 	key := keyOutqueue(evidence, ei.Priority)
-	store.db.Delete(key)
+	if err := store.db.Delete(key); err != nil {
+		fmt.Printf("MarkEvidenceAsBroadcasted Delete failed:%v", err)
+	}
 }
 
 // MarkEvidenceAsCommitted removes evidence from pending and outqueue and sets the state to committed.
@@ -199,7 +210,9 @@ func (store *EvidenceStore) MarkEvidenceAsCommitted(evidence ttypes.Evidence) {
 	store.MarkEvidenceAsBroadcasted(evidence)
 
 	pendingKey := keyPending(evidence)
-	store.db.Delete(pendingKey)
+	if err := store.db.Delete(pendingKey); err != nil {
+		fmt.Printf("MarkEvidenceAsCommitted Delete failed:%v", err)
+	}
 
 	ei := store.getEvidenceInfo(evidence)
 	ei.Committed = true
@@ -209,7 +222,9 @@ func (store *EvidenceStore) MarkEvidenceAsCommitted(evidence ttypes.Evidence) {
 	if err != nil {
 		fmt.Printf("MarkEvidenceAsCommitted marshal failed:%v", err)
 	}
-	store.db.SetSync(lookupKey, eiBytes)
+	if err = store.db.SetSync(lookupKey, eiBytes); err != nil {
+		fmt.Printf("MarkEvidenceAsCommitted SetSync failed:%v", err)
+	}
 }
 
 //---------------------------------------------------
@@ -338,7 +353,7 @@ func (evpool *EvidencePool) Update(block *ttypes.TendermintBlock) {
 
 // AddEvidence checks the evidence is valid and adds it to the pool.
 // Blocks on the EvidenceChan.
-func (evpool *EvidencePool) AddEvidence(evidence ttypes.Evidence) (err error) {
+func (evpool *EvidencePool) AddEvidence(evidence ttypes.Evidence) error {
 
 	// TODO: check if we already have evidence for this
 	// validator at this height so we dont get spammed
@@ -349,14 +364,17 @@ func (evpool *EvidencePool) AddEvidence(evidence ttypes.Evidence) (err error) {
 
 	// fetch the validator and return its voting power as its priority
 	// TODO: something better ?
-	valset, _ := evpool.stateDB.LoadValidators(evidence.Height())
+	valset, err := evpool.stateDB.LoadValidators(evidence.Height())
+	if err != nil {
+		return err
+	}
 	_, val := valset.GetByAddress(evidence.Address())
 	priority := val.VotingPower
 
 	added := evpool.evidenceStore.AddNewEvidence(evidence, priority)
 	if !added {
 		// evidence already known, just ignore
-		return
+		return nil
 	}
 
 	tendermintlog.Info("Verified new evidence of byzantine behaviour", "evidence", evidence)
