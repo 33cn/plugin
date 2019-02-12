@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"strings"
-	"time"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -510,7 +509,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 	game = &pkt.PokerBull{
 		GameId:      gameID,
 		Status:      pkt.PBGameActionStart,
-		StartTime:   time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
+		StartTime:   action.blocktime,
 		StartTxHash: gameID,
 		Value:       start.GetValue(),
 		Poker:       NewPoker(),
@@ -649,7 +648,6 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 		Address:   action.fromaddr,
 		TxHash:    txrng,
 		Ready:     false,
-		MatchTime: time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
 	})
 
 	// 如果人数达标，则发牌计算斗牛结果
@@ -759,7 +757,6 @@ func (action *Action) GameContinue(pbcontinue *pkt.PBGameContinue) (*types.Recei
 	}
 	pbplayer.TxHash = txrng
 	pbplayer.Ready = true
-	pbplayer.MatchTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
 
 	if getReadyPlayerNum(game.Players) == int(game.PlayerNum) {
 		logger.Info(fmt.Sprintf("Game starting: %s round: %d", game.GameId, game.Round))
@@ -864,7 +861,7 @@ func (action *Action) GameQuit(pbquit *pkt.PBGameQuit) (*types.Receipt, error) {
 	game.Status = pkt.PBGameActionQuit
 	game.PrevIndex = game.Index
 	game.Index = action.getIndex(game)
-	game.QuitTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
+	game.QuitTime = action.blocktime
 	game.QuitTxHash = common.ToHex(action.txhash)
 
 	receiptLog := action.GetReceiptLog(game)
@@ -946,7 +943,6 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 		// 更新玩家信息
 		for i, player := range game.Players {
 			player.TxHash = rands[i]
-			player.MatchTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
 		}
 
 		game.Round++
@@ -974,14 +970,13 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 			player := &pkt.PBPlayer{
 				Address:   addr,
 				TxHash:    rands[i],
-				MatchTime: time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05"),
 			}
 			game.Players = append(game.Players, player)
 		}
 
 		game.Status = pkt.PBGameActionQuit // 更新游戏状态
 		game.PreStatus = pkt.PBGameActionStart
-		game.QuitTime = time.Unix(action.blocktime, 0).Format("2006-01-02 15:04:05")
+		game.QuitTime = action.blocktime
 		game.QuitTxHash = common.ToHex(action.txhash)
 	}
 
