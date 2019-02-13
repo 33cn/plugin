@@ -44,5 +44,5 @@ var (
 	SupportMeans    = []string{"FixAmount", "LeftProportion"}
 
 	ForkTerminatePartX = "ForkTerminatePart"
-	ForkUnfreezeIDX = "ForkUnfreezeIDX"
+	ForkUnfreezeIDX    = "ForkUnfreezeIDX"
 )

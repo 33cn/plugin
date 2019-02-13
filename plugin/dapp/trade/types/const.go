@@ -85,9 +85,9 @@ const (
 
 const (
 	// ForkTradeAssetX support more kinds of asset
-	ForkTradeAssetX    = "ForkTradeAsset"
+	ForkTradeAssetX = "ForkTradeAsset"
 	// ForkTradeBuyLimitX support buy limit
 	ForkTradeBuyLimitX = "ForkTradeBuyLimit"
 	// ForkTradeIDX id without prefix
-	ForkTradeIDX       = "ForkTradeID"
+	ForkTradeIDX = "ForkTradeID"
 )
