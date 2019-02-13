@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+import "transaction.proto";
+import "blockchain.proto";
+
+package types;
+
+message Pos33Msg {
+  bytes data = 1;
+  enum Ty {
+    R = 0;
+    PP = 1;
+    P = 2;
+    C = 3;
+    B = 4;
+    V = 5;
+    NC = 6;
+  }
+  Ty ty = 2;
+}
+
+message Pos33Rand {
+  bytes rand_hash = 1;
+  uint32 weight = 2;
+  bytes sig = 3;
+}
+
+message Pos33Rands {
+  repeated Pos33Rand rands = 1;
+  string pub = 2;
+  int64 height = 3;
+}
+
+message Pos33Block {
+  types.Block b = 1;
+}
+
+message Pos33PrePrepare {
+  types.Block b = 1;
+}
+
+message Pos33Prepare {
+  bytes block_hash = 1;
+  int64 height = 2;
+  Signature sig = 3;
+}
+
+message Pos33Commit {
+  bytes block_hash = 1;
+  int64 height = 2;
+  Signature sig = 3;
+}
+
+// tx action message
+message Pos33Action {
+  oneof value {
+    Pos33DepositAction deposit = 1;
+    Pos33WithdrawAction withdraw = 2;
+    Pos33DelegateAction delegate = 3;
+    Pos33RewordAction reword = 4;
+    Pos33PunishAction punish = 5;
+  }
+}
+
+message Pos33DepositAction {
+  int64 w = 1;
+}
+
+message Pos33WithdrawAction {
+  int64 w = 1;
+}
+
+message Pos33DelegateAction {
+  string who = 1;
+  int64 w = 2;
+}
+
+message Pos33RewordAction {
+  repeated Pos33Vote votes = 1;
+  bytes rand_hash = 2;
+}
+
+message Pos33Punish {
+  Pos33Vote vote1 = 3;
+  Pos33Vote vote2 = 4;
+}
+
+message Pos33PunishAction {
+  map<string, Pos33Punish> punishs = 1;
+}
+
+message Pos33Vote {
+  int64 block_height = 1;
+  bytes block_hash = 2;
+  string bp = 3;  // next block proposer
+  int32 weight = 4;
+  Signature sig = 5;
+}
+
+message Pos33RandInfo {
+  string pubkey = 1;
+  Pos33Rand r = 2;
+}
+
+message Pos33Votes {
+  repeated Pos33Vote vs = 1;
+}
+
+message Pos33GetCommittee {
+  Signature sig = 1;
+}
+
+message Pos33Committee {
+  int64 base = 1;
+  bytes seed = 2;
+  int32 vw = 3;
+  map<string, Pos33Rands> rs = 4;
+  int64 height = 5;
+  bytes block_hash = 6;
+  Signature sig = 7;
+}
