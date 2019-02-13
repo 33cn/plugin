@@ -612,7 +612,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.DevFeeFactor > 0 {
-		devFee = totalBetsNumber * game.DevFeeFactor / 1000
+		devFee = totalBetsNumber / 1000 * game.DevFeeFactor
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
 		if err != nil {
 			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
@@ -625,7 +625,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.PlatFeeFactor > 0 {
-		platFee = totalBetsNumber * game.PlatFeeFactor / 1000
+		platFee = totalBetsNumber / 1000 * game.PlatFeeFactor
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
 		if err != nil {
 			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
@@ -642,7 +642,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
 		if trimStr(player.Bet.Option) == trimStr(game.Result) {
-			value := player.Bet.BetsNumber * winValue / winBetsNumber
+			value := int64(float64(player.Bet.BetsNumber) / float64(winBetsNumber) * float64(winValue))
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
 				//action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback
