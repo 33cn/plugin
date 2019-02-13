@@ -84,7 +84,7 @@ const (
 )
 
 const (
-	ForkTradeAssetX = "ForkTradeAsset"
+	ForkTradeAssetX    = "ForkTradeAsset"
 	ForkTradeBuyLimitX = "ForkTradeBuyLimit"
-	ForkTradeIDX = "ForkTradeID"
+	ForkTradeIDX       = "ForkTradeID"
 )
