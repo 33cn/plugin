@@ -70,7 +70,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", "ForkTradeAsset"),
+		types.GetDappFork("trade", pty.ForkTradeAssetX),
 		2,
 		1539918074,
 		"hash",
@@ -212,7 +212,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", "ForkTradeAsset"),
+		types.GetDappFork("trade", pty.ForkTradeAssetX),
 		2,
 		1539918074,
 		"hash",
