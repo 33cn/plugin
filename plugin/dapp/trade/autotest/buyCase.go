@@ -43,7 +43,8 @@ func (testCase *DependBuyCase) SendCommand(packID string) (types.PackFunc, error
 	if len(testCase.SellID) == 0 {
 		return nil, errors.New("depend sell case failed, Can't buy without sell id")
 	}
-	testCase.Command = fmt.Sprintf("%s -s %s", testCase.Command, testCase.SellID)
+	sellID := testCase.SellID[len("mavl-trade-sell-"):]
+	testCase.Command = fmt.Sprintf("%s -s %s", testCase.Command, sellID)
 
 	return types.DefaultSend(&testCase.BuyCase, &BuyPack{}, packID)
 }
