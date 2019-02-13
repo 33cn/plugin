@@ -82,3 +82,8 @@ const (
 	//InvalidStartTime :
 	InvalidStartTime = 0
 )
+
+const (
+	ForkTradeAssetX = "ForkTradeAsset"
+	ForkTradeBuyLimitX = "ForkTradeBuyLimit"
+)
