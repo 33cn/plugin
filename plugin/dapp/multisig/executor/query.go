@@ -340,7 +340,10 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 					continue
 				}
 				accAssets := &mty.AccAssets{}
-				account, _ := m.getMultiSigAccAssets(reciver.MultiSigAddr, reciver.Assets)
+				account, err := m.getMultiSigAccAssets(reciver.MultiSigAddr, reciver.Assets)
+				if err != nil {
+					multisiglog.Error("Query_MultiSigAccAssets:getMultiSigAccAssets", "MultiSigAddr", reciver.MultiSigAddr, "err", err)
+				}
 				accAssets.Account = account
 				accAssets.Assets = reciver.Assets
 				accAssets.RecvAmount = reciver.Amount
@@ -355,11 +358,17 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 		if err != nil {
 			return nil, err
 		}
-		account, _ := m.getMultiSigAccAssets(in.MultiSigAddr, in.Assets)
+		account, err := m.getMultiSigAccAssets(in.MultiSigAddr, in.Assets)
+		if err != nil {
+			multisiglog.Error("Query_MultiSigAccAssets:getMultiSigAccAssets", "MultiSigAddr", in.MultiSigAddr, "err", err)
+		}
 		accAssets.Account = account
 		accAssets.Assets = in.Assets
 
-		amount, _ := getAddrReciver(m.GetLocalDB(), in.MultiSigAddr, in.Assets.Execer, in.Assets.Symbol)
+		amount, err := getAddrReciver(m.GetLocalDB(), in.MultiSigAddr, in.Assets.Execer, in.Assets.Symbol)
+		if err != nil {
+			multisiglog.Error("Query_MultiSigAccAssets:getAddrReciver", "MultiSigAddr", in.MultiSigAddr, "err", err)
+		}
 		accAssets.RecvAmount = amount
 
 		replyAccAssets.AccAssets = append(replyAccAssets.AccAssets, accAssets)

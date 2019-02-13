@@ -105,31 +105,35 @@ func CreateMultiSigAccCreateCmd() *cobra.Command {
 func createMultiSigAccTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("owners_addr", "a", "", "address of owners,separated by '-', addr0-addr1-addr2...")
-	cmd.MarkFlagRequired("owners_addr")
+	err := cmd.MarkFlagRequired("owners_addr")
 
 	cmd.Flags().StringP("owners_weight", "w", "", "weight of owners,separated by '-', w0-w1-w2..., uint64 type")
-	cmd.MarkFlagRequired("owners_weight")
+	err = cmd.MarkFlagRequired("owners_weight")
 
 	cmd.Flags().Uint64P("required_weight", "r", 0, "required weight of account execute tx")
-	cmd.MarkFlagRequired("required_weight")
+	err = cmd.MarkFlagRequired("required_weight")
 
 	cmd.Flags().StringP("execer", "e", "", "assets execer name")
-	cmd.MarkFlagRequired("execer")
+	err = cmd.MarkFlagRequired("execer")
 
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
-	cmd.MarkFlagRequired("symbol")
+	err = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().Float64P("daily_limit", "d", 0, "daily_limit of assets ")
-	cmd.MarkFlagRequired("daily_limit")
+	err = cmd.MarkFlagRequired("daily_limit")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 
-	address, _ := cmd.Flags().GetString("owners_addr")
+	address, err := cmd.Flags().GetString("owners_addr")
 	addressArr := strings.Split(address, "-")
 
-	weightstr, _ := cmd.Flags().GetString("owners_weight")
+	weightstr, err := cmd.Flags().GetString("owners_weight")
 	weightsArr := strings.Split(weightstr, "-")
 
 	//校验owner和权重数量要一致
@@ -170,10 +174,10 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
 
-	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
+	dailylimit, err := cmd.Flags().GetFloat64("daily_limit")
 	err = isValidDailylimit(dailylimit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -209,22 +213,28 @@ func CreateMultiSigAccOwnerAddCmd() *cobra.Command {
 func createOwnerAddTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 
 	cmd.Flags().StringP("owner_addr", "o", "", "address of owner")
-	cmd.MarkFlagRequired("owner_addr")
+	err = cmd.MarkFlagRequired("owner_addr")
 
 	cmd.Flags().Uint64P("owner_weight", "w", 0, "weight of owner")
-	cmd.MarkFlagRequired("owner_weight")
-
+	err = cmd.MarkFlagRequired("owner_weight")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createOwnerAddTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
-	ownerWeight, _ := cmd.Flags().GetUint64("owner_weight")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	ownerAddr, err := cmd.Flags().GetString("owner_addr")
+	ownerWeight, err := cmd.Flags().GetUint64("owner_weight")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigOwnerOperate{
 		MultiSigAccAddr: multiSigAddr,
 		NewOwner:        ownerAddr,
@@ -250,17 +260,24 @@ func CreateMultiSigAccOwnerDelCmd() *cobra.Command {
 func createOwnerDelTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 
 	cmd.Flags().StringP("owner_addr", "o", "", "address of owner")
-	cmd.MarkFlagRequired("owner_addr")
+	err = cmd.MarkFlagRequired("owner_addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createOwnerDelTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	ownerAddr, err := cmd.Flags().GetString("owner_addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigOwnerOperate{
 		MultiSigAccAddr: multiSigAddr,
 		OldOwner:        ownerAddr,
@@ -285,19 +302,26 @@ func CreateMultiSigAccOwnerModifyCmd() *cobra.Command {
 func createOwnerModifyTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 	cmd.Flags().StringP("owner_addr", "o", "", "address of owner")
-	cmd.MarkFlagRequired("owner_addr")
+	err = cmd.MarkFlagRequired("owner_addr")
 	cmd.Flags().Uint64P("owner_weight", "w", 0, "new weight of owner")
-	cmd.MarkFlagRequired("owner_weight")
+	err = cmd.MarkFlagRequired("owner_weight")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createOwnerModifyTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
-	ownerWeight, _ := cmd.Flags().GetUint64("owner_weight")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	ownerAddr, err := cmd.Flags().GetString("owner_addr")
+	ownerWeight, err := cmd.Flags().GetUint64("owner_weight")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigOwnerOperate{
 		MultiSigAccAddr: multiSigAddr,
 		OldOwner:        ownerAddr,
@@ -323,19 +347,26 @@ func CreateMultiSigAccOwnerReplaceCmd() *cobra.Command {
 func createOwnerReplaceTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 	cmd.Flags().StringP("owner_addr", "o", "", "address of old owner")
-	cmd.MarkFlagRequired("owner_addr")
+	err = cmd.MarkFlagRequired("owner_addr")
 	cmd.Flags().StringP("new_owner", "n", "", "address of new owner")
-	cmd.MarkFlagRequired("new_owner")
+	err = cmd.MarkFlagRequired("new_owner")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createOwnerReplaceTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
-	newOwner, _ := cmd.Flags().GetString("new_owner")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	ownerAddr, err := cmd.Flags().GetString("owner_addr")
+	newOwner, err := cmd.Flags().GetString("new_owner")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigOwnerOperate{
 		MultiSigAccAddr: multiSigAddr,
 		OldOwner:        ownerAddr,
@@ -361,15 +392,22 @@ func CreateMultiSigAccWeightModifyCmd() *cobra.Command {
 func createMultiSigAccWeightModifyTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 	cmd.Flags().Uint64P("weight", "w", 0, "new required weight of multisig account ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigAccWeightModifyTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	weight, _ := cmd.Flags().GetUint64("weight")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	weight, err := cmd.Flags().GetUint64("weight")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &mty.MultiSigAccOperate{
 		MultiSigAccAddr:   multiSigAddr,
 		NewRequiredWeight: weight,
@@ -394,26 +432,33 @@ func CreateMultiSigAccDailyLimitModifyCmd() *cobra.Command {
 func createMultiSigAccDailyLimitModifyTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 
 	cmd.Flags().StringP("execer", "e", "", "assets execer name")
-	cmd.MarkFlagRequired("execer")
+	err = cmd.MarkFlagRequired("execer")
 
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
-	cmd.MarkFlagRequired("symbol")
+	err = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().Float64P("daily_limit", "d", 0, "daily_limit of assets ")
-	cmd.MarkFlagRequired("daily_limit")
+	err = cmd.MarkFlagRequired("daily_limit")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigAccDailyLimitModifyTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
-
-	err := isValidDailylimit(dailylimit)
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
+	dailylimit, err := cmd.Flags().GetFloat64("daily_limit")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	err = isValidDailylimit(dailylimit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -447,21 +492,24 @@ func CreateMultiSigConfirmTxCmd() *cobra.Command {
 func createMultiSigConfirmTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("multisig_addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("multisig_addr")
+	err := cmd.MarkFlagRequired("multisig_addr")
 
 	cmd.Flags().Uint64P("txid", "i", 0, "txid of  multisig transaction")
-	cmd.MarkFlagRequired("txid")
+	err = cmd.MarkFlagRequired("txid")
 
 	cmd.Flags().StringP("confirm_or_revoke", "c", "t", "whether confirm or revoke tx (0/f/false for No; 1/t/true for Yes)")
-
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigConfirmTransfer(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	multiSigAddr, _ := cmd.Flags().GetString("multisig_addr")
-	txid, _ := cmd.Flags().GetUint64("txid")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	multiSigAddr, err := cmd.Flags().GetString("multisig_addr")
+	txid, err := cmd.Flags().GetUint64("txid")
 
-	confirmOrRevoke, _ := cmd.Flags().GetString("confirm_or_revoke")
+	confirmOrRevoke, err := cmd.Flags().GetString("confirm_or_revoke")
 	confirmOrRevokeBool, err := strconv.ParseBool(confirmOrRevoke)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -491,28 +539,35 @@ func CreateMultiSigAccTransferInCmd() *cobra.Command {
 
 func createMultiSigAccTransferInFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("to", "t", "", "address of multisig account")
-	cmd.MarkFlagRequired("to")
+	err := cmd.MarkFlagRequired("to")
 
 	cmd.Flags().StringP("execer", "e", "", "assets  execer")
-	cmd.MarkFlagRequired("execer")
+	err = cmd.MarkFlagRequired("execer")
 
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
-	cmd.MarkFlagRequired("symbol")
+	err = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	err = cmd.MarkFlagRequired("amount")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	to, _ := cmd.Flags().GetString("to")
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	note, _ := cmd.Flags().GetString("note")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	to, err := cmd.Flags().GetString("to")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
+	note, err := cmd.Flags().GetString("note")
+	amount, err := cmd.Flags().GetFloat64("amount")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	if float64(types.MaxCoin/types.Coin) < amount {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
@@ -543,32 +598,39 @@ func CreateMultiSigAccTransferOutCmd() *cobra.Command {
 func createMultiSigAccTransferOutFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("from", "f", "", "address of multisig account")
-	cmd.MarkFlagRequired("from")
+	err := cmd.MarkFlagRequired("from")
 
 	cmd.Flags().StringP("to", "t", "", "address of account")
-	cmd.MarkFlagRequired("to")
+	err = cmd.MarkFlagRequired("to")
 
 	cmd.Flags().StringP("execer", "e", "", "assets execer")
-	cmd.MarkFlagRequired("execer")
+	err = cmd.MarkFlagRequired("execer")
 
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
-	cmd.MarkFlagRequired("symbol")
+	err = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	err = cmd.MarkFlagRequired("amount")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	from, _ := cmd.Flags().GetString("from")
-	to, _ := cmd.Flags().GetString("to")
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	note, _ := cmd.Flags().GetString("note")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	from, err := cmd.Flags().GetString("from")
+	to, err := cmd.Flags().GetString("to")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
+	note, err := cmd.Flags().GetString("note")
+	amount, err := cmd.Flags().GetFloat64("amount")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	if float64(types.MaxCoin/types.Coin) < amount {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
@@ -597,8 +659,11 @@ func GetMultiSigAccCountCmd() *cobra.Command {
 }
 
 func getMultiSigAccCount(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	var params rpctypes.Query4Jrpc
 
 	var rep interface{}
@@ -625,18 +690,25 @@ func GetMultiSigAccountsCmd() *cobra.Command {
 func addgetMultiSigAccountsFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Int64P("start", "s", 0, "account start index")
-	cmd.MarkFlagRequired("start")
+	err := cmd.MarkFlagRequired("start")
 
 	cmd.Flags().Int64P("end", "e", 0, "account end index")
-	cmd.MarkFlagRequired("end")
+	err = cmd.MarkFlagRequired("end")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccounts(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 
-	start, _ := cmd.Flags().GetInt64("start")
-	end, _ := cmd.Flags().GetInt64("end")
-
+	start, err := cmd.Flags().GetInt64("start")
+	end, err := cmd.Flags().GetInt64("end")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	if start > end || start < 0 {
 		fmt.Fprintln(os.Stderr, "input parameter invalid!")
 		return
@@ -670,13 +742,20 @@ func GetMultiSigAccountInfoCmd() *cobra.Command {
 
 func getMultiSigAccountInfoFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccountInfo(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	req := mty.ReqMultiSigAccInfo{
 		MultiSigAccAddr: addr,
 	}
@@ -736,13 +815,20 @@ func GetMultiSigAccTxCountCmd() *cobra.Command {
 
 func getMultiSigAccTxCountFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccTxCount(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	req := mty.ReqMultiSigAccInfo{
 		MultiSigAccAddr: addr,
 	}
@@ -771,39 +857,45 @@ func GetMultiSigTxidsCmd() *cobra.Command {
 
 func getMultiSigTxidsCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().Uint64P("start", "s", 0, "tx start index")
-	cmd.MarkFlagRequired("start")
+	err = cmd.MarkFlagRequired("start")
 
 	cmd.Flags().Uint64P("end", "e", 0, "tx end index")
-	cmd.MarkFlagRequired("end")
+	err = cmd.MarkFlagRequired("end")
 
 	cmd.Flags().StringP("pending", "p", "t", "whether pending tx (0/f/false for No; 1/t/true for Yes)")
-
 	cmd.Flags().StringP("executed", "x", "t", "whether executed tx (0/f/false for No; 1/t/true for Yes)")
-
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigTxids(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
 
-	start, _ := cmd.Flags().GetUint64("start")
-	end, _ := cmd.Flags().GetUint64("end")
+	start, err := cmd.Flags().GetUint64("start")
+	end, err := cmd.Flags().GetUint64("end")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	if start > end || start < 0 {
 		fmt.Fprintln(os.Stderr, "input parameter invalid!")
 		return
 	}
 
-	pending, _ := cmd.Flags().GetString("pending")
+	pending, err := cmd.Flags().GetString("pending")
 	pendingBool, err := strconv.ParseBool(pending)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 
-	executed, _ := cmd.Flags().GetString("executed")
+	executed, err := cmd.Flags().GetString("executed")
 	executedBool, err := strconv.ParseBool(executed)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -842,17 +934,24 @@ func GetMultiSigTxInfoCmd() *cobra.Command {
 
 func getMultiSigTxInfoFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().Uint64P("txid", "i", 0, "txid of  multisig transaction")
-	cmd.MarkFlagRequired("txid")
+	err = cmd.MarkFlagRequired("txid")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigTxInfo(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	txid, _ := cmd.Flags().GetUint64("txid")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	txid, err := cmd.Flags().GetUint64("txid")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	req := mty.ReqMultiSigTxInfo{
 		MultiSigAddr: addr,
 		TxId:         txid,
@@ -882,17 +981,24 @@ func GetMultiSigTxConfirmedWeightCmd() *cobra.Command {
 
 func getMultiSigTxConfirmedWeightFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().Uint64P("txid", "i", 0, "txid of  multisig transaction")
-	cmd.MarkFlagRequired("txid")
+	err = cmd.MarkFlagRequired("txid")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getGetMultiSigTxConfirmedWeight(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	txid, _ := cmd.Flags().GetUint64("txid")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	txid, err := cmd.Flags().GetUint64("txid")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	req := mty.ReqMultiSigTxInfo{
 		MultiSigAddr: addr,
 		TxId:         txid,
@@ -922,18 +1028,25 @@ func GetMultiSigAccUnSpentTodayCmd() *cobra.Command {
 
 func getMultiSigAccUnSpentTodayFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().StringP("execer", "e", "", "assets execer name")
 	cmd.Flags().StringP("symbol", "s", "", "assets symbol")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	isallBool := true
 	assets := &mty.Assets{}
 	//获取指定资产信息时，execer和symbol不能为空
@@ -995,18 +1108,25 @@ func GetMultiSigAccAssetsCmd() *cobra.Command {
 
 func getMultiSigAccAssetsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().StringP("execer", "e", "coins", "assets execer name ")
 	cmd.Flags().StringP("symbol", "s", "BTY", "assets symbol")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	execer, _ := cmd.Flags().GetString("execer")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	addr, err := cmd.Flags().GetString("addr")
+	execer, err := cmd.Flags().GetString("execer")
+	symbol, err := cmd.Flags().GetString("symbol")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	isallBool := true
 	assets := &mty.Assets{}
 	//获取指定资产信息时，execer和symbol不能为空
@@ -1075,13 +1195,20 @@ func GetMultiSigAccAllAddressCmd() *cobra.Command {
 
 func getMultiSigAccAllAddressFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address of created multisig account")
-	cmd.MarkFlagRequired("addr")
+	err := cmd.MarkFlagRequired("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 }
 
 func getMultiSigAccAllAddress(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	createAddr, _ := cmd.Flags().GetString("addr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	createAddr, err := cmd.Flags().GetString("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	var params rpctypes.Query4Jrpc
 	var rep interface{}
 	req := mty.ReqMultiSigAccInfo{
@@ -1118,9 +1245,12 @@ func getMultiSigAccByOwnerFlags(cmd *cobra.Command) {
 }
 
 func getMultiSigAccByOwner(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ownerAddr, _ := cmd.Flags().GetString("addr")
-
+	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
+	ownerAddr, err := cmd.Flags().GetString("addr")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 	params := &types.ReqString{
 		Data: ownerAddr,
 	}

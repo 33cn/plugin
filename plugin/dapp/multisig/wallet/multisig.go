@@ -492,7 +492,10 @@ func (policy *multisigPolicy) proceMultiSigAcc(multiSigAccs *mtypes.ReplyMultiSi
 				} else if ownerAttrs != nil {
 					AddOwnerAttr(false, ownerAttrs, ownerAttr, newbatch)
 				}
-				newbatch.Write()
+				err = newbatch.Write()
+				if err != nil {
+					bizlog.Error("ProceMultiSigAcc Write", "owneraddr", owneraddr, "err", err)
+				}
 				break
 			}
 		}
@@ -501,7 +504,10 @@ func (policy *multisigPolicy) proceMultiSigAcc(multiSigAccs *mtypes.ReplyMultiSi
 
 func (policy *multisigPolicy) proceWalletTxDetail(block *types.BlockDetail, tx *types.Transaction, index int32) *types.WalletTxDetail {
 	receipt := block.Receipts[index]
-	amount, _ := tx.Amount()
+	amount, err := tx.Amount()
+	if err != nil {
+		bizlog.Error("proceWalletTxDetail:tx.Amount()", "err", err)
+	}
 	wtxdetail := &types.WalletTxDetail{
 		Tx:         tx,
 		Height:     block.Block.Height,
