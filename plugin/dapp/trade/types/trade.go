@@ -54,6 +54,7 @@ func init() {
 	types.RegisterDappFork(TradeX, "Enable", 100899)
 	types.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
 	types.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
+	types.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
 }
 
 type tradeType struct {

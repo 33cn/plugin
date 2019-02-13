@@ -306,6 +306,9 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 }
 
 func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, error) {
+	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+		buyOrder.SellID = calcTokenSellID(buyOrder.SellID)
+	}
 	if buyOrder.BoardlotCnt < 0 || !strings.HasPrefix(buyOrder.SellID, sellIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}
@@ -376,6 +379,9 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 }
 
 func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*types.Receipt, error) {
+	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+		revoke.SellID = calcTokenSellID(revoke.SellID)
+	}
 	if !strings.HasPrefix(revoke.SellID, sellIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}
@@ -490,6 +496,9 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 }
 
 func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*types.Receipt, error) {
+	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+		sellOrder.BuyID = calcTokenSellID(sellOrder.BuyID)
+	}
 	if sellOrder.BoardlotCnt < 0 || !strings.HasPrefix(sellOrder.BuyID, buyIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}
@@ -562,6 +571,9 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 }
 
 func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*types.Receipt, error) {
+	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+		revoke.BuyID = calcTokenSellID(revoke.BuyID)
+	}
 	if !strings.HasPrefix(revoke.BuyID, buyIDPrefix) {
 		return nil, types.ErrInvalidParam
 	}

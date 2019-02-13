@@ -86,4 +86,5 @@ const (
 const (
 	ForkTradeAssetX = "ForkTradeAsset"
 	ForkTradeBuyLimitX = "ForkTradeBuyLimit"
+	ForkTradeIDX = "ForkTradeID"
 )
