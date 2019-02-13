@@ -144,7 +144,6 @@ func (s *suiteParaCommitMsg) createBlock() {
 func (s *suiteParaCommitMsg) TestRun_1() {
 	s.createBlock()
 
-	s.testRunGetMinerTxInfo()
 	s.testRunRmvBlock()
 
 	lastBlock, _ := s.para.RequestLastBlock()
@@ -152,17 +151,6 @@ func (s *suiteParaCommitMsg) TestRun_1() {
 		s.para.DelBlock(lastBlock, 1)
 
 	}
-
-}
-
-func (s *suiteParaCommitMsg) testRunGetMinerTxInfo() {
-	lastBlock, err := s.para.RequestLastBlock()
-	s.Nil(err)
-	plog.Info("para test testRunGetMinerTxInfo--------------", "last height", lastBlock.Height)
-	s.True(lastBlock.Height > 1)
-	status, err := getMinerTxInfo(lastBlock)
-	s.Nil(err)
-	s.Equal(int64(3), status.MainBlockHeight)
 
 }
 

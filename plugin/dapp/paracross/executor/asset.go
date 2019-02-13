@@ -81,7 +81,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 		return nil, errors.Wrap(err, "assetWithdrawCoins call NewParaAccount failed")
 	}
 	clog.Debug("paracross.assetWithdrawCoins isPara", "execer", string(a.tx.Execer),
-		"txHash", hex.EncodeToString(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
 	return assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
 }
 

@@ -1,6 +1,7 @@
 syntax = "proto3";
 package types;
 
+import "common.proto";
 import "tendermint.proto";
 
 message ValNode {
@@ -26,4 +27,9 @@ message ReqNodeInfo {
 
 message ReqBlockInfo {
     int64 height = 1;
+}
+
+service valnode {
+    rpc IsSync(ReqNil) returns (IsHealthy) {}
+    rpc GetNodeInfo(ReqNil) returns (ValidatorSet) {}
 }

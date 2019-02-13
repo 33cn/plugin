@@ -199,7 +199,7 @@ func (lott *Lottery) updateLotteryBuy(lotterylog *pty.ReceiptLottery, isAdd bool
 
 func (lott *Lottery) saveLotteryDraw(lotterylog *pty.ReceiptLottery) (kvs []*types.KeyValue) {
 	key := calcLotteryDrawKey(lotterylog.LotteryId, lotterylog.Round)
-	record := &pty.LotteryDrawRecord{Number: lotterylog.LuckyNumber, Round: lotterylog.Round, Time: lotterylog.Time, TxHash: lotterylog.TxHash, TotalAddrNum: lotterylog.TotalAddrNum, BuyAmount: lotterylog.BuyAmount}
+	record := &pty.LotteryDrawRecord{Number: lotterylog.LuckyNumber, Round: lotterylog.Round, Time: lotterylog.Time, TxHash: lotterylog.TxHash, TotalAddrNum: lotterylog.TotalAddrNum, BuyAmount: lotterylog.BuyAmount, LuckyAddrNum: lotterylog.LuckyAddrNum, TotalFund: lotterylog.TotalFund, Factor: lotterylog.Factor}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 	kvs = append(kvs, kv)
 	return kvs

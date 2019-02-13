@@ -32,17 +32,19 @@ func init() {
 type suiteParaClient struct {
 	// Include our basic suite logic.
 	suite.Suite
-	para    *client
-	grpcCli *typesmocks.Chain33Client
-	q       queue.Queue
-	block   *blockchain.BlockChain
-	exec    *executor.Executor
-	store   queue.Module
-	mem     queue.Module
-	network *p2p.P2p
+	para          *client
+	grpcCli       *typesmocks.Chain33Client
+	q             queue.Queue
+	block         *blockchain.BlockChain
+	exec          *executor.Executor
+	store         queue.Module
+	mem           queue.Module
+	network       *p2p.P2p
+	mainBlockList []*types.Block
 }
 
 func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule) {
+	s.createTempBlock()
 	q := queue.New("channel")
 	s.q = q
 	//api, _ = client.New(q.Client(), nil)
@@ -92,24 +94,29 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.createBlock()
 }
 
-func (s *suiteParaClient) createBlockMock() {
-	var i, hashdata int64
-	for i = 0; i < 3; i++ {
-		hashdata = i
-		if i > 0 {
-			hashdata = i - 1
-		}
-
+func (s *suiteParaClient) createTempBlock() {
+	var parentHash []byte
+	for i := 0; i < 3; i++ {
 		block := &types.Block{
-			Height:     i,
-			ParentHash: []byte(string(hashdata)),
+			Height:     int64(i),
+			ParentHash: parentHash,
 		}
+		hash := block.HashByForkHeight(1)
+		s.mainBlockList = append(s.mainBlockList, block)
+		parentHash = hash
+	}
+}
+
+func (s *suiteParaClient) createBlockMock() {
+	var i int64
+
+	for i = 0; i < 3; i++ {
 		blockSeq := &types.BlockSeq{
 			Seq: &types.BlockSequence{
-				Hash: []byte(string(i)),
+				Hash: s.mainBlockList[i].HashByForkHeight(1),
 				Type: 1,
 			},
-			Detail: &types.BlockDetail{Block: block},
+			Detail: &types.BlockDetail{Block: s.mainBlockList[i]},
 		}
 
 		s.grpcCli.On("GetBlockBySeq", mock.Anything, &types.Int64{Data: i}).Return(blockSeq, nil)
@@ -120,9 +127,10 @@ func (s *suiteParaClient) createBlockMock() {
 		Height:     3,
 		ParentHash: []byte(string(1)),
 	}
+	hash := block3.HashByForkHeight(1)
 	blockSeq3 := &types.BlockSeq{
 		Seq: &types.BlockSequence{
-			Hash: []byte(string(3)),
+			Hash: hash,
 			Type: 1,
 		},
 		Detail: &types.BlockDetail{Block: block3},
@@ -154,7 +162,7 @@ func (s *suiteParaClient) createBlock() {
 			plog.Error("para test", "err", err.Error())
 		}
 		plog.Info("para test---------1", "last height", lastBlock.Height)
-		s.para.createBlock(lastBlock, nil, i, getMainBlock(i+1, lastBlock.BlockTime+1))
+		s.para.createBlock(lastBlock, nil, i, s.getParaMainBlock(i+1, lastBlock.BlockTime+1))
 	}
 }
 
@@ -177,4 +185,19 @@ func (s *suiteParaClient) TearDownSuite() {
 	s.mem.Close()
 	s.q.Close()
 
+}
+
+func (s *suiteParaClient) getParaMainBlock(height int64, BlockTime int64) *types.BlockSeq {
+
+	return &types.BlockSeq{
+		Num: height,
+		Seq: &types.BlockSequence{Hash: s.mainBlockList[height-1].HashByForkHeight(1), Type: addAct},
+		Detail: &types.BlockDetail{
+			Block: &types.Block{
+				ParentHash: s.mainBlockList[height-1].ParentHash,
+				Height:     height,
+				BlockTime:  BlockTime,
+			},
+		},
+	}
 }

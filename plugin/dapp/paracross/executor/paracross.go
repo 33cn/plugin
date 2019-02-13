@@ -312,13 +312,14 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 	// 增加新的规则: 在主链执行器带着title的 asset-transfer/asset-withdraw 交易允许执行
 	// 1. user.p.${tilte}.${paraX}
 	// 1. payload 的 actionType = t/w
-	if !types.IsPara() && c.allowIsParaAssetTx(tx.Execer) {
+	if !types.IsPara() && c.allowIsParaTx(tx.Execer) {
 		var payload pt.ParacrossAction
 		err := types.Decode(tx.Payload, &payload)
 		if err != nil {
 			return err
 		}
-		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw {
+		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw ||
+			payload.Ty == pt.ParacrossActionCommit {
 			return nil
 		}
 	}
@@ -336,7 +337,7 @@ func (c *Paracross) Allow(tx *types.Transaction, index int) error {
 	return c.allow(tx, index)
 }
 
-func (c *Paracross) allowIsParaAssetTx(execer []byte) bool {
+func (c *Paracross) allowIsParaTx(execer []byte) bool {
 	if !bytes.HasPrefix(execer, types.ParaKey) {
 		return false
 	}

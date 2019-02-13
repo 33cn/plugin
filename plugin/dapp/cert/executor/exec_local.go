@@ -65,7 +65,11 @@ func (c *Cert) ExecLocal_Update(payload *ct.CertUpdate, tx *types.Transaction, r
 
 	// 证书更新
 	historityCertdata = &types.HistoryCertStore{}
-	authority.Author.ReloadCertByHeght(c.GetHeight())
+	err := authority.Author.ReloadCertByHeght(c.GetHeight())
+	if err != nil {
+		return nil, err
+	}
+
 	authority.Author.HistoryCertCache.ToHistoryCertStore(historityCertdata)
 	setKey := calcCertHeightKey(c.GetHeight())
 	set.KV = append(set.KV, &types.KeyValue{

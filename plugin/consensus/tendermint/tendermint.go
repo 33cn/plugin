@@ -266,7 +266,7 @@ OuterLoop:
 		}
 		state = statetmp.Copy()
 	} else {
-		tendermintlog.Info("StartConsensus", "blockinfo", blockInfo)
+		tendermintlog.Debug("StartConsensus", "blockinfo", blockInfo)
 		csState := blockInfo.GetState()
 		if csState == nil {
 			tendermintlog.Error("StartConsensus", "msg", "blockInfo.GetState is nil")
@@ -282,25 +282,24 @@ OuterLoop:
 		}
 	}
 
-	tendermintlog.Info("load state finish", "state", state, "validators", state.Validators)
+	tendermintlog.Debug("Load state finish", "state", state)
 	valNodes, err := client.QueryValidatorsByHeight(curHeight)
 	if err == nil && valNodes != nil {
 		if len(valNodes.Nodes) > 0 {
+			tendermintlog.Info("StartConsensus validators update", "update-valnodes", valNodes)
 			prevValSet := state.LastValidators.Copy()
 			nextValSet := prevValSet.Copy()
 			err := updateValidators(nextValSet, valNodes.Nodes)
 			if err != nil {
 				tendermintlog.Error("Error changing validator set", "error", err)
-				//return s, fmt.Errorf("Error changing validator set: %v", err)
 			}
 			// change results from this height but only applies to the next height
 			state.LastHeightValidatorsChanged = curHeight + 1
 			nextValSet.IncrementAccum(1)
 			state.Validators = nextValSet
-			tendermintlog.Info("StartConsensus validators updated", "update-valnodes", valNodes)
 		}
 	}
-	tendermintlog.Info("StartConsensus", "real validators", state.Validators)
+	tendermintlog.Info("StartConsensus", "validators", state.Validators)
 	// Log whether this node is a validator or an observer
 	if state.Validators.HasAddress(client.privValidator.GetAddress()) {
 		tendermintlog.Info("This node is a validator")
@@ -573,4 +572,39 @@ func (client *Client) LoadProposalBlock(height int64) *tmtypes.TendermintBlock {
 		tendermintlog.Debug("LoadProposalBlock txs hash", "height", proposalBlock.Header.Height, "tx-hash", fmt.Sprintf("%X", txHash))
 	}
 	return proposalBlock
+}
+
+// Query_IsHealthy query whether consensus is sync
+func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+	isHealthy := false
+	if client.IsCaughtUp() && client.GetCurrentHeight() <= client.csState.GetRoundState().Height+1 {
+		isHealthy = true
+	}
+	return &tmtypes.IsHealthy{IsHealthy: isHealthy}, nil
+}
+
+// Query_NodeInfo query validator node info
+func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+	nodes := client.csState.GetRoundState().Validators.Validators
+	validators := make([]*tmtypes.Validator, 0)
+	for _, node := range nodes {
+		if node == nil {
+			validators = append(validators, &tmtypes.Validator{})
+		} else {
+			item := &tmtypes.Validator{
+				Address:     node.Address,
+				PubKey:      node.PubKey,
+				VotingPower: node.VotingPower,
+				Accum:       node.Accum,
+			}
+			validators = append(validators, item)
+		}
+	}
+	return &tmtypes.ValidatorSet{Validators: validators, Proposer: &tmtypes.Validator{}}, nil
 }
