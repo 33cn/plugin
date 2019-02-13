@@ -212,8 +212,8 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 	}
 
 	// to 地址必须不是多重签名账户地址
-	multiSigAccTo, _ := getMultiSigAccFromDb(a.db, multiSigAccTransfer.To)
-	if multiSigAccTo != nil {
+	multiSigAccTo, err := getMultiSigAccFromDb(a.db, multiSigAccTransfer.To)
+	if multiSigAccTo != nil && err == nil {
 		multisiglog.Error("MultiSigExecTransferFrom", "multiSigAccTo", multiSigAccTo, "ToAddr", multiSigAccTransfer.To)
 		return nil, mty.ErrAddrNotSupport
 	}
@@ -250,19 +250,19 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransferTo) (*types.Receipt, error) {
 
 	//from地址校验必须不是多重签名账户地址
-	multiSigAccFrom, _ := getMultiSigAccFromDb(a.db, a.fromaddr)
-	if multiSigAccFrom != nil {
+	multiSigAccFrom, err := getMultiSigAccFromDb(a.db, a.fromaddr)
+	if multiSigAccFrom != nil && err == nil {
 		multisiglog.Error("MultiSigExecTransferTo", "multiSigAccFrom", multiSigAccFrom, "From", a.fromaddr)
 		return nil, mty.ErrAddrNotSupport
 	}
 	// to 地址必须是多重签名账户地址
-	multiSigAccTo, _ := getMultiSigAccFromDb(a.db, execTransfer.To)
-	if multiSigAccTo == nil {
+	multiSigAccTo, err := getMultiSigAccFromDb(a.db, execTransfer.To)
+	if multiSigAccTo == nil || err != nil {
 		multisiglog.Error("MultiSigExecTransferTo", "ToAddr", execTransfer.To)
 		return nil, mty.ErrAddrNotSupport
 	}
 	//assete资产合法性校验
-	err := mty.IsAssetsInvalid(execTransfer.Execname, execTransfer.Symbol)
+	err = mty.IsAssetsInvalid(execTransfer.Execname, execTransfer.Symbol)
 	if err != nil {
 		return nil, err
 	}

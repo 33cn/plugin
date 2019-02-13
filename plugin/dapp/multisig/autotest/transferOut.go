@@ -61,7 +61,11 @@ func (pack *transferOutPack) checkBalance(txInfo types.CheckHandlerParamType) bo
 
 	logLen := len(txInfo.Receipt.Logs)
 	var txLog map[string]interface{}
-	_ = json.Unmarshal(txInfo.Receipt.Logs[logLen-1].Log, &txLog)
+	err := json.Unmarshal(txInfo.Receipt.Logs[logLen-1].Log, &txLog)
+	if err != nil {
+		pack.FLog.Error("checkMultiSignTransferOut", "id", pack.PackID, "Unmarshal", err)
+		return false
+	}
 	pack.txID = txLog["multiSigTxOwner"].(map[string]interface{})["txid"].(string)
 	if logLen < 6 {
 		//need confirm
@@ -75,13 +79,16 @@ func (pack *transferOutPack) checkBalance(txInfo types.CheckHandlerParamType) bo
 	err2 := json.Unmarshal(txInfo.Receipt.Logs[2].Log, &toLog)
 
 	if err1 != nil || err2 != nil {
-		pack.FLog.Error("checkMultiSignTransferOut", "id", pack.PackID, "unmarshalErr1", err1, "unmarshalErr2")
+		pack.FLog.Error("checkMultiSignTransferOut", "id", pack.PackID, "unmarshalErr1", err1, "unmarshalErr2", err2)
 		return false
 	}
 
 	interCase := pack.TCase.(*transferOutCase)
-	amount, _ := strconv.ParseFloat(interCase.Amount, 64)
-
+	amount, err3 := strconv.ParseFloat(interCase.Amount, 64)
+	if err3 != nil {
+		pack.FLog.Error("checkMultiSignTransferOut", "id", pack.PackID, "ParseFloat", err3)
+		return false
+	}
 	return types.CheckFrozenDeltaWithAddr(fromLog, interCase.info.account, -amount) &&
 		types.CheckBalanceDeltaWithAddr(toLog, interCase.To, amount)
 }

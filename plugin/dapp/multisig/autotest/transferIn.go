@@ -66,8 +66,11 @@ func (pack *transferInPack) checkBalance(txInfo types.CheckHandlerParamType) boo
 	}
 
 	interCase := pack.TCase.(*transferInCase)
-	amount, _ := strconv.ParseFloat(interCase.Amount, 64)
-
+	amount, err := strconv.ParseFloat(interCase.Amount, 64)
+	if err != nil {
+		pack.FLog.Error("checkMultiSignTransferIn", "id", pack.PackID, "ParseFloat", err)
+		return false
+	}
 	return types.CheckBalanceDeltaWithAddr(fromLog, interCase.From, -amount) &&
 		types.CheckBalanceDeltaWithAddr(toLog, interCase.info.account, amount) &&
 		types.CheckFrozenDeltaWithAddr(frozenLog, interCase.info.account, amount) &&

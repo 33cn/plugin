@@ -39,10 +39,10 @@ func setMultiSigAccToDb(db dbm.KV, multiSigAcc *mty.MultiSig) ([]byte, []byte) {
 	value := types.Encode(multiSigAcc)
 
 	//即时保存到db中，方便同一个区块的下一个交易使用
-	db.Set(key, value)
-	//test
-	multisiglog.Info("setMultiSigAccToDb", "multiSigAcc", multiSigAcc)
-
+	err := db.Set(key, value)
+	if err != nil {
+		multisiglog.Error("setMultiSigAccToDb", "multiSigAcc", multiSigAcc, "err", err)
+	}
 	return key, value
 }
 
@@ -71,10 +71,10 @@ func getMultiSigAccTxFromDb(db dbm.KV, multiSigAddr string, txid uint64) (*mty.M
 func setMultiSigAccTxToDb(db dbm.KV, multiSigTx *mty.MultiSigTx) ([]byte, []byte) {
 	key := calcMultiSigAccTxKey(multiSigTx.MultiSigAddr, multiSigTx.Txid)
 	value := types.Encode(multiSigTx)
-	db.Set(key, value)
-
-	//test
-	multisiglog.Info("setMultiSigAccTxToDb", "multiSigTx", multiSigTx)
+	err := db.Set(key, value)
+	if err != nil {
+		multisiglog.Error("setMultiSigAccTxToDb", "multiSigTx", multiSigTx, "err", err)
+	}
 	return key, value
 }
 
@@ -127,7 +127,10 @@ func updateMultiSigAccCount(cachedb dbm.KVDB, isadd bool) (*types.KeyValue, erro
 		}
 		count--
 	}
-	setMultiSigAccCount(cachedb, count)
+	err = setMultiSigAccCount(cachedb, count)
+	if err != nil {
+		multisiglog.Error("updateMultiSigAccCount:setMultiSigAccCount ", "count", count, "err", err)
+	}
 	//keyvalue
 	return getMultiSigAccCountKV(count), nil
 }
@@ -188,12 +191,18 @@ func updateMultiSigAccList(db dbm.KVDB, addr string, index int64, isadd bool) (*
 	}
 
 	if isadd { //新增
-		db.Set(calcMultiSigAllAcc(index), []byte(addr))
+		err = db.Set(calcMultiSigAllAcc(index), []byte(addr))
+		if err != nil {
+			multisiglog.Error("UpdateMultiSigAccList add", "addr", addr, "index", index, "err", err)
+		}
 		kv := &types.KeyValue{Key: calcMultiSigAllAcc(index), Value: []byte(addr)}
 		return kv, nil
 	}
 	// 删除
-	db.Set(calcMultiSigAllAcc(index), nil)
+	err = db.Set(calcMultiSigAllAcc(index), nil)
+	if err != nil {
+		multisiglog.Error("UpdateMultiSigAccList del", "addr", addr, "index", index, "err", err)
+	}
 	kv := &types.KeyValue{Key: calcMultiSigAllAcc(index), Value: nil}
 	return kv, nil
 }
@@ -263,7 +272,10 @@ func updateAddrReciver(cachedb dbm.KVDB, addr, execname, symbol string, amount i
 	} else {
 		recv -= amount
 	}
-	setAddrReciver(cachedb, addr, execname, symbol, recv)
+	err = setAddrReciver(cachedb, addr, execname, symbol, recv)
+	if err != nil {
+		multisiglog.Error("updateAddrReciver setAddrReciver", "addr", addr, "execname", execname, "symbol", symbol, "err", err)
+	}
 	//keyvalue
 	return getAddrReciverKV(addr, execname, symbol, recv), nil
 }
@@ -350,7 +362,10 @@ func setMultiSigAddress(db dbm.KVDB, createAddr, multiSigAddr string, isadd bool
 	key := calcMultiSigAccCreateAddr(createAddr)
 	value := types.Encode(accAddress)
 
-	db.Set(key, value)
+	err = db.Set(key, value)
+	if err != nil {
+		multisiglog.Error("setMultiSigAddress", "key", string(key), "err", err)
+	}
 	return &types.KeyValue{Key: key, Value: value}
 }
 
