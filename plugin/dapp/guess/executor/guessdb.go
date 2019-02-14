@@ -6,10 +6,11 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common/db/table"
 	"math/big"
 	"strings"
+
+	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -613,7 +614,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 
 	if game.DevFeeFactor > 0 {
 		fee := big.NewInt(totalBetsNumber)
-		factor  := big.NewInt(game.DevFeeFactor)
+		factor := big.NewInt(game.DevFeeFactor)
 		thousand := big.NewInt(1000)
 		devFee = fee.Mul(fee, factor).Div(fee, thousand).Int64()
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
@@ -629,7 +630,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 
 	if game.PlatFeeFactor > 0 {
 		fee := big.NewInt(totalBetsNumber)
-		factor  := big.NewInt(game.PlatFeeFactor)
+		factor := big.NewInt(game.PlatFeeFactor)
 		thousand := big.NewInt(1000)
 		platFee = fee.Mul(fee, factor).Div(fee, thousand).Int64()
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
@@ -649,7 +650,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 		player := game.Plays[j]
 		if trimStr(player.Bet.Option) == trimStr(game.Result) {
 			betsNumber := big.NewInt(player.Bet.BetsNumber)
-			totalWinBetsNumber  := big.NewInt(winBetsNumber)
+			totalWinBetsNumber := big.NewInt(winBetsNumber)
 			leftWinBetsNumber := big.NewInt(winValue)
 
 			value := betsNumber.Mul(betsNumber, leftWinBetsNumber).Div(betsNumber, totalWinBetsNumber).Int64()
