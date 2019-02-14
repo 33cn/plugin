@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package kvmvccMavl
+package kvmvccmavl
 
 import (
 	"github.com/33cn/chain33/common"
@@ -12,9 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-
 var maxRollbackNum = 200
-
 
 // KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
@@ -23,7 +21,6 @@ type KVMVCCStore struct {
 	kvsetmap       map[string][]*types.KeyValue
 	enableMVCCIter bool
 }
-
 
 // NewKVMVCC construct KVMVCCStore module
 func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {

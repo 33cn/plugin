@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package kvmvccMavl
+package kvmvccmavl
 
 import (
 	"encoding/json"
@@ -37,7 +37,7 @@ func TestKvmvccMavlNewClose(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	store.Close()
@@ -49,7 +49,7 @@ func TestKvmvccMavlSetGet(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	kvmvccMavlFork = 50
@@ -82,7 +82,7 @@ func TestKvmvccMavlMemSet(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	kvmvccMavlFork = 50
@@ -120,7 +120,7 @@ func TestKvmvccMavlCommit(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
@@ -166,7 +166,7 @@ func TestKvmvccMavlCommit(t *testing.T) {
 		get := &types.StoreGet{StateHash: frontHash, Keys: keys}
 		values := store.Get(get)
 		require.Equal(t, len(values), len(keys))
-		for i, _ := range keys {
+		for i := range keys {
 			require.Equal(t, kv[i].Value, values[i])
 		}
 	}
@@ -175,7 +175,7 @@ func TestKvmvccMavlCommit(t *testing.T) {
 		get := &types.StoreGet{StateHash: hash, Keys: keys}
 		values := store.Get(get)
 		require.Equal(t, len(values), len(keys))
-		for i, _ := range keys {
+		for i := range keys {
 			require.Equal(t, kv[i].Value, values[i])
 		}
 	}
@@ -187,7 +187,7 @@ func TestKvmvccMavlRollback(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
@@ -250,7 +250,7 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
@@ -351,7 +351,7 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVMVCCMavlStore)
+	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	execaddr := "0111vcBNSEA7fZhAdLJphDwQRQJa111"
@@ -499,6 +499,45 @@ func GetRandomString(length int) string {
 	return common.GetRandPrintString(20, length)
 }
 
+func TestDelMavlData(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg, sub := newStoreCfgIter(dir)
+	store := New(storeCfg, sub).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	db := store.GetDB()
+
+	db.Set([]byte(mvccPrefix), []byte("value1"))
+	db.Set([]byte(fmt.Sprintf("%s123", mvccPrefix)), []byte("value2"))
+	db.Set([]byte(fmt.Sprintf("%s546", mvccPrefix)), []byte("value3"))
+	db.Set([]byte(fmt.Sprintf("123%s", mvccPrefix)), []byte("value4"))
+	db.Set([]byte("key11"), []byte("value11"))
+	db.Set([]byte("key22"), []byte("value22"))
+
+	delMavlData(db)
+
+	v, err := db.Get([]byte(mvccPrefix))
+	require.NoError(t, err)
+	require.Equal(t, []byte("value1"), v)
+	v, err = db.Get([]byte(fmt.Sprintf("%s123", mvccPrefix)))
+	require.NoError(t, err)
+	require.Equal(t, []byte("value2"), v)
+	v, err = db.Get([]byte(fmt.Sprintf("%s546", mvccPrefix)))
+	require.NoError(t, err)
+	require.Equal(t, []byte("value3"), v)
+	_, err = db.Get([]byte(fmt.Sprintf("123%s", mvccPrefix)))
+	require.Error(t, err)
+	_, err = db.Get([]byte("key11"))
+	require.Error(t, err)
+	_, err = db.Get([]byte("key22"))
+	require.Error(t, err)
+	_, err = db.Get(genDelMavlKey(mvccPrefix))
+	require.NoError(t, err)
+}
+
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
 func BenchmarkGetkmvcc(b *testing.B)     { benchmarkGet(b, true) }
 
@@ -509,7 +548,7 @@ func benchmarkGet(b *testing.B, isResetForkHeight bool) {
 	os.RemoveAll(dir)       //删除已存在目录
 
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -570,7 +609,7 @@ func benchmarkStoreGetKvs4N(b *testing.B, isResetForkHeight bool) {
 	}
 
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	var kv []*types.KeyValue
@@ -618,7 +657,7 @@ func benchmarkStoreGetKvsForNN(b *testing.B, isResetForkHeight bool) {
 	os.RemoveAll(dir)       //删除已存在目录
 
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -688,7 +727,7 @@ func benchmarkStoreGetKvsFor10000(b *testing.B, isResetForkHeight bool) {
 	os.RemoveAll(dir)       //删除已存在目录
 
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -763,7 +802,7 @@ func benchmarkGetIter(b *testing.B, isResetForkHeight bool) {
 	os.RemoveAll(dir)       //删除已存在目录
 
 	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVMVCCMavlStore)
+	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -816,7 +855,7 @@ func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 	b.Log(dir)
 
@@ -863,7 +902,7 @@ func benchmarkStoreSet(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -908,7 +947,7 @@ func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVMVCCMavlStore)
+	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(b, store)
 	b.Log(dir)
 
@@ -955,7 +994,7 @@ func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -999,7 +1038,7 @@ func benchmarkStoreMemSet(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -1047,7 +1086,7 @@ func benchmarkCommit(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -1097,7 +1136,7 @@ func benchmarkStoreCommit(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVMVCCMavlStore)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -1151,7 +1190,7 @@ func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVMVCCMavlStore)
+	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {
@@ -1194,7 +1233,7 @@ func benchmarkIterCommit(b *testing.B, isResetForkHeight bool) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVMVCCMavlStore)
+	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(b, store)
 
 	if isResetForkHeight {

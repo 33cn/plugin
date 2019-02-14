@@ -2,20 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package mavl 默克尔平衡树接口
-package kvmvccMavl
+package kvmvccmavl
 
 import (
 	"sync"
 
 	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
-	dbm "github.com/33cn/chain33/common/db"
 )
 
-// Store mavl store struct
+// MavlStore mavl store struct
 type MavlStore struct {
 	db               dbm.DB
 	trees            *sync.Map
@@ -30,9 +29,9 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 	var subcfg subMavlConfig
 	if sub != nil {
 		subcfg.EnableMavlPrefix = sub.EnableMavlPrefix
-		subcfg.EnableMVCC       = sub.EnableMVCC
-		subcfg.EnableMavlPrune  = sub.EnableMavlPrune
-		subcfg.PruneHeight      = sub.PruneHeight
+		subcfg.EnableMVCC = sub.EnableMVCC
+		subcfg.EnableMavlPrune = sub.EnableMavlPrune
+		subcfg.PruneHeight = sub.PruneHeight
 	}
 	mavls := &MavlStore{db, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
 	mavl.EnableMavlPrefix(subcfg.EnableMavlPrefix)
