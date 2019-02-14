@@ -366,7 +366,6 @@ func setMultiSigAddress(db dbm.KVDB, createAddr, multiSigAddr string, isadd bool
 	if err != nil {
 		multisiglog.Error("setMultiSigAddress", "key", string(key), "err", err)
 	}
-
 	return &types.KeyValue{Key: key, Value: value}
 }
 
