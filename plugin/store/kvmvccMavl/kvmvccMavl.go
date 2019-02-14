@@ -125,7 +125,6 @@ func (kvmMavls *KVmMavlStore) Close() {
 
 // Set kvs with statehash to KVmMavlStore
 func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
-	// 这里后续需要考虑分叉回退
 	if datas.Height < kvmvccMavlFork {
 		hash, err := kvmMavls.MavlStore.Set(datas, sync)
 		if err != nil {
@@ -166,7 +165,6 @@ func (kvmMavls *KVmMavlStore) Get(datas *types.StoreGet) [][]byte {
 
 // MemSet set kvs to the mem of KVmMavlStore module and return the StateHash
 func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
-	// 这里后续需要考虑分叉回退
 	if datas.Height < kvmvccMavlFork {
 		hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
 		if err != nil {
@@ -246,7 +244,6 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg queue.Message) {
 
 // Del set kvs to nil with StateHash
 func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
-	// 这里后续需要考虑分叉回退
 	if req.Height < kvmvccMavlFork {
 		hash, err := kvmMavls.MavlStore.Del(req)
 		if err != nil {
