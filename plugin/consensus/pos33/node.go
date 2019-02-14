@@ -397,13 +397,14 @@ type node struct {
 	rmp  map[int64][]*ty.Pos33Rands
 	comm *committee
 	v    *voter
+	conf *subConfig
 }
 
 // New create pos33 consensus client
-func newNode(con *pb.Consensus) *node {
+func newNode(conf *subConfig) *node {
 	priv := RootPrivKey
-	if len(con.Pos33SecretSeed) != 0 {
-		kb, err := hex.DecodeString(con.Pos33SecretSeed)
+	if len(conf.Pos33SecretSeed) != 0 {
+		kb, err := hex.DecodeString(conf.Pos33SecretSeed)
 		if err != nil {
 			plog.Error(err.Error())
 		}
@@ -421,12 +422,13 @@ func newNode(con *pb.Consensus) *node {
 		pub:  string(priv.PubKey().Bytes()),
 		bch:  make(chan *pb.Block, 16),
 		// cch:  make(chan int64, 1),
-		bmp: make(map[int64]*pb.Block),
-		vmp: make(map[int64][]*ty.Pos33Vote),
-		rmp: make(map[int64][]*ty.Pos33Rands),
+		bmp:  make(map[int64]*pb.Block),
+		vmp:  make(map[int64][]*ty.Pos33Vote),
+		rmp:  make(map[int64][]*ty.Pos33Rands),
+		conf: conf,
 	}
 
-	plog.Info("@@@@@@@ node start:", address.PubKeyToAddress([]byte(n.pub)), con.Pos33ListenAddr)
+	plog.Info("@@@@@@@ node start:", address.PubKeyToAddress([]byte(n.pub)), conf.Pos33ListenAddr)
 	return n
 }
 
@@ -464,7 +466,7 @@ func genRewordTx(vs map[string]*ty.Pos33Vote, seed []byte) (*pb.Transaction, int
 		Execer:  []byte("pos33"),
 		To:      address.GetExecAddress("pos33").String(),
 		Payload: data,
-		Fee:     pb.MinFee * 100,
+		Fee:     pos33MinFee,
 	}
 	return tx, w
 }
@@ -473,12 +475,12 @@ func (n *node) makeBlock(height int64, newSeed []byte, vs map[string]*ty.Pos33Vo
 	tx, w := genRewordTx(vs, newSeed)
 	tx.Sign(pb.ED25519, n.priv)
 	txs := []*pb.Transaction{tx}
-	nb, err := n.newBlock(txs, height, null)
+	nb, err := n.newBlock(txs, height, null, int(n.conf.Pos33MaxTxs))
 	if err != nil {
 		return nil, err
 	}
 	nb.Difficulty += uint32(w)
-	nb.Sign(n.priv)
+	// nb.Sign(n.priv)
 	plog.Info("@@@@@@@ I make a block: ", "height", nb.Height, "blockTime", nb.BlockTime, "vs", len(vs))
 	n.setBlock(nb)
 	n.gss.broadcastTCP(n.marshalBlockMsg(nb))
@@ -634,7 +636,7 @@ func (n *node) checkBlock(pb, b *pb.Block) bool {
 		return false
 	}
 
-	if b.BlockTime-pb.BlockTime < n.Cfg.Pos33BlockTime {
+	if b.BlockTime-pb.BlockTime < n.conf.Pos33BlockTime {
 		plog.Info("checkBlock false: blockTime too late", "height", b.Height, "pb.BlockTime", pb.BlockTime, "b.BlockTime", b.BlockTime)
 		return false
 	}
@@ -758,9 +760,9 @@ func (n *node) getCommittee() {
 }
 
 func (n *node) gossipCommittee(height int64, c *committee, isNext bool) {
-	ty := ty.Pos33Msg_C
+	t := ty.Pos33Msg_C
 	if isNext {
-		ty = ty.Pos33Msg_NC
+		t = ty.Pos33Msg_NC
 	}
 
 	pc := &ty.Pos33Committee{
@@ -775,7 +777,7 @@ func (n *node) gossipCommittee(height int64, c *committee, isNext bool) {
 	pc.Sig = &pb.Signature{Ty: pb.ED25519, Pubkey: []byte(n.pub), Signature: sig.Bytes()}
 	pm := &ty.Pos33Msg{
 		Data: pb.Encode(pc),
-		Ty:   ty,
+		Ty:   t,
 	}
 	data := pb.Encode(pm)
 	n.gss.broadcastTCP(data)
@@ -893,7 +895,7 @@ func (n *node) doGossipMsg() chan *ty.Pos33Msg {
 func (n *node) test(hch chan int64) {
 	time.AfterFunc(time.Second*5, func() {
 		hch := make(chan int64, 1)
-		runTest(n.Client, true, int(n.Cfg.Pos33TestMaxAccs), int(n.Cfg.Pos33TestMaxTxs), hch)
+		runTest(n.Client, true, int(n.conf.Pos33TestMaxAccs), int(n.conf.Pos33TestMaxTxs), hch)
 	})
 }
 
@@ -906,7 +908,7 @@ func (n *node) run() {
 	plog.Info("pos33 node runing.......", "last block height=", lb.Height)
 	height := lb.Height + 1
 
-	if n.Cfg.Pos33Test {
+	if n.conf.Pos33Test {
 		hch := make(chan int64, 1)
 		go n.test(hch)
 		go func() {
@@ -917,23 +919,23 @@ func (n *node) run() {
 		}()
 	}
 
-	n.gss = newGossip(n.priv.PubKey().KeyString(), n.Cfg.Pos33ListenAddr, n.Cfg.Pos33AdvertiseAddr, n.Cfg.Pos33PeerSeed)
+	n.gss = newGossip(n.priv.PubKey().KeyString(), n.conf.Pos33ListenAddr, n.conf.Pos33AdvertiseAddr, n.conf.Pos33PeerSeed)
 	go n.gss.runBroadcast()
 	msgch := n.doGossipMsg()
 
-	blockTime := n.Cfg.Pos33BlockTime
+	blockTime := n.conf.Pos33BlockTime
 	if blockTime == 0 {
 		blockTime = 1000
-		n.Cfg.Pos33BlockTime = blockTime
+		n.conf.Pos33BlockTime = blockTime
 	}
-	blockTimeout := n.Cfg.Pos33BlockTimeout
+	blockTimeout := n.conf.Pos33BlockTimeout
 	if blockTimeout == 0 {
 		blockTimeout = 3300
-		n.Cfg.Pos33BlockTimeout = blockTimeout
+		n.conf.Pos33BlockTimeout = blockTimeout
 	}
 	sortitionTimeout := 3300
 
-	if n.Cfg.Pos33Test {
+	if n.conf.Pos33Test {
 		n.sortition(lb)
 		n.v = newVoter(n.comm, lb.Height)
 		if lb.Height > 0 {

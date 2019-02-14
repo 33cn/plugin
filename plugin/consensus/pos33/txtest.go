@@ -264,8 +264,8 @@ func newTx(priv crypto.PrivKey, amount int64, to string, height int64) *Tx {
 	act := &types.CoinsAction{Value: &types.CoinsAction_Transfer{Transfer: &pb.AssetsTransfer{Cointoken: "YCC", Amount: amount}}, Ty: types.CoinsActionTransfer}
 	tx := &Tx{
 		Nonce:   rand.Int63(),
-		Execer:  pb.ExecerCoins,
-		Fee:     pb.MinFee + rand.Int63n(pb.MinFee),
+		Execer:  []byte(types.CoinsX),
+		Fee:     pos33MinFee + rand.Int63n(pos33MinFee),
 		To:      to, //
 		Payload: pb.Encode(act),
 		Expire:  height + pb.TxHeightFlag,

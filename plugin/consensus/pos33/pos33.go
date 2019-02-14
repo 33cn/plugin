@@ -14,13 +14,14 @@ import (
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	ced25519 "github.com/33cn/chain33/system/crypto/ed25519"
-	pb "github.com/33cn/chain33/types"
-
 	"github.com/33cn/chain33/system/dapp/coins/types"
+	pb "github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	// "github.com/33cn/chain33/util"
 )
 
 const rootSeed = "YCC-ROOT"
+const pos33MinFee = 1e7
 
 // RootPrivKey is the root private key for ycc
 var RootPrivKey crypto.PrivKey
@@ -61,10 +62,30 @@ type Client struct {
 	priv crypto.PrivKey
 }
 
+type subConfig struct {
+	Pos33SecretSeed    string `json:"Pos33SecretSeed,omitempty"`
+	Pos33ListenAddr    string `json:"Pos33ListenAddr,omitempty"`
+	Pos33AdvertiseAddr string `json:"Pos33AdvertiseAddr,omitempty"`
+	Pos33PeerSeed      string `json:"Pos33PeerSeed,omitempty"`
+	Pos33Test          bool   `json:"Pos33Test,omitempty"`
+	Pos33TestInit      bool   `json:"Pos33TestInit,omitempty"`
+	Pos33TestMaxAccs   int64  `json:"Pos33TestMaxAccs,omitempty"`
+	Pos33TestMaxTxs    int64  `json:"Pos33TestMaxTxs,omitempty"`
+	Pos33MaxTxs        int64  `json:"Pos33MaxTxs,omitempty"`
+	Pos33BlockTime     int64  `json:"Pos33BlockTime,omitempty"`
+	Pos33BlockTimeout  int64  `json:"Pos33BlockTimeout,omitempty"`
+	Pos33MinFee        int64  `json:"Pos33MinFee,omitempty"`
+}
+
 // New create pos33 consensus client
-func New(cfg *pb.Consensus, bs []byte) queue.Module {
+func New(cfg *pb.Consensus, sub []byte) queue.Module {
 	c := drivers.NewBaseClient(cfg)
-	n := newNode(cfg)
+	var subcfg subConfig
+	if sub != nil {
+		pb.MustDecode(sub, &subcfg)
+	}
+
+	n := newNode(&subcfg)
 	client := &Client{BaseClient: c, n: n}
 	client.n.Client = client
 	client.Cfg.Genesis = RootAddr
@@ -80,7 +101,7 @@ func (client *Client) ProcEvent(msg queue.Message) bool {
 	return false
 }
 
-func (client *Client) newBlock(txs []*pb.Transaction, height int64, null bool) (*pb.Block, error) {
+func (client *Client) newBlock(txs []*pb.Transaction, height int64, null bool, txcont int) (*pb.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("newBlock error", "error", err)
@@ -92,7 +113,7 @@ func (client *Client) newBlock(txs []*pb.Transaction, height int64, null bool) (
 	}
 	if !null {
 		ch := make(chan []*Tx, 1)
-		go func() { ch <- client.RequestTx(int(client.Cfg.Pos33MaxTxs), nil) }()
+		go func() { ch <- client.RequestTx(txcont, nil) }()
 		select {
 		case <-time.After(time.Millisecond * 300):
 		case ts := <-ch:
@@ -128,7 +149,7 @@ func (client *Client) AddBlock(b *pb.Block) {
 // CreateBlock will start run
 func (client *Client) CreateBlock() {
 	for {
-		if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.GetForceMining()) {
+		if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
 			plog.Info("createblock.ismining is disable or client is caughtup is false")
 			time.Sleep(time.Second)
 			continue

@@ -6,6 +6,7 @@ import (
 
 	"github.com/33cn/chain33/common/crypto"
 	pb "github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
 // RANDAROUNDS is rounds of generate rands
