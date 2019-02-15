@@ -82,7 +82,7 @@ func (s *StateDB) Rollback() {
 }
 
 // Commit canche tx
-func (s *StateDB) Commit() {
+func (s *StateDB) Commit() error {
 	for k, v := range s.txcache {
 		s.cache[k] = v
 	}
@@ -91,6 +91,7 @@ func (s *StateDB) Commit() {
 	if types.IsFork(s.height, "ForkExecRollback") {
 		s.resetTx()
 	}
+	return nil
 }
 
 func (s *StateDB) resetTx() {
@@ -174,7 +175,6 @@ func (s *StateDB) Set(key []byte, value []byte) error {
 	debugAccount("==set==", key, value)
 	skey := string(key)
 	if s.intx {
-		println("set intx")
 		if s.txcache == nil {
 			s.txcache = make(map[string][]byte)
 		}
