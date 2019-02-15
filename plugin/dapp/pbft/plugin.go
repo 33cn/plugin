@@ -11,6 +11,6 @@ import (
 
 func init() {
 	pluginmgr.Register(&pluginmgr.PluginBase{
-		Name:     "pbft",
+		Name: "pbft",
 	})
 }
