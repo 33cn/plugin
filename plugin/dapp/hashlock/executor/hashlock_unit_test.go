@@ -14,9 +14,9 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/db"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
 )
 
@@ -93,7 +93,8 @@ func TestExecHashsend(t *testing.T) {
 
 func constructHashlockInstance() drivers.Driver {
 	h := newHashlock()
-	h.SetStateDB(NewTestDB())
+	_, _, kvdb := util.CreateTestDB()
+	h.SetStateDB(kvdb)
 	return h
 }
 
@@ -149,36 +150,4 @@ func CompareRetrieveExecResult(rec1 *types.Receipt, err1 error, rec2 *types.Rece
 		return false
 	}
 	return true
-}
-
-type TestDB struct {
-	cache map[string][]byte
-	db.TransactionDB
-}
-
-func NewTestDB() *TestDB {
-	return &TestDB{cache: make(map[string][]byte)}
-}
-
-func (e *TestDB) Get(key []byte) (value []byte, err error) {
-	if value, ok := e.cache[string(key)]; ok {
-		//elog.Error("getkey", "key", string(key), "value", string(value))
-		return value, nil
-	}
-	return nil, types.ErrNotFound
-}
-
-func (e *TestDB) Set(key []byte, value []byte) error {
-	//elog.Error("setkey", "key", string(key), "value", string(value))
-	e.cache[string(key)] = value
-	return nil
-}
-
-func (e *TestDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
-	return nil, types.ErrNotFound
-}
-
-//从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (e *TestDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
-	return nil, types.ErrNotFound
 }
