@@ -420,7 +420,7 @@ func (rep *Replica) sendViewChange() {
 	delete(rep.newViewStore, rep.view)
 	// 根据论文内容，节点视图进入到v+1
 	rep.view++
-	rep.client = rep.replicas[rep.view - 1]
+	rep.client = rep.replicas[rep.view-1]
 	// activeView False表示正在viewchange
 	// 节点不会接收除了View-change(ack),New-view,checkpoint以外的消息
 	rep.activeView = false

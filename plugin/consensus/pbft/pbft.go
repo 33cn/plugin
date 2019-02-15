@@ -96,15 +96,15 @@ type Replica struct {
 	lastExec         uint64          // 上一个执行完成后的Request序列号(发送了Reply)
 	stableCheckpoint uint64          // 该节点储存的全网稳定的检查点的序列号
 	lastReply        *pt.ClientReply // 上一个发送的客户端回复
-	client 			 string           // 网络中的客户端，值为ip地址,对于主节点而言为自己的ip
+	client           string          // 网络中的客户端，值为ip地址,对于主节点而言为自己的ip
 	// highStateTarget  *stateUpdateTarget // 观察到的最大的弱检查点认证,TODO
 
 	// bool部分
-	isClient		bool // 该节点是否为对副本广播请求的节点
-	activeView 		bool // 若为false，意味着viewchange发生
+	isClient   bool // 该节点是否为对副本广播请求的节点
+	activeView bool // 若为false，意味着viewchange发生
 	// skipInProgress bool // 当节点重新恢复，需要找到一个新的启动点，此时此变量设置为true TODO
 	// stateTransferring bool // 当状态传输执行的时候，该变量设置为true TODO
-	byzantine 		bool // 用于测试，某个节点是否会表现拜占庭，发生任意性行为
+	byzantine bool // 用于测试，某个节点是否会表现拜占庭，发生任意性行为
 
 	// map部分
 	replicas        map[uint64]string                   // 目前所有节点的地址，由id索引
@@ -176,7 +176,7 @@ func NewReplica(nodeID uint64, peersURL string, primaryID uint64, f uint64, N ui
 	rep.view = primaryID
 	rep.replicasInit(peersURL)
 	rep.address = rep.replicas[rep.id-1] // 节点address由节点id决定
-	rep.setClient() // 设置节点的客户端ip，由主节点的ip决定
+	rep.setClient()                      // 设置节点的客户端ip，由主节点的ip决定
 	if rep.id == primaryID {
 		rep.isClient = true
 	} else {
@@ -255,9 +255,9 @@ func (rep *Replica) getClient() string {
 	return rep.client
 }
 
-// 更新节点客户端的ip 
+// 更新节点客户端的ip
 func (rep *Replica) setClient() {
-	rep.client = rep.replicas[rep.view - 1]
+	rep.client = rep.replicas[rep.view-1]
 }
 
 // 启动节点

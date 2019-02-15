@@ -91,7 +91,7 @@ func OnePbft(cfgName string) {
 	defer p2p.Close()
 	time.Sleep(1 * time.Second)
 
-	if cfgName == "Client.test.toml" || cfgName == "Windows.test.toml"{
+	if cfgName == "Client.test.toml" || cfgName == "Windows.test.toml" {
 		sendReplyList(q)
 	} else {
 		for {
