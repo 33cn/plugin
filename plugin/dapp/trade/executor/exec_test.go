@@ -138,7 +138,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 
 	// test buy market
 	buy := &pty.TradeBuyTx{
-		SellID:      sellOrder.SellID,
+		SellID:      sellOrder.SellID[len("mavl-trade-sell-"):],
 		BoardlotCnt: buyArgs.total,
 		Fee:         0,
 	}
@@ -278,7 +278,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	assert.Nil(t, err)
 
 	sell := &pty.TradeSellMarketTx{
-		BuyID:       buyLimitOrder.BuyID,
+		BuyID:       buyLimitOrder.BuyID[len("mavl-trade-buy-"):],
 		BoardlotCnt: sellArgs.total,
 		Fee:         0,
 	}
