@@ -96,16 +96,17 @@ type Replica struct {
 	lastExec         uint64          // 上一个执行完成后的Request序列号(发送了Reply)
 	stableCheckpoint uint64          // 该节点储存的全网稳定的检查点的序列号
 	lastReply        *pt.ClientReply // 上一个发送的客户端回复
+	client 			 string           // 网络中的客户端，值为ip地址,对于主节点而言为自己的ip
 	// highStateTarget  *stateUpdateTarget // 观察到的最大的弱检查点认证,TODO
 
 	// bool部分
-	activeView bool // 若为false，意味着viewchange发生
+	isClient		bool // 该节点是否为对副本广播请求的节点
+	activeView 		bool // 若为false，意味着viewchange发生
 	// skipInProgress bool // 当节点重新恢复，需要找到一个新的启动点，此时此变量设置为true TODO
-	//stateTransferring bool // 当状态传输执行的时候，该变量设置为true TODO
-	byzantine bool // 用于测试，某个节点是否会表现拜占庭，发生任意性行为
+	// stateTransferring bool // 当状态传输执行的时候，该变量设置为true TODO
+	byzantine 		bool // 用于测试，某个节点是否会表现拜占庭，发生任意性行为
 
 	// map部分
-	clients         map[uint64]string                   // 目前所有的客户端地址
 	replicas        map[uint64]string                   // 目前所有节点的地址，由id索引
 	reqStore        map[string]*pt.RequestClient        // 客户端的请求
 	outstandingReq  map[string]*pt.RequestClient        // 待完成的客户端请求
@@ -147,30 +148,11 @@ type Replica struct {
 }
 
 // NewReplica 创建一个节点，为构造器
-func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, clientURL string, primaryID uint64, f uint64, N uint64, K uint64, logMultiplier uint64, byzantine bool) (chan *pt.Request, chan *pt.BlockData, bool, string) {
+func NewReplica(nodeID uint64, peersURL string, primaryID uint64, f uint64, N uint64, K uint64, logMultiplier uint64, byzantine bool) (chan *pt.Request, chan *pt.BlockData, bool, string) {
 
 	rep := &Replica{}
-	isClient := false
-
-	if !isNode {
-		isClient = true
-		rep.f = f                              // 仅仅只需要知道f即可
-		rep.clients = make(map[uint64]string)  // 只用初始化客户端
-		rep.replicas = make(map[uint64]string) // 以及节点IP
-		rep.clientsInit(clientURL)
-		rep.address = rep.clients[clientID-1]        // 然后监听此端口即可，用于接发消息
-		rep.replicasInit(peersURL)                   // 初始化参与共识的节点IP，要向这些地址发送ClientRequest
-		rep.replyStore = make(map[string]*replyCert) //只用初始化回复证书，验证f+1即可
-		rep.requestChan = make(chan *pt.Request)     // 仅仅用于发送ClientRequest
-		rep.dataChan = make(chan *pt.BlockData)      // 用于出块的chan
-
-		plog.Info("PBFT Client INFO", "Address", rep.address)
-		rep.startReplica(isClient)
-		return rep.requestChan, rep.dataChan, isClient, rep.address
-	}
 
 	// map部分
-	rep.clients = make(map[uint64]string)                       // 网络中的客户端，索引没有意义，值为ip地址
 	rep.replicas = make(map[uint64]string)                      // 网络中的节点，id为索引，值为ip地址
 	rep.reqStore = make(map[string]*pt.RequestClient)           // 客户请求组，消息digest索引，值为客户请求
 	rep.outstandingReq = make(map[string]*pt.RequestClient)     // 待处理组，同上
@@ -193,8 +175,13 @@ func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, cl
 	rep.id = nodeID
 	rep.view = primaryID
 	rep.replicasInit(peersURL)
-	rep.clientsInit(clientURL)
 	rep.address = rep.replicas[rep.id-1] // 节点address由节点id决定
+	rep.setClient() // 设置节点的客户端ip，由主节点的ip决定
+	if rep.id == primaryID {
+		rep.isClient = true
+	} else {
+		rep.isClient = false
+	}
 	rep.f = f
 	rep.N = N
 	if rep.f*3+1 > rep.N {
@@ -238,14 +225,9 @@ func NewReplica(isNode bool, nodeID uint64, clientID uint64, peersURL string, cl
 	plog.Debug("PBFT Basic Info", "log size", rep.L)
 	plog.Debug("PBFT Basic Info", "byzantine flag", rep.byzantine)
 
-	for _, c := range rep.clients {
-		if rep.address == c {
-			isClient = true
-		}
-	}
 	// 开启网络监听，消息传输，启动节点
-	rep.startReplica(isClient)
-	return rep.requestChan, rep.dataChan, isClient, rep.address
+	rep.startReplica(rep.isClient)
+	return rep.requestChan, rep.dataChan, rep.isClient, rep.address
 }
 
 //=====================================================
@@ -268,26 +250,19 @@ func (rep *Replica) replicasAdd(id uint64, addr string) {
 	rep.replicas[id] = addr
 }
 
-// 初始化客户端组信息
-func (rep *Replica) clientsInit(clients string) {
-	for id, addr := range strings.Split(clients, ",") {
-		rep.clientsAdd(uint64(id), addr)
-	}
+// 获取目前状态下，客户端的ip
+func (rep *Replica) getClient() string {
+	return rep.client
 }
 
-// 增加节点中的客户端
-func (rep *Replica) clientsAdd(id uint64, addr string) {
-	rep.clients[id] = addr
-}
-
-// 删除节点中的客户端
-func (rep *Replica) clientsDelete(id uint64) {
-	delete(rep.clients, id)
+// 更新节点客户端的ip 
+func (rep *Replica) setClient() {
+	rep.client = rep.replicas[rep.view - 1]
 }
 
 // 启动节点
-func (rep *Replica) startReplica(replicaType bool) {
-	rep.startListen(replicaType)
+func (rep *Replica) startReplica(isClient bool) {
+	rep.startListen(isClient)
 	go rep.sendMessage()
 	go rep.recvMessage()
 }
@@ -774,14 +749,14 @@ func (rep *Replica) checkpointed(digest string, n uint64) bool {
 //=====================================================
 
 // 节点开启监听tcp端口
-func (rep *Replica) startListen(replicaType bool) {
+func (rep *Replica) startListen(isClient bool) {
 	var err error
 	rep.listen, err = net.Listen("tcp", rep.address)
 	if err != nil {
 		plog.Error("tcp connect error", "err", err)
 	}
-	if replicaType {
-		// 意味着是客户端(不参与共识的)
+	if isClient {
+		// 意味着是客户端(参与共识的)
 		plog.Info("Client listen start", "Address", rep.address)
 	} else {
 		// 意味着是共识节点

@@ -53,25 +53,16 @@ func NewPbftNode(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	peers := subcfg.PeersURL
 
-	if subcfg.IsNode && subcfg.NodeID <= 0 {
+	if subcfg.NodeID <= 0 {
 		plog.Error("Please check whether the configuration of NodeID is right")
 		if subcfg.PrimaryID <= 0 || subcfg.F < 0 || subcfg.N <= 0 || subcfg.K <= 0 || subcfg.LogMultiplier <= 1 {
 			plog.Error("Please check whether the ID and paras is below 0 or wrong")
 			return nil
 		}
 	}
-	if strings.Compare(subcfg.ClientAddr, "") == 0 {
-		plog.Error("Please check whether the configuration of ClientAddr is empty")
-		return nil
-	}
-	clients := subcfg.ClientAddr
-
-	if !subcfg.IsNode && subcfg.ClientID <= 0 {
-		plog.Error("Please check whether the configuration of ClientID is right")
-	}
 
 	var c *PbftNode
-	requestChan, dataChan, isClient, address := NewReplica(subcfg.IsNode, subcfg.NodeID, subcfg.ClientID, peers, clients, subcfg.PrimaryID, subcfg.F, subcfg.N, subcfg.K, subcfg.LogMultiplier, subcfg.Byzantine)
+	requestChan, dataChan, isClient, address := NewReplica(subcfg.NodeID, peers, subcfg.PrimaryID, subcfg.F, subcfg.N, subcfg.K, subcfg.LogMultiplier, subcfg.Byzantine)
 	c = NewBlockstore(cfg, requestChan, dataChan, isClient, address)
 	return c
 }

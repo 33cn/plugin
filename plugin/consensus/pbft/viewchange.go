@@ -123,7 +123,7 @@ func (rep *Replica) persistPset() {
 
 // 利用不同的键的值保存P、Q集合，P集合的键为pset，Q集合的键为qset，保存对应的PQ对象(经过protobuf二值化的)
 func (rep *Replica) persistPQset(key string, set []*pt.RequestViewChange_PQ) {
-	raw, err := proto.Marshal(&pt.PQset{set})
+	raw, err := proto.Marshal(&pt.PQset{Set: set})
 	if raw == nil && err != nil {
 		plog.Warn("Proto Marshall has Error")
 	}
@@ -420,6 +420,7 @@ func (rep *Replica) sendViewChange() {
 	delete(rep.newViewStore, rep.view)
 	// 根据论文内容，节点视图进入到v+1
 	rep.view++
+	rep.client = rep.replicas[rep.view - 1]
 	// activeView False表示正在viewchange
 	// 节点不会接收除了View-change(ack),New-view,checkpoint以外的消息
 	rep.activeView = false

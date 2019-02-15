@@ -90,14 +90,10 @@ powLimitBits = "0x1f2fffff"
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 genesisBlockTime=1514533394
 # =============== pbft共识配置参数 ===========================
-# 是否参与共识，pbft共识用到
-IsNode = true
 # 共识节点ID，pbft共识用到，不同的节点设置不同的nodeId
-NodeID=2
+NodeID = 2
 # pbft共识用到，表示所有节点的地址
 PeersURL = "172.28.0.6:8080,172.28.0.7:8080,172.28.0.8:8080,172.28.0.9:8080"
-# pbft共识用到，表示所有客户端的地址
-ClientAddr = "172.28.0.10:8080"
 # pbft共识用到，表示主节点的初始ID
 PrimaryID = 1
 # pbft共识用到，表示了最大容忍错误节点数，最大节点数
