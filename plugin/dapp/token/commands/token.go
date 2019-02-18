@@ -7,13 +7,13 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/spf13/cobra"
@@ -61,42 +61,15 @@ func CreateTokenTransferCmd() *cobra.Command {
 func addCreateTokenTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
 	cmd.MarkFlagRequired("to")
-
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
-
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
-
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	cmd.MarkFlagRequired("symbol")
 }
 
 func createTokenTransfer(cmd *cobra.Command, args []string) {
-	toAddr, _ := cmd.Flags().GetString("to")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	note, _ := cmd.Flags().GetString("note")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	payload := &types.AssetsTransfer{
-		To:        toAddr,
-		Amount:    int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
-		Note:      []byte(note),
-		Cointoken: symbol,
-	}
-	data, err := json.Marshal(&payload)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(tokenty.TokenX),
-		ActionName: "Transfer",
-		Payload:    data,
-	}
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	commands.CreateAssetTransfer(cmd, args, tokenty.TokenX)
 }
 
 // CreateTokenTransferExecCmd create raw transfer tx
@@ -124,41 +97,7 @@ func addCreateTokenSendToExecFlags(cmd *cobra.Command) {
 }
 
 func createTokenSendToExec(cmd *cobra.Command, args []string) {
-	paraName, _ := cmd.Flags().GetString("paraName")
-	exec, _ := cmd.Flags().GetString("exec")
-	exec = getRealExecName(paraName, exec)
-	to, err := GetExecAddr(exec)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	note, _ := cmd.Flags().GetString("note")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	payload := &types.AssetsTransferToExec{
-		To:        to,
-		Amount:    int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
-		Note:      []byte(note),
-		Cointoken: symbol,
-		ExecName:  exec,
-	}
-
-	data, err := json.Marshal(&payload)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(tokenty.TokenX),
-		ActionName: "TransferToExec",
-		Payload:    data,
-	}
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	commands.CreateAssetSendToExec(cmd, args, tokenty.TokenX)
 }
 
 // CreateTokenWithdrawCmd create raw withdraw tx
@@ -186,40 +125,7 @@ func addCreateTokenWithdrawFlags(cmd *cobra.Command) {
 }
 
 func createTokenWithdraw(cmd *cobra.Command, args []string) {
-	exec, _ := cmd.Flags().GetString("exec")
-	paraName, _ := cmd.Flags().GetString("paraName")
-	exec = getRealExecName(paraName, exec)
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	note, _ := cmd.Flags().GetString("note")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	exec = getRealExecName(paraName, exec)
-	execAddr, err := GetExecAddr(exec)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	payload := &types.AssetsWithdraw{
-		To:        execAddr,
-		Amount:    int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
-		Note:      []byte(note),
-		Cointoken: symbol,
-		ExecName:  exec,
-	}
-	data, err := json.Marshal(&payload)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(tokenty.TokenX),
-		ActionName: "Withdraw",
-		Payload:    data,
-	}
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	commands.CreateAssetWithdraw(cmd, args, tokenty.TokenX)
 }
 
 // GetTokensPreCreatedCmd get precreated tokens
@@ -462,6 +368,8 @@ func addTokenPrecreatedFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("total", "t", 0, "total amount of the token")
 	cmd.MarkFlagRequired("total")
 
+	cmd.Flags().Int32P("category", "c", 0, "token category")
+
 	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
 }
 
@@ -473,6 +381,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 	ownerAddr, _ := cmd.Flags().GetString("owner_addr")
 	price, _ := cmd.Flags().GetFloat64("price")
 	total, _ := cmd.Flags().GetInt64("total")
+	category, _ := cmd.Flags().GetInt32("category")
 
 	priceInt64 := int64((price + 0.000001) * 1e4)
 	params := &tokenty.TokenPreCreate{
@@ -482,6 +391,7 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 		Introduction: introduction,
 		Owner:        ownerAddr,
 		Total:        total * types.TokenPrecision,
+		Category:     category,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenPreCreateTx", params, nil)
 	ctx.RunWithoutMarshal()

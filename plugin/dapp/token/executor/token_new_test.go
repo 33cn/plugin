@@ -18,7 +18,8 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
-	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+	pty "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
 
@@ -149,7 +150,7 @@ func TestPrecreate(t *testing.T) {
 	fmt.Println("TestPrecreate start")
 	defer fmt.Println("TestPrecreate end")
 
-	v := &tokenty.TokenPreCreate{
+	v := &pty.TokenPreCreate{
 		Name:         tokenName,
 		Symbol:       tokenSym,
 		Introduction: tokenIntro,
@@ -157,9 +158,9 @@ func TestPrecreate(t *testing.T) {
 		Price:        tokenPrice,
 		Owner:        addr,
 	}
-	precreate := &tokenty.TokenAction{
-		Ty:    tokenty.TokenActionPreCreate,
-		Value: &tokenty.TokenAction_TokenPreCreate{TokenPreCreate: v},
+	precreate := &pty.TokenAction{
+		Ty:    pty.TokenActionPreCreate,
+		Value: &pty.TokenAction_TokenPreCreate{TokenPreCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
@@ -197,10 +198,10 @@ func TestFinish(t *testing.T) {
 	fmt.Println("TestFinish start")
 	defer fmt.Println("TestFinish end")
 
-	v := &tokenty.TokenFinishCreate{Symbol: tokenSym, Owner: addr}
-	finish := &tokenty.TokenAction{
-		Ty:    tokenty.TokenActionFinishCreate,
-		Value: &tokenty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
+	v := &pty.TokenFinishCreate{Symbol: tokenSym, Owner: addr}
+	finish := &pty.TokenAction{
+		Ty:    pty.TokenActionFinishCreate,
+		Value: &pty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
@@ -238,8 +239,8 @@ func TestTransferToken(t *testing.T) {
 	fmt.Println("TestTransferToken start")
 	defer fmt.Println("TestTransferToken end")
 
-	v := &tokenty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: []byte(""), To: transToAddr}}
-	transfer := &tokenty.TokenAction{Value: v, Ty: tokenty.ActionTransfer}
+	v := &pty.TokenAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: tokenSym, Amount: transAmount, Note: []byte(""), To: transToAddr}}
+	transfer := &pty.TokenAction{Value: v, Ty: pty.ActionTransfer}
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
 	tx.Nonce = r.Int63()
@@ -275,7 +276,7 @@ func TestQueryAsset(t *testing.T) {
 	req.Driver = execName
 	req.FuncName = "GetAccountTokenAssets"
 
-	var reqAsset tokenty.ReqAccountTokenAssets
+	var reqAsset pty.ReqAccountTokenAssets
 	reqAsset.Address = addr
 	reqAsset.Execer = execName
 
@@ -292,7 +293,7 @@ func TestQueryAsset(t *testing.T) {
 		t.Error(ErrTest)
 		return
 	}
-	var res tokenty.ReplyAccountTokenAssets
+	var res pty.ReplyAccountTokenAssets
 	err = types.Decode(reply.Msg, &res)
 	if err != nil {
 		t.Error(err)
@@ -381,4 +382,39 @@ func getprivkey(key string) crypto.PrivKey {
 		panic(err)
 	}
 	return priv
+}
+
+func TestToken_validSymbolWithHeight(t *testing.T) {
+	types.SetTitleOnlyForTest("chain33")
+	forkBadTokenSymbol := types.GetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX)
+	forkTokenSymbolWithNumber := types.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX)
+	t.Log("x", "1", forkBadTokenSymbol, "2", forkTokenSymbolWithNumber)
+	assert.Equal(t, true, (forkTokenSymbolWithNumber >= forkBadTokenSymbol))
+
+	cases := []struct {
+		symbol []byte
+		height int64
+		expect bool
+	}{
+		{[]byte("x"), int64(forkBadTokenSymbol - 1), false},
+		{[]byte("X林"), int64(forkBadTokenSymbol - 1), true},
+
+		{[]byte("x"), int64(forkBadTokenSymbol), false},
+		{[]byte("X林"), int64(forkBadTokenSymbol), false},
+
+		{[]byte("x"), int64(forkTokenSymbolWithNumber - 1), false},
+		{[]byte("X林"), int64(forkTokenSymbolWithNumber - 1), false},
+		{[]byte("X1"), int64(forkTokenSymbolWithNumber - 1), false},
+
+		{[]byte("x"), int64(forkTokenSymbolWithNumber), false},
+		{[]byte("X林"), int64(forkTokenSymbolWithNumber), false},
+		{[]byte("X1"), int64(forkTokenSymbolWithNumber), true},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run("validSymbol", func(t *testing.T) {
+			assert.Equal(t, c.expect, validSymbolWithHeight(c.symbol, c.height))
+		})
+	}
 }

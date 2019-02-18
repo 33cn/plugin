@@ -57,6 +57,7 @@ var (
 
 	TokenSymbol                = "X"
 	MainBlockHeightForTransfer = int64(9)
+	tempTitle                  = ""
 )
 
 type CommitTestSuite struct {
@@ -138,7 +139,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 			Items: []*types.BlockDetail{blockDetail},
 		}, nil)
 	suite.api.On("GetBlockHash", &types.ReqInt{Height: MainBlockHeight}).Return(
-		&types.ReplyHash{Hash: MainBlockHash10}, nil)
+		&types.ReplyHash{Hash: CurBlock}, nil)
 }
 
 func (suite *CommitTestSuite) TestSetup() {
@@ -167,7 +168,7 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 		CrossTxResult:   []byte("abc"),
 		CrossTxHashs:    [][]byte{},
 	}
-	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.ParaX, 0)
+	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.GetExecName(), 0)
 	if err != nil {
 		suite.T().Error("TestExec", "create tx failed", err)
 	}
@@ -331,7 +332,12 @@ func (suite *CommitTestSuite) TestExec() {
 }
 
 func TestCommitSuite(t *testing.T) {
+	tempTitle = types.GetTitle()
+	types.SetTitleOnlyForTest(Title)
+
 	suite.Run(t, new(CommitTestSuite))
+
+	types.SetTitleOnlyForTest(tempTitle)
 }
 
 func TestGetTitle(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin/crypto/init"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator"
 	ca "github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/generator/impl"
 	"github.com/BurntSushi/toml"
@@ -74,7 +75,12 @@ func generateUsers(baseDir string, orgName string) {
 	fmt.Printf("generateUsers\n")
 	fmt.Println(baseDir)
 
-	os.RemoveAll(baseDir)
+	err := os.RemoveAll(baseDir)
+	if err != nil {
+		fmt.Printf("Clean directory %s error", baseDir)
+		os.Exit(1)
+	}
+
 	caDir := filepath.Join(baseDir, "cacerts")
 
 	signType := types.GetSignType("cert", cfg.SignType)

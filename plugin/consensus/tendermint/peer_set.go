@@ -264,7 +264,10 @@ func (pc *peerConn) SetTransferChannel(transferChannel chan MsgInfo) {
 }
 
 func (pc *peerConn) CloseConn() {
-	pc.conn.Close() // nolint: errcheck
+	err := pc.conn.Close() // nolint: errcheck
+	if err != nil {
+		tendermintlog.Error("peerConn CloseConn failed", "err", err)
+	}
 }
 
 func (pc *peerConn) HandshakeTimeout(
@@ -479,7 +482,12 @@ FOR_LOOP:
 				pc.stopForError(err)
 				break FOR_LOOP
 			}
-			pc.bufWriter.Flush()
+			err = pc.bufWriter.Flush()
+			if err != nil {
+				tendermintlog.Error("peerConn sendroutine flush buffer failed", "error", err)
+				pc.stopForError(err)
+				break FOR_LOOP
+			}
 		case _, ok := <-pc.pongChannel:
 			if ok {
 				tendermintlog.Debug("Send Pong")

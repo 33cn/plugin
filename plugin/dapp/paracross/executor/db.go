@@ -5,8 +5,9 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -58,7 +59,7 @@ func GetBlock(api client.QueueProtocolAPI, blockHash []byte) (*types.BlockDetail
 	blockDetails, err := api.GetBlockByHashes(&types.ReqHashes{Hashes: [][]byte{blockHash}})
 	if err != nil {
 		clog.Error("paracross.Commit getBlockHeader", "db", err,
-			"commit tx hash", common.Bytes2Hex(blockHash))
+			"commit tx hash", hex.EncodeToString(blockHash))
 		return nil, err
 	}
 	if len(blockDetails.Items) != 1 {
@@ -66,7 +67,7 @@ func GetBlock(api client.QueueProtocolAPI, blockHash []byte) (*types.BlockDetail
 		return nil, pt.ErrParaBlockHashNoMatch
 	}
 	if blockDetails.Items[0] == nil {
-		clog.Error("paracross.Commit getBlockHeader", "commit tx hash net found", common.Bytes2Hex(blockHash))
+		clog.Error("paracross.Commit getBlockHeader", "commit tx hash net found", hex.EncodeToString(blockHash))
 		return nil, pt.ErrParaBlockHashNoMatch
 	}
 	return blockDetails.Items[0], nil
@@ -94,7 +95,7 @@ func GetTx(api client.QueueProtocolAPI, txHash []byte) (*types.TransactionDetail
 	txs, err := api.GetTransactionByHash(&types.ReqHashes{Hashes: [][]byte{txHash}})
 	if err != nil {
 		clog.Error("paracross.Commit GetTx", "db", err,
-			"commit tx hash", common.Bytes2Hex(txHash))
+			"commit tx hash", hex.EncodeToString(txHash))
 		return nil, err
 	}
 	if len(txs.Txs) != 1 {
@@ -102,7 +103,7 @@ func GetTx(api client.QueueProtocolAPI, txHash []byte) (*types.TransactionDetail
 		return nil, pt.ErrParaBlockHashNoMatch
 	}
 	if txs.Txs == nil {
-		clog.Error("paracross.Commit GetTx", "commit tx hash net found", common.Bytes2Hex(txHash))
+		clog.Error("paracross.Commit GetTx", "commit tx hash net found", hex.EncodeToString(txHash))
 		return nil, pt.ErrParaBlockHashNoMatch
 	}
 	return txs.Txs[0], nil

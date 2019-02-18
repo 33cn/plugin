@@ -5,8 +5,6 @@
 package types
 
 import (
-	"strings"
-
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
@@ -125,26 +123,6 @@ func IsAssetsInvalid(exec, symbol string) error {
 		multisiglog.Error("IsAssetsInvalid", "exec", exec)
 		return ErrInvalidExec
 	}
-	//Symbol检测
-	symbolstr := strings.Split(symbol, ".")[len(strings.Split(symbol, "."))-1]
-	valid := validSymbol([]byte(symbolstr))
-	if !valid {
-		multisiglog.Error("IsAssetsInvalid", "symbol", symbol)
-		return ErrInvalidSymbol
-	}
+	//Symbol不做检测
 	return nil
-}
-
-func isUpperChar(a byte) bool {
-	res := (a <= 'Z' && a >= 'A')
-	return res
-}
-
-func validSymbol(cs []byte) bool {
-	for _, c := range cs {
-		if !isUpperChar(c) {
-			return false
-		}
-	}
-	return true
 }

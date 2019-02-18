@@ -81,7 +81,7 @@ func (t *Trie) Prove(key []byte, fromLevel uint, proofDb dbm.DB) error {
 			} else {
 				enc, _ := proto.Marshal(n.create())
 				if !ok {
-					hash = createHashNode(common.ShaKeccak256(enc))
+					hash = createHashNode(common.Sha3(enc))
 				}
 				proofDb.Set(hash.GetHash(), enc)
 			}

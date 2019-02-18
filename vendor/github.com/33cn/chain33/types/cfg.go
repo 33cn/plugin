@@ -65,19 +65,12 @@ type Mempool struct {
 
 // Consensus 配置
 type Consensus struct {
-	Name                        string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	GenesisBlockTime            int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
-	Minerstart                  bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
-	Genesis                     string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
-	HotkeyAddr                  string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
-	ForceMining                 bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
-	WriteBlockSeconds           int64  `protobuf:"varint,20,opt,name=writeBlockSeconds" json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient        string `protobuf:"bytes,22,opt,name=paraRemoteGrpcClient" json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                 int64  `protobuf:"varint,23,opt,name=startHeight" json:"startHeight,omitempty"`
-	EmptyBlockInterval          int64  `protobuf:"varint,24,opt,name=emptyBlockInterval" json:"emptyBlockInterval,omitempty"`
-	AuthAccount                 string `protobuf:"bytes,25,opt,name=authAccount" json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg        int32  `protobuf:"varint,26,opt,name=waitBlocks4CommitMsg" json:"waitBlocks4CommitMsg,omitempty"`
-	SearchHashMatchedBlockDepth int32  `protobuf:"varint,27,opt,name=searchHashMatchedBlockDepth" json:"searchHashMatchedBlockDepth,omitempty"`
+	Name             string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	GenesisBlockTime int64  `protobuf:"varint,2,opt,name=genesisBlockTime" json:"genesisBlockTime,omitempty"`
+	Minerstart       bool   `protobuf:"varint,3,opt,name=minerstart" json:"minerstart,omitempty"`
+	Genesis          string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
+	HotkeyAddr       string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
+	ForceMining      bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
 }
 
 // Wallet 配置
@@ -145,8 +138,8 @@ type RPC struct {
 	GrpcFuncWhitelist []string `protobuf:"bytes,6,rep,name=grpcFuncWhitelist" json:"grpcFuncWhitelist,omitempty"`
 	JrpcFuncBlacklist []string `protobuf:"bytes,7,rep,name=jrpcFuncBlacklist" json:"jrpcFuncBlacklist,omitempty"`
 	GrpcFuncBlacklist []string `protobuf:"bytes,8,rep,name=grpcFuncBlacklist" json:"grpcFuncBlacklist,omitempty"`
-	MainnetJrpcAddr   string   `protobuf:"bytes,9,opt,name=mainnetJrpcAddr" json:"mainnetJrpcAddr,omitempty"`
 	EnableTLS         bool     `protobuf:"varint,10,opt,name=enableTLS" json:"enableTLS,omitempty"`
+	EnableTrace       bool     `protobuf:"varint,10,opt,name=enableTrace" json:"enableTrace,omitempty"`
 	CertFile          string   `protobuf:"varint,11,opt,name=certFile" json:"certFile,omitempty"`
 	KeyFile           string   `protobuf:"varint,12,opt,name=keyFile" json:"keyFile,omitempty"`
 }

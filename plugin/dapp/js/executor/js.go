@@ -13,6 +13,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/robertkrimen/otto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var driverName = ptypes.JsX
@@ -114,6 +116,11 @@ func (u *js) callVM(prefix string, payload *jsproto.Call, tx *types.Transaction,
 	vm.Set("args", payload.Args)
 	callfunc := "callcode(context, f, args, loglist)"
 	jsvalue, err := vm.Run(callfunc)
+	//除非你知道怎么做，不要返回这样的操作，这会引起整个区块执行失败，从而引起严重的安全问题。
+	//要保证不能人工的创造这样的条件，也就是调用接口的输入，不能用户可以任意修改的。
+	if u.GetExecutorAPI().IsErr() {
+		return nil, status.New(codes.Aborted, "jsvm operation is abort").Err()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +236,22 @@ func (u *js) execnameFunc(vm *otto.Otto, name string) {
 	})
 }
 
+func (u *js) randnumFunc(vm *otto.Otto, name string) {
+	vm.Set("randnum", func(call otto.FunctionCall) otto.Value {
+		hash := u.GetLastHash()
+		param := &types.ReqRandHash{
+			ExecName: "ticket",
+			BlockNum: 5,
+			Hash:     hash,
+		}
+		randhash, err := u.GetExecutorAPI().GetRandNum(param)
+		if err != nil {
+			return errReturn(vm, err)
+		}
+		return okReturn(vm, common.ToHex(randhash))
+	})
+}
+
 func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
 	_, plocal := calcAllPrefix(name)
@@ -281,6 +304,7 @@ func (u *js) createVM(name string, tx *types.Transaction, index int) (*otto.Otto
 	u.localdbFunc(vm, name)
 	u.listdbFunc(vm, name)
 	u.execnameFunc(vm, name)
+	u.randnumFunc(vm, name)
 	u.registerAccountFunc(vm)
 	u.registerTableFunc(vm, name)
 	return vm, nil

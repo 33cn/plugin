@@ -45,7 +45,7 @@ func (m *MultiSig) Query_MultiSigAccounts(in *mty.ReqMultiSigAccs) (types.Messag
 	if totalcount == 0 {
 		return accountAddrs, nil
 	}
-	if in.End > totalcount {
+	if in.End >= totalcount {
 		return nil, types.ErrInvalidParam
 	}
 	for index := in.Start; index <= in.End; index++ {
@@ -192,6 +192,8 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	}
 	if multiSigTx == nil {
 		multiSigTx = &mty.MultiSigTx{}
+	} else { //由于代码中使用hex.EncodeToString()接口转换的，没有加0x，为了方便上层统一处理再次返回时增加0x即可
+		multiSigTx.TxHash = "0x" + multiSigTx.TxHash
 	}
 	return multiSigTx, nil
 }
@@ -338,7 +340,10 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 					continue
 				}
 				accAssets := &mty.AccAssets{}
-				account, _ := m.getMultiSigAccAssets(reciver.MultiSigAddr, reciver.Assets)
+				account, err := m.getMultiSigAccAssets(reciver.MultiSigAddr, reciver.Assets)
+				if err != nil {
+					multisiglog.Error("Query_MultiSigAccAssets:getMultiSigAccAssets", "MultiSigAddr", reciver.MultiSigAddr, "err", err)
+				}
 				accAssets.Account = account
 				accAssets.Assets = reciver.Assets
 				accAssets.RecvAmount = reciver.Amount
@@ -353,11 +358,17 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 		if err != nil {
 			return nil, err
 		}
-		account, _ := m.getMultiSigAccAssets(in.MultiSigAddr, in.Assets)
+		account, err := m.getMultiSigAccAssets(in.MultiSigAddr, in.Assets)
+		if err != nil {
+			multisiglog.Error("Query_MultiSigAccAssets:getMultiSigAccAssets", "MultiSigAddr", in.MultiSigAddr, "err", err)
+		}
 		accAssets.Account = account
 		accAssets.Assets = in.Assets
 
-		amount, _ := getAddrReciver(m.GetLocalDB(), in.MultiSigAddr, in.Assets.Execer, in.Assets.Symbol)
+		amount, err := getAddrReciver(m.GetLocalDB(), in.MultiSigAddr, in.Assets.Execer, in.Assets.Symbol)
+		if err != nil {
+			multisiglog.Error("Query_MultiSigAccAssets:getAddrReciver", "MultiSigAddr", in.MultiSigAddr, "err", err)
+		}
 		accAssets.RecvAmount = amount
 
 		replyAccAssets.AccAssets = append(replyAccAssets.AccAssets, accAssets)

@@ -7,13 +7,16 @@ package para
 import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
+	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -221,4 +224,18 @@ func createTxsGroup(txs []*types.Transaction) ([]*types.Transaction, error) {
 		return nil, err
 	}
 	return group.Txs, nil
+}
+
+func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
+	para := new(client)
+	grpcClient := &typesmocks.Chain33Client{}
+	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
+	para.grpcClient = grpcClient
+	_, err := para.GetBlockHashForkHeightOnMainChain()
+	assert.NotNil(t, err)
+	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
+	ret, err := para.GetBlockHashForkHeightOnMainChain()
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), ret)
+
 }

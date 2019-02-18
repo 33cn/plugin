@@ -53,7 +53,7 @@ type client struct {
 	recv       chan Message
 	done       chan struct{}
 	wg         *sync.WaitGroup
-	topic      string
+	topic      unsafe.Pointer
 	isClosed   int32
 	isCloseing int32
 }
@@ -76,7 +76,7 @@ func (client *client) Send(msg Message, waitReply bool) (err error) {
 		timeout = time.Minute
 	}
 	err = client.SendTimeout(msg, waitReply, timeout)
-	if err == types.ErrTimeout {
+	if err == ErrQueueTimeout {
 		panic(err)
 	}
 	return err
@@ -85,7 +85,7 @@ func (client *client) Send(msg Message, waitReply bool) (err error) {
 // SendTimeout 超时发送， msg 消息 ,waitReply 是否等待回应， timeout 超时时间
 func (client *client) SendTimeout(msg Message, waitReply bool, timeout time.Duration) (err error) {
 	if client.isClose() {
-		return types.ErrIsClosed
+		return ErrIsQueueClosed
 	}
 	if !waitReply {
 		msg.chReply = nil
@@ -115,9 +115,9 @@ func (client *client) WaitTimeout(msg Message, timeout time.Duration) (Message, 
 	case msg = <-msg.chReply:
 		return msg, msg.Err()
 	case <-client.done:
-		return Message{}, errors.New("client is closed")
+		return Message{}, ErrIsQueueClosed
 	case <-t.C:
-		return Message{}, types.ErrTimeout
+		return Message{}, ErrQueueTimeout
 	}
 }
 
@@ -128,7 +128,7 @@ func (client *client) Wait(msg Message) (Message, error) {
 		timeout = 5 * time.Minute
 	}
 	msg, err := client.WaitTimeout(msg, timeout)
-	if err == types.ErrTimeout {
+	if err == ErrQueueTimeout {
 		panic(err)
 	}
 	return msg, err
@@ -140,13 +140,11 @@ func (client *client) Recv() chan Message {
 }
 
 func (client *client) getTopic() string {
-	address := unsafe.Pointer(&(client.topic))
-	return *(*string)(atomic.LoadPointer(&address))
+	return *(*string)(atomic.LoadPointer(&client.topic))
 }
 
 func (client *client) setTopic(topic string) {
-	address := unsafe.Pointer(&(client.topic))
-	atomic.StorePointer(&address, unsafe.Pointer(&topic))
+	atomic.StorePointer(&client.topic, unsafe.Pointer(&topic))
 }
 
 func (client *client) isClose() bool {
@@ -159,7 +157,7 @@ func (client *client) isInClose() bool {
 
 // Close 关闭client
 func (client *client) Close() {
-	if atomic.LoadInt32(&client.isClosed) == 1 {
+	if atomic.LoadInt32(&client.isClosed) == 1 || client.topic == nil {
 		return
 	}
 	topic := client.getTopic()

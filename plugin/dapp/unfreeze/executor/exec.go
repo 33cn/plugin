@@ -129,7 +129,7 @@ func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction)
 	if unfreeze.StartTime == 0 {
 		unfreeze.StartTime = u.GetBlockTime()
 	}
-	means, err := newMeans(payload.Means)
+	means, err := newMeans(payload.Means, u.GetHeight())
 	if err != nil {
 		return nil, err
 
@@ -150,7 +150,7 @@ func (u *Unfreeze) create(unfreeze *pty.Unfreeze) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	receiptLog := getUnfreezeLog(nil, unfreeze)
+	receiptLog := getUnfreezeLog(nil, unfreeze, pty.TyLogCreateUnfreeze)
 	return &types.Receipt{Ty: types.ExecOk,
 		KV: []*types.KeyValue{{Key: k, Value: v}}, Logs: []*types.ReceiptLog{receiptLog}}, nil
 }
@@ -162,9 +162,9 @@ func mergeReceipt(r1 *types.Receipt, r2 *types.Receipt) (*types.Receipt, error) 
 	return r1, nil
 }
 
-func getUnfreezeLog(prev, cur *pty.Unfreeze) *types.ReceiptLog {
+func getUnfreezeLog(prev, cur *pty.Unfreeze, ty int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
-	log.Ty = pty.TyLogCreateUnfreeze
+	log.Ty = ty
 	r := &pty.ReceiptUnfreeze{Prev: prev, Current: cur}
 	log.Log = types.Encode(r)
 	return log
@@ -172,7 +172,7 @@ func getUnfreezeLog(prev, cur *pty.Unfreeze) *types.ReceiptLog {
 
 // 提取解冻币
 func (u *Unfreeze) withdraw(unfreeze *pty.Unfreeze) (int64, *types.Receipt, error) {
-	means, err := newMeans(unfreeze.Means)
+	means, err := newMeans(unfreeze.Means, u.GetHeight())
 	if err != nil {
 		return 0, nil, err
 
@@ -183,7 +183,7 @@ func (u *Unfreeze) withdraw(unfreeze *pty.Unfreeze) (int64, *types.Receipt, erro
 	}
 	unfreezeOld := *unfreeze
 	unfreeze, amount := withdraw(unfreeze, frozen)
-	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze)
+	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze, pty.TyLogWithdrawUnfreeze)
 
 	k := []byte(unfreeze.UnfreezeID)
 	v := types.Encode(unfreeze)
@@ -203,9 +203,27 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 	}
 
 	unfreezeOld := *unfreeze
-	amount := unfreeze.Remaining
-	unfreeze.Remaining = 0
-	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze)
+	var amount int64
+	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, "ForkTerminatePart") {
+		if unfreeze.Terminated {
+			return 0, nil, pty.ErrTerminated
+		}
+		m, err := newMeans(unfreeze.Means, u.GetHeight())
+		if err != nil {
+			return 0, nil, err
+		}
+		frozen, err := m.calcFrozen(unfreeze, u.GetBlockTime())
+		if err != nil {
+			return 0, nil, err
+		}
+		amount = frozen
+		unfreeze.Remaining = unfreeze.Remaining - amount
+		unfreeze.Terminated = true
+	} else {
+		amount = unfreeze.Remaining
+		unfreeze.Remaining = 0
+	}
+	receiptLog := getUnfreezeLog(&unfreezeOld, unfreeze, pty.TyLogTerminateUnfreeze)
 
 	k := []byte(unfreeze.UnfreezeID)
 	v := types.Encode(unfreeze)

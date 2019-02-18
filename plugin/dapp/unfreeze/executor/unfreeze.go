@@ -22,7 +22,7 @@ func init() {
 
 // Init 重命名执行器名称
 func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newUnfreeze, 0)
+	drivers.Register(GetName(), newUnfreeze, types.GetDappFork(driverName, "Enable"))
 }
 
 // Unfreeze 执行器结构体

@@ -24,6 +24,8 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(UnfreezeX))
 	// init executor type
 	types.RegistorExecutor(name, NewType())
+	types.RegisterDappFork(name, "Enable", 0)
+	types.RegisterDappFork(name, ForkTerminatePartX, 1298600)
 }
 
 //getRealExecName
@@ -76,7 +78,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 	tlog.Debug("UnfreezeType.CreateTx", "action", action)
 	if action == Action_CreateUnfreeze {
 		var param UnfreezeCreate
-		err := json.Unmarshal(message, &param)
+		err := types.JSONToPB(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
@@ -84,7 +86,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 		return u.RPC_UnfreezeCreateTx(&param)
 	} else if action == Action_WithdrawUnfreeze {
 		var param UnfreezeWithdraw
-		err := json.Unmarshal(message, &param)
+		err := types.JSONToPB(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
@@ -92,7 +94,7 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 		return u.RPC_UnfreezeWithdrawTx(&param)
 	} else if action == Action_TerminateUnfreeze {
 		var param UnfreezeTerminate
-		err := json.Unmarshal(message, &param)
+		err := types.JSONToPB(message, &param)
 		if err != nil {
 			tlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam

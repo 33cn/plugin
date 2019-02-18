@@ -19,9 +19,10 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TokenX))
 	types.RegistorExecutor(TokenX, NewType())
 	types.RegisterDappFork(TokenX, "Enable", 100899)
-	types.RegisterDappFork(TokenX, "ForkTokenBlackList", 190000)
-	types.RegisterDappFork(TokenX, "ForkBadTokenSymbol", 184000)
-	types.RegisterDappFork(TokenX, "ForkTokenPrice", 560000)
+	types.RegisterDappFork(TokenX, ForkTokenBlackListX, 190000)
+	types.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 184000)
+	types.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
+	types.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
 }
 
 // TokenType 执行器基类结构体

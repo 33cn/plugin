@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"time"
@@ -35,9 +36,9 @@ func PrivacyCmd() *cobra.Command {
 	cmd.AddCommand(
 		showPrivacyKeyCmd(),
 		showPrivacyAccountSpendCmd(),
-		public2PrivacyCmd(),
-		privacy2PrivacyCmd(),
-		privacy2PublicCmd(),
+		createPub2PrivTxCmd(),
+		createPriv2PrivTxCmd(),
+		createPriv2PubTxCmd(),
 		showAmountsOfUTXOCmd(),
 		showUTXOs4SpecifiedAmountCmd(),
 		createUTXOsCmd(),
@@ -78,38 +79,34 @@ func showPrivacyKey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// public2PrivacyCmd public address to privacy address
-func public2PrivacyCmd() *cobra.Command {
+// CreatePub2PrivTxCmd create a public to privacy transaction
+func createPub2PrivTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pub2priv",
-		Short: "Public to privacy from pubkeypair amout note",
-		Run:   public2Privacy,
+		Short: "Create a public to privacy transaction",
+		Run:   createPub2PrivTx,
 	}
-	public2PrivacyFlag(cmd)
+	createPub2PrivTxFlags(cmd)
 	return cmd
 }
 
-func public2PrivacyFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("from", "f", "", "from account address")
-	cmd.MarkFlagRequired("from")
-
-	cmd.Flags().StringP("pubkeypair", "p", "", "to view spend public key pair")
+func createPub2PrivTxFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("pubkeypair", "p", "", "public key pair")
 	cmd.MarkFlagRequired("pubkeypair")
-
-	cmd.Flags().Float64P("amount", "a", 0, "transfer amount")
+	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount, at most 4 decimal places")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("note", "n", "", "transfer note")
+	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("note", "n", "", "note for transaction")
 	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
-
 }
 
-func public2Privacy(cmd *cobra.Command, args []string) {
+func createPub2PrivTx(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	from, _ := cmd.Flags().GetString("from")
 	pubkeypair, _ := cmd.Flags().GetString("pubkeypair")
-	amount, _ := cmd.Flags().GetFloat64("amount")
+	amount := cmdtypes.GetAmountValue(cmd, "amount")
+	tokenname, _ := cmd.Flags().GetString("symbol")
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
@@ -120,62 +117,59 @@ func public2Privacy(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Hour / time.Second)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4 //支持4位小数输入，多余的输入将被截断
-	params := pty.ReqPub2Pri{
-		Sender:     from,
-		Pubkeypair: pubkeypair,
-		Amount:     amountInt64,
+	params := types.ReqCreateTransaction{
+		Tokenname:  tokenname,
+		Type:       types.PrivacyTypePublic2Privacy,
+		Amount:     amount,
 		Note:       note,
-		Tokenname:  types.BTY,
+		Pubkeypair: pubkeypair,
 		Expire:     expire,
 	}
-
-	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPublic2privacy", params, &res)
-	ctx.Run()
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
-// privacy address to privacy address
-func privacy2PrivacyCmd() *cobra.Command {
+// CreatePriv2PrivTxCmd create a privacy to privacy transaction
+func createPriv2PrivTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "priv2priv",
-		Short: "Privacy to privacy from toviewpubkey tospendpubkey amout note",
-		Run:   privacy2Privacy,
+		Short: "Create a privacy to privacy transaction",
+		Run:   createPriv2PrivTx,
 	}
-	privacy2PrivacyFlag(cmd)
+	createPriv2PrivTxFlags(cmd)
 	return cmd
 }
 
-func privacy2PrivacyFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("from", "f", "", "from account address")
+func createPriv2PrivTxFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("pubkeypair", "p", "", "public key pair")
+	cmd.MarkFlagRequired("pubkeypair")
+	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount, at most 4 decimal places")
+	cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("from", "f", "", "from address")
 	cmd.MarkFlagRequired("from")
 
-	cmd.Flags().StringP("pubkeypair", "p", "", "to view spend public key pair")
-	cmd.MarkFlagRequired("pubkeypair")
-
-	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount")
-	cmd.MarkFlagRequired("amount")
-
-	cmd.Flags().StringP("note", "n", "", "transfer note")
-	cmd.Flags().Int32P("mixcount", "m", defMixCount, "transfer note")
+	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
+	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("note", "n", "", "note for transaction")
 	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
-func privacy2Privacy(cmd *cobra.Command, args []string) {
+func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	from, _ := cmd.Flags().GetString("from")
 	pubkeypair, _ := cmd.Flags().GetString("pubkeypair")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	mixcount, _ := cmd.Flags().GetInt32("mixcount")
+	amount := cmdtypes.GetAmountValue(cmd, "amount")
+	mixCount, _ := cmd.Flags().GetInt32("mixcount")
+	tokenname, _ := cmd.Flags().GetString("symbol")
 	note, _ := cmd.Flags().GetString("note")
+	sender, _ := cmd.Flags().GetString("from")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
 	if expiretype == 0 {
@@ -185,63 +179,60 @@ func privacy2Privacy(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Hour / time.Second)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4 //支持4位小数输入，多余的输入将被截断
-	params := pty.ReqPri2Pri{
-		Sender:     from,
-		Pubkeypair: pubkeypair,
-		Amount:     amountInt64,
-		Mixin:      mixcount,
+	params := types.ReqCreateTransaction{
+		Tokenname:  tokenname,
+		Type:       types.PrivacyTypePrivacy2Privacy,
+		Amount:     amount,
 		Note:       note,
-		Tokenname:  types.BTY,
+		Pubkeypair: pubkeypair,
+		From:       sender,
+		Mixcount:   mixCount,
 		Expire:     expire,
 	}
-
-	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPrivacy2privacy", params, &res)
-	ctx.Run()
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
-// privacy address to public address
-func privacy2PublicCmd() *cobra.Command {
+// CreatePriv2PubTxCmd create a privacy to public transaction
+func createPriv2PubTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "priv2pub",
-		Short: "Public to privacy from toviewpubkey tospendpubkey amout note",
-		Run:   privacy2Public,
+		Short: "Create a privacy to public transaction",
+		Run:   createPriv2PubTx,
 	}
-	privacy2Publiclag(cmd)
+	createPriv2PubTxFlags(cmd)
 	return cmd
 }
 
-func privacy2Publiclag(cmd *cobra.Command) {
-	cmd.Flags().StringP("from", "f", "", "from account address")
+func createPriv2PubTxFlags(cmd *cobra.Command) {
+	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount, at most 4 decimal places")
+	cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("from", "f", "", "from address")
 	cmd.MarkFlagRequired("from")
-
-	cmd.Flags().StringP("to", "t", "", "to account address")
+	cmd.Flags().StringP("to", "t", "", "to address")
 	cmd.MarkFlagRequired("to")
 
-	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount")
-	cmd.MarkFlagRequired("amount")
-
-	cmd.Flags().StringP("note", "n", "", "transfer note")
-	cmd.Flags().Int32P("mixcount", "m", defMixCount, "transfer note")
+	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
+	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("note", "n", "", "note for transaction")
 	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
-
 }
 
-func privacy2Public(cmd *cobra.Command, args []string) {
+func createPriv2PubTx(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	amount := cmdtypes.GetAmountValue(cmd, "amount")
+	mixCount, _ := cmd.Flags().GetInt32("mixcount")
+	tokenname, _ := cmd.Flags().GetString("symbol")
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	mixcount, _ := cmd.Flags().GetInt32("mixcount")
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
@@ -252,27 +243,25 @@ func privacy2Public(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Hour / time.Second)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4 //支持4位小数输入，多余的输入将被截断
-	params := pty.ReqPri2Pub{
-		Sender:    from,
-		Receiver:  to,
-		Amount:    amountInt64,
+	params := types.ReqCreateTransaction{
+		Tokenname: tokenname,
+		Type:      types.PrivacyTypePrivacy2Public,
+		Amount:    amount,
 		Note:      note,
-		Tokenname: types.BTY,
-		Mixin:     mixcount,
+		From:      from,
+		To:        to,
+		Mixcount:  mixCount,
 		Expire:    expire,
 	}
-
-	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.MakeTxPrivacy2public", params, &res)
-	ctx.Run()
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func showPrivacyAccountSpendCmd() *cobra.Command {
@@ -425,7 +414,7 @@ func parseShowUTXOs4SpecifiedAmountRes(arg interface{}) (interface{}, error) {
 		result := &PrivacyAccountResult{
 			Txhash:        common.ToHex(item.Txhash),
 			OutIndex:      item.Outindex,
-			OnetimePubKey: common.Bytes2Hex(item.Onetimepubkey),
+			OnetimePubKey: hex.EncodeToString(item.Onetimepubkey),
 		}
 		ret = append(ret, result)
 	}

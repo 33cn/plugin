@@ -247,7 +247,7 @@ func ConstructBackupTx() *types.Transaction {
 
 	vbackup := &rt.RetrieveAction_Backup{Backup: &rt.BackupRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr, DelayPeriod: delayPeriod}}
 	//fmt.Println(vlock)
-	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveBackup}
+	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveActionBackup}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, defaultPriv)
@@ -257,7 +257,7 @@ func ConstructBackupTx() *types.Transaction {
 func ConstructPrepareTx() *types.Transaction {
 	var fee int64 = 1e6
 	vprepare := &rt.RetrieveAction_Prepare{Prepare: &rt.PrepareRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
-	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrievePreapre}
+	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrieveActionPrepare}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, backupPriv)
@@ -269,7 +269,7 @@ func ConstructPerformTx() *types.Transaction {
 	var fee int64 = 1e6
 
 	vperform := &rt.RetrieveAction_Perform{Perform: &rt.PerformRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
-	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrievePerform}
+	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrieveActionPerform}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, backupPriv)

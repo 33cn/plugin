@@ -63,9 +63,6 @@ func (c *channelClient) ReWriteRawTx(param *types.ReWriteRawTx) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
-	if param.Execer != nil {
-		tx.Execer = param.Execer
-	}
 	if param.To != "" {
 		tx.To = param.To
 	}
@@ -206,11 +203,24 @@ func (c *channelClient) GetAddrOverview(parm *types.ReqAddr) (*types.AddrOvervie
 
 // GetBalance get balance
 func (c *channelClient) GetBalance(in *types.ReqBalance) ([]*types.Account, error) {
-	return c.accountdb.GetBalance(c.QueueProtocolAPI, in)
+	// in.AssetExec & in.AssetSymbol 新增参数，
+	// 不填时兼容原来的调用
+	if in.AssetExec == "" || in.AssetSymbol == "" {
+		in.AssetSymbol = "bty"
+		in.AssetExec = "coins"
+		return c.accountdb.GetBalance(c.QueueProtocolAPI, in)
+	}
+
+	acc, err := account.NewAccountDB(in.AssetExec, in.AssetSymbol, nil)
+	if err != nil {
+		log.Error("GetBalance", "Error", err.Error())
+		return nil, err
+	}
+	return acc.GetBalance(c.QueueProtocolAPI, in)
 }
 
 // GetAllExecBalance get balance of exec
-func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBalance, error) {
+func (c *channelClient) GetAllExecBalance(in *types.ReqAllExecBalance) (*types.AllExecBalance, error) {
 	addr := in.Addr
 	err := address.CheckAddress(addr)
 	if err != nil {
@@ -224,8 +234,11 @@ func (c *channelClient) GetAllExecBalance(in *types.ReqAddr) (*types.AllExecBala
 	for _, exec := range types.AllowUserExec {
 		execer := types.ExecName(string(exec))
 		params := &types.ReqBalance{
-			Addresses: addrs,
-			Execer:    execer,
+			Addresses:   addrs,
+			Execer:      execer,
+			StateHash:   in.StateHash,
+			AssetExec:   in.AssetExec,
+			AssetSymbol: in.AssetSymbol,
 		}
 		res, err := c.GetBalance(params)
 		if err != nil {

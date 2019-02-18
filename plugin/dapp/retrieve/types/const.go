@@ -8,9 +8,9 @@ import "github.com/33cn/chain33/types"
 
 //retrieve
 const (
-	RetrievePreapre = iota + 1
+	RetrieveBackup = iota + 1
+	RetrievePreapre
 	RetrievePerform
-	RetrieveBackup
 	RetrieveCancel
 )
 
@@ -24,8 +24,9 @@ const (
 
 // retrieve names
 var (
-	JRPCName       = "Retrieve"
-	RetrieveX      = "retrieve"
+	JRPCName  = "Retrieve"
+	RetrieveX = "retrieve"
+
 	ExecerRetrieve = []byte(RetrieveX)
 
 	actionName = map[string]int32{

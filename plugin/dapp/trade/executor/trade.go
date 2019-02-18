@@ -19,6 +19,7 @@ trade执行器支持trade的创建和交易，
 import (
 	log "github.com/33cn/chain33/common/log/log15"
 
+	"github.com/33cn/chain33/common/db/table"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
@@ -81,8 +82,16 @@ func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) saveSell(sellID []byte, ty int32) []*types.KeyValue {
-	sellorder := t.getSellOrderFromDb(sellID)
+func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
+	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
+
+	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
+		newOrder := t.genSellLimit(tx, base, sellorder, txIndex)
+		tradelog.Info("Table", "sell-add", newOrder)
+		ldb.Add(newOrder)
+	} else {
+		t.updateSellLimit(tx, base, sellorder, txIndex, ldb)
+	}
 	return genSaveSellKv(sellorder)
 }
 
@@ -106,20 +115,29 @@ func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) deleteSell(sellID []byte, ty int32) []*types.KeyValue {
-	sellorder := t.getSellOrderFromDb(sellID)
+func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, tradedBoardlot int64) []*types.KeyValue {
+	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
+	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
+		ldb.Del([]byte(txIndex))
+	} else {
+		t.rollBackSellLimit(tx, base, sellorder, txIndex, ldb, tradedBoardlot)
+	}
 	return genDeleteSellKv(sellorder)
 }
 
-func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase) []*types.KeyValue {
+func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	//tradelog.Info("save", "buy", receiptTradeBuy)
 
 	var kv []*types.KeyValue
+	order := t.genBuyMarket(tx, receiptTradeBuy, txIndex)
+	tradelog.Debug("trade BuyMarket save local", "order", order)
+	ldb.Add(order)
 	return saveBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
 }
 
-func (t *trade) deleteBuy(receiptTradeBuy *pty.ReceiptBuyBase) []*types.KeyValue {
+func (t *trade) deleteBuy(receiptTradeBuy *pty.ReceiptBuyBase, txIndex string, ldb *table.Table) []*types.KeyValue {
 	var kv []*types.KeyValue
+	ldb.Del([]byte(txIndex))
 	return deleteBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
 }
 
@@ -145,8 +163,17 @@ func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) saveBuyLimit(buyID []byte, ty int32) []*types.KeyValue {
-	buyOrder := t.getBuyOrderFromDb(buyID)
+func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
+	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
+	tradelog.Debug("Table", "buy-add", buyOrder)
+	if buyOrder.Status == pty.TradeOrderStatusOnBuy && buy.BoughtBoardlot == 0 {
+		order := t.genBuyLimit(tx, buy, txIndex)
+		tradelog.Info("Table", "buy-add", order)
+		ldb.Add(order)
+	} else {
+		t.updateBuyLimit(tx, buy, buyOrder, txIndex, ldb)
+	}
+
 	return genSaveBuyLimitKv(buyOrder)
 }
 
@@ -170,18 +197,26 @@ func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 	return kv
 }
 
-func (t *trade) deleteBuyLimit(buyID []byte, ty int32) []*types.KeyValue {
-	buyOrder := t.getBuyOrderFromDb(buyID)
+func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, traded int64) []*types.KeyValue {
+	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
+	if ty == pty.TyLogTradeBuyLimit && buy.BoughtBoardlot == 0 {
+		ldb.Del([]byte(txIndex))
+	} else {
+		t.rollbackBuyLimit(tx, buy, buyOrder, txIndex, ldb, traded)
+	}
 	return genDeleteBuyLimitKv(buyOrder)
 }
 
-func (t *trade) saveSellMarket(receiptTradeBuy *pty.ReceiptSellBase) []*types.KeyValue {
+func (t *trade) saveSellMarket(receiptTradeBuy *pty.ReceiptSellBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	var kv []*types.KeyValue
+	order := t.genSellMarket(tx, receiptTradeBuy, txIndex)
+	ldb.Add(order)
 	return saveSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
 }
 
-func (t *trade) deleteSellMarket(receiptTradeBuy *pty.ReceiptSellBase) []*types.KeyValue {
+func (t *trade) deleteSellMarket(receiptTradeBuy *pty.ReceiptSellBase, txIndex string, ldb *table.Table) []*types.KeyValue {
 	var kv []*types.KeyValue
+	ldb.Del([]byte(txIndex))
 	return deleteSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
 }
 

@@ -449,7 +449,7 @@ func estRetrievePerformB(t *testing.T) {
 func backup(backupaddrindex int, defaultaddrindex int, privkeyindex int, delayperiod int64) ([]byte, error) {
 	vbackup := &rt.RetrieveAction_Backup{Backup: &rt.BackupRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex], DelayPeriod: delayperiod}}
 	//fmt.Println(vlock)
-	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveBackup}
+	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveActionBackup}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, privkey[privkeyindex])
@@ -467,7 +467,7 @@ func backup(backupaddrindex int, defaultaddrindex int, privkeyindex int, delaype
 
 func prepare(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byte, error) {
 	vprepare := &rt.RetrieveAction_Prepare{Prepare: &rt.PrepareRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
-	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrievePreapre}
+	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrieveActionPrepare}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, privkey[privkeyindex])
@@ -484,7 +484,7 @@ func prepare(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byt
 
 func perform(backupaddrindex int, defaultaddrindex int, privkeyindex int) ([]byte, error) {
 	vperform := &rt.RetrieveAction_Perform{Perform: &rt.PerformRetrieve{BackupAddress: addr[backupaddrindex], DefaultAddress: addr[defaultaddrindex]}}
-	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrievePerform}
+	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrieveActionPerform}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: addr[backupaddrindex]}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, privkey[privkeyindex])

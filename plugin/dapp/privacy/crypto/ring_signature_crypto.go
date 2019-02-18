@@ -22,6 +22,7 @@ import (
 
 func init() {
 	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{})
+	crypto.RegisterType(privacytypes.SignNameRing, privacytypes.RingBaseonED25519)
 }
 
 // RingSignature 环签名中对于crypto.Signature接口实现
@@ -156,7 +157,7 @@ func (pubkey *RingSignPublicKey) VerifyBytes(msg []byte, sign crypto.Signature) 
 		return false
 	}
 	tx := new(types.Transaction)
-	if err := types.Decode(msg, tx); err != nil || !bytes.Equal([]byte(privacytypes.PrivacyX), tx.Execer) {
+	if err := types.Decode(msg, tx); err != nil || !bytes.Equal([]byte(privacytypes.PrivacyX), types.GetRealExecName(tx.Execer)) {
 		// 目前只有隐私交易用到了环签名
 		return false
 	}

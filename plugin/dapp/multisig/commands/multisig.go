@@ -51,6 +51,7 @@ func MultiSigAccountCmd() *cobra.Command {
 		GetMultiSigAccUnSpentTodayCmd(),
 		GetMultiSigAccAssetsCmd(),
 		GetMultiSigAccAllAddressCmd(),
+		GetMultiSigAccByOwnerCmd(),
 	)
 	return cmd
 }
@@ -103,10 +104,10 @@ func CreateMultiSigAccCreateCmd() *cobra.Command {
 
 func createMultiSigAccTransferFlags(cmd *cobra.Command) {
 
-	cmd.Flags().StringP("owners_addr", "a", "", "address of owner,separated by space")
+	cmd.Flags().StringP("owners_addr", "a", "", "address of owners,separated by '-', addr0-addr1-addr2...")
 	cmd.MarkFlagRequired("owners_addr")
 
-	cmd.Flags().StringP("owners_weight", "w", "", "weight of owner,separated by space,uint64 type")
+	cmd.Flags().StringP("owners_weight", "w", "", "weight of owners,separated by '-', w0-w1-w2..., uint64 type")
 	cmd.MarkFlagRequired("owners_weight")
 
 	cmd.Flags().Uint64P("required_weight", "r", 0, "required weight of account execute tx")
@@ -126,10 +127,10 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	address, _ := cmd.Flags().GetString("owners_addr")
-	addressArr := strings.Fields(address)
+	addressArr := strings.Split(address, "-")
 
 	weightstr, _ := cmd.Flags().GetString("owners_weight")
-	weightsArr := strings.Fields(weightstr)
+	weightsArr := strings.Split(weightstr, "-")
 
 	//校验owner和权重数量要一致
 	if len(addressArr) != len(weightsArr) {
@@ -699,7 +700,7 @@ func parseAccInfo(view interface{}) (interface{}, error) {
 	for _, dailyLimit := range res.DailyLimits {
 		dailyLimt := strconv.FormatFloat(float64(dailyLimit.DailyLimit)/float64(types.Coin), 'f', 4, 64)
 		spentToday := strconv.FormatFloat(float64(dailyLimit.SpentToday)/float64(types.Coin), 'f', 4, 64)
-		fmt.Println("parseAccInfo dailyLimt", dailyLimt)
+
 		dailyLimitResult := &mty.DailyLimitResult{
 			Symbol:     dailyLimit.Symbol,
 			Execer:     dailyLimit.Execer,
@@ -1099,4 +1100,31 @@ func isValidDailylimit(dailylimit float64) error {
 		return mty.ErrInvalidDailyLimit
 	}
 	return nil
+}
+
+//GetMultiSigAccByOwnerCmd 获取指定地址拥有的所有多重签名账户
+func GetMultiSigAccByOwnerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "owner",
+		Short: "get multisig accounts by the owner",
+		Run:   getMultiSigAccByOwner,
+	}
+	getMultiSigAccByOwnerFlags(cmd)
+	return cmd
+}
+
+func getMultiSigAccByOwnerFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "address of owner")
+}
+
+func getMultiSigAccByOwner(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ownerAddr, _ := cmd.Flags().GetString("addr")
+
+	params := &types.ReqString{
+		Data: ownerAddr,
+	}
+	var res mty.OwnerAttrs
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "multisig.MultiSigAddresList", params, &res)
+	ctx.Run()
 }

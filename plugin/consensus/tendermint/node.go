@@ -250,7 +250,10 @@ func (node *Node) addOutboundPeerWithConfig(addr string) error {
 // Stop ...
 func (node *Node) Stop() {
 	atomic.CompareAndSwapUint32(&node.stopped, 0, 1)
-	node.listener.Close()
+	err := node.listener.Close()
+	if err != nil {
+		tendermintlog.Error("Close listener failed", "err", err)
+	}
 	if node.quit != nil {
 		close(node.quit)
 	}
@@ -412,7 +415,9 @@ func (node *Node) StopPeerForError(peer Peer, reason interface{}) {
 func (node *Node) addInboundPeer(conn net.Conn) error {
 	peerConn, err := newInboundPeerConn(conn, node.privKey, node.StopPeerForError, node.state, node.evpool)
 	if err != nil {
-		conn.Close()
+		if er := conn.Close(); er != nil {
+			tendermintlog.Error("addInboundPeer close conn failed", "er", er)
+		}
 		return err
 	}
 	if err = node.addPeer(peerConn); err != nil {

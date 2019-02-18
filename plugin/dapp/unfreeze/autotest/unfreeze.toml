@@ -1,0 +1,49 @@
+
+
+
+
+
+#send to unfreeze exec
+[[TransferCase]]
+id = "transUnfreeze"
+command = "send bty transfer -a 5 -t 15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+from = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+to = "15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H"
+amount = "5"
+checkItem = ["balance"]
+
+
+
+[[UnfreezeCreateFix]]
+id = "createFix"
+command = "send unfreeze create fix_amount -a 0.01 -e coins -s bty -b 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -p 1 -t 2 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+from = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+to = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+totalAmount = "2"
+period = 1
+checkItem =["frozen", "unfreeze"]
+dep = ["transUnfreeze"]
+repeat = 2
+
+
+
+[[UnfreezeWithdraw]]
+id = "withdraw"
+command = "send unfreeze withdraw -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+addr = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+checkItem = ["unfreeze"]
+dep = ["createFix"]
+
+
+[[UnfreezeTerminate]]
+id = "terminate"
+command = "send unfreeze terminate -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+addr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+checkItem = ["unfreeze"]
+dep = ["createFix", "withdraw"]
+
+
+
+
+
+

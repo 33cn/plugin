@@ -5,8 +5,9 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -16,6 +17,7 @@ import (
 
 func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {
 	isPara := types.IsPara()
+	//主链处理分支
 	if !isPara {
 		accDB, err := createAccount(a.db, transfer.Cointoken)
 		if err != nil {
@@ -28,10 +30,10 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		}
 		toAddr := address.ExecAddress(string(a.tx.Execer))
 		clog.Debug("paracross.AssetTransfer not isPara", "execer", string(a.tx.Execer),
-			"txHash", common.Bytes2Hex(a.tx.Hash()))
+			"txHash", hex.EncodeToString(a.tx.Hash()))
 		return accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
 	}
-
+	//平行链处理分支
 	paraTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
 		return nil, errors.Wrap(err, "assetTransferCoins call getTitleFrom failed")
@@ -46,12 +48,13 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		return nil, errors.Wrap(err, "assetTransferCoins call NewParaAccount failed")
 	}
 	clog.Debug("paracross.AssetTransfer isPara", "execer", string(a.tx.Execer),
-		"txHash", common.Bytes2Hex(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()))
 	return assetDepositBalance(paraAcc, transfer.To, transfer.Amount)
 }
 
 func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	isPara := types.IsPara()
+	//主链处理分支
 	if !isPara {
 		accDB, err := createAccount(a.db, withdraw.Cointoken)
 		if err != nil {
@@ -63,7 +66,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 			"to", withdraw.To, "exec", execAddr, "withdrawTx execor", string(withdrawTx.Execer))
 		return accDB.ExecTransfer(fromAddr, withdraw.To, execAddr, withdraw.Amount)
 	}
-
+	//平行链处理分支
 	paraTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
 		return nil, errors.Wrap(err, "assetWithdrawCoins call getTitleFrom failed")
@@ -78,7 +81,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 		return nil, errors.Wrap(err, "assetWithdrawCoins call NewParaAccount failed")
 	}
 	clog.Debug("paracross.assetWithdrawCoins isPara", "execer", string(a.tx.Execer),
-		"txHash", common.Bytes2Hex(a.tx.Hash()))
+		"txHash", hex.EncodeToString(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
 	return assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
 }
 

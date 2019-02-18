@@ -17,7 +17,6 @@
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
-
 package mpt
 
 import (
@@ -101,7 +100,7 @@ func TestSecureGetKey(t *testing.T) {
 
 	key := []byte("foo")
 	value := []byte("bar")
-	seckey := common.ShaKeccak256(key)
+	seckey := common.Sha3(key)
 
 	if !bytes.Equal(trie.Get(key), value) {
 		t.Errorf("Get did not return bar")

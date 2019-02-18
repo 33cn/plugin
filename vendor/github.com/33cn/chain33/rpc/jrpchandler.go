@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 
@@ -48,7 +48,6 @@ func (c *Chain33) CreateRawTransaction(in *rpctypes.CreateTx, result *interface{
 func (c *Chain33) ReWriteRawTx(in *rpctypes.ReWriteRawTx, result *interface{}) error {
 	inpb := &types.ReWriteRawTx{
 		Tx:     in.Tx,
-		Execer: []byte(in.Execer),
 		To:     in.To,
 		Fee:    in.Fee,
 		Expire: in.Expire,
@@ -114,26 +113,8 @@ func (c *Chain33) SendRawTransaction(in rpctypes.SignedTx, result *interface{}) 
 	return fmt.Errorf(string(reply.Msg))
 }
 
-// used only in parachain
-func forwardTranToMainNet(in rpctypes.RawParm, result *interface{}) error {
-	if rpcCfg.MainnetJrpcAddr == "" {
-		return types.ErrInvalidMainnetRPCAddr
-	}
-	rpc, err := jsonclient.NewJSONClient(rpcCfg.MainnetJrpcAddr)
-
-	if err != nil {
-		return err
-	}
-
-	err = rpc.Call("Chain33.SendTransaction", in, result)
-	return err
-}
-
 // SendTransaction send transaction
 func (c *Chain33) SendTransaction(in rpctypes.RawParm, result *interface{}) error {
-	if types.IsPara() {
-		return forwardTranToMainNet(in, result)
-	}
 	var parm types.Transaction
 	data, err := common.FromHex(in.Data)
 	if err != nil {
@@ -141,7 +122,15 @@ func (c *Chain33) SendTransaction(in rpctypes.RawParm, result *interface{}) erro
 	}
 	types.Decode(data, &parm)
 	log.Debug("SendTransaction", "parm", parm)
-	reply, err := c.cli.SendTx(&parm)
+
+	var reply *types.Reply
+	//para chain, forward to main chain
+	if types.IsPara() {
+		reply, err = c.mainGrpcCli.SendTransaction(context.Background(), &parm)
+	} else {
+		reply, err = c.cli.SendTx(&parm)
+	}
+
 	if err == nil {
 		*result = common.ToHex(reply.GetMsg())
 	}
@@ -741,24 +730,17 @@ func (c *Chain33) GetWalletStatus(in types.ReqNil, result *interface{}) error {
 
 // GetBalance get balance
 func (c *Chain33) GetBalance(in types.ReqBalance, result *interface{}) error {
-
 	balances, err := c.cli.GetBalance(&in)
 	if err != nil {
 		return err
 	}
-	var accounts []*rpctypes.Account
-	for _, balance := range balances {
-		accounts = append(accounts, &rpctypes.Account{Addr: balance.GetAddr(),
-			Balance:  balance.GetBalance(),
-			Currency: balance.GetCurrency(),
-			Frozen:   balance.GetFrozen()})
-	}
-	*result = accounts
+
+	*result = fmtAccount(balances)
 	return nil
 }
 
 // GetAllExecBalance get all balance of exec
-func (c *Chain33) GetAllExecBalance(in types.ReqAddr, result *interface{}) error {
+func (c *Chain33) GetAllExecBalance(in types.ReqAllExecBalance, result *interface{}) error {
 	balance, err := c.cli.GetAllExecBalance(&in)
 	if err != nil {
 		return err
@@ -891,6 +873,9 @@ func (c *Chain33) IsNtpClockSync(in *types.ReqNil, result *interface{}) error {
 
 // QueryTotalFee query total fee
 func (c *Chain33) QueryTotalFee(in *types.LocalDBGet, result *interface{}) error {
+	if in == nil || len(in.Keys) > 1 {
+		return types.ErrInvalidParam
+	}
 	reply, err := c.cli.LocalGet(in)
 	if err != nil {
 		return err
@@ -942,58 +927,6 @@ func (c *Chain33) GetFatalFailure(in *types.ReqNil, result *interface{}) error {
 
 }
 
-// QueryTicketStat quert stat of ticket
-func (c *Chain33) QueryTicketStat(in *types.LocalDBGet, result *interface{}) error {
-	reply, err := c.cli.LocalGet(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketStat types.TicketStatistic
-	err = types.Decode(reply.Values[0], &ticketStat)
-	if err != nil {
-		return err
-	}
-	*result = ticketStat
-	return nil
-}
-
-// QueryTicketInfo query ticket information
-func (c *Chain33) QueryTicketInfo(in *types.LocalDBGet, result *interface{}) error {
-	reply, err := c.cli.LocalGet(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketInfo types.TicketMinerInfo
-	err = types.Decode(reply.Values[0], &ticketInfo)
-	if err != nil {
-		return err
-	}
-	*result = ticketInfo
-	return nil
-}
-
-// QueryTicketInfoList query ticket list information
-func (c *Chain33) QueryTicketInfoList(in *types.LocalDBList, result *interface{}) error {
-	reply, err := c.cli.LocalList(in)
-	if err != nil {
-		return err
-	}
-
-	var ticketInfo types.TicketMinerInfo
-	var ticketList []types.TicketMinerInfo
-	for _, v := range reply.Values {
-		err = types.Decode(v, &ticketInfo)
-		if err != nil {
-			return err
-		}
-		ticketList = append(ticketList, ticketInfo)
-	}
-	*result = ticketList
-	return nil
-}
-
 // DecodeRawTransaction decode rawtransaction
 func (c *Chain33) DecodeRawTransaction(in *types.ReqDecodeRawTransaction, result *interface{}) error {
 	reply, err := c.cli.DecodeRawTransaction(in)
@@ -1014,15 +947,12 @@ func (c *Chain33) GetTimeStatus(in *types.ReqNil, result *interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	timeStatus := &rpctypes.TimeStatus{
 		NtpTime:   reply.NtpTime,
 		LocalTime: reply.LocalTime,
 		Diff:      reply.Diff,
 	}
-
 	*result = timeStatus
-
 	return nil
 }
 
@@ -1172,6 +1102,10 @@ func convertBlockDetails(details []*types.BlockDetail, retDetails *rpctypes.Bloc
 	for _, item := range details {
 		var bdtl rpctypes.BlockDetail
 		var block rpctypes.Block
+		if item == nil {
+			retDetails.Items = append(retDetails.Items, nil)
+			continue
+		}
 		block.BlockTime = item.Block.GetBlockTime()
 		block.Height = item.Block.GetHeight()
 		block.Version = item.Block.GetVersion()
@@ -1208,4 +1142,15 @@ func convertBlockDetails(details []*types.BlockDetail, retDetails *rpctypes.Bloc
 		retDetails.Items = append(retDetails.Items, &bdtl)
 	}
 	return nil
+}
+
+func fmtAccount(balances []*types.Account) []*rpctypes.Account {
+	var accounts []*rpctypes.Account
+	for _, balance := range balances {
+		accounts = append(accounts, &rpctypes.Account{Addr: balance.GetAddr(),
+			Balance:  balance.GetBalance(),
+			Currency: balance.GetCurrency(),
+			Frozen:   balance.GetFrozen()})
+	}
+	return accounts
 }

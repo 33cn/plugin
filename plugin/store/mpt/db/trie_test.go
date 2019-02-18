@@ -612,7 +612,7 @@ func BenchmarkHash(b *testing.B) {
 	// Insert the accounts into the trie and hash it
 	trie := newEmpty()
 	for i := 0; i < len(addresses); i++ {
-		trie.Update(common.ShaKeccak256(addresses[i][:]), accounts[i])
+		trie.Update(common.Sha3(addresses[i][:]), accounts[i])
 	}
 	b.ResetTimer()
 	b.ReportAllocs()

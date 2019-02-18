@@ -16,16 +16,17 @@ import (
 	//"github.com/33cn/chain33/common"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -33,6 +34,8 @@ const (
 	delAct int64 = 2 //reference blockstore.go, del para block action
 
 	paraCrossTxCount = 2 //current only support 2 txs for cross
+
+	minBlockNum = 6 //min block number startHeight before lastHeight in mainchain
 )
 
 var (
@@ -40,14 +43,13 @@ var (
 	grpcSite                 = "localhost:8802"
 	genesisBlockTime   int64 = 1514533390
 	startHeight        int64     //parachain sync from startHeight in mainchain
-	searchSeq          int64     //start sequence to search  startHeight in mainchain
 	blockSec           int64 = 5 //write block interval, second
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
-	grpcRecSize        = 30 * 1024 * 1024 //the size should be limited in server
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey            = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchDepth int32 = 100
+	minerPrivateKey               = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	searchHashMatchDepth    int32 = 100
+	mainBlockHashForkHeight int64 = types.MaxHeight //calc block hash fork height in main chain
 )
 
 func init() {
@@ -57,35 +59,51 @@ func init() {
 
 type client struct {
 	*drivers.BaseClient
-	conn            *grpc.ClientConn
 	grpcClient      types.Chain33Client
-	paraClient      paracross.ParacrossClient
+	execAPI         api.ExecutorAPI
 	isCaughtUp      bool
 	commitMsgClient *commitMsgClient
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
+	subCfg          *subConfig
+}
+
+type subConfig struct {
+	WriteBlockSeconds           int64  `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient        string `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                 int64  `json:"startHeight,omitempty"`
+	EmptyBlockInterval          int64  `json:"emptyBlockInterval,omitempty"`
+	AuthAccount                 string `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
+	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount               int64  `json:"genesisAmount,omitempty"`
 }
 
 // New function to init paracross env
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	c := drivers.NewBaseClient(cfg)
-	if cfg.ParaRemoteGrpcClient != "" {
-		grpcSite = cfg.ParaRemoteGrpcClient
+	var subcfg subConfig
+	if sub != nil {
+		types.MustDecode(sub, &subcfg)
 	}
-	if cfg.StartHeight > 0 {
-		startHeight = cfg.StartHeight
-		searchSeq = calcSearchseq(cfg.StartHeight)
+	if subcfg.GenesisAmount <= 0 {
+		subcfg.GenesisAmount = 1e8
 	}
-	if cfg.WriteBlockSeconds > 0 {
-		blockSec = cfg.WriteBlockSeconds
+	if subcfg.ParaRemoteGrpcClient != "" {
+		grpcSite = subcfg.ParaRemoteGrpcClient
 	}
-	if cfg.EmptyBlockInterval > 0 {
-		emptyBlockInterval = cfg.EmptyBlockInterval
+	if subcfg.StartHeight > 0 {
+		startHeight = subcfg.StartHeight
 	}
-
-	if cfg.SearchHashMatchedBlockDepth > 0 {
-		searchHashMatchDepth = cfg.SearchHashMatchedBlockDepth
+	if subcfg.WriteBlockSeconds > 0 {
+		blockSec = subcfg.WriteBlockSeconds
+	}
+	if subcfg.EmptyBlockInterval > 0 {
+		emptyBlockInterval = subcfg.EmptyBlockInterval
+	}
+	if subcfg.SearchHashMatchedBlockDepth > 0 {
+		searchHashMatchDepth = subcfg.SearchHashMatchedBlockDepth
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -101,49 +119,32 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	plog.Debug("New Para consensus client")
-
-	msgRecvOp := grpc.WithMaxMsgSize(grpcRecSize)
-	conn, err := grpc.Dial(grpcSite, grpc.WithInsecure(), msgRecvOp)
-
+	grpcCli, err := grpcclient.NewMainChainClient(grpcSite)
 	if err != nil {
 		panic(err)
 	}
-	grpcClient := types.NewChain33Client(conn)
-	paraCli := paracross.NewParacrossClient(conn)
 
 	para := &client{
 		BaseClient:  c,
-		conn:        conn,
-		grpcClient:  grpcClient,
-		paraClient:  paraCli,
-		authAccount: cfg.AuthAccount,
+		grpcClient:  grpcCli,
+		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		isCaughtUp:  false,
+		subCfg:      &subcfg,
 	}
-
-	if cfg.WaitBlocks4CommitMsg < 2 {
+	if subcfg.WaitBlocks4CommitMsg < 2 {
 		panic("config WaitBlocks4CommitMsg should not less 2")
 	}
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:      para,
-		waitMainBlocks:  cfg.WaitBlocks4CommitMsg,
+		waitMainBlocks:  subcfg.WaitBlocks4CommitMsg,
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
 		quit:            make(chan struct{}),
 	}
-
 	c.SetChild(para)
-
 	return para
-}
-
-func calcSearchseq(height int64) int64 {
-	if height < 1000 {
-		return 0
-	}
-	return height - 1000
 }
 
 //para 不检查任何的交易
@@ -156,7 +157,6 @@ func (client *client) Close() {
 	client.BaseClient.Close()
 	close(client.commitMsgClient.quit)
 	client.wg.Wait()
-	client.conn.Close()
 	plog.Info("consensus para closed")
 }
 
@@ -173,55 +173,73 @@ func (client *client) SetQueueClient(c queue.Client) {
 }
 
 func (client *client) InitBlock() {
+	var err error
+	// get main chain calc block hash fork height
+	mainBlockHashForkHeight, err = client.GetBlockHashForkHeightOnMainChain()
+	if err != nil {
+		panic(err)
+	}
+
+	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
+
 	block, err := client.RequestLastBlock()
 	if err != nil {
 		panic(err)
 	}
 
 	if block == nil {
-		startSeq := int64(0)
-		if searchSeq > 0 {
-			startSeq = client.GetSeqByHeightOnMain(startHeight, searchSeq)
-		}
+		startSeq := client.GetStartSeq(startHeight)
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
+		newblock.MainHash = zeroHash[:]
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		client.WriteBlock(zeroHash[:], newblock, startSeq-int64(1))
+		client.WriteBlock(zeroHash[:], newblock, startSeq-1)
 	} else {
 		client.SetCurrentBlock(block)
 	}
 }
 
-func (client *client) GetSeqByHeightOnMain(height int64, originSeq int64) int64 {
-	lastSeq, err := client.GetLastSeqOnMainChain()
-	plog.Info("Searching for the sequence", "heightOnMain", height, "searchSeq", searchSeq, "lastSeq", lastSeq)
+// GetStartSeq get startSeq in mainchain
+func (client *client) GetStartSeq(height int64) int64 {
+	if height == 0 {
+		return 0
+	}
+
+	lastHeight, err := client.GetLastHeightOnMainChain()
 	if err != nil {
 		panic(err)
 	}
-	hint := time.NewTicker(10 * time.Second)
-	defer hint.Stop()
-	for originSeq <= lastSeq {
+	if lastHeight < height {
+		panic(fmt.Sprintf("lastHeight(%d) less than startHeight(%d) in mainchain", lastHeight, height))
+	}
+
+	hint := time.NewTicker(5 * time.Second)
+	for lastHeight < height+minBlockNum {
 		select {
 		case <-hint.C:
-			plog.Info("Still Searching......", "searchAtSeq", originSeq, "lastSeq", lastSeq)
+			plog.Info("Waiting lastHeight increase......", "lastHeight", lastHeight, "startHeight", height)
 		default:
-			blockDetail, seqTy, err := client.GetBlockOnMainBySeq(originSeq)
+			lastHeight, err = client.GetLastHeightOnMainChain()
 			if err != nil {
 				panic(err)
 			}
-			if blockDetail.Block.Height == height && seqTy == addAct {
-				plog.Info("the target sequence in mainchain", "heightOnMain", height, "targetSeq", originSeq)
-				return originSeq
-			}
-			originSeq++
+			time.Sleep(time.Second)
 		}
 	}
-	panic("Main chain has not reached the height currently")
+	hint.Stop()
+	plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
+
+	seq, err := client.GetSeqByHeightOnMainChain(height)
+	if err != nil {
+		panic(err)
+	}
+	plog.Info("the start sequence in mainchain", "startHeight", height, "startSeq", seq)
+	return seq
 }
 
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
@@ -231,7 +249,7 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = client.subCfg.GenesisAmount * types.Coin
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
@@ -324,37 +342,51 @@ func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 	return blockDetails.Items[0].Block, nil
 }
 
-func (client *client) getLastBlockInfo() (int64, *types.Block, []byte, int64, error) {
+func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
-		return -2, nil, nil, -2, err
+		return -2, nil, err
 	}
 	blockedSeq, err := client.GetBlockedSeq(lastBlock.Hash())
 	if err != nil {
 		plog.Error("Parachain GetBlockedSeq fail", "err", err)
-		return -2, nil, nil, -2, err
+		return -2, nil, err
 	}
 
-	if lastBlock.Height > 0 {
-		miner, err := getMinerTxInfo(lastBlock)
-		if err != nil {
-			return -2, nil, nil, -2, err
-		}
-		return blockedSeq, lastBlock, miner.MainBlockHash, miner.MainBlockHeight, nil
+	if lastBlock.Height > 0 || blockedSeq == -1 {
+		return blockedSeq, lastBlock, nil
 	}
-
-	//sequence in main chain start from 0
-	seq := blockedSeq
-	if seq == -1 {
-		seq = 0
-	}
-	savedBlockOnMain, _, err := client.GetBlockOnMainBySeq(seq)
+	// lastBlockHeight=0 创世区块本身没有记录主块hash,有两种场景：
+	// 1, startSeq=-1,也就是从主链0高度同步区块，主链seq从0开始，此时特殊处理，获取主链seq=0区块,后续对请求seq=0的区块做特殊处理
+	// 2, startSeq!=-1, 也就是从主链n高度同步区块，此时创世区块倒退一个seq，seq=n-1 可以获取到主链n-1的hash
+	main, err := client.GetBlockOnMainBySeq(blockedSeq)
 	if err != nil {
-		return -2, nil, nil, -2, err
+		return -2, nil, err
 	}
-	return blockedSeq, lastBlock, savedBlockOnMain.Block.Hash(), savedBlockOnMain.Block.Height, nil
+	lastBlock.MainHash = main.Seq.Hash
+	lastBlock.MainHeight = main.Detail.Block.Height
+	return blockedSeq, lastBlock, nil
 
+}
+
+func (client *client) GetBlockHashForkHeightOnMainChain() (int64, error) {
+	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
+	if err != nil {
+		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
+		return -1, err
+	}
+
+	return ret.Data, nil
+}
+
+func (client *client) GetLastHeightOnMainChain() (int64, error) {
+	header, err := client.grpcClient.GetLastHeader(context.Background(), &types.ReqNil{})
+	if err != nil {
+		plog.Error("GetLastHeightOnMainChain", "Error", err.Error())
+		return -1, err
+	}
+	return header.Height, nil
 }
 
 func (client *client) GetLastSeqOnMainChain() (int64, error) {
@@ -367,6 +399,24 @@ func (client *client) GetLastSeqOnMainChain() (int64, error) {
 	return seq.Data, nil
 }
 
+func (client *client) GetSeqByHeightOnMainChain(height int64) (int64, error) {
+	hash, err := client.GetHashByHeightOnMainChain(height)
+	if err != nil {
+		return -1, err
+	}
+	seq, err := client.GetSeqByHashOnMainChain(hash)
+	return seq, err
+}
+
+func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
+	reply, err := client.grpcClient.GetBlockHash(context.Background(), &types.ReqInt{Height: height})
+	if err != nil {
+		plog.Error("GetHashByHeightOnMainChain", "Error", err.Error())
+		return nil, err
+	}
+	return reply.Hash, nil
+}
+
 func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
 	seq, err := client.grpcClient.GetSequenceByHash(context.Background(), &types.ReqHash{Hash: hash})
 	if err != nil {
@@ -377,72 +427,43 @@ func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
 	return seq.Data, nil
 }
 
-func (client *client) GetBlocksByHashesFromMainChain(hashes [][]byte) (*types.BlockDetails, error) {
-	req := &types.ReqHashes{Hashes: hashes}
-	blocks, err := client.grpcClient.GetBlockByHashes(context.Background(), req)
+func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
+	blockSeq, err := client.grpcClient.GetBlockBySeq(context.Background(), &types.Int64{Data: seq})
 	if err != nil {
-		plog.Error("GetBlocksByHashesFromMainChain", "Error", err.Error())
+		plog.Error("Not found block on main", "seq", seq)
 		return nil, err
 	}
-	return blocks, nil
-}
 
-func (client *client) GetBlockHashFromMainChain(start int64, end int64) (*types.BlockSequences, error) {
-	req := &types.ReqBlocks{Start: start, End: end, IsDetail: true, Pid: []string{}}
-	blockSeqs, err := client.grpcClient.GetBlockSequences(context.Background(), req)
-	if err != nil {
-		plog.Error("GetBlockHashFromMainChain", "Error", err.Error())
-		return nil, err
-	}
-	return blockSeqs, nil
-}
-
-func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockDetail, int64, error) {
-	blockSeqs, err := client.GetBlockHashFromMainChain(seq, seq)
-	if err != nil {
-		plog.Error("Not found block hash on seq", "start", seq, "end", seq)
-		return nil, -1, err
+	hash := blockSeq.Detail.Block.HashByForkHeight(mainBlockHashForkHeight)
+	if !bytes.Equal(blockSeq.Seq.Hash, hash) {
+		plog.Error("para compare ForkBlockHash fail", "forkHeight", mainBlockHashForkHeight,
+			"seqHash", hex.EncodeToString(blockSeq.Seq.Hash), "calcHash", hex.EncodeToString(hash))
+		return nil, types.ErrBlockHashNoMatch
 	}
 
-	var hashes [][]byte
-	for _, item := range blockSeqs.Items {
-		hashes = append(hashes, item.Hash)
-	}
-
-	blockDetails, err := client.GetBlocksByHashesFromMainChain(hashes)
-	if err != nil {
-		return nil, -1, err
-	}
-
-	//protect the boundary
-	if len(blockSeqs.Items) != len(blockDetails.Items) {
-		panic("Inconsistency between GetBlockSequences and GetBlockByHashes")
-	}
-
-	return blockDetails.Items[0], blockSeqs.Items[0].Type, nil
+	return blockSeq, nil
 }
 
 // preBlockHash to identify the same main node
-func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*types.Transaction, *types.Block, int64, error) {
+func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*types.Transaction, *types.BlockSeq, error) {
 	plog.Debug("Para consensus RequestTx")
 	lastSeq, err := client.GetLastSeqOnMainChain()
 	if err != nil {
-		return nil, nil, -1, err
+		return nil, nil, err
 	}
 	plog.Info("RequestTx", "LastMainSeq", lastSeq, "CurrSeq", currSeq)
 	if lastSeq >= currSeq {
-		blockDetail, seqTy, err := client.GetBlockOnMainBySeq(currSeq)
+		blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
 		if err != nil {
-			return nil, nil, -1, err
+			return nil, nil, err
 		}
-
 		//genesis block start with seq=-1 not check
 		if currSeq == 0 ||
-			(bytes.Equal(preMainBlockHash, blockDetail.Block.ParentHash) && seqTy == addAct) ||
-			(bytes.Equal(preMainBlockHash, blockDetail.Block.Hash()) && seqTy == delAct) {
+			(bytes.Equal(preMainBlockHash, blockSeq.Detail.Block.ParentHash) && blockSeq.Seq.Type == addAct) ||
+			(bytes.Equal(preMainBlockHash, blockSeq.Seq.Hash) && blockSeq.Seq.Type == delAct) {
 
-			txs := client.FilterTxsForPara(blockDetail)
-			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", seqTy)
+			txs := client.FilterTxsForPara(blockSeq.Detail)
+			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
 
 			if lastSeq-currSeq > emptyBlockInterval {
 				client.isCaughtUp = false
@@ -451,39 +472,39 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			}
 
 			if client.authAccount != "" {
-				client.commitMsgClient.onMainBlockAdded(blockDetail)
+				client.commitMsgClient.onMainBlockAdded(blockSeq.Detail)
 			}
 
-			return txs, blockDetail.Block, seqTy, nil
+			return txs, blockSeq, nil
 		}
 		//not consistent case be processed at below
-		plog.Error("RequestTx", "preMainHash", common.Bytes2Hex(preMainBlockHash), "currSeq preMainHash", common.Bytes2Hex(blockDetail.Block.ParentHash),
-			"currSeq mainHash", common.Bytes2Hex(blockDetail.Block.Hash()), "curr seq", currSeq, "ty", seqTy, "currSeq Mainheight", blockDetail.Block.Height)
-		return nil, nil, -1, paracross.ErrParaCurHashNotMatch
+		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
+			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
+		return nil, nil, paracross.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
-		return nil, nil, -1, paracross.ErrParaWaitingNewSeq
+		return nil, nil, paracross.ErrParaWaitingNewSeq
 	}
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, -1, paracross.ErrParaCurHashNotMatch
+	return nil, nil, paracross.ErrParaCurHashNotMatch
 }
 
 //genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
 // for genesis seq=-1 scenario, mainHash not care, as the 0 seq instead of -1
 // not seq=-1 scenario, mainHash needed
 func (client *client) syncFromGenesisBlock() (int64, []byte, error) {
-	lastSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
+	lastSeq, lastBlock, err := client.getLastBlockInfo()
 	if err != nil {
 		plog.Error("Parachain getLastBlockInfo fail", "err", err)
 		return -2, nil, err
 	}
 	plog.Info("syncFromGenesisBlock sync from height 0")
-	return lastSeq + 1, lastSeqMainHash, nil
+	return lastSeq + 1, lastBlock.MainHash, nil
 }
 
 // search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
@@ -504,24 +525,21 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 		if err != nil {
 			return -2, nil, err
 		}
-		miner, err := getMinerTxInfo(block)
-		if err != nil {
-			return -2, nil, err
-		}
-		plog.Info("switchHashMatchedBlock", "lastParaBlock height", miner.Height, "mainHeight",
-			miner.MainBlockHeight, "mainHash", common.Bytes2Hex(miner.MainBlockHash))
-		mainSeq, err := client.GetSeqByHashOnMainChain(miner.MainBlockHash)
+		//当前block结构已经有mainHash和MainHeight但是从blockchain获取的block还没有写入，以后如果获取到，可以替换从minerTx获取
+		plog.Info("switchHashMatchedBlock", "lastParaBlockHeight", height, "mainHeight",
+			block.MainHeight, "mainHash", hex.EncodeToString(block.MainHash))
+		mainSeq, err := client.GetSeqByHashOnMainChain(block.MainHash)
 		if err != nil {
 			depth--
 			if depth == 0 {
-				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", miner.MainBlockHeight,
-					"mainHash", common.Bytes2Hex(miner.MainBlockHash), "search startHeight", lastBlock.Height, "curHeight", miner.Height,
+				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", block.MainHeight,
+					"mainHash", hex.EncodeToString(block.MainHash), "search startHeight", lastBlock.Height, "curHeight", height,
 					"search depth", searchHashMatchDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
 				plog.Error("switchHashMatchedBlock search to height=1 not found", "lastBlockHeight", lastBlock.Height,
-					"height1 mainHash", common.Bytes2Hex(miner.MainBlockHash))
+					"height1 mainHash", hex.EncodeToString(block.MainHash))
 				err = client.removeBlocks(0)
 				if err != nil {
 					return currSeq, nil, nil
@@ -539,8 +557,8 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 		}
 
 		plog.Info("switchHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
-			"new currSeq", mainSeq+1, "new preMainBlockHash", common.Bytes2Hex(miner.MainBlockHash))
-		return mainSeq + 1, miner.MainBlockHash, nil
+			"new currSeq", mainSeq+1, "new preMainBlockHash", hex.EncodeToString(block.MainHash))
+		return mainSeq + 1, block.MainHash, nil
 	}
 	return -2, nil, paracross.ErrParaCurHashNotMatch
 }
@@ -575,11 +593,12 @@ func (client *client) removeBlocks(endHeight int64) error {
 func (client *client) CreateBlock() {
 	incSeqFlag := true
 	//system startup, take the last added block's seq is ok
-	currSeq, _, lastSeqMainHash, _, err := client.getLastBlockInfo()
+	currSeq, lastBlock, err := client.getLastBlockInfo()
 	if err != nil {
 		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
 		return
 	}
+	lastSeqMainHash := lastBlock.MainHash
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()
@@ -593,7 +612,7 @@ func (client *client) CreateBlock() {
 			currSeq++
 		}
 
-		txs, blockOnMain, seqTy, err := client.RequestTx(currSeq, lastSeqMainHash)
+		txs, blockOnMain, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
 			incSeqFlag = false
 			if err == paracross.ErrParaCurHashNotMatch {
@@ -608,13 +627,13 @@ func (client *client) CreateBlock() {
 			continue
 		}
 
-		lastSeqMainHeight := blockOnMain.Height
-		lastSeqMainHash = blockOnMain.Hash()
-		if seqTy == delAct {
-			lastSeqMainHash = blockOnMain.ParentHash
+		lastSeqMainHeight := blockOnMain.Detail.Block.Height
+		lastSeqMainHash = blockOnMain.Seq.Hash
+		if blockOnMain.Seq.Type == delAct {
+			lastSeqMainHash = blockOnMain.Detail.Block.ParentHash
 		}
 
-		_, lastBlock, lastBlockMainHash, lastBlockMainHeight, err := client.getLastBlockInfo()
+		_, lastBlock, err := client.getLastBlockInfo()
 		if err != nil {
 			plog.Error("Parachain getLastBlockInfo fail", "err", err)
 			time.Sleep(time.Second)
@@ -623,11 +642,11 @@ func (client *client) CreateBlock() {
 
 		plog.Info("Parachain process block", "lastBlockSeq", lastSeq, "curSeq", currSeq,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
-			"lastBlockMainHeight", lastBlockMainHeight, "lastBlockMainHash", common.ToHex(lastBlockMainHash), "seqTy", seqTy)
+			"lastBlockMainHeight", lastBlock.MainHeight, "lastBlockMainHash", common.ToHex(lastBlock.MainHash), "seqTy", blockOnMain.Seq.Type)
 
-		if seqTy == delAct {
+		if blockOnMain.Seq.Type == delAct {
 			if len(txs) == 0 {
-				if lastSeqMainHeight > lastBlockMainHeight {
+				if lastSeqMainHeight > lastBlock.MainHeight {
 					incSeqFlag = true
 					continue
 				}
@@ -638,9 +657,9 @@ func (client *client) CreateBlock() {
 			if err != nil {
 				plog.Error(fmt.Sprintf("********************err:%v", err.Error()))
 			}
-		} else if seqTy == addAct {
+		} else if blockOnMain.Seq.Type == addAct {
 			if len(txs) == 0 {
-				if lastSeqMainHeight-lastBlockMainHeight < emptyBlockInterval {
+				if lastSeqMainHeight-lastBlock.MainHeight < emptyBlockInterval {
 					incSeqFlag = true
 					continue
 				}
@@ -662,42 +681,41 @@ func (client *client) CreateBlock() {
 }
 
 // miner tx need all para node create, but not all node has auth account, here just not sign to keep align
-func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.Block) error {
+func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.BlockSeq) error {
 	status := &pt.ParacrossNodeStatus{
 		Title:           types.GetTitle(),
 		Height:          block.Height,
 		PreBlockHash:    block.ParentHash,
 		PreStateHash:    preStateHash,
-		MainBlockHash:   main.Hash(),
-		MainBlockHeight: main.Height,
+		MainBlockHash:   main.Seq.Hash,
+		MainBlockHeight: main.Detail.Block.Height,
 	}
-
 	tx, err := paracross.CreateRawMinerTx(status)
 	if err != nil {
 		return err
 	}
 	tx.Sign(types.SECP256K1, client.privateKey)
-
 	block.Txs = append([]*types.Transaction{tx}, block.Txs...)
 	return nil
-
 }
 
-func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.Block) error {
+func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transaction, seq int64, mainBlock *types.BlockSeq) error {
 	var newblock types.Block
 	plog.Debug(fmt.Sprintf("the len txs is: %v", len(txs)))
+
 	newblock.ParentHash = lastBlock.Hash()
 	newblock.Height = lastBlock.Height + 1
 	newblock.Txs = txs
-	//挖矿固定难度
-	newblock.Difficulty = types.GetP(0).PowLimitBits
-	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = mainBlock.BlockTime
-
 	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
 	if err != nil {
 		return err
 	}
+	//挖矿固定难度
+	newblock.Difficulty = types.GetP(0).PowLimitBits
+	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
+	newblock.MainHash = mainBlock.Seq.Hash
+	newblock.MainHeight = mainBlock.Detail.Block.Height
 
 	err = client.WriteBlock(lastBlock.StateHash, &newblock, seq)
 
@@ -800,19 +818,4 @@ func checkMinerTx(current *types.BlockDetail) error {
 		return paracross.ErrParaMinerExecErr
 	}
 	return nil
-}
-
-func getMinerTxInfo(block *types.Block) (*paracross.ParacrossNodeStatus, error) {
-	baseTx := block.Txs[0]
-	//判断交易类型和执行情况
-	var action paracross.ParacrossAction
-	err := types.Decode(baseTx.GetPayload(), &action)
-	if err != nil {
-		return nil, err
-	}
-	if action.GetTy() != paracross.ParacrossActionMiner {
-		return nil, paracross.ErrParaMinerTxType
-	}
-
-	return action.GetMiner().Status, nil
 }

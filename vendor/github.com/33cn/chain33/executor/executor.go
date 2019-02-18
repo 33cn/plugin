@@ -11,9 +11,11 @@ import (
 	"sync"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client/api"
 	clog "github.com/33cn/chain33/common/log"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	drivers "github.com/33cn/chain33/system/dapp"
 
 	// register drivers
@@ -39,6 +41,7 @@ func DisableLog() {
 type Executor struct {
 	client       queue.Client
 	qclient      client.QueueProtocolAPI
+	grpccli      types.Chain33Client
 	pluginEnable map[string]bool
 	alias        map[string]string
 }
@@ -101,6 +104,10 @@ func (exec *Executor) SetQueueClient(qcli queue.Client) {
 	if err != nil {
 		panic(err)
 	}
+	exec.grpccli, err = grpcclient.NewMainChainClient("")
+	if err != nil {
+		panic(err)
+	}
 	//recv 消息的处理
 	go func() {
 		for msg := range exec.client.Recv() {
@@ -140,10 +147,11 @@ func (exec *Executor) procExecQuery(msg queue.Message) {
 	opt := &StateDBOption{EnableMVCC: exec.pluginEnable["mvcc"], Height: header.GetHeight()}
 
 	db := NewStateDB(exec.client, data.StateHash, localdb, opt)
-	db.(*StateDB).enableMVCC()
+	db.(*StateDB).enableMVCC(nil)
 	driver.SetStateDB(db)
 	driver.SetAPI(exec.qclient)
-
+	driver.SetExecutorAPI(exec.qclient, exec.grpccli)
+	driver.SetEnv(header.GetHeight(), header.GetBlockTime(), uint64(header.GetDifficulty()))
 	//查询的情况下下，执行器不做严格校验，allow，尽可能的加载执行器，并且做查询
 
 	ret, err := driver.Query(data.FuncName, data.Param)
@@ -156,9 +164,17 @@ func (exec *Executor) procExecQuery(msg queue.Message) {
 
 func (exec *Executor) procExecCheckTx(msg queue.Message) {
 	datas := msg.GetData().(*types.ExecTxList)
-	execute := newExecutor(datas.StateHash, exec, datas.Height, datas.BlockTime, datas.Difficulty, datas.Txs, nil)
-	execute.enableMVCC()
-	execute.api = exec.qclient
+	ctx := &executorCtx{
+		stateHash:  datas.StateHash,
+		height:     datas.Height,
+		blocktime:  datas.BlockTime,
+		difficulty: datas.Difficulty,
+		mainHash:   datas.MainHash,
+		mainHeight: datas.MainHeight,
+		parentHash: datas.ParentHash,
+	}
+	execute := newExecutor(ctx, exec, datas.Txs, nil)
+	execute.enableMVCC(nil)
 	//返回一个列表表示成功还是失败
 	result := &types.ReceiptCheckTxList{}
 	for i := 0; i < len(datas.Txs); i++ {
@@ -179,9 +195,17 @@ func (exec *Executor) procExecCheckTx(msg queue.Message) {
 
 func (exec *Executor) procExecTxList(msg queue.Message) {
 	datas := msg.GetData().(*types.ExecTxList)
-	execute := newExecutor(datas.StateHash, exec, datas.Height, datas.BlockTime, datas.Difficulty, datas.Txs, nil)
-	execute.enableMVCC()
-	execute.api = exec.qclient
+	ctx := &executorCtx{
+		stateHash:  datas.StateHash,
+		height:     datas.Height,
+		blocktime:  datas.BlockTime,
+		difficulty: datas.Difficulty,
+		mainHash:   datas.MainHash,
+		mainHeight: datas.MainHeight,
+		parentHash: datas.ParentHash,
+	}
+	execute := newExecutor(ctx, exec, datas.Txs, nil)
+	execute.enableMVCC(nil)
 	var receipts []*types.Receipt
 	index := 0
 	for i := 0; i < len(datas.Txs); i++ {
@@ -193,6 +217,10 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 		}
 		if tx.GroupCount == 0 {
 			receipt, err := execute.execTx(tx, index)
+			if api.IsAPIEnvError(err) {
+				msg.Reply(exec.client.NewMessage("", types.EventReceipts, err))
+				return
+			}
 			if err != nil {
 				receipts = append(receipts, types.NewErrReceipt(err))
 				continue
@@ -217,6 +245,10 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 			panic("len(receiptlist) must be equal tx.GroupCount")
 		}
 		if err != nil {
+			if api.IsAPIEnvError(err) {
+				msg.Reply(exec.client.NewMessage("", types.EventReceipts, err))
+				return
+			}
 			for n := 0; n < int(tx.GroupCount); n++ {
 				receipts = append(receipts, types.NewErrReceipt(err))
 			}
@@ -232,9 +264,18 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 func (exec *Executor) procExecAddBlock(msg queue.Message) {
 	datas := msg.GetData().(*types.BlockDetail)
 	b := datas.Block
-	execute := newExecutor(b.StateHash, exec, b.Height, b.BlockTime, uint64(b.Difficulty), b.Txs, datas.Receipts)
-	execute.enableMVCC()
-	execute.api = exec.qclient
+	ctx := &executorCtx{
+		stateHash:  b.StateHash,
+		height:     b.Height,
+		blocktime:  b.BlockTime,
+		difficulty: uint64(b.Difficulty),
+		mainHash:   b.MainHash,
+		mainHeight: b.MainHeight,
+		parentHash: b.ParentHash,
+	}
+	execute := newExecutor(ctx, exec, b.Txs, datas.Receipts)
+	//因为mvcc 还没有写入，所以目前的mvcc版本是前一个区块的版本
+	execute.enableMVCC(datas.PrevStatusHash)
 	var kvset types.LocalDBSet
 	for _, kv := range datas.KV {
 		execute.stateDB.Set(kv.Key, kv.Value)
@@ -257,6 +298,9 @@ func (exec *Executor) procExecAddBlock(msg queue.Message) {
 		}
 		if len(kvs) > 0 {
 			kvset.KV = append(kvset.KV, kvs...)
+			for _, kv := range kvs {
+				execute.localDB.Set(kv.Key, kv.Value)
+			}
 		}
 	}
 	for i := 0; i < len(b.Txs); i++ {
@@ -276,6 +320,9 @@ func (exec *Executor) procExecAddBlock(msg queue.Message) {
 				return
 			}
 			kvset.KV = append(kvset.KV, kv.KV...)
+			for _, kv := range kv.KV {
+				execute.localDB.Set(kv.Key, kv.Value)
+			}
 		}
 	}
 	msg.Reply(exec.client.NewMessage("", types.EventAddBlock, &kvset))
@@ -284,9 +331,17 @@ func (exec *Executor) procExecAddBlock(msg queue.Message) {
 func (exec *Executor) procExecDelBlock(msg queue.Message) {
 	datas := msg.GetData().(*types.BlockDetail)
 	b := datas.Block
-	execute := newExecutor(b.StateHash, exec, b.Height, b.BlockTime, uint64(b.Difficulty), b.Txs, nil)
-	execute.enableMVCC()
-	execute.api = exec.qclient
+	ctx := &executorCtx{
+		stateHash:  b.StateHash,
+		height:     b.Height,
+		blocktime:  b.BlockTime,
+		difficulty: uint64(b.Difficulty),
+		mainHash:   b.MainHash,
+		mainHeight: b.MainHeight,
+		parentHash: b.ParentHash,
+	}
+	execute := newExecutor(ctx, exec, b.Txs, nil)
+	execute.enableMVCC(nil)
 	var kvset types.LocalDBSet
 	for _, kv := range datas.KV {
 		execute.stateDB.Set(kv.Key, kv.Value)

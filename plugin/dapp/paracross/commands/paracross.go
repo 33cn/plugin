@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
@@ -31,6 +32,8 @@ func ParcCmd() *cobra.Command {
 		CreateRawWithdrawCmd(),
 		CreateRawTransferToExecCmd(),
 		IsSyncCmd(),
+		GetHeightCmd(),
+		GetBlockInfoCmd(),
 	)
 	return cmd
 }
@@ -162,19 +165,12 @@ func addCreateTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
-
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func createTransfer(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, false)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
+	commands.CreateAssetTransfer(cmd, args, pt.ParaX)
 }
 
 //CreateRawTransferToExecCmd create raw transfer to exec tx
@@ -189,27 +185,20 @@ func CreateRawTransferToExecCmd() *cobra.Command {
 }
 
 func addCreateTransferToExecFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("to", "t", "", "receiver exec name")
-	cmd.MarkFlagRequired("to")
-
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
+	cmd.Flags().StringP("symbol", "s", "coins.bty", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
 
-	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	cmd.MarkFlagRequired("exec")
 }
 
 func createTransferToExec(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, false)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
+	commands.CreateAssetSendToExec(cmd, args, pt.ParaX)
 }
 
 //CreateRawWithdrawCmd create raw withdraw tx
@@ -229,59 +218,15 @@ func addCreateWithdrawFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
-	cmd.MarkFlagRequired("title")
-
-	cmd.Flags().StringP("from", "t", "", "exec name")
-	cmd.MarkFlagRequired("from")
-
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	cmd.MarkFlagRequired("exec")
 }
 
 func createWithdraw(cmd *cobra.Command, args []string) {
-	txHex, err := createTransferTx(cmd, true)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(txHex)
-}
-
-func createTransferTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	if amount < 0 {
-		return "", types.ErrAmount
-	}
-	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
-
-	toAddr, _ := cmd.Flags().GetString("to")
-	note, _ := cmd.Flags().GetString("note")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	title, _ := cmd.Flags().GetString("title")
-	if !strings.HasPrefix(title, "user.p") {
-		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
-		return "", types.ErrInvalidParam
-	}
-	execName := title + pt.ParaX
-
-	param := types.CreateTx{
-		To:          toAddr,
-		Amount:      amountInt64,
-		Fee:         0,
-		Note:        []byte(note),
-		IsWithdraw:  isWithdraw,
-		IsToken:     false,
-		TokenSymbol: symbol,
-		ExecName:    execName,
-	}
-	tx, err := pt.CreateRawTransferTx(&param)
-	if err != nil {
-		return "", err
-	}
-
-	txHex := types.Encode(tx)
-	return hex.EncodeToString(txHex), nil
+	commands.CreateAssetWithdraw(cmd, args, pt.ParaX)
 }
 
 // IsSyncCmd query parachain is sync
@@ -299,4 +244,62 @@ func isSync(cmd *cobra.Command, args []string) {
 	var res bool
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.IsSync", nil, &res)
 	ctx.Run()
+}
+
+// GetHeightCmd get para chain's chain height and consensus height
+func GetHeightCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "height",
+		Short: "query consensus height",
+		Run:   consusHeight,
+	}
+	addTitleFlags(cmd)
+	return cmd
+}
+
+func addTitleFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("title", "t", "", "parallel chain's title, default null in para chain")
+}
+
+func consusHeight(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	title, _ := cmd.Flags().GetString("title")
+
+	var res pt.ParacrossConsensusStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetHeight", &types.ReqString{Data: title}, &res)
+	ctx.Run()
+}
+
+// GetBlockInfoCmd get blocks hash with main chain hash map
+func GetBlockInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "blocks",
+		Short: "Get blocks with main chain hash map between [start, end], the same in main",
+		Run:   blockInfo,
+	}
+	addBlockBodyCmdFlags(cmd)
+	return cmd
+}
+
+func addBlockBodyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "block start height")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Int64P("end", "e", 0, "block end height")
+	cmd.MarkFlagRequired("end")
+}
+
+func blockInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	startH, _ := cmd.Flags().GetInt64("start")
+	endH, _ := cmd.Flags().GetInt64("end")
+
+	params := types.ReqBlocks{
+		Start: startH,
+		End:   endH,
+	}
+	var res pt.ParaBlock2MainInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetBlock2MainInfo", params, &res)
+	ctx.Run()
+
 }

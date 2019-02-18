@@ -52,7 +52,7 @@ func NewCA(baseDir, name string, signType int) (generator.CAGenerator, error) {
 }
 
 func newEcdsaCA(baseDir, name string) (*EcdsaCA, error) {
-	err := os.MkdirAll(baseDir, 0755)
+	err := os.MkdirAll(baseDir, 0750)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +168,7 @@ func x509Template() x509.Certificate {
 
 }
 
-func genCertificateECDSA(baseDir, name string, template, parent *x509.Certificate,
-	priv interface{}) (*x509.Certificate, error) {
+func genCertificateECDSA(baseDir, name string, template, parent *x509.Certificate, priv interface{}) (*x509.Certificate, error) {
 	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, template.PublicKey, priv)
 	if err != nil {
 		return nil, err
@@ -180,9 +179,9 @@ func genCertificateECDSA(baseDir, name string, template, parent *x509.Certificat
 	if err != nil {
 		return nil, err
 	}
+	defer certFile.Close()
 
 	err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
-	certFile.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +290,10 @@ func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate
 
 	fileName := filepath.Join(baseDir, name+"-cert.pem")
 
-	utils.CreateCertificateToPem(fileName, template, parent, key)
+	err = utils.CreateCertificateToPem(fileName, template, parent, key)
+	if err != nil {
+		return nil, err
+	}
 
 	x509Cert, err := sm2.ReadCertificateFromMem(certBytes)
 	if err != nil {
@@ -310,7 +312,7 @@ func createFolderStructure(rootDir string, local bool) error {
 	}
 
 	for _, folder := range folders {
-		err := os.MkdirAll(folder, 0755)
+		err := os.MkdirAll(folder, 0750)
 		if err != nil {
 			return err
 		}

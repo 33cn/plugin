@@ -205,7 +205,10 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	storeBatch.Write()
+	err := storeBatch.Write()
+	if err != nil {
+		klog.Error("store kvmvcc saveKVSets to db failed")
+	}
 }
 
 func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) {

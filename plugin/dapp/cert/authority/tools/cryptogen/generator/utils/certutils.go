@@ -27,23 +27,18 @@ func CreateCertificateToMem(template, parent *sm2.Certificate, key csp.Key) (cer
 }
 
 // CreateCertificateToPem 证书转pem
-func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, key csp.Key) (bool, error) {
+func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, key csp.Key) error {
 	pk := key.(*csp.SM2PrivateKey).PrivKey
 
-	var result bool
-	var err error
 	pub, _ := template.PublicKey.(*sm2.PublicKey)
 	var puk sm2.PublicKey
 
 	puk.Curve = sm2.P256Sm2()
 	puk.X = pub.X
 	puk.Y = pub.Y
-	result, err = sm2.CreateCertificateToPem(FileName, template, parent, &puk, pk)
-	if err != nil {
-		return false, err
-	}
+	_, err := sm2.CreateCertificateToPem(FileName, template, parent, &puk, pk)
 
-	return result, err
+	return err
 }
 
 // ParseX509CertificateToSm2 解析x509格式为sm2格式证书

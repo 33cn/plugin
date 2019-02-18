@@ -81,7 +81,7 @@ func (t *Trie) Prove(key []byte, fromLevel uint, proofDb dbm.DB) error {
 			} else {
 				enc, _ := rlp.EncodeToBytes(n)
 				if !ok {
-					hash = common.ShaKeccak256(enc)
+					hash = common.Sha3(enc)
 				}
 				proofDb.Set(hash, enc)
 			}

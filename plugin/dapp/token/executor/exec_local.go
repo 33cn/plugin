@@ -142,6 +142,7 @@ func newLocalToken(payload *tokenty.TokenPreCreate) *tokenty.LocalToken {
 		TotalTransferTimes:  0,
 		RevokedHeight:       0,
 		RevokedTime:         0,
+		Category:            payload.Category,
 	}
 	return &localToken
 }

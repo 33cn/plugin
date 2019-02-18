@@ -5,26 +5,16 @@
 package executor
 
 import (
+	"encoding/hex"
 	"fmt"
 
-	"github.com/33cn/chain33/common"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 var (
-	id               = "mavl-" + pty.UnfreezeX + "-"
-	initLocal        = "LODB-" + pty.UnfreezeX + "-init-"
-	beneficiaryLocal = "LODB-" + pty.UnfreezeX + "-beneficiary-"
+	id = "mavl-" + pty.UnfreezeX + "-"
 )
 
 func unfreezeID(txHash []byte) []byte {
-	return []byte(fmt.Sprintf("%s%s", id, common.Bytes2Hex(txHash)))
-}
-
-func initKey(init string) []byte {
-	return []byte(fmt.Sprintf("%s%s", initLocal, init))
-}
-
-func beneficiaryKey(beneficiary string) []byte {
-	return []byte(fmt.Sprintf("%s%s", beneficiaryLocal, beneficiary))
+	return []byte(fmt.Sprintf("%s%s", id, hex.EncodeToString(txHash)))
 }

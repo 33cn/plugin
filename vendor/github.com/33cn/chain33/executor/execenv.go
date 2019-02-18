@@ -9,6 +9,7 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -21,38 +22,52 @@ type executor struct {
 	stateDB      dbm.KV
 	localDB      dbm.KVDB
 	coinsAccount *account.DB
+	ctx          *executorCtx
 	height       int64
 	blocktime    int64
-
 	// 增加区块的难度值，后面的执行器逻辑需要这些属性
 	difficulty uint64
 	txs        []*types.Transaction
 	api        client.QueueProtocolAPI
+	gcli       types.Chain33Client
+	execapi    api.ExecutorAPI
 	receipts   []*types.ReceiptData
 }
 
-func newExecutor(stateHash []byte, exec *Executor, height, blocktime int64, difficulty uint64,
-	txs []*types.Transaction, receipts []*types.ReceiptData) *executor {
+type executorCtx struct {
+	stateHash  []byte
+	height     int64
+	blocktime  int64
+	difficulty uint64
+	parentHash []byte
+	mainHash   []byte
+	mainHeight int64
+}
+
+func newExecutor(ctx *executorCtx, exec *Executor, txs []*types.Transaction, receipts []*types.ReceiptData) *executor {
 	client := exec.client
 	enableMVCC := exec.pluginEnable["mvcc"]
-	opt := &StateDBOption{EnableMVCC: enableMVCC, Height: height}
+	opt := &StateDBOption{EnableMVCC: enableMVCC, Height: ctx.height}
 	localdb := NewLocalDB(client)
 	e := &executor{
-		stateDB:      NewStateDB(client, stateHash, localdb, opt),
+		stateDB:      NewStateDB(client, ctx.stateHash, localdb, opt),
 		localDB:      localdb,
 		coinsAccount: account.NewCoinsAccount(),
-		height:       height,
-		blocktime:    blocktime,
-		difficulty:   difficulty,
+		height:       ctx.height,
+		blocktime:    ctx.blocktime,
+		difficulty:   ctx.difficulty,
+		ctx:          ctx,
 		txs:          txs,
 		receipts:     receipts,
+		api:          exec.qclient,
+		gcli:         exec.grpccli,
 	}
 	e.coinsAccount.SetDB(e.stateDB)
 	return e
 }
 
-func (e *executor) enableMVCC() {
-	e.stateDB.(*StateDB).enableMVCC()
+func (e *executor) enableMVCC(hash []byte) {
+	e.stateDB.(*StateDB).enableMVCC(hash)
 }
 
 // AddMVCC convert key value to mvcc kv data
@@ -136,7 +151,10 @@ func (e *executor) setEnv(exec drivers.Driver) {
 	exec.SetStateDB(e.stateDB)
 	exec.SetLocalDB(e.localDB)
 	exec.SetEnv(e.height, e.blocktime, e.difficulty)
+	exec.SetBlockInfo(e.ctx.parentHash, e.ctx.mainHash, e.ctx.mainHeight)
 	exec.SetAPI(e.api)
+	exec.SetExecutorAPI(e.api, e.gcli)
+	e.execapi = exec.GetExecutorAPI()
 	exec.SetTxs(e.txs)
 	exec.SetReceipt(e.receipts)
 }
@@ -227,6 +245,10 @@ func (e *executor) execTxGroup(txs []*types.Transaction, index int) ([]*types.Re
 	}
 	receipts[0], err = e.execTxOne(feelog, txs[0], index)
 	if err != nil {
+		//接口临时错误，取消执行
+		if api.IsAPIEnvError(err) {
+			return nil, err
+		}
 		//状态数据库回滚
 		if types.IsFork(e.height, "ForkExecRollback") {
 			e.stateDB.Rollback()
@@ -238,6 +260,9 @@ func (e *executor) execTxGroup(txs []*types.Transaction, index int) ([]*types.Re
 		receipts[i], err = e.execTxOne(receipts[i], txs[i], index+i)
 		if err != nil {
 			//reset other exec , and break!
+			if api.IsAPIEnvError(err) {
+				return nil, err
+			}
 			for k := 1; k < i; k++ {
 				receipts[k] = &types.Receipt{Ty: types.ExecPack}
 			}
@@ -409,6 +434,9 @@ func (e *executor) execTx(tx *types.Transaction, index int) (*types.Receipt, err
 		}
 	}
 	elog.Debug("exec tx = ", "index", index, "execer", string(tx.Execer), "err", err)
+	if api.IsAPIEnvError(err) {
+		return nil, err
+	}
 	return feelog, nil
 }
 

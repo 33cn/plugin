@@ -204,9 +204,7 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	gameID, _ := cmd.Flags().GetString("gameID")
 	address, _ := cmd.Flags().GetString("address")
 	statusStr, _ := cmd.Flags().GetString("status")
-	status, _ := strconv.ParseInt(statusStr, 10, 32)
 	indexstr, _ := cmd.Flags().GetString("index")
-	index, _ := strconv.ParseInt(indexstr, 10, 64)
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 	round, _ := cmd.Flags().GetString("round")
 
@@ -215,13 +213,21 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 	req := &pkt.QueryPBGameInfo{
 		GameId: gameID,
 		Addr:   address,
-		Status: int32(status),
-		Index:  index,
 	}
-	params.Payload = types.MustPBToJSON(req)
+	if indexstr != "" {
+		index, err := strconv.ParseInt(indexstr, 10, 64)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
+		req.Index = index
+	}
+
 	if gameID != "" {
 		if round == "" {
 			params.FuncName = pkt.FuncNameQueryGameByID
+			params.Payload = types.MustPBToJSON(req)
 			var res pkt.ReplyPBGame
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
@@ -243,11 +249,20 @@ func pokerbullQuery(cmd *cobra.Command, args []string) {
 		}
 	} else if address != "" {
 		params.FuncName = pkt.FuncNameQueryGameByAddr
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.PBGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else if statusStr != "" {
+		status, err := strconv.ParseInt(statusStr, 10, 32)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
+		req.Status = int32(status)
 		params.FuncName = pkt.FuncNameQueryGameByStatus
+		params.Payload = types.MustPBToJSON(req)
 		var res pkt.PBGameRecords
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()

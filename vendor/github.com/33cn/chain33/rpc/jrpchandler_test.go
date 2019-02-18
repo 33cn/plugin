@@ -10,6 +10,7 @@ import (
 
 	"encoding/hex"
 
+	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -373,6 +374,7 @@ func newTestChain33(api *mocks.QueueProtocolAPI) *Chain33 {
 	return &Chain33{
 		cli: channelClient{
 			QueueProtocolAPI: api,
+			accountdb:        account.NewCoinsAccount(),
 		},
 	}
 }
@@ -411,7 +413,6 @@ func TestChain33_ReWriteRawTx(t *testing.T) {
 
 	reTx := &rpctypes.ReWriteRawTx{
 		Tx:     txHex1,
-		Execer: "paracross",
 		Fee:    29977777777,
 		Expire: "130s",
 		To:     "aabbccdd",
@@ -426,7 +427,6 @@ func TestChain33_ReWriteRawTx(t *testing.T) {
 	tx := &types.Transaction{}
 	err = types.Decode(txData, tx)
 	assert.Nil(t, err)
-	assert.Equal(t, tx.Execer, []byte(reTx.Execer))
 	assert.Equal(t, tx.Fee, reTx.Fee)
 	assert.Equal(t, int64(130000000000), tx.Expire)
 	assert.Equal(t, reTx.To, tx.To)
@@ -1289,4 +1289,59 @@ func TestChain33_GetExecBalance(t *testing.T) {
 	api.On("StoreList", mock.Anything).Return(nil, types.ErrInvalidParam)
 	err = client.GetExecBalance(in, &testResult2)
 	assert.NotNil(t, err)
+}
+
+func TestChain33_GetBalance(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	client := newTestChain33(api)
+
+	var addrs = []string{"1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt"}
+	cases := []struct {
+		In types.ReqBalance
+	}{
+		{In: types.ReqBalance{
+			Execer:    types.ExecName("coins"),
+			Addresses: addrs,
+		}},
+		{In: types.ReqBalance{
+			Execer:    types.ExecName("ticket"),
+			Addresses: addrs,
+		}},
+
+		{In: types.ReqBalance{
+			AssetSymbol: "bty",
+			AssetExec:   "coins",
+			Execer:      types.ExecName("ticket"),
+			Addresses:   addrs,
+		}},
+		{In: types.ReqBalance{
+			AssetSymbol: "bty",
+			AssetExec:   "coins",
+			Execer:      types.ExecName("coins"),
+			Addresses:   addrs,
+		}},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run("test GetBalance", func(t *testing.T) {
+			head := &types.Header{StateHash: []byte("sdfadasds")}
+			api.On("GetLastHeader").Return(head, nil)
+
+			var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100}
+			accv := types.Encode(acc)
+			storevalue := &types.StoreReplyValue{}
+			storevalue.Values = append(storevalue.Values, accv)
+			api.On("StoreGet", mock.Anything).Return(storevalue, nil)
+
+			var data interface{}
+			err := client.GetBalance(c.In, &data)
+			assert.Nil(t, err)
+			result := data.([]*rpctypes.Account)
+			assert.Equal(t, 1, len(result))
+			//t.Error("result", "x", result)
+			assert.Equal(t, acc.Addr, result[0].Addr)
+			assert.Equal(t, int64(100), result[0].Balance)
+		})
+	}
 }

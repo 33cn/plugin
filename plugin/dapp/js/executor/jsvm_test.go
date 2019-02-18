@@ -9,13 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 	"github.com/robertkrimen/otto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func init() {
@@ -25,6 +28,12 @@ func init() {
 func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e := newjs().(*js)
 	e.SetEnv(1, time.Now().Unix(), 1)
+	mockapi := &mocks.QueueProtocolAPI{}
+	mockapi.On("Query", "ticket", "RandNumHash", mock.Anything).Return(&types.ReplyHash{Hash: []byte("hello")}, nil)
+	e.SetAPI(mockapi)
+	gclient, err := grpcclient.NewMainChainClient("")
+	assert.Nil(t, err)
+	e.SetExecutorAPI(mockapi, gclient)
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
 	c, tx := createCodeTx("test", code)
@@ -187,8 +196,9 @@ func TestCacheMemUsage(t *testing.T) {
 	e := initExec(ldb, kvdb, jscode, t)
 	vm, err := e.createVM("test", nil, 0)
 	assert.Nil(t, err)
-	vms := make([]*otto.Otto, 1024)
-	for i := 0; i < 1024; i++ {
+	n := 64
+	vms := make([]*otto.Otto, n)
+	for i := 0; i < n; i++ {
 		vms[i] = vm.Copy()
 	}
 	printMemUsage()

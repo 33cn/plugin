@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	listenAddr            = "localhost:8805"
-	unSyncMaxTimes uint32 = 6 //max 6 times
-	checkInterval  uint32 = 5 // 5s
+	listenAddr            = ":8805" //as server, should keep default 0.0.0.0
+	unSyncMaxTimes uint32 = 6       //max 6 times
+	checkInterval  uint32 = 5       // 5s
 )
 
 // HealthCheckServer  a node's health check server
@@ -98,7 +98,8 @@ func (s *HealthCheckServer) getHealth(sync bool) (bool, error) {
 		return false, err
 	}
 
-	log.Info("healthCheck tick", "peers", len(peerList.Peers), "isSync", reply.IsOk, "sync", sync)
+	log.Info("healthCheck tick", "peers", len(peerList.Peers), "isCaughtUp", reply.IsOk,
+		"health", len(peerList.Peers) > 1 && reply.IsOk, "listen", sync)
 
 	return len(peerList.Peers) > 1 && reply.IsOk, nil
 }

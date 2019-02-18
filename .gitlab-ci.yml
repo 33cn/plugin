@@ -46,7 +46,7 @@ go_test:
     tags:
         - 33cn
     script:
-        - make docker-compose-down DAPP=all
+        - make docker-compose-down dapp=all
         - make test
     only:
         - master
@@ -90,8 +90,8 @@ deploy_relay:
         - 33cn
     script:
         - make build_ci
-        - make docker-compose PROJ=relay DAPP=relay
-        - make docker-compose-down PROJ=relay DAPP=relay
+        - make docker-compose proj=relay dapp=relay
+        - make docker-compose-down proj=relay dapp=relay
     only:
         - master
 
@@ -101,8 +101,8 @@ deploy_paracross:
         - 33cn
     script:
         - make build_ci
-        - make docker-compose PROJ=paracross DAPP=paracross
-        - make docker-compose-down PROJ=paracross DAPP=paracross
+        - make docker-compose proj=paracross dapp=paracross
+        - make docker-compose-down proj=paracross dapp=paracross
     only:
         - master
 
@@ -139,8 +139,8 @@ fork_test_privacy:
     script:
          - if [ -n "${onceEveryday}" ]; then
          - make build_ci
-         - make fork-test PROJ=privacy DAPP=privacy
-         - make docker-compose-down PROJ=privacy DAPP=privacy
+         - make fork-test proj=privacy dapp=privacy
+         - make docker-compose-down proj=privacy dapp=privacy
          - fi
     only:
         - master
@@ -153,8 +153,8 @@ fork_test_paracross:
     script:
          - if [ -n "${onceEveryday}" ]; then
          - make build_ci
-         - make fork-test PROJ=paracross DAPP=paracross
-         - make docker-compose-down PROJ=paracross DAPP=paracross
+         - make fork-test proj=paracross dapp=paracross
+         - make docker-compose-down proj=paracross dapp=paracross
          - fi
     only:
         - master
@@ -168,8 +168,8 @@ fork_test_all:
     script:
          - if [ -n "${onceEveryday}" ]; then
          - make build_ci
-         - make fork-test PROJ=fork DAPP=all
-         - make docker-compose-down PROJ=fork DAPP=all
+         - make fork-test proj=fork dapp=all
+         - make docker-compose-down proj=fork dapp=all
          - fi
     only:
         - master
@@ -183,8 +183,8 @@ deploy_test_all:
     script:
          - if [ -n "${onceEveryday}" ]; then
          - make build_ci
-         - make docker-compose PROJ=deploy DAPP=all
-         - make docker-compose-down PROJ=deploy DAPP=all
+         - make docker-compose proj=deploy dapp=all
+         - make docker-compose-down proj=deploy dapp=all
          - fi
     only:
         - master
