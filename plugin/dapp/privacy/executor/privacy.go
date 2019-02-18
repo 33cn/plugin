@@ -251,7 +251,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 			input := keyinput[errIndex]
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/types.Coin, "utxo keyimage", common.ToHex(input.KeyImage))
 		}
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "checkUTXOValid failed ")
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "err", "checkUTXOValid failed ")
 		return pty.ErrDoubleSpendOccur
 	}
 
@@ -293,7 +293,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 func batchGet(stateDB db.KV, keyImages [][]byte) (values [][]byte, err error) {
 	for i := 0; i < len(keyImages); i++ {
 		v, err := stateDB.Get(keyImages[i])
-		if err != nil {
+		if err != nil && err != types.ErrNotFound {
 			return nil, err
 		}
 		values = append(values, v)
@@ -306,11 +306,11 @@ func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 	stateDB := p.GetStateDB()
 	values, err := batchGet(stateDB, keyImages)
 	if err != nil {
-		privacylog.Error("exec module", "checkUTXOValid failed to get value from statDB")
+		privacylog.Error("exec module", "checkUTXOValid failed to get value from statDB", err)
 		return false, invalidIndex
 	}
 	if len(values) != len(keyImages) {
-		privacylog.Error("exec module", "checkUTXOValid return different count value with keys")
+		privacylog.Error("exec module", "err", "checkUTXOValid return different count value with keys")
 		return false, invalidIndex
 	}
 	for i, value := range values {
@@ -331,7 +331,7 @@ func (p *privacy) checkPubKeyValid(keys [][]byte, pubkeys [][]byte) (bool, int32
 	}
 
 	if len(values) != len(pubkeys) {
-		privacylog.Error("exec module", "checkPubKeyValid return different count value with keys")
+		privacylog.Error("exec module", "err", "checkPubKeyValid return different count value with keys")
 		return false, invalidIndex
 	}
 
