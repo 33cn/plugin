@@ -117,9 +117,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 func (kvmMavls *KVmMavlStore) Close() {
 	quit = true
 	wg.Wait()
-	kvmMavls.BaseStore.Close()
 	kvmMavls.KVMVCCStore.Close()
 	kvmMavls.MavlStore.Close()
+	kvmMavls.BaseStore.Close()
 	kmlog.Info("store kvmMavls closed")
 }
 
@@ -154,12 +154,6 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 
 // Get kvs with statehash from KVmMavlStore
 func (kvmMavls *KVmMavlStore) Get(datas *types.StoreGet) [][]byte {
-	if value, ok := kvmMavls.cance.Get(string(datas.StateHash)); ok {
-		if value.(int64) < kvmvccMavlFork {
-			return kvmMavls.MavlStore.Get(datas)
-		}
-		return kvmMavls.KVMVCCStore.Get(datas)
-	}
 	return kvmMavls.KVMVCCStore.Get(datas)
 }
 
@@ -266,7 +260,7 @@ func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 	return hash, err
 }
 
-// DelMavl 数据库中mavl的清除
+// DelMavl 数据库中mavl数据清除
 // 达到kvmvccMavlFork + 100000 后触发清除
 func DelMavl(db dbm.DB) {
 	defer wg.Done()
