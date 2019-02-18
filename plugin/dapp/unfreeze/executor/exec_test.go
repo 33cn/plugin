@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"encoding/hex"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -17,7 +19,6 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
-	"encoding/hex"
 )
 
 type execEnv struct {
