@@ -28,7 +28,7 @@ func (testCase *unfreezeTerminateCase) SendCommand(packID string) (types.PackFun
 	if testCase.info == nil || len(testCase.info.unFreezeID) == 0 {
 		return nil, fmt.Errorf("can't withdraw without unFreezeID")
 	}
-	testCase.Command = fmt.Sprintf("%s --id %s", testCase.Command, testCase.info.unFreezeID)
+	testCase.Command = fmt.Sprintf("%s --id %s", testCase.Command, testCase.info.unFreezeID[len("mavl-unfreeze-"):])
 
 	return types.DefaultSend(testCase, &unfreezeTerminatePack{}, packID)
 }
