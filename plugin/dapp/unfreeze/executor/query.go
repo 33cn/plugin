@@ -35,7 +35,7 @@ func (u *Unfreeze) Query_ListUnfreezeByBeneficiary(in *pty.ReqUnfreezes) (types.
 
 // QueryWithdraw 查询可提币状态
 func QueryWithdraw(stateDB dbm.KV, id string) (types.Message, error) {
-	id = unfreezeIDFrom(id)
+	id = unfreezeIDFromHex(id)
 	unfreeze, err := loadUnfreeze(id, stateDB)
 	if err != nil {
 		uflog.Error("QueryWithdraw ", "unfreezeID", id, "err", err)
@@ -67,7 +67,7 @@ func getWithdrawAvailable(unfreeze *pty.Unfreeze, calcTime int64) (int64, error)
 
 // QueryUnfreeze 查询合约状态
 func QueryUnfreeze(stateDB dbm.KV, id string) (types.Message, error) {
-	id = unfreezeIDFrom(id)
+	id = unfreezeIDFromHex(id)
 	unfreeze, err := loadUnfreeze(id, stateDB)
 	if err != nil {
 		uflog.Error("QueryUnfreeze ", "unfreezeID", id, "err", err)
