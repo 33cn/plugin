@@ -254,7 +254,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		if !bytes.Equal(blockHash.Hash, commit.Status.MainBlockHash) && commit.Status.Height > 0 {
 			clog.Error("paracross.Commit blockHash not match", "db", hex.EncodeToString(blockHash.Hash),
 				"commit tx", hex.EncodeToString(commit.Status.MainBlockHash), "commitHeight", commit.Status.Height,
-				"commitMainHeight",commit.Status.MainBlockHeight,"from", a.fromaddr)
+				"commitMainHeight", commit.Status.MainBlockHeight, "from", a.fromaddr)
 			return nil, types.ErrBlockHashNoMatch
 		}
 	}
