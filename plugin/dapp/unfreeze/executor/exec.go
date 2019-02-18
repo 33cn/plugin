@@ -49,7 +49,7 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 // Exec_Withdraw 执行冻结合约中提币
 func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
-		payload.UnfreezeID = unfreezeIDFrom(payload.UnfreezeID)
+		payload.UnfreezeID = unfreezeIDFromHex(payload.UnfreezeID)
 	}
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
@@ -88,7 +88,7 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 // Exec_Terminate 执行终止冻结合约
 func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
-		payload.UnfreezeID = unfreezeIDFrom(payload.UnfreezeID)
+		payload.UnfreezeID = unfreezeIDFromHex(payload.UnfreezeID)
 	}
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {

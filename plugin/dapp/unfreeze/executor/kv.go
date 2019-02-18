@@ -19,6 +19,6 @@ func unfreezeID(txHash []byte) []byte {
 	return []byte(fmt.Sprintf("%s%s", id, hex.EncodeToString(txHash)))
 }
 
-func unfreezeIDFrom(txHash string) string {
+func unfreezeIDFromHex(txHash string) string {
 	return fmt.Sprintf("%s%s", id, txHash)
 }
