@@ -38,7 +38,7 @@ func (testCase *unfreezeWithdrawCase) SetDependData(depData interface{}) {
 
 	if info, ok := depData.(*unfreezeInfo); ok && info != nil {
 		testCase.info = info
-		testCase.Command = fmt.Sprintf("%s --id %s", testCase.Command, testCase.info.unFreezeID)
+		testCase.Command = fmt.Sprintf("%s --id %s", testCase.Command, testCase.info.unFreezeID[len("mavl-unfreeze-"):])
 
 	}
 }
