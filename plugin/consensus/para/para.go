@@ -633,14 +633,15 @@ func (client *client) CreateBlock() {
 			lastSeqMainHash = blockOnMain.Detail.Block.ParentHash
 		}
 
-		_, lastBlock, err := client.getLastBlockInfo()
+		lastBlockSeq, lastBlock, err := client.getLastBlockInfo()
 		if err != nil {
 			plog.Error("Parachain getLastBlockInfo fail", "err", err)
 			time.Sleep(time.Second)
 			continue
 		}
 
-		plog.Info("Parachain process block", "lastBlockSeq", lastSeq, "curSeq", currSeq,
+		plog.Info("Parachain process block", "lastSeq", lastSeq, "curSeq", currSeq,
+			"lastBlockHeight",lastBlock.Height,"lastBlockSeq",lastBlockSeq,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
 			"lastBlockMainHeight", lastBlock.MainHeight, "lastBlockMainHash", common.ToHex(lastBlock.MainHash), "seqTy", blockOnMain.Seq.Type)
 
