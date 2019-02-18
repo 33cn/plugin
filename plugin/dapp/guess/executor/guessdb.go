@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db"
