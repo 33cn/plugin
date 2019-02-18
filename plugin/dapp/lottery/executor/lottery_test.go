@@ -21,6 +21,7 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	pty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	rt "github.com/33cn/plugin/plugin/dapp/lottery/types"
 )
 
@@ -199,9 +200,10 @@ func ConstructDrawTx() *types.Transaction {
 func constructLotteryInstance() drivers.Driver {
 	lottery := newLottery()
 	//lottery.SetStateDB(NewTestDB())
-	mydb = NewTestDB()
+	_, _, kvdb := util.CreateTestDB()
+	mydb = kvdb
 	lottery.SetStateDB(mydb)
-	lottery.SetLocalDB(NewTestLDB())
+	lottery.SetLocalDB(kvdb)
 	q := queue.New("channel")
 	client.New(q.Client(), nil)
 	//lottery.SetAPI(qclient)
@@ -263,40 +265,4 @@ func CompareLotteryExecResult(rec1 *types.Receipt, err1 error, rec2 *types.Recei
 		return false
 	}
 	return true
-}
-
-type TestLDB struct {
-	db.TransactionDB
-	cache map[string][]byte
-}
-
-func NewTestLDB() *TestLDB {
-	return &TestLDB{cache: make(map[string][]byte)}
-}
-
-func (e *TestLDB) Get(key []byte) (value []byte, err error) {
-	if value, ok := e.cache[string(key)]; ok {
-		//elog.Error("getkey", "key", string(key), "value", string(value))
-		return value, nil
-	}
-	return nil, types.ErrNotFound
-}
-
-func (e *TestLDB) Set(key []byte, value []byte) error {
-	//elog.Error("setkey", "key", string(key), "value", string(value))
-	e.cache[string(key)] = value
-	return nil
-}
-
-func (e *TestLDB) BatchGet(keys [][]byte) (values [][]byte, err error) {
-	return nil, types.ErrNotFound
-}
-
-//从数据库中查询数据列表，set 中的cache 更新不会影响这个list
-func (e *TestLDB) List(prefix, key []byte, count, direction int32) ([][]byte, error) {
-	return nil, types.ErrNotFound
-}
-
-func (e *TestLDB) PrefixCount(prefix []byte) int64 {
-	return 0
 }
