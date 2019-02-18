@@ -124,7 +124,7 @@ function start() {
     done
 
     miner "${CLI}"
-#    miner "${CLI4}"
+    #    miner "${CLI4}"
     block_wait "${CLI}" 1
 
     echo "=========== check genesis hash ========== "
@@ -318,7 +318,7 @@ function transfer() {
 function base_config() {
     sync
     transfer "${CLI}"
-#    transfer "${CLI4}"
+    #    transfer "${CLI4}"
 }
 
 function dapp_run() {
