@@ -504,8 +504,8 @@ func TestDelMavlData(t *testing.T) {
 	assert.Nil(t, err)
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
-	storeCfg, sub := newStoreCfgIter(dir)
-	store := New(storeCfg, sub).(*KVmMavlStore)
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
 	db := store.GetDB()
@@ -517,6 +517,7 @@ func TestDelMavlData(t *testing.T) {
 	db.Set([]byte("key11"), []byte("value11"))
 	db.Set([]byte("key22"), []byte("value22"))
 
+	quit = false
 	delMavlData(db)
 
 	v, err := db.Get([]byte(mvccPrefix))
