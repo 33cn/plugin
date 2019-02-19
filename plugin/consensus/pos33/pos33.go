@@ -183,7 +183,7 @@ func (client *Client) CreateGenesisTx() (ret []*pb.Transaction) {
 	tx.Execer = []byte("pos33")
 	tx.To = address.GetExecAddress("pos33").String()
 	dact := &ty.Pos33DepositAction{W: 100}
-	tx.Payload = pb.Encode(&ty.Pos33Action{Value: &ty.Pos33Action_Deposit{Deposit: dact}})
+	tx.Payload = pb.Encode(&ty.Pos33Action{Value: &ty.Pos33Action_Deposit{Deposit: dact}, Ty: int32(ty.Pos33ActionDeposit)})
 	tx.Sign(pb.ED25519, RootPrivKey)
 	ret = append(ret, tx)
 	// plog.Error("@@@@@@@ genersis tx1 to: ", tx.To)
@@ -225,7 +225,7 @@ func (client *Client) allWeight() int {
 
 func (client *Client) getWeight(pub string) int {
 	addr := address.PubKeyToAddress([]byte(pub)).String()
-	v, err := client.Get([]byte(ty.Pos33Weight + addr))
+	v, err := client.Get([]byte(ty.Pos33WeightPrefix + addr))
 	if err != nil {
 		plog.Error(err.Error())
 		return 0

@@ -32,11 +32,11 @@ message Pos33Rands {
 }
 
 message Pos33Block {
-  types.Block b = 1;
+  Block b = 1;
 }
 
 message Pos33PrePrepare {
-  types.Block b = 1;
+  Block b = 1;
 }
 
 message Pos33Prepare {
@@ -60,6 +60,7 @@ message Pos33Action {
     Pos33RewordAction reword = 4;
     Pos33PunishAction punish = 5;
   }
+  int32 ty = 10;
 }
 
 message Pos33DepositAction {
@@ -118,4 +119,10 @@ message Pos33Committee {
   int64 height = 5;
   bytes block_hash = 6;
   Signature sig = 7;
+}
+
+
+message ReceiptPos33 {
+  string id   = 1;
+  int32  status     = 2;
 }
