@@ -636,8 +636,9 @@ func (client *Client) createBlock() (*types.Block, *types.Block) {
 	return &newblock, lastBlock
 }
 
-func (client *Client) updateBlock(newblock *types.Block, txHashList [][]byte) (*types.Block, [][]byte) {
+func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*types.Block, *types.Block, [][]byte) {
 	lastBlock := client.GetCurrentBlock()
+	newblock := *block
 	//需要去重复tx
 	if lastBlock.Height != newblock.Height-1 {
 		newblock.Txs = client.CheckTxDup(newblock.Txs)
@@ -653,7 +654,7 @@ func (client *Client) updateBlock(newblock *types.Block, txHashList [][]byte) (*
 	//tx 有更新
 	if len(txs) > 0 {
 		//防止区块过大
-		txs = client.AddTxsToBlock(newblock, txs)
+		txs = client.AddTxsToBlock(&newblock, txs)
 		if len(txs) > 0 {
 			txHashList = append(txHashList, getTxHashes(txs)...)
 		}
@@ -661,7 +662,7 @@ func (client *Client) updateBlock(newblock *types.Block, txHashList [][]byte) (*
 	if lastBlock.BlockTime >= newblock.BlockTime {
 		newblock.BlockTime = lastBlock.BlockTime + 1
 	}
-	return lastBlock, txHashList
+	return &newblock, lastBlock, txHashList
 }
 
 // CreateBlock ticket create block func
@@ -686,7 +687,7 @@ func (client *Client) CreateBlock() {
 			for lasttime >= types.Now().Unix() {
 				time.Sleep(time.Second / 10)
 			}
-			lastBlock, hashlist = client.updateBlock(block, hashlist)
+			block, lastBlock, hashlist = client.updateBlock(block, hashlist)
 		}
 	}
 }
