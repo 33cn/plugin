@@ -12,6 +12,7 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client/api"
+	dbm "github.com/33cn/chain33/common/db"
 	clog "github.com/33cn/chain33/common/log"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/pluginmgr"
@@ -39,6 +40,7 @@ func DisableLog() {
 
 // Executor executor struct
 type Executor struct {
+	disableLocal bool
 	client       queue.Client
 	qclient      client.QueueProtocolAPI
 	grpccli      types.Chain33Client
@@ -142,8 +144,12 @@ func (exec *Executor) procExecQuery(msg queue.Message) {
 	if data.StateHash == nil {
 		data.StateHash = header.StateHash
 	}
-	localdb := NewLocalDB(exec.client)
-	driver.SetLocalDB(localdb)
+	var localdb dbm.KVDB
+	if !exec.disableLocal {
+		localdb = NewLocalDB(exec.client)
+		defer localdb.(*LocalDB).Close()
+		driver.SetLocalDB(localdb)
+	}
 	opt := &StateDBOption{EnableMVCC: exec.pluginEnable["mvcc"], Height: header.GetHeight()}
 
 	db := NewStateDB(exec.client, data.StateHash, localdb, opt)
@@ -173,7 +179,12 @@ func (exec *Executor) procExecCheckTx(msg queue.Message) {
 		mainHeight: datas.MainHeight,
 		parentHash: datas.ParentHash,
 	}
-	execute := newExecutor(ctx, exec, datas.Txs, nil)
+	var localdb dbm.KVDB
+	if !exec.disableLocal {
+		localdb = NewLocalDB(exec.client)
+		defer localdb.(*LocalDB).Close()
+	}
+	execute := newExecutor(ctx, exec, localdb, datas.Txs, nil)
 	execute.enableMVCC(nil)
 	//返回一个列表表示成功还是失败
 	result := &types.ReceiptCheckTxList{}
@@ -204,7 +215,12 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 		mainHeight: datas.MainHeight,
 		parentHash: datas.ParentHash,
 	}
-	execute := newExecutor(ctx, exec, datas.Txs, nil)
+	var localdb dbm.KVDB
+	if !exec.disableLocal {
+		localdb = NewLocalDB(exec.client)
+		defer localdb.(*LocalDB).Close()
+	}
+	execute := newExecutor(ctx, exec, localdb, datas.Txs, nil)
 	execute.enableMVCC(nil)
 	var receipts []*types.Receipt
 	index := 0
@@ -225,6 +241,8 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 				receipts = append(receipts, types.NewErrReceipt(err))
 				continue
 			}
+			//update local
+			exec.execLocalSameTime(execute, tx, receipt, index)
 			receipts = append(receipts, receipt)
 			index++
 			continue
@@ -239,7 +257,7 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 			receipts = append(receipts, types.NewErrReceipt(types.ErrTxGroupCount))
 			continue
 		}
-		receiptlist, err := execute.execTxGroup(datas.Txs[i:i+int(tx.GroupCount)], index)
+		receiptlist, err := execute.execTxGroup(exec, datas.Txs[i:i+int(tx.GroupCount)], index)
 		i = i + int(tx.GroupCount) - 1
 		if len(receiptlist) > 0 && len(receiptlist) != int(tx.GroupCount) {
 			panic("len(receiptlist) must be equal tx.GroupCount")
@@ -261,6 +279,22 @@ func (exec *Executor) procExecTxList(msg queue.Message) {
 		&types.Receipts{Receipts: receipts}))
 }
 
+func (exec *Executor) execLocalSameTime(execute *executor, tx *types.Transaction, receipt *types.Receipt, index int) {
+	e := execute.loadDriver(tx, index)
+	if e.ExecutorOrder() == drivers.ExecLocalSameTime {
+		var r = &types.ReceiptData{}
+		if receipt != nil {
+			r.Ty = receipt.Ty
+			r.Logs = receipt.Logs
+		}
+		_, err := exec.execLocalTx(execute, tx, r, index)
+		//ignore err, only print err
+		if err != nil {
+			elog.Debug("ExecLocal Same Time", "err", err)
+		}
+	}
+}
+
 func (exec *Executor) procExecAddBlock(msg queue.Message) {
 	datas := msg.GetData().(*types.BlockDetail)
 	b := datas.Block
@@ -273,7 +307,12 @@ func (exec *Executor) procExecAddBlock(msg queue.Message) {
 		mainHeight: b.MainHeight,
 		parentHash: b.ParentHash,
 	}
-	execute := newExecutor(ctx, exec, b.Txs, datas.Receipts)
+	var localdb dbm.KVDB
+	if !exec.disableLocal {
+		localdb = NewLocalDB(exec.client)
+		defer localdb.(*LocalDB).Close()
+	}
+	execute := newExecutor(ctx, exec, localdb, b.Txs, datas.Receipts)
 	//因为mvcc 还没有写入，所以目前的mvcc版本是前一个区块的版本
 	execute.enableMVCC(datas.PrevStatusHash)
 	var kvset types.LocalDBSet
@@ -305,27 +344,36 @@ func (exec *Executor) procExecAddBlock(msg queue.Message) {
 	}
 	for i := 0; i < len(b.Txs); i++ {
 		tx := b.Txs[i]
-		kv, err := execute.execLocal(tx, datas.Receipts[i], i)
-		if err == types.ErrActionNotSupport {
-			continue
-		}
+		kv, err := exec.execLocalTx(execute, tx, datas.Receipts[i], i)
 		if err != nil {
 			msg.Reply(exec.client.NewMessage("", types.EventAddBlock, err))
 			return
 		}
 		if kv != nil && kv.KV != nil {
-			err := exec.checkPrefix(tx.Execer, kv.KV)
-			if err != nil {
-				msg.Reply(exec.client.NewMessage("", types.EventAddBlock, err))
-				return
-			}
 			kvset.KV = append(kvset.KV, kv.KV...)
-			for _, kv := range kv.KV {
-				execute.localDB.Set(kv.Key, kv.Value)
-			}
 		}
 	}
 	msg.Reply(exec.client.NewMessage("", types.EventAddBlock, &kvset))
+}
+
+func (exec *Executor) execLocalTx(execute *executor, tx *types.Transaction, r *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	kv, err := execute.execLocal(tx, r, index)
+	if err == types.ErrActionNotSupport {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if kv != nil && kv.KV != nil {
+		err := exec.checkPrefix(tx.Execer, kv.KV)
+		if err != nil {
+			return nil, err
+		}
+		for _, kv := range kv.KV {
+			execute.localDB.Set(kv.Key, kv.Value)
+		}
+	}
+	return kv, nil
 }
 
 func (exec *Executor) procExecDelBlock(msg queue.Message) {
@@ -340,7 +388,12 @@ func (exec *Executor) procExecDelBlock(msg queue.Message) {
 		mainHeight: b.MainHeight,
 		parentHash: b.ParentHash,
 	}
-	execute := newExecutor(ctx, exec, b.Txs, nil)
+	var localdb dbm.KVDB
+	if !exec.disableLocal {
+		localdb = NewLocalDB(exec.client)
+		defer localdb.(*LocalDB).Close()
+	}
+	execute := newExecutor(ctx, exec, localdb, b.Txs, nil)
 	execute.enableMVCC(nil)
 	var kvset types.LocalDBSet
 	for _, kv := range datas.KV {
