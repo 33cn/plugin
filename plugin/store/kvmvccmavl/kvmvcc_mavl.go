@@ -34,7 +34,7 @@ var (
 )
 
 const (
-	canceSize         = 2048 //可以缓存2048个roothash, height对
+	cacheSize         = 2048 //可以缓存2048个roothash, height对
 	batchDataSize     = 1024 * 1024 * 1
 	delMavlStateStart = 1
 	delMavlStateEnd   = 0
@@ -52,7 +52,7 @@ func DisableLog() {
 }
 
 func init() {
-	drivers.Reg("kvmvccMavl", New)
+	drivers.Reg("kvmvccmavl", New)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -60,7 +60,7 @@ type KVmMavlStore struct {
 	*drivers.BaseStore
 	*KVMVCCStore
 	*MavlStore
-	cance *lru.Cache
+	cache *lru.Cache
 }
 
 type subKVMVCCConfig struct {
@@ -97,7 +97,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
 	}
-	cance, err := lru.New(canceSize)
+	cance, err := lru.New(cacheSize)
 	if err != nil {
 		panic("new KVmMavlStore fail")
 	}
@@ -135,14 +135,14 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 			return hash, err
 		}
 		if err == nil {
-			kvmMavls.cance.Add(string(hash), datas.Height)
+			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
 		return hash, err
 	}
 	// 仅仅做kvmvcc
 	hash, err := kvmMavls.KVMVCCStore.Set(datas, nil, sync)
 	if err == nil {
-		kvmMavls.cance.Add(string(hash), datas.Height)
+		kvmMavls.cache.Add(string(hash), datas.Height)
 	}
 	// 删除Mavl数据
 	if datas.Height > delMavlDataHeight && !isDelMavlData && !isDelMavling() {
@@ -169,14 +169,14 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 			return hash, err
 		}
 		if err == nil {
-			kvmMavls.cance.Add(string(hash), datas.Height)
+			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
 		return hash, err
 	}
 	// 仅仅做kvmvcc
 	hash, err := kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
 	if err == nil {
-		kvmMavls.cance.Add(string(hash), datas.Height)
+		kvmMavls.cache.Add(string(hash), datas.Height)
 	}
 	// 删除Mavl数据
 	if datas.Height > delMavlDataHeight && !isDelMavlData && !isDelMavling() {
@@ -188,7 +188,7 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 
 // Commit kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) Commit(req *types.ReqHash) ([]byte, error) {
-	if value, ok := kvmMavls.cance.Get(string(req.Hash)); ok {
+	if value, ok := kvmMavls.cache.Get(string(req.Hash)); ok {
 		if value.(int64) < kvmvccMavlFork {
 			hash, err := kvmMavls.MavlStore.Commit(req)
 			if err != nil {
@@ -204,7 +204,7 @@ func (kvmMavls *KVmMavlStore) Commit(req *types.ReqHash) ([]byte, error) {
 
 // Rollback kvs in the mem of KVmMavlStore module and return the StateHash
 func (kvmMavls *KVmMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
-	if value, ok := kvmMavls.cance.Get(string(req.Hash)); ok {
+	if value, ok := kvmMavls.cache.Get(string(req.Hash)); ok {
 		if value.(int64) < kvmvccMavlFork {
 			hash, err := kvmMavls.MavlStore.Rollback(req)
 			if err != nil {
@@ -220,7 +220,7 @@ func (kvmMavls *KVmMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 
 // IterateRangeByStateHash travel with Prefix by StateHash  to get the latest version kvs.
 func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
-	if value, ok := kvmMavls.cance.Get(string(statehash)); ok {
+	if value, ok := kvmMavls.cache.Get(string(statehash)); ok {
 		if value.(int64) < kvmvccMavlFork {
 			kvmMavls.MavlStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
 			return
@@ -248,14 +248,14 @@ func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 			return hash, err
 		}
 		if err == nil {
-			kvmMavls.cance.Remove(string(req.StateHash))
+			kvmMavls.cache.Remove(string(req.StateHash))
 		}
 		return hash, err
 	}
 	// 仅仅做kvmvcc
 	hash, err := kvmMavls.KVMVCCStore.Del(req)
 	if err == nil {
-		kvmMavls.cance.Remove(string(req.StateHash))
+		kvmMavls.cache.Remove(string(req.StateHash))
 	}
 	return hash, err
 }
