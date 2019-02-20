@@ -99,7 +99,10 @@ func getCallReceipt(logs []*types.ReceiptLog) *evmtypes.ReceiptEVMContract {
 	for _, v := range logs {
 		if v.Ty == evmtypes.TyLogCallContract {
 			var res evmtypes.ReceiptEVMContract
-			types.Decode(v.Log, &res)
+			err := types.Decode(v.Log, &res)
+			if err != nil {
+				return nil
+			}
 			return &res
 		}
 	}
