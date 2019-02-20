@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	id = "mavl-" + pty.UnfreezeX + "-"
+	idPrefix = "mavl-" + pty.UnfreezeX + "-"
 )
 
 func unfreezeID(txHash []byte) []byte {
-	return []byte(fmt.Sprintf("%s%s", id, hex.EncodeToString(txHash)))
+	return []byte(fmt.Sprintf("%s%s", idPrefix, hex.EncodeToString(txHash)))
 }
 
 func unfreezeIDFromHex(txHash string) string {
-	return fmt.Sprintf("%s%s", id, txHash)
+	return fmt.Sprintf("%s%s", idPrefix, txHash)
 }
