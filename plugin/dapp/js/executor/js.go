@@ -72,6 +72,10 @@ func (u *js) GetDriverName() string {
 	return driverName
 }
 
+func (u *js) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
+
 func (u *js) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
 	if othertx == nil {
 		return false
