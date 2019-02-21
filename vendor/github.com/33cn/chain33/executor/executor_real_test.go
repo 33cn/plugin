@@ -307,6 +307,10 @@ func (demo *demoApp) Exec(tx *types.Transaction, index int) (receipt *types.Rece
 	if err != nil && err != types.ErrNotFound {
 		return nil, err
 	}
+	if seterrkey {
+		println("set err key value")
+		demo.GetLocalDB().Set([]byte("key1"), []byte("value1"))
+	}
 	receipt = &types.Receipt{Ty: types.ExecOk}
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   demoCalcStateKey(addr, id),
@@ -399,6 +403,41 @@ func TestExecLocalSameTime0(t *testing.T) {
 			fmt.Println(receipt)
 			assert.Equal(t, len(receipt.Logs), 2)
 			assert.Equal(t, receipt.Logs[1].Ty, int32(0))
+		}
+	}
+}
+
+var seterrkey = false
+
+func TestExecLocalSameTimeSetErrKey(t *testing.T) {
+	mock33 := newMockNode()
+	defer mock33.Close()
+	orderflag = 1
+	seterrkey = true
+	genkey := mock33.GetGenesisKey()
+	genaddr := mock33.GetGenesisAddress()
+	mock33.WaitHeight(0)
+	block := mock33.GetBlock(0)
+	assert.Equal(t, mock33.GetAccount(block.StateHash, genaddr).Balance, 100000000*types.Coin)
+	var txs []*types.Transaction
+	addr1, priv1 := util.Genaddress()
+	txs = append(txs, util.CreateCoinsTx(genkey, addr1, 1e8))
+	txs = append(txs, util.CreateTxWithExecer(priv1, "demo2"))
+	txs = append(txs, util.CreateTxWithExecer(priv1, "demo2"))
+	block2 := util.CreateNewBlock(block, txs)
+	detail, _, err := util.ExecBlock(mock33.GetClient(), block.StateHash, block2, false, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for i, receipt := range detail.Receipts {
+		if i == 0 {
+			assert.Equal(t, receipt.GetTy(), int32(2))
+		}
+		if i >= 1 {
+			assert.Equal(t, receipt.GetTy(), int32(1))
+			assert.Equal(t, len(receipt.Logs), 2)
+			assert.Equal(t, receipt.Logs[1].Ty, int32(1))
 		}
 	}
 }
