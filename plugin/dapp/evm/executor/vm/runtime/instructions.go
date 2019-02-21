@@ -488,7 +488,6 @@ func opReturnDataCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memor
 	err := memory.Set(memOffset.Uint64(), length.Uint64(), evm.Interpreter.ReturnData[dataOffset.Uint64():end.Uint64()])
 	if err != nil {
 		panic(err)
-		return nil, err
 	}
 
 	return nil, nil
