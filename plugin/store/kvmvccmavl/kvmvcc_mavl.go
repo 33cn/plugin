@@ -97,13 +97,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
 	}
-	cance, err := lru.New(cacheSize)
+	cache, err := lru.New(cacheSize)
 	if err != nil {
 		panic("new KVmMavlStore fail")
 	}
 
 	kvms = &KVmMavlStore{bs, NewKVMVCC(&subKVMVCCcfg, bs.GetDB()),
-		NewMavl(&subMavlcfg, bs.GetDB()), cance}
+		NewMavl(&subMavlcfg, bs.GetDB()), cache}
 	// 查询是否已经删除mavl
 	_, err = bs.GetDB().Get(genDelMavlKey(mvccPrefix))
 	if err == nil {
@@ -275,6 +275,7 @@ func DelMavl(db dbm.DB) {
 
 func delMavlData(db dbm.DB) bool {
 	it := db.Iterator(nil, nil, true)
+	defer it.Close()
 	batch := db.NewBatch(true)
 	for it.Rewind(); it.Valid(); it.Next() {
 		if quit {
