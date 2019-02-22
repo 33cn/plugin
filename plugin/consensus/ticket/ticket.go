@@ -36,7 +36,7 @@ func init() {
 	drivers.QueryData.Register("ticket", &Client{})
 }
 
-// Client export ticket client struct 
+// Client export ticket client struct
 type Client struct {
 	*drivers.BaseClient
 	//ticket map for miner
