@@ -115,7 +115,7 @@ func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret 
 	tx1 := types.Transaction{}
 	tx1.Execer = []byte("coins")
 
-	//给hotkey 10000 个币，作为miner的手续费
+	//给hotkey 10000 个币，作为miner的手续费 
 	tx1.To = minerAddr
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
