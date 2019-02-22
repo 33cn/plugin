@@ -19,6 +19,7 @@ package abi
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"reflect"
 	"strings"
 )
@@ -215,6 +216,10 @@ func (arguments Arguments) UnpackValues(data []byte) ([]interface{}, error) {
 			// Calculate the full array size to get the correct offset for the next argument.
 			// Decrement it by 1, as the normal index increment is still applied.
 			virtualArgs += getArraySize(&arg.Type) - 1
+		} else if arg.Type.T == AddressTy {
+			if H160Addr , ok := marshalledValue.(common.Hash160Address); ok {
+				marshalledValue = H160Addr.ToAddress().String()
+			}
 		}
 		if err != nil {
 			return nil, err
