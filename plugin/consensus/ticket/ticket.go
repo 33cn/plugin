@@ -58,7 +58,7 @@ type subConfig struct {
 	Genesis          []*genesisTicket `json:"genesis"`
 }
 
-// New  ticket's init env
+// New  ticket's init  env
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	c := drivers.NewBaseClient(cfg)
 	var subcfg subConfig
