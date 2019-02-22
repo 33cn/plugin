@@ -5,7 +5,7 @@ id = "enablePrivacy"
 command = "privacy enable -a all"
 dep = ["import1", "import2", "import3"]
 
-#import privacy test addr, 1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt
+#import privacy test addr, 1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt 
 [[SimpleCase]]
 id = "import1"
 command = "account import_key -k 0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb0dddd7df977d4d5477e -l privacy_test1"
