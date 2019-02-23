@@ -158,6 +158,6 @@ func (mpts *Store) IterateRangeByStateHash(statehash []byte, start []byte, end [
 }
 
 // ProcEvent not support message
-func (mpts *Store) ProcEvent(msg queue.Message) {
+func (mpts *Store) ProcEvent(msg *queue.Message) {
 	msg.ReplyErr("Store", types.ErrActionNotSupport)
 }
