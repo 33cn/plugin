@@ -131,9 +131,8 @@ func TestTicketMap(t *testing.T) {
 
 func TestProcEvent(t *testing.T) {
 	c := Client{}
-	ret := c.ProcEvent(queue.Message{})
+	ret := c.ProcEvent(&queue.Message{})
 	assert.Equal(t, ret, true)
-
 }
 
 func Test_genPrivHash(t *testing.T) {
