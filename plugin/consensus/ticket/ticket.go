@@ -160,7 +160,7 @@ func (client *Client) Query_FlushTicket(req *types.ReqNil) (types.Message, error
 }
 
 // ProcEvent ticket reply not support action err
-func (client *Client) ProcEvent(msg queue.Message) bool {
+func (client *Client) ProcEvent(msg *queue.Message) bool {
 	msg.ReplyErr("Client", types.ErrActionNotSupport)
 	return true
 }
