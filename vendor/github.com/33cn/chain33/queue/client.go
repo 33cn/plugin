@@ -34,6 +34,7 @@ type Client interface {
 	Wait(msg *Message) (*Message, error)                               //等待消息处理完成
 	WaitTimeout(msg *Message, timeout time.Duration) (*Message, error) //等待消息处理完成
 	Recv() chan *Message
+	Reply(msg *Message)
 	Sub(topic string) //订阅消息
 	Close()
 	CloseQueue() (*types.Reply, error)
@@ -99,6 +100,16 @@ func (client *client) SendTimeout(msg *Message, waitReply bool, timeout time.Dur
 func (client *client) NewMessage(topic string, ty int64, data interface{}) (msg *Message) {
 	id := atomic.AddInt64(&gid, 1)
 	return NewMessage(id, topic, ty, data)
+}
+
+func (client *client) Reply(msg *Message) {
+	if msg.chReply != nil {
+		msg.Reply(msg)
+		return
+	}
+	if msg.callback != nil {
+		client.q.callback <- msg
+	}
 }
 
 // WaitTimeout 等待时间 msg 消息 timeout 超时时间
@@ -183,10 +194,10 @@ func (client *client) isEnd(data *Message, ok bool) bool {
 	if !ok {
 		return true
 	}
-	if atomic.LoadInt32(&client.isClosed) == 1 {
+	if data.Data == nil && data.ID == 0 && data.Ty == 0 {
 		return true
 	}
-	if data.Data == nil && data.ID == 0 && data.Ty == 0 {
+	if atomic.LoadInt32(&client.isClosed) == 1 {
 		return true
 	}
 	return false

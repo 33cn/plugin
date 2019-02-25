@@ -66,13 +66,33 @@ type queue struct {
 	mu        sync.Mutex
 	done      chan struct{}
 	interrupt chan struct{}
+	callback  chan *Message
 	isClose   int32
 	name      string
 }
 
 // New new queue struct
 func New(name string) Queue {
-	q := &queue{chanSubs: make(map[string]*chanSub), name: name, done: make(chan struct{}, 1), interrupt: make(chan struct{}, 1)}
+	q := &queue{
+		chanSubs:  make(map[string]*chanSub),
+		name:      name,
+		done:      make(chan struct{}, 1),
+		interrupt: make(chan struct{}, 1),
+		callback:  make(chan *Message, 1024),
+	}
+	go func() {
+		for {
+			select {
+			case <-q.done:
+				fmt.Println("closing chain33 callback")
+				return
+			case msg := <-q.callback:
+				if msg.callback != nil {
+					msg.callback(msg)
+				}
+			}
+		}
+	}()
 	return q
 }
 
@@ -88,7 +108,8 @@ func (q *queue) Start() {
 	// Block until a signal is received.
 	select {
 	case <-q.done:
-		atomic.StoreInt32(&q.isClose, 1)
+		fmt.Println("closing chain33 done")
+		//atomic.StoreInt32(&q.isClose, 1)
 		break
 	case <-q.interrupt:
 		fmt.Println("closing chain33")
@@ -130,7 +151,11 @@ func (q *queue) chanSub(topic string) *chanSub {
 	defer q.mu.Unlock()
 	_, ok := q.chanSubs[topic]
 	if !ok {
-		q.chanSubs[topic] = &chanSub{make(chan *Message, defaultChanBuffer), make(chan *Message, defaultLowChanBuffer), 0}
+		q.chanSubs[topic] = &chanSub{
+			high:    make(chan *Message, defaultChanBuffer),
+			low:     make(chan *Message, defaultLowChanBuffer),
+			isClose: 0,
+		}
 	}
 	return q.chanSubs[topic]
 }
@@ -157,6 +182,10 @@ func (q *queue) send(msg *Message, timeout time.Duration) (err error) {
 	if sub.isClose == 1 {
 		return types.ErrChannelClosed
 	}
+	if timeout == -1 {
+		sub.high <- msg
+		return nil
+	}
 	defer func() {
 		res := recover()
 		if res != nil {
@@ -171,10 +200,6 @@ func (q *queue) send(msg *Message, timeout time.Duration) (err error) {
 			qlog.Error("send chainfull", "msg", msg, "topic", msg.Topic, "sub", sub)
 			return ErrQueueChannelFull
 		}
-	}
-	if timeout == -1 {
-		sub.high <- msg
-		return nil
 	}
 	t := time.NewTimer(timeout)
 	defer t.Stop()
@@ -212,12 +237,12 @@ func (q *queue) sendLowTimeout(msg *Message, timeout time.Duration) error {
 	if sub.isClose == 1 {
 		return types.ErrChannelClosed
 	}
-	if timeout == 0 {
-		return q.sendAsyn(msg)
-	}
 	if timeout == -1 {
 		sub.low <- msg
 		return nil
+	}
+	if timeout == 0 {
+		return q.sendAsyn(msg)
 	}
 	t := time.NewTimer(timeout)
 	defer t.Stop()
@@ -237,11 +262,12 @@ func (q *queue) Client() Client {
 
 // Message message struct
 type Message struct {
-	Topic   string
-	Ty      int64
-	ID      int64
-	Data    interface{}
-	chReply chan *Message
+	Topic    string
+	Ty       int64
+	ID       int64
+	Data     interface{}
+	chReply  chan *Message
+	callback func(msg *Message)
 }
 
 // NewMessage new message
@@ -252,6 +278,17 @@ func NewMessage(id int64, topic string, ty int64, data interface{}) (msg *Messag
 	msg.Data = data
 	msg.Topic = topic
 	msg.chReply = make(chan *Message, 1)
+	return msg
+}
+
+// NewMessageCallback reply block
+func NewMessageCallback(id int64, topic string, ty int64, data interface{}, callback func(msg *Message)) (msg *Message) {
+	msg = &Message{}
+	msg.ID = id
+	msg.Ty = ty
+	msg.Data = data
+	msg.Topic = topic
+	msg.callback = callback
 	return msg
 }
 

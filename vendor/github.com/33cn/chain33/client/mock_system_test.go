@@ -71,6 +71,10 @@ func (mock *mockClient) Wait(msg *queue.Message) (*queue.Message, error) {
 	return mock.c.Wait(msg)
 }
 
+func (mock *mockClient) Reply(msg *queue.Message) {
+	mock.c.Reply(msg)
+}
+
 func (mock *mockClient) WaitTimeout(msg *queue.Message, timeout time.Duration) (*queue.Message, error) {
 	return mock.c.WaitTimeout(msg, timeout)
 }
