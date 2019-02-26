@@ -64,7 +64,6 @@ func TestCallcode(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
 	e := initExec(ldb, kvdb, jscode, t)
-
 	call, tx := callCodeTx("test", "hello", `{"hello":"world"}`)
 	receipt, err := e.Exec_Call(call, tx, 0)
 	assert.Nil(t, err)

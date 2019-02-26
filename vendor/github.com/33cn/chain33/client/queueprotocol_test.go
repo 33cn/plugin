@@ -90,6 +90,7 @@ func TestQueueProtocol(t *testing.T) {
 	testIsSync(t, api)
 	testIsNtpClockSync(t, api)
 	testLocalGet(t, api)
+	testLocalTransaction(t, api)
 	testLocalList(t, api)
 	testGetLastHeader(t, api)
 	testSignRawTx(t, api)
@@ -188,6 +189,23 @@ func testLocalList(t *testing.T, api client.QueueProtocolAPI) {
 	if nil != err {
 		t.Error("Call LocalList Failed.", err)
 	}
+}
+
+func testLocalTransaction(t *testing.T, api client.QueueProtocolAPI) {
+	txid, err := api.LocalNew(nil)
+	assert.Nil(t, err)
+	assert.Equal(t, txid.Data, int64(9999))
+	err = api.LocalBegin(txid)
+	assert.Nil(t, err)
+	err = api.LocalCommit(txid)
+	assert.Nil(t, err)
+	err = api.LocalRollback(txid)
+	assert.Nil(t, err)
+	param := &types.LocalDBSet{Txid: txid.Data}
+	err = api.LocalSet(param)
+	assert.Nil(t, err)
+	err = api.LocalClose(txid)
+	assert.Nil(t, err)
 }
 
 func testIsNtpClockSync(t *testing.T, api client.QueueProtocolAPI) {

@@ -359,7 +359,7 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 // ProcEvent ...
-func (client *Client) ProcEvent(msg queue.Message) bool {
+func (client *Client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 

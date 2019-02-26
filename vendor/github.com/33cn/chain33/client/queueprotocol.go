@@ -55,34 +55,34 @@ func New(client queue.Client, option *QueueProtocolOption) (QueueProtocolAPI, er
 	if option != nil {
 		q.option = *option
 	} else {
-		q.option.SendTimeout = 600 * time.Second
-		q.option.WaitTimeout = 600 * time.Second
+		q.option.SendTimeout = time.Duration(-1)
+		q.option.WaitTimeout = time.Duration(-1)
 	}
 	return q, nil
 }
 
-func (q *QueueProtocol) query(topic string, ty int64, data interface{}) (queue.Message, error) {
+func (q *QueueProtocol) query(topic string, ty int64, data interface{}) (*queue.Message, error) {
 	client := q.client
 	msg := client.NewMessage(topic, ty, data)
 	err := client.SendTimeout(msg, true, q.option.SendTimeout)
 	if err != nil {
-		return queue.Message{}, err
+		return &queue.Message{}, err
 	}
 	return client.WaitTimeout(msg, q.option.WaitTimeout)
 }
 
-func (q *QueueProtocol) notify(topic string, ty int64, data interface{}) (queue.Message, error) {
+func (q *QueueProtocol) notify(topic string, ty int64, data interface{}) (*queue.Message, error) {
 	client := q.client
 	msg := client.NewMessage(topic, ty, data)
 	err := client.SendTimeout(msg, false, q.option.SendTimeout)
 	if err != nil {
-		return queue.Message{}, err
+		return &queue.Message{}, err
 	}
 	return msg, err
 }
 
 // Notify new and send client message
-func (q *QueueProtocol) Notify(topic string, ty int64, data interface{}) (queue.Message, error) {
+func (q *QueueProtocol) Notify(topic string, ty int64, data interface{}) (*queue.Message, error) {
 	return q.notify(topic, ty, data)
 }
 
@@ -92,7 +92,7 @@ func (q *QueueProtocol) Close() {
 }
 
 // NewMessage new message
-func (q *QueueProtocol) NewMessage(topic string, msgid int64, data interface{}) queue.Message {
+func (q *QueueProtocol) NewMessage(topic string, msgid int64, data interface{}) *queue.Message {
 	return q.client.NewMessage(topic, msgid, data)
 }
 
@@ -726,6 +726,84 @@ func (q *QueueProtocol) LocalGet(param *types.LocalDBGet) (*types.LocalReplyValu
 	return nil, types.ErrTypeAsset
 }
 
+// LocalSet set key value in local db
+func (q *QueueProtocol) LocalSet(param *types.LocalDBSet) error {
+	if param == nil {
+		err := types.ErrInvalidParam
+		log.Error("LocalSet", "Error", err)
+		return err
+	}
+	_, err := q.query(blockchainKey, types.EventLocalSet, param)
+	if err != nil {
+		log.Error("LocalSet", "Error", err.Error())
+		return err
+	}
+	return nil
+}
+
+//LocalNew new a localdb object
+func (q *QueueProtocol) LocalNew(param *types.ReqNil) (*types.Int64, error) {
+	msg, err := q.query(blockchainKey, types.EventLocalNew, nil)
+	if err != nil {
+		log.Error("LocalNew", "Error", err.Error())
+		return nil, err
+	}
+	if reply, ok := msg.GetData().(*types.Int64); ok {
+		return reply, nil
+	}
+	return nil, types.ErrTypeAsset
+}
+
+//LocalBegin begin a transaction
+func (q *QueueProtocol) LocalBegin(param *types.Int64) error {
+	_, err := q.query(blockchainKey, types.EventLocalBegin, param)
+	if err != nil {
+		log.Error("LocalBegin", "Error", err.Error())
+		return err
+	}
+	return nil
+}
+
+//LocalClose begin a transaction
+func (q *QueueProtocol) LocalClose(param *types.Int64) error {
+	_, err := q.query(blockchainKey, types.EventLocalClose, param)
+	if err != nil {
+		log.Error("LocalClose", "Error", err.Error())
+		return err
+	}
+	return nil
+}
+
+//LocalCommit commit a transaction
+func (q *QueueProtocol) LocalCommit(param *types.Int64) error {
+	if param == nil {
+		err := types.ErrInvalidParam
+		log.Error("LocalCommit", "Error", err)
+		return err
+	}
+	_, err := q.query(blockchainKey, types.EventLocalCommit, param)
+	if err != nil {
+		log.Error("LocalCommit", "Error", err.Error())
+		return err
+	}
+	return nil
+}
+
+//LocalRollback rollback a transaction
+func (q *QueueProtocol) LocalRollback(param *types.Int64) error {
+	if param == nil {
+		err := types.ErrInvalidParam
+		log.Error("LocalRollback", "Error", err)
+		return err
+	}
+	_, err := q.query(blockchainKey, types.EventLocalRollback, param)
+	if err != nil {
+		log.Error("LocalRollback", "Error", err.Error())
+		return err
+	}
+	return nil
+}
+
 // LocalList get value list from local db by key list
 func (q *QueueProtocol) LocalList(param *types.LocalDBList) (*types.LocalReplyValue, error) {
 	if param == nil {
@@ -733,7 +811,6 @@ func (q *QueueProtocol) LocalList(param *types.LocalDBList) (*types.LocalReplyVa
 		log.Error("LocalList", "Error", err)
 		return nil, err
 	}
-
 	msg, err := q.query(blockchainKey, types.EventLocalList, param)
 	if err != nil {
 		log.Error("LocalList", "Error", err.Error())

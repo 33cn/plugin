@@ -36,7 +36,7 @@ func NewBlockstore(cfg *types.Consensus, replyChan chan *types.ClientReply, requ
 }
 
 // ProcEvent method
-func (client *Client) ProcEvent(msg queue.Message) bool {
+func (client *Client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 

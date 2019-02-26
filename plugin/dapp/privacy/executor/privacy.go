@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -250,7 +251,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 			input := keyinput[errIndex]
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/types.Coin, "utxo keyimage", common.ToHex(input.KeyImage))
 		}
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "checkUTXOValid failed ")
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "err", "checkUTXOValid failed ")
 		return pty.ErrDoubleSpendOccur
 	}
 
@@ -289,16 +290,27 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
+func batchGet(stateDB db.KV, keyImages [][]byte) (values [][]byte, err error) {
+	for i := 0; i < len(keyImages); i++ {
+		v, err := stateDB.Get(keyImages[i])
+		if err != nil && err != types.ErrNotFound {
+			return nil, err
+		}
+		values = append(values, v)
+	}
+	return values, nil
+}
+
 //通过keyImage确认是否存在双花，有效即不存在双花，返回true，反之则返回false
 func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 	stateDB := p.GetStateDB()
-	values, err := stateDB.BatchGet(keyImages)
+	values, err := batchGet(stateDB, keyImages)
 	if err != nil {
-		privacylog.Error("exec module", "checkUTXOValid failed to get value from statDB")
+		privacylog.Error("exec module", "checkUTXOValid failed to get value from statDB", err)
 		return false, invalidIndex
 	}
 	if len(values) != len(keyImages) {
-		privacylog.Error("exec module", "checkUTXOValid return different count value with keys")
+		privacylog.Error("exec module", "err", "checkUTXOValid return different count value with keys")
 		return false, invalidIndex
 	}
 	for i, value := range values {
@@ -312,14 +324,14 @@ func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 }
 
 func (p *privacy) checkPubKeyValid(keys [][]byte, pubkeys [][]byte) (bool, int32) {
-	values, err := p.GetStateDB().BatchGet(keys)
+	values, err := batchGet(p.GetStateDB(), keys)
 	if err != nil {
 		privacylog.Error("exec module", "checkPubKeyValid failed to get value from statDB with err", err)
 		return false, invalidIndex
 	}
 
 	if len(values) != len(pubkeys) {
-		privacylog.Error("exec module", "checkPubKeyValid return different count value with keys")
+		privacylog.Error("exec module", "err", "checkPubKeyValid return different count value with keys")
 		return false, invalidIndex
 	}
 

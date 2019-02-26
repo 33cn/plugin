@@ -58,7 +58,7 @@ func TestExecutorGetTxGroup(t *testing.T) {
 		mainHash:   nil,
 		parentHash: nil,
 	}
-	execute := newExecutor(ctx, exec, txs, nil)
+	execute := newExecutor(ctx, exec, nil, txs, nil)
 	e := execute.loadDriver(txs[0], 0)
 	execute.setEnv(e)
 	txs2 := e.GetTxs()
@@ -73,7 +73,7 @@ func TestExecutorGetTxGroup(t *testing.T) {
 
 	//err tx group list
 	txs[0].Header = nil
-	execute = newExecutor(ctx, exec, txs, nil)
+	execute = newExecutor(ctx, exec, nil, txs, nil)
 	e = execute.loadDriver(txs[0], 0)
 	execute.setEnv(e)
 	_, err = e.GetTxGroup(len(txs) - 1)
@@ -180,7 +180,7 @@ func TestExecutorErrAPIEnv(t *testing.T) {
 	types.SetMinFee(0)
 	defer types.SetMinFee(minfee)
 	q := queue.New("channel")
-	exec := &Executor{client: q.Client()}
+	exec := &Executor{client: q.Client(), disableLocal: true}
 	execInit(nil)
 	var txs []*types.Transaction
 	genkey := util.TestPrivkeyList[0]

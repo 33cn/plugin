@@ -485,7 +485,10 @@ func opReturnDataCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memor
 	if end.BitLen() > 64 || uint64(len(evm.Interpreter.ReturnData)) < end.Uint64() {
 		return nil, model.ErrReturnDataOutOfBounds
 	}
-	memory.Set(memOffset.Uint64(), length.Uint64(), evm.Interpreter.ReturnData[dataOffset.Uint64():end.Uint64()])
+	err := memory.Set(memOffset.Uint64(), length.Uint64(), evm.Interpreter.ReturnData[dataOffset.Uint64():end.Uint64()])
+	if err != nil {
+		panic(err)
+	}
 
 	return nil, nil
 }
