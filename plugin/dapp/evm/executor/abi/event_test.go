@@ -159,7 +159,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	}
 
 	type EventPledge struct {
-		Who      common.Hash160Address
+		Who      string
 		Wad      *big.Int
 		Currency [3]byte
 	}
@@ -180,7 +180,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	bigintExpected := big.NewInt(1000000)
 	bigintExpected2 := big.NewInt(2218516807680)
 	bigintExpected3 := big.NewInt(1000001)
-	addr := common.HexToAddress("0x00Ce0d46d924CC8437c806721496599FC3FFA268")
+	addr := common.HexToAddress("0x00Ce0d46d924CC8437c806721496599FC3FFA268").ToAddress().String()
 	var testCases = []struct {
 		data     string
 		dest     interface{}
@@ -242,7 +242,7 @@ func TestEventTupleUnpack(t *testing.T) {
 		"Can unpack Pledge event into structure",
 	}, {
 		pledgeData1,
-		&[]interface{}{&common.Hash160Address{}, &bigint, &[3]byte{}},
+		&[]interface{}{new(string), &bigint, &[3]byte{}},
 		&[]interface{}{
 			&addr,
 			&bigintExpected2,
@@ -252,7 +252,7 @@ func TestEventTupleUnpack(t *testing.T) {
 		"Can unpack Pledge event into slice",
 	}, {
 		pledgeData1,
-		&[3]interface{}{&common.Hash160Address{}, &bigint, &[3]byte{}},
+		&[3]interface{}{new(string), &bigint, &[3]byte{}},
 		&[3]interface{}{
 			&addr,
 			&bigintExpected2,
@@ -265,18 +265,18 @@ func TestEventTupleUnpack(t *testing.T) {
 		&[]interface{}{new(int), 0, 0},
 		&[]interface{}{},
 		jsonEventPledge,
-		"abi: cannot unmarshal common.Hash160Address in to int",
+		"abi: cannot unmarshal string in to int",
 		"Can not unpack Pledge event into slice with wrong types",
 	}, {
 		pledgeData1,
 		&BadEventPledge{},
 		&BadEventPledge{},
 		jsonEventPledge,
-		"abi: cannot unmarshal common.Hash160Address in to string",
+		"abi: cannot unmarshal *big.Int in to int",
 		"Can not unpack Pledge event into struct with wrong filed types",
 	}, {
 		pledgeData1,
-		&[]interface{}{common.Hash160Address{}, new(big.Int)},
+		&[]interface{}{new(string), new(big.Int)},
 		&[]interface{}{},
 		jsonEventPledge,
 		"abi: insufficient number of elements in the list/array for unpack, want 3, got 2",
