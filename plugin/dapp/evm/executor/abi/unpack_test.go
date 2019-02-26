@@ -125,7 +125,8 @@ var unpackTests = []unpackTest{
 	{
 		def:  `[{"type": "address"}]`,
 		enc:  "0000000000000000000000000100000000000000000000000000000000000000",
-		want: common.Hash160Address{1},
+		want: common.Hash160Address{0},
+		err: "abi: cannot unmarshal string in to common.Hash160Address",
 	},
 	{
 		def:  `[{"type": "bytes32"}]`,
