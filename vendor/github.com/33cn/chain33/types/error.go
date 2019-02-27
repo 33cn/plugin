@@ -158,6 +158,7 @@ var (
 	ErrTxGroupNotSupport          = errors.New("ErrTxGroupNotSupport")
 	ErrNotAllowKey                = errors.New("ErrNotAllowKey")
 	ErrNotAllowMemSetKey          = errors.New("ErrNotAllowMemSetKey")
+	ErrNotAllowMemSetLocalKey     = errors.New("ErrNotAllowMemSetLocalKey")
 	ErrDataBaseDamage             = errors.New("ErrDataBaseDamage")
 	ErrIndex                      = errors.New("ErrIndex")
 	ErrTxGroupParaCount           = errors.New("ErrTxGroupParaCount")
@@ -168,6 +169,9 @@ var (
 	ErrDBFlag      = errors.New("ErrDBFlag")
 	ErrLocalPrefix = errors.New("ErrLocalPrefix")
 	ErrLocalKeyLen = errors.New("ErrLocalKeyLen")
+	//ErrNotSetInTransaction 必须set 在 事务 中
+	ErrNotSetInTransaction = errors.New("can not set kvs not in transaction")
+	ErrLocalDBTxDupOpen    = errors.New("ErrLocalDBTxDupOpen")
 
 	ErrCloneForkFrom      = errors.New("ErrCloneForkFrom")
 	ErrCloneForkToExist   = errors.New("ErrCloneForkToExist")

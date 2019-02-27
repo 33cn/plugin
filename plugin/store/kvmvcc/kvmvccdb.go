@@ -174,7 +174,7 @@ func (mvccs *KVMVCCStore) IterateRangeByStateHash(statehash []byte, start []byte
 }
 
 // ProcEvent handles supported events
-func (mvccs *KVMVCCStore) ProcEvent(msg queue.Message) {
+func (mvccs *KVMVCCStore) ProcEvent(msg *queue.Message) {
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 

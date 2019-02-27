@@ -1,5 +1,12 @@
 
-
+#tran to return addr in ticket
+[[TransferCase]]
+id = "trans"
+command = "send bty transfer -a 10 -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+to = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+amount = "10"
+checkItem = ["balance"]
 
 
 
@@ -11,6 +18,7 @@ from = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 to = "15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H"
 amount = "5"
 checkItem = ["balance"]
+dep = ["trans"]
 
 
 

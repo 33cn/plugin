@@ -22,6 +22,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"reflect"
 	"strings"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 // Argument holds the name of the argument and the corresponding type.
@@ -217,7 +219,7 @@ func (arguments Arguments) UnpackValues(data []byte) ([]interface{}, error) {
 			// Decrement it by 1, as the normal index increment is still applied.
 			virtualArgs += getArraySize(&arg.Type) - 1
 		} else if arg.Type.T == AddressTy {
-			if H160Addr , ok := marshalledValue.(common.Hash160Address); ok {
+			if H160Addr, ok := marshalledValue.(common.Hash160Address); ok {
 				marshalledValue = H160Addr.ToAddress().String()
 			}
 		}

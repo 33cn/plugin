@@ -255,7 +255,7 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-func (client *client) ProcEvent(msg queue.Message) bool {
+func (client *client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 
