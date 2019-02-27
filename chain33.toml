@@ -146,6 +146,7 @@ enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
 pruneHeight=10000
+enableMemTree=true
 
 [store.sub.kvmvccmavl]
 enableMVCCIter=false

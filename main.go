@@ -15,8 +15,14 @@ import (
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/util/cli"
 	_ "github.com/33cn/plugin/plugin"
+	"net/http"
+	"runtime/debug"
 )
 
 func main() {
+	go func() {
+		http.ListenAndServe("0.0.0.0:8080", nil)
+	}()
+	debug.SetGCPercent(20)
 	cli.RunChain33("")
 }
