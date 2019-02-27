@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
 // Argument holds the name of the argument and the corresponding type.
