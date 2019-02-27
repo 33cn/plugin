@@ -19,9 +19,10 @@ package abi
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"reflect"
 	"strings"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
