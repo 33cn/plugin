@@ -5,6 +5,7 @@
 package autotest
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/33cn/chain33/cmd/autotest/types"
@@ -40,6 +41,11 @@ func (pack *PrivToPrivPack) GetCheckHandlerMap() interface{} {
 func (pack *PrivToPrivPack) checkUtxo(txInfo map[string]interface{}) bool {
 
 	interCase := pack.TCase.(*PrivToPrivCase)
+
+	if interCase.From == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt" || interCase.To == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt" {
+		fmt.Println(pack.TxReceipt)
+	}
+
 	logArr := txInfo["receipt"].(map[string]interface{})["logs"].([]interface{})
 	inputLog := logArr[1].(map[string]interface{})["log"].(map[string]interface{})
 	outputLog := logArr[2].(map[string]interface{})["log"].(map[string]interface{})

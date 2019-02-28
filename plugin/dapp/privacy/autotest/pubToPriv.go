@@ -5,6 +5,7 @@
 package autotest
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/33cn/chain33/cmd/autotest/types"
@@ -61,6 +62,9 @@ func (pack *PubToPrivPack) checkBalance(txInfo map[string]interface{}) bool {
 func (pack *PubToPrivPack) checkUtxo(txInfo map[string]interface{}) bool {
 
 	interCase := pack.TCase.(*PubToPrivCase)
+	if interCase.From == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt" || interCase.To == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt" {
+		fmt.Println(pack.TxReceipt)
+	}
 	logArr := txInfo["receipt"].(map[string]interface{})["logs"].([]interface{})
 	outputLog := logArr[2].(map[string]interface{})["log"].(map[string]interface{})
 	amount, _ := strconv.ParseFloat(interCase.Amount, 64)
