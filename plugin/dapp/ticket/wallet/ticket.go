@@ -338,7 +338,7 @@ func (policy *ticketPolicy) getTickets(addr string, status int32) ([]*ty.Ticket,
 	api := policy.getAPI()
 	msg, err := api.Query(ty.TicketX, "TicketList", reqaddr)
 	if err != nil {
-		bizlog.Error("getTickets", "Query error", err)
+		bizlog.Error("getTickets", "addr", addr, "status", status, "Query error", err)
 		return nil, err
 	}
 	reply := msg.(*ty.ReplyTicketList)
