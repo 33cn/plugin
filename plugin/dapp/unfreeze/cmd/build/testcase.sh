@@ -56,7 +56,7 @@ function unfreeze_test() {
         echo "terminate failed, expect remaining < 100000000, result ${remaining}"
         exit 1
     fi
-    echo "=================== unfreeze test end"
+    echo "==================== unfreeze test end"
 }
 
 function unfreeze() {
