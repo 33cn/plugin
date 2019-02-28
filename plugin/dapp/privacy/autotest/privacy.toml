@@ -15,7 +15,7 @@ command = "account import_key -k 0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb
 id = "import2"
 command = "account import_key -k 0xa0c6f46de8d275ce21e935afa5363e9b8a087fe604e05f7a9eef1258dc781c3a -l privacy_test2"
 
-#import privacy test addr, 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d
+#import privacy test addr,12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d
 [[SimpleCase]]
 id = "import3"
 command = "account import_key -k 0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4 -l privacy_test3"
