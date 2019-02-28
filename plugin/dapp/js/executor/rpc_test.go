@@ -30,6 +30,8 @@ func TestJsVM(t *testing.T) {
 	mocker := testnode.NewWithConfig(cfg, sub, nil)
 	defer mocker.Close()
 	mocker.Listen()
+
+	configCreator(mocker, t)
 	//开始部署合约, 测试阶段任何人都可以部署合约
 	//后期需要加上权限控制
 	//1. 部署合约
@@ -94,6 +96,9 @@ func TestJsGame(t *testing.T) {
 	mocker.Listen()
 	err := mocker.SendHot()
 	assert.Nil(t, err)
+	// 需要配置
+	configCreator(mocker, t)
+
 	//开始部署合约, 测试阶段任何人都可以部署合约
 	//后期需要加上权限控制
 	//1. 部署合约
@@ -287,4 +292,27 @@ func TestJsGame(t *testing.T) {
 	err = mocker.GetJSONC().Call("Chain33.Query", query, &queryresult)
 	assert.Nil(t, err)
 	t.Log(queryresult.Data)
+}
+
+func configCreator(mocker *testnode.Chain33Mock, t *testing.T) {
+	// 需要配置
+	addr := address.PubKeyToAddress(mocker.GetHotKey().PubKey().Bytes()).String()
+	creator := &types.ModifyConfig{
+		Key:   "js-creator",
+		Op:    "add",
+		Value: addr,
+		Addr:  addr,
+	}
+	cfgReq := &rpctypes.CreateTxIn{
+		Execer:     "manage",
+		ActionName: "Modify",
+		Payload:    types.MustPBToJSON(creator),
+	}
+	var cfgtxhex string
+	err := mocker.GetJSONC().Call("Chain33.CreateTransaction", cfgReq, &cfgtxhex)
+	assert.Nil(t, err)
+	hash1, err := mocker.SendAndSign(mocker.GetHotKey(), cfgtxhex)
+	assert.Nil(t, err)
+	_, err = mocker.WaitTx(hash1)
+	assert.Nil(t, err)
 }
