@@ -37,6 +37,7 @@ func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
 	c, tx := createCodeTx("test", code)
+
 	// set config key
 	item := &types.ConfigItem{
 		Key:  "mavl-manage-js-creator",
