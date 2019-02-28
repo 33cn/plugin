@@ -51,8 +51,8 @@ function unfreeze_test() {
     ${CLI} send unfreeze terminate --id "${uid}" -k "${owner_key}"
     block_wait "${CLI}" 2
     remaining=$(${CLI} unfreeze show --id "${uid}" | jq ".remaining")
-    remainingNum=`echo $a | awk '{print int($0)}'`
-    if [ "100000000" -lt ${remainingNum} ]; then
+    remainingNum=$(echo "$remaining" | awk '{print int($0)}')
+    if [ "100000000" -lt "${remainingNum}" ]; then
         echo "terminate failed, expect remaining < 100000000, result ${remaining}"
         exit 1
     fi
