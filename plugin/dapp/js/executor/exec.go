@@ -8,13 +8,18 @@ import (
 )
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
+	err := checkPriv(tx.From(), ptypes.JsCreator, c.GetStateDB())
+	if err != nil {
+		return nil, err
+	}
+
 	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
 	if string(tx.Execer) != ptypes.JsX {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = calcStatePrefix([]byte(execer))
 	kvc := dapp.NewKVCreator(c.GetStateDB(), c.prefix, nil)
-	_, err := kvc.GetNoPrefix(calcCodeKey(payload.Name))
+	_, err = kvc.GetNoPrefix(calcCodeKey(payload.Name))
 	if err != nil && err != types.ErrNotFound {
 		return nil, err
 	}
