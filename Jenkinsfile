@@ -16,7 +16,7 @@ pipeline {
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
 
-    stages {
+    /*stages {
         stage('deploy') {
             steps {
                 dir("${PROJ_DIR}"){
@@ -76,5 +76,5 @@ pipeline {
 
             echo currentBuild.result
         }
-    }
+    }*/
 }
