@@ -290,7 +290,6 @@ func (mock *Chain33Mock) Close() {
 
 func (mock *Chain33Mock) closeNoLock() {
 	mock.chain.Close()
-	mock.store.Close()
 	mock.mem.Close()
 	mock.cs.Close()
 	mock.exec.Close()
@@ -298,6 +297,7 @@ func (mock *Chain33Mock) closeNoLock() {
 	mock.network.Close()
 	mock.client.Close()
 	mock.rpc.Close()
+	mock.store.Close()
 	os.RemoveAll(mock.datadir)
 }
 
