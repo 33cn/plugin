@@ -7,7 +7,7 @@ version="6.0.181228"
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
 logConsoleLevel = "info"
-# 日志文件名，可带目录，所有生成的日志文件都放到此目录下 
+# 日志文件名，可带目录，所有生成的日志文件都放到此目录下
 logFile = "logs/chain33.log"
 # 单个日志文件的最大值（单位：兆）
 maxFileSize = 300
