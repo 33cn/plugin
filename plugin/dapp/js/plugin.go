@@ -5,6 +5,9 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/js/cmd"
 	"github.com/33cn/plugin/plugin/dapp/js/executor"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
+
+	// init auto test
+	_ "github.com/33cn/plugin/plugin/dapp/js/autotest"
 )
 
 func init() {
