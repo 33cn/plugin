@@ -15,6 +15,7 @@ import (
 	//log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/system/dapp"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
 const (
@@ -99,6 +100,7 @@ type Action struct {
 	blocktime    int64
 	height       int64
 	execaddr     string
+	r            *Retrieve
 }
 
 // NewRetrieveAcction gen instance
@@ -106,7 +108,7 @@ func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{r.GetCoinsAccount(), r.GetStateDB(), hash, fromaddr,
-		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
+		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), r}
 }
 
 // RetrieveBackup Action
@@ -240,11 +242,33 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	}
 
 	acc = action.coinsAccount.LoadExecAccount(r.RetPara[index].DefaultAddress, action.execaddr)
-	rlog.Debug("RetrievePerform", "acc.Balance", acc.Balance)
+	rlog.Error("RetrievePerform", "acc.Balance", acc.Balance)
 	if acc.Balance > 0 {
 		receipt, err = action.coinsAccount.ExecTransfer(r.RetPara[index].DefaultAddress, r.BackupAddress, action.execaddr, acc.Balance)
 		if err != nil {
-			rlog.Debug("RetrievePerform", "ExecTransfer", err)
+			rlog.Error("RetrievePerform", "Acc ExecTransfer", err)
+			return nil, err
+		}
+	} else {
+		return nil, rt.ErrRetrieveNoBalance
+	}
+
+	accountTokendb, err := account.NewAccountDB(tokenty.TokenX, "ABC", action.db)
+	if err != nil {
+		return nil, rt.ErrRetrieveNoBalance
+	}
+
+	acctoken, err := accountTokendb.LoadExecAccountQueue(action.r.GetAPI(), perfRet.DefaultAddress, action.execaddr)
+	if err != nil {
+		rlog.Error("RetrievePerform", "loadtoken", err)
+		return nil, err
+	}
+
+	if acctoken.Balance > 0 {
+		receipt, err = accountTokendb.ExecTransfer(perfRet.DefaultAddress, r.BackupAddress, action.execaddr, acctoken.Balance)
+
+		if err != nil {
+			rlog.Error("RetrievePerform", "Token Acc ExecTransfer", err)
 			return nil, err
 		}
 	} else {
