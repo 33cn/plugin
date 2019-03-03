@@ -8,27 +8,20 @@ package types;
 message Pos33Msg {
   bytes data = 1;
   enum Ty {
-    R = 0;
-    PP = 1;
-    P = 2;
-    C = 3;
-    B = 4;
-    V = 5;
-    NC = 6;
+    B = 0;
+    V = 1;
   }
   Ty ty = 2;
 }
 
 message Pos33Rand {
   bytes rand_hash = 1;
-  uint32 weight = 2;
-  bytes sig = 3;
+  uint32 index = 2;
+  Signature sig = 3;
 }
 
 message Pos33Rands {
   repeated Pos33Rand rands = 1;
-  string pub = 2;
-  int64 height = 3;
 }
 
 message Pos33Block {
@@ -59,6 +52,7 @@ message Pos33Action {
     Pos33DelegateAction delegate = 3;
     Pos33RewordAction reword = 4;
     Pos33PunishAction punish = 5;
+    Pos33ElecteAction electe = 6;
   }
   int32 ty = 10;
 }
@@ -90,6 +84,13 @@ message Pos33PunishAction {
   map<string, Pos33Punish> punishs = 1;
 }
 
+message Pos33ElecteAction {
+  repeated Pos33Rands rands = 1;
+  int64 height = 3;
+  bytes hash = 4;
+}
+
+
 message Pos33Vote {
   int64 block_height = 1;
   bytes block_hash = 2;
@@ -98,29 +99,18 @@ message Pos33Vote {
   Signature sig = 5;
 }
 
-message Pos33RandInfo {
-  string pubkey = 1;
-  Pos33Rand r = 2;
-}
-
 message Pos33Votes {
   repeated Pos33Vote vs = 1;
 }
 
-message Pos33GetCommittee {
-  Signature sig = 1;
-}
-
 message Pos33Committee {
-  int64 base = 1;
-  bytes seed = 2;
-  int32 vw = 3;
-  map<string, Pos33Rands> rs = 4;
-  int64 height = 5;
-  bytes block_hash = 6;
-  Signature sig = 7;
+  int64 height = 1;
+  Pos33Rands rands = 2;
 }
 
+message Pos33ElecteLocal {
+  repeated Pos33ElecteAction es = 1;
+}
 
 message ReceiptPos33 {
   string id   = 1;

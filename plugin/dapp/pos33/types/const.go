@@ -13,6 +13,7 @@ const (
 	Pos33ActionDelegate
 	Pos33ActionReword
 	Pos33ActionPunish
+	Pos33ActionElecte
 
 	//log for game
 	TyLogDeposit  = 911
@@ -20,6 +21,7 @@ const (
 	TyLogDelegate = 913
 	TyLogReword   = 914
 	TyLogPunish   = 915
+	TyLogElecte   = 916
 )
 
 //包的名字可以通过配置文件来配置
@@ -36,21 +38,13 @@ const (
 	ActionDelegate = "delegate"
 	ActionReword   = "reword"
 	ActionPunish   = "punish"
+	ActionElecte   = "electe"
 )
 
 // query func name
 const (
-// FuncNameQuery           = "QueryGameListByIds"
-// FuncNameQuery           = "QueryGameListCount"
-// FuncNameQueryGameListByStatusAndAddr = "QueryGameListByStatusAndAddr"
-// FuncNameQueryGameByID                = "QueryGameById"
-)
-
-// const var
-const (
-	Pos33AllWeight      = "LODB-pos33-allWeight:"
-	Pos33WeightPrefix   = "LODB-pos33-weight:"
-	Pos33DelegatePrefix = "LODB-pos33-Delegate:"
+	FuncNameQuery         = "QueryGameListByIds"
+	FuncNameQueryGameByID = "QueryGameById"
 )
 
 const (
@@ -60,10 +54,23 @@ const (
 	Pos33BlockReword = types.Coin * 15
 	// Pos33VoteReword 每个区块的奖励
 	Pos33VoteReword = types.Coin / 2
-	// Pos33MaxCommittee 委员会成员数量
+	// Pos33CommitteeSize 委员会投票数量
+	Pos33CommitteeSize = 10
+	// Pos33MaxCommittee 委员会最大投票数量
 	Pos33MaxCommittee = 10
+	// Pos33MinCommittee 委员会最小投票数量
+	Pos33MinCommittee = 10
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址
 	Pos33FundKeyAddr = ""
+)
+
+// const var
+const (
+	KeyPos33AllWeight       = "LODB-pos33-AllWeight:"
+	KeyPos33WeightPrefix    = "LODB-pos33-Weight:"
+	KeyPos33DelegatePrefix  = "LODB-pos33-Delegate:"
+	KeyPos33ElectePrefix    = "LODB-pos33-Electe:"
+	KeyPos33CommitteePrefix = "LODB-pos33-Committee:"
 )

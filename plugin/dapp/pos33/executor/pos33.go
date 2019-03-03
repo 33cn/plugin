@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"strconv"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -46,14 +47,19 @@ func (p *Pos33) GetDriverName() string {
 }
 
 func (p *Pos33) setAllWeight(w int) *types.KeyValue {
-	k := []byte(pt.Pos33AllWeight)
+	k := []byte(pt.KeyPos33AllWeight)
 	v := []byte(strconv.Itoa(w))
 	p.GetLocalDB().Set(k, v)
 	return &types.KeyValue{Key: k, Value: v}
 }
 
+// GetAllWeight get all weight deposit ycc
+func (p *Pos33) GetAllWeight() int {
+	return p.getAllWeight()
+}
+
 func (p *Pos33) getAllWeight() int {
-	k := []byte(pt.Pos33AllWeight)
+	k := []byte(pt.KeyPos33AllWeight)
 	val, err := p.GetLocalDB().Get(k)
 	if err != nil {
 		return 0
@@ -68,14 +74,20 @@ func (p *Pos33) getAllWeight() int {
 
 func (p *Pos33) addWeight(addr string, w int) *types.KeyValue {
 	w += p.getWeight(addr)
-	k := []byte(pt.Pos33WeightPrefix + addr)
+	k := []byte(pt.KeyPos33WeightPrefix + addr)
 	v := []byte(strconv.Itoa(w))
 	p.GetLocalDB().Set(k, v)
 	return &types.KeyValue{Key: k, Value: v}
 }
 
+// GetWeight return addr depoist weight of vote
+func (p *Pos33) GetWeight(addr string) int {
+	return p.getWeight(addr)
+}
+
+// GetWeight get all weight deposit ycc by addr
 func (p *Pos33) getWeight(addr string) int {
-	val, err := p.GetLocalDB().Get([]byte(pt.Pos33WeightPrefix + addr))
+	val, err := p.GetLocalDB().Get([]byte(pt.KeyPos33WeightPrefix + addr))
 	if err != nil {
 		return 0
 	}
@@ -86,3 +98,43 @@ func (p *Pos33) getWeight(addr string) int {
 	}
 	return w
 }
+
+// func (p *Pos33) getCommittee(key string) (*pt.Pos33Committee, error) {
+// 	val, err := p.GetLocalDB().Get([]byte(key))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var comm pt.Pos33Committee
+// 	err = types.Decode(val, &comm)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &comm, nil
+// }
+
+// func (p *Pos33) setCommittee(key string, comm *pt.Pos33Committee) *types.KeyValue {
+// 	value := types.Encode(comm)
+// 	return p.GetLocalDB().Set([]byte(key), value)
+// }
+
+func (p *Pos33) getElecteLocal(height int64) (*pt.Pos33ElecteLocal, error) {
+	val, err := p.GetLocalDB().Get([]byte(fmt.Sprintf("%s%d", pt.KeyPos33ElectePrefix, height)))
+	if err != nil {
+		return nil, err
+	}
+
+	var e pt.Pos33ElecteLocal
+	err = types.Decode(val, &e)
+	if err != nil {
+		return nil, err
+	}
+
+	return &e, nil
+}
+
+// func (p *Pos33) setElecteLocal(e *pt.Pos33ElecteLocal) *types.KeyValue {
+// 	value := types.Encode(e)
+// 	return &types.KeyValue{[]byte(keyPos33Electe), value}
+// }

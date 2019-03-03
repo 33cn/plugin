@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -49,6 +51,7 @@ func (pt *Pos33Type) GetLogMap() map[int64]*types.LogInfo {
 		TyLogDelegate: {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogDelegate"},
 		TyLogReword:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogReword"},
 		TyLogPunish:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogPunish"},
+		TyLogElecte:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogElecte"},
 	}
 }
 
@@ -65,6 +68,7 @@ func (pt *Pos33Type) GetTypeMap() map[string]int32 {
 		"Delegate": Pos33ActionDelegate,
 		"Reword":   Pos33ActionReword,
 		"Punish":   Pos33ActionPunish,
+		"electe":   Pos33ActionElecte,
 	}
 }
 
@@ -103,8 +107,18 @@ func (act *Pos33RewordAction) ToString() string {
 	return string(b)
 }
 
-func (m Pos33Rands) Len() int { return len(m.Rands) }
-func (m Pos33Rands) Less(i, j int) bool {
+func (m *Pos33Rands) Len() int { return len(m.Rands) }
+func (m *Pos33Rands) Less(i, j int) bool {
 	return string(m.Rands[i].RandHash) < string(m.Rands[j].RandHash)
 }
-func (m Pos33Rands) Swap(i, j int) { m.Rands[i], m.Rands[j] = m.Rands[j], m.Rands[i] }
+func (m *Pos33Rands) Swap(i, j int) { m.Rands[i], m.Rands[j] = m.Rands[j], m.Rands[i] }
+
+// Public is get Pos33Rand public in singature helper func
+func (m *Pos33Rand) Public() string {
+	return string(m.Sig.Pubkey)
+}
+
+// Address is get Pos33Rand address in singature helper func
+func (m *Pos33Rand) Address() string {
+	return address.PubKeyToAddress([]byte(m.Public())).String()
+}

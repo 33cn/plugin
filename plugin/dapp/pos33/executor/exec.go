@@ -5,6 +5,9 @@
 package executor
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -83,5 +86,30 @@ func (p *Pos33) Exec_Punish(act *pt.Pos33PunishAction, tx *types.Transaction, in
 		kvs = append(kvs, db.GetKVSet(acc)...)
 	}
 
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs}, nil
+}
+
+// Exec_Electe do electe action
+func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, index int) (*types.Receipt, error) {
+	pub := string(tx.Signature.Pubkey)
+	allw := p.getAllWeight()
+	addr := address.PubKeyToAddress([]byte(pub)).String()
+	w := p.getWeight(addr)
+	if w < 1 {
+		return nil, fmt.Errorf("%s is NOT deposit ycc", addr)
+	}
+
+	if p.GetHeight() <= act.Height || p.GetHeight() > act.Height+pt.Pos33CommitteeSize || act.Height%pt.Pos33CommitteeSize != 0 {
+		return nil, errors.New("act.Hieght error")
+	}
+
+	// should check act.Hash == Block(act.height).Hash
+	err := pt.CheckRands(pub, allw, w, act.Rands, act.Height, act.Hash)
+	if err != nil {
+		return nil, err
+	}
+	key := []byte("mavl-" + pt.Pos33X + "-electe")
+	value := tx.Hash()
+	kvs := []*types.KeyValue{&types.KeyValue{Key: key, Value: value}}
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs}, nil
 }
