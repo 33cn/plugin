@@ -249,6 +249,8 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 			rlog.Error("RetrievePerform", "Acc ExecTransfer", err)
 			return nil, err
 		}
+		kv = append(kv, receipt.KV...)
+		logs = append(logs, receipt.Logs...)
 	} else {
 		return nil, rt.ErrRetrieveNoBalance
 	}
@@ -266,11 +268,12 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 
 	if acctoken.Balance > 0 {
 		receipt, err = accountTokendb.ExecTransfer(perfRet.DefaultAddress, r.BackupAddress, action.execaddr, acctoken.Balance)
-
 		if err != nil {
 			rlog.Error("RetrievePerform", "Token Acc ExecTransfer", err)
 			return nil, err
 		}
+		kv = append(kv, receipt.KV...)
+		logs = append(logs, receipt.Logs...)
 	} else {
 		return nil, rt.ErrRetrieveNoBalance
 	}
@@ -279,8 +282,8 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	//remove the relation
 	r.UnRelateDB(index)
 	r.Save(action.db)
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
+	//logs = append(logs, receipt.Logs...)
+	//kv = append(kv, receipt.KV...)
 	kv = append(kv, r.GetKVSet()...)
 
 	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
