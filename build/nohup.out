@@ -1,0 +1,547 @@
+t=2019-02-20T15:09:13+0800 lvl=info msg="current dir:" dir=/Users/w/go/src/github.com/33cn/plugin/build
+t=2019-02-20T15:09:13+0800 lvl=info msg="current dir:" dir=/Users/w/go/src/github.com/33cn/plugin/build
+[31mEROR[0m[02-20|15:09:13] chain config config.consensus.sub.para.ParaRemoteGrpcClient not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] listSeqCB                                [31mmodule[0m=blockchain [31merr[0m=ErrNotFound
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.coinDevFund not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.coinReward not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.futureBlockTime not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.ticketPrice not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.ticketFrozenTime not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.ticketWithdrawTime not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.ticketMinerWaitTime not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.maxTxNumber not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.powLimitBits not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.targetTimespan not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.targetTimePerBlock not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] mver config mver.consensus.retargetAdjustmentFactor not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:09:13] SaveBlockSequence                        [31mmodule[0m=blockchain [31msubmodule[0m=store [31mLoadBlockLastSequence err[0m=ErrHeightNotExist
+[31mEROR[0m[02-20|15:09:13] chain config config.consensus.sub.para.ParaRemoteGrpcClient not found [31mmodule[0m=types
+2019-02-20 15:09:18.514052 I | txtest.go:319: generate acc: 1000
+2019-02-20 15:09:18.514088 I | txtest.go:326: 12.21708ms
+2019-02-20 15:09:18.519733 I | txtest.go:347: generate 1000 accounts, please restart
+t=2019-02-20T15:10:18+0800 lvl=info msg="current dir:" dir=/Users/w/go/src/github.com/33cn/plugin/build
+t=2019-02-20T15:10:18+0800 lvl=info msg="current dir:" dir=/Users/w/go/src/github.com/33cn/plugin/build
+[31mEROR[0m[02-20|15:10:18] chain config config.consensus.sub.para.ParaRemoteGrpcClient not found [31mmodule[0m=types
+[31mEROR[0m[02-20|15:10:18] listSeqCB                                [31mmodule[0m=blockchain [31merr[0m=ErrNotFound
+[31mEROR[0m[02-20|15:10:18] chain config config.consensus.sub.para.ParaRemoteGrpcClient not found [31mmodule[0m=types
+2019-02-20 15:10:24.001127 I | txtest.go:374: 0 a2f9c2cdbeabe71673edd2f4ae5c6f2dfd260b8056682140073f25702aaf28afec51d9da49fdf284429dbeb41cd08387091e7475dcc7a1058f83708e8c9cbb8c
+2019-02-20 15:10:24.001189 I | txtest.go:379: load acc: 0
+2019-02-20 15:10:24.001309 I | txtest.go:374: 1 2a91546e16a2598bf2dd4bfd37430e876582222856a0eb798a38f2664c1530792e2905005584fbcc77dc2fa57bb93c2bca5a3ef1dbb297b42349320dc6620e75
+2019-02-20 15:10:24.001426 I | txtest.go:374: 2 ccf61f725a9ca26bbb069b724b810a0f162d0d1df8b521e793edb52d61dcdc91d0008f484ef4ae76a4f1c2ec16aee98202cb253adff9b13eb7841a70a7e6f7d2
+2019-02-20 15:10:24.001540 I | txtest.go:374: 3 dbefdefb81e9042e6589349591769300486f94677d89b88157230b2cb62a20e05bdee454c37cee37614c327841d64bf1b3e428086f7368a8e0504078dd656ed0
+2019-02-20 15:10:24.001664 I | txtest.go:374: 4 1eda6f9b175282a63cba5bbaec1f0d5427cf8f1805cba8cd79cde9dc18df20a7bd19981e370a82e01cb0cd362bd0368d6d1d3b26e007077b2715fc04753b9a5e
+2019-02-20 15:10:24.001786 I | txtest.go:374: 5 e416d4adb78b0497264f7ebb40a72946ba67f3595aeb8dae1e37137b0b7617775213b74130f73cf11b11f3530d5ce48bfd4533e21536194475388ac43ff56fc2
+2019-02-20 15:10:24.001897 I | txtest.go:374: 6 edd87b228fba53fb819c148b0452a117eac9b234bb71bb656484e63f3c2234816a0716ae317b330587916793f8f752e26331b66665dc34591358c2ddee3dcf22
+2019-02-20 15:10:24.002005 I | txtest.go:374: 7 c070a0aee0e0a9cd51d91aabf3acb98b750d957d67f9f4cc0f566623713279f434648b885460ee9aad530f4f307682d979347f328010b175c81a907fc69c2ed2
+2019-02-20 15:10:24.002153 I | txtest.go:374: 8 f623c55888f626d9fc09d62b22a30d2349cad8ea6f73fa7961901659c6c570beead26b6128e4067ad5bf2c2883701120f99a49e63fc36d2dbbba3fe2e9abf1d1
+2019-02-20 15:10:24.002259 I | txtest.go:374: 9 911f7dfd34dbc1263ebc6b7a8869554e7060ff6ed64e2a594019d946d5470896e026280e54ed38a4f6886a17743ce52324762f3a3e151e9d5d12c6c93ba4b321
+2019-02-20 15:10:24.049626 I | txtest.go:382: loadAccount:  1000
+2019-02-20 15:10:25.388624 I | txtest.go:288: 0 1000
+2019-02-20 15:10:25.411298 I | txtest.go:232: init txs finished: 1000
+[31mEROR[0m[02-20|15:10:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+2019-02-20 15:10:35.416323 I | txtest.go:99: generateTxs: 100
+[31mEROR[0m[02-20|15:10:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:10:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:10:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:18] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:11:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:11:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:12:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:12:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:13:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:13:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:14:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:14:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:15:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:15:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:15:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 -517.252047ms
+ntp.ubuntu.com:123 -76.986644ms
+time.apple.com:123 35.663222ms
+cn.pool.ntp.org:123 -66.570145ms
+pool.ntp.org:123 -89.654016ms
+[31mEROR[0m[02-20|15:15:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:15:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:15:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:15:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:16:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:16:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:17:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:17:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:18:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:18:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:19:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:19:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:20:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:20:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:20:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:20:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.apple.com:123 62.744542ms
+ntp.ubuntu.com:123 -58.179624ms
+time.windows.com:123 1.427930541s
+cn.pool.ntp.org:123 149.405µs
+pool.ntp.org:123 -38.968285ms
+[31mEROR[0m[02-20|15:20:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:20:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:20:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:20:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:21:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:21:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:22:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:22:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:23:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:23:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:24:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:24:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:25:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:25:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:25:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:25:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 -497.280777ms
+ntp.ubuntu.com:123 -6.428314ms
+pool.ntp.org:123 -19.675715ms
+time.apple.com:123 159.218331ms
+cn.pool.ntp.org:123 -31.89621ms
+[31mEROR[0m[02-20|15:25:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:25:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:25:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:25:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:26:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:26:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:27:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:27:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:28:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:28:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:29:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:29:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:30:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:30:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:30:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:30:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 -65.527631ms
+cn.pool.ntp.org:123 16.382924ms
+pool.ntp.org:123 10.609632ms
+time.apple.com:123 98.015631ms
+ntp.ubuntu.com:123 -50.853211ms
+[31mEROR[0m[02-20|15:30:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:30:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:30:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:30:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:31:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:31:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:32:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:32:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:33:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:33:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:34:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:34:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:35:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:35:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:35:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:35:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 -68.051601ms
+cn.pool.ntp.org:123 10.493075ms
+pool.ntp.org:123 9.832665ms
+time.apple.com:123 56.920324ms
+ntp.ubuntu.com:123 -50.094682ms
+[31mEROR[0m[02-20|15:35:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:35:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:35:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:35:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:36:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:36:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:37:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:37:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:38:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:38:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:39:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:39:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:40:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:40:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:40:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:40:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 10.464248572s
+time.apple.com:123 61.595584ms
+pool.ntp.org:123 13.515221ms
+ntp.ubuntu.com:123 -2.603645ms
+cn.pool.ntp.org:123 3.432264ms
+[31mEROR[0m[02-20|15:40:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:40:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:40:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:40:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:41:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:41:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:42:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:42:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:43:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:43:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:44:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:44:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:45:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:45:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:45:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:45:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 7.761962485s
+pool.ntp.org:123 18.169967ms
+time.apple.com:123 110.760423ms
+ntp.ubuntu.com:123 688.092µs
+cn.pool.ntp.org:123 25.755053ms
+[31mEROR[0m[02-20|15:45:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:45:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:45:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:45:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:46:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:46:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:47:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:47:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:48:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:48:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:49:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:49:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:50:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:50:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:50:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:50:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.windows.com:123 18.868858871s
+pool.ntp.org:123 4.181358ms
+time.apple.com:123 24.275493ms
+ntp.ubuntu.com:123 -51.556866ms
+cn.pool.ntp.org:123 2.479104ms
+[31mEROR[0m[02-20|15:50:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:50:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:50:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:50:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:51:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:51:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:52:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:52:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:53:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:53:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:54:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:54:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:55:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:55:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:55:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:55:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.apple.com:123 -3.41577ms
+time.windows.com:123 -103.832376ms
+pool.ntp.org:123 4.560036ms
+cn.pool.ntp.org:123 3.606281ms
+ntp.ubuntu.com:123 -3.176177ms
+[31mEROR[0m[02-20|15:55:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:55:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:55:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:55:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:56:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:56:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:57:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:57:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:58:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:58:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|15:59:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|15:59:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:00:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:00:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:00:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:00:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.apple.com:123 -1.530998ms
+time.windows.com:123 -69.494358ms
+ntp.ubuntu.com:123 -316.027µs
+pool.ntp.org:123 -37.233531ms
+[31mEROR[0m[02-20|16:00:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:00:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:00:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:00:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:01:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:01:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:02:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:02:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:03:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:03:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:04:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:04:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:05:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:05:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:05:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:05:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+time.apple.com:123 -1.249409ms
+cn.pool.ntp.org:123 9.400731ms
+time.windows.com:123 10.504365199s
+pool.ntp.org:123 -1.121618ms
+ntp.ubuntu.com:123 -80.289179ms
+[31mEROR[0m[02-20|16:05:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:05:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:05:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:05:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:06:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:06:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:07:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:07:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:08:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:08:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:09:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:29] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:39] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:49] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:09:59] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:10:09] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:10:19] CheckHeightNoIncrease GetMaxPeerInfo is nil [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:10:19] CheckTipBlockHash GetMaxPeerInfo is nil  [31mmodule[0m=blockchain [31msubmodule[0m=syn
+[31mEROR[0m[02-20|16:10:19] checkExpireFTXOOnTimer Can not get last header. [31mmodule[0m=wallet.privacy
+[31mEROR[0m[02-20|16:10:19] make block TIMEOUT                       [31mmodule[0m=pos33 [31mheight[0m=0
+time.apple.com:123 2.316925ms
+time.windows.com:123 -514.568891ms
+pool.ntp.org:123 -218.994µs
+ntp.ubuntu.com:123 6.911178ms
+[31mEROR[0m[02-20|16:10:22] make block TIMEOUT                       [31mmodule[0m=pos33 [31mheight[0m=0
+panic: proto: field "types.Pos33Vote.Bp" contains invalid UTF-8
+
+goroutine 135 [running]:
+github.com/33cn/plugin/vendor/github.com/33cn/chain33/types.Encode(0x27094c0, 0xc002ea90e0, 0x34da1e2, 0x45, 0x8f)
+	/Users/w/go/src/github.com/33cn/plugin/vendor/github.com/33cn/chain33/types/types.go:197 +0x83
+github.com/33cn/plugin/plugin/dapp/pos33/types.(*Pos33Vote).Sign(0xc002ea90e0, 0x2716c80, 0xc000319400)
+	/Users/w/go/src/github.com/33cn/plugin/plugin/dapp/pos33/types/types.go:83 +0x61
+github.com/33cn/plugin/plugin/consensus/pos33.(*voter).voteError(0xc0005d9830, 0x1, 0xc0001bf1f0)
+	/Users/w/go/src/github.com/33cn/plugin/plugin/consensus/pos33/node.go:144 +0x4a1
+github.com/33cn/plugin/plugin/consensus/pos33.(*node).run(0xc0001bf1f0)
+	/Users/w/go/src/github.com/33cn/plugin/plugin/consensus/pos33/node.go:969 +0xcb8
+github.com/33cn/plugin/plugin/consensus/pos33.(*Client).CreateBlock(0xc0007b2d00)
+	/Users/w/go/src/github.com/33cn/plugin/plugin/consensus/pos33/pos33.go:164 +0x126
+created by github.com/33cn/plugin/vendor/github.com/33cn/chain33/system/consensus.(*BaseClient).SetQueueClient
+	/Users/w/go/src/github.com/33cn/plugin/vendor/github.com/33cn/chain33/system/consensus/base.go:118 +0xc3

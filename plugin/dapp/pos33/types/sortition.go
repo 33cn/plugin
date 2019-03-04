@@ -123,6 +123,9 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 
 // Sortition 统计每个action的投票，计算出共识委员会选票
 func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
+	if len(acts) == 0 {
+		return nil
+	}
 	// 方便统计，将action的票放到rss 中
 	rss := make([]*Pos33Rands, sortRounds)
 	for _, a := range acts {

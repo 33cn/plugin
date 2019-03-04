@@ -20,7 +20,7 @@ localTime = true
 # 历史日志文件是否压缩（压缩格式为gz）
 compress = true
 # 是否打印调用源文件和行号
-callerFile = false
+callerFile = true
 # 是否打印调用方法
 callerFunction = false
 
@@ -33,7 +33,7 @@ driver="leveldb"
 dbPath="datadir"
 dbCache=64
 isStrongConsistency=false
-singleMode=false
+singleMode=true
 batchsync=false
 isRecordBlockSequence=true
 isParaChain=false

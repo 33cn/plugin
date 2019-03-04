@@ -44,15 +44,11 @@ func (p *Pos33) ExecDelLocal_Electe(act *pt.Pos33ElecteAction, tx *types.Transac
 	}
 
 	local.Es = local.Es[:len(local.Es)-1]
-	kvs := []*types.KeyValue{&types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", keyPos33ElectePrefix, act.Height)), Value: types.Encode(local)}}
+	kvs := []*types.KeyValue{&types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", pt.KeyPos33ElectePrefix, act.Height)), Value: types.Encode(local)}}
 
-	rs := sortition(local.Es)
-	comm, err := p.getCommittee(keyPos33Committee)
-	if err != nil {
-		return nil, err
-	}
-	comm.Rands = rs
-	kvs = append(kvs, &types.KeyValue{Key: []byte(keyPos33Committee), Value: types.Encode(comm)})
+	rs := pt.Sortition(local.Es)
+	comm := &pt.Pos33Committee{Rands: rs}
+	kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", pt.KeyPos33CommitteePrefix, act.Height)), Value: types.Encode(comm)})
 	return &types.LocalDBSet{KV: kvs}, nil
 }
 
