@@ -51,7 +51,7 @@ func (t *token) Query_GetAddrReceiverforTokens(in *tokenty.ReqAddrTokens) (types
 	return t.getAddrReceiverforTokens(in)
 }
 
-// Query_GetAccountTokenAssets 获取账户的token资产
+// Query_GetAccountTokenAssets 获取账户的token资产 
 func (t *token) Query_GetAccountTokenAssets(in *tokenty.ReqAccountTokenAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
