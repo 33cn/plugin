@@ -9,6 +9,8 @@ datadir*
 .vscode
 build/chain33*
 chain33_raft-1
+build/acc.dat
+build/test
 build/datadir
 build/bityuan*
 build/para
@@ -17,6 +19,7 @@ build/execblock
 build/relayd
 build/relayd.toml
 build/*.log
+build/*.out
 build/fzm
 build/guodun
 build/main.sh
@@ -36,3 +39,4 @@ plugin/store/mpt/cpu.pprof
 plugin/store/mpt/mpt.test
 plugin/consensus/raft/tools/scripts/grpc33.log
 plugin/consensus/raft/tools/scripts/logs/
+vendor*

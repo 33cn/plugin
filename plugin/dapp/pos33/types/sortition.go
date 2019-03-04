@@ -159,10 +159,6 @@ func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
 		rs.Rands = append(rs.Rands, rss[i].Rands...)
 	}
 
-	if len(rs.Rands) < min {
-		panic("can't go here")
-	}
-
 	// 如果k轮的总票数超出了max, 对第k轮票数排序，截取
 	max := Pos33MaxCommittee
 	if len(rs.Rands)+len(rss[k].Rands) > max {
@@ -170,6 +166,10 @@ func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
 		rss[k].Rands = rss[k].Rands[:max-len(rs.Rands)]
 	}
 	rs.Rands = append(rs.Rands, rss[k].Rands...)
+
+	if len(rs.Rands) < min {
+		panic("can't go here")
+	}
 
 	// 对最终符合的票数排序, 即委员会
 	if k > 0 { // k == 0 时上面已经排过了
