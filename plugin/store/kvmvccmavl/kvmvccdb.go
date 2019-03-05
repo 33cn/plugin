@@ -101,7 +101,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	for i := 0; i < len(datas.Keys); i++ {
 		value, err := mvccs.mvcc.GetV(datas.Keys[i], version)
 		if err != nil {
-			kmlog.Error("GetV by Keys failed.", "Key", string(datas.Keys[i]), "version", version)
+			//kmlog.Error("GetV by Keys failed.", "Key", string(datas.Keys[i]), "version", version)
 		} else if value != nil {
 			values[i] = value
 		}
