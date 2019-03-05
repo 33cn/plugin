@@ -123,7 +123,7 @@ func (client *Client) newBlock(txs []*types.Transaction, height int64, null bool
 		}
 	}
 
-	bt := time.Now().UnixNano() / 1000000
+	bt := time.Now().Unix()
 	return &types.Block{
 		ParentHash: lastBlock.Hash(),
 		Height:     lastBlock.Height + 1,
@@ -295,21 +295,18 @@ func (client *Client) sendTx(tx *types.Transaction) error {
 		panic("client not bind message queue.")
 	}
 	msg := qcli.NewMessage("mempool", types.EventTx, tx)
-	err := qcli.Send(msg, false)
+	err := qcli.Send(msg, true)
 	if err != nil {
 		return err
 	}
-	//plog.Info("sendTx", "N", N)
-
-	return nil
-	// resp, err := qcli.Wait(msg)
-	// if err != nil {
-	// 	return err
-	// }
-	// r := resp.GetData().(*types.Reply)
-	// if r.IsOk {
-	// 	return nil
-	// } else {
-	// 	return errors.New(string(r.Msg))
-	// }
+	resp, err := qcli.Wait(msg)
+	if err != nil {
+		return err
+	}
+	r := resp.GetData().(*types.Reply)
+	if r.IsOk {
+		return nil
+	}
+	plog.Info("sendTx error:", "error", string(r.Msg))
+	return errors.New(string(r.Msg))
 }

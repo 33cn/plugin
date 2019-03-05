@@ -79,6 +79,7 @@ func NewElecteTx(rands []*Pos33Rands, blockHash []byte, blochHeight int64) (*typ
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(types.ExecName(Pos33X)),
 		Fee:     1e7,
+		Expire:  time.Now().Unix() + 120,
 	}
 	return tx, nil
 }

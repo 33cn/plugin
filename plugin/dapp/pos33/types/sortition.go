@@ -89,7 +89,7 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 		}
 
 		rsm := make(map[string]bool)
-		for j, r := range rs.Rands {
+		for _, r := range rs.Rands {
 			if int(r.Index) > w {
 				return fmt.Errorf("%s Round >= RANDAROUNDS, w=%d", addr, r.Index)
 			}
@@ -98,13 +98,13 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 			}
 			rsm[string(r.RandHash)] = true
 
-			data := []byte(string(blockHash) + fmt.Sprintf("%d%d%d", i, j, blockHeight))
+			data := []byte(string(blockHash) + fmt.Sprintf("%d%d%d", i, r.Index, blockHeight))
 			hash := crypto.Sha256(data)
 			if !pb.CheckSign(hash, "pos33", r.Sig) {
 				return fmt.Errorf("%s signature error", addr)
 			}
 			if addr != address.PubKeyToAddress(r.Sig.Pubkey).String() {
-				return fmt.Errorf("%s signature error", addr)
+				return fmt.Errorf("%s NOT match signature", addr)
 			}
 
 			if string(r.RandHash) != string(crypto.Sha256(r.Sig.Signature)) {

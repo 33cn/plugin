@@ -157,7 +157,14 @@ func sendTx(tx *Tx) {
 
 func sendDepositTx(p crypto.PrivKey) {
 	act := &ty.Pos33Action{Value: &ty.Pos33Action_Deposit{Deposit: &ty.Pos33DepositAction{W: int64(*dw)}}, Ty: int32(ty.Pos33ActionDeposit)}
-	tx := &Tx{Nonce: rand.Int63(), Execer: []byte("pos33"), Payload: pb.Encode(act), Fee: 1e7 * 17, To: address.ExecAddress("pos33")}
+	tx := &Tx{
+		Nonce:   rand.Int63(),
+		Execer:  []byte("pos33"),
+		Payload: pb.Encode(act),
+		Fee:     1e7 * 17,
+		To:      address.ExecAddress("pos33"),
+		Expire:  time.Now().Unix() + 600,
+	}
 	tx.Sign(pb.ED25519, p)
 	sendTx(tx)
 }

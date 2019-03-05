@@ -68,7 +68,7 @@ func (pt *Pos33Type) GetTypeMap() map[string]int32 {
 		"Delegate": Pos33ActionDelegate,
 		"Reword":   Pos33ActionReword,
 		"Punish":   Pos33ActionPunish,
-		"electe":   Pos33ActionElecte,
+		"Electe":   Pos33ActionElecte,
 	}
 }
 

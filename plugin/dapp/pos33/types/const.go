@@ -63,7 +63,7 @@ const (
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址
-	Pos33FundKeyAddr = ""
+	Pos33FundKeyAddr = "1DvAFGqS26Recz22yeoHcovzxN7dUh92ZY"
 )
 
 // const var

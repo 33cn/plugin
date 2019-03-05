@@ -67,7 +67,7 @@ func (p *Pos33) Exec_Reword(act *pt.Pos33RewordAction, tx *types.Transaction, in
 	facc.Balance += fr
 	kvs = append(kvs, db.GetKVSet(facc)...)
 
-	plog.Info("block reword", "bp", bp, "bp reword", bpReword, "fund reword", fr)
+	plog.Info("block reword", "bp", bp, "bp-reword", bpReword, "fund-reword", fr)
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs}, nil
 }
 
@@ -94,6 +94,7 @@ func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, in
 	pub := string(tx.Signature.Pubkey)
 	allw := p.getAllWeight()
 	addr := address.PubKeyToAddress([]byte(pub)).String()
+	plog.Info("Exec_Electe", "addr", addr)
 	w := p.getWeight(addr)
 	if w < 1 {
 		return nil, fmt.Errorf("%s is NOT deposit ycc", addr)
@@ -104,7 +105,7 @@ func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, in
 	}
 
 	// should check act.Hash == Block(act.height).Hash
-	err := pt.CheckRands(pub, allw, w, act.Rands, act.Height, act.Hash)
+	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, act.Hash)
 	if err != nil {
 		return nil, err
 	}
