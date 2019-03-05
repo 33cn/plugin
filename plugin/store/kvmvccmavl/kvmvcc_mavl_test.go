@@ -19,6 +19,8 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	dbm "github.com/33cn/chain33/common/db"
+	"bytes"
 )
 
 const MaxKeylenth int = 64
@@ -537,6 +539,125 @@ func TestDelMavlData(t *testing.T) {
 	require.Error(t, err)
 	_, err = db.Get(genDelMavlKey(mvccPrefix))
 	require.NoError(t, err)
+}
+
+
+func TestPruning(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+
+	kvmvccStore := NewKVMVCC(&subKVMVCCConfig{}, store.GetDB())
+
+	SetPruneHeight(10)
+	defer SetPruneHeight(0)
+
+	var kv []*types.KeyValue
+	var key string
+	var value string
+	var keys [][]byte
+
+	for i := 0; i < 30; i++ {
+		key = GetRandomString(MaxKeylenth)
+		value = fmt.Sprintf("v%d", i)
+		keys = append(keys, []byte(string(key)))
+		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+	}
+	datas := &types.StoreSet{
+		StateHash: drivers.EmptyRoot[:],
+		KV:        kv,
+		Height:    0}
+
+	var hashes [][]byte
+	for i := 0; i < 100; i++ {
+		datas.Height = int64(i)
+		value = fmt.Sprintf("vv%d", i)
+		for j := 0; j < 30; j++ {
+			datas.KV[j].Value = []byte(value)
+		}
+		hash, err := kvmvccStore.MemSet(datas, nil, true)
+		require.NoError(t, err)
+		req := &types.ReqHash{
+			Hash: hash,
+		}
+		_, err = kvmvccStore.Commit(req)
+		require.NoError(t, err)
+		datas.StateHash = hash
+		hashes = append(hashes, hash)
+	}
+
+	pruningMVCC(store.GetDB(), 99)
+
+	//check
+	getDatas := &types.StoreGet{
+		StateHash: drivers.EmptyRoot[:],
+		Keys: keys,
+	}
+
+	for i := 92; i < len(hashes); i++  {
+		getDatas.StateHash = hashes[i]
+		values := store.Get(getDatas)
+		value = fmt.Sprintf("vv%d", i)
+
+		if i < 80 {
+			for _, v := range values {
+				require.Equal(t, nil, v)
+			}
+		}
+
+		if i > 90 {
+			for _, v := range values {
+				require.Equal(t, []byte(value), v)
+			}
+		}
+	}
+}
+
+func TestGetKeyVersion(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	mvcc := dbm.NewMVCC(store.GetDB())
+	kvs := []*types.KeyValue{
+		{Key: []byte("5"), Value: []byte("11")},
+		{Key: []byte("123"), Value: []byte("111")},
+		{Key: []byte(""), Value: []byte("1111")},
+	}
+	hash := []byte("12345678901234567890123456789012")
+	vsnkv, err := mvcc.AddMVCC(kvs, hash, nil, 0)
+	require.NoError(t, err)
+	for _, kv := range vsnkv {
+		if bytes.Contains(kv.Key, mvccData) && bytes.Contains(kv.Key, kvs[0].Key) {
+			k, h, err := getKeyVersion(kv.Key)
+			require.NoError(t, err)
+			require.Equal(t, k, kvs[0].Key)
+			require.Equal(t, h, int64(0))
+			continue
+		}
+		if bytes.Contains(kv.Key, mvccData) && bytes.Contains(kv.Key, kvs[1].Key) {
+			k, h, err := getKeyVersion(kv.Key)
+			require.NoError(t, err)
+			require.Equal(t, k, kvs[1].Key)
+			require.Equal(t, h, int64(0))
+			continue
+		}
+		if bytes.Contains(kv.Key, mvccData) {
+			k, h, err := getKeyVersion(kv.Key)
+			require.NoError(t, err)
+			require.Equal(t, k, kvs[2].Key)
+			require.Equal(t, h, int64(0))
+		}
+	}
 }
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }

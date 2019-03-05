@@ -368,7 +368,10 @@ func genKeyVersion(key []byte, height int64) []byte {
 }
 
 func getKeyVersion(vsnKey []byte) ([]byte, int64, error) {
-	if len(vsnKey) <= len(mvccData) + 1 + 20  {
+	if !bytes.Contains(vsnKey, mvccData) {
+		return nil, 0, types.ErrSize
+	}
+	if len(vsnKey) < len(mvccData) + 1 + 20  {
 		return nil, 0, types.ErrSize
 	}
 	sLen := vsnKey[len(vsnKey)-20:]
