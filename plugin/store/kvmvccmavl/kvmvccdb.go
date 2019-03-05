@@ -5,23 +5,24 @@
 package kvmvccmavl
 
 import (
+	"bytes"
+	"fmt"
+	"strconv"
+	"sync/atomic"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
-	"sync/atomic"
-	"fmt"
-	"strconv"
-	"bytes"
 )
 
 const (
-	pruningStateStart      = 1
-	pruningStateEnd        = 0
-	onceScanCount          = 10000 // 单次扫描数目
-	onceCount              = 1000  // 容器长度
-	LevelPruningHeight     = 100 * 10000
+	pruningStateStart  = 1
+	pruningStateEnd    = 0
+	onceScanCount      = 10000 // 单次扫描数目
+	onceCount          = 1000  // 容器长度
+	LevelPruningHeight = 100 * 10000
 )
 
 var (
@@ -29,28 +30,28 @@ var (
 	// 是否开启裁剪
 	enablePrune bool
 	// 每个10000裁剪一次
-	pruneHeight    = 10000
-	pruningState     int32
+	pruneHeight  = 10000
+	pruningState int32
 )
 
 var (
 	//同common/db中的mvcc相关的定义保持一致
-	mvccPrefix = []byte(".-mvcc-.")
-    mvccMeta = append(mvccPrefix, []byte("m.")...)
-    mvccData = append(mvccPrefix, []byte("d.")...)
-    mvccLast = append(mvccPrefix, []byte("l.")...)
-    mvccMetaVersion = append(mvccMeta, []byte("version.")...)
-    mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
+	mvccPrefix             = []byte(".-mvcc-.")
+	mvccMeta               = append(mvccPrefix, []byte("m.")...)
+	mvccData               = append(mvccPrefix, []byte("d.")...)
+	mvccLast               = append(mvccPrefix, []byte("l.")...)
+	mvccMetaVersion        = append(mvccMeta, []byte("version.")...)
+	mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
 )
 
 // KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
-	db             dbm.DB
-	mvcc           dbm.MVCC
-	kvsetmap       map[string][]*types.KeyValue
-	enableMVCCIter bool
-	enableMavlPrune  bool
-	pruneHeight      int32
+	db              dbm.DB
+	mvcc            dbm.MVCC
+	kvsetmap        map[string][]*types.KeyValue
+	enableMVCCIter  bool
+	enableMavlPrune bool
+	pruneHeight     int32
 }
 
 // NewKVMVCC construct KVMVCCStore module
@@ -62,10 +63,10 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	}
 	if enable {
 		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue),
-		true, sub.EnableMavlPrune, sub.PruneHeight}
+			true, sub.EnableMavlPrune, sub.PruneHeight}
 	} else {
 		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),
-		false, sub.EnableMavlPrune, sub.PruneHeight}
+			false, sub.EnableMavlPrune, sub.PruneHeight}
 	}
 	EnablePrune(sub.EnableMavlPrune)
 	SetPruneHeight(int(sub.PruneHeight))
@@ -280,7 +281,6 @@ func calcHash(datas proto.Message) []byte {
 	return common.Sha256(b)
 }
 
-
 //裁剪-------------------------------------------
 // EnablePrune 使能裁剪
 func EnablePrune(enable bool) {
@@ -324,10 +324,10 @@ func pruningFirst(db dbm.DB, curHeight int64) {
 			continue
 		}
 
-		if curHeight < int64(height) + LevelPruningHeight &&
-			curHeight >= int64(height) + int64(pruneHeight) {
-				mp[string(key)] = append(mp[string(key)], height)
-				count++
+		if curHeight < int64(height)+LevelPruningHeight &&
+			curHeight >= int64(height)+int64(pruneHeight) {
+			mp[string(key)] = append(mp[string(key)], height)
+			count++
 		}
 		if len(mp) >= onceCount-1 || count > onceScanCount {
 			deleteOldKV(mp, curHeight, batch)
@@ -344,8 +344,8 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 	batch.Reset()
 	for key, vals := range mp {
 		if len(vals) > 1 && vals[1] != vals[0] { //防止相同高度时候出现的误删除
-			for _, val := range vals[1:] {       //从第二个开始判断
-				if curHeight >= val + int64(pruneHeight) {
+			for _, val := range vals[1:] { //从第二个开始判断
+				if curHeight >= val+int64(pruneHeight) {
 					batch.Delete(genKeyVersion([]byte(key), val)) // 删除老版本key
 					if batch.ValueSize() > batchDataSize {
 						batch.Write()
@@ -368,7 +368,7 @@ func genKeyVersion(key []byte, height int64) []byte {
 }
 
 func getKeyVersion(vsnKey []byte) ([]byte, int64, error) {
-	if len(vsnKey) <= len(mvccData) + 1 + 20  {
+	if len(vsnKey) <= len(mvccData)+1+20 {
 		return nil, 0, types.ErrSize
 	}
 	sLen := vsnKey[len(vsnKey)-20:]
