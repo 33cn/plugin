@@ -16,6 +16,7 @@ func init() {
 	types.RegistorExecutor(RetrieveX, NewType())
 	types.RegisterDappFork(RetrieveX, "Enable", 0)
 	types.RegisterDappFork(RetrieveX, "ForkRetrive", 180000)
+	types.RegisterDappFork(RetrieveX, "ForkRetriveToken", 1800000)
 }
 
 // RetrieveType def
