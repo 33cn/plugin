@@ -38,7 +38,6 @@ const (
 	batchDataSize     = 1024 * 1024 * 1
 	delMavlStateStart = 1
 	delMavlStateEnd   = 0
-	mvccPrefix        = ".-mvcc-." //同common/db中的mvccPrefix一致
 )
 
 // SetLogLevel set log level
@@ -65,6 +64,8 @@ type KVmMavlStore struct {
 
 type subKVMVCCConfig struct {
 	EnableMVCCIter bool `json:"enableMVCCIter"`
+	EnableMavlPrune  bool  `json:"enableMavlPrune"`
+	PruneHeight      int32 `json:"pruneHeight"`
 }
 
 type subMavlConfig struct {
@@ -92,6 +93,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 		subKVMVCCcfg.EnableMVCCIter = subcfg.EnableMVCCIter
+		subKVMVCCcfg.EnableMavlPrune = subcfg.EnableMavlPrune
+		subKVMVCCcfg.PruneHeight = subcfg.PruneHeight
+
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
@@ -294,9 +298,9 @@ func delMavlData(db dbm.DB) bool {
 	return true
 }
 
-func genDelMavlKey(prefix string) []byte {
+func genDelMavlKey(prefix []byte) []byte {
 	delMavl := "--delMavlData--"
-	return []byte(fmt.Sprintf("%s%s", prefix, delMavl))
+	return []byte(fmt.Sprintf("%s%s", string(prefix), delMavl))
 }
 
 func isDelMavling() bool {
