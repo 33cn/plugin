@@ -252,7 +252,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 		}
 		kv = append(kv, receipt.KV...)
 		logs = append(logs, receipt.Logs...)
-		retrieveNum += 1
+		retrieveNum++
 	} else {
 		if !types.IsDappFork(action.height, rt.RetrieveX, "ForkRetriveToken") {
 			return nil, rt.ErrRetrieveNoBalance
@@ -295,7 +295,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 						}
 						kv = append(kv, receipt.KV...)
 						logs = append(logs, receipt.Logs...)
-						retrieveNum += 1
+						retrieveNum++
 					} else {
 						rlog.Error("RetrievePerform", "token not retrieved:", err)
 					}
