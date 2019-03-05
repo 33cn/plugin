@@ -22,9 +22,9 @@ type node struct {
 	gss  *gossip
 	priv crypto.PrivKey
 
-	bch      chan *types.Block
-	comm     *pt.Pos33Rands // current committee and next committee
-	myWeight int
+	bch            chan *types.Block
+	comm, lastComm *pt.Pos33Rands // current committee and next committee
+	myWeight       int
 
 	bmp map[int64]*types.Block    // cache blocks
 	vmp map[int64][]*pt.Pos33Vote // cache votes
@@ -158,7 +158,7 @@ func getWeight(rs *pt.Pos33Rands, u string) int {
 	return w
 }
 
-// TODO
+// TODO:
 func (n *node) checkVote(vt *pt.Pos33Vote) bool {
 	if int(vt.Weight) != getWeight(n.comm, addr(vt.Sig)) {
 		return false
@@ -265,13 +265,30 @@ func (n *node) checkBlock(b *types.Block) error {
 	}
 
 	plog.Info("node.checkBlock", "height", b.Height)
-	if n.comm == nil {
-		return nil
+
+	// check first Tx
+	tx := b.Txs[0]
+	var act pt.Pos33RewordAction
+	err := types.Decode(tx.GetPayload(), &act)
+	if err != nil {
+		return err
 	}
 
+	// must enought votes
+	w := vsWeight(act.Votes)
+	if w*3 < pt.Pos33CommitteeSize*2 {
+		return errors.New("block vote weight too low")
+	}
+
+	comm := n.comm
+	if comm == nil {
+		return nil // TODO: should't go here?
+	}
+
+	// block maker must be committee
 	bp := addr(b.Signature)
 	ok := false
-	for _, r := range n.comm.Rands {
+	for _, r := range comm.Rands {
 		if addr(r.Sig) == bp {
 			ok = true
 			break
@@ -281,9 +298,8 @@ func (n *node) checkBlock(b *types.Block) error {
 		return errors.New("block maker is NOT in commmittee")
 	}
 
-	// TODO: check the first tx which is reword tx
+	// ok
 	n.addBlock(b)
-
 	return nil
 }
 
@@ -401,6 +417,8 @@ func (n *node) changeCommittee(b *types.Block) {
 		plog.Error("sortition error", "err", err)
 		return
 	}
+
+	n.lastComm = n.comm
 
 	if b.Height > 0 {
 		n.comm, err = n.getCurrentCommittee()

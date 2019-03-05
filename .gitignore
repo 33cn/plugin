@@ -40,3 +40,5 @@ plugin/store/mpt/mpt.test
 plugin/consensus/raft/tools/scripts/grpc33.log
 plugin/consensus/raft/tools/scripts/logs/
 vendor*
+wallet
+build
