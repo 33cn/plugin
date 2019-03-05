@@ -243,7 +243,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	}
 
 	acc = action.coinsAccount.LoadExecAccount(r.RetPara[index].DefaultAddress, action.execaddr)
-	rlog.Error("RetrievePerform", "acc.Balance", acc.Balance)
+	rlog.Debug("RetrievePerform", "acc.Balance", acc.Balance)
 	if acc.Balance > 0 {
 		receipt, err = action.coinsAccount.ExecTransfer(r.RetPara[index].DefaultAddress, r.BackupAddress, action.execaddr, acc.Balance)
 		if err != nil {
@@ -262,26 +262,33 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	//token part
 	//find all tokens in this Addr/Retrieve and ExecTransfer
 	if types.IsDappFork(action.height, rt.RetrieveX, "ForkRetriveToken") {
-
-		req := tokenty.ReqAccountTokenAssets{Address: perfRet.DefaultAddress, Execer: rt.RetrieveX}
-		res, err := action.r.GetAPI().Query(tokenty.TokenX, "GetAccountTokenAssets", &req)
+		req := tokenty.ReqTokens{QueryAll: true, Status: tokenty.TokenStatusCreated, Tokens: nil, SymbolOnly: true}
+		res, err := action.r.GetAPI().Query(tokenty.TokenX, "GetTokens", &req)
+		rlog.Debug("RetrievePerform", "Query", err)
 		if err != nil && err != types.ErrNotFound {
+			rlog.Error("RetrievePerform", "Query", err)
 			return nil, err
 		}
 
 		if err != types.ErrNotFound {
-			if assets, ok := res.(*tokenty.ReplyAccountTokenAssets); ok {
-				for _, asset := range assets.TokenAssets {
-					symbol := asset.Symbol
-					acc := asset.Account
+			if tokens, ok := res.(*tokenty.ReplyTokens); ok {
+				for _, token := range tokens.Tokens {
+					symbol := token.Symbol
+					//acc := asset.Account
 					rlog.Debug("RetrievePerform", "symbol", symbol, "acc", acc)
-					if acc.Balance > 0 {
-						accountTokendb, err := account.NewAccountDB(tokenty.TokenX, symbol, action.db)
-						if err != nil {
-							return nil, rt.ErrRetrieveNoBalance
-						}
+					accountTokendb, err := account.NewAccountDB(tokenty.TokenX, symbol, action.db)
+					if err != nil {
+						return nil, rt.ErrRetrieveNoBalance
+					}
+					acctoken, err := accountTokendb.LoadExecAccountQueue(action.r.GetAPI(), perfRet.DefaultAddress, action.execaddr)
+					if err != nil {
+						rlog.Error("RetrievePerform", "loadtoken", err)
+						return nil, err
+					}
 
-						receipt, err = accountTokendb.ExecTransfer(perfRet.DefaultAddress, r.BackupAddress, action.execaddr, acc.Balance)
+					if acctoken.Balance > 0 {
+
+						receipt, err = accountTokendb.ExecTransfer(perfRet.DefaultAddress, r.BackupAddress, action.execaddr, acctoken.Balance)
 						if err != nil {
 							rlog.Error("RetrievePerform", "Token Acc ExecTransfer", err)
 							return nil, err
@@ -289,15 +296,15 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 						kv = append(kv, receipt.KV...)
 						logs = append(logs, receipt.Logs...)
 						retrieveNum += 1
+					} else {
+						rlog.Error("RetrievePerform", "token not retrieved:", err)
 					}
 				}
 			}
-		} else {
-			rlog.Debug("RetrievePerform", "token not retrieved:", err)
 		}
 	}
 
-	rlog.Debug("RetrievePerform", "retrieve token & bty Num", retrieveNum)
+	rlog.Error("RetrievePerform", "retrieve token & bty Num", retrieveNum)
 	if retrieveNum == 0 {
 		return nil, rt.ErrRetrieveNoBalance
 	}
