@@ -49,6 +49,35 @@ func (e *Paracross) ExecDelLocal_Commit(payload *pt.ParacrossCommitAction, tx *t
 	return &set, nil
 }
 
+func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaNodeConfig {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Prev.Status), Value: types.Encode(g.Prev)})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Current.Status), Value: nil})
+		} else if log.Ty == pt.TyLogParaNodeVoteDone {
+			var g pt.ReceiptParaNodeVoteDone
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: nil})
+		}
+	}
+	return &set, nil
+}
+
 //ExecDelLocal_AssetTransfer asset transfer del local db process
 func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet

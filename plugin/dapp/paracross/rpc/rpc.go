@@ -167,3 +167,57 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 	*result = *ret
 	return err
 }
+
+func (c *channelClient) GetNodeGroup(ctx context.Context, req *types.ReqString) (*types.ReplyConfig, error) {
+	data, err := c.Query(pt.GetExecName(), "GetNodeGroup", req)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*types.ReplyConfig); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListTitles get paracross consensus titles list
+func (c *Jrpc) GetNodeGroup(req *types.ReqString, result *interface{}) error {
+	data, err := c.cli.GetNodeGroup(context.Background(), req)
+	*result = data
+	return err
+}
+
+func (c *channelClient) GetNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeAddrStatus, error) {
+	data, err := c.Query(pt.GetExecName(), "GetNodeAddrInfo", req)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.ParaNodeAddrStatus); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListTitles get paracross consensus titles list
+func (c *Jrpc) GetNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
+	data, err := c.cli.GetNodeStatus(context.Background(), req)
+	*result = data
+	return err
+}
+
+func (c *channelClient) ListNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.RespParacrossNodeAddrs, error) {
+	data, err := c.Query(pt.GetExecName(), "ListNodeStatusInfo", req)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.RespParacrossNodeAddrs); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListTitles get paracross consensus titles list
+func (c *Jrpc) ListNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
+	data, err := c.cli.ListNodeStatus(context.Background(), req)
+	*result = data
+	return err
+}

@@ -108,6 +108,11 @@ function para_transfer() {
     echo "txhash=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
+    echo "=========== # para chain takeover node group ============="
+    txhash=$(${PARA_CLI} send para node -o takeover -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+
 }
 
 function para_transfer2account() {

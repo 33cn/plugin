@@ -86,3 +86,9 @@ func (e *Paracross) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx 
 	a := newAction(e, tx)
 	return a.TransferToExec(payload, tx, index)
 }
+
+//Exec_NodeConfig exec super node config
+func (e *Paracross) Exec_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.NodeConfig(payload)
+}

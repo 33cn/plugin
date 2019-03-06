@@ -39,33 +39,36 @@ func newAction(t *Paracross, tx *types.Transaction) *action {
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer)), t.GetAPI(), tx, t}
 }
 
-func getNodes(db dbm.KV, title string) (map[string]struct{}, error) {
-	key := calcConfigNodesKey(title)
+func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 	item, err := db.Get(key)
 	if err != nil {
 		clog.Info("getNodes", "get db key", string(key), "failed", err)
 		if isNotFound(err) {
 			err = pt.ErrTitleNotExist
 		}
-		return nil, errors.Wrapf(err, "db get key:%s", string(key))
+		return nil, nil, errors.Wrapf(err, "db get key:%s", string(key))
 	}
 	var config types.ConfigItem
 	err = types.Decode(item, &config)
 	if err != nil {
-		return nil, errors.Wrap(err, "decode config")
+		return nil, nil, errors.Wrap(err, "decode config")
 	}
 
 	value := config.GetArr()
 	if value == nil {
 		// 在配置地址后，发现配置错了， 删除会出现这种情况
-		return map[string]struct{}{}, nil
+		return map[string]struct{}{}, nil, nil
 	}
+	var nodes []string
 	uniqNode := make(map[string]struct{})
 	for _, v := range value.Value {
-		uniqNode[v] = struct{}{}
+		if _, exist := uniqNode[v]; !exist {
+			uniqNode[v] = struct{}{}
+			nodes = append(nodes, v)
+		}
 	}
 
-	return uniqNode, nil
+	return uniqNode, nodes, nil
 }
 
 func validTitle(title string) bool {
@@ -220,8 +223,8 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if !validTitle(commit.Status.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
-
-	nodes, err := getNodes(a.db, commit.Status.Title)
+	key := calcParaNodeGroupKey(commit.Status.Title)
+	nodes, _, err := getNodes(a.db, key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", commit.Status.Title)
 	}

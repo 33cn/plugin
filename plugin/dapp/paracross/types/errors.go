@@ -27,4 +27,14 @@ var (
 	ErrParaWaitingNewSeq = errors.New("ErrParaWaitingNewSeq")
 	// ErrParaCurHashNotMatch para curr main hash not match with pre, main node may switched
 	ErrParaCurHashNotMatch = errors.New("ErrParaCurHashNotMatch")
+	// ErrParaUnSupportNodeOper unsupport node operation
+	ErrParaUnSupportNodeOper     = errors.New("ErrParaUnSupportNodeOper")
+	ErrParaNodeAddrExisted       = errors.New("ErrParaNodeAddrExisted")
+	ErrParaNodeAddrNotExisted    = errors.New("ErrParaNodeAddrNotExisted")
+	ErrParaManageNodesNotSet     = errors.New("ErrParaManageNodesNotSet")
+	ErrParaNodeGroupNotSet       = errors.New("ErrParaManageNodesNotSet")
+	ErrParaNodeGroupExisted      = errors.New("ErrParaNodesExisted")
+	ErrParaNodeGroupLastAddr     = errors.New("ErrParaNodeGroupLastAddr")
+	ErrParaNodeGroupRefuseByVote = errors.New("ErrParaNodeGroupRefuseByVote")
+	ErrParaNodeVoteSelf          = errors.New("ErrParaNodeVoteSelf")
 )

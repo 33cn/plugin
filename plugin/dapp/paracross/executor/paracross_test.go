@@ -111,7 +111,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	MainBlockHash10 = blockDetail.Block.Hash()
 
 	// setup title nodes : len = 4
-	nodeConfigKey := calcConfigNodesKey(Title)
+	nodeConfigKey := calcManageConfigNodesKey(Title)
 	nodeValue := makeNodeInfo(Title, Title, 4)
 	suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
 	value, err := suite.stateDB.Get(nodeConfigKey)
@@ -139,7 +139,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 }
 
 func (suite *CommitTestSuite) TestSetup() {
-	nodeConfigKey := calcConfigNodesKey(Title)
+	nodeConfigKey := calcManageConfigNodesKey(Title)
 	suite.T().Log(string(nodeConfigKey))
 	_, err := suite.stateDB.Get(nodeConfigKey)
 	if err != nil {

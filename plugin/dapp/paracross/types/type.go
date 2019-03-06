@@ -61,6 +61,9 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaAssetTransfer:     {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
 		TyLogParaAssetDeposit:      {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
 		TyLogParacrossMiner:        {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
+		TyLogParaNodeConfig:        {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
+		TyLogParaNodeGroupUpdate:   {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupUpdate"},
+		TyLogParaNodeVoteDone:      {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
 	}
 }
 
@@ -74,6 +77,7 @@ func (p *ParacrossType) GetTypeMap() map[string]int32 {
 		"Transfer":       ParacrossActionTransfer,
 		"Withdraw":       ParacrossActionWithdraw,
 		"TransferToExec": ParacrossActionTransferToExec,
+		"NodeConfig":     ParacrossActionNodeConfig,
 	}
 }
 
@@ -107,6 +111,17 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		action == "ParacrossTransferToExec" || action == "TransferToExec" {
 
 		return p.CreateRawTransferTx(action, message)
+	} else if action == "NodeConfig" {
+		if !types.IsPara() {
+			return nil, types.ErrNotSupport
+		}
+		var param ParaNodeAddrConfig
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.NodeConfig", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return createRawNodeConfigTx(&param)
 	}
 
 	return nil, types.ErrNotSupport
