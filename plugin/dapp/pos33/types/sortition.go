@@ -15,7 +15,7 @@ import (
 const sortRounds = 3
 
 // persent of allw online
-const onlinePersentOfAllW = 0.8
+const onlinePersentOfAllW = 0.67
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256

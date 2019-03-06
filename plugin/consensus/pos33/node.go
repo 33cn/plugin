@@ -112,6 +112,16 @@ func (n *node) signBlock(b *types.Block) *types.Block {
 	return b
 }
 
+func vsAccWeight(vs []*pt.Pos33Vote, acc string) int {
+	w := 0
+	for _, v := range vs {
+		if addr(v.Sig) == acc {
+			w += int(v.Weight)
+		}
+	}
+	return w
+}
+
 func vsWeight(vs []*pt.Pos33Vote) int {
 	w := 0
 	for _, v := range vs {
@@ -160,15 +170,19 @@ func getWeight(rs *pt.Pos33Rands, u string) int {
 
 // TODO:
 func (n *node) checkVote(vt *pt.Pos33Vote) bool {
-	if int(vt.Weight) != getWeight(n.comm, addr(vt.Sig)) {
+	who := addr(vt.Sig)
+	if int(vt.Weight) != getWeight(n.comm, who) {
+		return false
+	}
+	if vsAccWeight(n.vmp[vt.BlockHeight], who) > 0 {
 		return false
 	}
 	return true
 }
 
 func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
+	plog.Info("countVote ", "height", height)
 	vts := n.vmp[height]
-
 	hmp := make(map[string][]*pt.Pos33Vote)
 	for _, v := range vts {
 		hmp[string(v.BlockHash)] = append(hmp[string(v.BlockHash)], v)
@@ -185,6 +199,9 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 			maxHash = k
 		}
 	}
+
+	plog.Info("countVote ", "max", max, "maxHash", hex.EncodeToString([]byte(maxHash)))
+
 	if max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
 	}
@@ -206,6 +223,9 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 			maxBp = k
 		}
 	}
+
+	plog.Info("countVote ", "max", max, "maxBp", maxBp)
+
 	if max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
 	}
@@ -223,10 +243,12 @@ func (n *node) handleVote(vt *pt.Pos33Vote) {
 		panic("can't go here")
 	}
 	if lastB.Height > vt.BlockHeight {
+		plog.Info("vote too late", "lastHeight", lastB.Height)
 		return // too late
 	}
 	if lastB.Height+1 < vt.BlockHeight {
 		n.vmp[vt.BlockHeight] = append(n.vmp[vt.BlockHeight], vt)
+		plog.Info("vote too early", "lastHeight", lastB.Height)
 		return
 	}
 	if !n.checkVote(vt) {
@@ -268,14 +290,18 @@ func (n *node) checkBlock(b *types.Block) error {
 
 	// check first Tx
 	tx := b.Txs[0]
-	var act pt.Pos33RewordAction
+	var act pt.Pos33Action
 	err := types.Decode(tx.GetPayload(), &act)
 	if err != nil {
 		return err
 	}
+	if act.Ty != pt.Pos33ActionReword {
+		return errors.New("first tx must include reword action")
+	}
+	rewordAct := act.GetReword()
 
 	// must enought votes
-	w := vsWeight(act.Votes)
+	w := vsWeight(rewordAct.Votes)
 	if w*3 < pt.Pos33CommitteeSize*2 {
 		return errors.New("block vote weight too low")
 	}
@@ -441,14 +467,12 @@ func (n *node) changeCommittee(b *types.Block) {
 	}
 }
 
-func (n *node) voteBlock(b *types.Block, timeout bool) {
-	height := b.Height
-	hash := b.Hash()
-	if timeout {
-		height++
-		hash = []byte(nil)
+func (n *node) voteBlock(height int64, hash []byte) {
+	x := height%int64(pt.Pos33CommitteeSize) - 1
+	if x < 0 {
+		x = pt.Pos33CommitteeSize - 1
 	}
-	r := n.comm.Rands[height%int64(pt.Pos33CommitteeSize)]
+	r := n.comm.Rands[x]
 	vt := &pt.Pos33Vote{
 		BlockHeight: height,
 		BlockHash:   hash,
@@ -511,14 +535,16 @@ func (n *node) runLoop() {
 		select {
 		case <-timeoutTm.C:
 			plog.Info("timeout......", "height", lb.Height+1)
-			n.voteBlock(lb, true)
+			n.voteBlock(lb.Height+1, []byte("nil"))
 			reseTm(timeoutTm, time.Second*3)
 		case height := <-ch:
 			if n.myWeight == 0 {
+				plog.Info("I'm not a committee", "addr", n.addr, "height", height)
 				break
 			}
 			newHeight, bp, vs, null := n.countVote(height)
 			if newHeight < 0 {
+				plog.Error("vote NOT enought", "addr", n.addr, "height", height)
 				break
 			}
 			if bp == n.addr {
@@ -536,8 +562,10 @@ func (n *node) runLoop() {
 				n.changeCommittee(b)
 			}
 			if n.myWeight > 0 {
-				n.voteBlock(b, false)
+				n.voteBlock(b.Height, b.Hash())
 			}
+
+			n.clear(b.Height - 1)
 		}
 	}
 }
