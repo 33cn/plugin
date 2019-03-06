@@ -68,24 +68,20 @@ func unmarshal(b []byte) (*pt.Pos33Msg, error) {
 }
 
 func (n *node) myHash(height int64) []byte {
-	for i, r := range n.comm.Rands {
-		if int64(i+1) == height%int64(pt.Pos33CommitteeSize) {
-			if n.addr != addr(r.Sig) {
-				panic("can't go here")
-			}
-			return r.RandHash
-		}
+	x, bp := n.commIndex(height)
+	r := n.comm.Rands[x]
+	if addr(r.Sig) != bp {
+		panic("can't go here")
 	}
-	return nil
+	return r.RandHash
 }
 
-// TODO:
 func (n *node) genRewordTx(height int64, vs []*pt.Pos33Vote) (*types.Transaction, error) {
 	data, err := proto.Marshal(&pt.Pos33Action{
 		Value: &pt.Pos33Action_Reword{
 			Reword: &pt.Pos33RewordAction{
 				Votes:    vs,
-				RandHash: n.myHash(height), // TODO
+				RandHash: n.myHash(height),
 			},
 		},
 		Ty: pt.Pos33ActionReword,
@@ -171,10 +167,13 @@ func getWeight(rs *pt.Pos33Rands, u string) int {
 // TODO:
 func (n *node) checkVote(vt *pt.Pos33Vote) bool {
 	who := addr(vt.Sig)
-	if int(vt.Weight) != getWeight(n.comm, who) {
+	cw := getWeight(n.comm, who)
+	if int(vt.Weight) != cw {
+		plog.Error("vote weight error", "addr", "addr", who, "vtw", vt.Weight, "comm_weight", cw)
 		return false
 	}
 	if vsAccWeight(n.vmp[vt.BlockHeight], who) > 0 {
+		plog.Error("vote repeated", "addr", who)
 		return false
 	}
 	return true
@@ -200,7 +199,7 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 		}
 	}
 
-	plog.Info("countVote ", "max", max, "maxHash", hex.EncodeToString([]byte(maxHash)))
+	// plog.Info("countVote ", "max", max, "maxHash", hex.EncodeToString([]byte(maxHash)))
 
 	if max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
@@ -224,16 +223,29 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 		}
 	}
 
-	plog.Info("countVote ", "max", max, "maxBp", maxBp)
+	// plog.Info("countVote ", "max", max, "maxBp", maxBp)
 
 	if max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
 	}
 
 	if maxHash == "nil" { // block error or timeout
+		p, bp := n.commIndex(height)      // height 高度的 bp和位置
+		x := n.findIndex(maxBp, p)        // 投票选择的bp的位置
+		n.comm.Rands[p] = n.comm.Rands[x] // 使用正确节点代替错误的
+		plog.Info("use maxBp replace bp", "height", height, "bp", bp, "maxbp", maxBp, "bp_pos", p, "maxbp_pos", x)
 		return height, maxBp, bmp[maxBp], true
 	}
 	return height + 1, maxBp, bmp[maxBp], false
+}
+
+func (n *node) findIndex(who string, p int) int {
+	for i := p; i < len(n.comm.Rands); i++ {
+		if addr(n.comm.Rands[i].Sig) == who {
+			return i
+		}
+	}
+	return -1
 }
 
 func (n *node) handleVote(vt *pt.Pos33Vote) {
@@ -307,21 +319,19 @@ func (n *node) checkBlock(b *types.Block) error {
 	}
 
 	comm := n.comm
-	if comm == nil {
-		return nil // TODO: should't go here?
-	}
-
-	// block maker must be committee
-	bp := addr(b.Signature)
-	ok := false
-	for _, r := range comm.Rands {
-		if addr(r.Sig) == bp {
-			ok = true
-			break
+	if comm != nil {
+		// block maker must be committee
+		bp := addr(b.Signature)
+		ok := false
+		for _, r := range comm.Rands {
+			if addr(r.Sig) == bp {
+				ok = true
+				break
+			}
 		}
-	}
-	if !ok {
-		return errors.New("block maker is NOT in commmittee")
+		if !ok {
+			return errors.New("block maker is NOT in commmittee")
+		}
 	}
 
 	// ok
@@ -454,7 +464,7 @@ func (n *node) changeCommittee(b *types.Block) {
 				return
 			}
 		}
-		printCommittee(n.comm)
+		//printCommittee(n.comm)
 	}
 	if len(n.comm.Rands) != pt.Pos33CommitteeSize {
 		panic("can't go here")
@@ -467,16 +477,30 @@ func (n *node) changeCommittee(b *types.Block) {
 	}
 }
 
-func (n *node) voteBlock(height int64, hash []byte) {
+func (n *node) commIndex(height int64) (int, string) {
 	x := height%int64(pt.Pos33CommitteeSize) - 1
-	if x < 0 {
+	if x < 0 { // last
 		x = pt.Pos33CommitteeSize - 1
 	}
-	r := n.comm.Rands[x]
+	return int(x), addr(n.comm.Rands[x].Sig)
+}
+
+func (n *node) voteBlock(height int64, hash []byte) {
+	x, bp := n.commIndex(height)
+	nbp := bp
+	if string(hash) != "nil" {
+		x++
+		nbp = addr(n.comm.Rands[x%pt.Pos33CommitteeSize].Sig)
+	} else {
+		for bp == nbp {
+			x++
+			nbp = addr(n.comm.Rands[x%pt.Pos33CommitteeSize].Sig)
+		}
+	}
 	vt := &pt.Pos33Vote{
 		BlockHeight: height,
 		BlockHash:   hash,
-		Bp:          addr(r.Sig),
+		Bp:          nbp,
 		Weight:      int32(n.myWeight),
 	}
 	vt.Sign(n.priv)
@@ -535,7 +559,9 @@ func (n *node) runLoop() {
 		select {
 		case <-timeoutTm.C:
 			plog.Info("timeout......", "height", lb.Height+1)
-			n.voteBlock(lb.Height+1, []byte("nil"))
+			if n.myWeight > 0 {
+				n.voteBlock(lb.Height+1, []byte("nil"))
+			}
 			reseTm(timeoutTm, time.Second*3)
 		case height := <-ch:
 			if n.myWeight == 0 {
@@ -554,16 +580,14 @@ func (n *node) runLoop() {
 			n.handlePos33Msg(msg)
 		case b := <-n.bch: // new block add to chain
 			lb = b
-
-			reseTm(timeoutTm, time.Second*3)
-			time.AfterFunc(time.Second, func() { ch <- b.Height })
-
 			if b.Height%pt.Pos33CommitteeSize == 0 {
 				n.changeCommittee(b)
 			}
 			if n.myWeight > 0 {
 				n.voteBlock(b.Height, b.Hash())
 			}
+			reseTm(timeoutTm, time.Second*3)
+			time.AfterFunc(time.Second, func() { ch <- b.Height })
 
 			n.clear(b.Height - 1)
 		}

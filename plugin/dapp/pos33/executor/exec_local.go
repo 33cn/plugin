@@ -60,7 +60,7 @@ func (p *Pos33) ExecLocal_Electe(act *pt.Pos33ElecteAction, tx *types.Transactio
 	kvs := []*types.KeyValue{&types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", pt.KeyPos33ElectePrefix, act.Height)), Value: types.Encode(local)}}
 
 	rs := pt.Sortition(local.Es)
-	plog.Info("sortition: ", "len(committee)", len(rs.Rands))
+	plog.Info("ExecLocal_Electe sortition:", "len(committee)", len(rs.Rands))
 	key := fmt.Sprintf("%s%d", pt.KeyPos33CommitteePrefix, act.Height)
 	comm := &pt.Pos33Committee{Rands: rs, Height: act.Height}
 	kvs = append(kvs, &types.KeyValue{Key: []byte(key), Value: types.Encode(comm)})

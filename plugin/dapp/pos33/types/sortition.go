@@ -37,6 +37,7 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 	sorted := false // 是否有符合的票数
 	rss := make([]*Pos33Rands, sortRounds)
 	// 每张票计算sortRounds轮
+	mp := make(map[int]bool)
 	for i := 0; i < sortRounds; i++ {
 		var rs Pos33Rands
 		for j := 0; j < w; j++ {
@@ -54,12 +55,17 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 			if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 				continue
 			}
+			if _, ok := mp[j]; ok {
+				continue
+			}
 			// 符合，表示抽中了
 			signature := &pb.Signature{Ty: pb.ED25519, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
 			rs.Rands = append(rs.Rands, &Pos33Rand{RandHash: rh, Index: uint32(j), Sig: signature})
-			rss[i] = &rs
+			// rss[i] = &rs
 			sorted = true
+			mp[j] = true
 		}
+		rss[i] = &rs
 	}
 
 	if !sorted {
@@ -75,6 +81,7 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 	if len(rss) != sortRounds {
 		return fmt.Errorf("%s len(rss)==%d", addr, len(rss))
 	}
+	mp := make(map[int]bool)
 	for i := 0; i < sortRounds; i++ {
 		rs := rss[i]
 		if rs == nil {
@@ -116,6 +123,10 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 			if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 				return fmt.Errorf("%s diff error", addr)
 			}
+			if _, ok := mp[int(r.Index)]; ok {
+				return fmt.Errorf("%s reuse %d index sortition", addr, r.Index)
+			}
+			mp[int(r.Index)] = true
 		}
 	}
 	return nil
@@ -144,6 +155,8 @@ func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
 		}
 	}
 
+	tlog.Info("Sortition rss lengths", "r0", len(rss[0].Rands), "r1", len(rss[1].Rands), "r2", len(rss[2].Rands))
+
 	// 如果rss[0]中的票<min, 继续累加rss[1]的，以此类推
 	min := Pos33MinCommittee
 	rs := new(Pos33Rands)
@@ -164,6 +177,7 @@ func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
 	if len(rs.Rands)+len(rss[k].Rands) > max {
 		sort.Sort(rss[k])
 		rss[k].Rands = rss[k].Rands[:max-len(rs.Rands)]
+		tlog.Info("Sortition ok", "k", k, "lenk", len(rss[k].Rands))
 	}
 	rs.Rands = append(rs.Rands, rss[k].Rands...)
 
