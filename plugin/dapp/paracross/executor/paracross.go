@@ -319,7 +319,7 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 			return err
 		}
 		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw ||
-			payload.Ty == pt.ParacrossActionCommit {
+			payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig {
 			return nil
 		}
 	}

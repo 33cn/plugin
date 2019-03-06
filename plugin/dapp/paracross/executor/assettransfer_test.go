@@ -65,7 +65,7 @@ func (suite *AssetTransferTestSuite) SetupTest() {
 	MainBlockHash10 = blockDetail.Block.Hash()
 
 	// setup title nodes : len = 1
-	nodeConfigKey := calcConfigNodesKey(Title)
+	nodeConfigKey := calcManageConfigNodesKey(Title)
 	nodeValue := makeNodeInfo(Title, Title, 1)
 	suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
 	value, err := suite.stateDB.Get(nodeConfigKey)

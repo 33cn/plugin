@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"fmt"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -17,6 +19,44 @@ func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 		return nil, types.ErrInvalidParam
 	}
 	return p.paracrossGetHeight(in.GetData())
+}
+
+func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	key := calcParaNodeGroupKey(in.GetData())
+	ret, _, err := getNodes(p.GetStateDB(), key)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	var nodes []string
+	for k, _ := range ret {
+		nodes = append(nodes, k)
+	}
+	var reply types.ReplyConfig
+	reply.Key = string(key)
+	reply.Value = fmt.Sprint(nodes)
+	return &reply, nil
+}
+
+func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" || in.Addr == "" {
+		return nil, types.ErrInvalidParam
+	}
+	key := calcParaNodeAddrKey(in.Title, in.Addr)
+	stat, err := getNodeAddr(p.GetStateDB(), key)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
+func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
 }
 
 //Query_ListTitles query paracross titles list
@@ -102,8 +142,29 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 	return &resp, nil
 }
 
+//按状态遍历
+func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
+	prefix := calcLocalNodeStatusPrefix(title, status)
+	res, err := db.List(prefix, []byte(""), 0, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp pt.RespParacrossNodeAddrs
+	for _, r := range res {
+		var st pt.ReceiptParaNodeVoteDone
+		err = types.Decode(r, &st)
+		if err != nil {
+			panic(err)
+		}
+		resp.Addrs = append(resp.Addrs, &st)
+	}
+	return &resp, nil
+
+}
+
 func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error) {
-	key := calcLocalTitleHeightKey(title, height)
+	key := calcLocalHeightKey(title, height)
 	res, err := db.Get(key)
 	if err != nil {
 		return nil, err

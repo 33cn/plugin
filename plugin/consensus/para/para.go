@@ -174,11 +174,6 @@ func (client *client) SetQueueClient(c queue.Client) {
 
 func (client *client) InitBlock() {
 	var err error
-	// get main chain calc block hash fork height
-	mainBlockHashForkHeight, err = client.GetBlockHashForkHeightOnMainChain()
-	if err != nil {
-		panic(err)
-	}
 
 	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
 
@@ -201,6 +196,12 @@ func (client *client) InitBlock() {
 		client.WriteBlock(zeroHash[:], newblock, startSeq-1)
 	} else {
 		client.SetCurrentBlock(block)
+	}
+
+	// get main chain calc block hash fork height
+	mainBlockHashForkHeight, err = client.GetBlockHashForkHeightOnMainChain()
+	if err != nil {
+		panic(err)
 	}
 }
 
