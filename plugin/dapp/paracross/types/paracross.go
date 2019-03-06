@@ -35,6 +35,10 @@ const (
 	TyLogParacrossMiner = 655
 	// TyLogParaAssetDeposit asset deposit log key
 	TyLogParaAssetDeposit = 656
+	// TyLogParaNodeConfig config super node log key
+	TyLogParaNodeConfig      = 657
+	TyLogParaNodeVoteDone    = 658
+	TyLogParaNodeGroupUpdate = 659
 )
 
 type paracrossCommitTx struct {
@@ -66,6 +70,7 @@ const (
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
 	// ParacrossActionAssetWithdraw paracross asset withdraw key
 	ParacrossActionAssetWithdraw
+	ParacrossActionNodeConfig
 )
 
 // status
@@ -74,6 +79,30 @@ const (
 	ParacrossStatusCommiting = iota
 	// ParacrossStatusCommitDone commit done status
 	ParacrossStatusCommitDone
+)
+
+// node config op
+const (
+	ParaNodeAdd      = "add"
+	ParaNodeDelete   = "delete"
+	ParaNodeVote     = "vote"
+	ParaNodeTakeover = "takeover"
+
+	ParaNodeVotePass = "pass"
+	ParaNodeVoteNo   = "no"
+)
+
+const (
+	// ParacrossNodeAdding apply for adding group
+	ParacrossNodeAdding = iota
+	// ParacrossNodeAdded, pass to add by votes
+	ParacrossNodeAdded
+	// ParacrossNodeQuiting, apply for quiting
+	ParacrossNodeQuiting
+	// ParacrossNodeQuited, pass to quite by votes
+	ParacrossNodeQuited
+	// ParacrossNodeRefused, refused by votes, add or quite
+	ParacrossNodeRefused
 )
 
 var (
@@ -129,6 +158,20 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 	if err != nil {
 		return nil, err
 	}
+	return tx, nil
+}
+
+func createRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
+	config.Title = types.GetTitle()
+
+	action := &ParacrossAction{
+		Ty:    ParacrossActionNodeConfig,
+		Value: &ParacrossAction_NodeConfig{config},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+	}
+
 	return tx, nil
 }
 
