@@ -66,6 +66,11 @@ message ReceiptToken {
     int32  status = 3;
 }
 
+message ReceiptTokenAmount {
+    Token prev = 1;
+    Token cur  = 2;
+}
+
 // local
 message LocalToken {
     string name                = 1;
