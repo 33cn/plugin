@@ -72,6 +72,8 @@ const (
 	TyLogTokenGenesisTransfer = 321
 	// TyLogTokenGenesisDeposit log for token genesis deposit
 	TyLogTokenGenesisDeposit = 322
+	// TyLogTokenMint log for token mint
+	TyLogTokenMint = 323
 )
 
 const (
@@ -81,4 +83,11 @@ const (
 	TokenSymbolLenLimit = 16
 	// TokenIntroLenLimit token introduction length limit
 	TokenIntroLenLimit = 1024
+)
+
+const (
+	// CategoryNormal
+	CategoryNormal = 0 << iota
+	// CategoryMintSupport support mint
+	CategoryMintSupport
 )
