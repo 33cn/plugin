@@ -19,6 +19,7 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
+	"time"
 )
 
 var (
@@ -236,7 +237,7 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 }
 
 // ProcEvent handles supported events
-func (kvmMavls *KVmMavlStore) ProcEvent(msg queue.Message) {
+func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 	msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
 }
 
@@ -290,6 +291,7 @@ func delMavlData(db dbm.DB) bool {
 			if batch.ValueSize() > batchDataSize {
 				batch.Write()
 				batch.Reset()
+				time.Sleep(time.Millisecond * 100)
 			}
 		}
 	}

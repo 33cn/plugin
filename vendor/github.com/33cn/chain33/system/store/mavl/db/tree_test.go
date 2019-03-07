@@ -22,7 +22,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"unsafe"
 )
 
 func init() {
@@ -1256,87 +1255,6 @@ func TestDelLeafCountKV(t *testing.T) {
 	}
 }
 
-func TestGetObsoleteNode(t *testing.T) {
-	dir, err := ioutil.TempDir("", "datastore")
-	require.NoError(t, err)
-	t.Log(dir)
-	defer os.Remove(dir)
-
-	EnableMemTree(true)
-	defer EnableMemTree(false)
-
-	db := db.NewDB("mavltree", "leveldb", dir, 100)
-	tree := NewTree(db, true)
-
-	type record struct {
-		key   string
-		value string
-	}
-	records := []record{
-		{"abc", "abc"},
-		{"low", "low"},
-		{"fan", "fan"},
-	}
-
-	for _, r := range records {
-		updated := tree.Set([]byte(r.key), []byte(r.value))
-		if updated {
-			t.Error("should have not been updated")
-		}
-	}
-	hash := tree.Save()
-	obs := tree.GetObsoleteNode()
-	require.Equal(t, 0, len(obs))
-	mp := NewTreeMap(1000)
-	LoadTree2MemDb(db, hash, mp)
-
-	tree1 := NewTree(db, true)
-	tree1.Load(hash)
-	records1 := []record{
-		{"abc", "abc1"},
-		{"low", "low1"},
-		{"fan", "fan1"},
-	}
-
-	for _, r := range records1 {
-		tree1.Set([]byte(r.key), []byte(r.value))
-	}
-	hash1 := tree1.Save()
-	obs = tree1.GetObsoleteNode()
-	mp1 := NewTreeMap(1000)
-	LoadTree2MemDb(db, hash1, mp1)
-	require.Equal(t, mp.Len(), len(obs)) //做了全部更新，因此旧节点全部删除
-	for ob,_ := range obs {
-		_, ok :=  mp.Get(ob)
-		if !ok {
-			require.Error(t, fmt.Errorf("should exist"))
-		}
-	}
-
-	tree2 := NewTree(db, true)
-	tree2.Load(hash)
-	records2 := []record{
-		{"fan", "fan1"},
-		{"foo", "foo"},
-		{"foobaz", "foobaz"},
-		{"good", "good"},
-	}
-	for _, r := range records2 {
-		tree2.Set([]byte(r.key), []byte(r.value))
-	}
-	hash2 := tree2.Save()
-	obs = tree2.GetObsoleteNode()
-	mp2 := NewTreeMap(1000)
-	LoadTree2MemDb(db, hash2, mp2)
-	//require.Equal(t, 0, len(obs))
-	for ob,_ := range obs {
-		_, ok :=  mp.Get(ob)
-		if !ok {
-			require.Error(t, fmt.Errorf("should exist"))
-		}
-	}
-}
-
 func TestPruningFirstLevelNode(t *testing.T) {
 	dir, err := ioutil.TempDir("", "datastore")
 	require.NoError(t, err)
@@ -1980,34 +1898,4 @@ func saveBlock(dbm db.DB, height int64, hash []byte, txN int64, mvcc bool) (newH
 		}
 	}
 	return newHash, nil
-}
-
-
-func TestSize1(t *testing.T) {
-	type storeNode struct {
-		Key       []byte
-		Value     []byte
-		LeftHash  []byte
-		RightHash []byte
-		Height    int32
-		Size      int32
-	}
-	type storeNode1 struct {
-		Key       [][]byte
-		Height    int32
-		Size      int32
-	}
-	a := types.StoreNode{}
-	b := storeNode{}
-	var c []byte
-	d := storeNode1{}
-
-
-	d.Key = make([][]byte, 4)
-	d.Key[0] = []byte("11111111111111111111111111111")
-	d.Key[1] = []byte("22222222222222222222222222222")
-	d.Key[2] = []byte("33333333333333333333333333333")
-
-	PrintMemStats(1)
-	fmt.Println(unsafe.Sizeof(a), unsafe.Sizeof(b), unsafe.Sizeof(c), unsafe.Sizeof(d), len(d.Key), cap(d.Key))
 }

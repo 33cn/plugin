@@ -12,7 +12,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
-	. "github.com/dgryski/go-farm"
 )
 
 // Node merkle avl Node
@@ -499,9 +498,6 @@ func removeOrphan(t *Tree, node *Node) {
 	}
 	if t.ndb == nil {
 		return
-	}
-	if enableMemTree && t != nil {
-		t.obsoleteNode[Hash64(node.hash)] = struct{}{}
 	}
 	t.ndb.RemoveNode(t, node)
 }

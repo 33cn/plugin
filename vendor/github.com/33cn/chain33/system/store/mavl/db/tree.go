@@ -17,7 +17,6 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/golang-lru"
-	. "github.com/dgryski/go-farm"
 )
 
 const (
@@ -38,9 +37,6 @@ var (
 	// 当前树的最大高度
 	maxBlockHeight int64
 	heightMtx      sync.Mutex
-	enableMemTree  bool
-
-	memTree        MemTreeOpera
 )
 
 // EnableMavlPrefix 使能mavl加前缀
@@ -53,48 +49,23 @@ func EnableMVCC(enable bool) {
 	enableMvcc = enable
 }
 
-func EnableMemTree(enable bool) {
-	enableMemTree = enable
-}
-
-type memNode struct {
-	Key                  []byte
-	Value                []byte
-	LeftHash             []byte
-	RightHash            []byte
-	Height               int32
-	Size                 int32
-}
-
 // Tree merkle avl tree
 type Tree struct {
 	root        *Node
 	ndb         *nodeDB
 	blockHeight int64
-	// 树更新之后，废弃的节点(更新缓存中节点先对旧节点进行删除然后再更新)
-	obsoleteNode map[uint64]struct{}
-	updateNode   map[uint64]*memNode
 }
 
 // NewTree 新建一个merkle avl 树
 func NewTree(db dbm.DB, sync bool) *Tree {
 	if db == nil {
 		// In-memory IAVLTree
-		return &Tree{
-			    obsoleteNode: make(map[uint64]struct{}),
-			    updateNode: make(map[uint64]*memNode),
-			}
+		return &Tree{}
 	}
 	// Persistent IAVLTree
 	ndb := newNodeDB(db, sync)
-	// 使能情况下非空创建当前整tree的缓存
-	if enableMemTree && memTree == nil  {
-		memTree = NewTreeARC(300 * 10000)
-	}
 	return &Tree{
 		ndb: ndb,
-		obsoleteNode: make(map[uint64]struct{}),
-		updateNode: make(map[uint64]*memNode),
 	}
 }
 
@@ -152,10 +123,6 @@ func (t *Tree) Set(key []byte, value []byte) (updated bool) {
 	return updated
 }
 
-func (t *Tree) GetObsoleteNode() map[uint64]struct{} {
-	return t.obsoleteNode
-}
-
 // Hash 计算tree 的roothash
 func (t *Tree) Hash() []byte {
 	if t.root == nil {
@@ -181,17 +148,6 @@ func (t *Tree) Save() []byte {
 		if enablePrune {
 			t.root.saveRootHash(t)
 		}
-		// 更新memTree
-		if enableMemTree && memTree != nil {
-			for k, _ := range t.obsoleteNode {
-				memTree.Delete(k)
-			}
-			for k, v := range t.updateNode {
-				memTree.Add(k, v)
-			}
-			treelog.Debug("Tree.Save", "memTree len", memTree.Len(), "tree height", t.blockHeight)
-		}
-
 		beg := types.Now()
 		err := t.ndb.Commit()
 		treelog.Info("tree.commit", "cost", types.Since(beg))
@@ -439,24 +395,6 @@ func (ndb *nodeDB) GetNode(t *Tree, hash []byte) (*Node, error) {
 			return elem.(*Node), nil
 		}
 	}
-	//从memtree中获取
-	if enableMemTree && memTree != nil {
-		elem, ok := memTree.Get(Hash64(hash))
-		if ok {
-			sn := elem.(*memNode)
-			node := &Node{
-				key: sn.Key,
-				value: sn.Value,
-				height: sn.Height,
-				size: sn.Size,
-				leftHash: sn.LeftHash,
-				rightHash: sn.RightHash,
-				hash: hash,
-				persisted: true,
-			}
-			return node, nil
-		}
-	}
 	// Doesn't exist, load from db.
 	var buf []byte
 	buf, err := ndb.db.Get(hash)
@@ -471,21 +409,6 @@ func (ndb *nodeDB) GetNode(t *Tree, hash []byte) (*Node, error) {
 	node.hash = hash
 	node.persisted = true
 	ndb.cacheNode(node)
-	treelog.Debug("Tree.GetNode", "height", node.height)
-	// Save node hashInt64 to mem
-	if enableMemTree && memTree != nil /*&& node.height != 0*/ {
-		memN := &memNode{
-			Key: copyBytes(node.key),
-			LeftHash: copyBytes(node.leftHash),
-			RightHash: copyBytes(node.rightHash),
-			Height: node.height,
-			Size: node.size,
-		}
-		if node.height == 0 {
-			memN.Value = copyBytes(node.value)
-		}
-		memTree.Add(Hash64(node.hash), memN)
-	}
 	return node, nil
 }
 
@@ -536,29 +459,6 @@ func (ndb *nodeDB) SaveNode(t *Tree, node *Node) {
 	ndb.cacheNode(node)
 	delete(ndb.orphans, string(node.hash))
 	//treelog.Debug("SaveNode", "hash", node.hash, "height", node.height, "value", node.value)
-	// Save node hashInt64 to localmem
-	updateLocalTreeMem(t, node)
-}
-
-// Save node hashInt64 to localmem
-func updateLocalTreeMem(t *Tree, node *Node) {
-	if t == nil || node == nil {
-		return
-	}
-	if enableMemTree && t.updateNode != nil /*&& node.height != 0*/ { // 0高度不保存
-		memN := &memNode{
-			Key: copyBytes(node.key),
-			LeftHash: copyBytes(node.leftHash),
-			RightHash: copyBytes(node.rightHash),
-			Height: node.height,
-			Size: node.size,
-		}
-		if node.height == 0 {
-			memN.Value = copyBytes(node.value)
-		}
-		t.updateNode[Hash64(node.hash)] = memN
-		//treelog.Debug("Tree.SaveNode", "store struct size", unsafe.Sizeof(store), "byte size", len(storenode), "height", node.height)
-	}
 }
 
 //cache缓存节点
