@@ -335,6 +335,11 @@ func pruningFirst(db dbm.DB, curHeight int64) {
 			count = 0
 		}
 	}
+	if len(mp) > 0 {
+		deleteOldKV(mp, curHeight, batch)
+		mp = nil
+		_ = mp
+	}
 }
 
 func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {

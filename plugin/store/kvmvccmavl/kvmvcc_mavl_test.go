@@ -599,14 +599,14 @@ func TestPruning(t *testing.T) {
 		Keys: keys,
 	}
 
-	for i := 92; i < len(hashes); i++  {
+	for i := 0; i < len(hashes); i++  {
 		getDatas.StateHash = hashes[i]
 		values := store.Get(getDatas)
 		value = fmt.Sprintf("vv%d", i)
 
 		if i < 80 {
 			for _, v := range values {
-				require.Equal(t, nil, v)
+				require.Equal(t, []byte(nil), v)
 			}
 		}
 
