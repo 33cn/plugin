@@ -50,7 +50,7 @@ func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, erro
 		return nil, errors.Cause(err)
 	}
 	var nodes []string
-	for k, _ := range ret {
+	for k := range ret {
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig

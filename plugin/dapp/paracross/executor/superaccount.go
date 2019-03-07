@@ -197,7 +197,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	// 如果投票账户是group账户，需计算此账户之外的投票
 	if validNode(config.Addr, nodes) {
 		temp := make(map[string]struct{})
-		for k, _ := range nodes {
+		for k := range nodes {
 			if k != config.Addr {
 				temp[k] = struct{}{}
 			}
