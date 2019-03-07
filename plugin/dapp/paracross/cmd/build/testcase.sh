@@ -376,13 +376,12 @@ function para_nodemanage_test() {
         exit 1
     fi
 
-    node=$(${PARA_CLI} para node_group -t user.p.para. |jq -r '.value|contains("14K")')
+    node=$(${PARA_CLI} para node_group -t user.p.para. | jq -r '.value|contains("14K")')
     if [ "${node}" != "true" ]; then
         echo "wrong node group addr"
         ${PARA_CLI} para node_group -t user.p.para.
         exit 1
     fi
-
 
     echo "=========== # para chain node quit ============="
     hash=$(${PARA_CLI} send para node -o quit -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
@@ -410,7 +409,7 @@ function para_nodemanage_test() {
         exit 1
     fi
 
-    node=$(${PARA_CLI} para node_group -t user.p.para. |jq -r '.value|contains("14K")')
+    node=$(${PARA_CLI} para node_group -t user.p.para. | jq -r '.value|contains("14K")')
     if [ "${node}" == "true" ]; then
         echo "wrong node group addr"
         ${PARA_CLI} para node_group -t user.p.para.
@@ -418,8 +417,6 @@ function para_nodemanage_test() {
     fi
 
 }
-
-
 
 function para_test() {
     echo "=========== # para chain test ============="
