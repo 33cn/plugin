@@ -12,6 +12,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"time"
+
 	dbm "github.com/33cn/chain33/common/db"
 	clog "github.com/33cn/chain33/common/log"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -19,7 +21,6 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
-	"time"
 )
 
 var (
