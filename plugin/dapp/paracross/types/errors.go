@@ -28,13 +28,19 @@ var (
 	// ErrParaCurHashNotMatch para curr main hash not match with pre, main node may switched
 	ErrParaCurHashNotMatch = errors.New("ErrParaCurHashNotMatch")
 	// ErrParaUnSupportNodeOper unsupport node operation
-	ErrParaUnSupportNodeOper     = errors.New("ErrParaUnSupportNodeOper")
-	ErrParaNodeAddrExisted       = errors.New("ErrParaNodeAddrExisted")
-	ErrParaNodeAddrNotExisted    = errors.New("ErrParaNodeAddrNotExisted")
-	ErrParaManageNodesNotSet     = errors.New("ErrParaManageNodesNotSet")
-	ErrParaNodeGroupNotSet       = errors.New("ErrParaManageNodesNotSet")
-	ErrParaNodeGroupExisted      = errors.New("ErrParaNodesExisted")
-	ErrParaNodeGroupLastAddr     = errors.New("ErrParaNodeGroupLastAddr")
-	ErrParaNodeGroupRefuseByVote = errors.New("ErrParaNodeGroupRefuseByVote")
-	ErrParaNodeVoteSelf          = errors.New("ErrParaNodeVoteSelf")
+	ErrParaUnSupportNodeOper = errors.New("ErrParaUnSupportNodeOper")
+	//ErrParaNodeAddrExisted node addr exist in group
+	ErrParaNodeAddrExisted = errors.New("ErrParaNodeAddrExisted")
+	//ErrParaNodeAddrNotExisted node addr not exist in group
+	ErrParaNodeAddrNotExisted = errors.New("ErrParaNodeAddrNotExisted")
+	//ErrParaManageNodesNotSet config manage node not set
+	ErrParaManageNodesNotSet = errors.New("ErrParaManageNodesNotSet")
+	//ErrParaNodeGroupNotSet para config node group not set by take over
+	ErrParaNodeGroupNotSet = errors.New("ErrParaManageNodesNotSet")
+	//ErrParaNodeGroupExisted para config group taked over alreay
+	ErrParaNodeGroupExisted = errors.New("ErrParaNodesExisted")
+	//ErrParaNodeGroupLastAddr last super node not be allow to quite
+	ErrParaNodeGroupLastAddr = errors.New("ErrParaNodeGroupLastAddr")
+	//ErrParaNodeVoteSelf vote self not allow
+	ErrParaNodeVoteSelf = errors.New("ErrParaNodeVoteSelf")
 )

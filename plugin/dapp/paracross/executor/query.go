@@ -7,6 +7,10 @@ package executor
 import (
 	"fmt"
 
+	"encoding/hex"
+	"math/big"
+	"strconv"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -21,6 +25,7 @@ func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 	return p.paracrossGetHeight(in.GetData())
 }
 
+//Query_GetNodeGroup get node group addrs
 func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -40,6 +45,7 @@ func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, erro
 	return &reply, nil
 }
 
+//Query_GetNodeAddrInfo get specific node addr info
 func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
@@ -52,6 +58,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	return stat, nil
 }
 
+//Query_ListNodeStatusInfo list node info by status
 func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
@@ -137,7 +144,18 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 		if err != nil {
 			panic(err)
 		}
-		resp.Titles = append(resp.Titles, &st)
+		rst := &pt.RespParacrossDone{
+			TotalNodes:     st.TotalNodes,
+			TotalCommit:    st.TotalCommit,
+			MostSameCommit: st.MostSameCommit,
+			Title:          st.Title,
+			Height:         st.Height,
+			StateHash:      hex.EncodeToString(st.StateHash),
+			TxCounts:       st.TxCounts,
+			TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+		}
+
+		resp.Titles = append(resp.Titles, rst)
 	}
 	return &resp, nil
 }
@@ -152,7 +170,7 @@ func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message
 
 	var resp pt.RespParacrossNodeAddrs
 	for _, r := range res {
-		var st pt.ReceiptParaNodeVoteDone
+		var st pt.ParaNodeAddrStatus
 		err = types.Decode(r, &st)
 		if err != nil {
 			panic(err)
@@ -169,12 +187,22 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 	if err != nil {
 		return nil, err
 	}
-	var resp pt.ReceiptParacrossDone
-	err = types.Decode(res, &resp)
+	var st pt.ReceiptParacrossDone
+	err = types.Decode(res, &st)
 	if err != nil {
 		panic(err)
 	}
-	return &resp, nil
+
+	return &pt.RespParacrossDone{
+		TotalNodes:     st.TotalNodes,
+		TotalCommit:    st.TotalCommit,
+		MostSameCommit: st.MostSameCommit,
+		Title:          st.Title,
+		Height:         st.Height,
+		StateHash:      hex.EncodeToString(st.StateHash),
+		TxCounts:       st.TxCounts,
+		TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+	}, nil
 }
 
 func (p *Paracross) paracrossGetTitleHeight(title string, height int64) (types.Message, error) {

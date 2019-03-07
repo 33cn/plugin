@@ -20,7 +20,6 @@ var (
 	localTitle           string
 	localTitleHeight     string
 	localAssetKey        string
-	localNodeTitle       string
 	localNodeTitleStatus string
 	localNodeTitleDone   string
 )

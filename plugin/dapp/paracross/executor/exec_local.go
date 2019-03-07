@@ -51,6 +51,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 	return &set, nil
 }
 
+//ExecLocal_NodeConfig node config add process
 func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
