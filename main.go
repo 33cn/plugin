@@ -12,11 +12,12 @@
 package main
 
 import (
+	"net/http"
+	"runtime/debug"
+
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/util/cli"
 	_ "github.com/33cn/plugin/plugin"
-	"net/http"
-	"runtime/debug"
 )
 
 func main() {
