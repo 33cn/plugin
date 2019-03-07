@@ -559,10 +559,10 @@ func (n *node) runLoop() {
 		select {
 		case <-timeoutTm.C:
 			plog.Info("timeout......", "height", lb.Height+1)
+			reseTm(timeoutTm, time.Second*3)
 			if n.myWeight > 0 {
 				n.voteBlock(lb.Height+1, []byte("nil"))
 			}
-			reseTm(timeoutTm, time.Second*3)
 		case height := <-ch:
 			if n.myWeight == 0 {
 				plog.Info("I'm not a committee", "addr", n.addr, "height", height)
@@ -580,14 +580,15 @@ func (n *node) runLoop() {
 			n.handlePos33Msg(msg)
 		case b := <-n.bch: // new block add to chain
 			lb = b
+			reseTm(timeoutTm, time.Second*3)
+
 			if b.Height%pt.Pos33CommitteeSize == 0 {
 				n.changeCommittee(b)
 			}
 			if n.myWeight > 0 {
 				n.voteBlock(b.Height, b.Hash())
+				time.AfterFunc(time.Second, func() { ch <- b.Height })
 			}
-			reseTm(timeoutTm, time.Second*3)
-			time.AfterFunc(time.Second, func() { ch <- b.Height })
 
 			n.clear(b.Height - 1)
 		}
