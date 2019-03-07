@@ -248,35 +248,31 @@ func CreateRawNodeManageCmd() *cobra.Command {
 }
 
 func addNodeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("operation", "o", "", "add,delete,vote,takeover operation")
+	cmd.Flags().StringP("operation", "o", "", "operation:join,quit,vote,takeover")
 	cmd.MarkFlagRequired("operation")
 
-	cmd.Flags().StringP("addr", "a", "", "operating addr object")
-	cmd.Flags().StringP("value", "v", "pass", "vote value: pass,no")
+	cmd.Flags().StringP("addr", "a", "", "operating target addr")
+	cmd.Flags().StringP("value", "v", "", "vote value: yes,no")
 }
 
 func createNodeTx(cmd *cobra.Command, args []string) {
 	op, _ := cmd.Flags().GetString("operation")
 	opAddr, _ := cmd.Flags().GetString("addr")
 	val, _ := cmd.Flags().GetString("value")
-	if op != "vote" && op != "delete" && op != "add" && op != "takeover" {
-		fmt.Println(os.Stderr, "operation should be one of add, delete,vote,takeover")
-	}
-	if (op == "vote" || op == "add" || op == "delete") && opAddr == "" {
-		fmt.Println(os.Stderr, "addr parameter should not be null")
+	if op != "vote" && op != "quit" && op != "join" && op != "takeover" {
+		fmt.Println("operation should be one of join,quit,vote,takeover")
 		return
 	}
-	if op == "vote" && (val != "pass" && val != "no") {
-		fmt.Println(os.Stderr, "vote operation value parameter require pass or no value")
+	if (op == "vote" || op == "join" || op == "quit") && opAddr == "" {
+		fmt.Println("addr parameter should not be null")
+		return
+	}
+	if op == "vote" && (val != "yes" && val != "no") {
+		fmt.Println("vote operation value parameter require yes or no value")
 		return
 	}
 
 	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr}
-	//modify := &pt.ParacrossAction{
-	//	Ty:    pt.ParacrossActionNodeConfig,
-	//	Value: &pt.ParacrossAction_NodeConfig{NodeConfig: v},
-	//}
-
 	params := &rpcTypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeConfig",
@@ -393,7 +389,7 @@ func paraInfo(cmd *cobra.Command, args []string) {
 		Title:  title,
 		Height: height,
 	}
-	var res pt.ReceiptParacrossDone
+	var res pt.RespParacrossDone
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetTitleHeight", params, &res)
 	ctx.Run()
 }
@@ -466,7 +462,7 @@ func addNodeListCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
 	cmd.MarkFlagRequired("title")
 
-	cmd.Flags().Int32P("status", "s", 0, "status:0:add,1:added,2:quit,3:quited,4:refused")
+	cmd.Flags().Int32P("status", "s", 0, "status:1:adding,2:added,3:quiting,4:quited")
 	cmd.MarkFlagRequired("status")
 
 }
@@ -485,7 +481,7 @@ func nodeList(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetNodeListCmd get node list by status
+// GetNodeGroupCmd get node group addr
 func GetNodeGroupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node_group",

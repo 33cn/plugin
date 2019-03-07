@@ -5,11 +5,22 @@
 package executor
 
 import (
+	"bytes"
+	"encoding/gob"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 )
+
+func deepCopy(dst, src interface{}) error {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
+		return err
+	}
+	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
+}
 
 func getNodeAddr(db dbm.KV, key []byte) (*pt.ParaNodeAddrStatus, error) {
 	val, err := db.Get(key)
@@ -23,20 +34,18 @@ func getNodeAddr(db dbm.KV, key []byte) (*pt.ParaNodeAddrStatus, error) {
 }
 
 func saveNodeAddr(db dbm.KV, key []byte, status types.Message) error {
-	// use as a types.Message
 	val := types.Encode(status)
 	return db.Set(key, val)
 }
 
-func makeVoteDoneReceipt(config *pt.ParaNodeAddrConfig, totalCount, commitCount, most int, ok bool, status int32) *types.Receipt {
-
+func makeVoteDoneReceipt(config *pt.ParaNodeAddrConfig, totalCount, commitCount, most int, pass string, status int32) *types.Receipt {
 	log := &pt.ReceiptParaNodeVoteDone{
 		Title:      config.Title,
 		TargetAddr: config.Addr,
 		TotalNodes: int32(totalCount),
 		TotalVote:  int32(commitCount),
 		MostVote:   int32(most),
-		VoteRst:    ok,
+		VoteRst:    pass,
 		DoneStatus: status,
 	}
 
@@ -116,7 +125,12 @@ func (a *action) nodeAdd(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) 
 		return makeNodeConfigReceipt(a.fromaddr, config, nil, stat), nil
 	}
 
-	copyStatus := *stat
+	var copyStat pt.ParaNodeAddrStatus
+	err = deepCopy(&copyStat, stat)
+	if err != nil {
+		clog.Error("nodeaccount.nodeAdd deep copy fail", "copy", copyStat, "stat", stat)
+		return nil, err
+	}
 	if stat.Status != pt.ParacrossNodeQuited {
 		clog.Error("nodeaccount.nodeAdd key exist", "key", string(key), "status", stat)
 		return nil, pt.ErrParaNodeAddrExisted
@@ -124,7 +138,7 @@ func (a *action) nodeAdd(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) 
 	stat.Status = pt.ParacrossNodeAdding
 	stat.Votes = &pt.ParaNodeVoteDetail{}
 	saveNodeAddr(a.db, key, stat)
-	return makeNodeConfigReceipt(a.fromaddr, config, &copyStatus, stat), nil
+	return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 
 }
 
@@ -150,9 +164,14 @@ func (a *action) nodeDelete(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	//refused or quiting
 	if stat.Status != pt.ParacrossNodeAdded {
 		clog.Error("nodeaccount.nodeDelete wrong status", "key", string(key), "status", stat)
-		return nil, errors.Wrapf(pt.ErrParaNodeGroupRefuseByVote, "nodeAddr refused by vote:%s", a.fromaddr)
+		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s not be added status:%d", a.fromaddr, stat.Status)
 	}
-	copyStat := *stat
+	var copyStat pt.ParaNodeAddrStatus
+	err = deepCopy(&copyStat, stat)
+	if err != nil {
+		clog.Error("nodeaccount.nodeDelete deep copy fail", "copy", copyStat, "stat", stat)
+		return nil, err
+	}
 	stat.Status = pt.ParacrossNodeQuiting
 	stat.Votes = &pt.ParaNodeVoteDetail{}
 	saveNodeAddr(a.db, key, stat)
@@ -160,19 +179,19 @@ func (a *action) nodeDelete(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 
 }
 
-func getMostVote(stat *pt.ParaNodeAddrStatus) (int, bool) {
+func getMostVote(stat *pt.ParaNodeAddrStatus) (int, string) {
 	var ok, nok int
 	for _, v := range stat.GetVotes().Votes {
-		if v == pt.ParaNodeVotePass {
+		if v == pt.ParaNodeVoteYes {
 			ok++
 		} else {
 			nok++
 		}
 	}
 	if ok > nok {
-		return ok, true
+		return ok, pt.ParaNodeVoteYes
 	}
-	return nok, false
+	return nok, pt.ParaNodeVoteNo
 
 }
 
@@ -211,7 +230,13 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return nil, err
 	}
 
-	copyStat := *stat
+	var copyStat pt.ParaNodeAddrStatus
+	err = deepCopy(&copyStat, stat)
+	if err != nil {
+		clog.Error("nodeaccount.nodevOTE deep copy fail", "copy", copyStat, "stat", stat)
+		return nil, err
+	}
+
 	if stat.Votes == nil {
 		stat.Votes = &pt.ParaNodeVoteDetail{}
 	}
@@ -222,17 +247,24 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		stat.Votes.Addrs = append(stat.Votes.Addrs, a.fromaddr)
 		stat.Votes.Votes = append(stat.Votes.Votes, config.Value)
 	}
-	receipt := makeNodeConfigReceipt(config.Addr, config, &copyStat, stat)
-	most, ok := getMostVote(stat)
+	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
 		saveNodeAddr(a.db, key, stat)
 		return receipt, nil
 	}
-	clog.Info("paracross.nodeVote commit ----pass", "most", most, "pass", ok)
+	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
 
 	var receiptGroup *types.Receipt
-	if !ok {
-		stat.Status = pt.ParacrossNodeRefused
+	if vote == pt.ParaNodeVoteNo {
+		// 对已经在group里面的node，直接投票remove，对正在申请中的adding or quiting状态保持不变，对quited的保持不变
+		if stat.Status == pt.ParacrossNodeAdded {
+			receiptGroup, err = unpdateNodeGroup(a.db, config.Title, config.Addr, false)
+			if err != nil {
+				return nil, err
+			}
+			stat.Status = pt.ParacrossNodeQuited
+		}
 	} else {
 		if stat.Status == pt.ParacrossNodeAdding {
 			receiptGroup, err = unpdateNodeGroup(a.db, config.Title, config.Addr, true)
@@ -248,14 +280,13 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParacrossNodeQuited
 		}
 	}
-
 	saveNodeAddr(a.db, key, stat)
-	receipt = makeNodeConfigReceipt(config.Addr, config, &copyStat, stat)
+	receipt = makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	if receiptGroup != nil {
 		receipt.KV = append(receipt.KV, receiptGroup.KV...)
 		receipt.Logs = append(receipt.Logs, receiptGroup.Logs...)
 	}
-	receiptDone := makeVoteDoneReceipt(config, len(nodes), len(stat.Votes.Addrs), most, ok, stat.Status)
+	receiptDone := makeVoteDoneReceipt(config, len(nodes), len(stat.Votes.Addrs), most, vote, stat.Status)
 	receipt.KV = append(receipt.KV, receiptDone.KV...)
 	receipt.Logs = append(receipt.Logs, receiptDone.Logs...)
 	return receipt, nil
@@ -295,7 +326,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 		item.Addr = addr
 		item.GetArr().Value = make([]string, 0)
 		for _, value := range copyItem.GetArr().Value {
-			clog.Info("unpdateNodeGroup", "key delete", key, "current", value)
+			clog.Info("unpdateNodeGroup", "key delete", string(key), "current", value)
 			if value != addr {
 				item.GetArr().Value = append(item.GetArr().Value, value)
 			}
@@ -357,13 +388,13 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, pt.ErrInvalidTitle
 	}
 
-	if config.Op == pt.ParaNodeAdd {
+	if config.Op == pt.ParaNodeJoin {
 		if config.Addr != a.fromaddr {
 			return nil, types.ErrFromAddr
 		}
 		return a.nodeAdd(config)
 
-	} else if config.Op == pt.ParaNodeDelete {
+	} else if config.Op == pt.ParaNodeQuit {
 		if config.Addr != a.fromaddr {
 			return nil, types.ErrFromAddr
 		}

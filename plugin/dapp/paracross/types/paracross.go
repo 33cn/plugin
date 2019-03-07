@@ -70,6 +70,7 @@ const (
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
 	// ParacrossActionAssetWithdraw paracross asset withdraw key
 	ParacrossActionAssetWithdraw
+	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
 )
 
@@ -83,26 +84,24 @@ const (
 
 // node config op
 const (
-	ParaNodeAdd      = "add"
-	ParaNodeDelete   = "delete"
+	ParaNodeJoin     = "join"
+	ParaNodeQuit     = "quit"
 	ParaNodeVote     = "vote"
 	ParaNodeTakeover = "takeover"
 
-	ParaNodeVotePass = "pass"
-	ParaNodeVoteNo   = "no"
+	ParaNodeVoteYes = "yes"
+	ParaNodeVoteNo  = "no"
 )
 
 const (
 	// ParacrossNodeAdding apply for adding group
-	ParacrossNodeAdding = iota
-	// ParacrossNodeAdded, pass to add by votes
+	ParacrossNodeAdding = iota + 1
+	// ParacrossNodeAdded pass to add by votes
 	ParacrossNodeAdded
-	// ParacrossNodeQuiting, apply for quiting
+	// ParacrossNodeQuiting apply for quiting
 	ParacrossNodeQuiting
-	// ParacrossNodeQuited, pass to quite by votes
+	// ParacrossNodeQuited pass to quite by votes
 	ParacrossNodeQuited
-	// ParacrossNodeRefused, refused by votes, add or quite
-	ParacrossNodeRefused
 )
 
 var (
