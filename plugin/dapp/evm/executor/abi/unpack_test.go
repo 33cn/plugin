@@ -124,8 +124,8 @@ var unpackTests = []unpackTest{
 	},
 	{
 		def:  `[{"type": "address"}]`,
-		enc:  "0000000000000000000000000100000000000000000000000000000000000000",
-		want: common.Hash160Address{1},
+		enc:  "00000000000000000000000000ce0d46d924cc8437c806721496599fc3ffa300",
+		want: common.HexToAddress("0x00Ce0d46d924CC8437c806721496599FC3FFA300").ToAddress().String(),
 	},
 	{
 		def:  `[{"type": "bytes32"}]`,

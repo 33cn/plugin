@@ -70,25 +70,23 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", "ForkTradeAsset"),
+		types.GetDappFork("trade", pty.ForkTradeAssetX),
 		2,
 		1539918074,
 		"hash",
 	}
 
-	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
+	_, ldb, kvdb := util.CreateTestDB()
 	accB := account.NewCoinsAccount()
-	accB.SetDB(stateDB)
+	accB.SetDB(kvdb)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
-
-	_, ldb, kvdb := util.CreateTestDB()
 
 	driver := newTrade()
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	driver.SetStateDB(stateDB)
+	driver.SetStateDB(kvdb)
 	driver.SetLocalDB(kvdb)
 
 	sell := &pty.TradeSellTx{
@@ -134,11 +132,10 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	}
 	_, err = driver.ExecLocal(tx, receiptDataSell, env.index)
 	assert.Nil(t, err)
-	kvdb.Commit()
 
 	// test buy market
 	buy := &pty.TradeBuyTx{
-		SellID:      sellOrder.SellID,
+		SellID:      sellOrder.SellID[len("mavl-trade-sell-"):],
 		BoardlotCnt: buyArgs.total,
 		Fee:         0,
 	}
@@ -212,7 +209,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", "ForkTradeAsset"),
+		types.GetDappFork("trade", pty.ForkTradeAssetX),
 		2,
 		1539918074,
 		"hash",
@@ -278,7 +275,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	assert.Nil(t, err)
 
 	sell := &pty.TradeSellMarketTx{
-		BuyID:       buyLimitOrder.BuyID,
+		BuyID:       buyLimitOrder.BuyID[len("mavl-trade-buy-"):],
 		BoardlotCnt: sellArgs.total,
 		Fee:         0,
 	}

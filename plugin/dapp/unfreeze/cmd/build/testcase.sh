@@ -26,7 +26,8 @@ function unfreeze_test() {
     tx_hash=$(${CLI} send unfreeze create fix_amount -a 0.01 -e coins -s bty -b ${beneficiary} -p 20 -t 2 -k ${owner_key})
     block_wait "${CLI}" 2
     unfreeze_id=$(${CLI} tx query -s "${tx_hash}" | jq ".receipt.logs[2].log.current.unfreezeID")
-    unfreeze_id2=${unfreeze_id#\"}
+    echo "${unfreeze_id}"
+    unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
     uid=${unfreeze_id2%\"}
 
     echo "==== 4 check some message "
@@ -50,8 +51,9 @@ function unfreeze_test() {
     ${CLI} send unfreeze terminate --id "${uid}" -k "${owner_key}"
     block_wait "${CLI}" 2
     remaining=$(${CLI} unfreeze show --id "${uid}" | jq ".remaining")
-    if [ "${remaining}" != '"0"' ]; then
-        echo "terminate failed, expect remaining 0, result ${remaining}"
+    remainingNum=$(echo "$remaining" | awk '{print int($0)}')
+    if [ "100000000" -lt "${remainingNum}" ]; then
+        echo "terminate failed, expect remaining < 100000000, result ${remaining}"
         exit 1
     fi
     echo "==================== unfreeze test end"

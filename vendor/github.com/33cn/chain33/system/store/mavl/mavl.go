@@ -37,7 +37,6 @@ type Store struct {
 	enableMVCC       bool
 	enableMavlPrune  bool
 	pruneHeight      int32
-	enableMemTree    bool
 }
 
 func init() {
@@ -45,11 +44,13 @@ func init() {
 }
 
 type subConfig struct {
-	EnableMavlPrefix bool  `json:"enableMavlPrefix"`
-	EnableMVCC       bool  `json:"enableMVCC"`
-	EnableMavlPrune  bool  `json:"enableMavlPrune"`
-	PruneHeight      int32 `json:"pruneHeight"`
-	EnableMemTree    bool  `json:"enableMemTree"`
+	// 是否使能mavl加前缀
+	EnableMavlPrefix bool `json:"enableMavlPrefix"`
+	EnableMVCC       bool `json:"enableMVCC"`
+	// 是否使能mavl数据裁剪
+	EnableMavlPrune bool `json:"enableMavlPrune"`
+	// 裁剪高度间隔
+	PruneHeight int32 `json:"pruneHeight"`
 }
 
 // New new mavl store module
@@ -59,18 +60,15 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
-	mavls := &Store{bs, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC,
-	subcfg.EnableMavlPrune, subcfg.PruneHeight, subcfg.EnableMemTree}
+	mavls := &Store{bs, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
 	mavls.enableMavlPrefix = subcfg.EnableMavlPrefix
 	mavls.enableMVCC = subcfg.EnableMVCC
 	mavls.enableMavlPrune = subcfg.EnableMavlPrune
 	mavls.pruneHeight = subcfg.PruneHeight
-	mavls.enableMemTree = subcfg.EnableMemTree
 	mavl.EnableMavlPrefix(mavls.enableMavlPrefix)
 	mavl.EnableMVCC(mavls.enableMVCC)
 	mavl.EnablePrune(mavls.enableMavlPrune)
 	mavl.SetPruneHeight(int(mavls.pruneHeight))
-	mavl.EnableMemTree(mavls.enableMemTree)
 	bs.SetChild(mavls)
 	return mavls
 }
@@ -93,7 +91,7 @@ func (mavls *Store) Get(datas *types.StoreGet) [][]byte {
 	var err error
 	values := make([][]byte, len(datas.Keys))
 	search := string(datas.StateHash)
-	if data, ok := mavls.trees.Load(search); ok {
+	if data, ok := mavls.trees.Load(search); ok && data != nil {
 		tree = data.(*mavl.Tree)
 	} else {
 		tree = mavl.NewTree(mavls.GetDB(), true)
@@ -184,7 +182,7 @@ func (mavls *Store) IterateRangeByStateHash(statehash []byte, start []byte, end 
 }
 
 // ProcEvent not support message
-func (mavls *Store) ProcEvent(msg queue.Message) {
+func (mavls *Store) ProcEvent(msg *queue.Message) {
 	msg.ReplyErr("Store", types.ErrActionNotSupport)
 }
 

@@ -34,14 +34,15 @@ func (u *Unfreeze) Query_ListUnfreezeByBeneficiary(in *pty.ReqUnfreezes) (types.
 }
 
 // QueryWithdraw 查询可提币状态
-func QueryWithdraw(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
-	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
+func QueryWithdraw(stateDB dbm.KV, id string) (types.Message, error) {
+	id = unfreezeIDFromHex(id)
+	unfreeze, err := loadUnfreeze(id, stateDB)
 	if err != nil {
-		uflog.Error("QueryWithdraw ", "unfreezeID", unfreezeID, "err", err)
+		uflog.Error("QueryWithdraw ", "unfreezeID", id, "err", err)
 		return nil, err
 	}
 	currentTime := time.Now().Unix()
-	reply := &pty.ReplyQueryUnfreezeWithdraw{UnfreezeID: unfreezeID}
+	reply := &pty.ReplyQueryUnfreezeWithdraw{UnfreezeID: id}
 	available, err := getWithdrawAvailable(unfreeze, currentTime)
 	if err != nil {
 		return nil, err
@@ -65,10 +66,11 @@ func getWithdrawAvailable(unfreeze *pty.Unfreeze, calcTime int64) (int64, error)
 }
 
 // QueryUnfreeze 查询合约状态
-func QueryUnfreeze(stateDB dbm.KV, unfreezeID string) (types.Message, error) {
-	unfreeze, err := loadUnfreeze(unfreezeID, stateDB)
+func QueryUnfreeze(stateDB dbm.KV, id string) (types.Message, error) {
+	id = unfreezeIDFromHex(id)
+	unfreeze, err := loadUnfreeze(id, stateDB)
 	if err != nil {
-		uflog.Error("QueryUnfreeze ", "unfreezeID", unfreezeID, "err", err)
+		uflog.Error("QueryUnfreeze ", "unfreezeID", id, "err", err)
 		return nil, err
 	}
 

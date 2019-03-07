@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"encoding/hex"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -68,7 +70,7 @@ func TestUnfreeze(t *testing.T) {
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.UnfreezeX, pty.ForkTerminatePartX),
+		types.GetDappFork(pty.UnfreezeX, pty.ForkUnfreezeIDX),
 		1539918074,
 	}
 	ty := pty.UnfreezeType{}
@@ -122,7 +124,7 @@ func TestUnfreeze(t *testing.T) {
 
 	// 提币
 	p2 := &pty.UnfreezeWithdraw{
-		UnfreezeID: string(unfreezeID(createTx.Hash())),
+		UnfreezeID: hex.EncodeToString(createTx.Hash()),
 	}
 	withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 	if err != nil {
@@ -156,7 +158,7 @@ func TestUnfreeze(t *testing.T) {
 	// 不是受益人提币
 	{
 		p2 := &pty.UnfreezeWithdraw{
-			UnfreezeID: string(unfreezeID(createTx.Hash())),
+			UnfreezeID: hex.EncodeToString(createTx.Hash()),
 		}
 		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {
@@ -176,7 +178,7 @@ func TestUnfreeze(t *testing.T) {
 	// 不是创建者终止
 	{
 		p3 := &pty.UnfreezeTerminate{
-			UnfreezeID: string(unfreezeID(createTx.Hash())),
+			UnfreezeID: hex.EncodeToString(createTx.Hash()),
 		}
 		terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 		if err != nil {
@@ -193,7 +195,7 @@ func TestUnfreeze(t *testing.T) {
 
 	// 终止
 	p3 := &pty.UnfreezeTerminate{
-		UnfreezeID: string(unfreezeID(createTx.Hash())),
+		UnfreezeID: hex.EncodeToString(createTx.Hash()),
 	}
 	terminateTx, err := ty.RPC_UnfreezeTerminateTx(p3)
 	if err != nil {
@@ -220,7 +222,7 @@ func TestUnfreeze(t *testing.T) {
 	// 终止后不能继续提币
 	{
 		p2 := &pty.UnfreezeWithdraw{
-			UnfreezeID: string(unfreezeID(createTx.Hash())),
+			UnfreezeID: hex.EncodeToString(createTx.Hash()),
 		}
 		withdrawTx, err := ty.RPC_UnfreezeWithdrawTx(p2)
 		if err != nil {
@@ -237,7 +239,7 @@ func TestUnfreeze(t *testing.T) {
 		assert.Nil(t, receipt)
 	}
 
-	req := types.ReqString{Data: string(unfreezeID(createTx.Hash()))}
+	req := types.ReqString{Data: hex.EncodeToString(createTx.Hash())}
 	_, err = exec.Query("GetUnfreeze", types.Encode(&req))
 	assert.Nil(t, err)
 

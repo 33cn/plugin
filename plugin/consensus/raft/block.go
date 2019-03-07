@@ -67,7 +67,7 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 }
 
 // ProcEvent method
-func (client *Client) ProcEvent(msg queue.Message) bool {
+func (client *Client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 

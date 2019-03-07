@@ -108,7 +108,7 @@ func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 			return nil, err
 		}
 		var acc1 *types.Account
-		if req.Execer == "trade" {
+		if req.Execer != "" {
 			execaddress := address.ExecAddress(req.Execer)
 			acc1 = acc.LoadExecAccount(req.Address, execaddress)
 		} else if req.Execer == t.GetName() {

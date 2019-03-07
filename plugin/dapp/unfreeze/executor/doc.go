@@ -4,4 +4,4 @@
 
 package executor
 
-// 定期解冻token
+// 定期解冻资产

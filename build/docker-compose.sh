@@ -124,6 +124,7 @@ function start() {
     done
 
     miner "${CLI}"
+    #    miner "${CLI4}"
     block_wait "${CLI}" 1
 
     echo "=========== check genesis hash ========== "
@@ -276,10 +277,10 @@ function transfer() {
     echo "=========== # transfer ============="
     hashes=()
     for ((i = 0; i < 10; i++)); do
-        hash=$(${CLI} send coins transfer -a 1 -n test -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+        hash=$(${1} send coins transfer -a 1 -n test -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
         hashes=("${hashes[@]}" "$hash")
     done
-    block_wait "${CLI}" 1
+    block_wait "${1}" 1
     echo "len: ${#hashes[@]}"
     if [ "${#hashes[@]}" != 10 ]; then
         echo "tx number wrong"
@@ -287,7 +288,7 @@ function transfer() {
     fi
 
     for ((i = 0; i < ${#hashes[*]}; i++)); do
-        txs=$(${CLI} tx query_hash -s "${hashes[$i]}" | jq ".txs")
+        txs=$(${1} tx query_hash -s "${hashes[$i]}" | jq ".txs")
         if [ -z "${txs}" ]; then
             echo "cannot find tx"
             exit 1
@@ -295,19 +296,19 @@ function transfer() {
     done
 
     echo "=========== # withdraw ============="
-    hash=$(${CLI} send coins transfer -a 2 -n deposit -t 1wvmD6RNHzwhY4eN75WnM6JcaAvNQ4nHx -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    hash=$(${1} send coins transfer -a 2 -n deposit -t 1wvmD6RNHzwhY4eN75WnM6JcaAvNQ4nHx -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash}"
-    block_wait "${CLI}" 1
-    before=$(${CLI} account balance -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e retrieve | jq -r ".balance")
+    block_wait "${1}" 1
+    before=$(${1} account balance -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e retrieve | jq -r ".balance")
     if [ "${before}" == "0.0000" ]; then
         echo "wrong ticket balance, should not be zero"
         exit 1
     fi
 
-    hash=$(${CLI} send coins withdraw -a 1 -n withdraw -e retrieve -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    hash=$(${1} send coins withdraw -a 1 -n withdraw -e retrieve -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash}"
-    block_wait "${CLI}" 1
-    txs=$(${CLI} tx query_hash -s "${hash}" | jq ".txs")
+    block_wait "${1}" 1
+    txs=$(${1} tx query_hash -s "${hash}" | jq ".txs")
     if [ "${txs}" == "null" ]; then
         echo "withdraw cannot find tx"
         exit 1
@@ -316,7 +317,8 @@ function transfer() {
 
 function base_config() {
     sync
-    transfer
+    transfer "${CLI}"
+    #    transfer "${CLI4}"
 }
 
 function dapp_run() {

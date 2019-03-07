@@ -254,14 +254,14 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		if !bytes.Equal(blockHash.Hash, commit.Status.MainBlockHash) && commit.Status.Height > 0 {
 			clog.Error("paracross.Commit blockHash not match", "db", hex.EncodeToString(blockHash.Hash),
 				"commit tx", hex.EncodeToString(commit.Status.MainBlockHash), "commitHeight", commit.Status.Height,
-				"from", a.fromaddr)
+				"commitMainHeight", commit.Status.MainBlockHeight, "from", a.fromaddr)
 			return nil, types.ErrBlockHashNoMatch
 		}
 	}
 	clog.Debug("paracross.Commit check input done")
 	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
 	if commit.Status.Height <= titleStatus.Height {
-		clog.Info("paracross.Commit record", "node", a.fromaddr, "titile", commit.Status.Title,
+		clog.Debug("paracross.Commit record", "node", a.fromaddr, "titile", commit.Status.Title,
 			"height", commit.Status.Height)
 		return makeRecordReceipt(a.fromaddr, commit), nil
 	}
@@ -398,7 +398,7 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, commit *pt.ParacrossCo
 func (a *action) execCrossTxs(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	var receipt types.Receipt
 	for i := 0; i < len(commit.Status.CrossTxHashs); i++ {
-		clog.Info("paracross.Commit commitDone", "do cross number", i, "hash",
+		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash",
 			hex.EncodeToString(commit.Status.CrossTxHashs[i]),
 			"res", util.BitMapBit(commit.Status.CrossTxResult, uint32(i)))
 		if util.BitMapBit(commit.Status.CrossTxResult, uint32(i)) {

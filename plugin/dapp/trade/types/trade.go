@@ -52,8 +52,9 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TradeX))
 	types.RegistorExecutor(TradeX, newType())
 	types.RegisterDappFork(TradeX, "Enable", 100899)
-	types.RegisterDappFork(TradeX, "ForkTradeBuyLimit", 301000)
-	types.RegisterDappFork(TradeX, "ForkTradeAsset", 1010000)
+	types.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
+	types.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
+	types.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
 }
 
 type tradeType struct {

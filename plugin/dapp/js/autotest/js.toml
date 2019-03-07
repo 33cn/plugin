@@ -1,0 +1,18 @@
+
+# 1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK manage addr
+# 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc
+
+[[jsCreateCase]]
+id = "create1"
+command = "send  jsvm  create -c ../../../plugin/dapp/js/executor/game.js -n hello -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+fail = true
+
+[[jsCreateCase]]
+id = "create2"
+command = "send  jsvm  create -c ../../../plugin/dapp/js/executor/game.js -n hello -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+dep = ["create1", "configJS"]
+
+[[SimpleCase]]
+id = "configJS"
+dep = ["create1"]
+command = "send config  config_tx  -c js-creator -o add -v 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt  -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"

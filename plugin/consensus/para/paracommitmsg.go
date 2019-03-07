@@ -33,6 +33,12 @@ type commitMsgClient struct {
 	quit               chan struct{}
 }
 
+//获取主链和平行链本身节点的平行链共识状态
+type consensStatus struct {
+	mainStatus *pt.ParacrossStatus
+	selfStatus *pt.ParacrossStatus
+}
+
 func (client *commitMsgClient) handler() {
 	var isSync bool
 	var notification []int64 //记录每次系统重启后 min and current height
@@ -42,7 +48,7 @@ func (client *commitMsgClient) handler() {
 	var readTick <-chan time.Time
 
 	client.paraClient.wg.Add(1)
-	consensusCh := make(chan *pt.ParacrossStatus, 1)
+	consensusCh := make(chan *consensStatus, 1)
 	go client.getConsensusHeight(consensusCh)
 
 	client.paraClient.wg.Add(1)
@@ -81,6 +87,9 @@ out:
 				sendingMsgs = nil
 				client.currentTx = nil
 			}
+			//在分叉的主链上，有可能在del完全之前收到共识消息后sync又置为true，然后发送消息，不过影响不大，共识消息间隔比较长
+			isSync = false
+			plog.Debug("para del block", "delHeight", height)
 
 		case block := <-client.mainBlockAdd:
 			if client.currentTx != nil && client.paraClient.isCaughtUp {
@@ -92,19 +101,18 @@ out:
 				} else {
 					client.checkTxCommitTimes++
 					if client.checkTxCommitTimes > client.waitMainBlocks {
-						//需要从rawtx构建,nonce需要改，不然会认为重复交易
-						signTx, _, err := client.calcCommitMsgTxs(sendingMsgs)
-						if err != nil || signTx == nil {
-							continue
-						}
-						client.currentTx = signTx
+						//超过等待最大次数，reset，重新组织发送，防止一直发送同一笔消息
+						sendingMsgs = nil
+						client.currentTx = nil
 						client.checkTxCommitTimes = 0
-						sendMsgCh <- client.currentTx
 					}
 				}
 			}
 
 		case <-readTick:
+			plog.Debug("para readTick", "notify", notification, "sending", len(sendingMsgs),
+				"finishHeight", finishHeight, "txIsNil", client.currentTx == nil, "sync", isSync)
+
 			if notification != nil && finishHeight < notification[1] && client.currentTx == nil && isSync {
 				count := notification[1] - finishHeight
 				if count > types.TxGroupMaxCount {
@@ -134,37 +142,43 @@ out:
 			}
 
 		//获取正在共识的高度，同步有两层意思，一个是主链跟其他节点完成了同步，另一个是当前平行链节点的高度追赶上了共识高度
+		//一般来说高度增长从小到大： notifiy[0] -- selfConsensusHeight(mainHeight) -- finishHeight -- sendingHeight -- notify[1]
 		case rsp := <-consensusCh:
-			consensusHeight := rsp.Height
+			selfConsensusHeight := rsp.selfStatus.Height
+			mainConsensHeight := rsp.mainStatus.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consens heigt", rsp.Height, "consens blockhash", common.HashHex(rsp.BlockHash), "sync", isSync)
+				"mainHeigt", rsp.mainStatus.Height, "mainlockhash", common.ToHex(rsp.mainStatus.BlockHash),
+				"selfHeight", rsp.selfStatus.Height, "selfHash", common.ToHex(rsp.selfStatus.BlockHash), "sync", isSync)
 
-			//所有节点还没有共识场景或新节点catchingUp场景，要等到收到区块高度大于共识高度时候发送
-			if consensusHeight == -1 || (notification != nil && notification[1] > consensusHeight) {
+			//所有节点还没有共识场景或新节点或重启节点catchingUp场景，要等到收到区块高度大于主链共识高度时候发送，在catchingup时候本身共识高度和块高度一起增长
+			if selfConsensusHeight == -1 || (notification != nil && notification[1] > mainConsensHeight) {
 				isSync = true
 			}
 
-			//未共识过的小于当前共识高度的区块，可以不参与共识
-			//如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
-			if notification != nil && finishHeight < consensusHeight {
-				finishHeight = consensusHeight
-			}
-
-			//如果正在发送的共识高度小于已经共识的高度，则取消发送，考虑新节点正在catchingup且新节点的加入能达成2/3共识场景，每次最多发送20 tx，
-			//但是由于addblock 正在catchingup，没办法确认tx，新tx达成了新的共识高度，需要把sendingmsg置nil，以发送下一笔共识交易
-			if sendingHeight <= consensusHeight && client.currentTx != nil {
-				sendingMsgs = nil
-				client.currentTx = nil
-				continue
+			//未共识过的小于当前共识高度的区块，可以不参与共识, 如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
+			if notification != nil && finishHeight < selfConsensusHeight {
+				finishHeight = selfConsensusHeight
 			}
 
 			//系统每次重启都有检查一次共识，如果共识高度落后于系统起来后完成的第一个高度或最小高度，说明可能有共识空洞，需要把从当前共识高度到完成的
 			//最大高度重发一遍，直到确认收到，发过的最小到最大高度也要重发是因为之前空洞原因共识不连续，即便满足2/3节点也不会增长，需要重发来触发commit
 			//此处也整合了当前consensus height=-1 场景
-			nextConsensHeight := consensusHeight + 1
+			// 需要是<而不是<=, 因为notification[0]被认为是系统起来后已经发送过的
+			nextConsensHeight := selfConsensusHeight + 1
 			if notification != nil && nextConsensHeight < notification[0] {
 				notification[0] = nextConsensHeight
-				finishHeight = nextConsensHeight - 1
+				finishHeight = selfConsensusHeight
+				sendingMsgs = nil
+				client.currentTx = nil
+			}
+
+			//在某些特殊场景下，比如平行链连接的主链节点分叉后又恢复，主链的共识高度低于分叉高度时候，主链上形成共识空洞，需要从共识高度重新发送而不是分叉高度
+			//共识高度和分叉高度不一致其中一个原因是共识交易组里面某个高度分叉了，分叉的主链节点执行成功，而其他主链节点执行失败
+			//理论上来说selfConsensusHeight只能小于等于mainConsensusHeihgt，因为在主链先共识之后才会同步到平行链
+			//此处主链共识高度应该会开始追赶平行链高度，在这种异常场景下，可能会有重复发送
+			if mainConsensHeight < selfConsensusHeight {
+				plog.Info("para consensus reset", "finishHeight", finishHeight, "mainHeight", mainConsensHeight, "selfHeight", selfConsensusHeight)
+				finishHeight = mainConsensHeight
 				sendingMsgs = nil
 				client.currentTx = nil
 			}
@@ -456,7 +470,7 @@ func (client *commitMsgClient) mainSync() error {
 
 }
 
-func (client *commitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
+func (client *commitMsgClient) getConsensusHeight(consensusRst chan *consensStatus) {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
 	defer ticker.Stop()
@@ -475,20 +489,47 @@ out:
 				isSync = true
 			}
 
-			var req types.ChainExecutor
-			req.Driver = "paracross"
-			req.FuncName = "GetTitle"
-			req.Param = types.Encode(&types.ReqString{Data: types.GetTitle()})
+			var status consensStatus
 
 			//从本地查询共识高度
-			ret, err := client.paraClient.GetAPI().QueryChain(&req)
+			ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+				Driver:   "paracross",
+				FuncName: "GetTitle",
+				Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
+			})
 			if err != nil {
 				plog.Error("getConsensusHeight ", "err", err.Error())
 				continue
 			}
-			if resp, ok := ret.(*pt.ParacrossStatus); ok {
-				consensusRst <- resp
+			resp, ok := ret.(*pt.ParacrossStatus)
+			if !ok {
+				plog.Error("getConsensusHeight ParacrossStatus nok")
+				continue
 			}
+			status.selfStatus = resp
+
+			//获取主链共识高度
+			reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
+				Driver:   "paracross",
+				FuncName: "GetTitle",
+				Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
+			})
+			if err != nil {
+				plog.Error("getMainConsensusHeight", "err", err.Error())
+				continue
+			}
+			if !reply.GetIsOk() {
+				plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
+				continue
+			}
+			var result pt.ParacrossStatus
+			err = types.Decode(reply.Msg, &result)
+			if err != nil {
+				plog.Error("getMainConsensusHeight decode", "err", err.Error())
+				continue
+			}
+			status.mainStatus = &result
+			consensusRst <- &status
 		}
 	}
 

@@ -6,14 +6,14 @@ package executor
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
-
-	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/db"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
@@ -562,7 +562,7 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 		return nil, types.ErrInvalidParam
 	}
 
-	game.Result = publish.Result
+	game.Result = trimStr(publish.Result)
 
 	//先遍历所有下注数据，转移资金到Admin账户合约地址；
 	for i := 0; i < len(game.Plays); i++ {
@@ -612,7 +612,10 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.DevFeeFactor > 0 {
-		devFee = totalBetsNumber * game.DevFeeFactor / 1000
+		fee := big.NewInt(totalBetsNumber)
+		factor := big.NewInt(game.DevFeeFactor)
+		thousand := big.NewInt(1000)
+		devFee = fee.Mul(fee, factor).Div(fee, thousand).Int64()
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, devAddr, action.execaddr, devFee)
 		if err != nil {
 			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, devFee) // rollback
@@ -625,7 +628,10 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	}
 
 	if game.PlatFeeFactor > 0 {
-		platFee = totalBetsNumber * game.PlatFeeFactor / 1000
+		fee := big.NewInt(totalBetsNumber)
+		factor := big.NewInt(game.PlatFeeFactor)
+		thousand := big.NewInt(1000)
+		platFee = fee.Mul(fee, factor).Div(fee, thousand).Int64()
 		receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, platAddr, action.execaddr, platFee)
 		if err != nil {
 			//action.coinsAccount.ExecFrozen(game.AdminAddr, action.execaddr, platFee) // rollback
@@ -642,7 +648,11 @@ func (action *Action) GamePublish(publish *gty.GuessGamePublish) (*types.Receipt
 	for j := 0; j < len(game.Plays); j++ {
 		player := game.Plays[j]
 		if trimStr(player.Bet.Option) == trimStr(game.Result) {
-			value := player.Bet.BetsNumber * winValue / winBetsNumber
+			betsNumber := big.NewInt(player.Bet.BetsNumber)
+			totalWinBetsNumber := big.NewInt(winBetsNumber)
+			leftWinBetsNumber := big.NewInt(winValue)
+
+			value := betsNumber.Mul(betsNumber, leftWinBetsNumber).Div(betsNumber, totalWinBetsNumber).Int64()
 			receipt, err := action.coinsAccount.ExecTransfer(game.AdminAddr, player.Addr, action.execaddr, value)
 			if err != nil {
 				//action.coinsAccount.ExecFrozen(player.Addr, action.execaddr, value) // rollback

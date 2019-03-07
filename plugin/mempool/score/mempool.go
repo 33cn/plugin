@@ -10,12 +10,10 @@ import (
 // Module Mempool
 
 type subConfig struct {
-	PoolCacheSize      int64 `json:"poolCacheSize"`
-	MinTxFee           int64 `json:"minTxFee"`
-	MaxTxNumPerAccount int64 `json:"maxTxNumPerAccount"`
-	TimeParam          int64 `json:"timeParam"`
-	PriceConstant      int64 `json:"priceConstant"`
-	PricePower         int64 `json:"pricePower"`
+	PoolCacheSize int64 `json:"poolCacheSize"`
+	TimeParam     int64 `json:"timeParam"`
+	PriceConstant int64 `json:"priceConstant"`
+	PricePower    int64 `json:"pricePower"`
 }
 
 func init() {

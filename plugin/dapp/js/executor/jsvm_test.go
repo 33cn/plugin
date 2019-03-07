@@ -37,6 +37,17 @@ func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	e.SetLocalDB(kvdb)
 	e.SetStateDB(kvdb)
 	c, tx := createCodeTx("test", code)
+
+	// set config key
+	item := &types.ConfigItem{
+		Key:  "mavl-manage-js-creator",
+		Addr: tx.From(),
+		Value: &types.ConfigItem_Arr{
+			Arr: &types.ArrayConfig{Value: []string{tx.From()}},
+		},
+	}
+	kvdb.Set([]byte(item.Key), types.Encode(item))
+
 	receipt, err := e.Exec_Create(c, tx, 0)
 	assert.Nil(t, err)
 	util.SaveKVList(ldb, receipt.KV)
@@ -64,7 +75,6 @@ func TestCallcode(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)
 	e := initExec(ldb, kvdb, jscode, t)
-
 	call, tx := callCodeTx("test", "hello", `{"hello":"world"}`)
 	receipt, err := e.Exec_Call(call, tx, 0)
 	assert.Nil(t, err)

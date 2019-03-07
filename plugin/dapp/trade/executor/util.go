@@ -35,7 +35,7 @@ func GetExecSymbol(order *pt.SellOrder) (string, string) {
 }
 
 func checkAsset(height int64, exec, symbol string) bool {
-	if types.IsDappFork(height, pt.TradeX, "ForkTradeAsset") {
+	if types.IsDappFork(height, pt.TradeX, pt.ForkTradeAssetX) {
 		if exec == "" || symbol == "" {
 			return false
 		}
@@ -48,7 +48,7 @@ func checkAsset(height int64, exec, symbol string) bool {
 }
 
 func createAccountDB(height int64, db db.KV, exec, symbol string) (*account.DB, error) {
-	if types.IsDappFork(height, pt.TradeX, "ForkTradeAsset") {
+	if types.IsDappFork(height, pt.TradeX, pt.ForkTradeAssetX) {
 		return account.NewAccountDB(exec, symbol, db)
 	}
 

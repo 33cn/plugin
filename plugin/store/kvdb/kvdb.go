@@ -140,7 +140,7 @@ func (kvs *KVStore) IterateRangeByStateHash(statehash []byte, start []byte, end 
 }
 
 // ProcEvent handles supported events
-func (kvs *KVStore) ProcEvent(msg queue.Message) {
+func (kvs *KVStore) ProcEvent(msg *queue.Message) {
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 
