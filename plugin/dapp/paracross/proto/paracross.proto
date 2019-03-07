@@ -43,7 +43,7 @@ message ParaNodeAddrConfig{
 }
 
 message ParaNodeVoteDetail{
-    repeated string addrs     = 1;
+    repeated string addrs      = 1;
     repeated string votes      = 2;
 }
 
@@ -74,7 +74,7 @@ message ReceiptParaNodeVoteDone {
     int32  totalNodes       = 3;
     int32  totalVote        = 4;
     int32  mostVote         = 5;
-    bool   voteRst          = 6;
+    string voteRst          = 6;
     int32  doneStatus       = 7;
 
 }
@@ -87,7 +87,7 @@ message ReqParacrossNodeInfo {
 }
 
 message RespParacrossNodeAddrs {
-    repeated ReceiptParaNodeVoteDone addrs = 1;
+    repeated ParaNodeAddrStatus addrs = 1;
 }
 
 message ParaBlock2MainMap {
@@ -181,8 +181,19 @@ message ReqParacrossTitleHeight {
     int64  height = 2;
 }
 
+message RespParacrossDone {
+    int32  totalNodes     = 1;
+    int32  totalCommit    = 2;
+    int32  mostSameCommit = 3;
+    string title          = 4;
+    int64  height         = 5;
+    string stateHash      = 6;
+    uint32 txCounts       = 7;
+    string txResult       = 8;
+}
+
 message RespParacrossTitles {
-    repeated ReceiptParacrossDone titles = 1;
+    repeated RespParacrossDone titles = 1;
 }
 
 message ReqParacrossTitleHash {
@@ -213,7 +224,7 @@ message ParacrossAsset {
 service paracross {
     rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}
     rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
-    rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ReceiptParacrossDone) {}
+    rpc GetTitleHeight(ReqParacrossTitleHeight) returns (RespParacrossDone) {}
     rpc GetAssetTxResult(ReqHash) returns (ParacrossAsset) {}
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }

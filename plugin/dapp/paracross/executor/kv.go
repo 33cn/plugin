@@ -17,11 +17,10 @@ var (
 	managerConfigNodes   string //manager 合约配置的nodes
 	paraConfigNodes      string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr   string //平行链配置节点账户
-	localTx          string
-	localTitle       string
-	localTitleHeight string
-	localAssetKey    string
-	localNodeTitle       string
+	localTx              string
+	localTitle           string
+	localTitleHeight     string
+	localAssetKey        string
 	localNodeTitleStatus string
 	localNodeTitleDone   string
 )

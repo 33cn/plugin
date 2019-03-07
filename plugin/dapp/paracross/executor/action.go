@@ -298,7 +298,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
 	} else {
-		copyStat := *stat
+		var copyStat pt.ParacrossHeightStatus
+		err = deepCopy(&copyStat, stat)
+		if err != nil {
+			clog.Error("paracross.Commit deep copy fail", "copy", copyStat, "stat", stat)
+			return nil, err
+		}
 		// 如有分叉， 同一个节点可能再次提交commit交易
 		found, index := hasCommited(stat.Details.Addrs, a.fromaddr)
 		if found {
