@@ -78,14 +78,14 @@ func (t *tokenDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue,
 	if t.token.Owner != addr {
 		return nil, nil, types.ErrNotAllow
 	}
-	if t.token.Total + amount > types.MaxTokenBalance {
+	if t.token.Total+amount > types.MaxTokenBalance {
 		return nil, nil, types.ErrAmount
 	}
 	prevToken := t.token
 	t.token.Total += amount
 
 	kvs := append(t.getKVSet(calcTokenKey(t.token.Symbol)), t.getKVSet(calcTokenAddrNewKeyS(t.token.Symbol, t.token.Owner))...)
-	logs := []*types.ReceiptLog{{Ty:pty.TyLogTokenMint, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
+	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenMint, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
 	return kvs, logs, nil
 }
 
@@ -516,7 +516,7 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	if tokendb.token.Category & pty.CategoryMintSupport == 0 {
+	if tokendb.token.Category&pty.CategoryMintSupport == 0 {
 		return nil, types.ErrNotSupport
 	}
 
@@ -531,7 +531,7 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 		return nil, err
 	}
 	tokenlog.Debug("mint", "token.Owner", mint.Symbol, "token.GetTotal()", mint.Amount)
-	receipt, err := tokenAccount.GenesisInit(mint.Symbol, mint.Amount)  // TODO 更新 chain33 支持 account mint
+	receipt, err := tokenAccount.GenesisInit(mint.Symbol, mint.Amount) // TODO 更新 chain33 支持 account mint
 	if err != nil {
 		return nil, err
 	}
@@ -541,4 +541,3 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
 }
-
