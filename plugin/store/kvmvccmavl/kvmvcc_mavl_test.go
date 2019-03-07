@@ -13,14 +13,15 @@ import (
 
 	"fmt"
 
+	"bytes"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	dbm "github.com/33cn/chain33/common/db"
-	"bytes"
 )
 
 const MaxKeylenth int = 64
@@ -541,7 +542,6 @@ func TestDelMavlData(t *testing.T) {
 	require.NoError(t, err)
 }
 
-
 func TestPruning(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
@@ -550,7 +550,6 @@ func TestPruning(t *testing.T) {
 	storeCfg := newStoreCfg(dir)
 	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
-
 
 	kvmvccStore := NewKVMVCC(&subKVMVCCConfig{}, store.GetDB())
 
@@ -596,10 +595,10 @@ func TestPruning(t *testing.T) {
 	//check
 	getDatas := &types.StoreGet{
 		StateHash: drivers.EmptyRoot[:],
-		Keys: keys,
+		Keys:      keys,
 	}
 
-	for i := 0; i < len(hashes); i++  {
+	for i := 0; i < len(hashes); i++ {
 		getDatas.StateHash = hashes[i]
 		values := store.Get(getDatas)
 		value = fmt.Sprintf("vv%d", i)
