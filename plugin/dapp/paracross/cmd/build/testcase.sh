@@ -345,8 +345,81 @@ function para_cross_transfer_withdraw_for_token() {
     done
 }
 
+function para_nodemanage_test() {
+    echo "=========== # para chain new node join ============="
+    hash=$(${PARA_CLI} send para node -o join -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    status=$(${PARA_CLI} para node_list -t user.p.para. -s 1 | jq -r ".addrs[0].applyAddr")
+    if [ "${status}" != "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" ]; then
+        echo "wrong join status"
+        ${PARA_CLI} para node_list -t user.p.para. -s 1
+        exit 1
+    fi
+
+    echo "=========== # para chain node vote ============="
+    ${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    hash=$(${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    status=$(${PARA_CLI} para node_status -t user.p.para. -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt | jq -r ".status")
+    if [ "${status}" != "2" ]; then
+        echo "wrong vote status"
+        ${PARA_CLI} para node_status -t user.p.para. -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+        exit 1
+    fi
+
+    node=$(${PARA_CLI} para node_group -t user.p.para. |jq -r '.value|contains("14K")')
+    if [ "${node}" != "true" ]; then
+        echo "wrong node group addr"
+        ${PARA_CLI} para node_group -t user.p.para.
+        exit 1
+    fi
+
+
+    echo "=========== # para chain node quit ============="
+    hash=$(${PARA_CLI} send para node -o quit -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    status=$(${PARA_CLI} para node_list -t user.p.para. -s 3 | jq -r ".addrs[0].applyAddr")
+    if [ "${status}" != "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" ]; then
+        echo "wrong join status"
+        ${PARA_CLI} para node_list -t user.p.para. -s 3
+        exit 1
+    fi
+
+    echo "=========== # para chain node vote quit ============="
+    ${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    hash=$(${PARA_CLI} send para node -o vote -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    status=$(${PARA_CLI} para node_status -t user.p.para. -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt | jq -r ".status")
+    if [ "${status}" != "4" ]; then
+        echo "wrong vote status"
+        ${PARA_CLI} para node_status -t user.p.para. -a 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+        exit 1
+    fi
+
+    node=$(${PARA_CLI} para node_group -t user.p.para. |jq -r '.value|contains("14K")')
+    if [ "${node}" == "true" ]; then
+        echo "wrong node group addr"
+        ${PARA_CLI} para node_group -t user.p.para.
+        exit 1
+    fi
+
+}
+
+
+
 function para_test() {
     echo "=========== # para chain test ============="
+    para_nodemanage_test
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
