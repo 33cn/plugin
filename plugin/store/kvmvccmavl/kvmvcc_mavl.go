@@ -287,7 +287,7 @@ func delMavlData(db dbm.DB) bool {
 		if quit {
 			return false
 		}
-		if !bytes.HasPrefix(it.Key(), []byte(mvccPrefix)) { // 将非mvcc的mavl数据全部删除
+		if !bytes.HasPrefix(it.Key(), mvccPrefix) { // 将非mvcc的mavl数据全部删除
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
 				batch.Write()

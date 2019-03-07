@@ -325,8 +325,8 @@ func pruningFirst(db dbm.DB, curHeight int64) {
 			continue
 		}
 
-		if curHeight < int64(height)+levelPruningHeight &&
-			curHeight >= int64(height)+int64(pruneHeight) {
+		if curHeight < height+levelPruningHeight &&
+			curHeight >= height+int64(pruneHeight) {
 			mp[string(key)] = append(mp[string(key)], height)
 			count++
 		}
