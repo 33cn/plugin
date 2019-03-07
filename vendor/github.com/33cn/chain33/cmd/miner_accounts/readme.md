@@ -19,7 +19,7 @@ wget 127.0.0.1:8866 --no-proxy --post-data='{"id" : 1 , "method" : "ShowMinerAcc
  8. expectIncrease 预期挖到多少币
  9. expectMinerBlocks 预期间隔多少个块能挖到币
  10. minerBtyDuring 在预期能挖到币的两倍时间间隔内，挖到多少币
- 11. expectTotalIncrease  一个小时内预期挖矿增加
+ 11. expectTotalIncrease 一个小时内预期挖矿增加
 
 需要监控
  1. 挖矿总量异常： 根据总体币的挖矿情况报警 （不再根据原来的固定值）
