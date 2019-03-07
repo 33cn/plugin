@@ -59,6 +59,36 @@ func (t *tokenDB) getKVSet(key []byte) (kvset []*types.KeyValue) {
 	return kvset
 }
 
+func loadTokenDB(db dbm.KV, symbol string) (*tokenDB, error) {
+	token, err := db.Get(calcTokenKey(symbol))
+	if err != nil {
+		tokenlog.Error("tokendb load ", "Can't get token form db for token", symbol)
+		return nil, pty.ErrTokenNotExist
+	}
+	var t pty.Token
+	err = types.Decode(token, &t)
+	if err != nil {
+		tokenlog.Error("tokendb load", "Can't decode token info", symbol)
+		return nil, err
+	}
+	return &tokenDB{t}, nil
+}
+
+func (t *tokenDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	if t.token.Owner != addr {
+		return nil, nil, types.ErrNotAllow
+	}
+	if t.token.Total + amount > types.MaxTokenBalance {
+		return nil, nil, types.ErrAmount
+	}
+	prevToken := t.token
+	t.token.Total += amount
+
+	kvs := append(t.getKVSet(calcTokenKey(t.token.Symbol)), t.getKVSet(calcTokenAddrNewKeyS(t.token.Symbol, t.token.Owner))...)
+	logs := []*types.ReceiptLog{{Ty:pty.TyLogTokenMint, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
+	return kvs, logs, nil
+}
+
 func getTokenFromDB(db dbm.KV, symbol string, owner string) (*pty.Token, error) {
 	key := calcTokenAddrKeyS(symbol, owner)
 	value, err := db.Get(key)
@@ -468,3 +498,47 @@ func validSymbolWithHeight(cs []byte, height int64) bool {
 	}
 	return validSymbolOriginal(cs)
 }
+
+// 铸币不可控， 也是麻烦。 2选1
+// 1. 谁可以发起
+// 2. 是否需要审核  这个会增加管理的成本
+// 现在实现选择 1
+func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
+	if mint == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxCoin || mint.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	tokendb, err := loadTokenDB(action.db, mint.GetSymbol())
+	if err != nil {
+		return nil, err
+	}
+
+	if tokendb.token.Category & pty.CategoryMintSupport == 0 {
+		return nil, types.ErrNotSupport
+	}
+
+	kvs, logs, err := tokendb.mint(action.db, action.fromaddr, mint.Amount)
+	if err != nil {
+		tokenlog.Error("token mint ", "symbol", mint.GetSymbol(), "error", err)
+		return nil, err
+	}
+
+	tokenAccount, err := account.NewAccountDB("token", mint.GetSymbol(), action.db)
+	if err != nil {
+		return nil, err
+	}
+	tokenlog.Debug("mint", "token.Owner", mint.Symbol, "token.GetTotal()", mint.Amount)
+	receipt, err := tokenAccount.GenesisInit(mint.Symbol, mint.Amount)  // TODO 更新 chain33 支持 account mint
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
