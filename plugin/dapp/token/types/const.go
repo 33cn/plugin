@@ -19,6 +19,8 @@ const (
 	TokenActionRevokeCreate = 9
 	// TokenActionTransferToExec for token transfer to exec
 	TokenActionTransferToExec = 11
+	// TokenActionMint for token mint
+	TokenActionMint = 12
 )
 
 // token status

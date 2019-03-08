@@ -93,6 +93,13 @@ message LocalToken {
     int32 category           = 17;
 }
 
+message LocalLogs {
+    string symbol     = 1;
+    string txIndex    = 2;
+    int32  actionType = 3;
+    string txHash     = 4;
+}
+
 // query
 message ReqTokens {
     bool     queryAll          = 1;
@@ -151,6 +158,10 @@ message ReqTokenTx {
     int64  height    = 5;
     int64  index     = 6;
     string addr      = 7;
+}
+
+message ReplyTokenLogs {
+    repeated LocalLogs logs = 1;
 }
 
 service token {
