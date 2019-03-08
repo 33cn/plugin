@@ -485,6 +485,9 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
 	for ticketID, ticket := range client.ticketsMap {
+		if client.IsClosed() {
+			return nil, nil, nil, nil, "", nil
+		}
 		if ticket == nil {
 			tlog.Warn("Client searchTargetTicket ticket is nil", "ticketID", ticketID)
 			continue
@@ -668,6 +671,10 @@ func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*typ
 // CreateBlock ticket create block func
 func (client *Client) CreateBlock() {
 	for {
+		if client.IsClosed() {
+			tlog.Info("create block stop")
+			break
+		}
 		if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
 			tlog.Debug("createblock.ismining is disable or client is caughtup is false")
 			time.Sleep(time.Second)
