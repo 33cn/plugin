@@ -88,8 +88,6 @@ const (
 )
 
 const (
-	// CategoryNormal
-	CategoryNormal = 0 << iota
 	// CategoryMintSupport support mint
-	CategoryMintSupport
+	CategoryMintSupport = 1 << iota
 )
