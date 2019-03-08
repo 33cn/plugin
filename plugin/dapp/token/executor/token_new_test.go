@@ -312,6 +312,78 @@ func TestQueryAsset(t *testing.T) {
 
 }
 
+func TestTokenMint(t *testing.T) {
+	if !isMainNetTest {
+		return
+	}
+	fmt.Println("TestTokenMint start")
+	defer fmt.Println("TestTokenMint end")
+
+	v := &pty.TokenAction_TokenMint{TokenMint: &pty.TokenMint{Symbol: tokenSym, Amount: transAmount}}
+	transfer := &pty.TokenAction{Value: v, Ty: pty.ActionTransfer}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, privkey)
+
+	reply, err := mainClient.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Println("err", err)
+		t.Error(err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Println("err = ", reply.GetMsg())
+		t.Error(ErrTest)
+		return
+	}
+
+	if !waitTx(tx.Hash()) {
+		t.Error(ErrTest)
+		return
+	}
+
+}
+
+func TestQueryTokenLogs(t *testing.T) {
+	if !isParaNetTest {
+		return
+	}
+	fmt.Println("TestQueryTokenLogs start")
+	defer fmt.Println("TestQueryTokenLogs end")
+
+	var req types.ChainExecutor
+	req.Driver = execName
+	req.FuncName = "GetTokenHistory"
+
+	req.Param = types.Encode(&types.ReqString{Data:tokenSym})
+
+	reply, err := paraClient.QueryChain(context.Background(), &req)
+	if err != nil {
+		fmt.Println(err)
+		t.Error(err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Println("Query reply err")
+		t.Error(ErrTest)
+		return
+	}
+	var res pty.ReplyTokenLogs
+	err = types.Decode(reply.Msg, &res)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	assert.Equal(t, 2, len(res.Logs))
+	for _, l := range res.Logs {
+		fmt.Println(l.Symbol)
+		fmt.Println(l.TxHash)
+		fmt.Println(l.TxIndex)
+		fmt.Println(l.ActionType)
+	}
+}
+
 //***************************************************
 //**************common actions for Test**************
 //***************************************************
