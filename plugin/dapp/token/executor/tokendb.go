@@ -517,12 +517,13 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 	}
 
 	if tokendb.token.Category&pty.CategoryMintSupport == 0 {
+		tokenlog.Error("Can't mint category", "category", tokendb.token.Category, "support", pty.CategoryMintSupport)
 		return nil, types.ErrNotSupport
 	}
 
 	kvs, logs, err := tokendb.mint(action.db, action.fromaddr, mint.Amount)
 	if err != nil {
-		tokenlog.Error("token mint ", "symbol", mint.GetSymbol(), "error", err)
+		tokenlog.Error("token mint ", "symbol", mint.GetSymbol(), "error", err, "from", action.fromaddr, "owner", tokendb.token.Owner)
 		return nil, err
 	}
 
