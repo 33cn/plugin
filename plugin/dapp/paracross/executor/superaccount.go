@@ -9,9 +9,14 @@ import (
 	"encoding/gob"
 
 	dbm "github.com/33cn/chain33/common/db"
+	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
+)
+
+var (
+	conf = types.ConfSub(manager.ManageX)
 )
 
 func deepCopy(dst, src interface{}) error {
@@ -179,6 +184,16 @@ func (a *action) nodeDelete(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 
 }
 
+// IsSuperManager is supper manager or not
+func isSuperManager(addr string) bool {
+	for _, m := range conf.GStrList("superManager") {
+		if addr == m {
+			return true
+		}
+	}
+	return false
+}
+
 func getMostVote(stat *pt.ParaNodeAddrStatus) (int, string) {
 	var ok, nok int
 	for _, v := range stat.GetVotes().Votes {
@@ -205,7 +220,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
-	if !validNode(a.fromaddr, nodes) {
+	if !validNode(a.fromaddr, nodes) && !isSuperManager(a.fromaddr) {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
 	}
 
@@ -250,8 +265,11 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
-		saveNodeAddr(a.db, key, stat)
-		return receipt, nil
+		//超级用户且当前group里面有任一账户投yes票，可以通过
+		if !(isSuperManager(a.fromaddr) && most > 1 && vote == pt.ParaNodeVoteYes) {
+			saveNodeAddr(a.db, key, stat)
+			return receipt, nil
+		}
 	}
 	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
 
