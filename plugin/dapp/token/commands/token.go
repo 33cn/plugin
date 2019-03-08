@@ -480,7 +480,7 @@ func CreateRawTokenMintTxCmd() *cobra.Command {
 }
 
 func addTokenMintFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "a", "", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().Float64P("amount", "a", 0, "amount of mintage")
@@ -492,7 +492,7 @@ func addTokenMintFlags(cmd *cobra.Command) {
 func tokenMint(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")
-	amount, _ := cmd.Flags().GetFloat64("owner_addr")
+	amount, _ := cmd.Flags().GetFloat64("amount")
 
 	params := &tokenty.TokenMint{
 		Symbol: symbol,
