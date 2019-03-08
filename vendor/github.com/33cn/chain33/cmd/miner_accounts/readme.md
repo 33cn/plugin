@@ -19,7 +19,7 @@ wget 127.0.0.1:8866 --no-proxy --post-data='{"id" : 1 , "method" : "ShowMinerAcc
  8. expectIncrease 预期挖到多少币
  9. expectMinerBlocks 预期间隔多少个块能挖到币
  10. minerBtyDuring 在预期能挖到币的两倍时间间隔内，挖到多少币
- 11. expectTotalIncrease  一个小时内预期挖矿增加
+ 11. expectTotalIncrease 一个小时内预期挖矿增加
 
 需要监控
  1. 挖矿总量异常： 根据总体币的挖矿情况报警 （不再根据原来的固定值）
@@ -28,6 +28,10 @@ wget 127.0.0.1:8866 --no-proxy --post-data='{"id" : 1 , "method" : "ShowMinerAcc
     1. 是否有某个挖矿帐号， 一个小时挖矿所得为0, 可能是挖矿机器出故障了
     1. 增涨不到预期的50%
     1. 不再监控这个点： 在预期能挖到币的两倍时间间隔内， 挖到的币为0。 挖矿有波动， 在进行预警的几天里， 这个有很多误报。
+ 1. 数据获得失败报警
+    1. result 里面 null
+ 1. 监控机器 heartbeat 表明监控机器没有宕机
+
 ```
 {
    "id" : 1,
