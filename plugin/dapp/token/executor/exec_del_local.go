@@ -5,9 +5,9 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
-	"github.com/33cn/chain33/system/dapp"
 )
 
 func (t *token) execDelLocal(receiptData *types.ReceiptData) ([]*types.KeyValue, error) {
@@ -143,7 +143,7 @@ func (t *token) ExecDelLocal_TokenMint(payload *tokenty.TokenMint, tx *types.Tra
 	if err != nil {
 		return nil, err
 	}
-	localToken = resetCreated(localToken)
+	localToken = resetMint(localToken, t.GetHeight(), t.GetBlockTime(), payload.Amount)
 	key := calcTokenStatusKeyLocal(payload.Symbol, tx.From(), tokenty.TokenStatusCreated)
 	var set []*types.KeyValue
 	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
@@ -162,4 +162,3 @@ func (t *token) ExecDelLocal_TokenMint(payload *tokenty.TokenMint, tx *types.Tra
 
 	return &types.LocalDBSet{KV: set}, nil
 }
-
