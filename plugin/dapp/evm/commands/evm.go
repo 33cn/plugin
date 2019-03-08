@@ -227,6 +227,11 @@ func createContract(cmd *cobra.Command, args []string) {
 
 	feeInt64 := uint64(fee*1e4) * 1e4
 
+	if !strings.EqualFold(sol, "") && !strings.EqualFold(code,"") && !strings.EqualFold(abi,"" ) {
+		fmt.Fprintln(os.Stderr, "--sol, --code and --abi shouldn't be used at the same time.")
+		return
+	}
+
 	var action evmtypes.EVMContractAction
 	if !strings.EqualFold(sol, "") {
 		if _, err := os.Stat(sol); os.IsNotExist(err) {
