@@ -22,9 +22,7 @@ import (
 )
 
 func TestTicket(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		testTicket(t)
-	}
+	testTicket(t)
 }
 
 func testTicket(t *testing.T) {
