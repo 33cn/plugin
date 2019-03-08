@@ -77,7 +77,7 @@ func TestChannelClient_GetTitleHeight(t *testing.T) {
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &pt.ReqParacrossTitleHeight{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ReceiptParacrossDone{}, nil)
+	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
 	_, err := client.GetTitleHeight(context.Background(), req)
 	assert.Nil(t, err)
 }
@@ -87,7 +87,7 @@ func TestJrpc_GetTitleHeight(t *testing.T) {
 	j := newJrpc(api)
 	req := &pt.ReqParacrossTitleHeight{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ReceiptParacrossDone{}, nil)
+	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
 	err := j.GetTitleHeight(req, &result)
 	assert.Nil(t, err)
 }
