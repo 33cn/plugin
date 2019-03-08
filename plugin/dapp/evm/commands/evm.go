@@ -236,12 +236,12 @@ func createContract(cmd *cobra.Command, args []string) {
 			contracts, err := compiler.CompileSolidity(solc, sol)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
-				os.Exit(-1)
+				return
 			}
 
 			if len(contracts) > 1 {
 				fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
-				os.Exit(-1)
+				return
 			}
 
 			for _, contract := range contracts {
