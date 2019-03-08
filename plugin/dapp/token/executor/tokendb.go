@@ -531,7 +531,7 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 		return nil, err
 	}
 	tokenlog.Debug("mint", "token.Owner", mint.Symbol, "token.GetTotal()", mint.Amount)
-	receipt, err := tokenAccount.GenesisInit(mint.Symbol, mint.Amount) // TODO 更新 chain33 支持 account mint
+	receipt, err := tokenAccount.Mint(action.fromaddr, mint.Amount)
 	if err != nil {
 		return nil, err
 	}
