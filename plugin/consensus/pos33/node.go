@@ -169,7 +169,7 @@ func (n *node) checkVote(vt *pt.Pos33Vote) bool {
 	who := addr(vt.Sig)
 	cw := getWeight(n.comm, who)
 	if int(vt.Weight) != cw {
-		plog.Error("vote weight error", "addr", "addr", who, "vtw", vt.Weight, "comm_weight", cw)
+		plog.Error("vote weight error", "addr", who, "vtw", vt.Weight, "comm_weight", cw)
 		return false
 	}
 	if vsAccWeight(n.vmp[vt.BlockHeight], who) > 0 {
@@ -249,7 +249,11 @@ func (n *node) findIndex(who string, p int) int {
 }
 
 func (n *node) handleVote(vt *pt.Pos33Vote) {
-	plog.Info("n.handleVote", "height", vt.BlockHeight, "addr", addr(vt.Sig))
+	if n.myWeight == 0 {
+		return
+	}
+
+	plog.Info("n.handleVote", "height", vt.BlockHeight, "addr", addr(vt.Sig), "vt.hash", hex.EncodeToString(vt.BlockHash), "bp", vt.Bp)
 	lastB, err := n.RequestLastBlock()
 	if err != nil {
 		panic("can't go here")
@@ -442,6 +446,7 @@ func (n *node) doGossipMsg() chan *pt.Pos33Msg {
 }
 
 func printCommittee(comm *pt.Pos33Rands) {
+	fmt.Println("---------------------")
 	for _, r := range comm.Rands {
 		fmt.Printf("addr:%s, index:%d, rand:%s\n", addr(r.Sig), r.Index, hex.EncodeToString(r.RandHash))
 	}
@@ -464,7 +469,7 @@ func (n *node) changeCommittee(b *types.Block) {
 				return
 			}
 		}
-		//printCommittee(n.comm)
+		printCommittee(n.comm)
 	}
 	if len(n.comm.Rands) != pt.Pos33CommitteeSize {
 		panic("can't go here")
@@ -504,7 +509,7 @@ func (n *node) voteBlock(height int64, hash []byte) {
 		Weight:      int32(n.myWeight),
 	}
 	vt.Sign(n.priv)
-	n.gss.broadcastTCP(n.marshalVoteMsg(vt))
+	n.gss.broadcastUDP(n.marshalVoteMsg(vt))
 	n.handleVote(vt)
 }
 
@@ -558,11 +563,13 @@ func (n *node) runLoop() {
 	for {
 		select {
 		case <-timeoutTm.C:
-			plog.Info("timeout......", "height", lb.Height+1)
-			reseTm(timeoutTm, time.Second*3)
+			height := lb.Height + 1
+			plog.Info("timeout......", "height", height)
+			reseTm(timeoutTm, time.Second*6)
 			if n.myWeight > 0 {
-				n.voteBlock(lb.Height+1, []byte("nil"))
+				n.voteBlock(height, []byte("nil"))
 			}
+			time.AfterFunc(time.Second*3, func() { ch <- height })
 		case height := <-ch:
 			if n.myWeight == 0 {
 				plog.Info("I'm not a committee", "addr", n.addr, "height", height)
@@ -576,6 +583,7 @@ func (n *node) runLoop() {
 			if bp == n.addr {
 				n.makeBlock(newHeight, vs, null)
 			}
+			n.clear(height)
 		case msg := <-msgch:
 			n.handlePos33Msg(msg)
 		case b := <-n.bch: // new block add to chain
@@ -589,8 +597,6 @@ func (n *node) runLoop() {
 				n.voteBlock(b.Height, b.Hash())
 				time.AfterFunc(time.Second, func() { ch <- b.Height })
 			}
-
-			n.clear(b.Height - 1)
 		}
 	}
 }
