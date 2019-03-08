@@ -13,7 +13,6 @@ import (
 	"time"
 
 	log "github.com/33cn/chain33/common/log/log15"
-	//"github.com/33cn/chain33/common"
 	"encoding/hex"
 
 	"github.com/33cn/chain33/client/api"
