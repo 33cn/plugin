@@ -59,3 +59,19 @@ func (testCase *TokenFinishCreateCase) SendCommand(packID string) (types.PackFun
 
 	return types.DefaultSend(testCase, &TokenFinishCreatePack{}, packID)
 }
+
+// TokenMintCase token mint case
+type TokenMintCase struct {
+	types.BaseCase
+}
+
+// TokenMintPack token mint pack command
+type TokenMintPack struct {
+	types.BaseCasePack
+}
+
+// SendCommand send command function of tokenfinishcreatecase
+func (testCase *TokenMintCase) SendCommand(packID string) (types.PackFunc, error) {
+
+	return types.DefaultSend(testCase, &TokenMintPack{}, packID)
+}
