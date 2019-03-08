@@ -357,7 +357,7 @@ func TestQueryTokenLogs(t *testing.T) {
 	req.Driver = execName
 	req.FuncName = "GetTokenHistory"
 
-	req.Param = types.Encode(&types.ReqString{Data:tokenSym})
+	req.Param = types.Encode(&types.ReqString{Data: tokenSym})
 
 	reply, err := paraClient.QueryChain(context.Background(), &req)
 	if err != nil {

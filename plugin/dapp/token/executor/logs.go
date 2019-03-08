@@ -14,7 +14,6 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
 
-
 var opt_logs_table = &table.Option{
 	Prefix:  "LODB-token",
 	Name:    "logs",

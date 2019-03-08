@@ -496,7 +496,7 @@ func tokenMint(cmd *cobra.Command, args []string) {
 
 	params := &tokenty.TokenMint{
 		Symbol: symbol,
-		Amount:  int64((amount + 0.000001) * 1e4) * 1e4,
+		Amount: int64((amount+0.000001)*1e4) * 1e4,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenMintTx", params, nil)
@@ -522,7 +522,7 @@ func getTokenLogs(cmd *cobra.Command, args []string) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = getRealExecName(paraName, "token")
 	params.FuncName = "GetTokenHistory"
-	params.Payload = types.MustPBToJSON(&types.ReqString{Data:symbol})
+	params.Payload = types.MustPBToJSON(&types.ReqString{Data: symbol})
 	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -547,4 +547,3 @@ func getTokenLogsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	cmd.MarkFlagRequired("symbol")
 }
-

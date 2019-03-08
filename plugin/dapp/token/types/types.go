@@ -57,7 +57,7 @@ func (t *TokenType) GetTypeMap() map[string]int32 {
 		"TokenFinishCreate": TokenActionFinishCreate,
 		"TokenRevokeCreate": TokenActionRevokeCreate,
 		"TransferToExec":    TokenActionTransferToExec,
-		"TokenMint":              TokenActionMint,
+		"TokenMint":         TokenActionMint,
 	}
 }
 

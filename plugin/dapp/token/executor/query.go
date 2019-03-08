@@ -75,7 +75,7 @@ func (t *token) Query_GetTokenHistory(in *types.ReqString) (types.Message, error
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	rows, err := list(t.GetLocalDB(), "symbol", &tokenty.LocalLogs{Symbol:in.Data}, -1, 0)
+	rows, err := list(t.GetLocalDB(), "symbol", &tokenty.LocalLogs{Symbol: in.Data}, -1, 0)
 	if err != nil {
 		tokenlog.Error("Query_GetTokenHistory", "err", err)
 		return nil, err

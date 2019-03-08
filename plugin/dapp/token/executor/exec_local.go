@@ -5,11 +5,12 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
-	"github.com/33cn/chain33/system/dapp"
-	"encoding/hex"
 )
 
 func (t *token) ExecLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
