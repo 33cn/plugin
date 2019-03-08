@@ -7,10 +7,11 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/commands/compiler"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/commands/compiler"
 
 	"strings"
 
@@ -227,7 +228,7 @@ func createContract(cmd *cobra.Command, args []string) {
 
 	feeInt64 := uint64(fee*1e4) * 1e4
 
-	if !strings.EqualFold(sol, "") && !strings.EqualFold(code,"") && !strings.EqualFold(abi,"" ) {
+	if !strings.EqualFold(sol, "") && !strings.EqualFold(code, "") && !strings.EqualFold(abi, "") {
 		fmt.Fprintln(os.Stderr, "--sol, --code and --abi shouldn't be used at the same time.")
 		return
 	}
