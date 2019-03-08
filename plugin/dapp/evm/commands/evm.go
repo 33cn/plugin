@@ -238,27 +238,26 @@ func createContract(cmd *cobra.Command, args []string) {
 		if _, err := os.Stat(sol); os.IsNotExist(err) {
 			fmt.Fprintln(os.Stderr, "Sol file is not exist.")
 			return
-		} else {
-			contracts, err := compiler.CompileSolidity(solc, sol)
+		}
+		contracts, err := compiler.CompileSolidity(solc, sol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
+			return
+		}
+
+		if len(contracts) > 1 {
+			fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
+			return
+		}
+
+		for _, contract := range contracts {
+			abi, _ := json.Marshal(contract.Info.AbiDefinition) // Flatten the compiler parse
+			bCode, err := common.FromHex(contract.Code)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
+				fmt.Fprintln(os.Stderr, "parse evm code error", err)
 				return
 			}
-
-			if len(contracts) > 1 {
-				fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
-				return
-			}
-
-			for _, contract := range contracts {
-				abi, _ := json.Marshal(contract.Info.AbiDefinition) // Flatten the compiler parse
-				bCode, err := common.FromHex(contract.Code)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "parse evm code error", err)
-					return
-				}
-				action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Abi: string(abi)}
-			}
+			action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Abi: string(abi)}
 		}
 	} else {
 		bCode, err := common.FromHex(code)
