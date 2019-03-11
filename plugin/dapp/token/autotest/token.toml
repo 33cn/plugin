@@ -25,6 +25,15 @@ dep = ["tokenPre"]
 id = "tokenMint"
 command = "send token mint -a 100 -s TC -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 dep = ["tokenFinish"]
+amount = "100"
+checkItem = ["balance"]
+
+[[TokenBurnCase]]
+id = "tokenBurn"
+command = "send token burn -a 50 -s TC -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+dep = ["tokenMint"]
+amount = "50"
+checkItem = ["balance"]
 
 #send to token for precreate
 [[TransferCase]]
