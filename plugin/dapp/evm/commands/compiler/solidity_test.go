@@ -45,7 +45,7 @@ func TestCompiler(t *testing.T) {
 
 	contracts, err := CompileSolidityString("", testSource)
 	if err != nil {
-		t.Fatalf("error compiling source. result %v: %v", contracts, err)
+		t.Fatalf("error compiling source. result is %v: %v", contracts, err)
 	}
 	if len(contracts) != 1 {
 		t.Errorf("one contract expected, got %d", len(contracts))
