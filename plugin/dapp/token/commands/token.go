@@ -539,7 +539,6 @@ func tokenBurn(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-
 // GetTokenLogsCmd get logs of token
 func GetTokenLogsCmd() *cobra.Command {
 	cmd := &cobra.Command{

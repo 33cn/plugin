@@ -110,9 +110,7 @@ func (pack *TokenMintPack) checkBalance(txInfo map[string]interface{}) bool {
 	accCurrent := parseInt64(logAccBurn["current"].(map[string]interface{})["balance"])
 	accPrev := parseInt64(logAccBurn["prev"].(map[string]interface{})["balance"])
 
-
-
-	return totalCurrent - amount == totalPrev && accCurrent - amount == accPrev
+	return totalCurrent-amount == totalPrev && accCurrent-amount == accPrev
 }
 
 // TokenBurnCase token mint case
@@ -162,9 +160,7 @@ func (pack *TokenBurnPack) checkBalance(txInfo map[string]interface{}) bool {
 	accCurrent := parseInt64(logAccBurn["current"].(map[string]interface{})["balance"])
 	accPrev := parseInt64(logAccBurn["prev"].(map[string]interface{})["balance"])
 
-
-
-	return totalCurrent + amount == totalPrev && accCurrent + amount == accPrev
+	return totalCurrent+amount == totalPrev && accCurrent+amount == accPrev
 }
 
 func parseInt64(s interface{}) int64 {

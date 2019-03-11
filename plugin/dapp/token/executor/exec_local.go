@@ -244,7 +244,7 @@ func (t *token) ExecLocal_TokenMint(payload *tokenty.TokenMint, tx *types.Transa
 
 	table := NewLogsTable(t.GetLocalDB())
 	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
-	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionMint, TxHash: "0x"+hex.EncodeToString(tx.Hash())})
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionMint, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func (t *token) ExecLocal_TokenBurn(payload *tokenty.TokenBurn, tx *types.Transa
 
 	table := NewLogsTable(t.GetLocalDB())
 	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
-	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionBurn, TxHash: "0x"+hex.EncodeToString(tx.Hash())})
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionBurn, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
 	if err != nil {
 		return nil, err
 	}

@@ -101,7 +101,6 @@ func (t *tokenDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.Rec
 	return kvs, logs, nil
 }
 
-
 func getTokenFromDB(db dbm.KV, symbol string, owner string) (*pty.Token, error) {
 	key := calcTokenAddrKeyS(symbol, owner)
 	value, err := db.Get(key)

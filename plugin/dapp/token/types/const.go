@@ -21,6 +21,7 @@ const (
 	TokenActionTransferToExec = 11
 	// TokenActionMint for token mint
 	TokenActionMint = 12
+	// TokenActionBurn for token burn
 	TokenActionBurn = 13
 )
 
@@ -77,6 +78,7 @@ const (
 	TyLogTokenGenesisDeposit = 322
 	// TyLogTokenMint log for token mint
 	TyLogTokenMint = 323
+	// TyLogTokenBurn log for token burn
 	TyLogTokenBurn = 324
 )
 
