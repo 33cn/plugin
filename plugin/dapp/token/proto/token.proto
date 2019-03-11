@@ -16,6 +16,7 @@ message TokenAction {
         AssetsGenesis        genesis           = 6;
         AssetsTransferToExec transferToExec    = 8;
         TokenMint            tokenMint         = 9;
+        TokenBurn            tokenBurn         = 10;
     }
     int32 Ty = 7;
 }
@@ -42,6 +43,11 @@ message TokenRevokeCreate {
 }
 
 message TokenMint {
+    string symbol = 1;
+    int64  amount = 2;
+}
+
+message TokenBurn {
     string symbol = 1;
     int64  amount = 2;
 }

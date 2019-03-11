@@ -21,6 +21,7 @@ const (
 	TokenActionTransferToExec = 11
 	// TokenActionMint for token mint
 	TokenActionMint = 12
+	TokenActionBurn = 13
 )
 
 // token status
@@ -76,6 +77,7 @@ const (
 	TyLogTokenGenesisDeposit = 322
 	// TyLogTokenMint log for token mint
 	TyLogTokenMint = 323
+	TyLogTokenBurn = 324
 )
 
 const (
@@ -88,6 +90,6 @@ const (
 )
 
 const (
-	// CategoryMintSupport support mint
-	CategoryMintSupport = 1 << iota
+	// CategoryMintBurnSupport support mint & burn
+	CategoryMintBurnSupport = 1 << iota
 )
