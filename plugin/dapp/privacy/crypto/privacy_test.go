@@ -51,11 +51,17 @@ func (*signatureMock) Equals(crypto.Signature) bool {
 	return true
 }
 
+func formatByte32(b []byte) []byte {
+	var b32 [32]byte
+	copy(b32[:], b)
+	return b32[:]
+}
+
 type privKeyMock struct {
 }
 
 func (mock *privKeyMock) Bytes() []byte {
-	return []byte("1234")
+	return formatByte32([]byte("1234"))
 }
 
 func (mock *privKeyMock) Sign(msg []byte) crypto.Signature {
@@ -82,7 +88,7 @@ func TestNewPrivacy(t *testing.T) {
 }
 
 func test_RecoverOnetimePriKey(t *testing.T) {
-	R := []byte("1234")
+	R := formatByte32([]byte("1234"))
 	pkm := privKeyMock{}
 	privKey, err := RecoverOnetimePriKey(R, &pkm, &pkm, 0)
 	assert.Nil(t, err)
