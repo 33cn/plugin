@@ -43,6 +43,7 @@ func TokenCmd() *cobra.Command {
 		CreateRawTokenRevokeTxCmd(),
 		CreateTokenTransferExecCmd(),
 		CreateRawTokenMintTxCmd(),
+		CreateRawTokenBurnTxCmd(),
 		GetTokenLogsCmd(),
 	)
 
@@ -468,7 +469,7 @@ func tokenRevoke(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// CreateRawTokenMintTxCmd create raw token finish create transaction
+// CreateRawTokenMintTxCmd create raw token  mintage transaction
 func CreateRawTokenMintTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint",
@@ -502,6 +503,42 @@ func tokenMint(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenMintTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
+
+// CreateRawTokenBurnTxCmd create raw token burn transaction
+func CreateRawTokenBurnTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn",
+		Short: "Create a burn token transaction",
+		Run:   tokenBurn,
+	}
+	addTokenBurnFlags(cmd)
+	return cmd
+}
+
+func addTokenBurnFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Float64P("amount", "a", 0, "amount of burn")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
+}
+
+func tokenBurn(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+
+	params := &tokenty.TokenBurn{
+		Symbol: symbol,
+		Amount: int64((amount+0.000001)*1e4) * 1e4,
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenBurnTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
 
 // GetTokenLogsCmd get logs of token
 func GetTokenLogsCmd() *cobra.Command {
