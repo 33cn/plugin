@@ -85,7 +85,7 @@ func (t *tokenDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue,
 	t.token.Total += amount
 
 	kvs := append(t.getKVSet(calcTokenKey(t.token.Symbol)), t.getKVSet(calcTokenAddrNewKeyS(t.token.Symbol, t.token.Owner))...)
-	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenMint, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
+	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenMint, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Current: &t.token})}}
 	return kvs, logs, nil
 }
 
@@ -97,7 +97,7 @@ func (t *tokenDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.Rec
 	t.token.Total -= amount
 
 	kvs := append(t.getKVSet(calcTokenKey(t.token.Symbol)), t.getKVSet(calcTokenAddrNewKeyS(t.token.Symbol, t.token.Owner))...)
-	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenBurn, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
+	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenBurn, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Current: &t.token})}}
 	return kvs, logs, nil
 }
 

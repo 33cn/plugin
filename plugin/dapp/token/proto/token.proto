@@ -73,8 +73,8 @@ message ReceiptToken {
 }
 
 message ReceiptTokenAmount {
-    Token prev = 1;
-    Token cur  = 2;
+    Token prev     = 1;
+    Token current  = 2;
 }
 
 // local
