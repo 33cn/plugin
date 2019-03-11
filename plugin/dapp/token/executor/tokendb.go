@@ -89,6 +89,19 @@ func (t *tokenDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue,
 	return kvs, logs, nil
 }
 
+func (t *tokenDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	if t.token.Total < amount {
+		return nil, nil, types.ErrNoBalance
+	}
+	prevToken := t.token
+	t.token.Total -= amount
+
+	kvs := append(t.getKVSet(calcTokenKey(t.token.Symbol)), t.getKVSet(calcTokenAddrNewKeyS(t.token.Symbol, t.token.Owner))...)
+	logs := []*types.ReceiptLog{{Ty: pty.TyLogTokenBurn, Log: types.Encode(&pty.ReceiptTokenAmount{Prev: &prevToken, Cur: &t.token})}}
+	return kvs, logs, nil
+}
+
+
 func getTokenFromDB(db dbm.KV, symbol string, owner string) (*pty.Token, error) {
 	key := calcTokenAddrKeyS(symbol, owner)
 	value, err := db.Get(key)
@@ -507,7 +520,7 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 	if mint == nil {
 		return nil, types.ErrInvalidParam
 	}
-	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxCoin || mint.GetSymbol() == "" {
+	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxTokenBalance || mint.GetSymbol() == "" {
 		return nil, types.ErrInvalidParam
 	}
 
@@ -516,8 +529,8 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	if tokendb.token.Category&pty.CategoryMintSupport == 0 {
-		tokenlog.Error("Can't mint category", "category", tokendb.token.Category, "support", pty.CategoryMintSupport)
+	if tokendb.token.Category&pty.CategoryMintBurnSupport == 0 {
+		tokenlog.Error("Can't mint category", "category", tokendb.token.Category, "support", pty.CategoryMintBurnSupport)
 		return nil, types.ErrNotSupport
 	}
 
@@ -533,6 +546,46 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 	}
 	tokenlog.Debug("mint", "token.Owner", mint.Symbol, "token.GetTotal()", mint.Amount)
 	receipt, err := tokenAccount.Mint(action.fromaddr, mint.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
+func (action *tokenAction) burn(burn *pty.TokenBurn) (*types.Receipt, error) {
+	if burn == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if burn.GetAmount() < 0 || burn.GetAmount() > types.MaxTokenBalance || burn.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	tokendb, err := loadTokenDB(action.db, burn.GetSymbol())
+	if err != nil {
+		return nil, err
+	}
+
+	if tokendb.token.Category&pty.CategoryMintBurnSupport == 0 {
+		tokenlog.Error("Can't burn category", "category", tokendb.token.Category, "support", pty.CategoryMintBurnSupport)
+		return nil, types.ErrNotSupport
+	}
+
+	kvs, logs, err := tokendb.burn(action.db, burn.Amount)
+	if err != nil {
+		tokenlog.Error("token burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr, "owner", tokendb.token.Owner)
+		return nil, err
+	}
+
+	tokenAccount, err := account.NewAccountDB("token", burn.GetSymbol(), action.db)
+	if err != nil {
+		return nil, err
+	}
+	tokenlog.Debug("burn", "token.Owner", burn.Symbol, "token.GetTotal()", burn.Amount)
+	receipt, err := tokenAccount.Burn(action.fromaddr, burn.Amount)
 	if err != nil {
 		return nil, err
 	}
