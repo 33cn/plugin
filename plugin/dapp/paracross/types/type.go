@@ -118,7 +118,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx.NodeConfig", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return createRawNodeConfigTx(&param)
+		return CreateRawNodeConfigTx(&param)
 	}
 
 	return nil, types.ErrNotSupport

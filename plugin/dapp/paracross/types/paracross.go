@@ -160,7 +160,8 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 	return tx, nil
 }
 
-func createRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
+// CreateRawNodeConfigTx create raw tx for node config
+func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
 	config.Title = types.GetTitle()
 
 	action := &ParacrossAction{
