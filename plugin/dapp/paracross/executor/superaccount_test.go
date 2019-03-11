@@ -162,8 +162,6 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 
 }
 
-
-
 func voteTest(suite *NodeManageTestSuite, addr string, join bool) {
 	config := &pt.ParaNodeAddrConfig{
 		Op:    pt.ParaNodeVote,
