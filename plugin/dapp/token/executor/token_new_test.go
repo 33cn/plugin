@@ -157,7 +157,7 @@ func TestPrecreate(t *testing.T) {
 		Total:        tokenAmount,
 		Price:        tokenPrice,
 		Owner:        addr,
-		Category:     pty.CategoryMintSupport,
+		Category:     pty.CategoryMintBurnSupport,
 	}
 	precreate := &pty.TokenAction{
 		Ty:    pty.TokenActionPreCreate,
