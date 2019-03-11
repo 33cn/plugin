@@ -162,3 +162,28 @@ func (t *token) ExecDelLocal_TokenMint(payload *tokenty.TokenMint, tx *types.Tra
 
 	return &types.LocalDBSet{KV: set}, nil
 }
+
+func (t *token) ExecDelLocal_TokenBurn(payload *tokenty.TokenBurn, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	localToken, err := loadLocalToken(payload.Symbol, tx.From(), tokenty.TokenStatusCreated, t.GetLocalDB())
+	if err != nil {
+		return nil, err
+	}
+	localToken = resetBurn(localToken, t.GetHeight(), t.GetBlockTime(), payload.Amount)
+	key := calcTokenStatusKeyLocal(payload.Symbol, tx.From(), tokenty.TokenStatusCreated)
+	var set []*types.KeyValue
+	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
+
+	table := NewLogsTable(t.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
+	err = table.Del([]byte(txIndex))
+	if err != nil {
+		return nil, err
+	}
+	kv, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
+	return &types.LocalDBSet{KV: set}, nil
+}
