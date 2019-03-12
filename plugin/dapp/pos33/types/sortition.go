@@ -181,8 +181,8 @@ func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
 	}
 	rs.Rands = append(rs.Rands, rss[k].Rands...)
 
-	if len(rs.Rands) < min {
-		panic("can't go here")
+	if len(rs.Rands) == 0 {
+		return rs
 	}
 
 	// 对最终符合的票数排序, 即委员会

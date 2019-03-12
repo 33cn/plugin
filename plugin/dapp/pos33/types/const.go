@@ -73,4 +73,5 @@ const (
 	KeyPos33DelegatePrefix  = "LODB-pos33-Delegate:"
 	KeyPos33ElectePrefix    = "LODB-pos33-Electe:"
 	KeyPos33CommitteePrefix = "LODB-pos33-Committee:"
+	KeyPos33RewordPrefix    = "LODB-pos33-Reword:"
 )

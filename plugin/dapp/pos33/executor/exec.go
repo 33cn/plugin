@@ -104,8 +104,16 @@ func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, in
 		return nil, errors.New("act.Hieght error")
 	}
 
-	// should check act.Hash == Block(act.height).Hash
-	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, act.Hash)
+	// TODO: should check act.Hash == Block(act.height).Hash
+	// seed, err := p.getBlockSeed(act.Height)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if string(seed) != string(act.Hash) {
+	// 	return nil, fmt.Errorf("block seed error")
+	// }
+	seed := act.Hash
+	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, seed)
 	if err != nil {
 		return nil, err
 	}

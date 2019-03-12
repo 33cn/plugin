@@ -164,8 +164,8 @@ func (client *Client) getNextCommittee() (*pt.Pos33Rands, error) {
 	return client.getCommittee(nextHeight)
 }
 
-func (client *Client) getCurrentCommittee() (*pt.Pos33Rands, error) {
-	height := client.GetCurrentHeight()
+func (client *Client) getCurrentCommittee(height int64) (*pt.Pos33Rands, error) {
+	// height := client.GetCurrentHeight()
 	currHeight := height - int64(pt.Pos33CommitteeSize) - height%int64(pt.Pos33CommitteeSize)
 	return client.getCommittee(currHeight)
 }

@@ -119,6 +119,14 @@ func (p *Pos33) getWeight(addr string) int {
 // 	return p.GetLocalDB().Set([]byte(key), value)
 // }
 
+func (p *Pos33) getBlockSeed(height int64) ([]byte, error) {
+	val, err := p.GetLocalDB().Get([]byte(fmt.Sprintf("%s%d", pt.KeyPos33RewordPrefix, height)))
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}
+
 func (p *Pos33) getElecteLocal(height int64) (*pt.Pos33ElecteLocal, error) {
 	val, err := p.GetLocalDB().Get([]byte(fmt.Sprintf("%s%d", pt.KeyPos33ElectePrefix, height)))
 	if err != nil {
