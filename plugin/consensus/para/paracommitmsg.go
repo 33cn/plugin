@@ -551,7 +551,11 @@ out:
 			break out
 		case <-time.NewTimer(time.Second * 2).C:
 			msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
-			client.paraClient.GetQueueClient().Send(msg, true)
+			err := client.paraClient.GetQueueClient().Send(msg, true)
+			if err != nil {
+				plog.Error("para commit send msg", "err", err.Error())
+				break out
+			}
 			resp, err := client.paraClient.GetQueueClient().Wait(msg)
 			if err != nil {
 				plog.Error("para commit msg sign to wallet", "err", err.Error())

@@ -11,6 +11,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/evm/commands/compiler"
+
 	"strings"
 
 	"strconv"
@@ -203,10 +205,12 @@ func createContractCmd() *cobra.Command {
 
 func addCreateContractFlags(cmd *cobra.Command) {
 	addCommonFlags(cmd)
-	cmd.MarkFlagRequired("input")
-
 	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name")
 	cmd.Flags().StringP("abi", "b", "", "bind the abi data")
+
+	cmd.Flags().StringP("sol", "", "", "sol file path")
+	cmd.Flags().StringP("solc", "", "solc", "solc compiler")
+
 }
 
 func createContract(cmd *cobra.Command, args []string) {
@@ -219,15 +223,50 @@ func createContract(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	abi, _ := cmd.Flags().GetString("abi")
+	sol, _ := cmd.Flags().GetString("sol")
+	solc, _ := cmd.Flags().GetString("solc")
 
 	feeInt64 := uint64(fee*1e4) * 1e4
 
-	bCode, err := common.FromHex(code)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "parse evm code error", err)
+	if !strings.EqualFold(sol, "") && !strings.EqualFold(code, "") && !strings.EqualFold(abi, "") {
+		fmt.Fprintln(os.Stderr, "--sol, --code and --abi shouldn't be used at the same time.")
 		return
 	}
-	action := evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Abi: abi}
+
+	var action evmtypes.EVMContractAction
+	if !strings.EqualFold(sol, "") {
+		if _, err := os.Stat(sol); os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, "Sol file is not exist.")
+			return
+		}
+		contracts, err := compiler.CompileSolidity(solc, sol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
+			return
+		}
+
+		if len(contracts) > 1 {
+			fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
+			return
+		}
+
+		for _, contract := range contracts {
+			abi, _ := json.Marshal(contract.Info.AbiDefinition) // Flatten the compiler parse
+			bCode, err := common.FromHex(contract.Code)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "parse evm code error", err)
+				return
+			}
+			action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Abi: string(abi)}
+		}
+	} else {
+		bCode, err := common.FromHex(code)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "parse evm code error", err)
+			return
+		}
+		action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Abi: abi}
+	}
 
 	data, err := createEvmTx(&action, types.ExecName(paraName+"evm"), caller, address.ExecAddress(types.ExecName(paraName+"evm")), expire, rpcLaddr, feeInt64)
 
