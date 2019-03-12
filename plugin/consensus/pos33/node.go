@@ -371,7 +371,7 @@ func getBlockSeed(b *types.Block) []byte {
 
 // gen and send my rands message
 func (n *node) sortition(b *types.Block) error {
-	seed := b.Hash() // getBlockSeed(b)
+	seed := getBlockSeed(b)
 
 	height := b.Height
 	rands := pt.GenRands(n.allWeight(), n.getWeight(n.addr), n.priv, height, seed)
