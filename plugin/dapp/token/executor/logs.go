@@ -63,7 +63,10 @@ func (r *LogsRow) Get(key string) ([]byte, error) {
 // NewLogsTable create table
 func NewLogsTable(kvdb dbm.KV) *table.Table {
 	rowMeta := NewOrderRow()
-	rowMeta.SetPayload(&pty.LocalLogs{})
+	err := rowMeta.SetPayload(&pty.LocalLogs{})
+	if err != nil {
+		panic(err)
+	}
 	t, err := table.NewTable(rowMeta, kvdb, opt_logs_table)
 	if err != nil {
 		panic(err)

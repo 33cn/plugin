@@ -40,7 +40,10 @@ func newTokenDB(preCreate *pty.TokenPreCreate, creator string, height int64) *to
 func (t *tokenDB) save(db dbm.KV, key []byte) {
 	set := t.getKVSet(key)
 	for i := 0; i < len(set); i++ {
-		db.Set(set[i].GetKey(), set[i].Value)
+		err := db.Set(set[i].GetKey(), set[i].Value)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
