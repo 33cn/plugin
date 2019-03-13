@@ -94,7 +94,7 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 	//通过创建交易的txhash生成一个唯一的多重签名合约 NewAddrFromString
 	addr := address.MultiSignAddress(a.txhash)
 	//账户去重校验
-	multiSig, err := getMultiSigAccount(a.localdb, addr)
+	multiSig, err := getMultiSigAccFromDb(a.db, addr)
 	if err == nil && multiSig != nil {
 		return nil, mty.ErrAccountHasExist
 	}
