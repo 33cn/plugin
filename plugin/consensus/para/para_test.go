@@ -231,10 +231,10 @@ func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
 	grpcClient := &typesmocks.Chain33Client{}
 	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
 	para.grpcClient = grpcClient
-	_, err := para.GetBlockHashForkHeightOnMainChain()
+	_, err := para.GetForkHeightOnMainChain("ForkBlockHash")
 	assert.NotNil(t, err)
 	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
-	ret, err := para.GetBlockHashForkHeightOnMainChain()
+	ret, err := para.GetForkHeightOnMainChain("ForkBlockHash")
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret)
 

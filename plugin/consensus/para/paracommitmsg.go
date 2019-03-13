@@ -150,13 +150,23 @@ out:
 				"mainHeigt", rsp.mainStatus.Height, "mainlockhash", common.ToHex(rsp.mainStatus.BlockHash),
 				"selfHeight", rsp.selfStatus.Height, "selfHash", common.ToHex(rsp.selfStatus.BlockHash), "sync", isSync)
 
+			if notification == nil {
+				continue
+			}
+
 			//所有节点还没有共识场景或新节点或重启节点catchingUp场景，要等到收到区块高度大于主链共识高度时候发送，在catchingup时候本身共识高度和块高度一起增长
-			if selfConsensusHeight == -1 || (notification != nil && notification[1] > mainConsensHeight) {
+			if selfConsensusHeight == -1 || (notification[1] > mainConsensHeight) {
 				isSync = true
 			}
 
 			//未共识过的小于当前共识高度的区块，可以不参与共识, 如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
-			if notification != nil && finishHeight < selfConsensusHeight {
+
+			if finishHeight < selfConsensusHeight {
+				finishHeight = selfConsensusHeight
+			}
+
+			// 自共识分叉高度切换场景， 分叉高度前平行链共识高度是-1，分叉高度后，需要重发tx平行链共识高度才能增长
+			if isMainCommitHeightForked() && selfConsensusHeight == -1 && mainConsensHeight > selfConsensusHeight {
 				finishHeight = selfConsensusHeight
 			}
 
@@ -165,7 +175,7 @@ out:
 			//此处也整合了当前consensus height=-1 场景
 			// 需要是<而不是<=, 因为notification[0]被认为是系统起来后已经发送过的
 			nextConsensHeight := selfConsensusHeight + 1
-			if notification != nil && nextConsensHeight < notification[0] {
+			if nextConsensHeight < notification[0] {
 				notification[0] = nextConsensHeight
 				finishHeight = selfConsensusHeight
 				sendingMsgs = nil
@@ -241,7 +251,11 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, paracross.GetExecName(), 0)
+		execName := pt.ParaX
+		if isMainCommitHeightForked() {
+			execName = paracross.GetExecName()
+		}
+		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -257,7 +271,11 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 }
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, paracross.GetExecName(), 0)
+	execName := pt.ParaX
+	if isMainCommitHeightForked() {
+		execName = paracross.GetExecName()
+	}
+	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -329,6 +347,10 @@ func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) 
 	}
 	return false
 
+}
+
+func isMainCommitHeightForked() bool {
+	return curMainChainHeight > mainParaCommitTxForkHeight+100
 }
 
 //当前未考虑获取key非常多失败的场景， 如果获取height非常多，block模块会比较大，但是使用完了就释放了
@@ -529,6 +551,10 @@ out:
 				continue
 			}
 			status.mainStatus = &result
+			//如果没有开启平行链自共识， 采用主链共识, 平行链自共识开启会影响发送tx高度的判断
+			if !isMainCommitHeightForked() {
+				status.selfStatus = status.mainStatus
+			}
 			consensusRst <- &status
 		}
 	}

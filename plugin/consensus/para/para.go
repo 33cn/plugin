@@ -47,9 +47,11 @@ var (
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey               = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchDepth    int32 = 100
-	mainBlockHashForkHeight int64 = types.MaxHeight //calc block hash fork height in main chain
+	minerPrivateKey                  = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	searchHashMatchDepth       int32 = 100
+	mainBlockHashForkHeight    int64 = types.MaxHeight //calc block hash fork height in main chain
+	mainParaCommitTxForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain
+	curMainChainHeight         int64
 )
 
 func init() {
@@ -173,11 +175,6 @@ func (client *client) SetQueueClient(c queue.Client) {
 
 func (client *client) InitBlock() {
 	var err error
-	// get main chain calc block hash fork height
-	mainBlockHashForkHeight, err = client.GetBlockHashForkHeightOnMainChain()
-	if err != nil {
-		panic(err)
-	}
 
 	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
 
@@ -201,6 +198,16 @@ func (client *client) InitBlock() {
 	} else {
 		client.SetCurrentBlock(block)
 	}
+	// get main chain calc block hash fork height
+	mainBlockHashForkHeight, err = client.GetForkHeightOnMainChain("ForkBlockHash")
+	if err != nil {
+		panic(err)
+	}
+	mainParaCommitTxForkHeight, err = client.GetForkHeightOnMainChain(pt.ParaX + "-" + pt.ForkCommitTx)
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 // GetStartSeq get startSeq in mainchain
@@ -369,11 +376,11 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 
 }
 
-func (client *client) GetBlockHashForkHeightOnMainChain() (int64, error) {
-	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte("ForkBlockHash")})
+func (client *client) GetForkHeightOnMainChain(key string) (int64, error) {
+	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte(key)})
 	if err != nil {
 		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
-		return -1, err
+		return types.MaxHeight, err
 	}
 
 	return ret.Data, nil
@@ -716,6 +723,8 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
 	newblock.MainHash = mainBlock.Seq.Hash
 	newblock.MainHeight = mainBlock.Detail.Block.Height
+
+	curMainChainHeight = mainBlock.Detail.Block.Height
 
 	err = client.WriteBlock(lastBlock.StateHash, &newblock, seq)
 
