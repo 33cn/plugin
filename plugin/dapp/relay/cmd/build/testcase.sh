@@ -170,6 +170,7 @@ function relay_test() {
 
     coinaddr=$(${1} tx query -s "${buy_hash}" | jq -r ".receipt.logs[2].log.coinAddr")
     if [ "${coinaddr}" != "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT" ]; then
+        ${1} tx query -s "${buy_hash}"
         echo "wrong create order to coinaddr"
         exit 1
     fi
