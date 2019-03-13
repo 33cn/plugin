@@ -14,8 +14,10 @@ import (
 
 var (
 	// ParaX paracross exec name
-	ParaX = "paracross"
-	glog  = log.New("module", ParaX)
+	ParaX        = "paracross"
+	glog         = log.New("module", ParaX)
+	// ForkCommitTx main chain support paracross commit tx
+	ForkCommitTx = "ForkParacrossCommitTx"
 )
 
 func init() {
@@ -24,6 +26,7 @@ func init() {
 	types.RegistorExecutor(ParaX, NewType())
 	types.RegisterDappFork(ParaX, "Enable", 0)
 	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
+	types.RegisterDappFork(ParaX, ForkCommitTx, types.MaxHeight)
 }
 
 // GetExecName get para exec name
