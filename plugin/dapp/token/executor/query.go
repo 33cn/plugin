@@ -69,3 +69,25 @@ func (t *token) Query_GetTxByToken(in *tokenty.ReqTokenTx) (types.Message, error
 	}
 	return t.getTxByToken(in)
 }
+
+// Query_GetTokenHistory 获取token 的变更历史
+func (t *token) Query_GetTokenHistory(in *types.ReqString) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	rows, err := list(t.GetLocalDB(), "symbol", &tokenty.LocalLogs{Symbol: in.Data}, -1, 0)
+	if err != nil {
+		tokenlog.Error("Query_GetTokenHistory", "err", err)
+		return nil, err
+	}
+	var replys tokenty.ReplyTokenLogs
+	for _, row := range rows {
+		o, ok := row.Data.(*tokenty.LocalLogs)
+		if !ok {
+			tokenlog.Error("Query_GetTokenHistory", "err", "bad row type")
+			return nil, types.ErrTypeAsset
+		}
+		replys.Logs = append(replys.Logs, o)
+	}
+	return &replys, nil
+}
