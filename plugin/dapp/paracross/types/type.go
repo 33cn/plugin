@@ -14,8 +14,8 @@ import (
 
 var (
 	// ParaX paracross exec name
-	ParaX        = "paracross"
-	glog         = log.New("module", ParaX)
+	ParaX = "paracross"
+	glog  = log.New("module", ParaX)
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
 )
