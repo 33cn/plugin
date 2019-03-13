@@ -41,6 +41,9 @@ var (
 
 func TestToken(t *testing.T) {
 	types.SetTitleOnlyForTest("chain33")
+	tokenTotal := int64(10000 * 1e8)
+	tokenBurn := int64(10 * 1e8)
+	tokenMint := int64(20 * 1e8)
 	total := int64(100000)
 	accountA := types.Account{
 		Balance: total,
@@ -93,7 +96,7 @@ func TestToken(t *testing.T) {
 		Name:         Symbol,
 		Symbol:       Symbol,
 		Introduction: Symbol,
-		Total:        10000 * 1e8,
+		Total:        tokenTotal,
 		Price:        0,
 		Owner:        string(Nodes[0]),
 		Category:     pty.CategoryMintBurnSupport,
@@ -146,6 +149,9 @@ func TestToken(t *testing.T) {
 	for _, kv := range receipt.KV {
 		stateDB.Set(kv.Key, kv.Value)
 	}
+	accDB, _ := account.NewAccountDB(pty.TokenX, Symbol, stateDB)
+	accChcek := accDB.LoadAccount(string(Nodes[0]))
+	assert.Equal(t, tokenTotal, accChcek.Balance)
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx2, receiptDate, int(1))
@@ -155,7 +161,7 @@ func TestToken(t *testing.T) {
 	// mint burn
 	p3 := &pty.TokenMint{
 		Symbol: Symbol,
-		Amount: 6 * 1e8,
+		Amount: tokenMint,
 	}
 	//v, _ := types.PBToJSON(p1)
 	createTx3, err := types.CallCreateTransaction(pty.TokenX, "TokenMint", p3)
@@ -176,6 +182,9 @@ func TestToken(t *testing.T) {
 		stateDB.Set(kv.Key, kv.Value)
 	}
 
+	accChcek = accDB.LoadAccount(string(Nodes[0]))
+	assert.Equal(t, tokenTotal+tokenMint, accChcek.Balance)
+
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx3, receiptDate, int(1))
 	assert.Nil(t, err)
@@ -183,7 +192,7 @@ func TestToken(t *testing.T) {
 
 	p4 := &pty.TokenBurn{
 		Symbol: Symbol,
-		Amount: 18,
+		Amount: tokenBurn,
 	}
 	//v, _ := types.PBToJSON(p1)
 	createTx4, err := types.CallCreateTransaction(pty.TokenX, "TokenBurn", p4)
@@ -203,6 +212,8 @@ func TestToken(t *testing.T) {
 	for _, kv := range receipt.KV {
 		stateDB.Set(kv.Key, kv.Value)
 	}
+	accChcek = accDB.LoadAccount(string(Nodes[0]))
+	assert.Equal(t, tokenTotal+tokenMint-tokenBurn, accChcek.Balance)
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx4, receiptDate, int(1))
