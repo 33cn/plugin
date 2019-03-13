@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"fmt"
 	"sort"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -61,25 +62,31 @@ func (lott *Lottery) GetDriverName() string {
 	return pty.LotteryX
 }
 
-func (lott *Lottery) findLotteryBuyRecords(key []byte) (*pty.LotteryBuyRecords, error) {
-
-	count := lott.GetLocalDB().PrefixCount(key)
-	llog.Error("findLotteryBuyRecords", "count", count)
-
-	values, err := lott.GetLocalDB().List(key, nil, int32(count), 0)
-	if err != nil {
-		return nil, err
-	}
+func (lott *Lottery) findLotteryBuyRecords(prefix []byte) (*pty.LotteryBuyRecords, error) {
+	count := 0
+	var key []byte
 	var records pty.LotteryBuyRecords
 
-	for _, value := range values {
-		var record pty.LotteryBuyRecord
-		err := types.Decode(value, &record)
+	for {
+		values, err := lott.GetLocalDB().List(prefix, key, DefultCount, 0)
 		if err != nil {
-			continue
+			return nil, err
 		}
-		records.Records = append(records.Records, &record)
+		for _, value := range values {
+			var record pty.LotteryBuyRecord
+			err := types.Decode(value, &record)
+			if err != nil {
+				continue
+			}
+			records.Records = append(records.Records, &record)
+		}
+		count += len(values)
+		if len(values) < int(DefultCount) {
+			break
+		}
+		key = []byte(fmt.Sprintf("%s:%18d", prefix, records.Records[count-1].Index))
 	}
+	llog.Info("findLotteryBuyRecords", "count", count)
 
 	return &records, nil
 }
