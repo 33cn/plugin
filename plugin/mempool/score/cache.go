@@ -3,6 +3,7 @@ package score
 import (
 	"bytes"
 	"encoding/gob"
+	"time"
 
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
@@ -36,7 +37,8 @@ func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error
 		return nil, err
 	}
 	size := len(buf.Bytes())
-	return &skiplist.SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
+	return &skiplist.SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*
+		cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
 }
 
 // Exist 是否存在
@@ -121,4 +123,27 @@ func (cache *Queue) Walk(count int, cb func(value *mempool.Item) bool) {
 		i++
 		return i != count
 	})
+}
+
+// GetProperFee 获取合适的手续费
+func (cache *Queue) GetProperFee() int64 {
+	var sumScore int64
+	var properFee int64
+	if cache.Size() == 0 {
+		return cache.subConfig.ProperFee
+	}
+	i := 0
+	cache.Walk(0, func(tx *mempool.Item) bool {
+		if i == 100 {
+			return false
+		}
+		//这里的int64(500)是一般交易的大小
+		sumScore += cache.subConfig.PriceConstant*tx.Value.Fee*
+			cache.subConfig.PricePower*int64(500) - cache.subConfig.TimeParam*tx.EnterTime
+		i++
+		return true
+	})
+	properFee = (sumScore/int64(cache.Size()) + cache.subConfig.TimeParam*time.Now().Unix()) /
+		(cache.subConfig.PriceConstant * cache.subConfig.PricePower * int64(500))
+	return properFee
 }

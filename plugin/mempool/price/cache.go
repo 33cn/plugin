@@ -130,3 +130,23 @@ func (cache *Queue) Walk(count int, cb func(value *mempool.Item) bool) {
 		return i != count
 	})
 }
+
+// GetProperFee 获取合适的手续费,取前100的平均价格
+func (cache *Queue) GetProperFee() int64 {
+	var sumFee int64
+	var properFee int64
+	if cache.Size() == 0 {
+		return cache.subConfig.ProperFee
+	}
+	i := 0
+	cache.Walk(0, func(tx *mempool.Item) bool {
+		if i == 100 {
+			return false
+		}
+		sumFee += tx.Value.Fee
+		i++
+		return true
+	})
+	properFee = sumFee / int64(i)
+	return properFee
+}
