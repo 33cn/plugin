@@ -379,7 +379,7 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 func (client *client) GetForkHeightOnMainChain(key string) (int64, error) {
 	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte(key)})
 	if err != nil {
-		plog.Error("para get rpc ForkBlockHash fail", "err", err.Error())
+		plog.Error("para get rpc ForkHeight fail", "key", key, "err", err.Error())
 		return types.MaxHeight, err
 	}
 
