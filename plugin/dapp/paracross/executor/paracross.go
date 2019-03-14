@@ -318,9 +318,13 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 		if err != nil {
 			return err
 		}
-		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw ||
-			payload.Ty == pt.ParacrossActionCommit {
+		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw {
 			return nil
+		}
+		if c.GetHeight() > types.GetDappFork(pt.ParaX, pt.ForkCommitTx) {
+			if payload.Ty == pt.ParacrossActionCommit {
+				return nil
+			}
 		}
 	}
 	return types.ErrNotAllow
