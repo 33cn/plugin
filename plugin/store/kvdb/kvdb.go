@@ -121,6 +121,16 @@ func (kvs *KVStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetEx set kvs to the mem of KVStore
+func (kvs *KVStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
+	return nil, nil
+}
+
+// CommitEx kvs in the mem of KVStore
+func (kvs *KVStore) CommitEx(req *types.ReqHash) ([]byte, error) {
+	return nil, nil
+}
+
 // Rollback kvs in the mem of KVStore
 func (kvs *KVStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := kvs.cache[string(req.Hash)]

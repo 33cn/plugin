@@ -161,6 +161,16 @@ func (mavls *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetEx set keys values to memcory mavl, return root hash and error
+func (mavls *Store) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
+	return nil, nil
+}
+
+// CommitEx convert memcory mavl to storage db
+func (mavls *Store) CommitEx(req *types.ReqHash) ([]byte, error) {
+	return nil, nil
+}
+
 // Rollback 回退将缓存的mavl树删除掉
 func (mavls *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
@@ -183,7 +193,7 @@ func (mavls *Store) IterateRangeByStateHash(statehash []byte, start []byte, end 
 
 // ProcEvent not support message
 func (mavls *Store) ProcEvent(msg *queue.Message) {
-	msg.ReplyErr("Store", types.ErrActionNotSupport)
+	//msg.ReplyErr("Store", types.ErrActionNotSupport)
 }
 
 // Del ...

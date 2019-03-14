@@ -341,6 +341,128 @@ func ExecBlock(client queue.Client, prevStateRoot []byte, block *types.Block, er
 	return &detail, deltx, nil
 }
 
+// ExecBlock : just exec block
+func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, errReturn, sync, checkblock bool) (*types.BlockDetail, []*types.Transaction, error) {
+	//发送执行交易给execs模块
+	//通过consensus module 再次检查
+	ulog.Debug("ExecBlock", "height------->", block.Height, "ntx", len(block.Txs))
+	beg := types.Now()
+	defer func() {
+		ulog.Info("ExecBlock", "height", block.Height, "ntx", len(block.Txs), "writebatchsync", sync, "cost", types.Since(beg))
+	}()
+
+	if errReturn && block.Height > 0 && !block.CheckSign() {
+		//block的来源不是自己的mempool，而是别人的区块
+		return nil, nil, types.ErrSign
+	}
+	//tx交易去重处理, 这个地方要查询数据库，需要一个更快的办法
+	cacheTxs := types.TxsToCache(block.Txs)
+	//oldtxscount := len(cacheTxs)
+	var err error
+	//cacheTxs, err = CheckTxDup(client, cacheTxs, block.Height)
+	//if err != nil {
+	//	return nil, nil, err
+	//}
+	//ulog.Info("ExecBlock", "CheckTxDup", types.Since(beg))
+	//beg = types.Now()
+	//newtxscount := len(cacheTxs)
+	//if oldtxscount != newtxscount && errReturn {
+	//	return nil, nil, types.ErrTxDup
+	//}
+	//ulog.Debug("ExecBlock", "prevtx", oldtxscount, "newtx", newtxscount)
+	block.Txs = types.CacheToTxs(cacheTxs)
+	//println("1")
+	receipts, err := ExecTx(client, prevStateRoot, block)
+	if err != nil {
+		return nil, nil, err
+	}
+	ulog.Info("ExecBlock", "ExecTx", types.Since(beg))
+	beg = types.Now()
+	var kvset []*types.KeyValue
+	var deltxlist = make(map[int]bool)
+	var rdata []*types.ReceiptData //save to db receipt log
+	for i := 0; i < len(receipts.Receipts); i++ {
+		receipt := receipts.Receipts[i]
+		if receipt.Ty == types.ExecErr {
+			ulog.Error("exec tx err", "err", receipt)
+			if errReturn { //认为这个是一个错误的区块
+				return nil, nil, types.ErrBlockExec
+			}
+			deltxlist[i] = true
+			continue
+		}
+		rdata = append(rdata, &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs})
+		kvset = append(kvset, receipt.KV...)
+	}
+	kvset = DelDupKey(kvset)
+	//删除无效的交易
+	var deltx []*types.Transaction
+	if len(deltxlist) > 0 {
+		index := 0
+		for i := 0; i < len(block.Txs); i++ {
+			if deltxlist[i] {
+				deltx = append(deltx, block.Txs[i])
+				continue
+			}
+			block.Txs[index] = block.Txs[i]
+			cacheTxs[index] = cacheTxs[i]
+			index++
+		}
+		block.Txs = block.Txs[0:index]
+		cacheTxs = cacheTxs[0:index]
+	}
+	//交易有执行不成功的，报错(TxHash一定不同)
+	if len(deltx) > 0 && errReturn {
+		return nil, nil, types.ErrCheckTxHash
+	}
+	//检查block的txhash值
+	calcHash := merkle.CalcMerkleRootCache(cacheTxs)
+	if errReturn && !bytes.Equal(calcHash, block.TxHash) {
+		return nil, nil, types.ErrCheckTxHash
+	}
+	ulog.Info("ExecBlock", "CalcMerkleRootCache", types.Since(beg))
+	beg = types.Now()
+	block.TxHash = calcHash
+	var detail types.BlockDetail
+	calcHash, err = ExecKVMemSetEx(client, prevStateRoot, block.Height, kvset, sync)
+	if err != nil {
+		return nil, nil, err
+	}
+	//println("2")
+	if errReturn && !bytes.Equal(block.StateHash, calcHash) {
+		//err = ExecKVSetRollback(client, calcHash)
+		//if err != nil {
+		//	ulog.Error("execBlock-->ExecKVSetRollback", "err", err)
+		//}
+		//if len(rdata) > 0 {
+		//	for i, rd := range rdata {
+		//		rd.OutputReceiptDetails(block.Txs[i].Execer, ulog)
+		//	}
+		//}
+		return nil, nil, types.ErrCheckStateHash
+	}
+	block.StateHash = calcHash
+	detail.Block = block
+	detail.Receipts = rdata
+	if detail.Block.Height > 0 && checkblock {
+		err := CheckBlock(client, &detail)
+		if err != nil {
+			ulog.Debug("CheckBlock-->", "err=", err)
+			return nil, deltx, err
+		}
+	}
+	ulog.Info("ExecBlock", "CheckBlock", types.Since(beg))
+	beg = types.Now()
+	// 写数据库失败时需要及时返回错误，防止错误数据被写入localdb中CHAIN33-567
+	err = ExecKVSetCommitEx(client, block.StateHash)
+	if err != nil {
+		return nil, nil, err
+	}
+	detail.KV = kvset
+	detail.PrevStatusHash = prevStateRoot
+	return &detail, deltx, nil
+}
+
 //CreateNewBlock : Create a New Block
 func CreateNewBlock(parent *types.Block, txs []*types.Transaction) *types.Block {
 	newblock := &types.Block{}

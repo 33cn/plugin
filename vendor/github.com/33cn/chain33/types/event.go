@@ -146,6 +146,10 @@ const (
 	EventLocalRollback = 137
 	EventLocalNew      = 138
 	EventLocalClose    = 139
+
+	EventReExecBlock   = 140
+	EventStoreMemSetEx = 141
+	EventStoreCommitEx = 142
 	//exec
 	EventBlockChainQuery = 212
 	EventConsensusQuery  = 213

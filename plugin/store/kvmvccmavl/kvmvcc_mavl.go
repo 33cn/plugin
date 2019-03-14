@@ -21,6 +21,8 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
+	"strings"
+	"os"
 )
 
 var (
@@ -33,6 +35,10 @@ var (
 	delMavlDataState  int32
 	wg                sync.WaitGroup
 	quit              bool
+
+	// 用来阻塞查看当前是否需要升级数据库
+	done              chan struct{}
+	isNeedUpdateStore bool
 )
 
 const (
@@ -54,6 +60,7 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
+	done = make(chan struct{}, 1)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -87,6 +94,20 @@ type subConfig struct {
 
 // New construct KVMVCCStore module
 func New(cfg *types.Store, sub []byte) queue.Module {
+	//需要做路径上面的判断
+	l := strings.LastIndex(cfg.DbPath, "/")
+	parentPath := string([]rune(cfg.DbPath)[:l])
+	mavlPath := parentPath + "/" + "mavltree"
+	isExist, err := PathExists(mavlPath)
+	if isExist && err == nil {
+		//err := os.Rename(cfg.DbPath, mavlPath)
+		//if err != nil {
+		//	panic(err)
+		//}
+		cfg.DbPath = mavlPath
+		isNeedUpdateStore = true
+	}
+
 	bs := drivers.NewBaseStore(cfg)
 	var kvms *KVmMavlStore
 	var subcfg subConfig
@@ -239,8 +260,72 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 
 // ProcEvent handles supported events
 func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
-	msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
+	//msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
+	client:= kvmMavls.GetQueueClient()
+	if msg != nil {
+		reData := msg.GetData().(*types.ReplyString)
+		if reData.Data == "over" {
+			kmlog.Info("ProcEvent update store over")
+			msg.ReplyErr("KVmMavlStore", nil)
+			done <- struct{}{}
+			return
+		}
+	}
+	if !isNeedUpdateStore {
+		return
+	}
+	height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
+	if err != nil {
+		height = 0
+	} else {
+		height++
+	}
+	msg1 := client.NewMessage("blockchain", types.EventReExecBlock, &types.ReqInt{Height: height})
+	err = client.Send(msg1, true)
+	if err != nil {
+		return
+	}
+	resp, err := client.Wait(msg1)
+	if err != nil {
+		return
+	}
+	fmt.Println(resp.GetData())
+	data := resp.GetData().(*types.ReplyString)
+	if data.Data == "need" { //进程阻塞
+		<-done
+		//TODO 完成之后处理保存数据路径问题
+	}
 }
+
+// MemSetEx set kvs to the mem of KVmMavlStore module and return the StateHash
+func (kvmMavls *KVmMavlStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
+	if datas.Height < kvmvccMavlFork {
+		hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
+		if err != nil {
+			return hash, err
+		}
+		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
+		if err != nil {
+			return hash, err
+		}
+		if err == nil {
+			kvmMavls.cache.Add(string(hash), datas.Height)
+		}
+		return hash, err
+	}
+	// 仅仅做kvmvcc
+	hash, err := kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	if err == nil {
+		kvmMavls.cache.Add(string(hash), datas.Height)
+	}
+	return hash, err
+}
+
+// CommitEx kvs in the mem of KVmMavlStore module to state db and return the StateHash
+func (kvmMavls *KVmMavlStore) CommitEx(req *types.ReqHash) ([]byte, error) {
+	return kvmMavls.KVMVCCStore.Commit(req)
+}
+
 
 // Del set kvs to nil with StateHash
 func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
@@ -312,4 +397,15 @@ func isDelMavling() bool {
 
 func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
+}
+
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }

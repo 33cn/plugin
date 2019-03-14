@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	"fmt"
 )
 
 //ProcessBlock 处理共识模块过来的blockdetail，peer广播过来的block，以及从peer同步过来的block
@@ -597,6 +598,39 @@ func (b *BlockChain) ProcessDelParaChainBlock(broadcast bool, blockdetail *types
 	b.index.DelNode(blockHash)
 
 	return nil, true, false, nil
+}
+
+func (b *BlockChain) ProcessReExecBlock(startHeight, curHeight int64) {
+	var prevStateHash []byte
+	if startHeight > 0 {
+		blockdetail, err := b.GetBlock(startHeight - 1)
+		if err != nil {
+			panic(fmt.Sprintf("get height=%d err, this not allow fail", startHeight - 1))
+		}
+		prevStateHash = blockdetail.Block.StateHash
+	}
+	for i := startHeight; i <= curHeight; i++ {
+		blockdetail, err := b.GetBlock(i)
+		if err != nil {
+			 panic(fmt.Sprintf("get height=%d err, this not allow fail", i))
+		}
+		block := blockdetail.Block
+		_,_, err = execBlockEx(b.client, prevStateHash, block, true, true)
+		if err != nil {
+			panic(fmt.Sprintf("execBlockEx height=%d err=%s, this not allow fail", i, err.Error()))
+		}
+		prevStateHash = block.StateHash
+	}
+	// 通知执行结束
+	msg := b.client.NewMessage("store", types.EventReExecBlock, &types.ReplyString{Data:"over"})
+	err := b.client.Send(msg, true)
+	if err != nil {
+		return
+	}
+	_, err = b.client.Wait(msg)
+	if err != nil {
+		return
+	}
 }
 
 // IsRecordFaultErr 检测此错误是否要记录到故障错误中

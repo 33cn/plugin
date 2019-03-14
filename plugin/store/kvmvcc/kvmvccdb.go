@@ -131,6 +131,16 @@ func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetEx set kvs to the mem of KVMVCCStore module and return the StateHash
+func (mvccs *KVMVCCStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
+	return nil, nil
+}
+
+// Commit kvs in the mem of KVMVCCStore module to state db and return the StateHash
+func (mvccs *KVMVCCStore) CommitEx(req *types.ReqHash) ([]byte, error) {
+	return nil, nil
+}
+
 // Rollback kvs in the mem of KVMVCCStore module and return the StateHash
 func (mvccs *KVMVCCStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mvccs.kvsetmap[string(req.Hash)]

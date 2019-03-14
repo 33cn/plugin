@@ -135,6 +135,16 @@ func (mpts *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetEx set keys values to memcory mpt, return root hash and error
+func (mpts *Store) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
+	return nil, nil
+}
+
+// CommitEx convert memcory mpt to storage db
+func (mpts *Store) CommitEx(req *types.ReqHash) ([]byte, error) {
+	return nil, nil
+}
+
 // Rollback 回退将缓存的mpt树删除掉
 func (mpts *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mpts.trees[string(req.Hash)]
