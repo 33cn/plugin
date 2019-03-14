@@ -350,7 +350,7 @@ func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) 
 }
 
 func isMainCommitHeightForked() bool {
-	return curMainChainHeight > mainParaCommitTxForkHeight+100
+	return curMainChainHeight > mainParaSelfConsensusForkHeight+100
 }
 
 //当前未考虑获取key非常多失败的场景， 如果获取height非常多，block模块会比较大，但是使用完了就释放了

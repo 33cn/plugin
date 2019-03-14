@@ -47,11 +47,11 @@ var (
 	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
 	zeroHash           [32]byte
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey                  = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchDepth       int32 = 100
-	mainBlockHashForkHeight    int64 = types.MaxHeight //calc block hash fork height in main chain
-	mainParaCommitTxForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain
-	curMainChainHeight         int64
+	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	searchHashMatchDepth            int32 = 100
+	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
+	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain
+	curMainChainHeight              int64 //当前实时的主链高度
 )
 
 func init() {
@@ -72,14 +72,16 @@ type client struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds           int64  `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient        string `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                 int64  `json:"startHeight,omitempty"`
-	EmptyBlockInterval          int64  `json:"emptyBlockInterval,omitempty"`
-	AuthAccount                 string `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg        int32  `json:"waitBlocks4CommitMsg,omitempty"`
-	SearchHashMatchedBlockDepth int32  `json:"searchHashMatchedBlockDepth,omitempty"`
-	GenesisAmount               int64  `json:"genesisAmount,omitempty"`
+	WriteBlockSeconds               int64  `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient            string `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                     int64  `json:"startHeight,omitempty"`
+	EmptyBlockInterval              int64  `json:"emptyBlockInterval,omitempty"`
+	AuthAccount                     string `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg            int32  `json:"waitBlocks4CommitMsg,omitempty"`
+	SearchHashMatchedBlockDepth     int32  `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount                   int64  `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight         int64  `json:"mainBlockHashForkHeight,omitempty"`
+	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
 }
 
 // New function to init paracross env
@@ -106,6 +108,13 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	if subcfg.SearchHashMatchedBlockDepth > 0 {
 		searchHashMatchDepth = subcfg.SearchHashMatchedBlockDepth
+	}
+	if subcfg.MainBlockHashForkHeight > 0 {
+		mainBlockHashForkHeight = subcfg.MainBlockHashForkHeight
+	}
+
+	if subcfg.MainParaSelfConsensusForkHeight > 0 {
+		mainParaSelfConsensusForkHeight = subcfg.MainParaSelfConsensusForkHeight
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -197,15 +206,6 @@ func (client *client) InitBlock() {
 		client.WriteBlock(zeroHash[:], newblock, startSeq-1)
 	} else {
 		client.SetCurrentBlock(block)
-	}
-	// get main chain calc block hash fork height
-	mainBlockHashForkHeight, err = client.GetForkHeightOnMainChain("ForkBlockHash")
-	if err != nil {
-		panic(err)
-	}
-	mainParaCommitTxForkHeight, err = client.GetForkHeightOnMainChain(pt.ParaX + "-" + pt.ForkCommitTx)
-	if err != nil {
-		panic(err)
 	}
 
 }
