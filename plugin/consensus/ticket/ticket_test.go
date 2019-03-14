@@ -21,8 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// 执行： go test -cover
 func TestTicket(t *testing.T) {
+	testTicket(t)
+}
+
+func testTicket(t *testing.T) {
 	mock33 := testnode.New("testdata/chain33.cfg.toml", nil)
 	defer mock33.Close()
 	mock33.Listen()
@@ -61,7 +64,7 @@ func TestTicket(t *testing.T) {
 	status, err = mock33.GetAPI().GetWalletStatus()
 	assert.Nil(t, err)
 	assert.Equal(t, true, status.IsAutoMining)
-	err = mock33.WaitHeight(100)
+	err = mock33.WaitHeight(50)
 	assert.Nil(t, err)
 	//查询票是否自动close，并且购买了新的票
 	req := &types.ReqWalletTransactionList{Count: 1000}

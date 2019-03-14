@@ -42,6 +42,9 @@ func TokenCmd() *cobra.Command {
 		CreateRawTokenFinishTxCmd(),
 		CreateRawTokenRevokeTxCmd(),
 		CreateTokenTransferExecCmd(),
+		CreateRawTokenMintTxCmd(),
+		CreateRawTokenBurnTxCmd(),
+		GetTokenLogsCmd(),
 	)
 
 	return cmd
@@ -464,4 +467,119 @@ func tokenRevoke(cmd *cobra.Command, args []string) {
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenRevokeTx", params, nil)
 	ctx.RunWithoutMarshal()
+}
+
+// CreateRawTokenMintTxCmd create raw token  mintage transaction
+func CreateRawTokenMintTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint",
+		Short: "Create a mint token transaction",
+		Run:   tokenMint,
+	}
+	addTokenMintFlags(cmd)
+	return cmd
+}
+
+func addTokenMintFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Float64P("amount", "a", 0, "amount of mintage")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
+}
+
+func tokenMint(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+
+	params := &tokenty.TokenMint{
+		Symbol: symbol,
+		Amount: int64((amount+0.000001)*1e4) * 1e4,
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenMintTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// CreateRawTokenBurnTxCmd create raw token burn transaction
+func CreateRawTokenBurnTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn",
+		Short: "Create a burn token transaction",
+		Run:   tokenBurn,
+	}
+	addTokenBurnFlags(cmd)
+	return cmd
+}
+
+func addTokenBurnFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Float64P("amount", "a", 0, "amount of burn")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
+}
+
+func tokenBurn(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+
+	params := &tokenty.TokenBurn{
+		Symbol: symbol,
+		Amount: int64((amount+0.000001)*1e4) * 1e4,
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenBurnTx", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// GetTokenLogsCmd get logs of token
+func GetTokenLogsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_token_logs",
+		Short: "Get logs of token",
+		Run:   getTokenLogs,
+	}
+	getTokenLogsFlags(cmd)
+	return cmd
+}
+
+func getTokenLogs(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = getRealExecName(paraName, "token")
+	params.FuncName = "GetTokenHistory"
+	params.Payload = types.MustPBToJSON(&types.ReqString{Data: symbol})
+	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	var res tokenty.ReplyTokenLogs
+	err = rpc.Call("Chain33.Query", params, &res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	data, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	fmt.Println(string(data))
+}
+
+func getTokenLogsFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
 }

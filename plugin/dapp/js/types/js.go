@@ -19,6 +19,9 @@ const (
 	TyLogJs = 10000
 )
 
+// JsCreator 配置项 创建js合约的管理员
+const JsCreator = "js-creator"
+
 var (
 	typeMap = map[string]int32{
 		"Create": jsActionCreate,
@@ -47,6 +50,8 @@ var (
 	ErrSymbolName   = errors.New("chain33.js: ErrSymbolName")
 	ErrExecerName   = errors.New("chain33.js: ErrExecerName")
 	ErrDBType       = errors.New("chain33.js: ErrDBType")
+	// ErrJsCreator
+	ErrJsCreator = errors.New("ErrJsCreator")
 )
 
 func init() {

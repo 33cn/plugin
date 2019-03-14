@@ -15,6 +15,8 @@ message TokenAction {
         AssetsWithdraw       withdraw          = 5;
         AssetsGenesis        genesis           = 6;
         AssetsTransferToExec transferToExec    = 8;
+        TokenMint            tokenMint         = 9;
+        TokenBurn            tokenBurn         = 10;
     }
     int32 Ty = 7;
 }
@@ -40,6 +42,16 @@ message TokenRevokeCreate {
     string owner  = 2;
 }
 
+message TokenMint {
+    string symbol = 1;
+    int64  amount = 2;
+}
+
+message TokenBurn {
+    string symbol = 1;
+    int64  amount = 2;
+}
+
 // state db
 message Token {
     string name         = 1;
@@ -58,6 +70,11 @@ message ReceiptToken {
     string symbol = 1;
     string owner  = 2;
     int32  status = 3;
+}
+
+message ReceiptTokenAmount {
+    Token prev     = 1;
+    Token current  = 2;
 }
 
 // local
@@ -80,6 +97,13 @@ message LocalToken {
     int64 revokedHeight      = 15;
     int64 revokedTime        = 16;
     int32 category           = 17;
+}
+
+message LocalLogs {
+    string symbol     = 1;
+    string txIndex    = 2;
+    int32  actionType = 3;
+    string txHash     = 4;
 }
 
 // query
@@ -140,6 +164,10 @@ message ReqTokenTx {
     int64  height    = 5;
     int64  index     = 6;
     string addr      = 7;
+}
+
+message ReplyTokenLogs {
+    repeated LocalLogs logs = 1;
 }
 
 service token {

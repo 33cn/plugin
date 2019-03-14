@@ -5,7 +5,10 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 )
@@ -107,6 +110,19 @@ func (t *token) ExecLocal_TokenFinishCreate(payload *tokenty.TokenFinishCreate, 
 	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
 	kv := AddTokenToAssets(payload.Owner, t.GetLocalDB(), payload.Symbol)
 	set = append(set, kv...)
+
+	table := NewLogsTable(t.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionFinishCreate, TxHash: hex.EncodeToString(tx.Hash())})
+	if err != nil {
+		return nil, err
+	}
+	kv, err = table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
 	return &types.LocalDBSet{KV: set}, nil
 }
 
@@ -182,6 +198,16 @@ func setRevoked(t *tokenty.LocalToken, height, time int64) *tokenty.LocalToken {
 	return t
 }
 
+func setMint(t *tokenty.LocalToken, height, time, amount int64) *tokenty.LocalToken {
+	t.Total = t.Total + amount
+	return t
+}
+
+func setBurn(t *tokenty.LocalToken, height, time, amount int64) *tokenty.LocalToken {
+	t.Total = t.Total - amount
+	return t
+}
+
 func resetCreated(t *tokenty.LocalToken) *tokenty.LocalToken {
 	t.CreatedTime = 0
 	t.CreatedHeight = 0
@@ -194,4 +220,64 @@ func resetRevoked(t *tokenty.LocalToken) *tokenty.LocalToken {
 	t.RevokedHeight = 0
 	t.Status = tokenty.TokenStatusPreCreated
 	return t
+}
+
+func resetMint(t *tokenty.LocalToken, height, time, amount int64) *tokenty.LocalToken {
+	t.Total = t.Total - amount
+	return t
+}
+
+func resetBurn(t *tokenty.LocalToken, height, time, amount int64) *tokenty.LocalToken {
+	t.Total = t.Total + amount
+	return t
+}
+
+func (t *token) ExecLocal_TokenMint(payload *tokenty.TokenMint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	localToken, err := loadLocalToken(payload.Symbol, tx.From(), tokenty.TokenStatusCreated, t.GetLocalDB())
+	if err != nil {
+		return nil, err
+	}
+	localToken = setMint(localToken, t.GetHeight(), t.GetBlockTime(), payload.Amount)
+	var set []*types.KeyValue
+	key := calcTokenStatusKeyLocal(payload.Symbol, tx.From(), tokenty.TokenStatusCreated)
+	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
+
+	table := NewLogsTable(t.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionMint, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
+	if err != nil {
+		return nil, err
+	}
+	kv, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
+	return &types.LocalDBSet{KV: set}, nil
+}
+
+func (t *token) ExecLocal_TokenBurn(payload *tokenty.TokenBurn, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	localToken, err := loadLocalToken(payload.Symbol, tx.From(), tokenty.TokenStatusCreated, t.GetLocalDB())
+	if err != nil {
+		return nil, err
+	}
+	localToken = setBurn(localToken, t.GetHeight(), t.GetBlockTime(), payload.Amount)
+	var set []*types.KeyValue
+	key := calcTokenStatusKeyLocal(payload.Symbol, tx.From(), tokenty.TokenStatusCreated)
+	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
+
+	table := NewLogsTable(t.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionBurn, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
+	if err != nil {
+		return nil, err
+	}
+	kv, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
+	return &types.LocalDBSet{KV: set}, nil
 }

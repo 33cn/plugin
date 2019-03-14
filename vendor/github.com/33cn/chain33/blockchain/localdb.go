@@ -7,7 +7,6 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-
 func (chain *BlockChain) procLocalDB(msgtype int64, msg *queue.Message, reqnum chan struct{}) bool {
 	switch msgtype {
 	case types.EventLocalGet:

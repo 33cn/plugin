@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/33cn/chain33/common/log/log15"
-	//"github.com/33cn/chain33/common"
 	"encoding/hex"
+
+	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
@@ -733,7 +733,10 @@ func (client *client) WriteBlock(prev []byte, paraBlock *types.Block, seq int64)
 
 	parablockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail, Sequence: seq}
 	msg := client.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, parablockDetail)
-	client.GetQueueClient().Send(msg, true)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return err
+	}
 	resp, err := client.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
@@ -760,7 +763,10 @@ func (client *client) DelBlock(block *types.Block, seq int64) error {
 		panic("Parachain attempt to Delete GenesisBlock !")
 	}
 	msg := client.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, &types.ReqBlocks{Start: start, End: start, IsDetail: true, Pid: []string{""}})
-	client.GetQueueClient().Send(msg, true)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return err
+	}
 	resp, err := client.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
@@ -769,7 +775,10 @@ func (client *client) DelBlock(block *types.Block, seq int64) error {
 
 	parablockDetail := &types.ParaChainBlockDetail{Blockdetail: blocks.Items[0], Sequence: seq}
 	msg = client.GetQueueClient().NewMessage("blockchain", types.EventDelParaChainBlockDetail, parablockDetail)
-	client.GetQueueClient().Send(msg, true)
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return err
+	}
 	resp, err = client.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err

@@ -79,7 +79,8 @@ func (evl EvidenceList) Hash() []byte {
 	default:
 		left := evl[:(len(evl)+1)/2].Hash()
 		right := evl[(len(evl)+1)/2:].Hash()
-		return merkle.GetHashFromTwoHash(left, right)
+		cache := make([]byte, len(left)+len(right))
+		return merkle.GetHashFromTwoHash(cache, left, right)
 	}
 }
 
