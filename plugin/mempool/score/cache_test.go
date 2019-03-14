@@ -1,6 +1,9 @@
 package score
 
 import (
+	"testing"
+	"time"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -8,8 +11,6 @@ import (
 	drivers "github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 var (
