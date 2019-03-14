@@ -141,6 +141,13 @@ enableMVCC=false
 enableMavlPrune=false
 pruneHeight=10000
 
+[store.sub.kvmvccmavl]
+enableMavlPrefix=false
+enableMVCC=false
+enableMavlPrune=false
+pruneHeight=10000
+enableUpdateKvmvcc=false
+
 [wallet]
 minFee=100000
 driver="leveldb"

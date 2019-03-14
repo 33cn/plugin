@@ -345,10 +345,10 @@ func ExecBlock(client queue.Client, prevStateRoot []byte, block *types.Block, er
 func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, errReturn, sync, checkblock bool) (*types.BlockDetail, []*types.Transaction, error) {
 	//发送执行交易给execs模块
 	//通过consensus module 再次检查
-	ulog.Debug("ExecBlock", "height------->", block.Height, "ntx", len(block.Txs))
+	ulog.Debug("ExecBlockEx", "height------->", block.Height, "ntx", len(block.Txs))
 	beg := types.Now()
 	defer func() {
-		ulog.Info("ExecBlock", "height", block.Height, "ntx", len(block.Txs), "writebatchsync", sync, "cost", types.Since(beg))
+		ulog.Info("ExecBlockEx", "height", block.Height, "ntx", len(block.Txs), "writebatchsync", sync, "cost", types.Since(beg))
 	}()
 
 	if errReturn && block.Height > 0 && !block.CheckSign() {
@@ -376,7 +376,7 @@ func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, 
 	if err != nil {
 		return nil, nil, err
 	}
-	ulog.Info("ExecBlock", "ExecTx", types.Since(beg))
+	ulog.Info("ExecBlockEx", "ExecTx", types.Since(beg))
 	beg = types.Now()
 	var kvset []*types.KeyValue
 	var deltxlist = make(map[int]bool)
@@ -420,7 +420,7 @@ func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, 
 	if errReturn && !bytes.Equal(calcHash, block.TxHash) {
 		return nil, nil, types.ErrCheckTxHash
 	}
-	ulog.Info("ExecBlock", "CalcMerkleRootCache", types.Since(beg))
+	ulog.Info("ExecBlockEx", "CalcMerkleRootCache", types.Since(beg))
 	beg = types.Now()
 	block.TxHash = calcHash
 	var detail types.BlockDetail
@@ -451,7 +451,7 @@ func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, 
 			return nil, deltx, err
 		}
 	}
-	ulog.Info("ExecBlock", "CheckBlock", types.Since(beg))
+	ulog.Info("ExecBlockEx", "CheckBlock", types.Since(beg))
 	beg = types.Now()
 	// 写数据库失败时需要及时返回错误，防止错误数据被写入localdb中CHAIN33-567
 	err = ExecKVSetCommitEx(client, block.StateHash)

@@ -21,8 +21,6 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
-	"strings"
-	"os"
 )
 
 var (
@@ -38,7 +36,8 @@ var (
 
 	// 用来阻塞查看当前是否需要升级数据库
 	done              chan struct{}
-	isNeedUpdateStore bool
+	// 使能mavl在当前区块基础上升级kvmvcc
+	enableUpdateKvmvcc bool
 )
 
 const (
@@ -90,25 +89,11 @@ type subConfig struct {
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
+	EnableUpdateKvmvcc  bool  `json:"enableUpdateKvmvcc"`
 }
 
 // New construct KVMVCCStore module
 func New(cfg *types.Store, sub []byte) queue.Module {
-	//需要做路径上面的判断
-	l := strings.LastIndex(cfg.DbPath, "/")
-	parentPath := string([]rune(cfg.DbPath)[:l])
-	mavlPath := parentPath + "/" + "mavltree"
-	isExist, err := PathExists(mavlPath)
-	if isExist && err == nil {
-		//err := os.Rename(cfg.DbPath, mavlPath)
-		//if err != nil {
-		//	panic(err)
-		//}
-		cfg.DbPath = mavlPath
-		isNeedUpdateStore = true
-	}
-
-	bs := drivers.NewBaseStore(cfg)
 	var kvms *KVmMavlStore
 	var subcfg subConfig
 	var subKVMVCCcfg subKVMVCCConfig
@@ -124,6 +109,12 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
 	}
+
+	if subcfg.EnableUpdateKvmvcc {
+		enableUpdateKvmvcc = true
+	}
+
+	bs := drivers.NewBaseStore(cfg)
 	cache, err := lru.New(cacheSize)
 	if err != nil {
 		panic("new KVmMavlStore fail")
@@ -271,7 +262,7 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 			return
 		}
 	}
-	if !isNeedUpdateStore {
+	if !enableUpdateKvmvcc {
 		return
 	}
 	height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
@@ -289,11 +280,10 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 	if err != nil {
 		return
 	}
-	fmt.Println(resp.GetData())
 	data := resp.GetData().(*types.ReplyString)
-	if data.Data == "need" { //进程阻塞
+	if data.Data == "need" {
+		//进程阻塞
 		<-done
-		//TODO 完成之后处理保存数据路径问题
 	}
 }
 
@@ -397,15 +387,4 @@ func isDelMavling() bool {
 
 func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
-}
-
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }
