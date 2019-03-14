@@ -51,7 +51,7 @@ var (
 	searchHashMatchDepth            int32 = 100
 	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain
-	curMainChainHeight              int64 //当前实时的主链高度
+	curMainChainHeight              int64                   //当前实时的主链高度
 )
 
 func init() {
