@@ -134,10 +134,11 @@ out:
 				client.checkTxCommitTimes = 0
 				sendMsgCh <- client.currentTx
 
+				txhash := common.ToHex(signTx.Hash())
 				for i, msg := range sendingMsgs {
 					plog.Info("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
 						"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
-						"from", client.paraClient.authAccount)
+						"txhash", txhash, "from", client.paraClient.authAccount)
 				}
 			}
 
@@ -293,20 +294,20 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
 	var err error
 	var tx *types.Transaction
-	resendTimer := time.After(time.Second * 1)
+	var resendTimer <-chan time.Time
 
 out:
 	for {
 		select {
 		case tx = <-ch:
 			err = client.sendCommitMsgTx(tx)
-			if err != nil {
+			if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
 				resendTimer = time.After(time.Second * 1)
 			}
 		case <-resendTimer:
 			if err != nil && tx != nil {
 				err = client.sendCommitMsgTx(tx)
-				if err != nil {
+				if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
 					resendTimer = time.After(time.Second * 1)
 				}
 			}
@@ -324,12 +325,12 @@ func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 	}
 	resp, err := client.paraClient.grpcClient.SendTransaction(context.Background(), tx)
 	if err != nil {
-		plog.Error("sendCommitMsgTx send tx", "tx", tx.Hash(), "err", err.Error())
+		plog.Error("sendCommitMsgTx send tx", "tx", common.ToHex(tx.Hash()), "err", err.Error())
 		return err
 	}
 
 	if !resp.GetIsOk() {
-		plog.Error("sendCommitMsgTx send tx Nok", "tx", tx.Hash(), "err", string(resp.GetMsg()))
+		plog.Error("sendCommitMsgTx send tx Nok", "tx", common.ToHex(tx.Hash()), "err", string(resp.GetMsg()))
 		return errors.New(string(resp.GetMsg()))
 	}
 
