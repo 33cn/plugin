@@ -9,7 +9,7 @@ pipeline {
 
     options {
         timeout(time: 2,unit: 'HOURS')
-        retry(2)
+        retry(1)
         timestamps()
         gitLabConnection('gitlab33')
         gitlabBuilds(builds: ['check'])
