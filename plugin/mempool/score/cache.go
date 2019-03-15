@@ -1,10 +1,11 @@
 package score
 
 import (
+	"time"
+
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
-	"time"
 )
 
 var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
