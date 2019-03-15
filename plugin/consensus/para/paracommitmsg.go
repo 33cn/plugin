@@ -324,12 +324,12 @@ func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 	}
 	resp, err := client.paraClient.grpcClient.SendTransaction(context.Background(), tx)
 	if err != nil {
-		plog.Error("sendCommitMsgTx send tx", "tx", tx, "err", err.Error())
+		plog.Error("sendCommitMsgTx send tx", "tx", tx.Hash(), "err", err.Error())
 		return err
 	}
 
 	if !resp.GetIsOk() {
-		plog.Error("sendCommitMsgTx send tx Nok", "tx", tx, "err", string(resp.GetMsg()))
+		plog.Error("sendCommitMsgTx send tx Nok", "tx", tx.Hash(), "err", string(resp.GetMsg()))
 		return errors.New(string(resp.GetMsg()))
 	}
 
