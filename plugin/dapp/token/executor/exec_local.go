@@ -113,7 +113,7 @@ func (t *token) ExecLocal_TokenFinishCreate(payload *tokenty.TokenFinishCreate, 
 
 	table := NewLogsTable(t.GetLocalDB())
 	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
-	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionFinishCreate, TxHash: hex.EncodeToString(tx.Hash())})
+	err = table.Add(&tokenty.LocalLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: tokenty.TokenActionFinishCreate, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
 	if err != nil {
 		return nil, err
 	}
