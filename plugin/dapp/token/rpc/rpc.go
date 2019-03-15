@@ -121,3 +121,29 @@ func (c *Jrpc) CreateRawTokenRevokeTx(param *tokenty.TokenRevokeCreate, result *
 	*result = hex.EncodeToString(data)
 	return nil
 }
+
+// CreateRawTokenMintTx 创建未签名的mint Token交易
+func (c *Jrpc) CreateRawTokenMintTx(param *tokenty.TokenMint, result *interface{}) error {
+	if param == nil || param.Symbol == "" || param.Amount <= 0 {
+		return types.ErrInvalidParam
+	}
+	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenMint", param)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(data)
+	return nil
+}
+
+// CreateRawTokenBurnTx 创建未签名的 burn Token交易
+func (c *Jrpc) CreateRawTokenBurnTx(param *tokenty.TokenBurn, result *interface{}) error {
+	if param == nil || param.Symbol == "" || param.Amount <= 0 {
+		return types.ErrInvalidParam
+	}
+	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenBurn", param)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(data)
+	return nil
+}

@@ -172,7 +172,10 @@ func updateAddrReciver(cachedb dbm.KVDB, token string, addr string, amount int64
 	} else {
 		recv -= amount
 	}
-	setAddrReciver(cachedb, token, addr, recv)
+	err = setAddrReciver(cachedb, token, addr, recv)
+	if err != nil {
+		return nil, err
+	}
 	//keyvalue
 	return getAddrReciverKV(token, addr, recv), nil
 }

@@ -19,6 +19,10 @@ const (
 	TokenActionRevokeCreate = 9
 	// TokenActionTransferToExec for token transfer to exec
 	TokenActionTransferToExec = 11
+	// TokenActionMint for token mint
+	TokenActionMint = 12
+	// TokenActionBurn for token burn
+	TokenActionBurn = 13
 )
 
 // token status
@@ -72,6 +76,10 @@ const (
 	TyLogTokenGenesisTransfer = 321
 	// TyLogTokenGenesisDeposit log for token genesis deposit
 	TyLogTokenGenesisDeposit = 322
+	// TyLogTokenMint log for token mint
+	TyLogTokenMint = 323
+	// TyLogTokenBurn log for token burn
+	TyLogTokenBurn = 324
 )
 
 const (
@@ -81,4 +89,9 @@ const (
 	TokenSymbolLenLimit = 16
 	// TokenIntroLenLimit token introduction length limit
 	TokenIntroLenLimit = 1024
+)
+
+const (
+	// CategoryMintBurnSupport support mint & burn
+	CategoryMintBurnSupport = 1 << iota
 )
