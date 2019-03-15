@@ -158,11 +158,15 @@ func TestGetProperFee(t *testing.T) {
 	cache.Push(item3)
 	cache.Push(item4)
 	cache.GetProperFee()
-	score3 := item3.Priority*cache.subConfig.PriceConstant*cache.subConfig.PricePower*int64(500) -
+	buf3 := types.Encode(item3.Value)
+	size3 := len(buf3)
+	buf4 := types.Encode(item4.Value)
+	size4 := len(buf4)
+	score3 := item3.Value.Fee*cache.subConfig.PriceConstant*cache.subConfig.PricePower/int64(size3) -
 		item3.EnterTime*cache.subConfig.TimeParam
-	score4 := item4.Priority*cache.subConfig.PriceConstant*cache.subConfig.PricePower*int64(500) -
+	score4 := item4.Value.Fee*cache.subConfig.PriceConstant*cache.subConfig.PricePower/int64(size4) -
 		item4.EnterTime*cache.subConfig.TimeParam
-	properFee := ((score3+score4)/2 + time.Now().Unix()*cache.subConfig.TimeParam) /
-		(cache.subConfig.PriceConstant * cache.subConfig.PricePower * int64(500))
-	assert.Equal(t, properFee, cache.GetProperFee())
+	properFee := ((score3+score4)/2 + time.Now().Unix()*cache.subConfig.TimeParam) * int64(250) /
+		(cache.subConfig.PriceConstant * cache.subConfig.PricePower)
+	assert.Equal(t, int64(1), properFee/cache.GetProperFee())
 }

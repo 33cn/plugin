@@ -1,9 +1,6 @@
 package price
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
@@ -28,14 +25,8 @@ func NewQueue(subcfg subConfig) *Queue {
 }
 
 func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
-	//tx := item.value
-	buf := bytes.NewBuffer(nil)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(item.Value)
-	if err != nil {
-		return nil, err
-	}
-	size := len(buf.Bytes())
+	buf := types.Encode(item.Value)
+	size := len(buf)
 	return &skiplist.SkipValue{Score: item.Value.Fee / int64(size), Value: item}, nil
 }
 
@@ -139,11 +130,11 @@ func (cache *Queue) GetProperFee() int64 {
 		return cache.subConfig.ProperFee
 	}
 	i := 0
-	cache.Walk(0, func(tx *mempool.Item) bool {
+	cache.txList.Walk(func(tx interface{}) bool {
 		if i == 100 {
 			return false
 		}
-		sumFee += tx.Value.Fee
+		sumFee += tx.(*mempool.Item).Value.Fee
 		i++
 		return true
 	})

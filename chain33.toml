@@ -73,7 +73,7 @@ poolCacheSize=10240
 [mempool.sub.score]
 poolCacheSize=10240
 timeParam=1      #时间占价格比例
-priceConstant=3  #手续费相对于时间的一个的常量,排队时手续费高1e3的分数~=快1h的分数
+priceConstant=10  #手续费相对于时间的一个的常量,排队时手续费高1e3的分数~=快1h的分数
 pricePower=1     #常量比例
 
 [mempool.sub.price]
