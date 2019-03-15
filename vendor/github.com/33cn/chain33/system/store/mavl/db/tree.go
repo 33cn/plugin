@@ -168,6 +168,16 @@ func (t *Tree) Hash() []byte {
 		return nil
 	}
 	hash := t.root.Hash(t)
+	// 更新memTree
+	if enableMemTree && memTree != nil {
+		for k := range t.obsoleteNode {
+			memTree.Delete(k)
+		}
+		for k, v := range t.updateNode {
+			memTree.Add(k, v)
+		}
+		treelog.Debug("Tree.Hash", "memTree len", memTree.Len(), "tree height", t.blockHeight)
+	}
 	return hash
 }
 
@@ -186,16 +196,6 @@ func (t *Tree) Save() []byte {
 		// 保存每个高度的roothash
 		if enablePrune {
 			t.root.saveRootHash(t)
-		}
-		// 更新memTree
-		if enableMemTree && memTree != nil {
-			for k := range t.obsoleteNode {
-				memTree.Delete(k)
-			}
-			for k, v := range t.updateNode {
-				memTree.Add(k, v)
-			}
-			treelog.Debug("Tree.Save", "memTree len", memTree.Len(), "tree height", t.blockHeight)
 		}
 
 		beg := types.Now()
@@ -519,11 +519,6 @@ func (ndb *nodeDB) SaveNode(t *Tree, node *Node) {
 	node.persisted = true
 	ndb.cacheNode(node)
 	delete(ndb.orphans, string(node.hash))
-	//treelog.Debug("SaveNode", "hash", node.hash, "height", node.height, "value", node.value)
-	// Save node hashInt64 to localmem
-	if enableMemTree {
-		updateLocalMemTree(t, node)
-	}
 }
 
 func getNode4MemTree(hash []byte) (*Node, error) {

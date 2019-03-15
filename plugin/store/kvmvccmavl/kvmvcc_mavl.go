@@ -81,6 +81,10 @@ type subMavlConfig struct {
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
+	// 是否使能内存树
+	EnableMemTree bool     `json:"enableMemTree"`
+	// 是否使能内存树中叶子节点
+	EnableMemVal bool       `json:"enableMemVal"`
 }
 
 type subConfig struct {
@@ -89,6 +93,10 @@ type subConfig struct {
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
+	// 是否使能内存树
+	EnableMemTree bool     `json:"enableMemTree"`
+	// 是否使能内存树中叶子节点
+	EnableMemVal bool       `json:"enableMemVal"`
 	EnableUpdateKvmvcc  bool  `json:"enableUpdateKvmvcc"`
 }
 
@@ -108,6 +116,8 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
+		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
+		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
 	}
 
 	if subcfg.EnableUpdateKvmvcc {
@@ -290,7 +300,7 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 // MemSetEx set kvs to the mem of KVmMavlStore module and return the StateHash
 func (kvmMavls *KVmMavlStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, error) {
 	if datas.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
+		hash, err := kvmMavls.MavlStore.MemSetEx(datas, sync)
 		if err != nil {
 			return hash, err
 		}
