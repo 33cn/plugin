@@ -163,6 +163,7 @@ rescanMultisigAddr=false
 [exec]
 isFree=false
 minExecFee=100000
+maxExecFee=1000000000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
