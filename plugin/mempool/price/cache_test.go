@@ -113,9 +113,9 @@ func TestTimeCompetition(t *testing.T) {
 
 func TestPriceCompetition(t *testing.T) {
 	cache := initEnv(1)
-	cache.Push(item1)
+	cache.Push(item3)
 	cache.Push(item4)
-	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
+	assert.Equal(t, false, cache.Exist(string(item3.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item4.Value.Hash())))
 }
 
@@ -148,4 +148,14 @@ func TestQueueDirection(t *testing.T) {
 	})
 	assert.Equal(t, 5, i)
 	assert.Equal(t, true, lastScore == cache.txList.GetIterator().Last().Score)
+}
+
+func TestGetProperFee(t *testing.T) {
+	cache := initEnv(0)
+	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
+
+	cache.Push(item1)
+	cache.Push(item4)
+	cache.GetProperFee()
+	assert.Equal(t, (item1.Value.Fee+item4.Value.Fee)/2, cache.GetProperFee())
 }

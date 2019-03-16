@@ -11,6 +11,7 @@ import (
 
 type subConfig struct {
 	PoolCacheSize int64 `json:"poolCacheSize"`
+	ProperFee     int64 `json:"properFee"`
 }
 
 func init() {
@@ -24,6 +25,9 @@ func New(cfg *types.Mempool, sub []byte) queue.Module {
 	types.MustDecode(sub, &subcfg)
 	if subcfg.PoolCacheSize == 0 {
 		subcfg.PoolCacheSize = cfg.PoolCacheSize
+	}
+	if subcfg.ProperFee == 0 {
+		subcfg.ProperFee = cfg.MinTxFee
 	}
 	c.SetQueueCache(NewQueue(subcfg))
 	return c
