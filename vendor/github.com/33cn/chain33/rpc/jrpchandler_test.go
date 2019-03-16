@@ -456,7 +456,7 @@ func TestChain33_CreateTxGroup(t *testing.T) {
 		t.Error("Test createtxgroup failed")
 		return
 	}
-	err = tx.Check(0, types.GInt("MinFee"))
+	err = tx.Check(0, types.GInt("MinFee"), types.GInt("MaxTxFee"))
 	assert.Nil(t, err)
 }
 
@@ -1012,6 +1012,23 @@ func TestChain33_GetLastMemPool(t *testing.T) {
 	var testResult interface{}
 	actual := types.ReqNil{}
 	err := testChain33.GetLastMemPool(actual, &testResult)
+	t.Log(err)
+	assert.Equal(t, nil, testResult)
+	assert.NotNil(t, err)
+
+	mock.AssertExpectationsForObjects(t, api)
+}
+
+func TestChain33_GetProperFee(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	testChain33 := newTestChain33(api)
+
+	// expected := &types.ReqBlocks{}
+	api.On("GetProperFee").Return(nil, errors.New("error value"))
+
+	var testResult interface{}
+	actual := types.ReqNil{}
+	err := testChain33.GetProperFee(actual, &testResult)
 	t.Log(err)
 	assert.Equal(t, nil, testResult)
 	assert.NotNil(t, err)
