@@ -5,27 +5,23 @@
 package executor
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-
-	//"github.com/stretchr/testify/mock"
+	"bytes"
+	"math/rand"
 	"testing"
+	"time"
 
 	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
-	"github.com/33cn/chain33/types"
-
-	"bytes"
-	"math/rand"
-	"time"
-
-	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
+	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试
@@ -528,7 +524,7 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"))
+	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxTxFee"))
 	if err != nil {
 		return nil, err
 	}
