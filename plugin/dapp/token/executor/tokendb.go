@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -155,6 +156,11 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 		return nil, pty.ErrTokenSymbolLen
 	} else if token.GetTotal() > types.MaxTokenBalance || token.GetTotal() <= 0 {
 		return nil, pty.ErrTokenTotalOverflow
+	}
+	if types.IsDappFork(action.height, pty.TokenX, "ForkTokenCheckAddress") {
+		if err := address.CheckAddress(token.Owner); err != nil {
+			return nil, err
+		}
 	}
 	if !types.IsDappFork(action.height, pty.TokenX, pty.ForkTokenSymbolWithNumberX) {
 		if token.Category != 0 {

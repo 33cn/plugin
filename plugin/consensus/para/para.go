@@ -166,7 +166,6 @@ func (client *client) SetQueueClient(c queue.Client) {
 		client.InitBlock()
 	})
 	go client.EventLoop()
-
 	client.wg.Add(1)
 	go client.commitMsgClient.handler()
 	go client.CreateBlock()
