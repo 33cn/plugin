@@ -519,7 +519,6 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-
 	group, err := types.CreateTxGroup(txs)
 	if err != nil {
 		return nil, err
@@ -532,7 +531,6 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	for i := range group.Txs {
 		group.SignN(i, int32(types.SECP256K1), privKey)
 	}
-
 	return group.Txs, nil
 }
 
