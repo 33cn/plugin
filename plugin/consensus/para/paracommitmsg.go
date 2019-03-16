@@ -225,7 +225,7 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 		plog.Error("para CreateTxGroup", "err", err.Error())
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxTxFee"))
+	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxFee"))
 	if err != nil {
 		plog.Error("para CheckTxGroup", "err", err.Error())
 		return nil, err

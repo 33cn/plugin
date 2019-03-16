@@ -523,7 +523,7 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxTxFee"))
+	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxFee"))
 	if err != nil {
 		return nil, err
 	}
