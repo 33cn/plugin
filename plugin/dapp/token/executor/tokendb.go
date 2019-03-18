@@ -365,7 +365,7 @@ func checkTokenExist(token string, db dbm.KV) bool {
 	return err == nil
 }
 
-// bug: prepare again after revoke, need to check status, fix in fork ForkTokenCheckPrepareX
+// bug: prepare again after revoke, need to check status, fixed in fork ForkTokenCheckPrepareX
 func checkTokenHasPrecreate(token, owner string, status int32, db dbm.KV) bool {
 	_, err := db.Get(calcTokenAddrKeyS(token, owner))
 	if err == nil {
