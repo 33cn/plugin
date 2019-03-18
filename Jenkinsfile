@@ -57,8 +57,8 @@ pipeline {
                 catch (err){
                     echo 'email  err'
                 }
+                currentBuild.result = 'SUCCESS'
             }
-            currentBuild.result = 'SUCCESS'
             echo 'SUCCESS'
 
         }
