@@ -91,7 +91,6 @@ func (chain *BlockChain) ProcRecvMsg() {
 		case types.EventGetSeqCBLastNum:
 			go chain.processMsg(msg, reqnum, chain.getSeqCBLastNum)
 		case types.EventReExecBlock:
-			chainlog.Info("Just for test EventReExecBlock msg", "content", msg.GetData())
 		    go chain.processMsg(msg, reqnum, chain.reExecBlock)
 		default:
 			go chain.processMsg(msg, reqnum, chain.unknowMsg)
@@ -139,7 +138,7 @@ func (chain *BlockChain) getSeqCBLastNum(msg *queue.Message) {
 func (chain *BlockChain) reExecBlock(msg *queue.Message) {
 	data := (msg.Data).(*types.ReqInt)
 	curHeight := chain.GetBlockHeight()
-	if curHeight <= data.Height {
+	if curHeight < data.Height {
 		msg.Reply(chain.client.NewMessage("store", types.EventReExecBlock, &types.ReplyString{Data:"none"}))
 		return
 	}

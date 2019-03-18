@@ -263,7 +263,7 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 	//msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
 	client:= kvmMavls.GetQueueClient()
-	if msg != nil {
+	if msg != nil && msg.Ty == types.EventReExecBlock {
 		reData := msg.GetData().(*types.ReplyString)
 		if reData.Data == "over" {
 			kmlog.Info("ProcEvent update store over")
@@ -271,29 +271,30 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 			done <- struct{}{}
 			return
 		}
-	}
-	if !enableUpdateKvmvcc {
-		return
-	}
-	height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
-	if err != nil {
-		height = 0
-	} else {
-		height++
-	}
-	msg1 := client.NewMessage("blockchain", types.EventReExecBlock, &types.ReqInt{Height: height})
-	err = client.Send(msg1, true)
-	if err != nil {
-		return
-	}
-	resp, err := client.Wait(msg1)
-	if err != nil {
-		return
-	}
-	data := resp.GetData().(*types.ReplyString)
-	if data.Data == "need" {
-		//进程阻塞
-		<-done
+	} else if msg == nil {
+		if !enableUpdateKvmvcc {
+			return
+		}
+		height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
+		if err != nil {
+			height = 0
+		} else {
+			height++
+		}
+		msg1 := client.NewMessage("blockchain", types.EventReExecBlock, &types.ReqInt{Height: height})
+		err = client.Send(msg1, true)
+		if err != nil {
+			return
+		}
+		resp, err := client.Wait(msg1)
+		if err != nil {
+			return
+		}
+		data := resp.GetData().(*types.ReplyString)
+		if data.Data == "need" {
+			//进程阻塞
+			<-done
+		}
 	}
 }
 
@@ -325,7 +326,6 @@ func (kvmMavls *KVmMavlStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte
 func (kvmMavls *KVmMavlStore) CommitEx(req *types.ReqHash) ([]byte, error) {
 	return kvmMavls.KVMVCCStore.Commit(req)
 }
-
 
 // Del set kvs to nil with StateHash
 func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {

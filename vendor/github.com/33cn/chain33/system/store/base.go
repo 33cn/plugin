@@ -86,7 +86,6 @@ func (store *BaseStore) SetQueueClient(c queue.Client) {
 		}
 		store.done <- struct{}{}
 	}()
-	// just for test
 	store.child.ProcEvent(nil)
 }
 
