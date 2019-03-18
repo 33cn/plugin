@@ -84,6 +84,10 @@ func (evm *EVMExecutor) GetDriverName() string {
 	return evmtypes.ExecutorName
 }
 
+func (u *EVMExecutor) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
+
 // Allow 允许哪些交易在本命执行器执行
 func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 	err := evm.DriverBase.Allow(tx, index)
