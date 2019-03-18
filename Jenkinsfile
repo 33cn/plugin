@@ -47,7 +47,7 @@ pipeline {
         success {
             echo 'I succeeeded!'
             echo "email user: ${ghprbActualCommitAuthorEmail}"
-            currentBuild.result = 'SUCCESS'
+
             script{
                 try {
                     mail to: "${ghprbActualCommitAuthorEmail}",
@@ -58,6 +58,7 @@ pipeline {
                     echo 'email  err'
                 }
             }
+            currentBuild.result = 'SUCCESS'
             echo 'SUCCESS'
 
         }
