@@ -177,7 +177,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 		return nil, pty.ErrTokenExist
 	}
 
-	if checkTokenHasPrecreate(token.GetSymbol(), token.GetOwner(), pty.TokenStatusPreCreated, action.db) {
+	if checkTokenHasPrecreateWithHeight(token.GetSymbol(), token.GetOwner(), action.db, action.height) {
 		return nil, pty.ErrTokenHavePrecreated
 	}
 
@@ -365,6 +365,7 @@ func checkTokenExist(token string, db dbm.KV) bool {
 	return err == nil
 }
 
+// bug: prepare again after revoke, need to check status, fix in fork ForkTokenCheckPrepareX
 func checkTokenHasPrecreate(token, owner string, status int32, db dbm.KV) bool {
 	_, err := db.Get(calcTokenAddrKeyS(token, owner))
 	if err == nil {
@@ -372,6 +373,27 @@ func checkTokenHasPrecreate(token, owner string, status int32, db dbm.KV) bool {
 	}
 	_, err = db.Get(calcTokenAddrNewKeyS(token, owner))
 	return err == nil
+}
+
+func checkTokenHasPrecreateWithHeight(token, owner string, db dbm.KV, height int64) bool {
+	if !types.IsDappFork(height, pty.TokenX, pty.ForkTokenCheckPrepareX) {
+		return checkTokenHasPrecreate(token, owner, pty.TokenStatusPreCreated, db)
+	}
+
+	tokenStatus, err := db.Get(calcTokenAddrNewKeyS(token, owner))
+	if err != nil {
+		tokenStatus, err = db.Get(calcTokenAddrKeyS(token, owner))
+		if err != nil {
+			return false
+		}
+	}
+
+	var t pty.Token
+	if err = types.Decode(tokenStatus, &t); err != nil {
+		tokenlog.Error("checkTokenHasPrecreateWithHeight", "Fail to decode types.token for key err info is", err)
+		panic("data err: checkTokenHasPrecreateWithHeight Fail to decode types.token for key err info is" + err.Error())
+	}
+	return t.Status == pty.TokenStatusPreCreated
 }
 
 func validFinisher(addr string, db dbm.KV) (bool, error) {
