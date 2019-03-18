@@ -84,7 +84,7 @@ func (evm *EVMExecutor) GetDriverName() string {
 	return evmtypes.ExecutorName
 }
 
-func (u *EVMExecutor) ExecutorOrder() int64 {
+func (evm *EVMExecutor) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
