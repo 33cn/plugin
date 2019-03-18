@@ -347,8 +347,9 @@ func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, 
 	//通过consensus module 再次检查
 	ulog.Debug("ExecBlockEx", "height------->", block.Height, "ntx", len(block.Txs))
 	beg := types.Now()
+	beg1 := beg
 	defer func() {
-		ulog.Info("ExecBlockEx", "height", block.Height, "ntx", len(block.Txs), "writebatchsync", sync, "cost", types.Since(beg))
+		ulog.Info("ExecBlockEx", "height", block.Height, "ntx", len(block.Txs), "writebatchsync", sync, "cost", types.Since(beg1))
 	}()
 
 	//tx交易去重处理, 这个地方要查询数据库，需要一个更快的办法
@@ -382,7 +383,6 @@ func ExecBlockEx(client queue.Client, prevStateRoot []byte, block *types.Block, 
 		return types.ErrCheckStateHash
 	}
 	ulog.Info("ExecBlockEx", "CheckBlock", types.Since(beg))
-	beg = types.Now()
 	// 写数据库失败时需要及时返回错误，防止错误数据被写入localdb中CHAIN33-567
 	err = ExecKVSetCommitEx(client, calcHash)
 	if err != nil {
