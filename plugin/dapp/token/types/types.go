@@ -24,6 +24,7 @@ func init() {
 	types.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
 	types.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
 	types.RegisterDappFork(TokenX, "ForkTokenCheckAddress", 1600000)
+	types.RegisterDappFork(TokenX, ForkTokenCheckPrepareX, 1600000)
 }
 
 // TokenType 执行器基类结构体
