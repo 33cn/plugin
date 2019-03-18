@@ -84,6 +84,7 @@ func (evm *EVMExecutor) GetDriverName() string {
 	return evmtypes.ExecutorName
 }
 
+// ExecutorOrder 设置localdb的EnableRead
 func (evm *EVMExecutor) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
