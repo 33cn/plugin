@@ -36,13 +36,11 @@ asset-transfer 分两种， 主链转出， 主链转入
    1. 用户主链paracross合约帐号， balance -
    1. 某平行链paracross合约帐号， balance +
  * 平行链(如果上面步骤失败，， 平行链会过滤掉这个交易)
-   1. 平行链中paracross合约帐号 balance +
    1. 平行链中 用户paracross合约帐号  balance +
 
 主链转入 withdraw
  * 平行链
    1. 平行链中 用户paracross合约帐号  balance -
-   1. 平行链中paracross合约帐号       balance -
  * 主链(上面步骤失败， 不进行操作)
    1. commit 交易共识时执行
    1. 某平行链paracross合约帐号， balance -

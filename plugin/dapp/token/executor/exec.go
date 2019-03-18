@@ -69,3 +69,13 @@ func (t *token) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *typ
 	}
 	return t.ExecTransWithdraw(db, tx, &tokenAction, index)
 }
+
+func (t *token) Exec_TokenMint(payload *tokenty.TokenMint, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newTokenAction(t, "", tx)
+	return action.mint(payload)
+}
+
+func (t *token) Exec_TokenBurn(payload *tokenty.TokenBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newTokenAction(t, "", tx)
+	return action.burn(payload)
+}

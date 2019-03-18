@@ -18,6 +18,8 @@ type tokenAutoTest struct {
 	TransferCaseArr          []autotest.TransferCase `toml:"TransferCase,omitempty"`
 	WithdrawCaseArr          []autotest.WithdrawCase `toml:"WithdrawCase,omitempty"`
 	TokenRevokeCaseArr       []TokenRevokeCase       `toml:"TokenRevokeCase,omitempty"`
+	TokenMintCaseArr         []TokenMintCase         `toml:"TokenMintCase,omitempty"`
+	TokenBurnCaseArr         []TokenBurnCase         `toml:"TokenBurnCase,omitempty"`
 }
 
 func init() {

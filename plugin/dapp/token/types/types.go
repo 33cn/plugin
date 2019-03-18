@@ -57,6 +57,8 @@ func (t *TokenType) GetTypeMap() map[string]int32 {
 		"TokenFinishCreate": TokenActionFinishCreate,
 		"TokenRevokeCreate": TokenActionRevokeCreate,
 		"TransferToExec":    TokenActionTransferToExec,
+		"TokenMint":         TokenActionMint,
+		"TokenBurn":         TokenActionBurn,
 	}
 }
 
@@ -75,6 +77,8 @@ func (t *TokenType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogPreCreateToken:       {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogPreCreateToken"},
 		TyLogFinishCreateToken:    {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogFinishCreateToken"},
 		TyLogRevokeCreateToken:    {Ty: reflect.TypeOf(ReceiptToken{}), Name: "LogRevokeCreateToken"},
+		TyLogTokenMint:            {Ty: reflect.TypeOf(ReceiptTokenAmount{}), Name: "LogMintToken"},
+		TyLogTokenBurn:            {Ty: reflect.TypeOf(ReceiptTokenAmount{}), Name: "LogBurnToken"},
 	}
 }
 
