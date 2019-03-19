@@ -157,7 +157,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	} else if token.GetTotal() > types.MaxTokenBalance || token.GetTotal() <= 0 {
 		return nil, pty.ErrTokenTotalOverflow
 	}
-	if types.IsDappFork(action.height, pty.TokenX, "ForkTokenCheckAddress") {
+	if types.IsDappFork(action.height, pty.TokenX, pty.ForkTokenCheckX) {
 		if err := address.CheckAddress(token.Owner); err != nil {
 			return nil, err
 		}
@@ -365,7 +365,7 @@ func checkTokenExist(token string, db dbm.KV) bool {
 	return err == nil
 }
 
-// bug: prepare again after revoke, need to check status, fixed in fork ForkTokenCheckPrepareX
+// bug: prepare again after revoke, need to check status, fixed in fork ForkTokenCheckX
 func checkTokenHasPrecreate(token, owner string, status int32, db dbm.KV) bool {
 	_, err := db.Get(calcTokenAddrKeyS(token, owner))
 	if err == nil {
@@ -376,7 +376,7 @@ func checkTokenHasPrecreate(token, owner string, status int32, db dbm.KV) bool {
 }
 
 func checkTokenHasPrecreateWithHeight(token, owner string, db dbm.KV, height int64) bool {
-	if !types.IsDappFork(height, pty.TokenX, pty.ForkTokenCheckPrepareX) {
+	if !types.IsDappFork(height, pty.TokenX, pty.ForkTokenCheckX) {
 		return checkTokenHasPrecreate(token, owner, pty.TokenStatusPreCreated, db)
 	}
 
