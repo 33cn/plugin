@@ -68,7 +68,7 @@ func TestToken(t *testing.T) {
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.TokenX, "ForkTokenCheckAddress"),
+		types.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
 		1539918074,
 	}
 
