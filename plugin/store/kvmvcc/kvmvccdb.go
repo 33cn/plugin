@@ -136,7 +136,7 @@ func (mvccs *KVMVCCStore) MemSetEx(datas *types.StoreSet, sync bool) ([]byte, er
 	return nil, nil
 }
 
-// Commit kvs in the mem of KVMVCCStore module to state db and return the StateHash
+// CommitEx kvs in the mem of KVMVCCStore module to state db and return the StateHash
 func (mvccs *KVMVCCStore) CommitEx(req *types.ReqHash) ([]byte, error) {
 	return nil, nil
 }

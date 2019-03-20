@@ -35,7 +35,7 @@ var (
 	quit              bool
 
 	// 用来阻塞查看当前是否需要升级数据库
-	done              chan struct{}
+	done chan struct{}
 	// 使能mavl在当前区块基础上升级kvmvcc
 	enableUpdateKvmvcc bool
 )
@@ -82,9 +82,9 @@ type subMavlConfig struct {
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
 	// 是否使能内存树
-	EnableMemTree bool     `json:"enableMemTree"`
+	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
-	EnableMemVal bool       `json:"enableMemVal"`
+	EnableMemVal bool `json:"enableMemVal"`
 }
 
 type subConfig struct {
@@ -94,10 +94,10 @@ type subConfig struct {
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
 	// 是否使能内存树
-	EnableMemTree bool     `json:"enableMemTree"`
+	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
-	EnableMemVal bool       `json:"enableMemVal"`
-	EnableUpdateKvmvcc  bool  `json:"enableUpdateKvmvcc"`
+	EnableMemVal       bool `json:"enableMemVal"`
+	EnableUpdateKvmvcc bool `json:"enableUpdateKvmvcc"`
 }
 
 // New construct KVMVCCStore module
@@ -262,7 +262,7 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 // ProcEvent handles supported events
 func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 	//msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
-	client:= kvmMavls.GetQueueClient()
+	client := kvmMavls.GetQueueClient()
 	if msg != nil && msg.Ty == types.EventReExecBlock {
 		reData := msg.GetData().(*types.ReplyString)
 		if reData.Data == "over" {
