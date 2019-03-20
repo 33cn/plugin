@@ -86,7 +86,10 @@ func (evm *EVMExecutor) GetDriverName() string {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (evm *EVMExecutor) ExecutorOrder() int64 {
-	return drivers.ExecLocalSameTime
+	if types.IsFork(evm.GetHeight(), "ForkLocalDBAccess") {
+		return drivers.ExecLocalSameTime
+	}
+	return evm.DriverBase.ExecutorOrder()
 }
 
 // Allow 允许哪些交易在本命执行器执行
