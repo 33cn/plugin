@@ -5,7 +5,7 @@
 ### 编译
 ```
 //本地存在chain33代码，该步骤可省略
-$ git clone https://github.com/33cn/chain33.git $GOPATH/src/github.com/33cn/chain33
+$ go get github.com/33cn/chain33
 //编译chain33 tools
 $ go build -i -o $GOPATH/bin/chain33-tool github.com/33cn/chain33/cmd/tools
 ```
@@ -36,8 +36,6 @@ $ chain33-tool gendapp -n demo -p ./demo.proto
 // 指定输出包路径
 $ chain33-tool gendapp -n demo -p ./demo.proto -o github.com/33cn/chain33/plugin/dapp/
 
-//生成proto
-cd proto && chmod +x ./create_protobuf.sh && make
 ```
 ### proto规范
 * 定义合约交易行为结构，采用**oneof value**形式，且名称必须为**NameAction**格式，
@@ -51,6 +49,11 @@ message DemoAction {
     int32 ty = 3;
 }
 ``` 
+* package name设为合约名，适配后续生成目录结构
+```
+package demo;
+```
+
 * 定义service，直接以合约名作为名称
 ```
 service demo {
@@ -61,7 +64,7 @@ service demo {
 
 
 ### 代码
-#####目录结构，以demo合约为例
+##### 目录结构，以demo合约为例
 ```
 demo
 ├── cmd             //包含官方ci集成相关脚本
@@ -84,10 +87,18 @@ demo
 │   ├── rpc.go
 │   └── types.go
 └── types           //类型模块
-    └── demo.go
+    └── demo
+        └── demo.go
 
+```
+##### 生成pb.go文件
+```
+//进入到上述proto目录执行相关脚本，将会在types目录下生成对应pb.go文件
+$ cd proto && chmod +x ./create_protobuf.sh && make
 ```
 
 ##### 后续开发   
-在生成代码基础上，需要实现交易创建，执行，及所需rpc服务，初次开发可以参考官方的echo合约    
-> github.com/33cn/plugin/plugin/dapp/echo
+在生成代码基础上，需要实现交易创建，执行，及所需rpc服务<br/>
+初次开发可以参考官方简单计算器合约
+[开发步骤](https://github.com/33cn/chain33/blob/master/cmd/tools/doc/gencalculator.md)
+
