@@ -50,8 +50,7 @@ var (
 	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	searchHashMatchDepth            int32 = 100
 	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
-	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain
-	curMainChainHeight              int64                   //当前实时的主链高度
+	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
 )
 
 func init() {
@@ -207,6 +206,9 @@ func (client *client) InitBlock() {
 	} else {
 		client.SetCurrentBlock(block)
 	}
+
+	plog.Debug("para consensus init parameter", "mainBlockHashForkHeight", mainBlockHashForkHeight)
+	plog.Debug("para consensus init parameter", "mainParaSelfConsensusForkHeight", mainParaSelfConsensusForkHeight)
 
 }
 
@@ -723,8 +725,6 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
 	newblock.MainHash = mainBlock.Seq.Hash
 	newblock.MainHeight = mainBlock.Detail.Block.Height
-
-	curMainChainHeight = mainBlock.Detail.Block.Height
 
 	err = client.WriteBlock(lastBlock.StateHash, &newblock, seq)
 

@@ -86,6 +86,10 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 	if commit.Status == nil {
 		return types.ErrInvalidParam
 	}
+	clog.Debug("paracross.Commit check input", "height", commit.Status.Height, "mainHeight", commit.Status.MainBlockHeight,
+		"mainHash", hex.EncodeToString(commit.Status.MainBlockHash), "blockHash", hex.EncodeToString(commit.Status.BlockHash),
+		"preBlockHash", hex.EncodeToString(commit.Status.PreBlockHash))
+
 	if commit.Status.Height == 0 {
 		if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
 			return types.ErrInvalidParam
@@ -212,7 +216,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if err != nil {
 		return nil, err
 	}
-	clog.Debug("paracross.Commit check", "input", commit.Status)
+
 	if !validTitle(commit.Status.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
@@ -297,15 +301,19 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, &copyStat, stat)
 	}
-	clog.Info("paracross.Commit commit", "stat", stat, "notes", len(nodes))
+	clog.Info("paracross.Commit commit", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
+	for i, v := range stat.Details.Addrs {
+		clog.Info("paracross.Commit commit detail", "addr", v, "hash", hex.EncodeToString(stat.Details.BlockHash[i]))
+	}
 
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
-		return receipt, nil
+		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
+		if !(types.IsPara() && titleStatus.Height == -1) {
+			return receipt, nil
+		}
 	}
-	for i, v := range stat.Details.Addrs {
-		clog.Debug("paracross.Commit stat detail", "addr", v, "hash", hex.EncodeToString(stat.Details.BlockHash[i]))
-	}
+
 	commitCount := len(stat.Details.Addrs)
 	most, mostHash := getMostCommit(stat)
 	if !isCommitDone(stat, nodes, most) {
@@ -320,13 +328,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 		blockHash, err := getBlockHash(a.api, stat.Height)
 		if err != nil {
-			clog.Error("paracross.Commit getBlockHash local", "err", err.Error(), "commitheight", commit.Status.Height,
+			clog.Error("paracross.Commit para getBlockHash local", "err", err.Error(), "commitheight", commit.Status.Height,
 				"commitHash", hex.EncodeToString(commit.Status.BlockHash), "mainHash", hex.EncodeToString(commit.Status.MainBlockHash),
 				"mainHeight", commit.Status.MainBlockHeight)
 			return receipt, nil
 		}
 		if !bytes.Equal(blockHash.Hash, []byte(mostHash)) {
-			clog.Error("paracross.Commit blockHash not match", "selfBlockHash", hex.EncodeToString(blockHash.Hash),
+			clog.Error("paracross.Commit para blockHash not match", "selfBlockHash", hex.EncodeToString(blockHash.Hash),
 				"mostHash", hex.EncodeToString([]byte(mostHash)), "commitHeight", commit.Status.Height,
 				"commitMainHash", hex.EncodeToString(commit.Status.MainBlockHash), "commitMainHeight", commit.Status.MainBlockHeight)
 			return receipt, nil
@@ -345,7 +353,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	saveTitle(a.db, calcTitleKey(commit.Status.Title), titleStatus)
 
 	clog.Info("paracross.Commit commit done", "height", commit.Status.Height,
-		"cross tx count", len(commit.Status.CrossTxHashs), "status", titleStatus)
+		"cross tx count", len(commit.Status.CrossTxHashs), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))
 
 	//parallel chain not need to process cross commit tx here
 	if types.IsPara() {
