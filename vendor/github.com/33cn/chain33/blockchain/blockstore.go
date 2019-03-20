@@ -47,7 +47,7 @@ func GetLocalDBKeyList() [][]byte {
 	return [][]byte{
 		blockLastHeight, bodyPerfix, LastSequence, headerPerfix, heightToHeaderPerfix,
 		hashPerfix, tdPerfix, heightToHashKeyPerfix, seqToHashKey, HashToSeqPerfix,
-		seqCBPrefix, seqCBLastNumPrefix,
+		seqCBPrefix, seqCBLastNumPrefix, tempBlockKey, lastTempBlockKey,
 	}
 }
 
@@ -156,11 +156,12 @@ func NewBlockStore(db dbm.DB, client queue.Client) *BlockStore {
 //如果没有，那么进行下面的步骤
 //1. 先把hash 都给改成 TX:hash
 //2. 把所有的 Tx:hash 都加一个 8字节的index
-//3. 10000个区块 处理一次，并且打印进度
+//3. 2000个交易处理一次，并且打印进度
 //4. 全部处理完成了,添加quickIndex 的标记
 func (bs *BlockStore) initQuickIndex(height int64) {
 	batch := bs.db.NewBatch(true)
-	var count int
+	var maxsize = 100 * 1024 * 1024
+	var count = 0
 	for i := int64(0); i <= height; i++ {
 		blockdetail, err := bs.LoadBlockByHeight(i)
 		if err != nil {
@@ -172,17 +173,17 @@ func (bs *BlockStore) initQuickIndex(height int64) {
 			if err != nil {
 				panic(err)
 			}
-			count++
+			count += len(txresult)
 			batch.Set(types.CalcTxKey(hash), txresult)
 			batch.Set(types.CalcTxShortKey(hash), []byte("1"))
 		}
-		if count > 100000 {
+		if count > maxsize {
 			storeLog.Info("initQuickIndex", "height", i)
 			err := batch.Write()
 			if err != nil {
 				panic(err)
 			}
-			batch = bs.db.NewBatch(true)
+			batch.Reset()
 			count = 0
 		}
 	}
@@ -192,6 +193,7 @@ func (bs *BlockStore) initQuickIndex(height int64) {
 			panic(err)
 		}
 		storeLog.Info("initQuickIndex", "height", height)
+		batch.Reset()
 	}
 	bs.saveQuickIndexFlag()
 }
