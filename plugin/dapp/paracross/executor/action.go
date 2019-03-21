@@ -248,20 +248,25 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	// 主链   （1）Bn1        （3） rollback-Bn1   （4） commit-done in Bn2
 	// 平行链         （2）commit                                 （5） 将得到一个错误的块
 	// 所以有必要做这个检测
-	if !types.IsPara() {
-		blockHash, err := getBlockHash(a.api, commit.Status.MainBlockHeight)
-		if err != nil {
-			clog.Error("paracross.Commit getBlockHash", "err", err,
-				"commit tx Main.height", commit.Status.MainBlockHeight, "from", a.fromaddr)
-			return nil, err
-		}
-		if !bytes.Equal(blockHash.Hash, commit.Status.MainBlockHash) && commit.Status.Height > 0 {
-			clog.Error("paracross.Commit blockHash not match", "db", hex.EncodeToString(blockHash.Hash),
-				"commit tx", hex.EncodeToString(commit.Status.MainBlockHash), "commitHeight", commit.Status.Height,
-				"commitMainHeight", commit.Status.MainBlockHeight, "from", a.fromaddr)
-			return nil, types.ErrBlockHashNoMatch
-		}
+	commitHeight := commit.Status.MainBlockHeight
+	commitHash := commit.Status.MainBlockHash
+	if types.IsPara() {
+		commitHeight = commit.Status.Height
+		commitHash = commit.Status.BlockHash
 	}
+	blockHash, err := getBlockHash(a.api, commitHeight)
+	if err != nil {
+		clog.Error("paracross.Commit getBlockHash", "err", err,
+			"commit tx height", commitHeight, "isMain", !types.IsPara(), "from", a.fromaddr)
+		return nil, err
+	}
+	if !bytes.Equal(blockHash.Hash, commitHash) && commit.Status.Height > 0 {
+		clog.Error("paracross.Commit blockHash not match", "isMain", !types.IsPara(), "db", hex.EncodeToString(blockHash.Hash),
+			"commit tx", hex.EncodeToString(commitHash), "commitHeight", commit.Status.Height,
+			"commitMainHeight", commit.Status.MainBlockHeight, "from", a.fromaddr)
+		return nil, types.ErrBlockHashNoMatch
+	}
+
 	clog.Debug("paracross.Commit check input done")
 	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
 	if commit.Status.Height <= titleStatus.Height {

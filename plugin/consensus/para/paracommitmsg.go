@@ -159,7 +159,7 @@ out:
 			selfConsensusHeight := rsp.selfStatus.Height
 			mainConsensHeight := rsp.mainStatus.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"mainHeigt", rsp.mainStatus.Height, "mainlockhash", common.ToHex(rsp.mainStatus.BlockHash),
+				"mainHeigt", rsp.mainStatus.Height, "mainHash", common.ToHex(rsp.mainStatus.BlockHash),
 				"selfHeight", rsp.selfStatus.Height, "selfHash", common.ToHex(rsp.selfStatus.BlockHash), "sync", isSync)
 
 			if notification == nil || isRollback {
