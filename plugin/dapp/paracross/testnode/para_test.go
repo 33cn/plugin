@@ -11,6 +11,7 @@ import (
 
 func TestParaNode(t *testing.T) {
 	para := NewParaNode(nil, nil)
+	defer para.Close()
 	//通过rpc 发生信息
 	txs := util.GenNoneTxs(para.Para.GetGenesisKey(), 10)
 	for i := 0; i < len(txs); i++ {
