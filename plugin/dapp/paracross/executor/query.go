@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"encoding/hex"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -17,6 +19,24 @@ func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 		return nil, types.ErrInvalidParam
 	}
 	return p.paracrossGetHeight(in.GetData())
+}
+
+// Query_GetTitleHash query paracross title by block hash
+func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	if !types.IsDappFork(p.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+		block, err := p.GetAPI().GetBlockByHashes(&types.ReqHashes{Hashes: [][]byte{in.BlockHash}})
+		if err != nil || block == nil {
+			return nil, types.ErrHashNotExist
+		}
+		return p.paracrossGetHeight(in.GetTitle())
+	}
+
+	return p.paracrossGetHeightByHash(in)
+
 }
 
 //Query_ListTitles query paracross titles list
@@ -74,6 +94,14 @@ func (p *Paracross) paracrossGetMainBlockHash(tx *types.Transaction) (types.Mess
 
 func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	ret, err := getTitle(p.GetStateDB(), calcTitleKey(title))
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	return ret, nil
+}
+
+func (p *Paracross) paracrossGetHeightByHash(in *pt.ReqParacrossTitleHash) (types.Message, error) {
+	ret, err := getTitle(p.GetStateDB(), calcTitleHashKey(in.GetTitle(), hex.EncodeToString(in.GetBlockHash())))
 	if err != nil {
 		return nil, errors.Cause(err)
 	}

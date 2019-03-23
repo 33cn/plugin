@@ -126,6 +126,11 @@ message RespParacrossTitles {
     repeated ReceiptParacrossDone titles = 1;
 }
 
+message ReqParacrossTitleHash {
+    string title        = 1;
+    bytes  blockHash    = 2;
+}
+
 // 跨链转账相关
 message ParacrossAsset {
     // input
