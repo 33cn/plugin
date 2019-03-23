@@ -13,6 +13,7 @@ import (
 var (
 	title            string
 	titleHeight      string
+	titleHash        string
 	configNodes      string
 	localTx          string
 	localTitle       string
@@ -23,6 +24,7 @@ var (
 func setPrefix() {
 	title = "mavl-paracross-title-"
 	titleHeight = "mavl-paracross-titleHeight-"
+	titleHash = "mavl-paracross-titleHash-"
 	configNodes = "paracross-nodes-"
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
@@ -36,6 +38,10 @@ func calcTitleKey(t string) []byte {
 
 func calcTitleHeightKey(title string, height int64) []byte {
 	return []byte(fmt.Sprintf(titleHeight+"%s-%d", title, height))
+}
+
+func calcTitleHashKey(title string, blockHash string) []byte {
+	return []byte(fmt.Sprintf(titleHash+"%s-%s", title, blockHash))
 }
 
 func calcLocalHeightKey(title string, height int64) []byte {

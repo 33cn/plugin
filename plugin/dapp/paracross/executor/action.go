@@ -357,6 +357,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	titleStatus.BlockHash = commit.Status.BlockHash
 	saveTitle(a.db, calcTitleKey(commit.Status.Title), titleStatus)
 
+	if types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+		key := calcTitleHashKey(commit.Status.Title, hex.EncodeToString(commit.Status.MainBlockHash))
+		saveTitle(a.db, key, titleStatus)
+		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: types.Encode(titleStatus)})
+	}
+
 	clog.Info("paracross.Commit commit done", "height", commit.Status.Height,
 		"cross tx count", len(commit.Status.CrossTxHashs), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))
 
