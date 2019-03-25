@@ -257,7 +257,7 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 2)
+	assert.Len(suite.T(), receipt.KV, 3)
 	assert.Len(suite.T(), receipt.Logs, 2)
 
 	key := calcTitleHeightKey(Title, TitleHeight)
