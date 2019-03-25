@@ -107,10 +107,9 @@ func (c Comm) newPeerFromConn(rawConn *grpc.ClientConn, remote *NetAddress, node
 func (c Comm) dialPeer(addr *NetAddress, node *Node) (*Peer, error) {
 	log.Debug("dialPeer", "will connect", addr.String())
 	var persistent bool
-	for _, seed := range node.nodeInfo.cfg.Seeds { //TODO待优化
-		if seed == addr.String() {
-			persistent = true //种子节点要一直连接
-		}
+
+	if _, ok := node.cfgSeeds.Load(addr.String()); ok {
+		persistent = true
 	}
 	peer, err := c.dialPeerWithAddress(addr, persistent, node)
 	if err != nil {
@@ -138,7 +137,7 @@ func (c Comm) GenPrivPubkey() ([]byte, []byte, error) {
 	return key.Bytes(), key.PubKey().Bytes(), nil
 }
 
-// Pubkey get pubkey by key
+// Pubkey get pubkey by priv key
 func (c Comm) Pubkey(key string) (string, error) {
 
 	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -163,8 +162,8 @@ func (c Comm) Pubkey(key string) (string, error) {
 
 // NewPingData get ping node ,return p2pping
 func (c Comm) NewPingData(nodeInfo *NodeInfo) (*types.P2PPing, error) {
-	randNonce := rand.Int31n(102040)
-	ping := &types.P2PPing{Nonce: int64(randNonce), Addr: nodeInfo.GetExternalAddr().IP.String(), Port: int32(nodeInfo.GetExternalAddr().Port)}
+	randNonce := rand.New(rand.NewSource(time.Now().UnixNano())).Int63()
+	ping := &types.P2PPing{Nonce: randNonce, Addr: nodeInfo.GetExternalAddr().IP.String(), Port: int32(nodeInfo.GetExternalAddr().Port)}
 	var err error
 	p2pPrivKey, _ := nodeInfo.addrBook.GetPrivPubKey()
 	ping, err = c.Signature(p2pPrivKey, ping)
@@ -240,6 +239,9 @@ func (c Comm) CheckSign(in *types.P2PPing) bool {
 // CollectPeerStat collect peer stat and report
 func (c Comm) CollectPeerStat(err error, peer *Peer) {
 	if err != nil {
+		if err == types.ErrVersion {
+			peer.version.SetSupport(false)
+		}
 		peer.peerStat.NotOk()
 	} else {
 		peer.peerStat.Ok()

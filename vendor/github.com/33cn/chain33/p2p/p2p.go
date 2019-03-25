@@ -55,8 +55,7 @@ func New(cfg *types.P2P) *P2p {
 	}
 
 	VERSION = cfg.Version
-	log.Info("p2p", "Version", VERSION)
-
+	log.Info("p2p", "Version", VERSION, "IsTest", types.IsTestNet())
 	if cfg.InnerBounds == 0 {
 		cfg.InnerBounds = 500
 	}
@@ -93,6 +92,7 @@ func (network *P2p) Close() {
 		network.client.Close()
 	}
 	network.node.pubsub.Shutdown()
+
 }
 
 // SetQueueClient set the queue
@@ -215,6 +215,7 @@ func (network *P2p) subP2pMsg() {
 				}
 			}
 			switch msg.Ty {
+
 			case types.EventTxBroadcast: //广播tx
 				go network.p2pCli.BroadCastTx(msg, taskIndex)
 			case types.EventBlockBroadcast: //广播block
