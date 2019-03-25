@@ -21,7 +21,7 @@ func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 	return p.paracrossGetHeight(in.GetData())
 }
 
-// Query_GetTitleHash query paracross title by block hash
+// Query_GetTitleByHash query paracross title by block hash
 func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
