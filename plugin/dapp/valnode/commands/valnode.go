@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -17,8 +18,15 @@ import (
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	vt "github.com/33cn/plugin/plugin/dapp/valnode/types"
 	"github.com/spf13/cobra"
+)
+
+var (
+	strChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" // 62 characters
+	genFile  = "genesis_file.json"
+	pvFile   = "priv_validator_"
 )
 
 // ValCmd valnode cmd register
@@ -33,6 +41,7 @@ func ValCmd() *cobra.Command {
 		GetBlockInfoCmd(),
 		GetNodeInfoCmd(),
 		AddNodeCmd(),
+		CreateCmd(),
 	)
 	return cmd
 }
@@ -189,4 +198,97 @@ func getprivkey() (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return priv, nil
+}
+
+//CreateCmd to create keyfiles
+func CreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "init_keyfile",
+		Short: "Initialize Tendermint Keyfile",
+		Run:   createFiles,
+	}
+	addCreateCmdFlags(cmd)
+	return cmd
+}
+
+func addCreateCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("num", "n", "", "Num of the keyfile to create")
+	cmd.MarkFlagRequired("num")
+}
+
+// RandStr ...
+func RandStr(length int) string {
+	chars := []byte{}
+MAIN_LOOP:
+	for {
+		val := rand.Int63()
+		for i := 0; i < 10; i++ {
+			v := int(val & 0x3f) // rightmost 6 bits
+			if v >= 62 {         // only 62 characters in strChars
+				val >>= 6
+				continue
+			} else {
+				chars = append(chars, strChars[v])
+				if len(chars) == length {
+					break MAIN_LOOP
+				}
+				val >>= 6
+			}
+		}
+	}
+
+	return string(chars)
+}
+
+func initCryptoImpl() error {
+	cr, err := crypto.New(types.GetSignName("", types.ED25519))
+	if err != nil {
+		fmt.Printf("New crypto impl failed err: %v", err)
+		return err
+	}
+	ttypes.ConsensusCrypto = cr
+	return nil
+}
+
+func createFiles(cmd *cobra.Command, args []string) {
+	// init crypto instance
+	err := initCryptoImpl()
+	if err != nil {
+		return
+	}
+
+	// genesis file
+	genDoc := ttypes.GenesisDoc{
+		ChainID:     fmt.Sprintf("chain33-%v", RandStr(6)),
+		GenesisTime: time.Now(),
+	}
+
+	num, _ := cmd.Flags().GetString("num")
+	n, err := strconv.Atoi(num)
+	if err != nil {
+		fmt.Println("num parameter is not valid digit")
+		return
+	}
+	for i := 0; i < n; i++ {
+		// create private validator file
+		pvFileName := pvFile + strconv.Itoa(i) + ".json"
+		privValidator := ttypes.LoadOrGenPrivValidatorFS(pvFileName)
+		if privValidator == nil {
+			fmt.Println("Create priv_validator file failed.")
+			break
+		}
+
+		// create genesis validator by the pubkey of private validator
+		gv := ttypes.GenesisValidator{
+			PubKey: ttypes.KeyText{Kind: "ed25519", Data: privValidator.GetPubKey().KeyString()},
+			Power:  10,
+		}
+		genDoc.Validators = append(genDoc.Validators, gv)
+	}
+
+	if err := genDoc.SaveAs(genFile); err != nil {
+		fmt.Println("Generated genesis file failed.")
+		return
+	}
+	fmt.Printf("Generated genesis file path %v\n", genFile)
 }
