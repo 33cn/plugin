@@ -28,7 +28,7 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 	}
 
 	if !types.IsDappFork(p.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
-		block, err := p.GetAPI().GetBlockByHashes(&types.ReqHashes{Hashes: [][]byte{in.BlockHash}})
+		block, err := p.GetAPI().GetBlockOverview(&types.ReqHash{Hash:in.BlockHash})
 		if err != nil || block == nil {
 			return nil, types.ErrHashNotExist
 		}
