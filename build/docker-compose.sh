@@ -78,6 +78,7 @@ function base_init() {
     sed -i $sedfix 's/^isSeed=.*/isSeed=true/g' chain33.toml
     sed -i $sedfix 's/^innerSeedEnable=.*/innerSeedEnable=false/g' chain33.toml
     sed -i $sedfix 's/^useGithub=.*/useGithub=false/g' chain33.toml
+    sed -i $sedfix '/^useGithub=.*/a version=1' chain33.toml
 
     # rpc
     sed -i $sedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8801"/g' chain33.toml
