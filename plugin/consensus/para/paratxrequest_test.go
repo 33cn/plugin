@@ -249,7 +249,6 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 
 func TestGetConsensusStatus(t *testing.T) {
 	para := new(client)
-	para.GetAPI()
 	grpcClient := &typesmocks.Chain33Client{}
 	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
 	para.grpcClient = grpcClient
