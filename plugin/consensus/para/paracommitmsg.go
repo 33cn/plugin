@@ -519,54 +519,58 @@ out:
 				continue
 			}
 
-			var status *pt.ParacrossStatus
-			if isParaSelfConsensusForked(block.MainHeight) {
-				//从本地查询共识高度
-				ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
-					Driver:   "paracross",
-					FuncName: "GetTitle",
-					Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
-				})
-				if err != nil {
-					plog.Error("getConsensusHeight ", "err", err.Error())
-					continue
-				}
-				resp, ok := ret.(*pt.ParacrossStatus)
-				if !ok {
-					plog.Error("getConsensusHeight ParacrossStatus nok")
-					continue
-				}
-				status = resp
-
-			} else {
-				//获取主链共识高度
-				reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
-					Driver:   "paracross",
-					FuncName: "GetTitleByHash",
-					Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
-				})
-				if err != nil {
-					plog.Error("getMainConsensusHeight", "err", err.Error())
-					continue
-				}
-				if !reply.GetIsOk() {
-					plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
-					continue
-				}
-				var result pt.ParacrossStatus
-				err = types.Decode(reply.Msg, &result)
-				if err != nil {
-					plog.Error("getMainConsensusHeight decode", "err", err.Error())
-					continue
-				}
-				status = &result
+			status, err := client.getConsensusStatus(block)
+			if err != nil {
+				continue
 			}
-
 			consensusRst <- status
 		}
 	}
 
 	client.paraClient.wg.Done()
+}
+
+func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.ParacrossStatus, error) {
+	//获取主链共识高度
+	if !isParaSelfConsensusForked(block.MainHeight) {
+		reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
+			Driver:   "paracross",
+			FuncName: "GetTitleByHash",
+			Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
+		})
+		if err != nil {
+			plog.Error("getMainConsensusHeight", "err", err.Error())
+			return nil, err
+		}
+		if !reply.GetIsOk() {
+			plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
+			return nil, err
+		}
+		var result pt.ParacrossStatus
+		err = types.Decode(reply.Msg, &result)
+		if err != nil {
+			plog.Error("getMainConsensusHeight decode", "err", err.Error())
+			return nil, err
+		}
+		return &result, nil
+	}
+
+	//从本地查询共识高度
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetTitle",
+		Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("getConsensusHeight ", "err", err.Error())
+		return nil, err
+	}
+	resp, ok := ret.(*pt.ParacrossStatus)
+	if !ok {
+		plog.Error("getConsensusHeight ParacrossStatus nok")
+		return nil, err
+	}
+	return resp, nil
 }
 
 func (client *commitMsgClient) fetchPrivacyKey(ch chan crypto.PrivKey) {
