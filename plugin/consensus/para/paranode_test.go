@@ -3,14 +3,15 @@
 // license that can be found in the LICENSE file.
 
 package para
+
 import (
 	"testing"
 
-	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 
-	"github.com/stretchr/testify/assert"
 	node "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParaNode(t *testing.T) {
@@ -49,11 +50,10 @@ func TestParaNode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, detail.Receipt.Ty, int32(types.ExecOk))
 
-	for i:=0;i<3;i++{
+	for i := 0; i < 3; i++ {
 		tx = util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
 		para.Para.SendTxRPC(tx)
-		para.Para.WaitHeight(int64(i)+1)
+		para.Para.WaitHeight(int64(i) + 1)
 	}
-
 
 }
