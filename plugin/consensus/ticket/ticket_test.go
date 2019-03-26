@@ -11,14 +11,15 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/queue"
-	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
-	_ "github.com/33cn/plugin/plugin/dapp/init"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	_ "github.com/33cn/plugin/plugin/store/init"
 	"github.com/stretchr/testify/assert"
+
+	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin/dapp/init"
+	_ "github.com/33cn/plugin/plugin/store/init"
 )
 
 func TestTicket(t *testing.T) {
