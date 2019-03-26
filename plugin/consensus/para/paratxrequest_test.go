@@ -71,8 +71,6 @@ func (s *suiteParaClient) initEnv(cfg *types.Config, sub *types.ConfigSubModule)
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 
-	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
-	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("paracross-ForkParacrossCommitTx")}).Return(&types.Int64{Data: 0}, nil).Once()
 	s.createBlockMock()
 
 	reply := &types.Reply{IsOk: true}
@@ -174,7 +172,7 @@ func (s *suiteParaClient) SetupSuite() {
 	s.initEnv(types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml"))
 }
 
-func TestRunSuiteParaClient(t *testing.T) {
+func testRunSuiteParaClient(t *testing.T) {
 	log := new(suiteParaClient)
 	suite.Run(t, log)
 }
