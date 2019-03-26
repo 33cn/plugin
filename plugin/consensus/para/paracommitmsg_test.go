@@ -77,8 +77,6 @@ func (s *suiteParaCommitMsg) initEnv(cfg *types.Config, sub *types.ConfigSubModu
 	s.para = New(cfg.Consensus, sub.Consensus["para"]).(*client)
 	s.grpcCli = &typesmocks.Chain33Client{}
 
-	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
-	s.grpcCli.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("paracross-ForkParacrossCommitTx")}).Return(&types.Int64{Data: 0}, nil).Once()
 	// GetBlockBySeq return error to stop create's for cycle to request tx
 	s.grpcCli.On("GetBlockBySeq", mock.Anything, mock.Anything).Return(nil, errors.New("quit create"))
 	//data := &types.Int64{1}
@@ -169,7 +167,7 @@ func (s *suiteParaCommitMsg) testRunRmvBlock() {
 
 }
 
-func TestRunSuiteParaCommitMsg(t *testing.T) {
+func testRunSuiteParaCommitMsg(t *testing.T) {
 	log := new(suiteParaCommitMsg)
 	suite.Run(t, log)
 }
