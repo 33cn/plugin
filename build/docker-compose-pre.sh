@@ -126,6 +126,8 @@ function main() {
         else
             ./system-fork-test.sh "${PROJ}"
         fi
+    elif [ "${OP}" == "modify" ]; then
+        sed -i $sedfix '/^useGithub=.*/a version=1' chain33.toml
     fi
 
 }
