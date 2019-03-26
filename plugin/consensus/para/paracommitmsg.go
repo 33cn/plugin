@@ -97,7 +97,10 @@ out:
 			plog.Debug("para del block", "delHeight", height)
 
 		case block := <-client.mainBlockAdd:
-			if client.currentTx != nil && client.paraClient.isCaughtUp {
+			client.paraClient.mtx.Lock()
+			isCaughtUp := client.paraClient.isCaughtUp
+			client.paraClient.mtx.Unlock()
+			if client.currentTx != nil && isCaughtUp {
 				exist := checkTxInMainBlock(client.currentTx, block)
 				if exist {
 					finishHeight = sendingHeight
@@ -487,6 +490,7 @@ func (client *commitMsgClient) mainSync() error {
 func (client *commitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
+	isCaughtUp := false
 	defer ticker.Stop()
 
 out:
@@ -503,7 +507,10 @@ out:
 				isSync = true
 			}
 
-			if !client.paraClient.isCaughtUp {
+			client.paraClient.mtx.Lock()
+			isCaughtUp = client.paraClient.isCaughtUp
+			client.paraClient.mtx.Unlock()
+			if !isCaughtUp {
 				plog.Debug("getConsensusHeight para is CatchingUp")
 				continue
 			}

@@ -68,6 +68,7 @@ type client struct {
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
 	subCfg          *subConfig
+	mtx             sync.Mutex
 }
 
 type subConfig struct {
@@ -139,7 +140,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		grpcClient:  grpcCli,
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
-		isCaughtUp:  false,
 		subCfg:      &subcfg,
 	}
 	if subcfg.WaitBlocks4CommitMsg < 2 {
@@ -473,11 +473,13 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			txs := client.FilterTxsForPara(blockSeq.Detail)
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
 
+			client.mtx.Lock()
 			if lastSeq-currSeq > emptyBlockInterval {
 				client.isCaughtUp = false
 			} else {
 				client.isCaughtUp = true
 			}
+			client.mtx.Unlock()
 
 			if client.authAccount != "" {
 				client.commitMsgClient.onMainBlockAdded(blockSeq.Detail)
@@ -808,7 +810,11 @@ func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error)
 	if client == nil {
 		return nil, fmt.Errorf("%s", "client not bind message queue.")
 	}
-	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp}, nil
+	client.mtx.Lock()
+	caughtUp := client.isCaughtUp
+	client.mtx.Unlock()
+
+	return &types.IsCaughtUp{Iscaughtup: caughtUp}, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {
