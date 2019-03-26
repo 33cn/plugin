@@ -490,7 +490,6 @@ func (client *commitMsgClient) mainSync() error {
 func (client *commitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
-	isCaughtUp := false
 	defer ticker.Stop()
 
 out:
@@ -508,7 +507,7 @@ out:
 			}
 
 			client.paraClient.mtx.Lock()
-			isCaughtUp = client.paraClient.isCaughtUp
+			isCaughtUp := client.paraClient.isCaughtUp
 			client.paraClient.mtx.Unlock()
 			if !isCaughtUp {
 				plog.Debug("getConsensusHeight para is CatchingUp")
