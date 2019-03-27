@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	title            string
-	titleHeight      string
-	titleHash        string
+	title                string
+	titleHeight          string
+	titleHash            string
 	managerConfigNodes   string //manager 合约配置的nodes
 	paraConfigNodes      string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr   string //平行链配置节点账户

@@ -84,7 +84,6 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
 }
 
-
 //Query_ListTitles query paracross titles list
 func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
 	return p.paracrossListTitles()
