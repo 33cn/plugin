@@ -59,16 +59,16 @@ func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 		// 在配置地址后，发现配置错了， 删除会出现这种情况
 		return map[string]struct{}{}, nil, nil
 	}
-	var nodes []string
-	uniqNode := make(map[string]struct{})
+	var nodesArray []string
+	nodesMap := make(map[string]struct{})
 	for _, v := range value.Value {
-		if _, exist := uniqNode[v]; !exist {
-			uniqNode[v] = struct{}{}
-			nodes = append(nodes, v)
+		if _, exist := nodesMap[v]; !exist {
+			nodesMap[v] = struct{}{}
+			nodesArray = append(nodesArray, v)
 		}
 	}
 
-	return uniqNode, nodes, nil
+	return nodesMap, nodesArray, nil
 }
 
 func validTitle(title string) bool {
@@ -214,6 +214,32 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
+func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
+	if !types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+		key := calcManageConfigNodesKey(title)
+		nodes, _, err := getNodes(a.db, key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getNodes for title:%s", title)
+		}
+		return nodes, nil
+	}
+
+	key := calcParaNodeGroupKey(title)
+	nodes, _, err := getNodes(a.db, key)
+	if err != nil {
+		if errors.Cause(err) != pt.ErrTitleNotExist {
+			return nil, errors.Wrapf(err, "getNodes para for title:%s", title)
+		}
+		key = calcManageConfigNodesKey(title)
+		nodes, _, err = getNodes(a.db, key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
+		}
+	}
+
+	return nodes, nil
+}
+
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	err := checkCommitInfo(commit)
 	if err != nil {
@@ -223,10 +249,10 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if !validTitle(commit.Status.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
-	key := calcParaNodeGroupKey(commit.Status.Title)
-	nodes, _, err := getNodes(a.db, key)
+
+	nodes, err := a.getNodesGroup(commit.Status.Title)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getNodes for title:%s", commit.Status.Title)
+		return nil, err
 	}
 
 	if !validNode(a.fromaddr, nodes) {

@@ -401,9 +401,14 @@ func (a *action) nodeTakeover(config *pt.ParaNodeAddrConfig) (*types.Receipt, er
 	return receipt, nil
 }
 
+//NodeConfig support super account node config
 func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	if !validTitle(config.Title) {
 		return nil, pt.ErrInvalidTitle
+	}
+
+	if !types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+		return nil, types.ErrNotSupport
 	}
 
 	if config.Op == pt.ParaNodeJoin {
