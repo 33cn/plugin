@@ -365,15 +365,17 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 	if lastBlock.Height > 0 || blockedSeq == -1 {
 		return blockedSeq, lastBlock, nil
 	}
-	// lastBlockHeight=0 创世区块本身没有记录主块hash,有两种场景：
-	// 1, startSeq=-1,也就是从主链0高度同步区块，主链seq从0开始，此时特殊处理，获取主链seq=0区块,后续对请求seq=0的区块做特殊处理
-	// 2, startSeq!=-1, 也就是从主链n高度同步区块，此时创世区块倒退一个seq，seq=n-1 可以获取到主链n-1的hash
-	main, err := client.GetBlockOnMainBySeq(blockedSeq)
+	// lastBlockHeight=0 && blockedSeq != -1 创世区块本身没有记录主块hash,有两种场景：
+	// 1, blockedSeq =-1,也就是从主链0高度同步区块，主链seq从0开始，对seq=0的区块做特殊处理，不校验parentHash
+	// 2, blockedSeq !=-1, 也就是从主链n高度同步区块，此时创世区块倒退一个seq，seq=n-1， 可以获取到主链n-1的hash
+	// 3 有可能n-1 seq 是回退block 获取的pareHash就不准，这里获取0区块 n+1seq的parentHash
+	// 在genesis create时候直接设mainhash也可以，但是会导致已有平行链所有block hash变化
+	main, err := client.GetBlockOnMainBySeq(blockedSeq + 1)
 	if err != nil {
 		return -2, nil, err
 	}
-	lastBlock.MainHash = main.Seq.Hash
-	lastBlock.MainHeight = main.Detail.Block.Height
+	lastBlock.MainHash = main.Detail.Block.ParentHash
+	lastBlock.MainHeight = main.Detail.Block.Height - 1
 	return blockedSeq, lastBlock, nil
 
 }
