@@ -202,6 +202,18 @@ func TestGetLastMemPool(t *testing.T) {
 	testGetLastMemPoolOK(t)
 }
 
+func testGetProperFeeOK(t *testing.T) {
+	qapi.On("GetProperFee").Return(nil, nil)
+	data, err := g.GetProperFee(getOkCtx(), nil)
+	assert.Nil(t, err, "the error should be nil")
+	assert.Nil(t, data)
+
+}
+
+func TestGetProperFee(t *testing.T) {
+	testGetProperFeeOK(t)
+}
+
 //func (g *Grpc) QueryChain(ctx context.Context, in *pb.Query) (*pb.Reply, error) {
 //	if !g.checkWhitlist(ctx) {
 //		return nil, fmt.Errorf("reject")
@@ -1164,4 +1176,15 @@ func TestGrpc_QueryRandNum(t *testing.T) {
 	qapi.On("Query", mock.Anything, mock.Anything, mock.Anything).Return(&pb.ReplyHash{Hash: []byte("test")}, nil)
 	_, err := g.QueryRandNum(getOkCtx(), &pb.ReqRandHash{})
 	assert.NoError(t, err)
+}
+
+func TestGrpc_GetFork(t *testing.T) {
+	pb.SetDappFork("local", "para", "fork100", 100)
+	val, err := g.GetFork(getOkCtx(), &pb.ReqKey{Key: []byte("para-fork100")})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(100), val.Data)
+
+	val, err = g.GetFork(getOkCtx(), &pb.ReqKey{Key: []byte("ForkBlockHash")})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), val.Data)
 }

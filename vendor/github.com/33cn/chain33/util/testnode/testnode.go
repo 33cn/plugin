@@ -12,7 +12,6 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/33cn/chain33/account"
@@ -49,7 +48,6 @@ func init() {
 
 //保证只有一个chain33 会运行
 var lognode = log15.New("module", "lognode")
-var chain33globalLock sync.Mutex
 
 //Chain33Mock :
 type Chain33Mock struct {
@@ -82,7 +80,6 @@ func NewWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client
 }
 
 func newWithConfig(cfg *types.Config, sub *types.ConfigSubModule, mockapi client.QueueProtocolAPI) *Chain33Mock {
-	chain33globalLock.Lock()
 	return newWithConfigNoLock(cfg, sub, mockapi)
 }
 
@@ -130,7 +127,11 @@ func newWithConfigNoLock(cfg *types.Config, sub *types.ConfigSubModule, mockapi 
 	mock.wallet.SetQueueClient(cli)
 	lognode.Info("init wallet")
 	if mockapi == nil {
-		mockapi, _ = client.New(q.Client(), nil)
+		var err error
+		mockapi, err = client.New(q.Client(), nil)
+		if err != nil {
+			return nil
+		}
 		newWalletRealize(mockapi)
 	}
 	mock.api = mockapi
@@ -168,13 +169,17 @@ func (mock *Chain33Mock) Listen() {
 		l := len(mock.cfg.RPC.GrpcBindAddr)
 		mock.cfg.RPC.GrpcBindAddr = mock.cfg.RPC.GrpcBindAddr[0:l-2] + ":" + fmt.Sprint(portgrpc)
 	}
-	if mock.sub.Consensus["para"] != nil {
-		data, err := types.ModifySubConfig(mock.sub.Consensus["para"], "ParaRemoteGrpcClient", mock.cfg.RPC.GrpcBindAddr)
+}
+
+//ModifyParaClient modify para config
+func ModifyParaClient(sub *types.ConfigSubModule, gaddr string) {
+	if sub.Consensus["para"] != nil {
+		data, err := types.ModifySubConfig(sub.Consensus["para"], "ParaRemoteGrpcClient", gaddr)
 		if err != nil {
 			panic(err)
 		}
-		mock.sub.Consensus["para"] = data
-		types.S("config.consensus.sub.para.ParaRemoteGrpcClient", mock.cfg.RPC.GrpcBindAddr)
+		sub.Consensus["para"] = data
+		types.S("config.consensus.sub.para.ParaRemoteGrpcClient", gaddr)
 	}
 }
 
@@ -194,7 +199,10 @@ func setFee(cfg *types.Config, fee int64) {
 
 //GetJSONC :
 func (mock *Chain33Mock) GetJSONC() *jsonclient.JSONClient {
-	jsonc, _ := jsonclient.NewJSONClient("http://" + mock.cfg.RPC.JrpcBindAddr + "/")
+	jsonc, err := jsonclient.NewJSONClient("http://" + mock.cfg.RPC.JrpcBindAddr + "/")
+	if err != nil {
+		return nil
+	}
 	return jsonc
 }
 
@@ -285,7 +293,6 @@ func (mock *Chain33Mock) GetCfg() *types.Config {
 //Close :
 func (mock *Chain33Mock) Close() {
 	mock.closeNoLock()
-	chain33globalLock.Unlock()
 }
 
 func (mock *Chain33Mock) closeNoLock() {
@@ -307,7 +314,10 @@ func (mock *Chain33Mock) closeNoLock() {
 	mock.store.Close()
 	lognode.Info("store close")
 	mock.client.Close()
-	os.RemoveAll(mock.datadir)
+	err := os.RemoveAll(mock.datadir)
+	if err != nil {
+		return
+	}
 }
 
 //WaitHeight :
@@ -361,6 +371,22 @@ func (mock *Chain33Mock) SendTx(tx *types.Transaction) []byte {
 	}
 	mock.lastsend = reply.GetMsg()
 	return reply.GetMsg()
+}
+
+//SendTxRPC :
+func (mock *Chain33Mock) SendTxRPC(tx *types.Transaction) []byte {
+	var txhash string
+	hextx := common.ToHex(types.Encode(tx))
+	err := mock.GetJSONC().Call("Chain33.SendTransaction", &rpctypes.RawParm{Data: hextx}, &txhash)
+	if err != nil {
+		panic(err)
+	}
+	hash, err := common.FromHex(txhash)
+	if err != nil {
+		panic(err)
+	}
+	mock.lastsend = hash
+	return hash
 }
 
 //Wait :

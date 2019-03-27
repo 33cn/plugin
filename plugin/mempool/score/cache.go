@@ -1,8 +1,7 @@
 package score
 
 import (
-	"bytes"
-	"encoding/gob"
+	"time"
 
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
@@ -11,7 +10,7 @@ import (
 
 var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
 
-// Queue 分数队列模式(分数=常量a*手续费/交易字节数-常量b*时间*定量c,按分数排队,高的优先,常量a,b和定量c可配置)
+// Queue 分数队列模式(分数=定量a*常量b*手续费/交易字节数-常量c*时间,按分数排队,高的优先,定量a和常量b,c可配置)
 type Queue struct {
 	txMap     map[string]*skiplist.SkipValue
 	txList    *skiplist.SkipList
@@ -28,15 +27,10 @@ func NewQueue(subcfg subConfig) *Queue {
 }
 
 func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
-	//tx := item.value
-	buf := bytes.NewBuffer(nil)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(item.Value)
-	if err != nil {
-		return nil, err
-	}
-	size := len(buf.Bytes())
-	return &skiplist.SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
+	buf := types.Encode(item.Value)
+	size := len(buf)
+	return &skiplist.SkipValue{Score: cache.subConfig.PriceConstant*(item.Value.Fee/int64(size))*
+		cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
 }
 
 // Exist 是否存在
@@ -121,4 +115,26 @@ func (cache *Queue) Walk(count int, cb func(value *mempool.Item) bool) {
 		i++
 		return i != count
 	})
+}
+
+// GetProperFee 获取合适的手续费
+func (cache *Queue) GetProperFee() int64 {
+	var sumScore int64
+	var properFee int64
+	if cache.Size() == 0 {
+		return cache.subConfig.ProperFee
+	}
+	i := 0
+	cache.txList.WalkS(func(node interface{}) bool {
+		if i == 100 {
+			return false
+		}
+		sumScore += node.(*skiplist.SkipValue).Score
+		i++
+		return true
+	})
+	//这里的int64(250)是一般交易的大小
+	properFee = (sumScore/int64(i) + cache.subConfig.TimeParam*time.Now().Unix()) * int64(250) /
+		(cache.subConfig.PriceConstant * cache.subConfig.PricePower)
+	return properFee
 }

@@ -28,6 +28,7 @@ var (
 	titles           = map[string]bool{}
 	chainConfig      = make(map[string]interface{})
 	mver             = make(map[string]*mversion)
+	coinSymbol       = "bty"
 )
 
 // coin conversation
@@ -223,7 +224,6 @@ func S(key string, value interface{}) {
 		} else {
 			tlog.Error("modify " + key + " is only for test")
 		}
-		return
 	}
 	setChainConfig(key, value)
 }
@@ -247,6 +247,7 @@ func Init(t string, cfg *Config) {
 	}
 	titles[t] = true
 	title = t
+
 	if cfg != nil {
 		if isLocal() {
 			setTestNet(true)
@@ -256,8 +257,20 @@ func Init(t string, cfg *Config) {
 		if cfg.Exec.MinExecFee > cfg.Mempool.MinTxFee || cfg.Mempool.MinTxFee > cfg.Wallet.MinFee {
 			panic("config must meet: wallet.minFee >= mempool.minTxFee >= exec.minExecFee")
 		}
+		if cfg.Exec.MaxExecFee < cfg.Mempool.MaxTxFee {
+			panic("config must meet: mempool.maxTxFee <= exec.maxExecFee")
+		}
 		setMinFee(cfg.Exec.MinExecFee)
 		setChainConfig("FixTime", cfg.FixTime)
+		if cfg.Exec.MaxExecFee > 0 {
+			setChainConfig("MaxFee", cfg.Exec.MaxExecFee)
+		}
+		if cfg.CoinSymbol != "" {
+			if strings.Contains(cfg.CoinSymbol, "-") {
+				panic("config CoinSymbol must without '-'")
+			}
+			coinSymbol = cfg.CoinSymbol
+		}
 	}
 	//local 只用于单元测试
 	if isLocal() {
@@ -291,6 +304,14 @@ func Init(t string, cfg *Config) {
 func GetTitle() string {
 	mu.Lock()
 	s := title
+	mu.Unlock()
+	return s
+}
+
+// GetCoinSymbol 获取 coin symbol
+func GetCoinSymbol() string {
+	mu.Lock()
+	s := coinSymbol
 	mu.Unlock()
 	return s
 }
@@ -355,6 +376,7 @@ func setMinFee(fee int64) {
 		panic("fee less than zero")
 	}
 	setChainConfig("MinFee", fee)
+	setChainConfig("MaxFee", fee*10000)
 	setChainConfig("MinBalanceTransfer", fee*10)
 }
 

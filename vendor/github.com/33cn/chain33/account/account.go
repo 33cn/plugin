@@ -41,7 +41,7 @@ type DB struct {
 
 // NewCoinsAccount 新建账户
 func NewCoinsAccount() *DB {
-	prefix := "mavl-coins-bty-"
+	prefix := "mavl-coins-" + types.GetCoinSymbol() + "-"
 	return newAccountDB(prefix)
 }
 
@@ -193,14 +193,20 @@ func (acc *DB) transferReceipt(fromkv, tokv []*types.KeyValue, receiptFrom, rece
 func (acc *DB) SaveAccount(acc1 *types.Account) {
 	set := acc.GetKVSet(acc1)
 	for i := 0; i < len(set); i++ {
-		acc.db.Set(set[i].GetKey(), set[i].Value)
+		err := acc.db.Set(set[i].GetKey(), set[i].Value)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 //SaveKVSet 保存Key Value set
 func (acc *DB) SaveKVSet(set []*types.KeyValue) {
 	for i := 0; i < len(set); i++ {
-		acc.db.Set(set[i].GetKey(), set[i].Value)
+		err := acc.db.Set(set[i].GetKey(), set[i].Value)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

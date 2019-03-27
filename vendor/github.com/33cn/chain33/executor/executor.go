@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client/api"
 	dbm "github.com/33cn/chain33/common/db"
 	clog "github.com/33cn/chain33/common/log"
@@ -26,7 +25,7 @@ import (
 )
 
 var elog = log.New("module", "execs")
-var coinsAccount = account.NewCoinsAccount()
+var coinsAccount *dbm.DB
 
 // SetLogLevel set log level
 func SetLogLevel(level string) {
@@ -106,9 +105,11 @@ func (exec *Executor) SetQueueClient(qcli queue.Client) {
 	if err != nil {
 		panic(err)
 	}
-	exec.grpccli, err = grpcclient.NewMainChainClient("")
-	if err != nil {
-		panic(err)
+	if types.IsPara() {
+		exec.grpccli, err = grpcclient.NewMainChainClient("")
+		if err != nil {
+			panic(err)
+		}
 	}
 	//recv 消息的处理
 	go func() {
@@ -332,7 +333,10 @@ func (exec *Executor) procExecAddBlock(msg *queue.Message) {
 	execute.enableMVCC(datas.PrevStatusHash)
 	var kvset types.LocalDBSet
 	for _, kv := range datas.KV {
-		execute.stateDB.Set(kv.Key, kv.Value)
+		err := execute.stateDB.Set(kv.Key, kv.Value)
+		if err != nil {
+			panic(err)
+		}
 	}
 	for name, plugin := range globalPlugins {
 		kvs, ok, err := plugin.CheckEnable(execute, exec.pluginEnable[name])
@@ -353,7 +357,10 @@ func (exec *Executor) procExecAddBlock(msg *queue.Message) {
 		if len(kvs) > 0 {
 			kvset.KV = append(kvset.KV, kvs...)
 			for _, kv := range kvs {
-				execute.localDB.Set(kv.Key, kv.Value)
+				err := execute.localDB.Set(kv.Key, kv.Value)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}
@@ -401,7 +408,10 @@ func (exec *Executor) procExecDelBlock(msg *queue.Message) {
 	execute.enableMVCC(nil)
 	var kvset types.LocalDBSet
 	for _, kv := range datas.KV {
-		execute.stateDB.Set(kv.Key, kv.Value)
+		err := execute.stateDB.Set(kv.Key, kv.Value)
+		if err != nil {
+			panic(err)
+		}
 	}
 	for name, plugin := range globalPlugins {
 		kvs, ok, err := plugin.CheckEnable(execute, exec.pluginEnable[name])

@@ -147,9 +147,13 @@ const (
 	EventLocalNew      = 138
 	EventLocalClose    = 139
 
-	EventReExecBlock   = 140
-	EventStoreMemSetEx = 141
-	EventStoreCommitEx = 142
+	//mempool
+	EventGetProperFee   = 140
+	EventReplyProperFee = 141
+  
+  EventReExecBlock   = 150
+	EventStoreMemSetEx = 151
+	EventStoreCommitEx = 152
 	//exec
 	EventBlockChainQuery = 212
 	EventConsensusQuery  = 213
@@ -294,4 +298,8 @@ var eventName = map[int]string{
 	EventLocalRollback: "EventLocalRollback",
 	EventLocalNew:      "EventLocalNew",
 	EventLocalClose:    "EventLocalClose",
+
+	//mempool
+	EventGetProperFee:   "EventGetProperFee",
+	EventReplyProperFee: "EventReplyProperFee",
 }

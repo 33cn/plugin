@@ -6,6 +6,7 @@
 //主要包含两方面功能
 // 1. token 的创建
 // 1. token 的转账
+// 1. token 燃烧和增发
 //
 //token的创建
 // 1. prepare create

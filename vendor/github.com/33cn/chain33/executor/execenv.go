@@ -138,7 +138,7 @@ func (e *executor) checkTx(tx *types.Transaction, index int) error {
 		//如果已经过期
 		return types.ErrTxExpire
 	}
-	if err := tx.Check(e.height, types.GInt("MinFee")); err != nil {
+	if err := tx.Check(e.height, types.GInt("MinFee"), types.GInt("MaxFee")); err != nil {
 		return err
 	}
 	//允许重写的情况
@@ -166,7 +166,7 @@ func (e *executor) checkTxGroup(txgroup *types.Transactions, index int) error {
 		//如果已经过期
 		return types.ErrTxExpire
 	}
-	if err := txgroup.Check(e.height, types.GInt("MinFee")); err != nil {
+	if err := txgroup.Check(e.height, types.GInt("MinFee"), types.GInt("MaxFee")); err != nil {
 		return err
 	}
 	return nil
@@ -203,7 +203,7 @@ func (e *executor) Exec(tx *types.Transaction, index int) (*types.Receipt, error
 	if err := drivers.CheckAddress(tx.GetRealToAddr(), e.height); err != nil {
 		return nil, err
 	}
-	if e.localDB != nil {
+	if e.localDB != nil && types.IsFork(e.height, "ForkLocalDBAccess") {
 		e.localDB.(*LocalDB).DisableWrite()
 		if exec.ExecutorOrder() != drivers.ExecLocalSameTime {
 			e.localDB.(*LocalDB).DisableRead()
@@ -295,7 +295,10 @@ func (e *executor) execTxGroup(txs []*types.Transaction, index int) ([]*types.Re
 			return receipts, nil
 		}
 	}
-	e.commit()
+	err = e.commit()
+	if err != nil {
+		return nil, err
+	}
 	return receipts, nil
 }
 
@@ -387,7 +390,9 @@ func (e *executor) execTxOne(feelog *types.Receipt, tx *types.Transaction, index
 	}
 	if types.IsFork(e.height, "ForkStateDBSet") {
 		for _, v := range feelog.KV {
-			e.stateDB.Set(v.Key, v.Value)
+			if err := e.stateDB.Set(v.Key, v.Value); err != nil {
+				panic(err)
+			}
 		}
 	}
 	return feelog, nil
@@ -436,16 +441,21 @@ func (e *executor) begin() {
 	}
 }
 
-func (e *executor) commit() {
+func (e *executor) commit() error {
 	matchfork := types.IsFork(e.height, "ForkExecRollback")
 	if matchfork {
 		if e.stateDB != nil {
-			e.stateDB.Commit()
+			if err := e.stateDB.Commit(); err != nil {
+				return err
+			}
 		}
 		if e.localDB != nil {
-			e.localDB.Commit()
+			if err := e.localDB.Commit(); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (e *executor) startTx() {
@@ -500,7 +510,10 @@ func (e *executor) execTx(exec *Executor, tx *types.Transaction, index int) (*ty
 	if err != nil {
 		e.rollback()
 	} else {
-		e.commit()
+		err := e.commit()
+		if err != nil {
+			return nil, err
+		}
 	}
 	elog.Debug("exec tx = ", "index", index, "execer", string(tx.Execer), "err", err)
 	if api.IsAPIEnvError(err) {
@@ -520,8 +533,7 @@ func (e *executor) execTx(exec *Executor, tx *types.Transaction, index int) (*ty
 */
 func (e *executor) isAllowExec(key []byte, tx *types.Transaction, index int) bool {
 	realExecer := e.getRealExecName(tx, index)
-	height := e.height
-	return isAllowKeyWrite(key, realExecer, tx, height)
+	return isAllowKeyWrite(e, key, realExecer, tx, index)
 }
 
 func (e *executor) isExecLocalSameTime(tx *types.Transaction, index int) bool {
@@ -573,7 +585,10 @@ func (e *executor) execLocalTx(tx *types.Transaction, r *types.ReceiptData, inde
 			return nil, err
 		}
 		for _, kv := range kv.KV {
-			e.localDB.Set(kv.Key, kv.Value)
+			err = e.localDB.Set(kv.Key, kv.Value)
+			if err != nil {
+				panic(err)
+			}
 		}
 	} else {
 		if len(memkvset) > 0 {

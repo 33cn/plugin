@@ -1,9 +1,6 @@
 package price
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
@@ -28,14 +25,8 @@ func NewQueue(subcfg subConfig) *Queue {
 }
 
 func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
-	//tx := item.value
-	buf := bytes.NewBuffer(nil)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(item.Value)
-	if err != nil {
-		return nil, err
-	}
-	size := len(buf.Bytes())
+	buf := types.Encode(item.Value)
+	size := len(buf)
 	return &skiplist.SkipValue{Score: item.Value.Fee / int64(size), Value: item}, nil
 }
 
@@ -129,4 +120,24 @@ func (cache *Queue) Walk(count int, cb func(value *mempool.Item) bool) {
 		i++
 		return i != count
 	})
+}
+
+// GetProperFee 获取合适的手续费,取前100的平均价格
+func (cache *Queue) GetProperFee() int64 {
+	var sumFee int64
+	var properFee int64
+	if cache.Size() == 0 {
+		return cache.subConfig.ProperFee
+	}
+	i := 0
+	cache.txList.Walk(func(tx interface{}) bool {
+		if i == 100 {
+			return false
+		}
+		sumFee += tx.(*mempool.Item).Value.Fee
+		i++
+		return true
+	})
+	properFee = sumFee / int64(i)
+	return properFee
 }

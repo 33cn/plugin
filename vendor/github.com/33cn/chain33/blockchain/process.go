@@ -390,7 +390,7 @@ func (b *BlockChain) connectBlock(node *blockNode, blockdetail *types.BlockDetai
 		chainlog.Debug("connectBlock SendAddBlockEvent", "err", err)
 	}
 	// 通知此block已经处理完，主要处理孤儿节点时需要设置
-	b.task.Done(blockdetail.Block.GetHeight())
+	b.syncTask.Done(blockdetail.Block.GetHeight())
 
 	//广播此block到全网络
 	if node.broadcast {
@@ -403,7 +403,7 @@ func (b *BlockChain) connectBlock(node *blockNode, blockdetail *types.BlockDetai
 		}
 	}
 	//目前非平行链并开启isRecordBlockSequence功能
-	if isRecordBlockSequence && !isParaChain {
+	if b.isRecordBlockSequence && !b.isParaChain {
 		b.pushseq.updateSeq(lastSequence)
 	}
 	return blockdetail, nil
@@ -472,7 +472,7 @@ func (b *BlockChain) disconnectBlock(node *blockNode, blockdetail *types.BlockDe
 	chainlog.Debug("disconnectBlock success", "newtipnode.hash", common.ToHex(newtipnode.hash), "delblock.parent.hash", common.ToHex(blockdetail.Block.GetParentHash()))
 
 	//目前非平行链并开启isRecordBlockSequence功能
-	if isRecordBlockSequence && !isParaChain {
+	if b.isRecordBlockSequence && !b.isParaChain {
 		b.pushseq.updateSeq(lastSequence)
 	}
 	return nil

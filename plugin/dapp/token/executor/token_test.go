@@ -68,7 +68,7 @@ func TestToken(t *testing.T) {
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX),
+		types.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
 		1539918074,
 	}
 
@@ -98,7 +98,7 @@ func TestToken(t *testing.T) {
 		Introduction: Symbol,
 		Total:        tokenTotal,
 		Price:        0,
-		Owner:        string(Nodes[0]),
+		Owner:        string(Nodes[0][1:]),
 		Category:     pty.CategoryMintBurnSupport,
 	}
 	//v, _ := types.PBToJSON(p1)
@@ -115,6 +115,32 @@ func TestToken(t *testing.T) {
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(createTx, int(1))
+	assert.NotNil(t, err)
+	assert.Nil(t, receipt)
+
+	p1 = &pty.TokenPreCreate{
+		Name:         Symbol,
+		Symbol:       Symbol,
+		Introduction: Symbol,
+		Total:        tokenTotal,
+		Price:        0,
+		Owner:        string(Nodes[0]),
+		Category:     pty.CategoryMintBurnSupport,
+	}
+	//v, _ := types.PBToJSON(p1)
+	createTx, err = types.CallCreateTransaction(pty.TokenX, "TokenPreCreate", p1)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx, err = signTx(createTx, PrivKeyA)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec = newToken()
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
 	t.Log(receipt)

@@ -37,7 +37,7 @@ singleMode=false
 batchsync=false
 isRecordBlockSequence=true
 isParaChain=false
-enableTxQuickIndex=false
+enableTxQuickIndex=true
 
 [p2p]
 seeds=[]
@@ -66,6 +66,7 @@ name="timeline"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=100
+maxTxFee=1000000000
 
 [mempool.sub.timeline]
 poolCacheSize=10240
@@ -73,7 +74,7 @@ poolCacheSize=10240
 [mempool.sub.score]
 poolCacheSize=10240
 timeParam=1      #时间占价格比例
-priceConstant=1544  #手续费相对于时间的一个合适的常量,取当前unxi时间戳前四位数,排序时手续费高1e-5~=快1s
+priceConstant=10  #手续费相对于时间的一个的常量,排队时手续费高1e3的分数~=快1h的分数
 pricePower=1     #常量比例
 
 [mempool.sub.price]
@@ -173,6 +174,7 @@ rescanMultisigAddr=false
 [exec]
 isFree=false
 minExecFee=100000
+maxExecFee=1000000000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
