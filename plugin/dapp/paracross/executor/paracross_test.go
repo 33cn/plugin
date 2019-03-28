@@ -139,7 +139,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 }
 
 func (suite *CommitTestSuite) TestSetup() {
-	nodeConfigKey := calcParaNodeGroupKey(Title)
+	nodeConfigKey := calcManageConfigNodesKey(Title)
 	suite.T().Log(string(nodeConfigKey))
 	_, err := suite.stateDB.Get(nodeConfigKey)
 	if err != nil {
