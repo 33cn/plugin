@@ -111,7 +111,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	MainBlockHash10 = blockDetail.Block.Hash()
 
 	// setup title nodes : len = 4
-	nodeConfigKey := calcParaNodeGroupKey(Title)
+	nodeConfigKey := calcManageConfigNodesKey(Title)
 	nodeValue := makeNodeInfo(Title, Title, 4)
 	suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
 	value, err := suite.stateDB.Get(nodeConfigKey)
@@ -257,7 +257,7 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 3)
+	assert.Len(suite.T(), receipt.KV, 2)
 	assert.Len(suite.T(), receipt.Logs, 2)
 
 	key := calcTitleHeightKey(Title, TitleHeight)
