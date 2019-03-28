@@ -49,6 +49,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
+	types.SetDappFork(Title,pt.ParaX,pt.ForkCommitTx,0)
 	// TODO, more fields
 	// setup block
 	blockDetail := &types.BlockDetail{
