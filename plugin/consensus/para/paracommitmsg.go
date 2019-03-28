@@ -155,7 +155,7 @@ out:
 		case rsp := <-consensusCh:
 			consensHeight := rsp.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consensHeigt", rsp.Height, "consensBlockHash", common.ToHex(rsp.BlockHash), "sync", isSync)
+				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "consensBlockHash", common.ToHex(rsp.BlockHash))
 
 			if notification == nil || isRollback {
 				continue
@@ -164,6 +164,11 @@ out:
 			//所有节点还没有共识场景或新节点或重启节点catchingUp场景，要等到收到区块高度大于共识高度时候发送，在catchingup时候本身共识高度和块高度一起增长
 			if notification[1] > consensHeight {
 				isSync = true
+			}
+
+			// 共识高度追赶上完成高度之后再发，不然分叉节点继续发浪费手续费
+			if finishHeight > consensHeight {
+				isSync = false
 			}
 
 			//未共识过的小于当前共识高度的区块，可以不参与共识, 如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
@@ -186,6 +191,7 @@ out:
 				finishHeight = consensHeight
 				sendingMsgs = nil
 				client.currentTx = nil
+				isSync = true
 			}
 
 		case key, ok := <-priKeyCh:

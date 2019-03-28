@@ -361,25 +361,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 	clog.Info("paracross.Commit commit ----pass", "most", most, "mostHash", hex.EncodeToString([]byte(mostHash)))
 
-	// parallel chain get self blockhash and compare with commit done result, if not match, just log and return
-	if types.IsPara() {
-		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
-
-		blockHash, err := getBlockHash(a.api, stat.Height)
-		if err != nil {
-			clog.Error("paracross.Commit para getBlockHash local", "err", err.Error(), "commitheight", commit.Status.Height,
-				"commitHash", hex.EncodeToString(commit.Status.BlockHash), "mainHash", hex.EncodeToString(commit.Status.MainBlockHash),
-				"mainHeight", commit.Status.MainBlockHeight)
-			return receipt, nil
-		}
-		if !bytes.Equal(blockHash.Hash, []byte(mostHash)) {
-			clog.Error("paracross.Commit para blockHash not match", "selfBlockHash", hex.EncodeToString(blockHash.Hash),
-				"mostHash", hex.EncodeToString([]byte(mostHash)), "commitHeight", commit.Status.Height,
-				"commitMainHash", hex.EncodeToString(commit.Status.MainBlockHash), "commitMainHeight", commit.Status.MainBlockHeight)
-			return receipt, nil
-		}
-	}
-
 	stat.Status = pt.ParacrossStatusCommitDone
 	receiptDone := makeDoneReceipt(a.fromaddr, commit, stat, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt.KV = append(receipt.KV, receiptDone.KV...)
@@ -390,12 +371,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	titleStatus.Height = commit.Status.Height
 	titleStatus.BlockHash = commit.Status.BlockHash
 	saveTitle(a.db, calcTitleKey(commit.Status.Title), titleStatus)
-
-	if types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
-		key := calcTitleHashKey(commit.Status.Title, hex.EncodeToString(commit.Status.MainBlockHash))
-		saveTitle(a.db, key, titleStatus)
-		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: types.Encode(titleStatus)})
-	}
 
 	clog.Info("paracross.Commit commit done", "height", commit.Status.Height,
 		"cross tx count", len(commit.Status.CrossTxHashs), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))

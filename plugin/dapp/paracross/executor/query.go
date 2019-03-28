@@ -31,16 +31,11 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 		return nil, types.ErrInvalidParam
 	}
 
-	if !types.IsDappFork(p.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
-		block, err := p.GetAPI().GetBlockOverview(&types.ReqHash{Hash: in.BlockHash})
-		if err != nil || block == nil {
-			return nil, types.ErrHashNotExist
-		}
-		return p.paracrossGetHeight(in.GetTitle())
+	block, err := p.GetAPI().GetBlockOverview(&types.ReqHash{Hash: in.BlockHash})
+	if err != nil || block == nil {
+		return nil, types.ErrHashNotExist
 	}
-
-	return p.paracrossGetHeightByHash(in)
-
+	return p.paracrossGetHeight(in.GetTitle())
 }
 
 //Query_GetNodeGroup get node group addrs
@@ -139,14 +134,6 @@ func (p *Paracross) paracrossGetMainBlockHash(tx *types.Transaction) (types.Mess
 
 func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	ret, err := getTitle(p.GetStateDB(), calcTitleKey(title))
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-	return ret, nil
-}
-
-func (p *Paracross) paracrossGetHeightByHash(in *pt.ReqParacrossTitleHash) (types.Message, error) {
-	ret, err := getTitle(p.GetStateDB(), calcTitleHashKey(in.GetTitle(), hex.EncodeToString(in.GetBlockHash())))
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
