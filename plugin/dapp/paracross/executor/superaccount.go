@@ -265,8 +265,9 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
-		//超级用户且当前group里面有任一账户投yes票，可以通过
-		if !(isSuperManager(a.fromaddr) && most > 1 && vote == pt.ParaNodeVoteYes) {
+		//超级用户投yes票，就可以通过，防止当前所有授权节点都忘掉私钥场景
+		//超级用户且当前group里面有任一账户投yes票也可以通过是备选方案 （most >1)即可
+		if !(isSuperManager(a.fromaddr) && most > 0 && vote == pt.ParaNodeVoteYes) {
 			saveNodeAddr(a.db, key, stat)
 			return receipt, nil
 		}
