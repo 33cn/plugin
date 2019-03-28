@@ -13,7 +13,6 @@ import (
 var (
 	title                string
 	titleHeight          string
-	titleHash            string
 	managerConfigNodes   string //manager 合约配置的nodes
 	paraConfigNodes      string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr   string //平行链配置节点账户
@@ -28,7 +27,6 @@ var (
 func setPrefix() {
 	title = "mavl-paracross-title-"
 	titleHeight = "mavl-paracross-titleHeight-"
-	titleHash = "mavl-paracross-titleHash-"
 	managerConfigNodes = "paracross-nodes-"
 	paraConfigNodes = "mavl-paracross-nodes-title-"
 	paraConfigNodeAddr = "mavl-paracross-nodes-titleAddr-"
@@ -48,10 +46,6 @@ func calcTitleKey(t string) []byte {
 
 func calcTitleHeightKey(title string, height int64) []byte {
 	return []byte(fmt.Sprintf(titleHeight+"%s-%d", title, height))
-}
-
-func calcTitleHashKey(title string, blockHash string) []byte {
-	return []byte(fmt.Sprintf(titleHash+"%s-%s", title, blockHash))
 }
 
 func calcLocalHeightKey(title string, height int64) []byte {

@@ -33,5 +33,5 @@ services:
      - chain30
     volumes:
      - ./nginx.conf:/etc/nginx/nginx.conf
-    expose:
-     - "8803"
+    ports:
+     - "8802:8803"
