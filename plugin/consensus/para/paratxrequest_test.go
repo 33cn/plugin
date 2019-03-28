@@ -312,4 +312,3 @@ func TestGetConsensusStatus(t *testing.T) {
 //	assert.Equal(t, ret, status)
 //
 //}
-
