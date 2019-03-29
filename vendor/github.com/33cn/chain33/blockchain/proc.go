@@ -90,6 +90,8 @@ func (chain *BlockChain) ProcRecvMsg() {
 
 		case types.EventGetSeqCBLastNum:
 			go chain.processMsg(msg, reqnum, chain.getSeqCBLastNum)
+		case types.EventReExecBlock:
+			go chain.processMsg(msg, reqnum, chain.reExecBlock)
 		default:
 			go chain.processMsg(msg, reqnum, chain.unknowMsg)
 		}
@@ -133,6 +135,17 @@ func (chain *BlockChain) getSeqCBLastNum(msg *queue.Message) {
 	msg.Reply(chain.client.NewMessage("rpc", types.EventGetSeqCBLastNum, lastNum))
 }
 
+func (chain *BlockChain) reExecBlock(msg *queue.Message) {
+	data := (msg.Data).(*types.ReqInt)
+	curHeight := chain.GetBlockHeight()
+	if curHeight < data.Height {
+		msg.Reply(chain.client.NewMessage("store", types.EventReExecBlock, &types.ReplyString{Data: "none"}))
+		return
+	}
+	msg.Reply(chain.client.NewMessage("store", types.EventReExecBlock, &types.ReplyString{Data: "need"}))
+	chain.ProcessReExecBlock(data.Height, curHeight)
+}
+
 func (chain *BlockChain) queryTx(msg *queue.Message) {
 	txhash := (msg.Data).(*types.ReqHash)
 	TransactionDetail, err := chain.ProcQueryTxMsg(txhash.Hash)
@@ -162,15 +175,15 @@ func (chain *BlockChain) addBlock(msg *queue.Message) {
 	blockpid := msg.Data.(*types.BlockPid)
 	//chainlog.Error("addBlock", "height", blockpid.Block.Height, "pid", blockpid.Pid)
 	if chain.GetDownloadSyncStatus() {
-		//downLoadTask 运行时设置对应的blockdone
-		if chain.downLoadTask.InProgress() {
-			chain.downLoadTask.Done(blockpid.Block.GetHeight())
-		}
 		err := chain.WriteBlockToDbTemp(blockpid.Block)
 		if err != nil {
 			chainlog.Error("WriteBlockToDbTemp", "height", blockpid.Block.Height, "err", err.Error())
 			reply.IsOk = false
 			reply.Msg = []byte(err.Error())
+		}
+		//downLoadTask 运行时设置对应的blockdone
+		if chain.downLoadTask.InProgress() {
+			chain.downLoadTask.Done(blockpid.Block.GetHeight())
 		}
 	} else {
 		_, err := chain.ProcAddBlockMsg(false, &types.BlockDetail{Block: blockpid.Block}, blockpid.Pid)

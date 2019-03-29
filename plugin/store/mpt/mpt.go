@@ -135,6 +135,18 @@ func (mpts *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetUpgrade set keys values to memcory mpt, return root hash and error
+func (mpts *Store) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
+// CommitUpgrade convert memcory mpt to storage db
+func (mpts *Store) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
 // Rollback 回退将缓存的mpt树删除掉
 func (mpts *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mpts.trees[string(req.Hash)]
@@ -159,5 +171,8 @@ func (mpts *Store) IterateRangeByStateHash(statehash []byte, start []byte, end [
 
 // ProcEvent not support message
 func (mpts *Store) ProcEvent(msg *queue.Message) {
+	if msg == nil {
+		return
+	}
 	msg.ReplyErr("Store", types.ErrActionNotSupport)
 }

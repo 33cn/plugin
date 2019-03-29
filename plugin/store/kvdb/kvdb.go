@@ -121,6 +121,18 @@ func (kvs *KVStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetUpgrade set kvs to the mem of KVStore
+func (kvs *KVStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
+// CommitUpgrade kvs in the mem of KVStore
+func (kvs *KVStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
 // Rollback kvs in the mem of KVStore
 func (kvs *KVStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := kvs.cache[string(req.Hash)]
@@ -141,6 +153,9 @@ func (kvs *KVStore) IterateRangeByStateHash(statehash []byte, start []byte, end 
 
 // ProcEvent handles supported events
 func (kvs *KVStore) ProcEvent(msg *queue.Message) {
+	if msg == nil {
+		return
+	}
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 

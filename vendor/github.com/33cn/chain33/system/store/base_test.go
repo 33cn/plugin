@@ -36,6 +36,14 @@ func (s *storeChild) Commit(hash *types.ReqHash) ([]byte, error) {
 	return []byte{}, nil
 }
 
+func (s *storeChild) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (s *storeChild) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	return []byte{}, nil
+}
+
 func (s *storeChild) Rollback(req *types.ReqHash) ([]byte, error) {
 	return []byte{}, nil
 }

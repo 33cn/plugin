@@ -229,6 +229,11 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue) {
 	storeBatch.Write()
 }
 
+// GetMaxVersion 获取当前最大高度
+func (mvccs *KVMVCCStore) GetMaxVersion() (int64, error) {
+	return mvccs.mvcc.GetMaxVersion()
+}
+
 func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) {
 	//检查新加入区块的height和现有的version的关系，来判断是否要回滚数据
 	maxVersion, err := mvccs.mvcc.GetMaxVersion()
