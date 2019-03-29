@@ -131,6 +131,18 @@ func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetUpgrade set kvs to the mem of KVMVCCStore module and return the StateHash
+func (mvccs *KVMVCCStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
+// CommitUpgrade kvs in the mem of KVMVCCStore module to state db and return the StateHash
+func (mvccs *KVMVCCStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	//not support
+	return nil, nil
+}
+
 // Rollback kvs in the mem of KVMVCCStore module and return the StateHash
 func (mvccs *KVMVCCStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
@@ -175,6 +187,9 @@ func (mvccs *KVMVCCStore) IterateRangeByStateHash(statehash []byte, start []byte
 
 // ProcEvent handles supported events
 func (mvccs *KVMVCCStore) ProcEvent(msg *queue.Message) {
+	if msg == nil {
+		return
+	}
 	msg.ReplyErr("KVStore", types.ErrActionNotSupport)
 }
 

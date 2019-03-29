@@ -33,6 +33,11 @@ var (
 	delMavlDataState  int32
 	wg                sync.WaitGroup
 	quit              bool
+
+	// 用来阻塞查看当前是否需要升级数据库
+	done chan struct{}
+	// 使能mavl在当前区块基础上升级kvmvcc
+	enableUpdateKvmvcc bool
 )
 
 const (
@@ -54,6 +59,7 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
+	done = make(chan struct{}, 1)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -75,6 +81,10 @@ type subMavlConfig struct {
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
+	// 是否使能内存树
+	EnableMemTree bool `json:"enableMemTree"`
+	// 是否使能内存树中叶子节点
+	EnableMemVal bool `json:"enableMemVal"`
 }
 
 type subConfig struct {
@@ -83,11 +93,15 @@ type subConfig struct {
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
+	// 是否使能内存树
+	EnableMemTree bool `json:"enableMemTree"`
+	// 是否使能内存树中叶子节点
+	EnableMemVal       bool `json:"enableMemVal"`
+	EnableUpdateKvmvcc bool `json:"enableUpdateKvmvcc"`
 }
 
 // New construct KVMVCCStore module
 func New(cfg *types.Store, sub []byte) queue.Module {
-	bs := drivers.NewBaseStore(cfg)
 	var kvms *KVmMavlStore
 	var subcfg subConfig
 	var subKVMVCCcfg subKVMVCCConfig
@@ -102,7 +116,15 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
+		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
+		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
 	}
+
+	if subcfg.EnableUpdateKvmvcc {
+		enableUpdateKvmvcc = true
+	}
+
+	bs := drivers.NewBaseStore(cfg)
 	cache, err := lru.New(cacheSize)
 	if err != nil {
 		panic("new KVmMavlStore fail")
@@ -239,7 +261,70 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 
 // ProcEvent handles supported events
 func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
-	msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
+	//msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
+	client := kvmMavls.GetQueueClient()
+	if msg != nil && msg.Ty == types.EventReExecBlock {
+		reData := msg.GetData().(*types.ReplyString)
+		if reData.Data == "over" {
+			kmlog.Info("ProcEvent update store over")
+			msg.ReplyErr("KVmMavlStore", nil)
+			done <- struct{}{}
+			return
+		}
+	} else if msg == nil {
+		if !enableUpdateKvmvcc {
+			return
+		}
+		height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
+		if err != nil {
+			height = 0
+		} else {
+			height++
+		}
+		msg1 := client.NewMessage("blockchain", types.EventReExecBlock, &types.ReqInt{Height: height})
+		err = client.Send(msg1, true)
+		if err != nil {
+			return
+		}
+		resp, err := client.Wait(msg1)
+		if err != nil {
+			return
+		}
+		data := resp.GetData().(*types.ReplyString)
+		if data.Data == "need" {
+			//进程阻塞
+			<-done
+		}
+	}
+}
+
+// MemSetUpgrade set kvs to the mem of KVmMavlStore module  not cache the tree and return the StateHash
+func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	if datas.Height < kvmvccMavlFork {
+		hash, err := kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
+		if err != nil {
+			return hash, err
+		}
+		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
+		if err != nil {
+			return hash, err
+		}
+		if err == nil {
+			kvmMavls.cache.Add(string(hash), datas.Height)
+		}
+		return hash, err
+	}
+	// 仅仅做kvmvcc
+	hash, err := kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	if err == nil {
+		kvmMavls.cache.Add(string(hash), datas.Height)
+	}
+	return hash, err
+}
+
+// CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
+func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	return kvmMavls.KVMVCCStore.Commit(req)
 }
 
 // Del set kvs to nil with StateHash

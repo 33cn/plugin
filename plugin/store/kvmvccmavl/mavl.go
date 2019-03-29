@@ -32,12 +32,16 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 		subcfg.EnableMVCC = sub.EnableMVCC
 		subcfg.EnableMavlPrune = sub.EnableMavlPrune
 		subcfg.PruneHeight = sub.PruneHeight
+		subcfg.EnableMemTree = sub.EnableMemTree
+		subcfg.EnableMemVal = sub.EnableMemVal
 	}
 	mavls := &MavlStore{db, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
 	mavl.EnableMavlPrefix(subcfg.EnableMavlPrefix)
 	mavl.EnableMVCC(subcfg.EnableMVCC)
 	mavl.EnablePrune(subcfg.EnableMavlPrune)
 	mavl.SetPruneHeight(int(subcfg.PruneHeight))
+	mavl.EnableMemTree(subcfg.EnableMemTree)
+	mavl.EnableMemVal(subcfg.EnableMemVal)
 	return mavls
 }
 
@@ -100,6 +104,29 @@ func (mavls *MavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error)
 	}
 	hash := tree.Hash()
 	mavls.trees.Store(string(hash), tree)
+	return hash, nil
+}
+
+// MemSetUpgrade 计算hash之后不在内存中存储树
+func (mavls *MavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	beg := types.Now()
+	defer func() {
+		kmlog.Info("MemSet", "cost", types.Since(beg))
+	}()
+	if len(datas.KV) == 0 {
+		kmlog.Info("store mavl memset,use preStateHash as stateHash for kvset is null")
+		return datas.StateHash, nil
+	}
+	tree := mavl.NewTree(mavls.db, sync)
+	tree.SetBlockHeight(datas.Height)
+	err := tree.Load(datas.StateHash)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(datas.KV); i++ {
+		tree.Set(datas.KV[i].Key, datas.KV[i].Value)
+	}
+	hash := tree.Hash()
 	return hash, nil
 }
 

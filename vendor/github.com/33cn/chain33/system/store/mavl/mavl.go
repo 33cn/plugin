@@ -172,6 +172,35 @@ func (mavls *Store) Commit(req *types.ReqHash) ([]byte, error) {
 	return req.Hash, nil
 }
 
+// MemSetUpgrade cacl mavl, but not store tree, return root hash and error
+func (mavls *Store) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
+	beg := types.Now()
+	defer func() {
+		mlog.Info("MemSet", "cost", types.Since(beg))
+	}()
+	if len(datas.KV) == 0 {
+		mlog.Info("store mavl memset,use preStateHash as stateHash for kvset is null")
+		mavls.trees.Store(string(datas.StateHash), nil)
+		return datas.StateHash, nil
+	}
+	tree := mavl.NewTree(mavls.GetDB(), sync)
+	tree.SetBlockHeight(datas.Height)
+	err := tree.Load(datas.StateHash)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(datas.KV); i++ {
+		tree.Set(datas.KV[i].Key, datas.KV[i].Value)
+	}
+	hash := tree.Hash()
+	return hash, nil
+}
+
+// CommitUpgrade convert memcory mavl to storage db
+func (mavls *Store) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
+	return req.Hash, nil
+}
+
 // Rollback 回退将缓存的mavl树删除掉
 func (mavls *Store) Rollback(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
@@ -194,6 +223,9 @@ func (mavls *Store) IterateRangeByStateHash(statehash []byte, start []byte, end 
 
 // ProcEvent not support message
 func (mavls *Store) ProcEvent(msg *queue.Message) {
+	if msg == nil {
+		return
+	}
 	msg.ReplyErr("Store", types.ErrActionNotSupport)
 }
 
