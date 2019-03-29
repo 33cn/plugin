@@ -114,6 +114,30 @@ func TestKvdbMemSet(t *testing.T) {
 	assert.Nil(t, notExistHash)
 }
 
+func TestKvmvccdbMemSetUpgrade(t *testing.T) {
+	// not support
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	var storeCfg = newStoreCfg(dir)
+	store := New(storeCfg, nil).(*Store)
+	assert.NotNil(t, store)
+	store.MemSetUpgrade(nil, false)
+}
+
+func TestKvmvccdbCommitUpgrade(t *testing.T) {
+	// not support
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	var storeCfg = newStoreCfg(dir)
+	store := New(storeCfg, nil).(*Store)
+	assert.NotNil(t, store)
+	store.CommitUpgrade(nil)
+}
+
 func TestKvdbRollback(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)

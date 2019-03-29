@@ -18,9 +18,12 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
+	qmocks "github.com/33cn/chain33/queue/mocks"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -114,6 +117,44 @@ func TestKvmvccMavlMemSet(t *testing.T) {
 		assert.Equal(t, []byte(fmt.Sprintf("value%d", i)), values[1])
 	}
 	notExistHash, _ := store.Commit(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
+	assert.Nil(t, notExistHash)
+}
+
+func TestKvmvccMavlMemSetUpgrade(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	var storeCfg = newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	kvmvccMavlFork = 50
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+	hash := drivers.EmptyRoot[:]
+	for i := 0; i < 1; i++ {
+		var kvs []*types.KeyValue
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("k%d", i)), Value: []byte(fmt.Sprintf("v%d", i))})
+		kvs = append(kvs, &types.KeyValue{Key: []byte(fmt.Sprintf("key%d", i)), Value: []byte(fmt.Sprintf("value%d", i))})
+		datas := &types.StoreSet{
+			StateHash: hash,
+			KV:        kvs,
+			Height:    int64(i)}
+
+		hash, err = store.MemSetUpgrade(datas, true)
+		assert.Nil(t, err)
+		actHash, _ := store.CommitUpgrade(&types.ReqHash{Hash: hash})
+		assert.Equal(t, hash, actHash)
+		keys := [][]byte{[]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("key%d", i))}
+		get := &types.StoreGet{StateHash: hash, Keys: keys}
+		values := store.Get(get)
+		assert.Len(t, values, 2)
+		assert.Equal(t, []byte(fmt.Sprintf("v%d", i)), values[0])
+		assert.Equal(t, []byte(fmt.Sprintf("value%d", i)), values[1])
+	}
+	notExistHash, _ := store.CommitUpgrade(&types.ReqHash{Hash: drivers.EmptyRoot[:]})
 	assert.Nil(t, notExistHash)
 }
 
@@ -496,6 +537,36 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	fmt.Println("resp.Amount=", resp.Amount)
 	assert.Equal(t, int64(0), resp.Num)
 	assert.Equal(t, int64(0), resp.Amount)
+}
+
+type testClient struct {
+	qmocks.Client
+}
+
+func TestProcEvent(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg, sub := newStoreCfgIter(dir)
+	store := New(storeCfg, sub).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	client := &qmocks.Client{}
+	client.On("Send", mock.Anything, mock.Anything).Return(nil)
+	client.On("Sub", mock.Anything, mock.Anything).Return(nil)
+	client.On("Recv", mock.Anything, mock.Anything).Return(nil)
+	client.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("Wait", mock.Anything).Return(&queue.Message{Data: &types.ReplyString{Data: "other"}}, nil).Once()
+	store.SetQueueClient(client)
+
+	store.ProcEvent(nil)
+	enableUpdateKvmvcc = true
+	defer func() {
+		enableUpdateKvmvcc = false
+	}()
+	store.ProcEvent(nil)
+	store.ProcEvent(&queue.Message{})
 }
 
 func GetRandomString(length int) string {
