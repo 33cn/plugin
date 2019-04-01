@@ -49,8 +49,8 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
-	forkHeight := types.GetDappFork(pt.ParaX,pt.ForkCommitTx)
-	if forkHeight == types.MaxHeight{
+	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
+	if forkHeight == types.MaxHeight {
 		types.SetDappFork(Title, pt.ParaX, pt.ForkCommitTx, 0)
 	}
 
