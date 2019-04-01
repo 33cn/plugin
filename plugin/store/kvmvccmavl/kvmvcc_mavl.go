@@ -324,7 +324,7 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 
 // CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
-	return kvmMavls.KVMVCCStore.Commit(req)
+	return kvmMavls.KVMVCCStore.CommitUpgrade(req)
 }
 
 // Del set kvs to nil with StateHash
