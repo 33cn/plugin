@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
-	rpcTypes "github.com/33cn/chain33/rpc/types"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -273,7 +273,7 @@ func createNodeTx(cmd *cobra.Command, args []string) {
 	}
 
 	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr}
-	params := &rpcTypes.CreateTxIn{
+	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeConfig",
 		Payload:    types.MustPBToJSON(payload),
