@@ -272,7 +272,4 @@ func TestGetConsensusStatus(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret.Height)
-
-	mainParaSelfConsensusForkHeight = 1
-
 }

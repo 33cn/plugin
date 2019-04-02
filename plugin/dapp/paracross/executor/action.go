@@ -39,33 +39,36 @@ func newAction(t *Paracross, tx *types.Transaction) *action {
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer)), t.GetAPI(), tx, t}
 }
 
-func getNodes(db dbm.KV, title string) (map[string]struct{}, error) {
-	key := calcConfigNodesKey(title)
+func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 	item, err := db.Get(key)
 	if err != nil {
 		clog.Info("getNodes", "get db key", string(key), "failed", err)
 		if isNotFound(err) {
 			err = pt.ErrTitleNotExist
 		}
-		return nil, errors.Wrapf(err, "db get key:%s", string(key))
+		return nil, nil, errors.Wrapf(err, "db get key:%s", string(key))
 	}
 	var config types.ConfigItem
 	err = types.Decode(item, &config)
 	if err != nil {
-		return nil, errors.Wrap(err, "decode config")
+		return nil, nil, errors.Wrap(err, "decode config")
 	}
 
 	value := config.GetArr()
 	if value == nil {
 		// 在配置地址后，发现配置错了， 删除会出现这种情况
-		return map[string]struct{}{}, nil
+		return map[string]struct{}{}, nil, nil
 	}
-	uniqNode := make(map[string]struct{})
+	var nodesArray []string
+	nodesMap := make(map[string]struct{})
 	for _, v := range value.Value {
-		uniqNode[v] = struct{}{}
+		if _, exist := nodesMap[v]; !exist {
+			nodesMap[v] = struct{}{}
+			nodesArray = append(nodesArray, v)
+		}
 	}
 
-	return uniqNode, nil
+	return nodesMap, nodesArray, nil
 }
 
 func validTitle(title string) bool {
@@ -211,6 +214,32 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
+func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
+	if !types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+		key := calcManageConfigNodesKey(title)
+		nodes, _, err := getNodes(a.db, key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getNodes for title:%s", title)
+		}
+		return nodes, nil
+	}
+
+	key := calcParaNodeGroupKey(title)
+	nodes, _, err := getNodes(a.db, key)
+	if err != nil {
+		if errors.Cause(err) != pt.ErrTitleNotExist {
+			return nil, errors.Wrapf(err, "getNodes para for title:%s", title)
+		}
+		key = calcManageConfigNodesKey(title)
+		nodes, _, err = getNodes(a.db, key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
+		}
+	}
+
+	return nodes, nil
+}
+
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	err := checkCommitInfo(commit)
 	if err != nil {
@@ -221,9 +250,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, pt.ErrInvalidTitle
 	}
 
-	nodes, err := getNodes(a.db, commit.Status.Title)
+	nodes, err := a.getNodesGroup(commit.Status.Title)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getNodes for title:%s", commit.Status.Title)
+		return nil, err
 	}
 
 	if !validNode(a.fromaddr, nodes) {
@@ -295,7 +324,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
 	} else {
-		copyStat := *stat
+		var copyStat pt.ParacrossHeightStatus
+		err = deepCopy(&copyStat, stat)
+		if err != nil {
+			clog.Error("paracross.Commit deep copy fail", "copy", copyStat, "stat", stat)
+			return nil, err
+		}
 		// 如有分叉， 同一个节点可能再次提交commit交易
 		found, index := hasCommited(stat.Details.Addrs, a.fromaddr)
 		if found {
@@ -327,25 +361,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 	clog.Info("paracross.Commit commit ----pass", "most", most, "mostHash", hex.EncodeToString([]byte(mostHash)))
 
-	// parallel chain get self blockhash and compare with commit done result, if not match, just log and return
-	if types.IsPara() {
-		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
-
-		blockHash, err := getBlockHash(a.api, stat.Height)
-		if err != nil {
-			clog.Error("paracross.Commit para getBlockHash local", "err", err.Error(), "commitheight", commit.Status.Height,
-				"commitHash", hex.EncodeToString(commit.Status.BlockHash), "mainHash", hex.EncodeToString(commit.Status.MainBlockHash),
-				"mainHeight", commit.Status.MainBlockHeight)
-			return receipt, nil
-		}
-		if !bytes.Equal(blockHash.Hash, []byte(mostHash)) {
-			clog.Error("paracross.Commit para blockHash not match", "selfBlockHash", hex.EncodeToString(blockHash.Hash),
-				"mostHash", hex.EncodeToString([]byte(mostHash)), "commitHeight", commit.Status.Height,
-				"commitMainHash", hex.EncodeToString(commit.Status.MainBlockHash), "commitMainHeight", commit.Status.MainBlockHeight)
-			return receipt, nil
-		}
-	}
-
 	stat.Status = pt.ParacrossStatusCommitDone
 	receiptDone := makeDoneReceipt(a.fromaddr, commit, stat, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt.KV = append(receipt.KV, receiptDone.KV...)
@@ -356,12 +371,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	titleStatus.Height = commit.Status.Height
 	titleStatus.BlockHash = commit.Status.BlockHash
 	saveTitle(a.db, calcTitleKey(commit.Status.Title), titleStatus)
-
-	if types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
-		key := calcTitleHashKey(commit.Status.Title, hex.EncodeToString(commit.Status.MainBlockHash))
-		saveTitle(a.db, key, titleStatus)
-		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: types.Encode(titleStatus)})
-	}
 
 	clog.Info("paracross.Commit commit done", "height", commit.Status.Height,
 		"cross tx count", len(commit.Status.CrossTxHashs), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))

@@ -51,6 +51,37 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 	return &set, nil
 }
 
+//ExecLocal_NodeConfig node config add process
+func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaNodeConfig {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Prev.Status), Value: nil})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key:   calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Current.Status),
+				Value: types.Encode(g.Current)})
+		} else if log.Ty == pt.TyLogParaNodeVoteDone {
+			var g pt.ReceiptParaNodeVoteDone
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+		}
+	}
+	return &set, nil
+}
+
 //ExecLocal_AssetTransfer asset transfer local proc
 func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet

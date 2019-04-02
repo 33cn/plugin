@@ -6,6 +6,10 @@ package executor
 
 import (
 	"encoding/hex"
+	"fmt"
+
+	"math/big"
+	"strconv"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -27,16 +31,52 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 		return nil, types.ErrInvalidParam
 	}
 
-	if !types.IsDappFork(p.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
-		block, err := p.GetAPI().GetBlockOverview(&types.ReqHash{Hash: in.BlockHash})
-		if err != nil || block == nil {
-			return nil, types.ErrHashNotExist
-		}
-		return p.paracrossGetHeight(in.GetTitle())
+	block, err := p.GetAPI().GetBlockOverview(&types.ReqHash{Hash: in.BlockHash})
+	if err != nil || block == nil {
+		return nil, types.ErrHashNotExist
 	}
+	return p.paracrossGetHeight(in.GetTitle())
+}
 
-	return p.paracrossGetHeightByHash(in)
+//Query_GetNodeGroup get node group addrs
+func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	key := calcParaNodeGroupKey(in.GetData())
+	ret, _, err := getNodes(p.GetStateDB(), key)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	var nodes []string
+	for k := range ret {
+		nodes = append(nodes, k)
+	}
+	var reply types.ReplyConfig
+	reply.Key = string(key)
+	reply.Value = fmt.Sprint(nodes)
+	return &reply, nil
+}
 
+//Query_GetNodeAddrInfo get specific node addr info
+func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" || in.Addr == "" {
+		return nil, types.ErrInvalidParam
+	}
+	key := calcParaNodeAddrKey(in.Title, in.Addr)
+	stat, err := getNodeAddr(p.GetStateDB(), key)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
+//Query_ListNodeStatusInfo list node info by status
+func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
 }
 
 //Query_ListTitles query paracross titles list
@@ -100,14 +140,6 @@ func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	return ret, nil
 }
 
-func (p *Paracross) paracrossGetHeightByHash(in *pt.ReqParacrossTitleHash) (types.Message, error) {
-	ret, err := getTitle(p.GetStateDB(), calcTitleHashKey(in.GetTitle(), hex.EncodeToString(in.GetBlockHash())))
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-	return ret, nil
-}
-
 func (p *Paracross) paracrossListTitles() (types.Message, error) {
 	return listLocalTitles(p.GetLocalDB())
 }
@@ -125,23 +157,65 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 		if err != nil {
 			panic(err)
 		}
-		resp.Titles = append(resp.Titles, &st)
+		rst := &pt.RespParacrossDone{
+			TotalNodes:     st.TotalNodes,
+			TotalCommit:    st.TotalCommit,
+			MostSameCommit: st.MostSameCommit,
+			Title:          st.Title,
+			Height:         st.Height,
+			StateHash:      hex.EncodeToString(st.StateHash),
+			TxCounts:       st.TxCounts,
+			TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+		}
+
+		resp.Titles = append(resp.Titles, rst)
 	}
 	return &resp, nil
 }
 
+//按状态遍历
+func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
+	prefix := calcLocalNodeStatusPrefix(title, status)
+	res, err := db.List(prefix, []byte(""), 0, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp pt.RespParacrossNodeAddrs
+	for _, r := range res {
+		var st pt.ParaNodeAddrStatus
+		err = types.Decode(r, &st)
+		if err != nil {
+			panic(err)
+		}
+		resp.Addrs = append(resp.Addrs, &st)
+	}
+	return &resp, nil
+
+}
+
 func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error) {
-	key := calcLocalTitleHeightKey(title, height)
+	key := calcLocalHeightKey(title, height)
 	res, err := db.Get(key)
 	if err != nil {
 		return nil, err
 	}
-	var resp pt.ReceiptParacrossDone
-	err = types.Decode(res, &resp)
+	var st pt.ReceiptParacrossDone
+	err = types.Decode(res, &st)
 	if err != nil {
 		panic(err)
 	}
-	return &resp, nil
+
+	return &pt.RespParacrossDone{
+		TotalNodes:     st.TotalNodes,
+		TotalCommit:    st.TotalCommit,
+		MostSameCommit: st.MostSameCommit,
+		Title:          st.Title,
+		Height:         st.Height,
+		StateHash:      hex.EncodeToString(st.StateHash),
+		TxCounts:       st.TxCounts,
+		TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+	}, nil
 }
 
 func (p *Paracross) paracrossGetTitleHeight(title string, height int64) (types.Message, error) {
