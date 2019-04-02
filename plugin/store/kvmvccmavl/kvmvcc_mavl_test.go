@@ -19,11 +19,9 @@ import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
-	qmocks "github.com/33cn/chain33/queue/mocks"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -539,10 +537,6 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Equal(t, int64(0), resp.Amount)
 }
 
-type testClient struct {
-	qmocks.Client
-}
-
 func TestProcEvent(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
@@ -552,19 +546,6 @@ func TestProcEvent(t *testing.T) {
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-	client := &qmocks.Client{}
-	client.On("Send", mock.Anything, mock.Anything).Return(nil)
-	client.On("Sub", mock.Anything, mock.Anything).Return(nil)
-	client.On("Recv", mock.Anything, mock.Anything).Return(nil)
-	client.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-	client.On("Wait", mock.Anything).Return(&queue.Message{Data: &types.ReplyString{Data: "other"}}, nil).Once()
-	store.SetQueueClient(client)
-
-	store.ProcEvent(nil)
-	enableUpdateKvmvcc = true
-	defer func() {
-		enableUpdateKvmvcc = false
-	}()
 	store.ProcEvent(nil)
 	store.ProcEvent(&queue.Message{})
 }

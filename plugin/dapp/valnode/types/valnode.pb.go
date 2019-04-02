@@ -3,13 +3,13 @@
 
 package types
 
-import (
-	context "context"
-	fmt "fmt"
-	math "math"
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import types1 "github.com/33cn/chain33/types"
 
-	types "github.com/33cn/chain33/types"
-	proto "github.com/golang/protobuf/proto"
+import (
+	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
 
@@ -18,44 +18,15 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type ValNode struct {
-	PubKey               []byte   `protobuf:"bytes,1,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
-	Power                int64    `protobuf:"varint,2,opt,name=power,proto3" json:"power,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	PubKey []byte `protobuf:"bytes,1,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
+	Power  int64  `protobuf:"varint,2,opt,name=power" json:"power,omitempty"`
 }
 
-func (m *ValNode) Reset()         { *m = ValNode{} }
-func (m *ValNode) String() string { return proto.CompactTextString(m) }
-func (*ValNode) ProtoMessage()    {}
-func (*ValNode) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38e9a3523ca7e0ea, []int{0}
-}
-
-func (m *ValNode) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ValNode.Unmarshal(m, b)
-}
-func (m *ValNode) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ValNode.Marshal(b, m, deterministic)
-}
-func (m *ValNode) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNode.Merge(m, src)
-}
-func (m *ValNode) XXX_Size() int {
-	return xxx_messageInfo_ValNode.Size(m)
-}
-func (m *ValNode) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValNode.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ValNode proto.InternalMessageInfo
+func (m *ValNode) Reset()                    { *m = ValNode{} }
+func (m *ValNode) String() string            { return proto.CompactTextString(m) }
+func (*ValNode) ProtoMessage()               {}
+func (*ValNode) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *ValNode) GetPubKey() []byte {
 	if m != nil {
@@ -72,36 +43,13 @@ func (m *ValNode) GetPower() int64 {
 }
 
 type ValNodes struct {
-	Nodes                []*ValNode `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Nodes []*ValNode `protobuf:"bytes,1,rep,name=nodes" json:"nodes,omitempty"`
 }
 
-func (m *ValNodes) Reset()         { *m = ValNodes{} }
-func (m *ValNodes) String() string { return proto.CompactTextString(m) }
-func (*ValNodes) ProtoMessage()    {}
-func (*ValNodes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38e9a3523ca7e0ea, []int{1}
-}
-
-func (m *ValNodes) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ValNodes.Unmarshal(m, b)
-}
-func (m *ValNodes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ValNodes.Marshal(b, m, deterministic)
-}
-func (m *ValNodes) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNodes.Merge(m, src)
-}
-func (m *ValNodes) XXX_Size() int {
-	return xxx_messageInfo_ValNodes.Size(m)
-}
-func (m *ValNodes) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValNodes.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ValNodes proto.InternalMessageInfo
+func (m *ValNodes) Reset()                    { *m = ValNodes{} }
+func (m *ValNodes) String() string            { return proto.CompactTextString(m) }
+func (*ValNodes) ProtoMessage()               {}
+func (*ValNodes) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 func (m *ValNodes) GetNodes() []*ValNode {
 	if m != nil {
@@ -114,52 +62,27 @@ type ValNodeAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*ValNodeAction_Node
 	//	*ValNodeAction_BlockInfo
-	Value                isValNodeAction_Value `protobuf_oneof:"value"`
-	Ty                   int32                 `protobuf:"varint,3,opt,name=Ty,proto3" json:"Ty,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+	Value isValNodeAction_Value `protobuf_oneof:"value"`
+	Ty    int32                 `protobuf:"varint,3,opt,name=Ty" json:"Ty,omitempty"`
 }
 
-func (m *ValNodeAction) Reset()         { *m = ValNodeAction{} }
-func (m *ValNodeAction) String() string { return proto.CompactTextString(m) }
-func (*ValNodeAction) ProtoMessage()    {}
-func (*ValNodeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38e9a3523ca7e0ea, []int{2}
-}
-
-func (m *ValNodeAction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ValNodeAction.Unmarshal(m, b)
-}
-func (m *ValNodeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ValNodeAction.Marshal(b, m, deterministic)
-}
-func (m *ValNodeAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNodeAction.Merge(m, src)
-}
-func (m *ValNodeAction) XXX_Size() int {
-	return xxx_messageInfo_ValNodeAction.Size(m)
-}
-func (m *ValNodeAction) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValNodeAction.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ValNodeAction proto.InternalMessageInfo
+func (m *ValNodeAction) Reset()                    { *m = ValNodeAction{} }
+func (m *ValNodeAction) String() string            { return proto.CompactTextString(m) }
+func (*ValNodeAction) ProtoMessage()               {}
+func (*ValNodeAction) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
 
 type isValNodeAction_Value interface {
 	isValNodeAction_Value()
 }
 
 type ValNodeAction_Node struct {
-	Node *ValNode `protobuf:"bytes,1,opt,name=node,proto3,oneof"`
+	Node *ValNode `protobuf:"bytes,1,opt,name=node,oneof"`
 }
-
 type ValNodeAction_BlockInfo struct {
-	BlockInfo *TendermintBlockInfo `protobuf:"bytes,2,opt,name=blockInfo,proto3,oneof"`
+	BlockInfo *TendermintBlockInfo `protobuf:"bytes,2,opt,name=blockInfo,oneof"`
 }
 
-func (*ValNodeAction_Node) isValNodeAction_Value() {}
-
+func (*ValNodeAction_Node) isValNodeAction_Value()      {}
 func (*ValNodeAction_BlockInfo) isValNodeAction_Value() {}
 
 func (m *ValNodeAction) GetValue() isValNodeAction_Value {
@@ -249,12 +172,12 @@ func _ValNodeAction_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Value.(type) {
 	case *ValNodeAction_Node:
 		s := proto.Size(x.Node)
-		n += 1 // tag and wire
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *ValNodeAction_BlockInfo:
 		s := proto.Size(x.BlockInfo)
-		n += 1 // tag and wire
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case nil:
@@ -265,36 +188,13 @@ func _ValNodeAction_OneofSizer(msg proto.Message) (n int) {
 }
 
 type ReqNodeInfo struct {
-	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Height int64 `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
 }
 
-func (m *ReqNodeInfo) Reset()         { *m = ReqNodeInfo{} }
-func (m *ReqNodeInfo) String() string { return proto.CompactTextString(m) }
-func (*ReqNodeInfo) ProtoMessage()    {}
-func (*ReqNodeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38e9a3523ca7e0ea, []int{3}
-}
-
-func (m *ReqNodeInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqNodeInfo.Unmarshal(m, b)
-}
-func (m *ReqNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqNodeInfo.Marshal(b, m, deterministic)
-}
-func (m *ReqNodeInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqNodeInfo.Merge(m, src)
-}
-func (m *ReqNodeInfo) XXX_Size() int {
-	return xxx_messageInfo_ReqNodeInfo.Size(m)
-}
-func (m *ReqNodeInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqNodeInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqNodeInfo proto.InternalMessageInfo
+func (m *ReqNodeInfo) Reset()                    { *m = ReqNodeInfo{} }
+func (m *ReqNodeInfo) String() string            { return proto.CompactTextString(m) }
+func (*ReqNodeInfo) ProtoMessage()               {}
+func (*ReqNodeInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
 
 func (m *ReqNodeInfo) GetHeight() int64 {
 	if m != nil {
@@ -304,36 +204,13 @@ func (m *ReqNodeInfo) GetHeight() int64 {
 }
 
 type ReqBlockInfo struct {
-	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Height int64 `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
 }
 
-func (m *ReqBlockInfo) Reset()         { *m = ReqBlockInfo{} }
-func (m *ReqBlockInfo) String() string { return proto.CompactTextString(m) }
-func (*ReqBlockInfo) ProtoMessage()    {}
-func (*ReqBlockInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38e9a3523ca7e0ea, []int{4}
-}
-
-func (m *ReqBlockInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqBlockInfo.Unmarshal(m, b)
-}
-func (m *ReqBlockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqBlockInfo.Marshal(b, m, deterministic)
-}
-func (m *ReqBlockInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqBlockInfo.Merge(m, src)
-}
-func (m *ReqBlockInfo) XXX_Size() int {
-	return xxx_messageInfo_ReqBlockInfo.Size(m)
-}
-func (m *ReqBlockInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqBlockInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqBlockInfo proto.InternalMessageInfo
+func (m *ReqBlockInfo) Reset()                    { *m = ReqBlockInfo{} }
+func (m *ReqBlockInfo) String() string            { return proto.CompactTextString(m) }
+func (*ReqBlockInfo) ProtoMessage()               {}
+func (*ReqBlockInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
 
 func (m *ReqBlockInfo) GetHeight() int64 {
 	if m != nil {
@@ -350,9 +227,114 @@ func init() {
 	proto.RegisterType((*ReqBlockInfo)(nil), "types.ReqBlockInfo")
 }
 
-func init() { proto.RegisterFile("valnode.proto", fileDescriptor_38e9a3523ca7e0ea) }
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
 
-var fileDescriptor_38e9a3523ca7e0ea = []byte{
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// Client API for Valnode service
+
+type ValnodeClient interface {
+	IsSync(ctx context.Context, in *types1.ReqNil, opts ...grpc.CallOption) (*IsHealthy, error)
+	GetNodeInfo(ctx context.Context, in *types1.ReqNil, opts ...grpc.CallOption) (*ValidatorSet, error)
+}
+
+type valnodeClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewValnodeClient(cc *grpc.ClientConn) ValnodeClient {
+	return &valnodeClient{cc}
+}
+
+func (c *valnodeClient) IsSync(ctx context.Context, in *types1.ReqNil, opts ...grpc.CallOption) (*IsHealthy, error) {
+	out := new(IsHealthy)
+	err := grpc.Invoke(ctx, "/types.valnode/IsSync", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *valnodeClient) GetNodeInfo(ctx context.Context, in *types1.ReqNil, opts ...grpc.CallOption) (*ValidatorSet, error) {
+	out := new(ValidatorSet)
+	err := grpc.Invoke(ctx, "/types.valnode/GetNodeInfo", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for Valnode service
+
+type ValnodeServer interface {
+	IsSync(context.Context, *types1.ReqNil) (*IsHealthy, error)
+	GetNodeInfo(context.Context, *types1.ReqNil) (*ValidatorSet, error)
+}
+
+func RegisterValnodeServer(s *grpc.Server, srv ValnodeServer) {
+	s.RegisterService(&_Valnode_serviceDesc, srv)
+}
+
+func _Valnode_IsSync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types1.ReqNil)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ValnodeServer).IsSync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.valnode/IsSync",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ValnodeServer).IsSync(ctx, req.(*types1.ReqNil))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Valnode_GetNodeInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types1.ReqNil)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ValnodeServer).GetNodeInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.valnode/GetNodeInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ValnodeServer).GetNodeInfo(ctx, req.(*types1.ReqNil))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Valnode_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.valnode",
+	HandlerType: (*ValnodeServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IsSync",
+			Handler:    _Valnode_IsSync_Handler,
+		},
+		{
+			MethodName: "GetNodeInfo",
+			Handler:    _Valnode_GetNodeInfo_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "valnode.proto",
+}
+
+func init() { proto.RegisterFile("valnode.proto", fileDescriptor1) }
+
+var fileDescriptor1 = []byte{
 	// 322 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x51, 0xcd, 0x6a, 0xf2, 0x40,
 	0x14, 0x4d, 0xcc, 0x97, 0xf8, 0xf5, 0x46, 0x45, 0xa6, 0x45, 0x42, 0x56, 0x61, 0xb0, 0x25, 0x50,
@@ -375,109 +357,4 @@ var fileDescriptor_38e9a3523ca7e0ea = []byte{
 	0xb2, 0x9d, 0xf1, 0x23, 0x71, 0x79, 0xbe, 0x48, 0x9a, 0x44, 0x52, 0x14, 0x2b, 0x94, 0xd4, 0xd8,
 	0x38, 0xea, 0xe9, 0x66, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xce, 0xc8, 0x21, 0x55, 0xf2, 0x01,
 	0x00, 0x00,
-}
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// ValnodeClient is the client API for Valnode service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type ValnodeClient interface {
-	IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*IsHealthy, error)
-	GetNodeInfo(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*ValidatorSet, error)
-}
-
-type valnodeClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewValnodeClient(cc *grpc.ClientConn) ValnodeClient {
-	return &valnodeClient{cc}
-}
-
-func (c *valnodeClient) IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*IsHealthy, error) {
-	out := new(IsHealthy)
-	err := c.cc.Invoke(ctx, "/types.valnode/IsSync", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *valnodeClient) GetNodeInfo(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*ValidatorSet, error) {
-	out := new(ValidatorSet)
-	err := c.cc.Invoke(ctx, "/types.valnode/GetNodeInfo", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// ValnodeServer is the server API for Valnode service.
-type ValnodeServer interface {
-	IsSync(context.Context, *types.ReqNil) (*IsHealthy, error)
-	GetNodeInfo(context.Context, *types.ReqNil) (*ValidatorSet, error)
-}
-
-func RegisterValnodeServer(s *grpc.Server, srv ValnodeServer) {
-	s.RegisterService(&_Valnode_serviceDesc, srv)
-}
-
-func _Valnode_IsSync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(types.ReqNil)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ValnodeServer).IsSync(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.valnode/IsSync",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ValnodeServer).IsSync(ctx, req.(*types.ReqNil))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Valnode_GetNodeInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(types.ReqNil)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ValnodeServer).GetNodeInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.valnode/GetNodeInfo",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ValnodeServer).GetNodeInfo(ctx, req.(*types.ReqNil))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Valnode_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.valnode",
-	HandlerType: (*ValnodeServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "IsSync",
-			Handler:    _Valnode_IsSync_Handler,
-		},
-		{
-			MethodName: "GetNodeInfo",
-			Handler:    _Valnode_GetNodeInfo_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "valnode.proto",
 }

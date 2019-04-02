@@ -135,6 +135,8 @@ name="kvmvccmavl"
 driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
+# store数据库版本
+storedbVersion="1.0.0"
 
 [store.sub.mavl]
 enableMavlPrefix=false
@@ -155,8 +157,6 @@ pruneHeight=10000
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
 enableMemVal=true
-# 是否使能升级kvmvcc(在mavl数据上)
-enableUpdateKvmvcc=false
 
 [wallet]
 minFee=100000
