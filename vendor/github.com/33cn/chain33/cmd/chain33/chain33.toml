@@ -202,6 +202,8 @@ dbPath="datadir/mavltree"
 dbCache=128
 # 数据库版本
 localdbVersion="1.0.0"
+# 状态数据库版本
+storedbVersion="1.0.0"
 
 [store.sub.mavl]
 # 是否使能mavl加前缀

@@ -76,13 +76,6 @@ message NoBalanceTx {
     string expire  = 4;
 }
 
-message SignedTx {
-    bytes unsign = 1;
-    bytes sign   = 2;
-    bytes pubkey = 3;
-    int32 ty     = 4;
-}
-
 message Transaction {
     bytes     execer    = 1;
     bytes     payload   = 2;
@@ -244,7 +237,7 @@ message UserWrite {
 }
 
 message UpgradeMeta {
-    bool   indexing = 1;
+    bool   starting = 1;
     string version  = 2;
     int64  height   = 3;
 }

@@ -131,7 +131,7 @@ returnAddr="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
 count=10000
 
 [store]
-name="mavl"
+name="kvmvccmavl"
 driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
