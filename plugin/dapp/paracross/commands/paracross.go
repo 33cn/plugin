@@ -65,7 +65,7 @@ func addCreateAssetTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
+	cmd.Flags().StringP("title", "", "", "the title of para chain, like `user.p.guodun.`")
 	cmd.MarkFlagRequired("title")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
@@ -97,7 +97,7 @@ func addCreateAssetWithdrawFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("title", "", "", "the title of para chain, like `p.user.guodun.`")
+	cmd.Flags().StringP("title", "", "", "the title of para chain, like `user.p.guodun.`")
 	cmd.MarkFlagRequired("title")
 
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
