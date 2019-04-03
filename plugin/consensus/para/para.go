@@ -130,7 +130,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	grpcCli, err := grpcclient.NewMainChainClient(grpcSite)
+	grpcCli, err := grpcclient.NewMainChainClient("")
 	if err != nil {
 		panic(err)
 	}
