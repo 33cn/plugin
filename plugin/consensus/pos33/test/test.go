@@ -39,6 +39,7 @@ var dpst = flag.String("d", "", "send deposit tx")
 var maxacc = flag.Int("a", 1000, "max account")
 var maxtx = flag.Int("t", 1000, "max txs")
 var dw = flag.Int("w", 7, "deposit weight")
+var rn = flag.Int("r", 3000, "sleep in Microsecond")
 
 var gClient *rpc.JSONClient
 
@@ -82,7 +83,7 @@ func main() {
 }
 
 // NODEN is number of nodes
-const NODEN = 10
+const NODEN = 30
 
 var nodePrivs = make([]crypto.PrivKey, NODEN)
 
@@ -120,10 +121,13 @@ type Tx = pb.Transaction
 
 func run(privs []crypto.PrivKey) {
 	ch := generateTxs(privs)
+	i := 0
 	for {
 		tx := <-ch
 		sendTx(tx)
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(50)))
+		time.Sleep(time.Microsecond * time.Duration(*rn))
+		i++
+		log.Println(i, "... txs sent")
 	}
 }
 

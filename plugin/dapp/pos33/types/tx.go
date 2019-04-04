@@ -68,9 +68,9 @@ func NewDelegateTx(w int) (*types.Transaction, error) {
 }
 
 // NewElecteTx create a deposit tx
-func NewElecteTx(rands []*Pos33Rands, blockHash []byte, blochHeight int64) (*types.Transaction, error) {
+func NewElecteTx(rands []*Pos33Rands, blockHash []byte, blochHeight int64, sig *types.Signature) (*types.Transaction, error) {
 	act := &Pos33Action{
-		Value: &Pos33Action_Electe{Electe: &Pos33ElecteAction{Rands: rands, Hash: blockHash, Height: blochHeight}},
+		Value: &Pos33Action_Electe{Electe: &Pos33ElecteAction{Rands: rands, Hash: blockHash, Height: blochHeight, Sig: sig}},
 		Ty:    Pos33ActionElecte,
 	}
 	tx := &types.Transaction{

@@ -113,7 +113,7 @@ func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, in
 	// 	return nil, fmt.Errorf("block seed error")
 	// }
 	seed := act.Hash
-	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, seed)
+	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, seed, act.Sig)
 	if err != nil {
 		return nil, err
 	}

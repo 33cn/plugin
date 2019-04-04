@@ -18,6 +18,7 @@ var plog = log15.New("module", "pos33")
 type committee struct {
 	*pt.Pos33Rands
 	height int64
+	stoped bool
 }
 
 type node struct {
@@ -74,7 +75,7 @@ func unmarshal(b []byte) (*pt.Pos33Msg, error) {
 func (n *node) myHash(height int64) []byte {
 	x, bp := n.commIndex(height)
 	r := n.comm.Rands[x]
-	if addr(r.Sig) != bp {
+	if r.Addr != bp {
 		panic("can't go here")
 	}
 	return r.RandHash
@@ -112,14 +113,13 @@ func (n *node) signBlock(b *types.Block) *types.Block {
 	return b
 }
 
-func vsAccWeight(vs []*pt.Pos33Vote, acc string) int {
-	w := 0
-	for _, v := range vs {
+func vsAccWeight(vs []*pt.Pos33Vote, acc string) (int, int) {
+	for i, v := range vs {
 		if addr(v.Sig) == acc {
-			w += int(v.Weight)
+			return int(v.Weight), i
 		}
 	}
-	return w
+	return 0, -1
 }
 
 func vsWeight(vs []*pt.Pos33Vote) int {
@@ -140,7 +140,8 @@ func (n *node) makeBlock(height int64, vs []*pt.Pos33Vote, null bool) (*types.Bl
 	plog.Info("@@@@@@@ I make a block: ", "height", height, "isNull", null)
 	nb, err := n.newBlock(txs, height, null)
 	if err != nil {
-		panic(err)
+		plog.Error("makeBlock error", "height", height, "error", err.Error())
+		return nil, err
 	}
 
 	nb.Difficulty += uint32(vsWeight(vs))
@@ -161,7 +162,7 @@ func (n *node) addBlock(b *types.Block) {
 func getWeight(comm *committee, u string) int {
 	w := 0
 	for _, r := range comm.Rands {
-		if u == addr(r.Sig) {
+		if u == r.Addr {
 			w++
 		}
 	}
@@ -200,8 +201,7 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 	}
 
 	// plog.Info("countVote ", "max", max, "maxHash", hex.EncodeToString([]byte(maxHash)))
-
-	if max*3 < pt.Pos33CommitteeSize*2 {
+	if !n.comm.stoped && max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
 	}
 
@@ -225,15 +225,15 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 
 	// plog.Info("countVote ", "max", max, "maxBp", maxBp)
 
-	if max*3 < pt.Pos33CommitteeSize*2 {
+	if !n.comm.stoped && max*3 < pt.Pos33CommitteeSize*2 {
 		return -1, "", nil, false
 	}
 
 	if maxHash == "nil" { // block error or timeout
-		p, bp := n.commIndex(height)      // height 高度的 bp和位置
-		x := n.findIndex(maxBp, p)        // 投票选择的bp的位置
-		n.comm.Rands[p] = n.comm.Rands[x] // 使用正确节点代替错误的
-		plog.Info("use maxBp replace bp", "height", height, "bp", bp, "maxbp", maxBp, "bp_pos", p, "maxbp_pos", x)
+		// p, bp := n.commIndex(height) // height 高度的 bp和位置
+		// x := n.findIndex(maxBp, p)   // 投票选择的bp的位置
+		// n.comm.Rands[p] = n.comm.Rands[x] // 使用正确节点代替错误的
+		// plog.Info("use maxBp replace bp", "height", height, "bp", bp, "maxbp", maxBp, "bp_pos", p, "maxbp_pos", x)
 		return height, maxBp, bmp[maxBp], true
 	}
 	return height + 1, maxBp, bmp[maxBp], false
@@ -241,7 +241,7 @@ func (n *node) countVote(height int64) (int64, string, []*pt.Pos33Vote, bool) {
 
 func (n *node) findIndex(who string, p int) int {
 	for i := p; i < len(n.comm.Rands); i++ {
-		if addr(n.comm.Rands[i].Sig) == who {
+		if n.comm.Rands[i].Addr == who {
 			return i
 		}
 	}
@@ -249,10 +249,6 @@ func (n *node) findIndex(who string, p int) int {
 }
 
 func (n *node) handleVote(vt *pt.Pos33Vote) {
-	if n.myWeight == 0 {
-		return
-	}
-
 	plog.Info("n.handleVote", "height", vt.BlockHeight, "addr", addr(vt.Sig), "vt.hash", hex.EncodeToString(vt.BlockHash), "bp", vt.Bp)
 	lastB, err := n.RequestLastBlock()
 	if err != nil {
@@ -264,8 +260,13 @@ func (n *node) handleVote(vt *pt.Pos33Vote) {
 	}
 
 	who := addr(vt.Sig)
-	if vsAccWeight(n.vmp[vt.BlockHeight], who) > 0 {
-		plog.Error("vote repeated", "addr", who)
+	w, i := vsAccWeight(n.vmp[vt.BlockHeight], who)
+	if w > 0 {
+		plog.Info("vote repeated", "addr", who)
+		n.vmp[vt.BlockHeight][i] = vt
+	}
+
+	if n.comm == nil {
 		return
 	}
 
@@ -281,6 +282,10 @@ func (n *node) handleVote(vt *pt.Pos33Vote) {
 	}
 
 	n.vmp[vt.BlockHeight] = append(n.vmp[vt.BlockHeight], vt)
+	dt := time.Now().Unix() - lastB.BlockTime
+	if vt.BlockHeight == lastB.Height && dt > 1 && dt < 3 {
+		n.newRound(vt.BlockHeight)
+	}
 }
 
 func addr(sig *types.Signature) string {
@@ -336,7 +341,7 @@ func (n *node) checkBlock(b *types.Block) error {
 		bp := addr(b.Signature)
 		ok := false
 		for _, r := range comm.Rands {
-			if addr(r.Sig) == bp {
+			if r.Addr == bp {
 				ok = true
 				break
 			}
@@ -374,14 +379,14 @@ func (n *node) sortition(b *types.Block) error {
 	seed := getBlockSeed(b)
 
 	height := b.Height
-	rands := pt.GenRands(n.allWeight(), n.getWeight(n.addr), n.priv, height, seed)
+	rands, sig := pt.GenRands(n.allWeight(), n.getWeight(n.addr), n.priv, height, seed)
 	if rands == nil {
 		plog.Info("sortiton nil", "height", b.Height)
 		return nil
 	}
 	plog.Info("node.sortition", "height", height, "weight", len(rands))
 
-	tx, err := pt.NewElecteTx(rands, seed, height)
+	tx, err := pt.NewElecteTx(rands, seed, height, sig)
 	if err != nil {
 		return err
 	}
@@ -455,7 +460,7 @@ func (n *node) doGossipMsg() chan *pt.Pos33Msg {
 
 func printCommittee(comm *committee) {
 	for i, r := range comm.Rands {
-		plog.Info("current committee", "index", i, "addr", addr(r.Sig), "hash", hex.EncodeToString(r.RandHash))
+		plog.Info("current committee", "index", i, "addr", r.Addr, "hash", hex.EncodeToString(r.RandHash))
 	}
 }
 
@@ -484,7 +489,7 @@ func (n *node) changeCommittee(b *types.Block) {
 	}
 	n.myWeight = 0
 	for _, r := range n.comm.Rands {
-		if n.addr == addr(r.Sig) {
+		if n.addr == r.Addr {
 			n.myWeight++
 		}
 	}
@@ -495,7 +500,7 @@ func (n *node) commIndex(height int64) (int, string) {
 	if x < 0 { // last
 		x = pt.Pos33CommitteeSize - 1
 	}
-	return int(x), addr(n.comm.Rands[x].Sig)
+	return int(x), n.comm.Rands[x].Addr
 }
 
 func (n *node) voteBlock(height int64, hash []byte) {
@@ -503,11 +508,11 @@ func (n *node) voteBlock(height int64, hash []byte) {
 	nbp := bp
 	if string(hash) != "nil" {
 		x++
-		nbp = addr(n.comm.Rands[x%pt.Pos33CommitteeSize].Sig)
+		nbp = n.comm.Rands[x%pt.Pos33CommitteeSize].Addr
 	} else {
 		for bp == nbp {
 			x++
-			nbp = addr(n.comm.Rands[x%pt.Pos33CommitteeSize].Sig)
+			nbp = n.comm.Rands[x%pt.Pos33CommitteeSize].Addr
 		}
 	}
 	vt := &pt.Pos33Vote{
@@ -534,21 +539,25 @@ func reseTm(tm *time.Timer, d time.Duration) {
 func (n *node) firstCommittee() error {
 	height := int64(-1)
 	seed := zeroHash[:]
-	rands := pt.GenRands(n.allWeight(), n.getWeight(n.addr), n.priv, height, seed)
+	rands, sig := pt.GenRands(n.allWeight(), n.getWeight(n.addr), n.priv, height, seed)
 	if rands == nil {
 		plog.Info("sortiton nil", "height", height)
-		panic("can't go here")
+		return nil
 	}
 	plog.Info("node.sortition", "height", height, "weight", len(rands))
 
-	act := &pt.Pos33ElecteAction{Rands: rands, Hash: seed, Height: height}
+	act := &pt.Pos33ElecteAction{Rands: rands, Hash: seed, Height: height, Sig: sig}
 	comm := pt.Sortition([]*pt.Pos33ElecteAction{act})
 	n.comm = &committee{Pos33Rands: comm, height: 0}
 	n.myWeight = len(n.comm.Rands)
 	return nil
 }
 
-func (n *node) newRound(height int64, ch chan int64) {
+func (n *node) newRound(height int64) {
+	if n.myWeight == 0 {
+		plog.Info("I'm not a committee", "addr", n.addr, "height", height)
+		return
+	}
 	changed := false
 	if height < n.comm.height {
 		plog.Info("committee changed, this height must use lastComm", "height", height)
@@ -560,14 +569,19 @@ func (n *node) newRound(height int64, ch chan int64) {
 			n.comm, n.lastComm = n.lastComm, n.comm
 		}
 	}()
-	if n.myWeight == 0 {
-		plog.Info("I'm not a committee", "addr", n.addr, "height", height)
-		return
+	if !n.comm.stoped {
+		lastB, err := n.RequestLastBlock()
+		if err != nil {
+			plog.Crit("should't go here")
+			return
+		}
+		if time.Now().Unix()-lastB.BlockTime >= int64(pt.Pos33MaxCommittee) {
+			n.comm.stoped = true
+		}
 	}
 	newHeight, bp, vs, null := n.countVote(height)
 	if newHeight < 0 {
 		plog.Error("vote NOT enought", "addr", n.addr, "height", height)
-		time.AfterFunc(time.Second, func() { ch <- height })
 		return
 	}
 	if bp == n.addr {
@@ -604,13 +618,13 @@ func (n *node) runLoop() {
 		case <-timeoutTm.C:
 			height := lb.Height + 1
 			plog.Info("timeout......", "height", height)
-			reseTm(timeoutTm, time.Second*6)
+			reseTm(timeoutTm, time.Second*5)
 			if n.myWeight > 0 {
 				n.voteBlock(height, []byte("nil"))
 			}
-			time.AfterFunc(time.Second*3, func() { ch <- height })
+			time.AfterFunc(time.Second*2, func() { ch <- height })
 		case height := <-ch:
-			n.newRound(height, ch)
+			n.newRound(height)
 		case b := <-n.bch: // new block add to chain
 			lb = b
 			reseTm(timeoutTm, time.Second*3)

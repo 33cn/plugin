@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -30,27 +31,31 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 7. 最后对Hashs排序，作为委员会打包顺序的依据
 
 // GenRands 计算抽签hash，allw是当前总票数, w是自己抵押的票数
-func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte) []*Pos33Rands {
+func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte) ([]*Pos33Rands, *pb.Signature) {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	diff := Pos33CommitteeSize / (float64(allw) * onlinePersentOfAllW)
 
 	sorted := false // 是否有符合的票数
 	rss := make([]*Pos33Rands, sortRounds)
+
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d", blockHeight))
+	hash := crypto.Sha256(data)
+	// 签名，为了可以验证
+	sig := priv.Sign(hash)
+	signature := &pb.Signature{Ty: pb.ED25519, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
+	addr := address.PubKeyToAddress(signature.Pubkey).String()
+
 	// 每张票计算sortRounds轮
 	mp := make(map[int]bool)
 	for i := 0; i < sortRounds; i++ {
 		var rs Pos33Rands
 		for j := 0; j < w; j++ {
 			// 基于blockHash，blockHeight，voute_i, round_i计算hash
-			data := []byte(string(blockHash) + fmt.Sprintf("%d%d%d", i, j, blockHeight))
-			hash := crypto.Sha256(data)
-			// 签名，为了可以验证
-			sig := priv.Sign(hash)
-			// 最终的抽签Hash
-			rh := crypto.Sha256(sig.Bytes())
+			rdata := []byte(string(sig.Bytes()) + fmt.Sprintf(":%s:%d%d", addr, i, j))
+			rhash := crypto.Sha256(rdata)
 
 			// 转为big.Float计算，比较难度diff
-			y := big.NewInt(0).SetBytes(rh)
+			y := big.NewInt(0).SetBytes(rhash)
 			z := big.NewFloat(0).SetInt(y)
 			if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 				continue
@@ -59,8 +64,7 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 				continue
 			}
 			// 符合，表示抽中了
-			signature := &pb.Signature{Ty: pb.ED25519, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
-			rs.Rands = append(rs.Rands, &Pos33Rand{RandHash: rh, Index: uint32(j), Sig: signature})
+			rs.Rands = append(rs.Rands, &Pos33Rand{RandHash: rhash, Index: uint32(j), Addr: addr})
 			// rss[i] = &rs
 			sorted = true
 			mp[j] = true
@@ -69,18 +73,27 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 	}
 
 	if !sorted {
-		return nil
+		return nil, nil
 	}
 
-	return rss
+	return rss, signature
 }
 
 // CheckRands 检验抽签hash，allw是当前总票数, w是抵押的票数
-func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, blockHash []byte) error {
+func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, blockHash []byte, sig *pb.Signature) error {
 	diff := Pos33CommitteeSize / (float64(allw) * onlinePersentOfAllW)
 	if len(rss) != sortRounds {
 		return fmt.Errorf("%s len(rss)==%d", addr, len(rss))
 	}
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d", blockHeight))
+	hash := crypto.Sha256(data)
+	if !pb.CheckSign(hash, "pos33", sig) {
+		return fmt.Errorf("%s signature error", addr)
+	}
+	if addr != address.PubKeyToAddress(sig.Pubkey).String() {
+		return fmt.Errorf("%s NOT match signature", addr)
+	}
+
 	mp := make(map[int]bool)
 	for i := 0; i < sortRounds; i++ {
 		rs := rss[i]
@@ -104,17 +117,13 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 				return fmt.Errorf("rand hash repeated")
 			}
 			rsm[string(r.RandHash)] = true
-
-			data := []byte(string(blockHash) + fmt.Sprintf("%d%d%d", i, r.Index, blockHeight))
-			hash := crypto.Sha256(data)
-			if !pb.CheckSign(hash, "pos33", r.Sig) {
-				return fmt.Errorf("%s signature error", addr)
-			}
-			if addr != address.PubKeyToAddress(r.Sig.Pubkey).String() {
-				return fmt.Errorf("%s NOT match signature", addr)
+			if addr != r.Addr {
+				return errors.New("rand address error")
 			}
 
-			if string(r.RandHash) != string(crypto.Sha256(r.Sig.Signature)) {
+			rdata := []byte(string(sig.Signature) + fmt.Sprintf(":%s:%d%d", r.Addr, i, r.Index))
+			rhash := crypto.Sha256(rdata)
+			if string(r.RandHash) != string(rhash) {
 				return fmt.Errorf("%s rand hash error", addr)
 			}
 

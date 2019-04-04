@@ -17,7 +17,8 @@ message Pos33Msg {
 message Pos33Rand {
   bytes rand_hash = 1;
   uint32 index = 2;
-  Signature sig = 3;
+  // Signature sig = 3;
+  string addr = 3;
 }
 
 message Pos33Rands {
@@ -88,6 +89,7 @@ message Pos33ElecteAction {
   repeated Pos33Rands rands = 1;
   int64 height = 3;
   bytes hash = 4;
+  Signature sig = 5;
 }
 
 

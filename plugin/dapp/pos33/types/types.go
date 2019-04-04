@@ -9,8 +9,6 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/33cn/chain33/common/address"
-
 	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -112,13 +110,3 @@ func (m *Pos33Rands) Less(i, j int) bool {
 	return string(m.Rands[i].RandHash) < string(m.Rands[j].RandHash)
 }
 func (m *Pos33Rands) Swap(i, j int) { m.Rands[i], m.Rands[j] = m.Rands[j], m.Rands[i] }
-
-// Public is get Pos33Rand public in singature helper func
-func (m *Pos33Rand) Public() string {
-	return string(m.Sig.Pubkey)
-}
-
-// Address is get Pos33Rand address in singature helper func
-func (m *Pos33Rand) Address() string {
-	return address.PubKeyToAddress([]byte(m.Public())).String()
-}
