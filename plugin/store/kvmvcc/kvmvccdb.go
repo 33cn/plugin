@@ -38,6 +38,7 @@ type KVMVCCStore struct {
 	mvcc           dbm.MVCC
 	kvsetmap       map[string][]*types.KeyValue
 	enableMVCCIter bool
+	sync           bool
 }
 
 type subConfig struct {
@@ -55,9 +56,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		enable = subcfg.EnableMVCCIter
 	}
 	if enable {
-		kvs = &KVMVCCStore{bs, dbm.NewMVCCIter(bs.GetDB()), make(map[string][]*types.KeyValue), true}
+		kvs = &KVMVCCStore{bs, dbm.NewMVCCIter(bs.GetDB()), make(map[string][]*types.KeyValue), true, false}
 	} else {
-		kvs = &KVMVCCStore{bs, dbm.NewMVCC(bs.GetDB()), make(map[string][]*types.KeyValue), false}
+		kvs = &KVMVCCStore{bs, dbm.NewMVCC(bs.GetDB()), make(map[string][]*types.KeyValue), false, false}
 	}
 	bs.SetChild(kvs)
 	return kvs
@@ -76,7 +77,7 @@ func (mvccs *KVMVCCStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
-	mvccs.saveKVSets(kvlist)
+	mvccs.saveKVSets(kvlist, sync)
 	return hash, nil
 }
 
@@ -101,6 +102,10 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 
 // MemSet set kvs to the mem of KVMVCCStore module and return the StateHash
 func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
+	beg := types.Now()
+	defer func() {
+		klog.Info("kvmvcc MemSet", "cost", types.Since(beg))
+	}()
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
 		return nil, err
@@ -114,19 +119,24 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, erro
 	if len(kvlist) > 0 {
 		kvset = append(kvset, kvlist...)
 	}
+	mvccs.sync = sync
 	mvccs.kvsetmap[string(hash)] = kvset
 	return hash, nil
 }
 
 // Commit kvs in the mem of KVMVCCStore module to state db and return the StateHash
 func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
+	beg := types.Now()
+	defer func() {
+		klog.Info("kvmvcc Commit", "cost", types.Since(beg))
+	}()
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
 		klog.Error("store kvmvcc commit", "err", types.ErrHashNotFound)
 		return nil, types.ErrHashNotFound
 	}
 	//klog.Debug("KVMVCCStore Commit saveKVSets", "hash", common.ToHex(req.Hash))
-	mvccs.saveKVSets(mvccs.kvsetmap[string(req.Hash)])
+	mvccs.saveKVSets(mvccs.kvsetmap[string(req.Hash)], mvccs.sync)
 	delete(mvccs.kvsetmap, string(req.Hash))
 	return req.Hash, nil
 }
@@ -202,16 +212,16 @@ func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
 	}
 
 	klog.Info("KVMVCCStore Del", "hash", common.ToHex(req.StateHash), "height", req.Height)
-	mvccs.saveKVSets(kvset)
+	mvccs.saveKVSets(kvset, mvccs.sync)
 	return req.StateHash, nil
 }
 
-func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue) {
+func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 	if len(kvset) == 0 {
 		return
 	}
 
-	storeBatch := mvccs.GetDB().NewBatch(true)
+	storeBatch := mvccs.GetDB().NewBatch(sync)
 
 	for i := 0; i < len(kvset); i++ {
 		if kvset[i].Value == nil {
