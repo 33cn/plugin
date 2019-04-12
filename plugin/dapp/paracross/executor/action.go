@@ -359,6 +359,20 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 		return receipt, nil
 	}
+
+	//平行连进行奖励分配，考虑可能的失败，需要在保存共识高度等数据之前处理
+	if types.IsPara() {
+
+		rewardReceipt, err := a.reward(commit.Status, stat)
+		//错误会导致和主链处理的共识结果不一致
+		if err != nil {
+			clog.Error("paracross mining reward err", "height", titleStatus.Height,
+				"blockhash", hex.EncodeToString(titleStatus.BlockHash), "err", err)
+			return nil, err
+		}
+		receipt = mergeReceipt(receipt, rewardReceipt)
+	}
+
 	clog.Info("paracross.Commit commit ----pass", "most", most, "mostHash", hex.EncodeToString([]byte(mostHash)))
 
 	stat.Status = pt.ParacrossStatusCommitDone
@@ -510,8 +524,20 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 
 	log.Log = types.Encode(receipt)
 	logs = append(logs, log)
-	return &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}, nil
 
+	minerReceipt := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
+	//增发coins到paracross合约中，只处理发放，不做分配
+	reward := (types.MGInt("mver.consensus.coinReward", a.height) +
+		types.MGInt("mver.consensus.coinDevFund", a.height)) * types.Coin
+	issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, reward)
+
+	if err != nil {
+		clog.Error("paracross miner issue err", "height", miner.Status.Height,
+			"execAddr", a.execaddr, "amount", reward/types.Coin)
+		return nil, err
+	}
+
+	return mergeReceipt(minerReceipt, issueReceipt), nil
 }
 
 func getTitleFrom(exec []byte) ([]byte, error) {
