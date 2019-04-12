@@ -66,6 +66,15 @@ func EnableMemVal(enable bool) {
 	enableMemVal = enable
 }
 
+func ReleaseGlobalMem() {
+	if memTree != nil {
+		memTree = nil
+	}
+	if tkCloseCache != nil {
+		tkCloseCache = nil
+	}
+}
+
 type memNode struct {
 	data   [][]byte //顺序为lefthash, righthash, key, value
 	Height int32
@@ -542,43 +551,45 @@ func (ndb *nodeDB) SaveNode(t *Tree, node *Node) {
 }
 
 func getNodeMemTree(hash []byte) (*Node, error) {
-	if memTree == nil && tkCloseCache == nil{
-		return nil, ErrNodeNotExist
+	if memTree != nil {
+		elem, ok := memTree.Get(uintkey(farm.Hash64(hash)))
+		if ok {
+			sn := elem.(*memNode)
+			node := &Node{
+				height:    sn.Height,
+				size:      sn.Size,
+				hash:      hash,
+				persisted: true,
+			}
+			node.leftHash = sn.data[0]
+			node.rightHash = sn.data[1]
+			node.key = sn.data[2]
+			if len(sn.data) == 4 {
+				node.value = sn.data[3]
+			}
+			return node, nil
+		}
 	}
-	elem, ok := memTree.Get(uintkey(farm.Hash64(hash)))
-	if ok {
-		sn := elem.(*memNode)
-		node := &Node{
-			height:    sn.Height,
-			size:      sn.Size,
-			hash:      hash,
-			persisted: true,
+
+	if tkCloseCache != nil {
+		// 从tkCloseCache缓存中获取
+		elem, ok := tkCloseCache.Get(uintkey(farm.Hash64(hash)))
+		if ok {
+			sn := elem.(*memNode)
+			node := &Node{
+				height:    sn.Height,
+				size:      sn.Size,
+				hash:      hash,
+				persisted: true,
+			}
+			node.leftHash = sn.data[0]
+			node.rightHash = sn.data[1]
+			node.key = sn.data[2]
+			if len(sn.data) == 4 {
+				node.value = sn.data[3]
+			}
+			return node, nil
 		}
-		node.leftHash = sn.data[0]
-		node.rightHash = sn.data[1]
-		node.key = sn.data[2]
-		if len(sn.data) == 4 {
-			node.value = sn.data[3]
-		}
-		return node, nil
-	}
-	// 从tkCloseCache缓存中获取
-	elem, ok = tkCloseCache.Get(uintkey(farm.Hash64(hash)))
-	if ok {
-		sn := elem.(*memNode)
-		node := &Node{
-			height:    sn.Height,
-			size:      sn.Size,
-			hash:      hash,
-			persisted: true,
-		}
-		node.leftHash = sn.data[0]
-		node.rightHash = sn.data[1]
-		node.key = sn.data[2]
-		if len(sn.data) == 4 {
-			node.value = sn.data[3]
-		}
-		return node, nil
 	}
 	return nil, ErrNodeNotExist
 }
