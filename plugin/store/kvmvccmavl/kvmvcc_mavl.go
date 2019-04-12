@@ -21,6 +21,7 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
+	"github.com/33cn/chain33/system/store/mavl/db"
 )
 
 var (
@@ -197,6 +198,8 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 	}
 	// 删除Mavl数据
 	if datas.Height > delMavlDataHeight && !isDelMavlData && !isDelMavling() {
+		// 达到该高度时候，将全局的memTree以及tkCloseCache释放掉
+		mavl.ReleaseGlobalMem()
 		wg.Add(1)
 		go DelMavl(kvmMavls.GetDB())
 	}
