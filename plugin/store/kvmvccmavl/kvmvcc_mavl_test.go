@@ -720,13 +720,44 @@ func TestIsCommitMavl(t *testing.T) {
 	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-	isComm := isCommitMavlDB(store.GetDB())
+	isComm := isPrunedMavlDB(store.GetDB())
 	require.Equal(t, false, isComm)
 
 	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "123")), []byte("v1"))
 	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "456")), []byte("v2"))
-	isComm = isCommitMavlDB(store.GetDB())
+	isComm = isPrunedMavlDB(store.GetDB())
 	require.Equal(t, true, isComm)
+}
+
+func TestDeletePrunedMavl(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "123")), []byte("v1"))
+
+	//测试只有一条数据时候, 则不做删除
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+	v1, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
+	require.NoError(t, err)
+	require.Equal(t, v1, []byte("v1"))
+
+	//测试再加入一条数据，即两条时候
+	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "456")), []byte("v2"))
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+
+	v1, err = store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
+	require.Error(t, err)
+	require.Equal(t, v1, []uint8([]byte(nil)))
+	v2, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "456")))
+	require.NoError(t, err)
+	require.Equal(t, v2, []byte("v2"))
+
 }
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
