@@ -14,6 +14,11 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+const (
+	// 同store/mavl中定义保持一致，即裁剪的加前缀
+	leafNodePrefix = "_mb_"
+)
+
 // MavlStore mavl store struct
 type MavlStore struct {
 	db               dbm.DB
