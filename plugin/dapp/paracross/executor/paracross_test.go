@@ -22,6 +22,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/33cn/chain33/util"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试
@@ -447,6 +448,107 @@ func (s *VoteTestSuite) TestVoteTx() {
 		}
 	}
 }
+
+func (s *VoteTestSuite) TestVoteTxFork() {
+	status := &pt.ParacrossNodeStatus{
+		MainBlockHash:   MainBlockHash10,
+		MainBlockHeight: MainBlockHeight,
+		PreBlockHash:    PerBlock,
+		Height:          CurHeight,
+		Title:           Title,
+	}
+
+	tx1, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
+	s.Nil(err)
+	tx2, err := createParaNormalTx(s.Suite, PrivKeyB, nil)
+	s.Nil(err)
+	tx3, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
+	s.Nil(err)
+	tx4, err := createCrossParaTx(s.Suite, []byte("toB"))
+	s.Nil(err)
+	tx34 := []*types.Transaction{tx3, tx4}
+	txGroup34, err := createTxsGroup(s.Suite, tx34)
+	s.Nil(err)
+
+	tx5, err := createCrossParaTx(s.Suite, nil)
+	s.Nil(err)
+	tx6, err := createCrossParaTx(s.Suite, nil)
+	s.Nil(err)
+	tx56 := []*types.Transaction{tx5, tx6}
+	txGroup56, err := createTxsGroup(s.Suite, tx56)
+	s.Nil(err)
+
+	tx7, err := createAssetTransferTx(s.Suite, PrivKeyC, nil)
+	s.Nil(err)
+
+	tx8, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
+	s.Nil(err)
+
+	txs := []*types.Transaction{tx1, tx2}
+	txs = append(txs, txGroup34...)
+	txs = append(txs, txGroup56...)
+	txs = append(txs, tx7)
+	txs = append(txs, tx8)
+	for _,tx:=range txs{
+		status.TxHashs = append(status.TxHashs, tx.Hash())
+	}
+	txHashs := util.FilterParaCrossTxHashes(Title, txs)
+	status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
+
+	baseCheckTxHash := util.CalcTxHashsHash(status.TxHashs)
+	baseCrossTxHash := util.CalcTxHashsHash(status.CrossTxHashs)
+
+	tx, err := s.createVoteTx(status, PrivKeyA)
+	s.Nil(err)
+
+	txs2 := []*types.Transaction{tx}
+	txs2 = append(txs2, txs...)
+
+	s.exec.SetTxs(txs2)
+
+	//for i,tx := range txs{
+	//	s.T().Log("tx exec name","i",i,"name",string(tx.Execer))
+	//}
+
+	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx",int64(1))
+
+	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
+	feelog := &types.Receipt{}
+	feelog.Logs = append(feelog.Logs, errlog)
+	receipt0, err := s.exec.Exec(tx, 0)
+	s.Nil(err)
+	recpt0 := &types.ReceiptData{Ty: receipt0.Ty, Logs: receipt0.Logs}
+	recpt1 := &types.ReceiptData{Ty: types.ExecErr}
+	recpt2 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt3 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt4 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt5 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
+	recpt7 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt8 := &types.ReceiptData{Ty: types.ExecOk}
+	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7, recpt8}
+	s.exec.SetReceipt(receipts)
+	set, err := s.exec.ExecLocal(tx, recpt0, 0)
+	s.Nil(err)
+	key := pt.CalcMinerHeightKey(status.Title, status.Height)
+	for _, kv := range set.KV {
+		//s.T().Log(string(kv.GetKey()))
+		if bytes.Equal(key, kv.Key) {
+			var rst pt.ParacrossNodeStatus
+			types.Decode(kv.GetValue(), &rst)
+			s.Equal([]uint8([]byte{0x8e}), rst.TxResult)
+			s.Equal([]uint8([]byte{0x22}), rst.CrossTxResult)
+			s.Equal(1, len(rst.TxHashs))
+			s.Equal(1, len(rst.CrossTxHashs))
+
+			s.Equal(baseCheckTxHash, rst.TxHashs[0])
+			s.Equal(baseCrossTxHash, rst.CrossTxHashs[0])
+			break
+		}
+	}
+}
+
+
 
 func (s *VoteTestSuite) createVoteTx(status *pt.ParacrossNodeStatus, privFrom string) (*types.Transaction, error) {
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{Status: status})
