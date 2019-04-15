@@ -209,13 +209,11 @@ func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error)
 }
 
 // CreateRawMinerTx create miner tx
-func CreateRawMinerTx(status *ParacrossNodeStatus) (*types.Transaction, error) {
-	v := &ParacrossMinerAction{
-		Status: status,
-	}
+func CreateRawMinerTx(value *ParacrossMinerAction) (*types.Transaction, error) {
+
 	action := &ParacrossAction{
 		Ty:    ParacrossActionMiner,
-		Value: &ParacrossAction_Miner{v},
+		Value: &ParacrossAction_Miner{value},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(types.ExecName(ParaX)),

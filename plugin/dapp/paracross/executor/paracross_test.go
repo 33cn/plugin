@@ -449,7 +449,7 @@ func (s *VoteTestSuite) TestVoteTx() {
 }
 
 func (s *VoteTestSuite) createVoteTx(status *pt.ParacrossNodeStatus, privFrom string) (*types.Transaction, error) {
-	tx, err := pt.CreateRawMinerTx(status)
+	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{Status: status})
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err

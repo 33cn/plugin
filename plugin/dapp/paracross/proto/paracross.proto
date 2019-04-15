@@ -124,6 +124,7 @@ message ParacrossCommitAction {
 
 message ParacrossMinerAction {
     ParacrossNodeStatus status = 1;
+    bool       isSelfConsensus = 2;
 }
 
 message ParacrossAction {
