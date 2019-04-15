@@ -391,10 +391,7 @@ func setDelMavl(state int32) {
 }
 
 func isNeedDelPrunedMavl() bool {
-	if atomic.LoadInt32(&delPrunedMavlState) == 0 {
-		return true
-	}
-	return false
+	return atomic.LoadInt32(&delPrunedMavlState) == 0
 }
 
 func setDelPrunedMavl(state int32) {
