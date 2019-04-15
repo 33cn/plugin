@@ -16,7 +16,10 @@ import (
 
 const (
 	// 同store/mavl中定义保持一致，即裁剪的加前缀
-	leafNodePrefix = "_mb_"
+	hashNodePrefix        = "_mh_"
+	leafNodePrefix        = "_mb_"
+	leafKeyCountPrefix    = "..mk.."
+	oldLeafKeyCountPrefix = "..mok.."
 )
 
 // MavlStore mavl store struct
