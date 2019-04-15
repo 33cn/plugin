@@ -133,7 +133,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if err == nil {
 		isDelMavlData = true
 	}
-	// 查询是Upgrade,需要存储mavl到db
+	// 查询是否是删除裁剪版mavl
 	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
 
 	bs.SetChild(kvms)
