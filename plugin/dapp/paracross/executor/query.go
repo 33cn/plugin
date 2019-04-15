@@ -8,9 +8,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"math/big"
-	"strconv"
-
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -165,7 +162,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			Height:         st.Height,
 			StateHash:      hex.EncodeToString(st.StateHash),
 			TxCounts:       st.TxCounts,
-			TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+			TxResult:       hex.EncodeToString(st.TxResult),
 		}
 
 		resp.Titles = append(resp.Titles, rst)
@@ -214,7 +211,7 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 		Height:         st.Height,
 		StateHash:      hex.EncodeToString(st.StateHash),
 		TxCounts:       st.TxCounts,
-		TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+		TxResult:       hex.EncodeToString(st.TxResult),
 	}, nil
 }
 

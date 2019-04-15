@@ -67,36 +67,6 @@ func (c *Paracross) checkTxGroup(tx *types.Transaction, index int) ([]*types.Tra
 	return nil, nil
 }
 
-//经para filter之后，交易组里面只会存在主链平行链跨链交易或全部平行链交易，全部平行链交易group里面有可能有资产转移交易
-func crossTxGroupProc(txs []*types.Transaction, index int) ([]*types.Transaction, int32) {
-	var headIdx, endIdx int32
-
-	for i := index; i >= 0; i-- {
-		if bytes.Equal(txs[index].Header, txs[i].Hash()) {
-			headIdx = int32(i)
-			break
-		}
-	}
-	//cross mix tx, contain main and para tx, main prefix with pt.ParaX
-	endIdx = headIdx + txs[index].GroupCount
-	for i := headIdx; i < endIdx; i++ {
-		if bytes.HasPrefix(txs[i].Execer, []byte(pt.ParaX)) {
-			return txs[headIdx:endIdx], endIdx
-		}
-	}
-	//cross asset transfer in tx group
-	var transfers []*types.Transaction
-	for i := headIdx; i < endIdx; i++ {
-		if types.IsMyParaExecName(string(txs[i].Execer)) &&
-			bytes.HasSuffix(txs[i].Execer, []byte(pt.ParaX)) {
-			transfers = append(transfers, txs[i])
-
-		}
-	}
-	return transfers, endIdx
-
-}
-
 func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 
@@ -110,14 +80,22 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 	}
 
 	commit := payload.GetCommit()
-	for i := 0; i < len(commit.Status.CrossTxHashs); i++ {
-		success := util.BitMapBit(commit.Status.CrossTxResult, uint32(i))
+	crossTxHashs, crossTxResult, err := getCrossTxHashs(c.GetAPI(), commit)
+	if err != nil {
+		return nil, err
+	}
+	if len(crossTxHashs) == 0 {
+		return &set, nil
+	}
 
-		paraTx, err := GetTx(c.GetAPI(), commit.Status.CrossTxHashs[i])
+	for i := 0; i < len(crossTxHashs); i++ {
+		success := util.BitMapBit(crossTxResult, uint32(i))
+
+		paraTx, err := GetTx(c.GetAPI(), crossTxHashs[i])
 		if err != nil {
 			clog.Crit("paracross.Commit Load Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
-				hex.EncodeToString(commit.Status.CrossTxHashs[i]))
+				hex.EncodeToString(crossTxHashs[i]))
 			return nil, err
 		}
 
@@ -126,7 +104,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 		if err != nil {
 			clog.Crit("paracross.Commit Decode Tx failed", "para title", commit.Status.Title,
 				"para height", commit.Status.Height, "para tx index", i, "error", err, "txHash",
-				hex.EncodeToString(commit.Status.CrossTxHashs[i]))
+				hex.EncodeToString(crossTxHashs[i]))
 			return nil, err
 		}
 		if payload.Ty == pt.ParacrossActionAssetTransfer {
