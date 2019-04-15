@@ -19,10 +19,10 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/33cn/chain33/util"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试
@@ -462,7 +462,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	s.Nil(err)
 	tx2, err := createParaNormalTx(s.Suite, PrivKeyB, nil)
 	s.Nil(err)
-	tx3, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
+	tx3, err := createParaNormalTx(s.Suite, PrivKeyA, []byte("toA"))
 	s.Nil(err)
 	tx4, err := createCrossParaTx(s.Suite, []byte("toB"))
 	s.Nil(err)
@@ -489,7 +489,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	txs = append(txs, txGroup56...)
 	txs = append(txs, tx7)
 	txs = append(txs, tx8)
-	for _,tx:=range txs{
+	for _, tx := range txs {
 		status.TxHashs = append(status.TxHashs, tx.Hash())
 	}
 	txHashs := util.FilterParaCrossTxHashes(Title, txs)
@@ -510,7 +510,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	//	s.T().Log("tx exec name","i",i,"name",string(tx.Execer))
 	//}
 
-	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx",int64(1))
+	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx", int64(1))
 
 	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
 	feelog := &types.Receipt{}
@@ -522,9 +522,9 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	recpt2 := &types.ReceiptData{Ty: types.ExecOk}
 	recpt3 := &types.ReceiptData{Ty: types.ExecOk}
 	recpt4 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt5 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt5 := &types.ReceiptData{Ty: types.ExecPack, Logs: feelog.Logs}
 	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
-	recpt7 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt7 := &types.ReceiptData{Ty: types.ExecPack, Logs: feelog.Logs}
 	recpt8 := &types.ReceiptData{Ty: types.ExecOk}
 	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7, recpt8}
 	s.exec.SetReceipt(receipts)
@@ -547,8 +547,6 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 		}
 	}
 }
-
-
 
 func (s *VoteTestSuite) createVoteTx(status *pt.ParacrossNodeStatus, privFrom string) (*types.Transaction, error) {
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{Status: status})
