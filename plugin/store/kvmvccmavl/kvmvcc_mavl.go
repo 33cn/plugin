@@ -129,7 +129,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		isDelMavlData = true
 	}
 	// 查询是Upgrade是否需保存mavl
-	isUpgradeCommitMavl = isCommitMavl(bs.GetDB())
+	isUpgradeCommitMavl = isCommitMavlDB(bs.GetDB())
 
 	bs.SetChild(kvms)
 	return kvms
@@ -270,7 +270,7 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 		var err error
 
 		if isUpgradeCommitMavl {
-			hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
+			hash, err = kvmMavls.MavlStore.MemSet(datas, sync)
 			if err != nil {
 				return hash, err
 			}
@@ -381,7 +381,7 @@ func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
 }
 
-func isCommitMavl(db dbm.DB) bool {
+func isCommitMavlDB(db dbm.DB) bool {
 	prefix := []byte(leafNodePrefix)
 	it := db.Iterator(prefix, nil, true)
 	defer it.Close()
