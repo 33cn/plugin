@@ -7,7 +7,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-// reward 挖矿奖励，主要处理挖矿分配逻辑，先实现基本策略，后面根据需求进行重构
+// reward 挖矿奖励， 主要处理挖矿分配逻辑，先实现基本策略，后面根据需求进行重构
 func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus) (*types.Receipt, error) {
 
 	//获取挖矿相关配置，这里需注意是共识的高度，而不是交易的高度
