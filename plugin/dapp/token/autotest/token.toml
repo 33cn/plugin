@@ -38,7 +38,7 @@ checkItem = ["balance"]
 #send to token for precreate
 [[TransferCase]]
 id = "transForPrecreate"
-command = "send bty transfer -a 10 -t 12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 10 -t 12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa"
 amount = "10"
@@ -46,7 +46,7 @@ checkItem = ["balance"]
 
 [[TransferCase]]
 id = "transForFee"
-command = "send bty transfer -a 10 -t 12cjnN5D4DPdBQSwh6vjwJbtsW4EJALTMv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 10 -t 12cjnN5D4DPdBQSwh6vjwJbtsW4EJALTMv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "12cjnN5D4DPdBQSwh6vjwJbtsW4EJALTMv"
 amount = "10"
