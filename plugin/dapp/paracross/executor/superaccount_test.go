@@ -46,7 +46,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetBlockInfo([]byte(""),[]byte(""),3)
+	suite.exec.SetBlockInfo([]byte(""), []byte(""), 3)
 	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
@@ -56,7 +56,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//
 	//}
 
-	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx",int64(1))
+	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx", int64(1))
 
 	// TODO, more fields
 	// setup block
