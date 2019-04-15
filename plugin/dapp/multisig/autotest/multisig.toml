@@ -6,7 +6,7 @@
 #send to token for precreate
 [[TransferCase]]
 id = "trans"
-command = "send bty transfer -a 20 -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 20 -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "14uBEP6LSHKdFvy97pTYRPVPAqij6bteee"
 amount = "20"

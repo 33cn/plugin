@@ -2,7 +2,7 @@
 #tran to return addr in ticket
 [[TransferCase]]
 id = "trans"
-command = "send bty transfer -a 10 -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 10 -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 amount = "10"
@@ -13,7 +13,7 @@ checkItem = ["balance"]
 #send to unfreeze exec
 [[TransferCase]]
 id = "transUnfreeze"
-command = "send bty transfer -a 5 -t 15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+command = "send coins transfer -a 5 -t 15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 from = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 to = "15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H"
 amount = "5"
