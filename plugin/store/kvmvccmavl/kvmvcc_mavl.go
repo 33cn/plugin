@@ -19,21 +19,22 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
+	"github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
-	"github.com/33cn/chain33/system/store/mavl/db"
 )
 
 var (
 	kmlog = log.New("module", "kvmvccMavl")
 	// ErrStateHashLost ...
-	ErrStateHashLost        = errors.New("ErrStateHashLost")
-	kvmvccMavlFork    int64 = 200 * 10000
-	isDelMavlData           = false
-	delMavlDataHeight       = kvmvccMavlFork + 10000
-	delMavlDataState  int32
-	wg                sync.WaitGroup
-	quit              bool
+	ErrStateHashLost          = errors.New("ErrStateHashLost")
+	kvmvccMavlFork      int64 = 200 * 10000
+	isDelMavlData             = false
+	delMavlDataHeight         = kvmvccMavlFork + 10000
+	delMavlDataState    int32
+	wg                  sync.WaitGroup
+	quit                bool
+	isUpgradeCommitMavl bool
 )
 
 const (
@@ -127,6 +128,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if err == nil {
 		isDelMavlData = true
 	}
+	// 查询是Upgrade是否需保存mavl
+	isUpgradeCommitMavl = isCommitMavl(bs.GetDB())
+
 	bs.SetChild(kvms)
 	return kvms
 }
@@ -262,9 +266,19 @@ func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
 // MemSetUpgrade set kvs to the mem of KVmMavlStore module  not cache the tree and return the StateHash
 func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
 	if datas.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
-		if err != nil {
-			return hash, err
+		var hash []byte
+		var err error
+
+		if isUpgradeCommitMavl {
+			hash, err := kvmMavls.MavlStore.MemSet(datas, sync)
+			if err != nil {
+				return hash, err
+			}
+		} else {
+			hash, err = kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
+			if err != nil {
+				return hash, err
+			}
 		}
 		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
 		if err != nil {
@@ -285,7 +299,14 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 
 // CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
-	return kvmMavls.KVMVCCStore.CommitUpgrade(req)
+	var hash []byte
+	var err error
+	if isUpgradeCommitMavl {
+		hash, err = kvmMavls.Commit(req)
+	} else {
+		hash, err = kvmMavls.KVMVCCStore.CommitUpgrade(req)
+	}
+	return hash, err
 }
 
 // Del set kvs to nil with StateHash
@@ -358,4 +379,17 @@ func isDelMavling() bool {
 
 func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
+}
+
+func isCommitMavl(db dbm.DB) bool {
+	prefix := []byte(leafNodePrefix)
+	it := db.Iterator(prefix, nil, true)
+	defer it.Close()
+	var isCommit bool
+	for it.Rewind(); it.Valid(); it.Next() {
+		isCommit = true
+		kmlog.Info("need commit mval")
+		break
+	}
+	return isCommit
 }

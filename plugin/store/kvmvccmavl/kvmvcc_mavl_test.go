@@ -711,6 +711,24 @@ func TestGetKeyVersion(t *testing.T) {
 	}
 }
 
+func TestIsCommitMavl(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	isComm := isCommitMavl(store.GetDB())
+	require.Equal(t, false, isComm)
+
+	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "123")), []byte("v1"))
+	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "456")), []byte("v2"))
+	isComm = isCommitMavl(store.GetDB())
+	require.Equal(t, true, isComm)
+}
+
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
 func BenchmarkGetkmvcc(b *testing.B)     { benchmarkGet(b, true) }
 
