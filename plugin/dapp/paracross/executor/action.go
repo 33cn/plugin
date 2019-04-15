@@ -359,6 +359,10 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 		return receipt, nil
 	}
+	//add commit done receipt
+	receiptDone := makeDoneReceipt(a.fromaddr, commit, stat, int32(most), int32(commitCount), int32(len(nodes)))
+	receipt.KV = append(receipt.KV, receiptDone.KV...)
+	receipt.Logs = append(receipt.Logs, receiptDone.Logs...)
 
 	//平行连进行奖励分配，考虑可能的失败，需要在保存共识高度等数据之前处理
 	if types.IsPara() {
@@ -376,9 +380,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	clog.Info("paracross.Commit commit ----pass", "most", most, "mostHash", hex.EncodeToString([]byte(mostHash)))
 
 	stat.Status = pt.ParacrossStatusCommitDone
-	receiptDone := makeDoneReceipt(a.fromaddr, commit, stat, int32(most), int32(commitCount), int32(len(nodes)))
-	receipt.KV = append(receipt.KV, receiptDone.KV...)
-	receipt.Logs = append(receipt.Logs, receiptDone.Logs...)
 	saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 
 	titleStatus.Title = commit.Status.Title
@@ -526,18 +527,35 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	logs = append(logs, log)
 
 	minerReceipt := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
-	//增发coins到paracross合约中，只处理发放，不做分配
-	reward := (types.MGInt("mver.consensus.coinReward", a.height) +
-		types.MGInt("mver.consensus.coinDevFund", a.height)) * types.Coin
-	issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, reward)
 
-	if err != nil {
-		clog.Error("paracross miner issue err", "height", miner.Status.Height,
-			"execAddr", a.execaddr, "amount", reward/types.Coin)
-		return nil, err
+	//自共识后才挖矿
+	if miner.IsSelfConsensus {
+		//增发coins到paracross合约中，只处理发放，不做分配
+		totalReward := int64(0)
+		coinReward := types.MGInt("mver.consensus.coinReward", a.height)
+		fundReward := types.MGInt("mver.consensus.coinDevFund", a.height)
+
+		if coinReward > 0 {
+			totalReward += coinReward
+		}
+		if fundReward > 0 {
+			totalReward += fundReward
+		}
+		totalReward *= types.Coin
+
+		if totalReward > 0 {
+			issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, totalReward)
+
+			if err != nil {
+				clog.Error("paracross miner issue err", "height", miner.Status.Height,
+					"execAddr", a.execaddr, "amount", totalReward/types.Coin)
+				return nil, err
+			}
+			minerReceipt = mergeReceipt(minerReceipt, issueReceipt)
+		}
 	}
 
-	return mergeReceipt(minerReceipt, issueReceipt), nil
+	return minerReceipt, nil
 }
 
 func getTitleFrom(exec []byte) ([]byte, error) {

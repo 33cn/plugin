@@ -16,31 +16,36 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	fundAddr := types.MGStr("mver.consensus.fundKeyAddr", nodeStatus.Height)
 
 	minerAddrs := getMiners(stat.Details, nodeStatus.BlockHash)
-
-	//分配给矿工的单位奖励，如果不等分转到发展基金
+	//分配给矿工的单位奖励
 	minerUnit := coinReward / int64(len(minerAddrs))
-	fundReward += coinReward % minerUnit
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	for _, addr := range minerAddrs {
-		rep, err := a.coinsAccount.ExecDeposit(addr, a.execaddr, minerUnit)
+	if minerUnit > 0 {
+		//如果不等分转到发展基金
+		fundReward += coinReward % minerUnit
+		for _, addr := range minerAddrs {
+			rep, err := a.coinsAccount.ExecDeposit(addr, a.execaddr, minerUnit)
 
+			if err != nil {
+				clog.Error("paracross miner reward deposit err", "height", nodeStatus.Height,
+					"execAddr", a.execaddr, "minerAddr", addr, "amount", minerUnit, "err", err)
+				return nil, err
+			}
+			receipt = mergeReceipt(receipt, rep)
+		}
+	}
+
+	if fundReward > 0 {
+		rep, err := a.coinsAccount.ExecDeposit(fundAddr, a.execaddr, fundReward)
 		if err != nil {
-			clog.Error("paracross miner reward deposit err", "height", nodeStatus.Height,
-				"execAddr", a.execaddr, "minerAddr", addr, "amount", minerUnit, "err", err)
+			clog.Error("paracross fund reward deposit err", "height", nodeStatus.Height,
+				"execAddr", a.execaddr, "fundAddr", fundAddr, "amount", fundReward, "err", err)
 			return nil, err
 		}
 		receipt = mergeReceipt(receipt, rep)
 	}
 
-	rep, err := a.coinsAccount.ExecDeposit(fundAddr, a.execaddr, fundReward)
-	if err != nil {
-		clog.Error("paracross fund reward deposit err", "height", nodeStatus.Height,
-			"execAddr", a.execaddr, "fundAddr", fundAddr, "amount", fundReward, "err", err)
-		return nil, err
-	}
-
-	return mergeReceipt(receipt, rep), nil
+	return receipt, nil
 }
 
 // getMiners 获取提交共识消息的矿工地址
