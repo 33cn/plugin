@@ -408,7 +408,14 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, pt.ErrInvalidTitle
 	}
 
-	if !types.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkCommitTx) {
+	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
+	if types.IsPara() {
+		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
+		if forkHeight == -1 || forkHeight == 0 {
+			forkHeight = types.MaxHeight
+		}
+	}
+	if a.exec.GetMainHeight() < forkHeight {
 		return nil, types.ErrNotSupport
 	}
 
