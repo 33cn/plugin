@@ -720,12 +720,12 @@ func TestIsCommitMavl(t *testing.T) {
 	store := New(storeCfg, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-	isComm := isCommitMavl(store.GetDB())
+	isComm := isCommitMavlDB(store.GetDB())
 	require.Equal(t, false, isComm)
 
 	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "123")), []byte("v1"))
 	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "456")), []byte("v2"))
-	isComm = isCommitMavl(store.GetDB())
+	isComm = isCommitMavlDB(store.GetDB())
 	require.Equal(t, true, isComm)
 }
 
