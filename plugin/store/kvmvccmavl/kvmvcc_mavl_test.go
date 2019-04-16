@@ -758,6 +758,9 @@ func TestDeletePrunedMavl(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, v2, []byte("v2"))
 
+	wg.Add(1)
+	go deletePrunedMavl(store.GetDB())
+	wg.Wait()
 }
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
