@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	"github.com/33cn/plugin/plugin/dapp/paracross/rpc"
 	"github.com/33cn/plugin/plugin/dapp/paracross/types"
+	_ "github.com/33cn/plugin/plugin/dapp/paracross/wallet" // register wallet package
 )
 
 func init() {

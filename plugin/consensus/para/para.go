@@ -848,3 +848,19 @@ func checkMinerTx(current *types.BlockDetail) error {
 	}
 	return nil
 }
+
+// Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户
+func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
+	plog.Info("Query_CreateNewAccount", "acc", acc)
+	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
+	// 需要实现具体处理 to be。。。。
+	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
+}
+
+// Query_WalletStatus 通知para共识模块钱包锁状态有变化
+func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
+	plog.Info("Query_WalletStatus", "walletStatus", walletStatus)
+	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
+	// 需要实现具体处理 to be。。。。
+	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
+}
