@@ -454,14 +454,14 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 			return nil, nil, err
 		}
 		//校验
-		paraBaseTxs := util.FilterTxsForPara(commit.Status.Title, blockDetail)
-		paraCrossHashs := util.FilterParaCrossTxHashes(commit.Status.Title, paraBaseTxs)
+		paraBaseTxs := FilterTxsForPara(commit.Status.Title, blockDetail)
+		paraCrossHashs := FilterParaCrossTxHashes(commit.Status.Title, paraBaseTxs)
 		var baseHashs [][]byte
 		for _, tx := range paraBaseTxs {
 			baseHashs = append(baseHashs, tx.Hash())
 		}
-		baseCheckTxHash := util.CalcTxHashsHash(baseHashs)
-		crossCheckHash := util.CalcTxHashsHash(paraCrossHashs)
+		baseCheckTxHash := CalcTxHashsHash(baseHashs)
+		crossCheckHash := CalcTxHashsHash(paraCrossHashs)
 		if !bytes.Equal(commit.Status.CrossTxHashs[0], crossCheckHash) {
 			clog.Error("getCrossTxHashs para hash not equal", "main.crossHash", hex.EncodeToString(crossCheckHash),
 				"commit.crossHash", hex.EncodeToString(commit.Status.CrossTxHashs[0]),
