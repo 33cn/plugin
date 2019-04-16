@@ -131,6 +131,8 @@ func TestTicketMap(t *testing.T) {
 
 	c.setTicket(nil, nil)
 	assert.Equal(t, c.getTicketCount(), int64(0))
+	_, err := c.Query_GetTicketCount(&types.ReqNil{})
+	assert.Nil(t, err)
 }
 
 func TestProcEvent(t *testing.T) {
