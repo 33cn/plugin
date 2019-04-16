@@ -110,7 +110,7 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 			paraTxHashs = append(paraTxHashs, hash)
 		}
 	}
-	crossTxHashs := util.FilterParaMainCrossTxHashes(types.GetTitle(), txs)
+	crossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
 	payload.Status.TxHashs = paraTxHashs
 	payload.Status.TxResult = util.CalcSubBitMap(curTxHashs, paraTxHashs, receipts)
 	payload.Status.CrossTxHashs = crossTxHashs
@@ -133,8 +133,8 @@ func setMinerTxResultFork(payload *pt.ParacrossMinerAction, txs []*types.Transac
 	//跨链tx结果
 	payload.Status.CrossTxResult = util.CalcBitMap(baseCrossTxHashs, curTxHashs, receipts)
 
-	payload.Status.TxHashs = [][]byte{util.CalcTxHashsHash(baseTxHashs)}
-	payload.Status.CrossTxHashs = [][]byte{util.CalcTxHashsHash(baseCrossTxHashs)}
+	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(baseTxHashs)}
+	payload.Status.CrossTxHashs = [][]byte{CalcTxHashsHash(baseCrossTxHashs)}
 }
 
 //ExecLocal_Miner miner tx local db process

@@ -25,9 +25,8 @@ import (
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/util"
-	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 )
 
 const (
@@ -427,7 +426,7 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			(bytes.Equal(preMainBlockHash, blockSeq.Detail.Block.ParentHash) && blockSeq.Seq.Type == addAct) ||
 			(bytes.Equal(preMainBlockHash, blockSeq.Seq.Hash) && blockSeq.Seq.Type == delAct) {
 
-			txs := util.FilterTxsForPara(types.GetTitle(), blockSeq.Detail)
+			txs := paraexec.FilterTxsForPara(types.GetTitle(), blockSeq.Detail)
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
 
 			client.mtx.Lock()
@@ -447,18 +446,18 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 		//not consistent case be processed at below
 		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
 			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
-		return nil, nil, paracross.ErrParaCurHashNotMatch
+		return nil, nil, pt.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
-		return nil, nil, paracross.ErrParaWaitingNewSeq
+		return nil, nil, pt.ErrParaWaitingNewSeq
 	}
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, paracross.ErrParaCurHashNotMatch
+	return nil, nil, pt.ErrParaCurHashNotMatch
 }
 
 //genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
@@ -527,7 +526,7 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 			"new currSeq", mainSeq+1, "new preMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq + 1, block.MainHash, nil
 	}
-	return -2, nil, paracross.ErrParaCurHashNotMatch
+	return -2, nil, pt.ErrParaCurHashNotMatch
 }
 
 func (client *client) removeBlocks(endHeight int64) error {
@@ -582,7 +581,7 @@ func (client *client) CreateBlock() {
 		txs, blockOnMain, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
 			incSeqFlag = false
-			if err == paracross.ErrParaCurHashNotMatch {
+			if err == pt.ErrParaCurHashNotMatch {
 				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq)
 				if err == nil {
 					currSeq = newSeq
@@ -664,11 +663,11 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 		for _, tx := range txs {
 			status.TxHashs = append(status.TxHashs, tx.Hash())
 		}
-		txHashs := util.FilterParaCrossTxHashes(types.GetTitle(), txs)
+		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
 		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 	}
 
-	tx, err := paracross.CreateRawMinerTx(&pt.ParacrossMinerAction{
+	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
 		Status:          status,
 		IsSelfConsensus: isParaSelfConsensusForked(status.MainBlockHeight),
 	})
@@ -794,22 +793,22 @@ func checkMinerTx(current *types.BlockDetail) error {
 	}
 	baseTx := current.Block.Txs[0]
 	//判断交易类型和执行情况
-	var action paracross.ParacrossAction
+	var action pt.ParacrossAction
 	err := types.Decode(baseTx.GetPayload(), &action)
 	if err != nil {
 		return err
 	}
-	if action.GetTy() != paracross.ParacrossActionMiner {
-		return paracross.ErrParaMinerTxType
+	if action.GetTy() != pt.ParacrossActionMiner {
+		return pt.ErrParaMinerTxType
 	}
 	//判断交易执行是否OK
 	if action.GetMiner() == nil {
-		return paracross.ErrParaEmptyMinerTx
+		return pt.ErrParaEmptyMinerTx
 	}
 
 	//判断exec 是否成功
 	if current.Receipts[0].Ty != types.ExecOk {
-		return paracross.ErrParaMinerExecErr
+		return pt.ErrParaMinerExecErr
 	}
 	return nil
 }

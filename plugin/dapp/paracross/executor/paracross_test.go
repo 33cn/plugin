@@ -360,6 +360,85 @@ func TestCrossLimits(t *testing.T) {
 	exec.SetEnv(0, 0, 0)
 	exec.SetAPI(api)
 
+func (s *VoteTestSuite) TestFilterTxsForPara() {
+	tx1, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
+	s.Nil(err)
+	tx2, err := createParaNormalTx(s.Suite, PrivKeyB, nil)
+	s.Nil(err)
+	tx3, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
+	s.Nil(err)
+	tx4, err := createCrossParaTx(s.Suite, []byte("toB"))
+	s.Nil(err)
+	tx5, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toB"))
+	s.Nil(err)
+	tx345 := []*types.Transaction{tx3, tx4,tx5}
+	txGroup345, err := createTxsGroup(s.Suite, tx345)
+	s.Nil(err)
+
+	tx6, err := createCrossParaTx(s.Suite, nil)
+	s.Nil(err)
+	tx7, err := createCrossParaTx(s.Suite, nil)
+	s.Nil(err)
+	tx67 := []*types.Transaction{tx6, tx7}
+	txGroup67, err := createTxsGroup(s.Suite, tx67)
+	s.Nil(err)
+
+	tx71, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
+	s.Nil(err)
+	tx72, err := createCrossParaTx(s.Suite, []byte("toB"))
+	s.Nil(err)
+	tx73, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toB"))
+	s.Nil(err)
+	tx777 := []*types.Transaction{tx71, tx72,tx73}
+	txGroup777, err := createTxsGroup(s.Suite, tx777)
+	s.Nil(err)
+
+	tx8, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
+	s.Nil(err)
+	tx9, err := createAssetTransferTx(s.Suite, PrivKeyC, nil)
+	s.Nil(err)
+
+	txs := []*types.Transaction{tx1, tx2}
+	txs = append(txs, txGroup345...)
+	txs = append(txs, txGroup67...)
+	txs = append(txs, txGroup777...)
+	txs = append(txs, tx8)
+	txs = append(txs, tx9)
+
+	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
+	feelog := &types.Receipt{}
+	feelog.Logs = append(feelog.Logs, errlog)
+
+	recpt1 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt2 := &types.ReceiptData{Ty: types.ExecPack}
+
+	recpt3 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt4 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt5 := &types.ReceiptData{Ty: types.ExecOk}
+
+	recpt6 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt7 := &types.ReceiptData{Ty: types.ExecPack}
+
+	recpt71 := &types.ReceiptData{Ty: types.ExecPack}
+	recpt72 := &types.ReceiptData{Ty: types.ExecPack}
+	recpt73 := &types.ReceiptData{Ty: types.ExecPack}
+
+	recpt8 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
+	recpt9 := &types.ReceiptData{Ty: types.ExecOk}
+	receipts := []*types.ReceiptData{recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7, recpt71,recpt72, recpt73, recpt8,recpt9}
+
+	block := &types.Block{Txs: txs}
+	detail := &types.BlockDetail{
+		Block:    block,
+		Receipts: receipts,
+	}
+
+	rst := FilterTxsForPara(Title, detail)
+	filterTxs := []*types.Transaction{ tx2,tx3, tx4, tx5,tx71,tx72,tx73,tx9}
+	s.Equal( filterTxs, rst)
+
+
+}
 
 	tx := &types.Transaction{Execer: []byte("p.user.test.paracross")}
 	res := exec.CrossLimits(tx, 1)
@@ -492,11 +571,11 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	for _, tx := range txs {
 		status.TxHashs = append(status.TxHashs, tx.Hash())
 	}
-	txHashs := util.FilterParaCrossTxHashes(Title, txs)
+	txHashs := FilterParaCrossTxHashes(Title, txs)
 	status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 
-	baseCheckTxHash := util.CalcTxHashsHash(status.TxHashs)
-	baseCrossTxHash := util.CalcTxHashsHash(status.CrossTxHashs)
+	baseCheckTxHash := CalcTxHashsHash(status.TxHashs)
+	baseCrossTxHash := CalcTxHashsHash(status.CrossTxHashs)
 
 	tx, err := s.createVoteTx(status, PrivKeyA)
 	s.Nil(err)
@@ -668,3 +747,5 @@ func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Trans
 
 	return tx, nil
 }
+
+

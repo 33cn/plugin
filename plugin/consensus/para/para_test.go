@@ -15,9 +15,9 @@ import (
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
-	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
+	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 )
 
 var (
@@ -121,7 +121,7 @@ func TestFilterTxsForPara(t *testing.T) {
 		Receipts: receipts,
 	}
 
-	rst := util.FilterTxsForPara(Title, detail)
+	rst := paraexec.FilterTxsForPara(Title, detail)
 	filterTxs := []*types.Transaction{tx3, tx4, tx5, tx6, txA, txB, txC}
 	assert.Equal(t, filterTxs, rst)
 
