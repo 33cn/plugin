@@ -31,6 +31,7 @@ func New() wcom.WalletBizPolicy {
 	return &ParaPolicy{mtx: &sync.Mutex{}}
 }
 
+// ParaPolicy: 结构体
 type ParaPolicy struct {
 	mtx           *sync.Mutex
 	walletOperate wcom.WalletOperate
