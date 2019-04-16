@@ -56,7 +56,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//
 	//}
 
-	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx", int64(1))
+	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
 
 	// TODO, more fields
 	// setup block

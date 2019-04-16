@@ -588,7 +588,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	//	s.T().Log("tx exec name","i",i,"name",string(tx.Execer))
 	//}
 
-	types.Conf("config.consensus.sub.para").S("MainForkParacrossCommitTx", int64(1))
+	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
 
 	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
 	feelog := &types.Receipt{}
