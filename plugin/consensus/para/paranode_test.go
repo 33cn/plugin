@@ -55,11 +55,10 @@ func TestParaNode(t *testing.T) {
 		para.Para.SendTxRPC(tx)
 		para.Para.WaitHeight(int64(i) + 1)
 	}
+	testParaQuery(para)
 }
 
-func TestParaQuery(t *testing.T) {
-	para := node.NewParaNode(nil, nil)
-	defer para.Close()
+func testParaQuery(para *node.ParaNode) {
 
 	var param types.ReqWalletImportPrivkey
 	param.Label = "Importprivkey"
