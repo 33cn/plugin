@@ -25,7 +25,7 @@ command = "account import_key -k 0x9d4f8ab11361be596468b265cb66946c87873d4a11971
 #prepare for privacy
 [[TransferCase]]
 id = "trans1"
-command = "send bty transfer -a 999 -t 1FeyE6VDZ4FYgpK1n2okWMDAtPkwBuooQd -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 999 -t 1FeyE6VDZ4FYgpK1n2okWMDAtPkwBuooQd -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "1FeyE6VDZ4FYgpK1n2okWMDAtPkwBuooQd"
 amount = "999"
@@ -34,7 +34,7 @@ dep = ["transForFee1", "transForFee2", "transForFee3"]
 
 [[TransferCase]]
 id = "transForFee1"
-command = "send bty transfer -a 100 -t 1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 100 -t 1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt"
 amount = "100"
@@ -43,7 +43,7 @@ dep = ["enablePrivacy"]
 
 [[TransferCase]]
 id = "transForFee2"
-command = "send bty transfer -a 100 -t 17UZr5eJVxDRW1gs7rausQwaSUPtvcpxGT -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 100 -t 17UZr5eJVxDRW1gs7rausQwaSUPtvcpxGT -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "17UZr5eJVxDRW1gs7rausQwaSUPtvcpxGT"
 amount = "100"
@@ -52,7 +52,7 @@ dep = ["enablePrivacy"]
 
 [[TransferCase]]
 id = "transForFee3"
-command = "send bty transfer -a 100 -t 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 100 -t 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
 amount = "100"

@@ -54,14 +54,14 @@ function para_set_wallet() {
 
 function para_import_key() {
     echo "=========== # save seed to wallet ============="
-    result=$(${1} seed save -p 1314 -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
+    result=$(${1} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
     if [ "${result}" = "false" ]; then
         echo "save seed to wallet error seed, result: ${result}"
         exit 1
     fi
 
     echo "=========== # unlock wallet ============="
-    result=$(${1} wallet unlock -p 1314 -t 0 | jq ".isok")
+    result=$(${1} wallet unlock -p 1314fuzamei -t 0 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
     fi
@@ -236,7 +236,7 @@ function para_cross_transfer_withdraw() {
     echo "=========== # para cross transfer/withdraw test ============="
     paracrossAddr=1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe
     ${CLI} account list
-    ${CLI} send bty transfer -a 10 -n test -t $paracrossAddr -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    ${CLI} send coins transfer -a 10 -n test -t $paracrossAddr -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
     hash=$(${CLI} send para asset_transfer --title user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
 
@@ -268,8 +268,8 @@ function token_create_on_mainChain() {
     echo "${hash}"
     query_tx "${MAIN_CLI}" "${hash}"
 
-    echo "=========== # send bty to token ============="
-    hash=$(${CLI} send bty send_exec -a 500 -e token -n send2exec -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "=========== # send coins to token ============="
+    hash=$(${CLI} send coins send_exec -a 500 -e token -n send2exec -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
     query_tx "${MAIN_CLI}" "${hash}"
 

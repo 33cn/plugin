@@ -5,6 +5,7 @@
 package ticket
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -530,7 +531,7 @@ func (client *Client) delTicket(ticketID string) {
 }
 
 // Miner ticket miner function
-func (client *Client) Miner(parent, block *types.Block) bool {
+func (client *Client) Miner(parent, block *types.Block) error {
 	//add miner address
 	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parent, block)
 	if err != nil {
@@ -540,21 +541,21 @@ func (client *Client) Miner(parent, block *types.Block) bool {
 			tlog.Error("Miner.RequestLastBlock", "err", err)
 		}
 		client.SetCurrentBlock(newblock)
-		return false
+		return err
 	}
 	if ticket == nil {
-		return false
+		return errors.New("ticket is nil")
 	}
 	err = client.addMinerTx(parent, block, diff, priv, ticket.TicketId, modify)
 	if err != nil {
-		return false
+		return err
 	}
 	err = client.WriteBlock(parent.StateHash, block)
 	if err != nil {
-		return false
+		return err
 	}
 	client.delTicket(ticketID)
-	return true
+	return nil
 }
 
 //gas 直接燃烧
@@ -687,7 +688,10 @@ func (client *Client) CreateBlock() {
 		}
 		block, lastBlock := client.createBlock()
 		hashlist := getTxHashes(block.Txs)
-		for !client.Miner(lastBlock, block) {
+		for err := client.Miner(lastBlock, block); err != nil; err = client.Miner(lastBlock, block) {
+			if err == queue.ErrIsQueueClosed {
+				break
+			}
 			//加入新的txs, 继续挖矿
 			lasttime := block.BlockTime
 			//只有时间增加了1s影响，影响难度计算了，才会去更新区块

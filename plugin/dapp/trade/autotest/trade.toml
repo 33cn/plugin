@@ -20,7 +20,7 @@ dep = ["tokenPre"]
 #send to token for precreate
 [[TransferCase]]
 id = "transForPrecreate"
-command = "send bty transfer -a 10 -t 12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 10 -t 12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa"
 amount = "10"
@@ -28,7 +28,7 @@ checkItem = ["balance"]
 
 [[TransferCase]]
 id = "transForFee"
-command = "send bty transfer -a 100 -t 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send coins transfer -a 100 -t 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 to = "1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH"
 amount = "100"
@@ -39,7 +39,7 @@ dep = ["import1"]
 #prepare bty for trade sell and buy
 [[TransferCase]]
 id = "btyToTrade"
-command = "send bty transfer -a 7 -t 1BXvgjmBw1aBgmGn1hjfGyRkmN3krWpFP4 -k 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH"
+command = "send coins transfer -a 7 -t 1BXvgjmBw1aBgmGn1hjfGyRkmN3krWpFP4 -k 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH"
 from = "1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH"
 to = "1BXvgjmBw1aBgmGn1hjfGyRkmN3krWpFP4"
 amount = "7"
