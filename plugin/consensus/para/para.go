@@ -25,8 +25,8 @@ import (
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 const (

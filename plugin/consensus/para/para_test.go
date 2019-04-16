@@ -15,9 +15,9 @@ import (
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
+	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
-	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 )
 
 var (
