@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"

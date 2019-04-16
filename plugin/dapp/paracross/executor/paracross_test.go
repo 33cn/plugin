@@ -19,7 +19,6 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -747,5 +746,3 @@ func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Trans
 
 	return tx, nil
 }
-
-
