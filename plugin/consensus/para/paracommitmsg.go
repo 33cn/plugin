@@ -286,7 +286,6 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 
 }
 
-
 func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
 	var err error
 	var tx *types.Transaction
@@ -297,7 +296,7 @@ out:
 		select {
 		case tx = <-ch:
 			err = client.sendCommitMsgTx(tx)
-			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance ) {
+			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
 				resendTimer = time.After(time.Second * 2)
 			}
 		case <-resendTimer:
