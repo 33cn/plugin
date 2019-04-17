@@ -112,7 +112,7 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 	}
 	crossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
 	payload.Status.TxHashs = paraTxHashs
-	payload.Status.TxResult = util.CalcBitMap(paraTxHashs,curTxHashs, receipts)
+	payload.Status.TxResult = util.CalcBitMap(paraTxHashs, curTxHashs, receipts)
 	payload.Status.CrossTxHashs = crossTxHashs
 	payload.Status.CrossTxResult = util.CalcBitMap(crossTxHashs, curTxHashs, receipts)
 
