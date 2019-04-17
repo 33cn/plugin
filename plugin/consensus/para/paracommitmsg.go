@@ -286,11 +286,7 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 
 }
 
-// 从ch收到tx有两种可能，readTick和addBlock, 如果
-// 3 input case from ch: readTick , addBlock and delMsg to readTick, readTick trigger firstly and will block until received from addBlock
-// if sendCommitMsgTx block quite long, write channel will be block in handle(), addBlock will not send new msg until rpc send over
-// if sendCommitMsgTx block quite long, if delMsg occur, after send over, ignore previous tx succ or fail, new msg will be rcv and sent
-// if sendCommitMsgTx fail, wait 1s resend the failed tx, if new tx rcv from ch, send the new one.
+
 func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
 	var err error
 	var tx *types.Transaction
@@ -301,15 +297,12 @@ out:
 		select {
 		case tx = <-ch:
 			err = client.sendCommitMsgTx(tx)
-			if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
-				resendTimer = time.After(time.Second * 1)
+			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance ) {
+				resendTimer = time.After(time.Second * 2)
 			}
 		case <-resendTimer:
 			if err != nil && tx != nil {
-				err = client.sendCommitMsgTx(tx)
-				if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
-					resendTimer = time.After(time.Second * 1)
-				}
+				client.sendCommitMsgTx(tx)
 			}
 		case <-client.quit:
 			break out
@@ -339,15 +332,15 @@ func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 }
 
 func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) bool {
-	targetHash := targetTx.Hash()
+	txMap := make(map[string]bool)
 
 	for i, tx := range detail.Block.Txs {
-		if bytes.Equal(targetHash, tx.Hash()) && detail.Receipts[i].Ty == types.ExecOk {
-			return true
+		if bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && detail.Receipts[i].Ty == types.ExecOk {
+			txMap[string(tx.Hash())] = true
 		}
 	}
-	return false
 
+	return txMap[string(targetTx.Hash())]
 }
 
 func isParaSelfConsensusForked(height int64) bool {

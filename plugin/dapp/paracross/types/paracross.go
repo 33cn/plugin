@@ -152,6 +152,7 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 		Payload: types.Encode(action),
 		Fee:     fee,
 		To:      address.ExecAddress(name),
+		Expire:  types.Now().Unix() + int64(120),  //120s
 	}
 	tx, err := types.FormatTx(name, tx)
 	if err != nil {
