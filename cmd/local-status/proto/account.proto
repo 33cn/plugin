@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package proto;
+
+message Config {
+    string          esHost       = 1;
+    string          chain33host  = 2;
+}
