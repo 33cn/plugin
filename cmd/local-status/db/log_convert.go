@@ -1,14 +1,15 @@
 package db
 
 import (
-	"github.com/33cn/chain33/types"
-	"errors"
 	"encoding/json"
+	"errors"
+
 	rpcTypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
 )
 
 type Log2KV interface {
-	Convert(logType int64, json string) (key []string, prev, current  []byte, err error)
+	Convert(logType int64, json string) (key []string, prev, current []byte, err error)
 }
 
 func NewConvert(exec string, detail *rpcTypes.BlockDetail) Log2KV {
@@ -20,15 +21,15 @@ func NewConvert(exec string, detail *rpcTypes.BlockDetail) Log2KV {
 	return nil
 }
 
-func notSupport (logType int64, json []byte) (key []string, prev, current  []byte, err error) {
+func notSupport(logType int64, json []byte) (key []string, prev, current []byte, err error) {
 	return nil, nil, nil, errors.New("notSupport")
 }
 
-func convertFailed () (key []string, prev, current  []byte, err error) {
+func convertFailed() (key []string, prev, current []byte, err error) {
 	return nil, nil, nil, errors.New("convertFailed")
 }
 
-func CommonConverts(ty int64, v []byte) (key []string, prev, current  []byte, err error) {
+func CommonConverts(ty int64, v []byte) (key []string, prev, current []byte, err error) {
 	if ty == types.TyLogFee {
 		return LogFeeConvert(v)
 	} else if ty == types.TyLogTransfer {
@@ -57,7 +58,6 @@ func CommonConverts(ty int64, v []byte) (key []string, prev, current  []byte, er
 	return notSupport(ty, v)
 }
 
-
 func LogFeeConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l types.ReceiptAccountTransfer
 	err = types.JSONToPB([]byte(v), &l)
@@ -71,9 +71,9 @@ func LogFeeConvert(v []byte) (key []string, prev, current []byte, err error) {
 }
 
 type account struct {
-	Frozen int64 `json:"frozen"`
+	Frozen  int64 `json:"frozen"`
 	Balance int64 `json:"balance"`
-	Total int64 `json:"total"`
+	Total   int64 `json:"total"`
 }
 
 func accountConvert(acc *types.Account) account {
@@ -115,7 +115,7 @@ func LogExecTransferConvert(v []byte) (key []string, prev, current []byte, err e
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		// TODO 如何设置提前的key ， 如 token
-		key = []string{"coins-bty", "coins", l.ExecAddr+":"+l.Current.Addr}
+		key = []string{"coins-bty", "coins", l.ExecAddr + ":" + l.Current.Addr}
 		prev, _ = json.Marshal(accountConvert(l.Prev))
 		current, _ = json.Marshal(accountConvert(l.Current))
 		return
@@ -123,13 +123,12 @@ func LogExecTransferConvert(v []byte) (key []string, prev, current []byte, err e
 	return nil, nil, nil, errors.New("failed")
 }
 
-
 func LogExecWithdrawConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l types.ReceiptExecAccountTransfer
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		// TODO 如何设置提前的key ， 如 token
-		key = []string{"coins-bty", "coins", l.ExecAddr+":"+l.Current.Addr}
+		key = []string{"coins-bty", "coins", l.ExecAddr + ":" + l.Current.Addr}
 		prev, _ = json.Marshal(accountConvert(l.Prev))
 		current, _ = json.Marshal(accountConvert(l.Current))
 		return
@@ -142,7 +141,7 @@ func LogExecDepositConvert(v []byte) (key []string, prev, current []byte, err er
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		// TODO 如何设置提前的key ， 如 token
-		key = []string{"coins-bty", "coins", l.ExecAddr+":"+l.Current.Addr}
+		key = []string{"coins-bty", "coins", l.ExecAddr + ":" + l.Current.Addr}
 		prev, _ = json.Marshal(accountConvert(l.Prev))
 		current, _ = json.Marshal(accountConvert(l.Current))
 		return
@@ -155,7 +154,7 @@ func LogExecFrozenConvert(v []byte) (key []string, prev, current []byte, err err
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		// TODO 如何设置提前的key ， 如 token
-		key = []string{"coins-bty", "coins", l.ExecAddr+":"+l.Current.Addr}
+		key = []string{"coins-bty", "coins", l.ExecAddr + ":" + l.Current.Addr}
 		prev, _ = json.Marshal(accountConvert(l.Prev))
 		current, _ = json.Marshal(accountConvert(l.Current))
 		return
@@ -168,7 +167,7 @@ func LogExecActiveConvert(v []byte) (key []string, prev, current []byte, err err
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		// TODO 如何设置提前的key ， 如 token
-		key = []string{"coins-bty", "coins", l.ExecAddr+":"+l.Current.Addr}
+		key = []string{"coins-bty", "coins", l.ExecAddr + ":" + l.Current.Addr}
 		prev, _ = json.Marshal(accountConvert(l.Prev))
 		current, _ = json.Marshal(accountConvert(l.Current))
 		return
@@ -227,6 +226,3 @@ func LogBurnConvert(v []byte) (key []string, prev, current []byte, err error) {
 	}
 	return nil, nil, nil, errors.New("failed")
 }
-
-
-

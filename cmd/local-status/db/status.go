@@ -1,12 +1,13 @@
 package db
 
 import (
-	"github.com/33cn/plugin/cmd/local-status/es_cli"
-	"github.com/pkg/errors"
-	"github.com/olivere/elastic"
-	rpctypes "github.com/33cn/chain33/rpc/types"
 	"fmt"
 	"time"
+
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/plugin/cmd/local-status/es_cli"
+	"github.com/olivere/elastic"
+	"github.com/pkg/errors"
 )
 
 type Sync interface {
@@ -30,7 +31,7 @@ type Sync interface {
 
 type dbStatus struct {
 	height int64
-	hash string
+	hash   string
 }
 
 func NewDBStatus() *dbStatus {
@@ -42,7 +43,7 @@ func (d *dbStatus) Recover(client *es_cli.ESClient) error {
 }
 
 func (d *dbStatus) Sync(client *es_cli.ESClient, headerCh chan int64, blockCh chan interface{}) {
-	nextHeader := d.height+1
+	nextHeader := d.height + 1
 
 	for {
 		headerCh <- nextHeader
@@ -59,9 +60,9 @@ func (d *dbStatus) Sync(client *es_cli.ESClient, headerCh chan int64, blockCh ch
 	}
 }
 
-const statusDB  =  "dbStatus"
+const statusDB = "dbStatus"
 const statusTable = "height"
-const lastHeader = "lastHeader"  // header, hash
+const lastHeader = "lastHeader" // header, hash
 
 func (d *dbStatus) lastHeader(client *es_cli.ESClient) error {
 	result, err := client.Get(statusDB, statusTable, lastHeader)
@@ -87,7 +88,6 @@ func (d *dbStatus) lastHeader(client *es_cli.ESClient) error {
 	return nil
 }
 
-
 func getInt(kvs map[string]interface{}, key string) (int64, error) {
 	if v, ok := kvs[key]; ok {
 		if i, ok := v.(int64); ok {
@@ -107,7 +107,7 @@ func getString(kvs map[string]interface{}, key string) (string, error) {
 }
 
 func (d *dbStatus) dealBlock(client *es_cli.ESClient, block *rpctypes.BlockDetail) (int64, error) {
-	if block.Block.Height != d.height + 1 {
+	if block.Block.Height != d.height+1 {
 		return d.height + 1, errors.New("height not match")
 	}
 	if block.Block.Height != 0 && block.Block.ParentHash != d.hash {
@@ -115,7 +115,7 @@ func (d *dbStatus) dealBlock(client *es_cli.ESClient, block *rpctypes.BlockDetai
 		// delete block ${height}
 		// set ${height} = d.height - 1
 		d.rollback(d.height, client)
-		d.height --
+		d.height--
 		return d.height + 1, errors.New("block hash not match")
 	}
 
@@ -123,7 +123,7 @@ func (d *dbStatus) dealBlock(client *es_cli.ESClient, block *rpctypes.BlockDetai
 	if err != nil {
 		return d.height + 1, errors.New("add block failed")
 	}
-	d.height ++
+	d.height++
 	return d.height + 1, nil
 }
 
@@ -140,7 +140,7 @@ func (d *dbStatus) addBlock(height int64, client *es_cli.ESClient, block *rpctyp
 			continue
 		}
 		for _, l := range block.Receipts[i].Logs {
-			keys, p, c, err :=kvc.Convert(int64(l.Ty), string(l.Log))
+			keys, p, c, err := kvc.Convert(int64(l.Ty), string(l.Log))
 			if err != nil {
 				continue
 			}
@@ -157,6 +157,3 @@ func (d *dbStatus) addBlock(height int64, client *es_cli.ESClient, block *rpctyp
 func (d *dbStatus) rollback(height int64, client *es_cli.ESClient) error {
 	return nil
 }
-
-
-

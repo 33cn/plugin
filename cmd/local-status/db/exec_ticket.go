@@ -2,25 +2,26 @@ package db
 
 import "github.com/33cn/chain33/types"
 import (
-	logType "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"encoding/json"
+
 	rpcTypes "github.com/33cn/chain33/rpc/types"
+	logType "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 // ticket/ticket/Id
-type ticket struct{
+type ticket struct {
 	Id      string `json:"id"`
 	Address string `json:"address"`
-	Height  int64 `json:"height"`
-	Ts      int64 `json:"ts"`
+	Height  int64  `json:"height"`
+	Ts      int64  `json:"ts"`
 }
 
 type bind struct {
-	oldMiner string `json:"old_miner"`
-	newMiner string `json:"new_miner"`
+	oldMiner      string `json:"old_miner"`
+	newMiner      string `json:"new_miner"`
 	returnAddress string `json:"return_address"`
-	height int64 `json:"height"`
-	ts int64 `json:"ts"`
+	height        int64  `json:"height"`
+	ts            int64  `json:"ts"`
 }
 
 const (
@@ -36,13 +37,11 @@ const (
 	TyLogTicketBind = 114
 )
 
-
 type ticketConvert struct {
 	block *rpcTypes.BlockDetail
-
 }
 
-func (t *ticketConvert) Convert(ty int64, jsonString string) (key []string, prev, current  []byte, err error) {
+func (t *ticketConvert) Convert(ty int64, jsonString string) (key []string, prev, current []byte, err error) {
 	if ty == types.TyLogFee {
 		return LogFeeConvert([]byte(jsonString))
 	} else if ty == TyLogNewTicket {
@@ -57,7 +56,7 @@ func (t *ticketConvert) Convert(ty int64, jsonString string) (key []string, prev
 	return CommonConverts(ty, []byte(jsonString))
 }
 
-func (t *ticketConvert)LogNewTicketConvert(v []byte) (key []string, prev, current  []byte, err error) {
+func (t *ticketConvert) LogNewTicketConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l logType.ReceiptTicket
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
@@ -74,7 +73,7 @@ func (t *ticketConvert)LogNewTicketConvert(v []byte) (key []string, prev, curren
 	return convertFailed()
 }
 
-func (t *ticketConvert)LogCloseTicketConvert(v []byte) (key []string, prev, current  []byte, err error) {
+func (t *ticketConvert) LogCloseTicketConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l logType.ReceiptTicket
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
@@ -91,7 +90,7 @@ func (t *ticketConvert)LogCloseTicketConvert(v []byte) (key []string, prev, curr
 	return convertFailed()
 }
 
-func (t *ticketConvert)LogMinerTicketConvert(v []byte) (key []string, prev, current  []byte, err error) {
+func (t *ticketConvert) LogMinerTicketConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l logType.ReceiptTicket
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
@@ -108,19 +107,18 @@ func (t *ticketConvert)LogMinerTicketConvert(v []byte) (key []string, prev, curr
 	return convertFailed()
 }
 
-
-func (t *ticketConvert)LogBindTicketConvert(v []byte) (key []string, prev, current  []byte, err error) {
+func (t *ticketConvert) LogBindTicketConvert(v []byte) (key []string, prev, current []byte, err error) {
 	var l logType.ReceiptTicketBind
 	err = types.JSONToPB([]byte(v), &l)
 	if err == nil {
 		key = []string{"ticket-bind", "ticket", l.ReturnAddress}
 		prev, _ = json.Marshal("")
 		current, _ = json.Marshal(bind{
-			oldMiner:           l.OldMinerAddress,
-			newMiner:           l.NewMinerAddress,
+			oldMiner:      l.OldMinerAddress,
+			newMiner:      l.NewMinerAddress,
 			returnAddress: l.ReturnAddress,
-			height:   t.block.Block.Height,
-			ts:       t.block.Block.BlockTime,
+			height:        t.block.Block.Height,
+			ts:            t.block.Block.BlockTime,
 		})
 		return
 	}

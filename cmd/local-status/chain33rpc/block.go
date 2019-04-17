@@ -10,11 +10,11 @@ import (
 	"os"
 	"time"
 
+	l "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
-	l "github.com/33cn/chain33/common/log/log15"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -23,13 +23,12 @@ var log = l.New("module", "chain33rpc")
 // ts/height -> blockHeader
 type chain33 struct {
 	lastHeader *rpctypes.Header
-	Host         string
+	Host       string
 	cache      *lru.Cache
 }
 
-
 var chain = chain33{
-	lastHeader:   &rpctypes.Header{Height: 0},
+	lastHeader: &rpctypes.Header{Height: 0},
 }
 
 func init() {
@@ -101,8 +100,8 @@ func syncBlocks(host string, curHeight int64, blockChan chan interface{}) {
 	if curHeight >= lastHeight {
 		return
 	}
-	if curHeight + 10 < lastHeight {
-		lastHeight = curHeight+10
+	if curHeight+10 < lastHeight {
+		lastHeight = curHeight + 10
 	}
 
 	hs, err := getHeaders(rpcCli, curHeight, lastHeight)
@@ -142,7 +141,7 @@ func SyncBlock(host string, headerChan chan int64, block chan interface{}) {
 	timeout := time.NewTicker(5 * time.Second)
 	for {
 		select {
-		case h :=<-headerChan:
+		case h := <-headerChan:
 			syncBlocks(host, h, block)
 		case <-timeout.C:
 			syncLastHeader(host)

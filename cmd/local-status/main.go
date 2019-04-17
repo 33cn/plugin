@@ -14,17 +14,16 @@ import (
 	l "github.com/33cn/chain33/common/log/log15"
 	tml "github.com/BurntSushi/toml"
 
-	"github.com/33cn/plugin/cmd/local-status/proto"
-	"github.com/33cn/plugin/cmd/local-status/es_cli"
-	"github.com/33cn/plugin/cmd/local-status/db"
 	"github.com/33cn/plugin/cmd/local-status/chain33rpc"
+	"github.com/33cn/plugin/cmd/local-status/db"
+	"github.com/33cn/plugin/cmd/local-status/es_cli"
+	"github.com/33cn/plugin/cmd/local-status/proto"
 )
 
 var (
 	log        = l.New("module", "main")
 	configPath = flag.String("f", "local-status.toml", "config file")
 )
-
 
 func main() {
 	d, _ := os.Getwd()
@@ -58,7 +57,6 @@ func main() {
 
 }
 
-
 func recover(es *es_cli.ESClient) (db.Sync, error) {
 	st := db.NewDBStatus()
 	err := st.Recover(es)
@@ -68,7 +66,6 @@ func recover(es *es_cli.ESClient) (db.Sync, error) {
 	}
 	return st, err
 }
-
 
 //InitCfg 初始化cfg
 func InitCfg(path string) *proto.Config {

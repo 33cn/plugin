@@ -1,17 +1,16 @@
 package es_cli
 
 import (
-	"github.com/olivere/elastic"
-	"os"
-	"fmt"
 	"context"
+	"fmt"
 	logx "log"
+	"os"
+
+	"github.com/olivere/elastic"
 )
 
-
-
 type ESClient struct {
-	host string
+	host   string
 	client *elastic.Client
 }
 
@@ -62,10 +61,7 @@ func (cli *ESClient) Get(index, typ, id string) (map[string]interface{}, error) 
 	return res.Fields, nil
 }
 
-
 /*
  Error 400 (Bad Request): Rejecting mapping update to [coins-bty] as the final mapping would have more than 1 type: [coins, 16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp] [type=illegal_argument_exception]
 	index/type/id   type 在一个 index 里唯一 在新版本中可能去掉 type
 */
-
-

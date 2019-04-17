@@ -9,7 +9,7 @@ type coinsConvert struct {
 	block *rpcTypes.BlockDetail
 }
 
-func (e *coinsConvert) Convert(ty int64, jsonString string) (key []string, prev, current  []byte, err error) {
+func (e *coinsConvert) Convert(ty int64, jsonString string) (key []string, prev, current []byte, err error) {
 	if ty == types.TyLogFee {
 		return LogFeeConvert([]byte(jsonString))
 	}
