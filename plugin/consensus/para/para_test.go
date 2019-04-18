@@ -29,22 +29,7 @@ var (
 func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, nil)
 
-	//only main txs
-	tx0, _ := createMainTx("ticket", "to")
-	//only main txs group
-	tx1, _ := createMainTx("ticket", "to")
-	tx2, _ := createMainTx("token", "to")
-	tx12 := []*types.Transaction{tx1, tx2}
-	txGroup12, err := createTxsGroup(tx12)
-	assert.Nil(t, err)
 
-	//para cross tx group succ
-	tx3, _ := createCrossMainTx("toA")
-	tx4, err := createCrossParaTx("toB", 4)
-	assert.Nil(t, err)
-	tx34 := []*types.Transaction{tx3, tx4}
-	txGroup34, err := createTxsGroup(tx34)
-	assert.Nil(t, err)
 
 	//all para tx group
 	tx5, err := createCrossParaTx("toB", 5)
@@ -56,17 +41,13 @@ func TestFilterTxsForPara(t *testing.T) {
 	assert.Nil(t, err)
 
 	//para cross tx group fail
-	tx7, _ := createCrossMainTx("toA")
+	tx7, _ := createCrossParaTx("toA",1)
 	tx8, err := createCrossParaTx("toB", 8)
 	assert.Nil(t, err)
 	tx78 := []*types.Transaction{tx7, tx8}
 	txGroup78, err := createTxsGroup(tx78)
 	assert.Nil(t, err)
 
-	tx9, _ := createMainTx("relay", "to")
-	//single para tx
-	txA, err := createCrossParaTx("toB", 10)
-	assert.Nil(t, err)
 
 	//all para tx group
 	txB, err := createCrossParaTx("toB", 11)
@@ -81,12 +62,9 @@ func TestFilterTxsForPara(t *testing.T) {
 	txD, err := createCrossParaTempTx("toB", 10)
 	assert.Nil(t, err)
 
-	txs := []*types.Transaction{tx0}
-	txs = append(txs, txGroup12...)
-	txs = append(txs, txGroup34...)
+	txs := []*types.Transaction{}
 	txs = append(txs, txGroup56...)
 	txs = append(txs, txGroup78...)
-	txs = append(txs, tx9, txA)
 	txs = append(txs, txGroupBC...)
 	txs = append(txs, txD)
 
@@ -94,11 +72,7 @@ func TestFilterTxsForPara(t *testing.T) {
 	//	t.Log("tx exec name", "i", i, "name", string(tx.Execer))
 	//}
 
-	recpt0 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt1 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt2 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt3 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt4 := &types.ReceiptData{Ty: types.ExecOk}
+
 	recpt5 := &types.ReceiptData{Ty: types.ExecPack}
 	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
 
@@ -107,13 +81,11 @@ func TestFilterTxsForPara(t *testing.T) {
 	recpt7 := &types.ReceiptData{Ty: types.ExecPack, Logs: logs}
 	recpt8 := &types.ReceiptData{Ty: types.ExecPack}
 
-	recpt9 := &types.ReceiptData{Ty: types.ExecOk}
-	recptA := &types.ReceiptData{Ty: types.ExecPack}
+
 	recptB := &types.ReceiptData{Ty: types.ExecPack}
 	recptC := &types.ReceiptData{Ty: types.ExecPack}
 	recptD := &types.ReceiptData{Ty: types.ExecPack}
-	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5,
-		recpt6, recpt7, recpt8, recpt9, recptA, recptB, recptC, recptD}
+	receipts := []*types.ReceiptData{  recpt5,recpt6, recpt7, recpt8,  recptB, recptC, recptD}
 
 	block := &types.Block{Txs: txs}
 	detail := &types.BlockDetail{
@@ -122,36 +94,12 @@ func TestFilterTxsForPara(t *testing.T) {
 	}
 
 	rst := paraexec.FilterTxsForPara(Title, detail)
-	filterTxs := []*types.Transaction{tx3, tx4, tx5, tx6, txA, txB, txC}
+	filterTxs := []*types.Transaction{ tx5, tx6, txB, txC}
 	assert.Equal(t, filterTxs, rst)
 
+
 }
 
-func createMainTx(exec string, to string) (*types.Transaction, error) {
-	param := types.CreateTx{
-		To:          to,
-		Amount:      Amount,
-		Fee:         0,
-		Note:        []byte("test"),
-		TokenSymbol: "",
-		ExecName:    exec,
-	}
-	transfer := &pt.ParacrossAction{}
-	v := &pt.ParacrossAction_AssetTransfer{AssetTransfer: &types.AssetsTransfer{
-		Amount: param.Amount, Note: param.GetNote(), To: param.GetTo()}}
-	transfer.Value = v
-	transfer.Ty = pt.ParacrossActionAssetTransfer
-
-	tx := &types.Transaction{
-		Execer:  []byte(param.GetExecName()),
-		Payload: types.Encode(transfer),
-		To:      address.ExecAddress(param.GetExecName()),
-		Fee:     param.Fee,
-		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-	}
-
-	return tx, nil
-}
 
 func createCrossMainTx(to string) (*types.Transaction, error) {
 	param := types.CreateTx{
