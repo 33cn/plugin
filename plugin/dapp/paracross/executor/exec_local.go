@@ -139,9 +139,9 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	}
 
 	payload.Status.TxHashs = paraTxHashs
-	payload.Status.TxResult = util.CalcSubBitMap(mixTxHashs, paraTxHashs, e.GetReceipt()[1:])
+	payload.Status.TxResult = util.CalcBitMap(paraTxHashs, mixTxHashs, e.GetReceipt()[1:])
 	payload.Status.CrossTxHashs = crossTxHashs
-	payload.Status.CrossTxResult = util.CalcSubBitMap(mixTxHashs, crossTxHashs, e.GetReceipt()[1:])
+	payload.Status.CrossTxResult = util.CalcBitMap(crossTxHashs, mixTxHashs, e.GetReceipt()[1:])
 
 	set.KV = append(set.KV, &types.KeyValue{
 		Key:   pt.CalcMinerHeightKey(payload.Status.Title, payload.Status.Height),
