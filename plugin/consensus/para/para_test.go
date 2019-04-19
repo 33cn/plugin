@@ -38,13 +38,12 @@ func TestFilterTxsForPara(t *testing.T) {
 	assert.Nil(t, err)
 
 	//para cross tx group fail
-	tx7, _ := createCrossParaTx("toA",1)
+	tx7, _ := createCrossParaTx("toA", 1)
 	tx8, err := createCrossParaTx("toB", 8)
 	assert.Nil(t, err)
 	tx78 := []*types.Transaction{tx7, tx8}
 	txGroup78, err := createTxsGroup(tx78)
 	assert.Nil(t, err)
-
 
 	//all para tx group
 	txB, err := createCrossParaTx("toB", 11)
@@ -69,7 +68,6 @@ func TestFilterTxsForPara(t *testing.T) {
 	//	t.Log("tx exec name", "i", i, "name", string(tx.Execer))
 	//}
 
-
 	recpt5 := &types.ReceiptData{Ty: types.ExecPack}
 	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
 
@@ -78,11 +76,10 @@ func TestFilterTxsForPara(t *testing.T) {
 	recpt7 := &types.ReceiptData{Ty: types.ExecPack, Logs: logs}
 	recpt8 := &types.ReceiptData{Ty: types.ExecPack}
 
-
 	recptB := &types.ReceiptData{Ty: types.ExecPack}
 	recptC := &types.ReceiptData{Ty: types.ExecPack}
 	recptD := &types.ReceiptData{Ty: types.ExecPack}
-	receipts := []*types.ReceiptData{  recpt5,recpt6, recpt7, recpt8,  recptB, recptC, recptD}
+	receipts := []*types.ReceiptData{recpt5, recpt6, recpt7, recpt8, recptB, recptC, recptD}
 
 	block := &types.Block{Txs: txs}
 	detail := &types.BlockDetail{
@@ -92,12 +89,10 @@ func TestFilterTxsForPara(t *testing.T) {
 
 	para := &client{}
 	rst := para.FilterTxsForPara(detail)
-	filterTxs := []*types.Transaction{ tx5, tx6, tx7,tx8,txB, txC}
+	filterTxs := []*types.Transaction{tx5, tx6, tx7, tx8, txB, txC}
 	assert.Equal(t, filterTxs, rst)
 
-
 }
-
 
 func createCrossMainTx(to string) (*types.Transaction, error) {
 	param := types.CreateTx{
