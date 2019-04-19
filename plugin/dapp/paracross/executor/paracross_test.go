@@ -391,7 +391,7 @@ func (s *VoteTestSuite) TestVoteTx() {
 	s.Nil(err)
 	tx2, err := createAssetTransferTx(s.Suite, PrivKeyB, nil)
 	s.Nil(err)
-	tx3, err := createCrossMainTx([]byte("toA"))
+	tx3, err := createParaNormalTx(s.Suite, PrivKeyB, nil)
 	s.Nil(err)
 	tx4, err := createCrossParaTx(s.Suite, []byte("toB"))
 	s.Nil(err)
@@ -439,10 +439,10 @@ func (s *VoteTestSuite) TestVoteTx() {
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
 			types.Decode(kv.GetValue(), &rst)
-			s.Equal([]uint8([]byte{0x25}), rst.TxResult)
-			s.Equal([]uint8([]byte{0x4d}), rst.CrossTxResult)
-			s.Equal(6, len(rst.TxHashs))
-			s.Equal(7, len(rst.CrossTxHashs))
+			s.Equal([]uint8([]byte{0x4d}), rst.TxResult)
+			s.Equal([]uint8([]byte{0x25}), rst.CrossTxResult)
+			s.Equal(7, len(rst.TxHashs))
+			s.Equal(6, len(rst.CrossTxHashs))
 			break
 		}
 	}
@@ -536,4 +536,35 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 
 func TestVoteSuite(t *testing.T) {
 	suite.Run(t, new(VoteTestSuite))
+}
+
+func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Transaction, error) {
+	param := types.CreateTx{
+		To:          string(to),
+		Amount:      Amount,
+		Fee:         0,
+		Note:        []byte("token"),
+		IsWithdraw:  false,
+		IsToken:     false,
+		TokenSymbol: "",
+		ExecName:    Title + "token",
+	}
+	tx := &types.Transaction{
+		Execer:  []byte(param.GetExecName()),
+		Payload: []byte{},
+		To:      address.ExecAddress(param.GetExecName()),
+		Fee:     param.Fee,
+	}
+	tx, err := types.FormatTx(param.GetExecName(), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err = signTx(s, tx, privFrom)
+	assert.Nil(s.T(), err, "sign asset transfer failed")
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
 }
