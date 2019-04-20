@@ -327,13 +327,13 @@ func (n *node) checkBlock(b *types.Block) error {
 	if act.Ty != pt.Pos33ActionReword {
 		return errors.New("first tx must include reword action")
 	}
-	rewordAct := act.GetReword()
+	// rewordAct := act.GetReword()
 
 	// must enought votes
-	w := vsWeight(rewordAct.Votes)
-	if w*3 < pt.Pos33CommitteeSize*2 {
-		return errors.New("block vote weight too low")
-	}
+	// w := vsWeight(rewordAct.Votes)
+	// if w*3 < pt.Pos33CommitteeSize*2 {
+	// 	return errors.New("block vote weight too low")
+	// }
 
 	comm := n.comm
 	if comm != nil {
@@ -584,6 +584,7 @@ func (n *node) newRound(height int64) {
 		plog.Error("vote NOT enought", "addr", n.addr, "height", height)
 		return
 	}
+	plog.Info("new round", "height", newHeight, "bp", bp, "null", null)
 	if bp == n.addr {
 		n.makeBlock(newHeight, vs, null)
 	}
