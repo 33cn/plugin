@@ -110,6 +110,7 @@ searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
 MainBlockHashForkHeight=1
+MainForkParacrossCommitTx=1
 
 [store]
 name="mavl"

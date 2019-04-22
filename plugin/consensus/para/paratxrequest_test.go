@@ -25,6 +25,7 @@ import (
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
+	"time"
 )
 
 func init() {
@@ -272,4 +273,32 @@ func TestGetConsensusStatus(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret.Height)
+}
+
+func TestSendCommitMsg(t *testing.T){
+	para := new(client)
+	grpcClient := &typesmocks.Chain33Client{}
+	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
+	para.grpcClient = grpcClient
+	commitCli := new(commitMsgClient)
+	commitCli.paraClient = para
+	commitCli.quit = make(chan struct{})
+
+	commitCli.paraClient.wg.Add(1)
+	sendMsgCh := make(chan *types.Transaction, 1)
+	go commitCli.sendCommitMsg(sendMsgCh)
+
+	//reply := &types.Reply{
+	//	IsOk: true,
+	//	Msg:  types.Encode(status),
+	//}
+	grpcClient.On("SendTransaction", mock.Anything, mock.Anything).Return(nil,types.ErrNotFound).Twice()
+	tx := &types.Transaction{}
+
+	sendMsgCh <-tx
+	time.Sleep(3*time.Second)
+
+	//para.BaseClient.Close()
+	close(commitCli.quit)
+
 }

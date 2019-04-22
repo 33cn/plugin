@@ -26,6 +26,7 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
+	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
@@ -326,12 +327,6 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 		if err != nil {
 			return -2, nil, err
 		}
-		if main.Detail.Block.Height != startHeight {
-			plog.Error("get start seq's main block height not expected as config", "config", startHeight, "main",
-				main.Detail.Block.Height)
-			//main chain node is not the initial node and the startHeight not match as config
-			panic("main chain node is not the initial node, need switch main node or delete db")
-		}
 		lastBlock.MainHash = main.Detail.Block.ParentHash
 		lastBlock.MainHeight = main.Detail.Block.Height - 1
 		return blockedSeq, lastBlock, nil
@@ -452,18 +447,18 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 		//not consistent case be processed at below
 		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
 			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
-		return nil, nil, pt.ErrParaCurHashNotMatch
+		return nil, nil, paracross.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
-		return nil, nil, pt.ErrParaWaitingNewSeq
+		return nil, nil, paracross.ErrParaWaitingNewSeq
 	}
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, pt.ErrParaCurHashNotMatch
+	return nil, nil, paracross.ErrParaCurHashNotMatch
 }
 
 //genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
@@ -532,7 +527,7 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 			"new currSeq", mainSeq+1, "new preMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq + 1, block.MainHash, nil
 	}
-	return -2, nil, pt.ErrParaCurHashNotMatch
+	return -2, nil, paracross.ErrParaCurHashNotMatch
 }
 
 func (client *client) removeBlocks(endHeight int64) error {
@@ -587,7 +582,7 @@ func (client *client) CreateBlock() {
 		txs, blockOnMain, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
 			incSeqFlag = false
-			if err == pt.ErrParaCurHashNotMatch {
+			if err == paracross.ErrParaCurHashNotMatch {
 				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq)
 				if err == nil {
 					currSeq = newSeq
@@ -799,22 +794,22 @@ func checkMinerTx(current *types.BlockDetail) error {
 	}
 	baseTx := current.Block.Txs[0]
 	//判断交易类型和执行情况
-	var action pt.ParacrossAction
+	var action paracross.ParacrossAction
 	err := types.Decode(baseTx.GetPayload(), &action)
 	if err != nil {
 		return err
 	}
 	if action.GetTy() != pt.ParacrossActionMiner {
-		return pt.ErrParaMinerTxType
+		return paracross.ErrParaMinerTxType
 	}
 	//判断交易执行是否OK
 	if action.GetMiner() == nil {
-		return pt.ErrParaEmptyMinerTx
+		return paracross.ErrParaEmptyMinerTx
 	}
 
 	//判断exec 是否成功
 	if current.Receipts[0].Ty != types.ExecOk {
-		return pt.ErrParaMinerExecErr
+		return paracross.ErrParaMinerExecErr
 	}
 	return nil
 }
