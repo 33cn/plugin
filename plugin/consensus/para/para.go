@@ -319,12 +319,18 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 	// 平行链创世区块特殊场景：
 	// 1,创世区块seq从-1开始，也就是从主链0高度同步区块，主链seq从0开始，平行链对seq=0的区块做特殊处理，不校验parentHash
 	// 2,创世区块seq不是-1， 也就是从主链seq=n高度同步区块，此时创世区块倒退一个seq，blockedSeq=n-1，
-	// 由于创世区块本身没有记录主块hash,需要在此处获取，有可能n-1 seq 是回退block 获取的Hash不对，这里获取主链第n seq的parentHash
+	// 由于创世区块本身没有记录主块hash,需要通过最初记录的seq获取，有可能n-1 seq 是回退block 获取的Hash不对，这里获取主链第n seq的parentHash
 	// 在genesis create时候直接设mainhash也可以，但是会导致已有平行链所有block hash变化
 	if lastBlock.Height == 0 && blockedSeq > -1 {
 		main, err := client.GetBlockOnMainBySeq(blockedSeq + 1)
 		if err != nil {
 			return -2, nil, err
+		}
+		if main.Detail.Block.Height != startHeight{
+			plog.Error("get start seq's main block height not expected as config","config",startHeight,"main",
+				main.Detail.Block.Height)
+			//main chain node is not the initial node and the startHeight not match as config
+			panic("main chain node is not the initial node, need switch main node or delete db")
 		}
 		lastBlock.MainHash = main.Detail.Block.ParentHash
 		lastBlock.MainHeight = main.Detail.Block.Height - 1
