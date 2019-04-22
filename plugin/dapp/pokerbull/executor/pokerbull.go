@@ -15,6 +15,7 @@ import (
 
 var logger = log.New("module", "execs.pokerbull")
 
+
 // Init 执行器初始化
 func Init(name string, sub []byte) {
 	drivers.Register(newPBGame().GetName(), newPBGame, types.GetDappFork(driverName, "Enable"))
