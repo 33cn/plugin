@@ -8,16 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
 	"errors"
-	"math/rand"
 	"testing"
-	"time"
-
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
+	"encoding/hex"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/address"
+	"math/rand"
+	"time"
 )
 
 var (
@@ -29,67 +30,9 @@ var (
 func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, nil)
 
-	//all para tx group
-	tx5, err := createCrossParaTx("toB", 5)
-	assert.Nil(t, err)
-	tx6, err := createCrossParaTx("toB", 6)
-	assert.Nil(t, err)
-	tx56 := []*types.Transaction{tx5, tx6}
-	txGroup56, err := createTxsGroup(tx56)
-	assert.Nil(t, err)
-
-	//para cross tx group fail
-	tx7, _ := createCrossParaTx("toA", 1)
-	tx8, err := createCrossParaTx("toB", 8)
-	assert.Nil(t, err)
-	tx78 := []*types.Transaction{tx7, tx8}
-	txGroup78, err := createTxsGroup(tx78)
-	assert.Nil(t, err)
-
-	//all para tx group
-	txB, err := createCrossParaTx("toB", 11)
-	assert.Nil(t, err)
-	txC, err := createCrossParaTx("toB", 12)
-	assert.Nil(t, err)
-	txBC := []*types.Transaction{txB, txC}
-	txGroupBC, err := createTxsGroup(txBC)
-	assert.Nil(t, err)
-
-	//single para tx
-	txD, err := createCrossParaTempTx("toB", 10)
-	assert.Nil(t, err)
-
-	txs := []*types.Transaction{}
-	txs = append(txs, txGroup56...)
-	txs = append(txs, txGroup78...)
-	txs = append(txs, txGroupBC...)
-	txs = append(txs, txD)
-
-	//for i, tx := range txs {
-	//	t.Log("tx exec name", "i", i, "name", string(tx.Execer))
-	//}
-
-	recpt5 := &types.ReceiptData{Ty: types.ExecPack}
-	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
-
-	log7 := &types.ReceiptLog{Ty: types.TyLogErr}
-	logs := []*types.ReceiptLog{log7}
-	recpt7 := &types.ReceiptData{Ty: types.ExecPack, Logs: logs}
-	recpt8 := &types.ReceiptData{Ty: types.ExecPack}
-
-	recptB := &types.ReceiptData{Ty: types.ExecPack}
-	recptC := &types.ReceiptData{Ty: types.ExecPack}
-	recptD := &types.ReceiptData{Ty: types.ExecPack}
-	receipts := []*types.ReceiptData{recpt5, recpt6, recpt7, recpt8, recptB, recptC, recptD}
-
-	block := &types.Block{Txs: txs}
-	detail := &types.BlockDetail{
-		Block:    block,
-		Receipts: receipts,
-	}
-
+	detail,filterTxs,_ := createTestTxs(t)
 	rst := paraexec.FilterTxsForPara(Title, detail)
-	filterTxs := []*types.Transaction{tx5, tx6, txB, txC}
+
 	assert.Equal(t, filterTxs, rst)
 
 }
@@ -178,5 +121,103 @@ func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
 	ret, err := para.GetForkHeightOnMainChain("ForkBlockHash")
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret)
+
+}
+
+func createTestTxs(t *testing.T) (*types.BlockDetail,[]*types.Transaction,[]*types.Transaction){
+	//all para tx group
+	tx5, err := createCrossParaTx("toB", 5)
+	assert.Nil(t, err)
+	tx6, err := createCrossParaTx("toB", 6)
+	assert.Nil(t, err)
+	tx56 := []*types.Transaction{tx5, tx6}
+	txGroup56, err := createTxsGroup(tx56)
+	assert.Nil(t, err)
+
+	//para cross tx group fail
+	tx7, _ := createCrossParaTx("toA", 1)
+	tx8, err := createCrossParaTx("toB", 8)
+	assert.Nil(t, err)
+	tx78 := []*types.Transaction{tx7, tx8}
+	txGroup78, err := createTxsGroup(tx78)
+	assert.Nil(t, err)
+
+	//all para tx group
+	txB, err := createCrossParaTx("toB", 11)
+	assert.Nil(t, err)
+	txC, err := createCrossParaTx("toB", 12)
+	assert.Nil(t, err)
+	txBC := []*types.Transaction{txB, txC}
+	txGroupBC, err := createTxsGroup(txBC)
+	assert.Nil(t, err)
+
+	//single para tx
+	txD, err := createCrossParaTempTx("toB", 10)
+	assert.Nil(t, err)
+
+	txs := []*types.Transaction{}
+	txs = append(txs, txGroup56...)
+	txs = append(txs, txGroup78...)
+	txs = append(txs, txGroupBC...)
+	txs = append(txs, txD)
+
+	//for i, tx := range txs {
+	//	t.Log("tx exec name", "i", i, "name", string(tx.Execer))
+	//}
+
+	recpt5 := &types.ReceiptData{Ty: types.ExecOk}
+	recpt6 := &types.ReceiptData{Ty: types.ExecOk}
+
+	log7 := &types.ReceiptLog{Ty: types.TyLogErr}
+	logs := []*types.ReceiptLog{log7}
+	recpt7 := &types.ReceiptData{Ty: types.ExecPack, Logs: logs}
+	recpt8 := &types.ReceiptData{Ty: types.ExecPack}
+
+	recptB := &types.ReceiptData{Ty: types.ExecPack}
+	recptC := &types.ReceiptData{Ty: types.ExecPack}
+	recptD := &types.ReceiptData{Ty: types.ExecPack}
+	receipts := []*types.ReceiptData{recpt5, recpt6, recpt7, recpt8, recptB, recptC, recptD}
+
+	block := &types.Block{Height:10, Txs: txs}
+	detail := &types.BlockDetail{
+		Block:    block,
+		Receipts: receipts,
+	}
+
+	filterTxs := []*types.Transaction{tx5, tx6, txB, txC}
+	return detail,filterTxs,txs
+
+}
+
+func TestAddMinerTx(t *testing.T){
+	pk, err := hex.DecodeString(minerPrivateKey)
+	assert.Nil(t,err)
+
+	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	assert.Nil(t,err)
+
+	priKey, err := secp.PrivKeyFromBytes(pk)
+	assert.Nil(t,err)
+
+	mainForkParacrossCommitTx = 1
+	block := &types.Block{}
+
+	mainDetail, filterTxs, allTxs := createTestTxs(t)
+	mainBlock := &types.BlockSeq{
+		Seq:&types.BlockSequence{},
+		Detail:mainDetail}
+	para := new(client)
+	para.privateKey = priKey
+	para.addMinerTx(nil, block,mainBlock,allTxs)
+
+	ret := checkTxInMainBlock(filterTxs[0],mainDetail)
+	assert.True(t,ret)
+
+	tx2,_ := createCrossMainTx("toA")
+	ret = checkTxInMainBlock(tx2,mainDetail)
+	assert.False(t,ret)
+
+
+
 
 }
