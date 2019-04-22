@@ -36,6 +36,7 @@ function para_set_toml() {
 
     #测试使用，主链也要替换ForkParacrossCommitTx 为300
     # sed -i $xsedfix '/^emptyBlockInterval=.*/a MainParaSelfConsensusForkHeight=300' "${1}"
+    sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=1/g' "${1}"
 
     # rpc
     sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
