@@ -7,18 +7,19 @@ package para
 import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
+	"encoding/hex"
 	"errors"
+	"math/rand"
 	"testing"
+	"time"
+
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
-	"encoding/hex"
-	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/address"
-	"math/rand"
-	"time"
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, nil)
 
-	detail,filterTxs,_ := createTestTxs(t)
+	detail, filterTxs, _ := createTestTxs(t)
 	rst := paraexec.FilterTxsForPara(Title, detail)
 
 	assert.Equal(t, filterTxs, rst)
@@ -124,7 +125,7 @@ func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
 
 }
 
-func createTestTxs(t *testing.T) (*types.BlockDetail,[]*types.Transaction,[]*types.Transaction){
+func createTestTxs(t *testing.T) (*types.BlockDetail, []*types.Transaction, []*types.Transaction) {
 	//all para tx group
 	tx5, err := createCrossParaTx("toB", 5)
 	assert.Nil(t, err)
@@ -178,46 +179,43 @@ func createTestTxs(t *testing.T) (*types.BlockDetail,[]*types.Transaction,[]*typ
 	recptD := &types.ReceiptData{Ty: types.ExecPack}
 	receipts := []*types.ReceiptData{recpt5, recpt6, recpt7, recpt8, recptB, recptC, recptD}
 
-	block := &types.Block{Height:10, Txs: txs}
+	block := &types.Block{Height: 10, Txs: txs}
 	detail := &types.BlockDetail{
 		Block:    block,
 		Receipts: receipts,
 	}
 
 	filterTxs := []*types.Transaction{tx5, tx6, txB, txC}
-	return detail,filterTxs,txs
+	return detail, filterTxs, txs
 
 }
 
-func TestAddMinerTx(t *testing.T){
+func TestAddMinerTx(t *testing.T) {
 	pk, err := hex.DecodeString(minerPrivateKey)
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 
 	priKey, err := secp.PrivKeyFromBytes(pk)
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 
 	mainForkParacrossCommitTx = 1
 	block := &types.Block{}
 
 	mainDetail, filterTxs, allTxs := createTestTxs(t)
 	mainBlock := &types.BlockSeq{
-		Seq:&types.BlockSequence{},
-		Detail:mainDetail}
+		Seq:    &types.BlockSequence{},
+		Detail: mainDetail}
 	para := new(client)
 	para.privateKey = priKey
-	para.addMinerTx(nil, block,mainBlock,allTxs)
+	para.addMinerTx(nil, block, mainBlock, allTxs)
 
-	ret := checkTxInMainBlock(filterTxs[0],mainDetail)
-	assert.True(t,ret)
+	ret := checkTxInMainBlock(filterTxs[0], mainDetail)
+	assert.True(t, ret)
 
-	tx2,_ := createCrossMainTx("toA")
-	ret = checkTxInMainBlock(tx2,mainDetail)
-	assert.False(t,ret)
-
-
-
+	tx2, _ := createCrossMainTx("toA")
+	ret = checkTxInMainBlock(tx2, mainDetail)
+	assert.False(t, ret)
 
 }
