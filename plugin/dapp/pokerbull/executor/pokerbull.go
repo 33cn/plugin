@@ -144,3 +144,11 @@ func delPBGameStatusAndPlayer(status int32, player int32, value, index int64) *t
 func (g *PokerBull) CheckReceiptExecOk() bool {
 	return true
 }
+
+// ExecutorOrder 设置localdb的EnableRead
+func (g *PokerBull) ExecutorOrder() int64 {
+	if types.IsFork(g.GetHeight(), "ForkLocalDBAccess") {
+		return drivers.ExecLocalSameTime
+	}
+	return g.DriverBase.ExecutorOrder()
+}
