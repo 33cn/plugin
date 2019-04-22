@@ -326,8 +326,8 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 		if err != nil {
 			return -2, nil, err
 		}
-		if main.Detail.Block.Height != startHeight{
-			plog.Error("get start seq's main block height not expected as config","config",startHeight,"main",
+		if main.Detail.Block.Height != startHeight {
+			plog.Error("get start seq's main block height not expected as config", "config", startHeight, "main",
 				main.Detail.Block.Height)
 			//main chain node is not the initial node and the startHeight not match as config
 			panic("main chain node is not the initial node, need switch main node or delete db")
