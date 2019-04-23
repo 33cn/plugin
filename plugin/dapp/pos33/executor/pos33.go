@@ -126,23 +126,3 @@ func (p *Pos33) getBlockSeed(height int64) ([]byte, error) {
 	}
 	return val, nil
 }
-
-func (p *Pos33) getElecteLocal(height int64) (*pt.Pos33ElecteLocal, error) {
-	val, err := p.GetLocalDB().Get([]byte(fmt.Sprintf("%s%d", pt.KeyPos33ElectePrefix, height)))
-	if err != nil {
-		return nil, err
-	}
-
-	var e pt.Pos33ElecteLocal
-	err = types.Decode(val, &e)
-	if err != nil {
-		return nil, err
-	}
-
-	return &e, nil
-}
-
-// func (p *Pos33) setElecteLocal(e *pt.Pos33ElecteLocal) *types.KeyValue {
-// 	value := types.Encode(e)
-// 	return &types.KeyValue{[]byte(keyPos33Electe), value}
-// }

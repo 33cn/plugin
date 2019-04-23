@@ -5,9 +5,6 @@
 package executor
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -37,7 +34,7 @@ func (p *Pos33) Exec_Delegate(act *pt.Pos33DelegateAction, tx *types.Transaction
 func (p *Pos33) Exec_Reword(act *pt.Pos33RewordAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	sumw := 0
 	for i, v := range act.Votes {
-		w := int(v.Weight)
+		w := v.Weight()
 		sumw += w
 		if sumw > int(pt.Pos33BlockReword/types.Coin) {
 			act.Votes = act.Votes[:i]
@@ -58,9 +55,9 @@ func (p *Pos33) Exec_Reword(act *pt.Pos33RewordAction, tx *types.Transaction, in
 	for _, v := range act.Votes {
 		addr := address.PubKeyToAddress(v.Sig.Pubkey).String()
 		acc := db.LoadAccount(addr)
-		acc.Balance += vr * int64(v.Weight)
+		acc.Balance += vr * int64(v.Weight())
 		kvs = append(kvs, db.GetKVSet(acc)...)
-		plog.Info("block reword", "voter", addr, "voter reword", vr*int64(v.Weight))
+		plog.Info("block reword", "voter", addr, "voter reword", vr*int64(v.Weight()))
 	}
 	facc := db.LoadAccount(pt.Pos33FundKeyAddr)
 	fr := pt.Pos33BlockReword - types.Coin*int64(sumw)
@@ -86,39 +83,5 @@ func (p *Pos33) Exec_Punish(act *pt.Pos33PunishAction, tx *types.Transaction, in
 		kvs = append(kvs, db.GetKVSet(acc)...)
 	}
 
-	return &types.Receipt{Ty: types.ExecOk, KV: kvs}, nil
-}
-
-// Exec_Electe do electe action
-func (p *Pos33) Exec_Electe(act *pt.Pos33ElecteAction, tx *types.Transaction, index int) (*types.Receipt, error) {
-	pub := string(tx.Signature.Pubkey)
-	allw := p.getAllWeight()
-	addr := address.PubKeyToAddress([]byte(pub)).String()
-	plog.Info("Exec_Electe", "addr", addr)
-	w := p.getWeight(addr)
-	if w < 1 {
-		return nil, fmt.Errorf("%s is NOT deposit ycc", addr)
-	}
-
-	if p.GetHeight() <= act.Height || p.GetHeight() > act.Height+pt.Pos33CommitteeSize || act.Height%pt.Pos33CommitteeSize != 0 {
-		return nil, errors.New("act.Hieght error")
-	}
-
-	// TODO: should check act.Hash == Block(act.height).Hash
-	// seed, err := p.getBlockSeed(act.Height)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if string(seed) != string(act.Hash) {
-	// 	return nil, fmt.Errorf("block seed error")
-	// }
-	seed := act.Hash
-	err := pt.CheckRands(addr, allw, w, act.Rands, act.Height, seed, act.Sig)
-	if err != nil {
-		return nil, err
-	}
-	key := []byte("mavl-" + pt.Pos33X + "-electe")
-	value := tx.Hash()
-	kvs := []*types.KeyValue{&types.KeyValue{Key: key, Value: value}}
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs}, nil
 }

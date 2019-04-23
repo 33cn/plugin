@@ -26,16 +26,19 @@ type Pos33Msg_Ty int32
 const (
 	Pos33Msg_B Pos33Msg_Ty = 0
 	Pos33Msg_V Pos33Msg_Ty = 1
+	Pos33Msg_E Pos33Msg_Ty = 2
 )
 
 var Pos33Msg_Ty_name = map[int32]string{
 	0: "B",
 	1: "V",
+	2: "E",
 }
 
 var Pos33Msg_Ty_value = map[string]int32{
 	"B": 0,
 	"V": 1,
+	"E": 2,
 }
 
 func (x Pos33Msg_Ty) String() string {
@@ -94,9 +97,8 @@ func (m *Pos33Msg) GetTy() Pos33Msg_Ty {
 }
 
 type Pos33Rand struct {
-	RandHash []byte `protobuf:"bytes,1,opt,name=rand_hash,json=randHash,proto3" json:"rand_hash,omitempty"`
-	Index    uint32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
-	// Signature sig = 3;
+	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Index                uint32   `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
 	Addr                 string   `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -128,9 +130,9 @@ func (m *Pos33Rand) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Pos33Rand proto.InternalMessageInfo
 
-func (m *Pos33Rand) GetRandHash() []byte {
+func (m *Pos33Rand) GetHash() []byte {
 	if m != nil {
-		return m.RandHash
+		return m.Hash
 	}
 	return nil
 }
@@ -188,190 +190,206 @@ func (m *Pos33Rands) GetRands() []*Pos33Rand {
 	return nil
 }
 
-type Pos33Block struct {
-	B                    *types.Block `protobuf:"bytes,1,opt,name=b,proto3" json:"b,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+type Pos33ElectMsg struct {
+	Rands                *Pos33Rands      `protobuf:"bytes,1,opt,name=rands,proto3" json:"rands,omitempty"`
+	Height               int64            `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Seed                 []byte           `protobuf:"bytes,2,opt,name=seed,proto3" json:"seed,omitempty"`
+	Stap                 int32            `protobuf:"varint,5,opt,name=stap,proto3" json:"stap,omitempty"`
+	Sig                  *types.Signature `protobuf:"bytes,4,opt,name=sig,proto3" json:"sig,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
-func (m *Pos33Block) Reset()         { *m = Pos33Block{} }
-func (m *Pos33Block) String() string { return proto.CompactTextString(m) }
-func (*Pos33Block) ProtoMessage()    {}
-func (*Pos33Block) Descriptor() ([]byte, []int) {
+func (m *Pos33ElectMsg) Reset()         { *m = Pos33ElectMsg{} }
+func (m *Pos33ElectMsg) String() string { return proto.CompactTextString(m) }
+func (*Pos33ElectMsg) ProtoMessage()    {}
+func (*Pos33ElectMsg) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f8d3cfebaf15bc9b, []int{3}
 }
 
-func (m *Pos33Block) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Block.Unmarshal(m, b)
+func (m *Pos33ElectMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33ElectMsg.Unmarshal(m, b)
 }
-func (m *Pos33Block) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Block.Marshal(b, m, deterministic)
+func (m *Pos33ElectMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33ElectMsg.Marshal(b, m, deterministic)
 }
-func (m *Pos33Block) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Block.Merge(m, src)
+func (m *Pos33ElectMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33ElectMsg.Merge(m, src)
 }
-func (m *Pos33Block) XXX_Size() int {
-	return xxx_messageInfo_Pos33Block.Size(m)
+func (m *Pos33ElectMsg) XXX_Size() int {
+	return xxx_messageInfo_Pos33ElectMsg.Size(m)
 }
-func (m *Pos33Block) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Block.DiscardUnknown(m)
+func (m *Pos33ElectMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33ElectMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pos33Block proto.InternalMessageInfo
+var xxx_messageInfo_Pos33ElectMsg proto.InternalMessageInfo
 
-func (m *Pos33Block) GetB() *types.Block {
+func (m *Pos33ElectMsg) GetRands() *Pos33Rands {
 	if m != nil {
-		return m.B
+		return m.Rands
 	}
 	return nil
 }
 
-type Pos33PrePrepare struct {
+func (m *Pos33ElectMsg) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *Pos33ElectMsg) GetSeed() []byte {
+	if m != nil {
+		return m.Seed
+	}
+	return nil
+}
+
+func (m *Pos33ElectMsg) GetStap() int32 {
+	if m != nil {
+		return m.Stap
+	}
+	return 0
+}
+
+func (m *Pos33ElectMsg) GetSig() *types.Signature {
+	if m != nil {
+		return m.Sig
+	}
+	return nil
+}
+
+type BlockMsg struct {
 	B                    *types.Block `protobuf:"bytes,1,opt,name=b,proto3" json:"b,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
 	XXX_unrecognized     []byte       `json:"-"`
 	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *Pos33PrePrepare) Reset()         { *m = Pos33PrePrepare{} }
-func (m *Pos33PrePrepare) String() string { return proto.CompactTextString(m) }
-func (*Pos33PrePrepare) ProtoMessage()    {}
-func (*Pos33PrePrepare) Descriptor() ([]byte, []int) {
+func (m *BlockMsg) Reset()         { *m = BlockMsg{} }
+func (m *BlockMsg) String() string { return proto.CompactTextString(m) }
+func (*BlockMsg) ProtoMessage()    {}
+func (*BlockMsg) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f8d3cfebaf15bc9b, []int{4}
 }
 
-func (m *Pos33PrePrepare) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33PrePrepare.Unmarshal(m, b)
+func (m *BlockMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BlockMsg.Unmarshal(m, b)
 }
-func (m *Pos33PrePrepare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33PrePrepare.Marshal(b, m, deterministic)
+func (m *BlockMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BlockMsg.Marshal(b, m, deterministic)
 }
-func (m *Pos33PrePrepare) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33PrePrepare.Merge(m, src)
+func (m *BlockMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BlockMsg.Merge(m, src)
 }
-func (m *Pos33PrePrepare) XXX_Size() int {
-	return xxx_messageInfo_Pos33PrePrepare.Size(m)
+func (m *BlockMsg) XXX_Size() int {
+	return xxx_messageInfo_BlockMsg.Size(m)
 }
-func (m *Pos33PrePrepare) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33PrePrepare.DiscardUnknown(m)
+func (m *BlockMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_BlockMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pos33PrePrepare proto.InternalMessageInfo
+var xxx_messageInfo_BlockMsg proto.InternalMessageInfo
 
-func (m *Pos33PrePrepare) GetB() *types.Block {
+func (m *BlockMsg) GetB() *types.Block {
 	if m != nil {
 		return m.B
 	}
 	return nil
 }
 
-type Pos33Prepare struct {
-	BlockHash            []byte           `protobuf:"bytes,1,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
-	Height               int64            `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+type Pos33VoteMsg struct {
+	Elect                *Pos33ElectMsg   `protobuf:"bytes,1,opt,name=elect,proto3" json:"elect,omitempty"`
+	BlockHash            []byte           `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
 	Sig                  *types.Signature `protobuf:"bytes,3,opt,name=sig,proto3" json:"sig,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
 }
 
-func (m *Pos33Prepare) Reset()         { *m = Pos33Prepare{} }
-func (m *Pos33Prepare) String() string { return proto.CompactTextString(m) }
-func (*Pos33Prepare) ProtoMessage()    {}
-func (*Pos33Prepare) Descriptor() ([]byte, []int) {
+func (m *Pos33VoteMsg) Reset()         { *m = Pos33VoteMsg{} }
+func (m *Pos33VoteMsg) String() string { return proto.CompactTextString(m) }
+func (*Pos33VoteMsg) ProtoMessage()    {}
+func (*Pos33VoteMsg) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f8d3cfebaf15bc9b, []int{5}
 }
 
-func (m *Pos33Prepare) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Prepare.Unmarshal(m, b)
+func (m *Pos33VoteMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33VoteMsg.Unmarshal(m, b)
 }
-func (m *Pos33Prepare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Prepare.Marshal(b, m, deterministic)
+func (m *Pos33VoteMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33VoteMsg.Marshal(b, m, deterministic)
 }
-func (m *Pos33Prepare) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Prepare.Merge(m, src)
+func (m *Pos33VoteMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33VoteMsg.Merge(m, src)
 }
-func (m *Pos33Prepare) XXX_Size() int {
-	return xxx_messageInfo_Pos33Prepare.Size(m)
+func (m *Pos33VoteMsg) XXX_Size() int {
+	return xxx_messageInfo_Pos33VoteMsg.Size(m)
 }
-func (m *Pos33Prepare) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Prepare.DiscardUnknown(m)
+func (m *Pos33VoteMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33VoteMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pos33Prepare proto.InternalMessageInfo
+var xxx_messageInfo_Pos33VoteMsg proto.InternalMessageInfo
 
-func (m *Pos33Prepare) GetBlockHash() []byte {
+func (m *Pos33VoteMsg) GetElect() *Pos33ElectMsg {
+	if m != nil {
+		return m.Elect
+	}
+	return nil
+}
+
+func (m *Pos33VoteMsg) GetBlockHash() []byte {
 	if m != nil {
 		return m.BlockHash
 	}
 	return nil
 }
 
-func (m *Pos33Prepare) GetHeight() int64 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-func (m *Pos33Prepare) GetSig() *types.Signature {
+func (m *Pos33VoteMsg) GetSig() *types.Signature {
 	if m != nil {
 		return m.Sig
 	}
 	return nil
 }
 
-type Pos33Commit struct {
-	BlockHash            []byte           `protobuf:"bytes,1,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
-	Height               int64            `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	Sig                  *types.Signature `protobuf:"bytes,3,opt,name=sig,proto3" json:"sig,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+type Pos33Votes struct {
+	Vs                   []*Pos33VoteMsg `protobuf:"bytes,1,rep,name=vs,proto3" json:"vs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *Pos33Commit) Reset()         { *m = Pos33Commit{} }
-func (m *Pos33Commit) String() string { return proto.CompactTextString(m) }
-func (*Pos33Commit) ProtoMessage()    {}
-func (*Pos33Commit) Descriptor() ([]byte, []int) {
+func (m *Pos33Votes) Reset()         { *m = Pos33Votes{} }
+func (m *Pos33Votes) String() string { return proto.CompactTextString(m) }
+func (*Pos33Votes) ProtoMessage()    {}
+func (*Pos33Votes) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f8d3cfebaf15bc9b, []int{6}
 }
 
-func (m *Pos33Commit) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Commit.Unmarshal(m, b)
+func (m *Pos33Votes) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33Votes.Unmarshal(m, b)
 }
-func (m *Pos33Commit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Commit.Marshal(b, m, deterministic)
+func (m *Pos33Votes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33Votes.Marshal(b, m, deterministic)
 }
-func (m *Pos33Commit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Commit.Merge(m, src)
+func (m *Pos33Votes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33Votes.Merge(m, src)
 }
-func (m *Pos33Commit) XXX_Size() int {
-	return xxx_messageInfo_Pos33Commit.Size(m)
+func (m *Pos33Votes) XXX_Size() int {
+	return xxx_messageInfo_Pos33Votes.Size(m)
 }
-func (m *Pos33Commit) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Commit.DiscardUnknown(m)
+func (m *Pos33Votes) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33Votes.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pos33Commit proto.InternalMessageInfo
+var xxx_messageInfo_Pos33Votes proto.InternalMessageInfo
 
-func (m *Pos33Commit) GetBlockHash() []byte {
+func (m *Pos33Votes) GetVs() []*Pos33VoteMsg {
 	if m != nil {
-		return m.BlockHash
-	}
-	return nil
-}
-
-func (m *Pos33Commit) GetHeight() int64 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-func (m *Pos33Commit) GetSig() *types.Signature {
-	if m != nil {
-		return m.Sig
+		return m.Vs
 	}
 	return nil
 }
@@ -384,7 +402,6 @@ type Pos33Action struct {
 	//	*Pos33Action_Delegate
 	//	*Pos33Action_Reword
 	//	*Pos33Action_Punish
-	//	*Pos33Action_Electe
 	Value                isPos33Action_Value `protobuf_oneof:"value"`
 	Ty                   int32               `protobuf:"varint,10,opt,name=ty,proto3" json:"ty,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
@@ -441,10 +458,6 @@ type Pos33Action_Punish struct {
 	Punish *Pos33PunishAction `protobuf:"bytes,5,opt,name=punish,proto3,oneof"`
 }
 
-type Pos33Action_Electe struct {
-	Electe *Pos33ElecteAction `protobuf:"bytes,6,opt,name=electe,proto3,oneof"`
-}
-
 func (*Pos33Action_Deposit) isPos33Action_Value() {}
 
 func (*Pos33Action_Withdraw) isPos33Action_Value() {}
@@ -454,8 +467,6 @@ func (*Pos33Action_Delegate) isPos33Action_Value() {}
 func (*Pos33Action_Reword) isPos33Action_Value() {}
 
 func (*Pos33Action_Punish) isPos33Action_Value() {}
-
-func (*Pos33Action_Electe) isPos33Action_Value() {}
 
 func (m *Pos33Action) GetValue() isPos33Action_Value {
 	if m != nil {
@@ -499,13 +510,6 @@ func (m *Pos33Action) GetPunish() *Pos33PunishAction {
 	return nil
 }
 
-func (m *Pos33Action) GetElecte() *Pos33ElecteAction {
-	if x, ok := m.GetValue().(*Pos33Action_Electe); ok {
-		return x.Electe
-	}
-	return nil
-}
-
 func (m *Pos33Action) GetTy() int32 {
 	if m != nil {
 		return m.Ty
@@ -521,7 +525,6 @@ func (*Pos33Action) XXX_OneofWrappers() []interface{} {
 		(*Pos33Action_Delegate)(nil),
 		(*Pos33Action_Reword)(nil),
 		(*Pos33Action_Punish)(nil),
-		(*Pos33Action_Electe)(nil),
 	}
 }
 
@@ -651,11 +654,11 @@ func (m *Pos33DelegateAction) GetW() int64 {
 }
 
 type Pos33RewordAction struct {
-	Votes                []*Pos33Vote `protobuf:"bytes,1,rep,name=votes,proto3" json:"votes,omitempty"`
-	RandHash             []byte       `protobuf:"bytes,2,opt,name=rand_hash,json=randHash,proto3" json:"rand_hash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Votes                []*Pos33VoteMsg `protobuf:"bytes,1,rep,name=votes,proto3" json:"votes,omitempty"`
+	RandHash             []byte          `protobuf:"bytes,2,opt,name=rand_hash,json=randHash,proto3" json:"rand_hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
 func (m *Pos33RewordAction) Reset()         { *m = Pos33RewordAction{} }
@@ -683,7 +686,7 @@ func (m *Pos33RewordAction) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Pos33RewordAction proto.InternalMessageInfo
 
-func (m *Pos33RewordAction) GetVotes() []*Pos33Vote {
+func (m *Pos33RewordAction) GetVotes() []*Pos33VoteMsg {
 	if m != nil {
 		return m.Votes
 	}
@@ -698,11 +701,11 @@ func (m *Pos33RewordAction) GetRandHash() []byte {
 }
 
 type Pos33Punish struct {
-	Vote1                *Pos33Vote `protobuf:"bytes,3,opt,name=vote1,proto3" json:"vote1,omitempty"`
-	Vote2                *Pos33Vote `protobuf:"bytes,4,opt,name=vote2,proto3" json:"vote2,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Vote1                *Pos33VoteMsg `protobuf:"bytes,3,opt,name=vote1,proto3" json:"vote1,omitempty"`
+	Vote2                *Pos33VoteMsg `protobuf:"bytes,4,opt,name=vote2,proto3" json:"vote2,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
 func (m *Pos33Punish) Reset()         { *m = Pos33Punish{} }
@@ -730,14 +733,14 @@ func (m *Pos33Punish) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Pos33Punish proto.InternalMessageInfo
 
-func (m *Pos33Punish) GetVote1() *Pos33Vote {
+func (m *Pos33Punish) GetVote1() *Pos33VoteMsg {
 	if m != nil {
 		return m.Vote1
 	}
 	return nil
 }
 
-func (m *Pos33Punish) GetVote2() *Pos33Vote {
+func (m *Pos33Punish) GetVote2() *Pos33VoteMsg {
 	if m != nil {
 		return m.Vote2
 	}
@@ -783,265 +786,6 @@ func (m *Pos33PunishAction) GetPunishs() map[string]*Pos33Punish {
 	return nil
 }
 
-type Pos33ElecteAction struct {
-	Rands                []*Pos33Rands    `protobuf:"bytes,1,rep,name=rands,proto3" json:"rands,omitempty"`
-	Height               int64            `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	Hash                 []byte           `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
-	Sig                  *types.Signature `protobuf:"bytes,5,opt,name=sig,proto3" json:"sig,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
-}
-
-func (m *Pos33ElecteAction) Reset()         { *m = Pos33ElecteAction{} }
-func (m *Pos33ElecteAction) String() string { return proto.CompactTextString(m) }
-func (*Pos33ElecteAction) ProtoMessage()    {}
-func (*Pos33ElecteAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{14}
-}
-
-func (m *Pos33ElecteAction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33ElecteAction.Unmarshal(m, b)
-}
-func (m *Pos33ElecteAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33ElecteAction.Marshal(b, m, deterministic)
-}
-func (m *Pos33ElecteAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33ElecteAction.Merge(m, src)
-}
-func (m *Pos33ElecteAction) XXX_Size() int {
-	return xxx_messageInfo_Pos33ElecteAction.Size(m)
-}
-func (m *Pos33ElecteAction) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33ElecteAction.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pos33ElecteAction proto.InternalMessageInfo
-
-func (m *Pos33ElecteAction) GetRands() []*Pos33Rands {
-	if m != nil {
-		return m.Rands
-	}
-	return nil
-}
-
-func (m *Pos33ElecteAction) GetHeight() int64 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-func (m *Pos33ElecteAction) GetHash() []byte {
-	if m != nil {
-		return m.Hash
-	}
-	return nil
-}
-
-func (m *Pos33ElecteAction) GetSig() *types.Signature {
-	if m != nil {
-		return m.Sig
-	}
-	return nil
-}
-
-type Pos33Vote struct {
-	BlockHeight          int64            `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	BlockHash            []byte           `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
-	Bp                   string           `protobuf:"bytes,3,opt,name=bp,proto3" json:"bp,omitempty"`
-	Weight               int32            `protobuf:"varint,4,opt,name=weight,proto3" json:"weight,omitempty"`
-	Sig                  *types.Signature `protobuf:"bytes,5,opt,name=sig,proto3" json:"sig,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
-}
-
-func (m *Pos33Vote) Reset()         { *m = Pos33Vote{} }
-func (m *Pos33Vote) String() string { return proto.CompactTextString(m) }
-func (*Pos33Vote) ProtoMessage()    {}
-func (*Pos33Vote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{15}
-}
-
-func (m *Pos33Vote) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Vote.Unmarshal(m, b)
-}
-func (m *Pos33Vote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Vote.Marshal(b, m, deterministic)
-}
-func (m *Pos33Vote) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Vote.Merge(m, src)
-}
-func (m *Pos33Vote) XXX_Size() int {
-	return xxx_messageInfo_Pos33Vote.Size(m)
-}
-func (m *Pos33Vote) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Vote.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pos33Vote proto.InternalMessageInfo
-
-func (m *Pos33Vote) GetBlockHeight() int64 {
-	if m != nil {
-		return m.BlockHeight
-	}
-	return 0
-}
-
-func (m *Pos33Vote) GetBlockHash() []byte {
-	if m != nil {
-		return m.BlockHash
-	}
-	return nil
-}
-
-func (m *Pos33Vote) GetBp() string {
-	if m != nil {
-		return m.Bp
-	}
-	return ""
-}
-
-func (m *Pos33Vote) GetWeight() int32 {
-	if m != nil {
-		return m.Weight
-	}
-	return 0
-}
-
-func (m *Pos33Vote) GetSig() *types.Signature {
-	if m != nil {
-		return m.Sig
-	}
-	return nil
-}
-
-type Pos33Votes struct {
-	Vs                   []*Pos33Vote `protobuf:"bytes,1,rep,name=vs,proto3" json:"vs,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
-}
-
-func (m *Pos33Votes) Reset()         { *m = Pos33Votes{} }
-func (m *Pos33Votes) String() string { return proto.CompactTextString(m) }
-func (*Pos33Votes) ProtoMessage()    {}
-func (*Pos33Votes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{16}
-}
-
-func (m *Pos33Votes) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Votes.Unmarshal(m, b)
-}
-func (m *Pos33Votes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Votes.Marshal(b, m, deterministic)
-}
-func (m *Pos33Votes) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Votes.Merge(m, src)
-}
-func (m *Pos33Votes) XXX_Size() int {
-	return xxx_messageInfo_Pos33Votes.Size(m)
-}
-func (m *Pos33Votes) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Votes.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pos33Votes proto.InternalMessageInfo
-
-func (m *Pos33Votes) GetVs() []*Pos33Vote {
-	if m != nil {
-		return m.Vs
-	}
-	return nil
-}
-
-type Pos33Committee struct {
-	Height               int64       `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	Rands                *Pos33Rands `protobuf:"bytes,2,opt,name=rands,proto3" json:"rands,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *Pos33Committee) Reset()         { *m = Pos33Committee{} }
-func (m *Pos33Committee) String() string { return proto.CompactTextString(m) }
-func (*Pos33Committee) ProtoMessage()    {}
-func (*Pos33Committee) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{17}
-}
-
-func (m *Pos33Committee) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33Committee.Unmarshal(m, b)
-}
-func (m *Pos33Committee) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33Committee.Marshal(b, m, deterministic)
-}
-func (m *Pos33Committee) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33Committee.Merge(m, src)
-}
-func (m *Pos33Committee) XXX_Size() int {
-	return xxx_messageInfo_Pos33Committee.Size(m)
-}
-func (m *Pos33Committee) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33Committee.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pos33Committee proto.InternalMessageInfo
-
-func (m *Pos33Committee) GetHeight() int64 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-func (m *Pos33Committee) GetRands() *Pos33Rands {
-	if m != nil {
-		return m.Rands
-	}
-	return nil
-}
-
-type Pos33ElecteLocal struct {
-	Es                   []*Pos33ElecteAction `protobuf:"bytes,1,rep,name=es,proto3" json:"es,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
-}
-
-func (m *Pos33ElecteLocal) Reset()         { *m = Pos33ElecteLocal{} }
-func (m *Pos33ElecteLocal) String() string { return proto.CompactTextString(m) }
-func (*Pos33ElecteLocal) ProtoMessage()    {}
-func (*Pos33ElecteLocal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{18}
-}
-
-func (m *Pos33ElecteLocal) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33ElecteLocal.Unmarshal(m, b)
-}
-func (m *Pos33ElecteLocal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33ElecteLocal.Marshal(b, m, deterministic)
-}
-func (m *Pos33ElecteLocal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33ElecteLocal.Merge(m, src)
-}
-func (m *Pos33ElecteLocal) XXX_Size() int {
-	return xxx_messageInfo_Pos33ElecteLocal.Size(m)
-}
-func (m *Pos33ElecteLocal) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33ElecteLocal.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pos33ElecteLocal proto.InternalMessageInfo
-
-func (m *Pos33ElecteLocal) GetEs() []*Pos33ElecteAction {
-	if m != nil {
-		return m.Es
-	}
-	return nil
-}
-
 type ReceiptPos33 struct {
 	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Status               int32    `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
@@ -1054,7 +798,7 @@ func (m *ReceiptPos33) Reset()         { *m = ReceiptPos33{} }
 func (m *ReceiptPos33) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPos33) ProtoMessage()    {}
 func (*ReceiptPos33) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f8d3cfebaf15bc9b, []int{19}
+	return fileDescriptor_f8d3cfebaf15bc9b, []int{14}
 }
 
 func (m *ReceiptPos33) XXX_Unmarshal(b []byte) error {
@@ -1094,10 +838,10 @@ func init() {
 	proto.RegisterType((*Pos33Msg)(nil), "types.Pos33Msg")
 	proto.RegisterType((*Pos33Rand)(nil), "types.Pos33Rand")
 	proto.RegisterType((*Pos33Rands)(nil), "types.Pos33Rands")
-	proto.RegisterType((*Pos33Block)(nil), "types.Pos33Block")
-	proto.RegisterType((*Pos33PrePrepare)(nil), "types.Pos33PrePrepare")
-	proto.RegisterType((*Pos33Prepare)(nil), "types.Pos33Prepare")
-	proto.RegisterType((*Pos33Commit)(nil), "types.Pos33Commit")
+	proto.RegisterType((*Pos33ElectMsg)(nil), "types.Pos33ElectMsg")
+	proto.RegisterType((*BlockMsg)(nil), "types.BlockMsg")
+	proto.RegisterType((*Pos33VoteMsg)(nil), "types.Pos33VoteMsg")
+	proto.RegisterType((*Pos33Votes)(nil), "types.Pos33Votes")
 	proto.RegisterType((*Pos33Action)(nil), "types.Pos33Action")
 	proto.RegisterType((*Pos33DepositAction)(nil), "types.Pos33DepositAction")
 	proto.RegisterType((*Pos33WithdrawAction)(nil), "types.Pos33WithdrawAction")
@@ -1106,66 +850,55 @@ func init() {
 	proto.RegisterType((*Pos33Punish)(nil), "types.Pos33Punish")
 	proto.RegisterType((*Pos33PunishAction)(nil), "types.Pos33PunishAction")
 	proto.RegisterMapType((map[string]*Pos33Punish)(nil), "types.Pos33PunishAction.PunishsEntry")
-	proto.RegisterType((*Pos33ElecteAction)(nil), "types.Pos33ElecteAction")
-	proto.RegisterType((*Pos33Vote)(nil), "types.Pos33Vote")
-	proto.RegisterType((*Pos33Votes)(nil), "types.Pos33Votes")
-	proto.RegisterType((*Pos33Committee)(nil), "types.Pos33Committee")
-	proto.RegisterType((*Pos33ElecteLocal)(nil), "types.Pos33ElecteLocal")
 	proto.RegisterType((*ReceiptPos33)(nil), "types.ReceiptPos33")
 }
 
 func init() { proto.RegisterFile("pos33.proto", fileDescriptor_f8d3cfebaf15bc9b) }
 
 var fileDescriptor_f8d3cfebaf15bc9b = []byte{
-	// 794 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0xdd, 0x6e, 0xe3, 0x44,
-	0x14, 0xee, 0x4c, 0xe2, 0xb4, 0x39, 0x09, 0x21, 0x1d, 0x10, 0x32, 0x41, 0x48, 0x61, 0x10, 0xe0,
-	0x1b, 0x22, 0x35, 0xa5, 0xa8, 0x42, 0x48, 0x88, 0x42, 0xa5, 0x5e, 0x00, 0x0a, 0x43, 0x15, 0xb8,
-	0x41, 0xab, 0x49, 0x3c, 0x8a, 0xad, 0xa6, 0xb6, 0xe5, 0x99, 0x24, 0xeb, 0x77, 0xd8, 0x17, 0xd8,
-	0xfb, 0x7d, 0xbd, 0x7d, 0x87, 0xd5, 0xfc, 0x38, 0xb1, 0x93, 0xa6, 0xda, 0x9b, 0xbd, 0xca, 0x8c,
-	0xcf, 0xf7, 0x9d, 0x73, 0xe6, 0x3b, 0x3f, 0x81, 0x4e, 0x96, 0xca, 0xcb, 0xcb, 0x51, 0x96, 0xa7,
-	0x2a, 0x25, 0x9e, 0x2a, 0x32, 0x21, 0x07, 0xe7, 0x2a, 0xe7, 0x89, 0xe4, 0x73, 0x15, 0xa7, 0x89,
-	0xb5, 0x0c, 0xfa, 0xb3, 0x65, 0x3a, 0x7f, 0x98, 0x47, 0x3c, 0x76, 0x5f, 0xe8, 0x14, 0xce, 0x26,
-	0x9a, 0xfa, 0xa7, 0x5c, 0x10, 0x02, 0xcd, 0x90, 0x2b, 0xee, 0xa3, 0x21, 0x0a, 0xba, 0xcc, 0x9c,
-	0x09, 0x05, 0xac, 0x0a, 0x1f, 0x0f, 0x51, 0xd0, 0x1b, 0x93, 0x91, 0x71, 0x3c, 0x2a, 0x09, 0xa3,
-	0xfb, 0x82, 0x61, 0x55, 0x50, 0x02, 0xf8, 0xbe, 0x20, 0x1e, 0xa0, 0x9b, 0xfe, 0x89, 0xfe, 0x99,
-	0xf6, 0x11, 0x65, 0xd0, 0x36, 0x30, 0xc6, 0x93, 0x90, 0x7c, 0x01, 0xed, 0x9c, 0x27, 0xe1, 0x8b,
-	0x88, 0xcb, 0xc8, 0x79, 0x3f, 0xd3, 0x1f, 0xee, 0xb8, 0x8c, 0xc8, 0xa7, 0xe0, 0xc5, 0x49, 0x28,
-	0x5e, 0x9a, 0x20, 0x1f, 0x31, 0x7b, 0xd1, 0xb9, 0xf0, 0x30, 0xcc, 0xfd, 0xc6, 0x10, 0x05, 0x6d,
-	0x66, 0xce, 0xf4, 0x07, 0x80, 0xad, 0x4f, 0x49, 0xbe, 0x05, 0x4f, 0xfb, 0x90, 0x3e, 0x1a, 0x36,
-	0x82, 0xce, 0xb8, 0x5f, 0x4d, 0x4e, 0x23, 0x98, 0x35, 0xd3, 0xc0, 0xb1, 0x6e, 0xf4, 0xd3, 0xc9,
-	0x00, 0xd0, 0xcc, 0xa4, 0xd0, 0x19, 0x77, 0x1d, 0xc3, 0x18, 0x18, 0x9a, 0xd1, 0xef, 0xe1, 0x63,
-	0x83, 0x9c, 0xe4, 0x62, 0x92, 0x8b, 0x8c, 0xe7, 0xe2, 0x59, 0x78, 0x0c, 0xdd, 0x12, 0x6e, 0xb0,
-	0x5f, 0x02, 0x18, 0x79, 0xab, 0xcf, 0x6c, 0x9b, 0x2f, 0xe6, 0x9d, 0x9f, 0x41, 0x2b, 0x12, 0xf1,
-	0x22, 0x52, 0xe6, 0xa1, 0x0d, 0xe6, 0x6e, 0x84, 0x42, 0x43, 0xc6, 0x0b, 0xf3, 0xd0, 0xdd, 0x2b,
-	0xfe, 0x89, 0x17, 0x09, 0x57, 0xab, 0x5c, 0x30, 0x6d, 0xa4, 0x11, 0x74, 0x4c, 0xa8, 0xdf, 0xd2,
-	0xc7, 0xc7, 0x58, 0x7d, 0xc8, 0x48, 0x6f, 0xb1, 0x0b, 0xf5, 0xab, 0xe9, 0x1b, 0x72, 0x05, 0xa7,
-	0xa1, 0xc8, 0x52, 0x19, 0x2b, 0x27, 0xc3, 0xe7, 0x55, 0x9d, 0x7f, 0xb7, 0x26, 0x8b, 0xbd, 0x3b,
-	0x61, 0x25, 0x96, 0x5c, 0xc3, 0xd9, 0x26, 0x56, 0x51, 0x98, 0xf3, 0x8d, 0x49, 0xa2, 0x33, 0x1e,
-	0x54, 0x79, 0xff, 0x3a, 0xdb, 0x96, 0xb8, 0x45, 0x6b, 0x66, 0x28, 0x96, 0x62, 0xc1, 0x95, 0x70,
-	0x99, 0x0e, 0xea, 0x11, 0xad, 0x6d, 0xc7, 0x2c, 0xd1, 0x64, 0x0c, 0xad, 0x5c, 0x6c, 0xd2, 0x3c,
-	0xf4, 0x9b, 0x86, 0xe7, 0xd7, 0x3a, 0xc2, 0x58, 0xb6, 0x2c, 0x87, 0xd4, 0x9c, 0x6c, 0x95, 0xc4,
-	0x32, 0xf2, 0xbd, 0x43, 0xce, 0xc4, 0x58, 0x76, 0x1c, 0x8b, 0xd4, 0x1c, 0xb1, 0x14, 0x73, 0x25,
-	0xfc, 0xd6, 0x21, 0xe7, 0xd6, 0x58, 0x76, 0x1c, 0x8b, 0x24, 0x3d, 0x33, 0x46, 0x30, 0x44, 0x81,
-	0xa7, 0x47, 0xe6, 0xe6, 0x14, 0xbc, 0x35, 0x5f, 0xae, 0x04, 0xa5, 0x40, 0x0e, 0x95, 0x24, 0x5d,
-	0x40, 0x1b, 0xa3, 0x77, 0x83, 0xa1, 0x0d, 0xfd, 0x1a, 0x3e, 0x79, 0x42, 0xb5, 0x3d, 0xd0, 0x95,
-	0x03, 0xd5, 0x05, 0x22, 0x7d, 0x68, 0x6c, 0xa2, 0xd4, 0xc0, 0xda, 0x4c, 0x1f, 0x2d, 0x0d, 0x97,
-	0xb4, 0xff, 0xe0, 0xfc, 0x40, 0x1f, 0x3d, 0x5a, 0xeb, 0x54, 0x89, 0x27, 0x47, 0x6b, 0x9a, 0x2a,
-	0xc1, 0xac, 0xb9, 0x3e, 0xd7, 0xb8, 0x3e, 0xd7, 0xf4, 0x7f, 0xd7, 0x48, 0x56, 0xc5, 0xd2, 0xe7,
-	0xc5, 0x5e, 0xfb, 0xed, 0xf9, 0xbc, 0x28, 0x71, 0x63, 0x57, 0xc4, 0x23, 0xb8, 0x31, 0x7d, 0x83,
-	0x5c, 0xe6, 0xd5, 0x2a, 0x91, 0x5f, 0xe0, 0xd4, 0x56, 0xa9, 0xcc, 0xfd, 0x9b, 0x63, 0x05, 0x1d,
-	0xd9, 0x8b, 0xbc, 0x4d, 0x54, 0x5e, 0xb0, 0x92, 0x35, 0xf8, 0x0b, 0xba, 0x55, 0x83, 0xd6, 0xef,
-	0x41, 0x14, 0xa5, 0x7e, 0x0f, 0xa2, 0x20, 0x81, 0x2b, 0x9d, 0xeb, 0x6b, 0x72, 0x18, 0x80, 0x59,
-	0xc0, 0x4f, 0xf8, 0x1a, 0xd1, 0x57, 0x65, 0x9a, 0xd5, 0xc6, 0x20, 0xdf, 0xd5, 0x77, 0xd7, 0xf9,
-	0xfe, 0xee, 0x92, 0x6e, 0x79, 0x55, 0x46, 0xb9, 0x51, 0x1b, 0x65, 0x02, 0x4d, 0x23, 0x7a, 0xd3,
-	0xae, 0x6a, 0x7d, 0x2e, 0xc7, 0xdb, 0x7b, 0x6e, 0xbc, 0x5f, 0x23, 0xb7, 0x97, 0xb5, 0x94, 0xe4,
-	0x2b, 0xe8, 0xba, 0x3d, 0x62, 0x63, 0xd8, 0x66, 0xea, 0xd8, 0x4d, 0x62, 0x03, 0xd5, 0x57, 0x0d,
-	0xde, 0x5f, 0x35, 0x3d, 0xc0, 0xb3, 0xcc, 0x2d, 0x69, 0x3c, 0xcb, 0x74, 0xbe, 0x1b, 0xeb, 0xab,
-	0x69, 0x7a, 0xdd, 0xdd, 0xde, 0x2b, 0xb7, 0x91, 0x5b, 0xd4, 0x53, 0xd3, 0x5b, 0x43, 0xc0, 0xeb,
-	0xe3, 0x0d, 0x88, 0xd7, 0x92, 0xfe, 0x0d, 0xbd, 0xca, 0x52, 0x54, 0x42, 0x54, 0xd4, 0x42, 0x35,
-	0xb5, 0xb6, 0x72, 0xdb, 0x92, 0x1d, 0x95, 0x9b, 0xfe, 0x0c, 0xfd, 0x4a, 0xb1, 0xfe, 0x48, 0xe7,
-	0x7c, 0x49, 0x02, 0xc0, 0xdb, 0x49, 0x38, 0x3a, 0xea, 0x0c, 0x0b, 0x49, 0x7f, 0x84, 0x2e, 0x13,
-	0x73, 0x11, 0x67, 0xca, 0xd8, 0xb5, 0x38, 0x71, 0xe8, 0x5a, 0x07, 0xc7, 0xa1, 0x4e, 0x4f, 0x2a,
-	0xae, 0x56, 0x36, 0x0f, 0x8f, 0xb9, 0xdb, 0xac, 0x65, 0xfe, 0x8a, 0x2f, 0xdf, 0x05, 0x00, 0x00,
-	0xff, 0xff, 0x2e, 0x8a, 0x1b, 0x39, 0xc5, 0x07, 0x00, 0x00,
+	// 697 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0x4f, 0x4f, 0xdb, 0x4a,
+	0x10, 0x67, 0x1d, 0x0c, 0xc9, 0x24, 0xa0, 0xb0, 0xa0, 0xa7, 0x90, 0xa7, 0x27, 0x45, 0x8b, 0x1e,
+	0x4d, 0x7b, 0x88, 0x84, 0x29, 0x15, 0xea, 0xa5, 0x2a, 0x2a, 0x12, 0x3d, 0xb4, 0x42, 0x5b, 0x44,
+	0x0f, 0x55, 0x55, 0x6d, 0xe2, 0x55, 0x6c, 0x11, 0xd9, 0x96, 0x77, 0x93, 0xd4, 0x87, 0x7e, 0x93,
+	0x1e, 0xfb, 0x25, 0xfa, 0xed, 0xaa, 0x9d, 0xdd, 0x0d, 0x06, 0x0a, 0xa7, 0xcc, 0xce, 0xfc, 0x7e,
+	0x33, 0xbf, 0xf9, 0x13, 0x43, 0xbb, 0xc8, 0xd5, 0xf1, 0xf1, 0xa8, 0x28, 0x73, 0x9d, 0xd3, 0x50,
+	0x57, 0x85, 0x54, 0xfd, 0x1d, 0x5d, 0x8a, 0x4c, 0x89, 0x89, 0x4e, 0xf3, 0xcc, 0x46, 0xfa, 0xdd,
+	0xf1, 0x2c, 0x9f, 0xdc, 0x4c, 0x12, 0x91, 0x3a, 0x0f, 0xfb, 0x0a, 0xcd, 0x4b, 0x43, 0xfd, 0xa0,
+	0xa6, 0x94, 0xc2, 0x7a, 0x2c, 0xb4, 0xe8, 0x91, 0x01, 0x19, 0x76, 0x38, 0xda, 0x94, 0x41, 0xa0,
+	0xab, 0x5e, 0x30, 0x20, 0xc3, 0xed, 0x88, 0x8e, 0x30, 0xf1, 0xc8, 0x13, 0x46, 0x57, 0x15, 0x0f,
+	0x74, 0xc5, 0xf6, 0x21, 0xb8, 0xaa, 0x68, 0x08, 0xe4, 0xac, 0xbb, 0x66, 0x7e, 0xae, 0xbb, 0xc4,
+	0xfc, 0x9c, 0x77, 0x03, 0xf6, 0x1e, 0x5a, 0x88, 0xe6, 0x22, 0x8b, 0x4d, 0xfe, 0x44, 0xa8, 0xc4,
+	0xe7, 0x37, 0x36, 0xdd, 0x83, 0x30, 0xcd, 0x62, 0xf9, 0x1d, 0x4b, 0x6c, 0x71, 0xfb, 0x30, 0x48,
+	0x11, 0xc7, 0x65, 0xaf, 0x31, 0x20, 0xc3, 0x16, 0x47, 0x9b, 0xbd, 0x04, 0x58, 0xa5, 0x52, 0xf4,
+	0x10, 0xc2, 0xd2, 0x18, 0x3d, 0x32, 0x68, 0x0c, 0xdb, 0x51, 0xb7, 0x2e, 0xcd, 0x20, 0xb8, 0x0d,
+	0xb3, 0x9f, 0x04, 0xb6, 0xd0, 0x79, 0x3e, 0x93, 0x13, 0x6d, 0xba, 0x7c, 0x76, 0xcb, 0x24, 0xc3,
+	0x76, 0xb4, 0x73, 0x9f, 0xa9, 0x1c, 0x95, 0xfe, 0x03, 0x1b, 0x89, 0x4c, 0xa7, 0x89, 0x46, 0x19,
+	0x0d, 0xee, 0x5e, 0x46, 0x9c, 0x92, 0x32, 0x46, 0xc5, 0x1d, 0x8e, 0x36, 0xfa, 0xb4, 0x28, 0x7a,
+	0xe1, 0x80, 0x0c, 0x43, 0x8e, 0x36, 0x65, 0xd0, 0x50, 0xe9, 0xb4, 0xb7, 0x8e, 0x65, 0xbc, 0xc0,
+	0x4f, 0xe9, 0x34, 0x13, 0x7a, 0x5e, 0x4a, 0x6e, 0x82, 0xec, 0x10, 0x9a, 0x67, 0x66, 0x25, 0x46,
+	0x58, 0x1f, 0xc8, 0xd8, 0x89, 0xea, 0x38, 0x34, 0xc6, 0x38, 0x19, 0xb3, 0x1f, 0xd0, 0x41, 0x81,
+	0xd7, 0xb9, 0x96, 0x06, 0xfb, 0x02, 0x42, 0x69, 0x1a, 0x72, 0xf8, 0xbd, 0x7a, 0x13, 0xbe, 0x53,
+	0x6e, 0x21, 0xf4, 0x3f, 0x00, 0x5c, 0xfb, 0x37, 0x1c, 0xbe, 0x55, 0xdd, 0x42, 0xcf, 0x85, 0xd9,
+	0x80, 0x93, 0xd9, 0x78, 0x4a, 0xe6, 0x91, 0x9b, 0xbd, 0x29, 0xaf, 0xe8, 0x01, 0x04, 0x0b, 0x3f,
+	0xf8, 0xdd, 0x7a, 0x65, 0xa7, 0x8e, 0x07, 0x0b, 0xc5, 0x7e, 0x07, 0xd0, 0x46, 0xe7, 0x5b, 0x3c,
+	0x40, 0x7a, 0x02, 0x9b, 0xb1, 0x2c, 0x72, 0x95, 0x7a, 0xcd, 0xfb, 0x75, 0xe6, 0x3b, 0x1b, 0xb2,
+	0xd8, 0x8b, 0x35, 0xee, 0xb1, 0xf4, 0x14, 0x9a, 0xcb, 0x54, 0x27, 0x71, 0x29, 0x96, 0x28, 0xbd,
+	0x1d, 0xf5, 0xeb, 0xbc, 0xcf, 0x2e, 0xb6, 0x22, 0xae, 0xd0, 0x86, 0x19, 0xcb, 0x99, 0x9c, 0x0a,
+	0x2d, 0x5d, 0x73, 0xfd, 0xbb, 0x15, 0x6d, 0xec, 0x96, 0xe9, 0xd1, 0x34, 0x82, 0x8d, 0x52, 0x2e,
+	0xf3, 0x32, 0x76, 0xbb, 0xeb, 0xdd, 0x39, 0x11, 0x8c, 0xac, 0x58, 0x0e, 0x69, 0x38, 0xc5, 0x3c,
+	0x4b, 0x55, 0x82, 0x27, 0x70, 0x8f, 0x73, 0x89, 0x91, 0x5b, 0x8e, 0x45, 0xd2, 0x6d, 0xfc, 0x6f,
+	0x01, 0x9e, 0x4c, 0xa0, 0xab, 0xb3, 0x4d, 0x08, 0x17, 0x62, 0x36, 0x97, 0x8c, 0x01, 0x7d, 0x38,
+	0x15, 0xda, 0x01, 0xb2, 0xc4, 0xd9, 0x35, 0x38, 0x59, 0xb2, 0x03, 0xd8, 0xfd, 0xcb, 0x04, 0xee,
+	0x81, 0x4e, 0x1c, 0xe8, 0x6e, 0xb3, 0xb4, 0x0b, 0x8d, 0x65, 0x92, 0x23, 0xac, 0xc5, 0x8d, 0x69,
+	0x69, 0x81, 0xa7, 0x7d, 0x81, 0x9d, 0x07, 0xbd, 0xd2, 0xe7, 0x10, 0x2e, 0xcc, 0xfa, 0x9f, 0x5a,
+	0xbc, 0x45, 0xd0, 0x7f, 0xa1, 0x65, 0xfe, 0x42, 0xf5, 0x83, 0x6b, 0x1a, 0x87, 0xb9, 0x37, 0x36,
+	0x71, 0x77, 0x61, 0x87, 0xe2, 0xd3, 0x1e, 0xb9, 0x1d, 0x3d, 0x9e, 0xf6, 0xc8, 0x43, 0x23, 0xb7,
+	0x96, 0xc7, 0xa1, 0x11, 0xfb, 0x45, 0x5c, 0x0b, 0xf5, 0xd1, 0xd3, 0x37, 0xb0, 0x69, 0x47, 0xef,
+	0x9b, 0xf8, 0xff, 0xb1, 0x2d, 0x8d, 0xec, 0x43, 0x9d, 0x67, 0xba, 0xac, 0xb8, 0x67, 0xf5, 0x3f,
+	0x42, 0xa7, 0x1e, 0x30, 0x83, 0xbc, 0x91, 0x95, 0x1f, 0xe4, 0x8d, 0xac, 0xe8, 0xd0, 0xed, 0xd0,
+	0x1d, 0x2b, 0x7d, 0x58, 0x80, 0x5b, 0xc0, 0xeb, 0xe0, 0x94, 0xb0, 0x57, 0xd0, 0xe1, 0x72, 0x22,
+	0xd3, 0x42, 0x23, 0xc0, 0x5c, 0x44, 0x1a, 0xbb, 0x74, 0x41, 0x1a, 0x9b, 0x4f, 0x90, 0xd2, 0x42,
+	0xcf, 0x15, 0xa6, 0x0b, 0xb9, 0x7b, 0x8d, 0x37, 0xf0, 0xe3, 0x7d, 0xfc, 0x27, 0x00, 0x00, 0xff,
+	0xff, 0x0f, 0x9d, 0x6a, 0x3b, 0xf7, 0x05, 0x00, 0x00,
 }

@@ -52,14 +52,14 @@ const (
 	Pos33Miner = types.Coin * 10000
 	// Pos33BlockReword 区块奖励
 	Pos33BlockReword = types.Coin * 15
+	// Pos33SortitionBlockNumber 多少区块做一次抽签
+	Pos33SortitionBlockNumber = 33
 	// Pos33VoteReword 每个区块的奖励
 	Pos33VoteReword = types.Coin / 2
-	// Pos33CommitteeSize 委员会投票数量
-	Pos33CommitteeSize = 10
-	// Pos33MaxCommittee 委员会最大投票数量
-	Pos33MaxCommittee = 10
-	// Pos33MinCommittee 委员会最小投票数量
-	Pos33MinCommittee = 10
+	// Pos33ProposerSize 候选区块Proposer数量
+	Pos33ProposerSize = 10
+	// Pos33VeriferSize  候选区块Verifer数量
+	Pos33VeriferSize = 10
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址

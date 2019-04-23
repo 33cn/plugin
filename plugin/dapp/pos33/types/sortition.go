@@ -13,7 +13,7 @@ import (
 )
 
 // sortRounds is rounds of generate rands
-const sortRounds = 3
+const sortRounds = 1
 
 // persent of allw online
 const onlinePersentOfAllW = 0.67
@@ -31,62 +31,70 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 7. 最后对Hashs排序，作为委员会打包顺序的依据
 
 // GenRands 计算抽签hash，allw是当前总票数, w是自己抵押的票数
-func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte) ([]*Pos33Rands, *pb.Signature) {
+func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte, stap int) (*Pos33Rands, *pb.Signature) {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
-	diff := Pos33CommitteeSize / (float64(allw) * onlinePersentOfAllW)
+	size := Pos33VeriferSize
+	if stap == 0 {
+		size = Pos33ProposerSize
+	}
+	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
 
-	sorted := false // 是否有符合的票数
-	rss := make([]*Pos33Rands, sortRounds)
-
-	data := []byte(string(blockHash) + fmt.Sprintf(":%d", blockHeight))
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, stap))
 	hash := crypto.Sha256(data)
 	// 签名，为了可以验证
 	sig := priv.Sign(hash)
 	signature := &pb.Signature{Ty: pb.ED25519, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
 	addr := address.PubKeyToAddress(signature.Pubkey).String()
 
-	// 每张票计算sortRounds轮
-	mp := make(map[int]bool)
-	for i := 0; i < sortRounds; i++ {
-		var rs Pos33Rands
-		for j := 0; j < w; j++ {
-			// 基于blockHash，blockHeight，voute_i, round_i计算hash
-			rdata := []byte(string(sig.Bytes()) + fmt.Sprintf(":%s:%d%d", addr, i, j))
-			rhash := crypto.Sha256(rdata)
+	var minHash []byte
+	var pos int
 
-			// 转为big.Float计算，比较难度diff
-			y := big.NewInt(0).SetBytes(rhash)
-			z := big.NewFloat(0).SetInt(y)
-			if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
-				continue
-			}
-			if _, ok := mp[j]; ok {
-				continue
-			}
-			// 符合，表示抽中了
-			rs.Rands = append(rs.Rands, &Pos33Rand{RandHash: rhash, Index: uint32(j), Addr: addr})
-			// rss[i] = &rs
-			sorted = true
-			mp[j] = true
+	var rs Pos33Rands
+	for j := 0; j < w; j++ {
+		// 基于blockHash，blockHeight，voute_i, round_i计算hash
+		rdata := []byte(string(sig.Bytes()) + fmt.Sprintf(":%s:%d", addr, j))
+		rhash := crypto.Sha256(rdata)
+
+		// 转为big.Float计算，比较难度diff
+		y := big.NewInt(0).SetBytes(rhash)
+		z := big.NewFloat(0).SetInt(y)
+		if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
+			continue
 		}
-		rss[i] = &rs
+
+		if minHash == nil {
+			minHash = rhash
+		}
+		if string(minHash) > string(rhash) {
+			minHash = rhash
+			pos = len(rs.Rands)
+		}
+		// 符合，表示抽中了
+		rs.Rands = append(rs.Rands, &Pos33Rand{Hash: rhash, Index: uint32(j), Addr: addr})
 	}
 
-	if !sorted {
+	if len(rs.Rands) == 0 {
 		return nil, nil
 	}
+	rs.Rands[0], rs.Rands[pos] = rs.Rands[pos], rs.Rands[0]
+	if stap == 0 {
+		rs.Rands = rs.Rands[:1]
+	}
 
-	return rss, signature
+	return &rs, signature
 }
 
 // CheckRands 检验抽签hash，allw是当前总票数, w是抵押的票数
-func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, blockHash []byte, sig *pb.Signature) error {
-	diff := Pos33CommitteeSize / (float64(allw) * onlinePersentOfAllW)
-	if len(rss) != sortRounds {
-		return fmt.Errorf("%s len(rss)==%d", addr, len(rss))
+func CheckRands(addr string, allw, w int, rs *Pos33Rands, blockHeight int64, blockHash []byte, sig *pb.Signature, stap int) error {
+	size := Pos33VeriferSize
+	if stap == 0 {
+		size = Pos33ProposerSize
 	}
-	data := []byte(string(blockHash) + fmt.Sprintf(":%d", blockHeight))
+	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
+
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, stap))
 	hash := crypto.Sha256(data)
+
 	if !pb.CheckSign(hash, "pos33", sig) {
 		return fmt.Errorf("%s signature error", addr)
 	}
@@ -94,109 +102,61 @@ func CheckRands(addr string, allw, w int, rss []*Pos33Rands, blockHeight int64, 
 		return fmt.Errorf("%s NOT match signature", addr)
 	}
 
+	if len(rs.Rands) == 0 {
+		return fmt.Errorf("sortition is nil")
+	}
+	// 抽中的票数不能大于抵押票数
+	if len(rs.Rands) > w {
+		return fmt.Errorf("%s len(rands)>w", addr)
+	}
+
 	mp := make(map[int]bool)
-	for i := 0; i < sortRounds; i++ {
-		rs := rss[i]
-		if rs == nil {
-			continue
+
+	for _, r := range rs.Rands {
+		if int(r.Index) > w {
+			return fmt.Errorf("%s Round >= RANDAROUNDS, w=%d", addr, r.Index)
 		}
-		if len(rs.Rands) == 0 {
-			continue
-		}
-		// 抽中的票数不能大于抵押票数
-		if len(rs.Rands) > w {
-			return fmt.Errorf("%s len(rands)>w", addr)
+		if addr != r.Addr {
+			return errors.New("rand address error")
 		}
 
-		rsm := make(map[string]bool)
-		for _, r := range rs.Rands {
-			if int(r.Index) > w {
-				return fmt.Errorf("%s Round >= RANDAROUNDS, w=%d", addr, r.Index)
-			}
-			if _, ok := rsm[string(r.RandHash)]; ok {
-				return fmt.Errorf("rand hash repeated")
-			}
-			rsm[string(r.RandHash)] = true
-			if addr != r.Addr {
-				return errors.New("rand address error")
-			}
-
-			rdata := []byte(string(sig.Signature) + fmt.Sprintf(":%s:%d%d", r.Addr, i, r.Index))
-			rhash := crypto.Sha256(rdata)
-			if string(r.RandHash) != string(rhash) {
-				return fmt.Errorf("%s rand hash error", addr)
-			}
-
-			y := big.NewInt(0).SetBytes(r.RandHash)
-			z := big.NewFloat(0).SetInt(y)
-			if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
-				return fmt.Errorf("%s diff error", addr)
-			}
-			if _, ok := mp[int(r.Index)]; ok {
-				return fmt.Errorf("%s reuse %d index sortition", addr, r.Index)
-			}
-			mp[int(r.Index)] = true
+		rdata := []byte(string(sig.Signature) + fmt.Sprintf(":%s:%d", r.Addr, r.Index))
+		rhash := crypto.Sha256(rdata)
+		if string(r.Hash) != string(rhash) {
+			return fmt.Errorf("%s rand hash error", addr)
 		}
+
+		y := big.NewInt(0).SetBytes(r.Hash)
+		z := big.NewFloat(0).SetInt(y)
+		if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
+			return fmt.Errorf("%s diff error", addr)
+		}
+		if _, ok := mp[int(r.Index)]; ok {
+			return fmt.Errorf("%s reuse %d index sortition", addr, r.Index)
+		}
+		mp[int(r.Index)] = true
 	}
 	return nil
 }
 
 // Sortition 统计每个action的投票，计算出共识委员会选票
-func Sortition(acts []*Pos33ElecteAction) *Pos33Rands {
-	if len(acts) == 0 {
+func Sortition(msgs []*Pos33ElectMsg, stap int) *Pos33Rands {
+	if len(msgs) == 0 {
 		return nil
 	}
-	// 方便统计，将action的票放到rss 中
-	rss := make([]*Pos33Rands, sortRounds)
-	for _, a := range acts {
-		if len(a.Rands) == 0 {
-			continue
-		}
-		for i, rs := range a.Rands {
-			if rss[i] == nil {
-				rss[i] = new(Pos33Rands)
-			}
-			if rs == nil {
-				continue
-			}
-			// 累加sortRounds的票
-			rss[i].Rands = append(rss[i].Rands, rs.Rands...)
+
+	var rs Pos33Rands
+	for _, a := range msgs {
+		for _, r := range a.Rands.Rands {
+			rs.Rands = append(rs.Rands, r)
 		}
 	}
 
-	tlog.Info("Sortition rss lengths", "r0", len(rss[0].Rands), "r1", len(rss[1].Rands), "r2", len(rss[2].Rands))
-
-	// 如果rss[0]中的票<min, 继续累加rss[1]的，以此类推
-	min := Pos33MinCommittee
-	rs := new(Pos33Rands)
-	k := 0
-	for i := 0; i < sortRounds; i++ {
-		if rss[i] == nil {
-			continue
-		}
-		if len(rs.Rands)+len(rss[i].Rands) >= min {
-			k = i // 第i轮票数已经够了
-			break
-		}
-		rs.Rands = append(rs.Rands, rss[i].Rands...)
+	sort.Sort(&rs)
+	if stap == 0 {
+		rs.Rands = rs.Rands[:Pos33ProposerSize]
+	} else {
+		rs.Rands = rs.Rands[:Pos33VeriferSize]
 	}
-
-	// 如果k轮的总票数超出了max, 对第k轮票数排序，截取
-	max := Pos33MaxCommittee
-	if len(rs.Rands)+len(rss[k].Rands) > max {
-		sort.Sort(rss[k])
-		rss[k].Rands = rss[k].Rands[:max-len(rs.Rands)]
-		tlog.Info("Sortition ok", "k", k, "lenk", len(rss[k].Rands))
-	}
-	rs.Rands = append(rs.Rands, rss[k].Rands...)
-
-	if len(rs.Rands) == 0 {
-		return rs
-	}
-
-	// 对最终符合的票数排序, 即委员会
-	if k > 0 { // k == 0 时上面已经排过了
-		sort.Sort(rs)
-	}
-	return rs
+	return &rs
 }

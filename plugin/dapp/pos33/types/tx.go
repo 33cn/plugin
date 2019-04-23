@@ -43,7 +43,7 @@ func NewWithdrawTx(w int) (*types.Transaction, error) {
 }
 
 // NewRewordTx create a deposit tx
-func NewRewordTx(votes []*Pos33Vote, randHash []byte) (*types.Transaction, error) {
+func NewRewordTx(votes []*Pos33VoteMsg, randHash []byte) (*types.Transaction, error) {
 	act := &Pos33Action{
 		Value: &Pos33Action_Reword{Reword: &Pos33RewordAction{Votes: votes, RandHash: randHash}},
 		Ty:    Pos33ActionReword,
@@ -65,21 +65,4 @@ func NewPunishTx(w int) (*types.Transaction, error) {
 // NewDelegateTx create a deposit tx
 func NewDelegateTx(w int) (*types.Transaction, error) {
 	return nil, nil
-}
-
-// NewElecteTx create a deposit tx
-func NewElecteTx(rands []*Pos33Rands, blockHash []byte, blochHeight int64, sig *types.Signature) (*types.Transaction, error) {
-	act := &Pos33Action{
-		Value: &Pos33Action_Electe{Electe: &Pos33ElecteAction{Rands: rands, Hash: blockHash, Height: blochHeight, Sig: sig}},
-		Ty:    Pos33ActionElecte,
-	}
-	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(Pos33X)),
-		Payload: types.Encode(act),
-		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-		To:      address.ExecAddress(types.ExecName(Pos33X)),
-		Fee:     1e7,
-		Expire:  time.Now().Unix() + 120,
-	}
-	return tx, nil
 }

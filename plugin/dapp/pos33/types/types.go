@@ -70,8 +70,13 @@ func (pt *Pos33Type) GetTypeMap() map[string]int32 {
 	}
 }
 
+// Weight is this vote weights
+func (v *Pos33VoteMsg) Weight() int {
+	return len(v.Elect.Rands.Rands)
+}
+
 // Verify is verify vote msg
-func (v *Pos33Vote) Verify() bool {
+func (v *Pos33VoteMsg) Verify() bool {
 	s := v.Sig
 	v.Sig = nil
 	b := crypto.Sha256(types.Encode(v))
@@ -80,7 +85,7 @@ func (v *Pos33Vote) Verify() bool {
 }
 
 // Sign is sign vote msg
-func (v *Pos33Vote) Sign(priv crypto.PrivKey) {
+func (v *Pos33VoteMsg) Sign(priv crypto.PrivKey) {
 	v.Sig = nil
 	b := crypto.Sha256(types.Encode(v))
 	sig := priv.Sign(b)
@@ -91,7 +96,7 @@ func (v *Pos33Vote) Sign(priv crypto.PrivKey) {
 func (m *Pos33Rands) ToString() string {
 	s := ""
 	for _, r := range m.Rands {
-		s += hex.EncodeToString(r.RandHash) + " "
+		s += hex.EncodeToString(r.Hash) + " "
 	}
 	return s
 }
@@ -107,6 +112,6 @@ func (act *Pos33RewordAction) ToString() string {
 
 func (m *Pos33Rands) Len() int { return len(m.Rands) }
 func (m *Pos33Rands) Less(i, j int) bool {
-	return string(m.Rands[i].RandHash) < string(m.Rands[j].RandHash)
+	return string(m.Rands[i].Hash) < string(m.Rands[j].Hash)
 }
 func (m *Pos33Rands) Swap(i, j int) { m.Rands[i], m.Rands[j] = m.Rands[j], m.Rands[i] }

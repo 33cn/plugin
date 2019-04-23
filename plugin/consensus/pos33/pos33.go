@@ -3,7 +3,6 @@ package pos33
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -136,38 +135,6 @@ func (client *Client) newBlock(txs []*types.Transaction, height int64, null bool
 // CheckBlock check block callback
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return client.n.checkBlock(current.Block)
-}
-
-func (client *Client) getCommittee(height int64) (*pt.Pos33Rands, error) {
-	key := fmt.Sprintf("%s%d", pt.KeyPos33CommitteePrefix, height)
-	val, err := client.Get([]byte(key))
-	if err != nil {
-		return nil, err
-	}
-
-	var comm pt.Pos33Committee
-	err = types.Decode(val, &comm)
-	if err != nil {
-		return nil, err
-	}
-
-	if comm.Height != height {
-		panic("can't go here")
-	}
-
-	return comm.Rands, nil
-}
-
-func (client *Client) getNextCommittee() (*pt.Pos33Rands, error) {
-	height := client.GetCurrentHeight()
-	nextHeight := height - height%int64(pt.Pos33CommitteeSize)
-	return client.getCommittee(nextHeight)
-}
-
-func (client *Client) getCurrentCommittee(height int64) (*pt.Pos33Rands, error) {
-	// height := client.GetCurrentHeight()
-	currHeight := height - int64(pt.Pos33CommitteeSize) - height%int64(pt.Pos33CommitteeSize)
-	return client.getCommittee(currHeight)
 }
 
 func (client *Client) allWeight() int {
