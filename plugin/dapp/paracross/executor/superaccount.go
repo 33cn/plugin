@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"encoding/gob"
 
+	"strings"
+
 	dbm "github.com/33cn/chain33/common/db"
 	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
@@ -16,7 +18,8 @@ import (
 )
 
 var (
-	conf = types.ConfSub(manager.ManageX)
+	confManager = types.ConfSub(manager.ManageX)
+	conf        = types.ConfSub(pt.ParaX)
 )
 
 func deepCopy(dst, src interface{}) error {
@@ -88,6 +91,27 @@ func makeNodeConfigReceipt(addr string, config *pt.ParaNodeAddrConfig, prev, cur
 	}
 }
 
+func makeParaNodeGroupApplyReiceipt(title, addr string, prev, current *pt.ParaNodeAddrStatus, logTy int32) *types.Receipt {
+	key := calcParaNodeGroupApplyKey(title)
+	log := &pt.ReceiptParaNodeConfig{
+		Addr:    addr,
+		Prev:    prev,
+		Current: current,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(current)},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  logTy,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
 func makeParaNodeGroupReiceipt(title string, prev, current *types.ConfigItem) *types.Receipt {
 	key := calcParaNodeGroupKey(title)
 	log := &types.ReceiptConfig{Prev: prev, Current: current}
@@ -105,7 +129,7 @@ func makeParaNodeGroupReiceipt(title string, prev, current *types.ConfigItem) *t
 	}
 }
 
-func (a *action) nodeAdd(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	key := calcParaNodeGroupKey(config.Title)
 	nodes, _, err := getNodes(a.db, key)
 	if err != nil {
@@ -113,6 +137,16 @@ func (a *action) nodeAdd(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) 
 	}
 	if validNode(a.fromaddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s", a.fromaddr)
+	}
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	if !types.IsPara() {
+		r, err := a.nodeGroupCoinsFrozen([]string{a.fromaddr}, config.CoinsFrozen)
+		if err != nil {
+			return nil, err
+		}
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
 	}
 
 	key = calcParaNodeAddrKey(config.Title, config.Addr)
@@ -123,31 +157,39 @@ func (a *action) nodeAdd(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) 
 		}
 		clog.Info("first time add node addr", "key", string(key))
 		stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeAdding,
-			Title:     config.Title,
-			ApplyAddr: config.Addr,
-			Votes:     &pt.ParaNodeVoteDetail{}}
+			Title:       config.Title,
+			ApplyAddr:   config.Addr,
+			Votes:       &pt.ParaNodeVoteDetail{},
+			CoinsFrozen: config.CoinsFrozen}
 		saveNodeAddr(a.db, key, stat)
-		return makeNodeConfigReceipt(a.fromaddr, config, nil, stat), nil
+		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+		return receipt, nil
 	}
 
 	var copyStat pt.ParaNodeAddrStatus
 	err = deepCopy(&copyStat, stat)
 	if err != nil {
-		clog.Error("nodeaccount.nodeAdd deep copy fail", "copy", copyStat, "stat", stat)
+		clog.Error("nodeaccount.nodeJoin deep copy fail", "copy", copyStat, "stat", stat)
 		return nil, err
 	}
 	if stat.Status != pt.ParacrossNodeQuited {
-		clog.Error("nodeaccount.nodeAdd key exist", "key", string(key), "status", stat)
+		clog.Error("nodeaccount.nodeJoin key exist", "key", string(key), "status", stat)
 		return nil, pt.ErrParaNodeAddrExisted
 	}
 	stat.Status = pt.ParacrossNodeAdding
+	stat.CoinsFrozen = config.CoinsFrozen
 	stat.Votes = &pt.ParaNodeVoteDetail{}
 	saveNodeAddr(a.db, key, stat)
-	return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
+	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+	return receipt, nil
 
 }
 
-func (a *action) nodeDelete(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	key := calcParaNodeGroupKey(config.Title)
 	nodes, _, err := getNodes(a.db, key)
 	if err != nil {
@@ -166,27 +208,49 @@ func (a *action) nodeDelete(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	if err != nil {
 		return nil, err
 	}
-	//refused or quiting
-	if stat.Status != pt.ParacrossNodeAdded {
-		clog.Error("nodeaccount.nodeDelete wrong status", "key", string(key), "status", stat)
-		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s not be added status:%d", a.fromaddr, stat.Status)
+
+	if stat.Status == pt.ParacrossNodeQuiting || stat.Status == pt.ParacrossNodeQuited {
+		clog.Error("nodeaccount.nodeQuit wrong status", "key", string(key), "status", stat)
+		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s was quit status:%d", a.fromaddr, stat.Status)
 	}
 	var copyStat pt.ParaNodeAddrStatus
 	err = deepCopy(&copyStat, stat)
 	if err != nil {
-		clog.Error("nodeaccount.nodeDelete deep copy fail", "copy", copyStat, "stat", stat)
+		clog.Error("nodeaccount.nodeQuit deep copy fail", "copy", copyStat, "stat", stat)
 		return nil, err
 	}
-	stat.Status = pt.ParacrossNodeQuiting
+	if stat.Status == pt.ParacrossNodeAdded {
+		stat.Status = pt.ParacrossNodeQuiting
+		stat.Votes = &pt.ParaNodeVoteDetail{}
+		saveNodeAddr(a.db, key, stat)
+		return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
+	}
+
+	//still adding status, quit directly
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	if !types.IsPara() {
+		r, err := a.nodeGroupCoinsActive([]string{a.fromaddr}, stat.CoinsFrozen)
+		if err != nil {
+			return nil, err
+		}
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+	}
+
+	stat.Status = pt.ParacrossNodeQuited
 	stat.Votes = &pt.ParaNodeVoteDetail{}
 	saveNodeAddr(a.db, key, stat)
-	return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
+	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+
+	return receipt, nil
 
 }
 
 // IsSuperManager is supper manager or not
 func isSuperManager(addr string) bool {
-	for _, m := range conf.GStrList("superManager") {
+	for _, m := range confManager.GStrList("superManager") {
 		if addr == m {
 			return true
 		}
@@ -297,6 +361,15 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeQuited
+
+			if !types.IsPara() {
+				r, err := a.nodeGroupCoinsActive([]string{stat.ApplyAddr}, stat.CoinsFrozen)
+				if err != nil {
+					return nil, err
+				}
+				receipt.KV = append(receipt.KV, r.KV...)
+				receipt.Logs = append(receipt.Logs, r.Logs...)
+			}
 		}
 	}
 	saveNodeAddr(a.db, key, stat)
@@ -355,57 +428,9 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	return makeParaNodeGroupReiceipt(title, &copyItem, &item), nil
 }
 
-func (a *action) nodeTakeover(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	key := calcManageConfigNodesKey(config.Title)
-	_, nodes, err := getNodes(a.db, key)
-	if err != nil {
-		return nil, err
-	}
-	if len(nodes) == 0 {
-		return nil, pt.ErrParaManageNodesNotSet
-	}
-
-	var item types.ConfigItem
-	key = calcParaNodeGroupKey(config.Title)
-	value, err := a.db.Get(key)
-	if err != nil && !isNotFound(err) {
-		return nil, err
-	}
-	if value != nil {
-		return nil, pt.ErrParaNodeGroupExisted
-	}
-
-	item.Key = string(key)
-	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
-	arr := types.ConfigItem_Arr{Arr: emptyValue}
-	item.Value = &arr
-
-	copyItem := item
-	item.GetArr().Value = append(item.GetArr().Value, nodes...)
-	item.Addr = a.fromaddr
-	a.db.Set(key, types.Encode(&item))
-	receipt := makeParaNodeGroupReiceipt(config.Title, &copyItem, &item)
-
-	//update add addr
-	for _, addr := range nodes {
-		key = calcParaNodeAddrKey(config.Title, addr)
-		stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeAdded,
-			Title:     config.Title,
-			ApplyAddr: addr,
-			Votes:     &pt.ParaNodeVoteDetail{}}
-		saveNodeAddr(a.db, key, stat)
-		config.Addr = addr
-		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
-	}
-	return receipt, nil
-}
-
-//NodeConfig support super account node config
-func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	if !validTitle(config.Title) {
-		return nil, pt.ErrInvalidTitle
+func (a *action) checkConfig(title string) error {
+	if !validTitle(title) {
+		return pt.ErrInvalidTitle
 	}
 
 	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
@@ -416,28 +441,341 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		}
 	}
 	if a.exec.GetMainHeight() < forkHeight {
-		return nil, types.ErrNotSupport
+		return types.ErrNotSupport
+	}
+
+	return nil
+}
+
+//NodeConfig support super account node config
+func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+	err := a.checkConfig(config.Title)
+	if err != nil {
+		return nil, err
 	}
 
 	if config.Op == pt.ParaNodeJoin {
 		if config.Addr != a.fromaddr {
 			return nil, types.ErrFromAddr
 		}
-		return a.nodeAdd(config)
+		return a.nodeJoin(config)
 
 	} else if config.Op == pt.ParaNodeQuit {
 		if config.Addr != a.fromaddr {
 			return nil, types.ErrFromAddr
 		}
-		return a.nodeDelete(config)
+		return a.nodeQuit(config)
 
 	} else if config.Op == pt.ParaNodeVote {
 		return a.nodeVote(config)
-	} else if config.Op == pt.ParaNodeTakeover {
-		return a.nodeTakeover(config)
-
 	} else {
 		return nil, pt.ErrParaUnSupportNodeOper
 	}
 
+}
+
+//NodeConfig support super account node config
+func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
+	err := a.checkConfig(config.Title)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(config.Addrs) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+
+	if config.Op == pt.ParacrossNodeGroupApply {
+		if !strings.Contains(config.Addrs, a.fromaddr) {
+			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
+			return nil, types.ErrNotAllow
+		}
+		err := a.checkNodeGroupExist(config.Title)
+		if err != nil {
+			return nil, err
+		}
+		return a.nodeGroupApply(config)
+
+	} else if config.Op == pt.ParacrossNodeGroupApprove {
+		err := a.checkNodeGroupExist(config.Title)
+		if err != nil {
+			return nil, err
+		}
+		return a.nodeGroupApprove(config)
+
+	} else if config.Op == pt.ParacrossNodeGroupQuit {
+		if !strings.Contains(config.Addrs, a.fromaddr) {
+			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
+			return nil, types.ErrNotAllow
+		}
+		return a.nodeGroupQuit(config)
+	} else {
+		return nil, pt.ErrParaUnSupportNodeOper
+	}
+
+}
+
+func getAddrGroup(addr string) []string {
+	if strings.Contains(addr, ",") {
+		repeats := make(map[string]bool)
+		var addrs []string
+
+		s := strings.Trim(addr, " ")
+		s = strings.Trim(s, ",")
+		ss := strings.Split(s, ",")
+		for _, v := range ss {
+			v = strings.Trim(v, " ")
+			if !repeats[v] {
+				addrs = append(addrs, v)
+				repeats[v] = true
+			}
+		}
+		return addrs
+	}
+
+	return []string{addr}
+}
+
+func (a *action) checkNodeGroupExist(title string) error {
+	key := calcParaNodeGroupKey(title)
+	value, err := a.db.Get(key)
+	if err != nil && !isNotFound(err) {
+		return err
+	}
+	if value != nil {
+		clog.Error("node group apply, group existed")
+		return pt.ErrParaNodeGroupExisted
+	}
+
+	return nil
+}
+
+func (a *action) nodeGroupCoinsFrozen(addrs []string, configCoinsFrozen int64) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	confCoins := confManager.GInt("nodeGroupFrozenCoins")
+	if configCoinsFrozen < confCoins {
+		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
+	}
+
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	for _, addr := range addrs {
+		receipt, err := a.coinsAccount.ExecFrozen(addr, a.execaddr, configCoinsFrozen)
+		if err != nil {
+			clog.Error("node group apply", "addr", addr, "execaddr", a.execaddr, "amount", configCoinsFrozen)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+	receipt.KV = append(receipt.KV, kv...)
+	receipt.Logs = append(receipt.Logs, logs...)
+
+	return receipt, nil
+}
+
+func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	for _, addr := range addrs {
+		receipt, err := a.coinsAccount.ExecActive(addr, a.execaddr, configCoinsFrozen)
+		if err != nil {
+			clog.Error("node group apply", "addr", addr, "execaddr", a.execaddr, "amount", configCoinsFrozen)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+	receipt.KV = append(receipt.KV, kv...)
+	receipt.Logs = append(receipt.Logs, logs...)
+
+	return receipt, nil
+}
+
+// NodeGroupApply
+func (a *action) nodeGroupApply(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
+	key := calcParaNodeGroupApplyKey(title)
+	status, err := getNodeAddr(a.db, key)
+	if err != nil && !isNotFound(err) {
+		return nil, err
+	}
+	if status != nil && status.Status != pt.ParacrossNodeGroupQuit {
+		clog.Error("node group apply exist", "status", status.Status)
+		return nil, pt.ErrParaNodeGroupExisted
+	}
+
+	addrs := getAddrGroup(config.Addrs)
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	//main chain
+	if !types.IsPara() {
+		r, err := a.nodeGroupCoinsFrozen(addrs, config.CoinsFrozen)
+		if err != nil {
+			return nil, err
+		}
+
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+	}
+
+	stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeGroupApply,
+		Title:       config.Title,
+		ApplyAddr:   strings.Join(addrs, ","),
+		CoinsFrozen: config.CoinsFrozen}
+	saveNodeAddr(a.db, key, stat)
+	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, nil, stat, pt.TyLogParaNodeGroupApply)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+
+	return receipt, nil
+}
+
+func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
+	key := calcParaNodeGroupApplyKey(title)
+	status, err := getNodeAddr(a.db, key)
+	if err != nil {
+		return nil, err
+	}
+	if status != nil && status.Status != pt.ParacrossNodeGroupApply {
+		clog.Error("node group apply exist", "status", status.Status)
+		return nil, pt.ErrParaNodeGroupStatusWrong
+	}
+
+	applyAddrs, err := checkNodeGroupAddrsMatch(status.ApplyAddr, config.Addrs)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	//main chain
+	if !types.IsPara() {
+		r, err := a.nodeGroupCoinsActive(applyAddrs, status.CoinsFrozen)
+		if err != nil {
+			return nil, err
+		}
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+	}
+
+	stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeGroupQuit,
+		Title:       config.Title,
+		ApplyAddr:   status.ApplyAddr,
+		CoinsFrozen: status.CoinsFrozen}
+	saveNodeAddr(a.db, key, stat)
+	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, nil, stat, pt.TyLogParaNodeGroupQuit)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+
+	return receipt, nil
+}
+
+func checkNodeGroupAddrsMatch(applyAddr, confAddr string) ([]string, error) {
+	confAddrs := getAddrGroup(confAddr)
+	applyAddrs := strings.Split(applyAddr, ",")
+
+	applys := make(map[string]bool)
+	configs := make(map[string]bool)
+	diff := []string{}
+	for _, addr := range applyAddrs {
+		applys[addr] = true
+	}
+	for _, addr := range confAddrs {
+		configs[addr] = true
+	}
+	if len(applys) != len(configs) {
+		clog.Error("node group addrs count not match", "apply", applyAddr, "quit", confAddr)
+		return nil, pt.ErrParaNodeGroupAddrNotMatch
+	}
+
+	for _, addr := range confAddrs {
+		if !applys[addr] {
+			diff = append(diff, addr)
+		}
+	}
+	if len(diff) > 0 {
+		clog.Error("node group addrs not match", "apply", applyAddr, "quit", confAddr)
+		return nil, pt.ErrParaNodeGroupAddrNotMatch
+	}
+	return confAddrs, nil
+
+}
+
+// NodeGroupApprove super addr approve the node group apply
+func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
+	if !isSuperManager(a.fromaddr) {
+		clog.Error("node group approve not super manager", "addr", a.fromaddr)
+		return nil, types.ErrNotAllow
+	}
+
+	key := calcParaNodeGroupApplyKey(title)
+	status, err := getNodeAddr(a.db, key)
+	if err != nil {
+		return nil, err
+	}
+	if status.Status != pt.ParacrossNodeGroupApply {
+		clog.Error("node group approve not apply status", "status", status.Status)
+		return nil, pt.ErrParaNodeGroupStatusWrong
+	}
+
+	applyAddrs, err := checkNodeGroupAddrsMatch(status.ApplyAddr, config.Addrs)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	//create the node group
+	r, err := a.nodeGroupCreate(config.Title, applyAddrs, config.CoinsFrozen)
+	if err != nil {
+		return nil, err
+	}
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+
+	stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeGroupApprove,
+		Title:       config.Title,
+		ApplyAddr:   status.ApplyAddr,
+		CoinsFrozen: status.CoinsFrozen}
+	saveNodeAddr(a.db, key, stat)
+	r = makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupApprove)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+
+	return receipt, nil
+}
+
+func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64) (*types.Receipt, error) {
+	var item types.ConfigItem
+	key := calcParaNodeGroupKey(title)
+	item.Key = string(key)
+	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
+	arr := types.ConfigItem_Arr{Arr: emptyValue}
+	item.Value = &arr
+
+	copyItem := item
+	item.GetArr().Value = append(item.GetArr().Value, nodes...)
+	item.Addr = a.fromaddr
+	a.db.Set(key, types.Encode(&item))
+	receipt := makeParaNodeGroupReiceipt(title, &copyItem, &item)
+
+	//update addr status
+	for _, addr := range nodes {
+		key = calcParaNodeAddrKey(title, addr)
+		stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeAdded,
+			Title:       title,
+			ApplyAddr:   addr,
+			Votes:       &pt.ParaNodeVoteDetail{},
+			CoinsFrozen: coinFrozen}
+		saveNodeAddr(a.db, key, stat)
+		config := &pt.ParaNodeAddrConfig{
+			Title:       title,
+			Addr:        addr,
+			CoinsFrozen: coinFrozen,
+		}
+		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+	}
+	return receipt, nil
 }

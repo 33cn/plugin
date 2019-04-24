@@ -169,7 +169,7 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 }
 
 // GetNodeGroup get super node group
-func (c *channelClient) GetNodeGroup(ctx context.Context, req *types.ReqString) (*types.ReplyConfig, error) {
+func (c *channelClient) GetNodeGroup(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*types.ReplyConfig, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "GetNodeGroup", &r)
 	if err != nil {
@@ -182,7 +182,7 @@ func (c *channelClient) GetNodeGroup(ctx context.Context, req *types.ReqString) 
 }
 
 // GetNodeGroup get super node group
-func (c *Jrpc) GetNodeGroup(req *types.ReqString, result *interface{}) error {
+func (c *Jrpc) GetNodeGroup(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.GetNodeGroup(context.Background(), req)
 	*result = data
 	return err

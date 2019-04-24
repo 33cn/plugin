@@ -122,6 +122,17 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawNodeConfigTx(&param)
+	} else if action == "NodeGroupApply" {
+		if !types.IsPara() {
+			return nil, types.ErrNotSupport
+		}
+		var param ParaNodeGroupApply
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.NodeGroupApply", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawNodeGroupApplyTx(&param)
 	}
 
 	return nil, types.ErrNotSupport
