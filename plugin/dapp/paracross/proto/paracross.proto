@@ -39,6 +39,7 @@ message ParaNodeAddrConfig{
     string op                   = 2;
     string addr                 = 3;
     string value                = 4;
+    int64  coinsFrozen          = 5;
 
 }
 
@@ -51,7 +52,8 @@ message ParaNodeAddrStatus{
     int32  status               = 1;
     string title                = 2;
     string applyAddr            = 3;
-    ParaNodeVoteDetail votes    = 4;
+    int64  coinsFrozen          = 4;
+    ParaNodeVoteDetail votes    = 5;
 }
 
 
@@ -78,6 +80,15 @@ message ReceiptParaNodeVoteDone {
     int32  doneStatus       = 7;
 
 }
+
+message ParaNodeGroupApply{
+    string title                = 1;
+    uint32 op                   = 2;
+    string addrs                = 3;
+    int64  coinsFrozen          = 4;
+
+}
+
 
 // node query
 message ReqParacrossNodeInfo {
@@ -137,6 +148,8 @@ message ParacrossAction {
         AssetsWithdraw        withdraw       = 7;
         AssetsTransferToExec  transferToExec = 8;
         ParaNodeAddrConfig    nodeConfig     = 9;
+        ParaNodeGroupApply    nodeGroupConfig= 10;
+
 
     }
     int32 ty = 2;

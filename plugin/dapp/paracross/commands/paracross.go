@@ -33,6 +33,7 @@ func ParcCmd() *cobra.Command {
 		CreateRawWithdrawCmd(),
 		CreateRawTransferToExecCmd(),
 		CreateRawNodeManageCmd(),
+		CreateNodeGroupApplyCmd(),
 		GetParaInfoCmd(),
 		GetParaListCmd(),
 		GetNodeGroupCmd(),
@@ -248,22 +249,27 @@ func CreateRawNodeManageCmd() *cobra.Command {
 }
 
 func addNodeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("operation", "o", "", "operation:join,quit,vote,takeover")
+	cmd.Flags().StringP("operation", "o", "", "operation:join,quit,vote")
 	cmd.MarkFlagRequired("operation")
 
 	cmd.Flags().StringP("addr", "a", "", "operating target addr")
+	cmd.MarkFlagRequired("addrs")
+
 	cmd.Flags().StringP("value", "v", "", "vote value: yes,no")
+	cmd.Flags().Int64P("coins_frozen", "c", 0, "join to frozen coins amount, not less config")
 }
 
 func createNodeTx(cmd *cobra.Command, args []string) {
 	op, _ := cmd.Flags().GetString("operation")
 	opAddr, _ := cmd.Flags().GetString("addr")
 	val, _ := cmd.Flags().GetString("value")
-	if op != "vote" && op != "quit" && op != "join" && op != "takeover" {
-		fmt.Println("operation should be one of join,quit,vote,takeover")
+	coins, _ := cmd.Flags().GetInt64("coins_frozen")
+
+	if op != "vote" && op != "quit" && op != "join" {
+		fmt.Println("operation should be one of join,quit,vote")
 		return
 	}
-	if (op == "vote" || op == "join" || op == "quit") && opAddr == "" {
+	if opAddr == "" {
 		fmt.Println("addr parameter should not be null")
 		return
 	}
@@ -272,7 +278,7 @@ func createNodeTx(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr}
+	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr, CoinsFrozen: coins}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeConfig",
@@ -283,6 +289,54 @@ func createNodeTx(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 
+}
+
+// CreateNodeGroupApplyCmd get node group addr
+func CreateNodeGroupApplyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nodegroup",
+		Short: "apply for para chain's super node group",
+		Run:   nodeGroupApply,
+	}
+	addNodeGroupApplyCmdFlags(cmd)
+	return cmd
+}
+
+func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:apply,2:approve,3:quit")
+	cmd.MarkFlagRequired("operation")
+
+	cmd.Flags().StringP("addrs", "a", "", "addrs apply for super node,split by ',' ")
+	cmd.MarkFlagRequired("addrs")
+
+	cmd.Flags().Int64P("coins_frozen", "c", 0, "coins amount to frozen, not less config")
+
+}
+
+func nodeGroupApply(cmd *cobra.Command, args []string) {
+	op, _ := cmd.Flags().GetUint32("operation")
+	addrs, _ := cmd.Flags().GetString("addrs")
+	coins, _ := cmd.Flags().GetInt64("coins_frozen")
+
+	if op == 0 || op > 3 {
+		fmt.Println("operation should be one of 1:apply,2:approve,3:quit")
+		return
+	}
+	if addrs == "" {
+		fmt.Println("addrs should not be nil")
+		return
+	}
+
+	payload := &pt.ParaNodeGroupApply{Op: op, Addrs: addrs, CoinsFrozen: coins}
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pt.ParaX),
+		ActionName: "NodeGroupApply",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 // IsSyncCmd query parachain is sync
@@ -315,6 +369,7 @@ func GetHeightCmd() *cobra.Command {
 
 func addTitleFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("title", "t", "", "parallel chain's title, default null in para chain")
+	cmd.MarkFlagRequired("title")
 }
 
 func consusHeight(cmd *cobra.Command, args []string) {
@@ -484,8 +539,8 @@ func nodeList(cmd *cobra.Command, args []string) {
 // GetNodeGroupCmd get node group addr
 func GetNodeGroupCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "node_group",
-		Short: "Get super node group by title",
+		Use:   "nodegroup_list",
+		Short: "Get super node group list by title or status",
 		Run:   nodeGroup,
 	}
 	addNodeGroupCmdFlags(cmd)
@@ -495,13 +550,22 @@ func GetNodeGroupCmd() *cobra.Command {
 func addNodeGroupCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
 	cmd.MarkFlagRequired("title")
+
+	cmd.Flags().Int32P("status", "s", 0, "status:1:apply,2:approve,3:quit")
+	cmd.MarkFlagRequired("status")
 }
 
 func nodeGroup(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
+	status, _ := cmd.Flags().GetInt32("status")
+
+	params := pt.ReqParacrossNodeInfo{
+		Title:  title,
+		Status: status,
+	}
 
 	var res types.ReplyConfig
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroup", types.ReqString{Data: title}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroup", params, &res)
 	ctx.Run()
 }

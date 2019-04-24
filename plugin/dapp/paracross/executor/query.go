@@ -36,11 +36,11 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 }
 
 //Query_GetNodeGroup get node group addrs
-func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, error) {
+func (p *Paracross) Query_GetNodeGroup(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeGroupKey(in.GetData())
+	key := calcParaNodeGroupKey(in.GetTitle())
 	ret, _, err := getNodes(p.GetStateDB(), key)
 	if err != nil {
 		return nil, errors.Cause(err)
