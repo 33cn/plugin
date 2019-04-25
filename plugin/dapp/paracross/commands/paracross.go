@@ -539,8 +539,8 @@ func nodeList(cmd *cobra.Command, args []string) {
 // GetNodeGroupCmd get node group addr
 func GetNodeGroupCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "nodegroup_list",
-		Short: "Get super node group list by title or status",
+		Use:   "nodegroup_addrs",
+		Short: "Get super node group's addrs by title",
 		Run:   nodeGroup,
 	}
 	addNodeGroupCmdFlags(cmd)
@@ -550,22 +550,72 @@ func GetNodeGroupCmd() *cobra.Command {
 func addNodeGroupCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
 	cmd.MarkFlagRequired("title")
-
-	cmd.Flags().Int32P("status", "s", 0, "status:1:apply,2:approve,3:quit")
-	cmd.MarkFlagRequired("status")
 }
 
 func nodeGroup(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
+
+	var res types.ReplyConfig
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupAddrs", types.ReqString{Data: title}, &res)
+	ctx.Run()
+}
+
+// GetNodeGroupCmd get node group addr
+func NodeGroupStatusCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nodegroup_status",
+		Short: "query super node group apply status by title",
+		Run:   nodeGroupStatus,
+	}
+	getNodeGroupStatusCmdFlags(cmd)
+	return cmd
+}
+
+func getNodeGroupStatusCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("title")
+
+}
+
+func nodeGroupStatus(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	title, _ := cmd.Flags().GetString("title")
+
+	params := pt.ReqParacrossNodeInfo{
+		Title: title,
+	}
+
+	var res pt.ParaNodeAddrStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupStatus", params, &res)
+	ctx.Run()
+}
+
+// GetNodeGroupCmd get node group addr
+func NodeGroupListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nodegroup_list",
+		Short: "query super node group apply list by status",
+		Run:   nodeGroupList,
+	}
+	getNodeGroupListCmdFlags(cmd)
+	return cmd
+}
+
+func getNodeGroupListCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("status", "s", 0, "status:1:apply,2:approve,3:quit")
+	cmd.MarkFlagRequired("status")
+}
+
+func nodeGroupList(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	status, _ := cmd.Flags().GetInt32("status")
 
 	params := pt.ReqParacrossNodeInfo{
-		Title:  title,
 		Status: status,
 	}
 
-	var res types.ReplyConfig
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroup", params, &res)
+	var res pt.RespParacrossNodeAddrs
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListNodeGroupStatus", params, &res)
 	ctx.Run()
 }
