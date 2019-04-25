@@ -3,16 +3,16 @@ package para
 import (
 	"bytes"
 	"context"
-	"fmt"
-
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
+	"fmt"
 )
 
 var mlog = log.New("module", "mempool.para")
 var topic = "mempool"
+var RETRY_TIMES = 3
 
 //Mempool mempool 基础类
 type Mempool struct {
@@ -49,21 +49,21 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 					if err != nil {
 						//进行重试
-						for i := 0; i < 3; i++ {
+						for i := 0; i < RETRY_TIMES; i++ {
 							reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 							if err != nil {
 								continue
+							} else {
+								break
 							}
 						}
+						if err != nil {
+							msg.Reply(client.NewMessage(topic, types.EventReply, &types.Reply{IsOk: false,
+								Msg: []byte(fmt.Sprintf("Send transaction to main chain failed, %v", err))}))
+							break
+						}
 					}
-
-					if err == nil {
-						msg.Reply(client.NewMessage(topic, types.EventReply, &types.Reply{IsOk: true,
-							Msg: []byte(reply.GetMsg())}))
-					} else {
-						msg.Reply(client.NewMessage(topic, types.EventReply, &types.Reply{IsOk: false,
-							Msg: []byte(fmt.Sprintf("Send transaction to main chain failed, %v", err))}))
-					}
+					msg.Reply(client.NewMessage(topic, types.EventReply, &types.Reply{IsOk: true, Msg: []byte(reply.GetMsg())}))
 				}
 			default:
 			}
