@@ -13,7 +13,7 @@ import (
 
 var mlog = log.New("module", "mempool.para")
 var topic = "mempool"
-var RETRY_TIMES = 3
+var retry_times = 3
 
 //Mempool mempool 基础类
 type Mempool struct {
@@ -50,7 +50,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 					if err != nil {
 						//进行重试
-						for i := 0; i < RETRY_TIMES; i++ {
+						for i := 0; i < retry_times; i++ {
 							reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 							if err != nil {
 								continue

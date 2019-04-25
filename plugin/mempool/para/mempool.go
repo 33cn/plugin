@@ -9,11 +9,6 @@ import (
 //--------------------------------------------------------------------------------
 // Module Mempool
 
-type subConfig struct {
-	PoolCacheSize int64 `json:"poolCacheSize"`
-	ProperFee     int64 `json:"properFee"`
-}
-
 func init() {
 	drivers.Reg("para", New)
 }
