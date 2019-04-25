@@ -3,11 +3,12 @@ package para
 import (
 	"bytes"
 	"context"
+	"fmt"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
-	"fmt"
 )
 
 var mlog = log.New("module", "mempool.para")
