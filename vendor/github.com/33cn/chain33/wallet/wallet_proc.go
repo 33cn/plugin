@@ -715,9 +715,18 @@ func (wallet *Wallet) ProcMergeBalance(MergeBalance *types.ReqWalletMergeBalance
 		v := &cty.CoinsAction_Transfer{
 			Transfer: &types.AssetsTransfer{Amount: amount, Note: []byte(note)},
 		}
+		if types.IsPara() {
+			v.Transfer.To = MergeBalance.GetTo()
+		}
 		transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 		//初始化随机数
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: wallet.FeeAmount, To: addrto, Nonce: wallet.random.Int63()}
+		exec := []byte("coins")
+		toAddr := addrto
+		if types.IsPara() {
+			exec = []byte(types.GetTitle() + "coins")
+			toAddr = address.ExecAddress(string(exec))
+		}
+		tx := &types.Transaction{Execer: exec, Payload: types.Encode(transfer), Fee: wallet.FeeAmount, To: toAddr, Nonce: wallet.random.Int63()}
 		tx.SetExpire(time.Second * 120)
 		tx.Sign(int32(SignType), priv)
 		//walletlog.Info("ProcMergeBalance", "tx.Nonce", tx.Nonce, "tx", tx, "index", index)

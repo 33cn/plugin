@@ -141,12 +141,7 @@ func RunChain33(name string) {
 	q := queue.New("channel")
 
 	log.Info("loading mempool module")
-	var mem queue.Module
-	if !types.IsPara() {
-		mem = mempool.New(cfg.Mempool, sub.Mempool)
-	} else {
-		mem = &util.MockModule{Key: "mempool"}
-	}
+	mem := mempool.New(cfg.Mempool, sub.Mempool)
 	mem.SetQueueClient(q.Client())
 
 	log.Info("loading execs module")
