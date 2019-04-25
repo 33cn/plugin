@@ -36,7 +36,7 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 }
 
 //Query_GetNodeGroup get node group addrs
-func (p *Paracross) Query_GetNodeGroup(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -50,7 +50,7 @@ func (p *Paracross) Query_GetNodeGroup(in *pt.ReqParacrossNodeInfo) (types.Messa
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(key)
+	reply.Key = string(in.GetTitle() + " all addrs")
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
@@ -74,6 +74,27 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 		return nil, types.ErrInvalidParam
 	}
 	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
+}
+
+//Query_GetNodeAddrInfo get specific node addr info
+func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+	key := calcParaNodeGroupApplyKey(in.Title)
+	stat, err := getNodeAddr(p.GetStateDB(), key)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
+//Query_ListNodeStatusInfo list node info by status
+func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Status == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	return listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
 }
 
 //Query_ListTitles query paracross titles list
@@ -170,9 +191,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 	return &resp, nil
 }
 
-//按状态遍历
-func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
-	prefix := calcLocalNodeStatusPrefix(title, status)
+func listNodeStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 	res, err := db.List(prefix, []byte(""), 0, 1)
 	if err != nil {
 		return nil, err
@@ -188,7 +207,17 @@ func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message
 		resp.Addrs = append(resp.Addrs, &st)
 	}
 	return &resp, nil
+}
 
+//按状态遍历
+func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
+	prefix := calcLocalNodeStatusPrefix(title, status)
+	return listNodeStatus(db, prefix)
+}
+
+func listLocalNodeGroupStatus(db dbm.KVDB, status int32) (types.Message, error) {
+	prefix := calcLocalNodeGroupStatusPrefix(status)
+	return listNodeStatus(db, prefix)
 }
 
 func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error) {

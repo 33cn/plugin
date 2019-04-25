@@ -625,7 +625,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupApply) (*types.Receipt, 
 		ApplyAddr:   strings.Join(addrs, ","),
 		CoinsFrozen: config.CoinsFrozen}
 	saveNodeAddr(a.db, key, stat)
-	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, nil, stat, pt.TyLogParaNodeGroupApply)
+	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupApply)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -664,7 +664,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupApply) (*types.Receipt, e
 		ApplyAddr:   status.ApplyAddr,
 		CoinsFrozen: status.CoinsFrozen}
 	saveNodeAddr(a.db, key, stat)
-	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, nil, stat, pt.TyLogParaNodeGroupQuit)
+	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupQuit)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 

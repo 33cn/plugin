@@ -79,6 +79,29 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 	return &set, nil
 }
 
+// ExecDelLocal_NodeGroupConfig node group config tx delete process
+func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupApply, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
+			log.Ty == pt.TyLogParaNodeGroupQuit {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title), Value: types.Encode(g.Prev)})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title), Value: nil})
+		}
+	}
+	return &set, nil
+}
+
 //ExecDelLocal_AssetTransfer asset transfer del local db process
 func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet

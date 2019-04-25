@@ -11,18 +11,19 @@ import (
 )
 
 var (
-	title                   string
-	titleHeight             string
-	managerConfigNodes      string //manager 合约配置的nodes
-	paraConfigNodes         string //平行链自组织配置的nodes，最初是从manager同步过来
-	paraConfigNodeAddr      string //平行链配置节点账户
-	paraNodeGroupApplyAddrs string
-	localTx                 string
-	localTitle              string
-	localTitleHeight        string
-	localAssetKey           string
-	localNodeTitleStatus    string
-	localNodeTitleDone      string
+	title                     string
+	titleHeight               string
+	managerConfigNodes        string //manager 合约配置的nodes
+	paraConfigNodes           string //平行链自组织配置的nodes，最初是从manager同步过来
+	paraConfigNodeAddr        string //平行链配置节点账户
+	paraNodeGroupApplyAddrs   string
+	localTx                   string
+	localTitle                string
+	localTitleHeight          string
+	localAssetKey             string
+	localNodeTitleStatus      string
+	localNodeTitleDone        string
+	localNodeGroupStatusTitle string
 )
 
 func setPrefix() {
@@ -39,6 +40,8 @@ func setPrefix() {
 
 	localNodeTitleStatus = "LODB-paracross-nodesTitleStatus-"
 	localNodeTitleDone = "LODB-paracross-nodesTitleDone-"
+
+	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
 }
 
@@ -97,4 +100,12 @@ func calcLocalNodeStatusPrefix(title string, status int32) []byte {
 
 func calcLocalNodeTitleDone(title, addr string) []byte {
 	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, addr))
+}
+
+func calcLocalNodeGroupStatusTitle(status int32, title string) []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-%s", status, title))
+}
+
+func calcLocalNodeGroupStatusPrefix(status int32) []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d", status))
 }

@@ -80,6 +80,29 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 	return &set, nil
 }
 
+//ExecLocal_NodeGroupConfig node group config add process
+func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupApply, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
+			log.Ty == pt.TyLogParaNodeGroupQuit {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title), Value: nil})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title), Value: types.Encode(g.Current)})
+		}
+	}
+	return &set, nil
+}
+
 //ExecLocal_AssetTransfer asset transfer local proc
 func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
