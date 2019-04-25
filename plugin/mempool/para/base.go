@@ -3,11 +3,12 @@ package para
 import (
 	"bytes"
 	"context"
+	"fmt"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
-	"fmt"
 )
 
 var mlog = log.New("module", "mempool.para")
@@ -49,7 +50,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 					if err != nil {
 						//进行重试
-						for i := 0; i < 3; i ++ {
+						for i := 0; i < 3; i++ {
 							reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 							if err != nil {
 								continue
