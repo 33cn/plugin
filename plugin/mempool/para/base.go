@@ -50,25 +50,18 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 				mlog.Info("Receive msg from para mempool")
 				if bytes.HasPrefix(msg.GetData().(*types.Transaction).Execer, types.ParaKey) {
 					tx := msg.GetData().(*types.Transaction)
-					var reply *types.Reply
-					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
-					if err != nil {
-						//进行重试
-						for i := 0; i < retry_times; i++ {
-							reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
-							if err != nil {
-								continue
-							} else {
-								break
-							}
-						}
-						if err != nil {
+					for i := 0; i < retry_times; i++ {
+						reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
+						if err == nil {
+							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: []byte(reply.GetMsg())}))
+							break
+						} else if err != nil && i != retry_times-1 {
+							continue
+						} else {
 							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: false,
 								Msg: []byte(fmt.Sprintf("Send transaction to main chain failed, %v", err))}))
-							break
 						}
 					}
-					msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: []byte(reply.GetMsg())}))
 				}
 			default:
 				msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: false,
