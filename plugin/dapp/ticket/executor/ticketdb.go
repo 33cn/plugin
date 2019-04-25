@@ -53,7 +53,8 @@ func NewDB(id, minerAddress, returnWallet string, blocktime, height, price int64
 	t.Status = 1
 	t.IsGenesis = isGenesis
 	t.prevstatus = 0
-	if types.IsFork(height, "ForkChainParamV2") {
+	//height == 0 的情况下，不去改变 genesis block
+	if types.IsFork(height, "ForkChainParamV2") && height > 0 {
 		t.Price = price
 	}
 	return t
