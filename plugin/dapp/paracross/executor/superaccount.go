@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
+	"github.com/33cn/chain33/system/dapp"
 )
 
 var (
@@ -552,18 +553,20 @@ func (a *action) checkNodeGroupExist(title string) error {
 
 func (a *action) nodeGroupCoinsFrozen(addrs []string, configCoinsFrozen int64) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
-	confCoins := confManager.GInt("nodeGroupFrozenCoins")
+	confCoins := conf.GInt("nodeGroupFrozenCoins")
 	if configCoinsFrozen < confCoins {
 		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
 	}
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
+	realExec := string(types.GetRealExecName(a.tx.Execer))
+	realExecAddr := dapp.ExecAddress(realExec)
 
 	for _, addr := range addrs {
-		receipt, err := a.coinsAccount.ExecFrozen(addr, a.execaddr, configCoinsFrozen)
+		receipt, err := a.coinsAccount.ExecFrozen(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
-			clog.Error("node group apply", "addr", addr, "execaddr", a.execaddr, "amount", configCoinsFrozen)
+			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -579,11 +582,13 @@ func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (
 	receipt := &types.Receipt{}
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
+	realExec := string(types.GetRealExecName(a.tx.Execer))
+	realExecAddr := dapp.ExecAddress(realExec)
 
 	for _, addr := range addrs {
-		receipt, err := a.coinsAccount.ExecActive(addr, a.execaddr, configCoinsFrozen)
+		receipt, err := a.coinsAccount.ExecActive(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
-			clog.Error("node group apply", "addr", addr, "execaddr", a.execaddr, "amount", configCoinsFrozen)
+			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -597,7 +602,7 @@ func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (
 
 // NodeGroupApply
 func (a *action) nodeGroupApply(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
-	key := calcParaNodeGroupApplyKey(title)
+	key := calcParaNodeGroupApplyKey(config.Title)
 	status, err := getNodeAddr(a.db, key)
 	if err != nil && !isNotFound(err) {
 		return nil, err
@@ -633,7 +638,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupApply) (*types.Receipt, 
 }
 
 func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
-	key := calcParaNodeGroupApplyKey(title)
+	key := calcParaNodeGroupApplyKey(config.Title)
 	status, err := getNodeAddr(a.db, key)
 	if err != nil {
 		return nil, err
@@ -709,7 +714,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupApply) (*types.Receipt
 		return nil, types.ErrNotAllow
 	}
 
-	key := calcParaNodeGroupApplyKey(title)
+	key := calcParaNodeGroupApplyKey(config.Title)
 	status, err := getNodeAddr(a.db, key)
 	if err != nil {
 		return nil, err
@@ -753,11 +758,11 @@ func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64)
 	arr := types.ConfigItem_Arr{Arr: emptyValue}
 	item.Value = &arr
 
-	copyItem := item
+
 	item.GetArr().Value = append(item.GetArr().Value, nodes...)
 	item.Addr = a.fromaddr
 	a.db.Set(key, types.Encode(&item))
-	receipt := makeParaNodeGroupReiceipt(title, &copyItem, &item)
+	receipt := makeParaNodeGroupReiceipt(title, nil, &item)
 
 	//update addr status
 	for _, addr := range nodes {

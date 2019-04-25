@@ -39,6 +39,8 @@ func ParcCmd() *cobra.Command {
 		GetNodeGroupCmd(),
 		GetNodeInfoCmd(),
 		GetNodeListCmd(),
+		NodeGroupStatusCmd(),
+		NodeGroupListCmd(),
 		IsSyncCmd(),
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
@@ -256,14 +258,14 @@ func addNodeManageFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("addrs")
 
 	cmd.Flags().StringP("value", "v", "", "vote value: yes,no")
-	cmd.Flags().Int64P("coins_frozen", "c", 0, "join to frozen coins amount, not less config")
+	cmd.Flags().Float64P("coins_frozen", "c", 0, "join to frozen coins amount, not less config")
 }
 
 func createNodeTx(cmd *cobra.Command, args []string) {
 	op, _ := cmd.Flags().GetString("operation")
 	opAddr, _ := cmd.Flags().GetString("addr")
 	val, _ := cmd.Flags().GetString("value")
-	coins, _ := cmd.Flags().GetInt64("coins_frozen")
+	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
 
 	if op != "vote" && op != "quit" && op != "join" {
 		fmt.Println("operation should be one of join,quit,vote")
@@ -278,7 +280,7 @@ func createNodeTx(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr, CoinsFrozen: coins}
+	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeConfig",
@@ -309,14 +311,14 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addrs", "a", "", "addrs apply for super node,split by ',' ")
 	cmd.MarkFlagRequired("addrs")
 
-	cmd.Flags().Int64P("coins_frozen", "c", 0, "coins amount to frozen, not less config")
+	cmd.Flags().Float64P("coins_frozen", "c", 0, "coins amount to frozen, not less config")
 
 }
 
 func nodeGroupApply(cmd *cobra.Command, args []string) {
 	op, _ := cmd.Flags().GetUint32("operation")
 	addrs, _ := cmd.Flags().GetString("addrs")
-	coins, _ := cmd.Flags().GetInt64("coins_frozen")
+	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
 
 	if op == 0 || op > 3 {
 		fmt.Println("operation should be one of 1:apply,2:approve,3:quit")
@@ -327,7 +329,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeGroupApply{Op: op, Addrs: addrs, CoinsFrozen: coins}
+	payload := &pt.ParaNodeGroupApply{Op: op, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeGroupApply",
@@ -557,7 +559,7 @@ func nodeGroup(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 
 	var res types.ReplyConfig
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupAddrs", types.ReqString{Data: title}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupAddrs", pt.ReqParacrossNodeInfo{Title: title}, &res)
 	ctx.Run()
 }
 

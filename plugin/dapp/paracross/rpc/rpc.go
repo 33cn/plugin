@@ -251,7 +251,7 @@ func (c *Jrpc) GetNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interfac
 //ListNodeStatus list super node by status
 func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.RespParacrossNodeAddrs, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "ListNodeGroupStatusInfo", &r)
+	data, err := c.Query(pt.GetExecName(), "ListNodeGroupStatus", &r)
 	if err != nil {
 		return nil, err
 	}
