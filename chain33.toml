@@ -111,7 +111,11 @@ targetTimespan = 2160
 targetTimePerBlock = 15
 
 [mver.consensus.ForkChainParamV2]
-powLimitBits = "0x1f2fffff"
+coinReward = 5
+coinDevFund = 3
+targetTimespan = 720
+targetTimePerBlock = 5
+ticketPrice = 3000
 
 [consensus.sub.ticket]
 genesisBlockTime=1514533394
