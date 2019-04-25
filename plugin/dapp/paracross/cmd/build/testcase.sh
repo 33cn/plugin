@@ -90,8 +90,37 @@ function para_transfer() {
     para_transfer2account "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
     para_transfer2account "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
     para_transfer2account "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-    block_wait "${CLI}" 1
+    block_wait "${CLI}" 2
 
+    echo "=========== # main chain send to paracross ============="
+    para_transfer2paracross "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    para_transfer2paracross "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
+    para_transfer2paracross "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+    para_transfer2paracross "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71"
+
+    para_create_manage_nodegroup
+    para_create_nodegroup
+
+    txhash=$(para_configkey "${PARA_CLI}" "token-blacklist" "BTY")
+    echo "txhash=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+
+}
+
+function para_transfer2account() {
+    echo "${1}"
+    hash1=$(${CLI} send coins transfer -a 100 -n test -t "${1}" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash1}"
+}
+
+function para_transfer2paracross(){
+    echo "${1}"
+    hash1=$(${CLI} send coins send_exec -a 20 -e paracross -k "${1}")
+    echo "${hash1}"
+
+}
+
+function para_create_manage_nodegroup(){
     echo "=========== # para chain send config ============="
     para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
     para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
@@ -102,24 +131,36 @@ function para_transfer() {
     para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
     para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
     para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
     block_wait "${CLI}" 1
 
-    txhash=$(para_configkey "${PARA_CLI}" "token-blacklist" "BTY")
-    echo "txhash=$txhash"
+}
+function para_create_nodegroup(){
+    echo "=========== # para chain create node group ============="
+    ##apply
+    txhash=$(${PARA_CLI} send para nodegroup -o 1 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 20 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
+    status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
+    if [ "$status" != 1 ];then
+        echo "status not approve"
+    fi
 
-    echo "=========== # para chain takeover node group ============="
-    txhash=$(${PARA_CLI} send para node -o takeover -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    ##approve
+    txhash=$(${PARA_CLI} send para nodegroup -o 2 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k, 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs," -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-}
+    status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
+    if [ "$status" != 2 ];then
+        echo "status not approve"
+    fi
 
-function para_transfer2account() {
-    echo "${1}"
-    hash1=$(${CLI} send coins transfer -a 10 -n test -t "${1}" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
-    echo "${hash1}"
+    addrs=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r ".value")
+    if [ "$addrs" != "[1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs]" ]; then
+        echo "para node group err"
+
+    fi
+
 }
 
 function para_configkey() {

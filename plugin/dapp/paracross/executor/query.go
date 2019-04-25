@@ -50,7 +50,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(in.GetTitle() + " all addrs")
+	reply.Key = string(key)
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
