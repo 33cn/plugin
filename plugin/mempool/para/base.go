@@ -45,7 +45,6 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 				mlog.Info("Receive msg from para mempool")
 				if bytes.HasPrefix(msg.GetData().(*types.Transaction).Execer, types.ParaKey) {
 					tx := msg.GetData().(*types.Transaction)
-					mlog.Info("Receive tx ", tx)
 					var reply *types.Reply
 					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 					if err != nil {
