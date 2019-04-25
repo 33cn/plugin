@@ -9,6 +9,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/types"
+	"sync"
 )
 
 var mlog = log.New("module", "mempool.para")
@@ -18,6 +19,7 @@ var retry_times = 3
 //Mempool mempool 基础类
 type Mempool struct {
 	key         string
+	wg          sync.WaitGroup
 	mainGrpcCli types.Chain33Client
 }
 
@@ -38,6 +40,7 @@ func NewMempool(cfg *types.Mempool) *Mempool {
 
 //SetQueueClient 初始化mempool模块
 func (mem *Mempool) SetQueueClient(client queue.Client) {
+	mem.wg.Add(1)
 	go func() {
 		client.Sub(mem.key)
 		for msg := range client.Recv() {
@@ -78,4 +81,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 func (mem *Mempool) Wait() {}
 
 // Close method
-func (mem *Mempool) Close() {}
+func (mem *Mempool) Close() {
+	// wait for cycle quit
+	mem.wg.Wait()
+}
