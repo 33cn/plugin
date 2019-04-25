@@ -35,12 +35,12 @@ type DB struct {
 }
 
 //GetRealPrice 获取真实的价格
-func (ticket *DB) GetRealPrice() int64 {
-	if ticket.GetPrice() == 0 {
+func (t *DB) GetRealPrice() int64 {
+	if t.GetPrice() == 0 {
 		cfg := types.GetP(types.GetFork("ForkChainParamV1"))
 		return cfg.TicketPrice
 	}
-	return ticket.GetPrice()
+	return t.GetPrice()
 }
 
 // NewDB new instance
