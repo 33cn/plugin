@@ -446,7 +446,7 @@ function para_cross_transfer_withdraw_for_token() {
     done
 }
 
-function para_nodemanage_node_join(){
+function para_nodemanage_node_join() {
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
@@ -474,14 +474,13 @@ function para_nodemanage_node_join(){
 
 }
 
-function para_nodemanage_quit_test(){
+function para_nodemanage_quit_test() {
     para_nodemanage_node_join
 
     echo "=========== # para chain node quit ============="
     hash=$(${PARA_CLI} send para node -o quit -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
 
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then

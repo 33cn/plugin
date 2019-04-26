@@ -202,13 +202,13 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s was quit status:%d", a.fromaddr, stat.Status)
 	}
 
-	if stat.Status == pt.ParacrossNodeAdded{
+	if stat.Status == pt.ParacrossNodeAdded {
 		groupKey := calcParaNodeGroupKey(config.Title)
 		nodes, _, err := getNodes(a.db, groupKey)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 		}
-		if !validNode(a.fromaddr, nodes){
+		if !validNode(a.fromaddr, nodes) {
 			return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "nodeAddr not existed:%s", a.fromaddr)
 		}
 		//不允许最后一个账户退出
@@ -216,7 +216,6 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			return nil, errors.Wrapf(pt.ErrParaNodeGroupLastAddr, "nodeAddr last one:%s", a.fromaddr)
 		}
 	}
-
 
 	var copyStat pt.ParaNodeAddrStatus
 	err = deepCopy(&copyStat, stat)
@@ -334,16 +333,16 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
 		superManagerPass := false
-		if isSuperManager(a.fromaddr){
+		if isSuperManager(a.fromaddr) {
 			confStopBlocks := conf.GInt("paraConsensusStopBlocks")
-			data,err := a.exec.paracrossGetHeight(config.Title)
-			if err != nil{
-				clog.Info("paracross.nodeVote get consens height","err",err.Error())
+			data, err := a.exec.paracrossGetHeight(config.Title)
+			if err != nil {
+				clog.Info("paracross.nodeVote get consens height", "err", err.Error())
 				return nil, err
 			}
 			consensHeight := data.(*pt.ParacrossStatus).Height
-			if a.exec.GetMainHeight() > consensHeight+confStopBlocks{
-				clog.Info("paracross.nodeVote, super manager pass","currHeight",a.height,"consensHeight",consensHeight,"confHeight",confStopBlocks)
+			if a.exec.GetMainHeight() > consensHeight+confStopBlocks {
+				clog.Info("paracross.nodeVote, super manager pass", "currHeight", a.height, "consensHeight", consensHeight, "confHeight", confStopBlocks)
 				superManagerPass = true
 			}
 		}
