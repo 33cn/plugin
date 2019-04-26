@@ -191,20 +191,20 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 }
 
 func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	key := calcParaNodeAddrKey(config.Title, config.Addr)
-	stat, err := getNodeAddr(a.db, key)
+	addrKey := calcParaNodeAddrKey(config.Title, config.Addr)
+	stat, err := getNodeAddr(a.db, addrKey)
 	if err != nil {
 		return nil, err
 	}
 
 	if stat.Status == pt.ParacrossNodeQuiting || stat.Status == pt.ParacrossNodeQuited {
-		clog.Error("nodeaccount.nodeQuit wrong status", "key", string(key), "status", stat)
+		clog.Error("nodeaccount.nodeQuit wrong status", "key", string(addrKey), "status", stat)
 		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s was quit status:%d", a.fromaddr, stat.Status)
 	}
 
 	if stat.Status == pt.ParacrossNodeAdded{
-		key = calcParaNodeGroupKey(config.Title)
-		nodes, _, err := getNodes(a.db, key)
+		groupKey := calcParaNodeGroupKey(config.Title)
+		nodes, _, err := getNodes(a.db, groupKey)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 		}
@@ -227,7 +227,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if stat.Status == pt.ParacrossNodeAdded {
 		stat.Status = pt.ParacrossNodeQuiting
 		stat.Votes = &pt.ParaNodeVoteDetail{}
-		saveNodeAddr(a.db, key, stat)
+		saveNodeAddr(a.db, addrKey, stat)
 		return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 	}
 
@@ -244,7 +244,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 
 	stat.Status = pt.ParacrossNodeQuited
 	stat.Votes = &pt.ParaNodeVoteDetail{}
-	saveNodeAddr(a.db, key, stat)
+	saveNodeAddr(a.db, addrKey, stat)
 	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
