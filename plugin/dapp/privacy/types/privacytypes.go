@@ -21,8 +21,7 @@ func (ftxos *FTXOsSTXOsInOneTx) IsExpire(blockheight, blocktime int64) bool {
 }
 
 // SetExpire 设定过期
-func (ftxos *FTXOsSTXOsInOneTx) SetExpire(tx *types.Transaction) {
-	expire := tx.Expire
+func (ftxos *FTXOsSTXOsInOneTx) SetExpire(expire int64) {
 	if expire > types.ExpireBound {
 		// FTXO的超时为时间时，则用Tx的过期时间加上12秒后认为超时
 		ftxos.Expire = expire + 12

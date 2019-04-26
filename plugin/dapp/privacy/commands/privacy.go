@@ -117,7 +117,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -179,7 +179,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -243,7 +243,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
