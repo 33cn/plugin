@@ -191,20 +191,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 }
 
 func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	key := calcParaNodeGroupKey(config.Title)
-	nodes, _, err := getNodes(a.db, key)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
-	}
-	if !validNode(a.fromaddr, nodes) {
-		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "nodeAddr not existed:%s", a.fromaddr)
-	}
-	//不允许最后一个账户退出
-	if len(nodes) == 1 {
-		return nil, errors.Wrapf(pt.ErrParaNodeGroupLastAddr, "nodeAddr last one:%s", a.fromaddr)
-	}
-
-	key = calcParaNodeAddrKey(config.Title, config.Addr)
+	key := calcParaNodeAddrKey(config.Title, config.Addr)
 	stat, err := getNodeAddr(a.db, key)
 	if err != nil {
 		return nil, err
@@ -214,6 +201,23 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		clog.Error("nodeaccount.nodeQuit wrong status", "key", string(key), "status", stat)
 		return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeAddr %s was quit status:%d", a.fromaddr, stat.Status)
 	}
+
+	if stat.Status == pt.ParacrossNodeAdded{
+		key = calcParaNodeGroupKey(config.Title)
+		nodes, _, err := getNodes(a.db, key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
+		}
+		if !validNode(a.fromaddr, nodes){
+			return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "nodeAddr not existed:%s", a.fromaddr)
+		}
+		//不允许最后一个账户退出
+		if len(nodes) == 1 {
+			return nil, errors.Wrapf(pt.ErrParaNodeGroupLastAddr, "nodeAddr last one:%s", a.fromaddr)
+		}
+	}
+
+
 	var copyStat pt.ParaNodeAddrStatus
 	err = deepCopy(&copyStat, stat)
 	if err != nil {
