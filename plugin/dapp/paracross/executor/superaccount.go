@@ -327,14 +327,13 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		stat.Votes.Addrs = append(stat.Votes.Addrs, a.fromaddr)
 		stat.Votes.Votes = append(stat.Votes.Votes, config.Value)
 	}
-	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
 		//超级用户投yes票，就可以通过，防止当前所有授权节点都忘掉私钥场景
 		//超级用户且当前group里面有任一账户投yes票也可以通过是备选方案 （most >1)即可
 		if !(isSuperManager(a.fromaddr) && most > 0 && vote == pt.ParaNodeVoteYes) {
 			saveNodeAddr(a.db, key, stat)
-			return receipt, nil
+			return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 		}
 	}
 	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
@@ -368,13 +367,13 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				if err != nil {
 					return nil, err
 				}
-				receipt.KV = append(receipt.KV, r.KV...)
-				receipt.Logs = append(receipt.Logs, r.Logs...)
+				receiptGroup.KV = append(receiptGroup.KV, r.KV...)
+				receiptGroup.Logs = append(receiptGroup.Logs, r.Logs...)
 			}
 		}
 	}
 	saveNodeAddr(a.db, key, stat)
-	receipt = makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	if receiptGroup != nil {
 		receipt.KV = append(receipt.KV, receiptGroup.KV...)
 		receipt.Logs = append(receipt.Logs, receiptGroup.Logs...)
@@ -409,7 +408,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
-		clog.Info("unpdateNodeGroup", "add key", key, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
+		clog.Info("unpdateNodeGroup", "add key", string(key), "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
 
 	} else {
 		//必须保留至少1个授权账户
@@ -564,13 +563,13 @@ func (a *action) nodeGroupCoinsFrozen(addrs []string, configCoinsFrozen int64) (
 	realExecAddr := dapp.ExecAddress(realExec)
 
 	for _, addr := range addrs {
-		receipt, err := a.coinsAccount.ExecFrozen(addr, realExecAddr, configCoinsFrozen)
+		r, err := a.coinsAccount.ExecFrozen(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
 			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
-		logs = append(logs, receipt.Logs...)
-		kv = append(kv, receipt.KV...)
+		logs = append(logs, r.Logs...)
+		kv = append(kv, r.KV...)
 	}
 	receipt.KV = append(receipt.KV, kv...)
 	receipt.Logs = append(receipt.Logs, logs...)
@@ -586,13 +585,13 @@ func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (
 	realExecAddr := dapp.ExecAddress(realExec)
 
 	for _, addr := range addrs {
-		receipt, err := a.coinsAccount.ExecActive(addr, realExecAddr, configCoinsFrozen)
+		r, err := a.coinsAccount.ExecActive(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
 			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
-		logs = append(logs, receipt.Logs...)
-		kv = append(kv, receipt.KV...)
+		logs = append(logs, r.Logs...)
+		kv = append(kv, r.KV...)
 	}
 	receipt.KV = append(receipt.KV, kv...)
 	receipt.Logs = append(receipt.Logs, logs...)
