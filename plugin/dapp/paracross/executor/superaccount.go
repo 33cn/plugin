@@ -329,9 +329,23 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
-		//超级用户投yes票，就可以通过，防止当前所有授权节点都忘掉私钥场景
-		//超级用户且当前group里面有任一账户投yes票也可以通过是备选方案 （most >1)即可
-		if !(isSuperManager(a.fromaddr) && most > 0 && vote == pt.ParaNodeVoteYes) {
+		superManagerPass := false
+		if isSuperManager(a.fromaddr){
+			confStopBlocks := conf.GInt("paraConsensusStopBlocks")
+			data,err := a.exec.paracrossGetHeight(config.Title)
+			if err != nil{
+				clog.Info("paracross.nodeVote get consens height","err",err.Error())
+				return nil, err
+			}
+			consensHeight := data.(*pt.ParacrossStatus).Height
+			if a.exec.GetMainHeight() > consensHeight+confStopBlocks{
+				clog.Info("paracross.nodeVote, super manager pass","currHeight",a.height,"consensHeight",consensHeight,"confHeight",confStopBlocks)
+				superManagerPass = true
+			}
+		}
+
+		//超级用户投yes票，共识停止了一定高度就可以通过，防止当前所有授权节点都忘掉私钥场景
+		if !(superManagerPass && most > 0 && vote == pt.ParaNodeVoteYes) {
 			saveNodeAddr(a.db, key, stat)
 			return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 		}

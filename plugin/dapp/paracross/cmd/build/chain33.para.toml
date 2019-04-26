@@ -153,6 +153,8 @@ tokenApprs = [
 	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
 ]
 
+[exec.sub.paracross]
+paraConsensusStopBlocks=100
 
 [pprof]
 listenAddr = "localhost:6061"
