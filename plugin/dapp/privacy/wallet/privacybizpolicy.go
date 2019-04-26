@@ -5,10 +5,6 @@
 package wallet
 
 import (
-	"sync"
-	"sync/atomic"
-	"time"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
@@ -16,6 +12,8 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
+	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -153,11 +151,6 @@ func (policy *privacyPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqS
 		bizlog.Error("SignTransaction", "action type ", action.Ty, "signature action type ", signParam.ActionType)
 		return
 	}
-	expire, err := types.ParseExpire(req.GetExpire())
-	if err != nil {
-		return
-	}
-	tx.SetExpire(time.Duration(expire))
 	switch action.Ty {
 	case privacytypes.ActionPublic2Privacy:
 		// 隐私交易的公对私动作，不存在交易组的操作
