@@ -64,24 +64,24 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaNodeConfig:        {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
 		TyLogParaNodeGroupUpdate:   {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupUpdate"},
 		TyLogParaNodeVoteDone:      {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
-		TyLogParaNodeGroupApply:	{Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApply"},
-		TyLogParaNodeGroupApprove:	{Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApprove"},
-		TyLogParaNodeGroupQuit:		{Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupQuit"},
+		TyLogParaNodeGroupApply:    {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApply"},
+		TyLogParaNodeGroupApprove:  {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApprove"},
+		TyLogParaNodeGroupQuit:     {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupQuit"},
 	}
 }
 
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":         ParacrossActionCommit,
-		"Miner":          ParacrossActionMiner,
-		"AssetTransfer":  ParacrossActionAssetTransfer,
-		"AssetWithdraw":  ParacrossActionAssetWithdraw,
-		"Transfer":       ParacrossActionTransfer,
-		"Withdraw":       ParacrossActionWithdraw,
-		"TransferToExec": ParacrossActionTransferToExec,
-		"NodeConfig":     ParacrossActionNodeConfig,
-		"NodeGroupConfig":ParacrossActionNodeGroupApply,
+		"Commit":          ParacrossActionCommit,
+		"Miner":           ParacrossActionMiner,
+		"AssetTransfer":   ParacrossActionAssetTransfer,
+		"AssetWithdraw":   ParacrossActionAssetWithdraw,
+		"Transfer":        ParacrossActionTransfer,
+		"Withdraw":        ParacrossActionWithdraw,
+		"TransferToExec":  ParacrossActionTransferToExec,
+		"NodeConfig":      ParacrossActionNodeConfig,
+		"NodeGroupConfig": ParacrossActionNodeGroupApply,
 	}
 }
 

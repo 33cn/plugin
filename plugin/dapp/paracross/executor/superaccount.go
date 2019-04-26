@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/system/dapp"
 	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
-	"github.com/33cn/chain33/system/dapp"
 )
 
 var (
@@ -565,7 +565,7 @@ func (a *action) nodeGroupCoinsFrozen(addrs []string, configCoinsFrozen int64) (
 	for _, addr := range addrs {
 		r, err := a.coinsAccount.ExecFrozen(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
-			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
+			clog.Error("node group apply", "addr", addr, "realExec", realExec, "realAddr", realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
 		logs = append(logs, r.Logs...)
@@ -587,7 +587,7 @@ func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (
 	for _, addr := range addrs {
 		r, err := a.coinsAccount.ExecActive(addr, realExecAddr, configCoinsFrozen)
 		if err != nil {
-			clog.Error("node group apply", "addr", addr, "realExec", realExec,"realAddr",realExecAddr, "amount", configCoinsFrozen)
+			clog.Error("node group apply", "addr", addr, "realExec", realExec, "realAddr", realExecAddr, "amount", configCoinsFrozen)
 			return nil, err
 		}
 		logs = append(logs, r.Logs...)
@@ -756,7 +756,6 @@ func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64)
 	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
 	arr := types.ConfigItem_Arr{Arr: emptyValue}
 	item.Value = &arr
-
 
 	item.GetArr().Value = append(item.GetArr().Value, nodes...)
 	item.Addr = a.fromaddr

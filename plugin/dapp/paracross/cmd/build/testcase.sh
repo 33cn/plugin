@@ -105,7 +105,7 @@ function para_transfer() {
     para_transfer2paracross "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
     block_wait "${CLI}" 2
 
-#    para_create_manage_nodegroup
+    #    para_create_manage_nodegroup
     para_create_nodegroup
 
     #token precreate
@@ -121,26 +121,25 @@ function para_transfer2account() {
     echo "${hash1}"
 }
 
-function para_transfer2paracross(){
+function para_transfer2paracross() {
     echo "addr=${1}"
     hash1=$(${CLI} send coins send_exec -a 20 -e paracross -k "${1}")
     echo "${hash1}"
 
 }
 
-
-function para_create_nodegroup_test(){
+function para_create_nodegroup_test() {
     echo "=========== # para chain create node group ============="
     ##apply
     txhash=$(${PARA_CLI} send para nodegroup -o 1 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 20 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
-    if [ "$status" != 1 ];then
+    if [ "$status" != 1 ]; then
         echo "status not apply"
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "apply coinfrozen error balance=$balance"
         exit 1
     fi
@@ -150,18 +149,18 @@ function para_create_nodegroup_test(){
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
-    if [ "$status" != 3 ];then
+    if [ "$status" != 3 ]; then
         echo "status not quit"
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".balance")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "quit coinfrozen error balance=$balance"
         exit 1
     fi
 
 }
 
-function para_create_nodegroup(){
+function para_create_nodegroup() {
     para_create_nodegroup_test
 
     ##apply
@@ -169,7 +168,7 @@ function para_create_nodegroup(){
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
-    if [ "$status" != 1 ];then
+    if [ "$status" != 1 ]; then
         echo "status not apply"
     fi
 
@@ -179,7 +178,7 @@ function para_create_nodegroup(){
     query_tx "${PARA_CLI}" "${txhash}"
 
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
-    if [ "$status" != 2 ];then
+    if [ "$status" != 2 ]; then
         echo "status not approve"
     fi
 
@@ -189,24 +188,23 @@ function para_create_nodegroup(){
 
     fi
 
-
     ##quit fail
     txhash=$(${PARA_CLI} send para nodegroup -o 3 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
     query_tx "${CLI}" "${txhash}"
     status=$(${CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
-    if [ "$status" != 2 ];then
+    if [ "$status" != 2 ]; then
         echo "status quit not approve"
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "quit fail coinfrozen error balance=$balance"
         exit 1
     fi
 
 }
 
-function para_create_manage_nodegroup(){
+function para_create_manage_nodegroup() {
     echo "=========== # para chain send config ============="
     para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
     para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
@@ -219,7 +217,6 @@ function para_create_manage_nodegroup(){
     para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
     block_wait "${CLI}" 1
 }
-
 
 function para_configkey() {
     tx=$(${1} config config_tx -o add -c "${2}" -v "${3}")
@@ -452,7 +449,7 @@ function para_cross_transfer_withdraw_for_token() {
 function para_nodemanage_test() {
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "balance coinfrozen error balance=$balance"
         exit 1
     fi
@@ -463,7 +460,7 @@ function para_nodemanage_test() {
     query_tx "${PARA_CLI}" "${hash}"
 
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "frozen coinfrozen error balance=$balance"
         exit 1
     fi
@@ -516,7 +513,7 @@ function para_nodemanage_test() {
     query_tx "${PARA_CLI}" "${hash}"
 
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
-    if [ "$balance" != "$PARA_COIN_FROZEN" ];then
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "unfrozen coinfrozen error balance=$balance"
         exit 1
     fi
