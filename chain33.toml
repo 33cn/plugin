@@ -214,5 +214,6 @@ superManager=[
 ]
 [exec.sub.paracross]
 nodeGroupFrozenCoins=0
+paraConsensusStopBlocks=100
 
 

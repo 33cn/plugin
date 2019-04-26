@@ -446,7 +446,7 @@ function para_cross_transfer_withdraw_for_token() {
     done
 }
 
-function para_nodemanage_test() {
+function para_nodemanage_node_join(){
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
@@ -471,6 +471,35 @@ function para_nodemanage_test() {
         ${PARA_CLI} para node_list -t user.p.para. -s 1
         exit 1
     fi
+
+}
+
+function para_nodemanage_quit_test(){
+    para_nodemanage_node_join
+
+    echo "=========== # para chain node quit ============="
+    hash=$(${PARA_CLI} send para node -o quit -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+
+    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
+        echo "unfrozen coinfrozen error balance=$balance"
+        exit 1
+    fi
+
+    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    if [ "${status}" != "4" ]; then
+        echo "wrong vote status"
+        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        exit 1
+    fi
+}
+
+function para_nodemanage_test() {
+    para_nodemanage_quit_test
+    para_nodemanage_node_join
 
     echo "=========== # para chain node vote ============="
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
