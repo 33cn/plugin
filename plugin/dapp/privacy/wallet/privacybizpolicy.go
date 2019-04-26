@@ -5,6 +5,9 @@
 package wallet
 
 import (
+	"sync"
+	"sync/atomic"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
@@ -12,8 +15,6 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
-	"sync"
-	"sync/atomic"
 )
 
 var (
