@@ -120,7 +120,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrNotSupport
 		}
 		var param ParaNodeAddrConfig
-		err := json.Unmarshal(message, &param)
+		err := types.JSONToPB(message, &param)
 		if err != nil {
 			glog.Error("CreateTx.NodeConfig", "Error", err)
 			return nil, types.ErrInvalidParam
