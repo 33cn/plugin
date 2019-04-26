@@ -606,7 +606,6 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType: action.Ty,
@@ -687,7 +686,6 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
 	if isPara {
 		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
 		if err != nil {
@@ -773,7 +771,6 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
 	if isPara {
 		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
 		if err != nil {
