@@ -53,7 +53,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 					for i := 0; i < retry_times; i++ {
 						reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 						if err == nil {
-							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: []byte(reply.GetMsg())}))
+							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: reply.GetMsg()}))
 							break
 						} else if err != nil && i != retry_times-1 {
 							continue
