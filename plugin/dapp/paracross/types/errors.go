@@ -43,10 +43,10 @@ var (
 	ErrParaNodeGroupLastAddr = errors.New("ErrParaNodeGroupLastAddr")
 	//ErrParaNodeVoteSelf vote self not allow
 	ErrParaNodeVoteSelf = errors.New("ErrParaNodeVoteSelf")
-	//ErrParaNodeGroupLessFrozenCoins node group coins in tx less than conf's minimum coins
+	//ErrParaNodeGroupFrozenCoinsNotEnough node group coins in tx less than conf's minimum coins
 	ErrParaNodeGroupFrozenCoinsNotEnough = errors.New("ErrParaNodeGroupFrozenCoinsNotEnough")
 	//ErrParaNodeGroupStatusWrong node group process wrong status
 	ErrParaNodeGroupStatusWrong = errors.New("ErrParaNodeGroupStatusWrong")
-	//ErrParaNodeGroupAddrNotMatch
+	//ErrParaNodeGroupAddrNotMatch group addrs not match with apply
 	ErrParaNodeGroupAddrNotMatch = errors.New("ErrParaNodeGroupAddrNotMatch")
 )

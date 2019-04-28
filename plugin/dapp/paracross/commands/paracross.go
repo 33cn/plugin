@@ -563,7 +563,7 @@ func nodeGroup(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetNodeGroupCmd get node group addr
+// NodeGroupStatusCmd get node group addr
 func NodeGroupStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "nodegroup_status",
@@ -593,7 +593,7 @@ func nodeGroupStatus(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetNodeGroupCmd get node group addr
+// NodeGroupListCmd get node group addr
 func NodeGroupListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "nodegroup_list",

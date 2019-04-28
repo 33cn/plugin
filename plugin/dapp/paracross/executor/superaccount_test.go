@@ -168,10 +168,6 @@ func checkVoteReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count 
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	assert.Len(suite.T(), stat.Votes.Votes, count)
-	////suite.T().Log("titleHeight", titleHeight)
-	//assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	//assert.Equal(suite.T(), int32(pt.ParacrossNodeAdding), stat.Status)
-	//assert.NotNil(suite.T(), stat.Votes)
 
 }
 
@@ -216,7 +212,6 @@ func voteTest(suite *NodeManageTestSuite, addr string, join bool) {
 }
 
 func (suite *NodeManageTestSuite) testNodeGroupConfig() {
-	//title := types.GetTitle()
 	config := &pt.ParaNodeGroupApply{
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
@@ -268,9 +263,9 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 	voteTest(suite, Account1MC, false)
 }
 
-func (s *NodeManageTestSuite) TestExec() {
-	s.testNodeGroupConfig()
-	s.testNodeConfig()
+func (suite *NodeManageTestSuite) TestExec() {
+	suite.testNodeGroupConfig()
+	suite.testNodeConfig()
 
 }
 
@@ -283,6 +278,6 @@ func TestNodeManageSuite(t *testing.T) {
 	types.SetTitleOnlyForTest(tempTitle)
 }
 
-func (s *NodeManageTestSuite) TearDownSuite() {
+func (suite *NodeManageTestSuite) TearDownSuite() {
 
 }
