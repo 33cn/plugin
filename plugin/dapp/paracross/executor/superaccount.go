@@ -453,8 +453,6 @@ func (a *action) checkConfig(title string) error {
 	return nil
 }
 
-
-
 func getAddrGroup(addr string) []string {
 	if strings.Contains(addr, ",") {
 		repeats := make(map[string]bool)
