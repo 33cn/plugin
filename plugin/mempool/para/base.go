@@ -13,9 +13,9 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+var retry_times = 3
 var mlog = log.New("module", "mempool.para")
 var topic = "mempool"
-var retry_times = 3
 
 //Mempool mempool 基础类
 type Mempool struct {
