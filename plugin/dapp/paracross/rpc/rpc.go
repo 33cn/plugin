@@ -208,7 +208,7 @@ func (c *Jrpc) ListNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{})
 	return err
 }
 
-// GetNodeGroup get super node group
+// GetNodeGroupAddrs get super node group addrs
 func (c *channelClient) GetNodeGroupAddrs(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*types.ReplyConfig, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "GetNodeGroupAddrs", &r)
@@ -221,14 +221,14 @@ func (c *channelClient) GetNodeGroupAddrs(ctx context.Context, req *pt.ReqParacr
 	return nil, types.ErrDecode
 }
 
-// GetNodeGroup get super node group
+// GetNodeGroupAddrs get super node group addrs
 func (c *Jrpc) GetNodeGroupAddrs(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.GetNodeGroupAddrs(context.Background(), req)
 	*result = data
 	return err
 }
 
-// GetNodeGroup get super node group
+// GetNodeGroupStatus get super node group status
 func (c *channelClient) GetNodeGroupStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeAddrStatus, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "GetNodeGroupStatus", &r)
@@ -241,14 +241,14 @@ func (c *channelClient) GetNodeGroupStatus(ctx context.Context, req *pt.ReqParac
 	return nil, types.ErrDecode
 }
 
-// GetNodeGroup get super node group
+// GetNodeGroupStatus get super node group status
 func (c *Jrpc) GetNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.GetNodeGroupStatus(context.Background(), req)
 	*result = data
 	return err
 }
 
-//ListNodeStatus list super node by status
+//ListNodeGroupStatus list super node group by status
 func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.RespParacrossNodeAddrs, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "ListNodeGroupStatus", &r)
@@ -261,7 +261,7 @@ func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqPara
 	return nil, types.ErrDecode
 }
 
-//ListNodeStatus list super node by status
+//ListNodeGroupStatus list super node group by status
 func (c *Jrpc) ListNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.ListNodeGroupStatus(context.Background(), req)
 	*result = data

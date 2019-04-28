@@ -721,7 +721,7 @@ func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64)
 	return receipt, nil
 }
 
-//NodeConfig support super account node config
+//NodeGroupConfig support super node group config
 func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
 	if !validTitle(config.Title) {
 		return nil, pt.ErrInvalidTitle
@@ -755,9 +755,10 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupApply) (*types.Receipt,
 			return nil, types.ErrNotAllow
 		}
 		return a.nodeGroupQuit(config)
-	} else {
-		return nil, pt.ErrParaUnSupportNodeOper
 	}
+
+	return nil, pt.ErrParaUnSupportNodeOper
+
 }
 
 //NodeConfig support super account node config
@@ -780,8 +781,8 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 
 	} else if config.Op == pt.ParaNodeVote {
 		return a.nodeVote(config)
-	} else {
-		return nil, pt.ErrParaUnSupportNodeOper
 	}
+
+	return nil, pt.ErrParaUnSupportNodeOper
 
 }

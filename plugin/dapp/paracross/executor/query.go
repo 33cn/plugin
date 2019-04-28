@@ -35,7 +35,7 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 	return p.paracrossGetHeight(in.GetTitle())
 }
 
-//Query_GetNodeGroup get node group addrs
+//Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -76,7 +76,7 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
 }
 
-//Query_GetNodeAddrInfo get specific node addr info
+//Query_GetNodeGroupStatus get specific node addr info
 func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
@@ -89,7 +89,7 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	return stat, nil
 }
 
-//Query_ListNodeStatusInfo list node info by status
+//Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Status == 0 {
 		return nil, types.ErrInvalidParam

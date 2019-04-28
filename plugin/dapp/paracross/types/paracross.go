@@ -75,7 +75,7 @@ const (
 	ParacrossActionAssetWithdraw
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
-	//ParacrossActionNodeGroupApply
+	//ParacrossActionNodeGroupApply apply for node group initially
 	ParacrossActionNodeGroupApply
 )
 
@@ -109,8 +109,11 @@ const (
 )
 
 const (
+	//ParacrossNodeGroupApply apply for para chain node group initially
 	ParacrossNodeGroupApply = iota + 1
+	//ParacrossNodeGroupApprove super manager approve the apply
 	ParacrossNodeGroupApprove
+	//ParacrossNodeGroupQuit applyer quit the apply when not be approved
 	ParacrossNodeGroupQuit
 )
 
@@ -186,6 +189,7 @@ func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, erro
 	return tx, nil
 }
 
+//CreateRawNodeGroupApplyTx create raw tx for node group
 func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupApply) (*types.Transaction, error) {
 	apply.Title = types.GetTitle()
 
