@@ -450,87 +450,10 @@ func (a *action) checkConfig(title string) error {
 		return pt.ErrInvalidTitle
 	}
 
-	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
-	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
-		if forkHeight == -1 || forkHeight == 0 {
-			forkHeight = types.MaxHeight
-		}
-	}
-	if a.exec.GetMainHeight() < forkHeight {
-		return types.ErrNotSupport
-	}
-
 	return nil
 }
 
-//NodeConfig support super account node config
-func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	err := a.checkConfig(config.Title)
-	if err != nil {
-		return nil, err
-	}
 
-	if config.Op == pt.ParaNodeJoin {
-		if config.Addr != a.fromaddr {
-			return nil, types.ErrFromAddr
-		}
-		return a.nodeJoin(config)
-
-	} else if config.Op == pt.ParaNodeQuit {
-		if config.Addr != a.fromaddr {
-			return nil, types.ErrFromAddr
-		}
-		return a.nodeQuit(config)
-
-	} else if config.Op == pt.ParaNodeVote {
-		return a.nodeVote(config)
-	} else {
-		return nil, pt.ErrParaUnSupportNodeOper
-	}
-
-}
-
-//NodeConfig support super account node config
-func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
-	err := a.checkConfig(config.Title)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(config.Addrs) == 0 {
-		return nil, types.ErrInvalidParam
-	}
-
-	if config.Op == pt.ParacrossNodeGroupApply {
-		if !strings.Contains(config.Addrs, a.fromaddr) {
-			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
-			return nil, types.ErrNotAllow
-		}
-		err := a.checkNodeGroupExist(config.Title)
-		if err != nil {
-			return nil, err
-		}
-		return a.nodeGroupApply(config)
-
-	} else if config.Op == pt.ParacrossNodeGroupApprove {
-		err := a.checkNodeGroupExist(config.Title)
-		if err != nil {
-			return nil, err
-		}
-		return a.nodeGroupApprove(config)
-
-	} else if config.Op == pt.ParacrossNodeGroupQuit {
-		if !strings.Contains(config.Addrs, a.fromaddr) {
-			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
-			return nil, types.ErrNotAllow
-		}
-		return a.nodeGroupQuit(config)
-	} else {
-		return nil, pt.ErrParaUnSupportNodeOper
-	}
-
-}
 
 func getAddrGroup(addr string) []string {
 	if strings.Contains(addr, ",") {
@@ -798,4 +721,69 @@ func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64)
 		receipt.Logs = append(receipt.Logs, r.Logs...)
 	}
 	return receipt, nil
+}
+
+//NodeConfig support super account node config
+func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupApply) (*types.Receipt, error) {
+	if !validTitle(config.Title) {
+		return nil, pt.ErrInvalidTitle
+	}
+
+	if len(config.Addrs) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+
+	if config.Op == pt.ParacrossNodeGroupApply {
+		if !strings.Contains(config.Addrs, a.fromaddr) {
+			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
+			return nil, types.ErrNotAllow
+		}
+		err := a.checkNodeGroupExist(config.Title)
+		if err != nil {
+			return nil, err
+		}
+		return a.nodeGroupApply(config)
+
+	} else if config.Op == pt.ParacrossNodeGroupApprove {
+		err := a.checkNodeGroupExist(config.Title)
+		if err != nil {
+			return nil, err
+		}
+		return a.nodeGroupApprove(config)
+
+	} else if config.Op == pt.ParacrossNodeGroupQuit {
+		if !strings.Contains(config.Addrs, a.fromaddr) {
+			clog.Error("node group apply fromaddr not one of apply addrs", "addr", a.fromaddr, "apply", config.Addrs)
+			return nil, types.ErrNotAllow
+		}
+		return a.nodeGroupQuit(config)
+	} else {
+		return nil, pt.ErrParaUnSupportNodeOper
+	}
+}
+
+//NodeConfig support super account node config
+func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+	if !validTitle(config.Title) {
+		return nil, pt.ErrInvalidTitle
+	}
+
+	if config.Op == pt.ParaNodeJoin {
+		if config.Addr != a.fromaddr {
+			return nil, types.ErrFromAddr
+		}
+		return a.nodeJoin(config)
+
+	} else if config.Op == pt.ParaNodeQuit {
+		if config.Addr != a.fromaddr {
+			return nil, types.ErrFromAddr
+		}
+		return a.nodeQuit(config)
+
+	} else if config.Op == pt.ParaNodeVote {
+		return a.nodeVote(config)
+	} else {
+		return nil, pt.ErrParaUnSupportNodeOper
+	}
+
 }
