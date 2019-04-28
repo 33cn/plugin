@@ -494,6 +494,9 @@ func (a *action) nodeGroupCoinsFrozen(addrs []string, configCoinsFrozen int64) (
 	if configCoinsFrozen < confCoins {
 		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
 	}
+	if configCoinsFrozen == 0{
+		return receipt,nil
+	}
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -521,6 +524,10 @@ func (a *action) nodeGroupCoinsActive(addrs []string, configCoinsFrozen int64) (
 	var kv []*types.KeyValue
 	realExec := string(types.GetRealExecName(a.tx.Execer))
 	realExecAddr := dapp.ExecAddress(realExec)
+
+	if configCoinsFrozen == 0{
+		return receipt,nil
+	}
 
 	for _, addr := range addrs {
 		r, err := a.coinsAccount.ExecActive(addr, realExecAddr, configCoinsFrozen)
