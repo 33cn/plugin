@@ -329,7 +329,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeGroupApply{Op: op, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupApply{Op: op, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeGroupApply",
