@@ -234,7 +234,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 
 }
 
-
 func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.testNodeGroupConfigQuit()
 
