@@ -29,7 +29,6 @@ var (
 	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 )
 
-
 type NodeManageTestSuite struct {
 	suite.Suite
 	stateDB dbm.KV
@@ -63,7 +62,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//}
 
 	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
-	types.S("config.exec.sub.manage.superManager",[]interface{}{Account12Q})
+	types.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
 
 	// TODO, more fields
 	// setup block
@@ -71,7 +70,6 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 		Block: &types.Block{},
 	}
 	MainBlockHash10 = blockDetail.Block.Hash()
-
 
 }
 
@@ -130,7 +128,6 @@ func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt
 	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApprove), stat.Status)
 
 }
-
 
 func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
@@ -218,11 +215,11 @@ func voteTest(suite *NodeManageTestSuite, addr string, join bool) {
 	checkVoteDoneReceipt(suite, receipt, 3, join)
 }
 
-func  (suite *NodeManageTestSuite) testNodeGroupConfig() {
+func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	//title := types.GetTitle()
 	config := &pt.ParaNodeGroupApply{
-		Addrs:applyAddrs,
-		Op: pt.ParacrossNodeGroupApply,
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupApply,
 	}
 	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -231,8 +228,8 @@ func  (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	checkGroupApplyReceipt(suite, receipt)
 
 	config = &pt.ParaNodeGroupApply{
-		Addrs:applyAddrs,
-		Op: pt.ParacrossNodeGroupApprove,
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupApprove,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -242,7 +239,7 @@ func  (suite *NodeManageTestSuite) testNodeGroupConfig() {
 
 }
 
-func  (suite *NodeManageTestSuite) testNodeConfig() {
+func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
 	config := &pt.ParaNodeAddrConfig{
 		Op:   pt.ParaNodeJoin,
