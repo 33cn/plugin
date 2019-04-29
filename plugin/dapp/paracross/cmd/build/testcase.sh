@@ -226,14 +226,14 @@ function para_configkey() {
 }
 
 function query_tx() {
-    block_wait "${1}" 2
+    block_wait "${1}" 1
 
     local times=100
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
         if [ "${ret}" != "${2}" ]; then
-            block_wait "${1}" 2
+            block_wait "${1}" 1
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "query tx=$2 failed"
