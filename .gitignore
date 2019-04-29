@@ -36,3 +36,13 @@ plugin/store/mpt/cpu.pprof
 plugin/store/mpt/mpt.test
 plugin/consensus/raft/tools/scripts/grpc33.log
 plugin/consensus/raft/tools/scripts/logs/
+build/check
+build/check.toml
+build/fzmstock
+build/paradatadir/
+build/parawallet/
+build/sendstock
+build/sendstock.toml
+build/*.csv
+
+
