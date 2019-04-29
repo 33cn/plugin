@@ -5,6 +5,8 @@
 package ticket
 
 import (
+	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -361,6 +363,20 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 	if current.Block.Size() > int(types.MaxBlockSize) {
 		return types.ErrBlockSize
 	}
+	//vrf verify
+	if types.IsDappFork(current.Block.Height, ty.TicketX, "ForkTicketVrf") {
+		LastTicketAction, err := client.getMinerTx(parent)
+		if err != nil {
+			return err
+		}
+		input := LastTicketAction.GetMiner().GetVrfHash()
+		if input == nil {
+			input = miner.PrivHash
+		}
+		if err = vrfVerify(miner.PubKey, input, miner.VrfProof, miner.VrfHash); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -573,13 +589,30 @@ func genPrivHash(priv crypto.PrivKey, tid string) ([]byte, error) {
 		var countNum int
 		countNum, err := strconv.Atoi(count)
 		if err != nil {
-			return privHash, err
+			return nil, err
 		}
 		privStr := fmt.Sprintf("%x:%d:%s", priv.Bytes(), countNum, seed)
 		privHash = common.Sha256([]byte(privStr))
-
 	}
 	return privHash, nil
+}
+
+func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
+	vrfPub, err := ty.ParseVrfPubKey(pub)
+	if err != nil {
+		tlog.Error("vrfVerify", "err", err)
+		return ty.ErrVrfVerfiy
+	}
+	vrfHash, err := vrfPub.ProofToHash(input, proof)
+	if err != nil {
+		tlog.Error("vrfVerify", "err", err)
+		return ty.ErrVrfVerfiy
+	}
+	tlog.Debug("vrf verify", "ProofToHash", fmt.Sprintf("(%x, %x): %x", input, proof, vrfHash), "hash", hex.EncodeToString(hash))
+	if !bytes.Equal(vrfHash[:], hash) {
+		return ty.ErrVrfVerfiy
+	}
+	return nil
 }
 
 func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv crypto.PrivKey, tid string, modify []byte) error {
@@ -597,6 +630,27 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 		return err
 	}
 	miner.PrivHash = privHash
+	//add vrf
+	if types.IsDappFork(block.Height, ty.TicketX, "ForkTicketVrf") {
+		LastTicketAction, err := client.getMinerTx(parent)
+		if err != nil {
+			return err
+		}
+		input := LastTicketAction.GetMiner().GetVrfHash()
+		if input == nil {
+			input = miner.PrivHash
+		}
+		vrfPriv, _, pubKey, err := ty.GenVrfKey(priv)
+		vrfHash, vrfProof := vrfPriv.Evaluate(input)
+		miner.PubKey = pubKey
+		miner.VrfHash = vrfHash[:]
+		miner.VrfProof = vrfProof
+		//vrf verify
+		if err = vrfVerify(miner.PubKey, input, miner.VrfProof, miner.VrfHash); err != nil {
+			tlog.Error("vrfVerify", "err", err)
+			return err
+		}
+	}
 	ticketAction.Value = &ty.TicketAction_Miner{Miner: miner}
 	ticketAction.Ty = ty.TicketActionMiner
 	//构造transaction

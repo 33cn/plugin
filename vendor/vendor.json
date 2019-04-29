@@ -125,6 +125,12 @@
 			"revisionTime": "2013-07-29T18:54:59Z"
 		},
 		{
+			"checksumSHA1": "HmbftipkadrLlCfzzVQ+iFHbl6g=",
+			"path": "github.com/golang/glog",
+			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+			"revisionTime": "2016-01-25T20:49:56Z"
+		},
+		{
 			"checksumSHA1": "BP2buXHHOKxI5eYS2xELVng2kf4=",
 			"path": "github.com/golang/protobuf/jsonpb",
 			"revision": "951a149f90371fb8858c6c979d03bb2583611052",
@@ -135,6 +141,30 @@
 			"path": "github.com/google/btree",
 			"revision": "4030bb1f1f0c35b30ca7009e9ebd06849dd45306",
 			"revisionTime": "2018-08-13T15:31:12Z"
+		},
+		{
+			"checksumSHA1": "Da+iyuif+EL5ZQ37dlpiGZdYrxQ=",
+			"path": "github.com/google/keytransparency/core/crypto/vrf",
+			"revision": "a3b2013109a42650a3aec5b39cb63be0ae50db91",
+			"revisionTime": "2019-04-19T00:43:36Z"
+		},
+		{
+			"checksumSHA1": "ed38HozgpUNgXyxG9YDePBHu59k=",
+			"path": "github.com/google/keytransparency/core/crypto/vrf/p256",
+			"revision": "a3b2013109a42650a3aec5b39cb63be0ae50db91",
+			"revisionTime": "2019-04-19T00:43:36Z"
+		},
+		{
+			"checksumSHA1": "u2q5qSyGNKqIwOUK/E8hzinAtuk=",
+			"path": "github.com/google/trillian/crypto/keys",
+			"revision": "f3eaa887163bb4d2ea4b4458cb4e7c5c2f346bc6",
+			"revisionTime": "2018-08-16T14:37:33Z"
+		},
+		{
+			"checksumSHA1": "znnUjnjwSqrfDct6tNGXLGRjmhA=",
+			"path": "github.com/google/trillian/crypto/keyspb",
+			"revision": "f3eaa887163bb4d2ea4b4458cb4e7c5c2f346bc6",
+			"revisionTime": "2018-08-16T14:37:33Z"
 		},
 		{
 			"checksumSHA1": "KAMDOfNMYpNFZo/l3WEATYQ2fSM=",

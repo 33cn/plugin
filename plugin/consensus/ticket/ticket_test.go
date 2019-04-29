@@ -163,3 +163,36 @@ func Test_getNextRequiredDifficulty(t *testing.T) {
 	assert.Equal(t, bt, defaultModify)
 	assert.Equal(t, bits, types.GetP(0).PowLimitBits)
 }
+
+func Test_vrfVerify(t *testing.T) {
+	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	assert.NoError(t, err)
+	priv, _ := c.GenKey()
+
+	vpriv, _, pubKey, err := ty.GenVrfKey(priv)
+	assert.NoError(t, err)
+	m1 := []byte("data1")
+	m2 := []byte("data2")
+	m3 := []byte("data2")
+	hash1, proof1 := vpriv.Evaluate(m1)
+	hash2, proof2 := vpriv.Evaluate(m2)
+	hash3, proof3 := vpriv.Evaluate(m3)
+	for _, tc := range []struct {
+		m     []byte
+		hash  [32]byte
+		proof []byte
+		err   error
+	}{
+		{m1, hash1, proof1, nil},
+		{m2, hash2, proof2, nil},
+		{m3, hash3, proof3, nil},
+		{m3, hash3, proof2, nil},
+		{m3, hash3, proof1, ty.ErrVrfVerfiy},
+		{m3, hash1, proof3, ty.ErrVrfVerfiy},
+	} {
+		err := vrfVerify(pubKey, tc.m, tc.proof, tc.hash[:])
+		if got, want := err, tc.err; got != want {
+			t.Errorf("vrfVerify(%s, %x): %v, want %v", tc.m, tc.proof, got, want)
+		}
+	}
+}
