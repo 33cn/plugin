@@ -341,10 +341,12 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			consensHeight := data.(*pt.ParacrossStatus).Height
-			if a.exec.GetMainHeight() > consensHeight+confStopBlocks {
-				clog.Info("paracross.nodeVote, super manager pass", "currHeight", a.height, "consensHeight", consensHeight, "confHeight", confStopBlocks)
-				superManagerPass = true
+			//return err to stop tx pass to para chain
+			if a.exec.GetMainHeight() <= consensHeight + confStopBlocks {
+				clog.Error("paracross.nodeVote, super manager height not reach", "currHeight", a.exec.GetMainHeight(), "consensHeight", consensHeight, "confHeight", confStopBlocks)
+				return nil, pt.ErrParaConsensStopBlocksNotReach
 			}
+			superManagerPass = true
 		}
 
 		//超级用户投yes票，共识停止了一定高度就可以通过，防止当前所有授权节点都忘掉私钥场景
