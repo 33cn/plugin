@@ -1,6 +1,7 @@
 package testnode
 
-var paraconfig = `
+//default config for testnode
+var DefaultConfig = `
 Title="user.p.guodun."
 # TestNet=true
 
@@ -70,6 +71,9 @@ name="timeline"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
+
+[mempool.sub.para]
+poolCacheSize=102400
 
 [consensus]
 name="para"
