@@ -46,7 +46,6 @@ func NewMempool(cfg *types.Mempool) *Mempool {
 func (mem *Mempool) SetQueueClient(client queue.Client) {
 	mem.client = client
 	mem.client.Sub(mem.key)
-
 	mem.wg.Add(1)
 	go func() {
 		for msg := range client.Recv() {
@@ -69,8 +68,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 					}
 				}
 			default:
-				msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: false,
-					Msg: []byte(fmt.Sprintf("para %v doesn't handle message %v", mem.key, msg.Ty))}))
+				msg.Reply(client.NewMessage(mem.key, types.EventReply, types.ErrActionNotSupport))
 			}
 		}
 	}()
@@ -81,10 +79,9 @@ func (mem *Mempool) Wait() {}
 
 // Close method
 func (mem *Mempool) Close() {
-	if mem.isClose() {
+	if !atomic.CompareAndSwapInt32(&mem.isclose, 0, 1) {
 		return
 	}
-	atomic.StoreInt32(&mem.isclose, 1)
 	if mem.client != nil {
 		mem.client.Close()
 	}
@@ -92,8 +89,4 @@ func (mem *Mempool) Close() {
 	mlog.Info("para mempool module closing")
 	mem.wg.Wait()
 	mlog.Info("para mempool module closed")
-}
-
-func (mem *Mempool) isClose() bool {
-	return atomic.LoadInt32(&mem.isclose) == 1
 }
