@@ -1,6 +1,6 @@
 package testnode
 
-//default config for testnode
+//DefaultConfig default config for testnode
 var DefaultConfig = `
 Title="user.p.guodun."
 # TestNet=true
