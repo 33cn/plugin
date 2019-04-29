@@ -3,7 +3,6 @@ package para
 import (
 	"context"
 	"sync/atomic"
-	"time"
 
 	"sync"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-var retry_times = 3
 var mlog = log.New("module", "mempool.para")
 var topic = "mempool"
 
@@ -52,17 +50,11 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 			case types.EventTx:
 				mlog.Info("Receive msg from para mempool")
 				tx := msg.GetData().(*types.Transaction)
-				for i := 0; i < retry_times; i++ {
-					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
-					if err == nil {
-						msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: reply.GetMsg()}))
-						break
-					} else if err != nil && i != retry_times-1 {
-						time.Sleep(time.Millisecond * 10)
-						continue
-					} else {
-						msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
-					}
+				reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
+				if err != nil {
+					msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
+				} else {
+					msg.Reply(client.NewMessage(mem.key, types.EventReply, reply))
 				}
 			default:
 				msg.Reply(client.NewMessage(mem.key, types.EventReply, types.ErrActionNotSupport))
