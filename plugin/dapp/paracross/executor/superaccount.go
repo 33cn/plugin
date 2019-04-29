@@ -342,7 +342,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			consensHeight := data.(*pt.ParacrossStatus).Height
 			//return err to stop tx pass to para chain
-			if a.exec.GetMainHeight() <= consensHeight + confStopBlocks {
+			if a.exec.GetMainHeight() <= consensHeight+confStopBlocks {
 				clog.Error("paracross.nodeVote, super manager height not reach", "currHeight", a.exec.GetMainHeight(), "consensHeight", consensHeight, "confHeight", confStopBlocks)
 				return nil, pt.ErrParaConsensStopBlocksNotReach
 			}
