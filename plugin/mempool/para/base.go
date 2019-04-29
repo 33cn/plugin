@@ -3,8 +3,8 @@ package para
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"sync/atomic"
+	"time"
 
 	"sync"
 
@@ -60,10 +60,10 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: reply.GetMsg()}))
 							break
 						} else if err != nil && i != retry_times-1 {
+							time.Sleep(time.Millisecond * 10)
 							continue
 						} else {
-							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: false,
-								Msg: []byte(fmt.Sprintf("Send transaction to main chain failed, %v", err))}))
+							msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
 						}
 					}
 				}
