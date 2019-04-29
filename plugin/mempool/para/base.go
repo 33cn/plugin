@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"sync"
 
@@ -21,7 +22,9 @@ var topic = "mempool"
 type Mempool struct {
 	key         string
 	wg          sync.WaitGroup
+	client      queue.Client
 	mainGrpcCli types.Chain33Client
+	isclose     int32
 }
 
 //NewMempool 新建mempool 实例
@@ -41,9 +44,11 @@ func NewMempool(cfg *types.Mempool) *Mempool {
 
 //SetQueueClient 初始化mempool模块
 func (mem *Mempool) SetQueueClient(client queue.Client) {
+	mem.client = client
+	mem.client.Sub(mem.key)
+
 	mem.wg.Add(1)
 	go func() {
-		client.Sub(mem.key)
 		for msg := range client.Recv() {
 			switch msg.Ty {
 			case types.EventTx:
@@ -76,6 +81,19 @@ func (mem *Mempool) Wait() {}
 
 // Close method
 func (mem *Mempool) Close() {
+	if mem.isClose() {
+		return
+	}
+	atomic.StoreInt32(&mem.isclose, 1)
+	if mem.client != nil {
+		mem.client.Close()
+	}
 	// wait for cycle quit
+	mlog.Info("para mempool module closing")
 	mem.wg.Wait()
+	mlog.Info("para mempool module closed")
+}
+
+func (mem *Mempool) isClose() bool {
+	return atomic.LoadInt32(&mem.isclose) == 1
 }
