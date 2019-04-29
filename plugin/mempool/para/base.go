@@ -1,7 +1,6 @@
 package para
 
 import (
-	"bytes"
 	"context"
 	"sync/atomic"
 	"time"
@@ -52,19 +51,17 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 			switch msg.Ty {
 			case types.EventTx:
 				mlog.Info("Receive msg from para mempool")
-				if bytes.HasPrefix(msg.GetData().(*types.Transaction).Execer, types.ParaKey) {
-					tx := msg.GetData().(*types.Transaction)
-					for i := 0; i < retry_times; i++ {
-						reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
-						if err == nil {
-							msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: reply.GetMsg()}))
-							break
-						} else if err != nil && i != retry_times-1 {
-							time.Sleep(time.Millisecond * 10)
-							continue
-						} else {
-							msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
-						}
+				tx := msg.GetData().(*types.Transaction)
+				for i := 0; i < retry_times; i++ {
+					reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
+					if err == nil {
+						msg.Reply(client.NewMessage(mem.key, types.EventReply, &types.Reply{IsOk: true, Msg: reply.GetMsg()}))
+						break
+					} else if err != nil && i != retry_times-1 {
+						time.Sleep(time.Millisecond * 10)
+						continue
+					} else {
+						msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
 					}
 				}
 			default:
