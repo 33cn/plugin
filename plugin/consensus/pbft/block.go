@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package pbft
 
 import (
@@ -15,11 +19,11 @@ import (
 
 func init() {
 	drivers.Reg("pbft", NewPbftNode)
-	drivers.QueryData.Register("pbft", &PbftNode{})
+	drivers.QueryData.Register("pbft", &Client{})
 }
 
-// PbftNode 是一个PBFT节点端(可以是客户端，参与共识)
-type PbftNode struct {
+// Client 是一个PBFT节点端(可以是客户端，参与共识)
+type Client struct {
 	*drivers.BaseClient
 	requestChan chan *pt.Request
 	dataChan    chan *pt.BlockData
@@ -28,30 +32,30 @@ type PbftNode struct {
 }
 
 // NewBlockstore 用于初始化新的Blockstore
-func NewBlockstore(cfg *types.Consensus, requestChan chan *pt.Request, dataChan chan *pt.BlockData, isClient bool, address string) *PbftNode {
+func NewBlockstore(cfg *types.Consensus, requestChan chan *pt.Request, dataChan chan *pt.BlockData, isClient bool, address string) *Client {
 	c := drivers.NewBaseClient(cfg)
-	client := &PbftNode{BaseClient: c, requestChan: requestChan, dataChan: dataChan, isClient: isClient, address: address}
+	client := &Client{BaseClient: c, requestChan: requestChan, dataChan: dataChan, isClient: isClient, address: address}
 	c.SetChild(client)
 	return client
 }
 
 // ProcEvent 返回false
-func (client *PbftNode) ProcEvent(msg *queue.Message) bool {
+func (client *Client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 
 // CheckBlock 用于验证区块
-func (client *PbftNode) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	return nil
 }
 
 // GetGenesisBlockTime 用于获取创世块时间戳
-func (client *PbftNode) GetGenesisBlockTime() int64 {
+func (client *Client) GetGenesisBlockTime() int64 {
 	return genesisBlockTime
 }
 
 // CreateGenesisTx 用于产生创世交易
-func (client *PbftNode) CreateGenesisTx() (ret []*types.Transaction) {
+func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	tx.Execer = []byte(cty.CoinsX)
 	tx.To = genesis
@@ -65,7 +69,7 @@ func (client *PbftNode) CreateGenesisTx() (ret []*types.Transaction) {
 }
 
 // SetQueueClient 用于初始化节点队列
-func (client *PbftNode) SetQueueClient(c queue.Client) {
+func (client *Client) SetQueueClient(c queue.Client) {
 	plog.Info("Enter SetQueue method of typesft consensus")
 	client.InitClient(c, func() {
 		client.InitBlock()
@@ -84,14 +88,14 @@ func (client *PbftClient) Close() {
 */
 
 // Propose 用于客户端发请求
-func (client *PbftNode) Propose(block *types.Block) {
+func (client *Client) Propose(block *types.Block) {
 	op := &pt.BlockData{Value: block}
 	req := ToRequestClient(op, time.Now().String(), client.address)
 	client.requestChan <- req
 }
 
 // 用于客户端读请求
-func (client *PbftNode) readReply() {
+func (client *Client) readReply() {
 
 	data := <-client.dataChan
 	if data == nil {
@@ -120,7 +124,7 @@ func (client *PbftNode) readReply() {
 }
 
 // CreateBlock 用于出块
-func (client *PbftNode) CreateBlock() {
+func (client *Client) CreateBlock() {
 	issleep := true
 
 	if !client.isClient {
@@ -176,21 +180,24 @@ func WriteSnap(block proto.Message, snapdir string) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(snapdir, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(snapdir, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return err
 	}
 	_, err = f.Write(blockbyte)
-	f.Close()
 	if err != nil {
-		return err
+		plog.Error("WriteSnap failed", "err", err)
 	}
-	return nil
+	err = f.Close()
+	if err != nil {
+		plog.Error("close failed", "err", err)
+	}
+	return err
 }
 
 // WriteLog write log to file
 func WriteLog(data []*pt.Request, snapdir string) error {
-	f, err := os.OpenFile(snapdir, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666) //os.ModeAppend
+	f, err := os.OpenFile(snapdir, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600) //os.ModeAppend
 	if err != nil {
 		return err
 	}
@@ -205,7 +212,7 @@ func WriteLog(data []*pt.Request, snapdir string) error {
 		}
 	}
 
-	f.Close()
+	err = f.Close()
 
-	return nil
+	return err
 }

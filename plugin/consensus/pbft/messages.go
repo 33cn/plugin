@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package pbft
 
 import (
@@ -24,7 +28,6 @@ func EQ(d1 []byte, d2 []byte) bool {
 	return true
 }
 
-// Checkpoint
 // ToCheckpoint 用于产生Checkpoint的types，非Request
 func ToCheckpoint(sequence uint64, digest string) *types.Checkpoint {
 	return &types.Checkpoint{Sequence: sequence, Digest: digest}
@@ -124,25 +127,30 @@ func ComputeCryptoHash(data []byte) (hash []byte) {
 // Hash 用于处理加密Request
 func Hash(REQ *types.Request) string {
 	var raw []byte
+	var err error
 	switch REQ.Value.(type) {
 	case *types.Request_Client:
-		raw, _ = proto.Marshal(REQ.GetClient())
+		raw, err = proto.Marshal(REQ.GetClient())
 	case *types.Request_Preprepare:
-		raw, _ = proto.Marshal(REQ.GetPreprepare())
+		raw, err = proto.Marshal(REQ.GetPreprepare())
 	case *types.Request_Prepare:
-		raw, _ = proto.Marshal(REQ.GetPrepare())
+		raw, err = proto.Marshal(REQ.GetPrepare())
 	case *types.Request_Commit:
-		raw, _ = proto.Marshal(REQ.GetCommit())
+		raw, err = proto.Marshal(REQ.GetCommit())
 	case *types.Request_Checkpoint:
-		raw, _ = proto.Marshal(REQ.GetCheckpoint())
+		raw, err = proto.Marshal(REQ.GetCheckpoint())
 	case *types.Request_Viewchange:
-		raw, _ = proto.Marshal(REQ.GetViewchange())
+		raw, err = proto.Marshal(REQ.GetViewchange())
 	case *types.Request_Ack:
-		raw, _ = proto.Marshal(REQ.GetAck())
+		raw, err = proto.Marshal(REQ.GetAck())
 	case *types.Request_Newview:
-		raw, _ = proto.Marshal(REQ.GetNewview())
+		raw, err = proto.Marshal(REQ.GetNewview())
 	default:
 		plog.Error("Asked to hash non-supported message type, ignoring")
+		return ""
+	}
+	if err != nil {
+		plog.Error("Hash() Marshal failed", "type", REQ.Value, "err", err)
 		return ""
 	}
 	return base64.StdEncoding.EncodeToString(ComputeCryptoHash(raw))
@@ -153,8 +161,11 @@ func DigestClientRequest(REQ *types.RequestClient) string {
 	if REQ == nil {
 		return ""
 	}
-	var raw []byte
-	raw, _ = proto.Marshal(REQ)
+	raw, err := proto.Marshal(REQ)
+	if err != nil {
+		plog.Error("DigestClientRequest() Marshal failed", "RequestClient", REQ, "err", err)
+		return ""
+	}
 	return base64.StdEncoding.EncodeToString(ComputeCryptoHash(raw))
 }
 
@@ -163,8 +174,12 @@ func DigestReply(reply *types.ClientReply) string {
 	if reply == nil {
 		return ""
 	}
-	var raw []byte
-	raw, _ = proto.Marshal(reply)
+	raw, err := proto.Marshal(reply)
+	if err != nil {
+		plog.Error("DigestReply() Marshal failed", "ClientReply", reply, "err", err)
+		return ""
+	}
+
 	return base64.StdEncoding.EncodeToString(ComputeCryptoHash(raw))
 }
 
@@ -173,8 +188,11 @@ func DigestViewchange(vc *types.RequestViewChange) string {
 	if vc == nil {
 		return ""
 	}
-	var raw []byte
-	raw, _ = proto.Marshal(vc)
+	raw, err := proto.Marshal(vc)
+	if err != nil {
+		plog.Error("DigestViewchange() Marshal failed", "RequestViewChange", vc, "err", err)
+		return ""
+	}
 	return base64.StdEncoding.EncodeToString(ComputeCryptoHash(raw))
 }
 

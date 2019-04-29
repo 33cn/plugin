@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package pbft
 
 import (
@@ -61,7 +65,7 @@ func NewPbftNode(cfg *types.Consensus, sub []byte) queue.Module {
 		}
 	}
 
-	var c *PbftNode
+	var c *Client
 	requestChan, dataChan, isClient, address := NewReplica(subcfg.NodeID, peers, subcfg.PrimaryID, subcfg.F, subcfg.N, subcfg.K, subcfg.LogMultiplier, subcfg.Byzantine)
 	c = NewBlockstore(cfg, requestChan, dataChan, isClient, address)
 	return c

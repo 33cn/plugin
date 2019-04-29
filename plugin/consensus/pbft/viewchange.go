@@ -1,3 +1,7 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package pbft
 
 import (
@@ -196,11 +200,11 @@ func (rep *Replica) getSsetViewchanges() (vset []*pt.RequestViewChange) {
 // ok 表示是否能找到这个检查点
 // replicas 表示给这个检查点提交了<view-change>的节点id
 func (rep *Replica) selectInitialCheckpoint(vset []*pt.RequestViewChange) (checkpoint pt.RequestViewChange_C, ok bool, replicas []uint64) {
-	checkpoints := make(map[pt.RequestViewChange_C][]*pt.RequestViewChange)
+	checkpoints := make(map[*pt.RequestViewChange_C][]*pt.RequestViewChange)
 	for _, vc := range vset {
 		for _, c := range vc.Cset { // TODO, verify that we strip duplicate checkpoints from this set
 			plog.Debug("Appending checkpoint...", "From replica", vc.Replica, "Add seqNo", vc.H, "Add h", c.Sequence)
-			checkpoints[*c] = append(checkpoints[*c], vc)
+			checkpoints[c] = append(checkpoints[c], vc)
 		}
 	}
 
@@ -243,7 +247,7 @@ func (rep *Replica) selectInitialCheckpoint(vset []*pt.RequestViewChange) (check
 
 		// 这里是满足论文中所说的，选择具有最高号码h的检查点，即可能有很多满足上述的检查点，这里我们选择最高号码的
 		if checkpoint.Sequence <= idx.Sequence {
-			checkpoint = idx
+			checkpoint = *idx
 			ok = true
 		}
 	}
