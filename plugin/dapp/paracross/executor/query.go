@@ -232,7 +232,6 @@ func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 	return &resp, nil
 }
 
-
 //按状态遍历
 func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
 	prefix := calcLocalNodeStatusPrefix(title, status)
