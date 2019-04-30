@@ -8,8 +8,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	"math/rand"
+
+	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 )
 
 const fee = 1e6

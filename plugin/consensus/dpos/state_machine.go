@@ -7,8 +7,9 @@ package dpos
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/outbrain/golib/math"
 	"time"
+
+	"github.com/outbrain/golib/math"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -17,11 +18,11 @@ import (
 
 var (
 	// InitStateType 为状态机的初始状态
-	InitStateType       = 1
+	InitStateType = 1
 	// VotingStateType 为状态机的投票状态
-	VotingStateType     = 2
+	VotingStateType = 2
 	// VotedStateType 为状态机的已投票状态
-	VotedStateType      = 3
+	VotedStateType = 3
 	// WaitNotifyStateType 为状态机的等待通知状态
 	WaitNotifyStateType = 4
 
@@ -31,10 +32,13 @@ var (
 
 // InitStateObj is the InitState obj
 var InitStateObj = &InitState{}
+
 // VotingStateObj is the VotingState obj
 var VotingStateObj = &VotingState{}
+
 // VotedStateObj is the VotedState obj
 var VotedStateObj = &VotedState{}
+
 // WaitNotifyStateObj is the WaitNotifyState obj
 var WaitNotifyStateObj = &WaitNofifyState{}
 
@@ -56,7 +60,7 @@ func DecideTaskByTime(now int64) (task DPosTask) {
 	task.cycleStart = now - now%dposCycle
 	task.cycleStop = task.cycleStart + dposCycle - 1
 
-	task.periodStart = task.cycleStart + task.nodeID * dposBlockInterval * dposContinueBlockNum
+	task.periodStart = task.cycleStart + task.nodeID*dposBlockInterval*dposContinueBlockNum
 	task.periodStop = task.periodStart + dposPeriod - 1
 
 	task.blockStart = task.periodStart + now%dposCycle%dposPeriod/dposBlockInterval*dposBlockInterval
@@ -363,12 +367,12 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 				cs.client.SetBlockTime(task.blockStop)
 				cs.client.CreateBlock()
-				cs.scheduleDPosTimeout(time.Millisecond * 500, VotedStateType)
+				cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
 				return
 			}
 
 			dposlog.Info("Wait time to create block near blockStop.")
-			cs.scheduleDPosTimeout(time.Millisecond * 500, VotedStateType)
+			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
 			return
 
 		} else {
