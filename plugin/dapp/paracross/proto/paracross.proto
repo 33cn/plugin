@@ -19,6 +19,7 @@ message ParacrossHeightStatus {
     string                 title   = 2;
     int64                  height  = 3;
     ParacrossStatusDetails details = 4;
+    int64                  mainHeight    = 5;
 }
 
 message ParacrossStatus {
@@ -86,7 +87,7 @@ message ParaNodeGroupApply{
     uint32 op                   = 2;
     string addrs                = 3;
     int64  coinsFrozen          = 4;
-
+    uint32 emptyBlockInterval   = 5;
 }
 
 
