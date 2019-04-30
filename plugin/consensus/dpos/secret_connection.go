@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package tendermint Uses nacl's secret_box to encrypt a net.Conn.
+// Package dpos Uses nacl's secret_box to encrypt a net.Conn.
 // It is (meant to be) an implementation of the STS protocol.
 // Note we do not (yet) assume that a remote peer's pubkey
 // is known ahead of time, and thus we are technically

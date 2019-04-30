@@ -42,7 +42,7 @@ const (
 
 	minReadBufferSize  = 1024
 	minWriteBufferSize = 65536
-	)
+)
 
 // Parallel method
 func Parallel(tasks ...func()) {
@@ -300,7 +300,6 @@ func (node *Node) StartConsensusRoutine() {
 		time.Sleep(1 * time.Second)
 	}
 }
-
 
 // BroadcastRoutine receive to broadcast
 func (node *Node) BroadcastRoutine() {

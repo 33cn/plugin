@@ -21,12 +21,12 @@ var (
 	ErrNotifyInvalidValidatorIndex   = errors.New("Invalid validator index for notify")
 	ErrNotifyInvalidSignature        = errors.New("Invalid notify signature")
 
-	ErrVoteInvalidValidatorIndex     = errors.New("Invalid validator index for vote")
-	ErrVoteInvalidValidatorAddress   = errors.New("Invalid validator address for vote")
-	ErrVoteInvalidSignature          = errors.New("Invalid vote signature")
-	ErrVoteNil                       = errors.New("Nil vote")
+	ErrVoteInvalidValidatorIndex   = errors.New("Invalid validator index for vote")
+	ErrVoteInvalidValidatorAddress = errors.New("Invalid validator address for vote")
+	ErrVoteInvalidSignature        = errors.New("Invalid vote signature")
+	ErrVoteNil                     = errors.New("Nil vote")
 
-	votelog                          = log15.New("module", "tendermint-vote")
+	votelog = log15.New("module", "tendermint-vote")
 
 	ConsensusCrypto crypto.Crypto
 )
@@ -91,12 +91,12 @@ func (vote *Vote) String() string {
 		vote.VoteItem.PeriodStart,
 		vote.VoteItem.PeriodStop,
 		vote.VoteItem.Height,
-		Fingerprint(vote.VoteItem.VoteId),
+		Fingerprint(vote.VoteItem.VoteID),
 		CanonicalTime(time.Unix(0, vote.VoteTimestamp)),
 		vote.VoterNodeIndex,
 		Fingerprint(vote.VoterNodeAddress),
 		Fingerprint(vote.Signature),
-		)
+	)
 }
 
 // Verify ...
@@ -133,8 +133,7 @@ func (vote *Vote) Hash() []byte {
 	return crypto.Ripemd160(bytes)
 }
 
-
-// Vote Represents a vote from validators for consensus.
+// Notify Represents a notify from validators for consensus.
 type Notify struct {
 	*DPosNotify
 }
@@ -178,7 +177,7 @@ func (notify *Notify) String() string {
 		notify.Vote.PeriodStart,
 		notify.Vote.PeriodStop,
 		notify.Vote.Height,
-		Fingerprint(notify.Vote.VoteId),
+		Fingerprint(notify.Vote.VoteID),
 		CanonicalTime(time.Unix(0, notify.NotifyTimestamp)),
 		notify.HeightStop,
 		notify.NotifyNodeIndex,

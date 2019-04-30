@@ -23,11 +23,11 @@ type GenesisValidator struct {
 
 // GenesisDoc defines the initial conditions for a tendermint blockchain, in particular its validator set.
 type GenesisDoc struct {
-	GenesisTime     time.Time          `json:"genesis_time"`
-	ChainID         string             `json:"chain_id"`
-	Validators      []GenesisValidator `json:"validators"`
-	AppHash         []byte             `json:"app_hash"`
-	AppOptions      interface{}        `json:"app_options,omitempty"`
+	GenesisTime time.Time          `json:"genesis_time"`
+	ChainID     string             `json:"chain_id"`
+	Validators  []GenesisValidator `json:"validators"`
+	AppHash     []byte             `json:"app_hash"`
+	AppOptions  interface{}        `json:"app_options,omitempty"`
 }
 
 // SaveAs is a utility method for saving GenensisDoc as a JSON file.

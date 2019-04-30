@@ -25,16 +25,15 @@ const (
 	proposalHeartbeatIntervalSeconds = 1
 
 	continueToVote = 0
-	voteSuccess = 1
-	voteFail = 2
-
+	voteSuccess    = 1
+	voteFail       = 2
 )
 
 // Errors define
 var (
-	ErrInvalidVoteSignature       = errors.New("Error invalid vote signature")
-	ErrInvalidVoteReplySignature  = errors.New("Error invalid vote reply signature")
-	ErrInvalidNotifySignature     = errors.New("Error invalid notify signature")
+	ErrInvalidVoteSignature      = errors.New("Error invalid vote signature")
+	ErrInvalidVoteReplySignature = errors.New("Error invalid vote reply signature")
+	ErrInvalidNotifySignature    = errors.New("Error invalid notify signature")
 )
 
 //-----------------------------------------------------------------------------
@@ -45,8 +44,8 @@ var (
 
 // internally generated messages which may update the state
 type timeoutInfo struct {
-	Duration time.Duration        `json:"duration"`
-	State int                     `json:"state"`
+	Duration time.Duration `json:"duration"`
+	State    int           `json:"state"`
 }
 
 func (ti *timeoutInfo) String() string {
@@ -59,12 +58,12 @@ func (ti *timeoutInfo) String() string {
 // The internal state machine receives input from peers, the internal validator, and from a timer.
 type ConsensusState struct {
 	// config details
-	client        *Client
-	privValidator ttypes.PrivValidator // for signing votes
+	client             *Client
+	privValidator      ttypes.PrivValidator // for signing votes
 	privValidatorIndex int
 
 	// internal state
-	mtx sync.Mutex
+	mtx          sync.Mutex
 	validatorMgr ValidatorMgr // State until height-1.
 
 	// state changes may be triggered by msgs from peers,
@@ -87,12 +86,12 @@ type ConsensusState struct {
 
 	//当前达成共识的选票
 	currentVote *dpostype.VoteItem
-	lastVote *dpostype.VoteItem
+	lastVote    *dpostype.VoteItem
 
-	myVote *dpostype.DPosVote
+	myVote     *dpostype.DPosVote
 	lastMyVote *dpostype.DPosVote
 
-	notify *dpostype.DPosNotify
+	notify     *dpostype.DPosNotify
 	lastNotify *dpostype.DPosNotify
 
 	//所有选票，包括自己的和从网络中接收到的
@@ -109,7 +108,7 @@ func NewConsensusState(client *Client, valMgr ValidatorMgr) *ConsensusState {
 		internalMsgQueue: make(chan MsgInfo, msgQueueSize),
 		timeoutTicker:    NewTimeoutTicker(),
 
-		Quit:         make(chan struct{}),
+		Quit:      make(chan struct{}),
 		dposState: InitStateObj,
 		dposVotes: nil,
 	}
@@ -141,7 +140,7 @@ func (cs *ConsensusState) String() string {
 	return fmt.Sprintf("ConsensusState") //(H:%v R:%v S:%v", cs.Height, cs.Round, cs.Step)
 }
 
-// GetState returns a copy of the chain state.
+// GetValidatorMgr returns a copy of the ValidatorMgr.
 func (cs *ConsensusState) GetValidatorMgr() ValidatorMgr {
 	cs.mtx.Lock()
 	defer cs.mtx.Unlock()
@@ -149,7 +148,7 @@ func (cs *ConsensusState) GetValidatorMgr() ValidatorMgr {
 }
 
 // GetValidators returns a copy of the current validators.
-func (cs *ConsensusState) GetValidators() ([]*ttypes.Validator) {
+func (cs *ConsensusState) GetValidators() []*ttypes.Validator {
 	cs.mtx.Lock()
 	defer cs.mtx.Unlock()
 	return cs.validatorMgr.Validators.Copy().Validators
@@ -182,7 +181,7 @@ func (cs *ConsensusState) Start() {
 		go cs.receiveRoutine()
 
 		// schedule the first round!
-		cs.scheduleDPosTimeout(time.Second * 3, InitStateType)
+		cs.scheduleDPosTimeout(time.Second*3, InitStateType)
 	}
 }
 
@@ -194,7 +193,7 @@ func (cs *ConsensusState) Stop() {
 
 // Attempt to schedule a timeout (by sending timeoutInfo on the tickChan)
 func (cs *ConsensusState) scheduleDPosTimeout(duration time.Duration, stateType int) {
-	cs.timeoutTicker.ScheduleTimeout(timeoutInfo{Duration:duration, State: stateType})
+	cs.timeoutTicker.ScheduleTimeout(timeoutInfo{Duration: duration, State: stateType})
 }
 
 // send a msg into the receiveRoutine regarding our own proposal, block part, or vote
@@ -216,6 +215,7 @@ func (cs *ConsensusState) sendInternalMessage(mi MsgInfo) {
 func (cs *ConsensusState) updateToValMgr(valMgr ValidatorMgr) {
 	cs.validatorMgr = valMgr
 }
+
 //-----------------------------------------
 // the main go routines
 
@@ -263,14 +263,14 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 	var err error
 	msg, peerID, peerIP := mi.Msg, string(mi.PeerID), mi.PeerIP
 	switch msg := msg.(type) {
-		case *dpostype.DPosVote:
-			cs.dposState.recvVote(cs, msg)
-		case *dpostype.DPosNotify:
-			cs.dposState.recvNotify(cs, msg)
+	case *dpostype.DPosVote:
+		cs.dposState.recvVote(cs, msg)
+	case *dpostype.DPosNotify:
+		cs.dposState.recvNotify(cs, msg)
 	case *dpostype.DPosVoteReply:
-			cs.dposState.recvVoteReply(cs, msg)
-		default:
-			dposlog.Error("Unknown msg type", msg.String(), "peerid", peerID, "peerip", peerIP)
+		cs.dposState.recvVoteReply(cs, msg)
+	default:
+		dposlog.Error("Unknown msg type", msg.String(), "peerid", peerID, "peerip", peerIP)
 	}
 	if err != nil {
 		dposlog.Error("Error with msg", "type", reflect.TypeOf(msg), "peerid", peerID, "peerip", peerIP, "err", err, "msg", msg)
@@ -297,22 +297,26 @@ func (cs *ConsensusState) IsProposer() bool {
 	return false
 }
 
-func (cs *ConsensusState) SetState(state DposState){
+// SetState method
+func (cs *ConsensusState) SetState(state DposState) {
 	cs.dposState = state
 }
 
+// SaveVote method
 func (cs *ConsensusState) SaveVote() {
 	if cs.lastVote == nil {
 		cs.lastVote = cs.currentVote
-	} else if cs.currentVote != nil && !bytes.Equal(cs.currentVote.VoteId, cs.lastVote.VoteId) {
+	} else if cs.currentVote != nil && !bytes.Equal(cs.currentVote.VoteID, cs.lastVote.VoteID) {
 		cs.lastVote = cs.currentVote
 	}
 }
 
-func (cs *ConsensusState) SetCurrentVote(vote * dpostype.VoteItem) {
+// SetCurrentVote method
+func (cs *ConsensusState) SetCurrentVote(vote *dpostype.VoteItem) {
 	cs.currentVote = vote
 }
 
+// SaveMyVote method
 func (cs *ConsensusState) SaveMyVote() {
 	if cs.lastMyVote == nil {
 		cs.lastMyVote = cs.myVote
@@ -321,10 +325,12 @@ func (cs *ConsensusState) SaveMyVote() {
 	}
 }
 
-func (cs *ConsensusState) SetMyVote(vote * dpostype.DPosVote){
+// SetMyVote method
+func (cs *ConsensusState) SetMyVote(vote *dpostype.DPosVote) {
 	cs.myVote = vote
 }
 
+// SaveNotify method
 func (cs *ConsensusState) SaveNotify() {
 	if cs.lastNotify == nil {
 		cs.lastNotify = cs.notify
@@ -333,7 +339,8 @@ func (cs *ConsensusState) SaveNotify() {
 	}
 }
 
-func (cs *ConsensusState) SetNotify(notify * dpostype.DPosNotify){
+// SetNotify method
+func (cs *ConsensusState) SetNotify(notify *dpostype.DPosNotify) {
 	if cs.notify != nil && !bytes.Equal(cs.lastNotify.Signature, notify.Signature) {
 		cs.lastNotify = cs.notify
 	}
@@ -341,15 +348,18 @@ func (cs *ConsensusState) SetNotify(notify * dpostype.DPosNotify){
 	cs.notify = notify
 }
 
-func (cs *ConsensusState) CacheNotify(notify * dpostype.DPosNotify){
+// CacheNotify method
+func (cs *ConsensusState) CacheNotify(notify *dpostype.DPosNotify) {
 	cs.cachedNotify = notify
 }
 
-func (cs *ConsensusState) ClearCachedNotify(){
+// ClearCachedNotify method
+func (cs *ConsensusState) ClearCachedNotify() {
 	cs.cachedNotify = nil
 }
 
-func (cs *ConsensusState) AddVotes(vote * dpostype.DPosVote){
+// AddVotes method
+func (cs *ConsensusState) AddVotes(vote *dpostype.DPosVote) {
 	repeatFlag := false
 	addrExistFlag := false
 	index := -1
@@ -384,7 +394,8 @@ func (cs *ConsensusState) AddVotes(vote * dpostype.DPosVote){
 	}
 }
 
-func (cs *ConsensusState) CacheVotes(vote * dpostype.DPosVote){
+// CacheVotes method
+func (cs *ConsensusState) CacheVotes(vote *dpostype.DPosVote) {
 	repeatFlag := false
 	addrExistFlag := false
 	index := -1
@@ -410,18 +421,19 @@ func (cs *ConsensusState) CacheVotes(vote * dpostype.DPosVote){
 		cs.cachedVotes = append(cs.cachedVotes, vote)
 	} else if vote.VoteTimestamp > cs.cachedVotes[index].VoteTimestamp {
 		/*
-		if index == len(cs.cachedVotes) - 1 {
-			cs.cachedVotes = append(cs.cachedVotes, vote)
-		}else {
-			cs.cachedVotes = append(cs.cachedVotes[:index], cs.dposVotes[(index + 1):]...)
-			cs.cachedVotes = append(cs.cachedVotes, vote)
-		}
+			if index == len(cs.cachedVotes) - 1 {
+				cs.cachedVotes = append(cs.cachedVotes, vote)
+			}else {
+				cs.cachedVotes = append(cs.cachedVotes[:index], cs.dposVotes[(index + 1):]...)
+				cs.cachedVotes = append(cs.cachedVotes, vote)
+			}
 		*/
 		cs.cachedVotes[index] = vote
 	}
 }
 
-func (cs *ConsensusState) CheckVotes()(ty int, vote * dpostype.VoteItem){
+// CheckVotes method
+func (cs *ConsensusState) CheckVotes() (ty int, vote *dpostype.VoteItem) {
 	major32 := int(dposDelegateNum * 2 / 3)
 
 	//总的票数还不够2/3，先不做决定
@@ -429,9 +441,9 @@ func (cs *ConsensusState) CheckVotes()(ty int, vote * dpostype.VoteItem){
 		return continueToVote, nil
 	}
 
-	voteStat := map[string] int {}
+	voteStat := map[string]int{}
 	for i := 0; i < len(cs.dposVotes); i++ {
-		key := string(cs.dposVotes[i].VoteItem.VoteId)
+		key := string(cs.dposVotes[i].VoteItem.VoteID)
 		if _, ok := voteStat[key]; ok {
 			voteStat[key]++
 		} else {
@@ -452,11 +464,11 @@ func (cs *ConsensusState) CheckVotes()(ty int, vote * dpostype.VoteItem){
 	//如果一个节点的投票数已经过2/3，则返回最终票数超过2/3的选票
 	if value >= major32 {
 		for i := 0; i < len(cs.dposVotes); i++ {
-			if key == string(cs.dposVotes[i].VoteItem.VoteId) {
+			if key == string(cs.dposVotes[i].VoteItem.VoteID) {
 				return voteSuccess, cs.dposVotes[i].VoteItem
 			}
 		}
-	} else if (value + (int(dposDelegateNum) - len(cs.dposVotes))) < major32{
+	} else if (value + (int(dposDelegateNum) - len(cs.dposVotes))) < major32 {
 		//得票最多的节点，即使后续所有票都选它，也不满足2/3多数，不能达成共识。
 		return voteFail, nil
 	}
@@ -464,17 +476,20 @@ func (cs *ConsensusState) CheckVotes()(ty int, vote * dpostype.VoteItem){
 	return continueToVote, nil
 }
 
-func (cs *ConsensusState) ClearVotes(){
+// ClearVotes method
+func (cs *ConsensusState) ClearVotes() {
 	cs.dposVotes = nil
 	cs.currentVote = nil
 	cs.myVote = nil
 }
 
+// ClearCachedVotes method
 func (cs *ConsensusState) ClearCachedVotes() {
 	cs.cachedVotes = nil
 }
 
-func (cs *ConsensusState)VerifyVote(vote * dpostype.DPosVote) bool{
+// VerifyVote method
+func (cs *ConsensusState) VerifyVote(vote *dpostype.DPosVote) bool {
 	// Check validator
 	index, val := cs.validatorMgr.Validators.GetByAddress(vote.VoterNodeAddress)
 	if index == -1 && val == nil {
@@ -497,7 +512,8 @@ func (cs *ConsensusState)VerifyVote(vote * dpostype.DPosVote) bool{
 	return true
 }
 
-func (cs *ConsensusState)VerifyNotify(notify * dpostype.DPosNotify) bool{
+// VerifyNotify method
+func (cs *ConsensusState) VerifyNotify(notify *dpostype.DPosNotify) bool {
 	// Check validator
 	index, val := cs.validatorMgr.Validators.GetByAddress(notify.NotifyNodeAddress)
 	if index == -1 && val == nil {

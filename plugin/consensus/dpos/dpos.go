@@ -22,24 +22,23 @@ import (
 const tendermintVersion = "0.1.0"
 
 var (
-	dposlog               = log15.New("module", "dpos")
-	genesis                     string
-	genesisBlockTime            int64
-	timeoutCheckConnections     int32 = 1000
-	timeoutVoting               int32 = 3000
-	timeoutWaitNotify           int32 = 2000
-	createEmptyBlocks                 = false
-	createEmptyBlocksInterval   int32 // second
-	validatorNodes              = []string{"127.0.0.1:46656"}
-	isValidator                       = false
+	dposlog                   = log15.New("module", "dpos")
+	genesis                   string
+	genesisBlockTime          int64
+	timeoutCheckConnections   int32 = 1000
+	timeoutVoting             int32 = 3000
+	timeoutWaitNotify         int32 = 2000
+	createEmptyBlocks               = false
+	createEmptyBlocksInterval int32 // second
+	validatorNodes                  = []string{"127.0.0.1:46656"}
+	isValidator                     = false
 
-	dposDelegateNum             int64 = 3       //委托节点个数，从配置读取，以后可以根据投票结果来定
-	dposBlockInterval           int64 = 3     //出块间隔，当前按3s
-	dposContinueBlockNum        int64 = 6  //一个委托节点当选后，一次性持续出块数量
-	dposCycle                         = int64(dposDelegateNum * dposBlockInterval * dposContinueBlockNum)
-	dposPeriod                        = int64(dposBlockInterval * dposContinueBlockNum)
-	zeroHash [32]byte
-
+	dposDelegateNum      int64 = 3 //委托节点个数，从配置读取，以后可以根据投票结果来定
+	dposBlockInterval    int64 = 3 //出块间隔，当前按3s
+	dposContinueBlockNum int64 = 6 //一个委托节点当选后，一次性持续出块数量
+	dposCycle                  = int64(dposDelegateNum * dposBlockInterval * dposContinueBlockNum)
+	dposPeriod                 = int64(dposBlockInterval * dposContinueBlockNum)
+	zeroHash             [32]byte
 )
 
 func init() {
@@ -221,7 +220,7 @@ OuterLoop:
 	for !DebugCatchup {
 		select {
 		case <-hint.C:
-			dposlog.Info("Still catching up max height......",  "cost", time.Since(beg))
+			dposlog.Info("Still catching up max height......", "cost", time.Since(beg))
 		default:
 			if client.IsCaughtUp() {
 				dposlog.Info("This node has caught up max height")
@@ -328,9 +327,8 @@ func (client *Client) CreateBlock() {
 				return
 			}
 		} else {
-			dposlog.Info("Ignore to create new Block for no tx in mempool", "Height", block.Height + 1)
+			dposlog.Info("Ignore to create new Block for no tx in mempool", "Height", block.Height+1)
 		}
-
 
 		return
 	}
@@ -368,11 +366,13 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 	return types.CacheToTxs(cacheTxs)
 }
 
-func (client *Client) SetBlockTime(blockTime int64)  {
+// SetBlockTime set current block time to generate new block
+func (client *Client) SetBlockTime(blockTime int64) {
 	client.blockTime = blockTime
 }
 
-func (client *Client) ValidatorIndex() int{
+// ValidatorIndex get the index of local this validator if it's
+func (client *Client) ValidatorIndex() int {
 	if client.isDelegator {
 		index, _ := client.csState.validatorMgr.Validators.GetByAddress(client.privValidator.GetAddress())
 		return index

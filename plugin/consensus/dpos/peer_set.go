@@ -85,7 +85,7 @@ type peerConn struct {
 
 	onPeerError func(Peer, interface{})
 
-	myState  *ConsensusState
+	myState *ConsensusState
 }
 
 // PeerSet struct
@@ -530,6 +530,7 @@ FOR_LOOP:
 		// Drain
 	}
 }
+
 // StackError struct
 type StackError struct {
 	Err   interface{}

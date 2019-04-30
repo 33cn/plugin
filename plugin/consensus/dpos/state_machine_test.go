@@ -29,14 +29,14 @@ func init() {
 	setParams(3, 3, 6)
 }
 func setParams(delegateNum int64, blockInterval int64, continueBlockNum int64) {
-	dposDelegateNum = delegateNum       //委托节点个数，从配置读取，以后可以根据投票结果来定
-	dposBlockInterval = blockInterval     //出块间隔，当前按3s
-	dposContinueBlockNum = continueBlockNum  //一个委托节点当选后，一次性持续出块数量
+	dposDelegateNum = delegateNum           //委托节点个数，从配置读取，以后可以根据投票结果来定
+	dposBlockInterval = blockInterval       //出块间隔，当前按3s
+	dposContinueBlockNum = continueBlockNum //一个委托节点当选后，一次性持续出块数量
 	dposCycle = int64(dposDelegateNum * dposBlockInterval * dposContinueBlockNum)
 	dposPeriod = int64(dposBlockInterval * dposContinueBlockNum)
 }
 
-func printTask(now int64, task *DPosTask){
+func printTask(now int64, task *DPosTask) {
 	fmt.Printf("now:%v|cycleStart:%v|cycleStop:%v|periodStart:%v|periodStop:%v|blockStart:%v|blockStop:%v|nodeId:%v\n",
 		now,
 		task.cycleStart,
@@ -45,10 +45,10 @@ func printTask(now int64, task *DPosTask){
 		task.periodStop,
 		task.blockStart,
 		task.blockStop,
-		task.nodeId)
+		task.nodeID)
 }
-func assertTask(task *DPosTask, t*testing.T){
-	assert.Equal(t, true, task.nodeId >= 0 && task.nodeId < dposDelegateNum)
+func assertTask(task *DPosTask, t *testing.T) {
+	assert.Equal(t, true, task.nodeID >= 0 && task.nodeID < dposDelegateNum)
 	assert.Equal(t, true, task.cycleStart <= task.periodStart && task.periodStart <= task.blockStart && task.blockStop <= task.periodStop && task.periodStop <= task.cycleStop)
 
 }
@@ -58,7 +58,6 @@ func TestDecideTaskByTime(t *testing.T) {
 	task := DecideTaskByTime(now)
 	printTask(now, &task)
 	assertTask(&task, t)
-
 
 	setParams(2, 1, 6)
 	now = time.Now().Unix()
@@ -71,7 +70,6 @@ func TestDecideTaskByTime(t *testing.T) {
 	task = DecideTaskByTime(now)
 	printTask(now, &task)
 	assertTask(&task, t)
-
 
 	setParams(21, 2, 12)
 	now = time.Now().Unix()
@@ -89,4 +87,3 @@ func TestDecideTaskByTime(t *testing.T) {
 		time.Sleep(time.Second * 1)
 	}
 }
-

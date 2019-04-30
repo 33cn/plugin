@@ -11,7 +11,7 @@ message VoteItem {
     int64 periodStart      = 5;    //新节点负责出块的起始时间
     int64 periodStop       = 6;    //新节点负责出块的终止时间
     int64 height           = 7;    //新节点负责出块的起始高度
-    bytes voteId           = 8;    //选票ID
+    bytes voteID           = 8;    //选票ID
 }
 
 //DPosVote Dpos共识的节点投票，为达成共识用。

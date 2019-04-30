@@ -18,13 +18,7 @@ var (
 	r *rand.Rand
 )
 
-// State is a short description of the latest committed block of the Tendermint consensus.
-// It keeps all information necessary to validate new blocks,
-// including the last validator set and the consensus params.
-// All fields are exposed so the struct can be easily serialized,
-// but none of them should be mutated directly.
-// Instead, use state.Copy() or state.NextState(...).
-// NOTE: not goroutine-safe.
+// ValidatorMgr ...
 type ValidatorMgr struct {
 	// Immutable
 	ChainID string
@@ -33,7 +27,7 @@ type ValidatorMgr struct {
 	// so we can query for historical validator sets.
 	// Note that if s.LastBlockHeight causes a valset change,
 	// we set s.LastHeightValidatorsChanged = s.LastBlockHeight + 1
-	Validators                  *ttypes.ValidatorSet
+	Validators *ttypes.ValidatorSet
 
 	// The latest AppHash we've received from calling abci.Commit()
 	AppHash []byte
@@ -44,7 +38,7 @@ func (s ValidatorMgr) Copy() ValidatorMgr {
 	return ValidatorMgr{
 		ChainID: s.ChainID,
 
-		Validators:                  s.Validators.Copy(),
+		Validators: s.Validators.Copy(),
 
 		AppHash: s.AppHash,
 	}
@@ -75,8 +69,7 @@ func (s ValidatorMgr) GetValidators() (current *ttypes.ValidatorSet) {
 	return s.Validators
 }
 
-
-// MakeGenesisState creates state from ttypes.GenesisDoc.
+// MakeGenesisValidatorMgr creates validators from ttypes.GenesisDoc.
 func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 	err := genDoc.ValidateAndComplete()
 	if err != nil {
@@ -93,14 +86,14 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 
 		// Make validator
 		validators[i] = &ttypes.Validator{
-			Address:     ttypes.GenAddressByPubKey(pubKey),
-			PubKey:      pubKey.Bytes(),
+			Address: ttypes.GenAddressByPubKey(pubKey),
+			PubKey:  pubKey.Bytes(),
 		}
 	}
 
 	return ValidatorMgr{
-		ChainID: genDoc.ChainID,
-		Validators:                  ttypes.NewValidatorSet(validators),
-		AppHash: genDoc.AppHash,
+		ChainID:    genDoc.ChainID,
+		Validators: ttypes.NewValidatorSet(validators),
+		AppHash:    genDoc.AppHash,
 	}, nil
 }

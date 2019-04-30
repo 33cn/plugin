@@ -18,15 +18,15 @@ var validatorsetlog = log15.New("module", "dpos-val")
 
 // Validator ...
 type Validator struct {
-	Address     []byte `json:"address"`
-	PubKey      []byte `json:"pub_key"`
+	Address []byte `json:"address"`
+	PubKey  []byte `json:"pub_key"`
 }
 
 // NewValidator ...
 func NewValidator(pubKey crypto.PubKey) *Validator {
 	return &Validator{
-		Address:     GenAddressByPubKey(pubKey),
-		PubKey:      pubKey.Bytes(),
+		Address: GenAddressByPubKey(pubKey),
+		PubKey:  pubKey.Bytes(),
 	}
 }
 
@@ -91,7 +91,7 @@ func (valSet *ValidatorSet) Copy() *ValidatorSet {
 		validators[i] = val.Copy()
 	}
 	return &ValidatorSet{
-		Validators:       validators,
+		Validators: validators,
 	}
 }
 

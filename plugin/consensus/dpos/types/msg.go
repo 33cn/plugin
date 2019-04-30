@@ -5,9 +5,9 @@
 package types
 
 import (
-	"time"
 	"reflect"
-	)
+	"time"
+)
 
 var (
 	// MsgMap define
@@ -16,9 +16,9 @@ var (
 
 // step and message id define
 const (
-	VoteID              = byte(0x06)
-	VoteReplyID         = byte(0x07)
-	NotifyID            = byte(0x08)
+	VoteID      = byte(0x06)
+	VoteReplyID = byte(0x07)
+	NotifyID    = byte(0x08)
 
 	PacketTypePing = byte(0xff)
 	PacketTypePong = byte(0xfe)
@@ -27,14 +27,13 @@ const (
 // InitMessageMap ...
 func InitMessageMap() {
 	MsgMap = map[byte]reflect.Type{
-		VoteID:              reflect.TypeOf(DPosVote{}),
-		VoteReplyID:         reflect.TypeOf(DPosVoteReply{}),
-		NotifyID:           reflect.TypeOf(DPosNotify{}),
+		VoteID:      reflect.TypeOf(DPosVote{}),
+		VoteReplyID: reflect.TypeOf(DPosVoteReply{}),
+		NotifyID:    reflect.TypeOf(DPosNotify{}),
 	}
 }
 
-//---------------------Canonical json-----------------------------------
-// CanonicalJSONVote ...
+// CanonicalJSONVoteItem ...
 type CanonicalJSONVoteItem struct {
 	VotedNodeIndex   int32  `json:"votedNodeIndex,omitempty"`
 	VotedNodeAddress []byte `json:"votedNodeAddress,omitempty"`
@@ -43,15 +42,15 @@ type CanonicalJSONVoteItem struct {
 	PeriodStart      int64  `json:"periodStart,omitempty"`
 	PeriodStop       int64  `json:"periodStop,omitempty"`
 	Height           int64  `json:"height,omitempty"`
-	VoteId           []byte `json:"voteId,omitempty"`
+	VoteID           []byte `json:"voteID,omitempty"`
 }
 
-
+// CanonicalJSONVote ...
 type CanonicalJSONVote struct {
 	VoteItem         *CanonicalJSONVoteItem `json:"vote,omitempty"`
-	VoteTimestamp    int64     `json:"voteTimestamp,omitempty"`
-	VoterNodeIndex   int32     `json:"voterNodeIndex,omitempty"`
-	VoterNodeAddress []byte    `json:"voterNodeAddress,omitempty"`
+	VoteTimestamp    int64                  `json:"voteTimestamp,omitempty"`
+	VoterNodeIndex   int32                  `json:"voterNodeIndex,omitempty"`
+	VoterNodeAddress []byte                 `json:"voterNodeAddress,omitempty"`
 }
 
 // CanonicalJSONOnceVote ...
@@ -63,49 +62,50 @@ type CanonicalJSONOnceVote struct {
 // CanonicalVote ...
 func CanonicalVote(vote *Vote) CanonicalJSONVote {
 	return CanonicalJSONVote{
-		VoteItem:   &CanonicalJSONVoteItem{
-					VotedNodeIndex: vote.VoteItem.VotedNodeIndex,
-					VotedNodeAddress: vote.VoteItem.VotedNodeAddress,
-					CycleStart: vote.VoteItem.CycleStart,
-					CycleStop: vote.VoteItem.CycleStop,
-					PeriodStart: vote.VoteItem.PeriodStart,
-					PeriodStop: vote.VoteItem.PeriodStop,
-					Height: vote.VoteItem.Height,
-					VoteId: vote.VoteItem.VoteId,
-				},
-		VoteTimestamp: vote.VoteTimestamp,
-		VoterNodeIndex: vote.VoterNodeIndex,
+		VoteItem: &CanonicalJSONVoteItem{
+			VotedNodeIndex:   vote.VoteItem.VotedNodeIndex,
+			VotedNodeAddress: vote.VoteItem.VotedNodeAddress,
+			CycleStart:       vote.VoteItem.CycleStart,
+			CycleStop:        vote.VoteItem.CycleStop,
+			PeriodStart:      vote.VoteItem.PeriodStart,
+			PeriodStop:       vote.VoteItem.PeriodStop,
+			Height:           vote.VoteItem.Height,
+			VoteID:           vote.VoteItem.VoteID,
+		},
+		VoteTimestamp:    vote.VoteTimestamp,
+		VoterNodeIndex:   vote.VoterNodeIndex,
 		VoterNodeAddress: vote.VoterNodeAddress,
 	}
 }
 
+// CanonicalJSONNotify ...
 type CanonicalJSONNotify struct {
-	VoteItem  *CanonicalJSONVoteItem `json:"vote,omitempty"`
+	VoteItem *CanonicalJSONVoteItem `json:"vote,omitempty"`
 
-	HeightStop      int64     `json:"heightStop,omitempty"`
-	NotifyTimestamp int64     `json:"notifyTimestamp,omitempty"`
+	HeightStop      int64 `json:"heightStop,omitempty"`
+	NotifyTimestamp int64 `json:"notifyTimestamp,omitempty"`
 }
 
-// CanonicalJSONOnceVote ...
+// CanonicalJSONOnceNotify ...
 type CanonicalJSONOnceNotify struct {
-	ChainID string            `json:"chain_id"`
-	Notify    CanonicalJSONNotify `json:"vote"`
+	ChainID string              `json:"chain_id"`
+	Notify  CanonicalJSONNotify `json:"vote"`
 }
 
-// CanonicalVote ...
+// CanonicalNotify ...
 func CanonicalNotify(notify *Notify) CanonicalJSONNotify {
 	return CanonicalJSONNotify{
-		VoteItem:   &CanonicalJSONVoteItem{
-			VotedNodeIndex: notify.Vote.VotedNodeIndex,
+		VoteItem: &CanonicalJSONVoteItem{
+			VotedNodeIndex:   notify.Vote.VotedNodeIndex,
 			VotedNodeAddress: notify.Vote.VotedNodeAddress,
-			CycleStart: notify.Vote.CycleStart,
-			CycleStop: notify.Vote.CycleStop,
-			PeriodStart: notify.Vote.PeriodStart,
-			PeriodStop: notify.Vote.PeriodStop,
-			Height: notify.Vote.Height,
-			VoteId: notify.Vote.VoteId,
+			CycleStart:       notify.Vote.CycleStart,
+			CycleStop:        notify.Vote.CycleStop,
+			PeriodStart:      notify.Vote.PeriodStart,
+			PeriodStop:       notify.Vote.PeriodStop,
+			Height:           notify.Vote.Height,
+			VoteID:           notify.Vote.VoteID,
 		},
-		HeightStop: notify.HeightStop,
+		HeightStop:      notify.HeightStop,
 		NotifyTimestamp: notify.NotifyTimestamp,
 	}
 }

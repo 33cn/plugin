@@ -195,7 +195,7 @@ func LoadPrivValidatorFSWithSigner(filePath string, signerFunc func(PrivValidato
 		Exit(Fmt("Error PrivValidator DecodeString failed:%v\n", err))
 	}
 	privValImp := &PrivValidatorImp{
-		Address:    addr,
+		Address: addr,
 	}
 	tmp, err := hex.DecodeString(privVal.PrivKey.Data)
 	if err != nil {
@@ -290,7 +290,6 @@ func (pv *PrivValidatorImp) SignVote(chainID string, vote *Vote) error {
 
 	signBytes := SignBytes(chainID, vote)
 
-
 	signature, err := pv.Sign(signBytes)
 	if err != nil {
 		return errors.New(Fmt("Error signing vote: %v", err))
@@ -299,14 +298,13 @@ func (pv *PrivValidatorImp) SignVote(chainID string, vote *Vote) error {
 	return nil
 }
 
-// SignVote signs a canonical representation of the vote, along with the
+// SignNotify signs a canonical representation of the notify, along with the
 // chainID. Implements PrivValidator.
 func (pv *PrivValidatorImp) SignNotify(chainID string, notify *Notify) error {
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 
 	signBytes := SignBytes(chainID, notify)
-
 
 	signature, err := pv.Sign(signBytes)
 	if err != nil {
