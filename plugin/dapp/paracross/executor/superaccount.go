@@ -313,7 +313,7 @@ func (a *action) superManagerVoteProc(title string) error {
 	confStopBlocks := conf.GInt("paraConsensusStopBlocks")
 	data, err := a.exec.paracrossGetHeight(title)
 	if err != nil {
-		clog.Info("paracross.superManagerVoteProc get consens height", "title",title,"err", err.Error())
+		clog.Info("paracross.superManagerVoteProc get consens height", "title", title, "err", err.Error())
 		return err
 	}
 	var consensMainHeight int64
@@ -324,7 +324,7 @@ func (a *action) superManagerVoteProc(title string) error {
 	} else {
 		stat, err := a.exec.paracrossGetStateTitleHeight(title, consensHeight)
 		if err != nil {
-			clog.Info("paracross.superManagerVoteProc get consens title height", "title",title,"conesusHeight",consensHeight,"err", err.Error())
+			clog.Info("paracross.superManagerVoteProc get consens title height", "title", title, "conesusHeight", consensHeight, "err", err.Error())
 			return err
 		}
 		consensMainHeight = stat.(*pt.ParacrossHeightStatus).MainHeight
@@ -621,11 +621,11 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 	}
 
 	stat := &pt.ParaNodeGroupStatus{Status: pt.ParacrossNodeGroupApply,
-		Title:       config.Title,
-		ApplyAddr:   strings.Join(addrs, ","),
-		CoinsFrozen: config.CoinsFrozen,
-		MainHeight:  a.exec.GetMainHeight(),
-		EmptyBlockInterval:config.EmptyBlockInterval}
+		Title:              config.Title,
+		ApplyAddr:          strings.Join(addrs, ","),
+		CoinsFrozen:        config.CoinsFrozen,
+		MainHeight:         a.exec.GetMainHeight(),
+		EmptyBlockInterval: config.EmptyBlockInterval}
 	saveNodeGroup(a.db, config.Title, stat)
 	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupApply)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -661,11 +661,11 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 	}
 
 	stat := &pt.ParaNodeGroupStatus{Status: pt.ParacrossNodeGroupQuit,
-		Title:       config.Title,
-		ApplyAddr:   status.ApplyAddr,
-		CoinsFrozen: status.CoinsFrozen,
-		MainHeight:  a.exec.GetMainHeight(),
-		EmptyBlockInterval:status.EmptyBlockInterval}
+		Title:              config.Title,
+		ApplyAddr:          status.ApplyAddr,
+		CoinsFrozen:        status.CoinsFrozen,
+		MainHeight:         a.exec.GetMainHeight(),
+		EmptyBlockInterval: status.EmptyBlockInterval}
 	saveNodeGroup(a.db, config.Title, stat)
 	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupQuit)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -736,11 +736,11 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
 	stat := &pt.ParaNodeGroupStatus{Status: pt.ParacrossNodeGroupApprove,
-		Title:       config.Title,
-		ApplyAddr:   status.ApplyAddr,
-		CoinsFrozen: status.CoinsFrozen,
-		MainHeight:  a.exec.GetMainHeight(),
-		EmptyBlockInterval:status.EmptyBlockInterval}
+		Title:              config.Title,
+		ApplyAddr:          status.ApplyAddr,
+		CoinsFrozen:        status.CoinsFrozen,
+		MainHeight:         a.exec.GetMainHeight(),
+		EmptyBlockInterval: status.EmptyBlockInterval}
 	saveNodeGroup(a.db, config.Title, stat)
 	r = makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupApprove)
 	receipt.KV = append(receipt.KV, r.KV...)
