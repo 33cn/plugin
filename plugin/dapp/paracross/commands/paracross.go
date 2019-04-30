@@ -588,7 +588,7 @@ func nodeGroupStatus(cmd *cobra.Command, args []string) {
 		Title: title,
 	}
 
-	var res pt.ParaNodeAddrStatus
+	var res pt.ParaNodeGroupStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupStatus", params, &res)
 	ctx.Run()
 }
@@ -617,7 +617,7 @@ func nodeGroupList(cmd *cobra.Command, args []string) {
 		Status: status,
 	}
 
-	var res pt.RespParacrossNodeAddrs
+	var res pt.RespParacrossNodeGroups
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListNodeGroupStatus", params, &res)
 	ctx.Run()
 }

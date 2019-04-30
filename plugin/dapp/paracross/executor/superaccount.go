@@ -330,7 +330,8 @@ func (a *action) superManagerVoteProc(title string) error {
 	}
 	//return err to stop tx pass to para chain
 	if a.exec.GetMainHeight() <= consensMainHeight+confStopBlocks*int64(status.EmptyBlockInterval) {
-		clog.Error("paracross.nodeVote, super manager height not reach", "currHeight", a.exec.GetMainHeight(), "consensHeight", consensHeight, "confHeight", confStopBlocks)
+		clog.Error("paracross.nodeVote, super manager height not reach", "currHeight", a.exec.GetMainHeight(),
+			"consensHeight", consensHeight,"mainHeight",consensMainHeight, "confHeight", confStopBlocks,"interval",status.EmptyBlockInterval)
 		return pt.ErrParaConsensStopBlocksNotReach
 	}
 
