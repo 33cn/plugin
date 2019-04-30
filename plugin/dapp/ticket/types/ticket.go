@@ -60,6 +60,7 @@ func init() {
 	types.RegistorExecutor(TicketX, NewType())
 	types.RegisterDappFork(TicketX, "Enable", 0)
 	types.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
+	types.RegisterDappFork(TicketX, "ForkTicketVrf", 1750000)
 }
 
 // TicketType ticket exec type
