@@ -212,7 +212,7 @@ func voteTest(suite *NodeManageTestSuite, addr string, join bool) {
 }
 
 func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
-	config := &pt.ParaNodeGroupApply{
+	config := &pt.ParaNodeGroupConfig{
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -222,7 +222,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	config = &pt.ParaNodeGroupApply{
+	config = &pt.ParaNodeGroupConfig{
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupQuit,
 	}
@@ -237,7 +237,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.testNodeGroupConfigQuit()
 
-	config := &pt.ParaNodeGroupApply{
+	config := &pt.ParaNodeGroupConfig{
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -247,7 +247,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	config = &pt.ParaNodeGroupApply{
+	config = &pt.ParaNodeGroupConfig{
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApprove,
 	}

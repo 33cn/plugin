@@ -108,6 +108,7 @@ function para_transfer() {
     #    para_create_manage_nodegroup
     para_create_nodegroup
 
+    echo "=========== # config token blacklist ============="
     #token precreate
     txhash=$(para_configkey "${PARA_CLI}" "token-blacklist" "BTY")
     echo "txhash=$txhash"
@@ -136,7 +137,8 @@ function para_create_nodegroup_test() {
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 1 ]; then
-        echo "status not apply"
+        echo "status not apply status=$status"
+        exit 1
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
@@ -144,13 +146,15 @@ function para_create_nodegroup_test() {
         exit 1
     fi
 
+    echo "=========== # para chain quit node group ============="
     ##quit
     txhash=$(${PARA_CLI} send para nodegroup -o 3 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 20 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 3 ]; then
-        echo "status not quit"
+        echo "status not quit  status=$status"
+        exit 1
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".balance")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
@@ -163,15 +167,18 @@ function para_create_nodegroup_test() {
 function para_create_nodegroup() {
     para_create_nodegroup_test
 
+    echo "=========== # para chain create node group again ============="
     ##apply
     txhash=$(${PARA_CLI} send para nodegroup -o 1 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 20 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 1 ]; then
-        echo "status not apply"
+        echo "status not apply status=$status"
+        exit 1
     fi
 
+    echo "=========== # para chain approve node group ============="
     ##approve
     txhash=$(${PARA_CLI} send para nodegroup -o 2 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k, 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs," -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
@@ -179,22 +186,21 @@ function para_create_nodegroup() {
 
     status=$(${PARA_CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 2 ]; then
-        echo "status not approve"
+        echo "status not approve status=$status"
+        exit 1
     fi
 
-    addrs=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r ".value")
-    if [ "$addrs" != "[1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs]" ]; then
-        echo "para node group err"
+    ${PARA_CLI} para nodegroup_addrs -t user.p.para.
 
-    fi
-
+    echo "=========== # para chain quit node group fail ============="
     ##quit fail
     txhash=$(${PARA_CLI} send para nodegroup -o 3 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
     query_tx "${CLI}" "${txhash}"
     status=$(${CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 2 ]; then
-        echo "status quit not approve"
+        echo "status quit not approve status=$status"
+        exit 1
     fi
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
