@@ -85,7 +85,7 @@ func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
 			log.Ty == pt.TyLogParaNodeGroupQuit {
-			var g pt.ReceiptParaNodeConfig
+			var g pt.ReceiptParaNodeGroupConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
 				return nil, err

@@ -119,6 +119,10 @@ message RespParacrossNodeAddrs {
     repeated ParaNodeAddrStatus addrs = 1;
 }
 
+message RespParacrossNodeGroups {
+    repeated ParaNodeGroupStatus addrs = 1;
+}
+
 message ParaBlock2MainMap {
     int64  height     = 1;
     string blockHash  = 2;
