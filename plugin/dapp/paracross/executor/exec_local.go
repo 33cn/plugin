@@ -81,7 +81,7 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 }
 
 //ExecLocal_NodeGroupConfig node group config add process
-func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupApply, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
@@ -169,10 +169,7 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	var set types.LocalDBSet
 	txs := e.GetTxs()
 
-	forkHeight := types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
-	if forkHeight == -1 || forkHeight == 0 {
-		forkHeight = types.MaxHeight
-	}
+	forkHeight := getDappForkHeight(pt.ForkCommitTx)
 
 	//removed the 0 vote tx
 	if payload.Status.MainBlockHeight >= forkHeight {
