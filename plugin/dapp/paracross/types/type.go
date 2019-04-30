@@ -130,7 +130,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		if !types.IsPara() {
 			return nil, types.ErrNotSupport
 		}
-		var param ParaNodeGroupApply
+		var param ParaNodeGroupConfig
 		err := types.JSONToPB(message, &param)
 		//err := json.Unmarshal(message, &param)
 		if err != nil {

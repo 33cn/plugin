@@ -40,8 +40,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeGroupKey(in.GetTitle())
-	ret, _, err := getNodes(p.GetStateDB(), key)
+	ret, _, err := getParacrossNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -50,7 +49,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(key)
+	reply.Key = string(calcParaNodeGroupKey(in.GetTitle()))
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
@@ -60,8 +59,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeAddrKey(in.Title, in.Addr)
-	stat, err := getNodeAddr(p.GetStateDB(), key)
+	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +79,7 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeGroupApplyKey(in.Title)
-	stat, err := getNodeAddr(p.GetStateDB(), key)
+	stat, err := getNodeGroupStatus(p.GetStateDB(), in.Title)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +149,14 @@ func (p *Paracross) paracrossGetMainBlockHash(tx *types.Transaction) (types.Mess
 
 func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	ret, err := getTitle(p.GetStateDB(), calcTitleKey(title))
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	return ret, nil
+}
+
+func (p *Paracross) paracrossGetStateTitleHeight(title string, height int64) (types.Message, error) {
+	ret, err := getTitleHeight(p.GetStateDB(), calcTitleHeightKey(title, height))
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
