@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"bytes"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -102,6 +100,43 @@ func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *t
 	return nil, nil
 }
 
+func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) {
+	var curTxHashs, paraTxHashs [][]byte
+	for _, tx := range txs {
+		hash := tx.Hash()
+		curTxHashs = append(curTxHashs, hash)
+		//跨链交易包含了主链交易，需要过滤出来
+		if types.IsMyParaExecName(string(tx.Execer)) {
+			paraTxHashs = append(paraTxHashs, hash)
+		}
+	}
+	crossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
+	payload.Status.TxHashs = paraTxHashs
+	payload.Status.TxResult = util.CalcBitMap(paraTxHashs, curTxHashs, receipts)
+	payload.Status.CrossTxHashs = crossTxHashs
+	payload.Status.CrossTxResult = util.CalcBitMap(crossTxHashs, curTxHashs, receipts)
+
+}
+
+func setMinerTxResultFork(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) {
+	var curTxHashs [][]byte
+	for _, tx := range txs {
+		hash := tx.Hash()
+		curTxHashs = append(curTxHashs, hash)
+	}
+	baseTxHashs := payload.Status.TxHashs
+	baseCrossTxHashs := payload.Status.CrossTxHashs
+
+	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
+	//全部平行链tx结果
+	payload.Status.TxResult = util.CalcBitMap(baseTxHashs, curTxHashs, receipts)
+	//跨链tx结果
+	payload.Status.CrossTxResult = util.CalcBitMap(baseCrossTxHashs, curTxHashs, receipts)
+
+	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(baseTxHashs)}
+	payload.Status.CrossTxHashs = [][]byte{CalcTxHashsHash(baseCrossTxHashs)}
+}
+
 //ExecLocal_Miner miner tx local db process
 func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if index != 0 {
@@ -109,39 +144,19 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	}
 
 	var set types.LocalDBSet
-
-	var mixTxHashs, paraTxHashs, crossTxHashs [][]byte
 	txs := e.GetTxs()
-	//remove the 0 vote tx
-	for i := 1; i < len(txs); i++ {
-		tx := txs[i]
-		hash := tx.Hash()
-		mixTxHashs = append(mixTxHashs, hash)
-		//跨链交易包含了主链交易，需要过滤出来
-		if types.IsMyParaExecName(string(tx.Execer)) {
-			paraTxHashs = append(paraTxHashs, hash)
-		}
-	}
-	for i := 1; i < len(txs); i++ {
-		tx := txs[i]
-		if tx.GroupCount >= 2 {
-			crossTxs, end := crossTxGroupProc(txs, i)
-			for _, crossTx := range crossTxs {
-				crossTxHashs = append(crossTxHashs, crossTx.Hash())
-			}
-			i = int(end) - 1
-			continue
-		}
-		if types.IsMyParaExecName(string(tx.Execer)) &&
-			bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
-			crossTxHashs = append(crossTxHashs, tx.Hash())
-		}
+
+	forkHeight := types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
+	if forkHeight == -1 || forkHeight == 0 {
+		forkHeight = types.MaxHeight
 	}
 
-	payload.Status.TxHashs = paraTxHashs
-	payload.Status.TxResult = util.CalcSubBitMap(mixTxHashs, paraTxHashs, e.GetReceipt()[1:])
-	payload.Status.CrossTxHashs = crossTxHashs
-	payload.Status.CrossTxResult = util.CalcSubBitMap(mixTxHashs, crossTxHashs, e.GetReceipt()[1:])
+	//removed the 0 vote tx
+	if payload.Status.MainBlockHeight >= forkHeight {
+		setMinerTxResultFork(payload, txs[1:], e.GetReceipt()[1:])
+	} else {
+		setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
+	}
 
 	set.KV = append(set.KV, &types.KeyValue{
 		Key:   pt.CalcMinerHeightKey(payload.Status.Title, payload.Status.Height),

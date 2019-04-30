@@ -57,9 +57,9 @@ Available Commands:
 
 
 测试步骤如下：
-cli seed save -p heyubin -s "voice leisure mechanic tape cluster grunt receive joke nurse between monkey lunch save useful cruise"
+cli seed save -p heyubin1234 -s "voice leisure mechanic tape cluster grunt receive joke nurse between monkey lunch save useful cruise"
 
-cli wallet unlock -p heyubin
+cli wallet unlock -p heyubin1234
 
 cli account import_key  -l miner -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
 
@@ -74,16 +74,16 @@ cli account create -l heyubin7
 cli account create -l heyubin8
 
 
-cli send bty transfer -a 100 -n test  -t 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t 1Kkgztjcni3xKw95y2VZHwPpsSHDEH5sXF -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t 1N8LP5gBufZXCEdf3hyViDhWFqeB7WPGdv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t 1C5xK2ytuoFqxmVGMcyz9XFKFWcDA8T3rK -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 
-cli send bty transfer -a 100 -n test  -t "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t "17a5NQTf9M2Dz9qBS8KiQ8VUg8qhoYeQbA" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t "1DeGvSFX8HAFsuHxhaVkLX56Ke3FzFbdct" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-cli send bty transfer -a 100 -n test  -t "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t "1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t "17a5NQTf9M2Dz9qBS8KiQ8VUg8qhoYeQbA" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t "1DeGvSFX8HAFsuHxhaVkLX56Ke3FzFbdct" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t "166po3ghRbRu53hu8jBBQzddp7kUJ9Ynyf" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+cli send coins transfer -a 100 -n test  -t "1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 
 
 
@@ -107,7 +107,7 @@ cli exec addr -e "multisig"
 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee
 
 // 转账
-cli send bty transfer -a 50 -n test  -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
+cli send coins transfer -a 50 -n test  -t 14uBEP6LSHKdFvy97pTYRPVPAqij6bteee -k 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 
 cli account balance -a 1DkrXbz2bK6XMpY4v9z2YUnhwWTXT6V5jd
 

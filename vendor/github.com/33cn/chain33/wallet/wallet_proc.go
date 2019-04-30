@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"unicode"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -714,9 +715,18 @@ func (wallet *Wallet) ProcMergeBalance(MergeBalance *types.ReqWalletMergeBalance
 		v := &cty.CoinsAction_Transfer{
 			Transfer: &types.AssetsTransfer{Amount: amount, Note: []byte(note)},
 		}
+		if types.IsPara() {
+			v.Transfer.To = MergeBalance.GetTo()
+		}
 		transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
 		//初始化随机数
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: wallet.FeeAmount, To: addrto, Nonce: wallet.random.Int63()}
+		exec := []byte("coins")
+		toAddr := addrto
+		if types.IsPara() {
+			exec = []byte(types.GetTitle() + "coins")
+			toAddr = address.ExecAddress(string(exec))
+		}
+		tx := &types.Transaction{Execer: exec, Payload: types.Encode(transfer), Fee: wallet.FeeAmount, To: toAddr, Nonce: wallet.random.Int63()}
 		tx.SetExpire(time.Second * 120)
 		tx.Sign(int32(SignType), priv)
 		//walletlog.Info("ProcMergeBalance", "tx.Nonce", tx.Nonce, "tx", tx, "index", index)
@@ -757,6 +767,10 @@ func (wallet *Wallet) ProcWalletSetPasswd(Passwd *types.ReqWalletSetPasswd) erro
 	isok, err := wallet.CheckWalletStatus()
 	if !isok && err == types.ErrSaveSeedFirst {
 		return err
+	}
+	// 新密码合法性校验
+	if !isValidPassWord(Passwd.NewPass) {
+		return types.ErrInvalidPassWord
 	}
 	//保存钱包的锁状态，需要暂时的解锁，函数退出时再恢复回去
 	tempislock := atomic.LoadInt32(&wallet.isWalletLocked)
@@ -1191,6 +1205,11 @@ func (wallet *Wallet) saveSeed(password string, seed string) (bool, error) {
 		return false, types.ErrInvalidParam
 	}
 
+	// 密码合法性校验
+	if !isValidPassWord(password) {
+		return false, types.ErrInvalidPassWord
+	}
+
 	seedarry := strings.Fields(seed)
 	curseedlen := len(seedarry)
 	if curseedlen < SaveSeedLong {
@@ -1276,4 +1295,25 @@ func (wallet *Wallet) setFatalFailure(reportErrEvent *types.ReportErrEvent) {
 
 func (wallet *Wallet) getFatalFailure() int32 {
 	return atomic.LoadInt32(&wallet.fatalFailureFlag)
+}
+
+//密码合法性校验,密码长度在8-30位之间。必须是数字+字母的组合
+func isValidPassWord(password string) bool {
+	pwLen := len(password)
+	if pwLen < 8 || pwLen > 30 {
+		return false
+	}
+
+	var char bool
+	var digit bool
+	for _, s := range password {
+		if unicode.IsLetter(s) {
+			char = true
+		} else if unicode.IsDigit(s) {
+			digit = true
+		} else {
+			return false
+		}
+	}
+	return char && digit
 }

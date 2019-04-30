@@ -196,7 +196,7 @@ func (f *Forks) IsDappFork(title string, height int64, dapp, fork string) bool {
 //SetTestNetFork bityuan test net fork
 func SetTestNetFork() {
 	systemFork.SetFork("chain33", "ForkChainParamV1", 110000)
-	systemFork.SetFork("chain33", "ForkChainParamV2", MaxHeight)
+	systemFork.SetFork("chain33", "ForkChainParamV2", 1692674)
 	systemFork.SetFork("chain33", "ForkCheckTxDup", 75260)
 	systemFork.SetFork("chain33", "ForkBlockHash", 209186)
 	systemFork.SetFork("chain33", "ForkMinerTime", 350000)
@@ -207,12 +207,12 @@ func SetTestNetFork() {
 	systemFork.SetFork("chain33", "ForkResetTx0", 453400)
 	systemFork.SetFork("chain33", "ForkExecRollback", 706531)
 	systemFork.SetFork("chain33", "ForkTxHeight", 806578)
-	systemFork.SetFork("chain33", "ForkTxGroupPara", 806578)
 	systemFork.SetFork("chain33", "ForkCheckBlockTime", 1200000)
 	systemFork.SetFork("chain33", "ForkMultiSignAddress", 1298600)
 	systemFork.SetFork("chain33", "ForkStateDBSet", 1572391)
 	systemFork.SetFork("chain33", "ForkBlockCheck", 1560000)
 	systemFork.SetFork("chain33", "ForkLocalDBAccess", 1572391)
+	systemFork.SetFork("chain33", "ForkTxGroupPara", 1687250)
 }
 
 func setLocalFork() {

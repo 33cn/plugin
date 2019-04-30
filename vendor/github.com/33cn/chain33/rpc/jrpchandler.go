@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -81,36 +80,6 @@ func (c *Chain33) CreateNoBalanceTransaction(in *types.NoBalanceTx, result *stri
 	grouptx := hex.EncodeToString(types.Encode(tx))
 	*result = grouptx
 	return nil
-}
-
-// SendRawTransaction send rawtransacion
-func (c *Chain33) SendRawTransaction(in rpctypes.SignedTx, result *interface{}) error {
-	var stx types.SignedTx
-	var err error
-
-	stx.Pubkey, err = hex.DecodeString(in.Pubkey)
-	if err != nil {
-		return err
-	}
-
-	stx.Sign, err = hex.DecodeString(in.Sign)
-	if err != nil {
-		return err
-	}
-	stx.Unsign, err = hex.DecodeString(in.Unsign)
-	if err != nil {
-		return err
-	}
-	stx.Ty = in.Ty
-	reply, err := c.cli.SendRawTransaction(&stx)
-	if err != nil {
-		return err
-	}
-	if reply.IsOk {
-		*result = "0x" + hex.EncodeToString(reply.Msg)
-		return nil
-	}
-	return fmt.Errorf(string(reply.Msg))
 }
 
 // SendTransaction send transaction
@@ -967,17 +936,33 @@ func (c *Chain33) GetFatalFailure(in *types.ReqNil, result *interface{}) error {
 
 }
 
-// DecodeRawTransaction decode rawtransaction
+// DecodeRawTransaction 考虑交易组的解析统一返回ReplyTxList列表
 func (c *Chain33) DecodeRawTransaction(in *types.ReqDecodeRawTransaction, result *interface{}) error {
-	reply, err := c.cli.DecodeRawTransaction(in)
+	tx, err := c.cli.DecodeRawTransaction(in)
 	if err != nil {
 		return err
 	}
-	res, err := rpctypes.DecodeTx(reply)
+	txs, err := tx.GetTxGroup()
 	if err != nil {
 		return err
 	}
-	*result = res
+	var rpctxs rpctypes.ReplyTxList
+	if txs == nil {
+		res, err := rpctypes.DecodeTx(tx)
+		if err != nil {
+			return err
+		}
+		rpctxs.Txs = append(rpctxs.Txs, res)
+	} else {
+		for _, rpctx := range txs.GetTxs() {
+			res, err := rpctypes.DecodeTx(rpctx)
+			if err != nil {
+				return err
+			}
+			rpctxs.Txs = append(rpctxs.Txs, res)
+		}
+	}
+	*result = &rpctxs
 	return nil
 }
 

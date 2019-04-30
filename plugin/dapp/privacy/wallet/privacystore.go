@@ -339,7 +339,7 @@ func (store *privacyStore) getPrivacyTokenUTXOs(token, addr string) (*walletUTXO
 //calcKey4UTXOsSpentInTx------>types.FTXOsSTXOsInOneTx,将当前交易的所有花费的utxo进行打包，设置为ftxo，同时通过支付交易hash索引
 //calcKey4FTXOsInTx----------->calcKey4UTXOsSpentInTx,创建该交易冻结的所有的utxo的信息
 //状态转移，将utxo转移至ftxo，同时记录该生成tx的花费的utxo，这样在确认执行成功之后就可以快速将相应的FTXO转换成STXO
-func (store *privacyStore) moveUTXO2FTXO(tx *types.Transaction, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
+func (store *privacyStore) moveUTXO2FTXO(expire int64, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
 	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{}
 	newbatch := store.NewBatch(true)
 	for _, txOutputInfo := range selectedUtxos {
@@ -357,7 +357,7 @@ func (store *privacyStore) moveUTXO2FTXO(tx *types.Transaction, token, sender, t
 	FTXOsInOneTx.Tokenname = token
 	FTXOsInOneTx.Sender = sender
 	FTXOsInOneTx.Txhash = txhash
-	FTXOsInOneTx.SetExpire(tx)
+	FTXOsInOneTx.SetExpire(expire)
 	//设置在该交易中花费的UTXO
 	key1 := calcKey4UTXOsSpentInTx(txhash)
 	value1 := types.Encode(FTXOsInOneTx)
@@ -956,7 +956,7 @@ func (store *privacyStore) moveSTXO2FTXO(tx *types.Transaction, txhash string, n
 	newbatch.Set(key1, value1)
 	bizlog.Info("moveSTXO2FTXO", "txhash ", txhash)
 
-	ftxosInOneTx.SetExpire(tx)
+	ftxosInOneTx.SetExpire(tx.GetExpire())
 	value = types.Encode(&ftxosInOneTx)
 	newbatch.Set(key, value)
 

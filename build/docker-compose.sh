@@ -124,14 +124,14 @@ function start() {
     done
 
     miner "${CLI}"
-    #    miner "${CLI4}"
+    # miner "${CLI4}"
     block_wait "${CLI}" 1
 
     echo "=========== check genesis hash ========== "
     ${CLI} block hash -t 0
-    res=$(${CLI} block hash -t 0 | jq ".hash")
-    count=$(echo "$res" | grep -c "0x67c58d6ba9175313f0468ae4e0ddec946549af7748037c2fdd5d54298afd20b6")
-    if [ "${count}" != 1 ]; then
+    res=$(${CLI} block hash -t 0 | jq -r ".hash")
+    #in case changes result in genesis change
+    if [ "${res}" != "0xa87972dfc3510cb934cb987bcb88036f7a1ffd7dc069cb9a5f0af179895fd2e8" ]; then
         echo "genesis hash error!"
         exit 1
     fi
@@ -158,7 +158,7 @@ function miner() {
     #fi
 
     echo "=========== # save seed to wallet ============="
-    result=$(${1} seed save -p 1314 -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
+    result=$(${1} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
     if [ "${result}" = "false" ]; then
         echo "save seed to wallet error seed, result: ${result}"
         exit 1
@@ -167,7 +167,7 @@ function miner() {
     sleep 1
 
     echo "=========== # unlock wallet ============="
-    result=$(${1} wallet unlock -p 1314 -t 0 | jq ".isok")
+    result=$(${1} wallet unlock -p 1314fuzamei -t 0 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
     fi

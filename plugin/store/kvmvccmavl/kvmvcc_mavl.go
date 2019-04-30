@@ -19,6 +19,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
+	"github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
 	"github.com/hashicorp/golang-lru"
 )
@@ -26,18 +27,15 @@ import (
 var (
 	kmlog = log.New("module", "kvmvccMavl")
 	// ErrStateHashLost ...
-	ErrStateHashLost        = errors.New("ErrStateHashLost")
-	kvmvccMavlFork    int64 = 200 * 10000
-	isDelMavlData           = false
-	delMavlDataHeight       = kvmvccMavlFork + 10000
-	delMavlDataState  int32
-	wg                sync.WaitGroup
-	quit              bool
-
-	// 用来阻塞查看当前是否需要升级数据库
-	done chan struct{}
-	// 使能mavl在当前区块基础上升级kvmvcc
-	enableUpdateKvmvcc bool
+	ErrStateHashLost         = errors.New("ErrStateHashLost")
+	kvmvccMavlFork     int64 = 200 * 10000
+	isDelMavlData            = false
+	delMavlDataHeight        = kvmvccMavlFork + 10000
+	delMavlDataState   int32
+	wg                 sync.WaitGroup
+	quit               bool
+	isPrunedMavl       bool                       // 是否是被裁剪过的 mavl
+	delPrunedMavlState int32 = delPrunedMavlStart // Upgrade时候删除pruned mavl的状态
 )
 
 const (
@@ -45,6 +43,10 @@ const (
 	batchDataSize     = 1024 * 1024 * 1
 	delMavlStateStart = 1
 	delMavlStateEnd   = 0
+
+	delPrunedMavlStart    = 0
+	delPrunedMavlStarting = 1
+	delPruneMavlEnd       = 2
 )
 
 // SetLogLevel set log level
@@ -59,7 +61,6 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
-	done = make(chan struct{}, 1)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -96,8 +97,7 @@ type subConfig struct {
 	// 是否使能内存树
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
-	EnableMemVal       bool `json:"enableMemVal"`
-	EnableUpdateKvmvcc bool `json:"enableUpdateKvmvcc"`
+	EnableMemVal bool `json:"enableMemVal"`
 }
 
 // New construct KVMVCCStore module
@@ -120,10 +120,6 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
 	}
 
-	if subcfg.EnableUpdateKvmvcc {
-		enableUpdateKvmvcc = true
-	}
-
 	bs := drivers.NewBaseStore(cfg)
 	cache, err := lru.New(cacheSize)
 	if err != nil {
@@ -137,6 +133,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if err == nil {
 		isDelMavlData = true
 	}
+	// 查询是否是删除裁剪版mavl
+	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
+
 	bs.SetChild(kvms)
 	return kvms
 }
@@ -208,6 +207,8 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 	}
 	// 删除Mavl数据
 	if datas.Height > delMavlDataHeight && !isDelMavlData && !isDelMavling() {
+		// 达到该高度时候，将全局的memTree以及tkCloseCache释放掉
+		mavl.ReleaseGlobalMem()
 		wg.Add(1)
 		go DelMavl(kvmMavls.GetDB())
 	}
@@ -261,49 +262,28 @@ func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []
 
 // ProcEvent handles supported events
 func (kvmMavls *KVmMavlStore) ProcEvent(msg *queue.Message) {
-	//msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
-	client := kvmMavls.GetQueueClient()
-	if msg != nil && msg.Ty == types.EventReExecBlock {
-		reData := msg.GetData().(*types.ReplyString)
-		if reData.Data == "over" {
-			kmlog.Info("ProcEvent update store over")
-			msg.ReplyErr("KVmMavlStore", nil)
-			done <- struct{}{}
-			return
-		}
-	} else if msg == nil {
-		if !enableUpdateKvmvcc {
-			return
-		}
-		height, err := kvmMavls.KVMVCCStore.GetMaxVersion()
-		if err != nil {
-			height = 0
-		} else {
-			height++
-		}
-		msg1 := client.NewMessage("blockchain", types.EventReExecBlock, &types.ReqInt{Height: height})
-		err = client.Send(msg1, true)
-		if err != nil {
-			return
-		}
-		resp, err := client.Wait(msg1)
-		if err != nil {
-			return
-		}
-		data := resp.GetData().(*types.ReplyString)
-		if data.Data == "need" {
-			//进程阻塞
-			<-done
-		}
+	if msg == nil {
+		return
 	}
+	msg.ReplyErr("KVmMavlStore", types.ErrActionNotSupport)
 }
 
 // MemSetUpgrade set kvs to the mem of KVmMavlStore module  not cache the tree and return the StateHash
 func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
 	if datas.Height < kvmvccMavlFork {
-		hash, err := kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
-		if err != nil {
-			return hash, err
+		var hash []byte
+		var err error
+
+		if isPrunedMavl {
+			hash, err = kvmMavls.MavlStore.MemSet(datas, sync)
+			if err != nil {
+				return hash, err
+			}
+		} else {
+			hash, err = kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
+			if err != nil {
+				return hash, err
+			}
 		}
 		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
 		if err != nil {
@@ -324,7 +304,18 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 
 // CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
-	return kvmMavls.KVMVCCStore.CommitUpgrade(req)
+	var hash []byte
+	var err error
+	if isPrunedMavl {
+		hash, err = kvmMavls.Commit(req)
+		if isNeedDelPrunedMavl() {
+			wg.Add(1)
+			go deletePrunedMavl(kvmMavls.GetDB())
+		}
+	} else {
+		hash, err = kvmMavls.KVMVCCStore.CommitUpgrade(req)
+	}
+	return hash, err
 }
 
 // Del set kvs to nil with StateHash
@@ -397,4 +388,56 @@ func isDelMavling() bool {
 
 func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
+}
+
+func isNeedDelPrunedMavl() bool {
+	return atomic.LoadInt32(&delPrunedMavlState) == 0
+}
+
+func setDelPrunedMavl(state int32) {
+	atomic.StoreInt32(&delPrunedMavlState, state)
+}
+
+func isPrunedMavlDB(db dbm.DB) bool {
+	prefix := []byte(leafNodePrefix)
+	it := db.Iterator(prefix, nil, true)
+	defer it.Close()
+	var isCommit bool
+	for it.Rewind(); it.Valid(); it.Next() {
+		isCommit = true
+		kmlog.Info("need commit mval")
+		break
+	}
+	return isCommit
+}
+
+func deletePrunedMavl(db dbm.DB) {
+	defer wg.Done()
+	setDelPrunedMavl(delPrunedMavlStarting)
+	defer setDelPrunedMavl(delPruneMavlEnd)
+
+	deletePrunedMavlData(db, hashNodePrefix)
+	deletePrunedMavlData(db, leafNodePrefix)
+	deletePrunedMavlData(db, leafKeyCountPrefix)
+	deletePrunedMavlData(db, oldLeafKeyCountPrefix)
+}
+
+func deletePrunedMavlData(db dbm.DB, prefix string) {
+	it := db.Iterator([]byte(prefix), nil, true)
+	defer it.Close()
+	if it.Rewind() && it.Valid() {
+		batch := db.NewBatch(false)
+		for it.Next(); it.Valid(); it.Next() { //第一个不做删除
+			if quit {
+				return
+			}
+			batch.Delete(it.Key())
+			if batch.ValueSize() > batchDataSize {
+				batch.Write()
+				batch.Reset()
+				time.Sleep(time.Millisecond * 100)
+			}
+		}
+		batch.Write()
+	}
 }

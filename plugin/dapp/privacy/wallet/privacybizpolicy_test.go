@@ -109,7 +109,7 @@ func (mock *testDataMock) initMember() {
 	mock.accdb = account.NewCoinsAccount()
 	mock.policy = privacy.New()
 	mock.policy.Init(wallet, sub.Wallet["privacy"])
-	mock.password = "123456"
+	mock.password = "ab123456"
 }
 
 func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey) {

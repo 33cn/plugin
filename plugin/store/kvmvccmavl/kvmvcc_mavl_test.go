@@ -19,11 +19,9 @@ import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
-	qmocks "github.com/33cn/chain33/queue/mocks"
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -539,10 +537,6 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	assert.Equal(t, int64(0), resp.Amount)
 }
 
-type testClient struct {
-	qmocks.Client
-}
-
 func TestProcEvent(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
@@ -552,19 +546,6 @@ func TestProcEvent(t *testing.T) {
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-	client := &qmocks.Client{}
-	client.On("Send", mock.Anything, mock.Anything).Return(nil)
-	client.On("Sub", mock.Anything, mock.Anything).Return(nil)
-	client.On("Recv", mock.Anything, mock.Anything).Return(nil)
-	client.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-	client.On("Wait", mock.Anything).Return(&queue.Message{Data: &types.ReplyString{Data: "other"}}, nil).Once()
-	store.SetQueueClient(client)
-
-	store.ProcEvent(nil)
-	enableUpdateKvmvcc = true
-	defer func() {
-		enableUpdateKvmvcc = false
-	}()
 	store.ProcEvent(nil)
 	store.ProcEvent(&queue.Message{})
 }
@@ -728,6 +709,58 @@ func TestGetKeyVersion(t *testing.T) {
 			require.Equal(t, h, int64(0))
 		}
 	}
+}
+
+func TestIsCommitMavl(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	isComm := isPrunedMavlDB(store.GetDB())
+	require.Equal(t, false, isComm)
+
+	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "123")), []byte("v1"))
+	store.GetDB().Set([]byte(fmt.Sprintln(leafNodePrefix, "456")), []byte("v2"))
+	isComm = isPrunedMavlDB(store.GetDB())
+	require.Equal(t, true, isComm)
+}
+
+func TestDeletePrunedMavl(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "123")), []byte("v1"))
+
+	//测试只有一条数据时候, 则不做删除
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+	v1, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
+	require.NoError(t, err)
+	require.Equal(t, v1, []byte("v1"))
+
+	//测试再加入一条数据，即两条时候
+	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "456")), []byte("v2"))
+	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
+
+	v1, err = store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
+	require.Error(t, err)
+	require.Equal(t, v1, []uint8([]byte(nil)))
+	v2, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "456")))
+	require.NoError(t, err)
+	require.Equal(t, v2, []byte("v2"))
+
+	wg.Add(1)
+	go deletePrunedMavl(store.GetDB())
+	wg.Wait()
 }
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }

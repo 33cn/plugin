@@ -6,6 +6,7 @@ package executor
 
 //database opeartion for execs ticket
 import (
+
 	//"bytes"
 	"encoding/hex"
 	"errors"
@@ -33,8 +34,17 @@ type DB struct {
 	prevstatus int32
 }
 
+//GetRealPrice 获取真实的价格
+func (t *DB) GetRealPrice() int64 {
+	if t.GetPrice() == 0 {
+		cfg := types.GetP(types.GetFork("ForkChainParamV1"))
+		return cfg.TicketPrice
+	}
+	return t.GetPrice()
+}
+
 // NewDB new instance
-func NewDB(id, minerAddress, returnWallet string, blocktime int64, isGenesis bool) *DB {
+func NewDB(id, minerAddress, returnWallet string, blocktime, height, price int64, isGenesis bool) *DB {
 	t := &DB{}
 	t.TicketId = id
 	t.MinerAddress = minerAddress
@@ -43,6 +53,10 @@ func NewDB(id, minerAddress, returnWallet string, blocktime int64, isGenesis boo
 	t.Status = 1
 	t.IsGenesis = isGenesis
 	t.prevstatus = 0
+	//height == 0 的情况下，不去改变 genesis block
+	if types.IsFork(height, "ForkChainParamV2") && height > 0 {
+		t.Price = price
+	}
 	return t
 }
 
@@ -131,7 +145,7 @@ func (action *Action) GenesisInit(genesis *ty.TicketGenesis) (*types.Receipt, er
 	cfg := types.GetP(action.height)
 	for i := 0; i < int(genesis.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
-		t := NewDB(id, genesis.MinerAddress, genesis.ReturnAddress, action.blocktime, true)
+		t := NewDB(id, genesis.MinerAddress, genesis.ReturnAddress, action.blocktime, action.height, cfg.TicketPrice, true)
 		//冻结子账户资金
 		receipt, err := action.coinsAccount.ExecFrozen(genesis.ReturnAddress, action.execaddr, cfg.TicketPrice)
 		if err != nil {
@@ -236,8 +250,7 @@ func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 			}
 			id = id + ":" + fmt.Sprintf("%x:%d", topen.PubHashes[i], topen.RandSeed)
 		}
-
-		t := NewDB(id, topen.MinerAddress, topen.ReturnAddress, action.blocktime, false)
+		t := NewDB(id, topen.MinerAddress, topen.ReturnAddress, action.blocktime, action.height, cfg.TicketPrice, false)
 
 		//冻结子账户资金
 		receipt, err := action.coinsAccount.ExecFrozen(topen.ReturnAddress, action.execaddr, cfg.TicketPrice)
@@ -384,7 +397,7 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 		if t.prevstatus == 1 {
 			t.MinerValue = 0
 		}
-		retValue := cfg.TicketPrice + t.MinerValue
+		retValue := t.GetRealPrice() + t.MinerValue
 		receipt1, err := action.coinsAccount.ExecActive(t.ReturnAddress, action.execaddr, retValue)
 		if err != nil {
 			tlog.Error("TicketClose.ExecActive user", "addr", t.ReturnAddress, "execaddr", action.execaddr, "value", retValue)

@@ -194,10 +194,10 @@ func TestRewriteJSON(t *testing.T) {
 }
 
 func TestCalcLocalPrefix(t *testing.T) {
-	assert.Equal(t, calcLocalPrefix([]byte("a")), []byte("LODB-a-"))
-	assert.Equal(t, calcStatePrefix([]byte("a")), []byte("mavl-a-"))
+	assert.Equal(t, types.CalcLocalPrefix([]byte("a")), []byte("LODB-a-"))
+	assert.Equal(t, types.CalcStatePrefix([]byte("a")), []byte("mavl-a-"))
 	assert.Equal(t, calcCodeKey("a"), []byte("mavl-jsvm-code-a"))
-	assert.Equal(t, calcRollbackKey([]byte("a")), []byte("LODB-jsvm-rollback-a"))
+	assert.Equal(t, types.CalcRollbackKey([]byte("jsvm"), []byte("a")), []byte("LODB-jsvm-rollback-a"))
 }
 
 func TestCacheMemUsage(t *testing.T) {

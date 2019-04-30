@@ -55,5 +55,37 @@ func TestParaNode(t *testing.T) {
 		para.Para.SendTxRPC(tx)
 		para.Para.WaitHeight(int64(i) + 1)
 	}
+	testParaQuery(para)
+}
+
+func testParaQuery(para *node.ParaNode) {
+
+	var param types.ReqWalletImportPrivkey
+	param.Label = "Importprivkey"
+	param.Privkey = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+	para.Para.GetAPI().Notify(
+		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
+			Driver:   "para",
+			FuncName: "CreateNewAccount",
+			Param:    types.Encode(&param),
+		})
+
+	var param1 types.ReqNewAccount
+	param1.Label = "NewAccount"
+	para.Para.GetAPI().Notify(
+		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
+			Driver:   "para",
+			FuncName: "CreateNewAccount",
+			Param:    types.Encode(&param1),
+		})
+
+	var walletsatus types.WalletStatus
+	walletsatus.IsWalletLock = true
+	para.Para.GetAPI().Notify(
+		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
+			Driver:   "para",
+			FuncName: "WalletStatus",
+			Param:    types.Encode(&walletsatus),
+		})
 
 }

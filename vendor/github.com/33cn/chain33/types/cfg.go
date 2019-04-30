@@ -81,6 +81,8 @@ type Consensus struct {
 	Genesis     string `protobuf:"bytes,4,opt,name=genesis" json:"genesis,omitempty"`
 	HotkeyAddr  string `protobuf:"bytes,5,opt,name=hotkeyAddr" json:"hotkeyAddr,omitempty"`
 	ForceMining bool   `protobuf:"varint,6,opt,name=forceMining" json:"forceMining,omitempty"`
+	// 配置挖矿的合约名单
+	MinerExecs []string `protobuf:"bytes,7,rep,name=minerExecs" json:"minerExecs,omitempty"`
 }
 
 // Wallet 配置
@@ -109,6 +111,8 @@ type Store struct {
 	DbCache int32 `protobuf:"varint,4,opt,name=dbCache" json:"dbCache,omitempty"`
 	// 数据库版本
 	LocalDBVersion string `protobuf:"bytes,5,opt,name=localdbVersion" json:"localdbVersion,omitempty"`
+	// 数据库版本
+	StoreDBVersion string `protobuf:"bytes,5,opt,name=storedbVersion" json:"storedbVersion,omitempty"`
 }
 
 // BlockChain 配置
@@ -136,6 +140,8 @@ type BlockChain struct {
 	// 是否为平行链节点
 	IsParaChain        bool `protobuf:"varint,12,opt,name=isParaChain" json:"isParaChain,omitempty"`
 	EnableTxQuickIndex bool `protobuf:"varint,13,opt,name=enableTxQuickIndex" json:"enableTxQuickIndex,omitempty"`
+	// 升级storedb是否重新执行localdb
+	EnableReExecLocal bool `protobuf:"varint,13,opt,name=enableReExecLocal" json:"enableReExecLocal,omitempty"`
 }
 
 // P2P 配置

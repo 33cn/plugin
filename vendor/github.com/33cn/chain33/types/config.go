@@ -20,15 +20,15 @@ import (
 //区块链共识相关的参数，重要参数不要随便修改
 var (
 	AllowUserExec = [][]byte{ExecerNone}
-	//AllowDepositExec 这里又限制了一次，因为挖矿的合约不会太多，所以这里配置死了，如果要扩展，需要改这里的代码
-	AllowDepositExec = [][]byte{[]byte("ticket")}
-	EmptyValue       = []byte("FFFFFFFFemptyBVBiCj5jvE15pEiwro8TQRGnJSNsJF") //这字符串表示数据库中的空值
-	title            string
-	mu               sync.Mutex
-	titles           = map[string]bool{}
-	chainConfig      = make(map[string]interface{})
-	mver             = make(map[string]*mversion)
-	coinSymbol       = "bty"
+	//挖矿的合约名单，适配旧配置，默认ticket
+	minerExecs  = []string{"ticket"}
+	EmptyValue  = []byte("FFFFFFFFemptyBVBiCj5jvE15pEiwro8TQRGnJSNsJF") //这字符串表示数据库中的空值
+	title       string
+	mu          sync.Mutex
+	titles      = map[string]bool{}
+	chainConfig = make(map[string]interface{})
+	mver        = make(map[string]*mversion)
+	coinSymbol  = "bty"
 )
 
 // coin conversation
@@ -91,6 +91,17 @@ func GetP(height int64) *ChainParam {
 	c.TargetTimePerBlock = time.Duration(conf.MGInt("targetTimePerBlock", height)) * time.Second
 	c.RetargetAdjustmentFactor = conf.MGInt("retargetAdjustmentFactor", height)
 	return c
+}
+
+// GetMinerExecs 获取挖矿的合约名单
+func GetMinerExecs() []string {
+	return minerExecs
+}
+
+func setMinerExecs(execs []string) {
+	if len(execs) > 0 {
+		minerExecs = execs
+	}
 }
 
 // GetFundAddr 获取基金账户地址
@@ -219,7 +230,7 @@ func S(key string, value interface{}) {
 	mu.Lock()
 	defer mu.Unlock()
 	if strings.HasPrefix(key, "config.") {
-		if !isLocal() { //only local can modify for test
+		if !isLocal() && !isTestPara() { //only local and test para can modify for test
 			panic("prefix config. is readonly")
 		} else {
 			tlog.Error("modify " + key + " is only for test")
@@ -260,6 +271,7 @@ func Init(t string, cfg *Config) {
 		if cfg.Exec.MaxExecFee < cfg.Mempool.MaxTxFee {
 			panic("config must meet: mempool.maxTxFee <= exec.maxExecFee")
 		}
+		setMinerExecs(cfg.Consensus.MinerExecs)
 		setMinFee(cfg.Exec.MinExecFee)
 		setChainConfig("FixTime", cfg.FixTime)
 		if cfg.Exec.MaxExecFee > 0 {
@@ -339,6 +351,10 @@ func isPara() bool {
 	return strings.Count(title, ".") == 3 && strings.HasPrefix(title, ParaKeyX)
 }
 
+func isTestPara() bool {
+	return strings.Count(title, ".") == 3 && strings.HasPrefix(title, ParaKeyX) && strings.HasSuffix(title, "test.")
+}
+
 // IsPara 是否平行链
 func IsPara() bool {
 	mu.Lock()
@@ -355,6 +371,23 @@ func IsParaExecName(exec string) bool {
 //IsMyParaExecName 是否是我的para链的执行器
 func IsMyParaExecName(exec string) bool {
 	return IsParaExecName(exec) && strings.HasPrefix(exec, GetTitle())
+}
+
+//IsSpecificParaExecName 是否是某一个平行链的执行器
+func IsSpecificParaExecName(title, exec string) bool {
+	return IsParaExecName(exec) && strings.HasPrefix(exec, title)
+}
+
+//GetParaExecTitleName 如果是平行链执行器，获取对应title
+func GetParaExecTitleName(exec string) (string, bool) {
+	if IsParaExecName(exec) {
+		for i := len(ParaKey); i < len(exec); i++ {
+			if exec[i] == '.' {
+				return exec[:i+1], true
+			}
+		}
+	}
+	return "", false
 }
 
 func setTestNet(isTestNet bool) {

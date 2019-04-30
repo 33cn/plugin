@@ -1,6 +1,7 @@
 package testnode
 
-var paraconfig = `
+//DefaultConfig default config for testnode
+var DefaultConfig = `
 Title="user.p.guodun."
 # TestNet=true
 
@@ -71,10 +72,14 @@ poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
 
+[mempool.sub.para]
+poolCacheSize=102400
+
 [consensus]
 name="para"
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+minerExecs=["paracross"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -109,6 +114,7 @@ searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
 MainBlockHashForkHeight=1
+MainForkParacrossCommitTx=1
 
 [store]
 name="mavl"

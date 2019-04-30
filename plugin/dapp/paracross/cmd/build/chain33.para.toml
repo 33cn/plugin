@@ -72,6 +72,7 @@ maxTxNumPerAccount=10000
 name="para"
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+minerExecs=["paracross"]    #配置挖矿合约
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -105,6 +106,8 @@ waitBlocks4CommitMsg=2
 searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
+#主链支持平行链共识tx分叉高度，需要和主链保持严格一致
+MainForkParacrossCommitTx=-1
 
 [store]
 name="mavl"

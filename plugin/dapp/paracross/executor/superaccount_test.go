@@ -46,13 +46,17 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
+	suite.exec.SetBlockInfo([]byte(""), []byte(""), 3)
 	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
-	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
-	if forkHeight == types.MaxHeight {
-		types.SetDappFork(Title, pt.ParaX, pt.ForkCommitTx, 0)
-	}
+	//forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
+	//if forkHeight == types.MaxHeight {
+	//	types.ReplaceDappFork(MainTitle, pt.ParaX, pt.ForkCommitTx, 0)
+	//
+	//}
+
+	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
 
 	// TODO, more fields
 	// setup block

@@ -13,9 +13,10 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strings"
 	"testing"
 	"unicode"
+
+	"strings"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -478,7 +479,7 @@ func ExecAndCheckBlockCB(qclient queue.Client, block *types.Block, txs []*types.
 //ResetDatadir 重写datadir
 func ResetDatadir(cfg *types.Config, datadir string) string {
 	// Check in case of paths like "/something/~/something/"
-	if datadir[:2] == "~/" {
+	if len(datadir) >= 2 && datadir[:2] == "~/" {
 		usr, err := user.Current()
 		if err != nil {
 			panic(err)
@@ -486,7 +487,7 @@ func ResetDatadir(cfg *types.Config, datadir string) string {
 		dir := usr.HomeDir
 		datadir = filepath.Join(dir, datadir[2:])
 	}
-	if datadir[:6] == "$TEMP/" {
+	if len(datadir) >= 6 && datadir[:6] == "$TEMP/" {
 		dir, err := ioutil.TempDir("", "chain33datadir-")
 		if err != nil {
 			panic(err)
