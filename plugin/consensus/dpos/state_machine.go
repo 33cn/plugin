@@ -7,7 +7,7 @@ package dpos
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/outbrain/golib/math"
+	"math"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -94,7 +94,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		//获得当前高度
 		height := cs.client.GetCurrentHeight()
 		now := time.Now().Unix()
-		if cs.lastMyVote != nil && math.AbsInt64(now-cs.lastMyVote.VoteItem.PeriodStop) <= 1 {
+		if cs.lastMyVote != nil && math.Abs(float64(now-cs.lastMyVote.VoteItem.PeriodStop)) <= 1 {
 			now += 2
 		}
 		//计算当前时间，属于哪一个周期，应该哪一个节点出块，应该出块的高度
