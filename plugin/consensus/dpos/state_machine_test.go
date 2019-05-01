@@ -6,12 +6,13 @@ package dpos
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/types"
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
