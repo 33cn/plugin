@@ -22,8 +22,6 @@ import (
 // Config
 
 const (
-	proposalHeartbeatIntervalSeconds = 1
-
 	continueToVote = 0
 	voteSuccess    = 1
 	voteFail       = 2

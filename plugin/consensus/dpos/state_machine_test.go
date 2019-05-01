@@ -6,24 +6,13 @@ package dpos
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
 	"time"
-
-	"github.com/33cn/chain33/types"
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
 	_ "github.com/33cn/plugin/plugin/store/init"
-)
-
-var (
-	random    *rand.Rand
-	loopCount = 10
-	conn      *grpc.ClientConn
-	c         types.Chain33Client
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {

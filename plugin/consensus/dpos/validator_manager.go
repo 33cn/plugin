@@ -13,8 +13,6 @@ import (
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 )
 
-const fee = 1e6
-
 var (
 	r *rand.Rand
 )

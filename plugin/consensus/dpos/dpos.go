@@ -5,7 +5,6 @@
 package dpos
 
 import (
-	"sync"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
@@ -36,8 +35,8 @@ var (
 	dposDelegateNum      int64 = 3 //委托节点个数，从配置读取，以后可以根据投票结果来定
 	dposBlockInterval    int64 = 3 //出块间隔，当前按3s
 	dposContinueBlockNum int64 = 6 //一个委托节点当选后，一次性持续出块数量
-	dposCycle                  = int64(dposDelegateNum * dposBlockInterval * dposContinueBlockNum)
-	dposPeriod                 = int64(dposBlockInterval * dposContinueBlockNum)
+	dposCycle                  = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
+	dposPeriod                 = dposBlockInterval * dposContinueBlockNum
 	zeroHash             [32]byte
 )
 
@@ -60,7 +59,6 @@ type Client struct {
 	stopC         chan struct{}
 	isDelegator   bool
 	blockTime     int64
-	once          sync.Once
 }
 
 type subConfig struct {

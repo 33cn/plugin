@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"math"
 	"time"
-	
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -133,7 +133,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 
 		index := -1
 		for i := 0; i < cs.validatorMgr.Validators.Size(); i++ {
-			if bytes.Compare(cs.validatorMgr.Validators.Validators[i].Address, cs.privValidator.GetAddress()) == 0 {
+			if bytes.Equal(cs.validatorMgr.Validators.Validators[i].Address, cs.privValidator.GetAddress()) {
 				index = i
 				break
 			}
@@ -456,9 +456,7 @@ func (voted *VotedState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNot
 	cs.scheduleDPosTimeout(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
 	if cs.cachedNotify != nil {
 		cs.dposState.recvNotify(cs, cs.cachedNotify)
-
 	}
-	return
 }
 
 // WaitNofifyState is the state of dpos state machine to wait notify.
