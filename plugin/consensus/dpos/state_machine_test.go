@@ -26,7 +26,7 @@ func setParams(delegateNum int64, blockInterval int64, continueBlockNum int64) {
 	dposPeriod = int64(dposBlockInterval * dposContinueBlockNum)
 }
 
-func printTask(now int64, task *DPosTask) {
+func printTask(now int64, task *Task) {
 	fmt.Printf("now:%v|cycleStart:%v|cycleStop:%v|periodStart:%v|periodStop:%v|blockStart:%v|blockStop:%v|nodeId:%v\n",
 		now,
 		task.cycleStart,
@@ -37,7 +37,7 @@ func printTask(now int64, task *DPosTask) {
 		task.blockStop,
 		task.nodeID)
 }
-func assertTask(task *DPosTask, t *testing.T) {
+func assertTask(task *Task, t *testing.T) {
 	assert.Equal(t, true, task.nodeID >= 0 && task.nodeID < dposDelegateNum)
 	assert.Equal(t, true, task.cycleStart <= task.periodStart && task.periodStart <= task.blockStart && task.blockStop <= task.periodStop && task.periodStop <= task.cycleStop)
 

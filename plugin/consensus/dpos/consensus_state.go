@@ -77,7 +77,7 @@ type ConsensusState struct {
 	Quit             chan struct{}
 
 	//当前状态
-	dposState DposState
+	dposState State
 
 	//所有选票，包括自己的和从网络中接收到的
 	dposVotes []*dpostype.DPosVote
@@ -296,7 +296,7 @@ func (cs *ConsensusState) IsProposer() bool {
 }
 
 // SetState method
-func (cs *ConsensusState) SetState(state DposState) {
+func (cs *ConsensusState) SetState(state State) {
 	cs.dposState = state
 }
 
