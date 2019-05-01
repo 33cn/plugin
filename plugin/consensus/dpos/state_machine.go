@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"math"
 	"time"
-	
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
