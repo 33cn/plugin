@@ -41,7 +41,7 @@ var VotedStateObj = &VotedState{}
 // WaitNotifyStateObj is the WaitNotifyState obj
 var WaitNotifyStateObj = &WaitNofifyState{}
 
-// DPosTask 为计算当前时间所属周期的数据结构
+// Task 为计算当前时间所属周期的数据结构
 type Task struct {
 	nodeID      int64
 	cycleStart  int64
@@ -68,7 +68,7 @@ func DecideTaskByTime(now int64) (task Task) {
 	return task
 }
 
-// DposState is the base class of dpos state machine, it defines some interfaces.
+// State is the base class of dpos state machine, it defines some interfaces.
 type State interface {
 	timeOut(cs *ConsensusState)
 	sendVote(cs *ConsensusState, vote *dpostype.DPosVote)
