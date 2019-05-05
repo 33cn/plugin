@@ -528,7 +528,6 @@ out:
 	client.paraClient.wg.Done()
 }
 
-
 func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.ParacrossStatus, error) {
 	if isParaSelfConsensusForked(block.MainHeight) {
 		//从本地查询共识高度

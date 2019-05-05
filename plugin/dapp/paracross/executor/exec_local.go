@@ -31,7 +31,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-			if !types.IsPara(){
+			if !types.IsPara() {
 				r, err := e.saveLocalParaTxs(tx, false)
 				if err != nil {
 					return nil, err
