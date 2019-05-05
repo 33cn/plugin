@@ -45,6 +45,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 	mem.client.Sub(mem.key)
 	mem.wg.Add(1)
 	go func() {
+		defer mem.wg.Done()
 		for msg := range client.Recv() {
 			switch msg.Ty {
 			case types.EventTx:
