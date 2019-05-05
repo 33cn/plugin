@@ -31,12 +31,14 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-
-			r, err := e.saveLocalParaTxs(tx, false)
-			if err != nil {
-				return nil, err
+			if !types.IsPara(){
+				r, err := e.saveLocalParaTxs(tx, false)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, r.KV...)
 			}
-			set.KV = append(set.KV, r.KV...)
+
 		} else if log.Ty == pt.TyLogParacrossCommitRecord {
 			var g pt.ReceiptParacrossRecord
 			types.Decode(log.Log, &g)

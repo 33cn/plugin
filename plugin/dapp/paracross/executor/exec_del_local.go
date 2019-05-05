@@ -32,11 +32,14 @@ func (e *Paracross) ExecDelLocal_Commit(payload *pt.ParacrossCommitAction, tx *t
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: nil})
 
-			r, err := e.saveLocalParaTxs(tx, true)
-			if err != nil {
-				return nil, err
+			if !types.IsPara(){
+				r, err := e.saveLocalParaTxs(tx, true)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, r.KV...)
 			}
-			set.KV = append(set.KV, r.KV...)
+
 		} else if log.Ty == pt.TyLogParacrossCommitRecord {
 			var g pt.ReceiptParacrossRecord
 			types.Decode(log.Log, &g)
