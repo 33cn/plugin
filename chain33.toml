@@ -38,6 +38,7 @@ batchsync=false
 isRecordBlockSequence=true
 isParaChain=false
 enableTxQuickIndex=true
+enableReExecLocal=true
 
 [p2p]
 seeds=[]
