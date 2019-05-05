@@ -61,6 +61,7 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
+	types.RegisterDappFork("kvmvccmavl", "ForkKvmvccmavl", types.MaxHeight)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -135,7 +136,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	}
 	// 查询是否是删除裁剪版mavl
 	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
-
+	// 读取fork高度
+	kvmvccMavlFork = types.GetDappFork("kvmvccmavl", "ForkKvmvccmavl")
+	delMavlDataHeight = kvmvccMavlFork + 10000
 	bs.SetChild(kvms)
 	return kvms
 }
