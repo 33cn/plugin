@@ -49,7 +49,6 @@ func (pt *Pos33Type) GetLogMap() map[int64]*types.LogInfo {
 		TyLogDelegate: {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogDelegate"},
 		TyLogReword:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogReword"},
 		TyLogPunish:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogPunish"},
-		TyLogElecte:   {Ty: reflect.TypeOf(ReceiptPos33{}), Name: "LogElecte"},
 	}
 }
 
@@ -66,7 +65,6 @@ func (pt *Pos33Type) GetTypeMap() map[string]int32 {
 		"Delegate": Pos33ActionDelegate,
 		"Reword":   Pos33ActionReword,
 		"Punish":   Pos33ActionPunish,
-		"Electe":   Pos33ActionElecte,
 	}
 }
 

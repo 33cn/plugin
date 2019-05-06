@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "transaction.proto";
-import "blockchain.proto";
 
 package types;
 
@@ -86,4 +85,13 @@ message Pos33PunishAction {
 message ReceiptPos33 {
   string id   = 1;
   int32  status     = 2;
+}
+
+message Pos33AllWeight {
+  int64 all_weight = 1;
+  map<int64, int64> new_weight = 2;
+}
+
+message Pos33Weight {
+  map<int64, int64> weights = 1;
 }

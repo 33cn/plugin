@@ -38,7 +38,6 @@ const (
 	ActionDelegate = "delegate"
 	ActionReword   = "reword"
 	ActionPunish   = "punish"
-	ActionElecte   = "electe"
 )
 
 // query func name
@@ -52,12 +51,12 @@ const (
 	Pos33Miner = types.Coin * 10000
 	// Pos33BlockReword 区块奖励
 	Pos33BlockReword = types.Coin * 15
-	// Pos33SortitionBlockNumber 多少区块做一次抽签
-	Pos33SortitionBlockNumber = 33
+	// Pos33SortitionSize 多少区块做一次抽签
+	Pos33SortitionSize = 10
 	// Pos33VoteReword 每个区块的奖励
 	Pos33VoteReword = types.Coin / 2
 	// Pos33ProposerSize 候选区块Proposer数量
-	Pos33ProposerSize = 10
+	Pos33ProposerSize = 7
 	// Pos33VeriferSize  候选区块Verifer数量
 	Pos33VeriferSize = 10
 	// Pos33DepositPeriod 抵押周期
@@ -71,7 +70,6 @@ const (
 	KeyPos33AllWeight       = "LODB-pos33-AllWeight:"
 	KeyPos33WeightPrefix    = "LODB-pos33-Weight:"
 	KeyPos33DelegatePrefix  = "LODB-pos33-Delegate:"
-	KeyPos33ElectePrefix    = "LODB-pos33-Electe:"
 	KeyPos33CommitteePrefix = "LODB-pos33-Committee:"
 	KeyPos33RewordPrefix    = "LODB-pos33-Reword:"
 )

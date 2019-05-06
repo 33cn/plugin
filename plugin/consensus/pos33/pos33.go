@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
@@ -137,31 +136,48 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 	return client.n.checkBlock(current.Block)
 }
 
-func (client *Client) allWeight() int {
+func (client *Client) allWeight(height int64) int {
 	k := []byte(pt.KeyPos33AllWeight)
 	v, err := client.Get(k)
 	if err != nil {
 		plog.Error(err.Error())
 		return 0
 	}
-	w, err := strconv.Atoi(string(v))
+	var allw pt.Pos33AllWeight
+	err = types.Decode(v, &allw)
 	if err != nil {
 		plog.Error(err.Error())
 		return 0
 	}
-	return w
+	w := allw.AllWeight
+	for h, nw := range allw.NewWeight {
+		if h+pt.Pos33SortitionSize*2-h%pt.Pos33SortitionSize < height {
+			w += nw
+		}
+	}
+
+	return int(w)
 }
 
-func (client *Client) getWeight(addr string) int {
+func (client *Client) getWeight(addr string, height int64) int {
 	v, err := client.Get([]byte(pt.KeyPos33WeightPrefix + addr))
 	if err != nil {
-		return -1
+		plog.Info("getWeight error", "error", err.Error())
+		return 0
 	}
-	w, err := strconv.Atoi(string(v))
+	var w pt.Pos33Weight
+	err = types.Decode(v, &w)
 	if err != nil {
-		return -1
+		plog.Error("getWeight error", "error", err.Error())
+		return 0
 	}
-	return w
+	allw := int64(0)
+	for h, nw := range w.Weights {
+		if h < pt.Pos33SortitionSize || h+pt.Pos33SortitionSize*2-h%pt.Pos33SortitionSize < height {
+			allw += nw
+		}
+	}
+	return int(allw)
 }
 
 // AddBlock notice driver a new block incoming
@@ -177,7 +193,7 @@ func (client *Client) CreateBlock() {
 			time.Sleep(time.Second)
 			continue
 		}
-		if client.getWeight(client.n.addr) == 0 {
+		if client.getWeight(client.n.addr, client.GetCurrentHeight()) == 0 {
 			plog.Info("if do consensus, must deposit 1,000,000 YCC")
 			time.Sleep(time.Second)
 			continue
@@ -229,6 +245,12 @@ func (client *Client) setBlock(b *types.Block) error {
 }
 
 func getBlockReword(b *types.Block) (*pt.Pos33RewordAction, error) {
+	if b == nil {
+		panic("can't go here0")
+	}
+	if len(b.Txs) == 0 {
+		panic("can't go here1")
+	}
 	tx := b.Txs[0]
 	var pact pt.Pos33Action
 	err := types.Decode(tx.Payload, &pact)
@@ -248,6 +270,7 @@ func (client *Client) Get(key []byte) ([]byte, error) {
 
 	if err != nil {
 		plog.Error(err.Error()) //no happen for ever
+		return nil, err
 	}
 	value := resp.GetData().(*types.LocalReplyValue).Values[0]
 	if value == nil {

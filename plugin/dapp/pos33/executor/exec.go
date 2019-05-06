@@ -17,6 +17,7 @@ func (p *Pos33) Exec_Deposit(act *pt.Pos33DepositAction, tx *types.Transaction, 
 	if err != nil {
 		panic(err)
 	}
+	plog.Info("Exec_Deposit", "from", tx.From(), "weight", act.W)
 	return r, err
 }
 

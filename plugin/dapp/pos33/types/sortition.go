@@ -16,7 +16,7 @@ import (
 const sortRounds = 1
 
 // persent of allw online
-const onlinePersentOfAllW = 0.67
+const onlinePersentOfAllW = 1. - 0.33
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256
@@ -79,6 +79,8 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 	rs.Rands[0], rs.Rands[pos] = rs.Rands[pos], rs.Rands[0]
 	if stap == 0 {
 		rs.Rands = rs.Rands[:1]
+	} else {
+		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VeriferSize)]
 	}
 
 	return &rs, signature
@@ -154,9 +156,16 @@ func Sortition(msgs []*Pos33ElectMsg, stap int) *Pos33Rands {
 
 	sort.Sort(&rs)
 	if stap == 0 {
-		rs.Rands = rs.Rands[:Pos33ProposerSize]
+		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33ProposerSize)]
 	} else {
-		rs.Rands = rs.Rands[:Pos33VeriferSize]
+		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VeriferSize)]
 	}
 	return &rs
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

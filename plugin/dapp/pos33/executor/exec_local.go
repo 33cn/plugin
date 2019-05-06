@@ -12,10 +12,10 @@ import (
 )
 
 func (p *Pos33) deposit(w int, tx *types.Transaction) (*types.LocalDBSet, error) {
-	allw := p.getAllWeight()
 	var kvs []*types.KeyValue
+	plog.Info("deposit @@@", "height", p.GetHeight(), "from", tx.From(), "weight", w)
 	kvs = append(kvs, p.addWeight(tx.From(), w))
-	kvs = append(kvs, p.setAllWeight(allw+w))
+	kvs = append(kvs, p.setAllWeight(w))
 	return &types.LocalDBSet{KV: kvs}, nil
 }
 
