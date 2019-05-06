@@ -31,12 +31,14 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-
-			r, err := e.saveLocalParaTxs(tx, false)
-			if err != nil {
-				return nil, err
+			if !types.IsPara() {
+				r, err := e.saveLocalParaTxs(tx, false)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, r.KV...)
 			}
-			set.KV = append(set.KV, r.KV...)
+
 		} else if log.Ty == pt.TyLogParacrossCommitRecord {
 			var g pt.ReceiptParacrossRecord
 			types.Decode(log.Log, &g)
@@ -75,6 +77,29 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 			}
 			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+		}
+	}
+	return &set, nil
+}
+
+//ExecLocal_NodeGroupConfig node group config add process
+func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
+			log.Ty == pt.TyLogParaNodeGroupQuit {
+			var g pt.ReceiptParaNodeGroupConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title), Value: nil})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title), Value: types.Encode(g.Current)})
 		}
 	}
 	return &set, nil
@@ -146,10 +171,7 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	var set types.LocalDBSet
 	txs := e.GetTxs()
 
-	forkHeight := types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
-	if forkHeight == -1 || forkHeight == 0 {
-		forkHeight = types.MaxHeight
-	}
+	forkHeight := getDappForkHeight(pt.ForkCommitTx)
 
 	//removed the 0 vote tx
 	if payload.Status.MainBlockHeight >= forkHeight {

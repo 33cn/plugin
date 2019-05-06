@@ -36,9 +36,12 @@ const (
 	// TyLogParaAssetDeposit asset deposit log key
 	TyLogParaAssetDeposit = 656
 	// TyLogParaNodeConfig config super node log key
-	TyLogParaNodeConfig      = 657
-	TyLogParaNodeVoteDone    = 658
-	TyLogParaNodeGroupUpdate = 659
+	TyLogParaNodeConfig       = 657
+	TyLogParaNodeVoteDone     = 658
+	TyLogParaNodeGroupUpdate  = 659
+	TyLogParaNodeGroupApply   = 660
+	TyLogParaNodeGroupApprove = 661
+	TyLogParaNodeGroupQuit    = 662
 )
 
 type paracrossCommitTx struct {
@@ -72,6 +75,8 @@ const (
 	ParacrossActionAssetWithdraw
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
+	//ParacrossActionNodeGroupApply apply for node group initially
+	ParacrossActionNodeGroupApply
 )
 
 // status
@@ -84,10 +89,9 @@ const (
 
 // node config op
 const (
-	ParaNodeJoin     = "join"
-	ParaNodeQuit     = "quit"
-	ParaNodeVote     = "vote"
-	ParaNodeTakeover = "takeover"
+	ParaNodeJoin = "join"
+	ParaNodeQuit = "quit"
+	ParaNodeVote = "vote"
 
 	ParaNodeVoteYes = "yes"
 	ParaNodeVoteNo  = "no"
@@ -102,6 +106,15 @@ const (
 	ParacrossNodeQuiting
 	// ParacrossNodeQuited pass to quite by votes
 	ParacrossNodeQuited
+)
+
+const (
+	//ParacrossNodeGroupApply apply for para chain node group initially
+	ParacrossNodeGroupApply = iota + 1
+	//ParacrossNodeGroupApprove super manager approve the apply
+	ParacrossNodeGroupApprove
+	//ParacrossNodeGroupQuit applyer quit the apply when not be approved
+	ParacrossNodeGroupQuit
 )
 
 var (
@@ -174,6 +187,28 @@ func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, erro
 	}
 
 	return tx, nil
+}
+
+//CreateRawNodeGroupApplyTx create raw tx for node group
+func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
+	apply.Title = types.GetTitle()
+	apply.EmptyBlockInterval = 4
+	interval := types.Conf("config.consensus.sub.para").GInt("emptyBlockInterval")
+	if interval > 0 {
+		apply.EmptyBlockInterval = uint32(interval)
+	}
+
+	action := &ParacrossAction{
+		Ty:    ParacrossActionNodeGroupApply,
+		Value: &ParacrossAction_NodeGroupConfig{apply},
+	}
+
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+	}
+
+	return tx, nil
+
 }
 
 // CreateRawAssetTransferTx create asset transfer tx

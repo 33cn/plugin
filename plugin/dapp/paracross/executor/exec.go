@@ -92,3 +92,9 @@ func (e *Paracross) Exec_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Tr
 	a := newAction(e, tx)
 	return a.NodeConfig(payload)
 }
+
+//Exec_NodeGroupConfig node group config process
+func (e *Paracross) Exec_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.NodeGroupConfig(payload)
+}

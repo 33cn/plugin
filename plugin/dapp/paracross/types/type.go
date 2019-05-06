@@ -64,20 +64,24 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaNodeConfig:        {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
 		TyLogParaNodeGroupUpdate:   {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupUpdate"},
 		TyLogParaNodeVoteDone:      {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
+		TyLogParaNodeGroupApply:    {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApply"},
+		TyLogParaNodeGroupApprove:  {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApprove"},
+		TyLogParaNodeGroupQuit:     {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupQuit"},
 	}
 }
 
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":         ParacrossActionCommit,
-		"Miner":          ParacrossActionMiner,
-		"AssetTransfer":  ParacrossActionAssetTransfer,
-		"AssetWithdraw":  ParacrossActionAssetWithdraw,
-		"Transfer":       ParacrossActionTransfer,
-		"Withdraw":       ParacrossActionWithdraw,
-		"TransferToExec": ParacrossActionTransferToExec,
-		"NodeConfig":     ParacrossActionNodeConfig,
+		"Commit":          ParacrossActionCommit,
+		"Miner":           ParacrossActionMiner,
+		"AssetTransfer":   ParacrossActionAssetTransfer,
+		"AssetWithdraw":   ParacrossActionAssetWithdraw,
+		"Transfer":        ParacrossActionTransfer,
+		"Withdraw":        ParacrossActionWithdraw,
+		"TransferToExec":  ParacrossActionTransferToExec,
+		"NodeConfig":      ParacrossActionNodeConfig,
+		"NodeGroupConfig": ParacrossActionNodeGroupApply,
 	}
 }
 
@@ -116,12 +120,24 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrNotSupport
 		}
 		var param ParaNodeAddrConfig
-		err := json.Unmarshal(message, &param)
+		err := types.JSONToPB(message, &param)
 		if err != nil {
 			glog.Error("CreateTx.NodeConfig", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawNodeConfigTx(&param)
+	} else if action == "NodeGroupApply" {
+		if !types.IsPara() {
+			return nil, types.ErrNotSupport
+		}
+		var param ParaNodeGroupConfig
+		err := types.JSONToPB(message, &param)
+		//err := json.Unmarshal(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.NodeGroupApply", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawNodeGroupApplyTx(&param)
 	}
 
 	return nil, types.ErrNotSupport

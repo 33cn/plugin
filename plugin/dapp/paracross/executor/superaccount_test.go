@@ -23,6 +23,10 @@ var (
 	PrivKey14K = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" // 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 	Account14K = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 	Account1MC = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+
+	Account12Q = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 )
 
 type NodeManageTestSuite struct {
@@ -32,6 +36,7 @@ type NodeManageTestSuite struct {
 	api     *apimock.QueueProtocolAPI
 
 	exec *Paracross
+	//title string
 }
 
 func (suite *NodeManageTestSuite) SetupSuite() {
@@ -57,6 +62,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//}
 
 	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	types.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
 
 	// TODO, more fields
 	// setup block
@@ -64,17 +70,6 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 		Block: &types.Block{},
 	}
 	MainBlockHash10 = blockDetail.Block.Hash()
-
-	// setup title nodes : len = 4
-	nodeConfigKey := calcManageConfigNodesKey(Title)
-	nodeValue := makeNodeInfo(Title, Title, 4)
-	suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
-	value, err := suite.stateDB.Get(nodeConfigKey)
-	if err != nil {
-		suite.T().Error("get setup title failed", err)
-		return
-	}
-	assert.Equal(suite.T(), value, types.Encode(nodeValue))
 
 }
 
@@ -102,6 +97,36 @@ func nodeCommitImpl(suite suite.Suite, exec *Paracross, privkeyStr string, tx *t
 	assert.Nil(suite.T(), err)
 
 	return
+}
+
+func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
+	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
+	assert.Len(suite.T(), receipt.KV, 1)
+	assert.Len(suite.T(), receipt.Logs, 1)
+
+	var stat pt.ParaNodeAddrStatus
+	err := types.Decode(receipt.KV[0].Value, &stat)
+	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
+	//suite.T().Log("titleHeight", titleHeight)
+	assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupApply), receipt.Logs[0].Ty)
+	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApply), stat.Status)
+
+}
+
+func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
+	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
+	assert.Len(suite.T(), receipt.KV, 6)
+	assert.Len(suite.T(), receipt.Logs, 6)
+
+	len := len(receipt.KV)
+
+	var stat pt.ParaNodeAddrStatus
+	err := types.Decode(receipt.KV[len-1].Value, &stat)
+	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
+	//suite.T().Log("titleHeight", titleHeight)
+	assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupApprove), receipt.Logs[len-1].Ty)
+	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApprove), stat.Status)
+
 }
 
 func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
@@ -143,10 +168,6 @@ func checkVoteReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count 
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	assert.Len(suite.T(), stat.Votes.Votes, count)
-	////suite.T().Log("titleHeight", titleHeight)
-	//assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	//assert.Equal(suite.T(), int32(pt.ParacrossNodeAdding), stat.Status)
-	//assert.NotNil(suite.T(), stat.Votes)
 
 }
 
@@ -190,23 +211,61 @@ func voteTest(suite *NodeManageTestSuite, addr string, join bool) {
 	checkVoteDoneReceipt(suite, receipt, 3, join)
 }
 
-func (suite *NodeManageTestSuite) TestExec() {
-	//takeover
-	config := &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeTakeover,
-		Addr: Account14K,
+func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
+	config := &pt.ParaNodeGroupConfig{
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
-	nodeCommit(suite, PrivKey14K, tx)
-	//checkJoinReceipt(suite, receipt)
+	receipt := nodeCommit(suite, PrivKeyB, tx)
+	checkGroupApplyReceipt(suite, receipt)
+
+	config = &pt.ParaNodeGroupConfig{
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupQuit,
+	}
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	suite.Nil(err)
+
+	nodeCommit(suite, PrivKeyB, tx)
+	//checkGroupApproveReceipt(suite, receipt)
+
+}
+
+func (suite *NodeManageTestSuite) testNodeGroupConfig() {
+	suite.testNodeGroupConfigQuit()
+
+	config := &pt.ParaNodeGroupConfig{
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupApply,
+	}
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
+	suite.Nil(err)
+
+	receipt := nodeCommit(suite, PrivKeyB, tx)
+	checkGroupApplyReceipt(suite, receipt)
+
+	config = &pt.ParaNodeGroupConfig{
+		Addrs: applyAddrs,
+		Op:    pt.ParacrossNodeGroupApprove,
+	}
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	suite.Nil(err)
+
+	receipt = nodeCommit(suite, PrivKey12Q, tx)
+	checkGroupApproveReceipt(suite, receipt)
+
+}
+
+func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
-	config = &pt.ParaNodeAddrConfig{
+	config := &pt.ParaNodeAddrConfig{
 		Op:   pt.ParaNodeJoin,
 		Addr: Account14K,
 	}
-	tx, err = pt.CreateRawNodeConfigTx(config)
+	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
@@ -227,6 +286,11 @@ func (suite *NodeManageTestSuite) TestExec() {
 
 	//vote test
 	voteTest(suite, Account1MC, false)
+}
+
+func (suite *NodeManageTestSuite) TestExec() {
+	suite.testNodeGroupConfig()
+	suite.testNodeConfig()
 
 }
 
@@ -237,4 +301,8 @@ func TestNodeManageSuite(t *testing.T) {
 	suite.Run(t, new(NodeManageTestSuite))
 
 	types.SetTitleOnlyForTest(tempTitle)
+}
+
+func (suite *NodeManageTestSuite) TearDownSuite() {
+
 }

@@ -71,6 +71,16 @@ func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 	return nodesMap, nodesArray, nil
 }
 
+func getConfigManageNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
+	key := calcManageConfigNodesKey(title)
+	return getNodes(db, key)
+}
+
+func getParacrossNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
+	key := calcParaNodeGroupKey(title)
+	return getNodes(db, key)
+}
+
 func validTitle(title string) bool {
 	if types.IsPara() {
 		return types.GetTitle() == title
@@ -214,31 +224,38 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
-func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
-	forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
+func getDappForkHeight(fork string) int64 {
+	paraConfigFork := ""
+	if fork == pt.ForkCommitTx {
+		paraConfigFork = "MainForkParacrossCommitTx"
+	}
+	var forkHeight int64
 	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
+		forkHeight = types.Conf("config.consensus.sub.para").GInt(paraConfigFork)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
+	} else {
+		forkHeight = types.GetDappFork(pt.ParaX, fork)
 	}
-	if a.exec.GetMainHeight() < forkHeight {
-		key := calcManageConfigNodesKey(title)
-		nodes, _, err := getNodes(a.db, key)
+	return forkHeight
+}
+
+func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
+	if a.exec.GetMainHeight() < getDappForkHeight(pt.ForkCommitTx) {
+		nodes, _, err := getConfigManageNodes(a.db, title)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getNodes for title:%s", title)
 		}
 		return nodes, nil
 	}
 
-	key := calcParaNodeGroupKey(title)
-	nodes, _, err := getNodes(a.db, key)
+	nodes, _, err := getParacrossNodes(a.db, title)
 	if err != nil {
 		if errors.Cause(err) != pt.ErrTitleNotExist {
 			return nil, errors.Wrapf(err, "getNodes para for title:%s", title)
 		}
-		key = calcManageConfigNodesKey(title)
-		nodes, _, err = getNodes(a.db, key)
+		nodes, _, err = getConfigManageNodes(a.db, title)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
 		}
@@ -328,6 +345,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 				Addrs:     []string{a.fromaddr},
 				BlockHash: [][]byte{commit.Status.BlockHash},
 			},
+		}
+		if a.exec.GetMainHeight() >= getDappForkHeight(pt.ForkCommitTx) {
+			stat.MainHeight = commit.Status.MainBlockHeight
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
 	} else {

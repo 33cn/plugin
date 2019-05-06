@@ -18,6 +18,7 @@ build/relayd
 build/relayd.toml
 build/*.log
 build/fzm
+build/*.db
 build/guodun
 build/main.sh
 build/main*

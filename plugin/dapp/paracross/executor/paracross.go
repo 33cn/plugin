@@ -300,7 +300,8 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 			return nil
 		}
 		if types.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkCommitTx) {
-			if payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig {
+			if payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig ||
+				payload.Ty == pt.ParacrossActionNodeGroupApply {
 				return nil
 			}
 		}
