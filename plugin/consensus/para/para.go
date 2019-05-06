@@ -156,6 +156,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
+		minerSwitch:     make(chan bool, 1),
 		quit:            make(chan struct{}),
 	}
 	c.SetChild(para)
@@ -818,7 +819,7 @@ func checkMinerTx(current *types.BlockDetail) error {
 func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
 	plog.Info("Query_CreateNewAccount", "acc", acc)
 	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
-	// 需要实现具体处理 to be。。。。
+	client.commitMsgClient.onWalletAccount(acc)
 	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }
 
@@ -826,6 +827,6 @@ func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message,
 func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
 	plog.Info("Query_WalletStatus", "walletStatus", walletStatus)
 	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
-	// 需要实现具体处理 to be。。。。
+	client.commitMsgClient.onWalletStatus(walletStatus)
 	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }
