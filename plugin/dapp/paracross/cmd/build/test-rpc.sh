@@ -26,7 +26,6 @@ chain33_lock() {
     echo_rst $FUNCNAME $rst
 }
 
-
 chain33_unlock() {
     ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
