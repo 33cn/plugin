@@ -14,6 +14,8 @@ if [ "$(uname)" == "Darwin" ]; then
     xsedfix=".bak"
 fi
 
+source test-rpc.sh
+
 function para_init() {
     para_set_toml chain33.para33.toml
     para_set_toml chain33.para32.toml
@@ -584,6 +586,7 @@ function paracross() {
         para_set_wallet
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
+        dapp_rpc_test "${3}"
     fi
 
     if [ "${2}" == "forkInit" ]; then
