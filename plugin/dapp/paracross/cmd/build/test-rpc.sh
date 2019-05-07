@@ -48,8 +48,6 @@ function dapp_rpc_test() {
     chain33_unlock
     paracross_GetBlock2MainInfo
 
-
-
     if [ -n "$CASE_ERR" ]; then
         echo "paracross there some case error"
         exit 1
