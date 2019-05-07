@@ -35,11 +35,8 @@ function system_test_rpc() {
     echo "=========== # system rpc test ============="
     echo "ip=$MAIN_HTTP"
 
-
     chain33_lock
     chain33_unlock
-
-
 
     if [ -n "$CASE_ERR" ]; then
         echo "there some case error"
