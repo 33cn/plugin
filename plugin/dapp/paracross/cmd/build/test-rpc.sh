@@ -24,14 +24,14 @@ paracross_GetBlock2MainInfo() {
 }
 
 chain33_lock() {
-    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Lock","params":[]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
+    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Lock","params":[]}' -H 'content-type:text/plain;' ${PARA_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 chain33_unlock() {
-    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
+    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${PARA_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
