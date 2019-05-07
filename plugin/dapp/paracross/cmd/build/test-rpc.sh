@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 MAIN_HTTP=""
+CASE_ERR=""
 
 # $2=0 means true, other false
 echo_rst() {
@@ -8,6 +9,7 @@ echo_rst() {
         echo "$1 ok"
     else
         echo "$1 err"
+        CASE_ERR="err"
     fi
 
 }
@@ -38,8 +40,14 @@ function dapp_rpc_test() {
     MAIN_HTTP="http://$ip:8901"
     echo "=========== # paracross rpc test ============="
     echo "ip=$MAIN_HTTP"
-    paracross_GetBlock2MainInfo
+    chain33_lock
     chain33_unlock
+    paracross_GetBlock2MainInfo
+
+    if [ -n "$CASE_ERR" ]; then
+        echo "paracross there some case error"
+        exit 1
+    fi
 }
 
 #dapp_rpc_test $1
