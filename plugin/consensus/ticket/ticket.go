@@ -366,11 +366,14 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 	}
 	//vrf verify
 	if types.IsDappFork(current.Block.Height, ty.TicketX, "ForkTicketVrf") {
-		LastTicketAction, err := client.getMinerTx(parent)
-		if err != nil {
-			return err
+		var input []byte
+		if current.Block.Height > 1 {
+			LastTicketAction, err := client.getMinerTx(parent)
+			if err != nil {
+				return err
+			}
+			input = LastTicketAction.GetMiner().GetVrfHash()
 		}
-		input := LastTicketAction.GetMiner().GetVrfHash()
 		if input == nil {
 			input = miner.PrivHash
 		}
@@ -639,11 +642,14 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	miner.PrivHash = privHash
 	//add vrf
 	if types.IsDappFork(block.Height, ty.TicketX, "ForkTicketVrf") {
-		LastTicketAction, err := client.getMinerTx(parent)
-		if err != nil {
-			return err
+		var input []byte
+		if block.Height > 1 {
+			LastTicketAction, err := client.getMinerTx(parent)
+			if err != nil {
+				return err
+			}
+			input = LastTicketAction.GetMiner().GetVrfHash()
 		}
-		input := LastTicketAction.GetMiner().GetVrfHash()
 		if input == nil {
 			input = miner.PrivHash
 		}
