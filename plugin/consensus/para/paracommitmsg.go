@@ -154,7 +154,7 @@ out:
 		case rsp := <-consensusCh:
 			consensHeight := rsp.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick!=nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
+				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick != nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
 
 			if notification == nil || isRollback {
 				continue
@@ -194,18 +194,18 @@ out:
 			}
 
 		case miner := <-client.minerSwitch:
-			plog.Info("para consensus mining","miner",miner)
+			plog.Info("para consensus mining", "miner", miner)
 			//停止挖矿
-			if !miner{
+			if !miner {
 				readTick = nil
-				if ticker != nil{
+				if ticker != nil {
 					ticker.Stop()
 				}
 				plog.Info("para consensus stop mining")
 				continue
 			}
 			//开启挖矿
-			if client.privateKey != nil && readTick == nil{
+			if client.privateKey != nil && readTick == nil {
 				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
 				readTick = ticker.C
 				plog.Info("para consensus start mining")
@@ -585,10 +585,10 @@ func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.Parac
 }
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
-	if status == nil || client.paraClient.authAccount == ""{
+	if status == nil || client.paraClient.authAccount == "" {
 		return
 	}
-	if !status.IsWalletLock && client.privateKey == nil{
+	if !status.IsWalletLock && client.privateKey == nil {
 		client.fetchPriKey()
 		plog.Info("para commit fetchPriKey")
 	}
@@ -599,13 +599,12 @@ func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 	}
 }
 
-
 func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
-	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil{
+	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil {
 		return
 	}
 	err := client.fetchPriKey()
-	if err != nil{
+	if err != nil {
 		plog.Error("para commit fetchPriKey", "err", err.Error())
 		return
 	}
@@ -616,7 +615,7 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 	}
 }
 
-func (client *commitMsgClient) fetchPriKey()  error {
+func (client *commitMsgClient) fetchPriKey() error {
 	req := &types.ReqString{Data: client.paraClient.authAccount}
 
 	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
@@ -651,4 +650,3 @@ func (client *commitMsgClient) fetchPriKey()  error {
 	plog.Info("para commit fetchPriKey success")
 	return nil
 }
-
