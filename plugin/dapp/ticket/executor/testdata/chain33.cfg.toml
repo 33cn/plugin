@@ -207,3 +207,4 @@ Enable=0
 [fork.sub.ticket]
 Enable=0
 ForkTicketId = 1600000
+ForkTicketVrf = 2070000
