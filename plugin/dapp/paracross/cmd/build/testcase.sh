@@ -14,6 +14,7 @@ if [ "$(uname)" == "Darwin" ]; then
     xsedfix=".bak"
 fi
 
+# shellcheck source=/dev/null
 source test-rpc.sh
 
 function para_init() {

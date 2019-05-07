@@ -57,7 +57,8 @@ if [ -n "${DAPP}" ]; then
 
 fi
 
-if [ -z $DAPP ]; then
+if [ -z "$DAPP" ]; then
+    # shellcheck source=/dev/null
     source system-test-rpc.sh
 fi
 
