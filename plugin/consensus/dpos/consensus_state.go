@@ -339,7 +339,7 @@ func (cs *ConsensusState) SaveNotify() {
 
 // SetNotify method
 func (cs *ConsensusState) SetNotify(notify *dpostype.DPosNotify) {
-	if cs.notify != nil && !bytes.Equal(cs.lastNotify.Signature, notify.Signature) {
+	if cs.notify != nil && !bytes.Equal(cs.notify.Signature, notify.Signature) {
 		cs.lastNotify = cs.notify
 	}
 
