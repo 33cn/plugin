@@ -205,7 +205,7 @@ out:
 				continue
 			}
 			//开启挖矿
-			if client.privateKey != nil && readTick == nil {
+			if readTick == nil {
 				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
 				readTick = ticker.C
 				plog.Info("para consensus start mining")
@@ -591,6 +591,11 @@ func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 	if !status.IsWalletLock && client.privateKey == nil {
 		client.fetchPriKey()
 		plog.Info("para commit fetchPriKey")
+	}
+
+	if client.privateKey == nil {
+		plog.Info("para commit wallet status prikey null", "status", status.IsWalletLock)
+		return
 	}
 
 	select {
