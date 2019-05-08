@@ -60,6 +60,8 @@ fi
 if [ -z "$DAPP" ]; then
     # shellcheck source=/dev/null
     source system-test-rpc.sh
+    # shellcheck source=/dev/null
+    source dapp-test-rpc.sh
 fi
 
 echo "=========== # env setting ============="
@@ -331,6 +333,7 @@ function base_config() {
 function base_test() {
     if [ "$DAPP" == "" ]; then
         system_test_rpc "${1}"
+        dapp_test_rpc "${1}"
     fi
 
 }

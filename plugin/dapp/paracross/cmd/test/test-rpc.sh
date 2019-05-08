@@ -17,13 +17,6 @@ echo_rst() {
 
 }
 
-paracross_GetBlock2MainInfo() {
-    height=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.items[1].height")
-    [ "$height" -eq 2 ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
 chain33_lock() {
     ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Lock","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
@@ -39,21 +32,12 @@ chain33_unlock() {
 
 }
 
-function run_main_testcases() {
+function run_testcases() {
     chain33_lock
     chain33_unlock
-    paracross_GetBlock2MainInfo
 
 }
-
-function run_para_testcases() {
-    chain33_lock
-    chain33_unlock
-    paracross_GetBlock2MainInfo
-
-}
-
-function dapp_rpc_test() {
+function paracross_rpc_test() {
     local ip=$1
     MAIN_HTTP="http://$ip:8801"
     PARA_HTTP="http://$ip:8901"
@@ -61,10 +45,7 @@ function dapp_rpc_test() {
     echo "main_ip=$MAIN_HTTP,para_ip=$PARA_HTTP"
 
     UNIT_HTTP=$MAIN_HTTP
-    run_main_testcases
-
-    UNIT_HTTP=$PARA_HTTP
-    run_para_testcases
+    run_testcases
 
     if [ -n "$CASE_ERR" ]; then
         echo "paracross there some case error"
@@ -72,4 +53,4 @@ function dapp_rpc_test() {
     fi
 }
 
-#dapp_rpc_test $1
+paracross_rpc_test "$1"
