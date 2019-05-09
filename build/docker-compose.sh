@@ -332,7 +332,7 @@ function base_config() {
 
 function base_test() {
     if [ "$DAPP" == "" ]; then
-        system_test_rpc "${1}"
+        system_test_rpc "http://${1}:8801"
         dapp_test_rpc "${1}"
     fi
 
