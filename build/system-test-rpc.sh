@@ -35,8 +35,8 @@ chain33_WalletTxList() {
     req='"method":"Chain33.WalletTxList", "params":[{"fromTx":"", "count":2, "direction":1}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.txDetails|length == 2)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.txDetails|length == 2)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -47,8 +47,8 @@ chain33_ImportPrivkey() {
     req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb0dddd7df977d4d5477e", "label":"testimportkey"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="testimportkey") and (.result.acc.addr == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt")' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.label=="testimportkey") and (.result.acc.addr == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -59,8 +59,8 @@ chain33_DumpPrivkey() {
     req='"method":"Chain33.DumpPrivkey", "params":[{"data":"1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.data=="0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb0dddd7df977d4d5477e")' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.data=="0x88b2fb90411935872f0501dd13345aba19b5fac9b00eb0dddd7df977d4d5477e")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -71,8 +71,8 @@ chain33_SendToAddress() {
     req='"method":"Chain33.SendToAddress", "params":[{"from":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","to":"1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt", "amount":10000000, "note":"test\n"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -82,8 +82,8 @@ chain33_SetTxFee() {
     req='"method":"Chain33.SetTxFee", "params":[{"amount":100000}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and .result.isOK' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and .result.isOK' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -93,8 +93,8 @@ chain33_SetLabl() {
     req='"method":"Chain33.SetLabl", "params":[{"addr":"1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt", "label":"updatetestimport"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="updatetestimport") and (.result.acc.addr == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt")' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.label=="updatetestimport") and (.result.acc.addr == "1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -104,9 +104,9 @@ chain33_GetPeerInfo() {
     req='"method":"Chain33.GetPeerInfo", "params":[{}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
+    #    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.peers|length >= 1) and (.result.peers[0] |
-    [has("addr", "port", "name", "mempoolSize", "self", "header"), true] | unique | length == 1)' <<< "$resp")
+    [has("addr", "port", "name", "mempoolSize", "self", "header"), true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -116,10 +116,10 @@ chain33_GetHeaders() {
     req='"method":"Chain33.GetHeaders", "params":[{"start":1, "end":2, "isDetail":true}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
+    #    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.items|length == 2) and (.result.items[0] |
     [has("version","parentHash", "txHash", "stateHash", "height", "blockTime", "txCount", "hash", "difficulty"),true] |
-    unique | length == 1 )' <<< "$resp")
+    unique | length == 1 )' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -129,8 +129,8 @@ chain33_GetLastMemPool() {
     req='"method":"Chain33.GetLastMemPool", "params":[{}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.txs|length >= 0)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.txs|length >= 0)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -140,8 +140,8 @@ chain33_GetProperFee() {
     req='"method":"Chain33.GetProperFee", "params":[{}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.properFee > 10000)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.properFee > 10000)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -152,10 +152,10 @@ chain33_GetBlockOverview() {
     req='"method":"Chain33.GetBlockOverview", "params":[{"hash":'"$hash"'}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
+    #    echo "#response: $resp"
     ok=$(jq '(.error|not) and
     (.result| [has("head", "txCount", "txHashes"), true]|unique|length == 1) and
-    (.result.txCount == (.result.txHashes|length))' <<< "$resp")
+    (.result.txCount == (.result.txHashes|length))' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -165,8 +165,8 @@ chain33_GetAddrOverview() {
     req='"method":"Chain33.GetAddrOverview", "params":[{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result|[has("reciver", "balance", "txCount"), true]|unique|length == 1)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result|[has("reciver", "balance", "txCount"), true]|unique|length == 1)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -176,8 +176,8 @@ chain33_SetPasswd() {
     req='"method":"Chain33.SetPasswd", "params":[{"oldPass":"1314fuzamei", "newPass":"abcd1234"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and .result.isOK' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and .result.isOK' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
@@ -187,8 +187,8 @@ chain33_MergeBalance() {
     req='"method":"Chain33.MergeBalance", "params":[{"to":"1D9xKRnLvV2zMtSxSx33ow1GF4pcbLcNRt"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
-#    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hashes|length > 0)' <<< "$resp")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.hashes|length > 0)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
