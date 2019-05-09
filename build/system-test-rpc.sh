@@ -173,7 +173,7 @@ chain33_GetAddrOverview() {
 
 chain33_SetPasswd() {
 
-    req='"method":"Chain33.SetPasswd", "params":[{"oldPass":"1314fuzamei", "newPass":"abcd1234"}]'
+    req='"method":"Chain33.SetPasswd", "params":[{"oldPass":"1314fuzamei", "newPass":"1314fuzamei"}]'
     echo "#request: $req"
     resp=$(curl -sd "{$req}" "$1")
     #    echo "#response: $resp"
@@ -201,6 +201,7 @@ function system_test_rpc() {
 
     chain33_lock
     chain33_unlock
+
     chain33_WalletTxList "$ip"
     chain33_ImportPrivkey "$ip"
     chain33_DumpPrivkey "$ip"
@@ -213,7 +214,6 @@ function system_test_rpc() {
     chain33_GetProperFee "$ip"
     chain33_GetBlockOverview "$ip"
     chain33_GetAddrOverview "$ip"
-
     #这两个测试放在最后
     chain33_SetPasswd "$ip"
     chain33_MergeBalance "$ip"
