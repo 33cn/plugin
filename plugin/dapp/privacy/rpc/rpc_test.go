@@ -32,7 +32,7 @@ func TestChain33_PrivacyTxList(t *testing.T) {
 	actual := &pty.ReqPrivacyTransactionList{}
 	api.On("ExecWalletFunc", "privacy", "PrivacyTransactionList", actual).Return(nil, errors.New("error value"))
 	var testResult interface{}
-	err := testChain33.PrivacyTxList(actual, &testResult)
+	err := testChain33.GetPrivacyTxByAddr(actual, &testResult)
 	t.Log(err)
 	assert.Equal(t, nil, testResult)
 	assert.NotNil(t, err)

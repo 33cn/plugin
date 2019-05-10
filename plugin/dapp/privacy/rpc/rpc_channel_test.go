@@ -69,7 +69,7 @@ func testShowPrivacyKey(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := types.ReqString{
 		Data: "1JSRSwp16NvXiTjYBYK9iUQ9wqp3sCxz2p",
 	}
-	err := jrpc.Call("privacy.ShowPrivacykey", params, &res)
+	err := jrpc.Call("privacy.ShowPrivacyKey", params, &res)
 	return err
 }
 
