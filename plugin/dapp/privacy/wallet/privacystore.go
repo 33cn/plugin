@@ -243,10 +243,6 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 			}
 			txbytes = append(txbytes, value)
 		}
-		if len(txbytes) == 0 {
-			bizlog.Error("getWalletPrivacyTxDetails does not exist tx!")
-			return nil, types.ErrTxNotExist
-		}
 
 	} else {
 		list := store.NewListHelper()
@@ -266,11 +262,6 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 				continue
 			}
 			txbytes = append(txbytes, value)
-		}
-
-		if len(txbytes) == 0 {
-			bizlog.Error("getWalletPrivacyTxDetails does not exist tx!")
-			return nil, types.ErrTxNotExist
 		}
 	}
 
@@ -714,10 +705,10 @@ func (store *privacyStore) listSpendUTXOs(token, addr string) (*privacytypes.UTX
 	prefix := calcSTXOPrefix4Addr(token, addr)
 	list := store.NewListHelper()
 	Key4FTXOsInTxs := list.PrefixScan(prefix)
-	if len(Key4FTXOsInTxs) == 0 {
-		bizlog.Error("listSpendUTXOs ", "addr not exist", addr)
-		return nil, types.ErrNotFound
-	}
+	//if len(Key4FTXOsInTxs) == 0 {
+	//	bizlog.Error("listSpendUTXOs ", "addr not exist", addr)
+	//	return nil, types.ErrNotFound
+	//}
 
 	var utxoHaveTxHashs privacytypes.UTXOHaveTxHashs
 	utxoHaveTxHashs.UtxoHaveTxHashs = make([]*privacytypes.UTXOHaveTxHash, 0)
