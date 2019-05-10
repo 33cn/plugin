@@ -12,7 +12,6 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
-
 echo_rst() {
     if [ "$2" == true ]; then
         echo -e "${GRE}$1 ok${NOC}"
@@ -34,8 +33,6 @@ privacy_CreateRawTransaction() {
     echo_rst "$FUNCNAME" "$ok"
 }
 
-
-
 privacy_GetPrivacyTxByAddr() {
 
     local ip=$1
@@ -47,7 +44,6 @@ privacy_GetPrivacyTxByAddr() {
 
     echo_rst "$FUNCNAME" "$ok"
 }
-
 
 privacy_ShowPrivacyKey() {
 
@@ -85,7 +81,6 @@ privacy_ShowPrivacyAccountSpend() {
     echo_rst "$FUNCNAME" "$ok"
 }
 
-
 privacy_RescanUtxos() {
 
     local ip=$1
@@ -105,10 +100,9 @@ privacy_EnablePrivacy() {
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$ip")
     echo "#response: $resp"
-    ok=$(jq '(.error|not) and .result.results[0].IsOK' <<< "$resp")
+    ok=$(jq '(.error|not) and .result.results[0].IsOK' <<<"$resp")
     echo_rst "$FUNCNAME" "$ok"
 }
-
 
 function run_test() {
     local ip=$1
