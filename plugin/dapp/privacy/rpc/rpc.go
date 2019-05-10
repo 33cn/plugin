@@ -86,7 +86,7 @@ func (c *Jrpc) ShowPrivacyAccountSpend(in *pty.ReqPrivBal4AddrToken, result *jso
 }
 
 // ShowPrivacykey display privacy key for json rpc
-func (c *Jrpc) ShowPrivacykey(in *types.ReqString, result *json.RawMessage) error {
+func (c *Jrpc) ShowPrivacyKey(in *types.ReqString, result *json.RawMessage) error {
 	reply, err := c.cli.ShowPrivacyKey(context.Background(), in)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (c *Jrpc) CreateUTXOs(in *pty.ReqCreateUTXOs, result *interface{}) error {
 }
 
 // PrivacyTxList get all privacy transaction list by param
-func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interface{}) error {
+func (c *Jrpc) GetPrivacyTxByAddr(in *pty.ReqPrivacyTransactionList, result *interface{}) error {
 	if in.Direction != 0 && in.Direction != 1 {
 		return types.ErrInvalidParam
 	}
