@@ -248,3 +248,11 @@ func deleteCreateOrderKeyValue(kv []*types.KeyValue, order *ty.RelayOrder, statu
 func (r *relay) CheckReceiptExecOk() bool {
 	return true
 }
+
+// ExecutorOrder 设置localdb的EnableRead
+func (g *relay) ExecutorOrder() int64 {
+	if types.IsFork(g.GetHeight(), "ForkLocalDBAccess") {
+		return drivers.ExecLocalSameTime
+	}
+	return g.DriverBase.ExecutorOrder()
+}
