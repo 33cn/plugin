@@ -57,7 +57,7 @@ if [ -n "${DAPP}" ]; then
 
 fi
 
-if [ -z "$DAPP" ]; then
+if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then
     # shellcheck source=/dev/null
     source system-test-rpc.sh
     # shellcheck source=/dev/null
@@ -328,16 +328,20 @@ function transfer() {
 }
 
 function base_config() {
-    sync
+#    sync
     transfer "${CLI}"
     #    transfer "${CLI4}"
 }
 
 function base_test() {
     if [ "$DAPP" == "" ]; then
-        system_test_rpc "${1}"
-        dapp_test_rpc "${1}"
+        system_test_rpc "http://${1}:8801"
+        dapp_test_rpc "http://${1}:8801"
     fi
+#    if [ "$DAPP" == "paracross" ]; then
+#        system_test_rpc "http://${1}:8901"
+#        dapp_test_rpc "http://${1}:8901"
+#    fi
 
 }
 function dapp_run() {

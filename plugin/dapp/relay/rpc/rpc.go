@@ -41,13 +41,7 @@ func createRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "ConfirmTx", parm)
 }
 
-func createRawRelayVerifyBTCTx(parm *ty.RelayVerifyCli) ([]byte, error) {
-	if parm == nil {
-		return nil, types.ErrInvalidParam
-	}
-	v := *parm
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "VerifyCli", &v)
-}
+
 
 func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 	if parm == nil {
@@ -58,6 +52,10 @@ func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 		PreviousHash: parm.PreviousHash,
 		MerkleRoot:   parm.MerkleRoot,
 		Height:       parm.Height,
+		Version:   	  parm.Version,
+		Time: 		  parm.Time,
+		Nonce:        parm.Nonce,
+		Bits:         parm.Bits,
 		IsReset:      parm.IsReset,
 	}
 
@@ -105,16 +103,6 @@ func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{
 		return err
 	}
 
-	*result = hex.EncodeToString(reply)
-	return nil
-}
-
-//CreateRawRelayVerifyBTCTx jrpc create veirfy btc tx
-func (c *Jrpc) CreateRawRelayVerifyBTCTx(in *ty.RelayVerifyCli, result *interface{}) error {
-	reply, err := createRawRelayVerifyBTCTx(in)
-	if err != nil {
-		return err
-	}
 	*result = hex.EncodeToString(reply)
 	return nil
 }
