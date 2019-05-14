@@ -29,7 +29,8 @@ var (
 )
 
 func TestFilterTxsForPara(t *testing.T) {
-	types.Init(Title, nil)
+	cfg, _ := types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml")
+	types.Init(Title, cfg)
 
 	detail, filterTxs, _ := createTestTxs(t)
 	rst := paraexec.FilterTxsForPara(Title, detail)
