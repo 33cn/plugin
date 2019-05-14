@@ -75,7 +75,7 @@ func showPrivacyKey(cmd *cobra.Command, args []string) {
 		Data: addr,
 	}
 	var res pty.ReplyPrivacyPkPair
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacykey", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacyKey", params, &res)
 	ctx.Run()
 }
 
@@ -601,7 +601,7 @@ func listPrivacyTxsFlags(cmd *cobra.Command, args []string) {
 		Seedtxhash:   []byte(seedtxhash),
 	}
 	var res rpctypes.WalletTxDetails
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.PrivacyTxList", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.GetPrivacyTxByAddr", params, &res)
 	ctx.SetResultCb(parseWalletTxListRes)
 	ctx.Run()
 }

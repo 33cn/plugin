@@ -19,6 +19,7 @@ import (
 
 var (
 	consensusInterval = 16 //about 1 new block interval
+	minerInterval     = 2
 )
 
 type commitMsgClient struct {
@@ -27,6 +28,7 @@ type commitMsgClient struct {
 	commitMsgNotify    chan int64
 	delMsgNotify       chan int64
 	mainBlockAdd       chan *types.BlockDetail
+	minerSwitch        chan bool
 	currentTx          *types.Transaction
 	checkTxCommitTimes int32
 	privateKey         crypto.PrivKey
@@ -41,14 +43,11 @@ func (client *commitMsgClient) handler() {
 	var sendingHeight int64 //当前发送的最大高度
 	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
+	var ticker *time.Ticker
 
 	client.paraClient.wg.Add(1)
 	consensusCh := make(chan *pt.ParacrossStatus, 1)
 	go client.getConsensusHeight(consensusCh)
-
-	client.paraClient.wg.Add(1)
-	priKeyCh := make(chan crypto.PrivKey, 1)
-	go client.fetchPrivacyKey(priKeyCh)
 
 	client.paraClient.wg.Add(1)
 	sendMsgCh := make(chan *types.Transaction, 1)
@@ -155,7 +154,7 @@ out:
 		case rsp := <-consensusCh:
 			consensHeight := rsp.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "consensBlockHash", common.ToHex(rsp.BlockHash))
+				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick != nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
 
 			if notification == nil || isRollback {
 				continue
@@ -194,13 +193,23 @@ out:
 				isSync = true
 			}
 
-		case key, ok := <-priKeyCh:
-			if !ok {
-				priKeyCh = nil
+		case miner := <-client.minerSwitch:
+			plog.Info("para consensus mining", "miner", miner)
+			//停止挖矿
+			if !miner {
+				readTick = nil
+				if ticker != nil {
+					ticker.Stop()
+				}
+				plog.Info("para consensus stop mining")
 				continue
 			}
-			client.privateKey = key
-			readTick = time.Tick(time.Second * 2)
+			//开启挖矿
+			if readTick == nil {
+				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
+				readTick = ticker.C
+				plog.Info("para consensus start mining")
+			}
 
 		case <-client.quit:
 			break out
@@ -575,51 +584,74 @@ func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.Parac
 
 }
 
-func (client *commitMsgClient) fetchPrivacyKey(ch chan crypto.PrivKey) {
-	defer client.paraClient.wg.Done()
-	if client.paraClient.authAccount == "" {
-		close(ch)
+func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
+	if status == nil || client.paraClient.authAccount == "" {
+		return
+	}
+	if !status.IsWalletLock && client.privateKey == nil {
+		client.fetchPriKey()
+		plog.Info("para commit fetchPriKey")
+	}
+
+	if client.privateKey == nil {
+		plog.Info("para commit wallet status prikey null", "status", status.IsWalletLock)
 		return
 	}
 
-	req := &types.ReqString{Data: client.paraClient.authAccount}
-out:
-	for {
-		select {
-		case <-client.quit:
-			break out
-		case <-time.NewTimer(time.Second * 2).C:
-			msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
-			err := client.paraClient.GetQueueClient().Send(msg, true)
-			if err != nil {
-				plog.Error("para commit send msg", "err", err.Error())
-				break out
-			}
-			resp, err := client.paraClient.GetQueueClient().Wait(msg)
-			if err != nil {
-				plog.Error("para commit msg sign to wallet", "err", err.Error())
-				continue
-			}
-			str := resp.GetData().(*types.ReplyString).Data
-			pk, err := common.FromHex(str)
-			if err != nil && pk == nil {
-				panic(err)
-			}
+	select {
+	case client.minerSwitch <- !status.IsWalletLock:
+	case <-client.quit:
+	}
+}
 
-			secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-			if err != nil {
-				panic(err)
-			}
-
-			priKey, err := secp.PrivKeyFromBytes(pk)
-			if err != nil {
-				panic(err)
-			}
-
-			ch <- priKey
-			close(ch)
-			break out
-		}
+func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
+	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil {
+		return
+	}
+	err := client.fetchPriKey()
+	if err != nil {
+		plog.Error("para commit fetchPriKey", "err", err.Error())
+		return
 	}
 
+	select {
+	case client.minerSwitch <- true:
+	case <-client.quit:
+	}
+}
+
+func (client *commitMsgClient) fetchPriKey() error {
+	req := &types.ReqString{Data: client.paraClient.authAccount}
+
+	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
+	err := client.paraClient.GetQueueClient().Send(msg, true)
+	if err != nil {
+		plog.Error("para commit send msg", "err", err.Error())
+		return err
+	}
+	resp, err := client.paraClient.GetQueueClient().Wait(msg)
+	if err != nil {
+		plog.Error("para commit msg sign to wallet", "err", err.Error())
+		return err
+	}
+	str := resp.GetData().(*types.ReplyString).Data
+	pk, err := common.FromHex(str)
+	if err != nil && pk == nil {
+		return err
+	}
+
+	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		return err
+	}
+
+	priKey, err := secp.PrivKeyFromBytes(pk)
+	if err != nil {
+		plog.Error("para commit msg get priKey", "err", err.Error())
+		return err
+	}
+
+	client.privateKey = priKey
+	plog.Info("para commit fetchPriKey success")
+	return nil
 }

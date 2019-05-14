@@ -462,7 +462,7 @@ func Test_ShowPrivacyAccountSpend(t *testing.T) {
 				Addr:  testAddrs[0],
 				Token: types.BTY,
 			},
-			needError: types.ErrNotFound,
+			//needError: types.ErrNotFound,
 		},
 	}
 	for index, testCase := range testCases {
@@ -491,7 +491,7 @@ func Test_PrivacyTransactionList(t *testing.T) {
 				Count:        10,
 				Address:      testAddrs[0],
 			},
-			needError: types.ErrTxNotExist,
+			//needError: types.ErrTxNotExist,
 		},
 	}
 	for index, testCase := range testCases {
