@@ -7,11 +7,12 @@ package para
 import (
 	"testing"
 
+	"time"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log"
 	"github.com/stretchr/testify/mock"
-	"time"
 
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
@@ -24,7 +25,6 @@ func init() {
 	//types.Init("user.p.para.", nil)
 	log.SetLogLevel("error")
 }
-
 
 func getPrivKey(t *testing.T) crypto.PrivKey {
 	pk, err := common.FromHex("6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b")
