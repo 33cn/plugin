@@ -10,9 +10,9 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 
+	_ "github.com/33cn/plugin/plugin/dapp/init" //dapp init
 	node "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"github.com/stretchr/testify/assert"
-	_ "github.com/33cn/plugin/plugin/dapp/init"      //dapp init
 )
 
 func TestParaNode(t *testing.T) {
