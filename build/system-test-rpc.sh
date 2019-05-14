@@ -30,8 +30,7 @@ chain33_unlock() {
 
 }
 function system_test_rpc() {
-    local ip=$1
-    MAIN_HTTP="http://$ip:8801"
+    MAIN_HTTP="$1"
     echo "=========== # system rpc test ============="
     echo "ip=$MAIN_HTTP"
 
@@ -44,4 +43,4 @@ function system_test_rpc() {
     fi
 }
 
-#system_rpc_test
+#system_test_rpc $1

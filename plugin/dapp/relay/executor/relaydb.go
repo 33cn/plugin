@@ -566,6 +566,7 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 
 }
 
+//之前用作cli verify, 检查不严格，现在弃用
 func (action *relayDB) verifyCmdTx(verify *ty.RelayVerifyCli) (*types.Receipt, error) {
 	orderID := []byte(verify.OrderId)
 	order, err := action.getOrderByID(orderID)
