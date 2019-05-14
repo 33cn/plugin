@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+set -e
+set -o pipefail
 
 MAIN_HTTP=""
 PARA_HTTP=""
@@ -188,11 +190,11 @@ function run_testcases() {
     #white2="OiexKDzIlS1CKr3KBNWEY1k5uXzDI/ou6Dd+x0ByQCM="
 
     #先创建账户地址
-    chain33_NewAccount "label189"
+    chain33_NewAccount "label188"
     gameAddr1="${glAddr}"
-    chain33_NewAccount "label289"
+    chain33_NewAccount "label288"
     gameAddr2="${glAddr}"
-    chain33_NewAccount "label389"
+    chain33_NewAccount "label388"
     gameAddr3="${glAddr}"
 
     #给每个账户分别转帐
@@ -231,7 +233,7 @@ function run_testcases() {
 
 
 }
-function paracross_rpc_test() {
+function main() {
     local ip=$1
     MAIN_HTTP="http://$ip:8801"
     PARA_HTTP="http://$ip:8901"
@@ -247,12 +249,4 @@ function paracross_rpc_test() {
     fi
 }
 
-paracross_rpc_test 172.19.0.6
-
-#UNIT_HTTP="http://172.19.0.6:8801"
-
-#blackwhite_GetBlackwhiteRoundInfo  "0xb7b61ea3412d528b956c91df76c26bb8e3adcb7ffce11b0a1008bb7d0f52d729"
-#blackwhite_GetBlackwhiteByStatusAndAddr "0xb7b61ea3412d528b956c91df76c26bb8e3adcb7ffce11b0a1008bb7d0f52d729" "18Y87cw2hiYC71bvpD872oYMYXtw66Qp6o"
-#blackwhite_GetBlackwhiteloopResult  "0xb7b61ea3412d528b956c91df76c26bb8e3adcb7ffce11b0a1008bb7d0f52d729"
-
-#blackwhite_BlackwhiteTimeoutDoneTx  "0xb7b61ea3412d528b956c91df76c26bb8e3adcb7ffce11b0a1008bb7d0f52d729"
+main "172.19.0.6"
