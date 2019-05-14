@@ -249,4 +249,4 @@ function main() {
     fi
 }
 
-main "172.19.0.6"
+main "$1"
