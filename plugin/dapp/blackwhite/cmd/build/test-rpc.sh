@@ -22,7 +22,6 @@ echo_rst() {
 gID=""
 gResp=""
 
-
 glAddr=""
 gameAddr1=""
 gameAddr2=""
@@ -64,7 +63,7 @@ chain33_SendToAddress() {
     note="test"
     resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not)' <<<"$resp")
-	[ "$ok" == true ]
+    [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
@@ -90,7 +89,6 @@ chain33_SendTransaction() {
     echo "tx hash is $gResp"
 }
 
-
 blackwhite_BlackwhiteCreateTx() {
     #创建交易
     addr=$1
@@ -101,7 +99,7 @@ blackwhite_BlackwhiteCreateTx() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction  "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${addr}"
     gID="${gResp}"
     echo "gameID $gID"
 }
@@ -118,7 +116,7 @@ blackwhite_BlackwhitePlayTx() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction  "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${addr}"
 }
 
 blackwhite_BlackwhiteShowTx() {
@@ -131,7 +129,7 @@ blackwhite_BlackwhiteShowTx() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction  "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${addr}"
 }
 
 blackwhite_BlackwhiteTimeoutDoneTx() {
@@ -199,40 +197,40 @@ function run_testcases() {
 
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    chain33_SendToAddress  "${origAddr}" "${gameAddr1}" 1000000000
-    chain33_SendToAddress  "${origAddr}" "${gameAddr2}" 1000000000
-    chain33_SendToAddress  "${origAddr}" "${gameAddr3}" 1000000000
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000
 
     block_wait 1
 
     #给游戏合约中转帐
     bwExecAddr="146wei89zoX5TNQKATBJmduNPEtSKTXi1z"
-    chain33_SendToAddress  "${gameAddr1}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress  "${gameAddr2}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress  "${gameAddr3}" "${bwExecAddr}" 500000000
+    chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000
+    chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000
+    chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000
 
     block_wait 1
     blackwhite_BlackwhiteCreateTx "${gameAddr1}"
 
     block_wait 1
-    blackwhite_BlackwhitePlayTx  "${gameAddr1}"  "${white0}" "${white1}" "${black2}"
-    blackwhite_BlackwhitePlayTx  "${gameAddr2}"  "${white0}" "${black1}" "${black2}"
-    blackwhite_BlackwhitePlayTx  "${gameAddr3}"  "${white0}" "${black1}" "${black2}"
+    blackwhite_BlackwhitePlayTx "${gameAddr1}" "${white0}" "${white1}" "${black2}"
+    blackwhite_BlackwhitePlayTx "${gameAddr2}" "${white0}" "${black1}" "${black2}"
+    blackwhite_BlackwhitePlayTx "${gameAddr3}" "${white0}" "${black1}" "${black2}"
 
     block_wait 1
-    blackwhite_BlackwhiteShowTx "${gameAddr1}"  "${sect1}"
-    blackwhite_BlackwhiteShowTx "${gameAddr2}"  "${sect1}"
-    blackwhite_BlackwhiteShowTx "${gameAddr3}"  "${sect1}"
+    blackwhite_BlackwhiteShowTx "${gameAddr1}" "${sect1}"
+    blackwhite_BlackwhiteShowTx "${gameAddr2}" "${sect1}"
+    blackwhite_BlackwhiteShowTx "${gameAddr3}" "${sect1}"
 
     blackwhite_BlackwhiteTimeoutDoneTx "$gID"
     #查询部分
     block_wait 1
     blackwhite_GetBlackwhiteRoundInfo "$gID"
     blackwhite_GetBlackwhiteByStatusAndAddr "$gID" "${gameAddr1}"
-    blackwhite_GetBlackwhiteloopResult  "$gID"
-
+    blackwhite_GetBlackwhiteloopResult "$gID"
 
 }
+
 function main() {
     local ip=$1
     MAIN_HTTP="http://$ip:8801"
