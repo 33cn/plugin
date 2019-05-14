@@ -564,4 +564,3 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
-
