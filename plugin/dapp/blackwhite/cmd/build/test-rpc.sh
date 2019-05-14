@@ -34,7 +34,7 @@ chain33_NewAccount() {
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     glAddr=$result
-    echo $glAddr
+    echo "$glAddr"
 }
 
 function block_wait() {
