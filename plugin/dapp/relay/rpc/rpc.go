@@ -41,8 +41,6 @@ func createRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
 	return types.CallCreateTx(types.ExecName(ty.RelayX), "ConfirmTx", parm)
 }
 
-
-
 func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -52,8 +50,8 @@ func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 		PreviousHash: parm.PreviousHash,
 		MerkleRoot:   parm.MerkleRoot,
 		Height:       parm.Height,
-		Version:   	  parm.Version,
-		Time: 		  parm.Time,
+		Version:      parm.Version,
+		Time:         parm.Time,
 		Nonce:        parm.Nonce,
 		Bits:         parm.Bits,
 		IsReset:      parm.IsReset,

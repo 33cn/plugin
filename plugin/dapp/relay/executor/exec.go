@@ -34,7 +34,6 @@ func (r *relay) Exec_Verify(payload *rty.RelayVerify, tx *types.Transaction, ind
 	return action.verifyTx(payload)
 }
 
-
 func (r *relay) Exec_BtcHeaders(payload *rty.BtcHeaders, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newRelayDB(r, tx)
 	return action.saveBtcHeader(payload, r.GetLocalDB())

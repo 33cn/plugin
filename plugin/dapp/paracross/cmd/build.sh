@@ -6,7 +6,6 @@ strapp=${strcmd%/cmd*}
 
 OUT_DIR="${1}/$strapp"
 
-
 PARACLI="${OUT_DIR}/chain33-para-cli"
 PARANAME=para
 SRC_CLI=github.com/33cn/plugin/cli
