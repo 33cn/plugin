@@ -23,6 +23,7 @@ build/guodun
 build/main.sh
 build/main*
 build/para.sh
+build/system-test-rpc.sh
 build/ci
 build/autotest/*
 !build/autotest/build.sh

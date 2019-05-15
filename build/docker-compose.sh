@@ -333,15 +333,15 @@ function base_config() {
     #    transfer "${CLI4}"
 }
 
-function base_test() {
+function rpc_test() {
     if [ "$DAPP" == "" ]; then
         system_test_rpc "http://${1}:8801"
         dapp_test_rpc "http://${1}:8801"
     fi
-    if [ "$DAPP" == "paracross" ]; then
-        system_test_rpc "http://${1}:8901"
-        dapp_test_rpc "http://${1}:8901"
-    fi
+#    if [ "$DAPP" == "paracross" ]; then
+#        system_test_rpc "http://${1}:8901"
+#        dapp_test_rpc "http://${1}:8901"
+#    fi
 
 }
 function dapp_run() {
@@ -365,8 +365,10 @@ function main() {
 
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr[0:10]")
-    base_test "${ip}"
     dapp_run test "${ip}"
+
+    ### rpc test  ###
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container

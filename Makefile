@@ -25,12 +25,12 @@ default: build depends
 build:
 	@go build $(BUILD_FLAGS) -v -i -o $(APP)
 	@go build -v -i -o $(CLI) $(SRC_CLI)
-	@cp chain33.toml build/
+	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_CLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
-	@cp chain33.toml build/
+	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 
 para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
@@ -142,6 +142,7 @@ clean: ## Remove previous build
 	@rm -rf build/logs
 	@rm -rf build/autotest/autotest
 	@rm -rf build/ci
+	@rm -rf build/system-rpc-test.sh
 	@rm -rf tool
 	@go clean
 
