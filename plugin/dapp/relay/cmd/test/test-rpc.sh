@@ -21,7 +21,7 @@ echo_rst() {
 }
 
 function block_wait() {
-    req='"method":"Chain33.GetLastHeader","params":[]'
+    local req='"method":"Chain33.GetLastHeader","params":[]'
     cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
     expect=$((cur_height + ${1}))
     local count=0
@@ -38,7 +38,7 @@ function block_wait() {
 
 function query_tx() {
     block_wait 1
-    txhash="$1"
+    local txhash="$1"
     local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
     # echo "req=$req"
     local times=10
@@ -62,10 +62,10 @@ function query_tx() {
 }
 
 Chain33_SendToAddress() {
-    from="$1"
-    to="$2"
-    amount=$3
-    req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
+    local from="$1"
+    local to="$2"
+    local amount=$3
+    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     #    echo "#response: $resp"
@@ -79,13 +79,13 @@ Chain33_SendToAddress() {
 }
 
 chain33_ImportPrivkey() {
-    pri=$2
-    acc=$3
-    req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"relayimportkey"}]'
+    local pri=$2
+    local acc=$3
+    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"relayimportkey1"}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$1")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="testimportkey") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+        echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.label=="relayimportkey1") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -93,7 +93,7 @@ chain33_ImportPrivkey() {
 signrawtx() {
     txHex="$1"
     priKey="$2"
-    req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
+    local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
     #    echo "#request SignRawTx: $req"
     signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
     #    echo "signedTx=$signedTx"
@@ -106,7 +106,7 @@ signrawtx() {
 
 sendTx() {
     signedTx=$1
-    req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
+    local req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
     #    echo "#request sendTx: $req"
     #    curl -ksd "{$req}" ${MAIN_HTTP}
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
@@ -122,7 +122,7 @@ sendTx() {
 }
 
 relay_CreateRawRelayOrderTx() {
-    req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":1000000000,"coinWaits":6}]'
+    local req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":1000000000,"coinWaits":6}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -134,7 +134,7 @@ relay_CreateRawRelayOrderTx() {
 }
 
 relay_CreateRawRelayAcceptTx() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
@@ -143,7 +143,7 @@ relay_CreateRawRelayAcceptTx() {
         exit 1
     fi
 
-    req='"method":"relay.CreateRawRelayAcceptTx","params":[{"orderId":"'"$id"'","coinAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}]'
+    local req='"method":"relay.CreateRawRelayAcceptTx","params":[{"orderId":"'"$id"'","coinAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -156,7 +156,7 @@ relay_CreateRawRelayAcceptTx() {
 }
 
 relay_CreateRawRelayRevokeTx() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
@@ -165,7 +165,7 @@ relay_CreateRawRelayRevokeTx() {
         exit 1
     fi
 
-    req='"method":"relay.CreateRawRelayRevokeTx","params":[{"orderId":"'"$id"'","target":0,"action":1}]'
+    local req='"method":"relay.CreateRawRelayRevokeTx","params":[{"orderId":"'"$id"'","target":0,"action":1}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -178,7 +178,7 @@ relay_CreateRawRelayRevokeTx() {
 }
 
 relay_CreateRawRelayConfirmTx() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetRelayOrderByStatus","payload":{"addr":"","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetRelayOrderByStatus","payload":{"addr":"","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
@@ -187,7 +187,7 @@ relay_CreateRawRelayConfirmTx() {
         exit 1
     fi
 
-    req='"method":"relay.CreateRawRelayConfirmTx","params":[{"orderId":"'"$id"'","rawTx":"6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"}]'
+    local req='"method":"relay.CreateRawRelayConfirmTx","params":[{"orderId":"'"$id"'","rawTx":"6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -200,7 +200,7 @@ relay_CreateRawRelayConfirmTx() {
 }
 
 relay_CreateRawRelaySaveBTCHeadTx() {
-    req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]'
+    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -213,7 +213,7 @@ relay_CreateRawRelaySaveBTCHeadTx() {
 }
 
 relay_CreateRawRelaySaveBTCHeadTx_11() {
-    req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]'
+    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -227,7 +227,7 @@ relay_CreateRawRelaySaveBTCHeadTx_11() {
 
 query_GetRelayOrderByStatus() {
     status="$1"
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetRelayOrderByStatus","payload":{"addr":"","status":"'"$status"'","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetRelayOrderByStatus","payload":{"addr":"","status":"'"$status"'","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #    echo "#response: $resp"
@@ -237,7 +237,7 @@ query_GetRelayOrderByStatus() {
 }
 
 query_GetSellRelayOrder() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #    echo "#response: $resp"
@@ -248,7 +248,7 @@ query_GetSellRelayOrder() {
 }
 
 query_GetBuyRelayOrder() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #   echo "#response: $resp"
@@ -259,7 +259,7 @@ query_GetBuyRelayOrder() {
 }
 
 query_GetBTCHeaderList() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBTCHeaderList","payload":{"reqHeight":"10","counts":10,"direction":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBTCHeaderList","payload":{"reqHeight":"10","counts":10,"direction":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     echo "#response: $resp"
@@ -270,7 +270,7 @@ query_GetBTCHeaderList() {
 }
 
 query_GetBTCHeaderCurHeight() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBTCHeaderCurHeight","payload":{"baseHeight":"0"}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBTCHeaderCurHeight","payload":{"baseHeight":"0"}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     echo "#response: $resp"
@@ -330,7 +330,7 @@ function rpc_test() {
     echo "main_ip=$MAIN_HTTP"
 
     init
-    run_testcases
+#    run_testcases
 
     if [ -n "$CASE_ERR" ]; then
         echo -e "${RED}=============Relay Rpc Test Fail=============${NOC}"
