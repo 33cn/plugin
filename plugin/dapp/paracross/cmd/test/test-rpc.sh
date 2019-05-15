@@ -4,7 +4,6 @@
 MAIN_HTTP=""
 CASE_ERR=""
 
-
 # $2=0 means true, other false
 echo_rst() {
     if [ "$2" -eq 0 ]; then
