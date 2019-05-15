@@ -135,7 +135,7 @@ function para_transfer() {
 
 function main_transfer2account() {
     echo "${1}"
-    hash1=$(${CLI} send coins transfer -a 500 -n test -t "${1}" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash1=$(${CLI} send coins transfer -a 200 -n test -t "${1}" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash1}"
 }
 

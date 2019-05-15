@@ -122,7 +122,7 @@ sendTx() {
 }
 
 relay_CreateRawRelayOrderTx() {
-    req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":10000000000,"coinWaits":6}]'
+    req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":1000000000,"coinWaits":6}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -294,10 +294,10 @@ init() {
     echo "relayaddr=$relay_addr"
 
     from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    Chain33_SendToAddress "$from" "$relay_addr" 30000000000
+    Chain33_SendToAddress "$from" "$relay_addr" 10000000000
 
     from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    Chain33_SendToAddress "$from" "$relay_addr" 30000000000
+    Chain33_SendToAddress "$from" "$relay_addr" 10000000000
     block_wait 1
 
 }
