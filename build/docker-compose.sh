@@ -323,7 +323,8 @@ function transfer() {
         exit 1
     fi
 
-    hash=$(${1} send coins transfer -a 1000 -n transfer -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${1} send coins transfer -a 1000 -n transfer -t 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
     block_wait "${1}" 1
 }
 
