@@ -97,7 +97,7 @@ func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
 	fromAddr := tx.From()
 	btc := newBtcStore(r.GetLocalDB())
 	return &relayDB{r.GetCoinsAccount(), r.GetStateDB(), hash,
-		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(r.GetName()), btc}
+		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), btc}
 }
 
 func (action *relayDB) getOrderByID(orderID []byte) (*ty.RelayOrder, error) {

@@ -50,13 +50,19 @@ function para_set_toml() {
 
 function para_set_wallet() {
     echo "=========== # para set wallet ============="
-    para_import_key "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-    para_import_key "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
-    para_import_key "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-    para_import_key "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71"
+    para_import_key "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"  "paraAuthAccount"
+    para_import_key "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" "paraAuthAccount"
+    para_import_key "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" "paraAuthAccount"
+    para_import_key "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
+
+    #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    para_import_key "${PARA_CLI}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "genesis"
+    #12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+    para_import_key "${PARA_CLI}" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" "test"
 }
 
 function para_import_key() {
+    local lable=$3
     echo "=========== # save seed to wallet ============="
     result=$(${1} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
     if [ "${result}" = "false" ]; then
@@ -72,7 +78,7 @@ function para_import_key() {
 
     echo "=========== # import private key ============="
     echo "key: ${2}"
-    result=$(${1} account import_key -k "${2}" -l paraAuthAccount | jq ".label")
+    result=$(${1} account import_key -k "${2}" -l "$lable" | jq ".label")
     if [ -z "${result}" ]; then
         exit 1
     fi
@@ -88,24 +94,29 @@ function para_import_key() {
 
 function para_transfer() {
     echo "=========== # para chain transfer ============="
-    para_transfer2account "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
-    para_transfer2account "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    para_transfer2account "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
-    para_transfer2account "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
-    para_transfer2account "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+    main_transfer2account "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
+    main_transfer2account "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
+    main_transfer2account "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
+    main_transfer2account "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
+    main_transfer2account "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
     # super node test
-    para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    main_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    para_transfer2account "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     block_wait "${CLI}" 2
 
     echo "=========== # main chain send to paracross ============="
-    para_transfer2paracross "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-    para_transfer2paracross "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
-    para_transfer2paracross "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-    para_transfer2paracross "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71"
+    main_transfer2paracross "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    main_transfer2paracross "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
+    main_transfer2paracross "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+    main_transfer2paracross "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71"
 
     #1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY test
-    para_transfer2paracross "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    main_transfer2paracross "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+
+    para_transfer2exec "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "relay"
+    para_transfer2exec "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" "relay"
     block_wait "${CLI}" 2
+
 
     #    para_create_manage_nodegroup
     para_create_nodegroup
@@ -118,17 +129,28 @@ function para_transfer() {
 
 }
 
-function para_transfer2account() {
+function main_transfer2account() {
     echo "${1}"
     hash1=$(${CLI} send coins transfer -a 100 -n test -t "${1}" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash1}"
 }
 
-function para_transfer2paracross() {
+function para_transfer2account() {
+    echo "${1}"
+    hash1=$(${PARA_CLI} send coins transfer -a 1000 -n transfer -t "${1}" -k 0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    echo "${hash1}"
+}
+
+function main_transfer2paracross() {
     echo "addr=${1}"
     hash1=$(${CLI} send coins send_exec -a 20 -e paracross -k "${1}")
     echo "${hash1}"
+}
 
+function para_transfer2exec() {
+    echo "exec=$2,addr=${1}"
+    hash1=$(${PARA_CLI} send coins send_exec -a 500 -e "$2" -k "${1}")
+    echo "${hash1}"
 }
 
 function para_create_nodegroup_test() {
