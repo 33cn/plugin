@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	plog                    = log.New("module", "Pbft")
-	genesis                 string
-	genesisBlockTime        int64
+	plog             = log.New("module", "Pbft")
+	genesis          string
+	genesisBlockTime int64
 )
 
 type subConfig struct {
