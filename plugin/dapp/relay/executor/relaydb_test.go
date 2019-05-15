@@ -1102,7 +1102,7 @@ func (s *suiteVerifyCli) TestVerify() {
 		BlockHash:  "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 	}
 
-	tx := &types.Transaction{Execer:[]byte(ty.RelayX)}
+	tx := &types.Transaction{Execer: []byte(ty.RelayX)}
 
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
@@ -1156,7 +1156,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay.SetChild(relay)
 	s.relay = relay
 
-	tx := &types.Transaction{Execer:[]byte(ty.RelayX)}
+	tx := &types.Transaction{Execer: []byte(ty.RelayX)}
 	tx.To = "addr"
 	tx.Sign(types.SECP256K1, privFrom)
 
