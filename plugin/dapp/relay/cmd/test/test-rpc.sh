@@ -38,15 +38,17 @@ function query_tx() {
     txhash="$1"
     local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
     # echo "req=$req"
-    local times=100
+    local times=10
     while true; do
         ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
-        echo "====query tx= ${1} "
+        echo "====query tx= ${1}, return=$ret "
         if [ "${ret}" != "${1}" ]; then
             block_wait 1
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "====query tx=$1 failed"
+                echo "req=$req"
+                curl -ksd "{$req}" ${MAIN_HTTP}
                 exit 1
             fi
         else
@@ -67,6 +69,8 @@ Chain33_SendToAddress() {
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
+#    hash=$(jq '(.result.hash)' <<<"$resp")
+#    query_tx "$hash"
 
 }
 
@@ -102,7 +106,7 @@ sendTx() {
 }
 
 relay_CreateRawRelayOrderTx() {
-    req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":20000000000,"coinWaits":6}]'
+    req='"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":10000000000,"coinWaits":6}]'
     # echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -261,16 +265,21 @@ query_GetBTCHeaderCurHeight() {
 }
 
 init() {
-    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    exec_relay_addr="1rhRgzbz264eyJu7Ac63wepsm9TsEpwXM"
-    Chain33_SendToAddress "$from" "$exec_relay_addr" 100000000000
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    local relay_addr=""
+    if [ "$ispara" == true ];then
+        relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.relay"}]}' ${MAIN_HTTP} | jq -r ".result")
+    else
+        relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"relay"}]}' ${MAIN_HTTP} | jq -r ".result")
+    fi
+    echo "relayaddr=$relay_addr"
 
-    to="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    Chain33_SendToAddress "$from" "$to" 50000000000
-    block_wait 1
+    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    Chain33_SendToAddress "$from" "$relay_addr" 30000000000
 
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    Chain33_SendToAddress "$from" "$exec_relay_addr" 20000000000
+    Chain33_SendToAddress "$from" "$relay_addr" 30000000000
     block_wait 1
 
 }
