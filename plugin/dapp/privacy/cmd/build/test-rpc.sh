@@ -4,7 +4,6 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-PARA_HTTP=""
 CASE_ERR=""
 
 #color

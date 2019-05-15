@@ -250,9 +250,9 @@ func (r *relay) CheckReceiptExecOk() bool {
 }
 
 // ExecutorOrder 设置localdb的EnableRead
-func (g *relay) ExecutorOrder() int64 {
-	if types.IsFork(g.GetHeight(), "ForkLocalDBAccess") {
+func (r *relay) ExecutorOrder() int64 {
+	if types.IsFork(r.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
-	return g.DriverBase.ExecutorOrder()
+	return r.DriverBase.ExecutorOrder()
 }
