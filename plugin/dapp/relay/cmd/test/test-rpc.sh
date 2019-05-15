@@ -84,7 +84,7 @@ chain33_ImportPrivkey() {
     local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"relayimportkey1"}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$1")
-        echo "#response: $resp"
+    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.label=="relayimportkey1") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"

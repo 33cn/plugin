@@ -234,10 +234,10 @@ function relay_test() {
     fi
 
     echo "=========== # accept buy order ============="
-    buy_hash=$(${1} send relay accept  -o "${buy_id}" -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
+    buy_hash=$(${1} send relay accept -o "${buy_id}" -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
     echo "${buy_hash}"
     echo "=========== # accept real buy order ============="
-    realbuy_hash=$(${1} send relay accept  -o "${realbuy_id}" -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -k "${real_buy_addr}")
+    realbuy_hash=$(${1} send relay accept -o "${realbuy_id}" -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -k "${real_buy_addr}")
     echo "${realbuy_hash}"
     echo "=========== # accept sell order ============="
     sell_hash=$(${1} send relay accept -o "${sell_id}" -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
@@ -294,7 +294,7 @@ function relay_test() {
 
     wait_btc_height "${1}" $((acceptHeight + 72))
 
-    revoke_hash=$(${1} send relay revoke -a 0 -t 1  -i "${buy_id}" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
+    revoke_hash=$(${1} send relay revoke -a 0 -t 1 -i "${buy_id}" -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
     echo "${revoke_hash}"
     echo "=========== # confirm real buy order ============="
     confirm_hash=$(${1} send relay confirm -t "${btc_tx_hash}" -o "${realbuy_id}" -k "${real_buy_addr}")
@@ -338,7 +338,7 @@ function relay_test() {
 
     wait_btc_height "${1}" $((confirmHeight + 288))
 
-    revoke_hash=$(${1} send relay revoke -a 0 -t 0  -i "${sell_id}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    revoke_hash=$(${1} send relay revoke -a 0 -t 0 -i "${sell_id}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${revoke_hash}"
     echo "=========== # test cancel create order ==="
     cancel_hash=$(${1} send relay create -m 2.99 -o 0 -c BTC -a 1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT -b 200 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
