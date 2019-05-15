@@ -78,6 +78,18 @@ Chain33_SendToAddress() {
 
 }
 
+chain33_ImportPrivkey() {
+    pri=$2
+    acc=$3
+    req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"relayimportkey"}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "$1")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.label=="testimportkey") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+}
 signrawtx() {
     txHex="$1"
     priKey="$2"
@@ -139,7 +151,7 @@ relay_CreateRawRelayAcceptTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$rawtx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
 
 }
 
@@ -183,7 +195,7 @@ relay_CreateRawRelayConfirmTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$rawtx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
 
 }
 
@@ -196,7 +208,7 @@ relay_CreateRawRelaySaveBTCHeadTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$rawtx" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 
 }
 
@@ -209,7 +221,7 @@ relay_CreateRawRelaySaveBTCHeadTx_11() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$rawtx" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 
 }
 
@@ -236,7 +248,7 @@ query_GetSellRelayOrder() {
 }
 
 query_GetBuyRelayOrder() {
-    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #   echo "#response: $resp"
@@ -269,6 +281,8 @@ query_GetBTCHeaderCurHeight() {
 }
 
 init() {
+    chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     local relay_addr=""
@@ -282,7 +296,7 @@ init() {
     from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     Chain33_SendToAddress "$from" "$relay_addr" 30000000000
 
-    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
     Chain33_SendToAddress "$from" "$relay_addr" 30000000000
     block_wait 1
 
@@ -319,10 +333,10 @@ function rpc_test() {
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then
-        echo "=======relay rpc test  error ==========="
+        echo -e "${RED}=============Relay Rpc Test Fail=============${NOC}"
         exit 1
     else
-        echo "====== relay rpc test  pass ==========="
+        echo -e "${GRE}=============Relay Rpc Test Pass==============${NOC}"
     fi
 }
 
