@@ -330,7 +330,7 @@ function rpc_test() {
     echo "main_ip=$MAIN_HTTP"
 
     init
-#    run_testcases
+    run_testcases
 
     if [ -n "$CASE_ERR" ]; then
         echo -e "${RED}=============Relay Rpc Test Fail=============${NOC}"
