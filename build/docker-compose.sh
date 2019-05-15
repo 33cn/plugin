@@ -339,10 +339,10 @@ function rpc_test() {
         system_test_rpc "http://${1}:8801"
         dapp_test_rpc "http://${1}:8801"
     fi
-#    if [ "$DAPP" == "paracross" ]; then
-#        system_test_rpc "http://${1}:8901"
-#        dapp_test_rpc "http://${1}:8901"
-#    fi
+    #    if [ "$DAPP" == "paracross" ]; then
+    #        system_test_rpc "http://${1}:8901"
+    #        dapp_test_rpc "http://${1}:8901"
+    #    fi
 
 }
 function dapp_run() {

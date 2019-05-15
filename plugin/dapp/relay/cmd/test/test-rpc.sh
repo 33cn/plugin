@@ -113,7 +113,7 @@ sendTx() {
     err=$(jq '(.error)' <<<"$resp")
     txhash=$(jq -r ".result" <<<"$resp")
     if [ "$err" == null ]; then
-    #   echo "tx hash: $txhash"
+        #   echo "tx hash: $txhash"
         query_tx "$txhash"
     else
         echo "send tx error:$err"
