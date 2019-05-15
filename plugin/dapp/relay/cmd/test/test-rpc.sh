@@ -2,16 +2,19 @@
 # shellcheck disable=SC2128
 
 MAIN_HTTP=""
-PARA_HTTP=""
 CASE_ERR=""
-UNIT_HTTP=""
+
+#color
+RED='\033[1;31m'
+GRE='\033[1;32m'
+NOC='\033[0m'
 
 # $2=0 means true, other false
 echo_rst() {
     if [ "$2" -eq 0 ]; then
-        echo "$1 ok"
+        echo -e "${GRE}$1 ok${NOC}"
     else
-        echo "$1 err"
+        echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="err"
     fi
 
@@ -65,11 +68,12 @@ Chain33_SendToAddress() {
     req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    echo "#response: $resp"
+    #    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    #    hash=$(jq '(.result.hash)' <<<"$resp")
+    hash=$(jq '(.result.hash)' <<<"$resp")
+    echo "hash=$hash"
     #    query_tx "$hash"
 
 }
@@ -97,7 +101,7 @@ sendTx() {
     err=$(jq '(.error)' <<<"$resp")
     txhash=$(jq -r ".result" <<<"$resp")
     if [ "$err" == null ]; then
-        echo "tx hash: $txhash"
+    #   echo "tx hash: $txhash"
         query_tx "$txhash"
     else
         echo "send tx error:$err"
