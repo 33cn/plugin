@@ -69,8 +69,8 @@ Chain33_SendToAddress() {
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-#    hash=$(jq '(.result.hash)' <<<"$resp")
-#    query_tx "$hash"
+    #    hash=$(jq '(.result.hash)' <<<"$resp")
+    #    query_tx "$hash"
 
 }
 
@@ -268,7 +268,7 @@ init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     local relay_addr=""
-    if [ "$ispara" == true ];then
+    if [ "$ispara" == true ]; then
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"relay"}]}' ${MAIN_HTTP} | jq -r ".result")
