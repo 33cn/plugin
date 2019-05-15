@@ -171,6 +171,7 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Nonce = 1 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
@@ -204,6 +205,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1aUnlock() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -225,6 +227,7 @@ func (s *suiteRelayDB) TestRevokeCreate_1bCancel() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -304,6 +307,7 @@ func (s *suiteAccept) setupRelayCreate() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Nonce = 2 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
@@ -353,6 +357,7 @@ func (s *suiteAccept) TestRelayAccept() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -384,6 +389,7 @@ func (s *suiteAccept) TestRevokeAccept_1() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -405,6 +411,7 @@ func (s *suiteAccept) TestRevokeAccept_2() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -426,6 +433,7 @@ func (s *suiteAccept) TestRevokeAccept_3() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -502,6 +510,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Nonce = 3 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
@@ -552,6 +561,7 @@ func (s *suiteConfirm) setupAccept() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -583,6 +593,7 @@ func (s *suiteConfirm) TestConfirm_1() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -601,6 +612,7 @@ func (s *suiteConfirm) TestConfirm_2() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -632,6 +644,7 @@ func (s *suiteConfirm) TestRevokeConfirm_1() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -653,6 +666,7 @@ func (s *suiteConfirm) TestRevokeConfirm_2() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -729,6 +743,7 @@ func (s *suiteVerify) setupRelayCreate() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Nonce = 4 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
@@ -761,6 +776,7 @@ func (s *suiteVerify) setupAccept() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -792,6 +808,7 @@ func (s *suiteVerify) setupConfirm() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -877,6 +894,7 @@ func (s *suiteVerify) TestVerify() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -960,6 +978,7 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Nonce = 5 //for different order id
 	tx.Sign(types.SECP256K1, privFrom)
@@ -992,6 +1011,7 @@ func (s *suiteVerifyCli) setupAccept() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -1023,6 +1043,7 @@ func (s *suiteVerifyCli) setupConfirm() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -1081,7 +1102,8 @@ func (s *suiteVerifyCli) TestVerify() {
 		BlockHash:  "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 	}
 
-	tx := &types.Transaction{}
+	tx := &types.Transaction{Execer:[]byte(ty.RelayX)}
+
 	tx.To = s.addrRelay
 	tx.Sign(types.SECP256K1, privTo)
 
@@ -1134,7 +1156,7 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	relay.SetChild(relay)
 	s.relay = relay
 
-	tx := &types.Transaction{}
+	tx := &types.Transaction{Execer:[]byte(ty.RelayX)}
 	tx.To = "addr"
 	tx.Sign(types.SECP256K1, privFrom)
 

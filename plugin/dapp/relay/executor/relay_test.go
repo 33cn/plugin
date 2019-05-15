@@ -176,6 +176,7 @@ func (s *suiteRelay) TestExec_2() {
 	}
 
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privTo)
@@ -211,7 +212,7 @@ func (s *suiteRelay) TestExec_3() {
 		Value: &ty.RelayAction_ConfirmTx{ConfirmTx: order},
 	}
 
-	tx := &types.Transaction{}
+	tx := &types.Transaction{Execer:[]byte("relay")}
 	tx.To = s.addrRelay
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
@@ -283,6 +284,7 @@ func (s *suiteRelay) TestExec_4() {
 		Value: &ty.RelayAction_Verify{Verify: order},
 	}
 	tx := &types.Transaction{}
+	tx.Execer = []byte(ty.RelayX)
 	tx.To = s.addrRelay
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
