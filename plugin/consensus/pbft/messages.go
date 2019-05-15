@@ -213,10 +213,11 @@ func DigestViewchange(vc *types.RequestViewChange) string {
 // WriteMessage 用于向地址addr写proto类的消息
 func WriteMessage(addr string, msg proto.Message) error {
 	conn, err := net.Dial("tcp", addr)
-	defer conn.Close()
 	if err != nil {
 		return err
 	}
+	//避免关闭不存在的连接
+	defer conn.Close()
 	bz, err := proto.Marshal(msg)
 	if err != nil {
 		return err

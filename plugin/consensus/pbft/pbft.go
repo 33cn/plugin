@@ -114,8 +114,8 @@ type Replica struct {
 	outstandingReq  map[string]*pt.RequestClient        // 待完成的客户端请求
 	executedReq     map[uint64]*pt.RequestClient        // 已完成的客户端请求
 	repStore        map[string][]*pt.ClientReply        // 已经发送的回复
-	pset            map[uint64]*pt.RequestViewChange_PQ // 对应论文P
-	qset            map[qidx]*pt.RequestViewChange_PQ   // 对应论文Q
+	pset            map[uint64]*pt.RequestViewChange_PQ // 对应论文P 表示那些已经Prepared的Request
+	qset            map[qidx]*pt.RequestViewChange_PQ   // 对应论文Q 表示那些已经Pre-prepared的Request
 	sset            map[vcidx]*pt.RequestViewChange     // 对应论文S
 	viewChangeStore map[vcidx]*pt.RequestViewChange     // 发送的视图变更请求
 	ackStore        map[ackidx]*pt.RequestAck           // 发送的ack的请求
@@ -814,7 +814,8 @@ func (rep *Replica) multicast(REQ proto.Message) error {
 	for _, replica := range rep.replicas {
 		err := WriteMessage(replica, REQ)
 		if err != nil {
-			return err
+			//避免中间节点失败影响后面的节点
+			plog.Error("PBFT write message failed", "replica", replica, "error", err)
 		}
 	}
 	return nil

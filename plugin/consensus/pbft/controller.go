@@ -16,9 +16,6 @@ var (
 	plog                    = log.New("module", "Pbft")
 	genesis                 string
 	genesisBlockTime        int64
-	defaultSnapCount        uint64 = 1000
-	snapshotCatchUpEntriesN uint64 = 1000
-	writeBlockSeconds       int64  = 1
 )
 
 type subConfig struct {
