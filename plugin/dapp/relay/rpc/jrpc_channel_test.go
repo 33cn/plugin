@@ -129,8 +129,6 @@ func testCreateRawRelayConfirmTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 	return jrpc.Call("relay.CreateRawRelayConfirmTx", params, &res)
 }
 
-
-
 func testCreateRawRelayBtcHeaderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := pty.BtcHeader{}
 	var res string
