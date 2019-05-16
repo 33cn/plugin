@@ -562,7 +562,7 @@ func (policy *privacyPolicy) buildInput(privacykeyParirs *privacy.Privacy, build
 	return privacyInput, utxosInKeyInput, realkeyInputSlice, selectedUtxo, nil
 }
 
-func (policy *privacyPolicy) createTransaction(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createTransaction(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	switch req.Type {
 	case types.PrivacyTypePublic2Privacy:
 		return policy.createPublic2PrivacyTx(req)
@@ -574,7 +574,7 @@ func (policy *privacyPolicy) createTransaction(req *types.ReqCreateTransaction) 
 	return nil, types.ErrInvalidParam
 }
 
-func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "parse view spend public key pair failed.  err ", err)
@@ -621,7 +621,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	return tx, nil
 }
 
-func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 
 	//需要燃烧的utxo
 	utxoBurnedAmount := privacytypes.PrivacyTxFee
@@ -708,7 +708,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	return tx, nil
 }
 
-func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 
 	//需要燃烧的utxo
 	utxoBurnedAmount := privacytypes.PrivacyTxFee

@@ -452,14 +452,14 @@ type VoteTestSuite struct {
 }
 
 func (s *VoteTestSuite) SetupSuite() {
-	types.Init(Title, nil)
+	para_init(Title)
 	s.exec = newParacross().(*Paracross)
 }
 
 func (s *VoteTestSuite) TestVoteTx() {
 	status := &pt.ParacrossNodeStatus{
 		MainBlockHash:   MainBlockHash10,
-		MainBlockHeight: MainBlockHeight,
+		MainBlockHeight: 0,
 		PreBlockHash:    PerBlock,
 		Height:          CurHeight,
 		Title:           Title,
@@ -588,7 +588,8 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	//	s.T().Log("tx exec name","i",i,"name",string(tx.Execer))
 	//}
 
-	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	//types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	//val,_:=types.G("config.consensus.sub.para.MainForkParacrossCommitTx")
 
 	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
 	feelog := &types.Receipt{}

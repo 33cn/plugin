@@ -51,7 +51,7 @@ func (g *channelClient) EnablePrivacy(ctx context.Context, in *pty.ReqEnablePriv
 	return data.(*pty.RepEnablePrivacy), nil
 }
 
-func (g *channelClient) CreateRawTransaction(ctx context.Context, in *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (g *channelClient) CreateRawTransaction(ctx context.Context, in *pty.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	data, err := g.ExecWalletFunc(pty.PrivacyX, "CreateTransaction", in)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (c *Jrpc) EnablePrivacy(in *pty.ReqEnablePrivacy, result *json.RawMessage) 
 }
 
 // CreateRawTransaction create raw trasaction for json rpc
-func (c *Jrpc) CreateRawTransaction(in *types.ReqCreateTransaction, result *interface{}) error {
+func (c *Jrpc) CreateRawTransaction(in *pty.ReqCreatePrivacyTx, result *interface{}) error {
 	reply, err := c.cli.CreateRawTransaction(context.Background(), in)
 	if err != nil {
 		return err

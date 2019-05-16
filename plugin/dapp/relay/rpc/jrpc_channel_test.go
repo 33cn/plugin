@@ -46,7 +46,6 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testCreateRawRelayAcceptTxCmd},
 		{fn: testCreateRawRevokeTxCmd},
 		{fn: testCreateRawRelayConfirmTxCmd},
-		{fn: testCreateRawRelayVerifyBTCTxCmd},
 		{fn: testCreateRawRelayBtcHeaderCmd},
 		{fn: testGetBTCHeaderCurHeight},
 	}
@@ -128,12 +127,6 @@ func testCreateRawRelayConfirmTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) e
 	params := pty.RelayConfirmTx{}
 	var res string
 	return jrpc.Call("relay.CreateRawRelayConfirmTx", params, &res)
-}
-
-func testCreateRawRelayVerifyBTCTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.RelayVerifyCli{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelayVerifyBTCTx", params, &res)
 }
 
 func testCreateRawRelayBtcHeaderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {

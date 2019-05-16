@@ -205,7 +205,7 @@ cryptoPath="authdir/crypto"
 signType="auth_ecdsa"
 
 [exec.sub.relay]
-genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
 superManager=[

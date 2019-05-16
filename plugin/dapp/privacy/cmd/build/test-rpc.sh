@@ -4,7 +4,6 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-PARA_HTTP=""
 CASE_ERR=""
 
 #color
@@ -116,11 +115,9 @@ function run_test() {
 
 }
 function main() {
-    local ip=$1
-    MAIN_HTTP="http://$ip:8801"
-    PARA_HTTP="http://$ip:8901"
+    MAIN_HTTP="$1"
     echo "=========== # privacy rpc test ============="
-    echo "main_ip=$MAIN_HTTP    para_ip=$PARA_HTTP"
+    echo "ip=$MAIN_HTTP"
 
     run_test "$MAIN_HTTP"
 
