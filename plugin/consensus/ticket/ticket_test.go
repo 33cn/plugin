@@ -5,17 +5,19 @@
 package ticket
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"testing"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
-	vrf "github.com/33cn/chain33/common/vrf/p256"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -170,8 +172,11 @@ func Test_vrfVerify(t *testing.T) {
 	assert.NoError(t, err)
 	priv, err := c.GenKey()
 	assert.NoError(t, err)
+	pub := priv.PubKey().Bytes()
 
-	vpriv, _, pubKey := vrf.GenVrfKey(priv)
+	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
+	vpriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+
 	m1 := []byte("data1")
 	m2 := []byte("data2")
 	m3 := []byte("data2")
@@ -191,7 +196,7 @@ func Test_vrfVerify(t *testing.T) {
 		{m3, hash3, proof1, ty.ErrVrfVerify},
 		{m3, hash1, proof3, ty.ErrVrfVerify},
 	} {
-		err := vrfVerify(pubKey, tc.m, tc.proof, tc.hash[:])
+		err := vrfVerify(pub, tc.m, tc.proof, tc.hash[:])
 		if got, want := err, tc.err; got != want {
 			t.Errorf("vrfVerify(%s, %x): %v, want %v", tc.m, tc.proof, got, want)
 		}
