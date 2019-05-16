@@ -8,7 +8,7 @@ function dapp_test_rpc() {
     echo "============ # dapp rpc test begin ============="
     if [ -d dapptest ]; then
         cd dapptest || return
-        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///')
+        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name blackwhite ! -name . | sed 's/^\.\///')
         for app in $dir; do
             echo "=========== # $app rpc test ============="
             ./"$app/${RPC_TESTFILE}" "$ip"
