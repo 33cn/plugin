@@ -1,4 +1,4 @@
-#!/usr/bin/evn bash
+#!/usr/bin/env bash
 # shellcheck disable=SC2128
 
 MAIN_HTTP=""
@@ -23,6 +23,10 @@ echo_rst() {
         echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="FAIL"
     fi
+}
+
+chian33_importKey() {
+    echo_rst
 }
 
 evm_CreateContract() {
@@ -120,6 +124,9 @@ queryTransaction() {
 
 function run_test() {
     local ip=$1
+    chain33_importKey
+    chain33_unlock
+    evm_Transfer
     evm_CreateContract
     evm_CallContract
     evm_abiGet
