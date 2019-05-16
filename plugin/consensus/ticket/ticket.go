@@ -6,6 +6,7 @@ package ticket
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -20,13 +21,14 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
-	vrf "github.com/33cn/chain33/common/vrf/p256"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	driver "github.com/33cn/chain33/system/dapp"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -377,11 +379,12 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 		if input == nil {
 			input = miner.PrivHash
 		}
-		if err = vrfVerify(miner.PubKey, input, miner.VrfProof, miner.VrfHash); err != nil {
+		minerTx := current.Block.Txs[0]
+		if err = vrfVerify(minerTx.Signature.Pubkey, input, miner.VrfProof, miner.VrfHash); err != nil {
 			return err
 		}
 	} else {
-		if len(miner.PubKey) != 0 || len(miner.VrfHash) != 0 || len(miner.VrfProof) != 0 {
+		if len(miner.VrfHash) != 0 || len(miner.VrfProof) != 0 {
 			tlog.Error("block error: not yet add vrf")
 			return ty.ErrNoVrf
 		}
@@ -390,11 +393,12 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
-	vrfPub, err := vrf.ParseVrfPubKey(pub)
+	pubKey, err := secp256k1.ParsePubKey(pub, secp256k1.S256())
 	if err != nil {
 		tlog.Error("vrfVerify", "err", err)
 		return ty.ErrVrfVerify
 	}
+	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
 	vrfHash, err := vrfPub.ProofToHash(input, proof)
 	if err != nil {
 		tlog.Error("vrfVerify", "err", err)
@@ -653,9 +657,9 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 		if input == nil {
 			input = miner.PrivHash
 		}
-		vrfPriv, _, pubKey := vrf.GenVrfKey(priv)
+		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
+		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
 		vrfHash, vrfProof := vrfPriv.Evaluate(input)
-		miner.PubKey = pubKey
 		miner.VrfHash = vrfHash[:]
 		miner.VrfProof = vrfProof
 	}
