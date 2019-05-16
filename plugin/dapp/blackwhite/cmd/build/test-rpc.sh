@@ -232,13 +232,9 @@ function run_testcases() {
 }
 
 function main() {
-    local ip=$1
-    MAIN_HTTP="http://$ip:8801"
-    PARA_HTTP="http://$ip:8901"
-    echo "=========== # paracross rpc test ============="
-    echo "main_ip=$MAIN_HTTP,para_ip=$PARA_HTTP"
+    MAIN_HTTP="$1"
+    echo "main_ip=$MAIN_HTTP"
 
-    UNIT_HTTP=$MAIN_HTTP
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then
