@@ -5,7 +5,7 @@
 package rpc
 
 import (
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 
 	"github.com/33cn/chain33/types"
 	bw "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
@@ -19,7 +19,7 @@ func (c *channelClient) Create(ctx context.Context, head *bw.BlackwhiteCreate) (
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(string(bw.ExecerBlackwhite), tx)
+	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (c *channelClient) Show(ctx context.Context, head *bw.BlackwhiteShow) (*typ
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(string(bw.ExecerBlackwhite), tx)
+	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (c *channelClient) Play(ctx context.Context, head *bw.BlackwhitePlay) (*typ
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(string(bw.ExecerBlackwhite), tx)
+	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *channelClient) TimeoutDone(ctx context.Context, head *bw.BlackwhiteTime
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(string(bw.ExecerBlackwhite), tx)
+	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
