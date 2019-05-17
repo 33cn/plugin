@@ -24,6 +24,19 @@ glAddr=""
 gameAddr1=""
 gameAddr2=""
 gameAddr3=""
+bwExecAddr=""
+
+init() {
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+
+    if [ "$ispara" == true ]; then
+        bwExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.blackwhite"}]}' ${MAIN_HTTP} | jq -r ".result")
+    else
+        bwExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"blackwhite"}]}' ${MAIN_HTTP} | jq -r ".result")
+    fi
+    echo "bwExecAddr=$bwExecAddr"
+}
 
 chain33_NewAccount() {
     label=$1
@@ -58,8 +71,9 @@ chain33_SendToAddress() {
     from=$1
     to=$2
     amount=$3
+    http=$4
     note="test"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
     ok=$(jq '(.error|not)' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
@@ -195,17 +209,24 @@ function run_testcases() {
 
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000
+
+    #主链中相应账户需要转帐
+    M_HTTP=${MAIN_HTTP//8901/8801}
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${M_HTTP}"
+
+    #平行链相应账户需要转帐
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${MAIN_HTTP}"
 
     block_wait 1
 
     #给游戏合约中转帐
-    bwExecAddr="146wei89zoX5TNQKATBJmduNPEtSKTXi1z"
-    chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000
+    chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
 
     block_wait 1
     blackwhite_BlackwhiteCreateTx "${gameAddr1}"
@@ -233,6 +254,7 @@ function main() {
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
+    init
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then
