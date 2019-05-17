@@ -16,7 +16,7 @@ GRE='\033[1;32m'
 NOC='\033[0m'
 
 # $2=0 means true, other false
-echo_rst() {
+function echo_rst() {
     if [ "$2" -eq 0 ]; then
         echo -e "${GRE}$1 ok${NOC}"
     else
@@ -25,11 +25,61 @@ echo_rst() {
     fi
 }
 
-chian33_importKey() {
-    echo_rst
+function chain33_ImportPrivkey() {
+    local pri=$2
+    local acc=$3
+    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"admin"}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "$1")
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.label=="admin") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
 }
 
-evm_CreateContract() {
+function Chain33_SendToAddress() {
+    local from="$1"
+    local to="$2"
+    local amount=$3
+    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
+    #    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    #    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+    hash=$(jq '(.result.hash)' <<<"$resp")
+    echo "hash=$hash"
+    #    query_tx "$hash"
+}
+
+function chain33_unlock() {
+    ok=$(curl -k -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
+    [ "$ok" == true ]
+    rst=$?
+    echo_rst "$FUNCNAME" "$rst"
+}
+
+function block_wait() {
+    local req='"method":"Chain33.GetLastHeader","params":[]'
+    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
+    expect=$((cur_height + ${1}))
+    local count=0
+    while true; do
+        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
+        if [ "${new_height}" -ge "${expect}" ]; then
+            break
+        fi
+        count=$((count + 1))
+        sleep 1
+    done
+    echo "wait new block $count s, cur height=$expect,old=$cur_height"
+}
+
+function chain33_execAddr() {
+    echo ""
+}
+function evm_CreateContract() {
     signRawTx "${evm_createContract_unsignedTx}" "${evm_creatorAddr}"
     if [ $? -ne 0 ]; then
         rst=$?
@@ -49,11 +99,11 @@ evm_CreateContract() {
     fi
 }
 
-evm_CallContract() {
+function evm_CallContract() {
     op=$1
-    if [ ${op} == "preExec" ]; then
+    if [ "${op}" == "preExec" ]; then
         unsignedTx="${evm_preExecContract_unsignedTx}"
-    elif [ ${op} == "Exec" ]; then
+    elif [ "${op}" == "Exec" ]; then
         unsignedTx="${evm_execContract_unsignedTxevm}"
     else
         rst=1
@@ -81,27 +131,27 @@ evm_CallContract() {
     return
 }
 
-evm_abiGet() {
+function evm_abiGet() {
     abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_addr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     rst=$?
     echo_rst "CallContract queryExecRes" "$rst"
     return
 }
 
-signRawTx() {
+function signRawTx() {
     unsignedTx=$1
     addr=$2
     signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ $signedTx == "null" ]; then
+    if [ "$signedTx" == "null" ]; then
         return 1
     else
         return 0
     fi
 }
 
-sendSignedTx() {
+function sendSignedTx() {
     txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'${signedTx}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ $txHash == "null" ]; then
+    if [ "$txHash" == "null" ]; then
         return 1
     else
         return 0
@@ -110,11 +160,11 @@ sendSignedTx() {
 
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
-queryTransaction() {
+function queryTransaction() {
     validator=$1
     expectRes=$2
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "'${validator}'")
-    if [ ${res} != "${expectRes}" ]; then
+    if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
         evm_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".receipt.logs[1].log.contractName")
@@ -122,11 +172,28 @@ queryTransaction() {
     fi
 }
 
+function init() {
+    chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    local evm_addr=""
+    if [ "$ispara" == true ]; then
+        evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.evm"}]}' ${MAIN_HTTP} | jq -r ".result")
+    else
+        evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"evm"}]}' ${MAIN_HTTP} | jq -r ".result")
+    fi
+    echo "evm=$evm_addr"
+
+    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    Chain33_SendToAddress "$from" "$evm_addr" 10000000000
+
+    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    Chain33_SendToAddress "$from" "$evm_addr" 10000000000
+    block_wait 1
+}
 function run_test() {
     local ip=$1
-    chain33_importKey
-    chain33_unlock
-    evm_Transfer
     evm_CreateContract
     evm_CallContract
     evm_abiGet
@@ -137,6 +204,8 @@ function main() {
     MAIN_HTTP="http://$ip:8801"
     echo "=========== # evm rpc test ============="
     echo "main_ip=$MAIN_HTTP"
+
+    init
     run_test "$MAIN_HTTP"
 
     if [ -n "$CASE_ERR" ]; then
