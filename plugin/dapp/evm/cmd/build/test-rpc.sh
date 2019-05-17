@@ -76,9 +76,6 @@ function block_wait() {
     echo "wait new block $count s, cur height=$expect,old=$cur_height"
 }
 
-function chain33_execAddr() {
-    echo ""
-}
 function evm_CreateContract() {
     signRawTx "${evm_createContract_unsignedTx}" "${evm_creatorAddr}"
     if [ $? -ne 0 ]; then
@@ -173,7 +170,7 @@ function queryTransaction() {
 }
 
 function init() {
-    chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    chain33_ImportPrivkey "${MAIN_HTTP}" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
@@ -185,10 +182,7 @@ function init() {
     fi
     echo "evm=$evm_addr"
 
-    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    Chain33_SendToAddress "$from" "$evm_addr" 10000000000
-
-    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     Chain33_SendToAddress "$from" "$evm_addr" 10000000000
     block_wait 1
 }
