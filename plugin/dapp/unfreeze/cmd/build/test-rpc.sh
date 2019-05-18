@@ -134,7 +134,7 @@ function query_unfreezeID() {
             #echo "${unfreeze_id}"
             unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
             uid=${unfreeze_id2%\"}
-            echo "====query tx=$1  success"
+            echo "====query tx=$txhash  success"
             break
         fi
     done
@@ -143,7 +143,6 @@ function query_unfreezeID() {
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
-    local relay_addr=""
     exec_name="unfreeze"
     if [ "$ispara" == true ]; then
         exec_name="user.p.para."${exec_name}
