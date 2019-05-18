@@ -157,7 +157,6 @@ function init() {
     owner_key=CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
     #unfreeze_exec_addr=15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H
 
-
     Chain33_SendToAddress "$owner" "$exec_addr" 500000000
     Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000
     block_wait 1
@@ -191,7 +190,7 @@ function CreateRawUnfreezeWithdraw() {
 }
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
-   # echo "#request: $req"
+    # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
@@ -204,7 +203,7 @@ function CreateRawUnfreezeTerminate() {
 
 function GetUnfreeze() {
     req='{"method":"unfreeze.GetUnfreeze","params":[{"data":"'${uid}'"}]}'
-   # echo "#request: $req"
+    # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
@@ -213,7 +212,7 @@ function GetUnfreeze() {
 }
 function GetUnfreezeWithdraw() {
     req='{"method":"unfreeze.GetUnfreezeWithdraw","params":[{"data":"'${uid}'"}]}'
-   # echo "#request: $req"
+    # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
@@ -231,7 +230,6 @@ function run_testcases() {
 
     CreateRawUnfreezeTerminate
 }
-
 
 function rpc_test() {
     MAIN_HTTP="$1"
