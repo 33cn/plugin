@@ -57,7 +57,7 @@ if [ -n "${DAPP}" ]; then
 
 fi
 
-if [ -z "$DAPP" ]; then
+if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then
     # shellcheck source=/dev/null
     source system-test-rpc.sh
     # shellcheck source=/dev/null
@@ -322,18 +322,26 @@ function transfer() {
         echo "withdraw cannot find tx"
         exit 1
     fi
+
+    hash=$(${1} send coins transfer -a 1000 -n transfer -t 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    block_wait "${1}" 1
 }
 
 function base_config() {
-    sync
+    #    sync
     transfer "${CLI}"
     #    transfer "${CLI4}"
 }
 
-function base_test() {
+function rpc_test() {
     if [ "$DAPP" == "" ]; then
-        system_test_rpc "${1}"
-        dapp_test_rpc "${1}"
+        system_test_rpc "http://${1}:8801"
+        dapp_test_rpc "http://${1}:8801"
+    fi
+    if [ "$DAPP" == "paracross" ]; then
+        #system_test_rpc "http://${1}:8901"
+        dapp_test_rpc "http://${1}:8901"
     fi
 
 }
@@ -358,8 +366,10 @@ function main() {
 
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr[0:10]")
-    base_test "${ip}"
     dapp_run test "${ip}"
+
+    ### rpc test  ###
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container

@@ -19,5 +19,4 @@ func main() {
 		buildflags.RPCAddr = "http://localhost:8801"
 	}
 	cli.Run(buildflags.RPCAddr, buildflags.ParaName)
-
 }

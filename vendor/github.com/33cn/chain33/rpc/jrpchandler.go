@@ -728,7 +728,13 @@ func (c *Chain33) GetWalletStatus(in types.ReqNil, result *interface{}) error {
 	if err != nil {
 		return err
 	}
-	*result = reply
+	status := rpctypes.WalletStatus{
+		IsWalletLock: reply.IsWalletLock,
+		IsAutoMining: reply.IsAutoMining,
+		IsHasSeed:    reply.IsHasSeed,
+		IsTicketLock: reply.IsTicketLock,
+	}
+	*result = &status
 	return nil
 }
 
@@ -979,17 +985,6 @@ func (c *Chain33) GetTimeStatus(in *types.ReqNil, result *interface{}) error {
 		Diff:      reply.Diff,
 	}
 	*result = timeStatus
-	return nil
-}
-
-// WalletCreateTx wallet create tx
-func (c *Chain33) WalletCreateTx(in types.ReqCreateTransaction, result *interface{}) error {
-	reply, err := c.cli.WalletCreateTx(&in)
-	if err != nil {
-		return err
-	}
-	txHex := types.Encode(reply)
-	*result = hex.EncodeToString(txHex)
 	return nil
 }
 

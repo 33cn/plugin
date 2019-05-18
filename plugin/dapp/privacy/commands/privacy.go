@@ -124,7 +124,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePublic2Privacy,
 		Amount:     amount,
@@ -186,7 +186,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePrivacy2Privacy,
 		Amount:     amount,
@@ -250,7 +250,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname: tokenname,
 		Type:      types.PrivacyTypePrivacy2Public,
 		Amount:    amount,
