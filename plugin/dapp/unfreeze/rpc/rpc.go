@@ -63,7 +63,7 @@ func (c *Jrpc) CreateRawUnfreezeCreate(param *pty.UnfreezeCreate, result *interf
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "UnfreezeCreateTX", param)
+	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "Create", param)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (c *Jrpc) CreateRawUnfreezeWithdraw(param *pty.UnfreezeWithdraw, result *in
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "UnfreezeWithdrawTx", param)
+	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "Withdraw", param)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (c *Jrpc) CreateRawUnfreezeTerminate(param *pty.UnfreezeTerminate, result *
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "UnfreezeTerminateTx", param)
+	data, err := types.CallCreateTx(types.ExecName(pty.UnfreezeX), "Terminate", param)
 	if err != nil {
 		return err
 	}
