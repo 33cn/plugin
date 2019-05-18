@@ -234,8 +234,7 @@ function run_testcases() {
 
 
 function rpc_test() {
-set -x
-    MAIN_HTTP="http://$1:8801"
+    MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
     init
@@ -247,7 +246,6 @@ set -x
     else
         echo "====== unfreeze rpc test  pass ==========="
     fi
-set +x
 }
 
 rpc_test "$1"
