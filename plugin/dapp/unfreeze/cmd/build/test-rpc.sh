@@ -209,6 +209,7 @@ function GetUnfreeze() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
+
 function GetUnfreezeWithdraw() {
     req='{"method":"unfreeze.GetUnfreezeWithdraw","params":[{"data":"'${uid}'"}]}'
     # echo "#request: $req"
@@ -217,17 +218,22 @@ function GetUnfreezeWithdraw() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-
 }
 
 function run_testcases() {
     CreateRawUnfreezeCreate
 
     CreateRawUnfreezeWithdraw
-    GetUnfreeze
-    GetUnfreezeWithdraw
+    debug_function GetUnfreeze
+    debug_function GetUnfreezeWithdraw
 
     CreateRawUnfreezeTerminate
+}
+
+function debug_function() {
+    set -x
+    eval $@
+    set +x
 }
 
 function rpc_test() {
