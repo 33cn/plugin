@@ -158,8 +158,9 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
-	if validNode(a.fromaddr, nodes) {
-		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s", a.fromaddr)
+	//有可能申请地址和配置地址不是同一个
+	if validNode(config.Addr, nodes) {
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s", config.Addr)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -181,6 +182,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		stat := &pt.ParaNodeAddrStatus{Status: pt.ParacrossNodeAdding,
 			Title:       config.Title,
 			ApplyAddr:   config.Addr,
+			FromAddr:    a.fromaddr,
 			Votes:       &pt.ParaNodeVoteDetail{},
 			CoinsFrozen: config.CoinsFrozen}
 		saveNodeAddr(a.db, config.Title, config.Addr, stat)
@@ -200,9 +202,13 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		clog.Error("nodeaccount.nodeJoin key exist", "addr", config.Addr, "status", stat)
 		return nil, pt.ErrParaNodeAddrExisted
 	}
-	stat.Status = pt.ParacrossNodeAdding
-	stat.CoinsFrozen = config.CoinsFrozen
-	stat.Votes = &pt.ParaNodeVoteDetail{}
+	stat = &pt.ParaNodeAddrStatus{
+		Status:      pt.ParacrossNodeAdding,
+		Title:       config.Title,
+		ApplyAddr:   config.Addr,
+		FromAddr:    a.fromaddr,
+		Votes:       &pt.ParaNodeVoteDetail{},
+		CoinsFrozen: config.CoinsFrozen}
 	saveNodeAddr(a.db, config.Title, config.Addr, stat)
 	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -252,7 +258,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	//still adding status, quit directly
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	if !types.IsPara() {
-		r, err := a.nodeGroupCoinsActive([]string{a.fromaddr}, stat.CoinsFrozen)
+		r, err := a.nodeGroupCoinsActive([]string{stat.FromAddr}, stat.CoinsFrozen)
 		if err != nil {
 			return nil, err
 		}
@@ -432,7 +438,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParacrossNodeQuited
 
 			if !types.IsPara() {
-				r, err := a.nodeGroupCoinsActive([]string{stat.ApplyAddr}, stat.CoinsFrozen)
+				r, err := a.nodeGroupCoinsActive([]string{stat.FromAddr}, stat.CoinsFrozen)
 				if err != nil {
 					return nil, err
 				}
@@ -829,9 +835,6 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	}
 
 	if config.Op == pt.ParaNodeJoin {
-		if config.Addr != a.fromaddr {
-			return nil, types.ErrFromAddr
-		}
 		return a.nodeJoin(config)
 
 	} else if config.Op == pt.ParaNodeQuit {
