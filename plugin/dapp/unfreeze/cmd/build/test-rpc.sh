@@ -224,8 +224,8 @@ function run_testcases() {
     CreateRawUnfreezeCreate
 
     CreateRawUnfreezeWithdraw
-    debug_function GetUnfreeze
-    debug_function GetUnfreezeWithdraw
+    GetUnfreeze
+    GetUnfreezeWithdraw
 
     CreateRawUnfreezeTerminate
 }
@@ -251,4 +251,4 @@ function rpc_test() {
     fi
 }
 
-rpc_test "$1"
+debug_function rpc_test "$1"
