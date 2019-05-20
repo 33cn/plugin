@@ -167,7 +167,7 @@ function init() {
 }
 
 function CreateRawUnfreezeCreate() {
-    req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[ {"execer" : "unfreeze", "actionName" :"createUnfreeze","payload":{"startTime":10000,"assetExec":"coins","assetSymbol":"bty","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}}]}'
+    req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"bty","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
     # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
