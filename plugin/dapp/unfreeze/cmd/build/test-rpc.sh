@@ -232,7 +232,7 @@ function run_testcases() {
 
 function debug_function() {
     set -x
-    eval $@
+    eval "$@"
     set +x
 }
 
