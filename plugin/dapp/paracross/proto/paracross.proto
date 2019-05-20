@@ -55,6 +55,7 @@ message ParaNodeAddrStatus{
     string applyAddr            = 3;
     int64  coinsFrozen          = 4;
     ParaNodeVoteDetail votes    = 5;
+    string fromAddr             = 6;
 }
 
 
