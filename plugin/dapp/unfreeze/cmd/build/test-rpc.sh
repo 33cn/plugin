@@ -22,10 +22,10 @@ function echo_rst() {
 }
 
 function Chain33_SendToAddress() {
-    from="$1"
-    to="$2"
-    amount=$3
-    req='{"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]}'
+    local from="$1"
+    local to="$2"
+    local amount=$3
+    local req='{"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]}'
     #    echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     #    echo "#response: $resp"
@@ -37,6 +37,7 @@ function Chain33_SendToAddress() {
     #    query_tx "$hash"
 
 }
+
 
 function sign_raw_tx() {
     txHex="$1"
@@ -88,13 +89,14 @@ function block_wait() {
 function query_tx() {
     block_wait 1
     txhash="$1"
-    local req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
     # echo "req=$req"
     local times=10
     while true; do
-        ret=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result.tx.hash")
+        req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
+        ret=$(curl -ksd "$req" ${MAIN_HTTP})
+        tx=$(jq -r ".result.tx.hash" <<<"$ret")
         echo "====query tx= ${1}, return=$ret "
-        if [ "${ret}" != "${1}" ]; then
+        if [ "${tx}" != "${1}" ]; then
             block_wait 1
             times=$((times - 1))
             if [ $times -le 0 ]; then
@@ -104,6 +106,8 @@ function query_tx() {
                 exit 1
             fi
         else
+            exec_err=$(jq '(.result.receipt.logs[0].tyName == "LogErr")' <<<"$ret")
+            [ "$exec_err" != true ]
             echo "====query tx=$1  success"
             break
         fi
@@ -113,10 +117,10 @@ function query_tx() {
 function query_unfreezeID() {
     block_wait 1
 
-    local req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
     # echo "req=$req"
     local times=10
     while true; do
+        req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
         ret=$(curl -ksd "$req" ${MAIN_HTTP})
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
         echo "====query tx= ${txhash}, return=$ret "
@@ -130,7 +134,7 @@ function query_unfreezeID() {
                 exit 1
             fi
         else
-            unfreeze_id=$(jq '(.result.receipt.logs[2].log.current.unfreezeID)' <<<"$ret")
+            unfreeze_id=$(jq '(.result.receipt.logs['$uid_index'].log.current.unfreezeID)' <<<"$ret")
             #echo "${unfreeze_id}"
             unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
             uid=${unfreeze_id2%\"}
@@ -144,8 +148,10 @@ function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     exec_name="unfreeze"
+    uid_index=2
     if [ "$ispara" == true ]; then
         exec_name="user.p.para."${exec_name}
+        uid_index=1
     fi
     exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${exec_name}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     echo "exec_addr=${exec_addr}"
@@ -159,11 +165,10 @@ function init() {
     Chain33_SendToAddress "$owner" "$exec_addr" 500000000
     Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000
     block_wait 1
-
 }
 
 function CreateRawUnfreezeCreate() {
-    req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[ {"execer" : "unfreeze", "actionName" :"createUnfreeze","payload":{"startTime":10000,"assetExec":"coins","assetSymbol":"bty","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":100000000}}}]}'
+    req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[ {"execer" : "unfreeze", "actionName" :"createUnfreeze","payload":{"startTime":10000,"assetExec":"coins","assetSymbol":"bty","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}}]}'
     # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
