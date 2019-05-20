@@ -133,7 +133,7 @@ function query_unfreezeID() {
                 exit 1
             fi
         else
-            unfreeze_id=$(jq '(.result.receipt.logs['$uid_index'].log.current.unfreezeID)' <<<"$ret")
+            unfreeze_id=$(jq '(.result.receipt.logs['"$uid_index"'].log.current.unfreezeID)' <<<"$ret")
             #echo "${unfreeze_id}"
             unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
             uid=${unfreeze_id2%\"}
