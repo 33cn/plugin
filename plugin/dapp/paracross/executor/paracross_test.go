@@ -513,7 +513,7 @@ func (s *VoteTestSuite) TestVoteTx() {
 	recpt6 := &types.ReceiptData{Ty: types.ExecPack}
 	recpt7 := &types.ReceiptData{Ty: types.ExecOk}
 	recpt8 := &types.ReceiptData{Ty: types.ExecOk}
-	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7,recpt8}
+	receipts := []*types.ReceiptData{recpt0, recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7, recpt8}
 	s.exec.SetReceipt(receipts)
 	set, err := s.exec.ExecLocal(tx, recpt0, 0)
 	s.Nil(err)
@@ -703,9 +703,9 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 }
 
 func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
-	status := &pt.ParacrossNodeStatus{MainBlockHash:[]byte("hash"),MainBlockHeight:0,Title:Title}
+	status := &pt.ParacrossNodeStatus{MainBlockHash: []byte("hash"), MainBlockHeight: 0, Title: Title}
 
-	tx, err := pt.CreateRawCommitTx4MainChain(status,Title + pt.ParaX,0)
+	tx, err := pt.CreateRawCommitTx4MainChain(status, Title+pt.ParaX, 0)
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
@@ -719,8 +719,6 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 
 	return tx, nil
 }
-
-
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
 	group, err := types.CreateTxGroup(txs)
