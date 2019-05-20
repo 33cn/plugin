@@ -10,11 +10,6 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-type MeansOpt struct {
-	FixAmount      *FixAmount      `json:"FixAmount,omitempty"`
-	LeftProportion *LeftProportion `json:"LeftProportion,omitempty"`
-}
-
 type parseUnfreezeCreate struct {
 	StartTime   int64  `protobuf:"varint,1,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	AssetExec   string `protobuf:"bytes,2,opt,name=assetExec,proto3" json:"assetExec,omitempty"`
@@ -22,11 +17,11 @@ type parseUnfreezeCreate struct {
 	TotalCount  int64  `protobuf:"varint,4,opt,name=totalCount,proto3" json:"totalCount,omitempty"`
 	Beneficiary string `protobuf:"bytes,5,opt,name=beneficiary,proto3" json:"beneficiary,omitempty"`
 	Means       string `protobuf:"bytes,6,opt,name=means,proto3" json:"means,omitempty"`
-	// MeansOpt             MeansOpt `json:"MeansOpt,omitempty"`
 	FixAmount      *FixAmount      `json:"fixAmount,omitempty"`
 	LeftProportion *LeftProportion `json:"leftProportion,omitempty"`
 }
 
+// UnmarshalJSON 解析UnfreezeCreate
 func (m *UnfreezeCreate) UnmarshalJSON(v []byte) error {
 	var c parseUnfreezeCreate
 	err := json.Unmarshal(v, &c)
