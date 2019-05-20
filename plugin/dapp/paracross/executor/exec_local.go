@@ -5,11 +5,12 @@
 package executor
 
 import (
+	"bytes"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"bytes"
 )
 
 //ExecLocal_Commit commit tx local db process
@@ -127,8 +128,8 @@ func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *t
 }
 
 func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) error {
-	isCommitTx :=make(map[string]bool)
-	var curTxHashs, paraTxHashs,crossTxHashs [][]byte
+	isCommitTx := make(map[string]bool)
+	var curTxHashs, paraTxHashs, crossTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
@@ -137,22 +138,22 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 			var payload pt.ParacrossAction
 			err := types.Decode(tx.Payload, &payload)
 			if err != nil {
-				clog.Error("setMinerTxResult","txHash",common.ToHex(hash))
+				clog.Error("setMinerTxResult", "txHash", common.ToHex(hash))
 				return err
 			}
-			if payload.Ty == pt.ParacrossActionCommit{
-				isCommitTx[string(hash)]=true
+			if payload.Ty == pt.ParacrossActionCommit {
+				isCommitTx[string(hash)] = true
 			}
 		}
 		//跨链交易包含了主链交易，需要过滤出来
-		if types.IsMyParaExecName(string(tx.Execer)) && !isCommitTx[string(hash)]{
+		if types.IsMyParaExecName(string(tx.Execer)) && !isCommitTx[string(hash)] {
 			paraTxHashs = append(paraTxHashs, hash)
 		}
 	}
 	totalCrossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
-	for _,crossHash:=range totalCrossTxHashs{
-		if !isCommitTx[string(crossHash)]{
-			crossTxHashs=append(crossTxHashs,crossHash)
+	for _, crossHash := range totalCrossTxHashs {
+		if !isCommitTx[string(crossHash)] {
+			crossTxHashs = append(crossTxHashs, crossHash)
 		}
 	}
 	payload.Status.TxHashs = paraTxHashs
@@ -198,7 +199,7 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 		setMinerTxResultFork(payload, txs[1:], e.GetReceipt()[1:])
 	} else {
 		err := setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
-		if err != nil{
+		if err != nil {
 			return nil, err
 		}
 	}
