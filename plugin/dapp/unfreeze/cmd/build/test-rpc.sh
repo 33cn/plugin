@@ -38,7 +38,6 @@ function Chain33_SendToAddress() {
 
 }
 
-
 function sign_raw_tx() {
     txHex="$1"
     priKey="$2"
