@@ -75,8 +75,8 @@ func (u *UnfreezeType) GetTypeMap() map[string]int32 {
 }
 
 // CreateTx 创建交易
-func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	tlog.Debug("UnfreezeType.CreateTx", "action", action)
+func (u *UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+	tlog.Error("UnfreezeType.CreateTx", "action", action, "message", string(message))
 	if action == Action_CreateUnfreeze {
 		var param UnfreezeCreate
 		err := types.JSONToPB(message, &param)
@@ -107,12 +107,13 @@ func (u UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.T
 }
 
 // RPC_UnfreezeCreateTx 创建冻结合约交易入口
-func (u UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
+func (u *UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
 	return CreateUnfreezeCreateTx(types.GetParaName(), parm)
 }
 
 // CreateUnfreezeCreateTx 创建冻结合约交易
 func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transaction, error) {
+	tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -140,7 +141,7 @@ func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transact
 }
 
 // RPC_UnfreezeWithdrawTx 创建提币交易入口
-func (u UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
+func (u *UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
 	return CreateUnfreezeWithdrawTx(types.GetParaName(), parm)
 }
 
@@ -168,7 +169,7 @@ func CreateUnfreezeWithdrawTx(title string, parm *UnfreezeWithdraw) (*types.Tran
 }
 
 // RPC_UnfreezeTerminateTx 创建终止冻结合约入口
-func (u UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
+func (u *UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
 	return CreateUnfreezeTerminateTx(types.GetParaName(), parm)
 }
 

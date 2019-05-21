@@ -45,7 +45,6 @@ func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Messag
 	var ticketIds string
 	var privHashs []byte
 	var vrfHashs []byte
-	var vrfProofs []byte
 
 	for _, ticketAction := range txActions {
 		//tlog.Debug("GetRandNum", "modify", ticketAction.GetMiner().GetModify(), "bits", ticketAction.GetMiner().GetBits(), "ticketId", ticketAction.GetMiner().GetTicketId(), "PrivHash", ticketAction.GetMiner().GetPrivHash())
@@ -54,12 +53,11 @@ func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Messag
 		ticketIds += ticketAction.GetMiner().GetTicketId()
 		privHashs = append(privHashs, ticketAction.GetMiner().GetPrivHash()...)
 		vrfHashs = append(vrfHashs, ticketAction.GetMiner().GetVrfHash()...)
-		vrfProofs = append(vrfProofs, ticketAction.GetMiner().GetVrfProof()...)
 	}
 
 	newmodify := fmt.Sprintf("%s:%s:%d:%s", string(modifies), ticketIds, bits, string(privHashs))
 	if len(vrfHashs) != 0 {
-		newmodify = newmodify + ":" + fmt.Sprintf("%x:%x", vrfHashs, vrfProofs)
+		newmodify = fmt.Sprintf("%s:%x", newmodify, vrfHashs)
 	}
 
 	modify := common.Sha256([]byte(newmodify))

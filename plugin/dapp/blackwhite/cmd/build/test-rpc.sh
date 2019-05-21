@@ -4,9 +4,7 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-PARA_HTTP=""
 CASE_ERR=""
-UNIT_HTTP=""
 
 # $2=0 means true, other false
 echo_rst() {
@@ -26,6 +24,19 @@ glAddr=""
 gameAddr1=""
 gameAddr2=""
 gameAddr3=""
+bwExecAddr=""
+
+init() {
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+
+    if [ "$ispara" == true ]; then
+        bwExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.blackwhite"}]}' ${MAIN_HTTP} | jq -r ".result")
+    else
+        bwExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"blackwhite"}]}' ${MAIN_HTTP} | jq -r ".result")
+    fi
+    echo "bwExecAddr=$bwExecAddr"
+}
 
 chain33_NewAccount() {
     label=$1
@@ -60,8 +71,9 @@ chain33_SendToAddress() {
     from=$1
     to=$2
     amount=$3
+    http=$4
     note="test"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
     ok=$(jq '(.error|not)' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
@@ -72,14 +84,14 @@ chain33_SendTransaction() {
     rawTx=$1
     addr=$2
     #签名交易
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 
     signTx=$(echo "${resp}" | jq -r ".result")
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
@@ -92,7 +104,7 @@ chain33_SendTransaction() {
 blackwhite_BlackwhiteCreateTx() {
     #创建交易
     addr=$1
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
@@ -109,7 +121,7 @@ blackwhite_BlackwhitePlayTx() {
     round1=$2
     round2=$3
     round3=$4
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhitePlayTx","params":[{"gameID":"'"$gID"'","amount":100000000,"Fee":1000000,"hashValues":["'"$round1"'","'"$round2"'","'"$round3"'"]}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhitePlayTx","params":[{"gameID":"'"$gID"'","amount":100000000,"Fee":1000000,"hashValues":["'"$round1"'","'"$round2"'","'"$round3"'"]}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
@@ -122,7 +134,7 @@ blackwhite_BlackwhitePlayTx() {
 blackwhite_BlackwhiteShowTx() {
     addr=$1
     sec=$2
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteShowTx","params":[{"gameID":"'"$gID"'","secret":"'"$sec"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteShowTx","params":[{"gameID":"'"$gID"'","secret":"'"$sec"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
@@ -134,7 +146,7 @@ blackwhite_BlackwhiteShowTx() {
 
 blackwhite_BlackwhiteTimeoutDoneTx() {
     gameID=$1
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteTimeoutDoneTx","params":[{"gameID":"'"$gameID"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteTimeoutDoneTx","params":[{"gameID":"'"$gameID"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [ "$ok" == null ]
     rst=$?
@@ -145,7 +157,7 @@ blackwhite_GetBlackwhiteRoundInfo() {
     gameID=$1
     execer="blackwhite"
     funcName="GetBlackwhiteRoundInfo"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.round | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout"),true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
@@ -157,7 +169,7 @@ blackwhite_GetBlackwhiteByStatusAndAddr() {
     addr=$2
     execer="blackwhite"
     funcName="GetBlackwhiteByStatusAndAddr"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"status":5,"address":"'"$addr"'","count":1,"direction":0,"index":-1}}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"status":5,"address":"'"$addr"'","count":1,"direction":0,"index":-1}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.round[0].createAddr == "'"$addr"'") and (.result.round[0].status == 5) and (.result.round[0] | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout", "winner"),true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
@@ -168,7 +180,7 @@ blackwhite_GetBlackwhiteloopResult() {
     gameID=$1
     execer="blackwhite"
     funcName="GetBlackwhiteloopResult"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'","loopSeq":0}}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'","loopSeq":0}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.gameID == "'"$gameID"'") and (.result.results|length >= 1)' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
@@ -197,17 +209,24 @@ function run_testcases() {
 
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000
+
+    #主链中相应账户需要转帐
+    M_HTTP=${MAIN_HTTP//8901/8801}
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${M_HTTP}"
+
+    #平行链相应账户需要转帐
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${MAIN_HTTP}"
 
     block_wait 1
 
     #给游戏合约中转帐
-    bwExecAddr="146wei89zoX5TNQKATBJmduNPEtSKTXi1z"
-    chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000
-    chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000
+    chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
 
     block_wait 1
     blackwhite_BlackwhiteCreateTx "${gameAddr1}"
@@ -232,13 +251,10 @@ function run_testcases() {
 }
 
 function main() {
-    local ip=$1
-    MAIN_HTTP="http://$ip:8801"
-    PARA_HTTP="http://$ip:8901"
-    echo "=========== # paracross rpc test ============="
-    echo "main_ip=$MAIN_HTTP,para_ip=$PARA_HTTP"
+    MAIN_HTTP="$1"
+    echo "main_ip=$MAIN_HTTP"
 
-    UNIT_HTTP=$MAIN_HTTP
+    init
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then

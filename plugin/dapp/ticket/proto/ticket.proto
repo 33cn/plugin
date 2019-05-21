@@ -41,12 +41,10 @@ message TicketMiner {
     bytes  modify   = 4;
     //挖到区块时公开
     bytes privHash = 5;
-    //VRF公钥
-    bytes pubKey = 6;
     //VRF计算得到的hash
-    bytes vrfHash = 7;
+    bytes vrfHash = 6;
     //VRF计算得到的proof
-    bytes vrfProof = 8;
+    bytes vrfProof = 7;
 }
 
 message TicketMinerOld {
