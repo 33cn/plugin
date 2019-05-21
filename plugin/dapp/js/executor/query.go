@@ -9,7 +9,7 @@ import (
 )
 
 func (c *js) Query_Query(payload *jsproto.Call) (types.Message, error) {
-	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
+	execer := c.userExecName(payload.Name)
 	c.prefix = types.CalcLocalPrefix([]byte(execer))
 	jsvalue, err := c.callVM("query", payload, nil, 0, nil)
 	if err != nil {
