@@ -710,13 +710,15 @@ func (client *Client) createBlock() (*types.Block, *types.Block) {
 func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*types.Block, *types.Block, [][]byte) {
 	lastBlock := client.GetCurrentBlock()
 	newblock := *block
-	//需要去重复tx
+	newblock.BlockTime = types.Now().Unix()
+
+	//需要去重复tx并删除过期tx交易
 	if lastBlock.Height != newblock.Height-1 {
 		newblock.Txs = client.CheckTxDup(newblock.Txs)
+		newblock.Txs = client.CheckTxExpire(newblock.Txs, lastBlock.Height+1, newblock.BlockTime)
 	}
 	newblock.ParentHash = lastBlock.Hash()
 	newblock.Height = lastBlock.Height + 1
-	newblock.BlockTime = types.Now().Unix()
 	cfg := types.GetP(newblock.Height)
 	var txs []*types.Transaction
 	if len(newblock.Txs) < int(cfg.MaxTxNumber-1) {
