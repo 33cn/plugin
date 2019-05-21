@@ -25,7 +25,7 @@ echo_rst() {
     fi
 }
 
-oracle_AddPublisher(){
+oracle_AddPublisher() {
     echo "=============== # Add publisher ==============="
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ispara=$ispara"
@@ -43,11 +43,11 @@ oracle_publish_transaction() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-        echo_rst "$FUNCNAME" "$?"
-        rawtx=$(jq -r ".result" <<<"$resp")
-        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
-        eventId="${txhash}"
-        echo "eventId $eventId"
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    eventId="${txhash}"
+    echo "eventId $eventId"
 }
 
 oracle_prePublishResult_transaction() {
@@ -58,9 +58,9 @@ oracle_prePublishResult_transaction() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-        echo_rst "$FUNCNAME" "$?"
-        rawtx=$(jq -r ".result" <<<"$resp")
-        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
 }
 
 oracle_eventAbort_transaction() {
@@ -71,9 +71,9 @@ oracle_eventAbort_transaction() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-        echo_rst "$FUNCNAME" "$?"
-        rawtx=$(jq -r ".result" <<<"$resp")
-        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
 }
 
 oracle_resultAbort_transaction() {
@@ -84,9 +84,9 @@ oracle_resultAbort_transaction() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-        echo_rst "$FUNCNAME" "$?"
-        rawtx=$(jq -r ".result" <<<"$resp")
-        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
 }
 
 oracle_publishResult_transaction() {
@@ -97,9 +97,9 @@ oracle_publishResult_transaction() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-        echo_rst "$FUNCNAME" "$?"
-        rawtx=$(jq -r ".result" <<<"$resp")
-        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
 }
 
 # 签名并发送
