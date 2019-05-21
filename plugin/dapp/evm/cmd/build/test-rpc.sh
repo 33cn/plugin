@@ -4,9 +4,10 @@
 MAIN_HTTP=""
 CASE_ERR=""
 evm_createContract_unsignedTx="0a0365766d129407228405608060405234801561001057600080fd5b50610264806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063b8e010de1461003b578063cc80f6f314610045575b600080fd5b6100436100c2565b005b61004d610109565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561008757818101518382015260200161006f565b50505050905090810190601f1680156100b45780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b60408051808201909152600d8082527f5468697320697320746573742e000000000000000000000000000000000000006020909201918252610106916000916101a0565b50565b60008054604080516020601f60026000196101006001881615020190951694909404938401819004810282018101909252828152606093909290918301828280156101955780601f1061016a57610100808354040283529160200191610195565b820191906000526020600020905b81548152906001019060200180831161017857829003601f168201915b505050505090505b90565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106101e157805160ff191683800117855561020e565b8280016001018555821561020e579182015b8281111561020e5782518255916020019190600101906101f3565b5061021a92915061021e565b5090565b61019d91905b8082111561021a576000815560010161022456fea165627a7a72305820fec5dd5ca2cb47523ba08c04749bc5c14c435afee039f3047c2b7ea2faca737800293a8a025b7b22636f6e7374616e74223a66616c73652c22696e70757473223a5b5d2c226e616d65223a22736574222c226f757470757473223a5b5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a226e6f6e70617961626c65222c2274797065223a2266756e6374696f6e227d2c7b22636f6e7374616e74223a747275652c22696e70757473223a5b5d2c226e616d65223a2273686f77222c226f757470757473223a5b7b226e616d65223a22222c2274797065223a22737472696e67227d5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a2276696577222c2274797065223a2266756e6374696f6e227d5d20c0c7ee04309aedc4bcfba5beca5f3a223139746a5335316b6a7772436f535153313355336f7765376759424c6653666f466d"
-evm_preExecContract_unsignedTx="0a4b757365722e65766d2e30786437343339376531363435316639643734316362656264393930653765633830366366356535313431376536343738306633376264333061353662383635373312073a05736574282920e0914330ddf78ef3deeee4d1153a2231466a54374243474c446f4b676571676a7a6d76527671796f537179454c57514c6f"
+evm_preExecContract_unsignedTx="0a4b757365722e65766d2e30783438316638393137353832333633613536323531343862646464383061643333363964363361306565393261623561323634376531393830373361316234393112073a05736574282920e0914330a083c5f68fccd5927a3a21317732485842757468424b6567773368524668334838487274426b585458323456"
 evm_execContract_unsignedTx="0a4b757365722e65766d2e30786437343339376531363435316639643734316362656264393930653765633830366366356535313431376536343738306633376264333061353662383635373312083a0673686f77282920e0914330efb5ebb5cda7e5a3513a2231466a54374243474c446f4b676571676a7a6d76527671796f537179454c57514c6f"
-evm_creatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+evm_creatorAddr="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+evm_contractAddr=""
 evm_addr=""
 
 
@@ -89,19 +90,33 @@ function evm_CreateContract() {
         echo_rst "CreateContract sendSignedTx" "$rst"
     fi
 
-    queryTransaction ".receipt.tyName" "ExecOk"
+    block_wait 1
+
+    queryTransaction ".result.receipt.tyName" "ExecOk"
     if [ $? -ne 0 ]; then
         rst=$?
         echo_rst "CreateContract queryExecRes" "$rst"
     fi
 }
 
+function evm_addressCheck() {
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    bContract=`echo ${res} | jq -r ".result.contract"`
+    contractAddr=`echo ${res} | jq -r ".result.contractAddr"`
+    if [ "${bContract}" == "true" -a "${contractAddr}" == "${evm_contractAddr}" ]; then
+        echo_rst "evm address check" 0
+    else
+        echo_rst "evm address check" 1
+    fi
+
+    return
+}
 function evm_CallContract() {
     op=$1
     if [ "${op}" == "preExec" ]; then
-        unsignedTx="${evm_preExecContract_unsignedTx}"
+        unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmCallTx","params":[{"fee":1,"caller":"'${evm_creatorAddr}'", "expire":"120s", "exec":"'${evm_addr}'", "abi": "set()"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     elif [ "${op}" == "Exec" ]; then
-        unsignedTx="${evm_execContract_unsignedTxevm}"
+        unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmCallTx","params":[{"fee":1,"caller":"'${evm_creatorAddr}'", "expire":"120s", "exec":"'${evm_addr}'", "abi": "show()"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     else
         rst=1
         echo_rst "CallContract invalid param" "$rst"
@@ -122,19 +137,98 @@ function evm_CallContract() {
         return
     fi
 
-    queryTransaction ".receipt.tyName" "ExecOk"
-    rst=$?
-    echo_rst "CallContract queryExecRes" "$rst"
-    return
+    block_wait 1
+
+    queryTransaction ".result.receipt.tyName" "ExecOk"
+    if [ $? -ne 0 ]; then
+        rst=$?
+        echo_rst "CreateContract queryExecRes" "$rst"
+    fi
 }
 
 function evm_abiGet() {
-    abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_addr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.abi")
     rst=$?
     echo_rst "CallContract queryExecRes" "$rst"
     return
 }
 
+function evm_transfer() {
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmTransferTx","params":[{"amount":1,"caller":"'${evm_creatorAddr}'","expire":"", "exec":"'${evm_addr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        rst=1
+        echo_rst "evm transfer create tx" "$rst"
+        return
+    fi
+
+    signRawTx "${unsignedTx}" "${evm_creatorAddr}"
+    if [ $? -ne 0 ]; then
+        rst=$?
+        echo_rst "evm transfer signRawTx" "$rst"
+        return
+    fi
+
+    sendSignedTx
+    if [ $? -ne 0 ]; then
+        rst=$?
+        echo_rst "evm transfer sendSignedTx" "$rst"
+        return
+    fi
+
+    block_wait 1
+
+    queryTransaction ".result.receipt.tyName" "ExecOk"
+    rst=$?
+    echo_rst "evm transfer queryExecRes" "$rst"
+    return
+}
+
+function evm_getBalance() {
+    expectBalance=$1
+    echo "This is evm get balance test."
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    balance=`echo ${res} | jq -r ".result[0].balance"`
+    addr=`echo ${res} | jq -r ".result[0].addr"`
+
+    if [ "${balance}" == "${expectBalance}" -a "${addr}" == "${evm_creatorAddr}" ]; then
+        echo_rst "evm getBalance" 0
+    else
+        echo_rst "evm getBalance" 1
+    fi
+
+    return
+}
+
+function evm_withDraw() {
+    echo "In evm withDraw test."
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmWithdrawTx","params":[{"amount":1,"caller":"'${evm_creatorAddr}'","expire":"", "exec":"'${evm_addr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        rst=1
+        echo_rst "evm withdraw create tx" "$rst"
+        return
+    fi
+
+    signRawTx "${unsignedTx}" "${evm_creatorAddr}"
+    if [ $? -ne 0 ]; then
+        rst=$?
+        echo_rst "evm withdraw signRawTx" "$rst"
+        return
+    fi
+
+    sendSignedTx
+    if [ $? -ne 0 ]; then
+        rst=$?
+        echo_rst "evm withdraw sendSignedTx" "$rst"
+        return
+    fi
+
+    block_wait 1
+
+    queryTransaction ".result.receipt.tyName" "ExecOk"
+    rst=$?
+    echo_rst "evm withdraw queryExecRes" "$rst"
+    return
+}
 function signRawTx() {
     unsignedTx=$1
     addr=$2
@@ -160,37 +254,50 @@ function sendSignedTx() {
 function queryTransaction() {
     validator=$1
     expectRes=$2
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "'${validator}'")
+    res=`curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}"`
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
-        evm_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".receipt.logs[1].log.contractName")
+        local res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+        if [ "${evm_addr}" == "" ]; then
+            evm_addr=`echo "${res}"  | jq -r ".result.receipt.logs[1].log.contractName"`
+        fi
+
+        if [ "${evm_contractAddr}" == "" ]; then
+            evm_contractAddr=`echo "${res}" | jq -r ".result.receipt.logs[1].log.contractAddr"`
+        fi
         return 0
     fi
 }
 
 function init() {
-    chain33_ImportPrivkey "${MAIN_HTTP}" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
 
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     local evm_addr=""
-    if [ "$ispara" == true ]; then
+    if [ "$ievm_addrspara" == true ]; then
         evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.evm"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
         evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"evm"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
     echo "evm=$evm_addr"
 
-    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
     Chain33_SendToAddress "$from" "$evm_addr" 10000000000
     block_wait 1
 }
 function run_test() {
     local ip=$1
     evm_CreateContract
-    evm_CallContract
+    evm_addressCheck
+    evm_CallContract preExec
+    evm_CallContract Exec
     evm_abiGet
+    evm_transfer
+    evm_getBalance 100000000
+    evm_withDraw
+    evm_getBalance 0
 }
 
 function main() {
