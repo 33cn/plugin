@@ -19,6 +19,7 @@ message ParacrossHeightStatus {
     string                 title   = 2;
     int64                  height  = 3;
     ParacrossStatusDetails details = 4;
+    int64                  mainHeight    = 5;
 }
 
 message ParacrossStatus {
@@ -39,6 +40,7 @@ message ParaNodeAddrConfig{
     string op                   = 2;
     string addr                 = 3;
     string value                = 4;
+    int64  coinsFrozen          = 5;
 
 }
 
@@ -51,7 +53,8 @@ message ParaNodeAddrStatus{
     int32  status               = 1;
     string title                = 2;
     string applyAddr            = 3;
-    ParaNodeVoteDetail votes    = 4;
+    int64  coinsFrozen          = 4;
+    ParaNodeVoteDetail votes    = 5;
 }
 
 
@@ -79,6 +82,32 @@ message ReceiptParaNodeVoteDone {
 
 }
 
+message ParaNodeGroupConfig {
+    string title                = 1;
+    uint32 op                   = 2;
+    string addrs                = 3;
+    int64  coinsFrozen          = 4;
+    uint32 emptyBlockInterval   = 5;
+}
+
+
+message ParaNodeGroupStatus {
+    int32  status               = 1;
+    string title                = 2;
+    string applyAddr            = 3;
+    int64  coinsFrozen          = 4;
+    uint32 emptyBlockInterval   = 5;
+    int64  mainHeight           = 6;
+}
+
+message ReceiptParaNodeGroupConfig {
+    string                 addr    = 1;
+    ParaNodeGroupConfig    config  = 2;
+    ParaNodeGroupStatus    prev    = 3;
+    ParaNodeGroupStatus    current = 4;
+}
+
+
 // node query
 message ReqParacrossNodeInfo {
     string title  = 1;
@@ -88,6 +117,10 @@ message ReqParacrossNodeInfo {
 
 message RespParacrossNodeAddrs {
     repeated ParaNodeAddrStatus addrs = 1;
+}
+
+message RespParacrossNodeGroups {
+    repeated ParaNodeGroupStatus addrs = 1;
 }
 
 message ParaBlock2MainMap {
@@ -137,6 +170,8 @@ message ParacrossAction {
         AssetsWithdraw        withdraw       = 7;
         AssetsTransferToExec  transferToExec = 8;
         ParaNodeAddrConfig    nodeConfig     = 9;
+        ParaNodeGroupConfig   nodeGroupConfig = 10;
+
 
     }
     int32 ty = 2;

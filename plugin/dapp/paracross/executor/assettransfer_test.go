@@ -17,6 +17,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
@@ -26,6 +27,11 @@ import (
 var (
 	Amount = int64(1 * types.Coin)
 )
+
+func para_init(title string) {
+	cfg, _ := types.InitCfgString(testnode.DefaultConfig)
+	types.Init(title, cfg)
+}
 
 // 构建跨链交易, 用1个节点即可， 不测试共识
 //    assetTransfer
@@ -156,7 +162,7 @@ func (suite *AssetTransferTestSuite) TestExecTransfer() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferInPara() {
-	types.Init(Title, nil)
+	para_init(Title)
 	toB := Nodes[1]
 
 	tx, err := createAssetTransferTx(suite.Suite, PrivKeyA, toB)
@@ -260,7 +266,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferTokenInPara() {
-	types.Init(Title, nil)
+	para_init(Title)
 	toB := Nodes[1]
 
 	tx, err := createAssetTransferTokenTx(suite.Suite, PrivKeyA, toB)

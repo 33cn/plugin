@@ -25,6 +25,7 @@ import (
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
+	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
@@ -32,8 +33,6 @@ import (
 const (
 	addAct int64 = 1 //add para block action
 	delAct int64 = 2 //reference blockstore.go, del para block action
-
-	paraCrossTxCount = 2 //current only support 2 txs for cross
 
 	minBlockNum = 6 //min block number startHeight before lastHeight in mainchain
 )
@@ -50,7 +49,8 @@ var (
 	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	searchHashMatchDepth            int32 = 100
 	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
-	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
+	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
+	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
 )
 
 func init() {
@@ -82,6 +82,7 @@ type subConfig struct {
 	GenesisAmount                   int64  `json:"genesisAmount,omitempty"`
 	MainBlockHashForkHeight         int64  `json:"mainBlockHashForkHeight,omitempty"`
 	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
+	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
 }
 
 // New function to init paracross env
@@ -115,6 +116,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.MainParaSelfConsensusForkHeight > 0 {
 		mainParaSelfConsensusForkHeight = subcfg.MainParaSelfConsensusForkHeight
+	}
+
+	if subcfg.MainForkParacrossCommitTx > 0 {
+		mainForkParacrossCommitTx = subcfg.MainForkParacrossCommitTx
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -151,6 +156,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
+		minerSwitch:     make(chan bool, 1),
 		quit:            make(chan struct{}),
 	}
 	c.SetChild(para)
@@ -267,56 +273,6 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 
-//1. 如果涉及跨链合约，如果有超过两条平行链的交易被判定为失败，交易组会执行不成功,也不PACK。（这样的情况下，主链交易一定会执行不成功）
-//2. 如果不涉及跨链合约，那么交易组没有任何规定，可以是20比，10条链。 如果主链交易有失败，平行链也不会执行
-//3. 如果交易组有一个ExecOk,主链上的交易都是ok的，可以全部打包
-//4. 如果全部是ExecPack，有两种情况，一是交易组所有交易都是平行链交易，另一是主链有交易失败而打包了的交易，需要检查LogErr，如果有错，全部不打包
-func calcParaCrossTxGroup(tx *types.Transaction, main *types.BlockDetail, index int) ([]*types.Transaction, int) {
-	var headIdx int
-
-	for i := index; i >= 0; i-- {
-		if bytes.Equal(tx.Header, main.Block.Txs[i].Hash()) {
-			headIdx = i
-			break
-		}
-	}
-
-	endIdx := headIdx + int(tx.GroupCount)
-	for i := headIdx; i < endIdx; i++ {
-		if types.IsMyParaExecName(string(main.Block.Txs[i].Execer)) {
-			continue
-		}
-		if main.Receipts[i].Ty == types.ExecOk {
-			return main.Block.Txs[headIdx:endIdx], endIdx
-		}
-
-		for _, log := range main.Receipts[i].Logs {
-			if log.Ty == types.TyLogErr {
-				return nil, endIdx
-			}
-		}
-	}
-	//全部是平行链交易 或主链执行非失败的tx
-	return main.Block.Txs[headIdx:endIdx], endIdx
-}
-
-func (client *client) FilterTxsForPara(main *types.BlockDetail) []*types.Transaction {
-	var txs []*types.Transaction
-	for i := 0; i < len(main.Block.Txs); i++ {
-		tx := main.Block.Txs[i]
-		if types.IsMyParaExecName(string(tx.Execer)) {
-			if tx.GroupCount >= paraCrossTxCount {
-				mainTxs, endIdx := calcParaCrossTxGroup(tx, main, i)
-				txs = append(txs, mainTxs...)
-				i = endIdx - 1
-				continue
-			}
-			txs = append(txs, tx)
-		}
-	}
-	return txs
-}
-
 //get the last sequence in parachain
 func (client *client) GetLastSeq() (int64, error) {
 	blockedSeq, err := client.GetAPI().GetLastBlockSequence()
@@ -365,7 +321,7 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 	// 平行链创世区块特殊场景：
 	// 1,创世区块seq从-1开始，也就是从主链0高度同步区块，主链seq从0开始，平行链对seq=0的区块做特殊处理，不校验parentHash
 	// 2,创世区块seq不是-1， 也就是从主链seq=n高度同步区块，此时创世区块倒退一个seq，blockedSeq=n-1，
-	// 由于创世区块本身没有记录主块hash,需要在此处获取，有可能n-1 seq 是回退block 获取的Hash不对，这里获取主链第n seq的parentHash
+	// 由于创世区块本身没有记录主块hash,需要通过最初记录的seq获取，有可能n-1 seq 是回退block 获取的Hash不对，这里获取主链第n seq的parentHash
 	// 在genesis create时候直接设mainhash也可以，但是会导致已有平行链所有block hash变化
 	if lastBlock.Height == 0 && blockedSeq > -1 {
 		main, err := client.GetBlockOnMainBySeq(blockedSeq + 1)
@@ -472,7 +428,7 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			(bytes.Equal(preMainBlockHash, blockSeq.Detail.Block.ParentHash) && blockSeq.Seq.Type == addAct) ||
 			(bytes.Equal(preMainBlockHash, blockSeq.Seq.Hash) && blockSeq.Seq.Type == delAct) {
 
-			txs := client.FilterTxsForPara(blockSeq.Detail)
+			txs := paraexec.FilterTxsForPara(types.GetTitle(), blockSeq.Detail)
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
 
 			client.mtx.Lock()
@@ -694,7 +650,7 @@ func (client *client) CreateBlock() {
 }
 
 // miner tx need all para node create, but not all node has auth account, here just not sign to keep align
-func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.BlockSeq) error {
+func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *types.BlockSeq, txs []*types.Transaction) error {
 	status := &pt.ParacrossNodeStatus{
 		Title:           types.GetTitle(),
 		Height:          block.Height,
@@ -703,7 +659,17 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 		MainBlockHash:   main.Seq.Hash,
 		MainBlockHeight: main.Detail.Block.Height,
 	}
-	tx, err := paracross.CreateRawMinerTx(&pt.ParacrossMinerAction{
+
+	//获取当前区块的所有原始tx hash 和跨链hash作为bitmap base hashs，因为有可能在执行过程中有些tx 执行error被剔除掉
+	if main.Detail.Block.Height >= mainForkParacrossCommitTx {
+		for _, tx := range txs {
+			status.TxHashs = append(status.TxHashs, tx.Hash())
+		}
+		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
+		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
+	}
+
+	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
 		Status:          status,
 		IsSelfConsensus: isParaSelfConsensusForked(status.MainBlockHeight),
 	})
@@ -722,7 +688,7 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	newblock.ParentHash = lastBlock.Hash()
 	newblock.Height = lastBlock.Height + 1
 	newblock.Txs = txs
-	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock)
+	err := client.addMinerTx(lastBlock.StateHash, &newblock, mainBlock, txs)
 	if err != nil {
 		return err
 	}
@@ -834,7 +800,7 @@ func checkMinerTx(current *types.BlockDetail) error {
 	if err != nil {
 		return err
 	}
-	if action.GetTy() != paracross.ParacrossActionMiner {
+	if action.GetTy() != pt.ParacrossActionMiner {
 		return paracross.ErrParaMinerTxType
 	}
 	//判断交易执行是否OK
@@ -851,16 +817,22 @@ func checkMinerTx(current *types.BlockDetail) error {
 
 // Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户
 func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
-	plog.Info("Query_CreateNewAccount", "acc", acc)
+	if acc == nil {
+		return nil, types.ErrInvalidParam
+	}
+	plog.Info("Query_CreateNewAccount", "acc", acc.Addr)
 	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
-	// 需要实现具体处理 to be。。。。
+	client.commitMsgClient.onWalletAccount(acc)
 	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }
 
 // Query_WalletStatus 通知para共识模块钱包锁状态有变化
 func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
-	plog.Info("Query_WalletStatus", "walletStatus", walletStatus)
+	if walletStatus == nil {
+		return nil, types.ErrInvalidParam
+	}
+	plog.Info("Query_WalletStatus", "walletStatus", walletStatus.IsWalletLock)
 	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
-	// 需要实现具体处理 to be。。。。
+	client.commitMsgClient.onWalletStatus(walletStatus)
 	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }

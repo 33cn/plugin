@@ -119,7 +119,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 	privacyInfo, _ := mock.policy.getPrivacyKeyPairs()
 	dbbatch := mock.store.NewBatch(true)
 	for n := 0; n < count; n++ {
-		tx := mock.createPublic2PrivacyTx(&types.ReqCreateTransaction{
+		tx := mock.createPublic2PrivacyTx(&ty.ReqCreatePrivacyTx{
 			Tokenname:  mock.tokenName,
 			Type:       1,
 			Amount:     amount,
@@ -188,7 +188,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 	dbbatch.Write()
 }
 
-func (mock *PrivacyMock) createPublic2PrivacyTx(req *types.ReqCreateTransaction) *types.Transaction {
+func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *types.Transaction {
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		return nil

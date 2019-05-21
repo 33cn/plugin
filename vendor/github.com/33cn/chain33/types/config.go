@@ -230,7 +230,7 @@ func S(key string, value interface{}) {
 	mu.Lock()
 	defer mu.Unlock()
 	if strings.HasPrefix(key, "config.") {
-		if !isLocal() { //only local can modify for test
+		if !isLocal() && !isTestPara() { //only local and test para can modify for test
 			panic("prefix config. is readonly")
 		} else {
 			tlog.Error("modify " + key + " is only for test")
@@ -271,8 +271,12 @@ func Init(t string, cfg *Config) {
 		if cfg.Exec.MaxExecFee < cfg.Mempool.MaxTxFee {
 			panic("config must meet: mempool.maxTxFee <= exec.maxExecFee")
 		}
-		setMinerExecs(cfg.Consensus.MinerExecs)
-		setMinFee(cfg.Exec.MinExecFee)
+		if cfg.Consensus != nil {
+			setMinerExecs(cfg.Consensus.MinerExecs)
+		}
+		if cfg.Exec != nil {
+			setMinFee(cfg.Exec.MinExecFee)
+		}
 		setChainConfig("FixTime", cfg.FixTime)
 		if cfg.Exec.MaxExecFee > 0 {
 			setChainConfig("MaxFee", cfg.Exec.MaxExecFee)
@@ -298,7 +302,9 @@ func Init(t string, cfg *Config) {
 	//如果para 没有配置fork，那么默认所有的fork 为 0（一般只用于测试）
 	if isPara() && (cfg == nil || cfg.Fork == nil || cfg.Fork.System == nil) {
 		//keep superManager same with mainnet
-		setForkForPara(title)
+		if !cfg.EnableParaFork {
+			setForkForParaZero(title)
+		}
 		if mver[title] != nil {
 			mver[title].UpdateFork()
 		}
@@ -351,6 +357,10 @@ func isPara() bool {
 	return strings.Count(title, ".") == 3 && strings.HasPrefix(title, ParaKeyX)
 }
 
+func isTestPara() bool {
+	return strings.Count(title, ".") == 3 && strings.HasPrefix(title, ParaKeyX) && strings.HasSuffix(title, "test.")
+}
+
 // IsPara 是否平行链
 func IsPara() bool {
 	mu.Lock()
@@ -367,6 +377,23 @@ func IsParaExecName(exec string) bool {
 //IsMyParaExecName 是否是我的para链的执行器
 func IsMyParaExecName(exec string) bool {
 	return IsParaExecName(exec) && strings.HasPrefix(exec, GetTitle())
+}
+
+//IsSpecificParaExecName 是否是某一个平行链的执行器
+func IsSpecificParaExecName(title, exec string) bool {
+	return IsParaExecName(exec) && strings.HasPrefix(exec, title)
+}
+
+//GetParaExecTitleName 如果是平行链执行器，获取对应title
+func GetParaExecTitleName(exec string) (string, bool) {
+	if IsParaExecName(exec) {
+		for i := len(ParaKey); i < len(exec); i++ {
+			if exec[i] == '.' {
+				return exec[:i+1], true
+			}
+		}
+	}
+	return "", false
 }
 
 func setTestNet(isTestNet bool) {

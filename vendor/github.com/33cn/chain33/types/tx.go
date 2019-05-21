@@ -137,6 +137,30 @@ func (txgroup *Transactions) CheckSign() bool {
 	return true
 }
 
+//RebuiltGroup 交易内容有变化时需要重新构建交易组
+func (txgroup *Transactions) RebuiltGroup() {
+	header := txgroup.Txs[0].Hash()
+	for i := len(txgroup.Txs) - 1; i >= 0; i-- {
+		txgroup.Txs[i].Header = header
+		if i == 0 {
+			header = txgroup.Txs[0].Hash()
+		} else {
+			txgroup.Txs[i-1].Next = txgroup.Txs[i].Hash()
+		}
+	}
+	for i := 0; i < len(txgroup.Txs); i++ {
+		txgroup.Txs[i].Header = header
+	}
+}
+
+//SetExpire 设置交易组中交易的过期时间
+func (txgroup *Transactions) SetExpire(n int, expire time.Duration) {
+	if n >= len(txgroup.GetTxs()) {
+		return
+	}
+	txgroup.GetTxs()[n].SetExpire(expire)
+}
+
 //IsExpire 交易是否过期
 func (txgroup *Transactions) IsExpire(height, blocktime int64) bool {
 	txs := txgroup.Txs
@@ -163,18 +187,27 @@ func (txgroup *Transactions) Check(height, minfee, maxFee int64) error {
 		if err != nil {
 			return err
 		}
-		name := string(txs[i].Execer)
-		if IsParaExecName(name) {
-			para[name] = true
+		if title, ok := GetParaExecTitleName(string(txs[i].Execer)); ok {
+			para[title] = true
 		}
 	}
-	//txgroup 只允许一条平行链的交易
-	if IsEnableFork(height, "ForkV24TxGroupPara", EnableTxGroupParaFork) {
+	//txgroup 只允许一条平行链的交易, 且平行链txgroup须全部是平行链tx
+	//如果平行链已经在主链分叉高度前运行了一段时间且有跨链交易，平行链需要自己设置这个fork
+	if IsFork(height, "ForkTxGroupPara") {
 		if len(para) > 1 {
 			tlog.Info("txgroup has multi para transaction")
 			return ErrTxGroupParaCount
 		}
+		if len(para) > 0 {
+			for _, tx := range txs {
+				if !IsParaExecName(string(tx.Execer)) {
+					tlog.Error("para txgroup has main chain transaction")
+					return ErrTxGroupParaMainMixed
+				}
+			}
+		}
 	}
+
 	for i := 1; i < len(txs); i++ {
 		if txs[i].Fee != 0 {
 			return ErrTxGroupFeeNotZero

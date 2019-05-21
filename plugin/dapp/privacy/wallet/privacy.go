@@ -562,7 +562,7 @@ func (policy *privacyPolicy) buildInput(privacykeyParirs *privacy.Privacy, build
 	return privacyInput, utxosInKeyInput, realkeyInputSlice, selectedUtxo, nil
 }
 
-func (policy *privacyPolicy) createTransaction(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createTransaction(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	switch req.Type {
 	case types.PrivacyTypePublic2Privacy:
 		return policy.createPublic2PrivacyTx(req)
@@ -574,7 +574,7 @@ func (policy *privacyPolicy) createTransaction(req *types.ReqCreateTransaction) 
 	return nil, types.ErrInvalidParam
 }
 
-func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "parse view spend public key pair failed.  err ", err)
@@ -621,7 +621,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *types.ReqCreateTransact
 	return tx, nil
 }
 
-func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 
 	//需要燃烧的utxo
 	utxoBurnedAmount := privacytypes.PrivacyTxFee
@@ -697,7 +697,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	}
 
 	// 创建交易成功，将已经使用掉的UTXO冻结，需要注意此处获取的txHash和交易发送时的一致
-	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
+	policy.saveFTXOInfo(tx.GetExpire(), req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType:    action.Ty,
@@ -708,7 +708,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *types.ReqCreateTransac
 	return tx, nil
 }
 
-func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
 
 	//需要燃烧的utxo
 	utxoBurnedAmount := privacytypes.PrivacyTxFee
@@ -782,7 +782,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 		}
 	}
 	// 创建交易成功，将已经使用掉的UTXO冻结，需要注意此处获取的txHash和交易发送时的一致
-	policy.saveFTXOInfo(tx, req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
+	policy.saveFTXOInfo(tx.GetExpire(), req.GetTokenname(), req.GetFrom(), hex.EncodeToString(tx.Hash()), selectedUtxo)
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType:    action.Ty,
@@ -793,9 +793,9 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *types.ReqCreateTransact
 	return tx, nil
 }
 
-func (policy *privacyPolicy) saveFTXOInfo(tx *types.Transaction, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
+func (policy *privacyPolicy) saveFTXOInfo(expire int64, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
 	//将已经作为本次交易输入的utxo进行冻结，防止产生双花交易
-	policy.store.moveUTXO2FTXO(tx, token, sender, txhash, selectedUtxos)
+	policy.store.moveUTXO2FTXO(expire, token, sender, txhash, selectedUtxos)
 	//TODO:需要加入超时处理，需要将此处的txhash写入到数据库中，以免钱包瞬间奔溃后没有对该笔隐私交易的记录，
 	//TODO:然后当该交易得到执行之后，没法将FTXO转化为STXO，added by hezhengjun on 2018.6.5
 }

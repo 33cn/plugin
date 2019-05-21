@@ -39,7 +39,7 @@ func (policy *privacyPolicy) On_CreateUTXOs(req *privacytypes.ReqCreateUTXOs) (t
 	return reply, err
 }
 
-func (policy *privacyPolicy) On_CreateTransaction(req *types.ReqCreateTransaction) (types.Message, error) {
+func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePrivacyTx) (types.Message, error) {
 	ok, err := policy.getWalletOperate().CheckWalletStatus()
 	if !ok {
 		bizlog.Error("createTransaction", "CheckWalletStatus cause error.", err)

@@ -5,16 +5,19 @@
 package ticket
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"testing"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -162,4 +165,40 @@ func Test_getNextRequiredDifficulty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, bt, defaultModify)
 	assert.Equal(t, bits, types.GetP(0).PowLimitBits)
+}
+
+func Test_vrfVerify(t *testing.T) {
+	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	assert.NoError(t, err)
+	priv, err := c.GenKey()
+	assert.NoError(t, err)
+	pub := priv.PubKey().Bytes()
+
+	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
+	vpriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+
+	m1 := []byte("data1")
+	m2 := []byte("data2")
+	m3 := []byte("data2")
+	hash1, proof1 := vpriv.Evaluate(m1)
+	hash2, proof2 := vpriv.Evaluate(m2)
+	hash3, proof3 := vpriv.Evaluate(m3)
+	for _, tc := range []struct {
+		m     []byte
+		hash  [32]byte
+		proof []byte
+		err   error
+	}{
+		{m1, hash1, proof1, nil},
+		{m2, hash2, proof2, nil},
+		{m3, hash3, proof3, nil},
+		{m3, hash3, proof2, nil},
+		{m3, hash3, proof1, ty.ErrVrfVerify},
+		{m3, hash1, proof3, ty.ErrVrfVerify},
+	} {
+		err := vrfVerify(pub, tc.m, tc.proof, tc.hash[:])
+		if got, want := err, tc.err; got != want {
+			t.Errorf("vrfVerify(%s, %x): %v, want %v", tc.m, tc.proof, got, want)
+		}
+	}
 }

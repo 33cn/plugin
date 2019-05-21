@@ -18,6 +18,8 @@ message Ticket {
     string minerAddress = 6;
     // return wallet
     string returnAddress = 7;
+    //miner Price
+    int64 price = 9;
 }
 
 // message for execs.ticket
@@ -39,6 +41,10 @@ message TicketMiner {
     bytes  modify   = 4;
     //挖到区块时公开
     bytes privHash = 5;
+    //VRF计算得到的hash
+    bytes vrfHash = 6;
+    //VRF计算得到的proof
+    bytes vrfProof = 7;
 }
 
 message TicketMinerOld {

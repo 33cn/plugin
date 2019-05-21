@@ -5,6 +5,9 @@
 package ticket
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -18,12 +21,14 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	driver "github.com/33cn/chain33/system/dapp"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -361,6 +366,49 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 	if current.Block.Size() > int(types.MaxBlockSize) {
 		return types.ErrBlockSize
 	}
+	//vrf verify
+	if types.IsDappFork(current.Block.Height, ty.TicketX, "ForkTicketVrf") {
+		var input []byte
+		if current.Block.Height > 1 {
+			LastTicketAction, err := client.getMinerTx(parent)
+			if err != nil {
+				return err
+			}
+			input = LastTicketAction.GetMiner().GetVrfHash()
+		}
+		if input == nil {
+			input = miner.PrivHash
+		}
+		minerTx := current.Block.Txs[0]
+		if err = vrfVerify(minerTx.Signature.Pubkey, input, miner.VrfProof, miner.VrfHash); err != nil {
+			return err
+		}
+	} else {
+		if len(miner.VrfHash) != 0 || len(miner.VrfProof) != 0 {
+			tlog.Error("block error: not yet add vrf")
+			return ty.ErrNoVrf
+		}
+	}
+	return nil
+}
+
+func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
+	pubKey, err := secp256k1.ParsePubKey(pub, secp256k1.S256())
+	if err != nil {
+		tlog.Error("vrfVerify", "err", err)
+		return ty.ErrVrfVerify
+	}
+	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfHash, err := vrfPub.ProofToHash(input, proof)
+	if err != nil {
+		tlog.Error("vrfVerify", "err", err)
+		return ty.ErrVrfVerify
+	}
+	tlog.Debug("vrf verify", "ProofToHash", fmt.Sprintf("(%x, %x): %x", input, proof, vrfHash), "hash", hex.EncodeToString(hash))
+	if !bytes.Equal(vrfHash[:], hash) {
+		tlog.Error("vrfVerify", "err", errors.New("invalid VRF hash"))
+		return ty.ErrVrfVerify
+	}
 	return nil
 }
 
@@ -573,11 +621,10 @@ func genPrivHash(priv crypto.PrivKey, tid string) ([]byte, error) {
 		var countNum int
 		countNum, err := strconv.Atoi(count)
 		if err != nil {
-			return privHash, err
+			return nil, err
 		}
 		privStr := fmt.Sprintf("%x:%d:%s", priv.Bytes(), countNum, seed)
 		privHash = common.Sha256([]byte(privStr))
-
 	}
 	return privHash, nil
 }
@@ -597,6 +644,26 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 		return err
 	}
 	miner.PrivHash = privHash
+	//add vrf
+	if types.IsDappFork(block.Height, ty.TicketX, "ForkTicketVrf") {
+		var input []byte
+		if block.Height > 1 {
+			LastTicketAction, err := client.getMinerTx(parent)
+			if err != nil {
+				return err
+			}
+			input = LastTicketAction.GetMiner().GetVrfHash()
+		}
+		if input == nil {
+			input = miner.PrivHash
+		}
+		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
+		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+		vrfHash, vrfProof := vrfPriv.Evaluate(input)
+		miner.VrfHash = vrfHash[:]
+		miner.VrfProof = vrfProof
+	}
+
 	ticketAction.Value = &ty.TicketAction_Miner{Miner: miner}
 	ticketAction.Ty = ty.TicketActionMiner
 	//构造transaction

@@ -97,7 +97,7 @@ func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
 	fromAddr := tx.From()
 	btc := newBtcStore(r.GetLocalDB())
 	return &relayDB{r.GetCoinsAccount(), r.GetStateDB(), hash,
-		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(r.GetName()), btc}
+		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), btc}
 }
 
 func (action *relayDB) getOrderByID(orderID []byte) (*ty.RelayOrder, error) {
@@ -566,6 +566,7 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 
 }
 
+//之前用作cli verify, 检查不严格，现在弃用
 func (action *relayDB) verifyCmdTx(verify *ty.RelayVerifyCli) (*types.Receipt, error) {
 	orderID := []byte(verify.OrderId)
 	order, err := action.getOrderByID(orderID)

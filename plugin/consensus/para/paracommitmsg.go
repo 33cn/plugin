@@ -19,6 +19,7 @@ import (
 
 var (
 	consensusInterval = 16 //about 1 new block interval
+	minerInterval     = 2
 )
 
 type commitMsgClient struct {
@@ -27,6 +28,7 @@ type commitMsgClient struct {
 	commitMsgNotify    chan int64
 	delMsgNotify       chan int64
 	mainBlockAdd       chan *types.BlockDetail
+	minerSwitch        chan bool
 	currentTx          *types.Transaction
 	checkTxCommitTimes int32
 	privateKey         crypto.PrivKey
@@ -41,14 +43,11 @@ func (client *commitMsgClient) handler() {
 	var sendingHeight int64 //当前发送的最大高度
 	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
+	var ticker *time.Ticker
 
 	client.paraClient.wg.Add(1)
 	consensusCh := make(chan *pt.ParacrossStatus, 1)
 	go client.getConsensusHeight(consensusCh)
-
-	client.paraClient.wg.Add(1)
-	priKeyCh := make(chan crypto.PrivKey, 1)
-	go client.fetchPrivacyKey(priKeyCh)
 
 	client.paraClient.wg.Add(1)
 	sendMsgCh := make(chan *types.Transaction, 1)
@@ -155,7 +154,7 @@ out:
 		case rsp := <-consensusCh:
 			consensHeight := rsp.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "consensBlockHash", common.ToHex(rsp.BlockHash))
+				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick != nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
 
 			if notification == nil || isRollback {
 				continue
@@ -194,13 +193,23 @@ out:
 				isSync = true
 			}
 
-		case key, ok := <-priKeyCh:
-			if !ok {
-				priKeyCh = nil
+		case miner := <-client.minerSwitch:
+			plog.Info("para consensus mining", "miner", miner)
+			//停止挖矿
+			if !miner {
+				readTick = nil
+				if ticker != nil {
+					ticker.Stop()
+				}
+				plog.Info("para consensus stop mining")
 				continue
 			}
-			client.privateKey = key
-			readTick = time.Tick(time.Second * 2)
+			//开启挖矿
+			if readTick == nil {
+				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
+				readTick = ticker.C
+				plog.Info("para consensus start mining")
+			}
 
 		case <-client.quit:
 			break out
@@ -286,11 +295,6 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 
 }
 
-// 从ch收到tx有两种可能，readTick和addBlock, 如果
-// 3 input case from ch: readTick , addBlock and delMsg to readTick, readTick trigger firstly and will block until received from addBlock
-// if sendCommitMsgTx block quite long, write channel will be block in handle(), addBlock will not send new msg until rpc send over
-// if sendCommitMsgTx block quite long, if delMsg occur, after send over, ignore previous tx succ or fail, new msg will be rcv and sent
-// if sendCommitMsgTx fail, wait 1s resend the failed tx, if new tx rcv from ch, send the new one.
 func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
 	var err error
 	var tx *types.Transaction
@@ -301,15 +305,12 @@ out:
 		select {
 		case tx = <-ch:
 			err = client.sendCommitMsgTx(tx)
-			if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
-				resendTimer = time.After(time.Second * 1)
+			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
+				resendTimer = time.After(time.Second * 2)
 			}
 		case <-resendTimer:
 			if err != nil && tx != nil {
-				err = client.sendCommitMsgTx(tx)
-				if err != nil && err != types.ErrBalanceLessThanTenTimesFee {
-					resendTimer = time.After(time.Second * 1)
-				}
+				client.sendCommitMsgTx(tx)
 			}
 		case <-client.quit:
 			break out
@@ -339,15 +340,15 @@ func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 }
 
 func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) bool {
-	targetHash := targetTx.Hash()
+	txMap := make(map[string]bool)
 
 	for i, tx := range detail.Block.Txs {
-		if bytes.Equal(targetHash, tx.Hash()) && detail.Receipts[i].Ty == types.ExecOk {
-			return true
+		if bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && detail.Receipts[i].Ty == types.ExecOk {
+			txMap[string(tx.Hash())] = true
 		}
 	}
-	return false
 
+	return txMap[string(targetTx.Hash())]
 }
 
 func isParaSelfConsensusForked(height int64) bool {
@@ -537,93 +538,120 @@ out:
 }
 
 func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.ParacrossStatus, error) {
-	//获取主链共识高度
-	if !isParaSelfConsensusForked(block.MainHeight) {
-		reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
+	if isParaSelfConsensusForked(block.MainHeight) {
+		//从本地查询共识高度
+		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
-			FuncName: "GetTitleByHash",
-			Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
+			FuncName: "GetTitle",
+			Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
 		})
 		if err != nil {
-			plog.Error("getMainConsensusHeight", "err", err.Error())
+			plog.Error("getConsensusHeight ", "err", err.Error())
 			return nil, err
 		}
-		if !reply.GetIsOk() {
-			plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
+		resp, ok := ret.(*pt.ParacrossStatus)
+		if !ok {
+			plog.Error("getConsensusHeight ParacrossStatus nok")
 			return nil, err
 		}
-		var result pt.ParacrossStatus
-		err = types.Decode(reply.Msg, &result)
-		if err != nil {
-			plog.Error("getMainConsensusHeight decode", "err", err.Error())
-			return nil, err
+		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
+		if resp.Height > -1 {
+			return resp, nil
 		}
-		return &result, nil
 	}
 
-	//从本地查询共识高度
-	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+	//去主链获取共识高度
+	reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
 		Driver:   "paracross",
-		FuncName: "GetTitle",
-		Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
+		FuncName: "GetTitleByHash",
+		Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
 	})
 	if err != nil {
-		plog.Error("getConsensusHeight ", "err", err.Error())
+		plog.Error("getMainConsensusHeight", "err", err.Error())
 		return nil, err
 	}
-	resp, ok := ret.(*pt.ParacrossStatus)
-	if !ok {
-		plog.Error("getConsensusHeight ParacrossStatus nok")
+	if !reply.GetIsOk() {
+		plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
 		return nil, err
 	}
-	return resp, nil
+	var result pt.ParacrossStatus
+	err = types.Decode(reply.Msg, &result)
+	if err != nil {
+		plog.Error("getMainConsensusHeight decode", "err", err.Error())
+		return nil, err
+	}
+	return &result, nil
+
 }
 
-func (client *commitMsgClient) fetchPrivacyKey(ch chan crypto.PrivKey) {
-	defer client.paraClient.wg.Done()
-	if client.paraClient.authAccount == "" {
-		close(ch)
+func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
+	if status == nil || client.paraClient.authAccount == "" {
+		return
+	}
+	if !status.IsWalletLock && client.privateKey == nil {
+		client.fetchPriKey()
+		plog.Info("para commit fetchPriKey")
+	}
+
+	if client.privateKey == nil {
+		plog.Info("para commit wallet status prikey null", "status", status.IsWalletLock)
 		return
 	}
 
-	req := &types.ReqString{Data: client.paraClient.authAccount}
-out:
-	for {
-		select {
-		case <-client.quit:
-			break out
-		case <-time.NewTimer(time.Second * 2).C:
-			msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
-			err := client.paraClient.GetQueueClient().Send(msg, true)
-			if err != nil {
-				plog.Error("para commit send msg", "err", err.Error())
-				break out
-			}
-			resp, err := client.paraClient.GetQueueClient().Wait(msg)
-			if err != nil {
-				plog.Error("para commit msg sign to wallet", "err", err.Error())
-				continue
-			}
-			str := resp.GetData().(*types.ReplyString).Data
-			pk, err := common.FromHex(str)
-			if err != nil && pk == nil {
-				panic(err)
-			}
+	select {
+	case client.minerSwitch <- !status.IsWalletLock:
+	case <-client.quit:
+	}
+}
 
-			secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-			if err != nil {
-				panic(err)
-			}
-
-			priKey, err := secp.PrivKeyFromBytes(pk)
-			if err != nil {
-				panic(err)
-			}
-
-			ch <- priKey
-			close(ch)
-			break out
-		}
+func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
+	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil {
+		return
+	}
+	err := client.fetchPriKey()
+	if err != nil {
+		plog.Error("para commit fetchPriKey", "err", err.Error())
+		return
 	}
 
+	select {
+	case client.minerSwitch <- true:
+	case <-client.quit:
+	}
+}
+
+func (client *commitMsgClient) fetchPriKey() error {
+	req := &types.ReqString{Data: client.paraClient.authAccount}
+
+	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
+	err := client.paraClient.GetQueueClient().Send(msg, true)
+	if err != nil {
+		plog.Error("para commit send msg", "err", err.Error())
+		return err
+	}
+	resp, err := client.paraClient.GetQueueClient().Wait(msg)
+	if err != nil {
+		plog.Error("para commit msg sign to wallet", "err", err.Error())
+		return err
+	}
+	str := resp.GetData().(*types.ReplyString).Data
+	pk, err := common.FromHex(str)
+	if err != nil && pk == nil {
+		return err
+	}
+
+	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		return err
+	}
+
+	priKey, err := secp.PrivKeyFromBytes(pk)
+	if err != nil {
+		plog.Error("para commit msg get priKey", "err", err.Error())
+		return err
+	}
+
+	client.privateKey = priKey
+	plog.Info("para commit fetchPriKey success")
+	return nil
 }

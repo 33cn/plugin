@@ -75,7 +75,7 @@ func showPrivacyKey(cmd *cobra.Command, args []string) {
 		Data: addr,
 	}
 	var res pty.ReplyPrivacyPkPair
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacykey", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.ShowPrivacyKey", params, &res)
 	ctx.Run()
 }
 
@@ -117,14 +117,14 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePublic2Privacy,
 		Amount:     amount,
@@ -179,14 +179,14 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
 		Type:       types.PrivacyTypePrivacy2Privacy,
 		Amount:     amount,
@@ -243,14 +243,14 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour / time.Second)
+			expire = int64(time.Hour)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
 		return
 	}
 
-	params := types.ReqCreateTransaction{
+	params := pty.ReqCreatePrivacyTx{
 		Tokenname: tokenname,
 		Type:      types.PrivacyTypePrivacy2Public,
 		Amount:    amount,
@@ -601,7 +601,7 @@ func listPrivacyTxsFlags(cmd *cobra.Command, args []string) {
 		Seedtxhash:   []byte(seedtxhash),
 	}
 	var res rpctypes.WalletTxDetails
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.PrivacyTxList", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.GetPrivacyTxByAddr", params, &res)
 	ctx.SetResultCb(parseWalletTxListRes)
 	ctx.Run()
 }

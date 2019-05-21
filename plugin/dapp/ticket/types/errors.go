@@ -25,4 +25,8 @@ var (
 	ErrModify = errors.New("ErrModify")
 	// ErrMinerTx err type
 	ErrMinerTx = errors.New("ErrMinerTx")
+	// ErrNoVrf err type
+	ErrNoVrf = errors.New("ErrNoVrf")
+	// ErrVrfVerify err type
+	ErrVrfVerify = errors.New("ErrVrfVerify")
 )

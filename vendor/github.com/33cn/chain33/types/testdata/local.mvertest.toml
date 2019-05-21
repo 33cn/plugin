@@ -82,6 +82,12 @@ name2="ticket-bityuan"
 [mver.consensus.ForkMinerTime]
 name2="ticket-bityuanv5"
 
+[mver.consensus.ForkChainParamV1]
+name2="ticket-bityuanv1"
+
+[mver.consensus.ForkChainParamV2]
+name2="ticket-bityuanv2"
+
 [consensus.sub.ticket]
 genesisBlockTime=1526486816
 [[consensus.sub.ticket.genesis]]
@@ -190,7 +196,7 @@ ForkCheckBlockTime=1200000
 ForkMultiSignAddress=1298600
 ForkBlockCheck=1
 ForkLocalDBAccess=0
-
+ForkBase58AddressCheck=1800000
 [fork.sub.coins]
 Enable=0
 
@@ -198,3 +204,5 @@ Enable=0
 Enable=0
 ForkManageExec=100000
 
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=1

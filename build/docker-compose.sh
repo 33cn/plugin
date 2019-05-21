@@ -57,6 +57,13 @@ if [ -n "${DAPP}" ]; then
 
 fi
 
+if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then
+    # shellcheck source=/dev/null
+    source system-test-rpc.sh
+    # shellcheck source=/dev/null
+    source dapp-test-rpc.sh
+fi
+
 echo "=========== # env setting ============="
 echo "DAPP=$DAPP"
 echo "DAPP_TEST_FILE=$DAPP_TEST_FILE"
@@ -86,6 +93,8 @@ function base_init() {
 
     # wallet
     sed -i $sedfix 's/^minerdisable=.*/minerdisable=false/g' chain33.toml
+
+    sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
 
 }
 
@@ -124,14 +133,14 @@ function start() {
     done
 
     miner "${CLI}"
-    #    miner "${CLI4}"
+    # miner "${CLI4}"
     block_wait "${CLI}" 1
 
     echo "=========== check genesis hash ========== "
     ${CLI} block hash -t 0
-    res=$(${CLI} block hash -t 0 | jq ".hash")
-    count=$(echo "$res" | grep -c "0x67c58d6ba9175313f0468ae4e0ddec946549af7748037c2fdd5d54298afd20b6")
-    if [ "${count}" != 1 ]; then
+    res=$(${CLI} block hash -t 0 | jq -r ".hash")
+    #in case changes result in genesis change
+    if [ "${res}" != "0xa87972dfc3510cb934cb987bcb88036f7a1ffd7dc069cb9a5f0af179895fd2e8" ]; then
         echo "genesis hash error!"
         exit 1
     fi
@@ -313,17 +322,32 @@ function transfer() {
         echo "withdraw cannot find tx"
         exit 1
     fi
+
+    hash=$(${1} send coins transfer -a 1000 -n transfer -t 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    block_wait "${1}" 1
 }
 
 function base_config() {
-    sync
+    #    sync
     transfer "${CLI}"
     #    transfer "${CLI4}"
 }
 
+function rpc_test() {
+    if [ "$DAPP" == "" ]; then
+        system_test_rpc "http://${1}:8801"
+        dapp_test_rpc "http://${1}:8801"
+    fi
+    if [ "$DAPP" == "paracross" ]; then
+        #system_test_rpc "http://${1}:8901"
+        dapp_test_rpc "http://${1}:8901"
+    fi
+
+}
 function dapp_run() {
     if [ -e "$DAPP_TEST_FILE" ]; then
-        ${DAPP} "${CLI}" "${1}"
+        ${DAPP} "${CLI}" "${1}" "${2}"
     fi
 
 }
@@ -341,7 +365,11 @@ function main() {
     dapp_run config
 
     ### test cases ###
-    dapp_run test
+    ip=$(${CLI} net info | jq -r ".externalAddr[0:10]")
+    dapp_run test "${ip}"
+
+    ### rpc test  ###
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container

@@ -36,7 +36,6 @@ func RelayCmd() *cobra.Command {
 		CreateRawRelayAcceptTxCmd(),
 		CreateRawRevokeTxCmd(),
 		CreateRawRelayConfirmTxCmd(),
-		CreateRawRelayVerifyBTCTxCmd(),
 		CreateRawRelayBtcHeaderCmd(),
 	)
 
@@ -370,7 +369,6 @@ func addExchangeFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("bty_amount", "b", 0, "exchange amount of BTY")
 	cmd.MarkFlagRequired("bty_amount")
 
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
 }
 
 func relayOrder(cmd *cobra.Command, args []string) {
@@ -423,7 +421,6 @@ func addRelayAcceptFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Uint32P("coin_wait", "n", 6, "coin blocks to wait,default:6,min:1")
 
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
 }
 
 func relayAccept(cmd *cobra.Command, args []string) {
@@ -467,7 +464,6 @@ func addRevokeFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("action", "a", 0, "0:unlock, 1:cancel(only for creator)")
 	cmd.MarkFlagRequired("action")
 
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
 }
 
 func relayRevoke(cmd *cobra.Command, args []string) {
@@ -504,7 +500,6 @@ func addConfirmFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("tx_hash", "t", "", "coin tx hash")
 	cmd.MarkFlagRequired("tx_hash")
 
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
 }
 
 func relayConfirm(cmd *cobra.Command, args []string) {
@@ -545,9 +540,8 @@ func addSaveBtcHeadFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("height", "t", 0, "block height")
 	cmd.MarkFlagRequired("height")
 
-	cmd.Flags().Int32P("flag", "g", 0, "block height")
+	cmd.Flags().Int32P("flag", "g", 0, "reset height and save from current height")
 
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
 }
 
 func relaySaveBtcHead(cmd *cobra.Command, args []string) {
@@ -568,56 +562,5 @@ func relaySaveBtcHead(cmd *cobra.Command, args []string) {
 
 	var res string
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelaySaveBTCHeadTx", params, &res)
-	ctx.RunWithoutMarshal()
-}
-
-// CreateRawRelayVerifyBTCTxCmd verify btc tx from cli
-func CreateRawRelayVerifyBTCTxCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "verify",
-		Short: "Create a verify coin transaction",
-		Run:   relayVerifyBTC,
-	}
-	addVerifyBTCFlags(cmd)
-	return cmd
-}
-
-func addVerifyBTCFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("order_id", "o", "", "order id")
-	cmd.MarkFlagRequired("order_id")
-
-	cmd.Flags().StringP("raw_tx", "t", "", "coin raw tx")
-	cmd.MarkFlagRequired("raw_tx")
-
-	cmd.Flags().Uint32P("tx_index", "i", 0, "raw tx index")
-	cmd.MarkFlagRequired("tx_index")
-
-	cmd.Flags().StringP("merk_branch", "m", "", "tx merkle branch")
-	cmd.MarkFlagRequired("merk_branch")
-
-	cmd.Flags().StringP("block_hash", "b", "", "block hash of tx ")
-	cmd.MarkFlagRequired("block_hash")
-
-	cmd.Flags().Float64P("fee", "f", 0, "coin transaction fee")
-}
-
-func relayVerifyBTC(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	orderid, _ := cmd.Flags().GetString("order_id")
-	rawtx, _ := cmd.Flags().GetString("raw_tx")
-	txindex, _ := cmd.Flags().GetUint32("tx_index")
-	merkbranch, _ := cmd.Flags().GetString("merk_branch")
-	blockhash, _ := cmd.Flags().GetString("block_hash")
-
-	params := &ty.RelayVerifyCli{
-		OrderId:    orderid,
-		RawTx:      rawtx,
-		TxIndex:    txindex,
-		MerkBranch: merkbranch,
-		BlockHash:  blockhash,
-	}
-
-	var res string
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayVerifyBTCTx", params, &res)
 	ctx.RunWithoutMarshal()
 }

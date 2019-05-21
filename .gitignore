@@ -18,10 +18,12 @@ build/relayd
 build/relayd.toml
 build/*.log
 build/fzm
+build/*.db
 build/guodun
 build/main.sh
 build/main*
 build/para.sh
+build/system-test-rpc.sh
 build/ci
 build/autotest/*
 !build/autotest/build.sh
@@ -36,3 +38,13 @@ plugin/store/mpt/cpu.pprof
 plugin/store/mpt/mpt.test
 plugin/consensus/raft/tools/scripts/grpc33.log
 plugin/consensus/raft/tools/scripts/logs/
+build/check
+build/check.toml
+build/fzmstock
+build/paradatadir/
+build/parawallet/
+build/sendstock
+build/sendstock.toml
+build/*.csv
+
+

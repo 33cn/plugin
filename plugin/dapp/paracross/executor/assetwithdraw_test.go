@@ -106,7 +106,7 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnMainChain() {
 
 // 平行链执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnParaChain() {
-	types.Init(Title, nil)
+	para_init(Title)
 	// make coins for transfer
 
 	total := 1000 * types.Coin
@@ -212,7 +212,7 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawAfterPara() {
 }
 
 func (suite *AssetWithdrawTestSuite) TestExecWithdrawFailedOnPara() {
-	types.Init(Title, nil)
+	para_init(Title)
 	// make coins for transfer
 	acc := account.NewCoinsAccount()
 	acc.SetDB(suite.stateDB)

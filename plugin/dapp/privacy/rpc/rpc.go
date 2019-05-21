@@ -51,7 +51,7 @@ func (g *channelClient) EnablePrivacy(ctx context.Context, in *pty.ReqEnablePriv
 	return data.(*pty.RepEnablePrivacy), nil
 }
 
-func (g *channelClient) CreateRawTransaction(ctx context.Context, in *types.ReqCreateTransaction) (*types.Transaction, error) {
+func (g *channelClient) CreateRawTransaction(ctx context.Context, in *pty.ReqCreatePrivacyTx) (*types.Transaction, error) {
 	data, err := g.ExecWalletFunc(pty.PrivacyX, "CreateTransaction", in)
 	if err != nil {
 		return nil, err
@@ -85,8 +85,8 @@ func (c *Jrpc) ShowPrivacyAccountSpend(in *pty.ReqPrivBal4AddrToken, result *jso
 	return err
 }
 
-// ShowPrivacykey display privacy key for json rpc
-func (c *Jrpc) ShowPrivacykey(in *types.ReqString, result *json.RawMessage) error {
+// ShowPrivacyKey display privacy key for json rpc
+func (c *Jrpc) ShowPrivacyKey(in *types.ReqString, result *json.RawMessage) error {
 	reply, err := c.cli.ShowPrivacyKey(context.Background(), in)
 	if err != nil {
 		return err
@@ -106,8 +106,8 @@ func (c *Jrpc) CreateUTXOs(in *pty.ReqCreateUTXOs, result *interface{}) error {
 	return nil
 }
 
-// PrivacyTxList get all privacy transaction list by param
-func (c *Jrpc) PrivacyTxList(in *pty.ReqPrivacyTransactionList, result *interface{}) error {
+// GetPrivacyTxByAddr get all privacy transaction list by param
+func (c *Jrpc) GetPrivacyTxByAddr(in *pty.ReqPrivacyTransactionList, result *interface{}) error {
 	if in.Direction != 0 && in.Direction != 1 {
 		return types.ErrInvalidParam
 	}
@@ -145,7 +145,7 @@ func (c *Jrpc) EnablePrivacy(in *pty.ReqEnablePrivacy, result *json.RawMessage) 
 }
 
 // CreateRawTransaction create raw trasaction for json rpc
-func (c *Jrpc) CreateRawTransaction(in *types.ReqCreateTransaction, result *interface{}) error {
+func (c *Jrpc) CreateRawTransaction(in *pty.ReqCreatePrivacyTx, result *interface{}) error {
 	reply, err := c.cli.CreateRawTransaction(context.Background(), in)
 	if err != nil {
 		return err

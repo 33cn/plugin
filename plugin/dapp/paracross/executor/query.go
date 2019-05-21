@@ -8,9 +8,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"math/big"
-	"strconv"
-
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -38,13 +35,12 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 	return p.paracrossGetHeight(in.GetTitle())
 }
 
-//Query_GetNodeGroup get node group addrs
-func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, error) {
+//Query_GetNodeGroupAddrs get node group addrs
+func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeGroupKey(in.GetData())
-	ret, _, err := getNodes(p.GetStateDB(), key)
+	ret, _, err := getParacrossNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -53,7 +49,7 @@ func (p *Paracross) Query_GetNodeGroup(in *types.ReqString) (types.Message, erro
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(key)
+	reply.Key = string(calcParaNodeGroupKey(in.GetTitle()))
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
@@ -63,8 +59,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
-	key := calcParaNodeAddrKey(in.Title, in.Addr)
-	stat, err := getNodeAddr(p.GetStateDB(), key)
+	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +72,26 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 		return nil, types.ErrInvalidParam
 	}
 	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
+}
+
+//Query_GetNodeGroupStatus get specific node addr info
+func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+	stat, err := getNodeGroupStatus(p.GetStateDB(), in.Title)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
+//Query_ListNodeGroupStatus list node info by status
+func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Status == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	return listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
 }
 
 //Query_ListTitles query paracross titles list
@@ -140,6 +155,14 @@ func (p *Paracross) paracrossGetHeight(title string) (types.Message, error) {
 	return ret, nil
 }
 
+func (p *Paracross) paracrossGetStateTitleHeight(title string, height int64) (types.Message, error) {
+	ret, err := getTitleHeight(p.GetStateDB(), calcTitleHeightKey(title, height))
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	return ret, nil
+}
+
 func (p *Paracross) paracrossListTitles() (types.Message, error) {
 	return listLocalTitles(p.GetLocalDB())
 }
@@ -165,7 +188,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			Height:         st.Height,
 			StateHash:      hex.EncodeToString(st.StateHash),
 			TxCounts:       st.TxCounts,
-			TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+			TxResult:       hex.EncodeToString(st.TxResult),
 		}
 
 		resp.Titles = append(resp.Titles, rst)
@@ -173,9 +196,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 	return &resp, nil
 }
 
-//按状态遍历
-func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
-	prefix := calcLocalNodeStatusPrefix(title, status)
+func listNodeStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 	res, err := db.List(prefix, []byte(""), 0, 1)
 	if err != nil {
 		return nil, err
@@ -191,7 +212,35 @@ func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message
 		resp.Addrs = append(resp.Addrs, &st)
 	}
 	return &resp, nil
+}
 
+func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
+	res, err := db.List(prefix, []byte(""), 0, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp pt.RespParacrossNodeGroups
+	for _, r := range res {
+		var st pt.ParaNodeGroupStatus
+		err = types.Decode(r, &st)
+		if err != nil {
+			panic(err)
+		}
+		resp.Addrs = append(resp.Addrs, &st)
+	}
+	return &resp, nil
+}
+
+//按状态遍历
+func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
+	prefix := calcLocalNodeStatusPrefix(title, status)
+	return listNodeStatus(db, prefix)
+}
+
+func listLocalNodeGroupStatus(db dbm.KVDB, status int32) (types.Message, error) {
+	prefix := calcLocalNodeGroupStatusPrefix(status)
+	return listNodeGroupStatus(db, prefix)
 }
 
 func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error) {
@@ -214,7 +263,7 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 		Height:         st.Height,
 		StateHash:      hex.EncodeToString(st.StateHash),
 		TxCounts:       st.TxCounts,
-		TxResult:       strconv.FormatUint(big.NewInt(0).SetBytes(st.TxResult).Uint64(), 2),
+		TxResult:       hex.EncodeToString(st.TxResult),
 	}, nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 
+	_ "github.com/33cn/plugin/plugin/dapp/init" //dapp init
 	node "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"github.com/stretchr/testify/assert"
 )
@@ -50,33 +51,24 @@ func TestParaNode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, detail.Receipt.Ty, int32(types.ExecOk))
 
+	testParaQuery(para)
+
 	for i := 0; i < 3; i++ {
 		tx = util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
 		para.Para.SendTxRPC(tx)
 		para.Para.WaitHeight(int64(i) + 1)
 	}
-	testParaQuery(para)
+
 }
 
 func testParaQuery(para *node.ParaNode) {
-
-	var param types.ReqWalletImportPrivkey
-	param.Label = "Importprivkey"
-	param.Privkey = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+	var acc types.Account
+	acc.Addr = "1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
 	para.Para.GetAPI().Notify(
 		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
 			Driver:   "para",
 			FuncName: "CreateNewAccount",
-			Param:    types.Encode(&param),
-		})
-
-	var param1 types.ReqNewAccount
-	param1.Label = "NewAccount"
-	para.Para.GetAPI().Notify(
-		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
-			Driver:   "para",
-			FuncName: "CreateNewAccount",
-			Param:    types.Encode(&param1),
+			Param:    types.Encode(&acc),
 		})
 
 	var walletsatus types.WalletStatus
@@ -88,4 +80,11 @@ func testParaQuery(para *node.ParaNode) {
 			Param:    types.Encode(&walletsatus),
 		})
 
+	walletsatus.IsWalletLock = false
+	para.Para.GetAPI().Notify(
+		"consensus", types.EventConsensusQuery, &types.ChainExecutor{
+			Driver:   "para",
+			FuncName: "WalletStatus",
+			Param:    types.Encode(&walletsatus),
+		})
 }

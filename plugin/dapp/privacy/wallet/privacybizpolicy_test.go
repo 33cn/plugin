@@ -109,7 +109,7 @@ func (mock *testDataMock) initMember() {
 	mock.accdb = account.NewCoinsAccount()
 	mock.policy = privacy.New()
 	mock.policy.Init(wallet, sub.Wallet["privacy"])
-	mock.password = "123456"
+	mock.password = "ab123456"
 }
 
 func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey) {
@@ -375,7 +375,7 @@ func Test_CreateTransaction(t *testing.T) {
 	mock.setBlockChainHeight(10020)
 
 	testCases := []struct {
-		req       *types.ReqCreateTransaction
+		req       *ty.ReqCreatePrivacyTx
 		needReply *types.Transaction
 		needError error
 	}{
@@ -383,7 +383,7 @@ func Test_CreateTransaction(t *testing.T) {
 			needError: types.ErrInvalidParam,
 		},
 		{ // 公对私测试
-			req: &types.ReqCreateTransaction{
+			req: &ty.ReqCreatePrivacyTx{
 				Tokenname:  types.BTY,
 				Type:       1,
 				Amount:     100 * types.Coin,
@@ -393,7 +393,7 @@ func Test_CreateTransaction(t *testing.T) {
 			//needError:types.ErrAddrNotExist,
 		},
 		{ // 私对私测试
-			req: &types.ReqCreateTransaction{
+			req: &ty.ReqCreatePrivacyTx{
 				Tokenname:  types.BTY,
 				Type:       2,
 				Amount:     10 * types.Coin,
@@ -403,7 +403,7 @@ func Test_CreateTransaction(t *testing.T) {
 			needError: types.ErrAddrNotExist,
 		},
 		{ // 私对公测试
-			req: &types.ReqCreateTransaction{
+			req: &ty.ReqCreatePrivacyTx{
 				Tokenname:  types.BTY,
 				Type:       3,
 				Amount:     10 * types.Coin,
@@ -462,7 +462,7 @@ func Test_ShowPrivacyAccountSpend(t *testing.T) {
 				Addr:  testAddrs[0],
 				Token: types.BTY,
 			},
-			needError: types.ErrNotFound,
+			//needError: types.ErrNotFound,
 		},
 	}
 	for index, testCase := range testCases {
@@ -491,7 +491,7 @@ func Test_PrivacyTransactionList(t *testing.T) {
 				Count:        10,
 				Address:      testAddrs[0],
 			},
-			needError: types.ErrTxNotExist,
+			//needError: types.ErrTxNotExist,
 		},
 	}
 	for index, testCase := range testCases {
