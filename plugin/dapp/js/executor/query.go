@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/33cn/chain33/types"
-	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 )
 
