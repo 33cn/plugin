@@ -671,7 +671,7 @@ function para_nodemanage_test() {
         exit 1
     fi
 
-    echo "=========== # para chain other node vote quit ============="
+    echo "=========== # para chain behalf node vote test ============="
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
     hash=$(${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
