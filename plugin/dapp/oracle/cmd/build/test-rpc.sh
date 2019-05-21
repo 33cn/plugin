@@ -6,6 +6,8 @@ CASE_ERR=""
 oracle_addPublisher_unsignedTx="0a066d616e61676512410a3f0a146f7261636c652d7075626c6973682d6576656e741222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630e6b685d696ee9394163a223151344e687572654a784b4e4266373164323642394a336642516f5163666d657a32"
 oracle_publisher_addr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 oracle_publishers_addr=""
+eventId=""
+txhash=""
 
 #color
 RED='\033[1;31m'
@@ -15,89 +17,119 @@ NOC='\033[0m'
 # $2=0 means true, other false
 echo_rst() {
     if [ "$2" -eq 0 ]; then
-        echo "$1 ok"
+        echo -e "${GRE}$1 ok${NOC}"
     else
-        echo "$1 err"
+        echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="err"
     fi
-
-}
-
-create_publish_transaction() {
-    local ip=$1
-    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":?????????,"content":"test","introduction":"test"}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$ip")
-    echo "#response: $resp"
-    ok=$(jq '.error|not' <<<"$resp")
-}
-
-create_prePublishResult_transaction() {
-    local ip=$1
-    event_id=$2
-    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPrePublish","payload":{"eventID":"${event_id}", "source":"sina sport","result":"0:1"}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$ip")
-    echo "#response: $resp"
-    ok=$(jq '.error|not' <<<"$resp")
-}
-
-create_publishResult_transaction() {
-    local ip=$1
-    event_id=$2
-    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPublish","payload":{"eventID":"${event_id}", "source":"sina sport","result":"1:1"}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$ip")
-    echo "#response: $resp"
-    ok=$(jq '.error|not' <<<"$resp")
 }
 
 oracle_AddPublisher(){
-    echo "=============== # add publisher ==============="
-    local ip=$1
-    signRawTx "${oracle_addPublisher_unsignedTx}" "${oracle_publisher_addr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "AddPublisher signRawTx" "$rst"
-    fi
-
-    sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "AddPublisher sendSignedTx" "$rst"
-    fi
-    block_wait 1
-    queryTransaction ".result.receipt.tyName" "ExecOk"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "AddPublisher queryExecRes" "$rst"
-    fi
+    echo "=============== # Add publisher ==============="
+    signAndSendRawTx "${oracle_addPublisher_unsignedTx}" "${oracle_publisher_addr}"
 }
 
-oracle_sendPublishEvent() {
-    echo "=============== # add sendPublishEvent ==============="
-    local ip=$1
-    create_publish_transaction "$ip"
+oracle_publish_transaction() {
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":1747814996,"content":"test","introduction":"test"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+        echo_rst "$FUNCNAME" "$?"
+        rawtx=$(jq -r ".result" <<<"$resp")
+        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+        eventId="${txhash}"
+        echo "eventId $eventId"
 }
 
-signRawTx() {
+oracle_prePublishResult_transaction() {
+    event_id=$1
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPrePublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"0:1"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+        echo_rst "$FUNCNAME" "$?"
+        rawtx=$(jq -r ".result" <<<"$resp")
+        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+}
+
+oracle_eventAbort_transaction() {
+    event_id=$1
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventAbort","payload":{"eventID":"'"$event_id"'"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+        echo_rst "$FUNCNAME" "$?"
+        rawtx=$(jq -r ".result" <<<"$resp")
+        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+}
+
+oracle_resultAbort_transaction() {
+    event_id=$1
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultAbort","payload":{"eventID":"'"$event_id"'"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+        echo_rst "$FUNCNAME" "$?"
+        rawtx=$(jq -r ".result" <<<"$resp")
+        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+}
+
+oracle_publishResult_transaction() {
+    event_id=$1
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"1:1"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+        echo_rst "$FUNCNAME" "$?"
+        rawtx=$(jq -r ".result" <<<"$resp")
+        signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+}
+
+# 签名并发送
+signAndSendRawTx() {
     unsignedTx=$1
     addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ $signedTx == "null" ]; then
-        return 1
+    req='"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s"}]'
+    signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    if [ "$signedTx" == "null" ]; then
+        echo "An error occurred while signing"
     else
-        return 0
+        sendSignedTx "$signedTx"
     fi
 }
 
 sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'${signedTx}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ $txHash == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
+    signedTx=$1
+    local req='"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"$signedTx"'"}]'
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    ok=$(echo "${resp}" | jq -r ".error")
+    [ "$ok" == null ]
+    rst=$?
+    echo_rst "$FUNCNAME" "$rst"
+    txhash=$(echo "${resp}" | jq -r ".result")
+    echo "tx hash is $txhash"
+}
+
+oracle_QueryOraclesByID() {
+    event_id=$1
+    local req='"method":"Chain33.Query", "params":[{"execer":"oracle","funcName":"QueryOraclesByIDs","payload":{"eventID":["'"$event_id"'"]}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result.status[0] | [has("eventID", "status", "type", "subType", "source"),true] | unique | length == 1)' <<<"$resp")
+    [ "$ok" == true ]
+    rst=$?
+    echo_rst "$FUNCNAME" "$rst"
 }
 
 function block_wait() {
@@ -116,33 +148,71 @@ function block_wait() {
     echo "wait new block $count s, cur height=$expect,old=$cur_height"
 }
 
-# 查询交易的执行结果
-# 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
 function queryTransaction() {
-    validator=$1
-    expectRes=$2
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
-    if [ ${res} != ${expectRes} ]; then
-        return 1
-    else
-        oracle_publishers_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.current.arr.value")
-        echo $oracle_publishers_addr
-        return 0
-    fi
+    block_wait 1
+    local txhash="$1"
+    local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
+    local times=10
+    while true; do
+        ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
+        if [ "${ret}" != "${1}" ]; then
+            block_wait 1
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "====query tx=$1 failed"
+                echo "req=$req"
+                curl -ksd "{$req}" ${MAIN_HTTP}
+                return 1
+                exit 1
+            fi
+        else
+            echo "====query tx=$1  success"
+            return 0
+            break
+        fi
+    done
 }
 
 function run_test() {
-    local ip=$1
-    oracle_AddPublisher "$ip"
-    oracle_sendPublishEvent "$ip"
+    # 增加发布人
+    oracle_AddPublisher
+    # 生成发布事件的交易
+    oracle_publish_transaction
+    # 预发布事件结果交易
+    oracle_prePublishResult_transaction "$eventId"
+    # 事件正式发布
+    oracle_publishResult_transaction "$eventId"
+    # 根据ID查询事件
+    block_wait 1
+    oracle_QueryOraclesByID "$eventId"
+
+    # 生成发布事件的交易
+    oracle_publish_transaction
+    # 取消事件发布
+    oracle_eventAbort_transaction "$eventId"
+    # 根据ID查询事件
+    block_wait 1
+    oracle_QueryOraclesByID "$eventId"
+
+    # 生成发布事件的交易
+    oracle_publish_transaction
+    # 预发布事件结果交易
+    oracle_prePublishResult_transaction "$eventId"
+    # 取消事件预发布
+    oracle_resultAbort_transaction "$eventId"
+    # 根据ID查询事件
+    block_wait 1
+    oracle_QueryOraclesByID "$eventId"
+
 }
 
 function main() {
-    local ip=$1
-    MAIN_HTTP="http://$ip:8801"
-    echo "=========== # oracle rpc test ============="
+
+    MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
-    run_test "$MAIN_HTTP"
+
+    echo "=========== # oracle rpc test start============="
+    run_test
 
     if [ -n "$CASE_ERR" ]; then
         echo -e "${RED}=============Oracle Rpc Test Fail=============${NOC}"
@@ -150,6 +220,7 @@ function main() {
     else
         echo -e "${GRE}=============Oracle Rpc Test Pass==============${NOC}"
     fi
+    echo "=========== # oracle rpc test end============="
 }
 
 main "$1"
