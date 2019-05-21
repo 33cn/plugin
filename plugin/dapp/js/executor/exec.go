@@ -15,6 +15,13 @@ func (c *js) userExecName(name string) string {
 	return execer
 }
 
+func (c *js) chechJsName(name string) bool {
+	if types.IsPara() {
+		return name == types.GetTitle()+ptypes.JsX
+	}
+	return name == ptypes.JsX
+}
+
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkPriv(tx.From(), ptypes.JsCreator, c.GetStateDB())
 	if err != nil {
@@ -22,7 +29,7 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 	}
 
 	execer := c.userExecName(payload.Name)
-	if string(tx.Execer) != ptypes.JsX {
+	if !c.chechJsName(string(tx.Execer)) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
@@ -50,7 +57,7 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
 	execer := c.userExecName(payload.Name)
-	if string(tx.Execer) != execer {
+	if !c.chechJsName(string(tx.Execer)) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
