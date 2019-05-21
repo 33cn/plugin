@@ -77,7 +77,9 @@ function block_wait() {
     echo "wait new block $count s, cur height=$expect,old=$cur_height"
 }
 
-function evm_CreateContract() {
+function evm_createContract() {
+    validator=$1
+    expectRes=$2
     signRawTx "${evm_createContract_unsignedTx}" "${evm_creatorAddr}"
     if [ $? -ne 0 ]; then
         rst=$?
@@ -92,7 +94,7 @@ function evm_CreateContract() {
 
     block_wait 1
 
-    queryTransaction ".result.receipt.tyName" "ExecOk"
+    queryTransaction "${validator}" "${expectRes}"
     if [ $? -ne 0 ]; then
         rst=$?
         echo_rst "CreateContract queryExecRes" "$rst"
@@ -111,8 +113,10 @@ function evm_addressCheck() {
 
     return
 }
-function evm_CallContract() {
+function evm_callContract() {
     op=$1
+    validator=$2
+    expectRes=$3
     if [ "${op}" == "preExec" ]; then
         unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmCallTx","params":[{"fee":1,"caller":"'${evm_creatorAddr}'", "expire":"120s", "exec":"'${evm_addr}'", "abi": "set()"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     elif [ "${op}" == "Exec" ]; then
@@ -139,10 +143,10 @@ function evm_CallContract() {
 
     block_wait 1
 
-    queryTransaction ".result.receipt.tyName" "ExecOk"
+    queryTransaction "${validator}" "${expectRes}"
     if [ $? -ne 0 ]; then
         rst=$?
-        echo_rst "CreateContract queryExecRes" "$rst"
+        echo_rst "CallContract queryExecRes" "$rst"
     fi
 }
 
@@ -154,6 +158,8 @@ function evm_abiGet() {
 }
 
 function evm_transfer() {
+    validator=$1
+    expectRes=$2
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmTransferTx","params":[{"amount":1,"caller":"'${evm_creatorAddr}'","expire":"", "exec":"'${evm_addr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         rst=1
@@ -177,7 +183,7 @@ function evm_transfer() {
 
     block_wait 1
 
-    queryTransaction ".result.receipt.tyName" "ExecOk"
+    queryTransaction "${validator}" "${expectRes}"
     rst=$?
     echo_rst "evm transfer queryExecRes" "$rst"
     return
@@ -201,6 +207,8 @@ function evm_getBalance() {
 
 function evm_withDraw() {
     echo "In evm withDraw test."
+    validator=$1
+    expectRes=$2
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmWithdrawTx","params":[{"amount":1,"caller":"'${evm_creatorAddr}'","expire":"", "exec":"'${evm_addr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         rst=1
@@ -224,7 +232,7 @@ function evm_withDraw() {
 
     block_wait 1
 
-    queryTransaction ".result.receipt.tyName" "ExecOk"
+    queryTransaction "${validator}" "${expectRes}"
     rst=$?
     echo_rst "evm withdraw queryExecRes" "$rst"
     return
@@ -252,9 +260,18 @@ function sendSignedTx() {
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
 function queryTransaction() {
-    validator=$1
+    validators=$1
     expectRes=$2
-    res=`curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}"`
+
+    res=`curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP}`
+
+    times=`echo ${validators} | awk -F '|' '{print NF}'`
+    for ((i=1; i<=$times; i++))
+    do
+        validator=`echo ${validators} | awk -F '|' '{print $'$i'}'`
+        res=`echo ${res} | ${validator}`
+    done
+
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
@@ -289,14 +306,14 @@ function init() {
 }
 function run_test() {
     local ip=$1
-    evm_CreateContract
+    evm_createContract "jq -r .result.receipt.tyName" "ExecOk"
     evm_addressCheck
-    evm_CallContract preExec
-    evm_CallContract Exec
+    evm_callContract preExec "jq -r .result.receipt.logs[1].tyName" "LogEVMStateChangeItem"
+    evm_callContract Exec "jq -r .result.receipt.logs[1].log.jsonRet | jq -r .[0].value" "This is test."
     evm_abiGet
-    evm_transfer
+    evm_transfer "jq -r .result.receipt.tyName" "ExecOk"
     evm_getBalance 100000000
-    evm_withDraw
+    evm_withDraw "jq -r .result.receipt.tyName" "ExecOk"
     evm_getBalance 0
 }
 
