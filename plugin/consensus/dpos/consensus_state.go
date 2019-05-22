@@ -268,7 +268,7 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 	case *dpostype.DPosVoteReply:
 		cs.dposState.recvVoteReply(cs, msg)
 	default:
-		dposlog.Error("Unknown msg type", msg.String(), "peerid", peerID, "peerip", peerIP)
+		dposlog.Error("Unknown msg type", "msg", msg.String(), "peerid", peerID, "peerip", peerIP)
 	}
 	if err != nil {
 		dposlog.Error("Error with msg", "type", reflect.TypeOf(msg), "peerid", peerID, "peerip", peerIP, "err", err, "msg", msg)
