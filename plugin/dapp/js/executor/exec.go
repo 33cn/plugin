@@ -1,25 +1,34 @@
 package executor
 
 import (
+	"strings"
+
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 )
 
-func (c *js) userExecName(name string) string {
-	execer := types.ExecName("user." + ptypes.JsX + "." + name)
-	if types.IsPara() {
-		execer = types.GetTitle() + execer
+func (c *js) userExecName(name string, local bool) string {
+	execer := "user." + ptypes.JsX + "." + name
+	if local {
+		execer = types.ExecName(execer)
 	}
 	return execer
 }
 
-func (c *js) chechJsName(name string) bool {
+func (c *js) checkJsName(name string) bool {
 	if types.IsPara() {
 		return name == types.GetTitle()+ptypes.JsX
 	}
 	return name == ptypes.JsX
+}
+
+func (c *js) checkJsPrefix(name string) bool {
+	if types.IsPara() {
+		return strings.HasPrefix(name, types.GetTitle()+"user."+ptypes.JsX)
+	}
+	return strings.HasPrefix(name, "user."+ptypes.JsX)
 }
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -28,8 +37,8 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 		return nil, err
 	}
 
-	execer := c.userExecName(payload.Name)
-	if !c.chechJsName(string(tx.Execer)) {
+	execer := c.userExecName(payload.Name, false)
+	if !c.checkJsName(string(tx.Execer)) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
@@ -56,8 +65,8 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 }
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := c.userExecName(payload.Name)
-	if !c.chechJsName(string(tx.Execer)) {
+	execer := c.userExecName(payload.Name, false)
+	if !c.checkJsPrefix(string(tx.Execer)) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
