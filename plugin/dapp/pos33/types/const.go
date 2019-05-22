@@ -57,8 +57,8 @@ const (
 	Pos33VoteReword = types.Coin / 2
 	// Pos33ProposerSize 候选区块Proposer数量
 	Pos33ProposerSize = 7
-	// Pos33VeriferSize  候选区块Verifer数量
-	Pos33VeriferSize = 10
+	// Pos33VerifierSize  候选区块Verifier数量
+	Pos33VerifierSize = 10
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址

@@ -31,15 +31,15 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 7. 最后对Hashs排序，作为委员会打包顺序的依据
 
 // GenRands 计算抽签hash，allw是当前总票数, w是自己抵押的票数
-func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte, stap int) (*Pos33Rands, *pb.Signature) {
+func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []byte, step int) (*Pos33Rands, *pb.Signature) {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
-	size := Pos33VeriferSize
-	if stap == 0 {
+	size := Pos33VerifierSize
+	if step == 0 {
 		size = Pos33ProposerSize
 	}
 	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
 
-	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, stap))
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, step))
 	hash := crypto.Sha256(data)
 	// 签名，为了可以验证
 	sig := priv.Sign(hash)
@@ -77,24 +77,24 @@ func GenRands(allw, w int, priv crypto.PrivKey, blockHeight int64, blockHash []b
 		return nil, nil
 	}
 	rs.Rands[0], rs.Rands[pos] = rs.Rands[pos], rs.Rands[0]
-	if stap == 0 {
+	if step == 0 {
 		rs.Rands = rs.Rands[:1]
 	} else {
-		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VeriferSize)]
+		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VerifierSize)]
 	}
 
 	return &rs, signature
 }
 
 // CheckRands 检验抽签hash，allw是当前总票数, w是抵押的票数
-func CheckRands(addr string, allw, w int, rs *Pos33Rands, blockHeight int64, blockHash []byte, sig *pb.Signature, stap int) error {
-	size := Pos33VeriferSize
-	if stap == 0 {
+func CheckRands(addr string, allw, w int, rs *Pos33Rands, blockHeight int64, blockHash []byte, sig *pb.Signature, step int) error {
+	size := Pos33VerifierSize
+	if step == 0 {
 		size = Pos33ProposerSize
 	}
 	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
 
-	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, stap))
+	data := []byte(string(blockHash) + fmt.Sprintf(":%d%d", blockHeight, step))
 	hash := crypto.Sha256(data)
 
 	if !pb.CheckSign(hash, "pos33", sig) {
@@ -142,7 +142,7 @@ func CheckRands(addr string, allw, w int, rs *Pos33Rands, blockHeight int64, blo
 }
 
 // Sortition 统计每个action的投票，计算出共识委员会选票
-func Sortition(msgs []*Pos33ElectMsg, stap int) *Pos33Rands {
+func Sortition(msgs []*Pos33ElectMsg, step int) *Pos33Rands {
 	if len(msgs) == 0 {
 		return nil
 	}
@@ -155,10 +155,10 @@ func Sortition(msgs []*Pos33ElectMsg, stap int) *Pos33Rands {
 	}
 
 	sort.Sort(&rs)
-	if stap == 0 {
+	if step == 0 {
 		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33ProposerSize)]
 	} else {
-		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VeriferSize)]
+		rs.Rands = rs.Rands[:min(len(rs.Rands), Pos33VerifierSize)]
 	}
 	return &rs
 }

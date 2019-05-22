@@ -122,6 +122,9 @@ func (client *Client) newBlock(txs []*types.Transaction, height int64, null bool
 	}
 
 	bt := time.Now().Unix()
+	if null {
+		bt = lastBlock.BlockTime + 4
+	}
 	return &types.Block{
 		ParentHash: lastBlock.Hash(),
 		Height:     lastBlock.Height + 1,

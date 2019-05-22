@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
@@ -36,9 +34,12 @@ func (p *Pos33) ExecLocal_Delegate(act *pt.Pos33DelegateAction, tx *types.Transa
 
 // ExecLocal_Reword do local reword
 func (p *Pos33) ExecLocal_Reword(act *pt.Pos33RewordAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	plog.Info("ExecLocal_Reword", "from", tx.From)
-	kvs := []*types.KeyValue{&types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", pt.KeyPos33RewordPrefix, p.GetHeight())), Value: act.RandHash}}
-	return &types.LocalDBSet{KV: kvs}, nil
+	/*
+		plog.Info("ExecLocal_Reword", "from", tx.From)
+		kvs := []*types.KeyValue{&types.KeyValue{Key: []byte(fmt.Sprintf("%s%d", pt.KeyPos33RewordPrefix, p.GetHeight())), Value: act.RandHash}}
+		return &types.LocalDBSet{KV: kvs}, nil
+	*/
+	return nil, nil
 }
 
 // ExecLocal_Punish do local punish
