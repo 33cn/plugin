@@ -328,6 +328,12 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 		if err != nil {
 			return -2, nil, err
 		}
+		//确保按照记录seq获取的区块高度是设定的startHeight，如果不同的主链，获取的height可能会不同，最好删除数据库，重新同步
+		if main.Detail.Block.Height != startHeight {
+			plog.Error("Parachain RequestLastBlock seq not match with genesis",
+				"seq", blockedSeq+1, "expect_height", startHeight, "get_height", main.Detail.Block.Height)
+			return -2, nil, types.ErrNotFound
+		}
 		lastBlock.MainHash = main.Detail.Block.ParentHash
 		lastBlock.MainHeight = main.Detail.Block.Height - 1
 		return blockedSeq, lastBlock, nil
@@ -662,9 +668,6 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 
 	//获取当前区块的所有原始tx hash 和跨链hash作为bitmap base hashs，因为有可能在执行过程中有些tx 执行error被剔除掉
 	if main.Detail.Block.Height >= mainForkParacrossCommitTx {
-		for _, tx := range txs {
-			status.TxHashs = append(status.TxHashs, tx.Hash())
-		}
 		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
 		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 	}

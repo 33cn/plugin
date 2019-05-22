@@ -172,7 +172,7 @@ func makeDoneReceipt(addr string, commit *pt.ParacrossCommitAction, current *pt.
 		Height:         commit.Status.Height,
 		StateHash:      commit.Status.StateHash,
 		TxCounts:       commit.Status.TxCounts,
-		TxResult:       commit.Status.TxResult,
+		TxResult:       commit.Status.CrossTxResult,
 	}
 	key := calcTitleKey(commit.Status.Title)
 	stat := &pt.ParacrossStatus{
@@ -476,16 +476,11 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 		//校验
 		paraBaseTxs := FilterTxsForPara(commit.Status.Title, blockDetail)
 		paraCrossHashs := FilterParaCrossTxHashes(commit.Status.Title, paraBaseTxs)
-		var baseHashs [][]byte
-		for _, tx := range paraBaseTxs {
-			baseHashs = append(baseHashs, tx.Hash())
-		}
-		baseCheckTxHash := CalcTxHashsHash(baseHashs)
+
 		crossCheckHash := CalcTxHashsHash(paraCrossHashs)
 		if !bytes.Equal(commit.Status.CrossTxHashs[0], crossCheckHash) {
 			clog.Error("getCrossTxHashs para hash not equal", "main.crossHash", hex.EncodeToString(crossCheckHash),
-				"commit.crossHash", hex.EncodeToString(commit.Status.CrossTxHashs[0]),
-				"main.baseHash", hex.EncodeToString(baseCheckTxHash), "commit.baseHash", hex.EncodeToString(commit.Status.TxHashs[0]))
+				"commit.crossHash", hex.EncodeToString(commit.Status.CrossTxHashs[0]), "commit.baseHash", hex.EncodeToString(commit.Status.TxHashs[0]))
 			return nil, nil, types.ErrCheckTxHash
 		}
 
