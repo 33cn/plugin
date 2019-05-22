@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"strings"
-
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
@@ -17,18 +15,10 @@ func (c *js) userExecName(name string, local bool) string {
 	return execer
 }
 
-func (c *js) checkJsName(name string) bool {
-	if types.IsPara() {
-		return name == types.GetTitle()+ptypes.JsX
-	}
-	return name == ptypes.JsX
-}
-
-func (c *js) checkJsPrefix(name string) bool {
-	if types.IsPara() {
-		return strings.HasPrefix(name, types.GetTitle()+"user."+ptypes.JsX)
-	}
-	return strings.HasPrefix(name, "user."+ptypes.JsX)
+// execName 在create 时为 jsvm
+// 在 call 时为 user.jsvm.game
+func (c *js) checkTxExec(txExec string, execName string) bool {
+	return txExec == types.ExecName(execName)
 }
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -38,7 +28,7 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 	}
 
 	execer := c.userExecName(payload.Name, false)
-	if !c.checkJsName(string(tx.Execer)) {
+	if !c.checkTxExec(string(tx.Execer), ptypes.JsX) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
@@ -66,7 +56,7 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
 	execer := c.userExecName(payload.Name, false)
-	if !c.checkJsPrefix(string(tx.Execer)) {
+	if !c.checkTxExec(string(tx.Execer), execer) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
