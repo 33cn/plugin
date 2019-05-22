@@ -206,7 +206,6 @@ function rpc_test() {
     echo "main_ip=$MAIN_HTTP"
 
     init
-    #callJS
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then
