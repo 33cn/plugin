@@ -572,13 +572,9 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	txs = append(txs, txGroup56...)
 	txs = append(txs, tx7)
 	txs = append(txs, tx8)
-	for _, tx := range txs {
-		status.TxHashs = append(status.TxHashs, tx.Hash())
-	}
+
 	txHashs := FilterParaCrossTxHashes(Title, txs)
 	status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
-
-	baseCheckTxHash := CalcTxHashsHash(status.TxHashs)
 	baseCrossTxHash := CalcTxHashsHash(status.CrossTxHashs)
 
 	tx, err := s.createVoteTx(status, PrivKeyA)
@@ -620,12 +616,10 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
 			types.Decode(kv.GetValue(), &rst)
-			s.Equal([]uint8([]byte{0x8e}), rst.TxResult)
 			s.Equal([]uint8([]byte{0x22}), rst.CrossTxResult)
-			s.Equal(1, len(rst.TxHashs))
+			s.Equal(0, len(rst.TxHashs))
 			s.Equal(1, len(rst.CrossTxHashs))
 
-			s.Equal(baseCheckTxHash, rst.TxHashs[0])
 			s.Equal(baseCrossTxHash, rst.CrossTxHashs[0])
 			break
 		}
