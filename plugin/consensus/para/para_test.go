@@ -13,18 +13,17 @@ import (
 	"testing"
 	"time"
 
+	apimocks "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
+	qmocks "github.com/33cn/chain33/queue/mocks"
+	drivers "github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
-	qmocks "github.com/33cn/chain33/queue/mocks"
-	drivers "github.com/33cn/chain33/system/consensus"
-	"github.com/33cn/chain33/queue"
-	apimocks "github.com/33cn/chain33/client/mocks"
-
 )
 
 var (
@@ -226,42 +225,42 @@ func TestAddMinerTx(t *testing.T) {
 
 }
 
-func initBlock(){
+func initBlock() {
 	println("initblock")
 }
 
-func TestGetLastBlockInfo(t *testing.T){
+func TestGetLastBlockInfo(t *testing.T) {
 	para := new(client)
 
-	baseCli := drivers.NewBaseClient(&types.Consensus{Name:"name"})
-	para.BaseClient=baseCli
+	baseCli := drivers.NewBaseClient(&types.Consensus{Name: "name"})
+	para.BaseClient = baseCli
 	grpcClient := &typesmocks.Chain33Client{}
 	qClient := &qmocks.Client{}
-	para.InitClient(qClient,initBlock)
+	para.InitClient(qClient, initBlock)
 
 	api := &apimocks.QueueProtocolAPI{}
 	para.SetAPI(api)
 
 	para.grpcClient = grpcClient
 
-	block:=&types.Block{Height:0}
+	block := &types.Block{Height: 0}
 	msg := queue.NewMessage(0, "", 1, block)
 
 	qClient.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(msg)
 	qClient.On("Send", mock.Anything, mock.Anything).Return(nil)
 
-	qClient.On("Wait", mock.Anything).Return(msg,nil)
+	qClient.On("Wait", mock.Anything).Return(msg, nil)
 
-	api.On("GetSequenceByHash",mock.Anything).Return(&types.Int64{Data:int64(1)},nil)
-	mainBlock := &types.Block{ParentHash:[]byte("phash")}
-	mainDetail := &types.BlockDetail{Block:mainBlock}
-	blocks:=&types.BlockDetails{}
-	blocks.Items = append(blocks.Items,mainDetail)
-	grpcClient.On("GetBlockByHashes",mock.Anything, mock.Anything).Return(blocks,nil)
-	grpcClient.On("GetSequenceByHash",mock.Anything, mock.Anything).Return(&types.Int64{Data:int64(10)},nil)
+	api.On("GetSequenceByHash", mock.Anything).Return(&types.Int64{Data: int64(1)}, nil)
+	mainBlock := &types.Block{ParentHash: []byte("phash")}
+	mainDetail := &types.BlockDetail{Block: mainBlock}
+	blocks := &types.BlockDetails{}
+	blocks.Items = append(blocks.Items, mainDetail)
+	grpcClient.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blocks, nil)
+	grpcClient.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: int64(10)}, nil)
 
-	mainSeq,hash,err:=para.getLastBlockMainInfo()
-	assert.NoError(t,err)
-	assert.Equal(t,int64(9),mainSeq)
-	assert.Equal(t,[]byte("phash"),hash)
+	mainSeq, hash, err := para.getLastBlockMainInfo()
+	assert.NoError(t, err)
+	assert.Equal(t, int64(9), mainSeq)
+	assert.Equal(t, []byte("phash"), hash)
 }
