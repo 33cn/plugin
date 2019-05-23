@@ -170,16 +170,16 @@ func setMinerTxResultFork(payload *pt.ParacrossMinerAction, txs []*types.Transac
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
 	}
-	baseTxHashs := payload.Status.TxHashs
-	baseCrossTxHashs := payload.Status.CrossTxHashs
+
+	baseCrossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	payload.Status.TxResult = util.CalcBitMap(baseTxHashs, curTxHashs, receipts)
+	payload.Status.TxResult = util.CalcBitMap(curTxHashs, curTxHashs, receipts)
 	//跨链tx结果
 	payload.Status.CrossTxResult = util.CalcBitMap(baseCrossTxHashs, curTxHashs, receipts)
 
-	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(baseTxHashs)}
+	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
 	payload.Status.CrossTxHashs = [][]byte{CalcTxHashsHash(baseCrossTxHashs)}
 }
 

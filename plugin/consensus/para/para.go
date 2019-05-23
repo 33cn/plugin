@@ -660,15 +660,6 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 		MainBlockHeight: main.Detail.Block.Height,
 	}
 
-	//获取当前区块的所有原始tx hash 和跨链hash作为bitmap base hashs，因为有可能在执行过程中有些tx 执行error被剔除掉
-	if main.Detail.Block.Height >= mainForkParacrossCommitTx {
-		for _, tx := range txs {
-			status.TxHashs = append(status.TxHashs, tx.Hash())
-		}
-		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
-		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
-	}
-
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
 		Status:          status,
 		IsSelfConsensus: isParaSelfConsensusForked(status.MainBlockHeight),
