@@ -47,7 +47,7 @@ func (c *channelClient) Create(ctx context.Context, in evmtypes.EvmContractCreat
 
 func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq) (*types.UnsignTx, error) {
 	amountInt64 := uint64(in.Amount*1e4) * 1e4
-	feeInt64 := in.Fee*1e4 * 1e4
+	feeInt64 := in.Fee * 1e4 * 1e4
 	toAddr := address.ExecAddress(in.Exec)
 
 	bCode, err := common.FromHex(in.Code)
