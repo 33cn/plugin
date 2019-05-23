@@ -139,7 +139,7 @@ function evm_callContract() {
 
 function evm_abiGet() {
     abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    res=$(echo "${abiInfo}" | jq -r ".result" | jq -r 'has("abi")')
+    res=$(echo "${abiInfo}" | jq -r ".result"  | jq -r 'has("abi")')
     if [ "${res}" == "true" ]; then
         echo_rst "CallContract queryExecRes" 0
     else
@@ -172,7 +172,6 @@ function evm_transfer() {
 
 function evm_getBalance() {
     expectBalance=$1
-    echo "This is evm get balance test."
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     balance=$(echo "${res}" | jq -r ".result[0].balance")
     addr=$(echo "${res}" | jq -r ".result[0].addr")
@@ -297,7 +296,6 @@ function run_test() {
     evm_transfer "jq -r .result.receipt.tyName" "ExecOk"
     evm_getBalance 100000000
     evm_withDraw "jq -r .result.receipt.tyName" "ExecOk"
-    evm_getBalance 0
 }
 
 function main() {
