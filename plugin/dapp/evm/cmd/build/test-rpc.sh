@@ -5,8 +5,6 @@ MAIN_HTTP=""
 CASE_ERR=""
 evm_createContract_unsignedTx="0a0365766d129407228405608060405234801561001057600080fd5b50610264806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063b8e010de1461003b578063cc80f6f314610045575b600080fd5b6100436100c2565b005b61004d610109565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561008757818101518382015260200161006f565b50505050905090810190601f1680156100b45780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b60408051808201909152600d8082527f5468697320697320746573742e000000000000000000000000000000000000006020909201918252610106916000916101a0565b50565b60008054604080516020601f60026000196101006001881615020190951694909404938401819004810282018101909252828152606093909290918301828280156101955780601f1061016a57610100808354040283529160200191610195565b820191906000526020600020905b81548152906001019060200180831161017857829003601f168201915b505050505090505b90565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106101e157805160ff191683800117855561020e565b8280016001018555821561020e579182015b8281111561020e5782518255916020019190600101906101f3565b5061021a92915061021e565b5090565b61019d91905b8082111561021a576000815560010161022456fea165627a7a72305820fec5dd5ca2cb47523ba08c04749bc5c14c435afee039f3047c2b7ea2faca737800293a8a025b7b22636f6e7374616e74223a66616c73652c22696e70757473223a5b5d2c226e616d65223a22736574222c226f757470757473223a5b5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a226e6f6e70617961626c65222c2274797065223a2266756e6374696f6e227d2c7b22636f6e7374616e74223a747275652c22696e70757473223a5b5d2c226e616d65223a2273686f77222c226f757470757473223a5b7b226e616d65223a22222c2274797065223a22737472696e67227d5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a2276696577222c2274797065223a2266756e6374696f6e227d5d20c0c7ee04309aedc4bcfba5beca5f3a223139746a5335316b6a7772436f535153313355336f7765376759424c6653666f466d"
 evm_createContract_para_unsignedTx="0a0f757365722e702e706172612e65766d129407228405608060405234801561001057600080fd5b50610264806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063b8e010de1461003b578063cc80f6f314610045575b600080fd5b6100436100c2565b005b61004d610109565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561008757818101518382015260200161006f565b50505050905090810190601f1680156100b45780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b60408051808201909152600d8082527f5468697320697320746573742e000000000000000000000000000000000000006020909201918252610106916000916101a0565b50565b60008054604080516020601f60026000196101006001881615020190951694909404938401819004810282018101909252828152606093909290918301828280156101955780601f1061016a57610100808354040283529160200191610195565b820191906000526020600020905b81548152906001019060200180831161017857829003601f168201915b505050505090505b90565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106101e157805160ff191683800117855561020e565b8280016001018555821561020e579182015b8281111561020e5782518255916020019190600101906101f3565b5061021a92915061021e565b5090565b61019d91905b8082111561021a576000815560010161022456fea165627a7a7230582080ff1004de2195e6c08d0d0a65484b3d393c99c280e305cb383dbc89343cdd6a00293a8a025b7b22636f6e7374616e74223a66616c73652c22696e70757473223a5b5d2c226e616d65223a22736574222c226f757470757473223a5b5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a226e6f6e70617961626c65222c2274797065223a2266756e6374696f6e227d2c7b22636f6e7374616e74223a747275652c22696e70757473223a5b5d2c226e616d65223a2273686f77222c226f757470757473223a5b7b226e616d65223a22222c2274797065223a22737472696e67227d5d2c2270617961626c65223a66616c73652c2273746174654d75746162696c697479223a2276696577222c2274797065223a2266756e6374696f6e227d5d20c0c7ee0430e1c7facdc1f199956c3a2231483969326a67464a594e5167573350695468694337796b7a5663653570764b7478"
-evm_preExecContract_unsignedTx="0a4b757365722e65766d2e30783438316638393137353832333633613536323531343862646464383061643333363964363361306565393261623561323634376531393830373361316234393112073a05736574282920e0914330a083c5f68fccd5927a3a21317732485842757468424b6567773368524668334838487274426b585458323456"
-evm_execContract_unsignedTx="0a4b757365722e65766d2e30786437343339376531363435316639643734316362656264393930653765633830366366356535313431376536343738306633376264333061353662383635373312083a0673686f77282920e0914330efb5ebb5cda7e5a3513a2231466a54374243474c446f4b676571676a7a6d76527671796f537179454c57514c6f"
 evm_creatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 evm_contractAddr=""
 evm_addr=""
@@ -86,32 +84,22 @@ function evm_createContract() {
     else
         signRawTx "${evm_createContract_unsignedTx}" "${evm_creatorAddr}"
     fi
-
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CreateContract signRawTx" "$rst"
-    fi
+    echo_rst "CreateContract signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CreateContract sendSignedTx" "$rst"
-    fi
+    echo_rst "CreateContract sendSignedTx" "$?"
 
     block_wait 2
 
     queryTransaction "${validator}" "${expectRes}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CreateContract queryExecRes" "$rst"
-    fi
+    echo_rst "CreateContract queryExecRes" "$?"
 }
 
 function evm_addressCheck() {
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     bContract=$(echo ${res} | jq -r ".result.contract")
     contractAddr=$(echo ${res} | jq -r ".result.contractAddr")
-    if [ "${bContract}" == "true" -a "${contractAddr}" == "${evm_contractAddr}" ]; then
+    if [ "${bContract}" == "true" ] && [ "${contractAddr}" == "${evm_contractAddr}" ]; then
         echo_rst "evm address check" 0
     else
         echo_rst "evm address check" 1
@@ -134,32 +122,24 @@ function evm_callContract() {
     fi
 
     signRawTx "${unsignedTx}" "${evm_creatorAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CallContract signRawTx" "$rst"
+    rst=$?
+    echo_rst "CallContract signRawTx" "$rst"
+    if [ ${rst} == 1 ]; then
         return
     fi
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CallContract sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "CallContract sendSignedTx" "$?"
 
     block_wait 2
 
     queryTransaction "${validator}" "${expectRes}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "CallContract queryExecRes" "$rst"
-    fi
+    echo_rst "CallContract queryExecRes" "$?"
 }
 
 function evm_abiGet() {
     abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.abi")
-    rst=$?
-    echo_rst "CallContract queryExecRes" "$rst"
+    echo_rst "CallContract queryExecRes" "$?"
     return
 }
 
@@ -174,41 +154,29 @@ function evm_transfer() {
     fi
 
     signRawTx "${unsignedTx}" "${evm_creatorAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "evm transfer signRawTx" "$rst"
-        return
-    fi
+    echo_rst "evm transfer signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "evm transfer sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "evm transfer sendSignedTx" "$?"
 
     block_wait 2
 
     queryTransaction "${validator}" "${expectRes}"
-    rst=$?
-    echo_rst "evm transfer queryExecRes" "$rst"
-    return
+    echo_rst "evm transfer queryExecRes" "$?"
 }
 
 function evm_getBalance() {
     expectBalance=$1
     echo "This is evm get balance test."
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    balance=$(echo ${res} | jq -r ".result[0].balance")
-    addr=$(echo ${res} | jq -r ".result[0].addr")
+    balance=$(echo "${res}" | jq -r ".result[0].balance")
+    addr=$(echo "${res}" | jq -r ".result[0].addr")
 
     if [ "${balance}" == "${expectBalance}" -a "${addr}" == "${evm_creatorAddr}" ]; then
         echo_rst "evm getBalance" 0
     else
         echo_rst "evm getBalance" 1
     fi
-
-    return
 }
 
 function evm_withDraw() {
@@ -223,30 +191,21 @@ function evm_withDraw() {
     fi
 
     signRawTx "${unsignedTx}" "${evm_creatorAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "evm withdraw signRawTx" "$rst"
-        return
-    fi
+    echo_rst "evm withdraw signRawTx" "$?"
+    return
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "evm withdraw sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "evm withdraw sendSignedTx" "$?"
 
     block_wait 2
 
     queryTransaction "${validator}" "${expectRes}"
-    rst=$?
-    echo_rst "evm withdraw queryExecRes" "$rst"
-    return
+    echo_rst "evm withdraw queryExecRes" "$?"
 }
 function signRawTx() {
     unsignedTx=$1
     addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"${addr}"'","txHex":"'"${unsignedTx}"'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$signedTx" == "null" ]; then
         return 1
     else
@@ -255,7 +214,7 @@ function signRawTx() {
 }
 
 function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'${signedTx}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$txHash" == "null" ]; then
         return 1
     else
@@ -269,18 +228,18 @@ function queryTransaction() {
     validators=$1
     expectRes=$2
 
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
-    times=$(echo ${validators} | awk -F '|' '{print NF}')
+    times=$(echo "${validators}" | awk -F '|' '{print NF}')
     for ((i = 1; i <= times; i++)); do
-        validator=$(echo ${validators} | awk -F '|' '{print $'$i'}')
-        res=$(echo ${res} | ${validator})
+        validator=$(echo "${validators}" | awk -F '|' '{print $'$i'}')
+        res=$(echo "${res}" | ${validator})
     done
 
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
-        local res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+        local res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
         if [ "${evm_addr}" == "" ]; then
             if [ "$ispara" == "true" ]; then
                 evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractName")
@@ -306,7 +265,7 @@ function init() {
     echo "ipara=$ispara"
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     local evm_addr=""
-    if [ "$ispara" == true ]; then
+    if [ "$ispara" == "true" ]; then
         evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.evm"}]}' ${MAIN_HTTP} | jq -r ".result")
         Chain33_SendToAddress "$from" "$evm_addr" 10000000000
     else
