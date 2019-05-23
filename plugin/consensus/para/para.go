@@ -320,17 +320,13 @@ func (client *client) getLastBlockMainInfo() (int64, []byte, error) {
 	if lastBlock.Height == 0 && lastSeq > -1 {
 		mainBlock, err := client.GetBlockOnMainByHash(lastBlock.MainHash)
 		if err != nil {
-			plog.Error("Parachain GetBlockOnMainByHash fail", "err", err)
 			return -2, nil, err
 		}
 
 		mainSeq, err := client.GetSeqByHashOnMainChain(lastBlock.MainHash)
 		if err != nil {
-			plog.Error("Parachain GetSeqByHashOnMainChain fail", "err", err, "mainhash", common.ToHex(lastBlock.MainHash))
 			return -2, nil, err
 		}
-		plog.Error("Parachain GetSeqByHashOnMainChain ",
-			"geneSeq", lastSeq, "newseq", mainSeq-1, "mainhash", common.ToHex(lastBlock.MainHash), "mainHeight", mainBlock.Height)
 		return mainSeq - 1, mainBlock.ParentHash, nil
 	}
 	return lastSeq, lastBlock.MainHash, nil
@@ -685,6 +681,9 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 
 	//获取当前区块的所有原始tx hash 和跨链hash作为bitmap base hashs，因为有可能在执行过程中有些tx 执行error被剔除掉
 	if main.Detail.Block.Height >= mainForkParacrossCommitTx {
+		for _, tx := range txs {
+			status.TxHashs = append(status.TxHashs, tx.Hash())
+		}
 		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
 		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 	}
