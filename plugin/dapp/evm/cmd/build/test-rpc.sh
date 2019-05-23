@@ -243,7 +243,7 @@ function queryTransaction() {
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
-        local res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+        res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
         if [ "${evm_addr}" == "" ]; then
             if [ "$ispara" == "true" ]; then
                 evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractName")
