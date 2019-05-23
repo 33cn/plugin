@@ -12,7 +12,7 @@ import (
 	evm "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
-// BlackwhiteCreateTx 创建游戏RPC接口
+// EvmCreateTx 创建Evm合约接口
 func (c *Jrpc) EvmCreateTx(parm *evm.EvmContractCreateReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -26,7 +26,7 @@ func (c *Jrpc) EvmCreateTx(parm *evm.EvmContractCreateReq, result *interface{}) 
 	return nil
 }
 
-// BlackwhiteShowTx 出示游戏密钥的RPC接口
+// EvmCallTx 调用Evm合约接口
 func (c *Jrpc) EvmCallTx(parm *evm.EvmContractCallReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -40,6 +40,7 @@ func (c *Jrpc) EvmCallTx(parm *evm.EvmContractCallReq, result *interface{}) erro
 	return nil
 }
 
+// EvmTransferTx Evm转账接口
 func (c *Jrpc) EvmTransferTx(parm *evm.EvmContractTransferReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
@@ -54,6 +55,7 @@ func (c *Jrpc) EvmTransferTx(parm *evm.EvmContractTransferReq, result *interface
 	return nil
 }
 
+// EvmWithdrawTx Evm转账接口
 func (c *Jrpc) EvmWithdrawTx(parm *evm.EvmContractTransferReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
