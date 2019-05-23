@@ -67,4 +67,3 @@ func (c *Jrpc) EvmWithdrawTx(parm *evm.EvmContractTransferReq, result *interface
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
-
