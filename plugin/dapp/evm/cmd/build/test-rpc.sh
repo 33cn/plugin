@@ -11,7 +11,6 @@ evm_creatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 evm_contractAddr=""
 evm_addr=""
 
-
 #color
 RED='\033[1;31m'
 GRE='\033[1;32m'
@@ -110,8 +109,8 @@ function evm_createContract() {
 
 function evm_addressCheck() {
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    bContract=`echo ${res} | jq -r ".result.contract"`
-    contractAddr=`echo ${res} | jq -r ".result.contractAddr"`
+    bContract=$(echo ${res} | jq -r ".result.contract")
+    contractAddr=$(echo ${res} | jq -r ".result.contractAddr")
     if [ "${bContract}" == "true" -a "${contractAddr}" == "${evm_contractAddr}" ]; then
         echo_rst "evm address check" 0
     else
@@ -200,8 +199,8 @@ function evm_getBalance() {
     expectBalance=$1
     echo "This is evm get balance test."
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    balance=`echo ${res} | jq -r ".result[0].balance"`
-    addr=`echo ${res} | jq -r ".result[0].addr"`
+    balance=$(echo ${res} | jq -r ".result[0].balance")
+    addr=$(echo ${res} | jq -r ".result[0].addr")
 
     if [ "${balance}" == "${expectBalance}" -a "${addr}" == "${evm_creatorAddr}" ]; then
         echo_rst "evm getBalance" 0
@@ -270,13 +269,12 @@ function queryTransaction() {
     validators=$1
     expectRes=$2
 
-    res=`curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP}`
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
-    times=`echo ${validators} | awk -F '|' '{print NF}'`
-    for ((i=1; i<=$times; i++))
-    do
-        validator=`echo ${validators} | awk -F '|' '{print $'$i'}'`
-        res=`echo ${res} | ${validator}`
+    times=$(echo ${validators} | awk -F '|' '{print NF}')
+    for ((i = 1; i <= times; i++)); do
+        validator=$(echo ${validators} | awk -F '|' '{print $'$i'}')
+        res=$(echo ${res} | ${validator})
     done
 
     if [ "${res}" != "${expectRes}" ]; then
@@ -285,17 +283,17 @@ function queryTransaction() {
         local res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
         if [ "${evm_addr}" == "" ]; then
             if [ "$ispara" == "true" ]; then
-                evm_addr=`echo "${res}"  | jq -r ".result.receipt.logs[0].log.contractName"`
+                evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractName")
             else
-                evm_addr=`echo "${res}"  | jq -r ".result.receipt.logs[1].log.contractName"`
+                evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[1].log.contractName")
             fi
         fi
 
         if [ "${evm_contractAddr}" == "" ]; then
             if [ "$ispara" == "true" ]; then
-                evm_contractAddr=`echo "${res}" | jq -r ".result.receipt.logs[0].log.contractAddr"`
+                evm_contractAddr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractAddr")
             else
-                evm_contractAddr=`echo "${res}" | jq -r ".result.receipt.logs[1].log.contractAddr"`
+                evm_contractAddr=$(echo "${res}" | jq -r ".result.receipt.logs[1].log.contractAddr")
             fi
 
         fi

@@ -7,14 +7,15 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/types"
-	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	"github.com/33cn/chain33/types"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // CreateEvmCallTx 创建未签名的调用evm交易
@@ -72,7 +73,7 @@ func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq
 	return &types.UnsignTx{Data: txHex}, nil
 }
 
-func (c *channelClient)Transfer(ctx context.Context, in evmtypes.EvmContractTransferReq, isWithdraw bool) (*types.UnsignTx, error) {
+func (c *channelClient) Transfer(ctx context.Context, in evmtypes.EvmContractTransferReq, isWithdraw bool) (*types.UnsignTx, error) {
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
 	amountInt64 := int64(in.Amount*1e4) * 1e4
