@@ -46,7 +46,7 @@ func (c *channelClient) Create(ctx context.Context, in evmtypes.EvmContractCreat
 }
 
 func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq) (*types.UnsignTx, error) {
-	amountInt64 := uint64(in.Amount*1e4) * 1e4
+	amountInt64 := in.Amount*1e4 * 1e4
 	feeInt64 := in.Fee*1e4 * 1e4
 	toAddr := address.ExecAddress(in.Exec)
 
@@ -61,8 +61,8 @@ func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq
 	tx := &types.Transaction{Execer: []byte(in.Exec), Payload: types.Encode(&action), Fee: 0, To: toAddr}
 
 	tx.Fee, _ = tx.GetRealFee(types.GInt("MinFee"))
-	if tx.Fee < int64(feeInt64) {
-		tx.Fee += int64(feeInt64)
+	if tx.Fee < feeInt64 {
+		tx.Fee += feeInt64
 	}
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
