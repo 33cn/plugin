@@ -66,7 +66,6 @@ function query_tx() {
 pokerbull_PlayRawTx() {
     echo "========== # pokerbull play tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Play","payload":{"gameId":"pokerbull-abc", "value":"1000000000", "round":1}}]}' ${MAIN_HTTP} | jq -r ".result")
-    PLAY_TX=$tx
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "pokerbull")' <<<"$data")
@@ -76,12 +75,13 @@ pokerbull_PlayRawTx() {
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "play"
     echo "========== # pokerbull play tx end =========="
+
+    block_wait 1
 }
 
 pokerbull_QuitRawTx() {
     echo "========== # pokerbull quit tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Quit","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    QUIT_TX=$tx
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "pokerbull")' <<<"$data")
@@ -91,12 +91,13 @@ pokerbull_QuitRawTx() {
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "quit"
     echo "========== # pokerbull quit tx end =========="
+
+    block_wait 1
 }
 
 pokerbull_ContinueRawTx() {
     echo "========== # pokerbull continue tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Continue","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    CONTINUE_TX=$tx
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "pokerbull")' <<<"$data")
@@ -106,6 +107,8 @@ pokerbull_ContinueRawTx() {
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "continue"
     echo "========== # pokerbull continue tx end =========="
+
+    block_wait 1
 }
 
 pokerbull_StartRawTx() {
@@ -120,6 +123,8 @@ pokerbull_StartRawTx() {
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "start"
     echo "========== # pokerbull start tx end =========="
+
+    block_wait 1
 }
 
 pokerbull_QueryResult() {

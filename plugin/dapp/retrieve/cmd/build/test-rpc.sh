@@ -64,7 +64,12 @@ function query_tx() {
 
 retrieve_Backup() {
     echo "========== # retrieve backup begin =========="
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'","delayPeriod":'$3'}]}' ${MAIN_HTTP} | jq -r ".result")
+
+    local backupaddr=$1
+    local defaultaddr=$2
+    local delayPeriod=$3
+
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr","delayPeriod": $delayPeriod}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -74,11 +79,17 @@ retrieve_Backup() {
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
     echo "========== # retrieve backup end =========="
+
+    block_wait 1
 }
 
 retrieve_Prepare() {
     echo "========== # retrieve prepare begin =========="
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
+
+    local backupaddr=$1
+    local defaultaddr=$2
+
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -88,11 +99,17 @@ retrieve_Prepare() {
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
     echo "========== # retrieve prepare end =========="
+
+    block_wait 1
 }
 
 retrieve_Perform() {
     echo "========== # retrieve perform begin =========="
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
+
+    local backupaddr=$1
+    local defaultaddr=$2
+
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -102,11 +119,17 @@ retrieve_Perform() {
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
     echo "========== # retrieve perform end =========="
+
+    block_wait 1
 }
 
 retrieve_Cancel() {
     echo "========== # retrieve cancel begin =========="
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
+
+    local backupaddr=$1
+    local defaultaddr=$2
+
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -116,12 +139,19 @@ retrieve_Cancel() {
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
     echo "========== # retrieve cancel end =========="
+
+    block_wait 1
 }
 
 retrieve_QueryResult() {
     echo "========== # retrieve query result begin =========="
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$1'", "defaultAddress":"'$2'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.status == '$3')' <<<"$data")
+
+    local backupaddr=$1
+    local defaultaddr=$2
+    local status=$3
+
+    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"$backupaddr", "defaultAddress":"defaultaddr"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    ok=$(jq '(.status == $3)' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
@@ -144,7 +174,6 @@ chain33_ImportPrivkey() {
 signrawtx() {
     txHex="$1"
     priKey="$2"
-    type="$3"
     local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
     echo "#request SignRawTx: $req"
     signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
