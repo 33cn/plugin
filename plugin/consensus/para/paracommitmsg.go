@@ -19,7 +19,7 @@ import (
 
 var (
 	consensusInterval = 16 //about 1 new block interval
-	minerInterval     = 2
+	minerInterval     = 5
 )
 
 type commitMsgClient struct {
@@ -432,14 +432,14 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	var needSentTxs uint32
 	for i := 0; i < int(count); i++ {
 		ret = append(ret, nodeList[req.Start+int64(i)])
-		needSentTxs += nodeList[req.Start+int64(i)].TxCounts
+		needSentTxs += nodeList[req.Start+int64(i)].NonCommitTxCounts
 	}
 	//1.如果是只有commit tx的空块，推迟发送，直到等到一个完全没有commit tx的空块或者其他tx的块
 	//2,如果20个块都是 commit tx的空块，20个块打包一次发送，尽量减少commit tx造成的空块
 	//3,如果形如xxoxx的块排列，x代表commit空块，o代表实际的块，即只要不全部是commit块，也要全部打包一起发出去
 	//如果=0 意味着全部是paracross commit tx，延迟发送
 	if needSentTxs == 0 && count < types.TxGroupMaxCount {
-		plog.Info("para commitmsg getNodeStatus all self consensus commit tx,send delay", "start", start, "end", end)
+		plog.Debug("para commitmsg getNodeStatus all self consensus commit tx,send delay", "start", start, "end", end)
 		return nil, nil
 	}
 
