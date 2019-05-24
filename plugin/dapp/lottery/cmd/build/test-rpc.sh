@@ -115,7 +115,7 @@ function query_tx() {
             exec_ok=$(jq '(.result.receipt.tyName == "ExecOk")' <<<"$ret")
             [[ $exec_ok == true ]]
             echo_rst "query tx=$1" $?
-            echo -e "######\n  response: $ret  \n######"
+            echo -e "######\\n  response: $ret  \\n######"
             break
         fi
     done
@@ -135,7 +135,7 @@ chain33_SendToAddress() {
 
     #查询交易
     txhash=$(jq -r ".result.hash" <<<"$resp")
-    query_tx $txhash $http
+    query_tx "$txhash" "$http"
 }
 
 chain33_SendTransaction() {
@@ -251,7 +251,7 @@ lottery_GetLotteryCurrentInfo() {
 
     if [[ $status == 3 ]]; then
         luckyNumber=$(echo "${resp}" | jq -r ".result.luckyNumber")
-        echo -e "######\n  luckyNumber is $luckyNumber  \n######"
+        echo -e "######\\n  luckyNumber is $luckyNumber  \\n######"
     fi
 }
 
