@@ -64,6 +64,7 @@ function query_tx() {
 }
 
 pokerbull_PlayRawTx() {
+    echo "========== # pokerbull play tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Play","payload":{"gameId":"pokerbull-abc", "value":"1000000000", "round":1}}]}' ${MAIN_HTTP} | jq -r ".result")
     PLAY_TX=$tx
 
@@ -74,9 +75,11 @@ pokerbull_PlayRawTx() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "play"
+    echo "========== # pokerbull play tx end =========="
 }
 
 pokerbull_QuitRawTx() {
+    echo "========== # pokerbull quit tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Quit","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     QUIT_TX=$tx
 
@@ -87,9 +90,11 @@ pokerbull_QuitRawTx() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "quit"
+    echo "========== # pokerbull quit tx end =========="
 }
 
 pokerbull_ContinueRawTx() {
+    echo "========== # pokerbull continue tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Continue","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     CONTINUE_TX=$tx
 
@@ -100,9 +105,11 @@ pokerbull_ContinueRawTx() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "continue"
+    echo "========== # pokerbull continue tx end =========="
 }
 
 pokerbull_StartRawTx() {
+    echo "========== # pokerbull start tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Start","payload":{"value":"1000000000", "playerNum":"2"}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -112,9 +119,11 @@ pokerbull_StartRawTx() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "start"
+    echo "========== # pokerbull start tx end =========="
 }
 
 pokerbull_QueryResult() {
+    echo "========== # pokerbull query result begin =========="
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     ok=$(jq '(.game.gameId == "'$GAME_ID'")' <<<"$data")
 
@@ -128,6 +137,7 @@ pokerbull_QueryResult() {
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}' ${MAIN_HTTP} | jq -r ".result")
     [ "$data" != null ]
     echo_rst "$FUNCNAME" "$?"
+    echo "========== # pokerbull query result end =========="
 }
 
 chain33_ImportPrivkey() {

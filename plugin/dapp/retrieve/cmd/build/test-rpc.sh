@@ -63,6 +63,7 @@ function query_tx() {
 }
 
 retrieve_Backup() {
+    echo "========== # retrieve backup begin =========="
     tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'","delayPeriod":'$3'}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -72,9 +73,11 @@ retrieve_Backup() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    echo "========== # retrieve backup end =========="
 }
 
 retrieve_Prepare() {
+echo "========== # retrieve prepare begin =========="
     tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -84,9 +87,11 @@ retrieve_Prepare() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    echo "========== # retrieve prepare end =========="
 }
 
 retrieve_Perform() {
+    echo "========== # retrieve perform begin =========="
     tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -96,9 +101,11 @@ retrieve_Perform() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    echo "========== # retrieve perform end =========="
 }
 
 retrieve_Cancel() {
+    echo "========== # retrieve cancel begin =========="
     tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -108,14 +115,17 @@ retrieve_Cancel() {
     echo_rst "$FUNCNAME" "$?"
 
     signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    echo "========== # retrieve cancel end =========="
 }
 
 retrieve_QueryResult() {
+    echo "========== # retrieve query result begin =========="
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$1'", "defaultAddress":"'$2'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     ok=$(jq '(.status == '$3')' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
+    echo "========== # retrieve query result end =========="
 }
 
 chain33_ImportPrivkey() {
@@ -136,9 +146,9 @@ signrawtx() {
     priKey="$2"
     type="$3"
     local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
-    #    echo "#request SignRawTx: $req"
+    echo "#request SignRawTx: $req"
     signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
-    #    echo "signedTx=$signedTx"
+    echo "signedTx=$signedTx"
     if [ "$signedTx" != null ]; then
         sendTx "$signedTx"
     else
@@ -149,13 +159,13 @@ signrawtx() {
 sendTx() {
     signedTx=$1
     local req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
-    #    echo "#request sendTx: $req"
+    echo "#request sendTx: $req"
     #    curl -ksd "{$req}" ${MAIN_HTTP}
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     err=$(jq '(.error)' <<<"$resp")
     txhash=$(jq -r ".result" <<<"$resp")
     if [ "$err" == null ]; then
-        #   echo "tx hash: $txhash"
+        echo "tx hash: $txhash"
         query_tx "$txhash"
     else
         echo "send tx error:$err"
@@ -168,15 +178,15 @@ Chain33_SendToAddress() {
     local to="$2"
     local amount=$3
     local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
-    #    echo "#request: $req"
+    echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
+    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     hash=$(jq '(.result.hash)' <<<"$resp")
     echo "hash=$hash"
-    #    query_tx "$hash"
+    query_tx "$hash"
 }
 
 init() {
