@@ -139,7 +139,7 @@ function evm_callContract() {
 
 function evm_abiGet() {
     abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    res=$(echo "${abiInfo}" | jq -r ".result"  | jq -r 'has("abi")')
+    res=$(echo "${abiInfo}" | jq -r ".result" | jq -r 'has("abi")')
     if [ "${res}" == "true" ]; then
         echo_rst "CallContract queryExecRes" 0
     else
