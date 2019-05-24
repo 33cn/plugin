@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"encoding/hex"
 )
 
 //ExecLocal_Commit commit tx local db process
@@ -193,9 +194,9 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	status.TxResult = util.CalcBitMap(curTxHashs, curTxHashs, receipts)
+	status.TxResult = []byte(hex.EncodeToString(util.CalcBitMap(curTxHashs, curTxHashs, receipts)))
 	//跨链tx结果
-	status.CrossTxResult = util.CalcBitMap(crossTxHashs, curTxHashs, receipts)
+	status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
 
 	status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
 	status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
