@@ -7,11 +7,12 @@ package executor
 import (
 	"bytes"
 
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"encoding/hex"
 )
 
 //ExecLocal_Commit commit tx local db process

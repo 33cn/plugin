@@ -491,8 +491,8 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 
 		//只获取跨链tx
 		crossTxHashs = paraCrossHashs
-		rst,err:=hex.DecodeString(string(commit.Status.CrossTxResult))
-		if err!=nil{
+		rst, err := hex.DecodeString(string(commit.Status.CrossTxResult))
+		if err != nil {
 			clog.Error("getCrossTxHashs decode string", "CrossTxResult", string(commit.Status.CrossTxResult),
 				"commit.height", commit.Status.Height)
 			return nil, nil, types.ErrInvalidParam
