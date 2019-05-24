@@ -164,23 +164,43 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 	return nil
 }
 
-func setMinerTxResultFork(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) {
+func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transaction, receipts []*types.ReceiptData) error {
+	isCommitTx := make(map[string]bool)
 	var curTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
+
+		if types.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			var payload pt.ParacrossAction
+			err := types.Decode(tx.Payload, &payload)
+			if err != nil {
+				clog.Error("setMinerTxResultFork", "txHash", common.ToHex(hash))
+				return err
+			}
+			if payload.Ty == pt.ParacrossActionCommit {
+				isCommitTx[string(hash)] = true
+			}
+		}
 	}
 
-	baseCrossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
+	//有tx且全部是user.p.x.paracross的commit tx时候设为0
+	status.TxCounts = 1
+	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
+		status.TxCounts = 0
+	}
+	crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	payload.Status.TxResult = util.CalcBitMap(curTxHashs, curTxHashs, receipts)
+	status.TxResult = util.CalcBitMap(curTxHashs, curTxHashs, receipts)
 	//跨链tx结果
-	payload.Status.CrossTxResult = util.CalcBitMap(baseCrossTxHashs, curTxHashs, receipts)
+	status.CrossTxResult = util.CalcBitMap(crossTxHashs, curTxHashs, receipts)
 
-	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
-	payload.Status.CrossTxHashs = [][]byte{CalcTxHashsHash(baseCrossTxHashs)}
+	status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
+	status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
+
+	return nil
 }
 
 //ExecLocal_Miner miner tx local db process
@@ -196,7 +216,10 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 
 	//removed the 0 vote tx
 	if payload.Status.MainBlockHeight >= forkHeight {
-		setMinerTxResultFork(payload, txs[1:], e.GetReceipt()[1:])
+		err := setMinerTxResultFork(payload.Status, txs[1:], e.GetReceipt()[1:])
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		err := setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
 		if err != nil {
