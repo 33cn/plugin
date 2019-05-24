@@ -154,6 +154,7 @@ chain33_ImportPrivkey() {
 }
 
 signrawtx() {
+    echo "sign tx '$1' begin"
     txHex="$1"
     priKey="$2"
     type="$3"
@@ -164,9 +165,11 @@ signrawtx() {
     else
         echo "signedTx null error"
     fi
+    echo "sign tx '$1' end"
 }
 
 sendTx() {
+    echo "send tx '$1' begin"
     signedTx=$1
     type=$2
     local req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
@@ -181,10 +184,11 @@ sendTx() {
     else
         echo "send tx error:$err"
     fi
-
+    echo "send tx '$1' end"
 }
 
 Chain33_SendToAddress() {
+    echo "send '$3' from '$1' to '$2' begin"
     local from="$1"
     local to="$2"
     local amount=$3
@@ -195,6 +199,7 @@ Chain33_SendToAddress() {
     echo_rst "$FUNCNAME" "$?"
     hash=$(jq '(.result.hash)' <<<"$resp")
     echo "hash=$hash"
+    echo "send '$3' from '$1' to '$2' end"
 }
 
 init() {
