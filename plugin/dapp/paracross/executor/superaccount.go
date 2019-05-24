@@ -165,7 +165,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	if !types.IsPara() {
-		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen,1)
+		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +258,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	//still adding status, quit directly
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	if !types.IsPara() {
-		r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen,1)
+		r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -438,7 +438,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParacrossNodeQuited
 
 			if !types.IsPara() {
-				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen,1)
+				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
 				}
@@ -546,7 +546,7 @@ func (a *action) checkNodeGroupExist(title string) error {
 	return nil
 }
 
-func (a *action) nodeGroupCoinsFrozen(createAddr string, configCoinsFrozen int64,nodeCounts int64) (*types.Receipt, error) {
+func (a *action) nodeGroupCoinsFrozen(createAddr string, configCoinsFrozen int64, nodeCounts int64) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
 	confCoins := conf.GInt("nodeGroupFrozenCoins")
 	if configCoinsFrozen < confCoins {
@@ -585,7 +585,7 @@ func (a *action) nodeGroupCoinsActive(createAddr string, configCoinsFrozen int64
 	r, err := a.coinsAccount.ExecActive(createAddr, realExecAddr, nodeCount*configCoinsFrozen)
 	if err != nil {
 		clog.Error("node group apply", "addr", createAddr,
-			"realExec", realExec, "realAddr", realExecAddr, "amount", configCoinsFrozen,"nodeCount",nodeCount)
+			"realExec", realExec, "realAddr", realExecAddr, "amount", configCoinsFrozen, "nodeCount", nodeCount)
 		return nil, err
 	}
 
@@ -610,7 +610,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
 	if !types.IsPara() {
-		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen,int64(len(addrs)))
+		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen, int64(len(addrs)))
 		if err != nil {
 			return nil, err
 		}
@@ -625,7 +625,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		CoinsFrozen:        config.CoinsFrozen,
 		MainHeight:         a.exec.GetMainHeight(),
 		EmptyBlockInterval: config.EmptyBlockInterval,
-		FromAddr: 			a.fromaddr}
+		FromAddr:           a.fromaddr}
 	saveNodeGroup(a.db, config.Title, stat)
 	r := makeParaNodeGroupApplyReiceipt(config.Title, a.fromaddr, status, stat, pt.TyLogParaNodeGroupApply)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -644,8 +644,8 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 		return nil, pt.ErrParaNodeGroupStatusWrong
 	}
 
-	if status.FromAddr != a.fromaddr{
-		clog.Error("node group create addr err", "createAddr", status.FromAddr,"currAddr",a.fromaddr)
+	if status.FromAddr != a.fromaddr {
+		clog.Error("node group create addr err", "createAddr", status.FromAddr, "currAddr", a.fromaddr)
 		return nil, types.ErrNotAllow
 	}
 
@@ -657,7 +657,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
 	if !types.IsPara() {
-		r, err := a.nodeGroupCoinsActive(a.fromaddr, status.CoinsFrozen,int64(len(applyAddrs)))
+		r, err := a.nodeGroupCoinsActive(a.fromaddr, status.CoinsFrozen, int64(len(applyAddrs)))
 		if err != nil {
 			return nil, err
 		}
@@ -734,7 +734,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//create the node group
-	r, err := a.nodeGroupCreate(config.Title, applyAddrs, status.CoinsFrozen,status.FromAddr)
+	r, err := a.nodeGroupCreate(config.Title, applyAddrs, status.CoinsFrozen, status.FromAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -756,7 +756,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 	return receipt, nil
 }
 
-func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64,createAddr string) (*types.Receipt, error) {
+func (a *action) nodeGroupCreate(title string, nodes []string, coinFrozen int64, createAddr string) (*types.Receipt, error) {
 	var item types.ConfigItem
 	key := calcParaNodeGroupKey(title)
 	item.Key = string(key)
