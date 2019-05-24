@@ -185,10 +185,11 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 		}
 	}
 
+	status.TxCounts = uint32(len(curTxHashs))
 	//有tx且全部是user.p.x.paracross的commit tx时候设为0
-	status.TxCounts = 1
+	status.NonCommitTxCounts = 1
 	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
-		status.TxCounts = 0
+		status.NonCommitTxCounts = 0
 	}
 	crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 

@@ -34,7 +34,7 @@ const (
 	addAct int64 = 1 //add para block action
 	delAct int64 = 2 //reference blockstore.go, del para block action
 
-	minBlockNum = 6 //min block number startHeight before lastHeight in mainchain
+	minBlockNum = 100 //min block number startHeight before lastHeight in mainchain
 )
 
 var (
