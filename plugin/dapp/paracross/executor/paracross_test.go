@@ -620,8 +620,8 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
 			types.Decode(kv.GetValue(), &rst)
-			s.Equal([]uint8([]byte{0x8e}), rst.TxResult)
-			s.Equal([]uint8([]byte{0x22}), rst.CrossTxResult)
+			s.Equal([]byte("8e"), rst.TxResult)
+			s.Equal([]byte("22"), rst.CrossTxResult)
 			s.Equal(1, len(rst.TxHashs))
 			s.Equal(1, len(rst.CrossTxHashs))
 
