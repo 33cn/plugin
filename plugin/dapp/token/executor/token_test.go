@@ -262,8 +262,8 @@ func TestToken(t *testing.T) {
 	assert.True(t, ok)
 
 	in := pty.ReqAccountTokenAssets{
-		Address:              string(Nodes[0]),
-		Execer:               pty.TokenX,
+		Address: string(Nodes[0]),
+		Execer:  pty.TokenX,
 	}
 	out, err := tokenExec.Query_GetAccountTokenAssets(&in)
 	assert.Nil(t, err)
