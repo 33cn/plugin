@@ -5,7 +5,6 @@ set -o pipefail
 
 MAIN_HTTP=""
 CASE_ERR=""
-GAME_ID=""
 
 #color
 RED='\033[1;31m'
@@ -63,70 +62,67 @@ function query_tx() {
     done
 }
 
-pokerbull_PlayRawTx() {
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Play","payload":{"gameId":"pokerbull-abc", "value":"1000000000", "round":1}}]}' ${MAIN_HTTP} | jq -r ".result")
-    PLAY_TX=$tx
+retrieve_Backup() {
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'","delayPeriod":$3}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "pokerbull")' <<<"$data")
+    ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "play"
+    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 }
 
-pokerbull_QuitRawTx() {
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Quit","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    QUIT_TX=$tx
+retrieve_Prepare() {
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "pokerbull")' <<<"$data")
+    ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "quit"
+    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 }
 
-pokerbull_ContinueRawTx() {
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Continue","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    CONTINUE_TX=$tx
+retrieve_Perform() {
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "pokerbull")' <<<"$data")
+    ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "continue"
+    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 }
 
-pokerbull_StartRawTx() {
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Start","payload":{"value":"1000000000", "playerNum":"2"}}]}' ${MAIN_HTTP} | jq -r ".result")
+retrieve_Cancel() {
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "pokerbull")' <<<"$data")
+    ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "start"
+    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 }
 
-pokerbull_QueryResult() {
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.game.gameId == "'$GAME_ID'")' <<<"$data")
-
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    [ "$data" != null ]
-    echo_rst "$FUNCNAME" "$?"
-
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    [ "$data" != null ]
+retrieve_QueryResult() {
+#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+#    ok=$(jq '(.game.gameId == "'$GAME_ID'")' <<<"$data")
+#
+#    [ "$ok" == true ]
+#    echo_rst "$FUNCNAME" "$?"
+#
+#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]}' ${MAIN_HTTP} | jq -r ".result")
+#    [ "$data" != null ]
+#    echo_rst "$FUNCNAME" "$?"
+#
+#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}' ${MAIN_HTTP} | jq -r ".result")
+#    [ "$data" != null ]
     echo_rst "$FUNCNAME" "$?"
 }
 
@@ -148,9 +144,11 @@ signrawtx() {
     priKey="$2"
     type="$3"
     local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
+    #    echo "#request SignRawTx: $req"
     signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    #    echo "signedTx=$signedTx"
     if [ "$signedTx" != null ]; then
-        sendTx "$signedTx" "$3"
+        sendTx "$signedTx"
     else
         echo "signedTx null error"
     fi
@@ -158,16 +156,15 @@ signrawtx() {
 
 sendTx() {
     signedTx=$1
-    type=$2
     local req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
+    #    echo "#request sendTx: $req"
+    #    curl -ksd "{$req}" ${MAIN_HTTP}
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     err=$(jq '(.error)' <<<"$resp")
     txhash=$(jq -r ".result" <<<"$resp")
     if [ "$err" == null ]; then
+        #   echo "tx hash: $txhash"
         query_tx "$txhash"
-        if [ "$type" == "start" ]; then
-            GAME_ID=$txhash
-        fi
     else
         echo "send tx error:$err"
     fi
@@ -179,57 +176,61 @@ Chain33_SendToAddress() {
     local to="$2"
     local amount=$3
     local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
+    #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    #    echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     hash=$(jq '(.result.hash)' <<<"$resp")
     echo "hash=$hash"
+    #    query_tx "$hash"
 }
 
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     if [ "$ispara" == true ]; then
-        pokerbull_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.pokerbull"}]}' ${MAIN_HTTP} | jq -r ".result")
+        retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
-        pokerbull_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"pokerbull"}]}' ${MAIN_HTTP} | jq -r ".result")
+        #chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+        retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
-    echo "pokerbulladdr=$pokerbull_addr"
+    echo "retrieveaddr=$retrieve_addr"
 
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    Chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000
+    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
 
     from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    Chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000
+    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
     block_wait 1
 }
 
 function run_test() {
-    pokerbull_StartRawTx
+    retrieve_Backup
 
-    pokerbull_ContinueRawTx
+    retrieve_Prepare
 
-    pokerbull_QuitRawTx
+    retrieve_Perform
 
-    pokerbull_PlayRawTx
+    retrieve_Cancel
 
-    pokerbull_QueryResult
+    retrieve_QueryResult
 
 }
 function main() {
     MAIN_HTTP="$1"
-    echo "=========== # pokerbull rpc test ============="
+    echo "=========== # retrieve rpc test ============="
     echo "ip=$MAIN_HTTP"
 
     init
     run_test
 
     if [ -n "$CASE_ERR" ]; then
-        echo -e "${RED}=============Pokerbull Rpc Test Fail=============${NOC}"
+        echo -e "${RED}=============retrieve Rpc Test Fail=============${NOC}"
         exit 1
     else
-        echo -e "${GRE}=============Pokerbull Rpc Test Pass==============${NOC}"
+        echo -e "${GRE}=============retrieve Rpc Test Pass==============${NOC}"
     fi
 }
 
