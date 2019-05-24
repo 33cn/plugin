@@ -69,7 +69,7 @@ retrieve_Backup() {
     local defaultaddr=$2
     local delayPeriod=$3
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr","delayPeriod": $delayPeriod}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'","delayPeriod": '$delayPeriod'}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -89,7 +89,7 @@ retrieve_Prepare() {
     local backupaddr=$1
     local defaultaddr=$2
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -109,7 +109,7 @@ retrieve_Perform() {
     local backupaddr=$1
     local defaultaddr=$2
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -129,7 +129,7 @@ retrieve_Cancel() {
     local backupaddr=$1
     local defaultaddr=$2
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"$backupaddr","defaultAddr":"$defaultaddr"}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -150,8 +150,8 @@ retrieve_QueryResult() {
     local defaultaddr=$2
     local status=$3
 
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"$backupaddr", "defaultAddress":"defaultaddr"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.status == $3)' <<<"$data")
+    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$backupaddr'", "defaultAddress":"'$defaultaddr'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    ok=$(jq '(.status == '$status')' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
