@@ -230,6 +230,7 @@ function sendSignedTx() {
 function queryTransaction() {
     validators=$1
     expectRes=$2
+    echo "txhash=${txHash}"
 
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
