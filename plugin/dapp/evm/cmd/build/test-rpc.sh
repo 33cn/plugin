@@ -185,7 +185,6 @@ function evm_getBalance() {
 }
 
 function evm_withDraw() {
-    echo "In evm withDraw test."
     validator=$1
     expectRes=$2
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"evm.EvmWithdrawTx","params":[{"amount":1,"caller":"'${evm_creatorAddr}'","expire":"", "exec":"'${evm_addr}'", "paraName":"'${paraName}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
