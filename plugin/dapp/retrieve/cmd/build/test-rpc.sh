@@ -63,7 +63,7 @@ function query_tx() {
 }
 
 retrieve_Backup() {
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'","delayPeriod":$3}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$1'","defaultAddr":"'$2'","delayPeriod":'$3'}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
@@ -83,7 +83,7 @@ retrieve_Prepare() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
 }
 
 retrieve_Perform() {
@@ -95,7 +95,7 @@ retrieve_Perform() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
 }
 
 retrieve_Cancel() {
@@ -111,29 +111,21 @@ retrieve_Cancel() {
 }
 
 retrieve_QueryResult() {
-#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-#    ok=$(jq '(.game.gameId == "'$GAME_ID'")' <<<"$data")
-#
-#    [ "$ok" == true ]
-#    echo_rst "$FUNCNAME" "$?"
-#
-#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]}' ${MAIN_HTTP} | jq -r ".result")
-#    [ "$data" != null ]
-#    echo_rst "$FUNCNAME" "$?"
-#
-#    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}' ${MAIN_HTTP} | jq -r ".result")
-#    [ "$data" != null ]
+    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$1'", "defaultAddress":"'$2'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    ok=$(jq '(.status == '$3')' <<<"$data")
+
+    [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 }
 
 chain33_ImportPrivkey() {
     local pri=$2
     local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"pokerbullimportkey1"}]'
+    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"retrieveimportkey1"}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$1")
     echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="pokerbullimportkey1") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result.label=="retrieveimportkey1") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -193,7 +185,7 @@ init() {
     if [ "$ispara" == true ]; then
         retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
-        #chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+        chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
         retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
     echo "retrieveaddr=$retrieve_addr"
@@ -201,23 +193,23 @@ init() {
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
 
-    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
     block_wait 1
 }
 
 function run_test() {
-    retrieve_Backup
+    retrieve_Backup "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"  61
+    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 1
 
-    retrieve_Prepare
+    retrieve_Prepare "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 2
 
-    retrieve_Perform
+    #retrieve_Perform "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    #retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 3
 
-    retrieve_Cancel
-
-    retrieve_QueryResult
-
+    retrieve_Cancel "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 4
 }
+
 function main() {
     MAIN_HTTP="$1"
     echo "=========== # retrieve rpc test ============="
