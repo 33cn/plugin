@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/evm/commands"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor"
+	"github.com/33cn/plugin/plugin/dapp/evm/rpc"
 	"github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
@@ -17,6 +18,6 @@ func init() {
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.EvmCmd,
-		RPC:      nil,
+		RPC:      rpc.Init,
 	})
 }
