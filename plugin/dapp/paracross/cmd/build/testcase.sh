@@ -252,7 +252,6 @@ function para_create_nodegroup() {
         exit 1
     fi
 
-
 }
 
 function para_create_manage_nodegroup() {
@@ -581,16 +580,13 @@ function para_nodemanage_quit_test() {
         exit 1
     fi
 
-
-
 }
 
 function para_nodegroup_behalf_quit_test() {
-        echo "=========== # para chain behalf node quit ============="
+    echo "=========== # para chain behalf node quit ============="
     hash=$(${PARA_CLI} send para node -o quit -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
 
     status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
     if [ "${status}" != "3" ]; then
@@ -599,7 +595,7 @@ function para_nodegroup_behalf_quit_test() {
         exit 1
     fi
 
-   ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
     hash=$(${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
@@ -626,8 +622,6 @@ function para_nodegroup_behalf_quit_test() {
     fi
 
 }
-
-
 
 function para_nodemanage_test() {
     para_nodemanage_quit_test
