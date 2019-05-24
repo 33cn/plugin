@@ -99,6 +99,7 @@ message ParaNodeGroupStatus {
     int64  coinsFrozen          = 4;
     uint32 emptyBlockInterval   = 5;
     int64  mainHeight           = 6;
+    string fromAddr             = 7;
 }
 
 message ReceiptParaNodeGroupConfig {
