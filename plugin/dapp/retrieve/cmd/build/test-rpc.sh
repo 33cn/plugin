@@ -190,17 +190,17 @@ Chain33_SendToAddress() {
 }
 
 function run_test() {
-    retrieve_Backup "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"  61
-    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 1
+    retrieve_Backup "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 61
+    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 1
 
     retrieve_Prepare "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 2
+    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 2
 
     #retrieve_Perform "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     #retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 3
 
     retrieve_Cancel "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 4
+    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 4
 }
 
 function main() {
