@@ -198,13 +198,14 @@ func (client *client) InitBlock() {
 	}
 
 	if block == nil {
-		startSeq := client.GetStartSeq(startHeight)
+		startSeq, mainHash := client.GetStartSeq(startHeight)
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
-		newblock.MainHash = zeroHash[:]
+		newblock.MainHash = mainHash
+		newblock.MainHeight = startHeight
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -219,9 +220,9 @@ func (client *client) InitBlock() {
 }
 
 // GetStartSeq get startSeq in mainchain
-func (client *client) GetStartSeq(height int64) int64 {
+func (client *client) GetStartSeq(height int64) (int64, []byte) {
 	if height == 0 {
-		return 0
+		return 0, nil
 	}
 
 	lastHeight, err := client.GetLastHeightOnMainChain()
@@ -248,12 +249,12 @@ func (client *client) GetStartSeq(height int64) int64 {
 	hint.Stop()
 	plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
 
-	seq, err := client.GetSeqByHeightOnMainChain(height)
+	seq, hash, err := client.GetSeqByHeightOnMainChain(height)
 	if err != nil {
 		panic(err)
 	}
 	plog.Info("the start sequence in mainchain", "startHeight", height, "startSeq", seq)
-	return seq
+	return seq, hash
 }
 
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
@@ -306,6 +307,31 @@ func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 	return blockDetails.Items[0].Block, nil
 }
 
+// 获取上一个平行链对应主链seq，hash信息
+// 对于平行链创世区块特殊场景：
+// 1,创世区块seq从-1开始，也就是从主链0高度同步区块，主链seq从0开始，平行链对seq=0的区块校验时候做特殊处理，不校验parentHash
+// 2,创世区块seq不是-1， 也就是从主链seq=n高度同步区块，此时创世区块记录了起始高度对应的主链hash，通过hash获取当前seq，然后创世区块需要倒退一个seq，lastSeq=n-1，
+// 因为对于云端主链节点，创世区块记录seq在不同主链节点上差异很大，通过记录的主链hash获取的真实seq-1来使用，主链hash使用对应区块的parenthash做校验目的
+func (client *client) getLastBlockMainInfo() (int64, []byte, error) {
+	lastSeq, lastBlock, err := client.getLastBlockInfo()
+	if err != nil {
+		return -2, nil, err
+	}
+	if lastBlock.Height == 0 && lastSeq > -1 {
+		mainBlock, err := client.GetBlockOnMainByHash(lastBlock.MainHash)
+		if err != nil {
+			return -2, nil, err
+		}
+
+		mainSeq, err := client.GetSeqByHashOnMainChain(lastBlock.MainHash)
+		if err != nil {
+			return -2, nil, err
+		}
+		return mainSeq - 1, mainBlock.ParentHash, nil
+	}
+	return lastSeq, lastBlock.MainHash, nil
+}
+
 func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
@@ -317,22 +343,6 @@ func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
 		plog.Error("Parachain GetBlockedSeq fail", "err", err)
 		return -2, nil, err
 	}
-
-	// 平行链创世区块特殊场景：
-	// 1,创世区块seq从-1开始，也就是从主链0高度同步区块，主链seq从0开始，平行链对seq=0的区块做特殊处理，不校验parentHash
-	// 2,创世区块seq不是-1， 也就是从主链seq=n高度同步区块，此时创世区块倒退一个seq，blockedSeq=n-1，
-	// 由于创世区块本身没有记录主块hash,需要通过最初记录的seq获取，有可能n-1 seq 是回退block 获取的Hash不对，这里获取主链第n seq的parentHash
-	// 在genesis create时候直接设mainhash也可以，但是会导致已有平行链所有block hash变化
-	if lastBlock.Height == 0 && blockedSeq > -1 {
-		main, err := client.GetBlockOnMainBySeq(blockedSeq + 1)
-		if err != nil {
-			return -2, nil, err
-		}
-		lastBlock.MainHash = main.Detail.Block.ParentHash
-		lastBlock.MainHeight = main.Detail.Block.Height - 1
-		return blockedSeq, lastBlock, nil
-	}
-
 	return blockedSeq, lastBlock, nil
 }
 
@@ -365,13 +375,13 @@ func (client *client) GetLastSeqOnMainChain() (int64, error) {
 	return seq.Data, nil
 }
 
-func (client *client) GetSeqByHeightOnMainChain(height int64) (int64, error) {
+func (client *client) GetSeqByHeightOnMainChain(height int64) (int64, []byte, error) {
 	hash, err := client.GetHashByHeightOnMainChain(height)
 	if err != nil {
-		return -1, err
+		return -1, nil, err
 	}
 	seq, err := client.GetSeqByHashOnMainChain(hash)
-	return seq, err
+	return seq, hash, err
 }
 
 func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
@@ -408,6 +418,16 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 	}
 
 	return blockSeq, nil
+}
+
+func (client *client) GetBlockOnMainByHash(hash []byte) (*types.Block, error) {
+	blocks, err := client.grpcClient.GetBlockByHashes(context.Background(), &types.ReqHashes{Hashes: [][]byte{hash}})
+	if err != nil || blocks.Items[0] == nil {
+		plog.Error("GetBlockOnMainByHash Not found", "blockhash", common.ToHex(hash))
+		return nil, err
+	}
+
+	return blocks.Items[0].Block, nil
 }
 
 // preBlockHash to identify the same main node
@@ -466,13 +486,13 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 // for genesis seq=-1 scenario, mainHash not care, as the 0 seq instead of -1
 // not seq=-1 scenario, mainHash needed
 func (client *client) syncFromGenesisBlock() (int64, []byte, error) {
-	lastSeq, lastBlock, err := client.getLastBlockInfo()
+	lastSeq, lastMainHash, err := client.getLastBlockMainInfo()
 	if err != nil {
 		plog.Error("Parachain getLastBlockInfo fail", "err", err)
 		return -2, nil, err
 	}
 	plog.Info("syncFromGenesisBlock sync from height 0")
-	return lastSeq + 1, lastBlock.MainHash, nil
+	return lastSeq + 1, lastMainHash, nil
 }
 
 // search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
@@ -561,12 +581,11 @@ func (client *client) removeBlocks(endHeight int64) error {
 func (client *client) CreateBlock() {
 	incSeqFlag := true
 	//system startup, take the last added block's seq is ok
-	currSeq, lastBlock, err := client.getLastBlockInfo()
+	currSeq, lastSeqMainHash, err := client.getLastBlockMainInfo()
 	if err != nil {
 		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
 		return
 	}
-	lastSeqMainHash := lastBlock.MainHash
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()
@@ -658,15 +677,6 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 		PreStateHash:    preStateHash,
 		MainBlockHash:   main.Seq.Hash,
 		MainBlockHeight: main.Detail.Block.Height,
-	}
-
-	//获取当前区块的所有原始tx hash 和跨链hash作为bitmap base hashs，因为有可能在执行过程中有些tx 执行error被剔除掉
-	if main.Detail.Block.Height >= mainForkParacrossCommitTx {
-		for _, tx := range txs {
-			status.TxHashs = append(status.TxHashs, tx.Hash())
-		}
-		txHashs := paraexec.FilterParaCrossTxHashes(types.GetTitle(), txs)
-		status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 	}
 
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{

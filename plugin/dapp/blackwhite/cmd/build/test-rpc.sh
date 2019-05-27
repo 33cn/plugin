@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
-set -e
+set +e
 set -o pipefail
+set -x
 
 MAIN_HTTP=""
 CASE_ERR=""
