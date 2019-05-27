@@ -141,7 +141,7 @@ retrieve_Cancel() {
 retrieve_QueryResult() {
     echo "========== # retrieve query result begin =========="
 
-    local status=$3
+    local status=$1
 
     req='"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY", "defaultAddress":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]'
     data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
@@ -213,17 +213,17 @@ Chain33_SendToAddress() {
 }
 
 function run_test() {
-    retrieve_Backup "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 61
-    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 1
+    retrieve_Backup
+    retrieve_QueryResult 1
 
-    retrieve_Prepare "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 2
+    retrieve_Prepare
+    retrieve_QueryResult 2
 
     #retrieve_Perform "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     #retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 3
 
-    retrieve_Cancel "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    retrieve_QueryResult "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 4
+    retrieve_Cancel
+    retrieve_QueryResult 4
 }
 
 function main() {
