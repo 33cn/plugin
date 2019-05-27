@@ -65,13 +65,11 @@ function query_tx() {
 retrieve_Backup() {
     echo "========== # retrieve backup begin =========="
 
-    local backupaddr=$1
-    local defaultaddr=$2
-    local delayPeriod=$3
+    req='"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt","delayPeriod": 61}]'
+    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'","delayPeriod": '$delayPeriod'}]}' ${MAIN_HTTP} | jq -r ".result")
-
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
+    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
@@ -86,12 +84,11 @@ retrieve_Backup() {
 retrieve_Prepare() {
     echo "========== # retrieve prepare begin =========="
 
-    local backupaddr=$1
-    local defaultaddr=$2
+    req='"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
-
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
+    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
@@ -106,12 +103,11 @@ retrieve_Prepare() {
 retrieve_Perform() {
     echo "========== # retrieve perform begin =========="
 
-    local backupaddr=$1
-    local defaultaddr=$2
+    req='"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
-
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
+    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
@@ -126,12 +122,11 @@ retrieve_Perform() {
 retrieve_Cancel() {
     echo "========== # retrieve cancel begin =========="
 
-    local backupaddr=$1
-    local defaultaddr=$2
+    req='"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
-    tx=$(curl -ksd '{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$backupaddr'","defaultAddr":"'$defaultaddr'"}]}' ${MAIN_HTTP} | jq -r ".result")
-
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
+    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer == "retrieve")' <<<"$data")
 
     [ "$ok" == true ]
@@ -146,12 +141,11 @@ retrieve_Cancel() {
 retrieve_QueryResult() {
     echo "========== # retrieve query result begin =========="
 
-    local backupaddr=$1
-    local defaultaddr=$2
     local status=$3
 
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$backupaddr'", "defaultAddress":"'$defaultaddr'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.status == '$status')' <<<"$data")
+    req='"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY", "defaultAddress":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]'
+    data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    ok=$(jq '(.status == '"$status"')' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
