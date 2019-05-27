@@ -141,7 +141,7 @@ driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
 # store数据库版本
-storedbVersion="1.0.0"
+storedbVersion="2.0.0"
 
 [store.sub.mavl]
 enableMavlPrefix=false
