@@ -386,23 +386,23 @@ function run_testcases() {
     gameAddr3="${glAddr}"
 
     #给每个账户分别转帐
-    origAddr="${lottery_creator_addr}"
+    origAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 2000000000 "${M_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 2000000000 "${M_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 2000000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 300000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 300000000 "${M_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 300000000 "${M_HTTP}"
 
     #平行链相应账户需要转帐
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 2000000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 2000000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 2000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 300000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 300000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 300000000 "${MAIN_HTTP}"
 
     #给游戏合约中转帐
-    chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 1000000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${gameAddr2}" "${lottExecAddr}" 1000000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${gameAddr3}" "${lottExecAddr}" 1000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr2}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr3}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
 
     #创建游戏
     lottery_LotteryCreate "${lottery_creator_addr}"
@@ -411,19 +411,19 @@ function run_testcases() {
 
     #第一次投注
     lottery_LotteryBuy "${gameAddr1}" 1 12345 1
-    lottery_LotteryBuy "${gameAddr2}" 2 66666 2
-    lottery_LotteryBuy "${gameAddr3}" 5 56789 5
+    lottery_LotteryBuy "${gameAddr2}" 1 66666 2
+    lottery_LotteryBuy "${gameAddr3}" 1 56789 5
     #查询
-    lottery_GetLotteryCurrentInfo "$gID" 2 8
+    lottery_GetLotteryCurrentInfo "$gID" 2 3
     lottery_GetLotteryPurchaseAddr "$gID" 3
     lottery_GetLotteryHistoryBuyInfo "$gID" "${gameAddr1}" 1 "12345"
     lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr2}" 1 1 "66666"
 
     #第二次投注
-    lottery_LotteryBuy "${gameAddr1}" 6 12321 1
-    lottery_LotteryBuy "${gameAddr3}" 2 78987 5
+    lottery_LotteryBuy "${gameAddr1}" 1 12321 1
+    lottery_LotteryBuy "${gameAddr3}" 1 78987 5
     #查询
-    lottery_GetLotteryCurrentInfo "$gID" 2 16
+    lottery_GetLotteryCurrentInfo "$gID" 2 5
     lottery_GetLotteryPurchaseAddr "$gID" 3
     lottery_GetLotteryHistoryBuyInfo "$gID" "${gameAddr1}" 2 "12321"
     lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr3}" 1 2 "78987"
@@ -436,10 +436,10 @@ function run_testcases() {
     #游戏查询
     lottery_GetLotteryHistoryLuckyNumber "$gID" 1 "${luckyNumber}"
     lottery_GetLotteryRoundLuckyNumber "$gID" 1 "${luckyNumber}"
-    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr1}" 1 7
-    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr2}" 1 2
-    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr1}" 1 7
-    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr3}" 1 7
+    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr1}" 1 2
+    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr2}" 1 1
+    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr1}" 1 2
+    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr3}" 1 2
 
     #关闭游戏
     lottery_LotteryClose "${lottery_creator_addr}"
