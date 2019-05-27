@@ -63,7 +63,7 @@ grpcFuncWhitelist=["*"]
 
 
 [mempool]
-name="timeline"
+name="para"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
@@ -154,6 +154,7 @@ tokenApprs = [
 ]
 
 [exec.sub.paracross]
+#平行链自共识停止n个块后，超级账户可以直接参与投票
 paraConsensusStopBlocks=100
 
 [pprof]

@@ -5,6 +5,10 @@
 package executor
 
 import (
+	"bytes"
+
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -125,41 +129,81 @@ func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *t
 	return nil, nil
 }
 
-func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) {
-	var curTxHashs, paraTxHashs [][]byte
+func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) error {
+	isCommitTx := make(map[string]bool)
+	var curTxHashs, paraTxHashs, crossTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
+		//对user.p.xx.paracross ,actionTy==commit 的tx不需要再发回主链
+		if types.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			var payload pt.ParacrossAction
+			err := types.Decode(tx.Payload, &payload)
+			if err != nil {
+				clog.Error("setMinerTxResult", "txHash", common.ToHex(hash))
+				return err
+			}
+			if payload.Ty == pt.ParacrossActionCommit {
+				isCommitTx[string(hash)] = true
+			}
+		}
 		//跨链交易包含了主链交易，需要过滤出来
-		if types.IsMyParaExecName(string(tx.Execer)) {
+		if types.IsMyParaExecName(string(tx.Execer)) && !isCommitTx[string(hash)] {
 			paraTxHashs = append(paraTxHashs, hash)
 		}
 	}
-	crossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
+	totalCrossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
+	for _, crossHash := range totalCrossTxHashs {
+		if !isCommitTx[string(crossHash)] {
+			crossTxHashs = append(crossTxHashs, crossHash)
+		}
+	}
 	payload.Status.TxHashs = paraTxHashs
 	payload.Status.TxResult = util.CalcBitMap(paraTxHashs, curTxHashs, receipts)
 	payload.Status.CrossTxHashs = crossTxHashs
 	payload.Status.CrossTxResult = util.CalcBitMap(crossTxHashs, curTxHashs, receipts)
 
+	return nil
 }
 
-func setMinerTxResultFork(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) {
+func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transaction, receipts []*types.ReceiptData) error {
+	isCommitTx := make(map[string]bool)
 	var curTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
+
+		if types.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			var payload pt.ParacrossAction
+			err := types.Decode(tx.Payload, &payload)
+			if err != nil {
+				clog.Error("setMinerTxResultFork", "txHash", common.ToHex(hash))
+				return err
+			}
+			if payload.Ty == pt.ParacrossActionCommit {
+				isCommitTx[string(hash)] = true
+			}
+		}
 	}
-	baseTxHashs := payload.Status.TxHashs
-	baseCrossTxHashs := payload.Status.CrossTxHashs
+
+	status.TxCounts = uint32(len(curTxHashs))
+	//有tx且全部是user.p.x.paracross的commit tx时候设为0
+	status.NonCommitTxCounts = 1
+	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
+		status.NonCommitTxCounts = 0
+	}
+	crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	payload.Status.TxResult = util.CalcBitMap(baseTxHashs, curTxHashs, receipts)
+	status.TxResult = []byte(hex.EncodeToString(util.CalcBitMap(curTxHashs, curTxHashs, receipts)))
 	//跨链tx结果
-	payload.Status.CrossTxResult = util.CalcBitMap(baseCrossTxHashs, curTxHashs, receipts)
+	status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
 
-	payload.Status.TxHashs = [][]byte{CalcTxHashsHash(baseTxHashs)}
-	payload.Status.CrossTxHashs = [][]byte{CalcTxHashsHash(baseCrossTxHashs)}
+	status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
+	status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
+
+	return nil
 }
 
 //ExecLocal_Miner miner tx local db process
@@ -175,9 +219,15 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 
 	//removed the 0 vote tx
 	if payload.Status.MainBlockHeight >= forkHeight {
-		setMinerTxResultFork(payload, txs[1:], e.GetReceipt()[1:])
+		err := setMinerTxResultFork(payload.Status, txs[1:], e.GetReceipt()[1:])
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
+		err := setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	set.KV = append(set.KV, &types.KeyValue{

@@ -108,11 +108,11 @@ func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 			return nil, err
 		}
 		var acc1 *types.Account
-		if req.Execer != "" {
-			execaddress := address.ExecAddress(req.Execer)
-			acc1 = acc.LoadExecAccount(req.Address, execaddress)
-		} else if req.Execer == t.GetName() {
+		if req.Execer == t.GetName() {
 			acc1 = acc.LoadAccount(req.Address)
+		} else if req.Execer != "" {
+			execAddress := address.ExecAddress(req.Execer)
+			acc1 = acc.LoadExecAccount(req.Address, execAddress)
 		}
 		if acc1 == nil {
 			continue

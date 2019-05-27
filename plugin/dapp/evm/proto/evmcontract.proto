@@ -147,3 +147,35 @@ message EvmQueryResp {
     string rawData  = 4;
     string jsonData = 5;
 }
+
+message EvmContractCreateReq {
+    string code         = 1;
+    int64 fee           = 2;
+    string note         = 3;
+    string alias        = 4;
+    string caller       = 5;
+    string abi          = 6;
+    string expire       = 7;
+    string paraName     = 8;
+}
+
+message EvmContractCallReq {
+    uint64 amount       = 1;
+    string code         = 2;
+    int64 fee           = 3;
+    string note         = 4;
+    string caller       = 5;
+    string abi          = 6;
+    string exec         = 7;
+    string expire       = 8;
+    string paraName     = 9;
+}
+
+message EvmContractTransferReq {
+    string caller        = 1;
+    float amount         = 2;
+    string exec          = 3;
+    string expire        = 4;
+    bool isWithdraw      = 5;
+    string paraName      = 6;
+}
