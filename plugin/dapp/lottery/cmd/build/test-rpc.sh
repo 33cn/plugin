@@ -127,8 +127,10 @@ chain33_SendToAddress() {
     amount=$3
     http=$4
     note="test"
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
     ok=$(jq '(.error|not)' <<<"$resp")
+    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -149,8 +151,10 @@ chain33_SendTransaction() {
     echo_rst "chain33_SignRawTx" "$rst"
 
     signTx=$(echo "${resp}" | jq -r ".result")
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -163,9 +167,11 @@ chain33_SendTransaction() {
 lottery_LotteryCreate() {
     #创建交易
     addr=$1
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
     "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -182,9 +188,11 @@ lottery_LotteryBuy() {
     amount=$2
     number=$3
     way=$4
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy",
     "payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -196,9 +204,11 @@ lottery_LotteryBuy() {
 lottery_LotteryDraw() {
     #创建交易
     addr=$1
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -210,9 +220,11 @@ lottery_LotteryDraw() {
 lottery_LotteryClose() {
     #创建交易
     addr=$1
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -374,7 +386,7 @@ function run_testcases() {
     gameAddr3="${glAddr}"
 
     #给每个账户分别转帐
-    origAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    origAddr="${lottery_creator_addr}"
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
