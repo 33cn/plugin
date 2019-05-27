@@ -415,7 +415,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	saveTitle(a.db, calcTitleKey(commit.Status.Title), titleStatus)
 
 	clog.Info("paracross.Commit commit done", "height", commit.Status.Height,
-		"cross tx bitmap", hex.EncodeToString(commit.Status.CrossTxResult), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))
+		"cross tx bitmap", string(commit.Status.CrossTxResult), "statusBlockHash", hex.EncodeToString(titleStatus.BlockHash))
 
 	//parallel chain not need to process cross commit tx here
 	if types.IsPara() {
@@ -491,7 +491,13 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 
 		//只获取跨链tx
 		crossTxHashs = paraCrossHashs
-		crossTxResult = commit.Status.CrossTxResult
+		rst, err := hex.DecodeString(string(commit.Status.CrossTxResult))
+		if err != nil {
+			clog.Error("getCrossTxHashs decode string", "CrossTxResult", string(commit.Status.CrossTxResult),
+				"commit.height", commit.Status.Height)
+			return nil, nil, types.ErrInvalidParam
+		}
+		crossTxResult = rst
 	}
 	return crossTxHashs, crossTxResult, nil
 }

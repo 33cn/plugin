@@ -7,14 +7,28 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
 )
 
+func (c *js) userExecName(name string, local bool) string {
+	execer := "user." + ptypes.JsX + "." + name
+	if local {
+		execer = types.ExecName(execer)
+	}
+	return execer
+}
+
+// execName 在create 时为 jsvm
+// 在 call 时为 user.jsvm.game
+func (c *js) checkTxExec(txExec string, execName string) bool {
+	return txExec == types.ExecName(execName)
+}
+
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkPriv(tx.From(), ptypes.JsCreator, c.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
 
-	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
-	if string(tx.Execer) != ptypes.JsX {
+	execer := c.userExecName(payload.Name, false)
+	if !c.checkTxExec(string(tx.Execer), ptypes.JsX) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))
@@ -41,8 +55,8 @@ func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index i
 }
 
 func (c *js) Exec_Call(payload *jsproto.Call, tx *types.Transaction, index int) (*types.Receipt, error) {
-	execer := types.ExecName("user." + ptypes.JsX + "." + payload.Name)
-	if string(tx.Execer) != execer {
+	execer := c.userExecName(payload.Name, false)
+	if !c.checkTxExec(string(tx.Execer), execer) {
 		return nil, types.ErrExecNameNotMatch
 	}
 	c.prefix = types.CalcStatePrefix([]byte(execer))

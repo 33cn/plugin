@@ -202,6 +202,7 @@ ForkStateDBSet=-1 #fork 6.2
 ForkLocalDBAccess=-1 #fork 6.2
 ForkBlockCheck=-1 #fork 6.2
 ForkBase58AddressCheck=-1 #fork6.2
+ForkEnableParaRegExec=0
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]

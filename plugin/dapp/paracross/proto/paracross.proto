@@ -55,6 +55,7 @@ message ParaNodeAddrStatus{
     string applyAddr            = 3;
     int64  coinsFrozen          = 4;
     ParaNodeVoteDetail votes    = 5;
+    string fromAddr             = 6;
 }
 
 
@@ -98,6 +99,7 @@ message ParaNodeGroupStatus {
     int64  coinsFrozen          = 4;
     uint32 emptyBlockInterval   = 5;
     int64  mainHeight           = 6;
+    string fromAddr             = 7;
 }
 
 message ReceiptParaNodeGroupConfig {
@@ -149,6 +151,7 @@ message ParacrossNodeStatus {
     repeated bytes txHashs       = 11;
     bytes          crossTxResult = 12;
     repeated bytes crossTxHashs  = 13;
+    uint32   nonCommitTxCounts   = 14;
 }
 
 message ParacrossCommitAction {

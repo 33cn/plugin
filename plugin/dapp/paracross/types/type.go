@@ -26,7 +26,7 @@ func init() {
 	types.RegistorExecutor(ParaX, NewType())
 	types.RegisterDappFork(ParaX, "Enable", 0)
 	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
-	types.RegisterDappFork(ParaX, ForkCommitTx, types.MaxHeight)
+	types.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 }
 
 // GetExecName get para exec name

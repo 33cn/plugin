@@ -62,7 +62,7 @@ grpcFuncWhitelist=["*"]
 mainnetJrpcAddr= "http://localhost:8801"
 
 [mempool]
-name="timeline"
+name="para"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=10000
