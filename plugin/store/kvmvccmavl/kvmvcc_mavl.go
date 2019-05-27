@@ -61,7 +61,7 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
-	types.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 186*10000)
+	types.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
