@@ -8,7 +8,7 @@ PARA_HTTP=""
 CASE_ERR=""
 GAME_ID=""
 PASSWD="ABCD"
-HASH_VALUE=$(echo -n "ABCD1" | sha256sum |awk '{print $1}')
+HASH_VALUE=$(echo -n "ABCD1" | sha256sum | awk '{print $1}')
 create_txHash=""
 match_txHash=""
 close_txHash=""
@@ -21,8 +21,6 @@ EXECTOR=""
 RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
-
-
 
 function echo_rst() {
     if [ "$2" -eq 0 ]; then
@@ -56,9 +54,9 @@ function CreateGameTx() {
     echo "#response: $resp"
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
-       echo_rst "CreateGame createRawTx" 1
+        echo_rst "CreateGame createRawTx" 1
     fi
-    signRawTx "${rawTx}"  "${ACCOUNT_A}"
+    signRawTx "${rawTx}" "${ACCOUNT_A}"
     echo_rst "CreateGame signRawTx" "$?"
     sendSignedTx
     echo_rst "CreateGame sendSignedTx" "$?"
@@ -77,9 +75,9 @@ function MatchGameTx() {
     echo "#response: $resp"
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
-       echo_rst "MatchGame createRawTx" 1
+        echo_rst "MatchGame createRawTx" 1
     fi
-    signRawTx "${rawTx}"  "${ACCOUNT_B}"
+    signRawTx "${rawTx}" "${ACCOUNT_B}"
     echo_rst "MatchGame signRawTx" "$?"
     sendSignedTx
     echo_rst "MatchGame sendSignedTx" "$?"
@@ -89,71 +87,71 @@ function MatchGameTx() {
 }
 
 function CloseGameTx() {
-   local gameId=$1
-   local secret=$2
-   local exector=$3
-   local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]'
-   echo "#request: $req"
-   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-   echo "#response: $resp"
-   rawTx=$(echo "${resp}" | jq -r ".result")
-   if [ "$rawTx" == "null" ]; then
-      echo_rst "CloseGame createRawTx" 1
-   fi
-   signRawTx "${rawTx}"  "${ACCOUNT_A}"
-   echo_rst "CloseGame signRawTx" "$?"
-   sendSignedTx
-   echo_rst "CloseGame sendSignedTx" "$?"
-   close_txHash="${txHash}"
-   query_tx "${txHash}"
-   echo_rst "CloseGame query_tx" "$?"
+    local gameId=$1
+    local secret=$2
+    local exector=$3
+    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    rawTx=$(echo "${resp}" | jq -r ".result")
+    if [ "$rawTx" == "null" ]; then
+        echo_rst "CloseGame createRawTx" 1
+    fi
+    signRawTx "${rawTx}" "${ACCOUNT_A}"
+    echo_rst "CloseGame signRawTx" "$?"
+    sendSignedTx
+    echo_rst "CloseGame sendSignedTx" "$?"
+    close_txHash="${txHash}"
+    query_tx "${txHash}"
+    echo_rst "CloseGame query_tx" "$?"
 }
 
 function CancleGameTx() {
-   local gameId=$1
-   local exector=$2
-   local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]'
-   echo "#request: $req"
-   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-   echo "#response: $resp"
-   rawTx=$(echo "${resp}" | jq -r ".result")
-   if [ "$rawTx" == "null" ]; then
-      echo_rst "CancleGame createRawTx" 1
-   fi
-   signRawTx "${rawTx}"  "${ACCOUNT_A}"
-   echo_rst "CancleGame signRawTx" "$?"
-   sendSignedTx
-   echo_rst "CancleGame sendSignedTx" "$?"
-   close_txHash="${txHash}"
-   query_tx "${txHash}"
-   echo_rst "CancleGame query_tx" "$?"
+    local gameId=$1
+    local exector=$2
+    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    rawTx=$(echo "${resp}" | jq -r ".result")
+    if [ "$rawTx" == "null" ]; then
+        echo_rst "CancleGame createRawTx" 1
+    fi
+    signRawTx "${rawTx}" "${ACCOUNT_A}"
+    echo_rst "CancleGame signRawTx" "$?"
+    sendSignedTx
+    echo_rst "CancleGame sendSignedTx" "$?"
+    close_txHash="${txHash}"
+    query_tx "${txHash}"
+    echo_rst "CancleGame query_tx" "$?"
 }
 
 function QueryGameByStatus() {
-   local exector=$1
-   local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":1,"address":""}}]'
-   echo "#request: $req"
-   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-   echo "#response: $resp"
-   GAMES=$(echo "${resp}" | jq -r ".result.games")
-   echo_rst "$FUNCNAME" "$?"
+    local exector=$1
+    local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":1,"address":""}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    GAMES=$(echo "${resp}" | jq -r ".result.games")
+    echo_rst "$FUNCNAME" "$?"
 }
 
 function QueryGameByGameId() {
-   local gameId=$1
-   local exector=$2
-   local status=$3
-   local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameById","payload":{"gameId":"'"${gameId}"'"}}]'
-   echo "#request: $req"
-   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-   echo "#response: $resp"
-   STATUS=$(echo "${resp}" | jq -r ".result.game.status")
-   if [ "${STATUS}" -ne "${status}" ]; then
-       echo "status is not equal"
-       echo_rst "QueryGameByGameId" 1
-       return 0
-   fi
-   echo_rst "QueryGameByGameId" 0
+    local gameId=$1
+    local exector=$2
+    local status=$3
+    local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameById","payload":{"gameId":"'"${gameId}"'"}}]'
+    echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    STATUS=$(echo "${resp}" | jq -r ".result.game.status")
+    if [ "${STATUS}" -ne "${status}" ]; then
+        echo "status is not equal"
+        echo_rst "QueryGameByGameId" 1
+        return 0
+    fi
+    echo_rst "QueryGameByGameId" 0
 }
 
 function chain33_ImportPrivkey() {
@@ -165,7 +163,7 @@ function chain33_ImportPrivkey() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result.label=="gameB") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
     [ "$ok" == true ]
-   # echo_rst "$FUNCNAME" "$?"
+    # echo_rst "$FUNCNAME" "$?"
 }
 
 function Chain33_SendToAddress() {
@@ -255,13 +253,12 @@ function query_tx() {
     done
 }
 
-
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
-    chain33_ImportPrivkey "${MAIN_HTTP}"  "${PRIVA_B}" "${ACCOUNT_B}"
+    chain33_ImportPrivkey "${MAIN_HTTP}" "${PRIVA_B}" "${ACCOUNT_B}"
 
     local game_addr=""
     if [ "$ispara" == "true" ]; then
@@ -282,25 +279,25 @@ function init() {
 
 function run_test() {
     local ip=$1
-    CreateGameTx 1000000000 "${HASH_VALUE}"  "${EXECTOR}"
+    CreateGameTx 1000000000 "${HASH_VALUE}" "${EXECTOR}"
 
-    QueryGameByGameId  "${GAME_ID}"  "${EXECTOR}" 1
+    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 1
 
-    MatchGameTx "${GAME_ID}"  "${EXECTOR}"
+    MatchGameTx "${GAME_ID}" "${EXECTOR}"
 
-    QueryGameByGameId  "${GAME_ID}"  "${EXECTOR}" 2
+    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 2
 
-    CloseGameTx "${GAME_ID}"  1  "${EXECTOR}"
+    CloseGameTx "${GAME_ID}" 1 "${EXECTOR}"
 
-    QueryGameByGameId  "${GAME_ID}"  "${EXECTOR}" 4
+    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 4
 
-    CreateGameTx 500000000 "${HASH_VALUE}"  "${EXECTOR}"
+    CreateGameTx 500000000 "${HASH_VALUE}" "${EXECTOR}"
 
-    QueryGameByGameId  "${GAME_ID}"  "${EXECTOR}" 1
+    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 1
 
-    CancleGameTx "${GAME_ID}"  "${EXECTOR}"
+    CancleGameTx "${GAME_ID}" "${EXECTOR}"
 
-    QueryGameByGameId  "${GAME_ID}"  "${EXECTOR}" 3
+    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 3
 }
 
 function main() {
@@ -312,7 +309,6 @@ function main() {
     Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000
 
     block_wait 1
-
 
     init
 
@@ -326,4 +322,4 @@ function main() {
     fi
 }
 
-main  "$1"
+main "$1"
