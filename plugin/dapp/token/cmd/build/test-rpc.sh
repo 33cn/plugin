@@ -10,7 +10,6 @@ tokenSymbol="ABE"
 token_addr=""
 execName="token"
 
-
 #color
 RED='\033[1;31m'
 GRE='\033[1;32m'
@@ -103,7 +102,7 @@ function queryTransaction() {
     validator=$1
     expectRes=$2
     echo "txhash=${txHash}"
-    res=`curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}"`
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
@@ -248,7 +247,7 @@ function token_getFinishCreated() {
 
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":1,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.tokens" | grep "symbol")
 
-    if [[ "${res}" =~ "${tokenSymbol}" ]]; then
+    if [[ ${res} =~ ${tokenSymbol} ]]; then
         echo_rst "token get finishCreated create tx" 0
     else
         echo_rst "token get finishCreated create tx" 1
@@ -263,9 +262,9 @@ function token_assets() {
         return
     fi
 
-    tokenInfo=`echo ${res} | jq -r '.result.tokenAssets'  | grep -A 6 -B 1 "${tokenSymbol}"`
-    addr=`echo ${tokenInfo} | awk -F '"' '{print $20}'`
-    balance=`echo ${tokenInfo} | awk -F '"' '{print $12}'`
+    tokenInfo=$(echo ${res} | jq -r '.result.tokenAssets' | grep -A 6 -B 1 "${tokenSymbol}")
+    addr=$(echo ${tokenInfo} | awk -F '"' '{print $20}')
+    balance=$(echo ${tokenInfo} | awk -F '"' '{print $12}')
 
     if [ "${addr}" == "${recvAddr}" ] && [ ${balance} -eq 1000000000 ]; then
         echo_rst "token get assets tx" 0
@@ -275,15 +274,15 @@ function token_assets() {
 
 }
 function token_balance() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} )
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
     if [ "${res}" == "" ]; then
         echo_rst "token get balance tx" 1
         return
     fi
 
-    addr=`echo ${res} | jq -r ".result[0].addr"`
-    balance=`echo ${res} | jq -r ".result[0].balance"`
+    addr=$(echo ${res} | jq -r ".result[0].addr")
+    balance=$(echo ${res} | jq -r ".result[0].balance")
 
     if [ "${addr}" == "${tokenAddr}" -a ${balance} -eq 100000000000 ]; then
         echo_rst "token get balance tx" 0
@@ -412,7 +411,6 @@ function token_sendExec() {
         echo_rst "token sendExec queryExecRes" "$rst"
     fi
 }
-
 
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
