@@ -125,7 +125,7 @@ function CancleGameTx() {
 
 function QueryGameByStatus() {
     local status=$1
-    local req='"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":"${status}","address":""}}]'
+    local req='"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":'"${status}"',"address":""}}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
