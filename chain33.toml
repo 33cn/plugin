@@ -154,6 +154,7 @@ enableMemTree=true
 enableMemVal=true
 
 [store.sub.kvmvccmavl]
+enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
