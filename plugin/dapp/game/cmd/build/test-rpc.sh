@@ -8,7 +8,7 @@ PARA_HTTP=""
 CASE_ERR=""
 GAME_ID=""
 PASSWD="ABCD"
-HASH_VALUE=$(echo -n "ABCD1" | sha256sum | awk '{print $1}')
+HASH_VALUE=$(echo -n "ABCD1" | sha256sum |awk '{print $1}')
 create_txHash=""
 match_txHash=""
 close_txHash=""
@@ -21,6 +21,8 @@ EXECTOR=""
 RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
+
+
 
 function echo_rst() {
     if [ "$2" -eq 0 ]; then
@@ -46,17 +48,16 @@ function chain33_GetExecAddr() {
 function CreateGameTx() {
     local amount=$1
     local hash_value=$2
-    local exector=$3
-    local addr=$4
-    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"createGame", "payload":{"amount": '"${amount}"',"hashType":"sha256","hashValue":"'"${hash_value}"'"}}]'
+    local addr=$3
+    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"createGame", "payload":{"amount": '"${amount}"',"hashType":"sha256","hashValue":"'"${hash_value}"'"}}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
-        echo_rst "CreateGame createRawTx" 1
+       echo_rst "CreateGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
+    signRawTx "${rawTx}"  "${ACCOUNT_A}"
     echo_rst "CreateGame signRawTx" "$?"
     sendSignedTx
     echo_rst "CreateGame sendSignedTx" "$?"
@@ -68,16 +69,15 @@ function CreateGameTx() {
 
 function MatchGameTx() {
     local gameId=$1
-    local exector=$2
-    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"matchGame", "payload":{"gameId": "'"${gameId}"'","guess":2}}]'
+    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"matchGame", "payload":{"gameId": "'"${gameId}"'","guess":2}}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
-        echo_rst "MatchGame createRawTx" 1
+       echo_rst "MatchGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_B}"
+    signRawTx "${rawTx}"  "${ACCOUNT_B}"
     echo_rst "MatchGame signRawTx" "$?"
     sendSignedTx
     echo_rst "MatchGame sendSignedTx" "$?"
@@ -87,71 +87,69 @@ function MatchGameTx() {
 }
 
 function CloseGameTx() {
-    local gameId=$1
-    local secret=$2
-    local exector=$3
-    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    echo "#response: $resp"
-    rawTx=$(echo "${resp}" | jq -r ".result")
-    if [ "$rawTx" == "null" ]; then
-        echo_rst "CloseGame createRawTx" 1
-    fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
-    echo_rst "CloseGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "CloseGame sendSignedTx" "$?"
-    close_txHash="${txHash}"
-    query_tx "${txHash}"
-    echo_rst "CloseGame query_tx" "$?"
+   local gameId=$1
+   local secret=$2
+   local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]'
+   echo "#request: $req"
+   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+   echo "#response: $resp"
+   rawTx=$(echo "${resp}" | jq -r ".result")
+   if [ "$rawTx" == "null" ]; then
+      echo_rst "CloseGame createRawTx" 1
+   fi
+   signRawTx "${rawTx}"  "${ACCOUNT_A}"
+   echo_rst "CloseGame signRawTx" "$?"
+   sendSignedTx
+   echo_rst "CloseGame sendSignedTx" "$?"
+   close_txHash="${txHash}"
+   query_tx "${txHash}"
+   echo_rst "CloseGame query_tx" "$?"
 }
 
 function CancleGameTx() {
-    local gameId=$1
-    local exector=$2
-    local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${exector}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    echo "#response: $resp"
-    rawTx=$(echo "${resp}" | jq -r ".result")
-    if [ "$rawTx" == "null" ]; then
-        echo_rst "CancleGame createRawTx" 1
-    fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
-    echo_rst "CancleGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "CancleGame sendSignedTx" "$?"
-    close_txHash="${txHash}"
-    query_tx "${txHash}"
-    echo_rst "CancleGame query_tx" "$?"
+   local gameId=$1
+   local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]'
+   echo "#request: $req"
+   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+   echo "#response: $resp"
+   rawTx=$(echo "${resp}" | jq -r ".result")
+   if [ "$rawTx" == "null" ]; then
+      echo_rst "CancleGame createRawTx" 1
+   fi
+   signRawTx "${rawTx}"  "${ACCOUNT_A}"
+   echo_rst "CancleGame signRawTx" "$?"
+   sendSignedTx
+   echo_rst "CancleGame sendSignedTx" "$?"
+   close_txHash="${txHash}"
+   query_tx "${txHash}"
+   echo_rst "CancleGame query_tx" "$?"
 }
 
 function QueryGameByStatus() {
-    local exector=$1
-    local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":1,"address":""}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    echo "#response: $resp"
-    GAMES=$(echo "${resp}" | jq -r ".result.games")
-    echo_rst "$FUNCNAME" "$?"
+   local status=$1
+   local req='"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":"${status}","address":""}}]'
+   echo "#request: $req"
+   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+   echo "#response: $resp"
+   GAMES=$(echo "${resp}" | jq -r ".result.games")
+   echo "${GAMES}"
+   echo_rst "$FUNCNAME" "$?"
 }
 
 function QueryGameByGameId() {
-    local gameId=$1
-    local exector=$2
-    local status=$3
-    local req='"method":"Chain33.Query","params":[{"execer":"'"${exector}"'","funcName":"QueryGameById","payload":{"gameId":"'"${gameId}"'"}}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    echo "#response: $resp"
-    STATUS=$(echo "${resp}" | jq -r ".result.game.status")
-    if [ "${STATUS}" -ne "${status}" ]; then
-        echo "status is not equal"
-        echo_rst "QueryGameByGameId" 1
-        return 0
-    fi
-    echo_rst "QueryGameByGameId" 0
+   local gameId=$1
+   local status=$2
+   local req='"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameById","payload":{"gameId":"'"${gameId}"'"}}]'
+   echo "#request: $req"
+   resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+   echo "#response: $resp"
+   STATUS=$(echo "${resp}" | jq -r ".result.game.status")
+   if [ "${STATUS}" -ne "${status}" ]; then
+       echo "status is not equal"
+       echo_rst "QueryGameByGameId" 1
+       return 0
+   fi
+   echo_rst "QueryGameByGameId" 0
 }
 
 function chain33_ImportPrivkey() {
@@ -161,25 +159,22 @@ function chain33_ImportPrivkey() {
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$1")
     echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="gameB") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    [ "$ok" == true ]
-    # echo_rst "$FUNCNAME" "$?"
+   # ok=$(jq '(.error|not) and (.result.label=="gameB") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+   # [ "$ok" == true ]
+   # echo_rst "$FUNCNAME" "$?"
 }
 
 function Chain33_SendToAddress() {
-    local from="$1"
-    local to="$2"
-    local amount=$3
-    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
-    #    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
+    from=$1
+    to=$2
+    amount=$3
+    http=$4
+    note="test"
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
+    ok=$(jq '(.error|not)' <<<"$resp")
     [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
-    # query_tx "$hash"
+    rst=$?
+    echo_rst "$FUNCNAME" "$rst"
 }
 
 function chain33_unlock() {
@@ -208,7 +203,7 @@ function block_wait() {
 function signRawTx() {
     unsignedTx=$1
     addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s","fee":10000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s","fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$signedTx" == "null" ]; then
         return 1
     else
@@ -253,15 +248,23 @@ function query_tx() {
     done
 }
 
+
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
-    chain33_ImportPrivkey "${MAIN_HTTP}" "${PRIVA_B}" "${ACCOUNT_B}"
+    chain33_ImportPrivkey "${MAIN_HTTP}"  "${PRIVA_B}" "${ACCOUNT_B}"
 
     local game_addr=""
     if [ "$ispara" == "true" ]; then
+        #主链中相应账户需要转帐
+        M_HTTP=${MAIN_HTTP//8901/8801}
+
+        Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000 "${M_HTTP}"
+
+        block_wait 1
+
         EXECTOR="user.p.para.game"
         game_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.game"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
@@ -270,34 +273,42 @@ function init() {
     fi
     echo "gameAddr=${game_addr}"
 
-    Chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000
+    Chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000 "${MAIN_HTTP}"
 
-    Chain33_SendToAddress "${ACCOUNT_A}" "$game_addr" 5000000000
+    Chain33_SendToAddress "${ACCOUNT_A}" "$game_addr" 5000000000 "${MAIN_HTTP}"
 
     block_wait 1
 }
 
 function run_test() {
     local ip=$1
-    CreateGameTx 1000000000 "${HASH_VALUE}" "${EXECTOR}"
+    CreateGameTx 1000000000 "${HASH_VALUE}"
 
-    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 1
+    QueryGameByGameId  "${GAME_ID}"  1
 
-    MatchGameTx "${GAME_ID}" "${EXECTOR}"
+    QueryGameByStatus 1
 
-    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 2
+    MatchGameTx "${GAME_ID}"
 
-    CloseGameTx "${GAME_ID}" 1 "${EXECTOR}"
+    QueryGameByGameId  "${GAME_ID}"  2
 
-    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 4
+    QueryGameByStatus 2
 
-    CreateGameTx 500000000 "${HASH_VALUE}" "${EXECTOR}"
+    CloseGameTx "${GAME_ID}"  1
 
-    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 1
+    QueryGameByGameId  "${GAME_ID}"  4
 
-    CancleGameTx "${GAME_ID}" "${EXECTOR}"
+    QueryGameByStatus  4
 
-    QueryGameByGameId "${GAME_ID}" "${EXECTOR}" 3
+    CreateGameTx 500000000 "${HASH_VALUE}"
+
+    QueryGameByGameId  "${GAME_ID}"  1
+
+    CancleGameTx "${GAME_ID}"
+
+    QueryGameByGameId  "${GAME_ID}"  3
+
+    QueryGameByStatus 3
 }
 
 function main() {
@@ -306,9 +317,10 @@ function main() {
     echo "=========== # game rpc test ============="
     echo "main_ip=$MAIN_HTTP"
 
-    Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000
+    Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000 "${MAIN_HTTP}"
 
     block_wait 1
+
 
     init
 
@@ -322,4 +334,4 @@ function main() {
     fi
 }
 
-main "$1"
+main  "$1"
