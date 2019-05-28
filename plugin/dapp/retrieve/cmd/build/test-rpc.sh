@@ -70,7 +70,7 @@ retrieve_Backup() {
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
     data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "retrieve")' <<<"$data")
+    ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
@@ -89,7 +89,7 @@ retrieve_Prepare() {
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
     data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "retrieve")' <<<"$data")
+    ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
@@ -108,7 +108,7 @@ retrieve_Perform() {
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
     data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "retrieve")' <<<"$data")
+    ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
@@ -127,7 +127,7 @@ retrieve_Cancel() {
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
     data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer == "retrieve")' <<<"$data")
+    ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
@@ -209,7 +209,24 @@ Chain33_SendToAddress() {
     echo_rst "$FUNCNAME" "$?"
     hash=$(jq '(.result.hash)' <<<"$resp")
     echo "hash=$hash"
-    query_tx "$hash"
+}
+
+init() {
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    if [ "$ispara" == true ]; then
+        retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
+    else
+        retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
+    fi
+    echo "retrieveaddr=$retrieve_addr"
+
+    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
+
+    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
+    block_wait 1
 }
 
 function run_test() {
@@ -219,11 +236,18 @@ function run_test() {
     retrieve_Prepare
     retrieve_QueryResult 2
 
-    #retrieve_Perform "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    #retrieve_QueryResult  "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt" 3
-
     retrieve_Cancel
     retrieve_QueryResult 4
+
+    retrieve_Backup
+    retrieve_QueryResult 1
+
+    retrieve_Prepare
+    retrieve_QueryResult 2
+
+    sleep 61
+    retrieve_Perform
+    retrieve_QueryResult 3
 }
 
 function main() {
@@ -231,6 +255,7 @@ function main() {
     echo "=========== # retrieve rpc test ============="
     echo "ip=$MAIN_HTTP"
 
+    init
     run_test
 
     if [ -n "$CASE_ERR" ]; then
