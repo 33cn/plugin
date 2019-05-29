@@ -136,12 +136,12 @@ returnAddr="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
 count=10000
 
 [store]
-name="mavl"
+name="kvmvccmavl"
 driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
 # store数据库版本
-storedbVersion="1.0.0"
+storedbVersion="2.0.0"
 
 [store.sub.mavl]
 enableMavlPrefix=false
@@ -154,6 +154,7 @@ enableMemTree=true
 enableMemVal=true
 
 [store.sub.kvmvccmavl]
+enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
