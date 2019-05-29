@@ -106,7 +106,6 @@ function queryTransaction() {
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
-        token_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.contractName")
         return 0
     fi
 }
@@ -320,6 +319,7 @@ function token_sendExec() {
     queryTransaction ".error | not" "true"
     echo_rst "token sendExec queryExecRes" "$?"
 }
+
 
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
