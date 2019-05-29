@@ -4,16 +4,14 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-PARA_HTTP=""
 CASE_ERR=""
 GAME_ID=""
 PASSWD="ABCD"
 HASH_VALUE=$(echo -n "ABCD1" | sha256sum | awk '{print $1}')
-create_txHash=""
-match_txHash=""
-close_txHash=""
+signedTx=""
+txHash=""
 ACCOUNT_A="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-PRIVA_A="cc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
+# PRIVA_A="cc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
 ACCOUNT_B="19MJmA7GcE1NfMwdGqgLJioBjVbzQnVYvR"
 PRIVA_B="5072a3b6ed612845a7c00b88b38e4564093f57ce652212d6e26da9fded83e951"
 EXECTOR=""
@@ -39,7 +37,7 @@ function chain33_GetExecAddr() {
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
-    GAME_ADDR=$(echo "${res}" | jq -r ".result")
+    # GAME_ADDR=$(echo "${res}" | jq -r ".result")
     echo_rst "$FUNCNAME" "$?"
 }
 
@@ -60,7 +58,7 @@ function CreateGameTx() {
     sendSignedTx
     echo_rst "CreateGame sendSignedTx" "$?"
     GAME_ID="${txHash}"
-    create_txHash="${txHash}"
+    # create_txHash="${txHash}"
     query_tx "${txHash}"
     echo_rst "CreateGame query_tx" "$?"
 }
@@ -79,7 +77,7 @@ function MatchGameTx() {
     echo_rst "MatchGame signRawTx" "$?"
     sendSignedTx
     echo_rst "MatchGame sendSignedTx" "$?"
-    match_txHash="${txHash}"
+    # match_txHash="${txHash}"
     query_tx "${txHash}"
     echo_rst "MatchGame query_tx" "$?"
 }
@@ -99,7 +97,6 @@ function CloseGameTx() {
     echo_rst "CloseGame signRawTx" "$?"
     sendSignedTx
     echo_rst "CloseGame sendSignedTx" "$?"
-    close_txHash="${txHash}"
     query_tx "${txHash}"
     echo_rst "CloseGame query_tx" "$?"
 }
@@ -118,7 +115,7 @@ function CancleGameTx() {
     echo_rst "CancleGame signRawTx" "$?"
     sendSignedTx
     echo_rst "CancleGame sendSignedTx" "$?"
-    close_txHash="${txHash}"
+    # close_txHash="${txHash}"
     query_tx "${txHash}"
     echo_rst "CancleGame query_tx" "$?"
 }
@@ -152,7 +149,7 @@ function QueryGameByGameId() {
 
 function chain33_ImportPrivkey() {
     local pri=$2
-    local acc=$3
+    #local acc=$3
     local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"gameB"}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$1")
@@ -201,7 +198,7 @@ function block_wait() {
 function signRawTx() {
     unsignedTx=$1
     addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s","fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"${addr}"'","txHex":"'"${unsignedTx}"'","expire":"120s","fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$signedTx" == "null" ]; then
         return 1
     else
@@ -210,7 +207,7 @@ function signRawTx() {
 }
 
 function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'${signedTx}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$txHash" == "null" ]; then
         return 1
     else
@@ -291,7 +288,7 @@ function run_test() {
 
     QueryGameByStatus 2
 
-    CloseGameTx "${GAME_ID}" 1
+    CloseGameTx "${GAME_ID}" "${PASSWD}"
 
     QueryGameByGameId "${GAME_ID}" 4
 
