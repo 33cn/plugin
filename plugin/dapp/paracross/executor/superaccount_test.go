@@ -307,26 +307,26 @@ func (suite *NodeManageTestSuite) TearDownSuite() {
 
 }
 
-func TestGetAddrGroup(t *testing.T){
+func TestGetAddrGroup(t *testing.T) {
 	addrs := " 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,    1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k, ,,,  1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs ,   "
 
-	retAddrs:=getAddrGroup(addrs)
-	expectAddrs:=[]string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4","1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR","1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k","1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"}
-	assert.Equal(t,expectAddrs,retAddrs)
+	retAddrs := getAddrGroup(addrs)
+	expectAddrs := []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k", "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"}
+	assert.Equal(t, expectAddrs, retAddrs)
 
 	addrs = " 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 , ,   "
-	retAddrs=getAddrGroup(addrs)
-	expectAddrs=[]string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}
-	assert.Equal(t,expectAddrs,retAddrs)
+	retAddrs = getAddrGroup(addrs)
+	expectAddrs = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}
+	assert.Equal(t, expectAddrs, retAddrs)
 
 	addrs = " , "
-	ret:=getAddrGroup(addrs)
-	assert.Equal(t,[]string(nil),ret)
-	assert.Equal(t,0,len(ret))
+	ret := getAddrGroup(addrs)
+	assert.Equal(t, []string(nil), ret)
+	assert.Equal(t, 0, len(ret))
 
 	addrs = " "
-	ret=getAddrGroup(addrs)
-	assert.Equal(t,[]string(nil),ret)
-	assert.Equal(t,0,len(ret))
+	ret = getAddrGroup(addrs)
+	assert.Equal(t, []string(nil), ret)
+	assert.Equal(t, 0, len(ret))
 
 }
