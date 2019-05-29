@@ -525,7 +525,7 @@ func (a *action) checkConfig(title string) error {
 
 func getAddrGroup(addr string) []string {
 	addr = strings.Trim(addr, " ")
-	if addr == ""{
+	if addr == "" {
 		return nil
 	}
 	if strings.Contains(addr, ",") {
