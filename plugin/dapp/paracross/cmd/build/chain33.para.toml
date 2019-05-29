@@ -108,6 +108,8 @@ searchHashMatchedBlockDepth=10000
 genesisAmount=100000000
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致
 MainForkParacrossCommitTx=-1
+#平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx
+MainParaSelfConsensusForkHeight=-1
 
 [store]
 name="mavl"
@@ -154,7 +156,7 @@ tokenApprs = [
 ]
 
 [exec.sub.paracross]
-#平行链自共识停止n个块后，超级账户可以直接参与投票
+#平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票
 paraConsensusStopBlocks=100
 
 [pprof]

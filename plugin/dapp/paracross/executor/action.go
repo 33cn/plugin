@@ -225,13 +225,9 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 }
 
 func getDappForkHeight(fork string) int64 {
-	paraConfigFork := ""
-	if fork == pt.ForkCommitTx {
-		paraConfigFork = "MainForkParacrossCommitTx"
-	}
 	var forkHeight int64
 	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt(paraConfigFork)
+		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
