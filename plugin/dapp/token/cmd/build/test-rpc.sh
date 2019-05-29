@@ -320,7 +320,6 @@ function token_sendExec() {
     echo_rst "token sendExec queryExecRes" "$?"
 }
 
-
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
