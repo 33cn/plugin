@@ -47,6 +47,11 @@ func GetName() string {
 	return newGuessGame().GetName()
 }
 
+//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+func (g *Guess) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
+
 //GetDriverName 获取Guess执行器的名称
 func (g *Guess) GetDriverName() string {
 	return gty.GuessX
