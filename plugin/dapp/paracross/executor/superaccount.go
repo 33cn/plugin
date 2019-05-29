@@ -524,6 +524,10 @@ func (a *action) checkConfig(title string) error {
 }
 
 func getAddrGroup(addr string) []string {
+	addr = strings.Trim(addr, " ")
+	if addr == ""{
+		return nil
+	}
 	if strings.Contains(addr, ",") {
 		repeats := make(map[string]bool)
 		var addrs []string
@@ -619,11 +623,12 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 	}
 
 	addrs := getAddrGroup(config.Addrs)
-	receipt := &types.Receipt{Ty: types.ExecOk}
 	if len(addrs) == 0 {
 		clog.Error("node group apply addrs null", "addrs", config.Addrs)
 		return nil, types.ErrInvalidParam
 	}
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
 	if !types.IsPara() {
 		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen, int64(len(addrs)))
