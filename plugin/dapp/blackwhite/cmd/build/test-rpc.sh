@@ -229,7 +229,6 @@ function run_testcases() {
     chain33_NewAccount "label388"
     gameAddr3="${glAddr}"
 
-
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
