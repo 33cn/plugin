@@ -61,6 +61,10 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" "test"
     #1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
     para_import_key "${PARA_CLI}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "relay"
+    #1PUiGcbsccfxW3zuvHXZBJfznziph5miAo
+    para_import_key "${PARA_CLI}" "0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "dapptest1"
+    #1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
+    para_import_key "${PARA_CLI}" "0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "dapptest2"
 
     #super node behalf test
     #1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj
@@ -117,6 +121,8 @@ function para_transfer() {
     #relay rpc test
     para_transfer2account "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    para_transfer2account "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+    para_transfer2account "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
     block_wait "${CLI}" 2
 
     echo "=========== # main chain send to paracross ============="

@@ -221,11 +221,11 @@ init() {
     fi
     echo "retrieveaddr=$retrieve_addr"
 
-    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
+    from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+    Chain33_SendToAddress "$from" "$retrieve_addr" 1000000000
 
-    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    Chain33_SendToAddress "$from" "$retrieve_addr" 10000000000
+    from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+    Chain33_SendToAddress "$from" "$retrieve_addr" 1000000000
     block_wait 1
 }
 

@@ -292,10 +292,10 @@ init() {
     fi
     echo "relayaddr=$relay_addr"
 
-    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
     Chain33_SendToAddress "$from" "$relay_addr" 10000000000
 
-    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
     Chain33_SendToAddress "$from" "$relay_addr" 10000000000
     block_wait 1
 
