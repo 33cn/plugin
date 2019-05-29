@@ -386,7 +386,7 @@ function run_testcases() {
     gameAddr3="${glAddr}"
 
     #给每个账户分别转帐
-    origAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    origAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
