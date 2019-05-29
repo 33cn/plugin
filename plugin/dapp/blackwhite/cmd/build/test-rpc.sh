@@ -60,12 +60,29 @@ chain33_GetAccounts() {
     echo "$resp"
 }
 
-chain33_QueryTransaction() {
-    #先获取一笔交易
-    reHash=$1
-    #查询交易
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"$reHash"'","upgrade":false}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    echo "$resp"
+function query_tx() {
+    block_wait 1
+    local txhash="$1"
+    local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
+    # echo "req=$req"
+    local times=10
+    while true; do
+        ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
+        echo "====query tx= ${1}, return=$ret "
+        if [ "${ret}" != "${1}" ]; then
+            block_wait 1
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "====query tx=$1 failed"
+                echo "req=$req"
+                curl -ksd "{$req}" ${MAIN_HTTP}
+                exit 1
+            fi
+        else
+            echo "====query tx=$1  success"
+            break
+        fi
+    done
 }
 
 function block_wait() {
@@ -98,6 +115,8 @@ chain33_SendToAddress() {
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
+    txhash=$(jq -r ".result" <<<"$resp")
+    query_tx "${txhash}"
 }
 
 chain33_SendTransaction() {
@@ -119,8 +138,7 @@ chain33_SendTransaction() {
     #返回交易
     gResp=$(echo "${resp}" | jq -r ".result")
     echo "tx hash is $gResp"
-    block_wait 1
-    chain33_QueryTransaction $gResp
+    query_tx "${gResp}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
@@ -229,7 +247,6 @@ function run_testcases() {
     chain33_NewAccount "label388"
     gameAddr3="${glAddr}"
 
-
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
@@ -246,29 +263,23 @@ function run_testcases() {
     chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${MAIN_HTTP}"
 
-    block_wait 1
-
     #给游戏合约中转帐
     chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
 
-    block_wait 1
     blackwhite_BlackwhiteCreateTx "${gameAddr1}"
 
-    block_wait 1
     blackwhite_BlackwhitePlayTx "${gameAddr1}" "${white0}" "${white1}" "${black2}"
     blackwhite_BlackwhitePlayTx "${gameAddr2}" "${white0}" "${black1}" "${black2}"
     blackwhite_BlackwhitePlayTx "${gameAddr3}" "${white0}" "${black1}" "${black2}"
 
-    block_wait 1
     blackwhite_BlackwhiteShowTx "${gameAddr1}" "${sect1}"
     blackwhite_BlackwhiteShowTx "${gameAddr2}" "${sect1}"
     blackwhite_BlackwhiteShowTx "${gameAddr3}" "${sect1}"
 
     blackwhite_BlackwhiteTimeoutDoneTx "$gID"
     #查询部分
-    block_wait 1
     blackwhite_GetBlackwhiteRoundInfo "$gID"
     blackwhite_GetBlackwhiteByStatusAndAddr "$gID" "${gameAddr1}"
     blackwhite_GetBlackwhiteloopResult "$gID"
