@@ -64,7 +64,7 @@ function query_tx() {
     block_wait 1
     local txhash="$1"
     local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
-    # echo "req=$req"
+    echo "req=$req"
     local times=10
     while true; do
         ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
@@ -116,7 +116,7 @@ chain33_SendToAddress() {
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     txhash=$(jq -r ".result" <<<"$resp")
-    query_tx "${txhash}"
+    query_tx "$txhash"
 }
 
 chain33_SendTransaction() {
@@ -138,7 +138,7 @@ chain33_SendTransaction() {
     #返回交易
     gResp=$(echo "${resp}" | jq -r ".result")
     echo "tx hash is $gResp"
-    query_tx "${gResp}"
+    query_tx "$gResp"
 }
 
 blackwhite_BlackwhiteCreateTx() {
