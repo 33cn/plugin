@@ -10,6 +10,7 @@ tokenSymbol="ABE"
 token_addr=""
 execName="token"
 
+
 #color
 RED='\033[1;31m'
 GRE='\033[1;32m'
@@ -88,7 +89,7 @@ function signRawTx() {
 }
 
 function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'${signedTx}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "$txHash" == "null" ]; then
         return 1
     else
@@ -102,11 +103,11 @@ function queryTransaction() {
     validator=$1
     expectRes=$2
     echo "txhash=${txHash}"
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
-        token_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'${txHash}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.contractName")
+        token_addr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.contractName")
         return 0
     fi
 }
@@ -143,31 +144,17 @@ function updateConfig() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "update config signRawTx" "$rst"
-        return
-    fi
+    echo_rst "update config signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "update config sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "update config sendSignedTx" "$?"
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "update config queryExecRes" "$rst"
-    fi
+    queryTransaction ".error | not" "true"
+    echo_rst "update config queryExecRes" "$?"
 }
 function token_preCreate() {
-    validator=$1
-    expectRes=$2
-
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenPreCreateTx","params":[{"name": "yinhebib", "symbol": "'"${tokenSymbol}"'", "total": 100000000000, "price": 100, "category": 1,"owner":"'${tokenAddr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "token preCreate create tx" 1
@@ -175,43 +162,26 @@ function token_preCreate() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token preCreate signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token preCreate signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token preCreate sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token preCreate sendSignedTx" "$?"
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token preCreate queryExecRes" "$rst"
-    fi
+    queryTransaction ".error | not" "true"
+    echo_rst "token preCreate queryExecRes" "$?"
 }
 
 function token_getPreCreated() {
-    validator=$1
-    expectRes=$2
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":0,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "${res}" != "" -a "" ]; then
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":0,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
+    if [ "${res}" != "true"  ]; then
         echo_rst "token preCreate create tx" 1
         return
     fi
-
 }
 
 function token_finish() {
-    validator=$1
-    expectRes=$2
-
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenFinishTx","params":[{"symbol": "'"${tokenSymbol}"'", "owner":"'${tokenAddr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "token finish create tx" 1
@@ -219,35 +189,21 @@ function token_finish() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token finish signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token finish signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token finish sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token finish sendSignedTx" "$?"
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token finish queryExecRes" "$rst"
-    fi
+    queryTransaction ".error | not" "true"
+    echo_rst "token finish queryExecRes" "$?"
 }
 
 function token_getFinishCreated() {
-    validator=$1
-    expectRes=$2
-
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":1,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.tokens" | grep "symbol")
 
-    if [[ ${res} =~ ${tokenSymbol} ]]; then
+    if [ "${res}" != "" ]; then
         echo_rst "token get finishCreated create tx" 0
     else
         echo_rst "token get finishCreated create tx" 1
@@ -262,11 +218,11 @@ function token_assets() {
         return
     fi
 
-    tokenInfo=$(echo ${res} | jq -r '.result.tokenAssets' | grep -A 6 -B 1 "${tokenSymbol}")
-    addr=$(echo ${tokenInfo} | awk -F '"' '{print $20}')
-    balance=$(echo ${tokenInfo} | awk -F '"' '{print $12}')
+    tokenInfo=$(echo "${res}" | jq -r '.result.tokenAssets'  | grep -A 6 -B 1 "${tokenSymbol}")
+    addr=$(echo "${tokenInfo}" | grep "addr" | awk -F '"' '{print $4}')
+    balance=$(echo "${tokenInfo}" | grep "balance" | awk -F '"' '{print $4}')
 
-    if [ "${addr}" == "${recvAddr}" ] && [ ${balance} -eq 1000000000 ]; then
+    if [ "${addr}" == "${recvAddr}" ] && [ "${balance}" -eq 1000000000 ]; then
         echo_rst "token get assets tx" 0
     else
         echo_rst "token get assets tx" 1
@@ -274,17 +230,17 @@ function token_assets() {
 
 }
 function token_balance() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} )
 
     if [ "${res}" == "" ]; then
         echo_rst "token get balance tx" 1
         return
     fi
 
-    addr=$(echo ${res} | jq -r ".result[0].addr")
-    balance=$(echo ${res} | jq -r ".result[0].balance")
+    addr=$(echo "${res}" | jq -r ".result[0].addr")
+    balance=$(echo "${res}" | jq -r ".result[0].balance")
 
-    if [ "${addr}" == "${tokenAddr}" -a ${balance} -eq 100000000000 ]; then
+    if [ "${addr}" == "${tokenAddr}" ] && [ "${balance}" -eq 100000000000 ]; then
         echo_rst "token get balance tx" 0
     else
         echo_rst "token get balance tx" 1
@@ -322,8 +278,6 @@ function token_burn() {
 }
 
 function token_mint() {
-    validator=$1
-    expectRes=$2
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenMintTx","params":[{"symbol": "'"${tokenSymbol}"'","amount": 10000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "token mint create tx" 1
@@ -375,7 +329,7 @@ function token_transfer() {
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
+    queryTransaction ".error | not" "true"
     if [ $? -ne 0 ]; then
         rst=$?
         echo_rst "token transfer queryExecRes" "$rst"
@@ -405,12 +359,13 @@ function token_sendExec() {
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
+    queryTransaction ".error | not" "true"
     if [ $? -ne 0 ]; then
         rst=$?
         echo_rst "token sendExec queryExecRes" "$rst"
     fi
 }
+
 
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
@@ -435,7 +390,7 @@ function token_withdraw() {
 
     block_wait 1
 
-    queryTransaction "${validator}" "${expectRes}"
+    queryTransaction ".error | not" "true"
     if [ $? -ne 0 ]; then
         rst=$?
         echo_rst "token withdraw queryExecRes" "$rst"
