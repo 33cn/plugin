@@ -7,12 +7,18 @@ set -x
 MAIN_HTTP=""
 CASE_ERR=""
 
+#color
+RED='\033[1;31m'
+GRE='\033[1;32m'
+NOC='\033[0m'
+
+# base functions
 # $2=0 means true, other false
-echo_rst() {
+function echo_rst() {
     if [ "$2" -eq 0 ]; then
-        echo "$1 ok"
+        echo -e "${GRE}$1 ok${NOC}"
     else
-        echo "$1 err"
+        echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="err"
     fi
 
@@ -47,6 +53,19 @@ chain33_NewAccount() {
     echo_rst "$FUNCNAME" "$rst"
     glAddr=$result
     echo "$glAddr"
+}
+
+chain33_GetAccounts() {
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetAccounts","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    echo "$resp"
+}
+
+chain33_QueryTransaction() {
+    #先获取一笔交易
+    reHash=$1
+    #查询交易
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"$reHash"'","upgrade":false}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    echo "$resp"
 }
 
 function block_wait() {
@@ -100,6 +119,8 @@ chain33_SendTransaction() {
     #返回交易
     gResp=$(echo "${resp}" | jq -r ".result")
     echo "tx hash is $gResp"
+    block_wait 1
+    chain33_QueryTransaction $gResp
 }
 
 blackwhite_BlackwhiteCreateTx() {
@@ -208,8 +229,11 @@ function run_testcases() {
     chain33_NewAccount "label388"
     gameAddr3="${glAddr}"
 
+
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+
+    chain33_GetAccounts
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
