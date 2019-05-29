@@ -254,26 +254,15 @@ function token_burn() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token burn signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token burn signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token burn sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token burn sendSignedTx" "$?"
 
     block_wait 1
 
     queryTransaction ".error | not" "true"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token burn queryExecRes" "$rst"
-    fi
+    echo_rst "token burn queryExecRes" "$?"
 }
 
 function token_mint() {
@@ -284,26 +273,15 @@ function token_mint() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token mint signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token mint signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token mint sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token mint sendSignedTx" "$?"
 
     block_wait 1
 
     queryTransaction ".error | not" "true"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token mint queryExecRes" "$rst"
-    fi
+    echo_rst "token mint queryExecRes" "$?"
 }
 function token_transfer() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Transfer","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "1000000000", "note": "", "to": "'"${recvAddr}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
@@ -313,26 +291,15 @@ function token_transfer() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token transfer signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token transfer signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token transfer sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token transfer sendSignedTx" "$?"
 
     block_wait 1
 
     queryTransaction ".error | not" "true"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token transfer queryExecRes" "$rst"
-    fi
+    echo_rst "token transfer queryExecRes" "$?"
 }
 
 function token_sendExec() {
@@ -343,27 +310,17 @@ function token_sendExec() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token sendExec signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token sendExec signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token sendExec sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token sendExec sendSignedTx" "$?"
 
     block_wait 1
 
     queryTransaction ".error | not" "true"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token sendExec queryExecRes" "$rst"
-    fi
+    echo_rst "token sendExec queryExecRes" "$?"
 }
+
 
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
@@ -373,26 +330,15 @@ function token_withdraw() {
     fi
 
     signRawTx "${unsignedTx}" "${tokenAddr}"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token withdraw signRawTx" "$rst"
-        return
-    fi
+    echo_rst "token withdraw signRawTx" "$?"
 
     sendSignedTx
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token withdraw sendSignedTx" "$rst"
-        return
-    fi
+    echo_rst "token withdraw sendSignedTx" "$?"
 
     block_wait 1
 
     queryTransaction ".error | not" "true"
-    if [ $? -ne 0 ]; then
-        rst=$?
-        echo_rst "token withdraw queryExecRes" "$rst"
-    fi
+    echo_rst "token withdraw queryExecRes" "$?"
 }
 
 function run_test() {
