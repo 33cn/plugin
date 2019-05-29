@@ -6,7 +6,7 @@ CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 recvAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 superManager="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
-tokenSymbol="ABE"
+tokenSymbol="ABCDE"
 token_addr=""
 execName="token"
 
@@ -342,6 +342,7 @@ function token_withdraw() {
 
 function run_test() {
     local ip=$1
+    set -x
     token_preCreate
     token_getPreCreated
 
@@ -355,6 +356,7 @@ function run_test() {
     token_sendExec
     token_assets
     token_withdraw
+    set +x
 }
 
 function main() {
