@@ -10,7 +10,6 @@ tokenSymbol="ABE"
 token_addr=""
 execName="token"
 
-
 #color
 RED='\033[1;31m'
 GRE='\033[1;32m'
@@ -175,7 +174,7 @@ function token_preCreate() {
 
 function token_getPreCreated() {
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":0,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" != "true"  ]; then
+    if [ "${res}" != "true" ]; then
         echo_rst "token preCreate create tx" 1
         return
     fi
@@ -218,7 +217,7 @@ function token_assets() {
         return
     fi
 
-    tokenInfo=$(echo "${res}" | jq -r '.result.tokenAssets'  | grep -A 6 -B 1 "${tokenSymbol}")
+    tokenInfo=$(echo "${res}" | jq -r '.result.tokenAssets' | grep -A 6 -B 1 "${tokenSymbol}")
     addr=$(echo "${tokenInfo}" | grep "addr" | awk -F '"' '{print $4}')
     balance=$(echo "${tokenInfo}" | grep "balance" | awk -F '"' '{print $4}')
 
@@ -230,7 +229,7 @@ function token_assets() {
 
 }
 function token_balance() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} )
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
     if [ "${res}" == "" ]; then
         echo_rst "token get balance tx" 1
@@ -365,7 +364,6 @@ function token_sendExec() {
         echo_rst "token sendExec queryExecRes" "$rst"
     fi
 }
-
 
 function token_withdraw() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Withdraw","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "10", "note": "", "to": "'"${token_addr}"'", "execName": "'"${execName}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
