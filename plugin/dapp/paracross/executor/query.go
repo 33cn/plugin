@@ -8,11 +8,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
-	"github.com/33cn/chain33/common"
 )
 
 // Query_GetTitle query paracross title
@@ -28,24 +28,24 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	stat,err:= p.paracrossGetStateTitleHeight(in.Title,in.Height)
+	stat, err := p.paracrossGetStateTitleHeight(in.Title, in.Height)
 	if err != nil {
 		clog.Error("paracross.GetTitleHeight", "title", title, "height", in.Height, "err", err.Error())
-		return nil,err
+		return nil, err
 	}
 	status := stat.(*pt.ParacrossHeightStatus)
 	res := &pt.ParacrossHeightStatusRsp{
-		Status:status.Status,
-		Title:status.Title,
-		Height:status.Height,
-		MainHeight:status.MainHeight,
-		MainHash:common.ToHex(status.MainHash),
+		Status:     status.Status,
+		Title:      status.Title,
+		Height:     status.Height,
+		MainHeight: status.MainHeight,
+		MainHash:   common.ToHex(status.MainHash),
 	}
-	for i,addr := range status.Details.Addrs{
+	for i, addr := range status.Details.Addrs {
 		res.CommitAddrs = append(res.CommitAddrs, addr)
-		res.CommitBlockHash = append(res.CommitBlockHash,common.ToHex(status.Details.BlockHash[i]))
+		res.CommitBlockHash = append(res.CommitBlockHash, common.ToHex(status.Details.BlockHash[i]))
 	}
-	return res,nil
+	return res, nil
 }
 
 // Query_GetTitleByHash query paracross title by block hash

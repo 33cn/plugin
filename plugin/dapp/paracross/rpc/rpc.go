@@ -104,7 +104,6 @@ func (c *channelClient) GetDoneTitleHeight(ctx context.Context, req *pt.ReqParac
 	return nil, types.ErrDecode
 }
 
-
 func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqHash) (*pt.ParacrossAsset, error) {
 	data, err := c.Query(pt.GetExecName(), "GetAssetTxResult", req)
 	if err != nil {
