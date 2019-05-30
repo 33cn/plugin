@@ -96,6 +96,9 @@ function base_init() {
 
     sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
 
+    # ticket
+    sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
+
 }
 
 function start() {
@@ -140,7 +143,7 @@ function start() {
     ${CLI} block hash -t 0
     res=$(${CLI} block hash -t 0 | jq -r ".hash")
     #in case changes result in genesis change
-    if [ "${res}" != "0xa87972dfc3510cb934cb987bcb88036f7a1ffd7dc069cb9a5f0af179895fd2e8" ]; then
+    if [ "${res}" != "0x67c58d6ba9175313f0468ae4e0ddec946549af7748037c2fdd5d54298afd20b6" ]; then
         echo "genesis hash error!"
         exit 1
     fi

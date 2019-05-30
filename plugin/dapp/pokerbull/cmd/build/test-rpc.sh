@@ -202,8 +202,8 @@ Chain33_SendToAddress() {
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
+    hash=$(jq -r ".result.hash" <<<"$resp")
+    query_tx "$hash"
     echo "send '$3' from '$1' to '$2' end"
 }
 
