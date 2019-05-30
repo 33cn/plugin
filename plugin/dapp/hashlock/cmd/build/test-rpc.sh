@@ -23,7 +23,7 @@ echo_rst() {
         CASE_ERR="err"
     fi
 }
-set -x
+
 saveSeed() {
 
     seed="journey notable narrow few bar stuff notable custom miss brother attend tongue price theme resist"
@@ -92,7 +92,7 @@ queryBalance() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo $resp|jq -r ".result"
+    echo "$resp"|jq -r ".result"
 }
 
 hashlock_lock() {
@@ -200,7 +200,7 @@ function queryTransaction() {
         else
             echo "====query tx=$1  success"
             ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx")
-            echo $ret
+            echo "$ret"
             return 0
             break
         fi
@@ -227,10 +227,10 @@ init() {
     echo "ipara=$ispara"
     if [ "$ispara" == true ]; then
         hashlock_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.hashlock"}]}' ${MAIN_HTTP} | jq -r ".result")
-        hashlock_exec="user.p.para.guess"
+        #hashlock_exec="user.p.para.guess"
     else
         hashlock_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"hashlock"}]}' ${MAIN_HTTP} | jq -r ".result")
-        hashlock_exec="hashlock"
+        #hashlock_exec="hashlock"
     fi
     echo "hashlock_addr=$hashlock_addr"
 }
@@ -270,7 +270,7 @@ function run_test() {
     block_wait 2
 
     #查询交易
-    queryTransaction $txhash
+    queryTransaction "$txhash"
     queryBalance $addr_A
     queryBalance $addr_B
 
@@ -281,7 +281,7 @@ function run_test() {
     block_wait 2
 
     #查询交易
-    queryTransaction $txhash
+    queryTransaction "$txhash"
     queryBalance $addr_A
     queryBalance $addr_B
 
@@ -292,7 +292,7 @@ function run_test() {
     block_wait 2
 
     #查询交易
-    queryTransaction $txhash
+    queryTransaction "$txhash"
     queryBalance $addr_A
     queryBalance $addr_B
 
@@ -302,7 +302,7 @@ function run_test() {
 
     #等待2个区块
     block_wait 2
-    queryTransaction $txhash
+    queryTransaction "$txhash"
 
     #unlock failed
     hashlock_unlock
@@ -312,7 +312,7 @@ function run_test() {
     block_wait 2
 
     #查询交易
-    queryTransaction $txhash
+    queryTransaction "$txhash"
 }
 
 function main() {
@@ -334,5 +334,3 @@ function main() {
 }
 
 main "$1"
-
-set +x

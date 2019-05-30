@@ -369,11 +369,11 @@ function main() {
 
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
-    ip=$(echo $ip | cut -d':' -f 1)
+    ip=$(echo "$ip" | cut -d':' -f 1)
     dapp_run test "${ip}"
 
     ### rpc test  ###
-    #    rpc_test "${ip}"
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container
