@@ -88,14 +88,13 @@ sendTransaction1() {
         Chain33_SendToAddress 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv 120000000000
 
         old=${MAIN_HTTP}
-        MAIN_HTTP=`echo ${MAIN_HTTP}|sed 's/8901/8801/'`
+        MAIN_HTTP="${MAIN_HTTP//8901/8801}"
         Chain33_SendToAddress 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt 1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF 300000000
         MAIN_HTTP=${old}
         return
     fi
 
     local fee=1000000
-    local exec="coins"
     local to="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     local from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     local privkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
@@ -115,7 +114,6 @@ sendTransaction1() {
 }
 sendTransaction11() {
     local fee=1000000
-    local exec="coins"
     local to="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     local from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     local privkey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
@@ -142,11 +140,10 @@ queryBalance1() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo $resp|jq -r ".result"
+    echo "$resp"|jq -r ".result"
 }
 sendTransaction2() {
     local fee=1000000
-    local exec="coins"
     local to="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
     local from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     local privkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
@@ -166,7 +163,6 @@ sendTransaction2() {
 }
 sendToExec1() {
     local fee=1000000
-    local exec="coins"
     local to="1Kv4NXEHbptdQMYbHBAjGr43kS3rggV225"
     local from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     local privkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
@@ -185,7 +181,6 @@ sendToExec1() {
 
 sendToExec2() {
     local fee=1000000
-    local exec="coins"
     local to="1Kv4NXEHbptdQMYbHBAjGr43kS3rggV225"
     local from="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
     local privkey="B0BB75BC49A787A71F4834DA18614763B53A18291ECE6B5EDEC3AD19D150C3E7"
@@ -219,7 +214,7 @@ queryBalance2() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo $resp|jq -r ".result"
+    echo "$resp"|jq -r ".result"
 }
 queryBalance3() {
     req='"method":"Chain33.GetBalance","params":[{"Addresses":["1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"]}]'
@@ -229,12 +224,12 @@ queryBalance3() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo $resp|jq -r ".result"
+    echo "$resp"|jq -r ".result"
 }
 
 set -x
 queryExecBalance1() {
-    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"], "execer" : "$guess_exec"}]}'
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"], "execer" : "'$guess_exec'"}]}'
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
@@ -242,7 +237,7 @@ queryExecBalance1() {
     echo_rst "$FUNCNAME" "$?"
 }
 queryExecBalance2() {
-    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"], "execer" : "$guess_exec"}]}'
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"], "execer" : "'$guess_exec'"}]}'
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
@@ -372,7 +367,7 @@ guess_QueryGameByID() {
     #echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     echo "#response: $resp"
-    ok=$(jq '(.result|has("game")) and (.result.game.status == '$status')' <<<"$resp")
+    ok="$(jq '(.result|has("game")) and (.result.game.status == '$status')' <<<"$resp")"
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -414,7 +409,7 @@ function queryTransaction() {
         else
             echo "====query tx=$1  success"
             ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx")
-            echo $ret
+            echo "$ret"
             return 0
             break
         fi
@@ -495,7 +490,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 11
+    guess_QueryGameByID "$eventId" 11
 
     #用户1下注
     guess_game_bet1
@@ -504,7 +499,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 12
+    guess_QueryGameByID "$eventId" 12
 
     #用户2下注
     guess_game_bet2
@@ -513,7 +508,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 12
+    guess_QueryGameByID "$eventId" 12
 
 
     #管理员停止下注
@@ -523,7 +518,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 13
+    guess_QueryGameByID "$eventId" 13
 
     #管理员发布结果
     guess_game_publish
@@ -532,7 +527,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 15
+    guess_QueryGameByID "$eventId" 15
 
 
     #start->stop->abort
@@ -542,7 +537,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 11
+    guess_QueryGameByID "$eventId" 11
 
     #管理员停止下注
     guess_game_stop
@@ -551,7 +546,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 13
+    guess_QueryGameByID "$eventId" 13
 
     #管理员发布结果
     guess_game_abort
@@ -560,7 +555,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 14
+    guess_QueryGameByID "$eventId" 14
 
     #start->abort
     guess_game_start
@@ -569,7 +564,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 11
+    guess_QueryGameByID "$eventId" 11
 
     #等待1个区块
     block_wait 2
@@ -581,7 +576,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 14
+    guess_QueryGameByID "$eventId" 14
 
     #start->bet->abort
 
@@ -592,7 +587,7 @@ function run_test() {
         block_wait 2
 
         #查询游戏状态
-        guess_QueryGameByID $eventId 11
+        guess_QueryGameByID "$eventId" 11
 
         #用户1下注
         guess_game_bet1
@@ -601,7 +596,7 @@ function run_test() {
         block_wait 2
 
         #查询游戏状态
-        guess_QueryGameByID $eventId 12
+        guess_QueryGameByID "$eventId" 12
 
         #用户2下注
         guess_game_bet2
@@ -610,7 +605,7 @@ function run_test() {
         block_wait 2
 
         #查询游戏状态
-        guess_QueryGameByID $eventId 12
+        guess_QueryGameByID "$eventId" 12
 
         #管理员发布结果
         guess_game_abort
@@ -618,7 +613,7 @@ function run_test() {
         #等待1个区块
         block_wait 2
         #查询游戏状态
-        guess_QueryGameByID $eventId 14
+        guess_QueryGameByID "$eventId" 14
 
     #start->bet->stop->abort
     #管理员创建游戏
@@ -628,7 +623,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 11
+    guess_QueryGameByID "$eventId" 11
 
     #用户1下注
     guess_game_bet1
@@ -637,7 +632,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 12
+    guess_QueryGameByID "$eventId" 12
 
     #用户2下注
     guess_game_bet2
@@ -646,7 +641,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 12
+    guess_QueryGameByID "$eventId" 12
 
 
     #管理员停止下注
@@ -656,7 +651,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 13
+    guess_QueryGameByID "$eventId" 13
 
     #管理员发布结果
     guess_game_abort
@@ -665,7 +660,7 @@ function run_test() {
     block_wait 2
 
     #查询游戏状态
-    guess_QueryGameByID $eventId 14
+    guess_QueryGameByID "$eventId" 14
 }
 
 function main() {
