@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
+	"github.com/33cn/chain33/common"
 )
 
 // Query_GetTitle query paracross title
@@ -20,6 +21,31 @@ func (p *Paracross) Query_GetTitle(in *types.ReqString) (types.Message, error) {
 		return nil, types.ErrInvalidParam
 	}
 	return p.paracrossGetHeight(in.GetData())
+}
+
+// Query_GetTitleHeight query paracross status with title and height
+func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	stat,err:= p.paracrossGetStateTitleHeight(in.Title,in.Height)
+	if err != nil {
+		clog.Error("paracross.GetTitleHeight", "title", title, "height", in.Height, "err", err.Error())
+		return nil,err
+	}
+	status := stat.(*pt.ParacrossHeightStatus)
+	res := &pt.ParacrossHeightStatusRsp{
+		Status:status.Status,
+		Title:status.Title,
+		Height:status.Height,
+		MainHeight:status.MainHeight,
+		MainHash:common.ToHex(status.MainHash),
+	}
+	for i,addr := range status.Details.Addrs{
+		res.CommitAddrs = append(res.CommitAddrs, addr)
+		res.CommitBlockHash = append(res.CommitBlockHash,common.ToHex(status.Details.BlockHash[i]))
+	}
+	return res,nil
 }
 
 // Query_GetTitleByHash query paracross title by block hash
@@ -99,8 +125,8 @@ func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
 	return p.paracrossListTitles()
 }
 
-// Query_GetTitleHeight query title height
-func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
+// Query_GetDoneTitleHeight query title height
+func (p *Paracross) Query_GetDoneTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
