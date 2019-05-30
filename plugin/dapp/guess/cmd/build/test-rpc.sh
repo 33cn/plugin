@@ -371,7 +371,7 @@ guess_QueryGameByID() {
     #echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     echo "#response: $resp"
-    ok="$(jq '(.result|has("game")) and (.result.game.status == '$status')' <<<"$resp")"
+    ok=$(jq '(.result|has("game")) and (.result.game.status == '"$status"')' <<<"$resp")
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
