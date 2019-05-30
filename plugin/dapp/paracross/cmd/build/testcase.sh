@@ -38,7 +38,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=4/g' "${1}"
     sed -i $xsedfix '/^emptyBlockInterval=.*/a MainBlockHashForkHeight=1' "${1}"
 
-    sed -i $xsedfix '/^emptyBlockInterval=.*/a MainParaSelfConsensusForkHeight=50' "${1}"
+    sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=1/g' "${1}"
 
     # rpc
@@ -597,6 +597,7 @@ function para_nodegroup_behalf_quit_test() {
 
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588
     hash=$(${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
@@ -663,6 +664,7 @@ function para_nodemanage_test() {
     echo "=========== # para chain node vote quit ============="
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588
     hash=$(${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
@@ -718,6 +720,7 @@ function para_nodemanage_test() {
     echo "=========== # para chain node vote quit ============="
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d
     hash=$(${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"

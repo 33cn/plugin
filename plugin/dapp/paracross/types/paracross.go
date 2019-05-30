@@ -7,6 +7,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/log/log15"
@@ -177,6 +178,7 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 // CreateRawNodeConfigTx create raw tx for node config
 func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
 	config.Title = types.GetTitle()
+	config.Addr = strings.Trim(config.Addr, " ")
 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionNodeConfig,

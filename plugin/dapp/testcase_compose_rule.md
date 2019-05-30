@@ -15,15 +15,15 @@ cmd目录下有两个文件Makefile和build.sh 负责在make时候把build里面
 
 也可以通过dapp参数关键字all来run所有的dapp， all模式会自动删除pass的dapp的资源
 
- 1. make docker-compose [PROJ=xx] [DAPP=xx]
-    1. 如果PROJ 和DAPP都不设置如 make docker-compose, 只会run 系统的test case，不会run任何dapp
-    1. 如果PROJ不设置，系统会缺省采用build关键字作为docker-compose的service工程名，如果设置以设置为准，
-       不同PROJ可以实现docker compose 并行
-    1. 如果DAPP不设置，则不run任何dapp，如果设置，则只run 指定的dapp，run结束后需要手动 make docker-compose-down DAPP=xx释放
-    1. 如果DAPP=all 或者ALL， 则run 所有提供testcase的dapp
- 1. make docker-compose down [PROJ=xx] [DAPP=xx] 
-    负责clean make docker-compose 或make fork-test 创建了的docker资源， PROJ 和DAPP规则同上
- 1. make fork-test [PROJ=xx] [DAPP=xx]   分叉测试
+ 1. make docker-compose [proj=xx] [dapp=xx]
+    1. 如果proj 和dapp都不设置如 make docker-compose, 只会run 系统的test case，不会run任何dapp
+    1. 如果proj不设置，系统会缺省采用build关键字作为docker-compose的service工程名，如果设置以设置为准，
+       不同proj可以实现docker compose 并行
+    1. 如果dapp不设置，则不run任何dapp，如果设置，则只run 指定的dapp，run结束后需要手动 make docker-compose-down dapp=xx释放
+    1. 如果dapp=all 或者ALL， 则run 所有提供testcase的dapp
+ 1. make docker-compose down [proj=xx] [dapp=xx] 
+    负责clean make docker-compose 或make fork-test 创建了的docker资源， proj 和dapp规则同上
+ 1. make fork-test [proj=xx] [dapp=xx]   分叉测试
     1. 规则同make docker-compose     
 
 
