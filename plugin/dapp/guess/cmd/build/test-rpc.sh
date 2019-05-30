@@ -140,7 +140,7 @@ queryBalance1() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo "$resp"|jq -r ".result"
+    echo "$resp" | jq -r ".result"
 
 }
 sendTransaction2() {
@@ -216,7 +216,7 @@ queryBalance2() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    echo "$resp"|jq -r ".result"
+    echo "$resp" | jq -r ".result"
 
 }
 queryBalance3() {
@@ -228,7 +228,7 @@ queryBalance3() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    echo "$resp"|jq -r ".result"
+    echo "$resp" | jq -r ".result"
 }
 
 set -x
@@ -587,10 +587,8 @@ function run_test() {
     #等待2个区块
     block_wait 2
 
-
-        #查询游戏状态
-        guess_QueryGameByID "$eventId" 11
-
+    #查询游戏状态
+    guess_QueryGameByID "$eventId" 11
 
     #用户1下注
     guess_game_bet1
@@ -598,9 +596,8 @@ function run_test() {
     #等待1个区块
     block_wait 2
 
-        #查询游戏状态
-        guess_QueryGameByID "$eventId" 12
-
+    #查询游戏状态
+    guess_QueryGameByID "$eventId" 12
 
     #用户2下注
     guess_game_bet2
@@ -608,17 +605,16 @@ function run_test() {
     #等待2个区块
     block_wait 2
 
-        #查询游戏状态
-        guess_QueryGameByID "$eventId" 12
-
+    #查询游戏状态
+    guess_QueryGameByID "$eventId" 12
 
     #管理员发布结果
     guess_game_abort
 
-        #等待1个区块
-        block_wait 2
-        #查询游戏状态
-        guess_QueryGameByID "$eventId" 14
+    #等待1个区块
+    block_wait 2
+    #查询游戏状态
+    guess_QueryGameByID "$eventId" 14
 
     #start->bet->stop->abort
     #管理员创建游戏
