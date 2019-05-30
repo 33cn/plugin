@@ -144,8 +144,11 @@ chain33_SendTransaction() {
     rawTx=$1
     addr=$2
     #签名交易
+
+    set -x
     resp=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "chain33_SignRawTx" "$rst"
