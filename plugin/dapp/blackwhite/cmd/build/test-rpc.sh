@@ -2,7 +2,6 @@
 # shellcheck disable=SC2128
 set +e
 set -o pipefail
-set -x
 
 MAIN_HTTP=""
 CASE_ERR=""
@@ -63,11 +62,12 @@ chain33_GetAccounts() {
 function query_tx() {
     block_wait 1
     local txhash="$1"
+    local http="$2"
     local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
     echo "req=$req"
     local times=10
     while true; do
-        ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
+        ret=$(curl -ksd "{$req}" "${http}" | jq -r ".result.tx.hash")
         echo "====query tx= ${1}, return=$ret "
         if [ "${ret}" != "${1}" ]; then
             block_wait 1
@@ -75,7 +75,7 @@ function query_tx() {
             if [ $times -le 0 ]; then
                 echo "====query tx=$1 failed"
                 echo "req=$req"
-                curl -ksd "{$req}" ${MAIN_HTTP}
+                curl -ksd "{$req}" "${http}"
                 exit 1
             fi
         else
@@ -115,8 +115,9 @@ chain33_SendToAddress() {
     [ "$ok" == true ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
-    txhash=$(jq -r ".result" <<<"$resp")
-    query_tx "$txhash"
+    txhash=$(jq -r ".result.hash" <<<"$resp")
+    echo "tx hash: $txhash"
+    query_tx "$txhash" "${http}"
 }
 
 chain33_SendTransaction() {
@@ -136,9 +137,9 @@ chain33_SendTransaction() {
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #返回交易
-    gResp=$(echo "${resp}" | jq -r ".result")
+    gResp=$(jq -r ".result" <<<"$resp")
     echo "tx hash is $gResp"
-    query_tx "$gResp"
+    query_tx "$gResp" "${MAIN_HTTP}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
@@ -299,4 +300,10 @@ function main() {
     fi
 }
 
-main "$1"
+function debug_function() {
+    set -x
+    eval "$@"
+    set +x
+}
+
+debug_function main "$1"
