@@ -47,18 +47,22 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 	go func() {
 		defer mem.wg.Done()
 		for msg := range client.Recv() {
+			var err error
+			var reply interface{}
 			switch msg.Ty {
 			case types.EventTx:
 				mlog.Info("Receive msg from para mempool")
 				tx := msg.GetData().(*types.Transaction)
-				reply, err := mem.mainGrpcCli.SendTransaction(context.Background(), tx)
-				if err != nil {
-					msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
-				} else {
-					msg.Reply(client.NewMessage(mem.key, types.EventReply, reply))
-				}
+				reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
+			case types.EventGetProperFee:
+				reply, err = mem.mainGrpcCli.GetProperFee(context.Background(), &types.ReqNil{})
 			default:
 				msg.Reply(client.NewMessage(mem.key, types.EventReply, types.ErrActionNotSupport))
+			}
+			if err != nil {
+				msg.Reply(client.NewMessage(mem.key, types.EventReply, err))
+			} else {
+				msg.Reply(client.NewMessage(mem.key, types.EventReply, reply))
 			}
 		}
 	}()
