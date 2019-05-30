@@ -26,7 +26,7 @@ echo_rst() {
         CASE_ERR="err"
     fi
 }
-set -x
+
 saveSeed() {
 
     seed="journey notable narrow few bar stuff notable custom miss brother attend tongue price theme resist"
@@ -79,7 +79,6 @@ importPrivkey3() {
     echo_rst "$FUNCNAME" "$?"
 }
 
-
 sendTransaction1() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
@@ -89,6 +88,7 @@ sendTransaction1() {
 
         old=${MAIN_HTTP}
         MAIN_HTTP="${MAIN_HTTP//8901/8801}"
+
         Chain33_SendToAddress 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt 1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF 300000000
         MAIN_HTTP=${old}
         return
@@ -141,6 +141,7 @@ queryBalance1() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     echo "$resp"|jq -r ".result"
+
 }
 sendTransaction2() {
     local fee=1000000
@@ -196,14 +197,14 @@ sendToExec2() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-sendToExec11(){
-     from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-     Chain33_SendToAddress "$from" "$guess_addr" 20000000000
+sendToExec11() {
+    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    Chain33_SendToAddress "$from" "$guess_addr" 20000000000
 }
 
-sendToExec12(){
-     from="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
-     Chain33_SendToAddress "$from" "$guess_addr" 20000000000
+sendToExec12() {
+    from="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+    Chain33_SendToAddress "$from" "$guess_addr" 20000000000
 }
 
 queryBalance2() {
@@ -214,7 +215,9 @@ queryBalance2() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
+
     echo "$resp"|jq -r ".result"
+
 }
 queryBalance3() {
     req='"method":"Chain33.GetBalance","params":[{"Addresses":["1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"]}]'
@@ -224,6 +227,7 @@ queryBalance3() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
+
     echo "$resp"|jq -r ".result"
 }
 
@@ -444,7 +448,6 @@ init() {
     echo "guess_addr=$guess_addr"
 }
 
-
 function run_test() {
 
     #保存seed
@@ -510,7 +513,6 @@ function run_test() {
     #查询游戏状态
     guess_QueryGameByID "$eventId" 12
 
-
     #管理员停止下注
     guess_game_stop
 
@@ -528,7 +530,6 @@ function run_test() {
 
     #查询游戏状态
     guess_QueryGameByID "$eventId" 15
-
 
     #start->stop->abort
     guess_game_start
@@ -581,34 +582,38 @@ function run_test() {
     #start->bet->abort
 
     #管理员创建游戏
-        guess_game_start
+    guess_game_start
 
-        #等待2个区块
-        block_wait 2
+    #等待2个区块
+    block_wait 2
+
 
         #查询游戏状态
         guess_QueryGameByID "$eventId" 11
 
-        #用户1下注
-        guess_game_bet1
 
-        #等待1个区块
-        block_wait 2
+    #用户1下注
+    guess_game_bet1
 
-        #查询游戏状态
-        guess_QueryGameByID "$eventId" 12
-
-        #用户2下注
-        guess_game_bet2
-
-        #等待2个区块
-        block_wait 2
+    #等待1个区块
+    block_wait 2
 
         #查询游戏状态
         guess_QueryGameByID "$eventId" 12
 
-        #管理员发布结果
-        guess_game_abort
+
+    #用户2下注
+    guess_game_bet2
+
+    #等待2个区块
+    block_wait 2
+
+        #查询游戏状态
+        guess_QueryGameByID "$eventId" 12
+
+
+    #管理员发布结果
+    guess_game_abort
 
         #等待1个区块
         block_wait 2
@@ -642,7 +647,6 @@ function run_test() {
 
     #查询游戏状态
     guess_QueryGameByID "$eventId" 12
-
 
     #管理员停止下注
     guess_game_stop
@@ -682,5 +686,3 @@ function main() {
 }
 
 main "$1"
-
-set +x
