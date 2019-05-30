@@ -65,7 +65,6 @@ importPrivkey2() {
     echo_rst "$FUNCNAME" "$?"
 }
 
-
 sendTransaction() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
@@ -74,14 +73,13 @@ sendTransaction() {
         Chain33_SendToAddress 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv 12000000000
     fi
 
-    Chain33_SendToAddress 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt  12000000000
+    Chain33_SendToAddress 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt 12000000000
 }
 
 sendToExec() {
     from=$1
     Chain33_SendToAddress "$from" "$hashlock_addr" 2000000000
 }
-
 
 queryBalance() {
     addr=$1
@@ -92,7 +90,7 @@ queryBalance() {
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    echo $resp|jq -r ".result"
+    echo $resp | jq -r ".result"
 }
 
 hashlock_lock() {
@@ -235,7 +233,6 @@ init() {
     echo "hashlock_addr=$hashlock_addr"
 }
 
-
 function run_test() {
 
     #保存seed
@@ -296,7 +293,6 @@ function run_test() {
     queryBalance $addr_A
     queryBalance $addr_B
 
-
     #lock
     hashlock_lock
 
@@ -306,7 +302,6 @@ function run_test() {
 
     #unlock failed
     hashlock_unlock
-
 
     #等待2个区块
     block_wait 2
