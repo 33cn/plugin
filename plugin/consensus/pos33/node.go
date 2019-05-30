@@ -2,7 +2,6 @@ package pos33
 
 import (
 	"encoding/hex"
-	"math"
 	"math/big"
 	"time"
 
@@ -186,7 +185,7 @@ func (n *node) makeBlock(null bool) (*types.Block, error) {
 		return nil, err
 	}
 	oldDiff := difficulty.CompactToBig(types.GetP(0).PowLimitBits)
-	newDiff := new(big.Int).Mul(oldDiff, big.NewInt(int64(diff+1)))
+	newDiff := new(big.Int).Sub(oldDiff, big.NewInt(int64(diff+1)))
 	nb.Difficulty += difficulty.BigToCompact(newDiff)
 
 	if null {
@@ -263,7 +262,7 @@ func (n *node) checkBlock(b *types.Block) error {
 	}
 
 	plog.Info("node.checkBlock", "height", b.Height)
-	go n.addBlock(b)
+
 	return nil
 }
 
@@ -329,10 +328,6 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 	}
 	strHash := string(vm.BlockHash)
 	n.cvs[m.Height][strHash] = append(n.cvs[m.Height][strHash], vm)
-
-	if n.GetCurrentBlock().Height >= m.Height {
-		return
-	}
 
 	if vsWeight(n.cvs[m.Height][strHash])*3 > pt.Pos33VerifierSize*2 {
 		b, ok := n.cbs[m.Height][strHash]
@@ -482,8 +477,6 @@ func (n *node) runLoop() {
 	}
 	time.AfterFunc(time.Second, func() { n.addBlock(lb) })
 
-	nnull := 1 // 连续空块的数量
-
 	for {
 		select {
 		case msg := <-msgch:
@@ -492,20 +485,13 @@ func (n *node) runLoop() {
 			if height == n.lastBlock.Height+1 {
 				plog.Info("vote timeout: ", "height", height)
 				n.voteTimeout(height)
-				nnull++
-			} else {
-				nnull = 1
 			}
 		case <-tm.C:
 			height := n.lastBlock.Height + 1
 			plog.Info("elect timeout: ", "height", height)
 			n.vote(height)
 
-			du := time.Duration(int64(math.Pow(2, float64(nnull))))
-			if du > 1024 {
-				du = 1024
-			}
-			time.AfterFunc(time.Second*du, func() {
+			time.AfterFunc(time.Second*5, func() {
 				ch <- height
 			})
 		case b := <-n.bch: // new block add to chain
