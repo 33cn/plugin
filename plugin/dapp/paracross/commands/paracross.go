@@ -446,7 +446,7 @@ func paraInfo(cmd *cobra.Command, args []string) {
 		Title:  title,
 		Height: height,
 	}
-	var res pt.RespParacrossDone
+	var res pt.ParacrossHeightStatusRsp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetTitleHeight", params, &res)
 	ctx.Run()
 }
