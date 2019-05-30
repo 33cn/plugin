@@ -25,7 +25,6 @@ echo_rst() {
 }
 
 saveSeed() {
-
     seed="journey notable narrow few bar stuff notable custom miss brother attend tongue price theme resist"
     req='{"method":"Chain33.SaveSeed", "params":[{"seed":"'"$seed"'", "passwd": "1314fuzamei"}]}'
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
@@ -252,12 +251,12 @@ function run_test() {
     sendTransaction
     block_wait 1
 
-    queryBalance $addr_A
-    queryBalance $addr_B
+    queryBalance "$addr_A"
+    queryBalance "$addr_B"
 
     #用户地址向合约转账，确保可以参与游戏
-    sendToExec $addr_A
-    sendToExec $addr_B
+    sendToExec "$addr_A"
+    sendToExec "$addr_B"
 
     block_wait 2
 
@@ -269,8 +268,8 @@ function run_test() {
 
     #查询交易
     queryTransaction "$txhash"
-    queryBalance $addr_A
-    queryBalance $addr_B
+    queryBalance "$addr_A"
+    queryBalance "$addr_B"
 
     #send
     hashlock_send
@@ -280,8 +279,8 @@ function run_test() {
 
     #查询交易
     queryTransaction "$txhash"
-    queryBalance $addr_A
-    queryBalance $addr_B
+    queryBalance "$addr_A"
+    queryBalance "$addr_B"
 
     #unlock failed
     hashlock_unlock
@@ -291,8 +290,8 @@ function run_test() {
 
     #查询交易
     queryTransaction "$txhash"
-    queryBalance $addr_A
-    queryBalance $addr_B
+    queryBalance "$addr_A"
+    queryBalance "$addr_B"
 
     #lock
     hashlock_lock
