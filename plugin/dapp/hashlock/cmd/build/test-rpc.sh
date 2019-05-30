@@ -91,7 +91,7 @@ queryBalance() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    echo "$resp"|jq -r ".result"
+    echo "$resp" | jq -r ".result"
 }
 
 hashlock_lock() {
@@ -330,4 +330,3 @@ function main() {
 }
 
 main "$1"
-
