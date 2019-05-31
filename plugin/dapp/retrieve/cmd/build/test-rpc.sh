@@ -65,7 +65,7 @@ function query_tx() {
 retrieve_Backup() {
     echo "========== # retrieve backup begin =========="
 
-    req='"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt","delayPeriod": 61}]'
+    req='"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX","defaultAddr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo","delayPeriod": 61}]'
     tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
@@ -75,7 +75,7 @@ retrieve_Backup() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
     echo "========== # retrieve backup end =========="
 
     block_wait 1
@@ -84,7 +84,7 @@ retrieve_Backup() {
 retrieve_Prepare() {
     echo "========== # retrieve prepare begin =========="
 
-    req='"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    req='"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX","defaultAddr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}]'
     tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
@@ -94,7 +94,7 @@ retrieve_Prepare() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    signrawtx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
     echo "========== # retrieve prepare end =========="
 
     block_wait 1
@@ -103,7 +103,7 @@ retrieve_Prepare() {
 retrieve_Perform() {
     echo "========== # retrieve perform begin =========="
 
-    req='"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    req='"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX","defaultAddr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}]'
     tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
@@ -113,7 +113,7 @@ retrieve_Perform() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    signrawtx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
     echo "========== # retrieve perform end =========="
 
     block_wait 1
@@ -122,7 +122,7 @@ retrieve_Perform() {
 retrieve_Cancel() {
     echo "========== # retrieve cancel begin =========="
 
-    req='"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","defaultAddr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}]'
+    req='"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX","defaultAddr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}]'
     tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
 
     reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
@@ -132,7 +132,7 @@ retrieve_Cancel() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+    signrawtx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
     echo "========== # retrieve cancel end =========="
 
     block_wait 1
@@ -143,7 +143,7 @@ retrieve_QueryResult() {
 
     local status=$1
 
-    req='"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY", "defaultAddress":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]'
+    req='"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX", "defaultAddress":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}}]'
     data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
     ok=$(jq '(.status == '"$status"')' <<<"$data")
 
@@ -207,8 +207,8 @@ Chain33_SendToAddress() {
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
+    hash=$(jq -r ".result.hash" <<<"$resp")
+    query_tx "$hash"
 }
 
 init() {

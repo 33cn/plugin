@@ -73,7 +73,7 @@ pokerbull_PlayRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "play"
+    signrawtx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "play"
     echo "========== # pokerbull play tx end =========="
 
     block_wait 1
@@ -89,7 +89,7 @@ pokerbull_QuitRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "quit"
+    signrawtx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "quit"
     echo "========== # pokerbull quit tx end =========="
 
     block_wait 1
@@ -105,7 +105,7 @@ pokerbull_ContinueRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "continue"
+    signrawtx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "continue"
     echo "========== # pokerbull continue tx end =========="
 
     block_wait 1
@@ -121,7 +121,7 @@ pokerbull_StartRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    signrawtx "$tx" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "start"
+    signrawtx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "start"
     echo "========== # pokerbull start tx end =========="
 
     block_wait 1
@@ -135,7 +135,7 @@ pokerbull_QueryResult() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}}]}' ${MAIN_HTTP} | jq -r ".result")
     [ "$data" != null ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -202,8 +202,8 @@ Chain33_SendToAddress() {
     ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
+    hash=$(jq -r ".result.hash" <<<"$resp")
+    query_tx "$hash"
     echo "send '$3' from '$1' to '$2' end"
 }
 
