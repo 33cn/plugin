@@ -461,8 +461,8 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, commit *pt.ParacrossCo
 func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitAction) ([][]byte, []byte, error) {
 	if types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		if len(commit.Status.CrossTxHashs) == 0 {
-			clog.Error("getCrossTxHashs len=0","paraHeight",commit.Status.Height,
-				"mainHeight",commit.Status.MainBlockHeight,"mainHash",hex.EncodeToString(commit.Status.MainBlockHash))
+			clog.Error("getCrossTxHashs len=0", "paraHeight", commit.Status.Height,
+				"mainHeight", commit.Status.MainBlockHeight, "mainHash", hex.EncodeToString(commit.Status.MainBlockHash))
 			return nil, nil, types.ErrCheckTxHash
 		}
 		blockDetail, err := GetBlock(api, commit.Status.MainBlockHash)
@@ -479,16 +479,16 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 		baseCheckTxHash := CalcTxHashsHash(baseHashs)
 		crossCheckHash := CalcTxHashsHash(paraCrossHashs)
 		if !bytes.Equal(commit.Status.CrossTxHashs[0], crossCheckHash) {
-			clog.Error("getCrossTxHashs para hash not equal", "paraHeight",commit.Status.Height,
-				"mainHeight",commit.Status.MainBlockHeight,"mainHash",hex.EncodeToString(commit.Status.MainBlockHash),
+			clog.Error("getCrossTxHashs para hash not equal", "paraHeight", commit.Status.Height,
+				"mainHeight", commit.Status.MainBlockHeight, "mainHash", hex.EncodeToString(commit.Status.MainBlockHash),
 				"main.crossHash", hex.EncodeToString(crossCheckHash),
 				"commit.crossHash", hex.EncodeToString(commit.Status.CrossTxHashs[0]),
 				"main.baseHash", hex.EncodeToString(baseCheckTxHash), "commit.baseHash", hex.EncodeToString(commit.Status.TxHashs[0]))
-			for _,hash :=range baseHashs{
-				clog.Error("getCrossTxHashs base tx hash","txhash",hex.EncodeToString(hash))
+			for _, hash := range baseHashs {
+				clog.Error("getCrossTxHashs base tx hash", "txhash", hex.EncodeToString(hash))
 			}
-			for _,hash :=range paraCrossHashs{
-				clog.Error("getCrossTxHashs paracross tx hash","txhash",hex.EncodeToString(hash))
+			for _, hash := range paraCrossHashs {
+				clog.Error("getCrossTxHashs paracross tx hash", "txhash", hex.EncodeToString(hash))
 			}
 			return nil, nil, types.ErrCheckTxHash
 		}
