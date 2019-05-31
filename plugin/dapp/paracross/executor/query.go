@@ -212,7 +212,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			MostSameCommit: st.MostSameCommit,
 			Title:          st.Title,
 			Height:         st.Height,
-			StateHash:      hex.EncodeToString(st.StateHash),
+			StateHash:      common.ToHex(st.StateHash),
 			TxCounts:       st.TxCounts,
 			TxResult:       hex.EncodeToString(st.TxResult),
 		}
@@ -287,7 +287,7 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 		MostSameCommit: st.MostSameCommit,
 		Title:          st.Title,
 		Height:         st.Height,
-		StateHash:      hex.EncodeToString(st.StateHash),
+		StateHash:      common.ToHex(st.StateHash),
 		TxCounts:       st.TxCounts,
 		TxResult:       hex.EncodeToString(st.TxResult),
 	}, nil

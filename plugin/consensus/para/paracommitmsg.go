@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	consensusInterval = 16 //about 1 new block interval
-	minerInterval     = 5
+	consensusInterval = 10 //about 1 new block interval
+	minerInterval     = 25 //5s的主块间隔后分叉概率增加，25s可以消除一些分叉回退
 )
 
 type commitMsgClient struct {
