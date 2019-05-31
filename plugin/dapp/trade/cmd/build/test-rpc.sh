@@ -310,7 +310,7 @@ function trade_buyLimit() {
 
     queryTransaction ".error | not" "true"
     echo_rst "trade buyLimit queryExecRes" "$?"
-    buyID=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} |  jq -r ".result.receipt.logs[1].log.base.buyID" | awk -F '-' '{print $4}')
+    buyID=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.base.buyID" | awk -F '-' '{print $4}')
 }
 
 function trade_sellMarket() {
@@ -332,7 +332,7 @@ function trade_sellMarket() {
     echo_rst "trade sellMarket queryExecRes" "$?"
 }
 
-function trade_revokeBuy(){
+function trade_revokeBuy() {
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"trade.CreateRawTradeRevokeTx","params":[{"sellID":"'"${sellID}"'","fee": 1}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "trade revokeBuy create tx" 1
