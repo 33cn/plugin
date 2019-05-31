@@ -340,7 +340,7 @@ function rpc_test() {
         dapp_test_rpc "http://${1}:8801"
     fi
     if [ "$DAPP" == "paracross" ]; then
-        system_test_rpc "http://${1}:8901"
+        #system_test_rpc "http://${1}:8901"
         dapp_test_rpc "http://${1}:8901"
     fi
 
@@ -366,7 +366,7 @@ function main() {
 
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
-    ip=$(echo $ip | cut -d':' -f 1)
+    ip=$(echo "$ip" | cut -d':' -f 1)
     dapp_run test "${ip}"
 
     ### rpc test  ###
