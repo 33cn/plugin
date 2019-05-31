@@ -117,8 +117,6 @@ hashlock_unlock() {
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
     signAndSendRawTx "$rawtx" "${addr_B}"
-    #eventId="${txhash}"
-    #echo "eventId $eventId"
     echo "txHash ${txhash}"
 }
 
@@ -132,8 +130,6 @@ hashlock_send() {
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
     signAndSendRawTx "$rawtx" "${addr_A}"
-    #eventId="${txhash}"
-    #echo "eventId $eventId"
     echo "txHash ${txhash}"
 }
 
