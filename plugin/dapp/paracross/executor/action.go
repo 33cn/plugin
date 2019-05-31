@@ -459,10 +459,10 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, commit *pt.ParacrossCo
 }
 
 func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitAction) ([][]byte, []byte, error) {
-	crossTxHashs := commit.Status.CrossTxHashs
-	crossTxResult := commit.Status.CrossTxResult
 	if types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		if len(commit.Status.CrossTxHashs) == 0 {
+			clog.Error("getCrossTxHashs len=0","paraHeight",commit.Status.Height,
+				"mainHeight",commit.Status.MainBlockHeight,"mainHash",hex.EncodeToString(commit.Status.MainBlockHash))
 			return nil, nil, types.ErrCheckTxHash
 		}
 		blockDetail, err := GetBlock(api, commit.Status.MainBlockHash)
@@ -479,23 +479,32 @@ func getCrossTxHashs(api client.QueueProtocolAPI, commit *pt.ParacrossCommitActi
 		baseCheckTxHash := CalcTxHashsHash(baseHashs)
 		crossCheckHash := CalcTxHashsHash(paraCrossHashs)
 		if !bytes.Equal(commit.Status.CrossTxHashs[0], crossCheckHash) {
-			clog.Error("getCrossTxHashs para hash not equal", "main.crossHash", hex.EncodeToString(crossCheckHash),
+			clog.Error("getCrossTxHashs para hash not equal", "paraHeight",commit.Status.Height,
+				"mainHeight",commit.Status.MainBlockHeight,"mainHash",hex.EncodeToString(commit.Status.MainBlockHash),
+				"main.crossHash", hex.EncodeToString(crossCheckHash),
 				"commit.crossHash", hex.EncodeToString(commit.Status.CrossTxHashs[0]),
 				"main.baseHash", hex.EncodeToString(baseCheckTxHash), "commit.baseHash", hex.EncodeToString(commit.Status.TxHashs[0]))
+			for _,hash :=range baseHashs{
+				clog.Error("getCrossTxHashs base tx hash","txhash",hex.EncodeToString(hash))
+			}
+			for _,hash :=range paraCrossHashs{
+				clog.Error("getCrossTxHashs paracross tx hash","txhash",hex.EncodeToString(hash))
+			}
 			return nil, nil, types.ErrCheckTxHash
 		}
 
 		//只获取跨链tx
-		crossTxHashs = paraCrossHashs
 		rst, err := hex.DecodeString(string(commit.Status.CrossTxResult))
 		if err != nil {
 			clog.Error("getCrossTxHashs decode string", "CrossTxResult", string(commit.Status.CrossTxResult),
 				"commit.height", commit.Status.Height)
 			return nil, nil, types.ErrInvalidParam
 		}
-		crossTxResult = rst
+
+		return paraCrossHashs, rst, nil
 	}
-	return crossTxHashs, crossTxResult, nil
+
+	return commit.Status.CrossTxHashs, commit.Status.CrossTxResult, nil
 }
 
 func (a *action) execCrossTxs(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
