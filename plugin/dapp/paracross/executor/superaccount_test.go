@@ -74,7 +74,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 }
 
 func (suite *NodeManageTestSuite) TestSetup() {
-	nodeConfigKey := calcParaNodeGroupKey(Title)
+	nodeConfigKey := calcParaNodeGroupAddrsKey(Title)
 	suite.T().Log(string(nodeConfigKey))
 	_, err := suite.stateDB.Get(nodeConfigKey)
 	if err != nil {
@@ -139,7 +139,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeAdding), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParacrossNodeJoining), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -310,22 +310,22 @@ func (suite *NodeManageTestSuite) TearDownSuite() {
 func TestGetAddrGroup(t *testing.T) {
 	addrs := " 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,    1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k, ,,,  1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs ,   "
 
-	retAddrs := getAddrGroup(addrs)
+	retAddrs := getConfigAddrs(addrs)
 	expectAddrs := []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k", "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"}
 	assert.Equal(t, expectAddrs, retAddrs)
 
 	addrs = " 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 , ,   "
-	retAddrs = getAddrGroup(addrs)
+	retAddrs = getConfigAddrs(addrs)
 	expectAddrs = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}
 	assert.Equal(t, expectAddrs, retAddrs)
 
 	addrs = " , "
-	ret := getAddrGroup(addrs)
+	ret := getConfigAddrs(addrs)
 	assert.Equal(t, []string(nil), ret)
 	assert.Equal(t, 0, len(ret))
 
 	addrs = " "
-	ret = getAddrGroup(addrs)
+	ret = getConfigAddrs(addrs)
 	assert.Equal(t, []string(nil), ret)
 	assert.Equal(t, 0, len(ret))
 

@@ -91,7 +91,7 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
-			log.Ty == pt.TyLogParaNodeGroupQuit {
+			log.Ty == pt.TyLogParaNodeGroupQuit || log.Ty == pt.TyLogParaNodeGroupModify {
 			var g pt.ReceiptParaNodeGroupConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {

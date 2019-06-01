@@ -16,7 +16,9 @@ var (
 	managerConfigNodes        string //manager 合约配置的nodes
 	paraConfigNodes           string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr        string //平行链配置节点账户
-	paraNodeGroupApplyAddrs   string
+	paraNodeGroupStatusAddrs  string //正在申请的addrs
+	paraNodeId                string
+	paraNodeGroupId           string
 	localTx                   string
 	localTitle                string
 	localTitleHeight          string
@@ -32,7 +34,9 @@ func setPrefix() {
 	managerConfigNodes = "paracross-nodes-"
 	paraConfigNodes = "mavl-paracross-nodes-title-"
 	paraConfigNodeAddr = "mavl-paracross-nodes-titleAddr-"
-	paraNodeGroupApplyAddrs = "mavl-paracross-nodegroup-apply-title-"
+	paraNodeGroupStatusAddrs = "mavl-paracross-nodegroup-apply-title-"
+	paraNodeId = "mavl-paracross-title-nodeid-"
+	paraNodeGroupId = "mavl-paracross-title-nodegroupid-"
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
 	localTitleHeight = "LODB-paracross-titleHeight-"
@@ -62,7 +66,7 @@ func calcManageConfigNodesKey(title string) []byte {
 	return []byte(types.ManageKey(key))
 }
 
-func calcParaNodeGroupKey(title string) []byte {
+func calcParaNodeGroupAddrsKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraConfigNodes+"%s", title))
 }
 
@@ -70,8 +74,16 @@ func calcParaNodeAddrKey(title string, addr string) []byte {
 	return []byte(fmt.Sprintf(paraConfigNodeAddr+"%s-%s", title, addr))
 }
 
-func calcParaNodeGroupApplyKey(title string) []byte {
-	return []byte(fmt.Sprintf(paraNodeGroupApplyAddrs+"%s", title))
+func calcParaNodeGroupStatusKey(title string) []byte {
+	return []byte(fmt.Sprintf(paraNodeGroupStatusAddrs+"%s", title))
+}
+
+func calcParaNodeIdKey(title, hash string) string {
+	return fmt.Sprintf(paraNodeId+"%s-%s", title, hash)
+}
+
+func calcParaNodeGroupIdKey(title, hash string) string {
+	return fmt.Sprintf(paraNodeGroupId+"%s-%s", title, hash)
 }
 
 func calcLocalTxKey(title string, height int64, addr string) []byte {
