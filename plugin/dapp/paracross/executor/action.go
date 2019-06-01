@@ -77,7 +77,7 @@ func getConfigManageNodes(db dbm.KV, title string) (map[string]struct{}, []strin
 }
 
 func getParacrossNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
-	key := calcParaNodeGroupKey(title)
+	key := calcParaNodeGroupAddrsKey(title)
 	return getNodes(db, key)
 }
 

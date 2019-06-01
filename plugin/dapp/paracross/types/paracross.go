@@ -37,12 +37,14 @@ const (
 	// TyLogParaAssetDeposit asset deposit log key
 	TyLogParaAssetDeposit = 656
 	// TyLogParaNodeConfig config super node log key
-	TyLogParaNodeConfig       = 657
-	TyLogParaNodeVoteDone     = 658
-	TyLogParaNodeGroupUpdate  = 659
-	TyLogParaNodeGroupApply   = 660
-	TyLogParaNodeGroupApprove = 661
-	TyLogParaNodeGroupQuit    = 662
+	TyLogParaNodeConfig            = 657
+	TyLogParaNodeVoteDone          = 658
+	TyLogParaNodeGroupAddrsUpdate  = 659
+	TyLogParaNodeGroupApply        = 660
+	TyLogParaNodeGroupApprove      = 661
+	TyLogParaNodeGroupQuit         = 662
+	TyLogParaNodeGroupModify       = 663
+	TyLogParaNodeGroupStatusUpdate = 664
 )
 
 type paracrossCommitTx struct {
@@ -99,10 +101,10 @@ const (
 )
 
 const (
-	// ParacrossNodeAdding apply for adding group
-	ParacrossNodeAdding = iota + 1
-	// ParacrossNodeAdded pass to add by votes
-	ParacrossNodeAdded
+	// ParacrossNodeJoining apply for adding group
+	ParacrossNodeJoining = iota + 1
+	// ParacrossNodeJoined pass to add by votes
+	ParacrossNodeJoined
 	// ParacrossNodeQuiting apply for quiting
 	ParacrossNodeQuiting
 	// ParacrossNodeQuited pass to quite by votes
@@ -116,6 +118,8 @@ const (
 	ParacrossNodeGroupApprove
 	//ParacrossNodeGroupQuit applyer quit the apply when not be approved
 	ParacrossNodeGroupQuit
+	//ParacrossNodeGroupModify applyer modify some parameters
+	ParacrossNodeGroupModify
 )
 
 var (
