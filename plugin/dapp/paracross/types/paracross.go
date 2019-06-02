@@ -94,6 +94,7 @@ const (
 	ParaNodeQuit
 )
 
+// node vote op
 const (
 	ParaNodeVoteInvalid = iota
 	ParaNodeVoteYes
@@ -101,6 +102,7 @@ const (
 	ParaNodeVoteEnd
 )
 
+// ParaNodeVoteStr
 var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
 const (

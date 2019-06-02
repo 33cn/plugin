@@ -104,7 +104,7 @@ func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) 
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
@@ -120,7 +120,7 @@ func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt
 
 	len := len(receipt.KV)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[len-1].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
@@ -134,7 +134,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
@@ -149,7 +149,7 @@ func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
@@ -164,7 +164,7 @@ func checkVoteReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count 
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	assert.Len(suite.T(), stat.Votes.Votes, count)
@@ -176,7 +176,7 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 	assert.Len(suite.T(), receipt.KV, 2)
 	assert.Len(suite.T(), receipt.Logs, 3)
 
-	var stat pt.ParaNodeAddrStatus
+	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	assert.Len(suite.T(), stat.Votes.Votes, count)
