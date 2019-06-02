@@ -138,7 +138,6 @@ function para_transfer() {
 
     #    para_create_manage_nodegroup
 
-
     echo "=========== # config token blacklist ============="
     #token precreate
     txhash=$(para_configkey "${PARA_CLI}" "token-blacklist" "BTY")
@@ -186,9 +185,9 @@ function para_create_nodegroup_test() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    local id=$(${PARA_CLI} tx query -s  "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+    local id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
-        ${PARA_CLI} tx query -s  "${txhash}"
+        ${PARA_CLI} tx query -s "${txhash}"
         echo "group id not getted"
         exit 1
     fi
@@ -227,9 +226,9 @@ function para_create_nodegroup() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    local id=$(${PARA_CLI} tx query -s  "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+    local id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
-        ${PARA_CLI} tx query -s  "${txhash}"
+        ${PARA_CLI} tx query -s "${txhash}"
         echo "group id not getted"
         exit 1
     fi
@@ -808,7 +807,7 @@ function paracross() {
 
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
-#        dapp_rpc_test "${3}"
+        #        dapp_rpc_test "${3}"
 
     fi
 
