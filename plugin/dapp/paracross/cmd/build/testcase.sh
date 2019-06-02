@@ -185,7 +185,7 @@ function para_create_nodegroup_test() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    local id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
         ${PARA_CLI} tx query -s "${txhash}"
         echo "group id not getted"
@@ -226,7 +226,7 @@ function para_create_nodegroup() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    local id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
         ${PARA_CLI} tx query -s "${txhash}"
         echo "group id not getted"
