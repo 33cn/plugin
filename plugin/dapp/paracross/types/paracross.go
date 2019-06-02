@@ -102,7 +102,7 @@ const (
 	ParaNodeVoteEnd
 )
 
-// ParaNodeVoteStr
+// ParaNodeVoteStr ...
 var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
 const (
