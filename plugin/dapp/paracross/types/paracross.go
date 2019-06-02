@@ -40,10 +40,7 @@ const (
 	TyLogParaNodeConfig            = 657
 	TyLogParaNodeVoteDone          = 658
 	TyLogParaNodeGroupAddrsUpdate  = 659
-	TyLogParaNodeGroupApply        = 660
-	TyLogParaNodeGroupApprove      = 661
-	TyLogParaNodeGroupQuit         = 662
-	TyLogParaNodeGroupModify       = 663
+	TyLogParaNodeGroupConfig       = 660
 	TyLogParaNodeGroupStatusUpdate = 664
 )
 
@@ -92,13 +89,19 @@ const (
 
 // node config op
 const (
-	ParaNodeJoin = "join"
-	ParaNodeQuit = "quit"
-	ParaNodeVote = "vote"
-
-	ParaNodeVoteYes = "yes"
-	ParaNodeVoteNo  = "no"
+	ParaNodeJoin = iota + 1
+	ParaNodeVote
+	ParaNodeQuit
 )
+
+const (
+	ParaNodeVoteInvalid = iota
+	ParaNodeVoteYes
+	ParaNodeVoteNo
+	ParaNodeVoteEnd
+)
+
+var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
 const (
 	// ParacrossNodeJoining apply for adding group
@@ -183,6 +186,7 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
 	config.Title = types.GetTitle()
 	config.Addr = strings.Trim(config.Addr, " ")
+	config.Id = strings.Trim(config.Id, " ")
 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionNodeConfig,
@@ -199,6 +203,7 @@ func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, erro
 func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
 	apply.Title = types.GetTitle()
 	apply.EmptyBlockInterval = 4
+	apply.Id = strings.Trim(apply.Id, " ")
 	interval := types.Conf("config.consensus.sub.para").GInt("emptyBlockInterval")
 	if interval > 0 {
 		apply.EmptyBlockInterval = uint32(interval)

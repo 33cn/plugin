@@ -418,7 +418,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return receipt, nil
 	}
 
-	if enableParacrossTransfer && commit.Status.Height > 0 && len(commit.Status.CrossTxHashs) > 0 {
+	haveCrossTxs := len(commit.Status.CrossTxHashs) > 0
+	if types.IsDappFork(a.height, pt.ParaX, pt.ForkCommitTx) && commit.Status.CrossTxHashs[0] == nil {
+		haveCrossTxs = false
+	}
+
+	if enableParacrossTransfer && commit.Status.Height > 0 && haveCrossTxs {
 		clog.Debug("paracross.Commit commitDone", "do cross", "")
 		crossTxReceipt, err := a.execCrossTxs(commit)
 		if err != nil {

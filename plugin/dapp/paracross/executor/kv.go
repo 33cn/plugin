@@ -102,22 +102,30 @@ func calcLocalAssetKey(hash []byte) []byte {
 	return []byte(fmt.Sprintf(localAssetKey+"%s", hash))
 }
 
-func calcLocalNodeTitleStatus(title, addr string, status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-%s", title, status, addr))
+func calcLocalNodeTitleStatus(title string, status int32, id string) []byte {
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-%s", title, status, id))
 }
 
 func calcLocalNodeStatusPrefix(title string, status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d", title, status))
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-", title, status))
+}
+
+func calcLocalNodeTitlePrefix(title string) []byte {
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-", title))
 }
 
 func calcLocalNodeTitleDone(title, addr string) []byte {
 	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, addr))
 }
 
-func calcLocalNodeGroupStatusTitle(status int32, title string) []byte {
-	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-%s", status, title))
+func calcLocalNodeGroupStatusTitle(status int32, title, id string) []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-%s-%s", status, title, id))
 }
 
 func calcLocalNodeGroupStatusPrefix(status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d", status))
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-", status))
+}
+
+func calcLocalNodeGroupAllPrefix() []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
 }

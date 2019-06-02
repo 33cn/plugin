@@ -85,7 +85,11 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
-	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
+	addrStat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := getNodeId(p.GetStateDB(), addrStat.ProposalId)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +234,7 @@ func listNodeStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 
 	var resp pt.RespParacrossNodeAddrs
 	for _, r := range res {
-		var st pt.ParaNodeAddrStatus
+		var st pt.ParaNodeIdStatus
 		err = types.Decode(r, &st)
 		if err != nil {
 			panic(err)
