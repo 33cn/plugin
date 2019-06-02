@@ -269,11 +269,6 @@ func createNodeTx(cmd *cobra.Command, args []string) {
 	val, _ := cmd.Flags().GetUint32("value")
 	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
 
-	if opAddr == "" {
-		fmt.Println("addr parameter should not be null")
-		return
-	}
-
 	payload := &pt.ParaNodeAddrConfig{Op: op, Id: id, Value: val, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
@@ -315,15 +310,6 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	addrs, _ := cmd.Flags().GetString("addrs")
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
-
-	if op == 0 || op > 3 {
-		fmt.Println("operation should be one of 1:apply,2:approve,3:quit")
-		return
-	}
-	if addrs == "" {
-		fmt.Println("addrs should not be nil")
-		return
-	}
 
 	payload := &pt.ParaNodeGroupConfig{Op: op, Id: id, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{

@@ -89,7 +89,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if err != nil {
 		return nil, err
 	}
-	stat, err := getNodeId(p.GetStateDB(), addrStat.ProposalId)
+	stat, err := getNodeID(p.GetStateDB(), addrStat.ProposalId)
 	if err != nil {
 		return nil, err
 	}

@@ -46,7 +46,7 @@ func getNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdStatus, error
 	return &status, err
 }
 
-func getNodeId(db dbm.KV, id string) (*pt.ParaNodeIdStatus, error) {
+func getNodeID(db dbm.KV, id string) (*pt.ParaNodeIdStatus, error) {
 	val, err := getDb(db, []byte(id))
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func getDb(db dbm.KV, key []byte) ([]byte, error) {
 	return val, nil
 }
 
-func getNodeGroupId(db dbm.KV, id string) (*pt.ParaNodeGroupStatus, error) {
+func getNodeGroupID(db dbm.KV, id string) (*pt.ParaNodeGroupStatus, error) {
 	val, err := getDb(db, []byte(id))
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func makeNodeConfigReceipt(fromAddr string, config *pt.ParaNodeAddrConfig, prev,
 	}
 }
 
-func makeNodeGroupIdReceipt(addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
+func makeNodeGroupIDReceipt(addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
 	log := &pt.ReceiptParaNodeGroupConfig{
 		Addr:    addr,
 		Prev:    prev,
@@ -230,7 +230,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		}
 		clog.Info("first time add node addr", "title", config.Title, "addr", config.Addr)
 		stat := &pt.ParaNodeIdStatus{
-			Id:          calcParaNodeIdKey(config.Title, common.ToHex(a.txhash)),
+			Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
 			Status:      pt.ParacrossNodeJoining,
 			Title:       config.Title,
 			TargetAddr:  config.Addr,
@@ -243,7 +243,11 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return receipt, nil
 	}
 
-	stat, err := getNodeId(a.db, addrStat.ProposalId)
+	stat, err := getNodeID(a.db, addrStat.ProposalId)
+	if err != nil {
+		clog.Error("nodeaccount.getNodeID fail", "err", err.Error())
+		return nil, err
+	}
 	var copyStat pt.ParaNodeIdStatus
 	err = deepCopy(&copyStat, stat)
 	if err != nil {
@@ -252,7 +256,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 	if stat.Status == pt.ParacrossNodeQuited {
 		stat = &pt.ParaNodeIdStatus{
-			Id:          calcParaNodeIdKey(config.Title, common.ToHex(a.txhash)),
+			Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
 			Status:      pt.ParacrossNodeJoining,
 			Title:       config.Title,
 			TargetAddr:  config.Addr,
@@ -271,7 +275,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 }
 
 func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	stat, err := getNodeId(a.db, config.Id)
+	stat, err := getNodeID(a.db, config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +408,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
 	}
 
-	stat, err := getNodeId(a.db, config.Id)
+	stat, err := getNodeID(a.db, config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -657,7 +661,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 	}
 
 	stat := &pt.ParaNodeGroupStatus{
-		Id:                 calcParaNodeGroupIdKey(config.Title, common.ToHex(a.txhash)),
+		Id:                 calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
 		Status:             pt.ParacrossNodeGroupApply,
 		Title:              config.Title,
 		TargetAddrs:        strings.Join(addrs, ","),
@@ -665,7 +669,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		MainHeight:         a.exec.GetMainHeight(),
 		EmptyBlockInterval: config.EmptyBlockInterval,
 		FromAddr:           a.fromaddr}
-	r := makeNodeGroupIdReceipt(a.fromaddr, nil, stat)
+	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -675,13 +679,13 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	stat := &pt.ParaNodeGroupStatus{
-		Id:                 calcParaNodeGroupIdKey(config.Title, common.ToHex(a.txhash)),
+		Id:                 calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
 		Status:             pt.ParacrossNodeGroupModify,
 		Title:              config.Title,
 		CoinsFrozen:        config.CoinsFrozen,
 		MainHeight:         a.exec.GetMainHeight(),
 		EmptyBlockInterval: config.EmptyBlockInterval}
-	r := makeNodeGroupIdReceipt(a.fromaddr, nil, stat)
+	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -689,7 +693,7 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 }
 
 func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
-	status, err := getNodeGroupId(a.db, config.Id)
+	status, err := getNodeGroupID(a.db, config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -720,7 +724,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 	copyStat := *status
 	status.Status = pt.ParacrossNodeGroupQuit
 
-	r := makeNodeGroupIdReceipt(a.fromaddr, &copyStat, status)
+	r := makeNodeGroupIDReceipt(a.fromaddr, &copyStat, status)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -743,7 +747,7 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 	copyModify := *modify
 	modify.Status = pt.ParacrossNodeGroupApprove
 
-	r := makeNodeGroupIdReceipt(a.fromaddr, &copyModify, modify)
+	r := makeNodeGroupIDReceipt(a.fromaddr, &copyModify, modify)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -784,7 +788,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	apply.Status = pt.ParacrossNodeGroupApprove
 	apply.MainHeight = a.exec.GetMainHeight()
 
-	r = makeNodeGroupIdReceipt(a.fromaddr, &copyStat, apply)
+	r = makeNodeGroupIDReceipt(a.fromaddr, &copyStat, apply)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -803,7 +807,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 		return nil, types.ErrNotAllow
 	}
 
-	id, err := getNodeGroupId(a.db, config.Id)
+	id, err := getNodeGroupID(a.db, config.Id)
 	if err != nil {
 		return nil, err
 	}
