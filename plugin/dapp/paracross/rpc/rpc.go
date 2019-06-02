@@ -180,13 +180,13 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 }
 
 // GetNodeStatus get super node status
-func (c *channelClient) GetNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeAddrStatus, error) {
+func (c *channelClient) GetNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeIdStatus, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "GetNodeAddrInfo", &r)
 	if err != nil {
 		return nil, err
 	}
-	if resp, ok := data.(*pt.ParaNodeAddrStatus); ok {
+	if resp, ok := data.(*pt.ParaNodeIdStatus); ok {
 		return resp, nil
 	}
 	return nil, types.ErrDecode
