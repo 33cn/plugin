@@ -131,7 +131,7 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 
 //Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Status == 0 {
+	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
 	return listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
@@ -252,7 +252,7 @@ func listNodeStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 		if err != nil {
 			panic(err)
 		}
-		resp.Addrs = append(resp.Addrs, &st)
+		resp.Ids = append(resp.Ids, &st)
 	}
 	return &resp, nil
 }
@@ -270,7 +270,7 @@ func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 		if err != nil {
 			panic(err)
 		}
-		resp.Addrs = append(resp.Addrs, &st)
+		resp.Ids = append(resp.Ids, &st)
 	}
 	return &resp, nil
 }
