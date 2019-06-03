@@ -72,12 +72,12 @@ func (c *Jrpc) ListTitles(req *types.ReqNil, result *interface{}) error {
 	return err
 }
 
-func (c *channelClient) GetTitleHeight(ctx context.Context, req *pt.ReqParacrossTitleHeight) (*pt.RespParacrossDone, error) {
+func (c *channelClient) GetTitleHeight(ctx context.Context, req *pt.ReqParacrossTitleHeight) (*pt.ParacrossHeightStatusRsp, error) {
 	data, err := c.Query(pt.GetExecName(), "GetTitleHeight", req)
 	if err != nil {
 		return nil, err
 	}
-	if resp, ok := data.(*pt.RespParacrossDone); ok {
+	if resp, ok := data.(*pt.ParacrossHeightStatusRsp); ok {
 		return resp, nil
 	}
 	return nil, types.ErrDecode
@@ -91,6 +91,17 @@ func (c *Jrpc) GetTitleHeight(req *pt.ReqParacrossTitleHeight, result *interface
 	data, err := c.cli.GetTitleHeight(context.Background(), req)
 	*result = data
 	return err
+}
+
+func (c *channelClient) GetDoneTitleHeight(ctx context.Context, req *pt.ReqParacrossTitleHeight) (*pt.RespParacrossDone, error) {
+	data, err := c.Query(pt.GetExecName(), "GetDoneTitleHeight", req)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.RespParacrossDone); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
 }
 
 func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqHash) (*pt.ParacrossAsset, error) {

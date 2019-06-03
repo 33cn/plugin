@@ -23,23 +23,19 @@ echo_rst() {
 
 lottery_addCreator_unsignedTx="0a066d616e616765123c0a3a0a0f6c6f74746572792d63726561746f721222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630c788b8f7ccbadbc0703a223151344e687572654a784b4e4266373164323642394a336642516f5163666d657a32"
 lottery_addCreator_unsignedTx_para="0a12757365722e702e706172612e6d616e616765123c0a3a0a0f6c6f74746572792d63726561746f721222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630a8bba1b887e7dade2b3a22314469484633317577783977356a6a733571514269474a6b4e686e71656564763157"
+
 lottery_creator_addr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+lottery_creator_priv="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 
 gID=""
 gResp=""
-
-glAddr=""
-gameAddr1=""
-gameAddr2=""
-gameAddr3=""
 lottExecAddr=""
+luckyNumber=""
 
 purNum=30
 drawNum=40
 opRatio=5
 devRatio=5
-
-luckyNumber=""
 
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
@@ -47,22 +43,12 @@ init() {
 
     if [[ $ispara == true ]]; then
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SendTransaction "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_addr}"
+        chain33_SendTransaction "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_priv}"
     else
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SendTransaction "${lottery_addCreator_unsignedTx}" "${lottery_creator_addr}"
+        chain33_SendTransaction "${lottery_addCreator_unsignedTx}" "${lottery_creator_priv}"
     fi
     echo "lottExecAddr=$lottExecAddr"
-}
-
-chain33_NewAccount() {
-    label=$1
-    result=$(curl -ksd '{"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.acc.addr")
-    [[ $result != "" ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    glAddr=$result
-    echo "$glAddr"
 }
 
 function block_wait() {
@@ -142,10 +128,12 @@ chain33_SendToAddress() {
 
 chain33_SendTransaction() {
     rawTx=$1
-    addr=$2
+    priv=$2
     #签名交易
-    resp=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    set -x
+    resp=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priv"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
+    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "chain33_SignRawTx" "$rst"
@@ -166,7 +154,7 @@ chain33_SendTransaction() {
 
 lottery_LotteryCreate() {
     #创建交易
-    addr=$1
+    priv=$1
     set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
     "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
@@ -177,14 +165,14 @@ lottery_LotteryCreate() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${priv}"
     gID="${gResp}"
     echo "gameID $gID"
 }
 
 lottery_LotteryBuy() {
     #创建交易
-    addr=$1
+    priv=$1
     amount=$2
     number=$3
     way=$4
@@ -198,12 +186,12 @@ lottery_LotteryBuy() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${priv}"
 }
 
 lottery_LotteryDraw() {
     #创建交易
-    addr=$1
+    priv=$1
     set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
@@ -214,12 +202,12 @@ lottery_LotteryDraw() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${priv}"
 }
 
 lottery_LotteryClose() {
     #创建交易
-    addr=$1
+    priv=$1
     set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
@@ -230,7 +218,7 @@ lottery_LotteryClose() {
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "${rawTx}" "${priv}"
 }
 
 lottery_GetLotteryNormalInfo() {
@@ -377,27 +365,20 @@ lottery_GetLotteryRoundGainInfo() {
 }
 
 function run_testcases() {
-    #先创建账户地址
-    chain33_NewAccount "lottery111"
-    gameAddr1="${glAddr}"
-    chain33_NewAccount "lottery222"
-    gameAddr2="${glAddr}"
-    chain33_NewAccount "lottery333"
-    gameAddr3="${glAddr}"
-
-    #给每个账户分别转帐
-    origAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    #账户地址
+    gameAddr1="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+    gamePriv1="0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
+    gameAddr2="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+    gamePriv2="0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
+    #该账户需要转账
+    gameAddr3="12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
+    gamePriv3="0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 300000000 "${M_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 300000000 "${M_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 300000000 "${M_HTTP}"
-
+    chain33_SendToAddress "${gameAddr1}" "${gameAddr3}" 300000000 "${M_HTTP}"
     #平行链相应账户需要转帐
-    chain33_SendToAddress "${origAddr}" "${gameAddr1}" 300000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr2}" 300000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${origAddr}" "${gameAddr3}" 300000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr1}" "${gameAddr3}" 300000000 "${MAIN_HTTP}"
 
     #给游戏合约中转帐
     chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
@@ -405,14 +386,14 @@ function run_testcases() {
     chain33_SendToAddress "${gameAddr3}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
 
     #创建游戏
-    lottery_LotteryCreate "${lottery_creator_addr}"
+    lottery_LotteryCreate "${lottery_creator_priv}"
     lottery_GetLotteryNormalInfo "$gID" "${lottery_creator_addr}"
     lottery_GetLotteryCurrentInfo "$gID" 1 0
 
     #第一次投注
-    lottery_LotteryBuy "${gameAddr1}" 1 12345 1
-    lottery_LotteryBuy "${gameAddr2}" 1 66666 2
-    lottery_LotteryBuy "${gameAddr3}" 1 56789 5
+    lottery_LotteryBuy "${gamePriv1}" 1 12345 1
+    lottery_LotteryBuy "${gamePriv2}" 1 66666 2
+    lottery_LotteryBuy "${gamePriv3}" 1 56789 5
     #查询
     lottery_GetLotteryCurrentInfo "$gID" 2 3
     lottery_GetLotteryPurchaseAddr "$gID" 3
@@ -420,8 +401,8 @@ function run_testcases() {
     lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr2}" 1 1 "66666"
 
     #第二次投注
-    lottery_LotteryBuy "${gameAddr1}" 1 12321 1
-    lottery_LotteryBuy "${gameAddr3}" 1 78987 5
+    lottery_LotteryBuy "${gamePriv1}" 1 12321 1
+    lottery_LotteryBuy "${gamePriv3}" 1 78987 5
     #查询
     lottery_GetLotteryCurrentInfo "$gID" 2 5
     lottery_GetLotteryPurchaseAddr "$gID" 3
@@ -430,7 +411,7 @@ function run_testcases() {
 
     #游戏开奖
     block_wait ${drawNum} "${M_HTTP}"
-    lottery_LotteryDraw "${lottery_creator_addr}"
+    lottery_LotteryDraw "${lottery_creator_priv}"
     lottery_GetLotteryCurrentInfo "$gID" 3 0
 
     #游戏查询
@@ -442,7 +423,7 @@ function run_testcases() {
     lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr3}" 1 2
 
     #关闭游戏
-    lottery_LotteryClose "${lottery_creator_addr}"
+    lottery_LotteryClose "${lottery_creator_priv}"
     lottery_GetLotteryCurrentInfo "$gID" 4 0
 }
 
