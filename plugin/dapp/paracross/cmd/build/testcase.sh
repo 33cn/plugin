@@ -526,7 +526,6 @@ function para_create_nodegroup() {
         fi
     fi
 
-
     ##approve
     txhash=$(${PARA_CLI} send para nodegroup -o 2 -i "$modifyid" -c 5 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
