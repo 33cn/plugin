@@ -244,7 +244,7 @@ function run_testcases() {
 
     blackwhite_BlackwhiteTimeoutDoneTx "$gID"
     #查询部分
-    block_wait 1
+    block_wait 3
     blackwhite_GetBlackwhiteRoundInfo "$gID"
     blackwhite_GetBlackwhiteByStatusAndAddr "$gID" "${gameAddr1}"
     blackwhite_GetBlackwhiteloopResult "$gID"
