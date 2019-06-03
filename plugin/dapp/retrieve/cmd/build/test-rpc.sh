@@ -5,6 +5,7 @@ set -o pipefail
 
 MAIN_HTTP=""
 
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 retrieve_Backup() {

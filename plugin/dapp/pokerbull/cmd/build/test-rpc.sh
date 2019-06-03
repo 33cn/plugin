@@ -6,6 +6,7 @@ set -o pipefail
 MAIN_HTTP=""
 GAME_ID=""
 
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 pokerbull_PlayRawTx() {
