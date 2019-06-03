@@ -47,71 +47,77 @@ message ParacrossConsensusStatus {
     string consensBlockHash = 4;
 }
 
-message ParaNodeAddrConfig{
+message ParaNodeAddrConfig {
     string title                = 1;
-    string op                   = 2;
-    string addr                 = 3;
-    string value                = 4;
-    int64  coinsFrozen          = 5;
+    uint32 op                   = 2;
+    string id                   = 3;
+    string addr                 = 4;
+    uint32 value                = 5;
+    int64  coinsFrozen          = 6;
 
 }
 
-message ParaNodeVoteDetail{
+message ParaNodeVoteDetail {
     repeated string addrs      = 1;
     repeated string votes      = 2;
 }
 
-message ParaNodeAddrStatus{
-    int32  status               = 1;
-    string title                = 2;
-    string applyAddr            = 3;
-    int64  coinsFrozen          = 4;
-    ParaNodeVoteDetail votes    = 5;
-    string fromAddr             = 6;
+message ParaNodeAddrIdStatus {
+    string proposalId           = 1;
+}
+
+message ParaNodeIdStatus {
+    string id                   = 1;
+    int32  status               = 2;
+    string title                = 3;
+    string targetAddr           = 4;
+    int64  coinsFrozen          = 5;
+    ParaNodeVoteDetail votes    = 6;
+    string fromAddr             = 7;
+    int64  height               = 8;
 }
 
 
 message ReceiptParaNodeConfig {
     string                addr    = 1;
     ParaNodeAddrConfig    config  = 2;
-    ParaNodeAddrStatus    prev    = 3;
-    ParaNodeAddrStatus    current = 4;
+    ParaNodeIdStatus      prev    = 3;
+    ParaNodeIdStatus      current = 4;
 }
 
-message ReceiptParaNodeVoteRecord {
-    string              fromAddr   = 1;
-    string              voteAddr   = 2;
-    int32               value      = 3;
-}
 
 message ReceiptParaNodeVoteDone {
-    string title            = 1;
-    string targetAddr       = 2;
-    int32  totalNodes       = 3;
-    int32  totalVote        = 4;
-    int32  mostVote         = 5;
-    string voteRst          = 6;
-    int32  doneStatus       = 7;
+    string id               = 1;
+    string title            = 2;
+    string targetAddr       = 3;
+    int32  totalNodes       = 4;
+    int32  totalVote        = 5;
+    int32  mostVote         = 6;
+    string voteRst          = 7;
+    int32  doneStatus       = 8;
 
 }
 
 message ParaNodeGroupConfig {
     string title                = 1;
     uint32 op                   = 2;
-    string addrs                = 3;
-    int64  coinsFrozen          = 4;
-    uint32 emptyBlockInterval   = 5;
+    string id                   = 3;
+    string addrs                = 4;
+    int64  coinsFrozen          = 5;
+    uint32 emptyBlockInterval   = 6;
 }
 
 
 message ParaNodeGroupStatus {
-    int32  status               = 1;
-    string title                = 2;
-    string applyAddr            = 3;
-    int64  coinsFrozen          = 4;
-    uint32 emptyBlockInterval   = 5;
-    int64  mainHeight           = 6;
-    string fromAddr             = 7;
+    string id                   = 1;
+    int32  status               = 2;
+    string title                = 3;
+    string targetAddrs          = 4;
+    int64  coinsFrozen          = 5;
+    uint32 emptyBlockInterval   = 6;
+    int64  mainHeight           = 7;
+    string fromAddr             = 8;
+    int64  height               = 9;
 }
 
 message ReceiptParaNodeGroupConfig {
@@ -125,16 +131,18 @@ message ReceiptParaNodeGroupConfig {
 // node query
 message ReqParacrossNodeInfo {
     string title  = 1;
-    string addr   = 2;
-    int32  status = 3;
+    string id     = 2;
+    string addr   = 3;
+    int32  status = 4;
+
 }
 
 message RespParacrossNodeAddrs {
-    repeated ParaNodeAddrStatus addrs = 1;
+    repeated ParaNodeIdStatus ids = 1;
 }
 
 message RespParacrossNodeGroups {
-    repeated ParaNodeGroupStatus addrs = 1;
+    repeated ParaNodeGroupStatus ids = 1;
 }
 
 message ParaBlock2MainMap {

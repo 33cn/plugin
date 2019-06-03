@@ -64,11 +64,11 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 			}
 			if g.Prev != nil {
 				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Prev.Status), Value: types.Encode(g.Prev)})
+					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Prev.Status, g.Prev.Id), Value: types.Encode(g.Prev)})
 			}
 
 			set.KV = append(set.KV, &types.KeyValue{
-				Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Current.Status), Value: nil})
+				Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.Status, g.Current.Id), Value: nil})
 		} else if log.Ty == pt.TyLogParaNodeVoteDone {
 			var g pt.ReceiptParaNodeVoteDone
 			err := types.Decode(log.Log, &g)
@@ -86,8 +86,7 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
-		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
-			log.Ty == pt.TyLogParaNodeGroupQuit {
+		if log.Ty == pt.TyLogParaNodeGroupConfig {
 			var g pt.ReceiptParaNodeGroupConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
@@ -95,11 +94,11 @@ func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig
 			}
 			if g.Prev != nil {
 				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title), Value: types.Encode(g.Prev)})
+					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title, g.Current.Id), Value: types.Encode(g.Prev)})
 			}
 
 			set.KV = append(set.KV, &types.KeyValue{
-				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title), Value: nil})
+				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: nil})
 		}
 	}
 	return &set, nil
