@@ -190,7 +190,7 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 }
 
 func voteTest(suite *NodeManageTestSuite, id string, join bool) {
-	var count int = 1
+	var count int
 	config := &pt.ParaNodeAddrConfig{
 		Op:    pt.ParaNodeVote,
 		Id:    id,
@@ -199,6 +199,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
+	count++
 	receipt := nodeCommit(suite, PrivKeyA, tx)
 	checkVoteReceipt(suite, receipt, count)
 	count++

@@ -129,8 +129,10 @@ message ReceiptParaNodeGroupConfig {
 // node query
 message ReqParacrossNodeInfo {
     string title  = 1;
-    string addr   = 2;
-    int32  status = 3;
+    string id     = 2;
+    string addr   = 3;
+    int32  status = 4;
+
 }
 
 message RespParacrossNodeAddrs {

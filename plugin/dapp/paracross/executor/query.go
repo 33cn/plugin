@@ -96,6 +96,19 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	return stat, nil
 }
 
+//Query_GetNodeIdInfo get specific node addr info
+func (p *Paracross) Query_GetNodeIdInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" || in.Id == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	stat, err := getNodeID(p.GetStateDB(), in.Id)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
 //Query_ListNodeStatusInfo list node info by status
 func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
@@ -264,12 +277,24 @@ func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 
 //按状态遍历
 func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
-	prefix := calcLocalNodeStatusPrefix(title, status)
+	var prefix []byte
+	if status == 0 {
+		prefix = calcLocalNodeTitlePrefix(title)
+	} else {
+		prefix = calcLocalNodeStatusPrefix(title, status)
+	}
+
 	return listNodeStatus(db, prefix)
 }
 
 func listLocalNodeGroupStatus(db dbm.KVDB, status int32) (types.Message, error) {
-	prefix := calcLocalNodeGroupStatusPrefix(status)
+	var prefix []byte
+	if status == 0 {
+		prefix = calcLocalNodeGroupAllPrefix()
+	} else {
+		prefix = calcLocalNodeGroupStatusPrefix(status)
+	}
+
 	return listNodeGroupStatus(db, prefix)
 }
 
