@@ -20,6 +20,18 @@ message ParacrossHeightStatus {
     int64                  height  = 3;
     ParacrossStatusDetails details = 4;
     int64                  mainHeight    = 5;
+    bytes                  mainHash      = 6;
+}
+
+message ParacrossHeightStatusRsp {
+    int32                  status  = 1;
+    string                 title   = 2;
+    int64                  height  = 3;
+    int64                  mainHeight    = 4;
+    string                 mainHash      = 5;
+    repeated string        commitAddrs    = 6;
+    repeated string        commitBlockHash = 7;
+
 }
 
 message ParacrossStatus {
@@ -263,7 +275,8 @@ message ParacrossAsset {
 service paracross {
     rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}
     rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
-    rpc GetTitleHeight(ReqParacrossTitleHeight) returns (RespParacrossDone) {}
+    rpc GetDoneTitleHeight(ReqParacrossTitleHeight) returns (RespParacrossDone) {}
+    rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ParacrossHeightStatusRsp) {}
     rpc GetAssetTxResult(ReqHash) returns (ParacrossAsset) {}
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }

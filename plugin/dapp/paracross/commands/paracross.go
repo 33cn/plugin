@@ -332,7 +332,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	payload := &pt.ParaNodeGroupConfig{Op: op, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
-		ActionName: "NodeGroupApply",
+		ActionName: "NodeGroupConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -446,7 +446,7 @@ func paraInfo(cmd *cobra.Command, args []string) {
 		Title:  title,
 		Height: height,
 	}
-	var res pt.RespParacrossDone
+	var res pt.ParacrossHeightStatusRsp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetTitleHeight", params, &res)
 	ctx.Run()
 }

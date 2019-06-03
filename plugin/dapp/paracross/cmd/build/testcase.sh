@@ -38,7 +38,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=4/g' "${1}"
     sed -i $xsedfix '/^emptyBlockInterval=.*/a MainBlockHashForkHeight=1' "${1}"
 
-    sed -i $xsedfix '/^emptyBlockInterval=.*/a MainParaSelfConsensusForkHeight=50' "${1}"
+    sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=1/g' "${1}"
 
     # rpc
@@ -61,6 +61,10 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" "test"
     #1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
     para_import_key "${PARA_CLI}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "relay"
+    #1PUiGcbsccfxW3zuvHXZBJfznziph5miAo
+    para_import_key "${PARA_CLI}" "0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "dapptest1"
+    #1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
+    para_import_key "${PARA_CLI}" "0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "dapptest2"
 
     #super node behalf test
     #1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj
@@ -117,6 +121,8 @@ function para_transfer() {
     #relay rpc test
     para_transfer2account "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    para_transfer2account "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+    para_transfer2account "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
     block_wait "${CLI}" 2
 
     echo "=========== # main chain send to paracross ============="
@@ -597,6 +603,7 @@ function para_nodegroup_behalf_quit_test() {
 
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588
     hash=$(${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
@@ -663,6 +670,7 @@ function para_nodemanage_test() {
     echo "=========== # para chain node vote quit ============="
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588
     hash=$(${PARA_CLI} send para node -o vote -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
@@ -718,6 +726,7 @@ function para_nodemanage_test() {
     echo "=========== # para chain node vote quit ============="
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    ${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d
     hash=$(${PARA_CLI} send para node -o vote -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -v yes -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
