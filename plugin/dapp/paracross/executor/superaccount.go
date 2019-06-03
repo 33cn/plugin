@@ -455,56 +455,54 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
 
-	var receiptGroup *types.Receipt
+	receipt := &types.Receipt{Ty: types.ExecOk}
 	if vote == pt.ParaNodeVoteNo {
 		// 对已经在group里面的node，直接投票remove，对正在申请中的adding or quiting状态保持不变，对quited的保持不变
 		if stat.Status == pt.ParacrossNodeJoined {
-			receiptGroup, err = unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
+			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
 			}
+			receipt = mergeReceipt(receipt,r)
 			stat.Status = pt.ParacrossNodeQuited
 			if !types.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
 				}
-				receiptGroup.KV = append(receiptGroup.KV, r.KV...)
-				receiptGroup.Logs = append(receiptGroup.Logs, r.Logs...)
+				receipt = mergeReceipt(receipt,r)
 			}
 		}
 	} else {
 		if stat.Status == pt.ParacrossNodeJoining {
-			receiptGroup, err = unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
+			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
 			if err != nil {
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeJoined
+			receipt = mergeReceipt(receipt,r)
 		} else if stat.Status == pt.ParacrossNodeQuiting {
-			receiptGroup, err = unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
+			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeQuited
+			receipt = mergeReceipt(receipt,r)
 
 			if !types.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
 				}
-				receiptGroup.KV = append(receiptGroup.KV, r.KV...)
-				receiptGroup.Logs = append(receiptGroup.Logs, r.Logs...)
+				receipt = mergeReceipt(receipt,r)
 			}
 		}
 	}
-	receipt := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
-	if receiptGroup != nil {
-		receipt.KV = append(receipt.KV, receiptGroup.KV...)
-		receipt.Logs = append(receipt.Logs, receiptGroup.Logs...)
-	}
+	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	receipt = mergeReceipt(receipt,r)
+
 	receiptDone := makeVoteDoneReceipt(stat, len(nodes), len(stat.Votes.Addrs), most, pt.ParaNodeVoteStr[vote], stat.Status)
-	receipt.KV = append(receipt.KV, receiptDone.KV...)
-	receipt.Logs = append(receipt.Logs, receiptDone.Logs...)
+	receipt = mergeReceipt(receipt,receiptDone)
 	return receipt, nil
 
 }
