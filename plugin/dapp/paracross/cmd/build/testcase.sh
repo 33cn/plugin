@@ -516,10 +516,17 @@ function para_create_nodegroup() {
     query_tx "${CLI}" "${txhash}"
     modifyid=$(${PARA_CLI} para nodegroup_list -s 4 | jq -r ".ids[0].id")
     if [ -z "$modifyid" ]; then
-        ${PARA_CLI} para nodegroup_list -s 4
         echo "query modify error "
-        exit 1
+        ${PARA_CLI} para nodegroup_list -s 4
+        modifyid=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+        if [ -z "$modifyid" ]; then
+            ${PARA_CLI} tx query -s "${txhash}"
+            echo "group id not getted"
+            exit 1
+        fi
     fi
+
+
     ##approve
     txhash=$(${PARA_CLI} send para nodegroup -o 2 -i "$modifyid" -c 5 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
