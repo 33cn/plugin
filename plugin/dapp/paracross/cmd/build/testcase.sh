@@ -178,7 +178,6 @@ function para_transfer2exec() {
     echo "${hash1}"
 }
 
-
 function para_create_manage_nodegroup() {
     echo "=========== # para chain send config ============="
     para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
@@ -421,7 +420,6 @@ function para_cross_transfer_withdraw_for_token() {
     done
 }
 
-
 function para_create_nodegroup_test() {
     echo "=========== # para chain create node group test ============="
     ##apply
@@ -541,7 +539,6 @@ function para_create_nodegroup() {
     fi
 }
 
-
 function para_nodegroup_behalf_quit_test() {
     echo "=========== # para chain behalf node quit ============="
     id=$(${PARA_CLI} para node_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -t user.p.para. | jq -r ".id")
@@ -590,8 +587,6 @@ function para_nodegroup_behalf_quit_test() {
     fi
 
 }
-
-
 
 function para_nodemanage_node_join() {
     echo "================# para node manage test ================="
@@ -690,7 +685,6 @@ function para_nodemanage_quit_test() {
     fi
 
 }
-
 
 function para_nodemanage_test() {
     para_nodemanage_quit_test

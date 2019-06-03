@@ -271,7 +271,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return receipt, nil
 
 	}
-	return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s,status:%d", config.Addr,stat.Status)
+	return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s,status:%d", config.Addr, stat.Status)
 
 }
 
@@ -709,7 +709,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 
 	//approved or quited
 	if status.Status != pt.ParacrossNodeGroupApply {
-		return nil,  errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "node group apply not apply:%d", status.Status)
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "node group apply not apply:%d", status.Status)
 	}
 
 	applyAddrs := strings.Split(status.TargetAddrs, ",")
@@ -744,7 +744,7 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 
 	//approve modify case
 	if modify.CoinsFrozen < config.CoinsFrozen {
-		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins modify:%d,config:%d", modify.CoinsFrozen,config.CoinsFrozen)
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins modify:%d,config:%d", modify.CoinsFrozen, config.CoinsFrozen)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -780,7 +780,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	}
 
 	if apply.CoinsFrozen < config.CoinsFrozen {
-		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen,config.CoinsFrozen)
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -809,7 +809,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	if !isSuperManager(a.fromaddr) {
-		return nil,  errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
 	}
 
 	id, err := getNodeGroupID(a.db, config.Id)
@@ -829,7 +829,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 		return a.nodeGroupApproveApply(config, id)
 	}
 
-	return nil, errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "nodeGroupApprove id wrong status:%d,id:%s", id.Status,config.Id)
+	return nil, errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "nodeGroupApprove id wrong status:%d,id:%s", id.Status, config.Id)
 
 }
 
