@@ -62,8 +62,10 @@ func getMiners(detail *pt.ParacrossStatusDetails, blockHash []byte) []string {
 
 //
 func mergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
+	if receipt2 != nil{
+		receipt1.KV = append(receipt1.KV, receipt2.KV...)
+		receipt1.Logs = append(receipt1.Logs, receipt2.Logs...)
+	}
 
-	receipt1.KV = append(receipt1.KV, receipt2.KV...)
-	receipt1.Logs = append(receipt1.Logs, receipt2.Logs...)
 	return receipt1
 }
