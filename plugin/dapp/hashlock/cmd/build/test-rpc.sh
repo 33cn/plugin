@@ -71,7 +71,6 @@ hashlock_unlock() {
     chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
-
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
