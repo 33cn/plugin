@@ -4,13 +4,7 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-CASE_ERR=""
 GAME_ID=""
-
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 source ../dapp-test-common.sh
 
@@ -24,10 +18,10 @@ pokerbull_PlayRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "play"
+    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
     echo "========== # pokerbull play tx end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 pokerbull_QuitRawTx() {
@@ -40,10 +34,10 @@ pokerbull_QuitRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "quit"
+    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
     echo "========== # pokerbull quit tx end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 pokerbull_ContinueRawTx() {
@@ -56,10 +50,10 @@ pokerbull_ContinueRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "continue"
+    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
     echo "========== # pokerbull continue tx end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 pokerbull_StartRawTx() {
@@ -72,11 +66,11 @@ pokerbull_StartRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "start"
+    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
     GAME_ID=$RAW_TX_HASH
     echo "========== # pokerbull start tx end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 pokerbull_QueryResult() {
@@ -108,11 +102,11 @@ init() {
     fi
 
     local from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000
+    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
 
     from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000
-    chain33_BlockWait 1
+    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 function run_test() {

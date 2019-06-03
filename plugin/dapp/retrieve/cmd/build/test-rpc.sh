@@ -4,12 +4,6 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-CASE_ERR=""
-
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 source ../dapp-test-common.sh
 
@@ -26,10 +20,10 @@ retrieve_Backup() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
+    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
     echo "========== # retrieve backup end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 retrieve_Prepare() {
@@ -45,10 +39,10 @@ retrieve_Prepare() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
+    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
     echo "========== # retrieve prepare end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 retrieve_Perform() {
@@ -64,10 +58,10 @@ retrieve_Perform() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
+    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
     echo "========== # retrieve perform end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 retrieve_Cancel() {
@@ -83,10 +77,10 @@ retrieve_Cancel() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
+    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
     echo "========== # retrieve cancel end =========="
 
-    chain33_BlockWait 1
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 retrieve_QueryResult() {
@@ -113,11 +107,11 @@ init() {
     fi
 
     local from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    chain33_SendToAddress "$from" "$retrieve_addr" 1000000000
+    chain33_SendToAddress "$from" "$retrieve_addr" 1000000000 ${MAIN_HTTP}
 
     from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-    chain33_SendToAddress "$from" "$retrieve_addr" 1000000000
-    chain33_BlockWait 1
+    chain33_SendToAddress "$from" "$retrieve_addr" 1000000000 ${MAIN_HTTP}
+    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 function run_test() {
