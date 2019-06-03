@@ -125,7 +125,6 @@ func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt
 
 	len := len(receipt.KV)
 
-
 	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[len-1].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
@@ -179,8 +178,7 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 	suite.NotNil(receipt)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 
-
-	suite.T().Log("checkVoteDoneReceipt","kvlen",len(receipt.KV))
+	suite.T().Log("checkVoteDoneReceipt", "kvlen", len(receipt.KV))
 
 	_, arry, err := getParacrossNodes(suite.stateDB, Title)
 	suite.Suite.Nil(err)
@@ -192,10 +190,10 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 }
 
 func voteTest(suite *NodeManageTestSuite, id string, join bool) {
-	var count int=1
+	var count int = 1
 	config := &pt.ParaNodeAddrConfig{
 		Op:    pt.ParaNodeVote,
-		Id:  	id,
+		Id:    id,
 		Value: pt.ParaNodeVoteYes,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
@@ -209,7 +207,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	checkVoteReceipt(suite, receipt, count)
 	count++
 
-	if !join{
+	if !join {
 		receipt = nodeCommit(suite, PrivKey14K, tx)
 		checkVoteReceipt(suite, receipt, count)
 		count++
@@ -230,14 +228,14 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig),receipt.Logs[0].Ty)
+	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
 		Id: g.Current.Id,
-		Op:    pt.ParacrossNodeGroupQuit,
+		Op: pt.ParacrossNodeGroupQuit,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -260,15 +258,14 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig),receipt.Logs[0].Ty)
+	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
-
 	config = &pt.ParaNodeGroupConfig{
 		Id: g.Current.Id,
-		Op:    pt.ParacrossNodeGroupApprove,
+		Op: pt.ParacrossNodeGroupApprove,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -290,7 +287,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 	receipt := nodeCommit(suite, PrivKey14K, tx)
 	checkJoinReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeConfig),receipt.Logs[0].Ty)
+	suite.Equal(int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -300,7 +297,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeQuit,
+		Op: pt.ParaNodeQuit,
 		Id: g.Current.Id,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)

@@ -463,14 +463,14 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			if err != nil {
 				return nil, err
 			}
-			receipt = mergeReceipt(receipt,r)
+			receipt = mergeReceipt(receipt, r)
 			stat.Status = pt.ParacrossNodeQuited
 			if !types.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
 				}
-				receipt = mergeReceipt(receipt,r)
+				receipt = mergeReceipt(receipt, r)
 			}
 		}
 	} else {
@@ -480,29 +480,29 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeJoined
-			receipt = mergeReceipt(receipt,r)
+			receipt = mergeReceipt(receipt, r)
 		} else if stat.Status == pt.ParacrossNodeQuiting {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeQuited
-			receipt = mergeReceipt(receipt,r)
+			receipt = mergeReceipt(receipt, r)
 
 			if !types.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
 				}
-				receipt = mergeReceipt(receipt,r)
+				receipt = mergeReceipt(receipt, r)
 			}
 		}
 	}
 	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
-	receipt = mergeReceipt(receipt,r)
+	receipt = mergeReceipt(receipt, r)
 
 	receiptDone := makeVoteDoneReceipt(stat, len(nodes), len(stat.Votes.Addrs), most, pt.ParaNodeVoteStr[vote], stat.Status)
-	receipt = mergeReceipt(receipt,receiptDone)
+	receipt = mergeReceipt(receipt, receiptDone)
 	return receipt, nil
 
 }
