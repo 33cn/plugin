@@ -74,6 +74,7 @@ message ParaNodeIdStatus {
     int64  coinsFrozen          = 5;
     ParaNodeVoteDetail votes    = 6;
     string fromAddr             = 7;
+    int64  height               = 8;
 }
 
 
@@ -116,6 +117,7 @@ message ParaNodeGroupStatus {
     uint32 emptyBlockInterval   = 6;
     int64  mainHeight           = 7;
     string fromAddr             = 8;
+    int64  height               = 9;
 }
 
 message ReceiptParaNodeGroupConfig {
@@ -136,11 +138,11 @@ message ReqParacrossNodeInfo {
 }
 
 message RespParacrossNodeAddrs {
-    repeated ParaNodeIdStatus addrs = 1;
+    repeated ParaNodeIdStatus ids = 1;
 }
 
 message RespParacrossNodeGroups {
-    repeated ParaNodeGroupStatus addrs = 1;
+    repeated ParaNodeGroupStatus ids = 1;
 }
 
 message ParaBlock2MainMap {

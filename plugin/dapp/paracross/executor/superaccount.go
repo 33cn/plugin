@@ -236,7 +236,8 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			TargetAddr:  config.Addr,
 			FromAddr:    a.fromaddr,
 			Votes:       &pt.ParaNodeVoteDetail{},
-			CoinsFrozen: config.CoinsFrozen}
+			CoinsFrozen: config.CoinsFrozen,
+			Height:      a.height}
 		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
 		receipt.KV = append(receipt.KV, r.KV...)
 		receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -262,7 +263,8 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			TargetAddr:  config.Addr,
 			FromAddr:    a.fromaddr,
 			Votes:       &pt.ParaNodeVoteDetail{},
-			CoinsFrozen: config.CoinsFrozen}
+			CoinsFrozen: config.CoinsFrozen,
+			Height:      a.height}
 		r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 		receipt.KV = append(receipt.KV, r.KV...)
 		receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -304,6 +306,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		}
 
 		stat.Status = pt.ParacrossNodeQuiting
+		stat.Height = a.height
 		stat.Votes = &pt.ParaNodeVoteDetail{}
 		return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 	}
@@ -321,6 +324,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		}
 
 		stat.Status = pt.ParacrossNodeQuited
+		stat.Height = a.height
 		stat.Votes = &pt.ParaNodeVoteDetail{}
 		r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 		receipt.KV = append(receipt.KV, r.KV...)
@@ -465,6 +469,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 			stat.Status = pt.ParacrossNodeQuited
+			stat.Height = a.height
 			if !types.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
@@ -480,6 +485,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeJoined
+			stat.Height = a.height
 			receipt = mergeReceipt(receipt, r)
 		} else if stat.Status == pt.ParacrossNodeQuiting {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
@@ -487,6 +493,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			stat.Status = pt.ParacrossNodeQuited
+			stat.Height = a.height
 			receipt = mergeReceipt(receipt, r)
 
 			if !types.IsPara() {
@@ -666,7 +673,8 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		CoinsFrozen:        config.CoinsFrozen,
 		MainHeight:         a.exec.GetMainHeight(),
 		EmptyBlockInterval: config.EmptyBlockInterval,
-		FromAddr:           a.fromaddr}
+		FromAddr:           a.fromaddr,
+		Height:             a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -682,7 +690,8 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 		Title:              config.Title,
 		CoinsFrozen:        config.CoinsFrozen,
 		MainHeight:         a.exec.GetMainHeight(),
-		EmptyBlockInterval: config.EmptyBlockInterval}
+		EmptyBlockInterval: config.EmptyBlockInterval,
+		Height:             a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -721,6 +730,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 
 	copyStat := *status
 	status.Status = pt.ParacrossNodeGroupQuit
+	status.Height = a.height
 
 	r := makeNodeGroupIDReceipt(a.fromaddr, &copyStat, status)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -744,6 +754,7 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	copyModify := *modify
 	modify.Status = pt.ParacrossNodeGroupApprove
+	modify.Height = a.height
 
 	r := makeNodeGroupIDReceipt(a.fromaddr, &copyModify, modify)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -756,6 +767,7 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 	stat.CoinsFrozen = modify.CoinsFrozen
 	stat.EmptyBlockInterval = modify.EmptyBlockInterval
 	stat.MainHeight = a.exec.GetMainHeight()
+	stat.Height = a.height
 
 	r = makeParaNodeGroupStatusReceipt(config.Title, a.fromaddr, &copyStat, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -785,6 +797,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	copyStat := *apply
 	apply.Status = pt.ParacrossNodeGroupApprove
 	apply.MainHeight = a.exec.GetMainHeight()
+	apply.Height = a.height
 
 	r = makeNodeGroupIDReceipt(a.fromaddr, &copyStat, apply)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -850,7 +863,8 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) *types.Receipt 
 			TargetAddr:  addr,
 			Votes:       &pt.ParaNodeVoteDetail{Addrs: []string{a.fromaddr}, Votes: []string{"yes"}},
 			CoinsFrozen: status.CoinsFrozen,
-			FromAddr:    status.FromAddr}
+			FromAddr:    status.FromAddr,
+			Height:      a.height}
 
 		r := makeNodeConfigReceipt(a.fromaddr, nil, nil, stat)
 		receipt.KV = append(receipt.KV, r.KV...)
