@@ -271,8 +271,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return receipt, nil
 
 	}
-	clog.Error("nodeaccount.nodeJoin key exist", "addr", config.Addr, "status", stat)
-	return nil, pt.ErrParaNodeAddrExisted
+	return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s,status:%d", config.Addr,stat.Status)
 
 }
 
@@ -649,8 +648,7 @@ func (a *action) nodeGroupCoinsActive(createAddr string, configCoinsFrozen int64
 func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	addrs := getConfigAddrs(config.Addrs)
 	if len(addrs) == 0 {
-		clog.Error("node group apply addrs null", "addrs", config.Addrs)
-		return nil, types.ErrInvalidParam
+		return nil, errors.Wrapf(types.ErrInvalidParam, "node group apply addrs null:%s", config.Addrs)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -711,8 +709,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 
 	//approved or quited
 	if status.Status != pt.ParacrossNodeGroupApply {
-		clog.Error("node group apply not apply", "status", status.Status)
-		return nil, pt.ErrParaNodeGroupStatusWrong
+		return nil,  errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "node group apply not apply:%d", status.Status)
 	}
 
 	applyAddrs := strings.Split(status.TargetAddrs, ",")
@@ -747,8 +744,7 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 
 	//approve modify case
 	if modify.CoinsFrozen < config.CoinsFrozen {
-		clog.Error("nodeGroupApprove id not enough coins", "id.coins", modify.CoinsFrozen, "config.coins", config.CoinsFrozen)
-		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins modify:%d,config:%d", modify.CoinsFrozen,config.CoinsFrozen)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -784,8 +780,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	}
 
 	if apply.CoinsFrozen < config.CoinsFrozen {
-		clog.Error("nodeGroupApprove id not enough coins", "id.coins", apply.CoinsFrozen, "config.coins", config.CoinsFrozen)
-		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen,config.CoinsFrozen)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -814,8 +809,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	if !isSuperManager(a.fromaddr) {
-		clog.Error("node group approve not super manager", "addr", a.fromaddr)
-		return nil, types.ErrNotAllow
+		return nil,  errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
 	}
 
 	id, err := getNodeGroupID(a.db, config.Id)
@@ -835,8 +829,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 		return a.nodeGroupApproveApply(config, id)
 	}
 
-	clog.Error("nodeGroupApprove id wrong status", "status", id.Status, "id", config.Id)
-	return nil, pt.ErrParaNodeGroupStatusWrong
+	return nil, errors.Wrapf(pt.ErrParaNodeGroupStatusWrong, "nodeGroupApprove id wrong status:%d,id:%s", id.Status,config.Id)
 
 }
 
