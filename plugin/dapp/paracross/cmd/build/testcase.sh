@@ -203,7 +203,7 @@ function para_create_nodegroup_test() {
     txhash=$(${PARA_CLI} send para nodegroup -o 3 -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
-    newid=$(${PARA_CLI} para nodegroup_list -s 3 | jq -r ".addrs[0].id")
+    newid=$(${PARA_CLI} para nodegroup_list -s 3 | jq -r ".ids[0].id")
     if [ -z "$newid" ]; then
         ${PARA_CLI} para nodegroup_list -s 3
         echo "quit status error "
@@ -690,7 +690,7 @@ function para_nodemanage_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para node_list -t user.p.para. -s 3 | jq -r ".addrs[0].targetAddr")
+    status=$(${PARA_CLI} para node_list -t user.p.para. -s 3 | jq -r ".ids[0].targetAddr")
     if [ "${status}" != "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" ]; then
         echo "wrong join status"
         ${PARA_CLI} para node_list -t user.p.para. -s 3
@@ -807,7 +807,7 @@ function paracross() {
 
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
-        #        dapp_rpc_test "${3}"
+        # dapp_rpc_test "${3}"
 
     fi
 
