@@ -14,9 +14,11 @@ echo_rst() {
     elif [ "$2" -eq 2 ]; then
         echo -e "${GRE}$1 not support${NOC}"
         CASE_ERR="err"
+        echo $CASE_ERR
     else
         echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="err"
+        echo $CASE_ERR
     fi
 }
 
@@ -41,7 +43,7 @@ chain33_BlockWait() {
 
 chain33_QueryTx() {
     local MAIN_HTTP=$2
-    chain33_BlockWait 1 $MAIN_HTTP
+    chain33_BlockWait 1 "$MAIN_HTTP"
     local txhash="$1"
     local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
 
@@ -49,7 +51,7 @@ chain33_QueryTx() {
     while true; do
         ret=$(curl -ksd "{$req}" "${MAIN_HTTP}" | jq -r ".result.tx.hash")
         if [ "${ret}" != "${1}" ]; then
-            chain33_BlockWait 1 $MAIN_HTTP
+            chain33_BlockWait 1 "$MAIN_HTTP"
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "====query tx=$1 failed"
