@@ -110,9 +110,9 @@ func calcLocalNodeStatusPrefix(title string, status int32) []byte {
 	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-", title, status))
 }
 
-//func calcLocalNodeTitlePrefix(title string) []byte {
-//	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-", title))
-//}
+func calcLocalNodeTitlePrefix(title string) []byte {
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-", title))
+}
 
 func calcLocalNodeTitleDone(title, addr string) []byte {
 	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, addr))
@@ -126,6 +126,6 @@ func calcLocalNodeGroupStatusPrefix(status int32) []byte {
 	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-", status))
 }
 
-//func calcLocalNodeGroupAllPrefix() []byte {
-//	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
-//}
+func calcLocalNodeGroupAllPrefix() []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
+}

@@ -468,7 +468,7 @@ func addNodeBodyCmdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("title")
 
 	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
-	cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("id", "i", "", "id apply for super user")
 
 }
 
@@ -476,10 +476,12 @@ func nodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
 	addr, _ := cmd.Flags().GetString("addr")
+	id, _ := cmd.Flags().GetString("id")
 
 	params := pt.ReqParacrossNodeInfo{
 		Title: title,
 		Addr:  addr,
+		Id:    id,
 	}
 	var res pt.ParaNodeIdStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeStatus", params, &res)
