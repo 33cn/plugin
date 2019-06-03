@@ -125,3 +125,17 @@ chain33_SignRawTx() {
         echo "signedTx null error"
     fi
 }
+
+chain33_QueryBalance() {
+    local addr=$1
+    local MAIN_HTTP=$2
+    req='"method":"Chain33.GetAllExecBalance","params":[{"addr":"'"${addr}"'"}]'
+    #echo "#request: $req"
+    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    echo "$resp" | jq -r ".result"
+}
