@@ -17,6 +17,7 @@ guess_addr=""
 guess_exec=""
 
 eventId=""
+txhash=""
 
 #color
 RED='\033[1;31m'

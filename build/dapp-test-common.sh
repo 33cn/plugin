@@ -149,5 +149,4 @@ chain33_QueryExecBalance() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
 }
