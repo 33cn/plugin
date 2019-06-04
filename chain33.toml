@@ -216,6 +216,7 @@ superManager=[
 ]
 [exec.sub.paracross]
 nodeGroupFrozenCoins=0
-paraConsensusStopBlocks=100
+#平行链共识停止后主链等待的高度
+paraConsensusStopBlocks=30000
 
 

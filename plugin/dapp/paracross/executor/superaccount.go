@@ -383,7 +383,7 @@ func (a *action) superManagerVoteProc(title string) error {
 	consensHeight := data.(*pt.ParacrossStatus).Height
 	//如果group建立后一直没有共识，则从approve时候开始算
 	if consensHeight == -1 {
-		consensMainHeight = status.MainHeight
+		consensMainHeight = status.Height
 	} else {
 		stat, err := a.exec.paracrossGetStateTitleHeight(title, consensHeight)
 		if err != nil {
@@ -393,10 +393,9 @@ func (a *action) superManagerVoteProc(title string) error {
 		consensMainHeight = stat.(*pt.ParacrossHeightStatus).MainHeight
 	}
 	//return err to stop tx pass to para chain
-	if a.exec.GetMainHeight() <= consensMainHeight+confStopBlocks*int64(status.EmptyBlockInterval) {
-		clog.Error("superManagerVoteProc, super manager height not reach", "currHeight", a.exec.GetMainHeight(),
-			"consensHeight", consensHeight, "mainHeight", consensMainHeight, "confHeight", confStopBlocks, "interval", status.EmptyBlockInterval)
-		return pt.ErrParaConsensStopBlocksNotReach
+	if a.height <= consensMainHeight + confStopBlocks {
+		return errors.Wrapf(pt.ErrParaConsensStopBlocksNotReach,
+			"supermanager height not reach,current:%d less consens:%d plus confStopBlocks:%s", a.height,consensMainHeight,confStopBlocks)
 	}
 
 	return nil
