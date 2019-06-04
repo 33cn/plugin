@@ -450,9 +450,6 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		if !isNotFound(err) {
 			return nil, errors.Wrapf(err, "nodeAddr:%s get error", stat.TargetAddr)
 		}
-		if stat.Status != pt.ParacrossNodeJoined {
-			return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "nodeAddr:%s int get wrong status", stat.TargetAddr, stat.Status)
-		}
 		addrStat = &pt.ParaNodeAddrIdStatus{}
 		addrStat.Title = stat.Title
 		addrStat.Addr = stat.TargetAddr
@@ -463,14 +460,14 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 	}
 
 	preStat := *addrStat
-	if stat.Status == pt.ParacrossNodeJoined {
+	if stat.Status == pt.ParacrossNodeJoining {
 		addrStat.Status = pt.ParacrossNodeJoined
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
 	}
 
-	if stat.Status == pt.ParacrossNodeQuited {
+	if stat.Status == pt.ParacrossNodeQuiting {
 		proposalStat, err := getNodeID(a.db, addrStat.ProposalId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodeAddr:%s quiting wrong proposeid:%s", stat.TargetAddr, addrStat.ProposalId)
@@ -559,7 +556,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	if vote == pt.ParaNodeVoteNo {
 		if stat.Status == pt.ParacrossNodeJoining {
-			stat.Status = pt.ParacrossNodeCanceled
+			stat.Status = pt.ParacrossNodeClosed
 			stat.Height = a.height
 			//active coins
 			if !types.IsPara() {
@@ -570,7 +567,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				receipt = mergeReceipt(receipt, r)
 			}
 		} else if stat.Status == pt.ParacrossNodeQuiting {
-			stat.Status = pt.ParacrossNodeCanceled
+			stat.Status = pt.ParacrossNodeClosed
 			stat.Height = a.height
 		}
 
@@ -580,8 +577,6 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			if err != nil {
 				return nil, err
 			}
-			stat.Status = pt.ParacrossNodeJoined
-			stat.Height = a.height
 			receipt = mergeReceipt(receipt, r)
 
 			r, err = a.updateNodeAddrStatus(stat)
@@ -589,13 +584,14 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				return nil, err
 			}
 			receipt = mergeReceipt(receipt, r)
+
+			stat.Status = pt.ParacrossNodeClosed
+			stat.Height = a.height
 		} else if stat.Status == pt.ParacrossNodeQuiting {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
 			}
-			stat.Status = pt.ParacrossNodeQuited
-			stat.Height = a.height
 			receipt = mergeReceipt(receipt, r)
 
 			r, err = a.updateNodeAddrStatus(stat)
@@ -604,6 +600,8 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
+			stat.Status = pt.ParacrossNodeClosed
+			stat.Height = a.height
 		}
 	}
 	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
@@ -887,7 +885,10 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//create the node group
-	r := a.nodeGroupCreate(apply)
+	r,err := a.nodeGroupCreate(apply)
+	if err != nil{
+		return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title,apply.TargetAddrs)
+	}
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
@@ -935,7 +936,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 
 }
 
-func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) *types.Receipt {
+func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt,error) {
 	nodes := strings.Split(status.TargetAddrs, ",")
 
 	var item types.ConfigItem
@@ -953,7 +954,7 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) *types.Receipt 
 	for i, addr := range nodes {
 		stat := &pt.ParaNodeIdStatus{
 			Id:          status.Id + "-" + strconv.Itoa(i),
-			Status:      pt.ParacrossNodeJoined,
+			Status:      pt.ParacrossNodeClosed,
 			Title:       status.Title,
 			TargetAddr:  addr,
 			Votes:       &pt.ParaNodeVoteDetail{Addrs: []string{a.fromaddr}, Votes: []string{"yes"}},
@@ -962,10 +963,15 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) *types.Receipt 
 			Height:      a.height}
 
 		r := makeNodeConfigReceipt(a.fromaddr, nil, nil, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
+		receipt = mergeReceipt(receipt,r)
+
+		r,err :=a.updateNodeAddrStatus(stat)
+		if err != nil{
+			return nil, err
+		}
+		receipt = mergeReceipt(receipt,r)
 	}
-	return receipt
+	return receipt,nil
 }
 
 //NodeGroupConfig support super node group config

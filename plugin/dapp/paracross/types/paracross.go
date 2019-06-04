@@ -108,14 +108,20 @@ const (
 var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
 const (
-	// ParacrossNodeJoining apply for adding group
-	ParacrossNodeJoining = iota + 1
 	// ParacrossNodeJoined pass to add by votes
-	ParacrossNodeJoined
-	// ParacrossNodeQuiting apply for quiting
-	ParacrossNodeQuiting
+	ParacrossNodeJoined =iota + 10
 	// ParacrossNodeQuited pass to quite by votes
 	ParacrossNodeQuited
+)
+
+//voting status
+const (
+	// ParacrossNodeIDJoining apply for join group
+	ParacrossNodeJoining = iota
+	// ParacrossNodeIDQuiting apply for quiting group
+	ParacrossNodeQuiting
+	// ParacrossNodeIDClosed id voting closed
+	ParacrossNodeClosed
 	// ParacrossNodeCanceled to cancel apply of joining or quiting
 	ParacrossNodeCanceled
 )

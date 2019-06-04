@@ -104,6 +104,21 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 			set.KV = append(set.KV, &types.KeyValue{
 				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: types.Encode(g.Current)})
 		}
+		if log.Ty == pt.TyLogParaNodeConfig {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Prev.Status, g.Current.Id), Value: nil})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key:   calcLocalNodeTitleStatus(g.Current.Title, g.Current.Status, g.Current.Id),
+				Value: types.Encode(g.Current)})
+		}
 	}
 	return &set, nil
 }

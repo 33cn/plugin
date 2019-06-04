@@ -120,23 +120,18 @@ func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) 
 
 func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 11)
-	assert.Len(suite.T(), receipt.Logs, 7)
-
-	len := len(receipt.KV)
 
 	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[len-1].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
-	//suite.T().Log("ty len-1", receipt.Logs[lenLogs-1].Ty,"len",lenLogs)
-	assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupStatusUpdate), receipt.Logs[7-1].Ty)
+
 	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApprove), stat.Status)
 
 }
 
 func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 2)
+	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
 	var stat pt.ParaNodeIdStatus
@@ -151,7 +146,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 
 func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 2)
+	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
 	var stat pt.ParaNodeIdStatus
@@ -299,12 +294,16 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
 		Op: pt.ParaNodeQuit,
-		Id: g.Current.Id,
+		Addr: Account14K,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 	receipt = nodeCommit(suite, PrivKeyD, tx)
 	checkQuitReceipt(suite, receipt)
+
+	suite.Equal(int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
+	err = types.Decode(receipt.Logs[0].Log, &g)
+	suite.Nil(err)
 
 	//vote test
 	voteTest(suite, g.Current.Id, false)
