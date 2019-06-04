@@ -4,24 +4,9 @@ set +e
 set -o pipefail
 
 MAIN_HTTP=""
-CASE_ERR=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
-
-# base functions
-# $2=0 means true, other false
-function echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="err"
-    fi
-
-}
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
 
 gID=""
 gResp=""
@@ -59,67 +44,6 @@ chain33_GetAccounts() {
     echo "$resp"
 }
 
-function query_tx() {
-    block_wait 1
-    local txhash="$1"
-    local http="$2"
-    local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
-    echo "req=$req"
-    local times=10
-    while true; do
-        ret=$(curl -ksd "{$req}" "${http}" | jq -r ".result.tx.hash")
-        echo "====query tx= ${1}, return=$ret "
-        if [ "${ret}" != "${1}" ]; then
-            block_wait 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "====query tx=$1 failed"
-                echo "req=$req"
-                curl -ksd "{$req}" "${http}"
-                exit 1
-            fi
-        else
-            echo "====query tx=$1  success"
-            break
-        fi
-    done
-}
-
-function block_wait() {
-    if [ "$#" -lt 1 ]; then
-        echo "wrong block_wait params"
-        exit 1
-    fi
-    cur_height=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-chain33_SendToAddress() {
-    from=$1
-    to=$2
-    amount=$3
-    http=$4
-    note="test"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
-    ok=$(jq '(.error|not)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    txhash=$(jq -r ".result.hash" <<<"$resp")
-    echo "tx hash: $txhash"
-    query_tx "$txhash" "${http}"
-}
-
 chain33_SendTransaction() {
     rawTx=$1
     addr=$2
@@ -139,7 +63,7 @@ chain33_SendTransaction() {
     #返回交易
     gResp=$(jq -r ".result" <<<"$resp")
     echo "tx hash is $gResp"
-    query_tx "$gResp" "${MAIN_HTTP}"
+    chain33_QueryTx "$gResp" "${MAIN_HTTP}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
