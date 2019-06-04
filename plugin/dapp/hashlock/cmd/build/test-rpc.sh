@@ -4,14 +4,13 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-GAME_ID=""
 
 addr_A=1PUiGcbsccfxW3zuvHXZBJfznziph5miAo
 addr_B=1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
 
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
-set -x
+
 hashlock_lock() {
 
     local secret=$1
@@ -26,7 +25,7 @@ hashlock_lock() {
     echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
-    echo "txHash ${txhash}"
+    #echo "txHash ${txhash}"
     echo "========== # hashlock lock tx end =========="
 
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -46,7 +45,7 @@ hashlock_send() {
     echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
-    echo "txHash ${txhash}"
+    #echo "txHash ${txhash}"
     echo "========== # hashlock send tx end =========="
 
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -65,7 +64,7 @@ hashlock_unlock() {
     echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
-    echo "txHash ${txhash}"
+    #echo "txHash ${txhash}"
     echo "========== # hashlock unlock tx end =========="
 
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -123,4 +122,3 @@ function main() {
 }
 
 main "$1"
-set +x
