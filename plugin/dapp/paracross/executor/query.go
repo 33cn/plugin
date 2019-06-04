@@ -75,7 +75,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(calcParaNodeGroupKey(in.GetTitle()))
+	reply.Key = string(calcParaNodeGroupAddrsKey(in.GetTitle()))
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
@@ -85,7 +85,24 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
-	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
+	addrStat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := getNodeID(p.GetStateDB(), addrStat.ProposalId)
+	if err != nil {
+		return nil, err
+	}
+	return stat, nil
+}
+
+//Query_GetNodeIdInfo get specific node addr info
+func (p *Paracross) Query_GetNodeIdInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" || in.Id == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	stat, err := getNodeID(p.GetStateDB(), in.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +131,7 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 
 //Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Status == 0 {
+	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
 	return listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
@@ -212,7 +229,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			MostSameCommit: st.MostSameCommit,
 			Title:          st.Title,
 			Height:         st.Height,
-			StateHash:      hex.EncodeToString(st.StateHash),
+			StateHash:      common.ToHex(st.StateHash),
 			TxCounts:       st.TxCounts,
 			TxResult:       hex.EncodeToString(st.TxResult),
 		}
@@ -230,12 +247,12 @@ func listNodeStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 
 	var resp pt.RespParacrossNodeAddrs
 	for _, r := range res {
-		var st pt.ParaNodeAddrStatus
+		var st pt.ParaNodeIdStatus
 		err = types.Decode(r, &st)
 		if err != nil {
 			panic(err)
 		}
-		resp.Addrs = append(resp.Addrs, &st)
+		resp.Ids = append(resp.Ids, &st)
 	}
 	return &resp, nil
 }
@@ -253,19 +270,31 @@ func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 		if err != nil {
 			panic(err)
 		}
-		resp.Addrs = append(resp.Addrs, &st)
+		resp.Ids = append(resp.Ids, &st)
 	}
 	return &resp, nil
 }
 
 //按状态遍历
 func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
-	prefix := calcLocalNodeStatusPrefix(title, status)
+	var prefix []byte
+	if status == 0 {
+		prefix = calcLocalNodeTitlePrefix(title)
+	} else {
+		prefix = calcLocalNodeStatusPrefix(title, status)
+	}
+
 	return listNodeStatus(db, prefix)
 }
 
 func listLocalNodeGroupStatus(db dbm.KVDB, status int32) (types.Message, error) {
-	prefix := calcLocalNodeGroupStatusPrefix(status)
+	var prefix []byte
+	if status == 0 {
+		prefix = calcLocalNodeGroupAllPrefix()
+	} else {
+		prefix = calcLocalNodeGroupStatusPrefix(status)
+	}
+
 	return listNodeGroupStatus(db, prefix)
 }
 
@@ -287,7 +316,7 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 		MostSameCommit: st.MostSameCommit,
 		Title:          st.Title,
 		Height:         st.Height,
-		StateHash:      hex.EncodeToString(st.StateHash),
+		StateHash:      common.ToHex(st.StateHash),
 		TxCounts:       st.TxCounts,
 		TxResult:       hex.EncodeToString(st.TxResult),
 	}, nil

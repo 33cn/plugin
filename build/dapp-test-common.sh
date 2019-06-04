@@ -106,7 +106,7 @@ chain33_ImportPrivkey() {
 
     local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"'"$label"'"}]'
     resp=$(curl -ksd "{$req}" "$MAIN_HTTP")
-    ok=$(jq '(.error|not) and (.result.label=="'"$label"'") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
+    ok=$(jq '(((.error|not) and (.result.label=="'"$label"'") and (.result.acc.addr == "'"$acc"'")) or (.error=="ErrPrivkeyExist"))' <<<"$resp")
 
     [ "$ok" == true ]
 }
@@ -126,8 +126,32 @@ chain33_SignRawTx() {
     fi
 }
 
+chain33_QueryBalance() {
+    local addr=$1
+    local MAIN_HTTP=$2
+    req='"method":"Chain33.GetAllExecBalance","params":[{"addr":"'"${addr}"'"}]'
+    #echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+
+    echo "$resp" | jq -r ".result"
+}
+
+chain33_QueryExecBalance() {
+    local addr=$1
+    local exec=$2
+    local MAIN_HTTP=$3
+
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"${addr}"'"], "execer" : "'"${exec}"'"}]}'
+    resp=$(curl -ksd "$req" "${MAIN_HTTP}")
+    echo "#response: $resp"
+    ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
+    [ "$ok" == true ]
+}
+
 chain33_GetAccounts() {
     resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetAccounts","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     echo "$resp"
 }
-

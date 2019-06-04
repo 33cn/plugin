@@ -67,11 +67,11 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 			}
 			if g.Prev != nil {
 				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Prev.Status), Value: nil})
+					Key: calcLocalNodeTitleStatus(g.Current.Title, g.Prev.Status, g.Current.Id), Value: nil})
 			}
 
 			set.KV = append(set.KV, &types.KeyValue{
-				Key:   calcLocalNodeTitleStatus(g.Current.Title, g.Current.ApplyAddr, g.Current.Status),
+				Key:   calcLocalNodeTitleStatus(g.Current.Title, g.Current.Status, g.Current.Id),
 				Value: types.Encode(g.Current)})
 		} else if log.Ty == pt.TyLogParaNodeVoteDone {
 			var g pt.ReceiptParaNodeVoteDone
@@ -90,8 +90,7 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
-		if log.Ty == pt.TyLogParaNodeGroupApply || log.Ty == pt.TyLogParaNodeGroupApprove ||
-			log.Ty == pt.TyLogParaNodeGroupQuit {
+		if log.Ty == pt.TyLogParaNodeGroupConfig {
 			var g pt.ReceiptParaNodeGroupConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
@@ -99,11 +98,11 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 			}
 			if g.Prev != nil {
 				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title), Value: nil})
+					Key: calcLocalNodeGroupStatusTitle(g.Prev.Status, g.Current.Title, g.Current.Id), Value: nil})
 			}
 
 			set.KV = append(set.KV, &types.KeyValue{
-				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title), Value: types.Encode(g.Current)})
+				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: types.Encode(g.Current)})
 		}
 	}
 	return &set, nil

@@ -4,31 +4,20 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-CASE_ERR=""
 GAME_ID=""
 PASSWD="ABCD"
 HASH_VALUE=$(echo -n "ABCD1" | sha256sum | awk '{print $1}')
-signedTx=""
-txHash=""
-ACCOUNT_A="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-# PRIVA_A="cc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
-ACCOUNT_B="19MJmA7GcE1NfMwdGqgLJioBjVbzQnVYvR"
-PRIVA_B="5072a3b6ed612845a7c00b88b38e4564093f57ce652212d6e26da9fded83e951"
+
+ACCOUNT_A="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+PRIVA_A="56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
+
+ACCOUNT_B="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+PRIVA_B="2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
+
 EXECTOR=""
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
-function echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="FAIL"
-    fi
-
-}
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
 
 function chain33_GetExecAddr() {
     #获取GAME合约地址
@@ -44,41 +33,36 @@ function chain33_GetExecAddr() {
 function CreateGameTx() {
     local amount=$1
     local hash_value=$2
-    local addr=$3
     local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"createGame", "payload":{"amount": '"${amount}"',"hashType":"sha256","hashValue":"'"${hash_value}"'"}}]'
     echo "#request: $req"
+
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
         echo_rst "CreateGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
-    echo_rst "CreateGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "CreateGame sendSignedTx" "$?"
-    GAME_ID="${txHash}"
-    # create_txHash="${txHash}"
-    query_tx "${txHash}"
+
+    chain33_SignRawTx "${rawTx}" "${PRIVA_A}" "${MAIN_HTTP}"
+    GAME_ID=$RAW_TX_HASH
+
     echo_rst "CreateGame query_tx" "$?"
 }
 
 function MatchGameTx() {
     local gameId=$1
     local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"matchGame", "payload":{"gameId": "'"${gameId}"'","guess":2}}]'
+
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
+
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
         echo_rst "MatchGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_B}"
-    echo_rst "MatchGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "MatchGame sendSignedTx" "$?"
-    # match_txHash="${txHash}"
-    query_tx "${txHash}"
+
+    chain33_SignRawTx "${rawTx}" "${PRIVA_B}" "${MAIN_HTTP}"
     echo_rst "MatchGame query_tx" "$?"
 }
 
@@ -86,37 +70,34 @@ function CloseGameTx() {
     local gameId=$1
     local secret=$2
     local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]'
+
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
+
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
         echo_rst "CloseGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
-    echo_rst "CloseGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "CloseGame sendSignedTx" "$?"
-    query_tx "${txHash}"
+
+    chain33_SignRawTx "${rawTx}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CloseGame query_tx" "$?"
 }
 
 function CancleGameTx() {
     local gameId=$1
     local req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]'
+
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
+
     rawTx=$(echo "${resp}" | jq -r ".result")
     if [ "$rawTx" == "null" ]; then
         echo_rst "CancleGame createRawTx" 1
     fi
-    signRawTx "${rawTx}" "${ACCOUNT_A}"
-    echo_rst "CancleGame signRawTx" "$?"
-    sendSignedTx
-    echo_rst "CancleGame sendSignedTx" "$?"
-    # close_txHash="${txHash}"
-    query_tx "${txHash}"
+
+    chain33_SignRawTx "${rawTx}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CancleGame query_tx" "$?"
 }
 
@@ -147,118 +128,12 @@ function QueryGameByGameId() {
     echo_rst "QueryGameByGameId" 0
 }
 
-function chain33_ImportPrivkey() {
-    local pri=$2
-    #local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"gameB"}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$1")
-    echo "#response: $resp"
-    # ok=$(jq '(.error|not) and (.result.label=="gameB") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    # [ "$ok" == true ]
-    # echo_rst "$FUNCNAME" "$?"
-}
-
-function Chain33_SendToAddress() {
-    from=$1
-    to=$2
-    amount=$3
-    http=$4
-    note="test"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
-    ok=$(jq '(.error|not)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
-function chain33_unlock() {
-    ok=$(curl -k -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
-function block_wait() {
-    local req='"method":"Chain33.GetLastHeader","params":[]'
-    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function signRawTx() {
-    unsignedTx=$1
-    addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"${addr}"'","txHex":"'"${unsignedTx}"'","expire":"120s","fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$signedTx" == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$txHash" == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-function query_tx() {
-    block_wait 1
-    txhash="$1"
-    # echo "req=$req"
-    local times=10
-    while true; do
-        req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
-        ret=$(curl -ksd "$req" ${MAIN_HTTP})
-        tx=$(jq -r ".result.tx.hash" <<<"$ret")
-        echo "====query tx= ${1}, return=$ret "
-        if [ "${tx}" != "${1}" ]; then
-            block_wait 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "====query tx=$1 failed"
-                echo "req=$req"
-                curl -ksd "$req" ${MAIN_HTTP}
-                exit 1
-            fi
-        else
-            exec_err=$(jq '(.result.receipt.logs[0].tyName == "LogErr")' <<<"$ret")
-            [ "$exec_err" != true ]
-            echo "====query tx=$1  success"
-            break
-        fi
-    done
-}
-
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
-    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-
-    chain33_ImportPrivkey "${MAIN_HTTP}" "${PRIVA_B}" "${ACCOUNT_B}"
 
     local game_addr=""
     if [ "$ispara" == "true" ]; then
-        #主链中相应账户需要转帐
-        M_HTTP=${MAIN_HTTP//8901/8801}
-
-        Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000 "${M_HTTP}"
-
-        block_wait 1
-
         EXECTOR="user.p.para.game"
         game_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.game"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
@@ -267,11 +142,11 @@ function init() {
     fi
     echo "gameAddr=${game_addr}"
 
-    Chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000 "${MAIN_HTTP}"
 
-    Chain33_SendToAddress "${ACCOUNT_A}" "$game_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${ACCOUNT_A}" "$game_addr" 5000000000 "${MAIN_HTTP}"
 
-    block_wait 1
+    chain33_BlockWait 1 "$MAIN_HTTP"
 }
 
 function run_test() {
@@ -311,12 +186,7 @@ function main() {
     echo "=========== # game rpc test ============="
     echo "main_ip=$MAIN_HTTP"
 
-    Chain33_SendToAddress "${ACCOUNT_A}" "${ACCOUNT_B}" 20000000000 "${MAIN_HTTP}"
-
-    block_wait 1
-
     init
-
     run_test "$MAIN_HTTP"
 
     if [ -n "$CASE_ERR" ]; then
