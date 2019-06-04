@@ -251,12 +251,12 @@ func CreateRawNodeManageCmd() *cobra.Command {
 }
 
 func addNodeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:join,2:vote,3:quit")
+	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:join,2:vote,3:quit,4:cancel")
 	cmd.MarkFlagRequired("operation")
 
-	cmd.Flags().StringP("addr", "a", "", "operating target addr")
+	cmd.Flags().StringP("addr", "a", "", "operating target addr[optional]")
 
-	cmd.Flags().StringP("id", "i", "", "operating target id")
+	cmd.Flags().StringP("id", "i", "", "operating target id[optional]")
 
 	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
 	cmd.Flags().Float64P("coins_frozen", "c", 0, "frozen coins amount, should not less nodegroup's")
