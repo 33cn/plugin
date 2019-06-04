@@ -125,3 +125,9 @@ chain33_SignRawTx() {
         echo "signedTx null error"
     fi
 }
+
+chain33_GetAccounts() {
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetAccounts","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    echo "$resp"
+}
+
