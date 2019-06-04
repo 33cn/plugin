@@ -123,7 +123,6 @@ guess_QueryGameByID() {
     echo "========== # guess QueryGameByID end =========="
 }
 
-
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
@@ -145,7 +144,6 @@ init() {
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
-
 
 function run_test() {
 
@@ -172,7 +170,6 @@ function run_test() {
 
     #查询游戏状态
     guess_QueryGameByID "$eventId" 12
-
 
     #用户2下注
     guess_game_bet "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "B"
