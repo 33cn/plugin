@@ -16,7 +16,7 @@ func (p *Pos33) ExecDelLocal_Deposit(act *pt.Pos33DepositAction, tx *types.Trans
 
 // ExecDelLocal_Withdraw for rollback withdraw
 func (p *Pos33) ExecDelLocal_Withdraw(act *pt.Pos33WithdrawAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return p.deposit(-int(act.W), tx)
+	return p.deposit(int(act.W), tx)
 }
 
 // ExecDelLocal_Delegate for rollback delegate

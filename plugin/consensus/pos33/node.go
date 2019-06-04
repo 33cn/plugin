@@ -2,12 +2,11 @@ package pos33
 
 import (
 	"encoding/hex"
-	"math/big"
+	"errors"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
@@ -119,6 +118,10 @@ func (n *node) genRewordTx() (*types.Transaction, int, error) {
 		strHash := string(n.lastBlock.Hash())
 		vs = n.cvs[height][strHash]
 	}
+	vsw := vsWeight(vs)
+	if height > 0 && vsw*3 < pt.Pos33VerifierSize*2 {
+		return nil, 0, errors.New("not enough votes")
+	}
 	data, err := proto.Marshal(&pt.Pos33Action{
 		Value: &pt.Pos33Action_Reword{
 			Reword: &pt.Pos33RewordAction{
@@ -166,27 +169,36 @@ func vsWeight(vs []*pt.Pos33VoteMsg) int {
 	return w
 }
 
+func diff(w int) uint32 {
+	return types.GetP(0).PowLimitBits
+	/*
+		oldDiff := difficulty.CompactToBig(types.GetP(0).PowLimitBits)
+		newDiff := new(big.Int).Sub(oldDiff, big.NewInt(int64(w+1)))
+		return difficulty.BigToCompact(newDiff)
+	*/
+}
+
 func (n *node) makeBlock(null bool) (*types.Block, error) {
 	var txs []*types.Transaction
-	diff := 0
+	dif := 0
+	height := n.lastBlock.Height + 1
 	if !null {
 		tx, w, err := n.genRewordTx()
 		if err != nil {
-			panic(err)
+			plog.Error("genRewordTx error", "err", err.Error(), "height", height)
+			return nil, err
 		}
 		tx.Sign(types.ED25519, n.priv)
 		txs = append(txs, tx)
-		diff = w // diff = votes weights
+		dif = w // diff = votes weights
 	}
-	height := n.lastBlock.Height + 1
 	nb, err := n.newBlock(txs, height, null)
 	if err != nil {
 		plog.Error("makeBlock error", "height", height, "error", err.Error())
 		return nil, err
 	}
-	oldDiff := difficulty.CompactToBig(types.GetP(0).PowLimitBits)
-	newDiff := new(big.Int).Sub(oldDiff, big.NewInt(int64(diff+1)))
-	nb.Difficulty += difficulty.BigToCompact(newDiff)
+
+	nb.Difficulty = diff(dif)
 
 	if null {
 		nb.MainHash = crypto.Sha256(n.lastBlock.MainHash)
@@ -256,12 +268,49 @@ func (n *node) handleBlock(b *types.Block) {
 	n.cbs[b.Height][strHash] = b
 }
 
-func (n *node) checkBlock(b *types.Block) error {
-	if b.Height == 0 {
+func (n *node) checkBlock(b, pb *types.Block) error {
+	plog.Info("node.checkBlock", "height", b.Height)
+	if b.Height < 2 {
+		return nil
+	}
+	if !n.IsCaughtUp() {
+		return nil
+	}
+	if len(b.Txs) == 0 {
 		return nil
 	}
 
-	plog.Info("node.checkBlock", "height", b.Height)
+	act, err := getBlockReword(b)
+	if err != nil {
+		return err
+	}
+
+	// check votes
+	for _, v := range act.Votes {
+		m := v.Elect
+		a := addr(m.Sig)
+		allw := n.allWeight(m.Height)
+		w := n.getWeight(a, m.Height)
+		err = pt.CheckRands(a, allw, w, m.Rands, m.Height, m.Seed, m.Sig, int(m.Step))
+		if err != nil {
+			return err
+		}
+	}
+
+	// check diff
+	vws := vsWeight(act.Votes)
+	if vws*3 < pt.Pos33VerifierSize*2 {
+		err = errors.New("block votersize error")
+		plog.Error(err.Error(), "height", b.Height, "len(votes)", vws)
+		return err
+	}
+	/*
+		if diff(vws) != b.Difficulty {
+			err = errors.New("block difficulty error")
+			plog.Error(err.Error(), "height", b.Height)
+			return err
+		}
+	*/
 
 	return nil
 }
@@ -305,17 +354,10 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 		return
 	}
 
-	/*
-		_, ok := n.ivs[m.Height]
-		if !ok {
-			return
-		}
-	*/
-
 	a := addr(m.Sig)
 	allw := n.allWeight(m.Height)
 	w := n.getWeight(a, m.Height)
-	plog.Info("handleVoteMsg", "height", m.Height, "voter", a, "weight", len(m.Rands.Rands))
+	plog.Info("handleVoteMsg", "height", m.Height, "voter", a, "weight", len(m.Rands.Rands), "bhash", hexs(vm.BlockHash))
 
 	err := pt.CheckRands(a, allw, w, m.Rands, m.Height, m.Seed, m.Sig, int(m.Step))
 	if err != nil {
@@ -334,7 +376,7 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 		if !ok {
 			return
 		}
-		plog.Info("@@@ set block 2f+1 @@@", "height", m.Height, "bp", addr(b.Signature))
+		plog.Info("@@@ set block 2f+1 @@@", "height", m.Height, "bp", addr(b.Signature), "hash", hexs(vm.BlockHash))
 		n.setBlock(b)
 	}
 }
@@ -475,7 +517,7 @@ func (n *node) runLoop() {
 	if lb.Height == 0 {
 		n.firstSortition(lb)
 	}
-	time.AfterFunc(time.Second, func() { n.addBlock(lb) })
+	//time.AfterFunc(time.Second, func() { n.addBlock(lb) })
 
 	for {
 		select {

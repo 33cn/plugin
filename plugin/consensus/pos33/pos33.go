@@ -123,7 +123,7 @@ func (client *Client) newBlock(txs []*types.Transaction, height int64, null bool
 
 	bt := time.Now().Unix()
 	if null {
-		bt = lastBlock.BlockTime + 4
+		bt = lastBlock.BlockTime + 5
 	}
 	return &types.Block{
 		ParentHash: lastBlock.Hash(),
@@ -136,7 +136,7 @@ func (client *Client) newBlock(txs []*types.Transaction, height int64, null bool
 
 // CheckBlock check block callback
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
-	return client.n.checkBlock(current.Block)
+	return client.n.checkBlock(current.Block, parent)
 }
 
 func (client *Client) allWeight(height int64) int {
@@ -208,8 +208,8 @@ func (client *Client) CreateBlock() {
 
 // CreateGenesisTx used generate the first txs
 func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
-	// the 1st tx for issue YCC
-	act0 := &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: 1e8 * types.Coin * 3}}
+	// the 1st tx for issue 10,000,000,000 YCC
+	act0 := &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: 1e8 * types.Coin * 100}}
 	tx := &types.Transaction{
 		Execer:  []byte("coins"),
 		To:      RootAddr,
@@ -248,12 +248,6 @@ func (client *Client) setBlock(b *types.Block) error {
 }
 
 func getBlockReword(b *types.Block) (*pt.Pos33RewordAction, error) {
-	if b == nil {
-		panic("can't go here0")
-	}
-	if len(b.Txs) == 0 {
-		panic("can't go here1")
-	}
 	tx := b.Txs[0]
 	var pact pt.Pos33Action
 	err := types.Decode(tx.Payload, &pact)
