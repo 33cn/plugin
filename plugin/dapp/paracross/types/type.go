@@ -64,9 +64,9 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaNodeConfig:        {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
 		TyLogParaNodeGroupUpdate:   {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupUpdate"},
 		TyLogParaNodeVoteDone:      {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
-		TyLogParaNodeGroupApply:    {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApply"},
-		TyLogParaNodeGroupApprove:  {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupApprove"},
-		TyLogParaNodeGroupQuit:     {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeGroupQuit"},
+		TyLogParaNodeGroupApply:    {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupApply"},
+		TyLogParaNodeGroupApprove:  {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupApprove"},
+		TyLogParaNodeGroupQuit:     {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupQuit"},
 	}
 }
 
@@ -126,7 +126,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawNodeConfigTx(&param)
-	} else if action == "NodeGroupApply" {
+	} else if action == "NodeGroupConfig" {
 		if !types.IsPara() {
 			return nil, types.ErrNotSupport
 		}

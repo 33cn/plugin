@@ -77,8 +77,18 @@ func TestChannelClient_GetTitleHeight(t *testing.T) {
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &pt.ReqParacrossTitleHeight{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
+	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
 	_, err := client.GetTitleHeight(context.Background(), req)
+	assert.Nil(t, err)
+}
+
+func TestChannelClient_GetTitleDoneHeight(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	client := newGrpc(api)
+	client.Init("paracross", nil, nil, nil)
+	req := &pt.ReqParacrossTitleHeight{}
+	api.On("Query", pt.GetExecName(), "GetDoneTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
+	_, err := client.GetDoneTitleHeight(context.Background(), req)
 	assert.Nil(t, err)
 }
 
@@ -87,7 +97,7 @@ func TestJrpc_GetTitleHeight(t *testing.T) {
 	j := newJrpc(api)
 	req := &pt.ReqParacrossTitleHeight{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
+	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
 	err := j.GetTitleHeight(req, &result)
 	assert.Nil(t, err)
 }

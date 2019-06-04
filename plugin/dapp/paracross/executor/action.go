@@ -225,13 +225,9 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 }
 
 func getDappForkHeight(fork string) int64 {
-	paraConfigFork := ""
-	if fork == pt.ForkCommitTx {
-		paraConfigFork = "MainForkParacrossCommitTx"
-	}
 	var forkHeight int64
 	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt(paraConfigFork)
+		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
@@ -348,6 +344,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		if a.exec.GetMainHeight() >= getDappForkHeight(pt.ForkCommitTx) {
 			stat.MainHeight = commit.Status.MainBlockHeight
+			stat.MainHash = commit.Status.MainBlockHash
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
 	} else {
@@ -388,8 +385,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 	//add commit done receipt
 	receiptDone := makeDoneReceipt(a.fromaddr, commit, stat, int32(most), int32(commitCount), int32(len(nodes)))
-	receipt.KV = append(receipt.KV, receiptDone.KV...)
-	receipt.Logs = append(receipt.Logs, receiptDone.Logs...)
+	receipt = mergeReceipt(receipt, receiptDone)
 
 	//平行连进行奖励分配，考虑可能的失败，需要在保存共识高度等数据之前处理
 	if types.IsPara() {
