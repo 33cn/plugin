@@ -170,7 +170,7 @@ function run_testcases() {
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
-    chain33_GetAccounts
+    chain33_GetAccounts "${MAIN_HTTP}"
 
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
