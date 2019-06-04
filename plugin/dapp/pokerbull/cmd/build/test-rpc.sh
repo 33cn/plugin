@@ -78,7 +78,11 @@ pokerbull_QueryResult() {
     echo "========== # pokerbull query result begin =========="
     local req='"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]'
     data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+<<<<<<< HEAD
     ok=$(jq '(.game.gameId == "'"$GAME_ID"'")' <<<"$data")
+=======
+    ok=$(jq '(.game.gameId == '"$GAME_ID"')' <<<"$data")
+>>>>>>> master
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"

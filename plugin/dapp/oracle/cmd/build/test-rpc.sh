@@ -2,36 +2,23 @@
 # shellcheck disable=SC2128
 
 MAIN_HTTP=""
-CASE_ERR=""
 oracle_addPublisher_unsignedTx="0a066d616e61676512410a3f0a146f7261636c652d7075626c6973682d6576656e741222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630e6b685d696ee9394163a223151344e687572654a784b4e4266373164323642394a336642516f5163666d657a32"
 oracle_addPublisher_unsignedTx_para="0a12757365722e702e706172612e6d616e61676512410a3f0a146f7261636c652d7075626c6973682d6576656e741222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630a186de8894c9aa864d3a22314469484633317577783977356a6a733571514269474a6b4e686e71656564763157"
-oracle_publisher_addr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+oracle_publisher_key="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 eventId=""
 txhash=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
-
-# $2=0 means true, other false
-echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="err"
-    fi
-}
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
 
 oracle_AddPublisher() {
     echo "=============== # Add publisher ==============="
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ispara=$ispara"
     if [ "$ispara" == true ]; then
-        signAndSendRawTx "${oracle_addPublisher_unsignedTx_para}" "${oracle_publisher_addr}"
+        chain33_SignRawTx "${oracle_addPublisher_unsignedTx_para}" "${oracle_publisher_key}" "${MAIN_HTTP}"
     else
-        signAndSendRawTx "${oracle_addPublisher_unsignedTx}" "${oracle_publisher_addr}"
+        chain33_SignRawTx "${oracle_addPublisher_unsignedTx}" "${oracle_publisher_key}" "${MAIN_HTTP}"
     fi
 }
 
@@ -44,7 +31,7 @@ oracle_publish_transaction() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
     eventId="${txhash}"
     echo "eventId $eventId"
 }
@@ -59,7 +46,7 @@ oracle_prePublishResult_transaction() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_eventAbort_transaction() {
@@ -72,7 +59,7 @@ oracle_eventAbort_transaction() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_resultAbort_transaction() {
@@ -85,7 +72,7 @@ oracle_resultAbort_transaction() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
+    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_publishResult_transaction() {
@@ -98,32 +85,7 @@ oracle_publishResult_transaction() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signAndSendRawTx "$rawtx" "${oracle_publisher_addr}"
-}
-
-# 签名并发送
-signAndSendRawTx() {
-    unsignedTx=$1
-    addr=$2
-    req='"method":"Chain33.SignRawTx","params":[{"addr":"'${addr}'","txHex":"'${unsignedTx}'","expire":"120s"}]'
-    signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
-    if [ "$signedTx" == "null" ]; then
-        echo "An error occurred while signing"
-    else
-        sendSignedTx "$signedTx"
-    fi
-}
-
-sendSignedTx() {
-    signedTx=$1
-    local req='"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"$signedTx"'"}]'
-    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    #echo_rst "$FUNCNAME" "$rst"
-    txhash=$(echo "${resp}" | jq -r ".result")
-    echo "tx hash is $txhash"
+    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_QueryOraclesByID() {
@@ -138,47 +100,6 @@ oracle_QueryOraclesByID() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-function block_wait() {
-    local req='"method":"Chain33.GetLastHeader","params":[]'
-    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function queryTransaction() {
-    block_wait 1
-    local txhash="$1"
-    local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
-    local times=10
-    while true; do
-        ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
-        if [ "${ret}" != "${1}" ]; then
-            block_wait 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "====query tx=$1 failed"
-                echo "req=$req"
-                curl -ksd "{$req}" ${MAIN_HTTP}
-                return 1
-                exit 1
-            fi
-        else
-            echo "====query tx=$1  success"
-            return 0
-            break
-        fi
-    done
-}
-
 function run_test() {
     # 增加发布人
     oracle_AddPublisher
@@ -189,7 +110,7 @@ function run_test() {
     # 事件正式发布
     oracle_publishResult_transaction "$eventId"
     # 根据ID查询事件
-    block_wait 2
+    chain33_BlockWait 2 "${MAIN_HTTP}"
     oracle_QueryOraclesByID "$eventId"
 
     # 生成发布事件的交易
@@ -197,7 +118,7 @@ function run_test() {
     # 取消事件发布
     oracle_eventAbort_transaction "$eventId"
     # 根据ID查询事件
-    block_wait 2
+    chain33_BlockWait 2 "${MAIN_HTTP}"
     oracle_QueryOraclesByID "$eventId"
 
     # 生成发布事件的交易
@@ -207,7 +128,7 @@ function run_test() {
     # 取消事件预发布
     oracle_resultAbort_transaction "$eventId"
     # 根据ID查询事件
-    block_wait 2
+    chain33_BlockWait 2 "${MAIN_HTTP}"
     oracle_QueryOraclesByID "$eventId"
 
 }
