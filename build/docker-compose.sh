@@ -98,6 +98,7 @@ function base_init() {
     sed -i $sedfix 's/^minerdisable=.*/minerdisable=false/g' chain33.toml
 
     sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
+    sed -i $sedfix 's/^paraConsensusStopBlocks=.*/paraConsensusStopBlocks=100/g' chain33.toml
 
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
