@@ -131,7 +131,7 @@ chain33_QueryBalance() {
     local MAIN_HTTP=$2
     req='"method":"Chain33.GetAllExecBalance","params":[{"addr":"'"${addr}"'"}]'
     #echo "#request: $req"
-    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
