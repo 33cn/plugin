@@ -395,10 +395,21 @@ func (a *action) superManagerVoteProc(title string) error {
 	//return err to stop tx pass to para chain
 	if a.height <= consensMainHeight+confStopBlocks {
 		return errors.Wrapf(pt.ErrParaConsensStopBlocksNotReach,
-			"supermanager height not reach,current:%d less consens:%d plus confStopBlocks:%s", a.height, consensMainHeight, confStopBlocks)
+			"supermanager height not reach,current:%d less consens:%d plus confStopBlocks:%d", a.height, consensMainHeight, confStopBlocks)
 	}
 
 	return nil
+}
+
+func updateVotes(stat *pt.ParaNodeIdStatus,nodes map[string]struct{}){
+	votes := &pt.ParaNodeVoteDetail{}
+	for i,addr := range stat.Votes.Addrs{
+		if _,ok :=nodes[addr]; ok{
+			votes.Addrs = append(votes.Addrs, addr)
+			votes.Votes = append(votes.Votes, stat.Votes.Votes[i])
+		}
+	}
+	stat.Votes = votes
 }
 
 func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -436,6 +447,10 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		stat.Votes.Addrs = append(stat.Votes.Addrs, a.fromaddr)
 		stat.Votes.Votes = append(stat.Votes.Votes, pt.ParaNodeVoteStr[config.Value])
 	}
+
+	//剔除已退出nodegroup的addr的投票
+	updateVotes(stat, nodes)
+
 	most, vote := getMostVote(stat)
 	if !isCommitDone(stat, nodes, most) {
 		superManagerPass := false

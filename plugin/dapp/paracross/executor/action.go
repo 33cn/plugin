@@ -260,6 +260,19 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 	return nodes, nil
 }
 
+//根据nodes过滤掉可能退出了的addrs
+func updateCommitAddrs(stat *pt.ParacrossHeightStatus,nodes map[string]struct{}){
+	details := &pt.ParacrossStatusDetails{}
+	for i,addr := range stat.Details.Addrs{
+		if _,ok :=nodes[addr]; ok{
+			details.Addrs = append(details.Addrs, addr)
+			details.BlockHash = append(details.BlockHash, stat.Details.BlockHash[i])
+		}
+	}
+	stat.Details = details
+
+}
+
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	err := checkCommitInfo(commit)
 	if err != nil {
@@ -364,6 +377,11 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		receipt = makeCommitReceipt(a.fromaddr, commit, &copyStat, stat)
 	}
+
+	if types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx){
+		updateCommitAddrs(stat,nodes)
+	}
+
 	clog.Info("paracross.Commit commit", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
 	for i, v := range stat.Details.Addrs {
 		clog.Info("paracross.Commit commit detail", "addr", v, "hash", hex.EncodeToString(stat.Details.BlockHash[i]))
