@@ -135,7 +135,6 @@ chain33_QueryBalance() {
     echo "#response: $resp"
     ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
     [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
 
     echo "$resp" | jq -r ".result"
 }
