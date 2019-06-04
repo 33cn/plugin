@@ -273,7 +273,6 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return receipt, nil
 	}
 
-
 	if addrStat.Status == pt.ParacrossNodeQuited {
 		stat := &pt.ParaNodeIdStatus{
 			Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
