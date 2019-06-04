@@ -393,9 +393,9 @@ func (a *action) superManagerVoteProc(title string) error {
 		consensMainHeight = stat.(*pt.ParacrossHeightStatus).MainHeight
 	}
 	//return err to stop tx pass to para chain
-	if a.height <= consensMainHeight + confStopBlocks {
+	if a.height <= consensMainHeight+confStopBlocks {
 		return errors.Wrapf(pt.ErrParaConsensStopBlocksNotReach,
-			"supermanager height not reach,current:%d less consens:%d plus confStopBlocks:%s", a.height,consensMainHeight,confStopBlocks)
+			"supermanager height not reach,current:%d less consens:%d plus confStopBlocks:%s", a.height, consensMainHeight, confStopBlocks)
 	}
 
 	return nil
