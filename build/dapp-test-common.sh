@@ -150,3 +150,4 @@ chain33_QueryExecBalance() {
     ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
 }
+
