@@ -41,6 +41,7 @@ const (
 	TyLogParaNodeVoteDone          = 658
 	TyLogParaNodeGroupAddrsUpdate  = 659
 	TyLogParaNodeGroupConfig       = 660
+	TyLogParaNodeStatusUpdate      = 661
 	TyLogParaNodeGroupStatusUpdate = 664
 )
 
@@ -92,6 +93,7 @@ const (
 	ParaNodeJoin = iota + 1
 	ParaNodeVote
 	ParaNodeQuit
+	ParaNodeCancel
 )
 
 // node vote op
@@ -114,6 +116,8 @@ const (
 	ParacrossNodeQuiting
 	// ParacrossNodeQuited pass to quite by votes
 	ParacrossNodeQuited
+	// ParacrossNodeCanceled to cancel apply of joining or quiting
+	ParacrossNodeCanceled
 )
 
 const (

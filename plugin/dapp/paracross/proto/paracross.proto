@@ -63,7 +63,11 @@ message ParaNodeVoteDetail {
 }
 
 message ParaNodeAddrIdStatus {
-    string proposalId           = 1;
+    string addr                 = 1;
+    string proposalId           = 2;
+    string quitId               = 3;
+    int32  status               = 4;
+    string title                = 5;
 }
 
 message ParaNodeIdStatus {
@@ -85,6 +89,11 @@ message ReceiptParaNodeConfig {
     ParaNodeIdStatus      current = 4;
 }
 
+message ReceiptParaNodeAddrStatUpdate {
+    string                    fromAddr = 1;
+    ParaNodeAddrIdStatus      prev     = 2;
+    ParaNodeAddrIdStatus      current  = 3;
+}
 
 message ReceiptParaNodeVoteDone {
     string id               = 1;

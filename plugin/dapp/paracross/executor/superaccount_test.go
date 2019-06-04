@@ -353,17 +353,17 @@ func TestGetAddrGroup(t *testing.T) {
 
 }
 
-func TestUpdateVotes(t *testing.T){
+func TestUpdateVotes(t *testing.T) {
 	stat := &pt.ParaNodeIdStatus{}
 	votes := &pt.ParaNodeVoteDetail{
-		Addrs:[]string{"AA","BB","CC"},
-		Votes:[]string{"yes","no","no"}}
+		Addrs: []string{"AA", "BB", "CC"},
+		Votes: []string{"yes", "no", "no"}}
 	stat.Votes = votes
 	nodes := make(map[string]struct{})
-	nodes["BB"]= struct{}{}
+	nodes["BB"] = struct{}{}
 	nodes["CC"] = struct{}{}
 
-	updateVotes(stat,nodes)
-	assert.Equal(t,[]string{"BB","CC"},stat.Votes.Addrs)
-	assert.Equal(t,[]string{"no","no"},stat.Votes.Votes)
+	updateVotes(stat, nodes)
+	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
+	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }
