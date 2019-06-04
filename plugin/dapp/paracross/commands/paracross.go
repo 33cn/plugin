@@ -251,36 +251,25 @@ func CreateRawNodeManageCmd() *cobra.Command {
 }
 
 func addNodeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("operation", "o", "", "operation:join,quit,vote")
+	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:join,2:vote,3:quit")
 	cmd.MarkFlagRequired("operation")
 
 	cmd.Flags().StringP("addr", "a", "", "operating target addr")
-	cmd.MarkFlagRequired("addrs")
 
-	cmd.Flags().StringP("value", "v", "", "vote value: yes,no")
-	cmd.Flags().Float64P("coins_frozen", "c", 0, "join to frozen coins amount, not less config")
+	cmd.Flags().StringP("id", "i", "", "operating target id")
+
+	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
+	cmd.Flags().Float64P("coins_frozen", "c", 0, "frozen coins amount, should not less nodegroup's")
 }
 
 func createNodeTx(cmd *cobra.Command, args []string) {
-	op, _ := cmd.Flags().GetString("operation")
+	op, _ := cmd.Flags().GetUint32("operation")
 	opAddr, _ := cmd.Flags().GetString("addr")
-	val, _ := cmd.Flags().GetString("value")
+	id, _ := cmd.Flags().GetString("id")
+	val, _ := cmd.Flags().GetUint32("value")
 	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
 
-	if op != "vote" && op != "quit" && op != "join" {
-		fmt.Println("operation should be one of join,quit,vote")
-		return
-	}
-	if opAddr == "" {
-		fmt.Println("addr parameter should not be null")
-		return
-	}
-	if op == "vote" && (val != "yes" && val != "no") {
-		fmt.Println("vote operation value parameter require yes or no value")
-		return
-	}
-
-	payload := &pt.ParaNodeAddrConfig{Op: op, Value: val, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeAddrConfig{Op: op, Id: id, Value: val, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeConfig",
@@ -305,11 +294,12 @@ func CreateNodeGroupApplyCmd() *cobra.Command {
 }
 
 func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:apply,2:approve,3:quit")
+	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:apply,2:approve,3:quit,4:modify")
 	cmd.MarkFlagRequired("operation")
 
+	cmd.Flags().StringP("id", "i", "", "apply id for nodegroup ")
+
 	cmd.Flags().StringP("addrs", "a", "", "addrs apply for super node,split by ',' ")
-	cmd.MarkFlagRequired("addrs")
 
 	cmd.Flags().Float64P("coins_frozen", "c", 0, "coins amount to frozen, not less config")
 
@@ -318,18 +308,10 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 func nodeGroupApply(cmd *cobra.Command, args []string) {
 	op, _ := cmd.Flags().GetUint32("operation")
 	addrs, _ := cmd.Flags().GetString("addrs")
+	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins_frozen")
 
-	if op == 0 || op > 3 {
-		fmt.Println("operation should be one of 1:apply,2:approve,3:quit")
-		return
-	}
-	if addrs == "" {
-		fmt.Println("addrs should not be nil")
-		return
-	}
-
-	payload := &pt.ParaNodeGroupConfig{Op: op, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Op: op, Id: id, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pt.ParaX),
 		ActionName: "NodeGroupConfig",
@@ -486,7 +468,7 @@ func addNodeBodyCmdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("title")
 
 	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
-	cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("id", "i", "", "id apply for super user")
 
 }
 
@@ -494,12 +476,14 @@ func nodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
 	addr, _ := cmd.Flags().GetString("addr")
+	id, _ := cmd.Flags().GetString("id")
 
 	params := pt.ReqParacrossNodeInfo{
 		Title: title,
 		Addr:  addr,
+		Id:    id,
 	}
-	var res pt.ParaNodeAddrStatus
+	var res pt.ParaNodeIdStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeStatus", params, &res)
 	ctx.Run()
 }

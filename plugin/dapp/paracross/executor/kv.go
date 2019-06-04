@@ -16,7 +16,9 @@ var (
 	managerConfigNodes        string //manager 合约配置的nodes
 	paraConfigNodes           string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr        string //平行链配置节点账户
-	paraNodeGroupApplyAddrs   string
+	paraNodeGroupStatusAddrs  string //正在申请的addrs
+	paraNodeID                string
+	paraNodeGroupID           string
 	localTx                   string
 	localTitle                string
 	localTitleHeight          string
@@ -32,7 +34,9 @@ func setPrefix() {
 	managerConfigNodes = "paracross-nodes-"
 	paraConfigNodes = "mavl-paracross-nodes-title-"
 	paraConfigNodeAddr = "mavl-paracross-nodes-titleAddr-"
-	paraNodeGroupApplyAddrs = "mavl-paracross-nodegroup-apply-title-"
+	paraNodeGroupStatusAddrs = "mavl-paracross-nodegroup-apply-title-"
+	paraNodeID = "mavl-paracross-title-nodeid-"
+	paraNodeGroupID = "mavl-paracross-title-nodegroupid-"
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
 	localTitleHeight = "LODB-paracross-titleHeight-"
@@ -62,7 +66,7 @@ func calcManageConfigNodesKey(title string) []byte {
 	return []byte(types.ManageKey(key))
 }
 
-func calcParaNodeGroupKey(title string) []byte {
+func calcParaNodeGroupAddrsKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraConfigNodes+"%s", title))
 }
 
@@ -70,8 +74,16 @@ func calcParaNodeAddrKey(title string, addr string) []byte {
 	return []byte(fmt.Sprintf(paraConfigNodeAddr+"%s-%s", title, addr))
 }
 
-func calcParaNodeGroupApplyKey(title string) []byte {
-	return []byte(fmt.Sprintf(paraNodeGroupApplyAddrs+"%s", title))
+func calcParaNodeGroupStatusKey(title string) []byte {
+	return []byte(fmt.Sprintf(paraNodeGroupStatusAddrs+"%s", title))
+}
+
+func calcParaNodeIDKey(title, hash string) string {
+	return fmt.Sprintf(paraNodeID+"%s-%s", title, hash)
+}
+
+func calcParaNodeGroupIDKey(title, hash string) string {
+	return fmt.Sprintf(paraNodeGroupID+"%s-%s", title, hash)
 }
 
 func calcLocalTxKey(title string, height int64, addr string) []byte {
@@ -90,22 +102,30 @@ func calcLocalAssetKey(hash []byte) []byte {
 	return []byte(fmt.Sprintf(localAssetKey+"%s", hash))
 }
 
-func calcLocalNodeTitleStatus(title, addr string, status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-%s", title, status, addr))
+func calcLocalNodeTitleStatus(title string, status int32, id string) []byte {
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-%s", title, status, id))
 }
 
 func calcLocalNodeStatusPrefix(title string, status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d", title, status))
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-%02d-", title, status))
+}
+
+func calcLocalNodeTitlePrefix(title string) []byte {
+	return []byte(fmt.Sprintf(localNodeTitleStatus+"%s-", title))
 }
 
 func calcLocalNodeTitleDone(title, addr string) []byte {
 	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, addr))
 }
 
-func calcLocalNodeGroupStatusTitle(status int32, title string) []byte {
-	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-%s", status, title))
+func calcLocalNodeGroupStatusTitle(status int32, title, id string) []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-%s-%s", status, title, id))
 }
 
 func calcLocalNodeGroupStatusPrefix(status int32) []byte {
-	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d", status))
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle+"%02d-", status))
+}
+
+func calcLocalNodeGroupAllPrefix() []byte {
+	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
 }

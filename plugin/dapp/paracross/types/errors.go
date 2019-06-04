@@ -47,8 +47,6 @@ var (
 	ErrParaNodeGroupFrozenCoinsNotEnough = errors.New("ErrParaNodeGroupFrozenCoinsNotEnough")
 	//ErrParaNodeGroupStatusWrong node group process wrong status
 	ErrParaNodeGroupStatusWrong = errors.New("ErrParaNodeGroupStatusWrong")
-	//ErrParaNodeGroupAddrNotMatch group addrs not match with apply
-	ErrParaNodeGroupAddrNotMatch = errors.New("ErrParaNodeGroupAddrNotMatch")
 	//ErrParaConsensStopBlocksNotReach consensus stop blocks not reach
 	ErrParaConsensStopBlocksNotReach = errors.New("ErrParaConsensStopBlocksNotReach")
 )
