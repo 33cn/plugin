@@ -771,13 +771,13 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 	}
 
 	stat := &pt.ParaNodeGroupStatus{
-		Id:                 calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
-		Status:             pt.ParacrossNodeGroupApply,
-		Title:              config.Title,
-		TargetAddrs:        strings.Join(addrs, ","),
-		CoinsFrozen:        config.CoinsFrozen,
-		FromAddr:           a.fromaddr,
-		Height:             a.height}
+		Id:          calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+		Status:      pt.ParacrossNodeGroupApply,
+		Title:       config.Title,
+		TargetAddrs: strings.Join(addrs, ","),
+		CoinsFrozen: config.CoinsFrozen,
+		FromAddr:    a.fromaddr,
+		Height:      a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -788,11 +788,11 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	stat := &pt.ParaNodeGroupStatus{
-		Id:                 calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
-		Status:             pt.ParacrossNodeGroupModify,
-		Title:              config.Title,
-		CoinsFrozen:        config.CoinsFrozen,
-		Height:             a.height}
+		Id:          calcParaNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+		Status:      pt.ParacrossNodeGroupModify,
+		Title:       config.Title,
+		CoinsFrozen: config.CoinsFrozen,
+		Height:      a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
