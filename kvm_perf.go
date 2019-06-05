@@ -51,8 +51,8 @@ func main() {
 		Height:    0}
 
 	var hashes [][]byte
-	blocks := 5000000
-	times := 1000000
+	blocks := 50000
+	times := 10000
 	start1 := time.Now()
 	for i := 0; i < blocks; i++ {
 		datas.Height = int64(i)
@@ -78,6 +78,8 @@ func main() {
 		if i < times {
 			hashes = append(hashes, hash)
 		}
+		fmt.Println("Block number:", i)
+
 	}
 	end1 := time.Now()
 
@@ -90,6 +92,7 @@ func main() {
 	for i := 0; i < times; i++ {
 		getData.StateHash = hashes[i]
 		store.Get(getData)
+		fmt.Println("read times:", i, " kv numbers:", i * 20)
 	}
 	end := time.Now()
 	fmt.Println("kvmvcc BenchmarkStoreGetKvsFor100million MemSet&Commit cost time is ", end1.Sub(start1), "blocks is", blocks)
