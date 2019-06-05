@@ -38,7 +38,7 @@ func ParcCmd() *cobra.Command {
 		GetParaListCmd(),
 		GetNodeGroupCmd(),
 		GetNodeInfoCmd(),
-		GetNodeIdInfoCmd(),
+		GetNodeIDInfoCmd(),
 		GetNodeListCmd(),
 		NodeGroupStatusCmd(),
 		NodeGroupListCmd(),
@@ -487,18 +487,18 @@ func nodeInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetNodeInfoCmd get node current status
-func GetNodeIdInfoCmd() *cobra.Command {
+// GetNodeIDInfoCmd get node current status
+func GetNodeIDInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node_id_status",
-		Short: "Get node id current vote status:0:all,1:joining,2:quiting,3:closed,4:canceld",
-		Run:   nodeIdInfo,
+		Short: "Get node id current vote status:0:all,1:joining,2:quiting,3:closed,4:canceled",
+		Run:   nodeIDInfo,
 	}
-	addNodeIdBodyCmdFlags(cmd)
+	addNodeIDBodyCmdFlags(cmd)
 	return cmd
 }
 
-func addNodeIdBodyCmdFlags(cmd *cobra.Command) {
+func addNodeIDBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
 	cmd.MarkFlagRequired("title")
 
@@ -507,7 +507,7 @@ func addNodeIdBodyCmdFlags(cmd *cobra.Command) {
 
 }
 
-func nodeIdInfo(cmd *cobra.Command, args []string) {
+func nodeIDInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
 	id, _ := cmd.Flags().GetString("id")

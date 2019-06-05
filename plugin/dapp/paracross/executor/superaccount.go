@@ -776,8 +776,6 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		Title:              config.Title,
 		TargetAddrs:        strings.Join(addrs, ","),
 		CoinsFrozen:        config.CoinsFrozen,
-		MainHeight:         a.exec.GetMainHeight(),
-		EmptyBlockInterval: config.EmptyBlockInterval,
 		FromAddr:           a.fromaddr,
 		Height:             a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
@@ -794,8 +792,6 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 		Status:             pt.ParacrossNodeGroupModify,
 		Title:              config.Title,
 		CoinsFrozen:        config.CoinsFrozen,
-		MainHeight:         a.exec.GetMainHeight(),
-		EmptyBlockInterval: config.EmptyBlockInterval,
 		Height:             a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
@@ -868,8 +864,6 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 	copyStat := *stat
 	stat.Id = modify.Id
 	stat.CoinsFrozen = modify.CoinsFrozen
-	stat.EmptyBlockInterval = modify.EmptyBlockInterval
-	stat.MainHeight = a.exec.GetMainHeight()
 	stat.Height = a.height
 
 	r = makeParaNodeGroupStatusReceipt(config.Title, a.fromaddr, &copyStat, stat)
@@ -901,7 +895,6 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 
 	copyStat := *apply
 	apply.Status = pt.ParacrossNodeGroupApprove
-	apply.MainHeight = a.exec.GetMainHeight()
 	apply.Height = a.height
 
 	r = makeNodeGroupIDReceipt(a.fromaddr, &copyStat, apply)

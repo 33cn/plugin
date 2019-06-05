@@ -217,7 +217,7 @@ func (c *Jrpc) GetNodeAddrStatus(req *pt.ReqParacrossNodeInfo, result *interface
 	return err
 }
 
-// GetNodeIdStatus get super node status
+// GetNodeIDStatus get super node status
 func (c *Jrpc) GetNodeIDStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	if req == nil || req.Id == "" {
 		return types.ErrInvalidParam
