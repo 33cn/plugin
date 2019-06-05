@@ -49,7 +49,7 @@ func (c *Jrpc) GetHeight(req *types.ReqString, result *interface{}) error {
 	}
 
 	data, err := c.cli.GetTitle(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = *data
@@ -71,7 +71,7 @@ func (c *channelClient) ListTitles(ctx context.Context, req *types.ReqNil) (*pt.
 // ListTitles get paracross consensus titles list
 func (c *Jrpc) ListTitles(req *types.ReqNil, result *interface{}) error {
 	data, err := c.cli.ListTitles(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -95,7 +95,7 @@ func (c *Jrpc) GetTitleHeight(req *pt.ReqParacrossTitleHeight, result *interface
 		return types.ErrInvalidParam
 	}
 	data, err := c.cli.GetTitleHeight(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -130,7 +130,7 @@ func (c *Jrpc) GetAssetTxResult(req *types.ReqHash, result *interface{}) error {
 		return types.ErrInvalidParam
 	}
 	data, err := c.cli.GetAssetTxResult(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -187,7 +187,7 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 	}
 
 	ret, err := c.cli.GetBlock2MainInfo(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = *ret
@@ -227,7 +227,7 @@ func (c *Jrpc) GetNodeAddrStatus(req *pt.ReqParacrossNodeInfo, result *interface
 	}
 
 	data, err := c.cli.GetNodeAddrStatus(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -241,7 +241,7 @@ func (c *Jrpc) GetNodeIDStatus(req *pt.ReqParacrossNodeInfo, result *interface{}
 	}
 
 	data, err := c.cli.GetNodeIDStatus(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -264,7 +264,7 @@ func (c *channelClient) ListNodeStatus(ctx context.Context, req *pt.ReqParacross
 //ListNodeStatus list super node by status
 func (c *Jrpc) ListNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.ListNodeStatus(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -287,7 +287,7 @@ func (c *channelClient) GetNodeGroupAddrs(ctx context.Context, req *pt.ReqParacr
 // GetNodeGroupAddrs get super node group addrs
 func (c *Jrpc) GetNodeGroupAddrs(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.GetNodeGroupAddrs(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -310,7 +310,7 @@ func (c *channelClient) GetNodeGroupStatus(ctx context.Context, req *pt.ReqParac
 // GetNodeGroupStatus get super node group status
 func (c *Jrpc) GetNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.GetNodeGroupStatus(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
@@ -333,7 +333,7 @@ func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqPara
 //ListNodeGroupStatus list super node group by status
 func (c *Jrpc) ListNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.ListNodeGroupStatus(context.Background(), req)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	*result = data
