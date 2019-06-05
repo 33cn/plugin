@@ -109,7 +109,7 @@ var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
 const (
 	// ParacrossNodeJoined pass to add by votes
-	ParacrossNodeJoined =iota + 10
+	ParacrossNodeJoined = iota + 10
 	// ParacrossNodeQuited pass to quite by votes
 	ParacrossNodeQuited
 )

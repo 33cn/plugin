@@ -293,7 +293,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
-		Op: pt.ParaNodeQuit,
+		Op:   pt.ParaNodeQuit,
 		Addr: Account14K,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)

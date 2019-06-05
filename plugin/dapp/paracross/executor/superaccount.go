@@ -444,7 +444,6 @@ func updateVotes(stat *pt.ParaNodeIdStatus, nodes map[string]struct{}) {
 	stat.Votes = votes
 }
 
-
 func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
@@ -512,10 +511,10 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 
 	//已经被其他id pass 场景
-	if stat.Status == pt.ParacrossNodeJoining && validNode(stat.TargetAddr,nodes){
+	if stat.Status == pt.ParacrossNodeJoining && validNode(stat.TargetAddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
 	}
-	if stat.Status == pt.ParacrossNodeQuiting && !validNode(stat.TargetAddr,nodes){
+	if stat.Status == pt.ParacrossNodeQuiting && !validNode(stat.TargetAddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
 	}
 
@@ -893,9 +892,9 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//create the node group
-	r,err := a.nodeGroupCreate(apply)
-	if err != nil{
-		return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title,apply.TargetAddrs)
+	r, err := a.nodeGroupCreate(apply)
+	if err != nil {
+		return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title, apply.TargetAddrs)
 	}
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -944,7 +943,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 
 }
 
-func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt,error) {
+func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
 	nodes := strings.Split(status.TargetAddrs, ",")
 
 	var item types.ConfigItem
@@ -971,15 +970,15 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt
 			Height:      a.height}
 
 		r := makeNodeConfigReceipt(a.fromaddr, nil, nil, stat)
-		receipt = mergeReceipt(receipt,r)
+		receipt = mergeReceipt(receipt, r)
 
-		r,err :=a.updateNodeAddrStatus(stat)
-		if err != nil{
+		r, err := a.updateNodeAddrStatus(stat)
+		if err != nil {
 			return nil, err
 		}
-		receipt = mergeReceipt(receipt,r)
+		receipt = mergeReceipt(receipt, r)
 	}
-	return receipt,nil
+	return receipt, nil
 }
 
 //NodeGroupConfig support super node group config

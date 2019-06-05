@@ -539,8 +539,6 @@ function para_create_nodegroup() {
     fi
 }
 
-
-
 function para_nodegroup_behalf_quit_test() {
     echo "=========== # para chain behalf node quit ============="
     status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
@@ -590,8 +588,6 @@ function para_nodegroup_behalf_quit_test() {
 
 }
 
-
-
 function para_nodemanage_cancel_test() {
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
@@ -631,7 +627,6 @@ function para_nodemanage_cancel_test() {
 }
 
 function para_nodemanage_test() {
-
 
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
@@ -696,7 +691,6 @@ function para_nodemanage_test() {
     echo "${txhash}"
     query_tx "${PARA_CLI}" "${txhash}"
 
-
     id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
         echo "id not found"
@@ -710,7 +704,6 @@ function para_nodemanage_test() {
     hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
 
     status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 | jq -r ".status")
     if [ "${status}" != "10" ]; then
@@ -733,7 +726,6 @@ function para_nodemanage_test() {
     fi
 
 }
-
 
 function para_nodemanage_node_behalf_join() {
     echo "=========== # para chain behalf node vote test ============="
@@ -760,8 +752,6 @@ function para_nodemanage_node_behalf_join() {
         ${PARA_CLI} tx query -s "${hash}"
         exit 1
     fi
-
-
 
     echo "=========== # para chain new node join 2============="
     hash=$(${PARA_CLI} send para node -o 1 -c 9 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
@@ -806,7 +796,6 @@ function para_nodemanage_node_behalf_join() {
         ${PARA_CLI} para nodegroup_addrs -t user.p.para.
         exit 1
     fi
-
 
     echo "=========== # para chain same node vote again fail ============="
     ${PARA_CLI} send para node -o 2 -i "$node1_id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
@@ -883,8 +872,6 @@ function para_nodemanage_node_behalf_join() {
         ${PARA_CLI} para nodegroup_addrs -t user.p.para.
         exit 1
     fi
-
-
 
 }
 
