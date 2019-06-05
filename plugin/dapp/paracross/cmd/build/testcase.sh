@@ -817,7 +817,7 @@ function para_nodemanage_node_behalf_join() {
     query_tx "${PARA_CLI}" "${hash}"
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "32.0000" ]; then
+    if [ "$balance" != "33.0000" ]; then
         echo "unfrozen coinfrozen error balance=$balance"
         exit 1
     fi
