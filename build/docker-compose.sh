@@ -374,6 +374,7 @@ function rpc_test() {
     if [ "$DAPP" == "paracross" ]; then
         system_test_rpc "http://${1}:8901"
         dapp_test_address "${CLI}"
+
         dapp_test_rpc "http://${1}:8901"
     fi
 
@@ -403,7 +404,7 @@ function main() {
     dapp_run test "${ip}"
 
     ### rpc test  ###
-    #    rpc_test "${ip}"
+    #rpc_test "${ip}"
 
     ### finish ###
     check_docker_container

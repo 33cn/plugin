@@ -314,7 +314,7 @@ function token_sendExec() {
     sendSignedTx
     echo_rst "token sendExec sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token sendExec queryExecRes" "$?"
