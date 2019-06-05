@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+
+package types;
+
+message VoteItem {
+    int32 votedNodeIndex   = 1;    //被投票的节点索引
+    bytes votedNodeAddress = 2;    //被投票的节点地址
+    int64 cycleStart       = 3;    //大周期起始时间
+    int64 cycleStop        = 4;    //大周期终止时间
+    int64 periodStart      = 5;    //新节点负责出块的起始时间
+    int64 periodStop       = 6;    //新节点负责出块的终止时间
+    int64 height           = 7;    //新节点负责出块的起始高度
+    bytes voteID           = 8;    //选票ID
+}
+
+//DPosVote Dpos共识的节点投票，为达成共识用。
+message DPosVote {
+    VoteItem  voteItem     = 1;
+    int64 voteTimestamp    = 2;    //发起投票的时间
+    int32 voterNodeIndex   = 3;    //投票节点索引
+    bytes voterNodeAddress = 4;    //投票节点地址
+    bytes signature        = 5;    //投票者签名
+}
+
+message DPosVoteReply {
+    DPosVote  vote         = 1;
+}
+
+//DPosNotify Dpos委托节点出块周期结束时，通知其他节点进行高度确认及新节点投票。
+message DPosNotify {
+    VoteItem  vote         = 1;
+    int64 heightStop       = 2;    //新节点负责出块的结束高度
+    bytes hashStop         = 3;    //新节点负责出块的结束hash
+    int64 notifyTimestamp  = 4;    //发起通知的时间
+    int32 notifyNodeIndex  = 5;    //通知节点的索引
+    bytes notifyNodeAddress= 6;    //通知节点的地址
+    bytes signature        = 7;    //通知节点的签名
+}
+
