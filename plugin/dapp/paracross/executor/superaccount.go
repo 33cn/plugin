@@ -487,7 +487,7 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		return receipt, nil
 	}
 
-	return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "nodeAddr:%s  get wrong status", stat.TargetAddr, stat.Status)
+	return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "nodeAddr:%s  get wrong status:%d", stat.TargetAddr, stat.Status)
 }
 
 func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
