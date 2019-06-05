@@ -2,21 +2,11 @@
 # shellcheck disable=SC2128
 set +e
 set -o pipefail
-set -x
 
 MAIN_HTTP=""
-CASE_ERR=""
 
-# $2=0 means true, other false
-echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo "$1 ok"
-    else
-        echo "$1 err"
-        CASE_ERR="err"
-    fi
-
-}
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
 
 gID=""
 gResp=""
@@ -49,38 +39,6 @@ chain33_NewAccount() {
     echo "$glAddr"
 }
 
-function block_wait() {
-    if [ "$#" -lt 1 ]; then
-        echo "wrong block_wait params"
-        exit 1
-    fi
-    cur_height=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-chain33_SendToAddress() {
-    from=$1
-    to=$2
-    amount=$3
-    http=$4
-    note="test"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
-    ok=$(jq '(.error|not)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
 chain33_SendTransaction() {
     rawTx=$1
     addr=$2
@@ -98,8 +56,9 @@ chain33_SendTransaction() {
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #返回交易
-    gResp=$(echo "${resp}" | jq -r ".result")
+    gResp=$(jq -r ".result" <<<"$resp")
     echo "tx hash is $gResp"
+    chain33_QueryTx "$gResp" "${MAIN_HTTP}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
@@ -211,6 +170,8 @@ function run_testcases() {
     #给每个账户分别转帐
     origAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
+    chain33_GetAccounts "${MAIN_HTTP}"
+
     #主链中相应账户需要转帐
     M_HTTP=${MAIN_HTTP//8901/8801}
     chain33_SendToAddress "${origAddr}" "${gameAddr1}" 1000000000 "${M_HTTP}"
@@ -222,29 +183,23 @@ function run_testcases() {
     chain33_SendToAddress "${origAddr}" "${gameAddr2}" 1000000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${origAddr}" "${gameAddr3}" 1000000000 "${MAIN_HTTP}"
 
-    block_wait 1
-
     #给游戏合约中转帐
     chain33_SendToAddress "${gameAddr1}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${gameAddr2}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${gameAddr3}" "${bwExecAddr}" 500000000 "${MAIN_HTTP}"
 
-    block_wait 1
     blackwhite_BlackwhiteCreateTx "${gameAddr1}"
 
-    block_wait 1
     blackwhite_BlackwhitePlayTx "${gameAddr1}" "${white0}" "${white1}" "${black2}"
     blackwhite_BlackwhitePlayTx "${gameAddr2}" "${white0}" "${black1}" "${black2}"
     blackwhite_BlackwhitePlayTx "${gameAddr3}" "${white0}" "${black1}" "${black2}"
 
-    block_wait 1
     blackwhite_BlackwhiteShowTx "${gameAddr1}" "${sect1}"
     blackwhite_BlackwhiteShowTx "${gameAddr2}" "${sect1}"
     blackwhite_BlackwhiteShowTx "${gameAddr3}" "${sect1}"
 
     blackwhite_BlackwhiteTimeoutDoneTx "$gID"
     #查询部分
-    block_wait 3
     blackwhite_GetBlackwhiteRoundInfo "$gID"
     blackwhite_GetBlackwhiteByStatusAndAddr "$gID" "${gameAddr1}"
     blackwhite_GetBlackwhiteloopResult "$gID"
@@ -256,6 +211,7 @@ function main() {
     echo "main_ip=$MAIN_HTTP"
 
     init
+
     run_testcases
 
     if [ -n "$CASE_ERR" ]; then
@@ -264,4 +220,10 @@ function main() {
     fi
 }
 
-main "$1"
+function debug_function() {
+    set -x
+    eval "$@"
+    set +x
+}
+
+debug_function main "$1"
