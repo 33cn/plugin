@@ -92,7 +92,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	return stat, nil
 }
 
-//Query_GetNodeIdInfo get specific node addr info
+//Query_GetNodeIDInfo get specific node addr info
 func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" || in.Id == "" {
 		return nil, types.ErrInvalidParam

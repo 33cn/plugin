@@ -113,7 +113,6 @@ message ParaNodeGroupConfig {
     string id                   = 3;
     string addrs                = 4;
     int64  coinsFrozen          = 5;
-    uint32 emptyBlockInterval   = 6;
 }
 
 
@@ -123,10 +122,8 @@ message ParaNodeGroupStatus {
     string title                = 3;
     string targetAddrs          = 4;
     int64  coinsFrozen          = 5;
-    uint32 emptyBlockInterval   = 6;
-    int64  mainHeight           = 7;
-    string fromAddr             = 8;
-    int64  height               = 9;
+    string fromAddr             = 6;
+    int64  height               = 7;
 }
 
 message ReceiptParaNodeGroupConfig {

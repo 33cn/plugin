@@ -214,12 +214,7 @@ func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, erro
 //CreateRawNodeGroupApplyTx create raw tx for node group
 func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
 	apply.Title = types.GetTitle()
-	apply.EmptyBlockInterval = 4
 	apply.Id = strings.Trim(apply.Id, " ")
-	interval := types.Conf("config.consensus.sub.para").GInt("emptyBlockInterval")
-	if interval > 0 {
-		apply.EmptyBlockInterval = uint32(interval)
-	}
 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionNodeGroupApply,
