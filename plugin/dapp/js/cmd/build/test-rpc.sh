@@ -6,7 +6,6 @@ source ../dapp-test-common.sh
 
 MAIN_HTTP=""
 
-
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
 
