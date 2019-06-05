@@ -1,28 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-
-function block_wait() {
-    req='{"method":"Chain33.GetLastHeader","params":[{}]}'
-    cur_height=$(curl -ksd "$req" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "$req" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
+txhash=""
 
 function query_unfreezeID() {
-    block_wait 1
+    chain33_BlockWait 1 "$MAIN_HTTP"
 
     # echo "req=$req"
     local times=10
@@ -99,6 +85,7 @@ function CreateRawUnfreezeWithdraw() {
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignRawTx "$rawtx" "${beneficiary_key}" "${MAIN_HTTP}"
 }
+
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
     # echo "#request: $req"
