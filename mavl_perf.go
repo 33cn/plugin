@@ -5,7 +5,6 @@
 package main
 
 import (
-	"github.com/33cn/plugin/plugin/store/mpt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -33,7 +32,7 @@ func main() {
 	os.RemoveAll(dir)       //删除已存在目录
 
 	var storeCfg = newStoreCfg(dir)
-	store := mpt.New(storeCfg, nil).(*mavl.Store)
+	store := mavl.New(storeCfg, nil).(*mavl.Store)
 
 	var kv []*types.KeyValue
 	var key string
