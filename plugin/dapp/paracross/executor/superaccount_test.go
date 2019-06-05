@@ -120,7 +120,7 @@ func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) 
 
 func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-
+	len := len(receipt.Logs)
 	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[len-1].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
