@@ -227,7 +227,9 @@ func (c *Jrpc) GetNodeAddrStatus(req *pt.ReqParacrossNodeInfo, result *interface
 	}
 
 	data, err := c.cli.GetNodeAddrStatus(context.Background(), req)
-
+	if err != nil{
+		return err
+	}
 	*result = data
 	return err
 }
@@ -239,7 +241,9 @@ func (c *Jrpc) GetNodeIDStatus(req *pt.ReqParacrossNodeInfo, result *interface{}
 	}
 
 	data, err := c.cli.GetNodeIDStatus(context.Background(), req)
-
+	if err != nil{
+		return err
+	}
 	*result = data
 	return err
 }
