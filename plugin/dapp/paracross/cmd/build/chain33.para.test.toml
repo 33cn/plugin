@@ -1,4 +1,5 @@
 Title="user.p.para."
+CoinSymbol="paracoin"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit

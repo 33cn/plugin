@@ -3,6 +3,7 @@ package testnode
 //DefaultConfig default config for testnode
 var DefaultConfig = `
 Title="user.p.guodun."
+CoinSymbol="paracoin"
 # TestNet=true
 
 [log]
