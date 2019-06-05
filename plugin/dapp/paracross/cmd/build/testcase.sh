@@ -513,7 +513,7 @@ function para_create_nodegroup() {
     echo "=========== # para chain modify node group coin=5 ============="
     txhash=$(${PARA_CLI} send para nodegroup -o 4 -c 5 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
-    query_tx "${CLI}" "${txhash}"
+    query_tx "${PARA_CLI}" "${txhash}"
     modifyid=$(${PARA_CLI} para nodegroup_list -s 4 | jq -r ".ids[0].id")
     if [ -z "$modifyid" ]; then
         echo "query modify error "
