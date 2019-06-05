@@ -109,24 +109,12 @@ func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) 
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 
-	var stat pt.ParaNodeIdStatus
-	err := types.Decode(receipt.KV[0].Value, &stat)
-	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
-	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApply), stat.Status)
 
 }
 
 func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	len := len(receipt.Logs)
-	var stat pt.ParaNodeIdStatus
-	err := types.Decode(receipt.KV[len-1].Value, &stat)
-	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
-
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeGroupApprove), stat.Status)
-
 }
 
 func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
