@@ -328,6 +328,11 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, err
 	}
 
+	//只能提案发起人撤销
+	if a.fromaddr != stat.FromAddr{
+		return nil, errors.Wrapf(types.ErrNotAllow, "id create by:%s,not by:%s", stat.FromAddr, a.fromaddr)
+	}
+
 	if config.Title != stat.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, stat.Title)
 	}
@@ -804,6 +809,11 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 	status, err := getNodeGroupID(a.db, config.Id)
 	if err != nil {
 		return nil, err
+	}
+
+	//只能提案发起人撤销
+	if a.fromaddr != status.FromAddr{
+		return nil, errors.Wrapf(types.ErrNotAllow, "id create by:%s,not by:%s", status.FromAddr, a.fromaddr)
 	}
 
 	if config.Title != status.Title {

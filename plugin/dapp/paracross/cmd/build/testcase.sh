@@ -496,7 +496,7 @@ function para_create_nodegroup() {
 
     echo "=========== # para chain quit node group fail ============="
     ##quit fail
-    txhash=$(${PARA_CLI} send para nodegroup -o 3 -i "$id" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    txhash=$(${PARA_CLI} send para nodegroup -o 3 -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${CLI}" "${txhash}"
     status=$(${CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
@@ -607,7 +607,7 @@ function para_nodemanage_cancel_test() {
         exit 1
     fi
 
-    echo "=========== # para chain node quit ============="
+    echo "=========== # para chain node cancel ============="
     id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
     if [ -z "$id" ]; then
         echo "id not found"
@@ -812,7 +812,7 @@ function para_nodemanage_node_behalf_join() {
     fi
 
     echo "=========== # para chain node 1 cancel ============="
-    hash=$(${PARA_CLI} send para node -o 4 -i "$node1_id" -k 0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0)
+    hash=$(${PARA_CLI} send para node -o 4 -i "$node1_id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
