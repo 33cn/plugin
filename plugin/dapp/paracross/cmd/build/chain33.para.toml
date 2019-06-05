@@ -1,5 +1,6 @@
 Title="user.p.guodun."
 # TestNet=true
+CoinSymbol="paracoin"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
