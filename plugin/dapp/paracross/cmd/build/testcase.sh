@@ -498,7 +498,7 @@ function para_create_nodegroup() {
     ##quit fail
     txhash=$(${PARA_CLI} send para nodegroup -o 3 -i "$id" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
+    query_tx "${CLI}" "${txhash}"
     status=$(${CLI} para nodegroup_status -t user.p.para. | jq -r ".status")
     if [ "$status" != 2 ]; then
         echo "status quit not approve status=$status"
@@ -518,12 +518,6 @@ function para_create_nodegroup() {
     if [ -z "$modifyid" ]; then
         echo "query modify error "
         ${PARA_CLI} para nodegroup_list -s 4
-        modifyid=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
-        if [ -z "$modifyid" ]; then
-            ${PARA_CLI} tx query -s "${txhash}"
-            echo "group id not getted"
-            exit 1
-        fi
     fi
 
     ##approve
@@ -545,19 +539,14 @@ function para_create_nodegroup() {
     fi
 }
 
+
+
 function para_nodegroup_behalf_quit_test() {
     echo "=========== # para chain behalf node quit ============="
-    id=$(${PARA_CLI} para node_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -t user.p.para. | jq -r ".id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
-        exit 1
-    fi
-
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
-    if [ "${status}" != "2" ]; then
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    if [ "${status}" != "10" ]; then
         echo "wrong 1E5 status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
         exit 1
     fi
 
@@ -565,6 +554,12 @@ function para_nodegroup_behalf_quit_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
+    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "${id}" ]; then
+        echo "wrong id "
+        ${PARA_CLI} tx query -s "${hash}"
+        exit 1
+    fi
 
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
@@ -573,10 +568,10 @@ function para_nodegroup_behalf_quit_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
-    if [ "${status}" != "4" ]; then
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    if [ "${status}" != "11" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
         exit 1
     fi
 
@@ -595,7 +590,9 @@ function para_nodegroup_behalf_quit_test() {
 
 }
 
-function para_nodemanage_node_join() {
+
+
+function para_nodemanage_cancel_test() {
     echo "================# para node manage test ================="
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
@@ -614,11 +611,134 @@ function para_nodemanage_node_join() {
         exit 1
     fi
 
+    echo "=========== # para chain node quit ============="
+    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${hash}"
+        exit 1
+    fi
+    hash=$(${PARA_CLI} send para node -o 4 -i "$id" -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
+    if [ "$balance" == "$PARA_COIN_FROZEN" ]; then
+        echo "unfrozen coinfrozen error balance=$balance"
+        exit 1
+    fi
+
 }
 
+function para_nodemanage_test() {
+
+
+    echo "================# para node manage test ================="
+    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".balance")
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
+        echo "balance coinfrozen error balance=$balance"
+        exit 1
+    fi
+
+    echo "=========== # para chain new node join reject============="
+    hash=$(${PARA_CLI} send para node -o 1 -c 5 -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
+    if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
+        echo "frozen coinfrozen error balance=$balance"
+        exit 1
+    fi
+
+    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${hash}"
+        exit 1
+    fi
+    echo "=========== # para chain node vote ============="
+
+    ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    if [ "${status}" == "10" ]; then
+        echo "wrong vote status"
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        exit 1
+    fi
+
+    status=$(${PARA_CLI} para node_id_status -t user.p.para. -i "$id" | jq -r ".status")
+    if [ "${status}" != "3" ]; then
+        echo "wrong cancel status"
+        ${PARA_CLI} para node_id_status -t user.p.para. -i "$id"
+        exit 1
+    fi
+
+    node=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r '.value|contains("1E5")')
+    if [ "${node}" == "true" ]; then
+        echo "wrong node group addr"
+        ${PARA_CLI} para nodegroup_addrs -t user.p.para.
+        exit 1
+    fi
+
+    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
+    if [ "$balance" != "0.0000" ]; then
+        echo "unfrozen coinfrozen error balance=$balance"
+        exit 1
+    fi
+    echo "=========== # para chain node quit reject ============="
+    txhash=$(${PARA_CLI} send para node -o 3 -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
+    echo "${txhash}"
+    query_tx "${PARA_CLI}" "${txhash}"
+
+
+    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${txhash}"
+        exit 1
+    fi
+
+    echo "=========== # para chain node vote quit ============="
+    ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 | jq -r ".status")
+    if [ "${status}" != "10" ]; then
+        echo "wrong vote status"
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+        exit 1
+    fi
+
+    status=$(${PARA_CLI} para node_id_status -t user.p.para. -i "$id" | jq -r ".status")
+    if [ "${status}" != "3" ]; then
+        echo "wrong close status"
+        ${PARA_CLI} para node_id_status -t user.p.para. -i "$id"
+        exit 1
+    fi
+    node=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r '.value|contains("1KS")')
+    if [ "${node}" != "true" ]; then
+        echo "wrong node group addr"
+        ${PARA_CLI} para nodegroup_addrs -t user.p.para.
+        exit 1
+    fi
+
+}
+
+
 function para_nodemanage_node_behalf_join() {
+    echo "=========== # para chain behalf node vote test ============="
     echo "=========== # para chain new node join 1 ============="
-    hash=$(${PARA_CLI} send para node -o 1 -c 8 -a 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    hash=$(${PARA_CLI} send para node -o 1 -c 8 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
@@ -628,11 +748,20 @@ function para_nodemanage_node_behalf_join() {
         exit 1
     fi
 
-    balance=$(${CLI} account balance -a 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH -e paracross | jq -r ".frozen")
+    balance=$(${CLI} account balance -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -e paracross | jq -r ".frozen")
     if [ "$balance" == "$PARA_COIN_FROZEN" ]; then
         echo "1LU frozen coinfrozen error balance=$balance"
         exit 1
     fi
+
+    node1_id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$node1_id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${hash}"
+        exit 1
+    fi
+
+
 
     echo "=========== # para chain new node join 2============="
     hash=$(${PARA_CLI} send para node -o 1 -c 9 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
@@ -645,143 +774,29 @@ function para_nodemanage_node_behalf_join() {
         exit 1
     fi
 
-    echo "=========== # para chain node 1 quit ============="
-    id=$(${PARA_CLI} para node_status -a 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH -t user.p.para. | jq -r ".id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} para node_status -t user.p.para. -a 1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH
-        exit 1
-    fi
-    hash=$(${PARA_CLI} send para node -o 4 -i "$id" -k 0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0)
-    echo "${hash}"
-    query_tx "${PARA_CLI}" "${hash}"
-
-    balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "33.0000" ]; then
-        echo "unfrozen coinfrozen error balance=$balance"
+    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${hash}"
         exit 1
     fi
 
-}
-
-function para_nodemanage_quit_test() {
-    para_nodemanage_node_join
-
-    echo "=========== # para chain node quit ============="
-    id=$(${PARA_CLI} para node_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -t user.p.para. | jq -r ".id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
-        exit 1
-    fi
-    hash=$(${PARA_CLI} send para node -o 3 -i "$id" -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
-    echo "${hash}"
-    query_tx "${PARA_CLI}" "${hash}"
-
-    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
-    if [ "$balance" == "$PARA_COIN_FROZEN" ]; then
-        echo "unfrozen coinfrozen error balance=$balance"
-        exit 1
-    fi
-
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
-    if [ "${status}" != "4" ]; then
-        echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
-        exit 1
-    fi
-
-}
-
-function para_nodemanage_test() {
-    para_nodemanage_quit_test
-    para_nodemanage_node_join
-
-    echo "=========== # para chain node vote ============="
-    id=$(${PARA_CLI} para node_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -t user.p.para. | jq -r ".id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
-        exit 1
-    fi
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
     hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
-    if [ "${status}" != "2" ]; then
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
+    if [ "${status}" != "10" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
         exit 1
     fi
-
-    node=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r '.value|contains("1E5")')
-    if [ "${node}" != "true" ]; then
-        echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup_addrs -t user.p.para.
-        exit 1
-    fi
-
-    echo "=========== # para chain node quit ============="
-    hash=$(${PARA_CLI} send para node -o 3 -i "$id" -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
-    echo "${hash}"
-    query_tx "${PARA_CLI}" "${hash}"
-
-    status=$(${PARA_CLI} para node_list -t user.p.para. -s 3 | jq -r ".ids[0].targetAddr")
-    if [ "${status}" != "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY" ]; then
-        echo "wrong join status"
-        ${PARA_CLI} para node_list -t user.p.para. -s 3
-        exit 1
-    fi
-
-    echo "=========== # para chain node vote quit ============="
-    ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
-    ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
-    ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588
-    hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    echo "${hash}"
-    query_tx "${PARA_CLI}" "${hash}"
-
-    balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
-    if [ "$balance" != "0.0000" ]; then
-        echo "unfrozen coinfrozen error balance=$balance"
-        exit 1
-    fi
-
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
-    if [ "${status}" != "4" ]; then
-        echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
-        exit 1
-    fi
-
-    node=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r '.value|contains("1E5")')
-    if [ "${node}" == "true" ]; then
-        echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup_addrs -t user.p.para.
-        exit 1
-    fi
-
-    echo "=========== # para chain behalf node vote test ============="
-    para_nodemanage_node_behalf_join
-    id=$(${PARA_CLI} para node_status -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -t user.p.para. | jq -r ".id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} para node_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
-        exit 1
-    fi
-    ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
-    ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
-    hash=$(${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    echo "${hash}"
-    query_tx "${PARA_CLI}" "${hash}"
-
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
-    if [ "${status}" != "2" ]; then
-        echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+    status=$(${PARA_CLI} para node_id_status -t user.p.para. -i "$id" | jq -r ".status")
+    if [ "${status}" != "3" ]; then
+        echo "wrong close status"
+        ${PARA_CLI} para node_id_status -t user.p.para. -i "$id"
         exit 1
     fi
 
@@ -792,12 +807,51 @@ function para_nodemanage_test() {
         exit 1
     fi
 
-    echo "=========== # para chain node quit ============="
-    hash=$(${PARA_CLI} send para node -o 3 -i "$id" -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d)
+
+    echo "=========== # para chain same node vote again fail ============="
+    ${PARA_CLI} send para node -o 2 -i "$node1_id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+    ${PARA_CLI} send para node -o 2 -i "$node1_id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+    hash=$(${PARA_CLI} send para node -o 2 -i "$node1_id" -v 1 -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    status=$(${CLI} para node_id_status -t user.p.para. -i "$node1_id" | jq -r ".status")
+    if [ "${status}" == "3" ]; then
+        echo "wrong vote status"
+        ${CLI} para node_id_status -t user.p.para. -i "$node1_id"
+        exit 1
+    fi
+
+    echo "=========== # para chain node 1 cancel ============="
+    hash=$(${PARA_CLI} send para node -o 4 -i "$node1_id" -k 0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    echo "=========== # para chain node vote quit ============="
+    balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
+    if [ "$balance" != "32.0000" ]; then
+        echo "unfrozen coinfrozen error balance=$balance"
+        exit 1
+    fi
+    status=$(${PARA_CLI} para node_id_status -t user.p.para. -i "$node1_id" | jq -r ".status")
+    if [ "${status}" != "4" ]; then
+        echo "wrong cancel status"
+        ${PARA_CLI} para node_id_status -t user.p.para. -i "$node1_id"
+        exit 1
+    fi
+
+    echo "=========== # para chain node 2 quit ============="
+    hash=$(${PARA_CLI} send para node -o 3 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d)
+    echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
+
+    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
+    if [ -z "$id" ]; then
+        echo "id not found"
+        ${PARA_CLI} tx query -s "${hash}"
+        exit 1
+    fi
+
+    echo "=========== # para chain node2 vote quit ============="
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d
@@ -811,26 +865,36 @@ function para_nodemanage_test() {
         exit 1
     fi
 
-    status=$(${PARA_CLI} para node_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
-    if [ "${status}" != "4" ]; then
+    status=$(${PARA_CLI} para node_addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
+    if [ "${status}" != "11" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para node_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para node_addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
         exit 1
     fi
-
+    status=$(${PARA_CLI} para node_id_status -t user.p.para. -i "$id" | jq -r ".status")
+    if [ "${status}" != "3" ]; then
+        echo "wrong cancel status"
+        ${PARA_CLI} para node_id_status -t user.p.para. -i "$id"
+        exit 1
+    fi
     node=$(${PARA_CLI} para nodegroup_addrs -t user.p.para. | jq -r '.value|contains("1NNa")')
     if [ "${node}" == "true" ]; then
         echo "wrong node group addr"
         ${PARA_CLI} para nodegroup_addrs -t user.p.para.
         exit 1
     fi
+
+
+
 }
 
 function para_test() {
     echo "=========== # para chain test ============="
     para_create_nodegroup
     para_nodegroup_behalf_quit_test
+    para_nodemanage_cancel_test
     para_nodemanage_test
+    para_nodemanage_node_behalf_join
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw

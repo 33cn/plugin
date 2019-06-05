@@ -444,6 +444,7 @@ func updateVotes(stat *pt.ParaNodeIdStatus, nodes map[string]struct{}) {
 	stat.Votes = votes
 }
 
+
 func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
@@ -503,14 +504,21 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil {
 		return nil, err
 	}
-
 	if config.Title != stat.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, stat.Title)
 	}
-
 	if stat.Status != pt.ParacrossNodeJoining && stat.Status != pt.ParacrossNodeQuiting {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, stat.Status)
 	}
+
+	//已经被其他id pass 场景
+	if stat.Status == pt.ParacrossNodeJoining && validNode(stat.TargetAddr,nodes){
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
+	}
+	if stat.Status == pt.ParacrossNodeQuiting && !validNode(stat.TargetAddr,nodes){
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
+	}
+
 	var copyStat pt.ParaNodeIdStatus
 	err = deepCopy(&copyStat, stat)
 	if err != nil {

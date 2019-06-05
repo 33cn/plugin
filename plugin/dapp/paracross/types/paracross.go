@@ -117,7 +117,7 @@ const (
 //voting status
 const (
 	// ParacrossNodeIDJoining apply for join group
-	ParacrossNodeJoining = iota
+	ParacrossNodeJoining = iota + 1
 	// ParacrossNodeIDQuiting apply for quiting group
 	ParacrossNodeQuiting
 	// ParacrossNodeIDClosed id voting closed

@@ -179,23 +179,23 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 	return err
 }
 
-// GetNodeStatus get super node status
-func (c *channelClient) GetNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeIdStatus, error) {
+// GetNodeAddrStatus get super node status
+func (c *channelClient) GetNodeAddrStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeAddrIdStatus, error) {
 	r := *req
 	data, err := c.Query(pt.GetExecName(), "GetNodeAddrInfo", &r)
 	if err != nil {
 		return nil, err
 	}
-	if resp, ok := data.(*pt.ParaNodeIdStatus); ok {
+	if resp, ok := data.(*pt.ParaNodeAddrIdStatus); ok {
 		return resp, nil
 	}
 	return nil, types.ErrDecode
 }
 
-// GetNodeStatus get super node status
+// GetNodeIDStatus get super node status
 func (c *channelClient) GetNodeIDStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeIdStatus, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetNodeIdInfo", &r)
+	data, err := c.Query(pt.GetExecName(), "GetNodeIDInfo", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -205,21 +205,25 @@ func (c *channelClient) GetNodeIDStatus(ctx context.Context, req *pt.ReqParacros
 	return nil, types.ErrDecode
 }
 
-// GetNodeStatus get super node status
-func (c *Jrpc) GetNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
-	if req == nil || (req.Addr == "" && req.Id == "") {
+// GetNodeAddrStatus get super node status
+func (c *Jrpc) GetNodeAddrStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
+	if req == nil || req.Addr == "" {
 		return types.ErrInvalidParam
 	}
 
-	var data *pt.ParaNodeIdStatus
-	var err error
-	if req.Addr != "" {
-		data, err = c.cli.GetNodeStatus(context.Background(), req)
+	data, err := c.cli.GetNodeAddrStatus(context.Background(), req)
+
+	*result = data
+	return err
+}
+
+// GetNodeIdStatus get super node status
+func (c *Jrpc) GetNodeIDStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
+	if req == nil || req.Id == "" {
+		return types.ErrInvalidParam
 	}
 
-	if req.Id != "" {
-		data, err = c.cli.GetNodeIDStatus(context.Background(), req)
-	}
+	data, err := c.cli.GetNodeIDStatus(context.Background(), req)
 
 	*result = data
 	return err

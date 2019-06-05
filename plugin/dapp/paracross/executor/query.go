@@ -85,11 +85,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if in == nil || in.Title == "" || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
-	addrStat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
-	if err != nil {
-		return nil, err
-	}
-	stat, err := getNodeID(p.GetStateDB(), addrStat.ProposalId)
+	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +93,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 }
 
 //Query_GetNodeIdInfo get specific node addr info
-func (p *Paracross) Query_GetNodeIdInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" || in.Id == "" {
 		return nil, types.ErrInvalidParam
 	}
