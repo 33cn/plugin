@@ -301,11 +301,9 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 
 // CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
-	if isPrunedMavl {
-		if isNeedDelPrunedMavl() {
-			wg.Add(1)
-			go deletePrunedMavl(kvmMavls.GetDB())
-		}
+	if isPrunedMavl && isNeedDelPrunedMavl() {
+		wg.Add(1)
+		go deletePrunedMavl(kvmMavls.GetDB())
 	}
 	return kvmMavls.Commit(req)
 }
