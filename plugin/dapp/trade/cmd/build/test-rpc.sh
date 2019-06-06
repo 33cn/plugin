@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 CASE_ERR=""
 trade_addr=""
@@ -13,67 +16,6 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
-# $2=0 means true, other false
-function echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="FAIL"
-    fi
-}
-
-function chain33_ImportPrivkey() {
-    local pri=$2
-    local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"admin"}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$1")
-    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="admin") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-}
-
-function Chain33_SendToAddress() {
-    local from="$1"
-    local to="$2"
-    local amount=$3
-    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
-    #    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
-    #    query_tx "$hash"
-}
-
-function chain33_unlock() {
-    ok=$(curl -k -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
-function block_wait() {
-    local req='"method":"Chain33.GetLastHeader","params":[]'
-    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
 function updateConfig() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "manage","actionName":"Modify","payload":{ "key": "token-blacklist","value": "BTY","op": "add","addr": ""}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
@@ -81,13 +23,7 @@ function updateConfig() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "update config signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "update config sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "update config queryExecRes" "$?"
@@ -100,13 +36,7 @@ function token_preCreate() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "token preCreate signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token preCreate sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token preCreate queryExecRes" "$?"
@@ -119,13 +49,7 @@ function token_finish() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "token finish signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token finish sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token finish queryExecRes" "$?"
@@ -157,13 +81,7 @@ function token_transfer() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "token transfer signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token transfer sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token transfer queryExecRes" "$?"
@@ -177,13 +95,7 @@ function token_sendExec() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${addr}"
-    echo_rst "token sendExec signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token sendExec sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${addr}" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token sendExec queryExecRes" "$?"
@@ -196,15 +108,9 @@ function trade_createSellTx() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "trade createSellTx signRawTx" "$?"
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
-    sendSignedTx
-    echo_rst "trade createSellTx sendSignedTx" "$?"
-
-    block_wait 2
-
-    queryTransaction ".error | not" "true"
+     queryTransaction ".error | not" "true"
     echo_rst "trade createSellTx queryExecRes" "$?"
 }
 
@@ -226,13 +132,7 @@ function trade_createBuyTx() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeBuyerAddr}"
-    echo_rst "trade createBuyTx signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "trade createBuyTx sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade createBuyTx queryExecRes" "$?"
@@ -300,13 +200,7 @@ function trade_buyLimit() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeBuyerAddr}"
-    echo_rst "trade buyLimit signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "trade buyLimit sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade buyLimit queryExecRes" "$?"
@@ -320,13 +214,7 @@ function trade_sellMarket() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "trade sellMarket signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "trade sellMarket sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${tradeAddr}" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade sellMarket queryExecRes" "$?"
@@ -339,13 +227,7 @@ function trade_revokeBuy(){
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "trade revokeBuy signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "trade revokeBuy sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade revokeBuy queryExecRes" "$?"
@@ -358,36 +240,10 @@ function trade_revoke() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tradeAddr}"
-    echo_rst "trade revoke signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "trade revoke sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade revoke queryExecRes" "$?"
-}
-
-function signRawTx() {
-    unsignedTx=$1
-    addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"${addr}"'","txHex":"'"${unsignedTx}"'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$signedTx" == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$txHash" == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
 }
 
 # 查询交易的执行结果
@@ -395,8 +251,8 @@ function sendSignedTx() {
 function queryTransaction() {
     validator=$1
     expectRes=$2
-    echo "txhash=${txHash}"
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
+    echo "txhash=${RAW_TX_HASH}"
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${RAW_TX_HASH}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
@@ -409,7 +265,7 @@ function init() {
     echo "ipara=$ispara"
     tokenExecName="token"
     tradeExecName="trade"
-    from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
     local trade_addr=""
     if [ "$ispara" == "true" ]; then
         tokenExecName="user.p.para.token"
@@ -421,12 +277,12 @@ function init() {
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    Chain33_SendToAddress "$tradeAddr" "$tradeBuyerAddr" 10000000000
-    Chain33_SendToAddress "$tradeAddr" "$trade_addr" 10000000000
-    Chain33_SendToAddress "$tradeAddr" "$token_addr" 10000000000
-    block_wait 2
-    Chain33_SendToAddress "$tradeBuyerAddr" "$trade_addr" 10000000000
-    block_wait 2
+    chain33_SendToAddress "$tradeAddr" "$tradeBuyerAddr" 10000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "$tradeAddr" "$trade_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "$tradeAddr" "$token_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_BlockWait 2 "${MAIN_HTTP}"
+    chain33_SendToAddress "$tradeBuyerAddr" "$trade_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_BlockWait 2 "${MAIN_HTTP}"
 
     echo "trade=$trade_addr"
 
@@ -435,8 +291,8 @@ function init() {
     token_finish
     token_balance
     token_transfer "${tradeBuyerAddr}"
-    token_sendExec "${tradeAddr}"
-    token_sendExec "${tradeBuyerAddr}"
+    token_sendExec "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
+    token_sendExec "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 "
 }
 
 function run_test() {
