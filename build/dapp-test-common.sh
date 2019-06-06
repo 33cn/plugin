@@ -150,3 +150,9 @@ chain33_QueryExecBalance() {
     ok=$(jq '(.error|not) and (.result[0] | [has("balance", "frozen"), true] | unique | length == 1)' <<<"$resp")
     [ "$ok" == true ]
 }
+
+chain33_GetAccounts() {
+    local MAIN_HTTP=$1
+    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetAccounts","params":[{}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}")
+    echo "$resp"
+}

@@ -1,120 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
-CASE_ERR=""
-
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
-
-# base functions
-# $2=0 means true, other false
-function echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="err"
-    fi
-
-}
-
-function Chain33_SendToAddress() {
-    local from="$1"
-    local to="$2"
-    local amount=$3
-    local req='{"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]}'
-    #    echo "#request: $req"
-    resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
-    #    query_tx "$hash"
-
-}
-
-function sign_raw_tx() {
-    txHex="$1"
-    priKey="$2"
-    req='{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]}'
-    #    echo "#request SignRawTx: $req"
-    signedTx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    #    echo "signedTx=$signedTx"
-    if [ "$signedTx" != null ]; then
-        send_tx "$signedTx"
-    else
-        echo "signedTx null error"
-    fi
-}
-
-function send_tx() {
-    signedTx=$1
-    req='{"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]}'
-    #    echo "#request sendTx: $req"
-    #    curl -ksd "$req" ${MAIN_HTTP}
-    resp=$(curl -ksd "$req" ${MAIN_HTTP})
-    err=$(jq '(.error)' <<<"$resp")
-    txhash=$(jq -r ".result" <<<"$resp")
-    if [ "$err" == null ]; then
-        #   echo "tx hash: $txhash"
-        query_tx "$txhash"
-    else
-        echo "send tx error:$err"
-    fi
-
-}
-
-function block_wait() {
-    req='{"method":"Chain33.GetLastHeader","params":[{}]}'
-    cur_height=$(curl -ksd "$req" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "$req" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function query_tx() {
-    block_wait 1
-    txhash="$1"
-    # echo "req=$req"
-    local times=10
-    while true; do
-        req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
-        ret=$(curl -ksd "$req" ${MAIN_HTTP})
-        tx=$(jq -r ".result.tx.hash" <<<"$ret")
-        echo "====query tx= ${1}, return=$ret "
-        if [ "${tx}" != "${1}" ]; then
-            block_wait 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "====query tx=$1 failed"
-                echo "req=$req"
-                curl -ksd "$req" ${MAIN_HTTP}
-                exit 1
-            fi
-        else
-            exec_err=$(jq '(.result.receipt.logs[0].tyName == "LogErr")' <<<"$ret")
-            [ "$exec_err" != true ]
-            echo "====query tx=$1  success"
-            break
-        fi
-    done
-}
+txhash=""
 
 function query_unfreezeID() {
-    block_wait 1
+    chain33_BlockWait 1 "$MAIN_HTTP"
 
     # echo "req=$req"
     local times=10
@@ -161,8 +55,8 @@ function init() {
     owner_key=CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
     #unfreeze_exec_addr=15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H
 
-    Chain33_SendToAddress "$owner" "$exec_addr" 500000000
-    Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000
+    Chain33_SendToAddress "$owner" "$exec_addr" 500000000 "${MAIN_HTTP}"
+    Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000 "${MAIN_HTTP}"
     block_wait 1
 }
 
@@ -175,7 +69,7 @@ function CreateRawUnfreezeCreate() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    sign_raw_tx "$rawtx" "$owner_key"
+    chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
     query_unfreezeID
 }
 
@@ -189,8 +83,9 @@ function CreateRawUnfreezeWithdraw() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    sign_raw_tx "$rawtx" "${beneficiary_key}"
+    chain33_SignRawTx "$rawtx" "${beneficiary_key}" "${MAIN_HTTP}"
 }
+
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
     # echo "#request: $req"
@@ -200,7 +95,7 @@ function CreateRawUnfreezeTerminate() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    sign_raw_tx "$rawtx" "$owner_key"
+    chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
     block_wait 2
 }
 

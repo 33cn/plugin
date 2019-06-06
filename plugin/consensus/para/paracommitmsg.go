@@ -40,6 +40,7 @@ func (client *commitMsgClient) handler() {
 	var isRollback bool
 	var notification []int64 //记录每次系统重启后 min and current height
 	var finishHeight int64
+	var consensHeight int64
 	var sendingHeight int64 //当前发送的最大高度
 	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
@@ -155,7 +156,7 @@ out:
 		//获取正在共识的高度，同步有两层意思，一个是主链跟其他节点完成了同步，另一个是当前平行链节点的高度追赶上了共识高度
 		//一般来说高度增长从小到大： notifiy[0] -- selfConsensusHeight(mainHeight) -- finishHeight -- sendingHeight -- notify[1]
 		case rsp := <-consensusCh:
-			consensHeight := rsp.Height
+			consensHeight = rsp.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
 				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick != nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
 
@@ -193,7 +194,6 @@ out:
 				finishHeight = consensHeight
 				sendingMsgs = nil
 				client.currentTx = nil
-				isSync = true
 			}
 
 		case miner := <-client.minerSwitch:
@@ -212,6 +212,9 @@ out:
 				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
 				readTick = ticker.C
 				plog.Info("para consensus start mining")
+
+				//钱包开启后，从共识高度重新开始发送，在需要重发共识时候，不需要重启设备
+				finishHeight = consensHeight
 			}
 
 		case <-client.quit:

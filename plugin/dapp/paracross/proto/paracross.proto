@@ -63,7 +63,11 @@ message ParaNodeVoteDetail {
 }
 
 message ParaNodeAddrIdStatus {
-    string proposalId           = 1;
+    string addr                 = 1;
+    string proposalId           = 2;
+    string quitId               = 3;
+    int32  status               = 4;
+    string title                = 5;
 }
 
 message ParaNodeIdStatus {
@@ -85,6 +89,11 @@ message ReceiptParaNodeConfig {
     ParaNodeIdStatus      current = 4;
 }
 
+message ReceiptParaNodeAddrStatUpdate {
+    string                    fromAddr = 1;
+    ParaNodeAddrIdStatus      prev     = 2;
+    ParaNodeAddrIdStatus      current  = 3;
+}
 
 message ReceiptParaNodeVoteDone {
     string id               = 1;
@@ -104,7 +113,6 @@ message ParaNodeGroupConfig {
     string id                   = 3;
     string addrs                = 4;
     int64  coinsFrozen          = 5;
-    uint32 emptyBlockInterval   = 6;
 }
 
 
@@ -114,10 +122,8 @@ message ParaNodeGroupStatus {
     string title                = 3;
     string targetAddrs          = 4;
     int64  coinsFrozen          = 5;
-    uint32 emptyBlockInterval   = 6;
-    int64  mainHeight           = 7;
-    string fromAddr             = 8;
-    int64  height               = 9;
+    string fromAddr             = 6;
+    int64  height               = 7;
 }
 
 message ReceiptParaNodeGroupConfig {

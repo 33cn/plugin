@@ -38,6 +38,7 @@ func ParcCmd() *cobra.Command {
 		GetParaListCmd(),
 		GetNodeGroupCmd(),
 		GetNodeInfoCmd(),
+		GetNodeIDInfoCmd(),
 		GetNodeListCmd(),
 		NodeGroupStatusCmd(),
 		NodeGroupListCmd(),
@@ -251,12 +252,12 @@ func CreateRawNodeManageCmd() *cobra.Command {
 }
 
 func addNodeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:join,2:vote,3:quit")
+	cmd.Flags().Uint32P("operation", "o", 0, "operation:1:join,2:vote,3:quit,4:cancel")
 	cmd.MarkFlagRequired("operation")
 
-	cmd.Flags().StringP("addr", "a", "", "operating target addr")
+	cmd.Flags().StringP("addr", "a", "", "operating target addr[optional]")
 
-	cmd.Flags().StringP("id", "i", "", "operating target id")
+	cmd.Flags().StringP("id", "i", "", "operating target id[optional]")
 
 	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
 	cmd.Flags().Float64P("coins_frozen", "c", 0, "frozen coins amount, should not less nodegroup's")
@@ -455,8 +456,8 @@ func paraList(cmd *cobra.Command, args []string) {
 // GetNodeInfoCmd get node current status
 func GetNodeInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "node_status",
-		Short: "Get node current vote status",
+		Use:   "node_addr_status",
+		Short: "Get node current status:10:joined,11:quited from nodegroup",
 		Run:   nodeInfo,
 	}
 	addNodeBodyCmdFlags(cmd)
@@ -468,7 +469,7 @@ func addNodeBodyCmdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("title")
 
 	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
-	cmd.Flags().StringP("id", "i", "", "id apply for super user")
+	cmd.MarkFlagRequired("addr")
 
 }
 
@@ -476,15 +477,47 @@ func nodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	title, _ := cmd.Flags().GetString("title")
 	addr, _ := cmd.Flags().GetString("addr")
-	id, _ := cmd.Flags().GetString("id")
 
 	params := pt.ReqParacrossNodeInfo{
 		Title: title,
 		Addr:  addr,
+	}
+	var res pt.ParaNodeAddrIdStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeAddrStatus", params, &res)
+	ctx.Run()
+}
+
+// GetNodeIDInfoCmd get node current status
+func GetNodeIDInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "node_id_status",
+		Short: "Get node id current vote status:0:all,1:joining,2:quiting,3:closed,4:canceled",
+		Run:   nodeIDInfo,
+	}
+	addNodeIDBodyCmdFlags(cmd)
+	return cmd
+}
+
+func addNodeIDBodyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("title", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("title")
+
+	cmd.Flags().StringP("id", "i", "", "id apply for super user")
+	cmd.MarkFlagRequired("id")
+
+}
+
+func nodeIDInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	title, _ := cmd.Flags().GetString("title")
+	id, _ := cmd.Flags().GetString("id")
+
+	params := pt.ReqParacrossNodeInfo{
+		Title: title,
 		Id:    id,
 	}
 	var res pt.ParaNodeIdStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeIDStatus", params, &res)
 	ctx.Run()
 }
 
