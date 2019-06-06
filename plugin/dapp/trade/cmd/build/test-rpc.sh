@@ -204,7 +204,7 @@ function trade_buyLimit() {
 
     queryTransaction ".error | not" "true"
     echo_rst "trade buyLimit queryExecRes" "$?"
-    buyID=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.base.buyID" | awk -F '-' '{print $4}')
+    buyID=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${RAW_TX_HASH}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.base.buyID" | awk -F '-' '{print $4}')
 }
 
 function trade_sellMarket() {
@@ -265,7 +265,6 @@ function init() {
     echo "ipara=$ispara"
     tokenExecName="token"
     tradeExecName="trade"
-    from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
     local trade_addr=""
     if [ "$ispara" == "true" ]; then
         tokenExecName="user.p.para.token"
