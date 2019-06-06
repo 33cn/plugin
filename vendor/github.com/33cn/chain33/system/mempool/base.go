@@ -285,7 +285,10 @@ func (mem *Mempool) RemoveTxsOfBlock(block *types.Block) bool {
 func (mem *Mempool) GetProperFeeRate() int64 {
 	baseFeeRate := mem.cache.GetProperFee()
 	if mem.cfg.IsLevelFee {
-		return mem.getLevelFeeRate(baseFeeRate)
+		levelFeeRate := mem.getLevelFeeRate(mem.cfg.MinTxFee)
+		if levelFeeRate > baseFeeRate {
+			return levelFeeRate
+		}
 	}
 	return baseFeeRate
 }
@@ -296,13 +299,12 @@ func (mem *Mempool) getLevelFeeRate(baseFeeRate int64) int64 {
 	sumByte := mem.cache.TotalByte()
 	maxTxNumber := types.GetP(mem.Height()).MaxTxNumber
 	switch {
-	case (sumByte > int64(types.MaxBlockSize/100) && sumByte < int64(types.MaxBlockSize/20)) ||
-		(int64(mem.Size()) >= maxTxNumber/10 && int64(mem.Size()) < maxTxNumber/2):
-		feeRate = 10 * baseFeeRate
 	case sumByte >= int64(types.MaxBlockSize/20) || int64(mem.Size()) >= maxTxNumber/2:
 		feeRate = 100 * baseFeeRate
+	case sumByte >= int64(types.MaxBlockSize/100) || int64(mem.Size()) >= maxTxNumber/10:
+		feeRate = 10 * baseFeeRate
 	default:
-		return baseFeeRate
+		feeRate = baseFeeRate
 	}
 	if feeRate > 10000000 {
 		feeRate = 10000000
