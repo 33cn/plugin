@@ -26,7 +26,7 @@ func NewQueue(subcfg subConfig) *Queue {
 }
 
 func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
-	txSize:=proto.Size(item.Value)
+	txSize := proto.Size(item.Value)
 	return &skiplist.SkipValue{Score: item.Value.Fee / int64(txSize), Value: item}, nil
 }
 
@@ -136,8 +136,8 @@ func (cache *Queue) GetProperFee() int64 {
 		if i == 100 {
 			return false
 		}
-		txSize=proto.Size(tx.(*mempool.Item).Value)
-		feeRate=tx.(*mempool.Item).Value.Fee/int64(txSize/1000+1)
+		txSize = proto.Size(tx.(*mempool.Item).Value)
+		feeRate = tx.(*mempool.Item).Value.Fee / int64(txSize/1000+1)
 		sumFeeRate += feeRate
 		i++
 		return true
