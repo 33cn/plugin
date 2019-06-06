@@ -277,17 +277,11 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 		var hash []byte
 		var err error
 
-		if isPrunedMavl {
-			hash, err = kvmMavls.MavlStore.MemSet(datas, sync)
-			if err != nil {
-				return hash, err
-			}
-		} else {
-			hash, err = kvmMavls.MavlStore.MemSetUpgrade(datas, sync)
-			if err != nil {
-				return hash, err
-			}
+		hash, err = kvmMavls.MavlStore.MemSet(datas, sync)
+		if err != nil {
+			return hash, err
 		}
+
 		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
 		if err != nil {
 			return hash, err
@@ -307,18 +301,13 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 
 // CommitUpgrade kvs in the mem of KVmMavlStore module to state db and return the StateHash
 func (kvmMavls *KVmMavlStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
-	var hash []byte
-	var err error
 	if isPrunedMavl {
-		hash, err = kvmMavls.Commit(req)
 		if isNeedDelPrunedMavl() {
 			wg.Add(1)
 			go deletePrunedMavl(kvmMavls.GetDB())
 		}
-	} else {
-		hash, err = kvmMavls.KVMVCCStore.CommitUpgrade(req)
 	}
-	return hash, err
+	return kvmMavls.Commit(req)
 }
 
 // Del set kvs to nil with StateHash
