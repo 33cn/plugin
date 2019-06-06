@@ -116,7 +116,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc MemSet", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc MemSet", "cost", types.Since(beg))
 	}()
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
@@ -150,7 +150,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc Commit", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc Commit", "cost", types.Since(beg))
 	}()
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
