@@ -110,7 +110,7 @@ function trade_createSellTx() {
 
     chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 
-     queryTransaction ".error | not" "true"
+    queryTransaction ".error | not" "true"
     echo_rst "trade createSellTx queryExecRes" "$?"
 }
 
