@@ -98,7 +98,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	values := make([][]byte, len(datas.Keys))
 	version, err := mvccs.mvcc.GetVersion(datas.StateHash)
 	if err != nil {
-		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash))
+		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash), "error:", err)
 		return values
 	}
 	for i := 0; i < len(datas.Keys); i++ {
@@ -262,7 +262,10 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	storeBatch.Write()
+	err := storeBatch.Write()
+	if err != nil {
+		kmlog.Info("KVMVCCStore saveKVSets", "Write error", err)
+	}
 }
 
 // GetMaxVersion 获取当前最大高度
