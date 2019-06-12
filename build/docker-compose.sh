@@ -430,7 +430,7 @@ function main() {
     dapp_run test "${ip}"
 
     ### rpc test  ###
-    #rpc_test "${ip}"
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container
