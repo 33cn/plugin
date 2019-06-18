@@ -9,17 +9,7 @@ MAIN_HTTP=""
 source ../dapp-test-common.sh
 
 ticketId=""
-blockhash=""
 price=$((10000 * 100000000))
-
-last_blockhash() {
-    result=$(curl -ksd '{"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.hash")
-    [[ $result != "" ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    blockhash=$result
-    echo -e "######\\n  last blockhash is $blockhash  \\n######"
-}
 
 ticket_CreateBindMiner() {
     #创建交易
@@ -28,7 +18,7 @@ ticket_CreateBindMiner() {
     returnPriv=$3
     amount=$4
     set -x
-    resp=$(curl -ksd '{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":false}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [[ $ok == null ]]
     rst=$?
@@ -177,8 +167,8 @@ function run_testcases() {
     #关闭
     ticket_CloseTickets "${minerAddr2}"
 
-    last_blockhash
-    ticket_RandNumHash "${blockhash}" 5
+    chain33_LastBlockhash "${MAIN_HTTP}"
+    ticket_RandNumHash "${LAST_BLOCK_HASH}" 5
 }
 
 function main() {
