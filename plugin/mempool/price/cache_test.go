@@ -9,6 +9,7 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	drivers "github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -157,5 +158,7 @@ func TestGetProperFee(t *testing.T) {
 	cache.Push(item1)
 	cache.Push(item4)
 	cache.GetProperFee()
-	assert.Equal(t, (item1.Value.Fee+item4.Value.Fee)/2, cache.GetProperFee())
+	txSize1 := proto.Size(item1.Value)
+	txSize2 := proto.Size(item4.Value)
+	assert.Equal(t, (item1.Value.Fee/int64(txSize1/1000+1)+item4.Value.Fee/int64(txSize2/1000+1))/2, cache.GetProperFee())
 }

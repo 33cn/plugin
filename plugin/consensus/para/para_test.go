@@ -251,7 +251,7 @@ func TestGetLastBlockInfo(t *testing.T) {
 
 	qClient.On("Wait", mock.Anything).Return(msg, nil)
 
-	api.On("GetSequenceByHash", mock.Anything).Return(&types.Int64{Data: int64(1)}, nil)
+	api.On("GetMainSequenceByHash", mock.Anything).Return(&types.Int64{Data: int64(1)}, nil)
 	mainBlock := &types.Block{ParentHash: []byte("phash")}
 	mainDetail := &types.BlockDetail{Block: mainBlock}
 	blocks := &types.BlockDetails{}

@@ -98,7 +98,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	values := make([][]byte, len(datas.Keys))
 	version, err := mvccs.mvcc.GetVersion(datas.StateHash)
 	if err != nil {
-		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash))
+		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash), "error:", err)
 		return values
 	}
 	for i := 0; i < len(datas.Keys); i++ {
@@ -116,7 +116,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc MemSet", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc MemSet", "cost", types.Since(beg))
 	}()
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
@@ -150,7 +150,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc Commit", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc Commit", "cost", types.Since(beg))
 	}()
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
@@ -262,7 +262,10 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	storeBatch.Write()
+	err := storeBatch.Write()
+	if err != nil {
+		kmlog.Info("KVMVCCStore saveKVSets", "Write error", err)
+	}
 }
 
 // GetMaxVersion 获取当前最大高度

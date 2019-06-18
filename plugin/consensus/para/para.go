@@ -276,7 +276,7 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 
 //get the last sequence in parachain
 func (client *client) GetLastSeq() (int64, error) {
-	blockedSeq, err := client.GetAPI().GetLastBlockSequence()
+	blockedSeq, err := client.GetAPI().GetLastBlockMainSequence()
 	if err != nil {
 		return -2, err
 	}
@@ -285,7 +285,7 @@ func (client *client) GetLastSeq() (int64, error) {
 
 func (client *client) GetBlockedSeq(hash []byte) (int64, error) {
 	//from blockchain db
-	blockedSeq, err := client.GetAPI().GetSequenceByHash(&types.ReqHash{Hash: hash})
+	blockedSeq, err := client.GetAPI().GetMainSequenceByHash(&types.ReqHash{Hash: hash})
 	if err != nil {
 		return -2, err
 	}
