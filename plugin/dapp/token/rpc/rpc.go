@@ -25,9 +25,7 @@ func (c *channelClient) getTokenBalance(in *tokenty.ReqTokenBalance) ([]*types.A
 	case types.ExecName(tokenty.TokenX):
 		addrs := in.GetAddresses()
 		var queryAddrs []string
-		for _, addr := range addrs {
-			queryAddrs = append(queryAddrs, addr)
-		}
+		queryAddrs = append(queryAddrs, addrs...)
 
 		accounts, err := accountTokendb.LoadAccounts(c.QueueProtocolAPI, queryAddrs)
 		if err != nil {
