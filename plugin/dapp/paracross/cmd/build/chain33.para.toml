@@ -1,6 +1,7 @@
-Title="user.p.guodun."
-# TestNet=true
-CoinSymbol="paracoin"
+Title="user.p.para."
+TestNet=false
+CoinSymbol="bty"
+EnableParaFork=true
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
@@ -37,7 +38,9 @@ singleMode=true
 batchsync=false
 isRecordBlockSequence=false
 isParaChain = true
-enableTxQuickIndex=false
+enableTxQuickIndex=true
+# 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
+enableReExecLocal=true
 
 [p2p]
 seeds=[]
@@ -56,9 +59,9 @@ grpcLogFile="grpc33.log"
 
 [rpc]
 # 避免与主链配置冲突
-jrpcBindAddr="localhost:8901"
-grpcBindAddr="localhost:8902"
-whitelist=["127.0.0.1"]
+jrpcBindAddr=":8901"
+grpcBindAddr=":8902"
+whitelist=["*"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
 
@@ -92,6 +95,7 @@ targetTimePerBlock = 16
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
+#ParaRemoteGrpcClient="101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
@@ -101,26 +105,38 @@ writeBlockSeconds=2
 emptyBlockInterval=50
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
-#等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
-waitBlocks4CommitMsg=2
 #云端主链节点切换后，平行链适配新主链节点block，回溯查找和自己记录的相同blockhash的深度
 searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
-#主链支持平行链共识tx分叉高度，需要和主链保持严格一致
-MainForkParacrossCommitTx=-1
-#平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx
+#主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改
+MainForkParacrossCommitTx=2270000
+#平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx=2270000， -1 不开启
 MainParaSelfConsensusForkHeight=-1
 
 [store]
-name="mavl"
+name="kvmvccmavl"
 driver="leveldb"
+storedbVersion="2.0.0"
 dbPath="paradatadir/mavltree"
 dbCache=128
+
+[store.sub.mavl]
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
 pruneHeight=10000
+enableMemTree=true
+enableMemVal=true
+
+[store.sub.kvmvccmavl]
+enableMVCCIter=true
+enableMavlPrefix=false
+enableMVCC=false
+enableMavlPrune=false
+pruneHeight=10000
+enableMemTree=true
+enableMemVal=true
 
 [wallet]
 minFee=100000
@@ -134,31 +150,135 @@ minerdisable=true
 isFree=true
 minExecFee=100000
 enableStat=false
+enableMVCC=false
 
 [exec.sub.relay]
-genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+genesis="1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
 
 [exec.sub.manage]
-superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
-    "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
-]
+superManager=["1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"]
 
 [exec.sub.token]
 saveTokenTxList=true
-tokenApprs = [
-	"1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
-	"1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",
-	"1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",
-	"1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",
-	"1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",
-	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
-]
+tokenApprs=[]
 
 [exec.sub.paracross]
-#平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票
-paraConsensusStopBlocks=100
+#平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
+paraConsensusStopBlocks=30000
+
+
+#系统中所有的fork,默认用chain33的测试网络的
+#但是我们可以替换
+[fork.system]
+ForkChainParamV1= 0
+ForkCheckTxDup=0
+ForkBlockHash= 1
+ForkMinerTime= 0
+ForkTransferExec=0
+ForkExecKey=0
+ForkTxGroup=0
+ForkResetTx0=0
+ForkWithdraw=0
+ForkExecRollback=0
+ForkCheckBlockTime=0
+ForkTxHeight=0
+ForkTxGroupPara=0
+ForkChainParamV2=0
+ForkMultiSignAddress=0
+ForkStateDBSet=0
+ForkLocalDBAccess=0
+ForkBlockCheck=0
+ForkBase58AddressCheck=0
+#平行链上使能平行链执行器如user.p.x.coins执行器的注册，缺省为0，对已有的平行链需要设置一个fork高度
+ForkEnableParaRegExec=0
+
+[fork.sub.coins]
+Enable=0
+
+[fork.sub.ticket]
+Enable=0
+ForkTicketId =0
+ForkTicketVrf =0
+
+[fork.sub.retrieve]
+Enable=0
+ForkRetrive=0
+
+[fork.sub.hashlock]
+Enable=0
+
+[fork.sub.manage]
+Enable=0
+ForkManageExec=0
+
+[fork.sub.token]
+Enable=0
+ForkTokenBlackList= 0
+ForkBadTokenSymbol= 0
+ForkTokenPrice=0
+ForkTokenSymbolWithNumber=0
+ForkTokenCheck= 0
+
+[fork.sub.trade]
+Enable=0
+ForkTradeBuyLimit= 0
+ForkTradeAsset= 0
+ForkTradeID = 0
+
+[fork.sub.paracross]
+Enable=0
+ForkParacrossWithdrawFromParachain=0
+ForkParacrossCommitTx=0
+
+[fork.sub.evm]
+Enable=0
+ForkEVMState=0
+ForkEVMABI=0
+ForkEVMFrozen=0
+ForkEVMKVHash=0
+
+[fork.sub.blackwhite]
+Enable=0
+ForkBlackWhiteV2=0
+
+[fork.sub.cert]
+Enable=0
+
+[fork.sub.guess]
+Enable=0
+
+[fork.sub.lottery]
+Enable=0
+
+[fork.sub.oracle]
+Enable=0
+
+[fork.sub.relay]
+Enable=0
+
+[fork.sub.norm]
+Enable=0
+
+[fork.sub.pokerbull]
+Enable=0
+
+[fork.sub.privacy]
+Enable=0
+
+[fork.sub.game]
+Enable=0
+
+[fork.sub.multisig]
+Enable=0
+
+[fork.sub.unfreeze]
+Enable=0
+ForkTerminatePart=0
+ForkUnfreezeIDX= 0
+
+#对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的fork，如果从0开始同步，statedb会跟以前mavl的不同
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=0
 
 [pprof]
 listenAddr = "localhost:6061"

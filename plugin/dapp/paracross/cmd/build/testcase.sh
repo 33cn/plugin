@@ -42,10 +42,22 @@ function para_set_toml() {
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=1/g' "${1}"
 
     # rpc
-    sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
-    sed -i $xsedfix 's/^grpcBindAddr=.*/grpcBindAddr="0.0.0.0:8902"/g' "${1}"
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
+
+    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+                                                        "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
+                                                        "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"]/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^tokenApprs=.*/tokenApprs=[	"1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+	                                                "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",\
+                                                    "1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",\
+                                                    "1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",\
+                                                    "1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",\
+	                                                "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",]/g' "${1}"
+
 }
 
 function para_set_wallet() {

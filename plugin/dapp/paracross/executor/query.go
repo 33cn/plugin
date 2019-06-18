@@ -63,10 +63,11 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 
 //Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil {
+	if in == nil || in.GetTitle() == "" {
 		return nil, types.ErrInvalidParam
 	}
-	ret, _, err := getParacrossNodes(p.GetStateDB(), in.GetTitle())
+
+	ret, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -75,7 +76,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(calcParaNodeGroupAddrsKey(in.GetTitle()))
+	reply.Key = string(key)
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }

@@ -237,6 +237,23 @@ func getDappForkHeight(fork string) int64 {
 	return forkHeight
 }
 
+func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []byte, error) {
+	key := calcParaNodeGroupAddrsKey(title)
+	nodes, _, err := getNodes(db, key)
+	if err != nil {
+		if errors.Cause(err) != pt.ErrTitleNotExist {
+			return nil, nil, errors.Wrapf(err, "getNodes para for title:%s", title)
+		}
+		key = calcManageConfigNodesKey(title)
+		nodes, _, err = getNodes(db, key)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
+		}
+	}
+
+	return nodes, key, nil
+}
+
 func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 	if a.exec.GetMainHeight() < getDappForkHeight(pt.ForkCommitTx) {
 		nodes, _, err := getConfigManageNodes(a.db, title)
@@ -246,18 +263,9 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 		return nodes, nil
 	}
 
-	nodes, _, err := getParacrossNodes(a.db, title)
-	if err != nil {
-		if errors.Cause(err) != pt.ErrTitleNotExist {
-			return nil, errors.Wrapf(err, "getNodes para for title:%s", title)
-		}
-		nodes, _, err = getConfigManageNodes(a.db, title)
-		if err != nil {
-			return nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
-		}
-	}
+	nodes, _, err := getConfigNodes(a.db, title)
+	return nodes, err
 
-	return nodes, nil
 }
 
 //根据nodes过滤掉可能退出了的addrs
