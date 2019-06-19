@@ -18,7 +18,7 @@ function query_unfreezeID() {
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
         echo "====query tx= ${txhash}, return=$ret "
         if [ "${tx}" != "${txhash}" ]; then
-            chain33_BlockWait  1 "${MAIN_HTTP}"
+            chain33_BlockWait 1 "${MAIN_HTTP}"
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "====query tx=$txhash failed"
@@ -57,7 +57,7 @@ function init() {
 
     chain33_SendToAddress "$owner" "$exec_addr" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000 "${MAIN_HTTP}"
-    chain33_BlockWait  1 "${MAIN_HTTP}"
+    chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeCreate() {
