@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 RAW_TX_HASH=""
+LAST_BLOCK_HASH=""
 CASE_ERR=""
 
 #color
@@ -155,4 +156,11 @@ chain33_GetAccounts() {
     local MAIN_HTTP=$1
     resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetAccounts","params":[{}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}")
     echo "$resp"
+}
+
+chain33_LastBlockhash() {
+    local MAIN_HTTP=$1
+    result=$(curl -ksd '{"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}" | jq -r ".result.hash")
+    LAST_BLOCK_HASH=$result
+    echo -e "######\\n  last blockhash is $LAST_BLOCK_HASH  \\n######"
 }
