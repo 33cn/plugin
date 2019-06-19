@@ -42,6 +42,7 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 		subcfg.PruneHeight = sub.PruneHeight
 		subcfg.EnableMemTree = sub.EnableMemTree
 		subcfg.EnableMemVal = sub.EnableMemVal
+		subcfg.TkCloseCacheLen = sub.TkCloseCacheLen
 	}
 	mavls := &MavlStore{db, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
 	mavl.EnableMavlPrefix(subcfg.EnableMavlPrefix)
@@ -50,6 +51,7 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 	mavl.SetPruneHeight(int(subcfg.PruneHeight))
 	mavl.EnableMemTree(subcfg.EnableMemTree)
 	mavl.EnableMemVal(subcfg.EnableMemVal)
+	mavl.TkCloseCacheLen(subcfg.TkCloseCacheLen)
 	return mavls
 }
 
