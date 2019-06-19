@@ -87,6 +87,8 @@ type subMavlConfig struct {
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
 	EnableMemVal bool `json:"enableMemVal"`
+	// 缓存close ticket数目
+	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
 }
 
 type subConfig struct {
@@ -99,6 +101,8 @@ type subConfig struct {
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
 	EnableMemVal bool `json:"enableMemVal"`
+	// 缓存close ticket数目
+	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
 }
 
 // New construct KVMVCCStore module
@@ -119,6 +123,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
 		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
 		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
+		subMavlcfg.TkCloseCacheLen = subcfg.TkCloseCacheLen
 	}
 
 	bs := drivers.NewBaseStore(cfg)
