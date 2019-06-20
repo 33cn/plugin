@@ -205,7 +205,7 @@ func (client *client) InitBlock() {
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
-		newblock.MainHeight = startHeight
+		newblock.MainHeight = startHeight - 1
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
