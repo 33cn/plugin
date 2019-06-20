@@ -26,7 +26,6 @@ paracross_GetBlock2MainInfo() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-
 chain33_lock() {
     local ok
 
@@ -44,7 +43,6 @@ chain33_unlock() {
     echo_rst "$FUNCNAME" "$rst"
 
 }
-
 
 function paracross_SignAndSend() {
     local signedTx
@@ -67,7 +65,6 @@ function paracross_QueryBalance() {
     echo "$balance"
     return $?
 }
-
 
 function paracross_Transfer_Withdraw() {
     echo "=========== ## para cross transfer/withdraw (main to para) test start"
@@ -108,7 +105,6 @@ function paracross_Transfer_Withdraw() {
     ##echo "tx:$tx"
     paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
-
     #3  资产从主链转移到平行链
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetTransfer","payload":{"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
@@ -128,7 +124,6 @@ function paracross_Transfer_Withdraw() {
     #echo "rawTx:$rawTx"
     paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
-
     sleep 15
     #6 查询取钱后余额状态
     para_balance_withdraw_after=$(paracross_QueryBalance "$fromAddr")
@@ -138,16 +133,14 @@ function paracross_Transfer_Withdraw() {
     withdraw_real=$(($para_balance_after - $para_balance_withdraw_after))
     #echo $withdraw_real
 
-     #7 验证转移是否正确
-    [ "$amount_real" ==  "$amount_should" ] && [ "$withdraw_should" == "$withdraw_real"  ]
+    #7 验证转移是否正确
+    [ "$amount_real" == "$amount_should" ] && [ "$withdraw_should" == "$withdraw_real" ]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 
     echo "=========== ## para cross transfer/withdraw (main to para) test start end"
 
-
 }
-
 
 function paracross_IsSync() {
     local ok
@@ -159,6 +152,7 @@ function paracross_IsSync() {
 }
 
 function paracross_ListTitles() {
+
     local resp
     local ok
 
@@ -169,8 +163,6 @@ function paracross_ListTitles() {
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
-
-
 
 function paracross_GetHeight() {
     local resp
@@ -220,7 +212,6 @@ function paracross_ListNodeGroupStatus() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-
 function paracross_ListNodeStatus() {
     local resp
     local ok
@@ -232,7 +223,6 @@ function paracross_ListNodeStatus() {
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
-
 
 function run_main_testcases() {
     chain33_lock
