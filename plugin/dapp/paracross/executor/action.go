@@ -228,7 +228,7 @@ func getDappForkHeight(forkKey string) int64 {
 	var forkHeight int64
 	if types.IsPara() {
 		key := forkKey
-		if forkKey == pt.ForkCommitTx{
+		if forkKey == pt.ForkCommitTx {
 			key = "MainForkParacrossCommitTx"
 		}
 		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
