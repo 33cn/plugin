@@ -59,7 +59,7 @@ func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDet
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
 		if types.IsPara() && main.Block.Height < forkHeight {
-			if types.IsMyParaExecName(string(main.Block.Txs[i].Execer)) {
+			if types.IsSpecificParaExecName(title, string(main.Block.Txs[i].Execer)) {
 				continue
 			}
 		}
