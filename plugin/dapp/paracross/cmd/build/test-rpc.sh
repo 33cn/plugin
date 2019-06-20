@@ -48,10 +48,10 @@ function paracross_SignAndSend() {
     local signedTx
     local sendedTx
 
-    signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'$1',"privkey":"'$2'","txHex":"'$3'"}]}' ${UNIT_HTTP} | jq -r ".result")
+    signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'"$1"',"privkey":"'"$2"'","txHex":"'"$3"'"}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "signedTx:$signedTx"
-    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP})
-    #echo "sendedTx:$sendedTx"
+    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'$signedTx'"}]}' ${UNIT_HTTP} | jq -r ".result" )
+    echo "sendedTx:$sendedTx"
 }
 
 function paracross_QueryBalance() {
@@ -120,7 +120,7 @@ function paracross_Transfer_Withdraw() {
     amount_real=$(($para_balance_after - $para_balance_before))
 
     #5 取钱
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":'true',"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
     paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
