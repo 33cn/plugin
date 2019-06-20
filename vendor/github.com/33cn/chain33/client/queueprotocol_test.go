@@ -343,7 +343,11 @@ func testGetLastMempool(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testGetProperFee(t *testing.T, api client.QueueProtocolAPI) {
-	_, err := api.GetProperFee()
+	_, err := api.GetProperFee(nil)
+	if err != nil {
+		t.Error("Call GetProperFee Failed.", err)
+	}
+	_, err = api.GetProperFee(&types.ReqProperFee{})
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
@@ -989,7 +993,7 @@ func testGetLastMemPoolGRPC(t *testing.T, rpc *mockGRPCSystem) {
 
 func testGetProperFeeGRPC(t *testing.T, rpc *mockGRPCSystem) {
 	var res types.ReplyProperFee
-	err := rpc.newRpcCtx("GetProperFee", &types.ReqNil{}, &res)
+	err := rpc.newRpcCtx("GetProperFee", &types.ReqProperFee{}, &res)
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
