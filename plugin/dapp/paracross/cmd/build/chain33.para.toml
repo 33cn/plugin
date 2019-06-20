@@ -1,6 +1,6 @@
 Title="user.p.para."
 TestNet=false
-CoinSymbol="bty"
+CoinSymbol="para"
 EnableParaFork=true
 
 [log]
@@ -59,9 +59,9 @@ grpcLogFile="grpc33.log"
 
 [rpc]
 # 避免与主链配置冲突
-jrpcBindAddr=":8901"
-grpcBindAddr=":8902"
-whitelist=["*"]
+jrpcBindAddr="localhost:8901"
+grpcBindAddr="localhost:8902"
+whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
 
@@ -111,7 +111,7 @@ waitBlocks4CommitMsg=2
 searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
-#主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改
+#主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
 MainForkParacrossCommitTx=2270000
 #平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx=2270000， -1 不开启
 MainParaSelfConsensusForkHeight=-1
@@ -278,7 +278,7 @@ Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
 
-#对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的fork，如果从0开始同步，statedb会跟以前mavl的不同
+#对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=0
 
