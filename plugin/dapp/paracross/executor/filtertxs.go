@@ -46,7 +46,7 @@ func checkReceiptExecOk(receipt *types.ReceiptData) bool {
 // 1, 主链+平行链 user.p.xx.paracross 交易组				混合跨链资产转移  paracross主链执行成功
 // 2, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合    paracross主链执行成功
 // 3, 平行链     user.p.xx.other  交易组					混合平行链组合    other主链pack
-func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDetail, index int) ([]*types.Transaction, int) {
+func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDetail, index int,forkHeight int64) ([]*types.Transaction, int) {
 	var headIdx int
 
 	for i := index; i >= 0; i-- {
@@ -58,6 +58,12 @@ func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDet
 
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
+		if types.IsPara() && main.Block.Height < forkHeight {
+			if types.IsMyParaExecName(string(main.Block.Txs[i].Execer)) {
+				continue
+			}
+		}
+
 		if !checkReceiptExecOk(main.Receipts[i]) {
 			return nil, endIdx
 		}
@@ -69,18 +75,21 @@ func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDet
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transaction {
 	var txs []*types.Transaction
+	forkHeight := getDappForkHeight(pt.ForkCommitTx)
 	for i := 0; i < len(main.Block.Txs); i++ {
 		tx := main.Block.Txs[i]
 		if types.IsSpecificParaExecName(title, string(tx.Execer)) {
 			if tx.GroupCount >= 2 {
-				mainTxs, endIdx := filterParaTxGroup(title, tx, main, i)
+				mainTxs, endIdx := filterParaTxGroup(title, tx, main, i,forkHeight)
 				txs = append(txs, mainTxs...)
 				i = endIdx - 1
 				continue
 			}
-			//单独的paracross跨链合约 如果主链执行失败也要排除
-			if bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.Receipts[i]) {
-				continue
+			//单独的paracross tx 如果主链执行失败也要排除
+			if main.Block.Height >= forkHeight{
+				if types.IsMyParaExecName(string(tx.Execer)) && !checkReceiptExecOk(main.Receipts[i]) {
+					continue
+				}
 			}
 
 			txs = append(txs, tx)
