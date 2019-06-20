@@ -224,15 +224,19 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
-func getDappForkHeight(fork string) int64 {
+func getDappForkHeight(forkKey string) int64 {
 	var forkHeight int64
 	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
+		key := forkKey
+		if forkKey == pt.ForkCommitTx{
+			key = "MainForkParacrossCommitTx"
+		}
+		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
 	} else {
-		forkHeight = types.GetDappFork(pt.ParaX, fork)
+		forkHeight = types.GetDappFork(pt.ParaX, forkKey)
 	}
 	return forkHeight
 }
