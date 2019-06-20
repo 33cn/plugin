@@ -441,7 +441,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	haveCrossTxs := len(commit.Status.CrossTxHashs) > 0
-	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && len(commit.Status.CrossTxHashs[0]) == 0{
+	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && len(commit.Status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 
