@@ -441,16 +441,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	haveCrossTxs := len(commit.Status.CrossTxHashs) > 0
-	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
-		clog.Info("paracross.Commit execCrossTx", "haveCrossTxs", haveCrossTxs, "crosstx", hex.EncodeToString(commit.Status.CrossTxHashs[0]))
-		if commit.Status.CrossTxHashs[0] == nil {
-			haveCrossTxs = false
-		}
-
+	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && len(commit.Status.CrossTxHashs[0]) == 0{
+		haveCrossTxs = false
 	}
-
-	clog.Info("paracross.Commit execCrossTx", "height", commit.Status.Height, "haveCrossTxs", haveCrossTxs,
-		"fork", types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx), "forkheight", types.GetDappFork(pt.ParaX, pt.ForkCommitTx))
 
 	if enableParacrossTransfer && commit.Status.Height > 0 && haveCrossTxs {
 		clog.Debug("paracross.Commit commitDone", "do cross", "")

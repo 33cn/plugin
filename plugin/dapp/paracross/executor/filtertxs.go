@@ -86,10 +86,8 @@ func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transactio
 				continue
 			}
 			//单独的paracross tx 如果主链执行失败也要排除
-			if main.Block.Height >= forkHeight {
-				if types.IsMyParaExecName(string(tx.Execer)) && !checkReceiptExecOk(main.Receipts[i]) {
-					continue
-				}
+			if main.Block.Height >= forkHeight && !checkReceiptExecOk(main.Receipts[i]){
+				continue
 			}
 
 			txs = append(txs, tx)
