@@ -18,7 +18,9 @@ echo_rst() {
 }
 
 paracross_GetBlock2MainInfo() {
-    local height=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.items[1].height")
+    local height
+
+    height=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.items[1].height")
     [ "$height" -eq 2 ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -26,14 +28,17 @@ paracross_GetBlock2MainInfo() {
 
 
 chain33_lock() {
-    local ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Lock","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.isOK")
+    local ok
+
+    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Lock","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 chain33_unlock() {
-    local ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.isOK")
+    local ok
+    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -42,17 +47,24 @@ chain33_unlock() {
 
 
 function paracross_SignAndSend() {
-    local signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'$1',"privkey":"'$2'","txHex":"'$3'"}]}' ${UNIT_HTTP} | jq -r ".result")
+    local signedTx
+    local sendedTx
+
+    signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'$1',"privkey":"'$2'","txHex":"'$3'"}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "signedTx:$signedTx"
-    local sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP})
+    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP})
     #echo "sendedTx:$sendedTx"
 }
 
 function paracross_QueryBalance() {
-    local req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'$1'"], "execer" : "paracross","asset_exec":"paracross","asset_symbol":"coins.bty"}]}'
-    local resp=$(curl -ksd "$req" "${UNIT_HTTP}")
-    local balance=$(jq -r '.result[0].balance' <<<"$resp")
-    echo $balance
+    local req
+    local resp
+    local balance
+
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'$1'"], "execer" : "paracross","asset_exec":"paracross","asset_symbol":"coins.bty"}]}'
+    resp=$(curl -ksd "$req" "${UNIT_HTTP}")
+    balance=$(jq -r '.result[0].balance' <<<"$resp")
+    echo "$balance"
     return $?
 }
 
@@ -74,46 +86,57 @@ function paracross_Transfer_Withdraw() {
     local withdraw_should=13000000
     #fee 交易费
     local fee=1000000
+    #转移前余额
+    local para_balance_before
+    #转移后余额
+    local para_balance_after
+    #取钱后余额
+    local para_balance_withdraw_after
+    #构造交易哈希
+    local tx_hash
+    #实际转移金额
+    local amount_real
+    #实际取钱金额
+    local withdraw_real
 
     #1. 查询资产转移前余额状态
-
-    local para_balance_before=$(paracross_QueryBalance $fromAddr)
+    para_balance_before=$(paracross_QueryBalance "$fromAddr")
     echo "before transferring:$para_balance_before"
 
     #2  存钱到合约地址
-    local tx=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'$paracrossAddr'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'$paracrossAddr'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
     ##echo "tx:$tx"
-    paracross_SignAndSend $fee $privkey $tx
+    paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
 
     #3  资产从主链转移到平行链
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetTransfer","payload":{"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetTransfer","payload":{"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
-    paracross_SignAndSend $fee $privkey $tx
+    paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
     sleep 30
 
-    #4 查询转移余额状态
-    local para_balance_after=$(paracross_QueryBalance $fromAddr)
+    #4 查询转移后余额状态
+    para_balance_after=$(paracross_QueryBalance "$fromAddr")
     echo "after transferring:$para_balance_after"
 
     #real_amount  实际转移金额
-    local amount_real=$(($para_balance_after - $para_balance_before))
+    amount_real=$(($para_balance_after - $para_balance_before))
 
     #5 取钱
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":'true',"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":'true',"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
-    paracross_SignAndSend $fee $privkey $tx
+    paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
 
     sleep 15
     #6 查询取钱后余额状态
-    local para_balance_withdraw_after=$(paracross_QueryBalance $fromAddr)
+    para_balance_withdraw_after=$(paracross_QueryBalance "$fromAddr")
     echo "after withdrawing :$para_balance_withdraw_after"
 
     #实际取钱金额
-    local withdraw_real=$((para_balance_after - para_balance_withdraw_after))
-    #echo $withdraw
+    withdraw_real=$(($para_balance_after - $para_balance_withdraw_after))
+    #echo $withdraw_real
 
      #7 验证转移是否正确
     [ "$amount_real" ==  "$amount_should" ] && [ "$withdraw_should" == "$withdraw_real"  ]
@@ -127,16 +150,21 @@ function paracross_Transfer_Withdraw() {
 
 
 function paracross_IsSync() {
-    local ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.IsSync","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result")
+    local ok
+
+    ok=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.IsSync","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} | jq -r ".result")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_ListTitles() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListTitles","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListTitles","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -145,36 +173,48 @@ function paracross_ListTitles() {
 
 
 function paracross_GetHeight() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetHeight","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetHeight","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_GetNodeGroupAddrs() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_GetNodeGroupStatus() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_ListNodeGroupStatus() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":'2'}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -182,9 +222,12 @@ function paracross_ListNodeGroupStatus() {
 
 
 function paracross_ListNodeStatus() {
-    local resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":'4'}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    local resp
+    local ok
+
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
     #echo $resp
-    local ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
