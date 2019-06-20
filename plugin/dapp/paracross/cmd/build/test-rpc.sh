@@ -117,7 +117,7 @@ function paracross_Transfer_Withdraw() {
     echo "after transferring:$para_balance_after"
 
     #real_amount  实际转移金额
-    amount_real=$(($para_balance_after - $para_balance_before))
+    amount_real=$((para_balance_after - para_balance_before))
 
     #5 取钱
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'$fromAddr'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
@@ -130,7 +130,7 @@ function paracross_Transfer_Withdraw() {
     echo "after withdrawing :$para_balance_withdraw_after"
 
     #实际取钱金额
-    withdraw_real=$(($para_balance_after - $para_balance_withdraw_after))
+    withdraw_real=$((para_balance_after - para_balance_withdraw_after))
     #echo $withdraw_real
 
     #7 验证转移是否正确
@@ -156,7 +156,7 @@ function paracross_ListTitles() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListTitles","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListTitles","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
     [ "$ok" == true ]
@@ -168,7 +168,7 @@ function paracross_GetHeight() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetHeight","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetHeight","params":[]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
     [ "$ok" == true ]
@@ -180,7 +180,7 @@ function paracross_GetNodeGroupAddrs() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
     [ "$ok" == true ]
@@ -192,7 +192,7 @@ function paracross_GetNodeGroupStatus() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
@@ -204,7 +204,7 @@ function paracross_ListNodeGroupStatus() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
@@ -216,7 +216,7 @@ function paracross_ListNodeStatus() {
     local resp
     local ok
 
-    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' -H 'content-type:text/plain;' ${UNIT_HTTP} )
+    resp=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' -H 'content-type:text/plain;' ${UNIT_HTTP})
     #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
