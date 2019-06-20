@@ -46,7 +46,7 @@ func checkReceiptExecOk(receipt *types.ReceiptData) bool {
 // 1, 主链+平行链 user.p.xx.paracross 交易组				混合跨链资产转移  paracross主链执行成功
 // 2, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合    paracross主链执行成功
 // 3, 平行链     user.p.xx.other  交易组					混合平行链组合    other主链pack
-func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDetail, index int,forkHeight int64) ([]*types.Transaction, int) {
+func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDetail, index int, forkHeight int64) ([]*types.Transaction, int) {
 	var headIdx int
 
 	for i := index; i >= 0; i-- {
@@ -80,13 +80,13 @@ func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transactio
 		tx := main.Block.Txs[i]
 		if types.IsSpecificParaExecName(title, string(tx.Execer)) {
 			if tx.GroupCount >= 2 {
-				mainTxs, endIdx := filterParaTxGroup(title, tx, main, i,forkHeight)
+				mainTxs, endIdx := filterParaTxGroup(title, tx, main, i, forkHeight)
 				txs = append(txs, mainTxs...)
 				i = endIdx - 1
 				continue
 			}
 			//单独的paracross tx 如果主链执行失败也要排除
-			if main.Block.Height >= forkHeight{
+			if main.Block.Height >= forkHeight {
 				if types.IsMyParaExecName(string(tx.Execer)) && !checkReceiptExecOk(main.Receipts[i]) {
 					continue
 				}
