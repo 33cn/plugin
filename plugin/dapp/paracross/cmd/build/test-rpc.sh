@@ -72,7 +72,7 @@ function paracross_QueryBalance() {
 function paracross_Transfer_Withdraw() {
     echo "=========== ## para cross transfer/withdraw (main to para) test start"
 
-    #fromAddr  跨莲资产转移地址
+    #fromAddr  跨链资产转移地址
     local fromAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     #privkey 地址签名
     local privkey="0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
@@ -261,6 +261,7 @@ function run_para_testcases() {
     paracross_ListNodeGroupStatus
     paracross_ListNodeStatus
     paracross_Transfer_Withdraw
+
 }
 
 function dapp_rpc_test() {
