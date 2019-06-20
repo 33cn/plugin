@@ -89,7 +89,7 @@ function paracross_Transfer_Withdraw() {
     local para_balance_after
     #取钱后余额
     local para_balance_withdraw_after
-    #交易哈希构造
+    #构造交易哈希
     local tx_hash
     #实际转移金额
     local amount_real
