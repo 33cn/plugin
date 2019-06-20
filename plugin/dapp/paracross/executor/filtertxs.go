@@ -85,8 +85,8 @@ func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transactio
 				i = endIdx - 1
 				continue
 			}
-			//单独的paracross tx 如果主链执行失败也要排除
-			if main.Block.Height >= forkHeight && !checkReceiptExecOk(main.Receipts[i]) {
+			//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
+			if main.Block.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.Receipts[i]) {
 				continue
 			}
 
