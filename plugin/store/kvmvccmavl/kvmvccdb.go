@@ -184,7 +184,10 @@ func (mvccs *KVMVCCStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
 			batch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	batch.Write()
+	err := batch.Write()
+	if err != nil {
+		panic(fmt.Sprint("batch write err", err))
+	}
 	delete(mvccs.kvsetmap, string(req.Hash))
 	return req.Hash, nil
 }
@@ -266,6 +269,7 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 	err := storeBatch.Write()
 	if err != nil {
 		kmlog.Info("KVMVCCStore saveKVSets", "Write error", err)
+		panic(fmt.Sprint("batch write err", err))
 	}
 }
 
@@ -390,13 +394,17 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 		return
 	}
 	batch.Reset()
+	var err error
 	for key, vals := range mp {
 		if len(vals) > 1 && vals[1] != vals[0] { //防止相同高度时候出现的误删除
 			for _, val := range vals[1:] { //从第二个开始判断
 				if curHeight >= val+int64(pruneHeight) {
 					batch.Delete(genKeyVersion([]byte(key), val)) // 删除老版本key
 					if batch.ValueSize() > batchDataSize {
-						batch.Write()
+						err = batch.Write()
+						if err != nil {
+							panic(fmt.Sprint("batch write err", err))
+						}
 						batch.Reset()
 					}
 				}
@@ -404,7 +412,10 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 		}
 		delete(mp, key)
 	}
-	batch.Write()
+	err = batch.Write()
+	if err != nil {
+		panic(fmt.Sprint("batch write err", err))
+	}
 }
 
 func genKeyVersion(key []byte, height int64) []byte {

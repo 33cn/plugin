@@ -367,6 +367,7 @@ func delMavlData(db dbm.DB) bool {
 	it := db.Iterator(nil, nil, true)
 	defer it.Close()
 	batch := db.NewBatch(true)
+	var err error
 	for it.Rewind(); it.Valid(); it.Next() {
 		if quit {
 			return false
@@ -374,14 +375,20 @@ func delMavlData(db dbm.DB) bool {
 		if !bytes.HasPrefix(it.Key(), mvccPrefix) { // 将非mvcc的mavl数据全部删除
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
-				batch.Write()
+				err = batch.Write()
+				if err != nil {
+					panic(fmt.Sprint("batch write err", err))
+				}
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
+				time.Sleep(time.Millisecond * 500)
 			}
 		}
 	}
 	batch.Set(genDelMavlKey(mvccPrefix), []byte(""))
-	batch.Write()
+	err = batch.Write()
+	if err != nil {
+		panic(fmt.Sprint("batch write err", err))
+	}
 	return true
 }
 
@@ -433,6 +440,7 @@ func deletePrunedMavl(db dbm.DB) {
 func deletePrunedMavlData(db dbm.DB, prefix string) {
 	it := db.Iterator([]byte(prefix), nil, true)
 	defer it.Close()
+	var err error
 	if it.Rewind() && it.Valid() {
 		batch := db.NewBatch(false)
 		for it.Next(); it.Valid(); it.Next() { //第一个不做删除
@@ -441,11 +449,17 @@ func deletePrunedMavlData(db dbm.DB, prefix string) {
 			}
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
-				batch.Write()
+				err = batch.Write()
+				if err != nil {
+					panic(fmt.Sprint("batch write err", err))
+				}
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
+				time.Sleep(time.Millisecond * 500)
 			}
 		}
-		batch.Write()
+		err = batch.Write()
+		if err != nil {
+			panic(fmt.Sprint("batch write err", err))
+		}
 	}
 }
