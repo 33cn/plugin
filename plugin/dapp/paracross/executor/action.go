@@ -440,9 +440,8 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return receipt, nil
 	}
 
-	//TODO commit.Status.CrossTxHashs[0] == nil 需要改为len(commit.Status.CrossTxHashs[0]) ==0 ,最好加分叉修改
 	haveCrossTxs := len(commit.Status.CrossTxHashs) > 0
-	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && commit.Status.CrossTxHashs[0] == nil {
+	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && len(commit.Status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 
