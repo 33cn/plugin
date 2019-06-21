@@ -256,7 +256,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 	} else if maxVersion == height-1 {
 		return nil, nil
 	} else {
-		count := 1
 		for i := maxVersion; i >= height; i-- {
 			hash, err := mvccs.mvcc.GetVersionHash(i)
 			if err != nil {
