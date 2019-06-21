@@ -914,6 +914,7 @@ function paracross() {
 
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
+        dapp_rpc_test "${3}"
     fi
 
     if [ "${2}" == "forkInit" ]; then
