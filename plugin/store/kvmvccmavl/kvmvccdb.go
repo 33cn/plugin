@@ -10,12 +10,13 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"time"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
-	"time"
 )
 
 const (
