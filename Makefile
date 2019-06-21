@@ -14,7 +14,7 @@ LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_INEFFASSIGN= `go list -f {{.Dir}} ./... | grep -v "vendor"`
-BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
+BUILD_FLAGS = -ldflags "-X github.com/33cn/plugin/vendor/github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
@@ -23,8 +23,8 @@ proj := "build"
 default: build depends
 
 build:
-	@go build $(BUILD_FLAGS) -v -i -o $(APP)
-	@go build -v -i -o $(CLI) $(SRC_CLI)
+	go build $(BUILD_FLAGS) -v -i -o $(APP)
+	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 
 build_ci: depends ## Build the binary file for CI
