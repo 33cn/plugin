@@ -363,7 +363,7 @@ func TestKvmvccdbRollbackBatch(t *testing.T) {
 
 	maxVersion, err = store.mvcc.GetMaxVersion()
 	assert.Equal(t, nil, err)
-	assert.Equal(t, int64(3), maxVersion)
+	assert.Equal(t, int64(1), maxVersion)
 
 	get2 := &types.StoreGet{StateHash: hash, Keys: keys}
 	values2 := store.Get(get2)
