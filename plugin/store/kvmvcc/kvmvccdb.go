@@ -16,7 +16,6 @@ import (
 )
 
 var klog = log.New("module", "kvmvccdb")
-var maxRollbackNum = 200
 
 // SetLogLevel set log level
 func SetLogLevel(level string) {
@@ -272,11 +271,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			kvset = append(kvset, kvlist...)
 
 			klog.Debug("store kvmvcc checkVersion DelMVCC4Height", "height", i, "maxVersion", maxVersion)
-			//为避免高度差过大时出现异常，做一个保护，一次最多回滚200个区块
-			count++
-			if count >= maxRollbackNum {
-				break
-			}
 		}
 	}
 
