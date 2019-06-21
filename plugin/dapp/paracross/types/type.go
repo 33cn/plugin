@@ -17,7 +17,8 @@ var (
 	ParaX = "paracross"
 	glog  = log.New("module", ParaX)
 	// ForkCommitTx main chain support paracross commit tx
-	ForkCommitTx              = "ForkParacrossCommitTx"
+	ForkCommitTx = "ForkParacrossCommitTx"
+	// ParaSelfConsensForkHeight para self consens height string
 	ParaSelfConsensForkHeight = "MainParaSelfConsensusForkHeight"
 )
 
