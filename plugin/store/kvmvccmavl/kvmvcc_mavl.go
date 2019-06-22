@@ -367,6 +367,8 @@ func delMavlData(db dbm.DB) bool {
 	it := db.Iterator(nil, nil, true)
 	defer it.Close()
 	batch := db.NewBatch(true)
+	count := 0
+	const onceCount = 200
 	for it.Rewind(); it.Valid(); it.Next() {
 		if quit {
 			return false
@@ -376,8 +378,12 @@ func delMavlData(db dbm.DB) bool {
 			if batch.ValueSize() > batchDataSize {
 				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Millisecond * 100)
+				count++
 			}
+		}
+		if count > onceCount {
+			return false
 		}
 	}
 	batch.Set(genDelMavlKey(mvccPrefix), []byte(""))
@@ -424,28 +430,55 @@ func deletePrunedMavl(db dbm.DB) {
 	setDelPrunedMavl(delPrunedMavlStarting)
 	defer setDelPrunedMavl(delPruneMavlEnd)
 
-	deletePrunedMavlData(db, hashNodePrefix)
-	deletePrunedMavlData(db, leafNodePrefix)
-	deletePrunedMavlData(db, leafKeyCountPrefix)
-	deletePrunedMavlData(db, oldLeafKeyCountPrefix)
+	for {
+		loop := deletePrunedMavlData(db, hashNodePrefix)
+		if !loop {
+			break
+		}
+	}
+	for {
+		loop := deletePrunedMavlData(db, leafNodePrefix)
+		if !loop {
+			break
+		}
+	}
+	for {
+		loop := deletePrunedMavlData(db, leafKeyCountPrefix)
+		if !loop {
+			break
+		}
+	}
+	for {
+		loop := deletePrunedMavlData(db, oldLeafKeyCountPrefix)
+		if !loop {
+			break
+		}
+	}
 }
 
-func deletePrunedMavlData(db dbm.DB, prefix string) {
+func deletePrunedMavlData(db dbm.DB, prefix string) (loop bool) {
 	it := db.Iterator([]byte(prefix), nil, true)
 	defer it.Close()
+	count := 0
+	const onceCount = 200
 	if it.Rewind() && it.Valid() {
 		batch := db.NewBatch(false)
 		for it.Next(); it.Valid(); it.Next() { //第一个不做删除
 			if quit {
-				return
+				return false
 			}
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
 				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Millisecond * 100)
+				count++
+			}
+			if count > onceCount {
+				return true
 			}
 		}
 		dbm.MustWrite(batch)
 	}
+	return false
 }
