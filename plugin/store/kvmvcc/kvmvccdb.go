@@ -13,7 +13,6 @@ import (
 	drivers "github.com/33cn/chain33/system/store"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
-	"fmt"
 )
 
 var klog = log.New("module", "kvmvccdb")
@@ -230,11 +229,7 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	err := storeBatch.Write()
-	if err != nil {
-		klog.Error("store kvmvcc saveKVSets to db failed")
-		panic(fmt.Sprint("batch write err", err))
-	}
+	dbm.MustWrite(storeBatch)
 }
 
 func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) {
