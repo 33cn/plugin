@@ -4,6 +4,7 @@
 CASE_ERR=""
 UNIT_HTTP=""
 
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 
@@ -74,7 +75,7 @@ function paracross_Transfer_Withdraw() {
     #withdraw_should 应取款金额
     local withdraw_should=13000000
     #fee 交易费
-    local fee=1000000
+    #local fee=1000000
     #转移前余额
     local para_balance_before
     #转移后余额
@@ -122,7 +123,7 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            let count+=1
+            count=`expr $count + 1`;
             break
         fi
     done
@@ -151,7 +152,7 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            let count+=1
+            count=`expr $count + 1`;
             break
         fi
     done
@@ -178,7 +179,7 @@ function paracross_ListTitles() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -190,7 +191,7 @@ function paracross_GetHeight() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -202,7 +203,7 @@ function paracross_GetNodeGroupAddrs() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -214,7 +215,7 @@ function paracross_GetNodeGroupStatus() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -226,7 +227,7 @@ function paracross_ListNodeGroupStatus() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -238,7 +239,7 @@ function paracross_ListNodeStatus() {
     local ok
 
     resp=$(curl -ksd '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}'   ${UNIT_HTTP})
-    echo $resp
+    #echo $resp
     ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?
@@ -246,11 +247,13 @@ function paracross_ListNodeStatus() {
 }
 
 function run_testcases() {
+    local ispara
+
     chain33_lock
     chain33_unlock
     paracross_GetBlock2MainInfo
 
-    local ispara=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
+    ispara=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
     if [ "$ispara" == true ]; then
         paracross_IsSync
         paracross_GetHeight
