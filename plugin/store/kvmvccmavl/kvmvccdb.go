@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"time"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
@@ -26,7 +28,6 @@ const (
 )
 
 var (
-	maxRollbackNum = 200
 	// 是否开启裁剪
 	enablePrune bool
 	// 每个10000裁剪一次
@@ -294,7 +295,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 	} else if maxVersion == height-1 {
 		return nil, nil
 	} else {
-		count := 1
 		for i := maxVersion; i >= height; i-- {
 			hash, err := mvccs.mvcc.GetVersionHash(i)
 			if err != nil {
@@ -309,11 +309,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			kvset = append(kvset, kvlist...)
 
 			kmlog.Debug("store kvmvcc checkVersion DelMVCC4Height", "height", i, "maxVersion", maxVersion)
-			//为避免高度差过大时出现异常，做一个保护，一次最多回滚200个区块
-			count++
-			if count >= maxRollbackNum {
-				break
-			}
 		}
 	}
 
@@ -345,7 +340,10 @@ func pruning(db dbm.DB, height int64) {
 func pruningMVCC(db dbm.DB, height int64) {
 	setPruning(pruningStateStart)
 	defer setPruning(pruningStateEnd)
+	start := time.Now()
 	pruningFirst(db, height)
+	end := time.Now()
+	kmlog.Debug("pruningMVCC", "height", height, "cost", end.Sub(start))
 }
 
 func pruningFirst(db dbm.DB, curHeight int64) {
