@@ -15,7 +15,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # shellcheck source=/dev/null
-source test-rpc.sh
+#source test-rpc.sh
 
 function para_init() {
     para_set_toml chain33.para33.toml
@@ -897,7 +897,6 @@ function paracross() {
 
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
-        dapp_rpc_test "${3}"
     fi
 
     if [ "${2}" == "forkInit" ]; then
