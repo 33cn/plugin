@@ -7,11 +7,10 @@ UNIT_HTTP=""
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
-
 paracross_GetBlock2MainInfo() {
     local height
 
-    height=$(curl -ksd '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}'   ${UNIT_HTTP} | jq -r ".result.items[1].height")
+    height=$(curl -ksd '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} | jq -r ".result.items[1].height")
     [ "$height" -eq 2 ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -20,7 +19,7 @@ paracross_GetBlock2MainInfo() {
 chain33_lock() {
     local ok
 
-    ok=$(curl -ksd '{"method":"Chain33.Lock","params":[]}'  ${UNIT_HTTP} | jq -r ".result.isOK")
+    ok=$(curl -ksd '{"method":"Chain33.Lock","params":[]}' ${UNIT_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -28,7 +27,7 @@ chain33_lock() {
 
 chain33_unlock() {
     local ok
-    ok=$(curl -ksd '{"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}'   ${UNIT_HTTP} | jq -r ".result.isOK")
+    ok=$(curl -ksd '{"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' ${UNIT_HTTP} | jq -r ".result.isOK")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -41,7 +40,7 @@ function paracross_SignAndSend() {
 
     signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'"$1"',"privkey":"'"$2"'","txHex":"'"$3"'"}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "signedTx:$signedTx"
-    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP} | jq -r ".result" )
+    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP} | jq -r ".result")
     echo "sendedTx:$sendedTx"
 }
 
@@ -56,7 +55,6 @@ function paracross_QueryBalance() {
     echo "$balance"
     return $?
 }
-
 
 function paracross_Transfer_Withdraw() {
 
@@ -105,7 +103,6 @@ function paracross_Transfer_Withdraw() {
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
-
     #4 查询转移后余额状态
     local times=100
     while true; do
@@ -134,7 +131,6 @@ function paracross_Transfer_Withdraw() {
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
-
     #6 查询取钱后余额状态
     local times=100
     while true; do
@@ -157,7 +153,6 @@ function paracross_Transfer_Withdraw() {
         fi
     done
 
-
     [ "$count" -eq 2 ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -167,7 +162,7 @@ function paracross_Transfer_Withdraw() {
 function paracross_IsSync() {
     local ok
 
-    ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}'  ${UNIT_HTTP} | jq -r ".result")
+    ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -265,7 +260,6 @@ function run_testcases() {
         paracross_Transfer_Withdraw
     fi
 }
-
 
 function main() {
     UNIT_HTTP=$1
