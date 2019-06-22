@@ -5,7 +5,6 @@
 package kvmvccdb
 
 import (
-	"fmt"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
