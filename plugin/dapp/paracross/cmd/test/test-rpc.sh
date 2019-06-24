@@ -120,7 +120,7 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            count=`expr $count + 1`;
+            count=$((count+1))
             break
         fi
     done
@@ -148,7 +148,7 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            count=`expr $count + 1`;
+            count=$((count+1))
             break
         fi
     done
