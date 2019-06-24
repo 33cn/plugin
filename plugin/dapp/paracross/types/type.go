@@ -18,6 +18,8 @@ var (
 	glog  = log.New("module", ParaX)
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
+	// ParaSelfConsensForkHeight para self consens height string
+	ParaSelfConsensForkHeight = "MainParaSelfConsensusForkHeight"
 )
 
 func init() {

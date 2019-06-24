@@ -147,12 +147,17 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privateKey:  priKey,
 		subCfg:      &subcfg,
 	}
-	if subcfg.WaitBlocks4CommitMsg < 2 {
-		panic("config WaitBlocks4CommitMsg should not less 2")
+
+	waitBlocks := int32(2) //最小是2
+	if subcfg.WaitBlocks4CommitMsg > 0 {
+		if subcfg.WaitBlocks4CommitMsg < waitBlocks {
+			panic("config WaitBlocks4CommitMsg should not less 2")
+		}
+		waitBlocks = subcfg.WaitBlocks4CommitMsg
 	}
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:      para,
-		waitMainBlocks:  subcfg.WaitBlocks4CommitMsg,
+		waitMainBlocks:  waitBlocks,
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
@@ -583,9 +588,10 @@ func (client *client) CreateBlock() {
 	//system startup, take the last added block's seq is ok
 	currSeq, lastSeqMainHash, err := client.getLastBlockMainInfo()
 	if err != nil {
-		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
+		plog.Error("Parachain CreateBlock getLastBlockMainInfo fail", "err", err.Error())
 		return
 	}
+
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()
