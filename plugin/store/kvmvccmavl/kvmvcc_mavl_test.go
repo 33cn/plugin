@@ -574,8 +574,8 @@ func TestDelMavlData(t *testing.T) {
 
 	quit = false
 	prefix := ""
-	loop := false
 	for {
+		var loop bool
 		loop, prefix = delMavlData(db, prefix)
 		if !loop {
 			break

@@ -357,9 +357,9 @@ func DelMavl(db dbm.DB) {
 	setDelMavl(delMavlStateStart)
 	defer setDelMavl(delMavlStateEnd)
 	prefix := ""
-	loop := false
 	for {
 		kmlog.Debug("start once del mavl")
+		var loop bool
 		loop, prefix = delMavlData(db, prefix)
 		if !loop {
 			break
@@ -472,7 +472,7 @@ func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
 				count++
 			}
 			if count > onceCount {
-				return 2  //loop
+				return 2 //loop
 			}
 		}
 		dbm.MustWrite(batch)
