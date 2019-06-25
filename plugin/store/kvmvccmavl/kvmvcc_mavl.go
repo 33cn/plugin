@@ -356,39 +356,49 @@ func DelMavl(db dbm.DB) {
 	defer wg.Done()
 	setDelMavl(delMavlStateStart)
 	defer setDelMavl(delMavlStateEnd)
-	isDel := delMavlData(db)
-	if isDel {
-		isDelMavlData = true
-		kmlog.Info("DelMavl success")
+	prefix := ""
+	loop := false
+	for {
+		kmlog.Debug("start once del mavl")
+		loop, prefix = delMavlData(db, prefix)
+		if !loop {
+			break
+		}
+		kmlog.Debug("end once del mavl")
+		time.Sleep(time.Second * 1)
 	}
 }
 
-func delMavlData(db dbm.DB) bool {
-	it := db.Iterator(nil, nil, true)
+func delMavlData(db dbm.DB, prefix string) (bool, string) {
+	it := db.Iterator([]byte(prefix), types.EmptyValue, false)
 	defer it.Close()
-	batch := db.NewBatch(true)
+	batch := db.NewBatch(false)
 	count := 0
-	const onceCount = 200
+	const onceCount = 50
 	for it.Rewind(); it.Valid(); it.Next() {
 		if quit {
-			return false
+			return false, ""
 		}
 		if !bytes.HasPrefix(it.Key(), mvccPrefix) { // 将非mvcc的mavl数据全部删除
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
 				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
 				count++
 			}
 		}
 		if count > onceCount {
-			return false
+			if it.Next() {
+				return true, string(it.Key())
+			}
+			return true, ""
 		}
 	}
 	batch.Set(genDelMavlKey(mvccPrefix), []byte(""))
 	dbm.MustWrite(batch)
-	return true
+	isDelMavlData = true
+	kmlog.Info("DelMavl success")
+	return false, ""
 }
 
 func genDelMavlKey(prefix []byte) []byte {
@@ -429,35 +439,23 @@ func deletePrunedMavl(db dbm.DB) {
 	defer wg.Done()
 	setDelPrunedMavl(delPrunedMavlStarting)
 	defer setDelPrunedMavl(delPruneMavlEnd)
-
-	for {
-		loop := deletePrunedMavlData(db, hashNodePrefix)
-		if !loop {
-			break
-		}
-	}
-	for {
-		loop := deletePrunedMavlData(db, leafNodePrefix)
-		if !loop {
-			break
-		}
-	}
-	for {
-		loop := deletePrunedMavlData(db, leafKeyCountPrefix)
-		if !loop {
-			break
-		}
-	}
-	for {
-		loop := deletePrunedMavlData(db, oldLeafKeyCountPrefix)
-		if !loop {
-			break
+	prefixS := []string{hashNodePrefix, leafNodePrefix, leafKeyCountPrefix, oldLeafKeyCountPrefix}
+	for _, str := range prefixS {
+		for {
+			stat := deletePrunedMavlData(db, str)
+			if stat == 0 {
+				return
+			} else if stat == 1 {
+				break
+			} else {
+				time.Sleep(time.Millisecond * 100)
+			}
 		}
 	}
 }
 
-func deletePrunedMavlData(db dbm.DB, prefix string) (loop bool) {
-	it := db.Iterator([]byte(prefix), nil, true)
+func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
+	it := db.Iterator([]byte(prefix), nil, false)
 	defer it.Close()
 	count := 0
 	const onceCount = 200
@@ -465,20 +463,19 @@ func deletePrunedMavlData(db dbm.DB, prefix string) (loop bool) {
 		batch := db.NewBatch(false)
 		for it.Next(); it.Valid(); it.Next() { //第一个不做删除
 			if quit {
-				return false
+				return 0 // quit
 			}
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
 				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
 				count++
 			}
 			if count > onceCount {
-				return true
+				return 2  //loop
 			}
 		}
 		dbm.MustWrite(batch)
 	}
-	return false
+	return 1 // this prefix Iterator over
 }

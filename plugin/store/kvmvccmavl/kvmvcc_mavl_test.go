@@ -573,7 +573,14 @@ func TestDelMavlData(t *testing.T) {
 	db.Set([]byte("key22"), []byte("value22"))
 
 	quit = false
-	delMavlData(db)
+	prefix := ""
+	loop := false
+	for {
+		loop, prefix = delMavlData(db, prefix)
+		if !loop {
+			break
+		}
+	}
 
 	v, err := db.Get([]byte(mvccPrefix))
 	require.NoError(t, err)
@@ -748,15 +755,15 @@ func TestDeletePrunedMavl(t *testing.T) {
 	require.Equal(t, v1, []byte("v1"))
 
 	//测试再加入一条数据，即两条时候
-	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "456")), []byte("v2"))
+	store.GetDB().Set([]byte(fmt.Sprintln(hashNodePrefix, "123")), []byte("v1"))
 	deletePrunedMavlData(store.GetDB(), hashNodePrefix)
 
-	v1, err = store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
+	v1, err = store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "456")))
 	require.Error(t, err)
 	require.Equal(t, v1, []uint8([]byte(nil)))
-	v2, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "456")))
+	v2, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
 	require.NoError(t, err)
-	require.Equal(t, v2, []byte("v2"))
+	require.Equal(t, v2, []byte("v1"))
 
 	wg.Add(1)
 	go deletePrunedMavl(store.GetDB())
