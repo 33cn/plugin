@@ -472,7 +472,7 @@ func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
 				count++
 			}
 			if count > onceCount {
-				return 2  //loop
+				return 2 //loop
 			}
 		}
 		dbm.MustWrite(batch)
