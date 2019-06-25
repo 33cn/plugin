@@ -477,5 +477,5 @@ func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
 		}
 		dbm.MustWrite(batch)
 	}
-	return 1 // this prefix Iterator over
+	return 1 // this  prefix Iterator over
 }
