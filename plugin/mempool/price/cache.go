@@ -7,8 +7,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
-
 // Queue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
 type Queue struct {
 	txMap     map[string]*skiplist.SkipValue
@@ -48,26 +46,7 @@ func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 func (cache *Queue) Push(item *mempool.Item) error {
 	hash := item.Value.Hash()
 	if cache.Exist(string(hash)) {
-		s := cache.txMap[string(hash)]
-		addedItem := s.Value.(*mempool.Item)
-		addedTime := addedItem.EnterTime
-		if types.Now().Unix()-addedTime < mempoolDupResendInterval {
-			return types.ErrTxExist
-		}
-		// 超过2分钟之后的重发交易返回nil，再次发送给P2P，但是不再次加入mempool
-		// 并修改其enterTime，以避免该交易一直在节点间被重发
-		newEnterTime := types.Now().Unix()
-		resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
-		var err error
-		sv, err := cache.newSkipValue(resendItem)
-		if err != nil {
-			return err
-		}
-		cache.Remove(string(hash))
-		cache.txList.Insert(sv)
-		cache.txMap[string(hash)] = sv
-		// ------------------
-		return nil
+		return types.ErrTxExist
 	}
 
 	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
@@ -100,7 +79,13 @@ func (cache *Queue) Push(item *mempool.Item) error {
 
 // Remove 删除数据
 func (cache *Queue) Remove(hash string) error {
-	cache.txList.Delete(cache.txMap[hash])
+	if !cache.Exist(hash) {
+		return types.ErrNotFound
+	}
+	ok := cache.txList.Delete(cache.txMap[hash])
+	if ok != 1 {
+		return types.ErrNotFound
+	}
 	delete(cache.txMap, hash)
 	return nil
 }

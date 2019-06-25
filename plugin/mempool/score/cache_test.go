@@ -170,3 +170,20 @@ func TestGetProperFee(t *testing.T) {
 		(cache.subConfig.PriceConstant * cache.subConfig.PricePower)
 	assert.Equal(t, int64(1), properFee/cache.GetProperFee())
 }
+
+func TestDel(t *testing.T) {
+	cache := initEnv(0)
+	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
+
+	cache.Push(item1)
+	cache.Push(item4)
+	assert.Equal(t, 2, cache.Size())
+
+	hash1 := item1.Value.Hash()
+	cache.Remove(string(hash1))
+	assert.Equal(t, 1, cache.Size())
+
+	hash2 := item4.Value.Hash()
+	cache.Remove(string(hash2))
+	assert.Equal(t, 0, cache.Size())
+}
