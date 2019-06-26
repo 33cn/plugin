@@ -184,7 +184,7 @@ func (mvccs *KVMVCCStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
 			batch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	batch.Write()
+	dbm.MustWrite(batch)
 	delete(mvccs.kvsetmap, string(req.Hash))
 	return req.Hash, nil
 }
@@ -263,10 +263,7 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	err := storeBatch.Write()
-	if err != nil {
-		kmlog.Info("KVMVCCStore saveKVSets", "Write error", err)
-	}
+	dbm.MustWrite(storeBatch)
 }
 
 // GetMaxVersion 获取当前最大高度
@@ -396,7 +393,7 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 				if curHeight >= val+int64(pruneHeight) {
 					batch.Delete(genKeyVersion([]byte(key), val)) // 删除老版本key
 					if batch.ValueSize() > batchDataSize {
-						batch.Write()
+						dbm.MustWrite(batch)
 						batch.Reset()
 					}
 				}
@@ -404,7 +401,7 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 		}
 		delete(mp, key)
 	}
-	batch.Write()
+	dbm.MustWrite(batch)
 }
 
 func genKeyVersion(key []byte, height int64) []byte {
