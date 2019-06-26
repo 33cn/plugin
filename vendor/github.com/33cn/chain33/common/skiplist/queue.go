@@ -10,6 +10,7 @@ import (
 type Scorer interface {
 	GetScore() int64
 	Hash() []byte
+	//在score相同情况下的比较
 	Compare(Scorer) int
 }
 
