@@ -1,17 +1,18 @@
 package price
 
 import (
+	"container/list"
+	"fmt"
+
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 )
 
-var mempoolDupResendInterval int64 = 600 // mempool内交易过期时间，10分钟
-
 // Queue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
 type Queue struct {
-	txMap     map[string]*skiplist.SkipValue
+	txMap     map[string]*list.Element
 	txList    *skiplist.SkipList
 	subConfig subConfig
 }
@@ -19,15 +20,34 @@ type Queue struct {
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
-		make(map[string]*skiplist.SkipValue, subcfg.PoolCacheSize),
+		make(map[string]*list.Element),
 		skiplist.NewSkipList(&skiplist.SkipValue{Score: -1, Value: nil}),
 		subcfg,
 	}
 }
 
-func (cache *Queue) newSkipValue(item *mempool.Item) (*skiplist.SkipValue, error) {
+/*
+为了处理相同 Score 的问题，需要一个队列保存相同 Score 下面的交易
+*/
+func (cache *Queue) insertSkipValue(item *mempool.Item) *list.Element {
 	txSize := proto.Size(item.Value)
-	return &skiplist.SkipValue{Score: item.Value.Fee / int64(txSize), Value: item}, nil
+	skvalue := &skiplist.SkipValue{Score: item.Value.Fee / int64(txSize)}
+	value := cache.txList.Find(skvalue)
+	var orderlist *list.List
+	if value == nil { //new OrderList
+		orderlist = list.New()
+		skvalue.Value = orderlist
+		cache.txList.Insert(skvalue)
+	} else {
+		orderlist = value.Value.(*list.List)
+	}
+	return orderlist.PushBack(item)
+}
+
+func (cache *Queue) newSkipValue(item *mempool.Item) *skiplist.SkipValue {
+	txSize := proto.Size(item.Value)
+	skvalue := &skiplist.SkipValue{Score: item.Value.Fee / int64(txSize)}
+	return skvalue
 }
 
 //Exist 是否存在
@@ -48,42 +68,23 @@ func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 func (cache *Queue) Push(item *mempool.Item) error {
 	hash := item.Value.Hash()
 	if cache.Exist(string(hash)) {
-		s := cache.txMap[string(hash)]
-		addedItem := s.Value.(*mempool.Item)
-		addedTime := addedItem.EnterTime
-		if types.Now().Unix()-addedTime < mempoolDupResendInterval {
-			return types.ErrTxExist
-		}
-		// 超过2分钟之后的重发交易返回nil，再次发送给P2P，但是不再次加入mempool
-		// 并修改其enterTime，以避免该交易一直在节点间被重发
-		newEnterTime := types.Now().Unix()
-		resendItem := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: newEnterTime}
-		var err error
-		sv, err := cache.newSkipValue(resendItem)
-		if err != nil {
-			return err
-		}
-		cache.Remove(string(hash))
-		cache.txList.Insert(sv)
-		cache.txMap[string(hash)] = sv
-		// ------------------
-		return nil
+		return types.ErrTxExist
 	}
-
 	it := &mempool.Item{Value: item.Value, Priority: item.Value.Fee, EnterTime: item.EnterTime}
-	sv, err := cache.newSkipValue(it)
-	if err != nil {
-		return err
-	}
+	sv := cache.newSkipValue(it)
 	if int64(cache.txList.Len()) >= cache.subConfig.PoolCacheSize {
 		tail := cache.txList.GetIterator().Last()
+		lasthash := string(tail.Value.(*mempool.Item).Value.Hash())
+		printhash("remove tail", []byte(lasthash))
+		printhash("push hash", hash)
+		fmt.Println("compare", sv.Compare(tail))
 		//价格高存留
 		switch sv.Compare(tail) {
 		case -1:
-			cache.Remove(string(tail.Value.(*mempool.Item).Value.Hash()))
+			cache.Remove(lasthash)
 		case 0:
 			if sv.Value.(*mempool.Item).EnterTime < tail.Value.(*mempool.Item).EnterTime {
-				cache.Remove(string(tail.Value.(*mempool.Item).Value.Hash()))
+				cache.Remove(lasthash)
 				break
 			}
 			return types.ErrMemFull
@@ -93,14 +94,21 @@ func (cache *Queue) Push(item *mempool.Item) error {
 			return types.ErrMemFull
 		}
 	}
-	cache.txList.Insert(sv)
-	cache.txMap[string(hash)] = sv
+	cache.add(string(hash), sv)
+	return nil
+}
+
+func (cache *Queue) add(hash string, item *list.Element) error {
+	cache.txMap[string(hash)] = cache.insertSkipValue(item)
 	return nil
 }
 
 // Remove 删除数据
 func (cache *Queue) Remove(hash string) error {
-	cache.txList.Delete(cache.txMap[hash])
+	retcode := cache.txList.Delete()
+	if retcode == 0 { //not found
+		printhash("remove error", []byte(hash))
+	}
 	delete(cache.txMap, hash)
 	return nil
 }
@@ -144,4 +152,8 @@ func (cache *Queue) GetProperFee() int64 {
 	})
 	properFeeRate = sumFeeRate / int64(i)
 	return properFeeRate
+}
+
+func printhash(title string, hash []byte) {
+	fmt.Printf(title+" %x \n", hash)
 }
