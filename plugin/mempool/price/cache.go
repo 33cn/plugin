@@ -3,7 +3,6 @@ package price
 import (
 	"github.com/33cn/chain33/common/skiplist"
 	"github.com/33cn/chain33/system/mempool"
-	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -22,10 +21,26 @@ func (item *priceScore) GetScore() int64 {
 	return item.Value.Fee / int64(txSize)
 }
 
+func (item *priceScore) Hash() []byte {
+	return item.Value.Hash()
+}
+
+func (item *priceScore) Compare(cmp skiplist.Scorer) int {
+	it := cmp.(*priceScore)
+	//时间越小，权重越高
+	if item.EnterTime < it.EnterTime {
+		return skiplist.Big
+	}
+	if item.EnterTime == it.EnterTime {
+		return skiplist.Equal
+	}
+	return skiplist.Small
+}
+
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
-		Queue:     skiplist.NewQueue(),
+		Queue:     skiplist.NewQueue(subcfg.PoolCacheSize),
 		subConfig: subcfg,
 	}
 }
@@ -39,41 +54,16 @@ func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 	return item.(*priceScore).Item, nil
 }
 
+//Push 加入数据到队列
+func (cache *Queue) Push(item *mempool.Item) error {
+	return cache.Queue.Push(&priceScore{Item: item})
+}
+
 //Walk 获取数据通过 key
 func (cache *Queue) Walk(count int, cb func(tx *mempool.Item) bool) {
 	cache.Queue.Walk(count, func(item skiplist.Scorer) bool {
 		return cb(item.(*priceScore).Item)
 	})
-}
-
-// Push 把给定tx添加到Queue；如果tx已经存在Queue中或Mempool已满则返回对应error
-func (cache *Queue) Push(item *mempool.Item) error {
-	hash := item.Value.Hash()
-	if cache.Exist(string(hash)) {
-		return types.ErrTxExist
-	}
-	sv := cache.CreateSkipValue(&priceScore{Item: item})
-	if int64(cache.Size()) >= cache.subConfig.PoolCacheSize {
-		tail := cache.Last().(*priceScore)
-		lasthash := string(tail.Value.Hash())
-		//价格高存留
-		switch sv.Compare(cache.CreateSkipValue(tail)) {
-		case -1:
-			cache.Queue.Remove(lasthash)
-		case 0:
-			if item.EnterTime < tail.EnterTime {
-				cache.Queue.Remove(lasthash)
-				break
-			}
-			return types.ErrMemFull
-		case 1:
-			return types.ErrMemFull
-		default:
-			return types.ErrMemFull
-		}
-	}
-	cache.Queue.Push(string(hash), &priceScore{Item: item})
-	return nil
 }
 
 // GetProperFee 获取合适的手续费率,取前100的平均手续费率
