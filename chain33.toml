@@ -63,12 +63,12 @@ grpcFuncWhitelist=["*"]
 
 
 [mempool]
-name="timeline"
+name="price"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=100
 maxTxFee=1000000000
-
+isLevelFee=true
 [mempool.sub.timeline]
 poolCacheSize=10240
 
