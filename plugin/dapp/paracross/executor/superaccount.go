@@ -545,7 +545,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	updateVotes(stat, nodes)
 
 	most, vote := getMostVote(stat)
-	if !isCommitDone(stat, nodes, most) {
+	if !isCommitDone(nodes, most) {
 		superManagerPass := false
 		if isSuperManager(a.fromaddr) {
 			//如果主链执行失败，交易不会过滤到平行链，如果主链成功，平行链直接成功
@@ -612,6 +612,15 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
+			if a.exec.GetMainHeight() > getDappForkHeight(pt.ForkLoopCheckCommitTxDone){
+				//node quit后，如果committx满足2/3目标，自动触发commitDone
+				r,err = a.loopCommitTxDone(config.Title)
+				if err != nil{
+					clog.Error("unpdateNodeGroup.loopCommitTxDone", "title", title,"err",err.Error())
+				}
+				receipt = mergeReceipt(receipt, r)
+			}
+
 			stat.Status = pt.ParacrossNodeClosed
 			stat.Height = a.height
 		}
@@ -664,7 +673,10 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 			}
 		}
 	}
-
+	err = db.Set(key,types.Encode(&item))
+	if err != nil {
+		return nil, errors.Wrapf(err,"unpdateNodeGroup set dbkey=%s",key)
+	}
 	return makeParaNodeGroupReceipt(title, &copyItem, &item), nil
 }
 

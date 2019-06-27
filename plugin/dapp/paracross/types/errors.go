@@ -49,4 +49,6 @@ var (
 	ErrParaNodeOpStatusWrong = errors.New("ErrParaNodeOpStatusWrong")
 	//ErrParaConsensStopBlocksNotReach consensus stop blocks not reach
 	ErrParaConsensStopBlocksNotReach = errors.New("ErrParaConsensStopBlocksNotReach")
+	//ErrForkHeightNotReach fork height not reach
+	ErrForkHeightNotReach = errors.New("ErrForkHeightNotReach")
 )
