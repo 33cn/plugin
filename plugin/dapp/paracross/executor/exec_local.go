@@ -81,7 +81,7 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 			}
 			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-		}else if log.Ty == pt.TyLogParacrossCommitDone {
+		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
 

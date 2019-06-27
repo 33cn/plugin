@@ -612,11 +612,11 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
-			if a.exec.GetMainHeight() > getDappForkHeight(pt.ForkLoopCheckCommitTxDone){
+			if a.exec.GetMainHeight() > getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
 				//node quit后，如果committx满足2/3目标，自动触发commitDone
-				r,err = a.loopCommitTxDone(config.Title)
-				if err != nil{
-					clog.Error("unpdateNodeGroup.loopCommitTxDone", "title", title,"err",err.Error())
+				r, err = a.loopCommitTxDone(config.Title)
+				if err != nil {
+					clog.Error("unpdateNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
 				}
 				receipt = mergeReceipt(receipt, r)
 			}
@@ -673,9 +673,9 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 			}
 		}
 	}
-	err = db.Set(key,types.Encode(&item))
+	err = db.Set(key, types.Encode(&item))
 	if err != nil {
-		return nil, errors.Wrapf(err,"unpdateNodeGroup set dbkey=%s",key)
+		return nil, errors.Wrapf(err, "unpdateNodeGroup set dbkey=%s", key)
 	}
 	return makeParaNodeGroupReceipt(title, &copyItem, &item), nil
 }
