@@ -14,7 +14,7 @@ type Scorer interface {
 	Compare(Scorer) int
 }
 
-// Queue 价格队列模式(价格=手续费/交易字节数,价格高者优先,同价则时间早优先)
+// Queue skiplist 实现的一个 按照score 排序的队列，score相同的按照元素到的先后排序
 type Queue struct {
 	txMap   map[string]*list.Element
 	txList  *SkipList
@@ -86,12 +86,11 @@ func (cache *Queue) GetItem(hash string) (Scorer, error) {
 }
 
 //Insert Scorer item to queue
-func (cache *Queue) Insert(hash string, item Scorer) error {
-	cache.txMap[string(hash)] = cache.insertSkipValue(item)
-	return nil
+func (cache *Queue) Insert(hash string, item Scorer) {
+	cache.txMap[hash] = cache.insertSkipValue(item)
 }
 
-// Push 把给定tx添加到Queue；如果tx已经存在Queue中或Mempool已满则返回对应error
+// Push item 到队列中，如果插入的数据优先级比队列中更大，那么弹出优先级最小的，然后插入这个数据，否则报错
 func (cache *Queue) Push(item Scorer) error {
 	hash := item.Hash()
 	if cache.Exist(string(hash)) {
@@ -101,21 +100,13 @@ func (cache *Queue) Push(item Scorer) error {
 	if int64(cache.Size()) >= cache.maxsize {
 		tail := cache.Last()
 		lasthash := string(tail.Hash())
-		//价格高存留
-		switch sv.Compare(cache.CreateSkipValue(tail)) {
-		case Big:
-			cache.Remove(lasthash)
-		case Equal:
-			//再score 相同的情况下，item 之间的比较方法
-			//权重大的留下来
-			if item.Compare(tail) == Big {
-				cache.Remove(lasthash)
-				break
+		cmp := sv.Compare(cache.CreateSkipValue(tail))
+		if cmp == Big || (cmp == Equal && item.Compare(tail) == Big) {
+			err := cache.Remove(lasthash)
+			if err != nil {
+				return err
 			}
-			return types.ErrMemFull
-		case Small:
-			return types.ErrMemFull
-		default:
+		} else {
 			return types.ErrMemFull
 		}
 	}
@@ -129,11 +120,13 @@ func (cache *Queue) Remove(hash string) error {
 	if !ok {
 		return types.ErrNotFound
 	}
+	//保证txMap中先删除，这个用于计数
+	delete(cache.txMap, hash)
 	err := cache.deleteSkipValue(elm)
 	if err != nil {
+		println("queue_data_crash")
 		return err
 	}
-	delete(cache.txMap, hash)
 	return nil
 }
 
