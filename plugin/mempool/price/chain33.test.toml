@@ -65,7 +65,7 @@ keyFile="key.pem"
 
 [mempool]
 name="price"
-poolCacheSize=10240
+poolCacheSize=200
 minTxFee=100000
 maxTxNumPerAccount=100
 

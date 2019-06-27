@@ -174,7 +174,7 @@ func TestRealNodeMempool(t *testing.T) {
 	mock33.WaitHeight(0)
 	mock33.SendHot()
 	mock33.WaitHeight(1)
-	n := 300
+	n := 20
 	done := make(chan struct{}, n)
 	keys := make([]crypto.PrivKey, n)
 	for i := 0; i < n; i++ {
