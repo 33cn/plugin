@@ -81,6 +81,23 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 			}
 			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+		}else if log.Ty == pt.TyLogParacrossCommitDone {
+			var g pt.ReceiptParacrossDone
+			types.Decode(log.Log, &g)
+
+			key := calcLocalTitleKey(g.Title)
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+
+			key = calcLocalHeightKey(g.Title, g.Height)
+			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+			if !types.IsPara() {
+				r, err := e.saveLocalParaTxsFork(&g, false)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, r.KV...)
+			}
+
 		}
 	}
 	return &set, nil
