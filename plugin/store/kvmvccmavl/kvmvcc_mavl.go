@@ -87,6 +87,8 @@ type subMavlConfig struct {
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
 	EnableMemVal bool `json:"enableMemVal"`
+	// 缓存close ticket数目
+	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
 }
 
 type subConfig struct {
@@ -99,6 +101,8 @@ type subConfig struct {
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
 	EnableMemVal bool `json:"enableMemVal"`
+	// 缓存close ticket数目
+	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
 }
 
 // New construct KVMVCCStore module
@@ -119,6 +123,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subMavlcfg.PruneHeight = subcfg.PruneHeight
 		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
 		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
+		subMavlcfg.TkCloseCacheLen = subcfg.TkCloseCacheLen
 	}
 
 	bs := drivers.NewBaseStore(cfg)
@@ -351,33 +356,49 @@ func DelMavl(db dbm.DB) {
 	defer wg.Done()
 	setDelMavl(delMavlStateStart)
 	defer setDelMavl(delMavlStateEnd)
-	isDel := delMavlData(db)
-	if isDel {
-		isDelMavlData = true
-		kmlog.Info("DelMavl success")
+	prefix := ""
+	for {
+		kmlog.Debug("start once del mavl")
+		var loop bool
+		loop, prefix = delMavlData(db, prefix)
+		if !loop {
+			break
+		}
+		kmlog.Debug("end once del mavl")
+		time.Sleep(time.Second * 1)
 	}
 }
 
-func delMavlData(db dbm.DB) bool {
-	it := db.Iterator(nil, nil, true)
+func delMavlData(db dbm.DB, prefix string) (bool, string) {
+	it := db.Iterator([]byte(prefix), types.EmptyValue, false)
 	defer it.Close()
-	batch := db.NewBatch(true)
+	batch := db.NewBatch(false)
+	count := 0
+	const onceCount = 50
 	for it.Rewind(); it.Valid(); it.Next() {
 		if quit {
-			return false
+			return false, ""
 		}
 		if !bytes.HasPrefix(it.Key(), mvccPrefix) { // 将非mvcc的mavl数据全部删除
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
-				batch.Write()
+				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
+				count++
 			}
+		}
+		if count > onceCount {
+			if it.Next() {
+				return true, string(it.Key())
+			}
+			return true, ""
 		}
 	}
 	batch.Set(genDelMavlKey(mvccPrefix), []byte(""))
-	batch.Write()
-	return true
+	dbm.MustWrite(batch)
+	isDelMavlData = true
+	kmlog.Info("DelMavl success")
+	return false, ""
 }
 
 func genDelMavlKey(prefix []byte) []byte {
@@ -418,29 +439,43 @@ func deletePrunedMavl(db dbm.DB) {
 	defer wg.Done()
 	setDelPrunedMavl(delPrunedMavlStarting)
 	defer setDelPrunedMavl(delPruneMavlEnd)
-
-	deletePrunedMavlData(db, hashNodePrefix)
-	deletePrunedMavlData(db, leafNodePrefix)
-	deletePrunedMavlData(db, leafKeyCountPrefix)
-	deletePrunedMavlData(db, oldLeafKeyCountPrefix)
+	prefixS := []string{hashNodePrefix, leafNodePrefix, leafKeyCountPrefix, oldLeafKeyCountPrefix}
+	for _, str := range prefixS {
+		for {
+			stat := deletePrunedMavlData(db, str)
+			if stat == 0 {
+				return
+			} else if stat == 1 {
+				break
+			} else {
+				time.Sleep(time.Millisecond * 100)
+			}
+		}
+	}
 }
 
-func deletePrunedMavlData(db dbm.DB, prefix string) {
-	it := db.Iterator([]byte(prefix), nil, true)
+func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
+	it := db.Iterator([]byte(prefix), nil, false)
 	defer it.Close()
+	count := 0
+	const onceCount = 200
 	if it.Rewind() && it.Valid() {
 		batch := db.NewBatch(false)
 		for it.Next(); it.Valid(); it.Next() { //第一个不做删除
 			if quit {
-				return
+				return 0 // quit
 			}
 			batch.Delete(it.Key())
 			if batch.ValueSize() > batchDataSize {
-				batch.Write()
+				dbm.MustWrite(batch)
 				batch.Reset()
-				time.Sleep(time.Millisecond * 100)
+				count++
+			}
+			if count > onceCount {
+				return 2 //loop
 			}
 		}
-		batch.Write()
+		dbm.MustWrite(batch)
 	}
+	return 1 // this  prefix Iterator over
 }

@@ -15,7 +15,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # shellcheck source=/dev/null
-source test-rpc.sh
+#source test-rpc.sh
 
 function para_init() {
     para_set_toml chain33.para33.toml
@@ -46,6 +46,20 @@ function para_set_toml() {
     sed -i $xsedfix 's/^grpcBindAddr=.*/grpcBindAddr="0.0.0.0:8902"/g' "${1}"
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
+
+    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+                                                        "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
+                                                        "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"]/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^tokenApprs=.*/tokenApprs=[	"1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+	                                                "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",\
+                                                    "1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",\
+                                                    "1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",\
+                                                    "1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",\
+	                                                "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",]/g' "${1}"
+
 }
 
 function para_set_wallet() {
@@ -312,7 +326,7 @@ function para_cross_transfer_withdraw() {
     echo "${hash}"
 
     sleep 15
-    ${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    hash2=$(${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
 
     local times=200
     while true; do
@@ -323,6 +337,9 @@ function para_cross_transfer_withdraw() {
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "para_cross_transfer_withdraw failed"
+                ${CLI} tx query -s "$hash2"
+                ${PARA_CLI} tx query -s "$hash2"
+                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e user.p.para.paracross --asset_exec paracross --asset_symbol coins.para
                 exit 1
             fi
         else

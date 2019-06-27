@@ -224,17 +224,38 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
-func getDappForkHeight(fork string) int64 {
+func getDappForkHeight(forkKey string) int64 {
 	var forkHeight int64
 	if types.IsPara() {
-		forkHeight = types.Conf("config.consensus.sub.para").GInt("MainForkParacrossCommitTx")
+		key := forkKey
+		if forkKey == pt.ForkCommitTx {
+			key = "MainForkParacrossCommitTx"
+		}
+		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
 	} else {
-		forkHeight = types.GetDappFork(pt.ParaX, fork)
+		forkHeight = types.GetDappFork(pt.ParaX, forkKey)
 	}
 	return forkHeight
+}
+
+func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []byte, error) {
+	key := calcParaNodeGroupAddrsKey(title)
+	nodes, _, err := getNodes(db, key)
+	if err != nil {
+		if errors.Cause(err) != pt.ErrTitleNotExist {
+			return nil, nil, errors.Wrapf(err, "getNodes para for title:%s", title)
+		}
+		key = calcManageConfigNodesKey(title)
+		nodes, _, err = getNodes(db, key)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
+		}
+	}
+
+	return nodes, key, nil
 }
 
 func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
@@ -246,18 +267,9 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 		return nodes, nil
 	}
 
-	nodes, _, err := getParacrossNodes(a.db, title)
-	if err != nil {
-		if errors.Cause(err) != pt.ErrTitleNotExist {
-			return nil, errors.Wrapf(err, "getNodes para for title:%s", title)
-		}
-		nodes, _, err = getConfigManageNodes(a.db, title)
-		if err != nil {
-			return nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
-		}
-	}
+	nodes, _, err := getConfigNodes(a.db, title)
+	return nodes, err
 
-	return nodes, nil
 }
 
 //根据nodes过滤掉可能退出了的addrs
@@ -390,7 +402,11 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
-		if !(types.IsPara() && titleStatus.Height == -1) {
+		paraSwitch, err := a.isParaSelfConsensSwitch(commit, titleStatus)
+		if err != nil {
+			return nil, err
+		}
+		if !paraSwitch {
 			return receipt, nil
 		}
 	}
@@ -437,7 +453,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	haveCrossTxs := len(commit.Status.CrossTxHashs) > 0
-	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && commit.Status.CrossTxHashs[0] == nil {
+	if commit.Status.Height > 0 && types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) && len(commit.Status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 
@@ -451,6 +467,32 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		receipt.Logs = append(receipt.Logs, crossTxReceipt.Logs...)
 	}
 	return receipt, nil
+}
+
+//平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
+// 这样在主链没有共识空洞前提下，平行链允许有条件的共识跳跃
+func (a *action) isParaSelfConsensSwitch(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
+	if !types.IsPara() {
+		return false, nil
+	}
+
+	if titleStatus.Height == -1 {
+		return true, nil
+	}
+
+	selfConsensForkHeight := getDappForkHeight(pt.ParaSelfConsensForkHeight)
+	lastStatusMainHeight := int64(-1)
+	if titleStatus.Height > -1 {
+		stat, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, titleStatus.Height))
+		if err != nil {
+			clog.Error("paracross.Commit isParaSelfConsensSwitch getTitleHeight failed", "err", err.Error())
+			return false, err
+		}
+		lastStatusMainHeight = stat.MainHeight
+	}
+
+	return commit.Status.MainBlockHeight > selfConsensForkHeight && lastStatusMainHeight < selfConsensForkHeight, nil
+
 }
 
 func (a *action) execCrossTx(tx *types.TransactionDetail, commit *pt.ParacrossCommitAction, crossTxHash []byte) (*types.Receipt, error) {

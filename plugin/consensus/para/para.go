@@ -147,12 +147,17 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privateKey:  priKey,
 		subCfg:      &subcfg,
 	}
-	if subcfg.WaitBlocks4CommitMsg < 2 {
-		panic("config WaitBlocks4CommitMsg should not less 2")
+
+	waitBlocks := int32(2) //最小是2
+	if subcfg.WaitBlocks4CommitMsg > 0 {
+		if subcfg.WaitBlocks4CommitMsg < waitBlocks {
+			panic("config WaitBlocks4CommitMsg should not less 2")
+		}
+		waitBlocks = subcfg.WaitBlocks4CommitMsg
 	}
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:      para,
-		waitMainBlocks:  subcfg.WaitBlocks4CommitMsg,
+		waitMainBlocks:  waitBlocks,
 		commitMsgNotify: make(chan int64, 1),
 		delMsgNotify:    make(chan int64, 1),
 		mainBlockAdd:    make(chan *types.BlockDetail, 1),
@@ -205,7 +210,7 @@ func (client *client) InitBlock() {
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
-		newblock.MainHeight = startHeight
+		newblock.MainHeight = startHeight - 1
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -276,7 +281,7 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 
 //get the last sequence in parachain
 func (client *client) GetLastSeq() (int64, error) {
-	blockedSeq, err := client.GetAPI().GetLastBlockSequence()
+	blockedSeq, err := client.GetAPI().GetLastBlockMainSequence()
 	if err != nil {
 		return -2, err
 	}
@@ -285,7 +290,7 @@ func (client *client) GetLastSeq() (int64, error) {
 
 func (client *client) GetBlockedSeq(hash []byte) (int64, error) {
 	//from blockchain db
-	blockedSeq, err := client.GetAPI().GetSequenceByHash(&types.ReqHash{Hash: hash})
+	blockedSeq, err := client.GetAPI().GetMainSequenceByHash(&types.ReqHash{Hash: hash})
 	if err != nil {
 		return -2, err
 	}
@@ -583,9 +588,10 @@ func (client *client) CreateBlock() {
 	//system startup, take the last added block's seq is ok
 	currSeq, lastSeqMainHash, err := client.getLastBlockMainInfo()
 	if err != nil {
-		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
+		plog.Error("Parachain CreateBlock getLastBlockMainInfo fail", "err", err.Error())
 		return
 	}
+
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()

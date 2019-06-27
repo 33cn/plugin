@@ -98,6 +98,7 @@ writeBlockSeconds=2
 #主链每隔几个没有相关交易的区块，平行链上打包空区块
 emptyBlockInterval=4
 MainBlockHashForkHeight=1
+MainForkParacrossCommitTx=5
 MainParaSelfConsensusForkHeight=300
 SearchHashMatchedBlockDepth=100
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空

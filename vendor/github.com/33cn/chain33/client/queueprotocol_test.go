@@ -343,7 +343,11 @@ func testGetLastMempool(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testGetProperFee(t *testing.T, api client.QueueProtocolAPI) {
-	_, err := api.GetProperFee()
+	_, err := api.GetProperFee(nil)
+	if err != nil {
+		t.Error("Call GetProperFee Failed.", err)
+	}
+	_, err = api.GetProperFee(&types.ReqProperFee{})
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
@@ -989,7 +993,7 @@ func testGetLastMemPoolGRPC(t *testing.T, rpc *mockGRPCSystem) {
 
 func testGetProperFeeGRPC(t *testing.T, rpc *mockGRPCSystem) {
 	var res types.ReplyProperFee
-	err := rpc.newRpcCtx("GetProperFee", &types.ReqNil{}, &res)
+	err := rpc.newRpcCtx("GetProperFee", &types.ReqProperFee{}, &res)
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
@@ -1195,4 +1199,27 @@ func TestGetBlockBySeq(t *testing.T) {
 	_, err := q.GetBlockBySeq(nil)
 	assert.NotNil(t, err)
 
+}
+
+func TestGetMainSeq(t *testing.T) {
+	net := queue.New("test-seq-api")
+	defer net.Close()
+
+	chain := &mockBlockChain{}
+	chain.SetQueueClient(net)
+	defer chain.Close()
+
+	api, err := client.New(net.Client(), nil)
+	assert.Nil(t, err)
+
+	seq, err := api.GetMainSequenceByHash(&types.ReqHash{Hash: []byte("exist-hash")})
+	assert.Nil(t, err)
+	assert.Equal(t, int64(9999), seq.Data)
+
+	seq, err = api.GetMainSequenceByHash(&types.ReqHash{Hash: []byte("")})
+	assert.NotNil(t, err)
+
+	seq1, err := api.GetLastBlockMainSequence()
+	assert.Nil(t, err)
+	assert.Equal(t, int64(9999), seq1.Data)
 }

@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 strpwd=$(pwd)
 strcmd=${strpwd##*dapp/}
 strapp=${strcmd%/cmd*}
+
 OUT_DIR="${1}/$strapp"
 #FLAG=$2
 
@@ -11,5 +12,4 @@ cp ./build/* "${OUT_DIR}"
 
 OUT_TESTDIR="${1}/dapptest/$strapp"
 mkdir -p "${OUT_TESTDIR}"
-chmod +x ./build/test-rpc.sh
 cp ./build/test-rpc.sh "${OUT_TESTDIR}"

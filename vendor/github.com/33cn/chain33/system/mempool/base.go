@@ -59,7 +59,7 @@ func NewMempool(cfg *types.Mempool) *Mempool {
 	pool.cfg = cfg
 	pool.poolHeader = make(chan struct{}, 2)
 	pool.removeBlockTicket = time.NewTicker(time.Minute)
-	pool.cache = newCache(cfg.MaxTxNumPerAccount, cfg.MaxTxLast)
+	pool.cache = newCache(cfg.MaxTxNumPerAccount, cfg.MaxTxLast, cfg.PoolCacheSize)
 	return pool
 }
 
@@ -282,10 +282,16 @@ func (mem *Mempool) RemoveTxsOfBlock(block *types.Block) bool {
 }
 
 // GetProperFeeRate 获取合适的手续费率
-func (mem *Mempool) GetProperFeeRate() int64 {
+func (mem *Mempool) GetProperFeeRate(req *types.ReqProperFee) int64 {
+	if req == nil || req.TxCount == 0 {
+		req = &types.ReqProperFee{TxCount: 20}
+	}
+	if req.TxSize == 0 {
+		req.TxSize = 10240
+	}
 	baseFeeRate := mem.cache.GetProperFee()
 	if mem.cfg.IsLevelFee {
-		levelFeeRate := mem.getLevelFeeRate(mem.cfg.MinTxFee)
+		levelFeeRate := mem.getLevelFeeRate(mem.cfg.MinTxFee, req.TxCount, req.TxSize)
 		if levelFeeRate > baseFeeRate {
 			return levelFeeRate
 		}
@@ -293,15 +299,15 @@ func (mem *Mempool) GetProperFeeRate() int64 {
 	return baseFeeRate
 }
 
-// getLevelFeeRate 获取合适的阶梯手续费率
-func (mem *Mempool) getLevelFeeRate(baseFeeRate int64) int64 {
+// getLevelFeeRate 获取合适的阶梯手续费率, 可以外部传入count, size进行前瞻性估计
+func (mem *Mempool) getLevelFeeRate(baseFeeRate int64, appendCount, appendSize int32) int64 {
 	var feeRate int64
-	sumByte := mem.cache.TotalByte()
+	sumByte := mem.cache.TotalByte() + int64(appendSize)
 	maxTxNumber := types.GetP(mem.Height()).MaxTxNumber
 	switch {
-	case sumByte >= int64(types.MaxBlockSize/20) || int64(mem.Size()) >= maxTxNumber/2:
+	case sumByte >= int64(types.MaxBlockSize/20) || int64(mem.Size()+int(appendCount)) >= maxTxNumber/2:
 		feeRate = 100 * baseFeeRate
-	case sumByte >= int64(types.MaxBlockSize/100) || int64(mem.Size()) >= maxTxNumber/10:
+	case sumByte >= int64(types.MaxBlockSize/100) || int64(mem.Size()+int(appendCount)) >= maxTxNumber/10:
 		feeRate = 10 * baseFeeRate
 	default:
 		feeRate = baseFeeRate
@@ -420,4 +426,27 @@ func (mem *Mempool) setSync(status bool) {
 	mem.proxyMtx.Lock()
 	mem.sync = status
 	mem.proxyMtx.Unlock()
+}
+
+// getTxListByHash 从qcache或者SHashTxCache中获取hash对应的tx交易列表
+func (mem *Mempool) getTxListByHash(hashList *types.ReqTxHashList) *types.ReplyTxList {
+	mem.proxyMtx.Lock()
+	defer mem.proxyMtx.Unlock()
+
+	var replyTxList types.ReplyTxList
+
+	//通过短hash来获取tx交易
+	if hashList.GetIsShortHash() {
+		for _, sHash := range hashList.GetHashes() {
+			tx := mem.cache.GetSHashTxCache(sHash)
+			replyTxList.Txs = append(replyTxList.Txs, tx)
+		}
+		return &replyTxList
+	}
+	//通过hash来获取tx交易
+	for _, hash := range hashList.GetHashes() {
+		tx := mem.cache.getTxByHash(hash)
+		replyTxList.Txs = append(replyTxList.Txs, tx)
+	}
+	return &replyTxList
 }

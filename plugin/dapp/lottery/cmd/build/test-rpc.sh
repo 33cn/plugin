@@ -4,22 +4,9 @@ set -e
 set -o pipefail
 
 MAIN_HTTP=""
-CASE_ERR=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
-
-# $2=0 means true, other false
-echo_rst() {
-    if [[ $2 -eq 0 ]]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="err"
-    fi
-}
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
 
 lottery_addCreator_unsignedTx="0a066d616e616765123c0a3a0a0f6c6f74746572792d63726561746f721222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630c788b8f7ccbadbc0703a223151344e687572654a784b4e4266373164323642394a336642516f5163666d657a32"
 lottery_addCreator_unsignedTx_para="0a12757365722e702e706172612e6d616e616765123c0a3a0a0f6c6f74746572792d63726561746f721222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630a8bba1b887e7dade2b3a22314469484633317577783977356a6a733571514269474a6b4e686e71656564763157"
@@ -28,7 +15,6 @@ lottery_creator_addr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 lottery_creator_priv="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 
 gID=""
-gResp=""
 lottExecAddr=""
 luckyNumber=""
 
@@ -43,113 +29,12 @@ init() {
 
     if [[ $ispara == true ]]; then
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SendTransaction "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_priv}"
+        chain33_SignRawTx "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_priv}" ${MAIN_HTTP}
     else
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SendTransaction "${lottery_addCreator_unsignedTx}" "${lottery_creator_priv}"
+        chain33_SignRawTx "${lottery_addCreator_unsignedTx}" "${lottery_creator_priv}" ${MAIN_HTTP}
     fi
     echo "lottExecAddr=$lottExecAddr"
-}
-
-function block_wait() {
-    if [[ $# -lt 1 ]]; then
-        echo "wrong block_wait params"
-        exit 1
-    fi
-    http="$2"
-    if [[ ! $http ]]; then
-        http=${MAIN_HTTP}
-    fi
-    cur_height=$(curl -ksd '{"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${http} | jq -r ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd '{"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' ${http} | jq -r ".result.height")
-        if [[ ${new_height} -ge ${expect} ]]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function query_tx() {
-    if [[ $# -lt 1 ]]; then
-        echo "wrong block_wait params"
-        exit 1
-    fi
-    http="$2"
-    if [[ ! $http ]]; then
-        http=${MAIN_HTTP}
-    fi
-    txhash="$1"
-    req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
-    local times=10
-    block_wait 1 ${http}
-    while true; do
-        ret=$(curl -ksd "$req" ${http})
-        tx=$(jq -r ".result.tx.hash" <<<"$ret")
-        if [[ ${tx} != "${1}" ]]; then
-            block_wait 1 ${http}
-            times=$((times - 1))
-            if [[ $times -le 0 ]]; then
-                echo_rst "query tx=$1" 1
-                exit 1
-            fi
-        else
-            exec_ok=$(jq '(.result.receipt.tyName == "ExecOk")' <<<"$ret")
-            [[ $exec_ok == true ]]
-            echo_rst "query tx=$1" $?
-            echo -e "######\\n  response: $ret  \\n######"
-            break
-        fi
-    done
-}
-
-chain33_SendToAddress() {
-    from=$1
-    to=$2
-    amount=$3
-    http=$4
-    note="test"
-    set -x
-    resp=$(curl -ksd '{"method":"Chain33.SendToAddress","params":[{"from":"'"$from"'","to":"'"$to"'","amount":'"$amount"',"note":"'"$note"'"}]}' -H 'content-type:text/plain;' "${http}")
-    ok=$(jq '(.error|not)' <<<"$resp")
-    set +x
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-
-    #查询交易
-    txhash=$(jq -r ".result.hash" <<<"$resp")
-    query_tx "$txhash" "$http"
-}
-
-chain33_SendTransaction() {
-    rawTx=$1
-    priv=$2
-    #签名交易
-    set -x
-    resp=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priv"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    set +x
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "chain33_SignRawTx" "$rst"
-
-    signTx=$(echo "${resp}" | jq -r ".result")
-    set -x
-    resp=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    set +x
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-
-    #查询交易
-    gResp=$(jq -r ".result" <<<"$resp")
-    query_tx "$gResp"
 }
 
 lottery_LotteryCreate() {
@@ -159,14 +44,15 @@ lottery_LotteryCreate() {
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
     "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
-    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${priv}"
-    gID="${gResp}"
+    chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
+    set +x
+
+    gID="${RAW_TX_HASH}"
     echo "gameID $gID"
 }
 
@@ -180,13 +66,13 @@ lottery_LotteryBuy() {
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy",
     "payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
-    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${priv}"
+    chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
+    set +x
 }
 
 lottery_LotteryDraw() {
@@ -196,13 +82,13 @@ lottery_LotteryDraw() {
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
-    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${priv}"
+    chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
+    set +x
 }
 
 lottery_LotteryClose() {
@@ -212,13 +98,13 @@ lottery_LotteryClose() {
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
-    set +x
     [[ $ok == null ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${priv}"
+    chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
+    set +x
 }
 
 lottery_GetLotteryNormalInfo() {
@@ -370,20 +256,12 @@ function run_testcases() {
     gamePriv1="0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
     gameAddr2="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
     gamePriv2="0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
-    #该账户需要转账
-    gameAddr3="12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
-    gamePriv3="0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
 
-    #主链中相应账户需要转帐
-    M_HTTP=${MAIN_HTTP//8901/8801}
-    chain33_SendToAddress "${gameAddr1}" "${gameAddr3}" 300000000 "${M_HTTP}"
-    #平行链相应账户需要转帐
-    chain33_SendToAddress "${gameAddr1}" "${gameAddr3}" 300000000 "${MAIN_HTTP}"
-
+    set -x
     #给游戏合约中转帐
-    chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${gameAddr2}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "${gameAddr3}" "${lottExecAddr}" 200000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "${gameAddr2}" "${lottExecAddr}" 500000000 "${MAIN_HTTP}"
+    set +x
 
     #创建游戏
     lottery_LotteryCreate "${lottery_creator_priv}"
@@ -392,35 +270,35 @@ function run_testcases() {
 
     #第一次投注
     lottery_LotteryBuy "${gamePriv1}" 1 12345 1
-    lottery_LotteryBuy "${gamePriv2}" 1 66666 2
-    lottery_LotteryBuy "${gamePriv3}" 1 56789 5
+    lottery_LotteryBuy "${gamePriv2}" 2 66666 2
     #查询
     lottery_GetLotteryCurrentInfo "$gID" 2 3
-    lottery_GetLotteryPurchaseAddr "$gID" 3
+    lottery_GetLotteryPurchaseAddr "$gID" 2
     lottery_GetLotteryHistoryBuyInfo "$gID" "${gameAddr1}" 1 "12345"
     lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr2}" 1 1 "66666"
 
     #第二次投注
-    lottery_LotteryBuy "${gamePriv1}" 1 12321 1
-    lottery_LotteryBuy "${gamePriv3}" 1 78987 5
+    lottery_LotteryBuy "${gamePriv1}" 2 12321 1
+    lottery_LotteryBuy "${gamePriv2}" 1 78987 5
     #查询
-    lottery_GetLotteryCurrentInfo "$gID" 2 5
-    lottery_GetLotteryPurchaseAddr "$gID" 3
+    lottery_GetLotteryCurrentInfo "$gID" 2 6
+    lottery_GetLotteryPurchaseAddr "$gID" 2
     lottery_GetLotteryHistoryBuyInfo "$gID" "${gameAddr1}" 2 "12321"
-    lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr3}" 1 2 "78987"
+    lottery_GetLotteryBuyRoundInfo "$gID" "${gameAddr2}" 1 2 "78987"
 
     #游戏开奖
-    block_wait ${drawNum} "${M_HTTP}"
+    M_HTTP=${MAIN_HTTP//8901/8801}
+    chain33_BlockWait ${drawNum} "${M_HTTP}"
     lottery_LotteryDraw "${lottery_creator_priv}"
     lottery_GetLotteryCurrentInfo "$gID" 3 0
 
     #游戏查询
     lottery_GetLotteryHistoryLuckyNumber "$gID" 1 "${luckyNumber}"
     lottery_GetLotteryRoundLuckyNumber "$gID" 1 "${luckyNumber}"
-    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr1}" 1 2
-    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr2}" 1 1
-    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr1}" 1 2
-    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr3}" 1 2
+    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr1}" 1 3
+    lottery_GetLotteryHistoryGainInfo "$gID" "${gameAddr2}" 1 3
+    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr1}" 1 3
+    lottery_GetLotteryRoundGainInfo "$gID" "${gameAddr2}" 1 3
 
     #关闭游戏
     lottery_LotteryClose "${lottery_creator_priv}"
