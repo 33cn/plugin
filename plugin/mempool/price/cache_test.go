@@ -193,6 +193,26 @@ func TestRealNodeMempool(t *testing.T) {
 					log.Println(err)
 					continue
 				}
+				//发送交易组
+				tx1 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx2 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2})
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				for i := 0; i < len(txgroup.GetTxs()); i++ {
+					err = txgroup.SignN(i, types.SECP256K1, priv)
+					if err != nil {
+						t.Error(err)
+						return
+					}
+				}
+				reply, err = mock33.GetAPI().SendTx(txgroup.Tx())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 				mock33.SetLastSend(reply.GetMsg())
 			}
 			done <- struct{}{}
@@ -204,6 +224,7 @@ func TestRealNodeMempool(t *testing.T) {
 	for {
 		txs, err := mock33.GetAPI().GetMempool()
 		assert.Nil(t, err)
+		println("len", len(txs.GetTxs()))
 		if len(txs.GetTxs()) > 0 {
 			mock33.Wait()
 			continue
