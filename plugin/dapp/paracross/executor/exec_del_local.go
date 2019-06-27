@@ -77,7 +77,7 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 			}
 			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: nil})
-		}else if log.Ty == pt.TyLogParacrossCommitDone {
+		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
 			g.Height = g.Height - 1
