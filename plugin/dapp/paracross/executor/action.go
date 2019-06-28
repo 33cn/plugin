@@ -237,7 +237,7 @@ func getMostCommit(stat *pt.ParacrossHeightStatus) (int, string) {
 }
 
 //需要在ForkLoopCheckCommitTxDone后使用
-func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte,[]byte, []byte, []byte, []byte) {
+func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte, []byte, []byte, []byte, []byte) {
 	for i, hash := range stat.BlockDetails.BlockHashs {
 		if bytes.Equal(mostHash, hash) {
 			return stat.BlockDetails.StateHashs[i], stat.BlockDetails.TxResults[i], stat.BlockDetails.TxHashs[i], stat.BlockDetails.CrossTxResults[i], stat.BlockDetails.CrossTxHashs[i]
@@ -317,9 +317,9 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 }
 
 //相同的BlockHash，只保留一份数据
-func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus,commit *pt.ParacrossNodeStatus) {
+func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.ParacrossNodeStatus) {
 	for _, blockHash := range stat.BlockDetails.BlockHashs {
-		if bytes.Equal(blockHash,commit.BlockHash) {
+		if bytes.Equal(blockHash, commit.BlockHash) {
 			return
 		}
 	}
@@ -431,7 +431,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			stat.MainHash = commit.Status.MainBlockHash
 		}
 		if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-			updateCommitBlockHashs(stat,commit.Status)
+			updateCommitBlockHashs(stat, commit.Status)
 		}
 
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
@@ -447,13 +447,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		if found {
 			stat.Details.BlockHash[index] = commit.Status.BlockHash
 			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-				updateCommitBlockHashs(stat,commit.Status)
+				updateCommitBlockHashs(stat, commit.Status)
 			}
 		} else {
 			stat.Details.Addrs = append(stat.Details.Addrs, a.fromaddr)
 			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.Status.BlockHash)
 			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-				updateCommitBlockHashs(stat,commit.Status)
+				updateCommitBlockHashs(stat, commit.Status)
 			}
 		}
 
