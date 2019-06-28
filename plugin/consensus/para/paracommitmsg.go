@@ -52,6 +52,7 @@ func (client *commitMsgClient) handler() {
 	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
 	var ticker *time.Ticker
+	var authAccountIn bool
 
 	client.paraClient.wg.Add(1)
 	consensusCh := make(chan *commitConsensRsp, 1)
@@ -166,6 +167,12 @@ out:
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
 				"consensHeight", rsp.status.Height, "finishHeight", finishHeight, "authIn", rsp.authAccountIn, "sync", isSync, "miner", readTick != nil)
 			plog.Debug("para consensus rcv", "consensBlockHash", common.ToHex(rsp.status.BlockHash))
+
+			//每次账户加入nodegroup 重新设置finishHeight 重新发送，防止曾经发送过，又退出group场景
+			if !authAccountIn && rsp.authAccountIn && finishHeight > consensHeight {
+				finishHeight = consensHeight
+			}
+			authAccountIn = rsp.authAccountIn
 
 			if notification == nil || isRollback || !rsp.authAccountIn {
 				isSync = false
