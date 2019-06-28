@@ -155,19 +155,6 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 	return &set, nil
 }
 
-func getCommitHeight(payload []byte) (int64, error) {
-	var a pt.ParacrossAction
-	err := types.Decode(payload, &a)
-	if err != nil {
-		return 0, err
-	}
-	if a.GetCommit() == nil {
-		return 0, types.ErrInvalidParam
-	}
-
-	return a.GetCommit().Status.Height, nil
-}
-
 func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
 	clog.Debug("para execLocal", "tx hash", hex.EncodeToString(tx.Hash()), "action name", log.Lazy{Fn: tx.ActionName})
 	key := calcLocalAssetKey(tx.Hash())
