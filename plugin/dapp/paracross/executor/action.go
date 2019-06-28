@@ -243,7 +243,7 @@ func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte, []
 			return stat.BlockDetails.StateHashs[i], stat.BlockDetails.TxResults[i], stat.BlockDetails.TxHashs[i], stat.BlockDetails.CrossTxResults[i], stat.BlockDetails.CrossTxHashs[i]
 		}
 	}
-	return nil, nil, nil, nil
+	return nil, nil, nil, nil, nil
 }
 
 func hasCommited(addrs []string, addr string) (bool, int) {
