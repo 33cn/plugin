@@ -340,7 +340,7 @@ function para_cross_transfer_withdraw() {
                 echo "para_cross_transfer_withdraw failed"
                 ${CLI} tx query -s "$hash2"
                 ${PARA_CLI} tx query -s "$hash2"
-                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e user.p.para.paracross --asset_exec paracross --asset_symbol coins.para
+                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e user.p.para.paracross --asset_exec paracross --asset_symbol coins.bty
                 exit 1
             fi
         else

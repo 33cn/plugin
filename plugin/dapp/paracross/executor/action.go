@@ -237,10 +237,10 @@ func getMostCommit(stat *pt.ParacrossHeightStatus) (int, string) {
 }
 
 //需要在ForkLoopCheckCommitTxDone后使用
-func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte, []byte, []byte, []byte) {
-	for i, hash := range stat.Details.BlockHash {
+func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte,[]byte, []byte, []byte, []byte) {
+	for i, hash := range stat.BlockDetails.BlockHashs {
 		if bytes.Equal(mostHash, hash) {
-			return stat.Details.TxResult[i], stat.Details.TxHashs[i], stat.Details.CrossTxResult[i], stat.Details.CrossTxHashs[i]
+			return stat.BlockDetails.StateHashs[i], stat.BlockDetails.TxResults[i], stat.BlockDetails.TxHashs[i], stat.BlockDetails.CrossTxResults[i], stat.BlockDetails.CrossTxHashs[i]
 		}
 	}
 	return nil, nil, nil, nil
@@ -316,6 +316,21 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
 
 }
 
+//相同的BlockHash，只保留一份数据
+func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus,commit *pt.ParacrossNodeStatus) {
+	for _, blockHash := range stat.BlockDetails.BlockHashs {
+		if bytes.Equal(blockHash,commit.BlockHash) {
+			return
+		}
+	}
+	stat.BlockDetails.BlockHashs = append(stat.BlockDetails.BlockHashs, commit.BlockHash)
+	stat.BlockDetails.StateHashs = append(stat.BlockDetails.StateHashs, commit.StateHash)
+	stat.BlockDetails.TxResults = append(stat.BlockDetails.TxResults, commit.TxResult)
+	stat.BlockDetails.TxHashs = append(stat.BlockDetails.TxHashs, commit.TxHashs[0])
+	stat.BlockDetails.CrossTxResults = append(stat.BlockDetails.CrossTxResults, commit.CrossTxResult)
+	stat.BlockDetails.CrossTxHashs = append(stat.BlockDetails.CrossTxHashs, commit.CrossTxHashs[0])
+}
+
 //根据nodes过滤掉可能退出了的addrs
 func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) {
 	details := &pt.ParacrossStatusDetails{}
@@ -323,14 +338,6 @@ func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}
 		if _, ok := nodes[addr]; ok {
 			details.Addrs = append(details.Addrs, addr)
 			details.BlockHash = append(details.BlockHash, stat.Details.BlockHash[i])
-
-			if stat.MainHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-				details.TxResult = append(details.TxResult, stat.Details.TxResult[i])
-				details.TxHashs = append(details.TxHashs, stat.Details.TxHashs[i])
-				details.CrossTxResult = append(details.CrossTxResult, stat.Details.CrossTxResult[i])
-				details.CrossTxHashs = append(details.CrossTxHashs, stat.Details.CrossTxHashs[i])
-			}
-
 		}
 	}
 	stat.Details = details
@@ -424,10 +431,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			stat.MainHash = commit.Status.MainBlockHash
 		}
 		if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-			stat.Details.TxResult = append(stat.Details.TxResult, commit.Status.TxResult)
-			stat.Details.TxHashs = append(stat.Details.TxHashs, commit.Status.TxHashs[0])
-			stat.Details.CrossTxResult = append(stat.Details.CrossTxResult, commit.Status.CrossTxResult)
-			stat.Details.CrossTxHashs = append(stat.Details.CrossTxHashs, commit.Status.CrossTxHashs[0])
+			updateCommitBlockHashs(stat,commit.Status)
 		}
 
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
@@ -443,19 +447,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		if found {
 			stat.Details.BlockHash[index] = commit.Status.BlockHash
 			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-				stat.Details.TxResult[index] = commit.Status.TxResult
-				stat.Details.TxHashs[index] = commit.Status.TxHashs[0]
-				stat.Details.CrossTxResult[index] = commit.Status.CrossTxResult
-				stat.Details.CrossTxHashs[index] = commit.Status.CrossTxHashs[0]
+				updateCommitBlockHashs(stat,commit.Status)
 			}
 		} else {
 			stat.Details.Addrs = append(stat.Details.Addrs, a.fromaddr)
 			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.Status.BlockHash)
 			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
-				stat.Details.TxResult = append(stat.Details.TxResult, commit.Status.TxResult)
-				stat.Details.TxHashs = append(stat.Details.TxHashs, commit.Status.TxHashs[0])
-				stat.Details.CrossTxResult = append(stat.Details.CrossTxResult, commit.Status.CrossTxResult)
-				stat.Details.CrossTxHashs = append(stat.Details.CrossTxHashs, commit.Status.CrossTxHashs[0])
+				updateCommitBlockHashs(stat,commit.Status)
 			}
 		}
 
@@ -654,13 +652,14 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 	r := makeCommitStatReceipt(stat)
 	receipt = mergeReceipt(receipt, r)
 
-	txRst, txHash, crossTxRst, crossTxHash := getMostResults([]byte(mostHash), stat)
+	stateHash, txRst, txHash, crossTxRst, crossTxHash := getMostResults([]byte(mostHash), stat)
 	mostStatus := &pt.ParacrossNodeStatus{
 		MainBlockHash:   stat.MainHash,
 		MainBlockHeight: stat.MainHeight,
 		Title:           stat.Title,
 		Height:          stat.Height,
 		BlockHash:       []byte(mostHash),
+		StateHash:       stateHash,
 		TxResult:        txRst,
 		TxHashs:         [][]byte{txHash},
 		CrossTxResult:   crossTxRst,
