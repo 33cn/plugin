@@ -239,6 +239,7 @@ ForkTradeID = 0
 Enable=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
+ForkLoopCheckCommitTxDone=-1
 
 [fork.sub.evm]
 Enable=0
