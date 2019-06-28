@@ -609,9 +609,6 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 		receipt = mergeReceipt(receipt, r)
 
 	}
-
-	return receipt, nil
-
 }
 
 func (a *action) checkCommitTxDone(title string, stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) (*types.Receipt, error) {
