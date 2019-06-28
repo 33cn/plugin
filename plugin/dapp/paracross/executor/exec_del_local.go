@@ -32,7 +32,7 @@ func (e *Paracross) ExecDelLocal_Commit(payload *pt.ParacrossCommitAction, tx *t
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: nil})
 
-			if !types.IsPara() && g.Height >0{
+			if !types.IsPara() && g.Height > 0 {
 				r, err := e.saveLocalParaTxs(tx, true)
 				if err != nil {
 					return nil, err
@@ -88,7 +88,7 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: nil})
 
-			if !types.IsPara() && g.Height >0{
+			if !types.IsPara() && g.Height > 0 {
 				r, err := e.saveLocalParaTxsFork(&g, true)
 				if err != nil {
 					return nil, err

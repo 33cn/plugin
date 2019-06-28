@@ -273,7 +273,7 @@ func getDappForkHeight(forkKey string) int64 {
 	} else {
 		forkHeight = types.GetDappFork(pt.ParaX, forkKey)
 
-		if types.IsLocal(){
+		if types.IsLocal() {
 			switch forkKey {
 			case pt.ForkCommitTx:
 				forkHeight = 10
@@ -498,11 +498,10 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
 	//之前记录的stat 状态没更新
-	if stat.MainHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone){
+	if stat.MainHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
 		r := makeCommitStatReceipt(stat)
 		receipt = mergeReceipt(receipt, r)
 	}
-
 
 	//add commit done receipt
 	receiptDone := makeDoneReceipt(a.exec.GetMainHeight(), nodeStatus, int32(most), int32(commitCount), int32(len(nodes)))
@@ -555,7 +554,7 @@ func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 	}
 
 	if enableParacrossTransfer && status.Height > 0 && haveCrossTxs {
-		clog.Info("paracross.Commit commitDone do cross", "height",status.Height, "havecross",haveCrossTxs)
+		clog.Info("paracross.Commit commitDone do cross", "height", status.Height, "havecross", haveCrossTxs)
 		crossTxReceipt, err := a.execCrossTxs(status)
 		if err != nil {
 			return nil, err
@@ -639,7 +638,7 @@ func (a *action) checkCommitTxDone(title string, stat *pt.ParacrossHeightStatus,
 
 //只根据stat的信息在commitDone之后重构一个commitStatus做后续处理
 func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
-									nodes map[string]struct{}, receipt *types.Receipt) (*types.Receipt, error) {
+	nodes map[string]struct{}, receipt *types.Receipt) (*types.Receipt, error) {
 
 	clog.Info("paracross.commitTxDoneByStat", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
 	for i, v := range stat.Details.Addrs {
