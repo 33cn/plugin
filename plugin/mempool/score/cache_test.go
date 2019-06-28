@@ -1,6 +1,7 @@
 package score
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -10,7 +11,12 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	drivers "github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
+	"github.com/33cn/chain33/util/testnode"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+
+	_ "github.com/33cn/chain33/system"
 )
 
 var (
@@ -22,11 +28,11 @@ var (
 	amount     = int64(1e8)
 	v          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 	transfer   = &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
-	tx1        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000, Expire: 1, To: toAddr}
-	tx2        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000, Expire: 2, To: toAddr}
-	tx3        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000, Expire: 3, To: toAddr}
-	tx4        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 200000, Expire: 4, To: toAddr}
-	tx5        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000, Expire: 5, To: toAddr}
+	tx1        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 1, To: toAddr}
+	tx2        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 2, To: toAddr}
+	tx3        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 3, To: toAddr}
+	tx4        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 2000000, Expire: 4, To: toAddr}
+	tx5        = &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 1000000, Expire: 5, To: toAddr}
 	item1      = &drivers.Item{Value: tx1, Priority: tx1.Fee, EnterTime: types.Now().Unix()}
 	item2      = &drivers.Item{Value: tx2, Priority: tx2.Fee, EnterTime: types.Now().Unix()}
 	item3      = &drivers.Item{Value: tx3, Priority: tx3.Fee, EnterTime: types.Now().Unix() - 1000}
@@ -134,12 +140,11 @@ func TestQueueDirection(t *testing.T) {
 	cache.Push(item3)
 	cache.Push(item4)
 	cache.Push(item5)
-	cache.txList.Print()
 	i := 0
-	lastScore := cache.txList.GetIterator().First().Score
+	lastScore := cache.First().GetScore()
 	var tmpScore int64
 	cache.Walk(5, func(value *drivers.Item) bool {
-		tmpScore = cache.txMap[string(value.Value.Hash())].Score
+		tmpScore = cache.CreateSkipValue(&scoreScore{Item: value, subConfig: cache.subConfig}).Score
 		if lastScore < tmpScore {
 			return false
 		}
@@ -148,25 +153,91 @@ func TestQueueDirection(t *testing.T) {
 		return true
 	})
 	assert.Equal(t, 5, i)
-	assert.Equal(t, true, lastScore == cache.txList.GetIterator().Last().Score)
+	assert.Equal(t, true, lastScore == cache.Last().GetScore())
+}
+
+func TestRealNodeMempool(t *testing.T) {
+	mock33 := testnode.New("chain33.test.toml", nil)
+	defer mock33.Close()
+	mock33.Listen()
+	mock33.WaitHeight(0)
+	mock33.SendHot()
+	mock33.WaitHeight(1)
+	n := 300
+	done := make(chan struct{}, n)
+	keys := make([]crypto.PrivKey, n)
+	for i := 0; i < n; i++ {
+		addr, priv := util.Genaddress()
+		tx := util.CreateCoinsTx(mock33.GetHotKey(), addr, 10*types.Coin)
+		mock33.SendTx(tx)
+		keys[i] = priv
+	}
+	mock33.Wait()
+	for i := 0; i < n; i++ {
+		go func(priv crypto.PrivKey) {
+			for i := 0; i < 100; i++ {
+				tx := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				reply, err := mock33.GetAPI().SendTx(tx)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				//发送交易组
+				tx1 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx2 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2})
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				for i := 0; i < len(txgroup.GetTxs()); i++ {
+					err = txgroup.SignN(i, types.SECP256K1, priv)
+					if err != nil {
+						t.Error(err)
+						return
+					}
+				}
+				reply, err = mock33.GetAPI().SendTx(txgroup.Tx())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				mock33.SetLastSend(reply.GetMsg())
+			}
+			done <- struct{}{}
+		}(keys[i])
+	}
+	for i := 0; i < n; i++ {
+		<-done
+	}
+	for {
+		txs, err := mock33.GetAPI().GetMempool()
+		assert.Nil(t, err)
+		println("len", len(txs.GetTxs()))
+		if len(txs.GetTxs()) > 0 {
+			mock33.Wait()
+			continue
+		}
+		break
+	}
+	peer, err := mock33.GetAPI().PeerInfo()
+	assert.Nil(t, err)
+	assert.Equal(t, len(peer.Peers), 1)
+	assert.Equal(t, peer.Peers[0].MempoolSize, int32(0))
 }
 
 func TestGetProperFee(t *testing.T) {
 	cache := initEnv(0)
 	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
-
 	cache.Push(item3)
 	cache.Push(item4)
-	cache.GetProperFee()
-	buf3 := types.Encode(item3.Value)
-	size3 := len(buf3)
-	buf4 := types.Encode(item4.Value)
-	size4 := len(buf4)
-	score3 := item3.Value.Fee*cache.subConfig.PriceConstant*cache.subConfig.PricePower/int64(size3) -
+	size3 := proto.Size(item3.Value)
+	size4 := proto.Size(item3.Value)
+	score3 := cache.subConfig.PriceConstant*cache.subConfig.PricePower*(item3.Value.Fee/int64(size3)) -
 		item3.EnterTime*cache.subConfig.TimeParam
-	score4 := item4.Value.Fee*cache.subConfig.PriceConstant*cache.subConfig.PricePower/int64(size4) -
+	score4 := cache.subConfig.PriceConstant*cache.subConfig.PricePower*(item4.Value.Fee/int64(size4)) -
 		item4.EnterTime*cache.subConfig.TimeParam
-	properFee := ((score3+score4)/2 + time.Now().Unix()*cache.subConfig.TimeParam) * int64(250) /
+	properFee := ((score3+score4)/2 + time.Now().Unix()*cache.subConfig.TimeParam) * int64(100) /
 		(cache.subConfig.PriceConstant * cache.subConfig.PricePower)
 	assert.Equal(t, int64(1), properFee/cache.GetProperFee())
 }
