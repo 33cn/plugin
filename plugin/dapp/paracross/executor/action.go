@@ -285,6 +285,10 @@ func getDappForkHeight(forkKey string) int64 {
 	return forkHeight
 }
 
+func isParaForkHeight(height int64, forkKey string) bool {
+	return height >= getDappForkHeight(forkKey)
+}
+
 func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []byte, error) {
 	key := calcParaNodeGroupAddrsKey(title)
 	nodes, _, err := getNodes(db, key)
@@ -425,13 +429,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 				BlockHash: [][]byte{commit.Status.BlockHash},
 			},
 		}
-		if a.exec.GetMainHeight() >= getDappForkHeight(pt.ForkCommitTx) {
+		if isParaForkHeight(a.exec.GetMainHeight(), pt.ForkCommitTx) {
 			stat.MainHeight = commit.Status.MainBlockHeight
 			stat.MainHash = commit.Status.MainBlockHash
 		}
 		//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
 		// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
-		if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+		if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 			stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
 			updateCommitBlockHashs(stat, commit.Status)
 		}
@@ -448,13 +452,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		found, index := hasCommited(stat.Details.Addrs, a.fromaddr)
 		if found {
 			stat.Details.BlockHash[index] = commit.Status.BlockHash
-			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+			if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 				updateCommitBlockHashs(stat, commit.Status)
 			}
 		} else {
 			stat.Details.Addrs = append(stat.Details.Addrs, a.fromaddr)
 			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.Status.BlockHash)
-			if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+			if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 				updateCommitBlockHashs(stat, commit.Status)
 			}
 		}
@@ -466,6 +470,11 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		updateCommitAddrs(stat, nodes)
 	}
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
+	//fork之前记录的stat 没有根据nodes更新而更新
+	if isParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+		r := makeCommitStatReceipt(stat)
+		receipt = mergeReceipt(receipt, r)
+	}
 
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
@@ -506,7 +515,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
 	//之前记录的stat 状态没更新
-	if stat.MainHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+	if isParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
 		r := makeCommitStatReceipt(stat)
 		receipt = mergeReceipt(receipt, r)
 	}
@@ -529,7 +538,7 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 	titleStatus.Title = nodeStatus.Title
 	titleStatus.Height = nodeStatus.Height
 	titleStatus.BlockHash = nodeStatus.BlockHash
-	if a.exec.GetMainHeight() >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+	if isParaForkHeight(a.exec.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
 		titleStatus.MainHeight = nodeStatus.MainBlockHeight
 		titleStatus.MainHash = nodeStatus.MainBlockHash
 	}
@@ -562,7 +571,7 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 
 func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	haveCrossTxs := len(status.CrossTxHashs) > 0
-	if status.Height > 0 && status.MainBlockHeight >= getDappForkHeight(pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
+	if status.Height > 0 && isParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 
@@ -591,7 +600,7 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "getTitle:%s", title)
 	}
 	//当前共识高度还未到分叉高度，则不处理
-	if titleStatus.GetMainHeight() < getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+	if !isParaForkHeight(titleStatus.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
 		return nil, errors.Wrapf(pt.ErrForkHeightNotReach,
 			"titleHeight:%d,forkHeight:%d", titleStatus.MainHeight, getDappForkHeight(pt.ForkLoopCheckCommitTxDone))
 	}
@@ -737,7 +746,7 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, crossTxHash []byte) (*
 }
 
 func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
-	if status.MainBlockHeight < getDappForkHeight(pt.ForkCommitTx) {
+	if !isParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) {
 		return status.CrossTxHashs, status.CrossTxResult, nil
 	}
 
