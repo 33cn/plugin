@@ -770,3 +770,44 @@ func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Trans
 
 	return tx, nil
 }
+
+func TestUpdateCommitBlockHashs(t *testing.T) {
+	stat := &pt.ParacrossHeightStatus{}
+	stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
+	commit := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main"),
+		MainBlockHeight: 1,
+		BlockHash:       []byte("1122"),
+		StateHash:       []byte("statehash"),
+		TxResult:        []byte(""),
+		TxHashs:         [][]byte{nil},
+		CrossTxResult:   []byte(""),
+		CrossTxHashs:    [][]byte{nil},
+	}
+
+	updateCommitBlockHashs(stat, commit)
+	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
+
+	updateCommitBlockHashs(stat, commit)
+	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
+
+	commit2 := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main"),
+		MainBlockHeight: 1,
+		BlockHash:       []byte("2233"),
+		StateHash:       []byte("statehash"),
+		TxResult:        []byte("11"),
+		TxHashs:         [][]byte{[]byte("hash2")},
+		CrossTxResult:   []byte("11"),
+		CrossTxHashs:    [][]byte{[]byte("hash2")},
+	}
+	updateCommitBlockHashs(stat, commit2)
+	assert.Equal(t, int(2), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, int(2), len(stat.BlockDetails.CrossTxHashs))
+	assert.Equal(t, commit2.BlockHash, stat.BlockDetails.BlockHashs[1])
+	assert.Equal(t, commit.CrossTxHashs[0], stat.BlockDetails.CrossTxHashs[0])
+	assert.Equal(t, commit2.CrossTxHashs[0], stat.BlockDetails.CrossTxHashs[1])
+
+}

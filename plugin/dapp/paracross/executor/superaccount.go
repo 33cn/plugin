@@ -657,7 +657,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
-		clog.Info("unpdateNodeGroup", "add key", string(key), "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
+		clog.Info("unpdateNodeGroup add", "addr", addr, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
 
 	} else {
 		//必须保留至少1个授权账户
@@ -667,11 +667,11 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 		item.Addr = addr
 		item.GetArr().Value = make([]string, 0)
 		for _, value := range copyItem.GetArr().Value {
-			clog.Info("unpdateNodeGroup", "key delete", string(key), "current", value)
 			if value != addr {
 				item.GetArr().Value = append(item.GetArr().Value, value)
 			}
 		}
+		clog.Info("unpdateNodeGroup delete", "addr", addr)
 	}
 	err = db.Set(key, types.Encode(&item))
 	if err != nil {
