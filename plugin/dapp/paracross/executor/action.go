@@ -432,6 +432,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
 		// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
 		if commit.Status.MainBlockHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+			stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
 			updateCommitBlockHashs(stat, commit.Status)
 		}
 
@@ -464,6 +465,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if types.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		updateCommitAddrs(stat, nodes)
 	}
+	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
@@ -476,11 +478,19 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			return receipt, nil
 		}
 	}
-	return a.commitTxDone(commit.Status, stat, titleStatus, nodes, receipt)
+	r, err := a.commitTxDone(commit.Status, stat, titleStatus, nodes)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
+	return receipt, nil
 }
 
+//分叉以前stat里面只记录了blockhash的信息，没有crossTxHash等信息，无法通过stat直接重构出mostCommitStatus
 func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
-	nodes map[string]struct{}, receipt *types.Receipt) (*types.Receipt, error) {
+	nodes map[string]struct{}) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+
 	clog.Debug("paracross.Commit commit", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
 	for i, v := range stat.Details.Addrs {
 		clog.Debug("paracross.Commit commit detail", "addr", v, "hash", hex.EncodeToString(stat.Details.BlockHash[i]))
@@ -489,7 +499,6 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	commitCount := len(stat.Details.Addrs)
 	most, mostHash := getMostCommit(stat)
 	if !isCommitDone(nodes, most) {
-		saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 		return receipt, nil
 	}
 	clog.Debug("paracross.Commit commit ----pass", "most", most, "mostHash", hex.EncodeToString([]byte(mostHash)))
@@ -506,11 +515,16 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	receiptDone := makeDoneReceipt(a.exec.GetMainHeight(), nodeStatus, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
-	return a.commitTxDoneStep2(nodeStatus, stat, titleStatus, receipt)
+	r, err := a.commitTxDoneStep2(nodeStatus, stat, titleStatus)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
+	return receipt, nil
 }
 
-func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
-	receipt *types.Receipt) (*types.Receipt, error) {
+func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
 
 	titleStatus.Title = nodeStatus.Title
 	titleStatus.Height = nodeStatus.Height
@@ -611,7 +625,6 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 }
 
 func (a *action) checkCommitTxDone(title string, stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) (*types.Receipt, error) {
-	receipt := &types.Receipt{}
 	status, err := getTitle(a.db, calcTitleKey(title))
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTitle:%s", title)
@@ -622,14 +635,13 @@ func (a *action) checkCommitTxDone(title string, stat *pt.ParacrossHeightStatus,
 		return nil, nil
 	}
 
-	return a.commitTxDoneByStat(stat, status, nodes, receipt)
+	return a.commitTxDoneByStat(stat, status, nodes)
 
 }
 
-//只根据stat的信息在commitDone之后重构一个commitStatus做后续处理
-func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
-	nodes map[string]struct{}, receipt *types.Receipt) (*types.Receipt, error) {
-
+//只根据stat的信息在commitDone之后重构一个commitMostStatus做后续处理
+func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus, nodes map[string]struct{}) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
 	clog.Debug("paracross.commitTxDoneByStat", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
 	for i, v := range stat.Details.Addrs {
 		clog.Debug("paracross.commitTxDoneByStat detail", "addr", v, "hash", hex.EncodeToString(stat.Details.BlockHash[i]))
@@ -665,7 +677,12 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 	receiptDone := makeDoneReceipt(a.exec.GetMainHeight(), mostStatus, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
-	return a.commitTxDoneStep2(mostStatus, stat, titleStatus, receipt)
+	r, err := a.commitTxDoneStep2(mostStatus, stat, titleStatus)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
+	return receipt, nil
 }
 
 //平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
