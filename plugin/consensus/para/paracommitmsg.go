@@ -22,6 +22,7 @@ import (
 var (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
+	feeRateInterval   = 60 //60s间隔，获取当前交易费的费率
 )
 
 type commitMsgClient struct {
@@ -54,14 +55,21 @@ func (client *commitMsgClient) handler() {
 	var ticker *time.Ticker
 	var lastAuthAccountIn bool
 	var consensStopTimes uint32
+	var currentFeeRate int64
 
 	client.paraClient.wg.Add(1)
 	consensusCh := make(chan *commitConsensRsp, 1)
 	go client.getConsensusHeight(consensusCh)
 
+	feeRateMsgCh := make(chan int64, 1)
+	if client.paraClient.authAccount != "" {
+		client.paraClient.wg.Add(1)
+		go client.getFeeRate(feeRateMsgCh)
+	}
+
 	client.paraClient.wg.Add(1)
 	sendMsgCh := make(chan *types.Transaction, 1)
-	go client.sendCommitMsg(sendMsgCh)
+	go client.sendCommitMsg(sendMsgCh, feeRateMsgCh)
 
 out:
 	for {
@@ -143,7 +151,7 @@ out:
 					continue
 				}
 
-				signTx, count, err := client.calcCommitMsgTxs(status)
+				signTx, count, err := client.calcCommitMsgTxs(status, currentFeeRate)
 				if err != nil || signTx == nil {
 					continue
 				}
@@ -228,10 +236,20 @@ out:
 			//开启挖矿
 			if readTick == nil {
 				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
+				defer ticker.Stop()
 				readTick = ticker.C
 				plog.Info("para consensus start mining")
 
 			}
+
+		case feeRate := <-feeRateMsgCh:
+			//新的feeRate比较大，可能当前交易fee不够，重新计算fee并发送当前交易
+			if feeRate > currentFeeRate && client.currentTx != nil {
+				sendingMsgs = nil
+				client.currentTx = nil
+				plog.Debug("para consensus feerate adjust", "new", feeRate, "current", currentFeeRate)
+			}
+			currentFeeRate = feeRate
 
 		case <-client.quit:
 			break out
@@ -241,10 +259,10 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int64, error) {
-	txs, count, err := client.batchCalcTxGroup(notifications)
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int64, error) {
+	txs, count, err := client.batchCalcTxGroup(notifications, feeRate)
 	if err != nil {
-		txs, err = client.singleCalcTx((notifications)[0])
+		txs, err = client.singleCalcTx((notifications)[0], feeRate)
 		if err != nil {
 			plog.Error("single calc tx", "height", notifications[0].Height)
 
@@ -280,14 +298,14 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 	return newtx, nil
 }
 
-func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
+func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		execName := pt.ParaX
 		if isParaSelfConsensusForked(status.MainBlockHeight) {
 			execName = paracross.GetExecName()
 		}
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -302,12 +320,12 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	return txs, len(notifications), nil
 }
 
-func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
+func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
 	if isParaSelfConsensusForked(status.MainBlockHeight) {
 		execName = paracross.GetExecName()
 	}
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -317,7 +335,7 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 
 }
 
-func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
+func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction, feeRateCh chan int64) {
 	var err error
 	var tx *types.Transaction
 	var resendTimer <-chan time.Time
@@ -327,7 +345,10 @@ out:
 		select {
 		case tx = <-ch:
 			err = client.sendCommitMsgTx(tx)
-			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
+			if err != nil && err == types.ErrTxFeeTooLow {
+				go client.GetProperFeeRate(feeRateCh)
+			}
+			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance && err != types.ErrTxFeeTooLow) {
 				resendTimer = time.After(time.Second * 2)
 			}
 		case <-resendTimer:
@@ -336,6 +357,36 @@ out:
 			}
 		case <-client.quit:
 			break out
+		}
+	}
+
+	client.paraClient.wg.Done()
+}
+
+func (client *commitMsgClient) GetProperFeeRate(feeRateChan chan int64) {
+	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), &types.ReqNil{})
+	if err != nil {
+		plog.Error("para commit.GetProperFee", "err", err.Error())
+		return
+	}
+	if feeRate == nil {
+		plog.Error("para commit.GetProperFee return nil")
+		return
+	}
+	feeRateChan <- feeRate.ProperFee
+}
+
+func (client *commitMsgClient) getFeeRate(feeRateChan chan int64) {
+	ticker := time.NewTicker(time.Second * time.Duration(feeRateInterval))
+	defer ticker.Stop()
+
+out:
+	for {
+		select {
+		case <-client.quit:
+			break out
+		case <-ticker.C:
+			client.GetProperFeeRate(feeRateChan)
 		}
 	}
 
