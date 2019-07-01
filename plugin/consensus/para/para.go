@@ -83,6 +83,7 @@ type subConfig struct {
 	MainBlockHashForkHeight         int64  `json:"mainBlockHashForkHeight,omitempty"`
 	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
 	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
+	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
 }
 
 // New function to init paracross env
@@ -155,14 +156,21 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		}
 		waitBlocks = subcfg.WaitBlocks4CommitMsg
 	}
+
+	waitConsensTimes := uint32(30) //30*10s = 5min
+	if subcfg.WaitConsensStopTimes > 0 {
+		waitConsensTimes = subcfg.WaitConsensStopTimes
+	}
+
 	para.commitMsgClient = &commitMsgClient{
-		paraClient:      para,
-		waitMainBlocks:  waitBlocks,
-		commitMsgNotify: make(chan int64, 1),
-		delMsgNotify:    make(chan int64, 1),
-		mainBlockAdd:    make(chan *types.BlockDetail, 1),
-		minerSwitch:     make(chan bool, 1),
-		quit:            make(chan struct{}),
+		paraClient:           para,
+		waitMainBlocks:       waitBlocks,
+		waitConsensStopTimes: waitConsensTimes,
+		commitMsgNotify:      make(chan int64, 1),
+		delMsgNotify:         make(chan int64, 1),
+		mainBlockAdd:         make(chan *types.BlockDetail, 1),
+		minerSwitch:          make(chan bool, 1),
+		quit:                 make(chan struct{}),
 	}
 	c.SetChild(para)
 	return para

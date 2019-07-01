@@ -25,16 +25,17 @@ var (
 )
 
 type commitMsgClient struct {
-	paraClient         *client
-	waitMainBlocks     int32 //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
-	commitMsgNotify    chan int64
-	delMsgNotify       chan int64
-	mainBlockAdd       chan *types.BlockDetail
-	minerSwitch        chan bool
-	currentTx          *types.Transaction
-	checkTxCommitTimes int32
-	privateKey         crypto.PrivKey
-	quit               chan struct{}
+	paraClient           *client
+	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
+	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
+	commitMsgNotify      chan int64
+	delMsgNotify         chan int64
+	mainBlockAdd         chan *types.BlockDetail
+	minerSwitch          chan bool
+	currentTx            *types.Transaction
+	checkTxCommitTimes   int32
+	privateKey           crypto.PrivKey
+	quit                 chan struct{}
 }
 
 type commitConsensRsp struct {
@@ -47,12 +48,12 @@ func (client *commitMsgClient) handler() {
 	var isRollback bool
 	var notification []int64 //记录每次系统重启后 min and current height
 	var finishHeight int64 = -1
-	var consensHeight int64 = -1
 	var sendingHeight int64 //当前发送的最大高度
 	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
 	var ticker *time.Ticker
 	var lastAuthAccountIn bool
+	var consensStopTimes uint32
 
 	client.paraClient.wg.Add(1)
 	consensusCh := make(chan *commitConsensRsp, 1)
@@ -163,7 +164,7 @@ out:
 		//获取正在共识的高度，同步有两层意思，一个是主链跟其他节点完成了同步，另一个是当前平行链节点的高度追赶上了共识高度
 		//一般来说高度增长从小到大： notifiy[0] -- selfConsensusHeight(mainHeight) -- finishHeight -- sendingHeight -- notify[1]
 		case rsp := <-consensusCh:
-			consensHeight = rsp.status.Height
+			consensHeight := rsp.status.Height
 			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
 				"consensHeight", rsp.status.Height, "finishHeight", finishHeight, "authIn", rsp.authAccountIn, "sync", isSync, "miner", readTick != nil)
 			plog.Debug("para consensus rcv", "consensBlockHash", common.ToHex(rsp.status.BlockHash))
@@ -186,15 +187,23 @@ out:
 
 			// 共识高度追赶上完成高度之后再发，不然继续发浪费手续费
 			if finishHeight > consensHeight {
-				isSync = false
+				if consensStopTimes < client.waitConsensStopTimes {
+					isSync = false
+					consensStopTimes++
+					continue
+				}
+
+				//reset finishHeight to consensHeight and resent
+				finishHeight = consensHeight
 			}
 
 			//未共识过的小于当前共识高度的区块，可以不参与共识, 如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
 			//在某些特殊场景下，比如平行链连接的主链节点分叉后又恢复，主链的共识高度低于分叉高度时候，主链上形成共识空洞，需要从共识高度重新发送而不是分叉高度
 			//共识高度和分叉高度不一致其中一个原因是共识交易组里面某个高度分叉了，分叉的主链节点执行成功，而其他主链节点执行失败,共识高度停留在交易组最小高度-1
 			//而分叉高度是交易组里面的某个高度
-			if finishHeight < consensHeight {
+			if finishHeight <= consensHeight {
 				finishHeight = consensHeight
+				consensStopTimes = 0
 			}
 
 			//系统每次重启都有检查一次共识，如果共识高度落后于系统起来后完成的第一个高度或最小高度，说明可能有共识空洞，需要重发
@@ -222,8 +231,6 @@ out:
 				readTick = ticker.C
 				plog.Info("para consensus start mining")
 
-				//钱包开启后，从共识高度重新开始发送，在需要重发共识时候，不需要重启设备
-				finishHeight = consensHeight
 			}
 
 		case <-client.quit:
