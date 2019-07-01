@@ -52,18 +52,18 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 		Title:  "user.p.para",
 	}
 	notify := []*pt.ParacrossNodeStatus{nt1}
-	tx, count, err := client.calcCommitMsgTxs(notify)
+	tx, count, err := client.calcCommitMsgTxs(notify, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 	assert.NotNil(t, tx)
 
 	notify = append(notify, nt2)
-	tx, count, err = client.calcCommitMsgTxs(notify)
+	tx, count, err = client.calcCommitMsgTxs(notify, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), count)
 	assert.NotNil(t, tx)
 
-	tx, err = client.singleCalcTx(nt2)
+	tx, err = client.singleCalcTx(nt2, 0)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 
@@ -105,9 +105,11 @@ func TestSendCommitMsg(t *testing.T) {
 	commitCli.paraClient = para
 	commitCli.quit = make(chan struct{})
 
+	feeRateMsgCh := make(chan int64, 1)
+
 	commitCli.paraClient.wg.Add(1)
 	sendMsgCh := make(chan *types.Transaction, 1)
-	go commitCli.sendCommitMsg(sendMsgCh)
+	go commitCli.sendCommitMsg(sendMsgCh, feeRateMsgCh)
 
 	//reply := &types.Reply{
 	//	IsOk: true,
