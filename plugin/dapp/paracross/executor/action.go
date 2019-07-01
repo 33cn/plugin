@@ -118,8 +118,9 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 	return nil
 }
 
+//区块链中不能使用float类型
 func isCommitDone(nodes map[string]struct{}, mostSame int) bool {
-	return float32(mostSame) > float32(len(nodes))*float32(2)/float32(3)
+	return 3*mostSame > 2*len(nodes)
 }
 
 func makeCommitReceipt(addr string, commit *pt.ParacrossCommitAction, prev, current *pt.ParacrossHeightStatus) *types.Receipt {
@@ -273,6 +274,7 @@ func getDappForkHeight(forkKey string) int64 {
 	} else {
 		forkHeight = types.GetDappFork(pt.ParaX, forkKey)
 
+		// CI特殊处理，主链是local，fork都是0，平行链有些配置项需要设置为非0，不然获取到的高度为MaxHeight
 		if types.IsLocal() {
 			switch forkKey {
 			case pt.ForkCommitTx:
@@ -696,7 +698,7 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 
 //平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
 // 这样在主链没有共识空洞前提下，平行链允许有条件的共识跳跃
-func (a *action) isParaSelfConsensSwitch(stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
+func (a *action) isParaSelfConsensSwitch(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
 	if !types.IsPara() {
 		return false, nil
 	}
@@ -708,7 +710,7 @@ func (a *action) isParaSelfConsensSwitch(stat *pt.ParacrossHeightStatus, titleSt
 	selfConsensForkHeight := getDappForkHeight(pt.ParaSelfConsensForkHeight)
 	lastStatusMainHeight := int64(-1)
 	if titleStatus.Height > -1 {
-		s, err := getTitleHeight(a.db, calcTitleHeightKey(stat.Title, titleStatus.Height))
+		s, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, titleStatus.Height))
 		if err != nil {
 			clog.Error("paracross.Commit isParaSelfConsensSwitch getTitleHeight failed", "err", err.Error())
 			return false, err
@@ -716,7 +718,7 @@ func (a *action) isParaSelfConsensSwitch(stat *pt.ParacrossHeightStatus, titleSt
 		lastStatusMainHeight = s.MainHeight
 	}
 
-	return stat.MainHeight > selfConsensForkHeight && lastStatusMainHeight < selfConsensForkHeight, nil
+	return commit.MainHeight > selfConsensForkHeight && lastStatusMainHeight < selfConsensForkHeight, nil
 
 }
 
