@@ -3,6 +3,10 @@
 
 CASE_ERR=""
 UNIT_HTTP=""
+MAIN_HTTP=""
+PARA_HTTP=""
+IS_PARA=false
+
 
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
@@ -50,28 +54,30 @@ function paracross_QueryBalance() {
     local balance
 
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "paracross","asset_exec":"paracross","asset_symbol":"coins.bty"}]}'
-    resp=$(curl -ksd "$req" "${UNIT_HTTP}")
+    resp=$(curl -ksd "$req" "${PARA_HTTP}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
     echo "$balance"
     return $?
 }
 
-function paracross_Transfer_Withdraw() {
+function paracross_Transfer_Withdraw_Inner() {
 
     # 计数器，资产转移操作和取钱操作都成功才算成功，也就是 counter == 2
     local count=0
     #fromAddr  跨链资产转移地址
-    local fromAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    local fromAddr="$1"
     #privkey 地址签名
-    local privkey="0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+    local privkey="$2"
     #paracrossAddr 合约地址
-    local paracrossAddr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+    local paracrossAddr="$3"
+    #标题
+    local title="$4"
     #amount_save 存钱到合约地址
-    local amount_save=100000000
+    local amount_save=1000000
     #amount_should 应转移金额
-    local amount_should=27000000
+    local amount_should=27000
     #withdraw_should 应取款金额
-    local withdraw_should=13000000
+    local withdraw_should=13000
     #fee 交易费
     #local fee=1000000
     #转移前余额
@@ -98,7 +104,7 @@ function paracross_Transfer_Withdraw() {
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
     #3  资产从主链转移到平行链
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetTransfer","payload":{"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'"$fromAddr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$title"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"$title"'","to":"'"$fromAddr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
@@ -120,13 +126,13 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            count=$((count+1))
+            count=$((count + 1))
             break
         fi
     done
 
     #5 取钱
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"paracross","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execer":"user.p.para.paracross","execName":"user.p.para.paracross","to":"'"$fromAddr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$title"'","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execName":"'"$title"'","to":"'"$fromAddr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
@@ -148,7 +154,7 @@ function paracross_Transfer_Withdraw() {
             fi
         else
             #echo "para_cross_transfer_withdraw success"
-            count=$((count+1))
+            count=$((count + 1))
             break
         fi
     done
@@ -159,10 +165,46 @@ function paracross_Transfer_Withdraw() {
 
 }
 
+function paracross_Transfer_Withdraw() {
+    #fromAddr  跨链资产转移地址
+    local fromAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    #privkey 地址签名
+    local privkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+    #paracrossAddr 合约地址
+    local paracrossAddr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+    #title
+    local title="user.p.para.paracross"
+
+    paracross_Transfer_Withdraw_Inner "$fromAddr" "$privkey" "$paracrossAddr" "$title"
+
+}
+
+function paracross_Transfer_Withdraw_Timer() {
+    #fromAddr  跨链资产转移地址
+    local fromAddr="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
+    #privkey 地址签名
+    local privkey="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    #paracrossAddr 合约地址
+    local paracrossAddr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+    #title
+    local title="user.p.fzmtest.paracross"
+
+    while true; do
+        paracross_Transfer_Withdraw_Inner "$fromAddr" "$privkey" "$paracrossAddr" "$title"
+        chain33_BlockWait 1 ${UNIT_HTTP}
+    done
+}
+
+
 function paracross_IsSync() {
     local ok
 
-    ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+    if [ "$IS_PARA" == "true" ]; then
+        ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+    else
+        ok=$(curl -ksd '{"method":"Chain33.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+    fi
+
     [ "$ok" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -185,12 +227,14 @@ function paracross_GetHeight() {
     local resp
     local ok
 
-    resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
-    #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    if [ "$IS_PARA" == "true" ]; then
+        resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
+        #echo $resp
+        ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
+        [ "$ok" == true ]
+        local rst=$?
+        echo_rst "$FUNCNAME" "$rst"
+    fi
 }
 
 function paracross_GetNodeGroupAddrs() {
@@ -241,31 +285,40 @@ function paracross_ListNodeStatus() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-function run_testcases() {
-    local ispara
 
+function run_testcases() {
     chain33_lock
     chain33_unlock
     paracross_GetBlock2MainInfo
-
-    ispara=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
-    if [ "$ispara" == true ]; then
-        paracross_IsSync
-        paracross_GetHeight
-        paracross_ListTitles
-        paracross_GetNodeGroupAddrs
-        paracross_GetNodeGroupStatus
-        paracross_ListNodeGroupStatus
-        paracross_ListNodeStatus
-        paracross_Transfer_Withdraw
-    fi
+    paracross_IsSync
+    paracross_GetHeight
+    paracross_ListTitles
+    paracross_GetNodeGroupAddrs
+    paracross_GetNodeGroupStatus
+    paracross_ListNodeGroupStatus
+    paracross_ListNodeStatus
+    paracross_Transfer_Withdraw
 }
 
+
 function main() {
+    local ip_http
+    local repeat_mode=$2
+
     UNIT_HTTP=$1
+
+    IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
+    ip_http=${UNIT_HTTP%:*}
+    MAIN_HTTP="$ip_http:8801"
+    PARA_HTTP="$ip_http:8901"
+
     echo "=========== # paracross rpc test ============="
 
-    run_testcases
+    if [ "$repeat_mode" == "repeat" ]; then
+        paracross_Transfer_Withdraw_Timer
+    else
+        run_testcases
+    fi
 
     if [ -n "$CASE_ERR" ]; then
         echo "paracross there some case error"
@@ -273,4 +326,4 @@ function main() {
     fi
 }
 
-main "$1"
+main "$1" "$2"
