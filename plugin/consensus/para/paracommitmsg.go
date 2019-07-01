@@ -109,6 +109,8 @@ out:
 			if height <= finishHeight {
 				finishHeight = notification[0] - 1
 			}
+			//回滚则立即暂停发送交易，直到add成功后
+			isSync = false
 			isRollback = true
 			plog.Debug("para del block", "delHeight", height)
 
