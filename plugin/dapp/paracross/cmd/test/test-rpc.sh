@@ -7,7 +7,6 @@ MAIN_HTTP=""
 PARA_HTTP=""
 IS_PARA=false
 
-
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
@@ -195,7 +194,6 @@ function paracross_Transfer_Withdraw_Timer() {
     done
 }
 
-
 function paracross_IsSync() {
     local ok
 
@@ -285,7 +283,6 @@ function paracross_ListNodeStatus() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-
 function run_testcases() {
     chain33_lock
     chain33_unlock
@@ -299,7 +296,6 @@ function run_testcases() {
     paracross_ListNodeStatus
     paracross_Transfer_Withdraw
 }
-
 
 function main() {
     local ip_http
