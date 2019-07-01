@@ -364,7 +364,7 @@ out:
 }
 
 func (client *commitMsgClient) GetProperFeeRate(feeRateChan chan int64) {
-	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), &types.ReqNil{})
+	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), nil)
 	if err != nil {
 		plog.Error("para commit.GetProperFee", "err", err.Error())
 		return
