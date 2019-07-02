@@ -100,6 +100,7 @@ timeoutWaitNotify=2000
 createEmptyBlocks=false
 createEmptyBlocksInterval=0
 validatorNodes=["127.0.0.1:46656"]
+delegateNum=3
 blockInterval=3
 continueBlockNum=12
 isValidator=false

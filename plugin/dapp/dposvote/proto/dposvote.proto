@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package types;
+
+//CandidatorInfo 候选节点信息
+message CandidatorInfo {
+    bytes  pubkey              = 1;  //候选节点的公钥
+    string address             = 2;  //后续节点的地址
+    string ip                  = 3;  //候选节点的运行IP
+    int64  votes               = 4;  //候选节点的投票数
+    int64  status              = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+    int64 preStatus            = 6;
+    int64  startTime           = 7;  //创建候选者的时间
+    int64  startHeight         = 8;  //创建候选者的时间
+    string startTxHash         = 9;  //创建候选者的交易hash
+    int64 startIndex           = 10;  //创建候选者的交易index
+    int64 index                = 11;
+    int64 preIndex             = 12;
+    repeated DposVoter voters  = 13;
+}
+
+message DposVoter{
+    string fromAddr = 1;
+    bytes  pubkey   = 2;    //候选节点的公钥
+    int64  votes    = 3;    //投给候选节点的票数，不能超过锁在合约中的未使用票数
+    int64  index    = 4;
+    int64  time     = 5;
+}
+
+//Candidator 候选节点信息
+message Candidator {
+    bytes  pubkey   = 1;  //候选节点的公钥
+    string address  = 2;  //后续节点的地址
+    string ip       = 3;  //候选节点的运行IP
+    int64  votes    = 4;  //候选节点的投票数
+    int64  status   = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+}
+
+//DposCandidatorRegist 注册Dpos候选节点，必须抵押一定数量的币，比如：10000个币
+message DposCandidatorRegist{
+    string  pubkey  = 1;  //候选节点的公钥
+    string address  = 2;  //候选节点的地址
+    string ip       = 3;  //候选节点的共识IP地址
+}
+
+//DposCandidatorCancelRegist 注销Dpos候选节点，解冻抵押的币
+message DposCandidatorCancelRegist{
+    string  pubkey   = 1;  //候选节点的公钥
+    string address  = 2;  //候选节点的地址
+}
+
+//DposVote 为Dpos候选节点投票
+message DposVote{
+    string fromAddr = 1;
+    string pubkey   = 2;  //候选节点的公钥
+    int64  votes    = 3;  //投给候选节点的票数，不能超过锁在合约中的未使用票数
+}
+
+//DposCancelVote 撤销为Dpos候选节点投票
+message DposCancelVote{
+    string pubkey   = 1;  //候选节点的公钥
+    int64  votes    = 2;  //撤销投给候选节点的票数，不超过之前投给该候选节点的总票数，投票3天之后才可以撤销投票
+}
+
+//DposVoteAction DposVote动作
+message DposVoteAction {
+    oneof value {
+        DposCandidatorRegist regist                = 1;
+        DposCandidatorCancelRegist cancelRegist    = 2;
+        DposCandidatorRegist reRegist              = 3;
+        DposVote vote                              = 4;
+        DposCancelVote  cancelVote                 = 5;
+        CandidatorQuery candidatorQuery            = 6;
+        DposVoteQuery voteQuery                    = 7;
+        DposVrfMRegist registVrfM                  = 8;
+        DposVrfRPRegist registVrfRP                = 9;
+        DposVrfQuery vrfQuery                      = 10;
+    }
+    int32 ty = 11;
+}
+
+message CandidatorQuery{
+    repeated string  pubkeys   = 1;  //候选节点公钥集合
+    int32  topN               = 2;  //topN
+    int32 ty                  = 3;  //1:按公钥集合查询，2：按topN票数查询
+}
+
+message CandidatorReply{
+    repeated  Candidator candidators   = 1;  //候选节点
+}
+
+message DposVoteQuery{
+    repeated string  pubkeys   = 1;  //候选节点的公钥，如果为空，则查询所有，否则，查询该地址给具体候选节点的投票
+    string  addr  = 2;              //要查询的地址
+}
+
+message DposVoteReply{
+    repeated DposVoter votes   = 1;  //某地址对具体候选节点的投票情况
+}
+
+//ReceiptCandicator 候选者收据信息
+message ReceiptCandicator {
+    int64   Index        = 1;
+    bytes   pubkey            = 2;
+    string  address           = 3;
+    int64   status            = 4;
+    int64   preStatus         = 5;
+    bool    statusChange      = 6;
+    bool    voted             = 7;
+    int64   votes             = 8;
+    string  fromAddr          = 9;
+    CandidatorInfo candInfo   = 10;
+    int64   time              = 11;
+}
+
+message DposVrfM{
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 3;
+    int64   height       = 4;
+    bytes   m            = 5;  //vrf的输入
+    int64   time         = 6;
+}
+
+message DposVrfRP{
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 3;
+    int64   height       = 4;
+    bytes   m            = 5;  //vrf的输入
+    bytes   r            = 6;  //vrf的hash
+    bytes   p            = 7;  //vrf的hash的proof
+    int64   time         = 8;
+}
+
+message DposVrfMRegist{
+    string   pubkey      = 1;
+    int64   cycle        = 2;
+    string   m           = 3;  //vrf的输入
+}
+
+message DposVrfRPRegist{
+    string   pubkey      = 1;
+    int64    cycle       = 2;
+    string   r           = 3;  //vrf的hash
+    string   p           = 4;  //vrf的hash的proof
+}
+
+
+//ReceiptVrf vrf收据信息
+message ReceiptVrf {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    bytes   m            = 6;
+    bytes   r            = 7;
+    bytes   p            = 8;
+    int64   time         = 9;
+}
+
+
+message VrfInfo {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    bytes   m            = 6;
+    bytes   r            = 7;
+    bytes   p            = 8;
+    int64   time         = 9;
+}
+
+message DposVrfQuery{
+    int64   ty           = 1;
+    int64   timestamp    = 2;
+    int64   cycle        = 3;
+}
+
+message DposVrfReply{
+    repeated VrfInfo vrf = 1;
+}

@@ -252,8 +252,8 @@ func (pv *PrivValidatorImp) save() {
 		Address:       addr,
 		LastSignature: nil,
 	}
-	privValFS.PrivKey = KeyText{Kind: "ed25519", Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
-	privValFS.PubKey = KeyText{Kind: "ed25519", Data: pv.PubKey.KeyString()}
+	privValFS.PrivKey = KeyText{Kind: "secp256k1", Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
+	privValFS.PubKey = KeyText{Kind: "secp256k1", Data: pv.PubKey.KeyString()}
 	if len(pv.LastSignBytes) != 0 {
 		tmp := Fmt("%X", pv.LastSignBytes[:])
 		privValFS.LastSignBytes = tmp

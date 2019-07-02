@@ -339,6 +339,16 @@ func testProcCreateNewAccount(t *testing.T, wallet *Wallet) {
 	}
 	println("TestProcCreateNewAccount end")
 	println("--------------------------")
+
+	Privkey1 := "85CA38F5FB65E5E13403F0704CA6DC479D8D18FFA5D87CE5A966838C9694EAFE"
+	privkeybyte1, _ := common.FromHex(Privkey1)
+	priv1, _ := cr.PrivKeyFromBytes(privkeybyte1)
+	fmt.Printf("pubkey:%X\n", priv1.PubKey().Bytes())
+	fmt.Printf("pubkey:%s\n", priv1.PubKey().KeyString())
+	fmt.Printf("priv:%X\n", priv1.Bytes())
+	addr = address.PubKeyToAddress(priv1.PubKey().Bytes())
+	fmt.Printf("address:%s\n", addr.String())
+	fmt.Printf("addr:%X\n", addr.Hash160)
 }
 
 func equal(acc1 types.Account, acc2 types.Account) bool {

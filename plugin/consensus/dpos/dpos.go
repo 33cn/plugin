@@ -18,7 +18,7 @@ import (
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 )
 
-const tendermintVersion = "0.1.0"
+const dposVersion = "0.1.0"
 
 var (
 	dposlog                   = log15.New("module", "dpos")
@@ -38,6 +38,7 @@ var (
 	dposCycle                  = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
 	dposPeriod                 = dposBlockInterval * dposContinueBlockNum
 	zeroHash             [32]byte
+	dposPort string = "36656"
 )
 
 func init() {
@@ -70,9 +71,11 @@ type subConfig struct {
 	CreateEmptyBlocks         bool     `json:"createEmptyBlocks"`
 	CreateEmptyBlocksInterval int32    `json:"createEmptyBlocksInterval"`
 	ValidatorNodes            []string `json:"validatorNodes"`
+	DelegateNum               int64    `json:"delegateNum"`
 	BlockInterval             int64    `json:"blockInterval"`
 	ContinueBlockNum          int64    `json:"continueBlockNum"`
 	IsValidator               bool     `json:"isValidator"`
+	Port                      string   `json:"port"`
 }
 
 func (client *Client) applyConfig(sub []byte) {
@@ -100,9 +103,13 @@ func (client *Client) applyConfig(sub []byte) {
 		createEmptyBlocksInterval = subcfg.CreateEmptyBlocksInterval
 	}
 
+	if subcfg.DelegateNum > 0 {
+		dposDelegateNum = subcfg.DelegateNum
+	}
+
 	if len(subcfg.ValidatorNodes) > 0 {
 		validatorNodes = subcfg.ValidatorNodes
-		dposDelegateNum = int64(len(subcfg.ValidatorNodes))
+		//dposDelegateNum = int64(len(subcfg.ValidatorNodes))
 	}
 
 	if subcfg.BlockInterval > 0 {
@@ -113,6 +120,9 @@ func (client *Client) applyConfig(sub []byte) {
 		dposContinueBlockNum = subcfg.ContinueBlockNum
 	}
 
+	if subcfg.Port != "" {
+		dposPort = subcfg.Port
+	}
 	dposCycle = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
 	dposPeriod = dposBlockInterval * dposContinueBlockNum
 
@@ -137,7 +147,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		//return nil
 	}
 
-	cr, err := crypto.New(types.GetSignName("", types.ED25519))
+	//为了使用VRF，需要使用SECP256K1体系的公私钥
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
 		dposlog.Error("NewDPosClient", "err", err)
 		return nil
@@ -145,7 +156,15 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	ttypes.ConsensusCrypto = cr
 
-	priv, err := cr.GenKey()
+	//安全连接仍然要使用ed25519
+	cr2, err := crypto.New(types.GetSignName("", types.ED25519))
+	if err != nil {
+		dposlog.Error("NewDPosClient", "err", err)
+		return nil
+	}
+	ttypes.SecureConnCrypto = cr2
+
+	priv, err := cr2.GenKey()
 	if err != nil {
 		dposlog.Error("NewDPosClient", "GenKey err", err)
 		return nil
@@ -262,8 +281,8 @@ OuterLoop:
 	csState.SetPrivValidator(client.privValidator, client.ValidatorIndex())
 
 	// Create & add listener
-	protocol, listeningAddress := "tcp", "0.0.0.0:36656"
-	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, valMgr.ChainID, tendermintVersion, csState)
+	protocol, listeningAddress := "tcp", "0.0.0.0:" + dposPort
+	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, valMgr.ChainID, dposVersion, csState)
 
 	client.node = node
 

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	"io"
 	"time"
 
@@ -30,6 +31,7 @@ var (
 	votelog = log15.New("module", "tendermint-vote")
 
 	ConsensusCrypto crypto.Crypto
+	SecureConnCrypto crypto.Crypto
 )
 
 // Signable is an interface for all signable things.
@@ -102,7 +104,7 @@ func (vote *Vote) String() string {
 
 // Verify ...
 func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
-	addr := GenAddressByPubKey(pubKey)
+	addr := address.PubKeyToAddress(pubKey.Bytes()).Hash160[:]
 	if !bytes.Equal(addr, vote.VoterNodeAddress) {
 		return ErrVoteInvalidValidatorAddress
 	}
@@ -189,7 +191,7 @@ func (notify *Notify) String() string {
 
 // Verify ...
 func (notify *Notify) Verify(chainID string, pubKey crypto.PubKey) error {
-	addr := GenAddressByPubKey(pubKey)
+	addr := address.PubKeyToAddress(pubKey.Bytes()).Hash160[:]
 	if !bytes.Equal(addr, notify.NotifyNodeAddress) {
 		return ErrNotifyInvalidValidatorAddress
 	}

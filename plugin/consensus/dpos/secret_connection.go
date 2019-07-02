@@ -301,11 +301,11 @@ func shareAuthSignature(sc io.ReadWriter, pubKey crypto.PubKey, signature crypto
 			//n := int(0) // not used.
 			//recvMsg = wire.ReadBinary(authSigMessage{}, bytes.NewBuffer(readBuffer), authSigMsgSize, &n, &err2).(authSigMessage)
 			//secret.Info("shareAuthSignature", "readBuffer", readBuffer)
-			recvMsg.Key, err2 = types.ConsensusCrypto.PubKeyFromBytes(readBuffer[:32])
+			recvMsg.Key, err2 = types.SecureConnCrypto.PubKeyFromBytes(readBuffer[:32])
 			if err2 != nil {
 				return
 			}
-			recvMsg.Sig, err2 = types.ConsensusCrypto.SignatureFromBytes(readBuffer[32:])
+			recvMsg.Sig, err2 = types.SecureConnCrypto.SignatureFromBytes(readBuffer[32:])
 			if err2 != nil {
 				return
 			}

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	"math/rand"
 
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -85,7 +86,7 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 
 		// Make validator
 		validators[i] = &ttypes.Validator{
-			Address: ttypes.GenAddressByPubKey(pubKey),
+			Address: address.PubKeyToAddress(pubKey.Bytes()).Hash160[:],
 			PubKey:  pubKey.Bytes(),
 		}
 	}
