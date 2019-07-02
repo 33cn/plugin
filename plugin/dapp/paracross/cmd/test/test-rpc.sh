@@ -309,6 +309,7 @@ function main() {
     PARA_HTTP="$ip_http:8901"
 
     echo "=========== # paracross rpc test ============="
+    echo "MAIN_HTTP=$MAIN_HTTP,PARA_HTTP=$PARA_HTTP"
 
     if [ "$repeat_mode" == "repeat" ]; then
         paracross_Transfer_Withdraw_Timer
