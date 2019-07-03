@@ -234,7 +234,7 @@ Enable=0
 ForkTradeBuyLimit= 0
 ForkTradeAsset= 0
 ForkTradeID = 0
-ForkTradeFixAssetDBX = 0
+ForkTradeFixAssetDB = 0
 
 [fork.sub.paracross]
 Enable=0
