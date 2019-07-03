@@ -3,8 +3,6 @@
 
 CASE_ERR=""
 UNIT_HTTP=""
-MAIN_HTTP=""
-PARA_HTTP=""
 IS_PARA=false
 
 # shellcheck source=/dev/null
@@ -47,30 +45,54 @@ function paracross_SignAndSend() {
     echo "sendedTx:$sendedTx"
 }
 
-function paracross_QueryBalance() {
+function paracross_QueryParaBalance() {
     local req
     local resp
     local balance
+    local ip_http
+    local para_http
+
+    ip_http=${UNIT_HTTP%:*}
+    para_http="$ip_http:8901"
 
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "paracross","asset_exec":"paracross","asset_symbol":"coins.bty"}]}'
-    resp=$(curl -ksd "$req" "${PARA_HTTP}")
+    resp=$(curl -ksd "$req" "${para_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
     echo "$balance"
     return $?
 }
+
+
+function paracross_QueryMainBalance() {
+    local req
+    local resp
+    local balance
+    local ip_http
+    local main_http
+
+    ip_http=${UNIT_HTTP%:*}
+    main_http="$ip_http:8801"
+
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "paracross"}]}'
+    resp=$(curl -ksd "$req" "${main_http}")
+    balance=$(jq -r '.result[0].balance' <<<"$resp")
+    echo "$balance"
+    return $?
+}
+
 
 function paracross_Transfer_Withdraw_Inner() {
 
     # 计数器，资产转移操作和取钱操作都成功才算成功，也就是 counter == 2
     local count=0
     #fromAddr  跨链资产转移地址
-    local fromAddr="$1"
+    local from_addr="$1"
     #privkey 地址签名
     local privkey="$2"
     #paracrossAddr 合约地址
-    local paracrossAddr="$3"
+    local paracross_addr="$3"
     #标题
-    local title="$4"
+    local execer_name="$4"
     #amount_save 存钱到合约地址
     local amount_save=1000000
     #amount_should 应转移金额
@@ -79,31 +101,45 @@ function paracross_Transfer_Withdraw_Inner() {
     local withdraw_should=13000
     #fee 交易费
     #local fee=1000000
-    #转移前余额
+    #平行链转移前余额
     local para_balance_before
-    #转移后余额
+    #平行链转移后余额
     local para_balance_after
-    #取钱后余额
+    #平行链取钱后余额
     local para_balance_withdraw_after
+    #主链转移前余额
+    local main_balance_before
+    #主链转移后余额
+    local main_balance_after
+    #主链取钱后余额
+    local main_balance_withdraw_after
+
     #构造交易哈希
     local tx_hash
-    #实际转移金额
-    local amount_real
-    #实际取钱金额
-    local withdraw_real
-
-    #1. 查询资产转移前余额状态
-    para_balance_before=$(paracross_QueryBalance "$fromAddr")
-    echo "before transferring:$para_balance_before"
+    #平行链实际转移金额
+    local para_amount_real
+    #平行链实际取钱金额
+    local para_withdraw_real
+    #主链实际转移金额
+    local main_amount_real
+    #主链实际取钱金额
+    local main_withdraw_real
 
     #2  存钱到合约地址
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'"$paracrossAddr"'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'"$paracross_addr"'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
     ##echo "tx:$tx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
+
+    #1. 查询资产转移前余额状态
+    para_balance_before=$(paracross_QueryParaBalance "$from_addr")
+    echo "para before transferring:$para_balance_before"
+    main_balance_before=$(paracross_QueryMainBalance "$from_addr")
+    echo "main before transferring:$main_balance_before"
+
     #3  资产从主链转移到平行链
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$title"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"$title"'","to":"'"$fromAddr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
@@ -111,12 +147,15 @@ function paracross_Transfer_Withdraw_Inner() {
     #4 查询转移后余额状态
     local times=100
     while true; do
-        para_balance_after=$(paracross_QueryBalance "$fromAddr")
-        echo "after transferring:$para_balance_after"
+        para_balance_after=$(paracross_QueryParaBalance "$from_addr")
+        echo "para after transferring:$para_balance_after"
+        main_balance_after=$(paracross_QueryMainBalance "$from_addr")
+        echo "main after transferring:$main_balance_after"
         #real_amount  实际转移金额
-        amount_real=$((para_balance_after - para_balance_before))
+        para_amount_real=$((para_balance_after - para_balance_before))
+        main_amount_real=$((main_balance_before - main_balance_after))
         #echo $amount_real
-        if [ "$amount_real" != "$amount_should" ]; then
+        if [ "$para_amount_real" != "$amount_should" ] || [ "$main_amount_real" != "$amount_should" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
             if [ $times -le 0 ]; then
@@ -131,7 +170,7 @@ function paracross_Transfer_Withdraw_Inner() {
     done
 
     #5 取钱
-    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$title"'","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execName":"'"$title"'","to":"'"$fromAddr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
+    tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
     #echo "rawTx:$rawTx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
@@ -139,12 +178,15 @@ function paracross_Transfer_Withdraw_Inner() {
     #6 查询取钱后余额状态
     local times=100
     while true; do
-        para_balance_withdraw_after=$(paracross_QueryBalance "$fromAddr")
-        echo "after withdrawing :$para_balance_withdraw_after"
+        para_balance_withdraw_after=$(paracross_QueryParaBalance "$from_addr")
+        echo "para after withdrawing :$para_balance_withdraw_after"
+        main_balance_withdraw_after=$(paracross_QueryMainBalance "$from_addr")
+        echo "main after withdrawing :$main_balance_withdraw_after"
         #实际取钱金额
-        withdraw_real=$((para_balance_after - para_balance_withdraw_after))
+        para_withdraw_real=$((para_balance_after - para_balance_withdraw_after))
+        main_withdraw_real=$((main_balance_withdraw_after - main_balance_after))
         #echo $withdraw_real
-        if [ "$withdraw_should" != "$withdraw_real" ]; then
+        if [ "$withdraw_should" != "$para_withdraw_real" ] || [ "$withdraw_should" != "$main_withdraw_real" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
             if [ $times -le 0 ]; then
@@ -166,32 +208,16 @@ function paracross_Transfer_Withdraw_Inner() {
 
 function paracross_Transfer_Withdraw() {
     #fromAddr  跨链资产转移地址
-    local fromAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    local from_addr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     #privkey 地址签名
     local privkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
     #paracrossAddr 合约地址
-    local paracrossAddr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
-    #title
-    local title="user.p.para.paracross"
+    local paracross_addr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+    #execer
+    local execer_name="user.p.para.paracross"
 
-    paracross_Transfer_Withdraw_Inner "$fromAddr" "$privkey" "$paracrossAddr" "$title"
+    paracross_Transfer_Withdraw_Inner "$from_addr" "$privkey" "$paracross_addr" "$execer_name"
 
-}
-
-function paracross_Transfer_Withdraw_Timer() {
-    #fromAddr  跨链资产转移地址
-    local fromAddr="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    #privkey 地址签名
-    local privkey="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-    #paracrossAddr 合约地址
-    local paracrossAddr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
-    #title
-    local title="user.p.fzmtest.paracross"
-
-    while true; do
-        paracross_Transfer_Withdraw_Inner "$fromAddr" "$privkey" "$paracrossAddr" "$title"
-        chain33_BlockWait 1 ${UNIT_HTTP}
-    done
 }
 
 function paracross_IsSync() {
@@ -297,24 +323,45 @@ function run_testcases() {
     paracross_Transfer_Withdraw
 }
 
+
+function transfer_guard() {
+    UNIT_HTTP=$1
+    IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
+
+    #fromAddr  跨链资产转移地址
+    local from_addr="$2"
+    #privkey 地址签名
+    local privkey="$3"
+    #execer
+    local execer_name="$4"
+    #paracrossAddr 合约地址
+    local paracross_addr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
+}
+
+
 function main() {
-    local ip_http
-    local repeat_mode=$2
 
     UNIT_HTTP=$1
-
     IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
-    ip_http=${UNIT_HTTP%:*}
-    MAIN_HTTP="$ip_http:8801"
-    PARA_HTTP="$ip_http:8901"
 
-    echo "=========== # paracross rpc test ============="
-    echo "MAIN_HTTP=$MAIN_HTTP,PARA_HTTP=$PARA_HTTP"
+    if [ $# -eq 4 ]; then
+        #fromAddr  跨链资产转移地址
+        local from_addr="$2"
+        #privkey 地址签名
+        local privkey="$3"
+        #execer
+        local execer_name="$4"
+        #paracrossAddr 合约地址
+        local paracross_addr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
 
-    if [ "$repeat_mode" == "repeat" ]; then
-        paracross_Transfer_Withdraw_Timer
+        echo "=========== # start cross transfer monitor ============="
+        while true; do
+            paracross_Transfer_Withdraw_Inner "$from_addr" "$privkey" "$paracross_addr" "$execer_name"
+            chain33_BlockWait 1 ${UNIT_HTTP}
+        done
     else
-        run_testcases
+       echo "=========== # paracross rpc test ============="
+       run_testcases
     fi
 
     if [ -n "$CASE_ERR" ]; then
@@ -323,4 +370,7 @@ function main() {
     fi
 }
 
-main "$1" "$2"
+main $1 $2 $3 $4
+#main http://127.0.0.1:8801
+#main http://47.98.253.127:8801 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b user.p.fzmtest.paracross
+
