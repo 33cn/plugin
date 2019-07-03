@@ -62,7 +62,6 @@ function paracross_QueryParaBalance() {
     return $?
 }
 
-
 function paracross_QueryMainBalance() {
     local req
     local resp
@@ -79,7 +78,6 @@ function paracross_QueryMainBalance() {
     echo "$balance"
     return $?
 }
-
 
 function paracross_Transfer_Withdraw_Inner() {
 
@@ -130,7 +128,6 @@ function paracross_Transfer_Withdraw_Inner() {
     ##echo "tx:$tx"
     chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
-
 
     #1. 查询资产转移前余额状态
     para_balance_before=$(paracross_QueryParaBalance "$from_addr")
@@ -323,7 +320,6 @@ function run_testcases() {
     paracross_Transfer_Withdraw
 }
 
-
 function transfer_guard() {
     UNIT_HTTP=$1
     IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
@@ -337,7 +333,6 @@ function transfer_guard() {
     #paracrossAddr 合约地址
     local paracross_addr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
 }
-
 
 function main() {
 
@@ -360,8 +355,8 @@ function main() {
             chain33_BlockWait 1 ${UNIT_HTTP}
         done
     else
-       echo "=========== # paracross rpc test ============="
-       run_testcases
+        echo "=========== # paracross rpc test ============="
+        run_testcases
     fi
 
     if [ -n "$CASE_ERR" ]; then
@@ -373,4 +368,3 @@ function main() {
 main $1 $2 $3 $4
 #main http://127.0.0.1:8801
 #main http://47.98.253.127:8801 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b user.p.fzmtest.paracross
-
