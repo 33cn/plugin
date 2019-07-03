@@ -333,7 +333,7 @@ func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 		if err != nil {
 			return hash, err
 		}
-		_, err = kvmMavls.KVMVCCStore.Del(req)
+		hash, err = kvmMavls.KVMVCCStore.Del(req)
 		if err != nil {
 			return hash, err
 		}
