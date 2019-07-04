@@ -344,7 +344,7 @@ function main() {
     UNIT_HTTP=$1
     IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
 
-    if [ $# -eq 4 ]; then
+    if [ $# -eq 4 ] &&  [ -n "$2" ] &&  [ -n "$3" ] &&  [ -n "$4" ]; then
         #fromAddr  跨链资产转移地址
         local from_addr="$2"
         #privkey 地址签名
@@ -357,7 +357,7 @@ function main() {
         echo "=========== # start cross transfer monitor ============="
         while true; do
             paracross_Transfer_Withdraw_Inner "$from_addr" "$privkey" "$paracross_addr" "$execer_name"
-            chain33_BlockWait 1 ${UNIT_HTTP}
+            chain33_BlockWait 1 "${UNIT_HTTP}"
         done
     else
        echo "=========== # paracross rpc test ============="
@@ -370,7 +370,7 @@ function main() {
     fi
 }
 
-main $1 $2 $3 $4
+main "$1" "$2" "$3" "$4"
 #main http://127.0.0.1:8801
 #main http://47.98.253.127:8801 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b user.p.fzmtest.paracross
 
