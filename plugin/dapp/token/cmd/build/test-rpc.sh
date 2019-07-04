@@ -119,16 +119,16 @@ function init() {
         execName="user.p.para.token"
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.token"}]}' ${MAIN_HTTP} | jq -r ".result")
         Chain33_SendToAddress "$recvAddr" "$tokenAddr" 100000000000
-        block_wait 1
+        block_wait 2
         Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
-        block_wait 1
+        block_wait 2
     else
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"token"}]}' ${MAIN_HTTP} | jq -r ".result")
         from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
         Chain33_SendToAddress "$from" "$tokenAddr" 10000000000
-        block_wait 1
+        block_wait 2
         Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
-        block_wait 1
+        block_wait 2
     fi
     echo "token=$token_addr"
     updateConfig
@@ -147,7 +147,7 @@ function updateConfig() {
     sendSignedTx
     echo_rst "update config sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "update config queryExecRes" "$?"
@@ -165,7 +165,7 @@ function token_preCreate() {
     sendSignedTx
     echo_rst "token preCreate sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token preCreate queryExecRes" "$?"
@@ -192,7 +192,7 @@ function token_finish() {
     sendSignedTx
     echo_rst "token finish sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token finish queryExecRes" "$?"
@@ -258,7 +258,7 @@ function token_burn() {
     sendSignedTx
     echo_rst "token burn sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token burn queryExecRes" "$?"
@@ -277,7 +277,7 @@ function token_mint() {
     sendSignedTx
     echo_rst "token mint sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token mint queryExecRes" "$?"
@@ -295,7 +295,7 @@ function token_transfer() {
     sendSignedTx
     echo_rst "token transfer sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token transfer queryExecRes" "$?"
@@ -333,7 +333,7 @@ function token_withdraw() {
     sendSignedTx
     echo_rst "token withdraw sendSignedTx" "$?"
 
-    block_wait 1
+    block_wait 2
 
     queryTransaction ".error | not" "true"
     echo_rst "token withdraw queryExecRes" "$?"
