@@ -339,7 +339,7 @@ function main() {
     UNIT_HTTP=$1
     IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
 
-    if [ $# -eq 4 ] &&  [ -n "$2" ] &&  [ -n "$3" ] &&  [ -n "$4" ]; then
+    if [ $# -eq 4 ] && [ -n "$2" ] && [ -n "$3" ] && [ -n "$4" ]; then
         #fromAddr  跨链资产转移地址
         local from_addr="$2"
         #privkey 地址签名
