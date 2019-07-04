@@ -320,20 +320,6 @@ function run_testcases() {
     paracross_Transfer_Withdraw
 }
 
-function transfer_guard() {
-    UNIT_HTTP=$1
-    IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
-
-    #fromAddr  跨链资产转移地址
-    local from_addr="$2"
-    #privkey 地址签名
-    local privkey="$3"
-    #execer
-    local execer_name="$4"
-    #paracrossAddr 合约地址
-    local paracross_addr="1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe"
-}
-
 function main() {
 
     UNIT_HTTP=$1
