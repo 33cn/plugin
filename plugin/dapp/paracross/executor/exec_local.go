@@ -222,7 +222,6 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
 		status.NonCommitTxCounts = 0
 	}
-	crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
@@ -231,6 +230,7 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 	//ForkLoopCheckCommitTxDone 后只保留全部txreseult 结果
 	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		//跨链tx结果
+		crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
 		status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
 		status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
