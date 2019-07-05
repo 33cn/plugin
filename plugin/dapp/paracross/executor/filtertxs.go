@@ -75,7 +75,7 @@ func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDet
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transaction {
 	var txs []*types.Transaction
-	forkHeight := getDappForkHeight(pt.ForkCommitTx)
+	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
 	for i := 0; i < len(main.Block.Txs); i++ {
 		tx := main.Block.Txs[i]
 		if types.IsSpecificParaExecName(title, string(tx.Execer)) {

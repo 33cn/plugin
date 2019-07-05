@@ -100,8 +100,22 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 		return types.ErrInvalidParam
 	}
 	clog.Debug("paracross.Commit check input", "height", commit.Status.Height, "mainHeight", commit.Status.MainBlockHeight,
-		"mainHash", hex.EncodeToString(commit.Status.MainBlockHash), "blockHash", hex.EncodeToString(commit.Status.BlockHash),
-		"preBlockHash", hex.EncodeToString(commit.Status.PreBlockHash))
+		"mainHash", hex.EncodeToString(commit.Status.MainBlockHash), "blockHash", hex.EncodeToString(commit.Status.BlockHash))
+
+	if !pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		if commit.Status.Height == 0 {
+			if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
+				return types.ErrInvalidParam
+			}
+			return nil
+		}
+		if len(commit.Status.MainBlockHash) == 0 || len(commit.Status.Title) == 0 || commit.Status.Height < 0 ||
+			len(commit.Status.PreBlockHash) == 0 || len(commit.Status.BlockHash) == 0 ||
+			len(commit.Status.StateHash) == 0 || len(commit.Status.PreStateHash) == 0 {
+			return types.ErrInvalidParam
+		}
+		return nil
+	}
 
 	if commit.Status.Height == 0 {
 		if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
@@ -109,9 +123,7 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 		}
 		return nil
 	}
-	if len(commit.Status.MainBlockHash) == 0 || len(commit.Status.Title) == 0 || commit.Status.Height < 0 ||
-		len(commit.Status.PreBlockHash) == 0 || len(commit.Status.BlockHash) == 0 ||
-		len(commit.Status.StateHash) == 0 || len(commit.Status.PreStateHash) == 0 {
+	if len(commit.Status.MainBlockHash) == 0 || commit.Status.Height < 0 || len(commit.Status.BlockHash) == 0 {
 		return types.ErrInvalidParam
 	}
 
@@ -182,13 +194,8 @@ func makeDoneReceipt(execMainHeight int64, commit *pt.ParacrossNodeStatus,
 		MostSameCommit:  most,
 		Title:           commit.Title,
 		Height:          commit.Height,
-		StateHash:       commit.StateHash,
 		BlockHash:       commit.BlockHash,
-		TxCounts:        commit.TxCounts,
 		TxResult:        commit.TxResult,
-		TxHashs:         commit.TxHashs,
-		CrossTxHashs:    commit.CrossTxHashs,
-		CrossTxResult:   commit.CrossTxResult,
 		MainBlockHeight: commit.MainBlockHeight,
 		MainBlockHash:   commit.MainBlockHash,
 	}
@@ -198,7 +205,7 @@ func makeDoneReceipt(execMainHeight int64, commit *pt.ParacrossNodeStatus,
 		Height:    commit.Height,
 		BlockHash: commit.BlockHash,
 	}
-	if execMainHeight >= getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+	if execMainHeight >= pt.GetDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
 		status.MainHeight = commit.MainBlockHeight
 		status.MainHash = commit.MainBlockHash
 	}
@@ -238,13 +245,13 @@ func getMostCommit(stat *pt.ParacrossHeightStatus) (int, string) {
 }
 
 //需要在ForkLoopCheckCommitTxDone后使用
-func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) ([]byte, []byte, []byte, []byte, []byte) {
+func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) []byte {
 	for i, hash := range stat.BlockDetails.BlockHashs {
 		if bytes.Equal(mostHash, hash) {
-			return stat.BlockDetails.StateHashs[i], stat.BlockDetails.TxResults[i], stat.BlockDetails.TxHashs[i], stat.BlockDetails.CrossTxResults[i], stat.BlockDetails.CrossTxHashs[i]
+			return stat.BlockDetails.TxResults[i]
 		}
 	}
-	return nil, nil, nil, nil, nil
+	return nil
 }
 
 func hasCommited(addrs []string, addr string) (bool, int) {
@@ -254,41 +261,6 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 		}
 	}
 	return false, 0
-}
-
-func getDappForkHeight(forkKey string) int64 {
-	var forkHeight int64
-	if types.IsPara() {
-		key := forkKey
-		switch forkKey {
-		case pt.ForkCommitTx:
-			key = pt.MainForkParacrossCommitTx
-		case pt.ForkLoopCheckCommitTxDone:
-			key = pt.MainLoopCheckCommitTxDoneForkHeight
-		}
-
-		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
-		if forkHeight <= 0 {
-			forkHeight = types.MaxHeight
-		}
-	} else {
-		forkHeight = types.GetDappFork(pt.ParaX, forkKey)
-
-		// CI特殊处理，主链是local，fork都是0，平行链有些配置项需要设置为非0，不然获取到的高度为MaxHeight
-		if types.IsLocal() {
-			switch forkKey {
-			case pt.ForkCommitTx:
-				forkHeight = 10
-			case pt.ForkLoopCheckCommitTxDone:
-				forkHeight = 60
-			}
-		}
-	}
-	return forkHeight
-}
-
-func isParaForkHeight(height int64, forkKey string) bool {
-	return height >= getDappForkHeight(forkKey)
 }
 
 func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []byte, error) {
@@ -309,7 +281,7 @@ func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []byte, error
 }
 
 func (a *action) getNodesGroup(title string) (map[string]struct{}, error) {
-	if a.exec.GetMainHeight() < getDappForkHeight(pt.ForkCommitTx) {
+	if a.exec.GetMainHeight() < pt.GetDappForkHeight(pt.ForkCommitTx) {
 		nodes, _, err := getConfigManageNodes(a.db, title)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getNodes for title:%s", title)
@@ -330,11 +302,8 @@ func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.Paracross
 		}
 	}
 	stat.BlockDetails.BlockHashs = append(stat.BlockDetails.BlockHashs, commit.BlockHash)
-	stat.BlockDetails.StateHashs = append(stat.BlockDetails.StateHashs, commit.StateHash)
 	stat.BlockDetails.TxResults = append(stat.BlockDetails.TxResults, commit.TxResult)
-	stat.BlockDetails.TxHashs = append(stat.BlockDetails.TxHashs, commit.TxHashs[0])
-	stat.BlockDetails.CrossTxResults = append(stat.BlockDetails.CrossTxResults, commit.CrossTxResult)
-	stat.BlockDetails.CrossTxHashs = append(stat.BlockDetails.CrossTxHashs, commit.CrossTxHashs[0])
+
 }
 
 //根据nodes过滤掉可能退出了的addrs
@@ -374,7 +343,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, errors.Wrapf(err, "getTitle:%s", a.fromaddr)
 	}
 
-	if titleStatus.Height+1 == commit.Status.Height && commit.Status.Height > 0 {
+	if titleStatus.Height+1 == commit.Status.Height && commit.Status.Height > 0 && !pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		if !bytes.Equal(titleStatus.BlockHash, commit.Status.PreBlockHash) {
 			clog.Error("paracross.Commit", "check PreBlockHash", hex.EncodeToString(titleStatus.BlockHash),
 				"commit tx", hex.EncodeToString(commit.Status.PreBlockHash), "commitheit", commit.Status.Height,
@@ -431,13 +400,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 				BlockHash: [][]byte{commit.Status.BlockHash},
 			},
 		}
-		if isParaForkHeight(a.exec.GetMainHeight(), pt.ForkCommitTx) {
+		if pt.IsParaForkHeight(a.exec.GetMainHeight(), pt.ForkCommitTx) {
 			stat.MainHeight = commit.Status.MainBlockHeight
 			stat.MainHash = commit.Status.MainBlockHash
 		}
 		//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
 		// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
-		if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		if pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 			stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
 			updateCommitBlockHashs(stat, commit.Status)
 		}
@@ -454,13 +423,13 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		found, index := hasCommited(stat.Details.Addrs, a.fromaddr)
 		if found {
 			stat.Details.BlockHash[index] = commit.Status.BlockHash
-			if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+			if pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 				updateCommitBlockHashs(stat, commit.Status)
 			}
 		} else {
 			stat.Details.Addrs = append(stat.Details.Addrs, a.fromaddr)
 			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.Status.BlockHash)
-			if isParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+			if pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 				updateCommitBlockHashs(stat, commit.Status)
 			}
 		}
@@ -473,7 +442,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 	//fork之前记录的stat 没有根据nodes更新而更新
-	if isParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+	if pt.IsParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
 		r := makeCommitStatReceipt(stat)
 		receipt = mergeReceipt(receipt, r)
 	}
@@ -517,7 +486,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
 	//之前记录的stat 状态没更新
-	if isParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+	if pt.IsParaForkHeight(stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
 		r := makeCommitStatReceipt(stat)
 		receipt = mergeReceipt(receipt, r)
 	}
@@ -540,7 +509,7 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 	titleStatus.Title = nodeStatus.Title
 	titleStatus.Height = nodeStatus.Height
 	titleStatus.BlockHash = nodeStatus.BlockHash
-	if isParaForkHeight(a.exec.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
+	if pt.IsParaForkHeight(a.exec.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
 		titleStatus.MainHeight = nodeStatus.MainBlockHeight
 		titleStatus.MainHash = nodeStatus.MainBlockHash
 	}
@@ -571,14 +540,24 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 	return receipt, nil
 }
 
-func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
-	haveCrossTxs := len(status.CrossTxHashs) > 0
-	if status.Height > 0 && isParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
-		haveCrossTxs = false
+func isHaveCrossTxs(status *pt.ParacrossNodeStatus) bool {
+	//ForkLoopCheckCommitTxDone分叉后只返回全部txResult的结果，要实际过滤出来后才能确定有没有跨链tx
+	if pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		return true
 	}
 
-	if enableParacrossTransfer && status.Height > 0 && haveCrossTxs {
-		clog.Debug("paracross.Commit commitDone do cross", "height", status.Height, "havecross", haveCrossTxs)
+	haveCrossTxs := len(status.CrossTxHashs) > 0
+	//ForkCommitTx后，CrossTxHashs[][] 所有跨链交易做成一个校验hash，如果没有则[0]为nil
+	if status.Height > 0 && pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
+		haveCrossTxs = false
+	}
+	return haveCrossTxs
+
+}
+
+func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
+	if enableParacrossTransfer && status.Height > 0 && isHaveCrossTxs(status) {
+		clog.Debug("paracross.Commit commitDone do cross", "height", status.Height)
 		crossTxReceipt, err := a.execCrossTxs(status)
 		if err != nil {
 			return nil, err
@@ -602,9 +581,9 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "getTitle:%s", title)
 	}
 	//当前共识高度还未到分叉高度，则不处理
-	if !isParaForkHeight(titleStatus.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
+	if !pt.IsParaForkHeight(titleStatus.GetMainHeight(), pt.ForkLoopCheckCommitTxDone) {
 		return nil, errors.Wrapf(pt.ErrForkHeightNotReach,
-			"titleHeight:%d,forkHeight:%d", titleStatus.MainHeight, getDappForkHeight(pt.ForkLoopCheckCommitTxDone))
+			"titleHeight:%d,forkHeight:%d", titleStatus.MainHeight, pt.GetDappForkHeight(pt.ForkLoopCheckCommitTxDone))
 	}
 
 	loopHeight := titleStatus.Height
@@ -670,18 +649,14 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 	r := makeCommitStatReceipt(stat)
 	receipt = mergeReceipt(receipt, r)
 
-	stateHash, txRst, txHash, crossTxRst, crossTxHash := getMostResults([]byte(mostHash), stat)
+	txRst := getMostResults([]byte(mostHash), stat)
 	mostStatus := &pt.ParacrossNodeStatus{
 		MainBlockHash:   stat.MainHash,
 		MainBlockHeight: stat.MainHeight,
 		Title:           stat.Title,
 		Height:          stat.Height,
 		BlockHash:       []byte(mostHash),
-		StateHash:       stateHash,
 		TxResult:        txRst,
-		TxHashs:         [][]byte{txHash},
-		CrossTxResult:   crossTxRst,
-		CrossTxHashs:    [][]byte{crossTxHash},
 	}
 
 	//add commit done receipt
@@ -707,7 +682,7 @@ func (a *action) isParaSelfConsensSwitch(commit *pt.ParacrossHeightStatus, title
 		return true, nil
 	}
 
-	selfConsensForkHeight := getDappForkHeight(pt.ParaSelfConsensForkHeight)
+	selfConsensForkHeight := pt.GetDappForkHeight(pt.ParaSelfConsensForkHeight)
 	lastStatusMainHeight := int64(-1)
 	if titleStatus.Height > -1 {
 		s, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, titleStatus.Height))
@@ -747,8 +722,42 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, crossTxHash []byte) (*
 
 }
 
+func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
+	//只获取跨链tx
+	rst, err := hex.DecodeString(string(status.TxResult))
+	if err != nil {
+		clog.Error("getCrossTxHashs decode rst", "CrossTxResult", string(status.TxResult), "paraHeight", status.Height)
+		return nil, nil, types.ErrInvalidParam
+	}
+
+	//空块
+	if len(rst) == 0 {
+		return nil, nil, nil
+	}
+
+	blockDetail, err := GetBlock(api, status.MainBlockHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	//抽取平行链交易和跨链交易
+	paraAllTxs := FilterTxsForPara(status.Title, blockDetail)
+	var baseHashs [][]byte
+	for _, tx := range paraAllTxs {
+		baseHashs = append(baseHashs, tx.Hash())
+	}
+	paraCrossHashs := FilterParaCrossTxHashes(status.Title, paraAllTxs)
+	crossRst := util.CalcBitMapByBitMap(paraCrossHashs, baseHashs, rst)
+
+	return paraCrossHashs, crossRst, nil
+
+}
+
 func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
-	if !isParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) {
+	if pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		return getCrossTxHashsByRst(api, status)
+	}
+	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkCommitTx) {
 		return status.CrossTxHashs, status.CrossTxResult, nil
 	}
 
@@ -879,7 +888,7 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 
 //当前miner tx不需要校验上一个区块的衔接性，因为tx就是本节点发出，高度，preHash等都在本区块里面的blockchain做了校验
 func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
-	if miner.Status.Title != types.GetTitle() || miner.Status.PreBlockHash == nil || miner.Status.MainBlockHash == nil {
+	if miner.Status.Title != types.GetTitle() || miner.Status.MainBlockHash == nil {
 		return nil, pt.ErrParaMinerExecErr
 	}
 

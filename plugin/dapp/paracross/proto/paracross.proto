@@ -16,11 +16,9 @@ message ParacrossStatusDetails {
 //记录不同blockHash的详细数据
 message ParacrossStatusBlockDetails {
     repeated bytes blockHashs     = 1;
-    repeated bytes stateHashs     = 2;
-    repeated bytes txResults      = 3;
-    repeated bytes txHashs        = 4;
-    repeated bytes crossTxResults = 5;
-    repeated bytes crossTxHashs   = 6;
+    repeated bytes txResults      = 2;
+
+
 }
 
 message ParacrossHeightStatus {
