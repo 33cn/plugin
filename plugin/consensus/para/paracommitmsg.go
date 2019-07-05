@@ -445,7 +445,7 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 			return nil, errors.New("paracommitmsg wrong block result")
 		}
 		nodeList[block.Block.Height].BlockHash = block.Block.Hash()
-		if !paracross.IsParaForkHeight(nodeList[block.Block.Height].MainBlockHeight,paracross.ForkLoopCheckCommitTxDone){
+		if !paracross.IsParaForkHeight(nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
 			nodeList[block.Block.Height].StateHash = block.Block.StateHash
 		}
 	}
