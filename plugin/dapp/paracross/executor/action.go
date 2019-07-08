@@ -353,7 +353,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	// 平行链         （2）commit                                 （5） 将得到一个错误的块
 	// 所以有必要做这个检测
 	var dbMainHash []byte
-	if !types.IsPara(){
+	if !types.IsPara() {
 		blockHash, err := getBlockHash(a.api, commit.Status.MainBlockHeight)
 		if err != nil {
 			clog.Error("paracross.Commit getBlockHash", "err", err,
@@ -362,10 +362,10 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 		dbMainHash = blockHash.Hash
 
-	}else {
-		block,err := getBlockInfo(a.api,commit.Status.Height)
-		if err != nil{
-			clog.Error("paracross.Commit getBlockInfo", "err", err,"height", commit.Status.Height,  "from", a.fromaddr)
+	} else {
+		block, err := getBlockInfo(a.api, commit.Status.Height)
+		if err != nil {
+			clog.Error("paracross.Commit getBlockInfo", "err", err, "height", commit.Status.Height, "from", a.fromaddr)
 			return nil, err
 		}
 		dbMainHash = block.MainHash
@@ -527,16 +527,15 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 		//平行链自共识校验
 		selfBlockHash, err := getBlockHash(a.api, nodeStatus.Height)
 		if err != nil {
-			clog.Error("paracross.CommitDone getBlockHash", "err", err,"commit tx height", nodeStatus.Height, "tx", hex.EncodeToString(a.txhash))
+			clog.Error("paracross.CommitDone getBlockHash", "err", err, "commit tx height", nodeStatus.Height, "tx", hex.EncodeToString(a.txhash))
 			return nil, err
 		}
 		//说明本节点blockhash和共识hash不一致，需要停止本节点执行
-		if !bytes.Equal(selfBlockHash.Hash,nodeStatus.BlockHash){
+		if !bytes.Equal(selfBlockHash.Hash, nodeStatus.BlockHash) {
 			clog.Error("paracross.CommitDone mosthash not match", "height", nodeStatus.Height,
-				"blockHash", hex.EncodeToString(selfBlockHash.Hash),"mosthash",hex.EncodeToString(nodeStatus.BlockHash))
+				"blockHash", hex.EncodeToString(selfBlockHash.Hash), "mosthash", hex.EncodeToString(nodeStatus.BlockHash))
 			return nil, pt.ErrParaCurHashNotMatch
 		}
-
 
 		//平行连进行奖励分配
 		rewardReceipt, err := a.reward(nodeStatus, stat)

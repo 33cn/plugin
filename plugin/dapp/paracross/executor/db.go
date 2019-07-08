@@ -86,7 +86,7 @@ func getBlockHash(api client.QueueProtocolAPI, height int64) (*types.ReplyHash, 
 func getBlockInfo(api client.QueueProtocolAPI, height int64) (*types.Block, error) {
 	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height})
 	if err != nil {
-		clog.Error("paracross.Commit getBlockInfo","height",height,"err",err.Error())
+		clog.Error("paracross.Commit getBlockInfo", "height", height, "err", err.Error())
 		return nil, err
 	}
 	if 1 != int64(len(blockDetails.Items)) {
@@ -95,7 +95,6 @@ func getBlockInfo(api client.QueueProtocolAPI, height int64) (*types.Block, erro
 	}
 	return blockDetails.Items[0].Block, nil
 }
-
 
 func isNotFound(err error) bool {
 	if err != nil && (err == dbm.ErrNotFoundInDb || err == types.ErrNotFound) {
