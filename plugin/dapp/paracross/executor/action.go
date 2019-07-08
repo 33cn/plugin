@@ -102,13 +102,14 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 	clog.Debug("paracross.Commit check input", "height", commit.Status.Height, "mainHeight", commit.Status.MainBlockHeight,
 		"mainHash", hex.EncodeToString(commit.Status.MainBlockHash), "blockHash", hex.EncodeToString(commit.Status.BlockHash))
 
-	if !pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
-		if commit.Status.Height == 0 {
-			if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
-				return types.ErrInvalidParam
-			}
-			return nil
+	if commit.Status.Height == 0 {
+		if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
+			return types.ErrInvalidParam
 		}
+		return nil
+	}
+
+	if !pt.IsParaForkHeight(commit.Status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		if len(commit.Status.MainBlockHash) == 0 || len(commit.Status.Title) == 0 || commit.Status.Height < 0 ||
 			len(commit.Status.PreBlockHash) == 0 || len(commit.Status.BlockHash) == 0 ||
 			len(commit.Status.StateHash) == 0 || len(commit.Status.PreStateHash) == 0 {
@@ -117,13 +118,8 @@ func checkCommitInfo(commit *pt.ParacrossCommitAction) error {
 		return nil
 	}
 
-	if commit.Status.Height == 0 {
-		if len(commit.Status.Title) == 0 || len(commit.Status.BlockHash) == 0 {
-			return types.ErrInvalidParam
-		}
-		return nil
-	}
-	if len(commit.Status.MainBlockHash) == 0 || commit.Status.Height < 0 || len(commit.Status.BlockHash) == 0 {
+	if len(commit.Status.MainBlockHash) == 0 || len(commit.Status.BlockHash) == 0 ||
+		commit.Status.MainBlockHeight < 0 || commit.Status.Height < 0 {
 		return types.ErrInvalidParam
 	}
 
@@ -356,21 +352,30 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	// 主链   （1）Bn1        （3） rollback-Bn1   （4） commit-done in Bn2
 	// 平行链         （2）commit                                 （5） 将得到一个错误的块
 	// 所以有必要做这个检测
-	commitHeight := commit.Status.MainBlockHeight
-	commitHash := commit.Status.MainBlockHash
-	if types.IsPara() {
-		commitHeight = commit.Status.Height
-		commitHash = commit.Status.BlockHash
+	var dbMainHash []byte
+	if !types.IsPara(){
+		blockHash, err := getBlockHash(a.api, commit.Status.MainBlockHeight)
+		if err != nil {
+			clog.Error("paracross.Commit getBlockHash", "err", err,
+				"commit tx height", commit.Status.MainBlockHeight, "from", a.fromaddr)
+			return nil, err
+		}
+		dbMainHash = blockHash.Hash
+
+	}else {
+		block,err := getBlockInfo(a.api,commit.Status.Height)
+		if err != nil{
+			clog.Error("paracross.Commit getBlockInfo", "err", err,"height", commit.Status.Height,  "from", a.fromaddr)
+			return nil, err
+		}
+		dbMainHash = block.MainHash
 	}
-	blockHash, err := getBlockHash(a.api, commitHeight)
-	if err != nil {
-		clog.Error("paracross.Commit getBlockHash", "err", err,
-			"commit tx height", commitHeight, "isMain", !types.IsPara(), "from", a.fromaddr)
-		return nil, err
-	}
-	if !bytes.Equal(blockHash.Hash, commitHash) && commit.Status.Height > 0 {
-		clog.Error("paracross.Commit blockHash not match", "isMain", !types.IsPara(), "db", hex.EncodeToString(blockHash.Hash),
-			"commit tx", hex.EncodeToString(commitHash), "commitHeight", commit.Status.Height,
+
+	//对于主链，校验的是主链高度对应的blockhash是否和commit的一致
+	//对于平行链， 校验的是commit信息的平行链height block对应的mainHash是否和本地相同高度对应的mainHash一致， 在主链hash一致的时候看平行链共识blockhash是否一致
+	if !bytes.Equal(dbMainHash, commit.Status.MainBlockHash) && commit.Status.Height > 0 {
+		clog.Error("paracross.Commit blockHash not match", "isMain", !types.IsPara(), "db", hex.EncodeToString(dbMainHash),
+			"commit", hex.EncodeToString(commit.Status.MainBlockHash), "commitHeight", commit.Status.Height,
 			"commitMainHeight", commit.Status.MainBlockHeight, "from", a.fromaddr)
 		return nil, types.ErrBlockHashNoMatch
 	}
@@ -519,6 +524,20 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 
 	//parallel chain not need to process cross commit tx here
 	if types.IsPara() {
+		//平行链自共识校验
+		selfBlockHash, err := getBlockHash(a.api, nodeStatus.Height)
+		if err != nil {
+			clog.Error("paracross.CommitDone getBlockHash", "err", err,"commit tx height", nodeStatus.Height, "tx", hex.EncodeToString(a.txhash))
+			return nil, err
+		}
+		//说明本节点blockhash和共识hash不一致，需要停止本节点执行
+		if !bytes.Equal(selfBlockHash.Hash,nodeStatus.BlockHash){
+			clog.Error("paracross.CommitDone mosthash not match", "height", nodeStatus.Height,
+				"blockHash", hex.EncodeToString(selfBlockHash.Hash),"mosthash",hex.EncodeToString(nodeStatus.BlockHash))
+			return nil, pt.ErrParaCurHashNotMatch
+		}
+
+
 		//平行连进行奖励分配
 		rewardReceipt, err := a.reward(nodeStatus, stat)
 		//错误会导致和主链处理的共识结果不一致
