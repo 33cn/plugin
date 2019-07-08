@@ -248,10 +248,8 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	var set types.LocalDBSet
 	txs := e.GetTxs()
 
-	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
-
 	//removed the 0 vote tx
-	if payload.Status.MainBlockHeight >= forkHeight {
+	if pt.IsParaForkHeight(payload.Status.MainBlockHeight, pt.ForkCommitTx) {
 		err := setMinerTxResultFork(payload.Status, txs[1:], e.GetReceipt()[1:])
 		if err != nil {
 			return nil, err
