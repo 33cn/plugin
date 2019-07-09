@@ -1,0 +1,22 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package types;
+
+message VotesResult {
+    // 总票数
+    int32	totalVotes   = 1;
+    // 赞成票
+    int32	approveVotes = 2;
+    // 反对票
+    int32	opposeVotes  = 3;
+    // 是否通过
+    bool	pass         = 4;
+}
+
+message VotesRecord {
+    repeated string address = 1;
+}

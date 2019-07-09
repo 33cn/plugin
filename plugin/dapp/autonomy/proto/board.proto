@@ -1,0 +1,70 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "lcommon.proto";
+
+package types;
+
+
+message AutonomyProposalBoard {
+    ProposalBoard  propBoard = 1;
+    // 全体持票人投票结果
+    VotesResult    res       = 2;
+    // 状态
+    int32          status    = 3;
+    string         address   = 4;
+    int64          height    = 5;
+    int32          index     = 6;
+}
+
+// action
+message ProposalBoard {
+    // 提案时间
+    int32 year  = 1;
+    int32 month = 2;
+    int32 day   = 3;
+
+    // 提案董事会成员
+    repeated string boards = 4;
+
+	// 投票相关
+    int64 startBlockHeight   = 5; // 提案开始投票高度
+	int64 endBlockHeight     = 6; // 提案结束投票高度
+    int64 realEndBlockHeight = 7; // 实际提案结束投票高度
+}
+
+message RevokeProposalBoard {
+    string proposalID = 1;
+}
+
+message VoteProposalBoard {
+    string proposalID = 1;
+    bool   approve    = 2;
+}
+
+message TerminateProposalBoard {
+    string proposalID = 1;
+}
+
+// receipt
+message ReceiptProposalBoard {
+    AutonomyProposalBoard prev    = 1;
+    AutonomyProposalBoard current = 2;
+}
+
+message LocalProposalBoard {
+    AutonomyProposalBoard propBd = 1;
+    repeated string comments     = 2;
+}
+
+// query
+message ReplyQueryProposalBoard {
+    string proposalID      = 1;
+}
+
+message ReplyProposalBoard {
+    repeated LocalProposalBoard propBoards = 1;
+}
