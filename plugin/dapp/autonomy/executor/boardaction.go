@@ -171,7 +171,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	}
 
 	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusProposalBoard || cur.Status != auty.AutonomyStatusVotePropBoard {
+	if cur.Status != auty.AutonomyStatusProposalBoard && cur.Status != auty.AutonomyStatusVotePropBoard {
 		err := auty.ErrProposalStatus
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
 			voteProb.ProposalID, "err", err)
