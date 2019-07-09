@@ -38,6 +38,19 @@ func (c *Jrpc) RevokeProposalBoardTx(parm *auty.RevokeProposalBoard, result *int
 	return nil
 }
 
+// VoteProposalBoardTx  投票提案董事会成员的RPC接口
+func (c *Jrpc) VoteProposalBoardTx(parm *auty.VoteProposalBoard, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.voteProposalBoard(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
+
 // TerminateProposalBoardTx  终止提案董事会成员的RPC接口
 func (c *Jrpc) TerminateProposalBoardTx(parm *auty.TerminateProposalBoard, result *interface{}) error {
 	if parm == nil {

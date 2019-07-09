@@ -70,11 +70,14 @@ const (
 )
 
 const (
-	// FuncNameQueryProposalBoard 查询方法名
-	FuncNameQueryProposalBoard   = "QueryProposalBoard"
-	FuncNameQueryProposalProject = "QueryProposalProject"
-	FuncNameQueryProposalRule    = "QueryProposalRule"
+	// GetProposalBoard 用于在cmd里面的区分不同的查询
+	GetProposalBoard   = "GetProposalBoard"
+	// GetProposalProject 用于在cmd里面的区分不同的查询
+	GetProposalProject = "GetProposalProject"
+	// GetProposalRule 用于在cmd里面的区分不同的查询
+	GetProposalRule    = "GetProposalRule"
 )
+
 
 //包的名字可以通过配置文件来配置
 //建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字

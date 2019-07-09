@@ -42,6 +42,21 @@ func (c *channelClient) revokeProposalBoard(ctx context.Context, head *auty.Revo
 	return &types.UnsignTx{Data: data}, nil
 }
 
+func (c *channelClient) voteProposalBoard(ctx context.Context, head *auty.VoteProposalBoard) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionVotePropBoard,
+		Value: &auty.AutonomyAction_VotePropBoard{VotePropBoard: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
 func (c *channelClient) terminateProposalBoard(ctx context.Context, head *auty.TerminateProposalBoard) (*types.UnsignTx, error) {
 	val := &auty.AutonomyAction{
 		Ty:    auty.AutonomyActionTmintPropBoard,

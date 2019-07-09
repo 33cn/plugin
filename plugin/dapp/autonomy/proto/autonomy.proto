@@ -32,9 +32,3 @@ message AutonomyAction {
     }
     int32 ty = 13;
 }
-
-service autonomy {
-    rpc QueryProposalBoard(ReplyQueryProposalBoard) returns (ReplyProposalBoard) {}
-    rpc QueryProposalProject(ReplyQueryProposalProject) returns (ReplyProposalProject) {}
-    rpc QueryProposalRule(ReplyQueryProposalRule) returns (ReplyProposalRule) {}
-}

@@ -61,10 +61,14 @@ message LocalProposalBoard {
 }
 
 // query
-message ReplyQueryProposalBoard {
-    string proposalID      = 1;
+message ReqQueryProposalBoard {
+    //优先根据status查询
+    int32  status    = 1;
+    int32  count     = 2;
+    int32  direction = 3;
+    int64  index     = 4;
 }
 
-message ReplyProposalBoard {
-    repeated LocalProposalBoard propBoards = 1;
+message ReplyQueryProposalBoard {
+    repeated AutonomyProposalBoard  proBoards    = 1;
 }
