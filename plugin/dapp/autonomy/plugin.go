@@ -17,7 +17,7 @@ func init() {
 		Name:     ptypes.PackageName,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      commands.Cmd,
+		Cmd:      commands.AutonomyCmd,
 		RPC:      rpc.Init,
 	})
 }

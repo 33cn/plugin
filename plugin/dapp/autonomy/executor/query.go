@@ -5,14 +5,11 @@
 package executor
 
 import (
-	"time"
-
-	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
 // Query_GetUnfreezeWithdraw 查询合约可提币量
-func (u *Unfreeze) Query_GetUnfreezeWithdraw(in *types.ReqString) (types.Message, error) {
-	return QueryWithdraw(u.GetStateDB(), in.GetData())
+func (a *Autonomy) Query_GetProposalBoard(in *auty.ReqQueryProposalBoard) (types.Message, error) {
+	return a.getProposalBoard(in)
 }

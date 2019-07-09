@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"fmt"
 )
 
 func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -25,7 +26,7 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 				if err != nil {
 					return nil, err
 				}
-				kv := a.saveHeightIndex(&receipt)
+				kv := saveHeightIndex(&receipt)
 				set = append(set, kv...)
 			}
 		default:
@@ -36,7 +37,7 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 	return dbSet, nil
 }
 
-func (c *Autonomy) saveHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
+func saveHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
 	// 先将之前的状态删除掉，再做更新
 	if res.Current.Status > 1 {
 		kv := &types.KeyValue{}
@@ -67,7 +68,7 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 				if err != nil {
 					return nil, err
 				}
-				kv := a.delHeightIndex(&receipt)
+				kv := delHeightIndex(&receipt)
 				set = append(set, kv...)
 			}
 		default:
@@ -78,7 +79,7 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 	return dbSet, nil
 }
 
-func (c *Autonomy) delHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
+func delHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
 	kv.Key = calcBoardKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
 	kv.Value = nil
@@ -91,4 +92,45 @@ func (c *Autonomy) delHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.
 		kvs = append(kvs, kv)
 	}
 	return kvs
+}
+
+// getProposalBoard
+func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
+	if req == nil {
+		return nil, types.ErrInvalidParam
+	}
+	var key []byte
+	var values [][]byte
+	var err error
+
+	localDb := a.GetLocalDB()
+	if req.GetIndex() == -1 {
+		key = nil
+	} else { //翻页查找指定的txhash列表
+		heightstr := genHeightIndexStr(req.GetIndex())
+		key    = calcBoardKey4StatusHeight(req.Status, heightstr)
+	}
+	prefix := calcBoardKey4StatusHeight(req.Status, "")
+	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 {
+		return nil, types.ErrNotFound
+	}
+
+	var rep auty.ReplyQueryProposalBoard
+	for _, value := range values {
+		prop := &auty.AutonomyProposalBoard{}
+		err = types.Decode(value, prop)
+		if err != nil {
+			return nil, err
+		}
+		rep.ProBoards = append(rep.ProBoards, prop)
+	}
+	return &rep, nil
+}
+
+func genHeightIndexStr(index int64) string {
+	return fmt.Sprintf("%018d", index)
 }

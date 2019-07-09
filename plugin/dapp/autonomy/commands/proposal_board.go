@@ -5,410 +5,217 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"math"
-	"os"
 	"strings"
 
-	"github.com/33cn/chain33/rpc/jsonclient"
+	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/spf13/cobra"
-
 	"github.com/33cn/chain33/types"
-	pty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/spf13/cobra"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-// Cmd autonomy 客户端主程序
-func Cmd() *cobra.Command {
+
+// AutonomyCmd 自治系统命令行
+func AutonomyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "autonomy",
-		Short: "autonomy construct management",
+		Short: "autonomy management",
 		Args:  cobra.MinimumNArgs(1),
 	}
-	cmd.AddCommand(createCmd())
-	cmd.AddCommand(withdrawCmd())
-	cmd.AddCommand(terminateCmd())
-	cmd.AddCommand(showCmd())
-	cmd.AddCommand(queryWithdrawCmd())
-	cmd.AddCommand(listautonomyCmd())
+
+	// board
+	cmd.AddCommand(
+		ProposalBoardCmd(),
+		RevokeProposalBoardCmd(),
+		VoteProposalBoardCmd(),
+		TerminateProposalBoardCmd(),
+		ShowProposalBoardCmd(),
+	)
+
 	return cmd
 }
 
-func createCmd() *cobra.Command {
+// ProposalBoardCmd 创建提案命令
+func ProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "create autonomy construct",
+		Use:   "proposalboard",
+		Short: "create proposal board",
+		Run:   proposalBoard,
 	}
-
-	cmd.AddCommand(fixAmountCmd())
-	cmd.AddCommand(leftCmd())
+	addProposalBoardFlags(cmd)
 	return cmd
 }
 
-func createFlag(cmd *cobra.Command) *cobra.Command {
-	cmd.PersistentFlags().StringP("beneficiary", "b", "", "address of beneficiary")
-	cmd.MarkFlagRequired("beneficiary")
+func addProposalBoardFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("year", "y", 0, "year")
+	cmd.Flags().Int32P("month", "m", 0, "month")
+	cmd.Flags().Int32P("day", "d", 0, "day")
+	cmd.Flags().Int64P("startBlock", "s", 0, "start block height")
+	cmd.MarkFlagRequired("startBlock")
+	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
+	cmd.MarkFlagRequired("endBlock")
 
-	cmd.PersistentFlags().StringP("asset_exec", "e", "", "asset exec")
-	cmd.MarkFlagRequired("asset_exec")
-
-	cmd.PersistentFlags().StringP("asset_symbol", "s", "", "asset symbol")
-	cmd.MarkFlagRequired("asset_symbol")
-
-	cmd.PersistentFlags().Float64P("total", "t", 0, "total count of asset")
-	cmd.MarkFlagRequired("total")
-
-	cmd.PersistentFlags().Int64P("start_ts", "", 0, "effect, UTC timestamp")
-	//cmd.MarkFlagRequired("start_ts")
-
-	return cmd
+	cmd.Flags().StringP("boards", "b", "", "addr1-addr2......addrN (3<=N<=30)")
+	cmd.MarkFlagRequired("boards")
 }
 
-func checkAmount(amount float64) error {
-	if amount < 0 || amount > float64(types.MaxCoin/types.Coin) {
-		return types.ErrAmount
-	}
-	return nil
-}
-
-func getCreateFlags(cmd *cobra.Command) (*pty.autonomyCreate, error) {
-	beneficiary, _ := cmd.Flags().GetString("beneficiary")
-	exec, _ := cmd.Flags().GetString("asset_exec")
-	symbol, _ := cmd.Flags().GetString("asset_symbol")
-	total, _ := cmd.Flags().GetFloat64("total")
-	startTs, _ := cmd.Flags().GetInt64("start_ts")
-
-	if err := checkAmount(total); err != nil {
-		return nil, types.ErrAmount
-	}
-	totalInt64 := int64(math.Trunc((total+0.0000001)*1e4)) * 1e4
-
-	autonomy := &pty.autonomyCreate{
-		StartTime:   startTs,
-		AssetExec:   exec,
-		AssetSymbol: symbol,
-		TotalCount:  totalInt64,
-		Beneficiary: beneficiary,
-		Means:       "",
-	}
-	return autonomy, nil
-}
-
-func fixAmountCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "fix_amount",
-		Short: "create fix amount means autonomy construct",
-		Run:   fixAmount,
-	}
-	cmd = createFlag(cmd)
-	cmd.Flags().Float64P("amount", "a", 0, "amount every period")
-	cmd.MarkFlagRequired("amount")
-
-	cmd.Flags().Int64P("period", "p", 0, "period in second")
-	cmd.MarkFlagRequired("period")
-	return cmd
-}
-
-func fixAmount(cmd *cobra.Command, args []string) {
-	create, err := getCreateFlags(cmd)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	if err = checkAmount(amount); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
-	period, _ := cmd.Flags().GetInt64("period")
-
-	if period <= 0 {
-		fmt.Fprintf(os.Stderr, "period must be positive integer")
-		return
-	}
-
-	if create.TotalCount <= amountInt64 {
-		fmt.Fprintf(os.Stderr, "total must bigger than amount")
-		return
-	}
-
-	create.Means = pty.FixAmountX
-	create.MeansOpt = &pty.autonomyCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amountInt64}}
-
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.autonomyX),
-		ActionName: "createautonomy",
-		Payload:    types.MustPBToJSON(create),
-	}
-
+func proposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	year, _ := cmd.Flags().GetInt32("year")
+	month, _ := cmd.Flags().GetInt32("month")
+	day, _ := cmd.Flags().GetInt32("day")
+
+	startBlock, _ := cmd.Flags().GetInt64("startBlock")
+	endBlock, _ := cmd.Flags().GetInt64("endBlock")
+	boardstr, _ := cmd.Flags().GetString("gameName")
+
+	boards := strings.Split(boardstr, "-")
+
+	params := &auty.ProposalBoard{
+		Year:  year,
+		Month: month,
+		Day:     day,
+		Boards:    boards,
+		StartBlockHeight:  startBlock,
+		EndBlockHeight: endBlock,
+	}
+
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PropBoardTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
-func leftCmd() *cobra.Command {
+// RevokeProposalBoardCmd 撤销提案
+func RevokeProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "left_proportion",
-		Short: "create left proportion means autonomy construct",
-		Run:   left,
+		Use:   "revokeBoard",
+		Short: "revoke proposal board",
+		Run:   revokeProposalBoard,
 	}
-	cmd = createFlag(cmd)
-	cmd.Flags().Int64P("ten_thousandth", "", 0, "input/10000 of total")
-	cmd.MarkFlagRequired("amount")
-
-	cmd.Flags().Int64P("period", "p", 0, "period in second")
-	cmd.MarkFlagRequired("period")
+	addRevokeProposalBoardFlags(cmd)
 	return cmd
 }
 
-func left(cmd *cobra.Command, args []string) {
-	create, err := getCreateFlags(cmd)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+func addRevokeProposalBoardFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+}
 
-	tenThousandth, _ := cmd.Flags().GetInt64("ten_thousandth")
-	period, _ := cmd.Flags().GetInt64("period")
-	create.Means = pty.LeftProportionX
-	create.MeansOpt = &pty.autonomyCreate_LeftProportion{
-		LeftProportion: &pty.LeftProportion{Period: period, TenThousandth: tenThousandth}}
-
-	if period <= 0 {
-		fmt.Fprintf(os.Stderr, "period must be positive interge")
-		return
-	}
-
-	if tenThousandth <= 0 || tenThousandth >= 10000 {
-		fmt.Fprintf(os.Stderr, "tenThousandth must be 0~10000")
-		return
-	}
-
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.autonomyX),
-		ActionName: pty.Action_Createautonomy,
-		Payload:    types.MustPBToJSON(create),
-	}
-
+func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ID, _ := cmd.Flags().GetString("proposalID")
+
+	params := &auty.RevokeProposalBoard{
+		ProposalID:     ID,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalBoardTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
-func withdrawCmd() *cobra.Command {
+// RevokeProposalBoardCmd 撤销提案
+func VoteProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw",
-		Short: "withdraw asset from construct",
-		Run:   withdraw,
+		Use:   "voteBoard",
+		Short: "vote proposal board",
+		Run:   voteProposalBoard,
 	}
-	cmd.Flags().StringP("id", "", "", "autonomy construct id")
-	cmd.MarkFlagRequired("id")
-
+	addVoteProposalBoardFlags(cmd)
 	return cmd
 }
 
-func terminateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "terminate",
-		Short: "terminate construct",
-		Run:   terminate,
-	}
-	cmd.Flags().StringP("id", "", "", "autonomy construct id")
-	cmd.MarkFlagRequired("id")
-
-	return cmd
+func addVoteProposalBoardFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+	cmd.Flags().BoolP("approve", "ap", true, "is approve, default true")
 }
 
-func showCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "show",
-		Short: "show construct",
-		Run:   show,
-	}
-	cmd.Flags().StringP("id", "", "", "autonomy construct id")
-	cmd.MarkFlagRequired("id")
-
-	return cmd
-}
-
-func queryWithdrawCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "show_withdraw",
-		Short: "show available withdraw amount of one autonomy construct",
-		Run:   queryWithdraw,
-	}
-	cmd.Flags().StringP("id", "", "", "autonomy construct id")
-	cmd.MarkFlagRequired("id")
-
-	return cmd
-}
-
-func withdraw(cmd *cobra.Command, args []string) {
-	id, _ := cmd.Flags().GetString("id")
-
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.autonomyX),
-		ActionName: pty.Action_Withdrawautonomy,
-		Payload:    types.MustPBToJSON(&pty.autonomyWithdraw{autonomyID: id}),
-	}
-
+func voteProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ID, _ := cmd.Flags().GetString("proposalID")
+	approve, _ := cmd.Flags().GetBool("approve")
+
+	params := &auty.VoteProposalBoard{
+		ProposalID:     ID,
+		Approve: approve,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalBoardTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
 
-func terminate(cmd *cobra.Command, args []string) {
-	id, _ := cmd.Flags().GetString("id")
-
-	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.autonomyX),
-		ActionName: pty.Action_Terminateautonomy,
-		Payload:    types.MustPBToJSON(&pty.autonomyTerminate{autonomyID: id}),
-	}
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
-}
-
-func queryWithdraw(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	paraName, _ := cmd.Flags().GetString("paraName")
-
-	id, _ := cmd.Flags().GetString("id")
-	cli, err := jsonclient.NewJSONClient(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	param := &rpctypes.Query4Jrpc{
-		Execer:   getRealExecName(paraName, pty.autonomyX),
-		FuncName: "GetautonomyWithdraw",
-		Payload:  types.MustPBToJSON(&types.ReqString{Data: id}),
-	}
-	var resp pty.ReplyQueryautonomyWithdraw
-	err = cli.Call("Chain33.Query", param, &resp)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	jsonOutput(&resp)
-}
-
-func show(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	paraName, _ := cmd.Flags().GetString("paraName")
-
-	id, _ := cmd.Flags().GetString("id")
-	cli, err := jsonclient.NewJSONClient(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	param := &rpctypes.Query4Jrpc{
-		Execer:   getRealExecName(paraName, pty.autonomyX),
-		FuncName: "Getautonomy",
-		Payload:  types.MustPBToJSON(&types.ReqString{Data: id}),
-	}
-	var resp pty.autonomy
-	err = cli.Call("Chain33.Query", param, &resp)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	jsonOutput(&resp)
-}
-
-func getRealExecName(paraName string, name string) string {
-	if strings.HasPrefix(name, "user.p.") {
-		return name
-	}
-	return paraName + name
-}
-
-func jsonOutput(resp types.Message) {
-	data, err := types.PBToJSON(resp)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	var buf bytes.Buffer
-	err = json.Indent(&buf, data, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(buf.String())
-}
-
-func listautonomyCmd() *cobra.Command {
+// TerminateProposalBoard 撤销提案
+func TerminateProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "list autonomy",
-		Run:   listautonomy,
+		Use:   "terminateBoard",
+		Short: "terminate proposal board",
+		Run:   terminateProposalBoard,
 	}
-	cmd.Flags().StringP("last_key", "l", "", "last key")
-	cmd.Flags().Int32P("count", "", 10, "list count")
-	cmd.Flags().Int32P("direction", "d", 0, "list direction: 0/1")
-
-	cmd.Flags().StringP("create", "c", "", "list by creator")
-	cmd.Flags().StringP("beneficiary", "b", "", "list by beneficiary")
-
+	addTerminateProposalBoardFlags(cmd)
 	return cmd
 }
 
-func listautonomy(cmd *cobra.Command, args []string) {
+func addTerminateProposalBoardFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+}
+
+func terminateProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	paraName, _ := cmd.Flags().GetString("paraName")
+	ID, _ := cmd.Flags().GetString("proposalID")
 
-	create, _ := cmd.Flags().GetString("create")
-	beneficiary, _ := cmd.Flags().GetString("beneficiary")
-	if (len(create) == 0 && len(beneficiary) == 0) || (len(create) > 0 && len(beneficiary) > 0) {
-		fmt.Fprintln(os.Stderr, "must assign one of create or beneficiary")
-		return
+	params := &auty.RevokeProposalBoard{
+		ProposalID:     ID,
 	}
-	funcName := "ListautonomyByBeneficiary"
-	if len(create) > 0 {
-		funcName = "ListautonomyByCreator"
-	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalBoardTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
 
-	direction, _ := cmd.Flags().GetInt32("direction")
+// ShowProposalBoardCmd 显示提案查询信息
+func ShowProposalBoardCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showInfo",
+		Short: "show proposal board info",
+		Run:   showProposalBoard,
+	}
+	addShowProposalBoardflags(cmd)
+	return cmd
+}
+
+func addShowProposalBoardflags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("type", "t", 0, "type")
+	cmd.MarkFlagRequired("type")
+
+	cmd.Flags().Uint32P("status", "s", 0, "status")
+	cmd.Flags().Int32P("count", "c", 0, "count")
+	cmd.Flags().Int32P("direction", "d", 0, "direction")
+	cmd.Flags().Int64P("index", "i", 0, "index")
+}
+
+func showProposalBoard(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	typ, _ := cmd.Flags().GetUint32("type")
+	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
-	last_key, _ := cmd.Flags().GetString("last_key")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	index, _ := cmd.Flags().GetInt64("index")
 
-	req := &pty.Reqautonomys{
-		Direction:   direction,
-		Count:       count,
-		FromKey:     last_key,
-		Initiator:   create,
-		Beneficiary: beneficiary,
+	var params rpctypes.Query4Jrpc
+	var rep interface{}
+	params.Execer = auty.AutonomyX
+	if 0 == typ {
+		req := auty.ReqQueryProposalBoard{
+			Status:    int32(status),
+			Count:     count,
+			Direction: direction,
+			Index:     index,
+		}
+		params.FuncName = auty.GetProposalBoard
+		params.Payload = types.MustPBToJSON(&req)
+		rep = &auty.ReplyQueryProposalBoard{}
 	}
 
-	param := &rpctypes.Query4Jrpc{
-		Execer:   getRealExecName(paraName, pty.autonomyX),
-		FuncName: funcName,
-		Payload:  types.MustPBToJSON(req),
-	}
-
-	cli, err := jsonclient.NewJSONClient(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	var resp pty.Replyautonomys
-	err = cli.Call("Chain33.Query", param, &resp)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	jsonOutput(&resp)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
 }
