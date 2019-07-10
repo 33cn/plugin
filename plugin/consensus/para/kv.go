@@ -6,13 +6,10 @@ package para
 
 import (
 	"fmt"
-
 )
 
-
-
-func calcTitleHeightKey(title string,height int64) []byte {
-	return []byte(fmt.Sprintf("TH-%s-%d", title,height))
+func calcTitleHeightKey(title string, height int64) []byte {
+	return []byte(fmt.Sprintf("TH-%s-%d", title, height))
 }
 
 func calcTitleLastHeightKey(title string) []byte {

@@ -262,7 +262,7 @@ func (client *client) GetStartSeq(height int64) (int64, []byte) {
 	hint.Stop()
 	plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
 
-	seq, hash, err := client.GetSeqByHeightOnMainChain(height-1)
+	seq, hash, err := client.GetSeqByHeightOnMainChain(height - 1)
 	if err != nil {
 		panic(err)
 	}
@@ -395,7 +395,7 @@ func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
 func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
 	seq, err := client.grpcClient.GetSequenceByHash(context.Background(), &types.ReqHash{Hash: hash})
 	if err != nil {
-		plog.Error("GetSeqByHashOnMainChain", "Error", err.Error(),"hash",hex.EncodeToString(hash))
+		plog.Error("GetSeqByHashOnMainChain", "Error", err.Error(), "hash", hex.EncodeToString(hash))
 		return -1, err
 	}
 	//the reflect checked in grpcHandle
