@@ -245,9 +245,7 @@ func (cs *ConsensusState) receiveRoutine() {
 			// go to the next step
 			cs.handleTimeout(ti)
 		case <-cs.Quit:
-			// NOTE: the internalMsgQueue may have signed messages from our
-			// priv_val that haven't hit the WAL, but its ok because
-			// priv_val tracks LastSig
+			dposlog.Info("ConsensusState recv quit signal.")
 			return
 		}
 	}

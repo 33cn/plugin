@@ -18,6 +18,7 @@ const (
 	CandidatorStatusVoted
 	CandidatorStatusCancelVoted
 	CandidatorStatusCancelRegist
+	CandidatorStatusReRegist
 
 	VrfStatusMRegist = iota + 1
 	VrfStatusRPRegist
@@ -27,10 +28,11 @@ const (
 const (
 	TyLogCandicatorRegist   = 1001
 	TyLogCandicatorVoted    = 1002
-	TyLogCandicatorCancelRegist  = 1003
-	TyLogCandicatorReRegist  = 1004
-	TyLogVrfMRegist  = 1005
-	TyLogVrfRPRegist  = 1006
+	TyLogCandicatorCancelVoted  = 1003
+	TyLogCandicatorCancelRegist  = 1004
+	TyLogCandicatorReRegist  = 1005
+	TyLogVrfMRegist  = 1006
+	TyLogVrfRPRegist  = 1007
 )
 
 const (

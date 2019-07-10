@@ -84,6 +84,19 @@ func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue
 		}
 
 		kvs = append(kvs1, kvs2...)
+	} else if log.Status == dty.CandidatorStatusReRegist || log.Status == dty.CandidatorStatusCancelRegist{
+		candInfo := log.CandInfo
+		log.CandInfo = nil
+
+		err = canTable.Replace(candInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		kvs, err = canTable.Save()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return kvs, nil
@@ -144,7 +157,7 @@ func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) 
 	}
 
 	for _, item := range receipt.Logs {
-		if item.Ty >= dty.CandidatorStatusRegist && item.Ty <= dty.CandidatorStatusCancelRegist {
+		if item.Ty >= dty.TyLogCandicatorRegist && item.Ty <= dty.TyLogCandicatorReRegist {
 			var candLog dty.ReceiptCandicator
 			err := types.Decode(item.Log, &candLog)
 			if err != nil {
@@ -155,7 +168,7 @@ func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) 
 				return nil, err
 			}
 			dbSet.KV = append(dbSet.KV, kvs...)
-		} else if  item.Ty >= dty.VrfStatusMRegist && item.Ty <= dty.VrfStatusRPRegist {
+		} else if  item.Ty >= dty.TyLogVrfMRegist && item.Ty <= dty.TyLogVrfRPRegist {
 			var vrfLog dty.ReceiptVrf
 			err := types.Decode(item.Log, &vrfLog)
 			if err != nil {

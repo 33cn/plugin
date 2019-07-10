@@ -172,7 +172,7 @@ func queryCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, error) {
 		bPubkey, _ := hex.DecodeString(req.Pubkeys[i])
 		rows, err := query.ListIndex("pubkey", bPubkey, nil, 1, 0)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		candInfo := rows[0].Data.(*dty.CandidatorInfo)
@@ -194,35 +194,9 @@ func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, erro
 	candTable := dty.NewDposCandidatorTable(kvdb)
 	query := candTable.GetQuery(kvdb)
 
-	rows, err := query.ListIndex("status", []byte(fmt.Sprintf("%2d", dty.CandidatorStatusVoted)), nil, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-
 	number := int32(0)
-	for index := 0; index < len(rows); index++ {
-		candInfo := rows[index].Data.(*dty.CandidatorInfo)
-		cand := &dty.Candidator{
-			Pubkey:  candInfo.Pubkey,
-			Address: candInfo.Address,
-			Ip:      candInfo.Ip,
-			Votes:   candInfo.Votes,
-			Status:  candInfo.Status,
-		}
-		cands = append(cands, cand)
-		number ++
-	}
-
-	sort.Slice(cands, func(i, j int) bool {
-		return cands[i].Votes > cands[j].Votes
-	})
-
-	if number < req.TopN {
-		rows, err = query.ListIndex("status", []byte(fmt.Sprintf("%2d", dty.CandidatorStatusRegist)), nil, req.TopN - number, 0)
-		if err != nil {
-			return nil, err
-		}
-
+	rows, err := query.ListIndex("status", []byte(fmt.Sprintf("%2d", dty.CandidatorStatusVoted)), nil, 0, 0)
+	if err == nil {
 		for index := 0; index < len(rows); index++ {
 			candInfo := rows[index].Data.(*dty.CandidatorInfo)
 			cand := &dty.Candidator{
@@ -234,10 +208,52 @@ func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, erro
 			}
 			cands = append(cands, cand)
 			number ++
-			if number == req.TopN {
-				break
+		}
+
+		sort.Slice(cands, func(i, j int) bool {
+			return cands[i].Votes > cands[j].Votes
+		})
+	}
+
+	if number < req.TopN {
+		rows, err = query.ListIndex("status", []byte(fmt.Sprintf("%2d", dty.CandidatorStatusRegist)), nil, req.TopN - number, 0)
+		if err == nil {
+			for index := 0; index < len(rows); index++ {
+				candInfo := rows[index].Data.(*dty.CandidatorInfo)
+				cand := &dty.Candidator{
+					Pubkey:  candInfo.Pubkey,
+					Address: candInfo.Address,
+					Ip:      candInfo.Ip,
+					Votes:   candInfo.Votes,
+					Status:  candInfo.Status,
+				}
+				cands = append(cands, cand)
+				number ++
+				if number == req.TopN {
+					break
+				}
 			}
 		}
+
+		rows, err = query.ListIndex("status", []byte(fmt.Sprintf("%2d", dty.CandidatorStatusReRegist)), nil, req.TopN - number, 0)
+		if err == nil {
+			for index := 0; index < len(rows); index++ {
+				candInfo := rows[index].Data.(*dty.CandidatorInfo)
+				cand := &dty.Candidator{
+					Pubkey:  candInfo.Pubkey,
+					Address: candInfo.Address,
+					Ip:      candInfo.Ip,
+					Votes:   candInfo.Votes,
+					Status:  candInfo.Status,
+				}
+				cands = append(cands, cand)
+				number ++
+				if number == req.TopN {
+					break
+				}
+			}
+		}
+
 	} else {
 		cands = cands[0:req.TopN]
 	}
@@ -319,6 +335,8 @@ func (action *Action) getReceiptLog(candInfo *dty.CandidatorInfo, statusChange b
 		log.Ty = dty.TyLogCandicatorVoted
 	} else if candInfo.Status == dty.CandidatorStatusCancelRegist {
 		log.Ty = dty.TyLogCandicatorCancelRegist
+	} else if candInfo.Status == dty.CandidatorStatusReRegist{
+		log.Ty = dty.TyLogCandicatorReRegist
 	}
 
 	r.Index = action.getIndex()
@@ -333,6 +351,9 @@ func (action *Action) getReceiptLog(candInfo *dty.CandidatorInfo, statusChange b
 	if voted {
 		r.Votes = vote.Votes
 		r.FromAddr = vote.FromAddr
+		if r.Votes < 0 {
+			log.Ty = dty.TyLogCandicatorCancelVoted
+		}
 	}
 	r.CandInfo = candInfo
 	log.Log = types.Encode(r)
@@ -387,18 +408,21 @@ func (action *Action) Regist(regist *dty.DposCandidatorRegist) (*types.Receipt, 
 		return nil, dty.ErrCandidatorExist
 	}
 
-	if !action.CheckExecAccountBalance(action.fromaddr, dty.RegistFrozenCoins, 0) {
-		logger.Error("Regist failed", "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrNoBalance)
-		return nil, types.ErrNoBalance
-	}
+	acc := action.coinsAccount.LoadExecAccount(action.fromaddr, action.execaddr)
+	if acc.GetFrozen() < dty.RegistFrozenCoins {
+		if acc.GetBalance() + acc.GetFrozen() < dty.RegistFrozenCoins {
+			logger.Error("Regist failed", "addr", action.fromaddr, "execaddr", action.execaddr, "Balance", acc.GetBalance(), "Frozen", acc.GetFrozen(),"err", types.ErrNoBalance)
+			return nil, types.ErrNoBalance
+		}
 
-	receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, dty.RegistFrozenCoins)
-	if err != nil {
-		logger.Error("ExecFrozen failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", dty.RegistFrozenCoins, "err", err.Error())
-		return nil, err
+		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, dty.RegistFrozenCoins)
+		if err != nil {
+			logger.Error("ExecFrozen failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", dty.RegistFrozenCoins, "err", err.Error())
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
 
 	logger.Info("Regist", "addr", action.fromaddr, "execaddr", action.execaddr, "new candicator", regist.String())
 
@@ -434,7 +458,7 @@ func (action *Action) ReRegist(regist *dty.DposCandidatorRegist) (*types.Receipt
 	if err != nil || candInfo == nil {
 		logger.Info("ReRegist", "addr", action.fromaddr, "execaddr", action.execaddr, "candicator is not exist",
 			candInfo.String())
-		return nil, dty.ErrCandidatorExist
+		return nil, dty.ErrCandidatorNotExist
 	}
 
 	if candInfo.Status != dty.CandidatorStatusCancelRegist {
@@ -443,24 +467,27 @@ func (action *Action) ReRegist(regist *dty.DposCandidatorRegist) (*types.Receipt
 		return nil, dty.ErrCandidatorInvalidStatus
 	}
 
-	if !action.CheckExecAccountBalance(action.fromaddr, dty.RegistFrozenCoins, 0) {
-		logger.Error("Regist failed", "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrNoBalance)
-		return nil, types.ErrNoBalance
+	acc := action.coinsAccount.LoadExecAccount(action.fromaddr, action.execaddr)
+	if acc.GetFrozen() < dty.RegistFrozenCoins {
+		if acc.GetBalance() + acc.GetFrozen() < dty.RegistFrozenCoins {
+			logger.Error("Regist failed", "addr", action.fromaddr, "execaddr", action.execaddr, "Balance", acc.GetBalance(), "Frozen", acc.GetFrozen(),"err", types.ErrNoBalance)
+			return nil, types.ErrNoBalance
+		}
+
+		receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, dty.RegistFrozenCoins)
+		if err != nil {
+			logger.Error("ExecFrozen failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", dty.RegistFrozenCoins, "err", err.Error())
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
 
-	receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, dty.RegistFrozenCoins)
-	if err != nil {
-		logger.Error("ExecFrozen failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", dty.RegistFrozenCoins, "err", err.Error())
-		return nil, err
-	}
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
-
-	logger.Info("Regist", "addr", action.fromaddr, "execaddr", action.execaddr, "new candicator",
-		regist.String())
+	logger.Info("Regist", "addr", action.fromaddr, "execaddr", action.execaddr, "new candicator", regist.String())
 
 	candInfo = action.newCandicatorInfo(regist)
-	candInfo.Status = dty.CandidatorStatusRegist
+	candInfo.Status = dty.CandidatorStatusReRegist
+	candInfo.PreStatus = dty.CandidatorStatusCancelRegist
 	candInfo.StartTime = action.blocktime
 	candInfo.StartHeight = action.mainHeight
 	candInfo.StartIndex = action.getIndex()
@@ -523,6 +550,15 @@ func (action *Action) CancelRegist(req *dty.DposCandidatorCancelRegist) (*types.
 			kv = append(kv, receipt.KV...)
 		}
 	}
+
+	receipt, err := action.coinsAccount.ExecActive(action.fromaddr, action.execaddr, dty.RegistFrozenCoins)
+	if err != nil {
+		logger.Error("ExecActive failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", dty.RegistFrozenCoins, "err", err.Error())
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
+
 	candInfo.PreStatus = candInfo.Status
 	candInfo.Status = dty.CandidatorStatusCancelRegist
 	candInfo.PreIndex = candInfo.Index
@@ -564,7 +600,7 @@ func (action *Action) Vote(vote *dty.DposVote) (*types.Receipt, error) {
 		candInfo.String())
 
 	statusChange := false
-	if candInfo.Status == dty.CandidatorStatusRegist {
+	if candInfo.Status == dty.CandidatorStatusRegist || candInfo.Status == dty.CandidatorStatusReRegist{
 		candInfo.PreStatus = candInfo.Status
 		candInfo.Status = dty.CandidatorStatusVoted
 		statusChange = true
@@ -636,13 +672,13 @@ func (action *Action) CancelVote(vote *dty.DposCancelVote) (*types.Receipt, erro
 	enoughVotes := false
 	for _, voter := range candInfo.Voters {
 		if voter.FromAddr == action.fromaddr && bytes.Equal(voter.Pubkey, bPubkey){
-			if action.blocktime - voter.Time >= dty.VoteFrozenTime {
+			//if action.blocktime - voter.Time >= dty.VoteFrozenTime {
 				availVotes += voter.Votes
 				if availVotes >= votes {
 					enoughVotes = true
 					break
 				}
-			}
+			//}
 		}
 	}
 	if !enoughVotes {
@@ -653,7 +689,7 @@ func (action *Action) CancelVote(vote *dty.DposCancelVote) (*types.Receipt, erro
 
 	for index, voter := range candInfo.Voters {
 		if voter.FromAddr == action.fromaddr && bytes.Equal(voter.Pubkey, bPubkey){
-			if action.blocktime - voter.Time >= 3 * 24 * 3600 {
+			//if action.blocktime - voter.Time >= dty.VoteFrozenTime {
 				if voter.Votes > votes {
 					voter.Votes -= votes
 					break
@@ -664,7 +700,7 @@ func (action *Action) CancelVote(vote *dty.DposCancelVote) (*types.Receipt, erro
 					candInfo.Voters = append(candInfo.Voters[:index], candInfo.Voters[index+1:]...)
 					votes = votes - voter.Votes
 				}
-			}
+			//}
 		}
 	}
 

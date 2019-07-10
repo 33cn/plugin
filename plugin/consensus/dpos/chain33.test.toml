@@ -104,6 +104,7 @@ delegateNum=3
 blockInterval=3
 continueBlockNum=12
 isValidator=false
+rpcAddr="http://localhost:9801"
 
 [store]
 name="kvdb"

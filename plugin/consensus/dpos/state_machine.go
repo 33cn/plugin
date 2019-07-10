@@ -26,7 +26,12 @@ var (
 	WaitNotifyStateType = 4
 
 	// StateTypeMapping 为状态的整型值和字符串值的对应关系
-	StateTypeMapping = map[int]string{InitStateType: "InitState", VotingStateType: "VotingState", VotedStateType: "VotedState", WaitNotifyStateType: "WaitNotifyState"}
+	StateTypeMapping = map[int]string{
+		InitStateType: "InitState",
+		VotingStateType: "VotingState",
+		VotedStateType: "VotedState",
+		WaitNotifyStateType: "WaitNotifyState",
+	}
 )
 
 // InitStateObj is the InitState obj

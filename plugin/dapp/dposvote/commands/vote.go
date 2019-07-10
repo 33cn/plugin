@@ -134,14 +134,17 @@ func addVoteFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("pubkey")
 	cmd.Flags().Int64P("votes", "v", 0, "votes")
 	cmd.MarkFlagRequired("votes")
+	cmd.Flags().StringP("addr", "a", "", "address of voter")
+	cmd.MarkFlagRequired("addr")
 }
 
 func vote(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	votes, _ := cmd.Flags().GetInt64("votes")
+	addr, _ := cmd.Flags().GetString("addr")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"votes\":\"%d\"}", pubkey, votes)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"votes\":\"%d\", \"fromAddr\":\"%s\"}", pubkey, votes, addr)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateVoteTx,

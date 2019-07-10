@@ -5,6 +5,10 @@
 package dpos
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/33cn/chain33/common/address"
+	"os"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
@@ -16,6 +20,10 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
+
+	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 )
 
 const dposVersion = "0.1.0"
@@ -39,6 +47,7 @@ var (
 	dposPeriod                 = dposBlockInterval * dposContinueBlockNum
 	zeroHash             [32]byte
 	dposPort string = "36656"
+	rpcAddr string = "http://0.0.0.0:8801"
 )
 
 func init() {
@@ -76,6 +85,7 @@ type subConfig struct {
 	ContinueBlockNum          int64    `json:"continueBlockNum"`
 	IsValidator               bool     `json:"isValidator"`
 	Port                      string   `json:"port"`
+	RpcAddr                   string   `json:"rpcAddr"`
 }
 
 func (client *Client) applyConfig(sub []byte) {
@@ -132,6 +142,10 @@ func (client *Client) applyConfig(sub []byte) {
 
 	if subcfg.IsValidator {
 		isValidator = true
+	}
+
+	if subcfg.RpcAddr != "" {
+		rpcAddr = subcfg.RpcAddr
 	}
 }
 
@@ -260,9 +274,33 @@ OuterLoop:
 		return
 	}
 	valMgr = valMgrTmp.Copy()
-	//todo 对于动态选举或者其他原因导致代理节点发生变化等情况，在后续增加处理 zzh
-
 	dposlog.Debug("Load Validator Manager finish", "state", valMgr)
+	block, err := client.RequestLastBlock()
+	if err != nil {
+		panic(err)
+	}
+	if block != nil {
+		time.Sleep(time.Second * 5)
+		cands, err := client.QueryCandidators()
+		if err != nil {
+			dposlog.Info("QueryCandidators failed", "err", err)
+		} else {
+			if len(cands) != int(dposDelegateNum) {
+				dposlog.Info("QueryCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(cands))
+			} else {
+				validators := make([]*ttypes.Validator, dposDelegateNum)
+				for i, val := range cands {
+					// Make validator
+					validators[i] = &ttypes.Validator{
+						Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
+						PubKey:  val.Pubkey,
+					}
+				}
+				valMgr.Validators = ttypes.NewValidatorSet(validators)
+				dposlog.Info("QueryCandidators success and update validator set", "old validators", valMgrTmp.Validators.String(), "new validators", valMgr.Validators.String())
+			}
+		}
+	}
 
 	dposlog.Info("StartConsensus", "validators", valMgr.Validators)
 	// Log whether this node is a delegator or an observer
@@ -292,6 +330,7 @@ OuterLoop:
 		node.Start()
 	}
 
+	go client.MonitorCandidators()
 	//go client.CreateBlock()
 }
 
@@ -396,4 +435,85 @@ func (client *Client) ValidatorIndex() int {
 	}
 
 	return -1
+}
+
+func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
+	var params rpctypes.Query4Jrpc
+	params.Execer = dty.DPosX
+
+	req := &dty.CandidatorQuery{
+		TopN: int32(dposDelegateNum),
+	}
+	params.FuncName = dty.FuncNameQueryCandidatorByTopN
+	params.Payload = types.MustPBToJSON(req)
+	var res dty.CandidatorReply
+	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", params, &res)
+
+	result, err := ctx.RunResult()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, err
+	}
+	res = *result.(*dty.CandidatorReply)
+	return res.GetCandidators(), nil
+}
+
+func (client *Client)MonitorCandidators() {
+	ticker := time.NewTicker(30 * time.Second)
+	for {
+		select {
+		case <- ticker.C:
+			dposlog.Info("Monitor Candidators")
+			block, err := client.RequestLastBlock()
+			if err != nil {
+				panic(err)
+			}
+
+			if block != nil {
+				cands, err := client.QueryCandidators()
+				if err != nil {
+					dposlog.Info("Query Candidators failed", "err", err)
+				} else {
+					if len(cands) != int(dposDelegateNum) {
+						dposlog.Info("QueryCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(cands))
+					} else {
+						validators := make([]*ttypes.Validator, dposDelegateNum)
+						for i, val := range cands {
+							// Make validator
+							validators[i] = &ttypes.Validator{
+								Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
+								PubKey:  val.Pubkey,
+							}
+						}
+
+						validatorSet := ttypes.NewValidatorSet(validators)
+						dposlog.Info("QueryCandidators success and update validator set")
+						if !client.isValidatorSetSame(validatorSet, client.csState.validatorMgr.Validators){
+							dposlog.Info("ValidatorSet from contract is changed, so stop the node and restart the consensus.")
+							client.node.Stop()
+							time.Sleep(time.Second * 3)
+							go client.StartConsensus()
+						} else {
+							dposlog.Info("ValidatorSet from contract is the same,no change.")
+						}
+					}
+				}
+			}
+
+		}
+	}
+}
+
+func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
+	if v1 == nil || v2 == nil || len(v1.Validators) != len(v2.Validators){
+		return false
+	}
+
+	for i := 0; i < len(v1.Validators); i++ {
+		if !bytes.Equal(v1.Validators[i].PubKey, v2.Validators[i].PubKey){
+			return false
+		}
+	}
+
+	return true
 }

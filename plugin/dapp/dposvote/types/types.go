@@ -52,7 +52,9 @@ func (t *DPosType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogCandicatorRegist:       {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorRegist"},
 		TyLogCandicatorVoted:        {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorVoted"},
+		TyLogCandicatorCancelVoted:  {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorCancelVoted"},
 		TyLogCandicatorCancelRegist: {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorCancelRegist"},
+		TyLogCandicatorReRegist:     {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorReRegist"},
 		TyLogVrfMRegist:             {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfMRegist"},
 		TyLogVrfRPRegist:            {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfRPRegist"},
 	}

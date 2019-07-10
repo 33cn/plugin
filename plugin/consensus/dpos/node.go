@@ -292,6 +292,10 @@ func (node *Node) listenRoutine() {
 // StartConsensusRoutine if peers reached the threshold start consensus routine
 func (node *Node) StartConsensusRoutine() {
 	for {
+		//zzh
+		if !node.IsRunning(){
+			break
+		}
 		//TODO:the peer count need be optimized
 		if node.peerSet.Size() >= 0 {
 			node.state.Start()
@@ -310,6 +314,11 @@ func (node *Node) BroadcastRoutine() {
 			return
 		}
 		node.Broadcast(msg)
+
+		//zzh
+		if !node.IsRunning() {
+			break
+		}
 	}
 }
 
