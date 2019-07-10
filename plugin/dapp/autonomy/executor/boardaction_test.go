@@ -20,6 +20,7 @@ import (
 	_ "github.com/33cn/chain33/system"
 	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/util"
 )
 
 type execEnv struct {
@@ -60,7 +61,6 @@ var (
 
 func init() {
 	commonlog.SetLogLevel("error")
-	//types.AllowUserExec = append(types.AllowUserExec, []byte("coins"))
 }
 
 func TestProposalBoard(t *testing.T) {
@@ -98,7 +98,7 @@ func TestProposalBoard(t *testing.T) {
 	}
 
 	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
-	localDB := new(dbmock.KVDB)
+	_, _, kvdb := util.CreateTestDB()
 	api := new(apimock.QueueProtocolAPI)
 
 	accCoin := account.NewCoinsAccount()
@@ -109,13 +109,13 @@ func TestProposalBoard(t *testing.T) {
 	accCoin.SaveAccount(&accountC)
 	accCoin.SaveAccount(&accountD)
 
-	driver := newAutonomy()
-	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	driver.SetStateDB(stateDB)
-	driver.SetLocalDB(localDB)
-	driver.SetAPI(api)
+	exec := newAutonomy()
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	exec.SetAPI(api)
 
-	// PropBoardTx
+	// PropBoard
 	opt1 :=  &auty.ProposalBoard{
 		Year: 2019,
 		Month: 7,
@@ -128,14 +128,38 @@ func TestProposalBoard(t *testing.T) {
 	require.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
 	require.NoError(t, err)
-	exec := newAutonomy()
-	exec.SetStateDB(stateDB)
-	exec.SetLocalDB(localDB)
+
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(pbtx, int(1))
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(pbtx, receiptDate, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
+
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	//RevokeProposalBoard
+	proposalID := common.ToHex(pbtx.Hash())
+	opt2 :=  &auty.RevokeProposalBoard{
+		ProposalID:proposalID,
+	}
+	rtx, err := revokeProposalBoardTx(opt2)
+	require.NoError(t, err)
+	rtx, err = signTx(rtx, PrivKeyA)
+	require.NoError(t, err)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err = exec.Exec(rtx, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
