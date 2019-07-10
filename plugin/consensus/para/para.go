@@ -222,7 +222,7 @@ func (client *client) InitBlock() {
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		client.WriteBlock(zeroHash[:], newblock, startSeq-1)
+		client.WriteBlock(zeroHash[:], newblock, startSeq)
 	} else {
 		client.SetCurrentBlock(block)
 	}
@@ -234,8 +234,8 @@ func (client *client) InitBlock() {
 
 // GetStartSeq get startSeq in mainchain
 func (client *client) GetStartSeq(height int64) (int64, []byte) {
-	if height == 0 {
-		return 0, nil
+	if height <= 0 {
+		panic(fmt.Sprintf("startHeight(%d) should be more than 0 in mainchain", height))
 	}
 
 	lastHeight, err := client.GetLastHeightOnMainChain()
@@ -262,7 +262,7 @@ func (client *client) GetStartSeq(height int64) (int64, []byte) {
 	hint.Stop()
 	plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
 
-	seq, hash, err := client.GetSeqByHeightOnMainChain(height)
+	seq, hash, err := client.GetSeqByHeightOnMainChain(height-1)
 	if err != nil {
 		panic(err)
 	}
@@ -320,43 +320,29 @@ func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 	return blockDetails.Items[0].Block, nil
 }
 
-// 获取上一个平行链对应主链seq，hash信息
-// 对于平行链创世区块特殊场景：
-// 1,创世区块seq从-1开始，也就是从主链0高度同步区块，主链seq从0开始，平行链对seq=0的区块校验时候做特殊处理，不校验parentHash
-// 2,创世区块seq不是-1， 也就是从主链seq=n高度同步区块，此时创世区块记录了起始高度对应的主链hash，通过hash获取当前seq，然后创世区块需要倒退一个seq，lastSeq=n-1，
-// 因为对于云端主链节点，创世区块记录seq在不同主链节点上差异很大，通过记录的主链hash获取的真实seq-1来使用，主链hash使用对应区块的parenthash做校验目的
-func (client *client) getLastBlockMainInfo() (int64, []byte, error) {
-	lastSeq, lastBlock, err := client.getLastBlockInfo()
+// 获取当前平行链block对应主链seq，hash信息
+// 对于云端主链节点，创世区块记录seq在不同主链节点上差异很大，通过记录的主链hash获取真实seq使用
+func (client *client) getLastBlockMainInfo() (int64, *types.Block, error) {
+	lastBlock, err := client.getLastBlockInfo()
 	if err != nil {
 		return -2, nil, err
 	}
-	if lastBlock.Height == 0 && lastSeq > -1 {
-		mainBlock, err := client.GetBlockOnMainByHash(lastBlock.MainHash)
-		if err != nil {
-			return -2, nil, err
-		}
-
-		mainSeq, err := client.GetSeqByHashOnMainChain(lastBlock.MainHash)
-		if err != nil {
-			return -2, nil, err
-		}
-		return mainSeq - 1, mainBlock.ParentHash, nil
+	mainSeq, err := client.GetSeqByHashOnMainChain(lastBlock.MainHash)
+	if err != nil {
+		return client.reqChainMatchedBlock(0)
 	}
-	return lastSeq, lastBlock.MainHash, nil
+	return mainSeq, lastBlock, nil
+
 }
 
-func (client *client) getLastBlockInfo() (int64, *types.Block, error) {
+func (client *client) getLastBlockInfo() (*types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
-		return -2, nil, err
+		return nil, err
 	}
-	blockedSeq, err := client.GetBlockedSeq(lastBlock.Hash())
-	if err != nil {
-		plog.Error("Parachain GetBlockedSeq fail", "err", err)
-		return -2, nil, err
-	}
-	return blockedSeq, lastBlock, nil
+
+	return lastBlock, nil
 }
 
 func (client *client) GetForkHeightOnMainChain(key string) (int64, error) {
@@ -409,7 +395,7 @@ func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
 func (client *client) GetSeqByHashOnMainChain(hash []byte) (int64, error) {
 	seq, err := client.grpcClient.GetSequenceByHash(context.Background(), &types.ReqHash{Hash: hash})
 	if err != nil {
-		plog.Error("GetSeqByHashOnMainChain", "Error", err.Error())
+		plog.Error("GetSeqByHashOnMainChain", "Error", err.Error(),"hash",hex.EncodeToString(hash))
 		return -1, err
 	}
 	//the reflect checked in grpcHandle
@@ -498,18 +484,18 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 //genesis block scenario,  new main node's blockHash as preMainHash, genesis sequence+1 as currSeq
 // for genesis seq=-1 scenario, mainHash not care, as the 0 seq instead of -1
 // not seq=-1 scenario, mainHash needed
-func (client *client) syncFromGenesisBlock() (int64, []byte, error) {
-	lastSeq, lastMainHash, err := client.getLastBlockMainInfo()
+func (client *client) syncFromGenesisBlock() (int64, *types.Block, error) {
+	lastSeq, lastBlock, err := client.getLastBlockMainInfo()
 	if err != nil {
 		plog.Error("Parachain getLastBlockInfo fail", "err", err)
 		return -2, nil, err
 	}
 	plog.Info("syncFromGenesisBlock sync from height 0")
-	return lastSeq + 1, lastMainHash, nil
+	return lastSeq, lastBlock, nil
 }
 
 // search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
-func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, error) {
+func (client *client) switchHashMatchedBlock(currSeq int64) (int64, *types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
@@ -559,7 +545,7 @@ func (client *client) switchHashMatchedBlock(currSeq int64) (int64, []byte, erro
 
 		plog.Info("switchHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
 			"new currSeq", mainSeq+1, "new preMainBlockHash", hex.EncodeToString(block.MainHash))
-		return mainSeq + 1, block.MainHash, nil
+		return mainSeq, block, nil
 	}
 	return -2, nil, paracross.ErrParaCurHashNotMatch
 }
@@ -615,15 +601,17 @@ func (client *client) CreateBlock() {
 
 		txs, blockOnMain, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
-			incSeqFlag = false
+
 			if err == paracross.ErrParaCurHashNotMatch {
 				newSeq, newSeqMainHash, err := client.switchHashMatchedBlock(currSeq)
 				if err == nil {
+					incSeqFlag = true
 					currSeq = newSeq
 					lastSeqMainHash = newSeqMainHash
 					continue
 				}
 			}
+			incSeqFlag = false
 			time.Sleep(time.Second * time.Duration(blockSec))
 			continue
 		}
@@ -634,7 +622,7 @@ func (client *client) CreateBlock() {
 			lastSeqMainHash = blockOnMain.Detail.Block.ParentHash
 		}
 
-		lastBlockSeq, lastBlock, err := client.getLastBlockInfo()
+		lastBlock, err := client.getLastBlockInfo()
 		if err != nil {
 			plog.Error("Parachain getLastBlockInfo fail", "err", err)
 			time.Sleep(time.Second)
@@ -642,7 +630,7 @@ func (client *client) CreateBlock() {
 		}
 
 		plog.Info("Parachain process block", "lastSeq", lastSeq, "curSeq", currSeq,
-			"lastBlockHeight", lastBlock.Height, "lastBlockSeq", lastBlockSeq,
+			"lastBlockHeight", lastBlock.Height,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
 			"lastBlockMainHeight", lastBlock.MainHeight, "lastBlockMainHash", common.ToHex(lastBlock.MainHash), "seqTy", blockOnMain.Seq.Type)
 

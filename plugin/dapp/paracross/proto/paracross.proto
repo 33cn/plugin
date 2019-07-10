@@ -301,6 +301,14 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
+message ParaLocalDbBlock {
+    int64     height         = 1;
+    bytes     mainHash       = 2;
+    int64     mainHeight     = 3;
+    bytes     parentMainHash = 4;
+    int64     blockTime      = 5;
+    repeated Transaction txs = 6;
+}
 
 
 service paracross {
