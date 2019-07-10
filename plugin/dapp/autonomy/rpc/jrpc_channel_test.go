@@ -13,7 +13,7 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
-	pty "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -38,13 +38,11 @@ func TestJRPCChannel(t *testing.T) {
 	testCases := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
-		{fn: testCreateRawTxCmd},
-		{fn: testPlayRawTxCmd},
-		{fn: testShowRawTxCmd},
-		{fn: testTimeoutDoneTxCmd},
-		{fn: testRoundInfoCmd},
-		{fn: testRoundListCmd},
-		{fn: testLoopResultCmd},
+		{fn: testPropBoardTxCmd},
+		{fn: testRevokeProposalBoardTxCmd},
+		{fn: testVoteProposalBoardTxCmd},
+		{fn: testTerminateProposalBoardTxCmd},
+		{fn: testGetProposalBoardCmd},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)
@@ -58,58 +56,36 @@ func TestJRPCChannel(t *testing.T) {
 	}
 }
 
-func testCreateRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &pty.BlackwhiteCreateTxReq{}
+func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.ProposalBoard{}
 	var res string
-	return jrpc.Call("blackwhite.BlackwhiteCreateTx", params, &res)
+	return jrpc.Call("autonomy.PropBoardTx", params, &res)
 }
 
-func testPlayRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &pty.BlackwhitePlayTxReq{}
+func testRevokeProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.RevokeProposalBoard{}
 	var res string
-	return jrpc.Call("blackwhite.BlackwhitePlayTx", params, &res)
+	return jrpc.Call("autonomy.RevokeProposalBoardTx", params, &res)
 }
 
-func testShowRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &pty.BlackwhiteShowTxReq{}
+func testVoteProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.VoteProposalBoard{}
 	var res string
-	return jrpc.Call("blackwhite.BlackwhiteShowTx", params, &res)
+	return jrpc.Call("autonomy.VoteProposalBoardTx", params, &res)
 }
 
-func testTimeoutDoneTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &pty.BlackwhiteTimeoutDoneTxReq{}
+func testTerminateProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.TerminateProposalBoard{}
 	var res string
-	return jrpc.Call("blackwhite.BlackwhiteTimeoutDoneTx", params, &res)
+	return jrpc.Call("autonomy.TerminateProposalBoardTx", params, &res)
 }
 
-func testRoundInfoCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testGetProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
-	req := &pty.ReqBlackwhiteRoundInfo{}
-	params.FuncName = pty.GetBlackwhiteRoundInfo
+	req := &auty.ReqQueryProposalBoard{}
+	params.FuncName = auty.GetProposalBoard
 	params.Payload = types.MustPBToJSON(req)
-	rep = &pty.ReplyBlackwhiteRoundInfo{}
-	return jrpc.Call("Chain33.Query", params, rep)
-}
-
-func testRoundListCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var rep interface{}
-	var params rpctypes.Query4Jrpc
-	req := &pty.ReqBlackwhiteRoundList{}
-	params.FuncName = pty.GetBlackwhiteByStatusAndAddr
-	params.Payload = types.MustPBToJSON(req)
-	rep = &pty.ReplyBlackwhiteRoundList{}
-
-	return jrpc.Call("Chain33.Query", params, rep)
-}
-
-func testLoopResultCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var rep interface{}
-	var params rpctypes.Query4Jrpc
-	req := &pty.ReqLoopResult{}
-	params.FuncName = pty.GetBlackwhiteloopResult
-	params.Payload = types.MustPBToJSON(req)
-	rep = &pty.ReplyLoopResults{}
-
+	rep = &auty.ReplyQueryProposalBoard{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
