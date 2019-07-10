@@ -5,22 +5,19 @@
 package para
 
 import (
-	"time"
 	"errors"
+	"time"
+
+	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
-	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/33cn/chain33/types"
-	"encoding/hex"
+	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-
-
-
-
-func (client *client) setLocalBlock(set *types.LocalDBSet) (error) {
+func (client *client) setLocalBlock(set *types.LocalDBSet) error {
 	//如果追赶上主链了，则落盘
-	if client.isCaughtUp{
+	if client.isCaughtUp {
 		set.Txid = 1
 	}
 
@@ -33,24 +30,23 @@ func (client *client) setLocalBlock(set *types.LocalDBSet) (error) {
 	if err != nil {
 		return err
 	}
-	if resp.GetData().(*types.Reply).IsOk{
+	if resp.GetData().(*types.Reply).IsOk {
 		return nil
 	}
 	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
 }
 
-
-func (client *client) addLocalBlock(height int64, block *paracross.ParaLocalDbBlock) (error) {
+func (client *client) addLocalBlock(height int64, block *paracross.ParaLocalDbBlock) error {
 	set := &types.LocalDBSet{}
 
-	key := calcTitleHeightKey(types.GetTitle(),height)
+	key := calcTitleHeightKey(types.GetTitle(), height)
 	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
-	set.KV = append(set.KV,kv)
+	set.KV = append(set.KV, kv)
 
 	//两个key原子操作
 	key = calcTitleLastHeightKey(types.GetTitle())
 	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height})}
-	set.KV = append(set.KV,kv)
+	set.KV = append(set.KV, kv)
 
 	return client.setLocalBlock(set)
 }
@@ -68,18 +64,16 @@ func (client *client) createLocalBlock(lastBlock *paracross.ParaLocalDbBlock, tx
 	return client.addLocalBlock(newblock.Height, &newblock)
 }
 
-
-
-func (client *client) delLocalBlock(height int64) (error) {
+func (client *client) delLocalBlock(height int64) error {
 	set := &types.LocalDBSet{}
-	key := calcTitleHeightKey(types.GetTitle(),height)
+	key := calcTitleHeightKey(types.GetTitle(), height)
 	kv := &types.KeyValue{Key: key, Value: nil}
-	set.KV = append(set.KV,kv)
+	set.KV = append(set.KV, kv)
 
 	//两个key原子操作
 	key = calcTitleLastHeightKey(types.GetTitle())
-	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height-1})}
-	set.KV = append(set.KV,kv)
+	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height - 1})}
+	set.KV = append(set.KV, kv)
 
 	return client.setLocalBlock(set)
 }
@@ -89,81 +83,76 @@ func (client *client) removeLocalBlocks(minHeight int64) error {
 	set := &types.LocalDBSet{}
 
 	key := calcTitleLastHeightKey(types.GetTitle())
-	if minHeight >0{
+	if minHeight > 0 {
 		kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: minHeight})}
-		set.KV = append(set.KV,kv)
-	}else {
+		set.KV = append(set.KV, kv)
+	} else {
 		kv := &types.KeyValue{Key: key, Value: nil}
-		set.KV = append(set.KV,kv)
+		set.KV = append(set.KV, kv)
 	}
 
 	return client.setLocalBlock(set)
 }
 
-
-
 func (client *client) getFromLocalDb(set *types.LocalDBGet, count int) ([][]byte, error) {
 	msg := client.GetQueueClient().NewMessage("blockchain", types.EventGetValueByKey, set)
 	err := client.GetQueueClient().Send(msg, true)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	resp, err := client.GetQueueClient().Wait(msg)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	reply := resp.GetData().(*types.LocalReplyValue)
-	if len(reply.Values) != count{
-		plog.Error("Parachain getFromLocalDb count not match", "expert", count,"real",len(reply.Values))
+	if len(reply.Values) != count {
+		plog.Error("Parachain getFromLocalDb count not match", "expert", count, "real", len(reply.Values))
 		return nil, types.ErrInvalidParam
 	}
 
-	return reply.Values,nil
+	return reply.Values, nil
 
 }
 
-
-
 func (client *client) getLastLocalHeight() (int64, error) {
 	key := calcTitleLastHeightKey(types.GetTitle())
-	set := &types.LocalDBGet{Keys:[][]byte{key}}
-	value,err := client.getFromLocalDb(set,len(set.Keys))
-	if err != nil{
+	set := &types.LocalDBGet{Keys: [][]byte{key}}
+	value, err := client.getFromLocalDb(set, len(set.Keys))
+	if err != nil {
 		return -1, err
 	}
-	if value[0] == nil{
+	if value[0] == nil {
 		return -1, types.ErrNotFound
 	}
 
 	height := &types.Int64{}
-	err = types.Decode(value[0],height)
-	if err != nil{
-		return -1,err
+	err = types.Decode(value[0], height)
+	if err != nil {
+		return -1, err
 	}
-	return height.Data,nil
+	return height.Data, nil
 
 }
 
 func (client *client) getLocalBlockByHeight(height int64) (*paracross.ParaLocalDbBlock, error) {
-	key := calcTitleHeightKey(types.GetTitle(),height)
-	set := &types.LocalDBGet{Keys:[][]byte{key}}
+	key := calcTitleHeightKey(types.GetTitle(), height)
+	set := &types.LocalDBGet{Keys: [][]byte{key}}
 
-	value,err := client.getFromLocalDb(set,len(set.Keys))
-	if err != nil{
+	value, err := client.getFromLocalDb(set, len(set.Keys))
+	if err != nil {
 		return nil, err
 	}
-	if value[0] == nil{
+	if value[0] == nil {
 		return nil, types.ErrNotFound
 	}
 
 	var block paracross.ParaLocalDbBlock
-	err = types.Decode(value[0],&block)
-	if err != nil{
-		return nil,err
+	err = types.Decode(value[0], &block)
+	if err != nil {
+		return nil, err
 	}
-	return &block,nil
-
+	return &block, nil
 
 }
 
@@ -182,52 +171,50 @@ func (client *client) getLocalBlockInfoByHeight(height int64) (int64, []byte, er
 
 }
 
-func (client *client) setLocalBlockByChainBlock(chainBlock *types.Block) (error) {
+func (client *client) setLocalBlockByChainBlock(chainBlock *types.Block) error {
 	//根据匹配上的chainblock，设置当前localdb block
 	localBlock := &paracross.ParaLocalDbBlock{
-		Height:chainBlock.Height,
-		MainHeight:chainBlock.MainHeight,
-		MainHash:chainBlock.MainHash,
-		BlockTime:chainBlock.BlockTime,
+		Height:     chainBlock.Height,
+		MainHeight: chainBlock.MainHeight,
+		MainHash:   chainBlock.MainHash,
+		BlockTime:  chainBlock.BlockTime,
 	}
 
-	return client.addLocalBlock(localBlock.Height,localBlock)
+	return client.addLocalBlock(localBlock.Height, localBlock)
 
 }
 
-
 //如果localdb里面没有信息，就从chain block返回，至少有创世区块，然后进入循环匹配切换场景
 func (client *client) getLastLocalBlockInfo() (int64, []byte, error) {
-	height,err := client.getLastLocalHeight()
-	if err == nil{
-		mainSeq,mainHash,err := client.getLocalBlockInfoByHeight(height)
-		if err == nil{
-			return mainSeq, mainHash,nil
+	height, err := client.getLastLocalHeight()
+	if err == nil {
+		mainSeq, mainHash, err := client.getLocalBlockInfoByHeight(height)
+		if err == nil {
+			return mainSeq, mainHash, nil
 		}
 	}
 
-	mainSeq,chainBlock,err := client.getLastBlockMainInfo()
-	if err != nil{
-		return -2,nil,err
+	mainSeq, chainBlock, err := client.getLastBlockMainInfo()
+	if err != nil {
+		return -2, nil, err
 	}
 
 	err = client.setLocalBlockByChainBlock(chainBlock)
-	if err != nil{
-		return -2,nil,err
+	if err != nil {
+		return -2, nil, err
 	}
-	return mainSeq,chainBlock.MainHash,nil
+	return mainSeq, chainBlock.MainHash, nil
 
 }
 
 func (client *client) getLastDbBlock() (*paracross.ParaLocalDbBlock, error) {
-	height,err := client.getLastLocalHeight()
+	height, err := client.getLastLocalHeight()
 	if err != nil {
 		return nil, err
 	}
 
 	return client.getLocalBlockByHeight(height)
 }
-
 
 func (client *client) reqChainMatchedBlock(startHeight int64) (int64, *types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
@@ -240,7 +227,7 @@ func (client *client) reqChainMatchedBlock(startHeight int64) (int64, *types.Blo
 		return client.syncFromGenesisBlock()
 	}
 
-	if startHeight == 0 || startHeight > lastBlock.Height{
+	if startHeight == 0 || startHeight > lastBlock.Height {
 		startHeight = lastBlock.Height
 	}
 
@@ -265,7 +252,7 @@ func (client *client) reqChainMatchedBlock(startHeight int64) (int64, *types.Blo
 			if height == 1 {
 				plog.Error("switchHashMatchedBlock search to height=1 not found", "lastBlockHeight", lastBlock.Height,
 					"height1 mainHash", hex.EncodeToString(block.MainHash))
-					return client.syncFromGenesisBlock()
+				return client.syncFromGenesisBlock()
 
 			}
 			continue
@@ -279,22 +266,22 @@ func (client *client) reqChainMatchedBlock(startHeight int64) (int64, *types.Blo
 }
 
 func (client *client) switchChainMatchedBlock(startHeight int64) (int64, []byte, error) {
-	mainSeq, chainBlock,err := client.reqChainMatchedBlock(startHeight)
-	if err != nil{
-		return -2,nil,err
+	mainSeq, chainBlock, err := client.reqChainMatchedBlock(startHeight)
+	if err != nil {
+		return -2, nil, err
 	}
 	err = client.setLocalBlockByChainBlock(chainBlock)
-	if err != nil{
-		return -2,nil,err
+	if err != nil {
+		return -2, nil, err
 	}
-	return mainSeq,chainBlock.MainHash,nil
+	return mainSeq, chainBlock.MainHash, nil
 }
 
 // search base on para block but not last MainBlockHash, last MainBlockHash can not back tracing
 func (client *client) switchLocalHashMatchedBlock(currSeq int64) (int64, []byte, error) {
 	lastBlock, err := client.getLastDbBlock()
 	if err != nil {
-		if err == types.ErrNotFound{
+		if err == types.ErrNotFound {
 			//TODO 或者通知执行层去切换
 			return client.switchChainMatchedBlock(0)
 		}
@@ -302,14 +289,13 @@ func (client *client) switchLocalHashMatchedBlock(currSeq int64) (int64, []byte,
 		return -2, nil, err
 	}
 
-
-	for height := lastBlock.Height; height > 0 ; height-- {
+	for height := lastBlock.Height; height > 0; height-- {
 		block, err := client.getLocalBlockByHeight(height)
 		if err != nil {
-			if err == types.ErrNotFound{
+			if err == types.ErrNotFound {
 				plog.Error("switchLocalHashMatchedBlock search not found", "lastBlockHeight", height)
 				err = client.removeLocalBlocks(height)
-				if err != nil{
+				if err != nil {
 					return -2, nil, err
 				}
 				return client.switchChainMatchedBlock(height)
@@ -337,22 +323,20 @@ func (client *client) switchLocalHashMatchedBlock(currSeq int64) (int64, []byte,
 	return -2, nil, paracross.ErrParaCurHashNotMatch
 }
 
-
-
 func (client *client) downloadBlocks() {
 	lastSeq, lastSeqMainHash, err := client.getLastLocalBlockInfo()
 	if err != nil {
 		plog.Error("Parachain CreateBlock getLastLocalBlockInfo fail", "err", err.Error())
 		return
 	}
-	currSeq := lastSeq+1
+	currSeq := lastSeq + 1
 	for {
 		txs, mainBlock, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
 			if err == paracross.ErrParaCurHashNotMatch {
 				preSeq, preSeqMainHash, err := client.switchLocalHashMatchedBlock(currSeq)
 				if err == nil {
-					currSeq = preSeq+1
+					currSeq = preSeq + 1
 					lastSeqMainHash = preSeqMainHash
 					continue
 				}
@@ -368,13 +352,13 @@ func (client *client) downloadBlocks() {
 		}
 
 		lastBlock, err := client.getLastDbBlock()
-		if err != nil && err != types.ErrNotFound{
+		if err != nil && err != types.ErrNotFound {
 			plog.Error("Parachain getLastDbBlock", "err", err)
 			time.Sleep(time.Second)
 			continue
 		}
 
-		plog.Info("Parachain process block", "curSeq", currSeq,"lastBlockHeight", lastBlock.Height,
+		plog.Info("Parachain process block", "curSeq", currSeq, "lastBlockHeight", lastBlock.Height,
 			"currSeqMainHeight", lastSeqMainHeight, "currSeqMainHash", common.ToHex(lastSeqMainHash),
 			"lastBlockMainHeight", lastBlock.MainHeight, "lastBlockMainHash", common.ToHex(lastBlock.MainHash), "seqTy", mainBlock.Seq.Type)
 
@@ -401,8 +385,8 @@ func (client *client) downloadBlocks() {
 			err = types.ErrInvalidParam
 		}
 
-		if err != nil{
-			plog.Error("para DownloadBlocks", "type",mainBlock.Seq.Type,"err",err.Error())
+		if err != nil {
+			plog.Error("para DownloadBlocks", "type", mainBlock.Seq.Type, "err", err.Error())
 			time.Sleep(time.Second)
 			continue
 		}
