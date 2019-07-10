@@ -16,9 +16,10 @@ var tlog = log.New("module", name)
 
 func init() {
 	name = AutonomyX
-	types.AllowUserExec = append(types.AllowUserExec, []byte(AutonomyX))
+	types.AllowUserExec = append(types.AllowUserExec, []byte(name))
 	// init executor type
 	types.RegistorExecutor(name, NewType())
+	types.RegisterDappFork(name, "Enable", 1)
 }
 
 //getRealExecName

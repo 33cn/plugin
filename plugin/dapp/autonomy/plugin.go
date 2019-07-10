@@ -9,12 +9,12 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/autonomy/commands"
 	"github.com/33cn/plugin/plugin/dapp/autonomy/executor"
 	"github.com/33cn/plugin/plugin/dapp/autonomy/rpc"
-	ptypes "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
 func init() {
 	pluginmgr.Register(&pluginmgr.PluginBase{
-		Name:     ptypes.PackageName,
+		Name:     types.AutonomyX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.AutonomyCmd,

@@ -77,7 +77,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	value := types.Encode(cur)
 	kv = append(kv, &types.KeyValue{Key: key, Value: value})
 
-	receiptLog := a.GetReceiptLog(nil, cur, auty.TyLogPropBoard)
+	receiptLog := getReceiptLog(nil, cur, auty.TyLogPropBoard)
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -138,7 +138,7 @@ func (a *action) rvkPropBoard(rvkProb *auty.RevokeProposalBoard) (*types.Receipt
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(rvkProb.ProposalID), Value: types.Encode(&cur)})
 
-	a.GetReceiptLog(pre, &cur, auty.TyLogRvkPropBoard)
+	getReceiptLog(pre, &cur, auty.TyLogRvkPropBoard)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -253,7 +253,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	if cur.Res.Pass {
 		ty = auty.TyLogTmintPropBoard
 	}
-	receiptLog := a.GetReceiptLog(pre, &cur, int32(ty))
+	receiptLog := getReceiptLog(pre, &cur, int32(ty))
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -324,7 +324,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(tmintProb.ProposalID), Value: types.Encode(&cur)})
 
-	a.GetReceiptLog(pre, &cur, auty.TyLogTmintPropBoard)
+	getReceiptLog(pre, &cur, auty.TyLogTmintPropBoard)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -353,9 +353,9 @@ func (a *action) getStartHeightVoteAccount(addr string, height int64) (*types.Ac
 	return account[0], nil
 }
 
-// GetReceiptLog 根据提案信息获取log
+// getReceiptLog 根据提案信息获取log
 // 状态变化：
-func (a *action) GetReceiptLog(pre, cur *auty.AutonomyProposalBoard, ty int32) *types.ReceiptLog {
+func getReceiptLog(pre, cur *auty.AutonomyProposalBoard, ty int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = ty
 	r := &auty.ReceiptProposalBoard{Prev: pre, Current: cur}
