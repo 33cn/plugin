@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -39,7 +40,26 @@ func (c *Chain33) CreateRawTransaction(in *rpctypes.CreateTx, result *interface{
 	if err != nil {
 		return err
 	}
-	*result = hex.EncodeToString(reply)
+	//add tx fee setting
+	tx := &types.Transaction{}
+	err = types.Decode(reply, tx)
+	if err != nil {
+		return err
+	}
+	tx.Fee = inpb.Fee
+	//set proper fee if zero fee
+	if tx.Fee <= 0 {
+		proper, err := c.cli.GetProperFee(nil)
+		if err != nil {
+			return err
+		}
+		fee, err := tx.GetRealFee(proper.ProperFee)
+		if err != nil {
+			return err
+		}
+		tx.Fee = fee
+	}
+	*result = hex.EncodeToString(types.Encode(tx))
 	return nil
 }
 
@@ -329,9 +349,8 @@ func fmtAsssets(assets []*types.Asset) []*rpctypes.Asset {
 }
 
 // GetMempool get mempool information
-func (c *Chain33) GetMempool(in *types.ReqNil, result *interface{}) error {
-
-	reply, err := c.cli.GetMempool()
+func (c *Chain33) GetMempool(in *types.ReqGetMempool, result *interface{}) error {
+	reply, err := c.cli.GetMempool(in)
 	if err != nil {
 		return err
 	}
@@ -894,8 +913,13 @@ func (c *Chain33) IsNtpClockSync(in *types.ReqNil, result *interface{}) error {
 
 // QueryTotalFee query total fee
 func (c *Chain33) QueryTotalFee(in *types.LocalDBGet, result *interface{}) error {
-	if in == nil || len(in.Keys) > 1 {
+	if in == nil || len(in.Keys) != 1 {
 		return types.ErrInvalidParam
+	}
+	totalFeePrefix := []byte("TotalFeeKey:")
+	//add prefix if not exist
+	if !bytes.HasPrefix(in.Keys[0], totalFeePrefix) {
+		in.Keys[0] = append(totalFeePrefix, in.Keys[0]...)
 	}
 	reply, err := c.cli.LocalGet(in)
 	if err != nil {

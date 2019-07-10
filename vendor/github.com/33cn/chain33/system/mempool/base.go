@@ -122,10 +122,10 @@ func (mem *Mempool) getTxList(filterList *types.TxHashList) (txs []*types.Transa
 	for i := 0; i < len(filterList.GetHashes()); i++ {
 		dupMap[string(filterList.GetHashes()[i])] = true
 	}
-	return mem.filterTxList(count, dupMap)
+	return mem.filterTxList(count, dupMap, false)
 }
 
-func (mem *Mempool) filterTxList(count int64, dupMap map[string]bool) (txs []*types.Transaction) {
+func (mem *Mempool) filterTxList(count int64, dupMap map[string]bool, isAll bool) (txs []*types.Transaction) {
 	height := mem.header.GetHeight()
 	blocktime := mem.header.GetBlockTime()
 	mem.cache.Walk(int(count), func(tx *Item) bool {
@@ -134,7 +134,7 @@ func (mem *Mempool) filterTxList(count int64, dupMap map[string]bool) (txs []*ty
 				return true
 			}
 		}
-		if isExpired(tx, height, blocktime) {
+		if isExpired(tx, height, blocktime) && !isAll {
 			return true
 		}
 		txs = append(txs, tx.Value)
@@ -289,14 +289,19 @@ func (mem *Mempool) GetProperFeeRate(req *types.ReqProperFee) int64 {
 	if req.TxSize == 0 {
 		req.TxSize = 10240
 	}
-	baseFeeRate := mem.cache.GetProperFee()
+	feeRate := mem.cache.GetProperFee()
 	if mem.cfg.IsLevelFee {
 		levelFeeRate := mem.getLevelFeeRate(mem.cfg.MinTxFee, req.TxCount, req.TxSize)
-		if levelFeeRate > baseFeeRate {
-			return levelFeeRate
+		if levelFeeRate > feeRate {
+			feeRate = levelFeeRate
 		}
 	}
-	return baseFeeRate
+	//控制精度
+	minFee := types.GInt("MinFee")
+	if minFee != 0 && feeRate%minFee > 0 {
+		feeRate = (feeRate/minFee + 1) * minFee
+	}
+	return feeRate
 }
 
 // getLevelFeeRate 获取合适的阶梯手续费率, 可以外部传入count, size进行前瞻性估计
