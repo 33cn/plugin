@@ -87,14 +87,14 @@ func (a *action) rvkPropBoard(rvkProb *auty.RevokeProposalBoard) (*types.Receipt
 	// 获取GameID
 	value, err := a.db.Get(propBoardID(rvkProb.ProposalID))
 	if err != nil {
-		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "get round failed",
+		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "get ProposalBoard) failed",
 			rvkProb.ProposalID, "err", err)
 		return nil, err
 	}
 	var cur auty.AutonomyProposalBoard
 	err = types.Decode(value, &cur)
 	if err != nil {
-		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode round failed",
+		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed",
 			rvkProb.ProposalID, "err", err)
 		return nil, err
 	}
