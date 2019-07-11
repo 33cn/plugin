@@ -17,6 +17,6 @@ var (
 	ErrRevokeProposalPeriod = errors.New("ErrRevokeProposalPeriod")
 	// ErrRevokeProposalPower 不能取消
 	ErrRevokeProposalPower = errors.New("ErrRevokeProposalPower")
-	// ErrRevokeProposal 不能取消
-	//ErrRevokeProposal = errors.New("ErrRevokeProposal")
+	// ErrTerminatePeriod 不能终止
+	ErrTerminatePeriod = errors.New("ErrTerminatePeriod")
 )

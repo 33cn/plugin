@@ -20,6 +20,7 @@ import (
 	_ "github.com/33cn/chain33/system"
 	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/common/address"
+	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/util"
 )
 
@@ -29,6 +30,8 @@ type execEnv struct {
 	index       int
 	difficulty  uint64
 	txHash      string
+	startHeight int64
+	endHeight   int64
 }
 
 var (
@@ -57,14 +60,14 @@ var (
 	OutAmount             int64  = 5
 
 	boards = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"}
+	total = types.Coin * 30000
 )
 
 func init() {
 	commonlog.SetLogLevel("error")
 }
 
-func TestProposalBoard(t *testing.T) {
-	total := types.Coin * 30000
+func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -89,17 +92,17 @@ func TestProposalBoard(t *testing.T) {
 		Addr:    AddrD,
 	}
 
-	env := execEnv{
-		1539918074,
-		10,
-		2,
-		1539918074,
-		"hash",
+	env := &execEnv{
+		blockTime: 1539918074,
+		blockHeight: 10,
+		index: 2,
+		difficulty: 1539918074,
+		txHash: "",
 	}
 
 	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
 	_, _, kvdb := util.CreateTestDB()
-	api := new(apimock.QueueProtocolAPI)
+
 
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
@@ -108,14 +111,43 @@ func TestProposalBoard(t *testing.T) {
 	accCoin.SaveAccount(&accountB)
 	accCoin.SaveAccount(&accountC)
 	accCoin.SaveAccount(&accountD)
+	//total ticket balance
+	accCoin.SaveAccount(&types.Account{Balance: total*4,
+		Frozen:  0,
+		Addr:    "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"})
 
 	exec := newAutonomy()
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	exec.SetAPI(api)
+	return env, exec, stateDB, kvdb
+}
 
+func TestRevokeProposalBoard(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
 	// PropBoard
+	testPropBoard(t, env, exec, stateDB, kvdb, true)
+	//RevokeProposalBoard
+	revokeProposalBoard(t, env, exec, stateDB, kvdb, false)
+}
+
+func TestVoteProposalBoard(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
+	// PropBoard
+	testPropBoard(t, env, exec, stateDB, kvdb, true)
+	//voteProposalBoard
+	voteProposalBoard(t, env, exec, stateDB, kvdb, true)
+}
+
+func TestTerminateProposalBoard(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
+	// PropBoard
+	testPropBoard(t, env, exec, stateDB, kvdb, true)
+	//terminateProposalBoard
+	terminateProposalBoard(t, env, exec, stateDB, kvdb, true)
+}
+
+func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	opt1 :=  &auty.ProposalBoard{
 		Year: 2019,
 		Month: 7,
@@ -134,32 +166,31 @@ func TestProposalBoard(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
+	if save {
+		for _, kv := range receipt.KV {
+			stateDB.Set(kv.Key, kv.Value)
+		}
 	}
 
-	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(pbtx, receiptDate, int(1))
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
 	require.NoError(t, err)
 	require.NotNil(t, set)
-
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
+	if save {
+		for _, kv := range set.KV {
+			kvdb.Set(kv.Key, kv.Value)
+		}
 	}
+	// 更新tahash
+	env.txHash = common.ToHex(pbtx.Hash())
+	env.startHeight = opt1.StartBlockHeight
+	env.endHeight = opt1.EndBlockHeight
 
-	//RevokeProposalBoard
-	proposalID := common.ToHex(pbtx.Hash())
-	opt2 :=  &auty.RevokeProposalBoard{
-		ProposalID:proposalID,
-	}
-	rtx, err := revokeProposalBoardTx(opt2)
-	require.NoError(t, err)
-	rtx, err = signTx(rtx, PrivKeyA)
-	require.NoError(t, err)
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(rtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	// check
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, lockAmount, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -173,6 +204,41 @@ func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
+func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	proposalID := env.txHash
+	opt2 :=  &auty.RevokeProposalBoard{
+		ProposalID:proposalID,
+	}
+	rtx, err := revokeProposalBoardTx(opt2)
+	require.NoError(t, err)
+	rtx, err = signTx(rtx, PrivKeyA)
+	require.NoError(t, err)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(rtx, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+	if save {
+		for _, kv := range receipt.KV {
+			stateDB.Set(kv.Key, kv.Value)
+		}
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(rtx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	if save {
+		for _, kv := range set.KV {
+			kvdb.Set(kv.Key, kv.Value)
+		}
+	}
+	// check
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(0), account.Frozen)
+}
+
 func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -184,6 +250,103 @@ func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, 
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
+func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	api := new(apimock.QueueProtocolAPI)
+	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+	hear := &types.Header{StateHash: []byte("")}
+	api.On("GetHeaders", mock.Anything).
+		Return(&types.Headers{
+		Items:[]*types.Header{hear}}, nil)
+	acc := &types.Account{
+		Currency: 0,
+		Balance: total*4,
+	}
+	val := types.Encode(acc)
+	values := [][]byte{val}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+
+	acc = &types.Account{
+		Currency: 0,
+		Balance: total,
+	}
+	val1 := types.Encode(acc)
+	values1 := [][]byte{val1}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	exec.SetAPI(api)
+
+	proposalID := env.txHash
+	// 4人参与投票，3人赞成票，1人反对票
+	type record struct {
+		priv string
+		appr bool
+	}
+	records := []record{
+		{PrivKeyA, true},
+		{PrivKeyB, false},
+		{PrivKeyC, true},
+		//{PrivKeyD, true},
+	}
+
+	for _, record := range records {
+		opt :=  &auty.VoteProposalBoard{
+			ProposalID:proposalID,
+			Approve: record.appr,
+		}
+		tx, err := voteProposalBoardTx(opt)
+		require.NoError(t, err)
+		tx, err = signTx(tx, record.priv)
+		require.NoError(t, err)
+		// 设定当前高度为投票高度
+		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
+
+		receipt, err := exec.Exec(tx, int(1))
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+		if save {
+			for _, kv := range receipt.KV {
+				stateDB.Set(kv.Key, kv.Value)
+			}
+		}
+		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+		set, err := exec.ExecLocal(tx, receiptData, int(1))
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		if save {
+			for _, kv := range set.KV {
+				kvdb.Set(kv.Key, kv.Value)
+			}
+		}
+
+		// 每次需要重新设置
+		acc := &types.Account{
+			Currency: 0,
+			Balance: total,
+		}
+		val := types.Encode(acc)
+		values := [][]byte{val}
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		exec.SetAPI(api)
+	}
+	// check
+	// balance
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(lockAmount), account.Balance)
+	// status
+	value, err := stateDB.Get(propBoardID(proposalID))
+	require.NoError(t, err)
+	cur := &auty.AutonomyProposalBoard{}
+	err = types.Decode(value, cur)
+	require.NoError(t, err)
+	require.Equal(t, int32(auty.AutonomyStatusTmintPropBoard), cur.Status)
+	require.Equal(t, AddrA, cur.Address)
+	require.Equal(t, true, cur.Res.Pass)
+}
+
 func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
@@ -193,6 +356,57 @@ func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, erro
 		Value: &auty.AutonomyAction_VotePropBoard{VotePropBoard: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+}
+
+func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	api := new(apimock.QueueProtocolAPI)
+	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+	hear := &types.Header{StateHash: []byte("")}
+	api.On("GetHeaders", mock.Anything).
+		Return(&types.Headers{
+		Items:[]*types.Header{hear}}, nil)
+	acc := &types.Account{
+		Currency: 0,
+		Balance: total*4,
+	}
+	val := types.Encode(acc)
+	values := [][]byte{val}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	exec.SetAPI(api)
+
+	proposalID := env.txHash
+	opt :=  &auty.TerminateProposalBoard{
+		ProposalID:proposalID,
+	}
+	tx, err := terminateProposalBoardTx(opt)
+	require.NoError(t, err)
+	tx, err = signTx(tx, PrivKeyA)
+	require.NoError(t, err)
+	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(tx, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+	if save {
+		for _, kv := range receipt.KV {
+			stateDB.Set(kv.Key, kv.Value)
+		}
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(tx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	if save {
+		for _, kv := range set.KV {
+			kvdb.Set(kv.Key, kv.Value)
+		}
+	}
+	// check
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(0), account.Frozen)
 }
 
 func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transaction, error) {
@@ -217,14 +431,22 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 
 	addr := "1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
-	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("111111111111111111111")}, nil)
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: make([][]byte, 1)}, nil)
-	hear := &types.Header{StateHash: []byte("111111111111111111111")}
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+	acc := &types.Account{
+		Currency: 0,
+		Balance: types.Coin,
+	}
+	val := types.Encode(acc)
+	values := [][]byte{val}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil)
+	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
 		Items:[]*types.Header{hear}}, nil)
-	_, err := action.getStartHeightVoteAccount(addr, 0)
+	account, err := action.getStartHeightVoteAccount(addr, 0)
 	require.NoError(t, err)
+	require.NotNil(t, account)
+	require.Equal(t, types.Coin, account.Balance)
 }
 
 func TestGetReceiptLog(t *testing.T) {
