@@ -229,16 +229,16 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		cur.Res.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, auty.AutonomyX, a.execaddr, lockAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
 		if err != nil {
-			alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+			alog.Error("votePropBoard ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
 		}
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
 
-	key := propBoardID(common.ToHex(a.txhash))
+	key := propBoardID(voteProb.ProposalID)
 	cur.Status = auty.AutonomyStatusVotePropBoard
 	if cur.Res.Pass {
 		cur.Status = auty.AutonomyStatusTmintPropBoard
@@ -263,32 +263,32 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	// 获取GameID
 	value, err := a.db.Get(propBoardID(tmintProb.ProposalID))
 	if err != nil {
-		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "get round failed",
+		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "get propBoardID failed",
 			tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
 	var cur auty.AutonomyProposalBoard
 	err = types.Decode(value, &cur)
 	if err != nil {
-		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode round failed",
+		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode AutonomyProposalBoard failed",
 			tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
 	pre := copyAutonomyProposalBoard(&cur)
 
-	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusVotePropBoard {
-		err := auty.ErrProposalStatus
-		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
+	start := cur.GetPropBoard().StartBlockHeight
+	end := cur.GetPropBoard().EndBlockHeight
+	if a.height < end && cur.Status != auty.AutonomyStatusVotePropBoard {
+		err := auty.ErrTerminatePeriod
+		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "height", a.height, "ProposalID",
 			tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
 
-	start := cur.GetPropBoard().StartBlockHeight
-	end := cur.GetPropBoard().EndBlockHeight
-	if a.height > end  {
-		err := auty.ErrRevokeProposalPeriod
-		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
+	// 检查当前状态
+	if cur.Status == auty.AutonomyStatusTmintPropBoard {
+		err := auty.ErrProposalStatus
+		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
 			tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, auty.AutonomyX, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
 	if err != nil {
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 		return nil, err

@@ -9,11 +9,15 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/33cn/chain33/common/address"
 )
 
-var alog = log.New("module", "execs.autonomy")
+var (
+    alog = log.New("module", "execs.autonomy")
+    driverName = auty.AutonomyX
+    autonomyAddr = address.ExecAddress(auty.AutonomyX)
+)
 
-var driverName = auty.AutonomyX
 
 func init() {
 	ety := types.LoadExecutorType(driverName)
