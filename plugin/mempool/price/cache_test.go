@@ -222,7 +222,7 @@ func TestRealNodeMempool(t *testing.T) {
 		<-done
 	}
 	for {
-		txs, err := mock33.GetAPI().GetMempool()
+		txs, err := mock33.GetAPI().GetMempool(&types.ReqGetMempool{})
 		assert.Nil(t, err)
 		println("len", len(txs.GetTxs()))
 		if len(txs.GetTxs()) > 0 {

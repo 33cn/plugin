@@ -109,6 +109,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 		Block: &types.Block{},
 	}
 	MainBlockHash10 = blockDetail.Block.Hash()
+	blockDetail.Block.MainHash = MainBlockHash10
 
 	// setup title nodes : len = 4
 	nodeConfigKey := calcManageConfigNodesKey(Title)
@@ -133,8 +134,12 @@ func (suite *CommitTestSuite) SetupSuite() {
 	suite.api.On("GetBlockByHashes", hashes).Return(
 		&types.BlockDetails{
 			Items: []*types.BlockDetail{blockDetail},
+		}, nil).Once()
+	suite.api.On("GetBlocks", &types.ReqBlocks{Start: TitleHeight, End: TitleHeight}).Return(
+		&types.BlockDetails{
+			Items: []*types.BlockDetail{blockDetail},
 		}, nil)
-	suite.api.On("GetBlockHash", &types.ReqInt{Height: MainBlockHeight}).Return(
+	suite.api.On("GetBlockHash", &types.ReqInt{Height: TitleHeight}).Return(
 		&types.ReplyHash{Hash: CurBlock}, nil)
 }
 
@@ -805,9 +810,6 @@ func TestUpdateCommitBlockHashs(t *testing.T) {
 	}
 	updateCommitBlockHashs(stat, commit2)
 	assert.Equal(t, int(2), len(stat.BlockDetails.BlockHashs))
-	assert.Equal(t, int(2), len(stat.BlockDetails.CrossTxHashs))
 	assert.Equal(t, commit2.BlockHash, stat.BlockDetails.BlockHashs[1])
-	assert.Equal(t, commit.CrossTxHashs[0], stat.BlockDetails.CrossTxHashs[0])
-	assert.Equal(t, commit2.CrossTxHashs[0], stat.BlockDetails.CrossTxHashs[1])
 
 }

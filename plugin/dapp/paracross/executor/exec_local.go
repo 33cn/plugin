@@ -217,22 +217,24 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 		}
 	}
 
-	status.TxCounts = uint32(len(curTxHashs))
 	//有tx且全部是user.p.x.paracross的commit tx时候设为0
 	status.NonCommitTxCounts = 1
 	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
 		status.NonCommitTxCounts = 0
 	}
-	crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	status.TxResult = []byte(hex.EncodeToString(util.CalcBitMap(curTxHashs, curTxHashs, receipts)))
-	//跨链tx结果
-	status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
+	status.TxResult = []byte(hex.EncodeToString(util.CalcSingleBitMap(curTxHashs, receipts)))
 
-	status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
-	status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
+	//ForkLoopCheckCommitTxDone 后只保留全部txreseult 结果
+	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		//跨链tx结果
+		crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
+		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
+		status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
+		status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
+	}
 
 	return nil
 }
@@ -246,10 +248,8 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 	var set types.LocalDBSet
 	txs := e.GetTxs()
 
-	forkHeight := getDappForkHeight(pt.ForkCommitTx)
-
 	//removed the 0 vote tx
-	if payload.Status.MainBlockHeight >= forkHeight {
+	if pt.IsParaForkHeight(payload.Status.MainBlockHeight, pt.ForkCommitTx) {
 		err := setMinerTxResultFork(payload.Status, txs[1:], e.GetReceipt()[1:])
 		if err != nil {
 			return nil, err

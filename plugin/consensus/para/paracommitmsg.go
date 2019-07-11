@@ -445,7 +445,9 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 			return nil, errors.New("paracommitmsg wrong block result")
 		}
 		nodeList[block.Block.Height].BlockHash = block.Block.Hash()
-		nodeList[block.Block.Height].StateHash = block.Block.StateHash
+		if !paracross.IsParaForkHeight(nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
+			nodeList[block.Block.Height].StateHash = block.Block.StateHash
+		}
 	}
 
 	var needSentTxs uint32
@@ -460,6 +462,11 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	if needSentTxs == 0 && len(ret) < types.TxGroupMaxCount {
 		plog.Debug("para commitmsg getNodeStatus all self consensus commit tx,send delay", "start", start, "end", end)
 		return nil, nil
+	}
+
+	//clear flag
+	for _, v := range ret {
+		v.NonCommitTxCounts = 0
 	}
 
 	return ret, nil
@@ -479,10 +486,8 @@ func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, 
 	}
 	status.Title = types.GetTitle()
 	status.Height = block.Height
-	status.PreBlockHash = zeroHash[:]
 	status.BlockHash = block.Hash()
-	status.PreStateHash = zeroHash[:]
-	status.StateHash = block.StateHash
+
 	return &status, nil
 }
 

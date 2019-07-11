@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"bytes"
 	"errors"
 	"testing"
 
@@ -627,9 +628,9 @@ func TestChain33_GetMempool(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	testChain33 := newTestChain33(api)
 
-	api.On("GetMempool").Return(&types.ReplyTxList{Txs: []*types.Transaction{{}}}, nil)
+	api.On("GetMempool", &types.ReqGetMempool{}).Return(&types.ReplyTxList{Txs: []*types.Transaction{{}}}, nil)
 	var testResult interface{}
-	data := &types.ReqNil{}
+	data := &types.ReqGetMempool{IsAll: false}
 	err := testChain33.GetMempool(data, &testResult)
 	t.Log(err)
 	assert.NotNil(t, testResult)
@@ -1421,4 +1422,26 @@ func Test_fmtTxDetail(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "to", tran.Fromaddr)
 	assert.Equal(t, "from", tx.To)
+}
+
+func queryTotalFee(client *Chain33, req *types.LocalDBGet, t *testing.T) int64 {
+	var testResult interface{}
+	err := client.QueryTotalFee(req, &testResult)
+	assert.NoError(t, err)
+	fee, _ := testResult.(types.TotalFee)
+	return fee.Fee
+}
+
+func TestChain33_QueryTotalFee(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	client := newTestChain33(api)
+
+	total := &types.TotalFee{TxCount: 1, Fee: 10000}
+	api.On("LocalGet", mock.Anything).Return(&types.LocalReplyValue{Values: [][]byte{types.Encode(total)}}, nil)
+	req := &types.LocalDBGet{Keys: [][]byte{types.TotalFeeKey([]byte("testHash"))}}
+	req1 := &types.LocalDBGet{Keys: [][]byte{[]byte("testHash")}}
+
+	assert.Equal(t, total.Fee, queryTotalFee(client, req, t))
+	assert.Equal(t, total.Fee, queryTotalFee(client, req1, t))
+	assert.True(t, bytes.Equal(req.Keys[0], req1.Keys[0]))
 }

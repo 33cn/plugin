@@ -612,7 +612,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
-			if a.exec.GetMainHeight() > getDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+			if a.exec.GetMainHeight() > pt.GetDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
 				//node quit后，如果committx满足2/3目标，自动触发commitDone
 				r, err = a.loopCommitTxDone(config.Title)
 				if err != nil {

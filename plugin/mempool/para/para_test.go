@@ -43,7 +43,7 @@ func TestParaNodeMempool(t *testing.T) {
 	hash := mockpara.Para.SendTx(tx)
 	assert.Equal(t, tx.Hash(), hash)
 
-	_, err := mockpara.Para.GetAPI().GetMempool()
+	_, err := mockpara.Para.GetAPI().GetMempool(&types.ReqGetMempool{})
 	assert.Equal(t, err, types.ErrActionNotSupport)
 	t.Log(err)
 }

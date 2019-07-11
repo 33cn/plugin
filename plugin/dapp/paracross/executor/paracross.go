@@ -97,9 +97,6 @@ func (c *Paracross) saveLocalParaTxsFork(commitDone *pt.ReceiptParacrossDone, is
 		Height:          commitDone.Height,
 		BlockHash:       commitDone.BlockHash,
 		TxResult:        commitDone.TxResult,
-		TxHashs:         commitDone.TxHashs,
-		CrossTxResult:   commitDone.CrossTxResult,
-		CrossTxHashs:    commitDone.CrossTxHashs,
 	}
 
 	crossTxHashs, crossTxResult, err := getCrossTxHashs(c.GetAPI(), status)
