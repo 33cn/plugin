@@ -309,6 +309,7 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 	return tx, nil
 }
 
+//GetDappForkHeight get paracross dapp fork height
 func GetDappForkHeight(forkKey string) int64 {
 	var forkHeight int64
 	if types.IsPara() {
@@ -340,6 +341,7 @@ func GetDappForkHeight(forkKey string) int64 {
 	return forkHeight
 }
 
+// IsParaForkHeight check height more than fork height
 func IsParaForkHeight(height int64, forkKey string) bool {
 	return height >= GetDappForkHeight(forkKey)
 }
