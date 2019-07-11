@@ -559,7 +559,7 @@ out:
 				continue
 			}
 
-			_, block, err := client.paraClient.getLastBlockInfo()
+			block, err := client.paraClient.getLastBlockInfo()
 			if err != nil {
 				continue
 			}
