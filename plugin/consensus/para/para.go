@@ -222,7 +222,15 @@ func (client *client) InitBlock() {
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		client.WriteBlock(zeroHash[:], newblock, startSeq)
+		err := client.WriteBlock(zeroHash[:], newblock, startSeq)
+		if err != nil{
+			panic(fmt.Sprintf("para chain create genesis block,err=%s",err.Error()))
+		}
+		err = client.createLocalGenesisBlock(newblock)
+		if err != nil{
+			panic(fmt.Sprintf("para chain create local genesis block,err=%s",err.Error()))
+		}
+
 	} else {
 		client.SetCurrentBlock(block)
 	}
@@ -329,7 +337,7 @@ func (client *client) getLastBlockMainInfo() (int64, *types.Block, error) {
 	}
 	mainSeq, err := client.GetSeqByHashOnMainChain(lastBlock.MainHash)
 	if err != nil {
-		return client.reqChainMatchedBlock(0)
+		return client.reqMatchedBlockOnChain(0)
 	}
 	return mainSeq, lastBlock, nil
 
