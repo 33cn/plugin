@@ -249,6 +249,11 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	// 更新VotesRecord
 	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
 
+	// 更新当前具有权利的董事会成员
+	if cur.VoteResult.Pass {
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value:types.Encode(cur.PropBoard)})
+	}
+
 	ty := auty.TyLogVotePropBoard
 	if cur.VoteResult.Pass {
 		ty = auty.TyLogTmintPropBoard
@@ -323,6 +328,11 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	cur.Status = auty.AutonomyStatusTmintPropBoard
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(tmintProb.ProposalID), Value: types.Encode(&cur)})
+
+	// 更新当前具有权利的董事会成员
+	if cur.VoteResult.Pass {
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value:types.Encode(cur.PropBoard)})
+	}
 
 	getReceiptLog(pre, &cur, auty.TyLogTmintPropBoard)
 

@@ -27,6 +27,10 @@ var (
 	localBoardPrefix = localPrefix + "board" + "-"
 )
 
+func activeBoardID() []byte {
+	return []byte(fmt.Sprintf("%s", boardPrefix))
+}
+
 func propBoardID(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", boardPrefix, txHash))
 }

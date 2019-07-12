@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// 重大项目金额阈值
-	largeAmount = types.Coin * 100 *10000
+	largeAmount  = types.Coin * 100 *10000 // 重大项目金额阈值
+	publicPeriod = 120960                  // 公示一周时间，以区块高度计算
 )
 
 
@@ -159,6 +159,40 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 		return nil, err
 	}
 
+	// 董事会成员验证
+	value, err = a.db.Get(activeBoardID())
+	if err != nil {
+		err = auty.ErrNoActiveBoard
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get activeBoardID failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+	prob :=  &auty.ProposalBoard{}
+	err = types.Decode(value, prob)
+	if err != nil {
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards  {
+		err = auty.ErrNoActiveBoard
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "illegality  boards number",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+	var isBoard bool
+	for _, addr := range prob.Boards {
+		if addr == a.fromaddr {
+			isBoard = true
+		}
+	}
+	if !isBoard {
+		err = auty.ErrNoActiveBoard
+		alog.Error("votePropProject ", "addr", a.fromaddr, "this addr is not active board member",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+
 	// 检查是否已经参与投票
 	var votes auty.VotesRecord
 	value, err = a.db.Get(VotesRecord(voteProb.ProposalID))
@@ -170,8 +204,116 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 			return nil, err
 		}
 	}
+	for _, addr := range votes.Address {
+		if addr == a.fromaddr {
+			err := auty.ErrRepeatVoteAddr
+			alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "repeat address ProposalID",
+				voteProb.ProposalID, "err", err)
+			return nil, err
+		}
+	}
+	// 更新已经投票地址
+	votes.Address = append(votes.Address, a.fromaddr)
+	// 更新投票结果
+	cur.BoardVoteRes.TotalVotes = int32(len(prob.Boards))
+	if voteProb.Approve {
+		cur.BoardVoteRes.ApproveVotes += 1
+	} else {
+		cur.BoardVoteRes.OpposeVotes += 1
+	}
 
-	// 检查是否有重复
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	if float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  participationRate &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= approveRate {
+		cur.BoardVoteRes.Pass = true
+		cur.PropProject.RealEndBlockHeight = a.height
+
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
+		if err != nil {
+			alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
+	key := propProjectID(voteProb.ProposalID)
+	cur.Status = auty.AutonomyStatusVotePropProject
+	if cur.BoardVoteRes.Pass {
+		if cur.PubVote.Publicity { // 进入公视
+			cur.Status = auty.AutonomyStatusPubVotePropProject
+		} else {
+			cur.Status = auty.AutonomyStatusTmintPropProject
+		}
+	}
+	value = types.Encode(&cur)
+	kv = append(kv, &types.KeyValue{Key: key, Value: value})
+
+	// 更新VotesRecord
+	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
+
+	ty := auty.TyLogVotePropProject
+	if cur.BoardVoteRes.Pass {
+		if cur.PubVote.Publicity {
+			ty = auty.TyLogPubVotePropProject
+		} else {
+			ty = auty.TyLogTmintPropProject
+		}
+	}
+	receiptLog := getProjectReceiptLog(pre, &cur, int32(ty))
+	logs = append(logs, receiptLog)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*types.Receipt, error) {
+	// 获取GameID
+	value, err := a.db.Get(propProjectID(voteProb.ProposalID))
+	if err != nil {
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get propProjectID failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+	var cur auty.AutonomyProposalProject
+	err = types.Decode(value, &cur)
+	if err != nil {
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode AutonomyProposalProject failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+	pre := copyAutonomyProposalProject(&cur)
+
+	start := cur.GetPropProject().StartBlockHeight
+	end := cur.GetPropProject().EndBlockHeight
+	real := cur.GetPropProject().RealEndBlockHeight
+	if start < a.height || end < a.height || (real != 0 && real < a.height) {
+		err := auty.ErrVotePeriod
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+
+	// 检查当前状态
+	if cur.Status != auty.AutonomyStatusProposalProject && cur.Status != auty.AutonomyStatusVotePropProject {
+		err := auty.ErrProposalStatus
+		alog.Error("votePropProject ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+
+	// 检查是否已经参与投票
+	var votes auty.VotesRecord
+	value, err = a.db.Get(VotesRecord(voteProb.ProposalID))
+	if err == nil {
+		err = types.Decode(value, &votes)
+		if err != nil {
+			alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode VotesRecord failed",
+				voteProb.ProposalID, "err", err)
+			return nil, err
+		}
+	}
 	for _, addr := range votes.Address {
 		if addr == a.fromaddr {
 			err := auty.ErrRepeatVoteAddr
@@ -184,7 +326,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计票数
-	    addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 		account, err := a.getStartHeightVoteAccount(addr, start)
 		if err != nil {
 			return nil, err
@@ -196,7 +338,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	if err != nil {
 		return nil, err
 	}
-	if voteProb.Approve {
+	if voteProb.voteProb {
 		cur.BoardVoteRes.ApproveVotes +=  int32(account.Balance/ticketPrice)
 	} else {
 		cur.BoardVoteRes.OpposeVotes += int32(account.Balance/ticketPrice)
@@ -239,11 +381,6 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
-
-func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*types.Receipt, error) {
-	return nil, nil
-}
-
 
 func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*types.Receipt, error) {
 	// 获取GameID

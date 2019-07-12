@@ -19,4 +19,6 @@ var (
 	ErrRevokeProposalPower = errors.New("ErrRevokeProposalPower")
 	// ErrTerminatePeriod 不能终止
 	ErrTerminatePeriod = errors.New("ErrTerminatePeriod")
+	// ErrNoActiveBoard 没有有效董事会
+	ErrNoActiveBoard = errors.New("ErrNoActiveBoard")
 )
