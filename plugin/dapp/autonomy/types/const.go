@@ -27,10 +27,11 @@ const (
 	TyLogVotePropBoard  = 2103
 	TyLogTmintPropBoard = 2104
 
-	TyLogPropProject      = 2111
-	TyLogRvkPropProject   = 2112
-	TyLogVotePropProject  = 2113
-	TyLogTmintPropProject = 2114
+	TyLogPropProject        = 2111
+	TyLogRvkPropProject     = 2112
+	TyLogVotePropProject    = 2113
+	TyLogPubVotePropProject = 2114
+	TyLogTmintPropProject   = 2115
 
 	TyLogPropRule      = 2121
 	TyLogRvkPropRule   = 2122
@@ -73,6 +74,7 @@ const (
 	AutonomyStatusProposalProject = iota + 1
 	AutonomyStatusRvkPropProject
 	AutonomyStatusVotePropProject
+	AutonomyStatusPubVotePropProject
 	AutonomyStatusTmintPropProject
 )
 
