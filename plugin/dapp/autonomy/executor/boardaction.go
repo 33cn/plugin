@@ -160,20 +160,20 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	}
 	pre := copyAutonomyProposalBoard(&cur)
 
+	// 检查当前状态
+	if cur.Status != auty.AutonomyStatusProposalBoard && cur.Status != auty.AutonomyStatusVotePropBoard {
+		err := auty.ErrProposalStatus
+		alog.Error("votePropBoard ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+
 	start := cur.GetPropBoard().StartBlockHeight
 	end := cur.GetPropBoard().EndBlockHeight
 	real := cur.GetPropBoard().RealEndBlockHeight
 	if start < a.height || end < a.height || (real != 0 && real < a.height) {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
-
-	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusProposalBoard && cur.Status != auty.AutonomyStatusVotePropBoard {
-		err := auty.ErrProposalStatus
-		alog.Error("votePropBoard ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
@@ -224,7 +224,9 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
+	if cur.VoteResult.TotalVotes != 0 &&
+		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
+	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
 		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= approveRate {
 		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
@@ -281,20 +283,20 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	}
 	pre := copyAutonomyProposalBoard(&cur)
 
-	start := cur.GetPropBoard().StartBlockHeight
-	end := cur.GetPropBoard().EndBlockHeight
-	if a.height < end && cur.Status != auty.AutonomyStatusVotePropBoard {
-		err := auty.ErrTerminatePeriod
-		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "height", a.height, "ProposalID",
-			tmintProb.ProposalID, "err", err)
-		return nil, err
-	}
-
 	// 检查当前状态
 	if cur.Status == auty.AutonomyStatusTmintPropBoard {
 		err := auty.ErrProposalStatus
 		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
 			tmintProb.ProposalID, "err", err)
+		return nil, err
+	}
+
+	start := cur.GetPropBoard().StartBlockHeight
+	end := cur.GetPropBoard().EndBlockHeight
+	if a.height < end && !cur.VoteResult.Pass {
+		err := auty.ErrTerminatePeriod
+		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
+			"in vote period can not terminate", tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
 
