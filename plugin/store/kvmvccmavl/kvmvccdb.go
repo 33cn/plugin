@@ -238,14 +238,34 @@ func (mvccs *KVMVCCStore) ProcEvent(msg queue.Message) {
 
 // Del set kvs to nil with StateHash
 func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
-	kvset, err := mvccs.mvcc.DelMVCC(req.StateHash, req.Height, false)
+	maxVersion, err := mvccs.mvcc.GetMaxVersion()
 	if err != nil {
-		kmlog.Error("store kvmvcc del", "err", err)
-		return nil, err
+		kmlog.Error("store kvmvcc GetMaxVersion failed", "err", err)
+		if err != types.ErrNotFound {
+			panic(err)
+		} else {
+			maxVersion = -1
+			return nil, err
+		}
 	}
-
-	kmlog.Info("KVMVCCStore Del", "hash", common.ToHex(req.StateHash), "height", req.Height)
-	mvccs.saveKVSets(kvset, mvccs.sync)
+	var kvset []*types.KeyValue
+	for i := maxVersion; i >= req.Height; i-- {
+		hash, err := mvccs.mvcc.GetVersionHash(i)
+		if err != nil {
+			kmlog.Debug("store kvmvcc Del GetVersionHash failed", "height", i, "maxVersion", maxVersion)
+			continue
+		}
+		kvlist, err := mvccs.mvcc.DelMVCC(hash, i, false)
+		if err != nil {
+			kmlog.Debug("store kvmvcc Del DelMVCC failed", "height", i, "err", err)
+			continue
+		}
+		kvset = append(kvset, kvlist...)
+		kmlog.Debug("store kvmvcc Del DelMVCC4Height", "height", i, "maxVersion", maxVersion)
+	}
+	if len(kvset) > 0 {
+		mvccs.saveKVSets(kvset, mvccs.sync)
+	}
 	return req.StateHash, nil
 }
 
