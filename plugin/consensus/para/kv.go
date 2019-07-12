@@ -6,12 +6,13 @@ package para
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/types"
 )
 
 func calcTitleHeightKey(title string, height int64) []byte {
-	return []byte(fmt.Sprintf("TH-%s-%d", title, height))
+	return []byte(fmt.Sprintf("%s-TH-%s-%d", types.ConsensusParaTxsPrefix,title, height))
 }
 
 func calcTitleLastHeightKey(title string) []byte {
-	return []byte(fmt.Sprintf("LH-%s", title))
+	return []byte(fmt.Sprintf("%s-TLH-%s", types.ConsensusParaTxsPrefix,title))
 }
