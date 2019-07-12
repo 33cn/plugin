@@ -252,12 +252,12 @@ func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
 	for i := maxVersion; i >= req.Height; i-- {
 		hash, err := mvccs.mvcc.GetVersionHash(i)
 		if err != nil {
-			kmlog.Debug("store kvmvcc Del GetVersionHash failed", "height", i, "maxVersion", maxVersion)
+			kmlog.Warn("store kvmvcc Del GetVersionHash failed", "height", i, "maxVersion", maxVersion)
 			continue
 		}
-		kvlist, err := mvccs.mvcc.DelMVCC(hash, i, false)
+		kvlist, err := mvccs.mvcc.DelMVCC(hash, i, true)
 		if err != nil {
-			kmlog.Debug("store kvmvcc Del DelMVCC failed", "height", i, "err", err)
+			kmlog.Warn("store kvmvcc Del DelMVCC failed", "height", i, "err", err)
 			continue
 		}
 		kvset = append(kvset, kvlist...)
@@ -315,12 +315,12 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 		for i := maxVersion; i >= height; i-- {
 			hash, err := mvccs.mvcc.GetVersionHash(i)
 			if err != nil {
-				kmlog.Debug("store kvmvcc checkVersion GetVersionHash failed", "height", i, "maxVersion", maxVersion)
+				kmlog.Warn("store kvmvcc checkVersion GetVersionHash failed", "height", i, "maxVersion", maxVersion)
 				continue
 			}
 			kvlist, err := mvccs.mvcc.DelMVCC(hash, i, false)
 			if err != nil {
-				kmlog.Debug("store kvmvcc checkVersion DelMVCC failed", "height", i, "err", err)
+				kmlog.Warn("store kvmvcc checkVersion DelMVCC failed", "height", i, "err", err)
 				continue
 			}
 			kvset = append(kvset, kvlist...)
