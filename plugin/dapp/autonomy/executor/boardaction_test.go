@@ -35,9 +35,6 @@ type execEnv struct {
 }
 
 var (
-	Symbol = "BTY"
-	Asset  = "coins"
-
 	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
 	PrivKeyB = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
 	PrivKeyC = "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" // 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
@@ -46,18 +43,6 @@ var (
 	AddrB    = "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
 	AddrC    = "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
 	AddrD    = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
-	AddrBWeight           uint64 = 1
-	AddrCWeight           uint64 = 4
-	AddrDWeight           uint64 = 10
-	NewWeight             uint64 = 2
-	Requiredweight        uint64 = 5
-	NewRequiredweight     uint64 = 4
-	CoinsBtyDailylimit    uint64 = 100
-	NewCoinsBtyDailylimit uint64 = 10
-	PrintFlag                    = false
-	InAmount              int64  = 10
-	OutAmount             int64  = 5
 
 	boards = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"}
 	total = types.Coin * 30000
@@ -344,7 +329,7 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	require.NoError(t, err)
 	require.Equal(t, int32(auty.AutonomyStatusTmintPropBoard), cur.Status)
 	require.Equal(t, AddrA, cur.Address)
-	require.Equal(t, true, cur.Res.Pass)
+	require.Equal(t, true, cur.VoteResult.Pass)
 }
 
 func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, error) {
@@ -452,13 +437,13 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 func TestGetReceiptLog(t *testing.T) {
 	pre := &auty.AutonomyProposalBoard{
 		PropBoard: &auty.ProposalBoard{Year: 1800, Month: 1},
-		Res: &auty.VotesResult{TotalVotes: 100},
+		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status: 1,
 		Address:"121",
 	}
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
-		Res: &auty.VotesResult{TotalVotes: 100},
+		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status: 2,
 		Address:"123",
 	}
@@ -474,20 +459,20 @@ func TestGetReceiptLog(t *testing.T) {
 func TestCopyAutonomyProposalBoard(t *testing.T) {
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
-		Res: &auty.VotesResult{TotalVotes: 100},
+		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status: 2,
 		Address:"123",
 	}
 	new := copyAutonomyProposalBoard(cur)
 	cur.PropBoard.Year = 1800
 	cur.PropBoard.Month = 2
-	cur.Res.TotalVotes = 50
+	cur.VoteResult.TotalVotes = 50
 	cur.Address = "234"
 	cur.Status = 1
 
 	require.Equal(t, 1900, int(new.PropBoard.Year))
 	require.Equal(t, 1, int(new.PropBoard.Month))
-	require.Equal(t, 100, int(new.Res.TotalVotes))
+	require.Equal(t, 100, int(new.VoteResult.TotalVotes))
 	require.Equal(t, "123", new.Address)
 	require.Equal(t, 2, int(new.Status))
 }

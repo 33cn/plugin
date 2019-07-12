@@ -20,15 +20,16 @@ message AutonomyAction {
         VoteProposalBoard      votePropBoard  = 3;
         TerminateProposalBoard tmintPropBoard = 4;
         // 提案项目相关
-        ProposalProject          propProject      = 5;
-        RevokeProposalProject    rvkPropProject   = 6;
-        VoteProposalBoard        votePropProject  = 7;
-        TerminateProposalProject tmintPropProject = 8;
+        ProposalProject          propProject        = 5;
+        RevokeProposalProject    rvkPropProject     = 6;
+        VoteProposalProject      votePropProject    = 7;
+        PubVoteProposalProject   pubVotePropProject = 8;
+        TerminateProposalProject tmintPropProject   = 9;
         // 提案规则修改相关
-        ProposalRule          propRule       = 9;
-        RevokeProposalRule    rvkPropRule    = 10;
-        VoteProposalBoard     votePropRule   = 11;
-        TerminateProposalRule tmintPropRule  = 12;
+        ProposalRule          propRule       = 10;
+        RevokeProposalRule    rvkPropRule    = 11;
+        VoteProposalRule      votePropRule   = 12;
+        TerminateProposalRule tmintPropRule  = 13;
     }
-    int32 ty = 13;
+    int32 ty = 14;
 }

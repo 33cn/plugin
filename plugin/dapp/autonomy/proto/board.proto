@@ -10,14 +10,14 @@ package types;
 
 
 message AutonomyProposalBoard {
-    ProposalBoard  propBoard = 1;
+    ProposalBoard  propBoard  = 1;
     // 全体持票人投票结果
-    VotesResult    res       = 2;
+    VoteResult     voteResult = 2;
     // 状态
-    int32          status    = 3;
-    string         address   = 4;
-    int64          height    = 5;
-    int32          index     = 6;
+    int32          status     = 3;
+    string         address    = 4;
+    int64          height     = 5;
+    int32          index      = 6;
 }
 
 // action
