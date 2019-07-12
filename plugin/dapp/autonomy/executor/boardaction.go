@@ -66,7 +66,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:prob,
-		Res: &auty.VotesResult{},
+		VoteResult: &auty.VoteResult{},
 		Status: auty.AutonomyStatusProposalBoard,
 		Address: a.fromaddr,
 		Height: a.height,
@@ -202,13 +202,13 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	// 加入已经投票的
 	votes.Address = append(votes.Address, a.fromaddr)
 
-	if cur.GetRes().TotalVotes == 0 { //需要统计票数
+	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
 	    addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 		account, err := a.getStartHeightVoteAccount(addr, start)
 		if err != nil {
 			return nil, err
 		}
-		cur.Res.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
 	}
 
 	account, err := a.getStartHeightVoteAccount(a.fromaddr, start)
@@ -216,17 +216,17 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		return nil, err
 	}
 	if voteProb.Approve {
-		cur.Res.ApproveVotes +=  int32(account.Balance/ticketPrice)
+		cur.VoteResult.ApproveVotes +=  int32(account.Balance/ticketPrice)
 	} else {
-		cur.Res.OpposeVotes += int32(account.Balance/ticketPrice)
+		cur.VoteResult.OpposeVotes += int32(account.Balance/ticketPrice)
 	}
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	if float32(cur.Res.ApproveVotes + cur.Res.OpposeVotes) / float32(cur.Res.TotalVotes) >=  participationRate &&
-		float32(cur.Res.ApproveVotes) / float32(cur.Res.ApproveVotes + cur.Res.OpposeVotes) >= approveRate {
-		cur.Res.Pass = true
+	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= approveRate {
+		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 
 		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
@@ -240,7 +240,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	key := propBoardID(voteProb.ProposalID)
 	cur.Status = auty.AutonomyStatusVotePropBoard
-	if cur.Res.Pass {
+	if cur.VoteResult.Pass {
 		cur.Status = auty.AutonomyStatusTmintPropBoard
 	}
 	value = types.Encode(&cur)
@@ -250,7 +250,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
 
 	ty := auty.TyLogVotePropBoard
-	if cur.Res.Pass {
+	if cur.VoteResult.Pass {
 		ty = auty.TyLogTmintPropBoard
 	}
 	receiptLog := getReceiptLog(pre, &cur, int32(ty))
@@ -293,20 +293,20 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		return nil, err
 	}
 
-	if cur.GetRes().TotalVotes == 0 { //需要统计票数
+	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
 		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 		account, err := a.getStartHeightVoteAccount(addr, start)
 		if err != nil {
 			return nil, err
 		}
-		cur.Res.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
 	}
 
-	if float32(cur.Res.ApproveVotes + cur.Res.OpposeVotes) / float32(cur.Res.TotalVotes) >=  participationRate &&
-		float32(cur.Res.ApproveVotes) / float32(cur.Res.ApproveVotes + cur.Res.OpposeVotes) >= approveRate {
-		cur.Res.Pass = true
+	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= approveRate {
+		cur.VoteResult.Pass = true
 	} else {
-		cur.Res.Pass = false
+		cur.VoteResult.Pass = false
 	}
 	cur.PropBoard.RealEndBlockHeight = a.height
 
@@ -366,9 +366,9 @@ func getReceiptLog(pre, cur *auty.AutonomyProposalBoard, ty int32) *types.Receip
 func copyAutonomyProposalBoard(cur *auty.AutonomyProposalBoard) *auty.AutonomyProposalBoard {
 	newAut := *cur
 	newBoard := *cur.GetPropBoard()
-	newRes := *cur.GetRes()
+	newRes := *cur.GetVoteResult()
 	newAut.PropBoard = &newBoard
-	newAut.Res = &newRes
+	newAut.VoteResult = &newRes
 	return &newAut
 }
 

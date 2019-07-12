@@ -70,6 +70,20 @@ const (
 )
 
 const (
+	AutonomyStatusProposalProject = iota + 1
+	AutonomyStatusRvkPropProject
+	AutonomyStatusVotePropProject
+	AutonomyStatusTmintPropProject
+)
+
+const (
+	AutonomyStatusProposalRule = iota + 1
+	AutonomyStatusRvkPropRule
+	AutonomyStatusVotePropRule
+	AutonomyStatusTmintPropRule
+)
+
+const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询
 	GetProposalBoard   = "GetProposalBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询

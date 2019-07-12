@@ -9,17 +9,16 @@ import "lcommon.proto";
 package types;
 
 message AutonomyProposalProject {
-    ProposalProject  propProject = 1;
+    ProposalProject  propProject  = 1;
     // 董事会投票结果
-    VotesResult      boardResult = 2;
-    // 是否需要公示
-    bool  publicity      = 3;
-    // 全体持票人反对票
-    int32 opposeVotes    = 4;
-    // 是否通过
-    bool  pubPass        = 5;
+    VoteResult       boardVoteRes = 2;
+    // 公示投票
+    PublicVote       pubVote      = 3;
     // 状态
-    int32 status         = 6;
+    int32  status        = 4;
+    string address       = 5;
+    int64  height        = 6;
+    int32  index         = 7;
 }
 
 message ProposalProject {
@@ -34,7 +33,7 @@ message ProposalProject {
     string production   = 6;  // 项目地址
     string description  = 7;  // 项目阶段性简述
     string contractor   = 8;  // 承包人
-    int32  amount       = 9;  // 项目经费
+    int64  amount       = 9;  // 项目经费
     string amountDetail = 10; // 经费细则
 
     // 支付相关
@@ -49,6 +48,16 @@ message ProposalProject {
 
 message RevokeProposalProject {
     string proposalID = 1;
+}
+
+message VoteProposalProject {
+    string proposalID = 1;
+    bool   approve    = 2;
+}
+
+message PubVoteProposalProject {
+    string proposalID = 1;
+    bool   oppose     = 2;
 }
 
 message TerminateProposalProject {
