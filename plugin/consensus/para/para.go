@@ -163,10 +163,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		paraClient:           para,
 		waitMainBlocks:       waitBlocks,
 		waitConsensStopTimes: waitConsensTimes,
-		commitMsgNotify:      make(chan int64, 1),
-		delMsgNotify:         make(chan int64, 1),
-		mainBlockAdd:         make(chan *types.BlockDetail, 1),
-		minerSwitch:          make(chan bool, 1),
+		commitNotify:         make(chan int64, 1),
+		resetNotify:          make(chan int64, 1),
+		chainHeight:          -1,
 		quit:                 make(chan struct{}),
 	}
 	c.SetChild(para)
@@ -393,7 +392,7 @@ func (client *client) WriteBlock(prev []byte, paraBlock *types.Block, seq int64)
 	client.SetCurrentBlock(blkdetail.Block)
 
 	if client.authAccount != "" {
-		client.commitMsgClient.onBlockAdded(blkdetail.Block.Height)
+		client.commitMsgClient.updateChainHeight(blockDetail.Block.Height, false)
 	}
 
 	return nil
@@ -430,7 +429,8 @@ func (client *client) DelBlock(block *types.Block, seq int64) error {
 
 	if resp.GetData().(*types.Reply).IsOk {
 		if client.authAccount != "" {
-			client.commitMsgClient.onBlockDeleted(blocks.Items[0].Block.Height)
+			client.commitMsgClient.updateChainHeight(blocks.Items[0].Block.Height, true)
+
 		}
 	} else {
 		reply := resp.GetData().(*types.Reply)
