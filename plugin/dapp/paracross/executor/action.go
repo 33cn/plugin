@@ -534,7 +534,7 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 		if !bytes.Equal(selfBlockHash.Hash, nodeStatus.BlockHash) {
 			clog.Error("paracross.CommitDone mosthash not match", "height", nodeStatus.Height,
 				"blockHash", hex.EncodeToString(selfBlockHash.Hash), "mosthash", hex.EncodeToString(nodeStatus.BlockHash))
-			return nil, pt.ErrParaCurHashNotMatch
+			return nil, types.ErrConsensusHashErr
 		}
 
 		//平行连进行奖励分配

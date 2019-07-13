@@ -15,7 +15,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
-	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 func (client *client) setLocalDb(set *types.LocalDBSet) error {
@@ -59,7 +59,7 @@ func (client *client) getLocalDb(set *types.LocalDBGet, count int) ([][]byte, er
 	return reply.Values, nil
 }
 
-func (client *client) addLocalBlock(height int64, block *paracross.ParaLocalDbBlock) error {
+func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
 	set := &types.LocalDBSet{}
 
 	key := calcTitleHeightKey(types.GetTitle(), height)
@@ -74,8 +74,26 @@ func (client *client) addLocalBlock(height int64, block *paracross.ParaLocalDbBl
 	return client.setLocalDb(set)
 }
 
-func (client *client) createLocalBlock(lastBlock *paracross.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.BlockSeq) error {
-	var newblock paracross.ParaLocalDbBlock
+func (client *client) checkTxInMainBlock(detail *types.BlockDetail) {
+	if !client.isCaughtUp {
+		return
+	}
+
+	txMap := make(map[string]bool)
+
+	for i, tx := range detail.Block.Txs {
+		if bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && detail.Receipts[i].Ty == types.ExecOk {
+			txMap[string(tx.Hash())] = true
+		}
+	}
+
+	//return txMap[string(targetTx.Hash())]
+	client.commitMsgClient.checkSendingTxDone(txMap)
+
+}
+
+func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.BlockSeq) error {
+	var newblock pt.ParaLocalDbBlock
 
 	newblock.Height = lastBlock.Height + 1
 	newblock.MainHash = mainBlock.Seq.Hash
@@ -85,7 +103,12 @@ func (client *client) createLocalBlock(lastBlock *paracross.ParaLocalDbBlock, tx
 
 	newblock.Txs = txs
 
-	return client.addLocalBlock(newblock.Height, &newblock)
+	err := client.addLocalBlock(newblock.Height, &newblock)
+	if err != nil {
+		return err
+	}
+	client.checkTxInMainBlock(mainBlock.Detail)
+	return nil
 }
 
 func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
@@ -137,7 +160,7 @@ func (client *client) getLastLocalHeight() (int64, error) {
 
 }
 
-func (client *client) getLocalBlockByHeight(height int64) (*paracross.ParaLocalDbBlock, error) {
+func (client *client) getLocalBlockByHeight(height int64) (*pt.ParaLocalDbBlock, error) {
 	key := calcTitleHeightKey(types.GetTitle(), height)
 	set := &types.LocalDBGet{Keys: [][]byte{key}}
 
@@ -149,7 +172,7 @@ func (client *client) getLocalBlockByHeight(height int64) (*paracross.ParaLocalD
 		return nil, types.ErrNotFound
 	}
 
-	var block paracross.ParaLocalDbBlock
+	var block pt.ParaLocalDbBlock
 	err = types.Decode(value[0], &block)
 	if err != nil {
 		return nil, err
@@ -175,7 +198,7 @@ func (client *client) getLocalBlockSeq(height int64) (int64, []byte, error) {
 
 //根据匹配上的chainblock，设置当前localdb block
 func (client *client) alignLocalBlock2ChainBlock(chainBlock *types.Block) error {
-	localBlock := &paracross.ParaLocalDbBlock{
+	localBlock := &pt.ParaLocalDbBlock{
 		Height:     chainBlock.Height,
 		MainHeight: chainBlock.MainHeight,
 		MainHash:   chainBlock.MainHash,
@@ -211,7 +234,7 @@ func (client *client) getLastLocalBlockSeq() (int64, []byte, error) {
 
 }
 
-func (client *client) getLastLocalBlock() (*paracross.ParaLocalDbBlock, error) {
+func (client *client) getLastLocalBlock() (*pt.ParaLocalDbBlock, error) {
 	height, err := client.getLastLocalHeight()
 	if err != nil {
 		return nil, err
@@ -277,7 +300,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 			"new currSeq", mainSeq, "new preMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq, block, nil
 	}
-	return -2, nil, paracross.ErrParaCurHashNotMatch
+	return -2, nil, pt.ErrParaCurHashNotMatch
 }
 
 func (client *client) switchMatchedBlockOnChain(startHeight int64) (int64, []byte, error) {
@@ -331,7 +354,7 @@ func (client *client) switchLocalHashMatchedBlock() (int64, []byte, error) {
 			"currSeq", mainSeq, "currMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq, block.MainHash, nil
 	}
-	return -2, nil, paracross.ErrParaCurHashNotMatch
+	return -2, nil, pt.ErrParaCurHashNotMatch
 }
 
 // preBlockHash to identify the same main node
@@ -362,27 +385,23 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 			}
 			client.mtx.Unlock()
 
-			if client.authAccount != "" {
-				client.commitMsgClient.onMainBlockAdded(blockSeq.Detail)
-			}
-
 			return txs, blockSeq, nil
 		}
 		//not consistent case be processed at below
 		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
 			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
-		return nil, nil, paracross.ErrParaCurHashNotMatch
+		return nil, nil, pt.ErrParaCurHashNotMatch
 	}
 	//lastSeq < CurrSeq case:
 	//lastSeq = currSeq-1, main node not update
 	if lastSeq+1 == currSeq {
 		plog.Debug("Waiting new sequence from main chain")
-		return nil, nil, paracross.ErrParaWaitingNewSeq
+		return nil, nil, pt.ErrParaWaitingNewSeq
 	}
 
 	// 1. lastSeq < currSeq-1
 	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, paracross.ErrParaCurHashNotMatch
+	return nil, nil, pt.ErrParaCurHashNotMatch
 }
 
 func (client *client) CreateBlock() {
@@ -395,7 +414,7 @@ func (client *client) CreateBlock() {
 	for {
 		txs, mainBlock, err := client.RequestTx(currSeq, lastSeqMainHash)
 		if err != nil {
-			if err == paracross.ErrParaCurHashNotMatch {
+			if err == pt.ErrParaCurHashNotMatch {
 				preSeq, preSeqMainHash, err := client.switchHashMatchedBlock()
 				if err == nil {
 					currSeq = preSeq + 1
