@@ -30,8 +30,8 @@ type commitMsgClient struct {
 	paraClient           *client
 	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
-	commitNotify         chan int64
-	resetNotify          chan int64
+	commitCh             chan int64
+	resetCh              chan int64
 	sendMsgCh            chan *types.Transaction
 	minerSwitch          int32
 	currentTx            unsafe.Pointer
@@ -68,15 +68,15 @@ out:
 	for {
 		select {
 		//正常的触发检查
-		case <-client.commitNotify:
+		case <-client.commitCh:
 			//回滚场景
 			if atomic.LoadInt64(&client.chainHeight) < client.sendingHeight {
-				client.resetSendTx()
+				client.clearSendingTx()
 			}
 			client.procSendTx()
 		//发送出错场景，需要reset 重发
-		case <-client.resetNotify:
-			client.resetSendTx()
+		case <-client.resetCh:
+			client.clearSendingTx()
 			client.procSendTx()
 		//例行检查发送
 		case <-readTick:
@@ -91,14 +91,22 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *commitMsgClient) resetSendTx() {
-	client.sendingHeight = 0
+func (client *commitMsgClient) commitNotify() {
+	client.commitCh <- 1
+}
+func (client *commitMsgClient) resetNotify() {
+	client.resetCh <- 1
+}
+
+func (client *commitMsgClient) clearSendingTx() {
+	client.sendingHeight = -1
 	client.setCurrentTx(nil)
 }
 
 func (client *commitMsgClient) procSendTx() {
-	plog.Debug("para readTick", "notify", atomic.LoadInt64(&client.chainHeight),
-		"finishHeight", client.sendingHeight, "txIsNil", client.currentTx == nil, "sync", client.isSync())
+	plog.Info("para procSendTx  ---send", "consensHeight",atomic.LoadInt64(&client.consensHeight),
+		"chainHeight", atomic.LoadInt64(&client.chainHeight),
+		"sendingHeight", client.sendingHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
 	if client.isSendingCommitMsg() || !client.isSync() {
 		return
 	}
@@ -116,7 +124,7 @@ func (client *commitMsgClient) procSendTx() {
 	}
 
 	//已发送，未共识场景
-	if client.sendingHeight > consensHeight {
+	if client.sendingHeight > -1 && client.sendingHeight > consensHeight {
 		return
 	}
 
@@ -134,16 +142,25 @@ func (client *commitMsgClient) procSendTx() {
 }
 
 func (client *commitMsgClient) isSync() bool {
-	chainHeight := atomic.LoadInt64(&client.chainHeight)
-	if chainHeight < 0 {
+	height := atomic.LoadInt64(&client.chainHeight)
+	if height <= 0 {
+		plog.Info("para isSync", "chainHeight",height)
+		return false
+	}
+
+	height = atomic.LoadInt64(&client.consensHeight)
+	if height == -2 {
+		plog.Info("para isSync", "consensHeight",height)
 		return false
 	}
 
 	if atomic.LoadInt32(&client.authAccountIn) != 1 {
+		plog.Info("para isSync ", "authAccountIn",atomic.LoadInt32(&client.authAccountIn))
 		return false
 	}
 
-	if atomic.LoadInt32(&client.minerSwitch) == 0 {
+	if atomic.LoadInt32(&client.minerSwitch) != 1 {
+		plog.Info("para isSync ", "minerSwitch",atomic.LoadInt32(&client.minerSwitch))
 		return false
 	}
 
@@ -175,9 +192,9 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	}
 
 	sendingMsgs := status[:count]
-	plog.Debug("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
+	plog.Info("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
 	for i, msg := range sendingMsgs {
-		plog.Debug("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
+		plog.Info("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
 			"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
 			"from", client.paraClient.authAccount)
 	}
@@ -205,6 +222,7 @@ func (client *commitMsgClient) updateChainHeight(height int64, isDel bool) {
 	}
 
 	atomic.StoreInt64(&client.chainHeight, height)
+	client.commitNotify()
 
 }
 
@@ -219,14 +237,15 @@ func (client *commitMsgClient) checkSendingTxDone(txs map[string]bool) {
 		client.setCurrentTx(nil)
 		atomic.StoreInt32(&client.checkTxCommitTimes, 0)
 		//继续处理
-		client.commitNotify <- 1
+		client.commitNotify()
 		return
 	}
 
 	atomic.AddInt32(&client.checkTxCommitTimes, 1)
 	if atomic.LoadInt32(&client.checkTxCommitTimes) >= client.waitMainBlocks {
+		atomic.StoreInt32(&client.checkTxCommitTimes, 0)
 		//重新发送
-		client.resetNotify <- 1
+		client.resetNotify()
 	}
 
 }
@@ -491,7 +510,7 @@ func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint3
 	if client.sendingHeight > atomic.LoadInt64(&client.consensHeight) && !client.isSendingCommitMsg() {
 		consensStopTimes++
 		if consensStopTimes > client.waitConsensStopTimes {
-			client.resetSendTx()
+			client.clearSendingTx()
 			return 0
 		}
 		return consensStopTimes
@@ -553,6 +572,7 @@ out:
 			} else {
 				atomic.StoreInt32(&client.authAccountIn, 0)
 			}
+			plog.Info("para getConsensusHeight", "height",status.Height,"AccoutIn",authExist)
 
 		}
 	}
