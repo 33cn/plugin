@@ -10,15 +10,17 @@ package types;
 
 message AutonomyProposalProject {
     ProposalProject  propProject  = 1;
+    // 投票该提案的董事会成员
+    repeated string  boards       = 2;
     // 董事会投票结果
-    VoteResult       boardVoteRes = 2;
+    VoteResult       boardVoteRes = 3;
     // 公示投票
-    PublicVote       pubVote      = 3;
+    PublicVote       pubVote      = 4;
     // 状态
-    int32  status        = 4;
-    string address       = 5;
-    int64  height        = 6;
-    int32  index         = 7;
+    int32  status        = 5;
+    string address       = 6;
+    int64  height        = 7;
+    int32  index         = 8;
 }
 
 message ProposalProject {
@@ -76,10 +78,14 @@ message LocalProposalProject {
 }
 
 // query
-message ReplyQueryProposalProject {
-    string proposalID      = 1;
+message ReqQueryProposalProject {
+    //优先根据status查询
+    int32  status    = 1;
+    int32  count     = 2;
+    int32  direction = 3;
+    int64  index     = 4;
 }
 
-message ReplyProposalProject {
-    repeated LocalProposalProject propProjects = 1;
+message ReplyQueryProposalProject {
+    repeated AutonomyProposalProject propProjects = 1;
 }

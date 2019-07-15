@@ -9,7 +9,12 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-// Query_GetUnfreezeWithdraw 查询合约可提币量
+// Query_GetProposalBoard 查询提案董事会
 func (a *Autonomy) Query_GetProposalBoard(in *auty.ReqQueryProposalBoard) (types.Message, error) {
 	return a.getProposalBoard(in)
+}
+
+// Query_GetProposalProject 查询提案项目
+func (a *Autonomy) Query_GetProposalProject(in *auty.ReqQueryProposalProject) (types.Message, error) {
+	return a.getProposalProject(in)
 }
