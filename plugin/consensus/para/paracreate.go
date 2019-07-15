@@ -74,7 +74,7 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 	return client.setLocalDb(set)
 }
 
-func (client *client) checkTxInMainBlock(detail *types.BlockDetail) {
+func (client *client) checkCommitTxSuccess(detail *types.BlockDetail) {
 	if !client.isCaughtUp {
 		return
 	}
@@ -107,8 +107,9 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 	if err != nil {
 		return err
 	}
-	client.checkTxInMainBlock(mainBlock.Detail)
-	return nil
+	client.checkCommitTxSuccess(mainBlock.Detail)
+	err = client.createBlockTemp(txs,mainBlock)
+	return err
 }
 
 func (client *client) createLocalGenesisBlock(genesis *types.Block) error {

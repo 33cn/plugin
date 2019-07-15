@@ -163,9 +163,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		paraClient:           para,
 		waitMainBlocks:       waitBlocks,
 		waitConsensStopTimes: waitConsensTimes,
-		commitNotify:         make(chan int64, 1),
-		resetNotify:          make(chan int64, 1),
-		chainHeight:          -1,
+		commitCh:             make(chan int64, 1),
+		resetCh:              make(chan int64, 1),
+		consensHeight:        -2,
+		sendingHeight:        -1,
 		quit:                 make(chan struct{}),
 	}
 	c.SetChild(para)
@@ -246,7 +247,7 @@ func (client *client) GetStartSeq(height int64) (int64, []byte) {
 	if err != nil {
 		panic(err)
 	}
-	if lastHeight < height {
+	if lastHeight < height && lastHeight > 0 {
 		panic(fmt.Sprintf("lastHeight(%d) less than startHeight(%d) in mainchain", lastHeight, height))
 	}
 
@@ -367,6 +368,16 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 		"newblock.Height", newblock.Height, "newblock.TxHash", common.ToHex(newblock.TxHash),
 		"newblock.BlockTime", newblock.BlockTime, "sequence", seq)
 	return err
+}
+
+func (client *client) createBlockTemp(txs []*types.Transaction,  mainBlock *types.BlockSeq) error{
+	lastBlock, err := client.RequestLastBlock()
+	if err != nil {
+		plog.Error("Parachain RequestLastBlock fail", "err", err)
+		return err
+	}
+	return client.createBlock(lastBlock,txs,0,mainBlock)
+
 }
 
 // 向blockchain写区块
