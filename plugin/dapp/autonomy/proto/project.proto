@@ -10,17 +10,19 @@ package types;
 
 message AutonomyProposalProject {
     ProposalProject  propProject  = 1;
+    // 投票该提案的规则
+    RuleConfig       CurRule      = 2;
     // 投票该提案的董事会成员
-    repeated string  boards       = 2;
+    repeated string  boards       = 3;
     // 董事会投票结果
-    VoteResult       boardVoteRes = 3;
+    VoteResult       boardVoteRes = 4;
     // 公示投票
-    PublicVote       pubVote      = 4;
+    PublicVote       pubVote      = 5;
     // 状态
-    int32  status        = 5;
-    string address       = 6;
-    int64  height        = 7;
-    int32  index         = 8;
+    int32  status        = 6;
+    string address       = 7;
+    int64  height        = 8;
+    int32  index         = 9;
 }
 
 message ProposalProject {

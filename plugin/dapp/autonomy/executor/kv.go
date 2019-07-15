@@ -55,6 +55,22 @@ func calcProjectKey4StatusHeight(status int32, heightindex string) []byte {
 	return []byte(key)
 }
 
+var (
+	// rule
+	rulePrefix = idPrefix + "rule" + "-"
+	localRulePrefix = localPrefix + "rule" + "-"
+)
 
+func activeRuleID() []byte {
+	return []byte(fmt.Sprintf("%s", rulePrefix))
+}
 
+func propRuleID(txHash string) []byte {
+	return []byte(fmt.Sprintf("%s%s", rulePrefix, txHash))
+}
+
+func calcRuleKey4StatusHeight(status int32, heightindex string) []byte {
+	key := fmt.Sprintf(localRulePrefix + "%d-" +"%s", status, heightindex)
+	return []byte(key)
+}
 

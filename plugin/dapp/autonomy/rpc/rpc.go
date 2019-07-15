@@ -73,3 +73,77 @@ func (c *channelClient) terminateProposalBoard(ctx context.Context, head *auty.T
 }
 
 // Proposal Project 相关的接口
+func (c *channelClient) propProject(ctx context.Context, head *auty.ProposalProject) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionPropProject,
+		Value: &auty.AutonomyAction_PropProject{PropProject: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) revokeProposalProject(ctx context.Context, head *auty.RevokeProposalProject) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionRvkPropProject,
+		Value: &auty.AutonomyAction_RvkPropProject{RvkPropProject: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) voteProposalProject(ctx context.Context, head *auty.VoteProposalProject) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionVotePropProject,
+		Value: &auty.AutonomyAction_VotePropProject{VotePropProject: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) pubVoteProposalProject(ctx context.Context, head *auty.PubVoteProposalProject) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionPubVotePropProject,
+		Value: &auty.AutonomyAction_PubVotePropProject{PubVotePropProject: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) terminateProposalProject(ctx context.Context, head *auty.TerminateProposalProject) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionTmintPropProject,
+		Value: &auty.AutonomyAction_TmintPropProject{TmintPropProject: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}

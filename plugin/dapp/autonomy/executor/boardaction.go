@@ -18,10 +18,10 @@ import (
 const (
 	minBoards          = 3
 	maxBoards          = 30
-	lockAmount   int64 = types.Coin * 1000  //创建者消耗金额
+	lockAmount   int64 = types.Coin * 1000  // 创建者消耗金额
 	ticketPrice        = types.Coin * 3000  // 单张票价
-	participationRate  = float32(2)/float32(3) //参与率
-	approveRate        = float32(2)/float32(3) //赞成率
+	participationRate int32 = 66 // 参与率以%计
+	approveRate       int32 = 66 // 赞成率以%计
 )
 
 type action struct {
@@ -226,8 +226,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= approveRate {
+	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(participationRate) &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(approveRate) {
 		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 
@@ -309,8 +309,8 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
 	}
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  participationRate &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= approveRate {
+	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(participationRate) &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(approveRate) {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false

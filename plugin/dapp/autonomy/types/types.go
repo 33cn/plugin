@@ -55,6 +55,7 @@ func (a *AutonomyType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogPropProject:    {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPropProject"},
 		TyLogRvkPropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogRvkPropProject"},
 		TyLogVotePropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogVotePropProject"},
+		TyLogPubVotePropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPubVotePropProject"},
 		TyLogTmintPropProject: {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogTmintPropProject"},
 
 		TyLogPropRule:    {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogPropRule"},
@@ -80,6 +81,7 @@ func (a *AutonomyType) GetTypeMap() map[string]int32 {
 		"PropProject":    AutonomyActionPropProject,
 		"RvkPropProject":  AutonomyActionRvkPropProject,
 		"VotePropProject":  AutonomyActionVotePropProject,
+		"PubVotePropProject":  AutonomyActionPubVotePropProject,
 		"TmintPropProject": AutonomyActionTmintPropProject,
 
 		"PropRule":    AutonomyActionPropRule,
