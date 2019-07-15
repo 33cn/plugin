@@ -104,7 +104,7 @@ func (client *commitMsgClient) clearSendingTx() {
 }
 
 func (client *commitMsgClient) procSendTx() {
-	plog.Info("para procSendTx  ---send", "consensHeight",atomic.LoadInt64(&client.consensHeight),
+	plog.Info("para procSendTx  ---send", "consensHeight", atomic.LoadInt64(&client.consensHeight),
 		"chainHeight", atomic.LoadInt64(&client.chainHeight),
 		"sendingHeight", client.sendingHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
 	if client.isSendingCommitMsg() || !client.isSync() {
@@ -144,23 +144,23 @@ func (client *commitMsgClient) procSendTx() {
 func (client *commitMsgClient) isSync() bool {
 	height := atomic.LoadInt64(&client.chainHeight)
 	if height <= 0 {
-		plog.Info("para isSync", "chainHeight",height)
+		plog.Info("para isSync", "chainHeight", height)
 		return false
 	}
 
 	height = atomic.LoadInt64(&client.consensHeight)
 	if height == -2 {
-		plog.Info("para isSync", "consensHeight",height)
+		plog.Info("para isSync", "consensHeight", height)
 		return false
 	}
 
 	if atomic.LoadInt32(&client.authAccountIn) != 1 {
-		plog.Info("para isSync ", "authAccountIn",atomic.LoadInt32(&client.authAccountIn))
+		plog.Info("para isSync ", "authAccountIn", atomic.LoadInt32(&client.authAccountIn))
 		return false
 	}
 
 	if atomic.LoadInt32(&client.minerSwitch) != 1 {
-		plog.Info("para isSync ", "minerSwitch",atomic.LoadInt32(&client.minerSwitch))
+		plog.Info("para isSync ", "minerSwitch", atomic.LoadInt32(&client.minerSwitch))
 		return false
 	}
 
@@ -572,7 +572,7 @@ out:
 			} else {
 				atomic.StoreInt32(&client.authAccountIn, 0)
 			}
-			plog.Info("para getConsensusHeight", "height",status.Height,"AccoutIn",authExist)
+			plog.Info("para getConsensusHeight", "height", status.Height, "AccoutIn", authExist)
 
 		}
 	}

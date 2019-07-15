@@ -370,13 +370,13 @@ func (client *client) createBlock(lastBlock *types.Block, txs []*types.Transacti
 	return err
 }
 
-func (client *client) createBlockTemp(txs []*types.Transaction,  mainBlock *types.BlockSeq) error{
+func (client *client) createBlockTemp(txs []*types.Transaction, mainBlock *types.BlockSeq) error {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
 		plog.Error("Parachain RequestLastBlock fail", "err", err)
 		return err
 	}
-	return client.createBlock(lastBlock,txs,0,mainBlock)
+	return client.createBlock(lastBlock, txs, 0, mainBlock)
 
 }
 
