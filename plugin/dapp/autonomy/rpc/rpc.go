@@ -71,3 +71,5 @@ func (c *channelClient) terminateProposalBoard(ctx context.Context, head *auty.T
 	}
 	return &types.UnsignTx{Data: data}, nil
 }
+
+// Proposal Project 相关的接口

@@ -33,8 +33,8 @@ It has these top-level messages:
 	TerminateProposalProject
 	ReceiptProposalProject
 	LocalProposalProject
+	ReqQueryProposalProject
 	ReplyQueryProposalProject
-	ReplyProposalProject
 	AutonomyProposalRule
 	ProposalRule
 	RevokeProposalRule

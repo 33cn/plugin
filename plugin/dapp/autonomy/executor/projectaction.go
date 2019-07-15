@@ -29,6 +29,25 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return  nil, types.ErrInvalidParam
 	}
 
+	// 获取董事会成员
+	value, err := a.db.Get(activeBoardID())
+	if err != nil {
+		err = auty.ErrNoActiveBoard
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get activeBoardID failed", err)
+		return nil, err
+	}
+	pboard :=  &auty.ProposalBoard{}
+	err = types.Decode(value, pboard)
+	if err != nil {
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed", err)
+		return nil, err
+	}
+	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards  {
+		err = auty.ErrNoActiveBoard
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "illegality  boards number", err)
+		return nil, err
+	}
+
 	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, lockAmount)
 	if err != nil {
 		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", lockAmount)
@@ -47,6 +66,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 	cur := &auty.AutonomyProposalProject{
 		PropProject:prob,
+		Boards: pboard.Boards,
 		BoardVoteRes: &auty.VoteResult{},
 		PubVote: &auty.PublicVote{Publicity:isPubVote},
 		Status: auty.AutonomyStatusProposalProject,
@@ -54,11 +74,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		Height: a.height,
 		Index: a.index,
 	}
-
-	key := propProjectID(common.ToHex(a.txhash))
-	value := types.Encode(cur)
-	kv = append(kv, &types.KeyValue{Key: key, Value: value})
-
+	kv = append(kv, &types.KeyValue{Key: propProjectID(common.ToHex(a.txhash)), Value: types.Encode(cur)})
 	receiptLog := getProjectReceiptLog(nil, cur, auty.TyLogPropProject)
 	logs = append(logs, receiptLog)
 
@@ -161,28 +177,8 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	// 董事会成员验证
-	value, err = a.db.Get(activeBoardID())
-	if err != nil {
-		err = auty.ErrNoActiveBoard
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get activeBoardID failed",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
-	prob :=  &auty.ProposalBoard{}
-	err = types.Decode(value, prob)
-	if err != nil {
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
-	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards  {
-		err = auty.ErrNoActiveBoard
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "illegality  boards number",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
 	var isBoard bool
-	for _, addr := range prob.Boards {
+	for _, addr := range cur.Boards {
 		if addr == a.fromaddr {
 			isBoard = true
 		}
@@ -216,7 +212,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	// 更新已经投票地址
 	votes.Address = append(votes.Address, a.fromaddr)
 	// 更新投票结果
-	cur.BoardVoteRes.TotalVotes = int32(len(prob.Boards))
+	cur.BoardVoteRes.TotalVotes = int32(len(cur.Boards))
 	if voteProb.Approve {
 		cur.BoardVoteRes.ApproveVotes += 1
 	} else {
