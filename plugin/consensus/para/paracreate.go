@@ -108,7 +108,7 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 		return err
 	}
 	client.checkCommitTxSuccess(mainBlock.Detail)
-	err = client.createBlockTemp(txs,mainBlock)
+	err = client.createBlockTemp(txs, mainBlock)
 	return err
 }
 
