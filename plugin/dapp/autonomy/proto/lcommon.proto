@@ -31,3 +31,16 @@ message PublicVote {
 message VotesRecord {
     repeated string address = 1;
 }
+
+message RuleConfig {
+    // 参与率,以%为单位,只保留整数部分
+    int32 boardAttendProb    = 1;
+    // 通过率
+    int32 boardPassProb      = 2;
+    // 否决率
+    int32 opposeProb         = 3;
+    // 提案金额
+    int64 proposalAmount     = 4;
+    // 公示金额阈值
+    int64 pubAmountThreshold = 5;
+}

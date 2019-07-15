@@ -25,6 +25,7 @@ It has these top-level messages:
 	VoteResult
 	PublicVote
 	VotesRecord
+	RuleConfig
 	AutonomyProposalProject
 	ProposalProject
 	RevokeProposalProject
@@ -42,8 +43,8 @@ It has these top-level messages:
 	TerminateProposalRule
 	ReceiptProposalRule
 	LocalProposalRule
+	ReqQueryProposalRule
 	ReplyQueryProposalRule
-	ReplyProposalRule
 */
 package types
 

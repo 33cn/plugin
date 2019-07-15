@@ -15,7 +15,7 @@ import (
 const (
 	largeAmount  = types.Coin * 100 *10000 // 重大项目金额阈值
 	publicPeriod = 120960                  // 公示一周时间，以区块高度计算
-	opposeRate   = float32(1)/float32(3)   // 反对率
+	opposeRate   int32 = 33                // 反对率以%计
 )
 
 
@@ -224,8 +224,8 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  participationRate &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= approveRate {
+	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(participationRate) &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(approveRate) {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
 		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
@@ -347,7 +347,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	var kv []*types.KeyValue
 
 	if cur.PubVote.TotalVotes != 0 &&
-	   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  opposeRate {
+	   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(opposeRate) {
 		cur.PubVote.PubPass = false
 		cur.PropProject.RealEndBlockHeight = a.height
 
@@ -452,8 +452,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  participationRate &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= approveRate {
+		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(participationRate) &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(approveRate) {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
@@ -469,7 +469,7 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 			cur.PubVote.TotalVotes = int32(account.Balance/ticketPrice)
 		}
 		if cur.PubVote.TotalVotes != 0 &&
-		   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  opposeRate {
+		   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(opposeRate) {
 		   	cur.PubVote.PubPass = false
 		}
 	}

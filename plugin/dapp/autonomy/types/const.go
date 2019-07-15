@@ -14,6 +14,7 @@ const (
 	AutonomyActionPropProject
 	AutonomyActionRvkPropProject
 	AutonomyActionVotePropProject
+	AutonomyActionPubVotePropProject
 	AutonomyActionTmintPropProject
 
 	AutonomyActionPropRule
@@ -37,29 +38,6 @@ const (
 	TyLogRvkPropRule   = 2122
 	TyLogVotePropRule  = 2123
 	TyLogTmintPropRule = 2124
-)
-
-const (
-	// Action_PropBoard Action 名字
-	Action_PropBoard = "propBoard"
-	// Action_RvkPropBoard Action 名字
-	Action_RvkPropBoard = "rvkPropBoard"
-	// Action_TmintPropBoard Action 名字
-	Action_TmintPropBoard = "tmintPropBoard"
-
-	// Action_PropProject Action 名字
-	Action_PropProject = "propProject"
-	// Action_RvkPropProject Action 名字
-	Action_RvkPropProject = "rvkPropProject"
-	// Action_TmintPropProject Action 名字
-	Action_TmintPropProject = "tmintPropProject"
-
-	// Action_PropRule Action 名字
-	Action_PropRule= "propRule"
-	// Action_RvkPropRule Action 名字
-	Action_RvkPropRule = "rvkPropRule"
-	// Action_TmintPropRule Action 名字
-	Action_TmintPropRule = "tmintPropRule"
 )
 
 // status

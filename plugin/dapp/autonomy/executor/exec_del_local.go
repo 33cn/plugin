@@ -9,7 +9,8 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-// ExecDelLocal_PropBoard 创建提案
+// 提案董事会相关
+// ExecDelLocal_PropBoard 创建提案董事会
 func (a *Autonomy) ExecDelLocal_PropBoard(payload *auty.ProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalBoard(receiptData)
 }
@@ -27,4 +28,30 @@ func (a *Autonomy) ExecDelLocal_VotePropBoard(payload *auty.VoteProposalBoard, t
 // ExecDelLocal_TmintPropBoard 终止提案
 func (a *Autonomy) ExecDelLocal_TmintPropBoard(payload *auty.TerminateProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalBoard(receiptData)
+}
+
+// 提案项目相关
+// ExecDelLocal_PropProject 创建提案项目
+func (a *Autonomy) ExecDelLocal_PropProject(payload *auty.ProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalProject(receiptData)
+}
+
+// ExecDelLocal_RvkPropProject 撤销提案
+func (a *Autonomy) ExecDelLocal_RvkPropProject(payload *auty.RevokeProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+	return a.execDelLocalProject(receiptData)
+}
+
+// ExecDelLocal_VotePropProject 投票提案
+func (a *Autonomy) ExecDelLocal_VotePropProject(payload *auty.VoteProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalProject(receiptData)
+}
+
+// ExecDelLocal_PubVotePropProject 投票提案
+func (a *Autonomy) ExecDelLocal_PubVotePropProject(payload *auty.PubVoteProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalProject(receiptData)
+}
+
+// ExecDelLocal_TmintPropProject 终止提案
+func (a *Autonomy) ExecDelLocal_TmintPropProject(payload *auty.TerminateProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalProject(receiptData)
 }

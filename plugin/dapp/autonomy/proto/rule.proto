@@ -9,11 +9,15 @@ import "lcommon.proto";
 package types;
 
 message AutonomyProposalRule {
-    ProposalRule  propRule = 1;
+    ProposalRule  propRule   = 1;
+    RuleConfig    rule       = 2;
     // 全体持票人投票结果
-    VoteResult    res      = 2;
+    VoteResult    voteResult = 3;
     // 状态
-    int32         status   = 3;
+    int32         status     = 4;
+    string        address    = 5;
+    int64         height     = 6;
+    int32         index      = 7;
 }
 
 message ProposalRule {
@@ -22,17 +26,12 @@ message ProposalRule {
     int32 month = 2;
     int32 day   = 3;
 
-    // 可修改项
-    int32 boardAttendProb    = 4; //参与率,以%为单位,只保留整数部分
-    int32 boardPassProb      = 5; //通过率
-    int32 opposeProb         = 6; //否决率
-    int32 proposalAmount     = 7; //提案金额
-    int32 pubAmountThreshold = 8; //公示金额阈值
-
+    // 规则可修改项,如果某项不修改则置为-1
+    RuleConfig ruleCfg       = 4;
     // 投票相关
-    int64 startBlockHeight   = 9;  // 提案开始投票高度
-    int64 endBlockHeight     = 10; // 提案结束投票高度
-    int64 realEndBlockHeight = 11; // 实际提案结束投票高度
+    int64 startBlockHeight   = 5; // 提案开始投票高度
+    int64 endBlockHeight     = 6; // 提案结束投票高度
+    int64 realEndBlockHeight = 7; // 实际提案结束投票高度
 }
 
 message RevokeProposalRule {
@@ -60,10 +59,14 @@ message LocalProposalRule {
 }
 
 // query
-message ReplyQueryProposalRule {
-    string proposalID      = 1;
+message ReqQueryProposalRule {
+    //优先根据status查询
+    int32  status    = 1;
+    int32  count     = 2;
+    int32  direction = 3;
+    int64  index     = 4;
 }
 
-message ReplyProposalRule {
-    repeated LocalProposalRule propRules = 1;
+message ReplyQueryProposalRule {
+    repeated AutonomyProposalRule propRules = 1;
 }
