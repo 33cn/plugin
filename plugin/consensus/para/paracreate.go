@@ -98,7 +98,7 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 	newblock.Height = lastBlock.Height + 1
 	newblock.MainHash = mainBlock.Seq.Hash
 	newblock.MainHeight = mainBlock.Detail.Block.Height
-	newblock.ParentMainHash = mainBlock.Detail.Block.ParentHash
+	newblock.ParentMainHash = lastBlock.MainHash
 	newblock.BlockTime = mainBlock.Detail.Block.BlockTime
 
 	newblock.Txs = txs
@@ -351,6 +351,11 @@ func (client *client) switchLocalHashMatchedBlock() (int64, []byte, error) {
 			return -2, nil, err
 		}
 
+		//err = client.removeBlocks(height)
+		//if err != nil {
+		//	return -2, nil, err
+		//}
+
 		plog.Info("switchLocalHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
 			"currSeq", mainSeq, "currMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq, block.MainHash, nil
@@ -453,6 +458,7 @@ func (client *client) CreateBlock() {
 				plog.Info("Delete empty block")
 			}
 			err = client.delLocalBlock(lastBlock.Height)
+			//client.DelBlock(lastBlock.Height,0)
 		} else if mainBlock.Seq.Type == addAct {
 			if len(txs) == 0 {
 				if lastSeqMainHeight-lastBlock.MainHeight < emptyBlockInterval {

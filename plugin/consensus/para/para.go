@@ -309,7 +309,7 @@ func (client *client) removeBlocks(endHeight int64) error {
 			return err
 		}
 
-		err = client.DelBlock(lastBlock, blockedSeq)
+		err = client.DelBlock(lastBlock.Height, blockedSeq)
 		if err != nil {
 			plog.Error("Parachain GetBlockedSeq fail", "err", err)
 			return err
@@ -410,9 +410,9 @@ func (client *client) WriteBlock(prev []byte, paraBlock *types.Block, seq int64)
 }
 
 // 向blockchain删区块
-func (client *client) DelBlock(block *types.Block, seq int64) error {
+func (client *client) DelBlock(start, seq int64) error {
 	plog.Debug("delete block in parachain")
-	start := block.Height
+	//start := block.Height
 	if start == 0 {
 		panic("Parachain attempt to Delete GenesisBlock !")
 	}
