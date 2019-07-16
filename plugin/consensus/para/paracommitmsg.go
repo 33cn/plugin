@@ -104,8 +104,8 @@ func (client *commitMsgClient) clearSendingTx() {
 }
 
 func (client *commitMsgClient) procSendTx() {
-	plog.Info("para commitMsg---send", "chainHeight", atomic.LoadInt64(&client.chainHeight),"sendingHeight", client.sendingHeight,
-		"consensHeight", atomic.LoadInt64(&client.consensHeight),"isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
+	plog.Info("para commitMsg---send", "chainHeight", atomic.LoadInt64(&client.chainHeight), "sendingHeight", client.sendingHeight,
+		"consensHeight", atomic.LoadInt64(&client.consensHeight), "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
 
 	if client.isSendingCommitMsg() || !client.isSync() {
 		return
@@ -135,7 +135,7 @@ func (client *commitMsgClient) procSendTx() {
 		}
 		client.sendingHeight = client.sendingHeight + count
 		client.setCurrentTx(signTx)
-		atomic.StoreInt32(&client.checkTxCommitTimes,0)
+		atomic.StoreInt32(&client.checkTxCommitTimes, 0)
 		client.sendMsgCh <- signTx
 	}
 
