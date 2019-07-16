@@ -67,18 +67,18 @@ func (client *commitMsgClient) handler() {
 out:
 	for {
 		select {
-		//正常的触发检查
+		//正常commit 入口
 		case <-client.commitCh:
 			//回滚场景
 			if atomic.LoadInt64(&client.chainHeight) < client.sendingHeight {
 				client.clearSendingTx()
 			}
 			client.procSendTx()
-		//发送出错场景，需要reset 重发
+		//出错场景入口，需要reset 重发
 		case <-client.resetCh:
 			client.clearSendingTx()
 			client.procSendTx()
-		//例行检查发送
+		//例行检查发送入口
 		case <-readTick:
 			consensStopTimes = client.checkConsensusStop(consensStopTimes)
 			client.procSendTx()
@@ -104,9 +104,9 @@ func (client *commitMsgClient) clearSendingTx() {
 }
 
 func (client *commitMsgClient) procSendTx() {
-	plog.Info("para procSendTx  ---send", "consensHeight", atomic.LoadInt64(&client.consensHeight),
-		"chainHeight", atomic.LoadInt64(&client.chainHeight),
-		"sendingHeight", client.sendingHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
+	plog.Info("para commitMsg---send", "chainHeight", atomic.LoadInt64(&client.chainHeight),"sendingHeight", client.sendingHeight,
+		"consensHeight", atomic.LoadInt64(&client.consensHeight),"isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
+
 	if client.isSendingCommitMsg() || !client.isSync() {
 		return
 	}
@@ -124,7 +124,7 @@ func (client *commitMsgClient) procSendTx() {
 	}
 
 	//已发送，未共识场景
-	if client.sendingHeight > -1 && client.sendingHeight > consensHeight {
+	if client.sendingHeight > consensHeight {
 		return
 	}
 
@@ -135,7 +135,7 @@ func (client *commitMsgClient) procSendTx() {
 		}
 		client.sendingHeight = client.sendingHeight + count
 		client.setCurrentTx(signTx)
-		client.checkTxCommitTimes = 0
+		atomic.StoreInt32(&client.checkTxCommitTimes,0)
 		client.sendMsgCh <- signTx
 	}
 
@@ -144,23 +144,23 @@ func (client *commitMsgClient) procSendTx() {
 func (client *commitMsgClient) isSync() bool {
 	height := atomic.LoadInt64(&client.chainHeight)
 	if height <= 0 {
-		plog.Info("para isSync", "chainHeight", height)
+		plog.Info("para is not Sync", "chainHeight", height)
 		return false
 	}
 
 	height = atomic.LoadInt64(&client.consensHeight)
 	if height == -2 {
-		plog.Info("para isSync", "consensHeight", height)
+		plog.Info("para is not Sync", "consensHeight", height)
 		return false
 	}
 
 	if atomic.LoadInt32(&client.authAccountIn) != 1 {
-		plog.Info("para isSync ", "authAccountIn", atomic.LoadInt32(&client.authAccountIn))
+		plog.Info("para is not Sync", "authAccountIn", atomic.LoadInt32(&client.authAccountIn))
 		return false
 	}
 
 	if atomic.LoadInt32(&client.minerSwitch) != 1 {
-		plog.Info("para isSync ", "minerSwitch", atomic.LoadInt32(&client.minerSwitch))
+		plog.Info("para is not Sync", "minerSwitch", atomic.LoadInt32(&client.minerSwitch))
 		return false
 	}
 
