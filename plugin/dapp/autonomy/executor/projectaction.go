@@ -48,9 +48,26 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return nil, err
 	}
 
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, lockAmount)
+	// 获取当前生效提案规则,并且将不修改的规则补齐
+	rule := &auty.RuleConfig{}
+	value, err = a.db.Get(activeRuleID())
+	if err == nil {
+		err = types.Decode(value, rule)
+		if err != nil {
+			alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalRule failed", err)
+			return nil, err
+		}
+	} else {// 载入系统默认值
+		rule.BoardAttendProb = participationRate
+		rule.BoardPassProb = approveRate
+		rule.OpposeProb = opposeRate
+		rule.ProposalAmount = lockAmount
+		rule.PubAmountThreshold = largeAmount
+	}
+
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
-		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", lockAmount)
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", rule.ProposalAmount)
 		return nil, err
 	}
 
@@ -61,11 +78,12 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	kv = append(kv, receipt.KV...)
 
 	var isPubVote bool
-	if prob.Amount >= largeAmount {
+	if prob.Amount >= rule.PubAmountThreshold {
 		isPubVote = true
 	}
 	cur := &auty.AutonomyProposalProject{
 		PropProject:prob,
+		CurRule:rule,
 		Boards: pboard.Boards,
 		BoardVoteRes: &auty.VoteResult{},
 		PubVote: &auty.PublicVote{Publicity:isPubVote},
@@ -124,9 +142,9 @@ func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Rec
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", lockAmount, "err", err)
+		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -224,11 +242,11 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(participationRate) &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(approveRate) {
+	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardPassProb)/100.0 {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -246,6 +264,14 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 			cur.PubVote.PubPass = true
 		} else {
 			cur.Status = auty.AutonomyStatusTmintPropProject
+			// 提案通过，将工程金额从基金付款给承包商
+			receipt, err := a.coinsAccount.ExecTransferFrozen(autonomyAddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+			if err != nil {
+				alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen to contractor fail", err)
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kv = append(kv, receipt.KV...)
 		}
 	}
 	value = types.Encode(&cur)
@@ -351,7 +377,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		cur.PubVote.PubPass = false
 		cur.PropProject.RealEndBlockHeight = a.height
 
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("pubVotePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -362,8 +388,10 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 
 	key := propProjectID(voteProb.ProposalID)
 	cur.Status = auty.AutonomyStatusPubVotePropProject
+	ty := auty.TyLogPubVotePropProject
 	if !cur.PubVote.PubPass {
 		cur.Status = auty.AutonomyStatusTmintPropProject
+		ty = auty.TyLogTmintPropProject
 	}
 	value = types.Encode(&cur)
 	kv = append(kv, &types.KeyValue{Key: key, Value: value})
@@ -371,10 +399,6 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	// 更新VotesRecord
 	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
 
-	ty := auty.TyLogPubVotePropProject
-	if cur.BoardVoteRes.Pass {
-		ty = auty.TyLogTmintPropProject
-	}
 	receiptLog := getProjectReceiptLog(pre, &cur, int32(ty))
 	logs = append(logs, receiptLog)
 
@@ -452,8 +476,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(participationRate) &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(approveRate) {
+		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardPassProb)/100.0 {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
@@ -478,13 +502,25 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+		alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
+
+	if (cur.PubVote.Publicity && cur.PubVote.PubPass) ||    // 需要公示且公示通过
+		(!cur.PubVote.Publicity && cur.BoardVoteRes.Pass){  // 不需要公示且董事会通过
+		// 提案通过，将工程金额从基金付款给承包商
+		receipt, err := a.coinsAccount.ExecTransferFrozen(autonomyAddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+		if err != nil {
+			alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen to contractor fail", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
 
 	cur.Status = auty.AutonomyStatusTmintPropProject
 

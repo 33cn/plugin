@@ -11,7 +11,7 @@ package types;
 message AutonomyProposalProject {
     ProposalProject  propProject  = 1;
     // 投票该提案的规则
-    RuleConfig       CurRule      = 2;
+    RuleConfig       curRule      = 2;
     // 投票该提案的董事会成员
     repeated string  boards       = 3;
     // 董事会投票结果
