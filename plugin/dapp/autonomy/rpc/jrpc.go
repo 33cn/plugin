@@ -132,3 +132,57 @@ func (c *Jrpc) TerminateProposalProjectTx(parm *auty.TerminateProposalProject, r
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
+// 提案规则相关
+// PropRuleTx 提案规则RPC接口
+func (c *Jrpc) PropRuleTx(parm *auty.ProposalRule, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.propRule(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
+
+// RevokeProposalRuleTx  撤销提案规则RPC接口
+func (c *Jrpc) RevokeProposalRuleTx(parm *auty.RevokeProposalRule, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.revokeProposalRule(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
+
+// VoteProposalRuleTx  投票提案规则RPC接口
+func (c *Jrpc) VoteProposalRuleTx(parm *auty.VoteProposalRule, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.voteProposalRule(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
+
+// TerminateProposalRuleTx  终止提案规则RPC接口
+func (c *Jrpc) TerminateProposalRuleTx(parm *auty.TerminateProposalRule, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.terminateProposalRule(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}

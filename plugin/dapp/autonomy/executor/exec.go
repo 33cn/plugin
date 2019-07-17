@@ -64,3 +64,28 @@ func (a *Autonomy) Exec_TmintPropProject(payload *auty.TerminateProposalProject,
 	action := newAction(a, tx, int32(index))
 	return action.tmintPropProject(payload)
 }
+
+// 提案规则相关
+// Exec_PropRule 创建提案规则
+func (a *Autonomy) Exec_PropRule(payload *auty.ProposalRule, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.propRule(payload)
+}
+
+// Exec_RvkPropRule 撤销提案规则
+func (a *Autonomy) Exec_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.rvkPropRule(payload)
+}
+
+// Exec_VotePropRule 投票提案规则
+func (a *Autonomy) Exec_VotePropRule(payload *auty.VoteProposalRule, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.votePropRule(payload)
+}
+
+// Exec_TmintPropRule 终止提案规则
+func (a *Autonomy) Exec_TmintPropRule(payload *auty.TerminateProposalRule, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.tmintPropRule(payload)
+}
