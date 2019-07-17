@@ -24,39 +24,16 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 
 	// 获取董事会成员
-	value, err := a.db.Get(activeBoardID())
+	pboard, err := a.getActiveBoard()
 	if err != nil {
-		err = auty.ErrNoActiveBoard
-		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get activeBoardID failed", err)
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get getActiveBoard failed", err)
 		return nil, err
 	}
-	pboard :=  &auty.ProposalBoard{}
-	err = types.Decode(value, pboard)
+	// 获取当前生效提案规则
+	rule, err := a.getActiveRule()
 	if err != nil {
-		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed", err)
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveRule failed", err)
 		return nil, err
-	}
-	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards  {
-		err = auty.ErrNoActiveBoard
-		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "illegality  boards number", err)
-		return nil, err
-	}
-
-	// 获取当前生效提案规则,并且将不修改的规则补齐
-	rule := &auty.RuleConfig{}
-	value, err = a.db.Get(activeRuleID())
-	if err == nil {
-		err = types.Decode(value, rule)
-		if err != nil {
-			alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalRule failed", err)
-			return nil, err
-		}
-	} else {// 载入系统默认值
-		rule.BoardAttendRatio   = boardAttendRatio
-		rule.BoardApproveRatio  = boardApproveRatio
-		rule.PubOpposeRatio     = pubOpposeRatio
-		rule.ProposalAmount     = proposalAmount
-		rule.LargeProjectAmount = largeProjectAmount
 	}
 
 	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
@@ -79,7 +56,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		PropProject:prob,
 		CurRule:rule,
 		Boards: pboard.Boards,
-		BoardVoteRes: &auty.VoteResult{},
+		BoardVoteRes: &auty.VoteResult{TotalVotes: int32(len(pboard.Boards))},
 		PubVote: &auty.PublicVote{Publicity:isPubVote},
 		Status: auty.AutonomyStatusProposalProject,
 		Address: a.fromaddr,
@@ -94,21 +71,13 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 }
 
 func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Receipt, error) {
-	// 获取GameID
-	value, err := a.db.Get(propProjectID(rvkProb.ProposalID))
+	cur, err := a.getProposalProject(rvkProb.ProposalID)
 	if err != nil {
-		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get ProposalProject) failed",
+		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getProposalProject failed",
 			rvkProb.ProposalID, "err", err)
 		return nil, err
 	}
-	var cur auty.AutonomyProposalProject
-	err = types.Decode(value, &cur)
-	if err != nil {
-		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalProject failed",
-			rvkProb.ProposalID, "err", err)
-		return nil, err
-	}
-	pre := copyAutonomyProposalProject(&cur)
+	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
 	if cur.Status != auty.AutonomyStatusProposalProject {
@@ -146,29 +115,21 @@ func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Rec
 
 	cur.Status = auty.AutonomyStatusRvkPropProject
 
-	kv = append(kv, &types.KeyValue{Key: propProjectID(rvkProb.ProposalID), Value: types.Encode(&cur)})
+	kv = append(kv, &types.KeyValue{Key: propProjectID(rvkProb.ProposalID), Value: types.Encode(cur)})
 
-	getProjectReceiptLog(pre, &cur, auty.TyLogRvkPropProject)
+	getProjectReceiptLog(pre, cur, auty.TyLogRvkPropProject)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Receipt, error) {
-	// 获取GameID
-	value, err := a.db.Get(propProjectID(voteProb.ProposalID))
+	cur, err := a.getProposalProject(voteProb.ProposalID)
 	if err != nil {
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get propProjectID failed",
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getProposalProject failed",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
-	var cur auty.AutonomyProposalProject
-	err = types.Decode(value, &cur)
-	if err != nil {
-		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode AutonomyProposalProject failed",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
-	pre := copyAutonomyProposalProject(&cur)
+	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
 	if cur.Status != auty.AutonomyStatusProposalProject && cur.Status != auty.AutonomyStatusVotePropProject {
@@ -203,24 +164,13 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	// 检查是否已经参与投票
-	var votes auty.VotesRecord
-	value, err = a.db.Get(VotesRecord(voteProb.ProposalID))
-	if err == nil {
-		err = types.Decode(value, &votes)
-		if err != nil {
-			alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode VotesRecord failed",
-				voteProb.ProposalID, "err", err)
-			return nil, err
-		}
+	votes, err := a.checkVotesRecord(voteProb.ProposalID)
+	if err != nil {
+		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
 	}
-	for _, addr := range votes.Address {
-		if addr == a.fromaddr {
-			err := auty.ErrRepeatVoteAddr
-			alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "repeat address ProposalID",
-				voteProb.ProposalID, "err", err)
-			return nil, err
-		}
-	}
+
 	// 更新已经投票地址
 	votes.Address = append(votes.Address, a.fromaddr)
 	// 更新投票结果
@@ -268,11 +218,10 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 			kv = append(kv, receipt.KV...)
 		}
 	}
-	value = types.Encode(&cur)
-	kv = append(kv, &types.KeyValue{Key: key, Value: value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: types.Encode(cur)})
 
 	// 更新VotesRecord
-	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
+	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(votes)})
 
 	ty := auty.TyLogVotePropProject
 	if cur.BoardVoteRes.Pass {
@@ -282,28 +231,20 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 			ty = auty.TyLogTmintPropProject
 		}
 	}
-	receiptLog := getProjectReceiptLog(pre, &cur, int32(ty))
+	receiptLog := getProjectReceiptLog(pre, cur, int32(ty))
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*types.Receipt, error) {
-	// 获取GameID
-	value, err := a.db.Get(propProjectID(voteProb.ProposalID))
+	cur, err := a.getProposalProject(voteProb.ProposalID)
 	if err != nil {
-		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get propProjectID failed",
+		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getProposalProject failed",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
-	var cur auty.AutonomyProposalProject
-	err = types.Decode(value, &cur)
-	if err != nil {
-		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode AutonomyProposalProject failed",
-			voteProb.ProposalID, "err", err)
-		return nil, err
-	}
-	pre := copyAutonomyProposalProject(&cur)
+	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
 	if cur.Status != auty.AutonomyStatusPubVotePropProject {
@@ -324,25 +265,13 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	}
 
 	// 检查是否已经参与投票
-	var votes auty.VotesRecord
-	value, err = a.db.Get(VotesRecord(voteProb.ProposalID))
-	if err == nil {
-		err = types.Decode(value, &votes)
-		if err != nil {
-			alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode VotesRecord failed",
-				voteProb.ProposalID, "err", err)
-			return nil, err
-		}
+	votes, err := a.checkVotesRecord(voteProb.ProposalID)
+	if err != nil {
+		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
+			voteProb.ProposalID, "err", err)
+		return nil, err
 	}
-	for _, addr := range votes.Address {
-		if addr == a.fromaddr {
-			err := auty.ErrRepeatVoteAddr
-			alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "repeat address GameID",
-				voteProb.ProposalID, "err", err)
-			return nil, err
-		}
-	}
-	// 加入已经投票的
+	// 更新投票记录
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计总票数
@@ -387,34 +316,25 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		cur.Status = auty.AutonomyStatusTmintPropProject
 		ty = auty.TyLogTmintPropProject
 	}
-	value = types.Encode(&cur)
-	kv = append(kv, &types.KeyValue{Key: key, Value: value})
+	kv = append(kv, &types.KeyValue{Key: key, Value: types.Encode(cur)})
 
 	// 更新VotesRecord
-	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(&votes)})
+	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(votes)})
 
-	receiptLog := getProjectReceiptLog(pre, &cur, int32(ty))
+	receiptLog := getProjectReceiptLog(pre, cur, int32(ty))
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*types.Receipt, error) {
-	// 获取GameID
-	value, err := a.db.Get(propProjectID(tmintProb.ProposalID))
+	cur, err := a.getProposalProject(tmintProb.ProposalID)
 	if err != nil {
-		alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get propProjectID failed",
+		alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getProposalProject failed",
 			tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
-	var cur auty.AutonomyProposalProject
-	err = types.Decode(value, &cur)
-	if err != nil {
-		alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode AutonomyProposalProject failed",
-			tmintProb.ProposalID, "err", err)
-		return nil, err
-	}
-	pre := copyAutonomyProposalProject(&cur)
+	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
 	if cur.Status == auty.AutonomyStatusTmintPropProject {
@@ -441,31 +361,6 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 		alog.Error("tmintPropProject ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
 			"in board vote period can not terminate", tmintProb.ProposalID, "err", err)
 		return nil, err
-	}
-
-	if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计票数
-		// 董事会成员验证
-		value, err = a.db.Get(activeBoardID())
-		if err != nil {
-			err = auty.ErrNoActiveBoard
-			alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get activeBoardID failed",
-				tmintProb.ProposalID, "err", err)
-			return nil, err
-		}
-		prob :=  &auty.ProposalBoard{}
-		err = types.Decode(value, prob)
-		if err != nil {
-			alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "decode ProposalBoard failed",
-				tmintProb.ProposalID, "err", err)
-			return nil, err
-		}
-		if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards  {
-			err = auty.ErrNoActiveBoard
-			alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "illegality  boards number",
-				tmintProb.ProposalID, "err", err)
-			return nil, err
-		}
-		cur.BoardVoteRes.TotalVotes = int32(len(prob.Boards))
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
@@ -518,11 +413,41 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	cur.Status = auty.AutonomyStatusTmintPropProject
 
-	kv = append(kv, &types.KeyValue{Key: propProjectID(tmintProb.ProposalID), Value: types.Encode(&cur)})
+	kv = append(kv, &types.KeyValue{Key: propProjectID(tmintProb.ProposalID), Value: types.Encode(cur)})
 
-	getProjectReceiptLog(pre, &cur, auty.TyLogTmintPropProject)
+	getProjectReceiptLog(pre, cur, auty.TyLogTmintPropProject)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func (a *action) getProposalProject(ID string) (*auty.AutonomyProposalProject, error) {
+	value, err := a.db.Get(propProjectID(ID))
+	if err != nil {
+		return nil, err
+	}
+	cur := &auty.AutonomyProposalProject{}
+	err = types.Decode(value, cur)
+	if err != nil {
+		return nil, err
+	}
+	return cur, nil
+}
+
+func (a *action) getActiveBoard() (*auty.ProposalBoard, error) {
+	value, err := a.db.Get(activeBoardID())
+	if err != nil {
+		return nil, err
+	}
+	pboard :=  &auty.ProposalBoard{}
+	err = types.Decode(value, pboard)
+	if err != nil {
+		return nil, err
+	}
+	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards  {
+		err = auty.ErrNoActiveBoard
+		return nil, err
+	}
+	return pboard, nil
 }
 
 // getProjectReceiptLog 根据提案信息获取log

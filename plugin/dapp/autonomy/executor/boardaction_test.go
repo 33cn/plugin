@@ -175,7 +175,7 @@ func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, lockAmount, account.Frozen)
+	require.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -267,10 +267,10 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 		appr bool
 	}
 	records := []record{
-		{PrivKeyA, true},
+		{PrivKeyA, false},
 		{PrivKeyB, false},
 		{PrivKeyC, true},
-		//{PrivKeyD, true},
+		{PrivKeyD, true},
 	}
 
 	for _, record := range records {
@@ -320,7 +320,7 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(lockAmount), account.Balance)
+	require.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
 	require.NoError(t, err)
