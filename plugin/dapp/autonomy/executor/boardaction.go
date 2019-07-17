@@ -18,10 +18,15 @@ import (
 const (
 	minBoards          = 3
 	maxBoards          = 30
-	lockAmount   int64 = types.Coin * 1000  // 创建者消耗金额
-	ticketPrice        = types.Coin * 3000  // 单张票价
-	participationRate int32 = 66 // 参与率以%计
-	approveRate       int32 = 66 // 赞成率以%计
+	publicPeriod       = 120960                  // 公示一周时间，以区块高度计算
+	ticketPrice        = types.Coin * 3000       // 单张票价
+	largeProjectAmount = types.Coin * 100 *10000 // 重大项目公示金额阈值
+	proposalAmount     = types.Coin * 1000       // 创建者消耗金额
+	boardAttendRatio  int32 = 66 // 董事会成员参与率，以%计，可修改
+	boardApproveRatio int32 = 66 // 董事会成员赞成率，以%计，可修改
+	pubAttendRatio    int32 = 50 // 全体持票人参与率，以%计
+	pubApproveRatio   int32 = 50 // 全体持票人赞成率，以%计
+	pubOpposeRatio    int32 = 33 // 全体持票人否决率，以%计
 )
 
 type action struct {
@@ -62,11 +67,11 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 			return nil, err
 		}
 	} else {// 载入系统默认值
-		rule.BoardAttendProb = participationRate
-		rule.BoardPassProb = approveRate
-		rule.OpposeProb = opposeRate
-		rule.ProposalAmount = lockAmount
-		rule.PubAmountThreshold = largeAmount
+		rule.BoardAttendRatio   = boardAttendRatio
+		rule.BoardApproveRatio  = boardApproveRatio
+		rule.PubOpposeRatio     = pubOpposeRatio
+		rule.ProposalAmount     = proposalAmount
+		rule.LargeProjectAmount = largeProjectAmount
 	}
 
 	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
@@ -242,8 +247,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(cur.CurRule.OpposeProb)/100.0 {
+	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 
@@ -325,8 +330,8 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
 	}
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(cur.CurRule.OpposeProb)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false
