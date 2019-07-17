@@ -1012,7 +1012,7 @@ func (a *action) Withdraw(withdraw *types.AssetsWithdraw, tx *types.Transaction,
 	if dapp.IsDriverAddress(tx.GetRealToAddr(), a.height) || dapp.ExecAddress(withdraw.ExecName) == tx.GetRealToAddr() {
 		return acc.TransferWithdraw(tx.From(), tx.GetRealToAddr(), withdraw.Amount)
 	}
-	return nil, types.ErrActionNotSupport
+	return nil, types.ErrToAddrNotSameToExecAddr
 }
 
 func (a *action) TransferToExec(transfer *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -1029,5 +1029,5 @@ func (a *action) TransferToExec(transfer *types.AssetsTransferToExec, tx *types.
 	if dapp.IsDriverAddress(tx.GetRealToAddr(), a.height) || dapp.ExecAddress(transfer.ExecName) == tx.GetRealToAddr() {
 		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
 	}
-	return nil, types.ErrActionNotSupport
+	return nil, types.ErrToAddrNotSameToExecAddr
 }
