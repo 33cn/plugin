@@ -75,7 +75,7 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 }
 
 func (client *client) checkCommitTxSuccess(detail *types.BlockDetail) {
-	if !client.isCaughtUp || !client.commitMsgClient.isSendingCommitMsg(){
+	if !client.isCaughtUp || !client.commitMsgClient.isSendingCommitMsg() {
 		return
 	}
 
