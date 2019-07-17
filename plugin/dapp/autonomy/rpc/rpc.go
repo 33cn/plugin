@@ -147,3 +147,64 @@ func (c *channelClient) terminateProposalProject(ctx context.Context, head *auty
 	}
 	return &types.UnsignTx{Data: data}, nil
 }
+
+// Proposal Rule 相关的接口
+func (c *channelClient) propRule(ctx context.Context, head *auty.ProposalRule) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionPropRule,
+		Value: &auty.AutonomyAction_PropRule{PropRule: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) revokeProposalRule(ctx context.Context, head *auty.RevokeProposalRule) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionRvkPropRule,
+		Value: &auty.AutonomyAction_RvkPropRule{RvkPropRule: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) voteProposalRule(ctx context.Context, head *auty.VoteProposalRule) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionVotePropRule,
+		Value: &auty.AutonomyAction_VotePropRule{VotePropRule: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}
+
+func (c *channelClient) terminateProposalRule(ctx context.Context, head *auty.TerminateProposalRule) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionTmintPropRule,
+		Value: &auty.AutonomyAction_TmintPropRule{TmintPropRule: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}

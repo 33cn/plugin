@@ -95,7 +95,6 @@ func delProjectHeightIndex(res *auty.ReceiptProposalProject) (kvs []*types.KeyVa
 	return kvs
 }
 
-// getProposalBoard
 func (a *Autonomy) getProposalProject(req *auty.ReqQueryProposalProject) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam

@@ -3,3 +3,210 @@
 // license that can be found in the LICENSE file.
 
 package commands
+
+import (
+	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
+	"github.com/spf13/cobra"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+)
+
+// ProposalRuleCmd 创建提案命令
+func ProposalRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proposalRule",
+		Short: "create proposal Rule",
+		Run:   proposalRule,
+	}
+	addProposalRuleFlags(cmd)
+	return cmd
+}
+
+func addProposalRuleFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("year", "y", 0, "year")
+	cmd.Flags().Int32P("month", "m", 0, "month")
+	cmd.Flags().Int32P("day", "d", 0, "day")
+	cmd.Flags().Int64P("startBlock", "s", 0, "start block height")
+	cmd.MarkFlagRequired("startBlock")
+	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
+	cmd.MarkFlagRequired("endBlock")
+
+	// 可修改规则
+	cmd.Flags().Int32P("boardAttendRatio", "attend", 0, "board attend ratio(unit is %)")
+	cmd.Flags().Int32P("boardApproveRatio", "approve", 0, "board approve ratio(unit is %)")
+	cmd.Flags().Int32P("pubOpposeRatio", "oppose", 0, "public oppose ratio(unit is %)")
+	cmd.Flags().Int64P("proposalAmount", "pa", 0, "proposal cost amount")
+	cmd.Flags().Int64P("largeProjectAmount", "la", 0, "large project amount threshold")
+}
+
+func proposalRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	year, _ := cmd.Flags().GetInt32("year")
+	month, _ := cmd.Flags().GetInt32("month")
+	day, _ := cmd.Flags().GetInt32("day")
+
+	startBlock, _ := cmd.Flags().GetInt64("startBlock")
+	endBlock, _ := cmd.Flags().GetInt64("endBlock")
+
+	boardAttendRatio, _ := cmd.Flags().GetInt32("boardAttendRatio")
+	boardApproveRatio, _ := cmd.Flags().GetInt32("boardApproveRatio")
+	pubOpposeRatio, _ := cmd.Flags().GetInt32("pubOpposeRatio")
+
+	proposalAmount, _ := cmd.Flags().GetInt64("proposalAmount")
+	largeProjectAmount, _ := cmd.Flags().GetInt64("largeProjectAmount")
+
+	params := &auty.ProposalRule{
+		Year:  year,
+		Month: month,
+		Day:     day,
+		RuleCfg:    &auty.RuleConfig{
+			BoardAttendRatio: boardAttendRatio,
+			BoardApproveRatio: boardApproveRatio,
+			PubOpposeRatio: pubOpposeRatio,
+			ProposalAmount: proposalAmount * types.Coin,
+			LargeProjectAmount: largeProjectAmount * types.Coin,
+		},
+		StartBlockHeight:  startBlock,
+		EndBlockHeight: endBlock,
+	}
+
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PropRuleTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// RevokeProposalRuleCmd 撤销提案
+func RevokeProposalRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "revokeRule",
+		Short: "revoke proposal Rule",
+		Run:   revokeProposalRule,
+	}
+	addRevokeProposalRuleFlags(cmd)
+	return cmd
+}
+
+func addRevokeProposalRuleFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+}
+
+func revokeProposalRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ID, _ := cmd.Flags().GetString("proposalID")
+
+	params := &auty.RevokeProposalRule{
+		ProposalID:     ID,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalRuleTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// VoteProposalRuleCmd 投票提案
+func VoteProposalRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "voteRule",
+		Short: "vote proposal Rule",
+		Run:   voteProposalRule,
+	}
+	addVoteProposalRuleFlags(cmd)
+	return cmd
+}
+
+func addVoteProposalRuleFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+	cmd.Flags().BoolP("approve", "ap", true, "is approve, default true")
+}
+
+func voteProposalRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ID, _ := cmd.Flags().GetString("proposalID")
+	approve, _ := cmd.Flags().GetBool("approve")
+
+	params := &auty.VoteProposalRule{
+		ProposalID:     ID,
+		Approve: approve,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalRuleTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// TerminateProposalRule 终止提案
+func TerminateProposalRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "terminateRule",
+		Short: "terminate proposal Rule",
+		Run:   terminateProposalRule,
+	}
+	addTerminateProposalRuleFlags(cmd)
+	return cmd
+}
+
+func addTerminateProposalRuleFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+}
+
+func terminateProposalRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ID, _ := cmd.Flags().GetString("proposalID")
+
+	params := &auty.RevokeProposalRule{
+		ProposalID:     ID,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalRuleTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// ShowProposalRuleCmd 显示提案查询信息
+func ShowProposalRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showInfo",
+		Short: "show proposal Rule info",
+		Run:   showProposalRule,
+	}
+	addShowProposalRuleflags(cmd)
+	return cmd
+}
+
+func addShowProposalRuleflags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("type", "t", 0, "type")
+	cmd.MarkFlagRequired("type")
+
+	cmd.Flags().Uint32P("status", "s", 0, "status")
+	cmd.Flags().Int32P("count", "c", 0, "count")
+	cmd.Flags().Int32P("direction", "d", 0, "direction")
+	cmd.Flags().Int64P("index", "i", 0, "index")
+}
+
+func showProposalRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	typ, _ := cmd.Flags().GetUint32("type")
+	status, _ := cmd.Flags().GetUint32("status")
+	count, _ := cmd.Flags().GetInt32("count")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	index, _ := cmd.Flags().GetInt64("index")
+
+	var params rpctypes.Query4Jrpc
+	var rep interface{}
+	params.Execer = auty.AutonomyX
+	if 0 == typ {
+		req := auty.ReqQueryProposalRule{
+			Status:    int32(status),
+			Count:     count,
+			Direction: direction,
+			Index:     index,
+		}
+		params.FuncName = auty.GetProposalRule
+		params.Payload = types.MustPBToJSON(&req)
+		rep = &auty.ReplyQueryProposalRule{}
+	}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
+}

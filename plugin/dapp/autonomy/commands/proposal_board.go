@@ -32,6 +32,25 @@ func AutonomyCmd() *cobra.Command {
 		ShowProposalBoardCmd(),
 	)
 
+	// project
+	cmd.AddCommand(
+		ProposalProjectCmd(),
+		RevokeProposalProjectCmd(),
+		VoteProposalProjectCmd(),
+		PubVoteProposalProjectCmd(),
+		TerminateProposalProjectCmd(),
+		ShowProposalProjectCmd(),
+	)
+
+	// rule
+	cmd.AddCommand(
+		ProposalRuleCmd(),
+		RevokeProposalRuleCmd(),
+		VoteProposalRuleCmd(),
+		TerminateProposalRuleCmd(),
+		ShowProposalRuleCmd(),
+	)
+
 	return cmd
 }
 
@@ -67,7 +86,7 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
-	boardstr, _ := cmd.Flags().GetString("gameName")
+	boardstr, _ := cmd.Flags().GetString("boards")
 
 	boards := strings.Split(boardstr, "-")
 
@@ -113,7 +132,7 @@ func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// RevokeProposalBoardCmd 撤销提案
+// VoteProposalBoardCmd 投票提案
 func VoteProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "voteBoard",
@@ -144,7 +163,7 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// TerminateProposalBoard 撤销提案
+// TerminateProposalBoard 终止提案
 func TerminateProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terminateBoard",

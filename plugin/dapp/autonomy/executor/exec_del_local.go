@@ -55,3 +55,24 @@ func (a *Autonomy) ExecDelLocal_PubVotePropProject(payload *auty.PubVoteProposal
 func (a *Autonomy) ExecDelLocal_TmintPropProject(payload *auty.TerminateProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalProject(receiptData)
 }
+
+// 提案规则相关
+// ExecDelLocal_PropRule 创建提案规则
+func (a *Autonomy) ExecDelLocal_PropRule(payload *auty.ProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalRule(receiptData)
+}
+
+// ExecDelLocal_RvkPropRule 撤销提案规则
+func (a *Autonomy) ExecDelLocal_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+	return a.execDelLocalRule(receiptData)
+}
+
+// ExecDelLocal_VotePropRule 投票提案规则
+func (a *Autonomy) ExecDelLocal_VotePropRule(payload *auty.VoteProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalRule(receiptData)
+}
+
+// ExecDelLocal_TmintPropRule 终止提案规则
+func (a *Autonomy) ExecDelLocal_TmintPropRule(payload *auty.TerminateProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalRule(receiptData)
+}

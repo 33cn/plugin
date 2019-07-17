@@ -18,3 +18,8 @@ func (a *Autonomy) Query_GetProposalBoard(in *auty.ReqQueryProposalBoard) (types
 func (a *Autonomy) Query_GetProposalProject(in *auty.ReqQueryProposalProject) (types.Message, error) {
 	return a.getProposalProject(in)
 }
+
+// Query_GetProposalRule 查询提案规则
+func (a *Autonomy) Query_GetProposalRule(in *auty.ReqQueryProposalRule) (types.Message, error) {
+	return a.getProposalRule(in)
+}

@@ -8,25 +8,24 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"fmt"
 )
 
-func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	var set []*types.KeyValue
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
-		case auty.TyLogPropBoard,
-			auty.TyLogRvkPropBoard,
-			auty.TyLogVotePropBoard,
-			auty.TyLogTmintPropBoard:
+		case auty.TyLogPropRule,
+			auty.TyLogRvkPropRule,
+			auty.TyLogVotePropRule,
+			auty.TyLogTmintPropRule:
 			{
-				var receipt auty.ReceiptProposalBoard
+				var receipt auty.ReceiptProposalRule
 				err := types.Decode(log.Log, &receipt)
 				if err != nil {
 					return nil, err
 				}
-				kv := saveBoardHeightIndex(&receipt)
+				kv := saveRuleHeightIndex(&receipt)
 				set = append(set, kv...)
 			}
 		default:
@@ -37,38 +36,38 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 	return dbSet, nil
 }
 
-func saveBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
+func saveRuleHeightIndex(res *auty.ReceiptProposalRule) (kvs []*types.KeyValue) {
 	// 先将之前的状态删除掉，再做更新
 	if res.Current.Status > 1 {
 		kv := &types.KeyValue{}
-		kv.Key = calcBoardKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
+		kv.Key = calcRuleKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
 		kv.Value = nil
 		kvs = append(kvs, kv)
 	}
 
 	kv := &types.KeyValue{}
-	kv.Key = calcBoardKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
+	kv.Key = calcRuleKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
 	kv.Value = types.Encode(res.Current)
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	var set []*types.KeyValue
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
-		case auty.TyLogPropBoard,
-			auty.TyLogRvkPropBoard,
-			auty.TyLogVotePropBoard,
-			auty.TyLogTmintPropBoard:
+		case auty.TyLogPropRule,
+			auty.TyLogRvkPropRule,
+			auty.TyLogVotePropRule,
+			auty.TyLogTmintPropRule:
 			{
-				var receipt auty.ReceiptProposalBoard
+				var receipt auty.ReceiptProposalRule
 				err := types.Decode(log.Log, &receipt)
 				if err != nil {
 					return nil, err
 				}
-				kv := delBoardHeightIndex(&receipt)
+				kv := delRuleHeightIndex(&receipt)
 				set = append(set, kv...)
 			}
 		default:
@@ -79,22 +78,22 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 	return dbSet, nil
 }
 
-func delBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
+func delRuleHeightIndex(res *auty.ReceiptProposalRule) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
-	kv.Key = calcBoardKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
+	kv.Key = calcRuleKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
 	kv.Value = nil
 	kvs = append(kvs, kv)
 
 	if res.Current.Status > 1 {
 		kv := &types.KeyValue{}
-		kv.Key = calcBoardKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
+		kv.Key = calcRuleKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
 		kv.Value = types.Encode(res.Prev)
 		kvs = append(kvs, kv)
 	}
 	return kvs
 }
 
-func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
+func (a *Autonomy) getProposalRule(req *auty.ReqQueryProposalRule) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -107,9 +106,9 @@ func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mess
 		key = nil
 	} else { //翻页查找指定的txhash列表
 		heightstr := genHeightIndexStr(req.GetIndex())
-		key    = calcBoardKey4StatusHeight(req.Status, heightstr)
+		key    = calcRuleKey4StatusHeight(req.Status, heightstr)
 	}
-	prefix := calcBoardKey4StatusHeight(req.Status, "")
+	prefix := calcRuleKey4StatusHeight(req.Status, "")
 	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
 	if err != nil {
 		return nil, err
@@ -118,18 +117,14 @@ func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mess
 		return nil, types.ErrNotFound
 	}
 
-	var rep auty.ReplyQueryProposalBoard
+	var rep auty.ReplyQueryProposalRule
 	for _, value := range values {
-		prop := &auty.AutonomyProposalBoard{}
+		prop := &auty.AutonomyProposalRule{}
 		err = types.Decode(value, prop)
 		if err != nil {
 			return nil, err
 		}
-		rep.ProBoards = append(rep.ProBoards, prop)
+		rep.PropRules = append(rep.PropRules, prop)
 	}
 	return &rep, nil
-}
-
-func genHeightIndexStr(index int64) string {
-	return fmt.Sprintf("%018d", index)
 }

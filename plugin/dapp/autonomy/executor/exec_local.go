@@ -46,7 +46,33 @@ func (a *Autonomy) ExecLocal_VotePropProject(payload *auty.VoteProposalProject, 
 	return a.execLocalProject(receiptData)
 }
 
+// ExecLocal_PubVotePropProject 全体投票提案项目
+func (a *Autonomy) ExecLocal_PubVotePropProject(payload *auty.PubVoteProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execLocalProject(receiptData)
+}
+
 // ExecLocal_TmintPropProject 终止提案项目
 func (a *Autonomy) ExecLocal_TmintPropProject(payload *auty.TerminateProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execLocalProject(receiptData)
+}
+
+// 提案规则相关
+// ExecLocal_PropRule 创建提案规则
+func (a *Autonomy) ExecLocal_PropRule(payload *auty.ProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execLocalRule(receiptData)
+}
+
+// ExecLocal_RvkPropRule 撤销提案规则
+func (a *Autonomy) ExecLocal_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+	return a.execLocalRule(receiptData)
+}
+
+// ExecLocal_VotePropRule 投票提案规则
+func (a *Autonomy) ExecLocal_VotePropRule(payload *auty.VoteProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execLocalRule(receiptData)
+}
+
+// ExecLocal_TmintPropRule 终止提案规则
+func (a *Autonomy) ExecLocal_TmintPropRule(payload *auty.TerminateProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execLocalRule(receiptData)
 }
