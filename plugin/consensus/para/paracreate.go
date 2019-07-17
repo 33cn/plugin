@@ -75,7 +75,7 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 }
 
 func (client *client) checkCommitTxSuccess(detail *types.BlockDetail) {
-	if !client.isCaughtUp {
+	if !client.isCaughtUp || !client.commitMsgClient.isSendingCommitMsg(){
 		return
 	}
 
@@ -87,7 +87,6 @@ func (client *client) checkCommitTxSuccess(detail *types.BlockDetail) {
 		}
 	}
 
-	//return txMap[string(targetTx.Hash())]
 	client.commitMsgClient.checkSendingTxDone(txMap)
 
 }
@@ -220,6 +219,7 @@ func (client *client) getLastLocalBlockSeq() (int64, []byte, error) {
 		}
 	}
 
+	plog.Info("Parachain getLastLocalBlockSeq from block")
 	//说明localDb获取存在错误，从chain获取
 	mainSeq, chainBlock, err := client.getLastBlockMainInfo()
 	if err != nil {
@@ -474,7 +474,7 @@ func (client *client) CreateBlock() {
 		}
 
 		if err != nil {
-			plog.Error("para DownloadBlocks", "type", mainBlock.Seq.Type, "err", err.Error())
+			plog.Error("para CreateBlock", "type", mainBlock.Seq.Type, "err", err.Error())
 			time.Sleep(time.Second)
 			continue
 		}
