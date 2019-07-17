@@ -11,16 +11,12 @@ import (
 
 )
 
-const (
-	ruleAttendRate  = 50 // 提案规则修改参与率
-	ruleApproveRate = 50 // 提案规则修改赞成率
-)
 
 
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendProb <= 0 && prob.RuleCfg.BoardPassProb <= 0  &&
-	   prob.RuleCfg.OpposeProb <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.PubAmountThreshold <= 0 {
+	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0  &&
+	   prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 {
 		return  nil, types.ErrInvalidParam
 	}
 
@@ -38,28 +34,31 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 			return nil, err
 		}
 	} else {// 载入系统默认值
-	    rule.BoardAttendProb = participationRate
-	    rule.BoardPassProb = approveRate
-	    rule.OpposeProb = opposeRate
-	    rule.ProposalAmount = lockAmount
-	    rule.PubAmountThreshold = largeAmount
+		rule.BoardAttendRatio   = boardAttendRatio
+		rule.BoardApproveRatio  = boardApproveRatio
+		rule.PubOpposeRatio     = pubOpposeRatio
+		rule.ProposalAmount     = proposalAmount
+		rule.LargeProjectAmount = largeProjectAmount
 	}
-	if prob.RuleCfg.BoardAttendProb > 0 {
-		rule.BoardAttendProb = prob.RuleCfg.BoardAttendProb
+	if prob.RuleCfg.BoardAttendRatio > 0 {
+		rule.BoardAttendRatio = prob.RuleCfg.BoardAttendRatio
 	}
-	if prob.RuleCfg.BoardPassProb > 0  {
-		rule.BoardPassProb = prob.RuleCfg.BoardPassProb
+	if prob.RuleCfg.BoardApproveRatio > 0  {
+		rule.BoardApproveRatio = prob.RuleCfg.BoardApproveRatio
+	}
+	if prob.RuleCfg.PubOpposeRatio > 0 {
+		rule.BoardApproveRatio = prob.RuleCfg.PubOpposeRatio
 	}
 	if prob.RuleCfg.ProposalAmount > 0{
 		rule.ProposalAmount = prob.RuleCfg.ProposalAmount
 	}
-	if prob.RuleCfg.PubAmountThreshold > 0 {
-		rule.PubAmountThreshold = prob.RuleCfg.PubAmountThreshold
+	if prob.RuleCfg.LargeProjectAmount > 0 {
+		rule.LargeProjectAmount = prob.RuleCfg.LargeProjectAmount
 	}
 
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
-		alog.Error("propRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", lockAmount)
+		alog.Error("propRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", rule.ProposalAmount)
 		return nil, err
 	}
 
@@ -132,9 +131,9 @@ func (a *action) rvkPropRule(rvkProb *auty.RevokeProposalRule) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.Rule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", lockAmount, "err", err)
+		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.Rule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -232,8 +231,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >= float32(ruleAttendRate)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(ruleApproveRate)/100.0 {
+	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropRule.RealEndBlockHeight = a.height
 
@@ -315,8 +314,8 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
 	}
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(ruleAttendRate)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(ruleApproveRate)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false

@@ -12,12 +12,6 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
-const (
-	largeAmount  = types.Coin * 100 *10000 // 重大项目金额阈值
-	publicPeriod = 120960                  // 公示一周时间，以区块高度计算
-	opposeRate   int32 = 33                // 反对率以%计
-)
-
 
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
 	if err := address.CheckAddress(prob.ToAddr); err != nil {
@@ -58,11 +52,11 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 			return nil, err
 		}
 	} else {// 载入系统默认值
-		rule.BoardAttendProb = participationRate
-		rule.BoardPassProb = approveRate
-		rule.OpposeProb = opposeRate
-		rule.ProposalAmount = lockAmount
-		rule.PubAmountThreshold = largeAmount
+		rule.BoardAttendRatio   = boardAttendRatio
+		rule.BoardApproveRatio  = boardApproveRatio
+		rule.PubOpposeRatio     = pubOpposeRatio
+		rule.ProposalAmount     = proposalAmount
+		rule.LargeProjectAmount = largeProjectAmount
 	}
 
 	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
@@ -78,7 +72,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	kv = append(kv, receipt.KV...)
 
 	var isPubVote bool
-	if prob.Amount >= rule.PubAmountThreshold {
+	if prob.Amount >= rule.LargeProjectAmount {
 		isPubVote = true
 	}
 	cur := &auty.AutonomyProposalProject{
@@ -242,8 +236,8 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardPassProb)/100.0 {
+	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendRatio)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
 		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
@@ -373,7 +367,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	var kv []*types.KeyValue
 
 	if cur.PubVote.TotalVotes != 0 &&
-	   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(opposeRate) {
+	   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(cur.CurRule.PubOpposeRatio) {
 		cur.PubVote.PubPass = false
 		cur.PropProject.RealEndBlockHeight = a.height
 
@@ -476,8 +470,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendProb)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardPassProb)/100.0 {
+		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendRatio)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
@@ -493,7 +487,7 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 			cur.PubVote.TotalVotes = int32(account.Balance/ticketPrice)
 		}
 		if cur.PubVote.TotalVotes != 0 &&
-		   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(opposeRate) {
+		   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(cur.CurRule.PubOpposeRatio) {
 		   	cur.PubVote.PubPass = false
 		}
 	}

@@ -33,14 +33,14 @@ message VotesRecord {
 }
 
 message RuleConfig {
-    // 参与率,以%为单位,只保留整数部分
-    int32 boardAttendProb    = 1;
-    // 通过率
-    int32 boardPassProb      = 2;
-    // 否决率
-    int32 opposeProb         = 3;
+    // 董事会成员参与率,以%为单位,只保留整数部分
+    int32 boardAttendRatio    = 1;
+    // 董事会成员赞成率
+    int32 boardApproveRatio   = 2;
+    // 全体持票人否决率
+    int32 pubOpposeRatio      = 3;
     // 提案金额
-    int64 proposalAmount     = 4;
-    // 公示金额阈值
-    int64 pubAmountThreshold = 5;
+    int64 proposalAmount      = 4;
+    // 重大项目公示金额阈值
+    int64 largeProjectAmount  = 5;
 }
