@@ -180,3 +180,58 @@ func TestFixV1(t *testing.T) {
 		})
 	}
 }
+
+// 查询可提币量， 和当前时间有关， 如对应节点时间不对， 查询结果也不对
+func TestLeftV2(t *testing.T) {
+	cases := []struct {
+		start         int64
+		now           int64
+		period        int64
+		total         int64
+		tenThousandth int64
+		expect        int64
+	}{
+		{1561607389, 1561607389 + 500000, 67200, 11111130, 1, 11102244},
+		{1561607389, -156107389 + 500000, 67200, 11111130, 1, 11111130},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run("test LeftProportionV2", func(t *testing.T) {
+			create := pty.UnfreezeCreate{
+				StartTime:   c.start,
+				AssetExec:   "coins",
+				AssetSymbol: "bty",
+				TotalCount:  c.total,
+				Beneficiary: "x",
+				Means:       pty.LeftProportionX,
+				MeansOpt: &pty.UnfreezeCreate_LeftProportion{
+					LeftProportion: &pty.LeftProportion{
+						Period:        c.period,
+						TenThousandth: c.tenThousandth,
+					},
+				},
+			}
+			u := &pty.Unfreeze{
+				TotalCount: c.total,
+				Means:      pty.LeftProportionX,
+				StartTime:  c.start,
+				MeansOpt: &pty.Unfreeze_LeftProportion{
+					LeftProportion: &pty.LeftProportion{
+						Period:        c.period,
+						TenThousandth: c.tenThousandth,
+					},
+				},
+			}
+			m := leftProportion{}
+			u, err := m.setOpt(u, &create)
+			assert.Nil(t, err)
+
+			f, err := m.calcFrozen(u, c.now)
+			assert.Nil(t, err)
+
+			assert.Equal(t, c.expect, f)
+
+		})
+	}
+}
