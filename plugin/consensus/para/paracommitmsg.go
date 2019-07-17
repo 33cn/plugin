@@ -120,7 +120,7 @@ func (client *commitMsgClient) procSendTx() {
 
 	//1.如果是在主链共识场景，共识高度可能大于平行链的链高度
 	//2.已发送，未共识场景
-	if chainHeight < consensHeight || client.sendingHeight > consensHeight{
+	if chainHeight < consensHeight || client.sendingHeight > consensHeight {
 		return
 	}
 
@@ -508,7 +508,7 @@ func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint3
 			client.clearSendingTx()
 			return 0
 		}
-		return consensStopTimes+1
+		return consensStopTimes + 1
 	}
 
 	return 0
