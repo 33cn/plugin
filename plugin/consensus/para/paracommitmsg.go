@@ -161,6 +161,12 @@ func (client *commitMsgClient) isSync() bool {
 	}
 
 	if atomic.LoadInt32(&client.isRollBack) == 1 {
+		plog.Info("para is not Sync", "isRollBack", atomic.LoadInt32(&client.isRollBack))
+		return false
+	}
+
+	if atomic.LoadInt32(&client.paraClient.isCaughtUp) != 1 {
+		plog.Info("para is not Sync", "isCaughtUp", atomic.LoadInt32(&client.paraClient.isCaughtUp))
 		return false
 	}
 
@@ -531,14 +537,6 @@ out:
 					continue
 				}
 				isSync = true
-			}
-
-			client.paraClient.mtx.Lock()
-			isCaughtUp := client.paraClient.isCaughtUp
-			client.paraClient.mtx.Unlock()
-			if !isCaughtUp {
-				plog.Debug("getConsensusHeight para is CatchingUp")
-				continue
 			}
 
 			block, err := client.paraClient.getLastBlockInfo()
