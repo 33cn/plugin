@@ -458,7 +458,9 @@ func (client *client) CreateBlock() {
 				plog.Info("Delete empty block")
 			}
 			err = client.delLocalBlock(lastBlock.Height)
-			//client.DelBlock(lastBlock.Height,0)
+
+			client.NotifyLocalChange()
+
 		} else if mainBlock.Seq.Type == addAct {
 			if len(txs) == 0 {
 				if lastSeqMainHeight-lastBlock.MainHeight < emptyBlockInterval {
@@ -468,6 +470,8 @@ func (client *client) CreateBlock() {
 				plog.Info("Create empty block")
 			}
 			err = client.createLocalBlock(lastBlock, txs, mainBlock)
+
+			client.NotifyLocalChange()
 
 		} else {
 			err = types.ErrInvalidParam
