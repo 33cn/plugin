@@ -17,3 +17,7 @@ func calcTitleHeightKey(title string, height int64) []byte {
 func calcTitleLastHeightKey(title string) []byte {
 	return []byte(fmt.Sprintf("%s-TLH-%s", types.ConsensusParaTxsPrefix, title))
 }
+
+func calcTitleFirstHeightKey(title string) []byte {
+	return []byte(fmt.Sprintf("%s-TFH-%s", types.ConsensusParaTxsPrefix, title))
+}
