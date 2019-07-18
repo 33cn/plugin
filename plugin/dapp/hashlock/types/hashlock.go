@@ -100,11 +100,10 @@ func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
 	}
 
 	v := &HashlockLock{
-		Amount:        parm.Amount,
-		Time:          parm.Time,
-		Hash:          common.Sha256([]byte(parm.Secret)),
-		ToAddress:     parm.ToAddr,
-		ReturnAddress: parm.ReturnAddr,
+		Amount:    parm.Amount,
+		Time:      parm.Time,
+		Hash:      common.Sha256([]byte(parm.Secret)),
+		ToAddress: parm.ToAddr,
 	}
 	lock := &HashlockAction{
 		Ty:    HashlockActionLock,

@@ -22,15 +22,6 @@ func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, in
 		clog.Warn("hashlock checkaddress")
 		return nil, err
 	}
-	if err := address.CheckAddress(hlock.ReturnAddress); err != nil {
-		clog.Warn("hashlock checkaddress")
-		return nil, err
-	}
-	if hlock.ReturnAddress != tx.From() {
-		clog.Warn("hashlock return address")
-		return nil, pty.ErrHashlockReturnAddrss
-	}
-
 	if hlock.Time <= minLockTime {
 		clog.Warn("exec hashlock time not enough")
 		return nil, pty.ErrHashlockTime

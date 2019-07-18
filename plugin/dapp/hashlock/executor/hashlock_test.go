@@ -86,7 +86,7 @@ func init() {
 	addrexec = address.ExecAddress("hashlock")
 }
 
-func estInitAccount(t *testing.T) {
+func testInitAccount(t *testing.T) {
 	fmt.Println("TestInitAccount start")
 	defer fmt.Println("TestInitAccount end")
 
@@ -132,7 +132,7 @@ func estInitAccount(t *testing.T) {
 	currBalanceB = defaultAmount
 }
 
-func estHashlock(t *testing.T) {
+func testHashlock(t *testing.T) {
 
 	fmt.Println("TestHashlock start")
 	defer fmt.Println("TestHashlock end")
@@ -185,7 +185,7 @@ func estHashlock(t *testing.T) {
 	fmt.Println("QueryHashlock =", hashlockquery)
 }
 
-func estHashunlock(t *testing.T) {
+func testHashunlock(t *testing.T) {
 	fmt.Println("TestHashunlock start")
 	defer fmt.Println("TestHashunlock end")
 	//not success as time not enough
@@ -284,7 +284,7 @@ func estHashunlock(t *testing.T) {
 	fmt.Println("QueryHashlock =", hashlockquery)
 }
 
-func estHashsend(t *testing.T) {
+func testHashsend(t *testing.T) {
 	fmt.Println("TestHashsend start")
 	defer fmt.Println("TestHashsend end")
 	//lock it again &send failed as secret is not right
@@ -387,7 +387,7 @@ func estHashsend(t *testing.T) {
 }
 
 func lock(secret []byte) error {
-	vlock := &hlt.HashlockAction_Hlock{Hlock: &hlt.HashlockLock{Amount: lockAmount, Time: int64(locktime), Hash: common.Sha256(secret), ToAddress: addr[accountindexB], ReturnAddress: addr[accountindexA]}}
+	vlock := &hlt.HashlockAction_Hlock{Hlock: &hlt.HashlockLock{Amount: lockAmount, Time: int64(locktime), Hash: common.Sha256(secret), ToAddress: addr[accountindexB]}}
 	//fmt.Println(vlock)
 	transfer := &hlt.HashlockAction{Value: vlock, Ty: hlt.HashlockActionLock}
 	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: addr[accountindexB]}

@@ -16,7 +16,7 @@ message HashlockLock {
     int64  time          = 2;
     bytes  hash          = 3;
     string toAddress     = 4;
-    string returnAddress = 5;
+   // string returnAddress = 5;
 }
 
 message HashlockSend {
