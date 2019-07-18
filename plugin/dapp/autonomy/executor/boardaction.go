@@ -399,6 +399,9 @@ func getReceiptLog(pre, cur *auty.AutonomyProposalBoard, ty int32) *types.Receip
 }
 
 func copyAutonomyProposalBoard(cur *auty.AutonomyProposalBoard) *auty.AutonomyProposalBoard {
+	if cur == nil {
+		return nil
+	}
 	newAut := *cur
 	newBoard := *cur.GetPropBoard()
 	newRes := *cur.GetVoteResult()

@@ -461,6 +461,9 @@ func getProjectReceiptLog(pre, cur *auty.AutonomyProposalProject, ty int32) *typ
 }
 
 func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.AutonomyProposalProject {
+	if cur == nil {
+		return nil
+	}
 	newAut := *cur
 	newProject := *cur.GetPropProject()
 	newRes := *cur.GetBoardVoteRes()

@@ -324,12 +324,21 @@ func getRuleReceiptLog(pre, cur *auty.AutonomyProposalRule, ty int32) *types.Rec
 }
 
 func copyAutonomyProposalRule(cur *auty.AutonomyProposalRule) *auty.AutonomyProposalRule {
+	if cur == nil {
+		return nil
+	}
 	newAut := *cur
-	newRule := *cur.GetPropRule()
-	newCfg := *cur.GetPropRule().GetRuleCfg()
+	newPropRule := *cur.GetPropRule()
+	var newCfg *auty.RuleConfig
+	if newPropRule.RuleCfg != nil {
+		cfg := *cur.GetPropRule().GetRuleCfg()
+		newCfg = &cfg
+	}
+	newRule := *cur.GetRule()
 	newRes := *cur.GetVoteResult()
-	newAut.PropRule = &newRule
-	newAut.PropRule.RuleCfg = &newCfg
+	newAut.PropRule = &newPropRule
+	newAut.PropRule.RuleCfg = newCfg
+	newAut.Rule = &newRule
 	newAut.VoteResult = &newRes
 	return &newAut
 }
