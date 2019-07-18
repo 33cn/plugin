@@ -14,6 +14,8 @@ import (
 
 	log "github.com/33cn/chain33/common/log/log15"
 
+	"sync/atomic"
+
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -59,7 +61,7 @@ type client struct {
 	*drivers.BaseClient
 	grpcClient      types.Chain33Client
 	execAPI         api.ExecutorAPI
-	isCaughtUp      bool
+	isCaughtUp      int32
 	commitMsgClient *commitMsgClient
 	authAccount     string
 	privateKey      crypto.PrivKey
@@ -455,9 +457,11 @@ func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error)
 	if client == nil {
 		return nil, fmt.Errorf("%s", "client not bind message queue.")
 	}
-	client.mtx.Lock()
-	caughtUp := client.isCaughtUp
-	client.mtx.Unlock()
+
+	caughtUp := false
+	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
+		caughtUp = true
+	}
 
 	return &types.IsCaughtUp{Iscaughtup: caughtUp}, nil
 }

@@ -12,6 +12,8 @@ import (
 
 	"bytes"
 
+	"sync/atomic"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
@@ -20,7 +22,7 @@ import (
 
 func (client *client) setLocalDb(set *types.LocalDBSet) error {
 	//如果追赶上主链了，则落盘
-	if client.isCaughtUp {
+	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
 		set.Txid = 1
 	}
 
@@ -75,7 +77,7 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 }
 
 func (client *client) checkCommitTxSuccess(detail *types.BlockDetail) {
-	if !client.isCaughtUp || !client.commitMsgClient.isSendingCommitMsg() {
+	if atomic.LoadInt32(&client.isCaughtUp) != 1 || !client.commitMsgClient.isSendingCommitMsg() {
 		return
 	}
 
@@ -376,20 +378,18 @@ func (client *client) RequestTx(currSeq int64, preMainBlockHash []byte) ([]*type
 		if err != nil {
 			return nil, nil, err
 		}
-		//genesis block start with seq=-1 not check
+
 		if (bytes.Equal(preMainBlockHash, blockSeq.Detail.Block.ParentHash) && blockSeq.Seq.Type == addAct) ||
 			(bytes.Equal(preMainBlockHash, blockSeq.Seq.Hash) && blockSeq.Seq.Type == delAct) {
 
 			txs := paraexec.FilterTxsForPara(types.GetTitle(), blockSeq.Detail)
 			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
 
-			client.mtx.Lock()
 			if lastSeq-currSeq > emptyBlockInterval {
-				client.isCaughtUp = false
+				atomic.StoreInt32(&client.isCaughtUp, 0)
 			} else {
-				client.isCaughtUp = true
+				atomic.StoreInt32(&client.isCaughtUp, 1)
 			}
-			client.mtx.Unlock()
 
 			return txs, blockSeq, nil
 		}
