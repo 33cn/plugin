@@ -49,7 +49,7 @@ func (client *client) CreateGenesisBlock(newblock *types.Block) error {
 func (client *client) SyncBlocks() {
 
 	client.syncInit()
-	var isSyncCaughtUp = false
+	isSyncCaughtUp := false
 	for {
 		//获取同步状态,在需要同步的情况下执行同步
 		curSyncCaughtState, err := client.syncBlocksIfNeed()
@@ -80,50 +80,50 @@ func (client *client) SyncBlocks() {
 }
 
 //获取每一轮可执行状态
-func (client *client) getNextAction() (NextActionType,*types.Block,*pt.ParaLocalDbBlock,error) {
+func (client *client) getNextAction() (NextActionType,*types.Block,*pt.ParaLocalDbBlock,int64,error) {
 	lastBlock, err := client.getLastBlockInfo()
 	if  err != nil {
         //取已执行最新区块发生错误，不做任何操作
-		return  NextActionKeep,nil,nil,err
+		return  NextActionKeep,nil,nil,-1,err
 	}
 
 	lastLocalHeight, err := client.getLastLocalHeight()
 	if  err != nil {
 		//取db中最新高度区块发生错误，不做任何操作
-		return  NextActionKeep,nil,nil,err
+		return  NextActionKeep,nil,nil,lastLocalHeight,err
 	}
 
 	if lastLocalHeight <= 0  {
 		//db中最新高度为0,不做任何操作（创世区块）
-		return  NextActionKeep,nil,nil,err
+		return  NextActionKeep,nil,nil,lastLocalHeight,err
 	} else if lastLocalHeight < lastBlock.Height {
 		//db中最新区块高度小于已执行最新区块高度,回滚
-		return NextActionRollback,lastBlock,nil,err
+		return NextActionRollback,lastBlock,nil,lastLocalHeight,err
 	} else if lastLocalHeight == lastBlock.Height {
 		localBlock, err := client.getLocalBlockByHeight(lastBlock.Height)
 		if  err != nil {
 			//取db中指定高度区块发生错误，不做任何操作
-			return  NextActionKeep,nil,nil,err
+			return  NextActionKeep,nil,nil,lastLocalHeight,err
 		}
 		if common.ToHex(localBlock.MainHash) == common.ToHex(lastBlock.MainHash)   {
 			//db中最新区块高度等于已执行最新区块高度并且hash相同,不做任何操作(已保持同步状态)
-			return  NextActionKeep,nil,nil,err
+			return  NextActionKeep,nil,nil,lastLocalHeight,err
 		} else {
 			//db中最新区块高度等于已执行最新区块高度并且hash不同,回滚
-			return NextActionRollback,lastBlock,nil,err
+			return NextActionRollback,lastBlock,nil,lastLocalHeight,err
 		}
 	} else {
 		localBlock, err := client.getLocalBlockByHeight(lastBlock.Height+1)
 		if  err != nil {
 			//取db中后一高度区块发生错误，不做任何操作
-			return  NextActionKeep,nil,nil,err
+			return  NextActionKeep,nil,nil,lastLocalHeight,err
 		}
 		if common.ToHex(localBlock.ParentMainHash) != common.ToHex(lastBlock.MainHash)  {
 			//db中后一高度区块的父hash不等于已执行最新区块的hash,回滚
-			return NextActionRollback,lastBlock,nil,err
+			return NextActionRollback,lastBlock,nil,lastLocalHeight,err
 		} else {
 			//db中后一高度区块的父hash等于已执行最新区块的hash,执行区块创建
-			return  NextActionAdd,lastBlock,localBlock,err
+			return  NextActionAdd,lastBlock,localBlock,lastLocalHeight,err
 		}
 	}
 }
@@ -132,7 +132,7 @@ func (client *client) getNextAction() (NextActionType,*types.Block,*pt.ParaLocal
 //返回参数
 //bool 是否已完成同步
 func (client *client) syncBlocksIfNeed() (bool,error) {
-	nextAction, lastBlock, localBlock, err := client.getNextAction()
+	nextAction, lastBlock, localBlock,lastLocalHeight, err := client.getNextAction()
 	if err != nil {
 		return  false,err
 	}
@@ -140,11 +140,15 @@ func (client *client) syncBlocksIfNeed() (bool,error) {
 	switch nextAction {
 	case NextActionAdd:
 		//1 db中后一高度区块的父hash等于已执行最新区块的hash
+		plog.Info("Para sync add block",
+			"lastBlock.Height",lastBlock.Height,"lastLocalHeight",lastLocalHeight)
 		return false,client.addBlock(lastBlock, localBlock)
 	case NextActionRollback:
 		//1 db中最新区块高度小于已执行最新区块高度
 		//2 db中最新区块高度等于已执行最新区块高度并且hash不同
 		//3 db中后一高度区块的父hash不等于已执行最新区块的hash
+		plog.Info("Para sync rollback block",
+			"lastBlock.Height",lastBlock.Height,"lastLocalHeight",lastLocalHeight)
 		return false,client.rollbackBlock(lastBlock)
 	default: //NextActionKeep
 	    //1 已完成同步，没有需要同步的块
@@ -159,7 +163,7 @@ func (client *client) delLocalBlocks(startHeight int64,endHeight int64) error {
 		return  errors.New("startHeight > endHeight,can't clear local blocks")
 	}
 
-	var index = startHeight
+	index := startHeight
 	set := &types.LocalDBSet{}
 	for {
 		if index > endHeight {
@@ -176,6 +180,8 @@ func (client *client) delLocalBlocks(startHeight int64,endHeight int64) error {
 	key := calcTitleFirstHeightKey(types.GetTitle())
 	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: endHeight+1})}
 	set.KV = append(set.KV, kv)
+
+	plog.Info("Para sync clear local blocks", "startHeight:",startHeight,"endHeight:",endHeight)
 
 	return client.setLocalDb(set)
 }
@@ -228,7 +234,7 @@ func (client *client) clearLocalOldBlocks() (bool,error) {
 		return  false,err
 	}
 
-	var canDelCount = lastLocalHeight - firstLocalHeight - localCacheCount + 1
+	canDelCount := lastLocalHeight - firstLocalHeight - localCacheCount + 1
 	if canDelCount <= 0 {
 		return  false,nil
 	}
@@ -378,7 +384,7 @@ func (client *client) initLocalChangeState() {
 //获取当前是否有新的下载到来,获取一次，并马上把状态设置为没有新通知
 //此函数原则上只限于此线程单元使用
 func (client *client) getAndFlipLocalChangeStateIfNeed() bool {
-	var hasLocalChange = atomic.LoadInt32(&client.localChangeAtom) == 1
+	hasLocalChange := atomic.LoadInt32(&client.localChangeAtom) == 1
 	if hasLocalChange {
 		atomic.StoreInt32(&client.localChangeAtom,0)
 	}
