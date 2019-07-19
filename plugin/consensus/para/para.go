@@ -49,6 +49,8 @@ var (
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
 	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
 	localCacheCount                 int64 = 1000  // local cache block max count
+	batchFetchSeqEnable             bool
+	batchFetchSeqNum   				int64 = 128
 )
 
 func init() {
@@ -86,6 +88,8 @@ type subConfig struct {
 	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
 	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
 	LocalCacheCount                 int64 `json:"localCacheCount,omitempty"`
+	BatchFetchSeqEnable             uint32 `json:"batchFetchSeqEnable,omitempty"`
+	BatchFetchSeqNum             	int64  `json:"batchFetchSeqNum,omitempty"`
 }
 
 // New function to init paracross env
@@ -127,6 +131,14 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.LocalCacheCount > 0 {
 		localCacheCount = subcfg.LocalCacheCount
+	}
+
+	if subcfg.BatchFetchSeqEnable > 0 {
+		batchFetchSeqEnable = true
+	}
+
+	if subcfg.BatchFetchSeqNum > 0 {
+		batchFetchSeqNum = subcfg.BatchFetchSeqNum
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)

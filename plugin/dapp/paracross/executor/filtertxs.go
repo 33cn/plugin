@@ -72,6 +72,36 @@ func filterParaTxGroup(title string, tx *types.Transaction, main *types.BlockDet
 	return main.Block.Txs[headIdx:endIdx], endIdx
 }
 
+func filterParaTxGroupPlus(title string, tx *types.Transaction, allTxs []*pt.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
+	var headIdx int
+
+	for i := index; i >= 0; i-- {
+		if bytes.Equal(tx.Header, allTxs[i].Tx.Hash()) {
+			headIdx = i
+			break
+		}
+	}
+
+	endIdx := headIdx + int(tx.GroupCount)
+	for i := headIdx; i < endIdx; i++ {
+		if types.IsPara() && blockHeight < forkHeight {
+			if types.IsSpecificParaExecName(title, string(allTxs[i].Tx.Execer)) {
+				continue
+			}
+		}
+
+		if !checkReceiptExecOk(allTxs[i].Receipt) {
+			return nil, endIdx
+		}
+	}
+	//全部是平行链交易 或平行链在主链执行成功的tx
+	var retTxs []*types.Transaction
+	for _, retTx := range allTxs[headIdx:endIdx] {
+		retTxs = append(retTxs, retTx.Tx)
+	}
+	return retTxs, endIdx
+}
+
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transaction {
 	var txs []*types.Transaction
@@ -87,6 +117,30 @@ func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transactio
 			}
 			//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
 			if main.Block.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.Receipts[i]) {
+				continue
+			}
+
+			txs = append(txs, tx)
+		}
+	}
+	return txs
+}
+
+//FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
+func FilterTxsForParaPlus(title string, main *pt.ParaTxDetail) []*types.Transaction {
+	var txs []*types.Transaction
+	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
+	for i := 0; i < len(main.TxDetails); i++ {
+		tx := main.TxDetails[i].Tx
+		if types.IsSpecificParaExecName(title, string(tx.Execer)) {
+			if tx.GroupCount >= 2 {
+				mainTxs, endIdx := filterParaTxGroupPlus(title, tx, main.TxDetails, i, main.Header.Height, forkHeight)
+				txs = append(txs, mainTxs...)
+				i = endIdx - 1
+				continue
+			}
+			//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
+			if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
 				continue
 			}
 
@@ -178,4 +232,33 @@ func CalcTxHashsHash(txHashs [][]byte) []byte {
 	totalTxHash.Hashes = append(totalTxHash.Hashes, txHashs...)
 	data := types.Encode(totalTxHash)
 	return common.Sha256(data)
+}
+
+//BlockDetail2ParaTxs blockDetail transfer to paraTxDetail
+func BlockDetail2ParaTxs(seqType int64, blockHash []byte, blockDetail *types.BlockDetail) *pt.ParaTxDetail {
+	header := &types.Header{
+		Version:    blockDetail.Block.Version,
+		ParentHash: blockDetail.Block.ParentHash,
+		TxHash:     blockDetail.Block.TxHash,
+		StateHash:  blockDetail.Block.StateHash,
+		Height:     blockDetail.Block.Height,
+		BlockTime:  blockDetail.Block.BlockTime,
+		Difficulty: blockDetail.Block.Difficulty,
+		Signature:  blockDetail.Block.Signature,
+	}
+	header.Hash = blockHash
+
+	txDetail := &pt.ParaTxDetail{
+		Type:   seqType,
+		Header: header,
+	}
+
+	for i, tx := range blockDetail.Block.Txs {
+		detail := &pt.TxDetail{
+			Tx:      tx,
+			Receipt: blockDetail.Receipts[i],
+		}
+		txDetail.TxDetails = append(txDetail.TxDetails, detail)
+	}
+	return txDetail
 }
