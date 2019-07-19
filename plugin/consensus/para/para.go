@@ -48,7 +48,7 @@ var (
 	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
 	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
-	localCacheCount                 int64 = 1000  // local cache block max count
+	localCacheCount                 int64 = 1000            // local cache block max count
 	batchFetchSeqEnable             bool
 	batchFetchSeqNum                int64 = 128
 )
@@ -71,7 +71,7 @@ type client struct {
 	mtx             sync.Mutex
 
 	syncCaughtUpAtom int32
-	localChangeAtom int32
+	localChangeAtom  int32
 }
 
 type subConfig struct {
@@ -87,7 +87,7 @@ type subConfig struct {
 	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
 	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
 	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
-	LocalCacheCount                 int64 `json:"localCacheCount,omitempty"`
+	LocalCacheCount                 int64  `json:"localCacheCount,omitempty"`
 	BatchFetchSeqEnable             uint32 `json:"batchFetchSeqEnable,omitempty"`
 	BatchFetchSeqNum                int64  `json:"batchFetchSeqNum,omitempty"`
 }
@@ -260,7 +260,7 @@ func (client *client) InitBlock() {
 }
 
 // GetStartMainHash get StartMainHash in mainchain
-func (client *client) GetStartMainHash(height int64) ([]byte) {
+func (client *client) GetStartMainHash(height int64) []byte {
 	if height <= 0 {
 		panic(fmt.Sprintf("startHeight(%d) should be more than 0 in mainchain", height))
 	}
