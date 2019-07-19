@@ -6,6 +6,7 @@ package dpos
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/33cn/chain33/common/address"
 	"os"
@@ -455,7 +456,25 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 		return nil, err
 	}
 	res = *result.(*dty.CandidatorReply)
-	return res.GetCandidators(), nil
+
+	var cands []*dty.Candidator
+	for _, val := range res.GetCandidators() {
+		bPubkey, err := hex.DecodeString(val.Pubkey)
+		if err != nil {
+			return nil, err
+		}
+
+		cand := &dty.Candidator{
+			Pubkey: bPubkey,
+			Address: val.Address,
+			Ip: val.Ip,
+			Votes: val.Votes,
+			Status: val.Status,
+		}
+
+		cands = append(cands, cand)
+	}
+	return cands, nil
 }
 
 func (client *Client)MonitorCandidators() {

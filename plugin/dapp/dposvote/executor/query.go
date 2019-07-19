@@ -33,3 +33,13 @@ func (d *DPos) Query_QueryVrfByTime(in *dty.DposVrfQuery) (types.Message, error)
 func (d *DPos) Query_QueryVrfByCycle(in *dty.DposVrfQuery) (types.Message, error) {
 	return queryVrfByCycle(d.GetLocalDB(), in)
 }
+
+//Query_QueryVrfByCycleForTopN method
+func (d *DPos) Query_QueryVrfByCycleForTopN(in *dty.DposVrfQuery) (types.Message, error) {
+	return queryVrfByCycleForTopN(d.GetLocalDB(), in)
+}
+
+//Query_QueryVrfByCycleForPubkeys method
+func (d *DPos) Query_QueryVrfByCycleForPubkeys(in *dty.DposVrfQuery) (types.Message, error) {
+	return queryVrfByCycleForPubkeys(d.GetLocalDB(), in)
+}

@@ -86,13 +86,136 @@ func queryVrfByTime(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) 
 	}
 
 	cycleInfo := calcCycleByTime(req.Timestamp)
-	req.Ty = dty.QueryVrfByTime
+	req.Ty = dty.QueryVrfByCycle
 	req.Cycle = cycleInfo.cycle
 	return queryVrfByCycle(kvdb, req)
 }
-//queryVrfByCycle 根据Cycle信息，查询TopN的受托节点的VRF信息
-func queryVrfByCycle(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) {
-	if req.Ty != dty.QueryVrfByCycle {
+
+func getJsonVrfs(vrfs [] *dty.VrfInfo) [] *dty.JsonVrfInfo{
+	var jsonVrfs [] *dty.JsonVrfInfo
+	for i := 0; i < len(vrfs); i++ {
+		jsonVrf := &dty.JsonVrfInfo{
+			Index: vrfs[i].Index,
+			Pubkey: hex.EncodeToString(vrfs[i].Pubkey),
+			Cycle: vrfs[i].Cycle,
+			Height: vrfs[i].Height,
+			M: string(vrfs[i].M),
+			R: hex.EncodeToString(vrfs[i].R),
+			P: hex.EncodeToString(vrfs[i].P),
+			Time: vrfs[i].Time,
+		}
+
+		jsonVrfs = append(jsonVrfs, jsonVrf)
+	}
+
+	return jsonVrfs
+}
+
+func getVrfInfoFromVrfRP(vrfRP *dty.DposVrfRP) *dty.VrfInfo{
+	if nil == vrfRP {
+		return nil
+	}
+
+	vrf := &dty.VrfInfo{
+		Index: vrfRP.Index,
+		Pubkey: vrfRP.Pubkey,
+		Cycle: vrfRP.Cycle,
+		Height: vrfRP.Height,
+		M: vrfRP.M,
+		R: vrfRP.R,
+		P: vrfRP.P,
+		Time: vrfRP.Time,
+	}
+
+	return vrf
+}
+
+func isRecordExist(vrfM *dty.DposVrfM, vrfs [] *dty.VrfInfo) bool {
+	if nil == vrfM || nil == vrfs || 0 == len(vrfs) {
+		return false
+	}
+
+	for i := 0; i < len(vrfs); i++ {
+		if vrfM.Cycle == vrfs[i].Cycle && bytes.Equal(vrfM.Pubkey, vrfs[i].Pubkey) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getVrfInfoFromVrfM(vrfM *dty.DposVrfM) *dty.VrfInfo{
+	if nil == vrfM {
+		return nil
+	}
+
+	vrf := &dty.VrfInfo{
+		Index: vrfM.Index,
+		Pubkey: vrfM.Pubkey,
+		Cycle: vrfM.Cycle,
+		Height: vrfM.Height,
+		M: vrfM.M,
+		Time: vrfM.Time,
+	}
+
+	return vrf
+}
+
+//queryVrfByCycleAndPubkeys 根据Cycle、Pubkeys信息，查询受托节点的VRF信息
+func queryVrfByCycleAndPubkeys(kvdb db.KVDB, pubkeys []string, cycle int64) [] *dty.VrfInfo {
+	VrfRPTable := dty.NewDposVrfRPTable(kvdb)
+	query := VrfRPTable.GetQuery(kvdb)
+
+	var tempPubkeys [] string
+	var vrfs [] *dty.VrfInfo
+	for i := 0; i < len(pubkeys); i ++ {
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", pubkeys[i], cycle)), nil, 1, 0)
+		if err != nil {
+			logger.Error("queryVrf RP failed", "pubkey", pubkeys[i], "cycle", cycle)
+			tempPubkeys = append(tempPubkeys, pubkeys[i])
+			continue
+		}
+
+		vrfRP := rows[0].Data.(*dty.DposVrfRP)
+		vrf := getVrfInfoFromVrfRP(vrfRP)
+		vrfs = append(vrfs, vrf)
+	}
+
+	if tempPubkeys == nil || len(tempPubkeys) == 0 {
+		return vrfs
+	}
+
+	vrfMTable := dty.NewDposVrfMTable(kvdb)
+	query = vrfMTable.GetQuery(kvdb)
+	for i := 0; i < len(tempPubkeys); i++ {
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", tempPubkeys[i], cycle)), nil, 1, 0)
+		if err != nil {
+			logger.Error("queryVrf M failed", "pubkey", tempPubkeys[i], "cycle", cycle)
+			continue
+		}
+
+		vrfM := rows[0].Data.(*dty.DposVrfM)
+		vrf := getVrfInfoFromVrfM(vrfM)
+		vrfs = append(vrfs, vrf)
+	}
+
+	return vrfs
+}
+
+//queryVrfByCycleForPubkeys 根据Cycle、Pubkeys信息，查询受托节点的VRF信息
+func queryVrfByCycleForPubkeys(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) {
+	if req.Ty != dty.QueryVrfByCycleForPubkeys {
+		return nil, types.ErrInvalidParam
+	}
+
+	vrfs := queryVrfByCycleAndPubkeys(kvdb, req.Pubkeys, req.Cycle)
+
+	return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
+}
+
+//queryVrfByCycleForTopN 根据Cycle信息，查询TopN的受托节点的VRF信息
+func queryVrfByCycleForTopN(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) {
+	if req.Ty != dty.QueryVrfByCycleForTopN {
 		return nil, types.ErrInvalidParam
 	}
 
@@ -107,64 +230,96 @@ func queryVrfByCycle(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error)
 		return nil, dty.ErrCandidatorNotEnough
 	}
 
+	var pubkeys []string
+	for i := 0; i < len(res.Candidators); i++ {
+		pubkeys = append(pubkeys, res.Candidators[i].Pubkey)
+		//zzh
+		logger.Info("queryVrfByCycleForTopN", "pubkey", pubkeys[i])
+	}
+
+	vrfs := queryVrfByCycleAndPubkeys(kvdb, pubkeys, req.Cycle)
+	/*
 	VrfRPTable := dty.NewDposVrfRPTable(kvdb)
 	query := VrfRPTable.GetQuery(kvdb)
 
-	var tempCands [] *dty.Candidator
+	var tempCands [] *dty.JsonCandidator
 	var vrfs [] *dty.VrfInfo
 	for i := 0; i < len(res.Candidators); i ++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", res.Candidators[i].Pubkey, req.Cycle)), nil, 1, 0)
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", res.Candidators[i].Pubkey, req.Cycle)), nil, 1, 0)
 		if err != nil {
-			logger.Error("queryVrf RP failed", "pubkey", fmt.Sprintf("%X", res.Candidators[i].Pubkey), "cycle", req.Cycle)
+			logger.Error("queryVrf RP failed", "pubkey", res.Candidators[i].Pubkey, "cycle", req.Cycle)
 			tempCands = append(tempCands, res.Candidators[i])
 			continue
 		}
 
 		vrfRP := rows[0].Data.(*dty.DposVrfRP)
-		vrf := &dty.VrfInfo{
-			Index: vrfRP.Index,
-			Pubkey: vrfRP.Pubkey,
-			Cycle: vrfRP.Cycle,
-			Height: vrfRP.Height,
-			M: vrfRP.M,
-			R: vrfRP.R,
-			P: vrfRP.P,
-			Time: vrfRP.Time,
-		}
+		vrf := getVrfInfoFromVrfRP(vrfRP)
 		vrfs = append(vrfs, vrf)
 	}
 
 	if tempCands == nil || len(tempCands) == 0 {
-		return &dty.DposVrfReply{Vrf: vrfs}, nil
+		return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
 	}
 
 	vrfMTable := dty.NewDposVrfMTable(kvdb)
 	query = vrfMTable.GetQuery(kvdb)
 	for i := 0; i < len(tempCands); i++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", tempCands[i].Pubkey, req.Cycle)), nil, 1, 0)
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", tempCands[i].Pubkey, req.Cycle)), nil, 1, 0)
 		if err != nil {
-			logger.Error("queryVrf M failed", "pubkey", fmt.Sprintf("%X", res.Candidators[i].Pubkey), "cycle", req.Cycle)
+			logger.Error("queryVrf M failed", "pubkey", res.Candidators[i].Pubkey, "cycle", req.Cycle)
 			continue
 		}
 
 		vrfM := rows[0].Data.(*dty.DposVrfM)
-		vrf := &dty.VrfInfo{
-			Index: vrfM.Index,
-			Pubkey: vrfM.Pubkey,
-			Cycle: vrfM.Cycle,
-			Height: vrfM.Height,
-			M: vrfM.M,
-			Time: vrfM.Time,
-		}
+		vrf := getVrfInfoFromVrfM(vrfM)
 		vrfs = append(vrfs, vrf)
 	}
+	*/
 
-	return &dty.DposVrfReply{Vrf: vrfs}, nil
+	return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
 }
 
+//queryVrfByCycle 根据Cycle信息，查询所有受托节点的VRF信息
+func queryVrfByCycle(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) {
+	if req.Ty != dty.QueryVrfByCycle {
+		return nil, types.ErrInvalidParam
+	}
+
+	VrfRPTable := dty.NewDposVrfRPTable(kvdb)
+	query := VrfRPTable.GetQuery(kvdb)
+
+	var vrfs [] *dty.VrfInfo
+	rows, err := query.ListIndex("cycle", []byte(fmt.Sprintf("%018d", req.Cycle)), nil, 0, 0)
+	if err != nil {
+		logger.Error("queryVrf RP failed", "cycle", req.Cycle)
+	} else {
+		for i := 0; i < len(rows); i++ {
+			vrfRP := rows[i].Data.(*dty.DposVrfRP)
+			vrf := getVrfInfoFromVrfRP(vrfRP)
+			vrfs = append(vrfs, vrf)
+		}
+	}
+
+	vrfMTable := dty.NewDposVrfMTable(kvdb)
+	query = vrfMTable.GetQuery(kvdb)
+	rows, err = query.ListIndex("cycle", []byte(fmt.Sprintf("%018d", req.Cycle)), nil, 1, 0)
+	if err != nil {
+		logger.Error("queryVrf M failed", "cycle", req.Cycle)
+	} else {
+		for i := 0; i < len(rows); i++ {
+			vrfM := rows[i].Data.(*dty.DposVrfM)
+			if !isRecordExist(vrfM, vrfs) {
+				vrf := getVrfInfoFromVrfM(vrfM)
+				vrfs = append(vrfs, vrf)
+			}
+		}
+	}
+
+	return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
+}
 //queryCands 根据候选节点的Pubkey下旬候选节点信息,得票数、状态等
 func queryCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, error) {
-	var cands []*dty.Candidator
+	var cands []*dty.JsonCandidator
 	candTable := dty.NewDposCandidatorTable(kvdb)
 	query := candTable.GetQuery(kvdb)
 
@@ -176,8 +331,8 @@ func queryCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, error) {
 		}
 
 		candInfo := rows[0].Data.(*dty.CandidatorInfo)
-		cand := &dty.Candidator{
-			Pubkey: candInfo.Pubkey,
+		cand := &dty.JsonCandidator{
+			Pubkey: strings.ToUpper(hex.EncodeToString(candInfo.Pubkey)),
 			Address: candInfo.Address,
 			Ip: candInfo.Ip,
 			Votes: candInfo.Votes,
@@ -190,7 +345,7 @@ func queryCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, error) {
 
 //queryTopNCands 查询得票数TopN的候选节点信息，包括得票数，状态等
 func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, error) {
-	var cands []*dty.Candidator
+	var cands []*dty.JsonCandidator
 	candTable := dty.NewDposCandidatorTable(kvdb)
 	query := candTable.GetQuery(kvdb)
 
@@ -199,8 +354,8 @@ func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, erro
 	if err == nil {
 		for index := 0; index < len(rows); index++ {
 			candInfo := rows[index].Data.(*dty.CandidatorInfo)
-			cand := &dty.Candidator{
-				Pubkey:  candInfo.Pubkey,
+			cand := &dty.JsonCandidator{
+				Pubkey:  strings.ToUpper(hex.EncodeToString(candInfo.Pubkey)),
 				Address: candInfo.Address,
 				Ip:      candInfo.Ip,
 				Votes:   candInfo.Votes,
@@ -220,8 +375,8 @@ func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, erro
 		if err == nil {
 			for index := 0; index < len(rows); index++ {
 				candInfo := rows[index].Data.(*dty.CandidatorInfo)
-				cand := &dty.Candidator{
-					Pubkey:  candInfo.Pubkey,
+				cand := &dty.JsonCandidator{
+					Pubkey:  strings.ToUpper(hex.EncodeToString(candInfo.Pubkey)),
 					Address: candInfo.Address,
 					Ip:      candInfo.Ip,
 					Votes:   candInfo.Votes,
@@ -239,8 +394,8 @@ func queryTopNCands(kvdb db.KVDB, req *dty.CandidatorQuery) (types.Message, erro
 		if err == nil {
 			for index := 0; index < len(rows); index++ {
 				candInfo := rows[index].Data.(*dty.CandidatorInfo)
-				cand := &dty.Candidator{
-					Pubkey:  candInfo.Pubkey,
+				cand := &dty.JsonCandidator{
+					Pubkey:  strings.ToUpper(hex.EncodeToString(candInfo.Pubkey)),
 					Address: candInfo.Address,
 					Ip:      candInfo.Ip,
 					Votes:   candInfo.Votes,
@@ -278,7 +433,7 @@ func isValidPubkey(pubkeys []string, pubkey string) bool{
 
 //queryVote 根据用户地址信息查询用户的投票情况
 func queryVote(kvdb db.KVDB, req *dty.DposVoteQuery) (types.Message, error) {
-	var voters []*dty.DposVoter
+	var voters []*dty.JsonDposVoter
 	voteTable := dty.NewDposVoteTable(kvdb)
 	query := voteTable.GetQuery(kvdb)
 
@@ -289,7 +444,14 @@ func queryVote(kvdb db.KVDB, req *dty.DposVoteQuery) (types.Message, error) {
 
 	for index := 0; index < len(rows); index++ {
 		voter := rows[index].Data.(*dty.DposVoter)
-		voters = append(voters, voter)
+		jsonVoter := &dty.JsonDposVoter{
+			FromAddr: voter.FromAddr,
+			Pubkey:  strings.ToUpper(hex.EncodeToString(voter.Pubkey)),
+			Votes:   voter.Votes,
+			Index:  voter.Index,
+			Time: voter.Time,
+		}
+		voters = append(voters, jsonVoter)
 	}
 
 	//如果不指定pubkeys，则返回所有；否则，需要判断pubkey是否为指定的值之一。
@@ -299,7 +461,7 @@ func queryVote(kvdb db.KVDB, req *dty.DposVoteQuery) (types.Message, error) {
 
 	reply := &dty.DposVoteReply{}
 	for index := 0; index < len(voters); index ++ {
-		strPubkey := hex.EncodeToString(voters[index].Pubkey)
+		strPubkey := voters[index].Pubkey
 		if isValidPubkey(req.Pubkeys, strPubkey) {
 			reply.Votes = append(reply.Votes, voters[index])
 		}
@@ -324,7 +486,7 @@ func (action *Action) getIndex() int64 {
 }
 
 //getReceiptLog 根据候选节点信息及投票信息生成收据信息
-func (action *Action) getReceiptLog(candInfo *dty.CandidatorInfo, statusChange bool,  voted bool, vote *dty.DposVote) *types.ReceiptLog {
+func (action *Action) getReceiptLog(candInfo *dty.CandidatorInfo, statusChange bool,  voteType int32, vote *dty.DposVoter) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	r := &dty.ReceiptCandicator{}
 	//r.StartIndex = can.StartIndex
@@ -347,14 +509,17 @@ func (action *Action) getReceiptLog(candInfo *dty.CandidatorInfo, statusChange b
 	r.PreStatus = candInfo.PreStatus
 	r.Address = candInfo.Address
 	r.Pubkey = candInfo.Pubkey
-	r.Voted = voted
-	if voted {
-		r.Votes = vote.Votes
-		r.FromAddr = vote.FromAddr
-		if r.Votes < 0 {
+	r.VoteType = voteType
+	switch (voteType) {
+		case dty.VoteTypeNone :
+		case dty.VoteTypeVote:
+			r.Vote = vote
+		case dty.VoteTypeCancelVote:
 			log.Ty = dty.TyLogCandicatorCancelVoted
-		}
+			r.Vote = vote
+	    case dty.VoteTypeCancelAllVote:
 	}
+
 	r.CandInfo = candInfo
 	log.Log = types.Encode(r)
 	return log
@@ -435,7 +600,7 @@ func (action *Action) Regist(regist *dty.DposCandidatorRegist) (*types.Receipt, 
 	candInfo.StartTxHash = common.ToHex(action.txhash)
 	candInfo.PreIndex = 0
 
-	receiptLog := action.getReceiptLog(candInfo, false, false, nil)
+	receiptLog := action.getReceiptLog(candInfo, false, dty.VoteTypeNone, nil)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveCandicator(candInfo)...)
 
@@ -494,8 +659,11 @@ func (action *Action) ReRegist(regist *dty.DposCandidatorRegist) (*types.Receipt
 	candInfo.Index = candInfo.StartIndex
 	candInfo.StartTxHash = common.ToHex(action.txhash)
 	candInfo.PreIndex = 0
+	candInfo.Votes = 0
+	candInfo.Voters = nil
 
-	receiptLog := action.getReceiptLog(candInfo, false, false, nil)
+	receiptLog := action.getReceiptLog(candInfo, false, dty.VoteTypeNone, nil)
+
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveCandicator(candInfo)...)
 
@@ -563,8 +731,12 @@ func (action *Action) CancelRegist(req *dty.DposCandidatorCancelRegist) (*types.
 	candInfo.Status = dty.CandidatorStatusCancelRegist
 	candInfo.PreIndex = candInfo.Index
 	candInfo.Index = action.getIndex()
+
+	receiptLog := action.getReceiptLog(candInfo, true, dty.VoteTypeCancelAllVote, nil)
+
+	candInfo.Votes = 0
 	candInfo.Voters = nil
-	receiptLog := action.getReceiptLog(candInfo, true, false, nil)
+
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveCandicator(candInfo)...)
 
@@ -596,8 +768,7 @@ func (action *Action) Vote(vote *dty.DposVote) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	logger.Info("vote", "addr", action.fromaddr, "execaddr", action.execaddr, "candicator",
-		candInfo.String())
+	logger.Info("vote", "addr", action.fromaddr, "execaddr", action.execaddr, "candicator", candInfo.String())
 
 	statusChange := false
 	if candInfo.Status == dty.CandidatorStatusRegist || candInfo.Status == dty.CandidatorStatusReRegist{
@@ -632,7 +803,7 @@ func (action *Action) Vote(vote *dty.DposVote) (*types.Receipt, error) {
 	candInfo.PreIndex = candInfo.Index
 	candInfo.Index = action.getIndex()
 
-	receiptLog := action.getReceiptLog(candInfo, statusChange, true, vote)
+	receiptLog := action.getReceiptLog(candInfo, statusChange, dty.VoteTypeVote, voter)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveCandicator(candInfo)...)
 
@@ -663,67 +834,37 @@ func (action *Action) CancelVote(vote *dty.DposCancelVote) (*types.Receipt, erro
 		return nil, types.ErrInvalidParam
 	}
 
-	logger.Info("CancelVote", "addr", action.fromaddr, "execaddr", action.execaddr, "candicator",
-		candInfo.String())
+	logger.Info("CancelVote", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey", vote.Pubkey, "index", vote.Index)
 
-
-	votes := vote.Votes
-	availVotes := int64(0)
-	enoughVotes := false
-	for _, voter := range candInfo.Voters {
-		if voter.FromAddr == action.fromaddr && bytes.Equal(voter.Pubkey, bPubkey){
-			//if action.blocktime - voter.Time >= dty.VoteFrozenTime {
-				availVotes += voter.Votes
-				if availVotes >= votes {
-					enoughVotes = true
-					break
-				}
-			//}
-		}
-	}
-	if !enoughVotes {
-		logger.Error("RevokeVote failed", "addr", action.fromaddr, "execaddr", action.execaddr, "not enough avail votes",
-			availVotes, "revoke votes", vote.Votes)
-		return nil, dty.ErrNotEnoughVotes
-	}
-
+	findVote := false
+	var oriVote *dty.DposVoter
 	for index, voter := range candInfo.Voters {
-		if voter.FromAddr == action.fromaddr && bytes.Equal(voter.Pubkey, bPubkey){
-			//if action.blocktime - voter.Time >= dty.VoteFrozenTime {
-				if voter.Votes > votes {
-					voter.Votes -= votes
-					break
-				} else if voter.Votes == votes {
-					candInfo.Voters = append(candInfo.Voters[:index], candInfo.Voters[index+1:]...)
-					break
-				} else {
-					candInfo.Voters = append(candInfo.Voters[:index], candInfo.Voters[index+1:]...)
-					votes = votes - voter.Votes
-				}
-			//}
+		if voter.FromAddr == action.fromaddr && bytes.Equal(voter.Pubkey, bPubkey) && voter.Index == vote.Index{
+			oriVote = voter
+			findVote = true
+			candInfo.Voters = append(candInfo.Voters[0:index], candInfo.Voters[index+1:]...)
+			break
 		}
 	}
 
-	checkValue := vote.Votes
-	receipt, err := action.coinsAccount.ExecActive(action.fromaddr, action.execaddr, checkValue)
+	if !findVote {
+		logger.Error("CancelVote failed", "addr", action.fromaddr, "execaddr", action.execaddr, vote.Pubkey, "index", vote.Index)
+		return nil, dty.ErrNoSuchVote
+	}
+
+	receipt, err := action.coinsAccount.ExecActive(action.fromaddr, action.execaddr, oriVote.Votes)
 	if err != nil {
-		logger.Error("ExecActive failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", checkValue, "err", err.Error())
+		logger.Error("ExecActive failed", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", oriVote.Votes, "err", err.Error())
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	candInfo.Votes -= vote.Votes
-
-	vote2 := &dty.DposVote{
-		FromAddr: action.fromaddr,
-		Pubkey: vote.Pubkey,
-		Votes: (-1) * vote.Votes,
-	}
+	candInfo.Votes -= oriVote.Votes
 	candInfo.PreIndex = candInfo.Index
 	candInfo.Index = action.getIndex()
 
-	receiptLog := action.getReceiptLog(candInfo, false, true, vote2)
+	receiptLog := action.getReceiptLog(candInfo, false, dty.VoteTypeCancelVote, oriVote)
 	logs = append(logs, receiptLog)
 	kv = append(kv, action.saveCandicator(candInfo)...)
 
@@ -743,47 +884,54 @@ func (action *Action) RegistVrfM(vrfMReg *dty.DposVrfMRegist) (*types.Receipt, e
 		return nil, types.ErrInvalidParam
 	}
 
+	/*
 	bM, err := hex.DecodeString(vrfMReg.M)
 	if err != nil {
 		logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "M is not correct",
 			vrfMReg.M)
 		return nil, types.ErrInvalidParam
-	}
+	}*/
+	bM := []byte(vrfMReg.M)
+
+	req := &dty.CandidatorQuery{}
+	req.Pubkeys = append(req.Pubkeys, vrfMReg.Pubkey)
 
 
-	req := &dty.CandidatorQuery{
-		TopN: int32(dposDelegateNum),
-	}
-
-	reply, err := queryTopNCands(action.localDB, req)
+	reply, err := queryCands(action.localDB, req)
 	res := reply.(*dty.CandidatorReply)
-	if err != nil || len(res.Candidators) < int(dposDelegateNum){
-		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "not enough Candidators",
-			dposDelegateNum)
-		return nil, dty.ErrCandidatorNotEnough
+	if err != nil || len(res.Candidators) != 1 || res.Candidators[0].Status == dty.CandidatorStatusCancelRegist{
+		logger.Error("RegistVrfM failed for no valid Candidators", "addr", action.fromaddr, "execaddr", action.execaddr)
+		return nil, dty.ErrCandidatorNotExist
 	}
 
 	legalCand := false
-    for i := 0; i < len(res.Candidators); i++ {
-    	if bytes.Equal(bPubkey, res.Candidators[i].Pubkey) && action.fromaddr == res.Candidators[i].Address {
-			legalCand = true
-		}
+	if (strings.ToUpper(vrfMReg.Pubkey) == res.Candidators[0].Pubkey) && (action.fromaddr == res.Candidators[0].Address) {
+		legalCand = true
 	}
 
     if !legalCand {
-		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "not legal Candidators",
-			res.String())
+		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "not legal Candidator",
+			res.Candidators[0].String())
 		return nil, dty.ErrCandidatorNotLegal
 	}
 
-    cycleInfo := calcCycleByTime(action.blocktime)
+
+	cycleInfo := calcCycleByTime(action.blocktime)
+    middleTime := cycleInfo.cycleStart + (cycleInfo.cycleStop - cycleInfo.cycleStart) / 2
     if vrfMReg.Cycle != cycleInfo.cycle {
-		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "cycle is not the same with current blocktime",
-			vrfMReg.String())
+		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "cycle is not correct",
+			vrfMReg.String(), "current cycle info", fmt.Sprintf("cycle:%d,start:%d,stop:%d,time:%d", cycleInfo.cycle, cycleInfo.cycleStart, cycleInfo.cycleStop, action.blocktime))
+		return nil, types.ErrInvalidParam
+	}else if action.blocktime >  middleTime{
+		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "time is not allowed, over the middle of this cycle",
+			action.blocktime, "allow time", fmt.Sprintf("cycle:%d,start:%d,middle:%d,stop:%d", cycleInfo.cycle, cycleInfo.cycleStart, middleTime, cycleInfo.cycleStop))
 		return nil, types.ErrInvalidParam
 	}
 
-    //todo 还需要检查是否针对这个cycle已经有注册过M了，如果注册过了，也需要提示失败
+	logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey", vrfMReg.Pubkey, "cycle", vrfMReg.Cycle, "M", vrfMReg.M, "now", action.blocktime,
+		"info", fmt.Sprintf("cycle:%d,start:%d,middle:%d,stop:%d", cycleInfo.cycle, cycleInfo.cycleStart, middleTime, cycleInfo.cycleStop))
+
+	//todo 还需要检查是否针对这个cycle已经有注册过M了，如果注册过了，也需要提示失败
 	vrfMTable := dty.NewDposVrfMTable(action.localDB)
 	query := vrfMTable.GetQuery(action.localDB)
 	_, err = query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", bPubkey, vrfMReg.Cycle)), nil, 1, 0)
@@ -802,6 +950,9 @@ func (action *Action) RegistVrfM(vrfMReg *dty.DposVrfMRegist) (*types.Receipt, e
 	r.Height = action.mainHeight
 	r.M = bM
 	r.Time = action.blocktime
+	r.CycleStart = cycleInfo.cycleStart
+	r.CycleStop = cycleInfo.cycleStop
+	r.CycleMiddle = middleTime
 
 	log.Ty = dty.TyLogVrfMRegist
 	log.Log = types.Encode(r)
@@ -818,43 +969,52 @@ func (action *Action) RegistVrfRP(vrfRPReg *dty.DposVrfRPRegist) (*types.Receipt
 
 	bPubkey, err := hex.DecodeString(vrfRPReg.Pubkey)
 	if err != nil {
-		logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey is not correct",
+		logger.Info("RegistVrfRP", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey is not correct",
 			vrfRPReg.Pubkey)
 		return nil, types.ErrInvalidParam
 	}
 
 	bR, err := hex.DecodeString(vrfRPReg.R)
 	if err != nil {
-		logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "M is not correct",
+		logger.Info("RegistVrfRP", "addr", action.fromaddr, "execaddr", action.execaddr, "R is not correct",
 			vrfRPReg.R)
 		return nil, types.ErrInvalidParam
 	}
 
 	bP, err := hex.DecodeString(vrfRPReg.P)
 	if err != nil {
-		logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "M is not correct",
+		logger.Info("RegistVrfRP", "addr", action.fromaddr, "execaddr", action.execaddr, "P is not correct",
 			vrfRPReg.P)
 		return nil, types.ErrInvalidParam
 	}
 
-	//todo 从localdb中查找对应的pubkey:cycle的信息，如果没找到，说明对应的M没有发布出来，则也不允许发布R,P。
-	vrfMTable := dty.NewDposVrfMTable(action.localDB)
-	query := vrfMTable.GetQuery(action.localDB)
-	rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", bPubkey, vrfRPReg.Cycle)), nil, 1, 0)
-	if err != nil {
-		logger.Error("RegistVrfRP failed", "addr", action.fromaddr, "execaddr", action.execaddr, "VrfM is not exist",
-			vrfRPReg.String())
-		return nil, dty.ErrVrfMNotRegisted
-	}
-	//对于可以注册的R、P，则允许。
 
 	cycleInfo := calcCycleByTime(action.blocktime)
+	middleTime := cycleInfo.cycleStart + (cycleInfo.cycleStop - cycleInfo.cycleStart) / 2
 	//对于cycle不一致的情况，则不允许注册
 	if vrfRPReg.Cycle != cycleInfo.cycle {
 		logger.Error("RegistVrfRP failed", "addr", action.fromaddr, "execaddr", action.execaddr, "cycle is not the same with current blocktime",
 			vrfRPReg.String())
 		return nil, types.ErrInvalidParam
+	} else if action.blocktime <  middleTime{
+		logger.Error("RegistVrfRP failed", "addr", action.fromaddr, "execaddr", action.execaddr, "time is not allowed, not over the middle of this cycle",
+			action.blocktime, "allow time", fmt.Sprintf("cycle:%d,start:%d,middle:%d,stop:%d", cycleInfo.cycle, cycleInfo.cycleStart, middleTime, cycleInfo.cycleStop))
+		return nil, types.ErrInvalidParam
 	}
+
+	logger.Info("RegistVrfRP", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey", vrfRPReg.Pubkey, "cycle", vrfRPReg.Cycle, "R", vrfRPReg.R, "P", vrfRPReg.P,
+		"now", action.blocktime, "info", fmt.Sprintf("cycle:%d,start:%d,middle:%d,stop:%d", cycleInfo.cycle, cycleInfo.cycleStart, middleTime, cycleInfo.cycleStop))
+
+	//从localdb中查找对应的pubkey:cycle的信息，如果没找到，说明对应的M没有发布出来，则也不允许发布R,P。
+	vrfMTable := dty.NewDposVrfMTable(action.localDB)
+	query := vrfMTable.GetQuery(action.localDB)
+	rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", bPubkey, vrfRPReg.Cycle)), nil, 1, 0)
+	if err != nil {
+		logger.Error("RegistVrfRP failed", "addr", action.fromaddr, "execaddr", action.execaddr, "VrfM is not registered",
+			vrfRPReg.String())
+		return nil, dty.ErrVrfMNotRegisted
+	}
+	//对于可以注册的R、P，则允许。
 
 	//todo 还需要检查是否针对这个cycle已经有注册过R、P了，如果注册过了，也需要提示失败
 	VrfRPTable := dty.NewDposVrfRPTable(action.localDB)
@@ -877,6 +1037,9 @@ func (action *Action) RegistVrfRP(vrfRPReg *dty.DposVrfRPRegist) (*types.Receipt
 	r.P = bP
 	r.M = rows[0].Data.(*dty.DposVrfM).M
 	r.Time = action.blocktime
+	r.CycleStart = cycleInfo.cycleStart
+	r.CycleStop = cycleInfo.cycleStop
+	r.CycleMiddle = middleTime
 
 	log.Ty = dty.TyLogVrfRPRegist
 	log.Log = types.Encode(r)

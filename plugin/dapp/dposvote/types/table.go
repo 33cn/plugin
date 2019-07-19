@@ -126,7 +126,7 @@ var opt_dpos_vrfm = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "vrfm",
 	Primary: "index",
-	Index:   []string{"pubkey_cycle"},
+	Index:   []string{"pubkey_cycle","cycle"},
 }
 
 //NewDposVrfMTable 新建表
@@ -169,6 +169,8 @@ func (tx *DposVrfMRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%018d", tx.Index)), nil
 	} else if key == "pubkey_cycle" {
 		return []byte(fmt.Sprintf("%X:%018d", tx.Pubkey, tx.Cycle)), nil
+	} else if key == "cycle" {
+		return []byte(fmt.Sprintf("%018d", tx.Cycle)), nil
 	}
 
 	return nil, types.ErrNotFound
@@ -179,7 +181,7 @@ var opt_dpos_vrfrp = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "vrfrp",
 	Primary: "index",
-	Index:   []string{"pubkey_cycle"},
+	Index:   []string{"pubkey_cycle", "cycle"},
 }
 
 //NewDposVrfRPTable 新建表
@@ -222,6 +224,8 @@ func (tx *DposVrfRPRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%018d", tx.Index)), nil
 	} else if key == "pubkey_cycle" {
 		return []byte(fmt.Sprintf("%X:%018d", tx.Pubkey, tx.Cycle)), nil
+	} else if key == "cycle" {
+		return []byte(fmt.Sprintf("%018d", tx.Cycle)), nil
 	}
 
 	return nil, types.ErrNotFound

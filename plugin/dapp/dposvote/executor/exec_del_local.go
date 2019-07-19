@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/33cn/chain33/types"
@@ -23,22 +24,15 @@ func (d *DPos) rollbackCand(cand *dty.CandidatorInfo, log *dty.ReceiptCandicator
 	}
 
 	//如果投票了，则需要把投票回滚
-	if log.Voted {
-		cand.Votes -= log.Votes
-		if log.Votes > 0 {
-			//如果是投票，则回滚时将投票删除。
-			cand.Voters = cand.Voters[:len(cand.Voters)-1]
-		} else {
-			//如果是撤销投票，则回滚时，将删除的投票还回来
-			voter := &dty.DposVoter{
-				FromAddr: log.FromAddr,
-				Pubkey: log.Pubkey,
-				Votes: -log.Votes,
-				Index: log.Index,
-				Time: log.Time - dty.VoteFrozenTime,
+	if log.VoteType == dty.VoteTypeVote {
+		for i := 0; i < len(cand.Voters); i++{
+			if cand.Voters[i].Index == log.Vote.Index && cand.Voters[i].FromAddr == log.Vote.FromAddr && bytes.Equal(cand.Voters[i].Pubkey, log.Vote.Pubkey){
+				cand.Voters = append(cand.Voters[0:i], cand.Voters[i+1:]...)
+				break
 			}
-			cand.Voters = append(cand.Voters, voter)
 		}
+	} else if log.VoteType == dty.VoteTypeCancelVote {
+		cand.Voters = append(cand.Voters, log.Vote)
 	}
 }
 
@@ -74,10 +68,16 @@ func (d *DPos) rollbackCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyVal
 			return nil, err
 		}
 
-		//删除投票信息
-		err = voterTable.Del([]byte(fmt.Sprintf("%018d", log.Index)))
-		if err != nil {
-			return nil, err
+		if log.VoteType == dty.VoteTypeVote {
+			err = voterTable.Del([]byte(fmt.Sprintf("%018d", log.Index)))
+			if err != nil {
+				return nil, err
+			}
+		} else if log.VoteType == dty.VoteTypeCancelVote {
+			err = voterTable.Add(log.Vote)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		kvs2, err := voterTable.Save()
@@ -86,7 +86,7 @@ func (d *DPos) rollbackCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyVal
 		}
 
 		kvs = append(kvs1, kvs2...)
-	} else if log.Status == dty.CandidatorStatusCancelVoted {
+	} else if log.Status == dty.CandidatorStatusCancelRegist {
 		//撤销投票回滚，需要将撤销的投票还回来
 		candInfo := log.CandInfo
 		log.CandInfo = nil
@@ -103,10 +103,13 @@ func (d *DPos) rollbackCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyVal
 			return nil, err
 		}
 
-		//删除投票信息
-		err = voterTable.Del([]byte(fmt.Sprintf("%018d", log.Index)))
-		if err != nil {
-			return nil, err
+		if log.VoteType == dty.VoteTypeCancelAllVote {
+			for i := 0; i < len(candInfo.Voters); i++ {
+				err = voterTable.Add(candInfo.Voters[i])
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 
 		kvs2, err := voterTable.Save()
@@ -115,6 +118,14 @@ func (d *DPos) rollbackCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyVal
 		}
 
 		kvs = append(kvs1, kvs2...)
+	} else if log.Status == dty.CandidatorStatusReRegist {
+		//注册回滚,cand表删除记录
+		err = candTable.Del(log.Pubkey)
+		if err != nil {
+			return nil, err
+		}
+		kvs, err = candTable.Save()
+		return kvs, err
 	}
 
 	return kvs, nil
@@ -153,7 +164,7 @@ func (d *DPos) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, erro
 
 	for _, log := range receipt.Logs {
 		switch log.GetTy() {
-		case dty.CandidatorStatusRegist, dty.CandidatorStatusVoted, dty.CandidatorStatusCancelVoted, dty.CandidatorStatusCancelRegist:
+		case dty.TyLogCandicatorRegist, dty.TyLogCandicatorVoted, dty.TyLogCandicatorCancelVoted, dty.TyLogCandicatorCancelRegist, dty.TyLogCandicatorReRegist:
 			receiptLog := &dty.ReceiptCandicator{}
 			if err := types.Decode(log.Log, receiptLog); err != nil {
 				return nil, err

@@ -171,16 +171,16 @@ func addCancelVoteFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("pubkey", "k", "", "pubkey of a candidator")
 	cmd.MarkFlagRequired("pubkey")
 
-	cmd.Flags().Int64P("votes", "v", 0, "votes")
-	cmd.MarkFlagRequired("votes")
+	cmd.Flags().Int64P("index", "i", 0, "index")
+	cmd.MarkFlagRequired("index")
 }
 
 func cancelVote(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
-	votes, _ := cmd.Flags().GetInt64("votes")
+	index, _ := cmd.Flags().GetInt64("index")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"votes\":\"%d\"}", pubkey, votes)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"index\":\"%d\"}", pubkey, index)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateCancelVoteTx,
@@ -358,7 +358,7 @@ func vrfM(cmd *cobra.Command, args []string) {
 	cycle, _ := cmd.Flags().GetInt64("cycle")
 	m, _ := cmd.Flags().GetString("m")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"m\":\"%X\"}", pubkey, cycle, m)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"m\":\"%s\"}", pubkey, cycle, m)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistVrfMTx,
@@ -399,10 +399,10 @@ func vrfRP(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	cycle, _ := cmd.Flags().GetInt64("cycle")
-	r, _ := cmd.Flags().GetString("r")
-	p, _ := cmd.Flags().GetString("p")
+	hash, _ := cmd.Flags().GetString("hash")
+	proof, _ := cmd.Flags().GetString("proof")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"r\":\"%s\", \"p\":\"%s\"}", pubkey, cycle, r, p)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"r\":\"%s\", \"p\":\"%s\"}", pubkey, cycle, hash, proof)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistVrfRPTx,
@@ -433,6 +433,7 @@ func addVrfQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("timestamp", "s", 0, "time stamp from 1970-1-1")
 	cmd.Flags().Int64P("cycle", "c", 0, "cycle,one time point belongs to a cycle")
 
+	cmd.Flags().StringP("pubkeys", "k", "", "pubkeys")
 }
 
 func vrfQuery(cmd *cobra.Command, args []string) {
@@ -441,6 +442,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 	dtime, _ := cmd.Flags().GetString("time")
 	timestamp, _ := cmd.Flags().GetInt64("timestamp")
 	cycle, _ := cmd.Flags().GetInt64("cycle")
+	pubkeys, _ := cmd.Flags().GetString("pubkeys")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = dty.DPosX
@@ -497,5 +499,45 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		var res dty.DposVrfReply
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
+
+	case "topN":
+		if cycle <= 0 {
+			fmt.Println("err cycle:", cycle)
+			return
+		}
+
+		req := &dty.DposVrfQuery{
+			Ty: dty.QueryVrfByCycleForTopN,
+			Cycle: cycle,
+		}
+
+		params.FuncName = dty.FuncNameQueryVrfByCycleForTopN
+		params.Payload = types.MustPBToJSON(req)
+		var res dty.DposVrfReply
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+
+	case "pubkeys":
+		if cycle <= 0 {
+			fmt.Println("err cycle:", cycle)
+			return
+		}
+
+		req := &dty.DposVrfQuery{
+			Ty: dty.QueryVrfByCycleForPubkeys,
+			Cycle: cycle,
+		}
+
+		keys := strings.Split(pubkeys, ";")
+		for _, key := range keys {
+			req.Pubkeys = append(req.Pubkeys, key)
+		}
+
+		params.FuncName = dty.FuncNameQueryVrfByCycleForPubkeys
+		params.Payload = types.MustPBToJSON(req)
+		var res dty.DposVrfReply
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
 	}
+
 }

@@ -38,6 +38,11 @@ const (
 const (
 	VoteFrozenTime = 3 * 24 * 3600
 	RegistFrozenCoins = 1000000000000
+
+	VoteTypeNone          int32 = 1
+	VoteTypeVote          int32 = 2
+	VoteTypeCancelVote    int32 = 3
+	VoteTypeCancelAllVote int32 = 4
 )
 //包的名字可以通过配置文件来配置
 //建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
@@ -59,6 +64,12 @@ const (
 
 	//FuncNameQueryVrfByCycle func name
 	FuncNameQueryVrfByCycle = "QueryVrfByCycle"
+
+	//FuncNameQueryVrfByCycleForTopN func name
+	FuncNameQueryVrfByCycleForTopN = "QueryVrfByCycleForTopN"
+
+	//FuncNameQueryVrfByCycleForPubkeys func name
+	FuncNameQueryVrfByCycleForPubkeys = "QueryVrfByCycleForPubkeys"
 
 	//FuncNameQueryVote func name
 	FuncNameQueryVote = "QueryVote"
@@ -84,9 +95,15 @@ const (
 	//CreateRegistVrfRPTx 创建注册Vrf的R/P信息的交易
 	CreateRegistVrfRPTx = "RegistVrfRP"
 
-	//QueryVrfByTime 创建根据time查询Vrf信息查询
+	//QueryVrfByTime 创建根据time查询Vrf信息
 	QueryVrfByTime = 1
 
-	//QueryVrfByCycle 创建根据cycle查询Vrf信息查询
+	//QueryVrfByCycle 创建根据cycle查询Vrf信息
 	QueryVrfByCycle = 2
+
+	//QueryVrfByCycleForTopN 创建根据cycle查询当前topN的候选节点的Vrf信息
+	QueryVrfByCycleForTopN = 3
+
+	//QueryVrfByCycleForPubkeys 创建根据cycle查询指定pubkey的多个候选节点的Vrf信息
+	QueryVrfByCycleForPubkeys = 4
 )

@@ -7,16 +7,17 @@ package executor
 import (
 	"github.com/33cn/chain33/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"fmt"
 )
 
 func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue, err error) {
 	voteTable := dty.NewDposVoteTable(d.GetLocalDB())
 	canTable := dty.NewDposCandidatorTable(d.GetLocalDB())
 
-	if log.Status == dty.CandidatorStatusRegist {
-		candInfo := log.CandInfo
-		log.CandInfo = nil
+	candInfo := log.CandInfo
+	log.CandInfo = nil
 
+	if log.Status == dty.CandidatorStatusRegist {
 		err = canTable.Add(candInfo)
 		if err != nil {
 			return nil, err
@@ -27,9 +28,7 @@ func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue
 			return nil, err
 		}
 	} else if log.Status == dty.CandidatorStatusVoted {
-		candInfo := log.CandInfo
-		log.CandInfo = nil
-		voter := candInfo.Voters[len(candInfo.Voters)-1]
+		voter := log.Vote
 
 		err = canTable.Replace(candInfo)
 		if err != nil {
@@ -41,9 +40,16 @@ func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue
 			return nil, err
 		}
 
-		err = voteTable.Add(voter)
-		if err != nil {
-			return nil, err
+		if log.VoteType == dty.VoteTypeVote {
+			err = voteTable.Add(voter)
+			if err != nil {
+				return nil, err
+			}
+		} else if log.VoteType == dty.VoteTypeCancelVote {
+			err = voteTable.Del([]byte(fmt.Sprintf("%018d", voter.Index)))
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		kvs2, err := voteTable.Save()
@@ -52,42 +58,7 @@ func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue
 		}
 
 		kvs = append(kvs1, kvs2...)
-	} else if log.Status == dty.CandidatorStatusCancelVoted {
-		candInfo := log.CandInfo
-		log.CandInfo = nil
-		voter := &dty.DposVoter{
-			FromAddr: log.FromAddr,
-			Pubkey: log.Pubkey,
-			Votes: log.Votes,
-			Index: log.Index,
-			Time: log.Time,
-		}
-
-		err = canTable.Replace(candInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		kvs1, err := canTable.Save()
-		if err != nil {
-			return nil, err
-		}
-
-		err = voteTable.Add(voter)
-		if err != nil {
-			return nil, err
-		}
-
-		kvs2, err := voteTable.Save()
-		if err != nil {
-			return nil, err
-		}
-
-		kvs = append(kvs1, kvs2...)
-	} else if log.Status == dty.CandidatorStatusReRegist || log.Status == dty.CandidatorStatusCancelRegist{
-		candInfo := log.CandInfo
-		log.CandInfo = nil
-
+	} else if log.Status == dty.CandidatorStatusReRegist {
 		err = canTable.Replace(candInfo)
 		if err != nil {
 			return nil, err
@@ -97,6 +68,30 @@ func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue
 		if err != nil {
 			return nil, err
 		}
+	} else if log.Status == dty.CandidatorStatusCancelRegist {
+		err = canTable.Replace(candInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		kvs1, err := canTable.Save()
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(candInfo.Voters); i++ {
+			err = voteTable.Del([]byte(fmt.Sprintf("%018d", candInfo.Voters[i].Index)))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		kvs2, err := voteTable.Save()
+		if err != nil {
+			return nil, err
+		}
+
+		kvs = append(kvs1, kvs2...)
 	}
 
 	return kvs, nil
@@ -112,6 +107,9 @@ func (d *DPos) updateVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err error)
 			Height: log.Height,
 			M: log.M,
 			Time: log.Time,
+			CycleStart: log.CycleStart,
+			CycleMiddle: log.CycleMiddle,
+			CycleStop: log.CycleStop,
 		}
 
 		err = vrfMTable.Add(vrfM)
@@ -134,6 +132,9 @@ func (d *DPos) updateVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err error)
 			P: log.P,
 			M: log.M,
 			Time: log.Time,
+			CycleStart: log.CycleStart,
+			CycleMiddle: log.CycleMiddle,
+			CycleStop: log.CycleStop,
 		}
 
 		err = VrfRPTable.Add(vrfRP)
@@ -211,11 +212,11 @@ func (d *DPos) ExecLocal_CancelVote(payload *dty.DposCancelVote, tx *types.Trans
 }
 
 //ExecLocal_VrfMRegist method
-func (d *DPos) ExecLocal_VrfMRegist(payload *dty.DposVrfMRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (d *DPos) ExecLocal_RegistVrfM(payload *dty.DposVrfMRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }
 
 //ExecLocal_VrfRPRegist method
-func (d *DPos) ExecLocal_VrfRPRegist(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (d *DPos) ExecLocal_RegistVrfRP(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }

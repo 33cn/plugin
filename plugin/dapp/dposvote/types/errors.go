@@ -8,6 +8,7 @@ import "errors"
 
 // Errors for Dpos
 var (
+	ErrNoSuchVote               = errors.New("ErrNoSuchVote")
 	ErrNotEnoughVotes           = errors.New("ErrNotEnoughVotes")
 	ErrCandidatorExist          = errors.New("ErrCandidatorExist")
 	ErrCandidatorInvalidStatus  = errors.New("ErrCandidatorInvalidStatus")
