@@ -31,22 +31,6 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	if prob.RuleCfg.BoardAttendRatio > 0 {
-		rule.BoardAttendRatio = prob.RuleCfg.BoardAttendRatio
-	}
-	if prob.RuleCfg.BoardApproveRatio > 0  {
-		rule.BoardApproveRatio = prob.RuleCfg.BoardApproveRatio
-	}
-	if prob.RuleCfg.PubOpposeRatio > 0 {
-		rule.BoardApproveRatio = prob.RuleCfg.PubOpposeRatio
-	}
-	if prob.RuleCfg.ProposalAmount > 0{
-		rule.ProposalAmount = prob.RuleCfg.ProposalAmount
-	}
-	if prob.RuleCfg.LargeProjectAmount > 0 {
-		rule.LargeProjectAmount = prob.RuleCfg.LargeProjectAmount
-	}
-
 	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
 		alog.Error("propRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", rule.ProposalAmount)
@@ -219,7 +203,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(cur.Rule)})
+		upRule := upgradeRule(cur.Rule, cur.PropRule.RuleCfg)
+		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
 	}
 
 	ty := auty.TyLogVotePropRule
@@ -292,7 +277,8 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(cur.Rule)})
+		upRule := upgradeRule(cur.Rule, cur.PropRule.RuleCfg)
+		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
 	}
 
 	getRuleReceiptLog(pre, cur, auty.TyLogTmintPropRule)
@@ -342,4 +328,28 @@ func copyAutonomyProposalRule(cur *auty.AutonomyProposalRule) *auty.AutonomyProp
 	newAut.VoteResult = &newRes
 	return &newAut
 }
+
+func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
+	if cur == nil || modify == nil {
+		return nil
+	}
+	new := *cur
+	if modify.BoardAttendRatio > 0 {
+		new.BoardAttendRatio = modify.BoardAttendRatio
+	}
+	if modify.BoardApproveRatio > 0 {
+		new.BoardApproveRatio = modify.BoardApproveRatio
+	}
+	if modify.PubOpposeRatio > 0 {
+		new.PubOpposeRatio = modify.PubOpposeRatio
+	}
+	if modify.ProposalAmount > 0 {
+		new.ProposalAmount = modify.ProposalAmount
+	}
+	if modify.LargeProjectAmount > 0 {
+		new.LargeProjectAmount = modify.LargeProjectAmount
+	}
+	return &new
+}
+
 

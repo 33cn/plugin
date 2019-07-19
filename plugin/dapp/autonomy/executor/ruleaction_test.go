@@ -20,6 +20,13 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 )
 
+const (
+	testBoardAttendRatio   int32 = 60
+	testBoardApproveRatio  int32 = 60
+	testPubOpposeRatio     int32 = 30
+	testProposalAmount     int64 = 0
+	testLargeProjectAmount int64 = 1
+)
 
 func TestRevokeProposalRule(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
@@ -50,7 +57,14 @@ func testPropRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.K
 		Year: 2019,
 		Month: 7,
 		Day:     10,
-		RuleCfg:    &auty.RuleConfig{BoardApproveRatio:60},
+		RuleCfg:    &auty.RuleConfig{
+			BoardAttendRatio: testBoardAttendRatio,
+			BoardApproveRatio: testBoardApproveRatio,
+			PubOpposeRatio: testPubOpposeRatio,
+			ProposalAmount: testProposalAmount,
+			LargeProjectAmount: testLargeProjectAmount,
+
+	},
 		StartBlockHeight:  env.blockHeight + 5,
 		EndBlockHeight: env.blockHeight + 10,
 	}
@@ -135,6 +149,20 @@ func revokeProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
+	// check rule
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	action := newAction(au, &types.Transaction{}, 0)
+	rule, err := action.getActiveRule()
+	require.NoError(t, err)
+	require.Equal(t, rule.BoardAttendRatio, boardAttendRatio)
+	require.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
+	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
+	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
 }
 
 func revokeProposalRuleTx(parm *auty.RevokeProposalRule) (*types.Transaction, error) {
@@ -243,6 +271,20 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	require.Equal(t, int32(auty.AutonomyStatusTmintPropRule), cur.Status)
 	require.Equal(t, AddrA, cur.Address)
 	require.Equal(t, true, cur.VoteResult.Pass)
+	// check rule
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	action := newAction(au, &types.Transaction{}, 0)
+	rule, err := action.getActiveRule()
+	require.NoError(t, err)
+	require.Equal(t, rule.BoardAttendRatio, testBoardAttendRatio)
+	require.Equal(t, rule.BoardApproveRatio, testBoardApproveRatio)
+	require.Equal(t, rule.PubOpposeRatio, testPubOpposeRatio)
+	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.LargeProjectAmount, testLargeProjectAmount)
 }
 
 func voteProposalRuleTx(parm *auty.VoteProposalRule) (*types.Transaction, error) {
@@ -305,6 +347,21 @@ func terminateProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stat
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
+
+	// check rule
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	action := newAction(au, &types.Transaction{}, 0)
+	rule, err := action.getActiveRule()
+	require.NoError(t, err)
+	require.Equal(t, rule.BoardAttendRatio, boardAttendRatio)
+	require.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
+	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
+	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
 }
 
 func terminateProposalRuleTx(parm *auty.TerminateProposalRule) (*types.Transaction, error) {
@@ -365,4 +422,45 @@ func TestCopyAutonomyProposalRule(t *testing.T) {
 	require.Equal(t, 2, int(new.Status))
 	require.Equal(t, 80, int(new.PropRule.RuleCfg.BoardApproveRatio))
 	require.Equal(t, 100, int(new.Rule.BoardApproveRatio))
+}
+
+func TestUpgradeRule(t *testing.T) {
+	new := upgradeRule(nil, &auty.RuleConfig{})
+	require.Nil(t, new)
+	cur := &auty.RuleConfig{
+		BoardAttendRatio: 1,
+		BoardApproveRatio: 2,
+		PubOpposeRatio: 3,
+		ProposalAmount: 4,
+		LargeProjectAmount: 5,
+	}
+	modify := &auty.RuleConfig{
+		BoardAttendRatio: 0,
+		BoardApproveRatio: -1,
+		PubOpposeRatio: 0,
+		ProposalAmount: -1,
+		LargeProjectAmount: 0,
+	}
+	new = upgradeRule(cur, modify)
+	require.NotNil(t, new)
+	require.Equal(t, new.BoardAttendRatio, cur.BoardAttendRatio)
+	require.Equal(t, new.BoardApproveRatio, cur.BoardApproveRatio)
+	require.Equal(t, new.PubOpposeRatio, cur.PubOpposeRatio)
+	require.Equal(t, new.ProposalAmount , cur.ProposalAmount)
+	require.Equal(t, new.LargeProjectAmount, cur.LargeProjectAmount)
+
+	modify = &auty.RuleConfig{
+		BoardAttendRatio: 10,
+		BoardApproveRatio: 20,
+		PubOpposeRatio: 30,
+		ProposalAmount: 40,
+		LargeProjectAmount: 50,
+	}
+	new = upgradeRule(cur, modify)
+	require.NotNil(t, new)
+	require.Equal(t, new.BoardAttendRatio, modify.BoardAttendRatio)
+	require.Equal(t, new.BoardApproveRatio, modify.BoardApproveRatio)
+	require.Equal(t, new.PubOpposeRatio, modify.PubOpposeRatio)
+	require.Equal(t, new.ProposalAmount , modify.ProposalAmount)
+	require.Equal(t, new.LargeProjectAmount, modify.LargeProjectAmount)
 }
