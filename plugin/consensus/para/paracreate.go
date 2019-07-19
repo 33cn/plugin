@@ -117,7 +117,6 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 		return err
 	}
 	client.checkCommitTxSuccess(mainBlock.TxDetails)
-	//err = client.createBlockTemp(txs, mainBlock)
 	return err
 }
 
@@ -361,11 +360,6 @@ func (client *client) switchLocalHashMatchedBlock() (int64, []byte, error) {
 			return -2, nil, err
 		}
 
-		//err = client.removeBlocks(height)
-		//if err != nil {
-		//	return -2, nil, err
-		//}
-
 		plog.Info("switchLocalHashMatchedBlock succ", "currHeight", height, "initHeight", lastBlock.Height,
 			"currSeq", mainSeq, "currMainBlockHash", hex.EncodeToString(block.MainHash))
 		return mainSeq, block.MainHash, nil
@@ -546,7 +540,6 @@ func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) error {
 			}
 			plog.Info("Delete empty block")
 		}
-		//client.DelBlock(lastBlock.Height, 0)
 		return client.delLocalBlock(lastBlock.Height)
 
 	} else if mainBlock.Type == addAct {
