@@ -145,3 +145,13 @@ func (client *client) GetBlockOnMainByHash(hash []byte) (*types.Block, error) {
 
 	return blocks.Items[0].Block, nil
 }
+
+func (client *client) QueryTxOnMainByHash(hash []byte) (*types.TransactionDetail, error) {
+	detail, err := client.grpcClient.QueryTransaction(context.Background(), &types.ReqHash{Hash: hash})
+	if err != nil {
+		plog.Error("QueryTxOnMainByHash Not found", "txhash", common.ToHex(hash))
+		return nil, err
+	}
+
+	return detail, nil
+}
