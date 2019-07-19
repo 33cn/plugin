@@ -17,15 +17,15 @@ import (
 )
 
 
-//定义每一轮可执行状态
+//NextActionType 定义每一轮可执行状态
 type NextActionType int8
 const (
 	_ NextActionType = iota
-	//回滚到前一区块
+	//NextActionRollback 回滚到前一区块
 	NextActionRollback
-	//保持
+	//NextActionKeep 保持
 	NextActionKeep
-	//增加一个新的区块
+	//NextActionAdd 增加一个新的区块
 	NextActionAdd
 )
 
@@ -108,24 +108,23 @@ func (client *client) getNextAction() (NextActionType,*types.Block,*pt.ParaLocal
 		if common.ToHex(localBlock.MainHash) == common.ToHex(lastBlock.MainHash)   {
 			//db中最新区块高度等于已执行最新区块高度并且hash相同,不做任何操作(已保持同步状态)
 			return  NextActionKeep,nil,nil,lastLocalHeight,err
-		} else {
-			//db中最新区块高度等于已执行最新区块高度并且hash不同,回滚
-			return NextActionRollback,lastBlock,nil,lastLocalHeight,err
 		}
-	} else {
-		localBlock, err := client.getLocalBlockByHeight(lastBlock.Height+1)
-		if  err != nil {
-			//取db中后一高度区块发生错误，不做任何操作
-			return  NextActionKeep,nil,nil,lastLocalHeight,err
-		}
-		if common.ToHex(localBlock.ParentMainHash) != common.ToHex(lastBlock.MainHash)  {
-			//db中后一高度区块的父hash不等于已执行最新区块的hash,回滚
-			return NextActionRollback,lastBlock,nil,lastLocalHeight,err
-		} else {
-			//db中后一高度区块的父hash等于已执行最新区块的hash,执行区块创建
-			return  NextActionAdd,lastBlock,localBlock,lastLocalHeight,err
-		}
+		//db中最新区块高度等于已执行最新区块高度并且hash不同,回滚
+		return NextActionRollback,lastBlock,nil,lastLocalHeight,err
 	}
+
+	// lastLocalHeight > lastBlock.Height
+	localBlock, err := client.getLocalBlockByHeight(lastBlock.Height+1)
+	if  err != nil {
+		//取db中后一高度区块发生错误，不做任何操作
+		return  NextActionKeep,nil,nil,lastLocalHeight,err
+	}
+	if common.ToHex(localBlock.ParentMainHash) != common.ToHex(lastBlock.MainHash)  {
+		//db中后一高度区块的父hash不等于已执行最新区块的hash,回滚
+		return NextActionRollback,lastBlock,nil,lastLocalHeight,err
+	}
+	//db中后一高度区块的父hash等于已执行最新区块的hash,执行区块创建
+	return  NextActionAdd,lastBlock,localBlock,lastLocalHeight,err
 }
 
 //根据当前可执行状态执行区块操作
