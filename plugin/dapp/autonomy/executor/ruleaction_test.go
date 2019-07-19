@@ -406,7 +406,7 @@ func TestCopyAutonomyProposalRule(t *testing.T) {
 		Status: 2,
 		Address:"123",
 	}
-	new := copyAutonomyProposalRule(cur)
+	pre := copyAutonomyProposalRule(cur)
 	cur.PropRule.Year = 1800
 	cur.PropRule.Month = 2
 	cur.PropRule.RuleCfg.BoardApproveRatio = 90
@@ -415,13 +415,13 @@ func TestCopyAutonomyProposalRule(t *testing.T) {
 	cur.Address = "234"
 	cur.Status = 1
 
-	require.Equal(t, 1900, int(new.PropRule.Year))
-	require.Equal(t, 1, int(new.PropRule.Month))
-	require.Equal(t, 100, int(new.VoteResult.TotalVotes))
-	require.Equal(t, "123", new.Address)
-	require.Equal(t, 2, int(new.Status))
-	require.Equal(t, 80, int(new.PropRule.RuleCfg.BoardApproveRatio))
-	require.Equal(t, 100, int(new.Rule.BoardApproveRatio))
+	require.Equal(t, 1900, int(pre.PropRule.Year))
+	require.Equal(t, 1, int(pre.PropRule.Month))
+	require.Equal(t, 100, int(pre.VoteResult.TotalVotes))
+	require.Equal(t, "123", pre.Address)
+	require.Equal(t, 2, int(pre.Status))
+	require.Equal(t, 80, int(pre.PropRule.RuleCfg.BoardApproveRatio))
+	require.Equal(t, 100, int(pre.Rule.BoardApproveRatio))
 }
 
 func TestUpgradeRule(t *testing.T) {

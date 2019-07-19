@@ -11,137 +11,123 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/33cn/chain33/types"
 	apimock "github.com/33cn/chain33/client/mocks"
-	dbmock "github.com/33cn/chain33/common/db/mocks"
-	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common"
-	commonlog "github.com/33cn/chain33/common/log"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/account"
 	_ "github.com/33cn/chain33/system"
 	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
-	"github.com/33cn/chain33/util"
 )
 
-type execEnv struct {
-	blockTime   int64 // 1539918074
-	blockHeight int64
-	index       int
-	difficulty  uint64
-	txHash      string
-	startHeight int64
-	endHeight   int64
+//const (
+//	testBoardAttendRatio   int32 = 60
+//	testBoardApproveRatio  int32 = 60
+//	testPubOpposeRatio     int32 = 30
+//	testProposalAmount     int64 = 0
+//	testLargeProjectAmount int64 = 1
+//)
+
+func InitProject(stateDB dbm.KV) {
+	// add active board
+	board := &auty.ProposalBoard{
+		Year: 2019,
+		Month: 11,
+		Day: 1,
+		Boards: []string{AddrA, AddrB, AddrC, AddrD},
+		StartBlockHeight:1,
+		EndBlockHeight:10,
+		RealEndBlockHeight:5,
+	}
+	stateDB.Set(activeBoardID(), types.Encode(board))
 }
 
-var (
-	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
-	PrivKeyB = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
-	PrivKeyC = "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" // 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
-	PrivKeyD = "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" // 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
-	AddrA    = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-	AddrB    = "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
-	AddrC    = "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
-	AddrD    = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+func TestPropProject(t *testing.T) {
+	env, exec, _, _ := InitEnv()
 
-	boards = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"}
-	total = types.Coin * 30000
-)
-
-func init() {
-	commonlog.SetLogLevel("error")
-}
-
-func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
-	accountA := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    AddrA,
+	opts := []*auty.ProposalProject{
+		&auty.ProposalProject{ // check toaddr
+			ToAddr: "1111111111",
+			StartBlockHeight:  env.blockHeight + 5,
+			EndBlockHeight: env.blockHeight + 10,
+		},
+		&auty.ProposalProject{ // check amount
+			Amount: 0,
+			ToAddr: AddrA,
+			StartBlockHeight:  env.blockHeight + 5,
+			EndBlockHeight: env.blockHeight + 10,
+		},
+		&auty.ProposalProject{ // check StartBlockHeight EndBlockHeight
+			Amount: 10,
+			ToAddr: AddrA,
+			StartBlockHeight:  env.blockHeight-1,
+			EndBlockHeight: env.blockHeight-1,
+		},
+		&auty.ProposalProject{ // check activeboard
+			Amount: 100,
+			ToAddr: AddrA,
+			StartBlockHeight:  env.blockHeight + 5,
+			EndBlockHeight: env.blockHeight + 10,
+		},
 	}
 
-	accountB := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    AddrB,
+	result := [] error {
+		types.ErrInvalidAddress,
+	    types.ErrInvalidParam,
+	    types.ErrInvalidParam,
+		types.ErrNotFound,
 	}
 
-	accountC := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    AddrC,
-	}
-
-	accountD := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    AddrD,
-	}
-
-	env := &execEnv{
-		blockTime: 1539918074,
-		blockHeight: 10,
-		index: 2,
-		difficulty: 1539918074,
-		txHash: "",
-	}
-
-	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
-	_, _, kvdb := util.CreateTestDB()
-
-
-	accCoin := account.NewCoinsAccount()
-	accCoin.SetDB(stateDB)
-	accCoin.SaveAccount(&accountA)
-	accCoin.SaveExecAccount(address.ExecAddress(auty.AutonomyX), &accountA)
-	accCoin.SaveAccount(&accountB)
-	accCoin.SaveAccount(&accountC)
-	accCoin.SaveAccount(&accountD)
-	//total ticket balance
-	accCoin.SaveAccount(&types.Account{Balance: total*4,
-		Frozen:  0,
-		Addr:    "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"})
-
-	exec := newAutonomy()
-	exec.SetStateDB(stateDB)
-	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	return env, exec, stateDB, kvdb
+	for i, tcase := range opts {
+		pbtx, err := propProjectTx(tcase)
+		require.NoError(t, err)
+		pbtx, err = signTx(pbtx, PrivKeyA)
+		require.NoError(t, err)
+		_, err = exec.Exec(pbtx, int(i))
+		require.Error(t, err, result[i])
+
+	}
 }
 
-func TestRevokeProposalBoard(t *testing.T) {
+func TestRevokeProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	// PropBoard
-	testPropBoard(t, env, exec, stateDB, kvdb, true)
-	//RevokeProposalBoard
-	revokeProposalBoard(t, env, exec, stateDB, kvdb, false)
+	InitProject(stateDB)
+	// PropProject
+	testPropProject(t, env, exec, stateDB, kvdb, true)
+	//RevokeProposalProject
+	revokeProposalProject(t, env, exec, stateDB, kvdb, false)
 }
 
-func TestVoteProposalBoard(t *testing.T) {
+func TestVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	// PropBoard
-	testPropBoard(t, env, exec, stateDB, kvdb, true)
-	//voteProposalBoard
-	voteProposalBoard(t, env, exec, stateDB, kvdb, true)
+	InitProject(stateDB)
+	// PropProject
+	testPropProject(t, env, exec, stateDB, kvdb, true)
+	//voteProposalProject
+	voteProposalProject(t, env, exec, stateDB, kvdb, true)
 }
 
-func TestTerminateProposalBoard(t *testing.T) {
+func TestTerminateProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	// PropBoard
-	testPropBoard(t, env, exec, stateDB, kvdb, true)
-	//terminateProposalBoard
-	terminateProposalBoard(t, env, exec, stateDB, kvdb, true)
+	InitProject(stateDB)
+	// PropProject
+	testPropProject(t, env, exec, stateDB, kvdb, true)
+	//terminateProposalProject
+	terminateProposalProject(t, env, exec, stateDB, kvdb, true)
 }
 
-func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
-	opt1 :=  &auty.ProposalBoard{
+func testPropProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	opt1 :=  &auty.ProposalProject{
 		Year: 2019,
 		Month: 7,
 		Day:     10,
-		Boards:    boards,
+		Amount: types.Coin * 100,
+		ToAddr: AddrD,
 		StartBlockHeight:  env.blockHeight + 5,
 		EndBlockHeight: env.blockHeight + 10,
 	}
-	pbtx, err := propBoardTx(opt1)
+	pbtx, err := propProjectTx(opt1)
 	require.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
 	require.NoError(t, err)
@@ -178,23 +164,23 @@ func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.
 	require.Equal(t, proposalAmount, account.Frozen)
 }
 
-func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
+func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	val := &auty.AutonomyAction{
-		Ty:    auty.AutonomyActionPropBoard,
-		Value: &auty.AutonomyAction_PropBoard{PropBoard: parm},
+		Ty:    auty.AutonomyActionPropProject,
+		Value: &auty.AutonomyAction_PropProject{PropProject: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func revokeProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
-	opt2 :=  &auty.RevokeProposalBoard{
+	opt2 :=  &auty.RevokeProposalProject{
 		ProposalID:proposalID,
 	}
-	rtx, err := revokeProposalBoardTx(opt2)
+	rtx, err := revokeProposalProjectTx(opt2)
 	require.NoError(t, err)
 	rtx, err = signTx(rtx, PrivKeyA)
 	require.NoError(t, err)
@@ -222,20 +208,27 @@ func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
+	// check Project
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	//action := newAction(au, &types.Transaction{}, 0)
 }
 
-func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, error) {
+func revokeProposalProjectTx(parm *auty.RevokeProposalProject) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	val := &auty.AutonomyAction{
-		Ty:    auty.AutonomyActionRvkPropBoard,
-		Value: &auty.AutonomyAction_RvkPropBoard{RvkPropBoard: parm},
+		Ty:    auty.AutonomyActionRvkPropProject,
+		Value: &auty.AutonomyAction_RvkPropProject{RvkPropProject: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -274,11 +267,11 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	}
 
 	for _, record := range records {
-		opt :=  &auty.VoteProposalBoard{
+		opt :=  &auty.VoteProposalProject{
 			ProposalID:proposalID,
 			Approve: record.appr,
 		}
-		tx, err := voteProposalBoardTx(opt)
+		tx, err := voteProposalProjectTx(opt)
 		require.NoError(t, err)
 		tx, err = signTx(tx, record.priv)
 		require.NoError(t, err)
@@ -322,28 +315,35 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(proposalAmount), account.Balance)
 	// status
-	value, err := stateDB.Get(propBoardID(proposalID))
+	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)
-	cur := &auty.AutonomyProposalBoard{}
+	cur := &auty.AutonomyProposalProject{}
 	err = types.Decode(value, cur)
 	require.NoError(t, err)
-	require.Equal(t, int32(auty.AutonomyStatusTmintPropBoard), cur.Status)
+	require.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	require.Equal(t, AddrA, cur.Address)
-	require.Equal(t, true, cur.VoteResult.Pass)
+	//require.Equal(t, true, cur.VoteResult.Pass)
+	// check Project
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	//action := newAction(au, &types.Transaction{}, 0)
 }
 
-func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, error) {
+func voteProposalProjectTx(parm *auty.VoteProposalProject) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	val := &auty.AutonomyAction{
-		Ty:    auty.AutonomyActionVotePropBoard,
-		Value: &auty.AutonomyAction_VotePropBoard{VotePropBoard: parm},
+		Ty:    auty.AutonomyActionVotePropProject,
+		Value: &auty.AutonomyAction_VotePropProject{VotePropProject: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func terminateProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -361,10 +361,10 @@ func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, sta
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
-	opt :=  &auty.TerminateProposalBoard{
+	opt :=  &auty.TerminateProposalProject{
 		ProposalID:proposalID,
 	}
-	tx, err := terminateProposalBoardTx(opt)
+	tx, err := terminateProposalProjectTx(opt)
 	require.NoError(t, err)
 	tx, err = signTx(tx, PrivKeyA)
 	require.NoError(t, err)
@@ -392,112 +392,85 @@ func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, sta
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
+
+	// check Project
+	au := &Autonomy{
+		drivers.DriverBase{},
+	}
+	au.SetStateDB(stateDB)
+	au.SetLocalDB(kvdb)
+	//action := newAction(au, &types.Transaction{}, 0)
 }
 
-func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transaction, error) {
+func terminateProposalProjectTx(parm *auty.TerminateProposalProject) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	val := &auty.AutonomyAction{
-		Ty:    auty.AutonomyActionTmintPropBoard,
-		Value: &auty.AutonomyAction_TmintPropBoard{TmintPropBoard: parm},
+		Ty:    auty.AutonomyActionTmintPropProject,
+		Value: &auty.AutonomyAction_TmintPropProject{TmintPropProject: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func TestGetStartHeightVoteAccount(t *testing.T) {
-	at := newAutonomy().(*Autonomy)
-	at.SetLocalDB(new(dbmock.KVDB))
-
-	api := new(apimock.QueueProtocolAPI)
-	at.SetAPI(api)
-	tx := &types.Transaction{}
-	action := newAction(at, tx, 0)
-
-	addr := "1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
-	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
-	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
-	acc := &types.Account{
-		Currency: 0,
-		Balance: types.Coin,
-	}
-	val := types.Encode(acc)
-	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil)
-	hear := &types.Header{StateHash: []byte("")}
-	api.On("GetHeaders", mock.Anything).
-		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
-	account, err := action.getStartHeightVoteAccount(addr, 0)
-	require.NoError(t, err)
-	require.NotNil(t, account)
-	require.Equal(t, types.Coin, account.Balance)
-}
-
-func TestGetReceiptLog(t *testing.T) {
-	pre := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1800, Month: 1},
-		VoteResult: &auty.VoteResult{TotalVotes: 100},
+func TestGetProjectReceiptLog(t *testing.T) {
+	pre := &auty.AutonomyProposalProject{
+		PropProject: &auty.ProposalProject{Year: 1800, Month: 1},
+		CurRule: &auty.RuleConfig{BoardAttendRatio:80},
+		Boards: []string{"111", "222", "333"},
+		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
 		Status: 1,
 		Address:"121",
 	}
-	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
-		VoteResult: &auty.VoteResult{TotalVotes: 100},
+	cur := &auty.AutonomyProposalProject{
+		PropProject: &auty.ProposalProject{Year: 1900, Month: 1},
+		CurRule: &auty.RuleConfig{BoardAttendRatio:90},
+		Boards: []string{"555", "666", "777"},
+		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
 		Status: 2,
 		Address:"123",
 	}
-	log := getReceiptLog(pre, cur, 2)
+	log := getProjectReceiptLog(pre, cur, 2)
 	require.Equal(t, int32(2), log.Ty)
-	recpt := &auty.ReceiptProposalBoard{}
+	recpt := &auty.ReceiptProposalProject{}
 	err := types.Decode(log.Log, recpt)
 	require.NoError(t, err)
-	require.Equal(t, int32(1800), recpt.Prev.PropBoard.Year)
-	require.Equal(t, int32(1900), recpt.Current.PropBoard.Year)
+	require.Equal(t, int32(1800), recpt.Prev.PropProject.Year)
+	require.Equal(t, int32(1900), recpt.Current.PropProject.Year)
+	require.Equal(t, int32(80), recpt.Prev.CurRule.BoardAttendRatio)
+	require.Equal(t, int32(90), recpt.Current.CurRule.BoardAttendRatio)
+	require.Equal(t, []string{"111", "222", "333"}, recpt.Prev.Boards)
+	require.Equal(t, []string{"555", "666", "777"}, recpt.Current.Boards)
 }
 
-func TestCopyAutonomyProposalBoard(t *testing.T) {
-	require.Nil(t, copyAutonomyProposalBoard(nil))
-	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
-		CurRule: &auty.RuleConfig{BoardAttendRatio: 100},
-		VoteResult: &auty.VoteResult{TotalVotes: 100},
+func TestCopyAutonomyProposalProject(t *testing.T) {
+	require.Nil(t, copyAutonomyProposalProject(nil))
+	cur := &auty.AutonomyProposalProject{
+		PropProject: &auty.ProposalProject{Year: 1800, Month: 1},
+		CurRule: &auty.RuleConfig{BoardAttendRatio:80},
+		Boards: []string{"111", "222", "333"},
+		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
+		PubVote: &auty.PublicVote{Publicity:true},
 		Status: 2,
 		Address:"123",
 	}
-	pre := copyAutonomyProposalBoard(cur)
-	cur.PropBoard.Year = 1800
-	cur.PropBoard.Month = 2
+	pre := copyAutonomyProposalProject(cur)
+	cur.PropProject.Year = 1900
+	cur.PropProject.Month = 2
 	cur.CurRule.BoardAttendRatio = 90
-	cur.VoteResult.TotalVotes = 50
+	cur.Boards = []string{"555", "666", "777"}
+	cur.BoardVoteRes.TotalVotes = 90
+	cur.PubVote.Publicity = false
 	cur.Address = "234"
 	cur.Status = 1
 
-	require.Equal(t, 1900, int(pre.PropBoard.Year))
-	require.Equal(t, 1, int(pre.PropBoard.Month))
-	require.Equal(t, 100, int(pre.CurRule.BoardAttendRatio))
-	require.Equal(t, 100, int(pre.VoteResult.TotalVotes))
+	require.Equal(t, 1800, int(pre.PropProject.Year))
+	require.Equal(t, 1, int(pre.PropProject.Month))
+	require.Equal(t, []string{"111", "222", "333"}, pre.Boards)
+	require.Equal(t, 80, int(pre.CurRule.BoardAttendRatio))
 	require.Equal(t, "123", pre.Address)
 	require.Equal(t, 2, int(pre.Status))
-}
-
-func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
-	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(auty.AutonomyX, signType))
-	if err != nil {
-		return tx, err
-	}
-
-	bytes, err := common.FromHex(hexPrivKey[:])
-	if err != nil {
-		return tx, err
-	}
-
-	privKey, err := c.PrivKeyFromBytes(bytes)
-	if err != nil {
-		return tx, err
-	}
-
-	tx.Sign(int32(signType), privKey)
-	return tx, nil
+	require.Equal(t, 100, int(pre.BoardVoteRes.TotalVotes))
+	require.Equal(t, true, pre.PubVote.Publicity)
+	require.Equal(t, []string{"555", "666", "777"}, cur.Boards)
 }

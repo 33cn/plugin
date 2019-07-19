@@ -403,10 +403,18 @@ func copyAutonomyProposalBoard(cur *auty.AutonomyProposalBoard) *auty.AutonomyPr
 		return nil
 	}
 	newAut := *cur
-	newBoard := *cur.GetPropBoard()
-	newRes := *cur.GetVoteResult()
-	newAut.PropBoard = &newBoard
-	newAut.VoteResult = &newRes
+	if cur.PropBoard != nil {
+		newBoard := *cur.GetPropBoard()
+		newAut.PropBoard = &newBoard
+	}
+	if cur.CurRule != nil {
+		newRule := *cur.GetCurRule()
+		newAut.CurRule = &newRule
+	}
+	if cur.VoteResult != nil {
+		newRes := *cur.GetVoteResult()
+		newAut.VoteResult = &newRes
+	}
 	return &newAut
 }
 
