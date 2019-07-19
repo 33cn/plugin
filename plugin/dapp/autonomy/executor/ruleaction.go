@@ -314,18 +314,22 @@ func copyAutonomyProposalRule(cur *auty.AutonomyProposalRule) *auty.AutonomyProp
 		return nil
 	}
 	newAut := *cur
-	newPropRule := *cur.GetPropRule()
-	var newCfg *auty.RuleConfig
-	if newPropRule.RuleCfg != nil {
-		cfg := *cur.GetPropRule().GetRuleCfg()
-		newCfg = &cfg
+	if cur.PropRule != nil {
+		newPropRule := *cur.GetPropRule()
+		newAut.PropRule = &newPropRule
+		if cur.PropRule.RuleCfg != nil {
+			cfg := *cur.GetPropRule().GetRuleCfg()
+			newAut.PropRule.RuleCfg = &cfg
+		}
 	}
-	newRule := *cur.GetRule()
-	newRes := *cur.GetVoteResult()
-	newAut.PropRule = &newPropRule
-	newAut.PropRule.RuleCfg = newCfg
-	newAut.Rule = &newRule
-	newAut.VoteResult = &newRes
+	if cur.Rule != nil {
+		newRule := *cur.GetRule()
+		newAut.Rule = &newRule
+	}
+	if cur.VoteResult != nil {
+		newRes := *cur.GetVoteResult()
+		newAut.VoteResult = &newRes
+	}
 	return &newAut
 }
 

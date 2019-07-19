@@ -15,8 +15,8 @@ import (
 
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
 	if err := address.CheckAddress(prob.ToAddr); err != nil {
-		alog.Error("propProject ", "check toAddr error", err)
-		return  nil, types.ErrInvalidParam
+		alog.Error("propProject ", "addr", prob.ToAddr, "check toAddr error", err)
+		return  nil, types.ErrInvalidAddress
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 {
@@ -465,12 +465,22 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 		return nil
 	}
 	newAut := *cur
-	newProject := *cur.GetPropProject()
-	newRes := *cur.GetBoardVoteRes()
-	newPub := *cur.GetPubVote()
-	newAut.PropProject = &newProject
-	newAut.BoardVoteRes = &newRes
-	newAut.PubVote = &newPub
+	if cur.PropProject != nil{
+		newProject := *cur.GetPropProject()
+		newAut.PropProject = &newProject
+	}
+	if cur.CurRule != nil {
+		newRule := *cur.GetCurRule()
+		newAut.CurRule = &newRule
+	}
+	if cur.BoardVoteRes != nil {
+		newRes := *cur.GetBoardVoteRes()
+		newAut.BoardVoteRes = &newRes
+	}
+	if cur.PubVote != nil {
+		newPub := *cur.GetPubVote()
+		newAut.PubVote = &newPub
+	}
 	return &newAut
 }
 
