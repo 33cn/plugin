@@ -50,7 +50,7 @@ var (
 	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
 	localCacheCount                 int64 = 1000  // local cache block max count
 	batchFetchSeqEnable             bool
-	batchFetchSeqNum   				int64 = 128
+	batchFetchSeqNum                int64 = 128
 )
 
 func init() {
@@ -89,7 +89,7 @@ type subConfig struct {
 	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
 	LocalCacheCount                 int64 `json:"localCacheCount,omitempty"`
 	BatchFetchSeqEnable             uint32 `json:"batchFetchSeqEnable,omitempty"`
-	BatchFetchSeqNum             	int64  `json:"batchFetchSeqNum,omitempty"`
+	BatchFetchSeqNum                int64  `json:"batchFetchSeqNum,omitempty"`
 }
 
 // New function to init paracross env
