@@ -88,7 +88,7 @@ func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Rec
 	}
 
 	start := cur.GetPropProject().StartBlockHeight
-	if a.height > start {
+	if a.height >= start {
 		err := auty.ErrRevokeProposalPeriod
 		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			rvkProb.ProposalID, "err", err)
@@ -132,7 +132,9 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusProposalProject && cur.Status != auty.AutonomyStatusVotePropProject {
+	if cur.Status == auty.AutonomyStatusRvkPropProject      ||
+		cur.Status == auty.AutonomyStatusPubVotePropProject ||
+		cur.Status == auty.AutonomyStatusTmintPropProject {
 		err := auty.ErrProposalStatus
 		alog.Error("votePropProject ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -259,9 +261,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	}
 
 	start := cur.GetPropProject().StartBlockHeight
-	end := cur.GetPropProject().EndBlockHeight
-	real := cur.GetPropProject().RealEndBlockHeight
-	if start < a.height || end < a.height || (real != 0 && real < a.height) {
+	if a.height < start {
 		err := auty.ErrVotePeriod
 		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -333,7 +333,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
-	if cur.Status == auty.AutonomyStatusTmintPropProject {
+	if cur.Status == auty.AutonomyStatusTmintPropProject ||
+		cur.Status == auty.AutonomyStatusRvkPropProject {
 		err := auty.ErrProposalStatus
 		alog.Error("tmintPropProject ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
 			tmintProb.ProposalID, "err", err)
