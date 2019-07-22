@@ -94,7 +94,25 @@ func delBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue)
 	return kvs
 }
 
-func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
+func (a *Autonomy) getProposalBoard(req *types.ReqString) (types.Message, error) {
+	if req == nil {
+		return nil, types.ErrInvalidParam
+	}
+	value, err := a.GetStateDB().Get(propBoardID(req.Data))
+	if err != nil {
+		return nil, err
+	}
+	prop := &auty.AutonomyProposalBoard{}
+	err = types.Decode(value, prop)
+	if err != nil {
+		return nil, err
+	}
+	rep := &auty.ReplyQueryProposalBoard{}
+	rep.PropBoards = append(rep.PropBoards, prop)
+	return rep, nil
+}
+
+func(a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}

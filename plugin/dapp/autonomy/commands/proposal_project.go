@@ -222,9 +222,10 @@ func ShowProposalProjectCmd() *cobra.Command {
 }
 
 func addShowProposalProjectflags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("type", "t", 0, "type")
+	cmd.Flags().Uint32P("type", "t", 0, "type(0:query by hash; 1:list)")
 	cmd.MarkFlagRequired("type")
 
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.Flags().Uint32P("status", "s", 0, "status")
 	cmd.Flags().Int32P("count", "c", 0, "count")
 	cmd.Flags().Int32P("direction", "d", 0, "direction")
@@ -234,6 +235,7 @@ func addShowProposalProjectflags(cmd *cobra.Command) {
 func showProposalProject(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
+	propID, _:= cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
@@ -243,13 +245,20 @@ func showProposalProject(cmd *cobra.Command, args []string) {
 	var rep interface{}
 	params.Execer = auty.AutonomyX
 	if 0 == typ {
+		req := types.ReqString{
+			Data:    propID,
+		}
+		params.FuncName = auty.GetProposalProject
+		params.Payload = types.MustPBToJSON(&req)
+		rep = &auty.ReplyQueryProposalProject{}
+	} else if 1 == typ {
 		req := auty.ReqQueryProposalProject{
 			Status:    int32(status),
 			Count:     count,
 			Direction: direction,
 			Index:     index,
 		}
-		params.FuncName = auty.GetProposalProject
+		params.FuncName = auty.ListProposalProject
 		params.Payload = types.MustPBToJSON(&req)
 		rep = &auty.ReplyQueryProposalProject{}
 	}

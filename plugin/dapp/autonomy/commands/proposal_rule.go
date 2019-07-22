@@ -175,9 +175,10 @@ func ShowProposalRuleCmd() *cobra.Command {
 }
 
 func addShowProposalRuleflags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("type", "t", 0, "type")
+	cmd.Flags().Uint32P("type", "t", 0, "type(0:query by hash; 1:list)")
 	cmd.MarkFlagRequired("type")
 
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.Flags().Uint32P("status", "s", 0, "status")
 	cmd.Flags().Int32P("count", "c", 0, "count")
 	cmd.Flags().Int32P("direction", "d", 0, "direction")
@@ -187,6 +188,7 @@ func addShowProposalRuleflags(cmd *cobra.Command) {
 func showProposalRule(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
+	propID, _:= cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
@@ -196,16 +198,22 @@ func showProposalRule(cmd *cobra.Command, args []string) {
 	var rep interface{}
 	params.Execer = auty.AutonomyX
 	if 0 == typ {
+		req := types.ReqString{
+			Data:    propID,
+		}
+		params.FuncName = auty.GetProposalRule
+		params.Payload = types.MustPBToJSON(&req)
+	} else if 1 == typ {
 		req := auty.ReqQueryProposalRule{
 			Status:    int32(status),
 			Count:     count,
 			Direction: direction,
 			Index:     index,
 		}
-		params.FuncName = auty.GetProposalRule
+		params.FuncName = auty.ListProposalRule
 		params.Payload = types.MustPBToJSON(&req)
-		rep = &auty.ReplyQueryProposalRule{}
 	}
+	rep = &auty.ReplyQueryProposalRule{}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()

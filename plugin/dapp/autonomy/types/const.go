@@ -66,10 +66,16 @@ const (
 const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询
 	GetProposalBoard   = "GetProposalBoard"
+	// ListProposalBoard
+	ListProposalBoard   = "ListProposalBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询
 	GetProposalProject = "GetProposalProject"
+	// ListProposalProject
+	ListProposalProject = "ListProposalProject"
 	// GetProposalRule 用于在cmd里面的区分不同的查询
 	GetProposalRule    = "GetProposalRule"
+	// ListProposalRule
+	ListProposalRule    = "ListProposalRule"
 )
 
 
