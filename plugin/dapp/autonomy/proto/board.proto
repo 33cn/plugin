@@ -72,5 +72,5 @@ message ReqQueryProposalBoard {
 }
 
 message ReplyQueryProposalBoard {
-    repeated AutonomyProposalBoard  proBoards    = 1;
+    repeated AutonomyProposalBoard  propBoards    = 1;
 }

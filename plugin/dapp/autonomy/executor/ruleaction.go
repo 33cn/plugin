@@ -45,7 +45,7 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 
 	cur := &auty.AutonomyProposalRule{
 		PropRule:prob,
-		Rule: rule,
+		CurRule: rule,
 		VoteResult: &auty.VoteResult{},
 		Status: auty.AutonomyStatusProposalRule,
 		Address: a.fromaddr,
@@ -81,7 +81,7 @@ func (a *action) rvkPropRule(rvkProb *auty.RevokeProposalRule) (*types.Receipt, 
 	}
 
 	start := cur.GetPropRule().StartBlockHeight
-	if a.height > start {
+	if a.height >= start {
 		err := auty.ErrRevokeProposalPeriod
 		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			rvkProb.ProposalID, "err", err)
@@ -98,9 +98,9 @@ func (a *action) rvkPropRule(rvkProb *auty.RevokeProposalRule) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.Rule.ProposalAmount)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.Rule.ProposalAmount, "err", err)
+		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -125,7 +125,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	pre := copyAutonomyProposalRule(cur)
 
 	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusProposalRule && cur.Status != auty.AutonomyStatusVotePropRule {
+	if cur.Status == auty.AutonomyStatusRvkPropRule ||
+		cur.Status == auty.AutonomyStatusTmintPropRule {
 		err := auty.ErrProposalStatus
 		alog.Error("votePropRule ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -135,7 +136,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	start := cur.GetPropRule().StartBlockHeight
 	end := cur.GetPropRule().EndBlockHeight
 	real := cur.GetPropRule().RealEndBlockHeight
-	if start < a.height || end < a.height || (real != 0 && real < a.height) {
+	if a.height < start || a.height > end || real != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -177,7 +178,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	// 首次进入投票期,即将提案金转入自治系统地址
 	if cur.Status == auty.AutonomyStatusProposalRule {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.Rule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropRule ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -206,7 +207,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
-		upRule := upgradeRule(cur.Rule, cur.PropRule.RuleCfg)
+		upRule := upgradeRule(cur.CurRule, cur.PropRule.RuleCfg)
 		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
 	}
 
@@ -270,7 +271,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
 	if cur.Status == auty.AutonomyStatusProposalRule {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.Rule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -286,7 +287,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
-		upRule := upgradeRule(cur.Rule, cur.PropRule.RuleCfg)
+		upRule := upgradeRule(cur.CurRule, cur.PropRule.RuleCfg)
 		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
 	}
 
@@ -331,9 +332,9 @@ func copyAutonomyProposalRule(cur *auty.AutonomyProposalRule) *auty.AutonomyProp
 			newAut.PropRule.RuleCfg = &cfg
 		}
 	}
-	if cur.Rule != nil {
-		newRule := *cur.GetRule()
-		newAut.Rule = &newRule
+	if cur.CurRule != nil {
+		newRule := *cur.GetCurRule()
+		newAut.CurRule = &newRule
 	}
 	if cur.VoteResult != nil {
 		newRes := *cur.GetVoteResult()

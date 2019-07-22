@@ -194,11 +194,11 @@ func TestGetProposalBoard(t *testing.T) {
 	}
 	rsp, err := au.getProposalBoard(req)
 	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).ProBoards), len(testcase2))
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[k].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[k].Index, int32(tcase.index))
+		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Height, tcase.height)
+		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Index, int32(tcase.index))
 		k--
 	}
 
@@ -211,10 +211,10 @@ func TestGetProposalBoard(t *testing.T) {
 	}
 	rsp, err = au.getProposalBoard(req)
 	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).ProBoards), len(testcase2))
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	for i, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[i].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[i].Index, int32(tcase.index))
+		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Height, tcase.height)
+		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
@@ -226,9 +226,9 @@ func TestGetProposalBoard(t *testing.T) {
 	}
 	rsp, err = au.getProposalBoard(req)
 	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).ProBoards), 1)
-	height := rsp.(*auty.ReplyQueryProposalBoard).ProBoards[0].Height
-	index := rsp.(*auty.ReplyQueryProposalBoard).ProBoards[0].Index
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
+	height := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height
+	index := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index
 	require.Equal(t, height, testcase2[2].height)
 	require.Equal(t, index, int32(testcase2[2].index))
 	//
@@ -240,9 +240,9 @@ func TestGetProposalBoard(t *testing.T) {
 		Index: Index,
 	}
 	rsp, err = au.getProposalBoard(req)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).ProBoards), 2)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[0].Height, testcase2[1].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[0].Index, int32(testcase2[1].index))
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[1].Height, testcase2[0].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).ProBoards[1].Index, int32(testcase2[0].index))
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
+	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
+	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))
+	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Height, testcase2[0].height)
+	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
 }

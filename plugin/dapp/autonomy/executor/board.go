@@ -125,7 +125,7 @@ func (a *Autonomy) getProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mess
 		if err != nil {
 			return nil, err
 		}
-		rep.ProBoards = append(rep.ProBoards, prop)
+		rep.PropBoards = append(rep.PropBoards, prop)
 	}
 	return &rep, nil
 }

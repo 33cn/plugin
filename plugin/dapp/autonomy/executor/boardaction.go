@@ -112,7 +112,7 @@ func (a *action) rvkPropBoard(rvkProb *auty.RevokeProposalBoard) (*types.Receipt
 	}
 
 	start := cur.GetPropBoard().StartBlockHeight
-	if a.height > start {
+	if a.height >= start {
 		err := auty.ErrRevokeProposalPeriod
 		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			rvkProb.ProposalID, "err", err)
@@ -156,7 +156,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	pre := copyAutonomyProposalBoard(cur)
 
 	// 检查当前状态
-	if cur.Status != auty.AutonomyStatusProposalBoard && cur.Status != auty.AutonomyStatusVotePropBoard {
+	if cur.Status == auty.AutonomyStatusRvkPropBoard ||
+		cur.Status == auty.AutonomyStatusTmintPropBoard {
 		err := auty.ErrProposalStatus
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "status", cur.Status, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -166,7 +167,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	start := cur.GetPropBoard().StartBlockHeight
 	end := cur.GetPropBoard().EndBlockHeight
 	real := cur.GetPropBoard().RealEndBlockHeight
-	if start < a.height || end < a.height || (real != 0 && real < a.height) {
+	if a.height < start || a.height > end || real != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -259,7 +260,8 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	pre := copyAutonomyProposalBoard(cur)
 
 	// 检查当前状态
-	if cur.Status == auty.AutonomyStatusTmintPropBoard {
+	if cur.Status == auty.AutonomyStatusTmintPropBoard ||
+		cur.Status == auty.AutonomyStatusRvkPropBoard {
 		err := auty.ErrProposalStatus
 		alog.Error("tmintPropBoard ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
 			tmintProb.ProposalID, "err", err)

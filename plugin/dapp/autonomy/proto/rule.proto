@@ -10,7 +10,7 @@ package types;
 
 message AutonomyProposalRule {
     ProposalRule  propRule   = 1;
-    RuleConfig    rule       = 2;
+    RuleConfig    curRule    = 2;
     // 全体持票人投票结果
     VoteResult    voteResult = 3;
     // 状态
