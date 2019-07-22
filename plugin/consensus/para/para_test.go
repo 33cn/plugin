@@ -208,20 +208,16 @@ func TestAddMinerTx(t *testing.T) {
 	mainForkParacrossCommitTx = 1
 	block := &types.Block{}
 
-	mainDetail, filterTxs, allTxs := createTestTxs(t)
-	mainBlock := &types.BlockSeq{
-		Seq:    &types.BlockSequence{},
-		Detail: mainDetail}
+	_, filterTxs, _ := createTestTxs(t)
+	localBlock := &pt.ParaLocalDbBlock{
+		Height:     1,
+		MainHeight: 10,
+		MainHash:   []byte("mainhash"),
+		Txs:        filterTxs}
 	para := new(client)
 	para.privateKey = priKey
-	para.addMinerTx(nil, block, mainBlock, allTxs)
-
-	ret := checkTxInMainBlock(filterTxs[0], mainDetail)
-	assert.True(t, ret)
-
-	tx2, _ := createCrossMainTx("toA")
-	ret = checkTxInMainBlock(tx2, mainDetail)
-	assert.False(t, ret)
+	para.addMinerTx(nil, block, localBlock)
+	assert.Equal(t,1,len(block.Txs))
 
 }
 
@@ -251,16 +247,10 @@ func TestGetLastBlockInfo(t *testing.T) {
 
 	qClient.On("Wait", mock.Anything).Return(msg, nil)
 
-	api.On("GetMainSequenceByHash", mock.Anything).Return(&types.Int64{Data: int64(1)}, nil)
-	mainBlock := &types.Block{ParentHash: []byte("phash")}
-	mainDetail := &types.BlockDetail{Block: mainBlock}
-	blocks := &types.BlockDetails{}
-	blocks.Items = append(blocks.Items, mainDetail)
-	grpcClient.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blocks, nil)
 	grpcClient.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: int64(10)}, nil)
 
-	mainSeq, hash, err := para.getLastBlockMainInfo()
+	mainSeq, lastBlock, err := para.getLastBlockMainInfo()
 	assert.NoError(t, err)
-	assert.Equal(t, int64(9), mainSeq)
-	assert.Equal(t, []byte("phash"), hash)
+	assert.Equal(t, int64(10), mainSeq)
+	assert.Equal(t, lastBlock.Height, block.Height)
 }

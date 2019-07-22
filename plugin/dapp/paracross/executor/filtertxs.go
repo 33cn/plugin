@@ -126,7 +126,7 @@ func FilterTxsForPara(title string, main *types.BlockDetail) []*types.Transactio
 	return txs
 }
 
-//FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
+//FilterTxsForParaPlus include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForParaPlus(title string, main *pt.ParaTxDetail) []*types.Transaction {
 	var txs []*types.Transaction
 	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
