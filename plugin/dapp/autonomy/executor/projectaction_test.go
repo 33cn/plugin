@@ -28,7 +28,11 @@ import (
 //	testLargeProjectAmount int64 = 1
 //)
 
-func InitProject(stateDB dbm.KV) {
+const (
+	testProjectAmount int64 =  types.Coin * 100 // 工程需要资金
+)
+
+func InitBoard(stateDB dbm.KV) {
 	// add active board
 	board := &auty.ProposalBoard{
 		Year: 2019,
@@ -40,6 +44,18 @@ func InitProject(stateDB dbm.KV) {
 		RealEndBlockHeight:5,
 	}
 	stateDB.Set(activeBoardID(), types.Encode(board))
+}
+
+func InitRule(stateDB dbm.KV) {
+	// add active rule
+	rule := &auty.RuleConfig{
+		BoardAttendRatio: boardAttendRatio,
+		BoardApproveRatio: boardApproveRatio,
+		PubOpposeRatio: pubOpposeRatio,
+		ProposalAmount: proposalAmount,
+		LargeProjectAmount: types.Coin *100,
+	}
+	stateDB.Set(activeRuleID(), types.Encode(rule))
 }
 
 func TestPropProject(t *testing.T) {
@@ -92,7 +108,7 @@ func TestPropProject(t *testing.T) {
 
 func TestRevokeProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	InitProject(stateDB)
+	InitBoard(stateDB)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//RevokeProposalProject
@@ -101,16 +117,33 @@ func TestRevokeProposalProject(t *testing.T) {
 
 func TestVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	InitProject(stateDB)
+	InitBoard(stateDB)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//voteProposalProject
 	voteProposalProject(t, env, exec, stateDB, kvdb, true)
+	// check
+	checkVoteProposalProjectResult(t, stateDB, env.txHash)
+}
+
+func TestPubVoteProposalProject(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
+	InitBoard(stateDB)
+	InitRule(stateDB)
+	// PropProject
+	testPropProject(t, env, exec, stateDB, kvdb, true)
+	// voteProposalProject
+	voteProposalProject(t, env, exec, stateDB, kvdb, true)
+	// pubVoteProposalProject
+	pubVoteProposalProject(t, env, exec, stateDB, kvdb, true) // 未通过全体持票人投票
+	// terminate
+	// check
+	checkPubVoteProposalProjectResult(t, stateDB, env.txHash)
 }
 
 func TestTerminateProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
-	InitProject(stateDB)
+	InitBoard(stateDB)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//terminateProposalProject
@@ -122,7 +155,7 @@ func testPropProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB db
 		Year: 2019,
 		Month: 7,
 		Day:     10,
-		Amount: types.Coin * 100,
+		Amount: testProjectAmount,
 		ToAddr: AddrD,
 		StartBlockHeight:  env.blockHeight + 5,
 		EndBlockHeight: env.blockHeight + 10,
@@ -261,9 +294,9 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 	}
 	records := []record{
 		{PrivKeyA, false},
-		{PrivKeyB, false},
+		{PrivKeyB, true},
 		{PrivKeyC, true},
-		{PrivKeyD, true},
+		//{PrivKeyD, true},
 	}
 
 	for _, record := range records {
@@ -306,6 +339,119 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
 		exec.SetAPI(api)
 	}
+}
+
+func voteProposalProjectTx(parm *auty.VoteProposalProject) (*types.Transaction, error) {
+	if parm == nil {
+		return nil, types.ErrInvalidParam
+	}
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionVotePropProject,
+		Value: &auty.AutonomyAction_VotePropProject{VotePropProject: parm},
+	}
+	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+}
+
+func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID string) {
+	// check
+	// balance
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(proposalAmount) - testProjectAmount, account.Balance)
+	// status
+	value, err := stateDB.Get(propProjectID(proposalID))
+	require.NoError(t, err)
+	cur := &auty.AutonomyProposalProject{}
+	err = types.Decode(value, cur)
+	require.NoError(t, err)
+	require.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
+	require.Equal(t, AddrA, cur.Address)
+}
+
+func pubVoteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	api := new(apimock.QueueProtocolAPI)
+	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+	hear := &types.Header{StateHash: []byte("")}
+	api.On("GetHeaders", mock.Anything).
+		Return(&types.Headers{
+		Items:[]*types.Header{hear}}, nil)
+	acc := &types.Account{
+		Currency: 0,
+		Balance: total*4,
+	}
+	val := types.Encode(acc)
+	values := [][]byte{val}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+
+	acc = &types.Account{
+		Currency: 0,
+		Balance: total,
+	}
+	val1 := types.Encode(acc)
+	values1 := [][]byte{val1}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	exec.SetAPI(api)
+
+	proposalID := env.txHash
+	// 4人参与投票，3人赞成票，1人反对票
+	type record struct {
+		priv string
+		appr bool
+	}
+	records := []record{
+		{PrivKeyA, true},
+		{PrivKeyB, false},
+		{PrivKeyC, true},
+		//{PrivKeyD, true},
+	}
+
+	for _, record := range records {
+		opt :=  &auty.PubVoteProposalProject{
+			ProposalID:proposalID,
+			Oppose: record.appr,
+		}
+		tx, err := pubVoteProposalProjectTx(opt)
+		require.NoError(t, err)
+		tx, err = signTx(tx, record.priv)
+		require.NoError(t, err)
+		// 设定当前高度为投票高度
+		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
+
+		receipt, err := exec.Exec(tx, int(1))
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+		if save {
+			for _, kv := range receipt.KV {
+				stateDB.Set(kv.Key, kv.Value)
+			}
+		}
+		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+		set, err := exec.ExecLocal(tx, receiptData, int(1))
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		if save {
+			for _, kv := range set.KV {
+				kvdb.Set(kv.Key, kv.Value)
+			}
+		}
+
+		// 每次需要重新设置
+		acc := &types.Account{
+			Currency: 0,
+			Balance: total,
+		}
+		val := types.Encode(acc)
+		values := [][]byte{val}
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		exec.SetAPI(api)
+	}
+}
+
+func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID string) {
 	// check
 	// balance
 	accCoin := account.NewCoinsAccount()
@@ -322,23 +468,15 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 	require.NoError(t, err)
 	require.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	require.Equal(t, AddrA, cur.Address)
-	//require.Equal(t, true, cur.VoteResult.Pass)
-	// check Project
-	au := &Autonomy{
-		drivers.DriverBase{},
-	}
-	au.SetStateDB(stateDB)
-	au.SetLocalDB(kvdb)
-	//action := newAction(au, &types.Transaction{}, 0)
 }
 
-func voteProposalProjectTx(parm *auty.VoteProposalProject) (*types.Transaction, error) {
+func pubVoteProposalProjectTx(parm *auty.PubVoteProposalProject) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	val := &auty.AutonomyAction{
-		Ty:    auty.AutonomyActionVotePropProject,
-		Value: &auty.AutonomyAction_VotePropProject{VotePropProject: parm},
+		Ty:    auty.AutonomyActionPubVotePropProject,
+		Value: &auty.AutonomyAction_PubVotePropProject{PubVotePropProject: parm},
 	}
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
