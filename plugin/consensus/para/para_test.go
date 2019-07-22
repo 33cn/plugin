@@ -217,7 +217,7 @@ func TestAddMinerTx(t *testing.T) {
 	para := new(client)
 	para.privateKey = priKey
 	para.addMinerTx(nil, block, localBlock)
-	assert.Equal(t,1,len(block.Txs))
+	assert.Equal(t, 1, len(block.Txs))
 
 }
 
