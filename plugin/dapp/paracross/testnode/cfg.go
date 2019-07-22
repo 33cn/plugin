@@ -116,7 +116,7 @@ searchHashMatchedBlockDepth=10000
 genesisAmount=100000000
 MainBlockHashForkHeight=1
 MainForkParacrossCommitTx=1
-MainLoopCheckCommitTxDoneForkHeight=1
+MainLoopCheckCommitTxDoneForkHeight=11
 
 [store]
 name="mavl"
