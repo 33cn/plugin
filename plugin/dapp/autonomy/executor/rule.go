@@ -93,7 +93,25 @@ func delRuleHeightIndex(res *auty.ReceiptProposalRule) (kvs []*types.KeyValue) {
 	return kvs
 }
 
-func (a *Autonomy) getProposalRule(req *auty.ReqQueryProposalRule) (types.Message, error) {
+func (a *Autonomy) getProposalRule(req *types.ReqString) (types.Message, error) {
+	if req == nil {
+		return nil, types.ErrInvalidParam
+	}
+	value, err := a.GetStateDB().Get(propRuleID(req.Data))
+	if err != nil {
+		return nil, err
+	}
+	prop := &auty.AutonomyProposalRule{}
+	err = types.Decode(value, prop)
+	if err != nil {
+		return nil, err
+	}
+	rep := &auty.ReplyQueryProposalRule{}
+	rep.PropRules = append(rep.PropRules, prop)
+	return rep, nil
+}
+
+func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}

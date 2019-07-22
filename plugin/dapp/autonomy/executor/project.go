@@ -95,7 +95,25 @@ func delProjectHeightIndex(res *auty.ReceiptProposalProject) (kvs []*types.KeyVa
 	return kvs
 }
 
-func (a *Autonomy) getProposalProject(req *auty.ReqQueryProposalProject) (types.Message, error) {
+func (a *Autonomy) getProposalProject(req *types.ReqString) (types.Message, error) {
+	if req == nil {
+		return nil, types.ErrInvalidParam
+	}
+	value, err := a.GetStateDB().Get(propProjectID(req.Data))
+	if err != nil {
+		return nil, err
+	}
+	prop := &auty.AutonomyProposalProject{}
+	err = types.Decode(value, prop)
+	if err != nil {
+		return nil, err
+	}
+	rep := &auty.ReplyQueryProposalProject{}
+	rep.PropProjects = append(rep.PropProjects, prop)
+	return rep, nil
+}
+
+func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}

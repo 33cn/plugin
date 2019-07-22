@@ -144,6 +144,20 @@ func TestGetProposalBoard(t *testing.T) {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
+	_, storedb, _ := util.CreateTestDB()
+	au.SetStateDB(storedb)
+	tx := "1111111111111111111"
+	storedb.Set(propBoardID(tx), types.Encode(&auty.AutonomyProposalBoard{}))
+	rsp, err := au.getProposalBoard(&types.ReqString{Data:tx})
+	require.NoError(t, err)
+	require.NotNil(t, rsp)
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
+}
+
+func TestListProposalBoard(t *testing.T) {
+	au := &Autonomy{
+		dapp.DriverBase{},
+	}
 	_, _, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 
@@ -192,7 +206,7 @@ func TestGetProposalBoard(t *testing.T) {
 		Direction:0,
 		Index: -1,
 	}
-	rsp, err := au.getProposalBoard(req)
+	rsp, err := au.listProposalBoard(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	k := 2
@@ -209,7 +223,7 @@ func TestGetProposalBoard(t *testing.T) {
 		Direction:1,
 		Index: -1,
 	}
-	rsp, err = au.getProposalBoard(req)
+	rsp, err = au.listProposalBoard(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	for i, tcase := range testcase2 {
@@ -224,7 +238,7 @@ func TestGetProposalBoard(t *testing.T) {
 		Direction:0,
 		Index: -1,
 	}
-	rsp, err = au.getProposalBoard(req)
+	rsp, err = au.listProposalBoard(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
 	height := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height
@@ -239,7 +253,7 @@ func TestGetProposalBoard(t *testing.T) {
 		Direction:0,
 		Index: Index,
 	}
-	rsp, err = au.getProposalBoard(req)
+	rsp, err = au.listProposalBoard(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))

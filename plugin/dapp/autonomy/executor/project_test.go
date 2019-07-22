@@ -148,6 +148,20 @@ func TestGetProposalProject(t *testing.T) {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
+	_, storedb, _ := util.CreateTestDB()
+	au.SetStateDB(storedb)
+	tx := "1111111111111111111"
+	storedb.Set(propProjectID(tx), types.Encode(&auty.AutonomyProposalProject{}))
+	rsp, err := au.getProposalProject(&types.ReqString{Data:tx})
+	require.NoError(t, err)
+	require.NotNil(t, rsp)
+	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
+}
+
+func TestListProposalProject(t *testing.T) {
+	au := &Autonomy{
+		dapp.DriverBase{},
+	}
 	_, _, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 
@@ -198,7 +212,7 @@ func TestGetProposalProject(t *testing.T) {
 		Direction:0,
 		Index: -1,
 	}
-	rsp, err := au.getProposalProject(req)
+	rsp, err := au.listProposalProject(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
 	k := 2
@@ -215,7 +229,7 @@ func TestGetProposalProject(t *testing.T) {
 		Direction:1,
 		Index: -1,
 	}
-	rsp, err = au.getProposalProject(req)
+	rsp, err = au.listProposalProject(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
 	for i, tcase := range testcase2 {
@@ -230,7 +244,7 @@ func TestGetProposalProject(t *testing.T) {
 		Direction:0,
 		Index: -1,
 	}
-	rsp, err = au.getProposalProject(req)
+	rsp, err = au.listProposalProject(req)
 	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
 	height := rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height
@@ -245,7 +259,7 @@ func TestGetProposalProject(t *testing.T) {
 		Direction:0,
 		Index: Index,
 	}
-	rsp, err = au.getProposalProject(req)
+	rsp, err = au.listProposalProject(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Index, int32(testcase2[1].index))
