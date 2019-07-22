@@ -174,7 +174,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	}
 
 	// 检查是否已经参与投票
-	votes, err := a.checkVotesRecord(voteProb.ProposalID)
+	votes, err := a.checkVotesRecord(votesRecord(voteProb.ProposalID))
 	if err != nil {
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
 			voteProb.ProposalID, "err", err)
@@ -205,13 +205,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
-		cur.PropBoard.RealEndBlockHeight = a.height
-
+	// 首次进入投票期,即将提案金转入自治系统地址
+	if cur.Status == auty.AutonomyStatusProposalBoard {
 		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropBoard ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
@@ -219,6 +214,14 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		}
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
+	}
+
+	if cur.VoteResult.TotalVotes != 0 &&
+		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
+	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+		cur.VoteResult.Pass = true
+		cur.PropBoard.RealEndBlockHeight = a.height
 	}
 
 	key := propBoardID(voteProb.ProposalID)
@@ -229,7 +232,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	kv = append(kv, &types.KeyValue{Key: key, Value: types.Encode(cur)})
 
 	// 更新VotesRecord
-	kv = append(kv, &types.KeyValue{Key: VotesRecord(voteProb.ProposalID), Value: types.Encode(votes)})
+	kv = append(kv, &types.KeyValue{Key: votesRecord(voteProb.ProposalID), Value: types.Encode(votes)})
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
@@ -291,13 +294,17 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
-	if err != nil {
-		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
-		return nil, err
+
+	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
+	if cur.Status == auty.AutonomyStatusProposalBoard {
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		if err != nil {
+			alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
 
 	cur.Status = auty.AutonomyStatusTmintPropBoard
 
@@ -369,9 +376,9 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	return rule, nil
 }
 
-func (a *action) checkVotesRecord(ID string) (*auty.VotesRecord, error) {
+func (a *action) checkVotesRecord(key []byte) (*auty.VotesRecord, error) {
 	var votes auty.VotesRecord
-	value, err := a.db.Get(VotesRecord(ID))
+	value, err := a.db.Get(key)
 	if err == nil {
 		err = types.Decode(value, &votes)
 		if err != nil {

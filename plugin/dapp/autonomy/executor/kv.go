@@ -17,7 +17,7 @@ var (
 	localPrefix = "LOCDB" + auty.AutonomyX + "-"
 )
 
-func VotesRecord(txHash string) []byte {
+func votesRecord(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", votesRecordPrefix, txHash))
 }
 
@@ -25,6 +25,7 @@ var (
 	// board
 	boardPrefix = idPrefix + "board" + "-"
 	localBoardPrefix = localPrefix + "board" + "-"
+	boardVotesRecordPrefix = boardPrefix + "vote" + "-"
 )
 
 func activeBoardID() []byte {
@@ -33,6 +34,10 @@ func activeBoardID() []byte {
 
 func propBoardID(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", boardPrefix, txHash))
+}
+
+func boardVotesRecord(txHash string) []byte {
+	return []byte(fmt.Sprintf("%s%s", boardVotesRecordPrefix, txHash))
 }
 
 func calcBoardKey4StatusHeight(status int32, heightindex string) []byte {
