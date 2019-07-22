@@ -573,43 +573,52 @@ func (client *client) CreateBlock() {
 		return
 	}
 	currSeq := lastSeq + 1
+
+out:
 	for {
-		count, err := client.getBatchFetchSeqCount(currSeq)
-		if err != nil {
-			currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)
-			if err == nil {
+		select {
+		case <-client.quitCreate:
+			break out
+		default:
+			count, err := client.getBatchFetchSeqCount(currSeq)
+			if err != nil {
+				currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)
+				if err == nil {
+					continue
+				}
+				time.Sleep(time.Second * time.Duration(blockSec))
 				continue
 			}
-			time.Sleep(time.Second * time.Duration(blockSec))
-			continue
-		}
 
-		plog.Info("Parachain CreateBlock", "curSeq", currSeq, "count", count, "lastSeqMainHash", common.ToHex(lastSeqMainHash))
-		paraTxs, err := client.RequestTx(currSeq, count, lastSeqMainHash)
-		if err != nil {
-			currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)
-			continue
-		}
+			plog.Info("Parachain CreateBlock", "curSeq", currSeq, "count", count, "lastSeqMainHash", common.ToHex(lastSeqMainHash))
+			paraTxs, err := client.RequestTx(currSeq, count, lastSeqMainHash)
+			if err != nil {
+				currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)
+				continue
+			}
 
-		if count+1 != int64(len(paraTxs.Items)) {
-			plog.Error("para CreateBlock count not match", "count", count+1, "items", len(paraTxs.Items))
-			continue
-		}
+			if count+1 != int64(len(paraTxs.Items)) {
+				plog.Error("para CreateBlock count not match", "count", count+1, "items", len(paraTxs.Items))
+				continue
+			}
 
-		err = client.procLocalBlocks(paraTxs)
-		if err != nil {
-			//根据localblock，重新搜索匹配
-			lastSeqMainHash = nil
-			plog.Error("para CreateBlock.procLocalBlocks", "err", err.Error())
-			continue
-		}
+			err = client.procLocalBlocks(paraTxs)
+			if err != nil {
+				//根据localblock，重新搜索匹配
+				lastSeqMainHash = nil
+				plog.Error("para CreateBlock.procLocalBlocks", "err", err.Error())
+				continue
+			}
 
-		//重新设定seq和lastSeqMainHash
-		lastSeqMainHash = paraTxs.Items[count].Header.Hash
-		if paraTxs.Items[count].Type == delAct {
-			lastSeqMainHash = paraTxs.Items[count].Header.ParentHash
-		}
-		currSeq = currSeq + count + 1
+			//重新设定seq和lastSeqMainHash
+			lastSeqMainHash = paraTxs.Items[count].Header.Hash
+			if paraTxs.Items[count].Type == delAct {
+				lastSeqMainHash = paraTxs.Items[count].Header.ParentHash
+			}
+			currSeq = currSeq + count + 1
 
+		}
 	}
+
+	client.wg.Done()
 }

@@ -106,8 +106,8 @@ func TestSendCommitMsg(t *testing.T) {
 	commitCli.quit = make(chan struct{})
 
 	commitCli.paraClient.wg.Add(1)
-	sendMsgCh := make(chan *types.Transaction, 1)
-	go commitCli.sendCommitMsg(sendMsgCh)
+	commitCli.sendMsgCh = make(chan *types.Transaction, 1)
+	go commitCli.sendCommitMsg()
 
 	//reply := &types.Reply{
 	//	IsOk: true,
@@ -116,7 +116,7 @@ func TestSendCommitMsg(t *testing.T) {
 	grpcClient.On("SendTransaction", mock.Anything, mock.Anything).Return(nil, types.ErrNotFound).Twice()
 	tx := &types.Transaction{}
 
-	sendMsgCh <- tx
+	commitCli.sendMsgCh <- tx
 	time.Sleep(3 * time.Second)
 
 	//para.BaseClient.Close()

@@ -104,7 +104,7 @@ func (client *commitMsgClient) clearSendingTx() {
 }
 
 func (client *commitMsgClient) procSendTx() {
-	plog.Info("para commitMsg---send", "chainHeight", atomic.LoadInt64(&client.chainHeight), "sendingHeight", client.sendingHeight,
+	plog.Info("para commitMsg---status", "chainHeight", atomic.LoadInt64(&client.chainHeight), "sendingHeight", client.sendingHeight,
 		"consensHeight", atomic.LoadInt64(&client.consensHeight), "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
 
 	if client.isSendingCommitMsg() || !client.isSync() {
@@ -156,7 +156,7 @@ func (client *commitMsgClient) isSync() bool {
 	}
 
 	if atomic.LoadInt32(&client.minerSwitch) != 1 {
-		plog.Info("para is not Sync", "minerSwitch", atomic.LoadInt32(&client.minerSwitch))
+		plog.Info("para is not Sync", "isMiner", atomic.LoadInt32(&client.minerSwitch))
 		return false
 	}
 
@@ -167,6 +167,11 @@ func (client *commitMsgClient) isSync() bool {
 
 	if atomic.LoadInt32(&client.paraClient.isCaughtUp) != 1 {
 		plog.Info("para is not Sync", "isCaughtUp", atomic.LoadInt32(&client.paraClient.isCaughtUp))
+		return false
+	}
+
+	if atomic.LoadInt32(&client.paraClient.syncCaughtUpAtom) != 1 {
+		plog.Info("para is not Sync", "syncCaughtUpAtom", atomic.LoadInt32(&client.paraClient.syncCaughtUpAtom))
 		return false
 	}
 
