@@ -269,7 +269,7 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block,localBl
 }
 
 //添加一个区块
-func (client *client) addBlock(lastBlock *types.Block,localBlock *pt.ParaLocalDbBlock ) error {
+func (client *client) addBlock(lastBlock *types.Block,localBlock *pt.ParaLocalDbBlock) error {
 	var newBlock types.Block
 	plog.Debug(fmt.Sprintf("the len txs is: %v", len(localBlock.Txs)))
 
