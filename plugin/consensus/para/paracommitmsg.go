@@ -170,8 +170,9 @@ func (client *commitMsgClient) isSync() bool {
 		return false
 	}
 
-	if atomic.LoadInt32(&client.paraClient.syncCaughtUpAtom) != 1 {
-		plog.Info("para is not Sync", "syncCaughtUpAtom", atomic.LoadInt32(&client.paraClient.syncCaughtUpAtom))
+
+	if !client.paraClient.SyncHasCaughtUp() {
+		plog.Info("para is not Sync", "syncCaughtUp", client.paraClient.SyncHasCaughtUp())
 		return false
 	}
 
