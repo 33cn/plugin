@@ -5,15 +5,15 @@
 package para
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
+
+	"encoding/hex"
 
 	log "github.com/33cn/chain33/common/log/log15"
 
 	"sync/atomic"
-
-	"time"
 
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/crypto"
@@ -154,12 +154,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para := &client{
-		BaseClient:  c,
-		grpcClient:  grpcCli,
-		authAccount: subcfg.AuthAccount,
-		privateKey:  priKey,
-		subCfg:      &subcfg,
-		quitCreate:  make(chan struct{}),
+		BaseClient:            c,
+		grpcClient:            grpcCli,
+		authAccount:           subcfg.AuthAccount,
+		privateKey:            priKey,
+		subCfg:                &subcfg,
+		quitCreate:            make(chan struct{}),
 	}
 
 	waitBlocks := int32(2) //最小是2
@@ -212,6 +212,7 @@ func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail
 func (client *client) Close() {
 	client.BaseClient.Close()
 	close(client.commitMsgClient.quit)
+	close(client.blockSyncClient.quitChan)
 	close(client.quitCreate)
 	close(client.blockSyncClient.quitChan)
 	client.wg.Wait()
