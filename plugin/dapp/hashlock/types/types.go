@@ -12,4 +12,7 @@ const (
 )
 
 // HashlockX name
-var HashlockX = "hashlock"
+var (
+	HashlockX            = "hashlock"
+	ForkBadRepeatSecretX = "ForkBadRepeatSecret"
+)
