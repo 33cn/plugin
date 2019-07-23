@@ -216,6 +216,7 @@ ForkRetrive=0
 
 [fork.sub.hashlock]
 Enable=0
+ForkBadRepeatSecret=0
 
 [fork.sub.manage]
 Enable=0
