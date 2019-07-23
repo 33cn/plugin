@@ -14,7 +14,7 @@ var (
 	idPrefix = "mavl-" + auty.AutonomyX + "-"
 	votesRecordPrefix = idPrefix + "vote" + "-"
 
-	localPrefix = "LOCDB" + auty.AutonomyX + "-"
+	localPrefix = "LODB-" + auty.AutonomyX + "-"
 )
 
 func votesRecord(txHash string) []byte {
