@@ -33,11 +33,11 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("endBlock")
 
 	// 可修改规则
-	cmd.Flags().Int32P("boardAttendRatio", "attend", 0, "board attend ratio(unit is %)")
-	cmd.Flags().Int32P("boardApproveRatio", "approve", 0, "board approve ratio(unit is %)")
-	cmd.Flags().Int32P("pubOpposeRatio", "oppose", 0, "public oppose ratio(unit is %)")
-	cmd.Flags().Int64P("proposalAmount", "pa", 0, "proposal cost amount")
-	cmd.Flags().Int64P("largeProjectAmount", "la", 0, "large project amount threshold")
+	cmd.Flags().Int32P("boardAttendRatio", "t", 0, "board attend ratio(unit is %)")
+	cmd.Flags().Int32P("boardApproveRatio", "r", 0, "board approve ratio(unit is %)")
+	cmd.Flags().Int32P("pubOpposeRatio", "o", 0, "public oppose ratio(unit is %)")
+	cmd.Flags().Int64P("proposalAmount", "p", 0, "proposal cost amount")
+	cmd.Flags().Int64P("largeProjectAmount", "l", 0, "large project amount threshold")
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
@@ -118,17 +118,23 @@ func VoteProposalRuleCmd() *cobra.Command {
 func addVoteProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().BoolP("approve", "ap", true, "is approve, default true")
+	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
 }
 
 func voteProposalRule(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
-	approve, _ := cmd.Flags().GetBool("approve")
+	approve, _ := cmd.Flags().GetInt32("approve")
+	var isapp bool
+	if approve == 0 {
+		isapp = false
+	} else {
+		isapp = true
+	}
 
 	params := &auty.VoteProposalRule{
 		ProposalID:     ID,
-		Approve: approve,
+		Approve: isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalRuleTx", params, &res)
@@ -166,8 +172,8 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 // ShowProposalRuleCmd 显示提案查询信息
 func ShowProposalRuleCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showInfo",
-		Short: "show proposal Rule info",
+		Use:   "showRuleInfo",
+		Short: "show proposal rule info",
 		Run:   showProposalRule,
 	}
 	addShowProposalRuleflags(cmd)

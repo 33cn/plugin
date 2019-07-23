@@ -28,16 +28,16 @@ func addProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("month", "m", 0, "month")
 	cmd.Flags().Int32P("day", "d", 0, "day")
 
-	cmd.Flags().StringP("firstStage", "firstStage", "", "first stage proposal ID")
-	cmd.Flags().StringP("lastStage", "lastStage", "", "last stage proposal ID")
-	cmd.Flags().StringP("production", "production", "", "production address")
-	cmd.Flags().StringP("description", "description", "", "description project")
-	cmd.Flags().StringP("contractor", "contractor", "", "contractor introduce")
+	cmd.Flags().StringP("firstStage", "f", "", "first stage proposal ID")
+	cmd.Flags().StringP("lastStage", "l", "", "last stage proposal ID")
+	cmd.Flags().StringP("production", "p", "", "production address")
+	cmd.Flags().StringP("description", "i", "", "description project")
+	cmd.Flags().StringP("contractor", "c", "", "contractor introduce")
 	cmd.Flags().Int64P("amount", "a", 0, "project cost amount")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("amountDetail", "detail", "", "project cost amount detail")
-	cmd.Flags().StringP("toAddr", "to", "", "project contractor account address")
+	cmd.Flags().StringP("amountDetail", "t", "", "project cost amount detail")
+	cmd.Flags().StringP("toAddr", "o", "", "project contractor account address")
 	cmd.MarkFlagRequired("toAddr")
 
 	cmd.Flags().Int64P("startBlock", "s", 0, "start block height")
@@ -133,17 +133,23 @@ func VoteProposalProjectCmd() *cobra.Command {
 func addVoteProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().BoolP("approve", "ap", true, "is approve, default true")
+	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
 }
 
 func voteProposalProject(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
-	approve, _ := cmd.Flags().GetBool("approve")
+	approve, _ := cmd.Flags().GetInt32("approve")
+	var isapp bool
+	if approve == 0 {
+		isapp = false
+	} else {
+		isapp = true
+	}
 
 	params := &auty.VoteProposalProject{
 		ProposalID:     ID,
-		Approve: approve,
+		Approve: isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalProjectTx", params, &res)
@@ -164,17 +170,24 @@ func PubVoteProposalProjectCmd() *cobra.Command {
 func addPubVoteProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().BoolP("oppose", "op", true, "is oppose, default true")
+	cmd.Flags().Int32P("oppose", "o", 1, "is oppose, default true")
 }
 
 func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
-	oppose, _ := cmd.Flags().GetBool("oppose")
+	oppose, _ := cmd.Flags().GetInt32("oppose")
+
+	var isopp bool
+	if oppose == 0 {
+		isopp = false
+	} else {
+		isopp = true
+	}
 
 	params := &auty.PubVoteProposalProject{
 		ProposalID:     ID,
-		Oppose: oppose,
+		Oppose: isopp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PubVoteProposalProjectTx", params, &res)
@@ -213,8 +226,8 @@ func terminateProposalProject(cmd *cobra.Command, args []string) {
 // ShowProposalProjectCmd 显示提案查询信息
 func ShowProposalProjectCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showInfo",
-		Short: "show proposal Project info",
+		Use:   "showProjectInfo",
+		Short: "show proposal project info",
 		Run:   showProposalProject,
 	}
 	addShowProposalProjectflags(cmd)

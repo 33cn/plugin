@@ -146,17 +146,23 @@ func VoteProposalBoardCmd() *cobra.Command {
 func addVoteProposalBoardFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().BoolP("approve", "ap", true, "is approve, default true")
+	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
 }
 
 func voteProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
-	approve, _ := cmd.Flags().GetBool("approve")
+	approve, _ := cmd.Flags().GetInt32("approve")
+	var isapp bool
+	if approve == 0 {
+		isapp = false
+	} else {
+		isapp = true
+	}
 
 	params := &auty.VoteProposalBoard{
 		ProposalID:     ID,
-		Approve: approve,
+		Approve: isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalBoardTx", params, &res)
@@ -194,7 +200,7 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 // ShowProposalBoardCmd 显示提案查询信息
 func ShowProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showInfo",
+		Use:   "showBoardInfo",
 		Short: "show proposal board info",
 		Run:   showProposalBoard,
 	}
