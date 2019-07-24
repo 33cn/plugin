@@ -119,7 +119,8 @@ func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Rec
 
 	kv = append(kv, &types.KeyValue{Key: propProjectID(rvkProb.ProposalID), Value: types.Encode(cur)})
 
-	getProjectReceiptLog(pre, cur, auty.TyLogRvkPropProject)
+	receiptLog := getProjectReceiptLog(pre, cur, auty.TyLogRvkPropProject)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -418,7 +419,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	kv = append(kv, &types.KeyValue{Key: propProjectID(tmintProb.ProposalID), Value: types.Encode(cur)})
 
-	getProjectReceiptLog(pre, cur, auty.TyLogTmintPropProject)
+	receiptLog := getProjectReceiptLog(pre, cur, auty.TyLogTmintPropProject)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }

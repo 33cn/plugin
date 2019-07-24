@@ -90,7 +90,14 @@ func (a *Autonomy) Exec_TmintPropRule(payload *auty.TerminateProposalRule, tx *t
 	return action.tmintPropRule(payload)
 }
 
+// Exec_Transfer 资金转入自治系统合约中
 func (a *Autonomy) Exec_Transfer(payload *auty.TransferFund, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.transfer(payload)
+}
+
+// Exec_Comment 评论提案
+func (a *Autonomy) Exec_Comment(payload *auty.Comment, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.comment(payload)
 }

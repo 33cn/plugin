@@ -79,3 +79,12 @@ func calcRuleKey4StatusHeight(status int32, heightindex string) []byte {
 	return []byte(key)
 }
 
+var (
+	// comment
+	localCommentPrefix = localPrefix + "cmt" + "-"
+)
+
+func calcCommentHeight(ID, heightindex string) []byte {
+	key := fmt.Sprintf(localCommentPrefix + "%s-" +"%s", ID, heightindex)
+	return []byte(key)
+}

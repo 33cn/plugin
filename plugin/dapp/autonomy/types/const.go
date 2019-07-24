@@ -40,6 +40,8 @@ const (
 	TyLogRvkPropRule   = 2122
 	TyLogVotePropRule  = 2123
 	TyLogTmintPropRule = 2124
+
+	TyLogCommentProp   = 2131
 )
 
 // status

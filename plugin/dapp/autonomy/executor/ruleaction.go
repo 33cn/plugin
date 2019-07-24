@@ -119,7 +119,8 @@ func (a *action) rvkPropRule(rvkProb *auty.RevokeProposalRule) (*types.Receipt, 
 
 	kv = append(kv, &types.KeyValue{Key: propRuleID(rvkProb.ProposalID), Value: types.Encode(cur)})
 
-	getRuleReceiptLog(pre, cur, auty.TyLogRvkPropRule)
+	receiptLog := getRuleReceiptLog(pre, cur, auty.TyLogRvkPropRule)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -299,8 +300,8 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 		upRule := upgradeRule(cur.CurRule, cur.PropRule.RuleCfg)
 		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
 	}
-
-	getRuleReceiptLog(pre, cur, auty.TyLogTmintPropRule)
+	receiptLog := getRuleReceiptLog(pre, cur, auty.TyLogTmintPropRule)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -322,6 +323,28 @@ func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func (a *action) comment(cm *auty.Comment) (*types.Receipt, error) {
+	if cm.Comment == "" || cm.ProposalID == "" {
+		err := types.ErrInvalidParam
+		alog.Error("autonomy comment ", "addr", a.fromaddr, "execaddr", a.execaddr, "Comment or proposalID empty", err)
+		return nil, err
+	}
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	receiptLog := getCommentReceiptLog(cm, a.height, a.index, auty.TyLogCommentProp)
+	logs = append(logs, receiptLog)
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func getCommentReceiptLog(cur *auty.Comment, height int64, index int32, ty int32) *types.ReceiptLog {
+	log := &types.ReceiptLog{}
+	log.Ty = ty
+	r := &auty.ReceiptProposalComment{Cmt: cur, Height:height, Index:index}
+	log.Log = types.Encode(r)
+	return log
 }
 
 func (a *action) getProposalRule(ID string) (*auty.AutonomyProposalRule, error) {
