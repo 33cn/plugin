@@ -5,7 +5,13 @@
 package commands
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/common/crypto"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,9 +19,17 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	"github.com/spf13/cobra"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
+var (
+	strChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" // 62 characters
+	genFile  = "genesis_file.json"
+	pvFile   = "priv_validator_"
+)
 //DPosCmd DPosVote合约命令行
 func DPosCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -35,6 +49,9 @@ func DPosCmd() *cobra.Command {
 		DPosVrfMRegistCmd(),
 		DPosVrfRPRegistCmd(),
 		DPosVrfQueryCmd(),
+		DPosCreateCmd(),
+		DPosVrfVerifyCmd(),
+		DPosVrfEvaluateCmd(),
 	)
 
 	return cmd
@@ -540,4 +557,226 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		ctx.Run()
 	}
 
+}
+
+//CreateCmd to create keyfiles
+func DPosCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "init_keyfile",
+		Short: "Initialize dpos Keyfile",
+		Run:   createFiles,
+	}
+	addCreateCmdFlags(cmd)
+	return cmd
+}
+
+func addCreateCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("num", "n", "", "Num of the keyfile to create")
+	cmd.MarkFlagRequired("num")
+}
+
+// RandStr ...
+func RandStr(length int) string {
+	chars := []byte{}
+MAIN_LOOP:
+	for {
+		val := rand.Int63()
+		for i := 0; i < 10; i++ {
+			v := int(val & 0x3f) // rightmost 6 bits
+			if v >= 62 {         // only 62 characters in strChars
+				val >>= 6
+				continue
+			} else {
+				chars = append(chars, strChars[v])
+				if len(chars) == length {
+					break MAIN_LOOP
+				}
+				val >>= 6
+			}
+		}
+	}
+
+	return string(chars)
+}
+
+func initCryptoImpl() error {
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		fmt.Printf("New crypto impl failed err: %v", err)
+		return err
+	}
+	ttypes.ConsensusCrypto = cr
+	return nil
+}
+
+func createFiles(cmd *cobra.Command, args []string) {
+	// init crypto instance
+	err := initCryptoImpl()
+	if err != nil {
+		return
+	}
+
+	// genesis file
+	genDoc := ttypes.GenesisDoc{
+		ChainID:     fmt.Sprintf("chain33-%v", RandStr(6)),
+		GenesisTime: time.Now(),
+	}
+
+	num, _ := cmd.Flags().GetString("num")
+	n, err := strconv.Atoi(num)
+	if err != nil {
+		fmt.Println("num parameter is not valid digit")
+		return
+	}
+	for i := 0; i < n; i++ {
+		// create private validator file
+		pvFileName := pvFile + strconv.Itoa(i) + ".json"
+		privValidator := ttypes.LoadOrGenPrivValidatorFS(pvFileName)
+		if privValidator == nil {
+			fmt.Println("Create priv_validator file failed.")
+			break
+		}
+
+		// create genesis validator by the pubkey of private validator
+		gv := ttypes.GenesisValidator{
+			PubKey: ttypes.KeyText{Kind: "secp256k1", Data: privValidator.GetPubKey().KeyString()},
+			Name:  "",
+		}
+		genDoc.Validators = append(genDoc.Validators, gv)
+	}
+
+	if err := genDoc.SaveAs(genFile); err != nil {
+		fmt.Println("Generated genesis file failed.")
+		return
+	}
+	fmt.Printf("Generated genesis file path %v\n", genFile)
+}
+
+//CreateCmd to create keyfiles
+func DPosVrfVerifyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vrfVerify",
+		Short: "vrf verify",
+		Run:   verify,
+	}
+	addVrfVerifyCmdFlags(cmd)
+	return cmd
+}
+
+func addVrfVerifyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("pubkey", "k", "", "key")
+	cmd.MarkFlagRequired("pubkey")
+
+	cmd.Flags().StringP("m", "m", "", "input of vrf")
+	cmd.MarkFlagRequired("m")
+
+	cmd.Flags().StringP("hash", "r", "", "hash of vrf")
+	cmd.MarkFlagRequired("hash")
+
+	cmd.Flags().StringP("proof", "p", "", "proof of vrf")
+	cmd.MarkFlagRequired("proof")
+}
+
+func verify(cmd *cobra.Command, args []string) {
+	// init crypto instance
+	err := initCryptoImpl()
+	if err != nil {
+		return
+	}
+
+	key, _ := cmd.Flags().GetString("pubkey")
+	data, _ := cmd.Flags().GetString("m")
+	hash, _ := cmd.Flags().GetString("hash")
+	proof, _ := cmd.Flags().GetString("proof")
+
+
+	m := []byte(data)
+
+	r, err := hex.DecodeString(hash)
+	if err != nil {
+		fmt.Println("Error DecodeString vrf hash data failed: ", err)
+		return
+	}
+
+	p, err := hex.DecodeString(proof)
+	if err != nil {
+		fmt.Println("Error DecodeString vrf proof data failed: ", err)
+		return
+	}
+
+	bKey, err := hex.DecodeString(key)
+	if err != nil {
+		fmt.Println("Error DecodeString bKey data failed: ", err)
+		return
+	}
+
+	pubKey, err := secp256k1.ParsePubKey(bKey, secp256k1.S256())
+	if err != nil {
+		fmt.Println("vrf Verify failed: ", err)
+		return
+	}
+	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfHash, err := vrfPub.ProofToHash(m, p)
+	if err != nil {
+		fmt.Println("vrf Verify failed: ", err)
+		return
+	}
+
+	fmt.Println("vrf m:", data)
+	fmt.Println("vrf proof:", proof)
+	fmt.Println("vrf hash:", hex.EncodeToString(vrfHash[:]))
+	fmt.Println("input hash:", hash)
+
+	if !bytes.Equal(vrfHash[:], r) {
+		fmt.Println("vrfVerify failed: invalid VRF hash")
+		return
+	}
+
+	fmt.Println("vrf hash is same with input hash, vrf Verify succeed")
+}
+
+//CreateCmd to create keyfiles
+func DPosVrfEvaluateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vrfEvaluate",
+		Short: "vrf evaluate",
+		Run:   evaluate,
+	}
+	addVrfEvaluateCmdFlags(cmd)
+	return cmd
+}
+
+func addVrfEvaluateCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("privKey", "p", "", "privKey")
+	cmd.MarkFlagRequired("privKey")
+
+	cmd.Flags().StringP("m", "m", "", "input of vrf")
+	cmd.MarkFlagRequired("m")
+}
+
+func evaluate(cmd *cobra.Command, args []string) {
+	// init crypto instance
+	err := initCryptoImpl()
+	if err != nil {
+		return
+	}
+
+	key, _ := cmd.Flags().GetString("privKey")
+	data, _ := cmd.Flags().GetString("m")
+
+	m := []byte(data)
+
+	bKey, err := hex.DecodeString(key)
+	if err != nil {
+		fmt.Println("Error DecodeString bKey data failed: ", err)
+		return
+	}
+
+	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), bKey)
+	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	vrfHash, vrfProof := vrfPriv.Evaluate(m)
+	fmt.Println("vrf evaluate:")
+	fmt.Println("input:", data)
+	fmt.Println(fmt.Sprintf("hash:%x", vrfHash))
+	fmt.Println(fmt.Sprintf("proof:%x", vrfProof))
 }
