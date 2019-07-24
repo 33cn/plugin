@@ -154,12 +154,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para := &client{
-		BaseClient:            c,
-		grpcClient:            grpcCli,
-		authAccount:           subcfg.AuthAccount,
-		privateKey:            priKey,
-		subCfg:                &subcfg,
-		quitCreate:            make(chan struct{}),
+		BaseClient:  c,
+		grpcClient:  grpcCli,
+		authAccount: subcfg.AuthAccount,
+		privateKey:  priKey,
+		subCfg:      &subcfg,
+		quitCreate:  make(chan struct{}),
 	}
 
 	waitBlocks := int32(2) //最小是2
