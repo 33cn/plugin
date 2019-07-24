@@ -105,7 +105,7 @@ func (client *client) batchSyncBlocks() {
 	client.setBlockSyncState(BlockSyncStateSyncing)
 	plog.Info("Para sync - syncing")
 
-	errCount  := int32(0)
+	errCount := int32(0)
 	for {
 		//获取同步状态,在需要同步的情况下执行同步
 		curSyncCaughtState, err := client.syncBlocksIfNeed()
