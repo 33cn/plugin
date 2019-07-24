@@ -5,7 +5,6 @@
 package para
 
 import (
-	"errors"
 	"time"
 
 	"encoding/hex"
@@ -19,47 +18,6 @@ import (
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
-
-func (client *client) setLocalDb(set *types.LocalDBSet) error {
-	//如果追赶上主链了，则落盘
-	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
-		set.Txid = 1
-	}
-
-	msg := client.GetQueueClient().NewMessage("blockchain", types.EventSetValueByKey, set)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		return err
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return err
-	}
-	if resp.GetData().(*types.Reply).IsOk {
-		return nil
-	}
-	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
-}
-
-func (client *client) getLocalDb(set *types.LocalDBGet, count int) ([][]byte, error) {
-	msg := client.GetQueueClient().NewMessage("blockchain", types.EventGetValueByKey, set)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	reply := resp.GetData().(*types.LocalReplyValue)
-	if len(reply.Values) != count {
-		plog.Error("Parachain getLocalDb count not match", "expert", count, "real", len(reply.Values))
-		return nil, types.ErrInvalidParam
-	}
-
-	return reply.Values, nil
-}
 
 func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
 	set := &types.LocalDBSet{}
@@ -367,7 +325,7 @@ func (client *client) switchLocalHashMatchedBlock() (int64, []byte, error) {
 	return -2, nil, pt.ErrParaCurHashNotMatch
 }
 
-func (client *client) getBatchFetchSeqCount(currSeq int64) (int64, error) {
+func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 	lastSeq, err := client.GetLastSeqOnMainChain()
 	if err != nil {
 		return 0, err
@@ -400,82 +358,21 @@ func (client *client) getBatchFetchSeqCount(currSeq int64) (int64, error) {
 
 }
 
-// preBlockHash to identify the same main node
-func (client *client) RequestTxOld(currSeq int64, preMainBlockHash []byte) ([]*types.Transaction, *types.BlockSeq, error) {
-	plog.Debug("Para consensus RequestTx")
-	lastSeq, err := client.GetLastSeqOnMainChain()
-	if err != nil {
-		return nil, nil, err
-	}
-	plog.Info("RequestTx", "LastMainSeq", lastSeq, "CurrSeq", currSeq)
-	if lastSeq >= currSeq {
-		blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if (bytes.Equal(preMainBlockHash, blockSeq.Detail.Block.ParentHash) && blockSeq.Seq.Type == addAct) ||
-			(bytes.Equal(preMainBlockHash, blockSeq.Seq.Hash) && blockSeq.Seq.Type == delAct) {
-
-			txs := paraexec.FilterTxsForPara(types.GetTitle(), blockSeq.Detail)
-			plog.Info("GetCurrentSeq", "Len of txs", len(txs), "seqTy", blockSeq.Seq.Type)
-
-			if lastSeq-currSeq > emptyBlockInterval {
-				atomic.StoreInt32(&client.isCaughtUp, 0)
-			} else {
-				atomic.StoreInt32(&client.isCaughtUp, 1)
-			}
-
-			return txs, blockSeq, nil
-		}
-		//not consistent case be processed at below
-		plog.Error("RequestTx", "preMainHash", hex.EncodeToString(preMainBlockHash), "currSeq preMainHash", hex.EncodeToString(blockSeq.Detail.Block.ParentHash),
-			"currSeq mainHash", hex.EncodeToString(blockSeq.Seq.Hash), "curr seq", currSeq, "ty", blockSeq.Seq.Type, "currSeq Mainheight", blockSeq.Detail.Block.Height)
-		return nil, nil, pt.ErrParaCurHashNotMatch
-	}
-	//lastSeq < CurrSeq case:
-	//lastSeq = currSeq-1, main node not update
-	if lastSeq+1 == currSeq {
-		plog.Debug("Waiting new sequence from main chain")
-		return nil, nil, pt.ErrParaWaitingNewSeq
-	}
-
-	// 1. lastSeq < currSeq-1
-	// 2. lastSeq >= currSeq and seq not consistent or fork case
-	return nil, nil, pt.ErrParaCurHashNotMatch
-}
-
-func (client *client) RequestTxOldVer(currSeq int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
-	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
-	if err != nil {
-		return nil, err
-	}
-
-	txDetail := paraexec.BlockDetail2ParaTxs(blockSeq.Seq.Type, blockSeq.Seq.Hash, blockSeq.Detail)
-
-	err = verifyTxDetailsHash(preMainBlockHash, txDetail)
-	if err != nil {
-		plog.Error("RequestTxOldVer", "curr seq", currSeq, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
-		return nil, err
-	}
-	return &pt.ParaTxDetails{Items: []*pt.ParaTxDetail{txDetail}}, nil
-}
-
-func verifyTxDetailsHash(preMainBlockHash []byte, mainBlock *pt.ParaTxDetail) error {
+func verifyMainBlockHash(preMainBlockHash []byte, mainBlock *pt.ParaTxDetail) error {
 	if (bytes.Equal(preMainBlockHash, mainBlock.Header.ParentHash) && mainBlock.Type == addAct) ||
 		(bytes.Equal(preMainBlockHash, mainBlock.Header.Hash) && mainBlock.Type == delAct) {
 		return nil
 	}
-	plog.Error("verifyTxDetailsHash", "preMainBlockHash", hex.EncodeToString(preMainBlockHash),
+	plog.Error("verifyMainBlockHash", "preMainBlockHash", hex.EncodeToString(preMainBlockHash),
 		"mainParentHash", hex.EncodeToString(mainBlock.Header.ParentHash), "mainHash", hex.EncodeToString(mainBlock.Header.Hash),
 		"type", mainBlock.Type, "height", mainBlock.Header.Height)
 	return pt.ErrParaCurHashNotMatch
 }
 
-func verifyTxDetails(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) error {
+func verifyMainBlocks(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) error {
 	pre := preMainBlockHash
 	for _, block := range mainBlocks.Items {
-		err := verifyTxDetailsHash(pre, block)
+		err := verifyMainBlockHash(pre, block)
 		if err != nil {
 			return err
 		}
@@ -484,17 +381,33 @@ func verifyTxDetails(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) erro
 	return nil
 }
 
-func (client *client) RequestTxBatch(currSeq int64, count int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
+func (client *client) requestAllMainTxs(currSeq int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
+	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
+	if err != nil {
+		return nil, err
+	}
+
+	txDetail := paraexec.BlockDetail2ParaTxs(blockSeq.Seq.Type, blockSeq.Seq.Hash, blockSeq.Detail)
+
+	err = verifyMainBlockHash(preMainBlockHash, txDetail)
+	if err != nil {
+		plog.Error("requestAllMainTxs", "curr seq", currSeq, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		return nil, err
+	}
+	return &pt.ParaTxDetails{Items: []*pt.ParaTxDetail{txDetail}}, nil
+}
+
+func (client *client) requestParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
 	//req := &pt.ReqParaTxByTitle{Start: currSeq, End: currSeq + count, Title: types.GetTitle()}
-	//items, err := client.GetBlockOnMainBySeq(req)
+	//details, err := client.GetParaTxByTitle(req)
 	//if err != nil {
-	//	return nil, nil, err
+	//	return nil, err
 	//}
 
 	details := &pt.ParaTxDetails{}
-	err := verifyTxDetails(preMainBlockHash, details)
+	err := verifyMainBlocks(preMainBlockHash, details)
 	if err != nil {
-		plog.Error("RequestTxBatch", "curr seq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		plog.Error("requestParaTxs", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, err
 	}
 	return details, nil
@@ -502,10 +415,10 @@ func (client *client) RequestTxBatch(currSeq int64, count int64, preMainBlockHas
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
 	if !batchFetchSeqEnable {
-		return client.RequestTxOldVer(currSeq, preMainBlockHash)
+		return client.requestAllMainTxs(currSeq, preMainBlockHash)
 	}
 
-	return client.RequestTxBatch(currSeq, count, preMainBlockHash)
+	return client.requestParaTxs(currSeq, count, preMainBlockHash)
 
 }
 
@@ -519,50 +432,59 @@ func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []
 	return currSeq, lastSeqMainHash, err
 }
 
-func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) error {
+func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) (bool, error) {
 	lastSeqMainHeight := mainBlock.Header.Height
 
 	lastBlock, err := client.getLastLocalBlock()
 	if err != nil {
 		plog.Error("Parachain getLastLocalBlock", "err", err)
-		return err
+		return false, err
 	}
 
-	txs := paraexec.FilterTxsForParaPlus(types.GetTitle(), mainBlock)
+	txs := paraexec.FilterTxsForPara(types.GetTitle(), mainBlock)
 
-	plog.Info("Parachain process block", "lastBlockHeight", lastBlock.Height, "currSeqMainHeight", lastSeqMainHeight,
-		"lastBlockMainHeight", lastBlock.MainHeight, "lastBlockMainHash", common.ToHex(lastBlock.MainHash), "seqTy", mainBlock.Type)
+	plog.Info("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
+		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", lastSeqMainHeight,
+		"curMainHash", common.ToHex(mainBlock.Header.Hash), "seqTy", mainBlock.Type)
 
 	if mainBlock.Type == delAct {
 		if len(txs) == 0 {
 			if lastSeqMainHeight > lastBlock.MainHeight {
-				return nil
+				return false, nil
 			}
 			plog.Info("Delete empty block")
 		}
-		return client.delLocalBlock(lastBlock.Height)
+		return true, client.delLocalBlock(lastBlock.Height)
 
 	} else if mainBlock.Type == addAct {
 		if len(txs) == 0 {
 			if lastSeqMainHeight-lastBlock.MainHeight < emptyBlockInterval {
-				return nil
+				return false, nil
 			}
 			plog.Info("Create empty block")
 		}
-		return client.createLocalBlock(lastBlock, txs, mainBlock)
+		return true, client.createLocalBlock(lastBlock, txs, mainBlock)
 
 	}
-	return types.ErrInvalidParam
+	return false, types.ErrInvalidParam
 
 }
 
 func (client *client) procLocalBlocks(mainBlocks *pt.ParaTxDetails) error {
+	var notify bool
 	for _, main := range mainBlocks.Items {
-		err := client.procLocalBlock(main)
-		if nil != err {
+		changed, err := client.procLocalBlock(main)
+		if err != nil {
 			return err
 		}
+		if changed {
+			notify = true
+		}
 	}
+	if notify {
+		client.NotifyLocalChange()
+	}
+
 	return nil
 }
 
@@ -580,7 +502,7 @@ out:
 		case <-client.quitCreate:
 			break out
 		default:
-			count, err := client.getBatchFetchSeqCount(currSeq)
+			count, err := client.getBatchSeqCount(currSeq)
 			if err != nil {
 				currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)
 				if err == nil {
