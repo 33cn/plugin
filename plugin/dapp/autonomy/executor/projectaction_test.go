@@ -54,6 +54,7 @@ func InitRule(stateDB dbm.KV) {
 		PubOpposeRatio: pubOpposeRatio,
 		ProposalAmount: proposalAmount,
 		LargeProjectAmount: types.Coin *100,
+		PublicPeriod: publicPeriod,
 	}
 	stateDB.Set(activeRuleID(), types.Encode(rule))
 }

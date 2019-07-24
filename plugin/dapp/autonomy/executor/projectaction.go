@@ -343,7 +343,7 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	// 公示期间不能终止
 	if cur.PubVote.Publicity && cur.PubVote.PubPass &&
-		a.height <= cur.PropProject.RealEndBlockHeight + publicPeriod {
+		a.height <= cur.PropProject.RealEndBlockHeight + int64(cur.CurRule.PublicPeriod) {
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropProject ", "addr", a.fromaddr, "status", cur.Status,
 			"in publicity vote period can not terminate", tmintProb.ProposalID, "err", err)

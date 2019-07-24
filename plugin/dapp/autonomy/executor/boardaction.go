@@ -18,7 +18,7 @@ import (
 const (
 	minBoards          = 3
 	maxBoards          = 30
-	publicPeriod       = 120960                  // 公示一周时间，以区块高度计算
+	publicPeriod      int32 = 120960             // 公示一周时间，以区块高度计算
 	ticketPrice        = types.Coin * 3000       // 单张票价
 	largeProjectAmount = types.Coin * 100 *10000 // 重大项目公示金额阈值
 	proposalAmount     = types.Coin * 1000       // 创建者消耗金额
@@ -374,6 +374,7 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 		rule.PubOpposeRatio     = pubOpposeRatio
 		rule.ProposalAmount     = proposalAmount
 		rule.LargeProjectAmount = largeProjectAmount
+		rule.PublicPeriod       = publicPeriod
 	}
 	return rule, nil
 }

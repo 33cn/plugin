@@ -26,6 +26,7 @@ const (
 	testPubOpposeRatio     int32 = 30
 	testProposalAmount     int64 = 0
 	testLargeProjectAmount int64 = 1
+	testPublicPeriod       int32 = 100
 )
 
 func TestRevokeProposalRule(t *testing.T) {
@@ -63,6 +64,7 @@ func testPropRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.K
 			PubOpposeRatio: testPubOpposeRatio,
 			ProposalAmount: testProposalAmount,
 			LargeProjectAmount: testLargeProjectAmount,
+			PublicPeriod:testPublicPeriod,
 
 	},
 		StartBlockHeight:  env.blockHeight + 5,
@@ -163,6 +165,7 @@ func revokeProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB
 	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
 	require.Equal(t, rule.ProposalAmount , proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
+	require.Equal(t, rule.PublicPeriod, publicPeriod)
 }
 
 func revokeProposalRuleTx(parm *auty.RevokeProposalRule) (*types.Transaction, error) {
@@ -285,6 +288,7 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	require.Equal(t, rule.PubOpposeRatio, testPubOpposeRatio)
 	require.Equal(t, rule.ProposalAmount , proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, testLargeProjectAmount)
+	require.Equal(t, rule.PublicPeriod, testPublicPeriod)
 }
 
 func voteProposalRuleTx(parm *auty.VoteProposalRule) (*types.Transaction, error) {
@@ -362,6 +366,7 @@ func terminateProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stat
 	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
 	require.Equal(t, rule.ProposalAmount , proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
+	require.Equal(t, rule.PublicPeriod, publicPeriod)
 }
 
 func terminateProposalRuleTx(parm *auty.TerminateProposalRule) (*types.Transaction, error) {
@@ -433,6 +438,7 @@ func TestUpgradeRule(t *testing.T) {
 		PubOpposeRatio: 3,
 		ProposalAmount: 4,
 		LargeProjectAmount: 5,
+		PublicPeriod: 6,
 	}
 	modify := &auty.RuleConfig{
 		BoardAttendRatio: 0,
@@ -440,6 +446,7 @@ func TestUpgradeRule(t *testing.T) {
 		PubOpposeRatio: 0,
 		ProposalAmount: -1,
 		LargeProjectAmount: 0,
+		PublicPeriod: 0,
 	}
 	new = upgradeRule(cur, modify)
 	require.NotNil(t, new)
@@ -448,6 +455,7 @@ func TestUpgradeRule(t *testing.T) {
 	require.Equal(t, new.PubOpposeRatio, cur.PubOpposeRatio)
 	require.Equal(t, new.ProposalAmount , cur.ProposalAmount)
 	require.Equal(t, new.LargeProjectAmount, cur.LargeProjectAmount)
+	require.Equal(t, new.PublicPeriod, cur.PublicPeriod)
 
 	modify = &auty.RuleConfig{
 		BoardAttendRatio: 10,
@@ -455,6 +463,7 @@ func TestUpgradeRule(t *testing.T) {
 		PubOpposeRatio: 30,
 		ProposalAmount: 40,
 		LargeProjectAmount: 50,
+		PublicPeriod: 60,
 	}
 	new = upgradeRule(cur, modify)
 	require.NotNil(t, new)
@@ -463,4 +472,5 @@ func TestUpgradeRule(t *testing.T) {
 	require.Equal(t, new.PubOpposeRatio, modify.PubOpposeRatio)
 	require.Equal(t, new.ProposalAmount , modify.ProposalAmount)
 	require.Equal(t, new.LargeProjectAmount, modify.LargeProjectAmount)
+	require.Equal(t, new.PublicPeriod, modify.PublicPeriod)
 }

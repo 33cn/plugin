@@ -38,6 +38,7 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("pubOpposeRatio", "o", 0, "public oppose ratio(unit is %)")
 	cmd.Flags().Int64P("proposalAmount", "p", 0, "proposal cost amount")
 	cmd.Flags().Int64P("largeProjectAmount", "l", 0, "large project amount threshold")
+	cmd.Flags().Int32P("publicPeriod", "u", 0, "public time")
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
@@ -55,6 +56,7 @@ func proposalRule(cmd *cobra.Command, args []string) {
 
 	proposalAmount, _ := cmd.Flags().GetInt64("proposalAmount")
 	largeProjectAmount, _ := cmd.Flags().GetInt64("largeProjectAmount")
+	publicPeriod, _ := cmd.Flags().GetInt32("publicPeriod")
 
 	params := &auty.ProposalRule{
 		Year:  year,
@@ -66,6 +68,7 @@ func proposalRule(cmd *cobra.Command, args []string) {
 			PubOpposeRatio: pubOpposeRatio,
 			ProposalAmount: proposalAmount * types.Coin,
 			LargeProjectAmount: largeProjectAmount * types.Coin,
+			PublicPeriod: publicPeriod,
 		},
 		StartBlockHeight:  startBlock,
 		EndBlockHeight: endBlock,

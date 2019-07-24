@@ -16,7 +16,8 @@ import (
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
 	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0  &&
-	   prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 {
+	   prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
+		prob.RuleCfg.PublicPeriod <= 0 {
 		return  nil, types.ErrInvalidParam
 	}
 
@@ -242,7 +243,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	start := cur.GetPropRule().StartBlockHeight
 	end := cur.GetPropRule().EndBlockHeight
-	if a.height <= end && !cur.VoteResult.Pass {
+	if a.height < end && !cur.VoteResult.Pass {
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropRule ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
 			"in vote period can not terminate", tmintProb.ProposalID, "err", err)
@@ -362,6 +363,9 @@ func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
 	}
 	if modify.LargeProjectAmount > 0 {
 		new.LargeProjectAmount = modify.LargeProjectAmount
+	}
+	if modify.PublicPeriod > 0 {
+		new.PublicPeriod = modify.PublicPeriod
 	}
 	return &new
 }
