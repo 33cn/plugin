@@ -9,6 +9,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
+	"github.com/33cn/chain33/system/dapp"
 )
 
 
@@ -18,10 +19,17 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0  &&
 	   prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
 		prob.RuleCfg.PublicPeriod <= 0 {
+		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return  nil, types.ErrInvalidParam
 	}
-
+	if prob.RuleCfg.BoardAttendRatio > 100 || prob.RuleCfg.BoardApproveRatio > 100 || prob.RuleCfg.PubOpposeRatio > 100 {
+		alog.Error("propRule RuleCfg invaild", "BoardAttendRatio", prob.RuleCfg.BoardAttendRatio, "BoardApproveRatio",
+			prob.RuleCfg.BoardApproveRatio, "PubOpposeRatio", prob.RuleCfg.PubOpposeRatio)
+		return  nil, types.ErrInvalidParam
+	}
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+		alog.Error("propRule height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
+			prob.EndBlockHeight, "height", a.height)
 		return  nil, types.ErrInvalidParam
 	}
 
@@ -294,6 +302,25 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	getRuleReceiptLog(pre, cur, auty.TyLogTmintPropRule)
 
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
+	if a.execaddr != dapp.ExecAddress(string(auty.AutonomyX))  {
+		err := auty.ErrNoAutonomyExec
+		alog.Error("autonomy transfer ", "addr", a.fromaddr, "execaddr", a.execaddr, "this exec is not autonomy", err)
+		return nil, err
+	}
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	receipt, err := a.coinsAccount.ExecTransfer(a.fromaddr, autonomyAddr, a.execaddr, tf.Amount)
+	if err != nil {
+		alog.Error("autonomy transfer ", "addr", a.fromaddr, "amount", tf.Amount, "ExecTransfer fail", err)
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 

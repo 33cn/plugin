@@ -26,10 +26,12 @@ message AutonomyAction {
         PubVoteProposalProject   pubVotePropProject = 8;
         TerminateProposalProject tmintPropProject   = 9;
         // 提案规则修改相关
-        ProposalRule          propRule       = 10;
-        RevokeProposalRule    rvkPropRule    = 11;
-        VoteProposalRule      votePropRule   = 12;
-        TerminateProposalRule tmintPropRule  = 13;
+        ProposalRule             propRule      = 10;
+        RevokeProposalRule       rvkPropRule   = 11;
+        VoteProposalRule         votePropRule  = 12;
+        TerminateProposalRule    tmintPropRule = 13;
+        // 发展基金转自治系统合约
+        TransferFund             transfer      = 14;
     }
-    int32 ty = 14;
+    int32 ty = 15;
 }

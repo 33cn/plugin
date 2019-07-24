@@ -227,3 +227,34 @@ func showProposalRule(cmd *cobra.Command, args []string) {
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
 }
+
+// TransferFundCmd 资金转入自治系统合约中
+func TransferFundCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transferFund",
+		Short: "transfer fund",
+		Run:   transferFund,
+	}
+	addTransferFundflags(cmd)
+	return cmd
+}
+
+func addTransferFundflags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("amount", "a", 0, "amount")
+	cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("note", "n", "", "note")
+}
+
+func transferFund(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	amount, _ := cmd.Flags().GetInt64("amount")
+	note, _:= cmd.Flags().GetString("note")
+
+	params := &auty.TransferFund{
+		Amount:     amount*types.Coin,
+		Note: note,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TransferFundTx", params, &res)
+	ctx.RunWithoutMarshal()
+}

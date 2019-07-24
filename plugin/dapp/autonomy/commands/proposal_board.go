@@ -51,6 +51,10 @@ func AutonomyCmd() *cobra.Command {
 		ShowProposalRuleCmd(),
 	)
 
+	cmd.AddCommand(
+		TransferFundCmd(),
+	)
+
 	return cmd
 }
 
