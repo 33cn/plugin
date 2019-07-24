@@ -13,6 +13,8 @@ import (
 
 	"sync/atomic"
 
+	"time"
+
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
@@ -66,7 +68,7 @@ type client struct {
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
 	subCfg          *subConfig
-	quitCreate       chan struct{}
+	quitCreate      chan struct{}
 }
 
 type subConfig struct {
