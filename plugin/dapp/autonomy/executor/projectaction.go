@@ -20,6 +20,8 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 {
+		alog.Error("propProject height or amount invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
+			prob.EndBlockHeight, "height", a.height, "amount", prob.Amount)
 		return  nil, types.ErrInvalidParam
 	}
 

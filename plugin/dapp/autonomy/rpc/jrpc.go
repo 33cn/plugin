@@ -186,3 +186,17 @@ func (c *Jrpc) TerminateProposalRuleTx(parm *auty.TerminateProposalRule, result 
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
+// TransferTx 资金转入自治系统合约中
+func (c *Jrpc) TransferFundTx(parm *auty.TransferFund, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.transferFund(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}

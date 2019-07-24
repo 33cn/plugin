@@ -208,3 +208,18 @@ func (c *channelClient) terminateProposalRule(ctx context.Context, head *auty.Te
 	}
 	return &types.UnsignTx{Data: data}, nil
 }
+
+func (c *channelClient) transferFund(ctx context.Context, head *auty.TransferFund) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionTransfer,
+		Value: &auty.AutonomyAction_Transfer{Transfer: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}

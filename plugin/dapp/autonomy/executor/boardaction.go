@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/client"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
+	"github.com/33cn/chain33/common/address"
 )
 
 const (
@@ -50,11 +51,21 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards {
+		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
 		return  nil, types.ErrInvalidParam
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
+			prob.EndBlockHeight, "height", a.height)
 		return  nil, types.ErrInvalidParam
+	}
+
+	for _, board := range prob.Boards {
+		if err := address.CheckAddress(board); err != nil {
+			alog.Error("propBoard ", "addr", board, "check toAddr error", err)
+			return  nil, types.ErrInvalidAddress
+		}
 	}
 
 	// 获取当前生效提案规则

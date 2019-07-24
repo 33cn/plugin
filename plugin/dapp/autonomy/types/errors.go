@@ -21,4 +21,6 @@ var (
 	ErrTerminatePeriod = errors.New("ErrTerminatePeriod")
 	// ErrNoActiveBoard 没有有效董事会
 	ErrNoActiveBoard = errors.New("ErrNoActiveBoard")
+	// ErrNoAutonomyExec 非Autonomy执行器
+	ErrNoAutonomyExec = errors.New("ErrNoAutonomyExec")
 )

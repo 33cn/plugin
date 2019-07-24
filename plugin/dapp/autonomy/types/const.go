@@ -22,6 +22,8 @@ const (
 	AutonomyActionVotePropRule
 	AutonomyActionTmintPropRule
 
+	AutonomyActionTransfer
+
 	//log for autonomy
 	TyLogPropBoard      = 2101
 	TyLogRvkPropBoard   = 2102

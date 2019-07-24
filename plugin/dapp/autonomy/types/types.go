@@ -88,5 +88,7 @@ func (a *AutonomyType) GetTypeMap() map[string]int32 {
 		"RvkPropRule":  AutonomyActionRvkPropRule,
 		"VotePropRule":  AutonomyActionVotePropRule,
 		"TmintPropRule": AutonomyActionTmintPropRule,
+
+		"Transfer": AutonomyActionTransfer,
 	}
 }

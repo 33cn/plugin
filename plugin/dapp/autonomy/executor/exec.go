@@ -89,3 +89,8 @@ func (a *Autonomy) Exec_TmintPropRule(payload *auty.TerminateProposalRule, tx *t
 	action := newAction(a, tx, int32(index))
 	return action.tmintPropRule(payload)
 }
+
+func (a *Autonomy) Exec_Transfer(payload *auty.TransferFund, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.transfer(payload)
+}
