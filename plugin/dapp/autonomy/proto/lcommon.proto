@@ -43,4 +43,6 @@ message RuleConfig {
     int64 proposalAmount      = 4;
     // 重大项目公示金额阈值
     int64 largeProjectAmount  = 5;
+    // 重大项目公示时间（以区块数为单位）
+    int32 publicPeriod        = 6;
 }
