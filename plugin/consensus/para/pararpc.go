@@ -8,19 +8,53 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
+
+	"sync/atomic"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 )
 
-func (client *client) GetBlockedSeq(hash []byte) (int64, error) {
-	//from blockchain db
-	blockedSeq, err := client.GetAPI().GetMainSequenceByHash(&types.ReqHash{Hash: hash})
-	if err != nil {
-		return -2, err
+func (client *client) setLocalDb(set *types.LocalDBSet) error {
+	//如果追赶上主链了，则落盘
+	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
+		set.Txid = 1
 	}
-	return blockedSeq.Data, nil
 
+	msg := client.GetQueueClient().NewMessage("blockchain", types.EventSetValueByKey, set)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return err
+	}
+	resp, err := client.GetQueueClient().Wait(msg)
+	if err != nil {
+		return err
+	}
+	if resp.GetData().(*types.Reply).IsOk {
+		return nil
+	}
+	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
+}
+
+func (client *client) getLocalDb(set *types.LocalDBGet, count int) ([][]byte, error) {
+	msg := client.GetQueueClient().NewMessage("blockchain", types.EventGetValueByKey, set)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.GetQueueClient().Wait(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	reply := resp.GetData().(*types.LocalReplyValue)
+	if len(reply.Values) != count {
+		plog.Error("Parachain getLocalDb count not match", "expert", count, "real", len(reply.Values))
+		return nil, types.ErrInvalidParam
+	}
+
+	return reply.Values, nil
 }
 
 func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
@@ -62,16 +96,6 @@ func (client *client) getLastBlockInfo() (*types.Block, error) {
 	return lastBlock, nil
 }
 
-func (client *client) GetForkHeightOnMainChain(key string) (int64, error) {
-	ret, err := client.grpcClient.GetFork(context.Background(), &types.ReqKey{Key: []byte(key)})
-	if err != nil {
-		plog.Error("para get rpc ForkHeight fail", "key", key, "err", err.Error())
-		return types.MaxHeight, err
-	}
-
-	return ret.Data, nil
-}
-
 func (client *client) GetLastHeightOnMainChain() (int64, error) {
 	header, err := client.grpcClient.GetLastHeader(context.Background(), &types.ReqNil{})
 	if err != nil {
@@ -89,15 +113,6 @@ func (client *client) GetLastSeqOnMainChain() (int64, error) {
 	}
 	//the reflect checked in grpcHandle
 	return seq.Data, nil
-}
-
-func (client *client) GetSeqByHeightOnMainChain(height int64) (int64, []byte, error) {
-	hash, err := client.GetHashByHeightOnMainChain(height)
-	if err != nil {
-		return -1, nil, err
-	}
-	seq, err := client.GetSeqByHashOnMainChain(hash)
-	return seq, hash, err
 }
 
 func (client *client) GetHashByHeightOnMainChain(height int64) ([]byte, error) {
@@ -136,15 +151,15 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 	return blockSeq, nil
 }
 
-func (client *client) GetBlockOnMainByHash(hash []byte) (*types.Block, error) {
-	blocks, err := client.grpcClient.GetBlockByHashes(context.Background(), &types.ReqHashes{Hashes: [][]byte{hash}})
-	if err != nil || blocks.Items[0] == nil {
-		plog.Error("GetBlockOnMainByHash Not found", "blockhash", common.ToHex(hash))
-		return nil, err
-	}
-
-	return blocks.Items[0].Block, nil
-}
+//func (client *client) GetParaTxByTitle(req *pt.ReqParaTxByTitle) (*pt.ParaTxDetails, error) {
+//	txDetails, err := client.grpcClient.GetParaTxByTitle(context.Background(), req)
+//	if err != nil  {
+//		plog.Error("GetParaTxByTitle wrong", "err", err.Error(),"start",req.Start,"end",req.End)
+//		return nil, err
+//	}
+//
+//	return txDetails, nil
+//}
 
 func (client *client) QueryTxOnMainByHash(hash []byte) (*types.TransactionDetail, error) {
 	detail, err := client.grpcClient.QueryTransaction(context.Background(), &types.ReqHash{Hash: hash})
