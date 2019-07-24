@@ -146,3 +146,34 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 	}
 	return &rep, nil
 }
+
+func (a *Autonomy) execLocalComment(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	var set []*types.KeyValue
+	for _, log := range receiptData.Logs {
+		switch log.Ty {
+		case auty.TyLogCommentProp:
+			{
+				var receipt auty.ReceiptProposalComment
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
+				kv := saveCommentHeightIndex(&receipt)
+				set = append(set, kv...)
+			}
+		default:
+			break
+		}
+	}
+	dbSet.KV = append(dbSet.KV, set...)
+	return dbSet, nil
+}
+
+func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyValue) {
+	kv := &types.KeyValue{}
+	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
+	kv.Value = types.Encode(&types.ReqString{Data:res.Cmt.Comment})
+	kvs = append(kvs, kv)
+	return kvs
+}

@@ -70,3 +70,21 @@ message ReqQueryProposalRule {
 message ReplyQueryProposalRule {
     repeated AutonomyProposalRule propRules = 1;
 }
+
+// TransferFund action
+message TransferFund {
+    int64   amount = 1;
+    string  note   = 2;
+}
+
+// Comment action
+message Comment {
+    string proposalID = 1;
+    string comment    = 2;
+}
+
+message ReceiptProposalComment {
+    Comment cmt    = 1;
+    int64   height = 2;
+    int32   index  = 3;
+}

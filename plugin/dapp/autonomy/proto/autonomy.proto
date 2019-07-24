@@ -32,6 +32,7 @@ message AutonomyAction {
         TerminateProposalRule    tmintPropRule = 13;
         // 发展基金转自治系统合约
         TransferFund             transfer      = 14;
+        Comment                  commentProp   = 15;
     }
-    int32 ty = 15;
+    int32 ty = 16;
 }

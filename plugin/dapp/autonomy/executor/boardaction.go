@@ -152,7 +152,8 @@ func (a *action) rvkPropBoard(rvkProb *auty.RevokeProposalBoard) (*types.Receipt
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(rvkProb.ProposalID), Value: types.Encode(cur)})
 
-	getReceiptLog(pre, cur, auty.TyLogRvkPropBoard)
+	receiptLog := getReceiptLog(pre, cur, auty.TyLogRvkPropBoard)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
@@ -328,7 +329,8 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value:types.Encode(cur.PropBoard)})
 	}
 
-	getReceiptLog(pre, cur, auty.TyLogTmintPropBoard)
+	receiptLog := getReceiptLog(pre, cur, auty.TyLogTmintPropBoard)
+	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }

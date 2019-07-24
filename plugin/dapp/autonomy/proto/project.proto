@@ -91,9 +91,3 @@ message ReqQueryProposalProject {
 message ReplyQueryProposalProject {
     repeated AutonomyProposalProject propProjects = 1;
 }
-
-// TransferFund action
-message TransferFund {
-    int64   amount = 1;
-    string  note   = 2;
-}
