@@ -170,7 +170,6 @@ func (client *commitMsgClient) isSync() bool {
 		return false
 	}
 
-
 	if !client.paraClient.SyncHasCaughtUp() {
 		plog.Info("para is not Sync", "syncCaughtUp", client.paraClient.SyncHasCaughtUp())
 		return false
