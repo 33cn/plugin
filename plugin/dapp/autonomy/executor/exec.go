@@ -97,7 +97,7 @@ func (a *Autonomy) Exec_Transfer(payload *auty.TransferFund, tx *types.Transacti
 }
 
 // Exec_Comment 评论提案
-func (a *Autonomy) Exec_Comment(payload *auty.Comment, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (a *Autonomy) Exec_CommentProp(payload *auty.Comment, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
-	return action.comment(payload)
+	return action.commentProp(payload)
 }

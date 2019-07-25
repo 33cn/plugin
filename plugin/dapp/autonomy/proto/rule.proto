@@ -101,6 +101,8 @@ message ReqQueryProposalComment {
 message RelationCmt {
     string repCmtHash = 1;
     string comment    = 2;
+    int64   height    = 3;
+    int32   index     = 4;
 }
 
 message ReplyQueryProposalComment {
