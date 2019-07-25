@@ -157,6 +157,7 @@ func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.
 		}
 	}
 
+	// local
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
 	require.NoError(t, err)
@@ -166,6 +167,11 @@ func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.
 			kvdb.Set(kv.Key, kv.Value)
 		}
 	}
+	// del
+	set, err = exec.ExecDelLocal(pbtx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
+
 	// 更新tahash
 	env.txHash = common.ToHex(pbtx.Hash())
 	env.startHeight = opt1.StartBlockHeight
@@ -217,6 +223,10 @@ func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 			kvdb.Set(kv.Key, kv.Value)
 		}
 	}
+	// del
+	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
@@ -302,6 +312,10 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 				kvdb.Set(kv.Key, kv.Value)
 			}
 		}
+		// del
+		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+		require.NoError(t, err)
+		require.NotNil(t, set)
 
 		// 每次需要重新设置
 		acc := &types.Account{
@@ -387,6 +401,10 @@ func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, sta
 			kvdb.Set(kv.Key, kv.Value)
 		}
 	}
+	// del
+	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
