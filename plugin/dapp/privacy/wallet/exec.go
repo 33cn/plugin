@@ -49,6 +49,18 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 		bizlog.Error("createTransaction", "isRescanUtxosFlagScaning cause error.", err)
 		return nil, err
 	}
+
+	//为空时增加自动设置
+	if req.GetAssetExec() == "coins" && req.GetTokenname() == "" {
+		req.Tokenname = types.GetCoinSymbol()
+	}
+
+	if req.AssetExec == "" || req.Tokenname == "" {
+		bizlog.Error("createTransaction", "checkAssertExecSymbol err", "empty assert exec or token name",
+			"assertExec", req.GetAssetExec(), "assertSymbol", req.GetTokenname())
+		return nil, types.ErrInvalidParam
+	}
+
 	if !checkAmountValid(req.Amount) {
 		err = types.ErrAmount
 		bizlog.Error("createTransaction", "isRescanUtxosFlagScaning cause error.", err)

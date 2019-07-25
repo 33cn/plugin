@@ -220,8 +220,13 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
 	var amount int64
 	keyinput := input.Keyinput
-	keyOutput := output.Keyoutput
+	assertExec := action.GetAssertExec()
 	token := action.GetTokenName()
+
+	if assertExec == "" || token == "" {
+		return types.ErrInvalidParam
+	}
+
 	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
 		amount = action.GetPrivacy2Public().Amount
 	}
@@ -264,13 +269,12 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrPubkeysOfUTXO
 	}
 
-	for _, output := range keyOutput {
-		totalOutput += output.Amount
-	}
-
 	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
-	if !types.IsPara() {
+	if assertExec == "coins" && types.IsPara() {
 
+		for _, output := range output.Keyoutput {
+			totalOutput += output.Amount
+		}
 		if tx.Fee < pty.PrivacyTxFee {
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
 			return pty.ErrPrivacyTxFeeNotEnough

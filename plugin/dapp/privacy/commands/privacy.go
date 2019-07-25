@@ -96,9 +96,10 @@ func createPub2PrivTxFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount, at most 4 decimal places")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -110,6 +111,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -117,7 +119,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -131,6 +133,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		Note:       note,
 		Pubkeypair: pubkeypair,
 		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -156,9 +159,10 @@ func createPriv2PrivTxFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("from")
 
 	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -172,6 +176,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 	sender, _ := cmd.Flags().GetString("from")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -179,7 +184,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -195,6 +200,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		From:       sender,
 		Mixcount:   mixCount,
 		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -220,9 +226,10 @@ func createPriv2PubTxFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -236,6 +243,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -243,7 +251,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -259,6 +267,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		To:        to,
 		Mixcount:  mixCount,
 		Expire:    expire,
+		AssetExec: assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -439,9 +448,10 @@ func createUTXOsFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("pubkeypair")
 	cmd.Flags().Float64P("amount", "a", 0, "amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Int32P("count", "c", 0, "mix count, default 0")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "transfer note")
-	cmd.Flags().Int64P("expire", "", int64(time.Hour), "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 }
 
 func createUTXOs(cmd *cobra.Command, args []string) {
@@ -449,22 +459,23 @@ func createUTXOs(cmd *cobra.Command, args []string) {
 	from, _ := cmd.Flags().GetString("from")
 	pubkeypair, _ := cmd.Flags().GetString("pubkeypair")
 	note, _ := cmd.Flags().GetString("note")
-	count, _ := cmd.Flags().GetInt32("count")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4
 	expire, _ := cmd.Flags().GetInt64("expire")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expire <= 0 {
-		expire = int64(time.Hour)
+		expire = int64(time.Minute * 10)
 	}
 
 	params := &pty.ReqCreateUTXOs{
-		Tokenname:  types.BTY,
+		Tokenname:  symbol,
 		Sender:     from,
 		Pubkeypair: pubkeypair,
 		Amount:     amountInt64,
-		Count:      count,
 		Note:       note,
 		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 
 	var res rpctypes.ReplyHash

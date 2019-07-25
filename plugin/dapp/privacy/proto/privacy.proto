@@ -23,6 +23,7 @@ message Public2Privacy {
     int64         amount    = 2;
     string        note      = 5;
     PrivacyOutput output    = 7;
+    string        assetExec = 8;
 }
 
 message Privacy2Privacy {
@@ -31,6 +32,7 @@ message Privacy2Privacy {
     string        note      = 5;
     PrivacyInput  input     = 6;
     PrivacyOutput output    = 7;
+    string        assetExec = 8;
 }
 
 message Privacy2Public {
@@ -40,6 +42,7 @@ message Privacy2Public {
     string        to        = 6;
     PrivacyInput  input     = 4;
     PrivacyOutput output    = 5;
+    string        assetExec = 8;
 }
 
 message UTXOGlobalIndex {
@@ -200,9 +203,9 @@ message ReqCreateUTXOs {
     int64  amount     = 4;
     string note       = 5;
     string sender     = 6; //发送人地址
-    int32  count      = 7;
     string pubkeypair = 8;
     int64  expire     = 9;
+    string assetExec  = 10;
 }
 
 message ReplyPrivacyPkPair {
@@ -425,6 +428,7 @@ message ReqCreatePrivacyTx {
     string pubkeypair = 10;
     int32  mixcount   = 11;
     int64  expire     = 12;
+    string assetExec  = 13;
 }
 
 service privacy {
