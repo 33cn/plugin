@@ -201,6 +201,8 @@ func TestAddMinerTx(t *testing.T) {
 		Txs:        filterTxs}
 	para := new(client)
 	para.privateKey = priKey
+	para.blockSyncClient = new(BlockSyncClient)
+	para.blockSyncClient.paraClient = para
 	para.blockSyncClient.addMinerTx(nil, block, localBlock)
 	assert.Equal(t, 1, len(block.Txs))
 
