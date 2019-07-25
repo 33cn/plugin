@@ -187,6 +187,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para.blockSyncClient = &BlockSyncClient{
+		paraClient:           para,
 		notifyChan:      make(chan bool),
 		quitChan:        make(chan struct{}),
 		maxCacheCount:   1000,
@@ -228,7 +229,8 @@ func (client *client) SetQueueClient(c queue.Client) {
 	go client.commitMsgClient.handler()
 	client.wg.Add(1)
 	go client.CreateBlock()
-	go client.SyncBlocks()
+	client.wg.Add(1)
+	go client.blockSyncClient.SyncBlocks()
 }
 
 func (client *client) InitBlock() {
@@ -257,7 +259,7 @@ func (client *client) InitBlock() {
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		err := client.CreateGenesisBlock(newblock)
+		err := client.blockSyncClient.CreateGenesisBlock(newblock)
 		if err != nil {
 			panic(fmt.Sprintf("para chain create genesis block,err=%s", err.Error()))
 		}
