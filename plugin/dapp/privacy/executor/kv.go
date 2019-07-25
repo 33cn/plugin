@@ -22,12 +22,12 @@ const (
 
 //CalcPrivacyOutputKey 该key对应的是types.KeyOutput
 //该kv会在store中设置
-func CalcPrivacyOutputKey(token string, amount int64, txhash string, outindex int) (key []byte) {
-	return []byte(fmt.Sprintf(privacyOutputKeyPrefix+"-%s-%d-%s-%d", token, amount, txhash, outindex))
+func CalcPrivacyOutputKey(exec, token string, amount int64, txhash string, outindex int) (key []byte) {
+	return []byte(fmt.Sprintf(privacyOutputKeyPrefix+"-%s-%s-%d-%s-%d", exec, token, amount, txhash, outindex))
 }
 
-func calcPrivacyKeyImageKey(token string, keyimage []byte) []byte {
-	return []byte(fmt.Sprintf(privacyKeyImagePrefix+"-%s-%s", token, common.ToHex(keyimage)))
+func calcPrivacyKeyImageKey(exec, token string, keyimage []byte) []byte {
+	return []byte(fmt.Sprintf(privacyKeyImagePrefix+"-%s-%s-%s", exec, token, common.ToHex(keyimage)))
 }
 
 //CalcPrivacyUTXOkeyHeight 在本地数据库中设置一条可以找到对应amount的对应的utxo的global index
