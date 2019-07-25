@@ -45,7 +45,7 @@ const (
 	TyLogCommentProp = 2131
 )
 
-// status
+// Board status
 const (
 	AutonomyStatusProposalBoard = iota + 1
 	AutonomyStatusRvkPropBoard
@@ -53,6 +53,7 @@ const (
 	AutonomyStatusTmintPropBoard
 )
 
+// Project status
 const (
 	AutonomyStatusProposalProject = iota + 1
 	AutonomyStatusRvkPropProject
@@ -61,6 +62,7 @@ const (
 	AutonomyStatusTmintPropProject
 )
 
+// Rule status
 const (
 	AutonomyStatusProposalRule = iota + 1
 	AutonomyStatusRvkPropRule
@@ -71,17 +73,17 @@ const (
 const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询
 	GetProposalBoard = "GetProposalBoard"
-	// ListProposalBoard
+	// ListProposalBoard 查询多个
 	ListProposalBoard = "ListProposalBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询
 	GetProposalProject = "GetProposalProject"
-	// ListProposalProject
+	// ListProposalProject 查询多个
 	ListProposalProject = "ListProposalProject"
 	// GetProposalRule 用于在cmd里面的区分不同的查询
 	GetProposalRule = "GetProposalRule"
-	// ListProposalRule
+	// ListProposalRule 查询多个
 	ListProposalRule = "ListProposalRule"
-	// ListProposalComment
+	// ListProposalComment 查询多个
 	ListProposalComment = "ListProposalComment"
 )
 

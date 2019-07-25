@@ -24,7 +24,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type execEnv struct {
+// ExecEnv exec environment
+type ExecEnv struct {
 	blockTime   int64 // 1539918074
 	blockHeight int64
 	index       int
@@ -52,7 +53,8 @@ func init() {
 	commonlog.SetLogLevel("error")
 }
 
-func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
+// InitEnv 初始化环境
+func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -77,7 +79,7 @@ func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 		Addr:    AddrD,
 	}
 
-	env := &execEnv{
+	env := &ExecEnv{
 		blockTime:   1539918074,
 		blockHeight: 10,
 		index:       2,
@@ -131,7 +133,7 @@ func TestTerminateProposalBoard(t *testing.T) {
 	terminateProposalBoard(t, env, exec, stateDB, kvdb, true)
 }
 
-func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	opt1 := &auty.ProposalBoard{
 		Year:             2019,
 		Month:            7,
@@ -194,7 +196,7 @@ func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
 	opt2 := &auty.RevokeProposalBoard{
 		ProposalID: proposalID,
@@ -244,7 +246,7 @@ func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, 
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -356,7 +358,7 @@ func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, erro
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)

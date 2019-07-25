@@ -255,6 +255,7 @@ func TestListProposalBoard(t *testing.T) {
 		Index:     Index,
 	}
 	rsp, err = au.listProposalBoard(req)
+	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))

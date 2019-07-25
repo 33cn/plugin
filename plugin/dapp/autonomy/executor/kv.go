@@ -29,7 +29,7 @@ var (
 )
 
 func activeBoardID() []byte {
-	return []byte(fmt.Sprintf("%s", boardPrefix))
+	return []byte(boardPrefix)
 }
 
 func propBoardID(txHash string) []byte {
@@ -67,7 +67,7 @@ var (
 )
 
 func activeRuleID() []byte {
-	return []byte(fmt.Sprintf("%s", rulePrefix))
+	return []byte(rulePrefix)
 }
 
 func propRuleID(txHash string) []byte {

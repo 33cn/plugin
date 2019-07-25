@@ -194,7 +194,7 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// TerminateProposalProject 终止提案
+// TerminateProposalProjectCmd 终止提案
 func TerminateProposalProjectCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terminateProject",

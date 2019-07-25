@@ -15,7 +15,6 @@ import (
 var (
 	alog             = log.New("module", "execs.autonomy")
 	driverName       = auty.AutonomyX
-	autonomyAddr     = address.ExecAddress(auty.AutonomyX)
 	autonomyFundAddr = address.ExecAddress("autonomyfund")
 )
 

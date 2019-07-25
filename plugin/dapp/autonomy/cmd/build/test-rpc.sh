@@ -5,7 +5,7 @@
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-txhash=""
+#txhash=""
 
 function run_testcases() {
     echo "run_testcases"
@@ -32,4 +32,4 @@ function rpc_test() {
     fi
 }
 
-debug_function rpc_test "$1"
+#debug_function rpc_test "$1"

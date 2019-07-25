@@ -199,9 +199,9 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	votes.Address = append(votes.Address, a.fromaddr)
 	// 更新投票结果
 	if voteProb.Approve {
-		cur.BoardVoteRes.ApproveVotes += 1
+		cur.BoardVoteRes.ApproveVotes++
 	} else {
-		cur.BoardVoteRes.OpposeVotes += 1
+		cur.BoardVoteRes.OpposeVotes++
 	}
 
 	var logs []*types.ReceiptLog

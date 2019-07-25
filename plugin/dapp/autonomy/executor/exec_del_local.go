@@ -10,6 +10,7 @@ import (
 )
 
 // 提案董事会相关
+
 // ExecDelLocal_PropBoard 创建提案董事会
 func (a *Autonomy) ExecDelLocal_PropBoard(payload *auty.ProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalBoard(receiptData)
@@ -31,6 +32,7 @@ func (a *Autonomy) ExecDelLocal_TmintPropBoard(payload *auty.TerminateProposalBo
 }
 
 // 提案项目相关
+
 // ExecDelLocal_PropProject 创建提案项目
 func (a *Autonomy) ExecDelLocal_PropProject(payload *auty.ProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalProject(receiptData)
@@ -57,6 +59,7 @@ func (a *Autonomy) ExecDelLocal_TmintPropProject(payload *auty.TerminateProposal
 }
 
 // 提案规则相关
+
 // ExecDelLocal_PropRule 创建提案规则
 func (a *Autonomy) ExecDelLocal_PropRule(payload *auty.ProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalRule(receiptData)
@@ -77,7 +80,7 @@ func (a *Autonomy) ExecDelLocal_TmintPropRule(payload *auty.TerminateProposalRul
 	return a.execDelLocalRule(receiptData)
 }
 
-// ExecDelLocal_TmintPropRule 终止提案规则
+// ExecDelLocal_CommentProp 终止提案规则
 func (a *Autonomy) ExecDelLocal_CommentProp(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalCommentProp(receiptData)
 }

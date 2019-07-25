@@ -255,6 +255,7 @@ func TestListProposalRule(t *testing.T) {
 		Index:     Index,
 	}
 	rsp, err = au.listProposalRule(req)
+	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Index, int32(testcase2[1].index))
@@ -324,7 +325,7 @@ func TestListProposalComment(t *testing.T) {
 	au.SetLocalDB(kvdb)
 
 	type statu struct {
-		propId string
+		propID string
 		height int64
 		index  int64
 	}
@@ -351,7 +352,7 @@ func TestListProposalComment(t *testing.T) {
 		Comment:    "bbbbbbbbbb",
 	}
 	for _, tcase := range testcase {
-		key := calcCommentHeight(tcase.propId,
+		key := calcCommentHeight(tcase.propID,
 			dapp.HeightIndexStr(tcase.height, int64(tcase.index)))
 		cur.Height = tcase.height
 		cur.Index = int32(tcase.index)
@@ -414,6 +415,7 @@ func TestListProposalComment(t *testing.T) {
 		Index:      Index,
 	}
 	rsp, err = au.listProposalComment(req)
+	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Index, int32(testcase2[1].index))
