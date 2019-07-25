@@ -263,7 +263,7 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
+	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propRuleID(proposalID))

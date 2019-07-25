@@ -62,6 +62,9 @@ func (a *AutonomyType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogRvkPropRule:  {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogRvkPropRule"},
 		TyLogVotePropRule:  {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogVotePropRule"},
 		TyLogTmintPropRule: {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogTmintPropRule"},
+
+		TyLogCommentProp: {Ty: reflect.TypeOf(ReceiptProposalComment{}), Name: "LogCommentProp"},
+
 	}
 }
 
@@ -90,5 +93,6 @@ func (a *AutonomyType) GetTypeMap() map[string]int32 {
 		"TmintPropRule": AutonomyActionTmintPropRule,
 
 		"Transfer": AutonomyActionTransfer,
+		"CommentProp": AutonomyActionCommentProp,
 	}
 }

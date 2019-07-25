@@ -23,6 +23,7 @@ const (
 	AutonomyActionTmintPropRule
 
 	AutonomyActionTransfer
+	AutonomyActionCommentProp
 
 	//log for autonomy
 	TyLogPropBoard      = 2101
@@ -80,6 +81,8 @@ const (
 	GetProposalRule    = "GetProposalRule"
 	// ListProposalRule
 	ListProposalRule    = "ListProposalRule"
+	// ListProposalComment
+	ListProposalComment = "ListProposalComment"
 )
 
 

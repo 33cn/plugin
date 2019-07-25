@@ -220,7 +220,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 首次进入投票期,即将提案金转入自治系统地址
 	if cur.Status == auty.AutonomyStatusProposalBoard {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropBoard ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -311,7 +311,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
 	if cur.Status == auty.AutonomyStatusProposalBoard {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err

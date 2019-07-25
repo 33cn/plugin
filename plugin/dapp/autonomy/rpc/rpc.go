@@ -223,3 +223,18 @@ func (c *channelClient) transferFund(ctx context.Context, head *auty.TransferFun
 	}
 	return &types.UnsignTx{Data: data}, nil
 }
+
+func (c *channelClient) commentProposal(ctx context.Context, head *auty.Comment) (*types.UnsignTx, error) {
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionCommentProp,
+		Value: &auty.AutonomyAction_CommentProp{CommentProp: head},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(val),
+	}
+	data, err := types.FormatTxEncode(types.ExecName(auty.AutonomyX), tx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.UnsignTx{Data: data}, nil
+}

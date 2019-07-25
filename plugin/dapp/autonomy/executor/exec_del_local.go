@@ -76,3 +76,8 @@ func (a *Autonomy) ExecDelLocal_VotePropRule(payload *auty.VoteProposalRule, tx 
 func (a *Autonomy) ExecDelLocal_TmintPropRule(payload *auty.TerminateProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalRule(receiptData)
 }
+
+// ExecDelLocal_TmintPropRule 终止提案规则
+func (a *Autonomy) ExecDelLocal_Comment(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execDelLocalComment(receiptData)
+}

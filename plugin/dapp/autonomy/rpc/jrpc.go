@@ -200,3 +200,17 @@ func (c *Jrpc) TransferFundTx(parm *auty.TransferFund, result *interface{}) erro
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
+
+// CommentProposalTx 提案评论
+func (c *Jrpc) CommentProposalTx(parm *auty.Comment, result *interface{}) error {
+	if parm == nil {
+		return types.ErrInvalidParam
+	}
+	reply, err := c.cli.commentProposal(context.Background(), parm)
+	if err != nil {
+		return err
+	}
+
+	*result = hex.EncodeToString(reply.Data)
+	return nil
+}
