@@ -6,34 +6,35 @@ package executor
 
 import (
 	"testing"
+
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/system/dapp"
-	"github.com/33cn/chain33/util"
 )
 
 func TestExecLocalProject(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropProject
 	cur := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{},
-		CurRule: &auty.RuleConfig{},
-		Boards: []string{"111", "222", "333"},
+		PropProject:  &auty.ProposalProject{},
+		CurRule:      &auty.RuleConfig{},
+		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{},
-		PubVote: &auty.PublicVote{},
-		Status: auty.AutonomyStatusProposalProject,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		PubVote:      &auty.PublicVote{},
+		Status:       auty.AutonomyStatusProposalProject,
+		Address:      "11111111111111",
+		Height:       1,
+		Index:        2,
 	}
 	receiptProject := &auty.ReceiptProposalProject{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropProject, Log:types.Encode(receiptProject)},
+			{Ty: auty.TyLogPropProject, Log: types.Encode(receiptProject)},
 		},
 	}
 	set, err := au.execLocalProject(receipt)
@@ -48,12 +49,12 @@ func TestExecLocalProject(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptProject1 := &auty.ReceiptProposalProject{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execLocalProject(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogRvkPropProject, Log:types.Encode(receiptProject1)},
+			{Ty: auty.TyLogRvkPropProject, Log: types.Encode(receiptProject1)},
 		},
 	})
 	require.NoError(t, err)
@@ -73,12 +74,12 @@ func TestExecLocalProject(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptProject2 := &auty.ReceiptProposalProject{
-		Prev: pre2,
+		Prev:    pre2,
 		Current: cur,
 	}
 	set, err = au.execLocalProject(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropProject, Log:types.Encode(receiptProject2)},
+			{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 		},
 	})
 	require.NoError(t, err)
@@ -94,23 +95,23 @@ func TestExecDelLocalProject(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropProject
 	cur := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{},
-		CurRule: &auty.RuleConfig{},
-		Boards: []string{"111", "222", "333"},
+		PropProject:  &auty.ProposalProject{},
+		CurRule:      &auty.RuleConfig{},
+		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{},
-		PubVote: &auty.PublicVote{},
-		Status: auty.AutonomyStatusProposalProject,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		PubVote:      &auty.PublicVote{},
+		Status:       auty.AutonomyStatusProposalProject,
+		Address:      "11111111111111",
+		Height:       1,
+		Index:        2,
 	}
 	receiptProject := &auty.ReceiptProposalProject{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropProject, Log:types.Encode(receiptProject)},
+			{Ty: auty.TyLogPropProject, Log: types.Encode(receiptProject)},
 		},
 	}
 	set, err := au.execDelLocalProject(receipt)
@@ -126,12 +127,12 @@ func TestExecDelLocalProject(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptProject2 := &auty.ReceiptProposalProject{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execDelLocalProject(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropProject, Log:types.Encode(receiptProject2)},
+			{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 		},
 	})
 	require.NoError(t, err)
@@ -152,7 +153,7 @@ func TestGetProposalProject(t *testing.T) {
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
 	storedb.Set(propProjectID(tx), types.Encode(&auty.AutonomyProposalProject{}))
-	rsp, err := au.getProposalProject(&types.ReqString{Data:tx})
+	rsp, err := au.getProposalProject(&types.ReqString{Data: tx})
 	require.NoError(t, err)
 	require.NotNil(t, rsp)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
@@ -185,15 +186,15 @@ func TestListProposalProject(t *testing.T) {
 	testcase = append(testcase, testcase1...)
 	testcase = append(testcase, testcase2...)
 	cur := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{},
-		CurRule: &auty.RuleConfig{},
-		Boards: []string{"111", "222", "333"},
+		PropProject:  &auty.ProposalProject{},
+		CurRule:      &auty.RuleConfig{},
+		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{},
-		PubVote: &auty.PublicVote{},
-		Status: auty.AutonomyStatusProposalProject,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		PubVote:      &auty.PublicVote{},
+		Status:       auty.AutonomyStatusProposalProject,
+		Address:      "11111111111111",
+		Height:       1,
+		Index:        2,
 	}
 	for _, tcase := range testcase {
 		key := calcProjectKey4StatusHeight(tcase.status,
@@ -207,10 +208,10 @@ func TestListProposalProject(t *testing.T) {
 
 	// 反向查找
 	req := &auty.ReqQueryProposalProject{
-		Status:auty.AutonomyStatusProposalProject,
-		Count:10,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalProject,
+		Count:     10,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err := au.listProposalProject(req)
 	require.NoError(t, err)
@@ -224,10 +225,10 @@ func TestListProposalProject(t *testing.T) {
 
 	// 正向查找
 	req = &auty.ReqQueryProposalProject{
-		Status:auty.AutonomyStatusProposalProject,
-		Count:10,
-		Direction:1,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalProject,
+		Count:     10,
+		Direction: 1,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalProject(req)
 	require.NoError(t, err)
@@ -239,10 +240,10 @@ func TestListProposalProject(t *testing.T) {
 
 	// 翻页查找
 	req = &auty.ReqQueryProposalProject{
-		Status:auty.AutonomyStatusProposalProject,
-		Count:1,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalProject,
+		Count:     1,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalProject(req)
 	require.NoError(t, err)
@@ -254,10 +255,10 @@ func TestListProposalProject(t *testing.T) {
 	//
 	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalProject{
-		Status:auty.AutonomyStatusProposalProject,
-		Count:10,
-		Direction:0,
-		Index: Index,
+		Status:    auty.AutonomyStatusProposalProject,
+		Count:     10,
+		Direction: 0,
+		Index:     Index,
 	}
 	rsp, err = au.listProposalProject(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 2)

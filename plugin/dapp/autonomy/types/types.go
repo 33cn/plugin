@@ -6,6 +6,7 @@ package types
 
 import (
 	"reflect"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
@@ -47,24 +48,23 @@ func (a *AutonomyType) GetName() string {
 // GetLogMap 获得日志类型列表
 func (a *AutonomyType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogPropBoard:    {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogPropBoard"},
-		TyLogRvkPropBoard:  {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogRvkPropBoard"},
+		TyLogPropBoard:      {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogPropBoard"},
+		TyLogRvkPropBoard:   {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogRvkPropBoard"},
 		TyLogVotePropBoard:  {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogVotePropBoard"},
 		TyLogTmintPropBoard: {Ty: reflect.TypeOf(ReceiptProposalBoard{}), Name: "LogTmintPropBoard"},
 
-		TyLogPropProject:    {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPropProject"},
-		TyLogRvkPropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogRvkPropProject"},
-		TyLogVotePropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogVotePropProject"},
-		TyLogPubVotePropProject:  {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPubVotePropProject"},
-		TyLogTmintPropProject: {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogTmintPropProject"},
+		TyLogPropProject:        {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPropProject"},
+		TyLogRvkPropProject:     {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogRvkPropProject"},
+		TyLogVotePropProject:    {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogVotePropProject"},
+		TyLogPubVotePropProject: {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogPubVotePropProject"},
+		TyLogTmintPropProject:   {Ty: reflect.TypeOf(ReceiptProposalProject{}), Name: "LogTmintPropProject"},
 
-		TyLogPropRule:    {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogPropRule"},
-		TyLogRvkPropRule:  {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogRvkPropRule"},
+		TyLogPropRule:      {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogPropRule"},
+		TyLogRvkPropRule:   {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogRvkPropRule"},
 		TyLogVotePropRule:  {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogVotePropRule"},
 		TyLogTmintPropRule: {Ty: reflect.TypeOf(ReceiptProposalRule{}), Name: "LogTmintPropRule"},
 
 		TyLogCommentProp: {Ty: reflect.TypeOf(ReceiptProposalComment{}), Name: "LogCommentProp"},
-
 	}
 }
 
@@ -76,23 +76,23 @@ func (a *AutonomyType) GetPayload() types.Message {
 // GetTypeMap 获得Action 方法列表
 func (a *AutonomyType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"PropBoard":    AutonomyActionPropBoard,
-		"RvkPropBoard":  AutonomyActionRvkPropBoard,
+		"PropBoard":      AutonomyActionPropBoard,
+		"RvkPropBoard":   AutonomyActionRvkPropBoard,
 		"VotePropBoard":  AutonomyActionVotePropBoard,
 		"TmintPropBoard": AutonomyActionTmintPropBoard,
 
-		"PropProject":    AutonomyActionPropProject,
-		"RvkPropProject":  AutonomyActionRvkPropProject,
-		"VotePropProject":  AutonomyActionVotePropProject,
-		"PubVotePropProject":  AutonomyActionPubVotePropProject,
-		"TmintPropProject": AutonomyActionTmintPropProject,
+		"PropProject":        AutonomyActionPropProject,
+		"RvkPropProject":     AutonomyActionRvkPropProject,
+		"VotePropProject":    AutonomyActionVotePropProject,
+		"PubVotePropProject": AutonomyActionPubVotePropProject,
+		"TmintPropProject":   AutonomyActionTmintPropProject,
 
-		"PropRule":    AutonomyActionPropRule,
-		"RvkPropRule":  AutonomyActionRvkPropRule,
+		"PropRule":      AutonomyActionPropRule,
+		"RvkPropRule":   AutonomyActionRvkPropRule,
 		"VotePropRule":  AutonomyActionVotePropRule,
 		"TmintPropRule": AutonomyActionTmintPropRule,
 
-		"Transfer": AutonomyActionTransfer,
+		"Transfer":    AutonomyActionTransfer,
 		"CommentProp": AutonomyActionCommentProp,
 	}
 }

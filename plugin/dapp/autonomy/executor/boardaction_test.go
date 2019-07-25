@@ -7,21 +7,21 @@ package executor
 import (
 	"testing"
 
-	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/types"
-	apimock "github.com/33cn/chain33/client/mocks"
-	dbmock "github.com/33cn/chain33/common/db/mocks"
-	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common"
-	commonlog "github.com/33cn/chain33/common/log"
-	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/account"
-	_ "github.com/33cn/chain33/system"
-	"github.com/stretchr/testify/mock"
+	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	dbm "github.com/33cn/chain33/common/db"
+	dbmock "github.com/33cn/chain33/common/db/mocks"
+	commonlog "github.com/33cn/chain33/common/log"
+	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type execEnv struct {
@@ -45,7 +45,7 @@ var (
 	AddrD    = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
 
 	boards = []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"}
-	total = types.Coin * 30000
+	total  = types.Coin * 30000
 )
 
 func init() {
@@ -78,16 +78,15 @@ func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	}
 
 	env := &execEnv{
-		blockTime: 1539918074,
+		blockTime:   1539918074,
 		blockHeight: 10,
-		index: 2,
-		difficulty: 1539918074,
-		txHash: "",
+		index:       2,
+		difficulty:  1539918074,
+		txHash:      "",
 	}
 
 	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
 	_, _, kvdb := util.CreateTestDB()
-
 
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
@@ -97,9 +96,9 @@ func InitEnv() (*execEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	accCoin.SaveAccount(&accountC)
 	accCoin.SaveAccount(&accountD)
 	//total ticket balance
-	accCoin.SaveAccount(&types.Account{Balance: total*4,
-		Frozen:  0,
-		Addr:    "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"})
+	accCoin.SaveAccount(&types.Account{Balance: total * 4,
+		Frozen: 0,
+		Addr:   "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"})
 
 	exec := newAutonomy()
 	exec.SetStateDB(stateDB)
@@ -133,13 +132,13 @@ func TestTerminateProposalBoard(t *testing.T) {
 }
 
 func testPropBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
-	opt1 :=  &auty.ProposalBoard{
-		Year: 2019,
-		Month: 7,
-		Day:     10,
-		Boards:    boards,
-		StartBlockHeight:  env.blockHeight + 5,
-		EndBlockHeight: env.blockHeight + 10,
+	opt1 := &auty.ProposalBoard{
+		Year:             2019,
+		Month:            7,
+		Day:              10,
+		Boards:           boards,
+		StartBlockHeight: env.blockHeight + 5,
+		EndBlockHeight:   env.blockHeight + 10,
 	}
 	pbtx, err := propBoardTx(opt1)
 	require.NoError(t, err)
@@ -197,8 +196,8 @@ func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
 
 func revokeProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
-	opt2 :=  &auty.RevokeProposalBoard{
-		ProposalID:proposalID,
+	opt2 := &auty.RevokeProposalBoard{
+		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalBoardTx(opt2)
 	require.NoError(t, err)
@@ -252,22 +251,22 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance: total,
+		Balance:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values1}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
@@ -284,9 +283,9 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 	}
 
 	for _, record := range records {
-		opt :=  &auty.VoteProposalBoard{
-			ProposalID:proposalID,
-			Approve: record.appr,
+		opt := &auty.VoteProposalBoard{
+			ProposalID: proposalID,
+			Approve:    record.appr,
 		}
 		tx, err := voteProposalBoardTx(opt)
 		require.NoError(t, err)
@@ -320,11 +319,11 @@ func voteProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, stateDB 
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance: total,
+			Balance:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 		exec.SetAPI(api)
 	}
 	// check
@@ -364,19 +363,19 @@ func terminateProposalBoard(t *testing.T, env *execEnv, exec drivers.Driver, sta
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
-	opt :=  &auty.TerminateProposalBoard{
-		ProposalID:proposalID,
+	opt := &auty.TerminateProposalBoard{
+		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalBoardTx(opt)
 	require.NoError(t, err)
@@ -437,15 +436,15 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: types.Coin,
+		Balance:  types.Coin,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil)
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil)
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	account, err := action.getStartHeightVoteAccount(addr, 0)
 	require.NoError(t, err)
 	require.NotNil(t, account)
@@ -454,16 +453,16 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 
 func TestGetReceiptLog(t *testing.T) {
 	pre := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1800, Month: 1},
+		PropBoard:  &auty.ProposalBoard{Year: 1800, Month: 1},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 1,
-		Address:"121",
+		Status:     1,
+		Address:    "121",
 	}
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
+		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 2,
-		Address:"123",
+		Status:     2,
+		Address:    "123",
 	}
 	log := getReceiptLog(pre, cur, 2)
 	require.Equal(t, int32(2), log.Ty)
@@ -477,11 +476,11 @@ func TestGetReceiptLog(t *testing.T) {
 func TestCopyAutonomyProposalBoard(t *testing.T) {
 	require.Nil(t, copyAutonomyProposalBoard(nil))
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{Year: 1900, Month: 1},
-		CurRule: &auty.RuleConfig{BoardAttendRatio: 100},
+		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
+		CurRule:    &auty.RuleConfig{BoardAttendRatio: 100},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 2,
-		Address:"123",
+		Status:     2,
+		Address:    "123",
 	}
 	pre := copyAutonomyProposalBoard(cur)
 	cur.PropBoard.Year = 1800

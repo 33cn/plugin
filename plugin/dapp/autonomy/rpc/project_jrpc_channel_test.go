@@ -9,12 +9,11 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/chain33/types"
-	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
-
 
 func testPropProjectTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.ProposalProject{}
@@ -65,4 +64,3 @@ func testListProposalProjectCmd(t *testing.T, jrpc *jsonclient.JSONClient) error
 	rep = &auty.ReplyQueryProposalProject{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
-

@@ -12,17 +12,16 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
-
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
 	if err := address.CheckAddress(prob.ToAddr); err != nil {
 		alog.Error("propProject ", "addr", prob.ToAddr, "check toAddr error", err)
-		return  nil, types.ErrInvalidAddress
+		return nil, types.ErrInvalidAddress
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 {
 		alog.Error("propProject height or amount invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height, "amount", prob.Amount)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	// 获取董事会成员
@@ -64,15 +63,15 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		isPubVote = true
 	}
 	cur := &auty.AutonomyProposalProject{
-		PropProject:prob,
-		CurRule:rule,
-		Boards: pboard.Boards,
+		PropProject:  prob,
+		CurRule:      rule,
+		Boards:       pboard.Boards,
 		BoardVoteRes: &auty.VoteResult{TotalVotes: int32(len(pboard.Boards))},
-		PubVote: &auty.PublicVote{Publicity:isPubVote},
-		Status: auty.AutonomyStatusProposalProject,
-		Address: a.fromaddr,
-		Height: a.height,
-		Index: a.index,
+		PubVote:      &auty.PublicVote{Publicity: isPubVote},
+		Status:       auty.AutonomyStatusProposalProject,
+		Address:      a.fromaddr,
+		Height:       a.height,
+		Index:        a.index,
 	}
 	kv = append(kv, &types.KeyValue{Key: propProjectID(common.ToHex(a.txhash)), Value: types.Encode(cur)})
 	receiptLog := getProjectReceiptLog(nil, cur, auty.TyLogPropProject)
@@ -154,7 +153,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	pre := copyAutonomyProposalProject(cur)
 
 	// 检查当前状态
-	if cur.Status == auty.AutonomyStatusRvkPropProject      ||
+	if cur.Status == auty.AutonomyStatusRvkPropProject ||
 		cur.Status == auty.AutonomyStatusPubVotePropProject ||
 		cur.Status == auty.AutonomyStatusTmintPropProject {
 		err := auty.ErrProposalStatus
@@ -220,9 +219,9 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-	    float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
+		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
 	}
@@ -306,7 +305,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		if err != nil {
 			return nil, err
 		}
-		cur.PubVote.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.PubVote.TotalVotes = int32(account.Balance / ticketPrice)
 	}
 
 	// 获取该地址票数
@@ -315,16 +314,16 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		return nil, err
 	}
 	if voteProb.Oppose { //投反对票
-		cur.PubVote.OpposeVotes +=  int32(account.Balance/ticketPrice)
+		cur.PubVote.OpposeVotes += int32(account.Balance / ticketPrice)
 	}
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
 	if cur.PubVote.TotalVotes != 0 &&
-	   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(cur.CurRule.PubOpposeRatio) / 100.0 {
+		float32(cur.PubVote.OpposeVotes)/float32(cur.PubVote.TotalVotes) >= float32(cur.CurRule.PubOpposeRatio)/100.0 {
 
-	   	cur.PubVote.PubPass = false
+		cur.PubVote.PubPass = false
 		cur.PropProject.RealEndBlockHeight = a.height
 		// 解冻项目金
 		receiptPrj, err := a.coinsAccount.ExecActive(autonomyFundAddr, a.execaddr, cur.PropProject.Amount)
@@ -374,7 +373,7 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	// 公示期间不能终止
 	if cur.PubVote.Publicity && cur.PubVote.PubPass &&
-		a.height <= cur.PropProject.RealEndBlockHeight + int64(cur.CurRule.PublicPeriod) {
+		a.height <= cur.PropProject.RealEndBlockHeight+int64(cur.CurRule.PublicPeriod) {
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropProject ", "addr", a.fromaddr, "status", cur.Status,
 			"in publicity vote period can not terminate", tmintProb.ProposalID, "err", err)
@@ -392,9 +391,9 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) / float32(cur.BoardVoteRes.TotalVotes) >=  float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes) / float32(cur.BoardVoteRes.ApproveVotes + cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
+		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
@@ -407,11 +406,11 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 			if err != nil {
 				return nil, err
 			}
-			cur.PubVote.TotalVotes = int32(account.Balance/ticketPrice)
+			cur.PubVote.TotalVotes = int32(account.Balance / ticketPrice)
 		}
 		if cur.PubVote.TotalVotes != 0 &&
-		   float32(cur.PubVote.OpposeVotes) / float32(cur.PubVote.TotalVotes) >=  float32(cur.CurRule.PubOpposeRatio)/ 100.0 {
-		   	cur.PubVote.PubPass = false
+			float32(cur.PubVote.OpposeVotes)/float32(cur.PubVote.TotalVotes) >= float32(cur.CurRule.PubOpposeRatio)/100.0 {
+			cur.PubVote.PubPass = false
 		}
 	}
 
@@ -431,8 +430,8 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 		kv = append(kv, receipt.KV...)
 	}
 
-	if (cur.PubVote.Publicity && cur.PubVote.PubPass) ||    // 需要公示且公示通过
-		(!cur.PubVote.Publicity && cur.BoardVoteRes.Pass) {  // 不需要公示且董事会通过
+	if (cur.PubVote.Publicity && cur.PubVote.PubPass) || // 需要公示且公示通过
+		(!cur.PubVote.Publicity && cur.BoardVoteRes.Pass) { // 不需要公示且董事会通过
 		// 提案通过，将工程金额从基金付款给承包商
 		receipt, err := a.coinsAccount.ExecTransferFrozen(autonomyFundAddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
 		if err != nil {
@@ -480,12 +479,12 @@ func (a *action) getActiveBoard() (*auty.ProposalBoard, error) {
 	if err != nil {
 		return nil, err
 	}
-	pboard :=  &auty.ProposalBoard{}
+	pboard := &auty.ProposalBoard{}
 	err = types.Decode(value, pboard)
 	if err != nil {
 		return nil, err
 	}
-	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards  {
+	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards {
 		err = auty.ErrNoActiveBoard
 		return nil, err
 	}
@@ -507,7 +506,7 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 		return nil
 	}
 	newAut := *cur
-	if cur.PropProject != nil{
+	if cur.PropProject != nil {
 		newProject := *cur.GetPropProject()
 		newAut.PropProject = &newProject
 	}
@@ -525,4 +524,3 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 	}
 	return &newAut
 }
-

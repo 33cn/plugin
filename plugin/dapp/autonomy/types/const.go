@@ -6,7 +6,7 @@ package types
 
 // autonomy action ty
 const (
-	AutonomyActionPropBoard       = iota + 1
+	AutonomyActionPropBoard = iota + 1
 	AutonomyActionRvkPropBoard
 	AutonomyActionVotePropBoard
 	AutonomyActionTmintPropBoard
@@ -42,7 +42,7 @@ const (
 	TyLogVotePropRule  = 2123
 	TyLogTmintPropRule = 2124
 
-	TyLogCommentProp   = 2131
+	TyLogCommentProp = 2131
 )
 
 // status
@@ -70,21 +70,20 @@ const (
 
 const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询
-	GetProposalBoard   = "GetProposalBoard"
+	GetProposalBoard = "GetProposalBoard"
 	// ListProposalBoard
-	ListProposalBoard   = "ListProposalBoard"
+	ListProposalBoard = "ListProposalBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询
 	GetProposalProject = "GetProposalProject"
 	// ListProposalProject
 	ListProposalProject = "ListProposalProject"
 	// GetProposalRule 用于在cmd里面的区分不同的查询
-	GetProposalRule    = "GetProposalRule"
+	GetProposalRule = "GetProposalRule"
 	// ListProposalRule
-	ListProposalRule    = "ListProposalRule"
+	ListProposalRule = "ListProposalRule"
 	// ListProposalComment
 	ListProposalComment = "ListProposalComment"
 )
-
 
 //包的名字可以通过配置文件来配置
 //建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字

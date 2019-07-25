@@ -8,8 +8,8 @@ import (
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
-	"github.com/spf13/cobra"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/spf13/cobra"
 )
 
 // ProposalRuleCmd 创建提案命令
@@ -61,17 +61,17 @@ func proposalRule(cmd *cobra.Command, args []string) {
 	params := &auty.ProposalRule{
 		Year:  year,
 		Month: month,
-		Day:     day,
-		RuleCfg:    &auty.RuleConfig{
-			BoardAttendRatio: boardAttendRatio,
-			BoardApproveRatio: boardApproveRatio,
-			PubOpposeRatio: pubOpposeRatio,
-			ProposalAmount: proposalAmount * types.Coin,
+		Day:   day,
+		RuleCfg: &auty.RuleConfig{
+			BoardAttendRatio:   boardAttendRatio,
+			BoardApproveRatio:  boardApproveRatio,
+			PubOpposeRatio:     pubOpposeRatio,
+			ProposalAmount:     proposalAmount * types.Coin,
 			LargeProjectAmount: largeProjectAmount * types.Coin,
-			PublicPeriod: publicPeriod,
+			PublicPeriod:       publicPeriod,
 		},
-		StartBlockHeight:  startBlock,
-		EndBlockHeight: endBlock,
+		StartBlockHeight: startBlock,
+		EndBlockHeight:   endBlock,
 	}
 
 	var res string
@@ -100,7 +100,7 @@ func revokeProposalRule(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalRule{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalRuleTx", params, &res)
@@ -136,8 +136,8 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 	}
 
 	params := &auty.VoteProposalRule{
-		ProposalID:     ID,
-		Approve: isapp,
+		ProposalID: ID,
+		Approve:    isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalRuleTx", params, &res)
@@ -165,7 +165,7 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalRule{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalRuleTx", params, &res)
@@ -197,7 +197,7 @@ func addShowProposalRuleflags(cmd *cobra.Command) {
 func showProposalRule(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
-	propID, _:= cmd.Flags().GetString("proposalID")
+	propID, _ := cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
@@ -208,7 +208,7 @@ func showProposalRule(cmd *cobra.Command, args []string) {
 	params.Execer = auty.AutonomyX
 	if 0 == typ {
 		req := types.ReqString{
-			Data:    propID,
+			Data: propID,
 		}
 		params.FuncName = auty.GetProposalRule
 		params.Payload = types.MustPBToJSON(&req)
@@ -248,11 +248,11 @@ func addTransferFundflags(cmd *cobra.Command) {
 func transferFund(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	amount, _ := cmd.Flags().GetInt64("amount")
-	note, _:= cmd.Flags().GetString("note")
+	note, _ := cmd.Flags().GetString("note")
 
 	params := &auty.TransferFund{
-		Amount:     amount*types.Coin,
-		Note: note,
+		Amount: amount * types.Coin,
+		Note:   note,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TransferFundTx", params, &res)
@@ -280,14 +280,14 @@ func addCommentProposalflags(cmd *cobra.Command) {
 
 func commentProposal(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	proposalID, _:= cmd.Flags().GetString("proposalID")
-	repCmtHash, _:= cmd.Flags().GetString("repCmtHash")
-	comment, _:= cmd.Flags().GetString("comment")
+	proposalID, _ := cmd.Flags().GetString("proposalID")
+	repCmtHash, _ := cmd.Flags().GetString("repCmtHash")
+	comment, _ := cmd.Flags().GetString("comment")
 
 	params := &auty.Comment{
-		ProposalID:proposalID,
-		RepCmtHash:repCmtHash,
-		Comment:comment,
+		ProposalID: proposalID,
+		RepCmtHash: repCmtHash,
+		Comment:    comment,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.CommentProposalTx", params, &res)
@@ -315,7 +315,7 @@ func addShowProposalCommentflags(cmd *cobra.Command) {
 
 func showProposalComment(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	propID, _:= cmd.Flags().GetString("proposalID")
+	propID, _ := cmd.Flags().GetString("proposalID")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
 	index, _ := cmd.Flags().GetInt64("index")
@@ -325,10 +325,10 @@ func showProposalComment(cmd *cobra.Command, args []string) {
 	params.Execer = auty.AutonomyX
 
 	req := auty.ReqQueryProposalComment{
-		ProposalID:    propID,
-		Count:     count,
-		Direction: direction,
-		Index:     index,
+		ProposalID: propID,
+		Count:      count,
+		Direction:  direction,
+		Index:      index,
 	}
 	params.FuncName = auty.ListProposalComment
 	params.Payload = types.MustPBToJSON(&req)

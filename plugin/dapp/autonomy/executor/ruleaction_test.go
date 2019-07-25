@@ -7,17 +7,17 @@ package executor
 import (
 	"testing"
 
-	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/account"
-	_ "github.com/33cn/chain33/system"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
+	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -54,21 +54,20 @@ func TestTerminateProposalRule(t *testing.T) {
 }
 
 func testPropRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
-	opt1 :=  &auty.ProposalRule{
-		Year: 2019,
+	opt1 := &auty.ProposalRule{
+		Year:  2019,
 		Month: 7,
-		Day:     10,
-		RuleCfg:    &auty.RuleConfig{
-			BoardAttendRatio: testBoardAttendRatio,
-			BoardApproveRatio: testBoardApproveRatio,
-			PubOpposeRatio: testPubOpposeRatio,
-			ProposalAmount: testProposalAmount,
+		Day:   10,
+		RuleCfg: &auty.RuleConfig{
+			BoardAttendRatio:   testBoardAttendRatio,
+			BoardApproveRatio:  testBoardApproveRatio,
+			PubOpposeRatio:     testPubOpposeRatio,
+			ProposalAmount:     testProposalAmount,
 			LargeProjectAmount: testLargeProjectAmount,
-			PublicPeriod:testPublicPeriod,
-
-	},
-		StartBlockHeight:  env.blockHeight + 5,
-		EndBlockHeight: env.blockHeight + 10,
+			PublicPeriod:       testPublicPeriod,
+		},
+		StartBlockHeight: env.blockHeight + 5,
+		EndBlockHeight:   env.blockHeight + 10,
 	}
 	pbtx, err := propRuleTx(opt1)
 	require.NoError(t, err)
@@ -124,8 +123,8 @@ func propRuleTx(parm *auty.ProposalRule) (*types.Transaction, error) {
 
 func revokeProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
-	opt2 :=  &auty.RevokeProposalRule{
-		ProposalID:proposalID,
+	opt2 := &auty.RevokeProposalRule{
+		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalRuleTx(opt2)
 	require.NoError(t, err)
@@ -171,7 +170,7 @@ func revokeProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB
 	require.Equal(t, rule.BoardAttendRatio, boardAttendRatio)
 	require.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
 	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
-	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.ProposalAmount, proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
 	require.Equal(t, rule.PublicPeriod, publicPeriod)
 }
@@ -194,22 +193,22 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance: total,
+		Balance:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values1}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
@@ -226,9 +225,9 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	}
 
 	for _, record := range records {
-		opt :=  &auty.VoteProposalRule{
-			ProposalID:proposalID,
-			Approve: record.appr,
+		opt := &auty.VoteProposalRule{
+			ProposalID: proposalID,
+			Approve:    record.appr,
 		}
 		tx, err := voteProposalRuleTx(opt)
 		require.NoError(t, err)
@@ -262,11 +261,11 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance: total,
+			Balance:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 		exec.SetAPI(api)
 	}
 	// check
@@ -298,7 +297,7 @@ func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB d
 	require.Equal(t, rule.BoardAttendRatio, testBoardAttendRatio)
 	require.Equal(t, rule.BoardApproveRatio, testBoardApproveRatio)
 	require.Equal(t, rule.PubOpposeRatio, testPubOpposeRatio)
-	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.ProposalAmount, proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, testLargeProjectAmount)
 	require.Equal(t, rule.PublicPeriod, testPublicPeriod)
 }
@@ -321,19 +320,19 @@ func terminateProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stat
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
-	opt :=  &auty.TerminateProposalRule{
-		ProposalID:proposalID,
+	opt := &auty.TerminateProposalRule{
+		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalRuleTx(opt)
 	require.NoError(t, err)
@@ -380,7 +379,7 @@ func terminateProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stat
 	require.Equal(t, rule.BoardAttendRatio, boardAttendRatio)
 	require.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
 	require.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
-	require.Equal(t, rule.ProposalAmount , proposalAmount)
+	require.Equal(t, rule.ProposalAmount, proposalAmount)
 	require.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
 	require.Equal(t, rule.PublicPeriod, publicPeriod)
 }
@@ -398,16 +397,16 @@ func terminateProposalRuleTx(parm *auty.TerminateProposalRule) (*types.Transacti
 
 func TestGetRuleReceiptLog(t *testing.T) {
 	pre := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{Year: 1800, Month: 1},
+		PropRule:   &auty.ProposalRule{Year: 1800, Month: 1},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 1,
-		Address:"121",
+		Status:     1,
+		Address:    "121",
 	}
 	cur := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{Year: 1900, Month: 1},
+		PropRule:   &auty.ProposalRule{Year: 1900, Month: 1},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 2,
-		Address:"123",
+		Status:     2,
+		Address:    "123",
 	}
 	log := getRuleReceiptLog(pre, cur, 2)
 	require.Equal(t, int32(2), log.Ty)
@@ -421,11 +420,11 @@ func TestGetRuleReceiptLog(t *testing.T) {
 func TestCopyAutonomyProposalRule(t *testing.T) {
 	require.Nil(t, copyAutonomyProposalRule(nil))
 	cur := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{Year: 1900, Month: 1, RuleCfg:&auty.RuleConfig{BoardApproveRatio:80}},
-		CurRule: &auty.RuleConfig{BoardApproveRatio:100},
+		PropRule:   &auty.ProposalRule{Year: 1900, Month: 1, RuleCfg: &auty.RuleConfig{BoardApproveRatio: 80}},
+		CurRule:    &auty.RuleConfig{BoardApproveRatio: 100},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
-		Status: 2,
-		Address:"123",
+		Status:     2,
+		Address:    "123",
 	}
 	pre := copyAutonomyProposalRule(cur)
 	cur.PropRule.Year = 1800
@@ -449,44 +448,44 @@ func TestUpgradeRule(t *testing.T) {
 	new := upgradeRule(nil, &auty.RuleConfig{})
 	require.Nil(t, new)
 	cur := &auty.RuleConfig{
-		BoardAttendRatio: 1,
-		BoardApproveRatio: 2,
-		PubOpposeRatio: 3,
-		ProposalAmount: 4,
+		BoardAttendRatio:   1,
+		BoardApproveRatio:  2,
+		PubOpposeRatio:     3,
+		ProposalAmount:     4,
 		LargeProjectAmount: 5,
-		PublicPeriod: 6,
+		PublicPeriod:       6,
 	}
 	modify := &auty.RuleConfig{
-		BoardAttendRatio: 0,
-		BoardApproveRatio: -1,
-		PubOpposeRatio: 0,
-		ProposalAmount: -1,
+		BoardAttendRatio:   0,
+		BoardApproveRatio:  -1,
+		PubOpposeRatio:     0,
+		ProposalAmount:     -1,
 		LargeProjectAmount: 0,
-		PublicPeriod: 0,
+		PublicPeriod:       0,
 	}
 	new = upgradeRule(cur, modify)
 	require.NotNil(t, new)
 	require.Equal(t, new.BoardAttendRatio, cur.BoardAttendRatio)
 	require.Equal(t, new.BoardApproveRatio, cur.BoardApproveRatio)
 	require.Equal(t, new.PubOpposeRatio, cur.PubOpposeRatio)
-	require.Equal(t, new.ProposalAmount , cur.ProposalAmount)
+	require.Equal(t, new.ProposalAmount, cur.ProposalAmount)
 	require.Equal(t, new.LargeProjectAmount, cur.LargeProjectAmount)
 	require.Equal(t, new.PublicPeriod, cur.PublicPeriod)
 
 	modify = &auty.RuleConfig{
-		BoardAttendRatio: 10,
-		BoardApproveRatio: 20,
-		PubOpposeRatio: 30,
-		ProposalAmount: 40,
+		BoardAttendRatio:   10,
+		BoardApproveRatio:  20,
+		PubOpposeRatio:     30,
+		ProposalAmount:     40,
 		LargeProjectAmount: 50,
-		PublicPeriod: 60,
+		PublicPeriod:       60,
 	}
 	new = upgradeRule(cur, modify)
 	require.NotNil(t, new)
 	require.Equal(t, new.BoardAttendRatio, modify.BoardAttendRatio)
 	require.Equal(t, new.BoardApproveRatio, modify.BoardApproveRatio)
 	require.Equal(t, new.PubOpposeRatio, modify.PubOpposeRatio)
-	require.Equal(t, new.ProposalAmount , modify.ProposalAmount)
+	require.Equal(t, new.ProposalAmount, modify.ProposalAmount)
 	require.Equal(t, new.LargeProjectAmount, modify.LargeProjectAmount)
 	require.Equal(t, new.PublicPeriod, modify.PublicPeriod)
 }
@@ -494,7 +493,7 @@ func TestUpgradeRule(t *testing.T) {
 func TestTransfer(t *testing.T) {
 	env, exec, stateDB, _ := InitEnv()
 
-	opt1 :=  &auty.TransferFund{
+	opt1 := &auty.TransferFund{
 		Amount: types.Coin * 190,
 	}
 	pbtx, err := transferFundTx(opt1)
@@ -514,9 +513,9 @@ func TestTransfer(t *testing.T) {
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, total - types.Coin * 190, account.Balance)
+	require.Equal(t, total-types.Coin*190, account.Balance)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, types.Coin * 190, account.Balance)
+	require.Equal(t, types.Coin*190, account.Balance)
 }
 
 func transferFundTx(parm *auty.TransferFund) (*types.Transaction, error) {
@@ -536,10 +535,10 @@ func TestComment(t *testing.T) {
 	propID := "11111111111111"
 	Repcmt := "2222222222"
 	comment := "3333333333"
-	opt1 :=  &auty.Comment{
+	opt1 := &auty.Comment{
 		ProposalID: propID,
 		RepCmtHash: Repcmt,
-		Comment:comment,
+		Comment:    comment,
 	}
 	pbtx, err := commentPropTx(opt1)
 	require.NoError(t, err)
