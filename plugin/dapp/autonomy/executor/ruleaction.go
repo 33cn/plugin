@@ -325,10 +325,10 @@ func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-func (a *action) comment(cm *auty.Comment) (*types.Receipt, error) {
+func (a *action) commentProp(cm *auty.Comment) (*types.Receipt, error) {
 	if cm.Comment == "" || cm.ProposalID == "" {
 		err := types.ErrInvalidParam
-		alog.Error("autonomy comment ", "addr", a.fromaddr, "execaddr", a.execaddr, "Comment or proposalID empty", err)
+		alog.Error("autonomy commentProp ", "addr", a.fromaddr, "execaddr", a.execaddr, "Comment or proposalID empty", err)
 		return nil, err
 	}
 	var logs []*types.ReceiptLog

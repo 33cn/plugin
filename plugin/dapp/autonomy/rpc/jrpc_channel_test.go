@@ -10,10 +10,8 @@ import (
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
-	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -43,6 +41,26 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testVoteProposalBoardTxCmd},
 		{fn: testTerminateProposalBoardTxCmd},
 		{fn: testGetProposalBoardCmd},
+		{fn: testListProposalBoardCmd},
+
+		{fn: testPropProjectTxCmd},
+		{fn: testRevokeProposalProjectTxCmd},
+		{fn: testVoteProposalProjectTxCmd},
+		{fn: testPubVoteProposalProjectTxCmd},
+		{fn: testTerminateProposalProjectTxCmd},
+		{fn: testGetProposalProjectCmd},
+		{fn: testListProposalProjectCmd},
+
+		{fn: testPropRuleTxCmd},
+		{fn: testRevokeProposalRuleTxCmd},
+		{fn: testVoteProposalRuleTxCmd},
+		{fn: testTerminateProposalRuleTxCmd},
+		{fn: testGetProposalRuleCmd},
+		{fn: testListProposalRuleCmd},
+
+		{fn: testTransferFundTxCmd},
+		{fn: testCommentProposalTxCmd},
+		{fn: testListProposalCommentCmd},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)
@@ -54,38 +72,4 @@ func TestJRPCChannel(t *testing.T) {
 			assert.FailNowf(t, err.Error(), "test index %d", index)
 		}
 	}
-}
-
-func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.ProposalBoard{}
-	var res string
-	return jrpc.Call("autonomy.PropBoardTx", params, &res)
-}
-
-func testRevokeProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.RevokeProposalBoard{}
-	var res string
-	return jrpc.Call("autonomy.RevokeProposalBoardTx", params, &res)
-}
-
-func testVoteProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.VoteProposalBoard{}
-	var res string
-	return jrpc.Call("autonomy.VoteProposalBoardTx", params, &res)
-}
-
-func testTerminateProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.TerminateProposalBoard{}
-	var res string
-	return jrpc.Call("autonomy.TerminateProposalBoardTx", params, &res)
-}
-
-func testGetProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var rep interface{}
-	var params rpctypes.Query4Jrpc
-	req := &auty.ReqQueryProposalBoard{}
-	params.FuncName = auty.GetProposalBoard
-	params.Payload = types.MustPBToJSON(req)
-	rep = &auty.ReplyQueryProposalBoard{}
-	return jrpc.Call("Chain33.Query", params, rep)
 }

@@ -474,3 +474,96 @@ func TestUpgradeRule(t *testing.T) {
 	require.Equal(t, new.LargeProjectAmount, modify.LargeProjectAmount)
 	require.Equal(t, new.PublicPeriod, modify.PublicPeriod)
 }
+
+func TestTransfer(t *testing.T) {
+	env, exec, stateDB, _ := InitEnv()
+
+	opt1 :=  &auty.TransferFund{
+		Amount: types.Coin * 190,
+	}
+	pbtx, err := transferFundTx(opt1)
+	require.NoError(t, err)
+	pbtx, err = signTx(pbtx, PrivKeyA)
+	require.NoError(t, err)
+
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(pbtx, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	// check
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, total - types.Coin * 190, account.Balance)
+	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, types.Coin * 190, account.Balance)
+}
+
+func transferFundTx(parm *auty.TransferFund) (*types.Transaction, error) {
+	if parm == nil {
+		return nil, types.ErrInvalidParam
+	}
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionTransfer,
+		Value: &auty.AutonomyAction_Transfer{Transfer: parm},
+	}
+	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+}
+
+func TestComment(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
+
+	propID := "11111111111111"
+	Repcmt := "2222222222"
+	comment := "3333333333"
+	opt1 :=  &auty.Comment{
+		ProposalID: propID,
+		RepCmtHash: Repcmt,
+		Comment:comment,
+	}
+	pbtx, err := commentPropTx(opt1)
+	require.NoError(t, err)
+	pbtx, err = signTx(pbtx, PrivKeyA)
+	require.NoError(t, err)
+
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(pbtx, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	// check
+	value, err := kvdb.Get(calcCommentHeight(propID, drivers.HeightIndexStr(env.blockHeight, 1)))
+	require.NoError(t, err)
+	cmt := &auty.RelationCmt{}
+	err = types.Decode(value, cmt)
+	require.NoError(t, err)
+	require.Equal(t, cmt.Comment, comment)
+	require.Equal(t, cmt.RepCmtHash, Repcmt)
+}
+
+func commentPropTx(parm *auty.Comment) (*types.Transaction, error) {
+	if parm == nil {
+		return nil, types.ErrInvalidParam
+	}
+	val := &auty.AutonomyAction{
+		Ty:    auty.AutonomyActionCommentProp,
+		Value: &auty.AutonomyAction_CommentProp{CommentProp: parm},
+	}
+	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+}

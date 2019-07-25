@@ -147,7 +147,7 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 	return &rep, nil
 }
 
-func (a *Autonomy) execLocalComment(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execLocalCommentProp(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	var set []*types.KeyValue
 	for _, log := range receiptData.Logs {
@@ -173,12 +173,17 @@ func (a *Autonomy) execLocalComment(receiptData *types.ReceiptData) (*types.Loca
 func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
 	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
-	kv.Value = types.Encode(&auty.RelationCmt{RepCmtHash: res.Cmt.RepCmtHash, Comment: res.Cmt.Comment})
+	kv.Value = types.Encode(&auty.RelationCmt{
+		RepCmtHash: res.Cmt.RepCmtHash,
+		Comment: res.Cmt.Comment,
+		Height: res.Height,
+		Index: res.Index,
+	})
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (a *Autonomy) execDelLocalComment(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execDelLocalCommentProp(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	var set []*types.KeyValue
 	for _, log := range receiptData.Logs {

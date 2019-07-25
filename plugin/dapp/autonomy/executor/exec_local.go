@@ -78,6 +78,6 @@ func (a *Autonomy) ExecLocal_TmintPropRule(payload *auty.TerminateProposalRule, 
 }
 
 // ExecLocal_Comment 评论提案
-func (a *Autonomy) ExecLocal_Comment(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return a.execLocalComment(receiptData)
+func (a *Autonomy) ExecLocal_CommentProp(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execLocalCommentProp(receiptData)
 }
