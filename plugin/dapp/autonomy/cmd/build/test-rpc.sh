@@ -32,4 +32,4 @@ function rpc_test() {
     fi
 }
 
-#debug_function rpc_test "$1"
+debug_function rpc_test "$1"
