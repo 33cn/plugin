@@ -41,7 +41,6 @@ func PrivacyCmd() *cobra.Command {
 		createPriv2PubTxCmd(),
 		showAmountsOfUTXOCmd(),
 		showUTXOs4SpecifiedAmountCmd(),
-		createUTXOsCmd(),
 		showPrivacyAccountInfoCmd(),
 		listPrivacyTxsCmd(),
 		rescanUtxosOptCmd(),
@@ -429,58 +428,6 @@ func parseShowUTXOs4SpecifiedAmountRes(arg interface{}) (interface{}, error) {
 	}
 
 	return ret, nil
-}
-
-func createUTXOsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "createutxos",
-		Short: "Create specified count UTXOs with specified amount",
-		Run:   createUTXOs,
-	}
-	createUTXOsFlag(cmd)
-	return cmd
-}
-
-func createUTXOsFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("from", "f", "", "from account address")
-	cmd.MarkFlagRequired("from")
-	cmd.Flags().StringP("pubkeypair", "p", "", "to view spend public key pair")
-	cmd.MarkFlagRequired("pubkeypair")
-	cmd.Flags().Float64P("amount", "a", 0, "amount")
-	cmd.MarkFlagRequired("amount")
-	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
-	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
-	cmd.Flags().StringP("note", "n", "", "transfer note")
-	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
-}
-
-func createUTXOs(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	from, _ := cmd.Flags().GetString("from")
-	pubkeypair, _ := cmd.Flags().GetString("pubkeypair")
-	note, _ := cmd.Flags().GetString("note")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4
-	expire, _ := cmd.Flags().GetInt64("expire")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	assetExec, _ := cmd.Flags().GetString("exec")
-	if expire <= 0 {
-		expire = int64(time.Minute * 10)
-	}
-
-	params := &pty.ReqCreateUTXOs{
-		Tokenname:  symbol,
-		Sender:     from,
-		Pubkeypair: pubkeypair,
-		Amount:     amountInt64,
-		Note:       note,
-		Expire:     expire,
-		AssetExec:  assetExec,
-	}
-
-	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateUTXOs", params, &res)
-	ctx.Run()
 }
 
 // showPrivacyAccountInfoCmd
