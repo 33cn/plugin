@@ -258,3 +258,83 @@ func transferFund(cmd *cobra.Command, args []string) {
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TransferFundTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
+
+// CommentProposalCmd 评论提案
+func CommentProposalCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "comment",
+		Short: "comment proposal",
+		Run:   commentProposal,
+	}
+	addCommentProposalflags(cmd)
+	return cmd
+}
+
+func addCommentProposalflags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+	cmd.Flags().StringP("repCmtHash", "r", "", "reply Comment hash")
+	cmd.Flags().StringP("comment", "c", "", "comment")
+	cmd.MarkFlagRequired("comment")
+}
+
+func commentProposal(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proposalID, _:= cmd.Flags().GetString("proposalID")
+	repCmtHash, _:= cmd.Flags().GetString("repCmtHash")
+	comment, _:= cmd.Flags().GetString("comment")
+
+	params := &auty.Comment{
+		ProposalID:proposalID,
+		RepCmtHash:repCmtHash,
+		Comment:comment,
+	}
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.CommentProposalTx", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// ShowProposalCommentCmd 显示提案评论查询信息
+func ShowProposalCommentCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showComment",
+		Short: "show proposal comment info",
+		Run:   showProposalComment,
+	}
+	addShowProposalCommentflags(cmd)
+	return cmd
+}
+
+func addShowProposalCommentflags(cmd *cobra.Command) {
+	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+	cmd.MarkFlagRequired("proposalID")
+	cmd.Flags().Int32P("count", "c", 0, "count")
+	cmd.Flags().Int32P("direction", "d", 0, "direction")
+	cmd.Flags().Int64P("index", "i", 0, "index")
+}
+
+func showProposalComment(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	propID, _:= cmd.Flags().GetString("proposalID")
+	count, _ := cmd.Flags().GetInt32("count")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	index, _ := cmd.Flags().GetInt64("index")
+
+	var params rpctypes.Query4Jrpc
+	var rep interface{}
+	params.Execer = auty.AutonomyX
+
+	req := auty.ReqQueryProposalComment{
+		ProposalID:    propID,
+		Count:     count,
+		Direction: direction,
+		Index:     index,
+	}
+	params.FuncName = auty.ListProposalComment
+	params.Payload = types.MustPBToJSON(&req)
+
+	rep = &auty.ReplyQueryProposalComment{}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
+}

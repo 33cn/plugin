@@ -59,6 +59,17 @@ func InitRule(stateDB dbm.KV) {
 	stateDB.Set(activeRuleID(), types.Encode(rule))
 }
 
+func InitFund(stateDB dbm.KV, amount int64) {
+	accountA := types.Account{
+		Balance: amount,
+		Frozen:  0,
+		Addr:    autonomyFundAddr,
+	}
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	accCoin.SaveExecAccount(autonomyAddr, &accountA)
+}
+
 func TestPropProject(t *testing.T) {
 	env, exec, _, _ := InitEnv()
 
@@ -110,6 +121,7 @@ func TestPropProject(t *testing.T) {
 func TestRevokeProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
+	InitFund(stateDB, testProjectAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//RevokeProposalProject
@@ -119,6 +131,7 @@ func TestRevokeProposalProject(t *testing.T) {
 func TestVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
+	InitFund(stateDB, testProjectAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//voteProposalProject
@@ -131,6 +144,7 @@ func TestPubVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
 	InitRule(stateDB)
+	InitFund(stateDB, testProjectAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	// voteProposalProject
@@ -145,6 +159,7 @@ func TestPubVoteProposalProject(t *testing.T) {
 func TestTerminateProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
+	InitFund(stateDB, testProjectAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//terminateProposalProject
@@ -360,8 +375,8 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount) - testProjectAmount, account.Balance)
+	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)
@@ -459,8 +474,8 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount), account.Balance)
+	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	require.Equal(t, int64(proposalAmount) + testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)

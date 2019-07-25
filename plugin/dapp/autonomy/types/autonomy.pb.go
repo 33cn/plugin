@@ -48,6 +48,9 @@ It has these top-level messages:
 	TransferFund
 	Comment
 	ReceiptProposalComment
+	ReqQueryProposalComment
+	RelationCmt
+	ReplyQueryProposalComment
 */
 package types
 

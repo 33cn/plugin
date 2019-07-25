@@ -173,7 +173,74 @@ func (a *Autonomy) execLocalComment(receiptData *types.ReceiptData) (*types.Loca
 func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyValue) {
 	kv := &types.KeyValue{}
 	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
-	kv.Value = types.Encode(&types.ReqString{Data:res.Cmt.Comment})
+	kv.Value = types.Encode(&auty.RelationCmt{RepCmtHash: res.Cmt.RepCmtHash, Comment: res.Cmt.Comment})
 	kvs = append(kvs, kv)
 	return kvs
+}
+
+func (a *Autonomy) execDelLocalComment(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	var set []*types.KeyValue
+	for _, log := range receiptData.Logs {
+		switch log.Ty {
+		case auty.TyLogCommentProp:
+			{
+				var receipt auty.ReceiptProposalComment
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
+				kv := delCommentHeightIndex(&receipt)
+				set = append(set, kv...)
+			}
+		default:
+			break
+		}
+	}
+	dbSet.KV = append(dbSet.KV, set...)
+	return dbSet, nil
+}
+
+func delCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyValue) {
+	kv := &types.KeyValue{}
+	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
+	kv.Value = nil
+	kvs = append(kvs, kv)
+	return kvs
+}
+
+func (a *Autonomy) listProposalComment(req *auty.ReqQueryProposalComment) (types.Message, error) {
+	if req == nil {
+		return nil, types.ErrInvalidParam
+	}
+	var key []byte
+	var values [][]byte
+	var err error
+
+	localDb := a.GetLocalDB()
+	if req.GetIndex() == -1 {
+		key = nil
+	} else { //翻页查找指定的txhash列表
+		heightstr := genHeightIndexStr(req.GetIndex())
+		key    = calcCommentHeight(req.ProposalID, heightstr)
+	}
+	prefix := calcCommentHeight(req.ProposalID, "")
+	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 {
+		return nil, types.ErrNotFound
+	}
+
+	var rep auty.ReplyQueryProposalComment
+	for _, value := range values {
+		cmt := &auty.RelationCmt{}
+		err = types.Decode(value, cmt)
+		if err != nil {
+			return nil, err
+		}
+		rep.RltCmt = append(rep.RltCmt, cmt)
+	}
+	return &rep, nil
 }
