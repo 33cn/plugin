@@ -29,16 +29,6 @@ func (policy *privacyPolicy) On_ShowPrivacyKey(req *types.ReqString) (types.Mess
 	return reply, err
 }
 
-func (policy *privacyPolicy) On_CreateUTXOs(req *privacytypes.ReqCreateUTXOs) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-	reply, err := policy.createUTXOs(req)
-	if err != nil {
-		bizlog.Error("createUTXOs", "err", err.Error())
-	}
-	return reply, err
-}
-
 func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePrivacyTx) (types.Message, error) {
 	ok, err := policy.getWalletOperate().CheckWalletStatus()
 	if !ok {

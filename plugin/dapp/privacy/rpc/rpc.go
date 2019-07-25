@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/33cn/chain33/common"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/privacy/types"
@@ -22,15 +21,6 @@ func (g *channelClient) ShowPrivacyKey(ctx context.Context, in *types.ReqString)
 		return nil, err
 	}
 	return data.(*pty.ReplyPrivacyPkPair), nil
-}
-
-// 创建一系列UTXO
-func (g *channelClient) CreateUTXOs(ctx context.Context, in *pty.ReqCreateUTXOs) (*types.Reply, error) {
-	data, err := g.ExecWalletFunc(pty.PrivacyX, "CreateUTXOs", in)
-	if err != nil {
-		return nil, err
-	}
-	return data.(*types.Reply), nil
 }
 
 // 扫描UTXO以及获取扫描UTXO后的状态
@@ -93,17 +83,6 @@ func (c *Jrpc) ShowPrivacyKey(in *types.ReqString, result *json.RawMessage) erro
 	}
 	*result, err = types.PBToJSON(reply)
 	return err
-}
-
-// CreateUTXOs create utxos for json rpc
-func (c *Jrpc) CreateUTXOs(in *pty.ReqCreateUTXOs, result *interface{}) error {
-
-	reply, err := c.cli.CreateUTXOs(context.Background(), in)
-	if err != nil {
-		return err
-	}
-	*result = rpctypes.ReplyHash{Hash: common.ToHex(reply.GetMsg())}
-	return nil
 }
 
 // GetPrivacyTxByAddr get all privacy transaction list by param
