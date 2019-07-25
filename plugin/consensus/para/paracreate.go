@@ -35,12 +35,16 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 }
 
 func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
-	if atomic.LoadInt32(&client.isCaughtUp) != 1 || !client.commitMsgClient.isSendingCommitMsg() {
+	if atomic.LoadInt32(&client.isCaughtUp) != 1 {
+		return
+	}
+
+	curTx := client.commitMsgClient.getCurrentTx()
+	if curTx == nil {
 		return
 	}
 
 	txMap := make(map[string]bool)
-	curTx := client.commitMsgClient.getCurrentTx()
 	if types.IsParaExecName(string(curTx.Execer)) {
 		for _, tx := range txs {
 			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
@@ -55,8 +59,11 @@ func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
 		}
 	}
 
-	client.commitMsgClient.checkSendingTxDone(txMap)
-
+	if txMap[string(curTx.Hash())] {
+		client.commitMsgClient.verifyNotify(curTx.Hash())
+	} else {
+		client.commitMsgClient.verifyNotify(nil)
+	}
 }
 
 func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *pt.ParaTxDetail) error {

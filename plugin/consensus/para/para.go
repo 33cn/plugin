@@ -181,6 +181,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		waitConsensStopTimes: waitConsensTimes,
 		commitCh:             make(chan int64, 1),
 		resetCh:              make(chan int64, 1),
+		verifyCh:             make(chan []byte, 1),
 		consensHeight:        -2,
 		sendingHeight:        -1,
 		quit:                 make(chan struct{}),

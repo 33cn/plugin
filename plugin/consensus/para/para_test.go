@@ -36,7 +36,7 @@ func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, cfg)
 
 	detail, filterTxs, _ := createTestTxs(t)
-	rst := paraexec.FilterTxsForPara(Title, detail)
+	rst := paraexec.FilterTxsForParaByBlock(Title, detail)
 
 	assert.Equal(t, filterTxs, rst)
 
@@ -201,7 +201,7 @@ func TestAddMinerTx(t *testing.T) {
 		Txs:        filterTxs}
 	para := new(client)
 	para.privateKey = priKey
-	para.addMinerTx(nil, block, localBlock)
+	para.blockSyncClient.addMinerTx(nil, block, localBlock)
 	assert.Equal(t, 1, len(block.Txs))
 
 }
