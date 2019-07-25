@@ -123,11 +123,11 @@ func testShowUTXOs4SpecifiedAmount(t *testing.T, jrpc *jsonclient.JSONClient) er
 
 func testCreateUTXOs(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &pty.ReqCreateUTXOs{
+		AssetExec:  "coins",
 		Tokenname:  types.BTY,
 		Sender:     "1JSRSwp16NvXiTjYBYK9iUQ9wqp3sCxz2p",
 		Pubkeypair: "92fe6cfec2e19cd15f203f83b5d440ddb63d0cb71559f96dc81208d819fea85886b08f6e874fca15108d244b40f9086d8c03260d4b954a40dfb3cbe41ebc7389",
 		Amount:     123456,
-		Count:      12,
 		Note:       "for test",
 		Expire:     int64(time.Hour),
 	}

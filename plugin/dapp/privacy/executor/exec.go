@@ -7,6 +7,8 @@ package executor
 import (
 	"encoding/hex"
 
+	"github.com/33cn/chain33/account"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -15,13 +17,15 @@ import (
 
 // Exec_Public2Privacy execute public to privacy
 func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if payload.Tokenname != types.BTY {
-		return nil, types.ErrNotSupport
+
+	accDB, err := p.createAccountDB(payload.GetAssetExec(), payload.GetTokenname())
+	if err != nil {
+		privacylog.Error("Exec_pub2priv_newAccountDB", "exec", payload.GetAssetExec(),
+			"symbol", payload.GetTokenname(), "err", err)
 	}
 	txhashstr := hex.EncodeToString(tx.Hash())
-	coinsAccount := p.GetCoinsAccount()
 	from := tx.From()
-	receipt, err := coinsAccount.ExecWithdraw(address.ExecAddress(string(tx.Execer)), from, payload.Amount)
+	receipt, err := accDB.ExecWithdraw(address.ExecAddress(string(tx.Execer)), from, payload.Amount)
 	if err != nil {
 		privacylog.Error("PrivacyTrading Exec", "txhash", txhashstr, "ExecWithdraw error ", err)
 		return nil, err
@@ -55,9 +59,7 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 
 // Exec_Privacy2Privacy execute privacy to privacy transaction
 func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if payload.Tokenname != types.BTY {
-		return nil, types.ErrNotSupport
-	}
+
 	txhashstr := hex.EncodeToString(tx.Hash())
 	receipt := &types.Receipt{KV: make([]*types.KeyValue, 0)}
 	privacyInput := payload.Input
@@ -97,12 +99,13 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 
 // Exec_Privacy2Public execute privacy to public transaction
 func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if payload.Tokenname != types.BTY {
-		return nil, types.ErrNotSupport
+	accDB, err := p.createAccountDB(payload.GetAssetExec(), payload.GetTokenname())
+	if err != nil {
+		privacylog.Error("Exec_pub2priv_newAccountDB", "exec", payload.GetAssetExec(),
+			"symbol", payload.GetTokenname(), "err", err)
 	}
 	txhashstr := hex.EncodeToString(tx.Hash())
-	coinsAccount := p.GetCoinsAccount()
-	receipt, err := coinsAccount.ExecDeposit(payload.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
+	receipt, err := accDB.ExecDeposit(payload.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
 	if err != nil {
 		privacylog.Error("PrivacyTrading Exec", "ActionPrivacy2Public txhash", txhashstr, "ExecDeposit error ", err)
 		return nil, err
@@ -140,4 +143,13 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	privacylog.Debug("PrivacyTrading Exec", "ActionPrivacy2Privacy txhash", txhashstr, "receipt is", receipt)
 	//////////////////debug code end///////////////
 	return receipt, nil
+}
+
+func (p *privacy) createAccountDB(exec, symbol string) (*account.DB, error) {
+
+	if exec == "coins" {
+		return p.GetCoinsAccount(), nil
+	}
+
+	return account.NewAccountDB(exec, symbol, p.GetStateDB())
 }

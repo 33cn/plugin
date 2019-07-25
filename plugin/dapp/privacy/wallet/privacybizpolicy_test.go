@@ -343,10 +343,10 @@ func Test_CreateUTXOs(t *testing.T) {
 		},
 		{
 			req: &ty.ReqCreateUTXOs{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Amount:     10 * types.Coin,
 				Note:       "say something",
-				Count:      16,
 				Sender:     testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
 			},
@@ -384,6 +384,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 公对私测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       1,
 				Amount:     100 * types.Coin,
@@ -394,6 +395,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 私对私测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       2,
 				Amount:     10 * types.Coin,
@@ -404,6 +406,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 私对公测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       3,
 				Amount:     10 * types.Coin,
