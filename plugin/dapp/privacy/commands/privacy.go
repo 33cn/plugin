@@ -284,16 +284,17 @@ func showPrivacyAccountSpendCmd() *cobra.Command {
 
 func showPrivacyAccountSpendFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.MarkFlagRequired("addr")
 }
 
 func showPrivacyAccountSpend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
-
+	symbol, _ := cmd.Flags().GetString("symbol")
 	params := pty.ReqPrivBal4AddrToken{
 		Addr:  addr,
-		Token: types.BTY,
+		Token: symbol,
 	}
 
 	var res pty.UTXOHaveTxHashs
@@ -445,14 +446,14 @@ func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
 	cmd.MarkFlagRequired("addr")
 
-	cmd.Flags().StringP("token", "t", types.BTY, "coins token, BTY supported.")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display available detail. 2:display frozen detail. 3:display all")
 }
 
 func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
-	token, _ := cmd.Flags().GetString("token")
+	token, _ := cmd.Flags().GetString("symbol")
 	mode, _ := cmd.Flags().GetInt32("displaymode")
 	if mode < 0 || mode > 3 {
 		fmt.Println("display mode only support 0-3")
