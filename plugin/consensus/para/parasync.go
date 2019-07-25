@@ -382,7 +382,7 @@ func (client *BlockSyncClient) rollbackBlock(block *types.Block) error {
 
 	if resp.GetData().(*types.Reply).IsOk {
 		if client.paraClient.authAccount != "" {
-			client.paraClient.commitMsgClient.updateChainHeight(blocks.Items[0].Block.Height, true)
+			client.paraClient.commitMsgClient.updateChainHeight(blocks.Items[0].Block.Height-1, true)
 
 		}
 	} else {
