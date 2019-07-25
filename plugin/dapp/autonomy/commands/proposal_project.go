@@ -5,11 +5,11 @@
 package commands
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/33cn/chain33/types"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/spf13/cobra"
 )
 
 // ProposalProjectCmd 创建提案命令
@@ -70,20 +70,20 @@ func proposalProject(cmd *cobra.Command, args []string) {
 	projectNeedBlockNum, _ := cmd.Flags().GetInt32("projectNeedBlockNum")
 
 	params := &auty.ProposalProject{
-		Year:  year,
-		Month: month,
-		Day:     day,
-		FirstStage: firstStage,
-		LastStage: lastStage,
-		Production: production,
-		Description: description,
-		Contractor: contractor,
-		Amount: amount*types.Coin,
-		AmountDetail: amountDetail,
-		ToAddr: toAddr,
-		StartBlockHeight:  startBlock,
-		EndBlockHeight: endBlock,
-		ProjectNeedBlockNum:projectNeedBlockNum,
+		Year:                year,
+		Month:               month,
+		Day:                 day,
+		FirstStage:          firstStage,
+		LastStage:           lastStage,
+		Production:          production,
+		Description:         description,
+		Contractor:          contractor,
+		Amount:              amount * types.Coin,
+		AmountDetail:        amountDetail,
+		ToAddr:              toAddr,
+		StartBlockHeight:    startBlock,
+		EndBlockHeight:      endBlock,
+		ProjectNeedBlockNum: projectNeedBlockNum,
 	}
 
 	var res string
@@ -112,7 +112,7 @@ func revokeProposalProject(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalProject{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalProjectTx", params, &res)
@@ -148,8 +148,8 @@ func voteProposalProject(cmd *cobra.Command, args []string) {
 	}
 
 	params := &auty.VoteProposalProject{
-		ProposalID:     ID,
-		Approve: isapp,
+		ProposalID: ID,
+		Approve:    isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalProjectTx", params, &res)
@@ -186,14 +186,13 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 	}
 
 	params := &auty.PubVoteProposalProject{
-		ProposalID:     ID,
-		Oppose: isopp,
+		ProposalID: ID,
+		Oppose:     isopp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PubVoteProposalProjectTx", params, &res)
 	ctx.RunWithoutMarshal()
 }
-
 
 // TerminateProposalProject 终止提案
 func TerminateProposalProjectCmd() *cobra.Command {
@@ -216,7 +215,7 @@ func terminateProposalProject(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalProject{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalProjectTx", params, &res)
@@ -248,7 +247,7 @@ func addShowProposalProjectflags(cmd *cobra.Command) {
 func showProposalProject(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
-	propID, _:= cmd.Flags().GetString("proposalID")
+	propID, _ := cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
@@ -259,7 +258,7 @@ func showProposalProject(cmd *cobra.Command, args []string) {
 	params.Execer = auty.AutonomyX
 	if 0 == typ {
 		req := types.ReqString{
-			Data:    propID,
+			Data: propID,
 		}
 		params.FuncName = auty.GetProposalProject
 		params.Payload = types.MustPBToJSON(&req)

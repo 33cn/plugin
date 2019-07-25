@@ -7,17 +7,17 @@ package executor
 import (
 	"testing"
 
-	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/account"
-	_ "github.com/33cn/chain33/system"
-	"github.com/stretchr/testify/mock"
 	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
+	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 //const (
@@ -29,19 +29,19 @@ import (
 //)
 
 const (
-	testProjectAmount int64 =  types.Coin * 100 // 工程需要资金
+	testProjectAmount int64 = types.Coin * 100 // 工程需要资金
 )
 
 func InitBoard(stateDB dbm.KV) {
 	// add active board
 	board := &auty.ProposalBoard{
-		Year: 2019,
-		Month: 11,
-		Day: 1,
-		Boards: []string{AddrA, AddrB, AddrC, AddrD},
-		StartBlockHeight:1,
-		EndBlockHeight:10,
-		RealEndBlockHeight:5,
+		Year:               2019,
+		Month:              11,
+		Day:                1,
+		Boards:             []string{AddrA, AddrB, AddrC, AddrD},
+		StartBlockHeight:   1,
+		EndBlockHeight:     10,
+		RealEndBlockHeight: 5,
 	}
 	stateDB.Set(activeBoardID(), types.Encode(board))
 }
@@ -49,12 +49,12 @@ func InitBoard(stateDB dbm.KV) {
 func InitRule(stateDB dbm.KV) {
 	// add active rule
 	rule := &auty.RuleConfig{
-		BoardAttendRatio: boardAttendRatio,
-		BoardApproveRatio: boardApproveRatio,
-		PubOpposeRatio: pubOpposeRatio,
-		ProposalAmount: proposalAmount,
-		LargeProjectAmount: types.Coin *100,
-		PublicPeriod: publicPeriod,
+		BoardAttendRatio:   boardAttendRatio,
+		BoardApproveRatio:  boardApproveRatio,
+		PubOpposeRatio:     pubOpposeRatio,
+		ProposalAmount:     proposalAmount,
+		LargeProjectAmount: types.Coin * 100,
+		PublicPeriod:       publicPeriod,
 	}
 	stateDB.Set(activeRuleID(), types.Encode(rule))
 }
@@ -74,35 +74,35 @@ func TestPropProject(t *testing.T) {
 	env, exec, _, _ := InitEnv()
 
 	opts := []*auty.ProposalProject{
-		&auty.ProposalProject{ // check toaddr
-			ToAddr: "1111111111",
-			StartBlockHeight:  env.blockHeight + 5,
-			EndBlockHeight: env.blockHeight + 10,
+		{ // check toaddr
+			ToAddr:           "1111111111",
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + 10,
 		},
-		&auty.ProposalProject{ // check amount
-			Amount: 0,
-			ToAddr: AddrA,
-			StartBlockHeight:  env.blockHeight + 5,
-			EndBlockHeight: env.blockHeight + 10,
+		{ // check amount
+			Amount:           0,
+			ToAddr:           AddrA,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + 10,
 		},
-		&auty.ProposalProject{ // check StartBlockHeight EndBlockHeight
-			Amount: 10,
-			ToAddr: AddrA,
-			StartBlockHeight:  env.blockHeight-1,
-			EndBlockHeight: env.blockHeight-1,
+		{ // check StartBlockHeight EndBlockHeight
+			Amount:           10,
+			ToAddr:           AddrA,
+			StartBlockHeight: env.blockHeight - 1,
+			EndBlockHeight:   env.blockHeight - 1,
 		},
-		&auty.ProposalProject{ // check activeboard
-			Amount: 100,
-			ToAddr: AddrA,
-			StartBlockHeight:  env.blockHeight + 5,
-			EndBlockHeight: env.blockHeight + 10,
+		{ // check activeboard
+			Amount:           100,
+			ToAddr:           AddrA,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + 10,
 		},
 	}
 
-	result := [] error {
+	result := []error{
 		types.ErrInvalidAddress,
-	    types.ErrInvalidParam,
-	    types.ErrInvalidParam,
+		types.ErrInvalidParam,
+		types.ErrInvalidParam,
 		types.ErrNotFound,
 	}
 
@@ -167,14 +167,14 @@ func TestTerminateProposalProject(t *testing.T) {
 }
 
 func testPropProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
-	opt1 :=  &auty.ProposalProject{
-		Year: 2019,
-		Month: 7,
-		Day:     10,
-		Amount: testProjectAmount,
-		ToAddr: AddrD,
-		StartBlockHeight:  env.blockHeight + 5,
-		EndBlockHeight: env.blockHeight + 10,
+	opt1 := &auty.ProposalProject{
+		Year:             2019,
+		Month:            7,
+		Day:              10,
+		Amount:           testProjectAmount,
+		ToAddr:           AddrD,
+		StartBlockHeight: env.blockHeight + 5,
+		EndBlockHeight:   env.blockHeight + 10,
 	}
 	pbtx, err := propProjectTx(opt1)
 	require.NoError(t, err)
@@ -231,8 +231,8 @@ func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
 
 func revokeProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
-	opt2 :=  &auty.RevokeProposalProject{
-		ProposalID:proposalID,
+	opt2 := &auty.RevokeProposalProject{
+		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalProjectTx(opt2)
 	require.NoError(t, err)
@@ -294,22 +294,22 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance: total,
+		Balance:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values1}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
@@ -326,9 +326,9 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 	}
 
 	for _, record := range records {
-		opt :=  &auty.VoteProposalProject{
-			ProposalID:proposalID,
-			Approve: record.appr,
+		opt := &auty.VoteProposalProject{
+			ProposalID: proposalID,
+			Approve:    record.appr,
 		}
 		tx, err := voteProposalProjectTx(opt)
 		require.NoError(t, err)
@@ -362,11 +362,11 @@ func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateD
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance: total,
+			Balance:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 		exec.SetAPI(api)
 	}
 }
@@ -408,22 +408,22 @@ func pubVoteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, sta
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance: total,
+		Balance:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values1}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values1}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
@@ -440,9 +440,9 @@ func pubVoteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, sta
 	}
 
 	for _, record := range records {
-		opt :=  &auty.PubVoteProposalProject{
-			ProposalID:proposalID,
-			Oppose: record.appr,
+		opt := &auty.PubVoteProposalProject{
+			ProposalID: proposalID,
+			Oppose:     record.appr,
 		}
 		tx, err := pubVoteProposalProjectTx(opt)
 		require.NoError(t, err)
@@ -476,11 +476,11 @@ func pubVoteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, sta
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance: total,
+			Balance:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 		exec.SetAPI(api)
 	}
 }
@@ -493,7 +493,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount) + testProjectAmount, account.Balance)
+	require.Equal(t, int64(proposalAmount)+testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)
@@ -522,19 +522,19 @@ func terminateProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, s
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
-		Items:[]*types.Header{hear}}, nil)
+			Items: []*types.Header{hear}}, nil)
 	acc := &types.Account{
 		Currency: 0,
-		Balance: total*4,
+		Balance:  total * 4,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
-	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values:values}, nil).Once()
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
-	opt :=  &auty.TerminateProposalProject{
-		ProposalID:proposalID,
+	opt := &auty.TerminateProposalProject{
+		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalProjectTx(opt)
 	require.NoError(t, err)
@@ -591,20 +591,20 @@ func terminateProposalProjectTx(parm *auty.TerminateProposalProject) (*types.Tra
 
 func TestGetProjectReceiptLog(t *testing.T) {
 	pre := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{Year: 1800, Month: 1},
-		CurRule: &auty.RuleConfig{BoardAttendRatio:80},
-		Boards: []string{"111", "222", "333"},
+		PropProject:  &auty.ProposalProject{Year: 1800, Month: 1},
+		CurRule:      &auty.RuleConfig{BoardAttendRatio: 80},
+		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
-		Status: 1,
-		Address:"121",
+		Status:       1,
+		Address:      "121",
 	}
 	cur := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{Year: 1900, Month: 1},
-		CurRule: &auty.RuleConfig{BoardAttendRatio:90},
-		Boards: []string{"555", "666", "777"},
+		PropProject:  &auty.ProposalProject{Year: 1900, Month: 1},
+		CurRule:      &auty.RuleConfig{BoardAttendRatio: 90},
+		Boards:       []string{"555", "666", "777"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
-		Status: 2,
-		Address:"123",
+		Status:       2,
+		Address:      "123",
 	}
 	log := getProjectReceiptLog(pre, cur, 2)
 	require.Equal(t, int32(2), log.Ty)
@@ -622,13 +622,13 @@ func TestGetProjectReceiptLog(t *testing.T) {
 func TestCopyAutonomyProposalProject(t *testing.T) {
 	require.Nil(t, copyAutonomyProposalProject(nil))
 	cur := &auty.AutonomyProposalProject{
-		PropProject: &auty.ProposalProject{Year: 1800, Month: 1},
-		CurRule: &auty.RuleConfig{BoardAttendRatio:80},
-		Boards: []string{"111", "222", "333"},
+		PropProject:  &auty.ProposalProject{Year: 1800, Month: 1},
+		CurRule:      &auty.RuleConfig{BoardAttendRatio: 80},
+		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
-		PubVote: &auty.PublicVote{Publicity:true},
-		Status: 2,
-		Address:"123",
+		PubVote:      &auty.PublicVote{Publicity: true},
+		Status:       2,
+		Address:      "123",
 	}
 	pre := copyAutonomyProposalProject(cur)
 	cur.PropProject.Year = 1900

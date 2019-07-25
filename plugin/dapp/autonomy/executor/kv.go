@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	idPrefix = "mavl-" + auty.AutonomyX + "-"
+	idPrefix          = "mavl-" + auty.AutonomyX + "-"
 	votesRecordPrefix = idPrefix + "vote" + "-"
 
 	localPrefix = "LODB-" + auty.AutonomyX + "-"
@@ -23,8 +23,8 @@ func votesRecord(txHash string) []byte {
 
 var (
 	// board
-	boardPrefix = idPrefix + "board" + "-"
-	localBoardPrefix = localPrefix + "board" + "-"
+	boardPrefix            = idPrefix + "board" + "-"
+	localBoardPrefix       = localPrefix + "board" + "-"
 	boardVotesRecordPrefix = boardPrefix + "vote" + "-"
 )
 
@@ -41,13 +41,13 @@ func boardVotesRecord(txHash string) []byte {
 }
 
 func calcBoardKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localBoardPrefix + "%d-" +"%s", status, heightindex)
+	key := fmt.Sprintf(localBoardPrefix+"%d-"+"%s", status, heightindex)
 	return []byte(key)
 }
 
 var (
 	// project
-	projectPrefix = idPrefix + "project" + "-"
+	projectPrefix      = idPrefix + "project" + "-"
 	localProjectPrefix = localPrefix + "project" + "-"
 )
 
@@ -56,13 +56,13 @@ func propProjectID(txHash string) []byte {
 }
 
 func calcProjectKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localProjectPrefix + "%d-" +"%s", status, heightindex)
+	key := fmt.Sprintf(localProjectPrefix+"%d-"+"%s", status, heightindex)
 	return []byte(key)
 }
 
 var (
 	// rule
-	rulePrefix = idPrefix + "rule" + "-"
+	rulePrefix      = idPrefix + "rule" + "-"
 	localRulePrefix = localPrefix + "rule" + "-"
 )
 
@@ -75,7 +75,7 @@ func propRuleID(txHash string) []byte {
 }
 
 func calcRuleKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localRulePrefix + "%d-" +"%s", status, heightindex)
+	key := fmt.Sprintf(localRulePrefix+"%d-"+"%s", status, heightindex)
 	return []byte(key)
 }
 
@@ -85,6 +85,6 @@ var (
 )
 
 func calcCommentHeight(ID, heightindex string) []byte {
-	key := fmt.Sprintf(localCommentPrefix + "%s-" +"%s", ID, heightindex)
+	key := fmt.Sprintf(localCommentPrefix+"%s-"+"%s", ID, heightindex)
 	return []byte(key)
 }

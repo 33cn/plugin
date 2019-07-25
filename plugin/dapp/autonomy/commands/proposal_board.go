@@ -10,10 +10,9 @@ import (
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
-	"github.com/spf13/cobra"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/spf13/cobra"
 )
-
 
 // AutonomyCmd 自治系统命令行
 func AutonomyCmd() *cobra.Command {
@@ -97,12 +96,12 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 	boards := strings.Split(boardstr, "-")
 
 	params := &auty.ProposalBoard{
-		Year:  year,
-		Month: month,
-		Day:     day,
-		Boards:    boards,
-		StartBlockHeight:  startBlock,
-		EndBlockHeight: endBlock,
+		Year:             year,
+		Month:            month,
+		Day:              day,
+		Boards:           boards,
+		StartBlockHeight: startBlock,
+		EndBlockHeight:   endBlock,
 	}
 
 	var res string
@@ -131,7 +130,7 @@ func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalBoard{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalBoardTx", params, &res)
@@ -167,8 +166,8 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	}
 
 	params := &auty.VoteProposalBoard{
-		ProposalID:     ID,
-		Approve: isapp,
+		ProposalID: ID,
+		Approve:    isapp,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalBoardTx", params, &res)
@@ -196,7 +195,7 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 
 	params := &auty.RevokeProposalBoard{
-		ProposalID:     ID,
+		ProposalID: ID,
 	}
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalBoardTx", params, &res)
@@ -228,7 +227,7 @@ func addShowProposalBoardflags(cmd *cobra.Command) {
 func showProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
-	propID, _:= cmd.Flags().GetString("proposalID")
+	propID, _ := cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
@@ -239,7 +238,7 @@ func showProposalBoard(cmd *cobra.Command, args []string) {
 	params.Execer = auty.AutonomyX
 	if 0 == typ {
 		req := types.ReqString{
-			Data:    propID,
+			Data: propID,
 		}
 		params.FuncName = auty.GetProposalBoard
 		params.Payload = types.MustPBToJSON(&req)

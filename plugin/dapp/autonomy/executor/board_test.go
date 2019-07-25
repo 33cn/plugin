@@ -6,32 +6,33 @@ package executor
 
 import (
 	"testing"
+
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/system/dapp"
-	"github.com/33cn/chain33/util"
 )
 
 func TestExecLocalBoard(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropBoard
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{},
-		CurRule: &auty.RuleConfig{},
+		PropBoard:  &auty.ProposalBoard{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalBoard,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalBoard,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	receiptBoard := &auty.ReceiptProposalBoard{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropBoard, Log:types.Encode(receiptBoard)},
+			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
 		},
 	}
 	set, err := au.execLocalBoard(receipt)
@@ -46,12 +47,12 @@ func TestExecLocalBoard(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptBoard1 := &auty.ReceiptProposalBoard{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execLocalBoard(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogRvkPropBoard, Log:types.Encode(receiptBoard1)},
+			{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
 		},
 	})
 	require.NoError(t, err)
@@ -71,12 +72,12 @@ func TestExecLocalBoard(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptBoard2 := &auty.ReceiptProposalBoard{
-		Prev: pre2,
+		Prev:    pre2,
 		Current: cur,
 	}
 	set, err = au.execLocalBoard(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log:types.Encode(receiptBoard2)},
+			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 		},
 	})
 	require.NoError(t, err)
@@ -92,21 +93,21 @@ func TestExecDelLocalBoard(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropBoard
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{},
-		CurRule: &auty.RuleConfig{},
+		PropBoard:  &auty.ProposalBoard{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalBoard,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalBoard,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	receiptBoard := &auty.ReceiptProposalBoard{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropBoard, Log:types.Encode(receiptBoard)},
+			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
 		},
 	}
 	set, err := au.execDelLocalBoard(receipt)
@@ -122,12 +123,12 @@ func TestExecDelLocalBoard(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptBoard2 := &auty.ReceiptProposalBoard{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execDelLocalBoard(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log:types.Encode(receiptBoard2)},
+			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 		},
 	})
 	require.NoError(t, err)
@@ -148,7 +149,7 @@ func TestGetProposalBoard(t *testing.T) {
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
 	storedb.Set(propBoardID(tx), types.Encode(&auty.AutonomyProposalBoard{}))
-	rsp, err := au.getProposalBoard(&types.ReqString{Data:tx})
+	rsp, err := au.getProposalBoard(&types.ReqString{Data: tx})
 	require.NoError(t, err)
 	require.NotNil(t, rsp)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
@@ -181,13 +182,13 @@ func TestListProposalBoard(t *testing.T) {
 	testcase = append(testcase, testcase1...)
 	testcase = append(testcase, testcase2...)
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard: &auty.ProposalBoard{},
-		CurRule: &auty.RuleConfig{},
+		PropBoard:  &auty.ProposalBoard{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalBoard,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalBoard,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	for _, tcase := range testcase {
 		key := calcBoardKey4StatusHeight(tcase.status,
@@ -201,10 +202,10 @@ func TestListProposalBoard(t *testing.T) {
 
 	// 反向查找
 	req := &auty.ReqQueryProposalBoard{
-		Status:auty.AutonomyStatusProposalBoard,
-		Count:10,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalBoard,
+		Count:     10,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err := au.listProposalBoard(req)
 	require.NoError(t, err)
@@ -218,10 +219,10 @@ func TestListProposalBoard(t *testing.T) {
 
 	// 正向查找
 	req = &auty.ReqQueryProposalBoard{
-		Status:auty.AutonomyStatusProposalBoard,
-		Count:10,
-		Direction:1,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalBoard,
+		Count:     10,
+		Direction: 1,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalBoard(req)
 	require.NoError(t, err)
@@ -233,10 +234,10 @@ func TestListProposalBoard(t *testing.T) {
 
 	// 翻页查找
 	req = &auty.ReqQueryProposalBoard{
-		Status:auty.AutonomyStatusProposalBoard,
-		Count:1,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalBoard,
+		Count:     1,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalBoard(req)
 	require.NoError(t, err)
@@ -248,10 +249,10 @@ func TestListProposalBoard(t *testing.T) {
 	//
 	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalBoard{
-		Status:auty.AutonomyStatusProposalBoard,
-		Count:10,
-		Direction:0,
-		Index: Index,
+		Status:    auty.AutonomyStatusProposalBoard,
+		Count:     10,
+		Direction: 0,
+		Index:     Index,
 	}
 	rsp, err = au.listProposalBoard(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)

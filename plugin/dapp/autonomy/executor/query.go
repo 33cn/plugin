@@ -19,7 +19,6 @@ func (a *Autonomy) Query_ListProposalBoard(in *auty.ReqQueryProposalBoard) (type
 	return a.listProposalBoard(in)
 }
 
-
 // Query_GetProposalProject 查询提案项目
 func (a *Autonomy) Query_GetProposalProject(in *types.ReqString) (types.Message, error) {
 	return a.getProposalProject(in)
@@ -30,7 +29,6 @@ func (a *Autonomy) Query_ListProposalProject(in *auty.ReqQueryProposalProject) (
 	return a.listProposalProject(in)
 }
 
-
 // Query_GetProposalRule 查询提案规则
 func (a *Autonomy) Query_GetProposalRule(in *types.ReqString) (types.Message, error) {
 	return a.getProposalRule(in)
@@ -40,7 +38,6 @@ func (a *Autonomy) Query_GetProposalRule(in *types.ReqString) (types.Message, er
 func (a *Autonomy) Query_ListProposalRule(in *auty.ReqQueryProposalRule) (types.Message, error) {
 	return a.listProposalRule(in)
 }
-
 
 // Query_ListProposalComment 批量查询提案评论
 func (a *Autonomy) Query_ListProposalComment(in *auty.ReqQueryProposalComment) (types.Message, error) {

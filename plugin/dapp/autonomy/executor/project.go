@@ -126,7 +126,7 @@ func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types
 		key = nil
 	} else { //翻页查找指定的txhash列表
 		heightstr := genHeightIndexStr(req.GetIndex())
-		key    = calcProjectKey4StatusHeight(req.Status, heightstr)
+		key = calcProjectKey4StatusHeight(req.Status, heightstr)
 	}
 	prefix := calcProjectKey4StatusHeight(req.Status, "")
 	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())

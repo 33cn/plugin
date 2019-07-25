@@ -12,25 +12,23 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 )
 
-
-
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0  &&
-	   prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
+	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0 &&
+		prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
 		prob.RuleCfg.PublicPeriod <= 0 {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 	if prob.RuleCfg.BoardAttendRatio > 100 || prob.RuleCfg.BoardApproveRatio > 100 || prob.RuleCfg.PubOpposeRatio > 100 {
 		alog.Error("propRule RuleCfg invaild", "BoardAttendRatio", prob.RuleCfg.BoardAttendRatio, "BoardApproveRatio",
 			prob.RuleCfg.BoardApproveRatio, "PubOpposeRatio", prob.RuleCfg.PubOpposeRatio)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
 		alog.Error("propRule height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	// 获取当前生效提案规则,并且将不修改的规则补齐
@@ -53,13 +51,13 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	kv = append(kv, receipt.KV...)
 
 	cur := &auty.AutonomyProposalRule{
-		PropRule:prob,
-		CurRule: rule,
+		PropRule:   prob,
+		CurRule:    rule,
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalRule,
-		Address: a.fromaddr,
-		Height: a.height,
-		Index: a.index,
+		Status:     auty.AutonomyStatusProposalRule,
+		Address:    a.fromaddr,
+		Height:     a.height,
+		Index:      a.index,
 	}
 
 	key := propRuleID(common.ToHex(a.txhash))
@@ -164,12 +162,12 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-	    addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 		account, err := a.getStartHeightVoteAccount(addr, start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
 	}
 
 	// 获取可投票数
@@ -178,9 +176,9 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 		return nil, err
 	}
 	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes +=  int32(account.Balance/ticketPrice)
+		cur.VoteResult.ApproveVotes += int32(account.Balance / ticketPrice)
 	} else {
-		cur.VoteResult.OpposeVotes += int32(account.Balance/ticketPrice)
+		cur.VoteResult.OpposeVotes += int32(account.Balance / ticketPrice)
 	}
 
 	var logs []*types.ReceiptLog
@@ -198,9 +196,9 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	}
 
 	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
+		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropRule.RealEndBlockHeight = a.height
 	}
@@ -218,7 +216,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
 		upRule := upgradeRule(cur.CurRule, cur.PropRule.RuleCfg)
-		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
+		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value: types.Encode(upRule)})
 	}
 
 	ty := auty.TyLogVotePropRule
@@ -265,11 +263,11 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
 	}
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false
@@ -298,7 +296,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 	// 更新系统规则
 	if cur.VoteResult.Pass {
 		upRule := upgradeRule(cur.CurRule, cur.PropRule.RuleCfg)
-		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value:types.Encode(upRule)})
+		kv = append(kv, &types.KeyValue{Key: activeRuleID(), Value: types.Encode(upRule)})
 	}
 	receiptLog := getRuleReceiptLog(pre, cur, auty.TyLogTmintPropRule)
 	logs = append(logs, receiptLog)
@@ -307,7 +305,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 }
 
 func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
-	if a.execaddr != dapp.ExecAddress(string(auty.AutonomyX))  {
+	if a.execaddr != dapp.ExecAddress(string(auty.AutonomyX)) {
 		err := auty.ErrNoAutonomyExec
 		alog.Error("autonomy transfer ", "addr", a.fromaddr, "execaddr", a.execaddr, "this exec is not autonomy", err)
 		return nil, err
@@ -342,7 +340,7 @@ func (a *action) commentProp(cm *auty.Comment) (*types.Receipt, error) {
 func getCommentReceiptLog(cur *auty.Comment, height int64, index int32, ty int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = ty
-	r := &auty.ReceiptProposalComment{Cmt: cur, Height:height, Index:index}
+	r := &auty.ReceiptProposalComment{Cmt: cur, Height: height, Index: index}
 	log.Log = types.Encode(r)
 	return log
 }
@@ -419,5 +417,3 @@ func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
 	}
 	return &new
 }
-
-

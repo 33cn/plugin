@@ -6,28 +6,28 @@ package executor
 
 import (
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/client"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
 	"github.com/33cn/chain33/common/address"
 )
 
 const (
-	minBoards          = 3
-	maxBoards          = 30
-	publicPeriod      int32 = 120960             // 公示一周时间，以区块高度计算
-	ticketPrice        = types.Coin * 3000       // 单张票价
-	largeProjectAmount = types.Coin * 100 *10000 // 重大项目公示金额阈值
-	proposalAmount     = types.Coin * 1000       // 创建者消耗金额
-	boardAttendRatio  int32 = 66 // 董事会成员参与率，以%计，可修改
-	boardApproveRatio int32 = 66 // 董事会成员赞成率，以%计，可修改
-	pubAttendRatio    int32 = 50 // 全体持票人参与率，以%计
-	pubApproveRatio   int32 = 50 // 全体持票人赞成率，以%计
-	pubOpposeRatio    int32 = 33 // 全体持票人否决率，以%计
+	minBoards                = 3
+	maxBoards                = 30
+	publicPeriod       int32 = 120960                   // 公示一周时间，以区块高度计算
+	ticketPrice              = types.Coin * 3000        // 单张票价
+	largeProjectAmount       = types.Coin * 100 * 10000 // 重大项目公示金额阈值
+	proposalAmount           = types.Coin * 1000        // 创建者消耗金额
+	boardAttendRatio   int32 = 66                       // 董事会成员参与率，以%计，可修改
+	boardApproveRatio  int32 = 66                       // 董事会成员赞成率，以%计，可修改
+	pubAttendRatio     int32 = 50                       // 全体持票人参与率，以%计
+	pubApproveRatio    int32 = 50                       // 全体持票人赞成率，以%计
+	pubOpposeRatio     int32 = 33                       // 全体持票人否决率，以%计
 )
 
 type action struct {
@@ -52,19 +52,19 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards {
 		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	for _, board := range prob.Boards {
 		if err := address.CheckAddress(board); err != nil {
 			alog.Error("propBoard ", "addr", board, "check toAddr error", err)
-			return  nil, types.ErrInvalidAddress
+			return nil, types.ErrInvalidAddress
 		}
 	}
 
@@ -88,13 +88,13 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	kv = append(kv, receipt.KV...)
 
 	cur := &auty.AutonomyProposalBoard{
-		PropBoard:prob,
-		CurRule:rule,
+		PropBoard:  prob,
+		CurRule:    rule,
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalBoard,
-		Address: a.fromaddr,
-		Height: a.height,
-		Index: a.index,
+		Status:     auty.AutonomyStatusProposalBoard,
+		Address:    a.fromaddr,
+		Height:     a.height,
+		Index:      a.index,
 	}
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(common.ToHex(a.txhash)), Value: types.Encode(cur)})
@@ -197,12 +197,12 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-	    addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 		account, err := a.getStartHeightVoteAccount(addr, start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
 	}
 
 	account, err := a.getStartHeightVoteAccount(a.fromaddr, start)
@@ -210,9 +210,9 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		return nil, err
 	}
 	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes +=  int32(account.Balance/ticketPrice)
+		cur.VoteResult.ApproveVotes += int32(account.Balance / ticketPrice)
 	} else {
-		cur.VoteResult.OpposeVotes += int32(account.Balance/ticketPrice)
+		cur.VoteResult.OpposeVotes += int32(account.Balance / ticketPrice)
 	}
 
 	var logs []*types.ReceiptLog
@@ -230,9 +230,9 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	}
 
 	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes != 0 &&
-	    float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
+		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 	}
@@ -249,7 +249,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value:types.Encode(cur.PropBoard)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.PropBoard)})
 	}
 
 	ty := auty.TyLogVotePropBoard
@@ -295,11 +295,11 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance/ticketPrice)
+		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
 	}
 
-	if float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) / float32(cur.VoteResult.TotalVotes) >=  float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes) / float32(cur.VoteResult.ApproveVotes + cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false
@@ -326,7 +326,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value:types.Encode(cur.PropBoard)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.PropBoard)})
 	}
 
 	receiptLog := getReceiptLog(pre, cur, auty.TyLogTmintPropBoard)
@@ -338,7 +338,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 func (a *action) getStartHeightVoteAccount(addr string, height int64) (*types.Account, error) {
 	param := &types.ReqBlocks{
 		Start: height,
-		End:height,
+		End:   height,
 	}
 	head, err := a.api.GetHeaders(param)
 	if err != nil || len(head.Items) == 0 {
@@ -381,13 +381,13 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {// 载入系统默认值
-		rule.BoardAttendRatio   = boardAttendRatio
-		rule.BoardApproveRatio  = boardApproveRatio
-		rule.PubOpposeRatio     = pubOpposeRatio
-		rule.ProposalAmount     = proposalAmount
+	} else { // 载入系统默认值
+		rule.BoardAttendRatio = boardAttendRatio
+		rule.BoardApproveRatio = boardApproveRatio
+		rule.PubOpposeRatio = pubOpposeRatio
+		rule.ProposalAmount = proposalAmount
 		rule.LargeProjectAmount = largeProjectAmount
-		rule.PublicPeriod       = publicPeriod
+		rule.PublicPeriod = publicPeriod
 	}
 	return rule, nil
 }
@@ -440,4 +440,3 @@ func copyAutonomyProposalBoard(cur *auty.AutonomyProposalBoard) *auty.AutonomyPr
 	}
 	return &newAut
 }
-

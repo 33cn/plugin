@@ -6,32 +6,33 @@ package executor
 
 import (
 	"testing"
+
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/require"
-	"github.com/33cn/chain33/system/dapp"
-	"github.com/33cn/chain33/util"
 )
 
 func TestExecLocalRule(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropRule
 	cur := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{},
-		CurRule: &auty.RuleConfig{},
+		PropRule:   &auty.ProposalRule{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalRule,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalRule,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	receiptRule := &auty.ReceiptProposalRule{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropRule, Log:types.Encode(receiptRule)},
+			{Ty: auty.TyLogPropRule, Log: types.Encode(receiptRule)},
 		},
 	}
 	set, err := au.execLocalRule(receipt)
@@ -46,12 +47,12 @@ func TestExecLocalRule(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptRule1 := &auty.ReceiptProposalRule{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execLocalRule(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogRvkPropRule, Log:types.Encode(receiptRule1)},
+			{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
 		},
 	})
 	require.NoError(t, err)
@@ -71,12 +72,12 @@ func TestExecLocalRule(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptRule2 := &auty.ReceiptProposalRule{
-		Prev: pre2,
+		Prev:    pre2,
 		Current: cur,
 	}
 	set, err = au.execLocalRule(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropRule, Log:types.Encode(receiptRule2)},
+			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 		},
 	})
 	require.NoError(t, err)
@@ -92,21 +93,21 @@ func TestExecDelLocalRule(t *testing.T) {
 	au := &Autonomy{}
 	//TyLogPropRule
 	cur := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{},
-		CurRule: &auty.RuleConfig{},
+		PropRule:   &auty.ProposalRule{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalRule,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalRule,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	receiptRule := &auty.ReceiptProposalRule{
-		Prev: nil,
+		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropRule, Log:types.Encode(receiptRule)},
+			{Ty: auty.TyLogPropRule, Log: types.Encode(receiptRule)},
 		},
 	}
 	set, err := au.execDelLocalRule(receipt)
@@ -122,12 +123,12 @@ func TestExecDelLocalRule(t *testing.T) {
 	cur.Height = 2
 	cur.Index = 3
 	receiptRule2 := &auty.ReceiptProposalRule{
-		Prev: pre1,
+		Prev:    pre1,
 		Current: cur,
 	}
 	set, err = au.execDelLocalRule(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropRule, Log:types.Encode(receiptRule2)},
+			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 		},
 	})
 	require.NoError(t, err)
@@ -148,7 +149,7 @@ func TestGetProposalRule(t *testing.T) {
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
 	storedb.Set(propRuleID(tx), types.Encode(&auty.AutonomyProposalRule{}))
-	rsp, err := au.getProposalRule(&types.ReqString{Data:tx})
+	rsp, err := au.getProposalRule(&types.ReqString{Data: tx})
 	require.NoError(t, err)
 	require.NotNil(t, rsp)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 1)
@@ -181,13 +182,13 @@ func TestListProposalRule(t *testing.T) {
 	testcase = append(testcase, testcase1...)
 	testcase = append(testcase, testcase2...)
 	cur := &auty.AutonomyProposalRule{
-		PropRule: &auty.ProposalRule{},
-		CurRule: &auty.RuleConfig{},
+		PropRule:   &auty.ProposalRule{},
+		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status: auty.AutonomyStatusProposalRule,
-		Address: "11111111111111",
-		Height: 1,
-		Index: 2,
+		Status:     auty.AutonomyStatusProposalRule,
+		Address:    "11111111111111",
+		Height:     1,
+		Index:      2,
 	}
 	for _, tcase := range testcase {
 		key := calcRuleKey4StatusHeight(tcase.status,
@@ -201,10 +202,10 @@ func TestListProposalRule(t *testing.T) {
 
 	// 反向查找
 	req := &auty.ReqQueryProposalRule{
-		Status:auty.AutonomyStatusProposalRule,
-		Count:10,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalRule,
+		Count:     10,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err := au.listProposalRule(req)
 	require.NoError(t, err)
@@ -218,10 +219,10 @@ func TestListProposalRule(t *testing.T) {
 
 	// 正向查找
 	req = &auty.ReqQueryProposalRule{
-		Status:auty.AutonomyStatusProposalRule,
-		Count:10,
-		Direction:1,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalRule,
+		Count:     10,
+		Direction: 1,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalRule(req)
 	require.NoError(t, err)
@@ -233,10 +234,10 @@ func TestListProposalRule(t *testing.T) {
 
 	// 翻页查找
 	req = &auty.ReqQueryProposalRule{
-		Status:auty.AutonomyStatusProposalRule,
-		Count:1,
-		Direction:0,
-		Index: -1,
+		Status:    auty.AutonomyStatusProposalRule,
+		Count:     1,
+		Direction: 0,
+		Index:     -1,
 	}
 	rsp, err = au.listProposalRule(req)
 	require.NoError(t, err)
@@ -248,10 +249,10 @@ func TestListProposalRule(t *testing.T) {
 	//
 	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalRule{
-		Status:auty.AutonomyStatusProposalRule,
-		Count:10,
-		Direction:0,
-		Index: Index,
+		Status:    auty.AutonomyStatusProposalRule,
+		Count:     10,
+		Direction: 0,
+		Index:     Index,
 	}
 	rsp, err = au.listProposalRule(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 2)
@@ -266,18 +267,18 @@ func TestExecLocalCommentProp(t *testing.T) {
 	propID := "11111111111111"
 	Repcmt := "2222222222"
 	comment := "3333333333"
-	receiptCmt := &auty.ReceiptProposalComment {
+	receiptCmt := &auty.ReceiptProposalComment{
 		Cmt: &auty.Comment{
 			ProposalID: propID,
-			RepCmtHash:Repcmt,
-			Comment:comment,
+			RepCmtHash: Repcmt,
+			Comment:    comment,
 		},
 		Height: 11,
-		Index: 1,
+		Index:  1,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogCommentProp, Log:types.Encode(receiptCmt)},
+			{Ty: auty.TyLogCommentProp, Log: types.Encode(receiptCmt)},
 		},
 	}
 	set, err := au.execLocalCommentProp(receipt)
@@ -293,18 +294,18 @@ func TestExecDelLocalCommentProp(t *testing.T) {
 	propID := "11111111111111"
 	Repcmt := "2222222222"
 	comment := "3333333333"
-	receiptCmt := &auty.ReceiptProposalComment {
+	receiptCmt := &auty.ReceiptProposalComment{
 		Cmt: &auty.Comment{
 			ProposalID: propID,
-			RepCmtHash:Repcmt,
-			Comment:comment,
+			RepCmtHash: Repcmt,
+			Comment:    comment,
 		},
 		Height: 11,
-		Index: 1,
+		Index:  1,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogCommentProp, Log:types.Encode(receiptCmt)},
+			{Ty: auty.TyLogCommentProp, Log: types.Encode(receiptCmt)},
 		},
 	}
 	set, err := au.execDelLocalCommentProp(receipt)
@@ -328,7 +329,7 @@ func TestListProposalComment(t *testing.T) {
 		index  int64
 	}
 
-	propID  := "3333333333"
+	propID := "3333333333"
 	propID1 := "2222222"
 	propID2 := "111111111111"
 
@@ -346,24 +347,24 @@ func TestListProposalComment(t *testing.T) {
 	testcase = append(testcase, testcase1...)
 	testcase = append(testcase, testcase2...)
 	cur := &auty.RelationCmt{
-		RepCmtHash:"aaaaaa",
-		Comment:"bbbbbbbbbb",
+		RepCmtHash: "aaaaaa",
+		Comment:    "bbbbbbbbbb",
 	}
 	for _, tcase := range testcase {
 		key := calcCommentHeight(tcase.propId,
 			dapp.HeightIndexStr(tcase.height, int64(tcase.index)))
 		cur.Height = tcase.height
-		cur.Index  = int32(tcase.index)
+		cur.Index = int32(tcase.index)
 		value := types.Encode(cur)
 		kvdb.Set(key, value)
 	}
 
 	// 反向查找
 	req := &auty.ReqQueryProposalComment{
-		ProposalID:propID2,
-		Count:10,
-		Direction:0,
-		Index: -1,
+		ProposalID: propID2,
+		Count:      10,
+		Direction:  0,
+		Index:      -1,
 	}
 	rsp, err := au.listProposalComment(req)
 	require.NoError(t, err)
@@ -377,10 +378,10 @@ func TestListProposalComment(t *testing.T) {
 
 	// 正向查找
 	req = &auty.ReqQueryProposalComment{
-		ProposalID:propID2,
-		Count:10,
-		Direction:1,
-		Index: -1,
+		ProposalID: propID2,
+		Count:      10,
+		Direction:  1,
+		Index:      -1,
 	}
 	rsp, err = au.listProposalComment(req)
 	require.NoError(t, err)
@@ -392,10 +393,10 @@ func TestListProposalComment(t *testing.T) {
 
 	// 翻页查找
 	req = &auty.ReqQueryProposalComment{
-		ProposalID:propID2,
-		Count:1,
-		Direction:0,
-		Index: -1,
+		ProposalID: propID2,
+		Count:      1,
+		Direction:  0,
+		Index:      -1,
 	}
 	rsp, err = au.listProposalComment(req)
 	require.NoError(t, err)
@@ -407,10 +408,10 @@ func TestListProposalComment(t *testing.T) {
 	//
 	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalComment{
-		ProposalID:propID2,
-		Count:10,
-		Direction:0,
-		Index: Index,
+		ProposalID: propID2,
+		Count:      10,
+		Direction:  0,
+		Index:      Index,
 	}
 	rsp, err = au.listProposalComment(req)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 2)

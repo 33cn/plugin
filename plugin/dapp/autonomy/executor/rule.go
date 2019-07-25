@@ -124,7 +124,7 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 		key = nil
 	} else { //翻页查找指定的txhash列表
 		heightstr := genHeightIndexStr(req.GetIndex())
-		key    = calcRuleKey4StatusHeight(req.Status, heightstr)
+		key = calcRuleKey4StatusHeight(req.Status, heightstr)
 	}
 	prefix := calcRuleKey4StatusHeight(req.Status, "")
 	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
@@ -175,9 +175,9 @@ func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyV
 	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
 	kv.Value = types.Encode(&auty.RelationCmt{
 		RepCmtHash: res.Cmt.RepCmtHash,
-		Comment: res.Cmt.Comment,
-		Height: res.Height,
-		Index: res.Index,
+		Comment:    res.Cmt.Comment,
+		Height:     res.Height,
+		Index:      res.Index,
 	})
 	kvs = append(kvs, kv)
 	return kvs
@@ -227,7 +227,7 @@ func (a *Autonomy) listProposalComment(req *auty.ReqQueryProposalComment) (types
 		key = nil
 	} else { //翻页查找指定的txhash列表
 		heightstr := genHeightIndexStr(req.GetIndex())
-		key    = calcCommentHeight(req.ProposalID, heightstr)
+		key = calcCommentHeight(req.ProposalID, heightstr)
 	}
 	prefix := calcCommentHeight(req.ProposalID, "")
 	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())

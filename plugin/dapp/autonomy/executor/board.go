@@ -5,10 +5,11 @@
 package executor
 
 import (
+	"fmt"
+
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"fmt"
 )
 
 func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -112,7 +113,7 @@ func (a *Autonomy) getProposalBoard(req *types.ReqString) (types.Message, error)
 	return rep, nil
 }
 
-func(a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
+func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -125,7 +126,7 @@ func(a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mess
 		key = nil
 	} else { //翻页查找指定的txhash列表
 		heightstr := genHeightIndexStr(req.GetIndex())
-		key    = calcBoardKey4StatusHeight(req.Status, heightstr)
+		key = calcBoardKey4StatusHeight(req.Status, heightstr)
 	}
 	prefix := calcBoardKey4StatusHeight(req.Status, "")
 	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())

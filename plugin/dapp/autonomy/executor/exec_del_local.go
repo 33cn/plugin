@@ -16,7 +16,7 @@ func (a *Autonomy) ExecDelLocal_PropBoard(payload *auty.ProposalBoard, tx *types
 }
 
 // ExecDelLocal_RvkPropBoard 撤销提案
-func (a *Autonomy) ExecDelLocal_RvkPropBoard(payload *auty.RevokeProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+func (a *Autonomy) ExecDelLocal_RvkPropBoard(payload *auty.RevokeProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalBoard(receiptData)
 }
 
@@ -37,7 +37,7 @@ func (a *Autonomy) ExecDelLocal_PropProject(payload *auty.ProposalProject, tx *t
 }
 
 // ExecDelLocal_RvkPropProject 撤销提案
-func (a *Autonomy) ExecDelLocal_RvkPropProject(payload *auty.RevokeProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+func (a *Autonomy) ExecDelLocal_RvkPropProject(payload *auty.RevokeProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalProject(receiptData)
 }
 
@@ -63,7 +63,7 @@ func (a *Autonomy) ExecDelLocal_PropRule(payload *auty.ProposalRule, tx *types.T
 }
 
 // ExecDelLocal_RvkPropRule 撤销提案规则
-func (a *Autonomy) ExecDelLocal_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error){
+func (a *Autonomy) ExecDelLocal_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execDelLocalRule(receiptData)
 }
 
