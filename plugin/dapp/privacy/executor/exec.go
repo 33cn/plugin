@@ -38,7 +38,7 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 	//executor中的临时数据库中，只需要将kv返回给blockchain就行
 	//即：一个块中产生的UTXO是不能够在同一个高度进行支付的
 	for index, keyOutput := range output {
-		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
+		key := CalcPrivacyOutputKey(payload.AssetExec, payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
@@ -65,7 +65,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	privacyInput := payload.Input
 	for _, keyInput := range privacyInput.Keyinput {
 		value := []byte{keyImageSpentAlready}
-		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
+		key := calcPrivacyKeyImageKey(payload.AssetExec, payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
@@ -77,7 +77,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 	txhash := common.ToHex(tx.Hash())
 	output := payload.GetOutput().GetKeyoutput()
 	for index, keyOutput := range output {
-		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
+		key := CalcPrivacyOutputKey(payload.AssetExec, payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
@@ -113,7 +113,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	privacyInput := payload.Input
 	for _, keyInput := range privacyInput.Keyinput {
 		value := []byte{keyImageSpentAlready}
-		key := calcPrivacyKeyImageKey(payload.Tokenname, keyInput.KeyImage)
+		key := calcPrivacyKeyImageKey(payload.AssetExec, payload.Tokenname, keyInput.KeyImage)
 		stateDB := p.GetStateDB()
 		stateDB.Set(key, value)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
@@ -125,7 +125,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	txhash := common.ToHex(tx.Hash())
 	output := payload.GetOutput().GetKeyoutput()
 	for index, keyOutput := range output {
-		key := CalcPrivacyOutputKey(payload.Tokenname, keyOutput.Amount, txhash, index)
+		key := CalcPrivacyOutputKey(payload.AssetExec, payload.Tokenname, keyOutput.Amount, txhash, index)
 		value := types.Encode(keyOutput)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}

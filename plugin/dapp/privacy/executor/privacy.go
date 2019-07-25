@@ -244,9 +244,9 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	pubkeys := make([][]byte, 0)
 	for i, input := range keyinput {
 		totalInput += input.Amount
-		keyImages[i] = calcPrivacyKeyImageKey(token, input.KeyImage)
+		keyImages[i] = calcPrivacyKeyImageKey(assertExec, token, input.KeyImage)
 		for j, globalIndex := range input.UtxoGlobalIndex {
-			keys = append(keys, CalcPrivacyOutputKey(token, input.Amount, common.ToHex(globalIndex.Txhash), int(globalIndex.Outindex)))
+			keys = append(keys, CalcPrivacyOutputKey(assertExec, token, input.Amount, common.ToHex(globalIndex.Txhash), int(globalIndex.Outindex)))
 			pubkeys = append(pubkeys, ringSignature.Items[i].Pubkey[j])
 		}
 	}
