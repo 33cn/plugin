@@ -13,7 +13,7 @@ var (
 	ErrProposalStatus = errors.New("ErrProposalStatus")
 	// ErrRepeatVoteAddr 重复投票地址
 	ErrRepeatVoteAddr = errors.New("ErrRepeatVoteAddr")
-	// ErrRevokePeriod 非取消提案期间
+	// ErrRevokeProposalPeriod 非取消提案期间
 	ErrRevokeProposalPeriod = errors.New("ErrRevokeProposalPeriod")
 	// ErrRevokeProposalPower 不能取消
 	ErrRevokeProposalPower = errors.New("ErrRevokeProposalPower")

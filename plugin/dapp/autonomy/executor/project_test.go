@@ -261,6 +261,7 @@ func TestListProposalProject(t *testing.T) {
 		Index:     Index,
 	}
 	rsp, err = au.listProposalProject(req)
+	require.NoError(t, err)
 	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 2)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height, testcase2[1].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Index, int32(testcase2[1].index))

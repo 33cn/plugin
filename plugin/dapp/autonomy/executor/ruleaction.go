@@ -305,7 +305,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 }
 
 func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
-	if a.execaddr != dapp.ExecAddress(string(auty.AutonomyX)) {
+	if a.execaddr != dapp.ExecAddress(auty.AutonomyX) {
 		err := auty.ErrNoAutonomyExec
 		alog.Error("autonomy transfer ", "addr", a.fromaddr, "execaddr", a.execaddr, "this exec is not autonomy", err)
 		return nil, err

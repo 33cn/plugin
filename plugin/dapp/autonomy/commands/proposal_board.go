@@ -174,7 +174,7 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// TerminateProposalBoard 终止提案
+// TerminateProposalBoardCmd 终止提案
 func TerminateProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terminateBoard",

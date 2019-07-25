@@ -13,6 +13,7 @@ import (
 )
 
 // 提案董事会相关
+
 // PropBoardTx 提案董事会成员RPC接口
 func (c *Jrpc) PropBoardTx(parm *auty.ProposalBoard, result *interface{}) error {
 	if parm == nil {
@@ -67,6 +68,7 @@ func (c *Jrpc) TerminateProposalBoardTx(parm *auty.TerminateProposalBoard, resul
 }
 
 // 提案项目相关
+
 // PropProjectTx 提案项目RPC接口
 func (c *Jrpc) PropProjectTx(parm *auty.ProposalProject, result *interface{}) error {
 	if parm == nil {
@@ -134,6 +136,7 @@ func (c *Jrpc) TerminateProposalProjectTx(parm *auty.TerminateProposalProject, r
 }
 
 // 提案规则相关
+
 // PropRuleTx 提案规则RPC接口
 func (c *Jrpc) PropRuleTx(parm *auty.ProposalRule, result *interface{}) error {
 	if parm == nil {
@@ -187,7 +190,7 @@ func (c *Jrpc) TerminateProposalRuleTx(parm *auty.TerminateProposalRule, result 
 	return nil
 }
 
-// TransferTx 资金转入自治系统合约中
+// TransferFundTx 资金转入自治系统合约中
 func (c *Jrpc) TransferFundTx(parm *auty.TransferFund, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam

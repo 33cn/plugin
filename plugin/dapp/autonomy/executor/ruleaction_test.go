@@ -53,7 +53,7 @@ func TestTerminateProposalRule(t *testing.T) {
 	terminateProposalRule(t, env, exec, stateDB, kvdb, true)
 }
 
-func testPropRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	opt1 := &auty.ProposalRule{
 		Year:  2019,
 		Month: 7,
@@ -121,7 +121,7 @@ func propRuleTx(parm *auty.ProposalRule) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func revokeProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func revokeProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
 	opt2 := &auty.RevokeProposalRule{
 		ProposalID: proposalID,
@@ -186,7 +186,7 @@ func revokeProposalRuleTx(parm *auty.RevokeProposalRule) (*types.Transaction, er
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func voteProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -313,7 +313,7 @@ func voteProposalRuleTx(parm *auty.VoteProposalRule) (*types.Transaction, error)
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func terminateProposalRule(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func terminateProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)

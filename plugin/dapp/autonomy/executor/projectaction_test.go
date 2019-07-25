@@ -28,6 +28,8 @@ import (
 //	testLargeProjectAmount int64 = 1
 //)
 
+var autonomyAddr = address.ExecAddress(auty.AutonomyX)
+
 const (
 	testProjectAmount int64 = types.Coin * 100 // 工程需要资金
 )
@@ -166,7 +168,7 @@ func TestTerminateProposalProject(t *testing.T) {
 	terminateProposalProject(t, env, exec, stateDB, kvdb, true)
 }
 
-func testPropProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	opt1 := &auty.ProposalProject{
 		Year:             2019,
 		Month:            7,
@@ -229,7 +231,7 @@ func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func revokeProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	proposalID := env.txHash
 	opt2 := &auty.RevokeProposalProject{
 		ProposalID: proposalID,
@@ -287,7 +289,7 @@ func revokeProposalProjectTx(parm *auty.RevokeProposalProject) (*types.Transacti
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func voteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -401,7 +403,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	require.Equal(t, AddrA, cur.Address)
 }
 
-func pubVoteProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -515,7 +517,7 @@ func pubVoteProposalProjectTx(parm *auty.PubVoteProposalProject) (*types.Transac
 	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
-func terminateProposalProject(t *testing.T, env *execEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)

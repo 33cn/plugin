@@ -7,13 +7,10 @@ package types
 import (
 	"reflect"
 
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
 
 var name string
-
-var tlog = log.New("module", name)
 
 func init() {
 	name = AutonomyX
@@ -21,11 +18,6 @@ func init() {
 	// init executor type
 	types.RegistorExecutor(name, NewType())
 	types.RegisterDappFork(name, "Enable", 0)
-}
-
-//getRealExecName
-func getRealExecName(paraName string) string {
-	return types.ExecName(paraName + AutonomyX)
 }
 
 // NewType 生成新的基础类型

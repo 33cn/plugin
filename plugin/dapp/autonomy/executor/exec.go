@@ -10,6 +10,7 @@ import (
 )
 
 // 提案董事会相关
+
 // Exec_PropBoard 创建提案
 func (a *Autonomy) Exec_PropBoard(payload *auty.ProposalBoard, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
@@ -35,37 +36,39 @@ func (a *Autonomy) Exec_TmintPropBoard(payload *auty.TerminateProposalBoard, tx 
 }
 
 // 提案项目相关
+
 // Exec_PropProject 创建提案项目
 func (a *Autonomy) Exec_PropProject(payload *auty.ProposalProject, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.propProject(payload)
 }
 
-// Exec_RvkPropBoard 撤销提案项目
+// Exec_RvkPropProject 撤销提案项目
 func (a *Autonomy) Exec_RvkPropProject(payload *auty.RevokeProposalProject, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.rvkPropProject(payload)
 }
 
-// Exec_VotePropBoard 投票提案项目
+// Exec_VotePropProject 投票提案项目
 func (a *Autonomy) Exec_VotePropProject(payload *auty.VoteProposalProject, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.votePropProject(payload)
 }
 
-// Exec_VotePropBoard 投票提案项目
+// Exec_PubVotePropProject 投票提案项目
 func (a *Autonomy) Exec_PubVotePropProject(payload *auty.PubVoteProposalProject, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.pubVotePropProject(payload)
 }
 
-// Exec_TmintPropBoard 终止提案项目
+// Exec_TmintPropProject 终止提案项目
 func (a *Autonomy) Exec_TmintPropProject(payload *auty.TerminateProposalProject, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.tmintPropProject(payload)
 }
 
 // 提案规则相关
+
 // Exec_PropRule 创建提案规则
 func (a *Autonomy) Exec_PropRule(payload *auty.ProposalRule, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
@@ -96,7 +99,7 @@ func (a *Autonomy) Exec_Transfer(payload *auty.TransferFund, tx *types.Transacti
 	return action.transfer(payload)
 }
 
-// Exec_Comment 评论提案
+// Exec_CommentProp 评论提案
 func (a *Autonomy) Exec_CommentProp(payload *auty.Comment, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(a, tx, int32(index))
 	return action.commentProp(payload)
