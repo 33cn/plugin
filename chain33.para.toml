@@ -201,6 +201,7 @@ ForkBlockCheck=0
 ForkBase58AddressCheck=0
 #平行链上使能平行链执行器如user.p.x.coins执行器的注册，缺省为0，对已有的平行链需要设置一个fork高度
 ForkEnableParaRegExec=0
+ForkCacheDriver=0
 
 [fork.sub.coins]
 Enable=0
