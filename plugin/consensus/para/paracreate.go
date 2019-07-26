@@ -59,11 +59,8 @@ func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
 		}
 	}
 
-	if txMap[string(curTx.Hash())] {
-		client.commitMsgClient.verifyNotify(curTx.Hash())
-	} else {
-		client.commitMsgClient.verifyNotify(nil)
-	}
+	client.commitMsgClient.verifyNotify(txMap[string(curTx.Hash())])
+
 }
 
 func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *pt.ParaTxDetail) error {
