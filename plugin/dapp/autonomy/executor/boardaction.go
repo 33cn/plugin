@@ -95,6 +95,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		Address:    a.fromaddr,
 		Height:     a.height,
 		Index:      a.index,
+		ProposalID: common.ToHex(a.txhash),
 	}
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(common.ToHex(a.txhash)), Value: types.Encode(cur)})

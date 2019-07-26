@@ -23,6 +23,7 @@ message AutonomyProposalProject {
     string address       = 7;
     int64  height        = 8;
     int32  index         = 9;
+    string proposalID    = 10;
 }
 
 message ProposalProject {

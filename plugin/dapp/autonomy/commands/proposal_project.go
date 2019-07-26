@@ -239,9 +239,9 @@ func addShowProposalProjectflags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.Flags().Uint32P("status", "s", 0, "status")
-	cmd.Flags().Int32P("count", "c", 0, "count")
-	cmd.Flags().Int32P("direction", "d", 0, "direction")
-	cmd.Flags().Int64P("index", "i", 0, "index")
+	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
+	cmd.Flags().Int32P("direction", "d", -1, "direction, default is reserve")
+	cmd.Flags().Int64P("index", "i", -1, "index, default is -1")
 }
 
 func showProposalProject(cmd *cobra.Command, args []string) {

@@ -20,6 +20,7 @@ message AutonomyProposalBoard {
     string         address    = 5;
     int64          height     = 6;
     int32          index      = 7;
+    string         proposalID = 8;
 }
 
 // action
