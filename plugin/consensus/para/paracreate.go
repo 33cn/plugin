@@ -35,10 +35,6 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 }
 
 func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
-	if atomic.LoadInt32(&client.isCaughtUp) != 1 {
-		return
-	}
-
 	curTx := client.commitMsgClient.getCurrentTx()
 	if curTx == nil {
 		return
@@ -52,11 +48,20 @@ func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
 			}
 		}
 	} else {
+		//如果正在追赶，则暂时不去主链查找，减少耗时
+		if atomic.LoadInt32(&client.isCaughtUp) != 1 {
+			return
+		}
 		//去主链查询
 		receipt, _ := client.QueryTxOnMainByHash(curTx.Hash())
 		if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
 			txMap[string(curTx.Hash())] = true
 		}
+	}
+
+	//如果没找到且当前正在追赶，则不计数，如果找到了，即便当前在追赶，也通知
+	if !txMap[string(curTx.Hash())] && atomic.LoadInt32(&client.isCaughtUp) != 1 {
+		return
 	}
 
 	client.commitMsgClient.verifyNotify(txMap[string(curTx.Hash())])
