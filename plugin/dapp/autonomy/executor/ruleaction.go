@@ -58,6 +58,7 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		Address:    a.fromaddr,
 		Height:     a.height,
 		Index:      a.index,
+		ProposalID: common.ToHex(a.txhash),
 	}
 
 	key := propRuleID(common.ToHex(a.txhash))

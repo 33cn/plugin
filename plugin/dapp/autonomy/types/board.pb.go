@@ -3,64 +3,33 @@
 
 package types
 
-import (
-	fmt "fmt"
-	math "math"
-
-	proto "github.com/golang/protobuf/proto"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type AutonomyProposalBoard struct {
-	PropBoard *ProposalBoard `protobuf:"bytes,1,opt,name=propBoard,proto3" json:"propBoard,omitempty"`
+	PropBoard *ProposalBoard `protobuf:"bytes,1,opt,name=propBoard" json:"propBoard,omitempty"`
 	// 投票该提案的规则
-	CurRule *RuleConfig `protobuf:"bytes,2,opt,name=curRule,proto3" json:"curRule,omitempty"`
+	CurRule *RuleConfig `protobuf:"bytes,2,opt,name=curRule" json:"curRule,omitempty"`
 	// 全体持票人投票结果
-	VoteResult *VoteResult `protobuf:"bytes,3,opt,name=voteResult,proto3" json:"voteResult,omitempty"`
+	VoteResult *VoteResult `protobuf:"bytes,3,opt,name=voteResult" json:"voteResult,omitempty"`
 	// 状态
-	Status               int32    `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`
-	Address              string   `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
-	Height               int64    `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
-	Index                int32    `protobuf:"varint,7,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Status     int32  `protobuf:"varint,4,opt,name=status" json:"status,omitempty"`
+	Address    string `protobuf:"bytes,5,opt,name=address" json:"address,omitempty"`
+	Height     int64  `protobuf:"varint,6,opt,name=height" json:"height,omitempty"`
+	Index      int32  `protobuf:"varint,7,opt,name=index" json:"index,omitempty"`
+	ProposalID string `protobuf:"bytes,8,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *AutonomyProposalBoard) Reset()         { *m = AutonomyProposalBoard{} }
-func (m *AutonomyProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*AutonomyProposalBoard) ProtoMessage()    {}
-func (*AutonomyProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{0}
-}
-
-func (m *AutonomyProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AutonomyProposalBoard.Unmarshal(m, b)
-}
-func (m *AutonomyProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AutonomyProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *AutonomyProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyProposalBoard.Merge(m, src)
-}
-func (m *AutonomyProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_AutonomyProposalBoard.Size(m)
-}
-func (m *AutonomyProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_AutonomyProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AutonomyProposalBoard proto.InternalMessageInfo
+func (m *AutonomyProposalBoard) Reset()                    { *m = AutonomyProposalBoard{} }
+func (m *AutonomyProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*AutonomyProposalBoard) ProtoMessage()               {}
+func (*AutonomyProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *AutonomyProposalBoard) GetPropBoard() *ProposalBoard {
 	if m != nil {
@@ -111,47 +80,31 @@ func (m *AutonomyProposalBoard) GetIndex() int32 {
 	return 0
 }
 
+func (m *AutonomyProposalBoard) GetProposalID() string {
+	if m != nil {
+		return m.ProposalID
+	}
+	return ""
+}
+
 // action
 type ProposalBoard struct {
 	// 提案时间
-	Year  int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
-	Month int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
-	Day   int32 `protobuf:"varint,3,opt,name=day,proto3" json:"day,omitempty"`
+	Year  int32 `protobuf:"varint,1,opt,name=year" json:"year,omitempty"`
+	Month int32 `protobuf:"varint,2,opt,name=month" json:"month,omitempty"`
+	Day   int32 `protobuf:"varint,3,opt,name=day" json:"day,omitempty"`
 	// 提案董事会成员
-	Boards []string `protobuf:"bytes,4,rep,name=boards,proto3" json:"boards,omitempty"`
+	Boards []string `protobuf:"bytes,4,rep,name=boards" json:"boards,omitempty"`
 	// 投票相关
-	StartBlockHeight     int64    `protobuf:"varint,5,opt,name=startBlockHeight,proto3" json:"startBlockHeight,omitempty"`
-	EndBlockHeight       int64    `protobuf:"varint,6,opt,name=endBlockHeight,proto3" json:"endBlockHeight,omitempty"`
-	RealEndBlockHeight   int64    `protobuf:"varint,7,opt,name=realEndBlockHeight,proto3" json:"realEndBlockHeight,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	StartBlockHeight   int64 `protobuf:"varint,5,opt,name=startBlockHeight" json:"startBlockHeight,omitempty"`
+	EndBlockHeight     int64 `protobuf:"varint,6,opt,name=endBlockHeight" json:"endBlockHeight,omitempty"`
+	RealEndBlockHeight int64 `protobuf:"varint,7,opt,name=realEndBlockHeight" json:"realEndBlockHeight,omitempty"`
 }
 
-func (m *ProposalBoard) Reset()         { *m = ProposalBoard{} }
-func (m *ProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*ProposalBoard) ProtoMessage()    {}
-func (*ProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{1}
-}
-
-func (m *ProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProposalBoard.Unmarshal(m, b)
-}
-func (m *ProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *ProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProposalBoard.Merge(m, src)
-}
-func (m *ProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_ProposalBoard.Size(m)
-}
-func (m *ProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProposalBoard proto.InternalMessageInfo
+func (m *ProposalBoard) Reset()                    { *m = ProposalBoard{} }
+func (m *ProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*ProposalBoard) ProtoMessage()               {}
+func (*ProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 func (m *ProposalBoard) GetYear() int32 {
 	if m != nil {
@@ -203,36 +156,13 @@ func (m *ProposalBoard) GetRealEndBlockHeight() int64 {
 }
 
 type RevokeProposalBoard struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *RevokeProposalBoard) Reset()         { *m = RevokeProposalBoard{} }
-func (m *RevokeProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*RevokeProposalBoard) ProtoMessage()    {}
-func (*RevokeProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{2}
-}
-
-func (m *RevokeProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RevokeProposalBoard.Unmarshal(m, b)
-}
-func (m *RevokeProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RevokeProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *RevokeProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeProposalBoard.Merge(m, src)
-}
-func (m *RevokeProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_RevokeProposalBoard.Size(m)
-}
-func (m *RevokeProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_RevokeProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RevokeProposalBoard proto.InternalMessageInfo
+func (m *RevokeProposalBoard) Reset()                    { *m = RevokeProposalBoard{} }
+func (m *RevokeProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*RevokeProposalBoard) ProtoMessage()               {}
+func (*RevokeProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
 
 func (m *RevokeProposalBoard) GetProposalID() string {
 	if m != nil {
@@ -242,37 +172,14 @@ func (m *RevokeProposalBoard) GetProposalID() string {
 }
 
 type VoteProposalBoard struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	Approve              bool     `protobuf:"varint,2,opt,name=approve,proto3" json:"approve,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
+	Approve    bool   `protobuf:"varint,2,opt,name=approve" json:"approve,omitempty"`
 }
 
-func (m *VoteProposalBoard) Reset()         { *m = VoteProposalBoard{} }
-func (m *VoteProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*VoteProposalBoard) ProtoMessage()    {}
-func (*VoteProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{3}
-}
-
-func (m *VoteProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_VoteProposalBoard.Unmarshal(m, b)
-}
-func (m *VoteProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_VoteProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *VoteProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VoteProposalBoard.Merge(m, src)
-}
-func (m *VoteProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_VoteProposalBoard.Size(m)
-}
-func (m *VoteProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_VoteProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_VoteProposalBoard proto.InternalMessageInfo
+func (m *VoteProposalBoard) Reset()                    { *m = VoteProposalBoard{} }
+func (m *VoteProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*VoteProposalBoard) ProtoMessage()               {}
+func (*VoteProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
 
 func (m *VoteProposalBoard) GetProposalID() string {
 	if m != nil {
@@ -289,36 +196,13 @@ func (m *VoteProposalBoard) GetApprove() bool {
 }
 
 type TerminateProposalBoard struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *TerminateProposalBoard) Reset()         { *m = TerminateProposalBoard{} }
-func (m *TerminateProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*TerminateProposalBoard) ProtoMessage()    {}
-func (*TerminateProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{4}
-}
-
-func (m *TerminateProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TerminateProposalBoard.Unmarshal(m, b)
-}
-func (m *TerminateProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TerminateProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *TerminateProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TerminateProposalBoard.Merge(m, src)
-}
-func (m *TerminateProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_TerminateProposalBoard.Size(m)
-}
-func (m *TerminateProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_TerminateProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TerminateProposalBoard proto.InternalMessageInfo
+func (m *TerminateProposalBoard) Reset()                    { *m = TerminateProposalBoard{} }
+func (m *TerminateProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*TerminateProposalBoard) ProtoMessage()               {}
+func (*TerminateProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
 
 func (m *TerminateProposalBoard) GetProposalID() string {
 	if m != nil {
@@ -329,37 +213,14 @@ func (m *TerminateProposalBoard) GetProposalID() string {
 
 // receipt
 type ReceiptProposalBoard struct {
-	Prev                 *AutonomyProposalBoard `protobuf:"bytes,1,opt,name=prev,proto3" json:"prev,omitempty"`
-	Current              *AutonomyProposalBoard `protobuf:"bytes,2,opt,name=current,proto3" json:"current,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+	Prev    *AutonomyProposalBoard `protobuf:"bytes,1,opt,name=prev" json:"prev,omitempty"`
+	Current *AutonomyProposalBoard `protobuf:"bytes,2,opt,name=current" json:"current,omitempty"`
 }
 
-func (m *ReceiptProposalBoard) Reset()         { *m = ReceiptProposalBoard{} }
-func (m *ReceiptProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*ReceiptProposalBoard) ProtoMessage()    {}
-func (*ReceiptProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{5}
-}
-
-func (m *ReceiptProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptProposalBoard.Unmarshal(m, b)
-}
-func (m *ReceiptProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *ReceiptProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptProposalBoard.Merge(m, src)
-}
-func (m *ReceiptProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_ReceiptProposalBoard.Size(m)
-}
-func (m *ReceiptProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReceiptProposalBoard proto.InternalMessageInfo
+func (m *ReceiptProposalBoard) Reset()                    { *m = ReceiptProposalBoard{} }
+func (m *ReceiptProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*ReceiptProposalBoard) ProtoMessage()               {}
+func (*ReceiptProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{5} }
 
 func (m *ReceiptProposalBoard) GetPrev() *AutonomyProposalBoard {
 	if m != nil {
@@ -376,37 +237,14 @@ func (m *ReceiptProposalBoard) GetCurrent() *AutonomyProposalBoard {
 }
 
 type LocalProposalBoard struct {
-	PropBd               *AutonomyProposalBoard `protobuf:"bytes,1,opt,name=propBd,proto3" json:"propBd,omitempty"`
-	Comments             []string               `protobuf:"bytes,2,rep,name=comments,proto3" json:"comments,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+	PropBd   *AutonomyProposalBoard `protobuf:"bytes,1,opt,name=propBd" json:"propBd,omitempty"`
+	Comments []string               `protobuf:"bytes,2,rep,name=comments" json:"comments,omitempty"`
 }
 
-func (m *LocalProposalBoard) Reset()         { *m = LocalProposalBoard{} }
-func (m *LocalProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*LocalProposalBoard) ProtoMessage()    {}
-func (*LocalProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{6}
-}
-
-func (m *LocalProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LocalProposalBoard.Unmarshal(m, b)
-}
-func (m *LocalProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LocalProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *LocalProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalProposalBoard.Merge(m, src)
-}
-func (m *LocalProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_LocalProposalBoard.Size(m)
-}
-func (m *LocalProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_LocalProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LocalProposalBoard proto.InternalMessageInfo
+func (m *LocalProposalBoard) Reset()                    { *m = LocalProposalBoard{} }
+func (m *LocalProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*LocalProposalBoard) ProtoMessage()               {}
+func (*LocalProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{6} }
 
 func (m *LocalProposalBoard) GetPropBd() *AutonomyProposalBoard {
 	if m != nil {
@@ -424,40 +262,17 @@ func (m *LocalProposalBoard) GetComments() []string {
 
 // query
 type ReqQueryProposalBoard struct {
-	//优先根据status查询
-	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Count                int32    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
-	Direction            int32    `protobuf:"varint,3,opt,name=direction,proto3" json:"direction,omitempty"`
-	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	// 优先根据status查询
+	Status    int32 `protobuf:"varint,1,opt,name=status" json:"status,omitempty"`
+	Count     int32 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Direction int32 `protobuf:"varint,3,opt,name=direction" json:"direction,omitempty"`
+	Index     int64 `protobuf:"varint,4,opt,name=index" json:"index,omitempty"`
 }
 
-func (m *ReqQueryProposalBoard) Reset()         { *m = ReqQueryProposalBoard{} }
-func (m *ReqQueryProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*ReqQueryProposalBoard) ProtoMessage()    {}
-func (*ReqQueryProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{7}
-}
-
-func (m *ReqQueryProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqQueryProposalBoard.Unmarshal(m, b)
-}
-func (m *ReqQueryProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqQueryProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *ReqQueryProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQueryProposalBoard.Merge(m, src)
-}
-func (m *ReqQueryProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_ReqQueryProposalBoard.Size(m)
-}
-func (m *ReqQueryProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqQueryProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqQueryProposalBoard proto.InternalMessageInfo
+func (m *ReqQueryProposalBoard) Reset()                    { *m = ReqQueryProposalBoard{} }
+func (m *ReqQueryProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*ReqQueryProposalBoard) ProtoMessage()               {}
+func (*ReqQueryProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{7} }
 
 func (m *ReqQueryProposalBoard) GetStatus() int32 {
 	if m != nil {
@@ -488,36 +303,13 @@ func (m *ReqQueryProposalBoard) GetIndex() int64 {
 }
 
 type ReplyQueryProposalBoard struct {
-	PropBoards           []*AutonomyProposalBoard `protobuf:"bytes,1,rep,name=propBoards,proto3" json:"propBoards,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	PropBoards []*AutonomyProposalBoard `protobuf:"bytes,1,rep,name=propBoards" json:"propBoards,omitempty"`
 }
 
-func (m *ReplyQueryProposalBoard) Reset()         { *m = ReplyQueryProposalBoard{} }
-func (m *ReplyQueryProposalBoard) String() string { return proto.CompactTextString(m) }
-func (*ReplyQueryProposalBoard) ProtoMessage()    {}
-func (*ReplyQueryProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_937f74b042f92c0f, []int{8}
-}
-
-func (m *ReplyQueryProposalBoard) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyQueryProposalBoard.Unmarshal(m, b)
-}
-func (m *ReplyQueryProposalBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyQueryProposalBoard.Marshal(b, m, deterministic)
-}
-func (m *ReplyQueryProposalBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQueryProposalBoard.Merge(m, src)
-}
-func (m *ReplyQueryProposalBoard) XXX_Size() int {
-	return xxx_messageInfo_ReplyQueryProposalBoard.Size(m)
-}
-func (m *ReplyQueryProposalBoard) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyQueryProposalBoard.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReplyQueryProposalBoard proto.InternalMessageInfo
+func (m *ReplyQueryProposalBoard) Reset()                    { *m = ReplyQueryProposalBoard{} }
+func (m *ReplyQueryProposalBoard) String() string            { return proto.CompactTextString(m) }
+func (*ReplyQueryProposalBoard) ProtoMessage()               {}
+func (*ReplyQueryProposalBoard) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{8} }
 
 func (m *ReplyQueryProposalBoard) GetPropBoards() []*AutonomyProposalBoard {
 	if m != nil {
@@ -538,41 +330,42 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalBoard)(nil), "types.ReplyQueryProposalBoard")
 }
 
-func init() { proto.RegisterFile("board.proto", fileDescriptor_937f74b042f92c0f) }
+func init() { proto.RegisterFile("board.proto", fileDescriptor1) }
 
-var fileDescriptor_937f74b042f92c0f = []byte{
-	// 524 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x6f, 0xd3, 0x40,
-	0x10, 0x95, 0x93, 0x6c, 0xd2, 0x4c, 0x55, 0xd4, 0x2e, 0x69, 0xb1, 0xaa, 0x0a, 0x45, 0x3e, 0x20,
-	0x0b, 0xa4, 0x08, 0xca, 0x87, 0x38, 0x70, 0x21, 0x80, 0x04, 0x12, 0x48, 0x30, 0x42, 0x70, 0xde,
-	0xda, 0xd3, 0xc6, 0xaa, 0xbd, 0xbb, 0xac, 0xd7, 0x11, 0xbe, 0x71, 0xe7, 0x87, 0xf2, 0x37, 0x90,
-	0xd7, 0x9b, 0x26, 0x2e, 0x11, 0xd0, 0x9b, 0xdf, 0xf8, 0xbd, 0xdd, 0x19, 0xcf, 0x7b, 0x86, 0xdd,
-	0x33, 0x25, 0x4c, 0x3a, 0xd3, 0x46, 0x59, 0xc5, 0x99, 0xad, 0x35, 0x95, 0xc7, 0x7b, 0x79, 0xa2,
-	0x8a, 0x42, 0xc9, 0xb6, 0x1a, 0xfd, 0xec, 0xc1, 0xe1, 0xcb, 0xca, 0x2a, 0xa9, 0x8a, 0xfa, 0xa3,
-	0x51, 0x5a, 0x95, 0x22, 0x9f, 0x37, 0x2a, 0x7e, 0x0a, 0x63, 0x6d, 0x94, 0x76, 0x20, 0x0c, 0xa6,
-	0x41, 0xbc, 0x7b, 0x3a, 0x99, 0xb9, 0x33, 0x66, 0x1d, 0x22, 0xae, 0x69, 0xfc, 0x01, 0x8c, 0x92,
-	0xca, 0x60, 0x95, 0x53, 0xd8, 0x73, 0x8a, 0x03, 0xaf, 0x68, 0x4a, 0xaf, 0x94, 0x3c, 0xcf, 0x2e,
-	0x70, 0xc5, 0xe0, 0x8f, 0x00, 0x96, 0xca, 0x12, 0x52, 0x59, 0xe5, 0x36, 0xec, 0x77, 0xf8, 0x5f,
-	0xae, 0x5e, 0xe0, 0x06, 0x89, 0x1f, 0xc1, 0xb0, 0xb4, 0xc2, 0x56, 0x65, 0x38, 0x98, 0x06, 0x31,
-	0x43, 0x8f, 0x78, 0x08, 0x23, 0x91, 0xa6, 0x86, 0xca, 0x32, 0x64, 0xd3, 0x20, 0x1e, 0xe3, 0x0a,
-	0x36, 0x8a, 0x05, 0x65, 0x17, 0x0b, 0x1b, 0x0e, 0xa7, 0x41, 0xdc, 0x47, 0x8f, 0xf8, 0x04, 0x58,
-	0x26, 0x53, 0xfa, 0x1e, 0x8e, 0xdc, 0x41, 0x2d, 0x88, 0x7e, 0x05, 0xb0, 0xd7, 0xfd, 0x0a, 0x1c,
-	0x06, 0x35, 0x09, 0xe3, 0x3e, 0x00, 0x43, 0xf7, 0xdc, 0x68, 0x0b, 0x25, 0xed, 0xc2, 0xcd, 0xc8,
-	0xb0, 0x05, 0x7c, 0x1f, 0xfa, 0xa9, 0xa8, 0xdd, 0x1c, 0x0c, 0x9b, 0xc7, 0xe6, 0x6e, 0xb7, 0x80,
-	0xa6, 0xdb, 0x7e, 0x3c, 0x46, 0x8f, 0xf8, 0x7d, 0xd8, 0x2f, 0xad, 0x30, 0x76, 0x9e, 0xab, 0xe4,
-	0xf2, 0x6d, 0xdb, 0x1d, 0x73, 0xdd, 0xfd, 0x51, 0xe7, 0xf7, 0xe0, 0x16, 0xc9, 0x74, 0x93, 0xd9,
-	0xce, 0x71, 0xad, 0xca, 0x67, 0xc0, 0x0d, 0x89, 0xfc, 0x4d, 0x97, 0x3b, 0x72, 0xdc, 0x2d, 0x6f,
-	0xa2, 0xa7, 0x70, 0x1b, 0x69, 0xa9, 0x2e, 0xa9, 0x3b, 0xee, 0x5d, 0x00, 0xed, 0x0b, 0xef, 0x5e,
-	0xbb, 0xa1, 0xc7, 0xb8, 0x51, 0x89, 0x3e, 0xc0, 0x41, 0xb3, 0x9a, 0x1b, 0x89, 0xdc, 0x76, 0xb4,
-	0x36, 0x6a, 0xd9, 0xba, 0x62, 0x07, 0x57, 0x30, 0x7a, 0x0e, 0x47, 0x9f, 0xc9, 0x14, 0x99, 0x14,
-	0x37, 0x3c, 0x33, 0xfa, 0x11, 0xc0, 0x04, 0x29, 0xa1, 0x4c, 0xdb, 0xae, 0xf0, 0x21, 0x0c, 0xb4,
-	0xa1, 0xa5, 0x77, 0xec, 0x89, 0xf7, 0xd3, 0x56, 0x8b, 0xa3, 0x63, 0xf2, 0x67, 0xce, 0xb4, 0x86,
-	0xa4, 0xf5, 0xa6, 0xfd, 0xbb, 0x68, 0x45, 0x8e, 0xce, 0x81, 0xbf, 0x57, 0x89, 0xc8, 0xbb, 0xf7,
-	0x3f, 0x81, 0xa1, 0xcb, 0x43, 0xfa, 0x5f, 0x1d, 0x78, 0x2e, 0x3f, 0x86, 0x9d, 0x26, 0x96, 0x24,
-	0x6d, 0x19, 0xf6, 0x9c, 0x59, 0xae, 0x70, 0x54, 0xc3, 0x21, 0xd2, 0xb7, 0x4f, 0x15, 0x99, 0x6b,
-	0x09, 0x5d, 0xa7, 0x21, 0xe8, 0xa4, 0x61, 0x02, 0x2c, 0x51, 0x95, 0x1f, 0x87, 0x61, 0x0b, 0xf8,
-	0x09, 0x8c, 0xd3, 0xcc, 0x50, 0x62, 0x33, 0x25, 0xbd, 0x4b, 0xd7, 0x85, 0x75, 0x1e, 0x06, 0xce,
-	0x32, 0x3e, 0x0f, 0x5f, 0xe1, 0x0e, 0x92, 0xce, 0xeb, 0x2d, 0x97, 0xbf, 0x68, 0x17, 0x34, 0x6f,
-	0x0d, 0x1e, 0x4c, 0xfb, 0xff, 0x9c, 0x75, 0x83, 0x7f, 0x36, 0x74, 0x7f, 0x9f, 0xc7, 0xbf, 0x03,
-	0x00, 0x00, 0xff, 0xff, 0x6e, 0xdf, 0x6d, 0xe2, 0xa2, 0x04, 0x00, 0x00,
+var fileDescriptor1 = []byte{
+	// 531 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x5d, 0x6f, 0xd3, 0x30,
+	0x14, 0x55, 0xda, 0xba, 0x1f, 0x77, 0x1a, 0xda, 0x4c, 0x37, 0xac, 0x69, 0x42, 0x55, 0x1e, 0x50,
+	0x05, 0x52, 0x05, 0xe3, 0x43, 0x3c, 0xf0, 0x42, 0x01, 0x09, 0x24, 0x90, 0xc0, 0x42, 0xf0, 0xec,
+	0x25, 0x77, 0x6b, 0xb4, 0xc4, 0x36, 0x8e, 0x53, 0x91, 0x37, 0xfe, 0x0f, 0x3f, 0x8c, 0xbf, 0x81,
+	0x62, 0xbb, 0x6b, 0xb3, 0x55, 0xb0, 0xbd, 0xe5, 0xdc, 0x9c, 0x7b, 0x73, 0x3f, 0xce, 0x09, 0xec,
+	0x9c, 0x2a, 0x61, 0xd2, 0x99, 0x36, 0xca, 0x2a, 0x4a, 0x6c, 0xad, 0xb1, 0x3c, 0xda, 0xcd, 0x13,
+	0x55, 0x14, 0x4a, 0xfa, 0x68, 0xfc, 0xbb, 0x03, 0x07, 0xaf, 0x2b, 0xab, 0xa4, 0x2a, 0xea, 0xcf,
+	0x46, 0x69, 0x55, 0x8a, 0x7c, 0xde, 0x64, 0xd1, 0x13, 0x18, 0x69, 0xa3, 0xb4, 0x03, 0x2c, 0x9a,
+	0x44, 0xd3, 0x9d, 0x93, 0xf1, 0xcc, 0xd5, 0x98, 0xb5, 0x88, 0x7c, 0x4d, 0xa3, 0x8f, 0x60, 0x90,
+	0x54, 0x86, 0x57, 0x39, 0xb2, 0x8e, 0xcb, 0xd8, 0x0f, 0x19, 0x4d, 0xe8, 0x8d, 0x92, 0x67, 0xd9,
+	0x39, 0x5f, 0x31, 0xe8, 0x13, 0x80, 0xa5, 0xb2, 0xc8, 0xb1, 0xac, 0x72, 0xcb, 0xba, 0x2d, 0xfe,
+	0xb7, 0xcb, 0x17, 0x7c, 0x83, 0x44, 0x0f, 0xa1, 0x5f, 0x5a, 0x61, 0xab, 0x92, 0xf5, 0x26, 0xd1,
+	0x94, 0xf0, 0x80, 0x28, 0x83, 0x81, 0x48, 0x53, 0x83, 0x65, 0xc9, 0xc8, 0x24, 0x9a, 0x8e, 0xf8,
+	0x0a, 0x36, 0x19, 0x0b, 0xcc, 0xce, 0x17, 0x96, 0xf5, 0x27, 0xd1, 0xb4, 0xcb, 0x03, 0xa2, 0x63,
+	0x20, 0x99, 0x4c, 0xf1, 0x27, 0x1b, 0xb8, 0x42, 0x1e, 0xd0, 0xfb, 0x00, 0x3a, 0xcc, 0xf6, 0xe1,
+	0x2d, 0x1b, 0xba, 0x52, 0x1b, 0x91, 0xf8, 0x4f, 0x04, 0xbb, 0xed, 0x2d, 0x51, 0xe8, 0xd5, 0x28,
+	0x8c, 0x5b, 0x10, 0xe1, 0xee, 0xb9, 0xa9, 0x5d, 0x28, 0x69, 0x17, 0x6e, 0x07, 0x84, 0x7b, 0x40,
+	0xf7, 0xa0, 0x9b, 0x8a, 0xda, 0xcd, 0x49, 0x78, 0xf3, 0xd8, 0xf4, 0xe6, 0x0e, 0xd4, 0x4c, 0xd3,
+	0x9d, 0x8e, 0x78, 0x40, 0xf4, 0x21, 0xec, 0x95, 0x56, 0x18, 0x3b, 0xcf, 0x55, 0x72, 0xf1, 0xde,
+	0x77, 0x4f, 0x5c, 0xf7, 0xd7, 0xe2, 0xf4, 0x01, 0xdc, 0x41, 0x99, 0x6e, 0x32, 0xfd, 0x9c, 0x57,
+	0xa2, 0x74, 0x06, 0xd4, 0xa0, 0xc8, 0xdf, 0xb5, 0xb9, 0x03, 0xc7, 0xdd, 0xf2, 0x26, 0x7e, 0x0e,
+	0x77, 0x39, 0x2e, 0xd5, 0x05, 0xb6, 0xc7, 0x6d, 0x2f, 0x28, 0xba, 0xb6, 0xa0, 0x4f, 0xb0, 0xdf,
+	0x9c, 0xee, 0x56, 0x49, 0xee, 0x7a, 0x5a, 0x1b, 0xb5, 0xf4, 0xaa, 0x19, 0xf2, 0x15, 0x8c, 0x5f,
+	0xc2, 0xe1, 0x57, 0x34, 0x45, 0x26, 0xc5, 0x2d, 0x6b, 0xc6, 0xbf, 0x22, 0x18, 0x73, 0x4c, 0x30,
+	0xd3, 0xb6, 0x9d, 0xf8, 0x18, 0x7a, 0xda, 0xe0, 0x32, 0x28, 0xfa, 0x38, 0xe8, 0x6d, 0xab, 0x05,
+	0xb8, 0x63, 0xd2, 0x17, 0x4e, 0xd4, 0x06, 0xa5, 0x0d, 0xa2, 0xfe, 0x77, 0xd2, 0x8a, 0x1c, 0x9f,
+	0x01, 0xfd, 0xa8, 0x12, 0x91, 0xb7, 0xbf, 0xff, 0x0c, 0xfa, 0xce, 0x2f, 0xe9, 0x8d, 0x3a, 0x08,
+	0x5c, 0x7a, 0x04, 0xc3, 0xc6, 0xb6, 0x28, 0x6d, 0xc9, 0x3a, 0x4e, 0x2c, 0x97, 0x38, 0xae, 0xe1,
+	0x80, 0xe3, 0x8f, 0x2f, 0x15, 0x9a, 0x2b, 0x0e, 0x5e, 0xbb, 0x25, 0x6a, 0xb9, 0x65, 0x0c, 0x24,
+	0x51, 0x55, 0x18, 0x87, 0x70, 0x0f, 0xe8, 0x31, 0x8c, 0xd2, 0xcc, 0x60, 0x62, 0x33, 0x25, 0x83,
+	0x4a, 0xd7, 0x81, 0xb5, 0x5f, 0x7a, 0x4e, 0x32, 0x1e, 0xc4, 0xdf, 0xe1, 0x1e, 0x47, 0x9d, 0xd7,
+	0x5b, 0x3e, 0xfe, 0xca, 0x1f, 0x68, 0xee, 0x05, 0x1e, 0x4d, 0xba, 0xff, 0x9d, 0x75, 0x83, 0x7f,
+	0xda, 0x77, 0x7f, 0xa7, 0xa7, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x02, 0x02, 0xe3, 0xd7, 0xc2,
+	0x04, 0x00, 0x00,
 }

@@ -72,6 +72,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		Address:      a.fromaddr,
 		Height:       a.height,
 		Index:        a.index,
+		ProposalID:   common.ToHex(a.txhash),
 	}
 	kv = append(kv, &types.KeyValue{Key: propProjectID(common.ToHex(a.txhash)), Value: types.Encode(cur)})
 	receiptLog := getProjectReceiptLog(nil, cur, auty.TyLogPropProject)
