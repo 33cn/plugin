@@ -22,6 +22,7 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 	if err != nil {
 		privacylog.Error("Exec_pub2priv_newAccountDB", "exec", payload.GetAssetExec(),
 			"symbol", payload.GetTokenname(), "err", err)
+		return nil, err
 	}
 	txhashstr := hex.EncodeToString(tx.Hash())
 	from := tx.From()
@@ -103,6 +104,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 	if err != nil {
 		privacylog.Error("Exec_pub2priv_newAccountDB", "exec", payload.GetAssetExec(),
 			"symbol", payload.GetTokenname(), "err", err)
+		return nil, err
 	}
 	txhashstr := hex.EncodeToString(tx.Hash())
 	receipt, err := accDB.ExecDeposit(payload.To, address.ExecAddress(string(tx.Execer)), payload.Amount)
