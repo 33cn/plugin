@@ -270,7 +270,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
-	if assertExec == "coins" && types.IsPara() {
+	if assertExec == "coins" && !types.IsPara() {
 
 		for _, output := range output.Keyoutput {
 			totalOutput += output.Amount
