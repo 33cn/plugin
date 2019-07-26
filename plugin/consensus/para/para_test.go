@@ -105,7 +105,7 @@ func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) 
 
 func createTxsGroup(txs []*types.Transaction) ([]*types.Transaction, error) {
 
-	group, err := types.CreateTxGroup(txs)
+	group, err := types.CreateTxGroup(txs, types.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}

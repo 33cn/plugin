@@ -726,7 +726,7 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-	group, err := types.CreateTxGroup(txs)
+	group, err := types.CreateTxGroup(txs, types.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}
