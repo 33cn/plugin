@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	consensusInterval = 5 //about 1 new block interval
+	consensusInterval = 5  //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
 )
 
