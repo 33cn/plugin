@@ -2,13 +2,12 @@ package p2p
 
 import (
 	"encoding/hex"
-	//"fmt"
-	"net"
+	"sync/atomic"
+	"time"
+
 	"os"
-	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	l "github.com/33cn/chain33/common/log"
 
@@ -22,15 +21,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-var q queue.Queue
-var p2pModule *P2p
-var dataDir = "testdata"
+var (
+	testChannel = int32(119)
+)
 
 func init() {
-	VERSION = 119
 	l.SetLogLevel("err")
-	q = queue.New("channel")
-	go q.Start()
+}
+
+func processMsg(q queue.Queue) {
 
 	go func() {
 
@@ -110,24 +109,20 @@ func init() {
 			switch msg.Ty {
 			case types.EventGetMempoolSize:
 				msg.Reply(client.NewMessage("p2p", types.EventMempoolSize, &types.MempoolSize{Size: 0}))
-
 			}
 		}
 	}()
-	time.Sleep(time.Second)
-	p2pModule = initP2p(53802, dataDir)
-	p2pModule.Wait()
-
 }
 
-//初始化p2p模块
-func initP2p(port int32, dbpath string) *P2p {
+//new p2p
+func newP2p(port int32, dbpath string, q queue.Queue) *P2p {
+
 	cfg := new(types.P2P)
 	cfg.Port = port
 	cfg.Enable = true
 	cfg.DbPath = dbpath
 	cfg.DbCache = 4
-	cfg.Version = 119
+	cfg.Channel = testChannel
 	cfg.ServerStart = true
 	cfg.Driver = "leveldb"
 
@@ -137,12 +132,18 @@ func initP2p(port int32, dbpath string) *P2p {
 	p2pcli.node.nodeInfo.addrBook.bookDb.Set([]byte(privKeyTag), []byte(privkey))
 	p2pcli.node.nodeInfo.SetServiceTy(7)
 	p2pcli.SetQueueClient(q.Client())
-
 	return p2pcli
 }
 
-func TestP2PEvent(t *testing.T) {
-	qcli := q.Client()
+//free P2p
+func freeP2p(p2p *P2p) {
+	p2p.Close()
+	if err := os.RemoveAll(p2p.cfg.DbPath); err != nil {
+		log.Error("removeTestDbErr", "err", err)
+	}
+}
+
+func testP2PEvent(t *testing.T, qcli queue.Client) {
 	msg := qcli.NewMessage("p2p", types.EventBlockBroadcast, &types.Block{})
 	qcli.Send(msg, false)
 
@@ -164,17 +165,17 @@ func TestP2PEvent(t *testing.T) {
 	qcli.Send(msg, false)
 
 }
-func TestNetInfo(t *testing.T) {
-	p2pModule.node.nodeInfo.IsNatDone()
-	p2pModule.node.nodeInfo.SetNatDone()
-	p2pModule.node.nodeInfo.Get()
-	p2pModule.node.nodeInfo.Set(p2pModule.node.nodeInfo)
-	assert.NotNil(t, p2pModule.node.nodeInfo.GetListenAddr())
-	assert.NotNil(t, p2pModule.node.nodeInfo.GetExternalAddr())
+func testNetInfo(t *testing.T, p2p *P2p) {
+	p2p.node.nodeInfo.IsNatDone()
+	p2p.node.nodeInfo.SetNatDone()
+	p2p.node.nodeInfo.Get()
+	p2p.node.nodeInfo.Set(p2p.node.nodeInfo)
+	assert.NotNil(t, p2p.node.nodeInfo.GetListenAddr())
+	assert.NotNil(t, p2p.node.nodeInfo.GetExternalAddr())
 }
 
 //测试Peer
-func TestPeer(t *testing.T) {
+func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 
 	conn, err := grpc.Dial("localhost:53802", grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")))
@@ -184,9 +185,8 @@ func TestPeer(t *testing.T) {
 	remote, err := NewNetAddressString("127.0.0.1:53802")
 	assert.Nil(t, err)
 
-	localP2P := initP2p(43802, "testdata2")
-	defer os.RemoveAll("testdata2")
-	defer localP2P.Close()
+	localP2P := newP2p(43802, "testPeer", q)
+	defer freeP2p(localP2P)
 
 	t.Log(localP2P.node.CacheBoundsSize())
 	t.Log(localP2P.node.GetCacheBounds())
@@ -197,19 +197,39 @@ func TestPeer(t *testing.T) {
 	defer peer.Close()
 	peer.MakePersistent()
 	localP2P.node.addPeer(peer)
-	time.Sleep(time.Second * 5)
-	t.Log(peer.GetInBouns())
-	t.Log(peer.version.GetVersion())
-	assert.IsType(t, "string", peer.GetPeerName())
+	var info *innerpeer
+	t.Log("WaitRegisterPeerStart...")
+	for peer.GetPeerName() == "" ||
+		info == nil || info.p2pversion == 0 {
+		time.Sleep(time.Millisecond * 10)
+		info = p2p.node.server.p2pserver.getInBoundPeerInfo("127.0.0.1:43802")
+	}
+	t.Log("WaitRegisterPeerStop...")
+	p2pcli := NewNormalP2PCli()
+	num, err := p2pcli.GetInPeersNum(peer)
+	assert.Equal(t, 1, num)
+	assert.Nil(t, err)
+	tx1 := &types.Transaction{Execer: []byte("testTx1")}
+	tx2 := &types.Transaction{Execer: []byte("testTx2")}
+	localP2P.node.pubToPeer(&types.P2PTx{Tx: tx1}, peer.GetPeerName())
+	p2p.node.server.p2pserver.pubToStream(&types.P2PTx{Tx: tx2}, info.name)
+	t.Log("WaitRegisterTxFilterStart...")
+	for !(txHashFilter.QueryRecvData(hex.EncodeToString(tx1.Hash())) &&
+		txHashFilter.QueryRecvData(hex.EncodeToString(tx1.Hash()))) {
+		time.Sleep(time.Millisecond * 10)
+	}
+	t.Log("WaitRegisterTxFilterStop")
 
 	localP2P.node.AddCachePeer(peer)
 	peer.GetRunning()
-	localP2P.node.natOk()
+	localP2P.node.nodeInfo.FetchPeerInfo(localP2P.node)
+	peers, infos := localP2P.node.GetActivePeers()
+	assert.Equal(t, len(peers), len(infos))
 	localP2P.node.flushNodePort(43803, 43802)
-	p2pcli := NewNormalP2PCli()
+
 	localP2P.node.nodeInfo.peerInfos.SetPeerInfo(nil)
 	localP2P.node.nodeInfo.peerInfos.GetPeerInfo("1222")
-	t.Log(p2pModule.node.GetRegisterPeer("localhost:43802"))
+	t.Log(p2p.node.GetRegisterPeer("localhost:43802"))
 	//测试发送Ping消息
 	err = p2pcli.SendPing(peer, localP2P.node.nodeInfo)
 	assert.Nil(t, err)
@@ -219,7 +239,7 @@ func TestPeer(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, pnum)
 
-	_, err = peer.GetPeerInfo(VERSION)
+	_, err = peer.GetPeerInfo()
 	assert.Nil(t, err)
 	//获取节点列表
 	_, err = p2pcli.GetAddrList(peer)
@@ -228,12 +248,12 @@ func TestPeer(t *testing.T) {
 	_, err = p2pcli.SendVersion(peer, localP2P.node.nodeInfo)
 	assert.Nil(t, err)
 
-	t.Log(p2pcli.CheckPeerNatOk("localhost:53802"))
+	t.Log(p2pcli.CheckPeerNatOk("localhost:53802", localP2P.node.nodeInfo))
 	t.Log("checkself:", p2pcli.CheckSelf("loadhost:43803", localP2P.node.nodeInfo))
 	_, err = p2pcli.GetAddr(peer)
 	assert.Nil(t, err)
 
-	localP2P.node.pubsub.FIFOPub(&types.P2PTx{Tx: &types.Transaction{}}, "tx")
+	localP2P.node.pubsub.FIFOPub(&types.P2PTx{Tx: &types.Transaction{}, Route: &types.P2PRoute{}}, "tx")
 	localP2P.node.pubsub.FIFOPub(&types.P2PBlock{Block: &types.Block{}}, "block")
 	//	//测试获取高度
 	height, err := p2pcli.GetBlockHeight(localP2P.node.nodeInfo)
@@ -260,23 +280,13 @@ func TestPeer(t *testing.T) {
 	job.setFreePeer(peer.GetPeerName())
 	job.removePeer(peer.GetPeerName())
 	job.CancelJob()
-	os.Remove(dataDir)
 
-}
-
-func TestSortArr(t *testing.T) {
-	var Inventorys = make(Invs, 0)
-	for i := 100; i >= 0; i-- {
-		var inv types.Inventory
-		inv.Ty = 111
-		inv.Height = int64(i)
-		Inventorys = append(Inventorys, &inv)
-	}
-	sort.Sort(Inventorys)
+	peer.Close()
+	localP2P.node.remove(peer.peerAddr.String())
 }
 
 //测试grpc 多连接
-func TestGrpcConns(t *testing.T) {
+func testGrpcConns(t *testing.T) {
 	var conns []*grpc.ClientConn
 
 	for i := 0; i < maxSamIPNum; i++ {
@@ -307,7 +317,7 @@ func TestGrpcConns(t *testing.T) {
 }
 
 //测试grpc 流多连接
-func TestGrpcStreamConns(t *testing.T) {
+func testGrpcStreamConns(t *testing.T, p2p *P2p) {
 
 	conn, err := grpc.Dial("localhost:53802", grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")))
@@ -319,7 +329,7 @@ func TestGrpcStreamConns(t *testing.T) {
 	_, err = resp.Recv()
 	assert.Equal(t, true, strings.Contains(err.Error(), "no authorized"))
 
-	ping, err := P2pComm.NewPingData(p2pModule.node.nodeInfo)
+	ping, err := P2pComm.NewPingData(p2p.node.nodeInfo)
 	assert.Nil(t, err)
 
 	_, err = cli.ServerStreamSend(context.Background(), ping)
@@ -336,53 +346,22 @@ func TestGrpcStreamConns(t *testing.T) {
 
 }
 
-func TestP2pComm(t *testing.T) {
+func testP2pComm(t *testing.T, p2p *P2p) {
 
-	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"})
+	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, calcChannelVersion(testChannel))
 	t.Log(addrs)
-
 	i32 := P2pComm.BytesToInt32([]byte{0xff})
 	t.Log(i32)
-
 	_, _, err := P2pComm.GenPrivPubkey()
 	assert.Nil(t, err)
-
-	ping, err := P2pComm.NewPingData(p2pModule.node.nodeInfo)
+	ping, err := P2pComm.NewPingData(p2p.node.nodeInfo)
 	assert.Nil(t, err)
-
 	assert.Equal(t, true, P2pComm.CheckSign(ping))
 	assert.IsType(t, "string", P2pComm.GetLocalAddr())
 	assert.Equal(t, 5, len(P2pComm.RandStr(5)))
-
 }
 
-func TestFilter(t *testing.T) {
-	go Filter.ManageRecvFilter()
-	defer Filter.Close()
-	Filter.GetLock()
-
-	assert.Equal(t, true, Filter.RegRecvData("key"))
-	assert.Equal(t, true, Filter.QueryRecvData("key"))
-	Filter.RemoveRecvData("key")
-	assert.Equal(t, false, Filter.QueryRecvData("key"))
-	Filter.ReleaseLock()
-
-}
-
-func TestAddrRouteble(t *testing.T) {
-	resp := P2pComm.AddrRouteble([]string{"114.55.101.159:13802"})
-	t.Log(resp)
-}
-
-func TestRandStr(t *testing.T) {
-	t.Log(P2pComm.RandStr(5))
-}
-
-func TestGetLocalAddr(t *testing.T) {
-	t.Log(P2pComm.GetLocalAddr())
-}
-
-func TestAddrBook(t *testing.T) {
+func testAddrBook(t *testing.T, p2p *P2p) {
 
 	prv, pub, err := P2pComm.GenPrivPubkey()
 	if err != nil {
@@ -399,7 +378,7 @@ func TestAddrBook(t *testing.T) {
 	}
 	t.Log("GenPubkey:", pubstr)
 
-	addrBook := p2pModule.node.nodeInfo.addrBook
+	addrBook := p2p.node.nodeInfo.addrBook
 	addrBook.Size()
 	addrBook.saveToDb()
 	addrBook.GetPeerStat("locolhost:43802")
@@ -413,50 +392,34 @@ func TestAddrBook(t *testing.T) {
 	addrBook.ResetPeerkey(hex.EncodeToString(prv), pubstr)
 	resetkey, _ := addrBook.GetPrivPubKey()
 	assert.NotEqual(t, resetkey, privkey)
-
 }
 
-func TestBytesToInt32(t *testing.T) {
-
-	t.Log(P2pComm.BytesToInt32([]byte{0xff}))
-	t.Log(P2pComm.Int32ToBytes(255))
+func testRestart(t *testing.T, p2p *P2p) {
+	client := p2p.client
+	assert.False(t, p2p.isRestart())
+	p2p.txFactory <- struct{}{}
+	p2p.processEvent(client.NewMessage("p2p", types.EventTxBroadcast, &types.Transaction{}), 128, p2p.p2pCli.BroadCastTx)
+	atomic.StoreInt32(&p2p.restart, 1)
+	p2p.ReStart()
+	atomic.StoreInt32(&p2p.restart, 0)
+	p2p.ReStart()
 }
 
-func TestNetAddress(t *testing.T) {
-	tcpAddr := new(net.TCPAddr)
-	tcpAddr.IP = net.ParseIP("localhost")
-	tcpAddr.Port = 2223
-	nad := NewNetAddress(tcpAddr)
-	nad1 := nad.Copy()
-	nad.Equals(nad1)
-	nad2s, err := NewNetAddressStrings([]string{"localhost:3306"})
-	if err != nil {
-		return
-	}
-	nad.Less(nad2s[0])
+func Test_p2p(t *testing.T) {
 
-}
-
-func TestP2pListen(t *testing.T) {
-	var node Node
-	node.listenPort = 3333
-	listen1 := NewListener("tcp", &node)
-	assert.Equal(t, true, listen1 != nil)
-	listen2 := NewListener("tcp", &node)
-	assert.Equal(t, true, listen2 != nil)
-
-	listen1.Close()
-	listen2.Close()
-}
-
-func TestP2pRestart(t *testing.T) {
-
-	assert.Equal(t, false, p2pModule.isClose())
-	assert.Equal(t, false, p2pModule.isRestart())
-	p2pModule.ReStart()
-}
-
-func TestP2pClose(t *testing.T) {
-	p2pModule.Close()
-	os.RemoveAll(dataDir)
+	q := queue.New("channel")
+	go q.Start()
+	processMsg(q)
+	p2p := newP2p(53802, "testP2p", q)
+	p2p.Wait()
+	defer freeP2p(p2p)
+	defer q.Close()
+	testP2PEvent(t, q.Client())
+	testNetInfo(t, p2p)
+	testPeer(t, p2p, q)
+	testGrpcConns(t)
+	testGrpcStreamConns(t, p2p)
+	testP2pComm(t, p2p)
+	testAddrBook(t, p2p)
+	testRestart(t, p2p)
 }
