@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"bytes"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
@@ -32,7 +34,7 @@ type commitMsgClient struct {
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
 	commitCh             chan int64
 	resetCh              chan int64
-	verifyCh             chan bool
+	verifyCh             chan []byte
 	sendMsgCh            chan *types.Transaction
 	minerSwitch          int32
 	currentTx            unsafe.Pointer
@@ -112,8 +114,8 @@ func (client *commitMsgClient) resetNotify() {
 	client.resetCh <- 1
 }
 
-func (client *commitMsgClient) verifyNotify(verified bool) {
-	client.verifyCh <- verified
+func (client *commitMsgClient) verifyNotify(verifyTx []byte) {
+	client.verifyCh <- verifyTx
 }
 
 func (client *commitMsgClient) resetSendEnv() {
@@ -169,13 +171,13 @@ func (client *commitMsgClient) procSendTx() {
 
 }
 
-func (client *commitMsgClient) procVerifyTx(verified bool) {
+func (client *commitMsgClient) procVerifyTx(verifyTx []byte) {
 	curTx := client.getCurrentTx()
 	if curTx == nil {
 		return
 	}
 
-	if verified {
+	if bytes.Equal(curTx.Hash(), verifyTx) {
 		client.clearCurrentTx()
 		client.procSendTx()
 		return
@@ -190,6 +192,7 @@ func (client *commitMsgClient) procVerifyTx(verified bool) {
 
 }
 
+//如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
 func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint32 {
 	consensHeight := client.getConsensusHeight()
 	if client.sendingHeight > consensHeight && !client.isSendingCommitMsg() {
@@ -649,7 +652,6 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		if resp.Height > -1 {
 			var statusMainHeight int64
 			if pt.IsParaForkHeight(resp.MainHeight, pt.ForkLoopCheckCommitTxDone) {
-				plog.Error("getSelfConsensusStatus ForkLoopCheckCommitTxDone reach")
 				statusMainHeight = resp.MainHeight
 			} else {
 				block, err := client.paraClient.GetBlockByHeight(resp.Height)

@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/stretchr/testify/mock"
 
+	apimocks "github.com/33cn/chain33/client/mocks"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
@@ -69,32 +70,46 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 
 }
 
-//func TestGetConsensusStatus(t *testing.T) {
-//	para := new(client)
-//	grpcClient := &typesmocks.Chain33Client{}
-//	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
-//	para.grpcClient = grpcClient
-//	commitCli := new(commitMsgClient)
-//	commitCli.paraClient = para
-//
-//	block := &types.Block{
-//		Height:     1,
-//		MainHeight: 10,
-//	}
-//
-//	status := &pt.ParacrossStatus{
-//		Height: 1,
-//	}
-//	reply := &types.Reply{
-//		IsOk: true,
-//		Msg:  types.Encode(status),
-//	}
-//	grpcClient.On("QueryChain", mock.Anything, mock.Anything).Return(reply, nil).Once()
-//	ret, err := commitCli.getSelfConsensusStatus()
-//
-//	assert.Nil(t, err)
-//	assert.Equal(t, int64(1), ret.Height)
-//}
+func TestGetConsensusStatus(t *testing.T) {
+	mainFork := mainParaSelfConsensusForkHeight
+	mainParaSelfConsensusForkHeight = 1
+	para := new(client)
+	grpcClient := &typesmocks.Chain33Client{}
+	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
+	para.grpcClient = grpcClient
+	commitCli := new(commitMsgClient)
+	commitCli.paraClient = para
+
+	block := &types.Block{
+		Height:     1,
+		MainHeight: 10,
+	}
+	getMockLastBlock(para, block)
+
+	api := &apimocks.QueueProtocolAPI{}
+	para.SetAPI(api)
+
+	status := &pt.ParacrossStatus{
+		Height: 1,
+	}
+
+	//msgx := &types.Message{types.Encode(status)}
+	//msg := types.Encode(status)
+	//reply := &types.Reply{
+	//	IsOk: true,
+	//	Msg:  types.Encode(status),
+	//}
+	api.On("QueryChain", mock.Anything, mock.Anything, mock.Anything).Return(status, nil).Once()
+	detail := &types.BlockDetail{Block: block}
+	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
+
+	api.On("GetBlocks", mock.Anything).Return(details, nil).Once()
+	ret, err := commitCli.getSelfConsensusStatus()
+
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), ret.Height)
+	mainParaSelfConsensusForkHeight = mainFork
+}
 
 func TestSendCommitMsg(t *testing.T) {
 	para := new(client)

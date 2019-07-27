@@ -64,7 +64,11 @@ func (client *client) checkCommitTxSuccess(txs []*pt.TxDetail) {
 		return
 	}
 
-	client.commitMsgClient.verifyNotify(txMap[string(curTx.Hash())])
+	if txMap[string(curTx.Hash())] {
+		client.commitMsgClient.verifyNotify(curTx.Hash())
+	} else {
+		client.commitMsgClient.verifyNotify(nil)
+	}
 
 }
 

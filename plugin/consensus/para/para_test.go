@@ -212,27 +212,31 @@ func initBlock() {
 	println("initblock")
 }
 
-func TestGetLastBlockInfo(t *testing.T) {
-	para := new(client)
-
+func getMockLastBlock(para *client, returnBlock *types.Block) {
 	baseCli := drivers.NewBaseClient(&types.Consensus{Name: "name"})
 	para.BaseClient = baseCli
-	grpcClient := &typesmocks.Chain33Client{}
+
 	qClient := &qmocks.Client{}
 	para.InitClient(qClient, initBlock)
 
-	api := &apimocks.QueueProtocolAPI{}
-	para.SetAPI(api)
+	msg := queue.NewMessage(0, "", 1, returnBlock)
 
-	para.grpcClient = grpcClient
-
-	block := &types.Block{Height: 0}
-	msg := queue.NewMessage(0, "", 1, block)
-
-	qClient.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(msg)
+	qClient.On("NewMessage", "blockchain", int64(types.EventGetLastBlock), mock.Anything).Return(msg)
 	qClient.On("Send", mock.Anything, mock.Anything).Return(nil)
 
 	qClient.On("Wait", mock.Anything).Return(msg, nil)
+}
+
+func TestGetLastBlockInfo(t *testing.T) {
+	para := new(client)
+	grpcClient := &typesmocks.Chain33Client{}
+	para.grpcClient = grpcClient
+
+	block := &types.Block{Height: 0}
+	getMockLastBlock(para, block)
+
+	api := &apimocks.QueueProtocolAPI{}
+	para.SetAPI(api)
 
 	grpcClient.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: int64(10)}, nil)
 

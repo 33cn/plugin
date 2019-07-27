@@ -162,11 +162,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		quitCreate:  make(chan struct{}),
 	}
 
-	waitBlocks := int32(3) //最小是2
+	waitBlocks := int32(3) //缺省是3
 	if subcfg.WaitBlocks4CommitMsg > 0 {
-		if subcfg.WaitBlocks4CommitMsg < waitBlocks {
-			panic("config WaitBlocks4CommitMsg should not less 2")
-		}
 		waitBlocks = subcfg.WaitBlocks4CommitMsg
 	}
 
@@ -181,7 +178,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		waitConsensStopTimes: waitConsensTimes,
 		commitCh:             make(chan int64, 1),
 		resetCh:              make(chan int64, 1),
-		verifyCh:             make(chan bool, 1),
+		verifyCh:             make(chan []byte, 1),
 		consensHeight:        -2,
 		sendingHeight:        -1,
 		quit:                 make(chan struct{}),
