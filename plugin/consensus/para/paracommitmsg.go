@@ -289,9 +289,9 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	}
 
 	sendingMsgs := status[:count]
-	plog.Info("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
+	plog.Debug("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
 	for i, msg := range sendingMsgs {
-		plog.Info("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
+		plog.Debug("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
 			"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
 			"from", client.paraClient.authAccount)
 	}
@@ -606,7 +606,6 @@ out:
 
 			//如果主链的共识高度产生了回滚，本地链也需要重新检查共识高度
 			if status.Height < atomic.LoadInt64(&client.consensHeight) {
-				plog.Debug("para getMainConsensusStatus rollback", "height", status.Height, "lastHeight", atomic.LoadInt64(&client.consensHeight))
 				atomic.StoreInt64(&client.consensHeight, status.Height)
 				client.resetNotify()
 			} else {
@@ -618,7 +617,7 @@ out:
 			if selfStatus != nil {
 				selfHeight = selfStatus.Height
 			}
-			plog.Debug("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
+			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
 
 		}
 	}
