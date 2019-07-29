@@ -264,7 +264,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 
 	acc = &types.Account{
 		Currency: 0,
-		Frozen:  total,
+		Frozen:   total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
@@ -321,7 +321,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Frozen:  total,
+			Frozen:   total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}

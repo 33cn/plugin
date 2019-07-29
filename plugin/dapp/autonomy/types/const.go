@@ -94,5 +94,5 @@ var (
 	AutonomyX      = "autonomy"
 	ExecerAutonomy = []byte(AutonomyX)
 	// TicketX 该模块需要查询ticket合约下的账户余额
-    TicketX        = "ticket"
+	TicketX = "ticket"
 )
