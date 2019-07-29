@@ -389,7 +389,12 @@ func verifyMainBlocks(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) err
 		if err != nil {
 			return err
 		}
-		pre = block.Header.Hash
+		if block.Type == addAct {
+			pre = block.Header.Hash
+		} else {
+			pre = block.Header.ParentHash
+		}
+
 	}
 	return nil
 }
@@ -525,7 +530,7 @@ out:
 				continue
 			}
 
-			plog.Info("Parachain CreateBlock", "curSeq", currSeq, "count", count, "lastSeqMainHash", common.ToHex(lastSeqMainHash))
+			plog.Debug("Parachain CreateBlock", "curSeq", currSeq, "count", count, "lastSeqMainHash", common.ToHex(lastSeqMainHash))
 			paraTxs, err := client.RequestTx(currSeq, count, lastSeqMainHash)
 			if err != nil {
 				currSeq, lastSeqMainHash, err = client.processHashNotMatchError(currSeq, lastSeqMainHash, err)

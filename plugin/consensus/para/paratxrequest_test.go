@@ -138,3 +138,75 @@ func TestSendCommitMsg(t *testing.T) {
 	close(commitCli.quit)
 
 }
+
+func TestVerifyMainBlocks(t *testing.T) {
+	hash0 := []byte("0")
+	hash1 := []byte("1")
+	hash2 := []byte("2")
+	hash3 := []byte("3")
+	//hash4 := []byte("4")
+	//hash5 := []byte("5")
+	hash6 := []byte("6")
+
+	header1 := &types.Header{
+		ParentHash: hash0,
+		Hash:       hash1,
+	}
+	block1 := &pt.ParaTxDetail{
+		Type:   addAct,
+		Header: header1,
+	}
+
+	header2 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash2,
+	}
+	block2 := &pt.ParaTxDetail{
+		Type:   addAct,
+		Header: header2,
+	}
+
+	header3 := &types.Header{
+		ParentHash: hash2,
+		Hash:       hash3,
+	}
+	block3 := &pt.ParaTxDetail{
+		Type:   addAct,
+		Header: header3,
+	}
+
+	//del3
+	header4 := &types.Header{
+		ParentHash: hash2,
+		Hash:       hash3,
+	}
+	block4 := &pt.ParaTxDetail{
+		Type:   delAct,
+		Header: header4,
+	}
+	//del2
+	header5 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash2,
+	}
+	block5 := &pt.ParaTxDetail{
+		Type:   delAct,
+		Header: header5,
+	}
+
+	header6 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash6,
+	}
+	block6 := &pt.ParaTxDetail{
+		Type:   addAct,
+		Header: header6,
+	}
+
+	mainBlocks := &pt.ParaTxDetails{
+		Items: []*pt.ParaTxDetail{block1, block2, block3, block4, block5, block6},
+	}
+
+	err := verifyMainBlocks(hash0, mainBlocks)
+	assert.Equal(t, nil, err)
+}
