@@ -339,7 +339,7 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	if cfg.Total != "" {
 		addr = cfg.Total
 	}
-	account, err := a.getStartHeightVoteAccount(addr, "",  height)
+	account, err := a.getStartHeightVoteAccount(addr, "", height)
 	if err != nil {
 		return 0, err
 	}
@@ -373,7 +373,7 @@ func (a *action) getStartHeightVoteAccount(addr, execer string, height int64) (*
 
 	account, err := a.coinsAccount.GetBalance(a.api, &types.ReqBalance{
 		Addresses: []string{addr},
-		Execer: execer,
+		Execer:    execer,
 		StateHash: stateHash,
 	})
 	if err != nil || len(account) == 0 {
