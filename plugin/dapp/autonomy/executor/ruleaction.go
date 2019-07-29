@@ -163,23 +163,22 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-		account, err := a.getStartHeightVoteAccount(addr, start)
+		vtCouts, err := a.getTotalVotes(start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
+		cur.VoteResult.TotalVotes = vtCouts
 	}
 
 	// 获取可投票数
-	account, err := a.getStartHeightVoteAccount(a.fromaddr, start)
+	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
 	if err != nil {
 		return nil, err
 	}
 	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes += int32(account.Balance / ticketPrice)
+		cur.VoteResult.ApproveVotes += vtCouts
 	} else {
-		cur.VoteResult.OpposeVotes += int32(account.Balance / ticketPrice)
+		cur.VoteResult.OpposeVotes += vtCouts
 	}
 
 	var logs []*types.ReceiptLog
@@ -198,8 +197,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropRule.RealEndBlockHeight = a.height
 	}
@@ -259,16 +258,15 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 	}
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-		account, err := a.getStartHeightVoteAccount(addr, start)
+		vtCouts, err := a.getTotalVotes(start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
+		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false

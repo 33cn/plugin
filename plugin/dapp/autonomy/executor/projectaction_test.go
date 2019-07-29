@@ -307,7 +307,7 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance:  total,
+		Frozen:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
@@ -364,7 +364,7 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance:  total,
+			Frozen:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
@@ -421,7 +421,7 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance:  total,
+		Frozen:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
@@ -478,7 +478,7 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance:  total,
+			Frozen:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}

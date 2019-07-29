@@ -301,21 +301,20 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetPubVote().TotalVotes == 0 { //需要统计总票数
-		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-		account, err := a.getStartHeightVoteAccount(addr, start)
+		vtCouts, err := a.getTotalVotes(start)
 		if err != nil {
 			return nil, err
 		}
-		cur.PubVote.TotalVotes = int32(account.Balance / ticketPrice)
+		cur.PubVote.TotalVotes = vtCouts
 	}
 
 	// 获取该地址票数
-	account, err := a.getStartHeightVoteAccount(a.fromaddr, start)
+	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
 	if err != nil {
 		return nil, err
 	}
 	if voteProb.Oppose { //投反对票
-		cur.PubVote.OpposeVotes += int32(account.Balance / ticketPrice)
+		cur.PubVote.OpposeVotes += vtCouts
 	}
 
 	var logs []*types.ReceiptLog
@@ -402,12 +401,11 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 
 	if cur.PubVote.Publicity {
 		if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计总票数
-			addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-			account, err := a.getStartHeightVoteAccount(addr, start)
+			vtCouts, err := a.getTotalVotes(start)
 			if err != nil {
 				return nil, err
 			}
-			cur.PubVote.TotalVotes = int32(account.Balance / ticketPrice)
+			cur.PubVote.TotalVotes = vtCouts
 		}
 		if cur.PubVote.TotalVotes != 0 &&
 			float32(cur.PubVote.OpposeVotes)/float32(cur.PubVote.TotalVotes) >= float32(cur.CurRule.PubOpposeRatio)/100.0 {

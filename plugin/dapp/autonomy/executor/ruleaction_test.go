@@ -204,7 +204,7 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance:  total,
+		Frozen:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
@@ -219,9 +219,9 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	}
 	records := []record{
 		{PrivKeyA, false},
-		{PrivKeyB, false},
+		{PrivKeyB, true},
 		{PrivKeyC, true},
-		{PrivKeyD, true},
+		//{PrivKeyD, true},
 	}
 
 	for _, record := range records {
@@ -261,7 +261,7 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance:  total,
+			Frozen:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
