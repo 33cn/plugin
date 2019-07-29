@@ -185,11 +185,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para.blockSyncClient = &BlockSyncClient{
-		paraClient:      para,
-		notifyChan:      make(chan bool),
-		quitChan:        make(chan struct{}),
-		maxCacheCount:   1000,
-		maxSyncErrCount: 100,
+		paraClient:       para,
+		notifyChan:       make(chan bool),
+		quitChan:         make(chan struct{}),
+		maxCacheCount:    1000,
+		maxSyncErrCount:  100,
+		isPrintDebugInfo: false,
 	}
 	if subcfg.MaxCacheCount > 0 {
 		para.blockSyncClient.maxCacheCount = subcfg.MaxCacheCount
