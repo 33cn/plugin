@@ -30,6 +30,8 @@ type BlockSyncClient struct {
 	maxCacheCount int64
 	//isSyncCaughtUp 是否追赶上
 	isSyncCaughtUpAtom int32
+	//printDebugInfo 打印Debug信息
+	isPrintDebugInfo bool
 }
 
 //NextActionType 定义每一轮可执行操作
@@ -63,9 +65,9 @@ func (client *BlockSyncClient) SyncHasCaughtUp() bool {
 
 //NotifyLocalChange 下载状态通知，供下载层调用
 func (client *BlockSyncClient) NotifyLocalChange() {
-	plog.Info("Para sync - notify change")
+	client.printDebugInfo("Para sync - notify change")
 	if client.getBlockSyncState() != BlockSyncStateSyncing {
-		plog.Info("Para sync - notified change")
+		client.printDebugInfo("Para sync - notified change")
 		client.notifyChan <- true
 	}
 }
@@ -95,14 +97,14 @@ out:
 		}
 	}
 
-	plog.Info("Para sync - quit block sync goroutine")
+	client.printDebugInfo("Para sync - quit block sync goroutine")
 	client.paraClient.wg.Done()
 }
 
 //批量执行同步区块
 func (client *BlockSyncClient) batchSyncBlocks() {
 	client.setBlockSyncState(BlockSyncStateSyncing)
-	plog.Info("Para sync - syncing")
+	client.printDebugInfo("Para sync - syncing")
 
 	errCount := int32(0)
 	for {
@@ -131,7 +133,7 @@ func (client *BlockSyncClient) batchSyncBlocks() {
 			}
 
 			client.setBlockSyncState(BlockSyncStateFinished)
-			plog.Info("Para sync - finished")
+			client.printDebugInfo("Para sync - finished")
 			return
 		}
 	}
@@ -211,7 +213,7 @@ func (client *BlockSyncClient) syncBlocksIfNeed() (bool, error) {
 			isSyncCaughtUp := lastBlock.Height+1 == lastLocalHeight
 			client.setSyncCaughtUp(isSyncCaughtUp)
 			if client.paraClient.authAccount != "" {
-				plog.Info("Para sync - add block commit", "isSyncCaughtUp", isSyncCaughtUp)
+				client.printDebugInfo("Para sync - add block commit", "isSyncCaughtUp", isSyncCaughtUp)
 				client.paraClient.commitMsgClient.updateChainHeight(lastBlock.Height+1, false)
 			}
 		}
@@ -230,7 +232,7 @@ func (client *BlockSyncClient) syncBlocksIfNeed() (bool, error) {
 		if err == nil {
 			client.setSyncCaughtUp(false)
 			if client.paraClient.authAccount != "" {
-				plog.Info("Para sync - rollback block commit", "isSyncCaughtUp", false)
+				client.printDebugInfo("Para sync - rollback block commit", "isSyncCaughtUp", false)
 				client.paraClient.commitMsgClient.updateChainHeight(lastBlock.Height-1, true)
 			}
 		}
@@ -267,7 +269,7 @@ func (client *BlockSyncClient) delLocalBlocks(startHeight int64, endHeight int64
 	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: endHeight + 1})}
 	set.KV = append(set.KV, kv)
 
-	plog.Info("Para sync - clear local blocks", "startHeight:", startHeight, "endHeight:", endHeight)
+	client.printDebugInfo("Para sync - clear local blocks", "startHeight:", startHeight, "endHeight:", endHeight)
 
 	return client.paraClient.setLocalDb(set)
 }
@@ -356,7 +358,7 @@ func (client *BlockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 //添加一个区块
 func (client *BlockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.ParaLocalDbBlock) error {
 	var newBlock types.Block
-	plog.Debug(fmt.Sprintf("Para sync - the len txs is: %v", len(localBlock.Txs)))
+	client.printDebugInfo(fmt.Sprintf("Para sync - the len txs is: %v", len(localBlock.Txs)))
 
 	newBlock.ParentHash = lastBlock.Hash()
 	newBlock.Height = lastBlock.Height + 1
@@ -374,7 +376,7 @@ func (client *BlockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 
 	err = client.writeBlock(lastBlock.StateHash, &newBlock)
 
-	plog.Debug("Para sync - para create new Block", "newblock.ParentHash", common.ToHex(newBlock.ParentHash),
+	client.printDebugInfo("Para sync - para create new Block", "newblock.ParentHash", common.ToHex(newBlock.ParentHash),
 		"newblock.Height", newBlock.Height, "newblock.TxHash", common.ToHex(newBlock.TxHash),
 		"newblock.BlockTime", newBlock.BlockTime)
 
@@ -383,7 +385,7 @@ func (client *BlockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 
 // 向blockchain删区块
 func (client *BlockSyncClient) rollbackBlock(block *types.Block) error {
-	plog.Debug("Para sync - delete block in parachain")
+	client.printDebugInfo("Para sync - delete block in parachain")
 
 	start := block.Height
 	if start == 0 {
@@ -469,9 +471,16 @@ func (client *BlockSyncClient) printError(err error) {
 	plog.Error(fmt.Sprintf("Para sync - sync block error:%v", err.Error()))
 }
 
+//打印调试信息
+func (client *BlockSyncClient) printDebugInfo(msg string, ctx ...interface{}) {
+	if client.isPrintDebugInfo {
+		plog.Info(msg, ctx...)
+	}
+}
+
 //初始化
 func (client *BlockSyncClient) syncInit() {
-	plog.Info("Para sync - init")
+	client.printDebugInfo("Para sync - init")
 	client.setBlockSyncState(BlockSyncStateNone)
 	client.setSyncCaughtUp(false)
 	err := client.initFirstLocalHeightIfNeed()
