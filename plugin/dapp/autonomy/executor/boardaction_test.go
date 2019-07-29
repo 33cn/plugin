@@ -264,7 +264,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 
 	acc = &types.Account{
 		Currency: 0,
-		Balance:  total,
+		Frozen:  total,
 	}
 	val1 := types.Encode(acc)
 	values1 := [][]byte{val1}
@@ -279,9 +279,9 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	}
 	records := []record{
 		{PrivKeyA, false},
-		{PrivKeyB, false},
+		{PrivKeyB, true},
 		{PrivKeyC, true},
-		{PrivKeyD, true},
+		//{PrivKeyD, true},
 	}
 
 	for _, record := range records {
@@ -321,7 +321,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 		// 每次需要重新设置
 		acc := &types.Account{
 			Currency: 0,
-			Balance:  total,
+			Frozen:  total,
 		}
 		val := types.Encode(acc)
 		values := [][]byte{val}
@@ -447,7 +447,7 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 	api.On("GetHeaders", mock.Anything).
 		Return(&types.Headers{
 			Items: []*types.Header{hear}}, nil)
-	account, err := action.getStartHeightVoteAccount(addr, 0)
+	account, err := action.getStartHeightVoteAccount(addr, "", 0)
 	require.NoError(t, err)
 	require.NotNil(t, account)
 	require.Equal(t, types.Coin, account.Balance)

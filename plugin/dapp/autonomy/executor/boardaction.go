@@ -198,22 +198,21 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	votes.Address = append(votes.Address, a.fromaddr)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-		account, err := a.getStartHeightVoteAccount(addr, start)
+		vtCouts, err := a.getTotalVotes(start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
+		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	account, err := a.getStartHeightVoteAccount(a.fromaddr, start)
+	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
 	if err != nil {
 		return nil, err
 	}
 	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes += int32(account.Balance / ticketPrice)
+		cur.VoteResult.ApproveVotes += vtCouts
 	} else {
-		cur.VoteResult.OpposeVotes += int32(account.Balance / ticketPrice)
+		cur.VoteResult.OpposeVotes += vtCouts
 	}
 
 	var logs []*types.ReceiptLog
@@ -232,8 +231,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropBoard.RealEndBlockHeight = a.height
 	}
@@ -291,16 +290,15 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	}
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-		account, err := a.getStartHeightVoteAccount(addr, start)
+		vtCouts, err := a.getTotalVotes(start)
 		if err != nil {
 			return nil, err
 		}
-		cur.VoteResult.TotalVotes = int32(account.Balance / ticketPrice)
+		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) >= float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) >= float32(pubApproveRatio)/100.0 {
+	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false
@@ -336,7 +334,31 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-func (a *action) getStartHeightVoteAccount(addr string, height int64) (*types.Account, error) {
+func (a *action) getTotalVotes(height int64) (int32, error) {
+	addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+	if cfg.Total != "" {
+		addr = cfg.Total
+	}
+	account, err := a.getStartHeightVoteAccount(addr, "",  height)
+	if err != nil {
+		return 0, err
+	}
+	return int32(account.Balance / ticketPrice), nil
+}
+
+func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
+	account, err := a.getStartHeightVoteAccount(addr, auty.TicketX, height)
+	if err != nil {
+		return 0, err
+	}
+	amount := account.Frozen
+	if cfg.UseBalance {
+		amount = account.Balance
+	}
+	return int32(amount / ticketPrice), nil
+}
+
+func (a *action) getStartHeightVoteAccount(addr, execer string, height int64) (*types.Account, error) {
 	param := &types.ReqBlocks{
 		Start: height,
 		End:   height,
@@ -351,6 +373,7 @@ func (a *action) getStartHeightVoteAccount(addr string, height int64) (*types.Ac
 
 	account, err := a.coinsAccount.GetBalance(a.api, &types.ReqBalance{
 		Addresses: []string{addr},
+		Execer: execer,
 		StateHash: stateHash,
 	})
 	if err != nil || len(account) == 0 {

@@ -12,10 +12,16 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
+type subConfig struct {
+	Total      string `json:"total"`
+	UseBalance bool   `json:"useBalance"`
+}
+
 var (
 	alog             = log.New("module", "execs.autonomy")
 	driverName       = auty.AutonomyX
 	autonomyFundAddr = address.ExecAddress("autonomyfund")
+	cfg  subConfig
 )
 
 func init() {
@@ -25,6 +31,9 @@ func init() {
 
 // Init 重命名执行器名称
 func Init(name string, sub []byte) {
+	if sub != nil {
+		types.MustDecode(sub, &cfg)
+	}
 	drivers.Register(GetName(), newAutonomy, types.GetDappFork(driverName, "Enable"))
 }
 
