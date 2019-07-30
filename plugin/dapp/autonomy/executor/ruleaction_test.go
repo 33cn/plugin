@@ -537,7 +537,7 @@ func TestComment(t *testing.T) {
 	comment := "3333333333"
 	opt1 := &auty.Comment{
 		ProposalID: propID,
-		RepHash: Repcmt,
+		RepHash:    Repcmt,
 		Comment:    comment,
 	}
 	pbtx, err := commentPropTx(opt1)

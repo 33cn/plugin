@@ -271,7 +271,7 @@ func TestExecLocalCommentProp(t *testing.T) {
 	receiptCmt := &auty.ReceiptProposalComment{
 		Cmt: &auty.Comment{
 			ProposalID: propID,
-			RepHash: Repcmt,
+			RepHash:    Repcmt,
 			Comment:    comment,
 		},
 		Height: 11,
@@ -298,7 +298,7 @@ func TestExecDelLocalCommentProp(t *testing.T) {
 	receiptCmt := &auty.ReceiptProposalComment{
 		Cmt: &auty.Comment{
 			ProposalID: propID,
-			RepHash: Repcmt,
+			RepHash:    Repcmt,
 			Comment:    comment,
 		},
 		Height: 11,
@@ -349,7 +349,7 @@ func TestListProposalComment(t *testing.T) {
 	testcase = append(testcase, testcase2...)
 	cur := &auty.RelationCmt{
 		RepHash: "aaaaaa",
-		Comment:    "bbbbbbbbbb",
+		Comment: "bbbbbbbbbb",
 	}
 	for _, tcase := range testcase {
 		key := calcCommentHeight(tcase.propID,
