@@ -241,9 +241,6 @@ func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint3
 }
 
 func (client *commitMsgClient) checkAuthAccountIn() {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-
 	nodes, err := client.getNodeGroupAddrs()
 	if err != nil {
 		return
@@ -252,14 +249,16 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
+		client.mutex.Lock()
 		client.resetSendEnv()
+		client.mutex.Unlock()
 	}
 
 	client.authAccountIn = authExist
 }
 
 func (client *commitMsgClient) procChecks(checks *commitCheckParams) {
-	//checks.consensStopTimes = client.checkConsensusStop(checks.consensStopTimes)
+	checks.consensStopTimes = client.checkConsensusStop(checks.consensStopTimes)
 	client.checkAuthAccountIn()
 }
 
