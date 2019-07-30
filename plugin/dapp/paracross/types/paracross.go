@@ -172,7 +172,7 @@ func createRawParacrossCommitTx(parm *paracrossCommitTx) (*types.Transaction, er
 	return createRawCommitTx(&parm.Status, types.ExecName(ParaX), parm.Fee)
 }
 
-func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*types.Transaction, error) {
+func createRawCommitTx(status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
 	v := &ParacrossCommitAction{
 		Status: status,
 	}
@@ -183,13 +183,18 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, fee int64) (*ty
 	tx := &types.Transaction{
 		Execer:  []byte(name),
 		Payload: types.Encode(action),
-		Fee:     fee,
 		To:      address.ExecAddress(name),
 		Expire:  types.Now().Unix() + int64(120), //120s
 	}
 	tx, err := types.FormatTx(name, tx)
 	if err != nil {
 		return nil, err
+	}
+	if feeRate != 0 {
+		tx.Fee, err = tx.GetRealFee(feeRate)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return tx, nil
 }

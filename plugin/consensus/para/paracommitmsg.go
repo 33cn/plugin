@@ -34,6 +34,7 @@ type commitMsgClient struct {
 	paraClient           *client
 	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
+	resetCh              chan interface{}
 	sendMsgCh            chan *types.Transaction
 	minerSwitch          int32
 	currentTx            unsafe.Pointer
@@ -43,6 +44,7 @@ type commitMsgClient struct {
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
+	txFeeRate            int64
 	privateKey           crypto.PrivKey
 	quit                 chan struct{}
 	mutex                sync.Mutex
@@ -59,7 +61,7 @@ func (client *commitMsgClient) handler() {
 	checkParams := &commitCheckParams{}
 
 	client.paraClient.wg.Add(1)
-	go client.getMainConsensusHeight()
+	go client.getMainConsensusInfo()
 
 	if client.paraClient.authAccount != "" {
 		client.paraClient.wg.Add(1)
@@ -74,6 +76,10 @@ func (client *commitMsgClient) handler() {
 out:
 	for {
 		select {
+		//出错场景入口，需要reset 重发
+		case <-client.resetCh:
+			client.resetSend()
+			client.sendCommitTx()
 		//例行检查发送入口
 		case <-readTick:
 			client.procChecks(checkParams)
@@ -98,16 +104,15 @@ func (client *commitMsgClient) updateChainHeightNotify(height int64, isDel bool)
 	atomic.StoreInt64(&client.chainHeight, height)
 
 	client.checkRollback(height)
-	client.sendCommitTx()
+	if !client.isSendingCommitMsg() {
+		client.sendCommitTx()
+	}
 
 }
 
 // reset notify 提供重设发送参数，发送tx的入口
 func (client *commitMsgClient) resetNotify() {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-
-	client.resetSendEnv()
+	client.resetCh <- 1
 }
 
 //新的区块产生，检查是否有commitTx正在发送入口
@@ -120,6 +125,12 @@ func (client *commitMsgClient) commitTxCheckNotify(txs []*pt.TxDetail) {
 func (client *commitMsgClient) resetSendEnv() {
 	client.sendingHeight = -1
 	client.setCurrentTx(nil)
+}
+func (client *commitMsgClient) resetSend() {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	client.resetSendEnv()
 }
 
 //自共识后直接从本地获取最新共识高度，没有自共识，获取主链的共识高度
@@ -249,9 +260,7 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
-		client.mutex.Lock()
-		client.resetSendEnv()
-		client.mutex.Unlock()
+		client.resetSend()
 	}
 
 	client.authAccountIn = authExist
@@ -318,7 +327,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		return nil, 0
 	}
 
-	signTx, count, err := client.calcCommitMsgTxs(status)
+	signTx, count, err := client.calcCommitMsgTxs(status, atomic.LoadInt64(&client.txFeeRate))
 	if err != nil || signTx == nil {
 		return nil, 0
 	}
@@ -334,10 +343,10 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	return signTx, count
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int64, error) {
-	txs, count, err := client.batchCalcTxGroup(notifications)
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int64, error) {
+	txs, count, err := client.batchCalcTxGroup(notifications, feeRate)
 	if err != nil {
-		txs, err = client.singleCalcTx((notifications)[0])
+		txs, err = client.singleCalcTx((notifications)[0], feeRate)
 		if err != nil {
 			plog.Error("single calc tx", "height", notifications[0].Height)
 
@@ -373,14 +382,14 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 	return newtx, nil
 }
 
-func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
+func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		execName := pt.ParaX
 		if isParaSelfConsensusForked(status.MainBlockHeight) {
 			execName = paracross.GetExecName()
 		}
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -395,12 +404,12 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	return txs, len(notifications), nil
 }
 
-func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
+func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
 	if isParaSelfConsensusForked(status.MainBlockHeight) {
 		execName = paracross.GetExecName()
 	}
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -460,6 +469,14 @@ out:
 		select {
 		case tx = <-client.sendMsgCh:
 			err = client.sendCommitTxOut(tx)
+			if err != nil && err == types.ErrTxFeeTooLow {
+				feeRate, err := client.GetProperFeeRate()
+				if err == nil {
+					atomic.StoreInt64(&client.txFeeRate, feeRate)
+					client.resetNotify()
+				}
+				continue
+			}
 			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
 				resendTimer = time.After(time.Second * 2)
 			}
@@ -611,7 +628,7 @@ func (client *commitMsgClient) mainSync() error {
 
 }
 
-func (client *commitMsgClient) getMainConsensusHeight() {
+func (client *commitMsgClient) getMainConsensusInfo() {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
 	defer ticker.Stop()
@@ -648,12 +665,35 @@ out:
 			if selfStatus != nil {
 				selfHeight = selfStatus.Height
 			}
-			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
+
+			var feeRate int64
+			if client.paraClient.authAccount != "" {
+				feeRate, err = client.GetProperFeeRate()
+				if err == nil {
+					atomic.StoreInt64(&client.txFeeRate, feeRate)
+				}
+			}
+
+			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight, "feeRate", feeRate)
 
 		}
 	}
 
 	client.paraClient.wg.Done()
+}
+
+func (client *commitMsgClient) GetProperFeeRate() (int64, error) {
+	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), &types.ReqProperFee{})
+	if err != nil {
+		plog.Error("para commit.GetProperFee", "err", err.Error())
+		return -1, err
+	}
+	if feeRate == nil {
+		plog.Error("para commit.GetProperFee return nil")
+		return -1, types.ErrInvalidParam
+	}
+
+	return feeRate.ProperFee, nil
 }
 
 func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, error) {
@@ -715,17 +755,17 @@ func (client *commitMsgClient) getMainConsensusStatus() (*pt.ParacrossStatus, er
 		Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
 	})
 	if err != nil {
-		plog.Error("getMainConsensusHeight", "err", err.Error())
+		plog.Error("getMainConsensusStatus", "err", err.Error())
 		return nil, err
 	}
 	if !reply.GetIsOk() {
-		plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
+		plog.Info("getMainConsensusStatus nok", "error", reply.GetMsg())
 		return nil, err
 	}
 	var result pt.ParacrossStatus
 	err = types.Decode(reply.Msg, &result)
 	if err != nil {
-		plog.Error("getMainConsensusHeight decode", "err", err.Error())
+		plog.Error("getMainConsensusStatus decode", "err", err.Error())
 		return nil, err
 	}
 	return &result, nil
