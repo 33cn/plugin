@@ -3,32 +3,64 @@
 
 package types
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 type AutonomyProposalRule struct {
-	PropRule *ProposalRule `protobuf:"bytes,1,opt,name=propRule" json:"propRule,omitempty"`
-	CurRule  *RuleConfig   `protobuf:"bytes,2,opt,name=curRule" json:"curRule,omitempty"`
+	PropRule *ProposalRule `protobuf:"bytes,1,opt,name=propRule,proto3" json:"propRule,omitempty"`
+	CurRule  *RuleConfig   `protobuf:"bytes,2,opt,name=curRule,proto3" json:"curRule,omitempty"`
 	// 全体持票人投票结果
-	VoteResult *VoteResult `protobuf:"bytes,3,opt,name=voteResult" json:"voteResult,omitempty"`
+	VoteResult *VoteResult `protobuf:"bytes,3,opt,name=voteResult,proto3" json:"voteResult,omitempty"`
 	// 状态
-	Status     int32  `protobuf:"varint,4,opt,name=status" json:"status,omitempty"`
-	Address    string `protobuf:"bytes,5,opt,name=address" json:"address,omitempty"`
-	Height     int64  `protobuf:"varint,6,opt,name=height" json:"height,omitempty"`
-	Index      int32  `protobuf:"varint,7,opt,name=index" json:"index,omitempty"`
-	ProposalID string `protobuf:"bytes,8,opt,name=proposalID" json:"proposalID,omitempty"`
+	Status               int32    `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`
+	Address              string   `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
+	Height               int64    `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
+	Index                int32    `protobuf:"varint,7,opt,name=index,proto3" json:"index,omitempty"`
+	ProposalID           string   `protobuf:"bytes,8,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AutonomyProposalRule) Reset()                    { *m = AutonomyProposalRule{} }
-func (m *AutonomyProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*AutonomyProposalRule) ProtoMessage()               {}
-func (*AutonomyProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
+func (m *AutonomyProposalRule) Reset()         { *m = AutonomyProposalRule{} }
+func (m *AutonomyProposalRule) String() string { return proto.CompactTextString(m) }
+func (*AutonomyProposalRule) ProtoMessage()    {}
+func (*AutonomyProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{0}
+}
+
+func (m *AutonomyProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AutonomyProposalRule.Unmarshal(m, b)
+}
+func (m *AutonomyProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AutonomyProposalRule.Marshal(b, m, deterministic)
+}
+func (m *AutonomyProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AutonomyProposalRule.Merge(m, src)
+}
+func (m *AutonomyProposalRule) XXX_Size() int {
+	return xxx_messageInfo_AutonomyProposalRule.Size(m)
+}
+func (m *AutonomyProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_AutonomyProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AutonomyProposalRule proto.InternalMessageInfo
 
 func (m *AutonomyProposalRule) GetPropRule() *ProposalRule {
 	if m != nil {
@@ -88,21 +120,44 @@ func (m *AutonomyProposalRule) GetProposalID() string {
 
 type ProposalRule struct {
 	// 提案时间
-	Year  int32 `protobuf:"varint,1,opt,name=year" json:"year,omitempty"`
-	Month int32 `protobuf:"varint,2,opt,name=month" json:"month,omitempty"`
-	Day   int32 `protobuf:"varint,3,opt,name=day" json:"day,omitempty"`
+	Year  int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
+	Month int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
+	Day   int32 `protobuf:"varint,3,opt,name=day,proto3" json:"day,omitempty"`
 	// 规则可修改项,如果某项不修改则置为-1
-	RuleCfg *RuleConfig `protobuf:"bytes,4,opt,name=ruleCfg" json:"ruleCfg,omitempty"`
+	RuleCfg *RuleConfig `protobuf:"bytes,4,opt,name=ruleCfg,proto3" json:"ruleCfg,omitempty"`
 	// 投票相关
-	StartBlockHeight   int64 `protobuf:"varint,5,opt,name=startBlockHeight" json:"startBlockHeight,omitempty"`
-	EndBlockHeight     int64 `protobuf:"varint,6,opt,name=endBlockHeight" json:"endBlockHeight,omitempty"`
-	RealEndBlockHeight int64 `protobuf:"varint,7,opt,name=realEndBlockHeight" json:"realEndBlockHeight,omitempty"`
+	StartBlockHeight     int64    `protobuf:"varint,5,opt,name=startBlockHeight,proto3" json:"startBlockHeight,omitempty"`
+	EndBlockHeight       int64    `protobuf:"varint,6,opt,name=endBlockHeight,proto3" json:"endBlockHeight,omitempty"`
+	RealEndBlockHeight   int64    `protobuf:"varint,7,opt,name=realEndBlockHeight,proto3" json:"realEndBlockHeight,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProposalRule) Reset()                    { *m = ProposalRule{} }
-func (m *ProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*ProposalRule) ProtoMessage()               {}
-func (*ProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
+func (m *ProposalRule) Reset()         { *m = ProposalRule{} }
+func (m *ProposalRule) String() string { return proto.CompactTextString(m) }
+func (*ProposalRule) ProtoMessage()    {}
+func (*ProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{1}
+}
+
+func (m *ProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProposalRule.Unmarshal(m, b)
+}
+func (m *ProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProposalRule.Marshal(b, m, deterministic)
+}
+func (m *ProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProposalRule.Merge(m, src)
+}
+func (m *ProposalRule) XXX_Size() int {
+	return xxx_messageInfo_ProposalRule.Size(m)
+}
+func (m *ProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProposalRule proto.InternalMessageInfo
 
 func (m *ProposalRule) GetYear() int32 {
 	if m != nil {
@@ -154,13 +209,36 @@ func (m *ProposalRule) GetRealEndBlockHeight() int64 {
 }
 
 type RevokeProposalRule struct {
-	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
+	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RevokeProposalRule) Reset()                    { *m = RevokeProposalRule{} }
-func (m *RevokeProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*RevokeProposalRule) ProtoMessage()               {}
-func (*RevokeProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{2} }
+func (m *RevokeProposalRule) Reset()         { *m = RevokeProposalRule{} }
+func (m *RevokeProposalRule) String() string { return proto.CompactTextString(m) }
+func (*RevokeProposalRule) ProtoMessage()    {}
+func (*RevokeProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{2}
+}
+
+func (m *RevokeProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RevokeProposalRule.Unmarshal(m, b)
+}
+func (m *RevokeProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RevokeProposalRule.Marshal(b, m, deterministic)
+}
+func (m *RevokeProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RevokeProposalRule.Merge(m, src)
+}
+func (m *RevokeProposalRule) XXX_Size() int {
+	return xxx_messageInfo_RevokeProposalRule.Size(m)
+}
+func (m *RevokeProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_RevokeProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RevokeProposalRule proto.InternalMessageInfo
 
 func (m *RevokeProposalRule) GetProposalID() string {
 	if m != nil {
@@ -170,14 +248,37 @@ func (m *RevokeProposalRule) GetProposalID() string {
 }
 
 type VoteProposalRule struct {
-	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
-	Approve    bool   `protobuf:"varint,2,opt,name=approve" json:"approve,omitempty"`
+	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	Approve              bool     `protobuf:"varint,2,opt,name=approve,proto3" json:"approve,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *VoteProposalRule) Reset()                    { *m = VoteProposalRule{} }
-func (m *VoteProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*VoteProposalRule) ProtoMessage()               {}
-func (*VoteProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{3} }
+func (m *VoteProposalRule) Reset()         { *m = VoteProposalRule{} }
+func (m *VoteProposalRule) String() string { return proto.CompactTextString(m) }
+func (*VoteProposalRule) ProtoMessage()    {}
+func (*VoteProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{3}
+}
+
+func (m *VoteProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_VoteProposalRule.Unmarshal(m, b)
+}
+func (m *VoteProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_VoteProposalRule.Marshal(b, m, deterministic)
+}
+func (m *VoteProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VoteProposalRule.Merge(m, src)
+}
+func (m *VoteProposalRule) XXX_Size() int {
+	return xxx_messageInfo_VoteProposalRule.Size(m)
+}
+func (m *VoteProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_VoteProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VoteProposalRule proto.InternalMessageInfo
 
 func (m *VoteProposalRule) GetProposalID() string {
 	if m != nil {
@@ -194,13 +295,36 @@ func (m *VoteProposalRule) GetApprove() bool {
 }
 
 type TerminateProposalRule struct {
-	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
+	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TerminateProposalRule) Reset()                    { *m = TerminateProposalRule{} }
-func (m *TerminateProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*TerminateProposalRule) ProtoMessage()               {}
-func (*TerminateProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{4} }
+func (m *TerminateProposalRule) Reset()         { *m = TerminateProposalRule{} }
+func (m *TerminateProposalRule) String() string { return proto.CompactTextString(m) }
+func (*TerminateProposalRule) ProtoMessage()    {}
+func (*TerminateProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{4}
+}
+
+func (m *TerminateProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TerminateProposalRule.Unmarshal(m, b)
+}
+func (m *TerminateProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TerminateProposalRule.Marshal(b, m, deterministic)
+}
+func (m *TerminateProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TerminateProposalRule.Merge(m, src)
+}
+func (m *TerminateProposalRule) XXX_Size() int {
+	return xxx_messageInfo_TerminateProposalRule.Size(m)
+}
+func (m *TerminateProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_TerminateProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TerminateProposalRule proto.InternalMessageInfo
 
 func (m *TerminateProposalRule) GetProposalID() string {
 	if m != nil {
@@ -211,14 +335,37 @@ func (m *TerminateProposalRule) GetProposalID() string {
 
 // receipt
 type ReceiptProposalRule struct {
-	Prev    *AutonomyProposalRule `protobuf:"bytes,1,opt,name=prev" json:"prev,omitempty"`
-	Current *AutonomyProposalRule `protobuf:"bytes,2,opt,name=current" json:"current,omitempty"`
+	Prev                 *AutonomyProposalRule `protobuf:"bytes,1,opt,name=prev,proto3" json:"prev,omitempty"`
+	Current              *AutonomyProposalRule `protobuf:"bytes,2,opt,name=current,proto3" json:"current,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
 }
 
-func (m *ReceiptProposalRule) Reset()                    { *m = ReceiptProposalRule{} }
-func (m *ReceiptProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*ReceiptProposalRule) ProtoMessage()               {}
-func (*ReceiptProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{5} }
+func (m *ReceiptProposalRule) Reset()         { *m = ReceiptProposalRule{} }
+func (m *ReceiptProposalRule) String() string { return proto.CompactTextString(m) }
+func (*ReceiptProposalRule) ProtoMessage()    {}
+func (*ReceiptProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{5}
+}
+
+func (m *ReceiptProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptProposalRule.Unmarshal(m, b)
+}
+func (m *ReceiptProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptProposalRule.Marshal(b, m, deterministic)
+}
+func (m *ReceiptProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptProposalRule.Merge(m, src)
+}
+func (m *ReceiptProposalRule) XXX_Size() int {
+	return xxx_messageInfo_ReceiptProposalRule.Size(m)
+}
+func (m *ReceiptProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReceiptProposalRule proto.InternalMessageInfo
 
 func (m *ReceiptProposalRule) GetPrev() *AutonomyProposalRule {
 	if m != nil {
@@ -235,14 +382,37 @@ func (m *ReceiptProposalRule) GetCurrent() *AutonomyProposalRule {
 }
 
 type LocalProposalRule struct {
-	PropRule *AutonomyProposalRule `protobuf:"bytes,1,opt,name=propRule" json:"propRule,omitempty"`
-	Comments []string              `protobuf:"bytes,2,rep,name=comments" json:"comments,omitempty"`
+	PropRule             *AutonomyProposalRule `protobuf:"bytes,1,opt,name=propRule,proto3" json:"propRule,omitempty"`
+	Comments             []string              `protobuf:"bytes,2,rep,name=comments,proto3" json:"comments,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
 }
 
-func (m *LocalProposalRule) Reset()                    { *m = LocalProposalRule{} }
-func (m *LocalProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*LocalProposalRule) ProtoMessage()               {}
-func (*LocalProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{6} }
+func (m *LocalProposalRule) Reset()         { *m = LocalProposalRule{} }
+func (m *LocalProposalRule) String() string { return proto.CompactTextString(m) }
+func (*LocalProposalRule) ProtoMessage()    {}
+func (*LocalProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{6}
+}
+
+func (m *LocalProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LocalProposalRule.Unmarshal(m, b)
+}
+func (m *LocalProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LocalProposalRule.Marshal(b, m, deterministic)
+}
+func (m *LocalProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalProposalRule.Merge(m, src)
+}
+func (m *LocalProposalRule) XXX_Size() int {
+	return xxx_messageInfo_LocalProposalRule.Size(m)
+}
+func (m *LocalProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_LocalProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LocalProposalRule proto.InternalMessageInfo
 
 func (m *LocalProposalRule) GetPropRule() *AutonomyProposalRule {
 	if m != nil {
@@ -260,17 +430,40 @@ func (m *LocalProposalRule) GetComments() []string {
 
 // query
 type ReqQueryProposalRule struct {
-	// 优先根据status查询
-	Status    int32 `protobuf:"varint,1,opt,name=status" json:"status,omitempty"`
-	Count     int32 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
-	Direction int32 `protobuf:"varint,3,opt,name=direction" json:"direction,omitempty"`
-	Index     int64 `protobuf:"varint,4,opt,name=index" json:"index,omitempty"`
+	//优先根据status查询
+	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	Count                int32    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	Direction            int32    `protobuf:"varint,3,opt,name=direction,proto3" json:"direction,omitempty"`
+	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqQueryProposalRule) Reset()                    { *m = ReqQueryProposalRule{} }
-func (m *ReqQueryProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*ReqQueryProposalRule) ProtoMessage()               {}
-func (*ReqQueryProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{7} }
+func (m *ReqQueryProposalRule) Reset()         { *m = ReqQueryProposalRule{} }
+func (m *ReqQueryProposalRule) String() string { return proto.CompactTextString(m) }
+func (*ReqQueryProposalRule) ProtoMessage()    {}
+func (*ReqQueryProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{7}
+}
+
+func (m *ReqQueryProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqQueryProposalRule.Unmarshal(m, b)
+}
+func (m *ReqQueryProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqQueryProposalRule.Marshal(b, m, deterministic)
+}
+func (m *ReqQueryProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQueryProposalRule.Merge(m, src)
+}
+func (m *ReqQueryProposalRule) XXX_Size() int {
+	return xxx_messageInfo_ReqQueryProposalRule.Size(m)
+}
+func (m *ReqQueryProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqQueryProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqQueryProposalRule proto.InternalMessageInfo
 
 func (m *ReqQueryProposalRule) GetStatus() int32 {
 	if m != nil {
@@ -301,13 +494,36 @@ func (m *ReqQueryProposalRule) GetIndex() int64 {
 }
 
 type ReplyQueryProposalRule struct {
-	PropRules []*AutonomyProposalRule `protobuf:"bytes,1,rep,name=propRules" json:"propRules,omitempty"`
+	PropRules            []*AutonomyProposalRule `protobuf:"bytes,1,rep,name=propRules,proto3" json:"propRules,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
 }
 
-func (m *ReplyQueryProposalRule) Reset()                    { *m = ReplyQueryProposalRule{} }
-func (m *ReplyQueryProposalRule) String() string            { return proto.CompactTextString(m) }
-func (*ReplyQueryProposalRule) ProtoMessage()               {}
-func (*ReplyQueryProposalRule) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{8} }
+func (m *ReplyQueryProposalRule) Reset()         { *m = ReplyQueryProposalRule{} }
+func (m *ReplyQueryProposalRule) String() string { return proto.CompactTextString(m) }
+func (*ReplyQueryProposalRule) ProtoMessage()    {}
+func (*ReplyQueryProposalRule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{8}
+}
+
+func (m *ReplyQueryProposalRule) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyQueryProposalRule.Unmarshal(m, b)
+}
+func (m *ReplyQueryProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyQueryProposalRule.Marshal(b, m, deterministic)
+}
+func (m *ReplyQueryProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQueryProposalRule.Merge(m, src)
+}
+func (m *ReplyQueryProposalRule) XXX_Size() int {
+	return xxx_messageInfo_ReplyQueryProposalRule.Size(m)
+}
+func (m *ReplyQueryProposalRule) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyQueryProposalRule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReplyQueryProposalRule proto.InternalMessageInfo
 
 func (m *ReplyQueryProposalRule) GetPropRules() []*AutonomyProposalRule {
 	if m != nil {
@@ -318,14 +534,37 @@ func (m *ReplyQueryProposalRule) GetPropRules() []*AutonomyProposalRule {
 
 // TransferFund action
 type TransferFund struct {
-	Amount int64  `protobuf:"varint,1,opt,name=amount" json:"amount,omitempty"`
-	Note   string `protobuf:"bytes,2,opt,name=note" json:"note,omitempty"`
+	Amount               int64    `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
+	Note                 string   `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TransferFund) Reset()                    { *m = TransferFund{} }
-func (m *TransferFund) String() string            { return proto.CompactTextString(m) }
-func (*TransferFund) ProtoMessage()               {}
-func (*TransferFund) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{9} }
+func (m *TransferFund) Reset()         { *m = TransferFund{} }
+func (m *TransferFund) String() string { return proto.CompactTextString(m) }
+func (*TransferFund) ProtoMessage()    {}
+func (*TransferFund) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{9}
+}
+
+func (m *TransferFund) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TransferFund.Unmarshal(m, b)
+}
+func (m *TransferFund) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TransferFund.Marshal(b, m, deterministic)
+}
+func (m *TransferFund) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferFund.Merge(m, src)
+}
+func (m *TransferFund) XXX_Size() int {
+	return xxx_messageInfo_TransferFund.Size(m)
+}
+func (m *TransferFund) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransferFund.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TransferFund proto.InternalMessageInfo
 
 func (m *TransferFund) GetAmount() int64 {
 	if m != nil {
@@ -343,15 +582,38 @@ func (m *TransferFund) GetNote() string {
 
 // Comment action
 type Comment struct {
-	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
-	RepHash    string `protobuf:"bytes,2,opt,name=repHash" json:"repHash,omitempty"`
-	Comment    string `protobuf:"bytes,3,opt,name=comment" json:"comment,omitempty"`
+	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	RepHash              string   `protobuf:"bytes,2,opt,name=repHash,proto3" json:"repHash,omitempty"`
+	Comment              string   `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Comment) Reset()                    { *m = Comment{} }
-func (m *Comment) String() string            { return proto.CompactTextString(m) }
-func (*Comment) ProtoMessage()               {}
-func (*Comment) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{10} }
+func (m *Comment) Reset()         { *m = Comment{} }
+func (m *Comment) String() string { return proto.CompactTextString(m) }
+func (*Comment) ProtoMessage()    {}
+func (*Comment) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{10}
+}
+
+func (m *Comment) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Comment.Unmarshal(m, b)
+}
+func (m *Comment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Comment.Marshal(b, m, deterministic)
+}
+func (m *Comment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Comment.Merge(m, src)
+}
+func (m *Comment) XXX_Size() int {
+	return xxx_messageInfo_Comment.Size(m)
+}
+func (m *Comment) XXX_DiscardUnknown() {
+	xxx_messageInfo_Comment.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Comment proto.InternalMessageInfo
 
 func (m *Comment) GetProposalID() string {
 	if m != nil {
@@ -375,16 +637,39 @@ func (m *Comment) GetComment() string {
 }
 
 type ReceiptProposalComment struct {
-	Cmt    *Comment `protobuf:"bytes,1,opt,name=cmt" json:"cmt,omitempty"`
-	Height int64    `protobuf:"varint,2,opt,name=height" json:"height,omitempty"`
-	Index  int32    `protobuf:"varint,3,opt,name=index" json:"index,omitempty"`
-	Hash   string   `protobuf:"bytes,4,opt,name=hash" json:"hash,omitempty"`
+	Cmt                  *Comment `protobuf:"bytes,1,opt,name=cmt,proto3" json:"cmt,omitempty"`
+	Height               int64    `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Index                int32    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	Hash                 string   `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReceiptProposalComment) Reset()                    { *m = ReceiptProposalComment{} }
-func (m *ReceiptProposalComment) String() string            { return proto.CompactTextString(m) }
-func (*ReceiptProposalComment) ProtoMessage()               {}
-func (*ReceiptProposalComment) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{11} }
+func (m *ReceiptProposalComment) Reset()         { *m = ReceiptProposalComment{} }
+func (m *ReceiptProposalComment) String() string { return proto.CompactTextString(m) }
+func (*ReceiptProposalComment) ProtoMessage()    {}
+func (*ReceiptProposalComment) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{11}
+}
+
+func (m *ReceiptProposalComment) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptProposalComment.Unmarshal(m, b)
+}
+func (m *ReceiptProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptProposalComment.Marshal(b, m, deterministic)
+}
+func (m *ReceiptProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptProposalComment.Merge(m, src)
+}
+func (m *ReceiptProposalComment) XXX_Size() int {
+	return xxx_messageInfo_ReceiptProposalComment.Size(m)
+}
+func (m *ReceiptProposalComment) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptProposalComment.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReceiptProposalComment proto.InternalMessageInfo
 
 func (m *ReceiptProposalComment) GetCmt() *Comment {
 	if m != nil {
@@ -416,16 +701,39 @@ func (m *ReceiptProposalComment) GetHash() string {
 
 // query
 type ReqQueryProposalComment struct {
-	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
-	Count      int32  `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
-	Direction  int32  `protobuf:"varint,3,opt,name=direction" json:"direction,omitempty"`
-	Index      int64  `protobuf:"varint,4,opt,name=index" json:"index,omitempty"`
+	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
+	Count                int32    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	Direction            int32    `protobuf:"varint,3,opt,name=direction,proto3" json:"direction,omitempty"`
+	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqQueryProposalComment) Reset()                    { *m = ReqQueryProposalComment{} }
-func (m *ReqQueryProposalComment) String() string            { return proto.CompactTextString(m) }
-func (*ReqQueryProposalComment) ProtoMessage()               {}
-func (*ReqQueryProposalComment) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{12} }
+func (m *ReqQueryProposalComment) Reset()         { *m = ReqQueryProposalComment{} }
+func (m *ReqQueryProposalComment) String() string { return proto.CompactTextString(m) }
+func (*ReqQueryProposalComment) ProtoMessage()    {}
+func (*ReqQueryProposalComment) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{12}
+}
+
+func (m *ReqQueryProposalComment) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqQueryProposalComment.Unmarshal(m, b)
+}
+func (m *ReqQueryProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqQueryProposalComment.Marshal(b, m, deterministic)
+}
+func (m *ReqQueryProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQueryProposalComment.Merge(m, src)
+}
+func (m *ReqQueryProposalComment) XXX_Size() int {
+	return xxx_messageInfo_ReqQueryProposalComment.Size(m)
+}
+func (m *ReqQueryProposalComment) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqQueryProposalComment.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqQueryProposalComment proto.InternalMessageInfo
 
 func (m *ReqQueryProposalComment) GetProposalID() string {
 	if m != nil {
@@ -456,17 +764,40 @@ func (m *ReqQueryProposalComment) GetIndex() int64 {
 }
 
 type RelationCmt struct {
-	RepHash string `protobuf:"bytes,1,opt,name=repHash" json:"repHash,omitempty"`
-	Comment string `protobuf:"bytes,2,opt,name=comment" json:"comment,omitempty"`
-	Height  int64  `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
-	Index   int32  `protobuf:"varint,4,opt,name=index" json:"index,omitempty"`
-	Hash    string `protobuf:"bytes,5,opt,name=hash" json:"hash,omitempty"`
+	RepHash              string   `protobuf:"bytes,1,opt,name=repHash,proto3" json:"repHash,omitempty"`
+	Comment              string   `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
+	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Index                int32    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	Hash                 string   `protobuf:"bytes,5,opt,name=hash,proto3" json:"hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RelationCmt) Reset()                    { *m = RelationCmt{} }
-func (m *RelationCmt) String() string            { return proto.CompactTextString(m) }
-func (*RelationCmt) ProtoMessage()               {}
-func (*RelationCmt) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{13} }
+func (m *RelationCmt) Reset()         { *m = RelationCmt{} }
+func (m *RelationCmt) String() string { return proto.CompactTextString(m) }
+func (*RelationCmt) ProtoMessage()    {}
+func (*RelationCmt) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{13}
+}
+
+func (m *RelationCmt) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RelationCmt.Unmarshal(m, b)
+}
+func (m *RelationCmt) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RelationCmt.Marshal(b, m, deterministic)
+}
+func (m *RelationCmt) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelationCmt.Merge(m, src)
+}
+func (m *RelationCmt) XXX_Size() int {
+	return xxx_messageInfo_RelationCmt.Size(m)
+}
+func (m *RelationCmt) XXX_DiscardUnknown() {
+	xxx_messageInfo_RelationCmt.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RelationCmt proto.InternalMessageInfo
 
 func (m *RelationCmt) GetRepHash() string {
 	if m != nil {
@@ -504,13 +835,36 @@ func (m *RelationCmt) GetHash() string {
 }
 
 type ReplyQueryProposalComment struct {
-	RltCmt []*RelationCmt `protobuf:"bytes,1,rep,name=rltCmt" json:"rltCmt,omitempty"`
+	RltCmt               []*RelationCmt `protobuf:"bytes,1,rep,name=rltCmt,proto3" json:"rltCmt,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *ReplyQueryProposalComment) Reset()                    { *m = ReplyQueryProposalComment{} }
-func (m *ReplyQueryProposalComment) String() string            { return proto.CompactTextString(m) }
-func (*ReplyQueryProposalComment) ProtoMessage()               {}
-func (*ReplyQueryProposalComment) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{14} }
+func (m *ReplyQueryProposalComment) Reset()         { *m = ReplyQueryProposalComment{} }
+func (m *ReplyQueryProposalComment) String() string { return proto.CompactTextString(m) }
+func (*ReplyQueryProposalComment) ProtoMessage()    {}
+func (*ReplyQueryProposalComment) Descriptor() ([]byte, []int) {
+	return fileDescriptor_07e8e0fa338d4596, []int{14}
+}
+
+func (m *ReplyQueryProposalComment) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyQueryProposalComment.Unmarshal(m, b)
+}
+func (m *ReplyQueryProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyQueryProposalComment.Marshal(b, m, deterministic)
+}
+func (m *ReplyQueryProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQueryProposalComment.Merge(m, src)
+}
+func (m *ReplyQueryProposalComment) XXX_Size() int {
+	return xxx_messageInfo_ReplyQueryProposalComment.Size(m)
+}
+func (m *ReplyQueryProposalComment) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyQueryProposalComment.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReplyQueryProposalComment proto.InternalMessageInfo
 
 func (m *ReplyQueryProposalComment) GetRltCmt() []*RelationCmt {
 	if m != nil {
@@ -537,9 +891,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalComment)(nil), "types.ReplyQueryProposalComment")
 }
 
-func init() { proto.RegisterFile("rule.proto", fileDescriptor4) }
+func init() { proto.RegisterFile("rule.proto", fileDescriptor_07e8e0fa338d4596) }
 
-var fileDescriptor4 = []byte{
+var fileDescriptor_07e8e0fa338d4596 = []byte{
 	// 695 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4b, 0x6f, 0xd3, 0x4c,
 	0x14, 0x95, 0xe3, 0x38, 0x8f, 0xdb, 0x7e, 0x55, 0x3b, 0xcd, 0x57, 0x4c, 0x41, 0x28, 0xf2, 0x02,

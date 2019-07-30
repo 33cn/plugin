@@ -286,7 +286,7 @@ func commentProposal(cmd *cobra.Command, args []string) {
 
 	params := &auty.Comment{
 		ProposalID: proposalID,
-		RepHash: repHash,
+		RepHash:    repHash,
 		Comment:    comment,
 	}
 	var res string
