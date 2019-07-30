@@ -214,7 +214,7 @@ func (client *BlockSyncClient) syncBlocksIfNeed() (bool, error) {
 			client.setSyncCaughtUp(isSyncCaughtUp)
 			if client.paraClient.authAccount != "" {
 				client.printDebugInfo("Para sync - add block commit", "isSyncCaughtUp", isSyncCaughtUp)
-				client.paraClient.commitMsgClient.updateChainHeight(lastBlock.Height+1, false)
+				client.paraClient.commitMsgClient.updateChainHeightNotify(lastBlock.Height+1, false)
 			}
 		}
 
@@ -233,7 +233,7 @@ func (client *BlockSyncClient) syncBlocksIfNeed() (bool, error) {
 			client.setSyncCaughtUp(false)
 			if client.paraClient.authAccount != "" {
 				client.printDebugInfo("Para sync - rollback block commit", "isSyncCaughtUp", false)
-				client.paraClient.commitMsgClient.updateChainHeight(lastBlock.Height-1, true)
+				client.paraClient.commitMsgClient.updateChainHeightNotify(lastBlock.Height-1, true)
 			}
 		}
 
