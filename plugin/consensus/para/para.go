@@ -61,7 +61,7 @@ type client struct {
 	*drivers.BaseClient
 	grpcClient      types.Chain33Client
 	execAPI         api.ExecutorAPI
-	isCaughtUp      int32
+	caughtUp        int32
 	commitMsgClient *commitMsgClient
 	blockSyncClient *BlockSyncClient
 	authAccount     string
@@ -176,9 +176,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		paraClient:           para,
 		waitMainBlocks:       waitBlocks,
 		waitConsensStopTimes: waitConsensTimes,
-		commitCh:             make(chan int64, 1),
-		resetCh:              make(chan int64, 1),
-		verifyCh:             make(chan []byte, 1),
 		consensHeight:        -2,
 		sendingHeight:        -1,
 		quit:                 make(chan struct{}),
@@ -329,18 +326,17 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 
+func (client *client) isCaughtUp() bool {
+	return atomic.LoadInt32(&client.caughtUp) == 1
+}
+
 //IsCaughtUp 是否追上最新高度,
 func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
 	if client == nil {
 		return nil, fmt.Errorf("%s", "client not bind message queue.")
 	}
 
-	caughtUp := false
-	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
-		caughtUp = true
-	}
-
-	return &types.IsCaughtUp{Iscaughtup: caughtUp}, nil
+	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp()}, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {

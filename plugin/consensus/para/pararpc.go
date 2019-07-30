@@ -10,15 +10,13 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"sync/atomic"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 )
 
 func (client *client) setLocalDb(set *types.LocalDBSet) error {
 	//如果追赶上主链了，则落盘
-	if atomic.LoadInt32(&client.isCaughtUp) == 1 {
+	if client.isCaughtUp() {
 		set.Txid = 1
 	}
 
