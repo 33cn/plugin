@@ -331,15 +331,15 @@ func (a *action) commentProp(cm *auty.Comment) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receiptLog := getCommentReceiptLog(cm, a.height, a.index, auty.TyLogCommentProp)
+	receiptLog := getCommentReceiptLog(cm, a.height, a.index, common.ToHex(a.txhash), auty.TyLogCommentProp)
 	logs = append(logs, receiptLog)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-func getCommentReceiptLog(cur *auty.Comment, height int64, index int32, ty int32) *types.ReceiptLog {
+func getCommentReceiptLog(cur *auty.Comment, height int64, index int32, hash string, ty int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = ty
-	r := &auty.ReceiptProposalComment{Cmt: cur, Height: height, Index: index}
+	r := &auty.ReceiptProposalComment{Cmt: cur, Height: height, Index: index, Hash: hash}
 	log.Log = types.Encode(r)
 	return log
 }
