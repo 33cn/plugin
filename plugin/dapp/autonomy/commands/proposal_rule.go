@@ -273,7 +273,7 @@ func CommentProposalCmd() *cobra.Command {
 func addCommentProposalflags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().StringP("repCmtHash", "r", "", "reply Comment hash")
+	cmd.Flags().StringP("repHash", "r", "", "reply Comment hash")
 	cmd.Flags().StringP("comment", "c", "", "comment")
 	cmd.MarkFlagRequired("comment")
 }
@@ -281,12 +281,12 @@ func addCommentProposalflags(cmd *cobra.Command) {
 func commentProposal(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	proposalID, _ := cmd.Flags().GetString("proposalID")
-	repCmtHash, _ := cmd.Flags().GetString("repCmtHash")
+	repHash, _ := cmd.Flags().GetString("repHash")
 	comment, _ := cmd.Flags().GetString("comment")
 
 	params := &auty.Comment{
 		ProposalID: proposalID,
-		RepCmtHash: repCmtHash,
+		RepHash: repHash,
 		Comment:    comment,
 	}
 	var res string

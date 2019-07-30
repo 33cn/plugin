@@ -81,7 +81,7 @@ message TransferFund {
 // Comment action
 message Comment {
     string proposalID = 1;
-    string repCmtHash = 2;
+    string repHash    = 2;
     string comment    = 3;
 }
 
@@ -89,6 +89,7 @@ message ReceiptProposalComment {
     Comment cmt    = 1;
     int64   height = 2;
     int32   index  = 3;
+    string  hash   = 4;
 }
 
 // query
@@ -100,10 +101,11 @@ message ReqQueryProposalComment {
 }
 
 message RelationCmt {
-    string repCmtHash = 1;
-    string comment    = 2;
-    int64   height    = 3;
-    int32   index     = 4;
+    string repHash = 1;
+    string comment = 2;
+    int64  height  = 3;
+    int32  index   = 4;
+    string hash    = 5;
 }
 
 message ReplyQueryProposalComment {

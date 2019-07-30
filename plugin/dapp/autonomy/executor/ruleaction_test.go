@@ -537,7 +537,7 @@ func TestComment(t *testing.T) {
 	comment := "3333333333"
 	opt1 := &auty.Comment{
 		ProposalID: propID,
-		RepCmtHash: Repcmt,
+		RepHash: Repcmt,
 		Comment:    comment,
 	}
 	pbtx, err := commentPropTx(opt1)
@@ -569,7 +569,7 @@ func TestComment(t *testing.T) {
 	err = types.Decode(value, cmt)
 	require.NoError(t, err)
 	require.Equal(t, cmt.Comment, comment)
-	require.Equal(t, cmt.RepCmtHash, Repcmt)
+	require.Equal(t, cmt.RepHash, Repcmt)
 }
 
 func commentPropTx(parm *auty.Comment) (*types.Transaction, error) {

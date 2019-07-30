@@ -174,10 +174,11 @@ func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyV
 	kv := &types.KeyValue{}
 	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
 	kv.Value = types.Encode(&auty.RelationCmt{
-		RepCmtHash: res.Cmt.RepCmtHash,
+		RepHash: res.Cmt.RepHash,
 		Comment:    res.Cmt.Comment,
 		Height:     res.Height,
 		Index:      res.Index,
+		Hash: res.Hash,
 	})
 	kvs = append(kvs, kv)
 	return kvs
