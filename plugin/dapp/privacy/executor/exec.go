@@ -149,7 +149,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 
 func (p *privacy) createAccountDB(exec, symbol string) (*account.DB, error) {
 
-	if exec == "coins" {
+	if exec == "" || exec == "coins" {
 		return p.GetCoinsAccount(), nil
 	}
 
