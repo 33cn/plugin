@@ -899,7 +899,7 @@ function check_privacy_utxo() {
     while true; do
         acc=$(${1} privacy showpai -a "${2}" -s "${3}" | jq -r ".AvailableAmount")
         echo "utxo avail balance is ${acc} "
-        if [[ "${acc}" == "${4}" ]]; then
+        if [[ ${acc} == "${4}" ]]; then
             break
         else
             block_wait "${1}" 1
