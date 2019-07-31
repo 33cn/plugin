@@ -88,6 +88,7 @@ type subConfig struct {
 	MaxSyncErrCount                 int32  `json:"maxSyncErrCount,omitempty"`
 	BatchFetchSeqEnable             uint32 `json:"batchFetchSeqEnable,omitempty"`
 	BatchFetchSeqNum                int64  `json:"batchFetchSeqNum,omitempty"`
+	ParaConsensStartHeight          int64  `json:"paraConsensStartHeight,omitempty"`
 }
 
 // New function to init paracross env
@@ -178,8 +179,13 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		waitConsensStopTimes: waitConsensTimes,
 		consensHeight:        -2,
 		sendingHeight:        -1,
+		consensStartHeight:   -1,
 		resetCh:              make(chan interface{}, 1),
 		quit:                 make(chan struct{}),
+	}
+	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
+	if subcfg.ParaConsensStartHeight > 0 {
+		para.commitMsgClient.consensStartHeight = subcfg.ParaConsensStartHeight - 1
 	}
 
 	para.blockSyncClient = &BlockSyncClient{

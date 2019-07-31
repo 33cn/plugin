@@ -41,6 +41,7 @@ type commitMsgClient struct {
 	chainHeight          int64
 	sendingHeight        int64
 	consensHeight        int64
+	consensStartHeight   int64
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
@@ -148,12 +149,18 @@ func (client *commitMsgClient) sendCommitTx() {
 	defer client.mutex.Unlock()
 
 	consensHeight := client.getConsensusHeight()
+	//只有从未共识过，才可以设置从初始起始高度跳跃
+	if consensHeight == -1 && consensHeight < client.consensStartHeight {
+		consensHeight = client.consensStartHeight
+	}
+
 	chainHeight := atomic.LoadInt64(&client.chainHeight)
 	sendingHeight := client.sendingHeight
+	isSync := client.isSync()
 	plog.Info("para commitMsg---status", "chainHeight", chainHeight, "sendingHeight", sendingHeight,
-		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", client.isSync())
+		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync)
 
-	if client.isSendingCommitMsg() || !client.isSync() {
+	if client.isSendingCommitMsg() || !isSync {
 		return
 	}
 
@@ -470,9 +477,8 @@ out:
 		case tx = <-client.sendMsgCh:
 			err = client.sendCommitTxOut(tx)
 			if err != nil && err == types.ErrTxFeeTooLow {
-				feeRate, err := client.GetProperFeeRate()
+				err := client.GetProperFeeRate()
 				if err == nil {
-					atomic.StoreInt64(&client.txFeeRate, feeRate)
 					client.resetNotify()
 				}
 				continue
@@ -666,15 +672,11 @@ out:
 				selfHeight = selfStatus.Height
 			}
 
-			var feeRate int64
 			if client.paraClient.authAccount != "" {
-				feeRate, err = client.GetProperFeeRate()
-				if err == nil {
-					atomic.StoreInt64(&client.txFeeRate, feeRate)
-				}
+				client.GetProperFeeRate()
 			}
 
-			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight, "feeRate", feeRate)
+			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
 
 		}
 	}
@@ -682,18 +684,19 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *commitMsgClient) GetProperFeeRate() (int64, error) {
+func (client *commitMsgClient) GetProperFeeRate() error {
 	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), &types.ReqProperFee{})
 	if err != nil {
 		plog.Error("para commit.GetProperFee", "err", err.Error())
-		return -1, err
+		return err
 	}
 	if feeRate == nil {
 		plog.Error("para commit.GetProperFee return nil")
-		return -1, types.ErrInvalidParam
+		return types.ErrInvalidParam
 	}
 
-	return feeRate.ProperFee, nil
+	atomic.StoreInt64(&client.txFeeRate, feeRate.ProperFee)
+	return nil
 }
 
 func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, error) {
