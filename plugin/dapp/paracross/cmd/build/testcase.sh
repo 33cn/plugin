@@ -899,7 +899,7 @@ function check_privacy_utxo() {
     while true; do
         acc=$(${1} privacy showpai -a "${2}" -s "${3}" | jq -r ".AvailableAmount")
         echo "utxo avail balance is ${acc} "
-        if (($(echo "$acc == ${4}" | bc -l))); then
+        if [[ "${acc}" == "${4}" ]]; then
             break
         else
             block_wait "${1}" 1
@@ -918,31 +918,29 @@ function privacy_transfer_test() {
     ${1} privacy enable -a all
 
     echo "#transfer to privacy exec"
-    hash=$(${1} send coins transfer -a 11 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt)
-    echo "${hash}"
-    query_tx "${1}" "${hash}"
+    ${1} send coins transfer -a 10 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    block_wait "${1}" 2
     ${1} send coins send_exec -a 10 -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
-    hash=$(${1} send token send_exec -a 10 -s GD -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4)
-    echo "${hash}"
-    query_tx "${1}" "${hash}"
+    ${1} send token send_exec -a 10 -s GD -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    block_wait "${1}" 2
 
     echo "#privacy pub2priv, to=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e coins -s BTY -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e token -s GD -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 9
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 9
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 9.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 9.0000
 
     echo "#privacy priv2priv, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
     ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 GD 3
-    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 BTY 3
+    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 GD 3.0000
+    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 BTY 3.0000
 
     echo "#privacy priv2pub, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
     ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 0
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 0
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 0.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 0.0000
 }
 
 function para_test() {
