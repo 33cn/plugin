@@ -7,12 +7,13 @@ package commands
 import (
 	"strings"
 
+	"encoding/json"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
-	"encoding/json"
 )
 
 // AutonomyCmd 自治系统命令行
