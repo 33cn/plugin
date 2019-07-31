@@ -176,6 +176,10 @@ tokenApprs=[]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
 paraConsensusStopBlocks=30000
 
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
+
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
