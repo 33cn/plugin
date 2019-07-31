@@ -13,30 +13,67 @@ import (
 	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"encoding/json"
 )
 
 func testPropRuleTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.ProposalRule{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.PropRuleTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testRevokeProposalRuleTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.RevokeProposalRule{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "RvkPropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.RevokeProposalRuleTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testVoteProposalRuleTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.VoteProposalRule{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "VotePropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.VoteProposalRuleTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testTerminateProposalRuleTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.TerminateProposalRule{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "TmintPropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.TerminateProposalRuleTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testGetProposalRuleCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
@@ -61,14 +98,32 @@ func testListProposalRuleCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 
 func testTransferFundTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.TransferFund{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "Transfer",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.TransferFundTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testCommentProposalTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.Comment{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "CommentProp",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.CommentProposalTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testListProposalCommentCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {

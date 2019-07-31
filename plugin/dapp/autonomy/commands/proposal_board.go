@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"encoding/json"
 )
 
 // AutonomyCmd 自治系统命令行
@@ -104,8 +105,18 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 		EndBlockHeight:   endBlock,
 	}
 
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PropBoard",
+		Payload:    payLoad,
+	}
+
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PropBoardTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -132,8 +143,17 @@ func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalBoard{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "RvkPropBoard",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalBoardTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -169,8 +189,18 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 		ProposalID: ID,
 		Approve:    isapp,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "VotePropBoard",
+		Payload:    payLoad,
+	}
+
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalBoardTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -197,8 +227,18 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalBoard{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "TmintPropBoard",
+		Payload:    payLoad,
+	}
+
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalBoardTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 

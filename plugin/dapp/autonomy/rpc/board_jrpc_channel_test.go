@@ -13,30 +13,67 @@ import (
 	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"encoding/json"
 )
 
 func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.ProposalBoard{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PropBoard",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.PropBoardTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testRevokeProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.RevokeProposalBoard{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "RvkPropBoard",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.RevokeProposalBoardTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testVoteProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.VoteProposalBoard{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "VotePropBoard",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.VoteProposalBoardTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testTerminateProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.TerminateProposalBoard{}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "TmintPropBoard",
+		Payload:    payLoad,
+	}
 	var res string
-	return jrpc.Call("autonomy.TerminateProposalBoardTx", params, &res)
+	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
 func testGetProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {

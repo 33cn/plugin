@@ -10,6 +10,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"encoding/json"
 )
 
 // ProposalRuleCmd 创建提案命令
@@ -73,9 +74,18 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PropRule",
+		Payload:    payLoad,
+	}
 
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PropRuleTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -102,8 +112,17 @@ func revokeProposalRule(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalRule{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "RvkPropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalRuleTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -139,8 +158,17 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		ProposalID: ID,
 		Approve:    isapp,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "VotePropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalRuleTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -167,8 +195,17 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalRule{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "TmintPropRule",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalRuleTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -254,8 +291,17 @@ func transferFund(cmd *cobra.Command, args []string) {
 		Amount: amount * types.Coin,
 		Note:   note,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "Transfer",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TransferFundTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -289,8 +335,17 @@ func commentProposal(cmd *cobra.Command, args []string) {
 		RepHash:    repHash,
 		Comment:    comment,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "CommentProp",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.CommentProposalTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
