@@ -208,6 +208,11 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return err
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
+	assertExec := action.GetAssertExec()
+	token := action.GetTokenName()
+	if token == "" {
+		return types.ErrInvalidParam
+	}
 	if pty.ActionPublic2Privacy == action.Ty {
 		return nil
 	}
@@ -220,12 +225,6 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
 	var amount int64
 	keyinput := input.Keyinput
-	assertExec := action.GetAssertExec()
-	token := action.GetTokenName()
-
-	if assertExec == "" || token == "" {
-		return types.ErrInvalidParam
-	}
 
 	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
 		amount = action.GetPrivacy2Public().Amount
@@ -269,8 +268,8 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrPubkeysOfUTXO
 	}
 
-	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
-	if assertExec == "coins" && !types.IsPara() {
+	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
+	if !types.IsPara() && (assertExec == "" || assertExec == "coins") {
 
 		for _, output := range output.Keyoutput {
 			totalOutput += output.Amount
