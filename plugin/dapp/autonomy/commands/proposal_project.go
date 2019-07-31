@@ -10,6 +10,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"encoding/json"
 )
 
 // ProposalProjectCmd 创建提案命令
@@ -86,8 +87,18 @@ func proposalProject(cmd *cobra.Command, args []string) {
 		ProjectNeedBlockNum: projectNeedBlockNum,
 	}
 
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PropProject",
+		Payload:    payLoad,
+	}
+
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PropProjectTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -114,8 +125,17 @@ func revokeProposalProject(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalProject{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "RvkPropProject",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.RevokeProposalProjectTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -151,8 +171,17 @@ func voteProposalProject(cmd *cobra.Command, args []string) {
 		ProposalID: ID,
 		Approve:    isapp,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "VotePropProject",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.VoteProposalProjectTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -189,8 +218,17 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 		ProposalID: ID,
 		Oppose:     isopp,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "PubVotePropProject",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.PubVoteProposalProjectTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
@@ -217,8 +255,17 @@ func terminateProposalProject(cmd *cobra.Command, args []string) {
 	params := &auty.RevokeProposalProject{
 		ProposalID: ID,
 	}
+	payLoad, err := json.Marshal(params)
+	if err != nil {
+		return
+	}
+	pm := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(auty.AutonomyX),
+		ActionName: "TmintPropProject",
+		Payload:    payLoad,
+	}
 	var res string
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "autonomy.TerminateProposalProjectTx", params, &res)
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", pm, &res)
 	ctx.RunWithoutMarshal()
 }
 
