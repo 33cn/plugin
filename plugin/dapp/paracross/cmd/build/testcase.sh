@@ -917,7 +917,8 @@ function privacy_transfer_test() {
     echo "#enable privacy"
     ${1} privacy enable -a all
 
-    echo "#transfer to privacy exec"
+    echo "#transfer to privacy exec" #send to user.p.para.privacy for privacy transfer fee
+    ${MAIN_CLI} send coins transfer -a 1 -t 15XvcMYK6H1La7ns4yzJhkyurdpXsjjzfQ -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
     ${1} send coins transfer -a 10 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     block_wait "${1}" 2
     ${1} send coins send_exec -a 10 -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
