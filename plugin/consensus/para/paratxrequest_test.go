@@ -152,7 +152,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash0,
 		Hash:       hash1,
 	}
-	block1 := &pt.ParaTxDetail{
+	block1 := &types.ParaTxDetail{
 		Type:   addAct,
 		Header: header1,
 	}
@@ -161,7 +161,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash1,
 		Hash:       hash2,
 	}
-	block2 := &pt.ParaTxDetail{
+	block2 := &types.ParaTxDetail{
 		Type:   addAct,
 		Header: header2,
 	}
@@ -170,7 +170,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash2,
 		Hash:       hash3,
 	}
-	block3 := &pt.ParaTxDetail{
+	block3 := &types.ParaTxDetail{
 		Type:   addAct,
 		Header: header3,
 	}
@@ -180,7 +180,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash2,
 		Hash:       hash3,
 	}
-	block4 := &pt.ParaTxDetail{
+	block4 := &types.ParaTxDetail{
 		Type:   delAct,
 		Header: header4,
 	}
@@ -189,7 +189,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash1,
 		Hash:       hash2,
 	}
-	block5 := &pt.ParaTxDetail{
+	block5 := &types.ParaTxDetail{
 		Type:   delAct,
 		Header: header5,
 	}
@@ -198,13 +198,13 @@ func TestVerifyMainBlocks(t *testing.T) {
 		ParentHash: hash1,
 		Hash:       hash6,
 	}
-	block6 := &pt.ParaTxDetail{
+	block6 := &types.ParaTxDetail{
 		Type:   addAct,
 		Header: header6,
 	}
 
-	mainBlocks := &pt.ParaTxDetails{
-		Items: []*pt.ParaTxDetail{block1, block2, block3, block4, block5, block6},
+	mainBlocks := &types.ParaTxDetails{
+		Items: []*types.ParaTxDetail{block1, block2, block3, block4, block5, block6},
 	}
 
 	err := verifyMainBlocks(hash0, mainBlocks)
