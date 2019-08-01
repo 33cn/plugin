@@ -75,14 +75,15 @@ message DposVoteAction {
         DposVrfMRegist registVrfM                  = 8;
         DposVrfRPRegist registVrfRP                = 9;
         DposVrfQuery vrfQuery                      = 10;
+        DposCBInfo recordCB                        = 11;
     }
-    int32 ty = 11;
+    int32 ty = 12;
 }
 
 message CandidatorQuery{
     repeated string  pubkeys   = 1;  //候选节点公钥集合
-    int32  topN               = 2;  //topN
-    int32 ty                  = 3;  //1:按公钥集合查询，2：按topN票数查询
+    int32  topN                = 2;  //topN
+    int32 ty                   = 3;  //1:按公钥集合查询，2：按topN票数查询
 }
 
 
@@ -90,10 +91,10 @@ message CandidatorQuery{
 //Candidator 候选节点信息
 message JsonCandidator {
     string  pubkey   = 1;  //候选节点的公钥
-    string address  = 2;  //后续节点的地址
-    string ip       = 3;  //候选节点的运行IP
-    int64  votes    = 4;  //候选节点的投票数
-    int64  status   = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+    string address   = 2;  //后续节点的地址
+    string ip        = 3;  //候选节点的运行IP
+    int64  votes     = 4;  //候选节点的投票数
+    int64  status    = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
 }
 message CandidatorReply{
     repeated  JsonCandidator candidators   = 1;  //候选节点
@@ -101,7 +102,7 @@ message CandidatorReply{
 
 message DposVoteQuery{
     repeated string  pubkeys   = 1;  //候选节点的公钥，如果为空，则查询所有，否则，查询该地址给具体候选节点的投票
-    string  addr  = 2;              //要查询的地址
+    string  addr               = 2;              //要查询的地址
 }
 
 message JsonDposVoter{
@@ -118,7 +119,7 @@ message DposVoteReply{
 
 //ReceiptCandicator 候选者收据信息
 message ReceiptCandicator {
-    int64   Index        = 1;
+    int64   Index             = 1;
     bytes   pubkey            = 2;
     string  address           = 3;
     int64   status            = 4;
@@ -219,4 +220,45 @@ message JsonVrfInfo {
 
 message DposVrfReply{
     repeated JsonVrfInfo vrf = 1;
+}
+
+message DposCycleBoundaryInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    bytes stopHash       = 3;
+    bytes pubkey         = 4;
+    bytes signature      = 5;
+}
+
+message DposCBInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    string pubkey        = 4;
+    string signature     = 5;
+}
+
+message DposCBQuery {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    int32 ty             = 4;
+}
+
+message DposCBReply {
+    DposCBInfo cbInfo = 1;
+}
+
+//ReceiptCB CycleBoundary收据信息
+message ReceiptCB {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    int64   time         = 6;
+    int64   cycleStart   = 7;
+    int64   cycleMiddle  = 8;
+    int64   cycleStop    = 9;
+    DposCycleBoundaryInfo cbInfo = 10;
 }

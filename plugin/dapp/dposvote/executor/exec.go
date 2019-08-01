@@ -39,7 +39,6 @@ func (d *DPos) Exec_CancelVote(payload *dty.DposCancelVote, tx *types.Transactio
 	return action.CancelVote(payload)
 }
 
-
 //Exec_RegistVrfM DPos执行器注册一个受托节点的Vrf M信息
 func (d *DPos) Exec_RegistVrfM(payload *dty.DposVrfMRegist, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(d, tx, index)
@@ -52,3 +51,8 @@ func (d *DPos) Exec_RegistVrfRP(payload *dty.DposVrfRPRegist, tx *types.Transact
 	return action.RegistVrfRP(payload)
 }
 
+//Exec_RecordCB DPos执行器记录CycleBoundary信息
+func (d *DPos) Exec_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(d, tx, index)
+	return action.RecordCB(payload)
+}

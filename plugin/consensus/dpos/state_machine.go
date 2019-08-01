@@ -6,6 +6,7 @@ package dpos
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"math"
 	"time"
@@ -13,6 +14,9 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"github.com/33cn/chain33/types"
+
 )
 
 var (
@@ -49,6 +53,7 @@ var WaitNotifyStateObj = &WaitNofifyState{}
 // Task 为计算当前时间所属周期的数据结构
 type Task struct {
 	nodeID      int64
+	cycle       int64
 	cycleStart  int64
 	cycleStop   int64
 	periodStart int64
@@ -60,7 +65,7 @@ type Task struct {
 // DecideTaskByTime 根据时间戳计算所属的周期，包括cycle周期，负责出块周期，当前出块周期
 func DecideTaskByTime(now int64) (task Task) {
 	task.nodeID = now % dposCycle / dposPeriod
-
+	task.cycle = now / dposCycle
 	task.cycleStart = now - now%dposCycle
 	task.cycleStop = task.cycleStart + dposCycle - 1
 
@@ -120,6 +125,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		voteItem := &dpostype.VoteItem{
 			VotedNodeAddress: addr,
 			VotedNodeIndex:   int32(task.nodeID),
+			Cycle:            task.cycle,
 			CycleStart:       task.cycleStart,
 			CycleStop:        task.cycleStop,
 			PeriodStart:      task.periodStart,
@@ -311,6 +317,42 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		if now >= cs.currentVote.PeriodStop {
 			//当前时间超过了节点切换时间，需要进行重新投票
 			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop)
+
+			//如果到了cycle结尾，需要再出一个块，把最终的CycleBoundary信息发布出去
+			if now >= cs.currentVote.CycleStop {
+				dposlog.Info("Create new tx for cycle change to record cycle boundary info.", "height", block.Height)
+
+				info := &dty.DposCBInfo{
+					Cycle: cs.currentVote.Cycle,
+					StopHeight: block.Height,
+					StopHash: hex.EncodeToString(block.Hash()),
+					Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
+				}
+
+				err := cs.privValidator.SignCBInfo(info)
+				if err != nil {
+					dposlog.Error("SignCBInfo failed.", "err", err)
+				} else {
+					tx, err := cs.client.CreateRecordCBTx(info)
+					if err != nil {
+						dposlog.Error("CreateRecordCBTx failed.", "err", err)
+					}else {
+						cs.privValidator.SignTx(tx)
+						dposlog.Info("Sign RecordCBTx.")
+						//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+						msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+						err = cs.client.GetQueueClient().Send(msg, false)
+						if err != nil {
+							dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
+						} else {
+							dposlog.Error("Send RecordCBTx to mempool ok.", "err", err)
+						}
+					}
+				}
+
+				cs.UpdateCBInfo(info)
+			}
+
 			//当前时间超过了节点切换时间，需要进行重新投票
 			notify := &dpostype.Notify{
 				DPosNotify: &dpostype.DPosNotify{
@@ -542,6 +584,14 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 		}
 		hint.Stop()
 	}
+
+	info := &dty.DposCBInfo{
+		Cycle: notify.Vote.Cycle,
+		StopHeight: notify.HeightStop,
+		StopHash: hex.EncodeToString(notify.HashStop),
+	}
+
+	cs.UpdateCBInfo(info)
 
 	cs.ClearCachedNotify()
 	cs.SaveNotify()

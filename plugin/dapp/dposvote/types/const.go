@@ -13,6 +13,7 @@ const (
 	DposVoteActionCancelVote
 	DposVoteActionRegistVrfM
 	DposVoteActionRegistVrfRP
+	DposVoteActionRecordCB
 
 	CandidatorStatusRegist = iota + 1
 	CandidatorStatusVoted
@@ -22,17 +23,20 @@ const (
 
 	VrfStatusMRegist = iota + 1
 	VrfStatusRPRegist
+
+	CBStatusRecord = iota + 1
 )
 
 //log ty
 const (
-	TyLogCandicatorRegist   = 1001
-	TyLogCandicatorVoted    = 1002
-	TyLogCandicatorCancelVoted  = 1003
+	TyLogCandicatorRegist        = 1001
+	TyLogCandicatorVoted         = 1002
+	TyLogCandicatorCancelVoted   = 1003
 	TyLogCandicatorCancelRegist  = 1004
-	TyLogCandicatorReRegist  = 1005
-	TyLogVrfMRegist  = 1006
-	TyLogVrfRPRegist  = 1007
+	TyLogCandicatorReRegist      = 1005
+	TyLogVrfMRegist              = 1006
+	TyLogVrfRPRegist             = 1007
+	TyLogCBInfoRecord            = 1008
 )
 
 const (
@@ -95,15 +99,42 @@ const (
 	//CreateRegistVrfRPTx 创建注册Vrf的R/P信息的交易
 	CreateRegistVrfRPTx = "RegistVrfRP"
 
-	//QueryVrfByTime 创建根据time查询Vrf信息
+	//CreateRecordCBTx 创建记录CB信息的交易
+	CreateRecordCBTx = "RecordCB"
+
+	//QueryVrfByTime 根据time查询Vrf信息
 	QueryVrfByTime = 1
 
-	//QueryVrfByCycle 创建根据cycle查询Vrf信息
+	//QueryVrfByCycle 根据cycle查询Vrf信息
 	QueryVrfByCycle = 2
 
-	//QueryVrfByCycleForTopN 创建根据cycle查询当前topN的候选节点的Vrf信息
+	//QueryVrfByCycleForTopN 根据cycle查询当前topN的候选节点的Vrf信息
 	QueryVrfByCycleForTopN = 3
 
-	//QueryVrfByCycleForPubkeys 创建根据cycle查询指定pubkey的多个候选节点的Vrf信息
+	//QueryVrfByCycleForPubkeys 根据cycle查询指定pubkey的多个候选节点的Vrf信息
 	QueryVrfByCycleForPubkeys = 4
+
+	//FuncNameQueryCBInfoByCycle func name
+	FuncNameQueryCBInfoByCycle = "QueryCBInfoByCycle"
+
+	//FuncNameQueryCBInfoByHeight func name
+	FuncNameQueryCBInfoByHeight = "QueryCBInfoByHeight"
+
+	//FuncNameQueryCBInfoByHash func name
+	FuncNameQueryCBInfoByHash = "QueryCBInfoByHash"
+
+	//FuncNameQueryLatestCBInfoByHeight func name
+	FuncNameQueryLatestCBInfoByHeight = "QueryLatestCBInfoByHeight"
+
+	//QueryCBInfoByCycle 根据cycle查询cycle boundary信息
+	QueryCBInfoByCycle = 1
+
+	//QueryCBInfoByHeight 根据stopHeight查询cycle boundary信息
+	QueryCBInfoByHeight = 2
+
+	//QueryCBInfoByHash 根据stopHash查询cycle boundary信息
+	QueryCBInfoByHash = 3
+
+	//QueryCBInfoByHeight 根据stopHeight查询cycle boundary信息
+	QueryLatestCBInfoByHeight = 4
 )

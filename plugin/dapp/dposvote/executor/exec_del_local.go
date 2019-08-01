@@ -156,6 +156,22 @@ func (d *DPos) rollbackVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err erro
 	return nil, nil
 }
 
+func (d *DPos) rollbackCBInfo(log *dty.ReceiptCB) (kvs []*types.KeyValue, err error) {
+	if log.Status == dty.CBStatusRecord {
+		cbTable := dty.NewDposCBTable(d.GetLocalDB())
+
+		//注册回滚,cand表删除记录
+		err = cbTable.Del([]byte(fmt.Sprintf("%018d", log.Cycle)))
+		if err != nil {
+			return nil, err
+		}
+		kvs, err = cbTable.Save()
+		return kvs, err
+	}
+
+	return nil, nil
+}
+
 func (d *DPos) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receipt.GetTy() != types.ExecOk {
@@ -175,12 +191,23 @@ func (d *DPos) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, erro
 			}
 			dbSet.KV = append(dbSet.KV, kv...)
 
-		case dty.VrfStatusMRegist, dty.VrfStatusRPRegist:
+		case dty.TyLogVrfMRegist, dty.TyLogVrfRPRegist:
 			receiptLog := &dty.ReceiptVrf{}
 			if err := types.Decode(log.Log, receiptLog); err != nil {
 				return nil, err
 			}
 			kv, err := d.rollbackVrf(receiptLog)
+			if err != nil {
+				return nil, err
+			}
+			dbSet.KV = append(dbSet.KV, kv...)
+
+		case dty.TyLogCBInfoRecord:
+			receiptLog := &dty.ReceiptCB{}
+			if err := types.Decode(log.Log, receiptLog); err != nil {
+				return nil, err
+			}
+			kv, err := d.rollbackCBInfo(receiptLog)
 			if err != nil {
 				return nil, err
 			}
@@ -223,5 +250,10 @@ func (d *DPos) ExecDelLocal_VrfMRegist(payload *dty.DposVrfMRegist, tx *types.Tr
 
 //ExecDelLocal_VrfRPRegist method
 func (d *DPos) ExecDelLocal_VrfRPRegist(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return d.execDelLocal(receiptData)
+}
+
+//ExecDelLocal_RecordCB method
+func (d *DPos) ExecDelLocal_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }

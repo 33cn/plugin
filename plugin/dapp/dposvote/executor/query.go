@@ -43,3 +43,18 @@ func (d *DPos) Query_QueryVrfByCycleForTopN(in *dty.DposVrfQuery) (types.Message
 func (d *DPos) Query_QueryVrfByCycleForPubkeys(in *dty.DposVrfQuery) (types.Message, error) {
 	return queryVrfByCycleForPubkeys(d.GetLocalDB(), in)
 }
+
+//Query_QueryCBInfoByCycle method
+func (d *DPos) Query_QueryCBInfoByCycle(in *dty.DposCBQuery) (types.Message, error) {
+	return queryCBInfoByCycle(d.GetLocalDB(), in)
+}
+
+//Query_QueryCBInfoByHeight method
+func (d *DPos) Query_QueryCBInfoByHeight(in *dty.DposCBQuery) (types.Message, error) {
+	return queryCBInfoByHeight(d.GetLocalDB(), in)
+}
+
+//Query_QueryCBInfoByHash method
+func (d *DPos) Query_QueryCBInfoByHash(in *dty.DposCBQuery) (types.Message, error) {
+	return queryCBInfoByHash(d.GetLocalDB(), in)
+}

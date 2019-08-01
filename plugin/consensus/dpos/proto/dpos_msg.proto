@@ -6,12 +6,13 @@ package types;
 message VoteItem {
     int32 votedNodeIndex   = 1;    //被投票的节点索引
     bytes votedNodeAddress = 2;    //被投票的节点地址
-    int64 cycleStart       = 3;    //大周期起始时间
-    int64 cycleStop        = 4;    //大周期终止时间
-    int64 periodStart      = 5;    //新节点负责出块的起始时间
-    int64 periodStop       = 6;    //新节点负责出块的终止时间
-    int64 height           = 7;    //新节点负责出块的起始高度
-    bytes voteID           = 8;    //选票ID
+    int64 cycle            = 3;    //大周期序号
+    int64 cycleStart       = 4;    //大周期起始时间
+    int64 cycleStop        = 5;    //大周期终止时间
+    int64 periodStart      = 6;    //新节点负责出块的起始时间
+    int64 periodStop       = 7;    //新节点负责出块的终止时间
+    int64 height           = 8;    //新节点负责出块的起始高度
+    bytes voteID           = 9;    //选票ID
 }
 
 //DPosVote Dpos共识的节点投票，为达成共识用。

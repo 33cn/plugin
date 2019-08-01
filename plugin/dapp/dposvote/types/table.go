@@ -230,3 +230,59 @@ func (tx *DposVrfRPRow) Get(key string) ([]byte, error) {
 
 	return nil, types.ErrNotFound
 }
+
+
+
+var opt_dpos_cb = &table.Option{
+	Prefix:  "LODB-dpos",
+	Name:    "cb",
+	Primary: "cycle",
+	Index:   []string{"height", "hash"},
+}
+
+//NewDposVrfRPTable 新建表
+func NewDposCBTable(kvdb db.KV) *table.Table {
+	rowmeta := NewDposCBRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_cb)
+	if err != nil {
+		panic(err)
+	}
+	return table
+}
+
+//DposCBRow table meta 结构
+type DposCBRow struct {
+	*DposCycleBoundaryInfo
+}
+
+//NewDposVrfRPRow 新建一个meta 结构
+func NewDposCBRow() *DposCBRow {
+	return &DposCBRow{DposCycleBoundaryInfo: &DposCycleBoundaryInfo{}}
+}
+
+//CreateRow 新建数据行
+func (tx *DposCBRow) CreateRow() *table.Row {
+	return &table.Row{Data: &DposCycleBoundaryInfo{}}
+}
+
+//SetPayload 设置数据
+func (tx *DposCBRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*DposCycleBoundaryInfo); ok {
+		tx.DposCycleBoundaryInfo = txdata
+		return nil
+	}
+	return types.ErrTypeAsset
+}
+
+//Get 按照indexName 查询 indexValue
+func (tx *DposCBRow) Get(key string) ([]byte, error) {
+	if key == "cycle" {
+		return []byte(fmt.Sprintf("%018d", tx.Cycle)), nil
+	} else if key == "height" {
+		return []byte(fmt.Sprintf("%018d", tx.StopHeight)), nil
+	} else if key == "hash" {
+		return []byte(fmt.Sprintf("%X", tx.StopHash)), nil
+	}
+
+	return nil, types.ErrNotFound
+}

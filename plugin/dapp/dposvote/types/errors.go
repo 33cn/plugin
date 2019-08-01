@@ -22,4 +22,7 @@ var (
 	ErrParamStatusInvalid       = errors.New("ErrParamStatusInvalid")
 	ErrParamAddressMustnotEmpty = errors.New("ErrParamAddressMustnotEmpty")
 	ErrSaveTable                = errors.New("ErrSaveTable")
+	ErrCBRecordExist            = errors.New("ErrCBRecordExist")
+	ErrCycleNotAllowed          = errors.New("ErrCycleNotAllowed")
+
 )

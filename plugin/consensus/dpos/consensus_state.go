@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/types"
 	"reflect"
 	"runtime/debug"
 	"sync"
@@ -16,6 +17,8 @@ import (
 
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"github.com/golang/protobuf/proto"
 )
 
 //-----------------------------------------------------------------------------
@@ -96,6 +99,8 @@ type ConsensusState struct {
 	cachedVotes []*dpostype.DPosVote
 
 	cachedNotify *dpostype.DPosNotify
+
+	cycleBoundaryMap map[int64] *dty.DposCBInfo
 }
 
 // NewConsensusState returns a new ConsensusState.
@@ -109,6 +114,7 @@ func NewConsensusState(client *Client, valMgr ValidatorMgr) *ConsensusState {
 		Quit:      make(chan struct{}),
 		dposState: InitStateObj,
 		dposVotes: nil,
+		cycleBoundaryMap: make(map[int64] *dty.DposCBInfo),
 	}
 
 	cs.updateToValMgr(valMgr)
@@ -530,4 +536,94 @@ func (cs *ConsensusState) VerifyNotify(notify *dpostype.DPosNotify) bool {
 	}
 
 	return true
+}
+
+// QueryCycleBoundaryInfo method
+func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error){
+	req := &dty.DposCBQuery{Cycle: cycle, Ty: dty.QueryCBInfoByCycle}
+	param, err := proto.Marshal(req)
+	if err != nil {
+		dposlog.Error("Marshal DposCBQuery failed", "err", err)
+		return nil, err
+	}
+	msg := cs.client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
+		&types.ChainExecutor{
+			Driver: dty.DPosX,
+			FuncName: dty.FuncNameQueryCBInfoByCycle,
+			StateHash: zeroHash[:],
+			Param:param,
+		})
+
+	err = cs.client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		dposlog.Error("send DposCBQuery to dpos exec failed", "err", err)
+		return nil, err
+	}
+
+	msg, err = cs.client.GetQueueClient().Wait(msg)
+	if err != nil {
+		dposlog.Error("send DposCBQuery wait failed", "err", err)
+		return nil, err
+	}
+
+	return msg.GetData().(types.Message).(*dty.DposCBInfo), nil
+}
+
+// InitCycleBoundaryInfo method
+func (cs *ConsensusState) InitCycleBoundaryInfo(){
+	now := time.Now().Unix()
+	task := DecideTaskByTime(now)
+
+	info, err := cs.QueryCycleBoundaryInfo(task.cycle)
+	if err == nil && info != nil {
+		//cs.cycleBoundaryMap[task.cycle] = info
+		cs.UpdateCBInfo(info)
+		return
+	}
+
+	info, err = cs.QueryCycleBoundaryInfo(task.cycle - 1)
+	if err == nil && info != nil {
+		//cs.cycleBoundaryMap[task.cycle] = info
+		cs.UpdateCBInfo(info)
+	}
+
+	return
+}
+
+func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
+	valueNumber := len(cs.cycleBoundaryMap)
+	if valueNumber == 0 {
+		cs.cycleBoundaryMap[info.Cycle] = info
+		return
+	}
+
+	oldestCycle := int64(0)
+	for k, _ := range cs.cycleBoundaryMap {
+		if k == info.Cycle {
+			cs.cycleBoundaryMap[info.Cycle] = info
+			return
+		} else {
+			if oldestCycle == 0 {
+				oldestCycle = k
+			} else if oldestCycle > k {
+				oldestCycle = k
+			}
+		}
+	}
+
+	if valueNumber >= 5 {
+		delete(cs.cycleBoundaryMap, oldestCycle)
+		cs.cycleBoundaryMap[info.Cycle] = info
+	} else {
+		cs.cycleBoundaryMap[info.Cycle] = info
+	}
+}
+
+func (cs *ConsensusState) GetCBInfoByCircle(cycle int64) (info *dty.DposCBInfo) {
+	if v, ok := cs.cycleBoundaryMap[cycle];ok {
+		info = v
+		return info
+	}
+
+	return nil
 }

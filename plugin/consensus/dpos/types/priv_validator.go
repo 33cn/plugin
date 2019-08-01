@@ -14,6 +14,8 @@ import (
 	"sync"
 
 	"github.com/33cn/chain33/common/crypto"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"github.com/33cn/chain33/types"
 )
 
 // KeyText ...
@@ -30,6 +32,8 @@ type PrivValidator interface {
 
 	SignVote(chainID string, vote *Vote) error
 	SignNotify(chainID string, notify *Notify) error
+	SignCBInfo(info *dty.DposCBInfo) error
+	SignTx(tx *types.Transaction)
 }
 
 // PrivValidatorFS implements PrivValidator using data persisted to disk
@@ -312,6 +316,41 @@ func (pv *PrivValidatorImp) SignNotify(chainID string, notify *Notify) error {
 	}
 	notify.Signature = signature.Bytes()
 	return nil
+}
+
+// SignCBInfo signs a canonical representation of the DposCBInfo, Implements PrivValidator.
+func (pv *PrivValidatorImp) SignCBInfo(info *dty.DposCBInfo) error {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+
+	buf := new(bytes.Buffer)
+
+	info.Pubkey = hex.EncodeToString(pv.PubKey.Bytes())
+	canonical := dty.CanonicalOnceCBInfo{
+		Cycle: info.Cycle,
+		StopHeight: info.StopHeight,
+		StopHash: info.StopHash,
+		Pubkey: info.Pubkey,
+	}
+
+	byteCB, err := json.Marshal(&canonical)
+	if err != nil {
+		return errors.New(Fmt("Error marshal CanonicalOnceCBInfo: %v", err))
+	}
+
+	_, err = buf.Write(byteCB)
+	if err != nil {
+		return errors.New(Fmt("Error write buffer: %v", err))
+	}
+
+	signature := pv.PrivKey.Sign(buf.Bytes())
+
+	info.Signature = hex.EncodeToString(signature.Bytes())
+	return nil
+}
+// SignTx signs a tx, Implements PrivValidator.
+func (pv *PrivValidatorImp)SignTx(tx *types.Transaction){
+	tx.Sign(types.SECP256K1, pv.PrivKey)
 }
 
 // Persist height/round/step and signature

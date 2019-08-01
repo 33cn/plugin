@@ -554,6 +554,70 @@ func (action *Action) newCandicatorInfo(regist *dty.DposCandidatorRegist) *dty.C
 	return candInfo
 }
 
+
+//queryCBInfoByCycle 根据cycle查询stopHeight及stopHash等CBInfo信息，用于VRF计算
+func queryCBInfoByCycle(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error) {
+	cbTable := dty.NewDposCBTable(kvdb)
+	query := cbTable.GetQuery(kvdb)
+
+	rows, err := query.ListIndex("cycle", []byte(fmt.Sprintf("%018d", req.Cycle)), nil, 1, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	cbInfo := rows[0].Data.(*dty.DposCycleBoundaryInfo)
+	info := &dty.DposCBInfo{
+		Cycle: cbInfo.Cycle,
+		StopHeight: cbInfo.StopHeight,
+		StopHash: hex.EncodeToString(cbInfo.StopHash),
+		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
+		Signature: hex.EncodeToString(cbInfo.StopHash),
+	}
+	return &dty.DposCBReply{CbInfo: info}, nil
+}
+
+//queryCBInfoByHeight 根据stopHeight查询stopHash等CBInfo信息，用于VRF计算
+func queryCBInfoByHeight(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error) {
+	cbTable := dty.NewDposCBTable(kvdb)
+	query := cbTable.GetQuery(kvdb)
+
+	rows, err := query.ListIndex("height", []byte(fmt.Sprintf("%018d", req.StopHeight)), nil, 1, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	cbInfo := rows[0].Data.(*dty.DposCycleBoundaryInfo)
+	info := &dty.DposCBInfo{
+		Cycle: cbInfo.Cycle,
+		StopHeight: cbInfo.StopHeight,
+		StopHash: hex.EncodeToString(cbInfo.StopHash),
+		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
+		Signature: hex.EncodeToString(cbInfo.StopHash),
+	}
+	return &dty.DposCBReply{CbInfo: info}, nil
+}
+
+//queryCBInfoByHash 根据stopHash查询CBInfo信息，用于VRF计算
+func queryCBInfoByHash(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error) {
+	cbTable := dty.NewDposCBTable(kvdb)
+	query := cbTable.GetQuery(kvdb)
+
+	rows, err := query.ListIndex("hash", []byte(fmt.Sprintf("%X", req.StopHash)), nil, 1, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	cbInfo := rows[0].Data.(*dty.DposCycleBoundaryInfo)
+	info := &dty.DposCBInfo{
+		Cycle: cbInfo.Cycle,
+		StopHeight: cbInfo.StopHeight,
+		StopHash: hex.EncodeToString(cbInfo.StopHash),
+		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
+		Signature: hex.EncodeToString(cbInfo.StopHash),
+	}
+	return &dty.DposCBReply{CbInfo: info}, nil
+}
+
 //Regist 注册候选节点
 func (action *Action) Regist(regist *dty.DposCandidatorRegist) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -884,13 +948,6 @@ func (action *Action) RegistVrfM(vrfMReg *dty.DposVrfMRegist) (*types.Receipt, e
 		return nil, types.ErrInvalidParam
 	}
 
-	/*
-	bM, err := hex.DecodeString(vrfMReg.M)
-	if err != nil {
-		logger.Info("RegistVrfM", "addr", action.fromaddr, "execaddr", action.execaddr, "M is not correct",
-			vrfMReg.M)
-		return nil, types.ErrInvalidParam
-	}*/
 	bM := []byte(vrfMReg.M)
 
 	req := &dty.CandidatorQuery{}
@@ -1042,6 +1099,74 @@ func (action *Action) RegistVrfRP(vrfRPReg *dty.DposVrfRPRegist) (*types.Receipt
 	r.CycleMiddle = middleTime
 
 	log.Ty = dty.TyLogVrfRPRegist
+	log.Log = types.Encode(r)
+
+	logs = append(logs, log)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+//RegistVrfRP 注册受托节点的Vrf R/P信息
+func (action *Action) RecordCB(cbInfo *dty.DposCBInfo) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	hash, err := hex.DecodeString(cbInfo.StopHash)
+	if err != nil {
+		logger.Info("RecordCB", "addr", action.fromaddr, "execaddr", action.execaddr, "StopHash is not correct", cbInfo.StopHash)
+		return nil, types.ErrInvalidParam
+	}
+
+	pubkey, err := hex.DecodeString(cbInfo.Pubkey)
+	if err != nil {
+		logger.Info("RecordCB", "addr", action.fromaddr, "execaddr", action.execaddr, "Pubkey is not correct", cbInfo.Pubkey)
+		return nil, types.ErrInvalidParam
+	}
+
+	sig, err := hex.DecodeString(cbInfo.Signature)
+	if err != nil {
+		logger.Info("RecordCB", "addr", action.fromaddr, "execaddr", action.execaddr, "Sig is not correct", cbInfo.Signature)
+		return nil, types.ErrInvalidParam
+	}
+
+	cb := &dty.DposCycleBoundaryInfo{
+		Cycle: cbInfo.Cycle,
+		StopHeight: cbInfo.StopHeight,
+		StopHash: hash,
+		Pubkey: pubkey,
+		Signature: sig,
+	}
+
+	cbTable := dty.NewDposCBTable(action.localDB)
+	query := cbTable.GetQuery(action.localDB)
+	rows, err := query.ListIndex("cycle", []byte(fmt.Sprintf("%018d", cbInfo.Cycle)), nil, 1, 0)
+	if err == nil && rows[0] != nil {
+		logger.Error("RecordCB failed", "addr", action.fromaddr, "execaddr", action.execaddr, "CB info is already recorded.", cbInfo.String())
+		return nil, dty.ErrCBRecordExist
+	}
+
+	cycleInfo := calcCycleByTime(action.blocktime)
+
+	if cbInfo.Cycle > cycleInfo.cycle + 1 || cbInfo.Cycle < cycleInfo.cycle - 2 {
+		logger.Error("RecordCB failed for cycle over range", "addr", action.fromaddr, "execaddr", action.execaddr, "CB info cycle", cbInfo.Cycle, "current cycle", cycleInfo.cycle)
+		return nil, dty.ErrCycleNotAllowed
+	}
+
+	middleTime := cycleInfo.cycleStart + (cycleInfo.cycleStop - cycleInfo.cycleStart) / 2
+	log := &types.ReceiptLog{}
+	r := &dty.ReceiptCB{}
+	r.Index = action.getIndex()
+	r.Pubkey = pubkey
+	r.Status = dty.CBStatusRecord
+	r.Cycle = cycleInfo.cycle
+	r.Height = action.mainHeight
+	r.Time = action.blocktime
+	r.CycleStart = cycleInfo.cycleStart
+	r.CycleStop = cycleInfo.cycleStop
+	r.CycleMiddle = middleTime
+	r.CbInfo = cb
+
+	log.Ty = dty.TyLogCBInfoRecord
 	log.Log = types.Encode(r)
 
 	logs = append(logs, log)

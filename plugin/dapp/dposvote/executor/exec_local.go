@@ -151,6 +151,24 @@ func (d *DPos) updateVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err error)
 	return kvs, nil
 }
 
+func (d *DPos) updateCB(log *dty.ReceiptCB) (kvs []*types.KeyValue, err error) {
+	if log.Status == dty.CBStatusRecord {
+		cbTable := dty.NewDposCBTable(d.GetLocalDB())
+
+		err = cbTable.Add(log.CbInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		kvs, err = cbTable.Save()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return kvs, nil
+}
+
 func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receipt.GetTy() != types.ExecOk {
@@ -176,6 +194,17 @@ func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) 
 				return nil, err
 			}
 			kvs, err := d.updateVrf(&vrfLog)
+			if err != nil {
+				return nil, err
+			}
+			dbSet.KV = append(dbSet.KV, kvs...)
+		} else if item.Ty == dty.TyLogCBInfoRecord {
+			var cbLog dty.ReceiptCB
+			err := types.Decode(item.Log, &cbLog)
+			if err != nil {
+				return nil, err
+			}
+			kvs, err := d.updateCB(&cbLog)
 			if err != nil {
 				return nil, err
 			}
@@ -218,5 +247,10 @@ func (d *DPos) ExecLocal_RegistVrfM(payload *dty.DposVrfMRegist, tx *types.Trans
 
 //ExecLocal_VrfRPRegist method
 func (d *DPos) ExecLocal_RegistVrfRP(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return d.execLocal(receiptData)
+}
+
+//ExecLocal_RecordCB method
+func (d *DPos) ExecLocal_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }

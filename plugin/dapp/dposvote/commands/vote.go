@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/33cn/chain33/common/crypto"
 	"math/rand"
@@ -779,4 +780,157 @@ func evaluate(cmd *cobra.Command, args []string) {
 	fmt.Println("input:", data)
 	fmt.Println(fmt.Sprintf("hash:%x", vrfHash))
 	fmt.Println(fmt.Sprintf("proof:%x", vrfProof))
+}
+
+//CreateCmd to create keyfiles
+func DPosCBRecordCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cbRecord",
+		Short: "record cycle boundary info",
+		Run:   recordCB,
+	}
+	addCBRecordCmdFlags(cmd)
+	return cmd
+}
+
+func addCBRecordCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("cycle", "c", 0, "cycle")
+	cmd.MarkFlagRequired("cycle")
+	cmd.Flags().Int64P("height", "h", 0, "height")
+	cmd.MarkFlagRequired("height")
+	cmd.Flags().StringP("hash", "m", "", "block hash")
+	cmd.MarkFlagRequired("hash")
+	cmd.Flags().StringP("privKey", "k", "", "private key")
+	cmd.MarkFlagRequired("privKey")
+}
+
+func recordCB(cmd *cobra.Command, args []string) {
+	// init crypto instance
+	err := initCryptoImpl()
+	if err != nil {
+		return
+	}
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	key, _ := cmd.Flags().GetString("privKey")
+	cycle, _ := cmd.Flags().GetInt64("cycle")
+	height, _ := cmd.Flags().GetInt64("height")
+	hash, _ := cmd.Flags().GetString("hash")
+
+	bKey, err := hex.DecodeString(key)
+	if err != nil {
+		fmt.Println("Error DecodeString bKey data failed: ", err)
+		return
+	}
+
+	privKey, err := ttypes.ConsensusCrypto.PrivKeyFromBytes(bKey)
+	if err != nil {
+		fmt.Println("Error PrivKeyFromBytes failed: ", err)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+
+	canonical := dty.CanonicalOnceCBInfo{
+		Cycle: cycle,
+		StopHeight: height,
+		StopHash: hash,
+		Pubkey: hex.EncodeToString(privKey.PubKey().Bytes()),
+	}
+
+	byteCB, err := json.Marshal(&canonical)
+	if err != nil {
+		fmt.Println("Error Marshal failed: ", err)
+		return
+	}
+
+	_, err = buf.Write(byteCB)
+	if err != nil {
+		fmt.Println("Error buf.Write failed: ", err)
+		return
+	}
+
+	signature := privKey.Sign(buf.Bytes())
+	sig := hex.EncodeToString(signature.Bytes())
+
+	payload := fmt.Sprintf("{\"cycle\":\"%d\", \"stopHeight\":\"%d\", \"stopHash\":\"%s\", \"pubkey\":\"%s\", \"signature\":\"%s\"}",
+		cycle, height, hash, hex.EncodeToString(privKey.PubKey().Bytes()), sig)
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(dty.DPosX),
+		ActionName: dty.CreateRecordCBTx,
+		Payload:    []byte(payload),
+	}
+
+	var res string
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+//DPosVrfQueryCmd 构造VRF相关信息查询的命令行
+func DPosCBQueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cbQuery",
+		Short: "query cycle boundary info",
+		Run:   cbQuery,
+	}
+	addCBQueryFlags(cmd)
+	return cmd
+}
+
+func addCBQueryFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("type", "t", "", "query type")
+	cmd.MarkFlagRequired("type")
+
+	cmd.Flags().Int64P("cycle", "c", 0, "cycle")
+	cmd.Flags().Int64P("height", "h", 0, "height")
+	cmd.Flags().StringP("hash", "m", "", "block hash")
+}
+
+func cbQuery(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ty, _ := cmd.Flags().GetString("type")
+	cycle, _ := cmd.Flags().GetInt64("cycle")
+	height, _ := cmd.Flags().GetInt64("height")
+	hash, _ := cmd.Flags().GetString("hash")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = dty.DPosX
+
+	switch ty {
+	case "cycle":
+		req := &dty.DposCBQuery{
+			Ty: dty.QueryCBInfoByCycle,
+			Cycle: cycle,
+		}
+
+		params.FuncName = dty.FuncNameQueryCBInfoByCycle
+		params.Payload = types.MustPBToJSON(req)
+		var res dty.DposCBReply
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+
+	case "height":
+		req := &dty.DposCBQuery{
+			Ty: dty.QueryCBInfoByHeight,
+			StopHeight: height,
+		}
+
+		params.FuncName = dty.FuncNameQueryCBInfoByHeight
+		params.Payload = types.MustPBToJSON(req)
+		var res dty.DposCBReply
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+
+	case "hash":
+		req := &dty.DposCBQuery{
+			Ty: dty.QueryCBInfoByHash,
+			StopHash: hash,
+		}
+
+		params.FuncName = dty.FuncNameQueryCBInfoByHash
+		params.Payload = types.MustPBToJSON(req)
+		var res dty.DposCBReply
+		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+	}
 }

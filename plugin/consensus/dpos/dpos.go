@@ -328,6 +328,7 @@ OuterLoop:
 	// 对于受托节点，才需要初始化区块，启动共识相关程序等,后续支持投票要做成动态切换的。
 	if client.isDelegator {
 		client.InitBlock()
+		client.csState.InitCycleBoundaryInfo()
 		node.Start()
 	}
 
@@ -407,6 +408,52 @@ func (client *Client) CreateBlock() {
 	}
 }
 
+// CreateBlock a routine monitor whether some transactions available and tell client by available channel
+func (client *Client) CreateBlockWithPriorTxs(priorTxs []*types.Transaction) {
+	lastBlock := client.GetCurrentBlock()
+	txs := client.RequestTx(int(types.GetP(lastBlock.Height + 1).MaxTxNumber), nil)
+	if len(priorTxs) > 0 {
+		txs = append(txs, priorTxs...)
+	}
+
+	if len(txs) == 0 {
+		block := client.GetCurrentBlock()
+		if createEmptyBlocks {
+			emptyBlock := &types.Block{}
+			emptyBlock.StateHash = block.StateHash
+			emptyBlock.ParentHash = block.Hash()
+			emptyBlock.Height = block.Height + 1
+			emptyBlock.Txs = nil
+			emptyBlock.TxHash = zeroHash[:]
+			emptyBlock.BlockTime = client.blockTime
+			err := client.WriteBlock(lastBlock.StateHash, emptyBlock)
+			//判断有没有交易是被删除的，这类交易要从mempool 中删除
+			if err != nil {
+				return
+			}
+		} else {
+			dposlog.Info("Ignore to create new Block for no tx in mempool", "Height", block.Height+1)
+		}
+
+		return
+	}
+	//check dup
+	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
+	var newblock types.Block
+	newblock.ParentHash = lastBlock.Hash()
+	newblock.Height = lastBlock.Height + 1
+	client.AddTxsToBlock(&newblock, txs)
+	//
+	newblock.Difficulty = types.GetP(0).PowLimitBits
+	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+	newblock.BlockTime = client.blockTime
+
+	err := client.WriteBlock(lastBlock.StateHash, &newblock)
+	//判断有没有交易是被删除的，这类交易要从mempool 中删除
+	if err != nil {
+		return
+	}
+}
 // StopC stop client
 func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
@@ -535,4 +582,42 @@ func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
 	}
 
 	return true
+}
+
+func (client *Client)QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error) {
+	var params rpctypes.Query4Jrpc
+	params.Execer = dty.DPosX
+
+	req := &dty.DposCBQuery{
+		Ty:    dty.QueryCBInfoByCycle,
+		Cycle: cycle,
+	}
+
+	params.FuncName = dty.FuncNameQueryCBInfoByCycle
+	params.Payload = types.MustPBToJSON(req)
+	var res dty.DposCBReply
+	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", params, &res)
+
+	result, err := ctx.RunResult()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, err
+	}
+	res = *result.(*dty.DposCBReply)
+
+	return res.CbInfo, nil
+}
+
+func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction, err error) {
+	var action dty.DposVoteAction
+	action.Value = &dty.DposVoteAction_RecordCB{
+		RecordCB: info,
+	}
+	action.Ty = dty.DposVoteActionRecordCB
+	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
 }
