@@ -253,12 +253,12 @@ func TestListProposalProject(t *testing.T) {
 	require.Equal(t, height, testcase2[2].height)
 	require.Equal(t, index, int32(testcase2[2].index))
 	//
-	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalProject{
 		Status:    auty.AutonomyStatusProposalProject,
 		Count:     10,
 		Direction: 0,
-		Index:     Index,
+		Height: height,
+		Index:     index,
 	}
 	rsp, err = au.listProposalProject(req)
 	require.NoError(t, err)
