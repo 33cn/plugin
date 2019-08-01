@@ -117,7 +117,7 @@ func (client *commitMsgClient) resetNotify() {
 }
 
 //新的区块产生，检查是否有commitTx正在发送入口
-func (client *commitMsgClient) commitTxCheckNotify(txs []*pt.TxDetail) {
+func (client *commitMsgClient) commitTxCheckNotify(txs []*types.TxDetail) {
 	if client.checkCommitTxSuccess(txs) {
 		client.sendCommitTx()
 	}
@@ -203,7 +203,7 @@ func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[
 
 }
 
-func (client *commitMsgClient) checkCommitTxSuccess(txs []*pt.TxDetail) bool {
+func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 

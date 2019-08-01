@@ -774,12 +774,12 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 	}
 
 	//抽取平行链交易和跨链交易
-	paraAllTxs := FilterTxsForParaByBlock(status.Title, blockDetail)
+	paraAllTxs := FilterTxsForPara(blockDetail.FilterParaTxsByTitle(status.Title))
 	var baseHashs [][]byte
 	for _, tx := range paraAllTxs {
 		baseHashs = append(baseHashs, tx.Hash())
 	}
-	paraCrossHashs := FilterParaCrossTxHashes(status.Title, paraAllTxs)
+	paraCrossHashs := FilterParaCrossTxHashes(paraAllTxs)
 	crossRst := util.CalcBitMapByBitMap(paraCrossHashs, baseHashs, rst)
 
 	return paraCrossHashs, crossRst, nil
@@ -805,8 +805,8 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 		return nil, nil, err
 	}
 	//校验
-	paraBaseTxs := FilterTxsForParaByBlock(status.Title, blockDetail)
-	paraCrossHashs := FilterParaCrossTxHashes(status.Title, paraBaseTxs)
+	paraBaseTxs := FilterTxsForPara(blockDetail.FilterParaTxsByTitle(status.Title))
+	paraCrossHashs := FilterParaCrossTxHashes(paraBaseTxs)
 	var baseHashs [][]byte
 	for _, tx := range paraBaseTxs {
 		baseHashs = append(baseHashs, tx.Hash())

@@ -580,7 +580,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	for _, tx := range txs {
 		status.TxHashs = append(status.TxHashs, tx.Hash())
 	}
-	txHashs := FilterParaCrossTxHashes(Title, txs)
+	txHashs := FilterParaCrossTxHashes(txs)
 	status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 
 	baseCheckTxHash := CalcTxHashsHash(status.TxHashs)

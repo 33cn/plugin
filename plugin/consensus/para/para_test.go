@@ -36,7 +36,7 @@ func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, cfg)
 
 	detail, filterTxs, _ := createTestTxs(t)
-	rst := paraexec.FilterTxsForParaByBlock(Title, detail)
+	rst := paraexec.FilterTxsForPara(detail.FilterParaTxsByTitle(Title))
 
 	assert.Equal(t, filterTxs, rst)
 

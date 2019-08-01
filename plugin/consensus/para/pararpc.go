@@ -149,15 +149,15 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 	return blockSeq, nil
 }
 
-//func (client *client) GetParaTxByTitle(req *pt.ReqParaTxByTitle) (*pt.ParaTxDetails, error) {
-//	txDetails, err := client.grpcClient.GetParaTxByTitle(context.Background(), req)
-//	if err != nil  {
-//		plog.Error("GetParaTxByTitle wrong", "err", err.Error(),"start",req.Start,"end",req.End)
-//		return nil, err
-//	}
-//
-//	return txDetails, nil
-//}
+func (client *client) GetParaTxByTitle(req *types.ReqParaTxByTitle) (*types.ParaTxDetails, error) {
+	txDetails, err := client.grpcClient.GetParaTxByTitle(context.Background(), req)
+	if err != nil {
+		plog.Error("GetParaTxByTitle wrong", "err", err.Error(), "start", req.Start, "end", req.End)
+		return nil, err
+	}
+
+	return txDetails, nil
+}
 
 func (client *client) QueryTxOnMainByHash(hash []byte) (*types.TransactionDetail, error) {
 	detail, err := client.grpcClient.QueryTransaction(context.Background(), &types.ReqHash{Hash: hash})

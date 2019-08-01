@@ -48,8 +48,8 @@ var (
 	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
 	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
-	batchFetchSeqEnable             bool
-	batchFetchSeqNum                int64 = 128
+	fetchFilterParaTxsEnable        bool
+	batchFetchBlockCount            int64 = 128
 )
 
 func init() {
@@ -86,8 +86,8 @@ type subConfig struct {
 	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
 	MaxCacheCount                   int64  `json:"maxCacheCount,omitempty"`
 	MaxSyncErrCount                 int32  `json:"maxSyncErrCount,omitempty"`
-	BatchFetchSeqEnable             uint32 `json:"batchFetchSeqEnable,omitempty"`
-	BatchFetchSeqNum                int64  `json:"batchFetchSeqNum,omitempty"`
+	FetchFilterParaTxsEnable        uint32 `json:"fetchFilterParaTxsEnable,omitempty"`
+	BatchFetchBlockCount            int64  `json:"batchFetchBlockCount,omitempty"`
 	ParaConsensStartHeight          int64  `json:"paraConsensStartHeight,omitempty"`
 }
 
@@ -128,12 +128,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		mainForkParacrossCommitTx = subcfg.MainForkParacrossCommitTx
 	}
 
-	if subcfg.BatchFetchSeqEnable > 0 {
-		batchFetchSeqEnable = true
+	if subcfg.FetchFilterParaTxsEnable > 0 {
+		fetchFilterParaTxsEnable = true
 	}
 
-	if subcfg.BatchFetchSeqNum > 0 {
-		batchFetchSeqNum = subcfg.BatchFetchSeqNum
+	if subcfg.BatchFetchBlockCount > 0 {
+		batchFetchBlockCount = subcfg.BatchFetchBlockCount
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)

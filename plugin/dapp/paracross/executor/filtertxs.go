@@ -46,7 +46,7 @@ func checkReceiptExecOk(receipt *types.ReceiptData) bool {
 // 1, 主链+平行链 user.p.xx.paracross 交易组				混合跨链资产转移  paracross主链执行成功
 // 2, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合    paracross主链执行成功
 // 3, 平行链     user.p.xx.other  交易组					混合平行链组合    other主链pack
-func filterParaTxGroup(title string, tx *types.Transaction, allTxs []*pt.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
+func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
 	var headIdx int
 
 	for i := index; i >= 0; i-- {
@@ -59,7 +59,7 @@ func filterParaTxGroup(title string, tx *types.Transaction, allTxs []*pt.TxDetai
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
 		if types.IsPara() && blockHeight < forkHeight {
-			if types.IsSpecificParaExecName(title, string(allTxs[i].Tx.Execer)) {
+			if types.IsParaExecName(string(allTxs[i].Tx.Execer)) {
 				continue
 			}
 		}
@@ -77,40 +77,32 @@ func filterParaTxGroup(title string, tx *types.Transaction, allTxs []*pt.TxDetai
 }
 
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
-func FilterTxsForPara(title string, main *pt.ParaTxDetail) []*types.Transaction {
+func FilterTxsForPara(main *types.ParaTxDetail) []*types.Transaction {
 	var txs []*types.Transaction
 	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
 	for i := 0; i < len(main.TxDetails); i++ {
 		tx := main.TxDetails[i].Tx
-		if types.IsSpecificParaExecName(title, string(tx.Execer)) {
-			if tx.GroupCount >= 2 {
-				mainTxs, endIdx := filterParaTxGroup(title, tx, main.TxDetails, i, main.Header.Height, forkHeight)
-				txs = append(txs, mainTxs...)
-				i = endIdx - 1
-				continue
-			}
-			//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
-			if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
-				continue
-			}
-
-			txs = append(txs, tx)
+		if tx.GroupCount >= 2 {
+			mainTxs, endIdx := filterParaTxGroup(tx, main.TxDetails, i, main.Header.Height, forkHeight)
+			txs = append(txs, mainTxs...)
+			i = endIdx - 1
+			continue
 		}
+		//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
+		if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
+			continue
+		}
+
+		txs = append(txs, tx)
 	}
 	return txs
 }
 
-//FilterTxsForParaByBlock include some main tx in tx group before ForkParacrossCommitTx
-func FilterTxsForParaByBlock(title string, main *types.BlockDetail) []*types.Transaction {
-	txDetail := BlockDetail2ParaTxs(0, main.Block.Hash(), main)
-	return FilterTxsForPara(title, txDetail)
-}
-
 // FilterParaCrossTxHashes only all para chain cross txs like xx.paracross exec
-func FilterParaCrossTxHashes(title string, txs []*types.Transaction) [][]byte {
+func FilterParaCrossTxHashes(txs []*types.Transaction) [][]byte {
 	var txHashs [][]byte
 	for _, tx := range txs {
-		if types.IsSpecificParaExecName(title, string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+		if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
 			txHashs = append(txHashs, tx.Hash())
 		}
 	}
@@ -188,33 +180,4 @@ func CalcTxHashsHash(txHashs [][]byte) []byte {
 	totalTxHash.Hashes = append(totalTxHash.Hashes, txHashs...)
 	data := types.Encode(totalTxHash)
 	return common.Sha256(data)
-}
-
-//BlockDetail2ParaTxs blockDetail transfer to paraTxDetail
-func BlockDetail2ParaTxs(seqType int64, blockHash []byte, blockDetail *types.BlockDetail) *pt.ParaTxDetail {
-	header := &types.Header{
-		Version:    blockDetail.Block.Version,
-		ParentHash: blockDetail.Block.ParentHash,
-		TxHash:     blockDetail.Block.TxHash,
-		StateHash:  blockDetail.Block.StateHash,
-		Height:     blockDetail.Block.Height,
-		BlockTime:  blockDetail.Block.BlockTime,
-		Difficulty: blockDetail.Block.Difficulty,
-		Signature:  blockDetail.Block.Signature,
-	}
-	header.Hash = blockHash
-
-	txDetail := &pt.ParaTxDetail{
-		Type:   seqType,
-		Header: header,
-	}
-
-	for i, tx := range blockDetail.Block.Txs {
-		detail := &pt.TxDetail{
-			Tx:      tx,
-			Receipt: blockDetail.Receipts[i],
-		}
-		txDetail.TxDetails = append(txDetail.TxDetails, detail)
-	}
-	return txDetail
 }

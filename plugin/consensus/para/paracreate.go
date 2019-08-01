@@ -34,7 +34,7 @@ func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) er
 	return client.setLocalDb(set)
 }
 
-func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *pt.ParaTxDetail) error {
+func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
 	var newblock pt.ParaLocalDbBlock
 
 	newblock.Height = lastBlock.Height + 1
@@ -312,8 +312,8 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if batchFetchSeqEnable && lastSeq-currSeq > batchFetchSeqNum {
-			return batchFetchSeqNum, nil
+		if fetchFilterParaTxsEnable && lastSeq-currSeq > batchFetchBlockCount {
+			return batchFetchBlockCount, nil
 		}
 		return 0, nil
 	}
@@ -333,7 +333,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 
 }
 
-func verifyMainBlockHash(preMainBlockHash []byte, mainBlock *pt.ParaTxDetail) error {
+func verifyMainBlockHash(preMainBlockHash []byte, mainBlock *types.ParaTxDetail) error {
 	if (bytes.Equal(preMainBlockHash, mainBlock.Header.ParentHash) && mainBlock.Type == addAct) ||
 		(bytes.Equal(preMainBlockHash, mainBlock.Header.Hash) && mainBlock.Type == delAct) {
 		return nil
@@ -344,7 +344,7 @@ func verifyMainBlockHash(preMainBlockHash []byte, mainBlock *pt.ParaTxDetail) er
 	return pt.ErrParaCurHashNotMatch
 }
 
-func verifyMainBlocks(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) error {
+func verifyMainBlocks(preMainBlockHash []byte, mainBlocks *types.ParaTxDetails) error {
 	pre := preMainBlockHash
 	for _, block := range mainBlocks.Items {
 		err := verifyMainBlockHash(pre, block)
@@ -361,45 +361,44 @@ func verifyMainBlocks(preMainBlockHash []byte, mainBlocks *pt.ParaTxDetails) err
 	return nil
 }
 
-func (client *client) requestAllMainTxs(currSeq int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
+func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
 	if err != nil {
 		return nil, err
 	}
 
-	txDetail := paraexec.BlockDetail2ParaTxs(blockSeq.Seq.Type, blockSeq.Seq.Hash, blockSeq.Detail)
+	txDetail := blockSeq.Detail.FilterParaTxsByTitle(types.GetTitle())
+	txDetail.Type = blockSeq.Seq.Type
 
 	err = verifyMainBlockHash(preMainBlockHash, txDetail)
 	if err != nil {
-		plog.Error("requestAllMainTxs", "curr seq", currSeq, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		plog.Error("requestTxsFromBlock", "curr seq", currSeq, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, err
 	}
-	return &pt.ParaTxDetails{Items: []*pt.ParaTxDetail{txDetail}}, nil
+	return &types.ParaTxDetails{Items: []*types.ParaTxDetail{txDetail}}, nil
 }
 
-func (client *client) requestParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
-	//req := &pt.ReqParaTxByTitle{Start: currSeq, End: currSeq + count, Title: types.GetTitle()}
-	//details, err := client.GetParaTxByTitle(req)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	details := &pt.ParaTxDetails{}
-	err := verifyMainBlocks(preMainBlockHash, details)
+func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
+	req := &types.ReqParaTxByTitle{Start: currSeq, End: currSeq + count, Title: types.GetTitle()}
+	details, err := client.GetParaTxByTitle(req)
 	if err != nil {
-		plog.Error("requestParaTxs", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		return nil, err
+	}
+
+	err = verifyMainBlocks(preMainBlockHash, details)
+	if err != nil {
+		plog.Error("requestTxsOnlyPara", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, err
 	}
 	return details, nil
 }
 
-func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*pt.ParaTxDetails, error) {
-	if !batchFetchSeqEnable {
-		return client.requestAllMainTxs(currSeq, preMainBlockHash)
+func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
+	if fetchFilterParaTxsEnable {
+		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 	}
 
-	return client.requestParaTxs(currSeq, count, preMainBlockHash)
-
+	return client.requestTxsFromBlock(currSeq, preMainBlockHash)
 }
 
 func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []byte, err error) (int64, []byte, error) {
@@ -412,7 +411,7 @@ func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []
 	return currSeq, lastSeqMainHash, err
 }
 
-func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) (bool, error) {
+func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error) {
 	lastSeqMainHeight := mainBlock.Header.Height
 
 	lastBlock, err := client.getLastLocalBlock()
@@ -421,7 +420,7 @@ func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) (bool, error) {
 		return false, err
 	}
 
-	txs := paraexec.FilterTxsForPara(types.GetTitle(), mainBlock)
+	txs := paraexec.FilterTxsForPara(mainBlock)
 
 	plog.Info("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
 		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", lastSeqMainHeight,
@@ -450,7 +449,7 @@ func (client *client) procLocalBlock(mainBlock *pt.ParaTxDetail) (bool, error) {
 
 }
 
-func (client *client) procLocalBlocks(mainBlocks *pt.ParaTxDetails) error {
+func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
 	var notify bool
 	for _, main := range mainBlocks.Items {
 		changed, err := client.procLocalBlock(main)
