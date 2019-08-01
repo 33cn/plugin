@@ -14,7 +14,7 @@ import (
 
 func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewBoardTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
 		case auty.TyLogPropBoard,
@@ -27,14 +27,23 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 				if err != nil {
 					return nil, err
 				}
-				kv := saveBoardHeightIndex(&receipt)
-				set = append(set, kv...)
+
+				err = table.Replace(receipt.Current)
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
+
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	dbSet.KV = append(dbSet.KV, kvs...)
+
 	return dbSet, nil
 }
 
@@ -56,27 +65,41 @@ func saveBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue
 
 func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewBoardTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
+		var receipt auty.ReceiptProposalBoard
+		err := types.Decode(log.Log, &receipt)
+		if err != nil {
+			return nil, err
+		}
 		switch log.Ty {
-		case auty.TyLogPropBoard,
-			auty.TyLogRvkPropBoard,
-			auty.TyLogVotePropBoard,
-			auty.TyLogTmintPropBoard:
+		case auty.TyLogPropBoard:
 			{
-				var receipt auty.ReceiptProposalBoard
-				err := types.Decode(log.Log, &receipt)
+				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
+				err = table.Del([]byte(heightIndex))
 				if err != nil {
 					return nil, err
 				}
-				kv := delBoardHeightIndex(&receipt)
-				set = append(set, kv...)
+			}
+		case auty.TyLogRvkPropBoard,
+			auty.TyLogVotePropBoard,
+			auty.TyLogTmintPropBoard:
+			{
+				err = table.Replace(receipt.Prev)
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	dbSet.KV = append(dbSet.KV, kvs...)
+
 	return dbSet, nil
 }
 
@@ -117,37 +140,53 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	var key []byte
-	var values [][]byte
-	var err error
 
 	localDb := a.GetLocalDB()
-	if req.GetIndex() == -1 {
-		key = nil
-	} else { //翻页查找指定的txhash列表
-		heightstr := genHeightIndexStr(req.GetIndex())
-		key = calcBoardKey4StatusHeight(req.Status, heightstr)
+	query := NewBoardTable(localDb).GetQuery(localDb)
+	var primary []byte
+	if req.Height > 0 {
+		primary = []byte(dapp.HeightIndexStr(req.Height, int64(req.Index)))
 	}
-	prefix := calcBoardKey4StatusHeight(req.Status, "")
-	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
+	indexName := ""
+	if req.Status > 0 && req.Addr != "" {
+		indexName = "addr_status"
+	} else if req.Status > 0 {
+		indexName = "status"
+	} else if req.Addr != "" {
+		indexName = "addr"
+	}
+
+	cur := &BoardRow{
+		AutonomyProposalBoard: &auty.AutonomyProposalBoard{},
+	}
+	cur.Address = req.Addr
+	cur.Status  = req.Status
+	cur.Height  = req.Height
+	cur.Index   = req.Index
+	prefix, err := cur.Get(indexName)
+
+	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {
+		alog.Error("query List failed", "indexName", indexName, "prefix", "prefix", "key", string(primary), "err", err)
 		return nil, err
 	}
-	if len(values) == 0 {
+	if len(rows) == 0 {
 		return nil, types.ErrNotFound
 	}
 
 	var rep auty.ReplyQueryProposalBoard
-	for _, value := range values {
-		prop := &auty.AutonomyProposalBoard{}
-		err = types.Decode(value, prop)
-		if err != nil {
-			return nil, err
+	for _, row := range rows {
+		r, ok := row.Data.(*auty.AutonomyProposalBoard)
+		if !ok {
+			alog.Error("listProposalBoard", "err", "bad row type")
+			return nil, types.ErrDecode
 		}
-		rep.PropBoards = append(rep.PropBoards, prop)
+		rep.PropBoards = append(rep.PropBoards, r)
 	}
 	return &rep, nil
 }
+
+
 
 func genHeightIndexStr(index int64) string {
 	return fmt.Sprintf("%018d", index)

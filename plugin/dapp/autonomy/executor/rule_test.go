@@ -247,12 +247,12 @@ func TestListProposalRule(t *testing.T) {
 	require.Equal(t, height, testcase2[2].height)
 	require.Equal(t, index, int32(testcase2[2].index))
 	//
-	Index := height*types.MaxTxsPerBlock + int64(index)
 	req = &auty.ReqQueryProposalRule{
 		Status:    auty.AutonomyStatusProposalRule,
 		Count:     10,
 		Direction: 0,
-		Index:     Index,
+		Height: height,
+		Index:     index,
 	}
 	rsp, err = au.listProposalRule(req)
 	require.NoError(t, err)

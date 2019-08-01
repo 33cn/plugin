@@ -117,34 +117,34 @@ func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	var key []byte
-	var values [][]byte
-	var err error
-
-	localDb := a.GetLocalDB()
-	if req.GetIndex() == -1 {
-		key = nil
-	} else { //翻页查找指定的txhash列表
-		heightstr := genHeightIndexStr(req.GetIndex())
-		key = calcProjectKey4StatusHeight(req.Status, heightstr)
-	}
-	prefix := calcProjectKey4StatusHeight(req.Status, "")
-	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
-	if err != nil {
-		return nil, err
-	}
-	if len(values) == 0 {
-		return nil, types.ErrNotFound
-	}
+	//var key []byte
+	//var values [][]byte
+	//var err error
+	//
+	//localDb := a.GetLocalDB()
+	//if req.GetIndex() == -1 {
+	//	key = nil
+	//} else { //翻页查找指定的txhash列表
+	//	heightstr := genHeightIndexStr(req.GetIndex())
+	//	key = calcProjectKey4StatusHeight(req.Status, heightstr)
+	//}
+	//prefix := calcProjectKey4StatusHeight(req.Status, "")
+	//values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(values) == 0 {
+	//	return nil, types.ErrNotFound
+	//}
 
 	var rep auty.ReplyQueryProposalProject
-	for _, value := range values {
-		prop := &auty.AutonomyProposalProject{}
-		err = types.Decode(value, prop)
-		if err != nil {
-			return nil, err
-		}
-		rep.PropProjects = append(rep.PropProjects, prop)
-	}
+	//for _, value := range values {
+	//	prop := &auty.AutonomyProposalProject{}
+	//	err = types.Decode(value, prop)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	rep.PropProjects = append(rep.PropProjects, prop)
+	//}
 	return &rep, nil
 }

@@ -115,35 +115,35 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	var key []byte
-	var values [][]byte
-	var err error
-
-	localDb := a.GetLocalDB()
-	if req.GetIndex() == -1 {
-		key = nil
-	} else { //翻页查找指定的txhash列表
-		heightstr := genHeightIndexStr(req.GetIndex())
-		key = calcRuleKey4StatusHeight(req.Status, heightstr)
-	}
-	prefix := calcRuleKey4StatusHeight(req.Status, "")
-	values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
-	if err != nil {
-		return nil, err
-	}
-	if len(values) == 0 {
-		return nil, types.ErrNotFound
-	}
+	//var key []byte
+	//var values [][]byte
+	//var err error
+	//
+	//localDb := a.GetLocalDB()
+	//if req.GetIndex() == -1 {
+	//	key = nil
+	//} else { //翻页查找指定的txhash列表
+	//	heightstr := genHeightIndexStr(req.GetIndex())
+	//	key = calcRuleKey4StatusHeight(req.Status, heightstr)
+	//}
+	//prefix := calcRuleKey4StatusHeight(req.Status, "")
+	//values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(values) == 0 {
+	//	return nil, types.ErrNotFound
+	//}
 
 	var rep auty.ReplyQueryProposalRule
-	for _, value := range values {
-		prop := &auty.AutonomyProposalRule{}
-		err = types.Decode(value, prop)
-		if err != nil {
-			return nil, err
-		}
-		rep.PropRules = append(rep.PropRules, prop)
-	}
+	//for _, value := range values {
+	//	prop := &auty.AutonomyProposalRule{}
+	//	err = types.Decode(value, prop)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	rep.PropRules = append(rep.PropRules, prop)
+	//}
 	return &rep, nil
 }
 
