@@ -32,10 +32,10 @@ const (
 )
 
 var (
-	//positiveMsgReply 设置queue返回的Message是正例还是反例
+	//testLoopCountAtom 设置queue返回的Message是正例还是反例
 	testLoopCountAtom int32
-	//actionReturnIndex 对应getNextAction的每一步返回顺序
-	actionReturnIndex int32
+	//actionReturnIndexAtom 对应getNextAction的每一步返回顺序
+	actionReturnIndexAtom int32
 )
 
 //测试初始化
@@ -99,9 +99,9 @@ func makeGenesisBlockReplyTestData(testLoopCount int32) interface{} {
 	}
 }
 
-//生成不同action情况下的同步测试数据
+//生成getNextAction不同返回情况下的同步测试数据
 //index 对应getNextAction的每一步返回顺序，按return的先后顺序索引
-//isPositive 生成正常数据还是异常数据
+//testLoopCount 测试轮数
 func makeSyncReplyTestData(index int32, testLoopCount int32) (
 	interface{}, //*types.Block, //GetLastBlock reply
 	interface{}, //*types.LocalReplyValue, //GetLastLocalHeight reply
@@ -175,7 +175,7 @@ func makeSyncReplyTestData(index int32, testLoopCount int32) (
 	}
 }
 
-//生成清理功能GetReply测试数据
+//生成清理功能Get Reply测试数据
 func makeCleanDataGetReplyTestData(clearLocalDBCallCount int32, testLoopCount int32) interface{} {
 	switch clearLocalDBCallCount {
 	case 1: //testinitFirstLocalHeightIfNeed会调用到
@@ -222,8 +222,8 @@ func mockMessageReply(q queue.Queue) {
 	cli := q.Client()
 	cli.Sub(blockChainKey)
 	//记录消息Call次数,用于loop退出；quitEndCount通过事先统计得出
-	quitCount := int32(0)
-	quitEndCount := int32(111) //TODO: Need a nice loop quit way
+	//quitCount := int32(0)
+	//quitEndCount := int32(111) //TODO: Need a nice loop quit way
 	//用于处理数据同步情况下EventGetValueByKey消息的多重返回
 	useLocalReply := false
 	usrLocalReplyStart := true
@@ -233,7 +233,7 @@ func mockMessageReply(q queue.Queue) {
 	for msg := range cli.Recv() {
 
 		testLoopCount := atomic.LoadInt32(&testLoopCountAtom)
-		getActionReturnIndex := atomic.LoadInt32(&actionReturnIndex)
+		getActionReturnIndex := atomic.LoadInt32(&actionReturnIndexAtom)
 
 		switch {
 		case getActionReturnIndex > 0:
@@ -247,22 +247,22 @@ func mockMessageReply(q queue.Queue) {
 
 			switch msg.Ty {
 			case types.EventGetLastBlock:
-				quitCount++
+				//quitCount++
 
 				msg.Reply(cli.NewMessage(blockChainKey, types.EventBlock, lastBlockReply))
 
 			case types.EventAddParaChainBlockDetail:
-				quitCount++
+				//quitCount++
 
 				msg.Reply(cli.NewMessage(blockChainKey, types.EventReply, writeBlockReply))
 
 			case types.EventDelParaChainBlockDetail:
-				quitCount++
+				//quitCount++
 
 				msg.Reply(cli.NewMessage(blockChainKey, types.EventReply, rollBlockReply))
 
 			case types.EventGetValueByKey:
-				quitCount++
+				//quitCount++
 
 				switch {
 				case getActionReturnIndex > 4:
@@ -285,7 +285,7 @@ func mockMessageReply(q queue.Queue) {
 				}
 
 			case types.EventGetBlocks:
-				quitCount++
+				//quitCount++
 
 				msg.Reply(cli.NewMessage(blockChainKey, types.EventBlocks, getBlocksReply))
 			default:
@@ -294,13 +294,13 @@ func mockMessageReply(q queue.Queue) {
 		default:
 			switch msg.Ty {
 			case types.EventAddParaChainBlockDetail: //mock创世区块创建消息返回,testCreateGenesisBlock
-				quitCount++
+				//quitCount++
 
 				reply := makeGenesisBlockReplyTestData(testLoopCount)
 				msg.Reply(cli.NewMessage(blockChainKey, types.EventReply, reply))
 
 			case types.EventGetValueByKey: //mock数据清理消息返回
-				quitCount++
+				//quitCount++
 
 				clearLocalDBCallCount++
 				reply := makeCleanDataGetReplyTestData(clearLocalDBCallCount, testLoopCount)
@@ -311,7 +311,7 @@ func mockMessageReply(q queue.Queue) {
 				}
 
 			case types.EventSetValueByKey: //mock数据清理消息返回,testclearLocalOldBlocks会调用到
-				quitCount++
+				//quitCount++
 
 				reply := makeCleanDataSetReplyTestData(testLoopCount)
 
@@ -321,10 +321,10 @@ func mockMessageReply(q queue.Queue) {
 			}
 		}
 
-		println(quitCount)
-		if quitCount == quitEndCount {
-			//break
-		}
+		//println(quitCount)
+		//if quitCount == quitEndCount {
+		//	break
+		//}
 	}
 }
 
@@ -372,7 +372,7 @@ func testInitFirstLocalHeightIfNeed(t *testing.T, para *client, testLoopCount in
 func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 	errorCount := int32(0)
 	for i := int32(1); i <= 10; i++ {
-		atomic.StoreInt32(&actionReturnIndex, i)
+		atomic.StoreInt32(&actionReturnIndexAtom, i)
 		isSynced, err := para.blockSyncClient.syncBlocksIfNeed()
 		if err != nil {
 			errorCount++
@@ -387,7 +387,7 @@ func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 		assert.Equal(t, true, errorCount == 7)
 	}
 
-	atomic.StoreInt32(&actionReturnIndex, 0)
+	atomic.StoreInt32(&actionReturnIndexAtom, 0)
 }
 
 //测试SyncHasCaughtUp
@@ -400,6 +400,7 @@ func testSyncHasCaughtUp(t *testing.T, para *client, testLoopCount int32) {
 	assert.Equal(t, true, isSyncHasCaughtUp)
 }
 
+//测试getBlockSyncState
 func testGetBlockSyncState(t *testing.T, para *client, testLoopCount int32) {
 	oldValue := para.blockSyncClient.getBlockSyncState()
 	para.blockSyncClient.setBlockSyncState(BlockSyncStateFinished)
@@ -411,7 +412,7 @@ func testGetBlockSyncState(t *testing.T, para *client, testLoopCount int32) {
 
 //执行所有函数测试
 func execTest(t *testing.T, para *client, testLoopCount int32) {
-	atomic.StoreInt32(&actionReturnIndex, 0)
+	atomic.StoreInt32(&actionReturnIndexAtom, 0)
 	atomic.StoreInt32(&testLoopCountAtom, testLoopCount)
 
 	testCreateGenesisBlock(t, para, testLoopCount)
