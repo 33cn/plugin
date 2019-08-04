@@ -15,6 +15,13 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
+const (
+	//DefaultMaxCacheCount 默认local最大缓冲数
+	DefaultMaxCacheCount = int64(1000)
+	//DefaultMaxSyncErrCount 默认连续错误最大数量
+	DefaultMaxSyncErrCount = int32(100)
+)
+
 //BlockSyncClient 区块同步控制和状态变量
 type BlockSyncClient struct {
 	paraClient *client
@@ -298,6 +305,11 @@ func (client *BlockSyncClient) getFirstLocalHeight() (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+
+	if len(value) == 0 {
+		return -1, types.ErrNotFound
+	}
+
 	if value[0] == nil {
 		return -1, types.ErrNotFound
 	}
@@ -402,6 +414,10 @@ func (client *BlockSyncClient) rollbackBlock(block *types.Block) error {
 		return err
 	}
 	blocks := resp.GetData().(*types.BlockDetails)
+
+	if len(blocks.Items) == 0 {
+		return errors.New("para sync -blocks Items len = 0 ")
+	}
 
 	parablockDetail := &types.ParaChainBlockDetail{Blockdetail: blocks.Items[0]}
 	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventDelParaChainBlockDetail, parablockDetail)
