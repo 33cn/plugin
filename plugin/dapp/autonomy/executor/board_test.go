@@ -7,13 +7,13 @@ package executor
 import (
 	"testing"
 
+	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/chain33/common/db"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExecLocalBoard(t *testing.T) {
@@ -47,7 +47,6 @@ func TestExecLocalBoard(t *testing.T) {
 
 	// check
 	checkExecLocalBoard(t, kvdb, cur)
-
 
 	// TyLogRvkPropBoard
 	pre1 := copyAutonomyProposalBoard(cur)
@@ -141,7 +140,6 @@ func TestExecDelLocalBoard(t *testing.T) {
 	assert.Equal(t, err, types.ErrNotFound)
 	_, err = query.ListIndex("addr_status", nil, nil, 10, 0)
 	assert.Equal(t, err, types.ErrNotFound)
-
 
 	// TyLogVotePropBoard
 	pre1 := copyAutonomyProposalBoard(cur)
@@ -294,7 +292,7 @@ func TestListProposalBoard(t *testing.T) {
 		Status:    auty.AutonomyStatusProposalBoard,
 		Count:     10,
 		Direction: 0,
-		Height:  height,
+		Height:    height,
 		Index:     index,
 	}
 	rsp, err = au.listProposalBoard(req)
