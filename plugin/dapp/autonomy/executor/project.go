@@ -128,6 +128,10 @@ func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types
 	cur.Height = req.Height
 	cur.Index = req.Index
 	prefix, err := cur.Get(indexName)
+	if err != nil {
+		alog.Error("Get", "indexName", indexName, "err", err)
+		return nil, err
+	}
 
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {

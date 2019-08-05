@@ -24,7 +24,7 @@ var boardOpt = &table.Option{
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
-//NewTable 新建表
+//NewBoardTable 新建表
 func NewBoardTable(kvdb db.KV) *table.Table {
 	rowmeta := NewBoardRow()
 	table, err := table.NewTable(rowmeta, kvdb, boardOpt)

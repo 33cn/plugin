@@ -24,7 +24,7 @@ var projectOpt = &table.Option{
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
-//NewTable 新建表
+//NewProjectTable 新建表
 func NewProjectTable(kvdb db.KV) *table.Table {
 	rowmeta := NewProjectRow()
 	table, err := table.NewTable(rowmeta, kvdb, projectOpt)

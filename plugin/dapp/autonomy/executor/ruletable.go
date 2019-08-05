@@ -24,7 +24,7 @@ var ruleOpt = &table.Option{
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
-//NewTable 新建表
+//NewRuleTable 新建表
 func NewRuleTable(kvdb db.KV) *table.Table {
 	rowmeta := NewRuleRow()
 	table, err := table.NewTable(rowmeta, kvdb, ruleOpt)

@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
@@ -130,6 +128,10 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 	cur.Height = req.Height
 	cur.Index = req.Index
 	prefix, err := cur.Get(indexName)
+	if err != nil {
+		alog.Error("Get", "indexName", indexName, "err", err)
+		return nil, err
+	}
 
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {
@@ -150,8 +152,4 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 		rep.PropBoards = append(rep.PropBoards, r)
 	}
 	return &rep, nil
-}
-
-func genHeightIndexStr(index int64) string {
-	return fmt.Sprintf("%018d", index)
 }

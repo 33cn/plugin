@@ -24,7 +24,6 @@ func votesRecord(txHash string) []byte {
 var (
 	// board
 	boardPrefix            = idPrefix + "board" + "-"
-	localBoardPrefix       = localPrefix + "board" + "-"
 	boardVotesRecordPrefix = boardPrefix + "vote" + "-"
 )
 
@@ -40,30 +39,18 @@ func boardVotesRecord(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", boardVotesRecordPrefix, txHash))
 }
 
-func calcBoardKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localBoardPrefix+"%d-"+"%s", status, heightindex)
-	return []byte(key)
-}
-
 var (
 	// project
-	projectPrefix      = idPrefix + "project" + "-"
-	localProjectPrefix = localPrefix + "project" + "-"
+	projectPrefix = idPrefix + "project" + "-"
 )
 
 func propProjectID(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", projectPrefix, txHash))
 }
 
-func calcProjectKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localProjectPrefix+"%d-"+"%s", status, heightindex)
-	return []byte(key)
-}
-
 var (
 	// rule
-	rulePrefix      = idPrefix + "rule" + "-"
-	localRulePrefix = localPrefix + "rule" + "-"
+	rulePrefix = idPrefix + "rule" + "-"
 )
 
 func activeRuleID() []byte {
@@ -72,11 +59,6 @@ func activeRuleID() []byte {
 
 func propRuleID(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", rulePrefix, txHash))
-}
-
-func calcRuleKey4StatusHeight(status int32, heightindex string) []byte {
-	key := fmt.Sprintf(localRulePrefix+"%d-"+"%s", status, heightindex)
-	return []byte(key)
 }
 
 var (
