@@ -12,12 +12,13 @@ import (
 	"github.com/33cn/chain33/types"
 
 	"encoding/hex"
+	"sync/atomic"
+
 	"github.com/33cn/chain33/queue"
 	typesmocks "github.com/33cn/chain33/types/mocks"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"sync/atomic"
 )
 
 const (
