@@ -47,6 +47,7 @@ func initTestSyncBlock() {
 //新建一个para测试实例并初始化一些参数
 func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	para := new(client)
+	para.subCfg = new(subConfig)
 
 	baseCli := drivers.NewBaseClient(&types.Consensus{Name: "name"})
 	para.BaseClient = baseCli
