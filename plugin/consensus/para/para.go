@@ -15,6 +15,8 @@ import (
 
 	"time"
 
+	"test/common"
+
 	"github.com/33cn/chain33/client/api"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
@@ -341,6 +343,40 @@ func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error)
 	}
 
 	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp()}, nil
+}
+
+func (client *client) Query_LocalBlockInfo(req *types.ReqInt) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	var block *pt.ParaLocalDbBlock
+	var err error
+	if req.Height <= -1 {
+		block, err = client.getLastLocalBlock()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		block, err = client.getLocalBlockByHeight(req.Height)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	blockInfo := &pt.ParaLocalDbBlockInfo{
+		Height:         block.Height,
+		MainHash:       common.ToHex(block.MainHash),
+		MainHeight:     block.MainHeight,
+		ParentMainHash: common.ToHex(block.ParentMainHash),
+		BlockTime:      block.BlockTime,
+	}
+
+	for _, tx := range block.Txs {
+		blockInfo.Txs = append(blockInfo.Txs, common.ToHex(tx.Hash()))
+	}
+
+	return blockInfo, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {
