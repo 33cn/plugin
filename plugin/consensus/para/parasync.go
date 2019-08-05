@@ -355,7 +355,7 @@ func (client *BlockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
 		Status:          status,
-		IsSelfConsensus: isParaSelfConsensusForked(status.MainBlockHeight),
+		IsSelfConsensus: client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight),
 	})
 	if err != nil {
 		return err

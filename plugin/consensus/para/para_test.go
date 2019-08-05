@@ -190,7 +190,6 @@ func TestAddMinerTx(t *testing.T) {
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
 
-	mainForkParacrossCommitTx = 1
 	block := &types.Block{}
 
 	_, filterTxs, _ := createTestTxs(t)
@@ -200,7 +199,11 @@ func TestAddMinerTx(t *testing.T) {
 		MainHash:   []byte("mainhash"),
 		Txs:        filterTxs}
 	para := new(client)
+	para.subCfg = new(subConfig)
 	para.privateKey = priKey
+	para.commitMsgClient = new(commitMsgClient)
+	para.commitMsgClient.paraClient = para
+
 	para.blockSyncClient = new(BlockSyncClient)
 	para.blockSyncClient.paraClient = para
 	para.blockSyncClient.addMinerTx(nil, block, localBlock)

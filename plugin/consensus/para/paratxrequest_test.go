@@ -40,10 +40,15 @@ func getPrivKey(t *testing.T) crypto.PrivKey {
 }
 
 func TestCalcCommitMsgTxs(t *testing.T) {
+	para := new(client)
+	para.subCfg = new(subConfig)
+
 	priKey := getPrivKey(t)
-	client := commitMsgClient{
+	client := &commitMsgClient{
 		privateKey: priKey,
+		paraClient: para,
 	}
+	para.commitMsgClient = client
 	nt1 := &pt.ParacrossNodeStatus{
 		Height: 1,
 		Title:  "user.p.para",
@@ -71,9 +76,8 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 }
 
 func TestGetConsensusStatus(t *testing.T) {
-	mainFork := mainParaSelfConsensusForkHeight
-	mainParaSelfConsensusForkHeight = 1
 	para := new(client)
+	para.subCfg = new(subConfig)
 	grpcClient := &typesmocks.Chain33Client{}
 	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
 	para.grpcClient = grpcClient
@@ -93,12 +97,6 @@ func TestGetConsensusStatus(t *testing.T) {
 		Height: 1,
 	}
 
-	//msgx := &types.Message{types.Encode(status)}
-	//msg := types.Encode(status)
-	//reply := &types.Reply{
-	//	IsOk: true,
-	//	Msg:  types.Encode(status),
-	//}
 	api.On("QueryChain", mock.Anything, mock.Anything, mock.Anything).Return(status, nil).Once()
 	detail := &types.BlockDetail{Block: block}
 	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
@@ -108,7 +106,6 @@ func TestGetConsensusStatus(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret.Height)
-	mainParaSelfConsensusForkHeight = mainFork
 }
 
 func TestSendCommitMsg(t *testing.T) {

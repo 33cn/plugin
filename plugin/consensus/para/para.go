@@ -32,24 +32,23 @@ const (
 	delAct int64 = 2 //reference blockstore.go, del para block action
 
 	minBlockNum = 100 //min block number startHeight before lastHeight in mainchain
+
+	genesisBlockTime int64 = 1514533390
+	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
+	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	defaultGenesisAmount            int64 = 1e8
+	poolMainBlockSec                int64 = 5
+	defaultEmptyBlockInterval       int64 = 4 //write empty block every interval blocks in mainchain
+	defaultSearchMatchedBlockDepth  int32 = 10000
+	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
+	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
+	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
+	batchFetchBlockCount            int64 = 128
 )
 
 var (
-	plog                     = log.New("module", "para")
-	grpcSite                 = "localhost:8802"
-	genesisBlockTime   int64 = 1514533390
-	startHeight        int64     //parachain sync from startHeight in mainchain
-	blockSec           int64 = 5 //write block interval, second
-	emptyBlockInterval int64 = 4 //write empty block every interval blocks in mainchain
-	zeroHash           [32]byte
-	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	searchHashMatchDepth            int32 = 100
-	mainBlockHashForkHeight         int64 = 209186          //calc block hash fork height in main chain
-	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
-	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
-	fetchFilterParaTxsEnable        bool
-	batchFetchBlockCount            int64 = 128
+	plog     = log.New("module", "para")
+	zeroHash [32]byte
 )
 
 func init() {
@@ -99,41 +98,36 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		types.MustDecode(sub, &subcfg)
 	}
 	if subcfg.GenesisAmount <= 0 {
-		subcfg.GenesisAmount = 1e8
-	}
-	if subcfg.ParaRemoteGrpcClient != "" {
-		grpcSite = subcfg.ParaRemoteGrpcClient
-	}
-	if subcfg.StartHeight > 0 {
-		startHeight = subcfg.StartHeight
-	}
-	if subcfg.WriteBlockSeconds > 0 {
-		blockSec = subcfg.WriteBlockSeconds
-	}
-	if subcfg.EmptyBlockInterval > 0 {
-		emptyBlockInterval = subcfg.EmptyBlockInterval
-	}
-	if subcfg.SearchHashMatchedBlockDepth > 0 {
-		searchHashMatchDepth = subcfg.SearchHashMatchedBlockDepth
-	}
-	if subcfg.MainBlockHashForkHeight > 0 {
-		mainBlockHashForkHeight = subcfg.MainBlockHashForkHeight
+		subcfg.GenesisAmount = defaultGenesisAmount
 	}
 
-	if subcfg.MainParaSelfConsensusForkHeight > 0 {
-		mainParaSelfConsensusForkHeight = subcfg.MainParaSelfConsensusForkHeight
+	if subcfg.WriteBlockSeconds <= 0 {
+		subcfg.WriteBlockSeconds = poolMainBlockSec
+	}
+	if subcfg.EmptyBlockInterval <= 0 {
+		subcfg.EmptyBlockInterval = defaultEmptyBlockInterval
+	}
+	if subcfg.SearchHashMatchedBlockDepth <= 0 {
+		subcfg.SearchHashMatchedBlockDepth = defaultSearchMatchedBlockDepth
+	}
+	if subcfg.MainBlockHashForkHeight <= 0 {
+		subcfg.MainBlockHashForkHeight = defaultMainBlockHashForkHeight
 	}
 
-	if subcfg.MainForkParacrossCommitTx > 0 {
-		mainForkParacrossCommitTx = subcfg.MainForkParacrossCommitTx
+	if subcfg.MainParaSelfConsensusForkHeight <= 0 {
+		subcfg.MainParaSelfConsensusForkHeight = mainParaSelfConsensusForkHeight
+	}
+
+	if subcfg.MainForkParacrossCommitTx <= 0 {
+		subcfg.MainForkParacrossCommitTx = mainForkParacrossCommitTx
 	}
 
 	if subcfg.FetchFilterParaTxsEnable > 0 {
 		fetchFilterParaTxsEnable = true
 	}
 
-	if subcfg.BatchFetchBlockCount > 0 {
-		batchFetchBlockCount = subcfg.BatchFetchBlockCount
+	if subcfg.BatchFetchBlockCount <= 0 {
+		subcfg.BatchFetchBlockCount = batchFetchBlockCount
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -163,26 +157,25 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		quitCreate:  make(chan struct{}),
 	}
 
-	waitBlocks := int32(3) //缺省是3
-	if subcfg.WaitBlocks4CommitMsg > 0 {
-		waitBlocks = subcfg.WaitBlocks4CommitMsg
-	}
-
-	waitConsensTimes := uint32(30) //30*10s = 5min
-	if subcfg.WaitConsensStopTimes > 0 {
-		waitConsensTimes = subcfg.WaitConsensStopTimes
-	}
-
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:           para,
-		waitMainBlocks:       waitBlocks,
-		waitConsensStopTimes: waitConsensTimes,
+		waitMainBlocks:       waitBlocks4CommitMsg,
+		waitConsensStopTimes: waitConsensStopTimes,
 		consensHeight:        -2,
 		sendingHeight:        -1,
 		consensStartHeight:   -1,
 		resetCh:              make(chan interface{}, 1),
 		quit:                 make(chan struct{}),
 	}
+	if subcfg.WaitBlocks4CommitMsg > 0 {
+		para.commitMsgClient.waitMainBlocks = subcfg.WaitBlocks4CommitMsg
+	}
+
+	if subcfg.WaitConsensStopTimes > 0 {
+		para.commitMsgClient.waitConsensStopTimes = subcfg.WaitConsensStopTimes
+	}
+
+	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
 	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
 	if subcfg.ParaConsensStartHeight > 0 {
 		para.commitMsgClient.consensStartHeight = subcfg.ParaConsensStartHeight - 1
@@ -247,18 +240,18 @@ func (client *client) InitBlock() {
 	}
 
 	if block == nil {
-		if startHeight <= 0 {
-			panic(fmt.Sprintf("startHeight(%d) should be more than 0 in mainchain", startHeight))
+		if client.subCfg.StartHeight <= 0 {
+			panic(fmt.Sprintf("startHeight(%d) should be more than 0 in mainchain", client.subCfg.StartHeight))
 		}
 		//平行链创世区块对应主链hash为startHeight-1的那个block的hash
-		mainHash := client.GetStartMainHash(startHeight - 1)
+		mainHash := client.GetStartMainHash(client.subCfg.StartHeight - 1)
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
-		newblock.MainHeight = startHeight - 1
+		newblock.MainHeight = client.subCfg.StartHeight - 1
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -275,8 +268,8 @@ func (client *client) InitBlock() {
 		client.SetCurrentBlock(block)
 	}
 
-	plog.Debug("para consensus init parameter", "mainBlockHashForkHeight", mainBlockHashForkHeight)
-	plog.Debug("para consensus init parameter", "mainParaSelfConsensusForkHeight", mainParaSelfConsensusForkHeight)
+	plog.Debug("para consensus init parameter", "mainBlockHashForkHeight", client.subCfg.MainBlockHashForkHeight)
+	plog.Debug("para consensus init parameter", "mainParaSelfConsensusForkHeight", client.subCfg.MainParaSelfConsensusForkHeight)
 
 }
 
@@ -291,7 +284,7 @@ func (client *client) GetStartMainHash(height int64) []byte {
 	}
 
 	if height > 0 {
-		hint := time.NewTicker(5 * time.Second)
+		hint := time.NewTicker(time.Second * time.Duration(client.subCfg.WriteBlockSeconds))
 		for lastHeight < height+minBlockNum {
 			select {
 			case <-hint.C:
@@ -327,6 +320,10 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
+}
+
+func (client *client) isParaSelfConsensusForked(height int64) bool {
+	return height > client.subCfg.MainParaSelfConsensusForkHeight
 }
 
 func (client *client) ProcEvent(msg *queue.Message) bool {
