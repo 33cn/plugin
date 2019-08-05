@@ -332,6 +332,9 @@ func checkExecLocalProject(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposa
 
 	prop, ok := rows[0].Data.(*auty.AutonomyProposalProject)
 	assert.Equal(t, true, ok)
-	assert.Equal(t, prop, cur)
+	assert.Equal(t, prop.Status, cur.Status)
+	assert.Equal(t, prop.Address, cur.Address)
+	assert.Equal(t, prop.Height, cur.Height)
+	assert.Equal(t, prop.Index, cur.Index)
 
 }

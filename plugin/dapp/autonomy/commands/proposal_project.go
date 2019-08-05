@@ -282,7 +282,7 @@ func ShowProposalProjectCmd() *cobra.Command {
 }
 
 func addShowProposalProjectflags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("type", "t", 0, "type(0:query by hash; 1:list)")
+	cmd.Flags().Uint32P("type", "y", 0, "type(0:query by hash; 1:list)")
 	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
@@ -291,7 +291,7 @@ func addShowProposalProjectflags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "address")
 	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
 	cmd.Flags().Int32P("direction", "d", -1, "direction, default is reserve")
-	cmd.Flags().Int64P("height", "h", -1, "height, default is -1")
+	cmd.Flags().Int64P("height", "t", -1, "height, default is -1")
 	cmd.Flags().Int32P("index", "i", -1, "index, default is -1")
 }
 
