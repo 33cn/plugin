@@ -12,10 +12,12 @@ import (
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/33cn/chain33/common/db"
 )
 
 func TestExecLocalBoard(t *testing.T) {
-	_, _, kvdb := util.CreateTestDB()
+	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
 	//TyLogPropBoard
@@ -40,14 +42,16 @@ func TestExecLocalBoard(t *testing.T) {
 	set, err := au.execLocalBoard(receipt)
 	require.NoError(t, err)
 	require.NotNil(t, set)
-	require.Equal(t, set.KV[0].Key, calcBoardKey4StatusHeight(cur.Status,
-		dapp.HeightIndexStr(cur.Height, int64(cur.Index))))
+	//save to database
+	saveKvs(sdb, set.KV)
+
+	// check
+	checkExecLocalBoard(t, kvdb, cur)
+
 
 	// TyLogRvkPropBoard
 	pre1 := copyAutonomyProposalBoard(cur)
 	cur.Status = auty.AutonomyStatusRvkPropBoard
-	cur.Height = 2
-	cur.Index = 3
 	receiptBoard1 := &auty.ReceiptProposalBoard{
 		Prev:    pre1,
 		Current: cur,
@@ -59,11 +63,12 @@ func TestExecLocalBoard(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, set)
-	require.Equal(t, set.KV[0].Key, calcBoardKey4StatusHeight(pre1.Status,
-		dapp.HeightIndexStr(pre1.Height, int64(pre1.Index))))
-	require.Equal(t, set.KV[0].Value, []byte(nil))
-	require.Equal(t, set.KV[1].Key, calcBoardKey4StatusHeight(cur.Status,
-		dapp.HeightIndexStr(cur.Height, int64(cur.Index))))
+
+	//save to database
+	saveKvs(sdb, set.KV)
+
+	// check
+	checkExecLocalBoard(t, kvdb, cur)
 
 	// TyLogVotePropBoard
 	cur.Status = auty.AutonomyStatusProposalBoard
@@ -71,8 +76,9 @@ func TestExecLocalBoard(t *testing.T) {
 	cur.Index = 2
 	pre2 := copyAutonomyProposalBoard(cur)
 	cur.Status = auty.AutonomyStatusVotePropBoard
-	cur.Height = 2
-	cur.Index = 3
+	cur.Height = 1
+	cur.Index = 2
+	cur.Address = "2222222222222"
 	receiptBoard2 := &auty.ReceiptProposalBoard{
 		Prev:    pre2,
 		Current: cur,
@@ -84,15 +90,16 @@ func TestExecLocalBoard(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, set)
-	require.Equal(t, set.KV[0].Key, calcBoardKey4StatusHeight(pre2.Status,
-		dapp.HeightIndexStr(pre1.Height, int64(pre2.Index))))
-	require.Equal(t, set.KV[0].Value, []byte(nil))
-	require.Equal(t, set.KV[1].Key, calcBoardKey4StatusHeight(cur.Status,
-		dapp.HeightIndexStr(cur.Height, int64(cur.Index))))
+	//save to database
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalBoard(t, kvdb, cur)
 }
 
 func TestExecDelLocalBoard(t *testing.T) {
+	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
+	au.SetLocalDB(kvdb)
 	//TyLogPropBoard
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  &auty.ProposalBoard{},
@@ -112,22 +119,51 @@ func TestExecDelLocalBoard(t *testing.T) {
 			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
 		},
 	}
-	set, err := au.execDelLocalBoard(receipt)
+	// 先执行local然后进行删除
+	set, err := au.execLocalBoard(receipt)
 	require.NoError(t, err)
 	require.NotNil(t, set)
-	require.Equal(t, set.KV[0].Key, calcBoardKey4StatusHeight(cur.Status,
-		dapp.HeightIndexStr(cur.Height, int64(cur.Index))))
-	require.Equal(t, set.KV[0].Value, []byte(nil))
+	saveKvs(sdb, set.KV)
+
+	set, err = au.execDelLocalBoard(receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
+
+	// check
+	table := NewBoardTable(au.GetLocalDB())
+	query := table.GetQuery(kvdb)
+	_, err = query.ListIndex("primary", nil, nil, 10, 0)
+	assert.Equal(t, err, types.ErrNotFound)
+	_, err = query.ListIndex("addr", nil, nil, 10, 0)
+	assert.Equal(t, err, types.ErrNotFound)
+	_, err = query.ListIndex("status", nil, nil, 10, 0)
+	assert.Equal(t, err, types.ErrNotFound)
+	_, err = query.ListIndex("addr_status", nil, nil, 10, 0)
+	assert.Equal(t, err, types.ErrNotFound)
+
 
 	// TyLogVotePropBoard
 	pre1 := copyAutonomyProposalBoard(cur)
 	cur.Status = auty.AutonomyStatusVotePropBoard
-	cur.Height = 2
-	cur.Index = 3
+	cur.Height = 1
+	cur.Index = 2
 	receiptBoard2 := &auty.ReceiptProposalBoard{
 		Prev:    pre1,
 		Current: cur,
 	}
+	// 先执行local然后进行删除
+	set, err = au.execLocalBoard(&types.ReceiptData{
+		Logs: []*types.ReceiptLog{
+			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalBoard(t, kvdb, cur)
+
 	set, err = au.execDelLocalBoard(&types.ReceiptData{
 		Logs: []*types.ReceiptLog{
 			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
@@ -135,12 +171,10 @@ func TestExecDelLocalBoard(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, set)
-	require.Equal(t, set.KV[0].Key, calcBoardKey4StatusHeight(cur.Status,
-		dapp.HeightIndexStr(cur.Height, int64(cur.Index))))
-	require.Equal(t, set.KV[0].Value, []byte(nil))
-	require.Equal(t, set.KV[1].Key, calcBoardKey4StatusHeight(pre1.Status,
-		dapp.HeightIndexStr(pre1.Height, int64(pre1.Index))))
-	require.NotNil(t, set.KV[1].Value)
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalBoard(t, kvdb, pre1)
+
 }
 
 func TestGetProposalBoard(t *testing.T) {
@@ -161,7 +195,7 @@ func TestListProposalBoard(t *testing.T) {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
-	_, _, kvdb := util.CreateTestDB()
+	_, sdb, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 
 	type statu struct {
@@ -192,16 +226,23 @@ func TestListProposalBoard(t *testing.T) {
 		Height:     1,
 		Index:      2,
 	}
+
+	//将数据保存下去
+	var kvs []*types.KeyValue
+	table := NewBoardTable(kvdb)
 	for _, tcase := range testcase {
-		key := calcBoardKey4StatusHeight(tcase.status,
-			dapp.HeightIndexStr(tcase.height, int64(tcase.index)))
 		cur.Status = tcase.status
 		cur.Height = tcase.height
 		cur.Index = int32(tcase.index)
-		value := types.Encode(cur)
-		kvdb.Set(key, value)
+
+		err := table.Replace(cur)
+		require.NoError(t, err)
+		kv, err := table.Save()
+		require.NoError(t, err)
+		kvs = append(kvs, kv...)
 	}
 
+	saveKvs(sdb, kvs)
 	// 反向查找
 	req := &auty.ReqQueryProposalBoard{
 		Status:    auty.AutonomyStatusProposalBoard,
@@ -263,4 +304,40 @@ func TestListProposalBoard(t *testing.T) {
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Height, testcase2[0].height)
 	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
+}
+
+func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalBoard) {
+	table := NewBoardTable(kvdb)
+	query := table.GetQuery(kvdb)
+
+	rows, err := query.ListIndex("primary", nil, nil, 10, 0)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, string(rows[0].Primary), dapp.HeightIndexStr(1, 2))
+
+	rows, err = query.ListIndex("addr", nil, nil, 10, 0)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, 1, len(rows))
+
+	rows, err = query.ListIndex("status", nil, nil, 10, 0)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, 1, len(rows))
+
+	rows, err = query.ListIndex("addr_status", nil, nil, 10, 0)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, 1, len(rows))
+
+	prop, ok := rows[0].Data.(*auty.AutonomyProposalBoard)
+	assert.Equal(t, true, ok)
+	assert.Equal(t, prop, cur)
+
+}
+
+func saveKvs(sdb db.DB, kvs []*types.KeyValue) {
+	for _, kv := range kvs {
+		if kv.Value == nil {
+			sdb.Delete(kv.Key)
+		} else {
+			sdb.Set(kv.Key, kv.Value)
+		}
+	}
 }

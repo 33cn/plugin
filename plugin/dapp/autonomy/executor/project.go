@@ -12,7 +12,7 @@ import (
 
 func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewProjectTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
 		case auty.TyLogPropProject,
@@ -26,73 +26,61 @@ func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.Loca
 				if err != nil {
 					return nil, err
 				}
-				kv := saveProjectHeightIndex(&receipt)
-				set = append(set, kv...)
+				err = table.Replace(receipt.Current)
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
-	return dbSet, nil
-}
-
-func saveProjectHeightIndex(res *auty.ReceiptProposalProject) (kvs []*types.KeyValue) {
-	// 先将之前的状态删除掉，再做更新
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcProjectKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = nil
-		kvs = append(kvs, kv)
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
 	}
-
-	kv := &types.KeyValue{}
-	kv.Key = calcProjectKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = types.Encode(res.Current)
-	kvs = append(kvs, kv)
-	return kvs
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
 }
 
 func (a *Autonomy) execDelLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewProjectTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
+		var receipt auty.ReceiptProposalProject
+		err := types.Decode(log.Log, &receipt)
+		if err != nil {
+			return nil, err
+		}
 		switch log.Ty {
-		case auty.TyLogPropProject,
-			auty.TyLogRvkPropProject,
+		case auty.TyLogPropProject:
+			{
+				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
+				err = table.Del([]byte(heightIndex))
+				if err != nil {
+					return nil, err
+				}
+			}
+		case auty.TyLogRvkPropProject,
 			auty.TyLogVotePropProject,
 			auty.TyLogPubVotePropProject,
 			auty.TyLogTmintPropProject:
 			{
-				var receipt auty.ReceiptProposalProject
-				err := types.Decode(log.Log, &receipt)
+				err = table.Replace(receipt.Prev)
 				if err != nil {
 					return nil, err
 				}
-				kv := delProjectHeightIndex(&receipt)
-				set = append(set, kv...)
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
-	return dbSet, nil
-}
-
-func delProjectHeightIndex(res *auty.ReceiptProposalProject) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = calcProjectKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = nil
-	kvs = append(kvs, kv)
-
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcProjectKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = types.Encode(res.Prev)
-		kvs = append(kvs, kv)
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
 	}
-	return kvs
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
 }
 
 func (a *Autonomy) getProposalProject(req *types.ReqString) (types.Message, error) {
@@ -117,34 +105,47 @@ func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	//var key []byte
-	//var values [][]byte
-	//var err error
-	//
-	//localDb := a.GetLocalDB()
-	//if req.GetIndex() == -1 {
-	//	key = nil
-	//} else { //翻页查找指定的txhash列表
-	//	heightstr := genHeightIndexStr(req.GetIndex())
-	//	key = calcProjectKey4StatusHeight(req.Status, heightstr)
-	//}
-	//prefix := calcProjectKey4StatusHeight(req.Status, "")
-	//values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(values) == 0 {
-	//	return nil, types.ErrNotFound
-	//}
+	localDb := a.GetLocalDB()
+	query := NewProjectTable(localDb).GetQuery(localDb)
+	var primary []byte
+	if req.Height > 0 {
+		primary = []byte(dapp.HeightIndexStr(req.Height, int64(req.Index)))
+	}
+	indexName := ""
+	if req.Status > 0 && req.Addr != "" {
+		indexName = "addr_status"
+	} else if req.Status > 0 {
+		indexName = "status"
+	} else if req.Addr != "" {
+		indexName = "addr"
+	}
+
+	cur := &ProjectRow{
+		AutonomyProposalProject: &auty.AutonomyProposalProject{},
+	}
+	cur.Address = req.Addr
+	cur.Status  = req.Status
+	cur.Height  = req.Height
+	cur.Index   = req.Index
+	prefix, err := cur.Get(indexName)
+
+	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
+	if err != nil {
+		alog.Error("query List failed", "indexName", indexName, "prefix", "prefix", "key", string(primary), "err", err)
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, types.ErrNotFound
+	}
 
 	var rep auty.ReplyQueryProposalProject
-	//for _, value := range values {
-	//	prop := &auty.AutonomyProposalProject{}
-	//	err = types.Decode(value, prop)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	rep.PropProjects = append(rep.PropProjects, prop)
-	//}
+	for _, row := range rows {
+		r, ok := row.Data.(*auty.AutonomyProposalProject)
+		if !ok {
+			alog.Error("listProposalProject", "err", "bad row type")
+			return nil, types.ErrDecode
+		}
+		rep.PropProjects = append(rep.PropProjects, r)
+	}
 	return &rep, nil
 }

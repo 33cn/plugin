@@ -286,10 +286,13 @@ func addShowProposalProjectflags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
+
 	cmd.Flags().Uint32P("status", "s", 0, "status")
+	cmd.Flags().StringP("addr", "a", "", "address")
 	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
 	cmd.Flags().Int32P("direction", "d", -1, "direction, default is reserve")
-	cmd.Flags().Int64P("index", "i", -1, "index, default is -1")
+	cmd.Flags().Int64P("height", "h", -1, "height, default is -1")
+	cmd.Flags().Int32P("index", "i", -1, "index, default is -1")
 }
 
 func showProposalProject(cmd *cobra.Command, args []string) {
@@ -297,9 +300,11 @@ func showProposalProject(cmd *cobra.Command, args []string) {
 	typ, _ := cmd.Flags().GetUint32("type")
 	propID, _ := cmd.Flags().GetString("proposalID")
 	status, _ := cmd.Flags().GetUint32("status")
+	addr, _ := cmd.Flags().GetString("addr")
 	count, _ := cmd.Flags().GetInt32("count")
 	direction, _ := cmd.Flags().GetInt32("direction")
-	index, _ := cmd.Flags().GetInt64("index")
+	height, _ := cmd.Flags().GetInt64("height")
+	index, _ := cmd.Flags().GetInt32("index")
 
 	var params rpctypes.Query4Jrpc
 	var rep interface{}
@@ -314,8 +319,10 @@ func showProposalProject(cmd *cobra.Command, args []string) {
 	} else if 1 == typ {
 		req := auty.ReqQueryProposalProject{
 			Status:    int32(status),
+			Addr:      addr,
 			Count:     count,
 			Direction: direction,
+			Height:    height,
 			Index:     index,
 		}
 		params.FuncName = auty.ListProposalProject
