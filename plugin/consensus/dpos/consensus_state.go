@@ -6,6 +6,8 @@ package dpos
 
 import (
 	"bytes"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/33cn/chain33/types"
@@ -51,6 +53,11 @@ type timeoutInfo struct {
 
 func (ti *timeoutInfo) String() string {
 	return fmt.Sprintf("%v", ti.Duration)
+}
+
+type vrfStatusInfo struct {
+	Cycle int64
+
 }
 
 // ConsensusState handles execution of the consensus algorithm.
@@ -271,6 +278,8 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 		cs.dposState.recvNotify(cs, msg)
 	case *dpostype.DPosVoteReply:
 		cs.dposState.recvVoteReply(cs, msg)
+	case *dty.DposCBInfo:
+		cs.dposState.recvCBInfo(cs, msg)
 	default:
 		dposlog.Error("Unknown msg type", "msg", msg.String(), "peerid", peerID, "peerip", peerIP)
 	}
@@ -613,10 +622,9 @@ func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
 
 	if valueNumber >= 5 {
 		delete(cs.cycleBoundaryMap, oldestCycle)
-		cs.cycleBoundaryMap[info.Cycle] = info
-	} else {
-		cs.cycleBoundaryMap[info.Cycle] = info
 	}
+
+	cs.cycleBoundaryMap[info.Cycle] = info
 }
 
 func (cs *ConsensusState) GetCBInfoByCircle(cycle int64) (info *dty.DposCBInfo) {
@@ -627,3 +635,131 @@ func (cs *ConsensusState) GetCBInfoByCircle(cycle int64) (info *dty.DposCBInfo) 
 
 	return nil
 }
+
+// VerifyNotify method
+func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
+	// Verify signature
+	bPubkey, err := hex.DecodeString(info.Pubkey)
+	if err != nil {
+		return false
+	}
+	pubkey, err := dpostype.ConsensusCrypto.PubKeyFromBytes(bPubkey)
+	if err != nil {
+		dposlog.Error("Error pubkey from bytes", "err", err)
+		return false
+	}
+
+	bSig, err := hex.DecodeString(info.Signature)
+	if err != nil {
+		dposlog.Error("Error signature from bytes", "err", err)
+		return false
+	}
+
+	sig, err := ttypes.ConsensusCrypto.SignatureFromBytes(bSig)
+	if err != nil {
+		dposlog.Error("CBInfo Verify failed", "err", err)
+		return false
+	}
+
+	buf := new(bytes.Buffer)
+
+	canonical := dty.CanonicalOnceCBInfo{
+		Cycle: info.Cycle,
+		StopHeight: info.StopHeight,
+		StopHash: info.StopHash,
+		Pubkey: info.Pubkey,
+	}
+
+	byteCB, err := json.Marshal(&canonical)
+	if err != nil {
+		dposlog.Error("Error Marshal failed: ", "err", err)
+		return false
+	}
+
+	_, err = buf.Write(byteCB)
+	if err != nil {
+		dposlog.Error("Error buf.Write failed: ", "err", err)
+		return false
+	}
+
+	if !pubkey.VerifyBytes(buf.Bytes(), sig) {
+		dposlog.Error("Error Verify Bytes failed: ", "err", err)
+		return false
+	}
+
+	return true
+}
+
+func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
+	err := cs.privValidator.SignCBInfo(info)
+	if err != nil {
+		dposlog.Error("SignCBInfo failed.", "err", err)
+		return false
+	} else {
+		tx, err := cs.client.CreateRecordCBTx(info)
+		if err != nil {
+			dposlog.Error("CreateRecordCBTx failed.", "err", err)
+			return false
+		} else {
+			cs.privValidator.SignTx(tx)
+			dposlog.Info("Sign RecordCBTx.")
+			//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+			msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+			err = cs.client.GetQueueClient().Send(msg, false)
+			if err != nil {
+				dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
+				return false
+			} else {
+				dposlog.Error("Send RecordCBTx to mempool ok.", "err", err)
+			}
+		}
+	}
+
+	return true
+}
+
+func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
+	tx, err := cs.client.CreateRegVrfMTx(info)
+	if err != nil {
+		dposlog.Error("CreateRegVrfMTx failed.", "err", err)
+		return false
+	} else {
+		cs.privValidator.SignTx(tx)
+		dposlog.Info("Sign RegistVrfMTx.")
+		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+		err = cs.client.GetQueueClient().Send(msg, false)
+		if err != nil {
+			dposlog.Error("Send RegistVrfMTx to mempool failed.", "err", err)
+			return false
+		} else {
+			dposlog.Error("Send RegistVrfMTx to mempool ok.", "err", err)
+		}
+	}
+
+	return true
+}
+
+func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
+	tx, err := cs.client.CreateRegVrfRPTx(info)
+	if err != nil {
+		dposlog.Error("CreateRegVrfRPTx failed.", "err", err)
+		return false
+	} else {
+		cs.privValidator.SignTx(tx)
+		dposlog.Info("Sign RegVrfRPTx.")
+		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+		err = cs.client.GetQueueClient().Send(msg, false)
+		if err != nil {
+			dposlog.Error("Send RegVrfRPTx to mempool failed.", "err", err)
+			return false
+		} else {
+			dposlog.Error("Send RegVrfRPTx to mempool ok.", "err", err)
+		}
+	}
+
+	return true
+}
+
+func (cs *ConsensusState) QueryVrf(info *dty.DposCBInfo) bool {

@@ -7,9 +7,7 @@ package dpos
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"github.com/33cn/chain33/common/address"
-	"os"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
@@ -22,9 +20,8 @@ import (
 	"github.com/33cn/chain33/util"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 
-	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"github.com/golang/protobuf/proto"
 )
 
 const dposVersion = "0.1.0"
@@ -486,6 +483,58 @@ func (client *Client) ValidatorIndex() int {
 }
 
 func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
+	req := &dty.CandidatorQuery{
+		TopN: int32(dposDelegateNum),
+	}
+	param, err := proto.Marshal(req)
+	if err != nil {
+		dposlog.Error("Marshal CandidatorQuery failed", "err", err)
+		return nil, err
+	}
+	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
+		&types.ChainExecutor{
+			Driver: dty.DPosX,
+			FuncName: dty.FuncNameQueryCandidatorByTopN,
+			StateHash: zeroHash[:],
+			Param:param,
+		})
+
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		dposlog.Error("send CandidatorQuery to dpos exec failed", "err", err)
+		return nil, err
+	}
+
+	msg, err = client.GetQueueClient().Wait(msg)
+	if err != nil {
+		dposlog.Error("send CandidatorQuery wait failed", "err", err)
+		return nil, err
+	}
+
+	res := msg.GetData().(types.Message).(*dty.CandidatorReply)
+
+	var cands []*dty.Candidator
+	for _, val := range res.GetCandidators() {
+		bPubkey, err := hex.DecodeString(val.Pubkey)
+		if err != nil {
+			return nil, err
+		}
+
+		cand := &dty.Candidator{
+			Pubkey: bPubkey,
+			Address: val.Address,
+			Ip: val.Ip,
+			Votes: val.Votes,
+			Status: val.Status,
+		}
+
+		cands = append(cands, cand)
+	}
+	return cands, nil
+}
+
+/*
+func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = dty.DPosX
 
@@ -523,7 +572,7 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	}
 	return cands, nil
 }
-
+*/
 func (client *Client)MonitorCandidators() {
 	ticker := time.NewTicker(30 * time.Second)
 	for {
@@ -584,6 +633,7 @@ func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
 	return true
 }
 
+/*
 func (client *Client)QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = dty.DPosX
@@ -607,7 +657,7 @@ func (client *Client)QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error)
 
 	return res.CbInfo, nil
 }
-
+*/
 func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RecordCB{
@@ -620,4 +670,175 @@ func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction
 	}
 
 	return tx, nil
+}
+
+func (client *Client)CreateRegVrfMTx(info *dty.DposVrfMRegist)(tx*types.Transaction, err error) {
+	var action dty.DposVoteAction
+	action.Value = &dty.DposVoteAction_RegistVrfM{
+		RegistVrfM: info,
+	}
+	action.Ty = dty.DposVoteActionRegistVrfM
+	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+func (client *Client)CreateRegVrfRPTx(info *dty.DposVrfRPRegist)(tx*types.Transaction, err error) {
+	var action dty.DposVoteAction
+	action.Value = &dty.DposVoteAction_RegistVrfRP{
+		RegistVrfRP: info,
+	}
+	action.Ty = dty.DposVoteActionRegistVrfRP
+	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo, error) {
+	req := &dty.DposVrfQuery{
+		Cycle: cycle,
+		Ty: dty.QueryVrfByCycleForPubkeys,
+	}
+
+	for i := 0; i < len(pubkeys); i++ {
+		req.Pubkeys = append(req.Pubkeys, hex.EncodeToString(pubkeys[i]))
+	}
+
+	param, err := proto.Marshal(req)
+	if err != nil {
+		dposlog.Error("Marshal DposVrfQuery failed", "err", err)
+		return nil, err
+	}
+	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
+		&types.ChainExecutor{
+			Driver: dty.DPosX,
+			FuncName: dty.FuncNameQueryVrfByCycleForPubkeys,
+			StateHash: zeroHash[:],
+			Param:param,
+		})
+
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		dposlog.Error("send DposVrfQuery to dpos exec failed", "err", err)
+		return nil, err
+	}
+
+	msg, err = client.GetQueueClient().Wait(msg)
+	if err != nil {
+		dposlog.Error("send DposVrfQuery wait failed", "err", err)
+		return nil, err
+	}
+
+	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
+
+	var infos []*dty.VrfInfo
+	for _, val := range res.Vrf {
+		bPubkey, err := hex.DecodeString(val.Pubkey)
+		if err != nil {
+			bPubkey = nil
+		}
+
+		bM, err := hex.DecodeString(val.M)
+		if err != nil {
+			bM = nil
+		}
+
+		bR, err := hex.DecodeString(val.R)
+		if err != nil {
+			bR = nil
+		}
+
+		bP, err := hex.DecodeString(val.P)
+		if err != nil {
+			bP = nil
+		}
+		info := &dty.VrfInfo{
+			Index: val.Index,
+			Pubkey: bPubkey,
+			Cycle: val.Cycle,
+			Height: val.Height,
+			Time: val.Time,
+			M: bM,
+			R: bR,
+			P: bP,
+		}
+
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
+func (client *Client)QueryVrfInfo(pubkeys []byte, cycle int64)(*dty.VrfInfo, error) {
+	req := &dty.DposVrfQuery{
+		Cycle: cycle,
+		Ty: dty.QueryVrfByCycleForPubkeys,
+	}
+
+	req.Pubkeys = append(req.Pubkeys, hex.EncodeToString(pubkeys))
+
+	param, err := proto.Marshal(req)
+	if err != nil {
+		dposlog.Error("Marshal DposVrfQuery failed", "err", err)
+		return nil, err
+	}
+	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
+		&types.ChainExecutor{
+			Driver: dty.DPosX,
+			FuncName: dty.FuncNameQueryVrfByCycleForPubkeys,
+			StateHash: zeroHash[:],
+			Param:param,
+		})
+
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		dposlog.Error("send DposVrfQuery to dpos exec failed", "err", err)
+		return nil, err
+	}
+
+	msg, err = client.GetQueueClient().Wait(msg)
+	if err != nil {
+		dposlog.Error("send DposVrfQuery wait failed", "err", err)
+		return nil, err
+	}
+
+	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
+
+	vrf := res.Vrf[0]
+	bPubkey, err := hex.DecodeString(vrf.Pubkey)
+	if err != nil {
+		bPubkey = nil
+	}
+
+	bM, err := hex.DecodeString(vrf.M)
+	if err != nil {
+		bM = nil
+	}
+
+	bR, err := hex.DecodeString(vrf.R)
+	if err != nil {
+		bR = nil
+	}
+
+	bP, err := hex.DecodeString(vrf.P)
+	if err != nil {
+		bP = nil
+	}
+	info := &dty.VrfInfo{
+		Index: vrf.Index,
+		Pubkey: bPubkey,
+		Cycle: vrf.Cycle,
+		Height: vrf.Height,
+		Time: vrf.Time,
+		M: bM,
+		R: bR,
+		P: bP,
+	}
+
+	return info, nil
 }

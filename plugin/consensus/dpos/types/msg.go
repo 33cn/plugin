@@ -19,6 +19,8 @@ const (
 	VoteID      = byte(0x06)
 	VoteReplyID = byte(0x07)
 	NotifyID    = byte(0x08)
+	CBInfoID    = byte(0x09)
+
 
 	PacketTypePing = byte(0xff)
 	PacketTypePong = byte(0xfe)

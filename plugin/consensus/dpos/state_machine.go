@@ -15,8 +15,6 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	"github.com/33cn/chain33/types"
-
 )
 
 var (
@@ -87,6 +85,8 @@ type State interface {
 	recvVoteReply(cs *ConsensusState, reply *dpostype.DPosVoteReply)
 	sendNotify(cs *ConsensusState, notify *dpostype.DPosNotify)
 	recvNotify(cs *ConsensusState, notify *dpostype.DPosNotify)
+	//sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo)
+	recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo)
 }
 
 // InitState is the initial state of dpos state machine
@@ -217,6 +217,14 @@ func (init *InitState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNotif
 	cs.SetNotify(notify)
 }
 
+//func (init *InitState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+//	dposlog.Info("InitState does not support sendCBInfo,so do nothing")
+//}
+
+func (init *InitState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+	dposlog.Info("InitState recvCBInfo")
+	cs.UpdateCBInfo(info)
+}
 // VotingState is the voting state of dpos state machine until timeout or get an agreement by votes.
 type VotingState struct {
 }
@@ -303,6 +311,14 @@ func (voting *VotingState) recvNotify(cs *ConsensusState, notify *dpostype.DPosN
 	dposlog.Info("VotingState does not support recvNotify,so do nothing")
 }
 
+//func (voting *VotingState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+//	dposlog.Info("VotingState does not support sendCBInfo,so do nothing")
+//}
+
+func (voting *VotingState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+	dposlog.Info("VotingState recvCBInfo")
+	cs.UpdateCBInfo(info)
+}
 // VotedState is the voted state of dpos state machine after getting an agreement for a period
 type VotedState struct {
 }
@@ -318,7 +334,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			//当前时间超过了节点切换时间，需要进行重新投票
 			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop)
 
-			//如果到了cycle结尾，需要再出一个块，把最终的CycleBoundary信息发布出去
+			//如果到了cycle结尾，需要构造一个交易，把最终的CycleBoundary信息发布出去
 			if now >= cs.currentVote.CycleStop {
 				dposlog.Info("Create new tx for cycle change to record cycle boundary info.", "height", block.Height)
 
@@ -328,7 +344,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 					StopHash: hex.EncodeToString(block.Hash()),
 					Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
 				}
-
+/*
 				err := cs.privValidator.SignCBInfo(info)
 				if err != nil {
 					dposlog.Error("SignCBInfo failed.", "err", err)
@@ -349,8 +365,17 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 						}
 					}
 				}
-
+*/
+				cs.SendCBTx(info)
+				info2 := &dty.DposCBInfo{
+					Cycle: info.Cycle,
+					StopHeight: info.StopHeight,
+					StopHash: info.StopHash,
+					Pubkey: info.Pubkey,
+					Signature: info.Signature,
+				}
 				cs.UpdateCBInfo(info)
+				voted.sendCBInfo(cs, info2)
 			}
 
 			//当前时间超过了节点切换时间，需要进行重新投票
@@ -393,7 +418,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			return
 		}
 		//如果区块未同步，则等待；如果区块已同步，则进行后续正常出块的判断和处理。
-		if block.Height+1 < cs.currentVote.Height {
+		if block.Height + 1 < cs.currentVote.Height {
 			dposlog.Info("VotedState timeOut but block is not sync,wait...", "localHeight", block.Height, "vote height", cs.currentVote.Height)
 			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
 			return
@@ -408,7 +433,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			return
 		} else if block.BlockTime < task.blockStart {
 			//本出块周期尚未出块，则进行出块
-			if task.blockStop-now <= 1 {
+			if task.blockStop - now <= 1 {
 				dposlog.Info("Create new block.", "height", block.Height+1)
 
 				cs.client.SetBlockTime(task.blockStop)
@@ -506,6 +531,15 @@ func (voted *VotedState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNot
 	}
 }
 
+func (voted *VotedState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+	cs.broadcastChannel <- MsgInfo{TypeID: dpostype.CBInfoID, Msg: info, PeerID: cs.ourID, PeerIP: ""}
+}
+
+func (voted *VotedState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+	dposlog.Info("VotedState recvCBInfo")
+	cs.UpdateCBInfo(info)
+}
+
 // WaitNofifyState is the state of dpos state machine to wait notify.
 type WaitNofifyState struct {
 }
@@ -585,6 +619,7 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 		hint.Stop()
 	}
 
+	/*
 	info := &dty.DposCBInfo{
 		Cycle: notify.Vote.Cycle,
 		StopHeight: notify.HeightStop,
@@ -592,6 +627,7 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 	}
 
 	cs.UpdateCBInfo(info)
+	*/
 
 	cs.ClearCachedNotify()
 	cs.SaveNotify()
@@ -602,4 +638,13 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 	dposlog.Info("Change state because recv notify.", "from", "WaitNofifyState", "to", "InitState")
 	cs.dposState.timeOut(cs)
 	//cs.scheduleDPosTimeout(time.Second * 1, InitStateType)
+}
+
+//func (wait *WaitNofifyState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+//	dposlog.Info("WaitNofifyState does not support sendCBInfo,so do nothing")
+//}
+
+func (wait *WaitNofifyState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+	dposlog.Info("WaitNofifyState recvCBInfo")
+	cs.UpdateCBInfo(info)
 }
