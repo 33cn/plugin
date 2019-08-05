@@ -19,6 +19,10 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
+var (
+	fetchFilterParaTxsEnable bool
+)
+
 func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
 	set := &types.LocalDBSet{}
 
@@ -89,7 +93,7 @@ func (client *client) getLastLocalHeight() (int64, error) {
 	if err != nil {
 		return -1, err
 	}
-	if value[0] == nil {
+	if len(value) == 0 {
 		return -1, types.ErrNotFound
 	}
 
@@ -110,7 +114,7 @@ func (client *client) getLocalBlockByHeight(height int64) (*pt.ParaLocalDbBlock,
 	if err != nil {
 		return nil, err
 	}
-	if value[0] == nil {
+	if len(value) == 0 {
 		return nil, types.ErrNotFound
 	}
 
@@ -212,7 +216,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 		startHeight = lastBlock.Height
 	}
 
-	depth := searchHashMatchDepth
+	depth := client.subCfg.SearchHashMatchedBlockDepth
 	for height := startHeight; height > 0 && depth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
 		if err != nil {
@@ -227,7 +231,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", block.MainHeight,
 					"mainHash", hex.EncodeToString(block.MainHash), "search startHeight", lastBlock.Height, "curHeight", height,
-					"search depth", searchHashMatchDepth)
+					"search depth", client.subCfg.SearchHashMatchedBlockDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
@@ -307,13 +311,13 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 	}
 
 	if lastSeq > currSeq {
-		if lastSeq-currSeq > emptyBlockInterval {
+		if lastSeq-currSeq > client.subCfg.EmptyBlockInterval {
 			atomic.StoreInt32(&client.caughtUp, 0)
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if fetchFilterParaTxsEnable && lastSeq-currSeq > batchFetchBlockCount {
-			return batchFetchBlockCount, nil
+		if fetchFilterParaTxsEnable && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+			return client.subCfg.BatchFetchBlockCount, nil
 		}
 		return 0, nil
 	}
@@ -437,7 +441,7 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 
 	} else if mainBlock.Type == addAct {
 		if len(txs) == 0 {
-			if lastSeqMainHeight-lastBlock.MainHeight < emptyBlockInterval {
+			if lastSeqMainHeight-lastBlock.MainHeight < client.subCfg.EmptyBlockInterval {
 				return false, nil
 			}
 			plog.Info("Create empty block")
@@ -487,7 +491,7 @@ out:
 				if err == nil {
 					continue
 				}
-				time.Sleep(time.Second * time.Duration(blockSec))
+				time.Sleep(time.Second * time.Duration(client.subCfg.WriteBlockSeconds))
 				continue
 			}
 

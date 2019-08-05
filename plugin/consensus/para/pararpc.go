@@ -139,9 +139,9 @@ func (client *client) GetBlockOnMainBySeq(seq int64) (*types.BlockSeq, error) {
 		return nil, err
 	}
 
-	hash := blockSeq.Detail.Block.HashByForkHeight(mainBlockHashForkHeight)
+	hash := blockSeq.Detail.Block.HashByForkHeight(client.subCfg.MainBlockHashForkHeight)
 	if !bytes.Equal(blockSeq.Seq.Hash, hash) {
-		plog.Error("para compare ForkBlockHash fail", "forkHeight", mainBlockHashForkHeight,
+		plog.Error("para compare ForkBlockHash fail", "forkHeight", client.subCfg.MainBlockHashForkHeight,
 			"seqHash", hex.EncodeToString(blockSeq.Seq.Hash), "calcHash", hex.EncodeToString(hash))
 		return nil, types.ErrBlockHashNoMatch
 	}

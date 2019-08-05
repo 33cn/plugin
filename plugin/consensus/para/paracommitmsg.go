@@ -25,9 +25,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
+const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
+
+	waitBlocks4CommitMsg int32  = 3
+	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
 type commitMsgClient struct {
@@ -393,7 +396,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		execName := pt.ParaX
-		if isParaSelfConsensusForked(status.MainBlockHeight) {
+		if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
 			execName = paracross.GetExecName()
 		}
 		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
@@ -413,7 +416,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
-	if isParaSelfConsensusForked(status.MainBlockHeight) {
+	if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
 		execName = paracross.GetExecName()
 	}
 	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
@@ -496,10 +499,6 @@ out:
 	}
 
 	client.paraClient.wg.Done()
-}
-
-func isParaSelfConsensusForked(height int64) bool {
-	return height > mainParaSelfConsensusForkHeight
 }
 
 //当前未考虑获取key非常多失败的场景， 如果获取height非常多，block模块会比较大，但是使用完了就释放了
@@ -705,7 +704,7 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		return nil, err
 	}
 
-	if isParaSelfConsensusForked(block.MainHeight) {
+	if client.paraClient.isParaSelfConsensusForked(block.MainHeight) {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
@@ -736,7 +735,7 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 			}
 
 			//本地共识高度对应主链高度一定要高于自共识高度，为了适配平行链共识高度不连续场景
-			if isParaSelfConsensusForked(statusMainHeight) {
+			if client.paraClient.isParaSelfConsensusForked(statusMainHeight) {
 				return resp, nil
 			}
 		}
