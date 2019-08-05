@@ -81,7 +81,6 @@ func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.Loca
 	return dbSet, nil
 }
 
-
 func (a *Autonomy) getProposalRule(req *types.ReqString) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
@@ -124,9 +123,9 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 		AutonomyProposalRule: &auty.AutonomyProposalRule{},
 	}
 	cur.Address = req.Addr
-	cur.Status  = req.Status
-	cur.Height  = req.Height
-	cur.Index   = req.Index
+	cur.Status = req.Status
+	cur.Height = req.Height
+	cur.Index = req.Index
 	prefix, err := cur.Get(indexName)
 
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)

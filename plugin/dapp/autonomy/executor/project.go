@@ -124,9 +124,9 @@ func (a *Autonomy) listProposalProject(req *auty.ReqQueryProposalProject) (types
 		AutonomyProposalProject: &auty.AutonomyProposalProject{},
 	}
 	cur.Address = req.Addr
-	cur.Status  = req.Status
-	cur.Height  = req.Height
-	cur.Index   = req.Index
+	cur.Status = req.Status
+	cur.Height = req.Height
+	cur.Index = req.Index
 	prefix, err := cur.Get(indexName)
 
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
