@@ -12,7 +12,7 @@ import (
 
 func (a *Autonomy) execLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewRuleTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
 		case auty.TyLogPropRule,
@@ -25,73 +25,62 @@ func (a *Autonomy) execLocalRule(receiptData *types.ReceiptData) (*types.LocalDB
 				if err != nil {
 					return nil, err
 				}
-				kv := saveRuleHeightIndex(&receipt)
-				set = append(set, kv...)
+				err = table.Replace(receipt.Current)
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
-	return dbSet, nil
-}
-
-func saveRuleHeightIndex(res *auty.ReceiptProposalRule) (kvs []*types.KeyValue) {
-	// 先将之前的状态删除掉，再做更新
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcRuleKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = nil
-		kvs = append(kvs, kv)
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
 	}
-
-	kv := &types.KeyValue{}
-	kv.Key = calcRuleKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = types.Encode(res.Current)
-	kvs = append(kvs, kv)
-	return kvs
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
 }
 
 func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
+	table := NewRuleTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
+		var receipt auty.ReceiptProposalRule
+		err := types.Decode(log.Log, &receipt)
+		if err != nil {
+			return nil, err
+		}
 		switch log.Ty {
-		case auty.TyLogPropRule,
-			auty.TyLogRvkPropRule,
-			auty.TyLogVotePropRule,
-			auty.TyLogTmintPropRule:
+		case auty.TyLogPropRule:
 			{
-				var receipt auty.ReceiptProposalRule
-				err := types.Decode(log.Log, &receipt)
+				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
+				err = table.Del([]byte(heightIndex))
 				if err != nil {
 					return nil, err
 				}
-				kv := delRuleHeightIndex(&receipt)
-				set = append(set, kv...)
+			}
+		case auty.TyLogRvkPropRule,
+			auty.TyLogVotePropRule,
+			auty.TyLogTmintPropRule:
+			{
+				err = table.Replace(receipt.Prev)
+				if err != nil {
+					return nil, err
+				}
 			}
 		default:
 			break
 		}
 	}
-	dbSet.KV = append(dbSet.KV, set...)
+	kvs, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }
 
-func delRuleHeightIndex(res *auty.ReceiptProposalRule) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = calcRuleKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = nil
-	kvs = append(kvs, kv)
-
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcRuleKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = types.Encode(res.Prev)
-		kvs = append(kvs, kv)
-	}
-	return kvs
-}
 
 func (a *Autonomy) getProposalRule(req *types.ReqString) (types.Message, error) {
 	if req == nil {
@@ -115,35 +104,49 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	//var key []byte
-	//var values [][]byte
-	//var err error
-	//
-	//localDb := a.GetLocalDB()
-	//if req.GetIndex() == -1 {
-	//	key = nil
-	//} else { //翻页查找指定的txhash列表
-	//	heightstr := genHeightIndexStr(req.GetIndex())
-	//	key = calcRuleKey4StatusHeight(req.Status, heightstr)
-	//}
-	//prefix := calcRuleKey4StatusHeight(req.Status, "")
-	//values, err = localDb.List(prefix, key, req.Count, req.GetDirection())
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(values) == 0 {
-	//	return nil, types.ErrNotFound
-	//}
+
+	localDb := a.GetLocalDB()
+	query := NewRuleTable(localDb).GetQuery(localDb)
+	var primary []byte
+	if req.Height > 0 {
+		primary = []byte(dapp.HeightIndexStr(req.Height, int64(req.Index)))
+	}
+	indexName := ""
+	if req.Status > 0 && req.Addr != "" {
+		indexName = "addr_status"
+	} else if req.Status > 0 {
+		indexName = "status"
+	} else if req.Addr != "" {
+		indexName = "addr"
+	}
+
+	cur := &RuleRow{
+		AutonomyProposalRule: &auty.AutonomyProposalRule{},
+	}
+	cur.Address = req.Addr
+	cur.Status  = req.Status
+	cur.Height  = req.Height
+	cur.Index   = req.Index
+	prefix, err := cur.Get(indexName)
+
+	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
+	if err != nil {
+		alog.Error("query List failed", "indexName", indexName, "prefix", "prefix", "key", string(primary), "err", err)
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, types.ErrNotFound
+	}
 
 	var rep auty.ReplyQueryProposalRule
-	//for _, value := range values {
-	//	prop := &auty.AutonomyProposalRule{}
-	//	err = types.Decode(value, prop)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	rep.PropRules = append(rep.PropRules, prop)
-	//}
+	for _, row := range rows {
+		r, ok := row.Data.(*auty.AutonomyProposalRule)
+		if !ok {
+			alog.Error("listProposalRule", "err", "bad row type")
+			return nil, types.ErrDecode
+		}
+		rep.PropRules = append(rep.PropRules, r)
+	}
 	return &rep, nil
 }
 
@@ -224,10 +227,10 @@ func (a *Autonomy) listProposalComment(req *auty.ReqQueryProposalComment) (types
 	var err error
 
 	localDb := a.GetLocalDB()
-	if req.GetIndex() == -1 {
+	if req.Height <= 0 {
 		key = nil
 	} else { //翻页查找指定的txhash列表
-		heightstr := genHeightIndexStr(req.GetIndex())
+		heightstr := dapp.HeightIndexStr(req.Height, int64(req.Index))
 		key = calcCommentHeight(req.ProposalID, heightstr)
 	}
 	prefix := calcCommentHeight(req.ProposalID, "")

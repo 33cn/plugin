@@ -61,12 +61,12 @@ message LocalProposalRule {
 
 // query
 message ReqQueryProposalRule {
-    int32  count     = 1;
-    int32  direction = 2;
-    int64  height    = 3;
-    int32  index     = 4;
-    int32  status    = 5;
-    string addr      = 6;
+    int32  status    = 1;
+    string addr      = 2;
+    int32  count     = 3;
+    int32  direction = 4;
+    int64  height    = 5;
+    int32  index     = 6;
 }
 
 message ReplyQueryProposalRule {
@@ -98,7 +98,8 @@ message ReqQueryProposalComment {
     string proposalID = 1;
     int32  count      = 2;
     int32  direction  = 3;
-    int64  index      = 4;
+    int64  height     = 4;
+    int32  index      = 5;
 }
 
 message RelationCmt {

@@ -37,30 +37,12 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 			break
 		}
 	}
-
 	kvs, err := table.Save()
 	if err != nil {
 		return nil, err
 	}
 	dbSet.KV = append(dbSet.KV, kvs...)
-
 	return dbSet, nil
-}
-
-func saveBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
-	// 先将之前的状态删除掉，再做更新
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcBoardKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = nil
-		kvs = append(kvs, kv)
-	}
-
-	kv := &types.KeyValue{}
-	kv.Key = calcBoardKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = types.Encode(res.Current)
-	kvs = append(kvs, kv)
-	return kvs
 }
 
 func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
@@ -99,23 +81,7 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 		return nil, err
 	}
 	dbSet.KV = append(dbSet.KV, kvs...)
-
 	return dbSet, nil
-}
-
-func delBoardHeightIndex(res *auty.ReceiptProposalBoard) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = calcBoardKey4StatusHeight(res.Current.Status, dapp.HeightIndexStr(res.Current.Height, int64(res.Current.Index)))
-	kv.Value = nil
-	kvs = append(kvs, kv)
-
-	if res.Current.Status > 1 {
-		kv := &types.KeyValue{}
-		kv.Key = calcBoardKey4StatusHeight(res.Prev.Status, dapp.HeightIndexStr(res.Prev.Height, int64(res.Prev.Index)))
-		kv.Value = types.Encode(res.Prev)
-		kvs = append(kvs, kv)
-	}
-	return kvs
 }
 
 func (a *Autonomy) getProposalBoard(req *types.ReqString) (types.Message, error) {
@@ -185,8 +151,6 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 	}
 	return &rep, nil
 }
-
-
 
 func genHeightIndexStr(index int64) string {
 	return fmt.Sprintf("%018d", index)

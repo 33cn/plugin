@@ -13,53 +13,53 @@ import (
 
 /*
 table  struct
-data:  autonomy board
+data:  autonomy rule
 index: status, addr
 */
 
-var boardOpt = &table.Option{
+var ruleOpt = &table.Option{
 	Prefix:  "LODB-autonomy",
-	Name:    "board",
+	Name:    "rule",
 	Primary: "heightindex",
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
 //NewTable 新建表
-func NewBoardTable(kvdb db.KV) *table.Table {
-	rowmeta := NewBoardRow()
-	table, err := table.NewTable(rowmeta, kvdb, boardOpt)
+func NewRuleTable(kvdb db.KV) *table.Table {
+	rowmeta := NewRuleRow()
+	table, err := table.NewTable(rowmeta, kvdb, ruleOpt)
 	if err != nil {
 		panic(err)
 	}
 	return table
 }
 
-//BoardRow table meta 结构
-type BoardRow struct {
-	*auty.AutonomyProposalBoard
+//RuleRow table meta 结构
+type RuleRow struct {
+	*auty.AutonomyProposalRule
 }
 
-//NewBoardRow 新建一个meta 结构
-func NewBoardRow() *BoardRow {
-	return &BoardRow{AutonomyProposalBoard: &auty.AutonomyProposalBoard{}}
+//NewRuleRow 新建一个meta 结构
+func NewRuleRow() *RuleRow {
+	return &RuleRow{AutonomyProposalRule: &auty.AutonomyProposalRule{}}
 }
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
-func (r *BoardRow) CreateRow() *table.Row {
-	return &table.Row{Data: &auty.AutonomyProposalBoard{}}
+func (r *RuleRow) CreateRow() *table.Row {
+	return &table.Row{Data: &auty.AutonomyProposalRule{}}
 }
 
 //SetPayload 设置数据
-func (r *BoardRow) SetPayload(data types.Message) error {
-	if d, ok := data.(*auty.AutonomyProposalBoard); ok {
-		r.AutonomyProposalBoard = d
+func (r *RuleRow) SetPayload(data types.Message) error {
+	if d, ok := data.(*auty.AutonomyProposalRule); ok {
+		r.AutonomyProposalRule = d
 		return nil
 	}
 	return types.ErrTypeAsset
 }
 
 //Get 按照indexName 查询 indexValue
-func (r *BoardRow) Get(key string) ([]byte, error) {
+func (r *RuleRow) Get(key string) ([]byte, error) {
 	if key == "heightindex" {
 		return []byte(dapp.HeightIndexStr(r.Height, int64(r.Index))), nil
 	} else if key == "status" {
