@@ -15,8 +15,8 @@ import (
 
 	"time"
 
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/client/api"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
