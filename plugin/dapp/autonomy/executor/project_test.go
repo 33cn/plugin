@@ -49,16 +49,18 @@ func testexecLocalProject(t *testing.T, auto bool) {
 
 	var set *types.LocalDBSet
 	var err error
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalProject(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalProject(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 
@@ -73,12 +75,14 @@ func testexecLocalProject(t *testing.T, auto bool) {
 		Current: cur,
 	}
 
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalProject(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogRvkPropProject, Log: types.Encode(receiptProject1)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -88,9 +92,9 @@ func testexecLocalProject(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropProject, Log: types.Encode(receiptProject1)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
-	require.NoError(t, err)
-	require.NotNil(t, set)
 
 	//save to database
 	saveKvs(sdb, set.KV)
@@ -108,12 +112,14 @@ func testexecLocalProject(t *testing.T, auto bool) {
 		Current: cur,
 	}
 
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalProject(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -123,9 +129,9 @@ func testexecLocalProject(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
-	require.NoError(t, err)
-	require.NotNil(t, set)
 
 	//save to database
 	saveKvs(sdb, set.KV)
@@ -168,7 +174,7 @@ func testexecDelLocalProject(t *testing.T, auto bool) {
 	var set *types.LocalDBSet
 	var err error
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err := au.execLocalProject(receipt)
 		require.NoError(t, err)
 		require.NotNil(t, set)
@@ -216,7 +222,7 @@ func testexecDelLocalProject(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 		}}
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalProject(recpt)
 
 		require.NoError(t, err)
