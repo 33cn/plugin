@@ -17,6 +17,11 @@ import (
 )
 
 func TestExecLocalRule(t *testing.T) {
+	testexecLocalRule(t, false)
+	testexecLocalRule(t, true)
+}
+
+func testexecLocalRule(t *testing.T, auto bool) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -39,7 +44,17 @@ func TestExecLocalRule(t *testing.T) {
 			{Ty: auty.TyLogPropRule, Log: types.Encode(receiptRule)},
 		},
 	}
-	set, err := au.execLocalRule(receipt)
+	var set *types.LocalDBSet
+	var err error
+
+	if auto == false {
+		set, err = au.execLocalRule(receipt)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalRule(tx, receipt)
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	//save to database
@@ -55,11 +70,23 @@ func TestExecLocalRule(t *testing.T) {
 		Prev:    pre1,
 		Current: cur,
 	}
-	set, err = au.execLocalRule(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
-		},
-	})
+	if auto == false {
+		set, err = au.execLocalRule(&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
+			},
+		})
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalRule(tx,
+			&types.ReceiptData{
+				Logs: []*types.ReceiptLog{
+					{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
+				},
+			})
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	//save to database
@@ -70,22 +97,30 @@ func TestExecLocalRule(t *testing.T) {
 
 	// TyLogVotePropRule
 	cur.Status = auty.AutonomyStatusProposalRule
-	cur.Height = 1
-	cur.Index = 2
 	pre2 := copyAutonomyProposalRule(cur)
 	cur.Status = auty.AutonomyStatusVotePropRule
-	cur.Height = 1
-	cur.Index = 2
 	cur.Address = "2222222222222"
 	receiptRule2 := &auty.ReceiptProposalRule{
 		Prev:    pre2,
 		Current: cur,
 	}
-	set, err = au.execLocalRule(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
-		},
-	})
+	if auto == false {
+		set, err = au.execLocalRule(&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
+			},
+		})
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalRule(tx,
+			&types.ReceiptData{
+				Logs: []*types.ReceiptLog{
+					{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
+				},
+			})
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	//save to database
@@ -95,6 +130,11 @@ func TestExecLocalRule(t *testing.T) {
 }
 
 func TestExecDelLocalRule(t *testing.T) {
+	testexecDelLocalRule(t, false)
+	testexecDelLocalRule(t, true)
+}
+
+func testexecDelLocalRule(t *testing.T, auto bool) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -117,16 +157,33 @@ func TestExecDelLocalRule(t *testing.T) {
 			{Ty: auty.TyLogPropRule, Log: types.Encode(receiptRule)},
 		},
 	}
+	var set *types.LocalDBSet
+	var err error
 	// 先执行local然后进行删除
-	set, err := au.execLocalRule(receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
+	if auto == false {
+		set, err := au.execLocalRule(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
 
-	set, err = au.execDelLocalRule(receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
+		set, err = au.execDelLocalRule(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err := au.execAutoLocalRule(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		set, err = au.execAutoDelLocal(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	}
+
 	// check
 	table := NewRuleTable(au.GetLocalDB())
 	query := table.GetQuery(kvdb)
@@ -146,26 +203,51 @@ func TestExecDelLocalRule(t *testing.T) {
 		Prev:    pre1,
 		Current: cur,
 	}
-	// 先执行local然后进行删除
-	set, err = au.execLocalRule(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
-		},
-	})
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
-	// check
-	checkExecLocalRule(t, kvdb, cur)
 
-	set, err = au.execDelLocalRule(&types.ReceiptData{
+	recpt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
 			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
-		},
-	})
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
+		}}
+	// 先执行local然后进行删除
+	if auto == false {
+		set, err = au.execLocalRule(recpt)
+
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+		// check
+		checkExecLocalRule(t, kvdb, cur)
+
+		set, err = au.execDelLocalRule(recpt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	} else {
+		// 自动回退测试时候，需要先设置一个前置状态
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err := au.execAutoLocalRule(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		// 正常测试退回
+		tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalRule(tx, recpt)
+
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+		// check
+		checkExecLocalRule(t, kvdb, cur)
+
+		set, err = au.execAutoDelLocal(tx, recpt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	}
+
 	// check
 	checkExecLocalRule(t, kvdb, pre1)
 }
@@ -329,7 +411,14 @@ func TestListProposalRule(t *testing.T) {
 }
 
 func TestExecLocalCommentProp(t *testing.T) {
+	testexecLocalCommentProp(t, false)
+	testexecLocalCommentProp(t, true)
+}
+
+func testexecLocalCommentProp(t *testing.T, auto bool) {
+	_, _, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
+	au.SetLocalDB(kvdb)
 	propID := "11111111111111"
 	Repcmt := "2222222222"
 	comment := "3333333333"
@@ -347,7 +436,16 @@ func TestExecLocalCommentProp(t *testing.T) {
 			{Ty: auty.TyLogCommentProp, Log: types.Encode(receiptCmt)},
 		},
 	}
-	set, err := au.execLocalCommentProp(receipt)
+	var set *types.LocalDBSet
+	var err error
+	if auto == false {
+		set, err = au.execLocalCommentProp(receipt)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalCommentProp(tx, receipt)
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
@@ -356,7 +454,14 @@ func TestExecLocalCommentProp(t *testing.T) {
 }
 
 func TestExecDelLocalCommentProp(t *testing.T) {
+	testexecDelLocalCommentProp(t, false)
+	testexecDelLocalCommentProp(t, true)
+}
+
+func testexecDelLocalCommentProp(t *testing.T, auto bool) {
+	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
+	au.SetLocalDB(kvdb)
 	propID := "11111111111111"
 	Repcmt := "2222222222"
 	comment := "3333333333"
@@ -374,9 +479,33 @@ func TestExecDelLocalCommentProp(t *testing.T) {
 			{Ty: auty.TyLogCommentProp, Log: types.Encode(receiptCmt)},
 		},
 	}
-	set, err := au.execDelLocalCommentProp(receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	var set *types.LocalDBSet
+	var err error
+	// 先执行local然后进行删除
+	if auto == false {
+		set, err = au.execLocalCommentProp(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		set, err = au.execDelLocalCommentProp(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+
+		set, err = au.execAutoLocalCommentProp(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		set, err = au.execAutoDelLocal(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+	}
+
+	// check
 	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
 		dapp.HeightIndexStr(receiptCmt.Height, int64(receiptCmt.Index))))
 	require.Nil(t, set.KV[0].Value)
