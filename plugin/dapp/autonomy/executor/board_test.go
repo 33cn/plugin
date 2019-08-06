@@ -47,16 +47,18 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 
 	var set *types.LocalDBSet
 	var err error
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalBoard(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 
@@ -70,12 +72,14 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		Prev:    pre1,
 		Current: cur,
 	}
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalBoard(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -85,10 +89,9 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
-
-	require.NoError(t, err)
-	require.NotNil(t, set)
 
 	//save to database
 	saveKvs(sdb, set.KV)
@@ -105,12 +108,14 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		Prev:    pre2,
 		Current: cur,
 	}
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalBoard(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -120,10 +125,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 	// check
@@ -162,7 +167,7 @@ func testexecDelLocalBoard(t *testing.T, auto bool) {
 	var set *types.LocalDBSet
 	var err error
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err := au.execLocalBoard(receipt)
 		require.NoError(t, err)
 		require.NotNil(t, set)
@@ -210,7 +215,7 @@ func testexecDelLocalBoard(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 		}}
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalBoard(recpt)
 
 		require.NoError(t, err)

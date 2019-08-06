@@ -16,7 +16,7 @@ func (a *Autonomy) execAutoLocalProject(tx *types.Transaction, receiptData *type
 		return set, err
 	}
 	dbSet := &types.LocalDBSet{}
-	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	dbSet.KV = a.AddRollbackKV(tx, tx.Execer, set.KV)
 	return dbSet, nil
 }
 

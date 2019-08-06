@@ -47,16 +47,18 @@ func testexecLocalRule(t *testing.T, auto bool) {
 	var set *types.LocalDBSet
 	var err error
 
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalRule(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalRule(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 
@@ -70,12 +72,14 @@ func testexecLocalRule(t *testing.T, auto bool) {
 		Prev:    pre1,
 		Current: cur,
 	}
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalRule(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -85,10 +89,10 @@ func testexecLocalRule(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 
@@ -104,12 +108,14 @@ func testexecLocalRule(t *testing.T, auto bool) {
 		Prev:    pre2,
 		Current: cur,
 	}
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalRule(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
 				{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 			},
 		})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -119,10 +125,10 @@ func testexecLocalRule(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 				},
 			})
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	//save to database
 	saveKvs(sdb, set.KV)
 	// check
@@ -160,7 +166,7 @@ func testexecDelLocalRule(t *testing.T, auto bool) {
 	var set *types.LocalDBSet
 	var err error
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err := au.execLocalRule(receipt)
 		require.NoError(t, err)
 		require.NotNil(t, set)
@@ -209,7 +215,7 @@ func testexecDelLocalRule(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 		}}
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalRule(recpt)
 
 		require.NoError(t, err)
@@ -438,16 +444,18 @@ func testexecLocalCommentProp(t *testing.T, auto bool) {
 	}
 	var set *types.LocalDBSet
 	var err error
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalCommentProp(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalCommentProp(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
 	}
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
 	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
 		dapp.HeightIndexStr(receiptCmt.Height, int64(receiptCmt.Index))))
 	require.NotNil(t, set.KV[0].Value)
@@ -482,7 +490,7 @@ func testexecDelLocalCommentProp(t *testing.T, auto bool) {
 	var set *types.LocalDBSet
 	var err error
 	// 先执行local然后进行删除
-	if auto == false {
+	if !auto {
 		set, err = au.execLocalCommentProp(receipt)
 		require.NoError(t, err)
 		require.NotNil(t, set)

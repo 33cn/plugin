@@ -16,7 +16,7 @@ func (a *Autonomy) execAutoLocalBoard(tx *types.Transaction, receiptData *types.
 		return set, err
 	}
 	dbSet := &types.LocalDBSet{}
-	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	dbSet.KV = a.AddRollbackKV(tx, tx.Execer, set.KV)
 	return dbSet, nil
 }
 
@@ -54,7 +54,7 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 }
 
 func (a *Autonomy) execAutoDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	kvs, err := a.DelRollbackKV(tx, []byte(tx.Execer))
+	kvs, err := a.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
 		return nil, err
 	}
