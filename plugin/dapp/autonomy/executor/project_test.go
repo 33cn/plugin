@@ -216,7 +216,7 @@ func testexecDelLocalProject(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 		}}
 	// 先执行local然后进行删除
-	if auto == false  {
+	if auto == false {
 		set, err = au.execLocalProject(recpt)
 
 		require.NoError(t, err)

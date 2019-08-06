@@ -81,10 +81,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx,
 			&types.ReceiptData{
-			Logs: []*types.ReceiptLog{
-				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
-			},
-		})
+				Logs: []*types.ReceiptLog{
+					{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
+				},
+			})
 	}
 
 	require.NoError(t, err)
@@ -116,10 +116,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx,
 			&types.ReceiptData{
-			Logs: []*types.ReceiptLog{
-				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
-			},
-		})
+				Logs: []*types.ReceiptLog{
+					{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+				},
+			})
 	}
 
 	require.NoError(t, err)
