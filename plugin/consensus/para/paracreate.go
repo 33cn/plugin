@@ -525,5 +525,6 @@ out:
 		}
 	}
 
+	plog.Info("para CreateBlock quit")
 	client.wg.Done()
 }

@@ -208,11 +208,13 @@ func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *client) Close() {
-	client.BaseClient.Close()
 	close(client.commitMsgClient.quit)
 	close(client.quitCreate)
 	close(client.blockSyncClient.quitChan)
 	client.wg.Wait()
+
+	client.BaseClient.Close()
+
 	plog.Info("consensus para closed")
 }
 
