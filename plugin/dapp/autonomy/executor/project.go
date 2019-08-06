@@ -10,8 +10,17 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execAutoLocalProject(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	set, err := a.execLocalProject(receiptData)
+	if err != nil {
+		return set, err
+	}
 	dbSet := &types.LocalDBSet{}
+	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	return dbSet, nil
+}
+
+func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	table := NewProjectTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
@@ -39,12 +48,12 @@ func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.Loca
 	if err != nil {
 		return nil, err
 	}
+	dbSet := &types.LocalDBSet{}
 	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }
 
 func (a *Autonomy) execDelLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	dbSet := &types.LocalDBSet{}
 	table := NewProjectTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		var receipt auty.ReceiptProposalProject
@@ -79,6 +88,7 @@ func (a *Autonomy) execDelLocalProject(receiptData *types.ReceiptData) (*types.L
 	if err != nil {
 		return nil, err
 	}
+	dbSet := &types.LocalDBSet{}
 	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }

@@ -179,6 +179,7 @@ paraConsensusStopBlocks=30000
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
+autoRollback=false
 
 
 #系统中所有的fork,默认用chain33的测试网络的

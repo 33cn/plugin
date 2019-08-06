@@ -17,6 +17,11 @@ import (
 )
 
 func TestExecLocalBoard(t *testing.T) {
+	testexecLocalBoard(t, false)
+	testexecLocalBoard(t, true)
+}
+
+func testexecLocalBoard(t *testing.T, auto bool) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -39,7 +44,17 @@ func TestExecLocalBoard(t *testing.T) {
 			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
 		},
 	}
-	set, err := au.execLocalBoard(receipt)
+
+	var set *types.LocalDBSet
+	var err error
+	if auto == false {
+		set, err = au.execLocalBoard(receipt)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalBoard(tx, receipt)
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	//save to database
@@ -55,11 +70,23 @@ func TestExecLocalBoard(t *testing.T) {
 		Prev:    pre1,
 		Current: cur,
 	}
-	set, err = au.execLocalBoard(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
-		},
-	})
+	if auto == false {
+		set, err = au.execLocalBoard(&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
+			},
+		})
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalBoard(tx,
+			&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
+			},
+		})
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 
@@ -71,22 +98,30 @@ func TestExecLocalBoard(t *testing.T) {
 
 	// TyLogVotePropBoard
 	cur.Status = auty.AutonomyStatusProposalBoard
-	cur.Height = 1
-	cur.Index = 2
 	pre2 := copyAutonomyProposalBoard(cur)
 	cur.Status = auty.AutonomyStatusVotePropBoard
-	cur.Height = 1
-	cur.Index = 2
 	cur.Address = "2222222222222"
 	receiptBoard2 := &auty.ReceiptProposalBoard{
 		Prev:    pre2,
 		Current: cur,
 	}
-	set, err = au.execLocalBoard(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
-		},
-	})
+	if auto == false {
+		set, err = au.execLocalBoard(&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+			},
+		})
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalBoard(tx,
+			&types.ReceiptData{
+			Logs: []*types.ReceiptLog{
+				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+			},
+		})
+	}
+
 	require.NoError(t, err)
 	require.NotNil(t, set)
 	//save to database
@@ -96,6 +131,11 @@ func TestExecLocalBoard(t *testing.T) {
 }
 
 func TestExecDelLocalBoard(t *testing.T) {
+	testexecDelLocalBoard(t, false)
+	testexecDelLocalBoard(t, true)
+}
+
+func testexecDelLocalBoard(t *testing.T, auto bool) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -118,16 +158,33 @@ func TestExecDelLocalBoard(t *testing.T) {
 			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
 		},
 	}
-	// 先执行local然后进行删除
-	set, err := au.execLocalBoard(receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
 
-	set, err = au.execDelLocalBoard(receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
+	var set *types.LocalDBSet
+	var err error
+	// 先执行local然后进行删除
+	if auto == false {
+		set, err := au.execLocalBoard(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		set, err = au.execDelLocalBoard(receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	} else {
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err := au.execAutoLocalBoard(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		set, err = au.execAutoDelLocal(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	}
 
 	// check
 	table := NewBoardTable(au.GetLocalDB())
@@ -144,35 +201,55 @@ func TestExecDelLocalBoard(t *testing.T) {
 	// TyLogVotePropBoard
 	pre1 := copyAutonomyProposalBoard(cur)
 	cur.Status = auty.AutonomyStatusVotePropBoard
-	cur.Height = 1
-	cur.Index = 2
 	receiptBoard2 := &auty.ReceiptProposalBoard{
 		Prev:    pre1,
 		Current: cur,
 	}
+	recpt := &types.ReceiptData{
+		Logs: []*types.ReceiptLog{
+			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+		}}
 	// 先执行local然后进行删除
-	set, err = au.execLocalBoard(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
-		},
-	})
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
-	// check
-	checkExecLocalBoard(t, kvdb, cur)
+	if auto == false {
+		set, err = au.execLocalBoard(recpt)
 
-	set, err = au.execDelLocalBoard(&types.ReceiptData{
-		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
-		},
-	})
-	require.NoError(t, err)
-	require.NotNil(t, set)
-	saveKvs(sdb, set.KV)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+		// check
+		checkExecLocalBoard(t, kvdb, cur)
+
+		set, err = au.execDelLocalBoard(recpt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	} else {
+		// 自动回退测试时候，需要先设置一个前置状态
+		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err := au.execAutoLocalBoard(tx, receipt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+
+		// 正常测试退回
+		tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		assert.NoError(t, err)
+		set, err = au.execAutoLocalBoard(tx, recpt)
+
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+		// check
+		checkExecLocalBoard(t, kvdb, cur)
+
+		set, err = au.execAutoDelLocal(tx, recpt)
+		require.NoError(t, err)
+		require.NotNil(t, set)
+		saveKvs(sdb, set.KV)
+	}
 	// check
 	checkExecLocalBoard(t, kvdb, pre1)
-
 }
 
 func TestGetProposalBoard(t *testing.T) {

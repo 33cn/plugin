@@ -10,8 +10,17 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (a *Autonomy) execAutoLocalBoard(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	set, err := a.execLocalBoard(receiptData)
+	if err != nil {
+		return set, err
+	}
 	dbSet := &types.LocalDBSet{}
+	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	return dbSet, nil
+}
+
+func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	table := NewBoardTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
@@ -39,12 +48,22 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 	if err != nil {
 		return nil, err
 	}
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
+}
+
+func (a *Autonomy) execAutoDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	kvs, err := a.DelRollbackKV(tx, []byte(tx.Execer))
+	if err != nil {
+		return nil, err
+	}
+	dbSet := &types.LocalDBSet{}
 	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }
 
 func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	dbSet := &types.LocalDBSet{}
 	table := NewBoardTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		var receipt auty.ReceiptProposalBoard
@@ -78,6 +97,7 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 	if err != nil {
 		return nil, err
 	}
+	dbSet := &types.LocalDBSet{}
 	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }

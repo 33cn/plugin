@@ -10,6 +10,16 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
+func (a *Autonomy) execAutoLocalRule(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	set, err := a.execLocalRule(receiptData)
+	if err != nil {
+		return set, err
+	}
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	return dbSet, nil
+}
+
 func (a *Autonomy) execLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	table := NewRuleTable(a.GetLocalDB())
@@ -151,6 +161,16 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 		rep.PropRules = append(rep.PropRules, r)
 	}
 	return &rep, nil
+}
+
+func (a *Autonomy) execAutoLocalCommentProp(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	set, err := a.execLocalCommentProp(receiptData)
+	if err != nil {
+		return set, err
+	}
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = a.AddRollbackKV(tx, []byte(tx.Execer), set.KV)
+	return dbSet, nil
 }
 
 func (a *Autonomy) execLocalCommentProp(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {

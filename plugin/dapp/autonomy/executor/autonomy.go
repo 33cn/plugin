@@ -13,8 +13,9 @@ import (
 )
 
 type subConfig struct {
-	Total      string `json:"total"`
-	UseBalance bool   `json:"useBalance"`
+	Total        string `json:"total"`
+	UseBalance   bool   `json:"useBalance"`
+	AutoRollback bool `json:"autoRollback"`
 }
 
 var (
