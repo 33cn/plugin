@@ -56,14 +56,14 @@ func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.Loca
 	dbSet := &types.LocalDBSet{}
 	table := NewRuleTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
-		var receipt auty.ReceiptProposalRule
-		err := types.Decode(log.Log, &receipt)
-		if err != nil {
-			return nil, err
-		}
 		switch log.Ty {
 		case auty.TyLogPropRule:
 			{
+				var receipt auty.ReceiptProposalRule
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
 				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
 				err = table.Del([]byte(heightIndex))
 				if err != nil {
@@ -74,6 +74,11 @@ func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.Loca
 			auty.TyLogVotePropRule,
 			auty.TyLogTmintPropRule:
 			{
+				var receipt auty.ReceiptProposalRule
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
 				err = table.Replace(receipt.Prev)
 				if err != nil {
 					return nil, err
