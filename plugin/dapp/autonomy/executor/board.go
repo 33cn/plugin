@@ -66,14 +66,14 @@ func (a *Autonomy) execAutoDelLocal(tx *types.Transaction, receiptData *types.Re
 func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	table := NewBoardTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
-		var receipt auty.ReceiptProposalBoard
-		err := types.Decode(log.Log, &receipt)
-		if err != nil {
-			return nil, err
-		}
 		switch log.Ty {
 		case auty.TyLogPropBoard:
 			{
+				var receipt auty.ReceiptProposalBoard
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
 				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
 				err = table.Del([]byte(heightIndex))
 				if err != nil {
@@ -84,6 +84,11 @@ func (a *Autonomy) execDelLocalBoard(receiptData *types.ReceiptData) (*types.Loc
 			auty.TyLogVotePropBoard,
 			auty.TyLogTmintPropBoard:
 			{
+				var receipt auty.ReceiptProposalBoard
+				err := types.Decode(log.Log, &receipt)
+				if err != nil {
+					return nil, err
+				}
 				err = table.Replace(receipt.Prev)
 				if err != nil {
 					return nil, err
