@@ -104,7 +104,7 @@ out:
 		}
 	}
 
-	client.printDebugInfo("Para sync - quit block sync goroutine")
+	plog.Info("Para sync - quit block sync goroutine")
 	client.paraClient.wg.Done()
 }
 
