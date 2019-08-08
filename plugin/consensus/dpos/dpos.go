@@ -325,7 +325,7 @@ OuterLoop:
 	// 对于受托节点，才需要初始化区块，启动共识相关程序等,后续支持投票要做成动态切换的。
 	if client.isDelegator {
 		client.InitBlock()
-		client.csState.InitCycleBoundaryInfo()
+		client.csState.Init()
 		node.Start()
 	}
 

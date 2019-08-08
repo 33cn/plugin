@@ -76,6 +76,97 @@ func DecideTaskByTime(now int64) (task Task) {
 	return task
 }
 
+func generateVote(cs *ConsensusState) *dpostype.Vote {
+	//获得当前高度
+	height := cs.client.GetCurrentHeight()
+	now := time.Now().Unix()
+	if cs.lastMyVote != nil && math.Abs(float64(now - cs.lastMyVote.VoteItem.PeriodStop)) <= 1 {
+		now += 2
+	}
+	//计算当前时间，属于哪一个周期，应该哪一个节点出块，应该出块的高度
+	task := DecideTaskByTime(now)
+
+	cs.ShuffleValidators(task.cycle)
+
+	addr, validator := cs.validatorMgr.GetValidatorByIndex(int(task.nodeID))
+	if addr == nil && validator == nil {
+		dposlog.Error("Address and Validator is nil", "node index", task.nodeID, "now", now, "cycle", dposCycle, "period", dposPeriod)
+		//cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+		return nil
+	}
+
+	//生成vote， 对于vote进行签名
+	voteItem := &dpostype.VoteItem{
+		VotedNodeAddress: addr,
+		VotedNodeIndex:   int32(task.nodeID),
+		Cycle:            task.cycle,
+		CycleStart:       task.cycleStart,
+		CycleStop:        task.cycleStop,
+		PeriodStart:      task.periodStart,
+		PeriodStop:       task.periodStop,
+		Height:           height + 1,
+	}
+	cs.validatorMgr.FillVoteItem(voteItem)
+
+	encode, err := json.Marshal(voteItem)
+	if err != nil {
+		panic("Marshal vote failed.")
+	}
+
+	voteItem.VoteID = crypto.Ripemd160(encode)
+
+	index := cs.validatorMgr.GetIndexByPubKey(cs.privValidator.GetPubKey().Bytes())
+
+	if index == -1 {
+		panic("This node's address is not exist in Validators.")
+	}
+
+	vote := &dpostype.Vote{
+		DPosVote: &dpostype.DPosVote{
+			VoteItem:         voteItem,
+			VoteTimestamp:    now,
+			VoterNodeAddress: cs.privValidator.GetAddress(),
+			VoterNodeIndex:   int32(index),
+		},
+	}
+
+	return vote
+}
+
+
+func checkVrf(cs *ConsensusState) {
+	now := time.Now().Unix()
+	task := DecideTaskByTime(now)
+	middleTime := task.cycleStart + (task.cycleStop - task.cycleStart) / 2
+	if now < middleTime {
+		info := cs.GetVrfInfoByCircle(task.cycle, VrfQueryTypeM)
+		if info == nil {
+			vrfM := &dty.DposVrfMRegist{
+				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
+				Cycle: task.cycle,
+				M: cs.currentVote.LastCBInfo.StopHash,
+			}
+
+			cs.SendRegistVrfMTx(vrfM)
+		}
+	} else {
+		info := cs.GetVrfInfoByCircle(task.cycle, VrfQueryTypeRP)
+		if info != nil && len(info.M) > 0 && (len(info.R) == 0 || len(info.P) == 0){
+			hash, proof := cs.VrfEvaluate(info.M)
+
+			vrfRP := &dty.DposVrfRPRegist{
+				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
+				Cycle: task.cycle,
+				R: hex.EncodeToString(hash[:]),
+				P: hex.EncodeToString(proof),
+			}
+
+			cs.SendRegistVrfRPTx(vrfRP)
+		}
+	}
+
+}
+
 // State is the base class of dpos state machine, it defines some interfaces.
 type State interface {
 	timeOut(cs *ConsensusState)
@@ -104,67 +195,14 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		//设定超时时间，超时后再检查链接数量
 		cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 	} else {
-		//获得当前高度
-		height := cs.client.GetCurrentHeight()
-		now := time.Now().Unix()
-		if cs.lastMyVote != nil && math.Abs(float64(now-cs.lastMyVote.VoteItem.PeriodStop)) <= 1 {
-			now += 2
-		}
-		//计算当前时间，属于哪一个周期，应该哪一个节点出块，应该出块的高度
-		task := DecideTaskByTime(now)
-
-		addr, validator := cs.validatorMgr.Validators.GetByIndex(int(task.nodeID))
-		if addr == nil && validator == nil {
-			dposlog.Error("Address and Validator is nil", "node index", task.nodeID, "now", now, "cycle", dposCycle, "period", dposPeriod)
-			//cs.SetState(InitStateObj)
+		vote := generateVote(cs)
+		if nil == vote {
 			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 			return
 		}
 
-		//生成vote， 对于vote进行签名
-		voteItem := &dpostype.VoteItem{
-			VotedNodeAddress: addr,
-			VotedNodeIndex:   int32(task.nodeID),
-			Cycle:            task.cycle,
-			CycleStart:       task.cycleStart,
-			CycleStop:        task.cycleStop,
-			PeriodStart:      task.periodStart,
-			PeriodStop:       task.periodStop,
-			Height:           height + 1,
-		}
-
-		encode, err := json.Marshal(voteItem)
-		if err != nil {
-			panic("Marshal vote failed.")
-			//cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
-			//return
-		}
-
-		voteItem.VoteID = crypto.Ripemd160(encode)
-
-		index := -1
-		for i := 0; i < cs.validatorMgr.Validators.Size(); i++ {
-			if bytes.Equal(cs.validatorMgr.Validators.Validators[i].Address, cs.privValidator.GetAddress()) {
-				index = i
-				break
-			}
-		}
-
-		if index == -1 {
-			panic("This node's address is not exist in Validators.")
-		}
-
-		vote := &dpostype.Vote{DPosVote: &dpostype.DPosVote{
-			VoteItem:         voteItem,
-			VoteTimestamp:    now,
-			VoterNodeAddress: cs.privValidator.GetAddress(),
-			VoterNodeIndex:   int32(index),
-		},
-		}
-
 		if err := cs.privValidator.SignVote(cs.validatorMgr.ChainID, vote); err != nil {
 			dposlog.Error("SignVote failed", "vote", vote.String())
-			//cs.SetState(InitStateObj)
 			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 			return
 		}
@@ -279,6 +317,14 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 
 		cs.SetCurrentVote(voteItem)
 
+		//检查最终投票是否与自己的投票一致，如果不一致，需要更新本地的信息，保证各节点共识结果执行一致。
+		if !bytes.Equal(cs.myVote.VoteItem.VoteID, voteItem.VoteID) {
+			if !cs.validatorMgr.UpdateFromVoteItem(voteItem) {
+				panic("This node's validators are not the same with final vote, please check")
+			}
+		}
+		//进行VRF相关处理
+		checkVrf(cs)
 		//1s后检查是否出块，是否需要重新投票
 		cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
 	} else if result == continueToVote {
@@ -330,6 +376,15 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 	if bytes.Equal(cs.privValidator.GetAddress(), cs.currentVote.VotedNodeAddress) {
 		//当前节点为出块节点
+
+		//如果区块未同步，则等待；如果区块已同步，则进行后续正常出块的判断和处理。
+		if block.Height + 1 < cs.currentVote.Height {
+			dposlog.Info("VotedState timeOut but block is not sync,wait...", "localHeight", block.Height, "vote height", cs.currentVote.Height)
+			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
+			return
+		}
+
+		//时间到了节点切换时刻
 		if now >= cs.currentVote.PeriodStop {
 			//当前时间超过了节点切换时间，需要进行重新投票
 			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop)
@@ -344,28 +399,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 					StopHash: hex.EncodeToString(block.Hash()),
 					Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
 				}
-/*
-				err := cs.privValidator.SignCBInfo(info)
-				if err != nil {
-					dposlog.Error("SignCBInfo failed.", "err", err)
-				} else {
-					tx, err := cs.client.CreateRecordCBTx(info)
-					if err != nil {
-						dposlog.Error("CreateRecordCBTx failed.", "err", err)
-					}else {
-						cs.privValidator.SignTx(tx)
-						dposlog.Info("Sign RecordCBTx.")
-						//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
-						msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
-						err = cs.client.GetQueueClient().Send(msg, false)
-						if err != nil {
-							dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
-						} else {
-							dposlog.Error("Send RecordCBTx to mempool ok.", "err", err)
-						}
-					}
-				}
-*/
+
 				cs.SendCBTx(info)
 				info2 := &dty.DposCBInfo{
 					Cycle: info.Cycle,
@@ -417,12 +451,6 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 			return
 		}
-		//如果区块未同步，则等待；如果区块已同步，则进行后续正常出块的判断和处理。
-		if block.Height + 1 < cs.currentVote.Height {
-			dposlog.Info("VotedState timeOut but block is not sync,wait...", "localHeight", block.Height, "vote height", cs.currentVote.Height)
-			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
-			return
-		}
 
 		//当前时间未到节点切换时间，则继续进行出块判断
 		if block.BlockTime >= task.blockStop {
@@ -457,6 +485,8 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 	} else {
 		dposlog.Info("This node is not current owner.", "current owner index", cs.currentVote.VotedNodeIndex, "this node index", cs.client.ValidatorIndex())
 
+		//根据时间进行vrf相关处理，如果在(cyclestart,middle)之间，发布M，如果在(middle,cyclestop)之间，发布R、P
+		checkVrf(cs)
 		//非当前出块节点，如果到了切换出块节点的时间，则进行状态切换，进行投票
 		if now >= cs.currentVote.PeriodStop {
 			//当前时间超过了节点切换时间，需要进行重新投票

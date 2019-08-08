@@ -17,6 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
@@ -30,6 +31,9 @@ const (
 	continueToVote = 0
 	voteSuccess    = 1
 	voteFail       = 2
+
+	VrfQueryTypeM  = 0
+	VrfQueryTypeRP = 1
 )
 
 // Errors define
@@ -55,11 +59,15 @@ func (ti *timeoutInfo) String() string {
 	return fmt.Sprintf("%v", ti.Duration)
 }
 
+/*
 type vrfStatusInfo struct {
 	Cycle int64
-
+	VrfStatus int64  //0:初始状态，1:未注册M状态，2:已发起M注册状态，3:已注册M状态，4:已发起RP注册状态,5:已注册RP状态，6:已过cycle一半但未发起M注册,7.cycle周期已过，未注册RP状态
+	M []byte
+	R []byte
+	P []byte
 }
-
+*/
 // ConsensusState handles execution of the consensus algorithm.
 // It processes votes and proposals, and upon reaching agreement,
 // commits blocks to the chain and executes them against the application.
@@ -108,6 +116,9 @@ type ConsensusState struct {
 	cachedNotify *dpostype.DPosNotify
 
 	cycleBoundaryMap map[int64] *dty.DposCBInfo
+	vrfInfoMap map[int64] *dty.VrfInfo
+	vrfInfosMap map[int64] []*dty.VrfInfo
+
 }
 
 // NewConsensusState returns a new ConsensusState.
@@ -122,6 +133,8 @@ func NewConsensusState(client *Client, valMgr ValidatorMgr) *ConsensusState {
 		dposState: InitStateObj,
 		dposVotes: nil,
 		cycleBoundaryMap: make(map[int64] *dty.DposCBInfo),
+		vrfInfoMap: make(map[int64]*dty.VrfInfo),
+		vrfInfosMap: make(map[int64] []*dty.VrfInfo),
 	}
 
 	cs.updateToValMgr(valMgr)
@@ -578,11 +591,17 @@ func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, e
 	return msg.GetData().(types.Message).(*dty.DposCBInfo), nil
 }
 
-// InitCycleBoundaryInfo method
-func (cs *ConsensusState) InitCycleBoundaryInfo(){
+// Init method
+func (cs *ConsensusState) Init() {
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
+	cs.InitCycleBoundaryInfo(task)
+	cs.InitCycleVrfInfo(task)
+	cs.InitCycleVrfInfos(task)
+}
 
+// InitCycleBoundaryInfo method
+func (cs *ConsensusState) InitCycleBoundaryInfo(task Task){
 	info, err := cs.QueryCycleBoundaryInfo(task.cycle)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
@@ -599,6 +618,7 @@ func (cs *ConsensusState) InitCycleBoundaryInfo(){
 	return
 }
 
+// UpdateCBInfo method
 func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
 	valueNumber := len(cs.cycleBoundaryMap)
 	if valueNumber == 0 {
@@ -627,16 +647,23 @@ func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
 	cs.cycleBoundaryMap[info.Cycle] = info
 }
 
+// GetCBInfoByCircle method
 func (cs *ConsensusState) GetCBInfoByCircle(cycle int64) (info *dty.DposCBInfo) {
 	if v, ok := cs.cycleBoundaryMap[cycle];ok {
 		info = v
 		return info
 	}
 
+	info, err := cs.QueryCycleBoundaryInfo(cycle)
+	if err == nil && info != nil {
+		cs.UpdateCBInfo(info)
+		return info
+	}
+
 	return nil
 }
 
-// VerifyNotify method
+// VerifyCBInfo method
 func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
 	// Verify signature
 	bPubkey, err := hex.DecodeString(info.Pubkey)
@@ -690,12 +717,27 @@ func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
 	return true
 }
 
+// SendCBTx method
 func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
-	err := cs.privValidator.SignCBInfo(info)
+	info.Pubkey = hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())
+	canonical := dty.CanonicalOnceCBInfo{
+		Cycle: info.Cycle,
+		StopHeight: info.StopHeight,
+		StopHash: info.StopHash,
+		Pubkey: info.Pubkey,
+	}
+
+	byteCB, err := json.Marshal(&canonical)
+	if err != nil {
+		dposlog.Error("marshal CanonicalOnceCBInfo failed", "err", err)
+	}
+
+	sig, err := cs.privValidator.SignMsg(byteCB)
 	if err != nil {
 		dposlog.Error("SignCBInfo failed.", "err", err)
 		return false
 	} else {
+		info.Signature = sig
 		tx, err := cs.client.CreateRecordCBTx(info)
 		if err != nil {
 			dposlog.Error("CreateRecordCBTx failed.", "err", err)
@@ -718,6 +760,7 @@ func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 	return true
 }
 
+// SendRegistVrfMTx method
 func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
 	tx, err := cs.client.CreateRegVrfMTx(info)
 	if err != nil {
@@ -740,6 +783,7 @@ func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
 	return true
 }
 
+// SendRegistVrfRPTx method
 func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
 	tx, err := cs.client.CreateRegVrfRPTx(info)
 	if err != nil {
@@ -762,4 +806,272 @@ func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
 	return true
 }
 
-func (cs *ConsensusState) QueryVrf(info *dty.DposCBInfo) bool {
+// QueryVrf method
+func (cs *ConsensusState) QueryVrf(pubkey []byte, cycle int64) (info *dty.VrfInfo, err error) {
+	var pubkeys [][]byte
+	pubkeys = append(pubkeys, pubkey)
+	infos, err := cs.client.QueryVrfInfos(pubkeys, cycle)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(infos) > 0 {
+		info = infos[0]
+	}
+
+	return info, nil
+}
+
+// InitCycleVrfInfo method
+func (cs *ConsensusState) InitCycleVrfInfo(task Task){
+	info, err := cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.cycle)
+	if err == nil && info != nil {
+		//cs.cycleBoundaryMap[task.cycle] = info
+		cs.UpdateVrfInfo(info)
+		return
+	}
+
+	info, err = cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.cycle - 1)
+	if err == nil && info != nil {
+		//cs.cycleBoundaryMap[task.cycle] = info
+		cs.UpdateVrfInfo(info)
+	}
+
+	return
+}
+
+// UpdateCBInfo method
+func (cs *ConsensusState) UpdateVrfInfo(info *dty.VrfInfo) {
+	valueNumber := len(cs.vrfInfoMap)
+	if valueNumber == 0 {
+		cs.vrfInfoMap[info.Cycle] = info
+		return
+	}
+
+	oldestCycle := int64(0)
+	for k, _ := range cs.vrfInfoMap {
+		if k == info.Cycle {
+			cs.vrfInfoMap[info.Cycle] = info
+			return
+		} else {
+			if oldestCycle == 0 {
+				oldestCycle = k
+			} else if oldestCycle > k {
+				oldestCycle = k
+			}
+		}
+	}
+
+	if valueNumber >= 5 {
+		delete(cs.vrfInfoMap, oldestCycle)
+	}
+
+	cs.vrfInfoMap[info.Cycle] = info
+}
+
+// GetCBInfoByCircle method
+func (cs *ConsensusState) GetVrfInfoByCircle(cycle int64, ty int) (info *dty.VrfInfo) {
+	if v, ok := cs.vrfInfoMap[cycle];ok {
+		info = v
+		if VrfQueryTypeM == ty && len(info.M) > 0 {
+			return info
+		} else if VrfQueryTypeRP == ty && len(info.M) > 0 && len(info.R) >0 && len(info.P) > 0 {
+			return info
+		}
+	}
+
+	info, err := cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), cycle)
+	if err == nil && info != nil {
+		cs.UpdateVrfInfo(info)
+		return info
+	}
+
+	return nil
+}
+
+
+// QueryVrfs method
+func (cs *ConsensusState) QueryVrfs(set *ttypes.ValidatorSet, cycle int64) (infos []*dty.VrfInfo, err error) {
+	var pubkeys [][]byte
+
+	for i := 0; i < set.Size(); i++ {
+		pubkeys = append(pubkeys, set.Validators[i].PubKey)
+	}
+	infos, err = cs.client.QueryVrfInfos(pubkeys, cycle)
+	if err != nil {
+		return nil, err
+	}
+
+
+	return infos, nil
+}
+
+
+// InitCycleVrfInfo method
+func (cs *ConsensusState) InitCycleVrfInfos(task Task){
+	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, task.cycle - 1)
+	if err == nil && infos != nil {
+		//cs.cycleBoundaryMap[task.cycle] = info
+		cs.UpdateVrfInfos(task.cycle, infos)
+	}
+
+	return
+}
+
+// UpdateCBInfo method
+func (cs *ConsensusState) UpdateVrfInfos(cycle int64, infos []*dty.VrfInfo) {
+	if len(cs.validatorMgr.Validators.Validators) != len(infos) {
+		return
+	}
+
+	for i := 0; i < len(infos); i++ {
+		if len(infos[i].M) == 0 || len(infos[i].R) == 0 || len(infos[i].P) == 0 {
+			return
+		}
+	}
+
+	valueNumber := len(cs.vrfInfosMap)
+	if valueNumber == 0 {
+		cs.vrfInfosMap[cycle] = infos
+		return
+	}
+
+	oldestCycle := int64(0)
+	for k, _ := range cs.vrfInfosMap {
+		if k == cycle {
+			cs.vrfInfosMap[cycle] = infos
+			return
+		} else {
+			if oldestCycle == 0 {
+				oldestCycle = k
+			} else if oldestCycle > k {
+				oldestCycle = k
+			}
+		}
+	}
+
+	if valueNumber >= 5 {
+		delete(cs.vrfInfosMap, oldestCycle)
+	}
+
+	cs.vrfInfosMap[cycle] = infos
+}
+
+// GetVrfInfosByCircle method
+func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (info []*dty.VrfInfo) {
+	if v, ok := cs.vrfInfosMap[cycle];ok {
+		info = v
+		return info
+	}
+
+	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, cycle)
+	if err == nil && infos != nil {
+		cs.UpdateVrfInfos(cycle, infos)
+		return info
+	}
+
+	return nil
+}
+
+// ShuffleValidators method
+func (cs *ConsensusState) ShuffleValidators(cycle int64){
+	if cycle == cs.validatorMgr.ShuffleCycle {
+		//如果已经洗过牌，则直接返回，不重复洗牌
+		return
+	}
+
+	infos := cs.GetVrfInfosByCircle(cycle - 1)
+	if infos == nil {
+		cs.validatorMgr.VrfValidators = nil
+		cs.validatorMgr.NoVrfValidators = nil
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		return
+	}
+
+	cbInfo := cs.GetCBInfoByCircle(cycle - 1)
+	if cbInfo == nil {
+		cs.validatorMgr.VrfValidators = nil
+		cs.validatorMgr.NoVrfValidators = nil
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		return
+	}
+	cs.validatorMgr.LastCycleBoundaryInfo = cbInfo
+
+	var vrfValidators []*ttypes.Validator
+	var noVrfValidators []*ttypes.Validator
+
+	for i := 0; i < len(infos); i++ {
+		if isValidVrfInfo(infos[i]) {
+			var vrfBytes []byte
+			vrfBytes = append(vrfBytes, []byte(cbInfo.StopHash)...)
+			vrfBytes = append(vrfBytes, infos[i].R...)
+
+			item := &ttypes.Validator{
+				PubKey: infos[i].Pubkey,
+			}
+			item.Address = crypto.Ripemd160(vrfBytes)
+			vrfValidators = append(vrfValidators, item)
+		}
+	}
+
+	set := cs.validatorMgr.Validators.Validators
+
+	if len(vrfValidators) == 0 {
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		return
+	} else if len(vrfValidators) == len(set) {
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeVrf
+		cs.validatorMgr.VrfValidators = ttypes.NewValidatorSet(vrfValidators)
+		return
+	}
+
+	cs.validatorMgr.ShuffleCycle = cycle
+	cs.validatorMgr.ShuffleType = ShuffleTypePartVrf
+
+	for i := 0; i < len(set); i ++ {
+		//如果节点信息不在VrfValidators，则说明没有完整的VRF信息，将被放入NoVrfValidators中
+		if !isValidatorExist(set[i].PubKey, vrfValidators) {
+			item := &ttypes.Validator{
+				PubKey: set[i].PubKey,
+				Address: set[i].Address,
+			}
+
+			noVrfValidators = append(noVrfValidators, item)
+		}
+	}
+
+	cs.validatorMgr.VrfValidators = ttypes.NewValidatorSet(vrfValidators)
+	cs.validatorMgr.NoVrfValidators = ttypes.NewValidatorSet(noVrfValidators)
+}
+
+func isValidVrfInfo(info *dty.VrfInfo) bool {
+	if info != nil && len(info.M) > 0 || len(info.R) > 0 || len(info.P) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func isValidatorExist(pubkey []byte ,set []*ttypes.Validator) bool {
+	for i := 0; i < len(set); i++ {
+		if bytes.Equal(pubkey, set[i].PubKey) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// VrfEvaluate method
+func (cs *ConsensusState) VrfEvaluate(input []byte)(hash [32]byte, proof []byte) {
+	return cs.privValidator.VrfEvaluate(input)
+}
+
+// VrfEvaluate method
+func (cs *ConsensusState) VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool{
+	return cs.privValidator.VrfProof(pubkey, input, hash, proof)
+}

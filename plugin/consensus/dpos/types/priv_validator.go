@@ -6,6 +6,7 @@ package types
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -14,8 +15,9 @@ import (
 	"sync"
 
 	"github.com/33cn/chain33/common/crypto"
-	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/types"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
 // KeyText ...
@@ -32,8 +34,10 @@ type PrivValidator interface {
 
 	SignVote(chainID string, vote *Vote) error
 	SignNotify(chainID string, notify *Notify) error
-	SignCBInfo(info *dty.DposCBInfo) error
+	SignMsg(msg []byte) (sig string, err error)
 	SignTx(tx *types.Transaction)
+    VrfEvaluate(input []byte) (hash [32]byte, proof []byte)
+	VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool
 }
 
 // PrivValidatorFS implements PrivValidator using data persisted to disk
@@ -319,38 +323,56 @@ func (pv *PrivValidatorImp) SignNotify(chainID string, notify *Notify) error {
 }
 
 // SignCBInfo signs a canonical representation of the DposCBInfo, Implements PrivValidator.
-func (pv *PrivValidatorImp) SignCBInfo(info *dty.DposCBInfo) error {
+func (pv *PrivValidatorImp) SignMsg(msg []byte) (sig string, err error) {
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 
 	buf := new(bytes.Buffer)
 
-	info.Pubkey = hex.EncodeToString(pv.PubKey.Bytes())
-	canonical := dty.CanonicalOnceCBInfo{
-		Cycle: info.Cycle,
-		StopHeight: info.StopHeight,
-		StopHash: info.StopHash,
-		Pubkey: info.Pubkey,
-	}
-
-	byteCB, err := json.Marshal(&canonical)
+	_, err = buf.Write(msg)
 	if err != nil {
-		return errors.New(Fmt("Error marshal CanonicalOnceCBInfo: %v", err))
-	}
-
-	_, err = buf.Write(byteCB)
-	if err != nil {
-		return errors.New(Fmt("Error write buffer: %v", err))
+		return "", errors.New(Fmt("Error write buffer: %v", err))
 	}
 
 	signature := pv.PrivKey.Sign(buf.Bytes())
 
-	info.Signature = hex.EncodeToString(signature.Bytes())
-	return nil
+	sig = hex.EncodeToString(signature.Bytes())
+	return sig, nil
 }
 // SignTx signs a tx, Implements PrivValidator.
 func (pv *PrivValidatorImp)SignTx(tx *types.Transaction){
 	tx.Sign(types.SECP256K1, pv.PrivKey)
+}
+
+// VrfEvaluate use input to generate hash & proof.
+func (pv *PrivValidatorImp) VrfEvaluate(input []byte) (hash [32]byte, proof []byte) {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+
+	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pv.PrivKey.Bytes())
+	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	hash, proof = vrfPriv.Evaluate(input)
+	return hash, proof
+}
+
+func (pv *PrivValidatorImp) VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool {
+	pv.mtx.Lock()
+	defer pv.mtx.Unlock()
+
+	pubKey, err := secp256k1.ParsePubKey(pubkey, secp256k1.S256())
+	if err != nil {
+		return false
+	}
+	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfHash, err := vrfPub.ProofToHash(input, proof)
+	if err != nil {
+		return false
+	}
+	if bytes.Equal(hash[:], vrfHash[:]){
+		return true
+	}
+
+	return false
 }
 
 // Persist height/round/step and signature

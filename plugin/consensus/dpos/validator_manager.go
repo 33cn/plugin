@@ -12,10 +12,17 @@ import (
 	"math/rand"
 
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 )
 
 var (
 	r *rand.Rand
+)
+
+const (
+	ShuffleTypeNoVrf = iota
+	ShuffleTypeVrf
+	ShuffleTypePartVrf
 )
 
 // ValidatorMgr ...
@@ -28,7 +35,11 @@ type ValidatorMgr struct {
 	// Note that if s.LastBlockHeight causes a valset change,
 	// we set s.LastHeightValidatorsChanged = s.LastBlockHeight + 1
 	Validators *ttypes.ValidatorSet
-
+	VrfValidators *ttypes.ValidatorSet
+	NoVrfValidators *ttypes.ValidatorSet
+	LastCycleBoundaryInfo *dty.DposCBInfo
+	ShuffleCycle int64
+	ShuffleType int64   //0-no vrf 1-vrf 2-part vrf
 	// The latest AppHash we've received from calling abci.Commit()
 	AppHash []byte
 }
@@ -37,10 +48,19 @@ type ValidatorMgr struct {
 func (s ValidatorMgr) Copy() ValidatorMgr {
 	return ValidatorMgr{
 		ChainID: s.ChainID,
-
 		Validators: s.Validators.Copy(),
-
 		AppHash: s.AppHash,
+		ShuffleCycle: s.ShuffleCycle,
+		ShuffleType: s.ShuffleType,
+		VrfValidators: s.VrfValidators.Copy(),
+		NoVrfValidators: s.NoVrfValidators.Copy(),
+		LastCycleBoundaryInfo: &dty.DposCBInfo{
+			Cycle: s.LastCycleBoundaryInfo.Cycle,
+			StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+			StopHash: s.LastCycleBoundaryInfo.StopHash,
+			Pubkey: s.LastCycleBoundaryInfo.Pubkey,
+			Signature: s.LastCycleBoundaryInfo.Signature,
+		},
 	}
 }
 
@@ -96,4 +116,147 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 		Validators: ttypes.NewValidatorSet(validators),
 		AppHash:    genDoc.AppHash,
 	}, nil
+}
+
+func (s *ValidatorMgr) GetValidatorByIndex(index int) (addres []byte, val *ttypes.Validator) {
+	if index < 0 || index >= len(s.Validators.Validators) {
+		return nil, nil
+	}
+
+	if s.ShuffleType == ShuffleTypeNoVrf {
+		val = s.Validators.Validators[index]
+		return val.Address, val.Copy()
+	} else if s.ShuffleType == ShuffleTypeVrf {
+		val = s.VrfValidators.Validators[index]
+		return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+	} else if s.ShuffleType == ShuffleTypePartVrf {
+		if index < len(s.VrfValidators.Validators) {
+			val = s.VrfValidators.Validators[index]
+			return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+		} else {
+			val = s.NoVrfValidators.Validators[index - len(s.VrfValidators.Validators)]
+			return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+		}
+	}
+
+	return nil, nil
+}
+
+func (s *ValidatorMgr) GetIndexByPubKey(pubkey []byte) (index int) {
+	if nil == pubkey {
+		return -1
+	}
+
+	index = -1
+
+	if s.ShuffleType == ShuffleTypeNoVrf {
+		for i := 0; i < s.Validators.Size(); i++ {
+			if bytes.Equal(s.Validators.Validators[i].PubKey, pubkey) {
+				index = i
+				return index
+			}
+		}
+	} else if s.ShuffleType == ShuffleTypeVrf {
+		for i := 0; i < s.VrfValidators.Size(); i++ {
+			if bytes.Equal(s.VrfValidators.Validators[i].PubKey, pubkey) {
+				index = i
+				return index
+			}
+		}
+	} else if s.ShuffleType == ShuffleTypePartVrf {
+		for i := 0; i < s.VrfValidators.Size(); i++ {
+			if bytes.Equal(s.VrfValidators.Validators[i].PubKey, pubkey) {
+				index = i
+				return index
+			}
+		}
+
+		for j := 0; j < s.NoVrfValidators.Size(); j++ {
+			if bytes.Equal(s.NoVrfValidators.Validators[j].PubKey, pubkey) {
+				index = j + s.VrfValidators.Size()
+				return index
+			}
+		}
+	}
+
+	return index
+}
+
+func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
+    voteItem.LastCBInfo =  &ttypes.CycleBoundaryInfo{
+		Cycle: s.LastCycleBoundaryInfo.Cycle,
+		StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+		StopHash: s.LastCycleBoundaryInfo.StopHash,
+	}
+
+	voteItem.ShuffleType = s.ShuffleType
+	for i := 0; i < s.Validators.Size(); i++ {
+		node := &ttypes.SuperNode{
+			PubKey: s.Validators.Validators[i].PubKey,
+			Address: s.Validators.Validators[i].Address,
+		}
+		voteItem.Validators = append(voteItem.Validators, node)
+	}
+
+	for i := 0; i < s.VrfValidators.Size(); i++ {
+		node := &ttypes.SuperNode{
+			PubKey: s.VrfValidators.Validators[i].PubKey,
+			Address: s.VrfValidators.Validators[i].Address,
+		}
+		voteItem.VrfValidators = append(voteItem.VrfValidators, node)
+	}
+
+	for i := 0; i < s.NoVrfValidators.Size(); i++ {
+		node := &ttypes.SuperNode{
+			PubKey: s.NoVrfValidators.Validators[i].PubKey,
+			Address: s.NoVrfValidators.Validators[i].Address,
+		}
+		voteItem.NoVrfValidators = append(voteItem.NoVrfValidators, node)
+	}
+}
+
+func (s *ValidatorMgr) UpdateFromVoteItem(voteItem *ttypes.VoteItem) bool {
+	validators := voteItem.Validators
+	for i := 0; i < s.Validators.Size(); i++ {
+		if !bytes.Equal(validators[i].PubKey, s.Validators.Validators[i].PubKey) {
+			return false
+		}
+	}
+
+	if s.LastCycleBoundaryInfo == nil ||
+		voteItem.LastCBInfo.Cycle != s.LastCycleBoundaryInfo.Cycle ||
+		voteItem.LastCBInfo.StopHeight != s.LastCycleBoundaryInfo.StopHeight ||
+		voteItem.LastCBInfo.StopHash != s.LastCycleBoundaryInfo.StopHash {
+		s.LastCycleBoundaryInfo = &dty.DposCBInfo{
+			Cycle: voteItem.LastCBInfo.Cycle,
+			StopHeight: voteItem.LastCBInfo.StopHeight,
+			StopHash: voteItem.LastCBInfo.StopHash,
+		}
+	}
+
+	var vrfVals []*ttypes.Validator
+	for i := 0; i < len(voteItem.VrfValidators); i++ {
+		val := &ttypes.Validator{
+			Address: voteItem.VrfValidators[i].Address,
+			PubKey: voteItem.VrfValidators[i].PubKey,
+		}
+
+		vrfVals = append(vrfVals, val)
+	}
+
+	s.VrfValidators = ttypes.NewValidatorSet(vrfVals)
+
+	var noVrfVals []*ttypes.Validator
+	for i := 0; i < len(voteItem.NoVrfValidators); i++ {
+		val := &ttypes.Validator{
+			Address: voteItem.NoVrfValidators[i].Address,
+			PubKey: voteItem.NoVrfValidators[i].PubKey,
+		}
+
+		noVrfVals = append(noVrfVals, val)
+	}
+
+	s.NoVrfValidators = ttypes.NewValidatorSet(noVrfVals)
+
+	return true
 }

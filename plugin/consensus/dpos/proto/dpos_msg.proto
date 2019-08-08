@@ -3,6 +3,16 @@ syntax = "proto3";
 
 package types;
 
+message CycleBoundaryInfo{
+    int64 cycle            = 1;
+    int64 stopHeight       = 2;
+    string stopHash        = 3;
+}
+
+message SuperNode{
+    bytes address          = 1;
+    bytes pubKey           = 2;
+}
 message VoteItem {
     int32 votedNodeIndex   = 1;    //被投票的节点索引
     bytes votedNodeAddress = 2;    //被投票的节点地址
@@ -13,6 +23,11 @@ message VoteItem {
     int64 periodStop       = 7;    //新节点负责出块的终止时间
     int64 height           = 8;    //新节点负责出块的起始高度
     bytes voteID           = 9;    //选票ID
+    CycleBoundaryInfo lastCBInfo = 10;
+    int64 shuffleType      = 11;
+    repeated SuperNode validators = 12;
+    repeated SuperNode vrfValidators = 13;
+    repeated SuperNode noVrfValidators = 14;
 }
 
 //DPosVote Dpos共识的节点投票，为达成共识用。
