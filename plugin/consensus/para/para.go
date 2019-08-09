@@ -63,7 +63,7 @@ type client struct {
 	execAPI         api.ExecutorAPI
 	caughtUp        int32
 	commitMsgClient *commitMsgClient
-	blockSyncClient *BlockSyncClient
+	blockSyncClient *blockSyncClient
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
@@ -182,12 +182,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		para.commitMsgClient.consensStartHeight = subcfg.ParaConsensStartHeight - 1
 	}
 
-	para.blockSyncClient = &BlockSyncClient{
+	para.blockSyncClient = &blockSyncClient{
 		paraClient:       para,
 		notifyChan:       make(chan bool, 1),
 		quitChan:         make(chan struct{}),
-		maxCacheCount:    DefaultMaxCacheCount,
-		maxSyncErrCount:  DefaultMaxSyncErrCount,
+		maxCacheCount:    defaultMaxCacheCount,
+		maxSyncErrCount:  defaultMaxSyncErrCount,
 		isPrintDebugInfo: false,
 	}
 	if subcfg.MaxCacheCount > 0 {
@@ -229,7 +229,7 @@ func (client *client) SetQueueClient(c queue.Client) {
 	client.wg.Add(1)
 	go client.CreateBlock()
 	client.wg.Add(1)
-	go client.blockSyncClient.SyncBlocks()
+	go client.blockSyncClient.syncBlocks()
 }
 
 func (client *client) InitBlock() {
@@ -258,7 +258,7 @@ func (client *client) InitBlock() {
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		err := client.blockSyncClient.CreateGenesisBlock(newblock)
+		err := client.blockSyncClient.createGenesisBlock(newblock)
 		if err != nil {
 			panic(fmt.Sprintf("para chain create genesis block,err=%s", err.Error()))
 		}

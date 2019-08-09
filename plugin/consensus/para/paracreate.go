@@ -465,7 +465,7 @@ func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
 		}
 	}
 	if notify {
-		client.blockSyncClient.NotifyLocalChange()
+		client.blockSyncClient.notifyLocalChange()
 	}
 
 	return nil
