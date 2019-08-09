@@ -291,7 +291,7 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 		cs.dposState.recvNotify(cs, msg)
 	case *dpostype.DPosVoteReply:
 		cs.dposState.recvVoteReply(cs, msg)
-	case *dty.DposCBInfo:
+	case *dpostype.DPosCBInfo:
 		cs.dposState.recvCBInfo(cs, msg)
 	default:
 		dposlog.Error("Unknown msg type", "msg", msg.String(), "peerid", peerID, "peerip", peerIP)
@@ -602,14 +602,14 @@ func (cs *ConsensusState) Init() {
 
 // InitCycleBoundaryInfo method
 func (cs *ConsensusState) InitCycleBoundaryInfo(task Task){
-	info, err := cs.QueryCycleBoundaryInfo(task.cycle)
+	info, err := cs.QueryCycleBoundaryInfo(task.Cycle)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateCBInfo(info)
 		return
 	}
 
-	info, err = cs.QueryCycleBoundaryInfo(task.cycle - 1)
+	info, err = cs.QueryCycleBoundaryInfo(task.Cycle - 1)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateCBInfo(info)
@@ -737,7 +737,7 @@ func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 		dposlog.Error("SignCBInfo failed.", "err", err)
 		return false
 	} else {
-		info.Signature = sig
+		info.Signature = hex.EncodeToString(sig.Bytes())
 		tx, err := cs.client.CreateRecordCBTx(info)
 		if err != nil {
 			dposlog.Error("CreateRecordCBTx failed.", "err", err)
@@ -824,14 +824,14 @@ func (cs *ConsensusState) QueryVrf(pubkey []byte, cycle int64) (info *dty.VrfInf
 
 // InitCycleVrfInfo method
 func (cs *ConsensusState) InitCycleVrfInfo(task Task){
-	info, err := cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.cycle)
+	info, err := cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.Cycle)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfo(info)
 		return
 	}
 
-	info, err = cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.cycle - 1)
+	info, err = cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.Cycle - 1)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfo(info)
@@ -909,10 +909,10 @@ func (cs *ConsensusState) QueryVrfs(set *ttypes.ValidatorSet, cycle int64) (info
 
 // InitCycleVrfInfo method
 func (cs *ConsensusState) InitCycleVrfInfos(task Task){
-	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, task.cycle - 1)
+	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, task.Cycle - 1)
 	if err == nil && infos != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
-		cs.UpdateVrfInfos(task.cycle, infos)
+		cs.UpdateVrfInfos(task.Cycle, infos)
 	}
 
 	return

@@ -54,3 +54,10 @@ message DPosNotify {
     bytes signature        = 7;    //通知节点的签名
 }
 
+message DPosCBInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    string pubkey        = 4;
+    string signature     = 5;
+}

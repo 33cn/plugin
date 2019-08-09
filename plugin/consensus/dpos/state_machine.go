@@ -50,28 +50,28 @@ var WaitNotifyStateObj = &WaitNofifyState{}
 
 // Task 为计算当前时间所属周期的数据结构
 type Task struct {
-	nodeID      int64
-	cycle       int64
-	cycleStart  int64
-	cycleStop   int64
-	periodStart int64
-	periodStop  int64
-	blockStart  int64
-	blockStop   int64
+	NodeID      int64
+	Cycle       int64
+	CycleStart  int64
+	CycleStop   int64
+	PeriodStart int64
+	PeriodStop  int64
+	BlockStart  int64
+	BlockStop   int64
 }
 
 // DecideTaskByTime 根据时间戳计算所属的周期，包括cycle周期，负责出块周期，当前出块周期
 func DecideTaskByTime(now int64) (task Task) {
-	task.nodeID = now % dposCycle / dposPeriod
-	task.cycle = now / dposCycle
-	task.cycleStart = now - now%dposCycle
-	task.cycleStop = task.cycleStart + dposCycle - 1
+	task.NodeID = now % dposCycle / dposPeriod
+	task.Cycle = now / dposCycle
+	task.CycleStart = now - now % dposCycle
+	task.CycleStop = task.CycleStart + dposCycle - 1
 
-	task.periodStart = task.cycleStart + task.nodeID*dposBlockInterval*dposContinueBlockNum
-	task.periodStop = task.periodStart + dposPeriod - 1
+	task.PeriodStart = task.CycleStart + task.NodeID * dposBlockInterval * dposContinueBlockNum
+	task.PeriodStop = task.PeriodStart + dposPeriod - 1
 
-	task.blockStart = task.periodStart + now%dposCycle%dposPeriod/dposBlockInterval*dposBlockInterval
-	task.blockStop = task.blockStart + dposBlockInterval - 1
+	task.BlockStart = task.PeriodStart + now % dposCycle % dposPeriod/dposBlockInterval * dposBlockInterval
+	task.BlockStop = task.BlockStart + dposBlockInterval - 1
 
 	return task
 }
@@ -86,24 +86,23 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 	//计算当前时间，属于哪一个周期，应该哪一个节点出块，应该出块的高度
 	task := DecideTaskByTime(now)
 
-	cs.ShuffleValidators(task.cycle)
+	cs.ShuffleValidators(task.Cycle)
 
-	addr, validator := cs.validatorMgr.GetValidatorByIndex(int(task.nodeID))
+	addr, validator := cs.validatorMgr.GetValidatorByIndex(int(task.NodeID))
 	if addr == nil && validator == nil {
-		dposlog.Error("Address and Validator is nil", "node index", task.nodeID, "now", now, "cycle", dposCycle, "period", dposPeriod)
-		//cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+		dposlog.Error("Address and Validator is nil", "node index", task.NodeID, "now", now, "cycle", dposCycle, "period", dposPeriod)
 		return nil
 	}
 
 	//生成vote， 对于vote进行签名
 	voteItem := &dpostype.VoteItem{
 		VotedNodeAddress: addr,
-		VotedNodeIndex:   int32(task.nodeID),
-		Cycle:            task.cycle,
-		CycleStart:       task.cycleStart,
-		CycleStop:        task.cycleStop,
-		PeriodStart:      task.periodStart,
-		PeriodStop:       task.periodStop,
+		VotedNodeIndex:   int32(task.NodeID),
+		Cycle:            task.Cycle,
+		CycleStart:       task.CycleStart,
+		CycleStop:        task.CycleStop,
+		PeriodStart:      task.PeriodStart,
+		PeriodStop:       task.PeriodStop,
 		Height:           height + 1,
 	}
 	cs.validatorMgr.FillVoteItem(voteItem)
@@ -133,30 +132,29 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 	return vote
 }
 
-
 func checkVrf(cs *ConsensusState) {
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
-	middleTime := task.cycleStart + (task.cycleStop - task.cycleStart) / 2
+	middleTime := task.CycleStart + (task.CycleStop - task.CycleStart) / 2
 	if now < middleTime {
-		info := cs.GetVrfInfoByCircle(task.cycle, VrfQueryTypeM)
+		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeM)
 		if info == nil {
 			vrfM := &dty.DposVrfMRegist{
 				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
-				Cycle: task.cycle,
+				Cycle: task.Cycle,
 				M: cs.currentVote.LastCBInfo.StopHash,
 			}
 
 			cs.SendRegistVrfMTx(vrfM)
 		}
 	} else {
-		info := cs.GetVrfInfoByCircle(task.cycle, VrfQueryTypeRP)
+		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeRP)
 		if info != nil && len(info.M) > 0 && (len(info.R) == 0 || len(info.P) == 0){
 			hash, proof := cs.VrfEvaluate(info.M)
 
 			vrfRP := &dty.DposVrfRPRegist{
 				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
-				Cycle: task.cycle,
+				Cycle: task.Cycle,
 				R: hex.EncodeToString(hash[:]),
 				P: hex.EncodeToString(proof),
 			}
@@ -165,6 +163,17 @@ func checkVrf(cs *ConsensusState) {
 		}
 	}
 
+}
+
+func recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
+	newInfo := &dty.DposCBInfo{
+		Cycle: info.Cycle,
+		StopHeight: info.StopHeight,
+		StopHash: info.StopHash,
+		Pubkey: info.Pubkey,
+		Signature: info.Signature,
+	}
+	cs.UpdateCBInfo(newInfo)
 }
 
 // State is the base class of dpos state machine, it defines some interfaces.
@@ -176,8 +185,7 @@ type State interface {
 	recvVoteReply(cs *ConsensusState, reply *dpostype.DPosVoteReply)
 	sendNotify(cs *ConsensusState, notify *dpostype.DPosNotify)
 	recvNotify(cs *ConsensusState, notify *dpostype.DPosNotify)
-	//sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo)
-	recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo)
+	recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo)
 }
 
 // InitState is the initial state of dpos state machine
@@ -232,7 +240,6 @@ func (init *InitState) sendVote(cs *ConsensusState, vote *dpostype.DPosVote) {
 
 func (init *InitState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote) {
 	dposlog.Info("InitState recvVote ,add it and will handle it later.")
-	//cs.AddVotes(vote)
 	cs.CacheVotes(vote)
 }
 
@@ -255,13 +262,9 @@ func (init *InitState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNotif
 	cs.SetNotify(notify)
 }
 
-//func (init *InitState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
-//	dposlog.Info("InitState does not support sendCBInfo,so do nothing")
-//}
-
-func (init *InitState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+func (init *InitState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	dposlog.Info("InitState recvCBInfo")
-	cs.UpdateCBInfo(info)
+	recvCBInfo(cs, info)
 }
 // VotingState is the voting state of dpos state machine until timeout or get an agreement by votes.
 type VotingState struct {
@@ -341,7 +344,6 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 
 func (voting *VotingState) sendVoteReply(cs *ConsensusState, reply *dpostype.DPosVoteReply) {
 	dposlog.Info("VotingState don't support sendVoteReply,so do nothing")
-	//cs.broadcastChannel <- MsgInfo{TypeID: dpostype.VoteReplyID, Msg: reply, PeerID: cs.ourID, PeerIP: ""}
 }
 
 func (voting *VotingState) recvVoteReply(cs *ConsensusState, reply *dpostype.DPosVoteReply) {
@@ -357,13 +359,9 @@ func (voting *VotingState) recvNotify(cs *ConsensusState, notify *dpostype.DPosN
 	dposlog.Info("VotingState does not support recvNotify,so do nothing")
 }
 
-//func (voting *VotingState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
-//	dposlog.Info("VotingState does not support sendCBInfo,so do nothing")
-//}
-
-func (voting *VotingState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+func (voting *VotingState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	dposlog.Info("VotingState recvCBInfo")
-	cs.UpdateCBInfo(info)
+	recvCBInfo(cs, info)
 }
 // VotedState is the voted state of dpos state machine after getting an agreement for a period
 type VotedState struct {
@@ -401,7 +399,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 				}
 
 				cs.SendCBTx(info)
-				info2 := &dty.DposCBInfo{
+				info2 := &dpostype.DPosCBInfo{
 					Cycle: info.Cycle,
 					StopHeight: info.StopHeight,
 					StopHash: info.StopHash,
@@ -453,18 +451,18 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		}
 
 		//当前时间未到节点切换时间，则继续进行出块判断
-		if block.BlockTime >= task.blockStop {
+		if block.BlockTime >= task.BlockStop {
 			//已出块，或者时间落后了。
-			dposlog.Info("VotedState timeOut but block already is generated.", "blocktime", block.BlockTime, "blockStop", task.blockStop, "now", now)
+			dposlog.Info("VotedState timeOut but block already is generated.", "blocktime", block.BlockTime, "blockStop", task.BlockStop, "now", now)
 			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
 
 			return
-		} else if block.BlockTime < task.blockStart {
+		} else if block.BlockTime < task.BlockStart {
 			//本出块周期尚未出块，则进行出块
-			if task.blockStop - now <= 1 {
+			if task.BlockStop - now <= 1 {
 				dposlog.Info("Create new block.", "height", block.Height+1)
 
-				cs.client.SetBlockTime(task.blockStop)
+				cs.client.SetBlockTime(task.BlockStop)
 				cs.client.CreateBlock()
 				cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
 				return
@@ -476,7 +474,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 		} else {
 			//本周期已经出块
-			dposlog.Info("Wait to next block cycle.", "waittime", task.blockStop-now+1)
+			dposlog.Info("Wait to next block cycle.", "waittime", task.BlockStop - now + 1)
 
 			//cs.scheduleDPosTimeout(time.Second * time.Duration(task.blockStop-now+1), VotedStateType)
 			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
@@ -561,13 +559,13 @@ func (voted *VotedState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNot
 	}
 }
 
-func (voted *VotedState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+func (voted *VotedState) sendCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	cs.broadcastChannel <- MsgInfo{TypeID: dpostype.CBInfoID, Msg: info, PeerID: cs.ourID, PeerIP: ""}
 }
 
-func (voted *VotedState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+func (voted *VotedState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	dposlog.Info("VotedState recvCBInfo")
-	cs.UpdateCBInfo(info)
+	recvCBInfo(cs, info)
 }
 
 // WaitNofifyState is the state of dpos state machine to wait notify.
@@ -588,12 +586,6 @@ func (wait *WaitNofifyState) sendVote(cs *ConsensusState, vote *dpostype.DPosVot
 func (wait *WaitNofifyState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote) {
 	dposlog.Info("WaitNofifyState recvVote,store it.")
 	//对于vote进行保存，在后续状态中进行处理。 保存的选票有先后，同一个节点发来的最新的选票被保存。
-	//if !cs.VerifyVote(vote) {
-	//	dposlog.Info("VotingState verify vote failed", "vote", vote.String())
-	//	return
-	//}
-
-	//cs.AddVotes(vote)
 	cs.CacheVotes(vote)
 }
 
@@ -649,32 +641,16 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 		hint.Stop()
 	}
 
-	/*
-	info := &dty.DposCBInfo{
-		Cycle: notify.Vote.Cycle,
-		StopHeight: notify.HeightStop,
-		StopHash: hex.EncodeToString(notify.HashStop),
-	}
-
-	cs.UpdateCBInfo(info)
-	*/
-
 	cs.ClearCachedNotify()
 	cs.SaveNotify()
 	cs.SetNotify(notify)
 
-	//cs.clearVotes()
 	cs.SetState(InitStateObj)
 	dposlog.Info("Change state because recv notify.", "from", "WaitNofifyState", "to", "InitState")
 	cs.dposState.timeOut(cs)
-	//cs.scheduleDPosTimeout(time.Second * 1, InitStateType)
 }
 
-//func (wait *WaitNofifyState) sendCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
-//	dposlog.Info("WaitNofifyState does not support sendCBInfo,so do nothing")
-//}
-
-func (wait *WaitNofifyState) recvCBInfo(cs *ConsensusState, info *dty.DposCBInfo) {
+func (wait *WaitNofifyState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	dposlog.Info("WaitNofifyState recvCBInfo")
-	cs.UpdateCBInfo(info)
+	recvCBInfo(cs, info)
 }

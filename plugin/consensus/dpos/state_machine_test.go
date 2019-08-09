@@ -29,17 +29,17 @@ func setParams(delegateNum int64, blockInterval int64, continueBlockNum int64) {
 func printTask(now int64, task *Task) {
 	fmt.Printf("now:%v|cycleStart:%v|cycleStop:%v|periodStart:%v|periodStop:%v|blockStart:%v|blockStop:%v|nodeId:%v\n",
 		now,
-		task.cycleStart,
-		task.cycleStop,
-		task.periodStart,
-		task.periodStop,
-		task.blockStart,
-		task.blockStop,
-		task.nodeID)
+		task.CycleStart,
+		task.CycleStop,
+		task.PeriodStart,
+		task.PeriodStop,
+		task.BlockStart,
+		task.BlockStop,
+		task.NodeID)
 }
 func assertTask(task *Task, t *testing.T) {
-	assert.Equal(t, true, task.nodeID >= 0 && task.nodeID < dposDelegateNum)
-	assert.Equal(t, true, task.cycleStart <= task.periodStart && task.periodStart <= task.blockStart && task.blockStop <= task.periodStop && task.periodStop <= task.cycleStop)
+	assert.Equal(t, true, task.NodeID >= 0 && task.NodeID < dposDelegateNum)
+	assert.Equal(t, true, task.CycleStart <= task.PeriodStart && task.PeriodStart <= task.BlockStart && task.BlockStop <= task.PeriodStop && task.PeriodStop <= task.CycleStop)
 
 }
 func TestDecideTaskByTime(t *testing.T) {

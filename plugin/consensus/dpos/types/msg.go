@@ -32,6 +32,7 @@ func InitMessageMap() {
 		VoteID:      reflect.TypeOf(DPosVote{}),
 		VoteReplyID: reflect.TypeOf(DPosVoteReply{}),
 		NotifyID:    reflect.TypeOf(DPosNotify{}),
+		CBInfoID:    reflect.TypeOf(DPosCBInfo{}),
 	}
 }
 

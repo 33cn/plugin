@@ -34,7 +34,7 @@ type PrivValidator interface {
 
 	SignVote(chainID string, vote *Vote) error
 	SignNotify(chainID string, notify *Notify) error
-	SignMsg(msg []byte) (sig string, err error)
+	SignMsg(msg []byte) (sig crypto.Signature, err error)
 	SignTx(tx *types.Transaction)
     VrfEvaluate(input []byte) (hash [32]byte, proof []byte)
 	VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool
@@ -46,8 +46,8 @@ type PrivValidator interface {
 type PrivValidatorFS struct {
 	Address       string   `json:"address"`
 	PubKey        KeyText  `json:"pub_key"`
-	LastSignature *KeyText `json:"last_signature,omitempty"` // so we dont lose signatures
-	LastSignBytes string   `json:"last_signbytes,omitempty"` // so we dont lose signatures
+	//LastSignature *KeyText `json:"last_signature,omitempty"` // so we dont lose signatures
+	//LastSignBytes string   `json:"last_signbytes,omitempty"` // so we dont lose signatures
 
 	// PrivKey should be empty if a Signer other than the default is being used.
 	PrivKey KeyText `json:"priv_key"`
@@ -57,8 +57,8 @@ type PrivValidatorFS struct {
 type PrivValidatorImp struct {
 	Address       []byte
 	PubKey        crypto.PubKey
-	LastSignature crypto.Signature
-	LastSignBytes []byte
+	//LastSignature crypto.Signature
+	//LastSignBytes []byte
 
 	// PrivKey should be empty if a Signer other than the default is being used.
 	PrivKey crypto.PrivKey
@@ -130,6 +130,7 @@ func PubKeyFromString(pubkeystring string) (crypto.PubKey, error) {
 }
 
 // SignatureFromString ...
+/*
 func SignatureFromString(sigString string) (crypto.Signature, error) {
 	sigbyte, err := hex.DecodeString(sigString)
 	if err != nil {
@@ -141,7 +142,7 @@ func SignatureFromString(sigString string) (crypto.Signature, error) {
 	}
 	return sig, nil
 }
-
+*/
 // GenPrivValidatorImp generates a new validator with randomly generated private key
 // and sets the filePath, but does not call Save().
 func GenPrivValidatorImp(filePath string) *PrivValidatorImp {
@@ -221,6 +222,7 @@ func LoadPrivValidatorFSWithSigner(filePath string, signerFunc func(PrivValidato
 	}
 	privValImp.PubKey = pubKey
 
+	/*
 	if len(privVal.LastSignBytes) != 0 {
 		tmp, err = hex.DecodeString(privVal.LastSignBytes)
 		if err != nil {
@@ -237,7 +239,7 @@ func LoadPrivValidatorFSWithSigner(filePath string, signerFunc func(PrivValidato
 	} else {
 		privValImp.LastSignature = nil
 	}
-
+	*/
 	privValImp.filePath = filePath
 	privValImp.Signer = signerFunc(privValImp)
 	return privValImp
@@ -258,10 +260,11 @@ func (pv *PrivValidatorImp) save() {
 
 	privValFS := &PrivValidatorFS{
 		Address:       addr,
-		LastSignature: nil,
+		//LastSignature: nil,
 	}
 	privValFS.PrivKey = KeyText{Kind: "secp256k1", Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
 	privValFS.PubKey = KeyText{Kind: "secp256k1", Data: pv.PubKey.KeyString()}
+	/*
 	if len(pv.LastSignBytes) != 0 {
 		tmp := Fmt("%X", pv.LastSignBytes[:])
 		privValFS.LastSignBytes = tmp
@@ -270,6 +273,7 @@ func (pv *PrivValidatorImp) save() {
 		sig := Fmt("%X", pv.LastSignature.Bytes()[:])
 		privValFS.LastSignature = &KeyText{Kind: "ed25519", Data: sig}
 	}
+	*/
 	jsonBytes, err := json.Marshal(privValFS)
 	if err != nil {
 		// `@; BOOM!!!
@@ -285,8 +289,8 @@ func (pv *PrivValidatorImp) save() {
 // Reset resets all fields in the PrivValidatorFS.
 // NOTE: Unsafe!
 func (pv *PrivValidatorImp) Reset() {
-	pv.LastSignature = nil
-	pv.LastSignBytes = nil
+	//pv.LastSignature = nil
+	//pv.LastSignBytes = nil
 	pv.Save()
 }
 
@@ -323,21 +327,13 @@ func (pv *PrivValidatorImp) SignNotify(chainID string, notify *Notify) error {
 }
 
 // SignCBInfo signs a canonical representation of the DposCBInfo, Implements PrivValidator.
-func (pv *PrivValidatorImp) SignMsg(msg []byte) (sig string, err error) {
+func (pv *PrivValidatorImp) SignMsg(msg []byte) (sig crypto.Signature, err error) {
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 
-	buf := new(bytes.Buffer)
-
-	_, err = buf.Write(msg)
-	if err != nil {
-		return "", errors.New(Fmt("Error write buffer: %v", err))
-	}
-
-	signature := pv.PrivKey.Sign(buf.Bytes())
-
-	sig = hex.EncodeToString(signature.Bytes())
-	return sig, nil
+	signature := pv.PrivKey.Sign(msg)
+	//sig = hex.EncodeToString(signature.Bytes())
+	return signature, nil
 }
 // SignTx signs a tx, Implements PrivValidator.
 func (pv *PrivValidatorImp)SignTx(tx *types.Transaction){
@@ -376,12 +372,14 @@ func (pv *PrivValidatorImp) VrfProof(pubkey []byte, input []byte, hash [32]byte,
 }
 
 // Persist height/round/step and signature
+/*
 func (pv *PrivValidatorImp) saveSigned(signBytes []byte, sig crypto.Signature) {
 
-	pv.LastSignature = sig
-	pv.LastSignBytes = signBytes
+	//pv.LastSignature = sig
+	//pv.LastSignBytes = signBytes
 	pv.save()
 }
+*/
 
 // String returns a string representation of the PrivValidatorImp.
 func (pv *PrivValidatorImp) String() string {
