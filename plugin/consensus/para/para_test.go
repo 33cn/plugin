@@ -204,7 +204,7 @@ func TestAddMinerTx(t *testing.T) {
 	para.commitMsgClient = new(commitMsgClient)
 	para.commitMsgClient.paraClient = para
 
-	para.blockSyncClient = new(BlockSyncClient)
+	para.blockSyncClient = new(blockSyncClient)
 	para.blockSyncClient.paraClient = para
 	para.blockSyncClient.addMinerTx(nil, block, localBlock)
 	assert.Equal(t, 1, len(block.Txs))

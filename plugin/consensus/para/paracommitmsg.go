@@ -314,8 +314,8 @@ func (client *commitMsgClient) isSync() bool {
 		return false
 	}
 
-	if !client.paraClient.blockSyncClient.SyncHasCaughtUp() {
-		plog.Info("para is not Sync", "syncCaughtUp", client.paraClient.blockSyncClient.SyncHasCaughtUp())
+	if !client.paraClient.blockSyncClient.syncHasCaughtUp() {
+		plog.Info("para is not Sync", "syncCaughtUp", client.paraClient.blockSyncClient.syncHasCaughtUp())
 		return false
 	}
 

@@ -68,7 +68,7 @@ func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	para.privateKey = priKey
 
 	//实例化BlockSyncClient
-	para.blockSyncClient = &BlockSyncClient{
+	para.blockSyncClient = &blockSyncClient{
 		paraClient:      para,
 		notifyChan:      make(chan bool),
 		quitChan:        make(chan struct{}),
@@ -333,7 +333,7 @@ func mockMessageReply(q queue.Queue) {
 //测试创世区块写入
 func testCreateGenesisBlock(t *testing.T, para *client, testLoopCount int32) {
 	genesisBlock := makeGenesisBlockInputTestData()
-	err := para.blockSyncClient.CreateGenesisBlock(genesisBlock)
+	err := para.blockSyncClient.createGenesisBlock(genesisBlock)
 
 	switch testLoopCount {
 	case 0:
@@ -394,9 +394,9 @@ func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 
 //测试SyncHasCaughtUp
 func testSyncHasCaughtUp(t *testing.T, para *client, testLoopCount int32) {
-	oldValue := para.blockSyncClient.SyncHasCaughtUp()
+	oldValue := para.blockSyncClient.syncHasCaughtUp()
 	para.blockSyncClient.setSyncCaughtUp(true)
-	isSyncHasCaughtUp := para.blockSyncClient.SyncHasCaughtUp()
+	isSyncHasCaughtUp := para.blockSyncClient.syncHasCaughtUp()
 	para.blockSyncClient.setSyncCaughtUp(oldValue)
 
 	assert.Equal(t, true, isSyncHasCaughtUp)
@@ -405,11 +405,11 @@ func testSyncHasCaughtUp(t *testing.T, para *client, testLoopCount int32) {
 //测试getBlockSyncState
 func testGetBlockSyncState(t *testing.T, para *client, testLoopCount int32) {
 	oldValue := para.blockSyncClient.getBlockSyncState()
-	para.blockSyncClient.setBlockSyncState(BlockSyncStateFinished)
+	para.blockSyncClient.setBlockSyncState(blockSyncStateFinished)
 	syncState := para.blockSyncClient.getBlockSyncState()
 	para.blockSyncClient.setBlockSyncState(oldValue)
 
-	assert.Equal(t, true, syncState == BlockSyncStateFinished)
+	assert.Equal(t, true, syncState == blockSyncStateFinished)
 }
 
 //执行所有函数测试
