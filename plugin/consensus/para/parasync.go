@@ -370,8 +370,6 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 //添加一个区块
 func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.ParaLocalDbBlock) error {
 	var newBlock types.Block
-	client.printDebugInfo(fmt.Sprintf("Para sync - the len txs is: %v", len(localBlock.Txs)))
-
 	newBlock.ParentHash = lastBlock.Hash()
 	newBlock.Height = lastBlock.Height + 1
 	newBlock.Txs = localBlock.Txs
@@ -388,7 +386,8 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 
 	err = client.writeBlock(lastBlock.StateHash, &newBlock)
 
-	client.printDebugInfo("Para sync - para create new Block", "newblock.ParentHash", common.ToHex(newBlock.ParentHash),
+	client.printDebugInfo("Para sync - create new Block",
+		"newblock.ParentHash", common.ToHex(newBlock.ParentHash),
 		"newblock.Height", newBlock.Height, "newblock.TxHash", common.ToHex(newBlock.TxHash),
 		"newblock.BlockTime", newBlock.BlockTime)
 
@@ -397,34 +396,35 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 
 // 向blockchain删区块
 func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
-	client.printDebugInfo("Para sync - delete block in parachain")
-
 	start := block.Height
-	if start == 0 {
-		panic("Para sync - Parachain attempt to Delete GenesisBlock !")
+	if start <= 0 {
+		return errors.New("para sync - attempt to rollbackBlock genesisBlock")
 	}
 
-	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, &types.ReqBlocks{Start: start, End: start, IsDetail: true, Pid: []string{""}})
+	reqBlocks := &types.ReqBlocks{Start: start, End: start, IsDetail: true, Pid: []string{""}}
+	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventGetBlocks, reqBlocks)
 	err := client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
 		return err
 	}
+
 	resp, err := client.paraClient.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
 	}
-	blocks := resp.GetData().(*types.BlockDetails)
 
+	blocks := resp.GetData().(*types.BlockDetails)
 	if len(blocks.Items) == 0 {
 		return errors.New("para sync -blocks Items len = 0 ")
 	}
 
-	parablockDetail := &types.ParaChainBlockDetail{Blockdetail: blocks.Items[0]}
-	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventDelParaChainBlockDetail, parablockDetail)
+	paraBlockDetail := &types.ParaChainBlockDetail{Blockdetail: blocks.Items[0]}
+	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventDelParaChainBlockDetail, paraBlockDetail)
 	err = client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
 		return err
 	}
+
 	resp, err = client.paraClient.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
@@ -442,23 +442,24 @@ func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
 func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) error {
 	//共识模块不执行block，统一由blockchain模块执行block并做去重的处理，返回执行后的blockdetail
 	blockDetail := &types.BlockDetail{Block: paraBlock}
-
-	parablockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail}
-	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, parablockDetail)
+	paraBlockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail}
+	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, paraBlockDetail)
 	err := client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
 		return err
 	}
+
 	resp, err := client.paraClient.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
 	}
-	blkdetail := resp.GetData().(*types.BlockDetail)
-	if blkdetail == nil {
-		return errors.New("Para sync - block detail is nil")
+
+	respBlockDetail := resp.GetData().(*types.BlockDetail)
+	if respBlockDetail == nil {
+		return errors.New("para sync - block detail is nil")
 	}
 
-	client.paraClient.SetCurrentBlock(blkdetail.Block)
+	client.paraClient.SetCurrentBlock(respBlockDetail.Block)
 
 	return nil
 }
