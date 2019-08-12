@@ -13,116 +13,74 @@ import (
 
 // ExecLocal_PropBoard 创建提案
 func (a *Autonomy) ExecLocal_PropBoard(payload *auty.ProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalBoard(tx, receiptData)
-	}
-	return a.execLocalBoard(receiptData)
+	return a.execAutoLocalBoard(tx, receiptData)
 }
 
 // ExecLocal_RvkPropBoard 撤销提案
 func (a *Autonomy) ExecLocal_RvkPropBoard(payload *auty.RevokeProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalBoard(tx, receiptData)
-	}
-	return a.execLocalBoard(receiptData)
+	return a.execAutoLocalBoard(tx, receiptData)
 }
 
 // ExecLocal_VotePropBoard 投票提案
 func (a *Autonomy) ExecLocal_VotePropBoard(payload *auty.VoteProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalBoard(tx, receiptData)
-	}
-	return a.execLocalBoard(receiptData)
+	return a.execAutoLocalBoard(tx, receiptData)
 }
 
 // ExecLocal_TmintPropBoard 终止提案
 func (a *Autonomy) ExecLocal_TmintPropBoard(payload *auty.TerminateProposalBoard, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalBoard(tx, receiptData)
-	}
-	return a.execLocalBoard(receiptData)
+	return a.execAutoLocalBoard(tx, receiptData)
 }
 
 // 提案项目相关
 
 // ExecLocal_PropProject 创建提案项目
 func (a *Autonomy) ExecLocal_PropProject(payload *auty.ProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalProject(tx, receiptData)
-	}
-	return a.execLocalProject(receiptData)
+	return a.execAutoLocalProject(tx, receiptData)
 }
 
 // ExecLocal_RvkPropProject 撤销提案项目
 func (a *Autonomy) ExecLocal_RvkPropProject(payload *auty.RevokeProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalProject(tx, receiptData)
-	}
-	return a.execLocalProject(receiptData)
+	return a.execAutoLocalProject(tx, receiptData)
 }
 
 // ExecLocal_VotePropProject 投票提案项目
 func (a *Autonomy) ExecLocal_VotePropProject(payload *auty.VoteProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalProject(tx, receiptData)
-	}
-	return a.execLocalProject(receiptData)
+	return a.execAutoLocalProject(tx, receiptData)
 }
 
 // ExecLocal_PubVotePropProject 全体投票提案项目
 func (a *Autonomy) ExecLocal_PubVotePropProject(payload *auty.PubVoteProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalProject(tx, receiptData)
-	}
-	return a.execLocalProject(receiptData)
+	return a.execAutoLocalProject(tx, receiptData)
 }
 
 // ExecLocal_TmintPropProject 终止提案项目
 func (a *Autonomy) ExecLocal_TmintPropProject(payload *auty.TerminateProposalProject, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalProject(tx, receiptData)
-	}
-	return a.execLocalProject(receiptData)
+	return a.execAutoLocalProject(tx, receiptData)
 }
 
 // 提案规则相关
 
 // ExecLocal_PropRule 创建提案规则
 func (a *Autonomy) ExecLocal_PropRule(payload *auty.ProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalRule(tx, receiptData)
-	}
-	return a.execLocalRule(receiptData)
+	return a.execAutoLocalRule(tx, receiptData)
 }
 
 // ExecLocal_RvkPropRule 撤销提案规则
 func (a *Autonomy) ExecLocal_RvkPropRule(payload *auty.RevokeProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalRule(tx, receiptData)
-	}
-	return a.execLocalRule(receiptData)
+	return a.execAutoLocalRule(tx, receiptData)
 }
 
 // ExecLocal_VotePropRule 投票提案规则
 func (a *Autonomy) ExecLocal_VotePropRule(payload *auty.VoteProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalRule(tx, receiptData)
-	}
-	return a.execLocalRule(receiptData)
+	return a.execAutoLocalRule(tx, receiptData)
 }
 
 // ExecLocal_TmintPropRule 终止提案规则
 func (a *Autonomy) ExecLocal_TmintPropRule(payload *auty.TerminateProposalRule, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalRule(tx, receiptData)
-	}
-	return a.execLocalRule(receiptData)
+	return a.execAutoLocalRule(tx, receiptData)
 }
 
 // ExecLocal_CommentProp 评论提案
 func (a *Autonomy) ExecLocal_CommentProp(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if cfg.AutoRollback {
-		return a.execAutoLocalCommentProp(tx, receiptData)
-	}
-	return a.execLocalCommentProp(receiptData)
+	return a.execAutoLocalCommentProp(tx, receiptData)
 }

@@ -203,10 +203,6 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 			kvdb.Set(kv.Key, kv.Value)
 		}
 	}
-	// del
-	set, err = exec.ExecDelLocal(pbtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
 
 	// 更新tahash
 	env.txHash = common.ToHex(pbtx.Hash())

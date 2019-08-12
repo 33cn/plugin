@@ -226,5 +226,4 @@ paraConsensusStopBlocks=30000
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
-autoRollback=false
 
