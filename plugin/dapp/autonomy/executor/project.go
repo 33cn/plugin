@@ -53,51 +53,6 @@ func (a *Autonomy) execLocalProject(receiptData *types.ReceiptData) (*types.Loca
 	return dbSet, nil
 }
 
-func (a *Autonomy) execDelLocalProject(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	table := NewProjectTable(a.GetLocalDB())
-	for _, log := range receiptData.Logs {
-		switch log.Ty {
-		case auty.TyLogPropProject:
-			{
-				var receipt auty.ReceiptProposalProject
-				err := types.Decode(log.Log, &receipt)
-				if err != nil {
-					return nil, err
-				}
-				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
-				err = table.Del([]byte(heightIndex))
-				if err != nil {
-					return nil, err
-				}
-			}
-		case auty.TyLogRvkPropProject,
-			auty.TyLogVotePropProject,
-			auty.TyLogPubVotePropProject,
-			auty.TyLogTmintPropProject:
-			{
-				var receipt auty.ReceiptProposalProject
-				err := types.Decode(log.Log, &receipt)
-				if err != nil {
-					return nil, err
-				}
-				err = table.Replace(receipt.Prev)
-				if err != nil {
-					return nil, err
-				}
-			}
-		default:
-			break
-		}
-	}
-	kvs, err := table.Save()
-	if err != nil {
-		return nil, err
-	}
-	dbSet := &types.LocalDBSet{}
-	dbSet.KV = append(dbSet.KV, kvs...)
-	return dbSet, nil
-}
-
 func (a *Autonomy) getProposalProject(req *types.ReqString) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam

@@ -141,11 +141,10 @@ func testexecLocalProject(t *testing.T, auto bool) {
 }
 
 func TestExecDelLocalProject(t *testing.T) {
-	testexecDelLocalProject(t, false)
-	testexecDelLocalProject(t, true)
+	testexecDelLocalProject(t)
 }
 
-func testexecDelLocalProject(t *testing.T, auto bool) {
+func testexecDelLocalProject(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -171,32 +170,18 @@ func testexecDelLocalProject(t *testing.T, auto bool) {
 		},
 	}
 
-	var set *types.LocalDBSet
-	var err error
 	// 先执行local然后进行删除
-	if !auto {
-		set, err := au.execLocalProject(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err := au.execAutoLocalProject(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		set, err = au.execDelLocalProject(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalProject(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-
-		set, err = au.execAutoDelLocal(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
+	set, err = au.execAutoDelLocal(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
 	// check
 	table := NewProjectTable(au.GetLocalDB())
@@ -222,44 +207,30 @@ func testexecDelLocalProject(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 		}}
 	// 先执行local然后进行删除
-	if !auto {
-		set, err = au.execLocalProject(recpt)
+	// 自动回退测试时候，需要先设置一个前置状态
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalProject(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalProject(t, kvdb, cur)
+	// 正常测试退回
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalProject(tx, recpt)
 
-		set, err = au.execDelLocalProject(recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		// 自动回退测试时候，需要先设置一个前置状态
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalProject(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalProject(t, kvdb, cur)
 
-		// 正常测试退回
-		tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err = au.execAutoLocalProject(tx, recpt)
+	set, err = au.execAutoDelLocal(tx, recpt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalProject(t, kvdb, cur)
-
-		set, err = au.execAutoDelLocal(tx, recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
 	checkExecLocalProject(t, kvdb, pre1)
 }
 
