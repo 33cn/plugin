@@ -52,50 +52,6 @@ func (a *Autonomy) execLocalRule(receiptData *types.ReceiptData) (*types.LocalDB
 	return dbSet, nil
 }
 
-func (a *Autonomy) execDelLocalRule(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	dbSet := &types.LocalDBSet{}
-	table := NewRuleTable(a.GetLocalDB())
-	for _, log := range receiptData.Logs {
-		switch log.Ty {
-		case auty.TyLogPropRule:
-			{
-				var receipt auty.ReceiptProposalRule
-				err := types.Decode(log.Log, &receipt)
-				if err != nil {
-					return nil, err
-				}
-				heightIndex := dapp.HeightIndexStr(receipt.Current.Height, int64(receipt.Current.Index))
-				err = table.Del([]byte(heightIndex))
-				if err != nil {
-					return nil, err
-				}
-			}
-		case auty.TyLogRvkPropRule,
-			auty.TyLogVotePropRule,
-			auty.TyLogTmintPropRule:
-			{
-				var receipt auty.ReceiptProposalRule
-				err := types.Decode(log.Log, &receipt)
-				if err != nil {
-					return nil, err
-				}
-				err = table.Replace(receipt.Prev)
-				if err != nil {
-					return nil, err
-				}
-			}
-		default:
-			break
-		}
-	}
-	kvs, err := table.Save()
-	if err != nil {
-		return nil, err
-	}
-	dbSet.KV = append(dbSet.KV, kvs...)
-	return dbSet, nil
-}
-
 func (a *Autonomy) getProposalRule(req *types.ReqString) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
@@ -211,37 +167,6 @@ func saveCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyV
 		Index:   res.Index,
 		Hash:    res.Hash,
 	})
-	kvs = append(kvs, kv)
-	return kvs
-}
-
-func (a *Autonomy) execDelLocalCommentProp(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	dbSet := &types.LocalDBSet{}
-	var set []*types.KeyValue
-	for _, log := range receiptData.Logs {
-		switch log.Ty {
-		case auty.TyLogCommentProp:
-			{
-				var receipt auty.ReceiptProposalComment
-				err := types.Decode(log.Log, &receipt)
-				if err != nil {
-					return nil, err
-				}
-				kv := delCommentHeightIndex(&receipt)
-				set = append(set, kv...)
-			}
-		default:
-			break
-		}
-	}
-	dbSet.KV = append(dbSet.KV, set...)
-	return dbSet, nil
-}
-
-func delCommentHeightIndex(res *auty.ReceiptProposalComment) (kvs []*types.KeyValue) {
-	kv := &types.KeyValue{}
-	kv.Key = calcCommentHeight(res.Cmt.ProposalID, dapp.HeightIndexStr(res.Height, int64(res.Index)))
-	kv.Value = nil
 	kvs = append(kvs, kv)
 	return kvs
 }

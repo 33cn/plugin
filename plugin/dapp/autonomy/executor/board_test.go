@@ -136,11 +136,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 }
 
 func TestExecDelLocalBoard(t *testing.T) {
-	testexecDelLocalBoard(t, false)
-	testexecDelLocalBoard(t, true)
+	testexecDelLocalBoard(t)
 }
 
-func testexecDelLocalBoard(t *testing.T, auto bool) {
+func testexecDelLocalBoard(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -164,32 +163,19 @@ func testexecDelLocalBoard(t *testing.T, auto bool) {
 		},
 	}
 
-	var set *types.LocalDBSet
-	var err error
 	// 先执行local然后进行删除
-	if !auto {
-		set, err := au.execLocalBoard(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
 
-		set, err = au.execDelLocalBoard(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalBoard(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err := au.execAutoLocalBoard(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		set, err = au.execAutoDelLocal(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
+	set, err = au.execAutoDelLocal(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
 	// check
 	table := NewBoardTable(au.GetLocalDB())
@@ -215,44 +201,30 @@ func testexecDelLocalBoard(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 		}}
 	// 先执行local然后进行删除
-	if !auto {
-		set, err = au.execLocalBoard(recpt)
 
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalBoard(t, kvdb, cur)
+	// 自动回退测试时候，需要先设置一个前置状态
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalBoard(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		set, err = au.execDelLocalBoard(recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		// 自动回退测试时候，需要先设置一个前置状态
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalBoard(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	// 正常测试退回
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalBoard(tx, recpt)
 
-		// 正常测试退回
-		tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err = au.execAutoLocalBoard(tx, recpt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalBoard(t, kvdb, cur)
 
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalBoard(t, kvdb, cur)
-
-		set, err = au.execAutoDelLocal(tx, recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
+	set, err = au.execAutoDelLocal(tx, recpt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 	// check
 	checkExecLocalBoard(t, kvdb, pre1)
 }

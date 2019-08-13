@@ -136,11 +136,10 @@ func testexecLocalRule(t *testing.T, auto bool) {
 }
 
 func TestExecDelLocalRule(t *testing.T) {
-	testexecDelLocalRule(t, false)
-	testexecDelLocalRule(t, true)
+	testexecDelLocalRule(t)
 }
 
-func testexecDelLocalRule(t *testing.T, auto bool) {
+func testexecDelLocalRule(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -163,32 +162,20 @@ func testexecDelLocalRule(t *testing.T, auto bool) {
 			{Ty: auty.TyLogPropRule, Log: types.Encode(receiptRule)},
 		},
 	}
-	var set *types.LocalDBSet
-	var err error
+
 	// 先执行local然后进行删除
-	if !auto {
-		set, err := au.execLocalRule(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
 
-		set, err = au.execDelLocalRule(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalRule(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err := au.execAutoLocalRule(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		set, err = au.execAutoDelLocal(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
+	set, err = au.execAutoDelLocal(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
 	// check
 	table := NewRuleTable(au.GetLocalDB())
@@ -215,44 +202,29 @@ func testexecDelLocalRule(t *testing.T, auto bool) {
 			{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 		}}
 	// 先执行local然后进行删除
-	if !auto {
-		set, err = au.execLocalRule(recpt)
+	// 自动回退测试时候，需要先设置一个前置状态
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalRule(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalRule(t, kvdb, cur)
+	// 正常测试退回
+	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
+	set, err = au.execAutoLocalRule(tx, recpt)
 
-		set, err = au.execDelLocalRule(recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	} else {
-		// 自动回退测试时候，需要先设置一个前置状态
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err := au.execAutoLocalRule(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
+	// check
+	checkExecLocalRule(t, kvdb, cur)
 
-		// 正常测试退回
-		tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
-		set, err = au.execAutoLocalRule(tx, recpt)
-
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-		// check
-		checkExecLocalRule(t, kvdb, cur)
-
-		set, err = au.execAutoDelLocal(tx, recpt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
-	}
+	set, err = au.execAutoDelLocal(tx, recpt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
 	// check
 	checkExecLocalRule(t, kvdb, pre1)
@@ -462,11 +434,10 @@ func testexecLocalCommentProp(t *testing.T, auto bool) {
 }
 
 func TestExecDelLocalCommentProp(t *testing.T) {
-	testexecDelLocalCommentProp(t, false)
-	testexecDelLocalCommentProp(t, true)
+	testexecDelLocalCommentProp(t)
 }
 
-func testexecDelLocalCommentProp(t *testing.T, auto bool) {
+func testexecDelLocalCommentProp(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
@@ -488,30 +459,19 @@ func testexecDelLocalCommentProp(t *testing.T, auto bool) {
 		},
 	}
 	var set *types.LocalDBSet
-	var err error
 	// 先执行local然后进行删除
-	if !auto {
-		set, err = au.execLocalCommentProp(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
 
-		set, err = au.execDelLocalCommentProp(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
-		assert.NoError(t, err)
+	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	assert.NoError(t, err)
 
-		set, err = au.execAutoLocalCommentProp(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-		saveKvs(sdb, set.KV)
+	set, err = au.execAutoLocalCommentProp(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
+	saveKvs(sdb, set.KV)
 
-		set, err = au.execAutoDelLocal(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
-	}
+	set, err = au.execAutoDelLocal(tx, receipt)
+	require.NoError(t, err)
+	require.NotNil(t, set)
 
 	// check
 	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
