@@ -150,7 +150,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash1,
 	}
 	block1 := &types.ParaTxDetail{
-		Type:   addAct,
+		Type:   types.AddBlock,
 		Header: header1,
 	}
 
@@ -159,7 +159,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash2,
 	}
 	block2 := &types.ParaTxDetail{
-		Type:   addAct,
+		Type:   types.AddBlock,
 		Header: header2,
 	}
 
@@ -168,7 +168,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash3,
 	}
 	block3 := &types.ParaTxDetail{
-		Type:   addAct,
+		Type:   types.AddBlock,
 		Header: header3,
 	}
 
@@ -178,7 +178,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash3,
 	}
 	block4 := &types.ParaTxDetail{
-		Type:   delAct,
+		Type:   types.DelBlock,
 		Header: header4,
 	}
 	//del2
@@ -187,7 +187,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash2,
 	}
 	block5 := &types.ParaTxDetail{
-		Type:   delAct,
+		Type:   types.DelBlock,
 		Header: header5,
 	}
 
@@ -196,7 +196,7 @@ func TestVerifyMainBlocks(t *testing.T) {
 		Hash:       hash6,
 	}
 	block6 := &types.ParaTxDetail{
-		Type:   addAct,
+		Type:   types.AddBlock,
 		Header: header6,
 	}
 
