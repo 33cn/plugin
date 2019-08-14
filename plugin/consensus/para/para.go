@@ -29,9 +29,6 @@ import (
 )
 
 const (
-	addAct int64 = 1 //add para block action
-	delAct int64 = 2 //reference blockstore.go, del para block action
-
 	minBlockNum = 100 //min block number startHeight before lastHeight in mainchain
 
 	genesisBlockTime int64 = 1514533390
@@ -64,10 +61,12 @@ type client struct {
 	caughtUp        int32
 	commitMsgClient *commitMsgClient
 	blockSyncClient *blockSyncClient
+	multiDldCli     *multiDldClient
 	authAccount     string
 	privateKey      crypto.PrivKey
 	wg              sync.WaitGroup
 	subCfg          *subConfig
+	isClosed        int32
 	quitCreate      chan struct{}
 }
 
@@ -89,6 +88,9 @@ type subConfig struct {
 	FetchFilterParaTxsEnable        uint32 `json:"fetchFilterParaTxsEnable,omitempty"`
 	BatchFetchBlockCount            int64  `json:"batchFetchBlockCount,omitempty"`
 	ParaConsensStartHeight          int64  `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen               int32  `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob           int64  `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum             uint32 `json:"multiDownJobBuffNum,omitempty"`
 }
 
 // New function to init paracross env
@@ -197,6 +199,21 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		para.blockSyncClient.maxSyncErrCount = subcfg.MaxSyncErrCount
 	}
 
+	para.multiDldCli = &multiDldClient{
+		paraClient:   para,
+		invNumPerJob: defaultInvNumPerJob,
+		jobBufferNum: defaultJobBufferNum,
+	}
+	if subcfg.MultiDownInvNumPerJob > 0 {
+		para.multiDldCli.invNumPerJob = subcfg.MultiDownInvNumPerJob
+	}
+	if subcfg.MultiDownJobBuffNum > 0 {
+		para.multiDldCli.jobBufferNum = subcfg.MultiDownJobBuffNum
+	}
+	if subcfg.MultiDownloadOpen > 0 {
+		para.multiDldCli.multiDldOpen = true
+	}
+
 	c.SetChild(para)
 	return para
 }
@@ -208,6 +225,7 @@ func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *client) Close() {
+	atomic.StoreInt32(&client.isClosed, 1)
 	close(client.commitMsgClient.quit)
 	close(client.quitCreate)
 	close(client.blockSyncClient.quitChan)
@@ -216,6 +234,10 @@ func (client *client) Close() {
 	client.BaseClient.Close()
 
 	plog.Info("consensus para closed")
+}
+
+func (client *client) isCancel() bool {
+	return atomic.LoadInt32(&client.isClosed) == 1
 }
 
 func (client *client) SetQueueClient(c queue.Client) {
