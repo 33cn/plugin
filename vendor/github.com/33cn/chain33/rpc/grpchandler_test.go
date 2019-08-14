@@ -163,7 +163,8 @@ func TestVersion(t *testing.T) {
 //}
 
 func testGetMemPoolOK(t *testing.T) {
-	qapi.On("GetMempool").Return(nil, nil)
+	var in *types.ReqGetMempool
+	qapi.On("GetMempool", in).Return(nil, nil)
 	data, err := g.GetMemPool(getOkCtx(), nil)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Nil(t, data)
@@ -203,11 +204,11 @@ func TestGetLastMemPool(t *testing.T) {
 }
 
 func testGetProperFeeOK(t *testing.T) {
-	qapi.On("GetProperFee").Return(nil, nil)
-	data, err := g.GetProperFee(getOkCtx(), nil)
+	var in *types.ReqProperFee
+	qapi.On("GetProperFee", in).Return(&types.ReplyProperFee{ProperFee: 1000000}, nil)
+	data, err := g.GetProperFee(getOkCtx(), in)
 	assert.Nil(t, err, "the error should be nil")
-	assert.Nil(t, data)
-
+	assert.Equal(t, int64(1000000), data.ProperFee)
 }
 
 func TestGetProperFee(t *testing.T) {
@@ -1073,6 +1074,11 @@ func TestReWriteRawTx(t *testing.T) {
 
 func TestGrpc_CreateNoBalanceTransaction(t *testing.T) {
 	_, err := g.CreateNoBalanceTransaction(getOkCtx(), &pb.NoBalanceTx{})
+	assert.NoError(t, err)
+}
+
+func TestGrpc_CreateNoBalanceTxs(t *testing.T) {
+	_, err := g.CreateNoBalanceTxs(getOkCtx(), &pb.NoBalanceTxs{TxHexs: []string{"0a05746f6b656e12413804223d0a0443434e5910a09c011a0d74657374207472616e73666572222231333559774e715367694551787577586650626d526d48325935334564673864343820a08d0630969a9fe6c4b9c7ba5d3a2231333559774e715367694551787577586650626d526d483259353345646738643438", "0a05746f6b656e12413804223d0a0443434e5910b0ea011a0d74657374207472616e73666572222231333559774e715367694551787577586650626d526d48325935334564673864343820a08d0630bca0a2dbc0f182e06f3a2231333559774e715367694551787577586650626d526d483259353345646738643438"}})
 	assert.NoError(t, err)
 }
 

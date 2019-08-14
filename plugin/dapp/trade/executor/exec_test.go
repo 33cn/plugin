@@ -338,3 +338,174 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
+
+func TestTradeSellFixAssetDB(t *testing.T) {
+	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeAssetX, int64(10))
+	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeIDX, int64(10))
+	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeFixAssetDBX, int64(20))
+
+	sellArgs := &orderArgs{100, 2, 2, 100}
+	buyArgs := &orderArgs{total: 5}
+	expect := &orderArgs{total: sellArgs.total - buyArgs.total}
+
+	total := int64(100000)
+	accountA := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    string(Nodes[0]),
+	}
+	accountB := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    string(Nodes[1]),
+	}
+
+	envA := execEnv{
+		1539918074,
+		types.GetDappFork("trade", pty.ForkTradeAssetX) - 1,
+		2,
+		1539918074,
+		"hash",
+	}
+
+	envB := execEnv{
+		1539918074,
+		types.GetDappFork("trade", pty.ForkTradeFixAssetDBX) - 1,
+		2,
+		1539918074,
+		"hash",
+	}
+
+	envC := execEnv{
+		1539918074,
+		types.GetDappFork("trade", pty.ForkTradeFixAssetDBX),
+		2,
+		1539918074,
+		"hash",
+	}
+
+	_, ldb, kvdb := util.CreateTestDB()
+	accB := account.NewCoinsAccount()
+	accB.SetDB(kvdb)
+	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
+
+	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
+	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
+
+	driver := newTrade()
+	driver.SetEnv(envA.blockHeight, envA.blockTime, envA.difficulty)
+	driver.SetStateDB(kvdb)
+	driver.SetLocalDB(kvdb)
+
+	sell := &pty.TradeSellTx{
+		TokenSymbol:       Symbol,
+		AmountPerBoardlot: sellArgs.amount,
+		MinBoardlot:       sellArgs.min,
+		PricePerBoardlot:  sellArgs.price,
+		TotalBoardlot:     sellArgs.total,
+		Fee:               0,
+		//AssetExec:         AssetExecToken,
+	}
+	tx, _ := pty.CreateRawTradeSellTx(sell)
+	tx, _ = signTx(tx, PrivKeyA)
+
+	receipt, err := driver.Exec(tx, envA.index)
+	if err != nil {
+		assert.Nil(t, err, "exec failed")
+		return
+	}
+
+	var acc types.Account
+	err = types.Decode(receipt.KV[0].Value, &acc)
+	assert.Nil(t, err, "decode account")
+	t.Log(acc)
+	assert.Equal(t, total-sellArgs.total*sellArgs.amount, acc.Balance)
+	assert.Equal(t, sellArgs.total*sellArgs.amount, acc.Frozen)
+
+	var sellOrder pty.SellOrder
+	err = types.Decode(receipt.KV[1].Value, &sellOrder)
+	assert.Nil(t, err)
+	assert.Equal(t, sellArgs.amount, sellOrder.AmountPerBoardlot)
+	assert.Equal(t, sellArgs.total, sellOrder.TotalBoardlot)
+	assert.Equal(t, sellArgs.price, sellOrder.PricePerBoardlot)
+	assert.Equal(t, sellArgs.min, sellOrder.MinBoardlot)
+	assert.Equal(t, "", sellOrder.AssetExec)
+	assert.Equal(t, Symbol, sellOrder.TokenSymbol)
+	assert.Equal(t, int64(0), sellOrder.SoldBoardlot)
+	assert.Equal(t, string(Nodes[0]), sellOrder.Address)
+
+	receiptDataSell := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataSell, envA.index)
+	assert.Nil(t, err)
+
+	// test buy market: height [asset, fixAsset), will failed
+	driver.SetEnv(envB.blockHeight, envB.blockTime, envB.difficulty)
+	buyB := &pty.TradeBuyTx{
+		SellID:      sellOrder.SellID[len("mavl-trade-sell-"):],
+		BoardlotCnt: buyArgs.total,
+		Fee:         0,
+	}
+	tx, _ = pty.CreateRawTradeBuyTx(buyB)
+	tx, _ = signTx(tx, PrivKeyB)
+	receipt, err = driver.Exec(tx, envB.index)
+	assert.Equal(t, types.ErrNoBalance, err)
+
+	driver.SetEnv(envC.blockHeight, envC.blockTime, envC.difficulty)
+	buy := &pty.TradeBuyTx{
+		SellID:      sellOrder.SellID[len("mavl-trade-sell-"):],
+		BoardlotCnt: buyArgs.total,
+		Fee:         0,
+	}
+	tx, _ = pty.CreateRawTradeBuyTx(buy)
+	tx, _ = signTx(tx, PrivKeyB)
+	receipt, err = driver.Exec(tx, envC.index)
+	if err != nil {
+		assert.Nil(t, err, "exec failed")
+		return
+	}
+	// but coins -, sell coins +, sell asset -, buy asset +, sell order
+	err = types.Decode(receipt.KV[0].Value, &acc)
+	assert.Nil(t, err)
+	assert.Equal(t, accountB.Balance-buyArgs.total*sellArgs.price, acc.Balance)
+
+	err = types.Decode(receipt.KV[1].Value, &acc)
+	assert.Nil(t, err)
+	assert.Equal(t, buyArgs.total*sellArgs.price, acc.Balance)
+
+	err = types.Decode(receipt.KV[2].Value, &acc)
+	assert.Nil(t, err)
+	assert.Equal(t, (sellArgs.total-buyArgs.total)*sellArgs.amount, acc.Frozen)
+
+	err = types.Decode(receipt.KV[3].Value, &acc)
+	assert.Nil(t, err)
+	assert.Equal(t, buyArgs.total*sellArgs.amount, acc.Balance)
+
+	err = types.Decode(receipt.KV[4].Value, &sellOrder)
+	assert.Nil(t, err)
+	assert.Equal(t, expect.total, sellOrder.TotalBoardlot-sellOrder.SoldBoardlot)
+
+	receiptDataBuy := &types.ReceiptData{
+		Ty:   receipt.Ty,
+		Logs: receipt.Logs,
+	}
+	_, err = driver.ExecLocal(tx, receiptDataBuy, envC.index)
+	assert.Nil(t, err)
+
+	req := &pty.ReqAddrAssets{
+		Addr:      string(Nodes[0]),
+		Status:    pty.TradeOrderStatusOnSale,
+		Token:     nil,
+		Direction: 1,
+		Count:     10,
+		FromKey:   "",
+	}
+	resp, err := driver.Query("GetOnesOrderWithStatus", types.Encode(req))
+	assert.Nil(t, err)
+	orders, ok := resp.(*pty.ReplyTradeOrders)
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(orders.Orders))
+	ldb.Close()
+}

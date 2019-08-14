@@ -20,7 +20,7 @@ func getTitle(db dbm.KV, key []byte) (*pt.ParacrossStatus, error) {
 			return nil, err
 		}
 		// 平行链如果是从其他链上移过来的，  需要增加配置， 对应title的平行链的起始高度
-		clog.Info("first time load title", "key", string(key))
+		clog.Debug("first time load title", "key", string(key))
 		return &pt.ParacrossStatus{Height: -1}, nil
 	}
 
@@ -39,7 +39,7 @@ func getTitleHeight(db dbm.KV, key []byte) (*pt.ParacrossHeightStatus, error) {
 	if err != nil {
 		// 对应高度第一次提交commit
 		if isNotFound(err) {
-			clog.Info("paracross.Commit first commit", "key", string(key))
+			clog.Debug("paracross.Commit first commit", "key", string(key))
 		}
 		return nil, err
 	}
@@ -81,6 +81,19 @@ func getBlockHash(api client.QueueProtocolAPI, height int64) (*types.ReplyHash, 
 		return nil, err
 	}
 	return hash, nil
+}
+
+func getBlockInfo(api client.QueueProtocolAPI, height int64) (*types.Block, error) {
+	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height})
+	if err != nil {
+		clog.Error("paracross.Commit getBlockInfo", "height", height, "err", err.Error())
+		return nil, err
+	}
+	if 1 != int64(len(blockDetails.Items)) {
+		clog.Error("paracross.Commit getBlockInfo count")
+		return nil, types.ErrInvalidParam
+	}
+	return blockDetails.Items[0].Block, nil
 }
 
 func isNotFound(err error) bool {

@@ -200,7 +200,7 @@ func (n *Node) getAddrFromOnline() {
 					continue
 				}
 
-				if !n.nodeInfo.blacklist.Has(addr) || !Filter.QueryRecvData(addr) {
+				if !n.nodeInfo.blacklist.Has(addr) || !peerAddrFilter.QueryRecvData(addr) {
 					if ticktimes < 10 {
 						//如果连接了其他节点，优先不连接种子节点
 						if _, ok := n.innerSeeds.Load(addr); !ok {
@@ -339,7 +339,7 @@ func (n *Node) nodeReBalance() {
 		}
 
 		if MinCacheInBoundPeer != nil {
-			info, err := MinCacheInBoundPeer.GetPeerInfo(VERSION)
+			info, err := MinCacheInBoundPeer.GetPeerInfo()
 			if err != nil {
 				n.RemoveCachePeer(MinCacheInBoundPeer.Addr())
 				MinCacheInBoundPeer.Close()
@@ -381,11 +381,12 @@ func (n *Node) monitorPeers() {
 		}
 
 		peers, infos := n.GetActivePeers()
-		for paddr, pinfo := range infos {
+		for name, pinfo := range infos {
 			peerheight := pinfo.GetHeader().GetHeight()
-			if pinfo.GetName() == selfName && !pinfo.GetSelf() { //发现连接到自己，立即删除
+			paddr := pinfo.GetAddr()
+			if name == selfName && !pinfo.GetSelf() { //发现连接到自己，立即删除
 				//删除节点数过低的节点
-				n.remove(paddr)
+				n.remove(pinfo.GetAddr())
 				n.nodeInfo.addrBook.RemoveAddr(paddr)
 				n.nodeInfo.blacklist.Add(paddr, 0)
 			}
@@ -448,7 +449,7 @@ func (n *Node) monitorDialPeers() {
 			log.Info("monitorDialPeers", "loop", "done")
 			return
 		}
-		if Filter.QueryRecvData(addr.(string)) {
+		if peerAddrFilter.QueryRecvData(addr.(string)) {
 			//先查询有没有注册进去，避免同时重复连接相同的地址
 			continue
 		}
@@ -462,7 +463,7 @@ func (n *Node) monitorDialPeers() {
 			continue
 		}
 
-		//不对已经连接上的地址或者黑名单地址发起连接
+		//不对已经连接上的地址或者黑名单地址发起连接 TODO:连接足够时,对于连入的地址也不再去重复连接(客户端服务端只维护一条连接, 后续优化)
 		if n.Has(netAddr.String()) || n.nodeInfo.blacklist.Has(netAddr.String()) || n.HasCacheBound(netAddr.String()) {
 			log.Debug("DialPeers", "find hash", netAddr.String())
 			continue
@@ -485,15 +486,15 @@ func (n *Node) monitorDialPeers() {
 		}
 		dialCount++
 		//把待连接的节点增加到过滤容器中
-		Filter.RegRecvData(addr.(string))
+		peerAddrFilter.RegRecvData(addr.(string))
 		log.Info("monitorDialPeer", "dialCount", dialCount)
 		go func(netAddr *NetAddress) {
-			defer Filter.RemoveRecvData(netAddr.String())
+			defer peerAddrFilter.RemoveRecvData(netAddr.String())
 			peer, err := P2pComm.dialPeer(netAddr, n)
 			if err != nil {
 				//连接失败后
 				n.nodeInfo.addrBook.RemoveAddr(netAddr.String())
-				log.Error("monitorDialPeers", "Err", err.Error())
+				log.Error("monitorDialPeers", "peerAddr", netAddr.str, "Err", err.Error())
 				if err == types.ErrVersion { //版本不支持，加入黑名单12小时
 					peer.version.SetSupport(false)
 					P2pComm.CollectPeerStat(err, peer)
@@ -566,7 +567,7 @@ func (n *Node) monitorBlackList() {
 }
 
 func (n *Node) monitorFilter() {
-	Filter.ManageRecvFilter()
+	peerAddrFilter.ManageRecvFilter()
 }
 
 //独立goroutine 监控配置的
@@ -594,7 +595,7 @@ func (n *Node) monitorCfgSeeds() {
 					peers, _ := n.GetActivePeers()
 					//选出当前连接的节点中，负载最大的节点
 					var MaxInBounds int32
-					var MaxInBoundPeer *Peer
+					MaxInBoundPeer := &Peer{}
 					for _, peer := range peers {
 						if peer.GetInBouns() > MaxInBounds {
 							MaxInBounds = peer.GetInBouns()

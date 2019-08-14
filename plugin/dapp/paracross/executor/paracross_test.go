@@ -109,6 +109,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 		Block: &types.Block{},
 	}
 	MainBlockHash10 = blockDetail.Block.Hash()
+	blockDetail.Block.MainHash = MainBlockHash10
 
 	// setup title nodes : len = 4
 	nodeConfigKey := calcManageConfigNodesKey(Title)
@@ -133,8 +134,12 @@ func (suite *CommitTestSuite) SetupSuite() {
 	suite.api.On("GetBlockByHashes", hashes).Return(
 		&types.BlockDetails{
 			Items: []*types.BlockDetail{blockDetail},
+		}, nil).Once()
+	suite.api.On("GetBlocks", &types.ReqBlocks{Start: TitleHeight, End: TitleHeight}).Return(
+		&types.BlockDetails{
+			Items: []*types.BlockDetail{blockDetail},
 		}, nil)
-	suite.api.On("GetBlockHash", &types.ReqInt{Height: MainBlockHeight}).Return(
+	suite.api.On("GetBlockHash", &types.ReqInt{Height: TitleHeight}).Return(
 		&types.ReplyHash{Hash: CurBlock}, nil)
 }
 
@@ -721,7 +726,7 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-	group, err := types.CreateTxGroup(txs)
+	group, err := types.CreateTxGroup(txs, types.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}
@@ -769,4 +774,42 @@ func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Trans
 	}
 
 	return tx, nil
+}
+
+func TestUpdateCommitBlockHashs(t *testing.T) {
+	stat := &pt.ParacrossHeightStatus{}
+	stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
+	commit := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main"),
+		MainBlockHeight: 1,
+		BlockHash:       []byte("1122"),
+		StateHash:       []byte("statehash"),
+		TxResult:        []byte(""),
+		TxHashs:         [][]byte{nil},
+		CrossTxResult:   []byte(""),
+		CrossTxHashs:    [][]byte{nil},
+	}
+
+	updateCommitBlockHashs(stat, commit)
+	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
+
+	updateCommitBlockHashs(stat, commit)
+	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
+
+	commit2 := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main"),
+		MainBlockHeight: 1,
+		BlockHash:       []byte("2233"),
+		StateHash:       []byte("statehash"),
+		TxResult:        []byte("11"),
+		TxHashs:         [][]byte{[]byte("hash2")},
+		CrossTxResult:   []byte("11"),
+		CrossTxHashs:    [][]byte{[]byte("hash2")},
+	}
+	updateCommitBlockHashs(stat, commit2)
+	assert.Equal(t, int(2), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, commit2.BlockHash, stat.BlockDetails.BlockHashs[1])
+
 }

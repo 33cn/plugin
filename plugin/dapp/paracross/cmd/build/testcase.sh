@@ -15,7 +15,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # shellcheck source=/dev/null
-source test-rpc.sh
+#source test-rpc.sh
 
 function para_init() {
     para_set_toml chain33.para33.toml
@@ -38,14 +38,29 @@ function para_set_toml() {
     sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=4/g' "${1}"
     sed -i $xsedfix '/^emptyBlockInterval=.*/a MainBlockHashForkHeight=1' "${1}"
 
+    sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
-    sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=1/g' "${1}"
+    sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight=60/g' "${1}"
 
     # rpc
     sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
     sed -i $xsedfix 's/^grpcBindAddr=.*/grpcBindAddr="0.0.0.0:8902"/g' "${1}"
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
+
+    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+                                                        "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
+                                                        "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"]/g' "${1}"
+    # shellcheck disable=SC1004
+    sed -i $xsedfix 's/^tokenApprs=.*/tokenApprs=[	"1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
+	                                                "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",\
+                                                    "1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",\
+                                                    "1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",\
+                                                    "1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",\
+	                                                "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",]/g' "${1}"
+
 }
 
 function para_set_wallet() {
@@ -312,7 +327,7 @@ function para_cross_transfer_withdraw() {
     echo "${hash}"
 
     sleep 15
-    ${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    hash2=$(${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
 
     local times=200
     while true; do
@@ -323,6 +338,9 @@ function para_cross_transfer_withdraw() {
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "para_cross_transfer_withdraw failed"
+                ${CLI} tx query -s "$hash2"
+                ${PARA_CLI} tx query -s "$hash2"
+                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e user.p.para.paracross --asset_exec paracross --asset_symbol coins.bty
                 exit 1
             fi
         else
@@ -875,6 +893,57 @@ function para_nodemanage_node_behalf_join() {
 
 }
 
+function check_privacy_utxo() {
+    echo '#check utxo balance, addr='"${2}"', token='"${3}"', expect='"${4}"
+    local times=10
+    while true; do
+        acc=$(${1} privacy showpai -a "${2}" -s "${3}" | jq -r ".AvailableAmount")
+        echo "utxo avail balance is ${acc} "
+        if [[ ${acc} == "${4}" ]]; then
+            break
+        else
+            block_wait "${1}" 1
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "check privacy utxo failed"
+                ${1} privacy showpai -a "${2}" -s "${3}"
+                exit 1
+            fi
+        fi
+    done
+}
+function privacy_transfer_test() {
+    echo "========= # para privacy test ============="
+    echo "#enable privacy"
+    ${1} privacy enable -a all
+
+    echo "#transfer to privacy exec" #send to user.p.para.privacy for privacy transfer fee
+    ${MAIN_CLI} send coins transfer -a 1 -t 15XvcMYK6H1La7ns4yzJhkyurdpXsjjzfQ -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+    ${1} send coins transfer -a 10 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    block_wait "${1}" 2
+    ${1} send coins send_exec -a 10 -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    ${1} send token send_exec -a 10 -s GD -e privacy -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    block_wait "${1}" 2
+
+    echo "#privacy pub2priv, to=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e coins -s BTY -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e token -s GD -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 9.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 9.0000
+
+    echo "#privacy priv2priv, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
+    ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 GD 3.0000
+    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 BTY 3.0000
+
+    echo "#privacy priv2pub, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
+    ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt GD 0.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt BTY 0.0000
+}
+
 function para_test() {
     echo "=========== # para chain test ============="
     para_create_nodegroup
@@ -886,6 +955,7 @@ function para_test() {
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
     para_cross_transfer_withdraw_for_token
+    privacy_transfer_test "${PARA_CLI}"
 }
 
 function paracross() {

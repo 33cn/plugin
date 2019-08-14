@@ -41,7 +41,6 @@ func PrivacyCmd() *cobra.Command {
 		createPriv2PubTxCmd(),
 		showAmountsOfUTXOCmd(),
 		showUTXOs4SpecifiedAmountCmd(),
-		createUTXOsCmd(),
 		showPrivacyAccountInfoCmd(),
 		listPrivacyTxsCmd(),
 		rescanUtxosOptCmd(),
@@ -96,9 +95,10 @@ func createPub2PrivTxFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0.0, "transfer amount, at most 4 decimal places")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -110,6 +110,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -117,7 +118,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -131,6 +132,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 		Note:       note,
 		Pubkeypair: pubkeypair,
 		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -156,9 +158,10 @@ func createPriv2PrivTxFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("from")
 
 	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -172,6 +175,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 	sender, _ := cmd.Flags().GetString("from")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -179,7 +183,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -195,6 +199,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 		From:       sender,
 		Mixcount:   mixCount,
 		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -220,9 +225,10 @@ func createPriv2PubTxFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Int32P("mixcount", "m", defMixCount, "utxo mix count")
-	cmd.Flags().StringP("symbol", "s", "BTY", "token symbol")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("note", "n", "", "note for transaction")
-	cmd.Flags().Int64P("expire", "", 0, "transfer expire, default one hour")
+	cmd.Flags().Int64P("expire", "x", 0, "transfer expire, default one hour")
 	cmd.Flags().IntP("expiretype", "", 1, "0: height  1: time default is 1")
 }
 
@@ -236,6 +242,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	expire, _ := cmd.Flags().GetInt64("expire")
 	expiretype, _ := cmd.Flags().GetInt("expiretype")
+	assetExec, _ := cmd.Flags().GetString("exec")
 	if expiretype == 0 {
 		if expire <= 0 {
 			fmt.Println("Invalid expire. expire must large than 0 in expiretype==0, expire", expire)
@@ -243,7 +250,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		}
 	} else if expiretype == 1 {
 		if expire <= 0 {
-			expire = int64(time.Hour)
+			expire = int64(time.Minute * 10)
 		}
 	} else {
 		fmt.Println("Invalid expiretype", expiretype)
@@ -259,6 +266,7 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 		To:        to,
 		Mixcount:  mixCount,
 		Expire:    expire,
+		AssetExec: assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -276,16 +284,17 @@ func showPrivacyAccountSpendCmd() *cobra.Command {
 
 func showPrivacyAccountSpendFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.MarkFlagRequired("addr")
 }
 
 func showPrivacyAccountSpend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
-
+	symbol, _ := cmd.Flags().GetString("symbol")
 	params := pty.ReqPrivBal4AddrToken{
 		Addr:  addr,
-		Token: types.BTY,
+		Token: symbol,
 	}
 
 	var res pty.UTXOHaveTxHashs
@@ -422,56 +431,6 @@ func parseShowUTXOs4SpecifiedAmountRes(arg interface{}) (interface{}, error) {
 	return ret, nil
 }
 
-func createUTXOsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "createutxos",
-		Short: "Create specified count UTXOs with specified amount",
-		Run:   createUTXOs,
-	}
-	createUTXOsFlag(cmd)
-	return cmd
-}
-
-func createUTXOsFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("from", "f", "", "from account address")
-	cmd.MarkFlagRequired("from")
-	cmd.Flags().StringP("pubkeypair", "p", "", "to view spend public key pair")
-	cmd.MarkFlagRequired("pubkeypair")
-	cmd.Flags().Float64P("amount", "a", 0, "amount")
-	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Int32P("count", "c", 0, "mix count, default 0")
-	cmd.Flags().StringP("note", "n", "", "transfer note")
-	cmd.Flags().Int64P("expire", "", int64(time.Hour), "transfer expire, default one hour")
-}
-
-func createUTXOs(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	from, _ := cmd.Flags().GetString("from")
-	pubkeypair, _ := cmd.Flags().GetString("pubkeypair")
-	note, _ := cmd.Flags().GetString("note")
-	count, _ := cmd.Flags().GetInt32("count")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4
-	expire, _ := cmd.Flags().GetInt64("expire")
-	if expire <= 0 {
-		expire = int64(time.Hour)
-	}
-
-	params := &pty.ReqCreateUTXOs{
-		Tokenname:  types.BTY,
-		Sender:     from,
-		Pubkeypair: pubkeypair,
-		Amount:     amountInt64,
-		Count:      count,
-		Note:       note,
-		Expire:     expire,
-	}
-
-	var res rpctypes.ReplyHash
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateUTXOs", params, &res)
-	ctx.Run()
-}
-
 // showPrivacyAccountInfoCmd
 func showPrivacyAccountInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -487,14 +446,14 @@ func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
 	cmd.MarkFlagRequired("addr")
 
-	cmd.Flags().StringP("token", "t", types.BTY, "coins token, BTY supported.")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display available detail. 2:display frozen detail. 3:display all")
 }
 
 func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
-	token, _ := cmd.Flags().GetString("token")
+	token, _ := cmd.Flags().GetString("symbol")
 	mode, _ := cmd.Flags().GetInt32("displaymode")
 	if mode < 0 || mode > 3 {
 		fmt.Println("display mode only support 0-3")

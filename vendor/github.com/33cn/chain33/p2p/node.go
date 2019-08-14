@@ -26,10 +26,10 @@ import (
 // 3.启动端口映射
 // 4.启动监控模块，进行节点管理
 
-// Start Node listener
+// Start Node server
 func (n *Node) Start() {
-	if n.listener != nil {
-		n.listener.Start()
+	if n.server != nil {
+		n.server.Start()
 	}
 	n.detectNodeAddr()
 	n.monitor()
@@ -38,22 +38,25 @@ func (n *Node) Start() {
 
 }
 
-// Close node listener
+// Close node server
 func (n *Node) Close() {
-	atomic.StoreInt32(&n.closed, 1)
-	if n.listener != nil {
-		n.listener.Close()
+	//避免重复
+	if !atomic.CompareAndSwapInt32(&n.closed, 0, 1) {
+		return
+	}
+	if n.server != nil {
+		n.server.Close()
 	}
 	log.Debug("stop", "listen", "closed")
 	n.nodeInfo.addrBook.Close()
 	n.nodeInfo.monitorChan <- nil
 	log.Debug("stop", "addrBook", "closed")
 	n.removeAll()
-	if Filter != nil {
-		Filter.Close()
+	if peerAddrFilter != nil {
+		peerAddrFilter.Close()
 	}
 	n.deleteNatMapPort()
-
+	n.pubsub.Shutdown()
 	log.Info("stop", "PeerRemoeAll", "closed")
 
 }
@@ -69,7 +72,7 @@ type Node struct {
 	cmtx       sync.Mutex
 	cacheBound map[string]*Peer
 	outBound   map[string]*Peer
-	listener   Listener
+	server     *listener
 	listenPort int
 	innerSeeds sync.Map
 	cfgSeeds   sync.Map
@@ -112,7 +115,7 @@ func NewNode(cfg *types.P2P) (*Node, error) {
 	}
 	node.nodeInfo = NewNodeInfo(cfg)
 	if cfg.ServerStart {
-		node.listener = NewListener(protocol, node)
+		node.server = newListener(protocol, node)
 	}
 	return node, nil
 }
@@ -147,7 +150,7 @@ func (n *Node) doNat() {
 	}
 	testExaddr := fmt.Sprintf("%v:%v", n.nodeInfo.GetExternalAddr().IP.String(), n.listenPort)
 	log.Info("TestNetAddr", "testExaddr", testExaddr)
-	if len(P2pComm.AddrRouteble([]string{testExaddr})) != 0 {
+	if len(P2pComm.AddrRouteble([]string{testExaddr}, n.nodeInfo.channelVersion)) != 0 {
 		log.Info("node outside")
 		n.nodeInfo.SetNetSide(true)
 		if netexaddr, err := NewNetAddressString(testExaddr); err == nil {
@@ -169,13 +172,13 @@ func (n *Node) doNat() {
 				if n.Size() > 0 {
 					break
 				}
+				time.Sleep(time.Millisecond * 100)
 			}
 
 			p2pcli := NewNormalP2PCli()
 			//测试映射后的端口能否连通或者外网+本地端口
-			if p2pcli.CheckPeerNatOk(n.nodeInfo.GetExternalAddr().String()) ||
-				p2pcli.CheckPeerNatOk(fmt.Sprintf("%v:%v", n.nodeInfo.GetExternalAddr().IP.String(), n.listenPort)) {
-
+			if p2pcli.CheckPeerNatOk(n.nodeInfo.GetExternalAddr().String(), n.nodeInfo) ||
+				p2pcli.CheckPeerNatOk(fmt.Sprintf("%v:%v", n.nodeInfo.GetExternalAddr().IP.String(), n.listenPort), n.nodeInfo) {
 				n.nodeInfo.SetServiceTy(Service)
 				log.Info("doNat", "NatOk", "Support Service")
 			} else {
@@ -304,9 +307,10 @@ func (n *Node) GetActivePeers() (map[string]*Peer, map[string]*types.Peer) {
 
 	var peers = make(map[string]*Peer)
 	for _, peer := range regPeers {
-		if _, ok := infos[peer.Addr()]; ok {
+		name := peer.GetPeerName()
+		if _, ok := infos[name]; ok {
 
-			peers[peer.Addr()] = peer
+			peers[name] = peer
 		}
 	}
 	return peers, infos
@@ -333,15 +337,18 @@ func (n *Node) removeAll() {
 
 func (n *Node) monitor() {
 	go n.monitorErrPeer()
-	go n.getAddrFromOnline()
-	go n.getAddrFromAddrBook()
+	//固定模式, 只连接seeds配置节点
+	go n.monitorCfgSeeds()
+	if !n.nodeInfo.cfg.FixedSeed {
+		go n.getAddrFromOnline()
+		go n.getAddrFromAddrBook()
+	}
 	go n.monitorPeerInfo()
 	go n.monitorDialPeers()
 	go n.monitorBlackList()
 	go n.monitorFilter()
 	go n.monitorPeers()
 	go n.nodeReBalance()
-	go n.monitorCfgSeeds()
 }
 
 func (n *Node) needMore() bool {
@@ -385,10 +392,10 @@ func (n *Node) detectNodeAddr() {
 			if len(exportBytes) != 0 {
 				externalPort = int(P2pComm.BytesToInt32(exportBytes))
 			} else {
-				externalPort = defalutNatPort
+				externalPort = n.listenPort
 			}
 			if err != nil {
-				log.Error("bookDb Get", "externalPortTag fail err:", err)
+				log.Error("bookDb Get", "nodePort", n.listenPort, "externalPortTag fail err:", err)
 			}
 		}
 
@@ -422,7 +429,7 @@ func (n *Node) natMapPort() {
 		time.Sleep(time.Second)
 	}
 	var err error
-	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()})) != 0 { //判断能否连通要映射的端口
+	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()}, n.nodeInfo.channelVersion)) != 0 { //判断能否连通要映射的端口
 		log.Info("natMapPort", "addr", "routeble")
 		p2pcli := NewNormalP2PCli() //检查要映射的IP地址是否已经被映射成功
 		ok := p2pcli.CheckSelf(n.nodeInfo.GetExternalAddr().String(), n.nodeInfo)
@@ -439,7 +446,7 @@ func (n *Node) natMapPort() {
 		err = nat.Any().AddMapping("TCP", int(n.nodeInfo.GetExternalAddr().Port), n.listenPort, nodename[:8], time.Hour*48)
 		if err != nil {
 			if i > tryMapPortTimes/2 { //如果连续失败次数超过最大限制次数的二分之一则切换为随机端口映射
-				log.Error("NatMapPort", "err", err.Error())
+				log.Warn("TryNatMapPortFailed", "tryTimes", i, "err", err.Error())
 				n.flushNodePort(uint16(n.listenPort), uint16(rand.Intn(64512)+1023))
 
 			}
@@ -497,4 +504,19 @@ func (n *Node) deleteNatMapPort() {
 
 func (n *Node) natNotice() {
 	<-n.nodeInfo.natNoticeChain
+}
+
+func (n *Node) verifyP2PChannel(channel int32) bool {
+	return channel == n.nodeInfo.cfg.Channel
+}
+
+//检测该节点地址是否作为客户端连入, 此时需要维护双向连接, 增加了节点间的连接冗余
+func (n *Node) isInBoundPeer(peerAddr string) (bool, *innerpeer) {
+
+	if n.server == nil || n.server.p2pserver == nil {
+		return false, nil
+	}
+	//查询连入的客户端
+	info := n.server.p2pserver.getInBoundPeerInfo(peerAddr)
+	return info == nil, info
 }

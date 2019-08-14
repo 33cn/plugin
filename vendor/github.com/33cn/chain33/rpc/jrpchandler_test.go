@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"bytes"
 	"errors"
 	"testing"
 
@@ -437,6 +438,7 @@ func TestChain33_CreateTxGroup(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	testChain33 := newTestChain33(api)
 	var testResult interface{}
+	api.On("GetProperFee", mock.Anything).Return(nil, nil)
 	err := testChain33.CreateRawTxGroup(nil, &testResult)
 	assert.Nil(t, testResult)
 	assert.NotNil(t, err)
@@ -627,9 +629,9 @@ func TestChain33_GetMempool(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	testChain33 := newTestChain33(api)
 
-	api.On("GetMempool").Return(&types.ReplyTxList{Txs: []*types.Transaction{{}}}, nil)
+	api.On("GetMempool", &types.ReqGetMempool{}).Return(&types.ReplyTxList{Txs: []*types.Transaction{{}}}, nil)
 	var testResult interface{}
-	data := &types.ReqNil{}
+	data := &types.ReqGetMempool{IsAll: false}
 	err := testChain33.GetMempool(data, &testResult)
 	t.Log(err)
 	assert.NotNil(t, testResult)
@@ -929,12 +931,11 @@ func TestChain33_GetProperFee(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	testChain33 := newTestChain33(api)
 
-	// expected := &types.ReqBlocks{}
-	api.On("GetProperFee").Return(nil, errors.New("error value"))
+	expected := types.ReqProperFee{}
+	api.On("GetProperFee", &expected).Return(nil, errors.New("error value"))
 
 	var testResult interface{}
-	actual := types.ReqNil{}
-	err := testChain33.GetProperFee(actual, &testResult)
+	err := testChain33.GetProperFee(expected, &testResult)
 	t.Log(err)
 	assert.Equal(t, nil, testResult)
 	assert.NotNil(t, err)
@@ -1300,8 +1301,18 @@ func TestChain33_GetBalance(t *testing.T) {
 func TestChain33_CreateNoBalanceTransaction(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	chain33 := newTestChain33(api)
+	api.On("GetProperFee", mock.Anything).Return(&types.ReplyProperFee{ProperFee: 1000000}, nil)
 	var result string
 	err := chain33.CreateNoBalanceTransaction(&types.NoBalanceTx{TxHex: "0a05636f696e73122c18010a281080c2d72f222131477444795771577233553637656a7663776d333867396e7a6e7a434b58434b7120a08d0630a696c0b3f78dd9ec083a2131477444795771577233553637656a7663776d333867396e7a6e7a434b58434b71"}, &result)
+	assert.NoError(t, err)
+}
+
+func TestChain33_CreateNoBalanceTxs(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	chain33 := newTestChain33(api)
+	api.On("GetProperFee", mock.Anything).Return(&types.ReplyProperFee{ProperFee: 1000000}, nil)
+	var result string
+	err := chain33.CreateNoBlanaceTxs(&types.NoBalanceTxs{TxHexs: []string{"0a05746f6b656e12413804223d0a0443434e5910a09c011a0d74657374207472616e73666572222231333559774e715367694551787577586650626d526d48325935334564673864343820a08d0630969a9fe6c4b9c7ba5d3a2231333559774e715367694551787577586650626d526d483259353345646738643438", "0a05746f6b656e12413804223d0a0443434e5910b0ea011a0d74657374207472616e73666572222231333559774e715367694551787577586650626d526d48325935334564673864343820a08d0630bca0a2dbc0f182e06f3a2231333559774e715367694551787577586650626d526d483259353345646738643438"}}, &result)
 	assert.NoError(t, err)
 }
 
@@ -1422,4 +1433,26 @@ func Test_fmtTxDetail(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "to", tran.Fromaddr)
 	assert.Equal(t, "from", tx.To)
+}
+
+func queryTotalFee(client *Chain33, req *types.LocalDBGet, t *testing.T) int64 {
+	var testResult interface{}
+	err := client.QueryTotalFee(req, &testResult)
+	assert.NoError(t, err)
+	fee, _ := testResult.(types.TotalFee)
+	return fee.Fee
+}
+
+func TestChain33_QueryTotalFee(t *testing.T) {
+	api := new(mocks.QueueProtocolAPI)
+	client := newTestChain33(api)
+
+	total := &types.TotalFee{TxCount: 1, Fee: 10000}
+	api.On("LocalGet", mock.Anything).Return(&types.LocalReplyValue{Values: [][]byte{types.Encode(total)}}, nil)
+	req := &types.LocalDBGet{Keys: [][]byte{types.TotalFeeKey([]byte("testHash"))}}
+	req1 := &types.LocalDBGet{Keys: [][]byte{[]byte("testHash")}}
+
+	assert.Equal(t, total.Fee, queryTotalFee(client, req, t))
+	assert.Equal(t, total.Fee, queryTotalFee(client, req1, t))
+	assert.True(t, bytes.Equal(req.Keys[0], req1.Keys[0]))
 }

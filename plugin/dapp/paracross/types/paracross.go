@@ -308,3 +308,40 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 
 	return tx, nil
 }
+
+//GetDappForkHeight get paracross dapp fork height
+func GetDappForkHeight(forkKey string) int64 {
+	var forkHeight int64
+	if types.IsPara() {
+		key := forkKey
+		switch forkKey {
+		case ForkCommitTx:
+			key = MainForkParacrossCommitTx
+		case ForkLoopCheckCommitTxDone:
+			key = MainLoopCheckCommitTxDoneForkHeight
+		}
+
+		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
+		if forkHeight <= 0 {
+			forkHeight = types.MaxHeight
+		}
+	} else {
+		forkHeight = types.GetDappFork(ParaX, forkKey)
+
+		// CI特殊处理，主链是local，fork都是0，平行链有些配置项需要设置为非0，不然获取到的高度为MaxHeight
+		if types.IsLocal() {
+			switch forkKey {
+			case ForkCommitTx:
+				forkHeight = 10
+			case ForkLoopCheckCommitTxDone:
+				forkHeight = 60
+			}
+		}
+	}
+	return forkHeight
+}
+
+// IsParaForkHeight check height more than fork height
+func IsParaForkHeight(height int64, forkKey string) bool {
+	return height >= GetDappForkHeight(forkKey)
+}

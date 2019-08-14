@@ -22,6 +22,25 @@ import (
 	"google.golang.org/grpc"
 )
 
+var cfgstring = `
+Title="test"
+
+[mver.consensus]
+fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+coinReward = 18
+coinDevFund = 12
+ticketPrice = 10000
+powLimitBits = "0x1f00ffff"
+retargetAdjustmentFactor = 4
+futureBlockTime = 16
+ticketFrozenTime = 5
+ticketWithdrawTime = 10
+ticketMinerWaitTime = 2
+maxTxNumber = 10000
+targetTimespan = 2304
+targetTimePerBlock = 16
+`
+
 func newGrpc(api *mocks.QueueProtocolAPI) *channelClient {
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -44,6 +63,9 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
 	api.On("StoreGet", mock.Anything).Return(storevalue, nil)
+
+	types.SetTitleOnlyForTest("test")
+	types.InitCfgString(cfgstring)
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")

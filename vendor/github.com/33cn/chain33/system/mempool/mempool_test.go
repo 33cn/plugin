@@ -624,10 +624,26 @@ func TestGetLatestTx(t *testing.T) {
 	}
 }
 
+func testProperFee(t *testing.T, client queue.Client, req *types.ReqProperFee, expectFee int64) int64 {
+	msg := client.NewMessage("mempool", types.EventGetProperFee, req)
+	client.Send(msg, true)
+	reply, err := client.Wait(msg)
+	if err != nil {
+		t.Error(err)
+		return 0
+	}
+	fee := reply.GetData().(*types.ReplyProperFee).GetProperFee()
+	assert.Equal(t, expectFee, fee)
+	return fee
+}
+
 func TestGetProperFee(t *testing.T) {
 	q, mem := initEnv(0)
 	defer q.Close()
 	defer mem.Close()
+	defer func() {
+		mem.cfg.IsLevelFee = false
+	}()
 
 	// add 10 txs
 	err := add10Tx(mem.client)
@@ -635,24 +651,24 @@ func TestGetProperFee(t *testing.T) {
 		t.Error("add tx error", err.Error())
 		return
 	}
-
+	maxTxNum := types.GetP(mem.Height()).MaxTxNumber
+	maxSize := types.MaxBlockSize
 	msg11 := mem.client.NewMessage("mempool", types.EventTx, tx11)
 	mem.client.Send(msg11, true)
 	mem.client.Wait(msg11)
 
-	msg := mem.client.NewMessage("mempool", types.EventGetProperFee, nil)
-	mem.client.Send(msg, true)
-
-	reply, err := mem.client.Wait(msg)
-
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if reply.GetData().(*types.ReplyProperFee).GetProperFee() != mem.cfg.MinTxFee {
-		t.Error("TestGetProperFee failed", reply.GetData().(*types.ReplyProperFee).GetProperFee(), mem.cfg.MinTxFee)
-	}
+	baseFee := testProperFee(t, mem.client, nil, mem.cfg.MinTxFee)
+	mem.cfg.IsLevelFee = true
+	testProperFee(t, mem.client, nil, baseFee)
+	testProperFee(t, mem.client, &types.ReqProperFee{}, baseFee)
+	//more than 1/2 max num
+	testProperFee(t, mem.client, &types.ReqProperFee{TxCount: int32(maxTxNum / 2)}, 100*baseFee)
+	//more than 1/10 max num
+	testProperFee(t, mem.client, &types.ReqProperFee{TxCount: int32(maxTxNum / 10)}, 10*baseFee)
+	//more than 1/20 max size
+	testProperFee(t, mem.client, &types.ReqProperFee{TxCount: 1, TxSize: int32(maxSize / 20)}, 100*baseFee)
+	//more than 1/100 max size
+	testProperFee(t, mem.client, &types.ReqProperFee{TxCount: 1, TxSize: int32(maxSize / 100)}, 10*baseFee)
 }
 
 func TestCheckLowFee(t *testing.T) {
@@ -853,7 +869,7 @@ func TestAddTxGroup(t *testing.T) {
 	crouptx3 := types.Transaction{Execer: []byte("coins"), Payload: types.Encode(transfer), Fee: 100000000, Expire: 0, To: toAddr}
 	crouptx4 := types.Transaction{Execer: []byte("user.write"), Payload: types.Encode(transfer), Fee: 100000000, Expire: 0, To: toAddr}
 
-	txGroup, _ := types.CreateTxGroup([]*types.Transaction{&crouptx1, &crouptx2, &crouptx3, &crouptx4})
+	txGroup, _ := types.CreateTxGroup([]*types.Transaction{&crouptx1, &crouptx2, &crouptx3, &crouptx4}, types.GInt("MinFee"))
 
 	for i := range txGroup.Txs {
 		err := txGroup.SignN(i, types.SECP256K1, mainPriv)
@@ -936,7 +952,7 @@ func TestLevelFeeBigByte(t *testing.T) {
 	}
 
 	//test group high fee , feeRate = 10 * minfee
-	txGroup, err := types.CreateTxGroup([]*types.Transaction{bigTx4, bigTx5, bigTx6, bigTx7, bigTx8, bigTx9, bigTx10, bigTx11})
+	txGroup, err := types.CreateTxGroup([]*types.Transaction{bigTx4, bigTx5, bigTx6, bigTx7, bigTx8, bigTx9, bigTx10, bigTx11}, types.GInt("MinFee"))
 	if err != nil {
 		t.Error("CreateTxGroup err ", err.Error())
 	}
@@ -1143,4 +1159,95 @@ func execProcess(q queue.Queue) {
 			}
 		}
 	}()
+}
+func TestTx(t *testing.T) {
+	subConfig := SubConfig{10240, 10000}
+	cache := newCache(10240, 10, 10240)
+	cache.SetQueueCache(NewSimpleQueue(subConfig))
+	tx := &types.Transaction{Execer: []byte("user.write"), Payload: types.Encode(transfer), Fee: 100000000, Expire: 0, To: toAddr}
+
+	var replyTxList types.ReplyTxList
+	var sHastList types.ReqTxHashList
+	var hastList types.ReqTxHashList
+	for i := 1; i <= 10240; i++ {
+		tx.Expire = int64(i)
+		cache.Push(tx)
+		sHastList.Hashes = append(sHastList.Hashes, types.CalcTxShortHash(tx.Hash()))
+		hastList.Hashes = append(hastList.Hashes, string(tx.Hash()))
+	}
+
+	for i := 1; i <= 1600; i++ {
+		Tx := cache.GetSHashTxCache(sHastList.Hashes[i])
+		if Tx == nil {
+			panic("TestTx:GetSHashTxCache is nil")
+		}
+		replyTxList.Txs = append(replyTxList.Txs, Tx)
+	}
+
+	for i := 1; i <= 1600; i++ {
+		Tx := cache.getTxByHash(hastList.Hashes[i])
+		if Tx == nil {
+			panic("TestTx:getTxByHash is nil")
+		}
+		replyTxList.Txs = append(replyTxList.Txs, Tx)
+	}
+}
+
+func TestEventTxListByHash(t *testing.T) {
+	q, mem := initEnv(0)
+	defer q.Close()
+	defer mem.Close()
+
+	// add tx
+	hashes, err := add4TxHash(mem.client)
+	if err != nil {
+		t.Error("add tx error", err.Error())
+		return
+	}
+	//通过交易hash获取交易信息
+	reqTxHashList := types.ReqTxHashList{
+		Hashes:      hashes,
+		IsShortHash: false,
+	}
+	msg1 := mem.client.NewMessage("mempool", types.EventTxListByHash, &reqTxHashList)
+	mem.client.Send(msg1, true)
+	data1, err := mem.client.Wait(msg1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	txs1 := data1.GetData().(*types.ReplyTxList).GetTxs()
+
+	if len(txs1) != 4 {
+		t.Error("TestEventTxListByHash:get txlist number error")
+	}
+
+	for i, tx := range txs1 {
+		if hashes[i] != string(tx.Hash()) {
+			t.Error("TestEventTxListByHash:hash mismatch")
+		}
+	}
+
+	//通过短hash获取tx交易
+	var shashes []string
+	for _, hash := range hashes {
+		shashes = append(shashes, types.CalcTxShortHash([]byte(hash)))
+	}
+	reqTxHashList.Hashes = shashes
+	reqTxHashList.IsShortHash = true
+
+	msg2 := mem.client.NewMessage("mempool", types.EventTxListByHash, &reqTxHashList)
+	mem.client.Send(msg2, true)
+	data2, err := mem.client.Wait(msg2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	txs2 := data2.GetData().(*types.ReplyTxList).GetTxs()
+	for i, tx := range txs2 {
+		if hashes[i] != string(tx.Hash()) {
+			t.Error("TestEventTxListByHash:shash mismatch")
+		}
+	}
 }

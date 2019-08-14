@@ -90,6 +90,9 @@ func (mem *Mempool) eventProcess() {
 		case types.EventGetProperFee:
 			// 获取对应排队策略中合适的手续费
 			mem.eventGetProperFee(msg)
+			// 消息类型EventTxListByHash：通过hash获取对应的tx列表
+		case types.EventTxListByHash:
+			mem.eventTxListByHash(msg)
 		default:
 		}
 		mlog.Debug("mempool", "cost", types.Since(beg), "msg", types.GetEventName(int(msg.Ty)))
@@ -112,8 +115,14 @@ func (mem *Mempool) eventTx(msg *queue.Message) {
 
 // EventGetMempool 获取Mempool内所有交易
 func (mem *Mempool) eventGetMempool(msg *queue.Message) {
+	var isAll bool
+	if msg.GetData() == nil {
+		isAll = false
+	} else {
+		isAll = msg.GetData().(*types.ReqGetMempool).GetIsAll()
+	}
 	msg.Reply(mem.client.NewMessage("rpc", types.EventReplyTxList,
-		&types.ReplyTxList{Txs: mem.filterTxList(0, nil)}))
+		&types.ReplyTxList{Txs: mem.filterTxList(0, nil, isAll)}))
 }
 
 // EventDelTxList 获取Mempool中一定数量交易，并把这些交易从Mempool中删除
@@ -191,7 +200,8 @@ func (mem *Mempool) eventGetAddrTxs(msg *queue.Message) {
 
 // eventGetProperFee 获取排队策略中合适的手续费率
 func (mem *Mempool) eventGetProperFee(msg *queue.Message) {
-	properFee := mem.GetProperFeeRate()
+	req, _ := msg.GetData().(*types.ReqProperFee)
+	properFee := mem.GetProperFeeRate(req)
 	msg.Reply(mem.client.NewMessage("rpc", types.EventReplyProperFee,
 		&types.ReplyProperFee{ProperFee: properFee}))
 }
@@ -204,4 +214,11 @@ func (mem *Mempool) checkSign(data *queue.Message) *queue.Message {
 	mlog.Error("wrong tx", "err", types.ErrSign)
 	data.Data = types.ErrSign
 	return data
+}
+
+// eventTxListByHash 通过hash获取tx列表
+func (mem *Mempool) eventTxListByHash(msg *queue.Message) {
+	shashList := msg.GetData().(*types.ReqTxHashList)
+	replytxList := mem.getTxListByHash(shashList)
+	msg.Reply(mem.client.NewMessage("", types.EventReplyTxList, replytxList))
 }

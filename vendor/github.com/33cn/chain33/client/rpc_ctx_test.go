@@ -138,7 +138,7 @@ func (c *GrpcCtx) Run() (err error) {
 		}
 		errRet = err
 	case "GetMemPool":
-		reply, err := rpc.GetMemPool(context.Background(), c.Params.(*types.ReqNil))
+		reply, err := rpc.GetMemPool(context.Background(), c.Params.(*types.ReqGetMempool))
 		if err == nil {
 			*c.Res.(*types.ReplyTxList) = *reply
 		}
@@ -220,7 +220,7 @@ func (c *GrpcCtx) Run() (err error) {
 		}
 		errRet = err
 	case "GetProperFee":
-		reply, err := rpc.GetProperFee(context.Background(), c.Params.(*types.ReqNil))
+		reply, err := rpc.GetProperFee(context.Background(), c.Params.(*types.ReqProperFee))
 		if err == nil {
 			*c.Res.(*types.ReplyProperFee) = *reply
 		}
@@ -327,6 +327,13 @@ func (c *GrpcCtx) Run() (err error) {
 			*c.Res.(*types.BlockSeq) = *reply
 		}
 		errRet = err
+	case "GetParaTxByTitle":
+		reply, err := rpc.GetParaTxByTitle(context.Background(), c.Params.(*types.ReqParaTxByTitle))
+		if err == nil {
+			*c.Res.(*types.ParaTxDetails) = *reply
+		}
+		errRet = err
+
 	default:
 		errRet = errors.New(fmt.Sprintf("Unsupport method %v", c.Method))
 	}

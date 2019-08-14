@@ -53,8 +53,8 @@ func TxCacheSet(tx *Transaction, txc *TransactionCache) {
 	txCache.Add(tx, txc)
 }
 
-// CreateTxGroup 创建组交易
-func CreateTxGroup(txs []*Transaction) (*Transactions, error) {
+// CreateTxGroup 创建组交易, feeRate传入交易费率, 建议通过系统GetProperFee获取
+func CreateTxGroup(txs []*Transaction, feeRate int64) (*Transactions, error) {
 	if len(txs) < 2 {
 		return nil, ErrTxGroupCountLessThanTwo
 	}
@@ -75,7 +75,7 @@ func CreateTxGroup(txs []*Transaction) (*Transactions, error) {
 		} else {
 			txs[i].Fee = 0
 		}
-		realfee, err := txs[i].GetRealFee(GInt("MinFee"))
+		realfee, err := txs[i].GetRealFee(feeRate)
 		if err != nil {
 			return nil, err
 		}
@@ -777,4 +777,12 @@ func ParseExpire(expire string) (int64, error) {
 	}
 
 	return 0, err
+}
+
+//CalcTxShortHash 取txhash的前指定字节，目前默认5
+func CalcTxShortHash(hash []byte) string {
+	if len(hash) >= 5 {
+		return hex.EncodeToString(hash[0:5])
+	}
+	return ""
 }

@@ -83,6 +83,7 @@ type subConfig struct {
 	MainBlockHashForkHeight         int64  `json:"mainBlockHashForkHeight,omitempty"`
 	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
 	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
+	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
 }
 
 // New function to init paracross env
@@ -147,17 +148,29 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privateKey:  priKey,
 		subCfg:      &subcfg,
 	}
-	if subcfg.WaitBlocks4CommitMsg < 2 {
-		panic("config WaitBlocks4CommitMsg should not less 2")
+
+	waitBlocks := int32(2) //最小是2
+	if subcfg.WaitBlocks4CommitMsg > 0 {
+		if subcfg.WaitBlocks4CommitMsg < waitBlocks {
+			panic("config WaitBlocks4CommitMsg should not less 2")
+		}
+		waitBlocks = subcfg.WaitBlocks4CommitMsg
 	}
+
+	waitConsensTimes := uint32(30) //30*10s = 5min
+	if subcfg.WaitConsensStopTimes > 0 {
+		waitConsensTimes = subcfg.WaitConsensStopTimes
+	}
+
 	para.commitMsgClient = &commitMsgClient{
-		paraClient:      para,
-		waitMainBlocks:  subcfg.WaitBlocks4CommitMsg,
-		commitMsgNotify: make(chan int64, 1),
-		delMsgNotify:    make(chan int64, 1),
-		mainBlockAdd:    make(chan *types.BlockDetail, 1),
-		minerSwitch:     make(chan bool, 1),
-		quit:            make(chan struct{}),
+		paraClient:           para,
+		waitMainBlocks:       waitBlocks,
+		waitConsensStopTimes: waitConsensTimes,
+		commitMsgNotify:      make(chan int64, 1),
+		delMsgNotify:         make(chan int64, 1),
+		mainBlockAdd:         make(chan *types.BlockDetail, 1),
+		minerSwitch:          make(chan bool, 1),
+		quit:                 make(chan struct{}),
 	}
 	c.SetChild(para)
 	return para
@@ -205,7 +218,7 @@ func (client *client) InitBlock() {
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
-		newblock.MainHeight = startHeight
+		newblock.MainHeight = startHeight - 1
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -276,7 +289,7 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 
 //get the last sequence in parachain
 func (client *client) GetLastSeq() (int64, error) {
-	blockedSeq, err := client.GetAPI().GetLastBlockSequence()
+	blockedSeq, err := client.GetAPI().GetLastBlockMainSequence()
 	if err != nil {
 		return -2, err
 	}
@@ -285,7 +298,7 @@ func (client *client) GetLastSeq() (int64, error) {
 
 func (client *client) GetBlockedSeq(hash []byte) (int64, error) {
 	//from blockchain db
-	blockedSeq, err := client.GetAPI().GetSequenceByHash(&types.ReqHash{Hash: hash})
+	blockedSeq, err := client.GetAPI().GetMainSequenceByHash(&types.ReqHash{Hash: hash})
 	if err != nil {
 		return -2, err
 	}
@@ -583,9 +596,10 @@ func (client *client) CreateBlock() {
 	//system startup, take the last added block's seq is ok
 	currSeq, lastSeqMainHash, err := client.getLastBlockMainInfo()
 	if err != nil {
-		plog.Error("Parachain getLastBlockInfo fail", "err", err.Error())
+		plog.Error("Parachain CreateBlock getLastBlockMainInfo fail", "err", err.Error())
 		return
 	}
+
 	for {
 		//should be lastSeq but not LastBlockSeq as del block case the seq is not equal
 		lastSeq, err := client.GetLastSeq()
@@ -673,12 +687,15 @@ func (client *client) addMinerTx(preStateHash []byte, block *types.Block, main *
 	status := &pt.ParacrossNodeStatus{
 		Title:           types.GetTitle(),
 		Height:          block.Height,
-		PreBlockHash:    block.ParentHash,
-		PreStateHash:    preStateHash,
 		MainBlockHash:   main.Seq.Hash,
 		MainBlockHeight: main.Detail.Block.Height,
 	}
 
+	if !paracross.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		status.PreBlockHash = block.ParentHash
+		status.PreStateHash = preStateHash
+
+	}
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
 		Status:          status,
 		IsSelfConsensus: isParaSelfConsensusForked(status.MainBlockHeight),

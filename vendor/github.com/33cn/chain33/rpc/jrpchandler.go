@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -69,6 +70,17 @@ func (c *Chain33) CreateRawTxGroup(in *types.CreateTransactionGroup, result *int
 	}
 
 	*result = hex.EncodeToString(reply)
+	return nil
+}
+
+// CreateNoBlanaceTxs create multiple transaction with no balance
+func (c *Chain33) CreateNoBlanaceTxs(in *types.NoBalanceTxs, result *string) error {
+	tx, err := c.cli.CreateNoBalanceTxs(in)
+	if err != nil {
+		return err
+	}
+	grouptx := hex.EncodeToString(types.Encode(tx))
+	*result = grouptx
 	return nil
 }
 
@@ -329,9 +341,8 @@ func fmtAsssets(assets []*types.Asset) []*rpctypes.Asset {
 }
 
 // GetMempool get mempool information
-func (c *Chain33) GetMempool(in *types.ReqNil, result *interface{}) error {
-
-	reply, err := c.cli.GetMempool()
+func (c *Chain33) GetMempool(in *types.ReqGetMempool, result *interface{}) error {
+	reply, err := c.cli.GetMempool(in)
 	if err != nil {
 		return err
 	}
@@ -614,8 +625,8 @@ func (c *Chain33) GetLastMemPool(in types.ReqNil, result *interface{}) error {
 }
 
 // GetProperFee get  contents in proper fee
-func (c *Chain33) GetProperFee(in types.ReqNil, result *interface{}) error {
-	reply, err := c.cli.GetProperFee()
+func (c *Chain33) GetProperFee(in types.ReqProperFee, result *interface{}) error {
+	reply, err := c.cli.GetProperFee(&in)
 	if err != nil {
 		return err
 	}
@@ -894,8 +905,13 @@ func (c *Chain33) IsNtpClockSync(in *types.ReqNil, result *interface{}) error {
 
 // QueryTotalFee query total fee
 func (c *Chain33) QueryTotalFee(in *types.LocalDBGet, result *interface{}) error {
-	if in == nil || len(in.Keys) > 1 {
+	if in == nil || len(in.Keys) != 1 {
 		return types.ErrInvalidParam
+	}
+	totalFeePrefix := []byte("TotalFeeKey:")
+	//add prefix if not exist
+	if !bytes.HasPrefix(in.Keys[0], totalFeePrefix) {
+		in.Keys[0] = append(totalFeePrefix, in.Keys[0]...)
 	}
 	reply, err := c.cli.LocalGet(in)
 	if err != nil {

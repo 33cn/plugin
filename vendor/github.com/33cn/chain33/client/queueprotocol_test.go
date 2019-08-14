@@ -95,6 +95,12 @@ func TestQueueProtocol(t *testing.T) {
 	testLocalList(t, api)
 	testGetLastHeader(t, api)
 	testSignRawTx(t, api)
+	testStoreSet(t, api)
+	testStoreGet(t, api)
+	testStoreMemSet(t, api)
+	testStoreCommit(t, api)
+	testStoreRollback(t, api)
+	testStoreDel(t, api)
 	testStoreGetTotalCoins(t, api)
 	testStoreList(t, api)
 	testBlockChainQuery(t, api)
@@ -118,6 +124,78 @@ func testBlockChainQuery(t *testing.T, api client.QueueProtocolAPI) {
 		res, err := api.QueryChain(test.param)
 		require.Equalf(t, err, test.actualErr, "testBlockChainQuery case index %d", index)
 		require.Equalf(t, res, test.actualRes, "testBlockChainQuery case index %d", index)
+	}
+}
+
+func testStoreSet(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreSet(&types.StoreSetWithSync{})
+	if err != nil {
+		t.Error("Call StoreSet Failed.", err)
+	}
+
+	_, err = api.StoreSet(nil)
+	if err == nil {
+		t.Error("StoreSet(nil) need return error.")
+	}
+}
+
+func testStoreGet(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreGet(&types.StoreGet{})
+	if err != nil {
+		t.Error("Call StoreGet Failed.", err)
+	}
+
+	_, err = api.StoreGet(nil)
+	if err == nil {
+		t.Error("StoreGet(nil) need return error.")
+	}
+}
+
+func testStoreMemSet(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreMemSet(&types.StoreSetWithSync{})
+	if err != nil {
+		t.Error("Call StoreMemSet Failed.", err)
+	}
+
+	_, err = api.StoreMemSet(nil)
+	if err == nil {
+		t.Error("StoreMemSet(nil) need return error.")
+	}
+}
+
+func testStoreCommit(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreCommit(&types.ReqHash{})
+	if err != nil {
+		t.Error("Call StoreCommit Failed.", err)
+	}
+
+	_, err = api.StoreCommit(nil)
+	if err == nil {
+		t.Error("StoreCommit(nil) need return error.")
+	}
+}
+
+func testStoreRollback(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreRollback(&types.ReqHash{})
+	if err != nil {
+		t.Error("Call StoreRollback Failed.", err)
+	}
+
+	_, err = api.StoreRollback(nil)
+	if err == nil {
+		t.Error("StoreRollback(nil) need return error.")
+	}
+}
+
+func testStoreDel(t *testing.T, api client.QueueProtocolAPI) {
+	_, err := api.StoreDel(&types.StoreDel{})
+	if err != nil {
+		t.Error("Call StoreDel Failed.", err)
+	}
+
+	_, err = api.StoreDel(nil)
+	if err == nil {
+		t.Error("StoreDel(nil) need return error.")
 	}
 }
 
@@ -343,7 +421,11 @@ func testGetLastMempool(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testGetProperFee(t *testing.T, api client.QueueProtocolAPI) {
-	_, err := api.GetProperFee()
+	_, err := api.GetProperFee(nil)
+	if err != nil {
+		t.Error("Call GetProperFee Failed.", err)
+	}
+	_, err = api.GetProperFee(&types.ReqProperFee{})
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
@@ -522,7 +604,8 @@ func testWalletGetAccountList(t *testing.T, api client.QueueProtocolAPI) {
 }
 
 func testGetMempool(t *testing.T, api client.QueueProtocolAPI) {
-	_, err := api.GetMempool()
+	req := types.ReqGetMempool{IsAll: false}
+	_, err := api.GetMempool(&req)
 	if err != nil {
 		t.Error("Call GetMempool Failed.", err)
 	}
@@ -855,6 +938,7 @@ func TestGRPC(t *testing.T) {
 	testIsSyncGRPC(t, &grpcMock)
 	testIsNtpClockSyncGRPC(t, &grpcMock)
 	testNetInfoGRPC(t, &grpcMock)
+	testGetParaTxByTitleGRPC(t, &grpcMock)
 
 }
 
@@ -989,7 +1073,7 @@ func testGetLastMemPoolGRPC(t *testing.T, rpc *mockGRPCSystem) {
 
 func testGetProperFeeGRPC(t *testing.T, rpc *mockGRPCSystem) {
 	var res types.ReplyProperFee
-	err := rpc.newRpcCtx("GetProperFee", &types.ReqNil{}, &res)
+	err := rpc.newRpcCtx("GetProperFee", &types.ReqProperFee{}, &res)
 	if err != nil {
 		t.Error("Call GetProperFee Failed.", err)
 	}
@@ -1093,7 +1177,7 @@ func testGetAccountsGRPC(t *testing.T, rpc *mockGRPCSystem) {
 
 func testGetMemPoolGRPC(t *testing.T, rpc *mockGRPCSystem) {
 	var res types.ReplyTxList
-	err := rpc.newRpcCtx("GetMemPool", &types.ReqNil{}, &res)
+	err := rpc.newRpcCtx("GetMemPool", &types.ReqGetMempool{}, &res)
 	if err != nil {
 		t.Error("Call GetMemPool Failed.", err)
 	}
@@ -1193,6 +1277,51 @@ func testGetBlockBySeqGRPC(t *testing.T, rpc *mockGRPCSystem) {
 func TestGetBlockBySeq(t *testing.T) {
 	q := client.QueueProtocol{}
 	_, err := q.GetBlockBySeq(nil)
+	assert.NotNil(t, err)
+
+}
+
+func TestGetMainSeq(t *testing.T) {
+	net := queue.New("test-seq-api")
+	defer net.Close()
+
+	chain := &mockBlockChain{}
+	chain.SetQueueClient(net)
+	defer chain.Close()
+
+	api, err := client.New(net.Client(), nil)
+	assert.Nil(t, err)
+
+	seq, err := api.GetMainSequenceByHash(&types.ReqHash{Hash: []byte("exist-hash")})
+	assert.Nil(t, err)
+	assert.Equal(t, int64(9999), seq.Data)
+
+	seq, err = api.GetMainSequenceByHash(&types.ReqHash{Hash: []byte("")})
+	assert.NotNil(t, err)
+
+	seq1, err := api.GetLastBlockMainSequence()
+	assert.Nil(t, err)
+	assert.Equal(t, int64(9999), seq1.Data)
+}
+
+func testGetParaTxByTitleGRPC(t *testing.T, rpc *mockGRPCSystem) {
+	var res types.ParaTxDetails
+	var req types.ReqParaTxByTitle
+	req.Start = 0
+	req.End = 0
+	req.Title = "user"
+	err := rpc.newRpcCtx("GetParaTxByTitle", &req, &res)
+	assert.NotNil(t, err)
+
+	req.Title = "user.p.para."
+	err = rpc.newRpcCtx("GetParaTxByTitle", &req, &res)
+	assert.Nil(t, err)
+
+}
+
+func TestGetParaTxByTitle(t *testing.T) {
+	q := client.QueueProtocol{}
+	_, err := q.GetParaTxByTitle(nil)
 	assert.NotNil(t, err)
 
 }

@@ -1,6 +1,7 @@
 package price
 
 import (
+	"log"
 	"testing"
 
 	"github.com/33cn/chain33/common"
@@ -9,8 +10,12 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	drivers "github.com/33cn/chain33/system/mempool"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
+	"github.com/33cn/chain33/util/testnode"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+
+	_ "github.com/33cn/chain33/system"
 )
 
 var (
@@ -134,12 +139,11 @@ func TestQueueDirection(t *testing.T) {
 	cache.Push(item3)
 	cache.Push(item4)
 	cache.Push(item5)
-	cache.txList.Print()
 	i := 0
-	lastScore := cache.txList.GetIterator().First().Score
+	lastScore := cache.First().GetScore()
 	var tmpScore int64
 	cache.Walk(5, func(value *drivers.Item) bool {
-		tmpScore = cache.txMap[string(value.Value.Hash())].Score
+		tmpScore = cache.CreateSkipValue(&priceScore{Item: value}).Score
 		if lastScore < tmpScore {
 			return false
 		}
@@ -148,7 +152,7 @@ func TestQueueDirection(t *testing.T) {
 		return true
 	})
 	assert.Equal(t, 5, i)
-	assert.Equal(t, true, lastScore == cache.txList.GetIterator().Last().Score)
+	assert.Equal(t, true, lastScore == cache.Last().GetScore())
 }
 
 func TestGetProperFee(t *testing.T) {
@@ -161,4 +165,74 @@ func TestGetProperFee(t *testing.T) {
 	txSize1 := proto.Size(item1.Value)
 	txSize2 := proto.Size(item4.Value)
 	assert.Equal(t, (item1.Value.Fee/int64(txSize1/1000+1)+item4.Value.Fee/int64(txSize2/1000+1))/2, cache.GetProperFee())
+}
+
+func TestRealNodeMempool(t *testing.T) {
+	mock33 := testnode.New("chain33.test.toml", nil)
+	defer mock33.Close()
+	mock33.Listen()
+	mock33.WaitHeight(0)
+	mock33.SendHot()
+	mock33.WaitHeight(1)
+	n := 20
+	done := make(chan struct{}, n)
+	keys := make([]crypto.PrivKey, n)
+	for i := 0; i < n; i++ {
+		addr, priv := util.Genaddress()
+		tx := util.CreateCoinsTx(mock33.GetHotKey(), addr, 10*types.Coin)
+		mock33.SendTx(tx)
+		keys[i] = priv
+	}
+	mock33.Wait()
+	for i := 0; i < n; i++ {
+		go func(priv crypto.PrivKey) {
+			for i := 0; i < 100; i++ {
+				tx := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				reply, err := mock33.GetAPI().SendTx(tx)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				//发送交易组
+				tx1 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx2 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, types.GInt("MinFee"))
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				for i := 0; i < len(txgroup.GetTxs()); i++ {
+					err = txgroup.SignN(i, types.SECP256K1, priv)
+					if err != nil {
+						t.Error(err)
+						return
+					}
+				}
+				reply, err = mock33.GetAPI().SendTx(txgroup.Tx())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				mock33.SetLastSend(reply.GetMsg())
+			}
+			done <- struct{}{}
+		}(keys[i])
+	}
+	for i := 0; i < n; i++ {
+		<-done
+	}
+	for {
+		txs, err := mock33.GetAPI().GetMempool(&types.ReqGetMempool{})
+		assert.Nil(t, err)
+		println("len", len(txs.GetTxs()))
+		if len(txs.GetTxs()) > 0 {
+			mock33.Wait()
+			continue
+		}
+		break
+	}
+	peer, err := mock33.GetAPI().PeerInfo()
+	assert.Nil(t, err)
+	assert.Equal(t, len(peer.Peers), 0)
+	//assert.Equal(t, peer.Peers[0].MempoolSize, int32(0))
 }

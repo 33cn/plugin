@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -47,7 +46,6 @@ func TestRPCChannel(t *testing.T) {
 		{fn: testShowPrivacyAccountSpend},
 		{fn: testShowAmountsOfUTXO},
 		{fn: testShowUTXOs4SpecifiedAmount},
-		{fn: testCreateUTXOs},
 		{fn: testListPrivacyTxs},
 		{fn: testRescanUtxosOpt},
 		{fn: testEnablePrivacy},
@@ -121,22 +119,6 @@ func testShowUTXOs4SpecifiedAmount(t *testing.T, jrpc *jsonclient.JSONClient) er
 	return err
 }
 
-func testCreateUTXOs(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &pty.ReqCreateUTXOs{
-		Tokenname:  types.BTY,
-		Sender:     "1JSRSwp16NvXiTjYBYK9iUQ9wqp3sCxz2p",
-		Pubkeypair: "92fe6cfec2e19cd15f203f83b5d440ddb63d0cb71559f96dc81208d819fea85886b08f6e874fca15108d244b40f9086d8c03260d4b954a40dfb3cbe41ebc7389",
-		Amount:     123456,
-		Count:      12,
-		Note:       "for test",
-		Expire:     int64(time.Hour),
-	}
-
-	var res rpctypes.ReplyHash
-	err := jrpc.Call("privacy.CreateUTXOs", params, &res)
-	return err
-}
-
 func testListPrivacyTxs(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := pty.ReqPrivacyTransactionList{
 		Tokenname:    types.BTY,
@@ -147,7 +129,7 @@ func testListPrivacyTxs(t *testing.T, jrpc *jsonclient.JSONClient) error {
 		Seedtxhash:   []byte("0xa64296792f90f364371e0b66fdac622080ceb7b2537ff9152e189aa9e88e61bd"),
 	}
 	var res rpctypes.WalletTxDetails
-	err := jrpc.Call("privacy.CreateUTXOs", params, &res)
+	err := jrpc.Call("privacy.GetPrivacyTxByAddr", params, &res)
 	return err
 }
 

@@ -18,7 +18,7 @@ import (
 	"github.com/33cn/chain33/types"
 	farm "github.com/dgryski/go-farm"
 	"github.com/golang/protobuf/proto"
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -40,10 +40,11 @@ var (
 	maxBlockHeight int64
 	heightMtx      sync.Mutex
 	//
-	enableMemTree bool
-	enableMemVal  bool
-	memTree       MemTreeOpera
-	tkCloseCache  MemTreeOpera
+	enableMemTree   bool
+	enableMemVal    bool
+	memTree         MemTreeOpera
+	tkCloseCache    MemTreeOpera
+	tkCloseCacheLen int32 = 10 * 10000
 )
 
 // EnableMavlPrefix 使能mavl加前缀
@@ -64,6 +65,11 @@ func EnableMemTree(enable bool) {
 // EnableMemVal 使能mavl叶子节点数据载入内存
 func EnableMemVal(enable bool) {
 	enableMemVal = enable
+}
+
+// TkCloseCacheLen 设置缓存close ticket数目
+func TkCloseCacheLen(len int32) {
+	tkCloseCacheLen = len
 }
 
 // ReleaseGlobalMem 释放全局缓存
@@ -110,7 +116,10 @@ func NewTree(db dbm.DB, sync bool) *Tree {
 	// 使能情况下非空创建当前整tree的缓存
 	if enableMemTree && memTree == nil {
 		memTree = NewTreeMap(50 * 10000)
-		tkCloseCache = NewTreeARC(10 * 10000)
+		if tkCloseCacheLen == 0 {
+			tkCloseCacheLen = 10 * 10000
+		}
+		tkCloseCache = NewTreeARC(int(tkCloseCacheLen))
 	}
 	return &Tree{
 		ndb:          ndb,
@@ -398,9 +407,7 @@ func (t *Tree) RemoveLeafCountKey(height int64) {
 			treelog.Debug("RemoveLeafCountKey:", "height", height, "key:", string(k), "hash:", common.ToHex(hash))
 		}
 	}
-	if err := batch.Write(); err != nil {
-		return
-	}
+	dbm.MustWrite(batch)
 }
 
 // Iterate 依次迭代遍历树的所有键
@@ -705,14 +712,11 @@ func (ndb *nodeDB) Commit() error {
 	defer ndb.mtx.Unlock()
 
 	// Write saves
-	err := ndb.batch.Write()
-	if err != nil {
-		treelog.Error("Commit batch.Write err", "err", err)
-	}
+	dbm.MustWrite(ndb.batch)
 
 	ndb.batch = nil
 	ndb.orphans = make(map[string]struct{})
-	return err
+	return nil
 }
 
 // SetKVPair 设置kv对外接口
