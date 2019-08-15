@@ -20,18 +20,20 @@ MKDIR=$(dir $(MKPATH))
 proj := "build"
 .PHONY: default dep all build release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
 
-default: build depends
+default: depends build
 
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.para.toml build/ci/paracross/
 
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_CLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.para.toml build/ci/paracross/
 
 
 para:
@@ -157,7 +159,7 @@ protobuf: ## Generate protbuf file of types package
 depends: ## Generate depends file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
 	@find ./vendor/github.com/33cn/chain33/system/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
-	@cp chain33.para.toml build/ci/paracross/
+
 
 help: ## Display this help screen
 	@printf "Help doc:\nUsage: make [command]\n"
