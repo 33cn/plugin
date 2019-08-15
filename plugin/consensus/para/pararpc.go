@@ -18,6 +18,7 @@ func (client *client) setLocalDb(set *types.LocalDBSet) error {
 	//如果追赶上主链了，则落盘
 	if client.isCaughtUp() {
 		set.Txid = 1
+		client.blockSyncClient.handleLocalCaughtUpMsg()
 	}
 
 	msg := client.GetQueueClient().NewMessage("blockchain", types.EventSetValueByKey, set)
