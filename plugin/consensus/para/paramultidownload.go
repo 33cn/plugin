@@ -17,19 +17,18 @@ import (
 )
 
 const (
-	maxRollbackHeight      int64 = 10000
-	defaultInvNumPerJob          = 20       // 20inv task per job
-	defaultJobBufferNum          = 20       // channel buffer num for done job process
-	maxBlockSize                 = 20000000 // 单次1000block size累积超过20M 需保存到localdb
-	downTimesFastThreshold       = 600      //  单个server 下载超过600次，平均20次用20s，下载10分钟左右检查有没有差别比较大的
-	downTimesSlowThreshold       = 40       //  慢的server小于40次，则小于快server的15倍，需要剔除
+	maxRollbackHeight      = 10000    // 据当前主链高度回滚的余量
+	defaultInvNumPerJob    = 20       // 20inv task per job
+	defaultJobBufferNum    = 20       // channel buffer num for done job process
+	maxBlockSize           = 20000000 // 单次1000block size累积超过20M 需保存到localdb
+	downTimesFastThreshold = 450      //  单个server 下载超过450次，平均20次用20s来计算，下载7分钟左右检查有没有差别比较大的
+	downTimesSlowThreshold = 30       //  慢的server小于30次，则小于快server的15倍，需要剔除
 )
 
 type connectCli struct {
 	ip        string
 	conn      types.Chain33Client
 	downTimes int64
-	isFail    bool
 }
 
 //invertory 是每次请求的最小单位，每次请求最多MaxBlockCountPerTime
@@ -355,22 +354,22 @@ func (d *downloadJob) checkDownLoadRate() {
 		return
 	}
 
-	var fastConns, slowConns []*connectCli
-
+	var found bool
 	for _, conn := range d.mDldCli.conns {
 		if conn.downTimes >= downTimesFastThreshold {
-			fastConns = append(fastConns, conn)
-		}
-		if conn.downTimes <= downTimesSlowThreshold {
-			slowConns = append(slowConns, conn)
+			found = true
+			break
 		}
 	}
 
-	if len(fastConns) > 0 {
-		for _, conn := range slowConns {
-			conn.isFail = true
-			plog.Info("paramultiDownload.checkDownLoadRate removed server", "ip", conn.ip, "times", conn.downTimes)
+	if found {
+		var fastConns []*connectCli
+		for _, conn := range d.mDldCli.conns {
+			if conn.downTimes > downTimesSlowThreshold {
+				fastConns = append(fastConns, conn)
+			}
 		}
+		d.mDldCli.conns = fastConns
 		d.mDldCli.connsCheckDone = true
 	}
 
@@ -445,9 +444,7 @@ func (d *downloadJob) getInvBlocks(inv *inventory, connPool chan *connectCli) {
 func (d *downloadJob) getInvs(invs []*inventory) {
 	connPool := make(chan *connectCli, len(d.mDldCli.conns))
 	for _, conn := range d.mDldCli.conns {
-		if !conn.isFail {
-			connPool <- conn
-		}
+		connPool <- conn
 	}
 
 	for _, inv := range invs {
