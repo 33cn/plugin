@@ -46,22 +46,42 @@ type ValidatorMgr struct {
 
 // Copy makes a copy of the State for mutating.
 func (s ValidatorMgr) Copy() ValidatorMgr {
-	return ValidatorMgr{
+	mgr := ValidatorMgr{
 		ChainID: s.ChainID,
 		Validators: s.Validators.Copy(),
 		AppHash: s.AppHash,
 		ShuffleCycle: s.ShuffleCycle,
 		ShuffleType: s.ShuffleType,
-		VrfValidators: s.VrfValidators.Copy(),
-		NoVrfValidators: s.NoVrfValidators.Copy(),
-		LastCycleBoundaryInfo: &dty.DposCBInfo{
-			Cycle: s.LastCycleBoundaryInfo.Cycle,
-			StopHeight: s.LastCycleBoundaryInfo.StopHeight,
-			StopHash: s.LastCycleBoundaryInfo.StopHash,
-			Pubkey: s.LastCycleBoundaryInfo.Pubkey,
-			Signature: s.LastCycleBoundaryInfo.Signature,
-		},
+		//VrfValidators: s.VrfValidators.Copy(),
+		//NoVrfValidators: s.NoVrfValidators.Copy(),
+		//LastCycleBoundaryInfo: &dty.DposCBInfo{
+		//	Cycle: s.LastCycleBoundaryInfo.Cycle,
+		//	StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+		//	StopHash: s.LastCycleBoundaryInfo.StopHash,
+		//	Pubkey: s.LastCycleBoundaryInfo.Pubkey,
+		//	Signature: s.LastCycleBoundaryInfo.Signature,
+		//},
 	}
+
+	if s.LastCycleBoundaryInfo != nil {
+		mgr.LastCycleBoundaryInfo = &dty.DposCBInfo{
+				Cycle: s.LastCycleBoundaryInfo.Cycle,
+				StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+				StopHash: s.LastCycleBoundaryInfo.StopHash,
+				Pubkey: s.LastCycleBoundaryInfo.Pubkey,
+				Signature: s.LastCycleBoundaryInfo.Signature,
+			}
+	}
+
+	if s.VrfValidators != nil {
+		mgr.VrfValidators = s.VrfValidators.Copy()
+	}
+
+	if s.NoVrfValidators != nil {
+		mgr.NoVrfValidators = s.NoVrfValidators.Copy()
+	}
+
+	return mgr
 }
 
 // Equals returns true if the States are identical.
@@ -183,14 +203,16 @@ func (s *ValidatorMgr) GetIndexByPubKey(pubkey []byte) (index int) {
 }
 
 func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
-    voteItem.LastCBInfo =  &ttypes.CycleBoundaryInfo{
-		Cycle: s.LastCycleBoundaryInfo.Cycle,
-		StopHeight: s.LastCycleBoundaryInfo.StopHeight,
-		StopHash: s.LastCycleBoundaryInfo.StopHash,
+	if s.LastCycleBoundaryInfo != nil {
+		voteItem.LastCBInfo = &ttypes.CycleBoundaryInfo{
+			Cycle:      s.LastCycleBoundaryInfo.Cycle,
+			StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+			StopHash:   s.LastCycleBoundaryInfo.StopHash,
+		}
 	}
 
 	voteItem.ShuffleType = s.ShuffleType
-	for i := 0; i < s.Validators.Size(); i++ {
+	for i := 0; s.Validators != nil && i < s.Validators.Size(); i++ {
 		node := &ttypes.SuperNode{
 			PubKey: s.Validators.Validators[i].PubKey,
 			Address: s.Validators.Validators[i].Address,
@@ -198,7 +220,7 @@ func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 		voteItem.Validators = append(voteItem.Validators, node)
 	}
 
-	for i := 0; i < s.VrfValidators.Size(); i++ {
+	for i := 0; s.VrfValidators != nil &&  i < s.VrfValidators.Size(); i++ {
 		node := &ttypes.SuperNode{
 			PubKey: s.VrfValidators.Validators[i].PubKey,
 			Address: s.VrfValidators.Validators[i].Address,
@@ -206,7 +228,7 @@ func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 		voteItem.VrfValidators = append(voteItem.VrfValidators, node)
 	}
 
-	for i := 0; i < s.NoVrfValidators.Size(); i++ {
+	for i := 0; s.NoVrfValidators != nil && i < s.NoVrfValidators.Size(); i++ {
 		node := &ttypes.SuperNode{
 			PubKey: s.NoVrfValidators.Validators[i].PubKey,
 			Address: s.NoVrfValidators.Validators[i].Address,
@@ -217,22 +239,35 @@ func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 
 func (s *ValidatorMgr) UpdateFromVoteItem(voteItem *ttypes.VoteItem) bool {
 	validators := voteItem.Validators
+	if len(s.Validators.Validators) != len(voteItem.Validators){
+		return false
+	}
+
 	for i := 0; i < s.Validators.Size(); i++ {
 		if !bytes.Equal(validators[i].PubKey, s.Validators.Validators[i].PubKey) {
 			return false
 		}
 	}
 
-	if s.LastCycleBoundaryInfo == nil ||
-		voteItem.LastCBInfo.Cycle != s.LastCycleBoundaryInfo.Cycle ||
-		voteItem.LastCBInfo.StopHeight != s.LastCycleBoundaryInfo.StopHeight ||
-		voteItem.LastCBInfo.StopHash != s.LastCycleBoundaryInfo.StopHash {
-		s.LastCycleBoundaryInfo = &dty.DposCBInfo{
-			Cycle: voteItem.LastCBInfo.Cycle,
-			StopHeight: voteItem.LastCBInfo.StopHeight,
-			StopHash: voteItem.LastCBInfo.StopHash,
+	if voteItem.LastCBInfo != nil {
+		if s.LastCycleBoundaryInfo == nil {
+			s.LastCycleBoundaryInfo = &dty.DposCBInfo{
+				Cycle:      voteItem.LastCBInfo.Cycle,
+				StopHeight: voteItem.LastCBInfo.StopHeight,
+				StopHash:   voteItem.LastCBInfo.StopHash,
+			}
+		} else if voteItem.LastCBInfo.Cycle != s.LastCycleBoundaryInfo.Cycle ||
+			voteItem.LastCBInfo.StopHeight != s.LastCycleBoundaryInfo.StopHeight ||
+			voteItem.LastCBInfo.StopHash != s.LastCycleBoundaryInfo.StopHash {
+			s.LastCycleBoundaryInfo = &dty.DposCBInfo{
+				Cycle:      voteItem.LastCBInfo.Cycle,
+				StopHeight: voteItem.LastCBInfo.StopHeight,
+				StopHash:   voteItem.LastCBInfo.StopHash,
+			}
 		}
 	}
+
+	s.ShuffleType = voteItem.ShuffleType
 
 	var vrfVals []*ttypes.Validator
 	for i := 0; i < len(voteItem.VrfValidators); i++ {

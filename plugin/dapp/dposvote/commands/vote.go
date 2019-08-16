@@ -53,6 +53,7 @@ func DPosCmd() *cobra.Command {
 		DPosCreateCmd(),
 		DPosVrfVerifyCmd(),
 		DPosVrfEvaluateCmd(),
+		DPosCBQueryCmd(),
 	)
 
 	return cmd
@@ -882,8 +883,8 @@ func addCBQueryFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().Int64P("cycle", "c", 0, "cycle")
-	cmd.Flags().Int64P("height", "h", 0, "height")
-	cmd.Flags().StringP("hash", "m", "", "block hash")
+	cmd.Flags().Int64P("height", "m", 0, "height")
+	cmd.Flags().StringP("hash", "s", "", "block hash")
 }
 
 func cbQuery(cmd *cobra.Command, args []string) {

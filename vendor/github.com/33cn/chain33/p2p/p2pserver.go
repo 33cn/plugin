@@ -505,8 +505,8 @@ func (s *P2pserver) ServerStreamRead(stream pb.P2Pgservice_ServerStreamReadServe
 		if block := in.GetBlock(); block != nil {
 			innerpeer := s.getInBoundPeerInfo(peername)
 			if innerpeer != nil {
-				log.Error("ServerStreamRead CheckVersion", "version", innerpeer.p2pversion, "ip", remoteIP)
 				if !s.checkVersion(innerpeer.p2pversion) {
+					log.Error("ServerStreamRead CheckVersion", "version", innerpeer.p2pversion, "ip", remoteIP)
 					return pb.ErrVersion
 				}
 			} else {

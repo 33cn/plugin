@@ -8,7 +8,10 @@ import (
 	"bytes"
 	"encoding/hex"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/util"
+	"strings"
 	"time"
+	"fmt"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
@@ -17,7 +20,6 @@ import (
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/util"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
@@ -260,11 +262,13 @@ OuterLoop:
 	}
 	hint.Stop()
 
+	//如果非候选节点，直接返回，接受同步区块数据，不做任何共识相关的事情。
 	if !isValidator {
 		dposlog.Info("This node is not a validator,does not join the consensus, just syncs blocks from validators")
 		client.InitBlock()
 		return
 	}
+
 	var valMgr ValidatorMgr
 	valMgrTmp, err := MakeGenesisValidatorMgr(client.genesisDoc)
 	if err != nil {
@@ -278,7 +282,7 @@ OuterLoop:
 		panic(err)
 	}
 	if block != nil {
-		time.Sleep(time.Second * 5)
+		//time.Sleep(time.Second * 5)
 		cands, err := client.QueryCandidators()
 		if err != nil {
 			dposlog.Info("QueryCandidators failed", "err", err)
@@ -325,12 +329,12 @@ OuterLoop:
 	// 对于受托节点，才需要初始化区块，启动共识相关程序等,后续支持投票要做成动态切换的。
 	if client.isDelegator {
 		client.InitBlock()
+		time.Sleep(time.Second * 2)
 		client.csState.Init()
 		node.Start()
 	}
 
-	go client.MonitorCandidators()
-	//go client.CreateBlock()
+	//go client.MonitorCandidators()
 }
 
 // GetGenesisBlockTime ...
@@ -406,6 +410,7 @@ func (client *Client) CreateBlock() {
 }
 
 // CreateBlock a routine monitor whether some transactions available and tell client by available channel
+/*
 func (client *Client) CreateBlockWithPriorTxs(priorTxs []*types.Transaction) {
 	lastBlock := client.GetCurrentBlock()
 	txs := client.RequestTx(int(types.GetP(lastBlock.Height + 1).MaxTxNumber), nil)
@@ -451,6 +456,7 @@ func (client *Client) CreateBlockWithPriorTxs(priorTxs []*types.Transaction) {
 		return
 	}
 }
+*/
 // StopC stop client
 func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
@@ -707,7 +713,7 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 	}
 
 	for i := 0; i < len(pubkeys); i++ {
-		req.Pubkeys = append(req.Pubkeys, hex.EncodeToString(pubkeys[i]))
+		req.Pubkeys = append(req.Pubkeys, strings.ToUpper(hex.EncodeToString(pubkeys[i])))
 	}
 
 	param, err := proto.Marshal(req)
@@ -736,6 +742,11 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 	}
 
 	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
+	if len(res.Vrf) > 0 {
+		dposlog.Info("DposVrfQuerys ok") //, "info", fmt.Sprintf("Cycle:%d,pubkey:%s,Height:%d,M:%s,R:%s,P:%s", res.Vrf[0].Cycle, res.Vrf[0].Pubkey, res.Vrf[0].Height, res.Vrf[0].M, res.Vrf[0].R, res.Vrf[0].P))
+	} else {
+		dposlog.Info("DposVrfQuerys ok,but no info")
+	}
 
 	var infos []*dty.VrfInfo
 	for _, val := range res.Vrf {
@@ -770,10 +781,14 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 		}
 
 		infos = append(infos, info)
+		dposlog.Info("VrfInfos", "info", fmt.Sprintf("Cycle:%d,pubkey:%s,Height:%d,M:%s,R:%s,P:%s", val.Cycle, val.Pubkey, val.Height, val.M, val.R, val.P))
+
 	}
+
 	return infos, nil
 }
 
+/*
 func (client *Client)QueryVrfInfo(pubkeys []byte, cycle int64)(*dty.VrfInfo, error) {
 	req := &dty.DposVrfQuery{
 		Cycle: cycle,
@@ -808,7 +823,11 @@ func (client *Client)QueryVrfInfo(pubkeys []byte, cycle int64)(*dty.VrfInfo, err
 	}
 
 	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
-
+	if len(res.Vrf) > 0 {
+		dposlog.Info("DposVrfQuery ok", "info", fmt.Sprintf("Cycle:%d,pubkey:%s,Height:%d,M:%s,R:%s,P:%s", res.Vrf[0].Cycle, res.Vrf[0].Pubkey, res.Vrf[0].Height, res.Vrf[0].M, res.Vrf[0].R, res.Vrf[0].P))
+	} else {
+		dposlog.Info("DposVrfQuery ok,but no info")
+	}
 	vrf := res.Vrf[0]
 	bPubkey, err := hex.DecodeString(vrf.Pubkey)
 	if err != nil {
@@ -842,3 +861,4 @@ func (client *Client)QueryVrfInfo(pubkeys []byte, cycle int64)(*dty.VrfInfo, err
 
 	return info, nil
 }
+*/

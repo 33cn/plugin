@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -114,23 +113,6 @@ func Parallel(tasks ...func()) {
 		}(task)
 	}
 	wg.Wait()
-}
-
-// Percent represents a percentage in increments of 1/1000th of a percent.
-type Percent uint32
-
-// Float ...
-func (p Percent) Float() float64 {
-	return float64(p) * 1e-3
-}
-
-func (p Percent) String() string {
-	var buf [12]byte
-	b := strconv.AppendUint(buf[:0], uint64(p)/1000, 10)
-	n := len(b)
-	b = strconv.AppendUint(b, 1000+uint64(p)%1000, 10)
-	b[n] = '.'
-	return string(append(b, '%'))
 }
 
 // MinInt ...

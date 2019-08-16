@@ -1,0 +1,171 @@
+package types
+
+import (
+	"bytes"
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"os"
+	"os/signal"
+	"strings"
+	"testing"
+	"time"
+)
+
+func init(){
+	Init()
+}
+
+func TestWriteFile(t *testing.T) {
+	filename := "./tmp_priv_validator.json"
+	err := WriteFile(filename, []byte(priv_validator_file), 0664)
+	require.Nil(t, err)
+
+	file, err := os.Stat(filename)
+	require.Nil(t, err)
+	//assert.True(t, file.Mode() == 077)
+	fmt.Println(file.Name())
+	fmt.Println(file.Mode())
+
+	assert.True(t, file.Name() == "tmp_priv_validator.json")
+	assert.True(t, file.Mode() == 0664)
+
+	remove(filename)
+}
+
+func TestWriteFileAtomic(t *testing.T) {
+	filename := "./tmp_priv_validator.json"
+	err := WriteFileAtomic(filename, []byte(priv_validator_file), 0664)
+	require.Nil(t, err)
+
+	file, err := os.Stat(filename)
+	require.Nil(t, err)
+	//assert.True(t, file.Mode() == 077)
+	fmt.Println(file.Name())
+	fmt.Println(file.Mode())
+
+	assert.True(t, file.Name() == "tmp_priv_validator.json")
+	assert.True(t, file.Mode() == 0664)
+
+	remove(filename)
+}
+
+func TestTempfile(t *testing.T) {
+	filename := "tmp_priv_validator.json"
+	file, name := Tempfile(filename)
+	fmt.Println(name)
+	require.NotNil(t, file)
+
+	_, err := file.Write([]byte(priv_validator_file))
+	if err == nil {
+		err = file.Sync()
+	}
+	require.Nil(t, err)
+
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	require.Nil(t, err)
+
+	if permErr := os.Chmod(file.Name(), 0777); err == nil {
+		err = permErr
+	}
+	require.Nil(t, err)
+
+	remove(name)
+}
+
+func TestFingerprint(t *testing.T) {
+	arr := []byte("abdcdfasdf")
+	finger := Fingerprint(arr)
+	assert.True(t, bytes.Equal(finger, arr[0:6]))
+}
+
+func TestKill(t *testing.T) {
+	c := make(chan os.Signal)
+	signal.Notify(c)
+	go Kill()
+	s := <- c
+	assert.True(t, s.String() == "terminated")
+}
+
+var (
+	go_index = 0
+	go_sum = 0
+
+)
+func test() {
+	go_index++
+	time.Sleep(time.Second * time.Duration(go_index))
+	go_sum++
+}
+
+func TestParallel(t *testing.T) {
+	f1 := test
+	f1()
+
+	f2 := test
+	f2()
+
+	go_sum = 0
+	Parallel(f1, f2)
+	assert.True(t, go_sum == 2)
+}
+
+func TestRandInt63n(t *testing.T) {
+	a := RandInt63n(10)
+	assert.True(t, a < 10)
+
+	b := RandInt63n(9999999999999999)
+	assert.True(t, b < 9999999999999999)
+
+}
+
+func TestRandIntn(t *testing.T) {
+	a := RandIntn(10)
+	assert.True(t, a < 10)
+
+	b := RandIntn(9999999999999)
+	assert.True(t, b < 9999999999999)
+}
+
+func TestRandUint32(t *testing.T) {
+	a := RandUint32()
+	assert.True(t, a >= 0)
+
+	b := RandUint32()
+	assert.True(t, b >= 0)
+}
+
+func TestPanicSanity(t *testing.T) {
+	defer func(){
+		if r:= recover(); r != nil {
+			//fmt.Println(r)
+			assert.True(t, strings.HasPrefix(r.(string), "Panicked on a Sanity Check: "))
+		}
+	}()
+
+	PanicSanity("hello")
+}
+
+func TestPanicCrisis(t *testing.T) {
+	defer func(){
+		if r:= recover(); r != nil {
+			//fmt.Println(r)
+			assert.True(t, strings.HasPrefix(r.(string), "Panicked on a Crisis: "))
+		}
+	}()
+
+	PanicCrisis("hello")
+}
+
+func TestPanicQ(t *testing.T) {
+	defer func(){
+		if r:= recover(); r != nil {
+			//fmt.Println(r)
+			assert.True(t, strings.HasPrefix(r.(string), "Panicked questionably: "))
+		}
+	}()
+
+	PanicQ("hello")
+}

@@ -565,7 +565,7 @@ func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, e
 	req := &dty.DposCBQuery{Cycle: cycle, Ty: dty.QueryCBInfoByCycle}
 	param, err := proto.Marshal(req)
 	if err != nil {
-		dposlog.Error("Marshal DposCBQuery failed", "err", err)
+		dposlog.Error("Marshal DposCBQuery failed", "cycle", cycle, "err", err)
 		return nil, err
 	}
 	msg := cs.client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
@@ -578,17 +578,21 @@ func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, e
 
 	err = cs.client.GetQueueClient().Send(msg, true)
 	if err != nil {
-		dposlog.Error("send DposCBQuery to dpos exec failed", "err", err)
+		dposlog.Error("send DposCBQuery to dpos exec failed", "cycle", cycle, "err", err)
 		return nil, err
 	}
 
 	msg, err = cs.client.GetQueueClient().Wait(msg)
 	if err != nil {
-		dposlog.Error("send DposCBQuery wait failed", "err", err)
+		dposlog.Error("send DposCBQuery wait failed", "cycle", cycle, "err", err)
 		return nil, err
 	}
 
-	return msg.GetData().(types.Message).(*dty.DposCBInfo), nil
+	res := msg.GetData().(types.Message).(*dty.DposCBReply)
+	info := res.CbInfo
+	dposlog.Info("DposCBQuery get reply", "cycle", cycle, "stopHeight", info.StopHeight, "stopHash", info.StopHash, "pubkey", info.Pubkey)
+
+	return info, nil
 }
 
 // Init method
@@ -719,7 +723,7 @@ func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
 
 // SendCBTx method
 func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
-	info.Pubkey = hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())
+	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	canonical := dty.CanonicalOnceCBInfo{
 		Cycle: info.Cycle,
 		StopHeight: info.StopHeight,
@@ -752,7 +756,7 @@ func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 				dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
 				return false
 			} else {
-				dposlog.Error("Send RecordCBTx to mempool ok.", "err", err)
+				dposlog.Info("Send RecordCBTx to mempool ok.")
 			}
 		}
 	}
@@ -776,7 +780,7 @@ func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
 			dposlog.Error("Send RegistVrfMTx to mempool failed.", "err", err)
 			return false
 		} else {
-			dposlog.Error("Send RegistVrfMTx to mempool ok.", "err", err)
+			dposlog.Info("Send RegistVrfMTx to mempool ok.")
 		}
 	}
 
@@ -815,6 +819,7 @@ func (cs *ConsensusState) QueryVrf(pubkey []byte, cycle int64) (info *dty.VrfInf
 		return nil, err
 	}
 
+	info = nil
 	if len(infos) > 0 {
 		info = infos[0]
 	}
@@ -902,7 +907,6 @@ func (cs *ConsensusState) QueryVrfs(set *ttypes.ValidatorSet, cycle int64) (info
 		return nil, err
 	}
 
-
 	return infos, nil
 }
 
@@ -958,16 +962,16 @@ func (cs *ConsensusState) UpdateVrfInfos(cycle int64, infos []*dty.VrfInfo) {
 }
 
 // GetVrfInfosByCircle method
-func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (info []*dty.VrfInfo) {
+func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (infos []*dty.VrfInfo) {
 	if v, ok := cs.vrfInfosMap[cycle];ok {
-		info = v
-		return info
+		infos = v
+		return infos
 	}
 
 	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, cycle)
-	if err == nil && infos != nil {
+	if err == nil && len(infos) > 0 {
 		cs.UpdateVrfInfos(cycle, infos)
-		return info
+		return infos
 	}
 
 	return nil
@@ -977,20 +981,14 @@ func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (info []*dty.VrfInfo)
 func (cs *ConsensusState) ShuffleValidators(cycle int64){
 	if cycle == cs.validatorMgr.ShuffleCycle {
 		//如果已经洗过牌，则直接返回，不重复洗牌
-		return
-	}
-
-	infos := cs.GetVrfInfosByCircle(cycle - 1)
-	if infos == nil {
-		cs.validatorMgr.VrfValidators = nil
-		cs.validatorMgr.NoVrfValidators = nil
-		cs.validatorMgr.ShuffleCycle = cycle
-		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		dposlog.Info("Shuffle for this cycle is done already.", "cycle", cycle)
 		return
 	}
 
 	cbInfo := cs.GetCBInfoByCircle(cycle - 1)
 	if cbInfo == nil {
+		dposlog.Info("GetCBInfoByCircle for Shuffle failed, don't use vrf to shuffle.", "cycle", cycle)
+
 		cs.validatorMgr.VrfValidators = nil
 		cs.validatorMgr.NoVrfValidators = nil
 		cs.validatorMgr.ShuffleCycle = cycle
@@ -998,6 +996,18 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 		return
 	}
 	cs.validatorMgr.LastCycleBoundaryInfo = cbInfo
+	dposlog.Info("GetCBInfoByCircle for Shuffle ok", "cycle", cycle, "stopHeight", cbInfo.StopHeight, "stopHash", cbInfo.StopHash)
+
+	infos := cs.GetVrfInfosByCircle(cycle - 1)
+	if infos == nil {
+		dposlog.Info("GetVrfInfosByCircle for Shuffle failed, don't use vrf to shuffle.", "cycle", cycle)
+
+		cs.validatorMgr.VrfValidators = nil
+		cs.validatorMgr.NoVrfValidators = nil
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		return
+	}
 
 	var vrfValidators []*ttypes.Validator
 	var noVrfValidators []*ttypes.Validator
@@ -1019,10 +1029,14 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 	set := cs.validatorMgr.Validators.Validators
 
 	if len(vrfValidators) == 0 {
+		dposlog.Info("Vrf validators is zero, don't use vrf to shuffle.", "cycle", cycle)
+
 		cs.validatorMgr.ShuffleCycle = cycle
 		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
 		return
 	} else if len(vrfValidators) == len(set) {
+		dposlog.Info("Vrf validators is full,use pure vrf to shuffle.", "cycle", cycle)
+
 		cs.validatorMgr.ShuffleCycle = cycle
 		cs.validatorMgr.ShuffleType = ShuffleTypeVrf
 		cs.validatorMgr.VrfValidators = ttypes.NewValidatorSet(vrfValidators)
@@ -1046,10 +1060,11 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 
 	cs.validatorMgr.VrfValidators = ttypes.NewValidatorSet(vrfValidators)
 	cs.validatorMgr.NoVrfValidators = ttypes.NewValidatorSet(noVrfValidators)
+	dposlog.Info("Vrf validators is part,use part vrf to shuffle.", "cycle", cycle, "vrf validators size", cs.validatorMgr.VrfValidators.Size(), "non vrf validators size", cs.validatorMgr.NoVrfValidators.Size())
 }
 
 func isValidVrfInfo(info *dty.VrfInfo) bool {
-	if info != nil && len(info.M) > 0 || len(info.R) > 0 || len(info.P) > 0 {
+	if info != nil && len(info.M) > 0 && len(info.R) > 0 && len(info.P) > 0 {
 		return true
 	}
 

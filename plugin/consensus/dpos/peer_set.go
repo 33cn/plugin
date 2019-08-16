@@ -513,7 +513,7 @@ FOR_LOOP:
 					dposlog.Error("peerConn recvRoutine Unmarshal data failed", "err", err)
 					continue
 				}
-				if pc.transferChannel != nil && (pkt.TypeID == ttypes.VoteID || pkt.TypeID == ttypes.VoteReplyID || pkt.TypeID == ttypes.NotifyID) {
+				if pc.transferChannel != nil && (pkt.TypeID == ttypes.VoteID || pkt.TypeID == ttypes.VoteReplyID || pkt.TypeID == ttypes.NotifyID || pkt.TypeID == ttypes.CBInfoID) {
 					pc.transferChannel <- MsgInfo{pkt.TypeID, realMsg.(proto.Message), pc.ID(), pc.ip.String()}
 				}
 			} else {

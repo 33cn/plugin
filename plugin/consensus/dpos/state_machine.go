@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -48,6 +49,8 @@ var VotedStateObj = &VotedState{}
 // WaitNotifyStateObj is the WaitNotifyState obj
 var WaitNotifyStateObj = &WaitNofifyState{}
 
+var LastCheckVrfMTime = int64(0)
+var LastCheckVrfRPTime = int64(0)
 // Task 为计算当前时间所属周期的数据结构
 type Task struct {
 	NodeID      int64
@@ -137,30 +140,51 @@ func checkVrf(cs *ConsensusState) {
 	task := DecideTaskByTime(now)
 	middleTime := task.CycleStart + (task.CycleStop - task.CycleStart) / 2
 	if now < middleTime {
+		if now - LastCheckVrfMTime < dposBlockInterval * 2 {
+			return
+		}
 		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeM)
 		if info == nil {
-			vrfM := &dty.DposVrfMRegist{
-				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
-				Cycle: task.Cycle,
-				M: cs.currentVote.LastCBInfo.StopHash,
-			}
+			if cs.currentVote.LastCBInfo != nil {
+				vrfM := &dty.DposVrfMRegist{
+					Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
+					Cycle: task.Cycle,
+					//M: cs.currentVote.LastCBInfo.StopHash,
+				}
 
-			cs.SendRegistVrfMTx(vrfM)
+				vrfM.M = cs.currentVote.LastCBInfo.StopHash
+				dposlog.Info("SendRegistVrfMTx", "pubkey", vrfM.Pubkey, "cycle", vrfM.Cycle, "M", vrfM.M)
+				cs.SendRegistVrfMTx(vrfM)
+			} else {
+				dposlog.Info("No avaliable LastCBInfo, so don't SendRegistVrfMTx, just wait another cycle")
+			}
+		} else {
+			dposlog.Info("VrfM is already registed", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 		}
+		LastCheckVrfMTime = now
 	} else {
+		if now - LastCheckVrfRPTime < dposBlockInterval * 2 {
+			return
+		}
 		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeRP)
 		if info != nil && len(info.M) > 0 && (len(info.R) == 0 || len(info.P) == 0){
 			hash, proof := cs.VrfEvaluate(info.M)
 
 			vrfRP := &dty.DposVrfRPRegist{
-				Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
+				Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
 				Cycle: task.Cycle,
 				R: hex.EncodeToString(hash[:]),
 				P: hex.EncodeToString(proof),
 			}
+			dposlog.Info("SendRegistVrfRPTx", "pubkey", vrfRP.Pubkey, "cycle", vrfRP.Cycle, "R", vrfRP.R, "P", vrfRP.P)
 
 			cs.SendRegistVrfRPTx(vrfRP)
+		} else if info != nil && len(info.M) > 0 && len(info.R) > 0 && len(info.P) > 0 {
+			dposlog.Info("VrfRP is already registed", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+		} else{
+			dposlog.Info("No available VrfM, so don't SendRegistVrfRPTx, just wait another cycle")
 		}
+		LastCheckVrfRPTime = now
 	}
 
 }
@@ -290,6 +314,7 @@ func (voting *VotingState) sendVote(cs *ConsensusState, vote *dpostype.DPosVote)
 func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote) {
 	dposlog.Info("VotingState get a vote", "VotedNodeIndex", vote.VoteItem.VotedNodeIndex,
 		"VotedNodeAddress", common.ToHex(vote.VoteItem.VotedNodeAddress),
+		"Cycle", vote.VoteItem.Cycle,
 		"CycleStart", vote.VoteItem.CycleStart,
 		"CycleStop", vote.VoteItem.CycleStop,
 		"PeriodStart", vote.VoteItem.PeriodStart,
@@ -326,8 +351,6 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 				panic("This node's validators are not the same with final vote, please check")
 			}
 		}
-		//进行VRF相关处理
-		checkVrf(cs)
 		//1s后检查是否出块，是否需要重新投票
 		cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
 	} else if result == continueToVote {
@@ -385,20 +408,19 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		//时间到了节点切换时刻
 		if now >= cs.currentVote.PeriodStop {
 			//当前时间超过了节点切换时间，需要进行重新投票
-			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop)
+			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop, "cycleStop", cs.currentVote.CycleStop)
 
 			//如果到了cycle结尾，需要构造一个交易，把最终的CycleBoundary信息发布出去
-			if now >= cs.currentVote.CycleStop {
+			if cs.currentVote.PeriodStop == cs.currentVote.CycleStop {
 				dposlog.Info("Create new tx for cycle change to record cycle boundary info.", "height", block.Height)
 
 				info := &dty.DposCBInfo{
 					Cycle: cs.currentVote.Cycle,
 					StopHeight: block.Height,
 					StopHash: hex.EncodeToString(block.Hash()),
-					Pubkey: hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()),
+					Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
 				}
 
-				cs.SendCBTx(info)
 				info2 := &dpostype.DPosCBInfo{
 					Cycle: info.Cycle,
 					StopHeight: info.StopHeight,
@@ -406,7 +428,11 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 					Pubkey: info.Pubkey,
 					Signature: info.Signature,
 				}
+				cs.SendCBTx(info)
+
 				cs.UpdateCBInfo(info)
+
+				dposlog.Info("Send CBInfo in consensus network", "cycle", info2.Cycle, "stopHeight", info2.StopHeight, "stopHash", info2.StopHash, "pubkey", info2.Pubkey)
 				voted.sendCBInfo(cs, info2)
 			}
 
@@ -450,6 +476,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			return
 		}
 
+		checkVrf(cs)
 		//当前时间未到节点切换时间，则继续进行出块判断
 		if block.BlockTime >= task.BlockStop {
 			//已出块，或者时间落后了。

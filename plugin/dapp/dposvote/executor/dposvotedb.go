@@ -169,7 +169,7 @@ func queryVrfByCycleAndPubkeys(kvdb db.KVDB, pubkeys []string, cycle int64) [] *
 	var tempPubkeys [] string
 	var vrfs [] *dty.VrfInfo
 	for i := 0; i < len(pubkeys); i ++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", pubkeys[i], cycle)), nil, 1, 0)
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", strings.ToUpper(pubkeys[i]), cycle)), nil, 1, 0)
 		if err != nil {
 			logger.Error("queryVrf RP failed", "pubkey", pubkeys[i], "cycle", cycle)
 			tempPubkeys = append(tempPubkeys, pubkeys[i])
@@ -188,7 +188,7 @@ func queryVrfByCycleAndPubkeys(kvdb db.KVDB, pubkeys []string, cycle int64) [] *
 	vrfMTable := dty.NewDposVrfMTable(kvdb)
 	query = vrfMTable.GetQuery(kvdb)
 	for i := 0; i < len(tempPubkeys); i++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", tempPubkeys[i], cycle)), nil, 1, 0)
+		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", strings.ToUpper(tempPubkeys[i]), cycle)), nil, 1, 0)
 		if err != nil {
 			logger.Error("queryVrf M failed", "pubkey", tempPubkeys[i], "cycle", cycle)
 			continue
@@ -602,7 +602,11 @@ func queryCBInfoByHash(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error
 	cbTable := dty.NewDposCBTable(kvdb)
 	query := cbTable.GetQuery(kvdb)
 
-	rows, err := query.ListIndex("hash", []byte(fmt.Sprintf("%X", req.StopHash)), nil, 1, 0)
+	hash, err := hex.DecodeString(req.StopHash)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := query.ListIndex("hash", hash, nil, 1, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -1128,6 +1132,8 @@ func (action *Action) RecordCB(cbInfo *dty.DposCBInfo) (*types.Receipt, error) {
 		logger.Info("RecordCB", "addr", action.fromaddr, "execaddr", action.execaddr, "Sig is not correct", cbInfo.Signature)
 		return nil, types.ErrInvalidParam
 	}
+
+	logger.Info("RecordCB", "addr", action.fromaddr, "execaddr", action.execaddr, "info", fmt.Sprintf("cycle:%d,stopHeight:%d,stopHash:%s,pubkey:%s", cbInfo.Cycle, cbInfo.StopHeight, cbInfo.StopHash, cbInfo.Pubkey))
 
 	cb := &dty.DposCycleBoundaryInfo{
 		Cycle: cbInfo.Cycle,
