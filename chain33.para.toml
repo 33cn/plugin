@@ -95,7 +95,7 @@ targetTimePerBlock = 16
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
-#ParaRemoteGrpcClient="101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#ParaRemoteGrpcClient="183.129.226.74:8802,183.129.226.75:8802,101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
