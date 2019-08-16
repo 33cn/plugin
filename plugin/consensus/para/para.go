@@ -91,6 +91,7 @@ type subConfig struct {
 	MultiDownloadOpen               int32  `json:"multiDownloadOpen,omitempty"`
 	MultiDownInvNumPerJob           int64  `json:"multiDownInvNumPerJob,omitempty"`
 	MultiDownJobBuffNum             uint32 `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime          uint32 `json:"multiDownServerRspTime,omitempty"`
 }
 
 // New function to init paracross env
@@ -199,9 +200,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para.multiDldCli = &multiDldClient{
-		paraClient:   para,
-		invNumPerJob: defaultInvNumPerJob,
-		jobBufferNum: defaultJobBufferNum,
+		paraClient:    para,
+		invNumPerJob:  defaultInvNumPerJob,
+		jobBufferNum:  defaultJobBufferNum,
+		serverTimeout: maxServerRspTimeout,
 	}
 	if subcfg.MultiDownInvNumPerJob > 0 {
 		para.multiDldCli.invNumPerJob = subcfg.MultiDownInvNumPerJob
@@ -211,6 +213,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	if subcfg.MultiDownloadOpen > 0 {
 		para.multiDldCli.multiDldOpen = true
+	}
+
+	if subcfg.MultiDownServerRspTime > 0 {
+		para.multiDldCli.serverTimeout = subcfg.MultiDownServerRspTime
 	}
 
 	c.SetChild(para)

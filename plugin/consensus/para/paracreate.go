@@ -507,6 +507,8 @@ func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
 }
 
 func (client *client) CreateBlock() {
+	defer client.wg.Done()
+
 	client.multiDldCli.tryMultiServerDownload()
 
 	lastSeq, lastSeqMainHash, err := client.getLastLocalBlockSeq()
@@ -563,5 +565,4 @@ out:
 	}
 
 	plog.Info("para CreateBlock quit")
-	client.wg.Done()
 }
