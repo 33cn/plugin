@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/mock"
 	"encoding/hex"
-	"errors"
 	"math/rand"
 	"testing"
 	"time"
@@ -37,7 +36,7 @@ func TestFilterTxsForPara(t *testing.T) {
 	types.Init(Title, cfg)
 
 	detail, filterTxs, _ := createTestTxs(t)
-	rst := paraexec.FilterTxsForPara(Title, detail)
+	rst := paraexec.FilterTxsForPara(detail.FilterParaTxsByTitle(Title))
 
 	assert.Equal(t, filterTxs, rst)
 
@@ -116,20 +115,6 @@ func createTxsGroup(txs []*types.Transaction) ([]*types.Transaction, error) {
 	return group.Txs, nil
 }
 
-func TestGetBlockHashForkHeightOnMainChain(t *testing.T) {
-	para := new(client)
-	grpcClient := &typesmocks.Chain33Client{}
-	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
-	para.grpcClient = grpcClient
-	_, err := para.GetForkHeightOnMainChain("ForkBlockHash")
-	assert.NotNil(t, err)
-	grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, nil).Once()
-	ret, err := para.GetForkHeightOnMainChain("ForkBlockHash")
-	assert.Nil(t, err)
-	assert.Equal(t, int64(1), ret)
-
-}
-
 func createTestTxs(t *testing.T) (*types.BlockDetail, []*types.Transaction, []*types.Transaction) {
 	//all para tx group
 	tx5, err := createCrossParaTx("toB", 5)
@@ -205,23 +190,24 @@ func TestAddMinerTx(t *testing.T) {
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
 
-	mainForkParacrossCommitTx = 1
 	block := &types.Block{}
 
-	mainDetail, filterTxs, allTxs := createTestTxs(t)
-	mainBlock := &types.BlockSeq{
-		Seq:    &types.BlockSequence{},
-		Detail: mainDetail}
+	_, filterTxs, _ := createTestTxs(t)
+	localBlock := &pt.ParaLocalDbBlock{
+		Height:     1,
+		MainHeight: 10,
+		MainHash:   []byte("mainhash"),
+		Txs:        filterTxs}
 	para := new(client)
+	para.subCfg = new(subConfig)
 	para.privateKey = priKey
-	para.addMinerTx(nil, block, mainBlock, allTxs)
+	para.commitMsgClient = new(commitMsgClient)
+	para.commitMsgClient.paraClient = para
 
-	ret := checkTxInMainBlock(filterTxs[0], mainDetail)
-	assert.True(t, ret)
-
-	tx2, _ := createCrossMainTx("toA")
-	ret = checkTxInMainBlock(tx2, mainDetail)
-	assert.False(t, ret)
+	para.blockSyncClient = new(blockSyncClient)
+	para.blockSyncClient.paraClient = para
+	para.blockSyncClient.addMinerTx(nil, block, localBlock)
+	assert.Equal(t, 1, len(block.Txs))
 
 }
 
@@ -229,38 +215,36 @@ func initBlock() {
 	println("initblock")
 }
 
-func TestGetLastBlockInfo(t *testing.T) {
-	para := new(client)
-
+func getMockLastBlock(para *client, returnBlock *types.Block) {
 	baseCli := drivers.NewBaseClient(&types.Consensus{Name: "name"})
 	para.BaseClient = baseCli
-	grpcClient := &typesmocks.Chain33Client{}
+
 	qClient := &qmocks.Client{}
 	para.InitClient(qClient, initBlock)
+
+	msg := queue.NewMessage(0, "", 1, returnBlock)
+
+	qClient.On("NewMessage", "blockchain", int64(types.EventGetLastBlock), mock.Anything).Return(msg)
+	qClient.On("Send", mock.Anything, mock.Anything).Return(nil)
+
+	qClient.On("Wait", mock.Anything).Return(msg, nil)
+}
+
+func TestGetLastBlockInfo(t *testing.T) {
+	para := new(client)
+	grpcClient := &typesmocks.Chain33Client{}
+	para.grpcClient = grpcClient
+
+	block := &types.Block{Height: 0}
+	getMockLastBlock(para, block)
 
 	api := &apimocks.QueueProtocolAPI{}
 	para.SetAPI(api)
 
-	para.grpcClient = grpcClient
-
-	block := &types.Block{Height: 0}
-	msg := queue.NewMessage(0, "", 1, block)
-
-	qClient.On("NewMessage", mock.Anything, mock.Anything, mock.Anything).Return(msg)
-	qClient.On("Send", mock.Anything, mock.Anything).Return(nil)
-
-	qClient.On("Wait", mock.Anything).Return(msg, nil)
-
-	api.On("GetMainSequenceByHash", mock.Anything).Return(&types.Int64{Data: int64(1)}, nil)
-	mainBlock := &types.Block{ParentHash: []byte("phash")}
-	mainDetail := &types.BlockDetail{Block: mainBlock}
-	blocks := &types.BlockDetails{}
-	blocks.Items = append(blocks.Items, mainDetail)
-	grpcClient.On("GetBlockByHashes", mock.Anything, mock.Anything).Return(blocks, nil)
 	grpcClient.On("GetSequenceByHash", mock.Anything, mock.Anything).Return(&types.Int64{Data: int64(10)}, nil)
 
-	mainSeq, hash, err := para.getLastBlockMainInfo()
+	mainSeq, lastBlock, err := para.getLastBlockMainInfo()
 	assert.NoError(t, err)
-	assert.Equal(t, int64(9), mainSeq)
-	assert.Equal(t, []byte("phash"), hash)
+	assert.Equal(t, int64(10), mainSeq)
+	assert.Equal(t, lastBlock.Height, block.Height)
 }

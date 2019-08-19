@@ -95,7 +95,7 @@ targetTimePerBlock = 16
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
-#ParaRemoteGrpcClient="101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#ParaRemoteGrpcClient="183.129.226.74:8802,183.129.226.75:8802,101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
@@ -115,6 +115,8 @@ MainForkParacrossCommitTx=2270000
 MainParaSelfConsensusForkHeight=-1
 #主链开启循环检查共识交易done的fork高度
 MainLoopCheckCommitTxDoneForkHeight=-1
+#主链过滤平行链tx
+FetchFilterParaTxsEnable=-1
 
 [store]
 name="kvmvccmavl"
@@ -175,6 +177,10 @@ tokenApprs=[]
 [exec.sub.paracross]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
 paraConsensusStopBlocks=30000
+
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
 
 
 #系统中所有的fork,默认用chain33的测试网络的
@@ -289,6 +295,9 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
+
+[fork.sub.autonomy]
+Enable=0
 
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]

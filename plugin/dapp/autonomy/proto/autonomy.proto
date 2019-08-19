@@ -1,0 +1,38 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+//import "common.proto";
+import "board.proto";
+import "project.proto";
+import "rule.proto";
+
+package types;
+
+// message for execs.Autonomy
+message AutonomyAction {
+    oneof value {
+        // 提案董事会相关
+        ProposalBoard          propBoard      = 1;
+        RevokeProposalBoard    rvkPropBoard   = 2;
+        VoteProposalBoard      votePropBoard  = 3;
+        TerminateProposalBoard tmintPropBoard = 4;
+        // 提案项目相关
+        ProposalProject          propProject        = 5;
+        RevokeProposalProject    rvkPropProject     = 6;
+        VoteProposalProject      votePropProject    = 7;
+        PubVoteProposalProject   pubVotePropProject = 8;
+        TerminateProposalProject tmintPropProject   = 9;
+        // 提案规则修改相关
+        ProposalRule             propRule      = 10;
+        RevokeProposalRule       rvkPropRule   = 11;
+        VoteProposalRule         votePropRule  = 12;
+        TerminateProposalRule    tmintPropRule = 13;
+        // 发展基金转自治系统合约
+        TransferFund             transfer      = 14;
+        Comment                  commentProp   = 15;
+    }
+    int32 ty = 16;
+}

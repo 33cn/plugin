@@ -34,13 +34,14 @@ function para_set_toml() {
 
     sed -i $xsedfix 's/^Title.*/Title="user.p.'''$PARANAME'''."/g' "${1}"
     sed -i $xsedfix 's/^# TestNet=.*/TestNet=true/g' "${1}"
-    sed -i $xsedfix 's/^startHeight=.*/startHeight=0/g' "${1}"
+    sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
     sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=4/g' "${1}"
     sed -i $xsedfix '/^emptyBlockInterval=.*/a MainBlockHashForkHeight=1' "${1}"
 
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
     sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight=60/g' "${1}"
+    sed -i $xsedfix 's/^FetchFilterParaTxsEnable=.*/FetchFilterParaTxsEnable=1/g' "${1}"
 
     # rpc
     sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
@@ -322,11 +323,14 @@ function para_cross_transfer_withdraw() {
     echo "=========== # para cross transfer/withdraw test ============="
     paracrossAddr=1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe
     ${CLI} account list
-    ${CLI} send coins transfer -a 10 -n test -t $paracrossAddr -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    hash=$(${CLI} send coins transfer -a 10 -n test -t $paracrossAddr -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
     hash=$(${CLI} send para asset_transfer --title user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
+    query_tx "${PARA_CLI}" "${hash}"
 
-    sleep 15
     hash2=$(${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
 
     local times=200

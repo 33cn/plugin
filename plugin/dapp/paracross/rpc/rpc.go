@@ -160,6 +160,25 @@ func (c *Jrpc) IsSync(in *types.ReqNil, result *interface{}) error {
 	return nil
 }
 
+// GetParaLocalBlockInfo query para local height
+func (c *channelClient) GetParaLocalBlockInfo(ctx context.Context, in *types.ReqInt) (*pt.ParaLocalDbBlockInfo, error) {
+	data, err := c.QueryConsensusFunc("para", "LocalBlockInfo", in)
+	if err != nil {
+		return nil, err
+	}
+	return data.(*pt.ParaLocalDbBlockInfo), nil
+}
+
+// GetParaLocalBlockInfo query para local height
+func (c *Jrpc) GetParaLocalBlockInfo(in *types.ReqInt, result *interface{}) error {
+	data, err := c.cli.GetParaLocalBlockInfo(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return nil
+}
+
 func (c *channelClient) GetBlock2MainInfo(ctx context.Context, req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
 	ret := &pt.ParaBlock2MainInfo{}
 	details, err := c.GetBlocks(req)

@@ -1,0 +1,95 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "lcommon.proto";
+
+package types;
+
+message AutonomyProposalProject {
+    ProposalProject  propProject  = 1;
+    // 投票该提案的规则
+    RuleConfig       curRule      = 2;
+    // 投票该提案的董事会成员
+    repeated string  boards       = 3;
+    // 董事会投票结果
+    VoteResult       boardVoteRes = 4;
+    // 公示投票
+    PublicVote       pubVote      = 5;
+    // 状态
+    int32  status        = 6;
+    string address       = 7;
+    int64  height        = 8;
+    int32  index         = 9;
+    string proposalID    = 10;
+}
+
+message ProposalProject {
+    // 提案时间
+    int32 year  = 1;
+    int32 month = 2;
+    int32 day   = 3;
+
+    // 项目相关
+    string firstStage   = 4;  // 第一阶段提案项目hash
+    string lastStage    = 5;  // 上一阶段提案项目hash
+    string production   = 6;  // 项目地址
+    string description  = 7;  // 项目阶段性简述
+    string contractor   = 8;  // 承包人
+    int64  amount       = 9;  // 项目经费
+    string amountDetail = 10; // 经费细则
+
+    // 支付相关
+    string toAddr       = 11; // 收款地址
+
+    // 投票相关
+    int64 startBlockHeight    = 12; // 提案开始投票高度
+    int64 endBlockHeight      = 13; // 提案结束投票高度
+    int64 realEndBlockHeight  = 14; // 实际提案结束投票高度
+    int32 projectNeedBlockNum = 15; // 以提案结束投票高度为准，需要项目需要消耗的区块数目所对应的时间
+}
+
+message RevokeProposalProject {
+    string proposalID = 1;
+}
+
+message VoteProposalProject {
+    string proposalID = 1;
+    bool   approve    = 2;
+}
+
+message PubVoteProposalProject {
+    string proposalID = 1;
+    bool   oppose     = 2;
+}
+
+message TerminateProposalProject {
+    string proposalID = 1;
+}
+
+// receipt
+message ReceiptProposalProject {
+    AutonomyProposalProject prev    = 1;
+    AutonomyProposalProject current = 2;
+}
+
+message LocalProposalProject {
+    AutonomyProposalProject propPrj  = 1;
+    repeated string         comments = 2;
+}
+
+// query
+message ReqQueryProposalProject {
+    int32  status    = 1;
+    string addr      = 2;
+    int32  count     = 3;
+    int32  direction = 4;
+    int64  height    = 5;
+    int32  index     = 6;
+}
+
+message ReplyQueryProposalProject {
+    repeated AutonomyProposalProject propProjects = 1;
+}

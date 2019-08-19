@@ -223,4 +223,7 @@ nodeGroupFrozenCoins=0
 #平行链共识停止后主链等待的高度
 paraConsensusStopBlocks=30000
 
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
 
