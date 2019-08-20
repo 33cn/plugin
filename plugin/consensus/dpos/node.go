@@ -14,6 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"errors"
 
 	"github.com/33cn/chain33/common/crypto"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -489,6 +490,20 @@ func (node *Node) startInitPeer(peer *peerConn) error {
 
 // FilterConnByAddr TODO:can make fileter by addr
 func (node *Node) FilterConnByAddr(addr net.Addr) error {
+	ip, _ := splitHostPort(addr.String())
+
+	legalIP := false
+	for _, v := range node.seeds {
+		host := strings.Split(v, ":")
+		if ip == host[0] {
+			legalIP = true
+			break
+		}
+	}
+
+	if !legalIP {
+		return errors.New(fmt.Sprintf("%s is not legal seeds ip", ip))
+	}
 	return nil
 }
 

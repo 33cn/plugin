@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strings"
 	"time"
+
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -200,6 +202,38 @@ func recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	cs.UpdateCBInfo(newInfo)
 }
 
+
+func printNotify(notify *dpostype.DPosNotify) string {
+	if notify.Vote.LastCBInfo != nil {
+		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[Cycle:%d,StopHeight:%d,StopHash:%s],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d];HeightStop:%d,HashStop:%s,NotifyTimestamp:%d,NotifyNodeIndex:%d,NotifyNodeAddrress:%s,Sig:%s",
+			notify.Vote.VotedNodeIndex, hex.EncodeToString(notify.Vote.VotedNodeAddress), notify.Vote.Cycle, notify.Vote.CycleStart, notify.Vote.CycleStop, notify.Vote.PeriodStart, notify.Vote.PeriodStop, notify.Vote.Height, hex.EncodeToString(notify.Vote.VoteID),
+			notify.Vote.LastCBInfo.Cycle, notify.Vote.LastCBInfo.StopHeight, notify.Vote.LastCBInfo.StopHash, notify.Vote.ShuffleType, len(notify.Vote.Validators), len(notify.Vote.VrfValidators), len(notify.Vote.NoVrfValidators),
+			notify.HeightStop, hex.EncodeToString(notify.HashStop), notify.NotifyTimestamp, notify.NotifyNodeIndex, hex.EncodeToString(notify.NotifyNodeAddress), hex.EncodeToString(notify.Signature))
+	} else {
+		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d];HeightStop:%d,HashStop:%s,NotifyTimestamp:%d,NotifyNodeIndex:%d,NotifyNodeAddrress:%s,Sig:%s",
+			notify.Vote.VotedNodeIndex, hex.EncodeToString(notify.Vote.VotedNodeAddress), notify.Vote.Cycle, notify.Vote.CycleStart, notify.Vote.CycleStop, notify.Vote.PeriodStart, notify.Vote.PeriodStop, notify.Vote.Height, hex.EncodeToString(notify.Vote.VoteID),
+			notify.Vote.ShuffleType, len(notify.Vote.Validators), len(notify.Vote.VrfValidators), len(notify.Vote.NoVrfValidators),
+			notify.HeightStop, hex.EncodeToString(notify.HashStop), notify.NotifyTimestamp, notify.NotifyNodeIndex, hex.EncodeToString(notify.NotifyNodeAddress), hex.EncodeToString(notify.Signature))
+	}
+}
+
+func printVote(vote *dpostype.DPosVote) string {
+	return fmt.Sprintf("vote:[VotedNodeIndex:%d,VotedNodeAddress:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,VoteTimestamp:%d,VoterNodeIndex:%d,VoterNodeAddress:%s,Sig:%s]",
+		vote.VoteItem.VotedNodeIndex, common.ToHex(vote.VoteItem.VotedNodeAddress), vote.VoteItem.Cycle, vote.VoteItem.CycleStart, vote.VoteItem.CycleStop, vote.VoteItem.PeriodStart, vote.VoteItem.PeriodStop, vote.VoteItem.Height,
+		hex.EncodeToString(vote.VoteItem.VoteID), vote.VoteTimestamp, vote.VoterNodeIndex, hex.EncodeToString(vote.VoterNodeAddress), hex.EncodeToString(vote.Signature))
+}
+
+func printVoteItem(voteItem *dpostype.VoteItem) string {
+	if voteItem.LastCBInfo != nil {
+		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[Cycle:%d,StopHeight:%d,StopHash:%s],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d]",
+			voteItem.VotedNodeIndex, hex.EncodeToString(voteItem.VotedNodeAddress), voteItem.Cycle, voteItem.CycleStart, voteItem.CycleStop, voteItem.PeriodStart, voteItem.PeriodStop, voteItem.Height, hex.EncodeToString(voteItem.VoteID),
+			voteItem.LastCBInfo.Cycle, voteItem.LastCBInfo.StopHeight, voteItem.LastCBInfo.StopHash, voteItem.ShuffleType, len(voteItem.Validators), len(voteItem.VrfValidators), len(voteItem.NoVrfValidators))
+	} else {
+		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d]",
+			voteItem.VotedNodeIndex, hex.EncodeToString(voteItem.VotedNodeAddress), voteItem.Cycle, voteItem.CycleStart, voteItem.CycleStop, voteItem.PeriodStart, voteItem.PeriodStop, voteItem.Height, hex.EncodeToString(voteItem.VoteID),
+			voteItem.ShuffleType, len(voteItem.Validators), len(voteItem.VrfValidators), len(voteItem.NoVrfValidators))
+	}
+}
 // State is the base class of dpos state machine, it defines some interfaces.
 type State interface {
 	timeOut(cs *ConsensusState)
@@ -247,6 +281,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		cs.SetState(VotingStateObj)
 		dposlog.Info("Change state.", "from", "InitState", "to", "VotingState")
 		//通过node发送p2p消息到其他节点
+		dposlog.Info("VotingState send a vote", "vote info", printVote(vote.DPosVote), "localNodeIndex", cs.client.ValidatorIndex(), "now", time.Now().Unix())
 		cs.dposState.sendVote(cs, vote.DPosVote)
 
 		cs.scheduleDPosTimeout(time.Duration(timeoutVoting)*time.Millisecond, VotingStateType)
@@ -312,20 +347,7 @@ func (voting *VotingState) sendVote(cs *ConsensusState, vote *dpostype.DPosVote)
 }
 
 func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote) {
-	dposlog.Info("VotingState get a vote", "VotedNodeIndex", vote.VoteItem.VotedNodeIndex,
-		"VotedNodeAddress", common.ToHex(vote.VoteItem.VotedNodeAddress),
-		"Cycle", vote.VoteItem.Cycle,
-		"CycleStart", vote.VoteItem.CycleStart,
-		"CycleStop", vote.VoteItem.CycleStop,
-		"PeriodStart", vote.VoteItem.PeriodStart,
-		"periodStop", vote.VoteItem.PeriodStop,
-		"Height", vote.VoteItem.Height,
-		"VoteID", common.ToHex(vote.VoteItem.VoteID),
-		"VoteTimestamp", vote.VoteTimestamp,
-		"VoterNodeIndex", vote.VoterNodeIndex,
-		"VoterNodeAddress", common.ToHex(vote.VoterNodeAddress),
-		"Signature", common.ToHex(vote.Signature),
-		"localNodeIndex", cs.client.ValidatorIndex(), "now", time.Now().Unix())
+	dposlog.Info("VotingState get a vote", "vote info", printVote(vote), "localNodeIndex", cs.client.ValidatorIndex(), "now", time.Now().Unix())
 
 	if !cs.VerifyVote(vote) {
 		dposlog.Info("VotingState verify vote failed")
@@ -337,7 +359,7 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 	result, voteItem := cs.CheckVotes()
 
 	if result == voteSuccess {
-		dposlog.Info("VotingState get 2/3 result", "final vote:", voteItem.String())
+		dposlog.Info("VotingState get 2/3 result", "final vote:", printVoteItem(voteItem))
 		dposlog.Info("VotingState change state to VotedState")
 		//切换状态
 		cs.SetState(VotedStateObj)
@@ -523,7 +545,6 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			cs.scheduleDPosTimeout(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
 			if cs.cachedNotify != nil {
 				cs.dposState.recvNotify(cs, cs.cachedNotify)
-
 			}
 			return
 		}
@@ -638,12 +659,12 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 
 	block := cs.client.GetCurrentBlock()
 	if block.Height > notify.HeightStop {
-		dposlog.Info("Local block height is advanced than notify, discard it.", "localheight", block.Height, "notify", notify.String())
+		dposlog.Info("Local block height is advanced than notify, discard it.", "localheight", block.Height, "notify", printNotify(notify))
 		return
 	} else if block.Height == notify.HeightStop && bytes.Equal(block.Hash(), notify.HashStop) {
-		dposlog.Info("Local block height is sync with notify", "notify", notify.String())
+		dposlog.Info("Local block height is sync with notify", "notify", printNotify(notify))
 	} else {
-		dposlog.Info("Local block height is not sync with notify", "localheight", cs.client.GetCurrentHeight(), "notify", notify.String())
+		dposlog.Info("Local block height is not sync with notify", "localheight", cs.client.GetCurrentHeight(), "notify", printNotify(notify))
 		hint := time.NewTicker(3 * time.Second)
 		beg := time.Now()
 		catchupFlag := false

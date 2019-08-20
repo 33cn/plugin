@@ -238,43 +238,6 @@ func queryVrfByCycleForTopN(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message,
 	}
 
 	vrfs := queryVrfByCycleAndPubkeys(kvdb, pubkeys, req.Cycle)
-	/*
-	VrfRPTable := dty.NewDposVrfRPTable(kvdb)
-	query := VrfRPTable.GetQuery(kvdb)
-
-	var tempCands [] *dty.JsonCandidator
-	var vrfs [] *dty.VrfInfo
-	for i := 0; i < len(res.Candidators); i ++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", res.Candidators[i].Pubkey, req.Cycle)), nil, 1, 0)
-		if err != nil {
-			logger.Error("queryVrf RP failed", "pubkey", res.Candidators[i].Pubkey, "cycle", req.Cycle)
-			tempCands = append(tempCands, res.Candidators[i])
-			continue
-		}
-
-		vrfRP := rows[0].Data.(*dty.DposVrfRP)
-		vrf := getVrfInfoFromVrfRP(vrfRP)
-		vrfs = append(vrfs, vrf)
-	}
-
-	if tempCands == nil || len(tempCands) == 0 {
-		return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
-	}
-
-	vrfMTable := dty.NewDposVrfMTable(kvdb)
-	query = vrfMTable.GetQuery(kvdb)
-	for i := 0; i < len(tempCands); i++ {
-		rows, err := query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%s:%018d", tempCands[i].Pubkey, req.Cycle)), nil, 1, 0)
-		if err != nil {
-			logger.Error("queryVrf M failed", "pubkey", res.Candidators[i].Pubkey, "cycle", req.Cycle)
-			continue
-		}
-
-		vrfM := rows[0].Data.(*dty.DposVrfM)
-		vrf := getVrfInfoFromVrfM(vrfM)
-		vrfs = append(vrfs, vrf)
-	}
-	*/
 
 	return &dty.DposVrfReply{Vrf: getJsonVrfs(vrfs)}, nil
 }

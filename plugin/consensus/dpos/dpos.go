@@ -211,7 +211,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 }
 
 // PrivValidator returns the Node's PrivValidator.
-// XXX: for convenience only!
 func (client *Client) PrivValidator() ttypes.PrivValidator {
 	return client.privValidator
 }
@@ -291,20 +290,24 @@ OuterLoop:
 				dposlog.Info("QueryCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(cands))
 			} else {
 				validators := make([]*ttypes.Validator, dposDelegateNum)
+				nodes := make([]string, dposDelegateNum)
 				for i, val := range cands {
 					// Make validator
 					validators[i] = &ttypes.Validator{
 						Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
 						PubKey:  val.Pubkey,
 					}
+					nodes[i] = val.Ip + ":" + dposPort
 				}
 				valMgr.Validators = ttypes.NewValidatorSet(validators)
-				dposlog.Info("QueryCandidators success and update validator set", "old validators", valMgrTmp.Validators.String(), "new validators", valMgr.Validators.String())
+				dposlog.Info("QueryCandidators success and update validator set", "old validators", printValidators(valMgrTmp.Validators), "new validators", printValidators(valMgr.Validators))
+				dposlog.Info("QueryCandidators success and update validator node ips", "old validator ips", printNodeIPs(validatorNodes), "new validators ips", printNodeIPs(nodes))
+				validatorNodes = nodes
 			}
 		}
 	}
 
-	dposlog.Info("StartConsensus", "validators", valMgr.Validators)
+	dposlog.Info("StartConsensus", "validators", printValidators(valMgr.Validators))
 	// Log whether this node is a delegator or an observer
 	if valMgr.Validators.HasAddress(client.privValidator.GetAddress()) {
 		dposlog.Info("This node is a delegator")
@@ -335,6 +338,26 @@ OuterLoop:
 	}
 
 	//go client.MonitorCandidators()
+}
+
+func printValidators(set *ttypes.ValidatorSet) string{
+	result := "Validators:["
+	for _, v := range set.Validators {
+		result = fmt.Sprintf("%s%s,", result, hex.EncodeToString(v.PubKey))
+	}
+
+	result += "]"
+	return result
+}
+
+func printNodeIPs(ips []string) string{
+	result := "nodeIPs:["
+	for _, v := range ips {
+		result = fmt.Sprintf("%s%s,", result, v)
+	}
+
+	result += "]"
+	return result
 }
 
 // GetGenesisBlockTime ...
@@ -409,54 +432,6 @@ func (client *Client) CreateBlock() {
 	}
 }
 
-// CreateBlock a routine monitor whether some transactions available and tell client by available channel
-/*
-func (client *Client) CreateBlockWithPriorTxs(priorTxs []*types.Transaction) {
-	lastBlock := client.GetCurrentBlock()
-	txs := client.RequestTx(int(types.GetP(lastBlock.Height + 1).MaxTxNumber), nil)
-	if len(priorTxs) > 0 {
-		txs = append(txs, priorTxs...)
-	}
-
-	if len(txs) == 0 {
-		block := client.GetCurrentBlock()
-		if createEmptyBlocks {
-			emptyBlock := &types.Block{}
-			emptyBlock.StateHash = block.StateHash
-			emptyBlock.ParentHash = block.Hash()
-			emptyBlock.Height = block.Height + 1
-			emptyBlock.Txs = nil
-			emptyBlock.TxHash = zeroHash[:]
-			emptyBlock.BlockTime = client.blockTime
-			err := client.WriteBlock(lastBlock.StateHash, emptyBlock)
-			//判断有没有交易是被删除的，这类交易要从mempool 中删除
-			if err != nil {
-				return
-			}
-		} else {
-			dposlog.Info("Ignore to create new Block for no tx in mempool", "Height", block.Height+1)
-		}
-
-		return
-	}
-	//check dup
-	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
-	var newblock types.Block
-	newblock.ParentHash = lastBlock.Hash()
-	newblock.Height = lastBlock.Height + 1
-	client.AddTxsToBlock(&newblock, txs)
-	//
-	newblock.Difficulty = types.GetP(0).PowLimitBits
-	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = client.blockTime
-
-	err := client.WriteBlock(lastBlock.StateHash, &newblock)
-	//判断有没有交易是被删除的，这类交易要从mempool 中删除
-	if err != nil {
-		return
-	}
-}
-*/
 // StopC stop client
 func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
@@ -539,46 +514,6 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	return cands, nil
 }
 
-/*
-func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
-	var params rpctypes.Query4Jrpc
-	params.Execer = dty.DPosX
-
-	req := &dty.CandidatorQuery{
-		TopN: int32(dposDelegateNum),
-	}
-	params.FuncName = dty.FuncNameQueryCandidatorByTopN
-	params.Payload = types.MustPBToJSON(req)
-	var res dty.CandidatorReply
-	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", params, &res)
-
-	result, err := ctx.RunResult()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return nil, err
-	}
-	res = *result.(*dty.CandidatorReply)
-
-	var cands []*dty.Candidator
-	for _, val := range res.GetCandidators() {
-		bPubkey, err := hex.DecodeString(val.Pubkey)
-		if err != nil {
-			return nil, err
-		}
-
-		cand := &dty.Candidator{
-			Pubkey: bPubkey,
-			Address: val.Address,
-			Ip: val.Ip,
-			Votes: val.Votes,
-			Status: val.Status,
-		}
-
-		cands = append(cands, cand)
-	}
-	return cands, nil
-}
-*/
 func (client *Client)MonitorCandidators() {
 	ticker := time.NewTicker(30 * time.Second)
 	for {
@@ -639,31 +574,6 @@ func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
 	return true
 }
 
-/*
-func (client *Client)QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error) {
-	var params rpctypes.Query4Jrpc
-	params.Execer = dty.DPosX
-
-	req := &dty.DposCBQuery{
-		Ty:    dty.QueryCBInfoByCycle,
-		Cycle: cycle,
-	}
-
-	params.FuncName = dty.FuncNameQueryCBInfoByCycle
-	params.Payload = types.MustPBToJSON(req)
-	var res dty.DposCBReply
-	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", params, &res)
-
-	result, err := ctx.RunResult()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return nil, err
-	}
-	res = *result.(*dty.DposCBReply)
-
-	return res.CbInfo, nil
-}
-*/
 func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RecordCB{
@@ -743,7 +653,7 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 
 	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
 	if len(res.Vrf) > 0 {
-		dposlog.Info("DposVrfQuerys ok") //, "info", fmt.Sprintf("Cycle:%d,pubkey:%s,Height:%d,M:%s,R:%s,P:%s", res.Vrf[0].Cycle, res.Vrf[0].Pubkey, res.Vrf[0].Height, res.Vrf[0].M, res.Vrf[0].R, res.Vrf[0].P))
+		dposlog.Info("DposVrfQuerys ok")
 	} else {
 		dposlog.Info("DposVrfQuerys ok,but no info")
 	}
@@ -787,78 +697,3 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 
 	return infos, nil
 }
-
-/*
-func (client *Client)QueryVrfInfo(pubkeys []byte, cycle int64)(*dty.VrfInfo, error) {
-	req := &dty.DposVrfQuery{
-		Cycle: cycle,
-		Ty: dty.QueryVrfByCycleForPubkeys,
-	}
-
-	req.Pubkeys = append(req.Pubkeys, hex.EncodeToString(pubkeys))
-
-	param, err := proto.Marshal(req)
-	if err != nil {
-		dposlog.Error("Marshal DposVrfQuery failed", "err", err)
-		return nil, err
-	}
-	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
-		&types.ChainExecutor{
-			Driver: dty.DPosX,
-			FuncName: dty.FuncNameQueryVrfByCycleForPubkeys,
-			StateHash: zeroHash[:],
-			Param:param,
-		})
-
-	err = client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		dposlog.Error("send DposVrfQuery to dpos exec failed", "err", err)
-		return nil, err
-	}
-
-	msg, err = client.GetQueueClient().Wait(msg)
-	if err != nil {
-		dposlog.Error("send DposVrfQuery wait failed", "err", err)
-		return nil, err
-	}
-
-	res := msg.GetData().(types.Message).(*dty.DposVrfReply)
-	if len(res.Vrf) > 0 {
-		dposlog.Info("DposVrfQuery ok", "info", fmt.Sprintf("Cycle:%d,pubkey:%s,Height:%d,M:%s,R:%s,P:%s", res.Vrf[0].Cycle, res.Vrf[0].Pubkey, res.Vrf[0].Height, res.Vrf[0].M, res.Vrf[0].R, res.Vrf[0].P))
-	} else {
-		dposlog.Info("DposVrfQuery ok,but no info")
-	}
-	vrf := res.Vrf[0]
-	bPubkey, err := hex.DecodeString(vrf.Pubkey)
-	if err != nil {
-		bPubkey = nil
-	}
-
-	bM, err := hex.DecodeString(vrf.M)
-	if err != nil {
-		bM = nil
-	}
-
-	bR, err := hex.DecodeString(vrf.R)
-	if err != nil {
-		bR = nil
-	}
-
-	bP, err := hex.DecodeString(vrf.P)
-	if err != nil {
-		bP = nil
-	}
-	info := &dty.VrfInfo{
-		Index: vrf.Index,
-		Pubkey: bPubkey,
-		Cycle: vrf.Cycle,
-		Height: vrf.Height,
-		Time: vrf.Time,
-		M: bM,
-		R: bR,
-		P: bP,
-	}
-
-	return info, nil
-}
-*/
