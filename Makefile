@@ -1,5 +1,5 @@
 
-# golang1.9 or latest
+# golang1.12 or latest
 # 1. make help
 # 2. make dep
 # 3. make build
@@ -9,12 +9,12 @@ CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
-CHAIN33_PATH=vendor/${CHAIN33}
+CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
+CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
 PKG_LIST_INEFFASSIGN= `go list -f {{.Dir}} ./... | grep -v "vendor"`
-BUILD_FLAGS = -ldflags "-X github.com/33cn/plugin/vendor/github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
@@ -23,15 +23,15 @@ proj := "build"
 default: depends build
 
 build: depends
-	go build $(BUILD_FLAGS) -v -i -o $(APP)
-	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
+	go build -v -i -o $(APP)
+	go build -v -i -o $(CLI) $(SRC_CLI)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_CLI)
-	@go build $(BUILD_FLAGS) -v -o $(APP)
+	@go build -v -o $(APP)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
@@ -58,24 +58,19 @@ autotest_tick: autotest ## run with ticket mining
 	&& cp -r $(CHAIN33_PATH)/build/autotest/gitlabci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
 	&& cd build/autotest && bash ./copy-autotest.sh gitlabci \
 	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
-
-update:
-	rm -rf ${CHAIN33_PATH}
-	git clone --depth 1 -b ${b} https://${CHAIN33}.git ${CHAIN33_PATH}
-	rm -rf vendor/${CHAIN33}/.git
-	rm -rf vendor/${CHAIN33}/vendor/github.com/apache/thrift/tutorial/erl/
-	cp -Rf vendor/${CHAIN33}/vendor/* vendor/
-	rm -rf vendor/${CHAIN33}/vendor
-	govendor init
-	go build -i -o tool github.com/33cn/plugin/vendor/github.com/33cn/chain33/cmd/tools
-	./tool import --path "plugin" --packname "github.com/33cn/plugin/plugin" --conf ""
-
-updatevendor:
-	govendor add +e
-	govendor fetch -v +m
-
+	
+updatemod:
+	go mod tidy
 dep:
-	dep init -v
+	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
+	@go get -u golang.org/x/tools/cmd/goimports
+	@go get -u github.com/mitchellh/gox
+	@go get -u github.com/vektra/mockery/.../
+	@go get -u mvdan.cc/sh/cmd/shfmt
+	@go get -u mvdan.cc/sh/cmd/gosh
+	@git checkout go.mod go.sum
+	@apt install clang-format
+	@apt install shellcheck
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
@@ -86,7 +81,7 @@ linter_test: ## Use gometalinter check code, for local test
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
 ineffassign:
-	@ineffassign -n ${PKG_LIST_INEFFASSIGN}
+	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign -n ${PKG_LIST_INEFFASSIGN}
 
 race: ## Run data race detector
 	@go test -race -short $(PKG_LIST)
@@ -158,7 +153,6 @@ protobuf: ## Generate protbuf file of types package
 
 depends: ## Generate depends file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
-	@find ./vendor/github.com/33cn/chain33/system/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
 
 
 help: ## Display this help screen

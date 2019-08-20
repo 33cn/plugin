@@ -10,7 +10,7 @@ import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/system/store/mavl/db"
+	mavl "github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
 )
 

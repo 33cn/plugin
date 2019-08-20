@@ -8,17 +8,16 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
-	"github.com/33cn/chain33/types"
-
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func newTestChain33(api *mocks.QueueProtocolAPI) *Jrpc {
+func newTestChain33(api client.QueueProtocolAPI) *Jrpc {
 	cli := &channelClient{
 		ChannelClient: rpctypes.ChannelClient{
 			QueueProtocolAPI: api,

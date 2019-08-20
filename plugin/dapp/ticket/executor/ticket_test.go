@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -131,7 +132,7 @@ func createBindMiner(t *testing.T, m, r string, priv crypto.PrivKey) *types.Tran
 	return tx
 }
 
-func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req *ty.TicketList) *ty.ReplyTicketList {
+func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req proto.Message) *ty.ReplyTicketList {
 	data, err := mock33.GetAPI().Query("ticket", "TicketList", req)
 	assert.Nil(t, err)
 	return data.(*ty.ReplyTicketList)
