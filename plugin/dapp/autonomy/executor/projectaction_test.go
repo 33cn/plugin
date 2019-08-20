@@ -114,7 +114,7 @@ func TestPropProject(t *testing.T) {
 		require.NoError(t, err)
 		pbtx, err = signTx(pbtx, PrivKeyA)
 		require.NoError(t, err)
-		_, err = exec.Exec(pbtx, int(i))
+		_, err = exec.Exec(pbtx, i)
 		require.Error(t, err, result[i])
 
 	}
@@ -388,7 +388,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount), account.Balance)
+	require.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)
@@ -491,7 +491,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	require.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount)+testProjectAmount, account.Balance)
+	require.Equal(t, proposalAmount+testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	require.NoError(t, err)

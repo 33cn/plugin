@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/common"
-	//	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	_ "github.com/33cn/chain33/system"
@@ -46,27 +44,6 @@ var TestPrivkeyHex = []string{
 	"0x9abcf378b397682109c174b37a45bfc8a459c9514dd2ef719e22a9815373047d",
 	"0xbf8f865a03fec64f30d2243847807e88d2dbc8104e77925e4fc11c4d4380f3da",
 	"0x5b8ca316cf073aa94f1056a9e3f6e0b9a9ec11ae45862d58c7a09640b4d55302",
-}
-
-func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
-	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(mty.MultiSigX, signType))
-	if err != nil {
-		return tx, err
-	}
-
-	bytes, err := common.FromHex(hexPrivKey[:])
-	if err != nil {
-		return tx, err
-	}
-
-	privKey, err := c.PrivKeyFromBytes(bytes)
-	if err != nil {
-		return tx, err
-	}
-
-	tx.Sign(int32(signType), privKey)
-	return tx, nil
 }
 
 func getRPCClient(t *testing.T, mocker *testnode.Chain33Mock) *jsonclient.JSONClient {
