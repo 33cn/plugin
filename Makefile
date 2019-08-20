@@ -5,7 +5,6 @@
 # 3. make build
 # ...
 export GO111MODULE=on
-export GOPROXY=https://mirrors.aliyun.com/goproxy
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
