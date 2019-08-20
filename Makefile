@@ -4,13 +4,15 @@
 # 2. make dep
 # 3. make build
 # ...
-
+export GO111MODULE=on
+export GOPROXY=https://mirrors.aliyun.com/goproxy
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
 CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
+BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
@@ -23,15 +25,15 @@ proj := "build"
 default: depends build
 
 build: depends
-	go build -v -i -o $(APP)
-	go build -v -i -o $(CLI) $(SRC_CLI)
+	go build $(BUILD_FLAGS) -v -i -o $(APP)
+	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_CLI)
-	@go build -v -o $(APP)
+	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 

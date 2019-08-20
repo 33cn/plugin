@@ -8,8 +8,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math/rand"
 	"testing"
 
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/executor"
@@ -28,6 +30,18 @@ var (
 	retrieve    drivers.Driver
 )
 
+func genaddress() (string, crypto.PrivKey) {
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		panic(err)
+	}
+	privto, err := cr.GenKey()
+	if err != nil {
+		panic(err)
+	}
+	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
+	return addrto.String(), privto
+}
 func init() {
 	backupAddr, backupPriv = genaddress()
 	defaultAddr, defaultPriv = genaddress()
@@ -251,7 +265,7 @@ func ConstructBackupTx() *types.Transaction {
 	//fmt.Println(vlock)
 	transfer := &rt.RetrieveAction{Value: vbackup, Ty: rt.RetrieveActionBackup}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
-	tx.Nonce = r.Int63()
+	tx.Nonce = rand.Int63()
 	tx.Sign(types.SECP256K1, defaultPriv)
 	return tx
 }
@@ -261,7 +275,7 @@ func ConstructPrepareTx() *types.Transaction {
 	vprepare := &rt.RetrieveAction_Prepare{Prepare: &rt.PrepareRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
 	transfer := &rt.RetrieveAction{Value: vprepare, Ty: rt.RetrieveActionPrepare}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
-	tx.Nonce = r.Int63()
+	tx.Nonce = rand.Int63()
 	tx.Sign(types.SECP256K1, backupPriv)
 	//tx.Sign(types.SECP256K1, defaultPriv)
 	return tx
@@ -273,7 +287,7 @@ func ConstructPerformTx() *types.Transaction {
 	vperform := &rt.RetrieveAction_Perform{Perform: &rt.PerformRetrieve{BackupAddress: backupAddr, DefaultAddress: defaultAddr}}
 	transfer := &rt.RetrieveAction{Value: vperform, Ty: rt.RetrieveActionPerform}
 	tx := &types.Transaction{Execer: []byte("retrieve"), Payload: types.Encode(transfer), Fee: fee, To: backupAddr}
-	tx.Nonce = r.Int63()
+	tx.Nonce = rand.Int63()
 	tx.Sign(types.SECP256K1, backupPriv)
 
 	return tx

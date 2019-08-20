@@ -24,10 +24,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
 
-// typeWithoutStringer is a alias for the Type type which simply doesn't implement
-// the stringer interface to allow printing type details in the tests below.
-type typeWithoutStringer Type
-
 // Tests that all allowed types get recognized by the type parser.
 func TestTypeRegexp(t *testing.T) {
 	tests := []struct {

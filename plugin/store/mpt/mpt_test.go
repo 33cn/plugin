@@ -168,15 +168,6 @@ func TestKvdbRollback(t *testing.T) {
 	assert.Nil(t, notExistHash)
 }
 
-var checkKVResult []*types.KeyValue
-
-func checkKV(k, v []byte) bool {
-	checkKVResult = append(checkKVResult,
-		&types.KeyValue{Key: k, Value: v})
-	//mlog.Debug("checkKV", "key", string(k), "value", string(v))
-	return false
-}
-
 func GetRandomString(length int) string {
 	return common.GetRandPrintString(20, length)
 }
@@ -197,8 +188,8 @@ func BenchmarkGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -239,8 +230,8 @@ func BenchmarkSet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -274,7 +265,7 @@ func BenchmarkMemSet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
+		keys = append(keys, []byte(key))
 		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
 	}
 	datas := &types.StoreSet{

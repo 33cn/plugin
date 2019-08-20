@@ -11,10 +11,11 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 * chain33地址: https://github.com/33cn/chain33
 * chain33官网: https://chain.33.cn
 
-## 环境
+### 环境
 
-** 需要 安装golang1.12 or latest **
-
+```
+需要安装golang1.12 or latest
+```
 
 #### 支持make file的平台
 
