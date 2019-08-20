@@ -45,5 +45,11 @@ func Test_WalletTicket(t *testing.T) {
 	assert.Nil(t, err)
 	hashes := msg.(*types.ReplyHashes)
 	assert.NotNil(t, hashes)
+
+	in = &ty.TicketClose{}
+	msg, err = mock33.GetAPI().ExecWalletFunc(ty.TicketX, "CloseTickets", in)
+	assert.Nil(t, err)
+	hashes = msg.(*types.ReplyHashes)
+	assert.NotNil(t, hashes)
 	t.Log("End wallet ticket test")
 }
