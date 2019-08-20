@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,27 +23,27 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type Game struct {
-	//默认是由创建这局游戏的txHash作为gameId
+	// 默认是由创建这局游戏的txHash作为gameId
 	GameId string `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	// create 1 -> Match 2 -> Cancel 3 -> Close 4
 	Status int32 `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	//创建时间
+	// 创建时间
 	CreateTime int64 `protobuf:"varint,3,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	//匹配时间(何时参与对赌）
+	// 匹配时间(何时参与对赌）
 	MatchTime int64 `protobuf:"varint,4,opt,name=matchTime,proto3" json:"matchTime,omitempty"`
-	//状态close的时间（包括cancel）
+	// 状态close的时间（包括cancel）
 	Closetime int64 `protobuf:"varint,5,opt,name=closetime,proto3" json:"closetime,omitempty"`
-	//赌注
+	// 赌注
 	Value int64 `protobuf:"varint,6,opt,name=value,proto3" json:"value,omitempty"`
-	//发起者账号地址
+	// 发起者账号地址
 	CreateAddress string `protobuf:"bytes,7,opt,name=createAddress,proto3" json:"createAddress,omitempty"`
-	//对赌者账号地址
+	// 对赌者账号地址
 	MatchAddress string `protobuf:"bytes,8,opt,name=matchAddress,proto3" json:"matchAddress,omitempty"`
 	// hash 类型，预留字段
 	HashType string `protobuf:"bytes,9,opt,name=hashType,proto3" json:"hashType,omitempty"`
-	//庄家创建游戏时，庄家自己出拳结果加密后的hash值
+	// 庄家创建游戏时，庄家自己出拳结果加密后的hash值
 	HashValue []byte `protobuf:"bytes,10,opt,name=hashValue,proto3" json:"hashValue,omitempty"`
-	//用来公布庄家出拳结果的私钥
+	// 用来公布庄家出拳结果的私钥
 	Secret string `protobuf:"bytes,11,opt,name=secret,proto3" json:"secret,omitempty"`
 	// 1 平局，2 庄家获胜，3 matcher获胜，4
 	// 庄家开奖超时，matcher获胜，并获得本局所有赌资
@@ -69,17 +70,16 @@ func (m *Game) Reset()         { *m = Game{} }
 func (m *Game) String() string { return proto.CompactTextString(m) }
 func (*Game) ProtoMessage()    {}
 func (*Game) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{0}
+	return fileDescriptor_game_10cc1411e24e5934, []int{0}
 }
-
 func (m *Game) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Game.Unmarshal(m, b)
 }
 func (m *Game) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Game.Marshal(b, m, deterministic)
 }
-func (m *Game) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Game.Merge(m, src)
+func (dst *Game) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Game.Merge(dst, src)
 }
 func (m *Game) XXX_Size() int {
 	return xxx_messageInfo_Game.Size(m)
@@ -248,17 +248,16 @@ func (m *GameAction) Reset()         { *m = GameAction{} }
 func (m *GameAction) String() string { return proto.CompactTextString(m) }
 func (*GameAction) ProtoMessage()    {}
 func (*GameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{1}
+	return fileDescriptor_game_10cc1411e24e5934, []int{1}
 }
-
 func (m *GameAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameAction.Unmarshal(m, b)
 }
 func (m *GameAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameAction.Marshal(b, m, deterministic)
 }
-func (m *GameAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameAction.Merge(m, src)
+func (dst *GameAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameAction.Merge(dst, src)
 }
 func (m *GameAction) XXX_Size() int {
 	return xxx_messageInfo_GameAction.Size(m)
@@ -463,17 +462,16 @@ func (m *GameMatch) Reset()         { *m = GameMatch{} }
 func (m *GameMatch) String() string { return proto.CompactTextString(m) }
 func (*GameMatch) ProtoMessage()    {}
 func (*GameMatch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{2}
+	return fileDescriptor_game_10cc1411e24e5934, []int{2}
 }
-
 func (m *GameMatch) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameMatch.Unmarshal(m, b)
 }
 func (m *GameMatch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameMatch.Marshal(b, m, deterministic)
 }
-func (m *GameMatch) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameMatch.Merge(m, src)
+func (dst *GameMatch) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameMatch.Merge(dst, src)
 }
 func (m *GameMatch) XXX_Size() int {
 	return xxx_messageInfo_GameMatch.Size(m)
@@ -509,17 +507,16 @@ func (m *GameCancel) Reset()         { *m = GameCancel{} }
 func (m *GameCancel) String() string { return proto.CompactTextString(m) }
 func (*GameCancel) ProtoMessage()    {}
 func (*GameCancel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{3}
+	return fileDescriptor_game_10cc1411e24e5934, []int{3}
 }
-
 func (m *GameCancel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameCancel.Unmarshal(m, b)
 }
 func (m *GameCancel) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameCancel.Marshal(b, m, deterministic)
 }
-func (m *GameCancel) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameCancel.Merge(m, src)
+func (dst *GameCancel) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameCancel.Merge(dst, src)
 }
 func (m *GameCancel) XXX_Size() int {
 	return xxx_messageInfo_GameCancel.Size(m)
@@ -549,17 +546,16 @@ func (m *GameClose) Reset()         { *m = GameClose{} }
 func (m *GameClose) String() string { return proto.CompactTextString(m) }
 func (*GameClose) ProtoMessage()    {}
 func (*GameClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{4}
+	return fileDescriptor_game_10cc1411e24e5934, []int{4}
 }
-
 func (m *GameClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameClose.Unmarshal(m, b)
 }
 func (m *GameClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameClose.Marshal(b, m, deterministic)
 }
-func (m *GameClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameClose.Merge(m, src)
+func (dst *GameClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameClose.Merge(dst, src)
 }
 func (m *GameClose) XXX_Size() int {
 	return xxx_messageInfo_GameClose.Size(m)
@@ -586,9 +582,9 @@ func (m *GameClose) GetSecret() string {
 
 type GameCreate struct {
 	Value int64 `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
-	//加密用的算法
+	// 加密用的算法
 	HashType string `protobuf:"bytes,2,opt,name=hashType,proto3" json:"hashType,omitempty"`
-	//加密后的值
+	// 加密后的值
 	HashValue            []byte   `protobuf:"bytes,3,opt,name=hashValue,proto3" json:"hashValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -599,17 +595,16 @@ func (m *GameCreate) Reset()         { *m = GameCreate{} }
 func (m *GameCreate) String() string { return proto.CompactTextString(m) }
 func (*GameCreate) ProtoMessage()    {}
 func (*GameCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{5}
+	return fileDescriptor_game_10cc1411e24e5934, []int{5}
 }
-
 func (m *GameCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameCreate.Unmarshal(m, b)
 }
 func (m *GameCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameCreate.Marshal(b, m, deterministic)
 }
-func (m *GameCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameCreate.Merge(m, src)
+func (dst *GameCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameCreate.Merge(dst, src)
 }
 func (m *GameCreate) XXX_Size() int {
 	return xxx_messageInfo_GameCreate.Size(m)
@@ -643,13 +638,13 @@ func (m *GameCreate) GetHashValue() []byte {
 
 // queryByAddr 和 queryByStatus共用同一个结构体
 type QueryGameListByStatusAndAddr struct {
-	//优先根据status查询,status不可为空
+	// 优先根据status查询,status不可为空
 	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	//二级搜索，如果要查询一个地址下的所有game信息，可以根据status，分多次查询，这样规避存储数据时的臃余情况
+	// 二级搜索，如果要查询一个地址下的所有game信息，可以根据status，分多次查询，这样规避存储数据时的臃余情况
 	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	// 索引值
 	Index int64 `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	//单页返回多少条记录，默认返回20条，单次最多返回100条
+	// 单页返回多少条记录，默认返回20条，单次最多返回100条
 	Count int32 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
 	// 0降序，1升序，默认降序
 	Direction            int32    `protobuf:"varint,5,opt,name=direction,proto3" json:"direction,omitempty"`
@@ -662,17 +657,16 @@ func (m *QueryGameListByStatusAndAddr) Reset()         { *m = QueryGameListBySta
 func (m *QueryGameListByStatusAndAddr) String() string { return proto.CompactTextString(m) }
 func (*QueryGameListByStatusAndAddr) ProtoMessage()    {}
 func (*QueryGameListByStatusAndAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{6}
+	return fileDescriptor_game_10cc1411e24e5934, []int{6}
 }
-
 func (m *QueryGameListByStatusAndAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGameListByStatusAndAddr.Unmarshal(m, b)
 }
 func (m *QueryGameListByStatusAndAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryGameListByStatusAndAddr.Marshal(b, m, deterministic)
 }
-func (m *QueryGameListByStatusAndAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGameListByStatusAndAddr.Merge(m, src)
+func (dst *QueryGameListByStatusAndAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGameListByStatusAndAddr.Merge(dst, src)
 }
 func (m *QueryGameListByStatusAndAddr) XXX_Size() int {
 	return xxx_messageInfo_QueryGameListByStatusAndAddr.Size(m)
@@ -720,9 +714,9 @@ func (m *QueryGameListByStatusAndAddr) GetDirection() int32 {
 
 // 统计数量
 type QueryGameListCount struct {
-	//优先根据status查询,status不可为空
+	// 优先根据status查询,status不可为空
 	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	//二级搜索，如果要查询一个地址下的所有game信息，可以根据status，分多次查询，这样规避存储数据时的臃余情况
+	// 二级搜索，如果要查询一个地址下的所有game信息，可以根据status，分多次查询，这样规避存储数据时的臃余情况
 	Address              string   `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -733,17 +727,16 @@ func (m *QueryGameListCount) Reset()         { *m = QueryGameListCount{} }
 func (m *QueryGameListCount) String() string { return proto.CompactTextString(m) }
 func (*QueryGameListCount) ProtoMessage()    {}
 func (*QueryGameListCount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{7}
+	return fileDescriptor_game_10cc1411e24e5934, []int{7}
 }
-
 func (m *QueryGameListCount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGameListCount.Unmarshal(m, b)
 }
 func (m *QueryGameListCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryGameListCount.Marshal(b, m, deterministic)
 }
-func (m *QueryGameListCount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGameListCount.Merge(m, src)
+func (dst *QueryGameListCount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGameListCount.Merge(dst, src)
 }
 func (m *QueryGameListCount) XXX_Size() int {
 	return xxx_messageInfo_QueryGameListCount.Size(m)
@@ -781,17 +774,16 @@ func (m *GameRecord) Reset()         { *m = GameRecord{} }
 func (m *GameRecord) String() string { return proto.CompactTextString(m) }
 func (*GameRecord) ProtoMessage()    {}
 func (*GameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{8}
+	return fileDescriptor_game_10cc1411e24e5934, []int{8}
 }
-
 func (m *GameRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GameRecord.Unmarshal(m, b)
 }
 func (m *GameRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GameRecord.Marshal(b, m, deterministic)
 }
-func (m *GameRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GameRecord.Merge(m, src)
+func (dst *GameRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GameRecord.Merge(dst, src)
 }
 func (m *GameRecord) XXX_Size() int {
 	return xxx_messageInfo_GameRecord.Size(m)
@@ -827,17 +819,16 @@ func (m *QueryGameInfo) Reset()         { *m = QueryGameInfo{} }
 func (m *QueryGameInfo) String() string { return proto.CompactTextString(m) }
 func (*QueryGameInfo) ProtoMessage()    {}
 func (*QueryGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{9}
+	return fileDescriptor_game_10cc1411e24e5934, []int{9}
 }
-
 func (m *QueryGameInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGameInfo.Unmarshal(m, b)
 }
 func (m *QueryGameInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryGameInfo.Marshal(b, m, deterministic)
 }
-func (m *QueryGameInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGameInfo.Merge(m, src)
+func (dst *QueryGameInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGameInfo.Merge(dst, src)
 }
 func (m *QueryGameInfo) XXX_Size() int {
 	return xxx_messageInfo_QueryGameInfo.Size(m)
@@ -866,17 +857,16 @@ func (m *QueryGameInfos) Reset()         { *m = QueryGameInfos{} }
 func (m *QueryGameInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryGameInfos) ProtoMessage()    {}
 func (*QueryGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{10}
+	return fileDescriptor_game_10cc1411e24e5934, []int{10}
 }
-
 func (m *QueryGameInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGameInfos.Unmarshal(m, b)
 }
 func (m *QueryGameInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryGameInfos.Marshal(b, m, deterministic)
 }
-func (m *QueryGameInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGameInfos.Merge(m, src)
+func (dst *QueryGameInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGameInfos.Merge(dst, src)
 }
 func (m *QueryGameInfos) XXX_Size() int {
 	return xxx_messageInfo_QueryGameInfos.Size(m)
@@ -905,17 +895,16 @@ func (m *ReplyGameList) Reset()         { *m = ReplyGameList{} }
 func (m *ReplyGameList) String() string { return proto.CompactTextString(m) }
 func (*ReplyGameList) ProtoMessage()    {}
 func (*ReplyGameList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{11}
+	return fileDescriptor_game_10cc1411e24e5934, []int{11}
 }
-
 func (m *ReplyGameList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyGameList.Unmarshal(m, b)
 }
 func (m *ReplyGameList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyGameList.Marshal(b, m, deterministic)
 }
-func (m *ReplyGameList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyGameList.Merge(m, src)
+func (dst *ReplyGameList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyGameList.Merge(dst, src)
 }
 func (m *ReplyGameList) XXX_Size() int {
 	return xxx_messageInfo_ReplyGameList.Size(m)
@@ -944,17 +933,16 @@ func (m *ReplyGameListCount) Reset()         { *m = ReplyGameListCount{} }
 func (m *ReplyGameListCount) String() string { return proto.CompactTextString(m) }
 func (*ReplyGameListCount) ProtoMessage()    {}
 func (*ReplyGameListCount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{12}
+	return fileDescriptor_game_10cc1411e24e5934, []int{12}
 }
-
 func (m *ReplyGameListCount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyGameListCount.Unmarshal(m, b)
 }
 func (m *ReplyGameListCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyGameListCount.Marshal(b, m, deterministic)
 }
-func (m *ReplyGameListCount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyGameListCount.Merge(m, src)
+func (dst *ReplyGameListCount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyGameListCount.Merge(dst, src)
 }
 func (m *ReplyGameListCount) XXX_Size() int {
 	return xxx_messageInfo_ReplyGameListCount.Size(m)
@@ -983,17 +971,16 @@ func (m *ReplyGame) Reset()         { *m = ReplyGame{} }
 func (m *ReplyGame) String() string { return proto.CompactTextString(m) }
 func (*ReplyGame) ProtoMessage()    {}
 func (*ReplyGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{13}
+	return fileDescriptor_game_10cc1411e24e5934, []int{13}
 }
-
 func (m *ReplyGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyGame.Unmarshal(m, b)
 }
 func (m *ReplyGame) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyGame.Marshal(b, m, deterministic)
 }
-func (m *ReplyGame) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyGame.Merge(m, src)
+func (dst *ReplyGame) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyGame.Merge(dst, src)
 }
 func (m *ReplyGame) XXX_Size() int {
 	return xxx_messageInfo_ReplyGame.Size(m)
@@ -1014,7 +1001,7 @@ func (m *ReplyGame) GetGame() *Game {
 type ReceiptGame struct {
 	GameId string `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Status int32  `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	//记录上一次状态
+	// 记录上一次状态
 	PrevStatus           int32    `protobuf:"varint,3,opt,name=prevStatus,proto3" json:"prevStatus,omitempty"`
 	Addr                 string   `protobuf:"bytes,4,opt,name=addr,proto3" json:"addr,omitempty"`
 	CreateAddr           string   `protobuf:"bytes,5,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
@@ -1030,17 +1017,16 @@ func (m *ReceiptGame) Reset()         { *m = ReceiptGame{} }
 func (m *ReceiptGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptGame) ProtoMessage()    {}
 func (*ReceiptGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_38fc58335341d769, []int{14}
+	return fileDescriptor_game_10cc1411e24e5934, []int{14}
 }
-
 func (m *ReceiptGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptGame.Unmarshal(m, b)
 }
 func (m *ReceiptGame) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptGame.Marshal(b, m, deterministic)
 }
-func (m *ReceiptGame) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptGame.Merge(m, src)
+func (dst *ReceiptGame) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptGame.Merge(dst, src)
 }
 func (m *ReceiptGame) XXX_Size() int {
 	return xxx_messageInfo_ReceiptGame.Size(m)
@@ -1125,9 +1111,9 @@ func init() {
 	proto.RegisterType((*ReceiptGame)(nil), "types.ReceiptGame")
 }
 
-func init() { proto.RegisterFile("game.proto", fileDescriptor_38fc58335341d769) }
+func init() { proto.RegisterFile("game.proto", fileDescriptor_game_10cc1411e24e5934) }
 
-var fileDescriptor_38fc58335341d769 = []byte{
+var fileDescriptor_game_10cc1411e24e5934 = []byte{
 	// 712 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xc1, 0x6e, 0xd3, 0x40,
 	0x10, 0xad, 0x93, 0x38, 0xa9, 0xc7, 0x4d, 0x69, 0x97, 0x08, 0x59, 0xa8, 0x82, 0xb0, 0xaa, 0x44,

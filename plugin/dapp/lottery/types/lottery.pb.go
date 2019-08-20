@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -35,17 +36,16 @@ func (m *PurchaseRecord) Reset()         { *m = PurchaseRecord{} }
 func (m *PurchaseRecord) String() string { return proto.CompactTextString(m) }
 func (*PurchaseRecord) ProtoMessage()    {}
 func (*PurchaseRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{0}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{0}
 }
-
 func (m *PurchaseRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PurchaseRecord.Unmarshal(m, b)
 }
 func (m *PurchaseRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PurchaseRecord.Marshal(b, m, deterministic)
 }
-func (m *PurchaseRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PurchaseRecord.Merge(m, src)
+func (dst *PurchaseRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PurchaseRecord.Merge(dst, src)
 }
 func (m *PurchaseRecord) XXX_Size() int {
 	return xxx_messageInfo_PurchaseRecord.Size(m)
@@ -98,17 +98,16 @@ func (m *PurchaseRecords) Reset()         { *m = PurchaseRecords{} }
 func (m *PurchaseRecords) String() string { return proto.CompactTextString(m) }
 func (*PurchaseRecords) ProtoMessage()    {}
 func (*PurchaseRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{1}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{1}
 }
-
 func (m *PurchaseRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PurchaseRecords.Unmarshal(m, b)
 }
 func (m *PurchaseRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PurchaseRecords.Marshal(b, m, deterministic)
 }
-func (m *PurchaseRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PurchaseRecords.Merge(m, src)
+func (dst *PurchaseRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PurchaseRecords.Merge(dst, src)
 }
 func (m *PurchaseRecords) XXX_Size() int {
 	return xxx_messageInfo_PurchaseRecords.Size(m)
@@ -156,7 +155,7 @@ type Lottery struct {
 	DrawBlockNum         int64  `protobuf:"varint,6,opt,name=drawBlockNum,proto3" json:"drawBlockNum,omitempty"`
 	LastTransToPurState  int64  `protobuf:"varint,7,opt,name=lastTransToPurState,proto3" json:"lastTransToPurState,omitempty"`
 	LastTransToDrawState int64  `protobuf:"varint,8,opt,name=lastTransToDrawState,proto3" json:"lastTransToDrawState,omitempty"`
-	//map<string, PurchaseRecords> records                    = 9;
+	// map<string, PurchaseRecords> records                    = 9;
 	TotalPurchasedTxNum        int64              `protobuf:"varint,10,opt,name=totalPurchasedTxNum,proto3" json:"totalPurchasedTxNum,omitempty"`
 	CreateAddr                 string             `protobuf:"bytes,11,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	Round                      int64              `protobuf:"varint,12,opt,name=round,proto3" json:"round,omitempty"`
@@ -179,17 +178,16 @@ func (m *Lottery) Reset()         { *m = Lottery{} }
 func (m *Lottery) String() string { return proto.CompactTextString(m) }
 func (*Lottery) ProtoMessage()    {}
 func (*Lottery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{2}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{2}
 }
-
 func (m *Lottery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Lottery.Unmarshal(m, b)
 }
 func (m *Lottery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Lottery.Marshal(b, m, deterministic)
 }
-func (m *Lottery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Lottery.Merge(m, src)
+func (dst *Lottery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Lottery.Merge(dst, src)
 }
 func (m *Lottery) XXX_Size() int {
 	return xxx_messageInfo_Lottery.Size(m)
@@ -358,17 +356,16 @@ func (m *MissingRecord) Reset()         { *m = MissingRecord{} }
 func (m *MissingRecord) String() string { return proto.CompactTextString(m) }
 func (*MissingRecord) ProtoMessage()    {}
 func (*MissingRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{3}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{3}
 }
-
 func (m *MissingRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MissingRecord.Unmarshal(m, b)
 }
 func (m *MissingRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MissingRecord.Marshal(b, m, deterministic)
 }
-func (m *MissingRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MissingRecord.Merge(m, src)
+func (dst *MissingRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MissingRecord.Merge(dst, src)
 }
 func (m *MissingRecord) XXX_Size() int {
 	return xxx_messageInfo_MissingRecord.Size(m)
@@ -403,17 +400,16 @@ func (m *LotteryAction) Reset()         { *m = LotteryAction{} }
 func (m *LotteryAction) String() string { return proto.CompactTextString(m) }
 func (*LotteryAction) ProtoMessage()    {}
 func (*LotteryAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{4}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{4}
 }
-
 func (m *LotteryAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryAction.Unmarshal(m, b)
 }
 func (m *LotteryAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryAction.Marshal(b, m, deterministic)
 }
-func (m *LotteryAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryAction.Merge(m, src)
+func (dst *LotteryAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryAction.Merge(dst, src)
 }
 func (m *LotteryAction) XXX_Size() int {
 	return xxx_messageInfo_LotteryAction.Size(m)
@@ -620,17 +616,16 @@ func (m *LotteryCreate) Reset()         { *m = LotteryCreate{} }
 func (m *LotteryCreate) String() string { return proto.CompactTextString(m) }
 func (*LotteryCreate) ProtoMessage()    {}
 func (*LotteryCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{5}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{5}
 }
-
 func (m *LotteryCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryCreate.Unmarshal(m, b)
 }
 func (m *LotteryCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryCreate.Marshal(b, m, deterministic)
 }
-func (m *LotteryCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryCreate.Merge(m, src)
+func (dst *LotteryCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryCreate.Merge(dst, src)
 }
 func (m *LotteryCreate) XXX_Size() int {
 	return xxx_messageInfo_LotteryCreate.Size(m)
@@ -683,17 +678,16 @@ func (m *LotteryBuy) Reset()         { *m = LotteryBuy{} }
 func (m *LotteryBuy) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuy) ProtoMessage()    {}
 func (*LotteryBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{6}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{6}
 }
-
 func (m *LotteryBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuy.Unmarshal(m, b)
 }
 func (m *LotteryBuy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuy.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuy.Merge(m, src)
+func (dst *LotteryBuy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuy.Merge(dst, src)
 }
 func (m *LotteryBuy) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuy.Size(m)
@@ -743,17 +737,16 @@ func (m *LotteryDraw) Reset()         { *m = LotteryDraw{} }
 func (m *LotteryDraw) String() string { return proto.CompactTextString(m) }
 func (*LotteryDraw) ProtoMessage()    {}
 func (*LotteryDraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{7}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{7}
 }
-
 func (m *LotteryDraw) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDraw.Unmarshal(m, b)
 }
 func (m *LotteryDraw) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDraw.Marshal(b, m, deterministic)
 }
-func (m *LotteryDraw) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDraw.Merge(m, src)
+func (dst *LotteryDraw) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDraw.Merge(dst, src)
 }
 func (m *LotteryDraw) XXX_Size() int {
 	return xxx_messageInfo_LotteryDraw.Size(m)
@@ -782,17 +775,16 @@ func (m *LotteryClose) Reset()         { *m = LotteryClose{} }
 func (m *LotteryClose) String() string { return proto.CompactTextString(m) }
 func (*LotteryClose) ProtoMessage()    {}
 func (*LotteryClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{8}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{8}
 }
-
 func (m *LotteryClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryClose.Unmarshal(m, b)
 }
 func (m *LotteryClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryClose.Marshal(b, m, deterministic)
 }
-func (m *LotteryClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryClose.Merge(m, src)
+func (dst *LotteryClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryClose.Merge(dst, src)
 }
 func (m *LotteryClose) XXX_Size() int {
 	return xxx_messageInfo_LotteryClose.Size(m)
@@ -839,17 +831,16 @@ func (m *ReceiptLottery) Reset()         { *m = ReceiptLottery{} }
 func (m *ReceiptLottery) String() string { return proto.CompactTextString(m) }
 func (*ReceiptLottery) ProtoMessage()    {}
 func (*ReceiptLottery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{9}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{9}
 }
-
 func (m *ReceiptLottery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptLottery.Unmarshal(m, b)
 }
 func (m *ReceiptLottery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptLottery.Marshal(b, m, deterministic)
 }
-func (m *ReceiptLottery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptLottery.Merge(m, src)
+func (dst *ReceiptLottery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptLottery.Merge(dst, src)
 }
 func (m *ReceiptLottery) XXX_Size() int {
 	return xxx_messageInfo_ReceiptLottery.Size(m)
@@ -1004,17 +995,16 @@ func (m *ReqLotteryInfo) Reset()         { *m = ReqLotteryInfo{} }
 func (m *ReqLotteryInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryInfo) ProtoMessage()    {}
 func (*ReqLotteryInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{10}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{10}
 }
-
 func (m *ReqLotteryInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryInfo.Merge(m, src)
+func (dst *ReqLotteryInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryInfo.Merge(dst, src)
 }
 func (m *ReqLotteryInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryInfo.Size(m)
@@ -1045,17 +1035,16 @@ func (m *ReqLotteryBuyInfo) Reset()         { *m = ReqLotteryBuyInfo{} }
 func (m *ReqLotteryBuyInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryBuyInfo) ProtoMessage()    {}
 func (*ReqLotteryBuyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{11}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{11}
 }
-
 func (m *ReqLotteryBuyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryBuyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryBuyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryBuyInfo.Merge(m, src)
+func (dst *ReqLotteryBuyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryBuyInfo.Merge(dst, src)
 }
 func (m *ReqLotteryBuyInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryBuyInfo.Size(m)
@@ -1103,17 +1092,16 @@ func (m *ReqLotteryBuyHistory) Reset()         { *m = ReqLotteryBuyHistory{} }
 func (m *ReqLotteryBuyHistory) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryBuyHistory) ProtoMessage()    {}
 func (*ReqLotteryBuyHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{12}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{12}
 }
-
 func (m *ReqLotteryBuyHistory) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Unmarshal(m, b)
 }
 func (m *ReqLotteryBuyHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryBuyHistory) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryBuyHistory.Merge(m, src)
+func (dst *ReqLotteryBuyHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryBuyHistory.Merge(dst, src)
 }
 func (m *ReqLotteryBuyHistory) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryBuyHistory.Size(m)
@@ -1178,17 +1166,16 @@ func (m *ReqLotteryLuckyInfo) Reset()         { *m = ReqLotteryLuckyInfo{} }
 func (m *ReqLotteryLuckyInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryLuckyInfo) ProtoMessage()    {}
 func (*ReqLotteryLuckyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{13}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{13}
 }
-
 func (m *ReqLotteryLuckyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryLuckyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryLuckyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryLuckyInfo.Merge(m, src)
+func (dst *ReqLotteryLuckyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryLuckyInfo.Merge(dst, src)
 }
 func (m *ReqLotteryLuckyInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryLuckyInfo.Size(m)
@@ -1227,17 +1214,16 @@ func (m *ReqLotteryLuckyHistory) Reset()         { *m = ReqLotteryLuckyHistory{}
 func (m *ReqLotteryLuckyHistory) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryLuckyHistory) ProtoMessage()    {}
 func (*ReqLotteryLuckyHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{14}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{14}
 }
-
 func (m *ReqLotteryLuckyHistory) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Unmarshal(m, b)
 }
 func (m *ReqLotteryLuckyHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryLuckyHistory) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryLuckyHistory.Merge(m, src)
+func (dst *ReqLotteryLuckyHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryLuckyHistory.Merge(dst, src)
 }
 func (m *ReqLotteryLuckyHistory) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryLuckyHistory.Size(m)
@@ -1292,17 +1278,16 @@ func (m *ReplyLotteryNormalInfo) Reset()         { *m = ReplyLotteryNormalInfo{}
 func (m *ReplyLotteryNormalInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryNormalInfo) ProtoMessage()    {}
 func (*ReplyLotteryNormalInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{15}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{15}
 }
-
 func (m *ReplyLotteryNormalInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryNormalInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryNormalInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryNormalInfo.Merge(m, src)
+func (dst *ReplyLotteryNormalInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryNormalInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryNormalInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryNormalInfo.Size(m)
@@ -1379,17 +1364,16 @@ func (m *ReplyLotteryCurrentInfo) Reset()         { *m = ReplyLotteryCurrentInfo
 func (m *ReplyLotteryCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryCurrentInfo) ProtoMessage()    {}
 func (*ReplyLotteryCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{16}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{16}
 }
-
 func (m *ReplyLotteryCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryCurrentInfo.Merge(m, src)
+func (dst *ReplyLotteryCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryCurrentInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryCurrentInfo.Size(m)
@@ -1509,17 +1493,16 @@ func (m *ReplyLotteryHistoryLuckyNumber) Reset()         { *m = ReplyLotteryHist
 func (m *ReplyLotteryHistoryLuckyNumber) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryHistoryLuckyNumber) ProtoMessage()    {}
 func (*ReplyLotteryHistoryLuckyNumber) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{17}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{17}
 }
-
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Unmarshal(m, b)
 }
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryHistoryLuckyNumber) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Merge(m, src)
+func (dst *ReplyLotteryHistoryLuckyNumber) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Merge(dst, src)
 }
 func (m *ReplyLotteryHistoryLuckyNumber) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryHistoryLuckyNumber.Size(m)
@@ -1548,17 +1531,16 @@ func (m *ReplyLotteryShowInfo) Reset()         { *m = ReplyLotteryShowInfo{} }
 func (m *ReplyLotteryShowInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryShowInfo) ProtoMessage()    {}
 func (*ReplyLotteryShowInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{18}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{18}
 }
-
 func (m *ReplyLotteryShowInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Unmarshal(m, b)
 }
 func (m *ReplyLotteryShowInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryShowInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryShowInfo.Merge(m, src)
+func (dst *ReplyLotteryShowInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryShowInfo.Merge(dst, src)
 }
 func (m *ReplyLotteryShowInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryShowInfo.Size(m)
@@ -1588,17 +1570,16 @@ func (m *LotteryNumberRecord) Reset()         { *m = LotteryNumberRecord{} }
 func (m *LotteryNumberRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryNumberRecord) ProtoMessage()    {}
 func (*LotteryNumberRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{19}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{19}
 }
-
 func (m *LotteryNumberRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryNumberRecord.Unmarshal(m, b)
 }
 func (m *LotteryNumberRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryNumberRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryNumberRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryNumberRecord.Merge(m, src)
+func (dst *LotteryNumberRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryNumberRecord.Merge(dst, src)
 }
 func (m *LotteryNumberRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryNumberRecord.Size(m)
@@ -1642,17 +1623,16 @@ func (m *LotteryBuyRecord) Reset()         { *m = LotteryBuyRecord{} }
 func (m *LotteryBuyRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuyRecord) ProtoMessage()    {}
 func (*LotteryBuyRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{20}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{20}
 }
-
 func (m *LotteryBuyRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuyRecord.Unmarshal(m, b)
 }
 func (m *LotteryBuyRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuyRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuyRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuyRecord.Merge(m, src)
+func (dst *LotteryBuyRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuyRecord.Merge(dst, src)
 }
 func (m *LotteryBuyRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuyRecord.Size(m)
@@ -1730,17 +1710,16 @@ func (m *LotteryBuyRecords) Reset()         { *m = LotteryBuyRecords{} }
 func (m *LotteryBuyRecords) String() string { return proto.CompactTextString(m) }
 func (*LotteryBuyRecords) ProtoMessage()    {}
 func (*LotteryBuyRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{21}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{21}
 }
-
 func (m *LotteryBuyRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryBuyRecords.Unmarshal(m, b)
 }
 func (m *LotteryBuyRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryBuyRecords.Marshal(b, m, deterministic)
 }
-func (m *LotteryBuyRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryBuyRecords.Merge(m, src)
+func (dst *LotteryBuyRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryBuyRecords.Merge(dst, src)
 }
 func (m *LotteryBuyRecords) XXX_Size() int {
 	return xxx_messageInfo_LotteryBuyRecords.Size(m)
@@ -1777,17 +1756,16 @@ func (m *LotteryDrawRecord) Reset()         { *m = LotteryDrawRecord{} }
 func (m *LotteryDrawRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryDrawRecord) ProtoMessage()    {}
 func (*LotteryDrawRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{22}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{22}
 }
-
 func (m *LotteryDrawRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDrawRecord.Unmarshal(m, b)
 }
 func (m *LotteryDrawRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDrawRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryDrawRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDrawRecord.Merge(m, src)
+func (dst *LotteryDrawRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDrawRecord.Merge(dst, src)
 }
 func (m *LotteryDrawRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryDrawRecord.Size(m)
@@ -1872,17 +1850,16 @@ func (m *LotteryDrawRecords) Reset()         { *m = LotteryDrawRecords{} }
 func (m *LotteryDrawRecords) String() string { return proto.CompactTextString(m) }
 func (*LotteryDrawRecords) ProtoMessage()    {}
 func (*LotteryDrawRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{23}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{23}
 }
-
 func (m *LotteryDrawRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryDrawRecords.Unmarshal(m, b)
 }
 func (m *LotteryDrawRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryDrawRecords.Marshal(b, m, deterministic)
 }
-func (m *LotteryDrawRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryDrawRecords.Merge(m, src)
+func (dst *LotteryDrawRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryDrawRecords.Merge(dst, src)
 }
 func (m *LotteryDrawRecords) XXX_Size() int {
 	return xxx_messageInfo_LotteryDrawRecords.Size(m)
@@ -1912,17 +1889,16 @@ func (m *LotteryUpdateRec) Reset()         { *m = LotteryUpdateRec{} }
 func (m *LotteryUpdateRec) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateRec) ProtoMessage()    {}
 func (*LotteryUpdateRec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{24}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{24}
 }
-
 func (m *LotteryUpdateRec) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateRec.Unmarshal(m, b)
 }
 func (m *LotteryUpdateRec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateRec.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateRec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateRec.Merge(m, src)
+func (dst *LotteryUpdateRec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateRec.Merge(dst, src)
 }
 func (m *LotteryUpdateRec) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateRec.Size(m)
@@ -1958,17 +1934,16 @@ func (m *LotteryUpdateRecs) Reset()         { *m = LotteryUpdateRecs{} }
 func (m *LotteryUpdateRecs) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateRecs) ProtoMessage()    {}
 func (*LotteryUpdateRecs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{25}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{25}
 }
-
 func (m *LotteryUpdateRecs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateRecs.Unmarshal(m, b)
 }
 func (m *LotteryUpdateRecs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateRecs.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateRecs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateRecs.Merge(m, src)
+func (dst *LotteryUpdateRecs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateRecs.Merge(dst, src)
 }
 func (m *LotteryUpdateRecs) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateRecs.Size(m)
@@ -1997,17 +1972,16 @@ func (m *LotteryUpdateBuyInfo) Reset()         { *m = LotteryUpdateBuyInfo{} }
 func (m *LotteryUpdateBuyInfo) String() string { return proto.CompactTextString(m) }
 func (*LotteryUpdateBuyInfo) ProtoMessage()    {}
 func (*LotteryUpdateBuyInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{26}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{26}
 }
-
 func (m *LotteryUpdateBuyInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Unmarshal(m, b)
 }
 func (m *LotteryUpdateBuyInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Marshal(b, m, deterministic)
 }
-func (m *LotteryUpdateBuyInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryUpdateBuyInfo.Merge(m, src)
+func (dst *LotteryUpdateBuyInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryUpdateBuyInfo.Merge(dst, src)
 }
 func (m *LotteryUpdateBuyInfo) XXX_Size() int {
 	return xxx_messageInfo_LotteryUpdateBuyInfo.Size(m)
@@ -2036,17 +2010,16 @@ func (m *ReplyLotteryPurchaseAddr) Reset()         { *m = ReplyLotteryPurchaseAd
 func (m *ReplyLotteryPurchaseAddr) String() string { return proto.CompactTextString(m) }
 func (*ReplyLotteryPurchaseAddr) ProtoMessage()    {}
 func (*ReplyLotteryPurchaseAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{27}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{27}
 }
-
 func (m *ReplyLotteryPurchaseAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Unmarshal(m, b)
 }
 func (m *ReplyLotteryPurchaseAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Marshal(b, m, deterministic)
 }
-func (m *ReplyLotteryPurchaseAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyLotteryPurchaseAddr.Merge(m, src)
+func (dst *ReplyLotteryPurchaseAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyLotteryPurchaseAddr.Merge(dst, src)
 }
 func (m *ReplyLotteryPurchaseAddr) XXX_Size() int {
 	return xxx_messageInfo_ReplyLotteryPurchaseAddr.Size(m)
@@ -2075,17 +2048,16 @@ func (m *LotteryGainInfos) Reset()         { *m = LotteryGainInfos{} }
 func (m *LotteryGainInfos) String() string { return proto.CompactTextString(m) }
 func (*LotteryGainInfos) ProtoMessage()    {}
 func (*LotteryGainInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{28}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{28}
 }
-
 func (m *LotteryGainInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryGainInfos.Unmarshal(m, b)
 }
 func (m *LotteryGainInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryGainInfos.Marshal(b, m, deterministic)
 }
-func (m *LotteryGainInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryGainInfos.Merge(m, src)
+func (dst *LotteryGainInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainInfos.Merge(dst, src)
 }
 func (m *LotteryGainInfos) XXX_Size() int {
 	return xxx_messageInfo_LotteryGainInfos.Size(m)
@@ -2116,17 +2088,16 @@ func (m *LotteryGainInfo) Reset()         { *m = LotteryGainInfo{} }
 func (m *LotteryGainInfo) String() string { return proto.CompactTextString(m) }
 func (*LotteryGainInfo) ProtoMessage()    {}
 func (*LotteryGainInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{29}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{29}
 }
-
 func (m *LotteryGainInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryGainInfo.Unmarshal(m, b)
 }
 func (m *LotteryGainInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryGainInfo.Marshal(b, m, deterministic)
 }
-func (m *LotteryGainInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryGainInfo.Merge(m, src)
+func (dst *LotteryGainInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainInfo.Merge(dst, src)
 }
 func (m *LotteryGainInfo) XXX_Size() int {
 	return xxx_messageInfo_LotteryGainInfo.Size(m)
@@ -2172,17 +2143,16 @@ func (m *LotteryGainRecord) Reset()         { *m = LotteryGainRecord{} }
 func (m *LotteryGainRecord) String() string { return proto.CompactTextString(m) }
 func (*LotteryGainRecord) ProtoMessage()    {}
 func (*LotteryGainRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{30}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{30}
 }
-
 func (m *LotteryGainRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryGainRecord.Unmarshal(m, b)
 }
 func (m *LotteryGainRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryGainRecord.Marshal(b, m, deterministic)
 }
-func (m *LotteryGainRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryGainRecord.Merge(m, src)
+func (dst *LotteryGainRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainRecord.Merge(dst, src)
 }
 func (m *LotteryGainRecord) XXX_Size() int {
 	return xxx_messageInfo_LotteryGainRecord.Size(m)
@@ -2232,17 +2202,16 @@ func (m *LotteryGainRecords) Reset()         { *m = LotteryGainRecords{} }
 func (m *LotteryGainRecords) String() string { return proto.CompactTextString(m) }
 func (*LotteryGainRecords) ProtoMessage()    {}
 func (*LotteryGainRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{31}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{31}
 }
-
 func (m *LotteryGainRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LotteryGainRecords.Unmarshal(m, b)
 }
 func (m *LotteryGainRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LotteryGainRecords.Marshal(b, m, deterministic)
 }
-func (m *LotteryGainRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LotteryGainRecords.Merge(m, src)
+func (dst *LotteryGainRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LotteryGainRecords.Merge(dst, src)
 }
 func (m *LotteryGainRecords) XXX_Size() int {
 	return xxx_messageInfo_LotteryGainRecords.Size(m)
@@ -2275,17 +2244,16 @@ func (m *ReqLotteryGainHistory) Reset()         { *m = ReqLotteryGainHistory{} }
 func (m *ReqLotteryGainHistory) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryGainHistory) ProtoMessage()    {}
 func (*ReqLotteryGainHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{32}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{32}
 }
-
 func (m *ReqLotteryGainHistory) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryGainHistory.Unmarshal(m, b)
 }
 func (m *ReqLotteryGainHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryGainHistory.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryGainHistory) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryGainHistory.Merge(m, src)
+func (dst *ReqLotteryGainHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryGainHistory.Merge(dst, src)
 }
 func (m *ReqLotteryGainHistory) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryGainHistory.Size(m)
@@ -2344,17 +2312,16 @@ func (m *ReqLotteryGainInfo) Reset()         { *m = ReqLotteryGainInfo{} }
 func (m *ReqLotteryGainInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqLotteryGainInfo) ProtoMessage()    {}
 func (*ReqLotteryGainInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2cce7afd61783b10, []int{33}
+	return fileDescriptor_lottery_2235dea2df3c1a69, []int{33}
 }
-
 func (m *ReqLotteryGainInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqLotteryGainInfo.Unmarshal(m, b)
 }
 func (m *ReqLotteryGainInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqLotteryGainInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqLotteryGainInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqLotteryGainInfo.Merge(m, src)
+func (dst *ReqLotteryGainInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqLotteryGainInfo.Merge(dst, src)
 }
 func (m *ReqLotteryGainInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqLotteryGainInfo.Size(m)
@@ -2424,9 +2391,9 @@ func init() {
 	proto.RegisterType((*ReqLotteryGainInfo)(nil), "types.ReqLotteryGainInfo")
 }
 
-func init() { proto.RegisterFile("lottery.proto", fileDescriptor_2cce7afd61783b10) }
+func init() { proto.RegisterFile("lottery.proto", fileDescriptor_lottery_2235dea2df3c1a69) }
 
-var fileDescriptor_2cce7afd61783b10 = []byte{
+var fileDescriptor_lottery_2235dea2df3c1a69 = []byte{
 	// 1509 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0xcd, 0x6e, 0x1c, 0xc5,
 	0x13, 0xf7, 0x7c, 0xed, 0x7a, 0x6b, 0xbd, 0xeb, 0xb8, 0xed, 0x38, 0xf3, 0xcf, 0x1f, 0x59, 0xd6,
