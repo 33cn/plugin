@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -50,17 +51,16 @@ func (m *AutonomyAction) Reset()         { *m = AutonomyAction{} }
 func (m *AutonomyAction) String() string { return proto.CompactTextString(m) }
 func (*AutonomyAction) ProtoMessage()    {}
 func (*AutonomyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0246b47df8434d60, []int{0}
+	return fileDescriptor_autonomy_3d5958647f2c145d, []int{0}
 }
-
 func (m *AutonomyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyAction.Unmarshal(m, b)
 }
 func (m *AutonomyAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AutonomyAction.Marshal(b, m, deterministic)
 }
-func (m *AutonomyAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyAction.Merge(m, src)
+func (dst *AutonomyAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AutonomyAction.Merge(dst, src)
 }
 func (m *AutonomyAction) XXX_Size() int {
 	return xxx_messageInfo_AutonomyAction.Size(m)
@@ -609,9 +609,9 @@ func init() {
 	proto.RegisterType((*AutonomyAction)(nil), "types.AutonomyAction")
 }
 
-func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_0246b47df8434d60) }
+func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_autonomy_3d5958647f2c145d) }
 
-var fileDescriptor_0246b47df8434d60 = []byte{
+var fileDescriptor_autonomy_3d5958647f2c145d = []byte{
 	// 427 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0xcf, 0xaf, 0xd2, 0x40,
 	0x14, 0x85, 0x01, 0xed, 0xe3, 0xbd, 0x5b, 0x5a, 0xc8, 0xd5, 0x68, 0x25, 0x1a, 0x89, 0x2b, 0x56,

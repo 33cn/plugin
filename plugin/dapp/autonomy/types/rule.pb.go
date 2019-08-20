@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -41,17 +42,16 @@ func (m *AutonomyProposalRule) Reset()         { *m = AutonomyProposalRule{} }
 func (m *AutonomyProposalRule) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalRule) ProtoMessage()    {}
 func (*AutonomyProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{0}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{0}
 }
-
 func (m *AutonomyProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalRule.Unmarshal(m, b)
 }
 func (m *AutonomyProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AutonomyProposalRule.Marshal(b, m, deterministic)
 }
-func (m *AutonomyProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyProposalRule.Merge(m, src)
+func (dst *AutonomyProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AutonomyProposalRule.Merge(dst, src)
 }
 func (m *AutonomyProposalRule) XXX_Size() int {
 	return xxx_messageInfo_AutonomyProposalRule.Size(m)
@@ -138,17 +138,16 @@ func (m *ProposalRule) Reset()         { *m = ProposalRule{} }
 func (m *ProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ProposalRule) ProtoMessage()    {}
 func (*ProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{1}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{1}
 }
-
 func (m *ProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalRule.Unmarshal(m, b)
 }
 func (m *ProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ProposalRule.Marshal(b, m, deterministic)
 }
-func (m *ProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProposalRule.Merge(m, src)
+func (dst *ProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProposalRule.Merge(dst, src)
 }
 func (m *ProposalRule) XXX_Size() int {
 	return xxx_messageInfo_ProposalRule.Size(m)
@@ -219,17 +218,16 @@ func (m *RevokeProposalRule) Reset()         { *m = RevokeProposalRule{} }
 func (m *RevokeProposalRule) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalRule) ProtoMessage()    {}
 func (*RevokeProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{2}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{2}
 }
-
 func (m *RevokeProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalRule.Unmarshal(m, b)
 }
 func (m *RevokeProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RevokeProposalRule.Marshal(b, m, deterministic)
 }
-func (m *RevokeProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeProposalRule.Merge(m, src)
+func (dst *RevokeProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RevokeProposalRule.Merge(dst, src)
 }
 func (m *RevokeProposalRule) XXX_Size() int {
 	return xxx_messageInfo_RevokeProposalRule.Size(m)
@@ -259,17 +257,16 @@ func (m *VoteProposalRule) Reset()         { *m = VoteProposalRule{} }
 func (m *VoteProposalRule) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalRule) ProtoMessage()    {}
 func (*VoteProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{3}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{3}
 }
-
 func (m *VoteProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalRule.Unmarshal(m, b)
 }
 func (m *VoteProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VoteProposalRule.Marshal(b, m, deterministic)
 }
-func (m *VoteProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VoteProposalRule.Merge(m, src)
+func (dst *VoteProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VoteProposalRule.Merge(dst, src)
 }
 func (m *VoteProposalRule) XXX_Size() int {
 	return xxx_messageInfo_VoteProposalRule.Size(m)
@@ -305,17 +302,16 @@ func (m *TerminateProposalRule) Reset()         { *m = TerminateProposalRule{} }
 func (m *TerminateProposalRule) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalRule) ProtoMessage()    {}
 func (*TerminateProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{4}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{4}
 }
-
 func (m *TerminateProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalRule.Unmarshal(m, b)
 }
 func (m *TerminateProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TerminateProposalRule.Marshal(b, m, deterministic)
 }
-func (m *TerminateProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TerminateProposalRule.Merge(m, src)
+func (dst *TerminateProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TerminateProposalRule.Merge(dst, src)
 }
 func (m *TerminateProposalRule) XXX_Size() int {
 	return xxx_messageInfo_TerminateProposalRule.Size(m)
@@ -346,17 +342,16 @@ func (m *ReceiptProposalRule) Reset()         { *m = ReceiptProposalRule{} }
 func (m *ReceiptProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalRule) ProtoMessage()    {}
 func (*ReceiptProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{5}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{5}
 }
-
 func (m *ReceiptProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalRule.Unmarshal(m, b)
 }
 func (m *ReceiptProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptProposalRule.Marshal(b, m, deterministic)
 }
-func (m *ReceiptProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptProposalRule.Merge(m, src)
+func (dst *ReceiptProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptProposalRule.Merge(dst, src)
 }
 func (m *ReceiptProposalRule) XXX_Size() int {
 	return xxx_messageInfo_ReceiptProposalRule.Size(m)
@@ -393,17 +388,16 @@ func (m *LocalProposalRule) Reset()         { *m = LocalProposalRule{} }
 func (m *LocalProposalRule) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalRule) ProtoMessage()    {}
 func (*LocalProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{6}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{6}
 }
-
 func (m *LocalProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalRule.Unmarshal(m, b)
 }
 func (m *LocalProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalProposalRule.Marshal(b, m, deterministic)
 }
-func (m *LocalProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalProposalRule.Merge(m, src)
+func (dst *LocalProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalProposalRule.Merge(dst, src)
 }
 func (m *LocalProposalRule) XXX_Size() int {
 	return xxx_messageInfo_LocalProposalRule.Size(m)
@@ -445,17 +439,16 @@ func (m *ReqQueryProposalRule) Reset()         { *m = ReqQueryProposalRule{} }
 func (m *ReqQueryProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalRule) ProtoMessage()    {}
 func (*ReqQueryProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{7}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{7}
 }
-
 func (m *ReqQueryProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalRule.Unmarshal(m, b)
 }
 func (m *ReqQueryProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqQueryProposalRule.Marshal(b, m, deterministic)
 }
-func (m *ReqQueryProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQueryProposalRule.Merge(m, src)
+func (dst *ReqQueryProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQueryProposalRule.Merge(dst, src)
 }
 func (m *ReqQueryProposalRule) XXX_Size() int {
 	return xxx_messageInfo_ReqQueryProposalRule.Size(m)
@@ -519,17 +512,16 @@ func (m *ReplyQueryProposalRule) Reset()         { *m = ReplyQueryProposalRule{}
 func (m *ReplyQueryProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalRule) ProtoMessage()    {}
 func (*ReplyQueryProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{8}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{8}
 }
-
 func (m *ReplyQueryProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalRule.Unmarshal(m, b)
 }
 func (m *ReplyQueryProposalRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyQueryProposalRule.Marshal(b, m, deterministic)
 }
-func (m *ReplyQueryProposalRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQueryProposalRule.Merge(m, src)
+func (dst *ReplyQueryProposalRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQueryProposalRule.Merge(dst, src)
 }
 func (m *ReplyQueryProposalRule) XXX_Size() int {
 	return xxx_messageInfo_ReplyQueryProposalRule.Size(m)
@@ -560,17 +552,16 @@ func (m *TransferFund) Reset()         { *m = TransferFund{} }
 func (m *TransferFund) String() string { return proto.CompactTextString(m) }
 func (*TransferFund) ProtoMessage()    {}
 func (*TransferFund) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{9}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{9}
 }
-
 func (m *TransferFund) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TransferFund.Unmarshal(m, b)
 }
 func (m *TransferFund) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TransferFund.Marshal(b, m, deterministic)
 }
-func (m *TransferFund) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransferFund.Merge(m, src)
+func (dst *TransferFund) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferFund.Merge(dst, src)
 }
 func (m *TransferFund) XXX_Size() int {
 	return xxx_messageInfo_TransferFund.Size(m)
@@ -609,17 +600,16 @@ func (m *Comment) Reset()         { *m = Comment{} }
 func (m *Comment) String() string { return proto.CompactTextString(m) }
 func (*Comment) ProtoMessage()    {}
 func (*Comment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{10}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{10}
 }
-
 func (m *Comment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Comment.Unmarshal(m, b)
 }
 func (m *Comment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Comment.Marshal(b, m, deterministic)
 }
-func (m *Comment) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Comment.Merge(m, src)
+func (dst *Comment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Comment.Merge(dst, src)
 }
 func (m *Comment) XXX_Size() int {
 	return xxx_messageInfo_Comment.Size(m)
@@ -665,17 +655,16 @@ func (m *ReceiptProposalComment) Reset()         { *m = ReceiptProposalComment{}
 func (m *ReceiptProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalComment) ProtoMessage()    {}
 func (*ReceiptProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{11}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{11}
 }
-
 func (m *ReceiptProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalComment.Unmarshal(m, b)
 }
 func (m *ReceiptProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptProposalComment.Marshal(b, m, deterministic)
 }
-func (m *ReceiptProposalComment) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptProposalComment.Merge(m, src)
+func (dst *ReceiptProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptProposalComment.Merge(dst, src)
 }
 func (m *ReceiptProposalComment) XXX_Size() int {
 	return xxx_messageInfo_ReceiptProposalComment.Size(m)
@@ -730,17 +719,16 @@ func (m *ReqQueryProposalComment) Reset()         { *m = ReqQueryProposalComment
 func (m *ReqQueryProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalComment) ProtoMessage()    {}
 func (*ReqQueryProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{12}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{12}
 }
-
 func (m *ReqQueryProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalComment.Unmarshal(m, b)
 }
 func (m *ReqQueryProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqQueryProposalComment.Marshal(b, m, deterministic)
 }
-func (m *ReqQueryProposalComment) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQueryProposalComment.Merge(m, src)
+func (dst *ReqQueryProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQueryProposalComment.Merge(dst, src)
 }
 func (m *ReqQueryProposalComment) XXX_Size() int {
 	return xxx_messageInfo_ReqQueryProposalComment.Size(m)
@@ -801,17 +789,16 @@ func (m *RelationCmt) Reset()         { *m = RelationCmt{} }
 func (m *RelationCmt) String() string { return proto.CompactTextString(m) }
 func (*RelationCmt) ProtoMessage()    {}
 func (*RelationCmt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{13}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{13}
 }
-
 func (m *RelationCmt) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelationCmt.Unmarshal(m, b)
 }
 func (m *RelationCmt) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelationCmt.Marshal(b, m, deterministic)
 }
-func (m *RelationCmt) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelationCmt.Merge(m, src)
+func (dst *RelationCmt) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelationCmt.Merge(dst, src)
 }
 func (m *RelationCmt) XXX_Size() int {
 	return xxx_messageInfo_RelationCmt.Size(m)
@@ -868,17 +855,16 @@ func (m *ReplyQueryProposalComment) Reset()         { *m = ReplyQueryProposalCom
 func (m *ReplyQueryProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalComment) ProtoMessage()    {}
 func (*ReplyQueryProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_07e8e0fa338d4596, []int{14}
+	return fileDescriptor_rule_dbb1f62f1c9d5ed3, []int{14}
 }
-
 func (m *ReplyQueryProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalComment.Unmarshal(m, b)
 }
 func (m *ReplyQueryProposalComment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyQueryProposalComment.Marshal(b, m, deterministic)
 }
-func (m *ReplyQueryProposalComment) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQueryProposalComment.Merge(m, src)
+func (dst *ReplyQueryProposalComment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQueryProposalComment.Merge(dst, src)
 }
 func (m *ReplyQueryProposalComment) XXX_Size() int {
 	return xxx_messageInfo_ReplyQueryProposalComment.Size(m)
@@ -914,9 +900,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalComment)(nil), "types.ReplyQueryProposalComment")
 }
 
-func init() { proto.RegisterFile("rule.proto", fileDescriptor_07e8e0fa338d4596) }
+func init() { proto.RegisterFile("rule.proto", fileDescriptor_rule_dbb1f62f1c9d5ed3) }
 
-var fileDescriptor_07e8e0fa338d4596 = []byte{
+var fileDescriptor_rule_dbb1f62f1c9d5ed3 = []byte{
 	// 718 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0xcd, 0x6f, 0xd4, 0x3e,
 	0x10, 0x55, 0x36, 0xc9, 0x7e, 0x4c, 0xfb, 0xab, 0x5a, 0xb7, 0xbf, 0x12, 0x0a, 0x42, 0xab, 0x1c,
