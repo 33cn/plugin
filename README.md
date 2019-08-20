@@ -11,17 +11,18 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 * chain33地址: https://github.com/33cn/chain33
 * chain33官网: https://chain.33.cn
 
-## 安装
+## 环境
 
-##### 1. 安装govendor 工具
+** 需要 安装golang1.12 or latest **
 
-```
-go get -u -v github.com/kardianos/govendor
-```
 
 #### 支持make file的平台
 
 ```
+export GO111MODULE=on
+
+export GOPROXY=https://mirrors.aliyun.com/goproxy
+
 make
 ```
 就可以完成编译安装
@@ -35,8 +36,8 @@ make
 
 ## 注意:
 
-从头开始安装vendor 有非常大的难度，主要问题是带宽 和 翻墙问题
-为了解决包依赖等问题，我们直接提供了vendor目录。
+使用mod管理依赖包，主要就是翻墙问题
+为了解决包依赖翻墙下载问题，我们提供了阿里云代理。
 
 
 ## 贡献代码：
@@ -47,10 +48,10 @@ make
 #### 准备阶段:
 
 * 首先点击 右上角的 fork 图标， 把chain33 fork 到自己的分支 比如我的是 vipwzw/plugin
-* `git clone https://github.com/vipwzw/chain33.git $GOPATH/src/github.com/33cn/plugin`
+* `git clone https://github.com/vipwzw/plugin.git $GOPATH/src/github.com/33cn/plugin`
 
 ```
-注意：这里要 clone 到 $GOPATH/src/github.com/33cn/chain33, 否则go 包路径会找不到
+注意：这里要 clone 到 $GOPATH/src/github.com/33cn/plugin, 否则go 包路径会找不到
 ```
 
 clone 完成后，执行

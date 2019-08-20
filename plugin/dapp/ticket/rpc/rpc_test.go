@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/version"
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -41,13 +42,13 @@ targetTimespan = 2304
 targetTimePerBlock = 16
 `
 
-func newGrpc(api *mocks.QueueProtocolAPI) *channelClient {
+func newGrpc(api client.QueueProtocolAPI) *channelClient {
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
 	}
 }
 
-func newJrpc(api *mocks.QueueProtocolAPI) *Jrpc {
+func newJrpc(api client.QueueProtocolAPI) *Jrpc {
 	return &Jrpc{cli: newGrpc(api)}
 }
 
