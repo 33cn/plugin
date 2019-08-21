@@ -81,7 +81,7 @@ func addProposalBoardFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
 	cmd.MarkFlagRequired("endBlock")
 
-	cmd.Flags().StringP("boards", "b", "", "addr1-addr2......addrN (3<=N<=30)")
+	cmd.Flags().StringP("boards", "b", "", "addr1-addr2......addrN (20<=N<=40)")
 	cmd.MarkFlagRequired("boards")
 }
 
@@ -173,22 +173,27 @@ func addVoteProposalBoardFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
+	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
 func voteProposalBoard(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
+	originAddr, _ := cmd.Flags().GetString("originAddr")
+
 	var isapp bool
 	if approve == 0 {
 		isapp = false
 	} else {
 		isapp = true
 	}
+	originAddrs := strings.Split(originAddr, "-")
 
 	params := &auty.VoteProposalBoard{
 		ProposalID: ID,
 		Approve:    isapp,
+		OriginAddr: originAddrs,
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {

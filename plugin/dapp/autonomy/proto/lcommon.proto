@@ -46,3 +46,10 @@ message RuleConfig {
     // 重大项目公示时间（以区块数为单位）
     int32 publicPeriod        = 6;
 }
+
+message ActiveBoard {
+    repeated string boards      = 1;
+    repeated string revboards   = 2;
+    int64           amount      = 3;
+    int64           startHeight = 4;
+}

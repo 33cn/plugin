@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // ProposalRuleCmd 创建提案命令
@@ -142,12 +143,14 @@ func addVoteProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
+	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
 func voteProposalRule(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
+	originAddr, _ := cmd.Flags().GetString("originAddr")
 	var isapp bool
 	if approve == 0 {
 		isapp = false
@@ -155,9 +158,12 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		isapp = true
 	}
 
+	originAddrs := strings.Split(originAddr, "-")
+
 	params := &auty.VoteProposalRule{
 		ProposalID: ID,
 		Approve:    isapp,
+		OriginAddr: originAddrs,
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {

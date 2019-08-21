@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // ProposalProjectCmd 创建提案命令
@@ -201,12 +202,14 @@ func addPubVoteProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 	cmd.Flags().Int32P("oppose", "o", 1, "is oppose, default true")
+	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
 func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	oppose, _ := cmd.Flags().GetInt32("oppose")
+	originAddr, _ := cmd.Flags().GetString("originAddr")
 
 	var isopp bool
 	if oppose == 0 {
@@ -215,9 +218,12 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 		isopp = true
 	}
 
+	originAddrs := strings.Split(originAddr, "-")
+
 	params := &auty.PubVoteProposalProject{
 		ProposalID: ID,
 		Oppose:     isopp,
+		OriginAddr: originAddrs,
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {

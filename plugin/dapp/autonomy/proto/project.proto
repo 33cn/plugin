@@ -63,6 +63,7 @@ message VoteProposalProject {
 message PubVoteProposalProject {
     string proposalID = 1;
     bool   oppose     = 2;
+    repeated string originAddr = 3;
 }
 
 message TerminateProposalProject {

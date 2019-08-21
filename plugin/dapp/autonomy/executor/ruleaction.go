@@ -12,15 +12,30 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 )
 
+const (
+	// 最小董事会赞成率
+	minBoardApproveRatio = 50
+	// 最大董事会赞成率
+	maxBoardApproveRatio = 66
+	// 最小全体持票人否决率
+	minPubOpposeRatio    = 33
+	// 最大全体持票人否决率
+	maxPubOpposeRatio    = 50
+	// 最小公示周期
+	minPublicPeriod    int32 = 17280 * 7
+	// 最大公示周期
+	maxPublicPeriod    int32 = 17280 * 14
+)
+
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio <= 0 && prob.RuleCfg.BoardApproveRatio <= 0 &&
-		prob.RuleCfg.PubOpposeRatio <= 0 && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
+	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio < minBoardAttendRatio && prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio &&
+		prob.RuleCfg.PubOpposeRatio <= minPubOpposeRatio && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
 		prob.RuleCfg.PublicPeriod <= 0 {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
-	if prob.RuleCfg.BoardAttendRatio > 100 || prob.RuleCfg.BoardApproveRatio > 100 || prob.RuleCfg.PubOpposeRatio > 100 {
+	if prob.RuleCfg.BoardAttendRatio > MaxBoardAttendRatio || prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio {
 		alog.Error("propRule RuleCfg invaild", "BoardAttendRatio", prob.RuleCfg.BoardAttendRatio, "BoardApproveRatio",
 			prob.RuleCfg.BoardApproveRatio, "PubOpposeRatio", prob.RuleCfg.PubOpposeRatio)
 		return nil, types.ErrInvalidParam
@@ -152,15 +167,33 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 		return nil, err
 	}
 
+	// 挖矿地址验证
+	if len(voteProb.OriginAddr) > 0 {
+		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
+		if err != nil {
+			alog.Error("votePropRule ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",
+				voteProb.ProposalID, "err", err)
+			return nil, err
+		}
+	}
+
+	// 本次参与投票地址
+	var addrs []string
+	if len(voteProb.OriginAddr) == 0 {
+		addrs = append(addrs, a.fromaddr)
+	} else {
+		addrs = append(addrs, voteProb.OriginAddr...)
+	}
+
 	// 检查是否已经参与投票
-	votes, err := a.checkVotesRecord(votesRecord(voteProb.ProposalID))
+	votes, err := a.checkVotesRecord(addrs, votesRecord(voteProb.ProposalID))
 	if err != nil {
 		alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	// 更新投票记录
-	votes.Address = append(votes.Address, a.fromaddr)
+	votes.Address = append(votes.Address, addrs...)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
 		vtCouts, err := a.getTotalVotes(start)
@@ -171,8 +204,10 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	}
 
 	// 获取可投票数
-	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
+	vtCouts, err := a.batchGetAddressVotes(addrs, start)
 	if err != nil {
+		alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "batchGetAddressVotes failed",
+			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	if voteProb.Approve {
