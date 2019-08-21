@@ -44,7 +44,7 @@ vet:
 	@go vet ${PKG_LIST_VET}
 
 autotest: ## build autotest binary
-	@cd build/autotest && bash ./build.sh && cd ../../
+	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
 	@if [ -n "$(dapp)" ]; then \
 		rm -rf build/autotest/local \
 		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
