@@ -266,7 +266,7 @@ func BenchmarkMemSet(b *testing.B) {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
 		keys = append(keys, []byte(key))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -298,8 +298,8 @@ func BenchmarkCommit(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
