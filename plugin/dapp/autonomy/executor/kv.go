@@ -70,3 +70,12 @@ func calcCommentHeight(ID, heightindex string) []byte {
 	key := fmt.Sprintf(localCommentPrefix+"%s-"+"%s", ID, heightindex)
 	return []byte(key)
 }
+
+var (
+	// change
+	changePrefix = idPrefix + "change" + "-"
+)
+
+func propChangeID(txHash string) []byte {
+	return []byte(fmt.Sprintf("%s%s", changePrefix, txHash))
+}

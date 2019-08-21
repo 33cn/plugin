@@ -29,15 +29,14 @@ const (
 
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardAttendRatio < minBoardAttendRatio && prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio &&
-		prob.RuleCfg.PubOpposeRatio <= minPubOpposeRatio && prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 &&
-		prob.RuleCfg.PublicPeriod <= 0 {
+	if prob.RuleCfg == nil || prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio && prob.RuleCfg.PubOpposeRatio <= minPubOpposeRatio &&
+		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0 {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
-	if prob.RuleCfg.BoardAttendRatio > MaxBoardAttendRatio || prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio {
-		alog.Error("propRule RuleCfg invaild", "BoardAttendRatio", prob.RuleCfg.BoardAttendRatio, "BoardApproveRatio",
-			prob.RuleCfg.BoardApproveRatio, "PubOpposeRatio", prob.RuleCfg.PubOpposeRatio)
+	if prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio {
+		alog.Error("propRule RuleCfg invaild",  "BoardApproveRatio", prob.RuleCfg.BoardApproveRatio,
+			"PubOpposeRatio", prob.RuleCfg.PubOpposeRatio)
 		return nil, types.ErrInvalidParam
 	}
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
@@ -431,9 +430,6 @@ func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
 		return nil
 	}
 	new := *cur
-	if modify.BoardAttendRatio > 0 {
-		new.BoardAttendRatio = modify.BoardAttendRatio
-	}
 	if modify.BoardApproveRatio > 0 {
 		new.BoardApproveRatio = modify.BoardApproveRatio
 	}

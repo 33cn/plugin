@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	maxBoardPeriodAmount = types.Coin * 10000 * 300  // 每个时期董事会审批最大额度200万
+	maxBoardPeriodAmount = types.Coin * 10000 * 300  // 每个时期董事会审批最大额度300万
 	boardPeriod          = 17280 * 30 * 1            // 时期为一个月
 )
 
@@ -242,9 +242,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
 	}
@@ -447,16 +445,14 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
 	}
 
 	if cur.PubVote.Publicity {
-		if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计总票数
+		if cur.PubVote.TotalVotes == 0 { //需要统计总票数
 			vtCouts, err := a.getTotalVotes(start)
 			if err != nil {
 				return nil, err

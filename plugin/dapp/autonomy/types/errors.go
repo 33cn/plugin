@@ -29,4 +29,8 @@ var (
 	ErrMinerAddr = errors.New("ErrMinerAddr")
 	// ErrBindAddr 无效绑定地址
 	ErrBindAddr = errors.New("ErrBindAddr")
+	// ErrChangeBoardAddr 无效修改董事会成员地址
+	ErrChangeBoardAddr = errors.New("ErrChangeBoardAddr")
+	// ErrBoardNumber 董事会成员数错误
+	ErrBoardNumber = errors.New("ErrBoardNumber")
 )

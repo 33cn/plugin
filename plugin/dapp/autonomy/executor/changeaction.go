@@ -29,6 +29,13 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
 		return nil, err
 	}
+	// 检查是否符合提案修改
+	new, err := a.checkChangeable(act, prob.Changes)
+	if err != nil {
+		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkChangeable failed", err)
+		return nil, err
+	}
+
 	// 获取当前生效提案规则,并且将不修改的规则补齐
 	rule, err := a.getActiveRule()
 	if err != nil {
@@ -51,7 +58,8 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	cur := &auty.AutonomyProposalChange{
 		PropChange:   prob,
 		CurRule:    rule,
-		VoteResult: &auty.VoteResult{},
+		Board:      new,
+		VoteResult: &auty.VoteResult{TotalVotes:int32(len(act.Boards))},
 		Status:     auty.AutonomyStatusProposalChange,
 		Address:    a.fromaddr,
 		Height:     a.height,
@@ -104,9 +112,9 @@ func (a *action) rvkPropChange(rvkProb *auty.RevokeProposalChange) (*types.Recei
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurChange.ProposalAmount)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurChange.ProposalAmount, "err", err)
+		alog.Error("rvkPropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -160,14 +168,6 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 	// 更新投票记录
 	votes.Address = append(votes.Address, a.fromaddr)
 
-	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		vtCouts, err := a.getTotalVotes(start)
-		if err != nil {
-			return nil, err
-		}
-		cur.VoteResult.TotalVotes = vtCouts
-	}
-
 	// 获取可投票数
 	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
 	if err != nil {
@@ -184,7 +184,7 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	// 首次进入投票期,即将提案金转入自治系统地址
 	if cur.Status == auty.AutonomyStatusProposalChange {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurChange.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropChange ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -194,9 +194,7 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 	}
 
 	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 		cur.PropChange.RealEndBlockHeight = a.height
 	}
@@ -211,10 +209,9 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 	// 更新VotesRecord
 	kv = append(kv, &types.KeyValue{Key: votesRecord(voteProb.ProposalID), Value: types.Encode(votes)})
 
-	// 更新系统规则
+	// 更新activeBoard
 	if cur.VoteResult.Pass {
-		upChange := upgradeChange(cur.CurChange, cur.PropChange.ChangeCfg)
-		kv = append(kv, &types.KeyValue{Key: activeChangeID(), Value: types.Encode(upChange)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
 
 	ty := auty.TyLogVotePropChange
@@ -246,7 +243,6 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 		return nil, err
 	}
 
-	start := cur.GetPropChange().StartBlockHeight
 	end := cur.GetPropChange().EndBlockHeight
 	if a.height < end && !cur.VoteResult.Pass {
 		err := auty.ErrTerminatePeriod
@@ -255,16 +251,8 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 		return nil, err
 	}
 
-	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
-		vtCouts, err := a.getTotalVotes(start)
-		if err != nil {
-			return nil, err
-		}
-		cur.VoteResult.TotalVotes = vtCouts
-	}
-
-	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+	if cur.VoteResult.TotalVotes != 0 &&
+		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.VoteResult.Pass = true
 	} else {
 		cur.VoteResult.Pass = false
@@ -276,7 +264,7 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 
 	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
 	if cur.Status == auty.AutonomyStatusProposalChange {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurChange.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -292,8 +280,7 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 
 	// 更新系统规则
 	if cur.VoteResult.Pass {
-		upChange := upgradeChange(cur.CurChange, cur.PropChange.ChangeCfg)
-		kv = append(kv, &types.KeyValue{Key: activeChangeID(), Value: types.Encode(upChange)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
 	receiptLog := getChangeReceiptLog(pre, cur, auty.TyLogTmintPropChange)
 	logs = append(logs, receiptLog)
@@ -314,6 +301,48 @@ func (a *action) getProposalChange(ID string) (*auty.AutonomyProposalChange, err
 	return cur, nil
 }
 
+func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (*auty.ActiveBoard, error) {
+	mpBd := make(map[string]struct{})
+	mpRbd := make(map[string]struct{})
+	for _, b := range act.Boards {
+		mpBd[b] = struct{}{}
+	}
+	for _, b := range act.Revboards {
+		mpRbd[b] = struct{}{}
+	}
+	for _, ch := range change {
+		if ch.Cancel {
+			if _, ok := mpBd[ch.Addr]; !ok {
+				return nil, auty.ErrChangeBoardAddr
+			}
+			// 将删除的加入对端
+			delete(mpBd, ch.Addr)
+			mpRbd[ch.Addr] = struct{}{}
+		} else {
+			if _, ok := mpRbd[ch.Addr]; !ok {
+				return nil, auty.ErrChangeBoardAddr
+			}
+			// 将删除的加入对端
+			delete(mpRbd, ch.Addr)
+			mpBd[ch.Addr] = struct{}{}
+		}
+	}
+	if len(mpBd) > maxBoards || len(mpBd) < minBoards {
+		return nil, auty.ErrBoardNumber
+	}
+	new := &auty.ActiveBoard{
+		Amount: act.Amount,
+		StartHeight: act.StartHeight,
+	}
+	for k := range mpBd {
+		new.Boards = append(new.Boards, k)
+	}
+	for k := range mpRbd {
+		new.Revboards = append(new.Revboards, k)
+	}
+	return new, nil
+}
+
 // getReceiptLog 根据提案信息获取log
 // 状态变化：
 func getChangeReceiptLog(pre, cur *auty.AutonomyProposalChange, ty int32) *types.ReceiptLog {
@@ -332,44 +361,25 @@ func copyAutonomyProposalChange(cur *auty.AutonomyProposalChange) *auty.Autonomy
 	if cur.PropChange != nil {
 		newPropChange := *cur.GetPropChange()
 		newAut.PropChange = &newPropChange
-		if cur.PropChange.ChangeCfg != nil {
-			cfg := *cur.GetPropChange().GetChangeCfg()
-			newAut.PropChange.ChangeCfg = &cfg
+		if cur.PropChange.Changes != nil {
+			chs := cur.GetPropChange().GetChanges()
+			for _, ch := range chs {
+				newch := *ch
+				newAut.PropChange.Changes = append(newAut.PropChange.Changes, &newch)
+			}
 		}
 	}
-	if cur.CurChange != nil {
-		newChange := *cur.GetCurChange()
-		newAut.CurChange = &newChange
+	if cur.CurRule != nil {
+		newChange := *cur.GetCurRule()
+		newAut.CurRule = &newChange
+	}
+	if cur.Board != nil {
+		newBoard := *cur.GetBoard()
+		newAut.Board = &newBoard
 	}
 	if cur.VoteResult != nil {
 		newRes := *cur.GetVoteResult()
 		newAut.VoteResult = &newRes
 	}
 	return &newAut
-}
-
-func upgradeChange(cur, modify *auty.ChangeConfig) *auty.ChangeConfig {
-	if cur == nil || modify == nil {
-		return nil
-	}
-	new := *cur
-	if modify.BoardAttendRatio > 0 {
-		new.BoardAttendRatio = modify.BoardAttendRatio
-	}
-	if modify.BoardApproveRatio > 0 {
-		new.BoardApproveRatio = modify.BoardApproveRatio
-	}
-	if modify.PubOpposeRatio > 0 {
-		new.PubOpposeRatio = modify.PubOpposeRatio
-	}
-	if modify.ProposalAmount > 0 {
-		new.ProposalAmount = modify.ProposalAmount
-	}
-	if modify.LargeProjectAmount > 0 {
-		new.LargeProjectAmount = modify.LargeProjectAmount
-	}
-	if modify.PublicPeriod > 0 {
-		new.PublicPeriod = modify.PublicPeriod
-	}
-	return &new
 }

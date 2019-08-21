@@ -14,7 +14,6 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
 	"github.com/33cn/chain33/common/address"
-	"syscall"
 	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
@@ -464,7 +463,6 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 			return nil, err
 		}
 	} else { // 载入系统默认值
-		rule.BoardAttendRatio = boardAttendRatio
 		rule.BoardApproveRatio = boardApproveRatio
 		rule.PubOpposeRatio = pubOpposeRatio
 		rule.ProposalAmount = proposalAmount
