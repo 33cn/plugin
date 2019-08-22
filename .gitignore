@@ -26,7 +26,12 @@ build/para.sh
 build/system-test-rpc.sh
 build/ci
 build/autotest/*
+!build/autotest/copy-autotest.sh
 !build/autotest/build.sh
+!build/autotest/local/local-autotest.sh
+!build/autotest/jerkinsci/*.yml
+!build/autotest/jerkinsci/*.sh
+!build/autotest/jerkinsci/Dockerfile-autotest
 .DS_Store
 logs/
 build/wallet
