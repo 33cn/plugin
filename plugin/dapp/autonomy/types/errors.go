@@ -33,4 +33,6 @@ var (
 	ErrChangeBoardAddr = errors.New("ErrChangeBoardAddr")
 	// ErrBoardNumber 董事会成员数错误
 	ErrBoardNumber = errors.New("ErrBoardNumber")
+	// ErrRepeatAddr 重复地址
+	ErrRepeatAddr = errors.New("ErrRepeatAddr")
 )

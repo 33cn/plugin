@@ -317,8 +317,14 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		return nil, err
 	}
 
-	// 挖矿地址验证
 	if len(voteProb.OriginAddr) > 0 {
+		for _, board := range voteProb.OriginAddr {
+			if err := address.CheckAddress(board); err != nil {
+				alog.Error("pubVotePropProject ", "addr", board, "check toAddr error", err)
+				return nil, types.ErrInvalidAddress
+			}
+		}
+		// 挖矿地址验证
 		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
 		if err != nil {
 			alog.Error("pubVotePropProject ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",

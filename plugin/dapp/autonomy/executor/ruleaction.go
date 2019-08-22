@@ -10,6 +10,7 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
 	"github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/common/address"
 )
 
 const (
@@ -178,8 +179,14 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 		return nil, err
 	}
 
-	// 挖矿地址验证
 	if len(voteProb.OriginAddr) > 0 {
+		for _, board := range voteProb.OriginAddr {
+			if err := address.CheckAddress(board); err != nil {
+				alog.Error("votePropRule ", "addr", board, "check toAddr error", err)
+				return nil, types.ErrInvalidAddress
+			}
+		}
+		// 挖矿地址验证
 		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
 		if err != nil {
 			alog.Error("votePropRule ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",

@@ -62,11 +62,19 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
+	mpBd := make(map[string]struct{})
 	for _, board := range prob.Boards {
 		if err := address.CheckAddress(board); err != nil {
 			alog.Error("propBoard ", "addr", board, "check toAddr error", err)
 			return nil, types.ErrInvalidAddress
 		}
+		// 提案board重复地址去重复
+		if _, ok := mpBd[board]; ok {
+			err := auty.ErrRepeatAddr
+			alog.Error("propBoard ", "addr", board, "propBoard have repeat addr ", err)
+			return nil, err
+		}
+		mpBd[board] = struct{}{}
 	}
 
 	// 获取当前生效提案规则
@@ -188,8 +196,14 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		return nil, err
 	}
 
-	// 挖矿地址验证
 	if len(voteProb.OriginAddr) > 0 {
+		for _, board := range voteProb.OriginAddr {
+			if err := address.CheckAddress(board); err != nil {
+				alog.Error("votePropBoard ", "addr", board, "check toAddr error", err)
+				return nil, types.ErrInvalidAddress
+			}
+		}
+		// 挖矿地址验证
 		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
 		if err != nil {
 			alog.Error("votePropBoard ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",

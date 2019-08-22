@@ -36,22 +36,15 @@ const (
 
 func InitBoard(stateDB dbm.KV) {
 	// add active board
-	board := &auty.ProposalBoard{
-		Year:               2019,
-		Month:              11,
-		Day:                1,
-		Boards:             []string{AddrA, AddrB, AddrC, AddrD},
-		StartBlockHeight:   1,
-		EndBlockHeight:     10,
-		RealEndBlockHeight: 5,
+	act := &auty.ActiveBoard{
+		Boards: boards,
 	}
-	stateDB.Set(activeBoardID(), types.Encode(board))
+	stateDB.Set(activeBoardID(), types.Encode(act))
 }
 
 func InitRule(stateDB dbm.KV) {
 	// add active rule
 	rule := &auty.RuleConfig{
-		BoardAttendRatio:   boardAttendRatio,
 		BoardApproveRatio:  boardApproveRatio,
 		PubOpposeRatio:     pubOpposeRatio,
 		ProposalAmount:     proposalAmount,
@@ -317,10 +310,21 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		appr bool
 	}
 	records := []record{
-		{PrivKeyA, false},
+		{PrivKeyA, true},
 		{PrivKeyB, true},
 		{PrivKeyC, true},
-		//{PrivKeyD, true},
+		{PrivKeyD, true},
+
+		{PrivKey1, true},
+		{PrivKey2, true},
+		{PrivKey3, true},
+		{PrivKey4, true},
+		{PrivKey5, true},
+		{PrivKey6, true},
+		{PrivKey7, true},
+		{PrivKey8, true},
+		{PrivKey9, true},
+		{PrivKey10, true},
 	}
 
 	for _, record := range records {
@@ -590,7 +594,7 @@ func terminateProposalProjectTx(parm *auty.TerminateProposalProject) (*types.Tra
 func TestGetProjectReceiptLog(t *testing.T) {
 	pre := &auty.AutonomyProposalProject{
 		PropProject:  &auty.ProposalProject{Year: 1800, Month: 1},
-		CurRule:      &auty.RuleConfig{BoardAttendRatio: 80},
+		CurRule:      &auty.RuleConfig{BoardApproveRatio: 80},
 		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
 		Status:       1,
@@ -598,7 +602,7 @@ func TestGetProjectReceiptLog(t *testing.T) {
 	}
 	cur := &auty.AutonomyProposalProject{
 		PropProject:  &auty.ProposalProject{Year: 1900, Month: 1},
-		CurRule:      &auty.RuleConfig{BoardAttendRatio: 90},
+		CurRule:      &auty.RuleConfig{BoardApproveRatio: 90},
 		Boards:       []string{"555", "666", "777"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
 		Status:       2,
@@ -611,8 +615,8 @@ func TestGetProjectReceiptLog(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int32(1800), recpt.Prev.PropProject.Year)
 	require.Equal(t, int32(1900), recpt.Current.PropProject.Year)
-	require.Equal(t, int32(80), recpt.Prev.CurRule.BoardAttendRatio)
-	require.Equal(t, int32(90), recpt.Current.CurRule.BoardAttendRatio)
+	require.Equal(t, int32(80), recpt.Prev.CurRule.BoardApproveRatio)
+	require.Equal(t, int32(90), recpt.Current.CurRule.BoardApproveRatio)
 	require.Equal(t, []string{"111", "222", "333"}, recpt.Prev.Boards)
 	require.Equal(t, []string{"555", "666", "777"}, recpt.Current.Boards)
 }
@@ -621,7 +625,7 @@ func TestCopyAutonomyProposalProject(t *testing.T) {
 	require.Nil(t, copyAutonomyProposalProject(nil))
 	cur := &auty.AutonomyProposalProject{
 		PropProject:  &auty.ProposalProject{Year: 1800, Month: 1},
-		CurRule:      &auty.RuleConfig{BoardAttendRatio: 80},
+		CurRule:      &auty.RuleConfig{BoardApproveRatio: 80},
 		Boards:       []string{"111", "222", "333"},
 		BoardVoteRes: &auty.VoteResult{TotalVotes: 100},
 		PubVote:      &auty.PublicVote{Publicity: true},
@@ -631,7 +635,7 @@ func TestCopyAutonomyProposalProject(t *testing.T) {
 	pre := copyAutonomyProposalProject(cur)
 	cur.PropProject.Year = 1900
 	cur.PropProject.Month = 2
-	cur.CurRule.BoardAttendRatio = 90
+	cur.CurRule.BoardApproveRatio = 90
 	cur.Boards = []string{"555", "666", "777"}
 	cur.BoardVoteRes.TotalVotes = 90
 	cur.PubVote.Publicity = false
@@ -641,7 +645,7 @@ func TestCopyAutonomyProposalProject(t *testing.T) {
 	require.Equal(t, 1800, int(pre.PropProject.Year))
 	require.Equal(t, 1, int(pre.PropProject.Month))
 	require.Equal(t, []string{"111", "222", "333"}, pre.Boards)
-	require.Equal(t, 80, int(pre.CurRule.BoardAttendRatio))
+	require.Equal(t, 80, int(pre.CurRule.BoardApproveRatio))
 	require.Equal(t, "123", pre.Address)
 	require.Equal(t, 2, int(pre.Status))
 	require.Equal(t, 100, int(pre.BoardVoteRes.TotalVotes))

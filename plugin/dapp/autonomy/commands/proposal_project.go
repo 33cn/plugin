@@ -201,7 +201,7 @@ func PubVoteProposalProjectCmd() *cobra.Command {
 func addPubVoteProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().Int32P("oppose", "o", 1, "is oppose, default true")
+	cmd.Flags().Int32P("oppose", "s", 1, "is oppose, default true")
 	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
