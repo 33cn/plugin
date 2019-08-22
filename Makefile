@@ -10,7 +10,7 @@ SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
-CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
+export CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
 BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
@@ -46,13 +46,15 @@ vet:
 autotest: ## build autotest binary
 	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
 	@if [ -n "$(dapp)" ]; then \
-		rm -rf build/autotest/local \
-		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
-		&& cd build/autotest && bash ./copy-autotest.sh local && cd local && bash ./local-autotest.sh $(dapp) && cd ../../../; fi
+#		&& rm -rf build/autotest/local \
+#		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest \
+	    cd build/autotest && chmod 755 local && bash ./copy-autotest.sh local \
+	    && cd local && chmod 640 *.toml && bash ./local-autotest.sh $(dapp) \
+	    && cd ../../../; fi
 autotest_ci: autotest ## autotest ci
-	@rm -rf build/autotest/jerkinsci \
-	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
-	&& cd build/autotest && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
+#	@rm -rf build/autotest/jerkinsci \
+#	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
+	cd build/autotest && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
 	&& cd jerkinsci && bash ./jerkins-ci-autotest.sh $(proj) && cd ../../../
 autotest_tick: autotest ## run with ticket mining
 	@rm -rf build/autotest/gitlabci \

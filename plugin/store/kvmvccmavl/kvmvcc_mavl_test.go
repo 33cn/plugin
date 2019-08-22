@@ -173,8 +173,8 @@ func TestKvmvccMavlCommit(t *testing.T) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -623,8 +623,8 @@ func TestPruning(t *testing.T) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -796,8 +796,8 @@ func benchmarkGet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -853,8 +853,8 @@ func benchmarkStoreGetKvs4N(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < kvnum; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -907,8 +907,8 @@ func benchmarkStoreGetKvsForNN(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -977,8 +977,8 @@ func benchmarkStoreGetKvsFor10000(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1050,8 +1050,8 @@ func benchmarkGetIter(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -1105,8 +1105,8 @@ func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -1152,8 +1152,8 @@ func benchmarkStoreSet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1197,8 +1197,8 @@ func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key := GetRandomString(MaxKeylenth)
 		value := fmt.Sprintf("%s%d", key, i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 		if i%10000 == 0 {
 			datas := &types.StoreSet{StateHash: hash, KV: kv, Height: 0}
 			hash, err = store.Set(datas, true)
@@ -1244,8 +1244,8 @@ func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1288,8 +1288,8 @@ func benchmarkStoreMemSet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < 30; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1335,8 +1335,8 @@ func benchmarkCommit(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1440,8 +1440,8 @@ func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
@@ -1483,8 +1483,8 @@ func benchmarkIterCommit(b *testing.B, isResetForkHeight bool) {
 	for i := 0; i < b.N; i++ {
 		key = GetRandomString(MaxKeylenth)
 		value = fmt.Sprintf("v%d", i)
-		keys = append(keys, []byte(string(key)))
-		kv = append(kv, &types.KeyValue{Key: []byte(string(key)), Value: []byte(string(value))})
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
 	}
 	datas := &types.StoreSet{
 		StateHash: drivers.EmptyRoot[:],
