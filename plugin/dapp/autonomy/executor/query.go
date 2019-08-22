@@ -43,3 +43,13 @@ func (a *Autonomy) Query_ListProposalRule(in *auty.ReqQueryProposalRule) (types.
 func (a *Autonomy) Query_ListProposalComment(in *auty.ReqQueryProposalComment) (types.Message, error) {
 	return a.listProposalComment(in)
 }
+
+// Query_GetProposalChange 查询提案修改董事会成员
+func (a *Autonomy) Query_GetProposalChange(in *types.ReqString) (types.Message, error) {
+	return a.getProposalChange(in)
+}
+
+// Query_ListProposalChange 批量查询
+func (a *Autonomy) Query_ListProposalChange(in *auty.ReqQueryProposalChange) (types.Message, error) {
+	return a.listProposalChange(in)
+}

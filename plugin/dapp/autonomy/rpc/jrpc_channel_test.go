@@ -61,6 +61,13 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testTransferFundTxCmd},
 		{fn: testCommentProposalTxCmd},
 		{fn: testListProposalCommentCmd},
+
+		{fn: testPropChangeTxCmd},
+		{fn: testRevokeProposalChangeTxCmd},
+		{fn: testVoteProposalChangeTxCmd},
+		{fn: testTerminateProposalChangeTxCmd},
+		{fn: testGetProposalChangeCmd},
+		{fn: testListProposalChangeCmd},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)

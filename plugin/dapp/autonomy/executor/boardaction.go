@@ -24,7 +24,7 @@ const (
 	publicPeriod       int32 = 17280 * 7                // 公示一周时间，以区块高度计算
 	ticketPrice              = types.Coin * 3000        // 单张票价
 	largeProjectAmount       = types.Coin * 100 * 10000 // 重大项目公示金额阈值
-	proposalAmount           = types.Coin * 1000        // 创建者消耗金额
+	proposalAmount           = types.Coin * 500         // 创建者消耗金额
 	boardApproveRatio  int32 = 66                       // 董事会成员赞成率，以%计，可修改
 	pubAttendRatio     int32 = 75                       // 全体持票人参与率，以%计
 	pubApproveRatio    int32 = 66                       // 全体持票人赞成率，以%计

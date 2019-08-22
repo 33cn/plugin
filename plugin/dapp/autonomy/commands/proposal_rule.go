@@ -53,7 +53,6 @@ func proposalRule(cmd *cobra.Command, args []string) {
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
 
-	boardAttendRatio, _ := cmd.Flags().GetInt32("boardAttendRatio")
 	boardApproveRatio, _ := cmd.Flags().GetInt32("boardApproveRatio")
 	pubOpposeRatio, _ := cmd.Flags().GetInt32("pubOpposeRatio")
 
@@ -66,7 +65,6 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		Month: month,
 		Day:   day,
 		RuleCfg: &auty.RuleConfig{
-			BoardAttendRatio:   boardAttendRatio,
 			BoardApproveRatio:  boardApproveRatio,
 			PubOpposeRatio:     pubOpposeRatio,
 			ProposalAmount:     proposalAmount * types.Coin,

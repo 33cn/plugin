@@ -84,3 +84,26 @@ func (a *Autonomy) ExecLocal_TmintPropRule(payload *auty.TerminateProposalRule, 
 func (a *Autonomy) ExecLocal_CommentProp(payload *auty.Comment, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return a.execAutoLocalCommentProp(tx, receiptData)
 }
+
+
+// 提案修改董事会成员相关
+
+// ExecLocal_PropChange 创建提案规则
+func (a *Autonomy) ExecLocal_PropChange(payload *auty.ProposalChange, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execAutoLocalChange(tx, receiptData)
+}
+
+// ExecLocal_RvkPropChange 撤销提案规则
+func (a *Autonomy) ExecLocal_RvkPropChange(payload *auty.RevokeProposalChange, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execAutoLocalChange(tx, receiptData)
+}
+
+// ExecLocal_VotePropChange 投票提案规则
+func (a *Autonomy) ExecLocal_VotePropChange(payload *auty.VoteProposalChange, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execAutoLocalChange(tx, receiptData)
+}
+
+// ExecLocal_TmintPropChange 终止提案规则
+func (a *Autonomy) ExecLocal_TmintPropChange(payload *auty.TerminateProposalChange, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return a.execAutoLocalChange(tx, receiptData)
+}

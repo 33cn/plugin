@@ -107,6 +107,8 @@ const (
 	ListProposalComment = "ListProposalComment"
 	// GetProposalChange 用于在cmd里面的区分不同的查询
 	GetProposalChange = "GetProposalChange"
+	// ListProposalChange 查询多个
+	ListProposalChange = "ListProposalChange"
 )
 
 //包的名字可以通过配置文件来配置

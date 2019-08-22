@@ -104,3 +104,30 @@ func (a *Autonomy) Exec_CommentProp(payload *auty.Comment, tx *types.Transaction
 	action := newAction(a, tx, int32(index))
 	return action.commentProp(payload)
 }
+
+
+// 提案修改董事会成员相关
+
+// Exec_PropChange 创建提案规则
+func (a *Autonomy) Exec_PropChange(payload *auty.ProposalChange, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.propChange(payload)
+}
+
+// Exec_RvkPropChange 撤销提案规则
+func (a *Autonomy) Exec_RvkPropChange(payload *auty.RevokeProposalChange, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.rvkPropChange(payload)
+}
+
+// Exec_VotePropChange 投票提案规则
+func (a *Autonomy) Exec_VotePropChange(payload *auty.VoteProposalChange, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.votePropChange(payload)
+}
+
+// Exec_TmintPropChange 终止提案规则
+func (a *Autonomy) Exec_TmintPropChange(payload *auty.TerminateProposalChange, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(a, tx, int32(index))
+	return action.tmintPropChange(payload)
+}
