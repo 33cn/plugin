@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	maxBoardPeriodAmount = types.Coin * 10000 * 300  // 每个时期董事会审批最大额度300万
-	boardPeriod          = 17280 * 30 * 1            // 时期为一个月
+	maxBoardPeriodAmount = types.Coin * 10000 * 300 // 每个时期董事会审批最大额度300万
+	boardPeriod          = 17280 * 30 * 1           // 时期为一个月
 )
 
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
@@ -37,10 +37,10 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 	// 检查是否可以对已审批额度归0,如果可以则设置kv
 	var kva *types.KeyValue
-	if a.height > pboard.StartHeight + boardPeriod  {
+	if a.height > pboard.StartHeight+boardPeriod {
 		pboard.StartHeight = a.height
 		pboard.Amount = 0
-		kva = &types.KeyValue{Key:activeBoardID(), Value:types.Encode(pboard)}
+		kva = &types.KeyValue{Key: activeBoardID(), Value: types.Encode(pboard)}
 	}
 	// 检查额度
 	pass := a.checkPeriodAmount(pboard, prob.Amount)
@@ -593,7 +593,7 @@ func (a *action) checkPeriodAmount(act *auty.ActiveBoard, amount int64) bool {
 	if act == nil {
 		return false
 	}
-	if act.Amount + amount >= maxBoardPeriodAmount {
+	if act.Amount+amount >= maxBoardPeriodAmount {
 		return false
 	}
 	return true
@@ -604,10 +604,10 @@ func (a *action) updatePeriodAmount(amount int64) (*types.KeyValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	if a.height > act.StartHeight + boardPeriod  {
+	if a.height > act.StartHeight+boardPeriod {
 		act.StartHeight = a.height
 		act.Amount = 0
 	}
 	act.Amount += amount
-	return &types.KeyValue{Key:activeBoardID(), Value:types.Encode(act)}, nil
+	return &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)}, nil
 }

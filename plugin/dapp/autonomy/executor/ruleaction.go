@@ -9,8 +9,8 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
-	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/dapp"
 )
 
 const (
@@ -19,37 +19,36 @@ const (
 	// 最大董事会赞成率
 	maxBoardApproveRatio = 66
 	// 最小全体持票人否决率
-	minPubOpposeRatio    = 33
+	minPubOpposeRatio = 33
 	// 最大全体持票人否决率
-	maxPubOpposeRatio    = 50
+	maxPubOpposeRatio = 50
 	// 最小公示周期
-	minPublicPeriod    int32 = 17280 * 7
+	minPublicPeriod int32 = 17280 * 7
 	// 最大公示周期
-	maxPublicPeriod    int32 = 17280 * 14
+	maxPublicPeriod int32 = 17280 * 14
 	// 最小重大项目阈值
 	minLargeProjectAmount = types.Coin * 100 * 10000
 	// 最大重大项目阈值
 	maxLargeProjectAmount = types.Coin * 300 * 10000
 	// 最小提案金
-	minProposalAmount     = types.Coin * 20
+	minProposalAmount = types.Coin * 20
 	// 最大提案金
-	maxProposalAmount     = types.Coin * 2000
-
+	maxProposalAmount = types.Coin * 2000
 )
 
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
 	if prob.RuleCfg == nil || prob.RuleCfg.BoardApproveRatio <= 0 && prob.RuleCfg.PubOpposeRatio <= 0 &&
-		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0{
+		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0 {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
 	if prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio ||
 		prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio || prob.RuleCfg.PubOpposeRatio < minPubOpposeRatio ||
-		prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod  ||
+		prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod ||
 		prob.RuleCfg.LargeProjectAmount > maxLargeProjectAmount || prob.RuleCfg.LargeProjectAmount < minLargeProjectAmount ||
-		prob.RuleCfg.ProposalAmount > maxProposalAmount || prob.RuleCfg.ProposalAmount < minProposalAmount{
-		alog.Error("propRule RuleCfg invaild",  "ruleCfg", prob.RuleCfg)
+		prob.RuleCfg.ProposalAmount > maxProposalAmount || prob.RuleCfg.ProposalAmount < minProposalAmount {
+		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {

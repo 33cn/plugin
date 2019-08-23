@@ -47,7 +47,7 @@ const (
 	TyLogVotePropRule  = 2123
 	TyLogTmintPropRule = 2124
 
-	TyLogCommentProp   = 2131
+	TyLogCommentProp = 2131
 
 	TyLogPropChange      = 2141
 	TyLogRvkPropChange   = 2142
@@ -87,8 +87,6 @@ const (
 	AutonomyStatusVotePropChange
 	AutonomyStatusTmintPropChange
 )
-
-
 
 const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询

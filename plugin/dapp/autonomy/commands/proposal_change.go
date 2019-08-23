@@ -58,14 +58,14 @@ func proposalChange(cmd *cobra.Command, args []string) {
 		if len(per) == 2 {
 			if per[1] == "true" {
 				change := &auty.Change{
-					Cancel:true,
-					Addr:per[0],
+					Cancel: true,
+					Addr:   per[0],
 				}
 				changes = append(changes, change)
 			} else if per[1] == "false" {
 				change := &auty.Change{
-					Cancel:false,
-					Addr:per[0],
+					Cancel: false,
+					Addr:   per[0],
 				}
 				changes = append(changes, change)
 			}
@@ -75,7 +75,7 @@ func proposalChange(cmd *cobra.Command, args []string) {
 		Year:             year,
 		Month:            month,
 		Day:              day,
-		Changes:           changes,
+		Changes:          changes,
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,
 	}

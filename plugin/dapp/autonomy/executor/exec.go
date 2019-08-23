@@ -105,7 +105,6 @@ func (a *Autonomy) Exec_CommentProp(payload *auty.Comment, tx *types.Transaction
 	return action.commentProp(payload)
 }
 
-
 // 提案修改董事会成员相关
 
 // Exec_PropChange 创建提案规则

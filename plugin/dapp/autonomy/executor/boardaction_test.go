@@ -20,10 +20,10 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
+	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
 )
 
 // ExecEnv exec environment
@@ -47,16 +47,43 @@ var (
 	AddrC    = "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
 	AddrD    = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
 
-	PrivKey1 = "0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
-	PrivKey2 = "0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5"
-	PrivKey3 = "0xc21d38be90493512a5c2417d565269a8b23ce8152010e404ff4f75efead8183a"
-	PrivKey4 = "0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0"
-	PrivKey5 = "0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d"
-	PrivKey6 = "0xf2cc48d30560e4c92e84821df68cf1086de82ee6a5725fc2a590a58d6ffe4fc5"
-	PrivKey7 = "0xeb4738a7c685a7ccf5471c3335a2d7ebe284b11d8a1717d814904b8d1ba936d9"
-	PrivKey8 = "0x9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40"
-	PrivKey9 = "0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1"
+	PrivKey1  = "0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
+	PrivKey2  = "0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5"
+	PrivKey3  = "0xc21d38be90493512a5c2417d565269a8b23ce8152010e404ff4f75efead8183a"
+	PrivKey4  = "0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0"
+	PrivKey5  = "0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d"
+	PrivKey6  = "0xf2cc48d30560e4c92e84821df68cf1086de82ee6a5725fc2a590a58d6ffe4fc5"
+	PrivKey7  = "0xeb4738a7c685a7ccf5471c3335a2d7ebe284b11d8a1717d814904b8d1ba936d9"
+	PrivKey8  = "0x9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40"
+	PrivKey9  = "0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1"
 	PrivKey10 = "0x1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
+
+	Addr1  = "12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
+	Addr2  = "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
+	Addr3  = "12cjnN5D4DPdBQSwh6vjwJbtsW4EJALTMv"
+	Addr4  = "1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH"
+	Addr5  = "1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB"
+	Addr6  = "1L1puAUjfmtDECKo2C1qLWsAMZtDGTBWf6"
+	Addr7  = "1LNf9AVXzUMQkQM5hgGLhkdrVtD8UMBSUm"
+	Addr8  = "1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx"
+	Addr9  = "1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu"
+	Addr10 = "1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
+
+	PrivKey11 = "0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
+	PrivKey12 = "0x4c9691bf6acc908ef5c07abcad23cf7f98e46e84101aa5059322aa53eb4dc471"
+	PrivKey13 = "0x50b9c6a4358ef8ffc96d5831a8dfd5e0fae504d49e20c5eafd12b6015423de33"
+	PrivKey14 = "0x96e3c766850a915fe4718b890d96208d5d1a3694b2597e08165480b5b48b84cb"
+	PrivKey15 = "0xeac5e45243c3920cf8a98f3d3a2e3a9b43f30a21769b57f734213913511e7575"
+	PrivKey16 = "0xd2aaa6f050a4db13fbd2c8bf87cbb96e217289172baca6c12e8a8b0680b9aa1a"
+	PrivKey17 = "0x33b3b977c657435a49773b5605a704ad5fdca0fa34fe36a02ea0f13a49099832"
+
+	Addr11 = "15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
+	Addr12 = "1DyR84CU5AHbGXLEnhHMwMvWNMeunLZsuJ"
+	Addr13 = "132pBvrgSYgHASxzoeL3bqnsqUpaBbUktm"
+	Addr14 = "1DEV4XwdBUWRkMuy4ARRiEAoxQ2LoDByNG"
+	Addr15 = "18Y87cw2hiYC71bvpD872oYMYXtw66Qp6o"
+	Addr16 = "1Fghq6cgdJEDr6gQBmvba3t6aXAkyZyjr2"
+	Addr17 = "142KsfJLvEA5FJxAgKm9ZDtFVjkRaPdu82"
 
 	boards = []string{
 		AddrA,
@@ -64,26 +91,26 @@ var (
 		AddrC,
 		AddrD,
 
-		"12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d",
-		"1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj",
-		"12cjnN5D4DPdBQSwh6vjwJbtsW4EJALTMv",
-		"1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH",
-		"1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB",
-		"1L1puAUjfmtDECKo2C1qLWsAMZtDGTBWf6",
-		"1LNf9AVXzUMQkQM5hgGLhkdrVtD8UMBSUm",
-		"1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx",
-		"1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu",
-		"1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx",
+		Addr1,
+		Addr2,
+		Addr3,
+		Addr4,
+		Addr5,
+		Addr6,
+		Addr7,
+		Addr8,
+		Addr9,
+		Addr10,
 
-		"15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve",
-		"1DyR84CU5AHbGXLEnhHMwMvWNMeunLZsuJ",
-		"132pBvrgSYgHASxzoeL3bqnsqUpaBbUktm",
-		"1DEV4XwdBUWRkMuy4ARRiEAoxQ2LoDByNG",
-		"18Y87cw2hiYC71bvpD872oYMYXtw66Qp6o",
-		"1Fghq6cgdJEDr6gQBmvba3t6aXAkyZyjr2",
-		"142KsfJLvEA5FJxAgKm9ZDtFVjkRaPdu82",
+		Addr11,
+		Addr12,
+		Addr13,
+		Addr14,
+		Addr15,
+		Addr16,
+		Addr17,
 	}
-	total  = types.Coin * 30000
+	total = types.Coin * 30000
 )
 
 func init() {
@@ -547,7 +574,7 @@ func TestVerifyMinerAddr(t *testing.T) {
 	// 授权地址AddrD
 	for _, addr := range addrs {
 		tkBind := &ticketTy.TicketBind{
-			MinerAddress: AddrD,
+			MinerAddress:  AddrD,
 			ReturnAddress: addr,
 		}
 		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
@@ -565,7 +592,7 @@ func TestVerifyMinerAddr(t *testing.T) {
 	// ErrBindAddr
 	testf = "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
 	tkBind := &ticketTy.TicketBind{
-		MinerAddress: AddrA,
+		MinerAddress:  AddrA,
 		ReturnAddress: testf,
 	}
 	stateDB.Set(ticket.BindKey(testf), types.Encode(tkBind))

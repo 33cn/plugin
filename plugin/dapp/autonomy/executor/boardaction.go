@@ -285,7 +285,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
 		act := &auty.ActiveBoard{
-			Boards: cur.PropBoard.Boards,
+			Boards:      cur.PropBoard.Boards,
 			StartHeight: a.height,
 		}
 		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
@@ -365,7 +365,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
 		act := &auty.ActiveBoard{
-			Boards: cur.PropBoard.Boards,
+			Boards:      cur.PropBoard.Boards,
 			StartHeight: a.height,
 		}
 		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
@@ -398,7 +398,7 @@ func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error
 		}
 		tkBind := &ticketTy.TicketBind{}
 		err = types.Decode(value, tkBind)
-		if err != nil ||tkBind.MinerAddress != bindAddr {
+		if err != nil || tkBind.MinerAddress != bindAddr {
 			return addr, auty.ErrBindAddr
 		}
 	}
@@ -503,7 +503,7 @@ func (a *action) checkVotesRecord(addrs []string, key []byte) (*auty.VotesRecord
 	for _, addr := range votes.Address {
 		if _, ok := mp[addr]; ok {
 			err := auty.ErrRepeatVoteAddr
-			alog.Error("autonomy ",  "addr", addr, "err", err)
+			alog.Error("autonomy ", "addr", addr, "err", err)
 			return nil, err
 		}
 	}

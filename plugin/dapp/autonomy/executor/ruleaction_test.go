@@ -23,9 +23,9 @@ import (
 const (
 	testBoardApproveRatio  int32 = 60
 	testPubOpposeRatio     int32 = 35
-	testProposalAmount      = minProposalAmount * 2
-	testLargeProjectAmount  = minLargeProjectAmount * 2
-	testPublicPeriod        = minPublicPeriod
+	testProposalAmount           = minProposalAmount * 2
+	testLargeProjectAmount       = minLargeProjectAmount * 2
+	testPublicPeriod             = minPublicPeriod
 )
 
 func TestRevokeProposalRule(t *testing.T) {

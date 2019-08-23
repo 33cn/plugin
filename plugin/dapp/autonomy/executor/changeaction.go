@@ -8,9 +8,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-
 )
-
 
 func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	//如果全小于等于0,则说明该提案规则参数不正确
@@ -56,10 +54,10 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	kv = append(kv, receipt.KV...)
 
 	cur := &auty.AutonomyProposalChange{
-		PropChange:   prob,
+		PropChange: prob,
 		CurRule:    rule,
 		Board:      new,
-		VoteResult: &auty.VoteResult{TotalVotes:int32(len(act.Boards))},
+		VoteResult: &auty.VoteResult{TotalVotes: int32(len(act.Boards))},
 		Status:     auty.AutonomyStatusProposalChange,
 		Address:    a.fromaddr,
 		Height:     a.height,
@@ -168,15 +166,10 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 	// 更新投票记录
 	votes.Address = append(votes.Address, a.fromaddr)
 
-	// 获取可投票数
-	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
-	if err != nil {
-		return nil, err
-	}
 	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes += vtCouts
+		cur.VoteResult.ApproveVotes++
 	} else {
-		cur.VoteResult.OpposeVotes += vtCouts
+		cur.VoteResult.OpposeVotes++
 	}
 
 	var logs []*types.ReceiptLog
@@ -331,7 +324,7 @@ func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (
 		return nil, auty.ErrBoardNumber
 	}
 	new := &auty.ActiveBoard{
-		Amount: act.Amount,
+		Amount:      act.Amount,
 		StartHeight: act.StartHeight,
 	}
 	for k := range mpBd {
@@ -359,13 +352,14 @@ func copyAutonomyProposalChange(cur *auty.AutonomyProposalChange) *auty.Autonomy
 	}
 	newAut := *cur
 	if cur.PropChange != nil {
-		newPropChange := *cur.GetPropChange()
+		newPropChange := *cur.PropChange
 		newAut.PropChange = &newPropChange
 		if cur.PropChange.Changes != nil {
-			chs := cur.GetPropChange().GetChanges()
-			for _, ch := range chs {
+			newAut.PropChange.Changes = make([]*auty.Change, len(cur.PropChange.Changes))
+			chs := cur.PropChange.Changes
+			for i, ch := range chs {
 				newch := *ch
-				newAut.PropChange.Changes = append(newAut.PropChange.Changes, &newch)
+				newAut.PropChange.Changes[i] = &newch
 			}
 		}
 	}
@@ -375,6 +369,10 @@ func copyAutonomyProposalChange(cur *auty.AutonomyProposalChange) *auty.Autonomy
 	}
 	if cur.Board != nil {
 		newBoard := *cur.GetBoard()
+		newBoard.Boards = make([]string, len(cur.Board.Boards))
+		copy(newBoard.Boards, cur.Board.Boards)
+		newBoard.Revboards = make([]string, len(cur.Board.Revboards))
+		copy(newBoard.Revboards, cur.Board.Revboards)
 		newAut.Board = &newBoard
 	}
 	if cur.VoteResult != nil {

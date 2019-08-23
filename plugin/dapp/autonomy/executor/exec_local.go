@@ -85,7 +85,6 @@ func (a *Autonomy) ExecLocal_CommentProp(payload *auty.Comment, tx *types.Transa
 	return a.execAutoLocalCommentProp(tx, receiptData)
 }
 
-
 // 提案修改董事会成员相关
 
 // ExecLocal_PropChange 创建提案规则
