@@ -27,7 +27,7 @@ InitLog() {
 
 Log() {
     if [ -e ${log_file} ]; then
-        $(touch ${log_file})
+        touch ${log_file}
     fi
     # get current time
     local curtime
@@ -46,35 +46,37 @@ GetInputFile() {
 
 PackageFiles() {
     Log "Begin to package the files: ${file}"
-    $(tar zcf ${package} $file)
+    tar zcf "${package}" "$file"
 }
 
 GetUserNamePasswdAndPath() {
     echo "Which way to get environment? 1) Input 2) Config file"
     read choice
-    if [ ${choice} -eq 1 ]; then
+    if [ "${choice}" -eq 1 ]; then
         echo 'Please input the username, password and path of the destination: (such as "ubuntu 123456 /home/ubuntu/chain33")'
 
         read destInfo
-        username=$(echo ${destInfo} | awk -F ' ' '{print $1}')
-        password=$(echo ${destInfo} | awk -F ' ' '{print $2}')
-        remote_dir=$(echo ${destInfo} | awk -F ' ' '{print $3}')
+        username=$(echo "${destInfo}" | awk -F ' ' '{print $1}')
+        password=$(echo "${destInfo}" | awk -F ' ' '{print $2}')
+        remote_dir=$(echo "${destInfo}" | awk -F ' ' '{print $3}')
 
         echo 'Please input ip list of your destination: (such as "192.168.3.143 192.168.3.144 192.168.3.145 192.168.3.146")'
         read iplist
         index=0
         CreateNewConfigFile
-        for ip in $(echo ${iplist}); do
-            index=$(expr $index + 1)
-            echo "[servers.${index}]" >>${config_file}
-            echo "userName:${username}" >>${config_file}
-            echo "password:${password}" >>${config_file}
-            echo "hostIp:${ip}" >>${config_file}
-            echo "path:${remote_dir}" >>${config_file}
+        for ip in "${iplist}"; do
+            index=$((index + 1))
+            {
+                echo "[servers.${index}]"
+                echo "userName:${username}"
+                echo "password:${password}"
+                echo "hostIp:${ip}"
+                echo "path:${remote_dir}"
+            } >>${config_file}
         done
 
         Log "The dest ip is ${ip} and path is ${remote_dir}"
-    elif [ ${choice} -eq 2 ]; then
+    elif [ "${choice}" -eq 2 ]; then
         ShowConfigInfo
 
         echo "Does the config of destination right?(yes/no)"
@@ -83,7 +85,7 @@ GetUserNamePasswdAndPath() {
             echo "The config file is wrong. You can config it manually."
             return 1
         fi
-    elif [ ${choice} -eq 3 ]; then
+    elif [ "${choice}" -eq 3 ]; then
         echo "Wrong input..."
         return 2
     fi
@@ -96,14 +98,14 @@ SendFileAndDecompressFile() {
 
     for line in $sections; do
         if [[ $line =~ $serverStr ]]; then
-            index=$(echo $line | awk -F '.' '{print $2}' | awk -F ']' '{print$1}')
-            getInfoByIndexAndKey $index "userName"
+            index=$(echo "$line" | awk -F '.' '{print $2}' | awk -F ']' '{print$1}')
+            getInfoByIndexAndKey "$index" "userName"
             username=${info}
-            getInfoByIndexAndKey $index "password"
+            getInfoByIndexAndKey "$index" "password"
             password=${info}
-            getInfoByIndexAndKey $index "hostIp"
+            getInfoByIndexAndKey "$index" "hostIp"
             ip=${info}
-            getInfoByIndexAndKey $index "path"
+            getInfoByIndexAndKey "$index" "path"
             remote_dir=${info}
 
             ExpectCmd "scp  ${package} ${username}@${ip}:${remote_dir}"
@@ -125,8 +127,8 @@ ExpectCmd() {
     expect -c "
     spawn ${cmd}
     expect {
-        "yes" { send "yes\\r"; exp_continue }
-        "password" { send "$password\\r" }
+        \"yes\" { send \"yes\\r\"; exp_continue }
+        \"password\" { send \"${password}\\r\"}
     }
     expect eof"
 }
@@ -149,14 +151,14 @@ ShowConfigInfo() {
 
     for line in $sections; do
         if [[ $line =~ $serverStr ]]; then
-            index=$(echo $line | awk -F '.' '{print $2}' | awk -F ']' '{print$1}')
-            getInfoByIndexAndKey $index "userName"
+            index=$(echo "$line" | awk -F '.' '{print $2}' | awk -F ']' '{print$1}')
+            getInfoByIndexAndKey "$index" "userName"
             echo "servers.$index: userName->$info"
-            getInfoByIndexAndKey $index "password"
+            getInfoByIndexAndKey "$index" "password"
             echo "servers.$index: password->$info"
-            getInfoByIndexAndKey $index "hostIp"
+            getInfoByIndexAndKey "$index" "hostIp"
             echo "servers.$index: hostIp->$info"
-            getInfoByIndexAndKey $index "path"
+            getInfoByIndexAndKey "$index" "path"
             echo "servers.$index: path->$info"
         fi
     done
@@ -168,15 +170,15 @@ getSections() {
 
 getInfoByIndex() {
     index=$1
-    nextIndex=$(expr ${index} + 1)
-    info=$(cat ${config_file} | sed -n "/^[# ]*\[servers.${index}/,/^[# ]*\[servers.${nextIndex}/p")
+    nextIndex=$((index + 1))
+    info=$(sed <${config_file} -n "/^[# ]*\[servers.${index}/,/^[# ]*\[servers.${nextIndex}/p")
 }
 
 getInfoByIndexAndKey() {
     index=$1
-    nextIndex=$(expr ${index} + 1)
+    nextIndex=$((index + 1))
     key=$2
-    info=$(cat ${config_file} | sed -n "/^[# ]*\[servers.${index}/,/^[# ]*\[servers.${nextIndex}/p" | grep -i $key | awk -F ':' '{print $2}')
+    info=$(sed <${config_file} -n "/^[# ]*\[servers.${index}/,/^[# ]*\[servers.${nextIndex}/p" | grep -i "$key" | awk -F ':' '{print $2}')
 }
 
 help() {

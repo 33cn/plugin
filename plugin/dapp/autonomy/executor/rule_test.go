@@ -515,7 +515,7 @@ func TestListProposalComment(t *testing.T) {
 	}
 	for _, tcase := range testcase {
 		key := calcCommentHeight(tcase.propID,
-			dapp.HeightIndexStr(tcase.height, int64(tcase.index)))
+			dapp.HeightIndexStr(tcase.height, tcase.index))
 		cur.Height = tcase.height
 		cur.Index = int32(tcase.index)
 		value := types.Encode(cur)
