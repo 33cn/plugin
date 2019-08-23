@@ -565,7 +565,7 @@ func TestDelMavlData(t *testing.T) {
 
 	db := store.GetDB()
 
-	db.Set([]byte(mvccPrefix), []byte("value1"))
+	db.Set(mvccPrefix, []byte("value1"))
 	db.Set([]byte(fmt.Sprintf("%s123", mvccPrefix)), []byte("value2"))
 	db.Set([]byte(fmt.Sprintf("%s546", mvccPrefix)), []byte("value3"))
 	db.Set([]byte(fmt.Sprintf("123%s", mvccPrefix)), []byte("value4"))
@@ -582,7 +582,7 @@ func TestDelMavlData(t *testing.T) {
 		}
 	}
 
-	v, err := db.Get([]byte(mvccPrefix))
+	v, err := db.Get(mvccPrefix)
 	require.NoError(t, err)
 	require.Equal(t, []byte("value1"), v)
 	v, err = db.Get([]byte(fmt.Sprintf("%s123", mvccPrefix)))
@@ -760,7 +760,7 @@ func TestDeletePrunedMavl(t *testing.T) {
 
 	v1, err = store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "456")))
 	require.Error(t, err)
-	require.Equal(t, v1, []uint8([]byte(nil)))
+	require.Equal(t, v1, []byte(nil))
 	v2, err := store.GetDB().Get([]byte(fmt.Sprintln(hashNodePrefix, "123")))
 	require.NoError(t, err)
 	require.Equal(t, v2, []byte("v1"))

@@ -20,13 +20,19 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 #### 支持make file的平台
 
 ```
+// 开启mod功能
 export GO111MODULE=on
 
+//国内用户需要导入阿里云代理，用于下载依赖包
 export GOPROXY=https://mirrors.aliyun.com/goproxy
 
 make
 ```
 就可以完成编译安装
+
+```
+注意：国内用户需要导入一下代理，才能获取依赖包，mod功能在Makefile中默认开启
+```
 
 ## 运行
 
