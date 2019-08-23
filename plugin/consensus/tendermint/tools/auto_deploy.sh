@@ -61,10 +61,10 @@ GetUserNamePasswdAndPath() {
         remote_dir=$(echo "${destInfo}" | awk -F ' ' '{print $3}')
 
         echo 'Please input ip list of your destination: (such as "192.168.3.143 192.168.3.144 192.168.3.145 192.168.3.146")'
-        read iplist
+        read -a iplist
         index=0
         CreateNewConfigFile
-        for ip in "${iplist}"; do
+        for ip in "${iplist[@]}"; do
             index=$((index + 1))
             {
                 echo "[servers.${index}]"

@@ -46,21 +46,18 @@ vet:
 autotest: ## build autotest binary
 	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
 	@if [ -n "$(dapp)" ]; then \
-	        chmod -R 755 build/autotest/local \
-	    && rm -rf build/autotest/local \
+	        rm -rf build/autotest/local \
 		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest \
 	    && cd build/autotest && chmod -R 755 local && chmod 755 *.sh && bash ./copy-autotest.sh local \
 	    && cd local && bash ./local-autotest.sh $(dapp) \
 	    && cd ../../../; fi
 autotest_ci: autotest ## autotest ci
-	 @chmod -R 755 build/autotest/jerkinsci \
-	&& rm -rf build/autotest/jerkinsci \
+	 @rm -rf build/autotest/jerkinsci \
 	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
 	cd build/autotest &&chmod -R 755 jerkinsci && chmod 755 *.sh && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
 	&& cd jerkinsci && bash ./jerkins-ci-autotest.sh $(proj) && cd ../../../
 autotest_tick: autotest ## run with ticket mining
-	@chmod -R 755 build/autotest/gitlabci \
-	&& rm -rf build/autotest/gitlabci \
+	@rm -rf build/autotest/gitlabci \
 	&& cp -r $(CHAIN33_PATH)/build/autotest/gitlabci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
 	&& cd build/autotest &&chmod -R 755 gitlabci && chmod 755 *.sh  && bash ./copy-autotest.sh gitlabci \
 	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
