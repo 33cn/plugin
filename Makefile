@@ -11,6 +11,7 @@ APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
 export CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
+export PLUGIN_PATH=${GOPATH}/src/github.com/33cn/plugin
 BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
@@ -61,7 +62,7 @@ autotest_tick: autotest ## run with ticket mining
 	&& cp -r $(CHAIN33_PATH)/build/autotest/gitlabci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
 	&& cd build/autotest &&chmod -R 755 gitlabci && chmod 755 *.sh  && bash ./copy-autotest.sh gitlabci \
 	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
-	
+
 updatemod:
 	go mod tidy
 dep:
