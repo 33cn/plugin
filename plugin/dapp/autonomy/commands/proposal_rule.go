@@ -157,7 +157,10 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		isapp = true
 	}
 
-	originAddrs := strings.Split(originAddr, "-")
+	var originAddrs []string
+	if len(originAddr) > 0  {
+		originAddrs = strings.Split(originAddr, "-")
+	}
 
 	params := &auty.VoteProposalRule{
 		ProposalID: ID,

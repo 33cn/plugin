@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	minBoards                 = 20
+	minBoards                 = 3
 	maxBoards                 = 40
 	publicPeriod        int32 = 17280 * 7                // 公示一周时间，以区块高度计算
 	ticketPrice               = types.Coin * 3000        // 单张票价

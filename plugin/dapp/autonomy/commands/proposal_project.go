@@ -219,7 +219,10 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 		isopp = true
 	}
 
-	originAddrs := strings.Split(originAddr, "-")
+	var originAddrs []string
+	if len(originAddr) > 0  {
+		originAddrs = strings.Split(originAddr, "-")
+	}
 
 	params := &auty.PubVoteProposalProject{
 		ProposalID: ID,
