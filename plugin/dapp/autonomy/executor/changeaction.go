@@ -16,7 +16,8 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		alog.Error("propChange ", "ProposalChange ChangeCfg invaild or have no modify param", prob)
 		return nil, types.ErrInvalidParam
 	}
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propChange height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, types.ErrInvalidParam

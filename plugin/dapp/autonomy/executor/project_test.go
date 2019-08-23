@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExecLocalProject(t *testing.T) {
@@ -51,14 +50,14 @@ func testexecLocalProject(t *testing.T, auto bool) {
 	var err error
 	if !auto {
 		set, err = au.execLocalProject(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalProject(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -81,8 +80,8 @@ func testexecLocalProject(t *testing.T, auto bool) {
 				{Ty: auty.TyLogRvkPropProject, Log: types.Encode(receiptProject1)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -92,8 +91,8 @@ func testexecLocalProject(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropProject, Log: types.Encode(receiptProject1)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -118,8 +117,8 @@ func testexecLocalProject(t *testing.T, auto bool) {
 				{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -129,8 +128,8 @@ func testexecLocalProject(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropProject, Log: types.Encode(receiptProject2)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -174,13 +173,13 @@ func testexecDelLocalProject(t *testing.T) {
 	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalProject(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	set, err = au.execAutoDelLocal(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// check
@@ -211,8 +210,8 @@ func testexecDelLocalProject(t *testing.T) {
 	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalProject(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
@@ -220,15 +219,15 @@ func testexecDelLocalProject(t *testing.T) {
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalProject(tx, recpt)
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
 	checkExecLocalProject(t, kvdb, cur)
 
 	set, err = au.execAutoDelLocal(tx, recpt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	checkExecLocalProject(t, kvdb, pre1)
@@ -243,9 +242,9 @@ func TestGetProposalProject(t *testing.T) {
 	tx := "1111111111111111111"
 	storedb.Set(propProjectID(tx), types.Encode(&auty.AutonomyProposalProject{}))
 	rsp, err := au.getProposalProject(&types.ReqString{Data: tx})
-	require.NoError(t, err)
-	require.NotNil(t, rsp)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
+	assert.NoError(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
 }
 
 func TestListProposalProject(t *testing.T) {
@@ -295,9 +294,9 @@ func TestListProposalProject(t *testing.T) {
 		cur.Index = int32(tcase.index)
 
 		err := table.Replace(cur)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kv, err := table.Save()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kvs = append(kvs, kv...)
 	}
 	saveKvs(sdb, kvs)
@@ -310,12 +309,12 @@ func TestListProposalProject(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err := au.listProposalProject(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[k].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[k].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[k].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[k].Index, int32(tcase.index))
 		k--
 	}
 
@@ -327,11 +326,11 @@ func TestListProposalProject(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalProject(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), len(testcase2))
 	for i, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[i].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[i].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[i].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
@@ -342,12 +341,12 @@ func TestListProposalProject(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalProject(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 1)
 	height := rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height
 	index := rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Index
-	require.Equal(t, height, testcase2[2].height)
-	require.Equal(t, index, int32(testcase2[2].index))
+	assert.Equal(t, height, testcase2[2].height)
+	assert.Equal(t, index, int32(testcase2[2].index))
 	//
 	req = &auty.ReqQueryProposalProject{
 		Status:    auty.AutonomyStatusProposalProject,
@@ -357,12 +356,12 @@ func TestListProposalProject(t *testing.T) {
 		Index:     index,
 	}
 	rsp, err = au.listProposalProject(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 2)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height, testcase2[1].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Index, int32(testcase2[1].index))
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[1].Height, testcase2[0].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[1].Index, int32(testcase2[0].index))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalProject).PropProjects), 2)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Height, testcase2[1].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[0].Index, int32(testcase2[1].index))
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[1].Height, testcase2[0].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalProject).PropProjects[1].Index, int32(testcase2[0].index))
 }
 
 func checkExecLocalProject(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalProject) {

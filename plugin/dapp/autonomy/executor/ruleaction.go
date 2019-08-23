@@ -51,7 +51,8 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propRule height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, types.ErrInvalidParam

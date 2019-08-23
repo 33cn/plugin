@@ -16,8 +16,8 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 //const (
@@ -66,19 +66,19 @@ func InitFund(stateDB dbm.KV, amount int64) {
 }
 
 func TestPropProject(t *testing.T) {
-	env, exec, _, _ := InitEnv()
+	env, exec, stateDB, _ := InitEnv()
 
 	opts := []*auty.ProposalProject{
 		{ // check toaddr
 			ToAddr:           "1111111111",
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + 10,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // check amount
 			Amount:           0,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + 10,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // check StartBlockHeight EndBlockHeight
 			Amount:           10,
@@ -90,7 +90,13 @@ func TestPropProject(t *testing.T) {
 			Amount:           100,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + 10,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // checkPeriodAmount
+			Amount:           100,
+			ToAddr:           AddrA,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 	}
 
@@ -99,17 +105,26 @@ func TestPropProject(t *testing.T) {
 		types.ErrInvalidParam,
 		types.ErrInvalidParam,
 		types.ErrNotFound,
+		auty.ErrNoPeriodAmount,
 	}
 
+	exec.SetStateDB(stateDB)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	for i, tcase := range opts {
 		pbtx, err := propProjectTx(tcase)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		pbtx, err = signTx(pbtx, PrivKeyA)
-		require.NoError(t, err)
+		assert.NoError(t, err)
+		if i == 4 {
+			act := &auty.ActiveBoard{
+				Boards: boards,
+				Amount: maxBoardPeriodAmount,
+			}
+			err := stateDB.Set(activeBoardID(), types.Encode(act))
+			assert.NoError(t, err)
+		}
 		_, err = exec.Exec(pbtx, int(i))
-		require.Error(t, err, result[i])
-
+		assert.Equal(t, err, result[i])
 	}
 }
 
@@ -161,6 +176,48 @@ func TestTerminateProposalProject(t *testing.T) {
 	terminateProposalProject(t, env, exec, stateDB, kvdb, true)
 }
 
+func TestBoardPeriodAmount(t *testing.T) {
+	env, exec, stateDB, _ := InitEnv()
+	InitFund(stateDB, testProjectAmount)
+	act := &auty.ActiveBoard{
+		Boards:      boards,
+		Amount:      maxBoardPeriodAmount - 100,
+		StartHeight: 10,
+	}
+	stateDB.Set(activeBoardID(), types.Encode(act))
+
+	opt1 := &auty.ProposalProject{
+		Year:             2019,
+		Month:            7,
+		Day:              10,
+		Amount:           testProjectAmount,
+		ToAddr:           AddrD,
+		StartBlockHeight: env.blockHeight + boardPeriod + 5,
+		EndBlockHeight:   env.blockHeight + boardPeriod + startEndBlockPeriod + 10,
+	}
+	pbtx, err := propProjectTx(opt1)
+	assert.NoError(t, err)
+	pbtx, err = signTx(pbtx, PrivKeyA)
+	assert.NoError(t, err)
+
+	exec.SetEnv(env.blockHeight+boardPeriod+1, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(pbtx, int(1))
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+
+	// check
+	value, err := stateDB.Get(activeBoardID())
+	assert.NoError(t, err)
+	nact := &auty.ActiveBoard{}
+	types.Decode(value, nact)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), nact.Amount)
+}
+
 func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	opt1 := &auty.ProposalProject{
 		Year:             2019,
@@ -169,17 +226,17 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 		Amount:           testProjectAmount,
 		ToAddr:           AddrD,
 		StartBlockHeight: env.blockHeight + 5,
-		EndBlockHeight:   env.blockHeight + 10,
+		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
 	pbtx, err := propProjectTx(opt1)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(pbtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 
 	if save {
 		for _, kv := range receipt.KV {
@@ -189,8 +246,8 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -206,7 +263,7 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
@@ -226,13 +283,13 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalProjectTx(opt2)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	rtx, err = signTx(rtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(rtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -241,8 +298,8 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -250,14 +307,14 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	}
 	// del
 	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 	// check Project
 	au := &Autonomy{
 		drivers.DriverBase{},
@@ -333,15 +390,15 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 			Approve:    record.appr,
 		}
 		tx, err := voteProposalProjectTx(opt)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		tx, err = signTx(tx, record.priv)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
 		receipt, err := exec.Exec(tx, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
+		assert.NoError(t, err)
+		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
 				stateDB.Set(kv.Key, kv.Value)
@@ -349,8 +406,8 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 		set, err := exec.ExecLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
 				kvdb.Set(kv.Key, kv.Value)
@@ -358,8 +415,8 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		}
 		// del
 		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 
 		// 每次需要重新设置
 		acc := &types.Account{
@@ -390,17 +447,17 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount), account.Balance)
+	assert.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	cur := &auty.AutonomyProposalProject{}
 	err = types.Decode(value, cur)
-	require.NoError(t, err)
-	require.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
-	require.Equal(t, AddrA, cur.Address)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
+	assert.Equal(t, AddrA, cur.Address)
 }
 
 func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -431,31 +488,32 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	proposalID := env.txHash
 	// 4人参与投票，3人赞成票，1人反对票
 	type record struct {
-		priv string
-		appr bool
+		priv   string
+		appr   bool
+		origin []string
 	}
 	records := []record{
-		{PrivKeyA, true},
-		{PrivKeyB, false},
-		{PrivKeyC, true},
-		//{PrivKeyD, true},
+		{priv: PrivKeyA, appr: false},
+		{priv: PrivKey1, appr: true, origin: []string{AddrB, AddrC}},
 	}
+	InitMinerAddr(stateDB, []string{AddrB, AddrC}, Addr1)
 
-	for _, record := range records {
+	for i, record := range records {
 		opt := &auty.PubVoteProposalProject{
 			ProposalID: proposalID,
 			Oppose:     record.appr,
+			OriginAddr: record.origin,
 		}
 		tx, err := pubVoteProposalProjectTx(opt)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		tx, err = signTx(tx, record.priv)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
 		receipt, err := exec.Exec(tx, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
+		assert.NoError(t, err)
+		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
 				stateDB.Set(kv.Key, kv.Value)
@@ -463,8 +521,8 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 		set, err := exec.ExecLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
 				kvdb.Set(kv.Key, kv.Value)
@@ -472,18 +530,22 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 		}
 		// del
 		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 
-		// 每次需要重新设置
-		acc := &types.Account{
-			Currency: 0,
-			Frozen:   total,
+		// 每次需要重新设置,对于下一个是多个授权地址的需要设置多次
+		if i+1 < len(records) {
+			for j := 0; j < len(records[i+1].origin); j++ {
+				acc := &types.Account{
+					Currency: 0,
+					Frozen:   total,
+				}
+				val := types.Encode(acc)
+				values := [][]byte{val}
+				api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
+				exec.SetAPI(api)
+			}
 		}
-		val := types.Encode(acc)
-		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
-		exec.SetAPI(api)
 	}
 }
 
@@ -493,17 +555,17 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount)+testProjectAmount, account.Balance)
+	assert.Equal(t, int64(proposalAmount)+testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	cur := &auty.AutonomyProposalProject{}
 	err = types.Decode(value, cur)
-	require.NoError(t, err)
-	require.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
-	require.Equal(t, AddrA, cur.Address)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
+	assert.Equal(t, AddrA, cur.Address)
 }
 
 func pubVoteProposalProjectTx(parm *auty.PubVoteProposalProject) (*types.Transaction, error) {
@@ -539,13 +601,13 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalProjectTx(opt)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	tx, err = signTx(tx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(tx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -554,8 +616,8 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -563,13 +625,13 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 	}
 	// del
 	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 
 	// check Project
 	au := &Autonomy{
@@ -609,20 +671,20 @@ func TestGetProjectReceiptLog(t *testing.T) {
 		Address:      "123",
 	}
 	log := getProjectReceiptLog(pre, cur, 2)
-	require.Equal(t, int32(2), log.Ty)
+	assert.Equal(t, int32(2), log.Ty)
 	recpt := &auty.ReceiptProposalProject{}
 	err := types.Decode(log.Log, recpt)
-	require.NoError(t, err)
-	require.Equal(t, int32(1800), recpt.Prev.PropProject.Year)
-	require.Equal(t, int32(1900), recpt.Current.PropProject.Year)
-	require.Equal(t, int32(80), recpt.Prev.CurRule.BoardApproveRatio)
-	require.Equal(t, int32(90), recpt.Current.CurRule.BoardApproveRatio)
-	require.Equal(t, []string{"111", "222", "333"}, recpt.Prev.Boards)
-	require.Equal(t, []string{"555", "666", "777"}, recpt.Current.Boards)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1800), recpt.Prev.PropProject.Year)
+	assert.Equal(t, int32(1900), recpt.Current.PropProject.Year)
+	assert.Equal(t, int32(80), recpt.Prev.CurRule.BoardApproveRatio)
+	assert.Equal(t, int32(90), recpt.Current.CurRule.BoardApproveRatio)
+	assert.Equal(t, []string{"111", "222", "333"}, recpt.Prev.Boards)
+	assert.Equal(t, []string{"555", "666", "777"}, recpt.Current.Boards)
 }
 
 func TestCopyAutonomyProposalProject(t *testing.T) {
-	require.Nil(t, copyAutonomyProposalProject(nil))
+	assert.Nil(t, copyAutonomyProposalProject(nil))
 	cur := &auty.AutonomyProposalProject{
 		PropProject:  &auty.ProposalProject{Year: 1800, Month: 1},
 		CurRule:      &auty.RuleConfig{BoardApproveRatio: 80},
@@ -642,13 +704,13 @@ func TestCopyAutonomyProposalProject(t *testing.T) {
 	cur.Address = "234"
 	cur.Status = 1
 
-	require.Equal(t, 1800, int(pre.PropProject.Year))
-	require.Equal(t, 1, int(pre.PropProject.Month))
-	require.Equal(t, []string{"111", "222", "333"}, pre.Boards)
-	require.Equal(t, 80, int(pre.CurRule.BoardApproveRatio))
-	require.Equal(t, "123", pre.Address)
-	require.Equal(t, 2, int(pre.Status))
-	require.Equal(t, 100, int(pre.BoardVoteRes.TotalVotes))
-	require.Equal(t, true, pre.PubVote.Publicity)
-	require.Equal(t, []string{"555", "666", "777"}, cur.Boards)
+	assert.Equal(t, 1800, int(pre.PropProject.Year))
+	assert.Equal(t, 1, int(pre.PropProject.Month))
+	assert.Equal(t, []string{"111", "222", "333"}, pre.Boards)
+	assert.Equal(t, 80, int(pre.CurRule.BoardApproveRatio))
+	assert.Equal(t, "123", pre.Address)
+	assert.Equal(t, 2, int(pre.Status))
+	assert.Equal(t, 100, int(pre.BoardVoteRes.TotalVotes))
+	assert.Equal(t, true, pre.PubVote.Publicity)
+	assert.Equal(t, []string{"555", "666", "777"}, cur.Boards)
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExecLocalRule(t *testing.T) {
@@ -49,14 +48,14 @@ func testexecLocalRule(t *testing.T, auto bool) {
 
 	if !auto {
 		set, err = au.execLocalRule(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalRule(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -78,8 +77,8 @@ func testexecLocalRule(t *testing.T, auto bool) {
 				{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -89,8 +88,8 @@ func testexecLocalRule(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropRule, Log: types.Encode(receiptRule1)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -114,8 +113,8 @@ func testexecLocalRule(t *testing.T, auto bool) {
 				{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -125,8 +124,8 @@ func testexecLocalRule(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropRule, Log: types.Encode(receiptRule2)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -168,13 +167,13 @@ func testexecDelLocalRule(t *testing.T) {
 	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalRule(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	set, err = au.execAutoDelLocal(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// check
@@ -206,8 +205,8 @@ func testexecDelLocalRule(t *testing.T) {
 	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalRule(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
@@ -215,15 +214,15 @@ func testexecDelLocalRule(t *testing.T) {
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalRule(tx, recpt)
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
 	checkExecLocalRule(t, kvdb, cur)
 
 	set, err = au.execAutoDelLocal(tx, recpt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// check
@@ -268,9 +267,9 @@ func TestGetProposalRule(t *testing.T) {
 	tx := "1111111111111111111"
 	storedb.Set(propRuleID(tx), types.Encode(&auty.AutonomyProposalRule{}))
 	rsp, err := au.getProposalRule(&types.ReqString{Data: tx})
-	require.NoError(t, err)
-	require.NotNil(t, rsp)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 1)
+	assert.NoError(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 1)
 }
 
 func TestListProposalRule(t *testing.T) {
@@ -318,9 +317,9 @@ func TestListProposalRule(t *testing.T) {
 		cur.Index = int32(tcase.index)
 
 		err := table.Replace(cur)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kv, err := table.Save()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kvs = append(kvs, kv...)
 	}
 	saveKvs(sdb, kvs)
@@ -333,12 +332,12 @@ func TestListProposalRule(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err := au.listProposalRule(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[k].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[k].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[k].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[k].Index, int32(tcase.index))
 		k--
 	}
 
@@ -350,11 +349,11 @@ func TestListProposalRule(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalRule(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), len(testcase2))
 	for i, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[i].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[i].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[i].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
@@ -365,12 +364,12 @@ func TestListProposalRule(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalRule(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 1)
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 1)
 	height := rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Height
 	index := rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Index
-	require.Equal(t, height, testcase2[2].height)
-	require.Equal(t, index, int32(testcase2[2].index))
+	assert.Equal(t, height, testcase2[2].height)
+	assert.Equal(t, index, int32(testcase2[2].index))
 	//
 	req = &auty.ReqQueryProposalRule{
 		Status:    auty.AutonomyStatusProposalRule,
@@ -380,12 +379,12 @@ func TestListProposalRule(t *testing.T) {
 		Index:     index,
 	}
 	rsp, err = au.listProposalRule(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 2)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Height, testcase2[1].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Index, int32(testcase2[1].index))
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[1].Height, testcase2[0].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[1].Index, int32(testcase2[0].index))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalRule).PropRules), 2)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Height, testcase2[1].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[0].Index, int32(testcase2[1].index))
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[1].Height, testcase2[0].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalRule).PropRules[1].Index, int32(testcase2[0].index))
 }
 
 func TestExecLocalCommentProp(t *testing.T) {
@@ -418,19 +417,19 @@ func testexecLocalCommentProp(t *testing.T, auto bool) {
 	var err error
 	if !auto {
 		set, err = au.execLocalCommentProp(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalCommentProp(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
-	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
+	assert.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
 		dapp.HeightIndexStr(receiptCmt.Height, int64(receiptCmt.Index))))
-	require.NotNil(t, set.KV[0].Value)
+	assert.NotNil(t, set.KV[0].Value)
 }
 
 func TestExecDelLocalCommentProp(t *testing.T) {
@@ -465,18 +464,18 @@ func testexecDelLocalCommentProp(t *testing.T) {
 	assert.NoError(t, err)
 
 	set, err = au.execAutoLocalCommentProp(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	set, err = au.execAutoDelLocal(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 
 	// check
-	require.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
+	assert.Equal(t, set.KV[0].Key, calcCommentHeight(propID,
 		dapp.HeightIndexStr(receiptCmt.Height, int64(receiptCmt.Index))))
-	require.Nil(t, set.KV[0].Value)
+	assert.Nil(t, set.KV[0].Value)
 }
 
 func TestListProposalComment(t *testing.T) {
@@ -530,12 +529,12 @@ func TestListProposalComment(t *testing.T) {
 		Index:      -1,
 	}
 	rsp, err := au.listProposalComment(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[k].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[k].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[k].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[k].Index, int32(tcase.index))
 		k--
 	}
 
@@ -547,11 +546,11 @@ func TestListProposalComment(t *testing.T) {
 		Index:      -1,
 	}
 	rsp, err = au.listProposalComment(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), len(testcase2))
 	for i, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[i].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[i].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[i].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
@@ -562,12 +561,12 @@ func TestListProposalComment(t *testing.T) {
 		Index:      -1,
 	}
 	rsp, err = au.listProposalComment(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 1)
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 1)
 	height := rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Height
 	index := rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Index
-	require.Equal(t, height, testcase2[2].height)
-	require.Equal(t, index, int32(testcase2[2].index))
+	assert.Equal(t, height, testcase2[2].height)
+	assert.Equal(t, index, int32(testcase2[2].index))
 	//
 	req = &auty.ReqQueryProposalComment{
 		ProposalID: propID2,
@@ -577,10 +576,10 @@ func TestListProposalComment(t *testing.T) {
 		Index:      index,
 	}
 	rsp, err = au.listProposalComment(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 2)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Height, testcase2[1].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Index, int32(testcase2[1].index))
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[1].Height, testcase2[0].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[1].Index, int32(testcase2[0].index))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalComment).RltCmt), 2)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Height, testcase2[1].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[0].Index, int32(testcase2[1].index))
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[1].Height, testcase2[0].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalComment).RltCmt[1].Index, int32(testcase2[0].index))
 }

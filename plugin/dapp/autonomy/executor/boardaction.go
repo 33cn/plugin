@@ -19,16 +19,17 @@ import (
 )
 
 const (
-	minBoards                = 20
-	maxBoards                = 40
-	publicPeriod       int32 = 17280 * 7                // 公示一周时间，以区块高度计算
-	ticketPrice              = types.Coin * 3000        // 单张票价
-	largeProjectAmount       = types.Coin * 100 * 10000 // 重大项目公示金额阈值
-	proposalAmount           = types.Coin * 500         // 创建者消耗金额
-	boardApproveRatio  int32 = 66                       // 董事会成员赞成率，以%计，可修改
-	pubAttendRatio     int32 = 75                       // 全体持票人参与率，以%计
-	pubApproveRatio    int32 = 66                       // 全体持票人赞成率，以%计
-	pubOpposeRatio     int32 = 33                       // 全体持票人否决率，以%计
+	minBoards                 = 20
+	maxBoards                 = 40
+	publicPeriod        int32 = 17280 * 7                // 公示一周时间，以区块高度计算
+	ticketPrice               = types.Coin * 3000        // 单张票价
+	largeProjectAmount        = types.Coin * 100 * 10000 // 重大项目公示金额阈值
+	proposalAmount            = types.Coin * 500         // 创建者消耗金额
+	boardApproveRatio   int32 = 66                       // 董事会成员赞成率，以%计，可修改
+	pubAttendRatio      int32 = 75                       // 全体持票人参与率，以%计
+	pubApproveRatio     int32 = 66                       // 全体持票人赞成率，以%计
+	pubOpposeRatio      int32 = 33                       // 全体持票人否决率，以%计
+	startEndBlockPeriod       = 720                      // 提案开始结束最小周期
 )
 
 type action struct {
@@ -56,7 +57,8 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, types.ErrInvalidParam

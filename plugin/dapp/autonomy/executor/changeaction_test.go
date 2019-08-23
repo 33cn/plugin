@@ -18,7 +18,6 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func InitChange(t *testing.T, stateDB dbm.KV) {
@@ -63,17 +62,17 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 		Day:              10,
 		Changes:          []*auty.Change{{Cancel: true, Addr: AddrA}},
 		StartBlockHeight: env.blockHeight + 5,
-		EndBlockHeight:   env.blockHeight + 10,
+		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
 	pbtx, err := propChangeTx(opt1)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(pbtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 
 	if save {
 		for _, kv := range receipt.KV {
@@ -84,8 +83,8 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	// local
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -101,7 +100,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propChangeTx(parm *auty.ProposalChange) (*types.Transaction, error) {
@@ -121,13 +120,13 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalChangeTx(opt2)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	rtx, err = signTx(rtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(rtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -136,8 +135,8 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -145,13 +144,13 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 	}
 	// del
 	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func revokeProposalChangeTx(parm *auty.RevokeProposalChange) (*types.Transaction, error) {
@@ -221,15 +220,15 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 			Approve:    record.appr,
 		}
 		tx, err := voteProposalChangeTx(opt)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		tx, err = signTx(tx, record.priv)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
 		receipt, err := exec.Exec(tx, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
+		assert.NoError(t, err)
+		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
 				stateDB.Set(kv.Key, kv.Value)
@@ -237,8 +236,8 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 		set, err := exec.ExecLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
 				kvdb.Set(kv.Key, kv.Value)
@@ -246,8 +245,8 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 		}
 		// del
 		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 
 		// 每次需要重新设置
 		acc := &types.Account{
@@ -264,26 +263,26 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount), account.Balance)
+	assert.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	cur := &auty.AutonomyProposalChange{}
 	err = types.Decode(value, cur)
-	require.NoError(t, err)
-	require.Equal(t, int32(auty.AutonomyStatusTmintPropChange), cur.Status)
-	require.Equal(t, AddrA, cur.Address)
-	require.Equal(t, true, cur.VoteResult.Pass)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(auty.AutonomyStatusTmintPropChange), cur.Status)
+	assert.Equal(t, AddrA, cur.Address)
+	assert.Equal(t, true, cur.VoteResult.Pass)
 
 	value, err = stateDB.Get(activeBoardID())
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	act := &auty.ActiveBoard{}
 	err = types.Decode(value, act)
-	require.NoError(t, err)
-	require.Equal(t, act.Revboards[0], AddrA)
-	require.Equal(t, len(act.Boards), len(boards)-1)
+	assert.NoError(t, err)
+	assert.Equal(t, act.Revboards[0], AddrA)
+	assert.Equal(t, len(act.Boards), len(boards)-1)
 }
 
 func voteProposalChangeTx(parm *auty.VoteProposalChange) (*types.Transaction, error) {
@@ -319,13 +318,13 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalChangeTx(opt)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	tx, err = signTx(tx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(tx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -334,8 +333,8 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -343,13 +342,13 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	}
 	// del
 	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func terminateProposalChangeTx(parm *auty.TerminateProposalChange) (*types.Transaction, error) {
@@ -377,12 +376,12 @@ func TestGetChangeReceiptLog(t *testing.T) {
 		Address:    "123",
 	}
 	log := getChangeReceiptLog(pre, cur, 2)
-	require.Equal(t, int32(2), log.Ty)
+	assert.Equal(t, int32(2), log.Ty)
 	recpt := &auty.ReceiptProposalChange{}
 	err := types.Decode(log.Log, recpt)
-	require.NoError(t, err)
-	require.Equal(t, int32(1800), recpt.Prev.PropChange.Year)
-	require.Equal(t, int32(1900), recpt.Current.PropChange.Year)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1800), recpt.Prev.PropChange.Year)
+	assert.Equal(t, int32(1900), recpt.Current.PropChange.Year)
 }
 
 func TestCheckChangeable(t *testing.T) {
@@ -397,18 +396,18 @@ func TestCheckChangeable(t *testing.T) {
 	// 正常撤销一个地址
 	changes := []*auty.Change{{Cancel: true, Addr: AddrA}}
 	cur, err := action.checkChangeable(act, changes)
-	require.NoError(t, err)
-	require.Equal(t, len(cur.Boards), len(boards)-1)
-	require.Equal(t, cur.Revboards[0], AddrA)
+	assert.NoError(t, err)
+	assert.Equal(t, len(cur.Boards), len(boards)-1)
+	assert.Equal(t, cur.Revboards[0], AddrA)
 
 	// 恢复撤销地址
 	changes = []*auty.Change{
 		{Cancel: false, Addr: AddrA},
 	}
 	ncur, err := action.checkChangeable(cur, changes)
-	require.NoError(t, err)
-	require.Equal(t, len(ncur.Boards), len(boards))
-	require.Equal(t, len(ncur.Revboards), 0)
+	assert.NoError(t, err)
+	assert.Equal(t, len(ncur.Boards), len(boards))
+	assert.Equal(t, len(ncur.Revboards), 0)
 
 	// 撤销两个地址，撤销不够最小minBoards
 	changes = []*auty.Change{
@@ -416,25 +415,25 @@ func TestCheckChangeable(t *testing.T) {
 		{Cancel: true, Addr: AddrB},
 	}
 	_, err = action.checkChangeable(act, changes)
-	require.Equal(t, err, auty.ErrBoardNumber)
+	assert.Equal(t, err, auty.ErrBoardNumber)
 
 	// 恢复一个没有被撤销的地址
 	changes = []*auty.Change{
 		{Cancel: false, Addr: AddrA},
 	}
 	_, err = action.checkChangeable(act, changes)
-	require.Equal(t, err, auty.ErrChangeBoardAddr)
+	assert.Equal(t, err, auty.ErrChangeBoardAddr)
 
 	// 撤销一个不存在地址
 	changes = []*auty.Change{
 		{Cancel: true, Addr: "1111111111"},
 	}
 	_, err = action.checkChangeable(act, changes)
-	require.Equal(t, err, auty.ErrChangeBoardAddr)
+	assert.Equal(t, err, auty.ErrChangeBoardAddr)
 }
 
 func TestCopyAutonomyProposalChange(t *testing.T) {
-	require.Nil(t, copyAutonomyProposalChange(nil))
+	assert.Nil(t, copyAutonomyProposalChange(nil))
 	cur := &auty.AutonomyProposalChange{
 		PropChange: &auty.ProposalChange{
 			Year:    1900,

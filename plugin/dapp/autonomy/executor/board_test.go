@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExecLocalBoard(t *testing.T) {
@@ -49,14 +48,14 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	var err error
 	if !auto {
 		set, err = au.execLocalBoard(receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx, receipt)
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -78,8 +77,8 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -89,8 +88,8 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 					{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -114,8 +113,8 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
@@ -125,8 +124,8 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 					{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
 				},
 			})
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 	}
 
 	//save to database
@@ -168,13 +167,13 @@ func testexecDelLocalBoard(t *testing.T) {
 	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalBoard(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	set, err = au.execAutoDelLocal(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// check
@@ -206,8 +205,8 @@ func testexecDelLocalBoard(t *testing.T) {
 	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalBoard(tx, receipt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
@@ -215,15 +214,15 @@ func testexecDelLocalBoard(t *testing.T) {
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalBoard(tx, recpt)
 
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
 	checkExecLocalBoard(t, kvdb, cur)
 
 	set, err = au.execAutoDelLocal(tx, recpt)
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
 	checkExecLocalBoard(t, kvdb, pre1)
@@ -238,9 +237,9 @@ func TestGetProposalBoard(t *testing.T) {
 	tx := "1111111111111111111"
 	storedb.Set(propBoardID(tx), types.Encode(&auty.AutonomyProposalBoard{}))
 	rsp, err := au.getProposalBoard(&types.ReqString{Data: tx})
-	require.NoError(t, err)
-	require.NotNil(t, rsp)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
+	assert.NoError(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
 }
 
 func TestListProposalBoard(t *testing.T) {
@@ -288,9 +287,9 @@ func TestListProposalBoard(t *testing.T) {
 		cur.Index = int32(tcase.index)
 
 		err := table.Replace(cur)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kv, err := table.Save()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		kvs = append(kvs, kv...)
 	}
 
@@ -303,12 +302,12 @@ func TestListProposalBoard(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err := au.listProposalBoard(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Index, int32(tcase.index))
 		k--
 	}
 
@@ -320,11 +319,11 @@ func TestListProposalBoard(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalBoard(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
 	for i, tcase := range testcase2 {
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Height, tcase.height)
-		require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
@@ -335,12 +334,12 @@ func TestListProposalBoard(t *testing.T) {
 		Index:     -1,
 	}
 	rsp, err = au.listProposalBoard(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
 	height := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height
 	index := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index
-	require.Equal(t, height, testcase2[2].height)
-	require.Equal(t, index, int32(testcase2[2].index))
+	assert.Equal(t, height, testcase2[2].height)
+	assert.Equal(t, index, int32(testcase2[2].index))
 	//
 	req = &auty.ReqQueryProposalBoard{
 		Status:    auty.AutonomyStatusProposalBoard,
@@ -350,12 +349,12 @@ func TestListProposalBoard(t *testing.T) {
 		Index:     index,
 	}
 	rsp, err = au.listProposalBoard(req)
-	require.NoError(t, err)
-	require.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Height, testcase2[0].height)
-	require.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
+	assert.NoError(t, err)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Height, testcase2[0].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
 }
 
 func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalBoard) {

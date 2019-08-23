@@ -22,8 +22,8 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 // ExecEnv exec environment
@@ -173,6 +173,16 @@ func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	return env, exec, stateDB, kvdb
 }
 
+func InitMinerAddr(stateDB dbm.KV, addrs []string, bind string) {
+	for _, addr := range addrs {
+		tkBind := &ticketTy.TicketBind{
+			MinerAddress:  bind,
+			ReturnAddress: addr,
+		}
+		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
+	}
+}
+
 func TestRevokeProposalBoard(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	// PropBoard
@@ -204,17 +214,17 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 		Day:              10,
 		Boards:           boards,
 		StartBlockHeight: env.blockHeight + 5,
-		EndBlockHeight:   env.blockHeight + 10,
+		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
 	pbtx, err := propBoardTx(opt1)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(pbtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 
 	if save {
 		for _, kv := range receipt.KV {
@@ -225,8 +235,8 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	// local
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -242,7 +252,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -262,13 +272,13 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		ProposalID: proposalID,
 	}
 	rtx, err := revokeProposalBoardTx(opt2)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	rtx, err = signTx(rtx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(rtx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -277,8 +287,8 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -286,13 +296,13 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	}
 	// del
 	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, error) {
@@ -334,31 +344,32 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	proposalID := env.txHash
 	// 4人参与投票，3人赞成票，1人反对票
 	type record struct {
-		priv string
-		appr bool
+		priv   string
+		appr   bool
+		origin []string
 	}
 	records := []record{
-		{PrivKeyA, false},
-		{PrivKeyB, true},
-		{PrivKeyC, true},
-		{PrivKeyD, true},
+		{priv: PrivKeyA, appr: false},
+		{priv: PrivKey1, appr: true, origin: []string{AddrB, AddrC, AddrD}},
 	}
+	InitMinerAddr(stateDB, []string{AddrB, AddrC, AddrD}, Addr1)
 
-	for _, record := range records {
+	for i, record := range records {
 		opt := &auty.VoteProposalBoard{
 			ProposalID: proposalID,
 			Approve:    record.appr,
+			OriginAddr: record.origin,
 		}
 		tx, err := voteProposalBoardTx(opt)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		tx, err = signTx(tx, record.priv)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
 		receipt, err := exec.Exec(tx, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
+		assert.NoError(t, err)
+		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
 				stateDB.Set(kv.Key, kv.Value)
@@ -366,8 +377,8 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 		set, err := exec.ExecLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
 				kvdb.Set(kv.Key, kv.Value)
@@ -375,36 +386,40 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 		}
 		// del
 		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-		require.NoError(t, err)
-		require.NotNil(t, set)
+		assert.NoError(t, err)
+		assert.NotNil(t, set)
 
-		// 每次需要重新设置
-		acc := &types.Account{
-			Currency: 0,
-			Frozen:   total,
+		// 每次需要重新设置,对于下一个是多个授权地址的需要设置多次
+		if i+1 < len(records) {
+			for j := 0; j < len(records[i+1].origin); j++ {
+				acc := &types.Account{
+					Currency: 0,
+					Frozen:   total,
+				}
+				val := types.Encode(acc)
+				values := [][]byte{val}
+				api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
+				exec.SetAPI(api)
+			}
 		}
-		val := types.Encode(acc)
-		values := [][]byte{val}
-		api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
-		exec.SetAPI(api)
 	}
 	// check
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(proposalAmount), account.Balance)
+	assert.Equal(t, int64(proposalAmount), account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	cur := &auty.AutonomyProposalBoard{}
 	err = types.Decode(value, cur)
-	require.NoError(t, err)
-	require.Equal(t, int32(auty.AutonomyStatusTmintPropBoard), cur.Status)
-	require.Equal(t, AddrA, cur.Address)
-	require.Equal(t, true, cur.VoteResult.Pass)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(auty.AutonomyStatusTmintPropBoard), cur.Status)
+	assert.Equal(t, AddrA, cur.Address)
+	assert.Equal(t, true, cur.VoteResult.Pass)
 }
 
 func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, error) {
@@ -440,13 +455,13 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 		ProposalID: proposalID,
 	}
 	tx, err := terminateProposalBoardTx(opt)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	tx, err = signTx(tx, PrivKeyA)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(tx, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
 			stateDB.Set(kv.Key, kv.Value)
@@ -455,8 +470,8 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
 			kvdb.Set(kv.Key, kv.Value)
@@ -464,13 +479,13 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	}
 	// del
 	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
-	require.NoError(t, err)
-	require.NotNil(t, set)
+	assert.NoError(t, err)
+	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	require.Equal(t, int64(0), account.Frozen)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transaction, error) {
@@ -508,9 +523,9 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 		Return(&types.Headers{
 			Items: []*types.Header{hear}}, nil)
 	account, err := action.getStartHeightVoteAccount(addr, "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, account)
-	require.Equal(t, types.Coin, account.Balance)
+	assert.NoError(t, err)
+	assert.NotNil(t, account)
+	assert.Equal(t, types.Coin, account.Balance)
 }
 
 func TestGetReceiptLog(t *testing.T) {
@@ -527,16 +542,16 @@ func TestGetReceiptLog(t *testing.T) {
 		Address:    "123",
 	}
 	log := getReceiptLog(pre, cur, 2)
-	require.Equal(t, int32(2), log.Ty)
+	assert.Equal(t, int32(2), log.Ty)
 	recpt := &auty.ReceiptProposalBoard{}
 	err := types.Decode(log.Log, recpt)
-	require.NoError(t, err)
-	require.Equal(t, int32(1800), recpt.Prev.PropBoard.Year)
-	require.Equal(t, int32(1900), recpt.Current.PropBoard.Year)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1800), recpt.Prev.PropBoard.Year)
+	assert.Equal(t, int32(1900), recpt.Current.PropBoard.Year)
 }
 
 func TestCopyAutonomyProposalBoard(t *testing.T) {
-	require.Nil(t, copyAutonomyProposalBoard(nil))
+	assert.Nil(t, copyAutonomyProposalBoard(nil))
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
 		CurRule:    &auty.RuleConfig{BoardApproveRatio: 100},
@@ -552,12 +567,12 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	cur.Address = "234"
 	cur.Status = 1
 
-	require.Equal(t, 1900, int(pre.PropBoard.Year))
-	require.Equal(t, 1, int(pre.PropBoard.Month))
-	require.Equal(t, 100, int(pre.CurRule.BoardApproveRatio))
-	require.Equal(t, 100, int(pre.VoteResult.TotalVotes))
-	require.Equal(t, "123", pre.Address)
-	require.Equal(t, 2, int(pre.Status))
+	assert.Equal(t, 1900, int(pre.PropBoard.Year))
+	assert.Equal(t, 1, int(pre.PropBoard.Month))
+	assert.Equal(t, 100, int(pre.CurRule.BoardApproveRatio))
+	assert.Equal(t, 100, int(pre.VoteResult.TotalVotes))
+	assert.Equal(t, "123", pre.Address)
+	assert.Equal(t, 2, int(pre.Status))
 }
 
 func TestVerifyMinerAddr(t *testing.T) {
@@ -580,14 +595,14 @@ func TestVerifyMinerAddr(t *testing.T) {
 		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
 	}
 	_, err := action.verifyMinerAddr(addrs, AddrD)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// ErrMinerAddr
 	testf := "12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
 	addrs = []string{testf}
 	addr, err := action.verifyMinerAddr(addrs, AddrD)
-	require.Equal(t, auty.ErrMinerAddr, err)
-	require.Equal(t, testf, addr)
+	assert.Equal(t, auty.ErrMinerAddr, err)
+	assert.Equal(t, testf, addr)
 
 	// ErrBindAddr
 	testf = "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
@@ -598,8 +613,8 @@ func TestVerifyMinerAddr(t *testing.T) {
 	stateDB.Set(ticket.BindKey(testf), types.Encode(tkBind))
 	addrs = []string{testf}
 	addr, err = action.verifyMinerAddr(addrs, AddrD)
-	require.Equal(t, auty.ErrBindAddr, err)
-	require.Equal(t, testf, addr)
+	assert.Equal(t, auty.ErrBindAddr, err)
+	assert.Equal(t, testf, addr)
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {

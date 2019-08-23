@@ -23,7 +23,8 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return nil, types.ErrInvalidAddress
 	}
 
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propProject height or amount invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height, "amount", prob.Amount)
 		return nil, types.ErrInvalidParam
@@ -593,7 +594,7 @@ func (a *action) checkPeriodAmount(act *auty.ActiveBoard, amount int64) bool {
 	if act == nil {
 		return false
 	}
-	if act.Amount+amount >= maxBoardPeriodAmount {
+	if act.Amount+amount > maxBoardPeriodAmount {
 		return false
 	}
 	return true
