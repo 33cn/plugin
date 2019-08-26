@@ -9,7 +9,9 @@ clone_folder: c:\gopath\src\github.com\33cn\plugin
 environment:
   GOPATH: c:\gopath
   DEPTESTBYPASS501: 1
-  GOVERSION: 1.9
+  GOVERSION: 1.12
+  GO111MODULE: on
+  
 
 #init:
 #  - git config --global core.autocrlf input
@@ -23,6 +25,7 @@ install:
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
 #  - choco install bzr
   - set Path=c:\go\bin;c:\gopath\bin;C:\Program Files (x86)\Bazaar\;C:\Program Files\Mercurial\%Path%
+  - set GO111MODULE=on
   - go version
   - go env
 
