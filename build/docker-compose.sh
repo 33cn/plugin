@@ -234,6 +234,31 @@ function block_wait() {
     echo "wait new block $count s, cur height=$expect,old=$cur_height"
 }
 
+function block_wait2height() {
+    if [ "$#" -lt 3 ]; then
+        echo "wrong block_wait params"
+        exit 1
+    fi
+    local count=0
+    local new_height=0
+    local expect=${2}
+    local isPara=${3}
+
+    while true; do
+        new_height=$(${1} block last_header | jq ".height")
+        if [ $isPara == "1" ]; then
+            ${1} para blocks -s $new_height -e $new_height
+            new_height=$(${1} para blocks -s $new_height -e $new_height | jq ".items[0].mainHeight")
+        fi
+        if [ "${new_height}" -ge "${expect}" ]; then
+            break
+        fi
+        count=$((count + 1))
+        sleep 1
+    done
+    echo "wait new block $count s, cur_height=$new_height,expect=$expect"
+}
+
 function check_docker_status() {
     status=$(docker-compose ps | grep chain33_1 | awk '{print $6}')
     statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
