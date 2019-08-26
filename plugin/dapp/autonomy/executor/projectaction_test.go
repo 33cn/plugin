@@ -123,7 +123,7 @@ func TestPropProject(t *testing.T) {
 			err := stateDB.Set(activeBoardID(), types.Encode(act))
 			assert.NoError(t, err)
 		}
-		_, err = exec.Exec(pbtx, int(i))
+		_, err = exec.Exec(pbtx, i)
 		assert.Equal(t, err, result[i])
 	}
 }
@@ -449,7 +449,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(proposalAmount), account.Balance)
+	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	assert.NoError(t, err)
@@ -565,7 +565,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(proposalAmount)+testProjectAmount, account.Balance)
+	assert.Equal(t, proposalAmount+testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	assert.NoError(t, err)

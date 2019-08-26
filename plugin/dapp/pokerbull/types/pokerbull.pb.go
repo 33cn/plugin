@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-//斗牛游戏内容
+// 斗牛游戏内容
 type PokerBull struct {
 	GameId               string      `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Status               int32       `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
@@ -49,17 +50,16 @@ func (m *PokerBull) Reset()         { *m = PokerBull{} }
 func (m *PokerBull) String() string { return proto.CompactTextString(m) }
 func (*PokerBull) ProtoMessage()    {}
 func (*PokerBull) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{0}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{0}
 }
-
 func (m *PokerBull) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PokerBull.Unmarshal(m, b)
 }
 func (m *PokerBull) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PokerBull.Marshal(b, m, deterministic)
 }
-func (m *PokerBull) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PokerBull.Merge(m, src)
+func (dst *PokerBull) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PokerBull.Merge(dst, src)
 }
 func (m *PokerBull) XXX_Size() int {
 	return xxx_messageInfo_PokerBull.Size(m)
@@ -189,7 +189,7 @@ func (m *PokerBull) GetRound() int32 {
 	return 0
 }
 
-//一把牌
+// 一把牌
 type PBHand struct {
 	Cards                []int32  `protobuf:"varint,1,rep,packed,name=cards,proto3" json:"cards,omitempty"`
 	Result               int32    `protobuf:"varint,2,opt,name=result,proto3" json:"result,omitempty"`
@@ -205,17 +205,16 @@ func (m *PBHand) Reset()         { *m = PBHand{} }
 func (m *PBHand) String() string { return proto.CompactTextString(m) }
 func (*PBHand) ProtoMessage()    {}
 func (*PBHand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{1}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{1}
 }
-
 func (m *PBHand) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBHand.Unmarshal(m, b)
 }
 func (m *PBHand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBHand.Marshal(b, m, deterministic)
 }
-func (m *PBHand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBHand.Merge(m, src)
+func (dst *PBHand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBHand.Merge(dst, src)
 }
 func (m *PBHand) XXX_Size() int {
 	return xxx_messageInfo_PBHand.Size(m)
@@ -261,7 +260,7 @@ func (m *PBHand) GetLeverage() int32 {
 	return 0
 }
 
-//玩家
+// 玩家
 type PBPlayer struct {
 	Hands                []*PBHand `protobuf:"bytes,1,rep,name=hands,proto3" json:"hands,omitempty"`
 	Address              string    `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
@@ -276,17 +275,16 @@ func (m *PBPlayer) Reset()         { *m = PBPlayer{} }
 func (m *PBPlayer) String() string { return proto.CompactTextString(m) }
 func (*PBPlayer) ProtoMessage()    {}
 func (*PBPlayer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{2}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{2}
 }
-
 func (m *PBPlayer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBPlayer.Unmarshal(m, b)
 }
 func (m *PBPlayer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBPlayer.Marshal(b, m, deterministic)
 }
-func (m *PBPlayer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBPlayer.Merge(m, src)
+func (dst *PBPlayer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBPlayer.Merge(dst, src)
 }
 func (m *PBPlayer) XXX_Size() int {
 	return xxx_messageInfo_PBPlayer.Size(m)
@@ -325,7 +323,7 @@ func (m *PBPlayer) GetReady() bool {
 	return false
 }
 
-//本局游戏结果
+// 本局游戏结果
 type PBResult struct {
 	Hands                []*PBHand `protobuf:"bytes,1,rep,name=hands,proto3" json:"hands,omitempty"`
 	Winner               string    `protobuf:"bytes,2,opt,name=winner,proto3" json:"winner,omitempty"`
@@ -341,17 +339,16 @@ func (m *PBResult) Reset()         { *m = PBResult{} }
 func (m *PBResult) String() string { return proto.CompactTextString(m) }
 func (*PBResult) ProtoMessage()    {}
 func (*PBResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{3}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{3}
 }
-
 func (m *PBResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBResult.Unmarshal(m, b)
 }
 func (m *PBResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBResult.Marshal(b, m, deterministic)
 }
-func (m *PBResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBResult.Merge(m, src)
+func (dst *PBResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBResult.Merge(dst, src)
 }
 func (m *PBResult) XXX_Size() int {
 	return xxx_messageInfo_PBResult.Size(m)
@@ -397,7 +394,7 @@ func (m *PBResult) GetDealerLeverage() int32 {
 	return 0
 }
 
-//扑克牌
+// 扑克牌
 type PBPoker struct {
 	Cards                []int32  `protobuf:"varint,1,rep,packed,name=cards,proto3" json:"cards,omitempty"`
 	Pointer              int32    `protobuf:"varint,2,opt,name=pointer,proto3" json:"pointer,omitempty"`
@@ -410,17 +407,16 @@ func (m *PBPoker) Reset()         { *m = PBPoker{} }
 func (m *PBPoker) String() string { return proto.CompactTextString(m) }
 func (*PBPoker) ProtoMessage()    {}
 func (*PBPoker) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{4}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{4}
 }
-
 func (m *PBPoker) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBPoker.Unmarshal(m, b)
 }
 func (m *PBPoker) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBPoker.Marshal(b, m, deterministic)
 }
-func (m *PBPoker) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBPoker.Merge(m, src)
+func (dst *PBPoker) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBPoker.Merge(dst, src)
 }
 func (m *PBPoker) XXX_Size() int {
 	return xxx_messageInfo_PBPoker.Size(m)
@@ -445,7 +441,7 @@ func (m *PBPoker) GetPointer() int32 {
 	return 0
 }
 
-//游戏状态
+// 游戏状态
 type PBGameAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*PBGameAction_Start
@@ -464,17 +460,16 @@ func (m *PBGameAction) Reset()         { *m = PBGameAction{} }
 func (m *PBGameAction) String() string { return proto.CompactTextString(m) }
 func (*PBGameAction) ProtoMessage()    {}
 func (*PBGameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{5}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{5}
 }
-
 func (m *PBGameAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameAction.Unmarshal(m, b)
 }
 func (m *PBGameAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameAction.Marshal(b, m, deterministic)
 }
-func (m *PBGameAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameAction.Merge(m, src)
+func (dst *PBGameAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameAction.Merge(dst, src)
 }
 func (m *PBGameAction) XXX_Size() int {
 	return xxx_messageInfo_PBGameAction.Size(m)
@@ -699,7 +694,7 @@ func _PBGameAction_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
-//游戏启动
+// 游戏启动
 type PBGameStart struct {
 	Value                int64    `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
 	PlayerNum            int32    `protobuf:"varint,2,opt,name=playerNum,proto3" json:"playerNum,omitempty"`
@@ -712,17 +707,16 @@ func (m *PBGameStart) Reset()         { *m = PBGameStart{} }
 func (m *PBGameStart) String() string { return proto.CompactTextString(m) }
 func (*PBGameStart) ProtoMessage()    {}
 func (*PBGameStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{6}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{6}
 }
-
 func (m *PBGameStart) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameStart.Unmarshal(m, b)
 }
 func (m *PBGameStart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameStart.Marshal(b, m, deterministic)
 }
-func (m *PBGameStart) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameStart.Merge(m, src)
+func (dst *PBGameStart) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameStart.Merge(dst, src)
 }
 func (m *PBGameStart) XXX_Size() int {
 	return xxx_messageInfo_PBGameStart.Size(m)
@@ -747,7 +741,7 @@ func (m *PBGameStart) GetPlayerNum() int32 {
 	return 0
 }
 
-//游戏继续
+// 游戏继续
 type PBGameContinue struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -759,17 +753,16 @@ func (m *PBGameContinue) Reset()         { *m = PBGameContinue{} }
 func (m *PBGameContinue) String() string { return proto.CompactTextString(m) }
 func (*PBGameContinue) ProtoMessage()    {}
 func (*PBGameContinue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{7}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{7}
 }
-
 func (m *PBGameContinue) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameContinue.Unmarshal(m, b)
 }
 func (m *PBGameContinue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameContinue.Marshal(b, m, deterministic)
 }
-func (m *PBGameContinue) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameContinue.Merge(m, src)
+func (dst *PBGameContinue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameContinue.Merge(dst, src)
 }
 func (m *PBGameContinue) XXX_Size() int {
 	return xxx_messageInfo_PBGameContinue.Size(m)
@@ -787,7 +780,7 @@ func (m *PBGameContinue) GetGameId() string {
 	return ""
 }
 
-//游戏结束
+// 游戏结束
 type PBGameQuit struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -799,17 +792,16 @@ func (m *PBGameQuit) Reset()         { *m = PBGameQuit{} }
 func (m *PBGameQuit) String() string { return proto.CompactTextString(m) }
 func (*PBGameQuit) ProtoMessage()    {}
 func (*PBGameQuit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{8}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{8}
 }
-
 func (m *PBGameQuit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameQuit.Unmarshal(m, b)
 }
 func (m *PBGameQuit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameQuit.Marshal(b, m, deterministic)
 }
-func (m *PBGameQuit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameQuit.Merge(m, src)
+func (dst *PBGameQuit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameQuit.Merge(dst, src)
 }
 func (m *PBGameQuit) XXX_Size() int {
 	return xxx_messageInfo_PBGameQuit.Size(m)
@@ -827,7 +819,7 @@ func (m *PBGameQuit) GetGameId() string {
 	return ""
 }
 
-//查询游戏结果
+// 查询游戏结果
 type PBGameQuery struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -839,17 +831,16 @@ func (m *PBGameQuery) Reset()         { *m = PBGameQuery{} }
 func (m *PBGameQuery) String() string { return proto.CompactTextString(m) }
 func (*PBGameQuery) ProtoMessage()    {}
 func (*PBGameQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{9}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{9}
 }
-
 func (m *PBGameQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameQuery.Unmarshal(m, b)
 }
 func (m *PBGameQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameQuery.Marshal(b, m, deterministic)
 }
-func (m *PBGameQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameQuery.Merge(m, src)
+func (dst *PBGameQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameQuery.Merge(dst, src)
 }
 func (m *PBGameQuery) XXX_Size() int {
 	return xxx_messageInfo_PBGameQuery.Size(m)
@@ -867,7 +858,7 @@ func (m *PBGameQuery) GetGameId() string {
 	return ""
 }
 
-//已匹配玩家直接游戏
+// 已匹配玩家直接游戏
 type PBGamePlay struct {
 	GameId               string   `protobuf:"bytes,1,opt,name=gameId,proto3" json:"gameId,omitempty"`
 	Round                int32    `protobuf:"varint,2,opt,name=round,proto3" json:"round,omitempty"`
@@ -882,17 +873,16 @@ func (m *PBGamePlay) Reset()         { *m = PBGamePlay{} }
 func (m *PBGamePlay) String() string { return proto.CompactTextString(m) }
 func (*PBGamePlay) ProtoMessage()    {}
 func (*PBGamePlay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{10}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{10}
 }
-
 func (m *PBGamePlay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGamePlay.Unmarshal(m, b)
 }
 func (m *PBGamePlay) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGamePlay.Marshal(b, m, deterministic)
 }
-func (m *PBGamePlay) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGamePlay.Merge(m, src)
+func (dst *PBGamePlay) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGamePlay.Merge(dst, src)
 }
 func (m *PBGamePlay) XXX_Size() int {
 	return xxx_messageInfo_PBGamePlay.Size(m)
@@ -931,7 +921,7 @@ func (m *PBGamePlay) GetAddress() []string {
 	return nil
 }
 
-//根据状态和游戏人数查找
+// 根据状态和游戏人数查找
 type QueryPBGameListByStatusAndPlayerNum struct {
 	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	PlayerNum            int32    `protobuf:"varint,2,opt,name=playerNum,proto3" json:"playerNum,omitempty"`
@@ -945,17 +935,16 @@ func (m *QueryPBGameListByStatusAndPlayerNum) Reset()         { *m = QueryPBGame
 func (m *QueryPBGameListByStatusAndPlayerNum) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameListByStatusAndPlayerNum) ProtoMessage()    {}
 func (*QueryPBGameListByStatusAndPlayerNum) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{11}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{11}
 }
-
 func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Unmarshal(m, b)
 }
 func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Marshal(b, m, deterministic)
 }
-func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Merge(m, src)
+func (dst *QueryPBGameListByStatusAndPlayerNum) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Merge(dst, src)
 }
 func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Size() int {
 	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Size(m)
@@ -1001,17 +990,16 @@ func (m *PBGameRecord) Reset()         { *m = PBGameRecord{} }
 func (m *PBGameRecord) String() string { return proto.CompactTextString(m) }
 func (*PBGameRecord) ProtoMessage()    {}
 func (*PBGameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{12}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{12}
 }
-
 func (m *PBGameRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameRecord.Unmarshal(m, b)
 }
 func (m *PBGameRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameRecord.Marshal(b, m, deterministic)
 }
-func (m *PBGameRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameRecord.Merge(m, src)
+func (dst *PBGameRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameRecord.Merge(dst, src)
 }
 func (m *PBGameRecord) XXX_Size() int {
 	return xxx_messageInfo_PBGameRecord.Size(m)
@@ -1055,17 +1043,16 @@ func (m *PBGameIndexRecord) Reset()         { *m = PBGameIndexRecord{} }
 func (m *PBGameIndexRecord) String() string { return proto.CompactTextString(m) }
 func (*PBGameIndexRecord) ProtoMessage()    {}
 func (*PBGameIndexRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{13}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{13}
 }
-
 func (m *PBGameIndexRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameIndexRecord.Unmarshal(m, b)
 }
 func (m *PBGameIndexRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameIndexRecord.Marshal(b, m, deterministic)
 }
-func (m *PBGameIndexRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameIndexRecord.Merge(m, src)
+func (dst *PBGameIndexRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameIndexRecord.Merge(dst, src)
 }
 func (m *PBGameIndexRecord) XXX_Size() int {
 	return xxx_messageInfo_PBGameIndexRecord.Size(m)
@@ -1101,17 +1088,16 @@ func (m *PBGameRecords) Reset()         { *m = PBGameRecords{} }
 func (m *PBGameRecords) String() string { return proto.CompactTextString(m) }
 func (*PBGameRecords) ProtoMessage()    {}
 func (*PBGameRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{14}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{14}
 }
-
 func (m *PBGameRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameRecords.Unmarshal(m, b)
 }
 func (m *PBGameRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameRecords.Marshal(b, m, deterministic)
 }
-func (m *PBGameRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameRecords.Merge(m, src)
+func (dst *PBGameRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameRecords.Merge(dst, src)
 }
 func (m *PBGameRecords) XXX_Size() int {
 	return xxx_messageInfo_PBGameRecords.Size(m)
@@ -1140,17 +1126,16 @@ func (m *PBGameIndexRecords) Reset()         { *m = PBGameIndexRecords{} }
 func (m *PBGameIndexRecords) String() string { return proto.CompactTextString(m) }
 func (*PBGameIndexRecords) ProtoMessage()    {}
 func (*PBGameIndexRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{15}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{15}
 }
-
 func (m *PBGameIndexRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameIndexRecords.Unmarshal(m, b)
 }
 func (m *PBGameIndexRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBGameIndexRecords.Marshal(b, m, deterministic)
 }
-func (m *PBGameIndexRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBGameIndexRecords.Merge(m, src)
+func (dst *PBGameIndexRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGameIndexRecords.Merge(dst, src)
 }
 func (m *PBGameIndexRecords) XXX_Size() int {
 	return xxx_messageInfo_PBGameIndexRecords.Size(m)
@@ -1182,17 +1167,16 @@ func (m *QueryPBGameInfo) Reset()         { *m = QueryPBGameInfo{} }
 func (m *QueryPBGameInfo) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameInfo) ProtoMessage()    {}
 func (*QueryPBGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{16}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{16}
 }
-
 func (m *QueryPBGameInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameInfo.Unmarshal(m, b)
 }
 func (m *QueryPBGameInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryPBGameInfo.Marshal(b, m, deterministic)
 }
-func (m *QueryPBGameInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameInfo.Merge(m, src)
+func (dst *QueryPBGameInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPBGameInfo.Merge(dst, src)
 }
 func (m *QueryPBGameInfo) XXX_Size() int {
 	return xxx_messageInfo_QueryPBGameInfo.Size(m)
@@ -1242,17 +1226,16 @@ func (m *ReplyPBGame) Reset()         { *m = ReplyPBGame{} }
 func (m *ReplyPBGame) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGame) ProtoMessage()    {}
 func (*ReplyPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{17}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{17}
 }
-
 func (m *ReplyPBGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGame.Unmarshal(m, b)
 }
 func (m *ReplyPBGame) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPBGame.Marshal(b, m, deterministic)
 }
-func (m *ReplyPBGame) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPBGame.Merge(m, src)
+func (dst *ReplyPBGame) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPBGame.Merge(dst, src)
 }
 func (m *ReplyPBGame) XXX_Size() int {
 	return xxx_messageInfo_ReplyPBGame.Size(m)
@@ -1281,17 +1264,16 @@ func (m *QueryPBGameInfos) Reset()         { *m = QueryPBGameInfos{} }
 func (m *QueryPBGameInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameInfos) ProtoMessage()    {}
 func (*QueryPBGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{18}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{18}
 }
-
 func (m *QueryPBGameInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameInfos.Unmarshal(m, b)
 }
 func (m *QueryPBGameInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryPBGameInfos.Marshal(b, m, deterministic)
 }
-func (m *QueryPBGameInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameInfos.Merge(m, src)
+func (dst *QueryPBGameInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPBGameInfos.Merge(dst, src)
 }
 func (m *QueryPBGameInfos) XXX_Size() int {
 	return xxx_messageInfo_QueryPBGameInfos.Size(m)
@@ -1320,17 +1302,16 @@ func (m *ReplyPBGameList) Reset()         { *m = ReplyPBGameList{} }
 func (m *ReplyPBGameList) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGameList) ProtoMessage()    {}
 func (*ReplyPBGameList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{19}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{19}
 }
-
 func (m *ReplyPBGameList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGameList.Unmarshal(m, b)
 }
 func (m *ReplyPBGameList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPBGameList.Marshal(b, m, deterministic)
 }
-func (m *ReplyPBGameList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPBGameList.Merge(m, src)
+func (dst *ReplyPBGameList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPBGameList.Merge(dst, src)
 }
 func (m *ReplyPBGameList) XXX_Size() int {
 	return xxx_messageInfo_ReplyPBGameList.Size(m)
@@ -1361,17 +1342,16 @@ func (m *QueryPBGameByRound) Reset()         { *m = QueryPBGameByRound{} }
 func (m *QueryPBGameByRound) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameByRound) ProtoMessage()    {}
 func (*QueryPBGameByRound) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{20}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{20}
 }
-
 func (m *QueryPBGameByRound) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameByRound.Unmarshal(m, b)
 }
 func (m *QueryPBGameByRound) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryPBGameByRound.Marshal(b, m, deterministic)
 }
-func (m *QueryPBGameByRound) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPBGameByRound.Merge(m, src)
+func (dst *QueryPBGameByRound) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPBGameByRound.Merge(dst, src)
 }
 func (m *QueryPBGameByRound) XXX_Size() int {
 	return xxx_messageInfo_QueryPBGameByRound.Size(m)
@@ -1414,17 +1394,16 @@ func (m *ReplyPBGameByRound) Reset()         { *m = ReplyPBGameByRound{} }
 func (m *ReplyPBGameByRound) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGameByRound) ProtoMessage()    {}
 func (*ReplyPBGameByRound) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{21}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{21}
 }
-
 func (m *ReplyPBGameByRound) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGameByRound.Unmarshal(m, b)
 }
 func (m *ReplyPBGameByRound) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPBGameByRound.Marshal(b, m, deterministic)
 }
-func (m *ReplyPBGameByRound) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPBGameByRound.Merge(m, src)
+func (dst *ReplyPBGameByRound) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPBGameByRound.Merge(dst, src)
 }
 func (m *ReplyPBGameByRound) XXX_Size() int {
 	return xxx_messageInfo_ReplyPBGameByRound.Size(m)
@@ -1505,17 +1484,16 @@ func (m *ReceiptPBGame) Reset()         { *m = ReceiptPBGame{} }
 func (m *ReceiptPBGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPBGame) ProtoMessage()    {}
 func (*ReceiptPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{22}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{22}
 }
-
 func (m *ReceiptPBGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptPBGame.Unmarshal(m, b)
 }
 func (m *ReceiptPBGame) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptPBGame.Marshal(b, m, deterministic)
 }
-func (m *ReceiptPBGame) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptPBGame.Merge(m, src)
+func (dst *ReceiptPBGame) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptPBGame.Merge(dst, src)
 }
 func (m *ReceiptPBGame) XXX_Size() int {
 	return xxx_messageInfo_ReceiptPBGame.Size(m)
@@ -1616,17 +1594,16 @@ func (m *PBStartTxReq) Reset()         { *m = PBStartTxReq{} }
 func (m *PBStartTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBStartTxReq) ProtoMessage()    {}
 func (*PBStartTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{23}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{23}
 }
-
 func (m *PBStartTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBStartTxReq.Unmarshal(m, b)
 }
 func (m *PBStartTxReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBStartTxReq.Marshal(b, m, deterministic)
 }
-func (m *PBStartTxReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBStartTxReq.Merge(m, src)
+func (dst *PBStartTxReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBStartTxReq.Merge(dst, src)
 }
 func (m *PBStartTxReq) XXX_Size() int {
 	return xxx_messageInfo_PBStartTxReq.Size(m)
@@ -1670,17 +1647,16 @@ func (m *PBContinueTxReq) Reset()         { *m = PBContinueTxReq{} }
 func (m *PBContinueTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBContinueTxReq) ProtoMessage()    {}
 func (*PBContinueTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{24}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{24}
 }
-
 func (m *PBContinueTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBContinueTxReq.Unmarshal(m, b)
 }
 func (m *PBContinueTxReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBContinueTxReq.Marshal(b, m, deterministic)
 }
-func (m *PBContinueTxReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBContinueTxReq.Merge(m, src)
+func (dst *PBContinueTxReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBContinueTxReq.Merge(dst, src)
 }
 func (m *PBContinueTxReq) XXX_Size() int {
 	return xxx_messageInfo_PBContinueTxReq.Size(m)
@@ -1717,17 +1693,16 @@ func (m *PBQuitTxReq) Reset()         { *m = PBQuitTxReq{} }
 func (m *PBQuitTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBQuitTxReq) ProtoMessage()    {}
 func (*PBQuitTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{25}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{25}
 }
-
 func (m *PBQuitTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBQuitTxReq.Unmarshal(m, b)
 }
 func (m *PBQuitTxReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBQuitTxReq.Marshal(b, m, deterministic)
 }
-func (m *PBQuitTxReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBQuitTxReq.Merge(m, src)
+func (dst *PBQuitTxReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBQuitTxReq.Merge(dst, src)
 }
 func (m *PBQuitTxReq) XXX_Size() int {
 	return xxx_messageInfo_PBQuitTxReq.Size(m)
@@ -1764,17 +1739,16 @@ func (m *PBQueryReq) Reset()         { *m = PBQueryReq{} }
 func (m *PBQueryReq) String() string { return proto.CompactTextString(m) }
 func (*PBQueryReq) ProtoMessage()    {}
 func (*PBQueryReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8d22e4ee2313e311, []int{26}
+	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{26}
 }
-
 func (m *PBQueryReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBQueryReq.Unmarshal(m, b)
 }
 func (m *PBQueryReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PBQueryReq.Marshal(b, m, deterministic)
 }
-func (m *PBQueryReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBQueryReq.Merge(m, src)
+func (dst *PBQueryReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBQueryReq.Merge(dst, src)
 }
 func (m *PBQueryReq) XXX_Size() int {
 	return xxx_messageInfo_PBQueryReq.Size(m)
@@ -1829,9 +1803,9 @@ func init() {
 	proto.RegisterType((*PBQueryReq)(nil), "types.PBQueryReq")
 }
 
-func init() { proto.RegisterFile("pokerbull.proto", fileDescriptor_8d22e4ee2313e311) }
+func init() { proto.RegisterFile("pokerbull.proto", fileDescriptor_pokerbull_5d387ab9a2fc22dd) }
 
-var fileDescriptor_8d22e4ee2313e311 = []byte{
+var fileDescriptor_pokerbull_5d387ab9a2fc22dd = []byte{
 	// 1054 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x17, 0x4b, 0x8f, 0xdb, 0x44,
 	0xb8, 0xb6, 0xe3, 0x3c, 0x3e, 0x77, 0x93, 0xed, 0x00, 0xab, 0x11, 0x42, 0x28, 0x72, 0x97, 0x36,

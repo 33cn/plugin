@@ -359,7 +359,7 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(proposalAmount), account.Balance)
+	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propRuleID(proposalID))
 	assert.NoError(t, err)

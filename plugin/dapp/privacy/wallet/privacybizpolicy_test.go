@@ -164,8 +164,6 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 	if Account != nil || err != nil {
 		if Account.Privkey == Encrypteredstr {
 			return
-		} else {
-			return
 		}
 	}
 

@@ -5,15 +5,14 @@
 package para
 
 import (
-	"github.com/stretchr/testify/assert"
-	//"github.com/stretchr/testify/mock"
 	"encoding/hex"
-	"math/rand"
+
+	"github.com/stretchr/testify/assert"
+
 	"testing"
-	"time"
 
 	apimocks "github.com/33cn/chain33/client/mocks"
-	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/queue"
 	qmocks "github.com/33cn/chain33/queue/mocks"
@@ -26,7 +25,7 @@ import (
 )
 
 var (
-	Amount = int64(1 * types.Coin)
+	Amount = 1 * types.Coin
 	Title  = string("user.p.para.")
 	Title2 = string("user.p.test.")
 )
@@ -42,37 +41,9 @@ func TestFilterTxsForPara(t *testing.T) {
 
 }
 
-func createCrossMainTx(to string) (*types.Transaction, error) {
-	param := types.CreateTx{
-		To:          string(to),
-		Amount:      Amount,
-		Fee:         0,
-		Note:        []byte("test asset transfer"),
-		IsWithdraw:  false,
-		IsToken:     false,
-		TokenSymbol: "",
-		ExecName:    pt.ParaX,
-	}
-	transfer := &pt.ParacrossAction{}
-	v := &pt.ParacrossAction_AssetTransfer{AssetTransfer: &types.AssetsTransfer{
-		Amount: param.Amount, Note: param.GetNote(), To: param.GetTo()}}
-	transfer.Value = v
-	transfer.Ty = pt.ParacrossActionAssetTransfer
-
-	tx := &types.Transaction{
-		Execer:  []byte(param.GetExecName()),
-		Payload: types.Encode(transfer),
-		To:      address.ExecAddress(param.GetExecName()),
-		Fee:     param.Fee,
-		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-	}
-
-	return tx, nil
-}
-
 func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
 	param := types.CreateTx{
-		To:          string(to),
+		To:          to,
 		Amount:      amount,
 		Fee:         0,
 		Note:        []byte("test asset transfer"),
@@ -88,7 +59,7 @@ func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
 
 func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) {
 	param := types.CreateTx{
-		To:          string(to),
+		To:          to,
 		Amount:      amount,
 		Fee:         0,
 		Note:        []byte("test asset transfer"),

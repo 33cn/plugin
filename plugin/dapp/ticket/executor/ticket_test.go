@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
@@ -42,13 +43,13 @@ func TestTicketPrice(t *testing.T) {
 func TestCheckFork(t *testing.T) {
 	assert.Equal(t, int64(1), types.GetFork("ForkChainParamV2"))
 	p1 := types.GetP(0)
-	assert.Equal(t, int64(10000*types.Coin), p1.TicketPrice)
+	assert.Equal(t, 10000*types.Coin, p1.TicketPrice)
 	p1 = types.GetP(1)
-	assert.Equal(t, int64(3000*types.Coin), p1.TicketPrice)
+	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
 	p1 = types.GetP(2)
-	assert.Equal(t, int64(3000*types.Coin), p1.TicketPrice)
+	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
 	p1 = types.GetP(3)
-	assert.Equal(t, int64(3000*types.Coin), p1.TicketPrice)
+	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
 }
 
 func TestTicket(t *testing.T) {
@@ -131,7 +132,7 @@ func createBindMiner(t *testing.T, m, r string, priv crypto.PrivKey) *types.Tran
 	return tx
 }
 
-func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req *ty.TicketList) *ty.ReplyTicketList {
+func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req proto.Message) *ty.ReplyTicketList {
 	data, err := mock33.GetAPI().Query("ticket", "TicketList", req)
 	assert.Nil(t, err)
 	return data.(*ty.ReplyTicketList)

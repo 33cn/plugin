@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -35,17 +36,16 @@ func (m *Cert) Reset()         { *m = Cert{} }
 func (m *Cert) String() string { return proto.CompactTextString(m) }
 func (*Cert) ProtoMessage()    {}
 func (*Cert) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{0}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{0}
 }
-
 func (m *Cert) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Cert.Unmarshal(m, b)
 }
 func (m *Cert) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Cert.Marshal(b, m, deterministic)
 }
-func (m *Cert) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Cert.Merge(m, src)
+func (dst *Cert) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Cert.Merge(dst, src)
 }
 func (m *Cert) XXX_Size() int {
 	return xxx_messageInfo_Cert.Size(m)
@@ -100,17 +100,16 @@ func (m *CertAction) Reset()         { *m = CertAction{} }
 func (m *CertAction) String() string { return proto.CompactTextString(m) }
 func (*CertAction) ProtoMessage()    {}
 func (*CertAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{1}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{1}
 }
-
 func (m *CertAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertAction.Unmarshal(m, b)
 }
 func (m *CertAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertAction.Marshal(b, m, deterministic)
 }
-func (m *CertAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertAction.Merge(m, src)
+func (dst *CertAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertAction.Merge(dst, src)
 }
 func (m *CertAction) XXX_Size() int {
 	return xxx_messageInfo_CertAction.Size(m)
@@ -283,17 +282,16 @@ func (m *CertNew) Reset()         { *m = CertNew{} }
 func (m *CertNew) String() string { return proto.CompactTextString(m) }
 func (*CertNew) ProtoMessage()    {}
 func (*CertNew) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{2}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{2}
 }
-
 func (m *CertNew) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertNew.Unmarshal(m, b)
 }
 func (m *CertNew) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertNew.Marshal(b, m, deterministic)
 }
-func (m *CertNew) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertNew.Merge(m, src)
+func (dst *CertNew) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertNew.Merge(dst, src)
 }
 func (m *CertNew) XXX_Size() int {
 	return xxx_messageInfo_CertNew.Size(m)
@@ -330,17 +328,16 @@ func (m *CertUpdate) Reset()         { *m = CertUpdate{} }
 func (m *CertUpdate) String() string { return proto.CompactTextString(m) }
 func (*CertUpdate) ProtoMessage()    {}
 func (*CertUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{3}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{3}
 }
-
 func (m *CertUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertUpdate.Unmarshal(m, b)
 }
 func (m *CertUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertUpdate.Marshal(b, m, deterministic)
 }
-func (m *CertUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertUpdate.Merge(m, src)
+func (dst *CertUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertUpdate.Merge(dst, src)
 }
 func (m *CertUpdate) XXX_Size() int {
 	return xxx_messageInfo_CertUpdate.Size(m)
@@ -377,17 +374,16 @@ func (m *CertNormal) Reset()         { *m = CertNormal{} }
 func (m *CertNormal) String() string { return proto.CompactTextString(m) }
 func (*CertNormal) ProtoMessage()    {}
 func (*CertNormal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{4}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{4}
 }
-
 func (m *CertNormal) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertNormal.Unmarshal(m, b)
 }
 func (m *CertNormal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertNormal.Marshal(b, m, deterministic)
 }
-func (m *CertNormal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertNormal.Merge(m, src)
+func (dst *CertNormal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertNormal.Merge(dst, src)
 }
 func (m *CertNormal) XXX_Size() int {
 	return xxx_messageInfo_CertNormal.Size(m)
@@ -425,17 +421,16 @@ func (m *Authority) Reset()         { *m = Authority{} }
 func (m *Authority) String() string { return proto.CompactTextString(m) }
 func (*Authority) ProtoMessage()    {}
 func (*Authority) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a142e29cbef9b1cf, []int{5}
+	return fileDescriptor_cert_ed39500e31f072f0, []int{5}
 }
-
 func (m *Authority) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Authority.Unmarshal(m, b)
 }
 func (m *Authority) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Authority.Marshal(b, m, deterministic)
 }
-func (m *Authority) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Authority.Merge(m, src)
+func (dst *Authority) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Authority.Merge(dst, src)
 }
 func (m *Authority) XXX_Size() int {
 	return xxx_messageInfo_Authority.Size(m)
@@ -476,9 +471,9 @@ func init() {
 	proto.RegisterType((*Authority)(nil), "types.Authority")
 }
 
-func init() { proto.RegisterFile("cert.proto", fileDescriptor_a142e29cbef9b1cf) }
+func init() { proto.RegisterFile("cert.proto", fileDescriptor_cert_ed39500e31f072f0) }
 
-var fileDescriptor_a142e29cbef9b1cf = []byte{
+var fileDescriptor_cert_ed39500e31f072f0 = []byte{
 	// 300 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0xcd, 0x4a, 0xf3, 0x40,
 	0x14, 0xed, 0x24, 0xfd, 0xbd, 0xfd, 0x28, 0x9f, 0x83, 0x48, 0x70, 0x21, 0x25, 0xab, 0x82, 0x10,

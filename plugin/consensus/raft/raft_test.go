@@ -160,7 +160,7 @@ func prepareTxList() *types.Transaction {
 
 func getReplyList(n int) (txs []*types.Transaction) {
 
-	for i := 0; i < int(n); i++ {
+	for i := 0; i < n; i++ {
 		txs = append(txs, prepareTxList())
 	}
 	return txs

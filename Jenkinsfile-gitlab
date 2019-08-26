@@ -4,6 +4,7 @@ pipeline {
 
     environment {
         GOPATH = "${WORKSPACE}"
+        GO111MODULE = "on"
         PROJ_DIR = "${WORKSPACE}/src/github.com/33cn/plugin"
     }
 
