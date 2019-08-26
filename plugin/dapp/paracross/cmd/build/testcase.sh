@@ -8,6 +8,7 @@ MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
 PARA_COIN_FROZEN="5.0000"
+MainLoopCheckForkHeight="60"
 
 xsedfix=""
 if [ "$(uname)" == "Darwin" ]; then
@@ -40,7 +41,7 @@ function para_set_toml() {
 
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
-    sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight=60/g' "${1}"
+    sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
     sed -i $xsedfix 's/^FetchFilterParaTxsEnable=.*/FetchFilterParaTxsEnable=1/g' "${1}"
 
     # rpc
@@ -448,13 +449,7 @@ function para_create_nodegroup_test() {
     txhash=$(${PARA_CLI} send para nodegroup -o 1 -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 5 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
-
-    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        ${PARA_CLI} tx query -s "${txhash}"
-        echo "group id not getted"
-        exit 1
-    fi
+    id=$txhash
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     if [ "$balance" != "20.0000" ]; then
@@ -489,13 +484,8 @@ function para_create_nodegroup() {
     txhash=$(${PARA_CLI} send para nodegroup -o 1 -a "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY,1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 6 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
+    id=$txhash
 
-    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        ${PARA_CLI} tx query -s "${txhash}"
-        echo "group id not getted"
-        exit 1
-    fi
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     if [ "$balance" != "30.0000" ]; then
         echo "apply coinfrozen error balance=$balance"
@@ -573,13 +563,7 @@ function para_nodegroup_behalf_quit_test() {
     hash=$(${PARA_CLI} send para node -o 3 -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
-    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "${id}" ]; then
-        echo "wrong id "
-        ${PARA_CLI} tx query -s "${hash}"
-        exit 1
-    fi
+    id=$hash
 
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
@@ -622,7 +606,7 @@ function para_nodemanage_cancel_test() {
     hash=$(${PARA_CLI} send para node -o 1 -c 5 -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
+    id=$hash
     balance=$(${CLI} account balance -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -e paracross | jq -r ".frozen")
     if [ "$balance" != "$PARA_COIN_FROZEN" ]; then
         echo "frozen coinfrozen error balance=$balance"
@@ -630,12 +614,6 @@ function para_nodemanage_cancel_test() {
     fi
 
     echo "=========== # para chain node cancel ============="
-    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${hash}"
-        exit 1
-    fi
     hash=$(${PARA_CLI} send para node -o 4 -i "$id" -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
@@ -667,13 +645,7 @@ function para_nodemanage_test() {
         echo "frozen coinfrozen error balance=$balance"
         exit 1
     fi
-
-    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${hash}"
-        exit 1
-    fi
+    id=$hash
     echo "=========== # para chain node vote ============="
 
     ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
@@ -712,13 +684,7 @@ function para_nodemanage_test() {
     txhash=$(${PARA_CLI} send para node -o 3 -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588)
     echo "${txhash}"
     query_tx "${PARA_CLI}" "${txhash}"
-
-    id=$(${PARA_CLI} tx query -s "${txhash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${txhash}"
-        exit 1
-    fi
+    id=$txhash
 
     echo "=========== # para chain node vote quit ============="
     ${PARA_CLI} send para node -o 2 -i "$id" -v 2 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
@@ -755,6 +721,7 @@ function para_nodemanage_node_behalf_join() {
     hash=$(${PARA_CLI} send para node -o 1 -c 8 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
+    node1_id=$hash
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     if [ "$balance" != "32.0000" ]; then
@@ -768,28 +735,15 @@ function para_nodemanage_node_behalf_join() {
         exit 1
     fi
 
-    node1_id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$node1_id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${hash}"
-        exit 1
-    fi
-
     echo "=========== # para chain new node join 2============="
     hash=$(${PARA_CLI} send para node -o 1 -c 9 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
+    id=$hash
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     if [ "$balance" != "41.0000" ]; then
         echo "frozen coinfrozen error balance=$balance"
-        exit 1
-    fi
-
-    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${hash}"
         exit 1
     fi
 
@@ -854,13 +808,7 @@ function para_nodemanage_node_behalf_join() {
     hash=$(${PARA_CLI} send para node -o 3 -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
-
-    id=$(${PARA_CLI} tx query -s "${hash}" | jq -r ".receipt.logs[0].log.current.id")
-    if [ -z "$id" ]; then
-        echo "id not found"
-        ${PARA_CLI} tx query -s "${hash}"
-        exit 1
-    fi
+    id=$hash
 
     echo "=========== # para chain node2 vote quit ============="
     ${PARA_CLI} send para node -o 2 -i "$id" -v 1 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
@@ -950,6 +898,7 @@ function privacy_transfer_test() {
 
 function para_test() {
     echo "=========== # para chain test ============="
+    block_wait2height "${PARA_CLI}" $MainLoopCheckForkHeight "1"
     para_create_nodegroup
     para_nodegroup_behalf_quit_test
     para_nodemanage_cancel_test

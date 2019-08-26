@@ -7,7 +7,13 @@ package executor
 import (
 	"fmt"
 
+	"strings"
+
 	"github.com/33cn/chain33/types"
+)
+
+const (
+	paraNodeIDUnifyPrefix = "mavl-paracross-title-node"
 )
 
 var (
@@ -17,8 +23,8 @@ var (
 	paraConfigNodes           string //平行链自组织配置的nodes，最初是从manager同步过来
 	paraConfigNodeAddr        string //平行链配置节点账户
 	paraNodeGroupStatusAddrs  string //正在申请的addrs
-	paraNodeID                string
-	paraNodeGroupID           string
+	paraNodeIDPrefix          string
+	paraNodeGroupIDPrefix     string
 	localTx                   string
 	localTitle                string
 	localTitleHeight          string
@@ -35,8 +41,8 @@ func setPrefix() {
 	paraConfigNodes = "mavl-paracross-nodes-title-"
 	paraConfigNodeAddr = "mavl-paracross-nodes-titleAddr-"
 	paraNodeGroupStatusAddrs = "mavl-paracross-nodegroup-apply-title-"
-	paraNodeID = "mavl-paracross-title-nodeid-"
-	paraNodeGroupID = "mavl-paracross-title-nodegroupid-"
+	paraNodeIDPrefix = "mavl-paracross-title-nodeid-"
+	paraNodeGroupIDPrefix = "mavl-paracross-title-nodegroupid-"
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
 	localTitleHeight = "LODB-paracross-titleHeight-"
@@ -79,11 +85,31 @@ func calcParaNodeGroupStatusKey(title string) []byte {
 }
 
 func calcParaNodeIDKey(title, hash string) string {
-	return fmt.Sprintf(paraNodeID+"%s-%s", title, hash)
+	return fmt.Sprintf(paraNodeIDPrefix+"%s-%s", title, hash)
 }
 
 func calcParaNodeGroupIDKey(title, hash string) string {
-	return fmt.Sprintf(paraNodeGroupID+"%s-%s", title, hash)
+	return fmt.Sprintf(paraNodeGroupIDPrefix+"%s-%s", title, hash)
+}
+
+func getParaNodeIDSuffix(id string) string {
+	if !strings.HasPrefix(id, paraNodeIDUnifyPrefix) {
+		return id
+	}
+
+	ids := strings.Split(id, "-")
+	txId := ids[len(ids)-1]
+	if strings.HasPrefix(txId, "0x") {
+		return txId
+	}
+	//对于nodegroup 创建的"mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274587...a61e444e9f848a4c02d7b-1"特殊场景
+	if len(ids) > 1 {
+		txId = ids[len(ids)-2] + "-" + txId
+		if strings.HasPrefix(txId, "0x") {
+			return txId
+		}
+	}
+	return id
 }
 
 func calcLocalTxKey(title string, height int64, addr string) []byte {

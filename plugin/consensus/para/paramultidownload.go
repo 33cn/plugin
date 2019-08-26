@@ -105,6 +105,7 @@ func (m *multiDldClient) testConn(conn *connectCli, inv *inventory) {
 	}()
 
 	t := time.NewTimer(time.Second * time.Duration(conn.timeout))
+	defer t.Stop()
 	select {
 	case <-t.C:
 		plog.Info("multiServerDownload.testconn ip timeout", "ip", conn.ip)
@@ -115,7 +116,6 @@ func (m *multiDldClient) testConn(conn *connectCli, inv *inventory) {
 			m.conns = append(m.conns, conn)
 			m.mtx.Unlock()
 		}
-		t.Stop()
 		return
 	}
 }
@@ -470,16 +470,15 @@ func requestMainBlockWithTime(inv *inventory) *types.ParaTxDetails {
 	}()
 
 	t := time.NewTimer(time.Second * time.Duration(inv.connCli.timeout))
+	defer t.Stop()
 	select {
 	case <-t.C:
 		plog.Debug("requestMainBlockWithTime timeout", "start", inv.start, "end", inv.end, "ip", inv.connCli.ip)
 		return nil
 	case ret, ok := <-retCh:
 		if !ok {
-			t.Stop()
 			return nil
 		}
-		t.Stop()
 		return ret
 	}
 }

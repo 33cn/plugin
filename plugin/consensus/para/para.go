@@ -131,7 +131,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	if subcfg.BatchFetchBlockCount <= 0 {
-		subcfg.BatchFetchBlockCount = batchFetchBlockCount
+		subcfg.BatchFetchBlockCount = types.MaxBlockCountPerTime
+	}
+	if subcfg.BatchFetchBlockCount > types.MaxBlockCountPerTime {
+		panic(fmt.Sprintf("BatchFetchBlockCount=%d should be more than %d ", subcfg.BatchFetchBlockCount, types.MaxBlockCountPerTime))
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
