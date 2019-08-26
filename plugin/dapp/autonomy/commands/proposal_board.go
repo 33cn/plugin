@@ -31,6 +31,7 @@ func AutonomyCmd() *cobra.Command {
 		VoteProposalBoardCmd(),
 		TerminateProposalBoardCmd(),
 		ShowProposalBoardCmd(),
+		ShowActiveBoardCmd(),
 	)
 
 	// project
@@ -198,7 +199,7 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 		isapp = true
 	}
 	var originAddrs []string
-	if len(originAddr) > 0  {
+	if len(originAddr) > 0 {
 		originAddrs = strings.Split(originAddr, "-")
 	}
 
@@ -318,6 +319,29 @@ func showProposalBoard(cmd *cobra.Command, args []string) {
 		params.Payload = types.MustPBToJSON(&req)
 	}
 	rep = &auty.ReplyQueryProposalBoard{}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
+}
+
+// ShowActiveBoardCmd 显示提案查询信息
+func ShowActiveBoardCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showActiveBoardInfo",
+		Short: "show active board info",
+		Run:   showActiveBoard,
+	}
+	return cmd
+}
+
+func showActiveBoard(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	params := rpctypes.Query4Jrpc{}
+	params.Execer = auty.AutonomyX
+	params.FuncName = auty.GetActiveBoard
+	params.Payload = types.MustPBToJSON(&types.ReqString{})
+	rep := &auty.ActiveBoard{}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()

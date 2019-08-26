@@ -96,3 +96,12 @@ func testListProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	rep = &auty.ReplyQueryProposalBoard{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
+
+func testGetActiveBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	var rep interface{}
+	var params rpctypes.Query4Jrpc
+	params.FuncName = auty.GetActiveBoard
+	params.Payload = types.MustPBToJSON(&types.ReqString{})
+	rep = &auty.ActiveBoard{}
+	return jrpc.Call("Chain33.Query", params, rep)
+}

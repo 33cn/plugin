@@ -19,6 +19,11 @@ func (a *Autonomy) Query_ListProposalBoard(in *auty.ReqQueryProposalBoard) (type
 	return a.listProposalBoard(in)
 }
 
+// Query_GetActiveBoard 查询当前board
+func (a *Autonomy) Query_GetActiveBoard(in *types.ReqString) (types.Message, error) {
+	return a.getActiveBoard()
+}
+
 // Query_GetProposalProject 查询提案项目
 func (a *Autonomy) Query_GetProposalProject(in *types.ReqString) (types.Message, error) {
 	return a.getProposalProject(in)

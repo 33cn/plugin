@@ -45,9 +45,9 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	}
 	if (prob.RuleCfg.BoardApproveRatio > 0 && (prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio)) ||
 		(prob.RuleCfg.PubOpposeRatio > 0 && (prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio || prob.RuleCfg.PubOpposeRatio < minPubOpposeRatio)) ||
-		(prob.RuleCfg.PublicPeriod > 0 && (prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod )) ||
+		(prob.RuleCfg.PublicPeriod > 0 && (prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod)) ||
 		(prob.RuleCfg.LargeProjectAmount > 0 && (prob.RuleCfg.LargeProjectAmount > maxLargeProjectAmount || prob.RuleCfg.LargeProjectAmount < minLargeProjectAmount)) ||
-		(prob.RuleCfg.ProposalAmount > 0 && (prob.RuleCfg.ProposalAmount > maxProposalAmount || prob.RuleCfg.ProposalAmount < minProposalAmount )){
+		(prob.RuleCfg.ProposalAmount > 0 && (prob.RuleCfg.ProposalAmount > maxProposalAmount || prob.RuleCfg.ProposalAmount < minProposalAmount)) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}

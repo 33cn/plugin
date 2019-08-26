@@ -357,6 +357,19 @@ func TestListProposalBoard(t *testing.T) {
 	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
 }
 
+func TestGetActiveBoard(t *testing.T) {
+	au := &Autonomy{
+		dapp.DriverBase{},
+	}
+	_, storedb, _ := util.CreateTestDB()
+	au.SetStateDB(storedb)
+	storedb.Set(activeBoardID(), types.Encode(&auty.ActiveBoard{Boards: []string{"111"}}))
+	rsp, err := au.getActiveBoard()
+	assert.NoError(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, len(rsp.(*auty.ActiveBoard).Boards), 1)
+}
+
 func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalBoard) {
 	table := NewBoardTable(kvdb)
 	query := table.GetQuery(kvdb)

@@ -458,6 +458,14 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	assert.NoError(t, err)
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
+
+	// 更新董事会累计审批金
+	value, err = stateDB.Get(activeBoardID())
+	assert.NoError(t, err)
+	aBd := &auty.ActiveBoard{}
+	err = types.Decode(value, aBd)
+	assert.NoError(t, err)
+	assert.Equal(t, testProjectAmount, aBd.Amount)
 }
 
 func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -486,7 +494,7 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	exec.SetAPI(api)
 
 	proposalID := env.txHash
-	// 4人参与投票，3人赞成票，1人反对票
+	// 3人参与投票，2人赞成票，1人反对票
 	type record struct {
 		priv   string
 		appr   bool
@@ -566,6 +574,14 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
+
+	// 更新董事会累计审批金
+	value, err = stateDB.Get(activeBoardID())
+	assert.NoError(t, err)
+	aBd := &auty.ActiveBoard{}
+	err = types.Decode(value, aBd)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), aBd.Amount)
 }
 
 func pubVoteProposalProjectTx(parm *auty.PubVoteProposalProject) (*types.Transaction, error) {

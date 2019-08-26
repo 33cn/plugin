@@ -134,3 +134,16 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 	}
 	return &rep, nil
 }
+
+func (a *Autonomy) getActiveBoard() (types.Message, error) {
+	value, err := a.GetStateDB().Get(activeBoardID())
+	if err != nil {
+		return nil, err
+	}
+	prop := &auty.ActiveBoard{}
+	err = types.Decode(value, prop)
+	if err != nil {
+		return nil, err
+	}
+	return prop, nil
+}

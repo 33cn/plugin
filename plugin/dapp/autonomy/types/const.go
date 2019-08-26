@@ -93,6 +93,8 @@ const (
 	GetProposalBoard = "GetProposalBoard"
 	// ListProposalBoard 查询多个
 	ListProposalBoard = "ListProposalBoard"
+	// GetActiveBoard 查询当前的
+	GetActiveBoard = "GetActiveBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询
 	GetProposalProject = "GetProposalProject"
 	// ListProposalProject 查询多个

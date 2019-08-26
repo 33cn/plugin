@@ -42,6 +42,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testTerminateProposalBoardTxCmd},
 		{fn: testGetProposalBoardCmd},
 		{fn: testListProposalBoardCmd},
+		{fn: testGetActiveBoardCmd},
 
 		{fn: testPropProjectTxCmd},
 		{fn: testRevokeProposalProjectTxCmd},

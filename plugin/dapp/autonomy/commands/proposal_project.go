@@ -220,7 +220,7 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 	}
 
 	var originAddrs []string
-	if len(originAddr) > 0  {
+	if len(originAddr) > 0 {
 		originAddrs = strings.Split(originAddr, "-")
 	}
 

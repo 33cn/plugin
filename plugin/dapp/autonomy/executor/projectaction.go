@@ -387,13 +387,6 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		}
 		logs = append(logs, receiptPrj.Logs...)
 		kv = append(kv, receiptPrj.KV...)
-		// 需要更新该董事会的累计审批金
-		pakv, err := a.updatePeriodAmount(cur.PropProject.Amount)
-		if err != nil {
-			alog.Error("pubVotePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "updatePeriodAmount fail", err)
-			return nil, err
-		}
-		kv = append(kv, pakv)
 	}
 
 	key := propProjectID(voteProb.ProposalID)

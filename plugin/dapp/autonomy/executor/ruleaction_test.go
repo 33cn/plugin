@@ -80,12 +80,24 @@ func TestPropRule(t *testing.T) {
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
+		{ // 配置参数其中之一不合法
+			RuleCfg: &auty.RuleConfig{
+				BoardApproveRatio:  1,
+				PubOpposeRatio:     minPubOpposeRatio + 1,
+				ProposalAmount:     minProposalAmount + 1,
+				LargeProjectAmount: minLargeProjectAmount + 1,
+				PublicPeriod:       minPublicPeriod + 1,
+			},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
 	}
 
 	result := []error{
 		types.ErrInvalidParam,
 		nil,
 		nil,
+		types.ErrInvalidParam,
 		types.ErrInvalidParam,
 		types.ErrInvalidParam,
 	}
