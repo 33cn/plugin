@@ -108,7 +108,7 @@ func TestPropRule(t *testing.T) {
 		assert.NoError(t, err)
 		pbtx, err = signTx(pbtx, PrivKeyA)
 		assert.NoError(t, err)
-		_, err = exec.Exec(pbtx, int(i))
+		_, err = exec.Exec(pbtx, i)
 		assert.Equal(t, err, result[i])
 	}
 }
