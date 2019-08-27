@@ -28,8 +28,7 @@ default: depends build
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
-	@cp chain33.toml  build/
-	cp $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.toml  $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
