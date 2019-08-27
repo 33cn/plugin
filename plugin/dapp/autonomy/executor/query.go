@@ -44,6 +44,11 @@ func (a *Autonomy) Query_ListProposalRule(in *auty.ReqQueryProposalRule) (types.
 	return a.listProposalRule(in)
 }
 
+// Query_GetActiveRule 查询当前rule
+func (a *Autonomy) Query_GetActiveRule(in *types.ReqString) (types.Message, error) {
+	return a.getActiveRule()
+}
+
 // Query_ListProposalComment 批量查询提案评论
 func (a *Autonomy) Query_ListProposalComment(in *auty.ReqQueryProposalComment) (types.Message, error) {
 	return a.listProposalComment(in)

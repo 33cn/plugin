@@ -283,7 +283,7 @@ func terminateProposalProject(cmd *cobra.Command, args []string) {
 // ShowProposalProjectCmd 显示提案查询信息
 func ShowProposalProjectCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showProjectInfo",
+		Use:   "showProject",
 		Short: "show proposal project info",
 		Run:   showProposalProject,
 	}

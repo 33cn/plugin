@@ -58,6 +58,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testTerminateProposalRuleTxCmd},
 		{fn: testGetProposalRuleCmd},
 		{fn: testListProposalRuleCmd},
+		{fn: testGetActiveRuleCmd},
 
 		{fn: testTransferFundTxCmd},
 		{fn: testCommentProposalTxCmd},

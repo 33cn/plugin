@@ -97,6 +97,15 @@ func testListProposalRuleCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
+func testGetActiveRuleCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	var rep interface{}
+	var params rpctypes.Query4Jrpc
+	params.FuncName = auty.GetActiveRule
+	params.Payload = types.MustPBToJSON(&types.ReqString{})
+	rep = &auty.RuleConfig{}
+	return jrpc.Call("Chain33.Query", params, rep)
+}
+
 func testTransferFundTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.TransferFund{}
 	payLoad, err := json.Marshal(params)

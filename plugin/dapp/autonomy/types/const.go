@@ -103,6 +103,8 @@ const (
 	GetProposalRule = "GetProposalRule"
 	// ListProposalRule 查询多个
 	ListProposalRule = "ListProposalRule"
+	// GetActiveRule 查询当前的
+	GetActiveRule = "GetActiveRule"
 	// ListProposalComment 查询多个
 	ListProposalComment = "ListProposalComment"
 	// GetProposalChange 用于在cmd里面的区分不同的查询

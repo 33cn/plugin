@@ -221,7 +221,7 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 // ShowProposalRuleCmd 显示提案查询信息
 func ShowProposalRuleCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showRuleInfo",
+		Use:   "showRule",
 		Short: "show proposal rule info",
 		Run:   showProposalRule,
 	}
@@ -276,6 +276,29 @@ func showProposalRule(cmd *cobra.Command, args []string) {
 		params.Payload = types.MustPBToJSON(&req)
 	}
 	rep = &auty.ReplyQueryProposalRule{}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
+}
+
+// ShowActiveRuleCmd 显示提案查询信息
+func ShowActiveRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showActiveRule",
+		Short: "show active rule",
+		Run:   showActiveRule,
+	}
+	return cmd
+}
+
+func showActiveRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	params := rpctypes.Query4Jrpc{}
+	params.Execer = auty.AutonomyX
+	params.FuncName = auty.GetActiveRule
+	params.Payload = types.MustPBToJSON(&types.ReqString{})
+	rep := &auty.RuleConfig{}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()

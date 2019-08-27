@@ -51,6 +51,7 @@ func AutonomyCmd() *cobra.Command {
 		VoteProposalRuleCmd(),
 		TerminateProposalRuleCmd(),
 		ShowProposalRuleCmd(),
+		ShowActiveRuleCmd(),
 	)
 
 	cmd.AddCommand(
@@ -264,7 +265,7 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 // ShowProposalBoardCmd 显示提案查询信息
 func ShowProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showBoardInfo",
+		Use:   "showBoard",
 		Short: "show proposal board info",
 		Run:   showProposalBoard,
 	}
@@ -327,8 +328,8 @@ func showProposalBoard(cmd *cobra.Command, args []string) {
 // ShowActiveBoardCmd 显示提案查询信息
 func ShowActiveBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showActiveBoardInfo",
-		Short: "show active board info",
+		Use:   "showActiveBoard",
+		Short: "show active board",
 		Run:   showActiveBoard,
 	}
 	return cmd

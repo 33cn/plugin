@@ -221,7 +221,7 @@ func terminateProposalChange(cmd *cobra.Command, args []string) {
 // ShowProposalChangeCmd 显示提案查询信息
 func ShowProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showChangeInfo",
+		Use:   "showChange",
 		Short: "show proposal change info",
 		Run:   showProposalChange,
 	}
