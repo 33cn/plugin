@@ -41,7 +41,6 @@ const (
 	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
 	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
-	batchFetchBlockCount            int64 = 1000
 )
 
 var (
