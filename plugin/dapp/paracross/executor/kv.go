@@ -98,15 +98,15 @@ func getParaNodeIDSuffix(id string) string {
 	}
 
 	ids := strings.Split(id, "-")
-	txId := ids[len(ids)-1]
-	if strings.HasPrefix(txId, "0x") {
-		return txId
+	txID := ids[len(ids)-1]
+	if strings.HasPrefix(txID, "0x") {
+		return txID
 	}
 	//对于nodegroup 创建的"mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274587...a61e444e9f848a4c02d7b-1"特殊场景
 	if len(ids) > 1 {
-		txId = ids[len(ids)-2] + "-" + txId
-		if strings.HasPrefix(txId, "0x") {
-			return txId
+		txID = ids[len(ids)-2] + "-" + txID
+		if strings.HasPrefix(txID, "0x") {
+			return txID
 		}
 	}
 	return id
