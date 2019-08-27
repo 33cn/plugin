@@ -246,9 +246,9 @@ function block_wait2height() {
 
     while true; do
         new_height=$(${1} block last_header | jq ".height")
-        if [ $isPara == "1" ]; then
-            ${1} para blocks -s $new_height -e $new_height
-            new_height=$(${1} para blocks -s $new_height -e $new_height | jq ".items[0].mainHeight")
+        if [ "$isPara" == "1" ]; then
+            ${1} para blocks -s "$new_height" -e "$new_height"
+            new_height=$(${1} para blocks -s "$new_height" -e "$new_height" | jq ".items[0].mainHeight")
         fi
         if [ "${new_height}" -ge "${expect}" ]; then
             break

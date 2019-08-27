@@ -10,8 +10,9 @@ SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 CHAIN33=github.com/33cn/chain33
 CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
-export CHAIN33_PATH=${GOPATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
-export PLUGIN_PATH=${GOPATH}/src/github.com/33cn/plugin
+GO_PATH=$(shell go env GOPATH)
+export CHAIN33_PATH=${GO_PATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
+export PLUGIN_PATH=${GO_PATH}/src/github.com/33cn/plugin
 BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
@@ -27,7 +28,8 @@ default: depends build
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
-	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.toml  build/
+	cp $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
