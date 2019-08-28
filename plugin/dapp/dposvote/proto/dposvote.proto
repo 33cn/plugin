@@ -76,8 +76,11 @@ message DposVoteAction {
         DposVrfRPRegist registVrfRP                = 9;
         DposVrfQuery vrfQuery                      = 10;
         DposCBInfo recordCB                        = 11;
+        DposCBQuery cbQuery                        = 12;
+        TopNCandidatorRegist registTopN            = 13;
+        TopNCandidatorsQuery topNQuery             = 14;
     }
-    int32 ty = 12;
+    int32 ty = 15;
 }
 
 message CandidatorQuery{
@@ -261,4 +264,41 @@ message ReceiptCB {
     int64   cycleMiddle  = 8;
     int64   cycleStop    = 9;
     DposCycleBoundaryInfo cbInfo = 10;
+}
+
+message TopNCandidator{
+    repeated Candidator cands = 1;
+    bytes    hash             = 2;
+    int64    height           = 3;
+    bytes    signerPubkey     = 4;
+    bytes    signature        = 5;
+}
+
+message TopNCandidators{
+    repeated TopNCandidator candsVotes = 1;
+    int64    version                   = 2;
+    int64    status                    = 3;
+    repeated Candidator finalCands     = 4;
+}
+
+message TopNCandidatorRegist{
+    TopNCandidator cand            = 1;
+}
+
+message TopNCandidatorsQuery{
+    int64 version                  = 1;
+}
+
+message TopNCandidatorsReply{
+    TopNCandidators topN           = 1;
+}
+
+message ReceiptTopN {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   version      = 4;
+    int64   height       = 5;
+    int64   time         = 6;
+    TopNCandidator topN = 10;
 }

@@ -281,7 +281,7 @@ func (tx *DposCBRow) Get(key string) ([]byte, error) {
 	} else if key == "height" {
 		return []byte(fmt.Sprintf("%018d", tx.StopHeight)), nil
 	} else if key == "hash" {
-		return []byte(fmt.Sprintf("%X", tx.StopHash)), nil
+		return tx.StopHash, nil
 	}
 
 	return nil, types.ErrNotFound

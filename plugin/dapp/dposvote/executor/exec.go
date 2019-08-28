@@ -56,3 +56,9 @@ func (d *DPos) Exec_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, ind
 	action := NewAction(d, tx, index)
 	return action.RecordCB(payload)
 }
+
+//Exec_RegistTopN DPos执行器注册某一cycle中的TOPN信息
+func (d *DPos) Exec_RegistTopN(payload *dty.TopNCandidatorRegist, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(d, tx, index)
+	return action.RegistTopN(payload)
+}

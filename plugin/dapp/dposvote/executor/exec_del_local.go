@@ -212,6 +212,9 @@ func (d *DPos) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, erro
 				return nil, err
 			}
 			dbSet.KV = append(dbSet.KV, kv...)
+
+		case dty.TyLogTopNCandidatorRegist:
+			//do nothing now
 		}
 	}
 
@@ -255,5 +258,10 @@ func (d *DPos) ExecDelLocal_VrfRPRegist(payload *dty.DposVrfRPRegist, tx *types.
 
 //ExecDelLocal_RecordCB method
 func (d *DPos) ExecDelLocal_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return d.execDelLocal(receiptData)
+}
+
+//ExecDelLocal_RegistTopN method
+func (d *DPos) ExecDelLocal_RegistTopN(payload *dty.TopNCandidatorRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }

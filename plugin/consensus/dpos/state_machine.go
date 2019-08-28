@@ -12,7 +12,7 @@ import (
 	"math"
 	"strings"
 	"time"
-
+	"os"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -53,6 +53,9 @@ var WaitNotifyStateObj = &WaitNofifyState{}
 
 var LastCheckVrfMTime = int64(0)
 var LastCheckVrfRPTime = int64(0)
+var LastCheckRegTopNTime = int64(0)
+var LastCheckUpdateTopNTime = int64(0)
+
 // Task 为计算当前时间所属周期的数据结构
 type Task struct {
 	NodeID      int64
@@ -63,6 +66,26 @@ type Task struct {
 	PeriodStop  int64
 	BlockStart  int64
 	BlockStop   int64
+}
+
+type TopNVersionInfo struct {
+	Version           int64
+	HeightStart       int64
+	HeightStop        int64
+	HeightToStart     int64
+	HeightRegLimit    int64
+	HeightUpdateLimit int64
+}
+
+func CalcTopNVersion(height int64) (info TopNVersionInfo) {
+	info = TopNVersionInfo{}
+	info.Version = height / blockNumToUpdateDelegate
+	info.HeightToStart = height % blockNumToUpdateDelegate
+	info.HeightStart = info.Version * blockNumToUpdateDelegate
+	info.HeightStop = (info.Version + 1 ) * blockNumToUpdateDelegate - 1
+	info.HeightRegLimit = info.HeightStart + registTopNHeightLimit
+	info.HeightUpdateLimit = info.HeightStart + updateTopNHeightLimit
+	return info
 }
 
 // DecideTaskByTime 根据时间戳计算所属的周期，包括cycle周期，负责出块周期，当前出块周期
@@ -138,6 +161,10 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 }
 
 func checkVrf(cs *ConsensusState) {
+	if shuffleType != dposShuffleTypeOrderByVrfInfo {
+		return
+	}
+
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
 	middleTime := task.CycleStart + (task.CycleStop - task.CycleStart) / 2
@@ -189,6 +216,99 @@ func checkVrf(cs *ConsensusState) {
 		LastCheckVrfRPTime = now
 	}
 
+}
+
+func checkTopNRegist(cs *ConsensusState) {
+	if whetherUpdateTopN == false {
+		return
+	}
+
+	now := time.Now().Unix()
+	if now - LastCheckRegTopNTime < dposBlockInterval * 3 {
+		//避免短时间频繁检查，5个区块以内不重复检查
+		return
+	}
+
+	height := cs.client.GetCurrentHeight()
+	info := CalcTopNVersion(height)
+	if height <= info.HeightRegLimit {
+		//在注册TOPN的区块区间内，则检查本节点是否注册成功，如果否则进行注册
+		topN := cs.GetTopNCandidatorsByVersion(info.Version)
+		if topN == nil || !cs.IsTopNRegisted(topN) {
+			cands, err := cs.client.QueryCandidators()
+			if err != nil || cands == nil {
+				dposlog.Error("QueryCandidators failed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+				LastCheckRegTopNTime = now
+				return
+
+			}
+			topNCand := &dty.TopNCandidator {
+				Cands: cands,
+				Height: height,
+				SignerPubkey: cs.privValidator.GetPubKey().Bytes(),
+			}
+			obj := dty.CanonicalTopNCandidator(topNCand)
+			topNCand.Hash = obj.ID()
+
+			regist := &dty.TopNCandidatorRegist {
+				Cand: topNCand,
+			}
+
+			cs.SendTopNRegistTx(regist)
+			LastCheckRegTopNTime = now
+		} else {
+			dposlog.Info("TopN is already registed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+			LastCheckRegTopNTime = now + (info.HeightStop - height) * dposBlockInterval
+		}
+	} else {
+		LastCheckRegTopNTime = now + (info.HeightStop - height) * dposBlockInterval
+	}
+}
+
+func checkTopNUpdate(cs *ConsensusState) {
+	if whetherUpdateTopN == false {
+		return
+	}
+
+	now := time.Now().Unix()
+	if now - LastCheckUpdateTopNTime < dposBlockInterval * 1 {
+		//避免短时间频繁检查，1个区块以内不重复检查
+		return
+	}
+
+	height := cs.client.GetCurrentHeight()
+	info := CalcTopNVersion(height)
+	if height >= info.HeightUpdateLimit {
+		topN := cs.GetLastestTopNCandidators()
+		if nil == topN {
+			dposlog.Error("No valid topN, do nothing", "now", now, "height", height, "HeightUpdateLimit", info.HeightUpdateLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+			LastCheckUpdateTopNTime = now + (info.HeightStop - height) *  dposBlockInterval
+			return
+		}
+
+		for i := 0; i < len(topN.FinalCands); i++ {
+			if isPubkeyExist(topN.FinalCands[i].Pubkey, cs.validatorMgr.Validators.Validators) {
+				continue
+			} else {
+				dposlog.Error("TopN changed, so restart to use latest topN", "now", now, "height", height, "HeightUpdateLimit", info.HeightUpdateLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+				os.Exit(0)
+			}
+		}
+		dposlog.Info("TopN not changed,so do nothing", "now", now, "height", height, "HeightUpdateLimit", info.HeightUpdateLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+		LastCheckUpdateTopNTime = now + (info.HeightStop - height) *  dposBlockInterval
+	} else {
+		LastCheckUpdateTopNTime = now + (info.HeightUpdateLimit - height - 1) * dposBlockInterval
+	}
+}
+
+func isPubkeyExist(pubkey []byte, validators []*dpostype.Validator) bool {
+	for i := 0; i < len(validators); i++ {
+		if bytes.Equal(pubkey, validators[i].PubKey) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
@@ -432,9 +552,11 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			//当前时间超过了节点切换时间，需要进行重新投票
 			dposlog.Info("VotedState timeOut over periodStop.", "periodStop", cs.currentVote.PeriodStop, "cycleStop", cs.currentVote.CycleStop)
 
+			isCycleSwith := false
 			//如果到了cycle结尾，需要构造一个交易，把最终的CycleBoundary信息发布出去
 			if cs.currentVote.PeriodStop == cs.currentVote.CycleStop {
 				dposlog.Info("Create new tx for cycle change to record cycle boundary info.", "height", block.Height)
+				isCycleSwith = true
 
 				info := &dty.DposCBInfo{
 					Cycle: cs.currentVote.Cycle,
@@ -492,13 +614,25 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			cs.SetNotify(notify2.DPosNotify)
 			cs.dposState.sendNotify(cs, notify.DPosNotify)
 			cs.ClearVotes()
+
+			//检查是否需要更新TopN，如果有更新，则更新TOPN节点后进入新的状态循环。
+			if isCycleSwith {
+				checkTopNUpdate(cs)
+			}
+
 			cs.SetState(InitStateObj)
 			dposlog.Info("Change state because of time.", "from", "VotedState", "to", "InitState")
 			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+
 			return
 		}
 
+		//根据时间进行vrf相关处理，如果在(cyclestart,middle)之间，发布M，如果在(middle,cyclestop)之间，发布R、P
 		checkVrf(cs)
+
+		//检查是否应该注册topN，是否已经注册topN
+		checkTopNRegist(cs)
+
 		//当前时间未到节点切换时间，则继续进行出块判断
 		if block.BlockTime >= task.BlockStop {
 			//已出块，或者时间落后了。
@@ -534,6 +668,10 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 		//根据时间进行vrf相关处理，如果在(cyclestart,middle)之间，发布M，如果在(middle,cyclestop)之间，发布R、P
 		checkVrf(cs)
+
+		//检查是否应该注册topN，是否已经注册topN
+		checkTopNRegist(cs)
+
 		//非当前出块节点，如果到了切换出块节点的时间，则进行状态切换，进行投票
 		if now >= cs.currentVote.PeriodStop {
 			//当前时间超过了节点切换时间，需要进行重新投票
@@ -622,6 +760,13 @@ type WaitNofifyState struct {
 
 func (wait *WaitNofifyState) timeOut(cs *ConsensusState) {
 	//cs.clearVotes()
+
+	//检查是否需要更新TopN，如果有更新，则更新TOPN节点后进入新的状态循环。
+	now := time.Now().Unix()
+	if now >= cs.lastVote.PeriodStop && cs.lastVote.PeriodStop == cs.lastVote.CycleStop {
+		checkTopNUpdate(cs)
+	}
+
 	cs.SetState(InitStateObj)
 	dposlog.Info("Change state because of time.", "from", "WaitNofifyState", "to", "InitState")
 	cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
@@ -692,6 +837,12 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 	cs.ClearCachedNotify()
 	cs.SaveNotify()
 	cs.SetNotify(notify)
+
+	//检查是否需要更新TopN，如果有更新，则更新TOPN节点后进入新的状态循环。
+	now := time.Now().Unix()
+	if now >= cs.lastVote.PeriodStop && cs.lastVote.PeriodStop == cs.lastVote.CycleStop {
+		checkTopNUpdate(cs)
+	}
 
 	cs.SetState(InitStateObj)
 	dposlog.Info("Change state because recv notify.", "from", "WaitNofifyState", "to", "InitState")

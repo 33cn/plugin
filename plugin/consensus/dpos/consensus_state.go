@@ -119,6 +119,7 @@ type ConsensusState struct {
 	vrfInfoMap map[int64] *dty.VrfInfo
 	vrfInfosMap map[int64] []*dty.VrfInfo
 
+	cachedTopNCands []*dty.TopNCandidators
 }
 
 // NewConsensusState returns a new ConsensusState.
@@ -284,6 +285,8 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 
 	var err error
 	msg, peerID, peerIP := mi.Msg, string(mi.PeerID), mi.PeerIP
+	dposlog.Info("Recv consensus msg", "msg type", fmt.Sprintf("%T", msg), "peerid", peerID, "peerip", peerIP)
+
 	switch msg := msg.(type) {
 	case *dpostype.DPosVote:
 		cs.dposState.recvVote(cs, msg)
@@ -602,6 +605,99 @@ func (cs *ConsensusState) Init() {
 	cs.InitCycleBoundaryInfo(task)
 	cs.InitCycleVrfInfo(task)
 	cs.InitCycleVrfInfos(task)
+
+	info := CalcTopNVersion(cs.client.GetCurrentHeight())
+	cs.InitTopNCandidators(info.Version)
+}
+
+// InitTopNCandidators method
+func (cs *ConsensusState) InitTopNCandidators(version int64){
+	for version > 0 {
+		info, err := cs.client.QueryTopNCandidators(version)
+		if err == nil && info != nil && info.Status == dty.TopNCandidatorsVoteMajorOK{
+			cs.UpdateTopNCandidators(info)
+			return
+		}
+
+		version--
+	}
+
+	return
+}
+// UpdateTopNCandidators method
+func (cs *ConsensusState) UpdateTopNCandidators(info *dty.TopNCandidators) {
+	if len(cs.cachedTopNCands) == 0 {
+		cs.cachedTopNCands = append(cs.cachedTopNCands, info)
+		return
+	}
+
+	if cs.cachedTopNCands[len(cs.cachedTopNCands) - 1].Version < info.Version {
+		cs.cachedTopNCands = append(cs.cachedTopNCands, info)
+	}
+}
+
+// GetTopNCandidatorsByVersion method
+func (cs *ConsensusState) GetTopNCandidatorsByVersion(version int64)(info *dty.TopNCandidators) {
+	if len(cs.cachedTopNCands) == 0 || cs.cachedTopNCands[len(cs.cachedTopNCands) - 1].Version < version{
+		info, err := cs.client.QueryTopNCandidators(version)
+		if err == nil && info != nil {
+			if info.Status == dty.TopNCandidatorsVoteMajorOK {
+				cs.UpdateTopNCandidators(info)
+			}
+			return info
+		}
+		return nil
+	}
+
+	for i := len(cs.cachedTopNCands) - 1 ; i >= 0 ; i-- {
+		if cs.cachedTopNCands[i].Version == version {
+			return cs.cachedTopNCands[i]
+		} else if cs.cachedTopNCands[i].Version < version {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+// GetLastestTopNCandidators method
+func (cs *ConsensusState) GetLastestTopNCandidators()(info *dty.TopNCandidators) {
+	length := len(cs.cachedTopNCands)
+	if length > 0 {
+		return  cs.cachedTopNCands[length -1]
+	}
+
+	return nil
+}
+
+// IsTopNRegisted method
+func (cs *ConsensusState) IsTopNRegisted(info *dty.TopNCandidators) bool {
+	if nil == info {
+		return false
+	}
+
+	for i := 0; i < len(info.CandsVotes); i++ {
+		if bytes.Equal(info.CandsVotes[i].SignerPubkey, cs.privValidator.GetPubKey().Bytes()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsInTopN method
+func (cs *ConsensusState) IsInTopN(info *dty.TopNCandidators) bool {
+	if nil == info || info.Status != dty.TopNCandidatorsVoteMajorOK || len(info.FinalCands) == 0 {
+		return false
+	}
+
+	for i := 0; i < len(info.FinalCands); i++ {
+		if bytes.Equal(info.FinalCands[i].Pubkey, cs.privValidator.GetPubKey().Bytes()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // InitCycleBoundaryInfo method
@@ -748,7 +844,7 @@ func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 			return false
 		} else {
 			cs.privValidator.SignTx(tx)
-			dposlog.Info("Sign RecordCBTx.")
+			dposlog.Info("Sign RecordCBTx ok.")
 			//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
 			msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
 			err = cs.client.GetQueueClient().Send(msg, false)
@@ -772,7 +868,7 @@ func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
 		return false
 	} else {
 		cs.privValidator.SignTx(tx)
-		dposlog.Info("Sign RegistVrfMTx.")
+		dposlog.Info("Sign RegistVrfMTx ok.")
 		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
 		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
 		err = cs.client.GetQueueClient().Send(msg, false)
@@ -795,7 +891,7 @@ func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
 		return false
 	} else {
 		cs.privValidator.SignTx(tx)
-		dposlog.Info("Sign RegVrfRPTx.")
+		dposlog.Info("Sign RegVrfRPTx ok.")
 		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
 		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
 		err = cs.client.GetQueueClient().Send(msg, false)
@@ -803,7 +899,7 @@ func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
 			dposlog.Error("Send RegVrfRPTx to mempool failed.", "err", err)
 			return false
 		} else {
-			dposlog.Error("Send RegVrfRPTx to mempool ok.", "err", err)
+			dposlog.Info("Send RegVrfRPTx to mempool ok.", "err", err)
 		}
 	}
 
@@ -979,6 +1075,16 @@ func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (infos []*dty.VrfInfo
 
 // ShuffleValidators method
 func (cs *ConsensusState) ShuffleValidators(cycle int64){
+	if shuffleType == dposShuffleTypeFixOrderByAddr {
+		dposlog.Info("ShuffleType FixOrderByAddr,so do nothing", "cycle", cycle)
+
+		cs.validatorMgr.VrfValidators = nil
+		cs.validatorMgr.NoVrfValidators = nil
+		cs.validatorMgr.ShuffleCycle = cycle
+		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
+		return
+	}
+
 	if cycle == cs.validatorMgr.ShuffleCycle {
 		//如果已经洗过牌，则直接返回，不重复洗牌
 		dposlog.Info("Shuffle for this cycle is done already.", "cycle", cycle)
@@ -987,16 +1093,11 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 
 	cbInfo := cs.GetCBInfoByCircle(cycle - 1)
 	if cbInfo == nil {
-		dposlog.Info("GetCBInfoByCircle for Shuffle failed, don't use vrf to shuffle.", "cycle", cycle)
-
-		cs.validatorMgr.VrfValidators = nil
-		cs.validatorMgr.NoVrfValidators = nil
-		cs.validatorMgr.ShuffleCycle = cycle
-		cs.validatorMgr.ShuffleType = ShuffleTypeNoVrf
-		return
+		dposlog.Info("GetCBInfoByCircle failed", "cycle", cycle)
+	} else {
+		cs.validatorMgr.LastCycleBoundaryInfo = cbInfo
+		dposlog.Info("GetCBInfoByCircle ok", "cycle", cycle, "stopHeight", cbInfo.StopHeight, "stopHash", cbInfo.StopHash)
 	}
-	cs.validatorMgr.LastCycleBoundaryInfo = cbInfo
-	dposlog.Info("GetCBInfoByCircle for Shuffle ok", "cycle", cycle, "stopHeight", cbInfo.StopHeight, "stopHash", cbInfo.StopHash)
 
 	infos := cs.GetVrfInfosByCircle(cycle - 1)
 	if infos == nil {
@@ -1015,7 +1116,7 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 	for i := 0; i < len(infos); i++ {
 		if isValidVrfInfo(infos[i]) {
 			var vrfBytes []byte
-			vrfBytes = append(vrfBytes, []byte(cbInfo.StopHash)...)
+			//vrfBytes = append(vrfBytes, []byte(cbInfo.StopHash)...)
 			vrfBytes = append(vrfBytes, infos[i].R...)
 
 			item := &ttypes.Validator{
@@ -1089,4 +1190,44 @@ func (cs *ConsensusState) VrfEvaluate(input []byte)(hash [32]byte, proof []byte)
 // VrfEvaluate method
 func (cs *ConsensusState) VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool{
 	return cs.privValidator.VrfProof(pubkey, input, hash, proof)
+}
+
+// SendCBTx method
+func (cs *ConsensusState) SendTopNRegistTx(reg *dty.TopNCandidatorRegist) bool {
+	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
+	obj := dty.CanonicalTopNCandidator(reg.Cand)
+	reg.Cand.Hash = obj.ID()
+	reg.Cand.SignerPubkey = cs.privValidator.GetPubKey().Bytes()
+
+	byteCB, err := json.Marshal(reg.Cand)
+	if err != nil {
+		dposlog.Error("marshal TopNCandidator failed", "err", err)
+	}
+
+	sig, err := cs.privValidator.SignMsg(byteCB)
+	if err != nil {
+		dposlog.Error("TopNCandidator failed.", "err", err)
+		return false
+	} else {
+		reg.Cand.Signature = sig.Bytes()
+		tx, err := cs.client.CreateTopNRegistTx(reg)
+		if err != nil {
+			dposlog.Error("CreateTopNRegistTx failed.", "err", err)
+			return false
+		} else {
+			cs.privValidator.SignTx(tx)
+			dposlog.Info("Sign TopNRegistTx ok.")
+			//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+			msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+			err = cs.client.GetQueueClient().Send(msg, false)
+			if err != nil {
+				dposlog.Error("Send TopNRegistTx to mempool failed.", "err", err)
+				return false
+			} else {
+				dposlog.Info("Send TopNRegistTx to mempool ok.")
+			}
+		}
+	}
+
+	return true
 }

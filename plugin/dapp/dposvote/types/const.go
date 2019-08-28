@@ -14,6 +14,7 @@ const (
 	DposVoteActionRegistVrfM
 	DposVoteActionRegistVrfRP
 	DposVoteActionRecordCB
+	DPosVoteActionRegistTopNCandidator
 
 	CandidatorStatusRegist = iota + 1
 	CandidatorStatusVoted
@@ -25,6 +26,8 @@ const (
 	VrfStatusRPRegist
 
 	CBStatusRecord = iota + 1
+
+	TopNCandidatorStatusRegist = iota + 1
 )
 
 //log ty
@@ -37,6 +40,7 @@ const (
 	TyLogVrfMRegist              = 1006
 	TyLogVrfRPRegist             = 1007
 	TyLogCBInfoRecord            = 1008
+	TyLogTopNCandidatorRegist    = 1009
 )
 
 const (
@@ -47,6 +51,10 @@ const (
 	VoteTypeVote          int32 = 2
 	VoteTypeCancelVote    int32 = 3
 	VoteTypeCancelAllVote int32 = 4
+
+	TopNCandidatorsVoteInit int64 = 0
+	TopNCandidatorsVoteMajorOK int64 = 1
+	TopNCandidatorsVoteMajorFail int64 = 2
 )
 //包的名字可以通过配置文件来配置
 //建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
@@ -137,4 +145,7 @@ const (
 
 	//QueryCBInfoByHeight 根据stopHeight查询cycle boundary信息
 	QueryLatestCBInfoByHeight = 4
+
+	//FuncNameQueryTopNByVersion func name
+	FuncNameQueryTopNByVersion = "QueryTopNByVersion"
 )

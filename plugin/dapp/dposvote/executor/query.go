@@ -58,3 +58,8 @@ func (d *DPos) Query_QueryCBInfoByHeight(in *dty.DposCBQuery) (types.Message, er
 func (d *DPos) Query_QueryCBInfoByHash(in *dty.DposCBQuery) (types.Message, error) {
 	return queryCBInfoByHash(d.GetLocalDB(), in)
 }
+
+//Query_QueryTopNByVersion method
+func (d *DPos) Query_QueryTopNByVersion(in *dty.TopNCandidatorsQuery) (types.Message, error) {
+	return queryTopNByVersion(d.GetStateDB(), in)
+}

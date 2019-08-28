@@ -53,7 +53,9 @@ func DPosCmd() *cobra.Command {
 		DPosCreateCmd(),
 		DPosVrfVerifyCmd(),
 		DPosVrfEvaluateCmd(),
+		DPosCBRecordCmd(),
 		DPosCBQueryCmd(),
+		DPosTopNQueryCmd(),
 	)
 
 	return cmd
@@ -797,9 +799,9 @@ func DPosCBRecordCmd() *cobra.Command {
 func addCBRecordCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("cycle", "c", 0, "cycle")
 	cmd.MarkFlagRequired("cycle")
-	cmd.Flags().Int64P("height", "h", 0, "height")
+	cmd.Flags().Int64P("height", "m", 0, "height")
 	cmd.MarkFlagRequired("height")
-	cmd.Flags().StringP("hash", "m", "", "block hash")
+	cmd.Flags().StringP("hash", "s", "", "block hash")
 	cmd.MarkFlagRequired("hash")
 	cmd.Flags().StringP("privKey", "k", "", "private key")
 	cmd.MarkFlagRequired("privKey")
@@ -867,7 +869,7 @@ func recordCB(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosVrfQueryCmd 构造VRF相关信息查询的命令行
+//DPosCBQueryCmd 查询Cycle Boundary info的命令
 func DPosCBQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cbQuery",
@@ -934,4 +936,39 @@ func cbQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	}
+}
+
+//DPosVrfQueryCmd 构造VRF相关信息查询的命令行
+func DPosTopNQueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "topNQuery",
+		Short: "query topN info",
+		Run:   topNQuery,
+	}
+	addTopNQueryFlags(cmd)
+	return cmd
+}
+
+func addTopNQueryFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("version", "v", 0, "version")
+	cmd.MarkFlagRequired("version")
+}
+
+func topNQuery(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	version, _ := cmd.Flags().GetInt64("version")
+
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = dty.DPosX
+
+	req := &dty.TopNCandidatorsQuery{
+		Version: version,
+	}
+
+	params.FuncName = dty.FuncNameQueryTopNByVersion
+	params.Payload = types.MustPBToJSON(req)
+	var res dty.TopNCandidatorsReply
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }

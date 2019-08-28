@@ -24,5 +24,6 @@ var (
 	ErrSaveTable                = errors.New("ErrSaveTable")
 	ErrCBRecordExist            = errors.New("ErrCBRecordExist")
 	ErrCycleNotAllowed          = errors.New("ErrCycleNotAllowed")
-
+	ErrVersionTopNNotExist      = errors.New("ErrVersionTopNNotExist")
+	ErrNotLegalTopN             = errors.New("ErrNotLegalTopN")
 )

@@ -7,11 +7,11 @@ package dpos
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/util"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
@@ -27,7 +27,8 @@ import (
 )
 
 const dposVersion = "0.1.0"
-
+const dposShuffleTypeFixOrderByAddr = 1
+const dposShuffleTypeOrderByVrfInfo = 2
 var (
 	dposlog                   = log15.New("module", "dpos")
 	genesis                   string
@@ -48,6 +49,11 @@ var (
 	zeroHash             [32]byte
 	dposPort string = "36656"
 	rpcAddr string = "http://0.0.0.0:8801"
+	shuffleType int32 = dposShuffleTypeOrderByVrfInfo   //shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
+	whetherUpdateTopN = false //是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
+	blockNumToUpdateDelegate int64 = 20000
+	registTopNHeightLimit int64 = 100
+	updateTopNHeightLimit int64 = 200
 )
 
 func init() {
@@ -86,6 +92,11 @@ type subConfig struct {
 	IsValidator               bool     `json:"isValidator"`
 	Port                      string   `json:"port"`
 	RpcAddr                   string   `json:"rpcAddr"`
+	ShuffleType               int32    `json:"shuffleType"`
+	WhetherUpdateTopN         bool     `json:"whetherUpdateTopN"`
+	BlockNumToUpdateDelegate  int64    `json:"blockNumToUpdateDelegate"`
+	RegistTopNHeightLimit     int64    `json:"registTopNHeightLimit"`
+	UpdateTopNHeightLimit     int64    `json:"updateTopNHeightLimit"`
 }
 
 func (client *Client) applyConfig(sub []byte) {
@@ -146,6 +157,26 @@ func (client *Client) applyConfig(sub []byte) {
 
 	if subcfg.RpcAddr != "" {
 		rpcAddr = subcfg.RpcAddr
+	}
+
+	if subcfg.ShuffleType > 0 {
+		shuffleType = subcfg.ShuffleType
+	}
+
+	if subcfg.WhetherUpdateTopN {
+		whetherUpdateTopN = subcfg.WhetherUpdateTopN
+	}
+
+	if subcfg.BlockNumToUpdateDelegate > 0 {
+		blockNumToUpdateDelegate = subcfg.BlockNumToUpdateDelegate
+	}
+
+	if subcfg.RegistTopNHeightLimit > 0 {
+		registTopNHeightLimit = subcfg.RegistTopNHeightLimit
+	}
+
+	if subcfg.UpdateTopNHeightLimit > 0 {
+		updateTopNHeightLimit = subcfg.UpdateTopNHeightLimit
 	}
 }
 
@@ -282,28 +313,38 @@ OuterLoop:
 	}
 	if block != nil {
 		//time.Sleep(time.Second * 5)
-		cands, err := client.QueryCandidators()
-		if err != nil {
-			dposlog.Info("QueryCandidators failed", "err", err)
-		} else {
-			if len(cands) != int(dposDelegateNum) {
-				dposlog.Info("QueryCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(cands))
+		//cands, err := client.QueryCandidators()
+		info := CalcTopNVersion(block.Height)
+		version := info.Version
+		var topN *dty.TopNCandidators
+		for version >= 0 {
+			topN, err = client.QueryTopNCandidators(version)
+			if err !=nil || topN == nil {
+				version --
 			} else {
-				validators := make([]*ttypes.Validator, dposDelegateNum)
-				nodes := make([]string, dposDelegateNum)
-				for i, val := range cands {
-					// Make validator
-					validators[i] = &ttypes.Validator{
-						Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
-						PubKey:  val.Pubkey,
-					}
-					nodes[i] = val.Ip + ":" + dposPort
-				}
-				valMgr.Validators = ttypes.NewValidatorSet(validators)
-				dposlog.Info("QueryCandidators success and update validator set", "old validators", printValidators(valMgrTmp.Validators), "new validators", printValidators(valMgr.Validators))
-				dposlog.Info("QueryCandidators success and update validator node ips", "old validator ips", printNodeIPs(validatorNodes), "new validators ips", printNodeIPs(nodes))
-				validatorNodes = nodes
+				break
 			}
+		}
+
+		if topN == nil {
+			dposlog.Info("QueryTopNCandidators failed, no candidators")
+		} else if len(topN.FinalCands) != int(dposDelegateNum) {
+			dposlog.Info("QueryTopNCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(topN.FinalCands))
+		} else {
+			validators := make([]*ttypes.Validator, dposDelegateNum)
+			nodes := make([]string, dposDelegateNum)
+			for i, val := range topN.FinalCands {
+				// Make validator
+				validators[i] = &ttypes.Validator{
+					Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
+					PubKey:  val.Pubkey,
+				}
+				nodes[i] = val.Ip + ":" + dposPort
+			}
+			valMgr.Validators = ttypes.NewValidatorSet(validators)
+			dposlog.Info("QueryCandidators success and update validator set", "old validators", printValidators(valMgrTmp.Validators), "new validators", printValidators(valMgr.Validators))
+			dposlog.Info("QueryCandidators success and update validator node ips", "old validator ips", printNodeIPs(validatorNodes), "new validators ips", printNodeIPs(nodes))
+			validatorNodes = nodes
 		}
 	}
 
@@ -514,52 +555,6 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	return cands, nil
 }
 
-func (client *Client)MonitorCandidators() {
-	ticker := time.NewTicker(30 * time.Second)
-	for {
-		select {
-		case <- ticker.C:
-			dposlog.Info("Monitor Candidators")
-			block, err := client.RequestLastBlock()
-			if err != nil {
-				panic(err)
-			}
-
-			if block != nil {
-				cands, err := client.QueryCandidators()
-				if err != nil {
-					dposlog.Info("Query Candidators failed", "err", err)
-				} else {
-					if len(cands) != int(dposDelegateNum) {
-						dposlog.Info("QueryCandidators success but no enough candidators", "dposDelegateNum", dposDelegateNum, "candidatorNum", len(cands))
-					} else {
-						validators := make([]*ttypes.Validator, dposDelegateNum)
-						for i, val := range cands {
-							// Make validator
-							validators[i] = &ttypes.Validator{
-								Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
-								PubKey:  val.Pubkey,
-							}
-						}
-
-						validatorSet := ttypes.NewValidatorSet(validators)
-						dposlog.Info("QueryCandidators success and update validator set")
-						if !client.isValidatorSetSame(validatorSet, client.csState.validatorMgr.Validators){
-							dposlog.Info("ValidatorSet from contract is changed, so stop the node and restart the consensus.")
-							client.node.Stop()
-							time.Sleep(time.Second * 3)
-							go client.StartConsensus()
-						} else {
-							dposlog.Info("ValidatorSet from contract is the same,no change.")
-						}
-					}
-				}
-			}
-
-		}
-	}
-}
-
 func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
 	if v1 == nil || v2 == nil || len(v1.Validators) != len(v2.Validators){
 		return false
@@ -696,4 +691,63 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 	}
 
 	return infos, nil
+}
+
+func (client *Client)CreateTopNRegistTx(reg *dty.TopNCandidatorRegist)(tx*types.Transaction, err error) {
+	var action dty.DposVoteAction
+	action.Value = &dty.DposVoteAction_RegistTopN{
+		RegistTopN: reg,
+	}
+	action.Ty = dty.DPosVoteActionRegistTopNCandidator
+	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+// QueryCycleBoundaryInfo method
+func (client *Client) QueryTopNCandidators(version int64)(*dty.TopNCandidators, error){
+	req := &dty.TopNCandidatorsQuery{Version: version}
+	param, err := proto.Marshal(req)
+	if err != nil {
+		dposlog.Error("Marshal TopNCandidatorsQuery failed", "version", version, "err", err)
+		return nil, err
+	}
+	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
+		&types.ChainExecutor{
+			Driver: dty.DPosX,
+			FuncName: dty.FuncNameQueryTopNByVersion,
+			StateHash: zeroHash[:],
+			Param:param,
+		})
+
+	err = client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		dposlog.Error("send TopNCandidatorsQuery to dpos exec failed", "version", version, "err", err)
+		return nil, err
+	}
+
+	msg, err = client.GetQueueClient().Wait(msg)
+	if err != nil {
+		dposlog.Error("send TopNCandidatorsQuery wait failed", "version", version, "err", err)
+		return nil, err
+	}
+
+	res := msg.GetData().(types.Message).(*dty.TopNCandidatorsReply)
+	info := res.TopN
+	dposlog.Info("TopNCandidatorsQuery get reply", "version", info.Version, "status", info.Status, "final candidators", printCandidators(info.FinalCands))
+
+	return info, nil
+}
+
+func printCandidators(cands []*dty.Candidator) string {
+	result := "["
+	for i := 0; i < len(cands); i++ {
+		fmt.Sprintf("%spubkey:%s,ip:%s;", result, hex.EncodeToString(cands[i].Pubkey), cands[i].Ip)
+	}
+	result += "]"
+
+	return result
 }

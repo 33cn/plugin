@@ -45,6 +45,7 @@ func (t *DPosType) GetTypeMap() map[string]int32 {
 		"RegistVrfM":     DposVoteActionRegistVrfM,
 		"RegistVrfRP":    DposVoteActionRegistVrfRP,
 		"RecordCB":       DposVoteActionRecordCB,
+		"RegistTopN":     DPosVoteActionRegistTopNCandidator,
 	}
 }
 
@@ -59,5 +60,6 @@ func (t *DPosType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogVrfMRegist:             {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfMRegist"},
 		TyLogVrfRPRegist:            {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfRPRegist"},
 		TyLogCBInfoRecord:           {Ty: reflect.TypeOf(ReceiptCB{}),         Name: "TyLogCBInfoRecord"},
+		TyLogTopNCandidatorRegist:   {Ty: reflect.TypeOf(ReceiptTopN{}),       Name: "TyLogTopNCandidatorRegist"},
 	}
 }

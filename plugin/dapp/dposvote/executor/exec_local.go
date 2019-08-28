@@ -209,6 +209,8 @@ func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) 
 				return nil, err
 			}
 			dbSet.KV = append(dbSet.KV, kvs...)
+		} else if item.Ty == dty.TyLogTopNCandidatorRegist {
+			//do nothing
 		}
 	}
 
@@ -252,5 +254,10 @@ func (d *DPos) ExecLocal_RegistVrfRP(payload *dty.DposVrfRPRegist, tx *types.Tra
 
 //ExecLocal_RecordCB method
 func (d *DPos) ExecLocal_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return d.execLocal(receiptData)
+}
+
+//ExecLocal_RegistTopN method
+func (d *DPos) ExecLocal_RegistTopN(payload *dty.TopNCandidatorRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }

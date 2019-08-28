@@ -79,6 +79,14 @@ func Key(id string) (key []byte) {
 	key = append(key, []byte(id)...)
 	return key
 }
+
+//Key State数据库中存储记录的Key值格式转换
+func TopNKey(id string) (key []byte) {
+	key = append(key, []byte("mavl-"+dty.DPosX+"-"+"topn"+"-")...)
+	key = append(key, []byte(id)...)
+	return key
+}
+
 //queryVrfByTime 根据时间信息，查询TopN的受托节点的VRF信息
 func queryVrfByTime(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) {
 	if req.Ty != dty.QueryVrfByTime{
@@ -130,7 +138,7 @@ func getVrfInfoFromVrfRP(vrfRP *dty.DposVrfRP) *dty.VrfInfo{
 	return vrf
 }
 
-func isRecordExist(vrfM *dty.DposVrfM, vrfs [] *dty.VrfInfo) bool {
+func isVrfMRecordExist(vrfM *dty.DposVrfM, vrfs [] *dty.VrfInfo) bool {
 	if nil == vrfM || nil == vrfs || 0 == len(vrfs) {
 		return false
 	}
@@ -271,7 +279,7 @@ func queryVrfByCycle(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error)
 	} else {
 		for i := 0; i < len(rows); i++ {
 			vrfM := rows[i].Data.(*dty.DposVrfM)
-			if !isRecordExist(vrfM, vrfs) {
+			if !isVrfMRecordExist(vrfM, vrfs) {
 				vrf := getVrfInfoFromVrfM(vrfM)
 				vrfs = append(vrfs, vrf)
 			}
@@ -517,6 +525,34 @@ func (action *Action) newCandicatorInfo(regist *dty.DposCandidatorRegist) *dty.C
 	return candInfo
 }
 
+//readTopNCandicators 根据版本信息查询特定高度区间的TOPN候选节点信息
+func (action *Action) readTopNCandicators(version int64) (*dty.TopNCandidators, error) {
+	strVersion := fmt.Sprintf("%018d", version)
+	data, err := action.db.Get(TopNKey(strVersion))
+	if err != nil {
+		logger.Error("readTopNCandicators have err:", "err", err.Error())
+		return nil, err
+	}
+	var cands dty.TopNCandidators
+	//decode
+	err = types.Decode(data, &cands)
+	if err != nil {
+		logger.Error("decode TopNCandidators have err:", err.Error())
+		return nil, err
+	}
+	return &cands, nil
+}
+
+func (action *Action) saveTopNCandicators(topCands *dty.TopNCandidators) (kvset []*types.KeyValue) {
+	value := types.Encode(topCands)
+	strVersion := fmt.Sprintf("%018d", topCands.Version)
+	err := action.db.Set(TopNKey(strVersion), value)
+	if err != nil {
+		logger.Error("saveCandicator have err:", err.Error())
+	}
+	kvset = append(kvset, &types.KeyValue{Key: TopNKey(strVersion), Value: value})
+	return kvset
+}
 
 //queryCBInfoByCycle 根据cycle查询stopHeight及stopHash等CBInfo信息，用于VRF计算
 func queryCBInfoByCycle(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error) {
@@ -525,6 +561,7 @@ func queryCBInfoByCycle(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, erro
 
 	rows, err := query.ListIndex("cycle", []byte(fmt.Sprintf("%018d", req.Cycle)), nil, 1, 0)
 	if err != nil {
+		logger.Error("queryCBInfoByCycle have err", "cycle", req.Cycle, "err", err.Error())
 		return nil, err
 	}
 
@@ -536,6 +573,8 @@ func queryCBInfoByCycle(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, erro
 		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
 		Signature: hex.EncodeToString(cbInfo.StopHash),
 	}
+	logger.Info("queryCBInfoByCycle ok", "cycle", req.Cycle, "info", info.String())
+
 	return &dty.DposCBReply{CbInfo: info}, nil
 }
 
@@ -546,6 +585,7 @@ func queryCBInfoByHeight(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, err
 
 	rows, err := query.ListIndex("height", []byte(fmt.Sprintf("%018d", req.StopHeight)), nil, 1, 0)
 	if err != nil {
+		logger.Error("queryCBInfoByHeight have err", "height", req.StopHeight, "err", err.Error())
 		return nil, err
 	}
 
@@ -557,6 +597,8 @@ func queryCBInfoByHeight(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, err
 		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
 		Signature: hex.EncodeToString(cbInfo.StopHash),
 	}
+	logger.Info("queryCBInfoByHeight ok", "height", req.StopHeight, "info", info.String())
+
 	return &dty.DposCBReply{CbInfo: info}, nil
 }
 
@@ -567,10 +609,14 @@ func queryCBInfoByHash(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error
 
 	hash, err := hex.DecodeString(req.StopHash)
 	if err != nil {
+		logger.Error("queryCBInfoByHash failed for decoding hash failed", "hash", req.StopHash, "err", err.Error())
+
 		return nil, err
 	}
 	rows, err := query.ListIndex("hash", hash, nil, 1, 0)
 	if err != nil {
+		logger.Error("queryCBInfoByHash have err", "hash", req.StopHash, "err", err.Error())
+
 		return nil, err
 	}
 
@@ -582,7 +628,32 @@ func queryCBInfoByHash(kvdb db.KVDB, req *dty.DposCBQuery) (types.Message, error
 		Pubkey: strings.ToUpper(hex.EncodeToString(cbInfo.Pubkey)),
 		Signature: hex.EncodeToString(cbInfo.StopHash),
 	}
+	logger.Info("queryCBInfoByHash ok", "hash", req.StopHash, "info", info.String())
+
 	return &dty.DposCBReply{CbInfo: info}, nil
+}
+
+//queryTopNByVersion 根据version查询具体周期使用的TopN超级节点信息
+func queryTopNByVersion(db dbm.KV, req *dty.TopNCandidatorsQuery) (types.Message, error) {
+	strVersion := fmt.Sprintf("%018d", req.Version)
+	data, err := db.Get(TopNKey(strVersion))
+	if err != nil || data == nil{
+		logger.Error("queryTopNByVersion have err:", "err", err.Error())
+		return nil, err
+	}
+	var cands dty.TopNCandidators
+	//decode
+	err = types.Decode(data, &cands)
+	if err != nil {
+		logger.Error("decode TopNCandidators have err:", err.Error())
+		return nil, err
+	}
+
+	reply := &dty.TopNCandidatorsReply{
+		TopN: &cands,
+	}
+
+	return reply, nil
 }
 
 //Regist 注册候选节点
@@ -1139,6 +1210,111 @@ func (action *Action) RecordCB(cbInfo *dty.DposCBInfo) (*types.Receipt, error) {
 	log.Log = types.Encode(r)
 
 	logs = append(logs, log)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+//RegistTopN 注册TopN节点
+func (action *Action) RegistTopN(regist *dty.TopNCandidatorRegist) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+
+	err := regist.Cand.Verify()
+	if err != nil {
+		logger.Error("RegistTopN failed for signature verify failed.", "addr", action.fromaddr, "execaddr", action.execaddr)
+		return nil, types.ErrInvalidParam
+	}
+
+	currentVersion, left := calcTopNVersion(action.mainHeight)
+	topNVersion, _ := calcTopNVersion(regist.Cand.Height)
+	if currentVersion != topNVersion {
+		logger.Error("RegistTopN failed for wrong version.", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"regist height", regist.Cand.Height, "regist version", topNVersion, "current height", action.mainHeight, "current version", currentVersion)
+		return nil, types.ErrInvalidParam
+	}
+
+	if left >= registTopNHeightLimit {
+		logger.Error("RegistTopN failed for height limit.", "addr", action.fromaddr, "execaddr", action.execaddr,
+			"current height", action.mainHeight, "registTopNHeightLimit", registTopNHeightLimit, "height in new circle", left)
+		return nil, types.ErrInvalidParam
+	}
+
+	version := topNVersion - 1
+	for version >= 0 {
+		lastTopN, err := action.readTopNCandicators(version)
+		if err != nil {
+			logger.Error("read old TopN failed.", "addr", action.fromaddr, "execaddr", action.execaddr, "version", version)
+
+			if version == 0 {
+				//如果从没有注册过，认为是创世阶段，可信环境，只有可信的节点来注册，可以不做过多的判断。
+				break
+			} else {
+				version--
+				continue
+			}
+		}
+
+		if lastTopN.Status != dty.TopNCandidatorsVoteMajorOK {
+			logger.Error("Not legal topN exist.", "addr", action.fromaddr, "execaddr", action.execaddr, "version", version)
+			if version > 0 {
+				version--
+				continue
+			} else {
+				break
+			}
+		}
+
+		isLegalVoter := false
+		for i := 0; i < len(lastTopN.FinalCands); i++{
+			if bytes.Equal(regist.Cand.SignerPubkey, lastTopN.FinalCands[i].Pubkey) {
+				isLegalVoter = true
+			}
+		}
+
+		if !isLegalVoter {
+			logger.Error("RegistTopN failed for the voter is not legal topN.", "addr", action.fromaddr, "execaddr", action.execaddr, "voter pubkey", hex.EncodeToString(regist.Cand.SignerPubkey))
+			return nil, dty.ErrNotLegalTopN
+		}
+
+		break
+	}
+
+	topNCands, err := action.readTopNCandicators(topNVersion)
+	if topNCands == nil {
+		topNCands = &dty.TopNCandidators {
+			Version: topNVersion,
+			Status: dty.TopNCandidatorsVoteInit,
+		}
+		topNCands.CandsVotes = append(topNCands.CandsVotes, regist.Cand)
+	} else {
+		for i := 0; i < len(topNCands.CandsVotes); i++ {
+			if bytes.Equal(topNCands.CandsVotes[i].SignerPubkey, regist.Cand.SignerPubkey) {
+				logger.Error("RegistTopN failed for vote exist.", "addr", action.fromaddr, "execaddr", action.execaddr, "pubkey", hex.EncodeToString(regist.Cand.SignerPubkey))
+				return nil, types.ErrInvalidParam
+			}
+		}
+		topNCands.CandsVotes = append(topNCands.CandsVotes, regist.Cand)
+	}
+
+	topNCands.CheckVoteStauts(dposDelegateNum)
+
+	logger.Info("RegistTopN add one vote", "addr", action.fromaddr, "execaddr", action.execaddr, "version", topNVersion, "voter pubkey", hex.EncodeToString(regist.Cand.SignerPubkey))
+
+	log := &types.ReceiptLog{}
+	r := &dty.ReceiptTopN{}
+	log.Ty = dty.TyLogTopNCandidatorRegist
+
+	r.Index = action.getIndex()
+	r.Time = action.blocktime
+	r.Height = action.mainHeight
+	r.Version = topNVersion
+	r.Status = dty.TopNCandidatorStatusRegist
+	r.Pubkey = regist.Cand.SignerPubkey
+	r.TopN = regist.Cand
+	log.Log = types.Encode(r)
+
+	logs = append(logs, log)
+	kv = append(kv, action.saveTopNCandicators(topNCands)...)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
