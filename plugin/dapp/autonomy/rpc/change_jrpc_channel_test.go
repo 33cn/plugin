@@ -17,91 +17,82 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.ProposalBoard{}
+func testPropChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.ProposalChange{}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "PropBoard",
+		ActionName: "PropChange",
 		Payload:    payLoad,
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
-func testRevokeProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.RevokeProposalBoard{}
+func testRevokeProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.RevokeProposalChange{}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "RvkPropBoard",
+		ActionName: "RvkPropChange",
 		Payload:    payLoad,
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
-func testVoteProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.VoteProposalBoard{}
+func testVoteProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.VoteProposalChange{}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "VotePropBoard",
+		ActionName: "VotePropChange",
 		Payload:    payLoad,
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
-func testTerminateProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := &auty.TerminateProposalBoard{}
+func testTerminateProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+	params := &auty.TerminateProposalChange{}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "TmintPropBoard",
+		ActionName: "TmintPropChange",
 		Payload:    payLoad,
 	}
 	var res string
 	return jrpc.Call("Chain33.CreateTransaction", pm, &res)
 }
 
-func testGetProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testGetProposalChangeCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
 	req := &types.ReqString{}
-	params.FuncName = auty.GetProposalBoard
+	params.FuncName = auty.GetProposalChange
 	params.Payload = types.MustPBToJSON(req)
-	rep = &auty.ReplyQueryProposalBoard{}
+	rep = &auty.ReplyQueryProposalChange{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }
 
-func testListProposalBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testListProposalChangeCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
-	req := &auty.ReqQueryProposalBoard{}
-	params.FuncName = auty.ListProposalBoard
+	req := &auty.ReqQueryProposalChange{}
+	params.FuncName = auty.ListProposalChange
 	params.Payload = types.MustPBToJSON(req)
-	rep = &auty.ReplyQueryProposalBoard{}
-	return jrpc.Call("Chain33.Query", params, rep)
-}
-
-func testGetActiveBoardCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	var rep interface{}
-	var params rpctypes.Query4Jrpc
-	params.FuncName = auty.GetActiveBoard
-	params.Payload = types.MustPBToJSON(&types.ReqString{})
-	rep = &auty.ActiveBoard{}
+	rep = &auty.ReplyQueryProposalChange{}
 	return jrpc.Call("Chain33.Query", params, rep)
 }

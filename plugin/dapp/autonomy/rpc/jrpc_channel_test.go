@@ -42,6 +42,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testTerminateProposalBoardTxCmd},
 		{fn: testGetProposalBoardCmd},
 		{fn: testListProposalBoardCmd},
+		{fn: testGetActiveBoardCmd},
 
 		{fn: testPropProjectTxCmd},
 		{fn: testRevokeProposalProjectTxCmd},
@@ -57,10 +58,18 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testTerminateProposalRuleTxCmd},
 		{fn: testGetProposalRuleCmd},
 		{fn: testListProposalRuleCmd},
+		{fn: testGetActiveRuleCmd},
 
 		{fn: testTransferFundTxCmd},
 		{fn: testCommentProposalTxCmd},
 		{fn: testListProposalCommentCmd},
+
+		{fn: testPropChangeTxCmd},
+		{fn: testRevokeProposalChangeTxCmd},
+		{fn: testVoteProposalChangeTxCmd},
+		{fn: testTerminateProposalChangeTxCmd},
+		{fn: testGetProposalChangeCmd},
+		{fn: testListProposalChangeCmd},
 	}
 	for index, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)

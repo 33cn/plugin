@@ -19,6 +19,11 @@ func (a *Autonomy) Query_ListProposalBoard(in *auty.ReqQueryProposalBoard) (type
 	return a.listProposalBoard(in)
 }
 
+// Query_GetActiveBoard 查询当前board
+func (a *Autonomy) Query_GetActiveBoard(in *types.ReqString) (types.Message, error) {
+	return a.getActiveBoard()
+}
+
 // Query_GetProposalProject 查询提案项目
 func (a *Autonomy) Query_GetProposalProject(in *types.ReqString) (types.Message, error) {
 	return a.getProposalProject(in)
@@ -39,7 +44,22 @@ func (a *Autonomy) Query_ListProposalRule(in *auty.ReqQueryProposalRule) (types.
 	return a.listProposalRule(in)
 }
 
+// Query_GetActiveRule 查询当前rule
+func (a *Autonomy) Query_GetActiveRule(in *types.ReqString) (types.Message, error) {
+	return a.getActiveRule()
+}
+
 // Query_ListProposalComment 批量查询提案评论
 func (a *Autonomy) Query_ListProposalComment(in *auty.ReqQueryProposalComment) (types.Message, error) {
 	return a.listProposalComment(in)
+}
+
+// Query_GetProposalChange 查询提案修改董事会成员
+func (a *Autonomy) Query_GetProposalChange(in *types.ReqString) (types.Message, error) {
+	return a.getProposalChange(in)
+}
+
+// Query_ListProposalChange 批量查询
+func (a *Autonomy) Query_ListProposalChange(in *auty.ReqQueryProposalChange) (types.Message, error) {
+	return a.listProposalChange(in)
 }

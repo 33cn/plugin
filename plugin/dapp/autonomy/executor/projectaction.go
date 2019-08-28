@@ -12,13 +12,19 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
+const (
+	maxBoardPeriodAmount = types.Coin * 10000 * 300 // 每个时期董事会审批最大额度300万
+	boardPeriod          = 17280 * 30 * 1           // 时期为一个月
+)
+
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
 	if err := address.CheckAddress(prob.ToAddr); err != nil {
 		alog.Error("propProject ", "addr", prob.ToAddr, "check toAddr error", err)
 		return nil, types.ErrInvalidAddress
 	}
 
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propProject height or amount invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height, "amount", prob.Amount)
 		return nil, types.ErrInvalidParam
@@ -28,6 +34,20 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	pboard, err := a.getActiveBoard()
 	if err != nil {
 		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "get getActiveBoard failed", err)
+		return nil, err
+	}
+	// 检查是否可以对已审批额度归0,如果可以则设置kv
+	var kva *types.KeyValue
+	if a.height > pboard.StartHeight+boardPeriod {
+		pboard.StartHeight = a.height
+		pboard.Amount = 0
+		kva = &types.KeyValue{Key: activeBoardID(), Value: types.Encode(pboard)}
+	}
+	// 检查额度
+	pass := a.checkPeriodAmount(pboard, prob.Amount)
+	if !pass {
+		err = auty.ErrNoPeriodAmount
+		alog.Error("propProject ", "addr", a.fromaddr, "cumsum amount", pboard.Amount, "this period board have enough amount", err)
 		return nil, err
 	}
 	// 获取当前生效提案规则
@@ -75,6 +95,9 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		ProposalID:   common.ToHex(a.txhash),
 	}
 	kv = append(kv, &types.KeyValue{Key: propProjectID(common.ToHex(a.txhash)), Value: types.Encode(cur)})
+	if kva != nil {
+		kv = append(kv, kva)
+	}
 	receiptLog := getProjectReceiptLog(nil, cur, auty.TyLogPropProject)
 	logs = append(logs, receiptLog)
 
@@ -189,7 +212,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	// 检查是否已经参与投票
-	votes, err := a.checkVotesRecord(boardVotesRecord(voteProb.ProposalID))
+	votes, err := a.checkVotesRecord([]string{a.fromaddr}, boardVotesRecord(voteProb.ProposalID))
 	if err != nil {
 		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord boardVotesRecord failed",
 			voteProb.ProposalID, "err", err)
@@ -220,9 +243,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 		cur.PropProject.RealEndBlockHeight = a.height
 	}
@@ -244,6 +265,13 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 			}
 			logs = append(logs, receipt.Logs...)
 			kv = append(kv, receipt.KV...)
+			// 需要更新该董事会的累计审批金
+			pakv, err := a.updatePeriodAmount(cur.PropProject.Amount)
+			if err != nil {
+				alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "updatePeriodAmount fail", err)
+				return nil, err
+			}
+			kv = append(kv, pakv)
 		}
 	}
 	kv = append(kv, &types.KeyValue{Key: key, Value: types.Encode(cur)})
@@ -290,15 +318,39 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 		return nil, err
 	}
 
+	if len(voteProb.OriginAddr) > 0 {
+		for _, board := range voteProb.OriginAddr {
+			if err := address.CheckAddress(board); err != nil {
+				alog.Error("pubVotePropProject ", "addr", board, "check toAddr error", err)
+				return nil, types.ErrInvalidAddress
+			}
+		}
+		// 挖矿地址验证
+		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
+		if err != nil {
+			alog.Error("pubVotePropProject ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",
+				voteProb.ProposalID, "err", err)
+			return nil, err
+		}
+	}
+
+	// 本次参与投票地址
+	var addrs []string
+	if len(voteProb.OriginAddr) == 0 {
+		addrs = append(addrs, a.fromaddr)
+	} else {
+		addrs = append(addrs, voteProb.OriginAddr...)
+	}
+
 	// 检查是否已经参与投票
-	votes, err := a.checkVotesRecord(votesRecord(voteProb.ProposalID))
+	votes, err := a.checkVotesRecord(addrs, votesRecord(voteProb.ProposalID))
 	if err != nil {
 		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	// 更新投票记录
-	votes.Address = append(votes.Address, a.fromaddr)
+	votes.Address = append(votes.Address, addrs...)
 
 	if cur.GetPubVote().TotalVotes == 0 { //需要统计总票数
 		vtCouts, err := a.getTotalVotes(start)
@@ -309,8 +361,10 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 	}
 
 	// 获取该地址票数
-	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
+	vtCouts, err := a.batchGetAddressVotes(addrs, start)
 	if err != nil {
+		alog.Error("pubVotePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "batchGetAddressVotes failed",
+			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	if voteProb.Oppose { //投反对票
@@ -391,16 +445,14 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 &&
-		cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardAttendRatio)/100.0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.ApproveVotes+cur.BoardVoteRes.OpposeVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
 	}
 
 	if cur.PubVote.Publicity {
-		if cur.GetBoardVoteRes().TotalVotes == 0 { //需要统计总票数
+		if cur.PubVote.TotalVotes == 0 { //需要统计总票数
 			vtCouts, err := a.getTotalVotes(start)
 			if err != nil {
 				return nil, err
@@ -439,6 +491,13 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 		}
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
+		// 需要更新该董事会的累计审批金
+		pakv, err := a.updatePeriodAmount(cur.PropProject.Amount)
+		if err != nil {
+			alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "updatePeriodAmount fail", err)
+			return nil, err
+		}
+		kv = append(kv, pakv)
 	} else {
 		// 解冻项目金
 		receiptPrj, err := a.coinsAccount.ExecActive(autonomyFundAddr, a.execaddr, cur.PropProject.Amount)
@@ -473,12 +532,12 @@ func (a *action) getProposalProject(ID string) (*auty.AutonomyProposalProject, e
 	return cur, nil
 }
 
-func (a *action) getActiveBoard() (*auty.ProposalBoard, error) {
+func (a *action) getActiveBoard() (*auty.ActiveBoard, error) {
 	value, err := a.db.Get(activeBoardID())
 	if err != nil {
 		return nil, err
 	}
-	pboard := &auty.ProposalBoard{}
+	pboard := &auty.ActiveBoard{}
 	err = types.Decode(value, pboard)
 	if err != nil {
 		return nil, err
@@ -522,4 +581,27 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 		newAut.PubVote = &newPub
 	}
 	return &newAut
+}
+
+func (a *action) checkPeriodAmount(act *auty.ActiveBoard, amount int64) bool {
+	if act == nil {
+		return false
+	}
+	if act.Amount+amount > maxBoardPeriodAmount {
+		return false
+	}
+	return true
+}
+
+func (a *action) updatePeriodAmount(amount int64) (*types.KeyValue, error) {
+	act, err := a.getActiveBoard()
+	if err != nil {
+		return nil, err
+	}
+	if a.height > act.StartHeight+boardPeriod {
+		act.StartHeight = a.height
+		act.Amount = 0
+	}
+	act.Amount += amount
+	return &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)}, nil
 }

@@ -124,6 +124,24 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 	return &rep, nil
 }
 
+func (a *Autonomy) getActiveRule() (types.Message, error) {
+	rule := &auty.RuleConfig{}
+	value, err := a.GetStateDB().Get(activeRuleID())
+	if err == nil {
+		err = types.Decode(value, rule)
+		if err != nil {
+			return nil, err
+		}
+	} else { // 载入系统默认值
+		rule.BoardApproveRatio = boardApproveRatio
+		rule.PubOpposeRatio = pubOpposeRatio
+		rule.ProposalAmount = proposalAmount
+		rule.LargeProjectAmount = largeProjectAmount
+		rule.PublicPeriod = publicPeriod
+	}
+	return rule, nil
+}
+
 func (a *Autonomy) execAutoLocalCommentProp(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	set, err := a.execLocalCommentProp(receiptData)
 	if err != nil {

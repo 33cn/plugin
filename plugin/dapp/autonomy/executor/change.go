@@ -10,8 +10,8 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
-func (a *Autonomy) execAutoLocalBoard(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	set, err := a.execLocalBoard(receiptData)
+func (a *Autonomy) execAutoLocalChange(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	set, err := a.execLocalChange(receiptData)
 	if err != nil {
 		return set, err
 	}
@@ -20,16 +20,16 @@ func (a *Autonomy) execAutoLocalBoard(tx *types.Transaction, receiptData *types.
 	return dbSet, nil
 }
 
-func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	table := NewBoardTable(a.GetLocalDB())
+func (a *Autonomy) execLocalChange(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	table := NewChangeTable(a.GetLocalDB())
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
-		case auty.TyLogPropBoard,
-			auty.TyLogRvkPropBoard,
-			auty.TyLogVotePropBoard,
-			auty.TyLogTmintPropBoard:
+		case auty.TyLogPropChange,
+			auty.TyLogRvkPropChange,
+			auty.TyLogVotePropChange,
+			auty.TyLogTmintPropChange:
 			{
-				var receipt auty.ReceiptProposalBoard
+				var receipt auty.ReceiptProposalChange
 				err := types.Decode(log.Log, &receipt)
 				if err != nil {
 					return nil, err
@@ -53,41 +53,31 @@ func (a *Autonomy) execLocalBoard(receiptData *types.ReceiptData) (*types.LocalD
 	return dbSet, nil
 }
 
-func (a *Autonomy) execAutoDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	kvs, err := a.DelRollbackKV(tx, tx.Execer)
-	if err != nil {
-		return nil, err
-	}
-	dbSet := &types.LocalDBSet{}
-	dbSet.KV = append(dbSet.KV, kvs...)
-	return dbSet, nil
-}
-
-func (a *Autonomy) getProposalBoard(req *types.ReqString) (types.Message, error) {
+func (a *Autonomy) getProposalChange(req *types.ReqString) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	value, err := a.GetStateDB().Get(propBoardID(req.Data))
+	value, err := a.GetStateDB().Get(propChangeID(req.Data))
 	if err != nil {
 		return nil, err
 	}
-	prop := &auty.AutonomyProposalBoard{}
+	prop := &auty.AutonomyProposalChange{}
 	err = types.Decode(value, prop)
 	if err != nil {
 		return nil, err
 	}
-	rep := &auty.ReplyQueryProposalBoard{}
-	rep.PropBoards = append(rep.PropBoards, prop)
+	rep := &auty.ReplyQueryProposalChange{}
+	rep.PropChanges = append(rep.PropChanges, prop)
 	return rep, nil
 }
 
-func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Message, error) {
+func (a *Autonomy) listProposalChange(req *auty.ReqQueryProposalChange) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
 
 	localDb := a.GetLocalDB()
-	query := NewBoardTable(localDb).GetQuery(localDb)
+	query := NewChangeTable(localDb).GetQuery(localDb)
 	var primary []byte
 	if req.Height > 0 {
 		primary = []byte(dapp.HeightIndexStr(req.Height, int64(req.Index)))
@@ -101,8 +91,8 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 		indexName = "addr"
 	}
 
-	cur := &BoardRow{
-		AutonomyProposalBoard: &auty.AutonomyProposalBoard{},
+	cur := &ChangeRow{
+		AutonomyProposalChange: &auty.AutonomyProposalChange{},
 	}
 	cur.Address = req.Addr
 	cur.Status = req.Status
@@ -123,27 +113,14 @@ func (a *Autonomy) listProposalBoard(req *auty.ReqQueryProposalBoard) (types.Mes
 		return nil, types.ErrNotFound
 	}
 
-	var rep auty.ReplyQueryProposalBoard
+	var rep auty.ReplyQueryProposalChange
 	for _, row := range rows {
-		r, ok := row.Data.(*auty.AutonomyProposalBoard)
+		r, ok := row.Data.(*auty.AutonomyProposalChange)
 		if !ok {
-			alog.Error("listProposalBoard", "err", "bad row type")
+			alog.Error("listProposalChange", "err", "bad row type")
 			return nil, types.ErrDecode
 		}
-		rep.PropBoards = append(rep.PropBoards, r)
+		rep.PropChanges = append(rep.PropChanges, r)
 	}
 	return &rep, nil
-}
-
-func (a *Autonomy) getActiveBoard() (types.Message, error) {
-	value, err := a.GetStateDB().Get(activeBoardID())
-	if err != nil {
-		return nil, err
-	}
-	prop := &auty.ActiveBoard{}
-	err = types.Decode(value, prop)
-	if err != nil {
-		return nil, err
-	}
-	return prop, nil
 }

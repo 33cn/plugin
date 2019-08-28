@@ -14,20 +14,22 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 
 	"github.com/33cn/chain33/common/address"
+	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
+	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
 const (
-	minBoards                = 3
-	maxBoards                = 30
-	publicPeriod       int32 = 120960                   // 公示一周时间，以区块高度计算
-	ticketPrice              = types.Coin * 3000        // 单张票价
-	largeProjectAmount       = types.Coin * 100 * 10000 // 重大项目公示金额阈值
-	proposalAmount           = types.Coin * 1000        // 创建者消耗金额
-	boardAttendRatio   int32 = 66                       // 董事会成员参与率，以%计，可修改
-	boardApproveRatio  int32 = 66                       // 董事会成员赞成率，以%计，可修改
-	pubAttendRatio     int32 = 50                       // 全体持票人参与率，以%计
-	pubApproveRatio    int32 = 50                       // 全体持票人赞成率，以%计
-	pubOpposeRatio     int32 = 33                       // 全体持票人否决率，以%计
+	minBoards                 = 20
+	maxBoards                 = 40
+	publicPeriod        int32 = 17280 * 7                // 公示一周时间，以区块高度计算
+	ticketPrice               = types.Coin * 3000        // 单张票价
+	largeProjectAmount        = types.Coin * 100 * 10000 // 重大项目公示金额阈值
+	proposalAmount            = types.Coin * 500         // 创建者消耗金额
+	boardApproveRatio   int32 = 66                       // 董事会成员赞成率，以%计，可修改
+	pubAttendRatio      int32 = 75                       // 全体持票人参与率，以%计
+	pubApproveRatio     int32 = 66                       // 全体持票人赞成率，以%计
+	pubOpposeRatio      int32 = 33                       // 全体持票人否决率，以%计
+	startEndBlockPeriod       = 720                      // 提案开始结束最小周期
 )
 
 type action struct {
@@ -55,17 +57,26 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height {
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
+		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, types.ErrInvalidParam
 	}
 
+	mpBd := make(map[string]struct{})
 	for _, board := range prob.Boards {
 		if err := address.CheckAddress(board); err != nil {
 			alog.Error("propBoard ", "addr", board, "check toAddr error", err)
 			return nil, types.ErrInvalidAddress
 		}
+		// 提案board重复地址去重复
+		if _, ok := mpBd[board]; ok {
+			err := auty.ErrRepeatAddr
+			alog.Error("propBoard ", "addr", board, "propBoard have repeat addr ", err)
+			return nil, err
+		}
+		mpBd[board] = struct{}{}
 	}
 
 	// 获取当前生效提案规则
@@ -187,15 +198,39 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		return nil, err
 	}
 
+	if len(voteProb.OriginAddr) > 0 {
+		for _, board := range voteProb.OriginAddr {
+			if err := address.CheckAddress(board); err != nil {
+				alog.Error("votePropBoard ", "addr", board, "check toAddr error", err)
+				return nil, types.ErrInvalidAddress
+			}
+		}
+		// 挖矿地址验证
+		addr, err := a.verifyMinerAddr(voteProb.OriginAddr, a.fromaddr)
+		if err != nil {
+			alog.Error("votePropBoard ", "from addr", a.fromaddr, "error addr", addr, "ProposalID",
+				voteProb.ProposalID, "err", err)
+			return nil, err
+		}
+	}
+
+	// 本次参与投票地址
+	var addrs []string
+	if len(voteProb.OriginAddr) == 0 {
+		addrs = append(addrs, a.fromaddr)
+	} else {
+		addrs = append(addrs, voteProb.OriginAddr...)
+	}
+
 	// 检查是否已经参与投票
-	votes, err := a.checkVotesRecord(votesRecord(voteProb.ProposalID))
+	votes, err := a.checkVotesRecord(addrs, votesRecord(voteProb.ProposalID))
 	if err != nil {
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord failed",
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	// 更新投票记录
-	votes.Address = append(votes.Address, a.fromaddr)
+	votes.Address = append(votes.Address, addrs...)
 
 	if cur.GetVoteResult().TotalVotes == 0 { //需要统计票数
 		vtCouts, err := a.getTotalVotes(start)
@@ -205,8 +240,10 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	vtCouts, err := a.getAddressVotes(a.fromaddr, start)
+	vtCouts, err := a.batchGetAddressVotes(addrs, start)
 	if err != nil {
+		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "batchGetAddressVotes failed",
+			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
 	if voteProb.Approve {
@@ -249,7 +286,11 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.PropBoard)})
+		act := &auty.ActiveBoard{
+			Boards:      cur.PropBoard.Boards,
+			StartHeight: a.height,
+		}
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
 	}
 
 	ty := auty.TyLogVotePropBoard
@@ -325,7 +366,11 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.PropBoard)})
+		act := &auty.ActiveBoard{
+			Boards:      cur.PropBoard.Boards,
+			StartHeight: a.height,
+		}
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
 	}
 
 	receiptLog := getReceiptLog(pre, cur, auty.TyLogTmintPropBoard)
@@ -344,6 +389,34 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 		return 0, err
 	}
 	return int32(account.Balance / ticketPrice), nil
+}
+
+func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
+	// 验证绑定关系
+	for _, addr := range addrs {
+		value, err := a.db.Get(ticket.BindKey(addr))
+		if err != nil {
+			return addr, auty.ErrMinerAddr
+		}
+		tkBind := &ticketTy.TicketBind{}
+		err = types.Decode(value, tkBind)
+		if err != nil || tkBind.MinerAddress != bindAddr {
+			return addr, auty.ErrBindAddr
+		}
+	}
+	return "", nil
+}
+
+func (a *action) batchGetAddressVotes(addrs []string, height int64) (int32, error) {
+	total := int32(0)
+	for _, addr := range addrs {
+		count, err := a.getAddressVotes(addr, height)
+		if err != nil {
+			return 0, err
+		}
+		total += count
+	}
+	return total, nil
 }
 
 func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
@@ -406,7 +479,6 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 			return nil, err
 		}
 	} else { // 载入系统默认值
-		rule.BoardAttendRatio = boardAttendRatio
 		rule.BoardApproveRatio = boardApproveRatio
 		rule.PubOpposeRatio = pubOpposeRatio
 		rule.ProposalAmount = proposalAmount
@@ -416,7 +488,7 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	return rule, nil
 }
 
-func (a *action) checkVotesRecord(key []byte) (*auty.VotesRecord, error) {
+func (a *action) checkVotesRecord(addrs []string, key []byte) (*auty.VotesRecord, error) {
 	var votes auty.VotesRecord
 	value, err := a.db.Get(key)
 	if err == nil {
@@ -425,10 +497,15 @@ func (a *action) checkVotesRecord(key []byte) (*auty.VotesRecord, error) {
 			return nil, err
 		}
 	}
+	mp := make(map[string]struct{}, len(addrs))
+	for _, addr := range addrs {
+		mp[addr] = struct{}{}
+	}
 	// 检查是否有重复
 	for _, addr := range votes.Address {
-		if addr == a.fromaddr {
+		if _, ok := mp[addr]; ok {
 			err := auty.ErrRepeatVoteAddr
+			alog.Error("autonomy ", "addr", addr, "err", err)
 			return nil, err
 		}
 	}

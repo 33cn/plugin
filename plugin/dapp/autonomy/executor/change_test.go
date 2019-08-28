@@ -15,45 +15,45 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExecLocalBoard(t *testing.T) {
-	testexecLocalBoard(t, false)
-	testexecLocalBoard(t, true)
+func TestExecLocalChange(t *testing.T) {
+	testexecLocalChange(t, false)
+	testexecLocalChange(t, true)
 }
 
-func testexecLocalBoard(t *testing.T, auto bool) {
+func testexecLocalChange(t *testing.T, auto bool) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
-	//TyLogPropBoard
-	cur := &auty.AutonomyProposalBoard{
-		PropBoard:  &auty.ProposalBoard{},
+	//TyLogPropChange
+	cur := &auty.AutonomyProposalChange{
+		PropChange: &auty.ProposalChange{},
 		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status:     auty.AutonomyStatusProposalBoard,
+		Status:     auty.AutonomyStatusProposalChange,
 		Address:    "11111111111111",
 		Height:     1,
 		Index:      2,
 	}
-	receiptBoard := &auty.ReceiptProposalBoard{
+	receiptChange := &auty.ReceiptProposalChange{
 		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
+			{Ty: auty.TyLogPropChange, Log: types.Encode(receiptChange)},
 		},
 	}
 
 	var set *types.LocalDBSet
 	var err error
 	if !auto {
-		set, err = au.execLocalBoard(receipt)
+		set, err = au.execLocalChange(receipt)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
-		set, err = au.execAutoLocalBoard(tx, receipt)
+		set, err = au.execAutoLocalChange(tx, receipt)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	}
@@ -62,19 +62,19 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	saveKvs(sdb, set.KV)
 
 	// check
-	checkExecLocalBoard(t, kvdb, cur)
+	checkExecLocalChange(t, kvdb, cur)
 
-	// TyLogRvkPropBoard
-	pre1 := copyAutonomyProposalBoard(cur)
-	cur.Status = auty.AutonomyStatusRvkPropBoard
-	receiptBoard1 := &auty.ReceiptProposalBoard{
+	// TyLogRvkPropChange
+	pre1 := copyAutonomyProposalChange(cur)
+	cur.Status = auty.AutonomyStatusRvkPropChange
+	receiptChange1 := &auty.ReceiptProposalChange{
 		Prev:    pre1,
 		Current: cur,
 	}
 	if !auto {
-		set, err = au.execLocalBoard(&types.ReceiptData{
+		set, err = au.execLocalChange(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
-				{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
+				{Ty: auty.TyLogRvkPropChange, Log: types.Encode(receiptChange1)},
 			},
 		})
 		assert.NoError(t, err)
@@ -82,10 +82,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
-		set, err = au.execAutoLocalBoard(tx,
+		set, err = au.execAutoLocalChange(tx,
 			&types.ReceiptData{
 				Logs: []*types.ReceiptLog{
-					{Ty: auty.TyLogRvkPropBoard, Log: types.Encode(receiptBoard1)},
+					{Ty: auty.TyLogRvkPropChange, Log: types.Encode(receiptChange1)},
 				},
 			})
 		assert.NoError(t, err)
@@ -96,21 +96,21 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	saveKvs(sdb, set.KV)
 
 	// check
-	checkExecLocalBoard(t, kvdb, cur)
+	checkExecLocalChange(t, kvdb, cur)
 
-	// TyLogVotePropBoard
-	cur.Status = auty.AutonomyStatusProposalBoard
-	pre2 := copyAutonomyProposalBoard(cur)
-	cur.Status = auty.AutonomyStatusVotePropBoard
+	// TyLogVotePropChange
+	cur.Status = auty.AutonomyStatusProposalChange
+	pre2 := copyAutonomyProposalChange(cur)
+	cur.Status = auty.AutonomyStatusVotePropChange
 	cur.Address = "2222222222222"
-	receiptBoard2 := &auty.ReceiptProposalBoard{
+	receiptChange2 := &auty.ReceiptProposalChange{
 		Prev:    pre2,
 		Current: cur,
 	}
 	if !auto {
-		set, err = au.execLocalBoard(&types.ReceiptData{
+		set, err = au.execLocalChange(&types.ReceiptData{
 			Logs: []*types.ReceiptLog{
-				{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+				{Ty: auty.TyLogVotePropChange, Log: types.Encode(receiptChange2)},
 			},
 		})
 		assert.NoError(t, err)
@@ -118,10 +118,10 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	} else {
 		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
-		set, err = au.execAutoLocalBoard(tx,
+		set, err = au.execAutoLocalChange(tx,
 			&types.ReceiptData{
 				Logs: []*types.ReceiptLog{
-					{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+					{Ty: auty.TyLogVotePropChange, Log: types.Encode(receiptChange2)},
 				},
 			})
 		assert.NoError(t, err)
@@ -131,34 +131,34 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 	//save to database
 	saveKvs(sdb, set.KV)
 	// check
-	checkExecLocalBoard(t, kvdb, cur)
+	checkExecLocalChange(t, kvdb, cur)
 }
 
-func TestExecDelLocalBoard(t *testing.T) {
-	testexecDelLocalBoard(t)
+func TestExecDelLocalChange(t *testing.T) {
+	testexecDelLocalChange(t)
 }
 
-func testexecDelLocalBoard(t *testing.T) {
+func testexecDelLocalChange(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
 	au := &Autonomy{}
 	au.SetLocalDB(kvdb)
-	//TyLogPropBoard
-	cur := &auty.AutonomyProposalBoard{
-		PropBoard:  &auty.ProposalBoard{},
+	//TyLogPropChange
+	cur := &auty.AutonomyProposalChange{
+		PropChange: &auty.ProposalChange{},
 		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status:     auty.AutonomyStatusProposalBoard,
+		Status:     auty.AutonomyStatusProposalChange,
 		Address:    "11111111111111",
 		Height:     1,
 		Index:      2,
 	}
-	receiptBoard := &auty.ReceiptProposalBoard{
+	receiptChange := &auty.ReceiptProposalChange{
 		Prev:    nil,
 		Current: cur,
 	}
 	receipt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogPropBoard, Log: types.Encode(receiptBoard)},
+			{Ty: auty.TyLogPropChange, Log: types.Encode(receiptChange)},
 		},
 	}
 
@@ -166,7 +166,7 @@ func testexecDelLocalBoard(t *testing.T) {
 
 	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
-	set, err := au.execAutoLocalBoard(tx, receipt)
+	set, err := au.execAutoLocalChange(tx, receipt)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
@@ -177,7 +177,7 @@ func testexecDelLocalBoard(t *testing.T) {
 	saveKvs(sdb, set.KV)
 
 	// check
-	table := NewBoardTable(au.GetLocalDB())
+	table := NewChangeTable(au.GetLocalDB())
 	query := table.GetQuery(kvdb)
 	_, err = query.ListIndex("primary", nil, nil, 10, 0)
 	assert.Equal(t, err, types.ErrNotFound)
@@ -188,23 +188,23 @@ func testexecDelLocalBoard(t *testing.T) {
 	_, err = query.ListIndex("addr_status", nil, nil, 10, 0)
 	assert.Equal(t, err, types.ErrNotFound)
 
-	// TyLogVotePropBoard
-	pre1 := copyAutonomyProposalBoard(cur)
-	cur.Status = auty.AutonomyStatusVotePropBoard
-	receiptBoard2 := &auty.ReceiptProposalBoard{
+	// TyLogVotePropChange
+	pre1 := copyAutonomyProposalChange(cur)
+	cur.Status = auty.AutonomyStatusVotePropChange
+	receiptChange2 := &auty.ReceiptProposalChange{
 		Prev:    pre1,
 		Current: cur,
 	}
 	recpt := &types.ReceiptData{
 		Logs: []*types.ReceiptLog{
-			{Ty: auty.TyLogVotePropBoard, Log: types.Encode(receiptBoard2)},
+			{Ty: auty.TyLogVotePropChange, Log: types.Encode(receiptChange2)},
 		}}
 	// 先执行local然后进行删除
 
 	// 自动回退测试时候，需要先设置一个前置状态
 	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
-	set, err = au.execAutoLocalBoard(tx, receipt)
+	set, err = au.execAutoLocalChange(tx, receipt)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
@@ -212,37 +212,37 @@ func testexecDelLocalBoard(t *testing.T) {
 	// 正常测试退回
 	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
-	set, err = au.execAutoLocalBoard(tx, recpt)
+	set, err = au.execAutoLocalChange(tx, recpt)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
-	checkExecLocalBoard(t, kvdb, cur)
+	checkExecLocalChange(t, kvdb, cur)
 
 	set, err = au.execAutoDelLocal(tx, recpt)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	saveKvs(sdb, set.KV)
 	// check
-	checkExecLocalBoard(t, kvdb, pre1)
+	checkExecLocalChange(t, kvdb, pre1)
 }
 
-func TestGetProposalBoard(t *testing.T) {
+func TestGetProposalChange(t *testing.T) {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
 	_, storedb, _ := util.CreateTestDB()
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
-	storedb.Set(propBoardID(tx), types.Encode(&auty.AutonomyProposalBoard{}))
-	rsp, err := au.getProposalBoard(&types.ReqString{Data: tx})
+	storedb.Set(propChangeID(tx), types.Encode(&auty.AutonomyProposalChange{}))
+	rsp, err := au.getProposalChange(&types.ReqString{Data: tx})
 	assert.NoError(t, err)
 	assert.NotNil(t, rsp)
-	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalChange).PropChanges), 1)
 }
 
-func TestListProposalBoard(t *testing.T) {
+func TestListProposalChange(t *testing.T) {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
@@ -256,23 +256,23 @@ func TestListProposalBoard(t *testing.T) {
 	}
 
 	testcase1 := []statu{
-		{auty.AutonomyStatusRvkPropBoard, 10, 2},
-		{auty.AutonomyStatusVotePropBoard, 15, 1},
-		{auty.AutonomyStatusTmintPropBoard, 20, 1},
+		{auty.AutonomyStatusRvkPropChange, 10, 2},
+		{auty.AutonomyStatusVotePropChange, 15, 1},
+		{auty.AutonomyStatusTmintPropChange, 20, 1},
 	}
 	testcase2 := []statu{
-		{auty.AutonomyStatusProposalBoard, 10, 1},
-		{auty.AutonomyStatusProposalBoard, 20, 2},
-		{auty.AutonomyStatusProposalBoard, 20, 5},
+		{auty.AutonomyStatusProposalChange, 10, 1},
+		{auty.AutonomyStatusProposalChange, 20, 2},
+		{auty.AutonomyStatusProposalChange, 20, 5},
 	}
 	var testcase []statu
 	testcase = append(testcase, testcase1...)
 	testcase = append(testcase, testcase2...)
-	cur := &auty.AutonomyProposalBoard{
-		PropBoard:  &auty.ProposalBoard{},
+	cur := &auty.AutonomyProposalChange{
+		PropChange: &auty.ProposalChange{},
 		CurRule:    &auty.RuleConfig{},
 		VoteResult: &auty.VoteResult{},
-		Status:     auty.AutonomyStatusProposalBoard,
+		Status:     auty.AutonomyStatusProposalChange,
 		Address:    "11111111111111",
 		Height:     1,
 		Index:      2,
@@ -280,7 +280,7 @@ func TestListProposalBoard(t *testing.T) {
 
 	//将数据保存下去
 	var kvs []*types.KeyValue
-	table := NewBoardTable(kvdb)
+	table := NewChangeTable(kvdb)
 	for _, tcase := range testcase {
 		cur.Status = tcase.status
 		cur.Height = tcase.height
@@ -295,83 +295,70 @@ func TestListProposalBoard(t *testing.T) {
 
 	saveKvs(sdb, kvs)
 	// 反向查找
-	req := &auty.ReqQueryProposalBoard{
-		Status:    auty.AutonomyStatusProposalBoard,
+	req := &auty.ReqQueryProposalChange{
+		Status:    auty.AutonomyStatusProposalChange,
 		Count:     10,
 		Direction: 0,
 		Index:     -1,
 	}
-	rsp, err := au.listProposalBoard(req)
+	rsp, err := au.listProposalChange(req)
 	assert.NoError(t, err)
-	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalChange).PropChanges), len(testcase2))
 	k := 2
 	for _, tcase := range testcase2 {
-		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Height, tcase.height)
-		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[k].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[k].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[k].Index, int32(tcase.index))
 		k--
 	}
 
 	// 正向查找
-	req = &auty.ReqQueryProposalBoard{
-		Status:    auty.AutonomyStatusProposalBoard,
+	req = &auty.ReqQueryProposalChange{
+		Status:    auty.AutonomyStatusProposalChange,
 		Count:     10,
 		Direction: 1,
 		Index:     -1,
 	}
-	rsp, err = au.listProposalBoard(req)
+	rsp, err = au.listProposalChange(req)
 	assert.NoError(t, err)
-	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), len(testcase2))
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalChange).PropChanges), len(testcase2))
 	for i, tcase := range testcase2 {
-		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Height, tcase.height)
-		assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[i].Index, int32(tcase.index))
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[i].Height, tcase.height)
+		assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[i].Index, int32(tcase.index))
 	}
 
 	// 翻页查找
-	req = &auty.ReqQueryProposalBoard{
-		Status:    auty.AutonomyStatusProposalBoard,
+	req = &auty.ReqQueryProposalChange{
+		Status:    auty.AutonomyStatusProposalChange,
 		Count:     1,
 		Direction: 0,
 		Index:     -1,
 	}
-	rsp, err = au.listProposalBoard(req)
+	rsp, err = au.listProposalChange(req)
 	assert.NoError(t, err)
-	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 1)
-	height := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height
-	index := rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalChange).PropChanges), 1)
+	height := rsp.(*auty.ReplyQueryProposalChange).PropChanges[0].Height
+	index := rsp.(*auty.ReplyQueryProposalChange).PropChanges[0].Index
 	assert.Equal(t, height, testcase2[2].height)
 	assert.Equal(t, index, int32(testcase2[2].index))
 	//
-	req = &auty.ReqQueryProposalBoard{
-		Status:    auty.AutonomyStatusProposalBoard,
+	req = &auty.ReqQueryProposalChange{
+		Status:    auty.AutonomyStatusProposalChange,
 		Count:     10,
 		Direction: 0,
 		Height:    height,
 		Index:     index,
 	}
-	rsp, err = au.listProposalBoard(req)
+	rsp, err = au.listProposalChange(req)
 	assert.NoError(t, err)
-	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalBoard).PropBoards), 2)
-	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Height, testcase2[1].height)
-	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[0].Index, int32(testcase2[1].index))
-	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Height, testcase2[0].height)
-	assert.Equal(t, rsp.(*auty.ReplyQueryProposalBoard).PropBoards[1].Index, int32(testcase2[0].index))
+	assert.Equal(t, len(rsp.(*auty.ReplyQueryProposalChange).PropChanges), 2)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[0].Height, testcase2[1].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[0].Index, int32(testcase2[1].index))
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[1].Height, testcase2[0].height)
+	assert.Equal(t, rsp.(*auty.ReplyQueryProposalChange).PropChanges[1].Index, int32(testcase2[0].index))
 }
 
-func TestGetActiveBoard(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
-	_, storedb, _ := util.CreateTestDB()
-	au.SetStateDB(storedb)
-	storedb.Set(activeBoardID(), types.Encode(&auty.ActiveBoard{Boards: []string{"111"}}))
-	rsp, err := au.getActiveBoard()
-	assert.NoError(t, err)
-	assert.NotNil(t, rsp)
-	assert.Equal(t, len(rsp.(*auty.ActiveBoard).Boards), 1)
-}
-
-func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalBoard) {
-	table := NewBoardTable(kvdb)
+func checkExecLocalChange(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalChange) {
+	table := NewChangeTable(kvdb)
 	query := table.GetQuery(kvdb)
 
 	rows, err := query.ListIndex("primary", nil, nil, 10, 0)
@@ -390,21 +377,11 @@ func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalB
 	assert.Equal(t, err, nil)
 	assert.Equal(t, 1, len(rows))
 
-	prop, ok := rows[0].Data.(*auty.AutonomyProposalBoard)
+	prop, ok := rows[0].Data.(*auty.AutonomyProposalChange)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, prop.Status, cur.Status)
 	assert.Equal(t, prop.Address, cur.Address)
 	assert.Equal(t, prop.Height, cur.Height)
 	assert.Equal(t, prop.Index, cur.Index)
 
-}
-
-func saveKvs(sdb db.DB, kvs []*types.KeyValue) {
-	for _, kv := range kvs {
-		if kv.Value == nil {
-			sdb.Delete(kv.Key)
-		} else {
-			sdb.Set(kv.Key, kv.Value)
-		}
-	}
 }

@@ -25,6 +25,11 @@ const (
 	AutonomyActionTransfer
 	AutonomyActionCommentProp
 
+	AutonomyActionPropChange
+	AutonomyActionRvkPropChange
+	AutonomyActionVotePropChange
+	AutonomyActionTmintPropChange
+
 	//log for autonomy
 	TyLogPropBoard      = 2101
 	TyLogRvkPropBoard   = 2102
@@ -43,6 +48,11 @@ const (
 	TyLogTmintPropRule = 2124
 
 	TyLogCommentProp = 2131
+
+	TyLogPropChange      = 2141
+	TyLogRvkPropChange   = 2142
+	TyLogVotePropChange  = 2143
+	TyLogTmintPropChange = 2144
 )
 
 // Board status
@@ -70,11 +80,21 @@ const (
 	AutonomyStatusTmintPropRule
 )
 
+// Change status
+const (
+	AutonomyStatusProposalChange = iota + 1
+	AutonomyStatusRvkPropChange
+	AutonomyStatusVotePropChange
+	AutonomyStatusTmintPropChange
+)
+
 const (
 	// GetProposalBoard 用于在cmd里面的区分不同的查询
 	GetProposalBoard = "GetProposalBoard"
 	// ListProposalBoard 查询多个
 	ListProposalBoard = "ListProposalBoard"
+	// GetActiveBoard 查询当前的
+	GetActiveBoard = "GetActiveBoard"
 	// GetProposalProject 用于在cmd里面的区分不同的查询
 	GetProposalProject = "GetProposalProject"
 	// ListProposalProject 查询多个
@@ -83,8 +103,14 @@ const (
 	GetProposalRule = "GetProposalRule"
 	// ListProposalRule 查询多个
 	ListProposalRule = "ListProposalRule"
+	// GetActiveRule 查询当前的
+	GetActiveRule = "GetActiveRule"
 	// ListProposalComment 查询多个
 	ListProposalComment = "ListProposalComment"
+	// GetProposalChange 用于在cmd里面的区分不同的查询
+	GetProposalChange = "GetProposalChange"
+	// ListProposalChange 查询多个
+	ListProposalChange = "ListProposalChange"
 )
 
 //包的名字可以通过配置文件来配置

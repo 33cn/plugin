@@ -16,74 +16,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// AutonomyCmd 自治系统命令行
-func AutonomyCmd() *cobra.Command {
+// ProposalChangeCmd 创建提案命令
+func ProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "autonomy",
-		Short: "autonomy management",
-		Args:  cobra.MinimumNArgs(1),
+		Use:   "proposalchange",
+		Short: "create proposal change",
+		Run:   proposalChange,
 	}
-
-	// board
-	cmd.AddCommand(
-		ProposalBoardCmd(),
-		RevokeProposalBoardCmd(),
-		VoteProposalBoardCmd(),
-		TerminateProposalBoardCmd(),
-		ShowProposalBoardCmd(),
-		ShowActiveBoardCmd(),
-	)
-
-	// project
-	cmd.AddCommand(
-		ProposalProjectCmd(),
-		RevokeProposalProjectCmd(),
-		VoteProposalProjectCmd(),
-		PubVoteProposalProjectCmd(),
-		TerminateProposalProjectCmd(),
-		ShowProposalProjectCmd(),
-	)
-
-	// rule
-	cmd.AddCommand(
-		ProposalRuleCmd(),
-		RevokeProposalRuleCmd(),
-		VoteProposalRuleCmd(),
-		TerminateProposalRuleCmd(),
-		ShowProposalRuleCmd(),
-		ShowActiveRuleCmd(),
-	)
-
-	cmd.AddCommand(
-		TransferFundCmd(),
-		CommentProposalCmd(),
-		ShowProposalCommentCmd(),
-	)
-
-	// change
-	cmd.AddCommand(
-		ProposalChangeCmd(),
-		RevokeProposalChangeCmd(),
-		VoteProposalChangeCmd(),
-		TerminateProposalChangeCmd(),
-		ShowProposalChangeCmd(),
-	)
-
+	addProposalChangeFlags(cmd)
 	return cmd
 }
 
-// ProposalBoardCmd 创建提案命令
-func ProposalBoardCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "proposalboard",
-		Short: "create proposal board",
-		Run:   proposalBoard,
-	}
-	addProposalBoardFlags(cmd)
-	return cmd
-}
-
-func addProposalBoardFlags(cmd *cobra.Command) {
+func addProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("year", "y", 0, "year")
 	cmd.Flags().Int32P("month", "m", 0, "month")
 	cmd.Flags().Int32P("day", "d", 0, "day")
@@ -92,11 +36,11 @@ func addProposalBoardFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
 	cmd.MarkFlagRequired("endBlock")
 
-	cmd.Flags().StringP("boards", "b", "", "addr1-addr2......addrN (20<=N<=40)")
-	cmd.MarkFlagRequired("boards")
+	cmd.Flags().StringP("changes", "c", "", "addr1-true*addr2-false*addr3-true*......*addrN-false (1<=N<20)")
+	cmd.MarkFlagRequired("changes")
 }
 
-func proposalBoard(cmd *cobra.Command, args []string) {
+func proposalChange(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	year, _ := cmd.Flags().GetInt32("year")
 	month, _ := cmd.Flags().GetInt32("month")
@@ -104,15 +48,34 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
-	boardstr, _ := cmd.Flags().GetString("boards")
+	changestr, _ := cmd.Flags().GetString("changes")
 
-	boards := strings.Split(boardstr, "-")
+	changeStr := strings.Split(changestr, "*")
 
-	params := &auty.ProposalBoard{
+	var changes []*auty.Change
+	for _, chStr := range changeStr {
+		per := strings.Split(chStr, "-")
+		if len(per) == 2 {
+			if per[1] == "true" {
+				change := &auty.Change{
+					Cancel: true,
+					Addr:   per[0],
+				}
+				changes = append(changes, change)
+			} else if per[1] == "false" {
+				change := &auty.Change{
+					Cancel: false,
+					Addr:   per[0],
+				}
+				changes = append(changes, change)
+			}
+		}
+	}
+	params := &auty.ProposalChange{
 		Year:             year,
 		Month:            month,
 		Day:              day,
-		Boards:           boards,
+		Changes:          changes,
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,
 	}
@@ -123,7 +86,7 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "PropBoard",
+		ActionName: "PropChange",
 		Payload:    payLoad,
 	}
 
@@ -132,27 +95,27 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// RevokeProposalBoardCmd 撤销提案
-func RevokeProposalBoardCmd() *cobra.Command {
+// RevokeProposalChangeCmd 撤销提案
+func RevokeProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "revokeBoard",
-		Short: "revoke proposal board",
-		Run:   revokeProposalBoard,
+		Use:   "revokeChange",
+		Short: "revoke proposal change",
+		Run:   revokeProposalChange,
 	}
-	addRevokeProposalBoardFlags(cmd)
+	addRevokeProposalChangeFlags(cmd)
 	return cmd
 }
 
-func addRevokeProposalBoardFlags(cmd *cobra.Command) {
+func addRevokeProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 }
 
-func revokeProposalBoard(cmd *cobra.Command, args []string) {
+func revokeProposalChange(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 
-	params := &auty.RevokeProposalBoard{
+	params := &auty.RevokeProposalChange{
 		ProposalID: ID,
 	}
 	payLoad, err := json.Marshal(params)
@@ -161,7 +124,7 @@ func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "RvkPropBoard",
+		ActionName: "RvkPropChange",
 		Payload:    payLoad,
 	}
 	var res string
@@ -169,29 +132,27 @@ func revokeProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// VoteProposalBoardCmd 投票提案
-func VoteProposalBoardCmd() *cobra.Command {
+// VoteProposalChangeCmd 投票提案
+func VoteProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "voteBoard",
-		Short: "vote proposal board",
-		Run:   voteProposalBoard,
+		Use:   "voteChange",
+		Short: "vote proposal change",
+		Run:   voteProposalChange,
 	}
-	addVoteProposalBoardFlags(cmd)
+	addVoteProposalChangeFlags(cmd)
 	return cmd
 }
 
-func addVoteProposalBoardFlags(cmd *cobra.Command) {
+func addVoteProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
-	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
-func voteProposalBoard(cmd *cobra.Command, args []string) {
+func voteProposalChange(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
-	originAddr, _ := cmd.Flags().GetString("originAddr")
 
 	var isapp bool
 	if approve == 0 {
@@ -199,15 +160,10 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	} else {
 		isapp = true
 	}
-	var originAddrs []string
-	if len(originAddr) > 0 {
-		originAddrs = strings.Split(originAddr, "-")
-	}
 
-	params := &auty.VoteProposalBoard{
+	params := &auty.VoteProposalChange{
 		ProposalID: ID,
 		Approve:    isapp,
-		OriginAddr: originAddrs,
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
@@ -215,7 +171,7 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "VotePropBoard",
+		ActionName: "VotePropChange",
 		Payload:    payLoad,
 	}
 
@@ -224,27 +180,27 @@ func voteProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// TerminateProposalBoardCmd 终止提案
-func TerminateProposalBoardCmd() *cobra.Command {
+// TerminateProposalChangeCmd 终止提案
+func TerminateProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "terminateBoard",
-		Short: "terminate proposal board",
-		Run:   terminateProposalBoard,
+		Use:   "terminateChange",
+		Short: "terminate proposal change",
+		Run:   terminateProposalChange,
 	}
-	addTerminateProposalBoardFlags(cmd)
+	addTerminateProposalChangeFlags(cmd)
 	return cmd
 }
 
-func addTerminateProposalBoardFlags(cmd *cobra.Command) {
+func addTerminateProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 }
 
-func terminateProposalBoard(cmd *cobra.Command, args []string) {
+func terminateProposalChange(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 
-	params := &auty.RevokeProposalBoard{
+	params := &auty.RevokeProposalChange{
 		ProposalID: ID,
 	}
 	payLoad, err := json.Marshal(params)
@@ -253,7 +209,7 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 	}
 	pm := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(auty.AutonomyX),
-		ActionName: "TmintPropBoard",
+		ActionName: "TmintPropChange",
 		Payload:    payLoad,
 	}
 
@@ -262,18 +218,18 @@ func terminateProposalBoard(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-// ShowProposalBoardCmd 显示提案查询信息
-func ShowProposalBoardCmd() *cobra.Command {
+// ShowProposalChangeCmd 显示提案查询信息
+func ShowProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showBoard",
-		Short: "show proposal board info",
-		Run:   showProposalBoard,
+		Use:   "showChange",
+		Short: "show proposal change info",
+		Run:   showProposalChange,
 	}
-	addShowProposalBoardflags(cmd)
+	addShowProposalChangeflags(cmd)
 	return cmd
 }
 
-func addShowProposalBoardflags(cmd *cobra.Command) {
+func addShowProposalChangeflags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("type", "y", 0, "type(0:query by hash; 1:list)")
 	cmd.MarkFlagRequired("type")
 
@@ -287,7 +243,7 @@ func addShowProposalBoardflags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("index", "i", -1, "index, default is -1")
 }
 
-func showProposalBoard(cmd *cobra.Command, args []string) {
+func showProposalChange(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	typ, _ := cmd.Flags().GetUint32("type")
 	propID, _ := cmd.Flags().GetString("proposalID")
@@ -305,10 +261,10 @@ func showProposalBoard(cmd *cobra.Command, args []string) {
 		req := types.ReqString{
 			Data: propID,
 		}
-		params.FuncName = auty.GetProposalBoard
+		params.FuncName = auty.GetProposalChange
 		params.Payload = types.MustPBToJSON(&req)
 	} else if 1 == typ {
-		req := auty.ReqQueryProposalBoard{
+		req := auty.ReqQueryProposalChange{
 			Status:    int32(status),
 			Addr:      addr,
 			Count:     count,
@@ -316,33 +272,10 @@ func showProposalBoard(cmd *cobra.Command, args []string) {
 			Height:    height,
 			Index:     index,
 		}
-		params.FuncName = auty.ListProposalBoard
+		params.FuncName = auty.ListProposalChange
 		params.Payload = types.MustPBToJSON(&req)
 	}
-	rep = &auty.ReplyQueryProposalBoard{}
-
-	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
-	ctx.Run()
-}
-
-// ShowActiveBoardCmd 显示提案查询信息
-func ShowActiveBoardCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "showActiveBoard",
-		Short: "show active board",
-		Run:   showActiveBoard,
-	}
-	return cmd
-}
-
-func showActiveBoard(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	params := rpctypes.Query4Jrpc{}
-	params.Execer = auty.AutonomyX
-	params.FuncName = auty.GetActiveBoard
-	params.Payload = types.MustPBToJSON(&types.ReqString{})
-	rep := &auty.ActiveBoard{}
+	rep = &auty.ReplyQueryProposalChange{}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()

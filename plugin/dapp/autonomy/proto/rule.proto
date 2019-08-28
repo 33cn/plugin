@@ -42,6 +42,7 @@ message RevokeProposalRule {
 message VoteProposalRule {
     string proposalID = 1;
     bool   approve    = 2;
+    repeated string originAddr = 3;
 }
 
 message TerminateProposalRule {

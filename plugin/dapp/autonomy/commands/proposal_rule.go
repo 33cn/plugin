@@ -7,6 +7,8 @@ package commands
 import (
 	"encoding/json"
 
+	"strings"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -52,7 +54,6 @@ func proposalRule(cmd *cobra.Command, args []string) {
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
 
-	boardAttendRatio, _ := cmd.Flags().GetInt32("boardAttendRatio")
 	boardApproveRatio, _ := cmd.Flags().GetInt32("boardApproveRatio")
 	pubOpposeRatio, _ := cmd.Flags().GetInt32("pubOpposeRatio")
 
@@ -65,7 +66,6 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		Month: month,
 		Day:   day,
 		RuleCfg: &auty.RuleConfig{
-			BoardAttendRatio:   boardAttendRatio,
 			BoardApproveRatio:  boardApproveRatio,
 			PubOpposeRatio:     pubOpposeRatio,
 			ProposalAmount:     proposalAmount * types.Coin,
@@ -142,12 +142,14 @@ func addVoteProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
 	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
+	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
 func voteProposalRule(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
+	originAddr, _ := cmd.Flags().GetString("originAddr")
 	var isapp bool
 	if approve == 0 {
 		isapp = false
@@ -155,9 +157,15 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		isapp = true
 	}
 
+	var originAddrs []string
+	if len(originAddr) > 0 {
+		originAddrs = strings.Split(originAddr, "-")
+	}
+
 	params := &auty.VoteProposalRule{
 		ProposalID: ID,
 		Approve:    isapp,
+		OriginAddr: originAddrs,
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
@@ -213,7 +221,7 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 // ShowProposalRuleCmd 显示提案查询信息
 func ShowProposalRuleCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "showRuleInfo",
+		Use:   "showRule",
 		Short: "show proposal rule info",
 		Run:   showProposalRule,
 	}
@@ -268,6 +276,29 @@ func showProposalRule(cmd *cobra.Command, args []string) {
 		params.Payload = types.MustPBToJSON(&req)
 	}
 	rep = &auty.ReplyQueryProposalRule{}
+
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
+	ctx.Run()
+}
+
+// ShowActiveRuleCmd 显示提案查询信息
+func ShowActiveRuleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showActiveRule",
+		Short: "show active rule",
+		Run:   showActiveRule,
+	}
+	return cmd
+}
+
+func showActiveRule(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	params := rpctypes.Query4Jrpc{}
+	params.Execer = auty.AutonomyX
+	params.FuncName = auty.GetActiveRule
+	params.Payload = types.MustPBToJSON(&types.ReqString{})
+	rep := &auty.RuleConfig{}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
 	ctx.Run()
