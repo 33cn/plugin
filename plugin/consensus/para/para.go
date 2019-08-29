@@ -140,7 +140,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subcfg.BatchFetchBlockCount = types.MaxBlockCountPerTime
 	}
 	if subcfg.BatchFetchBlockCount > types.MaxBlockCountPerTime {
-		panic(fmt.Sprintf("BatchFetchBlockCount=%d should be more than %d ", subcfg.BatchFetchBlockCount, types.MaxBlockCountPerTime))
+		panic(fmt.Sprintf("BatchFetchBlockCount=%d should be <= %d ", subcfg.BatchFetchBlockCount, types.MaxBlockCountPerTime))
 	}
 
 	pk, err := hex.DecodeString(minerPrivateKey)
@@ -224,7 +224,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.MultiDownServerRspTime > 0 {
 		para.multiDldCli.serverTimeout = subcfg.MultiDownServerRspTime
 	}
-
 	c.SetChild(para)
 	return para
 }
@@ -240,7 +239,7 @@ func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
 			return types.ErrInvalidParam
 		}
 		if in[i].Interval <= 0 {
-			plog.Error("EmptyBlockInterval,interval should big than 0", "height", in[i].BlockHeight)
+			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].BlockHeight)
 			return types.ErrInvalidParam
 		}
 	}

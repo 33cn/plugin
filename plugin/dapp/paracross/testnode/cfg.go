@@ -104,8 +104,6 @@ ParaRemoteGrpcClient=""
 startHeight=1
 #打包时间间隔，单位秒
 writeBlockSeconds=2
-#主链每隔几个没有相关交易的区块，平行链上打包空区块
-emptyBlockInterval=2
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
 #等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
@@ -117,6 +115,9 @@ genesisAmount=100000000
 MainBlockHashForkHeight=1
 MainForkParacrossCommitTx=1
 MainLoopCheckCommitTxDoneForkHeight=11
+[[consensus.sub.para.emptyBlockInterval]]
+blockHeight=0
+interval=2
 
 [store]
 name="mavl"
