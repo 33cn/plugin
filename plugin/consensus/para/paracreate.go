@@ -13,14 +13,12 @@ import (
 
 	"sync/atomic"
 
+	"fmt"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	paraexec "github.com/33cn/plugin/plugin/dapp/paracross/executor"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-)
-
-var (
-	fetchFilterParaTxsEnable bool
 )
 
 func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
@@ -316,12 +314,12 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 	}
 
 	if lastSeq > currSeq {
-		if lastSeq-currSeq > client.subCfg.EmptyBlockInterval {
+		if lastSeq-currSeq > client.subCfg.EmptyBlockInterval[0].Interval {
 			atomic.StoreInt32(&client.caughtUp, 0)
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if fetchFilterParaTxsEnable && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+		if client.subCfg.FetchFilterParaTxsEnable && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
 			return client.subCfg.BatchFetchBlockCount - 1, nil
 		}
 		return 0, nil
@@ -435,7 +433,7 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 }
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	if fetchFilterParaTxsEnable {
+	if client.subCfg.FetchFilterParaTxsEnable {
 		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 	}
 
@@ -452,6 +450,15 @@ func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []
 	return currSeq, lastSeqMainHash, err
 }
 
+func (client *client) getEmptyInterval(lastBlock *pt.ParaLocalDbBlock) int64 {
+	for i := len(client.subCfg.EmptyBlockInterval) - 1; i >= 0; i-- {
+		if lastBlock.Height >= client.subCfg.EmptyBlockInterval[i].BlockHeight {
+			return client.subCfg.EmptyBlockInterval[i].Interval
+		}
+	}
+	panic(fmt.Sprintf("emptyBlockInterval not set for height=%d", lastBlock.Height))
+}
+
 func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error) {
 	lastSeqMainHeight := mainBlock.Header.Height
 
@@ -460,12 +467,13 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 		plog.Error("Parachain getLastLocalBlock", "err", err)
 		return false, err
 	}
+	emptyInterval := client.getEmptyInterval(lastBlock)
 
 	txs := paraexec.FilterTxsForPara(mainBlock)
 
 	plog.Info("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
 		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", lastSeqMainHeight,
-		"curMainHash", common.ToHex(mainBlock.Header.Hash), "seqTy", mainBlock.Type)
+		"curMainHash", common.ToHex(mainBlock.Header.Hash), "emptyIntval", emptyInterval, "seqTy", mainBlock.Type)
 
 	if mainBlock.Type == types.DelBlock {
 		if len(txs) == 0 {
@@ -479,7 +487,7 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 	}
 	//AddAct
 	if len(txs) == 0 {
-		if lastSeqMainHeight-lastBlock.MainHeight < client.subCfg.EmptyBlockInterval {
+		if lastSeqMainHeight-lastBlock.MainHeight < emptyInterval {
 			return false, nil
 		}
 		plog.Info("Create empty block", "newHeight", lastBlock.Height+1)
