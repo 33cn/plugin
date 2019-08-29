@@ -36,7 +36,7 @@ const (
 	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	defaultGenesisAmount            int64 = 1e8
 	poolMainBlockSec                int64 = 5
-	defaultEmptyBlockInterval       int64 = 4 //write empty block every interval blocks in mainchain
+	defaultEmptyBlockInterval       int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth  int32 = 10000
 	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
@@ -69,28 +69,33 @@ type client struct {
 	quitCreate      chan struct{}
 }
 
+type emptyBlockInterval struct {
+	BlockHeight int64 `json:"blockHeight,omitempty"`
+	Interval    int64 `json:"interval,omitempty"`
+}
+
 type subConfig struct {
-	WriteBlockSeconds               int64  `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient            string `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                     int64  `json:"startHeight,omitempty"`
-	EmptyBlockInterval              int64  `json:"emptyBlockInterval,omitempty"`
-	AuthAccount                     string `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg            int32  `json:"waitBlocks4CommitMsg,omitempty"`
-	SearchHashMatchedBlockDepth     int32  `json:"searchHashMatchedBlockDepth,omitempty"`
-	GenesisAmount                   int64  `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight         int64  `json:"mainBlockHashForkHeight,omitempty"`
-	MainParaSelfConsensusForkHeight int64  `json:"mainParaSelfConsensusForkHeight,omitempty"`
-	MainForkParacrossCommitTx       int64  `json:"mainForkParacrossCommitTx,omitempty"`
-	WaitConsensStopTimes            uint32 `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount                   int64  `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount                 int32  `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsEnable        uint32 `json:"fetchFilterParaTxsEnable,omitempty"`
-	BatchFetchBlockCount            int64  `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight          int64  `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen               int32  `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob           int64  `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum             uint32 `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime          uint32 `json:"multiDownServerRspTime,omitempty"`
+	WriteBlockSeconds               int64                 `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient            string                `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                     int64                 `json:"startHeight,omitempty"`
+	EmptyBlockInterval              []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
+	AuthAccount                     string                `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg            int32                 `json:"waitBlocks4CommitMsg,omitempty"`
+	SearchHashMatchedBlockDepth     int32                 `json:"searchHashMatchedBlockDepth,omitempty"`
+	GenesisAmount                   int64                 `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight         int64                 `json:"mainBlockHashForkHeight,omitempty"`
+	MainParaSelfConsensusForkHeight int64                 `json:"mainParaSelfConsensusForkHeight,omitempty"`
+	MainForkParacrossCommitTx       int64                 `json:"mainForkParacrossCommitTx,omitempty"`
+	WaitConsensStopTimes            uint32                `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount                   int64                 `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount                 int32                 `json:"maxSyncErrCount,omitempty"`
+	FetchFilterParaTxsEnable        bool                  `json:"fetchFilterParaTxsEnable,omitempty"`
+	BatchFetchBlockCount            int64                 `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight          int64                 `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen               bool                  `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob           int64                 `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum             uint32                `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime          uint32                `json:"multiDownServerRspTime,omitempty"`
 }
 
 // New function to init paracross env
@@ -107,9 +112,15 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
 	}
-	if subcfg.EmptyBlockInterval <= 0 {
-		subcfg.EmptyBlockInterval = defaultEmptyBlockInterval
+	if len(subcfg.EmptyBlockInterval) == 0 {
+		interval := &emptyBlockInterval{Interval: defaultEmptyBlockInterval}
+		subcfg.EmptyBlockInterval = append(subcfg.EmptyBlockInterval, interval)
 	}
+	err := checkEmptyBlockInterval(subcfg.EmptyBlockInterval)
+	if err != nil {
+		panic("para EmptyBlockInterval config not correct")
+	}
+
 	if subcfg.SearchHashMatchedBlockDepth <= 0 {
 		subcfg.SearchHashMatchedBlockDepth = defaultSearchMatchedBlockDepth
 	}
@@ -123,10 +134,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.MainForkParacrossCommitTx <= 0 {
 		subcfg.MainForkParacrossCommitTx = mainForkParacrossCommitTx
-	}
-
-	if subcfg.FetchFilterParaTxsEnable > 0 {
-		fetchFilterParaTxsEnable = true
 	}
 
 	if subcfg.BatchFetchBlockCount <= 0 {
@@ -213,9 +220,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.MultiDownJobBuffNum > 0 {
 		para.multiDldCli.jobBufferNum = subcfg.MultiDownJobBuffNum
 	}
-	if subcfg.MultiDownloadOpen > 0 {
-		para.multiDldCli.multiDldOpen = true
-	}
 
 	if subcfg.MultiDownServerRspTime > 0 {
 		para.multiDldCli.serverTimeout = subcfg.MultiDownServerRspTime
@@ -223,6 +227,24 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	c.SetChild(para)
 	return para
+}
+
+func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
+	for i := 0; i < len(in); i++ {
+		if i == 0 && in[i].BlockHeight != 0 {
+			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].BlockHeight)
+			return types.ErrInvalidParam
+		}
+		if i > 0 && in[i].BlockHeight <= in[i-1].BlockHeight {
+			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].BlockHeight, "laterHeight", in[i].BlockHeight)
+			return types.ErrInvalidParam
+		}
+		if in[i].Interval <= 0 {
+			plog.Error("EmptyBlockInterval,interval should big than 0", "height", in[i].BlockHeight)
+			return types.ErrInvalidParam
+		}
+	}
+	return nil
 }
 
 //para 不检查任何的交易

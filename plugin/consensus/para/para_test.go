@@ -219,3 +219,64 @@ func TestGetLastBlockInfo(t *testing.T) {
 	assert.Equal(t, int64(10), mainSeq)
 	assert.Equal(t, lastBlock.Height, block.Height)
 }
+
+func TestGetEmptyInterval(t *testing.T) {
+	int1 := &emptyBlockInterval{BlockHeight: 0, Interval: 1}
+	int2 := &emptyBlockInterval{BlockHeight: 10, Interval: 10}
+	int3 := &emptyBlockInterval{BlockHeight: 15, Interval: 15}
+
+	ints := []*emptyBlockInterval{int1, int2, int3}
+	para := new(client)
+	para.subCfg = &subConfig{EmptyBlockInterval: ints}
+
+	lastBlock := &pt.ParaLocalDbBlock{Height: 1}
+	ret := para.getEmptyInterval(lastBlock)
+	assert.Equal(t, int1.Interval, ret)
+
+	lastBlock = &pt.ParaLocalDbBlock{Height: 10}
+	ret = para.getEmptyInterval(lastBlock)
+	assert.Equal(t, int2.Interval, ret)
+
+	lastBlock = &pt.ParaLocalDbBlock{Height: 11}
+	ret = para.getEmptyInterval(lastBlock)
+	assert.Equal(t, int2.Interval, ret)
+
+	lastBlock = &pt.ParaLocalDbBlock{Height: 16}
+	ret = para.getEmptyInterval(lastBlock)
+	assert.Equal(t, int3.Interval, ret)
+
+}
+
+func TestCheckEmptyInterval(t *testing.T) {
+	int1 := &emptyBlockInterval{BlockHeight: 0, Interval: 1}
+	int2 := &emptyBlockInterval{BlockHeight: 10, Interval: 10}
+	int3 := &emptyBlockInterval{BlockHeight: 15, Interval: 15}
+
+	int1.BlockHeight = 5
+	ints := []*emptyBlockInterval{int1, int2, int3}
+	err := checkEmptyBlockInterval(ints)
+	assert.Equal(t, types.ErrInvalidParam, err)
+	int1.BlockHeight = 0
+
+	int3.BlockHeight = 5
+	ints = []*emptyBlockInterval{int1, int2, int3}
+	err = checkEmptyBlockInterval(ints)
+	assert.Equal(t, types.ErrInvalidParam, err)
+
+	int3.BlockHeight = 10
+	ints = []*emptyBlockInterval{int1, int2, int3}
+	err = checkEmptyBlockInterval(ints)
+	assert.Equal(t, types.ErrInvalidParam, err)
+	int3.BlockHeight = 15
+
+	int2.Interval = 0
+	ints = []*emptyBlockInterval{int1, int2, int3}
+	err = checkEmptyBlockInterval(ints)
+	assert.Equal(t, types.ErrInvalidParam, err)
+
+	int2.Interval = 2
+	ints = []*emptyBlockInterval{int1, int2, int3}
+	err = checkEmptyBlockInterval(ints)
+	assert.Equal(t, nil, err)
+
+}

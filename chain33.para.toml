@@ -101,8 +101,7 @@ ParaRemoteGrpcClient="localhost:8802"
 startHeight=345850
 #打包时间间隔，单位秒
 writeBlockSeconds=2
-#主链每隔几个没有相关交易的区块，平行链上打包空区块
-emptyBlockInterval=50
+
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
 #云端主链节点切换后，平行链适配新主链节点block，回溯查找和自己记录的相同blockhash的深度
@@ -117,6 +116,12 @@ MainParaSelfConsensusForkHeight=-1
 MainLoopCheckCommitTxDoneForkHeight=-1
 #主链过滤平行链tx
 FetchFilterParaTxsEnable=-1
+#主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
+[[consensus.sub.para.emptyBlockInterval]]
+blockHeight=0
+intervel=50
+
+
 
 [store]
 name="kvmvccmavl"

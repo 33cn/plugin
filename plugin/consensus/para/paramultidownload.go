@@ -64,7 +64,6 @@ type multiDldClient struct {
 	serverTimeout  uint32
 	conns          []*connectCli
 	connsCheckDone bool
-	multiDldOpen   bool
 	wg             sync.WaitGroup
 	mtx            sync.Mutex
 }
@@ -157,7 +156,7 @@ func (m *multiDldClient) getConns(inv *inventory) error {
 }
 
 func (m *multiDldClient) tryMultiServerDownload() {
-	if !m.multiDldOpen {
+	if !m.paraClient.subCfg.MultiDownloadOpen {
 		return
 	}
 
