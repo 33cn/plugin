@@ -64,8 +64,12 @@ autotest_tick: autotest ## run with ticket mining
 	&& cd build/autotest &&chmod -R 755 gitlabci && chmod 755 *.sh  && bash ./copy-autotest.sh gitlabci \
 	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
 
-updatemod:
-	go mod tidy
+update:
+	@if [ -n "$(version)" ]; then \
+	        go mod edit -require="github.com/33cn/chain33@$(version)"; fi
+	@if [ -n "$(commithash)" ]; then   \
+	sed -i 's/github.com\/33cn\/chain33 .*/github.com\/33cn\/chain33 ${commithash}/g' go.mod ; fi
+	@go mod tidy
 dep:
 	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
 	@go get -u golang.org/x/tools/cmd/goimports
