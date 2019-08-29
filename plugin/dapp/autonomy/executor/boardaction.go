@@ -25,7 +25,7 @@ const (
 	ticketPrice               = types.Coin * 3000        // 单张票价
 	largeProjectAmount        = types.Coin * 100 * 10000 // 重大项目公示金额阈值
 	proposalAmount            = types.Coin * 500         // 创建者消耗金额
-	boardApproveRatio   int32 = 66                       // 董事会成员赞成率，以%计，可修改
+	boardApproveRatio   int32 = 51                       // 董事会成员赞成率，以%计，可修改
 	pubAttendRatio      int32 = 75                       // 全体持票人参与率，以%计
 	pubApproveRatio     int32 = 66                       // 全体持票人赞成率，以%计
 	pubOpposeRatio      int32 = 33                       // 全体持票人否决率，以%计

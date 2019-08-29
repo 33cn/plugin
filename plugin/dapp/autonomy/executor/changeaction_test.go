@@ -201,9 +201,9 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 		{PrivKeyD, true},
 
 		{PrivKey1, false},
-		{PrivKey2, true},
-		{PrivKey3, true},
-		{PrivKey4, true},
+		{PrivKey2, false},
+		{PrivKey3, false},
+		{PrivKey4, false},
 		{PrivKey5, true},
 		{PrivKey6, true},
 		{PrivKey7, true},

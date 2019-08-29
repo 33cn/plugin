@@ -372,9 +372,9 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 		{PrivKeyC, true},
 		{PrivKeyD, true},
 
-		{PrivKey1, true},
-		{PrivKey2, true},
-		{PrivKey3, true},
+		{PrivKey1, false},
+		{PrivKey2, false},
+		{PrivKey3, false},
 		{PrivKey4, true},
 		{PrivKey5, true},
 		{PrivKey6, true},
