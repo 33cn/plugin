@@ -114,12 +114,10 @@ MainForkParacrossCommitTx=2270000
 MainParaSelfConsensusForkHeight=-1
 #主链开启循环检查共识交易done的fork高度
 MainLoopCheckCommitTxDoneForkHeight=-1
-#主链过滤平行链tx
-FetchFilterParaTxsEnable=-1
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
-intervel=50
+interval=50
 
 
 
