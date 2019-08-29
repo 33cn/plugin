@@ -15,6 +15,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 ```
 需要安装golang1.12 or latest
+
 ```
 
 #### 支持make file的平台
