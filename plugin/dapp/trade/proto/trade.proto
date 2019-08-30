@@ -34,6 +34,9 @@ message TradeForSell {
     bool  crowdfund = 8;
     // 资产来源
     string assetExec = 9;
+    // 定价资产
+    string priceExec = 10;
+    string priceSymbol = 11;
 }
 
 // 购买者发起交易用来购买token持有者之前挂单出售的token
@@ -56,6 +59,9 @@ message TradeForBuyLimit {
     int64  pricePerBoardlot  = 4;
     int64  totalBoardlot     = 5;
     string assetExec         = 6;
+    // 定价资产
+    string priceExec = 7;
+    string priceSymbol = 8;
 }
 
 // 现价卖单
