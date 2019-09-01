@@ -3,69 +3,37 @@
 
 package types
 
-import (
-	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
-	math "math"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type AutonomyProposalProject struct {
-	PropProject *ProposalProject `protobuf:"bytes,1,opt,name=propProject,proto3" json:"propProject,omitempty"`
+	PropProject *ProposalProject `protobuf:"bytes,1,opt,name=propProject" json:"propProject,omitempty"`
 	// 投票该提案的规则
-	CurRule *RuleConfig `protobuf:"bytes,2,opt,name=curRule,proto3" json:"curRule,omitempty"`
+	CurRule *RuleConfig `protobuf:"bytes,2,opt,name=curRule" json:"curRule,omitempty"`
 	// 投票该提案的董事会成员
-	Boards []string `protobuf:"bytes,3,rep,name=boards,proto3" json:"boards,omitempty"`
+	Boards []string `protobuf:"bytes,3,rep,name=boards" json:"boards,omitempty"`
 	// 董事会投票结果
-	BoardVoteRes *VoteResult `protobuf:"bytes,4,opt,name=boardVoteRes,proto3" json:"boardVoteRes,omitempty"`
+	BoardVoteRes *VoteResult `protobuf:"bytes,4,opt,name=boardVoteRes" json:"boardVoteRes,omitempty"`
 	// 公示投票
-	PubVote *PublicVote `protobuf:"bytes,5,opt,name=pubVote,proto3" json:"pubVote,omitempty"`
+	PubVote *PublicVote `protobuf:"bytes,5,opt,name=pubVote" json:"pubVote,omitempty"`
 	// 状态
-	Status               int32    `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
-	Address              string   `protobuf:"bytes,7,opt,name=address,proto3" json:"address,omitempty"`
-	Height               int64    `protobuf:"varint,8,opt,name=height,proto3" json:"height,omitempty"`
-	Index                int32    `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	ProposalID           string   `protobuf:"bytes,10,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Status     int32  `protobuf:"varint,6,opt,name=status" json:"status,omitempty"`
+	Address    string `protobuf:"bytes,7,opt,name=address" json:"address,omitempty"`
+	Height     int64  `protobuf:"varint,8,opt,name=height" json:"height,omitempty"`
+	Index      int32  `protobuf:"varint,9,opt,name=index" json:"index,omitempty"`
+	ProposalID string `protobuf:"bytes,10,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *AutonomyProposalProject) Reset()         { *m = AutonomyProposalProject{} }
-func (m *AutonomyProposalProject) String() string { return proto.CompactTextString(m) }
-func (*AutonomyProposalProject) ProtoMessage()    {}
-func (*AutonomyProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{0}
-}
-func (m *AutonomyProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AutonomyProposalProject.Unmarshal(m, b)
-}
-func (m *AutonomyProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AutonomyProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *AutonomyProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyProposalProject.Merge(dst, src)
-}
-func (m *AutonomyProposalProject) XXX_Size() int {
-	return xxx_messageInfo_AutonomyProposalProject.Size(m)
-}
-func (m *AutonomyProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_AutonomyProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AutonomyProposalProject proto.InternalMessageInfo
+func (m *AutonomyProposalProject) Reset()                    { *m = AutonomyProposalProject{} }
+func (m *AutonomyProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*AutonomyProposalProject) ProtoMessage()               {}
+func (*AutonomyProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
 
 func (m *AutonomyProposalProject) GetPropProject() *ProposalProject {
 	if m != nil {
@@ -139,52 +107,30 @@ func (m *AutonomyProposalProject) GetProposalID() string {
 
 type ProposalProject struct {
 	// 提案时间
-	Year  int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
-	Month int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
-	Day   int32 `protobuf:"varint,3,opt,name=day,proto3" json:"day,omitempty"`
+	Year  int32 `protobuf:"varint,1,opt,name=year" json:"year,omitempty"`
+	Month int32 `protobuf:"varint,2,opt,name=month" json:"month,omitempty"`
+	Day   int32 `protobuf:"varint,3,opt,name=day" json:"day,omitempty"`
 	// 项目相关
-	FirstStage   string `protobuf:"bytes,4,opt,name=firstStage,proto3" json:"firstStage,omitempty"`
-	LastStage    string `protobuf:"bytes,5,opt,name=lastStage,proto3" json:"lastStage,omitempty"`
-	Production   string `protobuf:"bytes,6,opt,name=production,proto3" json:"production,omitempty"`
-	Description  string `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
-	Contractor   string `protobuf:"bytes,8,opt,name=contractor,proto3" json:"contractor,omitempty"`
-	Amount       int64  `protobuf:"varint,9,opt,name=amount,proto3" json:"amount,omitempty"`
-	AmountDetail string `protobuf:"bytes,10,opt,name=amountDetail,proto3" json:"amountDetail,omitempty"`
+	FirstStage   string `protobuf:"bytes,4,opt,name=firstStage" json:"firstStage,omitempty"`
+	LastStage    string `protobuf:"bytes,5,opt,name=lastStage" json:"lastStage,omitempty"`
+	Production   string `protobuf:"bytes,6,opt,name=production" json:"production,omitempty"`
+	Description  string `protobuf:"bytes,7,opt,name=description" json:"description,omitempty"`
+	Contractor   string `protobuf:"bytes,8,opt,name=contractor" json:"contractor,omitempty"`
+	Amount       int64  `protobuf:"varint,9,opt,name=amount" json:"amount,omitempty"`
+	AmountDetail string `protobuf:"bytes,10,opt,name=amountDetail" json:"amountDetail,omitempty"`
 	// 支付相关
-	ToAddr string `protobuf:"bytes,11,opt,name=toAddr,proto3" json:"toAddr,omitempty"`
+	ToAddr string `protobuf:"bytes,11,opt,name=toAddr" json:"toAddr,omitempty"`
 	// 投票相关
-	StartBlockHeight     int64    `protobuf:"varint,12,opt,name=startBlockHeight,proto3" json:"startBlockHeight,omitempty"`
-	EndBlockHeight       int64    `protobuf:"varint,13,opt,name=endBlockHeight,proto3" json:"endBlockHeight,omitempty"`
-	RealEndBlockHeight   int64    `protobuf:"varint,14,opt,name=realEndBlockHeight,proto3" json:"realEndBlockHeight,omitempty"`
-	ProjectNeedBlockNum  int32    `protobuf:"varint,15,opt,name=projectNeedBlockNum,proto3" json:"projectNeedBlockNum,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	StartBlockHeight    int64 `protobuf:"varint,12,opt,name=startBlockHeight" json:"startBlockHeight,omitempty"`
+	EndBlockHeight      int64 `protobuf:"varint,13,opt,name=endBlockHeight" json:"endBlockHeight,omitempty"`
+	RealEndBlockHeight  int64 `protobuf:"varint,14,opt,name=realEndBlockHeight" json:"realEndBlockHeight,omitempty"`
+	ProjectNeedBlockNum int32 `protobuf:"varint,15,opt,name=projectNeedBlockNum" json:"projectNeedBlockNum,omitempty"`
 }
 
-func (m *ProposalProject) Reset()         { *m = ProposalProject{} }
-func (m *ProposalProject) String() string { return proto.CompactTextString(m) }
-func (*ProposalProject) ProtoMessage()    {}
-func (*ProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{1}
-}
-func (m *ProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProposalProject.Unmarshal(m, b)
-}
-func (m *ProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *ProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProposalProject.Merge(dst, src)
-}
-func (m *ProposalProject) XXX_Size() int {
-	return xxx_messageInfo_ProposalProject.Size(m)
-}
-func (m *ProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProposalProject proto.InternalMessageInfo
+func (m *ProposalProject) Reset()                    { *m = ProposalProject{} }
+func (m *ProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*ProposalProject) ProtoMessage()               {}
+func (*ProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
 
 func (m *ProposalProject) GetYear() int32 {
 	if m != nil {
@@ -292,35 +238,13 @@ func (m *ProposalProject) GetProjectNeedBlockNum() int32 {
 }
 
 type RevokeProposalProject struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *RevokeProposalProject) Reset()         { *m = RevokeProposalProject{} }
-func (m *RevokeProposalProject) String() string { return proto.CompactTextString(m) }
-func (*RevokeProposalProject) ProtoMessage()    {}
-func (*RevokeProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{2}
-}
-func (m *RevokeProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RevokeProposalProject.Unmarshal(m, b)
-}
-func (m *RevokeProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RevokeProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *RevokeProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeProposalProject.Merge(dst, src)
-}
-func (m *RevokeProposalProject) XXX_Size() int {
-	return xxx_messageInfo_RevokeProposalProject.Size(m)
-}
-func (m *RevokeProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_RevokeProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RevokeProposalProject proto.InternalMessageInfo
+func (m *RevokeProposalProject) Reset()                    { *m = RevokeProposalProject{} }
+func (m *RevokeProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*RevokeProposalProject) ProtoMessage()               {}
+func (*RevokeProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{2} }
 
 func (m *RevokeProposalProject) GetProposalID() string {
 	if m != nil {
@@ -330,36 +254,14 @@ func (m *RevokeProposalProject) GetProposalID() string {
 }
 
 type VoteProposalProject struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	Approve              bool     `protobuf:"varint,2,opt,name=approve,proto3" json:"approve,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
+	Approve    bool   `protobuf:"varint,2,opt,name=approve" json:"approve,omitempty"`
 }
 
-func (m *VoteProposalProject) Reset()         { *m = VoteProposalProject{} }
-func (m *VoteProposalProject) String() string { return proto.CompactTextString(m) }
-func (*VoteProposalProject) ProtoMessage()    {}
-func (*VoteProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{3}
-}
-func (m *VoteProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_VoteProposalProject.Unmarshal(m, b)
-}
-func (m *VoteProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_VoteProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *VoteProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VoteProposalProject.Merge(dst, src)
-}
-func (m *VoteProposalProject) XXX_Size() int {
-	return xxx_messageInfo_VoteProposalProject.Size(m)
-}
-func (m *VoteProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_VoteProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_VoteProposalProject proto.InternalMessageInfo
+func (m *VoteProposalProject) Reset()                    { *m = VoteProposalProject{} }
+func (m *VoteProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*VoteProposalProject) ProtoMessage()               {}
+func (*VoteProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{3} }
 
 func (m *VoteProposalProject) GetProposalID() string {
 	if m != nil {
@@ -376,37 +278,15 @@ func (m *VoteProposalProject) GetApprove() bool {
 }
 
 type PubVoteProposalProject struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	Oppose               bool     `protobuf:"varint,2,opt,name=oppose,proto3" json:"oppose,omitempty"`
-	OriginAddr           []string `protobuf:"bytes,3,rep,name=originAddr,proto3" json:"originAddr,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string   `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
+	Oppose     bool     `protobuf:"varint,2,opt,name=oppose" json:"oppose,omitempty"`
+	OriginAddr []string `protobuf:"bytes,3,rep,name=originAddr" json:"originAddr,omitempty"`
 }
 
-func (m *PubVoteProposalProject) Reset()         { *m = PubVoteProposalProject{} }
-func (m *PubVoteProposalProject) String() string { return proto.CompactTextString(m) }
-func (*PubVoteProposalProject) ProtoMessage()    {}
-func (*PubVoteProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{4}
-}
-func (m *PubVoteProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PubVoteProposalProject.Unmarshal(m, b)
-}
-func (m *PubVoteProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PubVoteProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *PubVoteProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PubVoteProposalProject.Merge(dst, src)
-}
-func (m *PubVoteProposalProject) XXX_Size() int {
-	return xxx_messageInfo_PubVoteProposalProject.Size(m)
-}
-func (m *PubVoteProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_PubVoteProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PubVoteProposalProject proto.InternalMessageInfo
+func (m *PubVoteProposalProject) Reset()                    { *m = PubVoteProposalProject{} }
+func (m *PubVoteProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*PubVoteProposalProject) ProtoMessage()               {}
+func (*PubVoteProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{4} }
 
 func (m *PubVoteProposalProject) GetProposalID() string {
 	if m != nil {
@@ -430,35 +310,13 @@ func (m *PubVoteProposalProject) GetOriginAddr() []string {
 }
 
 type TerminateProposalProject struct {
-	ProposalID           string   `protobuf:"bytes,1,opt,name=proposalID,proto3" json:"proposalID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	ProposalID string `protobuf:"bytes,1,opt,name=proposalID" json:"proposalID,omitempty"`
 }
 
-func (m *TerminateProposalProject) Reset()         { *m = TerminateProposalProject{} }
-func (m *TerminateProposalProject) String() string { return proto.CompactTextString(m) }
-func (*TerminateProposalProject) ProtoMessage()    {}
-func (*TerminateProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{5}
-}
-func (m *TerminateProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TerminateProposalProject.Unmarshal(m, b)
-}
-func (m *TerminateProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TerminateProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *TerminateProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TerminateProposalProject.Merge(dst, src)
-}
-func (m *TerminateProposalProject) XXX_Size() int {
-	return xxx_messageInfo_TerminateProposalProject.Size(m)
-}
-func (m *TerminateProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_TerminateProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TerminateProposalProject proto.InternalMessageInfo
+func (m *TerminateProposalProject) Reset()                    { *m = TerminateProposalProject{} }
+func (m *TerminateProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*TerminateProposalProject) ProtoMessage()               {}
+func (*TerminateProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{5} }
 
 func (m *TerminateProposalProject) GetProposalID() string {
 	if m != nil {
@@ -469,36 +327,14 @@ func (m *TerminateProposalProject) GetProposalID() string {
 
 // receipt
 type ReceiptProposalProject struct {
-	Prev                 *AutonomyProposalProject `protobuf:"bytes,1,opt,name=prev,proto3" json:"prev,omitempty"`
-	Current              *AutonomyProposalProject `protobuf:"bytes,2,opt,name=current,proto3" json:"current,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	Prev    *AutonomyProposalProject `protobuf:"bytes,1,opt,name=prev" json:"prev,omitempty"`
+	Current *AutonomyProposalProject `protobuf:"bytes,2,opt,name=current" json:"current,omitempty"`
 }
 
-func (m *ReceiptProposalProject) Reset()         { *m = ReceiptProposalProject{} }
-func (m *ReceiptProposalProject) String() string { return proto.CompactTextString(m) }
-func (*ReceiptProposalProject) ProtoMessage()    {}
-func (*ReceiptProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{6}
-}
-func (m *ReceiptProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptProposalProject.Unmarshal(m, b)
-}
-func (m *ReceiptProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *ReceiptProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptProposalProject.Merge(dst, src)
-}
-func (m *ReceiptProposalProject) XXX_Size() int {
-	return xxx_messageInfo_ReceiptProposalProject.Size(m)
-}
-func (m *ReceiptProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReceiptProposalProject proto.InternalMessageInfo
+func (m *ReceiptProposalProject) Reset()                    { *m = ReceiptProposalProject{} }
+func (m *ReceiptProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*ReceiptProposalProject) ProtoMessage()               {}
+func (*ReceiptProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{6} }
 
 func (m *ReceiptProposalProject) GetPrev() *AutonomyProposalProject {
 	if m != nil {
@@ -515,36 +351,14 @@ func (m *ReceiptProposalProject) GetCurrent() *AutonomyProposalProject {
 }
 
 type LocalProposalProject struct {
-	PropPrj              *AutonomyProposalProject `protobuf:"bytes,1,opt,name=propPrj,proto3" json:"propPrj,omitempty"`
-	Comments             []string                 `protobuf:"bytes,2,rep,name=comments,proto3" json:"comments,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	PropPrj  *AutonomyProposalProject `protobuf:"bytes,1,opt,name=propPrj" json:"propPrj,omitempty"`
+	Comments []string                 `protobuf:"bytes,2,rep,name=comments" json:"comments,omitempty"`
 }
 
-func (m *LocalProposalProject) Reset()         { *m = LocalProposalProject{} }
-func (m *LocalProposalProject) String() string { return proto.CompactTextString(m) }
-func (*LocalProposalProject) ProtoMessage()    {}
-func (*LocalProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{7}
-}
-func (m *LocalProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LocalProposalProject.Unmarshal(m, b)
-}
-func (m *LocalProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LocalProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *LocalProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalProposalProject.Merge(dst, src)
-}
-func (m *LocalProposalProject) XXX_Size() int {
-	return xxx_messageInfo_LocalProposalProject.Size(m)
-}
-func (m *LocalProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_LocalProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LocalProposalProject proto.InternalMessageInfo
+func (m *LocalProposalProject) Reset()                    { *m = LocalProposalProject{} }
+func (m *LocalProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*LocalProposalProject) ProtoMessage()               {}
+func (*LocalProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{7} }
 
 func (m *LocalProposalProject) GetPropPrj() *AutonomyProposalProject {
 	if m != nil {
@@ -562,40 +376,18 @@ func (m *LocalProposalProject) GetComments() []string {
 
 // query
 type ReqQueryProposalProject struct {
-	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	Count                int32    `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
-	Direction            int32    `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
-	Height               int64    `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
-	Index                int32    `protobuf:"varint,6,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Status    int32  `protobuf:"varint,1,opt,name=status" json:"status,omitempty"`
+	Addr      string `protobuf:"bytes,2,opt,name=addr" json:"addr,omitempty"`
+	Count     int32  `protobuf:"varint,3,opt,name=count" json:"count,omitempty"`
+	Direction int32  `protobuf:"varint,4,opt,name=direction" json:"direction,omitempty"`
+	Height    int64  `protobuf:"varint,5,opt,name=height" json:"height,omitempty"`
+	Index     int32  `protobuf:"varint,6,opt,name=index" json:"index,omitempty"`
 }
 
-func (m *ReqQueryProposalProject) Reset()         { *m = ReqQueryProposalProject{} }
-func (m *ReqQueryProposalProject) String() string { return proto.CompactTextString(m) }
-func (*ReqQueryProposalProject) ProtoMessage()    {}
-func (*ReqQueryProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{8}
-}
-func (m *ReqQueryProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqQueryProposalProject.Unmarshal(m, b)
-}
-func (m *ReqQueryProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqQueryProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *ReqQueryProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQueryProposalProject.Merge(dst, src)
-}
-func (m *ReqQueryProposalProject) XXX_Size() int {
-	return xxx_messageInfo_ReqQueryProposalProject.Size(m)
-}
-func (m *ReqQueryProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqQueryProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqQueryProposalProject proto.InternalMessageInfo
+func (m *ReqQueryProposalProject) Reset()                    { *m = ReqQueryProposalProject{} }
+func (m *ReqQueryProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*ReqQueryProposalProject) ProtoMessage()               {}
+func (*ReqQueryProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{8} }
 
 func (m *ReqQueryProposalProject) GetStatus() int32 {
 	if m != nil {
@@ -640,35 +432,13 @@ func (m *ReqQueryProposalProject) GetIndex() int32 {
 }
 
 type ReplyQueryProposalProject struct {
-	PropProjects         []*AutonomyProposalProject `protobuf:"bytes,1,rep,name=propProjects,proto3" json:"propProjects,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	PropProjects []*AutonomyProposalProject `protobuf:"bytes,1,rep,name=propProjects" json:"propProjects,omitempty"`
 }
 
-func (m *ReplyQueryProposalProject) Reset()         { *m = ReplyQueryProposalProject{} }
-func (m *ReplyQueryProposalProject) String() string { return proto.CompactTextString(m) }
-func (*ReplyQueryProposalProject) ProtoMessage()    {}
-func (*ReplyQueryProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{9}
-}
-func (m *ReplyQueryProposalProject) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyQueryProposalProject.Unmarshal(m, b)
-}
-func (m *ReplyQueryProposalProject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyQueryProposalProject.Marshal(b, m, deterministic)
-}
-func (dst *ReplyQueryProposalProject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQueryProposalProject.Merge(dst, src)
-}
-func (m *ReplyQueryProposalProject) XXX_Size() int {
-	return xxx_messageInfo_ReplyQueryProposalProject.Size(m)
-}
-func (m *ReplyQueryProposalProject) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyQueryProposalProject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReplyQueryProposalProject proto.InternalMessageInfo
+func (m *ReplyQueryProposalProject) Reset()                    { *m = ReplyQueryProposalProject{} }
+func (m *ReplyQueryProposalProject) String() string            { return proto.CompactTextString(m) }
+func (*ReplyQueryProposalProject) ProtoMessage()               {}
+func (*ReplyQueryProposalProject) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{9} }
 
 func (m *ReplyQueryProposalProject) GetPropProjects() []*AutonomyProposalProject {
 	if m != nil {
@@ -690,9 +460,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalProject)(nil), "types.ReplyQueryProposalProject")
 }
 
-func init() { proto.RegisterFile("project.proto", fileDescriptor_project_56f3f85d427589c6) }
+func init() { proto.RegisterFile("project.proto", fileDescriptor4) }
 
-var fileDescriptor_project_56f3f85d427589c6 = []byte{
+var fileDescriptor4 = []byte{
 	// 713 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0x5f, 0x6f, 0xd3, 0x3e,
 	0x14, 0x55, 0x96, 0xa6, 0x5d, 0x6f, 0xbb, 0x3f, 0x3f, 0x6f, 0xbf, 0xce, 0x4c, 0x68, 0xaa, 0xf2,

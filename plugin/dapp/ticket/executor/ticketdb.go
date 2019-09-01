@@ -340,11 +340,22 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 		return nil, err
 	}
 	//fund
-	receipt2, err := action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-	if err != nil {
-		tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr)
-		return nil, err
+	var receipt2 *types.Receipt
+	if types.IsFork(action.height, "ForkTicketFundAddrV2") {
+		// issue coins to exec addr
+		receipt2, err = action.coinsAccount.ExecIssueCoins(types.GetFundAddr(), cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", types.GetFundAddr())
+			return nil, err
+		}
+	} else {
+		receipt2, err = action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr)
+			return nil, err
+		}
 	}
+
 	t.Save(action.db)
 	logs = append(logs, t.GetReceiptLog())
 	kv = append(kv, t.GetKVSet()...)

@@ -35,4 +35,6 @@ var (
 	ErrBoardNumber = errors.New("ErrBoardNumber")
 	// ErrRepeatAddr 重复地址
 	ErrRepeatAddr = errors.New("ErrRepeatAddr")
+	// ErrNotEnoughFund 重复地址
+	ErrNotEnoughFund = errors.New("ErrNotEnoughFund")
 )

@@ -28,10 +28,10 @@ import (
 //	testLargeProjectAmount int64 = 1
 //)
 
-var autonomyAddr = address.ExecAddress(auty.AutonomyX)
 
 const (
 	testProjectAmount int64 = types.Coin * 100 // 工程需要资金
+	testFundAmount    int64 = types.Coin * 1000 // 工程需要资金
 )
 
 func InitBoard(stateDB dbm.KV) {
@@ -58,11 +58,12 @@ func InitFund(stateDB dbm.KV, amount int64) {
 	accountA := types.Account{
 		Balance: amount,
 		Frozen:  0,
-		Addr:    autonomyFundAddr,
+		Addr:    autonomyAddr,
 	}
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	accCoin.SaveExecAccount(autonomyAddr, &accountA)
+	//accCoin.ExecIssueCoins(autonomyAddr, amount)
+	accCoin.SaveAccount(&accountA)
 }
 
 func TestPropProject(t *testing.T) {
@@ -131,7 +132,7 @@ func TestPropProject(t *testing.T) {
 func TestRevokeProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
-	InitFund(stateDB, testProjectAmount)
+	InitFund(stateDB, testFundAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//RevokeProposalProject
@@ -141,7 +142,7 @@ func TestRevokeProposalProject(t *testing.T) {
 func TestVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
-	InitFund(stateDB, testProjectAmount)
+	InitFund(stateDB, testFundAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//voteProposalProject
@@ -154,7 +155,7 @@ func TestPubVoteProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
 	InitRule(stateDB)
-	InitFund(stateDB, testProjectAmount)
+	InitFund(stateDB, testFundAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	// voteProposalProject
@@ -169,7 +170,7 @@ func TestPubVoteProposalProject(t *testing.T) {
 func TestTerminateProposalProject(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitBoard(stateDB)
-	InitFund(stateDB, testProjectAmount)
+	InitFund(stateDB, testFundAmount)
 	// PropProject
 	testPropProject(t, env, exec, stateDB, kvdb, true)
 	//terminateProposalProject
@@ -262,8 +263,8 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Frozen)
+	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, proposalAmount + testFundAmount, account.Balance)
 }
 
 func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
@@ -313,8 +314,8 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
+	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, testFundAmount, account.Balance)
 	// check Project
 	au := &Autonomy{
 		drivers.DriverBase{},
@@ -443,13 +444,6 @@ func voteProposalProjectTx(parm *auty.VoteProposalProject) (*types.Transaction, 
 
 func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID string) {
 	// check
-	// balance
-	accCoin := account.NewCoinsAccount()
-	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	assert.NoError(t, err)
@@ -458,7 +452,15 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	assert.NoError(t, err)
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
-
+	// balance
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadAccount(AddrA)
+	assert.Equal(t, total - proposalAmount, account.Balance)
+	account = accCoin.LoadAccount(AddrD)
+	assert.Equal(t, total + testProjectAmount, account.Balance)
+	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, testFundAmount + proposalAmount - testProjectAmount, account.Balance)
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())
 	assert.NoError(t, err)
@@ -559,13 +561,6 @@ func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 
 func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID string) {
 	// check
-	// balance
-	accCoin := account.NewCoinsAccount()
-	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount+testProjectAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propProjectID(proposalID))
 	assert.NoError(t, err)
@@ -574,6 +569,15 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
+	// balance
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadAccount(AddrA)
+	assert.Equal(t, total - proposalAmount, account.Balance)
+	account = accCoin.LoadAccount(AddrD)
+	assert.Equal(t, total, account.Balance)
+	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, testFundAmount + proposalAmount, account.Balance)
 
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())
@@ -646,8 +650,10 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
+	account := accCoin.LoadAccount(AddrA)
+	assert.Equal(t, total - proposalAmount, account.Balance)
+	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, testFundAmount + proposalAmount, account.Balance)
 
 	// check Project
 	au := &Autonomy{

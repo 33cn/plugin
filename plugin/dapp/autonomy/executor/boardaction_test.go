@@ -251,8 +251,8 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Frozen)
+	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, proposalAmount, account.Balance)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -301,8 +301,8 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
+	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, int64(0), account.Balance)
 }
 
 func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, error) {
@@ -407,9 +407,9 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadAccount(AddrA)
+	assert.Equal(t, total - proposalAmount, account.Balance)
+	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
@@ -484,8 +484,10 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Frozen)
+	account := accCoin.LoadAccount(AddrA)
+	assert.Equal(t, total - proposalAmount, account.Balance)
+	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	assert.Equal(t, proposalAmount, account.Balance)
 }
 
 func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transaction, error) {

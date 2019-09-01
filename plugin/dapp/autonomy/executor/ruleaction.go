@@ -304,7 +304,7 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 
 	start := cur.GetPropRule().StartBlockHeight
 	end := cur.GetPropRule().EndBlockHeight
-	if a.height < end && !cur.VoteResult.Pass {
+	if a.height <= end && !cur.VoteResult.Pass {
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropRule ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
 			"in vote period can not terminate", tmintProb.ProposalID, "err", err)
