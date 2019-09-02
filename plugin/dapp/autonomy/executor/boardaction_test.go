@@ -598,6 +598,16 @@ func TestVerifyMinerAddr(t *testing.T) {
 	}
 	_, err := action.verifyMinerAddr(addrs, AddrD)
 	assert.NoError(t, err)
+	// ErrRepeatAddr
+	addrss := []string{
+		AddrA,
+		AddrB,
+		AddrC,
+		AddrA,
+	}
+	add, err := action.verifyMinerAddr(addrss, AddrD)
+	assert.Equal(t, auty.ErrRepeatAddr, err)
+	assert.Equal(t, add, AddrA)
 
 	// ErrMinerAddr
 	testf := "12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"

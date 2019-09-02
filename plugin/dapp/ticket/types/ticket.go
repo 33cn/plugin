@@ -61,7 +61,7 @@ func init() {
 	types.RegisterDappFork(TicketX, "Enable", 0)
 	types.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
 	types.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
-	types.RegisterDappFork(TicketX, "ForkTicketFundAddrV2", 500 * 10000)
+	types.RegisterDappFork(TicketX, "ForkTicketFundAddrV1", 500 * 10000)
 }
 
 // TicketType ticket exec type

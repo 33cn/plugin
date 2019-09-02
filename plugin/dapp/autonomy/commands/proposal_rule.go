@@ -37,7 +37,6 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("endBlock")
 
 	// 可修改规则
-	cmd.Flags().Int32P("boardAttendRatio", "t", 0, "board attend ratio(unit is %)")
 	cmd.Flags().Int32P("boardApproveRatio", "r", 0, "board approve ratio(unit is %)")
 	cmd.Flags().Int32P("pubOpposeRatio", "o", 0, "public oppose ratio(unit is %)")
 	cmd.Flags().Int64P("proposalAmount", "p", 0, "proposal cost amount")

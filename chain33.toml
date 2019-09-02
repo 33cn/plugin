@@ -86,9 +86,11 @@ name="ticket"
 minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+minerExecs=["ticket", "autonomy"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+autonomyFundAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
@@ -226,4 +228,3 @@ paraConsensusStopBlocks=30000
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
-

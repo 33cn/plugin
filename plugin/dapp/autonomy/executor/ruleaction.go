@@ -56,7 +56,7 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propRule height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return nil, types.ErrInvalidParam
+		return nil, auty.ErrSetBlockHeight
 	}
 
 	// 获取当前生效提案规则,并且将不修改的规则补齐
@@ -66,9 +66,9 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
+	receipt, err := a.coinsAccount.Transfer(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
-		alog.Error("propRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", rule.ProposalAmount)
+		alog.Error("propRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", rule.ProposalAmount)
 		return nil, err
 	}
 
@@ -134,9 +134,9 @@ func (a *action) rvkPropRule(rvkProb *auty.RevokeProposalRule) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
+	receipt, err := a.coinsAccount.Transfer(a.execaddr, a.fromaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
+		alog.Error("rvkPropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -238,17 +238,6 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	// 首次进入投票期,即将提案金转入自治系统地址
-	if cur.Status == auty.AutonomyStatusProposalRule {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
-		if err != nil {
-			alog.Error("votePropRule ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kv = append(kv, receipt.KV...)
-	}
-
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
 		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
@@ -330,17 +319,6 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
-	if cur.Status == auty.AutonomyStatusProposalRule {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
-		if err != nil {
-			alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kv = append(kv, receipt.KV...)
-
-	}
 
 	cur.Status = auty.AutonomyStatusTmintPropRule
 
@@ -366,7 +344,7 @@ func (a *action) transfer(tf *auty.TransferFund) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.ExecTransfer(a.fromaddr, autonomyFundAddr, a.execaddr, tf.Amount)
+	receipt, err := a.coinsAccount.Transfer(a.fromaddr, autonomyAddr, tf.Amount)
 	if err != nil {
 		alog.Error("autonomy transfer ", "addr", a.fromaddr, "amount", tf.Amount, "ExecTransfer fail", err)
 		return nil, err

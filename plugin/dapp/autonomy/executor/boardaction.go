@@ -54,14 +54,14 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards {
 		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
-		return nil, types.ErrInvalidParam
+		return nil, auty.ErrBoardNumber
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return nil, types.ErrInvalidParam
+		return nil, auty.ErrSetBlockHeight
 	}
 
 	mpBd := make(map[string]struct{})
@@ -86,10 +86,9 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	//receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	receipt, err := a.coinsAccount.Transfer(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
-		alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", rule.ProposalAmount)
+		alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", rule.ProposalAmount)
 		return nil, err
 	}
 
@@ -153,9 +152,9 @@ func (a *action) rvkPropBoard(rvkProb *auty.RevokeProposalBoard) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	receipt, err := a.coinsAccount.TransferWithdraw(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
+	receipt, err := a.coinsAccount.Transfer(a.execaddr, a.fromaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
+		alog.Error("rvkPropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -256,16 +255,6 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	//// 首次进入投票期,即将提案金转入自治系统地址
-	//if cur.Status == auty.AutonomyStatusProposalBoard {
-	//	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
-	//	if err != nil {
-	//		alog.Error("votePropBoard ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
-	//		return nil, err
-	//	}
-	//	logs = append(logs, receipt.Logs...)
-	//	kv = append(kv, receipt.KV...)
-	//}
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
@@ -350,17 +339,6 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	//// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
-	//if cur.Status == auty.AutonomyStatusProposalBoard {
-	//	receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
-	//	if err != nil {
-	//		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
-	//		return nil, err
-	//	}
-	//	logs = append(logs, receipt.Logs...)
-	//	kv = append(kv, receipt.KV...)
-	//}
-
 	cur.Status = auty.AutonomyStatusTmintPropBoard
 
 	kv = append(kv, &types.KeyValue{Key: propBoardID(tmintProb.ProposalID), Value: types.Encode(cur)})
@@ -393,7 +371,8 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 }
 
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
-	// 验证绑定关系
+	// 验证绑定关系与重复地址
+	mp := make(map[string]struct{})
 	for _, addr := range addrs {
 		value, err := a.db.Get(ticket.BindKey(addr))
 		if err != nil {
@@ -404,6 +383,10 @@ func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error
 		if err != nil || tkBind.MinerAddress != bindAddr {
 			return addr, auty.ErrBindAddr
 		}
+		if _, ok := mp[addr]; ok {
+			return addr, auty.ErrRepeatAddr
+		}
+		mp[addr] = struct{}{}
 	}
 	return "", nil
 }

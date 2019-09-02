@@ -37,4 +37,6 @@ var (
 	ErrRepeatAddr = errors.New("ErrRepeatAddr")
 	// ErrNotEnoughFund 重复地址
 	ErrNotEnoughFund = errors.New("ErrNotEnoughFund")
+	// ErrSetBlockHeight
+	ErrSetBlockHeight = errors.New("ErrSetBlockHeight")
 )

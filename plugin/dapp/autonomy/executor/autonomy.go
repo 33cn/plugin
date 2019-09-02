@@ -20,7 +20,6 @@ type subConfig struct {
 var (
 	alog             = log.New("module", "execs.autonomy")
 	driverName       = auty.AutonomyX
-	autonomyFundAddr = address.ExecAddress("autonomyfund")
 	autonomyAddr     = address.ExecAddress("autonomy")
 	cfg              subConfig
 )

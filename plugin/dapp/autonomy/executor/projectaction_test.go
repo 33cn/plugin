@@ -20,14 +20,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-//const (
-//	testBoardAttendRatio   int32 = 60
-//	testBoardApproveRatio  int32 = 60
-//	testPubOpposeRatio     int32 = 30
-//	testProposalAmount     int64 = 0
-//	testLargeProjectAmount int64 = 1
-//)
-
 
 const (
 	testProjectAmount int64 = types.Coin * 100 // 工程需要资金
@@ -103,8 +95,8 @@ func TestPropProject(t *testing.T) {
 
 	result := []error{
 		types.ErrInvalidAddress,
-		types.ErrInvalidParam,
-		types.ErrInvalidParam,
+		auty.ErrSetBlockHeight,
+		auty.ErrSetBlockHeight,
 		types.ErrNotFound,
 		auty.ErrNoPeriodAmount,
 	}

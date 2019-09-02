@@ -341,11 +341,12 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	}
 	//fund
 	var receipt2 *types.Receipt
-	if types.IsFork(action.height, "ForkTicketFundAddrV2") {
+	if types.IsFork(action.height, "ForkTicketFundAddrV1") {
 		// issue coins to exec addr
-		receipt2, err = action.coinsAccount.ExecIssueCoins(types.GetFundAddr(), cfg.CoinDevFund)
+		addr := types.MGStr("mver.consensus.autonomyFundAddr", 0)
+		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
 		if err != nil {
-			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", types.GetFundAddr())
+			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr)
 			return nil, err
 		}
 	} else {
