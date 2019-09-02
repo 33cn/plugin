@@ -13,6 +13,9 @@ import (
 
 // sell limit
 func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
+	if sellorder.PriceExec != defaultPriceExec {
+		return nil
+	}
 	status := sellorder.Status
 	var kv []*types.KeyValue
 	kv = saveSellOrderKeyValue(kv, sellorder, status)
@@ -55,6 +58,10 @@ func genSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status
 
 // buy market
 func saveBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
+	if receipt.PriceExec != defaultPriceExec {
+		return nil
+	}
+
 	txhash := []byte(receipt.TxHash)
 	return genBuyMarketOrderKeyValue(kv, receipt, status, height, txhash)
 }
@@ -98,6 +105,10 @@ func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase
 
 // buy limit
 func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
+	if buyOrder.PriceExec != defaultPriceExec {
+		return nil
+	}
+
 	status := buyOrder.Status
 	var kv []*types.KeyValue
 	kv = saveBuyLimitOrderKeyValue(kv, buyOrder, status)
@@ -140,6 +151,9 @@ func genBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder,
 
 // sell market
 func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
+	if receipt.PriceExec != defaultPriceExec {
+		return nil
+	}
 	txhash := []byte(receipt.TxHash)
 	return genSellMarketOrderKeyValue(kv, receipt, status, height, txhash)
 }
@@ -147,6 +161,9 @@ func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellB
 // delete part
 // sell limit
 func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
+	if sellorder.PriceExec != defaultPriceExec {
+		return nil
+	}
 	status := sellorder.Status
 	var kv []*types.KeyValue
 	kv = deleteSellOrderKeyValue(kv, sellorder, status)
@@ -159,11 +176,17 @@ func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 
 // buy market
 func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
+	if receipt.PriceExec != defaultPriceExec {
+		return nil
+	}
 	return genBuyMarketOrderKeyValue(kv, receipt, status, height, nil)
 }
 
 // buy limit
 func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
+	if buyOrder.PriceExec != defaultPriceExec {
+		return nil
+	}
 	status := buyOrder.Status
 	var kv []*types.KeyValue
 	kv = deleteBuyLimitKeyValue(kv, buyOrder, status)
@@ -176,5 +199,8 @@ func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 
 // sell market
 func deleteSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
+	if receipt.PriceExec != defaultPriceExec {
+		return nil
+	}
 	return genSellMarketOrderKeyValue(kv, receipt, status, height, nil)
 }
