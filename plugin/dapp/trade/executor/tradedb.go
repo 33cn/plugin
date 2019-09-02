@@ -187,6 +187,8 @@ func (buydb *buyDB) getBuyLogs(tradeType int32, txhash string) *types.ReceiptLog
 		TxHash:            txhash,
 		Height:            buydb.Height,
 		AssetExec:         buydb.AssetExec,
+		PriceExec:         buydb.PriceExec,
+		PriceSymbol:       buydb.PriceSymbol,
 	}
 	if pty.TyLogTradeBuyLimit == tradeType {
 		receiptTrade := &pty.ReceiptTradeBuyLimit{Base: base}
@@ -475,10 +477,20 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	if !checkAsset(action.height, buy.AssetExec, buy.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
+	if !checkPrice(action.height, buy.PriceExec, buy.PriceExec) {
+		return nil, types.ErrInvalidParam
+	}
+	if !notSameAsset(action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, buy.PriceExec) {
+		return nil, pty.ErrAssetAndPriceSame
+	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, buy.PriceExec, buy.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	// check enough bty
 	amount := buy.PricePerBoardlot * buy.TotalBoardlot
-	receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, amount)
+	receipt, err := priceAcc.ExecFrozen(action.fromaddr, action.execaddr, amount)
 	if err != nil {
 		tradelog.Error("trade tradeBuyLimit ", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", amount)
 		return nil, err
@@ -498,6 +510,8 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 		Status:            pty.TradeOrderStatusOnBuy,
 		Height:            action.height,
 		AssetExec:         buy.AssetExec,
+		PriceExec:         buy.PriceExec,
+		PriceSymbol:       buy.PriceSymbol,
 	}
 
 	tokendb := newBuyDB(buyOrder)
