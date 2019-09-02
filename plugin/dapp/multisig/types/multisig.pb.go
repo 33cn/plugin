@@ -5,10 +5,12 @@ package types
 
 import (
 	fmt "fmt"
+
+	proto "github.com/golang/protobuf/proto"
+
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-	proto "github.com/golang/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,16 +24,16 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-//////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////
 // message for multisig start/////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//多重签名账户的状态信息，存在在statedb中，通过多重签名账户作为key值
-//createaddr: 创建多重签名地址的创建者账户
-//multisigaddr: 多重签名地址
-//owners: 可以操作此多重签名地址的owner账户列表
-//DailyLimit: 不同资产的每日限额，通过symbol来区分，本连的原生币，以及跨链过来的其他链的原生币
-//txCount:记录此多重签名地址上提交的withdraw交易数
-//requiredweight:确认一笔withdraw交易需要的权重。
+// ////////////////////////////////////////////////////////////////////////////
+// 多重签名账户的状态信息，存在在statedb中，通过多重签名账户作为key值
+// createaddr: 创建多重签名地址的创建者账户
+// multisigaddr: 多重签名地址
+// owners: 可以操作此多重签名地址的owner账户列表
+// DailyLimit: 不同资产的每日限额，通过symbol来区分，本连的原生币，以及跨链过来的其他链的原生币
+// txCount:记录此多重签名地址上提交的withdraw交易数
+// requiredweight:确认一笔withdraw交易需要的权重。
 type MultiSig struct {
 	CreateAddr           string        `protobuf:"bytes,1,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	MultiSigAddr         string        `protobuf:"bytes,2,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
@@ -48,17 +50,16 @@ func (m *MultiSig) Reset()         { *m = MultiSig{} }
 func (m *MultiSig) String() string { return proto.CompactTextString(m) }
 func (*MultiSig) ProtoMessage()    {}
 func (*MultiSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{0}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{0}
 }
-
 func (m *MultiSig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSig.Unmarshal(m, b)
 }
 func (m *MultiSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSig.Marshal(b, m, deterministic)
 }
-func (m *MultiSig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSig.Merge(m, src)
+func (dst *MultiSig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSig.Merge(dst, src)
 }
 func (m *MultiSig) XXX_Size() int {
 	return xxx_messageInfo_MultiSig.Size(m)
@@ -111,7 +112,7 @@ func (m *MultiSig) GetRequiredWeight() uint64 {
 	return 0
 }
 
-//这个地址是否已经确认某个交易
+// 这个地址是否已经确认某个交易
 type ConfirmedOwner struct {
 	ConfirmedOwner       []*Owner `protobuf:"bytes,1,rep,name=confirmedOwner,proto3" json:"confirmedOwner,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -123,17 +124,16 @@ func (m *ConfirmedOwner) Reset()         { *m = ConfirmedOwner{} }
 func (m *ConfirmedOwner) String() string { return proto.CompactTextString(m) }
 func (*ConfirmedOwner) ProtoMessage()    {}
 func (*ConfirmedOwner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{1}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{1}
 }
-
 func (m *ConfirmedOwner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfirmedOwner.Unmarshal(m, b)
 }
 func (m *ConfirmedOwner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ConfirmedOwner.Marshal(b, m, deterministic)
 }
-func (m *ConfirmedOwner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfirmedOwner.Merge(m, src)
+func (dst *ConfirmedOwner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfirmedOwner.Merge(dst, src)
 }
 func (m *ConfirmedOwner) XXX_Size() int {
 	return xxx_messageInfo_ConfirmedOwner.Size(m)
@@ -151,8 +151,8 @@ func (m *ConfirmedOwner) GetConfirmedOwner() []*Owner {
 	return nil
 }
 
-//记录提交的交易详情，在满足确认条件后执行data中的交易
-//txHash:用于存贮提交的确认交易。存贮在localdb中，通过txhash可以获取
+// 记录提交的交易详情，在满足确认条件后执行data中的交易
+// txHash:用于存贮提交的确认交易。存贮在localdb中，通过txhash可以获取
 type MultiSigTx struct {
 	Txid                 uint64   `protobuf:"varint,1,opt,name=txid,proto3" json:"txid,omitempty"`
 	TxHash               string   `protobuf:"bytes,2,opt,name=txHash,proto3" json:"txHash,omitempty"`
@@ -169,17 +169,16 @@ func (m *MultiSigTx) Reset()         { *m = MultiSigTx{} }
 func (m *MultiSigTx) String() string { return proto.CompactTextString(m) }
 func (*MultiSigTx) ProtoMessage()    {}
 func (*MultiSigTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{2}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{2}
 }
-
 func (m *MultiSigTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigTx.Unmarshal(m, b)
 }
 func (m *MultiSigTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigTx.Marshal(b, m, deterministic)
 }
-func (m *MultiSigTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigTx.Merge(m, src)
+func (dst *MultiSigTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigTx.Merge(dst, src)
 }
 func (m *MultiSigTx) XXX_Size() int {
 	return xxx_messageInfo_MultiSigTx.Size(m)
@@ -245,17 +244,16 @@ func (m *Owner) Reset()         { *m = Owner{} }
 func (m *Owner) String() string { return proto.CompactTextString(m) }
 func (*Owner) ProtoMessage()    {}
 func (*Owner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{3}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{3}
 }
-
 func (m *Owner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Owner.Unmarshal(m, b)
 }
 func (m *Owner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Owner.Marshal(b, m, deterministic)
 }
-func (m *Owner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Owner.Merge(m, src)
+func (dst *Owner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Owner.Merge(dst, src)
 }
 func (m *Owner) XXX_Size() int {
 	return xxx_messageInfo_Owner.Size(m)
@@ -280,9 +278,9 @@ func (m *Owner) GetWeight() uint64 {
 	return 0
 }
 
-//每日资产限额，不同的资产价格不一致，需要设置各自的每日限额。没有设置或者限额是0时，表示不能取币
-//spentToday今天已经花费的额度。用于和dailyLimit做对比，超过每日限额时需要多重签名
-//lastDay记录当天开始的时间戳，新的一天需要重置spentToday为初始值0，并修改lastDay的时间戳
+// 每日资产限额，不同的资产价格不一致，需要设置各自的每日限额。没有设置或者限额是0时，表示不能取币
+// spentToday今天已经花费的额度。用于和dailyLimit做对比，超过每日限额时需要多重签名
+// lastDay记录当天开始的时间戳，新的一天需要重置spentToday为初始值0，并修改lastDay的时间戳
 type DailyLimit struct {
 	Symbol               string   `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Execer               string   `protobuf:"bytes,2,opt,name=execer,proto3" json:"execer,omitempty"`
@@ -298,17 +296,16 @@ func (m *DailyLimit) Reset()         { *m = DailyLimit{} }
 func (m *DailyLimit) String() string { return proto.CompactTextString(m) }
 func (*DailyLimit) ProtoMessage()    {}
 func (*DailyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{4}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{4}
 }
-
 func (m *DailyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DailyLimit.Unmarshal(m, b)
 }
 func (m *DailyLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DailyLimit.Marshal(b, m, deterministic)
 }
-func (m *DailyLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DailyLimit.Merge(m, src)
+func (dst *DailyLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DailyLimit.Merge(dst, src)
 }
 func (m *DailyLimit) XXX_Size() int {
 	return xxx_messageInfo_DailyLimit.Size(m)
@@ -367,17 +364,16 @@ func (m *SymbolDailyLimit) Reset()         { *m = SymbolDailyLimit{} }
 func (m *SymbolDailyLimit) String() string { return proto.CompactTextString(m) }
 func (*SymbolDailyLimit) ProtoMessage()    {}
 func (*SymbolDailyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{5}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{5}
 }
-
 func (m *SymbolDailyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SymbolDailyLimit.Unmarshal(m, b)
 }
 func (m *SymbolDailyLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SymbolDailyLimit.Marshal(b, m, deterministic)
 }
-func (m *SymbolDailyLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SymbolDailyLimit.Merge(m, src)
+func (dst *SymbolDailyLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SymbolDailyLimit.Merge(dst, src)
 }
 func (m *SymbolDailyLimit) XXX_Size() int {
 	return xxx_messageInfo_SymbolDailyLimit.Size(m)
@@ -409,7 +405,7 @@ func (m *SymbolDailyLimit) GetDailyLimit() uint64 {
 	return 0
 }
 
-//MultiSig 所有可能的交易action
+// MultiSig 所有可能的交易action
 type MultiSigAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*MultiSigAction_MultiSigAccCreate
@@ -429,17 +425,16 @@ func (m *MultiSigAction) Reset()         { *m = MultiSigAction{} }
 func (m *MultiSigAction) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAction) ProtoMessage()    {}
 func (*MultiSigAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{6}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{6}
 }
-
 func (m *MultiSigAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAction.Unmarshal(m, b)
 }
 func (m *MultiSigAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigAction.Marshal(b, m, deterministic)
 }
-func (m *MultiSigAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigAction.Merge(m, src)
+func (dst *MultiSigAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigAction.Merge(dst, src)
 }
 func (m *MultiSigAction) XXX_Size() int {
 	return xxx_messageInfo_MultiSigAction.Size(m)
@@ -696,7 +691,7 @@ func _MultiSigAction_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
-//创建多重签名账户时需要的信息：创建时最少初始化两个owners，资产的每日限额初始时可以不设置
+// 创建多重签名账户时需要的信息：创建时最少初始化两个owners，资产的每日限额初始时可以不设置
 type MultiSigAccCreate struct {
 	Owners               []*Owner          `protobuf:"bytes,1,rep,name=owners,proto3" json:"owners,omitempty"`
 	RequiredWeight       uint64            `protobuf:"varint,2,opt,name=requiredWeight,proto3" json:"requiredWeight,omitempty"`
@@ -710,17 +705,16 @@ func (m *MultiSigAccCreate) Reset()         { *m = MultiSigAccCreate{} }
 func (m *MultiSigAccCreate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAccCreate) ProtoMessage()    {}
 func (*MultiSigAccCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{7}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{7}
 }
-
 func (m *MultiSigAccCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAccCreate.Unmarshal(m, b)
 }
 func (m *MultiSigAccCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigAccCreate.Marshal(b, m, deterministic)
 }
-func (m *MultiSigAccCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigAccCreate.Merge(m, src)
+func (dst *MultiSigAccCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigAccCreate.Merge(dst, src)
 }
 func (m *MultiSigAccCreate) XXX_Size() int {
 	return xxx_messageInfo_MultiSigAccCreate.Size(m)
@@ -752,7 +746,7 @@ func (m *MultiSigAccCreate) GetDailyLimit() *SymbolDailyLimit {
 	return nil
 }
 
-//对MultiSigAccount账户owner的操作：add/del/replace/modify
+// 对MultiSigAccount账户owner的操作：add/del/replace/modify
 type MultiSigOwnerOperate struct {
 	MultiSigAccAddr      string   `protobuf:"bytes,1,opt,name=multiSigAccAddr,proto3" json:"multiSigAccAddr,omitempty"`
 	OldOwner             string   `protobuf:"bytes,2,opt,name=oldOwner,proto3" json:"oldOwner,omitempty"`
@@ -768,17 +762,16 @@ func (m *MultiSigOwnerOperate) Reset()         { *m = MultiSigOwnerOperate{} }
 func (m *MultiSigOwnerOperate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigOwnerOperate) ProtoMessage()    {}
 func (*MultiSigOwnerOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{8}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{8}
 }
-
 func (m *MultiSigOwnerOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigOwnerOperate.Unmarshal(m, b)
 }
 func (m *MultiSigOwnerOperate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigOwnerOperate.Marshal(b, m, deterministic)
 }
-func (m *MultiSigOwnerOperate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigOwnerOperate.Merge(m, src)
+func (dst *MultiSigOwnerOperate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigOwnerOperate.Merge(dst, src)
 }
 func (m *MultiSigOwnerOperate) XXX_Size() int {
 	return xxx_messageInfo_MultiSigOwnerOperate.Size(m)
@@ -824,8 +817,8 @@ func (m *MultiSigOwnerOperate) GetOperateFlag() uint64 {
 	return 0
 }
 
-//对MultiSigAccount账户的操作：modify/add:SymbolDailyLimit,requiredweight
-//修改或者添加每日限额，或者请求权重的值。
+// 对MultiSigAccount账户的操作：modify/add:SymbolDailyLimit,requiredweight
+// 修改或者添加每日限额，或者请求权重的值。
 type MultiSigAccOperate struct {
 	MultiSigAccAddr      string            `protobuf:"bytes,1,opt,name=multiSigAccAddr,proto3" json:"multiSigAccAddr,omitempty"`
 	DailyLimit           *SymbolDailyLimit `protobuf:"bytes,2,opt,name=dailyLimit,proto3" json:"dailyLimit,omitempty"`
@@ -840,17 +833,16 @@ func (m *MultiSigAccOperate) Reset()         { *m = MultiSigAccOperate{} }
 func (m *MultiSigAccOperate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAccOperate) ProtoMessage()    {}
 func (*MultiSigAccOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{9}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{9}
 }
-
 func (m *MultiSigAccOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAccOperate.Unmarshal(m, b)
 }
 func (m *MultiSigAccOperate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigAccOperate.Marshal(b, m, deterministic)
 }
-func (m *MultiSigAccOperate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigAccOperate.Merge(m, src)
+func (dst *MultiSigAccOperate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigAccOperate.Merge(dst, src)
 }
 func (m *MultiSigAccOperate) XXX_Size() int {
 	return xxx_messageInfo_MultiSigAccOperate.Size(m)
@@ -889,9 +881,9 @@ func (m *MultiSigAccOperate) GetOperateFlag() bool {
 	return false
 }
 
-//多重签名合约中账户之间转币操作:增加一个from的字段实现MultiSigAddr--->addr之间的转账
-//需要判断from地址是否是多重签名地址
-//将MultiSig合约中from地址上execname+symbol的资产转移到to地址
+// 多重签名合约中账户之间转币操作:增加一个from的字段实现MultiSigAddr--->addr之间的转账
+// 需要判断from地址是否是多重签名地址
+// 将MultiSig合约中from地址上execname+symbol的资产转移到to地址
 type MultiSigExecTransferFrom struct {
 	Symbol               string   `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
@@ -908,17 +900,16 @@ func (m *MultiSigExecTransferFrom) Reset()         { *m = MultiSigExecTransferFr
 func (m *MultiSigExecTransferFrom) String() string { return proto.CompactTextString(m) }
 func (*MultiSigExecTransferFrom) ProtoMessage()    {}
 func (*MultiSigExecTransferFrom) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{10}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{10}
 }
-
 func (m *MultiSigExecTransferFrom) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigExecTransferFrom.Unmarshal(m, b)
 }
 func (m *MultiSigExecTransferFrom) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigExecTransferFrom.Marshal(b, m, deterministic)
 }
-func (m *MultiSigExecTransferFrom) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigExecTransferFrom.Merge(m, src)
+func (dst *MultiSigExecTransferFrom) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigExecTransferFrom.Merge(dst, src)
 }
 func (m *MultiSigExecTransferFrom) XXX_Size() int {
 	return xxx_messageInfo_MultiSigExecTransferFrom.Size(m)
@@ -971,9 +962,9 @@ func (m *MultiSigExecTransferFrom) GetFrom() string {
 	return ""
 }
 
-//多重签名合约中账户之间转币操作: addr --->MultiSigAddr之间的转账
-//需要判断to地址是否是多重签名地址
-//将MultiSig合约中签名地址上execname+symbol的资产转移到to地址
+// 多重签名合约中账户之间转币操作: addr --->MultiSigAddr之间的转账
+// 需要判断to地址是否是多重签名地址
+// 将MultiSig合约中签名地址上execname+symbol的资产转移到to地址
 type MultiSigExecTransferTo struct {
 	Symbol               string   `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Amount               int64    `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
@@ -989,17 +980,16 @@ func (m *MultiSigExecTransferTo) Reset()         { *m = MultiSigExecTransferTo{}
 func (m *MultiSigExecTransferTo) String() string { return proto.CompactTextString(m) }
 func (*MultiSigExecTransferTo) ProtoMessage()    {}
 func (*MultiSigExecTransferTo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{11}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{11}
 }
-
 func (m *MultiSigExecTransferTo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigExecTransferTo.Unmarshal(m, b)
 }
 func (m *MultiSigExecTransferTo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigExecTransferTo.Marshal(b, m, deterministic)
 }
-func (m *MultiSigExecTransferTo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigExecTransferTo.Merge(m, src)
+func (dst *MultiSigExecTransferTo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigExecTransferTo.Merge(dst, src)
 }
 func (m *MultiSigExecTransferTo) XXX_Size() int {
 	return xxx_messageInfo_MultiSigExecTransferTo.Size(m)
@@ -1045,9 +1035,9 @@ func (m *MultiSigExecTransferTo) GetTo() string {
 	return ""
 }
 
-//多重签名账户withdraw交易的确认或者取消确认
-//multisigaccaddr:多重签名账户地址
-//transactionid:多重签名账户上的withdraw交易的内部id
+// 多重签名账户withdraw交易的确认或者取消确认
+// multisigaccaddr:多重签名账户地址
+// transactionid:多重签名账户上的withdraw交易的内部id
 type MultiSigConfirmTx struct {
 	MultiSigAccAddr      string   `protobuf:"bytes,1,opt,name=multiSigAccAddr,proto3" json:"multiSigAccAddr,omitempty"`
 	TxId                 uint64   `protobuf:"varint,2,opt,name=txId,proto3" json:"txId,omitempty"`
@@ -1061,17 +1051,16 @@ func (m *MultiSigConfirmTx) Reset()         { *m = MultiSigConfirmTx{} }
 func (m *MultiSigConfirmTx) String() string { return proto.CompactTextString(m) }
 func (*MultiSigConfirmTx) ProtoMessage()    {}
 func (*MultiSigConfirmTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{12}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{12}
 }
-
 func (m *MultiSigConfirmTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigConfirmTx.Unmarshal(m, b)
 }
 func (m *MultiSigConfirmTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigConfirmTx.Marshal(b, m, deterministic)
 }
-func (m *MultiSigConfirmTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigConfirmTx.Merge(m, src)
+func (dst *MultiSigConfirmTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigConfirmTx.Merge(dst, src)
 }
 func (m *MultiSigConfirmTx) XXX_Size() int {
 	return xxx_messageInfo_MultiSigConfirmTx.Size(m)
@@ -1103,7 +1092,7 @@ func (m *MultiSigConfirmTx) GetConfirmOrRevoke() bool {
 	return false
 }
 
-//获取所有多重签名账号
+// 获取所有多重签名账号
 type ReqMultiSigAccs struct {
 	Start                int64    `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
 	End                  int64    `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
@@ -1116,17 +1105,16 @@ func (m *ReqMultiSigAccs) Reset()         { *m = ReqMultiSigAccs{} }
 func (m *ReqMultiSigAccs) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccs) ProtoMessage()    {}
 func (*ReqMultiSigAccs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{13}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{13}
 }
-
 func (m *ReqMultiSigAccs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccs.Unmarshal(m, b)
 }
 func (m *ReqMultiSigAccs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqMultiSigAccs.Marshal(b, m, deterministic)
 }
-func (m *ReqMultiSigAccs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqMultiSigAccs.Merge(m, src)
+func (dst *ReqMultiSigAccs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqMultiSigAccs.Merge(dst, src)
 }
 func (m *ReqMultiSigAccs) XXX_Size() int {
 	return xxx_messageInfo_ReqMultiSigAccs.Size(m)
@@ -1162,17 +1150,16 @@ func (m *ReplyMultiSigAccs) Reset()         { *m = ReplyMultiSigAccs{} }
 func (m *ReplyMultiSigAccs) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigAccs) ProtoMessage()    {}
 func (*ReplyMultiSigAccs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{14}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{14}
 }
-
 func (m *ReplyMultiSigAccs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigAccs.Unmarshal(m, b)
 }
 func (m *ReplyMultiSigAccs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyMultiSigAccs.Marshal(b, m, deterministic)
 }
-func (m *ReplyMultiSigAccs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyMultiSigAccs.Merge(m, src)
+func (dst *ReplyMultiSigAccs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyMultiSigAccs.Merge(dst, src)
 }
 func (m *ReplyMultiSigAccs) XXX_Size() int {
 	return xxx_messageInfo_ReplyMultiSigAccs.Size(m)
@@ -1190,7 +1177,7 @@ func (m *ReplyMultiSigAccs) GetAddress() []string {
 	return nil
 }
 
-//获取指定多重签名账号的状态信息
+// 获取指定多重签名账号的状态信息
 type ReqMultiSigAccInfo struct {
 	MultiSigAccAddr      string   `protobuf:"bytes,1,opt,name=multiSigAccAddr,proto3" json:"multiSigAccAddr,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1202,17 +1189,16 @@ func (m *ReqMultiSigAccInfo) Reset()         { *m = ReqMultiSigAccInfo{} }
 func (m *ReqMultiSigAccInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccInfo) ProtoMessage()    {}
 func (*ReqMultiSigAccInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{15}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{15}
 }
-
 func (m *ReqMultiSigAccInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccInfo.Unmarshal(m, b)
 }
 func (m *ReqMultiSigAccInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqMultiSigAccInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqMultiSigAccInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqMultiSigAccInfo.Merge(m, src)
+func (dst *ReqMultiSigAccInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqMultiSigAccInfo.Merge(dst, src)
 }
 func (m *ReqMultiSigAccInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqMultiSigAccInfo.Size(m)
@@ -1230,7 +1216,7 @@ func (m *ReqMultiSigAccInfo) GetMultiSigAccAddr() string {
 	return ""
 }
 
-//指定多重签名账号的状态信息
+// 指定多重签名账号的状态信息
 type ReplyMultiSigAccInfo struct {
 	CreateAddr           string        `protobuf:"bytes,1,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	MultiSigAddr         string        `protobuf:"bytes,2,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
@@ -1247,17 +1233,16 @@ func (m *ReplyMultiSigAccInfo) Reset()         { *m = ReplyMultiSigAccInfo{} }
 func (m *ReplyMultiSigAccInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigAccInfo) ProtoMessage()    {}
 func (*ReplyMultiSigAccInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{16}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{16}
 }
-
 func (m *ReplyMultiSigAccInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigAccInfo.Unmarshal(m, b)
 }
 func (m *ReplyMultiSigAccInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyMultiSigAccInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyMultiSigAccInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyMultiSigAccInfo.Merge(m, src)
+func (dst *ReplyMultiSigAccInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyMultiSigAccInfo.Merge(dst, src)
 }
 func (m *ReplyMultiSigAccInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyMultiSigAccInfo.Size(m)
@@ -1310,7 +1295,7 @@ func (m *ReplyMultiSigAccInfo) GetRequiredWeight() uint64 {
 	return 0
 }
 
-//获取txids设置过滤条件和区间，pending, executed
+// 获取txids设置过滤条件和区间，pending, executed
 type ReqMultiSigTxids struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	FromTxId             uint64   `protobuf:"varint,2,opt,name=fromTxId,proto3" json:"fromTxId,omitempty"`
@@ -1326,17 +1311,16 @@ func (m *ReqMultiSigTxids) Reset()         { *m = ReqMultiSigTxids{} }
 func (m *ReqMultiSigTxids) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigTxids) ProtoMessage()    {}
 func (*ReqMultiSigTxids) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{17}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{17}
 }
-
 func (m *ReqMultiSigTxids) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigTxids.Unmarshal(m, b)
 }
 func (m *ReqMultiSigTxids) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqMultiSigTxids.Marshal(b, m, deterministic)
 }
-func (m *ReqMultiSigTxids) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqMultiSigTxids.Merge(m, src)
+func (dst *ReqMultiSigTxids) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqMultiSigTxids.Merge(dst, src)
 }
 func (m *ReqMultiSigTxids) XXX_Size() int {
 	return xxx_messageInfo_ReqMultiSigTxids.Size(m)
@@ -1394,17 +1378,16 @@ func (m *ReplyMultiSigTxids) Reset()         { *m = ReplyMultiSigTxids{} }
 func (m *ReplyMultiSigTxids) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigTxids) ProtoMessage()    {}
 func (*ReplyMultiSigTxids) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{18}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{18}
 }
-
 func (m *ReplyMultiSigTxids) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigTxids.Unmarshal(m, b)
 }
 func (m *ReplyMultiSigTxids) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyMultiSigTxids.Marshal(b, m, deterministic)
 }
-func (m *ReplyMultiSigTxids) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyMultiSigTxids.Merge(m, src)
+func (dst *ReplyMultiSigTxids) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyMultiSigTxids.Merge(dst, src)
 }
 func (m *ReplyMultiSigTxids) XXX_Size() int {
 	return xxx_messageInfo_ReplyMultiSigTxids.Size(m)
@@ -1429,7 +1412,7 @@ func (m *ReplyMultiSigTxids) GetTxids() []uint64 {
 	return nil
 }
 
-//获取txid交易的信息，以及参与确认的owner信息
+// 获取txid交易的信息，以及参与确认的owner信息
 type ReqMultiSigTxInfo struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	TxId                 uint64   `protobuf:"varint,2,opt,name=txId,proto3" json:"txId,omitempty"`
@@ -1442,17 +1425,16 @@ func (m *ReqMultiSigTxInfo) Reset()         { *m = ReqMultiSigTxInfo{} }
 func (m *ReqMultiSigTxInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigTxInfo) ProtoMessage()    {}
 func (*ReqMultiSigTxInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{19}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{19}
 }
-
 func (m *ReqMultiSigTxInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigTxInfo.Unmarshal(m, b)
 }
 func (m *ReqMultiSigTxInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqMultiSigTxInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqMultiSigTxInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqMultiSigTxInfo.Merge(m, src)
+func (dst *ReqMultiSigTxInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqMultiSigTxInfo.Merge(dst, src)
 }
 func (m *ReqMultiSigTxInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqMultiSigTxInfo.Size(m)
@@ -1488,17 +1470,16 @@ func (m *ReplyMultiSigTxInfo) Reset()         { *m = ReplyMultiSigTxInfo{} }
 func (m *ReplyMultiSigTxInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigTxInfo) ProtoMessage()    {}
 func (*ReplyMultiSigTxInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{20}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{20}
 }
-
 func (m *ReplyMultiSigTxInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigTxInfo.Unmarshal(m, b)
 }
 func (m *ReplyMultiSigTxInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyMultiSigTxInfo.Marshal(b, m, deterministic)
 }
-func (m *ReplyMultiSigTxInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyMultiSigTxInfo.Merge(m, src)
+func (dst *ReplyMultiSigTxInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyMultiSigTxInfo.Merge(dst, src)
 }
 func (m *ReplyMultiSigTxInfo) XXX_Size() int {
 	return xxx_messageInfo_ReplyMultiSigTxInfo.Size(m)
@@ -1516,7 +1497,7 @@ func (m *ReplyMultiSigTxInfo) GetMultiSigTxInfo() *MultiSigTx {
 	return nil
 }
 
-//获取指定资产当日剩余的免多重签名的余额
+// 获取指定资产当日剩余的免多重签名的余额
 type ReqMultiSigAccUnSpentToday struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	Execer               string   `protobuf:"bytes,2,opt,name=execer,proto3" json:"execer,omitempty"`
@@ -1530,17 +1511,16 @@ func (m *ReqMultiSigAccUnSpentToday) Reset()         { *m = ReqMultiSigAccUnSpen
 func (m *ReqMultiSigAccUnSpentToday) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccUnSpentToday) ProtoMessage()    {}
 func (*ReqMultiSigAccUnSpentToday) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{21}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{21}
 }
-
 func (m *ReqMultiSigAccUnSpentToday) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccUnSpentToday.Unmarshal(m, b)
 }
 func (m *ReqMultiSigAccUnSpentToday) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqMultiSigAccUnSpentToday.Marshal(b, m, deterministic)
 }
-func (m *ReqMultiSigAccUnSpentToday) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqMultiSigAccUnSpentToday.Merge(m, src)
+func (dst *ReqMultiSigAccUnSpentToday) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqMultiSigAccUnSpentToday.Merge(dst, src)
 }
 func (m *ReqMultiSigAccUnSpentToday) XXX_Size() int {
 	return xxx_messageInfo_ReqMultiSigAccUnSpentToday.Size(m)
@@ -1583,17 +1563,16 @@ func (m *ReplyUnSpentAssets) Reset()         { *m = ReplyUnSpentAssets{} }
 func (m *ReplyUnSpentAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyUnSpentAssets) ProtoMessage()    {}
 func (*ReplyUnSpentAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{22}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{22}
 }
-
 func (m *ReplyUnSpentAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUnSpentAssets.Unmarshal(m, b)
 }
 func (m *ReplyUnSpentAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyUnSpentAssets.Marshal(b, m, deterministic)
 }
-func (m *ReplyUnSpentAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyUnSpentAssets.Merge(m, src)
+func (dst *ReplyUnSpentAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyUnSpentAssets.Merge(dst, src)
 }
 func (m *ReplyUnSpentAssets) XXX_Size() int {
 	return xxx_messageInfo_ReplyUnSpentAssets.Size(m)
@@ -1623,17 +1602,16 @@ func (m *UnSpentAssets) Reset()         { *m = UnSpentAssets{} }
 func (m *UnSpentAssets) String() string { return proto.CompactTextString(m) }
 func (*UnSpentAssets) ProtoMessage()    {}
 func (*UnSpentAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{23}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{23}
 }
-
 func (m *UnSpentAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnSpentAssets.Unmarshal(m, b)
 }
 func (m *UnSpentAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UnSpentAssets.Marshal(b, m, deterministic)
 }
-func (m *UnSpentAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnSpentAssets.Merge(m, src)
+func (dst *UnSpentAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnSpentAssets.Merge(dst, src)
 }
 func (m *UnSpentAssets) XXX_Size() int {
 	return xxx_messageInfo_UnSpentAssets.Size(m)
@@ -1658,7 +1636,7 @@ func (m *UnSpentAssets) GetAmount() uint64 {
 	return 0
 }
 
-//TyLogMultiSigAccCreate交易的执行Receipt
+// TyLogMultiSigAccCreate交易的执行Receipt
 type ReceiptMultiSig struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1670,17 +1648,16 @@ func (m *ReceiptMultiSig) Reset()         { *m = ReceiptMultiSig{} }
 func (m *ReceiptMultiSig) String() string { return proto.CompactTextString(m) }
 func (*ReceiptMultiSig) ProtoMessage()    {}
 func (*ReceiptMultiSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{24}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{24}
 }
-
 func (m *ReceiptMultiSig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptMultiSig.Unmarshal(m, b)
 }
 func (m *ReceiptMultiSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptMultiSig.Marshal(b, m, deterministic)
 }
-func (m *ReceiptMultiSig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptMultiSig.Merge(m, src)
+func (dst *ReceiptMultiSig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptMultiSig.Merge(dst, src)
 }
 func (m *ReceiptMultiSig) XXX_Size() int {
 	return xxx_messageInfo_ReceiptMultiSig.Size(m)
@@ -1711,17 +1688,16 @@ func (m *ReceiptOwnerAddOrDel) Reset()         { *m = ReceiptOwnerAddOrDel{} }
 func (m *ReceiptOwnerAddOrDel) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOwnerAddOrDel) ProtoMessage()    {}
 func (*ReceiptOwnerAddOrDel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{25}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{25}
 }
-
 func (m *ReceiptOwnerAddOrDel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOwnerAddOrDel.Unmarshal(m, b)
 }
 func (m *ReceiptOwnerAddOrDel) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptOwnerAddOrDel.Marshal(b, m, deterministic)
 }
-func (m *ReceiptOwnerAddOrDel) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptOwnerAddOrDel.Merge(m, src)
+func (dst *ReceiptOwnerAddOrDel) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptOwnerAddOrDel.Merge(dst, src)
 }
 func (m *ReceiptOwnerAddOrDel) XXX_Size() int {
 	return xxx_messageInfo_ReceiptOwnerAddOrDel.Size(m)
@@ -1753,8 +1729,8 @@ func (m *ReceiptOwnerAddOrDel) GetAddOrDel() bool {
 	return false
 }
 
-//TyLogMultiSigOwnerModify  = 10003 //输出modify的owner：preweight以及currentweight
-//TyLogMultiSigOwnerReplace = 10004 //输出old的owner的信息：以及当前的owner信息：addr+weight
+// TyLogMultiSigOwnerModify  = 10003 //输出modify的owner：preweight以及currentweight
+// TyLogMultiSigOwnerReplace = 10004 //输出old的owner的信息：以及当前的owner信息：addr+weight
 type ReceiptOwnerModOrRep struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	PrevOwner            *Owner   `protobuf:"bytes,2,opt,name=prevOwner,proto3" json:"prevOwner,omitempty"`
@@ -1769,17 +1745,16 @@ func (m *ReceiptOwnerModOrRep) Reset()         { *m = ReceiptOwnerModOrRep{} }
 func (m *ReceiptOwnerModOrRep) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOwnerModOrRep) ProtoMessage()    {}
 func (*ReceiptOwnerModOrRep) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{26}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{26}
 }
-
 func (m *ReceiptOwnerModOrRep) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOwnerModOrRep.Unmarshal(m, b)
 }
 func (m *ReceiptOwnerModOrRep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptOwnerModOrRep.Marshal(b, m, deterministic)
 }
-func (m *ReceiptOwnerModOrRep) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptOwnerModOrRep.Merge(m, src)
+func (dst *ReceiptOwnerModOrRep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptOwnerModOrRep.Merge(dst, src)
 }
 func (m *ReceiptOwnerModOrRep) XXX_Size() int {
 	return xxx_messageInfo_ReceiptOwnerModOrRep.Size(m)
@@ -1818,8 +1793,8 @@ func (m *ReceiptOwnerModOrRep) GetModOrRep() bool {
 	return false
 }
 
-//多重签名账户的操作：ReqWeight，AssetDailyLimit
-//TyLogMultiSigAccWeightModify     = 10005 //输出修改前后确认权重的值：preReqWeight和curReqWeight
+// 多重签名账户的操作：ReqWeight，AssetDailyLimit
+// TyLogMultiSigAccWeightModify     = 10005 //输出修改前后确认权重的值：preReqWeight和curReqWeight
 type ReceiptWeightModify struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	PrevWeight           uint64   `protobuf:"varint,2,opt,name=prevWeight,proto3" json:"prevWeight,omitempty"`
@@ -1833,17 +1808,16 @@ func (m *ReceiptWeightModify) Reset()         { *m = ReceiptWeightModify{} }
 func (m *ReceiptWeightModify) String() string { return proto.CompactTextString(m) }
 func (*ReceiptWeightModify) ProtoMessage()    {}
 func (*ReceiptWeightModify) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{27}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{27}
 }
-
 func (m *ReceiptWeightModify) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptWeightModify.Unmarshal(m, b)
 }
 func (m *ReceiptWeightModify) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptWeightModify.Marshal(b, m, deterministic)
 }
-func (m *ReceiptWeightModify) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptWeightModify.Merge(m, src)
+func (dst *ReceiptWeightModify) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptWeightModify.Merge(dst, src)
 }
 func (m *ReceiptWeightModify) XXX_Size() int {
 	return xxx_messageInfo_ReceiptWeightModify.Size(m)
@@ -1875,8 +1849,8 @@ func (m *ReceiptWeightModify) GetCurrentWeight() uint64 {
 	return 0
 }
 
-//TyLogMultiSigAccDailyLimitAdd    = 10006 //输出add的DailyLimit：Symbol和DailyLimit
-//TyLogMultiSigAccDailyLimitModify = 10007 //输出modify的DailyLimit：preDailyLimit以及currentDailyLimit
+// TyLogMultiSigAccDailyLimitAdd    = 10006 //输出add的DailyLimit：Symbol和DailyLimit
+// TyLogMultiSigAccDailyLimitModify = 10007 //输出modify的DailyLimit：preDailyLimit以及currentDailyLimit
 type ReceiptDailyLimitOperate struct {
 	MultiSigAddr         string      `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	PrevDailyLimit       *DailyLimit `protobuf:"bytes,2,opt,name=prevDailyLimit,proto3" json:"prevDailyLimit,omitempty"`
@@ -1891,17 +1865,16 @@ func (m *ReceiptDailyLimitOperate) Reset()         { *m = ReceiptDailyLimitOpera
 func (m *ReceiptDailyLimitOperate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptDailyLimitOperate) ProtoMessage()    {}
 func (*ReceiptDailyLimitOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{28}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{28}
 }
-
 func (m *ReceiptDailyLimitOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptDailyLimitOperate.Unmarshal(m, b)
 }
 func (m *ReceiptDailyLimitOperate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptDailyLimitOperate.Marshal(b, m, deterministic)
 }
-func (m *ReceiptDailyLimitOperate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptDailyLimitOperate.Merge(m, src)
+func (dst *ReceiptDailyLimitOperate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptDailyLimitOperate.Merge(dst, src)
 }
 func (m *ReceiptDailyLimitOperate) XXX_Size() int {
 	return xxx_messageInfo_ReceiptDailyLimitOperate.Size(m)
@@ -1940,9 +1913,9 @@ func (m *ReceiptDailyLimitOperate) GetAddOrModify() bool {
 	return false
 }
 
-//交易确认或者撤销（撤销值针对未执行的交易）
-//TyLogMultiSigConfirmTx       = 10008 //输出确认的交易id，以及owner信息：addr+weight
-//TyLogMultiSigConfirmTxRevoke = 10009 //输出撤销确认的交易id，以及owner信息：addr+weight
+// 交易确认或者撤销（撤销值针对未执行的交易）
+// TyLogMultiSigConfirmTx       = 10008 //输出确认的交易id，以及owner信息：addr+weight
+// TyLogMultiSigConfirmTxRevoke = 10009 //输出撤销确认的交易id，以及owner信息：addr+weight
 type ReceiptConfirmTx struct {
 	MultiSigTxOwner      *MultiSigTxOwner `protobuf:"bytes,1,opt,name=multiSigTxOwner,proto3" json:"multiSigTxOwner,omitempty"`
 	ConfirmeOrRevoke     bool             `protobuf:"varint,2,opt,name=confirmeOrRevoke,proto3" json:"confirmeOrRevoke,omitempty"`
@@ -1955,17 +1928,16 @@ func (m *ReceiptConfirmTx) Reset()         { *m = ReceiptConfirmTx{} }
 func (m *ReceiptConfirmTx) String() string { return proto.CompactTextString(m) }
 func (*ReceiptConfirmTx) ProtoMessage()    {}
 func (*ReceiptConfirmTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{29}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{29}
 }
-
 func (m *ReceiptConfirmTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptConfirmTx.Unmarshal(m, b)
 }
 func (m *ReceiptConfirmTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptConfirmTx.Marshal(b, m, deterministic)
 }
-func (m *ReceiptConfirmTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptConfirmTx.Merge(m, src)
+func (dst *ReceiptConfirmTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptConfirmTx.Merge(dst, src)
 }
 func (m *ReceiptConfirmTx) XXX_Size() int {
 	return xxx_messageInfo_ReceiptConfirmTx.Size(m)
@@ -1990,7 +1962,7 @@ func (m *ReceiptConfirmTx) GetConfirmeOrRevoke() bool {
 	return false
 }
 
-//可能会修改dailyLimit的相关属性
+// 可能会修改dailyLimit的相关属性
 type ReceiptAccDailyLimitUpdate struct {
 	MultiSigAddr         string      `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	PrevDailyLimit       *DailyLimit `protobuf:"bytes,2,opt,name=prevDailyLimit,proto3" json:"prevDailyLimit,omitempty"`
@@ -2004,17 +1976,16 @@ func (m *ReceiptAccDailyLimitUpdate) Reset()         { *m = ReceiptAccDailyLimit
 func (m *ReceiptAccDailyLimitUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptAccDailyLimitUpdate) ProtoMessage()    {}
 func (*ReceiptAccDailyLimitUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{30}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{30}
 }
-
 func (m *ReceiptAccDailyLimitUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptAccDailyLimitUpdate.Unmarshal(m, b)
 }
 func (m *ReceiptAccDailyLimitUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptAccDailyLimitUpdate.Marshal(b, m, deterministic)
 }
-func (m *ReceiptAccDailyLimitUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptAccDailyLimitUpdate.Merge(m, src)
+func (dst *ReceiptAccDailyLimitUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptAccDailyLimitUpdate.Merge(dst, src)
 }
 func (m *ReceiptAccDailyLimitUpdate) XXX_Size() int {
 	return xxx_messageInfo_ReceiptAccDailyLimitUpdate.Size(m)
@@ -2046,7 +2017,7 @@ func (m *ReceiptAccDailyLimitUpdate) GetCurDailyLimit() *DailyLimit {
 	return nil
 }
 
-//执行MultiSigAcc相关的交易可能会修改tx的执行状态和增加确认owner
+// 执行MultiSigAcc相关的交易可能会修改tx的执行状态和增加确认owner
 type ReceiptMultiSigTx struct {
 	MultiSigTxOwner      *MultiSigTxOwner `protobuf:"bytes,1,opt,name=multiSigTxOwner,proto3" json:"multiSigTxOwner,omitempty"`
 	PrevExecuted         bool             `protobuf:"varint,2,opt,name=prevExecuted,proto3" json:"prevExecuted,omitempty"`
@@ -2063,17 +2034,16 @@ func (m *ReceiptMultiSigTx) Reset()         { *m = ReceiptMultiSigTx{} }
 func (m *ReceiptMultiSigTx) String() string { return proto.CompactTextString(m) }
 func (*ReceiptMultiSigTx) ProtoMessage()    {}
 func (*ReceiptMultiSigTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{31}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{31}
 }
-
 func (m *ReceiptMultiSigTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptMultiSigTx.Unmarshal(m, b)
 }
 func (m *ReceiptMultiSigTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptMultiSigTx.Marshal(b, m, deterministic)
 }
-func (m *ReceiptMultiSigTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptMultiSigTx.Merge(m, src)
+func (dst *ReceiptMultiSigTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptMultiSigTx.Merge(dst, src)
 }
 func (m *ReceiptMultiSigTx) XXX_Size() int {
 	return xxx_messageInfo_ReceiptMultiSigTx.Size(m)
@@ -2138,17 +2108,16 @@ func (m *ReceiptTxCountUpdate) Reset()         { *m = ReceiptTxCountUpdate{} }
 func (m *ReceiptTxCountUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTxCountUpdate) ProtoMessage()    {}
 func (*ReceiptTxCountUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{32}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{32}
 }
-
 func (m *ReceiptTxCountUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTxCountUpdate.Unmarshal(m, b)
 }
 func (m *ReceiptTxCountUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTxCountUpdate.Marshal(b, m, deterministic)
 }
-func (m *ReceiptTxCountUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTxCountUpdate.Merge(m, src)
+func (dst *ReceiptTxCountUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTxCountUpdate.Merge(dst, src)
 }
 func (m *ReceiptTxCountUpdate) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTxCountUpdate.Size(m)
@@ -2186,17 +2155,16 @@ func (m *MultiSigTxOwner) Reset()         { *m = MultiSigTxOwner{} }
 func (m *MultiSigTxOwner) String() string { return proto.CompactTextString(m) }
 func (*MultiSigTxOwner) ProtoMessage()    {}
 func (*MultiSigTxOwner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{33}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{33}
 }
-
 func (m *MultiSigTxOwner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigTxOwner.Unmarshal(m, b)
 }
 func (m *MultiSigTxOwner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MultiSigTxOwner.Marshal(b, m, deterministic)
 }
-func (m *MultiSigTxOwner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MultiSigTxOwner.Merge(m, src)
+func (dst *MultiSigTxOwner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MultiSigTxOwner.Merge(dst, src)
 }
 func (m *MultiSigTxOwner) XXX_Size() int {
 	return xxx_messageInfo_MultiSigTxOwner.Size(m)
@@ -2239,17 +2207,16 @@ func (m *Uint64) Reset()         { *m = Uint64{} }
 func (m *Uint64) String() string { return proto.CompactTextString(m) }
 func (*Uint64) ProtoMessage()    {}
 func (*Uint64) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{34}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{34}
 }
-
 func (m *Uint64) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Uint64.Unmarshal(m, b)
 }
 func (m *Uint64) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Uint64.Marshal(b, m, deterministic)
 }
-func (m *Uint64) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Uint64.Merge(m, src)
+func (dst *Uint64) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Uint64.Merge(dst, src)
 }
 func (m *Uint64) XXX_Size() int {
 	return xxx_messageInfo_Uint64.Size(m)
@@ -2267,7 +2234,7 @@ func (m *Uint64) GetData() uint64 {
 	return 0
 }
 
-//记录账户收到固定资产的数量
+// 记录账户收到固定资产的数量
 type AccountAssets struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	Assets               *Assets  `protobuf:"bytes,2,opt,name=assets,proto3" json:"assets,omitempty"`
@@ -2281,17 +2248,16 @@ func (m *AccountAssets) Reset()         { *m = AccountAssets{} }
 func (m *AccountAssets) String() string { return proto.CompactTextString(m) }
 func (*AccountAssets) ProtoMessage()    {}
 func (*AccountAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{35}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{35}
 }
-
 func (m *AccountAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountAssets.Unmarshal(m, b)
 }
 func (m *AccountAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccountAssets.Marshal(b, m, deterministic)
 }
-func (m *AccountAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountAssets.Merge(m, src)
+func (dst *AccountAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountAssets.Merge(dst, src)
 }
 func (m *AccountAssets) XXX_Size() int {
 	return xxx_messageInfo_AccountAssets.Size(m)
@@ -2323,7 +2289,7 @@ func (m *AccountAssets) GetAmount() int64 {
 	return 0
 }
 
-//获取多重签名账户上的指定资产或者所有资产
+// 获取多重签名账户上的指定资产或者所有资产
 type ReqAccAssets struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	Assets               *Assets  `protobuf:"bytes,2,opt,name=assets,proto3" json:"assets,omitempty"`
@@ -2337,17 +2303,16 @@ func (m *ReqAccAssets) Reset()         { *m = ReqAccAssets{} }
 func (m *ReqAccAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAccAssets) ProtoMessage()    {}
 func (*ReqAccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{36}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{36}
 }
-
 func (m *ReqAccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAccAssets.Unmarshal(m, b)
 }
 func (m *ReqAccAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqAccAssets.Marshal(b, m, deterministic)
 }
-func (m *ReqAccAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqAccAssets.Merge(m, src)
+func (dst *ReqAccAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqAccAssets.Merge(dst, src)
 }
 func (m *ReqAccAssets) XXX_Size() int {
 	return xxx_messageInfo_ReqAccAssets.Size(m)
@@ -2390,17 +2355,16 @@ func (m *ReplyAccAssets) Reset()         { *m = ReplyAccAssets{} }
 func (m *ReplyAccAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyAccAssets) ProtoMessage()    {}
 func (*ReplyAccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{37}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{37}
 }
-
 func (m *ReplyAccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAccAssets.Unmarshal(m, b)
 }
 func (m *ReplyAccAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyAccAssets.Marshal(b, m, deterministic)
 }
-func (m *ReplyAccAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyAccAssets.Merge(m, src)
+func (dst *ReplyAccAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyAccAssets.Merge(dst, src)
 }
 func (m *ReplyAccAssets) XXX_Size() int {
 	return xxx_messageInfo_ReplyAccAssets.Size(m)
@@ -2418,7 +2382,7 @@ func (m *ReplyAccAssets) GetAccAssets() []*AccAssets {
 	return nil
 }
 
-//账户资产信息
+// 账户资产信息
 type AccAssets struct {
 	Assets               *Assets        `protobuf:"bytes,1,opt,name=assets,proto3" json:"assets,omitempty"`
 	RecvAmount           int64          `protobuf:"varint,2,opt,name=recvAmount,proto3" json:"recvAmount,omitempty"`
@@ -2432,17 +2396,16 @@ func (m *AccAssets) Reset()         { *m = AccAssets{} }
 func (m *AccAssets) String() string { return proto.CompactTextString(m) }
 func (*AccAssets) ProtoMessage()    {}
 func (*AccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{38}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{38}
 }
-
 func (m *AccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccAssets.Unmarshal(m, b)
 }
 func (m *AccAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccAssets.Marshal(b, m, deterministic)
 }
-func (m *AccAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccAssets.Merge(m, src)
+func (dst *AccAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccAssets.Merge(dst, src)
 }
 func (m *AccAssets) XXX_Size() int {
 	return xxx_messageInfo_AccAssets.Size(m)
@@ -2486,17 +2449,16 @@ func (m *Assets) Reset()         { *m = Assets{} }
 func (m *Assets) String() string { return proto.CompactTextString(m) }
 func (*Assets) ProtoMessage()    {}
 func (*Assets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{39}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{39}
 }
-
 func (m *Assets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Assets.Unmarshal(m, b)
 }
 func (m *Assets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Assets.Marshal(b, m, deterministic)
 }
-func (m *Assets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Assets.Merge(m, src)
+func (dst *Assets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Assets.Merge(dst, src)
 }
 func (m *Assets) XXX_Size() int {
 	return xxx_messageInfo_Assets.Size(m)
@@ -2521,7 +2483,7 @@ func (m *Assets) GetSymbol() string {
 	return ""
 }
 
-//账户地址列表
+// 账户地址列表
 type AccAddress struct {
 	Address              []string `protobuf:"bytes,1,rep,name=address,proto3" json:"address,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -2533,17 +2495,16 @@ func (m *AccAddress) Reset()         { *m = AccAddress{} }
 func (m *AccAddress) String() string { return proto.CompactTextString(m) }
 func (*AccAddress) ProtoMessage()    {}
 func (*AccAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{40}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{40}
 }
-
 func (m *AccAddress) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccAddress.Unmarshal(m, b)
 }
 func (m *AccAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccAddress.Marshal(b, m, deterministic)
 }
-func (m *AccAddress) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccAddress.Merge(m, src)
+func (dst *AccAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccAddress.Merge(dst, src)
 }
 func (m *AccAddress) XXX_Size() int {
 	return xxx_messageInfo_AccAddress.Size(m)
@@ -2561,7 +2522,7 @@ func (m *AccAddress) GetAddress() []string {
 	return nil
 }
 
-//owner拥有的多重签名账户信息
+// owner拥有的多重签名账户信息
 type OwnerAttr struct {
 	MultiSigAddr         string   `protobuf:"bytes,1,opt,name=multiSigAddr,proto3" json:"multiSigAddr,omitempty"`
 	OwnerAddr            string   `protobuf:"bytes,2,opt,name=ownerAddr,proto3" json:"ownerAddr,omitempty"`
@@ -2575,17 +2536,16 @@ func (m *OwnerAttr) Reset()         { *m = OwnerAttr{} }
 func (m *OwnerAttr) String() string { return proto.CompactTextString(m) }
 func (*OwnerAttr) ProtoMessage()    {}
 func (*OwnerAttr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{41}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{41}
 }
-
 func (m *OwnerAttr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OwnerAttr.Unmarshal(m, b)
 }
 func (m *OwnerAttr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_OwnerAttr.Marshal(b, m, deterministic)
 }
-func (m *OwnerAttr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OwnerAttr.Merge(m, src)
+func (dst *OwnerAttr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OwnerAttr.Merge(dst, src)
 }
 func (m *OwnerAttr) XXX_Size() int {
 	return xxx_messageInfo_OwnerAttr.Size(m)
@@ -2628,17 +2588,16 @@ func (m *OwnerAttrs) Reset()         { *m = OwnerAttrs{} }
 func (m *OwnerAttrs) String() string { return proto.CompactTextString(m) }
 func (*OwnerAttrs) ProtoMessage()    {}
 func (*OwnerAttrs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_62b8b91adf3febfa, []int{42}
+	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{42}
 }
-
 func (m *OwnerAttrs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OwnerAttrs.Unmarshal(m, b)
 }
 func (m *OwnerAttrs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_OwnerAttrs.Marshal(b, m, deterministic)
 }
-func (m *OwnerAttrs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OwnerAttrs.Merge(m, src)
+func (dst *OwnerAttrs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OwnerAttrs.Merge(dst, src)
 }
 func (m *OwnerAttrs) XXX_Size() int {
 	return xxx_messageInfo_OwnerAttrs.Size(m)
@@ -2702,9 +2661,9 @@ func init() {
 	proto.RegisterType((*OwnerAttrs)(nil), "types.OwnerAttrs")
 }
 
-func init() { proto.RegisterFile("multisig.proto", fileDescriptor_62b8b91adf3febfa) }
+func init() { proto.RegisterFile("multisig.proto", fileDescriptor_multisig_e7bea0a7633ad01b) }
 
-var fileDescriptor_62b8b91adf3febfa = []byte{
+var fileDescriptor_multisig_e7bea0a7633ad01b = []byte{
 	// 1572 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x18, 0xdd, 0x6e, 0xdc, 0x44,
 	0x37, 0xf6, 0xfe, 0x24, 0x7b, 0x92, 0x6c, 0x93, 0xf9, 0xa2, 0x7c, 0x26, 0x94, 0x12, 0x8d, 0x4a,
