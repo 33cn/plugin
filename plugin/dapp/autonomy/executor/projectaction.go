@@ -56,7 +56,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveRule failed", err)
 		return nil, err
 	}
-	
+
 	// 判断基金中是否有足够资金
 	account := a.coinsAccount.LoadAccount(a.execaddr)
 	if account == nil || account.Balance < prob.Amount {
@@ -76,7 +76,6 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
-
 
 	var isPubVote bool
 	if prob.Amount >= rule.LargeProjectAmount {

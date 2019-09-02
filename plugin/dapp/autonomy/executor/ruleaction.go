@@ -319,7 +319,6 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-
 	cur.Status = auty.AutonomyStatusTmintPropRule
 
 	kv = append(kv, &types.KeyValue{Key: propRuleID(tmintProb.ProposalID), Value: types.Encode(cur)})

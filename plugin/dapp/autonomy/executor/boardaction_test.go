@@ -408,7 +408,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total - proposalAmount, account.Balance)
+	assert.Equal(t, total-proposalAmount, account.Balance)
 	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
@@ -485,7 +485,7 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total - proposalAmount, account.Balance)
+	assert.Equal(t, total-proposalAmount, account.Balance)
 	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
 	assert.Equal(t, proposalAmount, account.Balance)
 }

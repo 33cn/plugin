@@ -255,7 +255,6 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-
 	if cur.VoteResult.TotalVotes != 0 &&
 		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
 		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
