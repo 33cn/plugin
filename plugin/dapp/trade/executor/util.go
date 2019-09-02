@@ -81,3 +81,14 @@ func createAccountDB(height int64, db db.KV, exec, symbol string) (*account.DB, 
 
 	return account.NewAccountDB(defaultAssetExec, symbol, db)
 }
+
+func createPriceDB(height int64, db db.KV, exec, symbol string) (*account.DB, error) {
+	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
+		// 在fork 之前提的交易
+		if exec == "" {
+			return account.NewCoinsAccount(), nil
+		}
+		return account.NewAccountDB(exec, symbol, db)
+	}
+	return account.NewCoinsAccount(), nil
+}

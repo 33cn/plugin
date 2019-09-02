@@ -29,6 +29,7 @@ var (
 	tradelog         = log.New("module", "execs.trade")
 	defaultAssetExec = "token"
 	driverName       = "trade"
+	defaultPriceExec = "coins"
 )
 
 func init() {
