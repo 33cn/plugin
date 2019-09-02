@@ -47,6 +47,28 @@ func checkAsset(height int64, exec, symbol string) bool {
 	return true
 }
 
+func checkPrice(height int64, exec, symbol string) bool {
+	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
+		if exec == "" || symbol == "" {
+			return false
+		}
+	} else {
+		if exec != "" || symbol != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func notSameAsset(height int64, assetExec, assetSymbol, priceExec, priceSymbol string) bool {
+	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
+		if assetExec == priceExec && assetSymbol == priceSymbol {
+			return false
+		}
+	}
+	return true
+}
+
 func createAccountDB(height int64, db db.KV, exec, symbol string) (*account.DB, error) {
 	if types.IsDappFork(height, pt.TradeX, pt.ForkTradeFixAssetDBX) {
 		if exec == "" {

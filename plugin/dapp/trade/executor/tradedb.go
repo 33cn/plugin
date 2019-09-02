@@ -61,6 +61,8 @@ func (selldb *sellDB) getSellLogs(tradeType int32, txhash string) *types.Receipt
 		TxHash:            txhash,
 		Height:            selldb.Height,
 		AssetExec:         selldb.AssetExec,
+		PriceExec:         selldb.GetPriceExec(),
+		PriceSymbol:       selldb.GetPriceSymbol(),
 	}
 	if pty.TyLogTradeSellLimit == tradeType {
 		receiptTrade := &pty.ReceiptTradeSellLimit{Base: base}
@@ -262,6 +264,12 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	if !checkAsset(action.height, sell.AssetExec, sell.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
+	if !checkPrice(action.height, sell.PriceExec, sell.PriceExec) {
+		return nil, types.ErrInvalidParam
+	}
+	if !notSameAsset(action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, sell.PriceExec) {
+		return nil, pty.ErrAssetAndPriceSame
+	}
 
 	accDB, err := createAccountDB(action.height, action.db, sell.AssetExec, sell.TokenSymbol)
 	if err != nil {
@@ -292,6 +300,8 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 		Status:            pty.TradeOrderStatusOnSale,
 		Height:            action.height,
 		AssetExec:         sell.AssetExec,
+		PriceExec:         sell.GetPriceExec(),
+		PriceSymbol:       sell.GetPriceSymbol(),
 	}
 
 	tokendb := newSellDB(sellOrder)
