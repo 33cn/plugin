@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -247,19 +246,18 @@ func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt in
 }
 
 type tradeAction struct {
-	coinsAccount *account.DB
-	db           dbm.KV
-	txhash       string
-	fromaddr     string
-	blocktime    int64
-	height       int64
-	execaddr     string
+	db        dbm.KV
+	txhash    string
+	fromaddr  string
+	blocktime int64
+	height    int64
+	execaddr  string
 }
 
 func newTradeAction(t *trade, tx *types.Transaction) *tradeAction {
 	hash := hex.EncodeToString(tx.Hash())
 	fromaddr := tx.From()
-	return &tradeAction{t.GetCoinsAccount(), t.GetStateDB(), hash, fromaddr,
+	return &tradeAction{t.GetStateDB(), hash, fromaddr,
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
 }
 
