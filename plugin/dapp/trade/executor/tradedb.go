@@ -93,6 +93,8 @@ func (selldb *sellDB) getBuyLogs(buyerAddr string, boardlotcnt int64, txhash str
 		TxHash:            txhash,
 		Height:            selldb.Height,
 		AssetExec:         selldb.AssetExec,
+		PriceExec:         selldb.PriceExec,
+		PriceSymbol:       selldb.PriceSymbol,
 	}
 
 	receipt := &pty.ReceiptTradeBuyMarket{Base: base}
@@ -343,8 +345,12 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, pty.ErrTCntLessThanMinBoardlot
 	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, sellOrder.PriceExec, sellOrder.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	//首先购买费用的划转
-	receiptFromAcc, err := action.coinsAccount.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+	receiptFromAcc, err := priceAcc.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
 	if err != nil {
 		tradelog.Error("account.Transfer ", "addrFrom", action.fromaddr, "addrTo", sellOrder.Address,
 			"amount", buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
@@ -362,7 +368,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 			"addrTo", action.fromaddr, "execaddr", action.execaddr,
 			"amount", buyOrder.BoardlotCnt*sellOrder.AmountPerBoardlot)
 		//因为未能成功将对应的token进行转账，所以需要将购买方的账户资金进行回退
-		action.coinsAccount.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+		priceAcc.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
 		return nil, err
 	}
 
