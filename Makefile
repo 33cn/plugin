@@ -159,6 +159,7 @@ proto:protobuf
 protobuf: ## Generate protbuf file of types package
 #	@cd ${CHAIN33_PATH}/types/proto && ./create_protobuf.sh && cd ../..
 	@find ./plugin/dapp -maxdepth 2 -type d  -name proto -exec  build/tools/create_protobuf.sh {} \;
+	mv plugin/dapp/js/types/js.pb.go plugin/dapp/js/types/jsproto/js.pb.go
 
 depends: ## Generate depends file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
