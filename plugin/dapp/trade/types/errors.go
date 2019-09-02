@@ -37,4 +37,6 @@ var (
 	ErrTBuyOrderRevoke = errors.New("ErrTradeBuyOrderRevokeNotAllowed")
 	//ErrTCntLessThanMinBoardlot :
 	ErrTCntLessThanMinBoardlot = errors.New("ErrTradeCountLessThanMinBoardlot")
+	// ErrAssetAndPriceSame :
+	ErrAssetAndPriceSame = errors.New("ErrAssetAndPriceSame")
 )
