@@ -157,7 +157,8 @@ message ReceiptSellBase {
     string txHash    = 14;
     int64  height    = 15;
     string assetExec = 16;
-    string assetSymbol = 17;
+    string priceExec = 17;
+    string priceSymbol = 18;
 }
 
 message ReceiptTradeBuyMarket {
