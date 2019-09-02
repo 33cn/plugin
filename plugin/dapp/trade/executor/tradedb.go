@@ -629,10 +629,14 @@ func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*
 		return nil, pty.ErrTBuyOrderRevoke
 	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
 	tradeRest := (buyOrder.TotalBoardlot - buyOrder.BoughtBoardlot) * buyOrder.PricePerBoardlot
 	//tradelog.Info("tradeRevokeBuyLimit", "total-b", buyOrder.TotalBoardlot, "price", buyOrder.PricePerBoardlot, "amount", tradeRest)
-	receiptFromExecAcc, err := action.coinsAccount.ExecActive(buyOrder.Address, action.execaddr, tradeRest)
+	receiptFromExecAcc, err := priceAcc.ExecActive(buyOrder.Address, action.execaddr, tradeRest)
 	if err != nil {
 		tradelog.Error("account.ExecActive bty ", "addrFrom", buyOrder.Address, "execaddr", action.execaddr, "amount", tradeRest)
 		return nil, err
