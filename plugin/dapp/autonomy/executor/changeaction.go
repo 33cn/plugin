@@ -5,10 +5,11 @@
 package executor
 
 import (
+	"sort"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
-	"sort"
 )
 
 func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
@@ -176,7 +177,6 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-
 
 	if cur.VoteResult.TotalVotes != 0 &&
 		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {

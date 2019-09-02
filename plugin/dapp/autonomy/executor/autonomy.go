@@ -18,10 +18,10 @@ type subConfig struct {
 }
 
 var (
-	alog             = log.New("module", "execs.autonomy")
-	driverName       = auty.AutonomyX
-	autonomyAddr     = address.ExecAddress("autonomy")
-	cfg              subConfig
+	alog         = log.New("module", "execs.autonomy")
+	driverName   = auty.AutonomyX
+	autonomyAddr = address.ExecAddress("autonomy")
+	cfg          subConfig
 )
 
 func init() {
