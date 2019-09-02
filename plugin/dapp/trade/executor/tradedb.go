@@ -237,6 +237,8 @@ func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt in
 		TxHash:            txhash,
 		Height:            buydb.Height,
 		AssetExec:         buydb.AssetExec,
+		PriceExec:         buydb.PriceExec,
+		PriceSymbol:       buydb.PriceSymbol,
 	}
 	receiptSellMarket := &pty.ReceiptSellMarket{Base: base}
 	log.Log = types.Encode(receiptSellMarket)
@@ -567,9 +569,13 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	}
 
 	//首先购买费用的划转
+	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	amount := sellOrder.BoardlotCnt * buyOrder.PricePerBoardlot
 	tradelog.Debug("tradeSellMarket", "step2 cnt", sellOrder.BoardlotCnt, "price", buyOrder.PricePerBoardlot, "amount", amount)
-	receiptFromAcc, err := action.coinsAccount.ExecTransferFrozen(buyOrder.Address, action.fromaddr, action.execaddr, amount)
+	receiptFromAcc, err := priceAcc.ExecTransferFrozen(buyOrder.Address, action.fromaddr, action.execaddr, amount)
 	if err != nil {
 		tradelog.Error("account.Transfer ", "addrFrom", buyOrder.Address, "addrTo", action.fromaddr,
 			"amount", amount)
