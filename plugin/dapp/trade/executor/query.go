@@ -20,10 +20,12 @@ import (
 // 由于现价买/卖是没有orderID的， 用txhash 代替作为key
 // key 有两种 orderID， txhash (0xAAAAAAAAAAAAAAA)
 
+// 1.15 both buy/sell order
 func (t *trade) Query_GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOnesOrderWithStatus(req)
 }
 
+// get order by id
 func (t *trade) Query_GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOneOrder(req)
 }
@@ -61,6 +63,7 @@ func fromStatus(status int32) (st, ty int32) {
 	return orderStatusInvalid, orderTypeInvalid
 }
 
+// GetOnesOrderWithStatus by address-status
 func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	orderStatus, orderType := fromStatus(req.Status)
 	if orderStatus == orderStatusInvalid || orderType == orderTypeInvalid {
