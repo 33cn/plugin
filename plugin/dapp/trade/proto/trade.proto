@@ -277,6 +277,8 @@ message ReplyTradeOrder {
     int64  blockTime         = 14;
     bool   isSellOrder       = 15;
     string assetExec         = 16;
+    string priceExec = 17;
+    string priceSymbol = 18;
 }
 
 message ReplyTradeOrders {
