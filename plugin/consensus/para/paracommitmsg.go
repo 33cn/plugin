@@ -223,8 +223,8 @@ func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool 
 				txMap[string(tx.Tx.Hash())] = true
 			}
 		}
-		// committx是主链交易，需要向主链查询
 	} else {
+		// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
 		//如果正在追赶，则暂时不去主链查找，减少耗时
 		if !client.paraClient.isCaughtUp() {
 			return false
