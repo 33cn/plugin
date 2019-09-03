@@ -86,9 +86,13 @@ func createPriceDB(height int64, db db.KV, exec, symbol string) (*account.DB, er
 	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
 		// 在fork 之前提的交易
 		if exec == "" {
-			return account.NewCoinsAccount(), nil
+			acc := account.NewCoinsAccount()
+			acc.SetDB(db)
+			return acc, nil
 		}
 		return account.NewAccountDB(exec, symbol, db)
 	}
-	return account.NewCoinsAccount(), nil
+	acc := account.NewCoinsAccount()
+	acc.SetDB(db)
+	return acc, nil
 }
