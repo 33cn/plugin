@@ -187,43 +187,43 @@ func TestPropBoard(t *testing.T) {
 
 	opts := []*auty.ProposalBoard{
 		{ // ErrRepeatAddr
-			Update:true,
+			Update:           true,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrRepeatAddr
-			Update:true,
+			Update:           true,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			Update:true,
+			Update:           true,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			Update:true,
+			Update:           true,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 
 		{ // ErrRepeatAddr
-			Update:false,
+			Update:           false,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			Update:false,
+			Update:           false,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			Update:false,
+			Update:           false,
 			Boards:           boards,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -625,7 +625,7 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	assert.Nil(t, copyAutonomyProposalBoard(nil))
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
-		Board:      &auty.ActiveBoard{Boards:[]string{"111", "112"}, Revboards:[]string{"113", "114"}},
+		Board:      &auty.ActiveBoard{Boards: []string{"111", "112"}, Revboards: []string{"113", "114"}},
 		CurRule:    &auty.RuleConfig{BoardApproveRatio: 100},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status:     2,
