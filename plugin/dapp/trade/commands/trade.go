@@ -464,6 +464,9 @@ func addTokenSellFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("total", "t", 0, "total tokens to be sold")
 	cmd.MarkFlagRequired("total")
+
+	cmd.Flags().StringP("price_exec", "", "", "price exec")
+	cmd.Flags().StringP("price_symbol", "", "", "price symbol")
 }
 
 func tokenSell(cmd *cobra.Command, args []string) {
@@ -473,6 +476,8 @@ func tokenSell(cmd *cobra.Command, args []string) {
 	price, _ := cmd.Flags().GetFloat64("price")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	total, _ := cmd.Flags().GetFloat64("total")
+	priceExec, _ := cmd.Flags().GetString("price_exec")
+	priceSymbol, _ := cmd.Flags().GetString("price_symbol")
 
 	priceInt64 := int64(price * 1e4)
 	feeInt64 := int64(fee * 1e4)
@@ -485,6 +490,8 @@ func tokenSell(cmd *cobra.Command, args []string) {
 		TotalBoardlot:     totalInt64,
 		Fee:               feeInt64 * 1e4,
 		AssetExec:         "token",
+		PriceExec:         priceExec,
+		PriceSymbol:       priceSymbol,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeSellTx", params, nil)
