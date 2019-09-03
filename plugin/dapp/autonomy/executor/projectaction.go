@@ -523,6 +523,10 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 		newRule := *cur.GetCurRule()
 		newAut.CurRule = &newRule
 	}
+	if len(cur.Boards) > 0 {
+		newAut.Boards = make([]string, len(cur.Boards))
+		copy(newAut.Boards, cur.Boards)
+	}
 	if cur.BoardVoteRes != nil {
 		newRes := *cur.GetBoardVoteRes()
 		newAut.BoardVoteRes = &newRes

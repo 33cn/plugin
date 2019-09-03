@@ -87,6 +87,8 @@ func addProposalBoardFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("year", "y", 0, "year")
 	cmd.Flags().Int32P("month", "m", 0, "month")
 	cmd.Flags().Int32P("day", "d", 0, "day")
+
+	cmd.Flags().BoolP("update", "u", false, "replace or update boards, default is replace(false); update(true)")
 	cmd.Flags().Int64P("startBlock", "s", 0, "start block height")
 	cmd.MarkFlagRequired("startBlock")
 	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
@@ -102,6 +104,7 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 	month, _ := cmd.Flags().GetInt32("month")
 	day, _ := cmd.Flags().GetInt32("day")
 
+	update, _ := cmd.Flags().GetBool("update")
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
 	boardstr, _ := cmd.Flags().GetString("boards")
@@ -112,6 +115,7 @@ func proposalBoard(cmd *cobra.Command, args []string) {
 		Year:             year,
 		Month:            month,
 		Day:              day,
+		Update:           update,
 		Boards:           boards,
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,

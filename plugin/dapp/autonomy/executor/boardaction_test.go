@@ -183,6 +183,76 @@ func InitMinerAddr(stateDB dbm.KV, addrs []string, bind string) {
 	}
 }
 
+func TestPropBoard(t *testing.T) {
+	env, exec, stateDB, _ := InitEnv()
+
+	opts := []*auty.ProposalBoard{
+		{ // ErrRepeatAddr
+			Update:true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrRepeatAddr
+			Update:true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrBoardNumber
+			Update:true,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // 正常
+			Update:true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+
+		{ // ErrRepeatAddr
+			Update:false,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrBoardNumber
+			Update:false,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // 正常
+			Update:false,
+			Boards:           boards,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+	}
+	result := []error{
+		auty.ErrRepeatAddr,
+		auty.ErrRepeatAddr,
+		auty.ErrBoardNumber,
+		nil,
+		auty.ErrRepeatAddr,
+		auty.ErrBoardNumber,
+		nil,
+	}
+
+	InitBoard(stateDB)
+	exec.SetStateDB(stateDB)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	for i, tcase := range opts {
+		pbtx, err := propBoardTx(tcase)
+		assert.NoError(t, err)
+		pbtx, err = signTx(pbtx, PrivKeyA)
+		assert.NoError(t, err)
+		_, err = exec.Exec(pbtx, i)
+		assert.Equal(t, err, result[i])
+	}
+}
+
 func TestRevokeProposalBoard(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	// PropBoard
@@ -556,6 +626,7 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	assert.Nil(t, copyAutonomyProposalBoard(nil))
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
+		Board:      &auty.ActiveBoard{Boards:[]string{"111", "112"}, Revboards:[]string{"113", "114"}},
 		CurRule:    &auty.RuleConfig{BoardApproveRatio: 100},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status:     2,
@@ -564,13 +635,16 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	pre := copyAutonomyProposalBoard(cur)
 	cur.PropBoard.Year = 1800
 	cur.PropBoard.Month = 2
+	cur.Board.Boards = []string{"211", "212"}
+	cur.Board.Revboards = []string{"113", "114"}
 	cur.CurRule.BoardApproveRatio = 90
 	cur.VoteResult.TotalVotes = 50
 	cur.Address = "234"
 	cur.Status = 1
 
 	assert.Equal(t, 1900, int(pre.PropBoard.Year))
-	assert.Equal(t, 1, int(pre.PropBoard.Month))
+	assert.Equal(t, []string{"111", "112"}, pre.Board.Boards)
+	assert.Equal(t, []string{"113", "114"}, pre.Board.Revboards)
 	assert.Equal(t, 100, int(pre.CurRule.BoardApproveRatio))
 	assert.Equal(t, 100, int(pre.VoteResult.TotalVotes))
 	assert.Equal(t, "123", pre.Address)
