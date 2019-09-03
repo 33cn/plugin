@@ -248,20 +248,10 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 		} else {
 			cur.Status = auty.AutonomyStatusTmintPropProject
 			// 提案通过，将工程金额从基金付款给承包商
-			var receipt *types.Receipt
-			acc := a.coinsAccount.LoadExecAccount(a.execaddr, a.execaddr)
-			if acc != nil && acc.Balance > cur.PropProject.Amount { // 先从合约的合约地址扣除
-				receipt, err = a.coinsAccount.ExecTransfer(a.execaddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
-				if err != nil {
-					alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.PropProject.Amount)
-					return nil, err
-				}
-			} else {
-				receipt, err = a.coinsAccount.ExecDeposit(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
-				if err != nil {
-					alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
-					return nil, err
-				}
+			receipt, err := a.coinsAccount.ExecDeposit(cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+			if err != nil {
+				alog.Error("votePropProject ", "addr", cur.PropProject.ToAddr, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
+				return nil, err
 			}
 
 			logs = append(logs, receipt.Logs...)
@@ -477,20 +467,10 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	if (cur.PubVote.Publicity && cur.PubVote.PubPass) || // 需要公示且公示通过
 		(!cur.PubVote.Publicity && cur.BoardVoteRes.Pass) { // 不需要公示且董事会通过
 		// 提案通过，将工程金额从基金付款给承包商
-		var receipt *types.Receipt
-		acc := a.coinsAccount.LoadExecAccount(a.execaddr, a.execaddr)
-		if acc != nil && acc.Balance > cur.PropProject.Amount { // 先从合约的合约地址扣除
-			receipt, err = a.coinsAccount.ExecTransfer(a.execaddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
-			if err != nil {
-				alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.PropProject.Amount)
-				return nil, err
-			}
-		} else {
-			receipt, err = a.coinsAccount.ExecDeposit(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
-			if err != nil {
-				alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
-				return nil, err
-			}
+		receipt, err := a.coinsAccount.ExecDeposit(cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+		if err != nil {
+			alog.Error("tmintPropProject ", "addr", cur.PropProject.ToAddr, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
+			return nil, err
 		}
 
 		logs = append(logs, receipt.Logs...)
