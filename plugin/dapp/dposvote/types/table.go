@@ -121,12 +121,11 @@ func (tx *DposCandidatorRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-
 var opt_dpos_vrfm = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "vrfm",
 	Primary: "index",
-	Index:   []string{"pubkey_cycle","cycle"},
+	Index:   []string{"pubkey_cycle", "cycle"},
 }
 
 //NewDposVrfMTable 新建表
@@ -175,7 +174,6 @@ func (tx *DposVrfMRow) Get(key string) ([]byte, error) {
 
 	return nil, types.ErrNotFound
 }
-
 
 var opt_dpos_vrfrp = &table.Option{
 	Prefix:  "LODB-dpos",
@@ -231,8 +229,6 @@ func (tx *DposVrfRPRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-
-
 var opt_dpos_cb = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "cb",
@@ -240,7 +236,7 @@ var opt_dpos_cb = &table.Option{
 	Index:   []string{"height", "hash"},
 }
 
-//NewDposVrfRPTable 新建表
+//NewDposCBTable 新建表
 func NewDposCBTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposCBRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_cb)
@@ -255,7 +251,7 @@ type DposCBRow struct {
 	*DposCycleBoundaryInfo
 }
 
-//NewDposVrfRPRow 新建一个meta 结构
+//NewDposCBRow 新建一个meta 结构
 func NewDposCBRow() *DposCBRow {
 	return &DposCBRow{DposCycleBoundaryInfo: &DposCycleBoundaryInfo{}}
 }

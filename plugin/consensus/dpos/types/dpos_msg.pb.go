@@ -33,6 +33,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+// CycleBoundaryInfo cycle边界信息
 type CycleBoundaryInfo struct {
 	Cycle      int64  `protobuf:"varint,1,opt,name=cycle" json:"cycle,omitempty"`
 	StopHeight int64  `protobuf:"varint,2,opt,name=stopHeight" json:"stopHeight,omitempty"`
@@ -65,6 +66,7 @@ func (m *CycleBoundaryInfo) GetStopHash() string {
 	return ""
 }
 
+// SuperNode 超级节点信息
 type SuperNode struct {
 	Address []byte `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	PubKey  []byte `protobuf:"bytes,2,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
@@ -89,6 +91,7 @@ func (m *SuperNode) GetPubKey() []byte {
 	return nil
 }
 
+// VoteItem 投票信息
 type VoteItem struct {
 	VotedNodeIndex   int32              `protobuf:"varint,1,opt,name=votedNodeIndex" json:"votedNodeIndex,omitempty"`
 	VotedNodeAddress []byte             `protobuf:"bytes,2,opt,name=votedNodeAddress,proto3" json:"votedNodeAddress,omitempty"`
@@ -258,6 +261,7 @@ func (m *DPosVote) GetSignature() []byte {
 	return nil
 }
 
+// DPosVoteReply 投票响应。
 type DPosVoteReply struct {
 	Vote *DPosVote `protobuf:"bytes,1,opt,name=vote" json:"vote,omitempty"`
 }
@@ -339,6 +343,7 @@ func (m *DPosNotify) GetSignature() []byte {
 	return nil
 }
 
+// DPosCBInfo Cycle boundary注册信息。
 type DPosCBInfo struct {
 	Cycle      int64  `protobuf:"varint,1,opt,name=cycle" json:"cycle,omitempty"`
 	StopHeight int64  `protobuf:"varint,2,opt,name=stopHeight" json:"stopHeight,omitempty"`

@@ -3,16 +3,20 @@ syntax = "proto3";
 
 package types;
 
+//CycleBoundaryInfo cycle边界信息
 message CycleBoundaryInfo{
     int64 cycle            = 1;
     int64 stopHeight       = 2;
     string stopHash        = 3;
 }
 
+//SuperNode 超级节点信息
 message SuperNode{
     bytes address          = 1;
     bytes pubKey           = 2;
 }
+
+//VoteItem 投票信息
 message VoteItem {
     int32 votedNodeIndex   = 1;    //被投票的节点索引
     bytes votedNodeAddress = 2;    //被投票的节点地址
@@ -39,6 +43,7 @@ message DPosVote {
     bytes signature        = 5;    //投票者签名
 }
 
+//DPosVoteReply 投票响应。
 message DPosVoteReply {
     DPosVote  vote         = 1;
 }
@@ -54,6 +59,7 @@ message DPosNotify {
     bytes signature        = 7;    //通知节点的签名
 }
 
+//DPosCBInfo Cycle boundary注册信息。
 message DPosCBInfo {
     int64 cycle          = 1;
     int64 stopHeight     = 2;

@@ -69,13 +69,13 @@ func TestDecideTaskByTime(t *testing.T) {
 
 	setParams(2, 3, 12)
 
-/*
-	for i := 0; i < 120; i++ {
-		now = time.Now().Unix()
-		task = DecideTaskByTime(now)
-		printTask(now, &task)
-		assertTask(&task, t)
-		time.Sleep(time.Second * 1)
-	}
-*/
+	/*
+		for i := 0; i < 120; i++ {
+			now = time.Now().Unix()
+			task = DecideTaskByTime(now)
+			printTask(now, &task)
+			assertTask(&task, t)
+			time.Sleep(time.Second * 1)
+		}
+	*/
 }

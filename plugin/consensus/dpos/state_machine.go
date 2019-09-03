@@ -10,9 +10,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -32,9 +32,9 @@ var (
 
 	// StateTypeMapping 为状态的整型值和字符串值的对应关系
 	StateTypeMapping = map[int]string{
-		InitStateType: "InitState",
-		VotingStateType: "VotingState",
-		VotedStateType: "VotedState",
+		InitStateType:       "InitState",
+		VotingStateType:     "VotingState",
+		VotedStateType:      "VotedState",
 		WaitNotifyStateType: "WaitNotifyState",
 	}
 )
@@ -51,9 +51,16 @@ var VotedStateObj = &VotedState{}
 // WaitNotifyStateObj is the WaitNotifyState obj
 var WaitNotifyStateObj = &WaitNofifyState{}
 
+// LastCheckVrfMTime is the Last Check Vrf M Time
 var LastCheckVrfMTime = int64(0)
+
+// LastCheckVrfRPTime is the Last Check Vrf RP Time
 var LastCheckVrfRPTime = int64(0)
+
+// LastCheckRegTopNTime is the Last Check Reg TopN Time
 var LastCheckRegTopNTime = int64(0)
+
+// LastCheckUpdateTopNTime is the Last Check Update TopN Time
 var LastCheckUpdateTopNTime = int64(0)
 
 // Task 为计算当前时间所属周期的数据结构
@@ -68,6 +75,7 @@ type Task struct {
 	BlockStop   int64
 }
 
+// TopNVersionInfo 为记录某一个区块高度对应的TopN更新的版本信息
 type TopNVersionInfo struct {
 	Version           int64
 	HeightStart       int64
@@ -77,12 +85,13 @@ type TopNVersionInfo struct {
 	HeightUpdateLimit int64
 }
 
+// CalcTopNVersion 根据某一个区块高度计算对应的TopN更新的版本信息
 func CalcTopNVersion(height int64) (info TopNVersionInfo) {
 	info = TopNVersionInfo{}
 	info.Version = height / blockNumToUpdateDelegate
 	info.HeightToStart = height % blockNumToUpdateDelegate
 	info.HeightStart = info.Version * blockNumToUpdateDelegate
-	info.HeightStop = (info.Version + 1 ) * blockNumToUpdateDelegate - 1
+	info.HeightStop = (info.Version+1)*blockNumToUpdateDelegate - 1
 	info.HeightRegLimit = info.HeightStart + registTopNHeightLimit
 	info.HeightUpdateLimit = info.HeightStart + updateTopNHeightLimit
 	return info
@@ -92,13 +101,13 @@ func CalcTopNVersion(height int64) (info TopNVersionInfo) {
 func DecideTaskByTime(now int64) (task Task) {
 	task.NodeID = now % dposCycle / dposPeriod
 	task.Cycle = now / dposCycle
-	task.CycleStart = now - now % dposCycle
+	task.CycleStart = now - now%dposCycle
 	task.CycleStop = task.CycleStart + dposCycle - 1
 
-	task.PeriodStart = task.CycleStart + task.NodeID * dposBlockInterval * dposContinueBlockNum
+	task.PeriodStart = task.CycleStart + task.NodeID*dposBlockInterval*dposContinueBlockNum
 	task.PeriodStop = task.PeriodStart + dposPeriod - 1
 
-	task.BlockStart = task.PeriodStart + now % dposCycle % dposPeriod/dposBlockInterval * dposBlockInterval
+	task.BlockStart = task.PeriodStart + now%dposCycle%dposPeriod/dposBlockInterval*dposBlockInterval
 	task.BlockStop = task.BlockStart + dposBlockInterval - 1
 
 	return task
@@ -108,7 +117,7 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 	//获得当前高度
 	height := cs.client.GetCurrentHeight()
 	now := time.Now().Unix()
-	if cs.lastMyVote != nil && math.Abs(float64(now - cs.lastMyVote.VoteItem.PeriodStop)) <= 1 {
+	if cs.lastMyVote != nil && math.Abs(float64(now-cs.lastMyVote.VoteItem.PeriodStop)) <= 1 {
 		now += 2
 	}
 	//计算当前时间，属于哪一个周期，应该哪一个节点出块，应该出块的高度
@@ -167,9 +176,9 @@ func checkVrf(cs *ConsensusState) {
 
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
-	middleTime := task.CycleStart + (task.CycleStop - task.CycleStart) / 2
+	middleTime := task.CycleStart + (task.CycleStop-task.CycleStart)/2
 	if now < middleTime {
-		if now - LastCheckVrfMTime < dposBlockInterval * 2 {
+		if now-LastCheckVrfMTime < dposBlockInterval*2 {
 			return
 		}
 		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeM)
@@ -177,7 +186,7 @@ func checkVrf(cs *ConsensusState) {
 			if cs.currentVote.LastCBInfo != nil {
 				vrfM := &dty.DposVrfMRegist{
 					Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
-					Cycle: task.Cycle,
+					Cycle:  task.Cycle,
 					//M: cs.currentVote.LastCBInfo.StopHash,
 				}
 
@@ -192,25 +201,25 @@ func checkVrf(cs *ConsensusState) {
 		}
 		LastCheckVrfMTime = now
 	} else {
-		if now - LastCheckVrfRPTime < dposBlockInterval * 2 {
+		if now-LastCheckVrfRPTime < dposBlockInterval*2 {
 			return
 		}
 		info := cs.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeRP)
-		if info != nil && len(info.M) > 0 && (len(info.R) == 0 || len(info.P) == 0){
+		if info != nil && len(info.M) > 0 && (len(info.R) == 0 || len(info.P) == 0) {
 			hash, proof := cs.VrfEvaluate(info.M)
 
 			vrfRP := &dty.DposVrfRPRegist{
 				Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
-				Cycle: task.Cycle,
-				R: hex.EncodeToString(hash[:]),
-				P: hex.EncodeToString(proof),
+				Cycle:  task.Cycle,
+				R:      hex.EncodeToString(hash[:]),
+				P:      hex.EncodeToString(proof),
 			}
 			dposlog.Info("SendRegistVrfRPTx", "pubkey", vrfRP.Pubkey, "cycle", vrfRP.Cycle, "R", vrfRP.R, "P", vrfRP.P)
 
 			cs.SendRegistVrfRPTx(vrfRP)
 		} else if info != nil && len(info.M) > 0 && len(info.R) > 0 && len(info.P) > 0 {
 			dposlog.Info("VrfRP is already registed", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
-		} else{
+		} else {
 			dposlog.Info("No available VrfM, so don't SendRegistVrfRPTx, just wait another cycle")
 		}
 		LastCheckVrfRPTime = now
@@ -224,7 +233,7 @@ func checkTopNRegist(cs *ConsensusState) {
 	}
 
 	now := time.Now().Unix()
-	if now - LastCheckRegTopNTime < dposBlockInterval * 3 {
+	if now-LastCheckRegTopNTime < dposBlockInterval*3 {
 		//避免短时间频繁检查，5个区块以内不重复检查
 		return
 	}
@@ -242,15 +251,15 @@ func checkTopNRegist(cs *ConsensusState) {
 				return
 
 			}
-			topNCand := &dty.TopNCandidator {
-				Cands: cands,
-				Height: height,
+			topNCand := &dty.TopNCandidator{
+				Cands:        cands,
+				Height:       height,
 				SignerPubkey: cs.privValidator.GetPubKey().Bytes(),
 			}
 			obj := dty.CanonicalTopNCandidator(topNCand)
 			topNCand.Hash = obj.ID()
 
-			regist := &dty.TopNCandidatorRegist {
+			regist := &dty.TopNCandidatorRegist{
 				Cand: topNCand,
 			}
 
@@ -258,10 +267,10 @@ func checkTopNRegist(cs *ConsensusState) {
 			LastCheckRegTopNTime = now
 		} else {
 			dposlog.Info("TopN is already registed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
-			LastCheckRegTopNTime = now + (info.HeightStop - height) * dposBlockInterval
+			LastCheckRegTopNTime = now + (info.HeightStop-height)*dposBlockInterval
 		}
 	} else {
-		LastCheckRegTopNTime = now + (info.HeightStop - height) * dposBlockInterval
+		LastCheckRegTopNTime = now + (info.HeightStop-height)*dposBlockInterval
 	}
 }
 
@@ -271,7 +280,7 @@ func checkTopNUpdate(cs *ConsensusState) {
 	}
 
 	now := time.Now().Unix()
-	if now - LastCheckUpdateTopNTime < dposBlockInterval * 1 {
+	if now-LastCheckUpdateTopNTime < dposBlockInterval*1 {
 		//避免短时间频繁检查，1个区块以内不重复检查
 		return
 	}
@@ -282,7 +291,7 @@ func checkTopNUpdate(cs *ConsensusState) {
 		topN := cs.GetLastestTopNCandidators()
 		if nil == topN {
 			dposlog.Error("No valid topN, do nothing", "now", now, "height", height, "HeightUpdateLimit", info.HeightUpdateLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
-			LastCheckUpdateTopNTime = now + (info.HeightStop - height) *  dposBlockInterval
+			LastCheckUpdateTopNTime = now + (info.HeightStop-height)*dposBlockInterval
 			return
 		}
 
@@ -295,9 +304,9 @@ func checkTopNUpdate(cs *ConsensusState) {
 			}
 		}
 		dposlog.Info("TopN not changed,so do nothing", "now", now, "height", height, "HeightUpdateLimit", info.HeightUpdateLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
-		LastCheckUpdateTopNTime = now + (info.HeightStop - height) *  dposBlockInterval
+		LastCheckUpdateTopNTime = now + (info.HeightStop-height)*dposBlockInterval
 	} else {
-		LastCheckUpdateTopNTime = now + (info.HeightUpdateLimit - height - 1) * dposBlockInterval
+		LastCheckUpdateTopNTime = now + (info.HeightUpdateLimit-height-1)*dposBlockInterval
 	}
 }
 
@@ -313,15 +322,14 @@ func isPubkeyExist(pubkey []byte, validators []*dpostype.Validator) bool {
 
 func recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo) {
 	newInfo := &dty.DposCBInfo{
-		Cycle: info.Cycle,
+		Cycle:      info.Cycle,
 		StopHeight: info.StopHeight,
-		StopHash: info.StopHash,
-		Pubkey: info.Pubkey,
-		Signature: info.Signature,
+		StopHash:   info.StopHash,
+		Pubkey:     info.Pubkey,
+		Signature:  info.Signature,
 	}
 	cs.UpdateCBInfo(newInfo)
 }
-
 
 func printNotify(notify *dpostype.DPosNotify) string {
 	if notify.Vote.LastCBInfo != nil {
@@ -329,12 +337,12 @@ func printNotify(notify *dpostype.DPosNotify) string {
 			notify.Vote.VotedNodeIndex, hex.EncodeToString(notify.Vote.VotedNodeAddress), notify.Vote.Cycle, notify.Vote.CycleStart, notify.Vote.CycleStop, notify.Vote.PeriodStart, notify.Vote.PeriodStop, notify.Vote.Height, hex.EncodeToString(notify.Vote.VoteID),
 			notify.Vote.LastCBInfo.Cycle, notify.Vote.LastCBInfo.StopHeight, notify.Vote.LastCBInfo.StopHash, notify.Vote.ShuffleType, len(notify.Vote.Validators), len(notify.Vote.VrfValidators), len(notify.Vote.NoVrfValidators),
 			notify.HeightStop, hex.EncodeToString(notify.HashStop), notify.NotifyTimestamp, notify.NotifyNodeIndex, hex.EncodeToString(notify.NotifyNodeAddress), hex.EncodeToString(notify.Signature))
-	} else {
-		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d];HeightStop:%d,HashStop:%s,NotifyTimestamp:%d,NotifyNodeIndex:%d,NotifyNodeAddrress:%s,Sig:%s",
-			notify.Vote.VotedNodeIndex, hex.EncodeToString(notify.Vote.VotedNodeAddress), notify.Vote.Cycle, notify.Vote.CycleStart, notify.Vote.CycleStop, notify.Vote.PeriodStart, notify.Vote.PeriodStop, notify.Vote.Height, hex.EncodeToString(notify.Vote.VoteID),
-			notify.Vote.ShuffleType, len(notify.Vote.Validators), len(notify.Vote.VrfValidators), len(notify.Vote.NoVrfValidators),
-			notify.HeightStop, hex.EncodeToString(notify.HashStop), notify.NotifyTimestamp, notify.NotifyNodeIndex, hex.EncodeToString(notify.NotifyNodeAddress), hex.EncodeToString(notify.Signature))
 	}
+
+	return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d];HeightStop:%d,HashStop:%s,NotifyTimestamp:%d,NotifyNodeIndex:%d,NotifyNodeAddrress:%s,Sig:%s",
+		notify.Vote.VotedNodeIndex, hex.EncodeToString(notify.Vote.VotedNodeAddress), notify.Vote.Cycle, notify.Vote.CycleStart, notify.Vote.CycleStop, notify.Vote.PeriodStart, notify.Vote.PeriodStop, notify.Vote.Height, hex.EncodeToString(notify.Vote.VoteID),
+		notify.Vote.ShuffleType, len(notify.Vote.Validators), len(notify.Vote.VrfValidators), len(notify.Vote.NoVrfValidators),
+		notify.HeightStop, hex.EncodeToString(notify.HashStop), notify.NotifyTimestamp, notify.NotifyNodeIndex, hex.EncodeToString(notify.NotifyNodeAddress), hex.EncodeToString(notify.Signature))
 }
 
 func printVote(vote *dpostype.DPosVote) string {
@@ -348,12 +356,13 @@ func printVoteItem(voteItem *dpostype.VoteItem) string {
 		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[Cycle:%d,StopHeight:%d,StopHash:%s],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d]",
 			voteItem.VotedNodeIndex, hex.EncodeToString(voteItem.VotedNodeAddress), voteItem.Cycle, voteItem.CycleStart, voteItem.CycleStop, voteItem.PeriodStart, voteItem.PeriodStop, voteItem.Height, hex.EncodeToString(voteItem.VoteID),
 			voteItem.LastCBInfo.Cycle, voteItem.LastCBInfo.StopHeight, voteItem.LastCBInfo.StopHash, voteItem.ShuffleType, len(voteItem.Validators), len(voteItem.VrfValidators), len(voteItem.NoVrfValidators))
-	} else {
-		return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d]",
-			voteItem.VotedNodeIndex, hex.EncodeToString(voteItem.VotedNodeAddress), voteItem.Cycle, voteItem.CycleStart, voteItem.CycleStop, voteItem.PeriodStart, voteItem.PeriodStop, voteItem.Height, hex.EncodeToString(voteItem.VoteID),
-			voteItem.ShuffleType, len(voteItem.Validators), len(voteItem.VrfValidators), len(voteItem.NoVrfValidators))
 	}
+
+	return fmt.Sprintf("vote:[VotedNodeIndex:%d, VotedNodeAddr:%s,Cycle:%d,CycleStart:%d,CycleStop:%d,PeriodStart:%d,PeriodStop:%d,Height:%d,VoteID:%s,CBInfo[],ShuffleType:%d,ValidatorSize:%d,VrfValidatorSize:%d,NoVrfValidatorSize:%d]",
+		voteItem.VotedNodeIndex, hex.EncodeToString(voteItem.VotedNodeAddress), voteItem.Cycle, voteItem.CycleStart, voteItem.CycleStop, voteItem.PeriodStart, voteItem.PeriodStop, voteItem.Height, hex.EncodeToString(voteItem.VoteID),
+		voteItem.ShuffleType, len(voteItem.Validators), len(voteItem.VrfValidators), len(voteItem.NoVrfValidators))
 }
+
 // State is the base class of dpos state machine, it defines some interfaces.
 type State interface {
 	timeOut(cs *ConsensusState)
@@ -445,6 +454,7 @@ func (init *InitState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBInfo)
 	dposlog.Info("InitState recvCBInfo")
 	recvCBInfo(cs, info)
 }
+
 // VotingState is the voting state of dpos state machine until timeout or get an agreement by votes.
 type VotingState struct {
 }
@@ -528,6 +538,7 @@ func (voting *VotingState) recvCBInfo(cs *ConsensusState, info *dpostype.DPosCBI
 	dposlog.Info("VotingState recvCBInfo")
 	recvCBInfo(cs, info)
 }
+
 // VotedState is the voted state of dpos state machine after getting an agreement for a period
 type VotedState struct {
 }
@@ -541,7 +552,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		//当前节点为出块节点
 
 		//如果区块未同步，则等待；如果区块已同步，则进行后续正常出块的判断和处理。
-		if block.Height + 1 < cs.currentVote.Height {
+		if block.Height+1 < cs.currentVote.Height {
 			dposlog.Info("VotedState timeOut but block is not sync,wait...", "localHeight", block.Height, "vote height", cs.currentVote.Height)
 			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
 			return
@@ -559,18 +570,18 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 				isCycleSwith = true
 
 				info := &dty.DposCBInfo{
-					Cycle: cs.currentVote.Cycle,
+					Cycle:      cs.currentVote.Cycle,
 					StopHeight: block.Height,
-					StopHash: hex.EncodeToString(block.Hash()),
-					Pubkey: strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
+					StopHash:   hex.EncodeToString(block.Hash()),
+					Pubkey:     strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
 				}
 
 				info2 := &dpostype.DPosCBInfo{
-					Cycle: info.Cycle,
+					Cycle:      info.Cycle,
 					StopHeight: info.StopHeight,
-					StopHash: info.StopHash,
-					Pubkey: info.Pubkey,
-					Signature: info.Signature,
+					StopHash:   info.StopHash,
+					Pubkey:     info.Pubkey,
+					Signature:  info.Signature,
 				}
 				cs.SendCBTx(info)
 
@@ -642,7 +653,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			return
 		} else if block.BlockTime < task.BlockStart {
 			//本出块周期尚未出块，则进行出块
-			if task.BlockStop - now <= 1 {
+			if task.BlockStop-now <= 1 {
 				dposlog.Info("Create new block.", "height", block.Height+1)
 
 				cs.client.SetBlockTime(task.BlockStop)
@@ -657,7 +668,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 		} else {
 			//本周期已经出块
-			dposlog.Info("Wait to next block cycle.", "waittime", task.BlockStop - now + 1)
+			dposlog.Info("Wait to next block cycle.", "waittime", task.BlockStop-now+1)
 
 			//cs.scheduleDPosTimeout(time.Second * time.Duration(task.blockStop-now+1), VotedStateType)
 			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)

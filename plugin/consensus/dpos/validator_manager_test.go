@@ -6,40 +6,39 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/assert"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"fmt"
 	"os"
 	"testing"
-	"fmt"
 )
-const (
-     genesis_content = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
-	pubkey11 = "03541AB9887951C038273648545072E5B6A46A639BFF535F3957E8150CBE2A70D7"
 
+const (
+	genesisContent = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
+	pubkey11        = "03541AB9887951C038273648545072E5B6A46A639BFF535F3957E8150CBE2A70D7"
 )
 
 var (
 	genDoc *ttypes.GenesisDoc
-
 )
-func init(){
+
+func init() {
 	//为了使用VRF，需要使用SECP256K1体系的公私钥
 	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
 		panic("init ConsensusCrypto failed.")
-		return
 	}
 
 	ttypes.ConsensusCrypto = cr
 
 	remove("./genesis.json")
-	save("./genesis.json", genesis_content)
+	save("./genesis.json", genesisContent)
 	genDoc, _ = ttypes.GenesisDocFromFile("./genesis.json")
 }
 
-func save(filename , filecontent string) {
+func save(filename, filecontent string) {
 	f, err := os.Create(filename)
 	if err != nil {
 		fmt.Println("err = ", err)
@@ -115,7 +114,6 @@ func TestGetValidatorByIndex(t *testing.T) {
 	val, flag := vMgr.VrfValidators.Remove(addr)
 	assert.True(t, flag)
 
-
 	vMgr.NoVrfValidators = &ttypes.ValidatorSet{}
 	vMgr.NoVrfValidators.Validators = append(vMgr.NoVrfValidators.Validators, val)
 	addr, val = vMgr.GetValidatorByIndex(2)
@@ -123,7 +121,7 @@ func TestGetValidatorByIndex(t *testing.T) {
 	assert.True(t, bytes.Equal(val.PubKey, vMgr.NoVrfValidators.Validators[0].PubKey))
 }
 
-func TestGetIndexByPubKey(t *testing.T){
+func TestGetIndexByPubKey(t *testing.T) {
 	vMgr, err := MakeGenesisValidatorMgr(genDoc)
 	require.Nil(t, err)
 	assert.True(t, vMgr.ChainID == "chain33-Z2cgFj")
@@ -198,10 +196,10 @@ func TestFillVoteItem(t *testing.T) {
 	vMgr.VrfValidators = ttypes.NewValidatorSet(vMgr.Validators.Validators)
 	vMgr.ShuffleType = ShuffleTypeVrf
 	vMgr.LastCycleBoundaryInfo = &dty.DposCBInfo{
-		Cycle: 110,
-		StopHeight:1111,
-		StopHash: "abcdefg",
-		Pubkey:"xxxxxxxx",
+		Cycle:      110,
+		StopHeight: 1111,
+		StopHash:   "abcdefg",
+		Pubkey:     "xxxxxxxx",
 	}
 
 	voteItem = &ttypes.VoteItem{}
@@ -214,7 +212,6 @@ func TestFillVoteItem(t *testing.T) {
 	assert.True(t, len(voteItem.Validators) == 3)
 	assert.True(t, len(voteItem.VrfValidators) == 3)
 	assert.True(t, voteItem.NoVrfValidators == nil)
-
 
 	vMgr.ShuffleType = ShuffleTypePartVrf
 	val, flag := vMgr.VrfValidators.Remove(vMgr.Validators.Validators[2].Address)
@@ -267,20 +264,19 @@ func TestUpdateFromVoteItem(t *testing.T) {
 	assert.True(t, flag == false)
 
 	/////
-	pkbytes , err := hex.DecodeString(pubkey11)
-	pk11, err := ttypes.ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pkbytes, _ := hex.DecodeString(pubkey11)
+	pk11, _ := ttypes.ConsensusCrypto.PubKeyFromBytes(pkbytes)
 	val.PubKey = pk11.Bytes()
 	newMgr.Validators.Add(val)
 	flag = newMgr.UpdateFromVoteItem(voteItem)
 	assert.True(t, flag == false)
 
-
 	/////
 	vMgr.LastCycleBoundaryInfo = &dty.DposCBInfo{
-		Cycle: 110,
-		StopHeight:1111,
-		StopHash: "abcdefg",
-		Pubkey:"xxxxxxxx",
+		Cycle:      110,
+		StopHeight: 1111,
+		StopHash:   "abcdefg",
+		Pubkey:     "xxxxxxxx",
 	}
 	voteItem = &ttypes.VoteItem{}
 	vMgr.FillVoteItem(voteItem)
@@ -288,20 +284,19 @@ func TestUpdateFromVoteItem(t *testing.T) {
 	newMgr = vMgr.Copy()
 	newMgr.LastCycleBoundaryInfo = nil
 	newMgr.UpdateFromVoteItem(voteItem)
-	assert.True(t, newMgr.LastCycleBoundaryInfo !=  nil)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle ==  voteItem.LastCBInfo.Cycle)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight ==  voteItem.LastCBInfo.StopHeight)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash ==  voteItem.LastCBInfo.StopHash)
+	assert.True(t, newMgr.LastCycleBoundaryInfo != nil)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle == voteItem.LastCBInfo.Cycle)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight == voteItem.LastCBInfo.StopHeight)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash == voteItem.LastCBInfo.StopHash)
 
 	/////
 	newMgr = vMgr.Copy()
 	newMgr.LastCycleBoundaryInfo.Cycle = 111110
 	newMgr.UpdateFromVoteItem(voteItem)
-	assert.True(t, newMgr.LastCycleBoundaryInfo !=  nil)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle ==  voteItem.LastCBInfo.Cycle)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight ==  voteItem.LastCBInfo.StopHeight)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash ==  voteItem.LastCBInfo.StopHash)
-
+	assert.True(t, newMgr.LastCycleBoundaryInfo != nil)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle == voteItem.LastCBInfo.Cycle)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight == voteItem.LastCBInfo.StopHeight)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash == voteItem.LastCBInfo.StopHash)
 
 	/////
 	vMgr.VrfValidators = ttypes.NewValidatorSet(vMgr.Validators.Validators)
@@ -322,14 +317,13 @@ func TestUpdateFromVoteItem(t *testing.T) {
 	newMgr.ShuffleType = ShuffleTypeNoVrf
 	newMgr.VrfValidators = nil
 	newMgr.UpdateFromVoteItem(voteItem)
-	assert.True(t, newMgr.LastCycleBoundaryInfo !=  nil)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle ==  voteItem.LastCBInfo.Cycle)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight ==  voteItem.LastCBInfo.StopHeight)
-	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash ==  voteItem.LastCBInfo.StopHash)
+	assert.True(t, newMgr.LastCycleBoundaryInfo != nil)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.Cycle == voteItem.LastCBInfo.Cycle)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHeight == voteItem.LastCBInfo.StopHeight)
+	assert.True(t, newMgr.LastCycleBoundaryInfo.StopHash == voteItem.LastCBInfo.StopHash)
 	assert.True(t, newMgr.ShuffleType == ShuffleTypeVrf)
 	assert.True(t, len(newMgr.Validators.Validators) == 3)
 	assert.True(t, len(newMgr.VrfValidators.Validators) == 3)
-
 
 	///
 	vMgr.ShuffleType = ShuffleTypePartVrf

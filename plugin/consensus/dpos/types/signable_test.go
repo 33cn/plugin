@@ -11,12 +11,11 @@ import (
 	"time"
 )
 
-func init(){
+func init() {
 	//为了使用VRF，需要使用SECP256K1体系的公私钥
 	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
 		panic("init ConsensusCrypto failed.")
-		return
 	}
 
 	ConsensusCrypto = cr
@@ -24,7 +23,7 @@ func init(){
 
 func TestVote(t *testing.T) {
 	filename := "./tmp_priv_validator.json"
-	save(filename, priv_validator_file)
+	save(filename, privValidatorFile)
 	privValidator := LoadOrGenPrivValidatorFS(filename)
 
 	now := time.Now().Unix()
@@ -69,7 +68,7 @@ func TestVote(t *testing.T) {
 
 func TestNotify(t *testing.T) {
 	filename := "./tmp_priv_validator.json"
-	save(filename, priv_validator_file)
+	save(filename, privValidatorFile)
 	privValidator := LoadOrGenPrivValidatorFS(filename)
 
 	now := time.Now().Unix()
@@ -91,7 +90,6 @@ func TestNotify(t *testing.T) {
 	}
 
 	voteItem.VoteID = crypto.Ripemd160(encode)
-
 
 	chainID := "test-chain-Ep9EcD"
 

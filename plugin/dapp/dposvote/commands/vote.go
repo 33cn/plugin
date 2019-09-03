@@ -16,14 +16,14 @@ import (
 	"strings"
 	"time"
 
+	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
-	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
-	"github.com/spf13/cobra"
-	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -31,6 +31,7 @@ var (
 	genFile  = "genesis_file.json"
 	pvFile   = "priv_validator_"
 )
+
 //DPosCmd DPosVote合约命令行
 func DPosCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -88,7 +89,6 @@ func regist(cmd *cobra.Command, args []string) {
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	address, _ := cmd.Flags().GetString("address")
 	ip, _ := cmd.Flags().GetString("ip")
-
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"ip\":\"%s\"}", pubkey, address, ip)
 	params := &rpctypes.CreateTxIn{
@@ -296,8 +296,7 @@ func candidatorQuery(cmd *cobra.Command, args []string) {
 
 	case "pubkeys":
 		keys := strings.Split(pubkeys, ";")
-		req := &dty.CandidatorQuery{
-		}
+		req := &dty.CandidatorQuery{}
 		for _, key := range keys {
 			req.Pubkeys = append(req.Pubkeys, key)
 		}
@@ -308,7 +307,6 @@ func candidatorQuery(cmd *cobra.Command, args []string) {
 		ctx.Run()
 	}
 }
-
 
 //DPosVoteQueryCmd 构造投票信息查询的命令行
 func DPosVoteQueryCmd() *cobra.Command {
@@ -477,7 +475,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		req := &dty.DposVrfQuery{
-			Ty: dty.QueryVrfByTime,
+			Ty:        dty.QueryVrfByTime,
 			Timestamp: t.Unix(),
 		}
 
@@ -494,7 +492,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		req := &dty.DposVrfQuery{
-			Ty: dty.QueryVrfByTime,
+			Ty:        dty.QueryVrfByTime,
 			Timestamp: timestamp,
 		}
 
@@ -511,7 +509,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		req := &dty.DposVrfQuery{
-			Ty: dty.QueryVrfByCycle,
+			Ty:    dty.QueryVrfByCycle,
 			Cycle: cycle,
 		}
 
@@ -528,7 +526,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		req := &dty.DposVrfQuery{
-			Ty: dty.QueryVrfByCycleForTopN,
+			Ty:    dty.QueryVrfByCycleForTopN,
 			Cycle: cycle,
 		}
 
@@ -545,7 +543,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		req := &dty.DposVrfQuery{
-			Ty: dty.QueryVrfByCycleForPubkeys,
+			Ty:    dty.QueryVrfByCycleForPubkeys,
 			Cycle: cycle,
 		}
 
@@ -563,7 +561,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 
 }
 
-//CreateCmd to create keyfiles
+//DPosCreateCmd to create keyfiles
 func DPosCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init_keyfile",
@@ -644,7 +642,7 @@ func createFiles(cmd *cobra.Command, args []string) {
 		// create genesis validator by the pubkey of private validator
 		gv := ttypes.GenesisValidator{
 			PubKey: ttypes.KeyText{Kind: "secp256k1", Data: privValidator.GetPubKey().KeyString()},
-			Name:  "",
+			Name:   "",
 		}
 		genDoc.Validators = append(genDoc.Validators, gv)
 	}
@@ -656,7 +654,7 @@ func createFiles(cmd *cobra.Command, args []string) {
 	fmt.Printf("Generated genesis file path %v\n", genFile)
 }
 
-//CreateCmd to create keyfiles
+//DPosVrfVerifyCmd to create keyfiles
 func DPosVrfVerifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfVerify",
@@ -692,7 +690,6 @@ func verify(cmd *cobra.Command, args []string) {
 	data, _ := cmd.Flags().GetString("m")
 	hash, _ := cmd.Flags().GetString("hash")
 	proof, _ := cmd.Flags().GetString("proof")
-
 
 	m := []byte(data)
 
@@ -739,7 +736,7 @@ func verify(cmd *cobra.Command, args []string) {
 	fmt.Println("vrf hash is same with input hash, vrf Verify succeed")
 }
 
-//CreateCmd to create keyfiles
+//DPosVrfEvaluateCmd to create keyfiles
 func DPosVrfEvaluateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfEvaluate",
@@ -785,7 +782,7 @@ func evaluate(cmd *cobra.Command, args []string) {
 	fmt.Println(fmt.Sprintf("proof:%x", vrfProof))
 }
 
-//CreateCmd to create keyfiles
+//DPosCBRecordCmd to create keyfiles
 func DPosCBRecordCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cbRecord",
@@ -834,10 +831,10 @@ func recordCB(cmd *cobra.Command, args []string) {
 	buf := new(bytes.Buffer)
 
 	canonical := dty.CanonicalOnceCBInfo{
-		Cycle: cycle,
+		Cycle:      cycle,
 		StopHeight: height,
-		StopHash: hash,
-		Pubkey: hex.EncodeToString(privKey.PubKey().Bytes()),
+		StopHash:   hash,
+		Pubkey:     hex.EncodeToString(privKey.PubKey().Bytes()),
 	}
 
 	byteCB, err := json.Marshal(&canonical)
@@ -902,7 +899,7 @@ func cbQuery(cmd *cobra.Command, args []string) {
 	switch ty {
 	case "cycle":
 		req := &dty.DposCBQuery{
-			Ty: dty.QueryCBInfoByCycle,
+			Ty:    dty.QueryCBInfoByCycle,
 			Cycle: cycle,
 		}
 
@@ -914,7 +911,7 @@ func cbQuery(cmd *cobra.Command, args []string) {
 
 	case "height":
 		req := &dty.DposCBQuery{
-			Ty: dty.QueryCBInfoByHeight,
+			Ty:         dty.QueryCBInfoByHeight,
 			StopHeight: height,
 		}
 
@@ -926,7 +923,7 @@ func cbQuery(cmd *cobra.Command, args []string) {
 
 	case "hash":
 		req := &dty.DposCBQuery{
-			Ty: dty.QueryCBInfoByHash,
+			Ty:       dty.QueryCBInfoByHash,
 			StopHash: hash,
 		}
 
@@ -938,7 +935,7 @@ func cbQuery(cmd *cobra.Command, args []string) {
 	}
 }
 
-//DPosVrfQueryCmd 构造VRF相关信息查询的命令行
+//DPosTopNQueryCmd 构造TopN相关信息查询的命令行
 func DPosTopNQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "topNQuery",
@@ -957,7 +954,6 @@ func addTopNQueryFlags(cmd *cobra.Command) {
 func topNQuery(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	version, _ := cmd.Flags().GetInt64("version")
-
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = dty.DPosX

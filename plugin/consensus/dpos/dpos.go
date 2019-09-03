@@ -29,6 +29,7 @@ import (
 const dposVersion = "0.1.0"
 const dposShuffleTypeFixOrderByAddr = 1
 const dposShuffleTypeOrderByVrfInfo = 2
+
 var (
 	dposlog                   = log15.New("module", "dpos")
 	genesis                   string
@@ -41,19 +42,18 @@ var (
 	validatorNodes                  = []string{"127.0.0.1:46656"}
 	isValidator                     = false
 
-	dposDelegateNum      int64 = 3 //委托节点个数，从配置读取，以后可以根据投票结果来定
-	dposBlockInterval    int64 = 3 //出块间隔，当前按3s
-	dposContinueBlockNum int64 = 6 //一个委托节点当选后，一次性持续出块数量
-	dposCycle                  = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
-	dposPeriod                 = dposBlockInterval * dposContinueBlockNum
-	zeroHash             [32]byte
-	dposPort string = "36656"
-	rpcAddr string = "http://0.0.0.0:8801"
-	shuffleType int32 = dposShuffleTypeOrderByVrfInfo   //shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
-	whetherUpdateTopN = false //是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
-	blockNumToUpdateDelegate int64 = 20000
-	registTopNHeightLimit int64 = 100
-	updateTopNHeightLimit int64 = 200
+	dposDelegateNum          int64 = 3 //委托节点个数，从配置读取，以后可以根据投票结果来定
+	dposBlockInterval        int64 = 3 //出块间隔，当前按3s
+	dposContinueBlockNum     int64 = 6 //一个委托节点当选后，一次性持续出块数量
+	dposCycle                      = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
+	dposPeriod                     = dposBlockInterval * dposContinueBlockNum
+	zeroHash                 [32]byte
+	dposPort                       = "36656"
+	shuffleType              int32  = dposShuffleTypeOrderByVrfInfo //shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
+	whetherUpdateTopN               = false                         //是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
+	blockNumToUpdateDelegate int64  = 20000
+	registTopNHeightLimit    int64  = 100
+	updateTopNHeightLimit    int64  = 200
 )
 
 func init() {
@@ -91,7 +91,6 @@ type subConfig struct {
 	ContinueBlockNum          int64    `json:"continueBlockNum"`
 	IsValidator               bool     `json:"isValidator"`
 	Port                      string   `json:"port"`
-	RpcAddr                   string   `json:"rpcAddr"`
 	ShuffleType               int32    `json:"shuffleType"`
 	WhetherUpdateTopN         bool     `json:"whetherUpdateTopN"`
 	BlockNumToUpdateDelegate  int64    `json:"blockNumToUpdateDelegate"`
@@ -153,10 +152,6 @@ func (client *Client) applyConfig(sub []byte) {
 
 	if subcfg.IsValidator {
 		isValidator = true
-	}
-
-	if subcfg.RpcAddr != "" {
-		rpcAddr = subcfg.RpcAddr
 	}
 
 	if subcfg.ShuffleType > 0 {
@@ -319,8 +314,8 @@ OuterLoop:
 		var topN *dty.TopNCandidators
 		for version >= 0 {
 			topN, err = client.QueryTopNCandidators(version)
-			if err !=nil || topN == nil {
-				version --
+			if err != nil || topN == nil {
+				version--
 			} else {
 				break
 			}
@@ -339,7 +334,7 @@ OuterLoop:
 					Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
 					PubKey:  val.Pubkey,
 				}
-				nodes[i] = val.Ip + ":" + dposPort
+				nodes[i] = val.IP + ":" + dposPort
 			}
 			valMgr.Validators = ttypes.NewValidatorSet(validators)
 			dposlog.Info("QueryCandidators success and update validator set", "old validators", printValidators(valMgrTmp.Validators), "new validators", printValidators(valMgr.Validators))
@@ -365,7 +360,7 @@ OuterLoop:
 	csState.SetPrivValidator(client.privValidator, client.ValidatorIndex())
 
 	// Create & add listener
-	protocol, listeningAddress := "tcp", "0.0.0.0:" + dposPort
+	protocol, listeningAddress := "tcp", "0.0.0.0:"+dposPort
 	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, valMgr.ChainID, dposVersion, csState)
 
 	client.node = node
@@ -381,7 +376,7 @@ OuterLoop:
 	//go client.MonitorCandidators()
 }
 
-func printValidators(set *ttypes.ValidatorSet) string{
+func printValidators(set *ttypes.ValidatorSet) string {
 	result := "Validators:["
 	for _, v := range set.Validators {
 		result = fmt.Sprintf("%s%s,", result, hex.EncodeToString(v.PubKey))
@@ -391,7 +386,7 @@ func printValidators(set *ttypes.ValidatorSet) string{
 	return result
 }
 
-func printNodeIPs(ips []string) string{
+func printNodeIPs(ips []string) string {
 	result := "nodeIPs:["
 	for _, v := range ips {
 		result = fmt.Sprintf("%s%s,", result, v)
@@ -504,7 +499,8 @@ func (client *Client) ValidatorIndex() int {
 	return -1
 }
 
-func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
+// QueryCandidators query the topN candidators from blockchain
+func (client *Client) QueryCandidators() ([]*dty.Candidator, error) {
 	req := &dty.CandidatorQuery{
 		TopN: int32(dposDelegateNum),
 	}
@@ -515,10 +511,10 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	}
 	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{
-			Driver: dty.DPosX,
-			FuncName: dty.FuncNameQueryCandidatorByTopN,
+			Driver:    dty.DPosX,
+			FuncName:  dty.FuncNameQueryCandidatorByTopN,
 			StateHash: zeroHash[:],
-			Param:param,
+			Param:     param,
 		})
 
 	err = client.GetQueueClient().Send(msg, true)
@@ -543,11 +539,11 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 		}
 
 		cand := &dty.Candidator{
-			Pubkey: bPubkey,
+			Pubkey:  bPubkey,
 			Address: val.Address,
-			Ip: val.Ip,
-			Votes: val.Votes,
-			Status: val.Status,
+			IP:      val.IP,
+			Votes:   val.Votes,
+			Status:  val.Status,
 		}
 
 		cands = append(cands, cand)
@@ -555,13 +551,13 @@ func (client *Client)QueryCandidators()([]*dty.Candidator, error) {
 	return cands, nil
 }
 
-func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
-	if v1 == nil || v2 == nil || len(v1.Validators) != len(v2.Validators){
+func (client *Client) isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
+	if v1 == nil || v2 == nil || len(v1.Validators) != len(v2.Validators) {
 		return false
 	}
 
 	for i := 0; i < len(v1.Validators); i++ {
-		if !bytes.Equal(v1.Validators[i].PubKey, v2.Validators[i].PubKey){
+		if !bytes.Equal(v1.Validators[i].PubKey, v2.Validators[i].PubKey) {
 			return false
 		}
 	}
@@ -569,7 +565,8 @@ func (client *Client)isValidatorSetSame(v1, v2 *ttypes.ValidatorSet) bool {
 	return true
 }
 
-func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction, err error) {
+// CreateRecordCBTx create the tx to record cb
+func (client *Client) CreateRecordCBTx(info *dty.DposCBInfo) (tx *types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RecordCB{
 		RecordCB: info,
@@ -583,7 +580,8 @@ func (client *Client)CreateRecordCBTx(info *dty.DposCBInfo)(tx*types.Transaction
 	return tx, nil
 }
 
-func (client *Client)CreateRegVrfMTx(info *dty.DposVrfMRegist)(tx*types.Transaction, err error) {
+// CreateRegVrfMTx create the tx to regist Vrf M
+func (client *Client) CreateRegVrfMTx(info *dty.DposVrfMRegist) (tx *types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RegistVrfM{
 		RegistVrfM: info,
@@ -597,7 +595,8 @@ func (client *Client)CreateRegVrfMTx(info *dty.DposVrfMRegist)(tx*types.Transact
 	return tx, nil
 }
 
-func (client *Client)CreateRegVrfRPTx(info *dty.DposVrfRPRegist)(tx*types.Transaction, err error) {
+// CreateRegVrfRPTx create the tx to regist Vrf RP
+func (client *Client) CreateRegVrfRPTx(info *dty.DposVrfRPRegist) (tx *types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RegistVrfRP{
 		RegistVrfRP: info,
@@ -611,10 +610,11 @@ func (client *Client)CreateRegVrfRPTx(info *dty.DposVrfRPRegist)(tx*types.Transa
 	return tx, nil
 }
 
-func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo, error) {
+// QueryVrfInfos query the vrf infos by pubkeys
+func (client *Client) QueryVrfInfos(pubkeys [][]byte, cycle int64) ([]*dty.VrfInfo, error) {
 	req := &dty.DposVrfQuery{
 		Cycle: cycle,
-		Ty: dty.QueryVrfByCycleForPubkeys,
+		Ty:    dty.QueryVrfByCycleForPubkeys,
 	}
 
 	for i := 0; i < len(pubkeys); i++ {
@@ -628,10 +628,10 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 	}
 	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{
-			Driver: dty.DPosX,
-			FuncName: dty.FuncNameQueryVrfByCycleForPubkeys,
+			Driver:    dty.DPosX,
+			FuncName:  dty.FuncNameQueryVrfByCycleForPubkeys,
 			StateHash: zeroHash[:],
-			Param:param,
+			Param:     param,
 		})
 
 	err = client.GetQueueClient().Send(msg, true)
@@ -675,14 +675,14 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 			bP = nil
 		}
 		info := &dty.VrfInfo{
-			Index: val.Index,
+			Index:  val.Index,
 			Pubkey: bPubkey,
-			Cycle: val.Cycle,
+			Cycle:  val.Cycle,
 			Height: val.Height,
-			Time: val.Time,
-			M: bM,
-			R: bR,
-			P: bP,
+			Time:   val.Time,
+			M:      bM,
+			R:      bR,
+			P:      bP,
 		}
 
 		infos = append(infos, info)
@@ -693,7 +693,8 @@ func (client *Client)QueryVrfInfos(pubkeys [][]byte, cycle int64)([]*dty.VrfInfo
 	return infos, nil
 }
 
-func (client *Client)CreateTopNRegistTx(reg *dty.TopNCandidatorRegist)(tx*types.Transaction, err error) {
+// CreateTopNRegistTx create tx to regist topN
+func (client *Client) CreateTopNRegistTx(reg *dty.TopNCandidatorRegist) (tx *types.Transaction, err error) {
 	var action dty.DposVoteAction
 	action.Value = &dty.DposVoteAction_RegistTopN{
 		RegistTopN: reg,
@@ -707,8 +708,8 @@ func (client *Client)CreateTopNRegistTx(reg *dty.TopNCandidatorRegist)(tx*types.
 	return tx, nil
 }
 
-// QueryCycleBoundaryInfo method
-func (client *Client) QueryTopNCandidators(version int64)(*dty.TopNCandidators, error){
+// QueryTopNCandidators method
+func (client *Client) QueryTopNCandidators(version int64) (*dty.TopNCandidators, error) {
 	req := &dty.TopNCandidatorsQuery{Version: version}
 	param, err := proto.Marshal(req)
 	if err != nil {
@@ -717,10 +718,10 @@ func (client *Client) QueryTopNCandidators(version int64)(*dty.TopNCandidators, 
 	}
 	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{
-			Driver: dty.DPosX,
-			FuncName: dty.FuncNameQueryTopNByVersion,
+			Driver:    dty.DPosX,
+			FuncName:  dty.FuncNameQueryTopNByVersion,
 			StateHash: zeroHash[:],
-			Param:param,
+			Param:     param,
 		})
 
 	err = client.GetQueueClient().Send(msg, true)
@@ -745,7 +746,7 @@ func (client *Client) QueryTopNCandidators(version int64)(*dty.TopNCandidators, 
 func printCandidators(cands []*dty.Candidator) string {
 	result := "["
 	for i := 0; i < len(cands); i++ {
-		fmt.Sprintf("%spubkey:%s,ip:%s;", result, hex.EncodeToString(cands[i].Pubkey), cands[i].Ip)
+		result = fmt.Sprintf("%spubkey:%s,ip:%s;", result, hex.EncodeToString(cands[i].Pubkey), cands[i].IP)
 	}
 	result += "]"
 

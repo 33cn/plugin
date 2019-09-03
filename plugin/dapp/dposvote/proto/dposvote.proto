@@ -6,7 +6,7 @@ package types;
 message CandidatorInfo {
     bytes  pubkey              = 1;  //候选节点的公钥
     string address             = 2;  //后续节点的地址
-    string ip                  = 3;  //候选节点的运行IP
+    string IP                  = 3;  //候选节点的运行IP
     int64  votes               = 4;  //候选节点的投票数
     int64  status              = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
     int64 preStatus            = 6;
@@ -19,6 +19,7 @@ message CandidatorInfo {
     repeated DposVoter voters  = 13;
 }
 
+//DposVoter 投票者信息
 message DposVoter{
     string fromAddr = 1;
     bytes  pubkey   = 2;    //候选节点的公钥
@@ -31,7 +32,7 @@ message DposVoter{
 message Candidator {
     bytes  pubkey   = 1;  //候选节点的公钥
     string address  = 2;  //后续节点的地址
-    string ip       = 3;  //候选节点的运行IP
+    string IP       = 3;  //候选节点的运行IP
     int64  votes    = 4;  //候选节点的投票数
     int64  status   = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
 }
@@ -40,7 +41,7 @@ message Candidator {
 message DposCandidatorRegist{
     string  pubkey  = 1;  //候选节点的公钥
     string  address = 2;  //候选节点的地址
-    string  ip      = 3;  //候选节点的共识IP地址
+    string  IP      = 3;  //候选节点的共识IP地址
 }
 
 //DposCandidatorCancelRegist 注销Dpos候选节点，解冻抵押的币
@@ -83,6 +84,7 @@ message DposVoteAction {
     int32 ty = 15;
 }
 
+//CandidatorQuery 候选节点查询
 message CandidatorQuery{
     repeated string  pubkeys   = 1;  //候选节点公钥集合
     int32  topN                = 2;  //topN
@@ -91,24 +93,28 @@ message CandidatorQuery{
 
 
 
-//Candidator 候选节点信息
-message JsonCandidator {
+//JSONCandidator 候选节点Json格式信息
+message JSONCandidator {
     string  pubkey   = 1;  //候选节点的公钥
     string address   = 2;  //后续节点的地址
-    string ip        = 3;  //候选节点的运行IP
+    string IP        = 3;  //候选节点的运行IP
     int64  votes     = 4;  //候选节点的投票数
     int64  status    = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
 }
+
+//CandidatorReply 候选节点查询响应
 message CandidatorReply{
-    repeated  JsonCandidator candidators   = 1;  //候选节点
+    repeated  JSONCandidator candidators   = 1;  //候选节点
 }
 
+//DposVoteQuery 投票查询
 message DposVoteQuery{
     repeated string  pubkeys   = 1;  //候选节点的公钥，如果为空，则查询所有，否则，查询该地址给具体候选节点的投票
     string  addr               = 2;              //要查询的地址
 }
 
-message JsonDposVoter{
+//JSONDposVoter Json格式的投票者信息
+message JSONDposVoter{
     string fromAddr = 1;
     string pubkey   = 2;    //候选节点的公钥
     int64  votes    = 3;    //投给候选节点的票数，不能超过锁在合约中的未使用票数
@@ -116,8 +122,9 @@ message JsonDposVoter{
     int64  time     = 5;
 }
 
+//DposVoteReply 投票查询响应
 message DposVoteReply{
-    repeated JsonDposVoter votes   = 1;  //某地址对具体候选节点的投票情况
+    repeated JSONDposVoter votes   = 1;  //某地址对具体候选节点的投票情况
 }
 
 //ReceiptCandicator 候选者收据信息
@@ -135,6 +142,7 @@ message ReceiptCandicator {
     int64   time              = 11;
 }
 
+//DposVrfM VrfM信息
 message DposVrfM{
     int64   Index        = 1;
     bytes   pubkey       = 2;
@@ -147,6 +155,7 @@ message DposVrfM{
     int64   cycleStop    = 9;
 }
 
+//DposVrfRP VrfRP信息
 message DposVrfRP{
     int64   Index        = 1;
     bytes   pubkey       = 2;
@@ -161,12 +170,14 @@ message DposVrfRP{
     int64   cycleStop    = 11;
 }
 
+//DposVrfMRegist VrfM注册请求
 message DposVrfMRegist{
     string   pubkey      = 1;
     int64   cycle        = 2;
     string   m           = 3;  //vrf的输入
 }
 
+//DposVrfRPRegist VrfRP注册请求
 message DposVrfRPRegist{
     string   pubkey      = 1;
     int64    cycle       = 2;
@@ -191,7 +202,7 @@ message ReceiptVrf {
     int64   cycleStop    = 12;
 }
 
-
+//VrfInfo vrf信息
 message VrfInfo {
     int64   Index        = 1;
     bytes   pubkey       = 2;
@@ -203,6 +214,7 @@ message VrfInfo {
     int64   time         = 9;
 }
 
+//DposVrfQuery vrf查询请求
 message DposVrfQuery{
     repeated string  pubkeys   = 1;
     int64   ty                 = 2;
@@ -210,7 +222,8 @@ message DposVrfQuery{
     int64   cycle              = 4;
 }
 
-message JsonVrfInfo {
+//JSONVrfInfo json格式的vrf信息
+message JSONVrfInfo {
     int64   Index        = 1;
     string  pubkey       = 2;
     int64   cycle        = 4;
@@ -221,10 +234,12 @@ message JsonVrfInfo {
     int64   time         = 9;
 }
 
+//DposVrfReply vrf查询响应
 message DposVrfReply{
-    repeated JsonVrfInfo vrf = 1;
+    repeated JSONVrfInfo vrf = 1;
 }
 
+//DposCycleBoundaryInfo cycle边界信息
 message DposCycleBoundaryInfo {
     int64 cycle          = 1;
     int64 stopHeight     = 2;
@@ -233,6 +248,7 @@ message DposCycleBoundaryInfo {
     bytes signature      = 5;
 }
 
+//DposCBInfo cycle边界记录请求消息
 message DposCBInfo {
     int64 cycle          = 1;
     int64 stopHeight     = 2;
@@ -241,6 +257,7 @@ message DposCBInfo {
     string signature     = 5;
 }
 
+//DposCBQuery cycle边界记录查询请求
 message DposCBQuery {
     int64 cycle          = 1;
     int64 stopHeight     = 2;
@@ -248,6 +265,7 @@ message DposCBQuery {
     int32 ty             = 4;
 }
 
+//DposCBReply cycle边界记录查询响应
 message DposCBReply {
     DposCBInfo cbInfo = 1;
 }
@@ -266,6 +284,7 @@ message ReceiptCB {
     DposCycleBoundaryInfo cbInfo = 10;
 }
 
+//TopNCandidator topN候选者
 message TopNCandidator{
     repeated Candidator cands = 1;
     bytes    hash             = 2;
@@ -274,6 +293,7 @@ message TopNCandidator{
     bytes    signature        = 5;
 }
 
+//TopNCandidators topN候选者(复数)
 message TopNCandidators{
     repeated TopNCandidator candsVotes = 1;
     int64    version                   = 2;
@@ -281,18 +301,22 @@ message TopNCandidators{
     repeated Candidator finalCands     = 4;
 }
 
+//TopNCandidatorRegist topN候选者注册请求
 message TopNCandidatorRegist{
     TopNCandidator cand            = 1;
 }
 
+//TopNCandidatorsQuery topN候选者查询请求
 message TopNCandidatorsQuery{
     int64 version                  = 1;
 }
 
+//TopNCandidatorsReply topN候选者查询响应
 message TopNCandidatorsReply{
     TopNCandidators topN           = 1;
 }
 
+//ReceiptTopN topN注册的收据信息
 message ReceiptTopN {
     int64   Index        = 1;
     bytes   pubkey       = 2;

@@ -3,13 +3,13 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 const (
@@ -20,6 +20,7 @@ const (
 	pubkey11 = "03541AB9887951C038273648545072E5B6A46A639BFF535F3957E8150CBE2A70D7"
 	pubkey12 = "03F2A7AFFA090763C42B370C6F33CC3E9B6140228ABAF0591240F3B88E8792F890"
 )
+
 var (
 	val1 *Validator
 	val2 *Validator
@@ -29,36 +30,35 @@ var (
 	val12 *Validator
 )
 
-func init(){
+func init() {
 	//为了使用VRF，需要使用SECP256K1体系的公私钥
 	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
 		panic("init ConsensusCrypto failed.")
-		return
 	}
 
 	ConsensusCrypto = cr
 
-	pkbytes , err := hex.DecodeString(pubkey1)
+	pkbytes, _ := hex.DecodeString(pubkey1)
 
-	pk1, err := ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pk1, _ := ConsensusCrypto.PubKeyFromBytes(pkbytes)
 
-	pkbytes , err = hex.DecodeString(pubkey2)
-	pk2, err := ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pkbytes, _ = hex.DecodeString(pubkey2)
+	pk2, _ := ConsensusCrypto.PubKeyFromBytes(pkbytes)
 
-	pkbytes , err = hex.DecodeString(pubkey3)
-	pk3, err := ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pkbytes, _ = hex.DecodeString(pubkey3)
+	pk3, _ := ConsensusCrypto.PubKeyFromBytes(pkbytes)
 
 	val1 = NewValidator(pk1)
 	val2 = NewValidator(pk2)
 	val3 = NewValidator(pk3)
 
-	pkbytes , err = hex.DecodeString(pubkey11)
-	pk11, err := ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pkbytes, _ = hex.DecodeString(pubkey11)
+	pk11, _ := ConsensusCrypto.PubKeyFromBytes(pkbytes)
 	val11 = NewValidator(pk11)
 
-	pkbytes , err = hex.DecodeString(pubkey12)
-	pk12, err := ConsensusCrypto.PubKeyFromBytes(pkbytes)
+	pkbytes, _ = hex.DecodeString(pubkey12)
+	pk12, _ := ConsensusCrypto.PubKeyFromBytes(pkbytes)
 	val12 = NewValidator(pk12)
 
 }
@@ -72,7 +72,7 @@ func TestValidator(t *testing.T) {
 }
 
 func match(index int, val *Validator) bool {
-	if bytes.Equal(val.Address, val1.Address){
+	if bytes.Equal(val.Address, val1.Address) {
 		return true
 	}
 
@@ -157,7 +157,7 @@ func TestValidatorsByAddress(t *testing.T) {
 	assert.True(t, arr.Less(0, 1) == false)
 	assert.True(t, arr.Less(0, 2) == true)
 
-	arr.Swap(0,1)
+	arr.Swap(0, 1)
 	assert.True(t, bytes.Equal(arr[0].PubKey, val2.PubKey))
 
 }

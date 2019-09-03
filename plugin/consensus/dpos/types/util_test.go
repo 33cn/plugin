@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-func init(){
+func init() {
 	Init()
 }
 
 func TestWriteFile(t *testing.T) {
 	filename := "./tmp_priv_validator.json"
-	err := WriteFile(filename, []byte(priv_validator_file), 0664)
+	err := WriteFile(filename, []byte(privValidatorFile), 0664)
 	require.Nil(t, err)
 
 	file, err := os.Stat(filename)
@@ -35,7 +35,7 @@ func TestWriteFile(t *testing.T) {
 
 func TestWriteFileAtomic(t *testing.T) {
 	filename := "./tmp_priv_validator.json"
-	err := WriteFileAtomic(filename, []byte(priv_validator_file), 0664)
+	err := WriteFileAtomic(filename, []byte(privValidatorFile), 0664)
 	require.Nil(t, err)
 
 	file, err := os.Stat(filename)
@@ -56,7 +56,7 @@ func TestTempfile(t *testing.T) {
 	fmt.Println(name)
 	require.NotNil(t, file)
 
-	_, err := file.Write([]byte(priv_validator_file))
+	_, err := file.Write([]byte(privValidatorFile))
 	if err == nil {
 		err = file.Sync()
 	}
@@ -85,19 +85,19 @@ func TestKill(t *testing.T) {
 	c := make(chan os.Signal)
 	signal.Notify(c)
 	go Kill()
-	s := <- c
+	s := <-c
 	assert.True(t, s.String() == "terminated")
 }
 
 var (
-	go_index = 0
-	go_sum = 0
-
+	goIndex = 0
+	goSum   = 0
 )
+
 func test() {
-	go_index++
-	time.Sleep(time.Second * time.Duration(go_index))
-	go_sum++
+	goIndex++
+	time.Sleep(time.Second * time.Duration(goIndex))
+	goSum++
 }
 
 func TestParallel(t *testing.T) {
@@ -107,9 +107,9 @@ func TestParallel(t *testing.T) {
 	f2 := test
 	f2()
 
-	go_sum = 0
+	goSum = 0
 	Parallel(f1, f2)
-	assert.True(t, go_sum == 2)
+	assert.True(t, goSum == 2)
 }
 
 func TestRandInt63n(t *testing.T) {
@@ -138,8 +138,8 @@ func TestRandUint32(t *testing.T) {
 }
 
 func TestPanicSanity(t *testing.T) {
-	defer func(){
-		if r:= recover(); r != nil {
+	defer func() {
+		if r := recover(); r != nil {
 			//fmt.Println(r)
 			assert.True(t, strings.HasPrefix(r.(string), "Panicked on a Sanity Check: "))
 		}
@@ -149,8 +149,8 @@ func TestPanicSanity(t *testing.T) {
 }
 
 func TestPanicCrisis(t *testing.T) {
-	defer func(){
-		if r:= recover(); r != nil {
+	defer func() {
+		if r := recover(); r != nil {
 			//fmt.Println(r)
 			assert.True(t, strings.HasPrefix(r.(string), "Panicked on a Crisis: "))
 		}
@@ -160,8 +160,8 @@ func TestPanicCrisis(t *testing.T) {
 }
 
 func TestPanicQ(t *testing.T) {
-	defer func(){
-		if r:= recover(); r != nil {
+	defer func() {
+		if r := recover(); r != nil {
 			//fmt.Println(r)
 			assert.True(t, strings.HasPrefix(r.(string), "Panicked questionably: "))
 		}

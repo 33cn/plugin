@@ -5,9 +5,9 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	"fmt"
 )
 
 func (d *DPos) updateCandVote(log *dty.ReceiptCandicator) (kvs []*types.KeyValue, err error) {
@@ -101,15 +101,15 @@ func (d *DPos) updateVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err error)
 	if log.Status == dty.VrfStatusMRegist {
 		vrfMTable := dty.NewDposVrfMTable(d.GetLocalDB())
 		vrfM := &dty.DposVrfM{
-			Index: log.Index,
-			Pubkey: log.Pubkey,
-			Cycle: log.Cycle,
-			Height: log.Height,
-			M: log.M,
-			Time: log.Time,
-			CycleStart: log.CycleStart,
+			Index:       log.Index,
+			Pubkey:      log.Pubkey,
+			Cycle:       log.Cycle,
+			Height:      log.Height,
+			M:           log.M,
+			Time:        log.Time,
+			CycleStart:  log.CycleStart,
 			CycleMiddle: log.CycleMiddle,
-			CycleStop: log.CycleStop,
+			CycleStop:   log.CycleStop,
 		}
 
 		err = vrfMTable.Add(vrfM)
@@ -124,17 +124,17 @@ func (d *DPos) updateVrf(log *dty.ReceiptVrf) (kvs []*types.KeyValue, err error)
 	} else if log.Status == dty.VrfStatusRPRegist {
 		VrfRPTable := dty.NewDposVrfRPTable(d.GetLocalDB())
 		vrfRP := &dty.DposVrfRP{
-			Index: log.Index,
-			Pubkey: log.Pubkey,
-			Cycle: log.Cycle,
-			Height: log.Height,
-			R: log.R,
-			P: log.P,
-			M: log.M,
-			Time: log.Time,
-			CycleStart: log.CycleStart,
+			Index:       log.Index,
+			Pubkey:      log.Pubkey,
+			Cycle:       log.Cycle,
+			Height:      log.Height,
+			R:           log.R,
+			P:           log.P,
+			M:           log.M,
+			Time:        log.Time,
+			CycleStart:  log.CycleStart,
 			CycleMiddle: log.CycleMiddle,
-			CycleStop: log.CycleStop,
+			CycleStop:   log.CycleStop,
 		}
 
 		err = VrfRPTable.Add(vrfRP)
@@ -187,7 +187,7 @@ func (d *DPos) execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) 
 				return nil, err
 			}
 			dbSet.KV = append(dbSet.KV, kvs...)
-		} else if  item.Ty >= dty.TyLogVrfMRegist && item.Ty <= dty.TyLogVrfRPRegist {
+		} else if item.Ty >= dty.TyLogVrfMRegist && item.Ty <= dty.TyLogVrfRPRegist {
 			var vrfLog dty.ReceiptVrf
 			err := types.Decode(item.Log, &vrfLog)
 			if err != nil {
@@ -242,12 +242,12 @@ func (d *DPos) ExecLocal_CancelVote(payload *dty.DposCancelVote, tx *types.Trans
 	return d.execLocal(receiptData)
 }
 
-//ExecLocal_VrfMRegist method
+//ExecLocal_RegistVrfM method
 func (d *DPos) ExecLocal_RegistVrfM(payload *dty.DposVrfMRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }
 
-//ExecLocal_VrfRPRegist method
+//ExecLocal_RegistVrfRP method
 func (d *DPos) ExecLocal_RegistVrfRP(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execLocal(receiptData)
 }

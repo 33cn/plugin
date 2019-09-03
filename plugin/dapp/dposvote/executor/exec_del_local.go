@@ -25,8 +25,8 @@ func (d *DPos) rollbackCand(cand *dty.CandidatorInfo, log *dty.ReceiptCandicator
 
 	//如果投票了，则需要把投票回滚
 	if log.VoteType == dty.VoteTypeVote {
-		for i := 0; i < len(cand.Voters); i++{
-			if cand.Voters[i].Index == log.Vote.Index && cand.Voters[i].FromAddr == log.Vote.FromAddr && bytes.Equal(cand.Voters[i].Pubkey, log.Vote.Pubkey){
+		for i := 0; i < len(cand.Voters); i++ {
+			if cand.Voters[i].Index == log.Vote.Index && cand.Voters[i].FromAddr == log.Vote.FromAddr && bytes.Equal(cand.Voters[i].Pubkey, log.Vote.Pubkey) {
 				cand.Voters = append(cand.Voters[0:i], cand.Voters[i+1:]...)
 				break
 			}

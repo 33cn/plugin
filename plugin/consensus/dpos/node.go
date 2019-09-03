@@ -14,7 +14,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"errors"
 
 	"github.com/33cn/chain33/common/crypto"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -294,7 +293,7 @@ func (node *Node) listenRoutine() {
 func (node *Node) StartConsensusRoutine() {
 	for {
 		//zzh
-		if !node.IsRunning(){
+		if !node.IsRunning() {
 			break
 		}
 		//TODO:the peer count need be optimized
@@ -502,7 +501,7 @@ func (node *Node) FilterConnByAddr(addr net.Addr) error {
 	}
 
 	if !legalIP {
-		return errors.New(fmt.Sprintf("%s is not legal seeds ip", ip))
+		return fmt.Errorf("%s is not legal seeds ip", ip)
 	}
 	return nil
 }

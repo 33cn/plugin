@@ -20,8 +20,14 @@ var (
 )
 
 const (
+
+	//ShuffleTypeNoVrf shuffle type: NoVrf, use default address order
 	ShuffleTypeNoVrf = iota
+
+	//ShuffleTypeVrf shuffle type: Vrf
 	ShuffleTypeVrf
+
+	//ShuffleTypePartVrf shuffle type: PartVrf
 	ShuffleTypePartVrf
 )
 
@@ -34,12 +40,12 @@ type ValidatorMgr struct {
 	// so we can query for historical validator sets.
 	// Note that if s.LastBlockHeight causes a valset change,
 	// we set s.LastHeightValidatorsChanged = s.LastBlockHeight + 1
-	Validators *ttypes.ValidatorSet
-	VrfValidators *ttypes.ValidatorSet
-	NoVrfValidators *ttypes.ValidatorSet
+	Validators            *ttypes.ValidatorSet
+	VrfValidators         *ttypes.ValidatorSet
+	NoVrfValidators       *ttypes.ValidatorSet
 	LastCycleBoundaryInfo *dty.DposCBInfo
-	ShuffleCycle int64
-	ShuffleType int64   //0-no vrf 1-vrf 2-part vrf
+	ShuffleCycle          int64
+	ShuffleType           int64 //0-no vrf 1-vrf 2-part vrf
 	// The latest AppHash we've received from calling abci.Commit()
 	AppHash []byte
 }
@@ -47,11 +53,11 @@ type ValidatorMgr struct {
 // Copy makes a copy of the State for mutating.
 func (s ValidatorMgr) Copy() ValidatorMgr {
 	mgr := ValidatorMgr{
-		ChainID: s.ChainID,
-		Validators: s.Validators.Copy(),
-		AppHash: s.AppHash,
+		ChainID:      s.ChainID,
+		Validators:   s.Validators.Copy(),
+		AppHash:      s.AppHash,
 		ShuffleCycle: s.ShuffleCycle,
-		ShuffleType: s.ShuffleType,
+		ShuffleType:  s.ShuffleType,
 		//VrfValidators: s.VrfValidators.Copy(),
 		//NoVrfValidators: s.NoVrfValidators.Copy(),
 		//LastCycleBoundaryInfo: &dty.DposCBInfo{
@@ -65,12 +71,12 @@ func (s ValidatorMgr) Copy() ValidatorMgr {
 
 	if s.LastCycleBoundaryInfo != nil {
 		mgr.LastCycleBoundaryInfo = &dty.DposCBInfo{
-				Cycle: s.LastCycleBoundaryInfo.Cycle,
-				StopHeight: s.LastCycleBoundaryInfo.StopHeight,
-				StopHash: s.LastCycleBoundaryInfo.StopHash,
-				Pubkey: s.LastCycleBoundaryInfo.Pubkey,
-				Signature: s.LastCycleBoundaryInfo.Signature,
-			}
+			Cycle:      s.LastCycleBoundaryInfo.Cycle,
+			StopHeight: s.LastCycleBoundaryInfo.StopHeight,
+			StopHash:   s.LastCycleBoundaryInfo.StopHash,
+			Pubkey:     s.LastCycleBoundaryInfo.Pubkey,
+			Signature:  s.LastCycleBoundaryInfo.Signature,
+		}
 	}
 
 	if s.VrfValidators != nil {
@@ -138,6 +144,7 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 	}, nil
 }
 
+// GetValidatorByIndex method
 func (s *ValidatorMgr) GetValidatorByIndex(index int) (addres []byte, val *ttypes.Validator) {
 	if index < 0 || index >= len(s.Validators.Validators) {
 		return nil, nil
@@ -153,15 +160,16 @@ func (s *ValidatorMgr) GetValidatorByIndex(index int) (addres []byte, val *ttype
 		if index < len(s.VrfValidators.Validators) {
 			val = s.VrfValidators.Validators[index]
 			return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
-		} else {
-			val = s.NoVrfValidators.Validators[index - len(s.VrfValidators.Validators)]
-			return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
 		}
+
+		val = s.NoVrfValidators.Validators[index-len(s.VrfValidators.Validators)]
+		return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
 	}
 
 	return nil, nil
 }
 
+// GetIndexByPubKey method
 func (s *ValidatorMgr) GetIndexByPubKey(pubkey []byte) (index int) {
 	if nil == pubkey {
 		return -1
@@ -202,6 +210,7 @@ func (s *ValidatorMgr) GetIndexByPubKey(pubkey []byte) (index int) {
 	return index
 }
 
+// FillVoteItem method
 func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 	if s.LastCycleBoundaryInfo != nil {
 		voteItem.LastCBInfo = &ttypes.CycleBoundaryInfo{
@@ -214,15 +223,15 @@ func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 	voteItem.ShuffleType = s.ShuffleType
 	for i := 0; s.Validators != nil && i < s.Validators.Size(); i++ {
 		node := &ttypes.SuperNode{
-			PubKey: s.Validators.Validators[i].PubKey,
+			PubKey:  s.Validators.Validators[i].PubKey,
 			Address: s.Validators.Validators[i].Address,
 		}
 		voteItem.Validators = append(voteItem.Validators, node)
 	}
 
-	for i := 0; s.VrfValidators != nil &&  i < s.VrfValidators.Size(); i++ {
+	for i := 0; s.VrfValidators != nil && i < s.VrfValidators.Size(); i++ {
 		node := &ttypes.SuperNode{
-			PubKey: s.VrfValidators.Validators[i].PubKey,
+			PubKey:  s.VrfValidators.Validators[i].PubKey,
 			Address: s.VrfValidators.Validators[i].Address,
 		}
 		voteItem.VrfValidators = append(voteItem.VrfValidators, node)
@@ -230,16 +239,17 @@ func (s *ValidatorMgr) FillVoteItem(voteItem *ttypes.VoteItem) {
 
 	for i := 0; s.NoVrfValidators != nil && i < s.NoVrfValidators.Size(); i++ {
 		node := &ttypes.SuperNode{
-			PubKey: s.NoVrfValidators.Validators[i].PubKey,
+			PubKey:  s.NoVrfValidators.Validators[i].PubKey,
 			Address: s.NoVrfValidators.Validators[i].Address,
 		}
 		voteItem.NoVrfValidators = append(voteItem.NoVrfValidators, node)
 	}
 }
 
+// UpdateFromVoteItem method
 func (s *ValidatorMgr) UpdateFromVoteItem(voteItem *ttypes.VoteItem) bool {
 	validators := voteItem.Validators
-	if len(s.Validators.Validators) != len(voteItem.Validators){
+	if len(s.Validators.Validators) != len(voteItem.Validators) {
 		return false
 	}
 
@@ -273,7 +283,7 @@ func (s *ValidatorMgr) UpdateFromVoteItem(voteItem *ttypes.VoteItem) bool {
 	for i := 0; i < len(voteItem.VrfValidators); i++ {
 		val := &ttypes.Validator{
 			Address: voteItem.VrfValidators[i].Address,
-			PubKey: voteItem.VrfValidators[i].PubKey,
+			PubKey:  voteItem.VrfValidators[i].PubKey,
 		}
 
 		vrfVals = append(vrfVals, val)
@@ -285,7 +295,7 @@ func (s *ValidatorMgr) UpdateFromVoteItem(voteItem *ttypes.VoteItem) bool {
 	for i := 0; i < len(voteItem.NoVrfValidators); i++ {
 		val := &ttypes.Validator{
 			Address: voteItem.NoVrfValidators[i].Address,
-			PubKey: voteItem.NoVrfValidators[i].PubKey,
+			PubKey:  voteItem.NoVrfValidators[i].PubKey,
 		}
 
 		noVrfVals = append(noVrfVals, val)

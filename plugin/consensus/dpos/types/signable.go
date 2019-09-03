@@ -30,7 +30,7 @@ var (
 
 	votelog = log15.New("module", "tendermint-vote")
 
-	ConsensusCrypto crypto.Crypto
+	ConsensusCrypto  crypto.Crypto
 	SecureConnCrypto crypto.Crypto
 )
 

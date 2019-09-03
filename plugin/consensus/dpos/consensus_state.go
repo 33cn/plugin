@@ -32,7 +32,10 @@ const (
 	voteSuccess    = 1
 	voteFail       = 2
 
+	//VrfQueryTypeM vrf query type 为查询M信息
 	VrfQueryTypeM  = 0
+
+	//VrfQueryTypeRP vrf query type 为查询RP信息
 	VrfQueryTypeRP = 1
 )
 
@@ -59,19 +62,7 @@ func (ti *timeoutInfo) String() string {
 	return fmt.Sprintf("%v", ti.Duration)
 }
 
-/*
-type vrfStatusInfo struct {
-	Cycle int64
-	VrfStatus int64  //0:初始状态，1:未注册M状态，2:已发起M注册状态，3:已注册M状态，4:已发起RP注册状态,5:已注册RP状态，6:已过cycle一半但未发起M注册,7.cycle周期已过，未注册RP状态
-	M []byte
-	R []byte
-	P []byte
-}
-*/
 // ConsensusState handles execution of the consensus algorithm.
-// It processes votes and proposals, and upon reaching agreement,
-// commits blocks to the chain and executes them against the application.
-// The internal state machine receives input from peers, the internal validator, and from a timer.
 type ConsensusState struct {
 	// config details
 	client             *Client
@@ -115,9 +106,9 @@ type ConsensusState struct {
 
 	cachedNotify *dpostype.DPosNotify
 
-	cycleBoundaryMap map[int64] *dty.DposCBInfo
-	vrfInfoMap map[int64] *dty.VrfInfo
-	vrfInfosMap map[int64] []*dty.VrfInfo
+	cycleBoundaryMap map[int64]*dty.DposCBInfo
+	vrfInfoMap       map[int64]*dty.VrfInfo
+	vrfInfosMap      map[int64][]*dty.VrfInfo
 
 	cachedTopNCands []*dty.TopNCandidators
 }
@@ -130,12 +121,12 @@ func NewConsensusState(client *Client, valMgr ValidatorMgr) *ConsensusState {
 		internalMsgQueue: make(chan MsgInfo, msgQueueSize),
 		timeoutTicker:    NewTimeoutTicker(),
 
-		Quit:      make(chan struct{}),
-		dposState: InitStateObj,
-		dposVotes: nil,
-		cycleBoundaryMap: make(map[int64] *dty.DposCBInfo),
-		vrfInfoMap: make(map[int64]*dty.VrfInfo),
-		vrfInfosMap: make(map[int64] []*dty.VrfInfo),
+		Quit:             make(chan struct{}),
+		dposState:        InitStateObj,
+		dposVotes:        nil,
+		cycleBoundaryMap: make(map[int64]*dty.DposCBInfo),
+		vrfInfoMap:       make(map[int64]*dty.VrfInfo),
+		vrfInfosMap:      make(map[int64][]*dty.VrfInfo),
 	}
 
 	cs.updateToValMgr(valMgr)
@@ -564,7 +555,7 @@ func (cs *ConsensusState) VerifyNotify(notify *dpostype.DPosNotify) bool {
 }
 
 // QueryCycleBoundaryInfo method
-func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, error){
+func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64) (*dty.DposCBInfo, error) {
 	req := &dty.DposCBQuery{Cycle: cycle, Ty: dty.QueryCBInfoByCycle}
 	param, err := proto.Marshal(req)
 	if err != nil {
@@ -573,10 +564,10 @@ func (cs *ConsensusState) QueryCycleBoundaryInfo(cycle int64)(*dty.DposCBInfo, e
 	}
 	msg := cs.client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
 		&types.ChainExecutor{
-			Driver: dty.DPosX,
-			FuncName: dty.FuncNameQueryCBInfoByCycle,
+			Driver:    dty.DPosX,
+			FuncName:  dty.FuncNameQueryCBInfoByCycle,
 			StateHash: zeroHash[:],
-			Param:param,
+			Param:     param,
 		})
 
 	err = cs.client.GetQueueClient().Send(msg, true)
@@ -611,10 +602,10 @@ func (cs *ConsensusState) Init() {
 }
 
 // InitTopNCandidators method
-func (cs *ConsensusState) InitTopNCandidators(version int64){
+func (cs *ConsensusState) InitTopNCandidators(version int64) {
 	for version > 0 {
 		info, err := cs.client.QueryTopNCandidators(version)
-		if err == nil && info != nil && info.Status == dty.TopNCandidatorsVoteMajorOK{
+		if err == nil && info != nil && info.Status == dty.TopNCandidatorsVoteMajorOK {
 			cs.UpdateTopNCandidators(info)
 			return
 		}
@@ -624,6 +615,7 @@ func (cs *ConsensusState) InitTopNCandidators(version int64){
 
 	return
 }
+
 // UpdateTopNCandidators method
 func (cs *ConsensusState) UpdateTopNCandidators(info *dty.TopNCandidators) {
 	if len(cs.cachedTopNCands) == 0 {
@@ -631,14 +623,14 @@ func (cs *ConsensusState) UpdateTopNCandidators(info *dty.TopNCandidators) {
 		return
 	}
 
-	if cs.cachedTopNCands[len(cs.cachedTopNCands) - 1].Version < info.Version {
+	if cs.cachedTopNCands[len(cs.cachedTopNCands)-1].Version < info.Version {
 		cs.cachedTopNCands = append(cs.cachedTopNCands, info)
 	}
 }
 
 // GetTopNCandidatorsByVersion method
-func (cs *ConsensusState) GetTopNCandidatorsByVersion(version int64)(info *dty.TopNCandidators) {
-	if len(cs.cachedTopNCands) == 0 || cs.cachedTopNCands[len(cs.cachedTopNCands) - 1].Version < version{
+func (cs *ConsensusState) GetTopNCandidatorsByVersion(version int64) (info *dty.TopNCandidators) {
+	if len(cs.cachedTopNCands) == 0 || cs.cachedTopNCands[len(cs.cachedTopNCands)-1].Version < version {
 		info, err := cs.client.QueryTopNCandidators(version)
 		if err == nil && info != nil {
 			if info.Status == dty.TopNCandidatorsVoteMajorOK {
@@ -649,7 +641,7 @@ func (cs *ConsensusState) GetTopNCandidatorsByVersion(version int64)(info *dty.T
 		return nil
 	}
 
-	for i := len(cs.cachedTopNCands) - 1 ; i >= 0 ; i-- {
+	for i := len(cs.cachedTopNCands) - 1; i >= 0; i-- {
 		if cs.cachedTopNCands[i].Version == version {
 			return cs.cachedTopNCands[i]
 		} else if cs.cachedTopNCands[i].Version < version {
@@ -661,10 +653,10 @@ func (cs *ConsensusState) GetTopNCandidatorsByVersion(version int64)(info *dty.T
 }
 
 // GetLastestTopNCandidators method
-func (cs *ConsensusState) GetLastestTopNCandidators()(info *dty.TopNCandidators) {
+func (cs *ConsensusState) GetLastestTopNCandidators() (info *dty.TopNCandidators) {
 	length := len(cs.cachedTopNCands)
 	if length > 0 {
-		return  cs.cachedTopNCands[length -1]
+		return cs.cachedTopNCands[length-1]
 	}
 
 	return nil
@@ -701,7 +693,7 @@ func (cs *ConsensusState) IsInTopN(info *dty.TopNCandidators) bool {
 }
 
 // InitCycleBoundaryInfo method
-func (cs *ConsensusState) InitCycleBoundaryInfo(task Task){
+func (cs *ConsensusState) InitCycleBoundaryInfo(task Task) {
 	info, err := cs.QueryCycleBoundaryInfo(task.Cycle)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
@@ -727,16 +719,16 @@ func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
 	}
 
 	oldestCycle := int64(0)
-	for k, _ := range cs.cycleBoundaryMap {
+	for k := range cs.cycleBoundaryMap {
 		if k == info.Cycle {
 			cs.cycleBoundaryMap[info.Cycle] = info
 			return
-		} else {
-			if oldestCycle == 0 {
-				oldestCycle = k
-			} else if oldestCycle > k {
-				oldestCycle = k
-			}
+		}
+
+		if oldestCycle == 0 {
+			oldestCycle = k
+		} else if oldestCycle > k {
+			oldestCycle = k
 		}
 	}
 
@@ -749,7 +741,7 @@ func (cs *ConsensusState) UpdateCBInfo(info *dty.DposCBInfo) {
 
 // GetCBInfoByCircle method
 func (cs *ConsensusState) GetCBInfoByCircle(cycle int64) (info *dty.DposCBInfo) {
-	if v, ok := cs.cycleBoundaryMap[cycle];ok {
+	if v, ok := cs.cycleBoundaryMap[cycle]; ok {
 		info = v
 		return info
 	}
@@ -791,10 +783,10 @@ func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
 	buf := new(bytes.Buffer)
 
 	canonical := dty.CanonicalOnceCBInfo{
-		Cycle: info.Cycle,
+		Cycle:      info.Cycle,
 		StopHeight: info.StopHeight,
-		StopHash: info.StopHash,
-		Pubkey: info.Pubkey,
+		StopHash:   info.StopHash,
+		Pubkey:     info.Pubkey,
 	}
 
 	byteCB, err := json.Marshal(&canonical)
@@ -821,10 +813,10 @@ func (cs *ConsensusState) VerifyCBInfo(info *dty.DposCBInfo) bool {
 func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	canonical := dty.CanonicalOnceCBInfo{
-		Cycle: info.Cycle,
+		Cycle:      info.Cycle,
 		StopHeight: info.StopHeight,
-		StopHash: info.StopHash,
-		Pubkey: info.Pubkey,
+		StopHash:   info.StopHash,
+		Pubkey:     info.Pubkey,
 	}
 
 	byteCB, err := json.Marshal(&canonical)
@@ -836,26 +828,26 @@ func (cs *ConsensusState) SendCBTx(info *dty.DposCBInfo) bool {
 	if err != nil {
 		dposlog.Error("SignCBInfo failed.", "err", err)
 		return false
-	} else {
-		info.Signature = hex.EncodeToString(sig.Bytes())
-		tx, err := cs.client.CreateRecordCBTx(info)
-		if err != nil {
-			dposlog.Error("CreateRecordCBTx failed.", "err", err)
-			return false
-		} else {
-			cs.privValidator.SignTx(tx)
-			dposlog.Info("Sign RecordCBTx ok.")
-			//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
-			msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
-			err = cs.client.GetQueueClient().Send(msg, false)
-			if err != nil {
-				dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
-				return false
-			} else {
-				dposlog.Info("Send RecordCBTx to mempool ok.")
-			}
-		}
 	}
+
+	info.Signature = hex.EncodeToString(sig.Bytes())
+	tx, err := cs.client.CreateRecordCBTx(info)
+	if err != nil {
+		dposlog.Error("CreateRecordCBTx failed.", "err", err)
+		return false
+	}
+
+	cs.privValidator.SignTx(tx)
+	dposlog.Info("Sign RecordCBTx ok.")
+	//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+	msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+	err = cs.client.GetQueueClient().Send(msg, false)
+	if err != nil {
+		dposlog.Error("Send RecordCBTx to mempool failed.", "err", err)
+		return false
+	}
+
+	dposlog.Info("Send RecordCBTx to mempool ok.")
 
 	return true
 }
@@ -866,19 +858,18 @@ func (cs *ConsensusState) SendRegistVrfMTx(info *dty.DposVrfMRegist) bool {
 	if err != nil {
 		dposlog.Error("CreateRegVrfMTx failed.", "err", err)
 		return false
-	} else {
-		cs.privValidator.SignTx(tx)
-		dposlog.Info("Sign RegistVrfMTx ok.")
-		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
-		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
-		err = cs.client.GetQueueClient().Send(msg, false)
-		if err != nil {
-			dposlog.Error("Send RegistVrfMTx to mempool failed.", "err", err)
-			return false
-		} else {
-			dposlog.Info("Send RegistVrfMTx to mempool ok.")
-		}
 	}
+	cs.privValidator.SignTx(tx)
+	dposlog.Info("Sign RegistVrfMTx ok.")
+	//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+	msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+	err = cs.client.GetQueueClient().Send(msg, false)
+	if err != nil {
+		dposlog.Error("Send RegistVrfMTx to mempool failed.", "err", err)
+		return false
+	}
+
+	dposlog.Info("Send RegistVrfMTx to mempool ok.")
 
 	return true
 }
@@ -889,19 +880,19 @@ func (cs *ConsensusState) SendRegistVrfRPTx(info *dty.DposVrfRPRegist) bool {
 	if err != nil {
 		dposlog.Error("CreateRegVrfRPTx failed.", "err", err)
 		return false
-	} else {
-		cs.privValidator.SignTx(tx)
-		dposlog.Info("Sign RegVrfRPTx ok.")
-		//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
-		msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
-		err = cs.client.GetQueueClient().Send(msg, false)
-		if err != nil {
-			dposlog.Error("Send RegVrfRPTx to mempool failed.", "err", err)
-			return false
-		} else {
-			dposlog.Info("Send RegVrfRPTx to mempool ok.", "err", err)
-		}
 	}
+
+	cs.privValidator.SignTx(tx)
+	dposlog.Info("Sign RegVrfRPTx ok.")
+	//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+	msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+	err = cs.client.GetQueueClient().Send(msg, false)
+	if err != nil {
+		dposlog.Error("Send RegVrfRPTx to mempool failed.", "err", err)
+		return false
+	}
+
+	dposlog.Info("Send RegVrfRPTx to mempool ok.", "err", err)
 
 	return true
 }
@@ -924,7 +915,7 @@ func (cs *ConsensusState) QueryVrf(pubkey []byte, cycle int64) (info *dty.VrfInf
 }
 
 // InitCycleVrfInfo method
-func (cs *ConsensusState) InitCycleVrfInfo(task Task){
+func (cs *ConsensusState) InitCycleVrfInfo(task Task) {
 	info, err := cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.Cycle)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
@@ -932,7 +923,7 @@ func (cs *ConsensusState) InitCycleVrfInfo(task Task){
 		return
 	}
 
-	info, err = cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.Cycle - 1)
+	info, err = cs.QueryVrf(cs.privValidator.GetPubKey().Bytes(), task.Cycle-1)
 	if err == nil && info != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfo(info)
@@ -941,7 +932,7 @@ func (cs *ConsensusState) InitCycleVrfInfo(task Task){
 	return
 }
 
-// UpdateCBInfo method
+// UpdateVrfInfo method
 func (cs *ConsensusState) UpdateVrfInfo(info *dty.VrfInfo) {
 	valueNumber := len(cs.vrfInfoMap)
 	if valueNumber == 0 {
@@ -950,16 +941,16 @@ func (cs *ConsensusState) UpdateVrfInfo(info *dty.VrfInfo) {
 	}
 
 	oldestCycle := int64(0)
-	for k, _ := range cs.vrfInfoMap {
+	for k := range cs.vrfInfoMap {
 		if k == info.Cycle {
 			cs.vrfInfoMap[info.Cycle] = info
 			return
-		} else {
-			if oldestCycle == 0 {
-				oldestCycle = k
-			} else if oldestCycle > k {
-				oldestCycle = k
-			}
+		}
+
+		if oldestCycle == 0 {
+			oldestCycle = k
+		} else if oldestCycle > k {
+			oldestCycle = k
 		}
 	}
 
@@ -970,13 +961,13 @@ func (cs *ConsensusState) UpdateVrfInfo(info *dty.VrfInfo) {
 	cs.vrfInfoMap[info.Cycle] = info
 }
 
-// GetCBInfoByCircle method
+// GetVrfInfoByCircle method
 func (cs *ConsensusState) GetVrfInfoByCircle(cycle int64, ty int) (info *dty.VrfInfo) {
-	if v, ok := cs.vrfInfoMap[cycle];ok {
+	if v, ok := cs.vrfInfoMap[cycle]; ok {
 		info = v
 		if VrfQueryTypeM == ty && len(info.M) > 0 {
 			return info
-		} else if VrfQueryTypeRP == ty && len(info.M) > 0 && len(info.R) >0 && len(info.P) > 0 {
+		} else if VrfQueryTypeRP == ty && len(info.M) > 0 && len(info.R) > 0 && len(info.P) > 0 {
 			return info
 		}
 	}
@@ -989,7 +980,6 @@ func (cs *ConsensusState) GetVrfInfoByCircle(cycle int64, ty int) (info *dty.Vrf
 
 	return nil
 }
-
 
 // QueryVrfs method
 func (cs *ConsensusState) QueryVrfs(set *ttypes.ValidatorSet, cycle int64) (infos []*dty.VrfInfo, err error) {
@@ -1006,10 +996,9 @@ func (cs *ConsensusState) QueryVrfs(set *ttypes.ValidatorSet, cycle int64) (info
 	return infos, nil
 }
 
-
-// InitCycleVrfInfo method
-func (cs *ConsensusState) InitCycleVrfInfos(task Task){
-	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, task.Cycle - 1)
+// InitCycleVrfInfos method
+func (cs *ConsensusState) InitCycleVrfInfos(task Task) {
+	infos, err := cs.QueryVrfs(cs.validatorMgr.Validators, task.Cycle-1)
 	if err == nil && infos != nil {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfos(task.Cycle, infos)
@@ -1018,7 +1007,7 @@ func (cs *ConsensusState) InitCycleVrfInfos(task Task){
 	return
 }
 
-// UpdateCBInfo method
+// UpdateVrfInfos method
 func (cs *ConsensusState) UpdateVrfInfos(cycle int64, infos []*dty.VrfInfo) {
 	if len(cs.validatorMgr.Validators.Validators) != len(infos) {
 		return
@@ -1037,16 +1026,16 @@ func (cs *ConsensusState) UpdateVrfInfos(cycle int64, infos []*dty.VrfInfo) {
 	}
 
 	oldestCycle := int64(0)
-	for k, _ := range cs.vrfInfosMap {
+	for k := range cs.vrfInfosMap {
 		if k == cycle {
 			cs.vrfInfosMap[cycle] = infos
 			return
-		} else {
-			if oldestCycle == 0 {
-				oldestCycle = k
-			} else if oldestCycle > k {
-				oldestCycle = k
-			}
+		}
+
+		if oldestCycle == 0 {
+			oldestCycle = k
+		} else if oldestCycle > k {
+			oldestCycle = k
 		}
 	}
 
@@ -1059,7 +1048,7 @@ func (cs *ConsensusState) UpdateVrfInfos(cycle int64, infos []*dty.VrfInfo) {
 
 // GetVrfInfosByCircle method
 func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (infos []*dty.VrfInfo) {
-	if v, ok := cs.vrfInfosMap[cycle];ok {
+	if v, ok := cs.vrfInfosMap[cycle]; ok {
 		infos = v
 		return infos
 	}
@@ -1074,7 +1063,7 @@ func (cs *ConsensusState) GetVrfInfosByCircle(cycle int64) (infos []*dty.VrfInfo
 }
 
 // ShuffleValidators method
-func (cs *ConsensusState) ShuffleValidators(cycle int64){
+func (cs *ConsensusState) ShuffleValidators(cycle int64) {
 	if shuffleType == dposShuffleTypeFixOrderByAddr {
 		dposlog.Info("ShuffleType FixOrderByAddr,so do nothing", "cycle", cycle)
 
@@ -1147,11 +1136,11 @@ func (cs *ConsensusState) ShuffleValidators(cycle int64){
 	cs.validatorMgr.ShuffleCycle = cycle
 	cs.validatorMgr.ShuffleType = ShuffleTypePartVrf
 
-	for i := 0; i < len(set); i ++ {
+	for i := 0; i < len(set); i++ {
 		//如果节点信息不在VrfValidators，则说明没有完整的VRF信息，将被放入NoVrfValidators中
 		if !isValidatorExist(set[i].PubKey, vrfValidators) {
 			item := &ttypes.Validator{
-				PubKey: set[i].PubKey,
+				PubKey:  set[i].PubKey,
 				Address: set[i].Address,
 			}
 
@@ -1172,7 +1161,7 @@ func isValidVrfInfo(info *dty.VrfInfo) bool {
 	return false
 }
 
-func isValidatorExist(pubkey []byte ,set []*ttypes.Validator) bool {
+func isValidatorExist(pubkey []byte, set []*ttypes.Validator) bool {
 	for i := 0; i < len(set); i++ {
 		if bytes.Equal(pubkey, set[i].PubKey) {
 			return true
@@ -1183,16 +1172,16 @@ func isValidatorExist(pubkey []byte ,set []*ttypes.Validator) bool {
 }
 
 // VrfEvaluate method
-func (cs *ConsensusState) VrfEvaluate(input []byte)(hash [32]byte, proof []byte) {
+func (cs *ConsensusState) VrfEvaluate(input []byte) (hash [32]byte, proof []byte) {
 	return cs.privValidator.VrfEvaluate(input)
 }
 
-// VrfEvaluate method
-func (cs *ConsensusState) VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool{
+// VrfProof method
+func (cs *ConsensusState) VrfProof(pubkey []byte, input []byte, hash [32]byte, proof []byte) bool {
 	return cs.privValidator.VrfProof(pubkey, input, hash, proof)
 }
 
-// SendCBTx method
+// SendTopNRegistTx method
 func (cs *ConsensusState) SendTopNRegistTx(reg *dty.TopNCandidatorRegist) bool {
 	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	obj := dty.CanonicalTopNCandidator(reg.Cand)
@@ -1208,26 +1197,25 @@ func (cs *ConsensusState) SendTopNRegistTx(reg *dty.TopNCandidatorRegist) bool {
 	if err != nil {
 		dposlog.Error("TopNCandidator failed.", "err", err)
 		return false
-	} else {
-		reg.Cand.Signature = sig.Bytes()
-		tx, err := cs.client.CreateTopNRegistTx(reg)
-		if err != nil {
-			dposlog.Error("CreateTopNRegistTx failed.", "err", err)
-			return false
-		} else {
-			cs.privValidator.SignTx(tx)
-			dposlog.Info("Sign TopNRegistTx ok.")
-			//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
-			msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
-			err = cs.client.GetQueueClient().Send(msg, false)
-			if err != nil {
-				dposlog.Error("Send TopNRegistTx to mempool failed.", "err", err)
-				return false
-			} else {
-				dposlog.Info("Send TopNRegistTx to mempool ok.")
-			}
-		}
 	}
+
+	reg.Cand.Signature = sig.Bytes()
+	tx, err := cs.client.CreateTopNRegistTx(reg)
+	if err != nil {
+		dposlog.Error("CreateTopNRegistTx failed.", "err", err)
+		return false
+	}
+
+	cs.privValidator.SignTx(tx)
+	dposlog.Info("Sign TopNRegistTx ok.")
+	//将交易发往交易池中，方便后续重启或者新加入的超级节点查询
+	msg := cs.client.GetQueueClient().NewMessage("mempool", types.EventTx, tx)
+	err = cs.client.GetQueueClient().Send(msg, false)
+	if err != nil {
+		dposlog.Error("Send TopNRegistTx to mempool failed.", "err", err)
+		return false
+	}
+	dposlog.Info("Send TopNRegistTx to mempool ok.")
 
 	return true
 }

@@ -17,7 +17,7 @@ func init() {
 	types.RegisterDappFork(DPosX, "Enable", 0)
 }
 
-// GuessType struct
+// DPosType struct
 type DPosType struct {
 	types.ExecTypeBase
 }
@@ -37,15 +37,15 @@ func (t *DPosType) GetPayload() types.Message {
 // GetTypeMap method
 func (t *DPosType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Regist":         DposVoteActionRegist,
-		"CancelRegist":   DposVoteActionCancelRegist,
-		"ReRegist":       DposVoteActionReRegist,
-		"Vote":           DposVoteActionVote,
-		"CancelVote":     DposVoteActionCancelVote,
-		"RegistVrfM":     DposVoteActionRegistVrfM,
-		"RegistVrfRP":    DposVoteActionRegistVrfRP,
-		"RecordCB":       DposVoteActionRecordCB,
-		"RegistTopN":     DPosVoteActionRegistTopNCandidator,
+		"Regist":       DposVoteActionRegist,
+		"CancelRegist": DposVoteActionCancelRegist,
+		"ReRegist":     DposVoteActionReRegist,
+		"Vote":         DposVoteActionVote,
+		"CancelVote":   DposVoteActionCancelVote,
+		"RegistVrfM":   DposVoteActionRegistVrfM,
+		"RegistVrfRP":  DposVoteActionRegistVrfRP,
+		"RecordCB":     DposVoteActionRecordCB,
+		"RegistTopN":   DPosVoteActionRegistTopNCandidator,
 	}
 }
 
@@ -57,9 +57,9 @@ func (t *DPosType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogCandicatorCancelVoted:  {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorCancelVoted"},
 		TyLogCandicatorCancelRegist: {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorCancelRegist"},
 		TyLogCandicatorReRegist:     {Ty: reflect.TypeOf(ReceiptCandicator{}), Name: "TyLogCandicatorReRegist"},
-		TyLogVrfMRegist:             {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfMRegist"},
-		TyLogVrfRPRegist:            {Ty: reflect.TypeOf(ReceiptVrf{}),        Name: "TyLogVrfRPRegist"},
-		TyLogCBInfoRecord:           {Ty: reflect.TypeOf(ReceiptCB{}),         Name: "TyLogCBInfoRecord"},
-		TyLogTopNCandidatorRegist:   {Ty: reflect.TypeOf(ReceiptTopN{}),       Name: "TyLogTopNCandidatorRegist"},
+		TyLogVrfMRegist:             {Ty: reflect.TypeOf(ReceiptVrf{}), Name: "TyLogVrfMRegist"},
+		TyLogVrfRPRegist:            {Ty: reflect.TypeOf(ReceiptVrf{}), Name: "TyLogVrfRPRegist"},
+		TyLogCBInfoRecord:           {Ty: reflect.TypeOf(ReceiptCB{}), Name: "TyLogCBInfoRecord"},
+		TyLogTopNCandidatorRegist:   {Ty: reflect.TypeOf(ReceiptTopN{}), Name: "TyLogTopNCandidatorRegist"},
 	}
 }
