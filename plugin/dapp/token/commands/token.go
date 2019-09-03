@@ -45,6 +45,7 @@ func TokenCmd() *cobra.Command {
 		CreateRawTokenMintTxCmd(),
 		CreateRawTokenBurnTxCmd(),
 		GetTokenLogsCmd(),
+		GetTokenCmd(),
 	)
 
 	return cmd
@@ -582,4 +583,53 @@ func getTokenLogs(cmd *cobra.Command, args []string) {
 func getTokenLogsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	cmd.MarkFlagRequired("symbol")
+}
+
+// GetTokenCmd get token
+func GetTokenCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_token",
+		Short: "Get token info",
+		Run:   getToken,
+	}
+	addGetTokenFlags(cmd)
+	return cmd
+}
+func addGetTokenFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func getToken(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	var reqtoken types.ReqString
+	reqtoken.Data = symbol
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = getRealExecName(paraName, "token")
+	params.FuncName = "GetTokenInfo"
+	params.Payload = types.MustPBToJSON(&reqtoken)
+	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	var res tokenty.LocalToken
+	err = rpc.Call("Chain33.Query", params, &res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	data, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	fmt.Println(string(data))
 }
