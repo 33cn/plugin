@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -186,8 +185,8 @@ func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.K
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propRuleTx(parm *auty.ProposalRule) (*types.Transaction, error) {
@@ -236,8 +235,8 @@ func revokeProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
 	// check rule
 	au := &Autonomy{
 		drivers.DriverBase{},
@@ -356,9 +355,9 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propRuleID(proposalID))
@@ -447,9 +446,9 @@ func terminateProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Balance)
 
 	// check rule
@@ -591,9 +590,9 @@ func TestTransfer(t *testing.T) {
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, total-types.Coin*190, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, types.Coin*190, account.Balance)
 }
 

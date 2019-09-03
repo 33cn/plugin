@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -254,8 +253,8 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount+testFundAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
@@ -305,8 +304,8 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, testFundAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
 	// check Project
 	au := &Autonomy{
 		drivers.DriverBase{},
@@ -446,12 +445,12 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(AddrD)
-	assert.Equal(t, total+testProjectAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, testFundAmount+proposalAmount-testProjectAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount - testProjectAmount, account.Balance)
+	account = accCoin.LoadExecAccount(AddrD, autonomyAddr)
+	assert.Equal(t, testProjectAmount, account.Balance)
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())
 	assert.NoError(t, err)
@@ -563,12 +562,12 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(AddrD)
-	assert.Equal(t, total, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, testFundAmount+proposalAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(AddrD, autonomyAddr)
+	assert.Equal(t, int64(0), account.Balance)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount, account.Balance)
 
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())
@@ -641,10 +640,8 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, testFundAmount+proposalAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
 
 	// check Project
 	au := &Autonomy{

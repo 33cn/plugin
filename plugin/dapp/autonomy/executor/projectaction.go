@@ -68,10 +68,10 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	// 提案金
-	receipt, err := a.coinsAccount.Transfer(a.fromaddr, a.execaddr, rule.ProposalAmount)
+	// 冻结提案金
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, rule.ProposalAmount)
 	if err != nil {
-		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer proposal amount", rule.ProposalAmount, "error", err)
+		alog.Error("propProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen proposal amount", rule.ProposalAmount, "error", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -138,10 +138,10 @@ func (a *action) rvkPropProject(rvkProb *auty.RevokeProposalProject) (*types.Rec
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	// 提案金
-	receipt, err := a.coinsAccount.Transfer(a.execaddr, a.fromaddr, cur.CurRule.ProposalAmount)
+	// 解冻提案金
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, cur.CurRule.ProposalAmount)
 	if err != nil {
-		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.CurRule.ProposalAmount, "err", err)
+		alog.Error("rvkPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecActive amount", cur.CurRule.ProposalAmount, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -221,6 +221,17 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
+	// 首次进入投票期,即将提案金转入自治系统地址
+	if cur.Status == auty.AutonomyStatusProposalProject {
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
+		if err != nil {
+			alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
 	if cur.BoardVoteRes.TotalVotes != 0 &&
 		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 		cur.BoardVoteRes.Pass = true
@@ -237,11 +248,22 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 		} else {
 			cur.Status = auty.AutonomyStatusTmintPropProject
 			// 提案通过，将工程金额从基金付款给承包商
-			receipt, err := a.coinsAccount.Transfer(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
-			if err != nil {
-				alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
-				return nil, err
+			var receipt *types.Receipt
+			acc := a.coinsAccount.LoadExecAccount(a.execaddr, a.execaddr)
+			if acc != nil && acc.Balance > cur.PropProject.Amount { // 先从合约的合约地址扣除
+				receipt, err = a.coinsAccount.ExecTransfer(a.execaddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+				if err != nil {
+					alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.PropProject.Amount)
+					return nil, err
+				}
+			} else {
+				receipt, err = a.coinsAccount.ExecDeposit(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
+				if err != nil {
+					alog.Error("votePropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
+					return nil, err
+				}
 			}
+
 			logs = append(logs, receipt.Logs...)
 			kv = append(kv, receipt.KV...)
 			// 需要更新该董事会的累计审批金
@@ -441,14 +463,36 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
+	// 如果为提案状态，则判断是否需要扣除提案费
+	if cur.Status == auty.AutonomyStatusProposalProject && a.height > end {
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
+		if err != nil {
+			alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
+	}
+
 	if (cur.PubVote.Publicity && cur.PubVote.PubPass) || // 需要公示且公示通过
 		(!cur.PubVote.Publicity && cur.BoardVoteRes.Pass) { // 不需要公示且董事会通过
 		// 提案通过，将工程金额从基金付款给承包商
-		receipt, err := a.coinsAccount.Transfer(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
-		if err != nil {
-			alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
-			return nil, err
+		var receipt *types.Receipt
+		acc := a.coinsAccount.LoadExecAccount(a.execaddr, a.execaddr)
+		if acc != nil && acc.Balance > cur.PropProject.Amount { // 先从合约的合约地址扣除
+			receipt, err = a.coinsAccount.ExecTransfer(a.execaddr, cur.PropProject.ToAddr, a.execaddr, cur.PropProject.Amount)
+			if err != nil {
+				alog.Error("tmintPropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "Transfer amount", cur.PropProject.Amount)
+				return nil, err
+			}
+		} else {
+			receipt, err = a.coinsAccount.ExecDeposit(a.execaddr, cur.PropProject.ToAddr, cur.PropProject.Amount)
+			if err != nil {
+				alog.Error("tmintPropProject ", "addr", cur.Address, "execaddr", a.execaddr, "Transfer to contractor project amount fail", err)
+				return nil, err
+			}
 		}
+
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 		// 需要更新该董事会的累计审批金

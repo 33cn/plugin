@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
@@ -157,7 +156,7 @@ func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	accCoin.SaveAccount(&accountA)
-	accCoin.SaveExecAccount(address.ExecAddress(auty.AutonomyX), &accountA)
+	accCoin.SaveExecAccount(autonomyAddr, &accountA)
 	accCoin.SaveAccount(&accountB)
 	accCoin.SaveAccount(&accountC)
 	accCoin.SaveAccount(&accountD)
@@ -321,8 +320,8 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -371,8 +370,8 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, int64(0), account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, error) {
@@ -477,9 +476,9 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
@@ -554,10 +553,10 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadAccount(AddrA)
-	assert.Equal(t, total-proposalAmount, account.Balance)
-	account = accCoin.LoadAccount(address.ExecAddress(auty.AutonomyX))
-	assert.Equal(t, proposalAmount, account.Balance)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
 }
 
 func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transaction, error) {
