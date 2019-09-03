@@ -448,7 +448,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount - testProjectAmount, account.Balance)
+	assert.Equal(t, proposalAmount-testProjectAmount, account.Balance)
 	account = accCoin.LoadExecAccount(AddrD, autonomyAddr)
 	assert.Equal(t, testProjectAmount, account.Balance)
 	// 更新董事会累计审批金
