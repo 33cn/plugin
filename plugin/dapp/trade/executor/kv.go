@@ -72,11 +72,6 @@ func calcOnesSellOrderPrefixStatus(addr string, status int32) []byte {
 	return []byte(fmt.Sprintf(sellOrderASTS+"%s:%d", addr, status))
 }
 
-// 特定状态下的卖单
-//func calcTokenSellOrderPrefixStatus(status int32) []byte {
-//	return []byte(fmt.Sprintf(sellOrderSHTAS+"%d", status))
-//}
-
 // ids
 func calcTokenSellID(hash string) string {
 	return sellIDPrefix + hash
@@ -140,10 +135,6 @@ func calcOnesBuyOrderPrefixStatus(addr string, status int32) []byte {
 //  目前页面是按addr， 状态来
 func calcOnesOrderKey(addr string, status int32, ty int32, height int64, key string) []byte {
 	return []byte(fmt.Sprintf(orderASTHK+"%s:%d:%010d:%d:%s", addr, status, height, ty, key))
-}
-
-func calcOnesOrderPrefixStatus(addr string, status int32) []byte {
-	return []byte(fmt.Sprintf(orderASTHK+"%s:%d:", addr, status))
 }
 
 // 特定状态下的买单
