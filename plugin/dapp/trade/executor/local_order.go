@@ -193,6 +193,8 @@ func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 		IsSellOrder:       true,
 		AssetExec:         sellorder.AssetExec,
 		IsFinished:        false,
+		PriceExec:         sellorder.PriceExec,
+		PriceSymbol:       sellorder.PriceSymbol,
 	}
 	return order
 }
@@ -290,7 +292,9 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 		IsSellOrder:       true,
 		AssetExec:         sell.AssetExec,
 
-		IsFinished: true,
+		IsFinished:  true,
+		PriceExec:   sell.PriceExec,
+		PriceSymbol: sell.PriceSymbol,
 	}
 	return order
 }
@@ -316,6 +320,8 @@ func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIn
 		IsSellOrder:       false,
 		AssetExec:         buy.AssetExec,
 		IsFinished:        false,
+		PriceExec:         buy.PriceExec,
+		PriceSymbol:       buy.PriceSymbol,
 	}
 	return order
 }
@@ -389,6 +395,8 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		IsSellOrder:       true,
 		AssetExec:         buy.AssetExec,
 		IsFinished:        true,
+		PriceExec:         buy.PriceExec,
+		PriceSymbol:       buy.PriceSymbol,
 	}
 	return order
 }

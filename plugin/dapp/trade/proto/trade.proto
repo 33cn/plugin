@@ -317,6 +317,8 @@ message LocalOrder {
     string assetExec         = 16;
     string txIndex           = 17;
     bool   isFinished        = 18;
+    string priceExec = 19;
+    string priceSymbol = 20;
 }
 
 service trade {
