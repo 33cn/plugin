@@ -117,6 +117,8 @@ func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
 		BlockTime:         order.BlockTime,
 		IsSellOrder:       order.IsSellOrder,
 		AssetExec:         order.AssetExec,
+		PriceExec:         order.PriceExec,
+		PriceSymbol:       order.PriceSymbol,
 	}
 }
 
