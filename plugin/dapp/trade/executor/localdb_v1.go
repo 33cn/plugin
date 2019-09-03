@@ -13,7 +13,7 @@ import (
 
 // sell limit
 func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != defaultPriceExec {
+	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
 		return nil
 	}
 	status := sellorder.Status
@@ -58,7 +58,7 @@ func genSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status
 
 // buy market
 func saveBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != defaultPriceExec {
+	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
 		return nil
 	}
 
@@ -105,7 +105,7 @@ func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase
 
 // buy limit
 func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != defaultPriceExec {
+	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
 		return nil
 	}
 
@@ -151,7 +151,7 @@ func genBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder,
 
 // sell market
 func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != defaultPriceExec {
+	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
 		return nil
 	}
 	txhash := []byte(receipt.TxHash)
@@ -161,7 +161,7 @@ func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellB
 // delete part
 // sell limit
 func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != defaultPriceExec {
+	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
 		return nil
 	}
 	status := sellorder.Status
@@ -176,7 +176,7 @@ func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
 
 // buy market
 func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != defaultPriceExec {
+	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
 		return nil
 	}
 	return genBuyMarketOrderKeyValue(kv, receipt, status, height, nil)
@@ -184,7 +184,7 @@ func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyB
 
 // buy limit
 func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != defaultPriceExec {
+	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
 		return nil
 	}
 	status := buyOrder.Status
@@ -199,7 +199,7 @@ func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
 
 // sell market
 func deleteSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != defaultPriceExec {
+	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
 		return nil
 	}
 	return genSellMarketOrderKeyValue(kv, receipt, status, height, nil)
