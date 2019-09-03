@@ -184,6 +184,8 @@ func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 		Stoptime:          0,
 		Crowdfund:         false,
 		AssetExec:         parm.AssetExec,
+		PriceExec:         parm.PriceExec,
+		PriceSymbol:       parm.PriceSymbol,
 	}
 	sell := &Trade{
 		Ty:    TradeSellLimit,
@@ -231,6 +233,8 @@ func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error)
 		PricePerBoardlot:  parm.PricePerBoardlot,
 		TotalBoardlot:     parm.TotalBoardlot,
 		AssetExec:         parm.AssetExec,
+		PriceExec:         parm.PriceExec,
+		PriceSymbol:       parm.PriceSymbol,
 	}
 	buyLimit := &Trade{
 		Ty:    TradeBuyLimit,
