@@ -46,6 +46,7 @@ func TokenCmd() *cobra.Command {
 		CreateRawTokenBurnTxCmd(),
 		GetTokenLogsCmd(),
 		GetTokenCmd(),
+		QueryTxCmd(),
 	)
 
 	return cmd
@@ -632,4 +633,58 @@ func getToken(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println(string(data))
+}
+
+// QueryTxCmd get tx by address
+func QueryTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query_tx",
+		Short: "Query transaction by token symbol",
+		Run:   queryTx,
+	}
+	addQueryTxFlags(cmd)
+	return cmd
+}
+
+func addQueryTxFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "account address")
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Int32P("flag", "f", 0, "transaction type(0: all txs relevant to addr, 1: addr as sender, 2: addr as receiver) (default 0)")
+	cmd.Flags().Int32P("count", "c", 10, "maximum return number of transactions")
+	cmd.Flags().Int32P("direction", "d", 0, "query direction from height:index(0: positive order -1:negative order) (default 0)")
+	cmd.Flags().Int64P("height", "t", -1, "transaction's block height(-1: from latest txs, >=0: query from height)")
+	cmd.Flags().Int64P("index", "i", 0, "query from index of tx in block height[0-100000] (default 0)")
+}
+
+func queryTx(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+	flag, _ := cmd.Flags().GetInt32("flag")
+	count, _ := cmd.Flags().GetInt32("count")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	height, _ := cmd.Flags().GetInt64("height")
+	index, _ := cmd.Flags().GetInt64("index")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	req := tokenty.ReqTokenTx{
+		Symbol:    symbol,
+		Addr:      addr,
+		Flag:      flag,
+		Count:     count,
+		Direction: direction,
+		Height:    height,
+		Index:     index,
+	}
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = getRealExecName(paraName, "token")
+	params.FuncName = "GetTxByToken"
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res types.ReplyTxInfos
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }
