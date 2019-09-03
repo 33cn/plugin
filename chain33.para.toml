@@ -246,6 +246,7 @@ ForkTradeBuyLimit= 0
 ForkTradeAsset= 0
 ForkTradeID = 0
 ForkTradeFixAssetDB = 0
+ForkTradePrice = 0
 
 [fork.sub.paracross]
 Enable=0
