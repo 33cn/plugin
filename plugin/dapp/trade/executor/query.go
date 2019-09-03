@@ -428,40 +428,6 @@ func (t *trade) loadOrderFromKey(key []byte) *pty.ReplyTradeOrder {
 	return txResult2OrderReply(txResult)
 }
 
-func (t *trade) GetOnesOrderWithStatusV1(req *pty.ReqAddrAssets) (types.Message, error) {
-	fromKey := []byte("")
-	if len(req.FromKey) != 0 {
-		order := t.loadOrderFromKey([]byte(req.FromKey))
-		if order == nil {
-			tradelog.Error("GetOnesOrderWithStatus", "key not exist", req.FromKey)
-			return nil, types.ErrInvalidParam
-		}
-		st, ty := fromStatus(order.Status)
-		fromKey = calcOnesOrderKey(order.Owner, st, ty, order.Height, order.Key)
-	}
-
-	orderStatus, orderType := fromStatus(req.Status)
-	if orderStatus == orderStatusInvalid || orderType == orderTypeInvalid {
-		return nil, types.ErrInvalidParam
-	}
-
-	keys, err := t.GetLocalDB().List(calcOnesOrderPrefixStatus(req.Addr, orderStatus), fromKey, req.Count, req.Direction)
-	if err != nil {
-		return nil, err
-	}
-
-	var replys pty.ReplyTradeOrders
-	for _, key := range keys {
-		reply := t.loadOrderFromKey(key)
-		if reply != nil {
-			replys.Orders = append(replys.Orders, reply)
-			tradelog.Debug("trade Query", "height of key", reply.Height,
-				"len of reply.Selloders", len(replys.Orders))
-		}
-	}
-	return &replys, nil
-}
-
 func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	orderStatus, orderType := fromStatus(req.Status)
 	if orderStatus == orderStatusInvalid || orderType == orderTypeInvalid {
