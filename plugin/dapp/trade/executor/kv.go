@@ -151,7 +151,6 @@ func calcOnesOrderPrefixStatus(addr string, status int32) []byte {
 //	return []byte(fmt.Sprintf(buyOrderSHTAS+"%d", status))
 //}
 
-
 func genSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32,
 	height int64, value []byte) []*types.KeyValue {
 
@@ -195,5 +194,3 @@ func genSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBa
 func calcPriceOfToken(priceBoardlot, AmountPerBoardlot int64) int64 {
 	return 1e8 * priceBoardlot / AmountPerBoardlot
 }
-
-
