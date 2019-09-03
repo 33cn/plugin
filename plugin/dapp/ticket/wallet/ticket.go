@@ -299,18 +299,22 @@ func (policy *ticketPolicy) checkNeedFlushTicket(tx *types.Transaction, receipt 
 }
 
 func (policy *ticketPolicy) forceCloseTicket(height int64, minerAddr string) (*types.ReplyHashes, error) {
-	return policy.forceCloseAllTicket(height, minerAddr)
+	if minerAddr != "" {
+		return policy.forceCloseTicketByReturnAddr(height, minerAddr)
+	}
+
+	return policy.forceCloseAllTicket(height)
 }
 
-func (policy *ticketPolicy) forceCloseAllTicket(height int64, minerAddr string) (*types.ReplyHashes, error) {
-	var tlistMiner []*ty.Ticket
-	var err error
-	// get miner addr's tickets if any
-	if minerAddr != "" {
-		tlistMiner, err = policy.getForceCloseTickets(minerAddr)
-		if err != nil {
-			return nil, err
-		}
+//通过minerAddr地址找到绑定的ticket的returnAddr，通过returnAddr的私钥close ticket，防止miner的私钥丢失场景
+func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr string) (*types.ReplyHashes, error) {
+	tListMiner, err := policy.getForceCloseTickets(minerAddr)
+	if err != nil {
+		return nil, err
+	}
+	tListMap := make(map[string][]*ty.Ticket)
+	for _, ticket := range tListMiner {
+		tListMap[ticket.ReturnAddress] = append(tListMap[ticket.ReturnAddress], ticket)
 	}
 
 	keys, err := policy.getWalletOperate().GetAllPrivKeys()
@@ -320,9 +324,42 @@ func (policy *ticketPolicy) forceCloseAllTicket(height int64, minerAddr string) 
 
 	var hashes types.ReplyHashes
 	for _, key := range keys {
-		hash, err := policy.forceCloseTicketsByAddr(height, key, tlistMiner)
+		returnAddr := address.PubKeyToAddress(key.PubKey().Bytes()).String()
+		if len(tListMap[returnAddr]) == 0 {
+			continue
+		}
+		hash, err := policy.forceCloseTicketList(height, key, tListMap[returnAddr])
 		if err != nil {
-			bizlog.Error("forceCloseAllTicket", "forceCloseTicketsByAddr error", err)
+			bizlog.Error("forceCloseTicketByAddr", "error", err, "returnAddr", returnAddr, "minerAddr", minerAddr)
+			continue
+		}
+		if hash == nil {
+			continue
+		}
+		hashes.Hashes = append(hashes.Hashes, hash)
+	}
+	return &hashes, nil
+}
+
+func (policy *ticketPolicy) forceCloseAllTicket(height int64) (*types.ReplyHashes, error) {
+	var err error
+
+	keys, err := policy.getWalletOperate().GetAllPrivKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	var hashes types.ReplyHashes
+	for _, key := range keys {
+		addr := address.PubKeyToAddress(key.PubKey().Bytes()).String()
+		tlist, err := policy.getForceCloseTickets(addr)
+		if err != nil {
+			bizlog.Error("forceCloseAllTicket getTickets", "error", err, "addr", addr)
+			continue
+		}
+		hash, err := policy.forceCloseTicketList(height, key, tlist)
+		if err != nil {
+			bizlog.Error("forceCloseAllTicket", "error", err, "addr", addr)
 			continue
 		}
 		if hash == nil {
@@ -361,19 +398,7 @@ func (policy *ticketPolicy) getForceCloseTickets(addr string) ([]*ty.Ticket, err
 	return append(tlist1, tlist2...), nil
 }
 
-func (policy *ticketPolicy) forceCloseTicketsByAddr(height int64, priv crypto.PrivKey, tListMiner []*ty.Ticket) ([]byte, error) {
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
-	tlist, err := policy.getForceCloseTickets(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, ticket := range tListMiner {
-		if ticket.ReturnAddress == addr {
-			tlist = append(tlist, ticket)
-		}
-	}
-
+func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivKey, tlist []*ty.Ticket) ([]byte, error) {
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()

@@ -23,6 +23,7 @@ message Public2Privacy {
     int64         amount    = 2;
     string        note      = 5;
     PrivacyOutput output    = 7;
+    string        assetExec = 8;
 }
 
 message Privacy2Privacy {
@@ -31,6 +32,7 @@ message Privacy2Privacy {
     string        note      = 5;
     PrivacyInput  input     = 6;
     PrivacyOutput output    = 7;
+    string        assetExec = 8;
 }
 
 message Privacy2Public {
@@ -40,6 +42,7 @@ message Privacy2Public {
     string        to        = 6;
     PrivacyInput  input     = 4;
     PrivacyOutput output    = 5;
+    string        assetExec = 8;
 }
 
 message UTXOGlobalIndex {
@@ -191,18 +194,6 @@ message PrivacyAction4Print {
         Privacy2Public4Print  privacy2public  = 3;
     }
     int32 ty = 4;
-}
-
-message ReqCreateUTXOs {
-    // string viewPublic  = 1; //接收人可见公钥A
-    // string spendPublic = 2; //接收人花费公钥B
-    string tokenname  = 3;
-    int64  amount     = 4;
-    string note       = 5;
-    string sender     = 6; //发送人地址
-    int32  count      = 7;
-    string pubkeypair = 8;
-    int64  expire     = 9;
 }
 
 message ReplyPrivacyPkPair {
@@ -425,14 +416,13 @@ message ReqCreatePrivacyTx {
     string pubkeypair = 10;
     int32  mixcount   = 11;
     int64  expire     = 12;
+    string assetExec  = 13;
 }
 
 service privacy {
     // Privacy Trading
     // 显示指定地址的公钥对信息，可以作为后续交易参数
     rpc ShowPrivacyKey(ReqString) returns (ReplyPrivacyPkPair) {}
-    // 创建一系列UTXO
-    rpc CreateUTXOs(ReqCreateUTXOs) returns (Reply) {}
     // 扫描UTXO以及获取扫描UTXO后的状态
     rpc RescanUtxos(ReqRescanUtxos) returns (RepRescanUtxos) {}
     // 使能隐私账户

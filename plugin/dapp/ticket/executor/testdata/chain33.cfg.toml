@@ -175,8 +175,8 @@ signType="auth_ecdsa"
 
 [exec.sub.manage]
 superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S", 
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 
+    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 ]
 
@@ -203,6 +203,7 @@ ForkLocalDBAccess=-1 #fork 6.2
 ForkBlockCheck=-1 #fork 6.2
 ForkBase58AddressCheck=-1 #fork6.2
 ForkEnableParaRegExec=0
+ForkCacheDriver=0
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]

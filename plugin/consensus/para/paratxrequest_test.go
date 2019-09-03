@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/stretchr/testify/mock"
 
+	apimocks "github.com/33cn/chain33/client/mocks"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
@@ -39,10 +40,15 @@ func getPrivKey(t *testing.T) crypto.PrivKey {
 }
 
 func TestCalcCommitMsgTxs(t *testing.T) {
+	para := new(client)
+	para.subCfg = new(subConfig)
+
 	priKey := getPrivKey(t)
-	client := commitMsgClient{
+	client := &commitMsgClient{
 		privateKey: priKey,
+		paraClient: para,
 	}
+	para.commitMsgClient = client
 	nt1 := &pt.ParacrossNodeStatus{
 		Height: 1,
 		Title:  "user.p.para",
@@ -52,18 +58,18 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 		Title:  "user.p.para",
 	}
 	notify := []*pt.ParacrossNodeStatus{nt1}
-	tx, count, err := client.calcCommitMsgTxs(notify)
+	tx, count, err := client.calcCommitMsgTxs(notify, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 	assert.NotNil(t, tx)
 
 	notify = append(notify, nt2)
-	tx, count, err = client.calcCommitMsgTxs(notify)
+	tx, count, err = client.calcCommitMsgTxs(notify, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), count)
 	assert.NotNil(t, tx)
 
-	tx, err = client.singleCalcTx(nt2)
+	tx, err = client.singleCalcTx(nt2, 0)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 
@@ -71,6 +77,7 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 
 func TestGetConsensusStatus(t *testing.T) {
 	para := new(client)
+	para.subCfg = new(subConfig)
 	grpcClient := &typesmocks.Chain33Client{}
 	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
 	para.grpcClient = grpcClient
@@ -81,16 +88,21 @@ func TestGetConsensusStatus(t *testing.T) {
 		Height:     1,
 		MainHeight: 10,
 	}
+	getMockLastBlock(para, block)
+
+	api := &apimocks.QueueProtocolAPI{}
+	para.SetAPI(api)
 
 	status := &pt.ParacrossStatus{
 		Height: 1,
 	}
-	reply := &types.Reply{
-		IsOk: true,
-		Msg:  types.Encode(status),
-	}
-	grpcClient.On("QueryChain", mock.Anything, mock.Anything).Return(reply, nil).Once()
-	ret, err := commitCli.getConsensusStatus(block)
+
+	api.On("QueryChain", mock.Anything, mock.Anything, mock.Anything).Return(status, nil).Once()
+	detail := &types.BlockDetail{Block: block}
+	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
+
+	api.On("GetBlocks", mock.Anything).Return(details, nil).Once()
+	ret, err := commitCli.getSelfConsensusStatus()
 
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), ret.Height)
@@ -106,8 +118,8 @@ func TestSendCommitMsg(t *testing.T) {
 	commitCli.quit = make(chan struct{})
 
 	commitCli.paraClient.wg.Add(1)
-	sendMsgCh := make(chan *types.Transaction, 1)
-	go commitCli.sendCommitMsg(sendMsgCh)
+	commitCli.sendMsgCh = make(chan *types.Transaction, 1)
+	go commitCli.sendCommitMsg()
 
 	//reply := &types.Reply{
 	//	IsOk: true,
@@ -116,10 +128,82 @@ func TestSendCommitMsg(t *testing.T) {
 	grpcClient.On("SendTransaction", mock.Anything, mock.Anything).Return(nil, types.ErrNotFound).Twice()
 	tx := &types.Transaction{}
 
-	sendMsgCh <- tx
+	commitCli.sendMsgCh <- tx
 	time.Sleep(3 * time.Second)
 
 	//para.BaseClient.Close()
 	close(commitCli.quit)
 
+}
+
+func TestVerifyMainBlocks(t *testing.T) {
+	hash0 := []byte("0")
+	hash1 := []byte("1")
+	hash2 := []byte("2")
+	hash3 := []byte("3")
+	//hash4 := []byte("4")
+	//hash5 := []byte("5")
+	hash6 := []byte("6")
+
+	header1 := &types.Header{
+		ParentHash: hash0,
+		Hash:       hash1,
+	}
+	block1 := &types.ParaTxDetail{
+		Type:   types.AddBlock,
+		Header: header1,
+	}
+
+	header2 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash2,
+	}
+	block2 := &types.ParaTxDetail{
+		Type:   types.AddBlock,
+		Header: header2,
+	}
+
+	header3 := &types.Header{
+		ParentHash: hash2,
+		Hash:       hash3,
+	}
+	block3 := &types.ParaTxDetail{
+		Type:   types.AddBlock,
+		Header: header3,
+	}
+
+	//del3
+	header4 := &types.Header{
+		ParentHash: hash2,
+		Hash:       hash3,
+	}
+	block4 := &types.ParaTxDetail{
+		Type:   types.DelBlock,
+		Header: header4,
+	}
+	//del2
+	header5 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash2,
+	}
+	block5 := &types.ParaTxDetail{
+		Type:   types.DelBlock,
+		Header: header5,
+	}
+
+	header6 := &types.Header{
+		ParentHash: hash1,
+		Hash:       hash6,
+	}
+	block6 := &types.ParaTxDetail{
+		Type:   types.AddBlock,
+		Header: header6,
+	}
+
+	mainBlocks := &types.ParaTxDetails{
+		Items: []*types.ParaTxDetail{block1, block2, block3, block4, block5, block6},
+	}
+
+	err := verifyMainBlocks(hash0, mainBlocks)
+	assert.Equal(t, nil, err)
 }

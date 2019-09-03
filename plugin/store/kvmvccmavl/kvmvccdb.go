@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"time"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
@@ -26,7 +28,6 @@ const (
 )
 
 var (
-	maxRollbackNum = 200
 	// 是否开启裁剪
 	enablePrune bool
 	// 每个10000裁剪一次
@@ -98,7 +99,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 	values := make([][]byte, len(datas.Keys))
 	version, err := mvccs.mvcc.GetVersion(datas.StateHash)
 	if err != nil {
-		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash))
+		kmlog.Error("Get version by hash failed.", "hash", common.ToHex(datas.StateHash), "error:", err)
 		return values
 	}
 	for i := 0; i < len(datas.Keys); i++ {
@@ -116,7 +117,7 @@ func (mvccs *KVMVCCStore) Get(datas *types.StoreGet) [][]byte {
 func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc MemSet", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc MemSet", "cost", types.Since(beg))
 	}()
 	kvset, err := mvccs.checkVersion(datas.Height)
 	if err != nil {
@@ -150,7 +151,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 func (mvccs *KVMVCCStore) Commit(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("kvmvcc Commit", "cost", types.Since(beg))
+		kmlog.Debug("kvmvcc Commit", "cost", types.Since(beg))
 	}()
 	_, ok := mvccs.kvsetmap[string(req.Hash)]
 	if !ok {
@@ -183,7 +184,7 @@ func (mvccs *KVMVCCStore) CommitUpgrade(req *types.ReqHash) ([]byte, error) {
 			batch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	batch.Write()
+	dbm.MustWrite(batch)
 	delete(mvccs.kvsetmap, string(req.Hash))
 	return req.Hash, nil
 }
@@ -237,14 +238,34 @@ func (mvccs *KVMVCCStore) ProcEvent(msg queue.Message) {
 
 // Del set kvs to nil with StateHash
 func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
-	kvset, err := mvccs.mvcc.DelMVCC(req.StateHash, req.Height, true)
+	maxVersion, err := mvccs.mvcc.GetMaxVersion()
 	if err != nil {
-		kmlog.Error("store kvmvcc del", "err", err)
-		return nil, err
+		kmlog.Error("store kvmvcc GetMaxVersion failed", "err", err)
+		if err != types.ErrNotFound {
+			panic(err)
+		} else {
+			maxVersion = -1
+			return nil, err
+		}
 	}
-
-	kmlog.Info("KVMVCCStore Del", "hash", common.ToHex(req.StateHash), "height", req.Height)
-	mvccs.saveKVSets(kvset, mvccs.sync)
+	var kvset []*types.KeyValue
+	for i := maxVersion; i >= req.Height; i-- {
+		hash, err := mvccs.mvcc.GetVersionHash(i)
+		if err != nil {
+			kmlog.Warn("store kvmvcc Del GetVersionHash failed", "height", i, "maxVersion", maxVersion)
+			continue
+		}
+		kvlist, err := mvccs.mvcc.DelMVCC(hash, i, true)
+		if err != nil {
+			kmlog.Warn("store kvmvcc Del DelMVCC failed", "height", i, "err", err)
+			continue
+		}
+		kvset = append(kvset, kvlist...)
+		kmlog.Debug("store kvmvcc Del DelMVCC4Height", "height", i, "maxVersion", maxVersion)
+	}
+	if len(kvset) > 0 {
+		mvccs.saveKVSets(kvset, mvccs.sync)
+	}
 	return req.StateHash, nil
 }
 
@@ -262,7 +283,7 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 			storeBatch.Set(kvset[i].Key, kvset[i].Value)
 		}
 	}
-	storeBatch.Write()
+	dbm.MustWrite(storeBatch)
 }
 
 // GetMaxVersion 获取当前最大高度
@@ -291,7 +312,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 	} else if maxVersion == height-1 {
 		return nil, nil
 	} else {
-		count := 1
 		for i := maxVersion; i >= height; i-- {
 			hash, err := mvccs.mvcc.GetVersionHash(i)
 			if err != nil {
@@ -306,11 +326,6 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			kvset = append(kvset, kvlist...)
 
 			kmlog.Debug("store kvmvcc checkVersion DelMVCC4Height", "height", i, "maxVersion", maxVersion)
-			//为避免高度差过大时出现异常，做一个保护，一次最多回滚200个区块
-			count++
-			if count >= maxRollbackNum {
-				break
-			}
 		}
 	}
 
@@ -342,7 +357,10 @@ func pruning(db dbm.DB, height int64) {
 func pruningMVCC(db dbm.DB, height int64) {
 	setPruning(pruningStateStart)
 	defer setPruning(pruningStateEnd)
+	start := time.Now()
 	pruningFirst(db, height)
+	end := time.Now()
+	kmlog.Debug("pruningMVCC", "height", height, "cost", end.Sub(start))
 }
 
 func pruningFirst(db dbm.DB, curHeight int64) {
@@ -395,7 +413,7 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 				if curHeight >= val+int64(pruneHeight) {
 					batch.Delete(genKeyVersion([]byte(key), val)) // 删除老版本key
 					if batch.ValueSize() > batchDataSize {
-						batch.Write()
+						dbm.MustWrite(batch)
 						batch.Reset()
 					}
 				}
@@ -403,7 +421,7 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 		}
 		delete(mp, key)
 	}
-	batch.Write()
+	dbm.MustWrite(batch)
 }
 
 func genKeyVersion(key []byte, height int64) []byte {

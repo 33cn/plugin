@@ -1,0 +1,86 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "lcommon.proto";
+
+package types;
+
+
+message AutonomyProposalChange {
+    ProposalChange  propChange  = 1;
+    // 投票该提案的规则
+    RuleConfig     curRule    = 2;
+    // 投票董事会
+    ActiveBoard    board      = 3;
+    // 全体持票人投票结果
+    VoteResult     voteResult = 4;
+    // 状态
+    int32          status     = 5;
+    string         address    = 6;
+    int64          height     = 7;
+    int32          index      = 8;
+    string         proposalID = 9;
+}
+
+// action
+message ProposalChange {
+    // 提案时间
+    int32 year  = 1;
+    int32 month = 2;
+    int32 day   = 3;
+
+    // 修改董事会成员
+    repeated Change Changes  = 4;
+
+	// 投票相关
+    int64 startBlockHeight   = 5; // 提案开始投票高度
+	int64 endBlockHeight     = 6; // 提案结束投票高度
+    int64 realEndBlockHeight = 7; // 实际提案结束投票高度
+}
+
+message Change {
+    // 1 取消 0 恢复
+    bool   cancel = 1;
+    string addr   = 2;
+}
+
+message RevokeProposalChange {
+    string proposalID = 1;
+}
+
+message VoteProposalChange {
+    string proposalID = 1;
+    bool   approve    = 2;
+}
+
+message TerminateProposalChange {
+    string proposalID = 1;
+}
+
+// receipt
+message ReceiptProposalChange {
+    AutonomyProposalChange prev    = 1;
+    AutonomyProposalChange current = 2;
+}
+
+message LocalProposalChange {
+    AutonomyProposalChange propBd = 1;
+    repeated string comments     = 2;
+}
+
+// query
+message ReqQueryProposalChange {
+    int32  status    = 1;
+    string addr      = 2;
+    int32  count     = 3;
+    int32  direction = 4;
+    int64  height    = 5;
+    int32  index     = 6;
+}
+
+message ReplyQueryProposalChange {
+    repeated AutonomyProposalChange  propChanges    = 1;
+}

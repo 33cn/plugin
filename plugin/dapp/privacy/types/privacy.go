@@ -205,3 +205,15 @@ func (action *PrivacyAction) GetTokenName() string {
 	}
 	return ""
 }
+
+// GetAssertExec get assert exec
+func (action *PrivacyAction) GetAssertExec() string {
+	if action.GetTy() == ActionPublic2Privacy && action.GetPublic2Privacy() != nil {
+		return action.GetPublic2Privacy().GetAssetExec()
+	} else if action.GetTy() == ActionPrivacy2Privacy && action.GetPrivacy2Privacy() != nil {
+		return action.GetPrivacy2Privacy().GetAssetExec()
+	} else if action.GetTy() == ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
+		return action.GetPrivacy2Public().GetAssetExec()
+	}
+	return ""
+}

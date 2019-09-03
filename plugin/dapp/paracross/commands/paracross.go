@@ -45,6 +45,7 @@ func ParcCmd() *cobra.Command {
 		IsSyncCmd(),
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
+		GetLocalBlockInfoCmd(),
 	)
 	return cmd
 }
@@ -396,6 +397,36 @@ func blockInfo(cmd *cobra.Command, args []string) {
 	}
 	var res pt.ParaBlock2MainInfo
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetBlock2MainInfo", params, &res)
+	ctx.Run()
+
+}
+
+// GetLocalBlockInfoCmd get blocks hash with main chain hash map
+func GetLocalBlockInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "local_block",
+		Short: "Get para local block info",
+		Run:   localBlockInfo,
+	}
+	addLocalBlockBodyCmdFlags(cmd)
+	return cmd
+}
+
+func addLocalBlockBodyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "t", 0, "block height,-1:latest height")
+	cmd.MarkFlagRequired("start")
+
+}
+
+func localBlockInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	startH, _ := cmd.Flags().GetInt64("start")
+
+	params := types.ReqInt{
+		Height: startH,
+	}
+	var res pt.ParaLocalDbBlockInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaLocalBlockInfo", params, &res)
 	ctx.Run()
 
 }

@@ -57,6 +57,14 @@ func getNodeID(db dbm.KV, id string) (*pt.ParaNodeIdStatus, error) {
 	return &status, err
 }
 
+//分叉之前 id是"mavl-paracros-...0x12342308b"格式，分叉以后只支持输入为去掉了mavl-paracross前缀的交易id，系统会为id加上前缀
+func getNodeIDWithFork(db dbm.KV, title string, height int64, id string) (*pt.ParaNodeIdStatus, error) {
+	if pt.IsParaForkHeight(height, pt.ForkLoopCheckCommitTxDone) {
+		id = calcParaNodeIDKey(title, id)
+	}
+	return getNodeID(db, id)
+}
+
 func getNodeGroupStatus(db dbm.KV, title string) (*pt.ParaNodeGroupStatus, error) {
 	key := calcParaNodeGroupStatusKey(title)
 	val, err := db.Get(key)
@@ -77,7 +85,11 @@ func getDb(db dbm.KV, key []byte) ([]byte, error) {
 	return val, nil
 }
 
-func getNodeGroupID(db dbm.KV, id string) (*pt.ParaNodeGroupStatus, error) {
+//分叉之前 id是"mavl-paracros-...0x12342308b"格式，分叉以后只支持输入为去掉了mavl-paracross前缀的交易id，系统会为id加上前缀
+func getNodeGroupID(db dbm.KV, title string, height int64, id string) (*pt.ParaNodeGroupStatus, error) {
+	if pt.IsParaForkHeight(height, pt.ForkLoopCheckCommitTxDone) {
+		id = calcParaNodeGroupIDKey(title, id)
+	}
 	val, err := getDb(db, []byte(id))
 	if err != nil {
 		return nil, err
@@ -253,43 +265,25 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 
 	addrStat, err := getNodeAddr(a.db, config.Title, config.Addr)
-	if err != nil {
-		if !isNotFound(err) {
-			return nil, err
-		}
-		clog.Info("first time add node addr", "title", config.Title, "addr", config.Addr)
-		stat := &pt.ParaNodeIdStatus{
-			Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
-			Status:      pt.ParacrossNodeJoining,
-			Title:       config.Title,
-			TargetAddr:  config.Addr,
-			FromAddr:    a.fromaddr,
-			Votes:       &pt.ParaNodeVoteDetail{},
-			CoinsFrozen: config.CoinsFrozen,
-			Height:      a.height}
-		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
-		return receipt, nil
+	if err != nil && !isNotFound(err) {
+		return nil, errors.Wrapf(err, "nodeJoin get title=%s,nodeAddr=%s", config.Title, config.Addr)
 	}
-
-	if addrStat.Status == pt.ParacrossNodeQuited {
-		stat := &pt.ParaNodeIdStatus{
-			Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
-			Status:      pt.ParacrossNodeJoining,
-			Title:       config.Title,
-			TargetAddr:  config.Addr,
-			FromAddr:    a.fromaddr,
-			Votes:       &pt.ParaNodeVoteDetail{},
-			CoinsFrozen: config.CoinsFrozen,
-			Height:      a.height}
-		r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
-		return receipt, nil
-
+	if addrStat != nil && addrStat.Status != pt.ParacrossNodeQuited {
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeJoin nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
 	}
-	return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
+	stat := &pt.ParaNodeIdStatus{
+		Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
+		Status:      pt.ParacrossNodeJoining,
+		Title:       config.Title,
+		TargetAddr:  config.Addr,
+		FromAddr:    a.fromaddr,
+		Votes:       &pt.ParaNodeVoteDetail{},
+		CoinsFrozen: config.CoinsFrozen,
+		Height:      a.height}
+	r := makeNodeConfigReceipt(a.fromaddr, config, nil, stat)
+	receipt.KV = append(receipt.KV, r.KV...)
+	receipt.Logs = append(receipt.Logs, r.Logs...)
+	return receipt, nil
 
 }
 
@@ -323,7 +317,7 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 }
 
 func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	stat, err := getNodeID(a.db, config.Id)
+	stat, err := getNodeIDWithFork(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +498,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
 	}
 
-	stat, err := getNodeID(a.db, config.Id)
+	stat, err := getNodeIDWithFork(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +539,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	updateVotes(stat, nodes)
 
 	most, vote := getMostVote(stat)
-	if !isCommitDone(stat, nodes, most) {
+	if !isCommitDone(nodes, most) {
 		superManagerPass := false
 		if isSuperManager(a.fromaddr) {
 			//如果主链执行失败，交易不会过滤到平行链，如果主链成功，平行链直接成功
@@ -612,6 +606,15 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
+			if a.exec.GetMainHeight() > pt.GetDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+				//node quit后，如果committx满足2/3目标，自动触发commitDone
+				r, err = a.loopCommitTxDone(config.Title)
+				if err != nil {
+					clog.Error("unpdateNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
+				}
+				receipt = mergeReceipt(receipt, r)
+			}
+
 			stat.Status = pt.ParacrossNodeClosed
 			stat.Height = a.height
 		}
@@ -648,7 +651,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
-		clog.Info("unpdateNodeGroup", "add key", string(key), "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
+		clog.Info("unpdateNodeGroup add", "addr", addr, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
 
 	} else {
 		//必须保留至少1个授权账户
@@ -658,13 +661,16 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 		item.Addr = addr
 		item.GetArr().Value = make([]string, 0)
 		for _, value := range copyItem.GetArr().Value {
-			clog.Info("unpdateNodeGroup", "key delete", string(key), "current", value)
 			if value != addr {
 				item.GetArr().Value = append(item.GetArr().Value, value)
 			}
 		}
+		clog.Info("unpdateNodeGroup delete", "addr", addr)
 	}
-
+	err = db.Set(key, types.Encode(&item))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unpdateNodeGroup set dbkey=%s", key)
+	}
 	return makeParaNodeGroupReceipt(title, &copyItem, &item), nil
 }
 
@@ -806,7 +812,7 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 }
 
 func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
-	status, err := getNodeGroupID(a.db, config.Id)
+	status, err := getNodeGroupID(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -925,7 +931,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
 	}
 
-	id, err := getNodeGroupID(a.db, config.Id)
+	id, err := getNodeGroupID(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}

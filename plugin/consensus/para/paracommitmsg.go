@@ -5,9 +5,17 @@
 package para
 
 import (
-	"bytes"
 	"context"
 	"time"
+
+	"strings"
+
+	"sync/atomic"
+	"unsafe"
+
+	"bytes"
+
+	"sync"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -17,205 +25,69 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
+const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
+
+	waitBlocks4CommitMsg int32  = 3
+	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
 type commitMsgClient struct {
-	paraClient         *client
-	waitMainBlocks     int32
-	commitMsgNotify    chan int64
-	delMsgNotify       chan int64
-	mainBlockAdd       chan *types.BlockDetail
-	minerSwitch        chan bool
-	currentTx          *types.Transaction
-	checkTxCommitTimes int32
-	privateKey         crypto.PrivKey
-	quit               chan struct{}
+	paraClient           *client
+	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
+	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
+	resetCh              chan interface{}
+	sendMsgCh            chan *types.Transaction
+	minerSwitch          int32
+	currentTx            unsafe.Pointer
+	chainHeight          int64
+	sendingHeight        int64
+	consensHeight        int64
+	consensStartHeight   int64
+	authAccountIn        bool
+	isRollBack           int32
+	checkTxCommitTimes   int32
+	txFeeRate            int64
+	privateKey           crypto.PrivKey
+	quit                 chan struct{}
+	mutex                sync.Mutex
 }
 
+type commitCheckParams struct {
+	consensStopTimes uint32
+}
+
+// 1. 链高度回滚，低于当前发送高度，需要重新计算当前发送高度,不然不会重新发送回滚的高度
+// 2. 定时轮询是在比如锁定解锁钱包这类外部条件变化时候，其他输入条件不会触发时候及时响应，不然任何一个外部条件变化都触发一下发送，可能条件比较多
 func (client *commitMsgClient) handler() {
-	var isSync bool
-	var isRollback bool
-	var notification []int64 //记录每次系统重启后 min and current height
-	var finishHeight int64
-	var consensHeight int64
-	var sendingHeight int64 //当前发送的最大高度
-	var sendingMsgs []*pt.ParacrossNodeStatus
 	var readTick <-chan time.Time
-	var ticker *time.Ticker
+	checkParams := &commitCheckParams{}
 
 	client.paraClient.wg.Add(1)
-	consensusCh := make(chan *pt.ParacrossStatus, 1)
-	go client.getConsensusHeight(consensusCh)
+	go client.getMainConsensusInfo()
 
-	client.paraClient.wg.Add(1)
-	sendMsgCh := make(chan *types.Transaction, 1)
-	go client.sendCommitMsg(sendMsgCh)
+	if client.paraClient.authAccount != "" {
+		client.paraClient.wg.Add(1)
+		client.sendMsgCh = make(chan *types.Transaction, 1)
+		go client.sendCommitMsg()
+
+		ticker := time.NewTicker(time.Second * time.Duration(minerInterval))
+		readTick = ticker.C
+		defer ticker.Stop()
+	}
 
 out:
 	for {
 		select {
-		case height := <-client.commitMsgNotify:
-			if notification == nil {
-				notification = append(notification, height)
-				notification = append(notification, height)
-				finishHeight = height - 1
-			} else {
-				//[0] need update to min value if any, [1] always get current height, as for fork case, the height may lower than before
-				if height < notification[0] {
-					notification[0] = height
-					finishHeight = height - 1
-				}
-				notification[1] = height
-				if finishHeight >= notification[1] {
-					//分叉场景，finish设置为最小值，等待主链共识高度重新设定finishHeight
-					finishHeight = notification[0] - 1
-				}
-			}
-			isRollback = false
-
-		case height := <-client.delMsgNotify:
-			if notification == nil {
-				continue
-			}
-			if height <= notification[1] {
-				notification[1] = height - 1
-			}
-			if height <= sendingHeight && client.currentTx != nil {
-				sendingMsgs = nil
-				client.currentTx = nil
-			}
-			//在分叉的主链上，回滚会连续回滚，回滚结束前不会add block，停止发送同时也忽略共识消息，回滚结束后根据共识高度重新设定finishHeight
-			//如果分叉高度大于当前已完成高度，说明新的主链也收到了finish的tx，不需要重发，也就不需要重新设定
-			if height <= finishHeight {
-				finishHeight = notification[0] - 1
-			}
-			isSync = false
-			isRollback = true
-			plog.Debug("para del block", "delHeight", height)
-
-		case block := <-client.mainBlockAdd:
-			client.paraClient.mtx.Lock()
-			isCaughtUp := client.paraClient.isCaughtUp
-			client.paraClient.mtx.Unlock()
-			if client.currentTx != nil && isCaughtUp {
-				exist := checkTxInMainBlock(client.currentTx, block)
-				if exist {
-					finishHeight = sendingHeight
-					sendingMsgs = nil
-					client.currentTx = nil
-				} else {
-					client.checkTxCommitTimes++
-					if client.checkTxCommitTimes > client.waitMainBlocks {
-						//超过等待最大次数，reset，重新组织发送，防止一直发送同一笔消息
-						sendingMsgs = nil
-						client.currentTx = nil
-						client.checkTxCommitTimes = 0
-					}
-				}
-			}
-
+		//出错场景入口，需要reset 重发
+		case <-client.resetCh:
+			client.resetSend()
+			client.sendCommitTx()
+		//例行检查发送入口
 		case <-readTick:
-			plog.Debug("para readTick", "notify", notification, "sending", len(sendingMsgs),
-				"finishHeight", finishHeight, "txIsNil", client.currentTx == nil, "sync", isSync)
-
-			if notification != nil && finishHeight < notification[1] && client.currentTx == nil && isSync {
-				count := notification[1] - finishHeight
-				if count > types.TxGroupMaxCount {
-					count = types.TxGroupMaxCount
-				}
-				status, err := client.getNodeStatus(finishHeight+1, finishHeight+count)
-				if err != nil {
-					plog.Error("para commit msg read tick", "err", err.Error())
-					continue
-				}
-				if len(status) == 0 {
-					continue
-				}
-
-				signTx, count, err := client.calcCommitMsgTxs(status)
-				if err != nil || signTx == nil {
-					continue
-				}
-				sendingHeight = finishHeight + count
-				sendingMsgs = status[:count]
-				client.currentTx = signTx
-				client.checkTxCommitTimes = 0
-				sendMsgCh <- client.currentTx
-
-				plog.Info("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
-				for i, msg := range sendingMsgs {
-					plog.Info("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
-						"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
-						"from", client.paraClient.authAccount)
-				}
-			}
-
-		//获取正在共识的高度，同步有两层意思，一个是主链跟其他节点完成了同步，另一个是当前平行链节点的高度追赶上了共识高度
-		//一般来说高度增长从小到大： notifiy[0] -- selfConsensusHeight(mainHeight) -- finishHeight -- sendingHeight -- notify[1]
-		case rsp := <-consensusCh:
-			consensHeight = rsp.Height
-			plog.Info("para consensus rcv", "notify", notification, "sending", len(sendingMsgs),
-				"consensHeigt", rsp.Height, "finished", finishHeight, "sync", isSync, "miner", readTick != nil, "consensBlockHash", common.ToHex(rsp.BlockHash))
-
-			if notification == nil || isRollback {
-				continue
-			}
-
-			//所有节点还没有共识场景或新节点或重启节点catchingUp场景，要等到收到区块高度大于共识高度时候发送，在catchingup时候本身共识高度和块高度一起增长
-			if notification[1] > consensHeight {
-				isSync = true
-			}
-
-			// 共识高度追赶上完成高度之后再发，不然分叉节点继续发浪费手续费
-			if finishHeight > consensHeight {
-				isSync = false
-			}
-
-			//未共识过的小于当前共识高度的区块，可以不参与共识, 如果是新节点，一直等到同步的区块达到了共识高度，才设置同步参与共识
-			//在某些特殊场景下，比如平行链连接的主链节点分叉后又恢复，主链的共识高度低于分叉高度时候，主链上形成共识空洞，需要从共识高度重新发送而不是分叉高度
-			//共识高度和分叉高度不一致其中一个原因是共识交易组里面某个高度分叉了，分叉的主链节点执行成功，而其他主链节点执行失败,共识高度停留在交易组最小高度-1
-			//而分叉高度是交易组里面的某个高度
-			if finishHeight < consensHeight {
-				finishHeight = consensHeight
-				sendingMsgs = nil
-				client.currentTx = nil
-			}
-
-			//系统每次重启都有检查一次共识，如果共识高度落后于系统起来后完成的第一个高度或最小高度，说明可能有共识空洞，需要把从当前共识高度到完成的
-			//最大高度重发一遍，直到确认收到，发过的最小到最大高度也要重发是因为之前空洞原因共识不连续，即便满足2/3节点也不会增长，需要重发来触发commit
-			//此处也整合了当前consensus height=-1 场景
-			// 需要是<而不是<=, 因为notification[0]被认为是系统起来后已经发送过的
-			nextConsensHeight := consensHeight + 1
-			if nextConsensHeight < notification[0] {
-				notification[0] = nextConsensHeight
-				finishHeight = consensHeight
-				sendingMsgs = nil
-				client.currentTx = nil
-			}
-
-		case miner := <-client.minerSwitch:
-			plog.Info("para consensus mining", "miner", miner)
-			//停止挖矿
-			if !miner {
-				readTick = nil
-				if ticker != nil {
-					ticker.Stop()
-				}
-				plog.Info("para consensus stop mining")
-				continue
-			}
-			//开启挖矿
-			if readTick == nil {
-				ticker = time.NewTicker(time.Second * time.Duration(minerInterval))
-				readTick = ticker.C
-				plog.Info("para consensus start mining")
-
-				//钱包开启后，从共识高度重新开始发送，在需要重发共识时候，不需要重启设备
-				finishHeight = consensHeight
-			}
+			client.procChecks(checkParams)
+			client.sendCommitTx()
 
 		case <-client.quit:
 			break out
@@ -225,10 +97,266 @@ out:
 	client.paraClient.wg.Done()
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int64, error) {
-	txs, count, err := client.batchCalcTxGroup(notifications)
+//chain height更新时候入口
+func (client *commitMsgClient) updateChainHeightNotify(height int64, isDel bool) {
+	if isDel {
+		atomic.StoreInt32(&client.isRollBack, 1)
+	} else {
+		atomic.StoreInt32(&client.isRollBack, 0)
+	}
+
+	atomic.StoreInt64(&client.chainHeight, height)
+
+	client.checkRollback(height)
+	if !client.isSendingCommitMsg() {
+		client.sendCommitTx()
+	}
+
+}
+
+// reset notify 提供重设发送参数，发送tx的入口
+func (client *commitMsgClient) resetNotify() {
+	client.resetCh <- 1
+}
+
+//新的区块产生，检查是否有commitTx正在发送入口
+func (client *commitMsgClient) commitTxCheckNotify(txs []*types.TxDetail) {
+	if client.checkCommitTxSuccess(txs) {
+		client.sendCommitTx()
+	}
+}
+
+func (client *commitMsgClient) resetSendEnv() {
+	client.sendingHeight = -1
+	client.setCurrentTx(nil)
+}
+func (client *commitMsgClient) resetSend() {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	client.resetSendEnv()
+}
+
+//自共识后直接从本地获取最新共识高度，没有自共识，获取主链的共识高度
+func (client *commitMsgClient) getConsensusHeight() int64 {
+	status, err := client.getSelfConsensusStatus()
 	if err != nil {
-		txs, err = client.singleCalcTx((notifications)[0])
+		return atomic.LoadInt64(&client.consensHeight)
+	}
+
+	return status.Height
+}
+
+func (client *commitMsgClient) sendCommitTx() {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	consensHeight := client.getConsensusHeight()
+	//只有从未共识过，才可以设置从初始起始高度跳跃
+	if consensHeight == -1 && consensHeight < client.consensStartHeight {
+		consensHeight = client.consensStartHeight
+	}
+
+	chainHeight := atomic.LoadInt64(&client.chainHeight)
+	sendingHeight := client.sendingHeight
+	isSync := client.isSync()
+	plog.Info("para commitMsg---status", "chainHeight", chainHeight, "sendingHeight", sendingHeight,
+		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync)
+
+	if client.isSendingCommitMsg() || !isSync {
+		return
+	}
+
+	if sendingHeight < consensHeight {
+		sendingHeight = consensHeight
+	}
+
+	//1.如果是在主链共识场景，共识高度可能大于平行链的链高度
+	//2.已发送，未共识场景
+	if chainHeight < consensHeight || sendingHeight > consensHeight {
+		return
+	}
+
+	if sendingHeight < chainHeight {
+		signTx, count := client.getSendingTx(sendingHeight, chainHeight)
+		if signTx == nil {
+			return
+		}
+		client.checkTxCommitTimes = 0
+		client.sendingHeight = sendingHeight + count
+		client.setCurrentTx(signTx)
+		client.sendMsgCh <- signTx
+	}
+
+}
+
+func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[string]bool) bool {
+	if verifyTxs[string(curTx.Hash())] {
+		client.setCurrentTx(nil)
+		return true
+	}
+
+	client.checkTxCommitTimes++
+	if client.checkTxCommitTimes >= client.waitMainBlocks {
+		client.checkTxCommitTimes = 0
+		client.resetSendEnv()
+		return true
+	}
+	return false
+
+}
+
+func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	curTx := client.getCurrentTx()
+	if curTx == nil {
+		return false
+	}
+
+	txMap := make(map[string]bool)
+	//committx是平行链交易
+	if types.IsParaExecName(string(curTx.Execer)) {
+		for _, tx := range txs {
+			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
+				txMap[string(tx.Tx.Hash())] = true
+			}
+		}
+		// committx是主链交易，需要向主链查询
+	} else {
+		//如果正在追赶，则暂时不去主链查找，减少耗时
+		if !client.paraClient.isCaughtUp() {
+			return false
+		}
+		receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
+		if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
+			txMap[string(curTx.Hash())] = true
+		}
+	}
+
+	//如果没找到且当前正在追赶，则不计数，如果找到了，即便当前在追赶，也立即处理
+	if !txMap[string(curTx.Hash())] && !client.paraClient.isCaughtUp() {
+		return false
+	}
+
+	return client.verifyTx(curTx, txMap)
+}
+
+//如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
+func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint32 {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	consensHeight := client.getConsensusHeight()
+	if client.sendingHeight > consensHeight && !client.isSendingCommitMsg() {
+		if consensStopTimes > client.waitConsensStopTimes {
+			plog.Debug("para commitMsg-checkConsensusStop", "times", consensStopTimes)
+			client.resetSendEnv()
+			return 0
+		}
+		return consensStopTimes + 1
+	}
+
+	return 0
+}
+
+func (client *commitMsgClient) checkAuthAccountIn() {
+	nodes, err := client.getNodeGroupAddrs()
+	if err != nil {
+		return
+	}
+	authExist := strings.Contains(nodes, client.paraClient.authAccount)
+
+	//如果授权节点重新加入，需要从当前共识高度重新发送
+	if !client.authAccountIn && authExist {
+		client.resetSend()
+	}
+
+	client.authAccountIn = authExist
+}
+
+func (client *commitMsgClient) procChecks(checks *commitCheckParams) {
+	checks.consensStopTimes = client.checkConsensusStop(checks.consensStopTimes)
+	client.checkAuthAccountIn()
+}
+
+func (client *commitMsgClient) isSync() bool {
+	height := atomic.LoadInt64(&client.chainHeight)
+	if height <= 0 {
+		plog.Info("para is not Sync", "chainHeight", height)
+		return false
+	}
+
+	height = atomic.LoadInt64(&client.consensHeight)
+	if height == -2 {
+		plog.Info("para is not Sync", "consensHeight", height)
+		return false
+	}
+
+	if !client.authAccountIn {
+		plog.Info("para is not Sync", "authAccountIn", client.authAccountIn)
+		return false
+	}
+
+	if atomic.LoadInt32(&client.minerSwitch) != 1 {
+		plog.Info("para is not Sync", "isMiner", atomic.LoadInt32(&client.minerSwitch))
+		return false
+	}
+
+	if atomic.LoadInt32(&client.isRollBack) == 1 {
+		plog.Info("para is not Sync", "isRollBack", atomic.LoadInt32(&client.isRollBack))
+		return false
+	}
+
+	if !client.paraClient.isCaughtUp() {
+		plog.Info("para is not Sync", "caughtUp", client.paraClient.isCaughtUp())
+		return false
+	}
+
+	if !client.paraClient.blockSyncClient.syncHasCaughtUp() {
+		plog.Info("para is not Sync", "syncCaughtUp", client.paraClient.blockSyncClient.syncHasCaughtUp())
+		return false
+	}
+
+	return true
+
+}
+
+func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*types.Transaction, int64) {
+	count := endHeight - startHeight
+	if count > types.TxGroupMaxCount {
+		count = types.TxGroupMaxCount
+	}
+	status, err := client.getNodeStatus(startHeight+1, startHeight+count)
+	if err != nil {
+		plog.Error("para commit msg read tick", "err", err.Error())
+		return nil, 0
+	}
+	if len(status) == 0 {
+		return nil, 0
+	}
+
+	signTx, count, err := client.calcCommitMsgTxs(status, atomic.LoadInt64(&client.txFeeRate))
+	if err != nil || signTx == nil {
+		return nil, 0
+	}
+
+	sendingMsgs := status[:count]
+	plog.Debug("paracommitmsg sending", "txhash", common.ToHex(signTx.Hash()), "exec", string(signTx.Execer))
+	for i, msg := range sendingMsgs {
+		plog.Debug("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
+			"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
+			"from", client.paraClient.authAccount)
+	}
+
+	return signTx, count
+}
+
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int64, error) {
+	txs, count, err := client.batchCalcTxGroup(notifications, feeRate)
+	if err != nil {
+		txs, err = client.singleCalcTx((notifications)[0], feeRate)
 		if err != nil {
 			plog.Error("single calc tx", "height", notifications[0].Height)
 
@@ -246,7 +374,7 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 		return tx, nil
 	}
 
-	group, err := types.CreateTxGroup(txsArr.Txs)
+	group, err := types.CreateTxGroup(txsArr.Txs, types.GInt("MinFee"))
 	if err != nil {
 		plog.Error("para CreateTxGroup", "err", err.Error())
 		return nil, err
@@ -264,14 +392,14 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 	return newtx, nil
 }
 
-func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus) (*types.Transaction, int, error) {
+func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		execName := pt.ParaX
-		if isParaSelfConsensusForked(status.MainBlockHeight) {
+		if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
 			execName = paracross.GetExecName()
 		}
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -286,12 +414,12 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	return txs, len(notifications), nil
 }
 
-func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*types.Transaction, error) {
+func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
-	if isParaSelfConsensusForked(status.MainBlockHeight) {
+	if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
 		execName = paracross.GetExecName()
 	}
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, 0)
+	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -301,43 +429,39 @@ func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus) (*ty
 
 }
 
-func (client *commitMsgClient) sendCommitMsg(ch chan *types.Transaction) {
-	var err error
-	var tx *types.Transaction
-	var resendTimer <-chan time.Time
-
-out:
-	for {
-		select {
-		case tx = <-ch:
-			err = client.sendCommitMsgTx(tx)
-			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
-				resendTimer = time.After(time.Second * 2)
-			}
-		case <-resendTimer:
-			if err != nil && tx != nil {
-				client.sendCommitMsgTx(tx)
-			}
-		case <-client.quit:
-			break out
-		}
-	}
-
-	client.paraClient.wg.Done()
+func (client *commitMsgClient) setCurrentTx(tx *types.Transaction) {
+	atomic.StorePointer(&client.currentTx, unsafe.Pointer(tx))
 }
 
-func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
+func (client *commitMsgClient) getCurrentTx() *types.Transaction {
+	return (*types.Transaction)(atomic.LoadPointer(&client.currentTx))
+}
+
+func (client *commitMsgClient) isSendingCommitMsg() bool {
+	return client.getCurrentTx() != nil
+}
+
+func (client *commitMsgClient) checkRollback(height int64) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	if height < client.sendingHeight {
+		client.resetSendEnv()
+	}
+}
+
+func (client *commitMsgClient) sendCommitTxOut(tx *types.Transaction) error {
 	if tx == nil {
 		return nil
 	}
 	resp, err := client.paraClient.grpcClient.SendTransaction(context.Background(), tx)
 	if err != nil {
-		plog.Error("sendCommitMsgTx send tx", "tx", common.ToHex(tx.Hash()), "err", err.Error())
+		plog.Error("sendCommitTxOut send tx", "tx", common.ToHex(tx.Hash()), "err", err.Error())
 		return err
 	}
 
 	if !resp.GetIsOk() {
-		plog.Error("sendCommitMsgTx send tx Nok", "tx", common.ToHex(tx.Hash()), "err", string(resp.GetMsg()))
+		plog.Error("sendCommitTxOut send tx Nok", "tx", common.ToHex(tx.Hash()), "err", string(resp.GetMsg()))
 		return errors.New(string(resp.GetMsg()))
 	}
 
@@ -345,20 +469,36 @@ func (client *commitMsgClient) sendCommitMsgTx(tx *types.Transaction) error {
 
 }
 
-func checkTxInMainBlock(targetTx *types.Transaction, detail *types.BlockDetail) bool {
-	txMap := make(map[string]bool)
+func (client *commitMsgClient) sendCommitMsg() {
+	var err error
+	var tx *types.Transaction
+	var resendTimer <-chan time.Time
 
-	for i, tx := range detail.Block.Txs {
-		if bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && detail.Receipts[i].Ty == types.ExecOk {
-			txMap[string(tx.Hash())] = true
+out:
+	for {
+		select {
+		case tx = <-client.sendMsgCh:
+			err = client.sendCommitTxOut(tx)
+			if err != nil && err == types.ErrTxFeeTooLow {
+				err := client.GetProperFeeRate()
+				if err == nil {
+					client.resetNotify()
+				}
+				continue
+			}
+			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
+				resendTimer = time.After(time.Second * 2)
+			}
+		case <-resendTimer:
+			if err != nil && tx != nil {
+				client.sendCommitTxOut(tx)
+			}
+		case <-client.quit:
+			break out
 		}
 	}
 
-	return txMap[string(targetTx.Hash())]
-}
-
-func isParaSelfConsensusForked(height int64) bool {
-	return height > mainParaSelfConsensusForkHeight
+	client.paraClient.wg.Done()
 }
 
 //当前未考虑获取key非常多失败的场景， 如果获取height非常多，block模块会比较大，但是使用完了就释放了
@@ -429,7 +569,9 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 			return nil, errors.New("paracommitmsg wrong block result")
 		}
 		nodeList[block.Block.Height].BlockHash = block.Block.Hash()
-		nodeList[block.Block.Height].StateHash = block.Block.StateHash
+		if !paracross.IsParaForkHeight(nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
+			nodeList[block.Block.Height].StateHash = block.Block.StateHash
+		}
 	}
 
 	var needSentTxs uint32
@@ -442,8 +584,13 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	//3,如果形如xxoxx的块排列，x代表commit空块，o代表实际的块，即只要不全部是commit块，也要全部打包一起发出去
 	//如果=0 意味着全部是paracross commit tx，延迟发送
 	if needSentTxs == 0 && len(ret) < types.TxGroupMaxCount {
-		plog.Debug("para commitmsg getNodeStatus all self consensus commit tx,send delay", "start", start, "end", end)
+		plog.Debug("para commitmsg all self-consensus commit tx,send delay", "start", start, "end", end)
 		return nil, nil
+	}
+
+	//clear flag
+	for _, v := range ret {
+		v.NonCommitTxCounts = 0
 	}
 
 	return ret, nil
@@ -463,34 +610,9 @@ func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, 
 	}
 	status.Title = types.GetTitle()
 	status.Height = block.Height
-	status.PreBlockHash = zeroHash[:]
 	status.BlockHash = block.Hash()
-	status.PreStateHash = zeroHash[:]
-	status.StateHash = block.StateHash
+
 	return &status, nil
-}
-
-func (client *commitMsgClient) onBlockAdded(height int64) error {
-	select {
-	case client.commitMsgNotify <- height:
-	case <-client.quit:
-	}
-
-	return nil
-}
-
-func (client *commitMsgClient) onBlockDeleted(height int64) {
-	select {
-	case client.delMsgNotify <- height:
-	case <-client.quit:
-	}
-}
-
-func (client *commitMsgClient) onMainBlockAdded(block *types.BlockDetail) {
-	select {
-	case client.mainBlockAdd <- block:
-	case <-client.quit:
-	}
 }
 
 //only sync once, as main usually sync, here just need the first sync status after start up
@@ -511,7 +633,7 @@ func (client *commitMsgClient) mainSync() error {
 
 }
 
-func (client *commitMsgClient) getConsensusHeight(consensusRst chan *pt.ParacrossStatus) {
+func (client *commitMsgClient) getMainConsensusInfo() {
 	ticker := time.NewTicker(time.Second * time.Duration(consensusInterval))
 	isSync := false
 	defer ticker.Stop()
@@ -530,32 +652,59 @@ out:
 				isSync = true
 			}
 
-			client.paraClient.mtx.Lock()
-			isCaughtUp := client.paraClient.isCaughtUp
-			client.paraClient.mtx.Unlock()
-			if !isCaughtUp {
-				plog.Debug("getConsensusHeight para is CatchingUp")
-				continue
-			}
-
-			_, block, err := client.paraClient.getLastBlockInfo()
+			status, err := client.getMainConsensusStatus()
 			if err != nil {
 				continue
 			}
 
-			status, err := client.getConsensusStatus(block)
-			if err != nil {
-				continue
+			//如果主链的共识高度产生了回滚，本地链也需要重新检查共识高度
+			if status.Height < atomic.LoadInt64(&client.consensHeight) {
+				atomic.StoreInt64(&client.consensHeight, status.Height)
+				client.resetNotify()
+			} else {
+				atomic.StoreInt64(&client.consensHeight, status.Height)
 			}
-			consensusRst <- status
+
+			selfHeight := int64(-2)
+			selfStatus, _ := client.getSelfConsensusStatus()
+			if selfStatus != nil {
+				selfHeight = selfStatus.Height
+			}
+
+			if client.paraClient.authAccount != "" {
+				client.GetProperFeeRate()
+			}
+
+			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
+
 		}
 	}
 
 	client.paraClient.wg.Done()
 }
 
-func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.ParacrossStatus, error) {
-	if isParaSelfConsensusForked(block.MainHeight) {
+func (client *commitMsgClient) GetProperFeeRate() error {
+	feeRate, err := client.paraClient.grpcClient.GetProperFee(context.Background(), &types.ReqProperFee{})
+	if err != nil {
+		plog.Error("para commit.GetProperFee", "err", err.Error())
+		return err
+	}
+	if feeRate == nil {
+		plog.Error("para commit.GetProperFee return nil")
+		return types.ErrInvalidParam
+	}
+
+	atomic.StoreInt64(&client.txFeeRate, feeRate.ProperFee)
+	return nil
+}
+
+func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, error) {
+	block, err := client.paraClient.getLastBlockInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	if client.paraClient.isParaSelfConsensusForked(block.MainHeight) {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
@@ -563,18 +712,42 @@ func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.Parac
 			Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
 		})
 		if err != nil {
-			plog.Error("getConsensusHeight ", "err", err.Error())
+			plog.Error("getSelfConsensusStatus ", "err", err.Error())
 			return nil, err
 		}
 		resp, ok := ret.(*pt.ParacrossStatus)
 		if !ok {
-			plog.Error("getConsensusHeight ParacrossStatus nok")
+			plog.Error("getSelfConsensusStatus ParacrossStatus nok")
 			return nil, err
 		}
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
 		if resp.Height > -1 {
-			return resp, nil
+			var statusMainHeight int64
+			if pt.IsParaForkHeight(resp.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+				statusMainHeight = resp.MainHeight
+			} else {
+				block, err := client.paraClient.GetBlockByHeight(resp.Height)
+				if err != nil {
+					plog.Error("getSelfConsensusStatus GetBlocks", "err", err.Error())
+					return nil, err
+				}
+				statusMainHeight = block.MainHeight
+			}
+
+			//本地共识高度对应主链高度一定要高于自共识高度，为了适配平行链共识高度不连续场景
+			if client.paraClient.isParaSelfConsensusForked(statusMainHeight) {
+				return resp, nil
+			}
 		}
+	}
+	return nil, types.ErrNotFound
+}
+
+//通过grpc获取主链状态可能耗时，放在定时器里面处理
+func (client *commitMsgClient) getMainConsensusStatus() (*pt.ParacrossStatus, error) {
+	block, err := client.paraClient.getLastBlockInfo()
+	if err != nil {
+		return nil, err
 	}
 
 	//去主链获取共识高度
@@ -584,21 +757,41 @@ func (client *commitMsgClient) getConsensusStatus(block *types.Block) (*pt.Parac
 		Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
 	})
 	if err != nil {
-		plog.Error("getMainConsensusHeight", "err", err.Error())
+		plog.Error("getMainConsensusStatus", "err", err.Error())
 		return nil, err
 	}
 	if !reply.GetIsOk() {
-		plog.Info("getMainConsensusHeight nok", "error", reply.GetMsg())
+		plog.Info("getMainConsensusStatus nok", "error", reply.GetMsg())
 		return nil, err
 	}
 	var result pt.ParacrossStatus
 	err = types.Decode(reply.Msg, &result)
 	if err != nil {
-		plog.Error("getMainConsensusHeight decode", "err", err.Error())
+		plog.Error("getMainConsensusStatus decode", "err", err.Error())
 		return nil, err
 	}
 	return &result, nil
 
+}
+
+//node group会在主链和平行链都同时配置,只本地查询就可以
+func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetNodeGroupAddrs",
+		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: types.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("commitmsg.getNodeGroupAddrs ", "err", err.Error())
+		return "", err
+	}
+	resp, ok := ret.(*types.ReplyConfig)
+	if !ok {
+		plog.Error("commitmsg.getNodeGroupAddrs rsp nok")
+		return "", err
+	}
+
+	return resp.Value, nil
 }
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
@@ -615,10 +808,12 @@ func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 		return
 	}
 
-	select {
-	case client.minerSwitch <- !status.IsWalletLock:
-	case <-client.quit:
+	if status.IsWalletLock {
+		atomic.StoreInt32(&client.minerSwitch, 0)
+	} else {
+		atomic.StoreInt32(&client.minerSwitch, 1)
 	}
+
 }
 
 func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
@@ -631,10 +826,8 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 		return
 	}
 
-	select {
-	case client.minerSwitch <- true:
-	case <-client.quit:
-	}
+	atomic.StoreInt32(&client.minerSwitch, 1)
+
 }
 
 func (client *commitMsgClient) fetchPriKey() error {

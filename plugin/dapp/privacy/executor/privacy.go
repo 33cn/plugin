@@ -208,6 +208,11 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return err
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
+	assertExec := action.GetAssertExec()
+	token := action.GetTokenName()
+	if token == "" {
+		return types.ErrInvalidParam
+	}
 	if pty.ActionPublic2Privacy == action.Ty {
 		return nil
 	}
@@ -220,8 +225,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
 	var amount int64
 	keyinput := input.Keyinput
-	keyOutput := output.Keyoutput
-	token := action.GetTokenName()
+
 	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
 		amount = action.GetPrivacy2Public().Amount
 	}
@@ -239,9 +243,9 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	pubkeys := make([][]byte, 0)
 	for i, input := range keyinput {
 		totalInput += input.Amount
-		keyImages[i] = calcPrivacyKeyImageKey(token, input.KeyImage)
+		keyImages[i] = calcPrivacyKeyImageKey(assertExec, token, input.KeyImage)
 		for j, globalIndex := range input.UtxoGlobalIndex {
-			keys = append(keys, CalcPrivacyOutputKey(token, input.Amount, common.ToHex(globalIndex.Txhash), int(globalIndex.Outindex)))
+			keys = append(keys, CalcPrivacyOutputKey(assertExec, token, input.Amount, common.ToHex(globalIndex.Txhash), int(globalIndex.Outindex)))
 			pubkeys = append(pubkeys, ringSignature.Items[i].Pubkey[j])
 		}
 	}
@@ -264,13 +268,12 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrPubkeysOfUTXO
 	}
 
-	for _, output := range keyOutput {
-		totalOutput += output.Amount
-	}
+	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
+	if !types.IsPara() && (assertExec == "" || assertExec == "coins") {
 
-	//平行链下的隐私交易，utxo不需要燃烧，fee只收取主链的bty，和utxo无关联
-	if !types.IsPara() {
-
+		for _, output := range output.Keyoutput {
+			totalOutput += output.Amount
+		}
 		if tx.Fee < pty.PrivacyTxFee {
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
 			return pty.ErrPrivacyTxFeeNotEnough

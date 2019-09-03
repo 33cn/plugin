@@ -1,7 +1,7 @@
 Title="chain33"
 TestNet=true
 FixTime=false
-version="6.1.1"
+version="6.2.0"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
@@ -63,12 +63,12 @@ grpcFuncWhitelist=["*"]
 
 
 [mempool]
-name="timeline"
+name="price"
 poolCacheSize=10240
 minTxFee=100000
 maxTxNumPerAccount=100
 maxTxFee=1000000000
-
+isLevelFee=true
 [mempool.sub.timeline]
 poolCacheSize=10240
 
@@ -152,6 +152,8 @@ pruneHeight=10000
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
 enableMemVal=true
+# 缓存close ticket数目，该缓存越大同步速度越快，最大设置到1500000
+tkCloseCacheLen=100000
 
 [store.sub.kvmvccmavl]
 enableMVCCIter=true
@@ -163,6 +165,8 @@ pruneHeight=10000
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
 enableMemVal=true
+# 缓存close ticket数目，该缓存越大同步速度越快，最大设置到1500000
+tkCloseCacheLen=100000
 
 [wallet]
 minFee=100000
@@ -219,4 +223,7 @@ nodeGroupFrozenCoins=0
 #平行链共识停止后主链等待的高度
 paraConsensusStopBlocks=30000
 
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
 

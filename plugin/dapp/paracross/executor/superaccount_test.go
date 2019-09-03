@@ -354,3 +354,16 @@ func TestUpdateVotes(t *testing.T) {
 	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
 	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }
+
+func TestGetNodeIdSuffix(t *testing.T) {
+	txID := "0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b"
+	id := "mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b"
+	rtID := getParaNodeIDSuffix(id)
+	assert.Equal(t, txID, rtID)
+
+	txID = "0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b-1"
+	id = "mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b-1"
+	rtID = getParaNodeIDSuffix(id)
+	assert.Equal(t, txID, rtID)
+
+}

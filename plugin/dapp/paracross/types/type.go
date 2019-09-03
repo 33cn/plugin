@@ -18,6 +18,14 @@ var (
 	glog  = log.New("module", ParaX)
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
+	// MainForkParacrossCommitTx 平行链配置项对应主链的ForkCommitTx 高度
+	MainForkParacrossCommitTx = "MainForkParacrossCommitTx"
+	// ParaSelfConsensForkHeight para self consens height string
+	ParaSelfConsensForkHeight = "MainParaSelfConsensusForkHeight"
+	// ForkLoopCheckCommitTxDone 循环检查共识交易done的fork
+	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
+	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
+	MainLoopCheckCommitTxDoneForkHeight = "MainLoopCheckCommitTxDoneForkHeight"
 )
 
 func init() {
@@ -27,6 +35,7 @@ func init() {
 	types.RegisterDappFork(ParaX, "Enable", 0)
 	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
 	types.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
+	types.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 }
 
 // GetExecName get para exec name

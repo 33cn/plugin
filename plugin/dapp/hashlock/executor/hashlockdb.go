@@ -89,10 +89,13 @@ func (action *Action) Hashlocklock(hlock *pty.HashlockLock) (*types.Receipt, err
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-
+	var err error
 	//不存在相同的hashlock，假定采用sha256
-	//_, err := readHashlock(action.db, hlock.Hash)
-	_, err := readHashlock(action.db, common.Sha256(hlock.Hash))
+	if types.IsDappFork(action.height, pty.HashlockX, pty.ForkBadRepeatSecretX) {
+		_, err = readHashlock(action.db, hlock.Hash)
+	} else {
+		_, err = readHashlock(action.db, common.Sha256(hlock.Hash))
+	}
 	if err != types.ErrNotFound {
 		hlog.Error("Hashlocklock", "hlock.Hash repeated", hlock.Hash)
 		return nil, pty.ErrHashlockReapeathash

@@ -10,7 +10,7 @@ import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/system/store/mavl/db"
+	mavl "github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
 )
 
@@ -42,6 +42,7 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 		subcfg.PruneHeight = sub.PruneHeight
 		subcfg.EnableMemTree = sub.EnableMemTree
 		subcfg.EnableMemVal = sub.EnableMemVal
+		subcfg.TkCloseCacheLen = sub.TkCloseCacheLen
 	}
 	mavls := &MavlStore{db, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
 	mavl.EnableMavlPrefix(subcfg.EnableMavlPrefix)
@@ -50,6 +51,7 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 	mavl.SetPruneHeight(int(subcfg.PruneHeight))
 	mavl.EnableMemTree(subcfg.EnableMemTree)
 	mavl.EnableMemVal(subcfg.EnableMemVal)
+	mavl.TkCloseCacheLen(subcfg.TkCloseCacheLen)
 	return mavls
 }
 
@@ -94,7 +96,7 @@ func (mavls *MavlStore) Get(datas *types.StoreGet) [][]byte {
 func (mavls *MavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("mavl MemSet", "cost", types.Since(beg))
+		kmlog.Debug("mavl MemSet", "cost", types.Since(beg))
 	}()
 	if len(datas.KV) == 0 {
 		kmlog.Info("store mavl memset,use preStateHash as stateHash for kvset is null")
@@ -119,7 +121,7 @@ func (mavls *MavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error)
 func (mavls *MavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("mavl MemSet", "cost", types.Since(beg))
+		kmlog.Debug("mavl MemSet", "cost", types.Since(beg))
 	}()
 	if len(datas.KV) == 0 {
 		kmlog.Info("store mavl memset,use preStateHash as stateHash for kvset is null")
@@ -142,7 +144,7 @@ func (mavls *MavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte,
 func (mavls *MavlStore) Commit(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("mavl Commit", "cost", types.Since(beg))
+		kmlog.Debug("mavl Commit", "cost", types.Since(beg))
 	}()
 	tree, ok := mavls.trees.Load(string(req.Hash))
 	if !ok {
@@ -167,7 +169,7 @@ func (mavls *MavlStore) Commit(req *types.ReqHash) ([]byte, error) {
 func (mavls *MavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
-		kmlog.Info("Rollback", "cost", types.Since(beg))
+		kmlog.Debug("Rollback", "cost", types.Since(beg))
 	}()
 	_, ok := mavls.trees.Load(string(req.Hash))
 	if !ok {

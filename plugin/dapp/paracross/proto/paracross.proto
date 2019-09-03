@@ -3,14 +3,21 @@ syntax = "proto3";
 import "transaction.proto";
 import "common.proto";
 import "blockchain.proto";
-import "executor.proto";
 
 package types;
 
 // stateDB
 message ParacrossStatusDetails {
-    repeated string addrs    = 1;
-    repeated bytes blockHash = 2;
+    repeated string addrs        = 1;
+    repeated bytes blockHash     = 2;
+}
+
+//记录不同blockHash的详细数据
+message ParacrossStatusBlockDetails {
+    repeated bytes blockHashs     = 1;
+    repeated bytes txResults      = 2;
+
+
 }
 
 message ParacrossHeightStatus {
@@ -21,6 +28,7 @@ message ParacrossHeightStatus {
     ParacrossStatusDetails details = 4;
     int64                  mainHeight    = 5;
     bytes                  mainHash      = 6;
+    ParacrossStatusBlockDetails blockDetails = 7;
 }
 
 message ParacrossHeightStatusRsp {
@@ -35,9 +43,11 @@ message ParacrossHeightStatusRsp {
 }
 
 message ParacrossStatus {
-    string title     = 1;
-    int64  height    = 2;
-    bytes  blockHash = 3;
+    string title         = 1;
+    int64  height        = 2;
+    bytes  blockHash     = 3;
+    int64  mainHeight    = 4;
+    bytes  mainHash      = 5;
 }
 
 message ParacrossConsensusStatus {
@@ -219,14 +229,20 @@ message ReceiptParacrossMiner {
 }
 
 message ReceiptParacrossDone {
-    int32  totalNodes     = 1;
-    int32  totalCommit    = 2;
-    int32  mostSameCommit = 3;
-    string title          = 4;
-    int64  height         = 5;
-    bytes  stateHash      = 6;
-    uint32 txCounts       = 7;
-    bytes  txResult       = 8;
+    int32  totalNodes            = 1;
+    int32  totalCommit           = 2;
+    int32  mostSameCommit        = 3;
+    string title                 = 4;
+    int64  height                = 5;
+    bytes  stateHash             = 6;
+    uint32 txCounts              = 7;
+    bytes  txResult              = 8;
+    bytes  blockHash             = 9;
+    repeated bytes txHashs       = 10;
+    bytes          crossTxResult = 11;
+    repeated bytes crossTxHashs  = 12;
+    bytes    mainBlockHash       = 13;
+    int64    mainBlockHeight     = 14;
 }
 
 message ReceiptParacrossRecord {
@@ -284,7 +300,23 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
+message ParaLocalDbBlock {
+    int64     height         = 1;
+    bytes     mainHash       = 2;
+    int64     mainHeight     = 3;
+    bytes     parentMainHash = 4;
+    int64     blockTime      = 5;
+    repeated Transaction txs = 6;
+}
 
+message ParaLocalDbBlockInfo {
+    int64     height         = 1;
+    string    mainHash       = 2;
+    int64     mainHeight     = 3;
+    string    parentMainHash = 4;
+    int64     blockTime      = 5;
+    repeated string txs      = 6;
+}
 
 service paracross {
     rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}

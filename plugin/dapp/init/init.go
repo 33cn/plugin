@@ -1,6 +1,7 @@
 package init
 
 import (
+	_ "github.com/33cn/plugin/plugin/dapp/autonomy"   //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/blackwhite" //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/cert"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/dposvote"   //auto gen

@@ -164,8 +164,6 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 	if Account != nil || err != nil {
 		if Account.Privkey == Encrypteredstr {
 			return
-		} else {
-			return
 		}
 	}
 
@@ -328,38 +326,6 @@ func Test_ShowPrivacyKey(t *testing.T) {
 	}
 }
 
-func Test_CreateUTXOs(t *testing.T) {
-	mock := &testDataMock{mockMempool: true}
-	mock.init()
-	mock.enablePrivacy()
-
-	testCases := []struct {
-		req       *ty.ReqCreateUTXOs
-		needReply *types.Reply
-		needError error
-	}{
-		{
-			needError: types.ErrInvalidParam,
-		},
-		{
-			req: &ty.ReqCreateUTXOs{
-				Tokenname:  types.BTY,
-				Amount:     10 * types.Coin,
-				Note:       "say something",
-				Count:      16,
-				Sender:     testAddrs[0],
-				Pubkeypair: testPubkeyPairs[0],
-			},
-			needError: types.ErrAddrNotExist,
-		},
-	}
-
-	for index, testCase := range testCases {
-		_, getErr := mock.wallet.GetAPI().ExecWalletFunc(ty.PrivacyX, "CreateUTXOs", testCase.req)
-		require.Equalf(t, getErr, testCase.needError, "CreateUTXOs test case index %d", index)
-	}
-}
-
 func Test_CreateTransaction(t *testing.T) {
 	mock := &testDataMock{
 		mockMempool:    true,
@@ -384,6 +350,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 公对私测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       1,
 				Amount:     100 * types.Coin,
@@ -394,6 +361,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 私对私测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       2,
 				Amount:     10 * types.Coin,
@@ -404,6 +372,7 @@ func Test_CreateTransaction(t *testing.T) {
 		},
 		{ // 私对公测试
 			req: &ty.ReqCreatePrivacyTx{
+				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				Type:       3,
 				Amount:     10 * types.Coin,

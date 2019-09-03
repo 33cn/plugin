@@ -95,9 +95,9 @@ ParaRemoteGrpcClient = "localhost:8802"
 startHeight=20
 #打包时间间隔，单位秒
 writeBlockSeconds=2
-#主链每隔几个没有相关交易的区块，平行链上打包空区块
-emptyBlockInterval=4
+
 MainBlockHashForkHeight=1
+MainForkParacrossCommitTx=5
 MainParaSelfConsensusForkHeight=300
 SearchHashMatchedBlockDepth=100
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
@@ -106,6 +106,10 @@ authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
 waitBlocks4CommitMsg=2
 #创世地址额度
 genesisAmount=100000000
+#主链每隔几个没有相关交易的区块，平行链上打包空区块
+[[consensus.sub.para.emptyBlockInterval]]
+blockHeight=0
+interval=4
 
 [store]
 name="mavl"

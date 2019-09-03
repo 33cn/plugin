@@ -55,7 +55,7 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 				tx := msg.GetData().(*types.Transaction)
 				reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 			case types.EventGetProperFee:
-				reply, err = mem.mainGrpcCli.GetProperFee(context.Background(), &types.ReqNil{})
+				reply, err = mem.mainGrpcCli.GetProperFee(context.Background(), &types.ReqProperFee{})
 			default:
 				msg.Reply(client.NewMessage(mem.key, types.EventReply, types.ErrActionNotSupport))
 			}

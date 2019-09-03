@@ -63,10 +63,11 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 
 //Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil {
+	if in == nil || in.GetTitle() == "" {
 		return nil, types.ErrInvalidParam
 	}
-	ret, _, err := getParacrossNodes(p.GetStateDB(), in.GetTitle())
+
+	ret, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -75,7 +76,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		nodes = append(nodes, k)
 	}
 	var reply types.ReplyConfig
-	reply.Key = string(calcParaNodeGroupAddrsKey(in.GetTitle()))
+	reply.Key = string(key)
 	reply.Value = fmt.Sprint(nodes)
 	return &reply, nil
 }
@@ -89,7 +90,27 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if err != nil {
 		return nil, err
 	}
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
+		return nil, err
+	}
+	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+		stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
+		stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
+	}
 	return stat, nil
+}
+
+func (p *Paracross) getMainHeight() (int64, error) {
+	mainHeight := p.GetMainHeight()
+	if types.IsPara() {
+		block, err := p.GetAPI().GetBlocks(&types.ReqBlocks{Start: p.GetHeight(), End: p.GetHeight()})
+		if err != nil || block == nil || len(block.Items) == 0 {
+			return -1, types.ErrBlockExist
+		}
+		mainHeight = block.Items[0].Block.MainHeight
+	}
+	return mainHeight, nil
 }
 
 //Query_GetNodeIDInfo get specific node addr info
@@ -97,10 +118,17 @@ func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Mess
 	if in == nil || in.Title == "" || in.Id == "" {
 		return nil, types.ErrInvalidParam
 	}
-
-	stat, err := getNodeID(p.GetStateDB(), in.Id)
+	mainHeight, err := p.getMainHeight()
 	if err != nil {
 		return nil, err
+	}
+	stat, err := getNodeIDWithFork(p.GetStateDB(), in.Title, mainHeight, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+		stat.Id = getParaNodeIDSuffix(stat.Id)
 	}
 	return stat, nil
 }
@@ -110,7 +138,22 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
 	}
-	return listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
+	resp, err := listLocalNodeStatus(p.GetLocalDB(), in.Title, in.Status)
+	if err != nil {
+		return resp, err
+	}
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
+		return nil, err
+	}
+	if !pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+		return resp, err
+	}
+	addrs := resp.(*pt.RespParacrossNodeAddrs)
+	for _, id := range addrs.Ids {
+		id.Id = getParaNodeIDSuffix(id.Id)
+	}
+	return resp, nil
 }
 
 //Query_GetNodeGroupStatus get specific node addr info
@@ -120,7 +163,14 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	}
 	stat, err := getNodeGroupStatus(p.GetStateDB(), in.Title)
 	if err != nil {
+		return stat, err
+	}
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
 		return nil, err
+	}
+	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+		stat.Id = getParaNodeIDSuffix(stat.Id)
 	}
 	return stat, nil
 }
@@ -130,7 +180,22 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
+	resp, err := listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
+	if err != nil {
+		return resp, err
+	}
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
+		return nil, err
+	}
+	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+		addrs := resp.(*pt.RespParacrossNodeGroups)
+		for _, id := range addrs.Ids {
+			id.Id = getParaNodeIDSuffix(id.Id)
+		}
+	}
+
+	return resp, nil
 }
 
 //Query_ListTitles query paracross titles list
@@ -225,8 +290,6 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			MostSameCommit: st.MostSameCommit,
 			Title:          st.Title,
 			Height:         st.Height,
-			StateHash:      common.ToHex(st.StateHash),
-			TxCounts:       st.TxCounts,
 			TxResult:       hex.EncodeToString(st.TxResult),
 		}
 
@@ -312,8 +375,6 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 		MostSameCommit: st.MostSameCommit,
 		Title:          st.Title,
 		Height:         st.Height,
-		StateHash:      common.ToHex(st.StateHash),
-		TxCounts:       st.TxCounts,
 		TxResult:       hex.EncodeToString(st.TxResult),
 	}, nil
 }

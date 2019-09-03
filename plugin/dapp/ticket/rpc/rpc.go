@@ -28,10 +28,14 @@ func bindMiner(param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
 
 // CreateBindMiner 创建绑定挖矿
 func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
-	if in.Amount%(10000*types.Coin) != 0 || in.Amount < 0 {
+	header, err := g.GetLastHeader()
+	if err != nil {
+		return nil, err
+	}
+	if in.Amount%types.GetP(header.Height).TicketPrice != 0 || in.Amount < 0 {
 		return nil, types.ErrAmount
 	}
-	err := address.CheckAddress(in.BindAddr)
+	err = address.CheckAddress(in.BindAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +45,7 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 	}
 
 	if in.CheckBalance {
-		getBalance := &types.ReqBalance{Addresses: []string{in.OriginAddr}, Execer: "coins"}
+		getBalance := &types.ReqBalance{Addresses: []string{in.OriginAddr}, Execer: "coins", AssetSymbol: "bty", AssetExec: "coins"}
 		balances, err := g.GetCoinsAccountDB().GetBalance(g, getBalance)
 		if err != nil {
 			return nil, err
