@@ -13,6 +13,8 @@ type TradeSellTx struct {
 	TotalBoardlot     int64  `json:"totalBoardlot"`
 	Fee               int64  `json:"fee"`
 	AssetExec         string `json:"assetExec"`
+	PriceExec         string `json:"priceExec"`
+	PriceSymbol       string `json:"priceSymbol"`
 }
 
 //TradeBuyTx :info for buy order to speficied order
@@ -37,6 +39,8 @@ type TradeBuyLimitTx struct {
 	TotalBoardlot     int64  `json:"totalBoardlot"`
 	Fee               int64  `json:"fee"`
 	AssetExec         string `json:"assetExec"`
+	PriceExec         string `json:"priceExec"`
+	PriceSymbol       string `json:"priceSymbol"`
 }
 
 //TradeSellMarketTx :用于向指定买单出售token的信息
