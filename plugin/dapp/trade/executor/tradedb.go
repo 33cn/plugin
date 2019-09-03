@@ -349,6 +349,8 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 
 	priceAcc, err := createPriceDB(action.height, action.db, sellOrder.PriceExec, sellOrder.PriceSymbol)
 	if err != nil {
+		tradelog.Error("createPriceDB", "addrFrom", action.fromaddr, "height", action.height,
+			"price", sellOrder.PriceExec+"-"+sellOrder.PriceSymbol, "err", err)
 		return nil, err
 	}
 	//首先购买费用的划转
@@ -359,9 +361,10 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, err
 	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
-	//TODO: 创建一个LRU用来保存token对应的子合约账户的地址
 	accDB, err := createAccountDB(action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
 	if err != nil {
+		tradelog.Error("createAccountDB", "addrFrom", action.fromaddr, "height", action.height,
+			"price", sellOrder.AssetExec+"-"+sellOrder.TokenSymbol, "err", err)
 		return nil, err
 	}
 	receiptFromExecAcc, err := accDB.ExecTransferFrozen(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.AmountPerBoardlot)
