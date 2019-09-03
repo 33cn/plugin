@@ -51,7 +51,6 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 	if err != nil {
 		return err
 	}
-	client.commitMsgClient.commitTxCheckNotify(mainBlock.TxDetails)
 	return err
 }
 
@@ -552,6 +551,10 @@ out:
 			if count != int64(len(paraTxs.Items)) {
 				plog.Debug("para CreateBlock count not match", "count", count, "items", len(paraTxs.Items))
 				count = int64(len(paraTxs.Items))
+			}
+			//如果超过１个block，则认为当前正在追赶，暂不处理
+			if client.authAccount != "" && len(paraTxs.Items) == 1 {
+				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0].TxDetails)
 			}
 
 			err = client.procLocalBlocks(paraTxs)
