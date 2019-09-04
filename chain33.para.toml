@@ -80,6 +80,7 @@ minerExecs=["paracross"]    #配置挖矿合约
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+autonomyFundAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
@@ -211,6 +212,7 @@ ForkBase58AddressCheck=0
 #平行链上使能平行链执行器如user.p.x.coins执行器的注册，缺省为0，对已有的平行链需要设置一个fork高度
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
+ForkTicketFundAddrV1=-1 #fork6.3
 
 [fork.sub.coins]
 Enable=0
