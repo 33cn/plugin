@@ -2,12 +2,13 @@ package types
 
 import (
 	"bytes"
+	"os"
+	"testing"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 const (

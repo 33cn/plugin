@@ -50,22 +50,22 @@ const (
 	RegistFrozenCoins = 1000000000000
 
 	//VoteTypeNone 非投票类型
-	VoteTypeNone          int32 = 1
+	VoteTypeNone int32 = 1
 
 	//VoteTypeVote 投票类型
-	VoteTypeVote          int32 = 2
+	VoteTypeVote int32 = 2
 
 	//VoteTypeCancelVote 撤销投票类型
-	VoteTypeCancelVote    int32 = 3
+	VoteTypeCancelVote int32 = 3
 
 	//VoteTypeCancelAllVote 撤销所有投票类型
 	VoteTypeCancelAllVote int32 = 4
 
 	//TopNCandidatorsVoteInit topN投票状态：初始状态
-	TopNCandidatorsVoteInit      int64 = 0
+	TopNCandidatorsVoteInit int64 = 0
 
 	//TopNCandidatorsVoteMajorOK topN投票状态：2/3多数达成一致
-	TopNCandidatorsVoteMajorOK   int64 = 1
+	TopNCandidatorsVoteMajorOK int64 = 1
 
 	//TopNCandidatorsVoteMajorFail topN投票状态：2/3多数达成一致失败
 	TopNCandidatorsVoteMajorFail int64 = 2

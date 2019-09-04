@@ -8,10 +8,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/util"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
@@ -49,11 +50,11 @@ var (
 	dposPeriod                     = dposBlockInterval * dposContinueBlockNum
 	zeroHash                 [32]byte
 	dposPort                       = "36656"
-	shuffleType              int32  = dposShuffleTypeOrderByVrfInfo //shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
-	whetherUpdateTopN               = false                         //是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
-	blockNumToUpdateDelegate int64  = 20000
-	registTopNHeightLimit    int64  = 100
-	updateTopNHeightLimit    int64  = 200
+	shuffleType              int32 = dposShuffleTypeOrderByVrfInfo //shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
+	whetherUpdateTopN              = false                         //是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
+	blockNumToUpdateDelegate int64 = 20000
+	registTopNHeightLimit    int64 = 100
+	updateTopNHeightLimit    int64 = 200
 )
 
 func init() {

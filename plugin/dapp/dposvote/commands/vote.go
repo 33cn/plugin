@@ -10,11 +10,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/chain33/common/crypto"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/common/crypto"
 
 	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"

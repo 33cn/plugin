@@ -8,6 +8,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db"
@@ -15,8 +18,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	"sort"
-	"strings"
 )
 
 const (
@@ -98,7 +99,6 @@ func queryVrfByTime(kvdb db.KVDB, req *dty.DposVrfQuery) (types.Message, error) 
 	req.Cycle = cycleInfo.cycle
 	return queryVrfByCycle(kvdb, req)
 }
-
 
 func getJSONVrfs(vrfs []*dty.VrfInfo) []*dty.JSONVrfInfo {
 	var jsonVrfs []*dty.JSONVrfInfo
