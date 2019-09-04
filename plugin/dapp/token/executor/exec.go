@@ -46,13 +46,7 @@ func (t *token) Exec_TokenPreCreate(payload *tokenty.TokenPreCreate, tx *types.T
 }
 
 func (t *token) Exec_TokenFinishCreate(payload *tokenty.TokenFinishCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	fundAddr := ""
-	if types.IsFork(t.GetHeight(), "ForkTicketFundAddrV1") {
-		fundAddr = types.MGStr("mver.consensus.autonomyFundAddr", 0)
-	} else {
-		fundAddr = types.GetFundAddr()
-	}
-	action := newTokenAction(t, fundAddr, tx)
+	action := newTokenAction(t, types.GetFundAddr(), tx)
 	return action.finishCreate(payload)
 }
 

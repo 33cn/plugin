@@ -90,7 +90,6 @@ minerExecs=["ticket", "autonomy"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-autonomyFundAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
@@ -119,6 +118,9 @@ coinDevFund = 3
 targetTimespan = 720
 targetTimePerBlock = 5
 ticketPrice = 3000
+
+[mver.consensus.ForkTicketFundAddrV1]
+fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 
 [consensus.sub.ticket]
 genesisBlockTime=1514533394

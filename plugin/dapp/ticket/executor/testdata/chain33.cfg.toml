@@ -74,7 +74,6 @@ minerExecs=["ticket", "autonomy"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-autonomyFundAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
@@ -101,6 +100,9 @@ maxTxNumber = 1500
 targetTimespan = 720
 targetTimePerBlock = 1
 powLimitBits = "0x1f2fffff"
+
+[mver.consensus.ForkTicketFundAddrV1]
+fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 
 [consensus.sub.solo]
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"

@@ -80,7 +80,6 @@ minerExecs=["paracross"]    #配置挖矿合约
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-autonomyFundAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
