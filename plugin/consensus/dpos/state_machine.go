@@ -218,7 +218,7 @@ func checkVrf(cs *ConsensusState) {
 
 			cs.SendRegistVrfRPTx(vrfRP)
 		} else if info != nil && len(info.M) > 0 && len(info.R) > 0 && len(info.P) > 0 {
-			dposlog.Info("VrfRP is already registed", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+			dposlog.Info("VrfRP is already registered", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 		} else {
 			dposlog.Info("No available VrfM, so don't SendRegistVrfRPTx, just wait another cycle")
 		}
@@ -266,7 +266,7 @@ func checkTopNRegist(cs *ConsensusState) {
 			cs.SendTopNRegistTx(regist)
 			LastCheckRegTopNTime = now
 		} else {
-			dposlog.Info("TopN is already registed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+			dposlog.Info("TopN is already registered", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 			LastCheckRegTopNTime = now + (info.HeightStop-height)*dposBlockInterval
 		}
 	} else {
