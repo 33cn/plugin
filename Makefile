@@ -8,11 +8,8 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-CHAIN33=github.com/33cn/chain33
-CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
-GO_PATH=$(shell go env GOPATH)
-export CHAIN33_PATH=${GO_PATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
-export PLUGIN_PATH=${GO_PATH}/src/github.com/33cn/plugin
+export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+export PLUGIN_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/plugin)
 BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
