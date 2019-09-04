@@ -228,7 +228,7 @@ func checkVrf(cs *ConsensusState) {
 }
 
 func checkTopNRegist(cs *ConsensusState) {
-	if whetherUpdateTopN == false {
+	if !whetherUpdateTopN {
 		return
 	}
 
@@ -275,7 +275,7 @@ func checkTopNRegist(cs *ConsensusState) {
 }
 
 func checkTopNUpdate(cs *ConsensusState) {
-	if whetherUpdateTopN == false {
+	if !whetherUpdateTopN {
 		return
 	}
 

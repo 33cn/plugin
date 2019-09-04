@@ -297,9 +297,7 @@ func candidatorQuery(cmd *cobra.Command, args []string) {
 	case "pubkeys":
 		keys := strings.Split(pubkeys, ";")
 		req := &dty.CandidatorQuery{}
-		for _, key := range keys {
-			req.Pubkeys = append(req.Pubkeys, key)
-		}
+		req.Pubkeys = append(req.Pubkeys, keys...)
 		params.FuncName = dty.FuncNameQueryCandidatorByPubkeys
 		params.Payload = types.MustPBToJSON(req)
 		var res dty.CandidatorReply
@@ -337,9 +335,7 @@ func voteQuery(cmd *cobra.Command, args []string) {
 	}
 
 	keys := strings.Split(pubkeys, ";")
-	for _, key := range keys {
-		req.Pubkeys = append(req.Pubkeys, key)
-	}
+	req.Pubkeys = append(req.Pubkeys, keys...)
 
 	params.FuncName = dty.FuncNameQueryVote
 	params.Payload = types.MustPBToJSON(req)
@@ -548,9 +544,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 		}
 
 		keys := strings.Split(pubkeys, ";")
-		for _, key := range keys {
-			req.Pubkeys = append(req.Pubkeys, key)
-		}
+		req.Pubkeys = append(req.Pubkeys, keys...)
 
 		params.FuncName = dty.FuncNameQueryVrfByCycleForPubkeys
 		params.Payload = types.MustPBToJSON(req)

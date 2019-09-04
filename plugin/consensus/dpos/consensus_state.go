@@ -612,8 +612,6 @@ func (cs *ConsensusState) InitTopNCandidators(version int64) {
 
 		version--
 	}
-
-	return
 }
 
 // UpdateTopNCandidators method
@@ -706,8 +704,6 @@ func (cs *ConsensusState) InitCycleBoundaryInfo(task Task) {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateCBInfo(info)
 	}
-
-	return
 }
 
 // UpdateCBInfo method
@@ -928,8 +924,6 @@ func (cs *ConsensusState) InitCycleVrfInfo(task Task) {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfo(info)
 	}
-
-	return
 }
 
 // UpdateVrfInfo method

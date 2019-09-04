@@ -190,7 +190,7 @@ func queryVrfByCycleAndPubkeys(kvdb db.KVDB, pubkeys []string, cycle int64) []*d
 		vrfs = append(vrfs, vrf)
 	}
 
-	if tempPubkeys == nil || len(tempPubkeys) == 0 {
+	if len(tempPubkeys) == 0 {
 		return vrfs
 	}
 

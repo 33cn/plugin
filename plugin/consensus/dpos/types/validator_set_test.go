@@ -72,11 +72,7 @@ func TestValidator(t *testing.T) {
 }
 
 func match(index int, val *Validator) bool {
-	if bytes.Equal(val.Address, val1.Address) {
-		return true
-	}
-
-	return false
+	return bytes.Equal(val.Address, val1.Address)
 }
 
 func TestValidatorSet(t *testing.T) {
