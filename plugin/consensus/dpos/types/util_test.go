@@ -117,15 +117,15 @@ func TestParallel(t *testing.T) {
 	f2()
 	assert.True(t, goSum == 2)
 	/*
-	goSumMutex.Lock()
-	goSum = 0
-	goSumMutex.Unlock()
-
-
-		Parallel(f1, f2)
 		goSumMutex.Lock()
-		assert.True(t, goSum == 2)
+		goSum = 0
 		goSumMutex.Unlock()
+
+
+			Parallel(f1, f2)
+			goSumMutex.Lock()
+			assert.True(t, goSum == 2)
+			goSumMutex.Unlock()
 	*/
 }
 
