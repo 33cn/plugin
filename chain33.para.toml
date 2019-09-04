@@ -223,6 +223,7 @@ ForkTicketVrf =0
 [fork.sub.retrieve]
 Enable=0
 ForkRetrive=0
+ForkRetriveAsset=0
 
 [fork.sub.hashlock]
 Enable=0
