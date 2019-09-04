@@ -110,13 +110,14 @@ func test() {
 }
 
 func TestParallel(t *testing.T) {
-	/*
+
 	f1 := test
 	f1()
 
 	f2 := test
 	f2()
-
+	assert.True(t, goSum == 2)
+	/*
 	goSumMutex.Lock()
 	goSum = 0
 	goSumMutex.Unlock()
