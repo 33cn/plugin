@@ -100,6 +100,13 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 }
 
 func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
+	priceExec := order.PriceExec
+	priceSymbol := order.PriceSymbol
+	if priceExec == "" {
+		priceExec = defaultPriceExec
+		priceSymbol = types.GetCoinSymbol()
+	}
+
 	return &pty.ReplyTradeOrder{
 		TokenSymbol:       order.AssetSymbol,
 		Owner:             order.Owner,
@@ -117,8 +124,8 @@ func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
 		BlockTime:         order.BlockTime,
 		IsSellOrder:       order.IsSellOrder,
 		AssetExec:         order.AssetExec,
-		PriceExec:         order.PriceExec,
-		PriceSymbol:       order.PriceSymbol,
+		PriceExec:         priceExec,
+		PriceSymbol:       priceSymbol,
 	}
 }
 
