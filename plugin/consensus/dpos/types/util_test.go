@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -91,13 +92,20 @@ func TestKill(t *testing.T) {
 
 var (
 	goIndex = 0
+	goIndexMutex sync.Mutex
+
 	goSum   = 0
+	goSumMutex sync.Mutex
 )
 
 func test() {
+	goIndexMutex.Lock()
 	goIndex++
+	goIndexMutex.Unlock()
 	time.Sleep(time.Second * time.Duration(goIndex))
+	goSumMutex.Lock()
 	goSum++
+	goSumMutex.Unlock()
 }
 
 func TestParallel(t *testing.T) {
