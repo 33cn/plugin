@@ -89,7 +89,14 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		for _, board := range act.Boards {
 			if _, ok := mpBd[board]; ok {
 				err := auty.ErrRepeatAddr
-				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr ", err)
+				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in boards", err)
+				return nil, err
+			}
+		}
+		for _, board := range act.Revboards {
+			if _, ok := mpBd[board]; ok {
+				err := auty.ErrRepeatAddr
+				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in revboards ", err)
 				return nil, err
 			}
 		}

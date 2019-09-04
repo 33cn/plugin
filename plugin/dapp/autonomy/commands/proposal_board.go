@@ -75,7 +75,7 @@ func AutonomyCmd() *cobra.Command {
 // ProposalBoardCmd 创建提案命令
 func ProposalBoardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proposalboard",
+		Use:   "proposalBoard",
 		Short: "create proposal board",
 		Run:   proposalBoard,
 	}

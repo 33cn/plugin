@@ -19,7 +19,7 @@ import (
 // ProposalChangeCmd 创建提案命令
 func ProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proposalchange",
+		Use:   "proposalChange",
 		Short: "create proposal change",
 		Run:   proposalChange,
 	}
