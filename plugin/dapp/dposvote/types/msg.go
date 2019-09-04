@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/33cn/chain33/common/crypto"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 )

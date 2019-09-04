@@ -3,6 +3,7 @@ package dpos
 import (
 	"bytes"
 	"encoding/hex"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -17,7 +18,7 @@ import (
 
 const (
 	genesisContent = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
-	pubkey11        = "03541AB9887951C038273648545072E5B6A46A639BFF535F3957E8150CBE2A70D7"
+	pubkey11       = "03541AB9887951C038273648545072E5B6A46A639BFF535F3957E8150CBE2A70D7"
 )
 
 var (

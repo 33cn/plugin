@@ -3,14 +3,15 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func init() {
@@ -91,10 +92,10 @@ func TestKill(t *testing.T) {
 }
 
 var (
-	goIndex = 0
+	goIndex      = 0
 	goIndexMutex sync.Mutex
 
-	goSum   = 0
+	goSum      = 0
 	goSumMutex sync.Mutex
 )
 

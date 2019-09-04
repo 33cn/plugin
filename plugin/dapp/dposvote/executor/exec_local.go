@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 )

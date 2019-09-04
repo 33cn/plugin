@@ -10,12 +10,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/chain33/types"
 	"reflect"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common/crypto"
 	dpostype "github.com/33cn/plugin/plugin/consensus/dpos/types"
@@ -33,7 +34,7 @@ const (
 	voteFail       = 2
 
 	//VrfQueryTypeM vrf query type 为查询M信息
-	VrfQueryTypeM  = 0
+	VrfQueryTypeM = 0
 
 	//VrfQueryTypeRP vrf query type 为查询RP信息
 	VrfQueryTypeRP = 1
