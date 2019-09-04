@@ -212,7 +212,7 @@ ForkBlockCheck=-1 #fork 6.2
 ForkBase58AddressCheck=-1 #fork6.2
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
-ForkTicketFundAddrV1=0 #fork6.3
+ForkTicketFundAddrV1=-1 #fork6.3
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]

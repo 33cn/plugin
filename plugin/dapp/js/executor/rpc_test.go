@@ -25,7 +25,9 @@ func init() {
 }
 
 func TestJsVM(t *testing.T) {
-	mocker := testnode.New("testdata/chain33.cfg.toml", nil)
+	cfg, sub := testnode.GetDefaultConfig()
+	cfg.Consensus.Name = "ticket"
+	mocker := testnode.NewWithConfig(cfg, sub, nil)
 	defer mocker.Close()
 	mocker.Listen()
 
