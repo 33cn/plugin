@@ -43,6 +43,7 @@ message PrepareRetrieve {
 message PerformRetrieve {
     string backupAddress  = 1;
     string defaultAddress = 2;
+    repeated Asset assets = 3;
 }
 
 message CancelRetrieve {
