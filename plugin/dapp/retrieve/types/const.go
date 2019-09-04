@@ -35,6 +35,9 @@ var (
 		"Backup":  RetrieveActionBackup,
 		"Cancel":  RetrieveActionCancel,
 	}
+
+	ForkRetriveAssetX = "ForkRetriveAsset"
+	ForkRetriveX      = "ForkRetrive"
 )
 
 func init() {
