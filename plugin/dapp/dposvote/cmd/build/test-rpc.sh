@@ -11,8 +11,8 @@ source ../dapp-test-common.sh
 MAIN_HTTP=""
 CASE_ERR=""
 
-eventId=""
-txhash=""
+#eventId=""
+#txhash=""
 
 #color
 RED='\033[1;31m'
