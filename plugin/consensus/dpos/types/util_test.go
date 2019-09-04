@@ -115,9 +115,15 @@ func TestParallel(t *testing.T) {
 	f2 := test
 	f2()
 
+	goSumMutex.Lock()
 	goSum = 0
+	goSumMutex.Unlock()
+
 	Parallel(f1, f2)
+	goSumMutex.Lock()
 	assert.True(t, goSum == 2)
+	goSumMutex.Unlock()
+
 }
 
 func TestRandInt63n(t *testing.T) {

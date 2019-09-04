@@ -1029,7 +1029,7 @@ func (action *Action) RegistVrfM(vrfMReg *dty.DposVrfMRegist) (*types.Receipt, e
 	query := vrfMTable.GetQuery(action.localDB)
 	_, err = query.ListIndex("pubkey_cycle", []byte(fmt.Sprintf("%X:%018d", bPubkey, vrfMReg.Cycle)), nil, 1, 0)
 	if err == nil {
-		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "VrfM already is registed",
+		logger.Error("RegistVrfM failed", "addr", action.fromaddr, "execaddr", action.execaddr, "VrfM already is registered",
 			vrfMReg.String())
 		return nil, dty.ErrVrfMAlreadyRegisted
 	}

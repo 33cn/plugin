@@ -997,8 +997,6 @@ func (cs *ConsensusState) InitCycleVrfInfos(task Task) {
 		//cs.cycleBoundaryMap[task.cycle] = info
 		cs.UpdateVrfInfos(task.Cycle, infos)
 	}
-
-	return
 }
 
 // UpdateVrfInfos method

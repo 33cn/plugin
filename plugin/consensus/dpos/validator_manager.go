@@ -9,14 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/33cn/chain33/common/address"
-	"math/rand"
-
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-)
-
-var (
-	r *rand.Rand
 )
 
 const (
@@ -145,7 +139,7 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 }
 
 // GetValidatorByIndex method
-func (s *ValidatorMgr) GetValidatorByIndex(index int) (addres []byte, val *ttypes.Validator) {
+func (s *ValidatorMgr) GetValidatorByIndex(index int) (addr []byte, val *ttypes.Validator) {
 	if index < 0 || index >= len(s.Validators.Validators) {
 		return nil, nil
 	}

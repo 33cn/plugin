@@ -194,10 +194,10 @@ func checkVrf(cs *ConsensusState) {
 				dposlog.Info("SendRegistVrfMTx", "pubkey", vrfM.Pubkey, "cycle", vrfM.Cycle, "M", vrfM.M)
 				cs.SendRegistVrfMTx(vrfM)
 			} else {
-				dposlog.Info("No avaliable LastCBInfo, so don't SendRegistVrfMTx, just wait another cycle")
+				dposlog.Info("No available LastCBInfo, so don't SendRegistVrfMTx, just wait another cycle")
 			}
 		} else {
-			dposlog.Info("VrfM is already registed", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
+			dposlog.Info("VrfM is already registered", "now", now, "middle", middleTime, "cycle", task.Cycle, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 		}
 		LastCheckVrfMTime = now
 	} else {
