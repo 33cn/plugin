@@ -19,11 +19,18 @@ type RetrievePrepareTx struct {
 	Fee         int64  `json:"fee"`
 }
 
+// Asset Asset
+type Asset struct {
+	Exec   string `json:"exec"`
+	Symbol string `json:"symbol"`
+}
+
 // RetrievePerformTx construction
 type RetrievePerformTx struct {
-	BackupAddr  string `json:"backupAddr"`
-	DefaultAddr string `json:"defaultAddr"`
-	Fee         int64  `json:"fee"`
+	BackupAddr  string  `json:"backupAddr"`
+	DefaultAddr string  `json:"defaultAddr"`
+	Assets      []Asset `json:"assets"`
+	Fee         int64   `json:"fee"`
 }
 
 // RetrieveCancelTx construction
