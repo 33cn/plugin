@@ -49,7 +49,7 @@ func checkAsset(height int64, exec, symbol string) bool {
 
 func checkPrice(height int64, exec, symbol string) bool {
 	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
-		if exec == "" || symbol == "" {
+		if exec == "" && symbol != "" || exec != "" && symbol == "" {
 			return false
 		}
 	} else {
@@ -84,7 +84,7 @@ func createAccountDB(height int64, db db.KV, exec, symbol string) (*account.DB, 
 
 func createPriceDB(height int64, db db.KV, exec, symbol string) (*account.DB, error) {
 	if types.IsDappFork(height, pt.TradeX, pt.ForkTradePriceX) {
-		// 在fork 之前提的交易
+		// 为空默认使用 coins
 		if exec == "" {
 			acc := account.NewCoinsAccount()
 			acc.SetDB(db)
