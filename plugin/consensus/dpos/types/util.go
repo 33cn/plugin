@@ -23,18 +23,24 @@ const (
 
 var (
 	randgen *rand.Rand
-	randMux sync.Mutex
+	//randMux sync.Mutex
 	// Fmt ...
 	Fmt = fmt.Sprintf
+	once sync.Once
 )
 
 // Init ...
 func Init() {
-	if randgen == nil {
-		randMux.Lock()
-		randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
-		randMux.Unlock()
-	}
+	once.Do(func () {
+		if randgen == nil {
+			randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
+		}
+	})
+	//if randgen == nil {
+	//	randMux.Lock()
+	//	randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
+	//	randMux.Unlock()
+	//}
 }
 
 // WriteFile ...
@@ -137,30 +143,30 @@ func RandIntn(n int) int {
 		panic("invalid argument to Intn")
 	}
 	if n <= 1<<31-1 {
-		randMux.Lock()
+		//randMux.Lock()
 		i32 := randgen.Int31n(int32(n))
-		randMux.Unlock()
+		//randMux.Unlock()
 		return int(i32)
 	}
-	randMux.Lock()
+	//randMux.Lock()
 	i64 := randgen.Int63n(int64(n))
-	randMux.Unlock()
+	//randMux.Unlock()
 	return int(i64)
 }
 
 // RandUint32 ...
 func RandUint32() uint32 {
-	randMux.Lock()
+	//randMux.Lock()
 	u32 := randgen.Uint32()
-	randMux.Unlock()
+	//randMux.Unlock()
 	return u32
 }
 
 // RandInt63n ...
 func RandInt63n(n int64) int64 {
-	randMux.Lock()
+	//randMux.Lock()
 	i64 := randgen.Int63n(n)
-	randMux.Unlock()
+	//randMux.Unlock()
 	return i64
 }
 

@@ -595,8 +595,10 @@ func (cs *ConsensusState) Init() {
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
 	cs.InitCycleBoundaryInfo(task)
-	cs.InitCycleVrfInfo(task)
-	cs.InitCycleVrfInfos(task)
+	if shuffleType == dposShuffleTypeOrderByVrfInfo {
+		cs.InitCycleVrfInfo(task)
+		cs.InitCycleVrfInfos(task)
+	}
 
 	info := CalcTopNVersion(cs.client.GetCurrentHeight())
 	cs.InitTopNCandidators(info.Version)
@@ -604,7 +606,7 @@ func (cs *ConsensusState) Init() {
 
 // InitTopNCandidators method
 func (cs *ConsensusState) InitTopNCandidators(version int64) {
-	for version > 0 {
+	for version > 0 && whetherUpdateTopN {
 		info, err := cs.client.QueryTopNCandidators(version)
 		if err == nil && info != nil && info.Status == dty.TopNCandidatorsVoteMajorOK {
 			cs.UpdateTopNCandidators(info)

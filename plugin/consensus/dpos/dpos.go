@@ -307,7 +307,7 @@ OuterLoop:
 	if err != nil {
 		panic(err)
 	}
-	if block != nil {
+	if block != nil && whetherUpdateTopN {
 		//time.Sleep(time.Second * 5)
 		//cands, err := client.QueryCandidators()
 		info := CalcTopNVersion(block.Height)
