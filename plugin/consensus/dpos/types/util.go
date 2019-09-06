@@ -25,13 +25,13 @@ var (
 	randgen *rand.Rand
 
 	// Fmt ...
-	Fmt = fmt.Sprintf
+	Fmt  = fmt.Sprintf
 	once sync.Once
 )
 
 // Init ...
 func Init() {
-	once.Do(func () {
+	once.Do(func() {
 		if randgen == nil {
 			randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
 		}
