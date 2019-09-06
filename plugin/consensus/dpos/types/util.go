@@ -23,7 +23,7 @@ const (
 
 var (
 	randgen *rand.Rand
-	//randMux sync.Mutex
+
 	// Fmt ...
 	Fmt = fmt.Sprintf
 	once sync.Once
@@ -36,11 +36,6 @@ func Init() {
 			randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
 		}
 	})
-	//if randgen == nil {
-	//	randMux.Lock()
-	//	randgen = rand.New(rand.NewSource(time.Now().UnixNano()))
-	//	randMux.Unlock()
-	//}
 }
 
 // WriteFile ...
