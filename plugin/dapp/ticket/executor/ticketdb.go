@@ -346,13 +346,13 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 		addr := types.MGStr("mver.consensus.fundKeyAddr", action.height)
 		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
 		if err != nil {
-			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr)
+			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
 			return nil, err
 		}
 	} else {
 		receipt2, err = action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
 		if err != nil {
-			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr)
+			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "error", err)
 			return nil, err
 		}
 	}
