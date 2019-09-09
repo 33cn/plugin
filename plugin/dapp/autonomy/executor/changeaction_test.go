@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -99,7 +98,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
@@ -149,7 +148,7 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 }
 
@@ -262,9 +261,9 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
@@ -347,7 +346,9 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
@@ -157,7 +156,7 @@ func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
 	accCoin.SaveAccount(&accountA)
-	accCoin.SaveExecAccount(address.ExecAddress(auty.AutonomyX), &accountA)
+	accCoin.SaveExecAccount(autonomyAddr, &accountA)
 	accCoin.SaveAccount(&accountB)
 	accCoin.SaveAccount(&accountC)
 	accCoin.SaveAccount(&accountD)
@@ -180,6 +179,76 @@ func InitMinerAddr(stateDB dbm.KV, addrs []string, bind string) {
 			ReturnAddress: addr,
 		}
 		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
+	}
+}
+
+func TestPropBoard(t *testing.T) {
+	env, exec, stateDB, _ := InitEnv()
+
+	opts := []*auty.ProposalBoard{
+		{ // ErrRepeatAddr
+			Update:           true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrRepeatAddr
+			Update:           true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrBoardNumber
+			Update:           true,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // 正常
+			Update:           true,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+
+		{ // ErrRepeatAddr
+			Update:           false,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrBoardNumber
+			Update:           false,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // 正常
+			Update:           false,
+			Boards:           boards,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+	}
+	result := []error{
+		auty.ErrRepeatAddr,
+		auty.ErrRepeatAddr,
+		auty.ErrBoardNumber,
+		nil,
+		auty.ErrRepeatAddr,
+		auty.ErrBoardNumber,
+		nil,
+	}
+
+	InitBoard(stateDB)
+	exec.SetStateDB(stateDB)
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	for i, tcase := range opts {
+		pbtx, err := propBoardTx(tcase)
+		assert.NoError(t, err)
+		pbtx, err = signTx(pbtx, PrivKeyA)
+		assert.NoError(t, err)
+		_, err = exec.Exec(pbtx, i)
+		assert.Equal(t, err, result[i])
 	}
 }
 
@@ -251,7 +320,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Frozen)
 }
 
@@ -301,7 +370,7 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 }
 
@@ -407,9 +476,9 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	// balance
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyFundAddr, address.ExecAddress(auty.AutonomyX))
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
@@ -484,7 +553,9 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	// check
 	accCoin := account.NewCoinsAccount()
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, address.ExecAddress(auty.AutonomyX))
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 }
 
@@ -554,6 +625,7 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	assert.Nil(t, copyAutonomyProposalBoard(nil))
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  &auty.ProposalBoard{Year: 1900, Month: 1},
+		Board:      &auty.ActiveBoard{Boards: []string{"111", "112"}, Revboards: []string{"113", "114"}},
 		CurRule:    &auty.RuleConfig{BoardApproveRatio: 100},
 		VoteResult: &auty.VoteResult{TotalVotes: 100},
 		Status:     2,
@@ -562,13 +634,16 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 	pre := copyAutonomyProposalBoard(cur)
 	cur.PropBoard.Year = 1800
 	cur.PropBoard.Month = 2
+	cur.Board.Boards = []string{"211", "212"}
+	cur.Board.Revboards = []string{"113", "114"}
 	cur.CurRule.BoardApproveRatio = 90
 	cur.VoteResult.TotalVotes = 50
 	cur.Address = "234"
 	cur.Status = 1
 
 	assert.Equal(t, 1900, int(pre.PropBoard.Year))
-	assert.Equal(t, 1, int(pre.PropBoard.Month))
+	assert.Equal(t, []string{"111", "112"}, pre.Board.Boards)
+	assert.Equal(t, []string{"113", "114"}, pre.Board.Revboards)
 	assert.Equal(t, 100, int(pre.CurRule.BoardApproveRatio))
 	assert.Equal(t, 100, int(pre.VoteResult.TotalVotes))
 	assert.Equal(t, "123", pre.Address)
@@ -596,6 +671,16 @@ func TestVerifyMinerAddr(t *testing.T) {
 	}
 	_, err := action.verifyMinerAddr(addrs, AddrD)
 	assert.NoError(t, err)
+	// ErrRepeatAddr
+	addrss := []string{
+		AddrA,
+		AddrB,
+		AddrC,
+		AddrA,
+	}
+	add, err := action.verifyMinerAddr(addrss, AddrD)
+	assert.Equal(t, auty.ErrRepeatAddr, err)
+	assert.Equal(t, add, AddrA)
 
 	// ErrMinerAddr
 	testf := "12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"

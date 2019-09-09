@@ -19,7 +19,7 @@ import (
 // ProposalChangeCmd 创建提案命令
 func ProposalChangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proposalchange",
+		Use:   "proposalChange",
 		Short: "create proposal change",
 		Run:   proposalChange,
 	}
@@ -238,7 +238,7 @@ func addShowProposalChangeflags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("status", "s", 0, "status")
 	cmd.Flags().StringP("addr", "a", "", "address")
 	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
-	cmd.Flags().Int32P("direction", "d", -1, "direction, default is reserve")
+	cmd.Flags().Int32P("direction", "d", 0, "direction, default is reserve")
 	cmd.Flags().Int64P("height", "t", -1, "height, default is -1")
 	cmd.Flags().Int32P("index", "i", -1, "index, default is -1")
 }

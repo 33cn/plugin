@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"sort"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
@@ -20,7 +22,7 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propChange height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return nil, types.ErrInvalidParam
+		return nil, auty.ErrSetBlockHeight
 	}
 
 	act, err := a.getActiveBoard()
@@ -178,7 +180,7 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	// 首次进入投票期,即将提案金转入自治系统地址
 	if cur.Status == auty.AutonomyStatusProposalChange {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropChange ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -238,7 +240,7 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 	}
 
 	end := cur.GetPropChange().EndBlockHeight
-	if a.height < end && !cur.VoteResult.Pass {
+	if a.height <= end && !cur.VoteResult.Pass {
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropChange ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
 			"in vote period can not terminate", tmintProb.ProposalID, "err", err)
@@ -258,7 +260,7 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 
 	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
 	if cur.Status == auty.AutonomyStatusProposalChange {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -331,9 +333,11 @@ func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (
 	for k := range mpBd {
 		new.Boards = append(new.Boards, k)
 	}
+	sort.Strings(new.Boards)
 	for k := range mpRbd {
 		new.Revboards = append(new.Revboards, k)
 	}
+	sort.Strings(new.Revboards)
 	return new, nil
 }
 

@@ -52,16 +52,15 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 }
 
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
-	if len(prob.Boards) > maxBoards || len(prob.Boards) < minBoards {
-		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
-		return nil, types.ErrInvalidParam
-	}
-
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
-		return nil, types.ErrInvalidParam
+		return nil, auty.ErrSetBlockHeight
+	}
+	if len(prob.Boards) == 0 {
+		alog.Error("propBoard ", "proposal boards number is zero", len(prob.Boards))
+		return nil, auty.ErrBoardNumber
 	}
 
 	mpBd := make(map[string]struct{})
@@ -77,6 +76,40 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 			return nil, err
 		}
 		mpBd[board] = struct{}{}
+	}
+
+	var act *auty.ActiveBoard
+	var err error
+	if prob.Update {
+		act, err = a.getActiveBoard()
+		if err != nil {
+			alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
+			return nil, err
+		}
+		for _, board := range act.Boards {
+			if _, ok := mpBd[board]; ok {
+				err := auty.ErrRepeatAddr
+				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in boards", err)
+				return nil, err
+			}
+		}
+		for _, board := range act.Revboards {
+			if _, ok := mpBd[board]; ok {
+				err := auty.ErrRepeatAddr
+				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in revboards ", err)
+				return nil, err
+			}
+		}
+		act.Boards = append(act.Boards, prob.Boards...)
+	} else {
+		act = &auty.ActiveBoard{
+			Boards: prob.Boards,
+		}
+	}
+
+	if len(act.Boards) > maxBoards || len(act.Boards) < minBoards {
+		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
+		return nil, auty.ErrBoardNumber
 	}
 
 	// 获取当前生效提案规则
@@ -101,6 +134,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	cur := &auty.AutonomyProposalBoard{
 		PropBoard:  prob,
 		CurRule:    rule,
+		Board:      act,
 		VoteResult: &auty.VoteResult{},
 		Status:     auty.AutonomyStatusProposalBoard,
 		Address:    a.fromaddr,
@@ -257,7 +291,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 首次进入投票期,即将提案金转入自治系统地址
 	if cur.Status == auty.AutonomyStatusProposalBoard {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropBoard ", "addr", cur.Address, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -286,11 +320,10 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		act := &auty.ActiveBoard{
-			Boards:      cur.PropBoard.Boards,
-			StartHeight: a.height,
+		if !cur.PropBoard.Update { // 非update才进行高度重写
+			cur.Board.StartHeight = a.height
 		}
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
 
 	ty := auty.TyLogVotePropBoard
@@ -351,7 +384,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 未进行投票情况下，符合提案关闭的也需要扣除提案费用
 	if cur.Status == auty.AutonomyStatusProposalBoard {
-		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, autonomyFundAddr, a.execaddr, cur.CurRule.ProposalAmount)
+		receipt, err := a.coinsAccount.ExecTransferFrozen(cur.Address, a.execaddr, a.execaddr, cur.CurRule.ProposalAmount)
 		if err != nil {
 			alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecTransferFrozen amount fail", err)
 			return nil, err
@@ -366,11 +399,10 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		act := &auty.ActiveBoard{
-			Boards:      cur.PropBoard.Boards,
-			StartHeight: a.height,
+		if !cur.PropBoard.Update { // 非update才进行高度重写
+			cur.Board.StartHeight = a.height
 		}
-		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(act)})
+		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
 
 	receiptLog := getReceiptLog(pre, cur, auty.TyLogTmintPropBoard)
@@ -392,7 +424,8 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 }
 
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
-	// 验证绑定关系
+	// 验证绑定关系与重复地址
+	mp := make(map[string]struct{})
 	for _, addr := range addrs {
 		value, err := a.db.Get(ticket.BindKey(addr))
 		if err != nil {
@@ -403,6 +436,10 @@ func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error
 		if err != nil || tkBind.MinerAddress != bindAddr {
 			return addr, auty.ErrBindAddr
 		}
+		if _, ok := mp[addr]; ok {
+			return addr, auty.ErrRepeatAddr
+		}
+		mp[addr] = struct{}{}
 	}
 	return "", nil
 }
@@ -534,6 +571,14 @@ func copyAutonomyProposalBoard(cur *auty.AutonomyProposalBoard) *auty.AutonomyPr
 	if cur.CurRule != nil {
 		newRule := *cur.GetCurRule()
 		newAut.CurRule = &newRule
+	}
+	if cur.Board != nil {
+		newBoard := *cur.GetBoard()
+		newBoard.Boards = make([]string, len(cur.Board.Boards))
+		copy(newBoard.Boards, cur.Board.Boards)
+		newBoard.Revboards = make([]string, len(cur.Board.Revboards))
+		copy(newBoard.Revboards, cur.Board.Revboards)
+		newAut.Board = &newBoard
 	}
 	if cur.VoteResult != nil {
 		newRes := *cur.GetVoteResult()

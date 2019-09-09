@@ -70,6 +70,7 @@ name="ticket"
 minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+minerExecs=["ticket", "autonomy"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -99,6 +100,9 @@ maxTxNumber = 1500
 targetTimespan = 720
 targetTimePerBlock = 1
 powLimitBits = "0x1f2fffff"
+
+[mver.consensus.ForkTicketFundAddrV1]
+fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 
 [consensus.sub.solo]
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
@@ -180,6 +184,10 @@ superManager=[
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 ]
 
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
+
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
 [fork.system]
@@ -204,6 +212,7 @@ ForkBlockCheck=-1 #fork 6.2
 ForkBase58AddressCheck=-1 #fork6.2
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
+ForkTicketFundAddrV1=-1 #fork6.3
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]
