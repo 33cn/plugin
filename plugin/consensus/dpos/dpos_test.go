@@ -11,11 +11,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/33cn/chain33/common/crypto"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/common/crypto"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -47,8 +48,8 @@ var (
 	strPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
 	pubkey []byte
 )
-const fee = 1e6
 
+const fee = 1e6
 
 func init() {
 	err := limits.SetLimits()
