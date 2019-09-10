@@ -31,6 +31,8 @@ import (
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 	"google.golang.org/grpc"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
+
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
@@ -42,6 +44,8 @@ var (
 	loopCount = 10
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
+	strPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
+	pubkey []byte
 )
 const fee = 1e6
 
@@ -53,15 +57,16 @@ func init() {
 	}
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
 	log.SetLogLevel("info")
+	pubkey, _ = hex.DecodeString(strPubkey)
 }
-func TestTendermintPerf(t *testing.T) {
-	TendermintPerf()
+func TestDposPerf(t *testing.T) {
+	DposPerf()
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
 
-func TendermintPerf() {
-	q, chain, s, mem, exec, cs, p2p := initEnvTendermint()
+func DposPerf() {
+	q, chain, s, mem, exec, cs, p2p := initEnvDpos()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
@@ -79,9 +84,101 @@ func TendermintPerf() {
 		time.Sleep(time.Second)
 	}
 	time.Sleep(10 * time.Second)
+	now := time.Now().Unix()
+	task := DecideTaskByTime(now)
+
+	dposClient := cs.(*Client)
+	dposClient.csState.QueryCycleBoundaryInfo(task.Cycle)
+	dposClient.csState.GetCBInfoByCircle(task.Cycle)
+	dposClient.csState.QueryVrf(pubkey, task.Cycle)
+	dposClient.csState.QueryVrfs(dposClient.csState.validatorMgr.Validators, task.Cycle)
+	dposClient.csState.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeM)
+	dposClient.csState.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeRP)
+	dposClient.csState.GetVrfInfosByCircle(task.Cycle)
+	input := []byte("data1")
+	hash, proof := dposClient.csState.VrfEvaluate(input)
+	if dposClient.csState.VrfProof(pubkey, input, hash, proof) {
+		fmt.Println("VrfProof ok")
+	}
+	dposClient.QueryTopNCandidators(1)
+
+	time.Sleep(1 * time.Second)
+	info := &dty.DposCBInfo{
+		Cycle: task.Cycle,
+		StopHeight: 10,
+		StopHash: "absadfafa",
+		Pubkey: strPubkey,
+	}
+	if dposClient.csState.SendCBTx(info) {
+		fmt.Println("sendCBTx ok")
+	} else {
+		fmt.Println("sendCBTx failed")
+	}
+	time.Sleep(2 * time.Second)
+	info2 := dposClient.csState.GetCBInfoByCircle(task.Cycle)
+	if info2 != nil && info2.StopHeight == info.StopHeight {
+		fmt.Println("GetCBInfoByCircle ok")
+	} else {
+		fmt.Println("GetCBInfoByCircle failed")
+	}
+	time.Sleep(1 * time.Second)
+	for {
+		now = time.Now().Unix()
+		task = DecideTaskByTime(now)
+		if now < task.CycleStart + (task.CycleStop-task.CycleStart)/2 {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	vrfM := &dty.DposVrfMRegist{
+		Pubkey: strPubkey,
+		Cycle: task.Cycle,
+		M: "absadfafa",
+	}
+	if dposClient.csState.SendRegistVrfMTx(vrfM) {
+		fmt.Println("SendRegistVrfMTx ok")
+	} else {
+		fmt.Println("SendRegistVrfMTx failed")
+	}
+	time.Sleep(2 * time.Second)
+	vrfInfo, err := dposClient.csState.QueryVrf(pubkey, task.Cycle)
+	if err != nil || vrfInfo == nil {
+		fmt.Println("QueryVrf failed")
+	} else {
+		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M))
+	}
+
+	for {
+		now = time.Now().Unix()
+		task = DecideTaskByTime(now)
+		if now > task.CycleStart + (task.CycleStop-task.CycleStart)/2 {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	vrfRP := &dty.DposVrfRPRegist{
+		Pubkey: strPubkey,
+		Cycle: task.Cycle,
+		R: "Rabsadfafa",
+		P: "Pabsadfafa",
+	}
+	if dposClient.csState.SendRegistVrfRPTx(vrfRP) {
+		fmt.Println("SendRegistVrfRPTx ok")
+	} else {
+		fmt.Println("SendRegistVrfRPTx failed")
+	}
+	time.Sleep(2 * time.Second)
+	vrfInfo, err = dposClient.csState.QueryVrf(pubkey, task.Cycle)
+	if err != nil || vrfInfo == nil{
+		fmt.Println("QueryVrf failed")
+	} else {
+		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M), "|", len(vrfInfo.R), "|", len(vrfInfo.P))
+	}
+	time.Sleep(2 * time.Second)
 }
 
-func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	var q = queue.New("channel")
 	flag.Parse()
 	cfg, sub := types.InitCfg("chain33.test.toml")
