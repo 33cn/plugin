@@ -273,8 +273,12 @@ func (client *Client) StartConsensus() {
 	//进入共识前先同步到最大高度
 	hint := time.NewTicker(5 * time.Second)
 	beg := time.Now()
+	block, err := client.RequestLastBlock()
+	if err != nil {
+		panic(err)
+	}
 OuterLoop:
-	for !DebugCatchup {
+	for !DebugCatchup && block != nil{
 		select {
 		case <-hint.C:
 			dposlog.Info("Still catching up max height......", "cost", time.Since(beg))
@@ -303,7 +307,7 @@ OuterLoop:
 	}
 	valMgr = valMgrTmp.Copy()
 	dposlog.Debug("Load Validator Manager finish", "state", valMgr)
-	block, err := client.RequestLastBlock()
+	block, err = client.RequestLastBlock()
 	if err != nil {
 		panic(err)
 	}
@@ -351,6 +355,7 @@ OuterLoop:
 		client.isDelegator = true
 	} else {
 		dposlog.Info("This node is not a delegator")
+		dposlog.Info("StartConsensus", "privValidator addr", hex.EncodeToString(client.privValidator.GetAddress()))
 	}
 
 	// Make ConsensusReactor
@@ -380,7 +385,7 @@ OuterLoop:
 func printValidators(set *ttypes.ValidatorSet) string {
 	result := "Validators:["
 	for _, v := range set.Validators {
-		result = fmt.Sprintf("%s%s,", result, hex.EncodeToString(v.PubKey))
+		result = fmt.Sprintf("%s%s|%s,", result, hex.EncodeToString(v.PubKey), hex.EncodeToString(v.Address))
 	}
 
 	result += "]"

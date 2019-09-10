@@ -383,7 +383,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 	//if available noes  < 2/3, don't change the state to voting.
 	connections := cs.client.node.peerSet.Size()
 	validators := cs.validatorMgr.Validators.Size()
-	if connections == 0 || connections < (validators*2/3-1) {
+	if dposDelegateNum > 1 && (connections == 0 || connections < (validators*2/3-1)) {
 		dposlog.Error("InitState timeout but available nodes less than 2/3,waiting for more connections", "connections", connections, "validators", validators)
 		cs.ClearVotes()
 
@@ -460,6 +460,31 @@ type VotingState struct {
 }
 
 func (voting *VotingState) timeOut(cs *ConsensusState) {
+	//如果是测试场景，只有一个节点，也需要状态机能运转下去
+	if dposDelegateNum == 1 {
+		result, voteItem := cs.CheckVotes()
+
+		if result == voteSuccess {
+			dposlog.Info("VotingState get 2/3 result", "final vote:", printVoteItem(voteItem))
+			dposlog.Info("VotingState change state to VotedState")
+			//切换状态
+			cs.SetState(VotedStateObj)
+			dposlog.Info("Change state because of check votes successfully.", "from", "VotingState", "to", "VotedState")
+
+			cs.SetCurrentVote(voteItem)
+
+			//检查最终投票是否与自己的投票一致，如果不一致，需要更新本地的信息，保证各节点共识结果执行一致。
+			if !bytes.Equal(cs.myVote.VoteItem.VoteID, voteItem.VoteID) {
+				if !cs.validatorMgr.UpdateFromVoteItem(voteItem) {
+					panic("This node's validators are not the same with final vote, please check")
+				}
+			}
+			//1s后检查是否出块，是否需要重新投票
+			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+		}
+		return
+	}
+
 	dposlog.Info("VotingState timeout but don't get an agreement. change state to InitState")
 
 	//清理掉之前的选票记录，从初始状态重新开始
@@ -548,6 +573,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 	block := cs.client.GetCurrentBlock()
 	task := DecideTaskByTime(now)
 
+	dposlog.Info("address info", "privValidatorAddr", hex.EncodeToString(cs.privValidator.GetAddress()), "VotedNodeAddress",hex.EncodeToString(cs.currentVote.VotedNodeAddress))
 	if bytes.Equal(cs.privValidator.GetAddress(), cs.currentVote.VotedNodeAddress) {
 		//当前节点为出块节点
 
