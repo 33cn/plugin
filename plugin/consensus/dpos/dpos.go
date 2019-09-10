@@ -278,7 +278,7 @@ func (client *Client) StartConsensus() {
 		panic(err)
 	}
 OuterLoop:
-	for !DebugCatchup && block != nil{
+	for !DebugCatchup && block != nil {
 		select {
 		case <-hint.C:
 			dposlog.Info("Still catching up max height......", "cost", time.Since(beg))

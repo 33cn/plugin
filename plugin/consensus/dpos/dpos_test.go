@@ -11,11 +11,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/33cn/chain33/common/crypto"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/common/crypto"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -43,8 +44,8 @@ var (
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 )
-const fee = 1e6
 
+const fee = 1e6
 
 func init() {
 	err := limits.SetLimits()

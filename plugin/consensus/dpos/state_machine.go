@@ -573,7 +573,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 	block := cs.client.GetCurrentBlock()
 	task := DecideTaskByTime(now)
 
-	dposlog.Info("address info", "privValidatorAddr", hex.EncodeToString(cs.privValidator.GetAddress()), "VotedNodeAddress",hex.EncodeToString(cs.currentVote.VotedNodeAddress))
+	dposlog.Info("address info", "privValidatorAddr", hex.EncodeToString(cs.privValidator.GetAddress()), "VotedNodeAddress", hex.EncodeToString(cs.currentVote.VotedNodeAddress))
 	if bytes.Equal(cs.privValidator.GetAddress(), cs.currentVote.VotedNodeAddress) {
 		//当前节点为出块节点
 
