@@ -22,5 +22,17 @@ func (r *Retrieve) Query_GetRetrieveInfo(in *rt.ReqRetrieveInfo) (types.Message,
 			info.RemainTime = 0
 		}
 	}
+
+	// 在指定asset 的情况下， 显示具体asset 的找回状态
+	if info.Status == retrievePerform && in.GetAssetExec() != "" {
+		asset, err := getRetrieveAsset(r.GetLocalDB(), in.BackupAddress, in.DefaultAddress, in.AssetExec, in.AssetSymbol)
+		if asset == nil {
+			// retrievePerform状态下，不存在即可以找回，但还没找回
+			info.Status = retrievePrepare
+			info.RemainTime = zeroRemainTime
+			return info, nil
+		}
+		return asset, err
+	}
 	return info, nil
 }
