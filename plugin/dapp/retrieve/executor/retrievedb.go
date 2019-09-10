@@ -116,7 +116,7 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	var receipt *types.Receipt
 	var r *DB
 	var newRetrieve = false
-	if types.IsDappFork(action.height, rt.RetrieveX, "ForkRetrive") {
+	if types.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveX) {
 		if err := address.CheckAddress(backupRet.BackupAddress); err != nil {
 			rlog.Debug("retrieve checkaddress")
 			return nil, err
@@ -203,6 +203,43 @@ func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receip
 	return receipt, nil
 }
 
+// RetrievePerformAssets Action
+func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, defaultAddress string) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kv []*types.KeyValue
+	var receipt *types.Receipt
+
+	// 兼容原来的找回， 在不指定的情况下，找回主币
+	if len(perfRet.Assets) == 0 {
+		perfRet.Assets = append(perfRet.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		//return nil, nil
+	}
+
+	for _, asset := range perfRet.Assets {
+		accdb, err := account.NewAccountDB(asset.Exec, asset.Symbol, action.db)
+		if err != nil {
+			rlog.Error("RetrievePerform", "NewAccountDB", err)
+			return nil, err
+		}
+		acc := accdb.LoadExecAccount(defaultAddress, action.execaddr)
+		rlog.Debug("RetrievePerform", "acc.Balance", acc.Balance)
+		if acc.Balance > 0 {
+			receipt, err = action.coinsAccount.ExecTransfer(defaultAddress, perfRet.BackupAddress, action.execaddr, acc.Balance)
+			if err != nil {
+				rlog.Debug("RetrievePerform", "ExecTransfer", err)
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kv = append(kv, receipt.KV...)
+		} else {
+			return nil, rt.ErrRetrieveNoBalance
+		}
+	}
+
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	return receipt, nil
+}
+
 // RetrievePerform Action
 func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -237,6 +274,10 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	if action.blocktime-r.RetPara[index].PrepareTime < r.RetPara[index].DelayPeriod {
 		rlog.Debug("RetrievePerform", "ErrRetrievePeriodLimit")
 		return nil, rt.ErrRetrievePeriodLimit
+	}
+
+	if types.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveAssetX) {
+		return action.RetrievePerformAssets(perfRet, r.RetPara[index].DefaultAddress)
 	}
 
 	acc = action.coinsAccount.LoadExecAccount(r.RetPara[index].DefaultAddress, action.execaddr)
