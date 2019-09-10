@@ -30,10 +30,9 @@ import (
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
+	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 	"google.golang.org/grpc"
-	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
@@ -46,7 +45,7 @@ var (
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 	strPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
-	pubkey []byte
+	pubkey    []byte
 )
 
 const fee = 1e6
@@ -105,10 +104,10 @@ func DposPerf() {
 
 	time.Sleep(1 * time.Second)
 	info := &dty.DposCBInfo{
-		Cycle: task.Cycle,
+		Cycle:      task.Cycle,
 		StopHeight: 10,
-		StopHash: "absadfafa",
-		Pubkey: strPubkey,
+		StopHash:   "absadfafa",
+		Pubkey:     strPubkey,
 	}
 	if dposClient.csState.SendCBTx(info) {
 		fmt.Println("sendCBTx ok")
@@ -126,7 +125,7 @@ func DposPerf() {
 	for {
 		now = time.Now().Unix()
 		task = DecideTaskByTime(now)
-		if now < task.CycleStart + (task.CycleStop-task.CycleStart)/2 {
+		if now < task.CycleStart+(task.CycleStop-task.CycleStart)/2 {
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -134,8 +133,8 @@ func DposPerf() {
 
 	vrfM := &dty.DposVrfMRegist{
 		Pubkey: strPubkey,
-		Cycle: task.Cycle,
-		M: "absadfafa",
+		Cycle:  task.Cycle,
+		M:      "absadfafa",
 	}
 	if dposClient.csState.SendRegistVrfMTx(vrfM) {
 		fmt.Println("SendRegistVrfMTx ok")
@@ -153,16 +152,16 @@ func DposPerf() {
 	for {
 		now = time.Now().Unix()
 		task = DecideTaskByTime(now)
-		if now > task.CycleStart + (task.CycleStop-task.CycleStart)/2 {
+		if now > task.CycleStart+(task.CycleStop-task.CycleStart)/2 {
 			break
 		}
 		time.Sleep(1 * time.Second)
 	}
 	vrfRP := &dty.DposVrfRPRegist{
 		Pubkey: strPubkey,
-		Cycle: task.Cycle,
-		R: "Rabsadfafa",
-		P: "Pabsadfafa",
+		Cycle:  task.Cycle,
+		R:      "Rabsadfafa",
+		P:      "Pabsadfafa",
 	}
 	if dposClient.csState.SendRegistVrfRPTx(vrfRP) {
 		fmt.Println("SendRegistVrfRPTx ok")
@@ -171,7 +170,7 @@ func DposPerf() {
 	}
 	time.Sleep(2 * time.Second)
 	vrfInfo, err = dposClient.csState.QueryVrf(pubkey, task.Cycle)
-	if err != nil || vrfInfo == nil{
+	if err != nil || vrfInfo == nil {
 		fmt.Println("QueryVrf failed")
 	} else {
 		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M), "|", len(vrfInfo.R), "|", len(vrfInfo.P))
