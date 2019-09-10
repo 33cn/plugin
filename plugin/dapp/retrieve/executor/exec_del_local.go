@@ -88,14 +88,22 @@ func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Trans
 func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecDelLocal_Perform")
-	if types.IsDappFork(c.GetHeight(), rt.RetrieveX, rt.ForkRetriveAssetX) {
-		return nil, nil
-	}
 
 	info := rt.RetrieveQuery{BackupAddress: perf.BackupAddress, DefaultAddress: perf.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrievePerform}
 	kv, err := DelRetrieveInfo(&info, retrievePerform, c.GetLocalDB())
 	if err != nil {
 		return set, nil
+	}
+
+	if types.IsDappFork(c.GetHeight(), rt.RetrieveX, rt.ForkRetriveAssetX) {
+		if len(perf.Assets) == 0 {
+			perf.Assets = append(perf.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		}
+	}
+	for _, asset := range perf.Assets {
+		kv := &types.KeyValue{Key: calcRetrieveAssetKey(info.BackupAddress, info.DefaultAddress, asset.Exec, asset.Symbol), Value: nil}
+		c.GetLocalDB().Set(kv.Key, kv.Value)
+		set.KV = append(set.KV, kv)
 	}
 
 	if kv != nil {
