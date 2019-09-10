@@ -74,9 +74,17 @@ func calcRetrieveAssetKey(backupAddr, defaultAddr, assetExec, assetSymbol string
 	return []byte(key)
 }
 
+func getRetrieveAsset(db dbm.KVDB, backupAddr, defaultAddr, assetExec, assetSymbol string) (*rt.RetrieveQuery, error) {
+	return getRetrieve(db, calcRetrieveAssetKey(backupAddr, defaultAddr, assetExec, assetSymbol))
+}
+
 func getRetrieveInfo(db dbm.KVDB, backupAddr string, defaultAddr string) (*rt.RetrieveQuery, error) {
+	return getRetrieve(db, calcRetrieveKey(backupAddr, defaultAddr))
+}
+
+func getRetrieve(db dbm.KVDB, key []byte) (*rt.RetrieveQuery, error) {
 	info := rt.RetrieveQuery{}
-	retInfo, err := db.Get(calcRetrieveKey(backupAddr, defaultAddr))
+	retInfo, err := db.Get(key)
 	if err != nil {
 		return nil, err
 	}
