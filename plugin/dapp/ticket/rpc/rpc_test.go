@@ -28,16 +28,19 @@ Title="test"
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+powLimitBits = "0x1f00ffff"
+maxTxNumber = 10000
+
+
+[mver.consensus.ticket]
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
-powLimitBits = "0x1f00ffff"
 retargetAdjustmentFactor = 4
 futureBlockTime = 16
 ticketFrozenTime = 5
 ticketWithdrawTime = 10
 ticketMinerWaitTime = 2
-maxTxNumber = 10000
 targetTimespan = 2304
 targetTimePerBlock = 16
 `

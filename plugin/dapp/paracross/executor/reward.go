@@ -11,8 +11,8 @@ import (
 func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus) (*types.Receipt, error) {
 
 	//获取挖矿相关配置，这里需注意是共识的高度，而不是交易的高度
-	coinReward := types.MGInt("mver.consensus.coinReward", nodeStatus.Height) * types.Coin
-	fundReward := types.MGInt("mver.consensus.coinDevFund", nodeStatus.Height) * types.Coin
+	coinReward := types.MGInt("mver.consensus.paracross.coinReward", nodeStatus.Height) * types.Coin
+	fundReward := types.MGInt("mver.consensus.paracross.coinDevFund", nodeStatus.Height) * types.Coin
 	fundAddr := types.MGStr("mver.consensus.fundKeyAddr", nodeStatus.Height)
 
 	minerAddrs := getMiners(stat.Details, nodeStatus.BlockHash)

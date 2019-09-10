@@ -37,7 +37,7 @@ type DB struct {
 //GetRealPrice 获取真实的价格
 func (t *DB) GetRealPrice() int64 {
 	if t.GetPrice() == 0 {
-		cfg := types.GetP(types.GetFork("ForkChainParamV1"))
+		cfg := ty.GetTicketMinerParam(types.GetFork("ForkChainParamV1"))
 		return cfg.TicketPrice
 	}
 	return t.GetPrice()
@@ -142,7 +142,7 @@ func (action *Action) GenesisInit(genesis *ty.TicketGenesis) (*types.Receipt, er
 	prefix = genesis.MinerAddress + ":" + prefix + ":"
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < int(genesis.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
 		t := NewDB(id, genesis.MinerAddress, genesis.ReturnAddress, action.blocktime, action.height, cfg.TicketPrice, true)
@@ -240,7 +240,7 @@ func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 		}
 	}
 	//action.fromaddr == topen.ReturnAddress or mineraddr == action.fromaddr
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < int(topen.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
 		//add pubHash
@@ -303,7 +303,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	if ticket.Status != 1 {
 		return nil, types.ErrCoinBaseTicketStatus
 	}
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	if !ticket.IsGenesis {
 		if action.blocktime-ticket.GetCreateTime() < cfg.TicketFrozenTime {
 			return nil, ty.ErrTime
@@ -370,7 +370,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 // TicketClose close tick
 func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error) {
 	tickets := make([]*DB, len(tclose.TicketId))
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < len(tclose.TicketId); i++ {
 		ticket, err := readTicket(action.db, tclose.TicketId[i])
 		if err != nil {
