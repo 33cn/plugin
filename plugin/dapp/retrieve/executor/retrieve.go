@@ -69,6 +69,11 @@ func calcRetrieveKey(backupAddr string, defaultAddr string) []byte {
 	return []byte(key)
 }
 
+func calcRetrieveAssetKey(backupAddr, defaultAddr, assetExec, assetSymbol string) []byte {
+	key := fmt.Sprintf("LODB-retrieve-backup-asset:%s:%s:%s:%s", backupAddr, defaultAddr, assetExec, assetSymbol)
+	return []byte(key)
+}
+
 func getRetrieveInfo(db dbm.KVDB, backupAddr string, defaultAddr string) (*rt.RetrieveQuery, error) {
 	info := rt.RetrieveQuery{}
 	retInfo, err := db.Get(calcRetrieveKey(backupAddr, defaultAddr))
