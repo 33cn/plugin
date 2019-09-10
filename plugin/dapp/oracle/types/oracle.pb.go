@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-//事件
+// 事件
 type OracleStatus struct {
 	EventID              string       `protobuf:"bytes,1,opt,name=eventID,proto3" json:"eventID,omitempty"`
 	Addr                 string       `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
@@ -43,17 +44,16 @@ func (m *OracleStatus) Reset()         { *m = OracleStatus{} }
 func (m *OracleStatus) String() string { return proto.CompactTextString(m) }
 func (*OracleStatus) ProtoMessage()    {}
 func (*OracleStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{0}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{0}
 }
-
 func (m *OracleStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OracleStatus.Unmarshal(m, b)
 }
 func (m *OracleStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_OracleStatus.Marshal(b, m, deterministic)
 }
-func (m *OracleStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleStatus.Merge(m, src)
+func (dst *OracleStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleStatus.Merge(dst, src)
 }
 func (m *OracleStatus) XXX_Size() int {
 	return xxx_messageInfo_OracleStatus.Size(m)
@@ -160,17 +160,16 @@ func (m *OracleAction) Reset()         { *m = OracleAction{} }
 func (m *OracleAction) String() string { return proto.CompactTextString(m) }
 func (*OracleAction) ProtoMessage()    {}
 func (*OracleAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{1}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{1}
 }
-
 func (m *OracleAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OracleAction.Unmarshal(m, b)
 }
 func (m *OracleAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_OracleAction.Marshal(b, m, deterministic)
 }
-func (m *OracleAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleAction.Merge(m, src)
+func (dst *OracleAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleAction.Merge(dst, src)
 }
 func (m *OracleAction) XXX_Size() int {
 	return xxx_messageInfo_OracleAction.Size(m)
@@ -407,17 +406,16 @@ func (m *EventStatus) Reset()         { *m = EventStatus{} }
 func (m *EventStatus) String() string { return proto.CompactTextString(m) }
 func (*EventStatus) ProtoMessage()    {}
 func (*EventStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{2}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{2}
 }
-
 func (m *EventStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventStatus.Unmarshal(m, b)
 }
 func (m *EventStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EventStatus.Marshal(b, m, deterministic)
 }
-func (m *EventStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventStatus.Merge(m, src)
+func (dst *EventStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventStatus.Merge(dst, src)
 }
 func (m *EventStatus) XXX_Size() int {
 	return xxx_messageInfo_EventStatus.Size(m)
@@ -457,17 +455,16 @@ func (m *EventPublish) Reset()         { *m = EventPublish{} }
 func (m *EventPublish) String() string { return proto.CompactTextString(m) }
 func (*EventPublish) ProtoMessage()    {}
 func (*EventPublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{3}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{3}
 }
-
 func (m *EventPublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventPublish.Unmarshal(m, b)
 }
 func (m *EventPublish) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EventPublish.Marshal(b, m, deterministic)
 }
-func (m *EventPublish) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventPublish.Merge(m, src)
+func (dst *EventPublish) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventPublish.Merge(dst, src)
 }
 func (m *EventPublish) XXX_Size() int {
 	return xxx_messageInfo_EventPublish.Size(m)
@@ -524,17 +521,16 @@ func (m *EventAbort) Reset()         { *m = EventAbort{} }
 func (m *EventAbort) String() string { return proto.CompactTextString(m) }
 func (*EventAbort) ProtoMessage()    {}
 func (*EventAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{4}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{4}
 }
-
 func (m *EventAbort) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventAbort.Unmarshal(m, b)
 }
 func (m *EventAbort) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EventAbort.Marshal(b, m, deterministic)
 }
-func (m *EventAbort) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventAbort.Merge(m, src)
+func (dst *EventAbort) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventAbort.Merge(dst, src)
 }
 func (m *EventAbort) XXX_Size() int {
 	return xxx_messageInfo_EventAbort.Size(m)
@@ -565,17 +561,16 @@ func (m *ResultPrePublish) Reset()         { *m = ResultPrePublish{} }
 func (m *ResultPrePublish) String() string { return proto.CompactTextString(m) }
 func (*ResultPrePublish) ProtoMessage()    {}
 func (*ResultPrePublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{5}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{5}
 }
-
 func (m *ResultPrePublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultPrePublish.Unmarshal(m, b)
 }
 func (m *ResultPrePublish) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResultPrePublish.Marshal(b, m, deterministic)
 }
-func (m *ResultPrePublish) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResultPrePublish.Merge(m, src)
+func (dst *ResultPrePublish) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResultPrePublish.Merge(dst, src)
 }
 func (m *ResultPrePublish) XXX_Size() int {
 	return xxx_messageInfo_ResultPrePublish.Size(m)
@@ -620,17 +615,16 @@ func (m *ResultPublish) Reset()         { *m = ResultPublish{} }
 func (m *ResultPublish) String() string { return proto.CompactTextString(m) }
 func (*ResultPublish) ProtoMessage()    {}
 func (*ResultPublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{6}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{6}
 }
-
 func (m *ResultPublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultPublish.Unmarshal(m, b)
 }
 func (m *ResultPublish) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResultPublish.Marshal(b, m, deterministic)
 }
-func (m *ResultPublish) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResultPublish.Merge(m, src)
+func (dst *ResultPublish) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResultPublish.Merge(dst, src)
 }
 func (m *ResultPublish) XXX_Size() int {
 	return xxx_messageInfo_ResultPublish.Size(m)
@@ -673,17 +667,16 @@ func (m *ResultAbort) Reset()         { *m = ResultAbort{} }
 func (m *ResultAbort) String() string { return proto.CompactTextString(m) }
 func (*ResultAbort) ProtoMessage()    {}
 func (*ResultAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{7}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{7}
 }
-
 func (m *ResultAbort) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultAbort.Unmarshal(m, b)
 }
 func (m *ResultAbort) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResultAbort.Marshal(b, m, deterministic)
 }
-func (m *ResultAbort) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResultAbort.Merge(m, src)
+func (dst *ResultAbort) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResultAbort.Merge(dst, src)
 }
 func (m *ResultAbort) XXX_Size() int {
 	return xxx_messageInfo_ResultAbort.Size(m)
@@ -713,17 +706,16 @@ func (m *EventRecord) Reset()         { *m = EventRecord{} }
 func (m *EventRecord) String() string { return proto.CompactTextString(m) }
 func (*EventRecord) ProtoMessage()    {}
 func (*EventRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{8}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{8}
 }
-
 func (m *EventRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventRecord.Unmarshal(m, b)
 }
 func (m *EventRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EventRecord.Marshal(b, m, deterministic)
 }
-func (m *EventRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventRecord.Merge(m, src)
+func (dst *EventRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventRecord.Merge(dst, src)
 }
 func (m *EventRecord) XXX_Size() int {
 	return xxx_messageInfo_EventRecord.Size(m)
@@ -752,17 +744,16 @@ func (m *QueryOracleInfos) Reset()         { *m = QueryOracleInfos{} }
 func (m *QueryOracleInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryOracleInfos) ProtoMessage()    {}
 func (*QueryOracleInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{9}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{9}
 }
-
 func (m *QueryOracleInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryOracleInfos.Unmarshal(m, b)
 }
 func (m *QueryOracleInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryOracleInfos.Marshal(b, m, deterministic)
 }
-func (m *QueryOracleInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOracleInfos.Merge(m, src)
+func (dst *QueryOracleInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleInfos.Merge(dst, src)
 }
 func (m *QueryOracleInfos) XXX_Size() int {
 	return xxx_messageInfo_QueryOracleInfos.Size(m)
@@ -791,17 +782,16 @@ func (m *ReplyEventIDs) Reset()         { *m = ReplyEventIDs{} }
 func (m *ReplyEventIDs) String() string { return proto.CompactTextString(m) }
 func (*ReplyEventIDs) ProtoMessage()    {}
 func (*ReplyEventIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{10}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{10}
 }
-
 func (m *ReplyEventIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyEventIDs.Unmarshal(m, b)
 }
 func (m *ReplyEventIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyEventIDs.Marshal(b, m, deterministic)
 }
-func (m *ReplyEventIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyEventIDs.Merge(m, src)
+func (dst *ReplyEventIDs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyEventIDs.Merge(dst, src)
 }
 func (m *ReplyEventIDs) XXX_Size() int {
 	return xxx_messageInfo_ReplyEventIDs.Size(m)
@@ -833,17 +823,16 @@ func (m *QueryEventID) Reset()         { *m = QueryEventID{} }
 func (m *QueryEventID) String() string { return proto.CompactTextString(m) }
 func (*QueryEventID) ProtoMessage()    {}
 func (*QueryEventID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{11}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{11}
 }
-
 func (m *QueryEventID) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryEventID.Unmarshal(m, b)
 }
 func (m *QueryEventID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryEventID.Marshal(b, m, deterministic)
 }
-func (m *QueryEventID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryEventID.Merge(m, src)
+func (dst *QueryEventID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEventID.Merge(dst, src)
 }
 func (m *QueryEventID) XXX_Size() int {
 	return xxx_messageInfo_QueryEventID.Size(m)
@@ -897,17 +886,16 @@ func (m *ReceiptOracle) Reset()         { *m = ReceiptOracle{} }
 func (m *ReceiptOracle) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOracle) ProtoMessage()    {}
 func (*ReceiptOracle) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{12}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{12}
 }
-
 func (m *ReceiptOracle) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOracle.Unmarshal(m, b)
 }
 func (m *ReceiptOracle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptOracle.Marshal(b, m, deterministic)
 }
-func (m *ReceiptOracle) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptOracle.Merge(m, src)
+func (dst *ReceiptOracle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptOracle.Merge(dst, src)
 }
 func (m *ReceiptOracle) XXX_Size() int {
 	return xxx_messageInfo_ReceiptOracle.Size(m)
@@ -964,17 +952,16 @@ func (m *ReplyOracleStatusList) Reset()         { *m = ReplyOracleStatusList{} }
 func (m *ReplyOracleStatusList) String() string { return proto.CompactTextString(m) }
 func (*ReplyOracleStatusList) ProtoMessage()    {}
 func (*ReplyOracleStatusList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b544994cdab50f02, []int{13}
+	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{13}
 }
-
 func (m *ReplyOracleStatusList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyOracleStatusList.Unmarshal(m, b)
 }
 func (m *ReplyOracleStatusList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyOracleStatusList.Marshal(b, m, deterministic)
 }
-func (m *ReplyOracleStatusList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyOracleStatusList.Merge(m, src)
+func (dst *ReplyOracleStatusList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyOracleStatusList.Merge(dst, src)
 }
 func (m *ReplyOracleStatusList) XXX_Size() int {
 	return xxx_messageInfo_ReplyOracleStatusList.Size(m)
@@ -1009,9 +996,9 @@ func init() {
 	proto.RegisterType((*ReplyOracleStatusList)(nil), "types.ReplyOracleStatusList")
 }
 
-func init() { proto.RegisterFile("oracle.proto", fileDescriptor_b544994cdab50f02) }
+func init() { proto.RegisterFile("oracle.proto", fileDescriptor_oracle_d3fda31ac2bc59b9) }
 
-var fileDescriptor_b544994cdab50f02 = []byte{
+var fileDescriptor_oracle_d3fda31ac2bc59b9 = []byte{
 	// 579 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4d, 0x8b, 0xdb, 0x3c,
 	0x10, 0x8e, 0x3f, 0xf7, 0xdd, 0xb1, 0xf7, 0x25, 0x55, 0xbf, 0x74, 0xe8, 0x21, 0xf8, 0xd0, 0x4d,

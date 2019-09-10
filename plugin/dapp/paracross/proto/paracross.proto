@@ -3,7 +3,6 @@ syntax = "proto3";
 import "transaction.proto";
 import "common.proto";
 import "blockchain.proto";
-import "executor.proto";
 
 package types;
 
@@ -301,7 +300,23 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
+message ParaLocalDbBlock {
+    int64     height         = 1;
+    bytes     mainHash       = 2;
+    int64     mainHeight     = 3;
+    bytes     parentMainHash = 4;
+    int64     blockTime      = 5;
+    repeated Transaction txs = 6;
+}
 
+message ParaLocalDbBlockInfo {
+    int64     height         = 1;
+    string    mainHash       = 2;
+    int64     mainHeight     = 3;
+    string    parentMainHash = 4;
+    int64     blockTime      = 5;
+    repeated string txs      = 6;
+}
 
 service paracross {
     rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}

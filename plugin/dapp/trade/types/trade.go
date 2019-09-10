@@ -56,6 +56,7 @@ func init() {
 	types.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
 	types.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
 	types.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 2500000)
+	types.RegisterDappFork(TradeX, ForkTradePriceX, 3150000)
 }
 
 type tradeType struct {
@@ -183,6 +184,8 @@ func CreateRawTradeSellTx(parm *TradeSellTx) (*types.Transaction, error) {
 		Stoptime:          0,
 		Crowdfund:         false,
 		AssetExec:         parm.AssetExec,
+		PriceExec:         parm.PriceExec,
+		PriceSymbol:       parm.PriceSymbol,
 	}
 	sell := &Trade{
 		Ty:    TradeSellLimit,
@@ -230,6 +233,8 @@ func CreateRawTradeBuyLimitTx(parm *TradeBuyLimitTx) (*types.Transaction, error)
 		PricePerBoardlot:  parm.PricePerBoardlot,
 		TotalBoardlot:     parm.TotalBoardlot,
 		AssetExec:         parm.AssetExec,
+		PriceExec:         parm.PriceExec,
+		PriceSymbol:       parm.PriceSymbol,
 	}
 	buyLimit := &Trade{
 		Ty:    TradeBuyLimit,

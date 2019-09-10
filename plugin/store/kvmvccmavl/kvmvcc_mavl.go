@@ -19,9 +19,9 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/store"
-	"github.com/33cn/chain33/system/store/mavl/db"
+	mavl "github.com/33cn/chain33/system/store/mavl/db"
 	"github.com/33cn/chain33/types"
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 var (

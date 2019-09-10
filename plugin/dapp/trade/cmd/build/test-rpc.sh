@@ -102,7 +102,7 @@ function token_sendExec() {
 }
 
 function trade_createSellTx() {
-    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"trade.CreateRawTradeSellTx","params":[{"tokenSymbol": "'"${tokenSymbol}"'", "amountPerBoardlot": 1000000, "minBoardlot": 1, "pricePerBoardlot": 100000000,"totalBoardlot":100, "fee": 10000000, "assetExec":"token"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"trade.CreateRawTradeSellTx","params":[{"tokenSymbol": "'"${tokenSymbol}"'", "amountPerBoardlot": 1000000, "minBoardlot": 1, "pricePerBoardlot": 100000000,"totalBoardlot":100, "fee": 10000000, "assetExec":"token", "priceExec" : "coins", "priceSymbol" : "'"${coinSymbol}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "trade createSellTx create tx" 1
         return
@@ -194,7 +194,7 @@ function trade_statusTokenSellOrder() {
 }
 
 function trade_buyLimit() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"trade.CreateRawTradeBuyLimitTx","params":[{"tokenSymbol":"'"${tokenSymbol}"'","amountPerBoardlot":1000000,"minBoardlot":1, "pricePerBoardlot":100000, "totalBoardlot":200, "fee": 1, "assetExec":"'"${tokenExecName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"trade.CreateRawTradeBuyLimitTx","params":[{"tokenSymbol":"'"${tokenSymbol}"'","amountPerBoardlot":1000000,"minBoardlot":1, "pricePerBoardlot":100000, "totalBoardlot":200, "fee": 1, "assetExec":"'"${tokenExecName}"'", "priceExec" : "coins", "priceSymbol" : "'"${coinSymbol}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "trade buyLimit create tx" 1
         return
@@ -267,11 +267,13 @@ function init() {
     tradeExecName="trade"
     local trade_addr=""
     if [ "$ispara" == "true" ]; then
+        coinSymbol="para"
         tokenExecName="user.p.para.token"
         tradeExecName="user.p.para.trade"
         trade_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tradeExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
+        coinSymbol="bty"
         trade_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tradeExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi

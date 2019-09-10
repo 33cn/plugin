@@ -5,9 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -38,17 +39,16 @@ func (m *Hashlock) Reset()         { *m = Hashlock{} }
 func (m *Hashlock) String() string { return proto.CompactTextString(m) }
 func (*Hashlock) ProtoMessage()    {}
 func (*Hashlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{0}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{0}
 }
-
 func (m *Hashlock) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Hashlock.Unmarshal(m, b)
 }
 func (m *Hashlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Hashlock.Marshal(b, m, deterministic)
 }
-func (m *Hashlock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hashlock.Merge(m, src)
+func (dst *Hashlock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Hashlock.Merge(dst, src)
 }
 func (m *Hashlock) XXX_Size() int {
 	return xxx_messageInfo_Hashlock.Size(m)
@@ -123,17 +123,16 @@ func (m *HashlockLock) Reset()         { *m = HashlockLock{} }
 func (m *HashlockLock) String() string { return proto.CompactTextString(m) }
 func (*HashlockLock) ProtoMessage()    {}
 func (*HashlockLock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{1}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{1}
 }
-
 func (m *HashlockLock) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashlockLock.Unmarshal(m, b)
 }
 func (m *HashlockLock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashlockLock.Marshal(b, m, deterministic)
 }
-func (m *HashlockLock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashlockLock.Merge(m, src)
+func (dst *HashlockLock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashlockLock.Merge(dst, src)
 }
 func (m *HashlockLock) XXX_Size() int {
 	return xxx_messageInfo_HashlockLock.Size(m)
@@ -190,17 +189,16 @@ func (m *HashlockSend) Reset()         { *m = HashlockSend{} }
 func (m *HashlockSend) String() string { return proto.CompactTextString(m) }
 func (*HashlockSend) ProtoMessage()    {}
 func (*HashlockSend) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{2}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{2}
 }
-
 func (m *HashlockSend) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashlockSend.Unmarshal(m, b)
 }
 func (m *HashlockSend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashlockSend.Marshal(b, m, deterministic)
 }
-func (m *HashlockSend) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashlockSend.Merge(m, src)
+func (dst *HashlockSend) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashlockSend.Merge(dst, src)
 }
 func (m *HashlockSend) XXX_Size() int {
 	return xxx_messageInfo_HashlockSend.Size(m)
@@ -233,17 +231,16 @@ func (m *Hashlockquery) Reset()         { *m = Hashlockquery{} }
 func (m *Hashlockquery) String() string { return proto.CompactTextString(m) }
 func (*Hashlockquery) ProtoMessage()    {}
 func (*Hashlockquery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{3}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{3}
 }
-
 func (m *Hashlockquery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Hashlockquery.Unmarshal(m, b)
 }
 func (m *Hashlockquery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Hashlockquery.Marshal(b, m, deterministic)
 }
-func (m *Hashlockquery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hashlockquery.Merge(m, src)
+func (dst *Hashlockquery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Hashlockquery.Merge(dst, src)
 }
 func (m *Hashlockquery) XXX_Size() int {
 	return xxx_messageInfo_Hashlockquery.Size(m)
@@ -301,17 +298,16 @@ func (m *HashRecv) Reset()         { *m = HashRecv{} }
 func (m *HashRecv) String() string { return proto.CompactTextString(m) }
 func (*HashRecv) ProtoMessage()    {}
 func (*HashRecv) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{4}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{4}
 }
-
 func (m *HashRecv) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashRecv.Unmarshal(m, b)
 }
 func (m *HashRecv) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashRecv.Marshal(b, m, deterministic)
 }
-func (m *HashRecv) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashRecv.Merge(m, src)
+func (dst *HashRecv) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashRecv.Merge(dst, src)
 }
 func (m *HashRecv) XXX_Size() int {
 	return xxx_messageInfo_HashRecv.Size(m)
@@ -347,17 +343,16 @@ func (m *HashlockUnlock) Reset()         { *m = HashlockUnlock{} }
 func (m *HashlockUnlock) String() string { return proto.CompactTextString(m) }
 func (*HashlockUnlock) ProtoMessage()    {}
 func (*HashlockUnlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{5}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{5}
 }
-
 func (m *HashlockUnlock) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashlockUnlock.Unmarshal(m, b)
 }
 func (m *HashlockUnlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashlockUnlock.Marshal(b, m, deterministic)
 }
-func (m *HashlockUnlock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashlockUnlock.Merge(m, src)
+func (dst *HashlockUnlock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashlockUnlock.Merge(dst, src)
 }
 func (m *HashlockUnlock) XXX_Size() int {
 	return xxx_messageInfo_HashlockUnlock.Size(m)
@@ -392,17 +387,16 @@ func (m *HashlockAction) Reset()         { *m = HashlockAction{} }
 func (m *HashlockAction) String() string { return proto.CompactTextString(m) }
 func (*HashlockAction) ProtoMessage()    {}
 func (*HashlockAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_acb83e90536b5ff8, []int{6}
+	return fileDescriptor_hashlock_f7e69822f8b087c1, []int{6}
 }
-
 func (m *HashlockAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashlockAction.Unmarshal(m, b)
 }
 func (m *HashlockAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashlockAction.Marshal(b, m, deterministic)
 }
-func (m *HashlockAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashlockAction.Merge(m, src)
+func (dst *HashlockAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashlockAction.Merge(dst, src)
 }
 func (m *HashlockAction) XXX_Size() int {
 	return xxx_messageInfo_HashlockAction.Size(m)
@@ -573,9 +567,9 @@ func init() {
 	proto.RegisterType((*HashlockAction)(nil), "types.HashlockAction")
 }
 
-func init() { proto.RegisterFile("hashlock.proto", fileDescriptor_acb83e90536b5ff8) }
+func init() { proto.RegisterFile("hashlock.proto", fileDescriptor_hashlock_f7e69822f8b087c1) }
 
-var fileDescriptor_acb83e90536b5ff8 = []byte{
+var fileDescriptor_hashlock_f7e69822f8b087c1 = []byte{
 	// 421 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x93, 0xcd, 0x6a, 0xdb, 0x40,
 	0x10, 0xc7, 0xbd, 0xb2, 0x65, 0xd7, 0x23, 0xdb, 0x87, 0xed, 0x07, 0x3a, 0x94, 0x22, 0x44, 0x29,

@@ -25,7 +25,7 @@ import (
 // para-exec addr on para 16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR
 
 var (
-	Amount = int64(1 * types.Coin)
+	Amount = types.Coin
 )
 
 func para_init(title string) {

@@ -95,14 +95,13 @@ targetTimePerBlock = 16
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
-#ParaRemoteGrpcClient="101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#ParaRemoteGrpcClient="183.129.226.74:8802,183.129.226.75:8802,101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
 #打包时间间隔，单位秒
 writeBlockSeconds=2
-#主链每隔几个没有相关交易的区块，平行链上打包空区块
-emptyBlockInterval=50
+
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
 #云端主链节点切换后，平行链适配新主链节点block，回溯查找和自己记录的相同blockhash的深度
@@ -115,6 +114,12 @@ MainForkParacrossCommitTx=2270000
 MainParaSelfConsensusForkHeight=-1
 #主链开启循环检查共识交易done的fork高度
 MainLoopCheckCommitTxDoneForkHeight=-1
+#主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
+[[consensus.sub.para.emptyBlockInterval]]
+blockHeight=0
+interval=50
+
+
 
 [store]
 name="kvmvccmavl"
@@ -176,6 +181,10 @@ tokenApprs=[]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
 paraConsensusStopBlocks=30000
 
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
+
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -202,6 +211,7 @@ ForkBase58AddressCheck=0
 #平行链上使能平行链执行器如user.p.x.coins执行器的注册，缺省为0，对已有的平行链需要设置一个fork高度
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
+ForkTicketFundAddrV1=-1 #fork6.3
 
 [fork.sub.coins]
 Enable=0
@@ -214,6 +224,7 @@ ForkTicketVrf =0
 [fork.sub.retrieve]
 Enable=0
 ForkRetrive=0
+ForkRetriveAsset=0
 
 [fork.sub.hashlock]
 Enable=0
@@ -237,6 +248,7 @@ ForkTradeBuyLimit= 0
 ForkTradeAsset= 0
 ForkTradeID = 0
 ForkTradeFixAssetDB = 0
+ForkTradePrice = 0
 
 [fork.sub.paracross]
 Enable=0
@@ -289,6 +301,9 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
+
+[fork.sub.autonomy]
+Enable=0
 
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]

@@ -326,12 +326,6 @@ Taken from
 https://github.com/ethereum/go-ethereum/pull/15568
 */
 
-type testResult struct {
-	Values [2]*big.Int
-	Value1 *big.Int
-	Value2 *big.Int
-}
-
 // TestEventUnpackIndexed verifies that indexed field will be skipped by event decoder.
 func TestEventUnpackIndexed(t *testing.T) {
 	definition := `[{"name": "test", "type": "event", "inputs": [{"indexed": true, "name":"value1", "type":"uint8"},{"indexed": false, "name":"value2", "type":"uint8"}]}]`

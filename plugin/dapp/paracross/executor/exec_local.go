@@ -230,7 +230,7 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 	//ForkLoopCheckCommitTxDone 后只保留全部txreseult 结果
 	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		//跨链tx结果
-		crossTxHashs := FilterParaCrossTxHashes(types.GetTitle(), txs)
+		crossTxHashs := FilterParaCrossTxHashes(txs)
 		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
 		status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
 		status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}

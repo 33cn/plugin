@@ -30,7 +30,7 @@ func TestCreateContract1(t *testing.T) {
 
 	test.assertEqualsB(ret, execCode)
 	test.assertBigger(int(gasLimit), int(leftGas))
-	test.assertNotEqualsI(common.Address(addr), common.EmptyAddress())
+	test.assertNotEqualsI(addr, common.EmptyAddress())
 
 	// 检查返回数据是否正确
 	test.assertEqualsV(statedb.GetLastSnapshot().GetID(), 0)

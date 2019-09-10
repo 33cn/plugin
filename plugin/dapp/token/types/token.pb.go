@@ -4,12 +4,16 @@
 package types
 
 import (
-	context "context"
 	fmt "fmt"
+
+	proto "github.com/golang/protobuf/proto"
+
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-	proto "github.com/golang/protobuf/proto"
+
+	context "golang.org/x/net/context"
+
 	grpc "google.golang.org/grpc"
 )
 
@@ -47,17 +51,16 @@ func (m *TokenAction) Reset()         { *m = TokenAction{} }
 func (m *TokenAction) String() string { return proto.CompactTextString(m) }
 func (*TokenAction) ProtoMessage()    {}
 func (*TokenAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{0}
+	return fileDescriptor_token_1597bc5f193dd821, []int{0}
 }
-
 func (m *TokenAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenAction.Unmarshal(m, b)
 }
 func (m *TokenAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenAction.Marshal(b, m, deterministic)
 }
-func (m *TokenAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenAction.Merge(m, src)
+func (dst *TokenAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenAction.Merge(dst, src)
 }
 func (m *TokenAction) XXX_Size() int {
 	return xxx_messageInfo_TokenAction.Size(m)
@@ -410,7 +413,7 @@ func _TokenAction_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
-//创建token，支持最大精确度是8位小数,即存入数据库的实际总额需要放大1e8倍
+// 创建token，支持最大精确度是8位小数,即存入数据库的实际总额需要放大1e8倍
 type TokenPreCreate struct {
 	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Symbol               string   `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
@@ -428,17 +431,16 @@ func (m *TokenPreCreate) Reset()         { *m = TokenPreCreate{} }
 func (m *TokenPreCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenPreCreate) ProtoMessage()    {}
 func (*TokenPreCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{1}
+	return fileDescriptor_token_1597bc5f193dd821, []int{1}
 }
-
 func (m *TokenPreCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenPreCreate.Unmarshal(m, b)
 }
 func (m *TokenPreCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenPreCreate.Marshal(b, m, deterministic)
 }
-func (m *TokenPreCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenPreCreate.Merge(m, src)
+func (dst *TokenPreCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenPreCreate.Merge(dst, src)
 }
 func (m *TokenPreCreate) XXX_Size() int {
 	return xxx_messageInfo_TokenPreCreate.Size(m)
@@ -510,17 +512,16 @@ func (m *TokenFinishCreate) Reset()         { *m = TokenFinishCreate{} }
 func (m *TokenFinishCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenFinishCreate) ProtoMessage()    {}
 func (*TokenFinishCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{2}
+	return fileDescriptor_token_1597bc5f193dd821, []int{2}
 }
-
 func (m *TokenFinishCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenFinishCreate.Unmarshal(m, b)
 }
 func (m *TokenFinishCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenFinishCreate.Marshal(b, m, deterministic)
 }
-func (m *TokenFinishCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenFinishCreate.Merge(m, src)
+func (dst *TokenFinishCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenFinishCreate.Merge(dst, src)
 }
 func (m *TokenFinishCreate) XXX_Size() int {
 	return xxx_messageInfo_TokenFinishCreate.Size(m)
@@ -557,17 +558,16 @@ func (m *TokenRevokeCreate) Reset()         { *m = TokenRevokeCreate{} }
 func (m *TokenRevokeCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenRevokeCreate) ProtoMessage()    {}
 func (*TokenRevokeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{3}
+	return fileDescriptor_token_1597bc5f193dd821, []int{3}
 }
-
 func (m *TokenRevokeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenRevokeCreate.Unmarshal(m, b)
 }
 func (m *TokenRevokeCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenRevokeCreate.Marshal(b, m, deterministic)
 }
-func (m *TokenRevokeCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenRevokeCreate.Merge(m, src)
+func (dst *TokenRevokeCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenRevokeCreate.Merge(dst, src)
 }
 func (m *TokenRevokeCreate) XXX_Size() int {
 	return xxx_messageInfo_TokenRevokeCreate.Size(m)
@@ -604,17 +604,16 @@ func (m *TokenMint) Reset()         { *m = TokenMint{} }
 func (m *TokenMint) String() string { return proto.CompactTextString(m) }
 func (*TokenMint) ProtoMessage()    {}
 func (*TokenMint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{4}
+	return fileDescriptor_token_1597bc5f193dd821, []int{4}
 }
-
 func (m *TokenMint) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenMint.Unmarshal(m, b)
 }
 func (m *TokenMint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenMint.Marshal(b, m, deterministic)
 }
-func (m *TokenMint) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenMint.Merge(m, src)
+func (dst *TokenMint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenMint.Merge(dst, src)
 }
 func (m *TokenMint) XXX_Size() int {
 	return xxx_messageInfo_TokenMint.Size(m)
@@ -651,17 +650,16 @@ func (m *TokenBurn) Reset()         { *m = TokenBurn{} }
 func (m *TokenBurn) String() string { return proto.CompactTextString(m) }
 func (*TokenBurn) ProtoMessage()    {}
 func (*TokenBurn) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{5}
+	return fileDescriptor_token_1597bc5f193dd821, []int{5}
 }
-
 func (m *TokenBurn) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenBurn.Unmarshal(m, b)
 }
 func (m *TokenBurn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenBurn.Marshal(b, m, deterministic)
 }
-func (m *TokenBurn) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenBurn.Merge(m, src)
+func (dst *TokenBurn) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenBurn.Merge(dst, src)
 }
 func (m *TokenBurn) XXX_Size() int {
 	return xxx_messageInfo_TokenBurn.Size(m)
@@ -706,17 +704,16 @@ func (m *Token) Reset()         { *m = Token{} }
 func (m *Token) String() string { return proto.CompactTextString(m) }
 func (*Token) ProtoMessage()    {}
 func (*Token) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{6}
+	return fileDescriptor_token_1597bc5f193dd821, []int{6}
 }
-
 func (m *Token) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Token.Unmarshal(m, b)
 }
 func (m *Token) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Token.Marshal(b, m, deterministic)
 }
-func (m *Token) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Token.Merge(m, src)
+func (dst *Token) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Token.Merge(dst, src)
 }
 func (m *Token) XXX_Size() int {
 	return xxx_messageInfo_Token.Size(m)
@@ -804,17 +801,16 @@ func (m *ReceiptToken) Reset()         { *m = ReceiptToken{} }
 func (m *ReceiptToken) String() string { return proto.CompactTextString(m) }
 func (*ReceiptToken) ProtoMessage()    {}
 func (*ReceiptToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{7}
+	return fileDescriptor_token_1597bc5f193dd821, []int{7}
 }
-
 func (m *ReceiptToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptToken.Unmarshal(m, b)
 }
 func (m *ReceiptToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptToken.Marshal(b, m, deterministic)
 }
-func (m *ReceiptToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptToken.Merge(m, src)
+func (dst *ReceiptToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptToken.Merge(dst, src)
 }
 func (m *ReceiptToken) XXX_Size() int {
 	return xxx_messageInfo_ReceiptToken.Size(m)
@@ -858,17 +854,16 @@ func (m *ReceiptTokenAmount) Reset()         { *m = ReceiptTokenAmount{} }
 func (m *ReceiptTokenAmount) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTokenAmount) ProtoMessage()    {}
 func (*ReceiptTokenAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{8}
+	return fileDescriptor_token_1597bc5f193dd821, []int{8}
 }
-
 func (m *ReceiptTokenAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTokenAmount.Unmarshal(m, b)
 }
 func (m *ReceiptTokenAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTokenAmount.Marshal(b, m, deterministic)
 }
-func (m *ReceiptTokenAmount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTokenAmount.Merge(m, src)
+func (dst *ReceiptTokenAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTokenAmount.Merge(dst, src)
 }
 func (m *ReceiptTokenAmount) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTokenAmount.Size(m)
@@ -922,17 +917,16 @@ func (m *LocalToken) Reset()         { *m = LocalToken{} }
 func (m *LocalToken) String() string { return proto.CompactTextString(m) }
 func (*LocalToken) ProtoMessage()    {}
 func (*LocalToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{9}
+	return fileDescriptor_token_1597bc5f193dd821, []int{9}
 }
-
 func (m *LocalToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalToken.Unmarshal(m, b)
 }
 func (m *LocalToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalToken.Marshal(b, m, deterministic)
 }
-func (m *LocalToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalToken.Merge(m, src)
+func (dst *LocalToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalToken.Merge(dst, src)
 }
 func (m *LocalToken) XXX_Size() int {
 	return xxx_messageInfo_LocalToken.Size(m)
@@ -1076,17 +1070,16 @@ func (m *LocalLogs) Reset()         { *m = LocalLogs{} }
 func (m *LocalLogs) String() string { return proto.CompactTextString(m) }
 func (*LocalLogs) ProtoMessage()    {}
 func (*LocalLogs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{10}
+	return fileDescriptor_token_1597bc5f193dd821, []int{10}
 }
-
 func (m *LocalLogs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalLogs.Unmarshal(m, b)
 }
 func (m *LocalLogs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalLogs.Marshal(b, m, deterministic)
 }
-func (m *LocalLogs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalLogs.Merge(m, src)
+func (dst *LocalLogs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalLogs.Merge(dst, src)
 }
 func (m *LocalLogs) XXX_Size() int {
 	return xxx_messageInfo_LocalLogs.Size(m)
@@ -1140,17 +1133,16 @@ func (m *ReqTokens) Reset()         { *m = ReqTokens{} }
 func (m *ReqTokens) String() string { return proto.CompactTextString(m) }
 func (*ReqTokens) ProtoMessage()    {}
 func (*ReqTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{11}
+	return fileDescriptor_token_1597bc5f193dd821, []int{11}
 }
-
 func (m *ReqTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokens.Unmarshal(m, b)
 }
 func (m *ReqTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqTokens.Marshal(b, m, deterministic)
 }
-func (m *ReqTokens) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTokens.Merge(m, src)
+func (dst *ReqTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqTokens.Merge(dst, src)
 }
 func (m *ReqTokens) XXX_Size() int {
 	return xxx_messageInfo_ReqTokens.Size(m)
@@ -1200,17 +1192,16 @@ func (m *ReplyTokens) Reset()         { *m = ReplyTokens{} }
 func (m *ReplyTokens) String() string { return proto.CompactTextString(m) }
 func (*ReplyTokens) ProtoMessage()    {}
 func (*ReplyTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{12}
+	return fileDescriptor_token_1597bc5f193dd821, []int{12}
 }
-
 func (m *ReplyTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTokens.Unmarshal(m, b)
 }
 func (m *ReplyTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyTokens.Marshal(b, m, deterministic)
 }
-func (m *ReplyTokens) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTokens.Merge(m, src)
+func (dst *ReplyTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyTokens.Merge(dst, src)
 }
 func (m *ReplyTokens) XXX_Size() int {
 	return xxx_messageInfo_ReplyTokens.Size(m)
@@ -1240,17 +1231,16 @@ func (m *TokenRecv) Reset()         { *m = TokenRecv{} }
 func (m *TokenRecv) String() string { return proto.CompactTextString(m) }
 func (*TokenRecv) ProtoMessage()    {}
 func (*TokenRecv) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{13}
+	return fileDescriptor_token_1597bc5f193dd821, []int{13}
 }
-
 func (m *TokenRecv) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenRecv.Unmarshal(m, b)
 }
 func (m *TokenRecv) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenRecv.Marshal(b, m, deterministic)
 }
-func (m *TokenRecv) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenRecv.Merge(m, src)
+func (dst *TokenRecv) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenRecv.Merge(dst, src)
 }
 func (m *TokenRecv) XXX_Size() int {
 	return xxx_messageInfo_TokenRecv.Size(m)
@@ -1286,17 +1276,16 @@ func (m *ReplyAddrRecvForTokens) Reset()         { *m = ReplyAddrRecvForTokens{}
 func (m *ReplyAddrRecvForTokens) String() string { return proto.CompactTextString(m) }
 func (*ReplyAddrRecvForTokens) ProtoMessage()    {}
 func (*ReplyAddrRecvForTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{14}
+	return fileDescriptor_token_1597bc5f193dd821, []int{14}
 }
-
 func (m *ReplyAddrRecvForTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAddrRecvForTokens.Unmarshal(m, b)
 }
 func (m *ReplyAddrRecvForTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyAddrRecvForTokens.Marshal(b, m, deterministic)
 }
-func (m *ReplyAddrRecvForTokens) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyAddrRecvForTokens.Merge(m, src)
+func (dst *ReplyAddrRecvForTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyAddrRecvForTokens.Merge(dst, src)
 }
 func (m *ReplyAddrRecvForTokens) XXX_Size() int {
 	return xxx_messageInfo_ReplyAddrRecvForTokens.Size(m)
@@ -1327,17 +1316,16 @@ func (m *ReqTokenBalance) Reset()         { *m = ReqTokenBalance{} }
 func (m *ReqTokenBalance) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenBalance) ProtoMessage()    {}
 func (*ReqTokenBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{15}
+	return fileDescriptor_token_1597bc5f193dd821, []int{15}
 }
-
 func (m *ReqTokenBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenBalance.Unmarshal(m, b)
 }
 func (m *ReqTokenBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqTokenBalance.Marshal(b, m, deterministic)
 }
-func (m *ReqTokenBalance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTokenBalance.Merge(m, src)
+func (dst *ReqTokenBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqTokenBalance.Merge(dst, src)
 }
 func (m *ReqTokenBalance) XXX_Size() int {
 	return xxx_messageInfo_ReqTokenBalance.Size(m)
@@ -1381,17 +1369,16 @@ func (m *ReqAccountTokenAssets) Reset()         { *m = ReqAccountTokenAssets{} }
 func (m *ReqAccountTokenAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAccountTokenAssets) ProtoMessage()    {}
 func (*ReqAccountTokenAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{16}
+	return fileDescriptor_token_1597bc5f193dd821, []int{16}
 }
-
 func (m *ReqAccountTokenAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAccountTokenAssets.Unmarshal(m, b)
 }
 func (m *ReqAccountTokenAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqAccountTokenAssets.Marshal(b, m, deterministic)
 }
-func (m *ReqAccountTokenAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqAccountTokenAssets.Merge(m, src)
+func (dst *ReqAccountTokenAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqAccountTokenAssets.Merge(dst, src)
 }
 func (m *ReqAccountTokenAssets) XXX_Size() int {
 	return xxx_messageInfo_ReqAccountTokenAssets.Size(m)
@@ -1428,17 +1415,16 @@ func (m *TokenAsset) Reset()         { *m = TokenAsset{} }
 func (m *TokenAsset) String() string { return proto.CompactTextString(m) }
 func (*TokenAsset) ProtoMessage()    {}
 func (*TokenAsset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{17}
+	return fileDescriptor_token_1597bc5f193dd821, []int{17}
 }
-
 func (m *TokenAsset) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenAsset.Unmarshal(m, b)
 }
 func (m *TokenAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenAsset.Marshal(b, m, deterministic)
 }
-func (m *TokenAsset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenAsset.Merge(m, src)
+func (dst *TokenAsset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenAsset.Merge(dst, src)
 }
 func (m *TokenAsset) XXX_Size() int {
 	return xxx_messageInfo_TokenAsset.Size(m)
@@ -1474,17 +1460,16 @@ func (m *ReplyAccountTokenAssets) Reset()         { *m = ReplyAccountTokenAssets
 func (m *ReplyAccountTokenAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyAccountTokenAssets) ProtoMessage()    {}
 func (*ReplyAccountTokenAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{18}
+	return fileDescriptor_token_1597bc5f193dd821, []int{18}
 }
-
 func (m *ReplyAccountTokenAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAccountTokenAssets.Unmarshal(m, b)
 }
 func (m *ReplyAccountTokenAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyAccountTokenAssets.Marshal(b, m, deterministic)
 }
-func (m *ReplyAccountTokenAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyAccountTokenAssets.Merge(m, src)
+func (dst *ReplyAccountTokenAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyAccountTokenAssets.Merge(dst, src)
 }
 func (m *ReplyAccountTokenAssets) XXX_Size() int {
 	return xxx_messageInfo_ReplyAccountTokenAssets.Size(m)
@@ -1518,17 +1503,16 @@ func (m *ReqAddrTokens) Reset()         { *m = ReqAddrTokens{} }
 func (m *ReqAddrTokens) String() string { return proto.CompactTextString(m) }
 func (*ReqAddrTokens) ProtoMessage()    {}
 func (*ReqAddrTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{19}
+	return fileDescriptor_token_1597bc5f193dd821, []int{19}
 }
-
 func (m *ReqAddrTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAddrTokens.Unmarshal(m, b)
 }
 func (m *ReqAddrTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqAddrTokens.Marshal(b, m, deterministic)
 }
-func (m *ReqAddrTokens) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqAddrTokens.Merge(m, src)
+func (dst *ReqAddrTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqAddrTokens.Merge(dst, src)
 }
 func (m *ReqAddrTokens) XXX_Size() int {
 	return xxx_messageInfo_ReqAddrTokens.Size(m)
@@ -1583,7 +1567,7 @@ func (m *ReqAddrTokens) GetFromKey() string {
 
 type ReqTokenTx struct {
 	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	//表示取所有/from/to/其他的hash列表
+	// 表示取所有/from/to/其他的hash列表
 	Flag                 int32    `protobuf:"varint,2,opt,name=flag,proto3" json:"flag,omitempty"`
 	Count                int32    `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
 	Direction            int32    `protobuf:"varint,4,opt,name=direction,proto3" json:"direction,omitempty"`
@@ -1599,17 +1583,16 @@ func (m *ReqTokenTx) Reset()         { *m = ReqTokenTx{} }
 func (m *ReqTokenTx) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenTx) ProtoMessage()    {}
 func (*ReqTokenTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{20}
+	return fileDescriptor_token_1597bc5f193dd821, []int{20}
 }
-
 func (m *ReqTokenTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenTx.Unmarshal(m, b)
 }
 func (m *ReqTokenTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqTokenTx.Marshal(b, m, deterministic)
 }
-func (m *ReqTokenTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTokenTx.Merge(m, src)
+func (dst *ReqTokenTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqTokenTx.Merge(dst, src)
 }
 func (m *ReqTokenTx) XXX_Size() int {
 	return xxx_messageInfo_ReqTokenTx.Size(m)
@@ -1680,17 +1663,16 @@ func (m *ReplyTokenLogs) Reset()         { *m = ReplyTokenLogs{} }
 func (m *ReplyTokenLogs) String() string { return proto.CompactTextString(m) }
 func (*ReplyTokenLogs) ProtoMessage()    {}
 func (*ReplyTokenLogs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3aff0bcd502840ab, []int{21}
+	return fileDescriptor_token_1597bc5f193dd821, []int{21}
 }
-
 func (m *ReplyTokenLogs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTokenLogs.Unmarshal(m, b)
 }
 func (m *ReplyTokenLogs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyTokenLogs.Marshal(b, m, deterministic)
 }
-func (m *ReplyTokenLogs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTokenLogs.Merge(m, src)
+func (dst *ReplyTokenLogs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyTokenLogs.Merge(dst, src)
 }
 func (m *ReplyTokenLogs) XXX_Size() int {
 	return xxx_messageInfo_ReplyTokenLogs.Size(m)
@@ -1733,9 +1715,85 @@ func init() {
 	proto.RegisterType((*ReplyTokenLogs)(nil), "types.ReplyTokenLogs")
 }
 
-func init() { proto.RegisterFile("token.proto", fileDescriptor_3aff0bcd502840ab) }
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
 
-var fileDescriptor_3aff0bcd502840ab = []byte{
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// TokenClient is the client API for Token service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type TokenClient interface {
+	// token 对外提供服务的接口
+	// 区块链接口
+	GetTokenBalance(ctx context.Context, in *ReqTokenBalance, opts ...grpc.CallOption) (*types.Accounts, error)
+}
+
+type tokenClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewTokenClient(cc *grpc.ClientConn) TokenClient {
+	return &tokenClient{cc}
+}
+
+func (c *tokenClient) GetTokenBalance(ctx context.Context, in *ReqTokenBalance, opts ...grpc.CallOption) (*types.Accounts, error) {
+	out := new(types.Accounts)
+	err := c.cc.Invoke(ctx, "/types.token/GetTokenBalance", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TokenServer is the server API for Token service.
+type TokenServer interface {
+	// token 对外提供服务的接口
+	// 区块链接口
+	GetTokenBalance(context.Context, *ReqTokenBalance) (*types.Accounts, error)
+}
+
+func RegisterTokenServer(s *grpc.Server, srv TokenServer) {
+	s.RegisterService(&_Token_serviceDesc, srv)
+}
+
+func _Token_GetTokenBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqTokenBalance)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TokenServer).GetTokenBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.token/GetTokenBalance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TokenServer).GetTokenBalance(ctx, req.(*ReqTokenBalance))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Token_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.token",
+	HandlerType: (*TokenServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetTokenBalance",
+			Handler:    _Token_GetTokenBalance_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "token.proto",
+}
+
+func init() { proto.RegisterFile("token.proto", fileDescriptor_token_1597bc5f193dd821) }
+
+var fileDescriptor_token_1597bc5f193dd821 = []byte{
 	// 1115 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x57, 0xdd, 0x6a, 0xe3, 0xc6,
 	0x17, 0xb7, 0x2d, 0x7f, 0x44, 0xc7, 0x89, 0x13, 0xcf, 0x7f, 0x37, 0x7f, 0x91, 0x2e, 0x8b, 0x11,
@@ -1807,80 +1865,4 @@ var fileDescriptor_3aff0bcd502840ab = []byte{
 	0x2f, 0xae, 0x4d, 0x31, 0xd9, 0x57, 0x70, 0xf8, 0x06, 0x65, 0x85, 0xe9, 0xc7, 0x26, 0x66, 0x63,
 	0x02, 0x4e, 0x0e, 0xab, 0x3c, 0xc9, 0xfd, 0xda, 0x87, 0x36, 0xfd, 0x5d, 0xb9, 0xfc, 0x3b, 0x00,
 	0x00, 0xff, 0xff, 0xe2, 0xae, 0x58, 0x34, 0xe6, 0x0c, 0x00, 0x00,
-}
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// TokenClient is the client API for Token service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type TokenClient interface {
-	// token 对外提供服务的接口
-	//区块链接口
-	GetTokenBalance(ctx context.Context, in *ReqTokenBalance, opts ...grpc.CallOption) (*types.Accounts, error)
-}
-
-type tokenClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewTokenClient(cc *grpc.ClientConn) TokenClient {
-	return &tokenClient{cc}
-}
-
-func (c *tokenClient) GetTokenBalance(ctx context.Context, in *ReqTokenBalance, opts ...grpc.CallOption) (*types.Accounts, error) {
-	out := new(types.Accounts)
-	err := c.cc.Invoke(ctx, "/types.token/GetTokenBalance", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// TokenServer is the server API for Token service.
-type TokenServer interface {
-	// token 对外提供服务的接口
-	//区块链接口
-	GetTokenBalance(context.Context, *ReqTokenBalance) (*types.Accounts, error)
-}
-
-func RegisterTokenServer(s *grpc.Server, srv TokenServer) {
-	s.RegisterService(&_Token_serviceDesc, srv)
-}
-
-func _Token_GetTokenBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqTokenBalance)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TokenServer).GetTokenBalance(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.token/GetTokenBalance",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServer).GetTokenBalance(ctx, req.(*ReqTokenBalance))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Token_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.token",
-	HandlerType: (*TokenServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetTokenBalance",
-			Handler:    _Token_GetTokenBalance_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "token.proto",
 }

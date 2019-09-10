@@ -7,6 +7,8 @@ package executor
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
@@ -111,4 +113,21 @@ func TestRevokeSaveDel(t *testing.T) {
 	kv := genSaveSellKv(&sellorderRevoked)
 	kvDel := genDeleteSellKv(&sellorderRevoked)
 	check(t, kv, kvDel)
+}
+
+func TestPriceCheck(t *testing.T) {
+	cases := []struct {
+		exec   string
+		symbol string
+		result bool
+	}{
+		{"coins", "bty", true},
+		{"", "bty", false},
+		{"coins", "", false},
+		{"token", "TEST", true},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, c.result, checkPrice(types.GetDappFork(pty.TradeX, pty.ForkTradePriceX), c.exec, c.symbol))
+	}
 }

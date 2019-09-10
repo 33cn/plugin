@@ -28,6 +28,8 @@ func (jrpc *Jrpc) CreateRawTradeSellTx(in *ptypes.TradeSellTx, result *interface
 		Stoptime:          0,
 		Crowdfund:         false,
 		AssetExec:         in.AssetExec,
+		PriceExec:         in.PriceExec,
+		PriceSymbol:       in.PriceSymbol,
 	}
 
 	reply, err := jrpc.cli.CreateRawTradeSellTx(context.Background(), param)
@@ -85,6 +87,8 @@ func (jrpc *Jrpc) CreateRawTradeBuyLimitTx(in *ptypes.TradeBuyLimitTx, result *i
 		PricePerBoardlot:  in.PricePerBoardlot,
 		TotalBoardlot:     in.TotalBoardlot,
 		AssetExec:         in.AssetExec,
+		PriceExec:         in.PriceExec,
+		PriceSymbol:       in.PriceSymbol,
 	}
 
 	reply, err := jrpc.cli.CreateRawTradeBuyLimitTx(context.Background(), param)

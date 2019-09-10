@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -61,6 +60,8 @@ func (selldb *sellDB) getSellLogs(tradeType int32, txhash string) *types.Receipt
 		TxHash:            txhash,
 		Height:            selldb.Height,
 		AssetExec:         selldb.AssetExec,
+		PriceExec:         selldb.GetPriceExec(),
+		PriceSymbol:       selldb.GetPriceSymbol(),
 	}
 	if pty.TyLogTradeSellLimit == tradeType {
 		receiptTrade := &pty.ReceiptTradeSellLimit{Base: base}
@@ -91,6 +92,8 @@ func (selldb *sellDB) getBuyLogs(buyerAddr string, boardlotcnt int64, txhash str
 		TxHash:            txhash,
 		Height:            selldb.Height,
 		AssetExec:         selldb.AssetExec,
+		PriceExec:         selldb.PriceExec,
+		PriceSymbol:       selldb.PriceSymbol,
 	}
 
 	receipt := &pty.ReceiptTradeBuyMarket{Base: base}
@@ -183,6 +186,8 @@ func (buydb *buyDB) getBuyLogs(tradeType int32, txhash string) *types.ReceiptLog
 		TxHash:            txhash,
 		Height:            buydb.Height,
 		AssetExec:         buydb.AssetExec,
+		PriceExec:         buydb.PriceExec,
+		PriceSymbol:       buydb.PriceSymbol,
 	}
 	if pty.TyLogTradeBuyLimit == tradeType {
 		receiptTrade := &pty.ReceiptTradeBuyLimit{Base: base}
@@ -231,6 +236,8 @@ func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt in
 		TxHash:            txhash,
 		Height:            buydb.Height,
 		AssetExec:         buydb.AssetExec,
+		PriceExec:         buydb.PriceExec,
+		PriceSymbol:       buydb.PriceSymbol,
 	}
 	receiptSellMarket := &pty.ReceiptSellMarket{Base: base}
 	log.Log = types.Encode(receiptSellMarket)
@@ -239,19 +246,18 @@ func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt in
 }
 
 type tradeAction struct {
-	coinsAccount *account.DB
-	db           dbm.KV
-	txhash       string
-	fromaddr     string
-	blocktime    int64
-	height       int64
-	execaddr     string
+	db        dbm.KV
+	txhash    string
+	fromaddr  string
+	blocktime int64
+	height    int64
+	execaddr  string
 }
 
 func newTradeAction(t *trade, tx *types.Transaction) *tradeAction {
 	hash := hex.EncodeToString(tx.Hash())
 	fromaddr := tx.From()
-	return &tradeAction{t.GetCoinsAccount(), t.GetStateDB(), hash, fromaddr,
+	return &tradeAction{t.GetStateDB(), hash, fromaddr,
 		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
 }
 
@@ -261,6 +267,12 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	}
 	if !checkAsset(action.height, sell.AssetExec, sell.TokenSymbol) {
 		return nil, types.ErrInvalidParam
+	}
+	if !checkPrice(action.height, sell.PriceExec, sell.PriceExec) {
+		return nil, types.ErrInvalidParam
+	}
+	if !notSameAsset(action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, sell.PriceExec) {
+		return nil, pty.ErrAssetAndPriceSame
 	}
 
 	accDB, err := createAccountDB(action.height, action.db, sell.AssetExec, sell.TokenSymbol)
@@ -292,6 +304,8 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 		Status:            pty.TradeOrderStatusOnSale,
 		Height:            action.height,
 		AssetExec:         sell.AssetExec,
+		PriceExec:         sell.GetPriceExec(),
+		PriceSymbol:       sell.GetPriceSymbol(),
 	}
 
 	tokendb := newSellDB(sellOrder)
@@ -333,17 +347,24 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, pty.ErrTCntLessThanMinBoardlot
 	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, sellOrder.PriceExec, sellOrder.PriceSymbol)
+	if err != nil {
+		tradelog.Error("createPriceDB", "addrFrom", action.fromaddr, "height", action.height,
+			"price", sellOrder.PriceExec+"-"+sellOrder.PriceSymbol, "err", err)
+		return nil, err
+	}
 	//首先购买费用的划转
-	receiptFromAcc, err := action.coinsAccount.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+	receiptFromAcc, err := priceAcc.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
 	if err != nil {
 		tradelog.Error("account.Transfer ", "addrFrom", action.fromaddr, "addrTo", sellOrder.Address,
 			"amount", buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
 		return nil, err
 	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
-	//TODO: 创建一个LRU用来保存token对应的子合约账户的地址
 	accDB, err := createAccountDB(action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
 	if err != nil {
+		tradelog.Error("createAccountDB", "addrFrom", action.fromaddr, "height", action.height,
+			"price", sellOrder.AssetExec+"-"+sellOrder.TokenSymbol, "err", err)
 		return nil, err
 	}
 	receiptFromExecAcc, err := accDB.ExecTransferFrozen(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.AmountPerBoardlot)
@@ -352,7 +373,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 			"addrTo", action.fromaddr, "execaddr", action.execaddr,
 			"amount", buyOrder.BoardlotCnt*sellOrder.AmountPerBoardlot)
 		//因为未能成功将对应的token进行转账，所以需要将购买方的账户资金进行回退
-		action.coinsAccount.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+		priceAcc.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
 		return nil, err
 	}
 
@@ -459,10 +480,20 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	if !checkAsset(action.height, buy.AssetExec, buy.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
+	if !checkPrice(action.height, buy.PriceExec, buy.PriceExec) {
+		return nil, types.ErrInvalidParam
+	}
+	if !notSameAsset(action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, buy.PriceExec) {
+		return nil, pty.ErrAssetAndPriceSame
+	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, buy.PriceExec, buy.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	// check enough bty
 	amount := buy.PricePerBoardlot * buy.TotalBoardlot
-	receipt, err := action.coinsAccount.ExecFrozen(action.fromaddr, action.execaddr, amount)
+	receipt, err := priceAcc.ExecFrozen(action.fromaddr, action.execaddr, amount)
 	if err != nil {
 		tradelog.Error("trade tradeBuyLimit ", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", amount)
 		return nil, err
@@ -482,6 +513,8 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 		Status:            pty.TradeOrderStatusOnBuy,
 		Height:            action.height,
 		AssetExec:         buy.AssetExec,
+		PriceExec:         buy.PriceExec,
+		PriceSymbol:       buy.PriceSymbol,
 	}
 
 	tokendb := newBuyDB(buyOrder)
@@ -537,9 +570,13 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	}
 
 	//首先购买费用的划转
+	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	amount := sellOrder.BoardlotCnt * buyOrder.PricePerBoardlot
 	tradelog.Debug("tradeSellMarket", "step2 cnt", sellOrder.BoardlotCnt, "price", buyOrder.PricePerBoardlot, "amount", amount)
-	receiptFromAcc, err := action.coinsAccount.ExecTransferFrozen(buyOrder.Address, action.fromaddr, action.execaddr, amount)
+	receiptFromAcc, err := priceAcc.ExecTransferFrozen(buyOrder.Address, action.fromaddr, action.execaddr, amount)
 	if err != nil {
 		tradelog.Error("account.Transfer ", "addrFrom", buyOrder.Address, "addrTo", action.fromaddr,
 			"amount", amount)
@@ -593,10 +630,14 @@ func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*
 		return nil, pty.ErrTBuyOrderRevoke
 	}
 
+	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	if err != nil {
+		return nil, err
+	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
 	tradeRest := (buyOrder.TotalBoardlot - buyOrder.BoughtBoardlot) * buyOrder.PricePerBoardlot
 	//tradelog.Info("tradeRevokeBuyLimit", "total-b", buyOrder.TotalBoardlot, "price", buyOrder.PricePerBoardlot, "amount", tradeRest)
-	receiptFromExecAcc, err := action.coinsAccount.ExecActive(buyOrder.Address, action.execaddr, tradeRest)
+	receiptFromExecAcc, err := priceAcc.ExecActive(buyOrder.Address, action.execaddr, tradeRest)
 	if err != nil {
 		tradelog.Error("account.ExecActive bty ", "addrFrom", buyOrder.Address, "execaddr", action.execaddr, "amount", tradeRest)
 		return nil, err

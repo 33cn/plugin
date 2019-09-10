@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"fmt"
+
 	"github.com/33cn/chain33/types"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
@@ -22,5 +24,32 @@ func (r *Retrieve) Query_GetRetrieveInfo(in *rt.ReqRetrieveInfo) (types.Message,
 			info.RemainTime = 0
 		}
 	}
+
+	// 在指定asset 的情况下， 显示具体asset 的找回状态
+	if info.Status == retrievePerform && in.GetAssetExec() != "" {
+		// retrievePerform状态下，不存在有两种情况
+		// 1 还没找回, 2 fork 之前是没有coins 找回记录的
+		count := r.GetLocalDB().PrefixCount(calcRetrieveAssetPrefix(in.BackupAddress, in.DefaultAddress))
+		// 2 fork 之前是 没有coins 找回记录的, 相当于都找回了
+		if count == 0 {
+			return info, nil
+		}
+
+		asset, _ := getRetrieveAsset(r.GetLocalDB(), in.BackupAddress, in.DefaultAddress, in.AssetExec, in.AssetSymbol)
+		if asset != nil {
+			return asset, nil
+		}
+
+		// 1 还没找回
+		info.Status = retrievePrepare
+		info.RemainTime = zeroRemainTime
+		return info, nil
+
+	}
 	return info, nil
+}
+
+func calcRetrieveAssetPrefix(backupAddr, defaultAddr string) []byte {
+	key := fmt.Sprintf("LODB-retrieve-backup-asset:%s:%s:", backupAddr, defaultAddr)
+	return []byte(key)
 }

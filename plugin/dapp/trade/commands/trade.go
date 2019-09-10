@@ -464,6 +464,10 @@ func addTokenSellFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("total", "t", 0, "total tokens to be sold")
 	cmd.MarkFlagRequired("total")
+
+	cmd.Flags().StringP("asset_exec", "e", "", "asset exec, default: token")
+	cmd.Flags().StringP("price_exec", "", "", "price exec")
+	cmd.Flags().StringP("price_symbol", "", "", "price symbol")
 }
 
 func tokenSell(cmd *cobra.Command, args []string) {
@@ -473,6 +477,12 @@ func tokenSell(cmd *cobra.Command, args []string) {
 	price, _ := cmd.Flags().GetFloat64("price")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	total, _ := cmd.Flags().GetFloat64("total")
+	priceExec, _ := cmd.Flags().GetString("price_exec")
+	priceSymbol, _ := cmd.Flags().GetString("price_symbol")
+	exec, _ := cmd.Flags().GetString("asset_exec")
+	if exec == "" {
+		exec = "token"
+	}
 
 	priceInt64 := int64(price * 1e4)
 	feeInt64 := int64(fee * 1e4)
@@ -484,7 +494,9 @@ func tokenSell(cmd *cobra.Command, args []string) {
 		PricePerBoardlot:  priceInt64 * 1e4,
 		TotalBoardlot:     totalInt64,
 		Fee:               feeInt64 * 1e4,
-		AssetExec:         "token",
+		AssetExec:         exec,
+		PriceExec:         priceExec,
+		PriceSymbol:       priceSymbol,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeSellTx", params, nil)
@@ -587,6 +599,10 @@ func addTokenBuyLimitFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("total", "t", 0, "total tokens to buy")
 	cmd.MarkFlagRequired("total")
+
+	cmd.Flags().StringP("asset_exec", "e", "", "asset exec, default: token")
+	cmd.Flags().StringP("price_exec", "", "", "price exec")
+	cmd.Flags().StringP("price_symbol", "", "", "price symbol")
 }
 
 func tokenBuyLimit(cmd *cobra.Command, args []string) {
@@ -596,6 +612,12 @@ func tokenBuyLimit(cmd *cobra.Command, args []string) {
 	price, _ := cmd.Flags().GetFloat64("price")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	total, _ := cmd.Flags().GetFloat64("total")
+	priceExec, _ := cmd.Flags().GetString("price_exec")
+	priceSymbol, _ := cmd.Flags().GetString("price_symbol")
+	exec, _ := cmd.Flags().GetString("asset_exec")
+	if exec == "" {
+		exec = "token"
+	}
 
 	priceInt64 := int64(price * 1e4)
 	feeInt64 := int64(fee * 1e4)
@@ -607,7 +629,9 @@ func tokenBuyLimit(cmd *cobra.Command, args []string) {
 		PricePerBoardlot:  priceInt64 * 1e4,
 		TotalBoardlot:     totalInt64,
 		Fee:               feeInt64 * 1e4,
-		AssetExec:         "token",
+		AssetExec:         exec,
+		PriceExec:         priceExec,
+		PriceSymbol:       priceSymbol,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeBuyLimitTx", params, nil)

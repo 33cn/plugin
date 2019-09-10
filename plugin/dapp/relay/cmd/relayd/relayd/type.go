@@ -22,24 +22,6 @@ type latestBlock struct {
 	TxIndexes  []uint64 `json:"txIndexes"`
 }
 
-type header struct {
-	Hash         string  `json:"hash"`
-	Ver          uint64  `json:"ver"`
-	PrevBlock    string  `json:"prev_block"`
-	MerkleRoot   string  `json:"mrkl_root"`
-	Time         int64   `json:"time"`
-	Bits         int64   `json:"bits"`
-	Fee          float64 `json:"fee,omitempty"`
-	Nonce        int64   `json:"nonce"`
-	TxNum        uint64  `json:"n_tx"`
-	Size         uint64  `json:"size"`
-	BlockIndex   uint64  `json:"block_index"`
-	MainChain    bool    `json:"main_chain"`
-	Height       uint64  `json:"height"`
-	ReceivedTime int64   `json:"received_time"`
-	RelayedBy    string  `json:"relayed_by"`
-}
-
 func (b *block) BtcHeader() *ty.BtcHeader {
 	return &ty.BtcHeader{
 		Hash:         b.Hash,

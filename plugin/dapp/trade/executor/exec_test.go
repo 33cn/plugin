@@ -36,6 +36,7 @@ type orderArgs struct {
 
 var (
 	Symbol         = "TEST"
+	SymbolA        = "TESTA"
 	AssetExecToken = "token"
 	AssetExecPara  = "paracross"
 
@@ -70,7 +71,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradeAssetX),
+		types.GetDappFork("trade", pty.ForkTradePriceX),
 		2,
 		1539918074,
 		"hash",
@@ -97,6 +98,8 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 		TotalBoardlot:     sellArgs.total,
 		Fee:               0,
 		AssetExec:         AssetExecToken,
+		PriceExec:         "coins",
+		PriceSymbol:       "bty",
 	}
 	tx, _ := pty.CreateRawTradeSellTx(sell)
 	tx, _ = signTx(tx, PrivKeyA)
@@ -218,7 +221,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, ldb, kvdb := util.CreateTestDB()
 
-	accB := account.NewCoinsAccount()
+	accB, _ := account.NewAccountDB(AssetExecToken, SymbolA, stateDB)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
@@ -238,6 +241,8 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 		TotalBoardlot:     buyArgs.total,
 		Fee:               0,
 		AssetExec:         AssetExecPara,
+		PriceExec:         AssetExecToken,
+		PriceSymbol:       SymbolA,
 	}
 	tx, _ := pty.CreateRawTradeBuyLimitTx(buy)
 	tx, _ = signTx(tx, PrivKeyB)
@@ -343,6 +348,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeAssetX, int64(10))
 	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeIDX, int64(10))
 	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeFixAssetDBX, int64(20))
+	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradePriceX, int64(30))
 
 	sellArgs := &orderArgs{100, 2, 2, 100}
 	buyArgs := &orderArgs{total: 5}

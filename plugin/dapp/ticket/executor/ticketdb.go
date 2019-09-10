@@ -340,11 +340,23 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 		return nil, err
 	}
 	//fund
-	receipt2, err := action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-	if err != nil {
-		tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr)
-		return nil, err
+	var receipt2 *types.Receipt
+	if types.IsFork(action.height, "ForkTicketFundAddrV1") {
+		// issue coins to exec addr
+		addr := types.MGStr("mver.consensus.fundKeyAddr", action.height)
+		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
+			return nil, err
+		}
+	} else {
+		receipt2, err = action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "error", err)
+			return nil, err
+		}
 	}
+
 	t.Save(action.db)
 	logs = append(logs, t.GetReceiptLog())
 	kv = append(kv, t.GetKVSet()...)
@@ -409,13 +421,15 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 		kv = append(kv, receipt1.KV...)
 		//如果ticket 已经挖矿成功了，那么要解冻发展基金部分币
 		if t.prevstatus == 2 {
-			receipt2, err := action.coinsAccount.ExecActive(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-			if err != nil {
-				tlog.Error("TicketClose.ExecActive fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)
-				return nil, err
+			if !types.IsFork(action.height, "ForkTicketFundAddrV1") {
+				receipt2, err := action.coinsAccount.ExecActive(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+				if err != nil {
+					tlog.Error("TicketClose.ExecActive fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)
+					return nil, err
+				}
+				logs = append(logs, receipt2.Logs...)
+				kv = append(kv, receipt2.KV...)
 			}
-			logs = append(logs, receipt2.Logs...)
-			kv = append(kv, receipt2.KV...)
 		}
 		t.Save(action.db)
 	}

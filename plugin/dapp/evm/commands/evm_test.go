@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/stretchr/testify/assert"
+
 	// 因为测试程序在外层，而合约类型的初始化在里面，所以需要显示引用，否则不会加载合约插件
 	_ "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"

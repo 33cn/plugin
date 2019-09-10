@@ -6,9 +6,7 @@ package executor
 
 import (
 	"bytes"
-	"math/rand"
 	"testing"
-	"time"
 
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
@@ -289,7 +287,7 @@ func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) 
 	assert.Nil(suite.T(), err, "decode title failed")
 	suite.T().Log("title", titleStat)
 	assert.Equal(suite.T(), int32(pt.TyLogParacrossCommitDone), receipt.Logs[1].Ty)
-	assert.Equal(suite.T(), int64(TitleHeight), titleStat.Height)
+	assert.Equal(suite.T(), TitleHeight, titleStat.Height)
 	assert.Equal(suite.T(), Title, titleStat.Title)
 	assert.Equal(suite.T(), CurBlock, titleStat.BlockHash)
 }
@@ -305,7 +303,7 @@ func checkRecordReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 	suite.T().Log("record", record)
 	assert.Equal(suite.T(), int32(pt.TyLogParacrossCommitRecord), receipt.Logs[0].Ty)
 	assert.Equal(suite.T(), Title, record.Status.Title)
-	assert.Equal(suite.T(), int64(TitleHeight), record.Status.Height)
+	assert.Equal(suite.T(), TitleHeight, record.Status.Height)
 	assert.Equal(suite.T(), CurBlock, record.Status.BlockHash)
 }
 
@@ -528,8 +526,8 @@ func (s *VoteTestSuite) TestVoteTx() {
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
 			types.Decode(kv.GetValue(), &rst)
-			s.Equal([]uint8([]byte{0x4d}), rst.TxResult)
-			s.Equal([]uint8([]byte{0x25}), rst.CrossTxResult)
+			s.Equal([]byte{0x4d}, rst.TxResult)
+			s.Equal([]byte{0x25}, rst.CrossTxResult)
 			s.Equal(7, len(rst.TxHashs))
 			s.Equal(6, len(rst.CrossTxHashs))
 			break
@@ -580,7 +578,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 	for _, tx := range txs {
 		status.TxHashs = append(status.TxHashs, tx.Hash())
 	}
-	txHashs := FilterParaCrossTxHashes(Title, txs)
+	txHashs := FilterParaCrossTxHashes(txs)
 	status.CrossTxHashs = append(status.CrossTxHashs, txHashs...)
 
 	baseCheckTxHash := CalcTxHashsHash(status.TxHashs)
@@ -648,34 +646,6 @@ func (s *VoteTestSuite) createVoteTx(status *pt.ParacrossNodeStatus, privFrom st
 	assert.Nil(s.T(), err, "sign asset transfer failed")
 	if err != nil {
 		return nil, err
-	}
-
-	return tx, nil
-}
-
-func createCrossMainTx(to []byte) (*types.Transaction, error) {
-	param := types.CreateTx{
-		To:          string(to),
-		Amount:      Amount,
-		Fee:         0,
-		Note:        []byte("test asset transfer"),
-		IsWithdraw:  false,
-		IsToken:     false,
-		TokenSymbol: "",
-		ExecName:    pt.ParaX,
-	}
-	transfer := &pt.ParacrossAction{}
-	v := &pt.ParacrossAction_AssetTransfer{AssetTransfer: &types.AssetsTransfer{
-		Amount: param.Amount, Note: param.GetNote(), To: param.GetTo()}}
-	transfer.Value = v
-	transfer.Ty = pt.ParacrossActionAssetTransfer
-
-	tx := &types.Transaction{
-		Execer:  []byte(param.GetExecName()),
-		Payload: types.Encode(transfer),
-		To:      address.ExecAddress(param.GetExecName()),
-		Fee:     param.Fee,
-		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 	}
 
 	return tx, nil

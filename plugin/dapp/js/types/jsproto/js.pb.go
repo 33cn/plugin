@@ -5,9 +5,10 @@ package jsproto
 
 import (
 	fmt "fmt"
-	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -34,17 +35,16 @@ func (m *Create) Reset()         { *m = Create{} }
 func (m *Create) String() string { return proto.CompactTextString(m) }
 func (*Create) ProtoMessage()    {}
 func (*Create) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d11539bc790542aa, []int{0}
+	return fileDescriptor_js_afd63f08422ad153, []int{0}
 }
-
 func (m *Create) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Create.Unmarshal(m, b)
 }
 func (m *Create) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Create.Marshal(b, m, deterministic)
 }
-func (m *Create) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Create.Merge(m, src)
+func (dst *Create) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Create.Merge(dst, src)
 }
 func (m *Create) XXX_Size() int {
 	return xxx_messageInfo_Create.Size(m)
@@ -83,17 +83,16 @@ func (m *Call) Reset()         { *m = Call{} }
 func (m *Call) String() string { return proto.CompactTextString(m) }
 func (*Call) ProtoMessage()    {}
 func (*Call) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d11539bc790542aa, []int{1}
+	return fileDescriptor_js_afd63f08422ad153, []int{1}
 }
-
 func (m *Call) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Call.Unmarshal(m, b)
 }
 func (m *Call) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Call.Marshal(b, m, deterministic)
 }
-func (m *Call) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Call.Merge(m, src)
+func (dst *Call) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Call.Merge(dst, src)
 }
 func (m *Call) XXX_Size() int {
 	return xxx_messageInfo_Call.Size(m)
@@ -140,17 +139,16 @@ func (m *JsAction) Reset()         { *m = JsAction{} }
 func (m *JsAction) String() string { return proto.CompactTextString(m) }
 func (*JsAction) ProtoMessage()    {}
 func (*JsAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d11539bc790542aa, []int{2}
+	return fileDescriptor_js_afd63f08422ad153, []int{2}
 }
-
 func (m *JsAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JsAction.Unmarshal(m, b)
 }
 func (m *JsAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JsAction.Marshal(b, m, deterministic)
 }
-func (m *JsAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JsAction.Merge(m, src)
+func (dst *JsAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JsAction.Merge(dst, src)
 }
 func (m *JsAction) XXX_Size() int {
 	return xxx_messageInfo_JsAction.Size(m)
@@ -290,17 +288,16 @@ func (m *JsLog) Reset()         { *m = JsLog{} }
 func (m *JsLog) String() string { return proto.CompactTextString(m) }
 func (*JsLog) ProtoMessage()    {}
 func (*JsLog) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d11539bc790542aa, []int{3}
+	return fileDescriptor_js_afd63f08422ad153, []int{3}
 }
-
 func (m *JsLog) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JsLog.Unmarshal(m, b)
 }
 func (m *JsLog) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JsLog.Marshal(b, m, deterministic)
 }
-func (m *JsLog) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JsLog.Merge(m, src)
+func (dst *JsLog) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JsLog.Merge(dst, src)
 }
 func (m *JsLog) XXX_Size() int {
 	return xxx_messageInfo_JsLog.Size(m)
@@ -329,17 +326,16 @@ func (m *QueryResult) Reset()         { *m = QueryResult{} }
 func (m *QueryResult) String() string { return proto.CompactTextString(m) }
 func (*QueryResult) ProtoMessage()    {}
 func (*QueryResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d11539bc790542aa, []int{4}
+	return fileDescriptor_js_afd63f08422ad153, []int{4}
 }
-
 func (m *QueryResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryResult.Unmarshal(m, b)
 }
 func (m *QueryResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryResult.Marshal(b, m, deterministic)
 }
-func (m *QueryResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryResult.Merge(m, src)
+func (dst *QueryResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryResult.Merge(dst, src)
 }
 func (m *QueryResult) XXX_Size() int {
 	return xxx_messageInfo_QueryResult.Size(m)
@@ -365,9 +361,9 @@ func init() {
 	proto.RegisterType((*QueryResult)(nil), "jsproto.QueryResult")
 }
 
-func init() { proto.RegisterFile("js.proto", fileDescriptor_d11539bc790542aa) }
+func init() { proto.RegisterFile("js.proto", fileDescriptor_js_afd63f08422ad153) }
 
-var fileDescriptor_d11539bc790542aa = []byte{
+var fileDescriptor_js_afd63f08422ad153 = []byte{
 	// 231 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x8f, 0xbf, 0x4e, 0xc3, 0x30,
 	0x10, 0xc6, 0x9b, 0x90, 0xa4, 0xe1, 0x22, 0x40, 0xf2, 0x14, 0xc1, 0x02, 0x66, 0x81, 0x25, 0x42,
