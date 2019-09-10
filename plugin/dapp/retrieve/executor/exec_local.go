@@ -10,6 +10,10 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+func createRetrieve(backupAddress, defaultAddress string, status int32) rt.RetrieveQuery {
+	return rt.RetrieveQuery{BackupAddress: backupAddress, DefaultAddress: defaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: status}
+}
+
 // SaveRetrieveInfo local
 func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.KeyValue, error) {
 	rlog.Debug("Retrieve SaveRetrieveInfo", "backupaddr", info.BackupAddress, "defaddr", info.DefaultAddress)
@@ -55,6 +59,7 @@ func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types
 func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecLocal_Backup")
+	//info := createRetrieve(backup.BackupAddress)
 	info := rt.RetrieveQuery{BackupAddress: backup.BackupAddress, DefaultAddress: backup.DefaultAddress, DelayPeriod: backup.DelayPeriod, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveBackup}
 	kv, err := SaveRetrieveInfo(&info, retrieveBackup, c.GetLocalDB())
 	if err != nil {
