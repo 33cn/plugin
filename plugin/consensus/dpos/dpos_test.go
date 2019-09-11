@@ -177,6 +177,34 @@ func DposPerf() {
 		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M), "|", len(vrfInfo.R), "|", len(vrfInfo.P))
 	}
 	time.Sleep(2 * time.Second)
+
+	var cands []*dty.Candidator
+	cand := &dty.Candidator{
+		Pubkey: pubkey,
+		Address: hex.EncodeToString(dposClient.csState.privValidator.GetAddress()),
+		IP: "127.0.0.1",
+		Votes: 100,
+		Status: 0,
+	}
+	cands = append(cands, cand)
+	topNCand := &dty.TopNCandidator{
+		Cands: cands,
+		Hash: []byte("abafasfda"),
+		Height: dposClient.GetCurrentHeight(),
+		SignerPubkey: pubkey,
+	}
+	reg := &dty.TopNCandidatorRegist{
+		Cand: topNCand,
+		}
+
+	if dposClient.csState.SendTopNRegistTx(reg) {
+		fmt.Println("SendTopNRegistTx ok")
+	} else {
+		fmt.Println("SendTopNRegistTx failed")
+	}
+	time.Sleep(2 * time.Second)
+	dposClient.QueryTopNCandidators(dposClient.GetCurrentHeight() / blockNumToUpdateDelegate)
+	time.Sleep(2 * time.Second)
 }
 
 func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
