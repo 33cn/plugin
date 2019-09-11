@@ -6,10 +6,11 @@ package wallet
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/mock"
 	"math/rand"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/33cn/chain33/util/testnode"
 	wcom "github.com/33cn/chain33/wallet/common"
@@ -62,85 +63,78 @@ func Test_WalletTicket(t *testing.T) {
 	t.Log("End wallet ticket test")
 }
 
+func Test_ForceCloseTicketList(t *testing.T) {
 
-
-
-func Test_ForceCloseTicketList(t *testing.T)  {
-
-	ticket := &ticketPolicy{mtx:&sync.Mutex{}}
+	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	ticket.walletOperate = new(walletOperateMock)
-	t1 := &ty.Ticket{Status:1,IsGenesis:false}
-	t2 := &ty.Ticket{Status:2,IsGenesis:false}
-	t3 := &ty.Ticket{Status:3,IsGenesis:false}
-	tlist := []*ty.Ticket{t1,t2,t3}
+	t1 := &ty.Ticket{Status: 1, IsGenesis: false}
+	t2 := &ty.Ticket{Status: 2, IsGenesis: false}
+	t3 := &ty.Ticket{Status: 3, IsGenesis: false}
+	tlist := []*ty.Ticket{t1, t2, t3}
 
-	r1,r2 := ticket.forceCloseTicketList(0,nil,tlist)
-	assert.Nil(t,r1)
-	assert.Nil(t,r2)
-
+	r1, r2 := ticket.forceCloseTicketList(0, nil, tlist)
+	assert.Nil(t, r1)
+	assert.Nil(t, r2)
 
 }
 
-func Test_CloseTicketsByAddr(t *testing.T)  {
+func Test_CloseTicketsByAddr(t *testing.T) {
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 
-	ticket := &ticketPolicy{mtx:&sync.Mutex{}}
+	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	wallet := new(walletOperateMock)
 	qapi := new(mocks.QueueProtocolAPI)
 	wallet.api = qapi
 	ticket.walletOperate = wallet
 
-	t1 := &ty.Ticket{Status:1,IsGenesis:false}
-	t2 := &ty.Ticket{Status:2,IsGenesis:false}
-	t3 := &ty.Ticket{Status:3,IsGenesis:false}
+	t1 := &ty.Ticket{Status: 1, IsGenesis: false}
+	t2 := &ty.Ticket{Status: 2, IsGenesis: false}
+	t3 := &ty.Ticket{Status: 3, IsGenesis: false}
 
-	tlist := &ty.ReplyTicketList{Tickets:[]*ty.Ticket{t1,t2,t3}}
-	qapi.On("Query",ty.TicketX, "TicketList",mock.Anything).Return(tlist,nil)
+	tlist := &ty.ReplyTicketList{Tickets: []*ty.Ticket{t1, t2, t3}}
+	qapi.On("Query", ty.TicketX, "TicketList", mock.Anything).Return(tlist, nil)
 
-	ticket.closeTicketsByAddr(0,priKey)
+	ticket.closeTicketsByAddr(0, priKey)
 
 }
 
-func Test_BuyTicketOne(t *testing.T)  {
+func Test_BuyTicketOne(t *testing.T) {
 
-	ticket := &ticketPolicy{mtx:&sync.Mutex{}}
+	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	ticket.walletOperate = new(walletOperateMock)
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
-	assert.Nil(t,err)
-	ticket.buyTicketOne(0,priKey)
-
+	assert.Nil(t, err)
+	ticket.buyTicketOne(0, priKey)
 
 }
 
-
-
-func Test_BuyMinerAddrTicketOne(t *testing.T)  {
+func Test_BuyMinerAddrTicketOne(t *testing.T) {
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
-	assert.Nil(t,err)
+	assert.Nil(t, err)
 
-	ticket := &ticketPolicy{mtx:&sync.Mutex{}}
+	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	wallet := new(walletOperateMock)
 	qapi := new(mocks.QueueProtocolAPI)
 	wallet.api = qapi
 	ticket.walletOperate = wallet
 
-	tlist := &types.ReplyStrings{Datas:[]string{"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"}}
-	qapi.On("Query",ty.TicketX, "MinerSourceList",mock.Anything).Return(tlist,nil)
+	tlist := &types.ReplyStrings{Datas: []string{"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"}}
+	qapi.On("Query", ty.TicketX, "MinerSourceList", mock.Anything).Return(tlist, nil)
 
-	ticket.buyMinerAddrTicketOne(0,priKey)
+	ticket.buyMinerAddrTicketOne(0, priKey)
 
 }
 
@@ -154,7 +148,7 @@ func (_m *walletOperateMock) AddrInWallet(addr string) bool {
 
 // CheckWalletStatus provides a mock function with given fields:
 func (_m *walletOperateMock) CheckWalletStatus() (bool, error) {
-	return false,nil
+	return false, nil
 }
 
 // GetAPI provides a mock function with given fields:
@@ -164,13 +158,13 @@ func (_m *walletOperateMock) GetAPI() client.QueueProtocolAPI {
 
 // GetAllPrivKeys provides a mock function with given fields:
 func (_m *walletOperateMock) GetAllPrivKeys() ([]crypto.PrivKey, error) {
-	return nil,nil
+	return nil, nil
 }
 
 // GetBalance provides a mock function with given fields: addr, execer
 func (_m *walletOperateMock) GetBalance(addr string, execer string) (*types.Account, error) {
 
-	return &types.Account{Balance:10},nil
+	return &types.Account{Balance: 10}, nil
 }
 
 // GetBlockHeight provides a mock function with given fields:
@@ -205,7 +199,7 @@ func (_m *walletOperateMock) GetPassword() string {
 
 // GetPrivKeyByAddr provides a mock function with given fields: addr
 func (_m *walletOperateMock) GetPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
-	return nil,nil
+	return nil, nil
 }
 
 // GetRandom provides a mock function with given fields:
@@ -230,7 +224,7 @@ func (_m *walletOperateMock) GetWaitGroup() *sync.WaitGroup {
 
 // GetWalletAccounts provides a mock function with given fields:
 func (_m *walletOperateMock) GetWalletAccounts() ([]*types.WalletAccountStore, error) {
-	return nil,nil
+	return nil, nil
 }
 
 // GetWalletDone provides a mock function with given fields:
@@ -265,12 +259,12 @@ func (_m *walletOperateMock) RegisterMineStatusReporter(reporter wcom.MineStatus
 
 // SendToAddress provides a mock function with given fields: priv, addrto, amount, note, Istoken, tokenSymbol
 func (_m *walletOperateMock) SendToAddress(priv crypto.PrivKey, addrto string, amount int64, note string, Istoken bool, tokenSymbol string) (*types.ReplyHash, error) {
-	return nil,nil
+	return nil, nil
 }
 
 // SendTransaction provides a mock function with given fields: payload, execer, priv, to
 func (_m *walletOperateMock) SendTransaction(payload types.Message, execer []byte, priv crypto.PrivKey, to string) ([]byte, error) {
-	return nil,nil
+	return nil, nil
 }
 
 // WaitTx provides a mock function with given fields: hash
