@@ -17,6 +17,8 @@ import (
 
 var klog = log.New("module", "kvmvccdb")
 
+const maxRollBlockNum = 10000 + 1024 //最大回退block数量
+
 // SetLogLevel set log level
 func SetLogLevel(level string) {
 	clog.SetLogLevel(level)
@@ -253,6 +255,7 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 	} else if maxVersion == height-1 {
 		return nil, nil
 	} else {
+		count := 0
 		for i := maxVersion; i >= height; i-- {
 			hash, err := mvccs.mvcc.GetVersionHash(i)
 			if err != nil {
@@ -267,6 +270,11 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			kvset = append(kvset, kvlist...)
 
 			klog.Debug("store kvmvcc checkVersion DelMVCC4Height", "height", i, "maxVersion", maxVersion)
+			//为避免高度差过大时出现内存异常，一次最多回滚maxRollBlockNum个区块
+			count++
+			if count >= maxRollBlockNum {
+				break
+			}
 		}
 	}
 
