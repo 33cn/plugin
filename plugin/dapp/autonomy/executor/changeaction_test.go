@@ -19,9 +19,17 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var (
+	Addr18    = "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+	PrivKey18 = "0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
+	Addr19    = "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+	PrivKey19 = "0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
+)
+
 func InitChange(t *testing.T, stateDB dbm.KV) {
 	act := &auty.ActiveBoard{
-		Boards: boards,
+		Boards:    boards,
+		Revboards: []string{Addr18},
 	}
 	err := stateDB.Set(activeBoardID(), types.Encode(act))
 	assert.NoError(t, err)
@@ -45,6 +53,15 @@ func TestVoteProposalChange(t *testing.T) {
 	voteProposalChange(t, env, exec, stateDB, kvdb, true)
 }
 
+func TestErrorVoteProposalChange(t *testing.T) {
+	env, exec, stateDB, kvdb := InitEnv()
+	InitChange(t, stateDB)
+	// PropChange
+	testPropChange(t, env, exec, stateDB, kvdb, true)
+	//voteProposalChange
+	voteErrorProposalChange(t, env, exec, stateDB, kvdb, true)
+}
+
 func TestTerminateProposalChange(t *testing.T) {
 	env, exec, stateDB, kvdb := InitEnv()
 	InitChange(t, stateDB)
@@ -59,7 +76,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 		Year:             2019,
 		Month:            7,
 		Day:              10,
-		Changes:          []*auty.Change{{Cancel: true, Addr: AddrA}},
+		Changes:          []*auty.Change{{Cancel: true, Addr: AddrA}, {Cancel: false, Addr: Addr18}},
 		StartBlockHeight: env.blockHeight + 5,
 		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
@@ -281,7 +298,134 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	err = types.Decode(value, act)
 	assert.NoError(t, err)
 	assert.Equal(t, act.Revboards[0], AddrA)
-	assert.Equal(t, len(act.Boards), len(boards)-1)
+	assert.Equal(t, len(act.Boards), len(boards))
+}
+
+func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
+	api := new(apimock.QueueProtocolAPI)
+	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+	hear := &types.Header{StateHash: []byte("")}
+	api.On("GetHeaders", mock.Anything).
+		Return(&types.Headers{
+			Items: []*types.Header{hear}}, nil)
+	acc := &types.Account{
+		Currency: 0,
+		Balance:  total * 4,
+	}
+	val := types.Encode(acc)
+	values := [][]byte{val}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
+
+	acc = &types.Account{
+		Currency: 0,
+		Frozen:   total,
+	}
+	val1 := types.Encode(acc)
+	values1 := [][]byte{val1}
+	api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values1}, nil).Once()
+	exec.SetAPI(api)
+
+	proposalID := env.txHash
+	type record struct {
+		priv string
+		appr bool
+	}
+	records := []record{
+		{PrivKey18, false},
+		{PrivKey19, false},
+		{PrivKeyA, false},
+		{PrivKeyB, true},
+		{PrivKeyC, true},
+		{PrivKeyD, true},
+
+		{PrivKey1, false},
+		{PrivKey2, false},
+		{PrivKey3, false},
+		{PrivKey4, false},
+		{PrivKey5, true},
+		{PrivKey6, true},
+		{PrivKey7, true},
+		{PrivKey8, true},
+		{PrivKey9, true},
+		{PrivKey10, true},
+		{PrivKey11, true},
+		{PrivKey12, true},
+	}
+
+	for i, record := range records {
+		opt := &auty.VoteProposalChange{
+			ProposalID: proposalID,
+			Approve:    record.appr,
+		}
+		tx, err := voteProposalChangeTx(opt)
+		assert.NoError(t, err)
+		tx, err = signTx(tx, record.priv)
+		assert.NoError(t, err)
+		// 设定当前高度为投票高度
+		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
+
+		receipt, err := exec.Exec(tx, int(1))
+		if i < 2 {
+			assert.Equal(t, err, auty.ErrNoActiveBoard)
+		} else {
+			assert.NoError(t, err)
+			assert.NotNil(t, receipt)
+			if save {
+				for _, kv := range receipt.KV {
+					stateDB.Set(kv.Key, kv.Value)
+				}
+			}
+			receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+			set, err := exec.ExecLocal(tx, receiptData, int(1))
+			assert.NoError(t, err)
+			assert.NotNil(t, set)
+			if save {
+				for _, kv := range set.KV {
+					kvdb.Set(kv.Key, kv.Value)
+				}
+			}
+			// del
+			set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+			assert.NoError(t, err)
+			assert.NotNil(t, set)
+
+			// 每次需要重新设置
+			acc := &types.Account{
+				Currency: 0,
+				Frozen:   total,
+			}
+			val := types.Encode(acc)
+			values := [][]byte{val}
+			api.On("StoreGet", mock.Anything).Return(&types.StoreReplyValue{Values: values}, nil).Once()
+			exec.SetAPI(api)
+		}
+	}
+	// check
+	// balance
+	accCoin := account.NewCoinsAccount()
+	accCoin.SetDB(stateDB)
+	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), account.Frozen)
+	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount, account.Balance)
+	// status
+	value, err := stateDB.Get(propChangeID(proposalID))
+	assert.NoError(t, err)
+	cur := &auty.AutonomyProposalChange{}
+	err = types.Decode(value, cur)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(auty.AutonomyStatusTmintPropChange), cur.Status)
+	assert.Equal(t, AddrA, cur.Address)
+	assert.Equal(t, true, cur.VoteResult.Pass)
+
+	value, err = stateDB.Get(activeBoardID())
+	assert.NoError(t, err)
+	act := &auty.ActiveBoard{}
+	err = types.Decode(value, act)
+	assert.NoError(t, err)
+	assert.Equal(t, act.Revboards[0], AddrA)
+	assert.Equal(t, len(act.Boards), len(boards))
 }
 
 func voteProposalChangeTx(parm *auty.VoteProposalChange) (*types.Transaction, error) {
