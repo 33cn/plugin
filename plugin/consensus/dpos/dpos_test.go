@@ -179,22 +179,22 @@ func DposPerf() {
 
 	var cands []*dty.Candidator
 	cand := &dty.Candidator{
-		Pubkey: pubkey,
+		Pubkey:  pubkey,
 		Address: hex.EncodeToString(dposClient.csState.privValidator.GetAddress()),
-		IP: "127.0.0.1",
-		Votes: 100,
-		Status: 0,
+		IP:      "127.0.0.1",
+		Votes:   100,
+		Status:  0,
 	}
 	cands = append(cands, cand)
 	topNCand := &dty.TopNCandidator{
-		Cands: cands,
-		Hash: []byte("abafasfda"),
-		Height: dposClient.GetCurrentHeight(),
+		Cands:        cands,
+		Hash:         []byte("abafasfda"),
+		Height:       dposClient.GetCurrentHeight(),
 		SignerPubkey: pubkey,
 	}
 	reg := &dty.TopNCandidatorRegist{
 		Cand: topNCand,
-		}
+	}
 
 	if dposClient.csState.SendTopNRegistTx(reg) {
 		fmt.Println("SendTopNRegistTx ok")
