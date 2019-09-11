@@ -115,6 +115,7 @@ func DposPerf() {
 		fmt.Println("sendCBTx failed")
 	}
 	time.Sleep(2 * time.Second)
+	/*
 	info2 := dposClient.csState.GetCBInfoByCircle(task.Cycle)
 	if info2 != nil && info2.StopHeight == info.StopHeight {
 		fmt.Println("GetCBInfoByCircle ok")
@@ -122,6 +123,7 @@ func DposPerf() {
 		fmt.Println("GetCBInfoByCircle failed")
 	}
 	time.Sleep(1 * time.Second)
+	*/
 	for {
 		now = time.Now().Unix()
 		task = DecideTaskByTime(now)
