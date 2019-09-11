@@ -503,14 +503,14 @@ func (action *Action) readCandicatorInfo(pubkey []byte) (*dty.CandidatorInfo, er
 	strPubkey := hex.EncodeToString(pubkey)
 	data, err := action.db.Get(Key(strPubkey))
 	if err != nil {
-		logger.Error("readCandicator have err:", err.Error())
+		logger.Error("readCandicator have err:", "err", err.Error())
 		return nil, err
 	}
 	var cand dty.CandidatorInfo
 	//decode
 	err = types.Decode(data, &cand)
 	if err != nil {
-		logger.Error("decode candicator have err:", err.Error())
+		logger.Error("decode candicator have err:", "err", err.Error())
 		return nil, err
 	}
 	return &cand, nil
