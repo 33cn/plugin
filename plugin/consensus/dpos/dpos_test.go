@@ -12,11 +12,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/33cn/chain33/util"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -48,10 +49,10 @@ var (
 	strPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
 	pubkey    []byte
 
-	genesisKey = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+	genesisKey   = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 	validatorKey = "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"
 
-	genesisAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+	genesisAddr   = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 	validatorAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
 )
 
@@ -410,7 +411,6 @@ func sendCBTx(cs *ConsensusState, info *dty.DposCBInfo) bool {
 	return true
 }
 
-
 func sendRegistVrfMTx(cs *ConsensusState, info *dty.DposVrfMRegist) bool {
 	tx, err := cs.client.CreateRegVrfMTx(info)
 	if err != nil {
@@ -500,7 +500,7 @@ func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 	return true
 }
 
-func sendTransferTx(fromKey ,to string, amount int64) bool {
+func sendTransferTx(fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -534,7 +534,7 @@ func sendTransferTx(fromKey ,to string, amount int64) bool {
 	return true
 }
 
-func sendTransferToExecTx(fromKey ,execName string, amount int64) bool {
+func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -571,7 +571,6 @@ func sendTransferToExecTx(fromKey ,execName string, amount int64) bool {
 	return true
 }
 
-
 func sendRegistCandidatorTx(ppubkey, addr, ip, privKey string) bool {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
@@ -579,9 +578,9 @@ func sendRegistCandidatorTx(ppubkey, addr, ip, privKey string) bool {
 
 	v := &dty.DposVoteAction_Regist{
 		Regist: &dty.DposCandidatorRegist{
-			Pubkey: ppubkey,
+			Pubkey:  ppubkey,
 			Address: addr,
-			IP: ip,
+			IP:      ip,
 		},
 	}
 
