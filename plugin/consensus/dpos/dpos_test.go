@@ -53,7 +53,7 @@ var (
 	validatorKey = "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"
 
 	//genesisAddr   = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	
+
 	validatorAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
 )
 
