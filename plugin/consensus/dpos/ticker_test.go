@@ -22,6 +22,6 @@ func TestTicker(t *testing.T) {
 	end := time.Now().Unix()
 
 	ticker.Stop()
-	assert.True(t, end-now == 2)
+	assert.True(t, end-now >= 2)
 
 }

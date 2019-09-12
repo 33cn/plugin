@@ -242,7 +242,7 @@ func DposPerf() {
 	} else {
 		fmt.Println("SendTopNRegistTx failed")
 	}
-	sendTopNRegistTx(dposClient.csState, reg)
+	//sendTopNRegistTx(dposClient.csState, reg)
 
 	time.Sleep(2 * time.Second)
 
