@@ -460,6 +460,7 @@ func sendRegistVrfRPTx(cs *ConsensusState, info *dty.DposVrfRPRegist) bool {
 	return true
 }
 
+/*
 func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	obj := dty.CanonicalTopNCandidator(reg.Cand)
@@ -500,6 +501,7 @@ func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 
 	return true
 }
+*/
 
 func sendTransferTx(fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
