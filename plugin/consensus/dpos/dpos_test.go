@@ -53,7 +53,7 @@ var (
 	validatorKey = "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"
 
 	//genesisAddr   = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	
+
 	validatorAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
 )
 
@@ -460,6 +460,7 @@ func sendRegistVrfRPTx(cs *ConsensusState, info *dty.DposVrfRPRegist) bool {
 	return true
 }
 
+/*
 func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	obj := dty.CanonicalTopNCandidator(reg.Cand)
@@ -500,7 +501,7 @@ func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 
 	return true
 }
-
+*/
 func sendTransferTx(fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
