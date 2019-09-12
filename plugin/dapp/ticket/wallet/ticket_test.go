@@ -197,7 +197,6 @@ func (_m *walletOperateMock) GetSignType() int {
 
 // GetTxDetailByHashs provides a mock function with given fields: ReqHashes
 func (_m *walletOperateMock) GetTxDetailByHashs(ReqHashes *types.ReqHashes) {
-	return
 }
 
 // GetWaitGroup provides a mock function with given fields:
