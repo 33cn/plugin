@@ -12,10 +12,10 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/33cn/chain33/util/testnode"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/33cn/chain33/util/testnode"
 
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
@@ -30,13 +30,15 @@ const (
 	sendhash = "sendhash"
 )
 
-func init() {
+
+func TestMain(m *testing.M)  {
 	cfg, _ := testnode.GetDefaultConfig()
 	cfg.Consensus.Name = "ticket"
 	types.Init(cfg.Title, cfg)
+	m.Run()
 }
 
-func Test_ForceCloseTicketList(t *testing.T) {
+func TestForceCloseTicketList(t *testing.T) {
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	ticket.walletOperate = new(walletOperateMock)
@@ -51,7 +53,7 @@ func Test_ForceCloseTicketList(t *testing.T) {
 
 }
 
-func Test_CloseTicketsByAddr(t *testing.T) {
+func TestCloseTicketsByAddr(t *testing.T) {
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -78,7 +80,7 @@ func Test_CloseTicketsByAddr(t *testing.T) {
 
 }
 
-func Test_BuyTicketOne(t *testing.T) {
+func TestBuyTicketOne(t *testing.T) {
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	ticket.walletOperate = new(walletOperateMock)
@@ -95,7 +97,7 @@ func Test_BuyTicketOne(t *testing.T) {
 
 }
 
-func Test_BuyMinerAddrTicketOne(t *testing.T) {
+func TestBuyMinerAddrTicketOne(t *testing.T) {
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
