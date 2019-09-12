@@ -12,10 +12,10 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/33cn/chain33/util/testnode"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/chain33/util/testnode"
 
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
@@ -30,8 +30,7 @@ const (
 	sendhash = "sendhash"
 )
 
-
-func TestMain(m *testing.M)  {
+func TestMain(m *testing.M) {
 	cfg, _ := testnode.GetDefaultConfig()
 	cfg.Consensus.Name = "ticket"
 	types.Init(cfg.Title, cfg)
