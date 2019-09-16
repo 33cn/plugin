@@ -237,31 +237,31 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
 	rootCmd.AddCommand(cmd)
 
-	rootCmd.SetArgs([]string{"dpos", "regist", "--address", validatorAddr, "--pubkey",strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "regist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", validatorAddr, "--pubkey",strPubkey, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", validatorAddr, "--pubkey", strPubkey, "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", validatorAddr, "--pubkey",strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "topN", "--top", "1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys",strPubkey})
+	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys", strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", validatorAddr, "--pubkeys",strPubkey})
+	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", validatorAddr, "--pubkeys", strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", validatorAddr, "--pubkey",strPubkey, "--votes", "60"})
+	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", validatorAddr, "--pubkey", strPubkey, "--votes", "60"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "init_keyfile", "--num", "1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash",strPubkey, "--height", "60", "--privKey", validatorKey})
+	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash", strPubkey, "--height", "60", "--privKey", validatorKey})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "cycle", "--cycle", "1000"})
