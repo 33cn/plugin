@@ -8,14 +8,13 @@ import (
 
 	"flag"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-
+	"github.com/spf13/cobra"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -53,7 +52,7 @@ var (
 	validatorAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
 
 	genesis = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
-	priv = `{"address":"2B226E6603E52C94715BA4E92080EEF236292E33","pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"last_height":1679,"last_round":0,"last_step":3,"last_signature":{"type":"secp256k1","data":"37892A916D6E487ADF90F9E88FE37024597677B6C6FED47444AD582F74144B3D6E4B364EAF16AF03A4E42827B6D3C86415D734A5A6CCA92E114B23EB9265AF09"},"last_signbytes":"7B22636861696E5F6964223A22636861696E33332D5A326367466A222C22766F7465223A7B22626C6F636B5F6964223A7B2268617368223A224F6A657975396B2B4149426A6E4859456739584765356A7A462B673D222C227061727473223A7B2268617368223A6E756C6C2C22746F74616C223A307D7D2C22686569676874223A313637392C22726F756E64223A302C2274696D657374616D70223A22323031382D30382D33315430373A35313A34332E3935395A222C2274797065223A327D7D","priv_key":{"type":"secp256k1","data":"5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"}}`
+	priv    = `{"address":"2B226E6603E52C94715BA4E92080EEF236292E33","pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"last_height":1679,"last_round":0,"last_step":3,"last_signature":{"type":"secp256k1","data":"37892A916D6E487ADF90F9E88FE37024597677B6C6FED47444AD582F74144B3D6E4B364EAF16AF03A4E42827B6D3C86415D734A5A6CCA92E114B23EB9265AF09"},"last_signbytes":"7B22636861696E5F6964223A22636861696E33332D5A326367466A222C22766F7465223A7B22626C6F636B5F6964223A7B2268617368223A224F6A657975396B2B4149426A6E4859456739584765356A7A462B673D222C227061727473223A7B2268617368223A6E756C6C2C22746F74616C223A307D7D2C22686569676874223A313637392C22726F756E64223A302C2274696D657374616D70223A22323031382D30382D33315430373A35313A34332E3935395A222C2274797065223A327D7D","priv_key":{"type":"secp256k1","data":"5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"}}`
 )
 
 const fee = 1e6
@@ -71,7 +70,6 @@ func init() {
 	os.Remove("priv_validator.json")
 	os.Remove("genesis_file.json")
 	os.Remove("priv_validator_0.json")
-
 
 	ioutil.WriteFile("genesis.json", []byte(genesis), 0664)
 	ioutil.WriteFile("priv_validator.json", []byte(priv), 0664)
@@ -239,31 +237,31 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
 	rootCmd.AddCommand(cmd)
 
-	rootCmd.SetArgs([]string{"dpos", "regist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "regist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "topN", "--top","1"})
+	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "topN", "--top", "1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkeys","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkeys", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--votes", "60"})
+	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--votes", "60"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "init_keyfile", "--num", "1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--height", "60", "--privKey", "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"})
+	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--height", "60", "--privKey", "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "cycle", "--cycle", "1000"})
@@ -278,7 +276,7 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"dpos", "vrfMRegist", "--cycle", "1000", "--m", "data1", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vrfRPRegist", "--cycle", "1000", "--hash", "22a58fbbe8002939b7818184e663e6c57447f4354adba31ad3c7f556e153353c","--proof", "5ed22d8c1cc0ad131c1c9f82daec7b99ff25ae5e717624b4a8cf60e0f3dca2c97096680cd8df0d9ed8662ce6513edf5d1676ad8d72b7e4f0e0de687bd38623f404eb085d28f5631207cf97a02c55f835bd3733241c7e068b80cf75e2afd12fd4c4cb8e6f630afa2b7b2918dff3d279e50acab59da1b25b3ff920b69c443da67320",  "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "vrfRPRegist", "--cycle", "1000", "--hash", "22a58fbbe8002939b7818184e663e6c57447f4354adba31ad3c7f556e153353c", "--proof", "5ed22d8c1cc0ad131c1c9f82daec7b99ff25ae5e717624b4a8cf60e0f3dca2c97096680cd8df0d9ed8662ce6513edf5d1676ad8d72b7e4f0e0de687bd38623f404eb085d28f5631207cf97a02c55f835bd3733241c7e068b80cf75e2afd12fd4c4cb8e6f630afa2b7b2918dff3d279e50acab59da1b25b3ff920b69c443da67320", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "dtime", "--time", "2006-01-02 15:04:05"})

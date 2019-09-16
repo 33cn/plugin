@@ -165,7 +165,7 @@ func (cs *ConsensusState) GetValidatorMgr() ValidatorMgr {
 }
 
 // GetPrivValidator returns the pointer of PrivValidator
-func (cs *ConsensusState) GetPrivValidator() ttypes.PrivValidator{
+func (cs *ConsensusState) GetPrivValidator() ttypes.PrivValidator {
 	return cs.privValidator
 }
 
