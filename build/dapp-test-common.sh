@@ -166,8 +166,7 @@ chain33_LastBlockhash() {
     echo -e "######\\n  last blockhash is $LAST_BLOCK_HASH  \\n######"
 }
 
-    ip=$(echo "$ip" | cut -d':' -f 1)
-
+ip=$(echo "$ip" | cut -d':' -f 1)
 
 chain33_getMainChainCoins() {
     echo "chain33_getMainChainCoins"
@@ -188,7 +187,6 @@ chain33_getMainChainCoins() {
     chain33_SendToAddress "${poolAddr}" "${targetAddr}" $count "${M_HTTP}"
 
 }
-
 
 chain33_getParaChainCoins() {
     echo "chain33_getParaChainCoins"
