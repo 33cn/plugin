@@ -760,6 +760,6 @@ func printCandidators(cands []*dty.Candidator) string {
 }
 
 // GetConsensusState return the pointer to ConsensusState
-func (client *Client)GetConsensusState() *ConsensusState {
+func (client *Client) GetConsensusState() *ConsensusState {
 	return client.csState
 }
