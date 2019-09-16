@@ -43,7 +43,7 @@ var (
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 	strPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
-	pubkey    []byte
+	//pubkey    []byte
 
 	genesisKey   = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 	validatorKey = "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"
@@ -65,7 +65,7 @@ func init() {
 	}
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
 	log.SetLogLevel("info")
-	pubkey, _ = hex.DecodeString(strPubkey)
+	//pubkey, _ = hex.DecodeString(strPubkey)
 
 	os.Remove("genesis.json")
 	os.Remove("priv_validator.json")
@@ -218,7 +218,7 @@ func prepareTxList() *types.Transaction {
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
 	tx.Nonce = random.Int63()
-	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
+	tx.Sign(types.SECP256K1, getprivkey(genesisKey))
 	return tx
 }
 
@@ -239,31 +239,31 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
 	rootCmd.AddCommand(cmd)
 
-	rootCmd.SetArgs([]string{"dpos", "regist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "regist", "--address", validatorAddr, "--pubkey",strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", validatorAddr, "--pubkey",strPubkey, "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", validatorAddr, "--pubkey",strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "topN", "--top","1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys",strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkeys","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", validatorAddr, "--pubkeys",strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b", "--pubkey","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--votes", "60"})
+	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", validatorAddr, "--pubkey",strPubkey, "--votes", "60"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "init_keyfile", "--num", "1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash","03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--height", "60", "--privKey", "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"})
+	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash",strPubkey, "--height", "60", "--privKey", validatorKey})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "cycle", "--cycle", "1000"})
@@ -272,10 +272,10 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "height", "--height", "1000"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "hash", "--hash", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "hash", "--hash", strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vrfMRegist", "--cycle", "1000", "--m", "data1", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "vrfMRegist", "--cycle", "1000", "--m", "data1", "--pubkey", strPubkey})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "vrfRPRegist", "--cycle", "1000", "--hash", "22a58fbbe8002939b7818184e663e6c57447f4354adba31ad3c7f556e153353c","--proof", "5ed22d8c1cc0ad131c1c9f82daec7b99ff25ae5e717624b4a8cf60e0f3dca2c97096680cd8df0d9ed8662ce6513edf5d1676ad8d72b7e4f0e0de687bd38623f404eb085d28f5631207cf97a02c55f835bd3733241c7e068b80cf75e2afd12fd4c4cb8e6f630afa2b7b2918dff3d279e50acab59da1b25b3ff920b69c443da67320",  "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
@@ -293,12 +293,12 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "topN"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "pubkeys", "--pubkeys", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
+	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "pubkeys", "--pubkeys", strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vrfEvaluate", "--privKey", "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2", "--m", "input"})
+	rootCmd.SetArgs([]string{"dpos", "vrfEvaluate", "--privKey", validatorKey, "--m", "input"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "vrfVerify", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4", "--m", "input", "--hash", "3975b20c89894a3961dbab6cefb07ce7736761b4105931f268e47a99511eb635", "--proof", "6fe5e2d8a5de203da8f487459c5af24b1e56bf69848f4ca2f786eac5d4ad60bab35d83fc15b903b3007f570e8766942031ffed84d42e9bb3314d408fec557fd5043e72a99cf64ae29c89282367c473e0925e8bd841063d508264af5c6320faecb61692f8fbde47cd3b82d0e9804e30d89d13f2fafd1769fe32d9bb9750d943ddb4"})
+	rootCmd.SetArgs([]string{"dpos", "vrfVerify", "--pubkey", strPubkey, "--m", "input", "--hash", "3975b20c89894a3961dbab6cefb07ce7736761b4105931f268e47a99511eb635", "--proof", "6fe5e2d8a5de203da8f487459c5af24b1e56bf69848f4ca2f786eac5d4ad60bab35d83fc15b903b3007f570e8766942031ffed84d42e9bb3314d408fec557fd5043e72a99cf64ae29c89282367c473e0925e8bd841063d508264af5c6320faecb61692f8fbde47cd3b82d0e9804e30d89d13f2fafd1769fe32d9bb9750d943ddb4"})
 	rootCmd.Execute()
 }
