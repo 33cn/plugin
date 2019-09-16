@@ -164,6 +164,11 @@ func (cs *ConsensusState) GetValidatorMgr() ValidatorMgr {
 	return cs.validatorMgr.Copy()
 }
 
+// GetPrivValidator returns the pointer of PrivValidator
+func (cs *ConsensusState) GetPrivValidator() ttypes.PrivValidator{
+	return cs.privValidator
+}
+
 // GetValidators returns a copy of the current validators.
 func (cs *ConsensusState) GetValidators() []*ttypes.Validator {
 	cs.mtx.Lock()

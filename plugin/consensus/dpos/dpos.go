@@ -758,3 +758,8 @@ func printCandidators(cands []*dty.Candidator) string {
 
 	return result
 }
+
+// GetConsensusState return the pointer to ConsensusState
+func (client *Client)GetConsensusState() *ConsensusState {
+	return client.csState
+}

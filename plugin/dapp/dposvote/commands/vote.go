@@ -91,7 +91,7 @@ func regist(cmd *cobra.Command, args []string) {
 	address, _ := cmd.Flags().GetString("address")
 	ip, _ := cmd.Flags().GetString("ip")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"ip\":\"%s\"}", pubkey, address, ip)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"IP\":\"%s\"}", pubkey, address, ip)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistTx,
@@ -242,7 +242,7 @@ func reRegist(cmd *cobra.Command, args []string) {
 	address, _ := cmd.Flags().GetString("address")
 	ip, _ := cmd.Flags().GetString("ip")
 
-	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"ip\":\"%s\"}", pubkey, address, ip)
+	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"IP\":\"%s\"}", pubkey, address, ip)
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(dty.DPosX),
 		ActionName: dty.CreateReRegistTx,
@@ -442,7 +442,7 @@ func DPosVrfQueryCmd() *cobra.Command {
 }
 
 func addVrfQueryFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("type", "t", "", "query type")
+	cmd.Flags().StringP("type", "t", "", "query type:dtime/timestamp/cycle/topN/pubkeys")
 	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().StringP("time", "d", "", "time like 2019-06-18")
@@ -873,7 +873,7 @@ func DPosCBQueryCmd() *cobra.Command {
 }
 
 func addCBQueryFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("type", "t", "", "query type")
+	cmd.Flags().StringP("type", "t", "", "query type:cycle/height/hash")
 	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().Int64P("cycle", "c", 0, "cycle")
