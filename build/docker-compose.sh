@@ -382,6 +382,11 @@ function dapp_test_address() {
 
     hash=$(${1} send coins transfer -a 1500 -n transfer -t 1PUiGcbsccfxW3zuvHXZBJfznziph5miAo -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
     echo "${hash}"
+
+    #total allocation for rpc test
+    hash=$(${1} send coins transfer -a 5000 -n transfer -t 1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
+    echo "${hash}"
+
     block_wait "${1}" 1
 }
 
@@ -427,7 +432,7 @@ function main() {
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
     ip=$(echo "$ip" | cut -d':' -f 1)
-    dapp_run test "${ip}"
+    #dapp_run test "${ip}"
 
     ### rpc test  ###
     rpc_test "${ip}"

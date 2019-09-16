@@ -140,6 +140,8 @@ function para_transfer() {
     para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
     para_transfer2account "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
     para_transfer2account "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+    #rpc test pool addr
+    para_transfer2account "1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx" 500000
     block_wait "${CLI}" 2
 
     echo "=========== # main chain send to paracross ============="
@@ -175,7 +177,11 @@ function main_transfer2account() {
 
 function para_transfer2account() {
     echo "${1}"
-    hash1=$(${PARA_CLI} send coins transfer -a 1000 -n transfer -t "${1}" -k 0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    local coins=1000
+    if [ "$#" -ge 2 ]; then
+        coins="$2"
+    fi
+    hash1=$(${PARA_CLI} send coins transfer -a "$coins" -n transfer -t "${1}" -k 0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash1}"
 }
 

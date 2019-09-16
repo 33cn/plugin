@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 CASE_ERR=""
 
@@ -61,35 +64,9 @@ function query_tx() {
     done
 }
 
-Chain33_SendToAddress() {
-    local from="$1"
-    local to="$2"
-    local amount=$3
-    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
-    #    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
-    #    query_tx "$hash"
 
-}
 
-chain33_ImportPrivkey() {
-    local pri=$2
-    local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"relayimportkey1"}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$1")
-    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="relayimportkey1") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
 
-}
 signrawtx() {
     txHex="$1"
     priKey="$2"
@@ -287,16 +264,16 @@ init() {
     if [ "$ispara" == true ]; then
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
-        chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+#        chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
     echo "relayaddr=$relay_addr"
 
-    from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    Chain33_SendToAddress "$from" "$relay_addr" 10000000000
+    local testAddr="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"
+    chain33_getMainChainCoins "${MAIN_HTTP}" "$testAddr" 10000000000
+    chain33_getParaChainCoins "${MAIN_HTTP}" "$testAddr" 10000000000
+    chain33_SendToAddress "$testAddr" "$relay_addr" 8000000000 "${MAIN_HTTP}"
 
-    from="1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    Chain33_SendToAddress "$from" "$relay_addr" 10000000000
     block_wait 1
 
 }

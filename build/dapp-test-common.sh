@@ -96,6 +96,7 @@ chain33_SendToAddress() {
     [ "$ok" == true ]
 
     hash=$(jq -r ".result.hash" <<<"$resp")
+    echo "hash"
     chain33_QueryTx "$hash" "$MAIN_HTTP"
 }
 
@@ -163,4 +164,48 @@ chain33_LastBlockhash() {
     result=$(curl -ksd '{"method":"Chain33.GetLastHeader","params":[{}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}" | jq -r ".result.hash")
     LAST_BLOCK_HASH=$result
     echo -e "######\\n  last blockhash is $LAST_BLOCK_HASH  \\n######"
+}
+
+    ip=$(echo "$ip" | cut -d':' -f 1)
+
+
+chain33_getMainChainCoins() {
+    echo "chain33_getMainChainCoins"
+    if [ "$#" -lt 3 ]; then
+        echo "chain33_getMainCoins wrong params"
+        exit 1
+    fi
+    local MAIN_HTTP=$1
+    local targetAddr=$2
+    local count=$3
+    if [ $count -gt 10000000000 ]; then
+        echo "chain33_getMainCoins wrong coins count,should less than 100 00000000"
+        exit 1
+    fi
+
+    local poolAddr="0x9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40"
+    M_HTTP=${MAIN_HTTP//8901/8801}
+    chain33_SendToAddress "${poolAddr}" "${targetAddr}" $count "${M_HTTP}"
+
+}
+
+
+chain33_getParaChainCoins() {
+    echo "chain33_getParaChainCoins"
+    if [ "$#" -lt 3 ]; then
+        echo "chain33_getParaChainCoins wrong params"
+        exit 1
+    fi
+    local MAIN_HTTP=$1
+    local targetAddr=$2
+    local count=$3
+    if [ $count -gt 100000000000 ]; then
+        echo "chain33_getMainCoins wrong coins count,should less than 1000 00000000"
+        exit 1
+    fi
+
+    local poolAddr="0x9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40"
+    P_HTTP=${MAIN_HTTP//8801/8901}
+    chain33_SendToAddress "${poolAddr}" "${targetAddr}" $count "${P_HTTP}"
+
 }
