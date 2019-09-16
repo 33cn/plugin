@@ -941,8 +941,8 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	if miner.IsSelfConsensus {
 		//增发coins到paracross合约中，只处理发放，不做分配
 		totalReward := int64(0)
-		coinReward := types.MGInt("mver.consensus.coinReward", a.height)
-		fundReward := types.MGInt("mver.consensus.coinDevFund", a.height)
+		coinReward := types.MGInt("mver.consensus.paracross.coinReward", a.height)
+		fundReward := types.MGInt("mver.consensus.paracross.coinDevFund", a.height)
 
 		if coinReward > 0 {
 			totalReward += coinReward

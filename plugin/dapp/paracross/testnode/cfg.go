@@ -84,18 +84,26 @@ minerExecs=["paracross"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+powLimitBits = "0x1f00ffff"
+maxTxNumber = 1600      #160
+
+
+[mver.consensus.ticket]
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
-powLimitBits = "0x1f00ffff"
 retargetAdjustmentFactor = 4
 futureBlockTime = 16
 ticketFrozenTime = 5    #5s only for test
 ticketWithdrawTime = 10 #10s only for test
 ticketMinerWaitTime = 2 #2s only for test
-maxTxNumber = 1600      #160
 targetTimespan = 2304
 targetTimePerBlock = 16
+
+[mver.consensus.paracross]
+coinReward = 18
+coinDevFund = 12
+
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.33.cn”

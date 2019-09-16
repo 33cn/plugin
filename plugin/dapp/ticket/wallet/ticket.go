@@ -402,15 +402,16 @@ func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivK
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()
+	cfg := ty.GetTicketMinerParam(height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
-			if t.Status == 1 && now-t.GetCreateTime() < types.GetP(height).TicketWithdrawTime {
+			if t.Status == 1 && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
-			if t.Status == 2 && now-t.GetCreateTime() < types.GetP(height).TicketWithdrawTime {
+			if t.Status == 2 && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
-			if t.Status == 2 && now-t.GetMinerTime() < types.GetP(height).TicketMinerWaitTime {
+			if t.Status == 2 && now-t.GetMinerTime() < cfg.TicketMinerWaitTime {
 				continue
 			}
 		}
@@ -495,12 +496,13 @@ func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()
+	cfg := ty.GetTicketMinerParam(height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
-			if now-t.GetCreateTime() < types.GetP(height).TicketWithdrawTime {
+			if now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
-			if now-t.GetMinerTime() < types.GetP(height).TicketMinerWaitTime {
+			if now-t.GetMinerTime() < cfg.TicketMinerWaitTime {
 				continue
 			}
 		}
@@ -633,10 +635,11 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	}
 	//留一个币作为手续费，如果手续费不够了，不能挖矿
 	//判断手续费是否足够，如果不足要及时补充。
+	cfg := ty.GetTicketMinerParam(height)
 	fee := types.Coin
-	if acc1.Balance+acc2.Balance-2*fee >= types.GetP(height).TicketPrice {
+	if acc1.Balance+acc2.Balance-2*fee >= cfg.TicketPrice {
 		// 如果可用余额+冻结余额，可以凑成新票，则转币到冻结余额
-		if (acc1.Balance+acc2.Balance-2*fee)/types.GetP(height).TicketPrice > acc2.Balance/types.GetP(height).TicketPrice {
+		if (acc1.Balance+acc2.Balance-2*fee)/cfg.TicketPrice > acc2.Balance/cfg.TicketPrice {
 			//第一步。转移币到 ticket
 			toaddr := address.ExecAddress(ty.TicketX)
 			amount := acc1.Balance - 2*fee
@@ -657,7 +660,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 		if err != nil {
 			return nil, 0, err
 		}
-		count := acc.Balance / types.GetP(height).TicketPrice
+		count := acc.Balance / cfg.TicketPrice
 		if count > 0 {
 			txhash, err := policy.openticket(addr, addr, priv, int32(count))
 			return txhash, int(count), err
@@ -737,6 +740,7 @@ func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.Priv
 	}
 	total := 0
 	var hashes [][]byte
+	cfg := ty.GetTicketMinerParam(height)
 	for i := 0; i < len(addrs); i++ {
 		bizlog.Info("sourceaddr", "addr", addrs[i])
 		ok := checkMinerWhiteList(addrs[i])
@@ -748,7 +752,7 @@ func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.Priv
 		if err != nil {
 			return nil, 0, err
 		}
-		count := acc.Balance / types.GetP(height).TicketPrice
+		count := acc.Balance / cfg.TicketPrice
 		if count > 0 {
 			txhash, err := policy.openticket(addr, addrs[i], priv, int32(count))
 			if err != nil {

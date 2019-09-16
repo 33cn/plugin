@@ -125,7 +125,7 @@ func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret 
 	tx1.To = minerAddr
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: types.GetP(height).TicketPrice}
+	g.Genesis = &types.AssetsGenesis{Amount: ty.GetTicketMinerParam(height).TicketPrice}
 	tx1.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx1)
 
@@ -135,7 +135,7 @@ func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret 
 	tx2.To = driver.ExecAddress("ticket")
 	//gen payload
 	g = &cty.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * types.GetP(height).TicketPrice, ReturnAddress: returnAddr}
+	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * ty.GetTicketMinerParam(height).TicketPrice, ReturnAddress: returnAddr}
 	tx2.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx2)
 
@@ -307,7 +307,7 @@ func (client *Client) getModify(beg, end int64) ([]byte, error) {
 
 // CheckBlock ticket implete checkblock func
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
-	cfg := types.GetP(current.Block.Height)
+	cfg := ty.GetTicketMinerParam(current.Block.Height)
 	if current.Block.BlockTime-types.Now().Unix() > cfg.FutureBlockTime {
 		return types.ErrFutureBlock
 	}
@@ -444,7 +444,8 @@ func (client *Client) getNextRequiredDifficulty(block *types.Block, bits uint32)
 	if block == nil {
 		return types.GetP(0).PowLimitBits, defaultModify, nil
 	}
-	cfg := types.GetP(block.Height)
+	powLimitBits := types.GetP(block.Height).PowLimitBits
+	cfg := ty.GetTicketMinerParam(block.Height)
 	blocksPerRetarget := int64(cfg.TargetTimespan / cfg.TargetTimePerBlock)
 	// Return the previous block's difficulty requirements if this block
 	// is not at a difficulty retarget interval.
@@ -462,15 +463,15 @@ func (client *Client) getNextRequiredDifficulty(block *types.Block, bits uint32)
 	// worth of blocks).
 	firstBlock, err := client.RequestBlock(block.Height + 1 - blocksPerRetarget)
 	if err != nil {
-		return cfg.PowLimitBits, defaultModify, err
+		return powLimitBits, defaultModify, err
 	}
 	if firstBlock == nil {
-		return cfg.PowLimitBits, defaultModify, types.ErrBlockNotFound
+		return powLimitBits, defaultModify, types.ErrBlockNotFound
 	}
 
 	modify, err := client.getModify(block.Height+1-blocksPerRetarget, block.Height)
 	if err != nil {
-		return cfg.PowLimitBits, defaultModify, err
+		return powLimitBits, defaultModify, err
 	}
 	// Limit the amount of adjustment that can occur to the previous
 	// difficulty.
@@ -496,7 +497,7 @@ func (client *Client) getNextRequiredDifficulty(block *types.Block, bits uint32)
 	newTarget.Div(newTarget, big.NewInt(targetTimespan))
 
 	// Limit new value to the proof of work limit.
-	powLimit := difficulty.CompactToBig(cfg.PowLimitBits)
+	powLimit := difficulty.CompactToBig(powLimitBits)
 	if newTarget.Cmp(powLimit) > 0 {
 		newTarget.Set(powLimit)
 	}
@@ -542,7 +543,7 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 			continue
 		}
 		//已经到成熟期
-		if !ticket.GetIsGenesis() && (block.BlockTime-ticket.GetCreateTime() <= types.GetP(block.Height).TicketFrozenTime) {
+		if !ticket.GetIsGenesis() && (block.BlockTime-ticket.GetCreateTime() <= ty.GetTicketMinerParam(block.Height).TicketFrozenTime) {
 			continue
 		}
 		// 查找私钥
@@ -638,7 +639,7 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	miner.TicketId = tid
 	miner.Bits = difficulty.BigToCompact(diff)
 	miner.Modify = modify
-	miner.Reward = types.GetP(block.Height).CoinReward + fee
+	miner.Reward = ty.GetTicketMinerParam(block.Height).CoinReward + fee
 	privHash, err := genPrivHash(priv, tid)
 	if err != nil {
 		return err
