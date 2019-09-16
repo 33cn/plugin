@@ -502,6 +502,7 @@ func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
 	return true
 }
 */
+
 func sendTransferTx(fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
