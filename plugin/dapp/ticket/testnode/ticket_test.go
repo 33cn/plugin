@@ -18,7 +18,7 @@ import (
 	_ "github.com/33cn/plugin/plugin"
 )
 
-func Test_WalletTicket(t *testing.T) {
+func TestWalletTicket(t *testing.T) {
 	minerAddr := "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	t.Log("Begin wallet ticket test")
 
