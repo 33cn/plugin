@@ -53,6 +53,157 @@ var (
 
 	genesis = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
 	priv    = `{"address":"2B226E6603E52C94715BA4E92080EEF236292E33","pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"last_height":1679,"last_round":0,"last_step":3,"last_signature":{"type":"secp256k1","data":"37892A916D6E487ADF90F9E88FE37024597677B6C6FED47444AD582F74144B3D6E4B364EAF16AF03A4E42827B6D3C86415D734A5A6CCA92E114B23EB9265AF09"},"last_signbytes":"7B22636861696E5F6964223A22636861696E33332D5A326367466A222C22766F7465223A7B22626C6F636B5F6964223A7B2268617368223A224F6A657975396B2B4149426A6E4859456739584765356A7A462B673D222C227061727473223A7B2268617368223A6E756C6C2C22746F74616C223A307D7D2C22686569676874223A313637392C22726F756E64223A302C2274696D657374616D70223A22323031382D30382D33315430373A35313A34332E3935395A222C2274797065223A327D7D","priv_key":{"type":"secp256k1","data":"5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"}}`
+	config = `Title="local"
+[log]
+# 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
+loglevel = "debug"
+logConsoleLevel = "info"
+# 日志文件名，可带目录，所有生成的日志文件都放到此目录下
+logFile = "logs/chain33.log"
+# 单个日志文件的最大值（单位：兆）
+maxFileSize = 300
+# 最多保存的历史日志文件个数
+maxBackups = 100
+# 最多保存的历史日志消息（单位：天）
+maxAge = 28
+# 日志文件名是否使用本地事件（否则使用UTC时间）
+localTime = true
+# 历史日志文件是否压缩（压缩格式为gz）
+compress = true
+# 是否打印调用源文件和行号
+callerFile = false
+# 是否打印调用方法
+callerFunction = false
+
+[blockchain]
+defCacheSize=512
+maxFetchBlockNum=128
+timeoutSeconds=5
+batchBlockNum=128
+driver="leveldb"
+dbPath="datadir"
+dbCache=64
+isStrongConsistency=true
+singleMode=true
+batchsync=false
+enableTxQuickIndex=true
+
+[p2p]
+seeds=["127.0.0.1:13802"]
+enable=true
+isSeed=true
+serverStart=true
+innerSeedEnable=false
+useGithub=false
+innerBounds=300
+msgCacheSize=10240
+driver="leveldb"
+dbPath="datadir/addrbook"
+dbCache=4
+grpcLogFile="grpc33.log"
+version=199
+verMix=199
+verMax=199
+
+
+[rpc]
+jrpcBindAddr="localhost:8801"
+grpcBindAddr="localhost:8802"
+whitelist=["127.0.0.1"]
+jrpcFuncWhitelist=["*"]
+grpcFuncWhitelist=["*"]
+
+[mempool]
+name="timeline"
+poolCacheSize=10240
+minTxFee=100000
+
+[consensus]
+name="tendermint"
+minerstart=false
+
+[mver.consensus]
+fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+coinReward = 18
+coinDevFund = 12
+ticketPrice = 10000
+powLimitBits = "0x1f00ffff"
+retargetAdjustmentFactor = 4
+futureBlockTime = 16
+ticketFrozenTime = 5    #5s only for test
+ticketWithdrawTime = 10 #10s only for test
+ticketMinerWaitTime = 2 #2s only for test
+maxTxNumber = 1600      #160
+targetTimespan = 2304
+targetTimePerBlock = 16
+
+[mver.consensus.ForkChainParamV1]
+maxTxNumber = 10000
+targetTimespan = 288 #only for test
+targetTimePerBlock = 2
+
+[mver.consensus.ForkChainParamV2]
+powLimitBits = "0x1f2fffff"
+
+[consensus.sub.dpos]
+genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+genesisBlockTime=1514533394
+timeoutCheckConnections=1000
+timeoutVoting=3000
+timeoutWaitNotify=2000
+createEmptyBlocks=false
+createEmptyBlocksInterval=0
+validatorNodes=["127.0.0.1:46656"]
+delegateNum=1
+blockInterval=2
+continueBlockNum=12
+isValidator=true
+rpcAddr="http://localhost:9801"
+#shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
+shuffleType=1
+#是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
+whetherUpdateTopN=false
+blockNumToUpdateDelegate=20000
+registTopNHeightLimit=100
+updateTopNHeightLimit=200
+
+[store]
+name="kvdb"
+driver="leveldb"
+dbPath="datadir/mavltree"
+dbCache=128
+
+[store.sub.kvdb]
+enableMavlPrefix=false
+enableMVCC=false
+
+[wallet]
+minFee=100000
+driver="leveldb"
+dbPath="wallet"
+dbCache=16
+signType="secp256k1"
+
+[wallet.sub.ticket]
+minerdisable=false
+minerwhitelist=["*"]
+
+[exec]
+isFree=false
+minExecFee=100000
+enableStat=false
+enableMVCC=false
+alias=["token1:token","token2:token","token3:token"]
+saveTokenTxList=false
+
+[exec.sub.cert]
+# 是否启用证书验证和签名
+enable=false
+# 加密文件路径
+cryptoPath="authdir/crypto"
+# 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
+signType="auth_ecdsa"
+`
 )
 
 const fee = 1e6
@@ -70,9 +221,11 @@ func init() {
 	os.Remove("priv_validator.json")
 	os.Remove("genesis_file.json")
 	os.Remove("priv_validator_0.json")
+	os.Remove("chain33.test.toml")
 
 	ioutil.WriteFile("genesis.json", []byte(genesis), 0664)
 	ioutil.WriteFile("priv_validator.json", []byte(priv), 0664)
+	ioutil.WriteFile("chain33.test.toml", []byte(config), 0664)
 }
 func TestDposPerf(t *testing.T) {
 	DposPerf()
@@ -106,6 +259,7 @@ func DposPerf() {
 	os.Remove("priv_validator.json")
 	os.Remove("genesis_file.json")
 	os.Remove("priv_validator_0.json")
+	os.Remove("chain33.test.toml")
 
 }
 
