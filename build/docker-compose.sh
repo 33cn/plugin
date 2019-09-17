@@ -440,7 +440,7 @@ function main() {
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
     ip=$(echo "$ip" | cut -d':' -f 1)
-    #dapp_run test "${ip}"
+    dapp_run test "${ip}"
 
     ### rpc test  ###
     rpc_test "${ip}"
