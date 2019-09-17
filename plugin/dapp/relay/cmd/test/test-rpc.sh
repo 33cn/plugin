@@ -5,93 +5,30 @@
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
-
-# $2=0 means true, other false
-echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="err"
-    fi
+relay_CreateRawRelaySaveBTCHeadTx() {
+    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]'
+    # echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    # echo "#resp: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignRawTx "$rawtx" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 
 }
 
-function block_wait() {
-    local req='"method":"Chain33.GetLastHeader","params":[]'
-    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function query_tx() {
-    block_wait 1
-    local txhash="$1"
-    local req='"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]'
-    # echo "req=$req"
-    local times=10
-    while true; do
-        ret=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.tx.hash")
-        echo "====query tx= ${1}, return=$ret "
-        if [ "${ret}" != "${1}" ]; then
-            block_wait 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "====query tx=$1 failed"
-                echo "req=$req"
-                curl -ksd "{$req}" ${MAIN_HTTP}
-                exit 1
-            fi
-        else
-            echo "====query tx=$1  success"
-            break
-        fi
-    done
-}
-
-signrawtx() {
-    txHex="$1"
-    priKey="$2"
-    local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
-    #    echo "#request SignRawTx: $req"
-    signedTx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
-    #    echo "signedTx=$signedTx"
-    if [ "$signedTx" != null ]; then
-        sendTx "$signedTx"
-    else
-        echo "signedTx null error"
-    fi
-}
-
-sendTx() {
-    signedTx=$1
-    local req='"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"'"$signedTx"'"}]'
-    #    echo "#request sendTx: $req"
-    #    curl -ksd "{$req}" ${MAIN_HTTP}
-    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
-    err=$(jq '(.error)' <<<"$resp")
-    txhash=$(jq -r ".result" <<<"$resp")
-    if [ "$err" == null ]; then
-        #   echo "tx hash: $txhash"
-        query_tx "$txhash"
-    else
-        echo "send tx error:$err"
-    fi
+relay_CreateRawRelaySaveBTCHeadTx_11() {
+    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]'
+    # echo "#request: $req"
+    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
+    # echo "#resp: $resp"
+    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignRawTx "$rawtx" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 
 }
 
@@ -104,11 +41,11 @@ relay_CreateRawRelayOrderTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+    chain33_SignRawTx "$rawtx" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
 
 relay_CreateRawRelayAcceptTx() {
-    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
@@ -125,12 +62,12 @@ relay_CreateRawRelayAcceptTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
+    chain33_SignRawTx "$rawtx" "0xec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "${MAIN_HTTP}"
 
 }
 
 relay_CreateRawRelayRevokeTx() {
-    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
@@ -147,7 +84,7 @@ relay_CreateRawRelayRevokeTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+    chain33_SignRawTx "$rawtx" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 
 }
 
@@ -169,33 +106,7 @@ relay_CreateRawRelayConfirmTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
-
-}
-
-relay_CreateRawRelaySaveBTCHeadTx() {
-    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]'
-    # echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
-    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
-
-}
-
-relay_CreateRawRelaySaveBTCHeadTx_11() {
-    local req='"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]'
-    # echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
-    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$resp")
-    signrawtx "$rawtx" "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+    chain33_SignRawTx "$rawtx" "0xec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "${MAIN_HTTP}"
 
 }
 
@@ -211,7 +122,7 @@ query_GetRelayOrderByStatus() {
 }
 
 query_GetSellRelayOrder() {
-    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #    echo "#response: $resp"
@@ -222,7 +133,7 @@ query_GetSellRelayOrder() {
 }
 
 query_GetBuyRelayOrder() {
-    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
+    local req='"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetBuyRelayOrder","payload":{"addr":"1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum","status":"locking","coins":["BTC"],"pageNumber":0,"pageSize":0}}]'
     #    echo "#request: $req"
     resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
     #   echo "#response: $resp"
@@ -261,17 +172,49 @@ init() {
     if [ "$ispara" == true ]; then
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
-        #        chain33_ImportPrivkey "${MAIN_HTTP}" "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
     echo "relayaddr=$relay_addr"
 
-    local testAddr="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"
-    chain33_getMainChainCoins "${MAIN_HTTP}" "$testAddr" 10000000000
-    chain33_getParaChainCoins "${MAIN_HTTP}" "$testAddr" 10000000000
-    chain33_SendToAddress "$testAddr" "$relay_addr" 8000000000 "${MAIN_HTTP}"
+    local main_ip=${MAIN_HTTP//8901/8801}
 
-    block_wait 1
+    #main chain import pri key
+    #1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3
+    chain33_ImportPrivkey "22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3" "relay_sell" "${main_ip}"
+    #1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum
+    chain33_ImportPrivkey "ec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum" "relay_acc" "$main_ip"
+
+    local sellAddr="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"
+    local accepAddr="1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$sellAddr" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${sellAddr}" "$main_ip"
+
+        chain33_applyCoins "$accepAddr" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${accepAddr}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$sellAddr" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${sellAddr}" "$main_ip"
+
+        chain33_applyCoins "$accepAddr" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${accepAddr}" "$main_ip"
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3" "relay_sell" "$para_ip"
+        chain33_ImportPrivkey "ec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum" "relay_acc" "$para_ip"
+
+        chain33_applyCoins "$sellAddr" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${sellAddr}" "$para_ip"
+        chain33_applyCoins "$accepAddr" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${accepAddr}" "$para_ip"
+    fi
+
+    chain33_SendToAddress "$sellAddr" "$relay_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_QueryExecBalance "${sellAddr}" "relay" "$MAIN_HTTP"
+    chain33_SendToAddress "$accepAddr" "$relay_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_QueryExecBalance "${accepAddr}" "relay" "$MAIN_HTTP"
 
 }
 function run_testcases() {
@@ -313,4 +256,4 @@ function rpc_test() {
     fi
 }
 
-rpc_test "$1"
+chain33_debug_function rpc_test "$1"

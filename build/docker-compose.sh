@@ -103,6 +103,9 @@ function base_init() {
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
 
+    #relay genesis
+    sed -i $sedfix 's/^genesis="12qyocayNF7.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' chain33.toml
+
 }
 
 function start() {
@@ -377,6 +380,11 @@ function dapp_test_address() {
     if [ -z "${result}" ]; then
         exit 1
     fi
+    result=$(${1} account import_key -k 9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40 -l rpctestpooladdr | jq ".label")
+    echo "${result}"
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
 
     sleep 1
 
@@ -384,7 +392,7 @@ function dapp_test_address() {
     echo "${hash}"
 
     #total allocation for rpc test
-    hash=$(${1} send coins transfer -a 5000 -n transfer -t 1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
+    hash=$(${1} send coins transfer -a 8000 -n transfer -t 1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
     echo "${hash}"
 
     block_wait "${1}" 1

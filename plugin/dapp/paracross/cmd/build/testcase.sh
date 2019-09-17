@@ -50,7 +50,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
 
-    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"/g' "${1}"
+    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' "${1}"
     # shellcheck disable=SC1004
     sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
                                                         "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
@@ -67,10 +67,10 @@ function para_set_toml() {
 
 function para_set_wallet() {
     echo "=========== # para set wallet ============="
-    para_import_key "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
-    para_import_key "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" "paraAuthAccount"
-    para_import_key "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" "paraAuthAccount"
-    para_import_key "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
+    para_import_wallet "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
+    para_import_wallet "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" "paraAuthAccount"
+    para_import_wallet "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" "paraAuthAccount"
+    para_import_wallet "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
 
     #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     para_import_key "${PARA_CLI}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "genesis"
@@ -82,6 +82,8 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" "dapptest1"
     #1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
     para_import_key "${PARA_CLI}" "0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" "dapptest2"
+    #1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx
+    para_import_key "${PARA_CLI}" "9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40" "rpctestpooladdr"
 
     #super node behalf test
     #1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj
@@ -92,7 +94,7 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d" "othernode2"
 }
 
-function para_import_key() {
+function para_import_wallet() {
     local lable=$3
     echo "=========== # save seed to wallet ============="
     result=$(${1} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib" | jq ".isok")
@@ -123,6 +125,16 @@ function para_import_key() {
     ${1} wallet status
 }
 
+function para_import_key() {
+    local lable=$3
+    echo "=========== # import private key ============="
+    echo "key: ${2}"
+    result=$(${1} account import_key -k "${2}" -l "$lable" | jq ".label")
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
+}
+
 function para_transfer() {
     echo "=========== # para chain transfer ============="
     main_transfer2account "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
@@ -150,9 +162,6 @@ function para_transfer() {
     #1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj
     main_transfer2paracross "0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5" 100
 
-    #relay rpc test
-    para_transfer2exec "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588" "relay"
-    para_transfer2exec "0x4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" "relay"
     block_wait "${CLI}" 2
 
     #    para_create_manage_nodegroup
@@ -192,12 +201,6 @@ function main_transfer2paracross() {
         coins="$2"
     fi
     hash1=$(${CLI} send coins send_exec -a "$coins" -e paracross -k "${1}")
-    echo "${hash1}"
-}
-
-function para_transfer2exec() {
-    echo "exec=$2,addr=${1}"
-    hash1=$(${PARA_CLI} send coins send_exec -a 500 -e "$2" -k "${1}")
     echo "${hash1}"
 }
 
