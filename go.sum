@@ -1,6 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/33cn/chain33 v0.0.0-20190912074522-1ed1c16eb445 h1:6GcQRHeeEDUWfP1jl7pyW9RIkQJg3x7UKVcCATsw57U=
-github.com/33cn/chain33 v0.0.0-20190912074522-1ed1c16eb445/go.mod h1:4I8n+Zyf3t0UKM5jjpqJY627Tub62oXkLsdzIv4r6rQ=
+github.com/33cn/chain33 v0.0.0-20190916043245-c5f98f6a92f5 h1:Nr0twQPrU5o8JE7jjXlaUNS8qQpREQxLi9IAYSAGAIc=
+github.com/33cn/chain33 v0.0.0-20190916043245-c5f98f6a92f5/go.mod h1:4I8n+Zyf3t0UKM5jjpqJY627Tub62oXkLsdzIv4r6rQ=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7 h1:PqzgE6kAMi81xWQA2QIVxjWkFHptGgC547vchpUbtFo=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
