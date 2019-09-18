@@ -270,6 +270,31 @@ function queryTransaction() {
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
+
+    local main_ip=${MAIN_HTTP//8901/8801}
+    #main chain import pri key
+    #1PTXh2EZ8aRUzpuoDRASV19K86Kx3qQiPt
+    chain33_ImportPrivkey "0x4947ce3c4b845cfed59be2edf47320546116a3ff3af5715a7df094d116039b89" "1PTXh2EZ8aRUzpuoDRASV19K86Kx3qQiPt" "evm" "${main_ip}"
+
+    local ACCOUNT_A="1PTXh2EZ8aRUzpuoDRASV19K86Kx3qQiPt"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x4947ce3c4b845cfed59be2edf47320546116a3ff3af5715a7df094d116039b89" "1PTXh2EZ8aRUzpuoDRASV19K86Kx3qQiPt" "evm" "$para_ip"
+
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
+    fi
+
+    Chain33_SendToAddress "$ACCOUNT_A" "$from" 11000000000
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
     local evm_addr=""
     if [ "$ispara" == "true" ]; then
