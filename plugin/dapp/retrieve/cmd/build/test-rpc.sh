@@ -107,6 +107,7 @@ init() {
         retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL
     chain33_ImportPrivkey "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" "1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL" "retrieve1" "${main_ip}"

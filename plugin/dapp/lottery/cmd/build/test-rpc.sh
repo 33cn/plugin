@@ -36,6 +36,7 @@ init() {
     fi
     echo "lottExecAddr=$lottExecAddr"
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF
     chain33_ImportPrivkey "0x8223b757a5d0f91b12e7af3b9666ca33be47fe63e1502987b0537089aaf90bc1" "1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF" "lottery1" "${main_ip}"

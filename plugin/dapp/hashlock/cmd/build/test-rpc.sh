@@ -79,6 +79,7 @@ init() {
         hashlock_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"hashlock"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3
     chain33_ImportPrivkey "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" "19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3" "hashlock1" "${main_ip}"

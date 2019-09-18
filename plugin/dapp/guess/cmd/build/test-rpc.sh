@@ -136,6 +136,7 @@ init() {
     fi
     echo "guess_addr=$guess_addr"
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM
     chain33_ImportPrivkey "0xc889d2958843fc96d4bd3f578173137d37230e580d65e9074545c61e7e9c1932" "1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM" "guess1" "${main_ip}"

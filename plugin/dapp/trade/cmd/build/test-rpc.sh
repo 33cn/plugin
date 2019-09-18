@@ -278,6 +278,7 @@ function init() {
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg
     chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "${main_ip}"

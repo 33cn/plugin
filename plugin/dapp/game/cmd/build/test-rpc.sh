@@ -139,6 +139,7 @@ function init() {
     fi
     echo "gameAddr=${game_addr}"
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f
     chain33_ImportPrivkey "0xfa21dc33a6144c546537580d28d894355d1e9af7292be175808b0f5737c30849" "16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f" "game1" "${main_ip}"

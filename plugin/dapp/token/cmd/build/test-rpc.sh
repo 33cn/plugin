@@ -118,6 +118,7 @@ function init() {
     echo "ipara=$ispara"
     chain33_ImportPrivkey "${MAIN_HTTP}" "${superManager}" "${tokenAddr}"
 
+    local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq
     chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "${main_ip}"
