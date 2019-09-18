@@ -3,6 +3,9 @@
 set -e
 set -o pipefail
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 GAME_ID=""
 PASSWD="ABCD"

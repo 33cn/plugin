@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
