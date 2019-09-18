@@ -49,7 +49,7 @@ function init() {
         Symbol="BTY"
         multisigExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"multisig"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
-    
+
     local main_ip=${MAIN_HTTP//8901/8801}
 
     if [ "$ispara" == false ]; then
@@ -68,7 +68,7 @@ function init() {
         chain33_applyCoins "$GenAddr" 12000000000 "${para_ip}"
         chain33_QueryBalance "${GenAddr}" "$para_ip"
     fi
-    
+
     echo "multisigExecAddr=$multisigExecAddr"
 }
 # 创建多重签名账户
