@@ -7,8 +7,8 @@ source ../dapp-test-common.sh
 MAIN_HTTP=""
 CASE_ERR=""
 trade_addr=""
-tradeAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-tradeBuyerAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+tradeAddr="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
+tradeBuyerAddr="1MbEtj189WoUGgLvX5vNosBVB4xmL3dAyJ"
 tokenSymbol="TOKEN"
 
 #color
@@ -23,7 +23,7 @@ function updateConfig() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "update config queryExecRes" "$?"
@@ -36,7 +36,7 @@ function token_preCreate() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token preCreate queryExecRes" "$?"
@@ -49,7 +49,7 @@ function token_finish() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token finish queryExecRes" "$?"
@@ -81,7 +81,7 @@ function token_transfer() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "token transfer queryExecRes" "$?"
@@ -108,7 +108,7 @@ function trade_createSellTx() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade createSellTx queryExecRes" "$?"
@@ -132,7 +132,7 @@ function trade_createBuyTx() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xfac83e59be12fb5cf21821c78e6f44d370b0b0a2c67902452d47a572d3c24d14" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade createBuyTx queryExecRes" "$?"
@@ -200,7 +200,7 @@ function trade_buyLimit() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xfac83e59be12fb5cf21821c78e6f44d370b0b0a2c67902452d47a572d3c24d14" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade buyLimit queryExecRes" "$?"
@@ -227,7 +227,7 @@ function trade_revokeBuy() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade revokeBuy queryExecRes" "$?"
@@ -240,7 +240,7 @@ function trade_revoke() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade revoke queryExecRes" "$?"
@@ -278,9 +278,38 @@ function init() {
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    chain33_SendToAddress "$tradeAddr" "$tradeBuyerAddr" 10000000000 "${MAIN_HTTP}"
+    #main chain import pri key
+    #1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg
+    chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "${main_ip}"
+    #1MbEtj189WoUGgLvX5vNosBVB4xmL3dAyJ
+    chain33_ImportPrivkey "0xfac83e59be12fb5cf21821c78e6f44d370b0b0a2c67902452d47a572d3c24d14" "1MbEtj189WoUGgLvX5vNosBVB4xmL3dAyJ" "trade2" "$main_ip"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$tradeAddr" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${tradeAddr}" "$main_ip"
+
+        chain33_applyCoins "$tradeBuyerAddr" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${tradeBuyerAddr}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$tradeAddr" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${tradeAddr}" "$main_ip"
+
+        chain33_applyCoins "$tradeBuyerAddr" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${tradeBuyerAddr}" "$main_ip"
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1"  "$para_ip"
+        chain33_ImportPrivkey "0xfac83e59be12fb5cf21821c78e6f44d370b0b0a2c67902452d47a572d3c24d14" "1MbEtj189WoUGgLvX5vNosBVB4xmL3dAyJ" "trade2"  "$para_ip"
+
+        chain33_applyCoins "$tradeAddr" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${tradeAddr}" "$para_ip"
+        chain33_applyCoins "$tradeBuyerAddr" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${tradeBuyerAddr}" "$para_ip"
+    fi
+
     chain33_SendToAddress "$tradeAddr" "$trade_addr" 10000000000 "${MAIN_HTTP}"
-    chain33_SendToAddress "$tradeAddr" "$token_addr" 10000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "$tradeAddr" "$token_addr" 1000000000 "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
     chain33_SendToAddress "$tradeBuyerAddr" "$trade_addr" 10000000000 "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
@@ -292,8 +321,8 @@ function init() {
     token_finish
     token_balance
     token_transfer "${tradeBuyerAddr}"
-    token_sendExec "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
-    token_sendExec "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 "
+    token_sendExec "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42"
+    token_sendExec "0xfac83e59be12fb5cf21821c78e6f44d370b0b0a2c67902452d47a572d3c24d14 "
 }
 
 function run_test() {
@@ -332,4 +361,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"

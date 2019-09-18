@@ -4,7 +4,7 @@
 MAIN_HTTP=""
 CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
-recvAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+recvAddr="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
 superManager="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
 tokenSymbol="ABCDE"
 token_addr=""
@@ -115,6 +115,26 @@ function init() {
     echo "ipara=$ispara"
     chain33_ImportPrivkey "${MAIN_HTTP}" "${superManager}" "${tokenAddr}"
 
+    #main chain import pri key
+    #1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq
+    chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "${main_ip}"
+    local token1="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$token1" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${token1}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$token1" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${token1}" "$main_ip"
+
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1"  "$para_ip"
+
+        chain33_applyCoins "$token1" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${token1}" "$para_ip"
+    fi
+
     if [ "$ispara" == true ]; then
         execName="user.p.para.token"
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.token"}]}' ${MAIN_HTTP} | jq -r ".result")
@@ -124,8 +144,7 @@ function init() {
         block_wait 2
     else
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"token"}]}' ${MAIN_HTTP} | jq -r ".result")
-        from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-        Chain33_SendToAddress "$from" "$tokenAddr" 10000000000
+        Chain33_SendToAddress "$recvAddr" "$tokenAddr" 10000000000
         block_wait 2
         Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
         block_wait 2
@@ -375,4 +394,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"

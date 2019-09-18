@@ -5,8 +5,8 @@ set -o pipefail
 
 MAIN_HTTP=""
 
-addr_A=1PUiGcbsccfxW3zuvHXZBJfznziph5miAo
-addr_B=1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
+addr_A=19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3
+addr_B=1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD
 
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
@@ -24,7 +24,7 @@ hashlock_lock() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
     echo "========== # hashlock lock tx end =========="
 
@@ -44,7 +44,7 @@ hashlock_send() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
     echo "========== # hashlock send tx end =========="
 
@@ -63,7 +63,7 @@ hashlock_unlock() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
     echo "========== # hashlock unlock tx end =========="
 
@@ -79,11 +79,44 @@ init() {
         hashlock_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"hashlock"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    local from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    chain33_SendToAddress "$from" "$hashlock_addr" 10000000000 ${MAIN_HTTP}
+    #main chain import pri key
+    #19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3
+    chain33_ImportPrivkey "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" "19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3" "hashlock1" "${main_ip}"
+    #1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD
+    chain33_ImportPrivkey "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" "1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD" "hashlock2" "$main_ip"
 
-    from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-    chain33_SendToAddress "$from" "$hashlock_addr" 10000000000 ${MAIN_HTTP}
+    local hashlock1="19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3"
+    local hashlock2="1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$hashlock1" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${hashlock1}" "$main_ip"
+
+        chain33_applyCoins "$hashlock2" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${hashlock2}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$hashlock1" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${hashlock1}" "$main_ip"
+
+        chain33_applyCoins "$hashlock2" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${hashlock2}" "$main_ip"
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" "19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3" "hashlock1"  "$para_ip"
+        chain33_ImportPrivkey "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" "1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD" "hashlock2"  "$para_ip"
+
+        chain33_applyCoins "$hashlock1" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${hashlock1}" "$para_ip"
+        chain33_applyCoins "$hashlock2" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${hashlock2}" "$para_ip"
+    fi
+
+    chain33_SendToAddress "$hashlock1" "$hashlock_addr" 10000000000 ${MAIN_HTTP}
+    chain33_QueryExecBalance "${hashlock1}" "hashlock" "$MAIN_HTTP"
+    chain33_SendToAddress "$hashlock2" "$hashlock_addr" 10000000000 ${MAIN_HTTP}
+    chain33_QueryExecBalance "${hashlock2}" "hashlock" "$MAIN_HTTP"
+
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
@@ -121,4 +154,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"

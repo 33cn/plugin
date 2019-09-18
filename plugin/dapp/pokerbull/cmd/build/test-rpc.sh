@@ -19,7 +19,7 @@ pokerbull_PlayRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
     echo "========== # pokerbull play tx end =========="
 
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -35,7 +35,7 @@ pokerbull_QuitRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
     echo "========== # pokerbull quit tx end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -51,7 +51,7 @@ pokerbull_ContinueRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" ${MAIN_HTTP}
     echo "========== # pokerbull continue tx end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -67,7 +67,7 @@ pokerbull_StartRawTx() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
     GAME_ID=$RAW_TX_HASH
     echo "========== # pokerbull start tx end =========="
 
@@ -84,7 +84,7 @@ pokerbull_QueryResult() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4"}}]}' ${MAIN_HTTP} | jq -r ".result")
     [ "$data" != null ]
     echo_rst "$FUNCNAME" "$?"
 
@@ -103,11 +103,44 @@ init() {
         pokerbull_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"pokerbull"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    local from="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
+    #main chain import pri key
+    #14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4
+    chain33_ImportPrivkey "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" "14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4" "pokerbull1" "${main_ip}"
+    #1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1
+    chain33_ImportPrivkey "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" "1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1" "pokerbull2" "$main_ip"
 
-    from="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-    chain33_SendToAddress "$from" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
+    local pokerbull1="14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4"
+    local pokerbull2="1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$pokerbull1" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${pokerbull1}" "$main_ip"
+
+        chain33_applyCoins "$pokerbull2" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${pokerbull2}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$pokerbull1" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${pokerbull1}" "$main_ip"
+
+        chain33_applyCoins "$pokerbull2" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${pokerbull2}" "$main_ip"
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" "14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4" "pokerbull1"  "$para_ip"
+        chain33_ImportPrivkey "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" "1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1" "pokerbull2"  "$para_ip"
+
+        chain33_applyCoins "$pokerbull1" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${pokerbull1}" "$para_ip"
+        chain33_applyCoins "$pokerbull2" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${pokerbull2}" "$para_ip"
+    fi
+
+    chain33_SendToAddress "$pokerbull1" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
+    chain33_QueryExecBalance "${pokerbull1}" "pokerbull" "$MAIN_HTTP"
+    chain33_SendToAddress "$pokerbull2" "$pokerbull_addr" 10000000000 ${MAIN_HTTP}
+    chain33_QueryExecBalance "${pokerbull2}" "pokerbull" "$MAIN_HTTP"
+
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
@@ -140,4 +173,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"

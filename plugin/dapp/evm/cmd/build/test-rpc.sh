@@ -317,4 +317,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"
