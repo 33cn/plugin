@@ -341,14 +341,17 @@ function main() {
             chain33_BlockWait 1 "${UNIT_HTTP}"
         done
     else
-        echo "=========== # paracross rpc test ============="
-        run_testcases
+        if [ "$IS_PARA" == "true" ]; then
+            echo "=========== # paracross rpc test ============="
+            run_testcases
+        fi
     fi
 
     if [ -n "$CASE_ERR" ]; then
         echo "paracross there some case error"
         exit 1
     fi
+
 }
 
 main "$1" "$2" "$3" "$4"
