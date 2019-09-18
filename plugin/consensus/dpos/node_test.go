@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/p2p"
@@ -13,11 +19,6 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
-	"sync"
-	"testing"
-	"time"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/mempool"
@@ -28,11 +29,11 @@ import (
 
 var (
 	secureConnCrypto crypto.Crypto
-	securePriv crypto.PrivKey
-	sum = 0
-	mutx sync.Mutex
-	privKey = "B3DC4C0725884EBB7264B92F1D8D37584A64ADE1799D997EC64B4FE3973E08DE220ACBE680DF2473A0CB48987A00FCC1812F106A7390BE6B8E2D31122C992A19"
-	expectAddress = "02A13174B92727C4902DB099E51A3339F48BD45E"
+	securePriv       crypto.PrivKey
+	sum              = 0
+	mutx             sync.Mutex
+	privKey          = "B3DC4C0725884EBB7264B92F1D8D37584A64ADE1799D997EC64B4FE3973E08DE220ACBE680DF2473A0CB48987A00FCC1812F106A7390BE6B8E2D31122C992A19"
+	expectAddress    = "02A13174B92727C4902DB099E51A3339F48BD45E"
 
 	//localGenesis = `{"genesis_time":"2018-08-16T15:38:56.951569432+08:00","chain_id":"chain33-Z2cgFj","validators":[{"pub_key":{"type":"secp256k1","data":"03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"},"name":""},{"pub_key":{"type":"secp256k1","data":"027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"},"name":""},{"pub_key":{"type":"secp256k1","data":"03F4AB6659E61E8512C9A24AC385CC1AC4D52B87D10ADBDF060086EA82BE62CDDE"},"name":""}],"app_hash":null}`
 
@@ -190,7 +191,7 @@ cryptoPath="authdir/crypto"
 # 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
 signType="auth_ecdsa"
 `
-///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////
 	config2 = `Title="local"
 
 [log]
@@ -365,6 +366,7 @@ cryptoPath="authdir/crypto"
 signType="auth_ecdsa"
 `
 )
+
 func init() {
 	cr2, err := crypto.New(types.GetSignName("", types.ED25519))
 	if err != nil {
@@ -398,23 +400,22 @@ func Init() {
 	ioutil.WriteFile("chain33.test2.toml", []byte(config2), 0664)
 }
 
-
 func TestParallel(t *testing.T) {
-	Parallel(func () {
+	Parallel(func() {
 		mutx.Lock()
 		sum += 1
 		mutx.Unlock()
 	},
-	func () {
-		mutx.Lock()
-		sum += 2
-		mutx.Unlock()
-	},
-	func () {
-		mutx.Lock()
-		sum += 3
-		mutx.Unlock()
-	},
+		func() {
+			mutx.Lock()
+			sum += 2
+			mutx.Unlock()
+		},
+		func() {
+			mutx.Lock()
+			sum += 3
+			mutx.Unlock()
+		},
 	)
 
 	fmt.Println("TestParallel ok")
@@ -454,7 +455,7 @@ func TestNode(t *testing.T) {
 	fmt.Println("=======start TestNode!=======")
 	Init()
 	q1, chain1, s1, mem1, exec1, cs1, p2p1 := initEnvDpos1("chain33.test1.toml")
-	q2, chain2, s2, mem2, exec2, cs2, p2p2  := initEnvDpos2("chain33.test2.toml")
+	q2, chain2, s2, mem2, exec2, cs2, p2p2 := initEnvDpos2("chain33.test2.toml")
 
 	defer clearTestData1()
 	defer chain1.Close()
@@ -491,15 +492,14 @@ func TestNode(t *testing.T) {
 	fmt.Println("node1 version:", cs1.(*Client).GetNode().Version)
 
 	nodeinfo := NodeInfo{
-		ID: cs1.(*Client).GetNode().ID,
-		IP: cs1.(*Client).GetNode().IP,
+		ID:      cs1.(*Client).GetNode().ID,
+		IP:      cs1.(*Client).GetNode().IP,
 		Network: cs1.(*Client).GetNode().Network,
 		Version: cs1.(*Client).GetNode().Version,
 	}
 
 	require.Nil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
 	fmt.Println("TestNodeCompatibleWith ok")
-
 
 	//time.Sleep(2 * time.Second)
 
@@ -531,7 +531,6 @@ func TestNode(t *testing.T) {
 	} else {
 		fmt.Println("======= cs1 is not running=======")
 	}
-
 
 	//cs2.(*Client).StopC()
 	if cs2.(*Client).GetNode().IsRunning() {
@@ -567,7 +566,6 @@ func clearTestData1() {
 
 	fmt.Println("test data clear successfully!")
 }
-
 
 func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	var q = queue.New("channel")
@@ -625,7 +623,6 @@ func initEnvDpos2(configName string) (queue.Queue, *blockchain.BlockChain, queue
 	cs.(*Client).SetTestFlag()
 	cs.SetQueueClient(q.Client())
 
-
 	mem := mempool.New(cfg.Mempool, nil)
 	mem.SetQueueClient(q.Client())
 	network := p2p.New(cfg.P2P)
@@ -638,4 +635,3 @@ func initEnvDpos2(configName string) (queue.Queue, *blockchain.BlockChain, queue
 
 	return q, chain, s, mem, exec, cs, network
 }
-

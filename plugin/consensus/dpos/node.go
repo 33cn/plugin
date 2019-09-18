@@ -197,7 +197,7 @@ func (node *Node) Start(testFlag bool) {
 				addr := node.seeds[i]
 				ip, _ := splitHostPort(addr)
 				_, ok := node.localIPs[ip]
-				if ok && !testFlag{
+				if ok && !testFlag {
 					dposlog.Info("find our ip ", "ourip", ip)
 					node.IP = ip
 					return

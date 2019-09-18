@@ -368,7 +368,7 @@ OuterLoop:
 	csState.SetPrivValidator(client.privValidator, client.ValidatorIndex())
 
 	// Create & add listener
-	protocol, listeningAddress := "tcp", "0.0.0.0:" + dposPort
+	protocol, listeningAddress := "tcp", "0.0.0.0:"+dposPort
 	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, valMgr.ChainID, dposVersion, csState)
 
 	client.node = node
@@ -772,6 +772,6 @@ func (client *Client) SetTestFlag() {
 }
 
 // GetNode return the pointer to Node
-func (client *Client) GetNode() *Node{
+func (client *Client) GetNode() *Node {
 	return client.node
 }
