@@ -18,7 +18,7 @@ function query_unfreezeID() {
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
         echo "====query tx= ${txhash}, return=$ret "
         if [ "${tx}" != "${txhash}" ]; then
-            block_wait 1
+            chain33_BlockWait 1 "${MAIN_HTTP}"
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "====query tx=$txhash failed"
@@ -49,15 +49,14 @@ function init() {
     exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${exec_name}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     echo "exec_addr=${exec_addr}"
 
-    beneficiary=12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
-    beneficiary_key=0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
-    owner=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    owner_key=CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
-    #unfreeze_exec_addr=15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H
+    beneficiary=1PUiGcbsccfxW3zuvHXZBJfznziph5miAo
+    beneficiary_key=0x56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138
+    owner=1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX
+    owner_key=0x2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989
 
-    Chain33_SendToAddress "$owner" "$exec_addr" 500000000 "${MAIN_HTTP}"
-    Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000 "${MAIN_HTTP}"
-    block_wait 1
+    chain33_SendToAddress "$owner" "$exec_addr" 500000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000 "${MAIN_HTTP}"
+    chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeCreate() {
@@ -96,7 +95,7 @@ function CreateRawUnfreezeTerminate() {
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
-    block_wait 2
+    chain33_BlockWait 2 "${MAIN_HTTP}"
 }
 
 function GetUnfreeze() {
