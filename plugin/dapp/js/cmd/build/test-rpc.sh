@@ -12,7 +12,7 @@ function init() {
     beneficiary_key=0xf146df80206194c81e0b3171db6aa40c7ad6182a24560698d4871d4dc75223ce
     beneficiary=1DwHQp8S7RS9krQTyrqePxRyvaLcuoQGks
     chain33_applyCoins "${beneficiary}" 10000000000 "${MAIN_HTTP}"
-    #paracross_get_money 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv 
+    #paracross_get_money 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
     #//beneficiary=12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
     #beneficiary_key=0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
     #owner=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt

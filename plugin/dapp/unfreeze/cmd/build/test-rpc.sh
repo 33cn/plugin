@@ -43,10 +43,10 @@ function init() {
     exec_name="unfreeze"
     uid_index=2
     symbol="bty"
-    
+
     beneficiary_key=0xa2ec1c6274723c021daa8792f4d0d52ffa0eff0fd47c9c6c1d1dd618762dc178
     beneficiary=1qpAv7H4C5JBgVQffDRbQKti7ibdM2TfU
-    
+
     owner=1CK51xZ1wNkrzAhGyDuFayxeQXHg3gqcVS
     owner_key=0x3b0d7f65b35da1c394891ba7a8ce0f070ccef6818e3f7ca9c203776013b3a4b0
 
@@ -65,7 +65,7 @@ function init() {
         chain33_applyCoins "${beneficiary}" 10000000000 "${main_ip}"
         chain33_applyCoins "${owner}" 10000000000 "${main_ip}"
     fi
-    
+
     exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${exec_name}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     echo "exec_addr=${exec_addr}"
     chain33_SendToAddress "$owner" "$exec_addr" 5000000000 "${MAIN_HTTP}"
