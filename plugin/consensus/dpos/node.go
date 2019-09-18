@@ -169,7 +169,7 @@ func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivK
 }
 
 // Start node
-func (node *Node) Start() {
+func (node *Node) Start(testFlag bool) {
 	if atomic.CompareAndSwapUint32(&node.started, 0, 1) {
 		// Create listener
 		var listener net.Listener
@@ -197,7 +197,7 @@ func (node *Node) Start() {
 				addr := node.seeds[i]
 				ip, _ := splitHostPort(addr)
 				_, ok := node.localIPs[ip]
-				if ok {
+				if ok && !testFlag{
 					dposlog.Info("find our ip ", "ourip", ip)
 					node.IP = ip
 					return

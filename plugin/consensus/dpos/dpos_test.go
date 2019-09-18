@@ -69,7 +69,7 @@ func init() {
 	pubkey, _ = hex.DecodeString(strPubkey)
 }
 func TestDposPerf(t *testing.T) {
-	DposPerf()
+	//DposPerf()
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
@@ -83,9 +83,10 @@ func DposPerf() {
 	defer q.Close()
 	defer cs.Close()
 	defer p2p.Close()
-	err := createConn()
+	var err error
+	conn, c, err = createConn("127.0.0.1:8802")
 	for err != nil {
-		err = createConn()
+		conn, c, err = createConn("127.0.0.1:8802")
 	}
 	time.Sleep(10 * time.Second)
 	for i := 0; i < loopCount; i++ {
@@ -149,15 +150,7 @@ func DposPerf() {
 	dposClient.csState.SendCBTx(info)
 	sendCBTx(dposClient.csState, info)
 	time.Sleep(2 * time.Second)
-	/*
-		info2 := dposClient.csState.GetCBInfoByCircle(task.Cycle)
-		if info2 != nil && info2.StopHeight == info.StopHeight {
-			fmt.Println("GetCBInfoByCircle ok")
-		} else {
-			fmt.Println("GetCBInfoByCircle failed")
-		}
-		time.Sleep(1 * time.Second)
-	*/
+
 	for {
 		now = time.Now().Unix()
 		task = DecideTaskByTime(now)
@@ -282,18 +275,18 @@ func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mod
 	return q, chain, s, mem, exec, cs, network
 }
 
-func createConn() error {
+func createConn(url string) (*grpc.ClientConn, types.Chain33Client, error) {
 	var err error
-	url := "127.0.0.1:8802"
+	//url := "127.0.0.1:8802"
 	fmt.Println("grpc url:", url)
-	conn, err = grpc.Dial(url, grpc.WithInsecure())
+	conn1, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return err
+		return conn1, nil, err
 	}
-	c = types.NewChain33Client(conn)
+	c1 := types.NewChain33Client(conn)
 	//r = rand.New(rand.NewSource(types.Now().UnixNano()))
-	return nil
+	return conn1, c1, nil
 }
 
 func generateKey(i, valI int) string {

@@ -1,6 +1,7 @@
 package dpos
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ func TestTicker(t *testing.T) {
 		Duration: time.Second * time.Duration(2),
 		State:    InitStateType,
 	}
+	fmt.Println("timeoutInfo:", ti.String())
 
 	now := time.Now().Unix()
 	ticker.ScheduleTimeout(ti)
@@ -23,5 +25,5 @@ func TestTicker(t *testing.T) {
 
 	ticker.Stop()
 	assert.True(t, end-now >= 2)
-
+	fmt.Println("TestTicker ok")
 }

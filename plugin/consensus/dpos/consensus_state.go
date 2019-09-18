@@ -185,11 +185,11 @@ func (cs *ConsensusState) SetPrivValidator(priv ttypes.PrivValidator, index int)
 }
 
 // SetTimeoutTicker sets the local timer. It may be useful to overwrite for testing.
-func (cs *ConsensusState) SetTimeoutTicker(timeoutTicker TimeoutTicker) {
-	cs.mtx.Lock()
-	defer cs.mtx.Unlock()
-	cs.timeoutTicker = timeoutTicker
-}
+//func (cs *ConsensusState) SetTimeoutTicker(timeoutTicker TimeoutTicker) {
+//	cs.mtx.Lock()
+//	defer cs.mtx.Unlock()
+//	cs.timeoutTicker = timeoutTicker
+//}
 
 // Start It start first time starts the timeout receive routines.
 func (cs *ConsensusState) Start() {
@@ -219,6 +219,7 @@ func (cs *ConsensusState) scheduleDPosTimeout(duration time.Duration, stateType 
 }
 
 // send a msg into the receiveRoutine regarding our own proposal, block part, or vote
+/*
 func (cs *ConsensusState) sendInternalMessage(mi MsgInfo) {
 	select {
 	case cs.internalMsgQueue <- mi:
@@ -231,7 +232,7 @@ func (cs *ConsensusState) sendInternalMessage(mi MsgInfo) {
 		go func() { cs.internalMsgQueue <- mi }()
 	}
 }
-
+*/
 // Updates ConsensusState and increments height to match that of state.
 // The round becomes 0 and cs.Step becomes ttypes.RoundStepNewHeight.
 func (cs *ConsensusState) updateToValMgr(valMgr ValidatorMgr) {

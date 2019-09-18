@@ -76,6 +76,7 @@ type Client struct {
 	stopC         chan struct{}
 	isDelegator   bool
 	blockTime     int64
+	testFlag      bool
 }
 
 type subConfig struct {
@@ -230,6 +231,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		crypto:        cr,
 		stopC:         make(chan struct{}, 1),
 		isDelegator:   false,
+		testFlag:      false,
 	}
 	c.SetChild(client)
 
@@ -366,7 +368,7 @@ OuterLoop:
 	csState.SetPrivValidator(client.privValidator, client.ValidatorIndex())
 
 	// Create & add listener
-	protocol, listeningAddress := "tcp", "0.0.0.0:"+dposPort
+	protocol, listeningAddress := "tcp", "0.0.0.0:" + dposPort
 	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, valMgr.ChainID, dposVersion, csState)
 
 	client.node = node
@@ -376,7 +378,7 @@ OuterLoop:
 		client.InitBlock()
 		time.Sleep(time.Second * 2)
 		client.csState.Init()
-		node.Start()
+		node.Start(client.testFlag)
 	}
 
 	//go client.MonitorCandidators()
@@ -762,4 +764,14 @@ func printCandidators(cands []*dty.Candidator) string {
 // GetConsensusState return the pointer to ConsensusState
 func (client *Client) GetConsensusState() *ConsensusState {
 	return client.csState
+}
+
+// SetTestFlag set the test flag
+func (client *Client) SetTestFlag() {
+	client.testFlag = true
+}
+
+// GetNode return the pointer to Node
+func (client *Client) GetNode() *Node{
+	return client.node
 }

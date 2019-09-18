@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/33cn/chain33/common/address"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -136,7 +137,8 @@ func GenPrivValidatorImp(filePath string) *PrivValidatorImp {
 		panic(Fmt("GenPrivValidatorImp: GenKey failed:%v", err))
 	}
 	return &PrivValidatorImp{
-		Address:  GenAddressByPubKey(privKey.PubKey()),
+		//Address:  GenAddressByPubKey(privKey.PubKey()),
+		Address: address.PubKeyToAddress(privKey.PubKey().Bytes()).Hash160[:],
 		PubKey:   privKey.PubKey(),
 		PrivKey:  privKey,
 		Signer:   NewDefaultSigner(privKey),
