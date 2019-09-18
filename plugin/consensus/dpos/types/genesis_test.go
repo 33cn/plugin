@@ -1,6 +1,7 @@
 package types
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -27,13 +28,16 @@ func init() {
 }
 
 func TestGenesisDocFromFile(t *testing.T) {
-	genDoc, err := GenesisDocFromFile("./genesis.json")
+	ioutil.WriteFile("genesis.json", []byte(genesisFile), 0664)
+
+	genDoc, err := GenesisDocFromFile("../genesis.json")
 	require.NotNil(t, err)
 	require.Nil(t, genDoc)
 
-	genDoc, err = GenesisDocFromFile("../genesis.json")
+	genDoc, err = GenesisDocFromFile("./genesis.json")
 	require.NotNil(t, genDoc)
 	require.Nil(t, err)
+	os.Remove("./genesis.json")
 }
 
 func TestGenesisDocFromJSON(t *testing.T) {
