@@ -69,6 +69,30 @@ func init() {
 	log.SetLogLevel("info")
 	pubkey, _ = hex.DecodeString(strPubkey)
 }
+
+func TestPrint(t *testing.T) {
+	fmt.Println(printNodeIPs([]string{"127.0.0.1:35566", "192.168.0.1:8080"}))
+
+	var cands []*dty.Candidator
+	cand := &dty.Candidator{
+		Pubkey: pubkey,
+		Address: validatorAddr,
+		IP: "127.0.0.1",
+		Votes: 60,
+		Status: 0,
+	}
+
+	cands = append(cands, cand)
+	cand = &dty.Candidator{
+		Pubkey: pubkey,
+		Address: validatorAddr,
+		IP: "127.0.0.2",
+		Votes: 60,
+		Status: 0,
+	}
+	cands = append(cands, cand)
+	fmt.Println(printCandidators(cands))
+}
 func TestDposPerf(t *testing.T) {
 
 	os.Remove("genesis.json")
@@ -167,14 +191,61 @@ func DposPerf() {
 		Pubkey:     strPubkey,
 	}
 	dposClient.csState.SendCBTx(info)
-	sendCBTx(dposClient.csState, info)
-	time.Sleep(2 * time.Second)
+
+	time.Sleep(4 * time.Second)
+	fmt.Println("=======start verifyCB!=======")
+	if verifyCB(dposClient.csState, info) {
+		fmt.Println("Verify CB ok.")
+	} else {
+		fmt.Println("Verify CB failed.")
+	}
+
 	fmt.Println("=======start GetCBInfoByCircle!=======")
 	//first time, not hit
 	dposClient.csState.GetCBInfoByCircle(task.Cycle)
-
+	time.Sleep(1 * time.Second)
 	//second time, hit cache
 	dposClient.csState.GetCBInfoByCircle(task.Cycle)
+
+	fmt.Println("=======start VoteVerify!=======")
+	vote := generateVote(dposClient.csState)
+	if nil == vote {
+		fmt.Println("generateVote failed.")
+	} else {
+		fmt.Println("Vote:\n", vote.String())
+		if err := dposClient.csState.privValidator.SignVote(dposClient.csState.validatorMgr.ChainID, vote); err != nil {
+			fmt.Println("SignVote failed")
+		} else {
+			if dposClient.csState.VerifyVote(vote.DPosVote) {
+				fmt.Println("Verify Vote ok.")
+			} else {
+				fmt.Println("Verify Vote failed.")
+			}
+		}
+	}
+
+	fmt.Println("=======start NotifyVerify!=======")
+	block := dposClient.GetCurrentBlock()
+	notify := &ttypes.Notify{
+		DPosNotify: &ttypes.DPosNotify{
+			Vote:              dposClient.csState.currentVote,
+			HeightStop:        block.Height,
+			HashStop:          block.Hash(),
+			NotifyTimestamp:   now,
+			NotifyNodeAddress: dposClient.csState.privValidator.GetAddress(),
+			NotifyNodeIndex:   int32(dposClient.csState.privValidatorIndex),
+		},
+	}
+
+	if err := dposClient.csState.privValidator.SignNotify(dposClient.csState.validatorMgr.ChainID, notify); err != nil {
+		fmt.Println("SignNotify failed.")
+	} else {
+		if dposClient.csState.VerifyNotify(notify.DPosNotify) {
+			fmt.Println("Verify Notify ok.")
+		} else {
+			fmt.Println("Verify Notify failed.")
+		}
+	}
 
 	fmt.Println("=======start SendRegistVrfMTx!=======")
 
@@ -423,7 +494,7 @@ func NormPut() {
 }
 
 // SendCBTx method
-func sendCBTx(cs *ConsensusState, info *dty.DposCBInfo) bool {
+func verifyCB(cs *ConsensusState, info *dty.DposCBInfo) bool {
 	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	canonical := dty.CanonicalOnceCBInfo{
 		Cycle:      info.Cycle,
@@ -444,27 +515,8 @@ func sendCBTx(cs *ConsensusState, info *dty.DposCBInfo) bool {
 	}
 
 	info.Signature = hex.EncodeToString(sig.Bytes())
-	tx, err := cs.client.CreateRecordCBTx(info)
-	if err != nil {
-		dposlog.Error("CreateRecordCBTx failed.", "err", err)
-		return false
-	}
 
-	tx.Fee = fee
-	cs.privValidator.SignTx(tx)
-	dposlog.Info("Sign RecordCBTx ok.")
-
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		return false
-	}
-
-	return true
+	return cs.VerifyCBInfo(info)
 }
 
 func sendRegistVrfMTx(cs *ConsensusState, info *dty.DposVrfMRegist) bool {
