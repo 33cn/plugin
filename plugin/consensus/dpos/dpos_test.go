@@ -228,16 +228,16 @@ func DposPerf() {
 	block := dposClient.GetCurrentBlock()
 	notify := &ttypes.Notify{
 		DPosNotify: &ttypes.DPosNotify{
-			Vote:              &ttypes.VoteItem{
-									VotedNodeIndex: vote.VoteItem.VotedNodeIndex,
-									Cycle: vote.VoteItem.Cycle,
-									CycleStart: vote.VoteItem.CycleStart,
-									CycleStop: vote.VoteItem.CycleStop,
-									PeriodStart: vote.VoteItem.PeriodStart,
-									PeriodStop: vote.VoteItem.PeriodStop,
-									Height: vote.VoteItem.Height,
-									ShuffleType: vote.VoteItem.ShuffleType,
-								},
+			Vote: &ttypes.VoteItem{
+				VotedNodeIndex: vote.VoteItem.VotedNodeIndex,
+				Cycle:          vote.VoteItem.Cycle,
+				CycleStart:     vote.VoteItem.CycleStart,
+				CycleStop:      vote.VoteItem.CycleStop,
+				PeriodStart:    vote.VoteItem.PeriodStart,
+				PeriodStop:     vote.VoteItem.PeriodStop,
+				Height:         vote.VoteItem.Height,
+				ShuffleType:    vote.VoteItem.ShuffleType,
+			},
 			HeightStop:        block.Height,
 			HashStop:          block.Hash(),
 			NotifyTimestamp:   now,
