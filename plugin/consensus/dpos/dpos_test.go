@@ -170,7 +170,7 @@ func DposPerf() {
 	sendCBTx(dposClient.csState, info)
 	time.Sleep(2 * time.Second)
 	fmt.Println("=======start GetCBInfoByCircle!=======")
-    //first time, not hit
+	//first time, not hit
 	dposClient.csState.GetCBInfoByCircle(task.Cycle)
 
 	//second time, hit cache
