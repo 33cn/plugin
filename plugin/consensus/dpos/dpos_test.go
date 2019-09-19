@@ -228,18 +228,33 @@ func DposPerf() {
 	block := dposClient.GetCurrentBlock()
 	notify := &ttypes.Notify{
 		DPosNotify: &ttypes.DPosNotify{
-			Vote:              dposClient.csState.currentVote,
+			Vote:              &ttypes.VoteItem{
+									VotedNodeIndex: vote.VoteItem.VotedNodeIndex,
+									Cycle: vote.VoteItem.Cycle,
+									CycleStart: vote.VoteItem.CycleStart,
+									CycleStop: vote.VoteItem.CycleStop,
+									PeriodStart: vote.VoteItem.PeriodStart,
+									PeriodStop: vote.VoteItem.PeriodStop,
+									Height: vote.VoteItem.Height,
+									ShuffleType: vote.VoteItem.ShuffleType,
+								},
 			HeightStop:        block.Height,
 			HashStop:          block.Hash(),
 			NotifyTimestamp:   now,
-			NotifyNodeAddress: dposClient.csState.privValidator.GetAddress(),
-			NotifyNodeIndex:   int32(dposClient.csState.privValidatorIndex),
+			NotifyNodeAddress: vote.VoteItem.VotedNodeAddress,
+			NotifyNodeIndex:   int32(vote.VoteItem.VotedNodeIndex),
 		},
 	}
+
+	notify.DPosNotify.Vote.VotedNodeAddress = make([]byte, len(vote.VoteItem.VotedNodeAddress))
+	copy(notify.DPosNotify.Vote.VotedNodeAddress, vote.VoteItem.VotedNodeAddress)
+	notify.DPosNotify.Vote.VoteID = make([]byte, len(vote.VoteItem.VoteID))
+	copy(notify.DPosNotify.Vote.VoteID, vote.VoteItem.VoteID)
 
 	if err := dposClient.csState.privValidator.SignNotify(dposClient.csState.validatorMgr.ChainID, notify); err != nil {
 		fmt.Println("SignNotify failed.")
 	} else {
+		fmt.Println("Notify:\n", notify.String())
 		if dposClient.csState.VerifyNotify(notify.DPosNotify) {
 			fmt.Println("Verify Notify ok.")
 		} else {
