@@ -2,7 +2,6 @@ package dpos
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -463,7 +462,7 @@ func TestNode(t *testing.T) {
 	defer exec1.Close()
 	defer s1.Close()
 	defer q1.Close()
-	//defer cs1.Close()
+	defer cs1.Close()
 	defer p2p1.Close()
 
 	//defer chain2.Close()
@@ -518,13 +517,14 @@ func TestNode(t *testing.T) {
 
 	fmt.Println(q1.Name())
 	fmt.Println(cs1.(*Client).testFlag)
-	fmt.Println(cs1.(*Client).GetConsensusState() == nil)
+	fmt.Println(cs1.(*Client).GetConsensusState() != nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().String())
-	fmt.Println(cs1.(*Client).GetConsensusState().GetValidators() == nil)
+	fmt.Println(len(cs1.(*Client).GetConsensusState().GetValidators()) == 1)
+	cs1.(*Client).GetConsensusState().SetPrivValidator(cs1.(*Client).GetConsensusState().GetPrivValidator(), cs1.(*Client).GetConsensusState().privValidatorIndex)
 	fmt.Println(cs1.(*Client).GetConsensusState().GetValidatorMgr().ChainID)
-	fmt.Println(cs1.(*Client).GetConsensusState().GetPrivValidator().GetAddress() == nil)
+	fmt.Println(cs1.(*Client).GetConsensusState().GetPrivValidator().GetAddress() != nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().IsProposer())
-	fmt.Println(cs1.(*Client).PrivValidator().GetAddress() == nil)
+	fmt.Println(cs1.(*Client).PrivValidator().GetAddress() != nil)
 	fmt.Println(cs1.(*Client).GenesisDoc().ChainID)
 	fmt.Println("Validator index: ", cs1.(*Client).ValidatorIndex())
 
@@ -602,6 +602,7 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 	return q, chain, s, mem, exec, cs, network
 }
 
+/*
 func initEnvDpos2(configName string) (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	var q = queue.New("channel2")
 
@@ -639,3 +640,4 @@ func initEnvDpos2(configName string) (queue.Queue, *blockchain.BlockChain, queue
 
 	return q, chain, s, mem, exec, cs, network
 }
+*/
