@@ -75,20 +75,20 @@ func TestPrint(t *testing.T) {
 
 	var cands []*dty.Candidator
 	cand := &dty.Candidator{
-		Pubkey: pubkey,
+		Pubkey:  pubkey,
 		Address: validatorAddr,
-		IP: "127.0.0.1",
-		Votes: 60,
-		Status: 0,
+		IP:      "127.0.0.1",
+		Votes:   60,
+		Status:  0,
 	}
 
 	cands = append(cands, cand)
 	cand = &dty.Candidator{
-		Pubkey: pubkey,
+		Pubkey:  pubkey,
 		Address: validatorAddr,
-		IP: "127.0.0.2",
-		Votes: 60,
-		Status: 0,
+		IP:      "127.0.0.2",
+		Votes:   60,
+		Status:  0,
 	}
 	cands = append(cands, cand)
 	fmt.Println(printCandidators(cands))
