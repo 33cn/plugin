@@ -92,8 +92,7 @@ func DposPerf() {
 	defer q.Close()
 	defer cs.Close()
 	defer p2p.Close()
-	var err error
-	err = createConn2()
+	err := createConn2()
 	for err != nil {
 		err = createConn2()
 	}
@@ -171,6 +170,12 @@ func DposPerf() {
 	dposClient.csState.SendCBTx(info)
 	sendCBTx(dposClient.csState, info)
 	time.Sleep(2 * time.Second)
+	fmt.Println("=======start GetCBInfoByCircle!=======")
+    //first time, not hit
+	dposClient.csState.GetCBInfoByCircle(task.Cycle)
+
+	//second time, hit cache
+	dposClient.csState.GetCBInfoByCircle(task.Cycle)
 
 	fmt.Println("=======start SendRegistVrfMTx!=======")
 
@@ -240,6 +245,17 @@ func DposPerf() {
 	} else {
 		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M), "|", len(vrfInfo.R), "|", len(vrfInfo.P))
 	}
+
+	fmt.Println("=======start QueryVrfInfos!=======")
+	var pubkeys [][]byte
+	pubkeys = append(pubkeys, pubkey)
+	vrfInfos, err := dposClient.QueryVrfInfos(pubkeys, task.Cycle)
+	if err != nil || vrfInfos == nil {
+		fmt.Println("QueryVrf failed")
+	} else {
+		fmt.Println("QueryVrf ok,", vrfInfos[0].Cycle, "|", len(vrfInfos[0].M), "|", len(vrfInfos[0].R), "|", len(vrfInfos[0].P))
+	}
+
 	time.Sleep(2 * time.Second)
 	fmt.Println("=======start SendTopNRegistTx!=======")
 

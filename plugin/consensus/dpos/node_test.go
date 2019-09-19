@@ -140,7 +140,7 @@ timeoutVoting=3000
 timeoutWaitNotify=2000
 createEmptyBlocks=false
 createEmptyBlocksInterval=0
-validatorNodes=["127.0.0.1:36657"]
+validatorNodes=["127.0.0.1:36656"]
 delegateNum=1
 blockInterval=2
 continueBlockNum=12
@@ -403,7 +403,7 @@ func Init() {
 func TestParallel(t *testing.T) {
 	Parallel(func() {
 		mutx.Lock()
-		sum += 1
+		sum ++
 		mutx.Unlock()
 	},
 		func() {
@@ -455,7 +455,7 @@ func TestNode(t *testing.T) {
 	fmt.Println("=======start TestNode!=======")
 	Init()
 	q1, chain1, s1, mem1, exec1, cs1, p2p1 := initEnvDpos1("chain33.test1.toml")
-	q2, chain2, s2, mem2, exec2, cs2, p2p2 := initEnvDpos2("chain33.test2.toml")
+	//q2, chain2, s2, mem2, exec2, cs2, p2p2 := initEnvDpos2("chain33.test2.toml")
 
 	defer clearTestData1()
 	defer chain1.Close()
@@ -466,13 +466,13 @@ func TestNode(t *testing.T) {
 	//defer cs1.Close()
 	defer p2p1.Close()
 
-	defer chain2.Close()
-	defer mem2.Close()
-	defer exec2.Close()
-	defer s2.Close()
-	defer q2.Close()
+	//defer chain2.Close()
+	//defer mem2.Close()
+	//defer exec2.Close()
+	//defer s2.Close()
+	//defer q2.Close()
 	//defer cs2.Close()
-	defer p2p2.Close()
+	//defer p2p2.Close()
 
 	time.Sleep(2 * time.Second)
 
@@ -481,10 +481,10 @@ func TestNode(t *testing.T) {
 		_, _, err = createConn("127.0.0.1:8802")
 	}
 
-	_, _, err = createConn("127.0.0.1:8804")
-	for err != nil {
-		_, _, err = createConn("127.0.0.1:8804")
-	}
+	//_, _, err = createConn("127.0.0.1:8804")
+	//for err != nil {
+	//	_, _, err = createConn("127.0.0.1:8804")
+	//}
 
 	fmt.Println("node1 ip:", cs1.(*Client).GetNode().IP)
 	fmt.Println("node1 id:", cs1.(*Client).GetNode().ID)
@@ -499,6 +499,19 @@ func TestNode(t *testing.T) {
 	}
 
 	require.Nil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+	cs1.(*Client).GetNode().Version = "0.1"
+	require.NotNil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+	cs1.(*Client).GetNode().Version = nodeinfo.Version
+	nodeinfo.Version = "0.1"
+	require.NotNil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+	nodeinfo.Version = "1.1.0"
+	require.NotNil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+	nodeinfo.Version = "0.0.0"
+	require.Nil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+	nodeinfo.Version = cs1.(*Client).GetNode().Version
+	nodeinfo.Network = "chain33-Z2cgFi"
+	require.NotNil(t, cs1.(*Client).GetNode().CompatibleWith(nodeinfo))
+
 	fmt.Println("TestNodeCompatibleWith ok")
 
 	//time.Sleep(2 * time.Second)
@@ -530,15 +543,6 @@ func TestNode(t *testing.T) {
 		//cs1.(*Client).GetNode().Stop()
 	} else {
 		fmt.Println("======= cs1 is not running=======")
-	}
-
-	//cs2.(*Client).StopC()
-	if cs2.(*Client).GetNode().IsRunning() {
-		fmt.Println("=======cs2 is running=======")
-		//cs2.(*Client).GetConsensusState().Stop()
-		//cs2.(*Client).GetNode().Stop()
-	} else {
-		fmt.Println("======= cs2 is not running=======")
 	}
 
 	fmt.Println("=======testNode ok=======")
