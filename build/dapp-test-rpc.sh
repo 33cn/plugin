@@ -22,4 +22,4 @@ function dapp_test_rpc() {
     echo "============ # dapp rpc test end ============="
 }
 
-dapp_test_rpc $1
+dapp_test_rpc "$1"
