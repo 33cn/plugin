@@ -520,7 +520,7 @@ func TestNode(t *testing.T) {
 	fmt.Println(cs1.(*Client).testFlag)
 	fmt.Println(cs1.(*Client).GetConsensusState() == nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().String())
-	fmt.Println(cs1.(*Client).GetConsensusState().GetValidators()==nil)
+	fmt.Println(cs1.(*Client).GetConsensusState().GetValidators() == nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().GetValidatorMgr().ChainID)
 	fmt.Println(cs1.(*Client).GetConsensusState().GetPrivValidator().GetAddress() == nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().IsProposer())

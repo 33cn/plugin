@@ -76,7 +76,6 @@ func TestDposPerf(t *testing.T) {
 	ioutil.WriteFile("genesis.json", []byte(localGenesis), 0664)
 	ioutil.WriteFile("priv_validator.json", []byte(localPriv), 0664)
 
-
 	DposPerf()
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
