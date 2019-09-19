@@ -8,12 +8,9 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-CHAIN33=github.com/33cn/chain33
-CHAIN33_VERSION=$(shell nl go.mod |grep "github.com/33cn/chain33" |awk '{print $$3}')
-GO_PATH=$(shell go env GOPATH)
-export CHAIN33_PATH=${GO_PATH}/pkg/mod/github.com/33cn/chain33@${CHAIN33_VERSION}
-export PLUGIN_PATH=${GO_PATH}/src/github.com/33cn/plugin
-BUILD_FLAGS = -ldflags "-X ${CHAIN33_PATH}/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
+export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+export PLUGIN_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/plugin)
+BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
 PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
@@ -64,11 +61,11 @@ autotest_tick: autotest ## run with ticket mining
 	&& cd build/autotest &&chmod -R 755 gitlabci && chmod 755 *.sh  && bash ./copy-autotest.sh gitlabci \
 	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
 
-update:
+update: ## version 可以是git tag打的具体版本号,也可以是commit hash, 什么都不填的情况下默认从master分支拉取最新版本
 	@if [ -n "$(version)" ]; then   \
-	sed -i 's/github.com\/33cn\/chain33 .*/github.com\/33cn\/chain33 ${version}/g' go.mod ; \
+	go get github.com/33cn/chain33@${version}  ; \
 	else \
-	sed -i 's/github.com\/33cn\/chain33 .*/github.com\/33cn\/chain33 latest/g' go.mod ;fi
+	go get github.com/33cn/chain33@master ;fi
 	@go mod tidy
 dep:
 	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1

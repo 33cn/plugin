@@ -53,7 +53,7 @@ func (c *Retrieve) ExecDelLocal_Backup(backup *rt.BackupRetrieve, tx *types.Tran
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecDelLocal_Backup")
 
-	info := rt.RetrieveQuery{BackupAddress: backup.BackupAddress, DefaultAddress: backup.DefaultAddress, DelayPeriod: backup.DelayPeriod, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveBackup}
+	info := createRetrieve(backup.BackupAddress, backup.DefaultAddress, retrieveBackup)
 	kv, err := DelRetrieveInfo(&info, retrieveBackup, c.GetLocalDB())
 	if err != nil {
 		return set, nil
@@ -71,7 +71,7 @@ func (c *Retrieve) ExecDelLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Trans
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecDelLocal_Prepare")
 
-	info := rt.RetrieveQuery{BackupAddress: pre.BackupAddress, DefaultAddress: pre.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: c.GetBlockTime(), RemainTime: zeroRemainTime, Status: retrievePrepare}
+	info := createRetrieve(pre.BackupAddress, pre.DefaultAddress, retrievePrepare)
 	kv, err := DelRetrieveInfo(&info, retrievePrepare, c.GetLocalDB())
 	if err != nil {
 		return set, nil
@@ -89,10 +89,21 @@ func (c *Retrieve) ExecDelLocal_Perform(perf *rt.PerformRetrieve, tx *types.Tran
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecDelLocal_Perform")
 
-	info := rt.RetrieveQuery{BackupAddress: perf.BackupAddress, DefaultAddress: perf.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrievePerform}
+	info := createRetrieve(perf.BackupAddress, perf.DefaultAddress, retrievePerform)
 	kv, err := DelRetrieveInfo(&info, retrievePerform, c.GetLocalDB())
 	if err != nil {
 		return set, nil
+	}
+
+	if types.IsDappFork(c.GetHeight(), rt.RetrieveX, rt.ForkRetriveAssetX) {
+		if len(perf.Assets) == 0 {
+			perf.Assets = append(perf.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		}
+	}
+	for _, asset := range perf.Assets {
+		kv := &types.KeyValue{Key: calcRetrieveAssetKey(info.BackupAddress, info.DefaultAddress, asset.Exec, asset.Symbol), Value: nil}
+		c.GetLocalDB().Set(kv.Key, kv.Value)
+		set.KV = append(set.KV, kv)
 	}
 
 	if kv != nil {
@@ -107,7 +118,7 @@ func (c *Retrieve) ExecDelLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Tran
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecDelLocal_Cancel")
 
-	info := rt.RetrieveQuery{BackupAddress: cancel.BackupAddress, DefaultAddress: cancel.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveCancel}
+	info := createRetrieve(cancel.BackupAddress, cancel.DefaultAddress, retrieveCancel)
 	kv, err := DelRetrieveInfo(&info, retrieveCancel, c.GetLocalDB())
 	if err != nil {
 		return set, nil

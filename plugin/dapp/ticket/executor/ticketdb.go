@@ -37,7 +37,7 @@ type DB struct {
 //GetRealPrice 获取真实的价格
 func (t *DB) GetRealPrice() int64 {
 	if t.GetPrice() == 0 {
-		cfg := types.GetP(types.GetFork("ForkChainParamV1"))
+		cfg := ty.GetTicketMinerParam(types.GetFork("ForkChainParamV1"))
 		return cfg.TicketPrice
 	}
 	return t.GetPrice()
@@ -142,7 +142,7 @@ func (action *Action) GenesisInit(genesis *ty.TicketGenesis) (*types.Receipt, er
 	prefix = genesis.MinerAddress + ":" + prefix + ":"
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < int(genesis.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
 		t := NewDB(id, genesis.MinerAddress, genesis.ReturnAddress, action.blocktime, action.height, cfg.TicketPrice, true)
@@ -240,7 +240,7 @@ func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 		}
 	}
 	//action.fromaddr == topen.ReturnAddress or mineraddr == action.fromaddr
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < int(topen.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
 		//add pubHash
@@ -303,7 +303,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	if ticket.Status != 1 {
 		return nil, types.ErrCoinBaseTicketStatus
 	}
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	if !ticket.IsGenesis {
 		if action.blocktime-ticket.GetCreateTime() < cfg.TicketFrozenTime {
 			return nil, ty.ErrTime
@@ -340,11 +340,23 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 		return nil, err
 	}
 	//fund
-	receipt2, err := action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-	if err != nil {
-		tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr)
-		return nil, err
+	var receipt2 *types.Receipt
+	if types.IsFork(action.height, "ForkTicketFundAddrV1") {
+		// issue coins to exec addr
+		addr := types.MGStr("mver.consensus.fundKeyAddr", action.height)
+		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
+			return nil, err
+		}
+	} else {
+		receipt2, err = action.coinsAccount.ExecDepositFrozen(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+		if err != nil {
+			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "error", err)
+			return nil, err
+		}
 	}
+
 	t.Save(action.db)
 	logs = append(logs, t.GetReceiptLog())
 	kv = append(kv, t.GetKVSet()...)
@@ -358,7 +370,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 // TicketClose close tick
 func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error) {
 	tickets := make([]*DB, len(tclose.TicketId))
-	cfg := types.GetP(action.height)
+	cfg := ty.GetTicketMinerParam(action.height)
 	for i := 0; i < len(tclose.TicketId); i++ {
 		ticket, err := readTicket(action.db, tclose.TicketId[i])
 		if err != nil {
@@ -409,13 +421,15 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 		kv = append(kv, receipt1.KV...)
 		//如果ticket 已经挖矿成功了，那么要解冻发展基金部分币
 		if t.prevstatus == 2 {
-			receipt2, err := action.coinsAccount.ExecActive(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-			if err != nil {
-				tlog.Error("TicketClose.ExecActive fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)
-				return nil, err
+			if !types.IsFork(action.height, "ForkTicketFundAddrV1") {
+				receipt2, err := action.coinsAccount.ExecActive(types.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+				if err != nil {
+					tlog.Error("TicketClose.ExecActive fund", "addr", types.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)
+					return nil, err
+				}
+				logs = append(logs, receipt2.Logs...)
+				kv = append(kv, receipt2.KV...)
 			}
-			logs = append(logs, receipt2.Logs...)
-			kv = append(kv, receipt2.KV...)
 		}
 		t.Save(action.db)
 	}

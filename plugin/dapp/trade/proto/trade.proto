@@ -34,6 +34,9 @@ message TradeForSell {
     bool  crowdfund = 8;
     // 资产来源
     string assetExec = 9;
+    // 定价资产
+    string priceExec = 10;
+    string priceSymbol = 11;
 }
 
 // 购买者发起交易用来购买token持有者之前挂单出售的token
@@ -56,6 +59,9 @@ message TradeForBuyLimit {
     int64  pricePerBoardlot  = 4;
     int64  totalBoardlot     = 5;
     string assetExec         = 6;
+    // 定价资产
+    string priceExec = 7;
+    string priceSymbol = 8;
 }
 
 // 现价卖单
@@ -89,6 +95,8 @@ message SellOrder {
     int32  status    = 12;
     int64  height    = 13;
     string assetExec = 14;
+    string priceExec = 15;
+    string priceSymbol = 16;
 }
 
 // 限价买单数据库记录
@@ -104,6 +112,8 @@ message BuyLimitOrder {
     int32  status            = 9;
     int64  height            = 10;
     string assetExec         = 11;
+    string priceExec = 12;
+    string priceSymbol = 13;
 }
 
 // 执行器日志部分
@@ -121,6 +131,8 @@ message ReceiptBuyBase {
     string txHash            = 11;
     int64  height            = 12;
     string assetExec         = 13;
+    string priceExec = 14;
+    string priceSymbol = 15;
 }
 
 message ReceiptSellBase {
@@ -145,6 +157,8 @@ message ReceiptSellBase {
     string txHash    = 14;
     int64  height    = 15;
     string assetExec = 16;
+    string priceExec = 17;
+    string priceSymbol = 18;
 }
 
 message ReceiptTradeBuyMarket {
@@ -263,6 +277,8 @@ message ReplyTradeOrder {
     int64  blockTime         = 14;
     bool   isSellOrder       = 15;
     string assetExec         = 16;
+    string priceExec = 17;
+    string priceSymbol = 18;
 }
 
 message ReplyTradeOrders {
@@ -303,6 +319,8 @@ message LocalOrder {
     string assetExec         = 16;
     string txIndex           = 17;
     bool   isFinished        = 18;
+    string priceExec = 19;
+    string priceSymbol = 20;
 }
 
 service trade {

@@ -59,7 +59,7 @@ dep = ["tokenFinish", "btyToTrade"]
 #token sell case
 [[SellCase]]
 id = "tokenSell1"
-command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 10 -s TS -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 10 -s TS -e token --price_exec coins --price_symbol bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 amount = "10"
 checkItem = ["balance", "frozen"]
@@ -68,7 +68,7 @@ dep = ["tokenToTrade"]
 
 [[SellCase]]
 id = "tokenSell2"
-command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 1 -s TS -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 1 -s TS  -e token --price_exec coins --price_symbol bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 amount = "1"
 checkItem = ["balance", "frozen"]
@@ -77,7 +77,7 @@ dep = ["tokenToTrade"]
 
 [[SellCase]]
 id = "tokenSell3"
-command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 10 -s TS -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 10 -s TS  -e token --price_exec coins --price_symbol bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 amount = "10"
 checkItem = ["balance", "frozen"]
@@ -87,7 +87,7 @@ dep = ["tokenToTrade"]
 #no balance
 [[SellCase]]
 id = "failSell"
-command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 100 -s TS -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send trade sell -f 0.01 -m 100 -p 0.01 -t 100 -s TS  -e token --price_exec coins --price_symbol bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 amount = "100"
 checkItem = ["balance", "frozen"]

@@ -33,7 +33,7 @@ message ProposalChange {
     int32 day   = 3;
 
     // 修改董事会成员
-    repeated Change Changes  = 4;
+    repeated Change changes  = 4;
 
 	// 投票相关
     int64 startBlockHeight   = 5; // 提案开始投票高度

@@ -32,7 +32,7 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 	if err != nil {
 		return nil, err
 	}
-	if in.Amount%types.GetP(header.Height).TicketPrice != 0 || in.Amount < 0 {
+	if in.Amount%ty.GetTicketMinerParam(header.Height).TicketPrice != 0 || in.Amount < 0 {
 		return nil, types.ErrAmount
 	}
 	err = address.CheckAddress(in.BindAddr)

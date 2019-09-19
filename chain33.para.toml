@@ -80,18 +80,14 @@ minerExecs=["paracross"]    #配置挖矿合约
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+powLimitBits = "0x1f00ffff"
+maxTxNumber = 1600
+
+
+[mver.consensus.paracross]
 coinReward = 18
 coinDevFund = 12
-ticketPrice = 10000
-powLimitBits = "0x1f00ffff"
-retargetAdjustmentFactor = 4
-futureBlockTime = 16
-ticketFrozenTime = 5    #5s only for test
-ticketWithdrawTime = 10 #10s only for test
-ticketMinerWaitTime = 2 #2s only for test
-maxTxNumber = 1600      #160
-targetTimespan = 2304
-targetTimePerBlock = 16
+
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
@@ -211,6 +207,7 @@ ForkBase58AddressCheck=0
 #平行链上使能平行链执行器如user.p.x.coins执行器的注册，缺省为0，对已有的平行链需要设置一个fork高度
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
+ForkTicketFundAddrV1=-1 #fork6.3
 
 [fork.sub.coins]
 Enable=0
@@ -223,6 +220,7 @@ ForkTicketVrf =0
 [fork.sub.retrieve]
 Enable=0
 ForkRetrive=0
+ForkRetriveAsset=0
 
 [fork.sub.hashlock]
 Enable=0
@@ -246,6 +244,7 @@ ForkTradeBuyLimit= 0
 ForkTradeAsset= 0
 ForkTradeID = 0
 ForkTradeFixAssetDB = 0
+ForkTradePrice = 0
 
 [fork.sub.paracross]
 Enable=0
@@ -300,6 +299,9 @@ ForkTerminatePart=0
 ForkUnfreezeIDX= 0
 
 [fork.sub.autonomy]
+Enable=0
+
+[fork.sub.jsvm]
 Enable=0
 
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同

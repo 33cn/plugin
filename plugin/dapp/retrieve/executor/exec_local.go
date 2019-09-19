@@ -10,6 +10,10 @@ import (
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
+func createRetrieve(backupAddress, defaultAddress string, status int32) rt.RetrieveQuery {
+	return rt.RetrieveQuery{BackupAddress: backupAddress, DefaultAddress: defaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: status}
+}
+
 // SaveRetrieveInfo local
 func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types.KeyValue, error) {
 	rlog.Debug("Retrieve SaveRetrieveInfo", "backupaddr", info.BackupAddress, "defaddr", info.DefaultAddress)
@@ -55,7 +59,8 @@ func SaveRetrieveInfo(info *rt.RetrieveQuery, Status int64, db dbm.KVDB) (*types
 func (c *Retrieve) ExecLocal_Backup(backup *rt.BackupRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecLocal_Backup")
-	info := rt.RetrieveQuery{BackupAddress: backup.BackupAddress, DefaultAddress: backup.DefaultAddress, DelayPeriod: backup.DelayPeriod, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveBackup}
+	info := createRetrieve(backup.BackupAddress, backup.DefaultAddress, retrieveBackup)
+	info.DelayPeriod = backup.DelayPeriod
 	kv, err := SaveRetrieveInfo(&info, retrieveBackup, c.GetLocalDB())
 	if err != nil {
 		return set, nil
@@ -73,7 +78,8 @@ func (c *Retrieve) ExecLocal_Prepare(pre *rt.PrepareRetrieve, tx *types.Transact
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecLocal_Prepare")
 
-	info := rt.RetrieveQuery{BackupAddress: pre.BackupAddress, DefaultAddress: pre.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrievePrepare}
+	info := createRetrieve(pre.BackupAddress, pre.DefaultAddress, retrievePrepare)
+	info.PrepareTime = c.GetBlockTime()
 	kv, err := SaveRetrieveInfo(&info, retrievePrepare, c.GetLocalDB())
 	if err != nil {
 		return set, nil
@@ -91,10 +97,21 @@ func (c *Retrieve) ExecLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transac
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecLocal_Perf")
 
-	info := rt.RetrieveQuery{BackupAddress: perf.BackupAddress, DefaultAddress: perf.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrievePerform}
+	info := createRetrieve(perf.BackupAddress, perf.DefaultAddress, retrievePerform)
 	kv, err := SaveRetrieveInfo(&info, retrievePerform, c.GetLocalDB())
 	if err != nil {
 		return set, nil
+	}
+	if types.IsDappFork(c.GetHeight(), rt.RetrieveX, rt.ForkRetriveAssetX) {
+		if len(perf.Assets) == 0 {
+			perf.Assets = append(perf.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		}
+	}
+	for _, asset := range perf.Assets {
+		value := types.Encode(&info)
+		kv := &types.KeyValue{Key: calcRetrieveAssetKey(info.BackupAddress, info.DefaultAddress, asset.Exec, asset.Symbol), Value: value}
+		c.GetLocalDB().Set(kv.Key, kv.Value)
+		set.KV = append(set.KV, kv)
 	}
 
 	if kv != nil {
@@ -109,7 +126,7 @@ func (c *Retrieve) ExecLocal_Cancel(cancel *rt.CancelRetrieve, tx *types.Transac
 	set := &types.LocalDBSet{}
 	rlog.Debug("Retrieve ExecLocal_Cancel")
 
-	info := rt.RetrieveQuery{BackupAddress: cancel.BackupAddress, DefaultAddress: cancel.DefaultAddress, DelayPeriod: zeroDelay, PrepareTime: zeroPrepareTime, RemainTime: zeroRemainTime, Status: retrieveCancel}
+	info := createRetrieve(cancel.BackupAddress, cancel.DefaultAddress, retrieveCancel)
 	kv, err := SaveRetrieveInfo(&info, retrieveCancel, c.GetLocalDB())
 	if err != nil {
 		return set, nil

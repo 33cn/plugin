@@ -13,14 +13,16 @@ message AutonomyProposalBoard {
     ProposalBoard  propBoard  = 1;
     // 投票该提案的规则
     RuleConfig     curRule    = 2;
+    // 投票董事会
+    ActiveBoard    board      = 3;
     // 全体持票人投票结果
-    VoteResult     voteResult = 3;
+    VoteResult     voteResult = 4;
     // 状态
-    int32          status     = 4;
-    string         address    = 5;
-    int64          height     = 6;
-    int32          index      = 7;
-    string         proposalID = 8;
+    int32          status     = 5;
+    string         address    = 6;
+    int64          height     = 7;
+    int32          index      = 8;
+    string         proposalID = 9;
 }
 
 // action
@@ -30,13 +32,15 @@ message ProposalBoard {
     int32 month = 2;
     int32 day   = 3;
 
+    // 是否更新
+    bool update = 4;
     // 提案董事会成员
-    repeated string boards = 4;
+    repeated string boards = 5;
 
 	// 投票相关
-    int64 startBlockHeight   = 5; // 提案开始投票高度
-	int64 endBlockHeight     = 6; // 提案结束投票高度
-    int64 realEndBlockHeight = 7; // 实际提案结束投票高度
+    int64 startBlockHeight   = 6; // 提案开始投票高度
+	int64 endBlockHeight     = 7; // 提案结束投票高度
+    int64 realEndBlockHeight = 8; // 实际提案结束投票高度
 }
 
 message RevokeProposalBoard {

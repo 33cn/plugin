@@ -86,37 +86,47 @@ name="ticket"
 minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+minerExecs=["ticket", "autonomy"]
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+powLimitBits="0x1f00ffff"
+maxTxNumber = 1600      #160
+
+[mver.consensus.ForkChainParamV1]
+maxTxNumber = 1500
+
+[mver.consensus.ForkTicketFundAddrV1]
+fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
+
+[mver.consensus.ticket]
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
-powLimitBits="0x1f00ffff"
 retargetAdjustmentFactor = 4
 futureBlockTime = 16
 ticketFrozenTime = 5    #5s only for test
 ticketWithdrawTime = 10 #10s only for test
 ticketMinerWaitTime = 2 #2s only for test
-maxTxNumber = 1600      #160
 targetTimespan = 2304
 targetTimePerBlock=16
 
-[mver.consensus.ForkChainParamV1]
+[mver.consensus.ticket.ForkChainParamV1]
 futureBlockTime = 15
 ticketFrozenTime = 43200
 ticketWithdrawTime = 172800
 ticketMinerWaitTime = 7200
-maxTxNumber = 1500
 targetTimespan = 2160
 targetTimePerBlock = 15
 
-[mver.consensus.ForkChainParamV2]
+[mver.consensus.ticket.ForkChainParamV2]
 coinReward = 5
 coinDevFund = 3
 targetTimespan = 720
 targetTimePerBlock = 5
 ticketPrice = 3000
+
+
 
 [consensus.sub.ticket]
 genesisBlockTime=1514533394
@@ -226,4 +236,3 @@ paraConsensusStopBlocks=30000
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
-
