@@ -348,7 +348,7 @@ function main() {
     fi
 
     if [ -n "$CASE_ERR" ]; then
-        echo "paracross there some case error"
+        echo "paracross there some case errors"
         exit 1
     fi
 }
