@@ -27,18 +27,6 @@ function echo_rst() {
     fi
 }
 
-function chain33_ImportPrivkey() {
-    local pri=$2
-    local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"admin"}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$1")
-    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="admin") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-}
-
 function Chain33_SendToAddress() {
     local from="$1"
     local to="$2"
@@ -294,8 +282,10 @@ function init() {
         chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
     fi
 
-    Chain33_SendToAddress "$ACCOUNT_A" "$from" 11000000000
     from="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+    Chain33_SendToAddress "$ACCOUNT_A" "$from" 11000000000
+    block_wait 2
+
     local evm_addr=""
     if [ "$ispara" == "true" ]; then
         evm_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.evm"}]}' ${MAIN_HTTP} | jq -r ".result")
