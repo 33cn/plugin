@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
@@ -23,18 +26,6 @@ function echo_rst() {
         echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="FAIL"
     fi
-}
-
-function chain33_ImportPrivkey() {
-    local pri=$2
-    local acc=$3
-    local req='"method":"Chain33.ImportPrivkey", "params":[{"privkey":"'"$pri"'", "label":"tokenAddr"}]'
-    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "$1")
-    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.label=="tokenAddr") and (.result.acc.addr == "'"$acc"'")' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
 }
 
 function Chain33_SendToAddress() {
@@ -113,12 +104,37 @@ function queryTransaction() {
 function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
-    chain33_ImportPrivkey "${MAIN_HTTP}" "${superManager}" "${tokenAddr}"
+    chain33_ImportPrivkey "${superManager}" "${tokenAddr}" "tokenAddr" "${MAIN_HTTP}"
+
+    local main_ip=${MAIN_HTTP//8901/8801}
+    #main chain import pri key
+    #1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq
+    chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "${main_ip}"
+
+    local ACCOUNT_A="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "$para_ip"
+
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
+    fi
+    Chain33_SendToAddress "$ACCOUNT_A" "$recvAddr" 11000000000
+    block_wait 2
 
     if [ "$ispara" == true ]; then
         execName="user.p.para.token"
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.token"}]}' ${MAIN_HTTP} | jq -r ".result")
-        Chain33_SendToAddress "$recvAddr" "$tokenAddr" 100000000000
+        Chain33_SendToAddress "$recvAddr" "$tokenAddr" 10000000000
         block_wait 2
         Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
         block_wait 2
