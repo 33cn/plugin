@@ -165,7 +165,7 @@ function run_testcases() {
     ticket_MinerAddress "${returnAddr2}" "${minerAddr2}"
     ticket_MinerSourceList "${minerAddr2}" "${returnAddr2}"
     #关闭
-    ticket_CloseTickets "${minerAddr2}"
+    #ticket_CloseTickets "${minerAddr2}"
 
     chain33_LastBlockhash "${MAIN_HTTP}"
     ticket_RandNumHash "${LAST_BLOCK_HASH}" 5
