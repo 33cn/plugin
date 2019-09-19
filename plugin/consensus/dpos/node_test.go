@@ -402,7 +402,7 @@ func Init() {
 func TestParallel(t *testing.T) {
 	Parallel(func() {
 		mutx.Lock()
-		sum ++
+		sum++
 		mutx.Unlock()
 	},
 		func() {
