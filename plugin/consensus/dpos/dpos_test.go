@@ -12,6 +12,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
@@ -69,12 +70,20 @@ func init() {
 	pubkey, _ = hex.DecodeString(strPubkey)
 }
 func TestDposPerf(t *testing.T) {
-	//DposPerf()
+
+	os.Remove("genesis.json")
+	os.Remove("priv_validator.json")
+	ioutil.WriteFile("genesis.json", []byte(localGenesis), 0664)
+	ioutil.WriteFile("priv_validator.json", []byte(localPriv), 0664)
+
+
+	DposPerf()
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
 
 func DposPerf() {
+	fmt.Println("=======start dpos test!=======")
 	q, chain, s, mem, exec, cs, p2p := initEnvDpos()
 	defer chain.Close()
 	defer mem.Close()
@@ -84,15 +93,19 @@ func DposPerf() {
 	defer cs.Close()
 	defer p2p.Close()
 	var err error
-	conn, c, err = createConn("127.0.0.1:8802")
+	err = createConn2()
 	for err != nil {
-		conn, c, err = createConn("127.0.0.1:8802")
+		err = createConn2()
 	}
 	time.Sleep(10 * time.Second)
+	fmt.Println("=======start NormPut!=======")
+
 	for i := 0; i < loopCount; i++ {
 		NormPut()
 		time.Sleep(time.Second)
 	}
+
+	fmt.Println("=======start sendTransferTx sendTransferToExecTx!=======")
 	//从创世地址向测试地址转入代币
 	sendTransferTx(genesisKey, validatorAddr, 2000000000000)
 	time.Sleep(3 * time.Second)
@@ -109,6 +122,8 @@ func DposPerf() {
 
 	time.Sleep(3 * time.Second)
 
+	fmt.Println("=======start GetBalance!=======")
+
 	in2 := &types.ReqBalance{}
 	in2.Addresses = append(in2.Addresses, validatorAddr)
 	acct, err = c.GetBalance(context.Background(), in2)
@@ -118,9 +133,13 @@ func DposPerf() {
 		fmt.Println(validatorAddr, " balance:", acct.Acc[0].Balance, "frozen:", acct.Acc[0].Frozen)
 	}
 
+	fmt.Println("=======start sendRegistCandidatorTx!=======")
+
 	sendRegistCandidatorTx(strPubkey, validatorAddr, "127.0.0.1", validatorKey)
 
 	time.Sleep(3 * time.Second)
+
+	fmt.Println("=======start query many things!=======")
 
 	now := time.Now().Unix()
 	task := DecideTaskByTime(now)
@@ -141,6 +160,8 @@ func DposPerf() {
 	dposClient.QueryTopNCandidators(1)
 
 	time.Sleep(1 * time.Second)
+	fmt.Println("=======start SendCBTx!=======")
+
 	info := &dty.DposCBInfo{
 		Cycle:      task.Cycle,
 		StopHeight: dposClient.GetCurrentHeight(),
@@ -150,6 +171,8 @@ func DposPerf() {
 	dposClient.csState.SendCBTx(info)
 	sendCBTx(dposClient.csState, info)
 	time.Sleep(2 * time.Second)
+
+	fmt.Println("=======start SendRegistVrfMTx!=======")
 
 	for {
 		now = time.Now().Unix()
@@ -174,6 +197,8 @@ func DposPerf() {
 
 	time.Sleep(2 * time.Second)
 
+	fmt.Println("=======start QueryVrf!=======")
+
 	vrfInfo, err := dposClient.csState.QueryVrf(pubkey, task.Cycle)
 	if err != nil || vrfInfo == nil {
 		fmt.Println("QueryVrf failed")
@@ -189,6 +214,9 @@ func DposPerf() {
 		}
 		time.Sleep(1 * time.Second)
 	}
+
+	fmt.Println("=======start SendRegistVrfRPTx!=======")
+
 	vrfRP := &dty.DposVrfRPRegist{
 		Pubkey: strPubkey,
 		Cycle:  task.Cycle,
@@ -204,6 +232,7 @@ func DposPerf() {
 	sendRegistVrfRPTx(dposClient.csState, vrfRP)
 
 	time.Sleep(2 * time.Second)
+	fmt.Println("=======start QueryVrf2!=======")
 
 	vrfInfo, err = dposClient.csState.QueryVrf(pubkey, task.Cycle)
 	if err != nil || vrfInfo == nil {
@@ -212,6 +241,7 @@ func DposPerf() {
 		fmt.Println("QueryVrf ok,", vrfInfo.Cycle, "|", len(vrfInfo.M), "|", len(vrfInfo.R), "|", len(vrfInfo.P))
 	}
 	time.Sleep(2 * time.Second)
+	fmt.Println("=======start SendTopNRegistTx!=======")
 
 	var cands []*dty.Candidator
 	cand := &dty.Candidator{
@@ -240,6 +270,7 @@ func DposPerf() {
 	//sendTopNRegistTx(dposClient.csState, reg)
 
 	time.Sleep(2 * time.Second)
+	fmt.Println("=======start QueryTopNCandidators!=======")
 
 	dposClient.QueryTopNCandidators(dposClient.GetCurrentHeight() / blockNumToUpdateDelegate)
 
@@ -287,6 +318,20 @@ func createConn(url string) (*grpc.ClientConn, types.Chain33Client, error) {
 	c1 := types.NewChain33Client(conn)
 	//r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	return conn1, c1, nil
+}
+
+func createConn2() error {
+	var err error
+	url := "127.0.0.1:8802"
+	fmt.Println("grpc url:", url)
+	conn, err = grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return err
+	}
+	c = types.NewChain33Client(conn)
+	//r = rand.New(rand.NewSource(types.Now().UnixNano()))
+	return nil
 }
 
 func generateKey(i, valI int) string {
@@ -343,6 +388,8 @@ func clearTestData() {
 	if err != nil {
 		fmt.Println("delete datadir have a err:", err.Error())
 	}
+	os.Remove("genesis.json")
+	os.Remove("priv_validator.json")
 	fmt.Println("test data clear successfully!")
 }
 

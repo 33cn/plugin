@@ -28,6 +28,9 @@ func init() {
 }
 
 func TestGenesisDocFromFile(t *testing.T) {
+	os.Remove("./genesis.json")
+	os.Remove("../genesis.json")
+
 	ioutil.WriteFile("genesis.json", []byte(genesisFile), 0664)
 
 	genDoc, err := GenesisDocFromFile("../genesis.json")
