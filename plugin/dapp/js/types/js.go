@@ -57,6 +57,7 @@ var (
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(JsX))
 	types.RegistorExecutor(JsX, NewType())
+	types.RegisterDappFork(JsX, "Enable", 0)
 }
 
 //JsType 类型
