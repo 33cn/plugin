@@ -128,8 +128,8 @@ init() {
         chain33_QueryBalance "${pokerbull2}" "$main_ip"
         local para_ip="${MAIN_HTTP}"
         #para chain import pri key
-        chain33_ImportPrivkey "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" "14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4" "pokerbull1"  "$para_ip"
-        chain33_ImportPrivkey "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" "1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1" "pokerbull2"  "$para_ip"
+        chain33_ImportPrivkey "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" "14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4" "pokerbull1" "$para_ip"
+        chain33_ImportPrivkey "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" "1MuVM87DLigWhJxLJKvghTa1po4ZdWtDv1" "pokerbull2" "$para_ip"
 
         chain33_applyCoins "$pokerbull1" 12000000000 "${para_ip}"
         chain33_QueryBalance "${pokerbull1}" "$para_ip"

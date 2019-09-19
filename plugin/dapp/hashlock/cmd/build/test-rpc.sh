@@ -104,8 +104,8 @@ init() {
         chain33_QueryBalance "${hashlock2}" "$main_ip"
         local para_ip="${MAIN_HTTP}"
         #para chain import pri key
-        chain33_ImportPrivkey "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" "19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3" "hashlock1"  "$para_ip"
-        chain33_ImportPrivkey "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" "1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD" "hashlock2"  "$para_ip"
+        chain33_ImportPrivkey "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" "19vpbRuz2XtKopQS2ruiVuVZeRdLd5n4t3" "hashlock1" "$para_ip"
+        chain33_ImportPrivkey "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" "1FcofeCgU1KYbB8dSa7cV2wjAF2RpMuUQD" "hashlock2" "$para_ip"
 
         chain33_applyCoins "$hashlock1" 12000000000 "${para_ip}"
         chain33_QueryBalance "${hashlock1}" "$para_ip"
