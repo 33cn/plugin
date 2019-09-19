@@ -53,11 +53,11 @@ func TestRaftPerf(t *testing.T) {
 }
 func RaftPerf() {
 	q, chain, s, mem, exec, cs, p2p := initEnvRaft()
+	defer q.Close()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
 	defer s.Close()
-	defer q.Close()
 	defer cs.Close()
 	defer p2p.Close()
 	sendReplyList(q)

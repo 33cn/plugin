@@ -242,7 +242,7 @@ func DposPerf() {
 			HashStop:          block.Hash(),
 			NotifyTimestamp:   now,
 			NotifyNodeAddress: vote.VoteItem.VotedNodeAddress,
-			NotifyNodeIndex:   int32(vote.VoteItem.VotedNodeIndex),
+			NotifyNodeIndex:   vote.VoteItem.VotedNodeIndex,
 		},
 	}
 
