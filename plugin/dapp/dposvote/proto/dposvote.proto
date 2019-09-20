@@ -1,0 +1,328 @@
+syntax = "proto3";
+
+package types;
+
+//CandidatorInfo 候选节点信息
+message CandidatorInfo {
+    bytes  pubkey              = 1;  //候选节点的公钥
+    string address             = 2;  //后续节点的地址
+    string IP                  = 3;  //候选节点的运行IP
+    int64  votes               = 4;  //候选节点的投票数
+    int64  status              = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+    int64 preStatus            = 6;
+    int64  startTime           = 7;  //创建候选者的时间
+    int64  startHeight         = 8;  //创建候选者的时间
+    string startTxHash         = 9;  //创建候选者的交易hash
+    int64 startIndex           = 10;  //创建候选者的交易index
+    int64 index                = 11;
+    int64 preIndex             = 12;
+    repeated DposVoter voters  = 13;
+}
+
+//DposVoter 投票者信息
+message DposVoter{
+    string fromAddr = 1;
+    bytes  pubkey   = 2;    //候选节点的公钥
+    int64  votes    = 3;    //投给候选节点的票数，不能超过锁在合约中的未使用票数
+    int64  index    = 4;
+    int64  time     = 5;
+}
+
+//Candidator 候选节点信息
+message Candidator {
+    bytes  pubkey   = 1;  //候选节点的公钥
+    string address  = 2;  //后续节点的地址
+    string IP       = 3;  //候选节点的运行IP
+    int64  votes    = 4;  //候选节点的投票数
+    int64  status   = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+}
+
+//DposCandidatorRegist 注册Dpos候选节点，必须抵押一定数量的币，比如：10000个币
+message DposCandidatorRegist{
+    string  pubkey  = 1;  //候选节点的公钥
+    string  address = 2;  //候选节点的地址
+    string  IP      = 3;  //候选节点的共识IP地址
+}
+
+//DposCandidatorCancelRegist 注销Dpos候选节点，解冻抵押的币
+message DposCandidatorCancelRegist{
+    string  pubkey   = 1;  //候选节点的公钥
+    string  address  = 2;  //候选节点的地址
+}
+
+//DposVote 为Dpos候选节点投票
+message DposVote{
+    string  fromAddr = 1;
+    string  pubkey   = 2;  //候选节点的公钥
+    int64   votes    = 3;  //投给候选节点的票数，不能超过锁在合约中的未使用票数
+}
+
+//DposCancelVote 撤销为Dpos候选节点投票
+message DposCancelVote{
+    string  pubkey   = 1;  //候选节点的公钥
+    int64   index    = 3;
+}
+
+//DposVoteAction DposVote动作
+message DposVoteAction {
+    oneof value {
+        DposCandidatorRegist regist                = 1;
+        DposCandidatorCancelRegist cancelRegist    = 2;
+        DposCandidatorRegist reRegist              = 3;
+        DposVote vote                              = 4;
+        DposCancelVote  cancelVote                 = 5;
+        CandidatorQuery candidatorQuery            = 6;
+        DposVoteQuery voteQuery                    = 7;
+        DposVrfMRegist registVrfM                  = 8;
+        DposVrfRPRegist registVrfRP                = 9;
+        DposVrfQuery vrfQuery                      = 10;
+        DposCBInfo recordCB                        = 11;
+        DposCBQuery cbQuery                        = 12;
+        TopNCandidatorRegist registTopN            = 13;
+        TopNCandidatorsQuery topNQuery             = 14;
+    }
+    int32 ty = 15;
+}
+
+//CandidatorQuery 候选节点查询
+message CandidatorQuery{
+    repeated string  pubkeys   = 1;  //候选节点公钥集合
+    int32  topN                = 2;  //topN
+    int32 ty                   = 3;  //1:按公钥集合查询，2：按topN票数查询
+}
+
+
+
+//JSONCandidator 候选节点Json格式信息
+message JSONCandidator {
+    string  pubkey   = 1;  //候选节点的公钥
+    string address   = 2;  //后续节点的地址
+    string IP        = 3;  //候选节点的运行IP
+    int64  votes     = 4;  //候选节点的投票数
+    int64  status    = 5;  //候选节点的状态，0:注册,1:当选,2:取消注册
+}
+
+//CandidatorReply 候选节点查询响应
+message CandidatorReply{
+    repeated  JSONCandidator candidators   = 1;  //候选节点
+}
+
+//DposVoteQuery 投票查询
+message DposVoteQuery{
+    repeated string  pubkeys   = 1;  //候选节点的公钥，如果为空，则查询所有，否则，查询该地址给具体候选节点的投票
+    string  addr               = 2;              //要查询的地址
+}
+
+//JSONDposVoter Json格式的投票者信息
+message JSONDposVoter{
+    string fromAddr = 1;
+    string pubkey   = 2;    //候选节点的公钥
+    int64  votes    = 3;    //投给候选节点的票数，不能超过锁在合约中的未使用票数
+    int64  index    = 4;
+    int64  time     = 5;
+}
+
+//DposVoteReply 投票查询响应
+message DposVoteReply{
+    repeated JSONDposVoter votes   = 1;  //某地址对具体候选节点的投票情况
+}
+
+//ReceiptCandicator 候选者收据信息
+message ReceiptCandicator {
+    int64   Index             = 1;
+    bytes   pubkey            = 2;
+    string  address           = 3;
+    int64   status            = 4;
+    int64   preStatus         = 5;
+    bool    statusChange      = 6;
+    int32   voteType          = 7;
+    DposVoter   vote          = 8;
+    string  fromAddr          = 9;
+    CandidatorInfo candInfo   = 10;
+    int64   time              = 11;
+}
+
+//DposVrfM VrfM信息
+message DposVrfM{
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 3;
+    int64   height       = 4;
+    bytes   m            = 5;  //vrf的输入
+    int64   time         = 6;
+    int64   cycleStart   = 7;
+    int64   cycleMiddle  = 8;
+    int64   cycleStop    = 9;
+}
+
+//DposVrfRP VrfRP信息
+message DposVrfRP{
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 3;
+    int64   height       = 4;
+    bytes   m            = 5;  //vrf的输入
+    bytes   r            = 6;  //vrf的hash
+    bytes   p            = 7;  //vrf的hash的proof
+    int64   time         = 8;
+    int64   cycleStart   = 9;
+    int64   cycleMiddle  = 10;
+    int64   cycleStop    = 11;
+}
+
+//DposVrfMRegist VrfM注册请求
+message DposVrfMRegist{
+    string   pubkey      = 1;
+    int64   cycle        = 2;
+    string   m           = 3;  //vrf的输入
+}
+
+//DposVrfRPRegist VrfRP注册请求
+message DposVrfRPRegist{
+    string   pubkey      = 1;
+    int64    cycle       = 2;
+    string   r           = 3;  //vrf的hash
+    string   p           = 4;  //vrf的hash的proof
+}
+
+
+//ReceiptVrf vrf收据信息
+message ReceiptVrf {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    bytes   m            = 6;
+    bytes   r            = 7;
+    bytes   p            = 8;
+    int64   time         = 9;
+    int64   cycleStart   = 10;
+    int64   cycleMiddle  = 11;
+    int64   cycleStop    = 12;
+}
+
+//VrfInfo vrf信息
+message VrfInfo {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    bytes   m            = 6;
+    bytes   r            = 7;
+    bytes   p            = 8;
+    int64   time         = 9;
+}
+
+//DposVrfQuery vrf查询请求
+message DposVrfQuery{
+    repeated string  pubkeys   = 1;
+    int64   ty                 = 2;
+    int64   timestamp          = 3;
+    int64   cycle              = 4;
+}
+
+//JSONVrfInfo json格式的vrf信息
+message JSONVrfInfo {
+    int64   Index        = 1;
+    string  pubkey       = 2;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    string  m            = 6;
+    string  r            = 7;
+    string  p            = 8;
+    int64   time         = 9;
+}
+
+//DposVrfReply vrf查询响应
+message DposVrfReply{
+    repeated JSONVrfInfo vrf = 1;
+}
+
+//DposCycleBoundaryInfo cycle边界信息
+message DposCycleBoundaryInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    bytes stopHash       = 3;
+    bytes pubkey         = 4;
+    bytes signature      = 5;
+}
+
+//DposCBInfo cycle边界记录请求消息
+message DposCBInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    string pubkey        = 4;
+    string signature     = 5;
+}
+
+//DposCBQuery cycle边界记录查询请求
+message DposCBQuery {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    int32 ty             = 4;
+}
+
+//DposCBReply cycle边界记录查询响应
+message DposCBReply {
+    DposCBInfo cbInfo = 1;
+}
+
+//ReceiptCB CycleBoundary收据信息
+message ReceiptCB {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   cycle        = 4;
+    int64   height       = 5;
+    int64   time         = 6;
+    int64   cycleStart   = 7;
+    int64   cycleMiddle  = 8;
+    int64   cycleStop    = 9;
+    DposCycleBoundaryInfo cbInfo = 10;
+}
+
+//TopNCandidator topN候选者
+message TopNCandidator{
+    repeated Candidator cands = 1;
+    bytes    hash             = 2;
+    int64    height           = 3;
+    bytes    signerPubkey     = 4;
+    bytes    signature        = 5;
+}
+
+//TopNCandidators topN候选者(复数)
+message TopNCandidators{
+    repeated TopNCandidator candsVotes = 1;
+    int64    version                   = 2;
+    int64    status                    = 3;
+    repeated Candidator finalCands     = 4;
+}
+
+//TopNCandidatorRegist topN候选者注册请求
+message TopNCandidatorRegist{
+    TopNCandidator cand            = 1;
+}
+
+//TopNCandidatorsQuery topN候选者查询请求
+message TopNCandidatorsQuery{
+    int64 version                  = 1;
+}
+
+//TopNCandidatorsReply topN候选者查询响应
+message TopNCandidatorsReply{
+    TopNCandidators topN           = 1;
+}
+
+//ReceiptTopN topN注册的收据信息
+message ReceiptTopN {
+    int64   Index        = 1;
+    bytes   pubkey       = 2;
+    int64   status       = 3;
+    int64   version      = 4;
+    int64   height       = 5;
+    int64   time         = 6;
+    TopNCandidator topN = 10;
+}
