@@ -19,7 +19,7 @@ function dapp_test_rpc() {
         done
 
         ##ticket用例最后执行
-         ./ticket/"${RPC_TESTFILE}" "$ip"
+        ./ticket/"${RPC_TESTFILE}" "$ip"
     fi
     echo "============ # dapp rpc test end ============="
 }
