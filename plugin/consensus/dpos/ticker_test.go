@@ -13,7 +13,7 @@ func TestTicker(t *testing.T) {
 	ticker.Start()
 
 	ti := timeoutInfo{
-		Duration: time.Second * time.Duration(2),
+		Duration: time.Second * time.Duration(3),
 		State:    InitStateType,
 	}
 	fmt.Println("timeoutInfo:", ti.String())
