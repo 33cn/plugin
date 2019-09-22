@@ -7,11 +7,12 @@ source ../dapp-test-common.sh
 MAIN_HTTP=""
 CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
-recvAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+recvAddr="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
 superManager="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
 tokenSymbol="ABCDE"
 token_addr=""
 execName="token"
+txHash=""
 
 #color
 RED='\033[1;31m'
@@ -25,65 +26,6 @@ function echo_rst() {
     else
         echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="FAIL"
-    fi
-}
-
-function Chain33_SendToAddress() {
-    local from="$1"
-    local to="$2"
-    local amount=$3
-    local req='"method":"Chain33.SendToAddress", "params":[{"from":"'"$from"'","to":"'"$to"'", "amount":'"$amount"', "note":"test\n"}]'
-    #    echo "#request: $req"
-    resp=$(curl -ksd "{$req}" "${MAIN_HTTP}")
-    #    echo "#response: $resp"
-    ok=$(jq '(.error|not) and (.result.hash|length==66)' <<<"$resp")
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
-    hash=$(jq '(.result.hash)' <<<"$resp")
-    echo "hash=$hash"
-    #    query_tx "$hash"
-}
-
-function chain33_unlock() {
-    ok=$(curl -k -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.UnLock","params":[{"passwd":"1314fuzamei","timeout":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.isOK")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
-function block_wait() {
-    local req='"method":"Chain33.GetLastHeader","params":[]'
-    cur_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-    expect=$((cur_height + ${1}))
-    local count=0
-    while true; do
-        new_height=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq ".result.height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 1
-    done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
-}
-
-function signRawTx() {
-    unsignedTx=$1
-    addr=$2
-    signedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"${addr}"'","txHex":"'"${unsignedTx}"'","expire":"120s"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$signedTx" == "null" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-function sendSignedTx() {
-    txHash=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"token":"","data":"'"${signedTx}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
-    if [ "$txHash" == "null" ]; then
-        return 1
-    else
-        return 0
     fi
 }
 
@@ -128,23 +70,21 @@ function init() {
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
     fi
-    Chain33_SendToAddress "$ACCOUNT_A" "$recvAddr" 11000000000
-    block_wait 2
 
     if [ "$ispara" == true ]; then
         execName="user.p.para.token"
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.token"}]}' ${MAIN_HTTP} | jq -r ".result")
-        Chain33_SendToAddress "$recvAddr" "$tokenAddr" 10000000000
-        block_wait 2
-        Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
-        block_wait 2
+        chain33_SendToAddress "$recvAddr" "$tokenAddr" 10000000000 "${MAIN_HTTP}"
+        chain33_BlockWait 2 "${MAIN_HTTP}"
+        chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000 "${MAIN_HTTP}"
+        chain33_BlockWait 2 "${MAIN_HTTP}"
     else
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"token"}]}' ${MAIN_HTTP} | jq -r ".result")
         from="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-        Chain33_SendToAddress "$from" "$tokenAddr" 10000000000
-        block_wait 2
-        Chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000
-        block_wait 2
+        chain33_SendToAddress "$from" "$tokenAddr" 10000000000 "${MAIN_HTTP}"
+        chain33_BlockWait 2 "${MAIN_HTTP}"
+        chain33_SendToAddress "$tokenAddr" "$token_addr" 1000000000 "${MAIN_HTTP}"
+        chain33_BlockWait 2 "${MAIN_HTTP}"
     fi
     echo "token=$token_addr"
     updateConfig
@@ -157,13 +97,8 @@ function updateConfig() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "update config signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "update config sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "update config queryExecRes" "$?"
@@ -175,13 +110,8 @@ function token_preCreate() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token preCreate signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token preCreate sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token preCreate queryExecRes" "$?"
@@ -202,13 +132,8 @@ function token_finish() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token finish signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token finish sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token finish queryExecRes" "$?"
@@ -268,13 +193,8 @@ function token_burn() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token burn signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token burn sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token burn queryExecRes" "$?"
@@ -287,13 +207,8 @@ function token_mint() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token mint signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token mint sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token mint queryExecRes" "$?"
@@ -305,13 +220,8 @@ function token_transfer() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token transfer signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token transfer sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token transfer queryExecRes" "$?"
@@ -324,13 +234,8 @@ function token_sendExec() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token sendExec signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token sendExec sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token sendExec queryExecRes" "$?"
@@ -343,13 +248,8 @@ function token_withdraw() {
         return
     fi
 
-    signRawTx "${unsignedTx}" "${tokenAddr}"
-    echo_rst "token withdraw signRawTx" "$?"
-
-    sendSignedTx
-    echo_rst "token withdraw sendSignedTx" "$?"
-
-    block_wait 2
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+    txHash=$RAW_TX_HASH
 
     queryTransaction ".error | not" "true"
     echo_rst "token withdraw queryExecRes" "$?"
