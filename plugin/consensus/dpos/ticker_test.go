@@ -13,15 +13,16 @@ func TestTicker(t *testing.T) {
 	ticker.Start()
 
 	ti := timeoutInfo{
-		Duration: time.Second * time.Duration(3),
+		Duration: time.Millisecond * time.Duration(3000),
 		State:    InitStateType,
 	}
 	fmt.Println("timeoutInfo:", ti.String())
 
 	now := time.Now().Unix()
 	ticker.ScheduleTimeout(ti)
-	<-ticker.Chan()
+	ti2 := <-ticker.Chan()
 	end := time.Now().Unix()
+	fmt.Println("timeoutInfo2:", ti2.String())
 
 	ticker.Stop()
 	assert.True(t, end-now >= 2)
