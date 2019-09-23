@@ -168,7 +168,7 @@ func performCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 	for i := 0; i < len(execs); i++ {
-		params.Assets = append(params.Assets, rpc.Asset{Exec: execs[i], Symbol: symbols[0]})
+		params.Assets = append(params.Assets, rpc.Asset{Exec: execs[i], Symbol: symbols[i]})
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "retrieve.CreateRawRetrievePerformTx", params, nil)
