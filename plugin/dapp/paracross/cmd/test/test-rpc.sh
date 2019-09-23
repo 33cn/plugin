@@ -17,7 +17,6 @@ paracross_GetBlock2MainInfo() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-
 function paracross_SignAndSend() {
     local signedTx
     local sendedTx
@@ -290,7 +289,7 @@ function paracross_ListNodeStatus() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-function paracross_testTxGroup(){
+function paracross_testTxGroup() {
     local para_ip=$1
 
     ispara=$(echo '"'"${para_ip}"'"' | jq '.|contains("8901")')
@@ -300,7 +299,6 @@ function paracross_testTxGroup(){
 
     paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' ${main_ip} | jq -r ".result")
     echo "paracross_addr=$paracross_addr"
-
 
     #main chain import pri key
     #1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU
@@ -323,7 +321,6 @@ function paracross_testTxGroup(){
     chain33_SendToAddress "${test_addr}" "$paracross_addr" "$amount_transfer" "${main_ip}"
     chain33_QueryExecBalance "${test_addr}" "paracross" "${main_ip}"
 
-
     #  资产从主链转移到平行链
     tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
     #curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"user.p.para.paracross","actionName":"ParacrossAssetTransfer","payload":{"execName":"user.p.para.paracross","to":"1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU","amount":100000000}}]}' http://172.20.0.5:8901
@@ -332,11 +329,9 @@ function paracross_testTxGroup(){
     tx_hash_transferExec=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"TransferToExec","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"${trade_exec_addr}"'","amount":'${amount_trade}', "cointoken":"coins.bty"}}]}' "${para_ip}" | jq -r ".result")
     #curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"user.p.para.paracross","actionName":"TransferToExec","payload":{"execName":"user.p.para.paracross","to":"12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13","amount":10000000, "cointoken":"coins.bty"}}]}' http://172.20.0.5:8901
 
-
     #create tx group with none
     tx_hash_group=$(curl -ksd '{"method":"Chain33.CreateNoBlanaceTxs","params":[{"txHexs":["'"${tx_hash_asset}"'","'"${tx_hash_transferExec}"'"],"privkey":"'"${test_prikey}"'","expire":"120"}]}' "${para_ip}" | jq -r ".result")
     #curl -ksd '{"method":"Chain33.CreateNoBlanaceTxs","params":[{"txHexs":["0a15757365722e702e706172612e7061726163726f7373122e10904e22291080c2d72f2222314d41754538515362626563683362564b4b324a504a4a7859784e745439356f535520a08d0630d195faf7d3a1ec9a4c3a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a716969","0a15757365722e702e706172612e7061726163726f7373124f1004424b0a09636f696e732e6274791080ade2042215757365722e702e706172612e7061726163726f73732a2231326269686a7a626159576a637044696979395375415765714e6b735164694e313320a08d0630a8c984ebb2bb90a5613a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a716969"],"privkey":"4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01","expire":"120"}]}' http://172.20.0.5:8901
-
 
     #sign 1
     tx_sign=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$test_prikey"'","txHex":"'"$tx_hash_group"'","index":2,"expire":"120s"}]}' "${para_ip}" | jq -r ".result")
