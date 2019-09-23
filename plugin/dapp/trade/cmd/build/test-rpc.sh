@@ -325,7 +325,7 @@ function run_test() {
     trade_getSellOrder
     trade_createBuyTx
     trade_getBuyOrder
-    #trade_statusBuyOrder
+    trade_statusBuyOrder
     trade_statusOrder
     trade_statusSellOrder
 
