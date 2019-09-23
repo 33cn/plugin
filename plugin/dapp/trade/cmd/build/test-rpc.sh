@@ -132,7 +132,7 @@ function trade_createBuyTx() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade createBuyTx queryExecRes" "$?"
