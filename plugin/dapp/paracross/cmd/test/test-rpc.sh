@@ -297,7 +297,7 @@ function paracross_testTxGroup() {
     local paracross_addr=""
     local main_ip=${para_ip//8901/8801}
 
-    paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' ${main_ip} | jq -r ".result")
+    paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' "${main_ip}" | jq -r ".result")
     echo "paracross_addr=$paracross_addr"
 
     #main chain import pri key
