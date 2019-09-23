@@ -25,5 +25,5 @@ func TestTicker(t *testing.T) {
 
 	ticker.Stop()
 	assert.True(t, end-now >= 2)
-	fmt.Println("TestTicker ok",  end-now)
+	fmt.Println("TestTicker ok", end-now)
 }
