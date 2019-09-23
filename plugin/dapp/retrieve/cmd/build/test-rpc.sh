@@ -8,7 +8,7 @@ MAIN_HTTP=""
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
-# TODO 
+# TODO
 # 1. 合约测试的先后顺序 是否可以在指定合约之后测试
 # 2. 或将资产类的合约先测试
 # 3. 或资产类的合约提供创建的函数 创建一个某某名字的token
@@ -136,7 +136,6 @@ retrieve_Perform_Token() {
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
-
 retrieve_Cancel() {
     echo "========== # retrieve cancel begin =========="
 
@@ -208,7 +207,7 @@ init() {
     chain33_applyCoins "${retrieve2}" 10000000000 "${MAIN_HTTP}"
 
     if [ "$ispara" == true ]; then
-    # for fee
+        # for fee
         local main_ip=${MAIN_HTTP//8901/8801}
         chain33_applyCoins "${retrieve1}" 1000000000 "${main_ip}"
         chain33_applyCoins "${retrieve2}" 1000000000 "${main_ip}"
@@ -262,5 +261,3 @@ function main() {
 
 set -x
 main "$1"
-
-
