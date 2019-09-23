@@ -211,7 +211,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 
 	// 兼容原来的找回， 在不指定的情况下，找回主币
 	if len(perfRet.Assets) == 0 {
-		perfRet.Assets = append(perfRet.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: types.GetCoinSymbol()})
 		//return nil, nil
 	}
 

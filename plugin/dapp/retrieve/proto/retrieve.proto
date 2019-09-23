@@ -40,10 +40,16 @@ message PrepareRetrieve {
     string defaultAddress = 2;
 }
 
+
+message AssetSymbol {
+    string exec = 1;
+    string symbol = 2;
+}
+
 message PerformRetrieve {
     string backupAddress  = 1;
     string defaultAddress = 2;
-    repeated Asset assets = 3;
+    repeated AssetSymbol assets = 3;
 }
 
 message CancelRetrieve {

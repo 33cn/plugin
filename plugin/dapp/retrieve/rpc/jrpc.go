@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/hex"
 
-	chain33_types "github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
 
@@ -50,11 +49,11 @@ func (c *Jrpc) CreateRawRetrievePerformTx(in *RetrievePerformTx, result *interfa
 	head := &types.PerformRetrieve{
 		BackupAddress:  in.BackupAddr,
 		DefaultAddress: in.DefaultAddr,
-		Assets:         []*chain33_types.Asset{},
+		Assets:         []*types.AssetSymbol{},
 	}
 
 	for i := 0; i < len(in.Assets); i++ {
-		head.Assets = append(head.Assets, &chain33_types.Asset{Exec: in.Assets[i].Exec, Symbol: in.Assets[i].Symbol})
+		head.Assets = append(head.Assets, &types.AssetSymbol{Exec: in.Assets[i].Exec, Symbol: in.Assets[i].Symbol})
 	}
 	reply, err := c.cli.Perform(context.Background(), head)
 	if err != nil {
