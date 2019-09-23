@@ -555,7 +555,6 @@ func TestNode(t *testing.T) {
 	notify := &ttypes.DPosNotify{}
 	InitStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
 
-
 	VotingStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
 	VotingStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
 	VotingStateObj.recvNotify(cs1.(*Client).GetConsensusState(), notify)
