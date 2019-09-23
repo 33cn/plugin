@@ -133,7 +133,7 @@ function run_test() {
     hashlock_lock "aef"
     chain33_QueryBalance "$addr_A" "${MAIN_HTTP}"
 
-    sleep 75
+    sleep 5
     hashlock_unlock "aef"
     chain33_BlockWait 1 ${MAIN_HTTP}
     chain33_QueryBalance "$addr_A" "${MAIN_HTTP}"
