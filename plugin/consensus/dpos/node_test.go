@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -544,6 +545,27 @@ func TestNode(t *testing.T) {
 	} else {
 		fmt.Println("======= cs1 is not running=======")
 	}
+
+	fmt.Println("=======test state machine=======")
+	vote := &ttypes.DPosVote{}
+	InitStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+	voteReply := &ttypes.DPosVoteReply{}
+	InitStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	InitStateObj.recvVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	notify := &ttypes.DPosNotify{}
+	InitStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
+
+
+	VotingStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	VotingStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
+	VotingStateObj.recvNotify(cs1.(*Client).GetConsensusState(), notify)
+
+	VotedStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+
+	WaitNotifyStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+	WaitNotifyStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	WaitNotifyStateObj.recvVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	WaitNotifyStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
 
 	fmt.Println("=======testNode ok=======")
 }
