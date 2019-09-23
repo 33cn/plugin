@@ -206,7 +206,7 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 func RetrieveQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
-		Short: "Backup the wallet",
+		Short: "show retrieve info",
 		Run:   queryRetrieveCmd,
 	}
 	addQueryRetrieveCmdFlags(cmd)
@@ -218,6 +218,9 @@ func addQueryRetrieveCmdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
 	cmd.MarkFlagRequired("default")
+
+	cmd.Flags().StringP("asset_exec", "e", "", "asset exec")
+	cmd.Flags().StringP("asset_symbol", "s", "", "asset symbol")
 }
 
 func parseRerieveDetail(arg interface{}) (interface{}, error) {
@@ -246,10 +249,14 @@ func queryRetrieveCmd(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
+	exec, _ := cmd.Flags().GetString("asset_exec")
+	symbol, _ := cmd.Flags().GetString("asset_symbol")
 
 	req := &rt.ReqRetrieveInfo{
 		BackupAddress:  backup,
 		DefaultAddress: defaultAddr,
+		AssetExec:      exec,
+		AssetSymbol:    symbol,
 	}
 
 	var params rpctypes.Query4Jrpc
