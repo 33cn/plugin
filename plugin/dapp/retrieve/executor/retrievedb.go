@@ -224,7 +224,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 		acc := accdb.LoadExecAccount(defaultAddress, action.execaddr)
 		rlog.Debug("RetrievePerform", "acc.Balance", acc.Balance)
 		if acc.Balance > 0 {
-			receipt, err = action.coinsAccount.ExecTransfer(defaultAddress, perfRet.BackupAddress, action.execaddr, acc.Balance)
+			receipt, err = accdb.ExecTransfer(defaultAddress, perfRet.BackupAddress, action.execaddr, acc.Balance)
 			if err != nil {
 				rlog.Debug("RetrievePerform", "ExecTransfer", err)
 				return nil, err
