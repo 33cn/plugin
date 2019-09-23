@@ -301,10 +301,8 @@ function paracross_testTxGroup() {
     echo "paracross_addr=$paracross_addr"
 
     #main chain import pri key
-    #1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU
-    #0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8
-    local test_addr="1Fghq6cgdJEDr6gQBmvba3t6aXAkyZyjr2"
-    local test_prikey="0xd2aaa6f050a4db13fbd2c8bf87cbb96e217289172baca6c12e8a8b0680b9aa1a"
+    local test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
+    local test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
     #execer
     local paracross_execer_name="user.p.para.paracross"
     local trade_exec_name="user.p.para.trade"
@@ -346,14 +344,14 @@ function paracross_testTxGroup() {
 
     local transfer_expect="700000000"
     local exec_expect="100000000"
-    transfer_val=$(paracross_QueryParaBalance "${test_addr}" "paracross")
-    transfer_exec_val=$(paracross_QueryParaBalance "${test_addr}" "trade")
+    transfer_val=$(paracross_QueryParaBalance "${test_addr}" "$paracross_execer_name")
+    transfer_exec_val=$(paracross_QueryParaBalance "${test_addr}" "$trade_exec_name")
     if [ "${transfer_val}" != $transfer_expect ]; then
         echo "paracross_testTxGroup trasfer failed, get=$transfer_val,expec=$transfer_expect"
         exit 1
     fi
     if [ "${transfer_exec_val}" != $exec_expect ]; then
-        echo "paracross_testTxGroup toexec failed, get=$transfer_expect,expec=$exec_expect"
+        echo "paracross_testTxGroup toexec failed, get=$transfer_exec_val,expec=$exec_expect"
         exit 1
     fi
 
