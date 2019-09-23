@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 )
@@ -45,9 +43,4 @@ func (r *Retrieve) Query_GetRetrieveInfo(in *rt.ReqRetrieveInfo) (types.Message,
 
 	}
 	return info, nil
-}
-
-func calcRetrieveAssetPrefix(backupAddr, defaultAddr string) []byte {
-	key := fmt.Sprintf("LODB-retrieve-backup-asset:%s:%s:", backupAddr, defaultAddr)
-	return []byte(key)
 }
