@@ -368,7 +368,6 @@ func DposPerf() {
 	} else {
 		fmt.Println("SendTopNRegistTx failed")
 	}
-	//sendTopNRegistTx(dposClient.csState, reg)
 
 	time.Sleep(2 * time.Second)
 	fmt.Println("=======start QueryTopNCandidators!=======")
@@ -581,49 +580,6 @@ func sendRegistVrfRPTx(cs *ConsensusState, info *dty.DposVrfRPRegist) bool {
 
 	return true
 }
-
-/*
-func sendTopNRegistTx(cs *ConsensusState, reg *dty.TopNCandidatorRegist) bool {
-	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
-	obj := dty.CanonicalTopNCandidator(reg.Cand)
-	reg.Cand.Hash = obj.ID()
-	reg.Cand.SignerPubkey = cs.privValidator.GetPubKey().Bytes()
-
-	byteCB, err := json.Marshal(reg.Cand)
-	if err != nil {
-		dposlog.Error("marshal TopNCandidator failed", "err", err)
-	}
-
-	sig, err := cs.privValidator.SignMsg(byteCB)
-	if err != nil {
-		dposlog.Error("TopNCandidator failed.", "err", err)
-		return false
-	}
-
-	reg.Cand.Signature = sig.Bytes()
-	tx, err := cs.client.CreateTopNRegistTx(reg)
-	if err != nil {
-		dposlog.Error("CreateTopNRegistTx failed.", "err", err)
-		return false
-	}
-
-	tx.Fee = fee
-
-	cs.privValidator.SignTx(tx)
-	dposlog.Info("Sign TopNRegistTx ok.")
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		return false
-	}
-
-	return true
-}
-*/
 
 func sendTransferTx(fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
