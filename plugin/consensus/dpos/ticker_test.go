@@ -24,6 +24,7 @@ func TestTicker(t *testing.T) {
 	end := time.Now().Unix()
 	fmt.Println("timeoutInfo2:", ti2.String())
 
+	time.Sleep(time.Second * 3)
 	ticker.Stop()
 	assert.True(t, end-now >= 2)
 	fmt.Println("TestTicker ok", end-now)
