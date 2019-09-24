@@ -8,12 +8,12 @@ function dapp_test_rpc() {
     local ip=$1
     echo "============ # dapp rpc test begin ============="
     if [ -d dapptest ]; then
-        cp $DAPP_TEST_COMMON dapptest/
+        cp "$DAPP_TEST_COMMON" dapptest/
         cd dapptest || return
 
         dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
-        parallel -k --retries 3 --verbose --joblog ./testlog ./{}/test-rpc.sh "$ip" ::: "$dapps"
+        parallel -k --retries 3 --verbose --joblog ./testlog ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         echo "check dapps test log"
         cat ./testlog
 
