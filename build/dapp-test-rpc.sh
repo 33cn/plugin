@@ -11,7 +11,7 @@ function dapp_test_rpc() {
         cp $DAPP_TEST_COMMON dapptest/
         cd dapptest || return
 
-        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name evm ! -name game ! -name guess ! -name hashlock ! -name ticket ! -name lottery ! -name pokerbull ! -name retrieve ! -name token ! -name trade ! -name . | sed 's/^\.\///' | sort)
+        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name evm ! -name game ! -name guess ! -name hashlock ! -name ticket ! -name lottery ! -name pokerbull ! -name token ! -name trade ! -name . | sed 's/^\.\///' | sort)
 
         echo "dapps list: $dir"
         for app in $dir; do

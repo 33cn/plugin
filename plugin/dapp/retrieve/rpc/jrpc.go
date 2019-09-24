@@ -49,6 +49,11 @@ func (c *Jrpc) CreateRawRetrievePerformTx(in *RetrievePerformTx, result *interfa
 	head := &types.PerformRetrieve{
 		BackupAddress:  in.BackupAddr,
 		DefaultAddress: in.DefaultAddr,
+		Assets:         []*types.AssetSymbol{},
+	}
+
+	for i := 0; i < len(in.Assets); i++ {
+		head.Assets = append(head.Assets, &types.AssetSymbol{Exec: in.Assets[i].Exec, Symbol: in.Assets[i].Symbol})
 	}
 	reply, err := c.cli.Perform(context.Background(), head)
 	if err != nil {
