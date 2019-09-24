@@ -212,7 +212,7 @@ function miner() {
     sleep 1
 
     echo "=========== # close auto mining ============="
-    result=$(${1} wallet auto_mine -f 0 | jq ".isok")
+    result=$(${1} wallet auto_mine -f 1 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
     fi
