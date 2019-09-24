@@ -37,5 +37,3 @@ require (
 	google.golang.org/grpc v1.22.1
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
-
-
