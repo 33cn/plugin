@@ -10,13 +10,12 @@ function dapp_test_rpc() {
     if [ -d dapptest ]; then
         cp $DAPP_TEST_COMMON dapptest/
         cd dapptest || return
-        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
-        echo "dapps list: $dir"
-        for app in $dir; do
-            echo "=========== # $app rpc test ============="
-            ./"$app/${RPC_TESTFILE}" "$ip"
-            echo "=========== # $app rpc end ============="
-        done
+
+        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
+        echo "dapps list: $dapps"
+        parallel -k --retries 3 --verbose --joblog ./testlog ./{}/test-rpc.sh "$ip" ::: "$dapps"
+        echo "check dapps test log"
+        cat ./testlog
 
         ##ticket用例最后执行
         ./ticket/"${RPC_TESTFILE}" "$ip"
