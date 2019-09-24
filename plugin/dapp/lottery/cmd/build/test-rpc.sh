@@ -74,7 +74,6 @@ init() {
 lottery_LotteryCreate() {
     #创建交易
     priv=$1
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
     "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
@@ -84,7 +83,6 @@ lottery_LotteryCreate() {
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
-    set +x
 
     gID="${RAW_TX_HASH}"
     echo "gameID $gID"
@@ -96,7 +94,6 @@ lottery_LotteryBuy() {
     amount=$2
     number=$3
     way=$4
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy",
     "payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
@@ -106,13 +103,11 @@ lottery_LotteryBuy() {
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
-    set +x
 }
 
 lottery_LotteryDraw() {
     #创建交易
     priv=$1
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
@@ -122,13 +117,11 @@ lottery_LotteryDraw() {
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
-    set +x
 }
 
 lottery_LotteryClose() {
     #创建交易
     priv=$1
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
     "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
@@ -138,7 +131,6 @@ lottery_LotteryClose() {
     #发送交易
     rawTx=$(echo "${resp}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
-    set +x
 }
 
 lottery_GetLotteryNormalInfo() {
@@ -146,10 +138,8 @@ lottery_GetLotteryNormalInfo() {
     addr=$2
     execer="lottery"
     funcName="GetLotteryNormalInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -161,10 +151,8 @@ lottery_GetLotteryCurrentInfo() {
     amount=$3
     execer="lottery"
     funcName="GetLotteryCurrentInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -180,10 +168,8 @@ lottery_GetLotteryPurchaseAddr() {
     count=$2
     execer="lottery"
     funcName="GetLotteryPurchaseAddr"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.address | length == '"$count"')' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -195,10 +181,8 @@ lottery_GetLotteryHistoryLuckyNumber() {
     lucky=$3
     execer="lottery"
     funcName="GetLotteryHistoryLuckyNumber"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -210,10 +194,8 @@ lottery_GetLotteryRoundLuckyNumber() {
     lucky=$3
     execer="lottery"
     funcName="GetLotteryRoundLuckyNumber"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "round":['"$round"']}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -226,10 +208,8 @@ lottery_GetLotteryHistoryBuyInfo() {
     number=$4
     execer="lottery"
     funcName="GetLotteryHistoryBuyInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -243,10 +223,8 @@ lottery_GetLotteryBuyRoundInfo() {
     number=$5
     execer="lottery"
     funcName="GetLotteryBuyRoundInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -259,10 +237,8 @@ lottery_GetLotteryHistoryGainInfo() {
     amount=$4
     execer="lottery"
     funcName="GetLotteryHistoryGainInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -275,10 +251,8 @@ lottery_GetLotteryRoundGainInfo() {
     amount=$4
     execer="lottery"
     funcName="GetLotteryRoundGainInfo"
-    set -x
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)' <<<"$resp")
-    set +x
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
@@ -291,11 +265,9 @@ function run_testcases() {
     gameAddr2="1UWE6NfXPR7eNAjYgT4HMERp7cMMi486E"
     gamePriv2="0xbfccb96690e0a1f89748b321f85b03e14bda0cb3d5d19f255ff0b9b0ffb624b3"
 
-    set -x
     #给游戏合约中转帐
     chain33_SendToAddress "${gameAddr1}" "${lottExecAddr}" 500000000 "${MAIN_HTTP}"
     chain33_SendToAddress "${gameAddr2}" "${lottExecAddr}" 500000000 "${MAIN_HTTP}"
-    set +x
 
     #创建游戏
     lottery_LotteryCreate "${lottery_creator_priv}"
