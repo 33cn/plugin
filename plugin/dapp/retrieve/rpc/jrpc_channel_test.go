@@ -8,11 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/33cn/chain33/common"
+
 	commonlog "github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
+
 	"github.com/33cn/plugin/plugin/dapp/retrieve/rpc"
 	pty "github.com/33cn/plugin/plugin/dapp/retrieve/types"
 	"github.com/stretchr/testify/assert"
@@ -67,8 +70,28 @@ func testPrepareCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 }
 
 func testPerformCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := rpc.RetrievePerformTx{}
-	return jrpc.Call("retrieve.CreateRawRetrievePerformTx", params, nil)
+	params := rpc.RetrievePerformTx{
+		BackupAddr:  "b",
+		DefaultAddr: "d",
+		Assets:      []rpc.Asset{{"e", "s"}},
+	}
+
+	var txS string
+	t.Log("tx info", "x", params.Assets)
+	err := jrpc.Call("retrieve.CreateRawRetrievePerformTx", &params, &txS)
+	var tx types.Transaction
+	bytes, err := common.FromHex(txS)
+	if err != nil {
+		return err
+	}
+	err = types.Decode(bytes, &tx)
+	if err != nil {
+		return err
+	}
+	var p2 pty.RetrieveAction
+	err = types.Decode(tx.Payload, &p2)
+	t.Log("asset", p2.GetPerform().GetAssets())
+	return err
 }
 
 func testCancelCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {

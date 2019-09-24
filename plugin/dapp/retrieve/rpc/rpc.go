@@ -43,10 +43,12 @@ func (c *channelClient) Perform(ctx context.Context, v *rt.PerformRetrieve) (*ty
 		Ty:    rt.RetrieveActionPerform,
 		Value: &rt.RetrieveAction_Perform{Perform: v},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), types.Encode(perform))
+	payload := types.Encode(perform)
+	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), payload)
 	if err != nil {
 		return nil, err
 	}
+
 	data := types.Encode(tx)
 	return &types.UnsignTx{Data: data}, nil
 }

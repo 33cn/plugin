@@ -8,20 +8,72 @@ MAIN_HTTP=""
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
+# TODO
+# 1. 合约测试的先后顺序 是否可以在指定合约之后测试
+# 2. 或将资产类的合约先测试
+# 3. 或资产类的合约提供创建的函数 创建一个某某名字的token
+function updateConfig() {
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "manage","actionName":"Modify","payload":{ "key": "token-blacklist","value": "BTY","op": "add","addr": ""}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        echo_rst "update config create tx" 1
+        return
+    fi
+
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+}
+
+function token_preCreate() {
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenPreCreateTx","params":[{"name": "yinhebib", "symbol": "'"$1"'", "total": 1000000000000, "price": 0, "category": 1,"owner":"'"$2"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        echo_rst "token preCreate create tx" 1
+        return
+    fi
+
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+}
+
+function token_finish() {
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenFinishTx","params":[{"symbol": "'"$1"'", "owner":"'"$2"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        echo_rst "token finish create tx" 1
+        return
+    fi
+
+    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+}
+
+function token_sendExec() {
+    unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${token_ame}"'","actionName":"TransferToExec","payload": {"cointoken":"'"$1"'", "amount": "10000000000", "note": "", "to": "'"${retrieve_addr}"'", "execName": "'"${retrieve_name}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
+    if [ "${unsignedTx}" == "" ]; then
+        echo_rst "token sendExec create tx" 1
+        return
+    fi
+
+    chain33_SignRawTx "${unsignedTx}" "$3" "${MAIN_HTTP}"
+}
+
+function createToken() {
+    # symbol owner owner_key
+    updateConfig
+    token_preCreate "$1" "$2"
+    token_finish "$1" "$2"
+    token_sendExec "$1" "$2" "$3"
+}
+
 retrieve_Backup() {
     echo "========== # retrieve backup begin =========="
 
-    local req='"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx","defaultAddr":"1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL","delayPeriod": 61}]'
-    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    local req='{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'","delayPeriod": 61}]}'
+    tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
-    local reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
-    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "0x3665fa66d1a17d2fc319a45250c8c8b9302ae0c393c2e39f2ef3b2f6bc40a42d" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "$retrieve2_key" ${MAIN_HTTP}
     echo "========== # retrieve backup end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -30,17 +82,17 @@ retrieve_Backup() {
 retrieve_Prepare() {
     echo "========== # retrieve prepare begin =========="
 
-    local req='"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx","defaultAddr":"1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL"}]'
-    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    local req='{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
+    tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
-    local reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
-    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "0xed8a078ee44eac473bd1d5c971e231c255badf7f0c2fbdbe31ef34669c441d6f" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
     echo "========== # retrieve prepare end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -49,17 +101,36 @@ retrieve_Prepare() {
 retrieve_Perform() {
     echo "========== # retrieve perform begin =========="
 
-    local req='"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx","defaultAddr":"1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL"}]'
-    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    local req='{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
+    tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
-    local reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
-    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "0xed8a078ee44eac473bd1d5c971e231c255badf7f0c2fbdbe31ef34669c441d6f" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
+    echo "========== # retrieve perform end =========="
+
+    chain33_BlockWait 1 "${MAIN_HTTP}"
+}
+
+retrieve_Perform_Token() {
+    echo "========== # retrieve perform begin =========="
+
+    local req='{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'","assets": [{"exec":"token","symbol":"'"$symbol"'"}] }]}'
+    tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
+
+    local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
     echo "========== # retrieve perform end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -68,17 +139,17 @@ retrieve_Perform() {
 retrieve_Cancel() {
     echo "========== # retrieve cancel begin =========="
 
-    local req='"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx","defaultAddr":"1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL"}]'
-    tx=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    local req='{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
+    tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
-    local reqDecode='"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]'
-    data=$(curl -ksd "{$reqDecode}" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "0x3665fa66d1a17d2fc319a45250c8c8b9302ae0c393c2e39f2ef3b2f6bc40a42d" ${MAIN_HTTP}
+    chain33_SignRawTx "$tx" "$retrieve2_key" ${MAIN_HTTP}
     echo "========== # retrieve cancel end =========="
 
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -89,8 +160,22 @@ retrieve_QueryResult() {
 
     local status=$1
 
-    local req='"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx", "defaultAddress":"1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL"}}]'
-    data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
+    local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'"}}]}'
+    data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
+    ok=$(jq '(.status == '"$status"')' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+    echo "========== # retrieve query result end =========="
+}
+
+retrieve_QueryAssetResult() {
+    echo "========== # retrieve query result begin =========="
+
+    local status=$1
+
+    local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'","assetExec":"token", "assetSymbol":"'"$symbol"'"}}]}'
+    data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
     ok=$(jq '(.status == '"$status"')' <<<"$data")
 
     [ "$ok" == true ]
@@ -102,50 +187,36 @@ init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     if [ "$ispara" == true ]; then
+        token_ame="user.p.para.token"
+        retrieve_name="user.p.para.retrieve"
         retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
+        token_ame="token"
+        retrieve_name="retrieve"
         retrieve_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"retrieve"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    local main_ip=${MAIN_HTTP//8901/8801}
-    #main chain import pri key
-    #1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL
-    chain33_ImportPrivkey "0x3665fa66d1a17d2fc319a45250c8c8b9302ae0c393c2e39f2ef3b2f6bc40a42d" "1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL" "retrieve1" "${main_ip}"
-    #13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx
-    chain33_ImportPrivkey "0xed8a078ee44eac473bd1d5c971e231c255badf7f0c2fbdbe31ef34669c441d6f" "13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx" "retrieve2" "$main_ip"
+    retrieve1_key=0xf54a8ffe50b308a2d37f44a9e595fd2d156c09732b712b8548eccf1dce4d0fde
+    retrieve1=19P3ZQg5VYgzTUGvLD4etFSrh74mk6HUWW
+    chain33_ImportPrivkey "${retrieve1_key}" "${retrieve1}" "retrieve1" "${MAIN_HTTP}"
+    chain33_applyCoins "${retrieve1}" 10000000000 "${MAIN_HTTP}"
 
-    local retrieve1="1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL"
-    local retrieve2="13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx"
+    retrieve2_key=0x61d86bf173ed37835fba9ff5b062382249c1b978cb2d3c6e2a3abbdf38314432
+    retrieve2=18x7o8Uktqs8RHEcPsMLJvaHKo22swLbqF
+    chain33_ImportPrivkey "${retrieve2_key}" "${retrieve2}" "retrieve2" "${MAIN_HTTP}"
+    chain33_applyCoins "${retrieve2}" 10000000000 "${MAIN_HTTP}"
 
-    if [ "$ispara" == false ]; then
-        chain33_applyCoins "$retrieve1" 12000000000 "${main_ip}"
-        chain33_QueryBalance "${retrieve1}" "$main_ip"
-
-        chain33_applyCoins "$retrieve2" 12000000000 "${main_ip}"
-        chain33_QueryBalance "${retrieve2}" "$main_ip"
-    else
-        # tx fee
-        chain33_applyCoins "$retrieve1" 1000000000 "${main_ip}"
-        chain33_QueryBalance "${retrieve1}" "$main_ip"
-
-        chain33_applyCoins "$retrieve2" 1000000000 "${main_ip}"
-        chain33_QueryBalance "${retrieve2}" "$main_ip"
-        local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
-        chain33_ImportPrivkey "0x3665fa66d1a17d2fc319a45250c8c8b9302ae0c393c2e39f2ef3b2f6bc40a42d" "1PdaXiQU994gzh4RcjLir2AbyqcQ3TwnBL" "retrieve1" "$para_ip"
-        chain33_ImportPrivkey "0xed8a078ee44eac473bd1d5c971e231c255badf7f0c2fbdbe31ef34669c441d6f" "13t1hnMNHqQ5K4QPeqq5xmdg2kTbDPtrgx" "retrieve2" "$para_ip"
-
-        chain33_applyCoins "$retrieve1" 12000000000 "${para_ip}"
-        chain33_QueryBalance "${retrieve1}" "$para_ip"
-        chain33_applyCoins "$retrieve2" 12000000000 "${para_ip}"
-        chain33_QueryBalance "${retrieve2}" "$para_ip"
+    if [ "$ispara" == true ]; then
+        # for fee
+        local main_ip=${MAIN_HTTP//8901/8801}
+        chain33_applyCoins "${retrieve1}" 1000000000 "${main_ip}"
+        chain33_applyCoins "${retrieve2}" 1000000000 "${main_ip}"
     fi
 
     chain33_SendToAddress "$retrieve1" "$retrieve_addr" 1000000000 ${MAIN_HTTP}
-    chain33_QueryExecBalance "${retrieve1}" "retrieve" "$MAIN_HTTP"
     chain33_SendToAddress "$retrieve2" "$retrieve_addr" 1000000000 ${MAIN_HTTP}
-    chain33_QueryExecBalance "${retrieve2}" "retrieve" "$MAIN_HTTP"
-
+    symbol="RETRIEVE"
+    createToken "$symbol" "$retrieve2" "$retrieve2_key"
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
@@ -168,6 +239,8 @@ function run_test() {
     sleep 61
     retrieve_Perform
     retrieve_QueryResult 3
+    retrieve_Perform_Token
+    retrieve_QueryAssetResult 3
 }
 
 function main() {
@@ -186,4 +259,6 @@ function main() {
     fi
 }
 
+set -x
 chain33_debug_function main "$1"
+
