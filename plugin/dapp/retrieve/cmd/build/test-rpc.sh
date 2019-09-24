@@ -261,4 +261,3 @@ function main() {
 
 set -x
 chain33_debug_function main "$1"
-
