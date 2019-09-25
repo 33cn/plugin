@@ -16,9 +16,6 @@ function dapp_test_rpc() {
         parallel -k --retries 3 --joblog ./testlog ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         echo "check dapps test log"
         cat ./testlog
-
-        ##ticket用例最后执行
-        #./ticket/"${RPC_TESTFILE}" "$ip"
     fi
     echo "============ # dapp rpc test end ============="
 }
