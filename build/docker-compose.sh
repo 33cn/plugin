@@ -64,6 +64,8 @@ if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then
     source dapp-test-rpc.sh
 fi
 
+source dapp-test-common.sh
+
 echo "=========== # env setting ============="
 echo "DAPP=$DAPP"
 echo "DAPP_TEST_FILE=$DAPP_TEST_FILE"
@@ -220,23 +222,8 @@ function block_wait() {
         echo "wrong block_wait params"
         exit 1
     fi
-    cur_height=$(${1} block last_header | jq ".height")
-    expect=$((cur_height + ${2}))
-    local count=0
-    while true; do
-        echo "blockwait start"
-        new_height=$(${1} block last_header | jq ".height")
-        echo "blockwait end"
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        echo "sleep start"
-        sleep 0.1
-        echo "sleep end"
-    done
-    echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
-}
+    chain33_BlockWait "${2}" "${1}"
+ }
 
 function block_wait2height() {
     if [ "$#" -lt 3 ]; then
