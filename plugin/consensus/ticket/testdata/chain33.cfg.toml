@@ -97,11 +97,11 @@ ticketFrozenTime = 5
 ticketWithdrawTime = 10
 ticketMinerWaitTime = 2
 targetTimespan = 2304
-targetTimePerBlock = 16
+targetTimePerBlock = 1
 
 [mver.consensus.ticket.ForkChainParamV1]
 targetTimespan = 288 #only for test
-targetTimePerBlock = 2
+targetTimePerBlock = 1
 
 [consensus.sub.solo]
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"

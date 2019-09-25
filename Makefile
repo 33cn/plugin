@@ -92,8 +92,8 @@ ineffassign:
 race: ## Run data race detector
 	@go test -parallel=8 -race -short $(PKG_LIST)
 
-test: ## Run unittests
-	@go test -parallel=8 -race  $(PKG_LIST)
+test: ## Run unittests count=1 to not cache
+	@go test -parallel=8 -count=1 -race  $(PKG_LIST)
 
 testq: ## Run unittests
 	@go test -parallel=8 $(PKG_LIST)

@@ -68,24 +68,37 @@ func testTicket(t *testing.T) {
 	status, err = mock33.GetAPI().GetWalletStatus()
 	assert.Nil(t, err)
 	assert.Equal(t, true, status.IsAutoMining)
-	err = mock33.WaitHeight(50)
-	assert.Nil(t, err)
-	//查询票是否自动close，并且购买了新的票
-	req := &types.ReqWalletTransactionList{Count: 1000}
-	list, err := mock33.GetAPI().WalletTransactionList(req)
-	assert.Nil(t, err)
 	hastclose := false
 	hastopen := false
-	for _, tx := range list.TxDetails {
-		if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {
-			hastclose = true
+	for i := mock33.GetLastBlock().Height; i < 100; i++ {
+		err = mock33.WaitHeight(i)
+		assert.Nil(t, err)
+		//查询票是否自动close，并且购买了新的票
+		req := &types.ReqWalletTransactionList{Count: 1000}
+		list, err := mock33.GetAPI().WalletTransactionList(req)
+		assert.Nil(t, err)
+
+		for _, tx := range list.TxDetails {
+			if tx.Height < 1 {
+				continue
+			}
+			if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {
+				hastclose = true
+			}
+			if tx.ActionName == "topen" && tx.Receipt.Ty == 2 {
+				hastopen = true
+			}
 		}
-		if tx.ActionName == "topen" && tx.Receipt.Ty == 2 {
-			hastopen = true
+		if hastclose && hastopen {
+			break
 		}
 	}
-	assert.Equal(t, true, hastclose)
-	assert.Equal(t, true, hastopen)
+
+	if !hastclose || !hastopen {
+		t.Error("wait 100 , open and close not happened")
+		return
+	}
+
 	//查询合约中的余额
 	accounts, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
