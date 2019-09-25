@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -454,7 +455,6 @@ func TestNode(t *testing.T) {
 	fmt.Println("=======start TestNode!=======")
 	Init()
 	q1, chain1, s1, mem1, exec1, cs1, p2p1 := initEnvDpos1("chain33.test1.toml")
-	//q2, chain2, s2, mem2, exec2, cs2, p2p2 := initEnvDpos2("chain33.test2.toml")
 
 	defer clearTestData1()
 	defer chain1.Close()
@@ -465,25 +465,12 @@ func TestNode(t *testing.T) {
 	defer cs1.Close()
 	defer p2p1.Close()
 
-	//defer chain2.Close()
-	//defer mem2.Close()
-	//defer exec2.Close()
-	//defer s2.Close()
-	//defer q2.Close()
-	//defer cs2.Close()
-	//defer p2p2.Close()
-
 	time.Sleep(2 * time.Second)
 
 	_, _, err := createConn("127.0.0.1:8802")
 	for err != nil {
 		_, _, err = createConn("127.0.0.1:8802")
 	}
-
-	//_, _, err = createConn("127.0.0.1:8804")
-	//for err != nil {
-	//	_, _, err = createConn("127.0.0.1:8804")
-	//}
 
 	fmt.Println("node1 ip:", cs1.(*Client).GetNode().IP)
 	fmt.Println("node1 id:", cs1.(*Client).GetNode().ID)
@@ -513,8 +500,6 @@ func TestNode(t *testing.T) {
 
 	fmt.Println("TestNodeCompatibleWith ok")
 
-	//time.Sleep(2 * time.Second)
-
 	fmt.Println(q1.Name())
 	fmt.Println(cs1.(*Client).testFlag)
 	fmt.Println(cs1.(*Client).GetConsensusState() != nil)
@@ -528,22 +513,33 @@ func TestNode(t *testing.T) {
 	fmt.Println(cs1.(*Client).GenesisDoc().ChainID)
 	fmt.Println("Validator index: ", cs1.(*Client).ValidatorIndex())
 
-	//go cs2.(*Client).GetNode().DialPeerWithAddress("127.0.0.1:36656")
-	//require.Nil(t, err)
-
-	//err = cs1.(*Client).GetNode().DialPeerWithAddress("127.0.0.1:36657")
-	//require.Nil(t, err)
-
 	time.Sleep(1 * time.Second)
 
-	//cs1.(*Client).StopC()
 	if cs1.(*Client).GetNode().IsRunning() {
 		fmt.Println("=======cs1 is running=======")
-		//cs1.(*Client).GetConsensusState().Stop()
-		//cs1.(*Client).GetNode().Stop()
 	} else {
 		fmt.Println("======= cs1 is not running=======")
 	}
+
+	fmt.Println("=======test state machine=======")
+	vote := &ttypes.DPosVote{}
+	InitStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+	voteReply := &ttypes.DPosVoteReply{}
+	InitStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	InitStateObj.recvVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	notify := &ttypes.DPosNotify{}
+	InitStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
+
+	VotingStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	VotingStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
+	VotingStateObj.recvNotify(cs1.(*Client).GetConsensusState(), notify)
+
+	VotedStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+
+	WaitNotifyStateObj.sendVote(cs1.(*Client).GetConsensusState(), vote)
+	WaitNotifyStateObj.sendVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	WaitNotifyStateObj.recvVoteReply(cs1.(*Client).GetConsensusState(), voteReply)
+	WaitNotifyStateObj.sendNotify(cs1.(*Client).GetConsensusState(), notify)
 
 	fmt.Println("=======testNode ok=======")
 }
@@ -601,43 +597,3 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 
 	return q, chain, s, mem, exec, cs, network
 }
-
-/*
-func initEnvDpos2(configName string) (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel2")
-
-	flag.Parse()
-	cfg, sub := types.InitCfg(configName)
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
-	chain.SetQueueClient(q.Client())
-
-	exec := executor.New(cfg.Exec, sub.Exec)
-	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
-	s.SetQueueClient(q.Client())
-
-	var subcfg subConfig
-	if sub != nil {
-		types.MustDecode(sub.Consensus["dpos"], &subcfg)
-	}
-	encode, _ := json.Marshal(subcfg)
-	fmt.Println(string(encode))
-	cs := New(cfg.Consensus, sub.Consensus["dpos"])
-	cs.(*Client).SetTestFlag()
-	cs.SetQueueClient(q.Client())
-
-	mem := mempool.New(cfg.Mempool, nil)
-	mem.SetQueueClient(q.Client())
-	network := p2p.New(cfg.P2P)
-
-	network.SetQueueClient(q.Client())
-
-	rpc.InitCfg(cfg.RPC)
-	gapi := rpc.NewGRpcServer(q.Client(), nil)
-	go gapi.Listen()
-
-	return q, chain, s, mem, exec, cs, network
-}
-*/
