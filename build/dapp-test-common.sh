@@ -32,12 +32,16 @@ chain33_BlockWait() {
 
     local count=0
     while true; do
+        echo "chain33 blockwait start"
         new_height=$(curl -ksd "{$req}" "${MAIN_HTTP}" | jq ".result.height")
+        echo "chain33 blockwait end"
         if [ "${new_height}" -ge "${expect}" ]; then
             break
         fi
         count=$((count + 1))
+        echo "sleep 0.1 start"
         sleep 0.1
+        echo "sleep 0.1 end"
     done
     echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }

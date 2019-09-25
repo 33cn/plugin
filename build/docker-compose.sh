@@ -224,12 +224,16 @@ function block_wait() {
     expect=$((cur_height + ${2}))
     local count=0
     while true; do
+        echo "blockwait start"
         new_height=$(${1} block last_header | jq ".height")
+        echo "blockwait end"
         if [ "${new_height}" -ge "${expect}" ]; then
             break
         fi
         count=$((count + 1))
+        echo "sleep start"
         sleep 0.1
+        echo "sleep end"
     done
     echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }
@@ -321,14 +325,16 @@ function transfer() {
     for ((i = 0; i < 10; i++)); do
         hash=$(${1} send coins transfer -a 1 -n test -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
         hashes=("${hashes[@]}" "$hash")
+        echo "$hash"
     done
+    echo "send end"
     block_wait "${1}" 1
     echo "len: ${#hashes[@]}"
     if [ "${#hashes[@]}" != 10 ]; then
         echo "tx number wrong"
         exit 1
     fi
-
+    echo "query hash start"
     for ((i = 0; i < ${#hashes[*]}; i++)); do
         txs=$(${1} tx query_hash -s "${hashes[$i]}" | jq ".txs")
         if [ -z "${txs}" ]; then
