@@ -163,7 +163,7 @@ func TestRealNodeMempool(t *testing.T) {
 	mock33.WaitHeight(0)
 	mock33.SendHot()
 	mock33.WaitHeight(1)
-	n := 20
+	n := 10
 	done := make(chan struct{}, n)
 	keys := make([]crypto.PrivKey, n)
 	for i := 0; i < n; i++ {
@@ -175,7 +175,7 @@ func TestRealNodeMempool(t *testing.T) {
 	mock33.Wait()
 	for i := 0; i < n; i++ {
 		go func(priv crypto.PrivKey) {
-			for i := 0; i < 100; i++ {
+			for i := 0; i < 30; i++ {
 				tx := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
 				reply, err := mock33.GetAPI().SendTx(tx)
 				if err != nil {
