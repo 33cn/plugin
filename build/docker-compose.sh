@@ -184,15 +184,12 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
-
     echo "=========== # unlock wallet ============="
     result=$(${1} wallet unlock -p 1314fuzamei -t 0 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key returnAddr ============="
     result=$(${1} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr | jq ".label")
@@ -201,7 +198,6 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key mining ============="
     result=$(${1} account import_key -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 -l minerAddr | jq ".label")
@@ -210,13 +206,12 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # close auto mining ============="
-    #result=$(${1} wallet auto_mine -f 0 | jq ".isok")
-    #if [ "${result}" = "false" ]; then
-    #    exit 1
-    #fi
+    result=$(${1} wallet auto_mine -f 1 | jq ".isok")
+    if [ "${result}" = "false" ]; then
+        exit 1
+    fi
 
 }
 function block_wait() {
@@ -289,7 +284,7 @@ function check_docker_container() {
 function sync_status() {
     echo "=========== query sync status========== "
     local sync_status
-    local count=100
+    local count=1000
     local wait_sec=0
     while [ $count -gt 0 ]; do
         sync_status=$(${1} net is_sync)
@@ -302,9 +297,9 @@ function sync_status() {
         fi
         ((count--))
         wait_sec=$((wait_sec + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "sync wait  ${wait_sec} s"
+    echo "sync wait  ${wait_sec}/10 s"
 }
 
 function sync() {
@@ -373,7 +368,6 @@ function dapp_test_address() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key dapptest2 mining ============="
     result=$(${1} account import_key -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989 -l dapptest2 | jq ".label")
@@ -387,7 +381,7 @@ function dapp_test_address() {
         exit 1
     fi
 
-    sleep 1
+    block_wait "${1}" 1
 
     hash=$(${1} send coins transfer -a 1500 -n transfer -t 1PUiGcbsccfxW3zuvHXZBJfznziph5miAo -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
     echo "${hash}"
