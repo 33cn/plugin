@@ -8,6 +8,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
@@ -68,20 +69,28 @@ func testTicket(t *testing.T) {
 	status, err = mock33.GetAPI().GetWalletStatus()
 	assert.Nil(t, err)
 	assert.Equal(t, true, status.IsAutoMining)
-	err = mock33.WaitHeight(50)
-	assert.Nil(t, err)
-	//查询票是否自动close，并且购买了新的票
-	req := &types.ReqWalletTransactionList{Count: 1000}
-	list, err := mock33.GetAPI().WalletTransactionList(req)
-	assert.Nil(t, err)
+	start := time.Now()
+	height := int64(0)
 	hastclose := false
 	hastopen := false
-	for _, tx := range list.TxDetails {
-		if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {
-			hastclose = true
+	for {
+		height += 50
+		err = mock33.WaitHeight(height)
+		assert.Nil(t, err)
+		//查询票是否自动close，并且购买了新的票
+		req := &types.ReqWalletTransactionList{Count: 1000}
+		list, err := mock33.GetAPI().WalletTransactionList(req)
+		assert.Nil(t, err)
+		for _, tx := range list.TxDetails {
+			if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {
+				hastclose = true
+			}
+			if tx.ActionName == "topen" && tx.Receipt.Ty == 2 {
+				hastopen = true
+			}
 		}
-		if tx.ActionName == "topen" && tx.Receipt.Ty == 2 {
-			hastopen = true
+		if hastopen == true && hastclose == true || time.Since(start) > 100*time.Second {
+			break
 		}
 	}
 	assert.Equal(t, true, hastclose)

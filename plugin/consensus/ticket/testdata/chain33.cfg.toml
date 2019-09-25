@@ -82,7 +82,7 @@ maxTxNumber = 1600
 maxTxNumber = 10000
 
 [mver.consensus.ForkChainParamV2]
-powLimitBits = "0x1f2fffff"
+powLimitBits = "0x2f2fffff"
 
 [mver.consensus.ForkTicketFundAddrV1]
 fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
@@ -113,7 +113,7 @@ genesisBlockTime=1514533394
 [[consensus.sub.ticket.genesis]]
 minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 returnAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-count=10000
+count=3000
 
 [[consensus.sub.ticket.genesis]]
 minerAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
