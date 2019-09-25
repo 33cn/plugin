@@ -36,6 +36,7 @@ if [ "$(uname)" == "Darwin" ]; then
     sedfix=".bak"
 fi
 CLI_IP=""
+PARA_CLI_IP=""
 DAPP=""
 if [ -n "${2}" ]; then
     DAPP=$2
@@ -133,6 +134,8 @@ function start() {
     ${CLI} block last_header
     ${CLI} net info
 
+    get_CLI_IP
+
     ${CLI} net peer_info
     local count=1000
     while [ $count -gt 0 ]; do
@@ -218,13 +221,14 @@ function block_wait() {
         echo "wrong block_wait params"
         exit 1
     fi
-    local http=$CLI_IP
-
-    #if [ "${1}" != $CLI ]; then
-    #   http=${CLI_IP//8801/8901}
+    local hp=$CLI_IP
+    #local s1="para"
+    #result=$(echo "$1" | grep "${s1}")
+    #if [ -n $result ]; then
+    #   hp=${CLI_IP//8801/8901}
     #fi
-    echo "http=$http"
-    chain33_BlockWait "${2}" "${http}"
+    echo "http=$hp"
+    chain33_BlockWait "${2}" "${hp}"
  }
 
 function block_wait2height() {
@@ -414,6 +418,15 @@ function dapp_run() {
     fi
 
 }
+
+function get_CLI_IP(){
+    local cli_ip=$(${CLI} net info | jq -r ".externalAddr")
+    cli_ip=$(echo "$cli_ip" | cut -d':' -f 1)
+    CLI_IP="http://${cli_ip}:8801"
+    PARA_CLI_IP=${CLI_IP//8801/8901}
+    echo "CLI_IP=$CLI_IP,PARA_CLI_IP=$PARA_CLI_IP"
+}
+
 function main() {
     echo "==============================DAPP=$DAPP main begin========================================================"
     ### init para ####
@@ -430,7 +443,6 @@ function main() {
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
     ip=$(echo "$ip" | cut -d':' -f 1)
-    CLI_IP=$ip
     dapp_run test "${ip}"
 
     ### rpc test  ###
