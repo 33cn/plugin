@@ -35,7 +35,7 @@ sedfix=""
 if [ "$(uname)" == "Darwin" ]; then
     sedfix=".bak"
 fi
-
+CLI_IP=""
 DAPP=""
 if [ -n "${2}" ]; then
     DAPP=$2
@@ -218,8 +218,14 @@ function block_wait() {
         echo "wrong block_wait params"
         exit 1
     fi
-    chain33_BlockWait "${2}" "${1}"
-}
+    local http=$CLI_IP
+
+    #if [ "${1}" != $CLI ]; then
+    #   http=${CLI_IP//8801/8901}
+    #fi
+    echo "http=$http"
+    chain33_BlockWait "${2}" "${http}"
+ }
 
 function block_wait2height() {
     if [ "$#" -lt 3 ]; then
@@ -424,6 +430,7 @@ function main() {
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
     ip=$(echo "$ip" | cut -d':' -f 1)
+    CLI_IP=$ip
     dapp_run test "${ip}"
 
     ### rpc test  ###
