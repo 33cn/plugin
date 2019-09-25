@@ -229,7 +229,7 @@ function block_wait() {
     #fi
     echo "http=$hp"
     chain33_BlockWait "${2}" "${hp}"
- }
+}
 
 function block_wait2height() {
     if [ "$#" -lt 3 ]; then
@@ -419,7 +419,7 @@ function dapp_run() {
 
 }
 
-function get_CLI_IP(){
+function get_CLI_IP() {
     local cli_ip=$(${CLI} net info | jq -r ".externalAddr")
     cli_ip=$(echo "$cli_ip" | cut -d':' -f 1)
     CLI_IP="http://${cli_ip}:8801"
