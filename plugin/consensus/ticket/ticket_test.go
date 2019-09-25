@@ -74,7 +74,7 @@ func testTicket(t *testing.T) {
 	hastclose := false
 	hastopen := false
 	for {
-		height += 50
+		height += 20
 		err = mock33.WaitHeight(height)
 		assert.Nil(t, err)
 		//查询票是否自动close，并且购买了新的票
