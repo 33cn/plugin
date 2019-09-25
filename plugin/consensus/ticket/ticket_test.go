@@ -30,7 +30,6 @@ func TestTicket(t *testing.T) {
 	testTicket(t)
 }
 
-
 func testTicket(t *testing.T) {
 	mock33 := testnode.New("testdata/chain33.cfg.toml", nil)
 	defer mock33.Close()
