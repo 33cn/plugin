@@ -211,7 +211,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 
 	// 兼容原来的找回， 在不指定的情况下，找回主币
 	if len(perfRet.Assets) == 0 {
-		perfRet.Assets = append(perfRet.Assets, &types.Asset{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: types.GetCoinSymbol()})
 		//return nil, nil
 	}
 
@@ -224,7 +224,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 		acc := accdb.LoadExecAccount(defaultAddress, action.execaddr)
 		rlog.Debug("RetrievePerform", "acc.Balance", acc.Balance)
 		if acc.Balance > 0 {
-			receipt, err = action.coinsAccount.ExecTransfer(defaultAddress, perfRet.BackupAddress, action.execaddr, acc.Balance)
+			receipt, err = accdb.ExecTransfer(defaultAddress, perfRet.BackupAddress, action.execaddr, acc.Balance)
 			if err != nil {
 				rlog.Debug("RetrievePerform", "ExecTransfer", err)
 				return nil, err

@@ -10,9 +10,7 @@ function dapp_test_rpc() {
     if [ -d dapptest ]; then
         cp $DAPP_TEST_COMMON dapptest/
         cd dapptest || return
-
-        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name evm ! -name game ! -name guess ! -name hashlock ! -name ticket ! -name lottery ! -name pokerbull ! -name retrieve ! -name token ! -name trade ! -name . | sed 's/^\.\///' | sort)
-
+        dir=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dir"
         for app in $dir; do
             echo "=========== # $app rpc test ============="
@@ -20,8 +18,8 @@ function dapp_test_rpc() {
             echo "=========== # $app rpc end ============="
         done
 
+        ##ticket用例最后执行
+        ./ticket/"${RPC_TESTFILE}" "$ip"
     fi
     echo "============ # dapp rpc test end ============="
 }
-
-#dapp_test_rpc $1

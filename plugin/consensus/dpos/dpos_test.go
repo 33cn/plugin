@@ -200,13 +200,6 @@ func DposPerf() {
 		fmt.Println("Verify CB failed.")
 	}
 
-	//fmt.Println("=======start GetCBInfoByCircle!=======")
-	//first time, not hit
-	//dposClient.csState.GetCBInfoByCircle(task.Cycle)
-	//time.Sleep(1 * time.Second)
-	//second time, hit cache
-	//dposClient.csState.GetCBInfoByCircle(task.Cycle)
-
 	fmt.Println("=======start VoteVerify!=======")
 	vote := generateVote(dposClient.csState)
 	if nil == vote {
@@ -430,7 +423,6 @@ func createConn2() error {
 		return err
 	}
 	c = types.NewChain33Client(conn)
-	//r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	return nil
 }
 
@@ -509,7 +501,6 @@ func NormPut() {
 
 // SendCBTx method
 func verifyCB(cs *ConsensusState, info *dty.DposCBInfo) bool {
-	//info.Pubkey = strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes()))
 	canonical := dty.CanonicalOnceCBInfo{
 		Cycle:      info.Cycle,
 		StopHeight: info.StopHeight,

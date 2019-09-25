@@ -90,13 +90,13 @@ ineffassign:
 	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign -n ${PKG_LIST_INEFFASSIGN}
 
 race: ## Run data race detector
-	@go test -race -short $(PKG_LIST)
+	@go test -parallel=8 -race -short $(PKG_LIST)
 
 test: ## Run unittests
-	@go test -race $(PKG_LIST)
+	@go test -parallel=8 -race  $(PKG_LIST)
 
 testq: ## Run unittests
-	@go test $(PKG_LIST)
+	@go test -parallel=8 $(PKG_LIST)
 
 fmt: fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
