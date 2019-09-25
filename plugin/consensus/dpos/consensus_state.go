@@ -68,7 +68,7 @@ type ConsensusState struct {
 	// msgs from ourself, or by timeouts
 	peerMsgQueue     chan MsgInfo
 	internalMsgQueue chan MsgInfo
-	timer *time.Timer
+	timer            *time.Timer
 
 	broadcastChannel chan<- MsgInfo
 	ourID            ID
@@ -192,13 +192,13 @@ func (cs *ConsensusState) Stop() {
 
 // Attempt to reset the timer
 func (cs *ConsensusState) resetTimer(duration time.Duration, stateType int) {
-	dposlog.Info("set timer","duration", duration, "state", StateTypeMapping[stateType])
+	dposlog.Info("set timer", "duration", duration, "state", StateTypeMapping[stateType])
 	cs.timer.Reset(duration)
 }
 
 // Attempt to reset the timer
 func (cs *ConsensusState) stopAndResetTimer(duration time.Duration, stateType int) {
-	dposlog.Info("set timer","duration", duration, "state", StateTypeMapping[stateType])
+	dposlog.Info("set timer", "duration", duration, "state", StateTypeMapping[stateType])
 	if !cs.timer.Stop() {
 		<-cs.timer.C
 	}
@@ -239,7 +239,7 @@ func (cs *ConsensusState) receiveRoutine() {
 		case mi = <-cs.internalMsgQueue:
 			// handles proposals, block parts, votes
 			cs.handleMsg(mi)
-		case <- cs.timer.C:
+		case <-cs.timer.C:
 			cs.handleTimeout()
 		case <-cs.Quit:
 			dposlog.Info("ConsensusState recv quit signal.")
