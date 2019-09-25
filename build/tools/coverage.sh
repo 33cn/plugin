@@ -12,7 +12,7 @@ mkdir -p "$COVERAGE_DIR"
 
 # Create a coverage file for each package
 for package in ${PKG_LIST}; do
-    go test -covermode=count -coverprofile "${COVERAGE_DIR}/${package##*/}.cov" "$package"
+    go test -parallel=8 -covermode=count -coverprofile "${COVERAGE_DIR}/${package##*/}.cov" "$package"
 done
 
 # Merge the coverage profile files
