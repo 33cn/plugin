@@ -190,7 +190,6 @@ function miner() {
         exit 1
     fi
 
-
     echo "=========== # import private key returnAddr ============="
     result=$(${1} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr | jq ".label")
     echo "${result}"
@@ -198,14 +197,12 @@ function miner() {
         exit 1
     fi
 
-
     echo "=========== # import private key mining ============="
     result=$(${1} account import_key -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 -l minerAddr | jq ".label")
     echo "${result}"
     if [ -z "${result}" ]; then
         exit 1
     fi
-
 
     echo "=========== # close auto mining ============="
     result=$(${1} wallet auto_mine -f 1 | jq ".isok")
@@ -367,7 +364,6 @@ function dapp_test_address() {
     if [ -z "${result}" ]; then
         exit 1
     fi
-
 
     echo "=========== # import private key dapptest2 mining ============="
     result=$(${1} account import_key -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989 -l dapptest2 | jq ".label")
