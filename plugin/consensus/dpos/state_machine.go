@@ -529,7 +529,7 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 			}
 		}
 		//1s后检查是否出块，是否需要重新投票
-		cs.stopAndResetTimer(time.Millisecond*500, VotedStateType)
+		cs.resetTimer(time.Millisecond*500, VotedStateType)
 	} else if result == continueToVote {
 		dposlog.Info("VotingState get a vote, but don't get an agreement,waiting for new votes...")
 	} else {
@@ -538,7 +538,7 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 		cs.ClearVotes()
 		cs.SetState(InitStateObj)
 		dposlog.Info("Change state because of vote failed.", "from", "VotingState", "to", "InitState")
-		cs.stopAndResetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+		cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 	}
 }
 
@@ -776,7 +776,7 @@ func (voted *VotedState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNot
 	cs.ClearVotes()
 	cs.SetState(WaitNotifyStateObj)
 	dposlog.Info("Change state because of recv notify.", "from", "VotedState", "to", "WaitNotifyState")
-	cs.stopAndResetTimer(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
+	cs.resetTimer(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
 	if cs.cachedNotify != nil {
 		cs.dposState.recvNotify(cs, cs.cachedNotify)
 	}

@@ -193,14 +193,11 @@ func (cs *ConsensusState) Stop() {
 // Attempt to reset the timer
 func (cs *ConsensusState) resetTimer(duration time.Duration, stateType int) {
 	dposlog.Info("set timer", "duration", duration, "state", StateTypeMapping[stateType])
-	cs.timer.Reset(duration)
-}
-
-// Attempt to reset the timer
-func (cs *ConsensusState) stopAndResetTimer(duration time.Duration, stateType int) {
-	dposlog.Info("set timer", "duration", duration, "state", StateTypeMapping[stateType])
 	if !cs.timer.Stop() {
-		<-cs.timer.C
+		select {
+		case <-cs.timer.C:
+		default:
+		}
 	}
 	cs.timer.Reset(duration)
 }
