@@ -219,7 +219,7 @@ function block_wait() {
         exit 1
     fi
     chain33_BlockWait "${2}" "${1}"
- }
+}
 
 function block_wait2height() {
     if [ "$#" -lt 3 ]; then
