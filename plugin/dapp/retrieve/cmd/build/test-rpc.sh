@@ -260,4 +260,4 @@ function main() {
 }
 
 set -x
-main "$1"
+chain33_debug_function main "$1"

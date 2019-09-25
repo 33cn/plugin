@@ -80,6 +80,7 @@ function base_init() {
 
     sed -i $sedfix 's/^powLimitBits=.*/powLimitBits="0x1f2fffff"/g' chain33.toml
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
+    sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
 
     # p2p
     sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
@@ -131,13 +132,13 @@ function start() {
     ${CLI} net info
 
     ${CLI} net peer_info
-    local count=100
+    local count=1000
     while [ $count -gt 0 ]; do
         peersCount=$(${CLI} net peer_info | jq '.[] | length')
         if [ "${peersCount}" -ge 2 ]; then
             break
         fi
-        sleep 5
+        sleep 1
         ((count--))
         echo "peers error: peersCount=${peersCount}"
     done
@@ -212,10 +213,10 @@ function miner() {
     sleep 1
 
     echo "=========== # close auto mining ============="
-    result=$(${1} wallet auto_mine -f 1 | jq ".isok")
-    if [ "${result}" = "false" ]; then
-        exit 1
-    fi
+    #result=$(${1} wallet auto_mine -f 0 | jq ".isok")
+    #if [ "${result}" = "false" ]; then
+    #    exit 1
+    #fi
 
 }
 function block_wait() {
@@ -232,9 +233,9 @@ function block_wait() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
+    echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }
 
 function block_wait2height() {
@@ -257,9 +258,9 @@ function block_wait2height() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur_height=$new_height,expect=$expect"
+    echo "wait new block $count/10 s, cur_height=$new_height,expect=$expect"
 }
 
 function check_docker_status() {

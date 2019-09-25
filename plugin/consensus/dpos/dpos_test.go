@@ -168,7 +168,7 @@ func DposPerf() {
 
 	dposClient := cs.(*Client)
 	dposClient.csState.QueryCycleBoundaryInfo(task.Cycle)
-	dposClient.csState.GetCBInfoByCircle(task.Cycle)
+	//dposClient.csState.GetCBInfoByCircle(task.Cycle)
 	dposClient.csState.QueryVrf(pubkey, task.Cycle)
 	dposClient.csState.QueryVrfs(dposClient.csState.validatorMgr.Validators, task.Cycle)
 	dposClient.csState.GetVrfInfoByCircle(task.Cycle, VrfQueryTypeM)
@@ -200,12 +200,12 @@ func DposPerf() {
 		fmt.Println("Verify CB failed.")
 	}
 
-	fmt.Println("=======start GetCBInfoByCircle!=======")
-	//first time, not hit
-	dposClient.csState.GetCBInfoByCircle(task.Cycle)
-	time.Sleep(1 * time.Second)
-	//second time, hit cache
-	dposClient.csState.GetCBInfoByCircle(task.Cycle)
+	//fmt.Println("=======start GetCBInfoByCircle!=======")
+	////first time, not hit
+	//dposClient.csState.GetCBInfoByCircle(task.Cycle)
+	//time.Sleep(1 * time.Second)
+	////second time, hit cache
+	//dposClient.csState.GetCBInfoByCircle(task.Cycle)
 
 	fmt.Println("=======start VoteVerify!=======")
 	vote := generateVote(dposClient.csState)

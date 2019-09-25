@@ -3,16 +3,13 @@
 set -e
 set -o pipefail
 
+# shellcheck source=/dev/null
+source ../dapp-test-common.sh
+
 MAIN_HTTP=""
 GAME_ID=""
 PASSWD="ABCD"
 HASH_VALUE=$(echo -n "ABCD1" | sha256sum | awk '{print $1}')
-
-ACCOUNT_A="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-PRIVA_A="56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138"
-
-ACCOUNT_B="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-PRIVA_B="2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"
 
 EXECTOR=""
 
@@ -142,9 +139,44 @@ function init() {
     fi
     echo "gameAddr=${game_addr}"
 
-    chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000 "${MAIN_HTTP}"
+    local main_ip=${MAIN_HTTP//8901/8801}
+    #main chain import pri key
+    #16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f
+    chain33_ImportPrivkey "0xfa21dc33a6144c546537580d28d894355d1e9af7292be175808b0f5737c30849" "16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f" "game1" "${main_ip}"
+    #16GXRfd9xj3XYMDti4y4ht7uzwoh55gZEc
+    chain33_ImportPrivkey "0x213286d352b01fd740b6eaeb78a4fd316d743dd51d2f12c6789977430a41e0c7" "16GXRfd9xj3XYMDti4y4ht7uzwoh55gZEc" "game2" "$main_ip"
 
+    local ACCOUNT_A="16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f"
+    local ACCOUNT_B="16GXRfd9xj3XYMDti4y4ht7uzwoh55gZEc"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+
+        chain33_applyCoins "$ACCOUNT_B" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+
+        chain33_applyCoins "$ACCOUNT_B" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0xfa21dc33a6144c546537580d28d894355d1e9af7292be175808b0f5737c30849" "16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f" "game1" "$para_ip"
+        chain33_ImportPrivkey "0x213286d352b01fd740b6eaeb78a4fd316d743dd51d2f12c6789977430a41e0c7" "16GXRfd9xj3XYMDti4y4ht7uzwoh55gZEc" "game2" "$para_ip"
+
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
+        chain33_applyCoins "$ACCOUNT_B" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${ACCOUNT_B}" "$para_ip"
+    fi
+
+    chain33_SendToAddress "${ACCOUNT_B}" "$game_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_QueryExecBalance "${ACCOUNT_B}" "game" "$MAIN_HTTP"
     chain33_SendToAddress "${ACCOUNT_A}" "$game_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_QueryExecBalance "${ACCOUNT_A}" "game" "$MAIN_HTTP"
 
     chain33_BlockWait 1 "$MAIN_HTTP"
 }
@@ -197,4 +229,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"

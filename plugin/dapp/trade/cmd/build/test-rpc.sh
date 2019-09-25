@@ -8,7 +8,7 @@ MAIN_HTTP=""
 CASE_ERR=""
 trade_addr=""
 tradeAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-tradeBuyerAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+tradeBuyerAddr="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
 tokenSymbol="TOKEN"
 
 #color
@@ -132,7 +132,7 @@ function trade_createBuyTx() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade createBuyTx queryExecRes" "$?"
@@ -200,7 +200,7 @@ function trade_buyLimit() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "${MAIN_HTTP}"
+    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
 
     queryTransaction ".error | not" "true"
     echo_rst "trade buyLimit queryExecRes" "$?"
@@ -278,7 +278,29 @@ function init() {
         token_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${tokenExecName}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
 
-    chain33_SendToAddress "$tradeAddr" "$tradeBuyerAddr" 10000000000 "${MAIN_HTTP}"
+    local main_ip=${MAIN_HTTP//8901/8801}
+    #main chain import pri key
+    #1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg
+    chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "${main_ip}"
+
+    local ACCOUNT_A="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+    else
+        # tx fee
+        chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
+
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "$para_ip"
+
+        chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${ACCOUNT_A}" "$para_ip"
+    fi
+
     chain33_SendToAddress "$tradeAddr" "$trade_addr" 10000000000 "${MAIN_HTTP}"
     chain33_SendToAddress "$tradeAddr" "$token_addr" 10000000000 "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
@@ -293,7 +315,7 @@ function init() {
     token_balance
     token_transfer "${tradeBuyerAddr}"
     token_sendExec "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
-    token_sendExec "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 "
+    token_sendExec "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42 "
 }
 
 function run_test() {
@@ -332,4 +354,4 @@ function main() {
     fi
 }
 
-main "$1"
+chain33_debug_function main "$1"
