@@ -80,6 +80,8 @@ function base_init() {
 
     sed -i $sedfix 's/^powLimitBits=.*/powLimitBits="0x1f2fffff"/g' chain33.toml
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
+    sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
+
 
     # p2p
     sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
@@ -131,13 +133,13 @@ function start() {
     ${CLI} net info
 
     ${CLI} net peer_info
-    local count=100
+    local count=1000
     while [ $count -gt 0 ]; do
         peersCount=$(${CLI} net peer_info | jq '.[] | length')
         if [ "${peersCount}" -ge 2 ]; then
             break
         fi
-        sleep 5
+        sleep 1
         ((count--))
         echo "peers error: peersCount=${peersCount}"
     done
@@ -183,15 +185,12 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
-
     echo "=========== # unlock wallet ============="
     result=$(${1} wallet unlock -p 1314fuzamei -t 0 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key returnAddr ============="
     result=$(${1} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr | jq ".label")
@@ -200,7 +199,6 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key mining ============="
     result=$(${1} account import_key -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 -l minerAddr | jq ".label")
@@ -209,7 +207,6 @@ function miner() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # close auto mining ============="
     result=$(${1} wallet auto_mine -f 1 | jq ".isok")
@@ -232,9 +229,9 @@ function block_wait() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
+    echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }
 
 function block_wait2height() {
@@ -257,9 +254,9 @@ function block_wait2height() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur_height=$new_height,expect=$expect"
+    echo "wait new block $count/10 s, cur_height=$new_height,expect=$expect"
 }
 
 function check_docker_status() {
@@ -288,7 +285,7 @@ function check_docker_container() {
 function sync_status() {
     echo "=========== query sync status========== "
     local sync_status
-    local count=100
+    local count=1000
     local wait_sec=0
     while [ $count -gt 0 ]; do
         sync_status=$(${1} net is_sync)
@@ -301,9 +298,9 @@ function sync_status() {
         fi
         ((count--))
         wait_sec=$((wait_sec + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "sync wait  ${wait_sec} s"
+    echo "sync wait  ${wait_sec}/10 s"
 }
 
 function sync() {
@@ -372,7 +369,6 @@ function dapp_test_address() {
         exit 1
     fi
 
-    sleep 1
 
     echo "=========== # import private key dapptest2 mining ============="
     result=$(${1} account import_key -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989 -l dapptest2 | jq ".label")
@@ -386,7 +382,7 @@ function dapp_test_address() {
         exit 1
     fi
 
-    sleep 1
+    block_wait "${1}" 1
 
     hash=$(${1} send coins transfer -a 1500 -n transfer -t 1PUiGcbsccfxW3zuvHXZBJfznziph5miAo -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
     echo "${hash}"
