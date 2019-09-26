@@ -80,6 +80,7 @@ function base_init() {
 
     sed -i $sedfix 's/^powLimitBits=.*/powLimitBits="0x1f2fffff"/g' chain33.toml
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
+    sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
 
     # p2p
     sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
@@ -102,6 +103,9 @@ function base_init() {
 
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
+
+    #relay genesis
+    sed -i $sedfix 's/^genesis="12qyocayNF7.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' chain33.toml
 
 }
 
@@ -128,13 +132,13 @@ function start() {
     ${CLI} net info
 
     ${CLI} net peer_info
-    local count=100
+    local count=1000
     while [ $count -gt 0 ]; do
         peersCount=$(${CLI} net peer_info | jq '.[] | length')
         if [ "${peersCount}" -ge 2 ]; then
             break
         fi
-        sleep 5
+        sleep 1
         ((count--))
         echo "peers error: peersCount=${peersCount}"
     done
@@ -209,10 +213,10 @@ function miner() {
     sleep 1
 
     echo "=========== # close auto mining ============="
-    result=$(${1} wallet auto_mine -f 0 | jq ".isok")
-    if [ "${result}" = "false" ]; then
-        exit 1
-    fi
+    #result=$(${1} wallet auto_mine -f 0 | jq ".isok")
+    #if [ "${result}" = "false" ]; then
+    #    exit 1
+    #fi
 
 }
 function block_wait() {
@@ -229,9 +233,9 @@ function block_wait() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur height=$expect,old=$cur_height"
+    echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }
 
 function block_wait2height() {
@@ -254,9 +258,9 @@ function block_wait2height() {
             break
         fi
         count=$((count + 1))
-        sleep 1
+        sleep 0.1
     done
-    echo "wait new block $count s, cur_height=$new_height,expect=$expect"
+    echo "wait new block $count/10 s, cur_height=$new_height,expect=$expect"
 }
 
 function check_docker_status() {
@@ -377,11 +381,21 @@ function dapp_test_address() {
     if [ -z "${result}" ]; then
         exit 1
     fi
+    result=$(${1} account import_key -k 9d315182e56fde7fadb94408d360203894e5134216944e858f9b31f70e9ecf40 -l rpctestpooladdr | jq ".label")
+    echo "${result}"
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
 
     sleep 1
 
     hash=$(${1} send coins transfer -a 1500 -n transfer -t 1PUiGcbsccfxW3zuvHXZBJfznziph5miAo -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
     echo "${hash}"
+
+    #total allocation for rpc test
+    hash=$(${1} send coins transfer -a 8000 -n transfer -t 1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
+    echo "${hash}"
+
     block_wait "${1}" 1
 }
 
@@ -430,7 +444,7 @@ function main() {
     dapp_run test "${ip}"
 
     ### rpc test  ###
-    #rpc_test "${ip}"
+    rpc_test "${ip}"
 
     ### finish ###
     check_docker_container

@@ -24,7 +24,7 @@ echo_rst() {
 privacy_CreateRawTransaction() {
 
     local ip=$1
-    req='"method":"privacy.CreateRawTransaction","params":[{"pubkeypair":"0a9d212b2505aefaa8da370319088bbccfac097b007f52ed71d8133456c8185823c8eac43c5e937953d7b6c8e68b0db1f4f03df4946a29f524875118960a35fb", "tokenname":"BTY", "type":1, "amount":100000000}]'
+    req='"method":"privacy.CreateRawTransaction","params":[{"pubkeypair":"0a9d212b2505aefaa8da370319088bbccfac097b007f52ed71d8133456c8185823c8eac43c5e937953d7b6c8e68b0db1f4f03df4946a29f524875118960a35fb", "assetExec":"coins", "tokenname":"BTY", "type":1, "amount":100000000}]'
     echo "#request: $req"
     resp=$(curl -ksd "{$req}" "$ip")
     echo "#response: $resp"

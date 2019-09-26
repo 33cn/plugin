@@ -18,7 +18,7 @@ function query_unfreezeID() {
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
         echo "====query tx= ${txhash}, return=$ret "
         if [ "${tx}" != "${txhash}" ]; then
-            block_wait 1
+            chain33_BlockWait 1 "${MAIN_HTTP}"
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "====query tx=$txhash failed"
@@ -42,26 +42,39 @@ function init() {
     echo "ipara=$ispara"
     exec_name="unfreeze"
     uid_index=2
+    symbol="bty"
+
+    beneficiary_key=0xa2ec1c6274723c021daa8792f4d0d52ffa0eff0fd47c9c6c1d1dd618762dc178
+    beneficiary=1qpAv7H4C5JBgVQffDRbQKti7ibdM2TfU
+
+    owner=1CK51xZ1wNkrzAhGyDuFayxeQXHg3gqcVS
+    owner_key=0x3b0d7f65b35da1c394891ba7a8ce0f070ccef6818e3f7ca9c203776013b3a4b0
+
+    chain33_ImportPrivkey "${beneficiary_key}" "${beneficiary}" "unfreeze_beneficiary" "${MAIN_HTTP}"
+    chain33_ImportPrivkey "${owner_key}" "${owner}" "unfreeze_owner" "${MAIN_HTTP}"
+
+    chain33_applyCoins "${beneficiary}" 10000000000 "${MAIN_HTTP}"
+    chain33_applyCoins "${owner}" 10000000000 "${MAIN_HTTP}"
+
     if [ "$ispara" == true ]; then
         exec_name="user.p.para."${exec_name}
         uid_index=1
+        symbol="para"
+
+        local main_ip=${MAIN_HTTP//8901/8801}
+        chain33_applyCoins "${beneficiary}" 10000000000 "${main_ip}"
+        chain33_applyCoins "${owner}" 10000000000 "${main_ip}"
     fi
+
     exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${exec_name}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     echo "exec_addr=${exec_addr}"
-
-    beneficiary=12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
-    beneficiary_key=0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
-    owner=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    owner_key=CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
-    #unfreeze_exec_addr=15YsqAuXeEXVHgm6RVx4oJaAAnhtwqnu3H
-
-    Chain33_SendToAddress "$owner" "$exec_addr" 500000000 "${MAIN_HTTP}"
-    Chain33_SendToAddress "$beneficiary" "$exec_addr" 500000000 "${MAIN_HTTP}"
-    block_wait 1
+    chain33_SendToAddress "$owner" "$exec_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_SendToAddress "$beneficiary" "$exec_addr" 5000000000 "${MAIN_HTTP}"
+    chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeCreate() {
-    req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"bty","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
+    req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"'$symbol'","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
     # echo "#request: $req"
     resp=$(curl -ksd "$req" "${MAIN_HTTP}")
     # echo "#resp: $resp"
@@ -96,7 +109,7 @@ function CreateRawUnfreezeTerminate() {
     echo_rst "$FUNCNAME" "$?"
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
-    block_wait 2
+    chain33_BlockWait 2 "${MAIN_HTTP}"
 }
 
 function GetUnfreeze() {

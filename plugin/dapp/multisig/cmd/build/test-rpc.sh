@@ -28,8 +28,8 @@ AddrB="1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj"
 AddrE="1KHwX7ZadNeQDjBGpnweb4k2dqj2CWtAYo"
 #GenAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
-GenAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-PrivKeyGen="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
+GenAddr="15wcitPEu1X1TBfrGfwN8GTkNTJoCmGc75"
+PrivKeyGen="0x295710fa409bd0b0bf928efa0994645edfe80a247d89c1e1637f90dc5e303f5e"
 
 multisigExecAddr=""
 multisigAccAddr=""
@@ -42,13 +42,33 @@ function init() {
 
     if [ "$ispara" == true ]; then
         execName="user.p.para.multisig"
-        Symbol="paracoin"
+        Symbol="para"
         multisigExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.multisig"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
         execName="multisig"
         Symbol="BTY"
         multisigExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"multisig"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
+
+    local main_ip=${MAIN_HTTP//8901/8801}
+
+    if [ "$ispara" == false ]; then
+        chain33_applyCoins "$GenAddr" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${GenAddr}" "$main_ip"
+
+    else
+        # tx fee
+        chain33_applyCoins "$GenAddr" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${GenAddr}" "$main_ip"
+
+        local para_ip="${MAIN_HTTP}"
+        #para chain import pri key
+        chain33_ImportPrivkey "0x295710fa409bd0b0bf928efa0994645edfe80a247d89c1e1637f90dc5e303f5e" "15wcitPEu1X1TBfrGfwN8GTkNTJoCmGc75" "gen" "$para_ip"
+
+        chain33_applyCoins "$GenAddr" 12000000000 "${para_ip}"
+        chain33_QueryBalance "${GenAddr}" "$para_ip"
+    fi
+
     echo "multisigExecAddr=$multisigExecAddr"
 }
 # 创建多重签名账户
@@ -97,7 +117,7 @@ function multisig_TransferInTx() {
 
     #查询multisigAccAddr地址资产信息
     accountasset=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"'"$multisigAccAddr"'","assets":{"execer":"'$Asset'","symbol":"'$Symbol'"},"isAll":false}}]}' ${MAIN_HTTP} | jq -r ".result.accAssets[0]")
-
+    echo "multisig_TransferInTx:=${accountasset}"
     ok=$(jq '(.assets.execer == "'$Asset'") and (.assets.symbol == "'$Symbol'") and (.account.frozen == "4000000000")' <<<"$accountasset")
     [ "$ok" == true ]
     rst=$?
@@ -110,12 +130,13 @@ function multisig_TransferOutTx() {
     echo "========== # multisig_TransferOutTx begin =========="
     #由GenAddr账户签名从multisigAccAddr账户转出2000000000到AddrB
 
-    txHex=$(curl -ksd '{"method":"multisig.MultiSigAccTransferOutTx","params":[{"symbol":"paracoin","amount":2000000000,"note":"test ","execname":"coins","to":"'$AddrB'","from":"'"$multisigAccAddr"'"}]}' ${MAIN_HTTP} | jq -r ".result")
+    txHex=$(curl -ksd '{"method":"multisig.MultiSigAccTransferOutTx","params":[{"symbol":"'$Symbol'","amount":2000000000,"note":"test ","execname":"coins","to":"'$AddrB'","from":"'"$multisigAccAddr"'"}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignRawTx "$txHex" "$PrivKeyGen" ${MAIN_HTTP}
     #chain33_BlockWait 1 ${MAIN_HTTP}
 
     #查询AddrB账户在multisig合约下有2000000000
-    accountasset=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj","assets":{"execer":"coins","symbol":"paracoin"},"isAll":false}}]}' ${MAIN_HTTP} | jq -r ".result.accAssets[0]")
+    accountasset=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj","assets":{"execer":"coins","symbol":"'$Symbol'"},"isAll":false}}]}' ${MAIN_HTTP} | jq -r ".result.accAssets[0]")
+    echo "multisig_TransferOutTx:=${accountasset}"
     ok=$(jq '(.assets.execer == "'$Asset'") and (.assets.symbol == "'$Symbol'") and (.account.balance == "2000000000")' <<<"$accountasset")
     [ "$ok" == true ]
     rst=$?

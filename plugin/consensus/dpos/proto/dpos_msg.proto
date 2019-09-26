@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+
+package types;
+
+//CycleBoundaryInfo cycle边界信息
+message CycleBoundaryInfo{
+    int64 cycle            = 1;
+    int64 stopHeight       = 2;
+    string stopHash        = 3;
+}
+
+//SuperNode 超级节点信息
+message SuperNode{
+    bytes address          = 1;
+    bytes pubKey           = 2;
+}
+
+//VoteItem 投票信息
+message VoteItem {
+    int32 votedNodeIndex   = 1;    //被投票的节点索引
+    bytes votedNodeAddress = 2;    //被投票的节点地址
+    int64 cycle            = 3;    //大周期序号
+    int64 cycleStart       = 4;    //大周期起始时间
+    int64 cycleStop        = 5;    //大周期终止时间
+    int64 periodStart      = 6;    //新节点负责出块的起始时间
+    int64 periodStop       = 7;    //新节点负责出块的终止时间
+    int64 height           = 8;    //新节点负责出块的起始高度
+    bytes voteID           = 9;    //选票ID
+    CycleBoundaryInfo lastCBInfo = 10;
+    int64 shuffleType      = 11;
+    repeated SuperNode validators = 12;
+    repeated SuperNode vrfValidators = 13;
+    repeated SuperNode noVrfValidators = 14;
+}
+
+//DPosVote Dpos共识的节点投票，为达成共识用。
+message DPosVote {
+    VoteItem  voteItem     = 1;
+    int64 voteTimestamp    = 2;    //发起投票的时间
+    int32 voterNodeIndex   = 3;    //投票节点索引
+    bytes voterNodeAddress = 4;    //投票节点地址
+    bytes signature        = 5;    //投票者签名
+}
+
+//DPosVoteReply 投票响应。
+message DPosVoteReply {
+    DPosVote  vote         = 1;
+}
+
+//DPosNotify Dpos委托节点出块周期结束时，通知其他节点进行高度确认及新节点投票。
+message DPosNotify {
+    VoteItem  vote         = 1;
+    int64 heightStop       = 2;    //新节点负责出块的结束高度
+    bytes hashStop         = 3;    //新节点负责出块的结束hash
+    int64 notifyTimestamp  = 4;    //发起通知的时间
+    int32 notifyNodeIndex  = 5;    //通知节点的索引
+    bytes notifyNodeAddress= 6;    //通知节点的地址
+    bytes signature        = 7;    //通知节点的签名
+}
+
+//DPosCBInfo Cycle boundary注册信息。
+message DPosCBInfo {
+    int64 cycle          = 1;
+    int64 stopHeight     = 2;
+    string stopHash      = 3;
+    string pubkey        = 4;
+    string signature     = 5;
+}

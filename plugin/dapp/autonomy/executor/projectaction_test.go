@@ -93,7 +93,7 @@ func TestPropProject(t *testing.T) {
 
 	result := []error{
 		types.ErrInvalidAddress,
-		auty.ErrSetBlockHeight,
+		types.ErrInvalidParam,
 		auty.ErrSetBlockHeight,
 		types.ErrNotFound,
 		auty.ErrNoPeriodAmount,

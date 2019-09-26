@@ -42,13 +42,13 @@ func TestTicketPrice(t *testing.T) {
 
 func TestCheckFork(t *testing.T) {
 	assert.Equal(t, int64(1), types.GetFork("ForkChainParamV2"))
-	p1 := types.GetP(0)
+	p1 := ty.GetTicketMinerParam(0)
 	assert.Equal(t, 10000*types.Coin, p1.TicketPrice)
-	p1 = types.GetP(1)
+	p1 = ty.GetTicketMinerParam(1)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = types.GetP(2)
+	p1 = ty.GetTicketMinerParam(2)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = types.GetP(3)
+	p1 = ty.GetTicketMinerParam(3)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
 }
 

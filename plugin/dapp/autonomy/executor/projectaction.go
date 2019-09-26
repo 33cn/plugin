@@ -23,11 +23,17 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return nil, types.ErrInvalidAddress
 	}
 
-	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height || prob.Amount <= 0 ||
+	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
-		alog.Error("propProject height or amount invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
-			prob.EndBlockHeight, "height", a.height, "amount", prob.Amount)
+		alog.Error("propProject height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
+			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
+	}
+
+	if prob.Amount <= 0 {
+		err := types.ErrInvalidParam
+		alog.Error("propProject amount invaild", "amount", prob.Amount, "error", err)
+		return nil, err
 	}
 
 	// 获取董事会成员

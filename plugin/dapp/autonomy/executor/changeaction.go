@@ -166,6 +166,28 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
+
+	// 董事会成员验证
+	mpBd := make(map[string]struct{})
+	for _, b := range cur.Board.Boards {
+		mpBd[b] = struct{}{}
+	}
+	for _, ch := range cur.PropChange.Changes {
+		if ch.Cancel {
+			mpBd[ch.Addr] = struct{}{}
+		} else {
+			if _, ok := mpBd[ch.Addr]; ok {
+				delete(mpBd, ch.Addr)
+			}
+		}
+	}
+	if _, ok := mpBd[a.fromaddr]; !ok {
+		err = auty.ErrNoActiveBoard
+		alog.Error("votePropChange ", "addr", a.fromaddr, "this addr is not active board member",
+			voteProb.ProposalID, "err", err)
+		return nil, err
+	}
+
 	// 更新投票记录
 	votes.Address = append(votes.Address, a.fromaddr)
 
