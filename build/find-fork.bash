@@ -38,7 +38,7 @@ function subdir_forks() {
 
 
 dir=$(go list -f '{{.Dir}}' github.com/33cn/plugin)/plugin/
-plugins=$(find $dir -maxdepth 2 -mindepth 2 -type d)
+plugins=$(find $dir -maxdepth 2 -mindepth 2 -type d | sort)
 for plugin in ${plugins}
 do 
 	name=$(echo $plugin | sed 's/.*\///g')
