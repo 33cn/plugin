@@ -26,9 +26,7 @@ function subdir_forks() {
 	for fork in "${forks}"
 	do
 		echo "${fork}" | awk -F ',' '{ \
-					if(match($1,"\"")) gsub("\"","",$1); else $1=$plugin_name; \
 					if(match($2,"\"")) gsub("\"","",$2); else gsub("X$","",$2); \
-					pirnt $1; \
 				    	print $2 "=" $3}'
 					#/*print "debug" $1 $2 $3;*/ \
 
