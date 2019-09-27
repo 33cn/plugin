@@ -63,9 +63,9 @@ autotest_tick: autotest ## run with ticket mining
 
 update: ## version 可以是git tag打的具体版本号,也可以是commit hash, 什么都不填的情况下默认从master分支拉取最新版本
 	@if [ -n "$(version)" ]; then   \
-	go get github.com/33cn/chain33@${version}  ; \
+	go get -u github.com/33cn/chain33@${version}  ; \
 	else \
-	go get github.com/33cn/chain33@master ;fi
+	go get -u github.com/33cn/chain33@master ;fi
 	@go mod tidy
 dep:
 	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
