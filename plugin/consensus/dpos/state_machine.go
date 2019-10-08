@@ -388,17 +388,17 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		cs.ClearVotes()
 
 		//设定超时时间，超时后再检查链接数量
-		cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+		cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 	} else {
 		vote := generateVote(cs)
 		if nil == vote {
-			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+			cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 			return
 		}
 
 		if err := cs.privValidator.SignVote(cs.validatorMgr.ChainID, vote); err != nil {
 			dposlog.Error("SignVote failed", "vote", vote.String())
-			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+			cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 			return
 		}
 
@@ -413,7 +413,7 @@ func (init *InitState) timeOut(cs *ConsensusState) {
 		dposlog.Info("VotingState send a vote", "vote info", printVote(vote.DPosVote), "localNodeIndex", cs.client.ValidatorIndex(), "now", time.Now().Unix())
 		cs.dposState.sendVote(cs, vote.DPosVote)
 
-		cs.scheduleDPosTimeout(time.Duration(timeoutVoting)*time.Millisecond, VotingStateType)
+		cs.resetTimer(time.Duration(timeoutVoting)*time.Millisecond, VotingStateType)
 		//处理之前缓存的投票信息
 		for i := 0; i < len(cs.cachedVotes); i++ {
 			cs.dposState.recvVote(cs, cs.cachedVotes[i])
@@ -480,7 +480,7 @@ func (voting *VotingState) timeOut(cs *ConsensusState) {
 				}
 			}
 			//1s后检查是否出块，是否需要重新投票
-			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+			cs.resetTimer(time.Millisecond*500, VotedStateType)
 		}
 		return
 	}
@@ -494,7 +494,7 @@ func (voting *VotingState) timeOut(cs *ConsensusState) {
 	dposlog.Info("Change state because of timeOut.", "from", "VotingState", "to", "InitState")
 
 	//由于连接多数情况下正常，快速触发InitState的超时处理
-	cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+	cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 }
 
 func (voting *VotingState) sendVote(cs *ConsensusState, vote *dpostype.DPosVote) {
@@ -529,7 +529,7 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 			}
 		}
 		//1s后检查是否出块，是否需要重新投票
-		cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+		cs.resetTimer(time.Millisecond*500, VotedStateType)
 	} else if result == continueToVote {
 		dposlog.Info("VotingState get a vote, but don't get an agreement,waiting for new votes...")
 	} else {
@@ -538,7 +538,7 @@ func (voting *VotingState) recvVote(cs *ConsensusState, vote *dpostype.DPosVote)
 		cs.ClearVotes()
 		cs.SetState(InitStateObj)
 		dposlog.Info("Change state because of vote failed.", "from", "VotingState", "to", "InitState")
-		cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+		cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 	}
 }
 
@@ -580,7 +580,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		//如果区块未同步，则等待；如果区块已同步，则进行后续正常出块的判断和处理。
 		if block.Height+1 < cs.currentVote.Height {
 			dposlog.Info("VotedState timeOut but block is not sync,wait...", "localHeight", block.Height, "vote height", cs.currentVote.Height)
-			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
+			cs.resetTimer(time.Second*1, VotedStateType)
 			return
 		}
 
@@ -639,7 +639,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 				cs.SetState(InitStateObj)
 				dposlog.Info("Change state because of time.", "from", "VotedState", "to", "InitState")
-				cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+				cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 				return
 			}
 
@@ -659,7 +659,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 			cs.SetState(InitStateObj)
 			dposlog.Info("Change state because of time.", "from", "VotedState", "to", "InitState")
-			cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+			cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 
 			return
 		}
@@ -674,7 +674,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 		if block.BlockTime >= task.BlockStop {
 			//已出块，或者时间落后了。
 			dposlog.Info("VotedState timeOut but block already is generated.", "blocktime", block.BlockTime, "blockStop", task.BlockStop, "now", now)
-			cs.scheduleDPosTimeout(time.Second*1, VotedStateType)
+			cs.resetTimer(time.Second*1, VotedStateType)
 
 			return
 		} else if block.BlockTime < task.BlockStart {
@@ -684,12 +684,12 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 				cs.client.SetBlockTime(task.BlockStop)
 				cs.client.CreateBlock()
-				cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+				cs.resetTimer(time.Millisecond*500, VotedStateType)
 				return
 			}
 
 			dposlog.Info("Wait time to create block near blockStop.")
-			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+			cs.resetTimer(time.Millisecond*500, VotedStateType)
 			return
 
 		} else {
@@ -697,7 +697,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			dposlog.Info("Wait to next block cycle.", "waittime", task.BlockStop-now+1)
 
 			//cs.scheduleDPosTimeout(time.Second * time.Duration(task.blockStop-now+1), VotedStateType)
-			cs.scheduleDPosTimeout(time.Millisecond*500, VotedStateType)
+			cs.resetTimer(time.Millisecond*500, VotedStateType)
 			return
 		}
 	} else {
@@ -717,7 +717,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 			cs.ClearVotes()
 			cs.SetState(WaitNotifyStateObj)
 			dposlog.Info("Change state because of time.", "from", "VotedState", "to", "WaitNotifyState")
-			cs.scheduleDPosTimeout(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
+			cs.resetTimer(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
 			if cs.cachedNotify != nil {
 				cs.dposState.recvNotify(cs, cs.cachedNotify)
 			}
@@ -726,7 +726,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 
 		//设置超时时间
 		dposlog.Info("wait until change state.", "waittime", cs.currentVote.PeriodStop-now+1)
-		cs.scheduleDPosTimeout(time.Second*time.Duration(cs.currentVote.PeriodStop-now+1), VotedStateType)
+		cs.resetTimer(time.Second*time.Duration(cs.currentVote.PeriodStop-now+1), VotedStateType)
 		return
 	}
 }
@@ -776,7 +776,7 @@ func (voted *VotedState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNot
 	cs.ClearVotes()
 	cs.SetState(WaitNotifyStateObj)
 	dposlog.Info("Change state because of recv notify.", "from", "VotedState", "to", "WaitNotifyState")
-	cs.scheduleDPosTimeout(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
+	cs.resetTimer(time.Duration(timeoutWaitNotify)*time.Millisecond, WaitNotifyStateType)
 	if cs.cachedNotify != nil {
 		cs.dposState.recvNotify(cs, cs.cachedNotify)
 	}
@@ -806,7 +806,7 @@ func (wait *WaitNofifyState) timeOut(cs *ConsensusState) {
 
 	cs.SetState(InitStateObj)
 	dposlog.Info("Change state because of time.", "from", "WaitNofifyState", "to", "InitState")
-	cs.scheduleDPosTimeout(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
+	cs.resetTimer(time.Duration(timeoutCheckConnections)*time.Millisecond, InitStateType)
 }
 
 func (wait *WaitNofifyState) sendVote(cs *ConsensusState, vote *dpostype.DPosVote) {

@@ -69,20 +69,23 @@ func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mod
 	flag.Parse()
 	cfg, sub := types.InitCfg("chain33.test.toml")
 	types.Init(cfg.Title, cfg)
+
+	s := store.New(cfg.Store, sub.Store)
+	s.SetQueueClient(q.Client())
+
 	chain := blockchain.New(cfg.BlockChain)
 	chain.SetQueueClient(q.Client())
 
 	exec := executor.New(cfg.Exec, sub.Exec)
 	exec.SetQueueClient(q.Client())
 	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
-	s.SetQueueClient(q.Client())
+
+	mem := mempool.New(cfg.Mempool, nil)
+	mem.SetQueueClient(q.Client())
 
 	cs := NewRaftCluster(cfg.Consensus, sub.Consensus["raft"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.Mempool, nil)
-	mem.SetQueueClient(q.Client())
 	network := p2p.New(cfg.P2P)
 
 	network.SetQueueClient(q.Client())
