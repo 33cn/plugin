@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package types;
+
+message Collateralize {
+    string      collateralizeId         = 1; //借贷ID,一期借贷对应一个ID
+    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
+    int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
+    float       liquidationRatio        = 4; //清算比例
+    int64       stabilityFee            = 5; //稳定费
+    int64       liquidationPenalty      = 6; //清算罚金
+    string      createAddr              = 7; //创建人地址
+    int64       balance                 = 8; //剩余可借贷金额(ccny)
+    repeated BorrowRecord borrowRecords = 9; //借贷记录
+    repeated BorrowRecord badRecords    = 10;//被系统清算的借贷
+    int32       status                  = 11;//当期借贷的状态，是否关闭
+    int32       collType                = 12;//质押资产类型(1，bty，2，btc，3，eth...)
+    float       latestRepayPrice        = 13;//最大清算价格
+}
+
+message BorrowRecord {
+    string      accountAddr          = 1; //借贷人地址
+    int64       startTime            = 2; //借贷时间
+    int64       collateralValue      = 3; //抵押物价值(bty)
+    float       collateralPrice      = 4; //抵押物价格
+    int64       debtValue            = 5; //债务价值(ccny)
+    float       liquidationPrice     = 6; //抵押物清算价格
+    int32       status               = 7; //抵押状态，是否被清算
+}
+
+message AssetPriceRecord {
+    string     recordTime      = 1; //价格记录时间
+    float      btyPrice        = 2; //bty价格
+    float      btcPrice        = 3; //btc价格
+    float      ethPrice        = 4; //eth价格
+    string     preRecordTime   = 5; //上一次记录时间
+}
+
+message CollateralizeAction {
+    oneof value {
+        CollateralizeCreate    create = 1; //创建一期借贷
+        CollateralizeBorrow    borrow = 2; //借贷
+        CollateralizeRepay     repay  = 3; //清算
+        CollateralizeAppend    append = 4; //追加
+        CollateralizeFeed      feed   = 5; //喂价
+        CollateralizeClose     close  = 6; //关闭
+    }
+    int32 ty = 10;
+}
+
+message CollateralizeCreate {
+    int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
+    float liquidationRatio   = 2; //清算比例
+    int64 stabilityFee       = 3; //稳定费
+    int64 liquidationPenalty = 4; //清算罚金
+    int64 totalBalance       = 5; //可借贷总金额
+}
+
+message CollateralizeBorrow {
+    string collateralizeId = 1; //借贷期数ID
+    int64  value           = 2; //借贷价值(ccny)
+}
+
+message CollateralizeRepay {
+    string collateralizeId = 1; //借贷期数ID
+    int64  value           = 2; //借贷价值(ccny)
+}
+
+message CollateralizeAppend {
+    string collateralizeId = 1; //借贷期数ID
+    int64  collateralValue = 2; //追加价值(bty)
+}
+
+message CollateralizeFeed {
+    repeated int64 price  = 1; //喂价
+    repeated int64 volume = 2; //成交量
+}
+
+message CollateralizeClose {
+    string collateralizeId = 1; //借贷期数ID
+}
+
+message ReceiptCollateralize {
+    string      collateralizeId    = 1;
+    string      createAddr         = 3;
+    string      accountAddr        = 4;
+    int32       status             = 9;
+    int32       preStatus          = 10;
+}
+
+message ReqCollateralizeInfo {
+    string collateralizeId = 1;
+}
+
+message ReqCollateralizeBorrowInfo {
+    string collateralizeId = 1;
+    string addr      = 2;
+}
+
+message ReqCollateralizeBadDebt {
+    string collateralizeId = 1;
+}
+
+message ReqCollateralizeBorrowHistory {
+    string collateralizeId = 1;
+    string addr      = 2;
+    int32  count     = 4;
+    int32  direction = 5;
+    int64  index     = 6;
+}
+
+message ReplyCollateralizeCurrentInfo {
+    int32       status                  = 1;//当期借贷的状态，是否关闭
+    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
+    int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
+    float       liquidationRatio        = 4; //清算比例
+    int64       stabilityFee            = 5; //稳定费
+    int64       liquidationPenalty      = 6; //清算罚金
+    string      createAddr              = 7; //创建人地址
+    int64       balance                 = 8; //剩余可借贷金额(ccny)
+}
+
+message ReplyCollateralizeBadDebt {
+    repeated BorrowRecord records = 1;
+}
+
+// used for execlocal
+message CollateralizeBorrowRecord {
+    string collateralizeId = 1;
+    int64  value = 2;
+    int64  index  = 3;
+    int64  time   = 4;
+    string txHash = 5;
+}
+
+message CollateralizeBorrowRecords {
+    repeated CollateralizeBorrowRecord records = 1;
+}
+
+message CollateralizeRepayRecord {
+    string collateralizeId = 1;
+    int64  value = 2;
+    int64  index  = 3;
+    int64  time   = 4;
+    string txHash = 5;
+}
+
+message CollateralizeRepayRecords {
+    repeated CollateralizeRepayRecord records = 1;
+}
