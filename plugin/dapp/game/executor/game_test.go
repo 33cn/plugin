@@ -36,7 +36,7 @@ var (
 
 func TestGame(t *testing.T) {
 	types.SetTitleOnlyForTest("chain33")
-	total := int64(100 * types.Coin)
+	total := 100 * types.Coin
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -112,10 +112,10 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 
-	gameId := common.ToHex(createTx.Hash())
+	gameID := common.ToHex(createTx.Hash())
 
 	//match game
-	matchParam := &pty.GamePreMatchTx{GameID: gameId, Guess: Scissor, Fee: 100000}
+	matchParam := &pty.GamePreMatchTx{GameID: gameID, Guess: Scissor, Fee: 100000}
 	matchTx, err := pty.CreateRawGamePreMatchTx(matchParam)
 	if err != nil {
 		t.Error(err)
@@ -141,7 +141,7 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 	msg, err := exec.Query(pty.FuncNameQueryGameListByIds, types.Encode(&pty.QueryGameInfos{
-		GameIds: []string{gameId},
+		GameIds: []string{gameID},
 	}))
 	if err != nil {
 		t.Error(err)
@@ -149,7 +149,7 @@ func TestGame(t *testing.T) {
 	t.Log(msg)
 
 	msg, err = exec.Query(pty.FuncNameQueryGameByID, types.Encode(&pty.QueryGameInfo{
-		GameId: gameId}))
+		GameId: gameID}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -162,7 +162,7 @@ func TestGame(t *testing.T) {
 	}
 
 	//close game
-	closeParam := &pty.GamePreCloseTx{GameID: gameId, Secret: "harrylee", Result: Rock, Fee: 100000}
+	closeParam := &pty.GamePreCloseTx{GameID: gameID, Secret: "harrylee", Result: Rock, Fee: 100000}
 	closeTx, err := pty.CreateRawGamePreCloseTx(closeParam)
 	if err != nil {
 		t.Error(err)
@@ -193,7 +193,7 @@ func TestGame(t *testing.T) {
 	t.Log(acB)
 
 	msg, err = exec.Query(pty.FuncNameQueryGameByID, types.Encode(&pty.QueryGameInfo{
-		GameId: gameId}))
+		GameId: gameID}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -233,10 +233,10 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 
-	gameId = common.ToHex(createTx.Hash())
+	gameID = common.ToHex(createTx.Hash())
 
 	//cancle game
-	cancleParam := &pty.GamePreCancelTx{Fee: 1e5, GameID: gameId}
+	cancleParam := &pty.GamePreCancelTx{Fee: 1e5, GameID: gameID}
 	cancelTx, err := pty.CreateRawGamePreCancelTx(cancleParam)
 	if err != nil {
 		t.Error(err)
@@ -264,7 +264,7 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 	msg, err = exec.Query(pty.FuncNameQueryGameByID, types.Encode(&pty.QueryGameInfo{
-		GameId: gameId}))
+		GameId: gameID}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -303,10 +303,10 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 
-	gameId = common.ToHex(createTx.Hash())
+	gameID = common.ToHex(createTx.Hash())
 
 	//match game
-	matchParam = &pty.GamePreMatchTx{GameID: gameId, Guess: Rock, Fee: 100000}
+	matchParam = &pty.GamePreMatchTx{GameID: gameID, Guess: Rock, Fee: 100000}
 	matchTx, err = pty.CreateRawGamePreMatchTx(matchParam)
 	if err != nil {
 		t.Error(err)
@@ -333,7 +333,7 @@ func TestGame(t *testing.T) {
 	}
 
 	//close game
-	closeParam = &pty.GamePreCloseTx{GameID: gameId, Secret: "123456", Result: Rock, Fee: 100000}
+	closeParam = &pty.GamePreCloseTx{GameID: gameID, Secret: "123456", Result: Rock, Fee: 100000}
 	closeTx, err = pty.CreateRawGamePreCloseTx(closeParam)
 	if err != nil {
 		t.Error(err)
@@ -360,7 +360,7 @@ func TestGame(t *testing.T) {
 	}
 
 	msg, err = exec.Query(pty.FuncNameQueryGameByID, types.Encode(&pty.QueryGameInfo{
-		GameId: gameId}))
+		GameId: gameID}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -399,10 +399,10 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 
-	gameId = common.ToHex(createTx.Hash())
+	gameID = common.ToHex(createTx.Hash())
 
 	//match game
-	matchParam = &pty.GamePreMatchTx{GameID: gameId, Guess: Paper, Fee: 100000}
+	matchParam = &pty.GamePreMatchTx{GameID: gameID, Guess: Paper, Fee: 100000}
 	matchTx, err = pty.CreateRawGamePreMatchTx(matchParam)
 	if err != nil {
 		t.Error(err)
@@ -428,7 +428,7 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 	//close game
-	closeParam = &pty.GamePreCloseTx{GameID: gameId, Secret: "123456", Result: Rock, Fee: 100000}
+	closeParam = &pty.GamePreCloseTx{GameID: gameID, Secret: "123456", Result: Rock, Fee: 100000}
 	closeTx, err = pty.CreateRawGamePreCloseTx(closeParam)
 	if err != nil {
 		t.Error(err)
@@ -454,7 +454,7 @@ func TestGame(t *testing.T) {
 		kvdb.Set(kv.Key, kv.Value)
 	}
 	msg, err = exec.Query(pty.FuncNameQueryGameByID, types.Encode(&pty.QueryGameInfo{
-		GameId: gameId}))
+		GameId: gameID}))
 	if err != nil {
 		t.Error(err)
 	}
