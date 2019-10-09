@@ -17,4 +17,7 @@ var (
 	ErrRecordNotExist                 = errors.New("ErrRecordNotExist")
 	ErrCollateralizeErrCloser         = errors.New("ErrCollateralizeErrCloser")
 	ErrRepayValueInsufficient         = errors.New("ErrRepayValueInsufficient")
+	ErrCollateralizeAccountExist      = errors.New("ErrCollateralizeAccountExist")
+	ErrCollateralizeLowBalance        = errors.New("ErrCollateralizeLowBalance")
+	ErrCollateralizeBalanceInvalid    = errors.New("ErrCollateralizeBalanceInvalid")
 )

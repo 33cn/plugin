@@ -113,7 +113,6 @@ func (action *Action) GetCreateReceiptLog(collateralize *pty.Collateralize, preS
 }
 
 // GetBorrowReceiptLog generate logs for Collateralize borrow action
-// TODO
 func (action *Action) GetBorrowReceiptLog(collateralize *pty.Collateralize, preStatus int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeBorrow
@@ -127,7 +126,6 @@ func (action *Action) GetBorrowReceiptLog(collateralize *pty.Collateralize, preS
 }
 
 // GetRepayReceiptLog generate logs for Collateralize Repay action
-// TODO
 func (action *Action) GetRepayReceiptLog(Collateralize *pty.Collateralize, preStatus int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeRepay
@@ -139,16 +137,28 @@ func (action *Action) GetRepayReceiptLog(Collateralize *pty.Collateralize, preSt
 	return log
 }
 
-// GetAppendReceiptLog generate logs for Collateralize Repay action
-// TODO
+// GetAppendReceiptLog generate logs for Collateralize append action
 func (action *Action) GetAppendReceiptLog(Collateralize *pty.Collateralize, preStatus int32) *types.ReceiptLog {
-	return nil
+	log := &types.ReceiptLog{}
+	log.Ty = pty.TyLogCollateralizeAppend
+
+	c := action.GetCollCommonRecipt(Collateralize, preStatus)
+
+	log.Log = types.Encode(c)
+
+	return log
 }
 
 // GetCloseReceiptLog generate logs for Collateralize close action
-// TODO
 func (action *Action) GetCloseReceiptLog(Collateralize *pty.Collateralize, preStatus int32) *types.ReceiptLog {
-	return nil
+	log := &types.ReceiptLog{}
+	log.Ty = pty.TyLogCollateralizeClose
+
+	c := action.GetCollCommonRecipt(Collateralize, preStatus)
+
+	log.Log = types.Encode(c)
+
+	return log
 }
 
 // GetIndex returns index in block
@@ -168,12 +178,13 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	if create.DebtCeiling > MaxDebtCeiling || create.DebtCeiling < 0 ||
 		create.LiquidationRatio < MinLiquidationRatio || create.LiquidationRatio >= 1 ||
 		create.StabilityFee > MaxStabilityFee || create.StabilityFee < 0 ||
-		create.LiquidationPenalty > MaxLiquidationPenalty || create.LiquidationPenalty < 0 {
+		create.LiquidationPenalty > MaxLiquidationPenalty || create.LiquidationPenalty < 0 ||
+		create.TotalBalance < MinCreatorAccount {
 		return nil, pty.ErrRiskParam
 	}
 
 	// 检查ccny余额
-	if !action.CheckExecTokenAccount(action.fromaddr, MinCreatorAccount, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
 		return nil, types.ErrInsufficientBalance
 	}
 
@@ -184,7 +195,14 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 		return nil, pty.ErrCollateralizeRepeatHash
 	}
 
-	// TODO ccny是否需要冻结
+	// 冻结ccny
+	receipt, err = action.tokenAccount.ExecFrozen(action.fromaddr, action.execaddr, create.TotalBalance)
+	if err != nil {
+		clog.Error("CollateralizeCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", create.TotalBalance)
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
 
 	// 构造coll结构
 	coll := &CollateralizeDB{}
@@ -194,6 +212,7 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	coll.DebtCeiling = create.DebtCeiling
 	coll.LiquidationPenalty = create.LiquidationPenalty
 	coll.StabilityFee = create.StabilityFee
+	coll.Balance = create.TotalBalance
 	coll.CreateAddr = action.fromaddr
 	coll.Status = pty.CollateralizeActionCreate
 
@@ -291,13 +310,19 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	var kv []*types.KeyValue
 
 	// 查找对应的借贷ID
-	// TODO 是否需要合约自动查找？
 	collateralize, err := findCollateralize(action.db, borrow.CollateralizeId)
 	if err != nil {
-		clog.Error("CollateralizeBorrow", "CollateralizeId", borrow.CollateralizeId)
+		clog.Error("CollateralizeBorrow", "CollateralizeId", borrow.CollateralizeId, "err", err)
 		return nil, err
 	}
 
+	// 一个地址在一期借贷中只允许借出一次
+	for _, record := range collateralize.BorrowRecords {
+		if record.AccountAddr == action.fromaddr {
+			clog.Error("CollateralizeBorrow","CollateralizeId", borrow.CollateralizeId, action.fromaddr, "execaddr", action.execaddr, "err", pty.ErrCollateralizeAccountExist)
+			return nil, err
+		}
+	}
 	coll := &CollateralizeDB{*collateralize}
 	preStatus := coll.Status
 
@@ -308,11 +333,22 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	}
 
 	// 借贷金额检查
-	if borrow.GetValue() <= 0 || borrow.GetValue() > coll.DebtCeiling {
+	if borrow.GetValue() <= 0 {
+		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "borrow value", borrow.GetValue(), "err", types.ErrInvalidParam)
+		return  nil, types.ErrInvalidParam
+	}
+
+	// 借贷金额不超过个人限额
+	if borrow.GetValue() > coll.DebtCeiling {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "borrow value", borrow.GetValue(), "err", pty.ErrCollateralizeExceedDebtCeiling)
 		return nil, pty.ErrCollateralizeExceedDebtCeiling
 	}
 
+	// 借贷金额不超过当前可借贷金额
+	if borrow.GetValue() > coll.Balance {
+		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "borrow value", borrow.GetValue(), "err", pty.ErrCollateralizeLowBalance)
+		return nil, pty.ErrCollateralizeLowBalance
+	}
 	clog.Debug("CollateralizeBorrow", "value", borrow.GetValue())
 
 	// 获取抵押物价格
@@ -380,6 +416,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// 保存
 	coll.BorrowRecords = append(coll.BorrowRecords, borrowRecord)
 	coll.Status = pty.CollateralizeStatusCreated
+	coll.Balance -= borrow.Value
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -397,14 +434,13 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	var receipt *types.Receipt
 
 	// 找到相应的借贷
-	// TODO 是否需要合约自动查找
-	Collateralize, err := findCollateralize(action.db, repay.CollateralizeId)
+	collateralize, err := findCollateralize(action.db, repay.CollateralizeId)
 	if err != nil {
-		clog.Error("CollateralizeRepay", "CollID", repay.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Can not find collateralize Id")
+		clog.Error("CollateralizeRepay", "CollID", repay.CollateralizeId, "err", err)
 		return nil, err
 	}
 
-	coll := &CollateralizeDB{*Collateralize}
+	coll := &CollateralizeDB{*collateralize}
 
 	preStatus := coll.Status
 
@@ -433,17 +469,19 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 		return nil, pty.ErrRepayValueInsufficient
 	}
 
+	// 借贷金额+利息
+	realRepay := repay.Value + repay.Value/20
+
 	// 检查
-	// TODO 暂时未考虑利息
-	if !action.CheckExecTokenAccount(action.fromaddr, repay.Value, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, realRepay, false) {
 		clog.Error("CollateralizeRepay", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrInsufficientBalance)
 		return nil, types.ErrNoBalance
 	}
 
 	// ccny转移
-	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, repay.Value)
+	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, realRepay)
 	if err != nil {
-		clog.Error("CollateralizeRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", repay.Value)
+		clog.Error("CollateralizeRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", realRepay)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
@@ -462,6 +500,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	borrowRecord.Status = pty.CollateralizeUserStatusClose
 
 	// 保存
+	coll.Balance += repay.Value
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -478,10 +517,9 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	var kv []*types.KeyValue
 
 	// 查找对应的借贷ID
-	// TODO 是否需要合约自动查找？
 	collateralize, err := findCollateralize(action.db, cAppend.CollateralizeId)
 	if err != nil {
-		clog.Error("CollateralizeAppend", "CollateralizeId", cAppend.CollateralizeId)
+		clog.Error("CollateralizeAppend", "CollateralizeId", cAppend.CollateralizeId, "err", err)
 		return nil, err
 	}
 
@@ -563,8 +601,6 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	return receipt, nil
 }
 
-// TODO 部分清算
-
 // CollateralizeFeed 喂价
 func (action *Action) CollateralizeFeed(repay *pty.CollateralizeFeed) (*types.Receipt, error) {
 	//TODO
@@ -572,32 +608,27 @@ func (action *Action) CollateralizeFeed(repay *pty.CollateralizeFeed) (*types.Re
 }
 
 // CollateralizeClose 终止借贷
-func (action *Action) CollateralizeClose(draw *pty.CollateralizeClose) (*types.Receipt, error) {
-	//TODO
+//TODO 暂时只实现无人借贷可终止
+func (action *Action) CollateralizeClose(close *pty.CollateralizeClose) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	//var receipt *types.Receipt
 
-	Collateralize, err := findCollateralize(action.db, draw.CollateralizeId)
+	collateralize, err := findCollateralize(action.db, close.CollateralizeId)
 	if err != nil {
-		clog.Error("CollateralizeBuy", "CollateralizeId", draw.CollateralizeId)
+		clog.Error("CollateralizeClose", "CollateralizeId", close.CollateralizeId, "err", err)
 		return nil, err
 	}
 
-	coll := &CollateralizeDB{*Collateralize}
+	if collateralize.Balance != collateralize.TotalBalance {
+		clog.Error("CollateralizeClose", "CollateralizeId", close.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", pty.ErrCollateralizeBalanceInvalid)
+		return nil, pty.ErrCollateralizeBalanceInvalid
+	}
+
+	clog.Debug("CollateralizeClose", "ID", close.CollateralizeId)
+
+	coll := &CollateralizeDB{*collateralize}
 	preStatus := coll.Status
-
-	if action.fromaddr != coll.CreateAddr {
-		return nil, pty.ErrCollateralizeErrCloser
-	}
-
-	if coll.Status == pty.CollateralizeStatusClose {
-		return nil, pty.ErrCollateralizeStatus
-	}
-
-	clog.Debug("CollateralizeClose", )
-
-	//TODO
+	coll.Status = pty.CollateralizeStatusClose
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
