@@ -30,18 +30,20 @@ var (
 
 var driverName = evmtypes.ExecutorName
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&EVMExecutor{}))
-}
-
 // Init 初始化本合约对象
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
-	drivers.Register(driverName, newEVMDriver, types.GetDappFork(driverName, evmtypes.EVMEnable))
-	EvmAddress = address.ExecAddress(types.ExecName(name))
+	drivers.Register(cfg, driverName, newEVMDriver, cfg.GetDappFork(driverName, evmtypes.EVMEnable))
+	EvmAddress = address.ExecAddress(cfg.ExecName(name))
 	// 初始化硬分叉数据
 	state.InitForkData()
+	InitExecType()
+}
+
+// InitExecType Init Exec Type
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&EVMExecutor{}))
 }
 
 // GetName 返回本合约名称
@@ -86,7 +88,8 @@ func (evm *EVMExecutor) GetDriverName() string {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (evm *EVMExecutor) ExecutorOrder() int64 {
-	if types.IsFork(evm.GetHeight(), "ForkLocalDBAccess") {
+	cfg := evm.GetAPI().GetConfig()
+	if cfg.IsFork(evm.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
 	return evm.DriverBase.ExecutorOrder()
@@ -101,7 +104,8 @@ func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 	//增加新的规则:
 	//主链: user.evm.xxx  执行 evm 合约
 	//平行链: user.p.guodun.user.evm.xxx 执行 evm 合约
-	exec := types.GetParaExec(tx.Execer)
+	cfg := evm.GetAPI().GetConfig()
+	exec := cfg.GetParaExec(tx.Execer)
 	if evm.AllowIsUserDot2(exec) {
 		return nil
 	}
@@ -113,7 +117,8 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 	if othertx == nil {
 		return false
 	}
-	exec := types.GetParaExec(othertx.Execer)
+	cfg := evm.GetAPI().GetConfig()
+	exec := cfg.GetParaExec(othertx.Execer)
 	if exec == nil || len(bytes.TrimSpace(exec)) == 0 {
 		return false
 	}
@@ -142,8 +147,9 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 
 // GetActionName 获取运行状态名
 func (evm *EVMExecutor) GetActionName(tx *types.Transaction) string {
-	if bytes.Equal(tx.Execer, []byte(types.ExecName(evmtypes.ExecutorName))) {
-		return types.ExecName(evmtypes.ExecutorName)
+	cfg := evm.GetAPI().GetConfig()
+	if bytes.Equal(tx.Execer, []byte(cfg.ExecName(evmtypes.ExecutorName))) {
+		return cfg.ExecName(evmtypes.ExecutorName)
 	}
 	return tx.ActionName()
 }

@@ -13,8 +13,16 @@ var ValNodeX = "valnode"
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(ValNodeX))
-	types.RegistorExecutor(ValNodeX, NewType())
-	types.RegisterDappFork(ValNodeX, "Enable", 0)
+	types.RegFork(ValNodeX, InitFork)
+	types.RegExec(ValNodeX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(ValNodeX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(ValNodeX, NewType(cfg))
 }
 
 // GetExecName get exec name
@@ -28,7 +36,7 @@ type ValNodeType struct {
 }
 
 // NewType method
-func NewType() *ValNodeType {
+func NewType(cfg *types.Chain33Config) *ValNodeType {
 	c := &ValNodeType{}
 	c.SetChild(c)
 	return c

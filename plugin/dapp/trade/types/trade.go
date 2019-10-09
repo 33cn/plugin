@@ -50,20 +50,28 @@ func (t *tradeType) GetLogMap() map[int64]*types.LogInfo {
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TradeX))
-	types.RegistorExecutor(TradeX, newType())
-	types.RegisterDappFork(TradeX, "Enable", 100899)
-	types.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
-	types.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
-	types.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
-	types.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 2500000)
-	types.RegisterDappFork(TradeX, ForkTradePriceX, 3150000)
+	types.RegFork(TradeX, InitFork)
+	types.RegExec(TradeX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(TradeX, "Enable", 100899)
+	cfg.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
+	cfg.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
+	cfg.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
+	cfg.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 2500000)
+	cfg.RegisterDappFork(TradeX, ForkTradePriceX, 3150000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(TradeX, NewType(cfg))
 }
 
 type tradeType struct {
 	types.ExecTypeBase
 }
 
-func newType() *tradeType {
+func NewType(cfg *types.Chain33Config) *tradeType {
 	c := &tradeType{}
 	c.SetChild(c)
 	return c

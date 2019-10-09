@@ -20,17 +20,18 @@ var blackwhiteAddr = address.ExecAddress(gt.BlackwhiteX)
 
 var driverName = gt.BlackwhiteX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Blackwhite{}))
-}
-
 // Init 重命名执行器名称
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
 	gt.BlackwhiteX = driverName
 	gt.ExecerBlackwhite = []byte(driverName)
-	drivers.Register(name, newBlackwhite, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, name, newBlackwhite, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Blackwhite{}))
 }
 
 // Blackwhite 几类执行器结构体

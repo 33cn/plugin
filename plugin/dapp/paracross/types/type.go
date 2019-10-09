@@ -31,16 +31,26 @@ var (
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(ParaX))
-	types.RegistorExecutor(ParaX, NewType())
-	types.RegisterDappFork(ParaX, "Enable", 0)
-	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
-	types.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
-	types.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	types.RegFork(ParaX, InitFork)
+	types.RegExec(ParaX, InitExecutor)
+
 }
 
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(ParaX, "Enable", 0)
+	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
+	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
+	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(ParaX, NewType(cfg))
+}
+
+
 // GetExecName get para exec name
-func GetExecName() string {
-	return types.ExecName(ParaX)
+func GetExecName(cfg *types.Chain33Config) string {
+	return cfg.ExecName(ParaX)
 }
 
 // ParacrossType base paracross type
@@ -49,9 +59,10 @@ type ParacrossType struct {
 }
 
 // NewType get paracross type
-func NewType() *ParacrossType {
+func NewType(cfg *types.Chain33Config) *ParacrossType {
 	c := &ParacrossType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -101,6 +112,7 @@ func (p *ParacrossType) GetPayload() types.Message {
 
 // CreateTx paracross create tx by different action
 func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+	cfg := p.GetConfig()
 	if action == "ParacrossCommit" {
 		var param paracrossCommitTx
 		err := json.Unmarshal(message, &param)
@@ -109,7 +121,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 
-		return createRawParacrossCommitTx(&param)
+		return createRawParacrossCommitTx(cfg, &param)
 	} else if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
 		var param types.CreateTx
 		err := json.Unmarshal(message, &param)
@@ -117,7 +129,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawAssetTransferTx(&param)
+		return CreateRawAssetTransferTx(cfg, &param)
 
 	} else if action == "ParacrossTransfer" || action == "Transfer" ||
 		action == "ParacrossWithdraw" || action == "Withdraw" ||
@@ -125,7 +137,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 
 		return p.CreateRawTransferTx(action, message)
 	} else if action == "NodeConfig" {
-		if !types.IsPara() {
+		if !cfg.IsPara() {
 			return nil, types.ErrNotSupport
 		}
 		var param ParaNodeAddrConfig
@@ -134,9 +146,9 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx.NodeConfig", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawNodeConfigTx(&param)
+		return CreateRawNodeConfigTx(cfg, &param)
 	} else if action == "NodeGroupConfig" {
-		if !types.IsPara() {
+		if !cfg.IsPara() {
 			return nil, types.ErrNotSupport
 		}
 		var param ParaNodeGroupConfig
@@ -146,7 +158,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx.NodeGroupApply", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawNodeGroupApplyTx(&param)
+		return CreateRawNodeGroupApplyTx(cfg, &param)
 	}
 
 	return nil, types.ErrNotSupport

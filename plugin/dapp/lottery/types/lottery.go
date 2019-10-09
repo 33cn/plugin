@@ -19,9 +19,18 @@ var (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(LotteryX))
-	types.RegistorExecutor(LotteryX, NewType())
-	types.RegisterDappFork(LotteryX, "Enable", 0)
+	types.RegFork(LotteryX, InitFork)
+	types.RegExec(LotteryX, InitExecutor)
 }
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(LotteryX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(LotteryX, NewType(cfg))
+}
+
 
 // LotteryType def
 type LotteryType struct {
@@ -29,9 +38,10 @@ type LotteryType struct {
 }
 
 // NewType method
-func NewType() *LotteryType {
+func NewType(cfg *types.Chain33Config) *LotteryType {
 	c := &LotteryType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -58,7 +68,7 @@ func (lottery *LotteryType) GetPayload() types.Message {
 // CreateTx method
 func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	llog.Debug("lottery.CreateTx", "action", action)
-
+    cfg := lottery.GetConfig()
 	if action == "LotteryCreate" {
 		var param LotteryCreateTx
 		err := json.Unmarshal(message, &param)
@@ -66,7 +76,7 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawLotteryCreateTx(&param)
+		return CreateRawLotteryCreateTx(cfg, &param)
 	} else if action == "LotteryBuy" {
 		var param LotteryBuyTx
 		err := json.Unmarshal(message, &param)
@@ -74,7 +84,7 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawLotteryBuyTx(&param)
+		return CreateRawLotteryBuyTx(cfg, &param)
 	} else if action == "LotteryDraw" {
 		var param LotteryDrawTx
 		err := json.Unmarshal(message, &param)
@@ -82,7 +92,7 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawLotteryDrawTx(&param)
+		return CreateRawLotteryDrawTx(cfg, &param)
 	} else if action == "LotteryClose" {
 		var param LotteryCloseTx
 		err := json.Unmarshal(message, &param)
@@ -90,7 +100,7 @@ func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*ty
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawLotteryCloseTx(&param)
+		return CreateRawLotteryCloseTx(cfg, &param)
 	} else {
 		return nil, types.ErrNotSupport
 	}
@@ -107,7 +117,7 @@ func (lottery LotteryType) GetTypeMap() map[string]int32 {
 }
 
 // CreateRawLotteryCreateTx method
-func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error) {
+func CreateRawLotteryCreateTx(cfg *types.Chain33Config, parm *LotteryCreateTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -124,13 +134,13 @@ func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error)
 		Value: &LotteryAction_Create{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(LotteryX)),
+		Execer:  []byte(cfg.ExecName(LotteryX)),
 		Payload: types.Encode(create),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(LotteryX)),
+		To:      address.ExecAddress(cfg.ExecName(LotteryX)),
 	}
-	name := types.ExecName(LotteryX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(LotteryX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +148,7 @@ func CreateRawLotteryCreateTx(parm *LotteryCreateTx) (*types.Transaction, error)
 }
 
 // CreateRawLotteryBuyTx method
-func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
+func CreateRawLotteryBuyTx(cfg *types.Chain33Config, parm *LotteryBuyTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryBuyTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -155,13 +165,13 @@ func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
 		Value: &LotteryAction_Buy{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(LotteryX)),
+		Execer:  []byte(cfg.ExecName(LotteryX)),
 		Payload: types.Encode(buy),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(LotteryX)),
+		To:      address.ExecAddress(cfg.ExecName(LotteryX)),
 	}
-	name := types.ExecName(LotteryX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(LotteryX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +179,7 @@ func CreateRawLotteryBuyTx(parm *LotteryBuyTx) (*types.Transaction, error) {
 }
 
 // CreateRawLotteryDrawTx method
-func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
+func CreateRawLotteryDrawTx(cfg *types.Chain33Config, parm *LotteryDrawTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryDrawTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -183,13 +193,13 @@ func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
 		Value: &LotteryAction_Draw{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(LotteryX)),
+		Execer:  []byte(cfg.ExecName(LotteryX)),
 		Payload: types.Encode(draw),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(LotteryX)),
+		To:      address.ExecAddress(cfg.ExecName(LotteryX)),
 	}
-	name := types.ExecName(LotteryX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(LotteryX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +207,7 @@ func CreateRawLotteryDrawTx(parm *LotteryDrawTx) (*types.Transaction, error) {
 }
 
 // CreateRawLotteryCloseTx method
-func CreateRawLotteryCloseTx(parm *LotteryCloseTx) (*types.Transaction, error) {
+func CreateRawLotteryCloseTx(cfg *types.Chain33Config, parm *LotteryCloseTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawLotteryCloseTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -211,14 +221,14 @@ func CreateRawLotteryCloseTx(parm *LotteryCloseTx) (*types.Transaction, error) {
 		Value: &LotteryAction_Close{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(LotteryX)),
+		Execer:  []byte(cfg.ExecName(LotteryX)),
 		Payload: types.Encode(close),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(LotteryX)),
+		To:      address.ExecAddress(cfg.ExecName(LotteryX)),
 	}
 
-	name := types.ExecName(LotteryX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(LotteryX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}

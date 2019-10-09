@@ -22,11 +22,19 @@ var tlog = log.New("module", name)
 func init() {
 	name = UnfreezeX
 	types.AllowUserExec = append(types.AllowUserExec, []byte(UnfreezeX))
-	// init executor type
-	types.RegistorExecutor(name, NewType())
-	types.RegisterDappFork(name, "Enable", 0)
-	types.RegisterDappFork(name, ForkTerminatePartX, 1298600)
-	types.RegisterDappFork(name, ForkUnfreezeIDX, 1450000)
+	types.RegFork(name, InitFork)
+	types.RegExec(name, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	name = UnfreezeX
+	cfg.RegisterDappFork(name, "Enable", 0)
+	cfg.RegisterDappFork(name, ForkTerminatePartX, 1298600)
+	cfg.RegisterDappFork(name, ForkUnfreezeIDX, 1450000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(UnfreezeX, NewType(cfg))
 }
 
 //getRealExecName
@@ -35,9 +43,10 @@ func getRealExecName(paraName string) string {
 }
 
 // NewType 生成新的基础类型
-func NewType() *UnfreezeType {
+func NewType(cfg *types.Chain33Config) *UnfreezeType {
 	c := &UnfreezeType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

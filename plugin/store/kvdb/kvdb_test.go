@@ -24,7 +24,7 @@ func TestKvdbNewClose(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil)
+	store := New(storeCfg, nil, nil)
 	assert.NotNil(t, store)
 
 	store.Close()
@@ -36,7 +36,7 @@ func TestKvddbSetGet(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVStore)
+	store := New(storeCfg, nil, nil).(*KVStore)
 	assert.NotNil(t, store)
 
 	keys0 := [][]byte{[]byte("mk1"), []byte("mk2")}
@@ -82,7 +82,7 @@ func TestKvdbMemSet(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVStore)
+	store := New(storeCfg, nil, nil).(*KVStore)
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue
@@ -114,7 +114,7 @@ func TestKvdbMemSetUpgrade(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVStore)
+	store := New(storeCfg, nil, nil).(*KVStore)
 	assert.NotNil(t, store)
 	store.MemSetUpgrade(nil, false)
 }
@@ -126,7 +126,7 @@ func TestKvdbCommitUpgrade(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVStore)
+	store := New(storeCfg, nil, nil).(*KVStore)
 	assert.NotNil(t, store)
 	store.CommitUpgrade(nil)
 }
@@ -137,7 +137,7 @@ func TestKvdbRollback(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 	os.RemoveAll(dir)       //删除已存在目录
 	var storeCfg = newStoreCfg(dir)
-	store := New(storeCfg, nil).(*KVStore)
+	store := New(storeCfg, nil, nil).(*KVStore)
 	assert.NotNil(t, store)
 
 	var kv []*types.KeyValue

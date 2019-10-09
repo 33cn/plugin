@@ -61,7 +61,11 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
-	types.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
+	types.RegFork("store-kvmvccmavl", InitFork)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -106,7 +110,7 @@ type subConfig struct {
 }
 
 // New construct KVMVCCStore module
-func New(cfg *types.Store, sub []byte) queue.Module {
+func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Module {
 	var kvms *KVmMavlStore
 	var subcfg subConfig
 	var subKVMVCCcfg subKVMVCCConfig
@@ -142,7 +146,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	// 查询是否是删除裁剪版mavl
 	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
 	// 读取fork高度
-	kvmvccMavlFork = types.GetDappFork("store-kvmvccmavl", "ForkKvmvccmavl")
+	if chain33cfg != nil {
+		kvmvccMavlFork = chain33cfg.GetDappFork("store-kvmvccmavl", "ForkKvmvccmavl")
+	}
 	delMavlDataHeight = kvmvccMavlFork + 10000
 	bs.SetChild(kvms)
 	return kvms

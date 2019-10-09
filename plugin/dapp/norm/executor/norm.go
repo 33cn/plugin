@@ -13,15 +13,16 @@ import (
 var clog = log.New("module", "execs.norm")
 var driverName = "norm"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Norm{}))
+// Init norm
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	clog.Debug("register norm execer")
+	drivers.Register(cfg, GetName(), newNorm, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init norm
-func Init(name string, sub []byte) {
-	clog.Debug("register norm execer")
-	drivers.Register(GetName(), newNorm, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Norm{}))
 }
 
 // GetName for norm

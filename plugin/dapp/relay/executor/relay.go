@@ -17,14 +17,16 @@ var relaylog = log.New("module", "execs.relay")
 var driverName = "relay"
 var subconfig = types.ConfSub(driverName)
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&relay{}))
-}
 
 // Init relay register driver
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newRelay, types.GetDappFork(driverName, "Enable")) //TODO: ForkV18Relay
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newRelay, cfg.GetDappFork(driverName, "Enable")) //TODO: ForkV18Relay
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&relay{}))
 }
 
 // GetName relay get driver name
@@ -251,7 +253,8 @@ func (r *relay) CheckReceiptExecOk() bool {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (r *relay) ExecutorOrder() int64 {
-	if types.IsFork(r.GetHeight(), "ForkLocalDBAccess") {
+	cfg := r.GetAPI().GetConfig()
+	if cfg.IsFork(r.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
 	return r.DriverBase.ExecutorOrder()

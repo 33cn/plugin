@@ -17,13 +17,21 @@ var tokenlog = log.New("module", "execs.token.types")
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TokenX))
-	types.RegistorExecutor(TokenX, NewType())
-	types.RegisterDappFork(TokenX, "Enable", 100899)
-	types.RegisterDappFork(TokenX, ForkTokenBlackListX, 190000)
-	types.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 184000)
-	types.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
-	types.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
-	types.RegisterDappFork(TokenX, ForkTokenCheckX, 1600000)
+	types.RegFork(TokenX, InitFork)
+	types.RegExec(TokenX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(TokenX, "Enable", 100899)
+	cfg.RegisterDappFork(TokenX, ForkTokenBlackListX, 190000)
+	cfg.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 184000)
+	cfg.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
+	cfg.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
+	cfg.RegisterDappFork(TokenX, ForkTokenCheckX, 1600000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(TokenX, NewType(cfg))
 }
 
 // TokenType 执行器基类结构体
@@ -32,9 +40,10 @@ type TokenType struct {
 }
 
 // NewType 创建执行器类型
-func NewType() *TokenType {
+func NewType(cfg *types.Chain33Config) *TokenType {
 	c := &TokenType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -98,7 +107,8 @@ func (t *TokenType) RPC_Default_Process(action string, msg interface{}) (*types.
 		return nil, err
 	}
 	//to地址的问题,如果是主链交易，to地址就是直接是设置to
-	if !types.IsPara() {
+	cfg := t.GetConfig()
+	if !cfg.IsPara() {
 		tx.To = create.To
 	}
 	return tx, err
@@ -111,7 +121,8 @@ func (t *TokenType) CreateTx(action string, msg json.RawMessage) (*types.Transac
 		tokenlog.Error("token CreateTx failed", "err", err, "action", action, "msg", string(msg))
 		return nil, err
 	}
-	if !types.IsPara() {
+	cfg := t.GetConfig()
+	if !cfg.IsPara() {
 		var transfer TokenAction
 		err = types.Decode(tx.Payload, &transfer)
 		if err != nil {

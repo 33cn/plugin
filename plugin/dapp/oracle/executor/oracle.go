@@ -17,9 +17,16 @@ var olog = log.New("module", "execs.oracle")
 var driverName = oty.OracleX
 
 // Init 执行器初始化
-func Init(name string, sub []byte) {
-	drivers.Register(newOracle().GetName(), newOracle, types.GetDappFork(driverName, "Enable"))
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, newOracle().GetName(), newOracle, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&oracle{}))
+}
+
 
 // GetName 获取oracle执行器名
 func GetName() string {
@@ -31,11 +38,6 @@ func newOracle() drivers.Driver {
 	t.SetChild(t)
 	t.SetExecutorType(types.LoadExecutorType(driverName))
 	return t
-}
-
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&oracle{}))
 }
 
 // oracle driver

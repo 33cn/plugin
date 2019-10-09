@@ -13,8 +13,16 @@ var NormX = "norm"
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(NormX))
-	types.RegistorExecutor(NormX, NewType())
-	types.RegisterDappFork(NormX, "Enable", 0)
+	types.RegFork(CoinsX, InitFork)
+	types.RegExec(CoinsX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(NormX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(NormX, NewType(cfg))
 }
 
 // NormType def
@@ -23,9 +31,10 @@ type NormType struct {
 }
 
 // NewType method
-func NewType() *NormType {
+func NewType(cfg *types.Chain33Config) *NormType {
 	c := &NormType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

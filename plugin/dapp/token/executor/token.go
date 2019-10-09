@@ -35,11 +35,6 @@ const (
 var driverName = "token"
 var conf = types.ConfSub(driverName)
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&token{}))
-}
-
 type subConfig struct {
 	SaveTokenTxList bool `json:"saveTokenTxList"`
 }
@@ -47,11 +42,17 @@ type subConfig struct {
 var cfg subConfig
 
 // Init 重命名执行器名称
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &cfg)
 	}
-	drivers.Register(GetName(), newToken, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, GetName(), newToken, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&token{}))
 }
 
 // GetName 获取执行器别名
@@ -238,8 +239,9 @@ func (t *token) saveLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	var kv []*types.KeyValue
 
 	key := calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, receipt.Status)
+	cfg := t.GetAPI().GetConfig()
 	var value []byte
-	if types.IsFork(t.GetHeight(), "ForkExecKey") {
+	if cfg.IsFork(t.GetHeight(), "ForkExecKey") {
 		value = calcTokenAddrNewKeyS(receipt.Symbol, receipt.Owner)
 	} else {
 		value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)
@@ -262,7 +264,8 @@ func (t *token) deleteLogs(receipt *tokenty.ReceiptToken) []*types.KeyValue {
 	if receipt.Status != tokenty.TokenStatusPreCreated {
 		key = calcTokenStatusKeyLocal(receipt.Symbol, receipt.Owner, tokenty.TokenStatusPreCreated)
 		var value []byte
-		if types.IsFork(t.GetHeight(), "ForkExecKey") {
+		cfg := t.GetAPI().GetConfig()
+		if cfg.IsFork(t.GetHeight(), "ForkExecKey") {
 			value = calcTokenAddrNewKeyS(receipt.Symbol, receipt.Owner)
 		} else {
 			value = calcTokenAddrKeyS(receipt.Symbol, receipt.Owner)

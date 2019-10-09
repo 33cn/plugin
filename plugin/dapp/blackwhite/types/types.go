@@ -24,10 +24,17 @@ const (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, ExecerBlackwhite)
-	// init executor type
-	types.RegistorExecutor(BlackwhiteX, NewType())
-	types.RegisterDappFork(BlackwhiteX, "ForkBlackWhiteV2", 900000)
-	types.RegisterDappFork(BlackwhiteX, "Enable", 850000)
+	types.RegFork(BlackwhiteX, InitFork)
+	types.RegExec(BlackwhiteX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(BlackwhiteX, "ForkBlackWhiteV2", 900000)
+	cfg.RegisterDappFork(BlackwhiteX, "Enable", 850000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(BlackwhiteX, NewType(cfg))
 }
 
 // BlackwhiteType 执行器基类结构体
@@ -36,9 +43,10 @@ type BlackwhiteType struct {
 }
 
 // NewType 创建执行器类型
-func NewType() *BlackwhiteType {
+func NewType(cfg *types.Chain33Config) *BlackwhiteType {
 	c := &BlackwhiteType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

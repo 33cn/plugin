@@ -58,10 +58,19 @@ var TicketX = "ticket"
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TicketX))
-	types.RegistorExecutor(TicketX, NewType())
-	types.RegisterDappFork(TicketX, "Enable", 0)
-	types.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
-	types.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
+	types.RegFork(TicketX, InitFork)
+	types.RegExec(TicketX, InitExecutor)
+
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(TicketX, "Enable", 0)
+	cfg.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
+	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(TicketX, NewType(cfg))
 }
 
 // TicketType ticket exec type
@@ -70,9 +79,10 @@ type TicketType struct {
 }
 
 // NewType new type
-func NewType() *TicketType {
+func NewType(cfg *types.Chain33Config) *TicketType {
 	c := &TicketType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

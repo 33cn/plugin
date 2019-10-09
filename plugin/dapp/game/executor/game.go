@@ -17,14 +17,15 @@ var glog = log.New("module", "execs.game")
 
 var driverName = gt.GameX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Game{}))
+// Init register dapp
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newGame, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init register dapp
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newGame, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Game{}))
 }
 
 // Game the game inherits all the attributes of the driverBase.

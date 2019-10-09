@@ -32,14 +32,16 @@ var multisiglog = log.New("module", "execs.multisig")
 
 var driverName = "multisig"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&MultiSig{}))
-}
 
 // Init multisig模块初始化
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newMultiSig, types.GetDappFork(driverName, "Enable"))
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newMultiSig, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&MultiSig{}))
 }
 
 // GetName multisig合约name
@@ -887,7 +889,8 @@ func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets)
 	}
 	var acc1 *types.Account
 
-	execaddress := dapp.ExecAddress(types.ExecName(m.GetName()))
+	cfg := m.GetAPI().GetConfig()
+	execaddress := dapp.ExecAddress(cfg.ExecName(m.GetName()))
 	acc1 = acc.LoadExecAccount(multiSigAddr, execaddress)
 	return acc1, nil
 }
