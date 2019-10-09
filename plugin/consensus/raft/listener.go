@@ -18,7 +18,7 @@ type stoppableListener struct {
 }
 
 // 监听tcp连接
-func newStoppableListener(addr string, ctx context.Context) (*stoppableListener, error) {
+func newStoppableListener(ctx context.Context,addr string) (*stoppableListener, error) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
