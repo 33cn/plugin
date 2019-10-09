@@ -150,39 +150,3 @@ func clearTestData() {
 	}
 	fmt.Println("test data clear successfully!")
 }
-
-func TestReplica(t *testing.T){
-	reply1, request1, isPrimary1:=NewReplica(1,"127.0.0.1:8891,127.0.0.1:8892,127.0.0.1:8893","127.0.0.1:8891")
-	reply2, request2, isPrimary2:=NewReplica(2,"127.0.0.1:8891,127.0.0.1:8892,127.0.0.1:8893","127.0.0.1:8892")
-	reply3, request3, isPrimary3:=NewReplica(3,"127.0.0.1:8891,127.0.0.1:8892,127.0.0.1:8893","127.0.0.1:8893")
-	go func() {
-		for {
-
-			select {
-			case <-reply1:
-				t.Log("I'm have reply1 message")
-			case <-reply2:
-				t.Log("I'm have reply2 message")
-			case <-reply3:
-				t.Log("I'm have reply3 message")
-			}
-		}
-	}()
-    t.Log(isPrimary1)
-	t.Log(isPrimary2)
-	t.Log(isPrimary3)
-	go func() {
-       for i:=0;i<100;i++ {
-		   op := &types.Operation{Value: &types.Block{}}
-		   select {
-		   case request1<-ToRequestClient(op, types.Now().String(), "127.0.0.1:8891"):
-			   t.Log("I'm have send request1 message")
-		   case request2<-ToRequestClient(op, types.Now().String(), "127.0.0.1:8892"):
-			   t.Log("I'm have send request2 message")
-		   case request3<-ToRequestClient(op, types.Now().String(), "127.0.0.1:8893"):
-			   t.Log("I'm have send request3 message")
-		  }
-	   }
-	}()
-	time.Sleep(5*time.Second)
-}

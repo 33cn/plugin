@@ -183,7 +183,7 @@ func (rc *raftNode) serveRaft() {
 		panic(err)
 	}
 
-	ln, err := newStoppableListener(nodeURL.Host, rc.ctx)
+	ln, err := newStoppableListener(rc.ctx, nodeURL.Host)
 	if err != nil {
 		rlog.Error(fmt.Sprintf("raft: Failed to listen rafthttp (%v)", err.Error()))
 		panic(err)
