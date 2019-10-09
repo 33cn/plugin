@@ -5,7 +5,9 @@
 package raft
 
 import (
+	"context"
 	"strings"
+	"sync/atomic"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
@@ -22,6 +24,7 @@ var (
 	writeBlockSeconds       int64  = 1
 	heartbeatTick                  = 1
 	isLeader                       = false
+	mux                     atomic.Value
 	confChangeC             chan raftpb.ConfChange
 )
 
@@ -37,6 +40,10 @@ type subConfig struct {
 	DefaultSnapCount  int64  `json:"defaultSnapCount"`
 	WriteBlockSeconds int64  `json:"writeBlockSeconds"`
 	HeartbeatTick     int32  `json:"heartbeatTick"`
+}
+
+func init() {
+	mux.Store(isLeader)
 }
 
 // NewRaftCluster create raft cluster
@@ -70,10 +77,6 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.HeartbeatTick > 0 {
 		heartbeatTick = int(subcfg.HeartbeatTick)
 	}
-	// propose channel
-	proposeC := make(chan *types.Block)
-	confChangeC = make(chan raftpb.ConfChange)
-
 	var b *Client
 	getSnapshot := func() ([]byte, error) { return b.getSnapshot() }
 	// raft集群的建立,1. 初始化两条channel： propose channel用于客户端和raft底层交互, commit channel用于获取commit消息
@@ -90,10 +93,15 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	if len(addPeers) == 1 && addPeers[0] == "" {
 		addPeers = []string{}
 	}
-	commitC, errorC, snapshotterReady, validatorC, stopC := NewRaftNode(int(subcfg.NodeID), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
+	//采用context来统一管理所有服务
+	ctx, stop := context.WithCancel(context.Background())
+	// propose channel
+	proposeC := make(chan *types.Block)
+	confChangeC = make(chan raftpb.ConfChange)
+	commitC, errorC, snapshotterReady, validatorC := NewRaftNode(ctx, int(subcfg.NodeID), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
 	//启动raft删除节点操作监听
-	go serveHTTPRaftAPI(int(subcfg.RaftAPIPort), confChangeC, errorC)
+	go serveHTTPRaftAPI(ctx, int(subcfg.RaftAPIPort), confChangeC, errorC)
 	// 监听commit channel,取block
-	b = NewBlockstore(cfg, <-snapshotterReady, proposeC, commitC, errorC, validatorC, stopC)
+	b = NewBlockstore(ctx, cfg, <-snapshotterReady, proposeC, commitC, errorC, validatorC, stop)
 	return b
 }

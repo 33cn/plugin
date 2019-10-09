@@ -56,17 +56,18 @@ type raftNode struct {
 	snapCount        uint64
 	transport        *rafthttp.Transport
 	stopMu           sync.RWMutex
-	stopc            chan struct{}
-	httpstopc        chan struct{}
-	httpdonec        chan struct{}
-	validatorC       chan bool
+	ctx              context.Context
+	//stopc            chan struct{}
+	//httpstopc  chan struct{}
+	//httpdonec  chan struct{}
+	validatorC chan bool
 	//用于判断该节点是否重启过
 	restartC chan struct{}
 }
 
 // NewRaftNode create raft node
-func NewRaftNode(id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan *types.Block,
-	confChangeC <-chan raftpb.ConfChange) (<-chan *types.Block, <-chan error, <-chan *snap.Snapshotter, <-chan bool, chan<- struct{}) {
+func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan *types.Block,
+	confChangeC <-chan raftpb.ConfChange) (<-chan *types.Block, <-chan error, <-chan *snap.Snapshotter, <-chan bool) {
 
 	rlog.Info("Enter consensus raft")
 	// commit channel
@@ -86,16 +87,14 @@ func NewRaftNode(id int, join bool, peers []string, readOnlyPeers []string, addP
 		snapdir:          fmt.Sprintf("chain33_raft-%d%ssnap", id, string(os.PathSeparator)),
 		getSnapshot:      getSnapshot,
 		snapCount:        defaultSnapCount,
-		stopc:            make(chan struct{}),
-		httpstopc:        make(chan struct{}),
-		httpdonec:        make(chan struct{}),
 		validatorC:       make(chan bool),
 		snapshotterReady: make(chan *snap.Snapshotter, 1),
 		restartC:         make(chan struct{}, 1),
+		ctx:              ctx,
 	}
 	go rc.startRaft()
 
-	return commitC, errorC, rc.snapshotterReady, rc.validatorC, rc.stopc
+	return commitC, errorC, rc.snapshotterReady, rc.validatorC
 }
 
 //  启动raft节点
@@ -184,22 +183,22 @@ func (rc *raftNode) serveRaft() {
 		panic(err)
 	}
 
-	ln, err := newStoppableListener(nodeURL.Host, rc.httpstopc)
+	ln, err := newStoppableListener(nodeURL.Host, rc.ctx)
 	if err != nil {
 		rlog.Error(fmt.Sprintf("raft: Failed to listen rafthttp (%v)", err.Error()))
 		panic(err)
 	}
-
-	err = (&http.Server{Handler: rc.transport.Handler()}).Serve(ln)
+	raftSrv := &http.Server{Handler: rc.transport.Handler()}
+	err = raftSrv.Serve(ln)
 	if err != nil {
 		rlog.Error(fmt.Sprintf("raft: Failed to serve rafthttp (%v)", err.Error()))
 	}
 	select {
-	case <-rc.httpstopc:
+	case <-rc.ctx.Done():
+		raftSrv.Close()
 	default:
 		rlog.Error(fmt.Sprintf("raft: Failed to serve rafthttp (%v)", err.Error()))
 	}
-	close(rc.httpdonec)
 }
 
 func (rc *raftNode) serveChannels() {
@@ -246,9 +245,11 @@ func (rc *raftNode) serveChannels() {
 						rlog.Error(fmt.Sprintf("rc.node.ProposeConfChange:%v", err.Error()))
 					}
 				}
+			case <-rc.ctx.Done():
+				rlog.Info("I have a exit message!")
+				return
 			}
 		}
-		close(rc.stopc)
 	}()
 	// 从Ready()中接收数据
 	for {
@@ -275,7 +276,7 @@ func (rc *raftNode) serveChannels() {
 			rc.writeError(err)
 			return
 
-		case <-rc.stopc:
+		case <-rc.ctx.Done():
 			rc.stop()
 			return
 		}
@@ -283,9 +284,9 @@ func (rc *raftNode) serveChannels() {
 }
 
 func (rc *raftNode) updateValidator() {
+
 	//TODO 这块监听后期需要根据场景进行优化?
 	time.Sleep(5 * time.Second)
-
 	//用于标记readOnlyPeers是否已经被添加到集群中了
 	flag := false
 	isRestart := false
@@ -297,25 +298,31 @@ func (rc *raftNode) updateValidator() {
 	case <-ticker.C:
 		ticker.Stop()
 	}
+	ticker = time.NewTicker(time.Second)
 	for {
-		time.Sleep(time.Second)
-		status := rc.Status()
-		if status.Lead == raft.None {
-			rlog.Debug(fmt.Sprintf("==============This is %s node!==============", status.RaftState.String()))
-			continue
-		} else {
-			// 获取到leader ID,选主成功
-			if rc.id == int(status.Lead) {
-				//leader选举出来之后即可添加addReadOnlyPeers
-				if !flag && !isRestart {
-					go rc.addReadOnlyPeers()
-				}
-				rc.validatorC <- true
+		select {
+		case <-rc.ctx.Done():
+			return
+		case <-ticker.C:
+			status := rc.Status()
+			if status.Lead == raft.None {
+				rlog.Debug(fmt.Sprintf("==============This is %s node!==============", status.RaftState.String()))
+				continue
 			} else {
-				rc.validatorC <- false
+				// 获取到leader ID,选主成功
+				if rc.id == int(status.Lead) {
+					//leader选举出来之后即可添加addReadOnlyPeers
+					if !flag && !isRestart {
+						go rc.addReadOnlyPeers()
+					}
+					rc.validatorC <- true
+				} else {
+					rc.validatorC <- false
+				}
+				flag = true
 			}
-			flag = true
 		}
+
 	}
 }
 func (rc *raftNode) Status() raft.Status {
@@ -454,20 +461,18 @@ func (rc *raftNode) stop() {
 	rc.stopHTTP()
 	close(rc.commitC)
 	close(rc.errorC)
-	close(rc.stopc)
 	rc.node.Stop()
 }
 
 func (rc *raftNode) stopHTTP() {
 	rc.transport.Stop()
-	close(rc.httpstopc)
-	<-rc.httpdonec
+	//close(rc.httpstopc)
+	//<-rc.httpdonec
 }
 
 func (rc *raftNode) writeError(err error) {
 	rc.stopHTTP()
 	close(rc.commitC)
-	close(rc.stopc)
 	rc.errorC <- err
 	close(rc.errorC)
 	rc.node.Stop()
@@ -488,7 +493,7 @@ func (rc *raftNode) publishEntries(ents []raftpb.Entry) bool {
 			}
 			select {
 			case rc.commitC <- block:
-			case <-rc.stopc:
+			case <-rc.ctx.Done():
 				return false
 			}
 
@@ -521,7 +526,7 @@ func (rc *raftNode) publishEntries(ents []raftpb.Entry) bool {
 		if ents[i].Index == rc.lastIndex {
 			select {
 			case rc.commitC <- nil:
-			case <-rc.stopc:
+			case <-rc.ctx.Done():
 				return false
 			}
 		}

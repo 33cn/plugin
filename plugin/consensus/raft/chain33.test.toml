@@ -36,8 +36,8 @@ enableTxQuickIndex=true
 
 [p2p]
 seeds=["127.0.0.1:13802"]
-enable=true
-isSeed=true
+enable=false
+isSeed=false
 serverStart=true
 innerSeedEnable=false
 useGithub=false
@@ -107,8 +107,8 @@ peersURL="http://127.0.0.1:9021"
 # raft共识用到，指示raft集群中只读节点的IP（只同步日志，不参与raft共识）
 readOnlyPeersURL=""
 addPeersURL=""
-#raft共识用到，默认raft中多少条记录打包一个snapshot
-defaultSnapCount=1000
+#raft共识用到，默认raft中多少条记录打包一个snapshot(这里为了测试调整小一点）
+defaultSnapCount=2
 #raft共识用到，默认raft中写区块时间间隔
 writeBlockSeconds=1
 #raft共识用到，默认raft中leader发送心跳包时间间隔
