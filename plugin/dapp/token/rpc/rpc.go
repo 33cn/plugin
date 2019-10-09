@@ -21,8 +21,9 @@ func (c *channelClient) getTokenBalance(in *tokenty.ReqTokenBalance) ([]*types.A
 	if err != nil {
 		return nil, err
 	}
+	cfg := c.GetConfig()
 	switch in.GetExecer() {
-	case types.ExecName(tokenty.TokenX):
+	case cfg.ExecName(tokenty.TokenX):
 		addrs := in.GetAddresses()
 		var queryAddrs []string
 		queryAddrs = append(queryAddrs, addrs...)
@@ -83,7 +84,8 @@ func (c *Jrpc) CreateRawTokenPreCreateTx(param *tokenty.TokenPreCreate, result *
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenPreCreate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(tokenty.TokenX), "TokenPreCreate", param)
 	if err != nil {
 		return err
 	}
@@ -96,7 +98,8 @@ func (c *Jrpc) CreateRawTokenFinishTx(param *tokenty.TokenFinishCreate, result *
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenFinishCreate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(tokenty.TokenX), "TokenFinishCreate", param)
 	if err != nil {
 		return err
 	}
@@ -109,7 +112,8 @@ func (c *Jrpc) CreateRawTokenRevokeTx(param *tokenty.TokenRevokeCreate, result *
 	if param == nil || param.Symbol == "" {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenRevokeCreate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(tokenty.TokenX), "TokenRevokeCreate", param)
 	if err != nil {
 		return err
 	}
@@ -122,7 +126,8 @@ func (c *Jrpc) CreateRawTokenMintTx(param *tokenty.TokenMint, result *interface{
 	if param == nil || param.Symbol == "" || param.Amount <= 0 {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenMint", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(tokenty.TokenX), "TokenMint", param)
 	if err != nil {
 		return err
 	}
@@ -135,7 +140,8 @@ func (c *Jrpc) CreateRawTokenBurnTx(param *tokenty.TokenBurn, result *interface{
 	if param == nil || param.Symbol == "" || param.Amount <= 0 {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(tokenty.TokenX), "TokenBurn", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(tokenty.TokenX), "TokenBurn", param)
 	if err != nil {
 		return err
 	}

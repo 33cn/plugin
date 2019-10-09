@@ -16,7 +16,8 @@ func (c *channelClient) Backup(ctx context.Context, v *rt.BackupRetrieve) (*type
 		Ty:    rt.RetrieveActionBackup,
 		Value: &rt.RetrieveAction_Backup{Backup: v},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), types.Encode(backup))
+	cfg := c.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(rt.RetrieveX), types.Encode(backup))
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,8 @@ func (c *channelClient) Prepare(ctx context.Context, v *rt.PrepareRetrieve) (*ty
 		Ty:    rt.RetrieveActionPrepare,
 		Value: &rt.RetrieveAction_Prepare{Prepare: v},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), types.Encode(prepare))
+	cfg := c.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(rt.RetrieveX), types.Encode(prepare))
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +46,8 @@ func (c *channelClient) Perform(ctx context.Context, v *rt.PerformRetrieve) (*ty
 		Value: &rt.RetrieveAction_Perform{Perform: v},
 	}
 	payload := types.Encode(perform)
-	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), payload)
+	cfg := c.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(rt.RetrieveX), payload)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,8 @@ func (c *channelClient) Cancel(ctx context.Context, v *rt.CancelRetrieve) (*type
 		Ty:    rt.RetrieveActionCancel,
 		Value: &rt.RetrieveAction_Cancel{Cancel: v},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(rt.RetrieveX), types.Encode(cancel))
+	cfg := c.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(rt.RetrieveX), types.Encode(cancel))
 	if err != nil {
 		return nil, err
 	}

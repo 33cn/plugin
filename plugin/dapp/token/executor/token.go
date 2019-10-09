@@ -33,7 +33,6 @@ const (
 )
 
 var driverName = "token"
-var conf = types.ConfSub(driverName)
 
 type subConfig struct {
 	SaveTokenTxList bool `json:"saveTokenTxList"`

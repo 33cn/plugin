@@ -409,9 +409,9 @@ func (policy *multisigPolicy) rescanOwnerAttrByAddr(addr string) {
 	}
 
 	operater := policy.getWalletOperate()
-
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	//获取全网中多重签名账户数量
-	msg, err := operater.GetAPI().Query(types.ExecName(mtypes.MultiSigX), "MultiSigAccCount", &types.ReqNil{})
+	msg, err := operater.GetAPI().Query(cfg.ExecName(mtypes.MultiSigX), "MultiSigAccCount", &types.ReqNil{})
 	if err != nil {
 		bizlog.Error("rescanOwnerAttrByAddr Query MultiSigAccCount err", "MultiSigX", mtypes.MultiSigX, "addr", addr, "err", err)
 		return
@@ -438,7 +438,7 @@ func (policy *multisigPolicy) rescanOwnerAttrByAddr(addr string) {
 			req.End = req.Start + MaxCountPerTime
 			curCount = req.End
 		}
-		msg, err := operater.GetAPI().Query(types.ExecName(mtypes.MultiSigX), "MultiSigAccounts", &req)
+		msg, err := operater.GetAPI().Query(cfg.ExecName(mtypes.MultiSigX), "MultiSigAccounts", &req)
 		if err != nil {
 			bizlog.Error("rescanOwnerAttrByAddr", "MultiSigAccounts error", err, "addr", addr)
 			return
@@ -458,12 +458,12 @@ func (policy *multisigPolicy) rescanOwnerAttrByAddr(addr string) {
 }
 func (policy *multisigPolicy) proceMultiSigAcc(multiSigAccs *mtypes.ReplyMultiSigAccs, owneraddr string) {
 	operater := policy.getWalletOperate()
-
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	for _, multiSigaddr := range multiSigAccs.Address {
 		req := mtypes.ReqMultiSigAccInfo{
 			MultiSigAccAddr: multiSigaddr,
 		}
-		msg, err := operater.GetAPI().Query(types.ExecName(mtypes.MultiSigX), "MultiSigAccountInfo", &req)
+		msg, err := operater.GetAPI().Query(cfg.ExecName(mtypes.MultiSigX), "MultiSigAccountInfo", &req)
 		if err != nil {
 			bizlog.Error("ProceMultiSigAcc", "MultiSigAccountInfo error", err, "multiSigaddr", multiSigaddr)
 			continue

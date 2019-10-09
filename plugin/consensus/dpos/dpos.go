@@ -436,13 +436,14 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 // CreateBlock a routine monitor whether some transactions available and tell client by available channel
 func (client *Client) CreateBlock() {
 	lastBlock := client.GetCurrentBlock()
-	txs := client.RequestTx(int(types.GetP(lastBlock.Height+1).MaxTxNumber), nil)
+	cfg := client.GetAPI().GetConfig()
+	txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
 	if len(txs) == 0 {
 		block := client.GetCurrentBlock()
 		if createEmptyBlocks {
 			emptyBlock := &types.Block{}
 			emptyBlock.StateHash = block.StateHash
-			emptyBlock.ParentHash = block.Hash()
+			emptyBlock.ParentHash = block.Hash(cfg)
 			emptyBlock.Height = block.Height + 1
 			emptyBlock.Txs = nil
 			emptyBlock.TxHash = zeroHash[:]
@@ -461,11 +462,11 @@ func (client *Client) CreateBlock() {
 	//check dup
 	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
 	var newblock types.Block
-	newblock.ParentHash = lastBlock.Hash()
+	newblock.ParentHash = lastBlock.Hash(cfg)
 	newblock.Height = lastBlock.Height + 1
 	client.AddTxsToBlock(&newblock, txs)
 	//
-	newblock.Difficulty = types.GetP(0).PowLimitBits
+	newblock.Difficulty = cfg.GetP(0).PowLimitBits
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = client.blockTime
 
@@ -580,7 +581,8 @@ func (client *Client) CreateRecordCBTx(info *dty.DposCBInfo) (tx *types.Transact
 		RecordCB: info,
 	}
 	action.Ty = dty.DposVoteActionRecordCB
-	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	cfg := client.GetAPI().GetConfig()
+	tx, err = types.CreateFormatTx(cfg, "dpos", types.Encode(&action))
 	if err != nil {
 		return nil, err
 	}
@@ -595,7 +597,8 @@ func (client *Client) CreateRegVrfMTx(info *dty.DposVrfMRegist) (tx *types.Trans
 		RegistVrfM: info,
 	}
 	action.Ty = dty.DposVoteActionRegistVrfM
-	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	cfg := client.GetAPI().GetConfig()
+	tx, err = types.CreateFormatTx(cfg, "dpos", types.Encode(&action))
 	if err != nil {
 		return nil, err
 	}
@@ -610,7 +613,8 @@ func (client *Client) CreateRegVrfRPTx(info *dty.DposVrfRPRegist) (tx *types.Tra
 		RegistVrfRP: info,
 	}
 	action.Ty = dty.DposVoteActionRegistVrfRP
-	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	cfg := client.GetAPI().GetConfig()
+	tx, err = types.CreateFormatTx(cfg, "dpos", types.Encode(&action))
 	if err != nil {
 		return nil, err
 	}
@@ -708,7 +712,8 @@ func (client *Client) CreateTopNRegistTx(reg *dty.TopNCandidatorRegist) (tx *typ
 		RegistTopN: reg,
 	}
 	action.Ty = dty.DPosVoteActionRegistTopNCandidator
-	tx, err = types.CreateFormatTx("dpos", types.Encode(&action))
+	cfg := client.GetAPI().GetConfig()
+	tx, err = types.CreateFormatTx(cfg, "dpos", types.Encode(&action))
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/lottery/types"
+	"github.com/33cn/chain33/client"
 )
 
 const (
@@ -120,6 +121,7 @@ type Action struct {
 	difficulty   uint64
 	index        int
 	lottery      *Lottery
+	api          client.QueueProtocolAPI
 }
 
 // NewLotteryAction generate New Action
@@ -130,7 +132,9 @@ func NewLotteryAction(l *Lottery, tx *types.Transaction, index int) *Action {
 		coinsAccount: l.GetCoinsAccount(), db: l.GetStateDB(),
 		txhash: hash, fromaddr: fromaddr, blocktime: l.GetBlockTime(),
 		height: l.GetHeight(), execaddr: dapp.ExecAddress(string(tx.Execer)),
-		difficulty: l.GetDifficulty(), index: index, lottery: l}
+		difficulty: l.GetDifficulty(), index: index, lottery: l,
+		api: l.GetAPI(),
+	}
 }
 
 // GetLottCommonRecipt generate logs for lottery common action
@@ -262,7 +266,8 @@ func (action *Action) LotteryCreate(create *pty.LotteryCreate) (*types.Receipt, 
 	lott.TotalAddrNum = 0
 	lott.BuyAmount = 0
 	llog.Debug("LotteryCreate", "OpRewardRatio", lott.OpRewardRatio, "DevRewardRatio", lott.DevRewardRatio)
-	if types.IsPara() {
+	cfg := action.api.GetConfig()
+	if cfg.IsPara() {
 		lott.CreateOnMain = action.lottery.GetMainHeight()
 	}
 
@@ -306,19 +311,19 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 			return nil, pty.ErrLotteryStatus
 		}
 	}
-
+	cfg := action.api.GetConfig()
 	if lott.Status == pty.LotteryCreated || lott.Status == pty.LotteryDrawed {
 		llog.Debug("LotteryBuy switch to purchasestate")
 		lott.LastTransToPurState = action.height
 		lott.Status = pty.LotteryPurchase
 		lott.Round++
-		if types.IsPara() {
+		if cfg.IsPara() {
 			lott.LastTransToPurStateOnMain = action.lottery.GetMainHeight()
 		}
 	}
 
 	if lott.Status == pty.LotteryPurchase {
-		if types.IsPara() {
+		if cfg.IsPara() {
 			mainHeight := action.lottery.GetMainHeight()
 			if mainHeight-lott.LastTransToPurStateOnMain > lott.GetPurBlockNum() {
 				llog.Error("LotteryBuy", "action.height", action.height, "mainHeight", mainHeight, "LastTransToPurStateOnMain", lott.LastTransToPurStateOnMain)
@@ -423,8 +428,8 @@ func (action *Action) LotteryDraw(draw *pty.LotteryDraw) (*types.Receipt, error)
 		llog.Error("LotteryDraw", "lott.Status", lott.Status)
 		return nil, pty.ErrLotteryStatus
 	}
-
-	if types.IsPara() {
+	cfg := action.api.GetConfig()
+	if cfg.IsPara() {
 		mainHeight := action.lottery.GetMainHeight()
 		if mainHeight-lott.GetLastTransToPurStateOnMain() < lott.GetDrawBlockNum() {
 			llog.Error("LotteryDraw", "action.height", action.height, "mainHeight", mainHeight, "GetLastTransToPurStateOnMain", lott.GetLastTransToPurState())
@@ -688,7 +693,8 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	lott.BuyAmount = 0
 	action.recordMissing(lott)
 
-	if types.IsPara() {
+	cfg := action.api.GetConfig()
+	if cfg.IsPara() {
 		lott.LastTransToDrawStateOnMain = action.lottery.GetMainHeight()
 	}
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, &updateInfo, &gainInfos, luckyAddrNum, totalFund, factor, nil

@@ -20,7 +20,8 @@ func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.Tr
 		Ty:    ptypes.TradeSellLimit,
 		Value: &ptypes.Trade_SellLimit{SellLimit: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(sell))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(sell))
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,8 @@ func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.Tra
 		Ty:    ptypes.TradeBuyMarket,
 		Value: &ptypes.Trade_BuyMarket{BuyMarket: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,8 @@ func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.
 		Ty:    ptypes.TradeRevokeSell,
 		Value: &ptypes.Trade_RevokeSell{RevokeSell: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +74,8 @@ func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptype
 		Ty:    ptypes.TradeBuyLimit,
 		Value: &ptypes.Trade_BuyLimit{BuyLimit: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +92,8 @@ func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *pty
 		Ty:    ptypes.TradeSellMarket,
 		Value: &ptypes.Trade_SellMarket{SellMarket: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +110,8 @@ func (cc *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptyp
 		Ty:    ptypes.TradeRevokeBuy,
 		Value: &ptypes.Trade_RevokeBuy{RevokeBuy: in},
 	}
-	tx, err := types.CreateFormatTx(types.ExecName(ptypes.TradeX), types.Encode(buy))
+	cfg := cc.GetConfig()
+	tx, err := types.CreateFormatTx(cfg, cfg.ExecName(ptypes.TradeX), types.Encode(buy))
 	if err != nil {
 		return nil, err
 	}

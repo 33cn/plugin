@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/33cn/chain33/client"
 )
 
 const (
@@ -90,6 +91,7 @@ type relayDB struct {
 	height       int64
 	execAddr     string
 	btc          *btcStore
+	api          client.QueueProtocolAPI
 }
 
 func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
@@ -97,7 +99,7 @@ func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
 	fromAddr := tx.From()
 	btc := newBtcStore(r.GetLocalDB())
 	return &relayDB{r.GetCoinsAccount(), r.GetStateDB(), hash,
-		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), btc}
+		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), btc, r.GetAPI()}
 }
 
 func (action *relayDB) getOrderByID(orderID []byte) (*ty.RelayOrder, error) {
@@ -676,6 +678,8 @@ func (action *relayDB) saveBtcHeader(headers *ty.BtcHeaders, localDb dbm.KVDB) (
 	var preHead = &ty.RelayLastRcvBtcHeader{}
 	var receipt = &ty.ReceiptRelayRcvBTCHeaders{}
 
+	cfg := action.api.GetConfig()
+	subconfig := types.ConfSub(cfg, driverName)
 	if action.fromAddr != subconfig.GStr("genesis") {
 		return nil, types.ErrFromAddr
 	}

@@ -419,7 +419,8 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 // BuildBlock build a new block contains some transactions
 func (client *Client) BuildBlock() *types.Block {
 	lastHeight := client.GetCurrentHeight()
-	txs := client.RequestTx(int(types.GetP(lastHeight+1).MaxTxNumber)-1, nil)
+	cfg := client.GetAPI().GetConfig()
+	txs := client.RequestTx(int(cfg.GetP(lastHeight+1).MaxTxNumber)-1, nil)
 	newblock := &types.Block{}
 	newblock.Height = lastHeight + 1
 	client.AddTxsToBlock(newblock, txs)
@@ -434,13 +435,16 @@ func (client *Client) CommitBlock(propBlock *types.Block) error {
 		tendermintlog.Error("RequestBlock fail", "err", err)
 		return err
 	}
-	newblock.ParentHash = lastBlock.Hash()
+	cfg := client.GetAPI().GetConfig()
+
+	newblock.ParentHash = lastBlock.Hash(cfg)
 	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = time.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
 		newblock.BlockTime = lastBlock.BlockTime + 1
 	}
-	newblock.Difficulty = types.GetP(0).PowLimitBits
+
+	newblock.Difficulty = cfg.GetP(0).PowLimitBits
 
 	err = client.WriteBlock(lastBlock.StateHash, &newblock)
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	//log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/system/dapp"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
+	"github.com/33cn/chain33/client"
 )
 
 const (
@@ -99,6 +100,7 @@ type Action struct {
 	blocktime    int64
 	height       int64
 	execaddr     string
+	api          client.QueueProtocolAPI
 }
 
 // NewRetrieveAcction gen instance
@@ -106,7 +108,7 @@ func NewRetrieveAcction(r *Retrieve, tx *types.Transaction) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{r.GetCoinsAccount(), r.GetStateDB(), hash, fromaddr,
-		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
+		r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), r.GetAPI()}
 }
 
 // RetrieveBackup Action
@@ -116,7 +118,8 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	var receipt *types.Receipt
 	var r *DB
 	var newRetrieve = false
-	if types.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveX) {
 		if err := address.CheckAddress(backupRet.BackupAddress); err != nil {
 			rlog.Debug("retrieve checkaddress")
 			return nil, err
@@ -208,10 +211,10 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
-
+	cfg := action.api.GetConfig()
 	// 兼容原来的找回， 在不指定的情况下，找回主币
 	if len(perfRet.Assets) == 0 {
-		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: types.GetCoinSymbol()})
+		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: cfg.GetCoinSymbol()})
 		//return nil, nil
 	}
 
@@ -248,6 +251,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	var index int
 	var related bool
 	var acc *types.Account
+	cfg := action.api.GetConfig()
 
 	retrieve, err := readRetrieve(action.db, perfRet.BackupAddress)
 	if err != nil {
@@ -276,7 +280,7 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 		return nil, rt.ErrRetrievePeriodLimit
 	}
 
-	if types.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveAssetX) {
+	if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveAssetX) {
 		return action.RetrievePerformAssets(perfRet, r.RetPara[index].DefaultAddress)
 	}
 

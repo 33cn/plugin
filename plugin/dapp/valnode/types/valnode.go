@@ -25,11 +25,6 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ValNodeX, NewType(cfg))
 }
 
-// GetExecName get exec name
-func GetExecName() string {
-	return types.ExecName(ValNodeX)
-}
-
 // ValNodeType stuct
 type ValNodeType struct {
 	types.ExecTypeBase

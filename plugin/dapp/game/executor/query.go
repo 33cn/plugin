@@ -21,7 +21,8 @@ func (g *Game) Query_QueryGameListCount(in *gt.QueryGameListCount) (types.Messag
 
 // Query_QueryGameListByStatusAndAddr query game list by status and addr
 func (g *Game) Query_QueryGameListByStatusAndAddr(in *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
-	return List(g.GetLocalDB(), g.GetStateDB(), in)
+	cfg := g.GetAPI().GetConfig()
+	return List(cfg, g.GetLocalDB(), g.GetStateDB(), in)
 }
 
 // Query_QueryGameById query game by gameID

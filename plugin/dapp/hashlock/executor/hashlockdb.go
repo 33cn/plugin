@@ -15,6 +15,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
+	"github.com/33cn/chain33/client"
 )
 
 var hlog = log.New("module", "hashlock.db")
@@ -75,13 +76,14 @@ type Action struct {
 	blocktime    int64
 	height       int64
 	execaddr     string
+	api          client.QueueProtocolAPI
 }
 
 // NewAction gen action instance
 func NewAction(h *Hashlock, tx *types.Transaction, execaddr string) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-	return &Action{h.GetCoinsAccount(), h.GetStateDB(), hash, fromaddr, h.GetBlockTime(), h.GetHeight(), execaddr}
+	return &Action{h.GetCoinsAccount(), h.GetStateDB(), hash, fromaddr, h.GetBlockTime(), h.GetHeight(), execaddr, h.GetAPI()}
 }
 
 // Hashlocklock Action
@@ -91,7 +93,8 @@ func (action *Action) Hashlocklock(hlock *pty.HashlockLock) (*types.Receipt, err
 	var kv []*types.KeyValue
 	var err error
 	//不存在相同的hashlock，假定采用sha256
-	if types.IsDappFork(action.height, pty.HashlockX, pty.ForkBadRepeatSecretX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, pty.HashlockX, pty.ForkBadRepeatSecretX) {
 		_, err = readHashlock(action.db, hlock.Hash)
 	} else {
 		_, err = readHashlock(action.db, common.Sha256(hlock.Hash))

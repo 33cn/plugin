@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/chain33/client"
 )
 
 // MemoryStateDB 内存状态数据库，保存在区块操作时内部的数据变更操作
@@ -61,12 +62,13 @@ type MemoryStateDB struct {
 	// 用户保存合约账户的状态数据或合约代码数据有没有发生变更
 	stateDirty map[string]interface{}
 	dataDirty  map[string]interface{}
+	api        client.QueueProtocolAPI
 }
 
 // NewMemoryStateDB 基于执行器框架的三个DB构建内存状态机对象
 // 此对象的生命周期对应一个区块，在同一个区块内的多个交易执行时共享同一个DB对象
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
-func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64) *MemoryStateDB {
+func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
 	mdb := &MemoryStateDB{
 		StateDB:      StateDB,
 		LocalDB:      LocalDB,
@@ -79,6 +81,7 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 		blockHeight:  blockHeight,
 		refund:       0,
 		txIndex:      0,
+		api:          api,
 	}
 	return mdb
 }
@@ -131,7 +134,8 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	isExec := mdb.Exist(addr)
 	var ac *types.Account
 	if isExec {
-		if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+		cfg := mdb.api.GetConfig()
+		if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
 			ac = mdb.CoinsAccount.LoadExecAccount(addr, addr)
 		} else {
 			contract := mdb.GetAccount(addr)
@@ -268,7 +272,8 @@ func (mdb *MemoryStateDB) SetState(addr string, key common.Hash, value common.Ha
 	if acc != nil {
 		acc.SetState(key, value)
 		// 新的分叉中状态数据变更不需要单独进行标识
-		if !types.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
+		cfg := mdb.api.GetConfig()
+		if !cfg.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 			mdb.stateDirty[addr] = true
 		}
 	}
@@ -481,7 +486,8 @@ func (mdb *MemoryStateDB) checkExecAccount(execAddr string, value int64) bool {
 	}
 
 	var accFrom *types.Account
-	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+	cfg := mdb.api.GetConfig()
+	if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
 		// 分叉后，需要检查合约地址下的金额是否足够
 		accFrom = mdb.CoinsAccount.LoadExecAccount(execAddr, execAddr)
 	} else {
@@ -613,7 +619,8 @@ func (mdb *MemoryStateDB) transfer2Contract(sender, recipient string, amount int
 
 	ret = &types.Receipt{}
 
-	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+	cfg := mdb.api.GetConfig()
+	if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
 		// 用户向合约转账时，将钱转到合约地址下execAddr:execAddr
 		rs, err := mdb.CoinsAccount.ExecTransfer(sender, execAddr, execAddr, amount)
 		if err != nil {
@@ -653,7 +660,8 @@ func (mdb *MemoryStateDB) transfer2External(sender, recipient string, amount int
 
 	execAddr := sender
 
-	if types.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
+	cfg := mdb.api.GetConfig()
+	if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
 		// 合约向用户地址转账时，从合约地址下的钱中转出到用户合约地址
 		ret, err = mdb.CoinsAccount.ExecTransfer(execAddr, recipient, execAddr, amount)
 		if err != nil {

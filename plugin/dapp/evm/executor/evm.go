@@ -25,7 +25,7 @@ var (
 	evmDebug = false
 
 	// EvmAddress 本合约地址
-	EvmAddress = address.ExecAddress(types.ExecName(evmtypes.ExecutorName))
+	EvmAddress = address.ExecAddress(evmtypes.ExecutorName)
 )
 
 var driverName = evmtypes.ExecutorName
@@ -137,7 +137,8 @@ func (evm *EVMExecutor) CheckReceiptExecOk() bool {
 
 // 生成一个新的合约对象地址
 func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
-	return common.NewAddress(txHash)
+	cfg := evm.GetAPI().GetConfig()
+	return common.NewAddress(cfg, txHash)
 }
 
 // CheckTx 校验交易

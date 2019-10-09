@@ -13,8 +13,8 @@ var NormX = "norm"
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(NormX))
-	types.RegFork(CoinsX, InitFork)
-	types.RegExec(CoinsX, InitExecutor)
+	types.RegFork(NormX, InitFork)
+	types.RegExec(NormX, InitExecutor)
 }
 
 func InitFork(cfg *types.Chain33Config) {

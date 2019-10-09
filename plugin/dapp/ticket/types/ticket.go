@@ -146,8 +146,8 @@ type TicketMinerParam struct {
 }
 
 // GetTicketMinerParam 获取ticket miner config params
-func GetTicketMinerParam(height int64) *TicketMinerParam {
-	conf := types.Conf("mver.consensus.ticket")
+func GetTicketMinerParam(cfg *types.Chain33Config, height int64) *TicketMinerParam {
+	conf := types.Conf(cfg, "mver.consensus.ticket")
 	c := &TicketMinerParam{}
 	c.CoinDevFund = conf.MGInt("coinDevFund", height) * types.Coin
 	c.CoinReward = conf.MGInt("coinReward", height) * types.Coin

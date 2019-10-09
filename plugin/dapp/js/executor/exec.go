@@ -10,7 +10,8 @@ import (
 func (c *js) userExecName(name string, local bool) string {
 	execer := "user." + ptypes.JsX + "." + name
 	if local {
-		execer = types.ExecName(execer)
+		cfg := c.GetAPI().GetConfig()
+		execer = cfg.ExecName(execer)
 	}
 	return execer
 }
@@ -18,7 +19,8 @@ func (c *js) userExecName(name string, local bool) string {
 // execName 在create 时为 jsvm
 // 在 call 时为 user.jsvm.game
 func (c *js) checkTxExec(txExec string, execName string) bool {
-	return txExec == types.ExecName(execName)
+	cfg := c.GetAPI().GetConfig()
+	return txExec == cfg.ExecName(execName)
 }
 
 func (c *js) Exec_Create(payload *jsproto.Create, tx *types.Transaction, index int) (*types.Receipt, error) {

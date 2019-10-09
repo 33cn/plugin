@@ -38,8 +38,8 @@ func InitExecutor(cfg *types.Chain33Config) {
 }
 
 //getRealExecName
-func getRealExecName(paraName string) string {
-	return types.ExecName(paraName + UnfreezeX)
+func getRealExecName(cfg *types.Chain33Config, paraName string) string {
+	return cfg.ExecName(paraName + UnfreezeX)
 }
 
 // NewType 生成新的基础类型
@@ -117,11 +117,12 @@ func (u *UnfreezeType) CreateTx(action string, message json.RawMessage) (*types.
 
 // RPC_UnfreezeCreateTx 创建冻结合约交易入口
 func (u *UnfreezeType) RPC_UnfreezeCreateTx(parm *UnfreezeCreate) (*types.Transaction, error) {
-	return CreateUnfreezeCreateTx(types.GetParaName(), parm)
+	cfg := u.GetConfig()
+	return CreateUnfreezeCreateTx(cfg, cfg.GetParaName(), parm)
 }
 
 // CreateUnfreezeCreateTx 创建冻结合约交易
-func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transaction, error) {
+func CreateUnfreezeCreateTx(cfg *types.Chain33Config, title string, parm *UnfreezeCreate) (*types.Transaction, error) {
 	tlog.Error("CreateUnfreezeCreateTx", "parm", parm)
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeCreateTx", "parm", parm)
@@ -140,22 +141,23 @@ func CreateUnfreezeCreateTx(title string, parm *UnfreezeCreate) (*types.Transact
 		Value: &UnfreezeAction_Create{parm},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(title)),
+		Execer:  []byte(getRealExecName(cfg, title)),
 		Payload: types.Encode(create),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	tx.SetRealFee(types.GInt("MinFee"))
+	tx.SetRealFee(cfg.GInt("MinFee"))
 	return tx, nil
 }
 
 // RPC_UnfreezeWithdrawTx 创建提币交易入口
 func (u *UnfreezeType) RPC_UnfreezeWithdrawTx(parm *UnfreezeWithdraw) (*types.Transaction, error) {
-	return CreateUnfreezeWithdrawTx(types.GetParaName(), parm)
+	cfg := u.GetConfig()
+	return CreateUnfreezeWithdrawTx(cfg, cfg.GetParaName(), parm)
 }
 
 // CreateUnfreezeWithdrawTx 创建提币交易
-func CreateUnfreezeWithdrawTx(title string, parm *UnfreezeWithdraw) (*types.Transaction, error) {
+func CreateUnfreezeWithdrawTx(cfg *types.Chain33Config, title string, parm *UnfreezeWithdraw) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeWithdrawTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -168,22 +170,23 @@ func CreateUnfreezeWithdrawTx(title string, parm *UnfreezeWithdraw) (*types.Tran
 		Value: &UnfreezeAction_Withdraw{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(title)),
+		Execer:  []byte(getRealExecName(cfg, title)),
 		Payload: types.Encode(withdraw),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	tx.SetRealFee(types.GInt("MinFee"))
+	tx.SetRealFee(cfg.GInt("MinFee"))
 	return tx, nil
 }
 
 // RPC_UnfreezeTerminateTx 创建终止冻结合约入口
 func (u *UnfreezeType) RPC_UnfreezeTerminateTx(parm *UnfreezeTerminate) (*types.Transaction, error) {
-	return CreateUnfreezeTerminateTx(types.GetParaName(), parm)
+	cfg := u.GetConfig()
+	return CreateUnfreezeTerminateTx(cfg, cfg.GetParaName(), parm)
 }
 
 // CreateUnfreezeTerminateTx 创建终止冻结合约
-func CreateUnfreezeTerminateTx(title string, parm *UnfreezeTerminate) (*types.Transaction, error) {
+func CreateUnfreezeTerminateTx(cfg *types.Chain33Config, title string, parm *UnfreezeTerminate) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("RPC_UnfreezeTerminateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -196,12 +199,12 @@ func CreateUnfreezeTerminateTx(title string, parm *UnfreezeTerminate) (*types.Tr
 		Value: &UnfreezeAction_Terminate{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(title)),
+		Execer:  []byte(getRealExecName(cfg, title)),
 		Payload: types.Encode(terminate),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	tx.SetRealFee(types.GInt("MinFee"))
+	tx.SetRealFee(cfg.GInt("MinFee"))
 	return tx, nil
 }
 

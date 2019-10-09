@@ -193,7 +193,8 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 }
 
 func (u *js) statedbFunc(vm *otto.Otto, name string) {
-	prefix, _ := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	prefix, _ := calcAllPrefix(cfg, name)
 	vm.Set("getstatedb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
@@ -215,7 +216,8 @@ func (u *js) statedbFunc(vm *otto.Otto, name string) {
 }
 
 func (u *js) localdbFunc(vm *otto.Otto, name string) {
-	_, prefix := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	_, prefix := calcAllPrefix(cfg, name)
 	vm.Set("getlocaldb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
@@ -261,7 +263,8 @@ func (u *js) randnumFunc(vm *otto.Otto, name string) {
 
 func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
-	_, plocal := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	_, plocal := calcAllPrefix(cfg, name)
 	vm.Set("listdb", func(call otto.FunctionCall) otto.Value {
 		prefix, err := call.Argument(0).ToString()
 		if err != nil {

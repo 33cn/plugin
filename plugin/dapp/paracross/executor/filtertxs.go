@@ -46,7 +46,7 @@ func checkReceiptExecOk(receipt *types.ReceiptData) bool {
 // 1, 主链+平行链 user.p.xx.paracross 交易组				混合跨链资产转移  paracross主链执行成功
 // 2, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合    paracross主链执行成功
 // 3, 平行链     user.p.xx.other  交易组					混合平行链组合    other主链pack
-func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
+func filterParaTxGroup(cfg *types.Chain33Config, tx *types.Transaction, allTxs []*types.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
 	var headIdx int
 
 	for i := index; i >= 0; i-- {
@@ -58,7 +58,7 @@ func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index in
 
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
-		if types.IsPara() && blockHeight < forkHeight {
+		if cfg.IsPara() && blockHeight < forkHeight {
 			if types.IsParaExecName(string(allTxs[i].Tx.Execer)) {
 				continue
 			}
@@ -77,13 +77,13 @@ func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index in
 }
 
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
-func FilterTxsForPara(main *types.ParaTxDetail) []*types.Transaction {
+func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*types.Transaction {
 	var txs []*types.Transaction
-	forkHeight := pt.GetDappForkHeight(pt.ForkCommitTx)
+	forkHeight := pt.GetDappForkHeight(cfg, pt.ForkCommitTx)
 	for i := 0; i < len(main.TxDetails); i++ {
 		tx := main.TxDetails[i].Tx
 		if tx.GroupCount >= 2 {
-			mainTxs, endIdx := filterParaTxGroup(tx, main.TxDetails, i, main.Header.Height, forkHeight)
+			mainTxs, endIdx := filterParaTxGroup(cfg, tx, main.TxDetails, i, main.Header.Height, forkHeight)
 			txs = append(txs, mainTxs...)
 			i = endIdx - 1
 			continue

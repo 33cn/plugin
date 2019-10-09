@@ -48,6 +48,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		execName     string
 		methodName   string
 	)
+	cfg := evm.GetAPI().GetConfig()
 
 	// 为了方便计费，即使合约为新生成，也将地址的初始化放到外面操作
 	if isCreate {
@@ -57,7 +58,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			return receipt, model.ErrContractAddressCollision
 		}
 		// 只有新创建的合约才能生成合约名称
-		execName = fmt.Sprintf("%s%s", types.ExecName(evmtypes.EvmPrefix), common.BytesToHash(txHash).Hex())
+		execName = fmt.Sprintf("%s%s", cfg.ExecName(evmtypes.EvmPrefix), common.BytesToHash(txHash).Hex())
 	} else {
 		contractAddr = *msg.To()
 	}
@@ -67,17 +68,17 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 
 	if isCreate {
 		// 如果携带ABI数据，则对数据合法性进行检查
-		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
+		if len(msg.ABI()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 			_, err = abi.JSON(strings.NewReader(msg.ABI()))
 			if err != nil {
 				return receipt, err
 			}
 		}
-		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.ABI())
+		ret, snapshot, leftOverGas, vmerr = env.Create(cfg, runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.ABI())
 	} else {
 		inData := msg.Data()
 		// 在这里进行ABI和十六进制的调用参数转换
-		if len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
+		if len(msg.ABI()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 			funcName, packData, err := abi.Pack(msg.ABI(), evm.mStateDB.GetAbi(msg.To().String()), readOnly)
 			if err != nil {
 				return receipt, err
@@ -85,7 +86,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			inData = packData
 			methodName = funcName
 		}
-		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
+		ret, snapshot, leftOverGas, vmerr = env.Call(cfg, runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
 	}
 
 	log.Debug("call(create) contract ", "input", common.Bytes2Hex(msg.Data()))
@@ -126,7 +127,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddr.String(), UsedGas: usedGas, Ret: ret}
 	// 这里进行ABI调用结果格式化
-	if len(methodName) > 0 && len(msg.ABI()) > 0 && types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
+	if len(methodName) > 0 && len(msg.ABI()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
 		jsonRet, err := abi.Unpack(ret, methodName, evm.mStateDB.GetAbi(msg.To().String()))
 		if err != nil {
 			// 这里出错不影响整体执行，只打印错误信息
@@ -137,7 +138,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddr.String())...)
 
-	if types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMKVHash) {
+	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMKVHash) {
 		// 将执行时生成的合约状态数据变更信息也计算哈希并保存
 		hashKV := evm.calcKVHash(contractAddr, logs)
 		if hashKV != nil {
@@ -153,7 +154,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	}
 
 	// 替换导致分叉的执行数据信息
-	state.ProcessFork(evm.GetHeight(), txHash, receipt)
+	state.ProcessFork(cfg, evm.GetHeight(), txHash, receipt)
 
 	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
 
@@ -163,7 +164,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 // CheckInit 检查是否初始化数据库
 func (evm *EVMExecutor) CheckInit() {
 	if evm.mStateDB == nil {
-		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight())
+		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight(), evm.GetAPI())
 	}
 }
 

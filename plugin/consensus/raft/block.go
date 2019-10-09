@@ -112,7 +112,7 @@ func (client *Client) CreateBlock() {
 	retry := 0
 	infoflag := 0
 	count := 0
-
+	cfg := client.GetAPI().GetConfig()
 	//打包区块前先同步到最大高度
 	for {
 		if client.IsCaughtUp() {
@@ -147,7 +147,7 @@ func (client *Client) CreateBlock() {
 			block := client.GetCurrentBlock()
 			emptyBlock := &types.Block{}
 			emptyBlock.StateHash = block.StateHash
-			emptyBlock.ParentHash = block.Hash()
+			emptyBlock.ParentHash = block.Hash(cfg)
 			emptyBlock.Height = block.Height + 1
 			emptyBlock.Txs = nil
 			emptyBlock.TxHash = zeroHash[:]
@@ -166,7 +166,7 @@ func (client *Client) CreateBlock() {
 		}
 
 		lastBlock := client.GetCurrentBlock()
-		txs := client.RequestTx(int(types.GetP(lastBlock.Height+1).MaxTxNumber), nil)
+		txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
 		if len(txs) == 0 {
 			issleep = true
 			continue
@@ -175,7 +175,7 @@ func (client *Client) CreateBlock() {
 		count = 0
 		rlog.Debug("==================start create new block!=====================")
 		var newblock types.Block
-		newblock.ParentHash = lastBlock.Hash()
+		newblock.ParentHash = lastBlock.Hash(cfg)
 		newblock.Height = lastBlock.Height + 1
 		client.AddTxsToBlock(&newblock, txs)
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)

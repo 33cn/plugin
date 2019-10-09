@@ -46,7 +46,8 @@ func (t *token) Exec_TokenPreCreate(payload *tokenty.TokenPreCreate, tx *types.T
 }
 
 func (t *token) Exec_TokenFinishCreate(payload *tokenty.TokenFinishCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newTokenAction(t, types.MGStr("mver.consensus.fundKeyAddr", t.GetHeight()), tx)
+	cfg := t.GetAPI().GetConfig()
+	action := newTokenAction(t, cfg.MGStr("mver.consensus.fundKeyAddr", t.GetHeight()), tx)
 	return action.finishCreate(payload)
 }
 

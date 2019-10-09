@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
+	"github.com/33cn/chain33/client"
 )
 
 const (
@@ -41,6 +42,7 @@ type action struct {
 	height       int64
 	index        int32
 	execaddr     string
+	api          client.QueueProtocolAPI
 }
 
 type resultCalc struct {
@@ -59,7 +61,7 @@ func newAction(t *Blackwhite, tx *types.Transaction, index int32) *action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &action{t.GetCoinsAccount(), t.GetStateDB(), hash, fromaddr,
-		t.GetBlockTime(), t.GetHeight(), index, dapp.ExecAddress(string(tx.Execer))}
+		t.GetBlockTime(), t.GetHeight(), index, dapp.ExecAddress(string(tx.Execer)), t.GetAPI()}
 }
 
 func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
@@ -180,7 +182,8 @@ func (a *action) Play(play *gt.BlackwhitePlay) (*types.Receipt, error) {
 
 	key1 := calcMavlRoundKey(round.GameID)
 	value1 := types.Encode(&round)
-	if types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
@@ -264,7 +267,8 @@ func (a *action) Show(show *gt.BlackwhiteShow) (*types.Receipt, error) {
 
 	key1 := calcMavlRoundKey(round.GameID)
 	value1 := types.Encode(&round)
-	if types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
@@ -360,7 +364,8 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 
 	key1 := calcMavlRoundKey(round.GameID)
 	value1 := types.Encode(&round)
-	if types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
 	}
@@ -528,12 +533,13 @@ func (a *action) getWinner(round *gt.BlackwhiteRound) ([]*addrResult, *gt.ReplyL
 	addrRes := round.AddrResult
 	loop := int(round.Loop)
 
+	cfg := a.api.GetConfig()
 	for _, address := range addrRes {
 		if len(address.ShowSecret) > 0 && len(address.HashValues) == loop {
 			var isBlack []bool
 			// 加入分叉高度判断：分叉高度在ForkV25BlackWhite到ForkV25BlackWhiteV2之间的执行原来逻辑，大于ForkV25BlackWhiteV2执行新逻辑，
 			// 小于ForkV25BlackWhite则无法进入
-			if !types.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
+			if !cfg.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
 				for _, hash := range address.HashValues {
 					if bytes.Equal(common.Sha256([]byte(address.ShowSecret+black)), hash) {
 						isBlack = append(isBlack, true)
