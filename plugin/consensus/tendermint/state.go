@@ -118,9 +118,9 @@ func (s State) GetValidators() (last *ttypes.ValidatorSet, current *ttypes.Valid
 // Create a block from the latest state
 
 // MakeBlock builds a block with the given txs and commit from the current state.
-func (s State) MakeBlock(height int64, round int64, Txs []*types.Transaction, commit *tmtypes.TendermintCommit) *ttypes.TendermintBlock {
+func (s State) MakeBlock(height int64, round int64, pblock *types.Block, commit *tmtypes.TendermintCommit, proposerAddr []byte) *ttypes.TendermintBlock {
 	// build base block
-	block := ttypes.MakeBlock(height, round, Txs, commit)
+	block := ttypes.MakeBlock(height, round, pblock, commit)
 
 	// fill header with state data
 	block.Header.ChainID = s.ChainID
@@ -130,6 +130,7 @@ func (s State) MakeBlock(height int64, round int64, Txs []*types.Transaction, co
 	block.Header.AppHash = s.AppHash
 	block.Header.ConsensusHash = s.ConsensusParams.Hash()
 	block.Header.LastResultsHash = s.LastResultsHash
+	block.Header.ProposerAddr = proposerAddr
 
 	return block
 }
@@ -226,6 +227,7 @@ func LoadState(state *tmtypes.State) State {
 		ChainID:                          state.GetChainID(),
 		LastBlockHeight:                  state.GetLastBlockHeight(),
 		LastBlockTotalTx:                 state.GetLastBlockTotalTx(),
+		LastBlockID:                      ttypes.BlockID{BlockID: *state.LastBlockID},
 		LastBlockTime:                    state.LastBlockTime,
 		Validators:                       nil,
 		LastValidators:                   nil,
@@ -307,7 +309,7 @@ func (csdb *CSStateDB) LoadValidators(height int64) (*ttypes.ValidatorSet, error
 	if height == 0 {
 		return nil, nil
 	}
-	if csdb.state.LastBlockHeight+1 == height {
+	if csdb.state.LastBlockHeight == height {
 		return csdb.state.Validators, nil
 	}
 
@@ -374,6 +376,7 @@ func SaveState(state State) *tmtypes.State {
 		ChainID:                          state.ChainID,
 		LastBlockHeight:                  state.LastBlockHeight,
 		LastBlockTotalTx:                 state.LastBlockTotalTx,
+		LastBlockID:                      &state.LastBlockID.BlockID,
 		LastBlockTime:                    state.LastBlockTime,
 		Validators:                       &tmtypes.ValidatorSet{Validators: make([]*tmtypes.Validator, 0), Proposer: &tmtypes.Validator{}},
 		LastValidators:                   &tmtypes.ValidatorSet{Validators: make([]*tmtypes.Validator, 0), Proposer: &tmtypes.Validator{}},
@@ -458,17 +461,14 @@ func LoadProposer(source *tmtypes.Validator) (*ttypes.Validator, error) {
 }
 
 // CreateBlockInfoTx make blockInfo to the first transaction of the block and execer is valnode
-func CreateBlockInfoTx(pubkey string, lastCommit *tmtypes.TendermintCommit, seenCommit *tmtypes.TendermintCommit, state *tmtypes.State, proposal *tmtypes.Proposal, block *tmtypes.TendermintBlock) *types.Transaction {
-	blockNoTxs := *block
-	blockNoTxs.Txs = make([]*types.Transaction, 0)
+func CreateBlockInfoTx(pubkey string, state *tmtypes.State, block *tmtypes.TendermintBlock) *types.Transaction {
+	blockSave := *block
+	blockSave.Data = nil
 	blockInfo := &tmtypes.TendermintBlockInfo{
-		SeenCommit: seenCommit,
-		LastCommit: lastCommit,
-		State:      state,
-		Proposal:   proposal,
-		Block:      &blockNoTxs,
+		State: state,
+		Block: &blockSave,
 	}
-	tendermintlog.Debug("CreateBlockInfoTx", "validators", blockInfo.State.Validators.Validators, "block", block, "block-notxs", blockNoTxs)
+	tendermintlog.Debug("CreateBlockInfoTx", "blockInfo", blockInfo)
 
 	nput := &tmtypes.ValNodeAction_BlockInfo{BlockInfo: blockInfo}
 	action := &tmtypes.ValNodeAction{Value: nput, Ty: tmtypes.ValNodeActionBlockInfo}

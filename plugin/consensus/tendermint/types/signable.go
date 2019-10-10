@@ -70,7 +70,7 @@ func NewProposal(height int64, round int, blockhash []byte, polRound int, polBlo
 
 // String returns a string representation of the Proposal.
 func (p *Proposal) String() string {
-	return fmt.Sprintf("Proposal{%v/%v (%v,%v) %X %v @ %s}",
+	return fmt.Sprintf("Proposal{%v/%v (%v, %X) %X %X @ %s}",
 		p.Height, p.Round, p.POLRound, p.POLBlockID,
 		p.Blockhash, p.Signature, CanonicalTime(time.Unix(0, p.Timestamp)))
 }
@@ -211,7 +211,7 @@ func (vote *Vote) String() string {
 		PanicSanity("Unknown vote type")
 	}
 
-	return fmt.Sprintf("Vote{%v:%X %v/%02d/%v(%v) %X %v @ %s}",
+	return fmt.Sprintf("Vote{%v:%X %v/%02d/%v(%v) %X %X @ %s}",
 		vote.ValidatorIndex, Fingerprint(vote.ValidatorAddress),
 		vote.Height, vote.Round, vote.Type, typeString,
 		Fingerprint(vote.BlockID.Hash), vote.Signature,

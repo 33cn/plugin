@@ -58,18 +58,19 @@ type TendermintBlock struct {
 
 // MakeBlock returns a new block with an empty header, except what can be computed from itself.
 // It populates the same set of fields validated by ValidateBasic
-func MakeBlock(height int64, round int64, Txs []*types.Transaction, commit *tmtypes.TendermintCommit) *TendermintBlock {
-	block := &TendermintBlock{&tmtypes.TendermintBlock{
-		Header: &tmtypes.TendermintBlockHeader{
-			Height: height,
-			Round:  round,
-			Time:   time.Now().UnixNano(),
-			NumTxs: int64(len(Txs)),
+func MakeBlock(height int64, round int64, pblock *types.Block, commit *tmtypes.TendermintCommit) *TendermintBlock {
+	block := &TendermintBlock{
+		&tmtypes.TendermintBlock{
+			Header: &tmtypes.TendermintBlockHeader{
+				Height: height,
+				Round:  round,
+				Time:   pblock.BlockTime,
+				NumTxs: int64(len(pblock.Txs)),
+			},
+			Data:       pblock,
+			LastCommit: commit,
+			Evidence:   &tmtypes.EvidenceData{Evidence: make([]*tmtypes.EvidenceEnvelope, 0)},
 		},
-		Txs:        Txs,
-		LastCommit: commit,
-		Evidence:   &tmtypes.EvidenceData{Evidence: make([]*tmtypes.EvidenceEnvelope, 0)},
-	},
 	}
 	block.FillHeader()
 	return block
@@ -97,7 +98,7 @@ func (b *TendermintBlock) AddEvidence(evidence []Evidence) {
 // ValidateBasic performs basic validation that doesn't involve state data.
 // It checks the internal consistency of the block.
 func (b *TendermintBlock) ValidateBasic() (int64, error) {
-	newTxs := int64(len(b.Txs))
+	newTxs := int64(len(b.Data.Txs))
 
 	if b.Header.NumTxs != newTxs {
 		return 0, fmt.Errorf("Wrong Block.Header.NumTxs. Expected %v, got %v", newTxs, b.Header.NumTxs)
@@ -247,17 +248,13 @@ func (h *Header) StringIndented(indent string) string {
 // Commit struct
 type Commit struct {
 	*tmtypes.TendermintCommit
-
-	firstPrecommit *tmtypes.Vote
 	hash           []byte
 	bitArray       *BitArray
+	firstPrecommit *tmtypes.Vote
 }
 
 // FirstPrecommit returns the first non-nil precommit in the commit
 func (commit *Commit) FirstPrecommit() *tmtypes.Vote {
-	if len(commit.Precommits) == 0 {
-		return nil
-	}
 	if commit.firstPrecommit != nil {
 		return commit.firstPrecommit
 	}

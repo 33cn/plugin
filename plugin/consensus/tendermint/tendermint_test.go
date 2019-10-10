@@ -68,12 +68,12 @@ func TendermintPerf() {
 	for err != nil {
 		err = createConn()
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	for i := 0; i < loopCount; i++ {
 		NormPut()
 		time.Sleep(time.Second)
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 }
 
 func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {

@@ -39,10 +39,11 @@ const (
 	ProposalPOLID       = byte(0x05)
 	VoteID              = byte(0x06)
 	HasVoteID           = byte(0x07)
-	VoteSetMaj23ID      = byte(0X08)
+	VoteSetMaj23ID      = byte(0x08)
 	VoteSetBitsID       = byte(0x09)
 	ProposalHeartbeatID = byte(0x0a)
 	ProposalBlockID     = byte(0x0b)
+	ValidBlockID        = byte(0x0c)
 
 	PacketTypePing = byte(0xff)
 	PacketTypePong = byte(0xfe)
@@ -62,6 +63,7 @@ func InitMessageMap() {
 		VoteSetBitsID:       reflect.TypeOf(tmtypes.VoteSetBitsMsg{}),
 		ProposalHeartbeatID: reflect.TypeOf(tmtypes.Heartbeat{}),
 		ProposalBlockID:     reflect.TypeOf(tmtypes.TendermintBlock{}),
+		ValidBlockID:        reflect.TypeOf(tmtypes.ValidBlockMsg{}),
 	}
 }
 
@@ -108,6 +110,8 @@ type RoundState struct {
 	ProposalBlock  *TendermintBlock
 	LockedRound    int
 	LockedBlock    *TendermintBlock
+	ValidRound     int              // Last known round with POL for non-nil valid block.
+	ValidBlock     *TendermintBlock // Last known block of POL mentioned above.
 	Votes          *HeightVoteSet
 	CommitRound    int
 	LastCommit     *VoteSet // Last precommits at Height-1
@@ -117,9 +121,9 @@ type RoundState struct {
 // RoundStateMessage ...
 func (rs *RoundState) RoundStateMessage() *tmtypes.NewRoundStepMsg {
 	return &tmtypes.NewRoundStepMsg{
-		Height:                rs.Height,
-		Round:                 int32(rs.Round),
-		Step:                  int32(rs.Step),
+		Height: rs.Height,
+		Round:  int32(rs.Round),
+		Step:   int32(rs.Step),
 		SecondsSinceStartTime: int32(time.Since(rs.StartTime).Seconds()),
 		LastCommitRound:       int32(rs.LastCommit.Round()),
 	}
@@ -141,6 +145,8 @@ func (rs *RoundState) StringIndented(indent string) string {
 %s  ProposalBlock: %v
 %s  LockedRound:   %v
 %s  LockedBlock:   %v
+%s  ValidRound:    %v
+%s  ValidBlock:    %v
 %s  Votes:         %v
 %s  LastCommit:    %v
 %s  LastValidators:%v
@@ -153,6 +159,8 @@ func (rs *RoundState) StringIndented(indent string) string {
 		indent, rs.ProposalBlock.StringShort(),
 		indent, rs.LockedRound,
 		indent, rs.LockedBlock.StringShort(),
+		indent, rs.ValidRound,
+		indent, rs.ValidBlock.StringShort(),
 		indent, rs.Votes.StringIndented(indent+"    "),
 		indent, rs.LastCommit.StringShort(),
 		indent, rs.LastValidators.StringIndented(indent+"    "),
@@ -173,14 +181,15 @@ type PeerRoundState struct {
 	StartTime          time.Time     // Estimated start of round 0 at this height
 	Proposal           bool          // True if peer has proposal for this round
 	ProposalBlock      bool          // True if peer has proposal block for this round
-	ProposalPOLRound   int           // Proposal's POL round. -1 if none.
-	ProposalPOL        *BitArray     // nil until ProposalPOLMessage received.
-	Prevotes           *BitArray     // All votes peer has for this round
-	Precommits         *BitArray     // All precommits peer has for this round
-	LastCommitRound    int           // Round of commit for last height. -1 if none.
-	LastCommit         *BitArray     // All commit precommits of commit for last height.
-	CatchupCommitRound int           // Round that we have commit for. Not necessarily unique. -1 if none.
-	CatchupCommit      *BitArray     // All commit precommits peer has for this height & CatchupCommitRound
+	ProposalBlockHash  []byte
+	ProposalPOLRound   int       // Proposal's POL round. -1 if none.
+	ProposalPOL        *BitArray // nil until ProposalPOLMessage received.
+	Prevotes           *BitArray // All votes peer has for this round
+	Precommits         *BitArray // All precommits peer has for this round
+	LastCommitRound    int       // Round of commit for last height. -1 if none.
+	LastCommit         *BitArray // All commit precommits of commit for last height.
+	CatchupCommitRound int       // Round that we have commit for. Not necessarily unique. -1 if none.
+	CatchupCommit      *BitArray // All commit precommits peer has for this height & CatchupCommitRound
 }
 
 // String returns a string representation of the PeerRoundState
@@ -194,6 +203,7 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 %s  %v/%v/%v @%v
 %s  Proposal %v
 %s  ProposalBlock %v
+%s  ProposalBlockHash %X
 %s  POL      %v (round %v)
 %s  Prevotes   %v
 %s  Precommits %v
@@ -202,6 +212,7 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 %s}`,
 		indent, prs.Height, prs.Round, prs.Step, prs.StartTime,
 		indent, prs.Proposal,
+		indent, prs.ProposalBlock,
 		indent, prs.ProposalBlock,
 		indent, prs.ProposalPOL, prs.ProposalPOLRound,
 		indent, prs.Prevotes,
