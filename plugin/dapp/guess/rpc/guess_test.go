@@ -1,21 +1,21 @@
 package rpc
 
 import (
-	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
-	"github.com/33cn/chain33/system/consensus/solo"
-	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/stretchr/testify/assert"
-	"strings"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+
 	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
+
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
+
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,20 +32,28 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
+	"github.com/33cn/chain33/types"
+
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/chain33/system/consensus/solo"
 
-	cty "github.com/33cn/chain33/system/dapp/coins/types"
-	"github.com/33cn/chain33/types"
-	dty "github.com/33cn/plugin/plugin/dapp/guess/types"
+	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+
+	"github.com/33cn/chain33/system/consensus/solo"
+
 	_ "github.com/33cn/plugin/plugin/dapp/init"
+
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
+
 	_ "github.com/33cn/plugin/plugin/store/init"
+
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
+
 var (
 	secp crypto.Crypto
-
 
 	config = `# Title为local，表示此配置文件为本地单节点的配置。此时本地节点所在的链上只有这一个节点，共识模块一般采用solo模式。
 Title="local"
@@ -303,15 +311,14 @@ superManager=[
 `
 )
 
-
 var (
-	random    *rand.Rand
+	random *rand.Rand
 
-	//loopCount = 10
+	loopCount = 1
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
-	adminPriv   = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
-	adminAddr   = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+	adminPriv = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+	adminAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 	//userAPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
 	userAAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
@@ -386,10 +393,10 @@ func testGuessImp(t *testing.T) {
 	time.Sleep(2 * time.Second)
 	fmt.Println("=======start NormPut!=======")
 
-	//for i := 0; i < loopCount; i++ {
-	//	NormPut()
-	//	time.Sleep(time.Second)
-	//}
+	for i := 0; i < loopCount; i++ {
+		NormPut()
+		time.Sleep(time.Second)
+	}
 
 	fmt.Println("=======start sendTransferTx sendTransferToExecTx!=======")
 	//从创世地址向测试地址A转入代币
@@ -416,7 +423,6 @@ func testGuessImp(t *testing.T) {
 		fmt.Println(userBAddr, " balance:", acct2.Acc[0].Balance, "frozen:", acct2.Acc[0].Frozen)
 	}
 	assert.Equal(t, true, acct2.Acc[0].Balance == 2000000000000)
-
 
 	//从测试地址向dos合约转入代币
 	sendTransferToExecTx(userAPriv, "guess", 1000000000000)
@@ -446,7 +452,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, acct4.Acc[0].Balance == 1000000000000)
 
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid := sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football" ,adminPriv)
+	ok, gameid := sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		panic("Guess start failed.")
 	} else {
@@ -454,11 +460,10 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 
-	strGameID1 := "0x"+hex.EncodeToString(gameid)
+	strGameID1 := "0x" + hex.EncodeToString(gameid)
 
 	reply := queryGuessByIds(strGameID1)
 	assert.Equal(t, true, reply.Games[0].Status == 7)
-
 
 	fmt.Println("=======start sendGuessBetTx!=======")
 	ok, txid := sendGuessBetTx(strGameID1, "A", 5e8, userAPriv)
@@ -549,7 +554,7 @@ func testGuessImp(t *testing.T) {
 
 	//再来一次，测试异常流程:start->abort->stop
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football" ,adminPriv)
+	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		fmt.Println("Guess start failed.")
 	} else {
@@ -557,7 +562,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 
-	strGameID2 := "0x"+hex.EncodeToString(gameid)
+	strGameID2 := "0x" + hex.EncodeToString(gameid)
 
 	reply = queryGuessByIds(strGameID2)
 	assert.Equal(t, true, reply.Games[0].Status == 7)
@@ -586,7 +591,7 @@ func testGuessImp(t *testing.T) {
 
 	//再来一次，测试流程:start->stop->abort
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football" ,adminPriv)
+	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		fmt.Println("Guess start failed.")
 	} else {
@@ -594,7 +599,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 
-	strGameID3 := "0x"+hex.EncodeToString(gameid)
+	strGameID3 := "0x" + hex.EncodeToString(gameid)
 	reply = queryGuessByIds(strGameID3)
 	assert.Equal(t, true, reply.Games[0].Status == 7)
 
@@ -617,7 +622,6 @@ func testGuessImp(t *testing.T) {
 		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
 	}
 	time.Sleep(2 * time.Second)
-
 
 	//以下测试查询接口
 	fmt.Println("=======start queryGuessByIds!=======")
@@ -656,7 +660,6 @@ func testGuessImp(t *testing.T) {
 
 	record = queryGuessByAdminAddrStatus(adminAddr, 11)
 	assert.Equal(t, true, len(record.Records) == 1)
-
 
 	fmt.Println("=======start queryGuessByCategoryStatus!=======")
 	record = queryGuessByCategoryStatus("football", 11)
@@ -713,7 +716,6 @@ func createConn() error {
 	c = types.NewChain33Client(conn)
 	return nil
 }
-
 
 func generateKey(i, valI int) string {
 	key := make([]byte, valI)
@@ -852,24 +854,24 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 func sendGuessStartTx(topic, option, category, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
-	action := &dty.GuessGameAction{}
+	action := &gty.GuessGameAction{}
 
-	v := &dty.GuessGameAction_Start{
-		Start: &dty.GuessGameStart{
-			Topic:    topic,
-			Options:  option,
-			Category: category,
+	v := &gty.GuessGameAction_Start{
+		Start: &gty.GuessGameStart{
+			Topic:          topic,
+			Options:        option,
+			Category:       category,
 			MaxBetsOneTime: 100e8,
-			MaxBetsNumber: 1000e8,
-			DevFeeFactor: 5,
-			DevFeeAddr: "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7",
-			PlatFeeFactor: 5,
-			PlatFeeAddr: "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX",
+			MaxBetsNumber:  1000e8,
+			DevFeeFactor:   5,
+			DevFeeAddr:     "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7",
+			PlatFeeFactor:  5,
+			PlatFeeAddr:    "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX",
 		},
 	}
 
 	action.Value = v
-	action.Ty = dty.GuessGameActionStart
+	action.Ty = gty.GuessGameActionStart
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
 	tx, err := types.FormatTx(string(execer), tx)
@@ -900,22 +902,21 @@ func sendGuessStartTx(topic, option, category, privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-
-func sendGuessBetTx(gameID, option string, betsNum int64 , privKey string) (bool, []byte) {
+func sendGuessBetTx(gameID, option string, betsNum int64, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
-	action := &dty.GuessGameAction{}
+	action := &gty.GuessGameAction{}
 
-	v := &dty.GuessGameAction_Bet{
-		Bet: &dty.GuessGameBet{
-			GameID: gameID,
-			Option: option,
+	v := &gty.GuessGameAction_Bet{
+		Bet: &gty.GuessGameBet{
+			GameID:  gameID,
+			Option:  option,
 			BetsNum: betsNum,
 		},
 	}
 
 	action.Value = v
-	action.Ty = dty.GuessGameActionBet
+	action.Ty = gty.GuessGameActionBet
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
 	tx, err := types.FormatTx(string(execer), tx)
@@ -946,19 +947,19 @@ func sendGuessBetTx(gameID, option string, betsNum int64 , privKey string) (bool
 	return true, reply.Msg
 }
 
-func sendGuessStopTx(gameID , privKey string) (bool, []byte) {
+func sendGuessStopTx(gameID, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
-	action := &dty.GuessGameAction{}
+	action := &gty.GuessGameAction{}
 
-	v := &dty.GuessGameAction_StopBet{
-		StopBet: &dty.GuessGameStopBet{
+	v := &gty.GuessGameAction_StopBet{
+		StopBet: &gty.GuessGameStopBet{
 			GameID: gameID,
 		},
 	}
 
 	action.Value = v
-	action.Ty = dty.GuessGameActionStopBet
+	action.Ty = gty.GuessGameActionStopBet
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
 	tx, err := types.FormatTx(string(execer), tx)
@@ -989,19 +990,19 @@ func sendGuessStopTx(gameID , privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func sendGuessAbortTx(gameID , privKey string) (bool, []byte) {
+func sendGuessAbortTx(gameID, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
-	action := &dty.GuessGameAction{}
+	action := &gty.GuessGameAction{}
 
-	v := &dty.GuessGameAction_Abort{
-		Abort: &dty.GuessGameAbort{
+	v := &gty.GuessGameAction_Abort{
+		Abort: &gty.GuessGameAbort{
 			GameID: gameID,
 		},
 	}
 
 	action.Value = v
-	action.Ty = dty.GuessGameActionAbort
+	action.Ty = gty.GuessGameActionAbort
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
 	tx, err := types.FormatTx(string(execer), tx)
@@ -1032,20 +1033,20 @@ func sendGuessAbortTx(gameID , privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func sendGuessPublishTx(gameID , result, privKey string) (bool, []byte) {
+func sendGuessPublishTx(gameID, result, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
-	action := &dty.GuessGameAction{}
+	action := &gty.GuessGameAction{}
 
-	v := &dty.GuessGameAction_Publish{
-		Publish: &dty.GuessGamePublish{
+	v := &gty.GuessGameAction_Publish{
+		Publish: &gty.GuessGamePublish{
 			GameID: gameID,
 			Result: result,
 		},
 	}
 
 	action.Value = v
-	action.Ty = dty.GuessGameActionPublish
+	action.Ty = gty.GuessGameActionPublish
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
 	tx, err := types.FormatTx(string(execer), tx)
@@ -1076,7 +1077,7 @@ func sendGuessPublishTx(gameID , result, privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func queryGuessByIds(gameIDs string) (*gty.ReplyGuessGameInfos) {
+func queryGuessByIds(gameIDs string) *gty.ReplyGuessGameInfos {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
@@ -1087,12 +1088,12 @@ func queryGuessByIds(gameIDs string) (*gty.ReplyGuessGameInfos) {
 	params.FuncName = gty.FuncNameQueryGamesByIDs
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.ReplyGuessGameInfos
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByID(gameID string) (*gty.ReplyGuessGameInfo) {
+func queryGuessByID(gameID string) *gty.ReplyGuessGameInfo {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
@@ -1102,12 +1103,12 @@ func queryGuessByID(gameID string) (*gty.ReplyGuessGameInfo) {
 	params.FuncName = gty.FuncNameQueryGameByID
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.ReplyGuessGameInfo
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByAddr(addr string) (*gty.GuessGameRecords) {
+func queryGuessByAddr(addr string) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
@@ -1117,13 +1118,12 @@ func queryGuessByAddr(addr string) (*gty.GuessGameRecords) {
 	params.FuncName = gty.FuncNameQueryGameByAddr
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-
-func queryGuessByStatus(status int32) (*gty.GuessGameRecords) {
+func queryGuessByStatus(status int32) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
@@ -1133,12 +1133,12 @@ func queryGuessByStatus(status int32) (*gty.GuessGameRecords) {
 	params.FuncName = gty.FuncNameQueryGameByStatus
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByAdminAddr(addr string) (*gty.GuessGameRecords) {
+func queryGuessByAdminAddr(addr string) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
@@ -1148,55 +1148,55 @@ func queryGuessByAdminAddr(addr string) (*gty.GuessGameRecords) {
 	params.FuncName = gty.FuncNameQueryGameByAdminAddr
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByAddrStatus(addr string, status int32) (*gty.GuessGameRecords) {
+func queryGuessByAddrStatus(addr string, status int32) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
 	req := &gty.QueryGuessGameInfo{
-		Addr: addr,
+		Addr:   addr,
 		Status: status,
 	}
 	params.FuncName = gty.FuncNameQueryGameByAddrStatus
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByAdminAddrStatus(addr string, status int32) (*gty.GuessGameRecords) {
+func queryGuessByAdminAddrStatus(addr string, status int32) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
 	req := &gty.QueryGuessGameInfo{
 		AdminAddr: addr,
-		Status: status,
+		Status:    status,
 	}
 	params.FuncName = gty.FuncNameQueryGameByAdminStatus
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
 
-func queryGuessByCategoryStatus(category string, status int32) (*gty.GuessGameRecords) {
+func queryGuessByCategoryStatus(category string, status int32) *gty.GuessGameRecords {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
 	req := &gty.QueryGuessGameInfo{
 		Category: category,
-		Status: status,
+		Status:   status,
 	}
 	params.FuncName = gty.FuncNameQueryGameByCategoryStatus
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	ctx := jsonrpc.NewRPCCtx("http://" + types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
