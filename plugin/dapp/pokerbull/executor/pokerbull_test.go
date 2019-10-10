@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -10,7 +12,6 @@ import (
 	"github.com/33cn/chain33/util"
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type execEnv struct {
