@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	"io"
 	"os"
 	"sort"
@@ -301,4 +302,49 @@ func TestSignTx(t *testing.T) {
 	assert.True(t, 0 < len(tx.Signature.Signature))
 
 	remove(filename)
+}
+
+
+
+func TestPubkeyAndAddress(t *testing.T) {
+	priv := "880D055D311827AB427031959F43238500D08F3EDF443EB903EC6D1A16A5783A"
+	pub := "026BD23C69F9A1D7A50F185514EDCA25AFD00DD2A92485CC1E8CDA3EDD284CA838"
+	addr := "22F4EA6D79D5AD0621900AB25A2BF01D3E288A7B"
+
+	testOneKey(priv, pub, addr, t)
+
+	priv = "2C1B7E0B53548209E6915D8C5EB3162E9AF43D051C1316784034C9D549DD5F61"
+	pub = "02DE57B5427CE38E7D9811AC7CAE51A6FCFD251BCAD88DBDCF636EC9F7441B6AB6"
+	addr = "F518C3964A84EF2E37FD3284B5C638D3C928C537"
+
+	testOneKey(priv, pub, addr, t)
+
+	priv = "2EA198F3F063F69B2DB860F41F8FAACB2EDEBCA1A74A75A5254B84E6F7D154B4"
+	pub = "036A818C01FA49F455E3779D073BD5FBE551A3E60BD447D8CFEE87F95037C29E59"
+	addr = "3FBB75FDC792E2618DA5D39B6C64B718AC0AAA5E"
+	testOneKey(priv, pub, addr, t)
+
+	priv = "EEDD4815535AD81B6191EF9883346702C5117C80F8D85EB36FBD77D6CC979C8F"
+	pub = "023D3E5DDAD1F20C28E333FF05C16539ECB95CFAA881B66ADFCB2A5198E5BC0EFE"
+	addr = "ACB850206A75F233DDBB56A4D7DA6A015C3FE2EB"
+	testOneKey(priv, pub, addr, t)
+
+	priv = "4EBB8B86F95DD7AB25CC27928D9AE04692DA9D7CA822CDA3FDE1DE778F01AFA7"
+	pub = "03DC5D8106E9E19EDFF91687CE55C97F3F6FA7584678313CF14925F76D0DB09055"
+	addr = "5A60D96560192EEE8EC9091FCC1AFC5511CA0BF0"
+	testOneKey(priv, pub, addr, t)
+}
+
+func testOneKey(priv, pub, addr string, t *testing.T) {
+	tmp, _ := hex.DecodeString(priv)
+	bPriv, _ := ConsensusCrypto.PrivKeyFromBytes(tmp)
+	fmt.Println(fmt.Sprintf("%x", bPriv))
+
+	bPub, _ := PubKeyFromString(pub)
+	assert.True(t, bytes.Equal(bPub.Bytes(), bPriv.PubKey().Bytes()))
+
+	bAddr := address.PubKeyToAddress(bPub.Bytes()).Hash160[:]
+	fmt.Println("addr:", addr)
+	fmt.Println(fmt.Sprintf("%x", bAddr))
+	assert.True(t, addr == fmt.Sprintf("%X", bAddr))
 }

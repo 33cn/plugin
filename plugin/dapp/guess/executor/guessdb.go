@@ -257,7 +257,7 @@ func (action *Action) getReceiptLog(game *gty.GuessGame, statusChange bool, bet 
 func (action *Action) readGame(id string) (*gty.GuessGame, error) {
 	data, err := action.db.Get(Key(id))
 	if err != nil {
-		logger.Error("readGame have err:", err.Error())
+		logger.Error("readGame have err", "err", err.Error())
 		return nil, err
 	}
 	var game gty.GuessGame

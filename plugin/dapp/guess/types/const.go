@@ -6,11 +6,6 @@ package types
 
 //game action ty
 const (
-	PBGameActionStart = iota + 1
-	PBGameActionContinue
-	PBGameActionQuit
-	PBGameActionQuery
-
 	GuessGameActionStart = iota + 1
 	GuessGameActionBet
 	GuessGameActionStopBet
