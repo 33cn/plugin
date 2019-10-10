@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -12,17 +11,7 @@ import (
 	_ "github.com/33cn/plugin/plugin"
 )
 
-var (
-	configPath = flag.String("f", "", "configfile")
-)
-
 func main() {
-	flag.Parse()
-	if *configPath == "" {
-		*configPath = "chain33.toml"
-	}
-	cfg, _ := types.InitCfg(*configPath)
-	types.Init(cfg.Title, cfg)
 	forks, err := types.CloneFork("chain33")
 	if err != nil {
 		fmt.Printf("clone fork failed: %v", err)
