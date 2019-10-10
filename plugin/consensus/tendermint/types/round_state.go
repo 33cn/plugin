@@ -39,7 +39,7 @@ const (
 	ProposalPOLID       = byte(0x05)
 	VoteID              = byte(0x06)
 	HasVoteID           = byte(0x07)
-	VoteSetMaj23ID      = byte(0X08)
+	VoteSetMaj23ID      = byte(0x08)
 	VoteSetBitsID       = byte(0x09)
 	ProposalHeartbeatID = byte(0x0a)
 	ProposalBlockID     = byte(0x0b)
@@ -117,9 +117,9 @@ type RoundState struct {
 // RoundStateMessage ...
 func (rs *RoundState) RoundStateMessage() *tmtypes.NewRoundStepMsg {
 	return &tmtypes.NewRoundStepMsg{
-		Height:                rs.Height,
-		Round:                 int32(rs.Round),
-		Step:                  int32(rs.Step),
+		Height: rs.Height,
+		Round:  int32(rs.Round),
+		Step:   int32(rs.Step),
 		SecondsSinceStartTime: int32(time.Since(rs.StartTime).Seconds()),
 		LastCommitRound:       int32(rs.LastCommit.Round()),
 	}

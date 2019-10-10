@@ -43,7 +43,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testQuitRawTxCmd},
 		{fn: testPlayRawTxCmd},
 	}
-	
+
 	for _, testCase := range testCases {
 		err := testCase.fn(t, jrpcClient)
 		assert.Nil(t, err)
@@ -96,7 +96,7 @@ func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 }
 
 func testPlayRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	payload := &pty.PBGamePlay{GameId: "123", Round:1, Value:5, Address: []string{"a", "b"}}
+	payload := &pty.PBGamePlay{GameId: "123", Round: 1, Value: 5, Address: []string{"a", "b"}}
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pty.PokerBullX),
 		ActionName: pty.CreatePlayTx,
