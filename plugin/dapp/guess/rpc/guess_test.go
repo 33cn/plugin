@@ -2,6 +2,7 @@ package rpc
 
 import (
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
+	"github.com/33cn/chain33/system/consensus/solo"
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ import (
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
 	_ "github.com/33cn/chain33/system"
-	solo "github.com/33cn/chain33/system/consensus/solo"
+	_ "github.com/33cn/chain33/system/consensus/solo"
 
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
