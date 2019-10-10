@@ -31,7 +31,7 @@ var (
 
 func TestPokerbull(t *testing.T) {
 	types.SetTitleOnlyForTest("chain33")
-	total := int64(1000 * types.Coin)
+	total := 1000 * types.Coin
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
