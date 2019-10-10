@@ -147,6 +147,12 @@ func addNodeFlags(cmd *cobra.Command) {
 }
 
 func addNode(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	power, _ := cmd.Flags().GetInt64("power")
@@ -164,7 +170,7 @@ func addNode(cmd *cobra.Command, args []string) {
 	value := &vt.ValNodeAction_Node{Node: &vt.ValNode{PubKey: pubkeybyte, Power: power}}
 	action := &vt.ValNodeAction{Value: value, Ty: vt.ValNodeActionUpdate}
 	tx := &types.Transaction{Execer: []byte(vt.ValNodeX), Payload: types.Encode(action), Fee: 0}
-	err = tx.SetRealFee(types.GInt("MinFee"))
+	err = tx.SetRealFee(cfg.GInt("MinFee"))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

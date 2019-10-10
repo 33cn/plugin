@@ -74,7 +74,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 				return receipt, err
 			}
 		}
-		ret, snapshot, leftOverGas, vmerr = env.Create(cfg, runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.ABI())
+		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.ABI())
 	} else {
 		inData := msg.Data()
 		// 在这里进行ABI和十六进制的调用参数转换
@@ -86,7 +86,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			inData = packData
 			methodName = funcName
 		}
-		ret, snapshot, leftOverGas, vmerr = env.Call(cfg, runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
+		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
 	}
 
 	log.Debug("call(create) contract ", "input", common.Bytes2Hex(msg.Data()))

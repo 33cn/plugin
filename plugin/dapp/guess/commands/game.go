@@ -65,6 +65,12 @@ func addGuessStartFlags(cmd *cobra.Command) {
 }
 
 func guessStart(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	topic, _ := cmd.Flags().GetString("topic")
 	category, _ := cmd.Flags().GetString("category")
@@ -80,7 +86,7 @@ func guessStart(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"topic\":\"%s\", \"options\":\"%s\", \"category\":\"%s\", \"maxBetHeight\":%d, \"maxBetsOneTime\":%d,\"maxBetsNumber\":%d,\"devFeeFactor\":%d,\"platFeeFactor\":%d,\"expireHeight\":%d,\"devFeeAddr\":\"%s\",\"platFeeAddr\":\"%s\"}", topic, options, category, maxBetHeight, maxBetsOneTime, maxBetsNumber, devFeeFactor, platFeeFactor, expireHeight, devFeeAddr, platFeeAddr)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(gty.GuessX),
+		Execer:     cfg.ExecName(gty.GuessX),
 		ActionName: gty.CreateStartTx,
 		Payload:    []byte(payload),
 	}
@@ -112,6 +118,12 @@ func addGuessBetFlags(cmd *cobra.Command) {
 }
 
 func guessBet(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	option, _ := cmd.Flags().GetString("option")
@@ -119,7 +131,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\", \"option\":\"%s\", \"betsNum\":%d}", gameID, option, betsNumber)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(gty.GuessX),
+		Execer:     cfg.ExecName(gty.GuessX),
 		ActionName: gty.CreateBetTx,
 		Payload:    []byte(payload),
 	}
@@ -147,12 +159,18 @@ func addGuessStopBetFlags(cmd *cobra.Command) {
 }
 
 func guessStopBet(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(gty.GuessX),
+		Execer:     cfg.ExecName(gty.GuessX),
 		ActionName: gty.CreateStopBetTx,
 		Payload:    []byte(payload),
 	}
@@ -179,12 +197,18 @@ func addGuessAbortFlags(cmd *cobra.Command) {
 }
 
 func guessAbort(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(gty.GuessX),
+		Execer:     cfg.ExecName(gty.GuessX),
 		ActionName: gty.CreateAbortTx,
 		Payload:    []byte(payload),
 	}
@@ -214,13 +238,19 @@ func addGuessPublishFlags(cmd *cobra.Command) {
 }
 
 func guessPublish(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	result, _ := cmd.Flags().GetString("result")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\",\"result\":\"%s\"}", gameID, result)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(gty.GuessX),
+		Execer:     cfg.ExecName(gty.GuessX),
 		ActionName: gty.CreatePublishTx,
 		Payload:    []byte(payload),
 	}

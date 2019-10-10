@@ -738,3 +738,8 @@ func (mdb *MemoryStateDB) ResetDatas() {
 func (mdb *MemoryStateDB) GetBlockHeight() int64 {
 	return mdb.blockHeight
 }
+
+// GetConfig 获取系统配置
+func (mdb *MemoryStateDB) GetConfig() *types.Chain33Config {
+	return mdb.api.GetConfig()
+}

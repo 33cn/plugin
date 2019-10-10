@@ -112,6 +112,12 @@ func fixAmountCmd() *cobra.Command {
 }
 
 func fixAmount(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	create, err := getCreateFlags(cmd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -140,7 +146,7 @@ func fixAmount(cmd *cobra.Command, args []string) {
 	create.MeansOpt = &pty.UnfreezeCreate_FixAmount{FixAmount: &pty.FixAmount{Period: period, Amount: amountInt64}}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.UnfreezeX),
+		Execer:     cfg.ExecName(pty.UnfreezeX),
 		ActionName: "createUnfreeze",
 		Payload:    types.MustPBToJSON(create),
 	}
@@ -166,6 +172,12 @@ func leftCmd() *cobra.Command {
 }
 
 func left(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	create, err := getCreateFlags(cmd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -189,7 +201,7 @@ func left(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.UnfreezeX),
+		Execer:     cfg.ExecName(pty.UnfreezeX),
 		ActionName: pty.Action_CreateUnfreeze,
 		Payload:    types.MustPBToJSON(create),
 	}
@@ -248,10 +260,16 @@ func queryWithdrawCmd() *cobra.Command {
 }
 
 func withdraw(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	id, _ := cmd.Flags().GetString("id")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.UnfreezeX),
+		Execer:     cfg.ExecName(pty.UnfreezeX),
 		ActionName: pty.Action_WithdrawUnfreeze,
 		Payload:    types.MustPBToJSON(&pty.UnfreezeWithdraw{UnfreezeID: id}),
 	}
@@ -262,10 +280,16 @@ func withdraw(cmd *cobra.Command, args []string) {
 }
 
 func terminate(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	id, _ := cmd.Flags().GetString("id")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.UnfreezeX),
+		Execer:     cfg.ExecName(pty.UnfreezeX),
 		ActionName: pty.Action_TerminateUnfreeze,
 		Payload:    types.MustPBToJSON(&pty.UnfreezeTerminate{UnfreezeID: id}),
 	}

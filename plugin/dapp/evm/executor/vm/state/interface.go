@@ -7,6 +7,7 @@ package state
 import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/chain33/types"
 )
 
 // EVMStateDB 状态数据库封装，面向EVM业务执行逻辑；
@@ -81,4 +82,7 @@ type EVMStateDB interface {
 
 	// GetBlockHeight 返回当前区块高度
 	GetBlockHeight() int64
+
+	// GetConfig 获取系统配置
+	GetConfig() *types.Chain33Config
 }

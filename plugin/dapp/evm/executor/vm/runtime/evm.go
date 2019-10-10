@@ -169,7 +169,7 @@ func (evm *EVM) preCheck(caller ContractRef, recipient common.Address, value uin
 // Call 此方法提供合约外部调用入口
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
-func (evm *EVM) Call(cfg *types.Chain33Config, caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	pass, err := evm.preCheck(caller, addr, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -223,6 +223,7 @@ func (evm *EVM) Call(cfg *types.Chain33Config, caller ContractRef, addr common.A
 	}
 
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
+	cfg := evm.StateDB.GetConfig()
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
@@ -357,7 +358,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 // 使用传入的部署代码创建新的合约；
 // 目前chain33为了保证账户安全，不允许合约中涉及到外部账户的转账操作，
 // 所以，本步骤不接收转账金额参数
-func (evm *EVM) Create(cfg *types.Chain33Config, caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias, abi string) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias, abi string) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	pass, err := evm.preCheck(caller, contractAddr, 0)
 	if !pass {
 		return nil, -1, gas, err
@@ -382,6 +383,7 @@ func (evm *EVM) Create(cfg *types.Chain33Config, caller ContractRef, contractAdd
 	// 检查部署后的合约代码大小是否超限
 	maxCodeSizeExceeded := len(ret) > evm.maxCodeSize
 
+	cfg := evm.StateDB.GetConfig()
 	// 如果执行成功，计算存储合约代码需要花费的Gas
 	if err == nil && !maxCodeSizeExceeded {
 		createDataGas := uint64(len(ret)) * params.CreateDataGas

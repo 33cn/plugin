@@ -65,7 +65,7 @@ func InitFork(cfg *types.Chain33Config) {
 }
 
 func InitExecutor(cfg *types.Chain33Config) {
-	types.RegistorExecutor("coins", NewType(cfg))
+	types.RegistorExecutor(JsX, NewType(cfg))
 }
 
 //JsType 类型

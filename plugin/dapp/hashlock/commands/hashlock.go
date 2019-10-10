@@ -44,6 +44,12 @@ func HashlockLockCmd() *cobra.Command {
 }
 
 func addHashlockLockCmdFlags(cmd *cobra.Command) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	cmd.Flags().StringP("secret", "s", "", "secret information")
 	cmd.MarkFlagRequired("secret")
 	cmd.Flags().Float64P("amount", "a", 0.0, "locking amount")
@@ -55,7 +61,7 @@ func addHashlockLockCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("return", "r", "", "return address")
 	cmd.MarkFlagRequired("return")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
 }
 
@@ -109,10 +115,16 @@ func HashlockUnlockCmd() *cobra.Command {
 }
 
 func addHashlockCmdFlags(cmd *cobra.Command) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	cmd.Flags().StringP("secret", "s", "", "secret information")
 	cmd.MarkFlagRequired("secret")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
 }
 

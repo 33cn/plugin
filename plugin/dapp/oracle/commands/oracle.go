@@ -88,6 +88,12 @@ func addPublishEventFlags(cmd *cobra.Command) {
 }
 
 func publishEvent(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
 		fmt.Printf("publishEvent get rpc addr Error: %v", err)
@@ -127,7 +133,7 @@ func publishEvent(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oraclety.OracleX),
+		Execer:     cfg.ExecName(oraclety.OracleX),
 		ActionName: oraclety.CreateEventPublishTx,
 		Payload:    []byte(fmt.Sprintf("{\"type\":\"%s\",\"subType\":\"%s\",\"time\":%d, \"content\":\"%s\", \"introduction\":\"%s\"}", ty, subType, t.Unix(), content, introduction)),
 	}
@@ -157,6 +163,12 @@ func addAbortPublishEventFlags(cmd *cobra.Command) {
 }
 
 func abortPublishEvent(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
 		fmt.Printf("abortPublishEvent rpc_addr Error: %v", err)
@@ -169,7 +181,7 @@ func abortPublishEvent(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oraclety.OracleX),
+		Execer:     cfg.ExecName(oraclety.OracleX),
 		ActionName: oraclety.CreateAbortEventPublishTx,
 		Payload:    []byte(fmt.Sprintf("{\"eventID\":\"%s\"}", eventID)),
 	}
@@ -213,6 +225,12 @@ func addPrePublishResultFlags(cmd *cobra.Command) {
 }
 
 func prePublishResult(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
 		fmt.Printf("prePublishResult rpc_laddr Error: %v", err)
@@ -235,7 +253,7 @@ func prePublishResult(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oraclety.OracleX),
+		Execer:     cfg.ExecName(oraclety.OracleX),
 		ActionName: oraclety.CreatePrePublishResultTx,
 		Payload:    []byte(fmt.Sprintf("{\"eventID\":\"%s\", \"source\":\"%s\", \"result\":\"%s\"}", eventID, source, result)),
 	}
@@ -265,6 +283,12 @@ func addAbortPrePubResultFlags(cmd *cobra.Command) {
 }
 
 func abortPrePubResult(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
 		fmt.Printf("abortPrePubResult rpc_laddr Error: %v", err)
@@ -277,7 +301,7 @@ func abortPrePubResult(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oraclety.OracleX),
+		Execer:     cfg.ExecName(oraclety.OracleX),
 		ActionName: oraclety.CreateAbortResultPrePublishTx,
 		Payload:    []byte(fmt.Sprintf("{\"eventID\":\"%s\"}", eventID)),
 	}
@@ -321,6 +345,12 @@ func addPublishResultFlags(cmd *cobra.Command) {
 }
 
 func publishResult(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
 		fmt.Printf("publishResult rpc_laddr Error: %v", err)
@@ -343,7 +373,7 @@ func publishResult(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oraclety.OracleX),
+		Execer:     cfg.ExecName(oraclety.OracleX),
 		ActionName: oraclety.CreateResultPublishTx,
 		Payload:    []byte(fmt.Sprintf("{\"eventID\":\"%s\", \"source\":\"%s\", \"result\":\"%s\"}", eventID, source, result)),
 	}

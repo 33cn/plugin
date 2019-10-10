@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
+	"fmt"
 )
 
 // ProposalRuleCmd 创建提案命令
@@ -45,6 +46,12 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	year, _ := cmd.Flags().GetInt32("year")
 	month, _ := cmd.Flags().GetInt32("month")
@@ -79,7 +86,7 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "PropRule",
 		Payload:    payLoad,
 	}
@@ -106,6 +113,12 @@ func addRevokeProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func revokeProposalRule(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 
@@ -117,7 +130,7 @@ func revokeProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "RvkPropRule",
 		Payload:    payLoad,
 	}
@@ -145,6 +158,12 @@ func addVoteProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func voteProposalRule(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
@@ -171,7 +190,7 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "VotePropRule",
 		Payload:    payLoad,
 	}
@@ -197,6 +216,12 @@ func addTerminateProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func terminateProposalRule(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
 
@@ -208,7 +233,7 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "TmintPropRule",
 		Payload:    payLoad,
 	}
@@ -321,6 +346,12 @@ func addTransferFundflags(cmd *cobra.Command) {
 }
 
 func transferFund(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	amount, _ := cmd.Flags().GetInt64("amount")
 	note, _ := cmd.Flags().GetString("note")
@@ -334,7 +365,7 @@ func transferFund(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "Transfer",
 		Payload:    payLoad,
 	}
@@ -363,6 +394,12 @@ func addCommentProposalflags(cmd *cobra.Command) {
 }
 
 func commentProposal(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	proposalID, _ := cmd.Flags().GetString("proposalID")
 	repHash, _ := cmd.Flags().GetString("repHash")
@@ -378,7 +415,7 @@ func commentProposal(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     cfg.ExecName(auty.AutonomyX),
 		ActionName: "CommentProp",
 		Payload:    payLoad,
 	}

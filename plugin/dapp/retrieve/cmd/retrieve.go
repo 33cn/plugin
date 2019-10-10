@@ -53,6 +53,12 @@ func BackupCmd() *cobra.Command {
 }
 
 func addBakupCmdFlags(cmd *cobra.Command) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
@@ -60,7 +66,7 @@ func addBakupCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("delay", "d", 60, "delay period (minimum 60 seconds)")
 	cmd.MarkFlagRequired("delay")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
 }
 
@@ -98,16 +104,28 @@ func PrepareCmd() *cobra.Command {
 }
 
 func addRetrieveCmdFlags(cmd *cobra.Command) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
 	cmd.MarkFlagRequired("default")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	cmd.Flags().Float64P("fee", "f", defaultFee, "sign address")
 }
 
 func addPerformCmdFlags(cmd *cobra.Command) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
@@ -116,7 +134,7 @@ func addPerformCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArrayP("exec", "e", []string{}, "asset exec")
 	cmd.Flags().StringArrayP("symbol", "s", []string{}, "asset symbol")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	cmd.Flags().Float64P("fee", "f", defaultFee, "sign address")
 }
 
