@@ -623,8 +623,8 @@ func testGuessImp(t *testing.T) {
 	reply = queryGuessByIds(strGameID3)
 	assert.Equal(t, true, reply.Games[0].Status == 10)
 
-	fmt.Println("=======start queryGuessById!=======")
-	reply2 := queryGuessById(strGameID1)
+	fmt.Println("=======start queryGuessByID!=======")
+	reply2 := queryGuessByID(strGameID1)
 	assert.Equal(t, true, reply2.Game.Status == 11 && reply2.Game.BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start queryGuessByAddr!=======")
@@ -1091,7 +1091,7 @@ func queryGuessByIds(gameIDs string) (*gty.ReplyGuessGameInfos) {
 	return &res
 }
 
-func queryGuessById(gameID string) (*gty.ReplyGuessGameInfo) {
+func queryGuessByID(gameID string) (*gty.ReplyGuessGameInfo) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
 
