@@ -24,14 +24,14 @@ var (
 	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
 	PrivKeyB = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
 	Nodes    = [][]byte{
-	[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
-	[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
+		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
+		[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
 	}
 )
 
 func TestPokerbull(t *testing.T) {
 	types.SetTitleOnlyForTest("chain33")
-	total := int64(1000*types.Coin)
+	total := int64(1000 * types.Coin)
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -63,8 +63,8 @@ func TestPokerbull(t *testing.T) {
 
 	// start game
 	p1 := &pkt.PBGameStart{
-		Value:        5*types.Coin,
-		PlayerNum:    2,
+		Value:     5 * types.Coin,
+		PlayerNum: 2,
 	}
 	createTx, err := types.CallCreateTransaction(pkt.PokerBullX, "Start", p1)
 	if err != nil {
@@ -126,7 +126,7 @@ func TestPokerbull(t *testing.T) {
 
 	// continue game
 	p2 := &pkt.PBGameContinue{
-		GameId:   common.ToHex(gameID),
+		GameId: common.ToHex(gameID),
 	}
 	createTx, err = types.CallCreateTransaction(pkt.PokerBullX, "Continue", p2)
 	if err != nil {
@@ -185,11 +185,11 @@ func TestPokerbull(t *testing.T) {
 	}
 
 	// query
-	res, err := exec.Query(pkt.FuncNameQueryGameByID, types.Encode(&pkt.QueryPBGameInfo{GameId:common.ToHex(gameID)}))
+	res, err := exec.Query(pkt.FuncNameQueryGameByID, types.Encode(&pkt.QueryPBGameInfo{GameId: common.ToHex(gameID)}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
-	res, err = exec.Query(pkt.FuncNameQueryGameByAddr, types.Encode(&pkt.QueryPBGameInfo{Addr:string(Nodes[0])}))
+	res, err = exec.Query(pkt.FuncNameQueryGameByAddr, types.Encode(&pkt.QueryPBGameInfo{Addr: string(Nodes[0])}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
