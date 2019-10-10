@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/33cn/chain33/common/address"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"sort"
@@ -15,7 +16,7 @@ import (
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 )
 
