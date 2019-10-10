@@ -1,25 +1,18 @@
 package rpc
 
 import (
-	cty "github.com/33cn/chain33/system/dapp/coins/types"
-
 	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
-
-	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
-
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -32,24 +25,22 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
+	"github.com/33cn/chain33/system/consensus/solo"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/chain33/system/consensus/solo"
+	_ "github.com/33cn/plugin/plugin/dapp/init"
+	_ "github.com/33cn/plugin/plugin/store/init"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-
-	"github.com/33cn/chain33/system/consensus/solo"
-
-	_ "github.com/33cn/plugin/plugin/dapp/init"
-
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
-
-	_ "github.com/33cn/plugin/plugin/store/init"
-
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 )
 
 var (

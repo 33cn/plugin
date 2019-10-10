@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/chain33/common/address"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"sort"
@@ -14,9 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -304,8 +303,6 @@ func TestSignTx(t *testing.T) {
 
 	remove(filename)
 }
-
-
 
 func TestPubkeyAndAddress(t *testing.T) {
 	priv := "880D055D311827AB427031959F43238500D08F3EDF443EB903EC6D1A16A5783A"
