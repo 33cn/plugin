@@ -34,6 +34,7 @@ type PokerBullType struct {
 func NewType(cfg *types.Chain33Config) *PokerBullType {
 	c := &PokerBullType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

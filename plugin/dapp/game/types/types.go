@@ -42,6 +42,7 @@ func getRealExecName(cfg *types.Chain33Config, paraName string) string {
 func NewType(cfg *types.Chain33Config) *GameType {
 	c := &GameType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

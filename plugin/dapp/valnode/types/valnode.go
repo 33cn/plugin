@@ -34,6 +34,7 @@ type ValNodeType struct {
 func NewType(cfg *types.Chain33Config) *ValNodeType {
 	c := &ValNodeType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

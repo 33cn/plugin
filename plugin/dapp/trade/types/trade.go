@@ -74,6 +74,7 @@ type tradeType struct {
 func NewType(cfg *types.Chain33Config) *tradeType {
 	c := &tradeType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
