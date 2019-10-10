@@ -85,19 +85,18 @@ maxTxNumber = 1600
 
 
 [mver.consensus.paracross]
-coinReward = 18
-coinDevFund = 12
+coinReward=18
+coinDevFund=12
 
 
 [consensus.sub.para]
-#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com”
-#ParaRemoteGrpcClient="183.129.226.74:8802,183.129.226.75:8802,101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com”
+#ParaRemoteGrpcClient="118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com,183.129.226.74:8802,183.129.226.75:8802"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
 #打包时间间隔，单位秒
 writeBlockSeconds=2
-
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
 #云端主链节点切换后，平行链适配新主链节点block，回溯查找和自己记录的相同blockhash的深度
@@ -108,8 +107,8 @@ genesisAmount=100000000
 MainForkParacrossCommitTx=2270000
 #平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx=2270000， -1 不开启
 MainParaSelfConsensusForkHeight=-1
-#主链开启循环检查共识交易done的fork高度
-MainLoopCheckCommitTxDoneForkHeight=-1
+#主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
+MainLoopCheckCommitTxDoneForkHeight=4320000
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
@@ -250,7 +249,7 @@ ForkTradePrice = 0
 Enable=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
-ForkLoopCheckCommitTxDone=-1
+ForkLoopCheckCommitTxDone=0
 
 [fork.sub.evm]
 Enable=0
