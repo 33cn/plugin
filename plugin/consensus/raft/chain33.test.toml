@@ -80,6 +80,7 @@ poolCacheSize=10240
 # 共识驱动名,支持solo/raft/ticket/tendermint/pbft
 name="raft"
 minerstart=false
+genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -127,7 +128,7 @@ enableMVCC=false
 
 [wallet]
 minFee=100000
-driver="leveldb"
+driver="memdb"
 dbPath="wallet"
 dbCache=16
 signType="secp256k1"
@@ -135,6 +136,8 @@ signType="secp256k1"
 [wallet.sub.ticket]
 minerdisable=false
 minerwhitelist=["*"]
+minerWaitTime="1s"
+
 
 [exec]
 isFree=false
@@ -144,6 +147,9 @@ enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
 saveTokenTxList=false
 
+[exec.sub.relay]
+genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+
 [exec.sub.cert]
 # 是否启用证书验证和签名
 enable=false
@@ -151,3 +157,14 @@ enable=false
 cryptoPath="authdir/crypto"
 # 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
 signType="auth_ecdsa"
+
+[exec.sub.manage]
+superManager=[
+    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
+    "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
+]
+
+[exec.sub.autonomy]
+total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+useBalance=false
