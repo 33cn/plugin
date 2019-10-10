@@ -236,7 +236,7 @@ function tx_wait() {
         exit 1
     fi
     local req=\"${2}\"
-    local txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
+    txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
     local count=0
     while true; do
         txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
