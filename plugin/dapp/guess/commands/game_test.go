@@ -307,12 +307,12 @@ var (
 	adminAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 	//userAPubkey = "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"
-	userAAddr = "15LsTP6tkYGZcN7tc1Xo2iYifQfowxot3b"
-	userAPriv = "5A6A14DA6F5A42835E529D75D87CC8904544F59EEE5387A37D87EEAD194D7EB2"
+	userAAddr = "14BqNZoysh5Br8wiyJLyLu6aTzkFhbvZNm"
+	userAPriv = "880D055D311827AB427031959F43238500D08F3EDF443EB903EC6D1A16A5783A"
 
 	//userBPubkey = "027848E7FA630B759DB406940B5506B666A344B1060794BBF314EB459D40881BB3"
-	userBAddr = "14w5JaGDrXTZwF5Wv51UAtuGgAupenLAok"
-	userBPriv = "754F53FCEA0CB1F528918726A49B3551B7F1284D802A1D6AAF4522E8A8DA1B5B"
+	userBAddr = "1PLxDdfdLxpsgR52T6DGDKQSTeJULR2Gre"
+	userBPriv = "2C1B7E0B53548209E6915D8C5EB3162E9AF43D051C1316784034C9D549DD5F61"
 )
 
 const fee = 1e6
@@ -436,12 +436,8 @@ func testGuessImp(t *testing.T) {
 		fmt.Println(userBAddr, " balance:", acct4.Acc[0].Balance, "frozen:", acct4.Acc[0].Frozen)
 	}
 	assert.Equal(t, true, acct4.Acc[0].Balance == 1000000000000)
-
-
 	testCmd(cmd)
-
 	time.Sleep(2 * time.Second)
-
 }
 
 func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module, *cobra.Command) {
