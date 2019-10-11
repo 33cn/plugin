@@ -6,19 +6,19 @@ package types
 
 //game action ty
 const (
-	GuessGameActionStart = iota + 1
-	GuessGameActionBet
-	GuessGameActionStopBet
-	GuessGameActionAbort
-	GuessGameActionPublish
-	GuessGameActionQuery
+	GuessGameActionStart   = 5
+	GuessGameActionBet     = 6
+	GuessGameActionStopBet = 7
+	GuessGameActionAbort   = 8
+	GuessGameActionPublish = 9
+	GuessGameActionQuery   = 10
 
-	GuessGameStatusStart = iota + 1
-	GuessGameStatusBet
-	GuessGameStatusStopBet
-	GuessGameStatusAbort
-	GuessGameStatusPublish
-	GuessGameStatusTimeOut
+	GuessGameStatusStart   = 11
+	GuessGameStatusBet     = 12
+	GuessGameStatusStopBet = 13
+	GuessGameStatusAbort   = 14
+	GuessGameStatusPublish = 15
+	GuessGameStatusTimeOut = 16
 )
 
 //game log ty
