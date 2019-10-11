@@ -7,27 +7,27 @@ package executor
 import "fmt"
 
 func calcCollateralizeKey(CollateralizeID string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-create:%s", CollateralizeID)
+	key := fmt.Sprintf("LODB-Collateralize-ID:%s", CollateralizeID)
 	return []byte(key)
 }
 
-func calcCollateralizeBorrowPrefix(CollateralizeID string, addr string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-borrow:%s:%s", CollateralizeID, addr)
+func calcCollateralizeStatusPrefix(status int32) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-status-index:%d", status)
 	return []byte(key)
 }
 
-func calcCollateralizeBorrowKey(CollateralizeID string, addr string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-buy:%s:%s:%18d", CollateralizeID, addr)
+func calcCollateralizeStatusKey(status int32, index int64) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-status:%d:%018d", status, index)
 	return []byte(key)
 }
 
-func calcCollateralizeRepayPrefix(CollateralizeID string, addr string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-repay:%s:%s", CollateralizeID, addr)
+func calcCollateralizeAddrPrefix(addr string) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-addr:%s", addr)
 	return []byte(key)
 }
 
-func calcCollateralizeRepayKey(CollateralizeID string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-repay:%s:%10d", CollateralizeID)
+func calcCollateralizeAddrKey(addr string, index int64) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-addr:%s:%018d", addr, index)
 	return []byte(key)
 }
 

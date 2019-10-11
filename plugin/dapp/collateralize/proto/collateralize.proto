@@ -84,8 +84,9 @@ message ReceiptCollateralize {
     string      collateralizeId    = 1;
     string      createAddr         = 3;
     string      accountAddr        = 4;
-    int32       status             = 9;
-    int32       preStatus          = 10;
+    int32       status             = 5;
+    int32       preStatus          = 6;
+    int64       index              = 7;
 }
 
 message ReqCollateralizeInfo {
@@ -125,26 +126,11 @@ message ReplyCollateralizeBadDebt {
 }
 
 // used for execlocal
-message CollateralizeBorrowRecord {
+message CollateralizeRecord {
     string collateralizeId = 1;
-    int64  value = 2;
     int64  index  = 3;
-    int64  time   = 4;
-    string txHash = 5;
 }
 
-message CollateralizeBorrowRecords {
-    repeated CollateralizeBorrowRecord records = 1;
-}
-
-message CollateralizeRepayRecord {
-    string collateralizeId = 1;
-    int64  value = 2;
-    int64  index  = 3;
-    int64  time   = 4;
-    string txHash = 5;
-}
-
-message CollateralizeRepayRecords {
-    repeated CollateralizeRepayRecord records = 1;
+message CollateralizeRecords {
+    repeated CollateralizeRecord records = 1;
 }

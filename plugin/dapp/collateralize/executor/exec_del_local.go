@@ -13,25 +13,32 @@ import (
 func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	for _, item := range receiptData.Logs {
-		switch item.Ty {
-		case pty.TyLogCollateralizeCreate, pty.TyLogCollateralizeBorrow, pty.TyLogCollateralizeAppend,
-		pty.TyLogCollateralizeRepay, pty.TyLogCollateralizeFeed, pty.TyLogCollateralizeClose:
-			var collateralizelog pty.ReceiptCollateralize
-			err := types.Decode(item.Log, &collateralizelog)
-			if err != nil {
-				return nil, err
-			}
-			kv := c.deleteCollateralize(&collateralizelog)
-			set.KV = append(set.KV, kv...)
+		var collateralizelog pty.ReceiptCollateralize
+		err := types.Decode(item.Log, &collateralizelog)
+		if err != nil {
+			return nil, err
+		}
 
-			if item.Ty == pty.TyLogCollateralizeBorrow {
-				kv := c.deleteCollateralizeBorrow(&collateralizelog)
-				set.KV = append(set.KV, kv...)
-			} else if item.Ty == pty.TyLogCollateralizeAppend {
-				kv := c.deleteCollateralizeRepay(&collateralizelog)
-				set.KV = append(set.KV, kv...)
-				//TODO
-			}
+		switch item.Ty {
+		case pty.TyLogCollateralizeCreate:
+			kv := c.deleteCollateralizeStatus(&collateralizelog)
+			set.KV = append(set.KV, kv...)
+			break
+		case pty.TyLogCollateralizeBorrow:
+			kv := c.deleteCollateralizeAddr(&collateralizelog)
+			set.KV = append(set.KV, kv...)
+			break
+		case pty.TyLogCollateralizeAppend: // append没有状态变化
+			break
+		case pty.TyLogCollateralizeRepay:
+			kv := c.addCollateralizeAddr(&collateralizelog)
+			set.KV = append(set.KV, kv...)
+			break
+		/*case pty.TyLogCollateralizeFeed:*/ // TODO
+		case pty.TyLogCollateralizeClose:
+			kv := c.addCollateralizeStatus(&collateralizelog)
+			set.KV = append(set.KV, kv...)
+			break
 		}
 	}
 	return set, nil

@@ -59,76 +59,42 @@ func (Coll *Collateralize) GetDriverName() string {
 	return pty.CollateralizeX
 }
 
-func (Coll *Collateralize) saveCollateralizeBorrow(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeBorrowKey(collateralizelog.CollateralizeId, collateralizelog.AccountAddr)
-	record := &pty.CollateralizeBorrowRecord{CollateralizeId:collateralizelog.CollateralizeId,}
+func (Coll *Collateralize) addCollateralizeStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
+	key := calcCollateralizeStatusKey(collateralizelog.Status, collateralizelog.Index)
+	record := &pty.CollateralizeRecord{
+		CollateralizeId:collateralizelog.CollateralizeId,
+		Index: collateralizelog.Index,
+	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (Coll *Collateralize) deleteCollateralizeBorrow(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeBorrowKey(collateralizelog.CollateralizeId, collateralizelog.AccountAddr)
+func (Coll *Collateralize) deleteCollateralizeStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
+	key := calcCollateralizeStatusKey(collateralizelog.Status, collateralizelog.Index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (Coll *Collateralize) saveCollateralizeRepay(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeRepayKey(collateralizelog.CollateralizeId)
-	record := &pty.CollateralizeRepayRecord{}
+func (Coll *Collateralize) addCollateralizeAddr(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
+	key := calcCollateralizeAddrKey(collateralizelog.AccountAddr, collateralizelog.Index)
+	record := &pty.CollateralizeRecord{
+		CollateralizeId:collateralizelog.CollateralizeId,
+		Index: collateralizelog.Index,
+	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
+
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (Coll *Collateralize) deleteCollateralizeRepay(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeRepayKey(collateralizelog.CollateralizeId)
+func (Coll *Collateralize) deleteCollateralizeAddr(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
+	key := calcCollateralizeAddrKey(collateralizelog.AccountAddr, collateralizelog.Index)
+
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
-}
-
-func (Coll *Collateralize) saveCollateralize(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	if collateralizelog.PreStatus > 0 {
-		kv := delCollateralize(collateralizelog.CollateralizeId, collateralizelog.PreStatus)
-		kvs = append(kvs, kv)
-	}
-	kvs = append(kvs, addCollateralize(collateralizelog.CollateralizeId, collateralizelog.Status))
-	return kvs
-}
-
-func (Coll *Collateralize) deleteCollateralize(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	if collateralizelog.PreStatus > 0 {
-		kv := addCollateralize(collateralizelog.CollateralizeId, collateralizelog.PreStatus)
-		kvs = append(kvs, kv)
-	}
-	kvs = append(kvs, delCollateralize(collateralizelog.CollateralizeId, collateralizelog.Status))
-	return kvs
-}
-
-func addCollateralize(collateralizeID string, status int32) *types.KeyValue {
-	kv := &types.KeyValue{}
-	kv.Key = calcCollateralizeKey(collateralizeID)
-	kv.Value = []byte(collateralizeID)
-	return kv
-}
-
-func delCollateralize(collateralizeID string, status int32) *types.KeyValue {
-	kv := &types.KeyValue{}
-	kv.Key = calcCollateralizeKey(collateralizeID)
-	kv.Value = nil
-	return kv
-}
-
-// GetPayloadValue CollateralizeAction
-func (Coll *Collateralize) GetPayloadValue() types.Message {
-	return &pty.CollateralizeAction{}
-}
-
-// CheckReceiptExecOk return true to check if receipt ty is ok
-func (Coll *Collateralize) CheckReceiptExecOk() bool {
-	return true
 }
