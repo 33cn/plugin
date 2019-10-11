@@ -647,7 +647,7 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"guess", "publish", "--gameId", strGameID, "--result", "A", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "ids", "--gameIDs", strGameID+";"+strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "ids", "--gameIDs", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"guess", "query", "--type", "id", "--gameId", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})

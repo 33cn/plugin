@@ -32,8 +32,6 @@ import (
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
-	_ "github.com/33cn/chain33/system/consensus/solo"
-	_ "github.com/33cn/plugin/plugin/dapp/init"
 	_ "github.com/33cn/plugin/plugin/store/init"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
