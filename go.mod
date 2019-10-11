@@ -38,4 +38,4 @@ require (
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
 
-replace github.com/33cn/chain33 => github.com/lyh169/chain33 v0.0.0-20190930095658-54e45a73f547
+replace github.com/33cn/chain33 => github.com/lyh169/chain33 v0.0.0-20191010100821-0fe85b69ee68

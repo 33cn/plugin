@@ -53,12 +53,6 @@ func BackupCmd() *cobra.Command {
 }
 
 func addBakupCmdFlags(cmd *cobra.Command) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
@@ -66,16 +60,26 @@ func addBakupCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("delay", "d", 60, "delay period (minimum 60 seconds)")
 	cmd.MarkFlagRequired("delay")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
-	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
+	cmd.Flags().Float64P("fee", "f", 0.0, "transaction fee")
 }
 
 func backupCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 	delay, _ := cmd.Flags().GetInt64("delay")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	if delay < 60 {
 		fmt.Println("delay period changed to 60")
@@ -104,28 +108,15 @@ func PrepareCmd() *cobra.Command {
 }
 
 func addRetrieveCmdFlags(cmd *cobra.Command) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
 	cmd.MarkFlagRequired("default")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
-	cmd.Flags().Float64P("fee", "f", defaultFee, "sign address")
+	cmd.Flags().Float64P("fee", "f", 0.0, "sign address")
 }
 
 func addPerformCmdFlags(cmd *cobra.Command) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	cmd.Flags().StringP("backup", "b", "", "backup address")
 	cmd.MarkFlagRequired("backup")
 	cmd.Flags().StringP("default", "t", "", "default address")
@@ -134,15 +125,25 @@ func addPerformCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArrayP("exec", "e", []string{}, "asset exec")
 	cmd.Flags().StringArrayP("symbol", "s", []string{}, "asset symbol")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
-	cmd.Flags().Float64P("fee", "f", defaultFee, "sign address")
+	cmd.Flags().Float64P("fee", "f", 0.0, "sign address")
 }
 
 func prepareCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := rpc.RetrievePrepareTx{
@@ -166,10 +167,21 @@ func PerformCmd() *cobra.Command {
 }
 
 func performCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	execs, _ := cmd.Flags().GetStringArray("exec")
 	symbols, _ := cmd.Flags().GetStringArray("symbol")
@@ -205,10 +217,21 @@ func CancelCmd() *cobra.Command {
 }
 
 func cancelCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := rpc.RetrieveCancelTx{
