@@ -389,7 +389,7 @@ func testGuessImp(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 
-	fmt.Println("=======start sendTransferTx sendTransferToExecTx!=======")
+	fmt.Println("=======start sendTransferTx!=======")
 	//从创世地址向测试地址A转入代币
 	sendTransferTx(adminPriv, userAAddr, 2000000000000)
 	sendTransferTx(adminPriv, userBAddr, 2000000000000)
@@ -415,6 +415,7 @@ func testGuessImp(t *testing.T) {
 	}
 	assert.Equal(t, true, acct2.Acc[0].Balance == 2000000000000)
 
+	fmt.Println("=======start sendTransferToExecTx!=======")
 	//从测试地址向dos合约转入代币
 	sendTransferToExecTx(userAPriv, "guess", 1000000000000)
 	sendTransferToExecTx(userBPriv, "guess", 1000000000000)
