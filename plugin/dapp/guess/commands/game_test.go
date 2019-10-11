@@ -662,12 +662,12 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminAddr", "--adminAddr", adminAddr, "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "addrStatus", "--addr", userAAddr, "--status", "10","--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "addrStatus", "--addr", userAAddr, "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminStatus", "--adminAddr", adminAddr, "--status", "10","--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminStatus", "--adminAddr", adminAddr, "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "categoryStatus", "--category", "football", "--status", "10","--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "categoryStatus", "--category", "football", "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
 	rootCmd.Execute()
 }
