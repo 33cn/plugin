@@ -134,9 +134,9 @@ init() {
     local main_ip=${MAIN_HTTP//8901/8801}
     #main chain import pri key
     #1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM
-    chain33_ImportPrivkey "0xc889d2958843fc96d4bd3f578173137d37230e580d65e9074545c61e7e9c1932" "1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM" "guess1" "${main_ip}"
+    chain33_ImportPrivkey "0xc889d2958843fc96d4bd3f578173137d37230e580d65e9074545c61e7e9c1932" "1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM" "guess11" "${main_ip}"
     #17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN
-    chain33_ImportPrivkey "0xf10c79470dc74c229c4ee73b05d14c58322b771a6c749d27824f6a59bb6c2d73" "17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN" "guess2" "$main_ip"
+    chain33_ImportPrivkey "0xf10c79470dc74c229c4ee73b05d14c58322b771a6c749d27824f6a59bb6c2d73" "17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN" "guess22" "$main_ip"
 
     local guess1="1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM"
     local guess2="17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN"
@@ -156,8 +156,8 @@ init() {
         chain33_QueryBalance "${guess2}" "$main_ip"
         local para_ip="${MAIN_HTTP}"
         #para chain import pri key
-        chain33_ImportPrivkey "0xc889d2958843fc96d4bd3f578173137d37230e580d65e9074545c61e7e9c1932" "1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM" "guess1" "$para_ip"
-        chain33_ImportPrivkey "0xf10c79470dc74c229c4ee73b05d14c58322b771a6c749d27824f6a59bb6c2d73" "17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN" "guess2" "$para_ip"
+        chain33_ImportPrivkey "0xc889d2958843fc96d4bd3f578173137d37230e580d65e9074545c61e7e9c1932" "1NrfEBfdFJUUqgbw5ZbHXhdew6NNQumYhM" "guess11" "$para_ip"
+        chain33_ImportPrivkey "0xf10c79470dc74c229c4ee73b05d14c58322b771a6c749d27824f6a59bb6c2d73" "17tRkBrccmFiVcLPXgEceRxDzJ2WaDZumN" "guess22" "$para_ip"
 
         chain33_applyCoins "$guess1" 12000000000 "${para_ip}"
         chain33_QueryBalance "${guess1}" "$para_ip"

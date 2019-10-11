@@ -132,7 +132,7 @@ func guessBet(cmd *cobra.Command, args []string) {
 //GuessStopBetRawTxCmd 构造Guess合约的停止下注(stopBet)原始交易（未签名）的命令行
 func GuessStopBetRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "stop bet",
+		Use:   "stop",
 		Short: "stop bet for a guess game",
 		Run:   guessStopBet,
 	}
@@ -143,7 +143,6 @@ func GuessStopBetRawTxCmd() *cobra.Command {
 func addGuessStopBetFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("gameId", "g", "", "game ID")
 	cmd.MarkFlagRequired("gameId")
-	cmd.Flags().Float64P("fee", "f", 0.01, "tx fee")
 }
 
 func guessStopBet(cmd *cobra.Command, args []string) {
@@ -265,11 +264,6 @@ func guessQuery(cmd *cobra.Command, args []string) {
 	gameIDs, _ := cmd.Flags().GetString("gameIDs")
 	category, _ := cmd.Flags().GetString("category")
 	primary, _ := cmd.Flags().GetString("primary")
-
-	//var primaryKey []byte
-	//if len(primary) > 0 {
-	//	primaryKey = []byte(primary)
-	//}
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
