@@ -454,7 +454,7 @@ func testGuessImp(t *testing.T) {
 	strGameID1 := "0x" + hex.EncodeToString(gameid)
 
 	reply := queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 7)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessBetTx!=======")
 	ok, txid := sendGuessBetTx(strGameID1, "A", 5e8, userAPriv)
@@ -465,7 +465,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 8 && reply.Games[0].BetStat.TotalBetTimes == 1)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 1)
 
 	ok, txid = sendGuessBetTx(strGameID1, "B", 5e8, userBPriv)
 	if !ok {
@@ -475,7 +475,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 8 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
 	ok, txid = sendGuessStopTx(strGameID1, userBPriv)
@@ -486,7 +486,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 8 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
 	ok, txid = sendGuessStopTx(strGameID1, adminPriv)
@@ -497,7 +497,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 9 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessBetTx failed!=======")
 	ok, txid = sendGuessBetTx(strGameID1, "A", 5e8, userAPriv)
@@ -508,7 +508,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 9 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx failed!=======")
 	ok, txid = sendGuessPublishTx(strGameID1, "A", userAPriv)
@@ -519,7 +519,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 9 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx!=======")
 	ok, txid = sendGuessPublishTx(strGameID1, "A", adminPriv)
@@ -530,7 +530,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 11 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusPublish && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
 	ok, txid = sendGuessAbortTx(strGameID1, adminPriv)
@@ -541,7 +541,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
-	assert.Equal(t, true, reply.Games[0].Status == 11 && reply.Games[0].BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusPublish && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	//再来一次，测试异常流程:start->abort->stop
 	fmt.Println("=======start sendGuessStartTx!=======")
@@ -556,7 +556,7 @@ func testGuessImp(t *testing.T) {
 	strGameID2 := "0x" + hex.EncodeToString(gameid)
 
 	reply = queryGuessByIds(strGameID2)
-	assert.Equal(t, true, reply.Games[0].Status == 7)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
 	ok, txid = sendGuessAbortTx(strGameID2, adminPriv)
@@ -567,7 +567,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID2)
-	assert.Equal(t, true, reply.Games[0].Status == 10)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
 	ok, txid = sendGuessStopTx(strGameID2, adminPriv)
@@ -578,7 +578,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID2)
-	assert.Equal(t, true, reply.Games[0].Status == 10)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	//再来一次，测试流程:start->stop->abort
 	fmt.Println("=======start sendGuessStartTx!=======")
@@ -592,7 +592,7 @@ func testGuessImp(t *testing.T) {
 
 	strGameID3 := "0x" + hex.EncodeToString(gameid)
 	reply = queryGuessByIds(strGameID3)
-	assert.Equal(t, true, reply.Games[0].Status == 7)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
 	ok, txid = sendGuessStopTx(strGameID3, adminPriv)
@@ -603,7 +603,7 @@ func testGuessImp(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID3)
-	assert.Equal(t, true, reply.Games[0].Status == 9)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
 	ok, txid = sendGuessAbortTx(strGameID3, adminPriv)
@@ -617,11 +617,11 @@ func testGuessImp(t *testing.T) {
 	//以下测试查询接口
 	fmt.Println("=======start queryGuessByIds!=======")
 	reply = queryGuessByIds(strGameID3)
-	assert.Equal(t, true, reply.Games[0].Status == 10)
+	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	fmt.Println("=======start queryGuessByID!=======")
 	reply2 := queryGuessByID(strGameID1)
-	assert.Equal(t, true, reply2.Game.Status == 11 && reply2.Game.BetStat.TotalBetTimes == 2)
+	assert.Equal(t, true, reply2.Game.Status == gty.GuessGameStatusPublish && reply2.Game.BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start queryGuessByAddr!=======")
 	record := queryGuessByAddr(userAAddr)
@@ -629,10 +629,10 @@ func testGuessImp(t *testing.T) {
 
 	fmt.Println("=======start queryGuessByStatus!=======")
 
-	record = queryGuessByStatus(11)
+	record = queryGuessByStatus(gty.GuessGameStatusPublish)
 	assert.Equal(t, true, record.Records[0].GameID == strGameID1)
 
-	record = queryGuessByStatus(10)
+	record = queryGuessByStatus(gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
 
 	fmt.Println("=======start queryGuessByAdminAddr!=======")
@@ -640,23 +640,23 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, len(record.Records) == 3)
 
 	fmt.Println("=======start queryGuessByAddrStatus!=======")
-	record = queryGuessByAddrStatus(userBAddr, 11)
+	record = queryGuessByAddrStatus(userBAddr, gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1 && record.Records[0].GameID == strGameID1)
 	record = queryGuessByAddrStatus(userBAddr, 10)
 	assert.Equal(t, true, len(record.Records) == 0)
 
 	fmt.Println("=======start queryGuessByAdminAddrStatus!=======")
-	record = queryGuessByAdminAddrStatus(adminAddr, 10)
+	record = queryGuessByAdminAddrStatus(adminAddr, gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
 
-	record = queryGuessByAdminAddrStatus(adminAddr, 11)
+	record = queryGuessByAdminAddrStatus(adminAddr, gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1)
 
 	fmt.Println("=======start queryGuessByCategoryStatus!=======")
-	record = queryGuessByCategoryStatus("football", 11)
+	record = queryGuessByCategoryStatus("football", gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1)
 
-	record = queryGuessByCategoryStatus("football", 10)
+	record = queryGuessByCategoryStatus("football", gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
 
 	time.Sleep(2 * time.Second)
