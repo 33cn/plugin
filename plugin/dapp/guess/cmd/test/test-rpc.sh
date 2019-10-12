@@ -19,7 +19,6 @@ guess_exec=""
 eventId=""
 txhash=""
 
-
 guess_game_start() {
     echo "========== # guess start tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"guess","actionName":"Start", "payload":{"topic":"WorldCup Final","options":"A:France;B:Claodia","category":"football","maxBetsOneTime":10000000000,"maxBetsNumber":100000000000,"devFeeFactor":5,"devFeeAddr":"1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7","platFeeFactor":5,"platFeeAddr":"1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"}}]}' ${MAIN_HTTP} | jq -r ".result")

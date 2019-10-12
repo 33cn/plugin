@@ -14,7 +14,6 @@ CASE_ERR=""
 #eventId=""
 #txhash=""
 
-
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
