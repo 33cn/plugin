@@ -11,10 +11,6 @@ tradeAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 tradeBuyerAddr="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
 tokenSymbol="TOKEN"
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 function updateConfig() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "manage","actionName":"Modify","payload":{ "key": "token-blacklist","value": "BTY","op": "add","addr": ""}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")

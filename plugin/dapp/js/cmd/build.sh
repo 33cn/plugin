@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-output_dir=${1}
 strpwd=$(pwd)
 strcmd=${strpwd##*dapp/}
 strapp=${strcmd%/cmd*}

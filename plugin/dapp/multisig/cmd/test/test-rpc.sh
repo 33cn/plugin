@@ -8,10 +8,6 @@ MAIN_HTTP=""
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 Symbol="BTY"
 Asset="coins"
