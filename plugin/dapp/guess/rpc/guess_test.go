@@ -122,9 +122,9 @@ verMix=200
 verMax=200
 [rpc]
 # jrpc绑定地址
-jrpcBindAddr="localhost:8801"
+jrpcBindAddr="localhost:9801"
 # grpc绑定地址
-grpcBindAddr="localhost:8802"
+grpcBindAddr="localhost:9802"
 # 白名单列表，允许访问的IP地址，默认是“*”，允许所有IP访问
 whitelist=["127.0.0.1"]
 # jrpc方法请求白名单，默认是“*”，允许访问所有RPC方法
@@ -696,7 +696,7 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 
 func createConn() error {
 	var err error
-	url := "127.0.0.1:8802"
+	url := "127.0.0.1:9802"
 	fmt.Println("grpc url:", url)
 	conn, err = grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
@@ -1079,7 +1079,7 @@ func queryGuessByIds(gameIDs string) *gty.ReplyGuessGameInfos {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.ReplyGuessGameInfos
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1095,7 +1095,7 @@ func queryGuessByID(gameID string) *gty.ReplyGuessGameInfo {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.ReplyGuessGameInfo
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1111,7 +1111,7 @@ func queryGuessByAddr(addr string) *gty.GuessGameRecords {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1127,7 +1127,7 @@ func queryGuessByStatus(status int32) *gty.GuessGameRecords {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1143,7 +1143,7 @@ func queryGuessByAdminAddr(addr string) *gty.GuessGameRecords {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1160,7 +1160,7 @@ func queryGuessByAddrStatus(addr string, status int32) *gty.GuessGameRecords {
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1177,7 +1177,7 @@ func queryGuessByAdminAddrStatus(addr string, status int32) *gty.GuessGameRecord
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
@@ -1194,7 +1194,7 @@ func queryGuessByCategoryStatus(category string, status int32) *gty.GuessGameRec
 	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
 	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:8801", "Chain33.Query", params, &res)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
 	ctx.Run()
 	return &res
 }
