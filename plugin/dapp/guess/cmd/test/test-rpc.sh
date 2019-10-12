@@ -19,10 +19,6 @@ guess_exec=""
 eventId=""
 txhash=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 guess_game_start() {
     echo "========== # guess start tx begin =========="

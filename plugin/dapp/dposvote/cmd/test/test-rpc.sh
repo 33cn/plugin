@@ -14,10 +14,6 @@ CASE_ERR=""
 #eventId=""
 #txhash=""
 
-#color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
 
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
