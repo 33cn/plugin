@@ -184,19 +184,18 @@ chain33_applyCoins() {
 }
 
 chain33_RpcTestBegin() {
-    echo -e  "${GRE}====== $1 Rpc Test Begin ===========${NOC}"
+    echo -e "${GRE}====== $1 Rpc Test Begin ===========${NOC}"
 }
 
 chain33_RpcTestRst() {
     if [ -n "$2" ]; then
-        echo -e  "${RED}====== $1 Rpc Test Fail ===========${NOC}"
+        echo -e "${RED}====== $1 Rpc Test Fail ===========${NOC}"
         exit 1
     else
-        echo -e  "${GRE}====== $1 Rpc Test Pass ===========${NOC}"
+        echo -e "${GRE}====== $1 Rpc Test Pass ===========${NOC}"
     fi
 
 }
-
 
 chain33_debug_function() {
     set -x

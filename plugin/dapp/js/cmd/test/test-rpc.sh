@@ -94,7 +94,6 @@ function run_testcases() {
     queryJS
 }
 
-
 function rpc_test() {
     chain33_RpcTestBegin js
 

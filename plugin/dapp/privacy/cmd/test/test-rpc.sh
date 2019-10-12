@@ -8,7 +8,6 @@ source ../dapp-test-common.sh
 
 MAIN_HTTP=""
 
-
 privacy_CreateRawTransaction() {
 
     local ip=$1
