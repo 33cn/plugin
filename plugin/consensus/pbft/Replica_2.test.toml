@@ -29,11 +29,11 @@ batchBlockNum=128
 driver="leveldb"
 dbPath="datadir"
 isStrongConsistency=true
-singleMode=true
+singleMode=false
 batchsync=false
 
 [p2p]
-seeds=["127.0.0.1:13802"]
+seeds=["172.28.0.6:13802","172.28.0.7:13802","172.28.0.8:13802","172.28.0.9:13802","172.28.0.10:13802"]
 enable=true
 isSeed=false
 serverStart=true
@@ -42,9 +42,9 @@ driver="leveldb"
 dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
-version=198
-verMix=198
-verMax=199
+version=118
+verMix=118
+verMax=119
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -65,11 +65,23 @@ minerstart=false
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+coinReward = 18
+coinDevFund = 12
+ticketPrice = 10000
 powLimitBits = "0x1f00ffff"
+retargetAdjustmentFactor = 4
+futureBlockTime = 16
+ticketFrozenTime = 5    #5s only for test
+ticketWithdrawTime = 10 #10s only for test
+ticketMinerWaitTime = 2 #2s only for test
 maxTxNumber = 1600      #160
+targetTimespan = 2304
+targetTimePerBlock = 16
 
 [mver.consensus.ForkChainParamV1]
 maxTxNumber = 10000
+targetTimespan = 288 #only for test
+targetTimePerBlock = 2
 
 [mver.consensus.ForkChainParamV2]
 powLimitBits = "0x1f2fffff"
@@ -79,14 +91,14 @@ genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 genesisBlockTime=1514533394
 # =============== pbft共识配置参数 ===========================
 # 共识节点ID，pbft共识用到，不同的节点设置不同的nodeId
-NodeID = 1
+NodeID = 2
 # pbft共识用到，表示所有节点的地址
-PeersURL = "127.0.0.1:8080"
+PeersURL = "172.28.0.6:8080,172.28.0.7:8080,172.28.0.8:8080,172.28.0.9:8080"
 # pbft共识用到，表示主节点的初始ID
 PrimaryID = 1
 # pbft共识用到，表示了最大容忍错误节点数，最大节点数
-f = 0
-N = 1
+f = 1
+N = 4
 # pbft共识用到，表示检查点常数以及周期
 K = 128
 logMultiplier = 2
