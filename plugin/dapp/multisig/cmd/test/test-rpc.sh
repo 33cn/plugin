@@ -8,7 +8,6 @@ MAIN_HTTP=""
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
-
 Symbol="BTY"
 Asset="coins"
 #PrivKeyA="0x06c0fa653c719275d1baa365c7bc0b9306447287499a715b541b930482eaa504"
