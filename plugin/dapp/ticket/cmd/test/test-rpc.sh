@@ -153,8 +153,6 @@ function main() {
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
-
-
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     if [[ $ispara == true ]]; then
         echo "***skip ticket test on parachain***"

@@ -13,8 +13,10 @@ function dapp_test_rpc() {
 
         dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
-        parallel -k --retries 3 --joblog ./testlog ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
-        echo "check dapps test log"
+        parallel -k --retries 3 --joblog ./testlog 'echo tried {} >>./retries.log; ./{}/"'"${RPC_TESTFILE}"'" "'"$ip"'"' ::: "$dapps"
+        echo "============ # retried dapps log: ============="
+        cat ./retries.log
+        echo "============ # check dapps test log: ============="
         cat ./testlog
     fi
     echo "============ # dapp rpc test end ============="
