@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -65,6 +66,7 @@ func filterParaTxGroup(cfg *types.Chain33Config, tx *types.Transaction, allTxs [
 		}
 
 		if !checkReceiptExecOk(allTxs[i].Receipt) {
+			clog.Error("filterParaTxGroup rmv tx group", "txhash", hex.EncodeToString(allTxs[i].Tx.Hash()))
 			return nil, endIdx
 		}
 	}
@@ -90,6 +92,7 @@ func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*typ
 		}
 		//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
 		if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
+			clog.Error("FilterTxsForPara rmv tx", "txhash", hex.EncodeToString(tx.Hash()))
 			continue
 		}
 
