@@ -10,7 +10,7 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
@@ -28,15 +28,7 @@ func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindM
 
 // CreateBindMiner 创建绑定挖矿
 func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
-	header, err := g.GetLastHeader()
-	if err != nil {
-		return nil, err
-	}
-	cfg := g.GetConfig()
-	if in.Amount%ty.GetTicketMinerParam(cfg, header.Height).TicketPrice != 0 || in.Amount < 0 {
-		return nil, types.ErrAmount
-	}
-	err = address.CheckAddress(in.BindAddr)
+	err := address.CheckAddress(in.BindAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +36,17 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 	if err != nil {
 		return nil, err
 	}
-
+  
+  cfg := g.GetConfig()
 	if in.CheckBalance {
+		header, err := g.GetLastHeader()
+		if err != nil {
+			return nil, err
+		}
+		if in.Amount%ty.GetTicketMinerParam(cfg, header.Height).TicketPrice != 0 || in.Amount < 0 {
+			return nil, types.ErrAmount
+		}
+
 		getBalance := &types.ReqBalance{Addresses: []string{in.OriginAddr}, Execer: "coins", AssetSymbol: "bty", AssetExec: "coins"}
 		balances, err := g.GetCoinsAccountDB().GetBalance(g, getBalance)
 		if err != nil {
