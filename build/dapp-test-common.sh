@@ -194,7 +194,6 @@ chain33_RpcTestRst() {
     else
         echo -e "${GRE}====== $1 Rpc Test Pass ===========${NOC}"
     fi
-
 }
 
 chain33_debug_function() {
