@@ -12,6 +12,8 @@ import (
 	"github.com/33cn/chain33/util"
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	apimock "github.com/33cn/chain33/client/mocks"
 )
 
 type execEnv struct {
@@ -30,7 +32,9 @@ var (
 )
 
 func TestPokerbull(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	Init(pkt.PokerBullX, cfg,nil)
 	total := 1000 * types.Coin
 	accountA := types.Account{
 		Balance: total,
@@ -43,21 +47,24 @@ func TestPokerbull(t *testing.T) {
 		Addr:    string(Nodes[1]),
 	}
 
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+
 	execAddr := dapp.ExecAddress(pkt.PokerBullX)
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, _, kvdb := util.CreateTestDB()
 
-	accA := account.NewCoinsAccount()
+	accA := account.NewCoinsAccount(cfg)
 	accA.SetDB(stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB := account.NewCoinsAccount()
+	accB := account.NewCoinsAccount(cfg)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pkt.PokerBullX, "Enable"),
+		cfg.GetDappFork(pkt.PokerBullX, "Enable"),
 		1539918074,
 	}
 
@@ -76,6 +83,7 @@ func TestPokerbull(t *testing.T) {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
 	exec := newPBGame()
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	assert.Equal(t, exec.GetCoinsAccount().LoadExecAccount(string(Nodes[0]), execAddr).GetBalance(), total)
 	exec.SetLocalDB(kvdb)

@@ -22,8 +22,9 @@ import (
 
 func TestRPC_Call(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
-	cfg, sub := testnode.GetDefaultConfig()
-	mock33 := testnode.NewWithConfig(cfg, sub, api)
+	cfg := testnode.GetDefaultConfig()
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	mock33 := testnode.NewWithConfig(cfg, api)
 	defer func() {
 		mock33.Close()
 		mock.AssertExpectationsForObjects(t, api)

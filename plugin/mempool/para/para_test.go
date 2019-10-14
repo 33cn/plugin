@@ -12,6 +12,7 @@ import (
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin"
+	"strings"
 )
 
 func TestClose(t *testing.T) {
@@ -33,13 +34,14 @@ func TestParaNodeMempool(t *testing.T) {
 	main := testnode.New("", nil)
 	main.Listen()
 
-	cfg, sub := types.InitCfgString(paratest.DefaultConfig)
-	testnode.ModifyParaClient(sub, main.GetCfg().RPC.GrpcBindAddr)
+	chainCfg := types.NewChain33ConfigNoInit(strings.Replace(paratest.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
+	testnode.ModifyParaClient(chainCfg, main.GetCfg().RPC.GrpcBindAddr)
+	cfg := chainCfg.GetModuleConfig()
 	cfg.Mempool.Name = "para"
-	para := testnode.NewWithConfig(cfg, sub, nil)
+	para := testnode.NewWithConfig(chainCfg, nil)
 	para.Listen()
 	mockpara := paratest.NewParaNode(main, para)
-	tx := util.CreateTxWithExecer(mockpara.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx := util.CreateTxWithExecer(chainCfg, mockpara.Para.GetGenesisKey(), "user.p.guodun.none")
 	hash := mockpara.Para.SendTx(tx)
 	assert.Equal(t, tx.Hash(), hash)
 

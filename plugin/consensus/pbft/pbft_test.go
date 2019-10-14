@@ -63,24 +63,27 @@ func TestPbft(t *testing.T) {
 }
 
 func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
+
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
+	chain33Cfg.SetMinFee(0)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 	cs := NewPbft(cfg.Consensus, sub.Consensus["pbft"])
 	cs.SetQueueClient(q.Client())
-	p2pnet := p2p.New(cfg.P2P)
+	p2pnet := p2p.New(chain33Cfg)
 	p2pnet.SetQueueClient(q.Client())
-	walletm := wallet.New(cfg.Wallet, sub.Wallet)
+	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())
 
 	return q, chain, p2pnet, s, mem, exec, cs, walletm

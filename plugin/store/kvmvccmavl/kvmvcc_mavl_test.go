@@ -402,7 +402,7 @@ func TestIterateRangeByStateHash(t *testing.T) {
 	addr2 := "26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 	addr3 := "36htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 	addr4 := "46htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-	accCoin := account.NewCoinsAccount(&types.Chain33Config{})
+	accCoin := account.NewCoinsAccount(types.NewChain33ConfigNoInit(types.GetDefaultCfgstring()))
 
 	account1 := &types.Account{
 		Balance: 1000 * 1e8,

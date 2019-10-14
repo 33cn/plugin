@@ -108,6 +108,7 @@ func TestDposPerf(t *testing.T) {
 func DposPerf() {
 	fmt.Println("=======start dpos test!=======")
 	q, chain, s, mem, exec, cs, p2p := initEnvDpos()
+	cfg := q.GetConfig()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
@@ -129,7 +130,7 @@ func DposPerf() {
 
 	fmt.Println("=======start sendTransferTx sendTransferToExecTx!=======")
 	//从创世地址向测试地址转入代币
-	sendTransferTx(genesisKey, validatorAddr, 2000000000000)
+	sendTransferTx(cfg, genesisKey, validatorAddr, 2000000000000)
 	time.Sleep(3 * time.Second)
 	in := &types.ReqBalance{}
 	in.Addresses = append(in.Addresses, validatorAddr)
@@ -140,7 +141,7 @@ func DposPerf() {
 		fmt.Println(validatorAddr, " balance:", acct.Acc[0].Balance, "frozen:", acct.Acc[0].Frozen)
 	}
 	//从测试地址向dos合约转入代币
-	sendTransferToExecTx(validatorKey, "dpos", 1600000000000)
+	sendTransferToExecTx(cfg, validatorKey, "dpos", 1600000000000)
 
 	time.Sleep(3 * time.Second)
 
@@ -157,7 +158,7 @@ func DposPerf() {
 
 	fmt.Println("=======start sendRegistCandidatorTx!=======")
 
-	sendRegistCandidatorTx(strPubkey, validatorAddr, "127.0.0.1", validatorKey)
+	sendRegistCandidatorTx(cfg, strPubkey, validatorAddr, "127.0.0.1", validatorKey)
 
 	time.Sleep(3 * time.Second)
 
@@ -187,7 +188,7 @@ func DposPerf() {
 	info := &dty.DposCBInfo{
 		Cycle:      task.Cycle,
 		StopHeight: dposClient.GetCurrentHeight(),
-		StopHash:   hex.EncodeToString(dposClient.GetCurrentBlock().Hash()),
+		StopHash:   hex.EncodeToString(dposClient.GetCurrentBlock().Hash(cfg)),
 		Pubkey:     strPubkey,
 	}
 	dposClient.csState.SendCBTx(info)
@@ -232,7 +233,7 @@ func DposPerf() {
 				ShuffleType:    vote.VoteItem.ShuffleType,
 			},
 			HeightStop:        block.Height,
-			HashStop:          block.Hash(),
+			HashStop:          block.Hash(cfg),
 			NotifyTimestamp:   now,
 			NotifyNodeAddress: vote.VoteItem.VotedNodeAddress,
 			NotifyNodeIndex:   vote.VoteItem.VotedNodeIndex,
@@ -371,25 +372,28 @@ func DposPerf() {
 }
 
 func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
+
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
+	chain33Cfg.SetMinFee(0)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 
 	cs := New(cfg.Consensus, sub.Consensus["dpos"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(cfg.P2P)
+	network := p2p.New(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
@@ -572,7 +576,7 @@ func sendRegistVrfRPTx(cs *ConsensusState, info *dty.DposVrfRPRegist) bool {
 	return true
 }
 
-func sendTransferTx(fromKey, to string, amount int64) bool {
+func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -581,7 +585,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransfer
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: to, Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("in sendTransferTx formatTx failed")
 		return false
@@ -606,7 +610,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	return true
 }
 
-func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
+func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -616,7 +620,7 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransferToExec
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: address.ExecAddress("dpos"), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendTransferToExecTx formatTx failed.")
 
@@ -643,7 +647,7 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	return true
 }
 
-func sendRegistCandidatorTx(ppubkey, addr, ip, privKey string) bool {
+func sendRegistCandidatorTx(cfg *types.Chain33Config, ppubkey, addr, ip, privKey string) bool {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &dty.DposVoteAction{}
@@ -660,7 +664,7 @@ func sendRegistCandidatorTx(ppubkey, addr, ip, privKey string) bool {
 	action.Ty = dty.DposVoteActionRegist
 	execer := []byte("dpos")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendRegistCandidatorTx formatTx failed.")
 

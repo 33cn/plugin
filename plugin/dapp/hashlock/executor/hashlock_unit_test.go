@@ -19,6 +19,8 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/client"
 )
 
 var (
@@ -111,7 +113,13 @@ func TestExecHashsend(t *testing.T) {
 }
 
 func constructHashlockInstance() drivers.Driver {
+	chainTestCfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	Init(pty.HashlockX, chainTestCfg, nil)
 	h := newHashlock()
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	h.SetAPI(api)
 	_, _, kvdb := util.CreateTestDB()
 	h.SetStateDB(kvdb)
 	return h

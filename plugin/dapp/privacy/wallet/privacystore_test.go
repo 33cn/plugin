@@ -22,9 +22,10 @@ import (
 )
 
 func createStore(t *testing.T) *privacyStore {
-	cfg, _ := testnode.GetDefaultConfig()
-	util.ResetDatadir(cfg, "$TEMP/")
-	cfgWallet := cfg.Wallet
+	cfg := testnode.GetDefaultConfig()
+	mcfg := cfg.GetModuleConfig()
+	util.ResetDatadir(mcfg, "$TEMP/")
+	cfgWallet := mcfg.Wallet
 	walletStoreDB := dbm.NewDB("wallet", cfgWallet.Driver, cfgWallet.DbPath, cfgWallet.DbCache)
 	store := newStore(walletStoreDB)
 	assert.NotNil(t, store)

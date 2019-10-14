@@ -7,18 +7,18 @@ import (
 	"strings"
 
 	_ "github.com/33cn/chain33/system"
-	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin"
 )
 
 func main() {
-	forks, err := types.CloneFork("chain33")
-	if err != nil {
-		fmt.Printf("clone fork failed: %v", err)
-		return
-	}
-
-	fmtForks(forks)
+	// TODO 后续在开启该功能
+	//forks, err := types.CloneFork("chain33")
+	//if err != nil {
+	//	fmt.Printf("clone fork failed: %v", err)
+	//	return
+	//}
+	//
+	//fmtForks(forks)
 }
 
 /*

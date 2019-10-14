@@ -21,17 +21,18 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func init() {
-	Init(ptypes.JsX, nil)
-}
-
 func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	Init(ptypes.JsX, cfg,nil)
+
 	e := newjs().(*js)
+
 	e.SetEnv(1, time.Now().Unix(), 1)
 	mockapi := &mocks.QueueProtocolAPI{}
 	mockapi.On("Query", "ticket", "RandNumHash", mock.Anything).Return(&types.ReplyHash{Hash: []byte("hello")}, nil)
+	mockapi.On("GetConfig", mock.Anything).Return(cfg, nil)
 	e.SetAPI(mockapi)
-	gclient, err := grpcclient.NewMainChainClient("")
+	gclient, err := grpcclient.NewMainChainClient(cfg, "")
 	assert.Nil(t, err)
 	e.SetExecutorAPI(mockapi, gclient)
 	e.SetLocalDB(kvdb)

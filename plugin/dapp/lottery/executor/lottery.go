@@ -21,7 +21,7 @@ type subConfig struct {
 	ParaRemoteGrpcClient string `json:"paraRemoteGrpcClient"`
 }
 
-var cfg subConfig
+var subCfg subConfig
 
 // Init lottery
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -30,7 +30,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 		panic("system dapp can't be rename")
 	}
 	if sub != nil {
-		types.MustDecode(sub, &cfg)
+		types.MustDecode(sub, &subCfg)
 	}
 	drivers.Register(cfg, driverName, newLottery, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()

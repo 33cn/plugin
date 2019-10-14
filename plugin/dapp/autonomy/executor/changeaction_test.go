@@ -113,7 +113,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	env.endHeight = opt1.EndBlockHeight
 
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Frozen)
@@ -127,7 +127,7 @@ func propChangeTx(parm *auty.ProposalChange) (*types.Transaction, error) {
 		Ty:    auty.AutonomyActionPropChange,
 		Value: &auty.AutonomyAction_PropChange{PropChange: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -163,7 +163,7 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -177,7 +177,7 @@ func revokeProposalChangeTx(parm *auty.RevokeProposalChange) (*types.Transaction
 		Ty:    auty.AutonomyActionRvkPropChange,
 		Value: &auty.AutonomyAction_RvkPropChange{RvkPropChange: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -276,7 +276,7 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	}
 	// check
 	// balance
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -403,7 +403,7 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	}
 	// check
 	// balance
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -436,7 +436,7 @@ func voteProposalChangeTx(parm *auty.VoteProposalChange) (*types.Transaction, er
 		Ty:    auty.AutonomyActionVotePropChange,
 		Value: &auty.AutonomyAction_VotePropChange{VotePropChange: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -488,7 +488,7 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -504,7 +504,7 @@ func terminateProposalChangeTx(parm *auty.TerminateProposalChange) (*types.Trans
 		Ty:    auty.AutonomyActionTmintPropChange,
 		Value: &auty.AutonomyAction_TmintPropChange{TmintPropChange: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func TestGetChangeReceiptLog(t *testing.T) {
@@ -530,7 +530,7 @@ func TestGetChangeReceiptLog(t *testing.T) {
 }
 
 func TestCheckChangeable(t *testing.T) {
-	at := newAutonomy().(*Autonomy)
+	at := newTestAutonomy()
 	tx := &types.Transaction{}
 	action := newAction(at, tx, 0)
 

@@ -23,6 +23,8 @@ import (
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/client"
 )
 
 // ExecEnv exec environment
@@ -114,10 +116,12 @@ var (
 
 func init() {
 	commonlog.SetLogLevel("error")
+	Init(auty.AutonomyX, chainTestCfg, nil)
 }
 
 // InitEnv 初始化环境
 func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
+	//cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -153,7 +157,7 @@ func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
 	_, _, kvdb := util.CreateTestDB()
 
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	accCoin.SaveAccount(&accountA)
 	accCoin.SaveExecAccount(autonomyAddr, &accountA)
@@ -166,6 +170,10 @@ func InitEnv() (*ExecEnv, drivers.Driver, dbm.KV, dbm.KVDB) {
 		Addr:   "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"})
 
 	exec := newAutonomy()
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
@@ -318,7 +326,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	env.endHeight = opt1.EndBlockHeight
 
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Frozen)
@@ -332,7 +340,7 @@ func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
 		Ty:    auty.AutonomyActionPropBoard,
 		Value: &auty.AutonomyAction_PropBoard{PropBoard: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -368,7 +376,7 @@ func revokeProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -382,12 +390,13 @@ func revokeProposalBoardTx(parm *auty.RevokeProposalBoard) (*types.Transaction, 
 		Ty:    auty.AutonomyActionRvkPropBoard,
 		Value: &auty.AutonomyAction_RvkPropBoard{RvkPropBoard: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
@@ -474,7 +483,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	}
 	// check
 	// balance
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -499,12 +508,13 @@ func voteProposalBoardTx(parm *auty.VoteProposalBoard) (*types.Transaction, erro
 		Ty:    auty.AutonomyActionVotePropBoard,
 		Value: &auty.AutonomyAction_VotePropBoard{VotePropBoard: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
 	api.On("GetHeaders", mock.Anything).
@@ -551,7 +561,7 @@ func terminateProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, sta
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -567,7 +577,7 @@ func terminateProposalBoardTx(parm *auty.TerminateProposalBoard) (*types.Transac
 		Ty:    auty.AutonomyActionTmintPropBoard,
 		Value: &auty.AutonomyAction_TmintPropBoard{TmintPropBoard: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func TestGetStartHeightVoteAccount(t *testing.T) {
@@ -575,13 +585,15 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 	at.SetLocalDB(new(dbmock.KVDB))
 
 	api := new(apimock.QueueProtocolAPI)
+	addr := "1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
+	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
+
 	at.SetAPI(api)
 	tx := &types.Transaction{}
 	action := newAction(at, tx, 0)
 
-	addr := "1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
-	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
-	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	acc := &types.Account{
 		Currency: 0,
 		Balance:  types.Coin,
@@ -651,7 +663,7 @@ func TestCopyAutonomyProposalBoard(t *testing.T) {
 }
 
 func TestVerifyMinerAddr(t *testing.T) {
-	at := newAutonomy().(*Autonomy)
+	at := newTestAutonomy()
 	stateDB, _ := dbm.NewGoMemDB("state", "state", 100)
 	at.SetStateDB(stateDB)
 	tx := &types.Transaction{}

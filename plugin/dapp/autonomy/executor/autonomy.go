@@ -21,13 +21,13 @@ var (
 	alog         = log.New("module", "execs.autonomy")
 	driverName   = auty.AutonomyX
 	autonomyAddr = address.ExecAddress(auty.AutonomyX)
-	cfg          subConfig
+	subcfg          subConfig
 )
 
 // Init 重命名执行器名称
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	if sub != nil {
-		types.MustDecode(sub, &cfg)
+		types.MustDecode(sub, &subcfg)
 	}
 	drivers.Register(cfg, GetName(), newAutonomy, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()

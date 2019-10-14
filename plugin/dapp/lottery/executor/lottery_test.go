@@ -11,18 +11,17 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/executor"
-	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	pty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	rt "github.com/33cn/plugin/plugin/dapp/lottery/types"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/client"
 )
 
 var (
@@ -35,6 +34,7 @@ var (
 	r           *rand.Rand
 	mydb        db.KV
 	lotteryID   string
+	chainTestCfg *types.Chain33Config
 )
 
 func init() {
@@ -50,6 +50,7 @@ func TestExecCreateLottery(t *testing.T) {
 	var targetErr = rt.ErrNoPrivilege
 	var receipt *types.Receipt
 	var err error
+
 	targetReceipt.Ty = 2
 	tx := ConstructCreateTx()
 	receipt, err = lottery.Exec(tx, 0)
@@ -147,10 +148,6 @@ func genaddress() (string, crypto.PrivKey) {
 	return addrto.String(), privto
 }
 
-func NewTestDB() db.KV {
-	return executor.NewStateDB(nil, nil, nil, &executor.StateDBOption{Height: types.GetFork("ForkExecRollback")})
-}
-
 func ConstructCreateTx() *types.Transaction {
 
 	var purBlockNum int64 = 30
@@ -162,7 +159,7 @@ func ConstructCreateTx() *types.Transaction {
 	vcreate := &rt.LotteryAction_Create{Create: &rt.LotteryCreate{PurBlockNum: purBlockNum, DrawBlockNum: drawBlockNum, OpRewardRatio: opRatio, DevRewardRatio: devRatio}}
 
 	transfer := &rt.LotteryAction{Value: vcreate, Ty: rt.LotteryActionCreate}
-	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(types.ExecName(rt.LotteryX))}
+	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(chainTestCfg.ExecName(rt.LotteryX))}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, creatorPriv)
 	return tx
@@ -178,7 +175,7 @@ func ConstructBuyTx() *types.Transaction {
 	vbuy := &rt.LotteryAction_Buy{Buy: &rt.LotteryBuy{LotteryId: lotteryID, Amount: amount, Number: number, Way: way}}
 
 	transfer := &rt.LotteryAction{Value: vbuy, Ty: rt.LotteryActionBuy}
-	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(types.ExecName(rt.LotteryX))}
+	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(chainTestCfg.ExecName(rt.LotteryX))}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, buyPriv)
 	return tx
@@ -191,22 +188,25 @@ func ConstructDrawTx() *types.Transaction {
 	vdraw := &rt.LotteryAction_Draw{Draw: &rt.LotteryDraw{LotteryId: lotteryID}}
 
 	transfer := &rt.LotteryAction{Value: vdraw, Ty: rt.LotteryActionDraw}
-	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(types.ExecName(rt.LotteryX))}
+	tx := &types.Transaction{Execer: []byte("lottery"), Payload: types.Encode(transfer), Fee: fee, To: address.ExecAddress(chainTestCfg.ExecName(rt.LotteryX))}
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, creatorPriv)
 	return tx
 }
 
 func constructLotteryInstance() drivers.Driver {
+	chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+	Init(rt.LotteryX, chainTestCfg,nil)
 	lottery := newLottery()
 	//lottery.SetStateDB(NewTestDB())
 	_, _, kvdb := util.CreateTestDB()
 	mydb = kvdb
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	lottery.SetAPI(api)
 	lottery.SetStateDB(mydb)
 	lottery.SetLocalDB(kvdb)
-	q := queue.New("channel")
-	client.New(q.Client(), nil)
-	//lottery.SetAPI(qclient)
 	return lottery
 }
 

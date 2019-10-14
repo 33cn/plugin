@@ -20,6 +20,7 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
+	"github.com/stretchr/testify/mock"
 )
 
 type execEnv struct {
@@ -54,12 +55,13 @@ var (
 	PrintFlag                    = false
 	InAmount              int64  = 10
 	OutAmount             int64  = 5
+	chainTestCfg                 = types.NewChain33Config(types.GetDefaultCfgstring())
 )
 
 func init() {
 	commonlog.SetLogLevel("debug")
 	types.AllowUserExec = append(types.AllowUserExec, []byte("coins"))
-
+	Init(mty.MultiSigX, chainTestCfg,nil)
 }
 
 //创建一个多重签名的账户
@@ -80,7 +82,7 @@ func TestMultiSigAccCreate(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("multisig", "ForkMultiSigV1"),
+		chainTestCfg.GetDappFork("multisig", "ForkMultiSigV1"),
 		2,
 		1539918074,
 		"hash",
@@ -90,13 +92,14 @@ func TestMultiSigAccCreate(t *testing.T) {
 	localDB := new(dbmock.KVDB)
 	api := new(apimock.QueueProtocolAPI)
 
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	// 给账户accountB在multisig合约中写入coins-bty资产
-	accB := account.NewCoinsAccount()
+	accB := account.NewCoinsAccount(chainTestCfg)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(address.ExecAddress("multisig"), &accountA)
 
 	// 给账户accountD在multisig合约中写入coins-bty资产
-	accD := account.NewCoinsAccount()
+	accD := account.NewCoinsAccount(chainTestCfg)
 	accD.SetDB(stateDB)
 	accD.SaveExecAccount(address.ExecAddress("multisig"), &accountD)
 
@@ -105,9 +108,9 @@ func TestMultiSigAccCreate(t *testing.T) {
 
 	driver := newMultiSig()
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	driver.SetAPI(api)
 	driver.SetStateDB(stateDB)
 	driver.SetLocalDB(localDB)
-	driver.SetAPI(api)
 
 	//add create MultiSigAcc
 	multiSigAddr, err := testMultiSigAccCreate(t, driver, env, localDB)
@@ -957,7 +960,7 @@ func multiSigAccCreate(parm *mty.MultiSigAccCreate) (*types.Transaction, error) 
 		Ty:    mty.ActionMultiSigAccCreate,
 		Value: &mty.MultiSigAction_MultiSigAccCreate{MultiSigAccCreate: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
 
 func multiSigOwnerOperate(parm *mty.MultiSigOwnerOperate) (*types.Transaction, error) {
@@ -968,7 +971,7 @@ func multiSigOwnerOperate(parm *mty.MultiSigOwnerOperate) (*types.Transaction, e
 		Ty:    mty.ActionMultiSigOwnerOperate,
 		Value: &mty.MultiSigAction_MultiSigOwnerOperate{MultiSigOwnerOperate: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
 
 func multiSigAccOperate(parm *mty.MultiSigAccOperate) (*types.Transaction, error) {
@@ -979,7 +982,7 @@ func multiSigAccOperate(parm *mty.MultiSigAccOperate) (*types.Transaction, error
 		Ty:    mty.ActionMultiSigAccOperate,
 		Value: &mty.MultiSigAction_MultiSigAccOperate{MultiSigAccOperate: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
 
 func multiSigConfirmTx(parm *mty.MultiSigConfirmTx) (*types.Transaction, error) {
@@ -990,7 +993,7 @@ func multiSigConfirmTx(parm *mty.MultiSigConfirmTx) (*types.Transaction, error) 
 		Ty:    mty.ActionMultiSigConfirmTx,
 		Value: &mty.MultiSigAction_MultiSigConfirmTx{MultiSigConfirmTx: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
 func multiSigExecTransferTo(parm *mty.MultiSigExecTransferTo, fromOrTo bool) (*types.Transaction, error) {
 	if parm == nil {
@@ -1000,7 +1003,7 @@ func multiSigExecTransferTo(parm *mty.MultiSigExecTransferTo, fromOrTo bool) (*t
 		Ty:    mty.ActionMultiSigExecTransferTo,
 		Value: &mty.MultiSigAction_MultiSigExecTransferTo{MultiSigExecTransferTo: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }
 
 func multiSigExecTransferFrom(parm *mty.MultiSigExecTransferFrom, fromOrTo bool) (*types.Transaction, error) {
@@ -1011,5 +1014,5 @@ func multiSigExecTransferFrom(parm *mty.MultiSigExecTransferFrom, fromOrTo bool)
 		Ty:    mty.ActionMultiSigExecTransferFrom,
 		Value: &mty.MultiSigAction_MultiSigExecTransferFrom{MultiSigExecTransferFrom: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(mty.MultiSigX), types.Encode(multiSig))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(mty.MultiSigX), types.Encode(multiSig))
 }

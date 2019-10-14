@@ -5,20 +5,19 @@
 package wallet
 
 import (
-	"bytes"
-	"encoding/hex"
 	"sync"
-	"time"
-	"unsafe"
-
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
-	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
+	"github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
+	"encoding/hex"
+	"bytes"
+	"unsafe"
+	"github.com/33cn/chain33/common/address"
+	"time"
 )
 
 type PrivacyMock struct {
@@ -218,9 +217,10 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 		Nonce:   mock.walletOp.Nonce(),
 		To:      address.ExecAddress(ty.PrivacyX),
 	}
+	cfg := mock.walletOp.GetAPI().GetConfig()
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * cfg.GInt("MinFee")
 	tx.Fee = realFee
-	tx.SetExpire(time.Hour)
+	tx.SetExpire(cfg, time.Hour)
 	return tx
 }

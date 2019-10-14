@@ -10,14 +10,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/33cn/chain33/types"
 )
 
 func TestCreateRawGamePreCreateTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	param := &GamePreCreateTx{
 		Amount:   100,
 		HashType: "SHA256",
 	}
-	tx, err := CreateRawGamePreCreateTx(param)
+	tx, err := CreateRawGamePreCreateTx(cfg, param)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 	assert.Equal(t, []byte(GameX), tx.Execer)
@@ -25,11 +27,12 @@ func TestCreateRawGamePreCreateTx(t *testing.T) {
 }
 
 func TestCreateRawGamePreMatchTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	param := &GamePreMatchTx{
 		GameID: "xxxxxxxxxxxxxxxxxxxxxxxxxx",
 		Guess:  1,
 	}
-	tx, err := CreateRawGamePreMatchTx(param)
+	tx, err := CreateRawGamePreMatchTx(cfg, param)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 	assert.Equal(t, []byte(GameX), tx.Execer)
@@ -37,11 +40,12 @@ func TestCreateRawGamePreMatchTx(t *testing.T) {
 }
 
 func TestCreateRawGamePreCloseTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	param := &GamePreCloseTx{
 		GameID: "xxxxxxxxxxxxxxxxxxxxxxxxxx",
 		Result: 1,
 	}
-	tx, err := CreateRawGamePreCloseTx(param)
+	tx, err := CreateRawGamePreCloseTx(cfg, param)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 	assert.Equal(t, []byte(GameX), tx.Execer)
@@ -49,10 +53,11 @@ func TestCreateRawGamePreCloseTx(t *testing.T) {
 }
 
 func TestCreateRawGamePreCancelTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	param := &GamePreCancelTx{
 		GameID: "xxxxxxxxxxxxxxxxxxxxxxxxxx",
 	}
-	tx, err := CreateRawGamePreCancelTx(param)
+	tx, err := CreateRawGamePreCancelTx(cfg, param)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 	assert.Equal(t, []byte(GameX), tx.Execer)

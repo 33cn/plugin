@@ -31,17 +31,16 @@ var (
 )
 
 func TestFilterTxsForPara(t *testing.T) {
-	cfg, _ := types.InitCfg("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml")
-	types.Init(Title, cfg)
+	cfg := types.NewChain33Config(types.ReadFile("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml"))
 
-	detail, filterTxs, _ := createTestTxs(t)
-	rst := paraexec.FilterTxsForPara(detail.FilterParaTxsByTitle(Title))
+	detail, filterTxs, _ := createTestTxs(cfg, t)
+	rst := paraexec.FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, Title))
 
 	assert.Equal(t, filterTxs, rst)
 
 }
 
-func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
+func createCrossParaTx(cfg *types.Chain33Config, to string, amount int64) (*types.Transaction, error) {
 	param := types.CreateTx{
 		To:          to,
 		Amount:      amount,
@@ -50,14 +49,14 @@ func createCrossParaTx(to string, amount int64) (*types.Transaction, error) {
 		IsWithdraw:  false,
 		IsToken:     false,
 		TokenSymbol: "",
-		ExecName:    types.ExecName(pt.ParaX),
+		ExecName:    cfg.ExecName(pt.ParaX),
 	}
-	tx, err := pt.CreateRawAssetTransferTx(&param)
+	tx, err := pt.CreateRawAssetTransferTx(cfg, &param)
 
 	return tx, err
 }
 
-func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) {
+func createCrossParaTempTx(cfg *types.Chain33Config, to string, amount int64) (*types.Transaction, error) {
 	param := types.CreateTx{
 		To:          to,
 		Amount:      amount,
@@ -68,53 +67,53 @@ func createCrossParaTempTx(to string, amount int64) (*types.Transaction, error) 
 		TokenSymbol: "",
 		ExecName:    Title2 + pt.ParaX,
 	}
-	tx, err := pt.CreateRawAssetTransferTx(&param)
+	tx, err := pt.CreateRawAssetTransferTx(cfg, &param)
 
 	return tx, err
 }
 
-func createTxsGroup(txs []*types.Transaction) ([]*types.Transaction, error) {
+func createTxsGroup(cfg *types.Chain33Config, txs []*types.Transaction) ([]*types.Transaction, error) {
 
-	group, err := types.CreateTxGroup(txs, types.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txs, cfg.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxFee"))
+	err = group.Check(cfg, 0, cfg.GInt("MinFee"), cfg.GInt("MaxFee"))
 	if err != nil {
 		return nil, err
 	}
 	return group.Txs, nil
 }
 
-func createTestTxs(t *testing.T) (*types.BlockDetail, []*types.Transaction, []*types.Transaction) {
+func createTestTxs(cfg *types.Chain33Config, t *testing.T) (*types.BlockDetail, []*types.Transaction, []*types.Transaction) {
 	//all para tx group
-	tx5, err := createCrossParaTx("toB", 5)
+	tx5, err := createCrossParaTx(cfg, "toB", 5)
 	assert.Nil(t, err)
-	tx6, err := createCrossParaTx("toB", 6)
+	tx6, err := createCrossParaTx(cfg, "toB", 6)
 	assert.Nil(t, err)
 	tx56 := []*types.Transaction{tx5, tx6}
-	txGroup56, err := createTxsGroup(tx56)
+	txGroup56, err := createTxsGroup(cfg, tx56)
 	assert.Nil(t, err)
 
 	//para cross tx group fail
-	tx7, _ := createCrossParaTx("toA", 1)
-	tx8, err := createCrossParaTx("toB", 8)
+	tx7, _ := createCrossParaTx(cfg, "toA", 1)
+	tx8, err := createCrossParaTx(cfg, "toB", 8)
 	assert.Nil(t, err)
 	tx78 := []*types.Transaction{tx7, tx8}
-	txGroup78, err := createTxsGroup(tx78)
+	txGroup78, err := createTxsGroup(cfg, tx78)
 	assert.Nil(t, err)
 
 	//all para tx group
-	txB, err := createCrossParaTx("toB", 11)
+	txB, err := createCrossParaTx(cfg, "toB", 11)
 	assert.Nil(t, err)
-	txC, err := createCrossParaTx("toB", 12)
+	txC, err := createCrossParaTx(cfg, "toB", 12)
 	assert.Nil(t, err)
 	txBC := []*types.Transaction{txB, txC}
-	txGroupBC, err := createTxsGroup(txBC)
+	txGroupBC, err := createTxsGroup(cfg, txBC)
 	assert.Nil(t, err)
 
 	//single para tx
-	txD, err := createCrossParaTempTx("toB", 10)
+	txD, err := createCrossParaTempTx(cfg, "toB", 10)
 	assert.Nil(t, err)
 
 	txs := []*types.Transaction{}
@@ -152,6 +151,7 @@ func createTestTxs(t *testing.T) (*types.BlockDetail, []*types.Transaction, []*t
 }
 
 func TestAddMinerTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.ReadFile("../../../plugin/dapp/paracross/cmd/build/chain33.para.test.toml"))
 	pk, err := hex.DecodeString(minerPrivateKey)
 	assert.Nil(t, err)
 
@@ -163,7 +163,7 @@ func TestAddMinerTx(t *testing.T) {
 
 	block := &types.Block{}
 
-	_, filterTxs, _ := createTestTxs(t)
+	_, filterTxs, _ := createTestTxs(cfg, t)
 	localBlock := &pt.ParaLocalDbBlock{
 		Height:     1,
 		MainHeight: 10,

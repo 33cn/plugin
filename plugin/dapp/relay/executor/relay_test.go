@@ -15,6 +15,7 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	apimock "github.com/33cn/chain33/client/mocks"
 
 	_ "github.com/33cn/chain33/system"
 )
@@ -66,6 +67,7 @@ func (s *suiteRelay) accountSetup() {
 }
 
 func (s *suiteRelay) SetupSuite() {
+	chainTestCfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	//s.db = new(mocks.KV)
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestDb", "test", 128)
@@ -74,7 +76,9 @@ func (s *suiteRelay) SetupSuite() {
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetChild(relay)
 	relay.SetExecutorType(types.LoadExecutorType(driverName))
 	s.relay = relay

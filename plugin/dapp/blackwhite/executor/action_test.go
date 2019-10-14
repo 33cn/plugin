@@ -15,7 +15,19 @@ import (
 	"github.com/33cn/chain33/types"
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 	"github.com/stretchr/testify/require"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/client"
 )
+
+func newTestAction() *action{
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	au := &action{}
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	au.api = api
+	return au
+}
 
 func newAddressResult(Addr string, blackwhite []int) *gt.AddressResult {
 	showSecret := "1234"
@@ -33,7 +45,7 @@ func newAddressResult(Addr string, blackwhite []int) *gt.AddressResult {
 
 // 参数: 比对次数， 参加的数字， 那几个人赢了
 func newGameRound(name string, loop int32, blackwhite [][]int, win ...int32) ([]*addrResult, error) {
-	a := action{}
+	a := newTestAction()
 	var addrRes []*gt.AddressResult
 	round := &gt.BlackwhiteRound{
 		Loop: loop,
@@ -206,8 +218,9 @@ func test5(t *testing.T) {
 
 func Test_getWinnerAndLoser(t *testing.T) {
 
-	a := action{}
-	a.height = 1 + types.GetFork("ForkBlackWhiteV2")
+	a := newTestAction()
+	cfg := a.api.GetConfig()
+	a.height = 1 + cfg.GetFork("ForkBlackWhiteV2")
 
 	showSecret := "123456789012345678901234567890"
 

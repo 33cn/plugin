@@ -65,28 +65,30 @@ func RaftPerf() {
 }
 
 func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
 
-	s := store.New(cfg.Store, sub.Store)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 
-	chain := blockchain.New(cfg.BlockChain)
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
+	chain33Cfg.SetMinFee(0)
 
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
 
 	cs := NewRaftCluster(cfg.Consensus, sub.Consensus["raft"])
 	cs.SetQueueClient(q.Client())
 
-	network := p2p.New(cfg.P2P)
+	network := p2p.New(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 	return q, chain, s, mem, exec, cs, network

@@ -12,7 +12,9 @@ import (
 
 // TestEvmType_CreateTx 测试RPC创建交易逻辑
 func TestEvmType_CreateTx(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	evm := &EvmType{}
+	evm.SetConfig(cfg)
 	errMap := map[int]string{2: "code must be set in create tx",
 		4: "encoding/hex: invalid byte: U+0078 'x'"}
 	for idx, test := range []CreateCallTx{
@@ -97,9 +99,9 @@ func TestEvmType_CreateTx(t *testing.T) {
 			assert.EqualValues(t, bcode, action.Code)
 		}
 		if test.IsCreate {
-			assert.EqualValues(t, address.ExecAddress(types.ExecName(ExecutorName)), tx.To)
+			assert.EqualValues(t, address.ExecAddress(cfg.ExecName(ExecutorName)), tx.To)
 		} else {
-			assert.EqualValues(t, address.ExecAddress(types.ExecName(test.Name)), tx.To)
+			assert.EqualValues(t, address.ExecAddress(cfg.ExecName(test.Name)), tx.To)
 		}
 	}
 

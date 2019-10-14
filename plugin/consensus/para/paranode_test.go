@@ -20,6 +20,7 @@ func TestParaNode(t *testing.T) {
 
 	para := node.NewParaNode(nil, nil)
 	defer para.Close()
+	cfg := para.Para.GetClient().GetConfig()
 	//通过rpc 发生信息
 	genesis := para.Main.GetGenesisAddress()
 	genesisKey := para.Main.GetGenesisKey()
@@ -28,7 +29,7 @@ func TestParaNode(t *testing.T) {
 	assert.Equal(t, acc.Balance, 100000000*types.Coin)
 
 	//super acc
-	tx := util.CreateCoinsTx(genesisKey, para.Main.GetHotAddress(), 10*types.Coin)
+	tx := util.CreateCoinsTx(cfg, genesisKey, para.Main.GetHotAddress(), 10*types.Coin)
 	para.Main.SendTx(tx)
 	para.Main.Wait()
 	block = para.Main.GetLastBlock()
@@ -36,7 +37,7 @@ func TestParaNode(t *testing.T) {
 	assert.Equal(t, acc.Balance, 10*types.Coin)
 
 	//auth acc
-	tx = util.CreateCoinsTx(genesisKey, authAcc, 10*types.Coin)
+	tx = util.CreateCoinsTx(cfg, genesisKey, authAcc, 10*types.Coin)
 	para.Main.SendTx(tx)
 	para.Main.Wait()
 	block = para.Main.GetLastBlock()
@@ -44,7 +45,7 @@ func TestParaNode(t *testing.T) {
 	assert.Equal(t, acc.Balance, 10*types.Coin)
 
 	//create manage config
-	tx = util.CreateManageTx(para.Main.GetHotKey(), "paracross-nodes-user.p.guodun.", "add", "1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF")
+	tx = util.CreateManageTx(cfg, para.Main.GetHotKey(), "paracross-nodes-user.p.guodun.", "add", "1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF")
 	reply, err := para.Main.GetAPI().SendTx(tx)
 	assert.Nil(t, err)
 	detail, err := para.Main.WaitTx(reply.GetMsg())
@@ -54,7 +55,7 @@ func TestParaNode(t *testing.T) {
 	testParaQuery(para)
 
 	for i := 0; i < 3; i++ {
-		tx = util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
+		tx = util.CreateTxWithExecer(cfg, para.Para.GetGenesisKey(), "user.p.guodun.none")
 		para.Para.SendTxRPC(tx)
 		para.Para.WaitHeight(int64(i) + 1)
 	}

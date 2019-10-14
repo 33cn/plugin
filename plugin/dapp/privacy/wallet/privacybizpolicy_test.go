@@ -78,22 +78,26 @@ func (mock *testDataMock) init() {
 }
 
 func (mock *testDataMock) initMember() {
+	cfg := testnode.GetDefaultConfig()
+	mcfg := cfg.GetModuleConfig()
+
 	var q = queue.New("channel")
-	cfg, sub := testnode.GetDefaultConfig()
-	util.ResetDatadir(cfg, "$TEMP/")
-	wallet := wallet.New(cfg.Wallet, sub.Wallet)
+	q.SetConfig(cfg)
+
+	util.ResetDatadir(mcfg, "$TEMP/")
+	wallet := wallet.New(cfg)
 	wallet.SetQueueClient(q.Client())
 	mock.modules = append(mock.modules, wallet)
 	mock.wallet = wallet
 
-	store := store.New(cfg.Store, sub.Store)
+	store := store.New(cfg)
 	store.SetQueueClient(q.Client())
 	mock.modules = append(mock.modules, store)
 
 	if mock.mockBlockChain {
 		mock.mockBlockChainProc(q)
 	} else {
-		chain := blockchain.New(cfg.BlockChain)
+		chain := blockchain.New(cfg)
 		chain.SetQueueClient(q.Client())
 		mock.modules = append(mock.modules, chain)
 	}
@@ -101,13 +105,14 @@ func (mock *testDataMock) initMember() {
 	if mock.mockMempool {
 		mock.mockMempoolProc(q)
 	} else {
-		mempool := mempool.New(cfg.Mempool, nil)
+		mempool := mempool.New(cfg)
 		mempool.SetQueueClient(q.Client())
 		mock.modules = append(mock.modules, mempool)
 	}
 
-	mock.accdb = account.NewCoinsAccount()
+	mock.accdb = account.NewCoinsAccount(cfg)
 	mock.policy = privacy.New()
+	sub := cfg.GetSubConfig()
 	mock.policy.Init(wallet, sub.Wallet["privacy"])
 	mock.password = "ab123456"
 }
@@ -208,7 +213,8 @@ func (mock *testDataMock) initAccounts() {
 		}
 		mock.importPrivateKey(privKey)
 	}
-	accCoin := account.NewCoinsAccount()
+	cfg := mock.wallet.GetAPI().GetConfig()
+	accCoin := account.NewCoinsAccount(cfg)
 	accCoin.SetDB(wallet.GetDBStore())
 	accounts, _ := mock.accdb.LoadAccounts(wallet.GetAPI(), testAddrs)
 	for _, account := range accounts {

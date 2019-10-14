@@ -25,9 +25,10 @@ func init() {
 }
 
 func TestJsVM(t *testing.T) {
-	cfg, sub := testnode.GetDefaultConfig()
-	cfg.Consensus.Name = "ticket"
-	mocker := testnode.NewWithConfig(cfg, sub, nil)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+
+	mocker := testnode.NewWithConfig(cfg, nil)
 	defer mocker.Close()
 	mocker.Listen()
 
