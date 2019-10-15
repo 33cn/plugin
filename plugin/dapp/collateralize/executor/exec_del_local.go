@@ -5,7 +5,6 @@
 package executor
 
 import (
-	//"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/collateralize/types"
 )

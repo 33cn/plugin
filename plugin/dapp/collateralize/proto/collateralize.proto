@@ -86,12 +86,12 @@ message CollateralizeFeed {
     repeated int64 volume = 3; //成交量
 }
 
-// 喂价关闭
+// 借贷关闭
 message CollateralizeClose {
     string collateralizeId = 1; //借贷期数ID
 }
 
-// exec_local记录信息
+// exec_local 借贷信息
 message ReceiptCollateralize {
     string      collateralizeId    = 1;
     string      createAddr         = 2;
@@ -102,28 +102,25 @@ message ReceiptCollateralize {
     int32       recordStatus       = 7;
 }
 
+// exec_local 借贷记录信息
+message CollateralizeRecord {
+    string collateralizeId = 1;
+    string addr            = 2;
+    int64  index           = 3;
+}
+
+// exec_local 借贷记录信息列表
+message CollateralizeRecords {
+    repeated CollateralizeRecord records = 1;
+}
+
+// 根据ID查询一期借贷信息
 message ReqCollateralizeInfo {
     string collateralizeId = 1;
 }
 
-message ReqCollateralizeBorrowInfo {
-    string collateralizeId = 1;
-    string addr      = 2;
-}
-
-message ReqCollateralizeBadDebt {
-    string collateralizeId = 1;
-}
-
-message ReqCollateralizeBorrowHistory {
-    string collateralizeId = 1;
-    string addr      = 2;
-    int32  count     = 4;
-    int32  direction = 5;
-    int64  index     = 6;
-}
-
-message ReplyCollateralizeCurrentInfo {
+// 返回一期借贷信息
+message RepCollateralizeCurrentInfo {
     int32       status                  = 1;//当期借贷的状态，是否关闭
     int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
@@ -134,17 +131,49 @@ message ReplyCollateralizeCurrentInfo {
     int64       balance                 = 8; //剩余可借贷金额(ccny)
 }
 
-message ReplyCollateralizeBadDebt {
-    repeated BorrowRecord records = 1;
+// 根据ID列表查询多期借贷信息
+message ReqCollateralizeInfos {
+    repeated string collateralizeIds = 1;
 }
 
-// used for execlocal
-message CollateralizeRecord {
+// 返回多期借贷信息
+message RepCollateralizeCurrentInfos {
+    repeated RepCollateralizeCurrentInfo infos = 1;
+}
+
+// 根据借贷状态查询
+message ReqCollateralizeByStatus {
+    int32 status = 1;
+}
+
+// 根据用户地址查询
+message ReqCollateralizeByAddr {
+    string addr = 1;
+}
+
+// 返回借贷ID列表
+message RepCollateralizeIDs {
+    repeated string IDs = 1;
+}
+
+// 根据地址和借贷ID混合查询具体借贷记录
+message ReqCollateralizeBorrowInfoByAddr {
     string collateralizeId = 1;
     string addr            = 2;
-    int64  index           = 3;
 }
 
-message CollateralizeRecords {
-    repeated CollateralizeRecord records = 1;
+// 返回借贷记录
+message RepCollateralizeBorrowInfo {
+    BorrowRecord record = 1;
+}
+
+// 根据状态和借贷ID混合查询具体借贷记录
+message ReqCollateralizeBorrowInfoByStatus {
+    string collateralizeId = 1;
+    int32 status           = 2;
+}
+
+// 返回借贷记录
+message RepCollateralizeBorrowInfos {
+    repeated BorrowRecord record = 1;
 }

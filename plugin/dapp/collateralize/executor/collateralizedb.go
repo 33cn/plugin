@@ -771,7 +771,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 		return nil, pty.ErrPriceInvalid
 	}
 
-	collIDRecords, err := queryCollateralizes(action.localDB)
+	collIDRecords, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated)
 	if err != nil {
 		clog.Error("CollateralizePriceFeed", "get collateralize record error", err)
 		return nil, err
@@ -871,10 +871,10 @@ func queryCollateralizeByID(db dbm.KV, CollateralizeID string) (*pty.Collaterali
 	return &coll, nil
 }
 
-func queryCollateralizes(localdb dbm.Lister) ([]*pty.CollateralizeRecord, error) {
-	data, err := localdb.List(calcCollateralizePrefix(), nil, DefultCount, ListDESC)
+func queryCollateralizeByStatus(localdb dbm.Lister, status int32) ([]*pty.CollateralizeRecord, error) {
+	data, err := localdb.List(calcCollateralizeStatusPrefix(status), nil, DefultCount, ListDESC)
 	if err != nil {
-		clog.Debug("queryCollateralizes", "error", err)
+		clog.Debug("queryCollateralizesByStatus", "error", err)
 		return nil, err
 	}
 
@@ -883,7 +883,49 @@ func queryCollateralizes(localdb dbm.Lister) ([]*pty.CollateralizeRecord, error)
 	for _, collBytes := range data {
 		err = types.Decode(collBytes, &coll)
 		if err != nil {
-			clog.Debug("queryCollateralizeByID", "decode", err)
+			clog.Debug("queryCollateralizesByStatus", "decode", err)
+			return nil, err
+		}
+		colls = append(colls, &coll)
+	}
+
+	return colls, nil
+}
+
+func queryCollateralizeByAddr(localdb dbm.Lister, addr string) ([]*pty.CollateralizeRecord, error) {
+	data, err := localdb.List(calcCollateralizeAddrPrefix(addr), nil, DefultCount, ListDESC)
+	if err != nil {
+		clog.Debug("queryCollateralizesByAddr", "error", err)
+		return nil, err
+	}
+
+	var colls []*pty.CollateralizeRecord
+	var coll pty.CollateralizeRecord
+	for _, collBytes := range data {
+		err = types.Decode(collBytes, &coll)
+		if err != nil {
+			clog.Debug("queryCollateralizesByAddr", "decode", err)
+			return nil, err
+		}
+		colls = append(colls, &coll)
+	}
+
+	return colls, nil
+}
+
+func queryCollateralizeRecordByStatus(localdb dbm.Lister, status int32) ([]*pty.CollateralizeRecord, error) {
+	data, err := localdb.List(calcCollateralizeRecordStatusPrefix(status), nil, DefultCount, ListDESC)
+	if err != nil {
+		clog.Debug("queryCollateralizeRecordByStatus", "error", err)
+		return nil, err
+	}
+
+	var colls []*pty.CollateralizeRecord
+	var coll pty.CollateralizeRecord
+	for _, collBytes := range data {
+		err = types.Decode(collBytes, &coll)
+		if err != nil {
+			clog.Debug("queryCollateralizesByStatus", "decode", err)
 			return nil, err
 		}
 		colls = append(colls, &coll)
