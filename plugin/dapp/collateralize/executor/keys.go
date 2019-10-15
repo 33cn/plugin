@@ -6,8 +6,13 @@ package executor
 
 import "fmt"
 
-func calcCollateralizeKey(CollateralizeID string) []byte {
-	key := fmt.Sprintf("LODB-Collateralize-ID:%s", CollateralizeID)
+func calcCollateralizeKey(collateralizeID string, index int64) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-ID:%s:%018d", collateralizeID, index)
+	return []byte(key)
+}
+
+func calcCollateralizePrefix() []byte {
+	key := fmt.Sprintf("LODB-Collateralize-ID:")
 	return []byte(key)
 }
 
@@ -38,5 +43,15 @@ func calcCollateralizePriceKey(time string) []byte {
 
 func calcCollateralizeLatestPriceKey() []byte {
 	key := fmt.Sprintf("LODB-Collateralize-latest-price")
+	return []byte(key)
+}
+
+func calcCollateralizeRecordStatusPrefix(status int32) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-record-status:%d", status)
+	return []byte(key)
+}
+
+func calcCollateralizeRecordStatusKey(status int32, index int64) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-record-status:%d:%018d", status, index)
 	return []byte(key)
 }
