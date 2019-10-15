@@ -361,7 +361,7 @@ func (client *Client) getBlockInfoTx(current *types.Block) (*tmtypes.ValNodeActi
 	return &valAction, nil
 }
 
-// CheckBlock 暂不检查任何的交易
+// CheckBlock 检查区块
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	if current.Block.Difficulty != types.GetP(0).PowLimitBits {
 		return types.ErrBlockHeaderDifficulty
@@ -385,7 +385,6 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 		}
 		lastInfo := lastValAction.GetBlockInfo()
 		lastProposalBlock := &ttypes.TendermintBlock{TendermintBlock: lastInfo.GetBlock()}
-		lastProposalBlock.Data = parent
 		if !lastProposalBlock.HashesTo(info.Block.Header.LastBlockID.Hash) {
 			return ttypes.ErrLastBlockID
 		}

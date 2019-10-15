@@ -269,11 +269,11 @@ func (cs *ConsensusState) reconstructLastCommit(state State) {
 		precommit := &ttypes.Vote{Vote: item}
 		added, err := lastPrecommits.AddVote(precommit)
 		if !added || err != nil {
-			panic(fmt.Sprintf("Panicked on a Crisis: %v", fmt.Sprintf("Failed to reconstruct LastCommit: %v", err)))
+			panic(fmt.Sprintf("Failed to reconstruct LastCommit: %v", err))
 		}
 	}
 	if !lastPrecommits.HasTwoThirdsMajority() {
-		panic(fmt.Sprintf("Panicked on a Sanity Check: %v", "Failed to reconstruct LastCommit: Does not have +2/3 maj"))
+		panic("Failed to reconstruct LastCommit: Does not have +2/3 maj")
 	}
 	cs.LastCommit = lastPrecommits
 }
@@ -282,14 +282,12 @@ func (cs *ConsensusState) reconstructLastCommit(state State) {
 // The round becomes 0 and cs.Step becomes ttypes.RoundStepNewHeight.
 func (cs *ConsensusState) updateToState(state State) {
 	if cs.CommitRound > -1 && 0 < cs.Height && cs.Height != state.LastBlockHeight {
-		panic(fmt.Sprintf("Panicked on a Sanity Check: %v", fmt.Sprintf("updateToState() expected state height of %v but found %v",
-			cs.Height, state.LastBlockHeight)))
+		panic(fmt.Sprintf("updateToState expected state height of %v but found %v", cs.Height, state.LastBlockHeight))
 	}
 	if !cs.state.IsEmpty() && cs.state.LastBlockHeight+1 != cs.Height {
 		// This might happen when someone else is mutating cs.state.
 		// Someone forgot to pass in state.Copy() somewhere?!
-		panic(fmt.Sprintf("Panicked on a Sanity Check: %v", fmt.Sprintf("Inconsistent cs.state.LastBlockHeight+1 %v vs cs.Height %v",
-			cs.state.LastBlockHeight+1, cs.Height)))
+		panic(fmt.Sprintf("Inconsistent cs.state.LastBlockHeight+1 %v vs cs.Height %v", cs.state.LastBlockHeight+1, cs.Height))
 	}
 
 	// If state isn't further out than cs.state, just ignore.
@@ -305,7 +303,7 @@ func (cs *ConsensusState) updateToState(state State) {
 	lastPrecommits := (*ttypes.VoteSet)(nil)
 	if cs.CommitRound > -1 && cs.Votes != nil {
 		if !cs.Votes.Precommits(cs.CommitRound).HasTwoThirdsMajority() {
-			panic(fmt.Sprintf("Panicked on a Sanity Check: %v", "updateToState(state) called but last Precommit round didn't have +2/3"))
+			panic("updateToState called but last Precommit round didn't have +2/3")
 		}
 		lastPrecommits = cs.Votes.Precommits(cs.CommitRound)
 	}
@@ -556,6 +554,9 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 		// We've already reset these upon new height,
 		// and meanwhile we might have received a proposal
 		// for round 0.
+		if cs.begCons.IsZero() {
+			cs.begCons = time.Now()
+		}
 	} else {
 		tendermintlog.Info("Resetting Proposal info")
 		cs.Proposal = nil
@@ -616,7 +617,7 @@ func (cs *ConsensusState) proposalHeartbeat(height int64, round int) {
 // Enter (!CreateEmptyBlocks) : after enterNewRound(height,round), once txs are in the mempool
 func (cs *ConsensusState) enterPropose(height int64, round int) {
 	if cs.Height != height || round < cs.Round || (cs.Round == round && ttypes.RoundStepPropose <= cs.Step) {
-		tendermintlog.Info(fmt.Sprintf("enterPropose(%v/%v): Invalid args. Current step: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
+		tendermintlog.Debug(fmt.Sprintf("enterPropose(%v/%v): Invalid args. Current step: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
 		return
 	}
 	tendermintlog.Info(fmt.Sprintf("enterPropose(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
@@ -730,7 +731,7 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	} else {
 		// This shouldn't happen.
 		tendermintlog.Error("enterPropose: Cannot propose anything: No commit for the previous block.")
-		return
+		return nil
 	}
 
 	// Mempool validated transactions
@@ -741,7 +742,7 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 
 	if pblock.Height != cs.Height {
 		tendermintlog.Error("pblock.Height is not equal to cs.Height")
-		return
+		return nil
 	}
 
 	proposerAddr := cs.privValidator.GetAddress()
@@ -752,7 +753,7 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	pblockNew := cs.client.ExecBlock(block.Data)
 	if pblockNew == nil {
 		tendermintlog.Error("createProposalBlock ExecBlock fail")
-		return
+		return nil
 	}
 	block.Data = pblockNew
 	evidence := cs.evpool.PendingEvidence()
@@ -825,6 +826,20 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 		return
 	}
 
+	// Exec proposal block
+	blockCopy := *cs.ProposalBlock.Data
+	blockNew := cs.client.ExecBlock(&blockCopy)
+	if blockNew == nil {
+		tendermintlog.Error("enterPrevote: Exec ProposalBlock fail")
+		cs.signAddVote(ttypes.VoteTypePrevote, nil)
+		return
+	}
+	if !bytes.Equal(blockNew.Hash(), cs.ProposalBlock.Data.Hash()) {
+		tendermintlog.Error("enterPrevote: Exec ProposalBlock has change")
+		cs.signAddVote(ttypes.VoteTypePrevote, nil)
+		return
+	}
+
 	// Prevote cs.ProposalBlock
 	// NOTE: the proposal signature is validated when it is received,
 	// and the proposal block parts are validated as they are received (against the merkle hash in the proposal)
@@ -839,7 +854,7 @@ func (cs *ConsensusState) enterPrevoteWait(height int64, round int) {
 		return
 	}
 	if !cs.Votes.Prevotes(round).HasTwoThirdsAny() {
-		panic(fmt.Sprintf("Panicked on a Sanity Check: %v", fmt.Sprintf("enterPrevoteWait(%v/%v), but Prevotes does not have any +2/3 votes", height, round)))
+		panic(fmt.Sprintf("enterPrevoteWait(%v/%v), but Prevotes does not have any +2/3 votes", height, round))
 	}
 	tendermintlog.Info(fmt.Sprintf("enterPrevoteWait(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
 
@@ -920,7 +935,7 @@ func (cs *ConsensusState) enterPrecommit(height int64, round int) {
 		tendermintlog.Info("enterPrecommit: +2/3 prevoted proposal block. Locking", "hash", fmt.Sprintf("%X", blockID.Hash))
 		// Validate the block.
 		if err := cs.blockExec.ValidateBlock(cs.state, cs.ProposalBlock); err != nil {
-			panic(fmt.Sprintf("Panicked on a Consensus Failure: %v", fmt.Sprintf("enterPrecommit: +2/3 prevoted for an invalid block: %v", err)))
+			panic(fmt.Sprintf("enterPrecommit: +2/3 prevoted for an invalid block: %v", err))
 		}
 		cs.LockedRound = round
 		cs.LockedBlock = cs.ProposalBlock

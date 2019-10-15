@@ -97,29 +97,47 @@ func (b *TendermintBlock) AddEvidence(evidence []Evidence) {
 
 // ValidateBasic performs basic validation that doesn't involve state data.
 // It checks the internal consistency of the block.
-func (b *TendermintBlock) ValidateBasic() (int64, error) {
-	newTxs := int64(len(b.Data.Txs))
-
-	if b.Header.NumTxs != newTxs {
-		return 0, fmt.Errorf("Wrong Block.Header.NumTxs. Expected %v, got %v", newTxs, b.Header.NumTxs)
+// Further validation is done using state#ValidateBlock.
+func (b *TendermintBlock) ValidateBasic() error {
+	if b == nil {
+		return errors.New("nil block")
 	}
+
+	if b.Header.Height < 0 {
+		return errors.New("Negative Header.Height")
+	} else if b.Header.Height == 0 {
+		return errors.New("Zero Header.Height")
+	}
+
+	newTxs := int64(len(b.Data.Txs))
+	if b.Header.NumTxs != newTxs {
+		return fmt.Errorf("Wrong Header.NumTxs. Expected %v, got %v", newTxs, b.Header.NumTxs)
+	}
+
+	if b.Header.TotalTxs < 0 {
+		return errors.New("Negative Header.TotalTxs")
+	}
+
 	lastCommit := Commit{
 		TendermintCommit: b.LastCommit,
 	}
-	if !bytes.Equal(b.Header.LastCommitHash, lastCommit.Hash()) {
-		return 0, fmt.Errorf("Wrong Block.Header.LastCommitHash.  Expected %v, got %v", b.Header.LastCommitHash, lastCommit.Hash())
-	}
-	if b.Header.Height != 1 {
-		if err := lastCommit.ValidateBasic(); err != nil {
-			return 0, err
+	if b.Header.Height > 1 {
+		if b.LastCommit == nil {
+			return errors.New("nil LastCommit")
 		}
+		if err := lastCommit.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+	if !bytes.Equal(b.Header.LastCommitHash, lastCommit.Hash()) {
+		return fmt.Errorf("Wrong Header.LastCommitHash.  Expected %v, got %v", b.Header.LastCommitHash, lastCommit.Hash())
 	}
 
 	evidence := &EvidenceData{EvidenceData: b.Evidence}
 	if !bytes.Equal(b.Header.EvidenceHash, evidence.Hash()) {
-		return 0, errors.New(Fmt("Wrong Block.Header.EvidenceHash.  Expected %v, got %v", b.Header.EvidenceHash, evidence.Hash()))
+		return errors.New(Fmt("Wrong Header.EvidenceHash.  Expected %v, got %v", b.Header.EvidenceHash, evidence.Hash()))
 	}
-	return newTxs, nil
+	return nil
 }
 
 // FillHeader fills in any remaining header fields that are a function of the block data
@@ -331,13 +349,14 @@ func (commit *Commit) ValidateBasic() error {
 	height, round := commit.Height(), commit.Round()
 
 	// validate the precommits
-	for _, precommit := range commit.Precommits {
-		// It's OK for precommits to be missing.
-		if precommit == nil {
+	for _, item := range commit.Precommits {
+		// may be nil if validator skipped.
+		if item == nil || len(item.Signature) == 0 {
 			continue
 		}
+		precommit := &Vote{Vote: item}
 		// Ensure that all votes are precommits
-		if byte(precommit.Type) != VoteTypePrecommit {
+		if precommit.Type != uint32(VoteTypePrecommit) {
 			return fmt.Errorf("Invalid commit vote. Expected precommit, got %v",
 				precommit.Type)
 		}

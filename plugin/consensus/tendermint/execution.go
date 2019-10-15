@@ -191,7 +191,10 @@ func changeInVotingPowerMoreOrEqualToOneThird(currentSet *ttypes.ValidatorSet, u
 }
 
 func validateBlock(stateDB *CSStateDB, s State, b *ttypes.TendermintBlock) error {
-	newTxs := b.Header.NumTxs
+	// Validate internal consistency.
+	if err := b.ValidateBasic(); err != nil {
+		return err
+	}
 
 	// validate basic info
 	if b.Header.ChainID != s.ChainID {
@@ -206,6 +209,7 @@ func validateBlock(stateDB *CSStateDB, s State, b *ttypes.TendermintBlock) error
 		return fmt.Errorf("Wrong Block.Header.LastBlockID.  Expected %v, got %v", s.LastBlockID, b.Header.LastBlockID)
 	}
 
+	newTxs := b.Header.NumTxs
 	if b.Header.TotalTxs != s.LastBlockTotalTx+newTxs {
 		return fmt.Errorf("Wrong Block.Header.TotalTxs. Expected %v, got %v", s.LastBlockTotalTx+newTxs, b.Header.TotalTxs)
 	}

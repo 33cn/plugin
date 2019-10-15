@@ -7,6 +7,7 @@ package tendermint
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
+	ty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
@@ -36,7 +38,7 @@ import (
 
 var (
 	random    *rand.Rand
-	loopCount = 10
+	loopCount = 3
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 )
@@ -70,6 +72,11 @@ func TendermintPerf() {
 	}
 	time.Sleep(2 * time.Second)
 	for i := 0; i < loopCount; i++ {
+		NormPut()
+		time.Sleep(time.Second)
+	}
+	AddNode()
+	for i := 0; i < loopCount*3; i++ {
 		NormPut()
 		time.Sleep(time.Second)
 	}
@@ -166,6 +173,31 @@ func clearTestData() {
 
 func NormPut() {
 	tx := prepareTxList()
+
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
+		return
+	}
+}
+
+func AddNode() {
+	pubkey := "788657125A5A547B499F8B74239092EBB6466E8A205348D9EA645D510235A671"
+	pubkeybyte, err := hex.DecodeString(pubkey)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	nput := &ty.ValNodeAction_Node{Node: &ty.ValNode{PubKey: pubkeybyte, Power: int64(2)}}
+	action := &ty.ValNodeAction{Value: nput, Ty: ty.ValNodeActionUpdate}
+	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
+	tx.To = address.ExecAddress("valnode")
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
 	if err != nil {
