@@ -87,20 +87,6 @@ message State {
     bytes           AppHash                          = 12;
 }
 
-message DuplicateVoteEvidence {
-    string pubKey = 1;
-    Vote   voteA  = 2;
-    Vote   voteB  = 3;
-}
-
-message EvidenceEnvelope {
-    string typeName = 1;
-    bytes  data     = 2;
-}
-
-message EvidenceData {
-    repeated EvidenceEnvelope evidence = 1;
-}
 
 message TendermintBlockHeader {
     string  chainID         = 1;
@@ -115,14 +101,12 @@ message TendermintBlockHeader {
     bytes   consensusHash   = 10;
     bytes   appHash         = 11;
     bytes   lastResultsHash = 12;
-    bytes   evidenceHash    = 13;
-    bytes   proposerAddr    = 14;
+    bytes   proposerAddr    = 13;
 }
 
 message TendermintBlock {
     TendermintBlockHeader header       = 1;
     Block                 data         = 2;
-    EvidenceData          evidence     = 3;
     TendermintCommit      lastCommit   = 4;
 }
 

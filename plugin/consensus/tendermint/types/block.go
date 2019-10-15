@@ -17,7 +17,6 @@ import (
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
-	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -69,30 +68,10 @@ func MakeBlock(height int64, round int64, pblock *types.Block, commit *tmtypes.T
 			},
 			Data:       pblock,
 			LastCommit: commit,
-			Evidence:   &tmtypes.EvidenceData{Evidence: make([]*tmtypes.EvidenceEnvelope, 0)},
 		},
 	}
 	block.FillHeader()
 	return block
-}
-
-// AddEvidence appends the given evidence to the block
-func (b *TendermintBlock) AddEvidence(evidence []Evidence) {
-	for _, item := range evidence {
-		ev := item.Child()
-		if ev != nil {
-			data, err := proto.Marshal(ev)
-			if err != nil {
-				blocklog.Error("AddEvidence marshal failed", "error", err)
-				panic("AddEvidence marshal failed")
-			}
-			env := &tmtypes.EvidenceEnvelope{
-				TypeName: item.TypeName(),
-				Data:     data,
-			}
-			b.Evidence.Evidence = append(b.Evidence.Evidence, env)
-		}
-	}
 }
 
 // ValidateBasic performs basic validation that doesn't involve state data.
@@ -133,10 +112,6 @@ func (b *TendermintBlock) ValidateBasic() error {
 		return fmt.Errorf("Wrong Header.LastCommitHash.  Expected %v, got %v", b.Header.LastCommitHash, lastCommit.Hash())
 	}
 
-	evidence := &EvidenceData{EvidenceData: b.Evidence}
-	if !bytes.Equal(b.Header.EvidenceHash, evidence.Hash()) {
-		return errors.New(Fmt("Wrong Header.EvidenceHash.  Expected %v, got %v", b.Header.EvidenceHash, evidence.Hash()))
-	}
 	return nil
 }
 
@@ -147,10 +122,6 @@ func (b *TendermintBlock) FillHeader() {
 			TendermintCommit: b.LastCommit,
 		}
 		b.Header.LastCommitHash = lastCommit.Hash()
-	}
-	if b.Header.EvidenceHash == nil {
-		evidence := &EvidenceData{EvidenceData: b.Evidence}
-		b.Header.EvidenceHash = evidence.Hash()
 	}
 }
 
@@ -246,7 +217,6 @@ func (h *Header) StringIndented(indent string) string {
 %s  App:            %v
 %s  Conensus:       %v
 %s  Results:        %v
-%s  Evidence:       %v
 %s}#%v`,
 		indent, h.ChainID,
 		indent, h.Height,
@@ -259,7 +229,6 @@ func (h *Header) StringIndented(indent string) string {
 		indent, h.AppHash,
 		indent, h.ConsensusHash,
 		indent, h.LastResultsHash,
-		indent, h.EvidenceHash,
 		indent, h.Hash())
 }
 
@@ -409,114 +378,4 @@ func (commit *Commit) StringIndented(indent string) string {
 type SignedHeader struct {
 	Header *Header `json:"header"`
 	Commit *Commit `json:"commit"`
-}
-
-// EvidenceEnvelope ...
-type EvidenceEnvelope struct {
-	*tmtypes.EvidenceEnvelope
-}
-
-// EvidenceEnvelopeList contains any evidence of malicious wrong-doing by validators
-type EvidenceEnvelopeList []EvidenceEnvelope
-
-// Hash ...
-func (env EvidenceEnvelope) Hash() []byte {
-	penv := env.EvidenceEnvelope
-	evidence := EvidenceEnvelope2Evidence(penv)
-	if evidence != nil {
-		return evidence.Hash()
-	}
-	return nil
-}
-
-func (env EvidenceEnvelope) String() string {
-	penv := env.EvidenceEnvelope
-	evidence := EvidenceEnvelope2Evidence(penv)
-	if evidence != nil {
-		return evidence.String()
-	}
-	return ""
-}
-
-// Hash returns the simple merkle root hash of the EvidenceList.
-func (evl EvidenceEnvelopeList) Hash() []byte {
-	// Recursive impl.
-	// Copied from tmlibs/merkle to avoid allocations
-	switch len(evl) {
-	case 0:
-		return nil
-	case 1:
-		return evl[0].Hash()
-	default:
-		left := evl[:(len(evl)+1)/2].Hash()
-		right := evl[(len(evl)+1)/2:].Hash()
-		cache := make([]byte, len(left)+len(right))
-		return merkle.GetHashFromTwoHash(cache, left, right)
-	}
-}
-
-func (evl EvidenceEnvelopeList) String() string {
-	s := ""
-	for _, e := range evl {
-		s += Fmt("%s\t\t", e)
-	}
-	return s
-}
-
-// Has returns true if the evidence is in the EvidenceList.
-func (evl EvidenceEnvelopeList) Has(evidence Evidence) bool {
-	for _, ev := range evl {
-		penv := ev.EvidenceEnvelope
-		tmp := EvidenceEnvelope2Evidence(penv)
-		if tmp != nil {
-			if tmp.Equal(evidence) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// EvidenceData ...
-type EvidenceData struct {
-	*tmtypes.EvidenceData
-	hash []byte
-}
-
-// Hash returns the hash of the data.
-func (data *EvidenceData) Hash() []byte {
-	if data.hash == nil {
-		if data.EvidenceData == nil {
-			return nil
-		}
-		var evidence EvidenceEnvelopeList
-		for _, item := range data.Evidence {
-			elem := EvidenceEnvelope{
-				EvidenceEnvelope: item,
-			}
-			evidence = append(evidence, elem)
-		}
-		data.hash = evidence.Hash()
-	}
-	return data.hash
-}
-
-// StringIndented returns a string representation of the evidence.
-func (data *EvidenceData) StringIndented(indent string) string {
-	if data == nil {
-		return "nil-Evidence"
-	}
-	evStrings := make([]string, MinInt(len(data.Evidence), 21))
-	for i, ev := range data.Evidence {
-		if i == 20 {
-			evStrings[i] = Fmt("... (%v total)", len(data.Evidence))
-			break
-		}
-		evStrings[i] = Fmt("Evidence:%v", ev)
-	}
-	return Fmt(`Data{
-%s  %v
-%s}#%v`,
-		indent, strings.Join(evStrings, "\n"+indent+"  "),
-		indent, data.hash)
 }

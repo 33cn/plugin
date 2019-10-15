@@ -295,15 +295,11 @@ OuterLoop:
 
 	stateDB := NewStateDB(client, state)
 
-	//make evidenceReactor
-	evidenceStore := NewEvidenceStore(client.evidenceDB)
-	evidencePool := NewEvidencePool(stateDB, state, evidenceStore)
-
 	// make block executor for consensus and blockchain reactors to execute blocks
-	blockExec := NewBlockExecutor(stateDB, evidencePool)
+	blockExec := NewBlockExecutor(stateDB)
 
 	// Make ConsensusReactor
-	csState := NewConsensusState(client, state, blockExec, evidencePool)
+	csState := NewConsensusState(client, state, blockExec)
 	// reset height, round, state begin at newheigt,0,0
 	client.privValidator.ResetLastHeight(state.LastBlockHeight)
 	csState.SetPrivValidator(client.privValidator)
@@ -312,7 +308,7 @@ OuterLoop:
 
 	// Create & add listener
 	protocol, listeningAddress := "tcp", "0.0.0.0:46656"
-	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermintVersion, csState, evidencePool)
+	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermintVersion, csState)
 
 	client.node = node
 	node.Start()

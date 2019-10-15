@@ -25,6 +25,7 @@ var (
 	ErrVoteInvalidSignature          = errors.New("Invalid signature")
 	ErrVoteInvalidBlockHash          = errors.New("Invalid block hash")
 	ErrVoteNonDeterministicSignature = errors.New("Non-deterministic signature")
+	ErrVoteConflict                  = errors.New("Conflicting vote")
 	ErrVoteNil                       = errors.New("Nil vote")
 	votelog                          = log15.New("module", "tendermint-vote")
 )
@@ -117,34 +118,6 @@ func (heartbeat *Heartbeat) WriteSignBytes(chainID string, w io.Writer, n *int, 
 	number, writeErr := w.Write(byteHeartbeat)
 	*n = number
 	*err = writeErr
-}
-
-// ErrVoteConflictingVotes ...
-type ErrVoteConflictingVotes struct {
-	*DuplicateVoteEvidence
-}
-
-func (err *ErrVoteConflictingVotes) Error() string {
-	pubkey, error := PubKeyFromString(err.PubKey)
-	if error != nil {
-		return fmt.Sprintf("Conflicting votes from validator PubKey:%v,error:%v", err.PubKey, error)
-	}
-	addr := GenAddressByPubKey(pubkey)
-	return fmt.Sprintf("Conflicting votes from validator %v", addr)
-}
-
-// NewConflictingVoteError ...
-func NewConflictingVoteError(val *Validator, voteA, voteB *tmtypes.Vote) *ErrVoteConflictingVotes {
-	keyString := fmt.Sprintf("%X", val.PubKey)
-	return &ErrVoteConflictingVotes{
-		&DuplicateVoteEvidence{
-			&tmtypes.DuplicateVoteEvidence{
-				PubKey: keyString,
-				VoteA:  voteA,
-				VoteB:  voteB,
-			},
-		},
-	}
 }
 
 // Types of votes

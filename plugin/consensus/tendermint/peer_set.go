@@ -94,8 +94,7 @@ type peerConn struct {
 
 	onPeerError func(Peer, interface{})
 
-	myState  *ConsensusState
-	myevpool *EvidencePool
+	myState *ConsensusState
 
 	state            *PeerConnState
 	updateStateQueue chan MsgInfo
@@ -579,19 +578,6 @@ FOR_LOOP:
 					}
 				} else if pkt.TypeID == ttypes.ProposalHeartbeatID {
 					pc.heartbeatQueue <- realMsg.(*tmtypes.Heartbeat)
-				} else if pkt.TypeID == ttypes.EvidenceListID {
-					go func() {
-						for _, ev := range realMsg.(*tmtypes.EvidenceData).Evidence {
-							evidence := ttypes.EvidenceEnvelope2Evidence(ev)
-							if evidence != nil {
-								err := pc.myevpool.AddEvidence(evidence.(ttypes.Evidence))
-								if err != nil {
-									tendermintlog.Error("Evidence is not valid", "evidence", ev, "err", err)
-									// TODO: punish peer
-								}
-							}
-						}
-					}()
 				} else {
 					pc.updateStateQueue <- MsgInfo{pkt.TypeID, realMsg.(proto.Message), pc.ID(), pc.ip.String()}
 				}

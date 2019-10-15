@@ -65,8 +65,6 @@ type ConsensusState struct {
 	// TODO: encapsulate all of this in one "BlockManager"
 	blockExec *BlockExecutor
 
-	evpool ttypes.EvidencePool
-
 	// internal state
 	mtx sync.Mutex
 	ttypes.RoundState
@@ -97,14 +95,13 @@ type ConsensusState struct {
 }
 
 // NewConsensusState returns a new ConsensusState.
-func NewConsensusState(client *Client, state State, blockExec *BlockExecutor, evpool ttypes.EvidencePool) *ConsensusState {
+func NewConsensusState(client *Client, state State, blockExec *BlockExecutor) *ConsensusState {
 	cs := &ConsensusState{
 		client:           client,
 		blockExec:        blockExec,
 		peerMsgQueue:     make(chan MsgInfo, msgQueueSize),
 		internalMsgQueue: make(chan MsgInfo, msgQueueSize),
 		timeoutTicker:    NewTimeoutTicker(),
-		evpool:           evpool,
 
 		Quit:         make(chan struct{}),
 		txsAvailable: make(chan int64, 1),
@@ -554,9 +551,6 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 		// We've already reset these upon new height,
 		// and meanwhile we might have received a proposal
 		// for round 0.
-		if cs.begCons.IsZero() {
-			cs.begCons = time.Now()
-		}
 	} else {
 		tendermintlog.Info("Resetting Proposal info")
 		cs.Proposal = nil
@@ -756,9 +750,6 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 		return nil
 	}
 	block.Data = pblockNew
-	evidence := cs.evpool.PendingEvidence()
-	block.AddEvidence(evidence)
-
 	return block
 }
 
@@ -1277,13 +1268,11 @@ func (cs *ConsensusState) tryAddVote(voteRaw *tmtypes.Vote, peerID string, peerI
 		// If it's otherwise invalid, punish peer.
 		if err == ErrVoteHeightMismatch {
 			return err
-		} else if voteErr, ok := err.(*ttypes.ErrVoteConflictingVotes); ok {
+		} else if err == ttypes.ErrVoteConflict {
 			if bytes.Equal(vote.ValidatorAddress, cs.privValidator.GetAddress()) {
 				tendermintlog.Error("Found conflicting vote from ourselves. Did you unsafe_reset a validator?", "height", vote.Height, "round", vote.Round, "type", vote.Type)
 				return err
 			}
-			err = cs.evpool.AddEvidence(voteErr.DuplicateVoteEvidence)
-			return err
 		} else {
 			// Probably an invalid signature / Bad peer.
 			// Seems this can also err sometimes with "Unexpected step" - perhaps not from a bad peer ?
@@ -1337,6 +1326,10 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 		err = ErrVoteHeightMismatch
 		tendermintlog.Info("Vote ignored and not added", "voteHeight", vote.Height, "csHeight", cs.Height, "peerID", peerID)
 		return
+	}
+
+	if cs.begCons.IsZero() {
+		cs.begCons = time.Now()
 	}
 
 	height := cs.Height

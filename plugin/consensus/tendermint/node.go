@@ -17,8 +17,6 @@ import (
 
 	"github.com/33cn/chain33/common/crypto"
 	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
-	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
-	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -132,7 +130,6 @@ type Node struct {
 	lAddr    string
 
 	state            *ConsensusState
-	evpool           *EvidencePool
 	broadcastChannel chan MsgInfo
 	started          uint32 // atomic
 	stopped          uint32 // atomic
@@ -140,7 +137,7 @@ type Node struct {
 }
 
 // NewNode method
-func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivKey, network string, version string, state *ConsensusState, evpool *EvidencePool) *Node {
+func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivKey, network string, version string, state *ConsensusState) *Node {
 	address := GenAddressByPubKey(privKey.PubKey())
 
 	node := &Node{
@@ -158,7 +155,6 @@ func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivK
 		reconnecting:     NewMutexMap(),
 		broadcastChannel: make(chan MsgInfo, maxSendQueueSize),
 		state:            state,
-		evpool:           evpool,
 		localIPs:         make(map[string]net.IP),
 	}
 
@@ -219,7 +215,6 @@ func (node *Node) Start() {
 
 		go node.StartConsensusRoutine()
 		go node.BroadcastRoutine()
-		go node.evidenceBroadcastRoutine()
 	}
 }
 
@@ -234,7 +229,7 @@ func (node *Node) DialPeerWithAddress(addr string) error {
 func (node *Node) addOutboundPeerWithConfig(addr string) error {
 	tendermintlog.Info("Dialing peer", "address", addr)
 
-	peerConn, err := newOutboundPeerConn(addr, node.privKey, node.StopPeerForError, node.state, node.evpool)
+	peerConn, err := newOutboundPeerConn(addr, node.privKey, node.StopPeerForError, node.state)
 	if err != nil {
 		go node.reconnectToPeer(addr)
 		return err
@@ -307,66 +302,6 @@ func (node *Node) StartConsensusRoutine() {
 	}
 }
 
-func (node *Node) evidenceBroadcastRoutine() {
-	ticker := time.NewTicker(time.Second * broadcastEvidenceIntervalS)
-	for {
-		select {
-		case evidence := <-node.evpool.EvidenceChan():
-			// broadcast some new evidence
-			data, err := proto.Marshal(evidence.Child())
-			if err != nil {
-				msg := MsgInfo{TypeID: ttypes.EvidenceListID,
-					Msg: &tmtypes.EvidenceData{
-						Evidence: []*tmtypes.EvidenceEnvelope{
-							{
-								TypeName: evidence.TypeName(),
-								Data:     data,
-							},
-						},
-					},
-					PeerID: node.ID, PeerIP: node.IP,
-				}
-				node.Broadcast(msg)
-
-				// TODO: Broadcast runs asynchronously, so this should wait on the successChan
-				// in another routine before marking to be proper.
-				node.evpool.evidenceStore.MarkEvidenceAsBroadcasted(evidence)
-			}
-
-		case <-ticker.C:
-			// broadcast all pending evidence
-			var eData tmtypes.EvidenceData
-			evidence := node.evpool.PendingEvidence()
-			for _, item := range evidence {
-				ev := item.Child()
-				if ev != nil {
-					data, err := proto.Marshal(ev)
-					if err != nil {
-						panic("AddEvidence marshal failed")
-					}
-					env := &tmtypes.EvidenceEnvelope{
-						TypeName: item.TypeName(),
-						Data:     data,
-					}
-					eData.Evidence = append(eData.Evidence, env)
-				}
-			}
-			msg := MsgInfo{TypeID: ttypes.EvidenceListID,
-				Msg:    &eData,
-				PeerID: node.ID,
-				PeerIP: node.IP,
-			}
-			node.Broadcast(msg)
-		case _, ok := <-node.quit:
-			if !ok {
-				node.quit = nil
-				tendermintlog.Info("evidenceBroadcastRoutine quit")
-				return
-			}
-		}
-	}
-}
-
 // BroadcastRoutine receive to broadcast
 func (node *Node) BroadcastRoutine() {
 	for {
@@ -413,7 +348,7 @@ func (node *Node) StopPeerForError(peer Peer, reason interface{}) {
 }
 
 func (node *Node) addInboundPeer(conn net.Conn) error {
-	peerConn, err := newInboundPeerConn(conn, node.privKey, node.StopPeerForError, node.state, node.evpool)
+	peerConn, err := newInboundPeerConn(conn, node.privKey, node.StopPeerForError, node.state)
 	if err != nil {
 		if er := conn.Close(); er != nil {
 			tendermintlog.Error("addInboundPeer close conn failed", "er", er)
@@ -710,13 +645,13 @@ func dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState, evpool *EvidencePool) (*peerConn, error) {
+func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState) (*peerConn, error) {
 	conn, err := dial(addr)
 	if err != nil {
 		return &peerConn{}, fmt.Errorf("Error creating peer:%v", err)
 	}
 
-	pc, err := newPeerConn(conn, true, true, ourNodePrivKey, onPeerError, state, evpool)
+	pc, err := newPeerConn(conn, true, true, ourNodePrivKey, onPeerError, state)
 	if err != nil {
 		if cerr := conn.Close(); cerr != nil {
 			return &peerConn{}, fmt.Errorf("newPeerConn failed:%v, connection close failed:%v", err, cerr)
@@ -732,12 +667,11 @@ func newInboundPeerConn(
 	ourNodePrivKey crypto.PrivKey,
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
-	evpool *EvidencePool,
 ) (*peerConn, error) {
 
 	// TODO: issue PoW challenge
 
-	return newPeerConn(conn, false, false, ourNodePrivKey, onPeerError, state, evpool)
+	return newPeerConn(conn, false, false, ourNodePrivKey, onPeerError, state)
 }
 
 func newPeerConn(
@@ -746,7 +680,6 @@ func newPeerConn(
 	ourNodePrivKey crypto.PrivKey,
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
-	evpool *EvidencePool,
 ) (pc *peerConn, err error) {
 	conn := rawConn
 
@@ -769,6 +702,5 @@ func newPeerConn(
 		conn:        conn,
 		onPeerError: onPeerError,
 		myState:     state,
-		myevpool:    evpool,
 	}, nil
 }

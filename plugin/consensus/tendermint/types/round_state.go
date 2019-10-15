@@ -32,7 +32,6 @@ const (
 	RoundStepCommit        = RoundStepType(0x08) // Entered commit state machine
 	// NOTE: RoundStepNewHeight acts as RoundStepCommitWait.
 
-	EvidenceListID      = byte(0x01)
 	NewRoundStepID      = byte(0x02)
 	CommitStepID        = byte(0x03)
 	ProposalID          = byte(0x04)
@@ -52,7 +51,6 @@ const (
 // InitMessageMap ...
 func InitMessageMap() {
 	MsgMap = map[byte]reflect.Type{
-		EvidenceListID:      reflect.TypeOf(tmtypes.EvidenceData{}),
 		NewRoundStepID:      reflect.TypeOf(tmtypes.NewRoundStepMsg{}),
 		CommitStepID:        reflect.TypeOf(tmtypes.CommitStepMsg{}),
 		ProposalID:          reflect.TypeOf(tmtypes.Proposal{}),
@@ -121,9 +119,9 @@ type RoundState struct {
 // RoundStateMessage ...
 func (rs *RoundState) RoundStateMessage() *tmtypes.NewRoundStepMsg {
 	return &tmtypes.NewRoundStepMsg{
-		Height: rs.Height,
-		Round:  int32(rs.Round),
-		Step:   int32(rs.Step),
+		Height:                rs.Height,
+		Round:                 int32(rs.Round),
+		Step:                  int32(rs.Step),
 		SecondsSinceStartTime: int32(time.Since(rs.StartTime).Seconds()),
 		LastCommitRound:       int32(rs.LastCommit.Round()),
 	}
