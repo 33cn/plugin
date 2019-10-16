@@ -87,10 +87,10 @@ type subConfig struct {
 	WaitConsensStopTimes            uint32                `json:"waitConsensStopTimes,omitempty"`
 	MaxCacheCount                   int64                 `json:"maxCacheCount,omitempty"`
 	MaxSyncErrCount                 int32                 `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsEnable        bool                  `json:"fetchFilterParaTxsEnable,omitempty"`
+	FetchFilterParaTxsClose         bool                  `json:"fetchFilterParaTxsClose,omitempty"`
 	BatchFetchBlockCount            int64                 `json:"batchFetchBlockCount,omitempty"`
 	ParaConsensStartHeight          int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen               bool                  `json:"multiDownloadOpen,omitempty"`
+	MultiDownloadClose              bool                  `json:"multiDownloadClose,omitempty"`
 	MultiDownInvNumPerJob           int64                 `json:"multiDownInvNumPerJob,omitempty"`
 	MultiDownJobBuffNum             uint32                `json:"multiDownJobBuffNum,omitempty"`
 	MultiDownServerRspTime          uint32                `json:"multiDownServerRspTime,omitempty"`
