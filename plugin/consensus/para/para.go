@@ -90,7 +90,7 @@ type subConfig struct {
 	FetchFilterParaTxsClose         bool                  `json:"fetchFilterParaTxsClose,omitempty"`
 	BatchFetchBlockCount            int64                 `json:"batchFetchBlockCount,omitempty"`
 	ParaConsensStartHeight          int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadClose              bool                  `json:"multiDownloadClose,omitempty"`
+	MultiDownloadOpen               bool                  `json:"multiDownloadOpen,omitempty"`
 	MultiDownInvNumPerJob           int64                 `json:"multiDownInvNumPerJob,omitempty"`
 	MultiDownJobBuffNum             uint32                `json:"multiDownJobBuffNum,omitempty"`
 	MultiDownServerRspTime          uint32                `json:"multiDownServerRspTime,omitempty"`
