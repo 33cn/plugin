@@ -71,6 +71,7 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),
 			false, sub.EnableMVCCPrune, sub.PruneHeight, false}
 	}
+
 	EnablePrune(sub.EnableMVCCPrune)
 	SetPruneHeight(int(sub.PruneHeight))
 	return kvs
