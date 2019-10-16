@@ -17,6 +17,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	apimock "github.com/33cn/chain33/client/mocks"
 )
 
 type suiteRelayLog struct {
@@ -150,11 +151,13 @@ func (s *suiteRelayDB) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestDb", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -337,11 +340,13 @@ func (s *suiteAccept) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestAccept", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -540,11 +545,13 @@ func (s *suiteConfirm) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestAccept", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -837,11 +844,13 @@ func (s *suiteVerify) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestAccept", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1072,11 +1081,13 @@ func (s *suiteVerifyCli) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestAccept", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 
@@ -1148,11 +1159,13 @@ func (s *suiteSaveBtcHeader) SetupSuite() {
 	s.db = new(mocks.KV)
 	s.kvdb = new(mocks.KVDB)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(s.db)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	s.relay = relay
 

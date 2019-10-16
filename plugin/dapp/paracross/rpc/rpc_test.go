@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"
+	ptestNode "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 )
 
 func newGrpc(api client.QueueProtocolAPI) *channelClient {
@@ -31,22 +32,26 @@ func newJrpc(api client.QueueProtocolAPI) *Jrpc {
 }
 
 func TestChannelClient_GetTitle(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &types.ReqString{Data: "xxxxxxxxxxx"}
-	api.On("Query", pt.GetExecName(), "GetTitle", req).Return(&pt.ParacrossStatus{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetTitle", req).Return(&pt.ParacrossStatus{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{}, nil).Once()
 	_, err := client.GetTitle(context.Background(), req)
 	assert.Nil(t, err)
 }
 
 func TestJrpc_GetTitle(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	j := newJrpc(api)
 	req := &types.ReqString{Data: "xxxxxxxxxxx"}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetTitle", req).Return(&pt.ParacrossStatus{
+	api.On("Query", pt.GetExecName(cfg), "GetTitle", req).Return(&pt.ParacrossStatus{
 		Title: "user.p.para", Height: int64(64), BlockHash: []byte{177, 17, 9, 106, 247, 117, 90, 242, 221, 160, 157, 31, 33, 51, 10, 99, 77, 47, 245, 223, 59, 64, 121, 121, 215, 167, 152, 17, 223, 218, 173, 83}}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{}, nil).Once()
 	err := j.GetHeight(req, &result)
@@ -54,77 +59,93 @@ func TestJrpc_GetTitle(t *testing.T) {
 }
 
 func TestChannelClient_ListTitles(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &types.ReqNil{}
-	api.On("Query", pt.GetExecName(), "ListTitles", req).Return(&pt.RespParacrossTitles{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "ListTitles", req).Return(&pt.RespParacrossTitles{}, nil)
 	_, err := client.ListTitles(context.Background(), req)
 	assert.Nil(t, err)
 }
 
 func TestJrpc_ListTitles(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	j := newJrpc(api)
 	req := &types.ReqNil{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "ListTitles", req).Return(&pt.RespParacrossTitles{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "ListTitles", req).Return(&pt.RespParacrossTitles{}, nil)
 	err := j.ListTitles(req, &result)
 	assert.Nil(t, err)
 }
 
 func TestChannelClient_GetTitleHeight(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &pt.ReqParacrossTitleHeight{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
 	_, err := client.GetTitleHeight(context.Background(), req)
 	assert.Nil(t, err)
 }
 
 func TestChannelClient_GetTitleDoneHeight(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &pt.ReqParacrossTitleHeight{}
-	api.On("Query", pt.GetExecName(), "GetDoneTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetDoneTitleHeight", req).Return(&pt.RespParacrossDone{}, nil)
 	_, err := client.GetDoneTitleHeight(context.Background(), req)
 	assert.Nil(t, err)
 }
 
 func TestJrpc_GetTitleHeight(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	j := newJrpc(api)
 	req := &pt.ReqParacrossTitleHeight{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetTitleHeight", req).Return(&pt.ParacrossHeightStatusRsp{}, nil)
 	err := j.GetTitleHeight(req, &result)
 	assert.Nil(t, err)
 }
 
 func TestChannelClient_GetAssetTxResult(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &types.ReqHash{}
-	api.On("Query", pt.GetExecName(), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
 	_, err := client.GetAssetTxResult(context.Background(), req)
 	assert.Nil(t, err)
 }
 
 func TestJrpc_GetAssetTxResult(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	j := newJrpc(api)
 	req := &types.ReqHash{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
 	err := j.GetAssetTxResult(req, &result)
 	assert.Nil(t, err)
 }
 
 func TestChannelClient_IsSync(t *testing.T) {
+	cfg := types.NewChain33Config(ptestNode.DefaultConfig)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
 	req := &types.ReqNil{}

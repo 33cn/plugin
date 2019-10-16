@@ -14,6 +14,9 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/assert"
 	//"github.com/33cn/chain33/types/jsonpb"
+	"strings"
+	"github.com/stretchr/testify/mock"
+	apimock "github.com/33cn/chain33/client/mocks"
 )
 
 type execEnv struct {
@@ -40,7 +43,8 @@ var (
 )
 
 func TestToken(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	Init(pty.TokenX, cfg, nil)
 	tokenTotal := int64(10000 * 1e8)
 	tokenBurn := int64(10 * 1e8)
 	tokenMint := int64(20 * 1e8)
@@ -68,7 +72,7 @@ func TestToken(t *testing.T) {
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
+		cfg.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
 		1539918074,
 	}
 
@@ -111,6 +115,9 @@ func TestToken(t *testing.T) {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
 	exec := newToken()
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
@@ -137,6 +144,7 @@ func TestToken(t *testing.T) {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
 	exec = newToken()
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)

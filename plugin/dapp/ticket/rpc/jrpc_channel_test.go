@@ -20,9 +20,9 @@ import (
 var mocker *testnode.Chain33Mock
 
 func TestMain(m *testing.M) {
-	cfg, sub := testnode.GetDefaultConfig()
-	cfg.Consensus.Name = "ticket"
-	mocker = testnode.NewWithConfig(cfg, sub, nil)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	mocker = testnode.NewWithConfig(cfg, nil)
 	mocker.Listen()
 	m.Run()
 	mocker.Close()

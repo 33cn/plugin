@@ -24,6 +24,9 @@ import (
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
 	_ "github.com/33cn/plugin/plugin/store/init"
+	"github.com/stretchr/testify/mock"
+	apimocks "github.com/33cn/chain33/client/mocks"
+	drivers "github.com/33cn/chain33/system/consensus"
 )
 
 func TestTicket(t *testing.T) {
@@ -170,13 +173,12 @@ func Test_genPrivHash(t *testing.T) {
 
 func Test_getNextRequiredDifficulty(t *testing.T) {
 	cfg := types.NewChain33Config(types.ReadFile("testdata/chain33.cfg.toml"))
-	mcfg := cfg.GetModuleConfig().Consensus
-	var q = queue.New("channel")
-	q.SetConfig(cfg)
-	clt := New(mcfg, nil)
 
-	clt.SetQueueClient(q.Client())
-	c := clt.(*Client)
+	api := new(apimocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	c := &Client{BaseClient:&drivers.BaseClient{}}
+	c.SetAPI(api)
+
 	bits, bt, err := c.getNextRequiredDifficulty(nil, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, bt, defaultModify)

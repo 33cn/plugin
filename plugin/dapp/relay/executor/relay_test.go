@@ -20,9 +20,12 @@ import (
 	_ "github.com/33cn/chain33/system"
 )
 
+var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+
 func init() {
 	//init some config param
 	testnode.New("", nil)
+	Init(ty.RelayX, chainTestCfg, nil)
 }
 
 type suiteRelay struct {
@@ -67,18 +70,17 @@ func (s *suiteRelay) accountSetup() {
 }
 
 func (s *suiteRelay) SetupSuite() {
-	chainTestCfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	//s.db = new(mocks.KV)
 	s.kvdb = new(mocks.KVDB)
 	accDb, _ := db.NewGoMemDB("relayTestDb", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(accDb)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	api := new(apimock.QueueProtocolAPI)
-	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
-	relay.SetAPI(api)
 	relay.SetChild(relay)
 	relay.SetExecutorType(types.LoadExecutorType(driverName))
 	s.relay = relay
@@ -408,11 +410,13 @@ func (s *suiteBtcHeader) SetupSuite() {
 	s.kvdb = new(mocks.KVDB)
 	//accDb, _ := db.NewGoMemDB("relayTestDb", "test", 128)
 	relay := &relay{}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	relay.SetAPI(api)
 	relay.SetStateDB(s.db)
 	relay.SetLocalDB(s.kvdb)
 	relay.SetEnv(10, 100, 1)
 	relay.SetIsFree(false)
-	relay.SetAPI(nil)
 	relay.SetChild(relay)
 	relay.SetExecutorType(types.LoadExecutorType(driverName))
 	s.relay = relay

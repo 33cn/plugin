@@ -20,6 +20,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"strings"
 )
 
 var (
@@ -422,9 +423,9 @@ func getprivkey(key string) crypto.PrivKey {
 }
 
 func TestToken_validSymbolWithHeight(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
-	forkBadTokenSymbol := types.GetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX)
-	forkTokenSymbolWithNumber := types.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX)
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	forkBadTokenSymbol := cfg.GetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX)
+	forkTokenSymbolWithNumber := cfg.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX)
 	t.Log("x", "1", forkBadTokenSymbol, "2", forkTokenSymbolWithNumber)
 	assert.Equal(t, true, (forkTokenSymbolWithNumber >= forkBadTokenSymbol))
 
@@ -451,7 +452,7 @@ func TestToken_validSymbolWithHeight(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run("validSymbol", func(t *testing.T) {
-			assert.Equal(t, c.expect, validSymbolWithHeight(c.symbol, c.height))
+			assert.Equal(t, c.expect, validSymbolWithHeight(cfg, c.symbol, c.height))
 		})
 	}
 }

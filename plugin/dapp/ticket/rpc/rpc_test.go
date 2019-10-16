@@ -116,7 +116,10 @@ func newJrpc(api client.QueueProtocolAPI) *Jrpc {
 }
 
 func TestChannelClient_BindMiner(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("test")
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("ticket", nil, nil, nil)
 	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
@@ -128,9 +131,9 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	storevalue.Values = append(storevalue.Values, accv)
 	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
 
-	types.SetTitleOnlyForTest("test")
-	cfg, _ := types.InitCfgString(cfgstring)
-	types.Init("test", cfg)
+
+	//cfg, _ := types.InitCfgString(cfgstring)
+	//types.Init("test", cfg)
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
@@ -155,7 +158,9 @@ func TestChannelClient_BindMiner(t *testing.T) {
 }
 
 func testGetTicketCountOK(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	g := newGrpc(api)
 	api.On("QueryConsensusFunc", "ticket", "GetTicketCount", mock.Anything).Return(&types.Int64{}, nil)
 	data, err := g.GetTicketCount(context.Background(), nil)
@@ -222,11 +227,13 @@ func TestJrpc_GetTicketCount(t *testing.T) {
 }
 
 func TestRPC_CallTestNode(t *testing.T) {
-	api := new(mocks.QueueProtocolAPI)
-	cfg, sub := testnode.GetDefaultConfig()
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	// 测试环境下，默认配置的共识为solo，需要修改
-	cfg.Consensus.Name = "ticket"
-	mock33 := testnode.NewWithConfig(cfg, sub, api)
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+
+	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	mock33 := testnode.NewWithConfig(cfg, api)
 	defer func() {
 		mock33.Close()
 		mock.AssertExpectationsForObjects(t, api)

@@ -169,7 +169,11 @@ func TestAddMinerTx(t *testing.T) {
 		MainHeight: 10,
 		MainHash:   []byte("mainhash"),
 		Txs:        filterTxs}
-	para := new(client)
+
+	api := new(apimocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	para := &client{BaseClient:&drivers.BaseClient{}}
+	para.SetAPI(api)
 	para.subCfg = new(subConfig)
 	para.privateKey = priKey
 	para.commitMsgClient = new(commitMsgClient)
