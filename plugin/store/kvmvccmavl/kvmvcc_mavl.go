@@ -96,8 +96,9 @@ type subConfig struct {
 	EnableMavlPrefix bool  `json:"enableMavlPrefix"`
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
+	PruneMavlHeight  int32 `json:"pruneMavlHeight"`
 	EnableMVCCPrune  bool  `json:"enableMVCCPrune"`
-	PruneHeight      int32 `json:"pruneHeight"`
+	PruneMVCCHeight  int32 `json:"pruneMVCCHeight"`
 	// 是否使能内存树
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
@@ -116,12 +117,12 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		types.MustDecode(sub, &subcfg)
 		subKVMVCCcfg.EnableMVCCIter = subcfg.EnableMVCCIter
 		subKVMVCCcfg.EnableMVCCPrune = subcfg.EnableMVCCPrune
-		subKVMVCCcfg.PruneHeight = subcfg.PruneHeight
+		subKVMVCCcfg.PruneHeight = subcfg.PruneMVCCHeight
 
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
-		subMavlcfg.PruneHeight = subcfg.PruneHeight
+		subMavlcfg.PruneHeight = subcfg.PruneMavlHeight
 		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
 		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
 		subMavlcfg.TkCloseCacheLen = subcfg.TkCloseCacheLen
