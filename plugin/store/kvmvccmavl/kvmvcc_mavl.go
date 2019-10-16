@@ -74,7 +74,7 @@ type KVmMavlStore struct {
 
 type subKVMVCCConfig struct {
 	EnableMVCCIter  bool  `json:"enableMVCCIter"`
-	EnableMavlPrune bool  `json:"enableMavlPrune"`
+	EnableMVCCPrune bool  `json:"enableMVCCPrune"`
 	PruneHeight     int32 `json:"pruneHeight"`
 }
 
@@ -96,6 +96,7 @@ type subConfig struct {
 	EnableMavlPrefix bool  `json:"enableMavlPrefix"`
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
+	EnableMVCCPrune  bool  `json:"enableMVCCPrune"`
 	PruneHeight      int32 `json:"pruneHeight"`
 	// 是否使能内存树
 	EnableMemTree bool `json:"enableMemTree"`
@@ -114,7 +115,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 		subKVMVCCcfg.EnableMVCCIter = subcfg.EnableMVCCIter
-		subKVMVCCcfg.EnableMavlPrune = subcfg.EnableMavlPrune
+		subKVMVCCcfg.EnableMVCCPrune = subcfg.EnableMVCCPrune
 		subKVMVCCcfg.PruneHeight = subcfg.PruneHeight
 
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix

@@ -171,6 +171,7 @@ enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
+enableMVCCPrune=false
 pruneHeight=10000
 # 是否使能mavl数据载入内存
 enableMemTree=true
