@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/mock"
-	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"strings"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试
@@ -56,7 +56,7 @@ var (
 	MainBlockHeightForTransfer = int64(9)
 	tempTitle                  = ""
 	chain33TestCfg             = types.NewChain33Config(strings.Replace(testnode.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
-	//chain33TestCfg             = types.NewChain33Config(testnode.DefaultConfig)
+	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"" , 1))
 )
 
 type CommitTestSuite struct {

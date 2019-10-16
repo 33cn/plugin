@@ -92,6 +92,9 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 // 主链先不执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnMainChain() {
 	//types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
 	tx, err := createAssetWithdrawTx(suite.Suite, PrivKeyA, Nodes[1])
 	if err != nil {
 		suite.T().Error("createAssetWithdrawTx", "err", err)
@@ -147,6 +150,10 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnParaChain() {
 // 主链在平行链执行成功后执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawAfterPara() {
 	// types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
+
 	// make coins for transfer
 	acc := account.NewCoinsAccount(chain33TestCfg)
 	acc.SetDB(suite.stateDB)

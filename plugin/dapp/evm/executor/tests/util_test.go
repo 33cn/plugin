@@ -22,9 +22,10 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/client"
+	"strings"
 )
 
-var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+var chainTestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
 
 func init() {
 	evm.Init(evmtypes.ExecutorName, chainTestCfg, nil)

@@ -116,8 +116,7 @@ func newJrpc(api client.QueueProtocolAPI) *Jrpc {
 }
 
 func TestChannelClient_BindMiner(t *testing.T) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("test")
+	cfg := types.NewChain33Config(cfgstring)
 	api := new(mocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
@@ -130,10 +129,6 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
 	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
-
-
-	//cfg, _ := types.InitCfgString(cfgstring)
-	//types.Init("test", cfg)
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")

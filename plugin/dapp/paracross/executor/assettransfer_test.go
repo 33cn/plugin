@@ -18,6 +18,8 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"strings"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -55,10 +57,10 @@ func (suite *AssetTransferTestSuite) SetupTest() {
 	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
-	suite.api = new(apimock.QueueProtocolAPI)
-	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 
 	suite.exec = newParacross().(*Paracross)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 	suite.exec.SetAPI(suite.api)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
@@ -101,6 +103,10 @@ func (suite *AssetTransferTestSuite) SetupTest() {
 
 func (suite *AssetTransferTestSuite) TestExecTransferNobalance() {
 	//types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
+
 	toB := Nodes[1]
 	tx, err := createAssetTransferTx(suite.Suite, PrivKeyD, toB)
 	if err != nil {
@@ -117,6 +123,10 @@ func (suite *AssetTransferTestSuite) TestExecTransferNobalance() {
 
 func (suite *AssetTransferTestSuite) TestExecTransfer() {
 	//types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
+
 	toB := Nodes[1]
 
 	total := 1000 * types.Coin
@@ -163,6 +173,7 @@ func (suite *AssetTransferTestSuite) TestExecTransfer() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferInPara() {
+	chain33TestCfg = types.NewChain33Config(strings.Replace(testnode.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
 	//para_init(Title)
 	toB := Nodes[1]
 
@@ -222,6 +233,10 @@ const TestSymbol = "TEST"
 
 func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 	//types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
+
 	toB := Nodes[1]
 
 	total := 1000 * types.Coin
@@ -267,6 +282,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferTokenInPara() {
+	chain33TestCfg = types.NewChain33Config(strings.Replace(testnode.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
 	// para_init(Title)
 	toB := Nodes[1]
 

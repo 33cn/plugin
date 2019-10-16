@@ -17,18 +17,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var mocker *testnode.Chain33Mock
-
-func TestMain(m *testing.M) {
+func TestJRPCChannel(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
-	mocker = testnode.NewWithConfig(cfg, nil)
+	mocker := testnode.NewWithConfig(cfg, nil)
 	mocker.Listen()
-	m.Run()
-	mocker.Close()
-}
+	defer mocker.Close()
 
-func TestJRPCChannel(t *testing.T) {
 	jrpcClient := mocker.GetJSONC()
 
 	testCases := []struct {
