@@ -156,7 +156,7 @@ func (m *multiDldClient) getConns(inv *inventory) error {
 }
 
 func (m *multiDldClient) tryMultiServerDownload() {
-	if !m.paraClient.subCfg.MultiDownloadOpen {
+	if m.paraClient.subCfg.MultiDownloadClose {
 		return
 	}
 
