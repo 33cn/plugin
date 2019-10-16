@@ -213,7 +213,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 		startHeight = lastBlock.Height
 	}
 
-	depth := client.subCfg.SearchHashMatchedBlockDepth
+	depth := defaultSearchMatchedBlockDepth
 	for height := startHeight; height > 0 && depth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
 		if err != nil {
@@ -228,7 +228,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", block.MainHeight,
 					"mainHash", hex.EncodeToString(block.MainHash), "search startHeight", lastBlock.Height, "curHeight", height,
-					"search depth", client.subCfg.SearchHashMatchedBlockDepth)
+					"search depth", defaultSearchMatchedBlockDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
