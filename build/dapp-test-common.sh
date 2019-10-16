@@ -14,8 +14,6 @@ echo_rst() {
         echo -e "${GRE}$1 ok${NOC}"
     elif [ "$2" -eq 2 ]; then
         echo -e "${GRE}$1 not support${NOC}"
-        CASE_ERR="err"
-        echo $CASE_ERR
     else
         echo -e "${RED}$1 fail${NOC}"
         CASE_ERR="err"
@@ -184,6 +182,19 @@ chain33_applyCoins() {
     local poolAddr="1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx"
     chain33_SendToAddress "${poolAddr}" "${targetAddr}" "$count" "${ip}"
 
+}
+
+chain33_RpcTestBegin() {
+    echo -e "${GRE}====== $1 Rpc Test Begin ===========${NOC}"
+}
+
+chain33_RpcTestRst() {
+    if [ -n "$2" ]; then
+        echo -e "${RED}====== $1 Rpc Test Fail ===========${NOC}"
+        exit 1
+    else
+        echo -e "${GRE}====== $1 Rpc Test Pass ===========${NOC}"
+    fi
 }
 
 chain33_debug_function() {
