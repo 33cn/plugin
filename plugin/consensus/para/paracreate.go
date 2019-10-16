@@ -318,7 +318,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if client.subCfg.FetchFilterParaTxsEnable && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+		if !client.subCfg.FetchFilterParaTxsClose && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
 			return client.subCfg.BatchFetchBlockCount - 1, nil
 		}
 		return 0, nil
@@ -432,7 +432,7 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 }
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	if client.subCfg.FetchFilterParaTxsEnable {
+	if !client.subCfg.FetchFilterParaTxsClose {
 		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 	}
 
