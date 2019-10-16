@@ -45,5 +45,6 @@ const (
 	CollateralizeUserStatusCreate = 1 + iota
 	CollateralizeUserStatusWarning
 	CollateralizeUserStatusSystemLiquidate
+	CollateralizeUserStatusExpire
 	CollateralizeUserStatusClose
 )

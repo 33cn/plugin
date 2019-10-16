@@ -137,7 +137,6 @@ func CreateRawCollateralizeCreateTx(parm *CollateralizeCreateTx) (*types.Transac
 		DebtCeiling:    parm.DebtCeiling,
 		LiquidationRatio:   parm.LiquidationRatio,
 		StabilityFee:  parm.StabilityFee,
-		LiquidationPenalty: parm.LiquidationPenalty,
 		TotalBalance:  parm.TotalBalance,
 	}
 	create := &CollateralizeAction{

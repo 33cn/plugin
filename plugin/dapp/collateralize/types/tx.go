@@ -9,7 +9,6 @@ type CollateralizeCreateTx struct {
 	DebtCeiling         int64 `json:"debtCeiling"`
 	LiquidationRatio    float32 `json:"liquidationRatio"`
 	StabilityFee        int64 `json:"stabilityFee"`
-	LiquidationPenalty  int64 `json:"liquidationPenalty"`
 	TotalBalance        int64 `json:"totalBalance"`
 	Fee                 int64  `json:"fee"`
 }
@@ -37,7 +36,7 @@ type CollateralizeAppendTx struct {
 
 // CollateralizeFeedTx for construction
 type CollateralizeFeedTx struct {
-	Price     []int64  `json:"price"`
+	Price     []float32  `json:"price"`
 	Volume    []int64  `json:"volume"`
 	Fee       int64  `json:"fee"`
 }

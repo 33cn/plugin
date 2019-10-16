@@ -4,18 +4,20 @@ package types;
 
 // 借贷信息
 message Collateralize {
-    string      collateralizeId         = 1; //借贷ID,一期借贷对应一个ID
-    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
-    int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio        = 4; //清算比例
-    int64       stabilityFee            = 5; //稳定费
-    int64       liquidationPenalty      = 6; //清算罚金
-    string      createAddr              = 7; //创建人地址
-    int64       balance                 = 8; //剩余可借贷金额(ccny)
-    repeated BorrowRecord borrowRecords = 9; //借贷记录
-    int32       status                  = 10;//当期借贷的状态，是否关闭
-    int32       collType                = 11;//质押资产类型(1，bty，2，btc，3，eth...)
-    float       latestLiquidationPrice  = 12;//最大清算价格
+    string      collateralizeId          = 1; //借贷ID,一期借贷对应一个ID
+    int64       totalBalance             = 2; //当期可借贷的总金额(ccny)
+    int64       debtCeiling              = 3; //单用户可借出的限额(ccny)
+    float       liquidationRatio         = 4; //清算比例
+    int64       stabilityFee             = 5; //稳定费
+    string      createAddr               = 6; //创建人地址
+    int64       balance                  = 7; //剩余可借贷金额(ccny)
+    repeated BorrowRecord borrowRecords  = 8; //借贷记录
+    repeated BorrowRecord InvalidRecords = 9; //失效的借贷记录
+    int32       status                   = 10;//当期借贷的状态，是否关闭
+    int32       collType                 = 11;//质押资产类型(1，bty，2，btc，3，eth...)
+    float       latestLiquidationPrice   = 12;//最高清算价格
+    int64       period                   = 13;//借贷最大期限
+    int64       latestExpireTime         = 14;//最近超期时间
 }
 
 // 借出记录
@@ -28,6 +30,7 @@ message BorrowRecord {
     float       liquidationPrice     = 6; //抵押物清算价格
     int32       status               = 7; //抵押状态，是否被清算
     int64       liquidateTime        = 8; //清算时间
+    int64       expireTime           = 9; //超时清算时间
 }
 
 // 资产价格记录
@@ -57,8 +60,7 @@ message CollateralizeCreate {
     int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
     float liquidationRatio   = 2; //清算比例
     int64 stabilityFee       = 3; //稳定费
-    int64 liquidationPenalty = 4; //清算罚金
-    int64 totalBalance       = 5; //可借贷总金额
+    int64 totalBalance       = 4; //可借贷总金额
 }
 
 // 质押借出
@@ -160,11 +162,6 @@ message RepCollateralizeIDs {
 message ReqCollateralizeBorrowInfoByAddr {
     string collateralizeId = 1;
     string addr            = 2;
-}
-
-// 返回借贷记录
-message RepCollateralizeBorrowInfo {
-    BorrowRecord record = 1;
 }
 
 // 根据状态和借贷ID混合查询具体借贷记录

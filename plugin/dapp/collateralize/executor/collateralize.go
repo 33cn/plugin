@@ -140,3 +140,16 @@ func (c *Collateralize) deleteCollateralizeRecordStatus(collateralizelog *pty.Re
 	kvs = append(kvs, kv)
 	return kvs
 }
+
+// CheckReceiptExecOk return true to check if receipt ty is ok
+func (c *Collateralize) CheckReceiptExecOk() bool {
+	return true
+}
+
+// ExecutorOrder 设置localdb的EnableRead
+func (c *Collateralize) ExecutorOrder() int64 {
+	if types.IsFork(c.GetHeight(), "ForkLocalDBAccess") {
+		return drivers.ExecLocalSameTime
+	}
+	return c.DriverBase.ExecutorOrder()
+}

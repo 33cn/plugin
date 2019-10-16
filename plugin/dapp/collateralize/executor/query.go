@@ -21,7 +21,6 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		TotalBalance:       coll.TotalBalance,
 		DebtCeiling:        coll.DebtCeiling,
 		LiquidationRatio:   coll.LiquidationRatio,
-		LiquidationPenalty: coll.LiquidationPenalty,
 		StabilityFee:       coll.StabilityFee,
 		CreateAddr:         coll.CreateAddr,
 		Balance:            coll.Balance,
@@ -42,7 +41,6 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			TotalBalance:       coll.TotalBalance,
 			DebtCeiling:        coll.DebtCeiling,
 			LiquidationRatio:   coll.LiquidationRatio,
-			LiquidationPenalty: coll.LiquidationPenalty,
 			StabilityFee:       coll.StabilityFee,
 			CreateAddr:         coll.CreateAddr,
 			Balance:            coll.Balance,
@@ -89,6 +87,7 @@ func (c *Collateralize) Query_CollateralizeBorrowInfoByAddr(req *pty.ReqCollater
 		return nil, err
 	}
 
+	ret := &pty.RepCollateralizeBorrowInfos{}
 	for _, record := range records {
 		if record.CollateralizeId == req.CollateralizeId {
 			coll, err := queryCollateralizeByID(c.GetStateDB(), record.CollateralizeId)
@@ -99,9 +98,13 @@ func (c *Collateralize) Query_CollateralizeBorrowInfoByAddr(req *pty.ReqCollater
 
 			for _, borrowRecord := range coll.BorrowRecords {
 				if borrowRecord.AccountAddr == req.Addr {
-					ret := &pty.RepCollateralizeBorrowInfo{}
-					ret.Record = borrowRecord
-					return ret, nil
+					ret.Record = append(ret.Record, borrowRecord)
+				}
+			}
+
+			for _, borrowRecord := range coll.InvalidRecords {
+				if borrowRecord.AccountAddr == req.Addr {
+					ret.Record = append(ret.Record, borrowRecord)
 				}
 			}
 		}
@@ -126,6 +129,12 @@ func (c *Collateralize) Query_CollateralizeBorrowInfoByStatus(req *pty.ReqCollat
 		}
 
 		for _, borrowRecord := range coll.BorrowRecords {
+			if borrowRecord.Status == req.Status {
+				ret.Record = append(ret.Record, borrowRecord)
+			}
+		}
+
+		for _, borrowRecord := range coll.InvalidRecords {
 			if borrowRecord.Status == req.Status {
 				ret.Record = append(ret.Record, borrowRecord)
 			}
