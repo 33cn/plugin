@@ -85,7 +85,7 @@ func serveHTTPRaftAPI(ctx context.Context, port int, confChangeC chan<- raftpb.C
 	case err := <-errorC:
 		srv.Close()
 		if err != nil {
-		    rlog.Error(fmt.Sprintf("the errorC chan receive a err (%v)\n", err.Error()))
+			rlog.Error(fmt.Sprintf("the errorC chan receive a err (%v)\n", err.Error()))
 		}
 	}
 }
