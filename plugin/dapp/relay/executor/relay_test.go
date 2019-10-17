@@ -11,7 +11,6 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -23,8 +22,6 @@ import (
 var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
 
 func init() {
-	//init some config param
-	testnode.New("", nil)
 	Init(ty.RelayX, chainTestCfg, nil)
 }
 
