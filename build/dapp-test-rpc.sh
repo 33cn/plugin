@@ -11,7 +11,7 @@ function dapp_test_rpc() {
         cp "$DAPP_TEST_COMMON" dapptest/
         cd dapptest || return
 
-        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///' | sort)
+        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         parallel -k --retries 3 --joblog ./testlog ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         echo "check dapps test log"
