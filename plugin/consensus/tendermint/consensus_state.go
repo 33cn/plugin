@@ -744,9 +744,9 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	baseTx := cs.createBaseTx(block.TendermintBlock)
 	block.Data.Txs[0] = baseTx
 	block.Data.TxHash = merkle.CalcMerkleRoot(block.Data.Txs)
-	pblockNew := cs.client.ExecBlock(block.Data)
+	pblockNew := cs.client.PreExecBlock(block.Data, false)
 	if pblockNew == nil {
-		tendermintlog.Error("createProposalBlock ExecBlock fail")
+		tendermintlog.Error("createProposalBlock PreExecBlock fail")
 		return nil
 	}
 	block.Data = pblockNew
@@ -817,16 +817,16 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 		return
 	}
 
-	// Exec proposal block
+	// PreExec proposal block
 	blockCopy := *cs.ProposalBlock.Data
-	blockNew := cs.client.ExecBlock(&blockCopy)
+	blockNew := cs.client.PreExecBlock(&blockCopy, true)
 	if blockNew == nil {
-		tendermintlog.Error("enterPrevote: Exec ProposalBlock fail")
+		tendermintlog.Error("enterPrevote: PreExec ProposalBlock fail")
 		cs.signAddVote(ttypes.VoteTypePrevote, nil)
 		return
 	}
 	if !bytes.Equal(blockNew.Hash(), cs.ProposalBlock.Data.Hash()) {
-		tendermintlog.Error("enterPrevote: Exec ProposalBlock has change")
+		tendermintlog.Error("enterPrevote: PreExec ProposalBlock has change")
 		cs.signAddVote(ttypes.VoteTypePrevote, nil)
 		return
 	}
