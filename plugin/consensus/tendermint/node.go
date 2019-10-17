@@ -42,8 +42,6 @@ const (
 
 	minReadBufferSize  = 1024
 	minWriteBufferSize = 65536
-
-	broadcastEvidenceIntervalS = 60 // broadcast uncommitted evidence this often
 )
 
 // Parallel method

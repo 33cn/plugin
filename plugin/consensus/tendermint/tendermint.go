@@ -473,7 +473,7 @@ func (client *Client) CommitBlock(block *types.Block) error {
 	retErr := client.WriteBlock(nil, block)
 	if retErr != nil {
 		tendermintlog.Info("CommitBlock fail", "err", retErr)
-		if client.WaitBlock(block.Height) == true {
+		if client.WaitBlock(block.Height) {
 			curBlock, err := client.RequestBlock(block.Height)
 			if err == nil {
 				if bytes.Equal(curBlock.Hash(), block.Hash()) {

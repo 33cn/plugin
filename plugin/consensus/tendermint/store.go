@@ -6,6 +6,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -65,7 +66,7 @@ func (cs *ConsensusStore) LoadSeenCommit(height int64) *tmtypes.TendermintCommit
 }
 
 // SaveConsensusState save state and seenCommit
-func (cs *ConsensusStore) SaveConsensusState(height int64, state *tmtypes.State, sc *tmtypes.TendermintCommit) error {
+func (cs *ConsensusStore) SaveConsensusState(height int64, state *tmtypes.State, sc proto.Message) error {
 	seenCommitBytes := types.Encode(sc)
 	stateBytes := types.Encode(state)
 	batch := cs.db.NewBatch(true)
