@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 
+
 RPC_TESTFILE=test-rpc.sh
 DAPP_TEST_COMMON=dapp-test-common.sh
 
