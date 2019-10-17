@@ -26,6 +26,26 @@ import (
 var cfgstring = `
 Title="test"
 
+[mempool]
+poolCacheSize=102400
+minTxFee=100000
+maxTxNumPerAccount=100
+
+[exec]
+isFree=false
+minExecFee=100000
+enableStat=false
+enableMVCC=false
+
+[wallet]
+minFee=100000
+driver="leveldb"
+dbPath="wallet"
+dbCache=16
+signType="secp256k1"
+minerdisable=false
+minerwhitelist=["*"]
+
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
 powLimitBits = "0x1f00ffff"
@@ -43,6 +63,46 @@ ticketWithdrawTime = 10
 ticketMinerWaitTime = 2
 targetTimespan = 2304
 targetTimePerBlock = 16
+
+[mver.consensus.ticket.ForkChainParamV1]
+ticketPrice = 3000
+
+[mver.consensus.ticket.ForkChainParamV2]
+ticketPrice = 6000
+
+[fork.system]
+ForkChainParamV1= 10
+ForkChainParamV2= 20
+ForkStateDBSet=-1
+ForkCheckTxDup=0
+ForkBlockHash= 1
+ForkMinerTime= 10
+ForkTransferExec= 100000
+ForkExecKey= 200000
+ForkTxGroup= 200000
+ForkResetTx0= 200000
+ForkWithdraw= 200000
+ForkExecRollback= 450000
+ForkTxHeight= -1
+ForkTxGroupPara= -1
+ForkCheckBlockTime=1200000
+ForkMultiSignAddress=1298600
+ForkBlockCheck=1
+ForkLocalDBAccess=0
+ForkBase58AddressCheck=1800000
+ForkEnableParaRegExec=0
+ForkCacheDriver=0
+ForkTicketFundAddrV1=-1
+[fork.sub.coins]
+Enable=0
+
+[fork.sub.manage]
+Enable=0
+ForkManageExec=100000
+
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=1
+
 `
 
 func newGrpc(api client.QueueProtocolAPI) *channelClient {
@@ -59,17 +119,18 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	client := newGrpc(api)
 	client.Init("ticket", nil, nil, nil)
-	head := &types.Header{StateHash: []byte("sdfadasds")}
-	api.On("GetLastHeader").Return(head, nil)
+	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
+	api.On("GetLastHeader").Return(head, nil).Times(4)
 
 	var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100000 * types.Coin}
 	accv := types.Encode(acc)
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
-	api.On("StoreGet", mock.Anything).Return(storevalue, nil)
+	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
 
 	types.SetTitleOnlyForTest("test")
-	types.InitCfgString(cfgstring)
+	cfg, _ := types.InitCfgString(cfgstring)
+	types.Init("test", cfg)
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
@@ -81,6 +142,16 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
+
+	in.Amount = 200000 * types.Coin
+	_, err = client.CreateBindMiner(context.Background(), in)
+	assert.Equal(t, types.ErrNoBalance, err)
+
+	head.Height = 20 //ForkChainParamV2
+	api.On("GetLastHeader").Return(head, nil).Times(2)
+	_, err = client.CreateBindMiner(context.Background(), in)
+	assert.Equal(t, types.ErrAmount, err)
+
 }
 
 func testGetTicketCountOK(t *testing.T) {
