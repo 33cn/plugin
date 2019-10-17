@@ -128,30 +128,16 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	storevalue.Values = append(storevalue.Values, accv)
 	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
 
-	types.SetTitleOnlyForTest("test")
-	cfg, _ := types.InitCfgString(cfgstring)
-	types.Init("test", cfg)
-
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
 	var in = &ty.ReqBindMiner{
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		Amount:       10000 * types.Coin,
-		CheckBalance: true,
+		CheckBalance: false,
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
-
-	in.Amount = 200000 * types.Coin
-	_, err = client.CreateBindMiner(context.Background(), in)
-	assert.Equal(t, types.ErrNoBalance, err)
-
-	head.Height = 20 //ForkChainParamV2
-	api.On("GetLastHeader").Return(head, nil).Times(2)
-	_, err = client.CreateBindMiner(context.Background(), in)
-	assert.Equal(t, types.ErrAmount, err)
-
 }
 
 func testGetTicketCountOK(t *testing.T) {
