@@ -2,7 +2,7 @@ package testnode
 
 //DefaultConfig default config for testnode
 var DefaultConfig = `
-Title="user.p.guodun."
+Title="user.p.test."
 CoinSymbol="bty"
 # TestNet=true
 

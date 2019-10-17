@@ -12,7 +12,6 @@ import (
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin"
-	"strings"
 )
 
 func TestClose(t *testing.T) {
@@ -34,7 +33,7 @@ func TestParaNodeMempool(t *testing.T) {
 	main := testnode.New("", nil)
 	main.Listen()
 
-	chainCfg := types.NewChain33ConfigNoInit(strings.Replace(paratest.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
+	chainCfg := types.NewChain33ConfigNoInit(paratest.DefaultConfig)
 	testnode.ModifyParaClient(chainCfg, main.GetCfg().RPC.GrpcBindAddr)
 	cfg := chainCfg.GetModuleConfig()
 	cfg.Mempool.Name = "para"

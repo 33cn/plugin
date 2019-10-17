@@ -22,7 +22,6 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
-// TODO 调整InitExecType的大小写
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&ValNode{}))

@@ -18,7 +18,6 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"strings"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"github.com/stretchr/testify/mock"
 )
@@ -173,7 +172,7 @@ func (suite *AssetTransferTestSuite) TestExecTransfer() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferInPara() {
-	chain33TestCfg = types.NewChain33Config(strings.Replace(testnode.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
+	chain33TestCfg = types.NewChain33Config(testnode.DefaultConfig)
 	//para_init(Title)
 	toB := Nodes[1]
 
@@ -282,7 +281,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 }
 
 func (suite *AssetTransferTestSuite) TestExecTransferTokenInPara() {
-	chain33TestCfg = types.NewChain33Config(strings.Replace(testnode.DefaultConfig, "Title=\"user.p.guodun.\"", "Title=\"user.p.test.\"" , 1))
+	chain33TestCfg = types.NewChain33Config(testnode.DefaultConfig)
 	// para_init(Title)
 	toB := Nodes[1]
 
