@@ -82,7 +82,6 @@ func TestFingerprint(t *testing.T) {
 	assert.True(t, bytes.Equal(finger, arr[0:6]))
 }
 
-
 var (
 	goIndex      = 0
 	goIndexMutex sync.Mutex
