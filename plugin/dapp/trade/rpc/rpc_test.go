@@ -10,9 +10,9 @@ import (
 
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/types"
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/mock"
 )
 

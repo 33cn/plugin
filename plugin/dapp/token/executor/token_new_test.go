@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"strings"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -20,7 +22,6 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	"strings"
 )
 
 var (
@@ -423,7 +424,7 @@ func getprivkey(key string) crypto.PrivKey {
 }
 
 func TestToken_validSymbolWithHeight(t *testing.T) {
-	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	forkBadTokenSymbol := cfg.GetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX)
 	forkTokenSymbolWithNumber := cfg.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX)
 	t.Log("x", "1", forkBadTokenSymbol, "2", forkTokenSymbolWithNumber)

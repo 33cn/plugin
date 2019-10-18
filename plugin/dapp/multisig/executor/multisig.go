@@ -32,7 +32,6 @@ var multisiglog = log.New("module", "execs.multisig")
 
 var driverName = "multisig"
 
-
 // Init multisig模块初始化
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newMultiSig, cfg.GetDappFork(driverName, "Enable"))

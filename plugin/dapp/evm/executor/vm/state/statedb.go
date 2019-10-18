@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	"github.com/33cn/chain33/client"
 )
 
 // MemoryStateDB 内存状态数据库，保存在区块操作时内部的数据变更操作

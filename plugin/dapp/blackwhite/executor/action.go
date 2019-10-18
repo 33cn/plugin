@@ -11,12 +11,12 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
-	"github.com/33cn/chain33/client"
 )
 
 const (

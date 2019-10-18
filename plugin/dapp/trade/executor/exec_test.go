@@ -7,7 +7,10 @@ package executor
 import (
 	"testing"
 
+	"strings"
+
 	"github.com/33cn/chain33/account"
+	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -17,8 +20,6 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apimock "github.com/33cn/chain33/client/mocks"
-	"strings"
 )
 
 type execEnv struct {
@@ -53,7 +54,7 @@ var (
 		[]byte("1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"),
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
-    chain33TestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	chain33TestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 )
 
 func init() {

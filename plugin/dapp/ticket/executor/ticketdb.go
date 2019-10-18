@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
@@ -21,7 +22,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	"github.com/33cn/chain33/client"
 )
 
 var tlog = log.New("module", "ticket.db")

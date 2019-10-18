@@ -7,6 +7,7 @@ package executor
 import (
 	"testing"
 
+	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/mocks"
@@ -14,7 +15,6 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	apimock "github.com/33cn/chain33/client/mocks"
 
 	_ "github.com/33cn/chain33/system"
 )

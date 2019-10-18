@@ -14,11 +14,11 @@ import (
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
+	ptestNode "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"
-	ptestNode "github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 )
 
 func newGrpc(api client.QueueProtocolAPI) *channelClient {

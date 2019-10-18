@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/account"
+	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
@@ -13,7 +14,6 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/pokerbull/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apimock "github.com/33cn/chain33/client/mocks"
 )
 
 type execEnv struct {
@@ -34,7 +34,7 @@ var (
 func TestPokerbull(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	Init(pkt.PokerBullX, cfg,nil)
+	Init(pkt.PokerBullX, cfg, nil)
 	total := 1000 * types.Coin
 	accountA := types.Account{
 		Balance: total,

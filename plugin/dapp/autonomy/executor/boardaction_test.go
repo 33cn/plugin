@@ -8,12 +8,14 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	commonlog "github.com/33cn/chain33/common/log"
+	"github.com/33cn/chain33/queue"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -23,8 +25,6 @@ import (
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
 )
 
 // ExecEnv exec environment

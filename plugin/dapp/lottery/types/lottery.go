@@ -31,7 +31,6 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(LotteryX, NewType(cfg))
 }
 
-
 // LotteryType def
 type LotteryType struct {
 	types.ExecTypeBase
@@ -68,7 +67,7 @@ func (lottery *LotteryType) GetPayload() types.Message {
 // CreateTx method
 func (lottery LotteryType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	llog.Debug("lottery.CreateTx", "action", action)
-    cfg := lottery.GetConfig()
+	cfg := lottery.GetConfig()
 	if action == "LotteryCreate" {
 		var param LotteryCreateTx
 		err := json.Unmarshal(message, &param)

@@ -36,8 +36,8 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 	if err != nil {
 		return nil, err
 	}
-  
-    cfg := g.GetConfig()
+
+	cfg := g.GetConfig()
 	if in.CheckBalance {
 		header, err := g.GetLastHeader()
 		if err != nil {

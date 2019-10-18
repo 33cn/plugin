@@ -61,7 +61,7 @@ var (
 func init() {
 	commonlog.SetLogLevel("debug")
 	types.AllowUserExec = append(types.AllowUserExec, []byte("coins"))
-	Init(mty.MultiSigX, chainTestCfg,nil)
+	Init(mty.MultiSigX, chainTestCfg, nil)
 }
 
 //创建一个多重签名的账户

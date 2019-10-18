@@ -16,12 +16,12 @@ import (
 
 	apimocks "github.com/33cn/chain33/client/mocks"
 	_ "github.com/33cn/chain33/system"
+	drivers "github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
 	typesmocks "github.com/33cn/chain33/types/mocks"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
-	drivers "github.com/33cn/chain33/system/consensus"
-	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 )
 
 func init() {
@@ -45,7 +45,7 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 	cfg := types.NewChain33Config(testnode.DefaultConfig)
 	api := new(apimocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
-	para := &client{BaseClient:&drivers.BaseClient{}}
+	para := &client{BaseClient: &drivers.BaseClient{}}
 	para.SetAPI(api)
 
 	para.subCfg = new(subConfig)
@@ -87,8 +87,7 @@ func TestGetConsensusStatus(t *testing.T) {
 
 	api := new(apimocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(chain33Cfg, nil)
-	para := &client{BaseClient:&drivers.BaseClient{}}
-
+	para := &client{BaseClient: &drivers.BaseClient{}}
 
 	para.subCfg = new(subConfig)
 	grpcClient := &typesmocks.Chain33Client{}
@@ -127,7 +126,7 @@ func TestSendCommitMsg(t *testing.T) {
 	cfg := types.NewChain33Config(testnode.DefaultConfig)
 	api := new(apimocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
-	para := &client{BaseClient:&drivers.BaseClient{}}
+	para := &client{BaseClient: &drivers.BaseClient{}}
 	para.SetAPI(api)
 
 	grpcClient := &typesmocks.Chain33Client{}

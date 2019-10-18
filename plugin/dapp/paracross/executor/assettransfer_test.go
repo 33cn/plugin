@@ -17,8 +17,8 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
 )
 

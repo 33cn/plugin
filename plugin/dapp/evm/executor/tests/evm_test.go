@@ -15,15 +15,15 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
 )
 
 func TestVM(t *testing.T) {

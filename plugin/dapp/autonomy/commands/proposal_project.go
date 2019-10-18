@@ -9,12 +9,13 @@ import (
 
 	"strings"
 
+	"fmt"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
-	"fmt"
 )
 
 // ProposalProjectCmd 创建提案命令

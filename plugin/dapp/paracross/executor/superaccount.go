@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-
 func deepCopy(dst, src interface{}) error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(src); err != nil {

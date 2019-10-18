@@ -18,8 +18,6 @@ var (
 	KeyPrefixPangLocal = "LODB-echo-pang:%s"
 )
 
-
-
 // Init 本执行器的初始化动作，向系统注册本执行器，这里生效高度暂写为0
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	dapp.Register(cfg, echotypes.EchoX, newEcho, 0)

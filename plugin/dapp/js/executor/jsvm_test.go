@@ -23,7 +23,7 @@ import (
 
 func initExec(ldb db.DB, kvdb db.KVDB, code string, t assert.TestingT) *js {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	Init(ptypes.JsX, cfg,nil)
+	Init(ptypes.JsX, cfg, nil)
 
 	e := newjs().(*js)
 

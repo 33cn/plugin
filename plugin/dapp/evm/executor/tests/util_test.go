@@ -9,10 +9,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"strings"
+
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -20,12 +24,9 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
-	"strings"
 )
 
-var chainTestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+var chainTestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 
 func init() {
 	evm.Init(evmtypes.ExecutorName, chainTestCfg, nil)

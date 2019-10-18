@@ -21,7 +21,7 @@ var (
 	alog         = log.New("module", "execs.autonomy")
 	driverName   = auty.AutonomyX
 	autonomyAddr = address.ExecAddress(auty.AutonomyX)
-	subcfg          subConfig
+	subcfg       subConfig
 )
 
 // Init 重命名执行器名称

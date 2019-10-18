@@ -7,19 +7,19 @@ package executor
 import (
 	"testing"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/queue"
 )
 
 var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
 
-func newTestAutonomy() *Autonomy{
+func newTestAutonomy() *Autonomy {
 	au := &Autonomy{
 		dapp.DriverBase{},
 	}
