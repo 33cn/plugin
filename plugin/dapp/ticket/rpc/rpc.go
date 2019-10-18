@@ -42,6 +42,10 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 		if err != nil {
 			return nil, err
 		}
+		price := ty.GetTicketMinerParam(header.Height).TicketPrice
+		if price == 0 {
+			return nil, types.ErrInvalidParam
+		}
 		if in.Amount%ty.GetTicketMinerParam(header.Height).TicketPrice != 0 || in.Amount < 0 {
 			return nil, types.ErrAmount
 		}

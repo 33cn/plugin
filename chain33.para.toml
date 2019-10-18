@@ -36,7 +36,8 @@ dbCache=64
 isStrongConsistency=true
 singleMode=true
 batchsync=false
-isRecordBlockSequence=false
+#平行链钱包通过平行链区块seqence索引高度，缺省是true
+isRecordBlockSequence=true
 isParaChain = true
 enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
@@ -99,8 +100,6 @@ startHeight=345850
 writeBlockSeconds=2
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
-#云端主链节点切换后，平行链适配新主链节点block，回溯查找和自己记录的相同blockhash的深度
-searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
@@ -140,7 +139,9 @@ enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
-pruneHeight=10000
+pruneMavlHeight=10000
+enableMVCCPrune=false
+pruneMVCCHeight=10000
 # 是否使能mavl数据载入内存
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
