@@ -155,6 +155,7 @@ func (m *multiDldClient) getConns(inv *inventory) error {
 	return nil
 }
 
+//缺省不打开，因为有些节点下载时间不稳定，容易超时出错，后面看怎么优化
 func (m *multiDldClient) tryMultiServerDownload() {
 	if !m.paraClient.subCfg.MultiDownloadOpen {
 		return
