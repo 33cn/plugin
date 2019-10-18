@@ -43,6 +43,7 @@ var (
 	//mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
 )
 
+// KVMCCCConfig KVMCCC config
 type KVMCCCConfig struct {
 	EnableMVCCIter  bool
 	EnableMavlPrune bool
