@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
 	"testing"
@@ -83,13 +82,6 @@ func TestFingerprint(t *testing.T) {
 	assert.True(t, bytes.Equal(finger, arr[0:6]))
 }
 
-func TestKill(t *testing.T) {
-	c := make(chan os.Signal)
-	signal.Notify(c)
-	go Kill()
-	s := <-c
-	assert.True(t, s.String() == "terminated")
-}
 
 var (
 	goIndex      = 0
@@ -116,17 +108,6 @@ func TestParallel(t *testing.T) {
 	f2 := test
 	f2()
 	assert.True(t, goSum == 2)
-	/*
-		goSumMutex.Lock()
-		goSum = 0
-		goSumMutex.Unlock()
-
-
-			Parallel(f1, f2)
-			goSumMutex.Lock()
-			assert.True(t, goSum == 2)
-			goSumMutex.Unlock()
-	*/
 }
 
 func TestRandInt63n(t *testing.T) {
