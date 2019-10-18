@@ -11,11 +11,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
