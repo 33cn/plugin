@@ -137,11 +137,6 @@ func (cs *ConsensusState) IsRunning() bool {
 }
 
 //----------------------------------------
-// String returns a string.
-func (cs *ConsensusState) String() string {
-	// better not to access shared variables
-	return fmt.Sprintf("ConsensusState") //(H:%v R:%v S:%v", cs.Height, cs.Round, cs.Step)
-}
 
 // GetState returns a copy of the chain state.
 func (cs *ConsensusState) GetState() State {
@@ -443,7 +438,7 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 }
 
 func (cs *ConsensusState) handleTimeout(ti timeoutInfo, rs ttypes.RoundState) {
-	tendermintlog.Debug("Received tock", "timeout", ti.Duration, "height", ti.Height, "round", ti.Round, "step", ti.Step)
+	tendermintlog.Debug("Received tock", "timeout", ti.String())
 
 	// timeouts must be for current height, round, step
 	if ti.Height != rs.Height || ti.Round < rs.Round || (ti.Round == rs.Round && ti.Step < rs.Step) {

@@ -407,15 +407,28 @@ func (client *Client) CreateBlock() {
 		if issleep {
 			time.Sleep(time.Second)
 		}
-		if !client.CheckTxsAvailable() {
+		height, err := client.getLastHeight()
+		if err != nil {
+			issleep = true
+			continue
+		}
+		if !client.CheckTxsAvailable(height) {
 			issleep = true
 			continue
 		}
 		issleep = false
 
-		client.txsAvailable <- client.GetCurrentHeight() + 1
+		client.txsAvailable <- height + 1
 		time.Sleep(time.Duration(timeoutTxAvail) * time.Millisecond)
 	}
+}
+
+func (client *Client) getLastHeight() (int64, error) {
+	lastBlock, err := client.RequestLastBlock()
+	if err != nil {
+		return -1, err
+	}
+	return lastBlock.Height, nil
 }
 
 // TxsAvailable check available channel
@@ -429,9 +442,9 @@ func (client *Client) StopC() <-chan struct{} {
 }
 
 // CheckTxsAvailable check whether some new transactions arriving
-func (client *Client) CheckTxsAvailable() bool {
+func (client *Client) CheckTxsAvailable(height int64) bool {
 	txs := client.RequestTx(10, nil)
-	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
+	txs = client.CheckTxDup(txs, height)
 	return len(txs) != 0
 }
 
@@ -495,10 +508,9 @@ func (client *Client) CommitBlock(block *types.Block) error {
 // WaitBlock by height
 func (client *Client) WaitBlock(height int64) bool {
 	retry := 0
-	var newHeight int64
 	for {
-		newHeight = client.GetCurrentHeight()
-		if newHeight >= height {
+		newHeight, err := client.getLastHeight()
+		if err == nil && newHeight >= height {
 			return true
 		}
 		retry++

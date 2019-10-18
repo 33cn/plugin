@@ -163,10 +163,8 @@ func (b *TendermintBlock) StringIndented(indent string) string {
 	return Fmt(`Block{
 %s  %v
 %s  %v
-%s  %v
 %s}#%v`,
 		indent, header.StringIndented(indent+"  "),
-		//		indent, b.Evidence.StringIndented(indent+"  "),
 		indent, lastCommit.StringIndented(indent+"  "),
 		indent, b.Hash())
 }

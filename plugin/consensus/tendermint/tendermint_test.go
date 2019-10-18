@@ -11,6 +11,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"testing"
@@ -52,12 +53,12 @@ func init() {
 	log.SetLogLevel("info")
 }
 func TestTendermintPerf(t *testing.T) {
-	TendermintPerf()
+	TendermintPerf(t)
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
 
-func TendermintPerf() {
+func TendermintPerf(t *testing.T) {
 	q, chain, s, mem, exec, cs, p2p := initEnvTendermint()
 	defer chain.Close()
 	defer mem.Close()
@@ -75,6 +76,7 @@ func TendermintPerf() {
 		NormPut()
 		time.Sleep(time.Second)
 	}
+	CheckState(t, cs.(*Client))
 	AddNode()
 	for i := 0; i < loopCount*3; i++ {
 		NormPut()
@@ -196,7 +198,7 @@ func AddNode() {
 	action := &ty.ValNodeAction{Value: nput, Ty: ty.ValNodeActionUpdate}
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
-	tx.Nonce = r.Int63()
+	tx.Nonce = random.Int63()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
@@ -208,4 +210,14 @@ func AddNode() {
 		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
 		return
 	}
+}
+
+func CheckState(t *testing.T, client *Client) {
+	msg1, err := client.Query_IsHealthy(&types.ReqNil{})
+	assert.Nil(t, err)
+	flag := msg1.(*ty.IsHealthy).IsHealthy
+	assert.Equal(t, true, flag)
+
+	_, err = client.Query_NodeInfo(&types.ReqNil{})
+	assert.Nil(t, err)
 }

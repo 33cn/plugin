@@ -213,7 +213,6 @@ func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
 // Hash ...
 func (vote *Vote) Hash() []byte {
 	if vote == nil {
-		//votelog.Error("vote hash is nil")
 		return nil
 	}
 	bytes, err := json.Marshal(vote)

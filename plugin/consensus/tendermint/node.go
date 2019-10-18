@@ -414,11 +414,6 @@ func (node *Node) addPeer(pc *peerConn) error {
 		return fmt.Errorf("get remote ip failed:%v", rErr)
 	}
 
-	// Filter peer against ID white list
-	//if err := node.FilterConnByID(peerID); err != nil {
-	//return err
-	//}
-
 	// Check version, chain id
 	if err := node.CompatibleWith(peerNodeInfo); err != nil {
 		return err
@@ -440,7 +435,6 @@ func (node *Node) addPeer(pc *peerConn) error {
 	if err := node.peerSet.Add(pc); err != nil {
 		return err
 	}
-	//node.metrics.Peers.Add(float64(1))
 
 	tendermintlog.Info("Added peer", "peer", pc.ip)
 	return nil

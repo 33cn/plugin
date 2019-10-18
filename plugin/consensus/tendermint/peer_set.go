@@ -698,12 +698,6 @@ OUTER_LOOP:
 
 		// If the peer is on a previous height, help catch up.
 		if (0 < prs.Height) && (prs.Height < rs.Height) {
-			//if prs.Height+1 == rs.Height && prs.Round == rs.LastCommit.Round() && prs.Step == ttypes.RoundStepCommit && prs.ProposalBlock {
-			//	tendermintlog.Debug("Peer is waiting for finalizeCommit finish", "peerip", pc.ip.String(),
-			//		"state", fmt.Sprintf("%v/%v/%v", prs.Height, prs.Round, prs.Step))
-			//	time.Sleep(10 * pc.myState.PeerGossipSleep())
-			//	continue OUTER_LOOP
-			//}
 			if prs.ProposalBlockHash == nil || prs.ProposalBlock {
 				time.Sleep(pc.myState.PeerGossipSleep())
 				continue OUTER_LOOP
@@ -803,9 +797,6 @@ OUTER_LOOP:
 
 		rs := pc.myState.GetRoundState()
 		prs := pc.state
-		//tendermintlog.Debug("gossipVotesRoutine", "rs(H/R/S)", fmt.Sprintf("%v/%v/%v", rs.Height, rs.Round, rs.Step.String()),
-		//	"prs(H/R/S)", fmt.Sprintf("%v/%v/%v", prs.Height, prs.Round, prs.Step.String()),
-		//	"precommits", rs.Votes.Precommits(prs.Round).BitArray().String(), "peerip", pc.ip.String())
 
 		switch sleeping {
 		case 1: // First sleep
