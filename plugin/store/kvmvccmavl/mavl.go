@@ -24,12 +24,9 @@ const (
 
 // MavlStore mavl store struct
 type MavlStore struct {
-	db               dbm.DB
-	trees            *sync.Map
-	enableMavlPrefix bool
-	enableMVCC       bool
-	enableMavlPrune  bool
-	pruneHeight      int32
+	db      dbm.DB
+	trees   *sync.Map
+	treeCfg *mavl.TreeConfig
 }
 
 // NewMavl new mavl store module
@@ -44,14 +41,21 @@ func NewMavl(sub *subMavlConfig, db dbm.DB) *MavlStore {
 		subcfg.EnableMemVal = sub.EnableMemVal
 		subcfg.TkCloseCacheLen = sub.TkCloseCacheLen
 	}
-	mavls := &MavlStore{db, &sync.Map{}, subcfg.EnableMavlPrefix, subcfg.EnableMVCC, subcfg.EnableMavlPrune, subcfg.PruneHeight}
-	mavl.EnableMavlPrefix(subcfg.EnableMavlPrefix)
-	mavl.EnableMVCC(subcfg.EnableMVCC)
-	mavl.EnablePrune(subcfg.EnableMavlPrune)
-	mavl.SetPruneHeight(int(subcfg.PruneHeight))
-	mavl.EnableMemTree(subcfg.EnableMemTree)
-	mavl.EnableMemVal(subcfg.EnableMemVal)
-	mavl.TkCloseCacheLen(subcfg.TkCloseCacheLen)
+
+	// 开启裁剪需要同时开启前缀树
+	if subcfg.EnableMavlPrune {
+		subcfg.EnableMavlPrefix = subcfg.EnableMavlPrune
+	}
+	treeCfg := &mavl.TreeConfig{
+		EnableMavlPrefix: subcfg.EnableMavlPrefix,
+		EnableMVCC:       subcfg.EnableMVCC,
+		EnableMavlPrune:  subcfg.EnableMavlPrune,
+		PruneHeight:      subcfg.PruneHeight,
+		EnableMemTree:    subcfg.EnableMemTree,
+		EnableMemVal:     subcfg.EnableMemVal,
+		TkCloseCacheLen:  subcfg.TkCloseCacheLen,
+	}
+	mavls := &MavlStore{db, &sync.Map{}, treeCfg}
 	return mavls
 }
 
@@ -63,7 +67,7 @@ func (mavls *MavlStore) Close() {
 
 // Set set k v to mavl store db; sync is true represent write sync
 func (mavls *MavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, error) {
-	return mavl.SetKVPair(mavls.db, datas, sync)
+	return mavl.SetKVPair(mavls.db, datas, sync, mavls.treeCfg)
 }
 
 // Get get values by keys
@@ -75,7 +79,7 @@ func (mavls *MavlStore) Get(datas *types.StoreGet) [][]byte {
 	if data, ok := mavls.trees.Load(search); ok {
 		tree = data.(*mavl.Tree)
 	} else {
-		tree = mavl.NewTree(mavls.db, true)
+		tree = mavl.NewTree(mavls.db, true, mavls.treeCfg)
 		//get接口也应该传入高度
 		//tree.SetBlockHeight(datas.Height)
 		err = tree.Load(datas.StateHash)
@@ -103,7 +107,7 @@ func (mavls *MavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, error)
 		mavls.trees.Store(string(datas.StateHash), nil)
 		return datas.StateHash, nil
 	}
-	tree := mavl.NewTree(mavls.db, sync)
+	tree := mavl.NewTree(mavls.db, sync, mavls.treeCfg)
 	tree.SetBlockHeight(datas.Height)
 	err := tree.Load(datas.StateHash)
 	if err != nil {
@@ -127,7 +131,7 @@ func (mavls *MavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([]byte,
 		kmlog.Info("store mavl memset,use preStateHash as stateHash for kvset is null")
 		return datas.StateHash, nil
 	}
-	tree := mavl.NewTree(mavls.db, sync)
+	tree := mavl.NewTree(mavls.db, sync, mavls.treeCfg)
 	tree.SetBlockHeight(datas.Height)
 	err := tree.Load(datas.StateHash)
 	if err != nil {
@@ -182,7 +186,7 @@ func (mavls *MavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 
 // IterateRangeByStateHash 迭代实现功能； statehash：当前状态hash, start：开始查找的key, end: 结束的key, ascending：升序，降序, fn 迭代回调函数
 func (mavls *MavlStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
-	mavl.IterateRangeByStateHash(mavls.db, statehash, start, end, ascending, fn)
+	mavl.IterateRangeByStateHash(mavls.db, statehash, start, end, ascending, mavls.treeCfg, fn)
 }
 
 // ProcEvent not support message
