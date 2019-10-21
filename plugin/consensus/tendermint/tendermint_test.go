@@ -7,6 +7,7 @@ package tendermint
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
@@ -27,6 +30,7 @@ import (
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
+	ty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
@@ -36,7 +40,7 @@ import (
 
 var (
 	random    *rand.Rand
-	loopCount = 10
+	loopCount = 3
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 )
@@ -50,12 +54,12 @@ func init() {
 	log.SetLogLevel("info")
 }
 func TestTendermintPerf(t *testing.T) {
-	TendermintPerf()
+	TendermintPerf(t)
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
 
-func TendermintPerf() {
+func TendermintPerf(t *testing.T) {
 	q, chain, s, mem, exec, cs, p2p := initEnvTendermint()
 	defer chain.Close()
 	defer mem.Close()
@@ -68,12 +72,18 @@ func TendermintPerf() {
 	for err != nil {
 		err = createConn()
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	for i := 0; i < loopCount; i++ {
 		NormPut()
 		time.Sleep(time.Second)
 	}
-	time.Sleep(10 * time.Second)
+	CheckState(t, cs.(*Client))
+	AddNode()
+	for i := 0; i < loopCount*3; i++ {
+		NormPut()
+		time.Sleep(time.Second)
+	}
+	time.Sleep(2 * time.Second)
 }
 
 func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
@@ -176,4 +186,39 @@ func NormPut() {
 		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
 		return
 	}
+}
+
+func AddNode() {
+	pubkey := "788657125A5A547B499F8B74239092EBB6466E8A205348D9EA645D510235A671"
+	pubkeybyte, err := hex.DecodeString(pubkey)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	nput := &ty.ValNodeAction_Node{Node: &ty.ValNode{PubKey: pubkeybyte, Power: int64(2)}}
+	action := &ty.ValNodeAction{Value: nput, Ty: ty.ValNodeActionUpdate}
+	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
+	tx.To = address.ExecAddress("valnode")
+	tx.Nonce = random.Int63()
+	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
+
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
+		return
+	}
+}
+
+func CheckState(t *testing.T, client *Client) {
+	msg1, err := client.Query_IsHealthy(&types.ReqNil{})
+	assert.Nil(t, err)
+	flag := msg1.(*ty.IsHealthy).IsHealthy
+	assert.Equal(t, true, flag)
+
+	_, err = client.Query_NodeInfo(&types.ReqNil{})
+	assert.Nil(t, err)
 }
