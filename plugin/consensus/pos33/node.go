@@ -40,7 +40,6 @@ type node struct {
 	// receive candidate blocks
 	cbs map[int64]map[string]*types.Block
 
-	//nilBlocks    []*types.Block
 	voteOkHeight int64
 
 	lastBlock *types.Block
@@ -408,7 +407,7 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 	a := addr(m.Sig)
 	allw := n.allWeight(m.Height)
 	w := n.getWeight(a, m.Height)
-	plog.Info("handleVoteMsg", "height", m.Height, "nilHeight", m.NilHeight, "voter", a, "weight", len(m.Rands.Rands), "bhash", hexs(vm.BlockHash))
+	plog.Info("handleVoteMsg", "height", m.Height, "voter", a, "weight", len(m.Rands.Rands), "bhash", hexs(vm.BlockHash))
 
 	err := pt.CheckRands(a, allw, w, m.Rands, m.Height, m.Seed, m.Sig, int(m.Round), int(m.Step))
 	if err != nil {
@@ -417,9 +416,6 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 	}
 
 	height := m.Height
-	if m.NilHeight > 0 {
-		height = m.NilHeight
-	}
 	if n.cvs[height] == nil {
 		n.cvs[height] = make(map[int]map[string]*pt.Pos33VoteMsg)
 	}
@@ -449,10 +445,7 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 func (n *node) handleElectMsg(m *pt.Pos33ElectMsg) {
 	a := addr(m.Sig)
 	height := m.Height
-	if m.NilHeight != 0 {
-		height = m.NilHeight
-	}
-	plog.Info("handleElectMsg", "height", m.Height, "nilHeight", m.NilHeight, "address", addr(m.Sig))
+	plog.Info("handleElectMsg", "height", m.Height, "address", addr(m.Sig))
 	err := pt.CheckRands(a, n.allWeight(m.Height), n.getWeight(a, m.Height), m.Rands, m.Height, m.Seed, m.Sig, int(m.Round), int(m.Step))
 	if err != nil {
 		plog.Info("check rand error:", "error", err.Error())
@@ -632,7 +625,6 @@ func (n *node) vote(height int64, round int) {
 	rs := pt.Sortition(pes, 0)
 	if rs == nil {
 		plog.Info("sortition nil", "height", height)
-		//n.voteNil(height, 0)
 		return
 	}
 

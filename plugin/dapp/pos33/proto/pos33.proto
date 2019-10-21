@@ -29,7 +29,6 @@ message Pos33Rands {
 message Pos33ElectMsg {
   Pos33Rands rands = 1;
   int64 height = 3;
-  int64 nil_height = 6;
   bytes seed = 2;
   int32 step = 5;
   int32 round = 7;
