@@ -21,7 +21,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		TotalBalance:       coll.TotalBalance,
 		DebtCeiling:        coll.DebtCeiling,
 		LiquidationRatio:   coll.LiquidationRatio,
-		StabilityFee:       coll.StabilityFee,
+		StabilityFeeRatio:  coll.StabilityFeeRatio,
 		CreateAddr:         coll.CreateAddr,
 		Balance:            coll.Balance,
 	}, nil
@@ -41,7 +41,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			TotalBalance:       coll.TotalBalance,
 			DebtCeiling:        coll.DebtCeiling,
 			LiquidationRatio:   coll.LiquidationRatio,
-			StabilityFee:       coll.StabilityFee,
+			StabilityFeeRatio:  coll.StabilityFeeRatio,
 			CreateAddr:         coll.CreateAddr,
 			Balance:            coll.Balance,
 		})

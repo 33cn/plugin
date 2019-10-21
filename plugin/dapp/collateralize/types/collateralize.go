@@ -109,6 +109,18 @@ func (Collateralize CollateralizeType) CreateTx(action string, message json.RawM
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawCollateralizeCloseTx(&param)
+	} else if action == "CollateralizeManage" {
+		var param CollateralizeManageTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			llog.Error("CreateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		if param.Addr != nil {
+			return CreateRawCollateralizeManageAddrTx(&param)
+		}
+
+		return CreateRawCollateralizeManageConfigTx(&param)
 	} else {
 		return nil, types.ErrNotSupport
 	}
@@ -123,6 +135,7 @@ func (Collateralize CollateralizeType) GetTypeMap() map[string]int32 {
 		"Append": CollateralizeActionAppend,
 		"Feed":   CollateralizeActionFeed,
 		"Close":  CollateralizeActionClose,
+		"Manage": CollateralizeActionManage,
 	}
 }
 
@@ -134,9 +147,6 @@ func CreateRawCollateralizeCreateTx(parm *CollateralizeCreateTx) (*types.Transac
 	}
 
 	v := &CollateralizeCreate{
-		DebtCeiling:    parm.DebtCeiling,
-		LiquidationRatio:   parm.LiquidationRatio,
-		StabilityFee:  parm.StabilityFee,
 		TotalBalance:  parm.TotalBalance,
 	}
 	create := &CollateralizeAction{
@@ -286,6 +296,69 @@ func CreateRawCollateralizeCloseTx(parm *CollateralizeCloseTx) (*types.Transacti
 	close := &CollateralizeAction{
 		Ty:    CollateralizeActionClose,
 		Value: &CollateralizeAction_Close{v},
+	}
+	tx := &types.Transaction{
+		Execer:  []byte(types.ExecName(CollateralizeX)),
+		Payload: types.Encode(close),
+		Fee:     parm.Fee,
+		To:      address.ExecAddress(types.ExecName(CollateralizeX)),
+	}
+
+	name := types.ExecName(CollateralizeX)
+	tx, err := types.FormatTx(name, tx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateRawCollateralizeManageConfigTx method
+func CreateRawCollateralizeManageConfigTx(parm *CollateralizeManageTx) (*types.Transaction, error) {
+	if parm == nil {
+		llog.Error("CreateRawCollateralizeManageTx", "parm", parm)
+		return nil, types.ErrInvalidParam
+	}
+
+	v := &CollateralizeManage{}
+	v.Cfg = &CollateralizeConfig{
+		DebtCeiling:          parm.DebtCeiling,
+		LiquidationRatio:     parm.LiquidationRatio,
+		StabilityFeeRatio:    parm.StabilityFeeRatio,
+		Period:               parm.Period,
+	}
+
+	close := &CollateralizeAction{
+		Ty:    CollateralizeActionManage,
+		Value: &CollateralizeAction_Manage{v},
+	}
+	tx := &types.Transaction{
+		Execer:  []byte(types.ExecName(CollateralizeX)),
+		Payload: types.Encode(close),
+		Fee:     parm.Fee,
+		To:      address.ExecAddress(types.ExecName(CollateralizeX)),
+	}
+
+	name := types.ExecName(CollateralizeX)
+	tx, err := types.FormatTx(name, tx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateRawCollateralizeManageAddrTx method
+func CreateRawCollateralizeManageAddrTx(parm *CollateralizeManageTx) (*types.Transaction, error) {
+	if parm == nil {
+		llog.Error("CreateRawCollateralizeManageTx", "parm", parm)
+		return nil, types.ErrInvalidParam
+	}
+
+	v := &CollateralizeManage{}
+	v.Addr = &CollateralizeAddr{SuperAddrs:parm.Addr}
+
+	close := &CollateralizeAction{
+		Ty:    CollateralizeActionManage,
+		Value: &CollateralizeAction_Manage{v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(types.ExecName(CollateralizeX)),

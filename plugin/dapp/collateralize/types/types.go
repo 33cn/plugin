@@ -12,6 +12,7 @@ const (
 	CollateralizeActionAppend
 	CollateralizeActionFeed
 	CollateralizeActionClose
+	CollateralizeActionManage
 
 	//log for Collateralize
 	TyLogCollateralizeCreate    = 731
@@ -46,5 +47,6 @@ const (
 	CollateralizeUserStatusWarning
 	CollateralizeUserStatusSystemLiquidate
 	CollateralizeUserStatusExpire
+	CollateralizeUserStatusExpireLiquidate
 	CollateralizeUserStatusClose
 )

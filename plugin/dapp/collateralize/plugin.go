@@ -6,6 +6,7 @@ package collateralize
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
+	"github.com/33cn/plugin/plugin/dapp/collateralize/commands"
 	"github.com/33cn/plugin/plugin/dapp/collateralize/executor"
 	"github.com/33cn/plugin/plugin/dapp/collateralize/types"
 )
@@ -15,7 +16,6 @@ func init() {
 		Name:     types.CollateralizeX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      nil,
-		RPC:      nil,
+		Cmd:      commands.CollateralizeCmd,
 	})
 }

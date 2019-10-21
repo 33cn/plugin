@@ -20,6 +20,6 @@ var (
 	ErrCollateralizeAccountExist      = errors.New("ErrCollateralizeAccountExist")
 	ErrCollateralizeLowBalance        = errors.New("ErrCollateralizeLowBalance")
 	ErrCollateralizeBalanceInvalid    = errors.New("ErrCollateralizeBalanceInvalid")
-	ErrPriceFeedPermissionDeny        = errors.New("ErrPriceFeedPermissionDeny")
+	ErrPermissionDeny                 = errors.New("ErrPermissionDeny")
 	ErrCollateralizeRecordNotEmpty    = errors.New("ErrCollateralizeRecordNotEmpty")
 )

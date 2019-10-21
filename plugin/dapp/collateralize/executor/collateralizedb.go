@@ -23,12 +23,13 @@ const (
 )
 
 const (
-	decimal               = types.Coin     // 1e8
-	MaxDebtCeiling        = 10000          // 最大借贷限额
-	MinLiquidationRatio   = 0.3            // 最小质押比
-	MaxStabilityFee       = 1000           // 最大稳定费
-	PriceWarningRate      = 1.3            // 价格提前预警率
-	ExpireWarningTime     = 3600 * 24 * 10 // 提前10天超时预警
+	Coin                      = types.Coin      // 1e8
+	DefaultDebtCeiling        = 10000           // 默认借贷限额
+	DefaultLiquidationRatio   = 0.4             // 默认质押比
+	DefaultStabilityFeeRation = 0.08            // 默认稳定费
+	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
+	PriceWarningRate          = 1.3             // 价格提前预警率
+	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
 )
 
 // CollateralizeDB def
@@ -55,6 +56,18 @@ func (coll *CollateralizeDB) Save(db dbm.KV) {
 func Key(id string) (key []byte) {
 	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-")...)
 	key = append(key, []byte(id)...)
+	return key
+}
+
+// Key for CollateralizeConfig
+func ConfigKey() (key []byte) {
+	key = append(key, []byte("mavl-"+pty.CollateralizeX+"config")...)
+	return key
+}
+
+// Key for CollateralizeAddrConfig
+func AddrKey() (key []byte) {
+	key = append(key, []byte("mavl-"+pty.CollateralizeX+"addr")...)
 	return key
 }
 
@@ -204,20 +217,124 @@ func getLatestExpireTime(coll *pty.Collateralize) int64 {
 	return latest
 }
 
+// CollateralizeConfig 设置全局借贷参数（管理员权限）
+func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*types.Receipt, error) {
+	var kv []*types.KeyValue
+	var receipt *types.Receipt
+
+	// 是否配置管理用户
+	if !isRightAddr(configKey, action.fromaddr, action.db) {
+		clog.Error("CollateralizeManage", "addr", action.fromaddr, "error", "Address has no permission to config")
+		return nil, pty.ErrPermissionDeny
+	}
+
+	if manage.Cfg != nil {
+		// 配置借贷参数
+		config := manage.Cfg
+		if config.DebtCeiling < 0 || config.LiquidationRatio < 0 || config.LiquidationRatio >= 1 ||
+			config.StabilityFeeRatio < 0 || config.StabilityFeeRatio >= 1 {
+			return nil, pty.ErrRiskParam
+		}
+
+		collConfig := &pty.CollateralizeConfig{}
+		collConfig.StabilityFeeRatio = config.StabilityFeeRatio
+		collConfig.Period = config.Period
+		collConfig.LiquidationRatio = config.LiquidationRatio
+		collConfig.DebtCeiling = config.DebtCeiling
+
+		value := types.Encode(collConfig)
+		action.db.Set(ConfigKey(), value)
+		kv = append(kv, &types.KeyValue{Key: ConfigKey(), Value: value})
+	} else if manage.Addr != nil {
+		// 添加大户地址
+		data, err := action.db.Get(AddrKey())
+		if err != nil {
+			if err != types.ErrNotFound {
+				clog.Error("CollateralizeManage", "error", err)
+				return nil, err
+			}
+			value := types.Encode(manage.Addr)
+			action.db.Set(AddrKey(), value)
+			kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
+		} else {
+			var addrStore pty.CollateralizeAddr
+			err = types.Decode(data, &addrStore)
+			if err != nil {
+				clog.Debug("CollateralizeManage", "decode", err)
+				return nil, err
+			}
+			addrStore.SuperAddrs = append(addrStore.SuperAddrs, manage.Addr.SuperAddrs...)
+			value := types.Encode(&addrStore)
+			action.db.Set(AddrKey(), value)
+			kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
+		}
+	}
+
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: nil}
+	return receipt, nil
+}
+
+func (action *Action) getCollateralizeConfig() (*pty.CollateralizeConfig, error) {
+	data, err := action.db.Get(ConfigKey())
+	if err != nil {
+		clog.Debug("getCollateralizeConfig", "error", err)
+		return nil, err
+	}
+
+	var collCfg pty.CollateralizeConfig
+	err = types.Decode(data, &collCfg)
+	if err != nil {
+		clog.Debug("getCollateralizeConfig", "decode", err)
+		return nil, err
+	}
+	return &collCfg, nil
+}
+
+
+func (action *Action) getSuperAddr() []string {
+	data, err := action.db.Get(AddrKey())
+	if err != nil {
+		clog.Error("getSuperAddr", "error", err)
+		return nil
+	}
+
+	var addrStore pty.CollateralizeAddr
+	err = types.Decode(data, &addrStore)
+	if err != nil {
+		clog.Debug("getSuperAddr", "decode", err)
+		return nil
+	}
+
+	return addrStore.SuperAddrs
+}
+
+func isSuperAddr(super []string, addr string) bool {
+	if super == nil || len(super) == 0 {
+		return false
+	}
+
+	for _, superAddr := range super {
+		if superAddr == addr {
+			return true
+		}
+	}
+
+	return false
+}
+
 // CollateralizeCreate 创建借贷，持有一定数量ccny的用户可创建借贷，提供给其他用户借贷
 func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
 
-	collateralizeID := common.ToHex(action.txhash)
-
-	// 参数校验
-	if create.DebtCeiling > MaxDebtCeiling || create.DebtCeiling < 0 ||
-		create.LiquidationRatio < MinLiquidationRatio || create.LiquidationRatio >= 1 ||
-		create.StabilityFee > MaxStabilityFee || create.StabilityFee < 0 {
-		return nil, pty.ErrRiskParam
+	superAddr := action.getSuperAddr()
+	if !isSuperAddr(superAddr, action.fromaddr) {
+		clog.Error("CollateralizeCreate", "error", "CollateralizeCreate need super address")
+		return nil, pty.ErrPermissionDeny
 	}
+
+	collateralizeID := common.ToHex(action.txhash)
 
 	// 检查ccny余额
 	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
@@ -240,13 +357,23 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
+	// 获取借贷配置
+	var collcfg *pty.CollateralizeConfig
+	cfg, err := action.getCollateralizeConfig()
+	if err != nil {
+		collcfg = &pty.CollateralizeConfig{DebtCeiling:DefaultDebtCeiling, LiquidationRatio:DefaultLiquidationRatio, StabilityFeeRatio:DefaultStabilityFeeRation, Period:DefaultPeriod}
+	} else {
+		collcfg = cfg
+	}
+
 	// 构造coll结构
 	coll := &CollateralizeDB{}
 	coll.CollateralizeId = collateralizeID
-	coll.LiquidationRatio = create.LiquidationRatio
+	coll.LiquidationRatio = collcfg.LiquidationRatio
 	coll.TotalBalance = create.TotalBalance
-	coll.DebtCeiling = create.DebtCeiling
-	coll.StabilityFee = create.StabilityFee
+	coll.DebtCeiling = collcfg.DebtCeiling
+	coll.StabilityFeeRatio = collcfg.StabilityFeeRatio
+	coll.Period = collcfg.Period
 	coll.Balance = create.TotalBalance
 	coll.CreateAddr = action.fromaddr
 	coll.Status = pty.CollateralizeActionCreate
@@ -406,7 +533,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	}
 
 	// 抵押物转账
-	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, btyFrozen*decimal)
+	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, btyFrozen*Coin)
 	if err != nil {
 		clog.Error("CollateralizeBorrow.ExecTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", btyFrozen)
 		return nil, err
@@ -508,7 +635,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	realRepay := repay.Value + repay.Value/20
+	realRepay := repay.Value + int64(float32(repay.Value) * coll.StabilityFeeRatio) + 1
 
 	// 检查
 	if !action.CheckExecTokenAccount(action.fromaddr, realRepay, false) {
@@ -603,7 +730,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	}
 
 	// 抵押物转账
-	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, cAppend.CollateralValue*decimal)
+	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, cAppend.CollateralValue*Coin)
 	if err != nil {
 		clog.Error("CollateralizeBorrow.ExecTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", cAppend.CollateralValue, "err", err)
 		return nil, err
@@ -651,23 +778,24 @@ func getManageKey(key string, db dbm.KV) ([]byte, error) {
 const (
 	priceFeedKey = "collateralize-price-feed"
 	guarantorKey = "collateralize-guarantor"
+	configKey    = "collateralize-config"
 )
 
-func isRightPriceFeed(addr string, db dbm.KV) bool {
-	value, err := getManageKey(priceFeedKey, db)
+func isRightAddr(key string, addr string, db dbm.KV) bool {
+	value, err := getManageKey(key, db)
 	if err != nil {
-		clog.Error("CollateralizePriceFeed", "priceFeedKey", priceFeedKey)
+		clog.Error("isRightAddr", "Key", key)
 		return false
 	}
 	if value == nil {
-		clog.Error("CollateralizePriceFeed priceFeedKey found nil value")
+		clog.Error("isRightAddr", "key", key, "error", "Found key nil value")
 		return false
 	}
 
 	var item types.ConfigItem
 	err = types.Decode(value, &item)
 	if err != nil {
-		clog.Error("CollateralizePriceFeed", "Decode", value)
+		clog.Error("isRightAddr", "Decode", value)
 		return false
 	}
 
@@ -791,12 +919,12 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			// 借贷记录清算
 			borrowRecord.LiquidateTime = action.blocktime
 			preStatus = borrowRecord.Status
-			borrowRecord.Status = pty.CollateralizeUserStatusSystemLiquidate
+			borrowRecord.Status = pty.CollateralizeUserStatusExpireLiquidate
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 		} else {
 			preStatus = borrowRecord.Status
-			borrowRecord.Status = pty.CollateralizeUserStatusWarning
+			borrowRecord.Status = pty.CollateralizeUserStatusExpire
 		}
 
 		log := action.GetFeedReceiptLog(coll, borrowRecord, preStatus)
@@ -839,9 +967,9 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 	}
 
 	// 是否后台管理用户
-	if !isRightPriceFeed(action.fromaddr, action.db) {
+	if !isRightAddr(priceFeedKey, action.fromaddr, action.db) {
 		clog.Error("CollateralizePriceFeed", "addr", action.fromaddr, "error", "Address has no permission to feed price")
-		return nil, pty.ErrPriceFeedPermissionDeny
+		return nil, pty.ErrPermissionDeny
 	}
 
 	price := pricePolicy(feed)

@@ -6,9 +6,6 @@ package types
 
 // CollateralizeCreateTx for construction
 type CollateralizeCreateTx struct {
-	DebtCeiling         int64 `json:"debtCeiling"`
-	LiquidationRatio    float32 `json:"liquidationRatio"`
-	StabilityFee        int64 `json:"stabilityFee"`
 	TotalBalance        int64 `json:"totalBalance"`
 	Fee                 int64  `json:"fee"`
 }
@@ -43,6 +40,16 @@ type CollateralizeFeedTx struct {
 
 // CollateralizeCloseTx for construction
 type CollateralizeCloseTx struct {
-	CollateralizeID string `json:"CollateralizeId"`
+	CollateralizeID string `json:"collateralizeId"`
 	Fee       int64  `json:"fee"`
+}
+
+// CollateralizeManageTx for construction
+type CollateralizeManageTx struct {
+	DebtCeiling         int64 `json:"debtCeiling"`
+	LiquidationRatio    float32 `json:"liquidationRatio"`
+	StabilityFeeRatio   float32 `json:"stabilityFeeRatio"`
+	Period              int64 `json:"period"`
+	Addr                []string `json:"addr"`
+	Fee                 int64  `json:"fee"`
 }
