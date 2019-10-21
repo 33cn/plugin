@@ -130,6 +130,7 @@ function run_testcases() {
     returnAddr2="1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB"
     returnPriv2="0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d"
 
+    chain33_QueryBalance "${returnAddr2}" "${MAIN_HTTP}"
     chain33_applyCoins "${minerAddr2}" 1000000000 "${MAIN_HTTP}"
 
     ticket_SetAutoMining 0
