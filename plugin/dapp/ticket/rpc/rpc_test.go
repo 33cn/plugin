@@ -23,28 +23,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var cfgstring = `
-Title="test"
-
-[mver.consensus]
-fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-powLimitBits = "0x1f00ffff"
-maxTxNumber = 10000
-
-
-[mver.consensus.ticket]
-coinReward = 18
-coinDevFund = 12
-ticketPrice = 10000
-retargetAdjustmentFactor = 4
-futureBlockTime = 16
-ticketFrozenTime = 5
-ticketWithdrawTime = 10
-ticketMinerWaitTime = 2
-targetTimespan = 2304
-targetTimePerBlock = 16
-`
-
 func newGrpc(api client.QueueProtocolAPI) *channelClient {
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -59,17 +37,14 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	client := newGrpc(api)
 	client.Init("ticket", nil, nil, nil)
-	head := &types.Header{StateHash: []byte("sdfadasds")}
-	api.On("GetLastHeader").Return(head, nil)
+	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
+	api.On("GetLastHeader").Return(head, nil).Times(4)
 
 	var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100000 * types.Coin}
 	accv := types.Encode(acc)
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
-	api.On("StoreGet", mock.Anything).Return(storevalue, nil)
-
-	types.SetTitleOnlyForTest("test")
-	types.InitCfgString(cfgstring)
+	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
@@ -77,7 +52,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		Amount:       10000 * types.Coin,
-		CheckBalance: true,
+		CheckBalance: false,
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)

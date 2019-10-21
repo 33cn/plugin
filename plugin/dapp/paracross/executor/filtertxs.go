@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -46,7 +47,7 @@ func checkReceiptExecOk(receipt *types.ReceiptData) bool {
 // 1, 主链+平行链 user.p.xx.paracross 交易组				混合跨链资产转移  paracross主链执行成功
 // 2, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合    paracross主链执行成功
 // 3, 平行链     user.p.xx.other  交易组					混合平行链组合    other主链pack
-func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index int, blockHeight, forkHeight int64) ([]*types.Transaction, int) {
+func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index int, mainBlockHeight, forkHeight int64) ([]*types.Transaction, int) {
 	var headIdx int
 
 	for i := index; i >= 0; i-- {
@@ -58,13 +59,15 @@ func filterParaTxGroup(tx *types.Transaction, allTxs []*types.TxDetail, index in
 
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
-		if types.IsPara() && blockHeight < forkHeight {
+		//缺省是在forkHeight之前与更老版本一致，不检查平行链交易,但有些特殊平行链6.2.0版本升级上来无更老版本且要求blockhash不变，则需与6.2.0保持一致，不检查
+		if types.IsPara() && mainBlockHeight < forkHeight && !types.Conf("config.consensus.sub.para").IsEnable("FilterIgnoreParaTxGroup") {
 			if types.IsParaExecName(string(allTxs[i].Tx.Execer)) {
 				continue
 			}
 		}
 
 		if !checkReceiptExecOk(allTxs[i].Receipt) {
+			clog.Error("filterParaTxGroup rmv tx group", "txhash", hex.EncodeToString(allTxs[i].Tx.Hash()))
 			return nil, endIdx
 		}
 	}
@@ -90,6 +93,7 @@ func FilterTxsForPara(main *types.ParaTxDetail) []*types.Transaction {
 		}
 		//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
 		if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
+			clog.Error("FilterTxsForPara rmv tx", "txhash", hex.EncodeToString(tx.Hash()))
 			continue
 		}
 

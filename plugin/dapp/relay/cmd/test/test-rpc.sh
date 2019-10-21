@@ -242,18 +242,14 @@ function run_testcases() {
 }
 
 function rpc_test() {
+    chain33_RpcTestBegin Relay
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_testcases
 
-    if [ -n "$CASE_ERR" ]; then
-        echo -e "${RED}=============Relay Rpc Test Fail=============${NOC}"
-        exit 1
-    else
-        echo -e "${GRE}=============Relay Rpc Test Pass==============${NOC}"
-    fi
+    chain33_RpcTestRst Relay "$CASE_ERR"
 }
 
 chain33_debug_function rpc_test "$1"

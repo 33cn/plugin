@@ -359,10 +359,13 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 	status := &pt.ParacrossNodeStatus{
 		Title:           types.GetTitle(),
 		Height:          block.Height,
-		PreBlockHash:    block.ParentHash,
-		PreStateHash:    preStateHash,
 		MainBlockHash:   localBlock.MainHash,
 		MainBlockHeight: localBlock.MainHeight,
+	}
+
+	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		status.PreBlockHash = block.ParentHash
+		status.PreStateHash = preStateHash
 	}
 
 	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{

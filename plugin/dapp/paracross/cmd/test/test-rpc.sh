@@ -372,7 +372,7 @@ function run_testcases() {
 }
 
 function main() {
-
+    chain33_RpcTestBegin paracross
     UNIT_HTTP=$1
     IS_PARA=$(echo '"'"${UNIT_HTTP}"'"' | jq '.|contains("8901")')
 
@@ -398,10 +398,7 @@ function main() {
         fi
     fi
 
-    if [ -n "$CASE_ERR" ]; then
-        echo "paracross there some case errors"
-        exit 1
-    fi
+    chain33_RpcTestRst paracross "$CASE_ERR"
 }
 
 chain33_debug_function main "$1" "$2" "$3" "$4"

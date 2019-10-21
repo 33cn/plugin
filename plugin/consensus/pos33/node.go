@@ -111,7 +111,7 @@ func (n *node) genRewordTx(height int64, round int, strHash string) (*types.Tran
 	}
 
 	vsw := vsWeight(vs)
-	plog.Info("genRewordTx", "height", height, "vsw", vsw, "nilBlock", strHash == nilBlockHash)
+	plog.Info("genRewordTx", "height", height, "vsw", vsw)
 	randHash := n.ips[height+1].Rands.Rands[0].Hash
 
 	data, err := proto.Marshal(&pt.Pos33Action{
@@ -442,102 +442,9 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 		plog.Info("@@@ set block 2f+1 @@@", "height", height, "bp", addr(b.Signature), "hash", hexs(vm.BlockHash))
 		n.voteOkHeight = b.Height
 
-		n.setNilBlock(b)
-		n.nilBlocks = nil
 		n.setBlock(b)
 	}
 }
-
-func (n *node) setNilBlock(b *types.Block) {
-	var bs []*types.Block
-	cb := b
-	for {
-		ok := false
-		for _, lb := range n.nilBlocks {
-			if string(lb.Hash()) == string(cb.ParentHash) {
-				bs = append(bs, lb)
-				cb = lb
-				ok = true
-				break
-			}
-		}
-		if !ok {
-			break
-		}
-	}
-	if len(bs) == 0 {
-		return
-	}
-	i := len(bs) - 1
-	lb, err := n.RequestLastBlock()
-	if err != nil {
-		return
-	}
-	if string(lb.Hash()) != string(bs[i].ParentHash) {
-		return
-	}
-	for ; i >= 0; i-- {
-		n.setBlock(bs[i])
-	}
-}
-
-var nilHashMap = map[string]int{
-	"1": 1,
-	"2": 2,
-	"3": 3,
-	"4": 4,
-	"5": 5,
-	"6": 6,
-	"7": 7,
-}
-
-const nilBlockHash = "nil.block"
-
-func (n *node) voteNil(height, num int64) {
-	e, ok := n.ivs[height+num]
-	if !ok {
-		plog.Info("I'm not verifer", "height", height)
-		return
-	}
-	if num > 0 {
-		ne := *e
-		ne.NilHeight = height
-		e = &ne
-	}
-	v := &pt.Pos33VoteMsg{Elect: e, BlockHash: []byte(nilBlockHash)}
-	v.Sign(n.priv)
-	n.handleVoteMsg(v)
-	n.gss.broadcastTCP(marshalVoteMsg(v))
-}
-
-/*
-func (n *node) voteTimeout(height, num int64) {
-	max := 0
-	maxHash := ""
-	for hash, vs := range n.cvs[height] {
-		vw := vsWeight(vs)
-		if vw > max {
-			max = vw
-			maxHash = hash
-		}
-	}
-
-	plog.Info("@@@ vote timeout @@@", "height", height, "maxHash", hexs([]byte(maxHash)))
-	b, ok := n.cbs[height][maxHash]
-	if !ok {
-		n.clear(height)
-		plog.Info("not receive the max vote block", "height", height)
-		if maxHash == nilBlockHash {
-			n.elect(height, num)
-		} else {
-			n.voteNil(height, num)
-		}
-		return
-	}
-	n.nilBlocks = append(n.nilBlocks, b)
-	go func() { n.bch <- b }()
-}
-*/
 
 func (n *node) handleElectMsg(m *pt.Pos33ElectMsg) {
 	a := addr(m.Sig)
@@ -699,7 +606,6 @@ func (n *node) runLoop() {
 			n.clear(b.Height - 1)
 		}
 	}
-	panic("fuck go here")
 }
 
 func hexs(b []byte) string {

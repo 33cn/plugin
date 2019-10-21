@@ -52,7 +52,7 @@ type KVMVCCStore struct {
 	mvcc            dbm.MVCC
 	kvsetmap        map[string][]*types.KeyValue
 	enableMVCCIter  bool
-	enableMavlPrune bool
+	enableMVCCPrune bool
 	pruneHeight     int32
 	sync            bool
 }
@@ -66,12 +66,12 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	}
 	if enable {
 		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue),
-			true, sub.EnableMavlPrune, sub.PruneHeight, false}
+			true, sub.EnableMVCCPrune, sub.PruneHeight, false}
 	} else {
 		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),
-			false, sub.EnableMavlPrune, sub.PruneHeight, false}
+			false, sub.EnableMVCCPrune, sub.PruneHeight, false}
 	}
-	EnablePrune(sub.EnableMavlPrune)
+	EnablePrune(sub.EnableMVCCPrune)
 	SetPruneHeight(int(sub.PruneHeight))
 	return kvs
 }
