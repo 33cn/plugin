@@ -52,7 +52,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 
 func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByStatus) (types.Message, error) {
 	ids := &pty.RepCollateralizeIDs{}
-	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), pty.CollateralizeStatusCreated)
+	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), req.Status)
 	if err != nil {
 		clog.Error("Query_CollateralizeByStatus", "get collateralize record error", err)
 		return nil, err
