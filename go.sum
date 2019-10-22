@@ -126,6 +126,8 @@ github.com/lyh169/chain33 v0.0.0-20191017080109-0e21124b01fc h1:X9d9RvQaECoqK1jW
 github.com/lyh169/chain33 v0.0.0-20191017080109-0e21124b01fc/go.mod h1:4I8n+Zyf3t0UKM5jjpqJY627Tub62oXkLsdzIv4r6rQ=
 github.com/lyh169/chain33 v0.0.0-20191021072850-f71d3eddca4a h1:m4xrIrvYN8pe3aASOxNpSvFOsZA7Fy+KKLmN8gRugkA=
 github.com/lyh169/chain33 v0.0.0-20191021072850-f71d3eddca4a/go.mod h1:4I8n+Zyf3t0UKM5jjpqJY627Tub62oXkLsdzIv4r6rQ=
+github.com/lyh169/chain33 v0.0.0-20191022063356-de2f9a9bf0d0 h1:TcUUwt0Z1AbOvANGFlgPKUOaee0jylzAZLWqKusPsHI=
+github.com/lyh169/chain33 v0.0.0-20191022063356-de2f9a9bf0d0/go.mod h1:4I8n+Zyf3t0UKM5jjpqJY627Tub62oXkLsdzIv4r6rQ=
 github.com/mattn/go-colorable v0.0.9 h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.4 h1:bnP0vzxcAdeI1zdubAl5PjU6zsERjGZb7raWodagDYs=
