@@ -17,13 +17,13 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
-	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 	pexec "github.com/33cn/plugin/plugin/dapp/privacy/executor"
+	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 var (
-	pubsByte [10][]byte
-	secsByte [10][]byte
+	pubsByte     [10][]byte
+	secsByte     [10][]byte
 	chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
 )
 
@@ -57,7 +57,7 @@ func init() {
 		secsByte[i], _ = common.FromHex(secstrs[i])
 	}
 
-	pexec.Init(privacytypes.PrivacyX, chainTestCfg,nil)
+	pexec.Init(privacytypes.PrivacyX, chainTestCfg, nil)
 }
 
 func TestGenerateKeyImage1(t *testing.T) {

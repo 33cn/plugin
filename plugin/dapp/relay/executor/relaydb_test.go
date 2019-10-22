@@ -7,6 +7,7 @@ package executor
 import (
 	"testing"
 
+	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -17,7 +18,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	apimock "github.com/33cn/chain33/client/mocks"
 )
 
 type suiteRelayLog struct {

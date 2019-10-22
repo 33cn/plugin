@@ -172,7 +172,7 @@ func TestAddMinerTx(t *testing.T) {
 
 	api := new(apimocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
-	para := &client{BaseClient:&drivers.BaseClient{}}
+	para := &client{BaseClient: &drivers.BaseClient{}}
 	para.SetAPI(api)
 	para.subCfg = new(subConfig)
 	para.privateKey = priKey

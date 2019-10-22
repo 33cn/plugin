@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"testing"
 
+	"strings"
+
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -17,12 +19,11 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/mock"
-	"strings"
-	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
+	"github.com/stretchr/testify/suite"
 )
 
 // 构造一个4个节点的平行链数据， 进行测试
@@ -56,7 +57,7 @@ var (
 	MainBlockHeightForTransfer = int64(9)
 	tempTitle                  = ""
 	chain33TestCfg             = types.NewChain33Config(testnode.DefaultConfig)
-	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"" , 1))
+	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
 )
 
 type CommitTestSuite struct {

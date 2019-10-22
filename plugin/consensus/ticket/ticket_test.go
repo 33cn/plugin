@@ -21,12 +21,12 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/assert"
 
+	apimocks "github.com/33cn/chain33/client/mocks"
 	_ "github.com/33cn/chain33/system"
+	drivers "github.com/33cn/chain33/system/consensus"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
 	_ "github.com/33cn/plugin/plugin/store/init"
 	"github.com/stretchr/testify/mock"
-	apimocks "github.com/33cn/chain33/client/mocks"
-	drivers "github.com/33cn/chain33/system/consensus"
 )
 
 func TestTicket(t *testing.T) {
@@ -176,7 +176,7 @@ func Test_getNextRequiredDifficulty(t *testing.T) {
 
 	api := new(apimocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
-	c := &Client{BaseClient:&drivers.BaseClient{}}
+	c := &Client{BaseClient: &drivers.BaseClient{}}
 	c.SetAPI(api)
 
 	bits, bt, err := c.getNextRequiredDifficulty(nil, 1)

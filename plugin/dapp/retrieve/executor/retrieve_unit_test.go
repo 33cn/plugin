@@ -11,15 +11,16 @@ import (
 	"math/rand"
 	"testing"
 
+	"strings"
+
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	rt "github.com/33cn/plugin/plugin/dapp/retrieve/types"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
-	"strings"
 )
 
 var (
@@ -49,7 +50,6 @@ func init() {
 	testNormErr = errors.New("Err")
 	retrieve = constructRetrieveInstance()
 }
-
 
 func TestExecBackup(t *testing.T) {
 	var targetReceipt types.Receipt
@@ -248,7 +248,7 @@ func TestExecDelLocalBackup(t *testing.T) {
 }
 
 func constructRetrieveInstance() drivers.Driver {
-	cfgstring := strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1)
+	cfgstring := strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1)
 	chainTestCfg := types.NewChain33Config(cfgstring)
 	Init(rt.RetrieveX, chainTestCfg, nil)
 	q := queue.New("channel")

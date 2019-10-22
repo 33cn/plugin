@@ -12,15 +12,15 @@ import (
 
 	"math/rand"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
 )
 
 var (

@@ -204,7 +204,6 @@ func TestChckSignWithSm2(t *testing.T) {
 	}
 	cfg.SetMinFee(0)
 
-
 	tx15.Sign(ct.AuthSM2, privKeysm2)
 	if !tx15.CheckSign() {
 		t.Error("check signature failed")

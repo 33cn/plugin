@@ -11,29 +11,29 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	pty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	rt "github.com/33cn/plugin/plugin/dapp/lottery/types"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
 )
 
 var (
-	creatorAddr string
-	buyAddr     string
-	buyPriv     crypto.PrivKey
-	creatorPriv crypto.PrivKey
-	testNormErr error
-	lottery     drivers.Driver
-	r           *rand.Rand
-	mydb        db.KV
-	lotteryID   string
+	creatorAddr  string
+	buyAddr      string
+	buyPriv      crypto.PrivKey
+	creatorPriv  crypto.PrivKey
+	testNormErr  error
+	lottery      drivers.Driver
+	r            *rand.Rand
+	mydb         db.KV
+	lotteryID    string
 	chainTestCfg *types.Chain33Config
 )
 
@@ -196,7 +196,7 @@ func ConstructDrawTx() *types.Transaction {
 
 func constructLotteryInstance() drivers.Driver {
 	chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
-	Init(rt.LotteryX, chainTestCfg,nil)
+	Init(rt.LotteryX, chainTestCfg, nil)
 	lottery := newLottery()
 	//lottery.SetStateDB(NewTestDB())
 	_, _, kvdb := util.CreateTestDB()

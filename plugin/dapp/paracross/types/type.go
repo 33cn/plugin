@@ -47,7 +47,6 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ParaX, NewType(cfg))
 }
 
-
 // GetExecName get para exec name
 func GetExecName(cfg *types.Chain33Config) string {
 	return cfg.ExecName(ParaX)

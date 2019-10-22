@@ -610,7 +610,7 @@ func TestPruning(t *testing.T) {
 	store := New(storeCfg, nil, nil).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-	kvmvccStore := NewKVMVCC(&subKVMVCCConfig{PruneHeight:10}, store.GetDB())
+	kvmvccStore := NewKVMVCC(&subKVMVCCConfig{PruneHeight: 10}, store.GetDB())
 
 	var kv []*types.KeyValue
 	var key string
@@ -646,7 +646,7 @@ func TestPruning(t *testing.T) {
 		hashes = append(hashes, hash)
 	}
 
-	pruningMVCC(store.GetDB(), 99, &KVMCCCConfig{PruneHeight:10})
+	pruningMVCC(store.GetDB(), 99, &KVMCCCConfig{PruneHeight: 10})
 
 	//check
 	getDatas := &types.StoreGet{

@@ -25,7 +25,7 @@ const (
 	onceScanCount      = 10000 // 单次扫描数目
 	onceCount          = 1000  // 容器长度
 	levelPruningHeight = 100 * 10000
-	defaultPruneHeight  = 10000 // 每个10000裁剪一次
+	defaultPruneHeight = 10000 // 每个10000裁剪一次
 )
 
 var (
@@ -52,11 +52,11 @@ type KVMCCCConfig struct {
 
 // KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
-	db              dbm.DB
-	mvcc            dbm.MVCC
-	kvsetmap        map[string][]*types.KeyValue
-	sync            bool
-	kvmvccCfg       *KVMCCCConfig
+	db        dbm.DB
+	mvcc      dbm.MVCC
+	kvsetmap  map[string][]*types.KeyValue
+	sync      bool
+	kvmvccCfg *KVMCCCConfig
 }
 
 // NewKVMVCC construct KVMVCCStore module
@@ -75,9 +75,9 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 
 	}
 	if kvmvccCfg.EnableMVCCIter {
-		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue),false, kvmvccCfg}
+		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue), false, kvmvccCfg}
 	} else {
-		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),false, kvmvccCfg}
+		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue), false, kvmvccCfg}
 	}
 	return kvs
 }

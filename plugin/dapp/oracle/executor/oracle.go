@@ -27,7 +27,6 @@ func InitExecType() {
 	ety.InitFuncList(types.ListMethod(&oracle{}))
 }
 
-
 // GetName 获取oracle执行器名
 func GetName() string {
 	return newOracle().GetName()

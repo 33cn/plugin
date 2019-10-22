@@ -16,10 +16,10 @@ import (
 
 	"github.com/33cn/chain33/queue"
 	typesmocks "github.com/33cn/chain33/types/mocks"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 )
 
 const (

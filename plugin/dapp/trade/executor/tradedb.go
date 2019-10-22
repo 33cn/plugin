@@ -278,7 +278,6 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 		return nil, pty.ErrAssetAndPriceSame
 	}
 
-
 	accDB, err := createAccountDB(cfg, action.height, action.db, sell.AssetExec, sell.TokenSymbol)
 	if err != nil {
 		return nil, err

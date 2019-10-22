@@ -8,13 +8,13 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	pty "github.com/33cn/plugin/plugin/dapp/game/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/client"
 )
 
 type execEnv struct {

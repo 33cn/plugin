@@ -10,12 +10,12 @@ import (
 	"fmt"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
-	"github.com/33cn/chain33/client"
 )
 
 var hlog = log.New("module", "hashlock.db")

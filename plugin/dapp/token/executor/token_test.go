@@ -13,10 +13,12 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/assert"
+
 	//"github.com/33cn/chain33/types/jsonpb"
 	"strings"
-	"github.com/stretchr/testify/mock"
+
 	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/stretchr/testify/mock"
 )
 
 type execEnv struct {
@@ -43,7 +45,7 @@ var (
 )
 
 func TestToken(t *testing.T) {
-	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(pty.TokenX, cfg, nil)
 	tokenTotal := int64(10000 * 1e8)
 	tokenBurn := int64(10 * 1e8)
