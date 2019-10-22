@@ -158,13 +158,17 @@ func TestQueueDirection(t *testing.T) {
 func TestGetProperFee(t *testing.T) {
 	cache := initEnv(0)
 	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
-
+	txs, err := types.CreateTxGroup([]*types.Transaction{tx2, tx3, tx5}, 1200000)
+	assert.NoError(t, err)
+	tx := txs.Tx()
+	groupItem := &drivers.Item{Value: txs.Tx(), Priority: tx.Fee, EnterTime: types.Now().Unix() - 1000}
 	cache.Push(item1)
 	cache.Push(item4)
-	cache.GetProperFee()
-	txSize1 := proto.Size(item1.Value)
-	txSize2 := proto.Size(item4.Value)
-	assert.Equal(t, (item1.Value.Fee/int64(txSize1/1000+1)+item4.Value.Fee/int64(txSize2/1000+1))/2, cache.GetProperFee())
+	cache.Push(groupItem)
+	properFee := cache.GetProperFee()
+	feeRate1 := item1.Value.Fee / int64(proto.Size(item1.Value)/1000+1)
+	feeRate2 := item4.Value.Fee / int64(proto.Size(item4.Value)/1000+1)
+	assert.Equal(t, (feeRate1+feeRate2+1200000)/3, properFee)
 }
 
 func TestRealNodeMempool(t *testing.T) {
