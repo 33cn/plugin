@@ -5,179 +5,46 @@
 package raft
 
 import (
-	"encoding/binary"
-	"flag"
 	"fmt"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/33cn/chain33/blockchain"
-	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/limits"
-	"github.com/33cn/chain33/common/log"
-	"github.com/33cn/chain33/executor"
-	"github.com/33cn/chain33/mempool"
-	"github.com/33cn/chain33/p2p"
-	"github.com/33cn/chain33/queue"
-	"github.com/33cn/chain33/store"
-	"github.com/33cn/chain33/types"
+	//加载系统内置store, 不要依赖plugin
+	_ "github.com/33cn/chain33/system/dapp/init"
+	_ "github.com/33cn/chain33/system/mempool/init"
+	_ "github.com/33cn/chain33/system/store/init"
+	"github.com/33cn/chain33/util"
+	"github.com/33cn/chain33/util/testnode"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
-	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
 	_ "github.com/33cn/plugin/plugin/store/init"
 )
 
-var (
-	random    *rand.Rand
-	txNumber  = 10
-	loopCount = 10
-)
-
-func init() {
-	err := limits.SetLimits()
-	if err != nil {
-		panic(err)
+// 执行： go test -cover
+func TestRaft(t *testing.T) {
+	mock33 := testnode.New("chain33.test.toml", nil)
+	cfg := mock33.GetClient().GetConfig()
+	defer mock33.Close()
+	mock33.Listen()
+	t.Log(mock33.GetGenesisAddress())
+	time.Sleep(10 * time.Second)
+	txs := util.GenNoneTxs(cfg, mock33.GetGenesisKey(), 10)
+	for i := 0; i < len(txs); i++ {
+		mock33.GetAPI().SendTx(txs[i])
 	}
-	random = rand.New(rand.NewSource(types.Now().UnixNano()))
-	log.SetLogLevel("info")
-}
-func TestRaftPerf(t *testing.T) {
-	RaftPerf()
-	fmt.Println("=======start clear test data!=======")
+	mock33.WaitHeight(1)
+	txs = util.GenNoneTxs(cfg, mock33.GetGenesisKey(), 10)
+	for i := 0; i < len(txs); i++ {
+		mock33.GetAPI().SendTx(txs[i])
+	}
+	mock33.WaitHeight(2)
 	clearTestData()
-}
-func RaftPerf() {
-	q, chain, s, mem, exec, cs, p2p := initEnvRaft()
-	defer q.Close()
-	defer s.Close()
-	defer p2p.Close()
-	defer mem.Close()
-	defer exec.Close()
-	defer chain.Close()
-	defer cs.Close()
-
-	sendReplyList(q)
-}
-
-func initEnvRaft() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	flag.Parse()
-	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
-	var q = queue.New("channel")
-	q.SetConfig(chain33Cfg)
-	cfg := chain33Cfg.GetModuleConfig()
-	sub := chain33Cfg.GetSubConfig()
-
-	s := store.New(chain33Cfg)
-	s.SetQueueClient(q.Client())
-
-	chain := blockchain.New(chain33Cfg)
-	chain.SetQueueClient(q.Client())
-
-	exec := executor.New(chain33Cfg)
-	exec.SetQueueClient(q.Client())
-	chain33Cfg.SetMinFee(0)
-
-	mem := mempool.New(chain33Cfg)
-	mem.SetQueueClient(q.Client())
-
-	cs := NewRaftCluster(cfg.Consensus, sub.Consensus["raft"])
-	cs.SetQueueClient(q.Client())
-
-	network := p2p.New(chain33Cfg)
-
-	network.SetQueueClient(q.Client())
-	return q, chain, s, mem, exec, cs, network
-}
-
-func generateKey(i, valI int) string {
-	key := make([]byte, valI)
-	binary.PutUvarint(key[:10], uint64(valI))
-	binary.PutUvarint(key[12:24], uint64(i))
-	if _, err := rand.Read(key[24:]); err != nil {
-		os.Exit(1)
-	}
-	return string(key)
-}
-
-func generateValue(i, valI int) string {
-	value := make([]byte, valI)
-	binary.PutUvarint(value[:16], uint64(i))
-	binary.PutUvarint(value[32:128], uint64(i))
-	if _, err := rand.Read(value[128:]); err != nil {
-		os.Exit(1)
-	}
-	return string(value)
-}
-
-func getprivkey(key string) crypto.PrivKey {
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	if err != nil {
-		panic(err)
-	}
-	bkey, err := common.FromHex(key)
-	if err != nil {
-		panic(err)
-	}
-	priv, err := cr.PrivKeyFromBytes(bkey)
-	if err != nil {
-		panic(err)
-	}
-	return priv
-}
-
-func sendReplyList(q queue.Queue) {
-	client := q.Client()
-	client.Sub("mempool")
-	var count int
-	for msg := range client.Recv() {
-		if msg.Ty == types.EventTxList {
-			count++
-			msg.Reply(client.NewMessage("consensus", types.EventReplyTxList,
-				&types.ReplyTxList{Txs: getReplyList(txNumber)}))
-			if count >= loopCount {
-				time.Sleep(4 * time.Second)
-				break
-			}
-		}
-	}
-}
-
-func prepareTxList() *types.Transaction {
-	var key string
-	var value string
-	var i int
-
-	key = generateKey(i, 32)
-	value = generateValue(i, 180)
-
-	nput := &pty.NormAction_Nput{Nput: &pty.NormPut{Key: []byte(key), Value: []byte(value)}}
-	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
-	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: 0}
-	tx.To = address.ExecAddress("norm")
-	tx.Nonce = random.Int63()
-	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
-	return tx
-}
-
-func getReplyList(n int) (txs []*types.Transaction) {
-
-	for i := 0; i < n; i++ {
-		txs = append(txs, prepareTxList())
-	}
-	return txs
 }
 
 func clearTestData() {
-	err := os.RemoveAll("datadir")
-	if err != nil {
-		fmt.Println("delete datadir have a err:", err.Error())
-	}
-	err = os.RemoveAll("chain33_raft-1")
+	err := os.RemoveAll("chain33_raft-1")
 	if err != nil {
 		fmt.Println("delete chain33_raft dir have a err:", err.Error())
 	}

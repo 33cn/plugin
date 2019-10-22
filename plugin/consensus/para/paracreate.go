@@ -218,7 +218,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 		startHeight = lastBlock.Height
 	}
 
-	depth := client.subCfg.SearchHashMatchedBlockDepth
+	depth := defaultSearchMatchedBlockDepth
 	for height := startHeight; height > 0 && depth > 0; height-- {
 		block, err := client.GetBlockByHeight(height)
 		if err != nil {
@@ -233,7 +233,7 @@ func (client *client) getMatchedBlockOnChain(startHeight int64) (int64, *types.B
 			if depth == 0 {
 				plog.Error("switchHashMatchedBlock depth overflow", "last info:mainHeight", block.MainHeight,
 					"mainHash", hex.EncodeToString(block.MainHash), "search startHeight", lastBlock.Height, "curHeight", height,
-					"search depth", client.subCfg.SearchHashMatchedBlockDepth)
+					"search depth", defaultSearchMatchedBlockDepth)
 				panic("search HashMatchedBlock overflow, re-setting search depth and restart to try")
 			}
 			if height == 1 {
@@ -323,7 +323,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if client.subCfg.FetchFilterParaTxsEnable && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+		if !client.subCfg.FetchFilterParaTxsClose && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
 			return client.subCfg.BatchFetchBlockCount - 1, nil
 		}
 		return 0, nil
@@ -439,7 +439,7 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 }
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	if client.subCfg.FetchFilterParaTxsEnable {
+	if !client.subCfg.FetchFilterParaTxsClose {
 		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 	}
 

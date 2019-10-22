@@ -36,12 +36,16 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 	if err != nil {
 		return nil, err
 	}
-  
+
     cfg := g.GetConfig()
 	if in.CheckBalance {
 		header, err := g.GetLastHeader()
 		if err != nil {
 			return nil, err
+		}
+		price := ty.GetTicketMinerParam(cfg, header.Height).TicketPrice
+		if price == 0 {
+			return nil, types.ErrInvalidParam
 		}
 		if in.Amount%ty.GetTicketMinerParam(cfg, header.Height).TicketPrice != 0 || in.Amount < 0 {
 			return nil, types.ErrAmount

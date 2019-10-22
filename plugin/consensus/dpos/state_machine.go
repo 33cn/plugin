@@ -142,7 +142,6 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 		PeriodStop:       task.PeriodStop,
 		Height:           height + 1,
 	}
-	cs.validatorMgr.FillVoteItem(voteItem)
 
 	encode, err := json.Marshal(voteItem)
 	if err != nil {
@@ -150,6 +149,8 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 	}
 
 	voteItem.VoteID = crypto.Ripemd160(encode)
+
+	cs.validatorMgr.FillVoteItem(voteItem)
 
 	index := cs.validatorMgr.GetIndexByPubKey(cs.privValidator.GetPubKey().Bytes())
 
@@ -245,7 +246,7 @@ func checkTopNRegist(cs *ConsensusState) {
 		topN := cs.GetTopNCandidatorsByVersion(info.Version)
 		if topN == nil || !cs.IsTopNRegisted(topN) {
 			cands, err := cs.client.QueryCandidators()
-			if err != nil || cands == nil {
+			if err != nil || cands == nil || len(cands) != int(dposDelegateNum) {
 				dposlog.Error("QueryCandidators failed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 				LastCheckRegTopNTime = now
 				return

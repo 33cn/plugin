@@ -23,88 +23,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var cfgstring = `
-Title="test"
-
-[mempool]
-poolCacheSize=102400
-minTxFee=100000
-maxTxNumPerAccount=100
-
-[exec]
-isFree=false
-minExecFee=100000
-enableStat=false
-enableMVCC=false
-
-[wallet]
-minFee=100000
-driver="leveldb"
-dbPath="wallet"
-dbCache=16
-signType="secp256k1"
-minerdisable=false
-minerwhitelist=["*"]
-
-[mver.consensus]
-fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-powLimitBits = "0x1f00ffff"
-maxTxNumber = 10000
-
-
-[mver.consensus.ticket]
-coinReward = 18
-coinDevFund = 12
-ticketPrice = 10000
-retargetAdjustmentFactor = 4
-futureBlockTime = 16
-ticketFrozenTime = 5
-ticketWithdrawTime = 10
-ticketMinerWaitTime = 2
-targetTimespan = 2304
-targetTimePerBlock = 16
-
-[mver.consensus.ticket.ForkChainParamV1]
-ticketPrice = 3000
-
-[mver.consensus.ticket.ForkChainParamV2]
-ticketPrice = 6000
-
-[fork.system]
-ForkChainParamV1= 10
-ForkChainParamV2= 20
-ForkStateDBSet=-1
-ForkCheckTxDup=0
-ForkBlockHash= 1
-ForkMinerTime= 10
-ForkTransferExec= 100000
-ForkExecKey= 200000
-ForkTxGroup= 200000
-ForkResetTx0= 200000
-ForkWithdraw= 200000
-ForkExecRollback= 450000
-ForkTxHeight= -1
-ForkTxGroupPara= -1
-ForkCheckBlockTime=1200000
-ForkMultiSignAddress=1298600
-ForkBlockCheck=1
-ForkLocalDBAccess=0
-ForkBase58AddressCheck=1800000
-ForkEnableParaRegExec=0
-ForkCacheDriver=0
-ForkTicketFundAddrV1=-1
-[fork.sub.coins]
-Enable=0
-
-[fork.sub.manage]
-Enable=0
-ForkManageExec=100000
-
-[fork.sub.store-kvmvccmavl]
-ForkKvmvccmavl=1
-
-`
-
 func newGrpc(api client.QueueProtocolAPI) *channelClient {
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -136,20 +54,10 @@ func TestChannelClient_BindMiner(t *testing.T) {
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		Amount:       10000 * types.Coin,
-		CheckBalance: true,
+		CheckBalance: false,
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
-
-	in.Amount = 200000 * types.Coin
-	_, err = client.CreateBindMiner(context.Background(), in)
-	assert.Equal(t, types.ErrNoBalance, err)
-
-	head.Height = 20 //ForkChainParamV2
-	api.On("GetLastHeader").Return(head, nil).Times(2)
-	_, err = client.CreateBindMiner(context.Background(), in)
-	assert.Equal(t, types.ErrAmount, err)
-
 }
 
 func testGetTicketCountOK(t *testing.T) {

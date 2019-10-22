@@ -5,6 +5,7 @@
 package raft
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -35,14 +36,15 @@ type Client struct {
 	errorC      <-chan error
 	snapshotter *snap.Snapshotter
 	validatorC  <-chan bool
-	stopC       chan<- struct{}
+	ctx         context.Context
+	cancel      context.CancelFunc
 	once        sync.Once
 }
 
 // NewBlockstore create Raft Client
-func NewBlockstore(cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- *types.Block, commitC <-chan *types.Block, errorC <-chan error, validatorC <-chan bool, stopC chan<- struct{}) *Client {
+func NewBlockstore(ctx context.Context, cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- *types.Block, commitC <-chan *types.Block, errorC <-chan error, validatorC <-chan bool, cancel context.CancelFunc) *Client {
 	c := drivers.NewBaseClient(cfg)
-	client := &Client{BaseClient: c, proposeC: proposeC, snapshotter: snapshotter, validatorC: validatorC, commitC: commitC, errorC: errorC, stopC: stopC}
+	client := &Client{BaseClient: c, proposeC: proposeC, snapshotter: snapshotter, validatorC: validatorC, commitC: commitC, errorC: errorC, ctx: ctx, cancel: cancel}
 	c.SetChild(client)
 	return client
 }
@@ -97,12 +99,12 @@ func (client *Client) SetQueueClient(c queue.Client) {
 	})
 	go client.EventLoop()
 	go client.readCommits(client.commitC, client.errorC)
-	go client.pollingTask(c)
+	go client.pollingTask()
 }
 
 // Close method
 func (client *Client) Close() {
-	client.stopC <- struct{}{}
+	client.cancel()
 	rlog.Info("consensus raft closed")
 }
 
@@ -125,73 +127,79 @@ func (client *Client) CreateBlock() {
 			panic("This node encounter problem, exit.")
 		}
 	}
-
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
 	for {
-		//如果leader节点突然挂了，不是打包节点，需要退出
-		if !isLeader {
-			rlog.Warn("I'm not the validator node anymore, exit.=============================")
-			break
-		}
-		infoflag++
-		if infoflag >= 3 {
-			rlog.Info("==================This is Leader node=====================")
-			infoflag = 0
-		}
-		if issleep {
-			time.Sleep(10 * time.Second)
-			count++
-		}
+		select {
+		case <-client.ctx.Done():
+		case <-ticker.C:
+			//如果leader节点突然挂了，不是打包节点，需要退出
+			if !mux.Load().(bool) {
+				rlog.Warn("I'm not the validator node anymore, exit.=============================")
+				break
+			}
+			infoflag++
+			if infoflag >= 3 {
+				rlog.Info("==================This is Leader node=====================")
+				infoflag = 0
+			}
+			if issleep {
+				time.Sleep(10 * time.Second)
+				count++
+			}
 
-		if count >= 12 {
-			rlog.Info("Create an empty block")
-			block := client.GetCurrentBlock()
-			emptyBlock := &types.Block{}
-			emptyBlock.StateHash = block.StateHash
-			emptyBlock.ParentHash = block.Hash(cfg)
-			emptyBlock.Height = block.Height + 1
-			emptyBlock.Txs = nil
-			emptyBlock.TxHash = zeroHash[:]
-			emptyBlock.BlockTime = types.Now().Unix()
+			if count >= 12 {
+				rlog.Info("Create an empty block")
+				block := client.GetCurrentBlock()
+				emptyBlock := &types.Block{}
+				emptyBlock.StateHash = block.StateHash
+				emptyBlock.ParentHash = block.Hash(cfg)
+				emptyBlock.Height = block.Height + 1
+				emptyBlock.Txs = nil
+				emptyBlock.TxHash = zeroHash[:]
+				emptyBlock.BlockTime = types.Now().Unix()
 
-			entry := emptyBlock
-			client.propose(entry)
+				entry := emptyBlock
+				client.propose(entry)
 
-			er := client.WriteBlock(block.StateHash, emptyBlock)
-			if er != nil {
-				rlog.Error(fmt.Sprintf("********************err:%v", er.Error()))
+				er := client.WriteBlock(block.StateHash, emptyBlock)
+				if er != nil {
+					rlog.Error(fmt.Sprintf("********************err:%v", er.Error()))
+					continue
+				}
+				client.SetCurrentBlock(emptyBlock)
+				count = 0
+			}
+
+			lastBlock := client.GetCurrentBlock()
+			txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
+			if len(txs) == 0 {
+				issleep = true
 				continue
 			}
-			client.SetCurrentBlock(emptyBlock)
+			issleep = false
 			count = 0
+			rlog.Debug("==================start create new block!=====================")
+			var newblock types.Block
+			newblock.ParentHash = lastBlock.Hash(cfg)
+			newblock.Height = lastBlock.Height + 1
+			client.AddTxsToBlock(&newblock, txs)
+			newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+			newblock.BlockTime = types.Now().Unix()
+			if lastBlock.BlockTime >= newblock.BlockTime {
+				newblock.BlockTime = lastBlock.BlockTime + 1
+			}
+			blockEntry := newblock
+			client.propose(&blockEntry)
+			err := client.WriteBlock(lastBlock.StateHash, &newblock)
+			if err != nil {
+				issleep = true
+				rlog.Error(fmt.Sprintf("********************err:%v", err.Error()))
+				continue
+			}
+			time.Sleep(time.Second * time.Duration(writeBlockSeconds))
 		}
 
-		lastBlock := client.GetCurrentBlock()
-		txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
-		if len(txs) == 0 {
-			issleep = true
-			continue
-		}
-		issleep = false
-		count = 0
-		rlog.Debug("==================start create new block!=====================")
-		var newblock types.Block
-		newblock.ParentHash = lastBlock.Hash(cfg)
-		newblock.Height = lastBlock.Height + 1
-		client.AddTxsToBlock(&newblock, txs)
-		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-		newblock.BlockTime = types.Now().Unix()
-		if lastBlock.BlockTime >= newblock.BlockTime {
-			newblock.BlockTime = lastBlock.BlockTime + 1
-		}
-		blockEntry := newblock
-		client.propose(&blockEntry)
-		err := client.WriteBlock(lastBlock.StateHash, &newblock)
-		if err != nil {
-			issleep = true
-			rlog.Error(fmt.Sprintf("********************err:%v", err.Error()))
-			continue
-		}
-		time.Sleep(time.Second * time.Duration(writeBlockSeconds))
 	}
 }
 
@@ -219,17 +227,21 @@ func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan err
 			if ok {
 				panic(err)
 			}
-
+		case <-client.ctx.Done():
+			return
 		}
 	}
 }
 
 //轮询任务，去检测本机器是否为validator节点，如果是，则执行打包任务
-func (client *Client) pollingTask(c queue.Client) {
+func (client *Client) pollingTask() {
+
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	for {
 		select {
+		case <-client.ctx.Done():
+			return
 		case value, ok := <-client.validatorC:
 			//各个节点Block只初始化一次
 			client.once.Do(func() {
@@ -237,9 +249,14 @@ func (client *Client) pollingTask(c queue.Client) {
 			})
 			if ok && !value {
 				rlog.Debug("================I'm not the validator node!=============")
-				isLeader = false
-			} else if ok && !isLeader && value {
+				leader := mux.Load().(bool)
+				if leader {
+					isLeader = false
+					mux.Store(isLeader)
+				}
+			} else if ok && !mux.Load().(bool) && value {
 				isLeader = true
+				mux.Store(isLeader)
 				go client.CreateBlock()
 			} else if !ok {
 				break

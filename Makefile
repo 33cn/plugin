@@ -69,7 +69,7 @@ update: ## version 可以是git tag打的具体版本号,也可以是commit hash
 	go get github.com/33cn/chain33@master ;fi
 	@go mod tidy
 dep:
-	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
+	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
 	@go get -u golang.org/x/tools/cmd/goimports
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/vektra/mockery/.../

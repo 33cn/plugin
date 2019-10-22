@@ -46,7 +46,7 @@ var (
 // KVMCCCConfig KVMCCC config
 type KVMCCCConfig struct {
 	EnableMVCCIter  bool
-	EnableMavlPrune bool
+	EnableMVCCPrune bool
 	PruneHeight     int32
 }
 
@@ -70,7 +70,7 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	}
 	kvmvccCfg := &KVMCCCConfig{
 		EnableMVCCIter: sub.EnableMVCCIter,
-		EnableMavlPrune: sub.EnableMavlPrune,
+		EnableMVCCPrune: sub.EnableMVCCPrune,
 		PruneHeight: sub.PruneHeight,
 
 	}
@@ -143,7 +143,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 	mvccs.kvsetmap[string(hash)] = kvset
 	mvccs.sync = sync
 	// 进行裁剪
-	if mvccs.kvmvccCfg != nil && mvccs.kvmvccCfg.EnableMavlPrune &&
+	if mvccs.kvmvccCfg != nil && mvccs.kvmvccCfg.EnableMVCCPrune &&
 		!isPruning() && mvccs.kvmvccCfg.PruneHeight != 0 &&
 		datas.Height%int64(mvccs.kvmvccCfg.PruneHeight) == 0 &&
 		datas.Height/int64(mvccs.kvmvccCfg.PruneHeight) > 1 {
