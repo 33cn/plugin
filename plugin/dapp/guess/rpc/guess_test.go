@@ -368,6 +368,7 @@ func TestGuess(t *testing.T) {
 func testGuessImp(t *testing.T) {
 	fmt.Println("=======start guess test!=======")
 	q, chain, s, mem, exec, cs, p2p := initEnvGuess()
+	cfg := q.GetConfig()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
@@ -389,8 +390,8 @@ func testGuessImp(t *testing.T) {
 
 	fmt.Println("=======start sendTransferTx!=======")
 	//从创世地址向测试地址A转入代币
-	sendTransferTx(adminPriv, userAAddr, 2000000000000)
-	sendTransferTx(adminPriv, userBAddr, 2000000000000)
+	sendTransferTx(cfg, adminPriv, userAAddr, 2000000000000)
+	sendTransferTx(cfg, adminPriv, userBAddr, 2000000000000)
 
 	time.Sleep(2 * time.Second)
 	in := &types.ReqBalance{}
@@ -415,8 +416,8 @@ func testGuessImp(t *testing.T) {
 
 	fmt.Println("=======start sendTransferToExecTx!=======")
 	//从测试地址向dos合约转入代币
-	sendTransferToExecTx(userAPriv, "guess", 1000000000000)
-	sendTransferToExecTx(userBPriv, "guess", 1000000000000)
+	sendTransferToExecTx(cfg, userAPriv, "guess", 1000000000000)
+	sendTransferToExecTx(cfg, userBPriv, "guess", 1000000000000)
 	time.Sleep(2 * time.Second)
 
 	fmt.Println("=======start GetBalance!=======")
@@ -442,7 +443,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, acct4.Acc[0].Balance == 1000000000000)
 
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid := sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
+	ok, gameid := sendGuessStartTx(cfg, "WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		panic("Guess start failed.")
 	} else {
@@ -456,7 +457,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessBetTx!=======")
-	ok, txid := sendGuessBetTx(strGameID1, "A", 5e8, userAPriv)
+	ok, txid := sendGuessBetTx(cfg, strGameID1, "A", 5e8, userAPriv)
 	if !ok {
 		panic("Guess A bet failed.")
 	} else {
@@ -466,7 +467,7 @@ func testGuessImp(t *testing.T) {
 	reply = queryGuessByIds(strGameID1)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 1)
 
-	ok, txid = sendGuessBetTx(strGameID1, "B", 5e8, userBPriv)
+	ok, txid = sendGuessBetTx(cfg, strGameID1, "B", 5e8, userBPriv)
 	if !ok {
 		panic("Guess B bet failed.")
 	} else {
@@ -477,7 +478,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
-	ok, txid = sendGuessStopTx(strGameID1, userBPriv)
+	ok, txid = sendGuessStopTx(cfg, strGameID1, userBPriv)
 	if !ok {
 		panic("Guess stop failed,only admin can stop.")
 	} else {
@@ -488,7 +489,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
-	ok, txid = sendGuessStopTx(strGameID1, adminPriv)
+	ok, txid = sendGuessStopTx(cfg, strGameID1, adminPriv)
 	if !ok {
 		panic("Guess stop failed.")
 	} else {
@@ -499,7 +500,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessBetTx failed!=======")
-	ok, txid = sendGuessBetTx(strGameID1, "A", 5e8, userAPriv)
+	ok, txid = sendGuessBetTx(cfg, strGameID1, "A", 5e8, userAPriv)
 	if !ok {
 		fmt.Println("Guess stopped, bet failed.")
 	} else {
@@ -510,7 +511,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx failed!=======")
-	ok, txid = sendGuessPublishTx(strGameID1, "A", userAPriv)
+	ok, txid = sendGuessPublishTx(cfg, strGameID1, "A", userAPriv)
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed,only admin can publish.")
 	} else {
@@ -521,7 +522,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx!=======")
-	ok, txid = sendGuessPublishTx(strGameID1, "A", adminPriv)
+	ok, txid = sendGuessPublishTx(cfg, strGameID1, "A", adminPriv)
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed.")
 	} else {
@@ -532,7 +533,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusPublish && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
-	ok, txid = sendGuessAbortTx(strGameID1, adminPriv)
+	ok, txid = sendGuessAbortTx(cfg, strGameID1, adminPriv)
 	if !ok {
 		fmt.Println("Guess abort failed, already published.")
 	} else {
@@ -544,7 +545,7 @@ func testGuessImp(t *testing.T) {
 
 	//再来一次，测试异常流程:start->abort->stop
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
+	ok, gameid = sendGuessStartTx(cfg, "WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		fmt.Println("Guess start failed.")
 	} else {
@@ -558,7 +559,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
-	ok, txid = sendGuessAbortTx(strGameID2, adminPriv)
+	ok, txid = sendGuessAbortTx(cfg, strGameID2, adminPriv)
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
@@ -569,7 +570,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
-	ok, txid = sendGuessStopTx(strGameID2, adminPriv)
+	ok, txid = sendGuessStopTx(cfg, strGameID2, adminPriv)
 	if !ok {
 		fmt.Println("Guess stop failed,it's already aborted.")
 	} else {
@@ -581,7 +582,7 @@ func testGuessImp(t *testing.T) {
 
 	//再来一次，测试流程:start->stop->abort
 	fmt.Println("=======start sendGuessStartTx!=======")
-	ok, gameid = sendGuessStartTx("WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
+	ok, gameid = sendGuessStartTx(cfg, "WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
 	if !ok {
 		fmt.Println("Guess start failed.")
 	} else {
@@ -594,7 +595,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
-	ok, txid = sendGuessStopTx(strGameID3, adminPriv)
+	ok, txid = sendGuessStopTx(cfg, strGameID3, adminPriv)
 	if !ok {
 		fmt.Println("Guess stop failed")
 	} else {
@@ -605,7 +606,7 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
-	ok, txid = sendGuessAbortTx(strGameID3, adminPriv)
+	ok, txid = sendGuessAbortTx(cfg, strGameID3, adminPriv)
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
@@ -662,25 +663,27 @@ func testGuessImp(t *testing.T) {
 }
 
 func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
+	chain33Cfg.SetMinFee(0)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 
 	cs := solo.New(cfg.Consensus, sub.Consensus["solo"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(cfg.P2P)
+	network := p2p.New(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
@@ -770,7 +773,7 @@ func NormPut() {
 	}
 }
 
-func sendTransferTx(fromKey, to string, amount int64) bool {
+func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -779,7 +782,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransfer
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: to, Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("in sendTransferTx formatTx failed")
 		return false
@@ -804,7 +807,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	return true
 }
 
-func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
+func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -814,7 +817,7 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransferToExec
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: address.ExecAddress("guess"), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendTransferToExecTx formatTx failed.")
 
@@ -841,7 +844,7 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	return true
 }
 
-func sendGuessStartTx(topic, option, category, privKey string) (bool, []byte) {
+func sendGuessStartTx(cfg *types.Chain33Config, topic, option, category, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &gty.GuessGameAction{}
@@ -864,7 +867,7 @@ func sendGuessStartTx(topic, option, category, privKey string) (bool, []byte) {
 	action.Ty = gty.GuessGameActionStart
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendGuessStartTx formatTx failed.")
 
@@ -892,7 +895,7 @@ func sendGuessStartTx(topic, option, category, privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func sendGuessBetTx(gameID, option string, betsNum int64, privKey string) (bool, []byte) {
+func sendGuessBetTx(cfg *types.Chain33Config, gameID, option string, betsNum int64, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &gty.GuessGameAction{}
@@ -909,7 +912,7 @@ func sendGuessBetTx(gameID, option string, betsNum int64, privKey string) (bool,
 	action.Ty = gty.GuessGameActionBet
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendGuessBetTx formatTx failed.")
 
@@ -937,7 +940,7 @@ func sendGuessBetTx(gameID, option string, betsNum int64, privKey string) (bool,
 	return true, reply.Msg
 }
 
-func sendGuessStopTx(gameID, privKey string) (bool, []byte) {
+func sendGuessStopTx(cfg *types.Chain33Config, gameID, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &gty.GuessGameAction{}
@@ -952,7 +955,7 @@ func sendGuessStopTx(gameID, privKey string) (bool, []byte) {
 	action.Ty = gty.GuessGameActionStopBet
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendGuessStopTx formatTx failed.")
 
@@ -980,7 +983,7 @@ func sendGuessStopTx(gameID, privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func sendGuessAbortTx(gameID, privKey string) (bool, []byte) {
+func sendGuessAbortTx(cfg *types.Chain33Config, gameID, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &gty.GuessGameAction{}
@@ -995,7 +998,7 @@ func sendGuessAbortTx(gameID, privKey string) (bool, []byte) {
 	action.Ty = gty.GuessGameActionAbort
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendGuessAbortTx formatTx failed.")
 
@@ -1023,7 +1026,7 @@ func sendGuessAbortTx(gameID, privKey string) (bool, []byte) {
 	return true, reply.Msg
 }
 
-func sendGuessPublishTx(gameID, result, privKey string) (bool, []byte) {
+func sendGuessPublishTx(cfg *types.Chain33Config, gameID, result, privKey string) (bool, []byte) {
 	signer := util.HexToPrivkey(privKey)
 	var tx *types.Transaction
 	action := &gty.GuessGameAction{}
@@ -1039,7 +1042,7 @@ func sendGuessPublishTx(gameID, result, privKey string) (bool, []byte) {
 	action.Ty = gty.GuessGameActionPublish
 	execer := []byte("guess")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(action), To: address.ExecAddress(string(execer)), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendGuessPublishTx formatTx failed.")
 

@@ -365,6 +365,7 @@ func TestGuess(t *testing.T) {
 func testGuessImp(t *testing.T) {
 	fmt.Println("=======start guess test!=======")
 	q, chain, s, mem, exec, cs, p2p, cmd := initEnvGuess()
+	cfg := q.GetConfig()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
@@ -386,8 +387,8 @@ func testGuessImp(t *testing.T) {
 
 	fmt.Println("=======start sendTransferTx sendTransferToExecTx!=======")
 	//从创世地址向测试地址A转入代币
-	sendTransferTx(adminPriv, userAAddr, 2000000000000)
-	sendTransferTx(adminPriv, userBAddr, 2000000000000)
+	sendTransferTx(cfg, adminPriv, userAAddr, 2000000000000)
+	sendTransferTx(cfg, adminPriv, userBAddr, 2000000000000)
 
 	time.Sleep(2 * time.Second)
 	in := &types.ReqBalance{}
@@ -411,8 +412,8 @@ func testGuessImp(t *testing.T) {
 	assert.Equal(t, true, acct2.Acc[0].Balance == 2000000000000)
 
 	//从测试地址向dos合约转入代币
-	sendTransferToExecTx(userAPriv, "guess", 1000000000000)
-	sendTransferToExecTx(userBPriv, "guess", 1000000000000)
+	sendTransferToExecTx(cfg, userAPriv, "guess", 1000000000000)
+	sendTransferToExecTx(cfg, userBPriv, "guess", 1000000000000)
 	time.Sleep(2 * time.Second)
 
 	fmt.Println("=======start GetBalance!=======")
@@ -441,25 +442,28 @@ func testGuessImp(t *testing.T) {
 }
 
 func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module, *cobra.Command) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
+
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
+	chain33Cfg.SetMinFee(0)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 
 	cs := solo.New(cfg.Consensus, sub.Consensus["solo"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(cfg.P2P)
+	network := p2p.New(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
@@ -550,7 +554,7 @@ func NormPut() {
 	}
 }
 
-func sendTransferTx(fromKey, to string, amount int64) bool {
+func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -559,7 +563,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransfer
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: to, Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("in sendTransferTx formatTx failed")
 		return false
@@ -584,7 +588,7 @@ func sendTransferTx(fromKey, to string, amount int64) bool {
 	return true
 }
 
-func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
+func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, amount int64) bool {
 	signer := util.HexToPrivkey(fromKey)
 	var tx *types.Transaction
 	transfer := &cty.CoinsAction{}
@@ -594,7 +598,7 @@ func sendTransferToExecTx(fromKey, execName string, amount int64) bool {
 	transfer.Ty = cty.CoinsActionTransferToExec
 	execer := []byte("coins")
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: address.ExecAddress("guess"), Fee: fee}
-	tx, err := types.FormatTx(string(execer), tx)
+	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
 		fmt.Println("sendTransferToExecTx formatTx failed.")
 
@@ -626,6 +630,11 @@ func testCmd(cmd *cobra.Command) {
 		Use:   "chain33-cli",
 		Short: "chain33 client tools",
 	}
+
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	types.SetCliSysParam(chain33Cfg.GetTitle(), chain33Cfg)
+
+	rootCmd.PersistentFlags().String("title", chain33Cfg.GetTitle(), "get title name")
 
 	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
 	rootCmd.AddCommand(cmd)

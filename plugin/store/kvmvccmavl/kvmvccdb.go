@@ -306,6 +306,7 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			panic(err)
 		} else {
 			maxVersion = -1
+			kmlog.Error("store kvmvcc checkVersion GetMaxVersion failed", "err", err, "maxVersion", maxVersion)
 		}
 	}
 

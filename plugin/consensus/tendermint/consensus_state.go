@@ -820,7 +820,8 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 		cs.signAddVote(ttypes.VoteTypePrevote, nil)
 		return
 	}
-	if !bytes.Equal(blockNew.Hash(), cs.ProposalBlock.Data.Hash()) {
+	cfg := cs.client.GetQueueClient().GetConfig()
+	if !bytes.Equal(blockNew.Hash(cfg), cs.ProposalBlock.Data.Hash(cfg)) {
 		tendermintlog.Error("enterPrevote: PreExec ProposalBlock has change")
 		cs.signAddVote(ttypes.VoteTypePrevote, nil)
 		return
