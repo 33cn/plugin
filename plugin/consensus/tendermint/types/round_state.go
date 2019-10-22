@@ -119,9 +119,9 @@ type RoundState struct {
 // RoundStateMessage ...
 func (rs *RoundState) RoundStateMessage() *tmtypes.NewRoundStepMsg {
 	return &tmtypes.NewRoundStepMsg{
-		Height:                rs.Height,
-		Round:                 int32(rs.Round),
-		Step:                  int32(rs.Step),
+		Height: rs.Height,
+		Round:  int32(rs.Round),
+		Step:   int32(rs.Step),
 		SecondsSinceStartTime: int32(time.Since(rs.StartTime).Seconds()),
 		LastCommitRound:       int32(rs.LastCommit.Round()),
 	}

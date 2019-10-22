@@ -55,7 +55,6 @@ var (
 
 	TokenSymbol                = "X"
 	MainBlockHeightForTransfer = int64(9)
-	tempTitle                  = ""
 	chain33TestCfg             = types.NewChain33Config(testnode.DefaultConfig)
 	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
 )

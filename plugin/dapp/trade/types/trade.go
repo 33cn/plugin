@@ -36,15 +36,15 @@ var (
 	}
 )
 
-func (t *tradeType) GetName() string {
+func (t *TradeType) GetName() string {
 	return TradeX
 }
 
-func (t *tradeType) GetTypeMap() map[string]int32 {
+func (t *TradeType) GetTypeMap() map[string]int32 {
 	return actionName
 }
 
-func (t *tradeType) GetLogMap() map[int64]*types.LogInfo {
+func (t *TradeType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
 
@@ -67,23 +67,23 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(TradeX, NewType(cfg))
 }
 
-type tradeType struct {
+type TradeType struct {
 	types.ExecTypeBase
 }
 
-func NewType(cfg *types.Chain33Config) *tradeType {
-	c := &tradeType{}
+func NewType(cfg *types.Chain33Config) *TradeType {
+	c := &TradeType{}
 	c.SetChild(c)
 	c.SetConfig(cfg)
 	return c
 }
 
-func (t *tradeType) GetPayload() types.Message {
+func (t *TradeType) GetPayload() types.Message {
 	return &Trade{}
 }
 
 //ActionName :
-func (t *tradeType) ActionName(tx *types.Transaction) string {
+func (t *TradeType) ActionName(tx *types.Transaction) string {
 	var action Trade
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
@@ -105,7 +105,7 @@ func (t *tradeType) ActionName(tx *types.Transaction) string {
 	return "unknown"
 }
 
-func (t *tradeType) Amount(tx *types.Transaction) (int64, error) {
+func (t *TradeType) Amount(tx *types.Transaction) (int64, error) {
 	//TODO: 补充和完善token和trade分支的amount的计算, added by hzj
 	var trade Trade
 	err := types.Decode(tx.GetPayload(), &trade)
@@ -123,7 +123,7 @@ func (t *tradeType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
-func (t *tradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+func (t *TradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	//var tx *types.Transaction
 	cfg := t.GetConfig()
 	if action == "TradeSellLimit" {
