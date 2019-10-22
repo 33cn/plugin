@@ -69,10 +69,9 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 		sub.PruneHeight = defaultPruneHeight
 	}
 	kvmvccCfg := &KVMCCCConfig{
-		EnableMVCCIter: sub.EnableMVCCIter,
+		EnableMVCCIter:  sub.EnableMVCCIter,
 		EnableMVCCPrune: sub.EnableMVCCPrune,
-		PruneHeight: sub.PruneHeight,
-
+		PruneHeight:     sub.PruneHeight,
 	}
 	if kvmvccCfg.EnableMVCCIter {
 		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue), false, kvmvccCfg}
