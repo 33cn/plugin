@@ -70,7 +70,7 @@ func (cache *Queue) Walk(count int, cb func(tx *mempool.Item) bool) {
 func (cache *Queue) GetProperFee() int64 {
 	var sumFeeRate int64
 	var properFeeRate int64
-	if cache.Size() == 0 {
+	if cache.Size() < 100 {
 		return cache.subConfig.ProperFee
 	}
 	i := 0

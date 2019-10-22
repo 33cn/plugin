@@ -41,7 +41,7 @@ var (
 
 func initEnv(size int64) *Queue {
 	if size == 0 {
-		size = 100
+		size = 1000
 	}
 	_, sub := types.InitCfg("chain33.test.toml")
 	var subcfg subConfig
@@ -161,14 +161,23 @@ func TestGetProperFee(t *testing.T) {
 	txs, err := types.CreateTxGroup([]*types.Transaction{tx2, tx3, tx5}, 1200000)
 	assert.NoError(t, err)
 	tx := txs.Tx()
-	groupItem := &drivers.Item{Value: txs.Tx(), Priority: tx.Fee, EnterTime: types.Now().Unix() - 1000}
+	groupItem := &drivers.Item{Value: tx, Priority: tx.Fee, EnterTime: item1.EnterTime - 1}
+	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
 	cache.Push(item1)
 	cache.Push(item4)
-	cache.Push(groupItem)
+	assert.NoError(t, cache.Push(groupItem))
+	for i := 0; i < 97; i++ {
+		item := *item1
+		tempTx := *item1.Value
+		item.Value = &tempTx
+		item.Value.Nonce = int64(i + 1)
+		assert.NoError(t, cache.Push(&item))
+	}
 	properFee := cache.GetProperFee()
 	feeRate1 := item1.Value.Fee / int64(proto.Size(item1.Value)/1000+1)
 	feeRate2 := item4.Value.Fee / int64(proto.Size(item4.Value)/1000+1)
-	assert.Equal(t, (feeRate1+feeRate2+1200000)/3, properFee)
+	t.Log(feeRate1, feeRate2)
+	assert.Equal(t, (feeRate1*98+feeRate2+1200000)/100, properFee)
 }
 
 func TestRealNodeMempool(t *testing.T) {
