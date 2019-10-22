@@ -78,4 +78,4 @@ require (
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 )
 
-replace github.com/33cn/chain33 => github.com/lyh169/chain33 v0.0.0-20191021072850-f71d3eddca4a
+replace github.com/33cn/chain33 => github.com/lyh169/chain33 v0.0.0-20191022063356-de2f9a9bf0d0
