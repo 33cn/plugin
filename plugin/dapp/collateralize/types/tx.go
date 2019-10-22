@@ -50,6 +50,5 @@ type CollateralizeManageTx struct {
 	LiquidationRatio    float32 `json:"liquidationRatio"`
 	StabilityFeeRatio   float32 `json:"stabilityFeeRatio"`
 	Period              int64 `json:"period"`
-	Addr                []string `json:"addr"`
 	Fee                 int64  `json:"fee"`
 }

@@ -44,3 +44,9 @@ func (c *Collateralize) Exec_Close(payload *pty.CollateralizeClose, tx *types.Tr
 	actiondb := NewCollateralizeAction(c, tx, index)
 	return actiondb.CollateralizeClose(payload)
 }
+
+// Exec_Close Action
+func (c *Collateralize) Exec_Manage(payload *pty.CollateralizeManage, tx *types.Transaction, index int) (*types.Receipt, error) {
+	actiondb := NewCollateralizeAction(c, tx, index)
+	return actiondb.CollateralizeManage(payload)
+}

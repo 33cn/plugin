@@ -31,6 +31,7 @@ message BorrowRecord {
     int32       status               = 7; //抵押状态，是否被清算
     int64       liquidateTime        = 8; //清算时间
     int64       expireTime           = 9; //超时清算时间
+    int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
 }
 
 // 资产价格记录
@@ -39,7 +40,6 @@ message AssetPriceRecord {
     float      btyPrice        = 2; //bty价格
     float      btcPrice        = 3; //btc价格
     float      ethPrice        = 4; //eth价格
-    int64      preRecordTime   = 5; //上一次记录时间
 }
 
 // action
@@ -57,11 +57,6 @@ message CollateralizeAction {
 }
 
 message CollateralizeManage {
-    CollateralizeConfig cfg  = 1; //借贷配置
-    CollateralizeAddr   addr = 2; //地址配置
-}
-
-message CollateralizeConfig {
     int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
     float liquidationRatio   = 2; //清算比例
     float stabilityFeeRatio  = 3; //稳定费
@@ -141,9 +136,8 @@ message RepCollateralizeCurrentInfo {
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
     float       liquidationRatio        = 4; //清算比例
     float       stabilityFeeRatio       = 5; //稳定费
-    int64       liquidationPenalty      = 6; //清算罚金
-    string      createAddr              = 7; //创建人地址
-    int64       balance                 = 8; //剩余可借贷金额(ccny)
+    string      createAddr              = 6; //创建人地址
+    int64       balance                 = 7; //剩余可借贷金额(ccny)
 }
 
 // 根据ID列表查询多期借贷信息

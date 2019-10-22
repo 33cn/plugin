@@ -11,11 +11,6 @@ func calcCollateralizeKey(collateralizeID string, index int64) []byte {
 	return []byte(key)
 }
 
-func calcCollateralizePrefix() []byte {
-	key := fmt.Sprintf("LODB-Collateralize-ID:")
-	return []byte(key)
-}
-
 func calcCollateralizeStatusPrefix(status int32) []byte {
 	key := fmt.Sprintf("LODB-Collateralize-status-index:%d", status)
 	return []byte(key)

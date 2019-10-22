@@ -237,7 +237,7 @@ func CollateralizeManageRawTxCmd() *cobra.Command {
 		Short: "manage a collateralize",
 		Run:   CollateralizeManage,
 	}
-	addCollateralizeCloseFlags(cmd)
+	addCollateralizeManageFlags(cmd)
 	return cmd
 }
 
@@ -246,7 +246,6 @@ func addCollateralizeManageFlags(cmd *cobra.Command) {
 	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
 	cmd.Flags().Float32P("stabilityFeeRatio", "s", 0, "stabilityFeeRatio")
 	cmd.Flags().Uint64P("period", "p", 0, "period")
-	cmd.Flags().StringP("addr", "a", "", "addr")
 }
 
 func CollateralizeManage(cmd *cobra.Command, args []string) {
@@ -255,22 +254,12 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
 	stabilityFeeRatio, _ := cmd.Flags().GetFloat32("stabilityFeeRatio")
 	period, _ := cmd.Flags().GetUint64("period")
-	addr, _ := cmd.Flags().GetString("addr")
 
-	var params *rpctypes.CreateTxIn
-	if addr == "" {
-		params = &rpctypes.CreateTxIn{
-			Execer:     types.ExecName(pkt.CollateralizeX),
-			ActionName: "CollateralizeManage",
-			Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%s,}",
-				debtCeiling, liquidationRatio, stabilityFeeRatio, period)),
-		}
-	} else {
-		params = &rpctypes.CreateTxIn{
-			Execer:     types.ExecName(pkt.CollateralizeX),
-			ActionName: "CollateralizeManage",
-			Payload:    []byte(fmt.Sprintf("{[\"addr\":%s]}", addr)),
-		}
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pkt.CollateralizeX),
+		ActionName: "CollateralizeManage",
+		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%s,}",
+			debtCeiling, liquidationRatio, stabilityFeeRatio, period)),
 	}
 
 	var res string

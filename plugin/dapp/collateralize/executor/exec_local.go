@@ -76,3 +76,8 @@ func (c *Collateralize) ExecLocal_Feed(payload *pty.CollateralizeFeed, tx *types
 func (c *Collateralize) ExecLocal_Close(payload *pty.CollateralizeClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(tx, receiptData)
 }
+
+// ExecLocal_Manage Action
+func (c *Collateralize) ExecLocal_Manage(payload *pty.CollateralizeManage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return c.execLocal(tx, receiptData)
+}
