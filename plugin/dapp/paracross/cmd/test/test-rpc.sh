@@ -125,7 +125,7 @@ function paracross_Transfer_Withdraw_Inner() {
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
     #4 查询转移后余额状态
-    local times=100
+    local times=1000
     while true; do
         para_balance_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after transferring:$para_balance_after"
@@ -156,7 +156,7 @@ function paracross_Transfer_Withdraw_Inner() {
     #paracross_SignAndSend $fee "$privkey" "$tx_hash"
 
     #6 查询取钱后余额状态
-    local times=100
+    local times=1000
     while true; do
         para_balance_withdraw_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after withdrawing :$para_balance_withdraw_after"

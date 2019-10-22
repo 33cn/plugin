@@ -95,6 +95,9 @@ function base_init() {
     sed -i $sedfix 's/^grpcBindAddr=.*/grpcBindAddr="0.0.0.0:8802"/g' chain33.toml
     sed -i $sedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' chain33.toml
 
+    #mempool
+    sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
+
     # wallet
     sed -i $sedfix 's/^minerdisable=.*/minerdisable=false/g' chain33.toml
 
