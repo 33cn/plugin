@@ -18,7 +18,6 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	"github.com/33cn/plugin/plugin/dapp/privacy/crypto"
-	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	ty "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
