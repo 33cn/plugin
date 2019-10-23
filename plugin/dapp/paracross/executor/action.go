@@ -456,7 +456,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
-		allowJump, err := a.isAllowConsensJump(stat, titleStatus)
+		allowJump, err := a.isAllowConsensJump(commit, titleStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -707,29 +707,12 @@ func (a *action) isAllowMainConsensJump(commit *pt.ParacrossHeightStatus, titleS
 	return false, nil
 }
 
-//平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
-// 这样在主链没有共识空洞前提下，平行链允许有条件的共识跳跃
-func (a *action) isAllowParaConsensJump(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
-	if titleStatus.Height == -1 {
-		return true, nil
-	}
-	cfg := a.api.GetConfig()
-	selfConsensForkHeight := pt.GetDappForkHeight(cfg, pt.ParaSelfConsensForkHeight)
-	lastStatusMainHeight := int64(-1)
-	if titleStatus.Height > -1 {
-		s, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, titleStatus.Height))
-		if err != nil {
-			clog.Error("paracross.Commit isAllowConsensJump getTitleHeight failed", "err", err.Error())
-			return false, err
-		}
-		lastStatusMainHeight = s.MainHeight
-	}
-
-	return commit.MainHeight > selfConsensForkHeight && lastStatusMainHeight < selfConsensForkHeight, nil
-
+//平行链自共识无缝切换条件：commit height为自共识分段起始高度
+func (a *action) isAllowParaConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
+	return commit.Status.IsStartHeight, nil
 }
 
-func (a *action) isAllowConsensJump(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
+func (a *action) isAllowConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
 	cfg := a.api.GetConfig()
 	if cfg.IsPara() {
 		return a.isAllowParaConsensJump(commit, titleStatus)

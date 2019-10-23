@@ -188,6 +188,7 @@ message ParacrossNodeStatus {
     bytes          crossTxResult = 12;
     repeated bytes crossTxHashs  = 13;
     uint32   nonCommitTxCounts   = 14;
+    bool    isStartHeight        = 15;
 }
 
 message ParacrossCommitAction {
