@@ -88,7 +88,7 @@ type subConfig struct {
 	WaitBlocks4CommitMsg    int32                 `json:"waitBlocks4CommitMsg,omitempty"`
 	GenesisAmount           int64                 `json:"genesisAmount,omitempty"`
 	MainBlockHashForkHeight int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	selfConsensusEnable     []*paraSelfConsEnable `json:"selfConsensusEnable,omitempty"`
+	SelfConsensusEnable     []*paraSelfConsEnable `json:"selfConsensusEnable,omitempty"`
 	WaitConsensStopTimes    uint32                `json:"waitConsensStopTimes,omitempty"`
 	MaxCacheCount           int64                 `json:"maxCacheCount,omitempty"`
 	MaxSyncErrCount         int32                 `json:"maxSyncErrCount,omitempty"`
@@ -128,16 +128,16 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subcfg.MainBlockHashForkHeight = defaultMainBlockHashForkHeight
 	}
 
-	if len(subcfg.selfConsensusEnable) == 0 {
+	if len(subcfg.SelfConsensusEnable) == 0 {
 		selfEnable := &paraSelfConsEnable{Enable: false}
-		subcfg.selfConsensusEnable = append(subcfg.selfConsensusEnable, selfEnable)
+		subcfg.SelfConsensusEnable = append(subcfg.SelfConsensusEnable, selfEnable)
 	}
 
-	if subcfg.selfConsensusEnable[0].BlockHeight != 0 {
+	if subcfg.SelfConsensusEnable[0].BlockHeight != 0 {
 		selfEnable := &paraSelfConsEnable{Enable: false}
-		subcfg.selfConsensusEnable = append([]*paraSelfConsEnable{selfEnable}, subcfg.selfConsensusEnable...)
+		subcfg.SelfConsensusEnable = append([]*paraSelfConsEnable{selfEnable}, subcfg.SelfConsensusEnable...)
 	}
-	err = checkSelfConsensEnable(subcfg.selfConsensusEnable)
+	err = checkSelfConsensEnable(subcfg.SelfConsensusEnable)
 	if err != nil {
 		panic("para selfConsensusEnable config not correct")
 	}
@@ -195,7 +195,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		para.commitMsgClient.waitConsensStopTimes = subcfg.WaitConsensStopTimes
 	}
 
-	para.commitMsgClient.setSelfConsensMap(subcfg.selfConsensusEnable)
+	para.commitMsgClient.setSelfConsensMap(subcfg.SelfConsensusEnable)
 
 	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
 	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
@@ -400,9 +400,9 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 }
 
 func (client *client) getSelfConsEnableStatus(height int64) *paraSelfConsEnable {
-	for i := len(client.subCfg.selfConsensusEnable) - 1; i >= 0; i-- {
-		if height >= client.subCfg.selfConsensusEnable[i].BlockHeight {
-			return client.subCfg.selfConsensusEnable[i]
+	for i := len(client.subCfg.SelfConsensusEnable) - 1; i >= 0; i-- {
+		if height >= client.subCfg.SelfConsensusEnable[i].BlockHeight {
+			return client.subCfg.SelfConsensusEnable[i]
 		}
 	}
 	panic(fmt.Sprintf("para selfConsensusEnable not set for height=%d", height))

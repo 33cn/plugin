@@ -39,7 +39,6 @@ function para_set_toml() {
     sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
 
     sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=10/g' "${1}"
-    sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
     sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix '/^MainForkParacrossCommitTx=.*/a MainBlockHashForkHeight=1' "${1}"
