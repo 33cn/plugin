@@ -254,6 +254,7 @@ Enable=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
+ForkConsensSupportJump=0
 
 [fork.sub.evm]
 Enable=0
