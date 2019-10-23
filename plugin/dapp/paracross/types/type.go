@@ -26,6 +26,8 @@ var (
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
 	MainLoopCheckCommitTxDoneForkHeight = "MainLoopCheckCommitTxDoneForkHeight"
+	// ForkConsensSupportJump 支持主链共识从-1开始跳跃一次
+	ForkConsensSupportJump = "ForkConsensSupportJump"
 )
 
 func init() {
@@ -41,6 +43,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	cfg.RegisterDappFork(ParaX, ForkConsensSupportJump, types.MaxHeight)
 }
 
 func InitExecutor(cfg *types.Chain33Config) {
