@@ -26,6 +26,8 @@ var (
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
 	MainLoopCheckCommitTxDoneForkHeight = "MainLoopCheckCommitTxDoneForkHeight"
+	// ForkConsensSupportJump 支持主链共识从-1开始跳跃一次
+	ForkConsensSupportJump = "ForkConsensSupportJump"
 )
 
 func init() {
@@ -36,6 +38,7 @@ func init() {
 	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
 	types.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	types.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	types.RegisterDappFork(ParaX, ForkConsensSupportJump, types.MaxHeight)
 }
 
 // GetExecName get para exec name

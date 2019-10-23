@@ -44,11 +44,13 @@ type commitMsgClient struct {
 	chainHeight          int64
 	sendingHeight        int64
 	consensHeight        int64
-	consensStartHeight   int64
+	consensDoneHeight    int64
+	selfConsensForked    int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
 	txFeeRate            int64
+	selfConsensMap       map[int64]bool //selfConsensEnable 分段 map
 	privateKey           crypto.PrivKey
 	quit                 chan struct{}
 	mutex                sync.Mutex
@@ -153,8 +155,8 @@ func (client *commitMsgClient) sendCommitTx() {
 
 	consensHeight := client.getConsensusHeight()
 	//只有从未共识过，才可以设置从初始起始高度跳跃
-	if consensHeight == -1 && consensHeight < client.consensStartHeight {
-		consensHeight = client.consensStartHeight
+	if consensHeight == -1 && consensHeight < client.consensDoneHeight {
+		consensHeight = client.consensDoneHeight
 	}
 
 	chainHeight := atomic.LoadInt64(&client.chainHeight)
@@ -294,6 +296,11 @@ func (client *commitMsgClient) isSync() bool {
 		return false
 	}
 
+	if atomic.LoadInt32(&client.selfConsensForked) != 0 {
+		plog.Info("para is not Sync", "selfConsensForked", atomic.LoadInt32(&client.selfConsensForked))
+		return false
+	}
+
 	if !client.authAccountIn {
 		plog.Info("para is not Sync", "authAccountIn", client.authAccountIn)
 		return false
@@ -396,7 +403,8 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	var rawTxs types.Transactions
 	for _, status := range notifications {
 		execName := pt.ParaX
-		if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
+		stat := client.paraClient.getSelfConsEnableStatus(status.Height)
+		if stat.Enable {
 			execName = paracross.GetExecName()
 		}
 		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
@@ -416,7 +424,8 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
-	if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
+	stat := client.paraClient.getSelfConsEnableStatus(status.Height)
+	if stat.Enable {
 		execName = paracross.GetExecName()
 	}
 	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
@@ -588,6 +597,8 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 		return nil, nil
 	}
 
+	client.setConsensStart(ret)
+
 	//clear flag
 	for _, v := range ret {
 		v.NonCommitTxCounts = 0
@@ -595,6 +606,28 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 
 	return ret, nil
 
+}
+
+// 主链共识可能从-1跃迁或者自共识可能分阶段开启场景，设置起始高度标志，主链只需要根据是否起始高度来允许跃迁
+// 1. 主链ParaConsensStartHeight　在selfCons设置的Disable范围没问题，只有主链做共识，平行链收不到共识交易
+// 2. 主链ParaConsensStartHeight 超过selfCons StartHeight也没问题，　自共识也从ParaConsensStartHeight　开始做自共识
+func (client *commitMsgClient) setConsensStart(invs []*pt.ParacrossNodeStatus) {
+	for _, v := range invs {
+		//平行链自共识
+		v.IsStartHeight = client.selfConsensMap[v.Height]
+
+		//主链共识起始高度，只允许从-1跃迁，否则可能存在未共识的asset withdraw交易
+		if v.Height == client.paraClient.subCfg.ParaConsensStartHeight {
+			v.IsStartHeight = true
+		}
+
+	}
+}
+
+func (client *commitMsgClient) setSelfConsensMap(invs []*paraSelfConsEnable) {
+	for _, v := range invs {
+		client.selfConsensMap[v.BlockHeight] = v.Enable
+	}
 }
 
 func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, error) {
@@ -652,17 +685,8 @@ out:
 				isSync = true
 			}
 
-			status, err := client.getMainConsensusStatus()
-			if err != nil {
-				continue
-			}
-
-			//如果主链的共识高度产生了回滚，本地链也需要重新检查共识高度
-			if status.Height < atomic.LoadInt64(&client.consensHeight) {
-				atomic.StoreInt64(&client.consensHeight, status.Height)
-				client.resetNotify()
-			} else {
-				atomic.StoreInt64(&client.consensHeight, status.Height)
+			if client.paraClient.authAccount != "" {
+				client.GetProperFeeRate()
 			}
 
 			selfHeight := int64(-2)
@@ -671,12 +695,26 @@ out:
 				selfHeight = selfStatus.Height
 			}
 
-			if client.paraClient.authAccount != "" {
-				client.GetProperFeeRate()
+			mainStatus, err := client.getMainConsensusStatus()
+			if err != nil {
+				continue
 			}
 
-			plog.Info("para consensusHeight", "mainHeight", status.Height, "selfHeight", selfHeight)
+			//如果主链的共识高度小于自共识高度，需要等待自共识回滚
+			if mainStatus.Height < selfHeight {
+				atomic.StoreInt32(&client.selfConsensForked, 1)
+			} else {
+				atomic.StoreInt32(&client.selfConsensForked, 0)
+			}
 
+			preHeight := atomic.LoadInt64(&client.consensHeight)
+			atomic.StoreInt64(&client.consensHeight, mainStatus.Height)
+			//如果主链的共识高度产生了回滚，本地链也需要重新检查共识高度,不然可能会一直等待共识追赶上来
+			if mainStatus.Height < preHeight {
+				client.resetNotify()
+			}
+
+			plog.Info("para consensusHeight", "mainHeight", mainStatus.Height, "selfHeight", selfHeight)
 		}
 	}
 
@@ -704,7 +742,8 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		return nil, err
 	}
 
-	if client.paraClient.isParaSelfConsensusForked(block.MainHeight) {
+	selfCons := client.paraClient.getSelfConsEnableStatus(block.Height)
+	if selfCons.Enable {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
@@ -715,29 +754,15 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 			plog.Error("getSelfConsensusStatus ", "err", err.Error())
 			return nil, err
 		}
-		resp, ok := ret.(*pt.ParacrossStatus)
+		status, ok := ret.(*pt.ParacrossStatus)
 		if !ok {
 			plog.Error("getSelfConsensusStatus ParacrossStatus nok")
 			return nil, err
 		}
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
-		if resp.Height > -1 {
-			var statusMainHeight int64
-			if pt.IsParaForkHeight(resp.MainHeight, pt.ForkLoopCheckCommitTxDone) {
-				statusMainHeight = resp.MainHeight
-			} else {
-				block, err := client.paraClient.GetBlockByHeight(resp.Height)
-				if err != nil {
-					plog.Error("getSelfConsensusStatus GetBlocks", "err", err.Error())
-					return nil, err
-				}
-				statusMainHeight = block.MainHeight
-			}
-
-			//本地共识高度对应主链高度一定要高于自共识高度，为了适配平行链共识高度不连续场景
-			if client.paraClient.isParaSelfConsensusForked(statusMainHeight) {
-				return resp, nil
-			}
+		//本地共识高度一定要高于阶段共识高度的起始高度，为了适配平行链共识高度不连续场景，一定要设置新自共识起始高度高于当前主链共识高度，否则不生效
+		if status.Height >= selfCons.BlockHeight {
+			return status, nil
 		}
 	}
 	return nil, types.ErrNotFound

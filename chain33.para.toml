@@ -104,15 +104,16 @@ authAccount=""
 genesisAmount=100000000
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
 MainForkParacrossCommitTx=2270000
-#平行链自共识开启对应的主链高度，需要大于等于MainForkParacrossCommitTx=2270000， -1 不开启
-MainParaSelfConsensusForkHeight=-1
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 MainLoopCheckCommitTxDoneForkHeight=4320000
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
 interval=50
-
+#平行链自共识开启对应的主链高度，必须大于等于MainForkParacrossCommitTx=2270000， -1 不开启，可以多个高度开启和关闭
+[[consensus.sub.para.selfConsensusEnable]]
+blockHeight=0
+enable=false
 
 
 [store]
