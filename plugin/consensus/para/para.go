@@ -33,13 +33,12 @@ const (
 
 	genesisBlockTime int64 = 1514533390
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	defaultGenesisAmount            int64 = 1e8
-	poolMainBlockSec                int64 = 5
-	defaultEmptyBlockInterval       int64 = 50 //write empty block every interval blocks in mainchain
-	defaultSearchMatchedBlockDepth  int32 = 10000
-	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
-	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
+	minerPrivateKey                      = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	defaultGenesisAmount           int64 = 1e8
+	poolMainBlockSec               int64 = 5
+	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
+	defaultSearchMatchedBlockDepth int32 = 10000
+	defaultMainBlockHashForkHeight int64 = 209186 //calc block hash fork height in main chain
 )
 
 var (
