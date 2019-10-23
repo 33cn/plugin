@@ -708,8 +708,20 @@ func (a *action) isAllowMainConsensJump(commit *pt.ParacrossHeightStatus, titleS
 }
 
 //平行链自共识无缝切换条件：commit height为自共识分段起始高度
+//分叉高度按平行链本身高度判断，而不是按主链高度，可以尽早支持isStartHeight标志，没共识过的平行链采用分段结构，可以从0开始，分叉高度也为0,
+//共识过的平行链，由于之前按主链高度判断，创世0区块固定只在主链共识，平行链需要自动从１高度或更高高度过渡过来
 func (a *action) isAllowParaConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
-	return commit.Status.IsStartHeight, nil
+	if commit.Status.IsStartHeight || types.IsDappFork(a.height, pt.ParaX, pt.ForkConsensSupportJump) {
+		return commit.Status.IsStartHeight, nil
+	}
+
+	return a.isAllowParaConsensJumpOld(commit, titleStatus)
+}
+
+//平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
+// 这样在主链没有共识空洞前提下，平行链允许有条件的共识跳跃
+func (a *action) isAllowParaConsensJumpOld(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
+	return titleStatus.Height == -1, nil
 }
 
 func (a *action) isAllowConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
