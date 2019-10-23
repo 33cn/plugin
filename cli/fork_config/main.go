@@ -1,17 +1,18 @@
 package main
 
 import (
-	_ "github.com/33cn/chain33/system"
-	_ "github.com/33cn/plugin/plugin"
 	"fmt"
-	"github.com/33cn/chain33/types"
-	"strings"
 	"os"
 	"sort"
+	"strings"
+
+	_ "github.com/33cn/chain33/system"
+	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 func main() {
-	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"" , 1))
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	forks, err := cfg.GetForks()
 	if err != nil {
 		fmt.Printf("clone fork failed: %v", err)
