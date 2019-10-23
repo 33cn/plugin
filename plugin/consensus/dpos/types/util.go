@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -87,10 +88,48 @@ func Fingerprint(slice []byte) []byte {
 	return fingerprint
 }
 
+// Kill ...
+func Kill() error {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return err
+	}
+	return p.Signal(syscall.SIGTERM)
+}
+
 // Exit ...
 func Exit(s string) {
 	fmt.Printf(s + "\n")
 	os.Exit(1)
+}
+
+// Parallel ...
+func Parallel(tasks ...func()) {
+	var wg sync.WaitGroup
+	wg.Add(len(tasks))
+	for _, task := range tasks {
+		go func(task func()) {
+			task()
+			wg.Done()
+		}(task)
+	}
+	wg.Wait()
+}
+
+// MinInt ...
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// MaxInt ...
+func MaxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // RandIntn ...
