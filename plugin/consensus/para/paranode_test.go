@@ -54,7 +54,7 @@ func TestParaNode(t *testing.T) {
 
 	testParaQuery(para)
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 2; i++ {
 		tx = util.CreateTxWithExecer(cfg, para.Para.GetGenesisKey(), "user.p.guodun.none")
 		para.Para.SendTxRPC(tx)
 		para.Para.WaitHeight(int64(i) + 1)
