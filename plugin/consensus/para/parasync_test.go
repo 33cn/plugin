@@ -49,6 +49,7 @@ func initTestSyncBlock() {
 func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	para := new(client)
 	para.subCfg = new(subConfig)
+	para.subCfg.SelfConsensusEnable = append(para.subCfg.SelfConsensusEnable, &paraSelfConsEnable{Enable: false})
 
 	baseCli := drivers.NewBaseClient(&types.Consensus{Name: "name"})
 	para.BaseClient = baseCli

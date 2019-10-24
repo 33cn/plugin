@@ -38,7 +38,6 @@ const (
 	poolMainBlockSec               int64 = 5
 	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth int32 = 10000
-	defaultMainBlockHashForkHeight int64 = 209186 //calc block hash fork height in main chain
 )
 
 var (
@@ -78,26 +77,27 @@ type paraSelfConsEnable struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds       int64                 `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient    string                `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight             int64                 `json:"startHeight,omitempty"`
-	GenesisStartHeightSame  bool                  `json:"genesisStartHeightSame,omitempty"`
-	EmptyBlockInterval      []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
-	AuthAccount             string                `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg    int32                 `json:"waitBlocks4CommitMsg,omitempty"`
-	GenesisAmount           int64                 `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	SelfConsensusEnable     []*paraSelfConsEnable `json:"selfConsensusEnable,omitempty"`
-	WaitConsensStopTimes    uint32                `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount           int64                 `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount         int32                 `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsClose bool                  `json:"fetchFilterParaTxsClose,omitempty"`
-	BatchFetchBlockCount    int64                 `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight  int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen       bool                  `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob   int64                 `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum     uint32                `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime  uint32                `json:"multiDownServerRspTime,omitempty"`
+	WriteBlockSeconds              int64                 `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient           string                `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight                    int64                 `json:"startHeight,omitempty"`
+	GenesisStartHeightSame         bool                  `json:"genesisStartHeightSame,omitempty"`
+	EmptyBlockInterval             []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
+	AuthAccount                    string                `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg           int32                 `json:"waitBlocks4CommitMsg,omitempty"`
+	GenesisAmount                  int64                 `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight        int64                 `json:"mainBlockHashForkHeight,omitempty"`
+	SelfConsensusEnable            []*paraSelfConsEnable `json:"selfConsensusEnable,omitempty"`
+	WaitConsensStopTimes           uint32                `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount                  int64                 `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount                int32                 `json:"maxSyncErrCount,omitempty"`
+	FetchFilterParaTxsClose        bool                  `json:"fetchFilterParaTxsClose,omitempty"`
+	BatchFetchBlockCount           int64                 `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight         int64                 `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen              bool                  `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob          int64                 `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum            uint32                `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime         uint32                `json:"multiDownServerRspTime,omitempty"`
+	RmCommitMsgHashParamMainHeight int64                 `json:"rmCommitMsgHashParamMainHeight,omitempty"`
 }
 
 // New function to init paracross env
@@ -121,10 +121,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	err := checkEmptyBlockInterval(subcfg.EmptyBlockInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
-	}
-
-	if subcfg.MainBlockHashForkHeight <= 0 {
-		subcfg.MainBlockHashForkHeight = defaultMainBlockHashForkHeight
 	}
 
 	if len(subcfg.SelfConsensusEnable) == 0 {
