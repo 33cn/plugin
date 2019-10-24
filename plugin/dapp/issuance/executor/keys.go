@@ -21,13 +21,13 @@ func calcIssuanceStatusKey(status int32, index int64) []byte {
 	return []byte(key)
 }
 
-func calcIssuanceAddrPrefix(addr string) []byte {
-	key := fmt.Sprintf("LODB-Issuance-addr:%s", addr)
+func calcIssuanceRecordAddrPrefix(addr string) []byte {
+	key := fmt.Sprintf("LODB-Issuance-record-addr:%s", addr)
 	return []byte(key)
 }
 
-func calcIssuanceAddrKey(addr string, index int64) []byte {
-	key := fmt.Sprintf("LODB-Issuance-addr:%s:%018d", addr, index)
+func calcIssuanceRecordAddrKey(addr string, index int64) []byte {
+	key := fmt.Sprintf("LODB-Issuance-record-addr:%s:%018d", addr, index)
 	return []byte(key)
 }
 
@@ -41,8 +41,8 @@ func calcIssuanceLatestPriceKey() []byte {
 	return []byte(key)
 }
 
-func calcIssuanceRecordStatusPrefix(status int32) []byte {
-	key := fmt.Sprintf("LODB-Issuance-record-status:%d", status)
+func calcIssuanceRecordStatusPrefix(status string) []byte {
+	key := fmt.Sprintf("LODB-Issuance-record-status:%s", status)
 	return []byte(key)
 }
 

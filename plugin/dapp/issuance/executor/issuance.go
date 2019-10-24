@@ -59,11 +59,11 @@ func (c *Issuance) GetDriverName() string {
 	return pty.IssuanceX
 }
 
-func (c *Issuance) addIssuanceID(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceKey(issuancelog.IssuanceId, issuancelog.Index)
+func (c *Issuance) addIssuanceID(index int64, issuanceId string) (kvs []*types.KeyValue) {
+	key := calcIssuanceKey(issuanceId, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuancelog.IssuanceId,
-		Index: issuancelog.Index,
+		IssuanceId:issuanceId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -71,19 +71,19 @@ func (c *Issuance) addIssuanceID(issuancelog *pty.ReceiptIssuance) (kvs []*types
 	return kvs
 }
 
-func (c *Issuance) deleteIssuanceID(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceKey(issuancelog.IssuanceId, issuancelog.Index)
+func (c *Issuance) deleteIssuanceID(index int64, issuanceId string) (kvs []*types.KeyValue) {
+	key := calcIssuanceKey(issuanceId, index)
 	kv := &types.KeyValue{Key: key, Value: nil}
 
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Issuance) addIssuanceStatus(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceStatusKey(issuancelog.Status, issuancelog.Index)
+func (c *Issuance) addIssuanceStatus(status int32, index int64, issuanceId string) (kvs []*types.KeyValue) {
+	key := calcIssuanceStatusKey(status, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuancelog.IssuanceId,
-		Index: issuancelog.Index,
+		IssuanceId:issuanceId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -91,19 +91,20 @@ func (c *Issuance) addIssuanceStatus(issuancelog *pty.ReceiptIssuance) (kvs []*t
 	return kvs
 }
 
-func (c *Issuance) deleteIssuanceStatus(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceStatusKey(issuancelog.Status, issuancelog.Index)
+func (c *Issuance) deleteIssuanceStatus(status int32, index int64) (kvs []*types.KeyValue) {
+	key := calcIssuanceStatusKey(status, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Issuance) addIssuanceAddr(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceAddrKey(issuancelog.AccountAddr, issuancelog.Index)
+func (c *Issuance) addIssuanceRecordAddr(accountAddr string, index int64, debtId string, issuanceId string) (kvs []*types.KeyValue) {
+	key := calcIssuanceRecordAddrKey(accountAddr, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuancelog.IssuanceId,
-		Index: issuancelog.Index,
+		IssuanceId:issuanceId,
+		DebtId: debtId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -111,21 +112,22 @@ func (c *Issuance) addIssuanceAddr(issuancelog *pty.ReceiptIssuance) (kvs []*typ
 	return kvs
 }
 
-func (c *Issuance) deleteIssuanceAddr(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceAddrKey(issuancelog.AccountAddr, issuancelog.Index)
+func (c *Issuance) deleteIssuanceRecordAddr(accountAddr string, index int64) (kvs []*types.KeyValue) {
+	key := calcIssuanceRecordAddrKey(accountAddr, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Issuance) addIssuanceRecordStatus(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceRecordStatusKey(issuancelog.RecordStatus, issuancelog.Index)
+func (c *Issuance) addIssuanceRecordStatus(recordStatus int32, accountAddr string, index int64, debtId string, issuanceId string) (kvs []*types.KeyValue) {
+	key := calcIssuanceRecordStatusKey(recordStatus, index)
 
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuancelog.IssuanceId,
-		Addr:  issuancelog.AccountAddr,
-		Index: issuancelog.Index,
+		IssuanceId:issuanceId,
+		DebtId: debtId,
+		Addr:  accountAddr,
+		Index: index,
 	}
 
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -133,8 +135,8 @@ func (c *Issuance) addIssuanceRecordStatus(issuancelog *pty.ReceiptIssuance) (kv
 	return kvs
 }
 
-func (c *Issuance) deleteIssuanceRecordStatus(issuancelog *pty.ReceiptIssuance) (kvs []*types.KeyValue) {
-	key := calcIssuanceRecordStatusKey(issuancelog.RecordStatus, issuancelog.Index)
+func (c *Issuance) deleteIssuanceRecordStatus(status int32, index int64) (kvs []*types.KeyValue) {
+	key := calcIssuanceRecordStatusKey(status, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)

@@ -61,81 +61,38 @@ func (c *Issuance) Query_IssuanceByStatus(req *pty.ReqIssuanceByStatus) (types.M
 	return ids, nil
 }
 
-func (c *Issuance) Query_IssuanceByAddr(req *pty.ReqIssuanceByAddr) (types.Message, error) {
-	ids := &pty.RepIssuanceIDs{}
-	issuIDRecords, err := queryIssuanceByAddr(c.GetLocalDB(), req.Addr)
+func (c *Issuance) Query_IssuanceRecordByID(req *pty.ReqIssuanceDebtInfo) (types.Message, error) {
+	issuRecord, err := queryIssuanceRecordByID(c.GetStateDB(), req.IssuanceId, req.DebtId)
 	if err != nil {
-		clog.Error("Query_IssuanceByAddr", "get issuance record error", err)
+		clog.Error("Query_IssuanceRecordByID", "get issuance record error", err)
 		return nil, err
 	}
 
-	for _, record := range issuIDRecords {
-		ids.IDs = append(ids.IDs, record.IssuanceId)
-	}
-
-	return ids, nil
+	ret := &pty.RepIssuanceDebtInfo{}
+	ret.Record = issuRecord
+	return issuRecord, nil
 }
 
-func (c *Issuance) Query_IssuanceDebtInfoByAddr(req *pty.ReqIssuanceDebtInfoByAddr) (types.Message, error) {
-	records, err := queryIssuanceByAddr(c.GetLocalDB(), req.Addr)
+func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecordsByAddr) (types.Message, error) {
+	records, err := queryIssuanceRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {
 		clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepIssuanceDebtInfos{}
-	for _, record := range records {
-		if record.IssuanceId == req.IssuanceId {
-			issu, err := queryIssuanceByID(c.GetStateDB(), record.IssuanceId)
-			if err != nil {
-				clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
-				return nil, err
-			}
-
-			for _, borrowRecord := range issu.DebtRecords {
-				if borrowRecord.AccountAddr == req.Addr {
-					ret.Record = append(ret.Record, borrowRecord)
-				}
-			}
-
-			for _, borrowRecord := range issu.InvalidRecords {
-				if borrowRecord.AccountAddr == req.Addr {
-					ret.Record = append(ret.Record, borrowRecord)
-				}
-			}
-		}
-	}
-
-	return nil, pty.ErrRecordNotExist
+	ret := &pty.RepIssuanceRecords{}
+	ret.Records = records
+	return ret, nil
 }
 
-func (c *Issuance) Query_IssuanceDebtInfoByStatus(req *pty.ReqIssuanceDebtInfoByStatus) (types.Message, error) {
-	records, err := queryIssuanceRecordByStatus(c.GetLocalDB(), req.Status)
+func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecordsByStatus) (types.Message, error) {
+	records, err := queryIssuanceRecordsByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status)
 	if err != nil {
 		clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepIssuanceDebtInfos{}
-	for _, record := range records {
-		issu, err := queryIssuanceByID(c.GetStateDB(), record.IssuanceId)
-		if err != nil {
-			clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
-			return nil, err
-		}
-
-		for _, borrowRecord := range issu.DebtRecords {
-			if borrowRecord.Status == req.Status {
-				ret.Record = append(ret.Record, borrowRecord)
-			}
-		}
-
-		for _, borrowRecord := range issu.InvalidRecords {
-			if borrowRecord.Status == req.Status {
-				ret.Record = append(ret.Record, borrowRecord)
-			}
-		}
-	}
-
+	ret := &pty.RepIssuanceRecords{}
+	ret.Records = records
 	return ret, nil
 }

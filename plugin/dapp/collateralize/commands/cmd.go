@@ -284,6 +284,7 @@ func addCollateralizeQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("index", "i", "", "index")
 	cmd.Flags().StringP("status", "s", "", "status")
 	cmd.Flags().StringP("collateralizeIDs", "d", "", "collateralize IDs")
+	cmd.Flags().StringP("borrowID", "b", "", "borrow ID")
 }
 
 func CollateralizeQuery(cmd *cobra.Command, args []string) {
@@ -293,6 +294,7 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	statusStr, _ := cmd.Flags().GetString("status")
 	// indexstr, _ := cmd.Flags().GetString("index")
 	collateralizeIDs, _ := cmd.Flags().GetString("collateralizeIDs")
+	borrowID, _ := cmd.Flags().GetString("borrowID")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.CollateralizeX
@@ -315,25 +317,36 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 
 	if collateralizeID != "" {
 		if statusStr != "" {
-			params.FuncName = "CollateralizeBorrowInfoByStatus"
+			params.FuncName = "CollateralizeRecordByStatus"
 
-			req := &pkt.ReqCollateralizeBorrowInfoByStatus{
+			req := &pkt.ReqCollateralizeRecordByStatus{
 				CollateralizeId: collateralizeID,
 				Status: int32(status),
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepCollateralizeBorrowInfos
+			var res pkt.RepCollateralizeRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else if address != "" {
-			params.FuncName = "CollateralizeBorrowInfoByAddr"
+			params.FuncName = "CollateralizeRecordByAddr"
 
-			req := &pkt.ReqCollateralizeBorrowInfoByAddr{
+			req := &pkt.ReqCollateralizeRecordByAddr{
 				CollateralizeId: collateralizeID,
 				Addr: address,
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepCollateralizeBorrowInfos
+			var res pkt.RepCollateralizeRecords
+			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+			ctx.Run()
+		} else if borrowID != ""{
+			params.FuncName = "CollateralizeRecordByID"
+
+			req := &pkt.ReqCollateralizeRecord{
+				CollateralizeId: collateralizeID,
+				RecordId: borrowID,
+			}
+			params.Payload = types.MustPBToJSON(req)
+			var res pkt.RepCollateralizeRecord
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else {

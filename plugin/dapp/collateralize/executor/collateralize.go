@@ -59,11 +59,11 @@ func (c *Collateralize) GetDriverName() string {
 	return pty.CollateralizeX
 }
 
-func (c *Collateralize) addCollateralizeID(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeKey(collateralizelog.CollateralizeId, collateralizelog.Index)
+func (c *Collateralize) addCollateralizeID(collateralizeId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeKey(collateralizeId, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizelog.CollateralizeId,
-		Index: collateralizelog.Index,
+		CollateralizeId:collateralizeId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -71,19 +71,19 @@ func (c *Collateralize) addCollateralizeID(collateralizelog *pty.ReceiptCollater
 	return kvs
 }
 
-func (c *Collateralize) deleteCollateralizeID(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeKey(collateralizelog.CollateralizeId, collateralizelog.Index)
+func (c *Collateralize) deleteCollateralizeID(collateralizeId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeKey(collateralizeId, index)
 	kv := &types.KeyValue{Key: key, Value: nil}
 
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeStatusKey(collateralizelog.Status, collateralizelog.Index)
+func (c *Collateralize) addCollateralizeStatus(status int32, collateralizeId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeStatusKey(status, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizelog.CollateralizeId,
-		Index: collateralizelog.Index,
+		CollateralizeId:collateralizeId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -91,19 +91,19 @@ func (c *Collateralize) addCollateralizeStatus(collateralizelog *pty.ReceiptColl
 	return kvs
 }
 
-func (c *Collateralize) deleteCollateralizeStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeStatusKey(collateralizelog.Status, collateralizelog.Index)
+func (c *Collateralize) deleteCollateralizeStatus(status int32, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeStatusKey(status, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeAddr(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeAddrKey(collateralizelog.AccountAddr, collateralizelog.Index)
+func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeAddrKey(addr, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizelog.CollateralizeId,
-		Index: collateralizelog.Index,
+		CollateralizeId:collateralizeId,
+		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -111,21 +111,21 @@ func (c *Collateralize) addCollateralizeAddr(collateralizelog *pty.ReceiptCollat
 	return kvs
 }
 
-func (c *Collateralize) deleteCollateralizeAddr(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeAddrKey(collateralizelog.AccountAddr, collateralizelog.Index)
+func (c *Collateralize) deleteCollateralizeAddr(addr string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeAddrKey(addr, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeRecordStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeRecordStatusKey(collateralizelog.RecordStatus, collateralizelog.Index)
+func (c *Collateralize) addCollateralizeRecordStatus(recordStatus int32, collateralizeId string, recordId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeRecordStatusKey(recordStatus, index)
 
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizelog.CollateralizeId,
-		Addr:  collateralizelog.AccountAddr,
-		Index: collateralizelog.Index,
+		CollateralizeId:collateralizeId,
+		RecordId:recordId,
+		Index: index,
 	}
 
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -133,8 +133,30 @@ func (c *Collateralize) addCollateralizeRecordStatus(collateralizelog *pty.Recei
 	return kvs
 }
 
-func (c *Collateralize) deleteCollateralizeRecordStatus(collateralizelog *pty.ReceiptCollateralize) (kvs []*types.KeyValue) {
-	key := calcCollateralizeRecordStatusKey(collateralizelog.RecordStatus, collateralizelog.Index)
+func (c *Collateralize) deleteCollateralizeRecordStatus(recordStatus int32, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeRecordStatusKey(recordStatus, index)
+
+	kv := &types.KeyValue{Key: key, Value: nil}
+	kvs = append(kvs, kv)
+	return kvs
+}
+
+func (c *Collateralize) addCollateralizeRecordAddr(recordAddr string, collateralizeId string, recordId string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeRecordAddrKey(recordAddr, index)
+
+	record := &pty.CollateralizeRecord{
+		CollateralizeId:collateralizeId,
+		RecordId:recordId,
+		Index: index,
+	}
+
+	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
+	kvs = append(kvs, kv)
+	return kvs
+}
+
+func (c *Collateralize) deleteCollateralizeRecordAddr(recordAddr string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeRecordAddrKey(recordAddr, index)
 
 	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)

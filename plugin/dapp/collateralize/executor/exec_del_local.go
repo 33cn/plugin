@@ -20,28 +20,38 @@ func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.R
 
 		switch item.Ty {
 		case pty.TyLogCollateralizeCreate:
-			kv := c.deleteCollateralizeStatus(&collateralizeLog)
-			set.KV = append(set.KV, kv...)
+			set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
+			set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.Index)...)
 			break
 		case pty.TyLogCollateralizeBorrow:
-			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(&collateralizeLog)...)
-			set.KV = append(set.KV, c.deleteCollateralizeAddr(&collateralizeLog)...)
+			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.RecordStatus, collateralizeLog.Index)...)
+			set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
 			break
 		case pty.TyLogCollateralizeAppend: // append没有状态变化
 			break
 		case pty.TyLogCollateralizeRepay:
-			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(&collateralizeLog)...)
-			set.KV = append(set.KV, c.addCollateralizeAddr(&collateralizeLog)...)
+			set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.RecordPreStatus, collateralizeLog.CollateralizeId,
+				collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
+			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.RecordStatus, collateralizeLog.Index)...)
+			set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
+				collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
 			break
 		case pty.TyLogCollateralizeFeed:
-			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(&collateralizeLog)...)
-			if collateralizeLog.RecordStatus == pty.CollateralizeUserStatusSystemLiquidate {
-				set.KV = append(set.KV, c.addCollateralizeAddr(&collateralizeLog)...)
+			set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.RecordStatus, collateralizeLog.CollateralizeId,
+				collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
+			set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.RecordStatus, collateralizeLog.Index)...)
+			set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
+				collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
+			// 如果没有被清算，需要把地址索引更新
+			if collateralizeLog.RecordStatus == pty.CollateralizeUserStatusWarning || collateralizeLog.RecordStatus == pty.CollateralizeUserStatusExpire {
+				set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
 			}
 			break
 		case pty.TyLogCollateralizeClose:
-			kv := c.addCollateralizeStatus(&collateralizeLog)
-			set.KV = append(set.KV, kv...)
+			set.KV = append(set.KV, c.addCollateralizeStatus(pty.CollateralizeStatusCreated, collateralizeLog.CollateralizeId,
+				collateralizeLog.PreIndex)...)
+			set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId,
+				collateralizeLog.PreIndex)...)
 			break
 		}
 	}

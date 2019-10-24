@@ -245,7 +245,8 @@ func addIssuanceQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("address", "a", "", "address")
 	cmd.Flags().StringP("index", "i", "", "index")
 	cmd.Flags().StringP("status", "s", "", "status")
-	cmd.Flags().StringP("issuanceIDs", "d", "", "issuance IDs")
+	cmd.Flags().StringP("issuanceIDs", "e", "", "issuance IDs")
+	cmd.Flags().StringP("debtID", "d", "", "debt ID")
 }
 
 func IssuanceQuery(cmd *cobra.Command, args []string) {
@@ -255,6 +256,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 	statusStr, _ := cmd.Flags().GetString("status")
 	// indexstr, _ := cmd.Flags().GetString("index")
 	issuanceIDs, _ := cmd.Flags().GetString("issuanceIDs")
+	debtID, _ := cmd.Flags().GetString("debtID")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.IssuanceX
@@ -277,25 +279,36 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 
 	if issuanceID != "" {
 		if statusStr != "" {
-			params.FuncName = "IssuanceDebtInfoByStatus"
+			params.FuncName = "IssuanceRecordsByStatus"
 
-			req := &pkt.ReqIssuanceDebtInfoByStatus{
+			req := &pkt.ReqIssuanceRecordsByStatus{
 				IssuanceId: issuanceID,
 				Status: int32(status),
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepIssuanceDebtInfos
+			var res pkt.RepIssuanceRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else if address != "" {
-			params.FuncName = "IssuanceDebtInfoByAddr"
+			params.FuncName = "IssuanceRecordsByAddr"
 
-			req := &pkt.ReqIssuanceDebtInfoByAddr{
+			req := &pkt.ReqIssuanceRecordsByAddr{
 				IssuanceId: issuanceID,
 				Addr: address,
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepIssuanceDebtInfos
+			var res pkt.RepIssuanceDebtInfo
+			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+			ctx.Run()
+		} else if debtID != ""{
+			params.FuncName = "IssuanceRecordByID"
+
+			req := &pkt.ReqIssuanceDebtInfo{
+				IssuanceId: issuanceID,
+				DebtId: debtID,
+			}
+			params.Payload = types.MustPBToJSON(req)
+			var res pkt.RepIssuanceCurrentInfo
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else {
@@ -309,14 +322,6 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		}
-	} else if address != "" {
-		params.FuncName = "IssuanceByAddr"
-
-		req := &pkt.ReqIssuanceByAddr{Addr: address}
-		params.Payload = types.MustPBToJSON(req)
-		var res pkt.RepIssuanceIDs
-		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-		ctx.Run()
 	} else if statusStr != "" {
 		params.FuncName = "IssuanceByStatus"
 

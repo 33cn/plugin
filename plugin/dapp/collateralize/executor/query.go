@@ -80,66 +80,40 @@ func (c *Collateralize) Query_CollateralizeByAddr(req *pty.ReqCollateralizeByAdd
 	return ids, nil
 }
 
-func (c *Collateralize) Query_CollateralizeBorrowInfoByAddr(req *pty.ReqCollateralizeBorrowInfoByAddr) (types.Message, error) {
-	records, err := queryCollateralizeByAddr(c.GetLocalDB(), req.Addr)
+func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeRecord) (types.Message, error) {
+	issuRecord, err := queryCollateralizeRecordByID(c.GetStateDB(), req.CollateralizeId, req.RecordId)
 	if err != nil {
-		clog.Error("Query_CollateralizeBorrowInfoByAddr", "get collateralize record error", err)
+		clog.Error("Query_IssuanceRecordByID", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepCollateralizeBorrowInfos{}
-	for _, record := range records {
-		if record.CollateralizeId == req.CollateralizeId {
-			coll, err := queryCollateralizeByID(c.GetStateDB(), record.CollateralizeId)
-			if err != nil {
-				clog.Error("Query_CollateralizeBorrowInfoByAddr", "get collateralize record error", err)
-				return nil, err
-			}
-
-			for _, borrowRecord := range coll.BorrowRecords {
-				if borrowRecord.AccountAddr == req.Addr {
-					ret.Record = append(ret.Record, borrowRecord)
-				}
-			}
-
-			for _, borrowRecord := range coll.InvalidRecords {
-				if borrowRecord.AccountAddr == req.Addr {
-					ret.Record = append(ret.Record, borrowRecord)
-				}
-			}
-		}
-	}
-
-	return nil, pty.ErrRecordNotExist
+	ret := &pty.RepCollateralizeRecord{}
+	ret.Record = issuRecord
+	return issuRecord, nil
 }
 
-func (c *Collateralize) Query_CollateralizeBorrowInfoByStatus(req *pty.ReqCollateralizeBorrowInfoByStatus) (types.Message, error) {
-	records, err := queryCollateralizeRecordByStatus(c.GetLocalDB(), req.Status)
+func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
+	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {
-		clog.Error("Query_CollateralizeBorrowInfoByAddr", "get collateralize record error", err)
+		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepCollateralizeBorrowInfos{}
-	for _, record := range records {
-		coll, err := queryCollateralizeByID(c.GetStateDB(), record.CollateralizeId)
-		if err != nil {
-			clog.Error("Query_CollateralizeBorrowInfoByAddr", "get collateralize record error", err)
-			return nil, err
-		}
+	ret := &pty.RepCollateralizeRecords{}
+	ret.Records = records
 
-		for _, borrowRecord := range coll.BorrowRecords {
-			if borrowRecord.Status == req.Status {
-				ret.Record = append(ret.Record, borrowRecord)
-			}
-		}
+	return ret, nil
+}
 
-		for _, borrowRecord := range coll.InvalidRecords {
-			if borrowRecord.Status == req.Status {
-				ret.Record = append(ret.Record, borrowRecord)
-			}
-		}
+func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
+	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status)
+	if err != nil {
+		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
+		return nil, err
 	}
+
+	ret := &pty.RepCollateralizeRecords{}
+	ret.Records = records
 
 	return ret, nil
 }

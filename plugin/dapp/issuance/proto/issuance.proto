@@ -19,6 +19,9 @@ message Issuance {
     int64       createTime              = 13;//创建时间
     int64       balance                 = 14;//剩余可发行ccny
     string      issuerAddr              = 15;//发行地址
+    int64       index                   = 16;//当前索引
+    int64       preIndex                = 17;//上级索引
+    int64       createIndex             = 18;//创建索引，用于close删除状态
 }
 
 // 抵押记录
@@ -33,10 +36,11 @@ message DebtRecord {
     int64       liquidateTime        = 8; //清算时间
     int64       expireTime           = 9; //超时清算时间
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
+    string      debtId               = 11;//借贷id
 }
 
 // 资产价格记录
-message AssetPriceRecord {
+message IssuanceAssetPriceRecord {
     int64      recordTime      = 1; //价格记录时间
     float      btyPrice        = 2; //bty价格
 }
@@ -68,13 +72,14 @@ message IssuanceCreate {
 
 // 质押借出
 message IssuanceDebt {
-    string IssuanceId = 1; //借贷期数ID
+    string issuanceId = 1; //借贷期数ID
     int64  value      = 2; //借贷价值(ccny)
 }
 
 // 质押清算
 message IssuanceRepay {
-    string IssuanceId = 1; //借贷期数ID
+    string issuanceId = 1; //借贷期数ID
+    string debtId     = 2; //借贷ID
 }
 
 // 喂价
@@ -86,24 +91,27 @@ message IssuanceFeed {
 
 // 借贷关闭
 message IssuanceClose {
-    string IssuanceId = 1; //借贷期数ID
+    string issuanceId = 1; //借贷期数ID
 }
 
 // exec_local 借贷信息
 message ReceiptIssuance {
-    string      IssuanceId    = 1;
-    string      accountAddr   = 2;
-    int32       status        = 3;
-    int32       preStatus     = 4;
-    int64       index         = 5;
-    int32       recordStatus  = 6;
+    string      issuanceId      = 1;
+    string      accountAddr     = 2;
+    int32       status          = 3;
+    string      debtId          = 4;
+    int32       recordStatus    = 5;
+    int32       recordPreStatus = 6;
+    int64       index           = 7;
+    int64       preIndex        = 8;
 }
 
 // exec_local 借贷记录信息
 message IssuanceRecord {
-    string IssuanceId   = 1;
+    string issuanceId   = 1;
     string addr         = 2;
-    int64  index        = 3;
+    string debtId       = 3;
+    int64  index        = 4;
 }
 
 // exec_local 借贷记录信息列表
@@ -113,7 +121,7 @@ message IssuanceRecords {
 
 // 根据ID查询一期借贷信息
 message ReqIssuanceInfo {
-    string IssuanceId = 1;
+    string issuanceId = 1;
 }
 
 // 返回一期借贷信息
@@ -129,7 +137,7 @@ message RepIssuanceCurrentInfo {
 
 // 根据ID列表查询多期借贷信息
 message ReqIssuanceInfos {
-    repeated string IssuanceIds = 1;
+    repeated string issuanceIds = 1;
 }
 
 // 返回多期借贷信息
@@ -137,14 +145,9 @@ message RepIssuanceCurrentInfos {
     repeated RepIssuanceCurrentInfo infos = 1;
 }
 
-// 根据借贷状态查询
+// 根据发行状态查询
 message ReqIssuanceByStatus {
     int32 status = 1;
-}
-
-// 根据用户地址查询
-message ReqIssuanceByAddr {
-    string addr = 1;
 }
 
 // 返回借贷ID列表
@@ -152,19 +155,30 @@ message RepIssuanceIDs {
     repeated string IDs = 1;
 }
 
-// 根据地址和借贷ID混合查询具体借贷记录
-message ReqIssuanceDebtInfoByAddr {
-    string IssuanceId = 1;
+// 根据用户地址查询发行记录
+message ReqIssuanceRecordsByAddr {
+    string issuanceId = 1;
     string addr       = 2;
 }
 
-// 根据状态和借贷ID混合查询具体借贷记录
-message ReqIssuanceDebtInfoByStatus {
-    string IssuanceId = 1;
+// 根据状态查询发行记录
+message ReqIssuanceRecordsByStatus {
+    string issuanceId = 1;
     int32 status      = 2;
 }
 
-// 返回借贷记录
-message RepIssuanceDebtInfos {
-    repeated DebtRecord record = 1;
+// 返回记录列表
+message RepIssuanceRecords {
+    repeated DebtRecord records = 1;
+}
+
+// 精确查找发行记录
+message ReqIssuanceDebtInfo {
+    string issuanceId = 1;
+    string debtId     = 2;
+}
+
+// 返回记录
+message RepIssuanceDebtInfo {
+    DebtRecord record = 1;
 }

@@ -41,6 +41,16 @@ func calcCollateralizeLatestPriceKey() []byte {
 	return []byte(key)
 }
 
+func calcCollateralizeRecordAddrPrefix(addr string) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-record-addr:%d", addr)
+	return []byte(key)
+}
+
+func calcCollateralizeRecordAddrKey(addr string, index int64) []byte {
+	key := fmt.Sprintf("LODB-Collateralize-record-addr:%d:%018d", addr, index)
+	return []byte(key)
+}
+
 func calcCollateralizeRecordStatusPrefix(status int32) []byte {
 	key := fmt.Sprintf("LODB-Collateralize-record-status:%d", status)
 	return []byte(key)
