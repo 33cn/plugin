@@ -339,6 +339,8 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 				forkHeight = 10
 			case ForkLoopCheckCommitTxDone:
 				forkHeight = 60
+			case ForkConsensSupportJump:
+				forkHeight = 100
 			}
 		}
 	}

@@ -365,7 +365,7 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 		MainBlockHash:   localBlock.MainHash,
 		MainBlockHeight: localBlock.MainHeight,
 	}
-	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+	if status.MainBlockHeight < client.paraClient.subCfg.RmCommitMsgHashParamMainHeight {
 		status.PreBlockHash = block.ParentHash
 		status.PreStateHash = preStateHash
 	}
