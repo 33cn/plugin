@@ -120,12 +120,21 @@ waitBlocks4CommitMsg=2
 searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
-MainBlockHashForkHeight=1
-MainForkParacrossCommitTx=1
-MainLoopCheckCommitTxDoneForkHeight=11
+mainBlockHashForkHeight=1
+mainForkParacrossCommitTx=1
+mainLoopCheckCommitTxDoneForkHeight=11
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
 interval=2
+[[consensus.sub.para.selfConsensusEnable]]
+blockHeight=0
+enable=true
+[[consensus.sub.para.selfConsensusEnable]]
+blockHeight=20
+enable=false
+[[consensus.sub.para.selfConsensusEnable]]
+blockHeight=40
+enable=true
 
 [store]
 name="mavl"

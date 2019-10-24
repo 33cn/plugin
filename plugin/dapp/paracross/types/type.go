@@ -19,13 +19,11 @@ var (
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
 	// MainForkParacrossCommitTx 平行链配置项对应主链的ForkCommitTx 高度
-	MainForkParacrossCommitTx = "MainForkParacrossCommitTx"
-	// ParaSelfConsensForkHeight para self consens height string
-	ParaSelfConsensForkHeight = "MainParaSelfConsensusForkHeight"
+	MainForkParacrossCommitTx = "mainForkParacrossCommitTx"
 	// ForkLoopCheckCommitTxDone 循环检查共识交易done的fork
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
-	MainLoopCheckCommitTxDoneForkHeight = "MainLoopCheckCommitTxDoneForkHeight"
+	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
 	// ForkConsensSupportJump 支持主链共识从-1开始跳跃一次
 	ForkConsensSupportJump = "ForkConsensSupportJump"
 )

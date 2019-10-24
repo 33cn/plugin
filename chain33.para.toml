@@ -102,10 +102,14 @@ writeBlockSeconds=2
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
+#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,209186是bityuan主链对应高度， ycc或其他按实际修改
+mainBlockHashForkHeight=209186
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
-MainForkParacrossCommitTx=2270000
+mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
-MainLoopCheckCommitTxDoneForkHeight=4320000
+mainLoopCheckCommitTxDoneForkHeight=4320000
+#精简commitMsg，删除多余的hash参数，缺省mainLoopCheckCommitTxDoneForkHeight一致，一些特殊的链如game需定制
+rmCommitMsgHashParamMainHeight=4320000
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
