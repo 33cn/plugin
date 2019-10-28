@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20191017025459-6d5c61c7d134
+	github.com/33cn/chain33 v0.0.0-20191028082607-ea7ecac59540
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac
@@ -41,5 +41,3 @@ require (
 	google.golang.org/grpc v1.22.1
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
-
-replace github.com/33cn/chain33 => github.com/lyh169/chain33 v0.0.0-20191022063356-de2f9a9bf0d0
