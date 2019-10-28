@@ -965,7 +965,7 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 		totalReward *= types.Coin
 
 		if totalReward > 0 {
-			issueReceipt, err := a.coinsAccount.ExecIssueCoins(cfg, a.execaddr, totalReward)
+			issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, totalReward)
 
 			if err != nil {
 				clog.Error("paracross miner issue err", "height", miner.Status.Height,
@@ -1016,7 +1016,8 @@ func (a *action) Transfer(transfer *types.AssetsTransfer, tx *types.Transaction,
 		transfer.Amount, "to", tx.To)
 	from := tx.From()
 
-	acc, err := account.NewAccountDB(pt.ParaX, transfer.Cointoken, a.db)
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, pt.ParaX, transfer.Cointoken, a.db)
 	if err != nil {
 		clog.Error("Transfer failed", "err", err)
 		return nil, err
@@ -1031,7 +1032,8 @@ func (a *action) Transfer(transfer *types.AssetsTransfer, tx *types.Transaction,
 func (a *action) Withdraw(withdraw *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	clog.Debug("Paracross.Exec Withdraw", "symbol", withdraw.Cointoken, "amount",
 		withdraw.Amount, "to", tx.To)
-	acc, err := account.NewAccountDB(pt.ParaX, withdraw.Cointoken, a.db)
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, pt.ParaX, withdraw.Cointoken, a.db)
 	if err != nil {
 		clog.Error("Withdraw failed", "err", err)
 		return nil, err
@@ -1047,7 +1049,8 @@ func (a *action) TransferToExec(transfer *types.AssetsTransferToExec, tx *types.
 		transfer.Amount, "to", tx.To)
 	from := tx.From()
 
-	acc, err := account.NewAccountDB(pt.ParaX, transfer.Cointoken, a.db)
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, pt.ParaX, transfer.Cointoken, a.db)
 	if err != nil {
 		clog.Error("TransferToExec failed", "err", err)
 		return nil, err

@@ -881,14 +881,13 @@ func (m *MultiSig) saveMultiSigTxCountUpdate(accTxCount mty.ReceiptTxCountUpdate
 //获取多重签名账户的指定资产
 func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets) (*types.Account, error) {
 	symbol := getRealSymbol(assets.Symbol)
-
-	acc, err := account.NewAccountDB(assets.Execer, symbol, m.GetStateDB())
+	cfg := m.GetAPI().GetConfig()
+	acc, err := account.NewAccountDB(cfg, assets.Execer, symbol, m.GetStateDB())
 	if err != nil {
 		return &types.Account{}, err
 	}
 	var acc1 *types.Account
 
-	cfg := m.GetAPI().GetConfig()
 	execaddress := dapp.ExecAddress(cfg.ExecName(m.GetName()))
 	acc1 = acc.LoadExecAccount(multiSigAddr, execaddress)
 	return acc1, nil

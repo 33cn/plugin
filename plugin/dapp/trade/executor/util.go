@@ -74,12 +74,12 @@ func createAccountDB(cfg *types.Chain33Config, height int64, db db.KV, exec, sym
 		if exec == "" {
 			exec = defaultAssetExec
 		}
-		return account.NewAccountDB(exec, symbol, db)
+		return account.NewAccountDB(cfg, exec, symbol, db)
 	} else if cfg.IsDappFork(height, pt.TradeX, pt.ForkTradeAssetX) {
-		return account.NewAccountDB(exec, symbol, db)
+		return account.NewAccountDB(cfg, exec, symbol, db)
 	}
 
-	return account.NewAccountDB(defaultAssetExec, symbol, db)
+	return account.NewAccountDB(cfg, defaultAssetExec, symbol, db)
 }
 
 func createPriceDB(cfg *types.Chain33Config, height int64, db db.KV, exec, symbol string) (*account.DB, error) {
@@ -90,7 +90,7 @@ func createPriceDB(cfg *types.Chain33Config, height int64, db db.KV, exec, symbo
 			acc.SetDB(db)
 			return acc, nil
 		}
-		return account.NewAccountDB(exec, symbol, db)
+		return account.NewAccountDB(cfg, exec, symbol, db)
 	}
 	acc := account.NewCoinsAccount(cfg)
 	acc.SetDB(db)

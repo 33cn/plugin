@@ -152,6 +152,6 @@ func (p *privacy) createAccountDB(exec, symbol string) (*account.DB, error) {
 	if exec == "" || exec == "coins" {
 		return p.GetCoinsAccount(), nil
 	}
-
-	return account.NewAccountDB(exec, symbol, p.GetStateDB())
+	cfg := p.GetAPI().GetConfig()
+	return account.NewAccountDB(cfg, exec, symbol, p.GetStateDB())
 }

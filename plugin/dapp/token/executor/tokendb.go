@@ -276,7 +276,7 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 
 	//创建token类型的账户，同时需要创建的额度存入
 
-	tokenAccount, err := account.NewAccountDB("token", tokenFinish.GetSymbol(), action.db)
+	tokenAccount, err := account.NewAccountDB(cfg, "token", tokenFinish.GetSymbol(), action.db)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +575,8 @@ func (action *tokenAction) mint(mint *pty.TokenMint) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	tokenAccount, err := account.NewAccountDB("token", mint.GetSymbol(), action.db)
+	cfg := action.api.GetConfig()
+	tokenAccount, err := account.NewAccountDB(cfg, "token", mint.GetSymbol(), action.db)
 	if err != nil {
 		return nil, err
 	}
@@ -614,8 +615,8 @@ func (action *tokenAction) burn(burn *pty.TokenBurn) (*types.Receipt, error) {
 		tokenlog.Error("token burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr, "owner", tokendb.token.Owner)
 		return nil, err
 	}
-
-	tokenAccount, err := account.NewAccountDB("token", burn.GetSymbol(), action.db)
+	chain33cfg := action.api.GetConfig()
+	tokenAccount, err := account.NewAccountDB(chain33cfg, "token", burn.GetSymbol(), action.db)
 	if err != nil {
 		return nil, err
 	}

@@ -219,7 +219,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 	}
 
 	for _, asset := range perfRet.Assets {
-		accdb, err := account.NewAccountDB(asset.Exec, asset.Symbol, action.db)
+		accdb, err := account.NewAccountDB(cfg, asset.Exec, asset.Symbol, action.db)
 		if err != nil {
 			rlog.Error("RetrievePerform", "NewAccountDB", err)
 			return nil, err

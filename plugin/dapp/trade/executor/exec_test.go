@@ -91,7 +91,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 	accB.SetDB(kvdb)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, Symbol, kvdb)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
 	api := new(apimock.QueueProtocolAPI)
@@ -233,11 +233,11 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, ldb, kvdb := util.CreateTestDB()
 
-	accB, _ := account.NewAccountDB(AssetExecToken, SymbolA, stateDB)
+	accB, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, SymbolA, stateDB)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
 	api := new(apimock.QueueProtocolAPI)
@@ -410,7 +410,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 	accB.SetDB(kvdb)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, Symbol, kvdb)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
 	api := new(apimock.QueueProtocolAPI)

@@ -197,7 +197,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferInPara() {
 		suite.T().Log(string(kv.Key), v)
 	}
 
-	acc, _ := NewParaAccount(Title, "coins", "bty", suite.stateDB)
+	acc, _ := NewParaAccount(chain33TestCfg, Title, "coins", "bty", suite.stateDB)
 	resultB := acc.LoadAccount(string(toB))
 	assert.Equal(suite.T(), Amount, resultB.Balance)
 }
@@ -244,7 +244,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 		Frozen:  0,
 		Addr:    string(Nodes[0]),
 	}
-	acc, _ := account.NewAccountDB("token", TestSymbol, suite.stateDB)
+	acc, _ := account.NewAccountDB(chain33TestMainCfg, "token", TestSymbol, suite.stateDB)
 	addrMain := address.ExecAddress(pt.ParaX)
 	addrPara := address.ExecAddress(Title + pt.ParaX)
 
@@ -306,7 +306,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferTokenInPara() {
 		suite.T().Log(string(kv.Key), v)
 	}
 
-	acc, _ := NewParaAccount(Title, "token", TestSymbol, suite.stateDB)
+	acc, _ := NewParaAccount(chain33TestCfg, Title, "token", TestSymbol, suite.stateDB)
 	resultB := acc.LoadAccount(string(toB))
 	assert.Equal(suite.T(), Amount, resultB.Balance)
 }

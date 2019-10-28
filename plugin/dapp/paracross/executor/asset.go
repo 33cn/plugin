@@ -41,9 +41,9 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 	}
 	var paraAcc *account.DB
 	if transfer.Cointoken == "" {
-		paraAcc, err = NewParaAccount(string(paraTitle), "coins", "bty", a.db)
+		paraAcc, err = NewParaAccount(cfg, string(paraTitle), "coins", "bty", a.db)
 	} else {
-		paraAcc, err = NewParaAccount(string(paraTitle), "token", transfer.Cointoken, a.db)
+		paraAcc, err = NewParaAccount(cfg, string(paraTitle), "token", transfer.Cointoken, a.db)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "assetTransferCoins call NewParaAccount failed")
@@ -75,9 +75,9 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 	}
 	var paraAcc *account.DB
 	if withdraw.Cointoken == "" {
-		paraAcc, err = NewParaAccount(string(paraTitle), "coins", "bty", a.db)
+		paraAcc, err = NewParaAccount(cfg, string(paraTitle), "coins", "bty", a.db)
 	} else {
-		paraAcc, err = NewParaAccount(string(paraTitle), "token", withdraw.Cointoken, a.db)
+		paraAcc, err = NewParaAccount(cfg, string(paraTitle), "token", withdraw.Cointoken, a.db)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "assetWithdrawCoins call NewParaAccount failed")
@@ -94,7 +94,7 @@ func createAccount(cfg *types.Chain33Config, db db.KV, symbol string) (*account.
 		accDB = account.NewCoinsAccount(cfg)
 		accDB.SetDB(db)
 	} else {
-		accDB, err = account.NewAccountDB("token", symbol, db)
+		accDB, err = account.NewAccountDB(cfg, "token", symbol, db)
 	}
 	return accDB, err
 }

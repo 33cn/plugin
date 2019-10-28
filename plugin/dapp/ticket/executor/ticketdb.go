@@ -339,7 +339,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	//user
-	receipt1, err := action.coinsAccount.ExecDepositFrozen(chain33Cfg, t.ReturnAddress, action.execaddr, ticket.MinerValue)
+	receipt1, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, ticket.MinerValue)
 	if err != nil {
 		tlog.Error("TicketMiner.ExecDepositFrozen user", "addr", t.ReturnAddress, "execaddr", action.execaddr)
 		return nil, err
@@ -349,13 +349,13 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	if chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {
 		// issue coins to exec addr
 		addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
-		receipt2, err = action.coinsAccount.ExecIssueCoins(chain33Cfg, addr, cfg.CoinDevFund)
+		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
 		if err != nil {
 			tlog.Error("TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
 			return nil, err
 		}
 	} else {
-		receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg, chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+		receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
 		if err != nil {
 			tlog.Error("TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
 			return nil, err

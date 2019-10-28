@@ -30,7 +30,8 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(payload.AssetExec, payload.AssetSymbol, u.GetStateDB())
+	cfg := u.GetAPI().GetConfig()
+	acc, err := account.NewAccountDB(cfg, payload.AssetExec, payload.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		uflog.Error("unfreeze create new account", "addr", tx.From(), "execAddr",
 			dapp.ExecAddress(string(tx.Execer)), "exec", payload.AssetExec, "symbol", payload.AssetSymbol)
@@ -71,7 +72,7 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
+	acc, err := account.NewAccountDB(cfg, unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
+	acc, err := account.NewAccountDB(cfg, unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		return nil, err
 	}

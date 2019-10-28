@@ -38,12 +38,12 @@ type subConfig struct {
 	SaveTokenTxList bool `json:"saveTokenTxList"`
 }
 
-var cfg subConfig
+var subCfg subConfig
 
 // Init 重命名执行器名称
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	if sub != nil {
-		types.MustDecode(sub, &cfg)
+		types.MustDecode(sub, &subCfg)
 	}
 	drivers.Register(cfg, GetName(), newToken, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
@@ -102,8 +102,9 @@ func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 	if err != nil {
 		return nil, err
 	}
+	cfg := t.GetAPI().GetConfig()
 	for _, asset := range assets.Datas {
-		acc, err := account.NewAccountDB(t.GetName(), asset, t.GetStateDB())
+		acc, err := account.NewAccountDB(cfg, t.GetName(), asset, t.GetStateDB())
 		if err != nil {
 			return nil, err
 		}

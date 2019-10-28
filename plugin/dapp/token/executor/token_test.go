@@ -66,10 +66,10 @@ func TestToken(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, _, kvdb := util.CreateTestDB()
 
-	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accB, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
 	env := execEnv{
@@ -188,7 +188,7 @@ func TestToken(t *testing.T) {
 	for _, kv := range receipt.KV {
 		stateDB.Set(kv.Key, kv.Value)
 	}
-	accDB, _ := account.NewAccountDB(pty.TokenX, Symbol, stateDB)
+	accDB, _ := account.NewAccountDB(cfg, pty.TokenX, Symbol, stateDB)
 	accCheck := accDB.LoadAccount(string(Nodes[0]))
 	assert.Equal(t, tokenTotal, accCheck.Balance)
 

@@ -70,10 +70,10 @@ func TestUnfreeze(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, ldb, kvdb := util.CreateTestDB()
 
-	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accB, _ := account.NewAccountDB(chain33TestCfg, AssetExecPara, Symbol, stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
 	env := execEnv{

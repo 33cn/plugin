@@ -17,11 +17,12 @@ import (
 
 //TODO:和GetBalance进行泛化处理，同时LoadAccounts和LoadExecAccountQueue也需要进行泛化处理, added by hzj
 func (c *channelClient) getTokenBalance(in *tokenty.ReqTokenBalance) ([]*types.Account, error) {
-	accountTokendb, err := account.NewAccountDB(tokenty.TokenX, in.GetTokenSymbol(), nil)
+	cfg := c.GetConfig()
+	accountTokendb, err := account.NewAccountDB(cfg, tokenty.TokenX, in.GetTokenSymbol(), nil)
 	if err != nil {
 		return nil, err
 	}
-	cfg := c.GetConfig()
+
 	switch in.GetExecer() {
 	case cfg.ExecName(tokenty.TokenX):
 		addrs := in.GetAddresses()
