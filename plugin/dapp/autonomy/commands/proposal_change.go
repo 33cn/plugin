@@ -9,8 +9,6 @@ import (
 
 	"encoding/json"
 
-	"fmt"
-
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -45,9 +43,6 @@ func addProposalChangeFlags(cmd *cobra.Command) {
 func proposalChange(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	year, _ := cmd.Flags().GetInt32("year")
@@ -122,9 +117,6 @@ func addRevokeProposalChangeFlags(cmd *cobra.Command) {
 func revokeProposalChange(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -166,9 +158,6 @@ func addVoteProposalChangeFlags(cmd *cobra.Command) {
 func voteProposalChange(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -219,9 +208,6 @@ func addTerminateProposalChangeFlags(cmd *cobra.Command) {
 func terminateProposalChange(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")

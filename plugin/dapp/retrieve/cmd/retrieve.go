@@ -66,9 +66,6 @@ func addBakupCmdFlags(cmd *cobra.Command) {
 func backupCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
@@ -131,9 +128,6 @@ func addPerformCmdFlags(cmd *cobra.Command) {
 func prepareCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
@@ -169,9 +163,6 @@ func PerformCmd() *cobra.Command {
 func performCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
@@ -219,9 +210,6 @@ func CancelCmd() *cobra.Command {
 func cancelCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")

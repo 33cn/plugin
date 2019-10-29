@@ -56,9 +56,6 @@ func addBindMinerFlags(cmd *cobra.Command) {
 func bindMiner(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	bindAddr, _ := cmd.Flags().GetString("bind_addr")
 	originAddr, _ := cmd.Flags().GetString("origin_addr")

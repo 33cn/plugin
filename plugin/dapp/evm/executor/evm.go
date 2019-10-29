@@ -25,7 +25,7 @@ var (
 	evmDebug = false
 
 	// EvmAddress 本合约地址
-	EvmAddress = address.ExecAddress(evmtypes.ExecutorName)
+	EvmAddress = ""
 )
 
 var driverName = evmtypes.ExecutorName

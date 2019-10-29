@@ -20,7 +20,7 @@ type subConfig struct {
 var (
 	alog         = log.New("module", "execs.autonomy")
 	driverName   = auty.AutonomyX
-	autonomyAddr = address.ExecAddress(auty.AutonomyX)
+	autonomyAddr string
 	subcfg       subConfig
 )
 
@@ -29,6 +29,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
+	autonomyAddr = address.ExecAddress(cfg.ExecName(auty.AutonomyX))
 	drivers.Register(cfg, GetName(), newAutonomy, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }

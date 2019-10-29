@@ -216,9 +216,6 @@ func addCreateContractFlags(cmd *cobra.Command) {
 func createContract(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	code, _ := cmd.Flags().GetString("input")
 	caller, _ := cmd.Flags().GetString("caller")
@@ -389,9 +386,6 @@ func callContractCmd() *cobra.Command {
 func callContract(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	code, _ := cmd.Flags().GetString("input")
 	caller, _ := cmd.Flags().GetString("caller")
@@ -715,9 +709,6 @@ func addEvmTransferFlags(cmd *cobra.Command) {
 func evmTransfer(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	caller, _ := cmd.Flags().GetString("caller")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -769,9 +760,6 @@ func addEvmWithdrawFlags(cmd *cobra.Command) {
 func evmWithdraw(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	caller, _ := cmd.Flags().GetString("caller")
 	amount, _ := cmd.Flags().GetFloat64("amount")

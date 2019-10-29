@@ -61,9 +61,6 @@ func addHashlockLockCmdFlags(cmd *cobra.Command) {
 func hashlockLockCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
@@ -128,9 +125,6 @@ func addHashlockCmdFlags(cmd *cobra.Command) {
 func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
@@ -174,9 +168,6 @@ func HashlockSendCmd() *cobra.Command {
 func hashlockSendCmd(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")

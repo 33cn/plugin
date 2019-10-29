@@ -90,9 +90,6 @@ func addPublishEventFlags(cmd *cobra.Command) {
 func publishEvent(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
@@ -165,9 +162,6 @@ func addAbortPublishEventFlags(cmd *cobra.Command) {
 func abortPublishEvent(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
@@ -227,9 +221,6 @@ func addPrePublishResultFlags(cmd *cobra.Command) {
 func prePublishResult(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
@@ -285,9 +276,6 @@ func addAbortPrePubResultFlags(cmd *cobra.Command) {
 func abortPrePubResult(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {
@@ -347,9 +335,6 @@ func addPublishResultFlags(cmd *cobra.Command) {
 func publishResult(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	rpcLaddr, err := cmd.Flags().GetString("rpc_laddr")
 	if err != nil {

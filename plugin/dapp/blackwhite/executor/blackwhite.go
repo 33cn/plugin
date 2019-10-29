@@ -14,17 +14,18 @@ import (
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
-var clog = log.New("module", "execs.blackwhite")
-
-var blackwhiteAddr = address.ExecAddress(gt.BlackwhiteX)
-
-var driverName = gt.BlackwhiteX
+var (
+    clog = log.New("module", "execs.blackwhite")
+    blackwhiteAddr string
+    driverName = gt.BlackwhiteX
+)
 
 // Init 重命名执行器名称
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
 	gt.BlackwhiteX = driverName
 	gt.ExecerBlackwhite = []byte(driverName)
+	blackwhiteAddr = address.ExecAddress(cfg.ExecName(gt.BlackwhiteX))
 	drivers.Register(cfg, name, newBlackwhite, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }

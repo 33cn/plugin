@@ -117,9 +117,6 @@ func createAssetWithdraw(cmd *cobra.Command, args []string) {
 func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	if amount < 0 {
@@ -268,9 +265,6 @@ func addNodeJoinFlags(cmd *cobra.Command) {
 func createNodeJoinTx(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	opAddr, _ := cmd.Flags().GetString("addr")
 	coins, _ := cmd.Flags().GetFloat64("coins")
@@ -308,9 +302,6 @@ func addNodeVoteFlags(cmd *cobra.Command) {
 func createNodeVoteTx(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
@@ -346,9 +337,6 @@ func addNodeQuitFlags(cmd *cobra.Command) {
 func createNodeQuitTx(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	opAddr, _ := cmd.Flags().GetString("addr")
 
@@ -383,9 +371,6 @@ func addNodeCancelFlags(cmd *cobra.Command) {
 func createNodeCancelTx(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	id, _ := cmd.Flags().GetString("id")
 
@@ -543,9 +528,6 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 func nodeGroupApply(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	addrs, _ := cmd.Flags().GetString("addrs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
@@ -584,9 +566,6 @@ func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
 func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins")
@@ -622,9 +601,6 @@ func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	id, _ := cmd.Flags().GetString("id")
 
@@ -658,9 +634,6 @@ func addNodeGroupModifyCmdFlags(cmd *cobra.Command) {
 func nodeGroupModify(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
 
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
