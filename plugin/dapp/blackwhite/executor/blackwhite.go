@@ -14,23 +14,25 @@ import (
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
 
-var clog = log.New("module", "execs.blackwhite")
-
-var blackwhiteAddr = address.ExecAddress(gt.BlackwhiteX)
-
-var driverName = gt.BlackwhiteX
-
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Blackwhite{}))
-}
+var (
+	clog           = log.New("module", "execs.blackwhite")
+	blackwhiteAddr string
+	driverName     = gt.BlackwhiteX
+)
 
 // Init 重命名执行器名称
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
 	gt.BlackwhiteX = driverName
 	gt.ExecerBlackwhite = []byte(driverName)
-	drivers.Register(name, newBlackwhite, types.GetDappFork(driverName, "Enable"))
+	blackwhiteAddr = address.ExecAddress(cfg.ExecName(gt.BlackwhiteX))
+	drivers.Register(cfg, name, newBlackwhite, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Blackwhite{}))
 }
 
 // Blackwhite 几类执行器结构体

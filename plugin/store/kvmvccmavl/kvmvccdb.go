@@ -25,13 +25,10 @@ const (
 	onceScanCount      = 10000 // 单次扫描数目
 	onceCount          = 1000  // 容器长度
 	levelPruningHeight = 100 * 10000
+	defaultPruneHeight = 10000 // 每个10000裁剪一次
 )
 
 var (
-	// 是否开启裁剪
-	enablePrune bool
-	// 每个10000裁剪一次
-	pruneHeight  = 10000
 	pruningState int32
 	batch        dbm.Batch
 )
@@ -46,33 +43,41 @@ var (
 	//mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
 )
 
+// KVMCCCConfig KVMCCC config
+type KVMCCCConfig struct {
+	EnableMVCCIter  bool
+	EnableMVCCPrune bool
+	PruneHeight     int32
+}
+
 // KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
-	db              dbm.DB
-	mvcc            dbm.MVCC
-	kvsetmap        map[string][]*types.KeyValue
-	enableMVCCIter  bool
-	enableMVCCPrune bool
-	pruneHeight     int32
-	sync            bool
+	db        dbm.DB
+	mvcc      dbm.MVCC
+	kvsetmap  map[string][]*types.KeyValue
+	sync      bool
+	kvmvccCfg *KVMCCCConfig
 }
 
 // NewKVMVCC construct KVMVCCStore module
 func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	var kvs *KVMVCCStore
-	enable := false
-	if sub != nil {
-		enable = sub.EnableMVCCIter
+	if sub == nil {
+		panic("sub is nil memory")
 	}
-	if enable {
-		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue),
-			true, sub.EnableMVCCPrune, sub.PruneHeight, false}
+	if sub.PruneHeight == 0 {
+		sub.PruneHeight = defaultPruneHeight
+	}
+	kvmvccCfg := &KVMCCCConfig{
+		EnableMVCCIter:  sub.EnableMVCCIter,
+		EnableMVCCPrune: sub.EnableMVCCPrune,
+		PruneHeight:     sub.PruneHeight,
+	}
+	if kvmvccCfg.EnableMVCCIter {
+		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue), false, kvmvccCfg}
 	} else {
-		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),
-			false, sub.EnableMVCCPrune, sub.PruneHeight, false}
+		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue), false, kvmvccCfg}
 	}
-	EnablePrune(sub.EnableMVCCPrune)
-	SetPruneHeight(int(sub.PruneHeight))
 	return kvs
 }
 
@@ -137,12 +142,12 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 	mvccs.kvsetmap[string(hash)] = kvset
 	mvccs.sync = sync
 	// 进行裁剪
-	if enablePrune && !isPruning() &&
-		pruneHeight != 0 &&
-		datas.Height%int64(pruneHeight) == 0 &&
-		datas.Height/int64(pruneHeight) > 1 {
+	if mvccs.kvmvccCfg != nil && mvccs.kvmvccCfg.EnableMVCCPrune &&
+		!isPruning() && mvccs.kvmvccCfg.PruneHeight != 0 &&
+		datas.Height%int64(mvccs.kvmvccCfg.PruneHeight) == 0 &&
+		datas.Height/int64(mvccs.kvmvccCfg.PruneHeight) > 1 {
 		wg.Add(1)
-		go pruning(mvccs.db, datas.Height)
+		go pruning(mvccs.db, datas.Height, mvccs.kvmvccCfg)
 	}
 	return hash, nil
 }
@@ -205,7 +210,7 @@ func (mvccs *KVMVCCStore) Rollback(req *types.ReqHash) ([]byte, error) {
 
 // IterateRangeByStateHash travel with Prefix by StateHash  to get the latest version kvs.
 func (mvccs *KVMVCCStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
-	if !mvccs.enableMVCCIter {
+	if !mvccs.kvmvccCfg.EnableMVCCIter {
 		panic("call IterateRangeByStateHash when disable mvcc iter")
 	}
 	//按照kv最新值来进行遍历处理，要求statehash必须是最新区块的statehash，否则不支持该接口
@@ -300,6 +305,7 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 			panic(err)
 		} else {
 			maxVersion = -1
+			kmlog.Error("store kvmvcc checkVersion GetMaxVersion failed", "err", err, "maxVersion", maxVersion)
 		}
 	}
 
@@ -339,31 +345,21 @@ func calcHash(datas proto.Message) []byte {
 
 /*裁剪-------------------------------------------*/
 
-// EnablePrune 使能裁剪
-func EnablePrune(enable bool) {
-	enablePrune = enable
-}
-
-// SetPruneHeight 设置每次裁剪高度
-func SetPruneHeight(height int) {
-	pruneHeight = height
-}
-
-func pruning(db dbm.DB, height int64) {
+func pruning(db dbm.DB, height int64, KVmvccCfg *KVMCCCConfig) {
 	defer wg.Done()
-	pruningMVCC(db, height)
+	pruningMVCC(db, height, KVmvccCfg)
 }
 
-func pruningMVCC(db dbm.DB, height int64) {
+func pruningMVCC(db dbm.DB, height int64, KVmvccCfg *KVMCCCConfig) {
 	setPruning(pruningStateStart)
 	defer setPruning(pruningStateEnd)
 	start := time.Now()
-	pruningFirst(db, height)
+	pruningFirst(db, height, KVmvccCfg)
 	end := time.Now()
 	kmlog.Debug("pruningMVCC", "height", height, "cost", end.Sub(start))
 }
 
-func pruningFirst(db dbm.DB, curHeight int64) {
+func pruningFirst(db dbm.DB, curHeight int64, KVmvccCfg *KVMCCCConfig) {
 	it := db.Iterator(mvccData, nil, true)
 	defer it.Close()
 
@@ -385,24 +381,24 @@ func pruningFirst(db dbm.DB, curHeight int64) {
 		}
 
 		if curHeight < height+levelPruningHeight &&
-			curHeight >= height+int64(pruneHeight) {
+			curHeight >= height+int64(KVmvccCfg.PruneHeight) {
 			mp[string(key)] = append(mp[string(key)], height)
 			count++
 		}
 		if len(mp) >= onceCount-1 || count > onceScanCount {
-			deleteOldKV(mp, curHeight, batch)
+			deleteOldKV(mp, curHeight, batch, KVmvccCfg)
 			mp = nil
 			count = 0
 		}
 	}
 	if len(mp) > 0 {
-		deleteOldKV(mp, curHeight, batch)
+		deleteOldKV(mp, curHeight, batch, KVmvccCfg)
 		mp = nil
 		_ = mp
 	}
 }
 
-func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
+func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch, KVmvccCfg *KVMCCCConfig) {
 	if len(mp) == 0 {
 		return
 	}
@@ -410,7 +406,7 @@ func deleteOldKV(mp map[string][]int64, curHeight int64, batch dbm.Batch) {
 	for key, vals := range mp {
 		if len(vals) > 1 && vals[1] != vals[0] { //防止相同高度时候出现的误删除
 			for _, val := range vals[1:] { //从第二个开始判断
-				if curHeight >= val+int64(pruneHeight) {
+				if curHeight >= val+int64(KVmvccCfg.PruneHeight) {
 					batch.Delete(genKeyVersion([]byte(key), val)) // 删除老版本key
 					if batch.ValueSize() > batchDataSize {
 						dbm.MustWrite(batch)

@@ -15,15 +15,16 @@ import (
 var clog = log.New("module", "execs.valnode")
 var driverName = "valnode"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&ValNode{}))
+// Init method
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	clog.Debug("register valnode execer")
+	drivers.Register(cfg, GetName(), newValNode, 0)
+	InitExecType()
 }
 
-// Init method
-func Init(name string, sub []byte) {
-	clog.Debug("register valnode execer")
-	drivers.Register(GetName(), newValNode, 0)
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&ValNode{}))
 }
 
 // GetName method

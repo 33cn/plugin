@@ -272,19 +272,20 @@ func (client *blockSyncClient) delLocalBlocks(startHeight int64, endHeight int64
 
 	index := startHeight
 	set := &types.LocalDBSet{}
+	cfg := client.paraClient.GetAPI().GetConfig()
 	for {
 		if index > endHeight {
 			break
 		}
 
-		key := calcTitleHeightKey(types.GetTitle(), index)
+		key := calcTitleHeightKey(cfg.GetTitle(), index)
 		kv := &types.KeyValue{Key: key, Value: nil}
 		set.KV = append(set.KV, kv)
 
 		index++
 	}
 
-	key := calcTitleFirstHeightKey(types.GetTitle())
+	key := calcTitleFirstHeightKey(cfg.GetTitle())
 	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: endHeight + 1})}
 	set.KV = append(set.KV, kv)
 
@@ -296,10 +297,10 @@ func (client *blockSyncClient) delLocalBlocks(startHeight int64, endHeight int64
 //最低高度没有设置的时候设置一下最低高度
 func (client *blockSyncClient) initFirstLocalHeightIfNeed() error {
 	height, err := client.getFirstLocalHeight()
-
+	cfg := client.paraClient.GetAPI().GetConfig()
 	if err != nil || height < 0 {
 		set := &types.LocalDBSet{}
-		key := calcTitleFirstHeightKey(types.GetTitle())
+		key := calcTitleFirstHeightKey(cfg.GetTitle())
 		kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: 0})}
 		set.KV = append(set.KV, kv)
 
@@ -311,7 +312,8 @@ func (client *blockSyncClient) initFirstLocalHeightIfNeed() error {
 
 //获取下载层缓冲数据的区块最低高度
 func (client *blockSyncClient) getFirstLocalHeight() (int64, error) {
-	key := calcTitleFirstHeightKey(types.GetTitle())
+	cfg := client.paraClient.GetAPI().GetConfig()
+	key := calcTitleFirstHeightKey(cfg.GetTitle())
 	set := &types.LocalDBGet{Keys: [][]byte{key}}
 	value, err := client.paraClient.getLocalDb(set, len(set.Keys))
 	if err != nil {
@@ -356,19 +358,18 @@ func (client *blockSyncClient) clearLocalOldBlocks() (bool, error) {
 
 // miner tx need all para node create, but not all node has auth account, here just not sign to keep align
 func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Block, localBlock *pt.ParaLocalDbBlock) error {
+	cfg := client.paraClient.GetAPI().GetConfig()
 	status := &pt.ParacrossNodeStatus{
-		Title:           types.GetTitle(),
+		Title:           cfg.GetTitle(),
 		Height:          block.Height,
 		MainBlockHash:   localBlock.MainHash,
 		MainBlockHeight: localBlock.MainHeight,
 	}
-
-	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		status.PreBlockHash = block.ParentHash
 		status.PreStateHash = preStateHash
 	}
-
-	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{
+	tx, err := pt.CreateRawMinerTx(cfg, &pt.ParacrossMinerAction{
 		Status:          status,
 		IsSelfConsensus: client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight),
 	})
@@ -384,8 +385,9 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 
 //添加一个区块
 func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.ParaLocalDbBlock) error {
+	cfg := client.paraClient.GetAPI().GetConfig()
 	var newBlock types.Block
-	newBlock.ParentHash = lastBlock.Hash()
+	newBlock.ParentHash = lastBlock.Hash(cfg)
 	newBlock.Height = lastBlock.Height + 1
 	newBlock.Txs = localBlock.Txs
 	err := client.addMinerTx(lastBlock.StateHash, &newBlock, localBlock)
@@ -393,7 +395,7 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 		return err
 	}
 	//挖矿固定难度
-	newBlock.Difficulty = types.GetP(0).PowLimitBits
+	newBlock.Difficulty = cfg.GetP(0).PowLimitBits
 	newBlock.TxHash = merkle.CalcMerkleRoot(newBlock.Txs)
 	newBlock.BlockTime = localBlock.BlockTime
 	newBlock.MainHash = localBlock.MainHash

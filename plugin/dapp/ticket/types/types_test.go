@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	InitExecutor(nil)
+}
+
 func TestDecodeLogNewTicket(t *testing.T) {
 	var logTmp = &ReceiptTicket{}
 

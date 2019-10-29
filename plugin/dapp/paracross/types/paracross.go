@@ -160,19 +160,19 @@ func CalcMinerHeightKey(title string, height int64) []byte {
 }
 
 // CreateRawCommitTx4MainChain create commit tx to main chain
-func CreateRawCommitTx4MainChain(status *ParacrossNodeStatus, name string, fee int64) (*types.Transaction, error) {
-	return createRawCommitTx(status, name, fee)
+func CreateRawCommitTx4MainChain(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, fee int64) (*types.Transaction, error) {
+	return createRawCommitTx(cfg, status, name, fee)
 }
 
-func createRawParacrossCommitTx(parm *paracrossCommitTx) (*types.Transaction, error) {
+func createRawParacrossCommitTx(cfg *types.Chain33Config, parm *paracrossCommitTx) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("createRawParacrossCommitTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	return createRawCommitTx(&parm.Status, types.ExecName(ParaX), parm.Fee)
+	return createRawCommitTx(cfg, &parm.Status, cfg.ExecName(ParaX), parm.Fee)
 }
 
-func createRawCommitTx(status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
+func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
 	v := &ParacrossCommitAction{
 		Status: status,
 	}
@@ -186,7 +186,7 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, feeRate int64) 
 		To:      address.ExecAddress(name),
 		Expire:  types.Now().Unix() + int64(120), //120s
 	}
-	tx, err := types.FormatTx(name, tx)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -200,8 +200,8 @@ func createRawCommitTx(status *ParacrossNodeStatus, name string, feeRate int64) 
 }
 
 // CreateRawNodeConfigTx create raw tx for node config
-func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
-	config.Title = types.GetTitle()
+func CreateRawNodeConfigTx(cfg *types.Chain33Config, config *ParaNodeAddrConfig) (*types.Transaction, error) {
+	config.Title = cfg.GetTitle()
 	config.Addr = strings.Trim(config.Addr, " ")
 	config.Id = strings.Trim(config.Id, " ")
 
@@ -217,8 +217,8 @@ func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, erro
 }
 
 //CreateRawNodeGroupApplyTx create raw tx for node group
-func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
-	apply.Title = types.GetTitle()
+func CreateRawNodeGroupApplyTx(cfg *types.Chain33Config, apply *ParaNodeGroupConfig) (*types.Transaction, error) {
+	apply.Title = cfg.GetTitle()
 	apply.Id = strings.Trim(apply.Id, " ")
 
 	action := &ParacrossAction{
@@ -235,7 +235,7 @@ func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, 
 }
 
 // CreateRawAssetTransferTx create asset transfer tx
-func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error) {
+func CreateRawAssetTransferTx(cfg *types.Chain33Config, param *types.CreateTx) (*types.Transaction, error) {
 	// 跨链交易需要在主链和平行链上执行， 所以应该可以在主链和平行链上构建
 	if !types.IsParaExecName(param.GetExecName()) {
 		tlog.Error("CreateRawAssetTransferTx", "exec", param.GetExecName())
@@ -260,7 +260,7 @@ func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error)
 		To:      address.ExecAddress(param.GetExecName()),
 		Fee:     param.Fee,
 	}
-	tx, err := types.FormatTx(param.GetExecName(), tx)
+	tx, err := types.FormatTx(cfg, param.GetExecName(), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -268,19 +268,19 @@ func CreateRawAssetTransferTx(param *types.CreateTx) (*types.Transaction, error)
 }
 
 // CreateRawMinerTx create miner tx
-func CreateRawMinerTx(value *ParacrossMinerAction) (*types.Transaction, error) {
+func CreateRawMinerTx(cfg *types.Chain33Config, value *ParacrossMinerAction) (*types.Transaction, error) {
 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionMiner,
 		Value: &ParacrossAction_Miner{value},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(ParaX)),
+		Execer:  []byte(cfg.ExecName(ParaX)),
 		Payload: types.Encode(action),
 		Nonce:   0, //for consensus purpose, block hash need same, different auth node need keep totally same vote tx
-		To:      address.ExecAddress(types.ExecName(ParaX)),
+		To:      address.ExecAddress(cfg.ExecName(ParaX)),
 	}
-	err := tx.SetRealFee(types.GInt("MinFee"))
+	err := tx.SetRealFee(cfg.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +295,8 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 		tlog.Error("ParacrossType CreateTx failed", "err", err, "action", action, "msg", string(param))
 		return nil, err
 	}
-	if !types.IsPara() {
+	cfg := p.GetConfig()
+	if !cfg.IsPara() {
 		var transfer ParacrossAction
 		err = types.Decode(tx.Payload, &transfer)
 		if err != nil {
@@ -315,9 +316,9 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 }
 
 //GetDappForkHeight get paracross dapp fork height
-func GetDappForkHeight(forkKey string) int64 {
+func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 	var forkHeight int64
-	if types.IsPara() {
+	if cfg.IsPara() {
 		key := forkKey
 		switch forkKey {
 		case ForkCommitTx:
@@ -326,15 +327,15 @@ func GetDappForkHeight(forkKey string) int64 {
 			key = MainLoopCheckCommitTxDoneForkHeight
 		}
 
-		forkHeight = types.Conf("config.consensus.sub.para").GInt(key)
+		forkHeight = types.Conf(cfg, "config.consensus.sub.para").GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
 	} else {
-		forkHeight = types.GetDappFork(ParaX, forkKey)
+		forkHeight = cfg.GetDappFork(ParaX, forkKey)
 
 		// CI特殊处理，主链是local，fork都是0，平行链有些配置项需要设置为非0，不然获取到的高度为MaxHeight
-		if types.IsLocal() {
+		if cfg.IsLocal() {
 			switch forkKey {
 			case ForkCommitTx:
 				forkHeight = 10
@@ -347,6 +348,6 @@ func GetDappForkHeight(forkKey string) int64 {
 }
 
 // IsParaForkHeight check height more than fork height
-func IsParaForkHeight(height int64, forkKey string) bool {
-	return height >= GetDappForkHeight(forkKey)
+func IsParaForkHeight(cfg *types.Chain33Config, height int64, forkKey string) bool {
+	return height >= GetDappForkHeight(cfg, forkKey)
 }

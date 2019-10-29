@@ -19,7 +19,8 @@ func (c *channelClient) Create(ctx context.Context, head *bw.BlackwhiteCreate) (
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
+	cfg := c.GetConfig()
+	data, err := types.FormatTxEncode(cfg, cfg.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +35,8 @@ func (c *channelClient) Show(ctx context.Context, head *bw.BlackwhiteShow) (*typ
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
+	cfg := c.GetConfig()
+	data, err := types.FormatTxEncode(cfg, cfg.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +51,8 @@ func (c *channelClient) Play(ctx context.Context, head *bw.BlackwhitePlay) (*typ
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
+	cfg := c.GetConfig()
+	data, err := types.FormatTxEncode(cfg, cfg.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,8 @@ func (c *channelClient) TimeoutDone(ctx context.Context, head *bw.BlackwhiteTime
 	tx := &types.Transaction{
 		Payload: types.Encode(val),
 	}
-	data, err := types.FormatTxEncode(types.ExecName(string(bw.ExecerBlackwhite)), tx)
+	cfg := c.GetConfig()
+	data, err := types.FormatTxEncode(cfg, cfg.ExecName(string(bw.ExecerBlackwhite)), tx)
 	if err != nil {
 		return nil, err
 	}

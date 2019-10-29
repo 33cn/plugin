@@ -11,10 +11,12 @@ import (
 	"math/rand"
 	"testing"
 
+	"strings"
+
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/executor"
+	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -49,9 +51,6 @@ func init() {
 	retrieve = constructRetrieveInstance()
 }
 
-func NewTestDB() db.KV {
-	return executor.NewStateDB(nil, nil, nil, &executor.StateDBOption{Height: types.GetFork("ForkExecRollback")})
-}
 func TestExecBackup(t *testing.T) {
 	var targetReceipt types.Receipt
 	var targetErr error
@@ -249,8 +248,15 @@ func TestExecDelLocalBackup(t *testing.T) {
 }
 
 func constructRetrieveInstance() drivers.Driver {
+	cfgstring := strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1)
+	chainTestCfg := types.NewChain33Config(cfgstring)
+	Init(rt.RetrieveX, chainTestCfg, nil)
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
 	r := newRetrieve()
 	_, _, kvdb := util.CreateTestDB()
+	r.SetAPI(api)
 	r.SetStateDB(kvdb)
 	r.SetLocalDB(kvdb)
 	return r

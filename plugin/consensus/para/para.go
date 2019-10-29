@@ -147,14 +147,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	grpcCli, err := grpcclient.NewMainChainClient("")
-	if err != nil {
-		panic(err)
-	}
-
 	para := &client{
 		BaseClient:  c,
-		grpcClient:  grpcCli,
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		subCfg:      &subcfg,
@@ -277,6 +271,12 @@ func (client *client) InitBlock() {
 	var err error
 
 	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
+	cfg := client.GetAPI().GetConfig()
+	grpcCli, err := grpcclient.NewMainChainClient(cfg, "")
+	if err != nil {
+		panic(err)
+	}
+	client.grpcClient = grpcCli
 
 	block, err := client.RequestLastBlock()
 	if err != nil {
@@ -359,7 +359,8 @@ func (client *client) GetStartMainHash(height int64) []byte {
 
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
-	tx.Execer = []byte(types.ExecName(cty.CoinsX))
+	cfg := client.GetAPI().GetConfig()
+	tx.Execer = []byte(cfg.ExecName(cty.CoinsX))
 	tx.To = client.Cfg.Genesis
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}

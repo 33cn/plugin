@@ -5,13 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
 func TestCalcFrozen(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
-	m, err := newMeans("LeftProportion", 15000000)
+	m, err := newMeans(chain33TestCfg, "LeftProportion", 15000000)
 	assert.Nil(t, err)
 	assert.NotNil(t, m)
 

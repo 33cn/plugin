@@ -9,10 +9,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"strings"
+
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -21,6 +25,12 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
+
+var chainTestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
+
+func init() {
+	evm.Init(evmtypes.ExecutorName, chainTestCfg, nil)
+}
 
 func getBin(data string) (ret []byte) {
 	ret, err := hex.DecodeString(data)
@@ -202,7 +212,7 @@ func createTx(privKey crypto.PrivKey, code []byte, fee uint64, amount uint64) ty
 }
 
 func addAccount(mdb *db.GoMemDB, execAddr string, acc1 *types.Account) {
-	acc := account.NewCoinsAccount()
+	acc := account.NewCoinsAccount(chainTestCfg)
 	var set []*types.KeyValue
 	if len(execAddr) > 0 {
 		set = acc.GetExecKVSet(execAddr, acc1)
@@ -249,6 +259,10 @@ func buildStateDB(addr string, balance int64) *db.GoMemDB {
 
 func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret []byte, contractAddr common.Address, leftOverGas uint64, statedb *state.MemoryStateDB, err error) {
 	inst := evm.NewEVMExecutor()
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	inst.SetAPI(api)
 	inst.CheckInit()
 	msg, _ := inst.GetMessage(&tx)
 
@@ -257,7 +271,7 @@ func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret
 
 	statedb.StateDB = mdb
 
-	statedb.CoinsAccount = account.NewCoinsAccount()
+	statedb.CoinsAccount = account.NewCoinsAccount(chainTestCfg)
 	statedb.CoinsAccount.SetDB(statedb.StateDB)
 
 	vmcfg := inst.GetVMConfig()

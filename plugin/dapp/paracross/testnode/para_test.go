@@ -11,12 +11,13 @@ import (
 
 func TestParaNode(t *testing.T) {
 	para := NewParaNode(nil, nil)
+	paraCfg := para.Para.GetAPI().GetConfig()
 	defer para.Close()
 	//通过rpc 发生信息
-	tx := util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx := util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(1)
-	tx = util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx = util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(2)
 }

@@ -12,8 +12,16 @@ import (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(MultiSigX))
-	types.RegistorExecutor(MultiSigX, NewType())
-	types.RegisterDappFork(MultiSigX, "Enable", 0)
+	types.RegFork(MultiSigX, InitFork)
+	types.RegExec(MultiSigX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(MultiSigX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(MultiSigX, NewType(cfg))
 }
 
 // MultiSigType multisig合约结构体
@@ -22,9 +30,10 @@ type MultiSigType struct {
 }
 
 // NewType new一个新的multisig合约实例
-func NewType() *MultiSigType {
+func NewType(cfg *types.Chain33Config) *MultiSigType {
 	c := &MultiSigType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

@@ -57,14 +57,23 @@ const (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(RelayX))
-	types.RegistorExecutor(RelayX, NewType())
-	types.RegisterDappFork(RelayX, "Enable", 570000)
+	types.RegFork(RelayX, InitFork)
+	types.RegExec(RelayX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(RelayX, "Enable", 570000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(RelayX, NewType(cfg))
 }
 
 // NewType new relay type
-func NewType() *RelayType {
+func NewType(cfg *types.Chain33Config) *RelayType {
 	c := &RelayType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

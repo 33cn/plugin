@@ -32,14 +32,15 @@ var (
 	defaultPriceExec = "coins"
 )
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&trade{}))
+// Init : 注册当前trade合约
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newTrade, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init : 注册当前trade合约
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newTrade, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&trade{}))
 }
 
 // GetName : 获取trade合约名字

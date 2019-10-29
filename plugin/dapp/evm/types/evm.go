@@ -28,18 +28,24 @@ var (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, ExecerEvm)
-	// init executor type
-	types.RegistorExecutor(ExecutorName, NewType())
+	types.RegFork(ExecutorName, InitFork)
+	types.RegExec(ExecutorName, InitExecutor)
+}
 
-	types.RegisterDappFork(ExecutorName, EVMEnable, 500000)
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(ExecutorName, EVMEnable, 500000)
 	// EVM合约中的数据分散存储，支持大数据量
-	types.RegisterDappFork(ExecutorName, ForkEVMState, 650000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMState, 650000)
 	// EVM合约状态数据生成哈希，保存在主链的StateDB中
-	types.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
 	// EVM合约支持ABI绑定和调用
-	types.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
 	// EEVM合约用户金额冻结
-	types.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(ExecutorName, NewType(cfg))
 }
 
 // EvmType EVM类型定义
@@ -48,9 +54,10 @@ type EvmType struct {
 }
 
 // NewType 新建EVM类型对象
-func NewType() *EvmType {
+func NewType(cfg *types.Chain33Config) *EvmType {
 	c := &EvmType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -68,7 +75,8 @@ func (evm *EvmType) GetPayload() types.Message {
 func (evm EvmType) ActionName(tx *types.Transaction) string {
 	// 这个需要通过合约交易目标地址来判断Action
 	// 如果目标地址为空，或为evm的固定合约地址，则为创建合约，否则为调用合约
-	if strings.EqualFold(tx.To, address.ExecAddress(types.ExecName(ExecutorName))) {
+	cfg := evm.GetConfig()
+	if strings.EqualFold(tx.To, address.ExecAddress(cfg.ExecName(ExecutorName))) {
 		return "createEvmContract"
 	}
 	return "callEvmContract"
@@ -107,7 +115,7 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			elog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return createEvmTx(&param)
+		return createEvmTx(evm.GetConfig(), &param)
 	}
 	return nil, types.ErrNotSupport
 }
@@ -117,7 +125,7 @@ func (evm *EvmType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
 
-func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
+func createEvmTx(cfg *types.Chain33Config, param *CreateCallTx) (*types.Transaction, error) {
 	if param == nil {
 		elog.Error("createEvmTx", "param", param)
 		return nil, types.ErrInvalidParam
@@ -153,27 +161,27 @@ func createEvmTx(param *CreateCallTx) (*types.Transaction, error) {
 			return nil, errors.New("code must be set in create tx")
 		}
 
-		return createRawTx(action, "", param.Fee)
+		return createRawTx(cfg, action, "", param.Fee)
 	}
-	return createRawTx(action, param.Name, param.Fee)
+	return createRawTx(cfg, action, param.Name, param.Fee)
 }
 
-func createRawTx(action proto.Message, name string, fee int64) (*types.Transaction, error) {
+func createRawTx(cfg *types.Chain33Config, action proto.Message, name string, fee int64) (*types.Transaction, error) {
 	tx := &types.Transaction{}
 	if len(name) == 0 {
 		tx = &types.Transaction{
-			Execer:  []byte(types.ExecName(ExecutorName)),
+			Execer:  []byte(cfg.ExecName(ExecutorName)),
 			Payload: types.Encode(action),
-			To:      address.ExecAddress(types.ExecName(ExecutorName)),
+			To:      address.ExecAddress(cfg.ExecName(ExecutorName)),
 		}
 	} else {
 		tx = &types.Transaction{
-			Execer:  []byte(types.ExecName(name)),
+			Execer:  []byte(cfg.ExecName(name)),
 			Payload: types.Encode(action),
-			To:      address.ExecAddress(types.ExecName(name)),
+			To:      address.ExecAddress(cfg.ExecName(name)),
 		}
 	}
-	tx, err := types.FormatTx(string(tx.Execer), tx)
+	tx, err := types.FormatTx(cfg, string(tx.Execer), tx)
 	if err != nil {
 		return nil, err
 	}

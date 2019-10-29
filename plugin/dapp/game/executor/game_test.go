@@ -8,9 +8,11 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	pty "github.com/33cn/plugin/plugin/dapp/game/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +37,9 @@ var (
 )
 
 func TestGame(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	Init(pty.GameX, cfg, nil)
 	total := 100 * types.Coin
 	accountA := types.Account{
 		Balance: total,
@@ -62,20 +66,20 @@ func TestGame(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 1000)
 	_, _, kvdb := util.CreateTestDB()
 
-	accA, _ := account.NewAccountDB("coins", "bty", stateDB)
+	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB, _ := account.NewAccountDB("coins", "bty", stateDB)
+	accB, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
-	accC, _ := account.NewAccountDB("coins", "bty", stateDB)
+	accC, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accC.SaveExecAccount(execAddr, &accountC)
 
-	accD, _ := account.NewAccountDB("coins", "bty", stateDB)
+	accD, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accD.SaveExecAccount(execAddr, &accountD)
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.GameX, "Enable"),
+		cfg.GetDappFork(pty.GameX, "Enable"),
 		1539918074,
 	}
 
@@ -84,7 +88,7 @@ func TestGame(t *testing.T) {
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("harrylee" + string(Rock))),
 		Fee:       100000}
-	createTx, err := pty.CreateRawGamePreCreateTx(createParam)
+	createTx, err := pty.CreateRawGamePreCreateTx(cfg, createParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -93,6 +97,10 @@ func TestGame(t *testing.T) {
 		t.Error(err)
 	}
 	exec := newGame()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(1, env.blockTime, env.difficulty)
@@ -116,7 +124,7 @@ func TestGame(t *testing.T) {
 
 	//match game
 	matchParam := &pty.GamePreMatchTx{GameID: gameID, Guess: Scissor, Fee: 100000}
-	matchTx, err := pty.CreateRawGamePreMatchTx(matchParam)
+	matchTx, err := pty.CreateRawGamePreMatchTx(cfg, matchParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -163,7 +171,7 @@ func TestGame(t *testing.T) {
 
 	//close game
 	closeParam := &pty.GamePreCloseTx{GameID: gameID, Secret: "harrylee", Result: Rock, Fee: 100000}
-	closeTx, err := pty.CreateRawGamePreCloseTx(closeParam)
+	closeTx, err := pty.CreateRawGamePreCloseTx(cfg, closeParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -206,7 +214,7 @@ func TestGame(t *testing.T) {
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}
-	createTx, err = pty.CreateRawGamePreCreateTx(createParam)
+	createTx, err = pty.CreateRawGamePreCreateTx(cfg, createParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -237,7 +245,7 @@ func TestGame(t *testing.T) {
 
 	//cancle game
 	cancleParam := &pty.GamePreCancelTx{Fee: 1e5, GameID: gameID}
-	cancelTx, err := pty.CreateRawGamePreCancelTx(cancleParam)
+	cancelTx, err := pty.CreateRawGamePreCancelTx(cfg, cancleParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -276,7 +284,7 @@ func TestGame(t *testing.T) {
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}
-	createTx, err = pty.CreateRawGamePreCreateTx(createParam)
+	createTx, err = pty.CreateRawGamePreCreateTx(cfg, createParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -307,7 +315,7 @@ func TestGame(t *testing.T) {
 
 	//match game
 	matchParam = &pty.GamePreMatchTx{GameID: gameID, Guess: Rock, Fee: 100000}
-	matchTx, err = pty.CreateRawGamePreMatchTx(matchParam)
+	matchTx, err = pty.CreateRawGamePreMatchTx(cfg, matchParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -334,7 +342,7 @@ func TestGame(t *testing.T) {
 
 	//close game
 	closeParam = &pty.GamePreCloseTx{GameID: gameID, Secret: "123456", Result: Rock, Fee: 100000}
-	closeTx, err = pty.CreateRawGamePreCloseTx(closeParam)
+	closeTx, err = pty.CreateRawGamePreCloseTx(cfg, closeParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -372,7 +380,7 @@ func TestGame(t *testing.T) {
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}
-	createTx, err = pty.CreateRawGamePreCreateTx(createParam)
+	createTx, err = pty.CreateRawGamePreCreateTx(cfg, createParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -403,7 +411,7 @@ func TestGame(t *testing.T) {
 
 	//match game
 	matchParam = &pty.GamePreMatchTx{GameID: gameID, Guess: Paper, Fee: 100000}
-	matchTx, err = pty.CreateRawGamePreMatchTx(matchParam)
+	matchTx, err = pty.CreateRawGamePreMatchTx(cfg, matchParam)
 	if err != nil {
 		t.Error(err)
 	}
@@ -429,7 +437,7 @@ func TestGame(t *testing.T) {
 	}
 	//close game
 	closeParam = &pty.GamePreCloseTx{GameID: gameID, Secret: "123456", Result: Rock, Fee: 100000}
-	closeTx, err = pty.CreateRawGamePreCloseTx(closeParam)
+	closeTx, err = pty.CreateRawGamePreCloseTx(cfg, closeParam)
 	if err != nil {
 		t.Error(err)
 	}

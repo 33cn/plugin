@@ -12,9 +12,11 @@ import (
 
 	"math/rand"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
@@ -111,7 +113,13 @@ func TestExecHashsend(t *testing.T) {
 }
 
 func constructHashlockInstance() drivers.Driver {
+	chainTestCfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	Init(pty.HashlockX, chainTestCfg, nil)
 	h := newHashlock()
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	h.SetAPI(api)
 	_, _, kvdb := util.CreateTestDB()
 	h.SetStateDB(kvdb)
 	return h

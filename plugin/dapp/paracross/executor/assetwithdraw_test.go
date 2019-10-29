@@ -18,6 +18,7 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/mock"
 )
 
 // 构建跨链交易, 依然使用1个节点
@@ -45,19 +46,20 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 
 	suite.exec = newParacross().(*Paracross)
+	suite.exec.SetAPI(suite.api)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = true
 
 	// setup block
 	blockDetail := &types.BlockDetail{
 		Block: &types.Block{},
 	}
-	MainBlockHash10 = blockDetail.Block.Hash()
+	MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
 
 	// setup title nodes : len = 1
 	nodeConfigKey := calcManageConfigNodesKey(Title)
@@ -89,7 +91,10 @@ func (suite *AssetWithdrawTestSuite) SetupTest() {
 
 // 主链先不执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnMainChain() {
-	types.Init("test", nil)
+	//types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
 	tx, err := createAssetWithdrawTx(suite.Suite, PrivKeyA, Nodes[1])
 	if err != nil {
 		suite.T().Error("createAssetWithdrawTx", "err", err)
@@ -106,7 +111,7 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnMainChain() {
 
 // 平行链执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnParaChain() {
-	para_init(Title)
+	// para_init(Title)
 	// make coins for transfer
 
 	total := 1000 * types.Coin
@@ -115,7 +120,7 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnParaChain() {
 		Frozen:  0,
 		Addr:    string(Nodes[0]),
 	}
-	paraAcc, _ := NewParaAccount(Title, "coins", "bty", suite.stateDB)
+	paraAcc, _ := NewParaAccount(chain33TestCfg, Title, "coins", "bty", suite.stateDB)
 	paraAcc.SaveAccount(&accountA)
 
 	tx, err := createAssetWithdrawTx(suite.Suite, PrivKeyA, Nodes[1])
@@ -144,9 +149,13 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawOnParaChain() {
 
 // 主链在平行链执行成功后执行
 func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawAfterPara() {
-	types.Init("test", nil)
+	// types.Init("test", nil)
+	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestMainCfg, nil)
+	suite.exec.SetAPI(suite.api)
+
 	// make coins for transfer
-	acc := account.NewCoinsAccount()
+	acc := account.NewCoinsAccount(chain33TestCfg)
 	acc.SetDB(suite.stateDB)
 
 	total := 10 * types.Coin
@@ -212,9 +221,9 @@ func (suite *AssetWithdrawTestSuite) TestExecAssetWithdrawAfterPara() {
 }
 
 func (suite *AssetWithdrawTestSuite) TestExecWithdrawFailedOnPara() {
-	para_init(Title)
+	//para_init(Title)
 	// make coins for transfer
-	acc := account.NewCoinsAccount()
+	acc := account.NewCoinsAccount(chain33TestCfg)
 	acc.SetDB(suite.stateDB)
 
 	addrPara := address.ExecAddress(Title + pt.ParaX)
@@ -258,7 +267,7 @@ func createAssetWithdrawTx(s suite.Suite, privFrom string, to []byte) (*types.Tr
 		TokenSymbol: "",
 		ExecName:    Title + pt.ParaX,
 	}
-	tx, err := pt.CreateRawAssetTransferTx(&param)
+	tx, err := pt.CreateRawAssetTransferTx(chain33TestCfg, &param)
 	assert.Nil(s.T(), err, "create asset Withdraw failed")
 	if err != nil {
 		return nil, err

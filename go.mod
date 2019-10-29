@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20191025150615-4180fe9f0aba
+	github.com/33cn/chain33 v0.0.0-20191029031458-93fc20976cc2
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac
@@ -27,6 +27,7 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.3
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tjfoc/gmsm v0.0.0-20171124023159-98aa888b79d8
 	github.com/valyala/fasthttp v1.5.0

@@ -12,9 +12,17 @@ import (
 
 func init() {
 	// init executor type
-	types.RegistorExecutor(PokerBullX, NewType())
 	types.AllowUserExec = append(types.AllowUserExec, ExecerPokerBull)
-	types.RegisterDappFork(PokerBullX, "Enable", 0)
+	types.RegFork(PokerBullX, InitFork)
+	types.RegExec(PokerBullX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(PokerBullX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(PokerBullX, NewType(cfg))
 }
 
 // PokerBullType 斗牛执行器类型
@@ -23,9 +31,10 @@ type PokerBullType struct {
 }
 
 // NewType 创建pokerbull执行器类型
-func NewType() *PokerBullType {
+func NewType(cfg *types.Chain33Config) *PokerBullType {
 	c := &PokerBullType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

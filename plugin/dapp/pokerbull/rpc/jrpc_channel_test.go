@@ -27,6 +27,7 @@ func init() {
 func TestJRPCChannel(t *testing.T) {
 	// 启动RPCmocker
 	mocker := testnode.New("--notset--", nil)
+	cfg := mocker.GetAPI().GetConfig()
 	defer func() {
 		mocker.Close()
 	}()
@@ -36,7 +37,7 @@ func TestJRPCChannel(t *testing.T) {
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {
-		fn func(*testing.T, *jsonclient.JSONClient) error
+		fn func(*testing.T, *types.Chain33Config, *jsonclient.JSONClient) error
 	}{
 		{fn: testStartRawTxCmd},
 		{fn: testContinueRawTxCmd},
@@ -45,11 +46,11 @@ func TestJRPCChannel(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := testCase.fn(t, jrpcClient)
+		err := testCase.fn(t, cfg, jrpcClient)
 		assert.Nil(t, err)
 	}
 
-	testCases = []struct {
+	testCases1 := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
 		{fn: testQueryGameByID},
@@ -57,26 +58,26 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testQueryGameByStatus},
 		{fn: testQueryGameByRound},
 	}
-	for index, testCase := range testCases {
+	for index, testCase := range testCases1 {
 		err := testCase.fn(t, jrpcClient)
 		assert.Equal(t, err, types.ErrNotFound, fmt.Sprint(index))
 	}
 
-	testCases = []struct {
+	testCases2 := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
 		{fn: testQueryGameByIDs},
 	}
-	for index, testCase := range testCases {
+	for index, testCase := range testCases2 {
 		err := testCase.fn(t, jrpcClient)
 		assert.Equal(t, err, nil, fmt.Sprint(index))
 	}
 }
 
-func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testStartRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.PBGameStart{Value: 123}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.PokerBullX),
+		Execer:     cfg.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateStartTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -84,10 +85,10 @@ func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testContinueRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.PBGameContinue{GameId: "123"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.PokerBullX),
+		Execer:     cfg.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateContinueTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -95,10 +96,10 @@ func testContinueRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testPlayRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testPlayRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.PBGamePlay{GameId: "123", Round: 1, Value: 5, Address: []string{"a", "b"}}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.PokerBullX),
+		Execer:     cfg.ExecName(pty.PokerBullX),
 		ActionName: pty.CreatePlayTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -106,10 +107,10 @@ func testPlayRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testQuitRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testQuitRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.PBGameQuit{GameId: "123"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.PokerBullX),
+		Execer:     cfg.ExecName(pty.PokerBullX),
 		ActionName: pty.CreateQuitTx,
 		Payload:    types.MustPBToJSON(payload),
 	}

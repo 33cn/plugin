@@ -23,9 +23,9 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 		main.Listen()
 	}
 	if para == nil {
-		cfg, sub := types.InitCfgString(DefaultConfig)
-		testnode.ModifyParaClient(sub, main.GetCfg().RPC.GrpcBindAddr)
-		para = testnode.NewWithConfig(cfg, sub, nil)
+		cfg := types.NewChain33Config(DefaultConfig)
+		testnode.ModifyParaClient(cfg, main.GetCfg().RPC.GrpcBindAddr)
+		para = testnode.NewWithConfig(cfg, nil)
 		para.Listen()
 	}
 	return &ParaNode{Main: main, Para: para}

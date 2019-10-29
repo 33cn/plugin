@@ -359,7 +359,8 @@ func (client *Client) getBlockInfoTx(current *types.Block) (*tmtypes.ValNodeActi
 
 // CheckBlock 检查区块
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
-	if current.Block.Difficulty != types.GetP(0).PowLimitBits {
+	cfg := client.GetAPI().GetConfig()
+	if current.Block.Difficulty != cfg.GetP(0).PowLimitBits {
 		return types.ErrBlockHeaderDifficulty
 	}
 	valAction, err := client.getBlockInfoTx(current.Block)
@@ -462,17 +463,18 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 // BuildBlock build a new block
 func (client *Client) BuildBlock() *types.Block {
 	lastBlock := client.GetCurrentBlock()
-	txs := client.RequestTx(int(types.GetP(lastBlock.Height+1).MaxTxNumber)-1, nil)
+	cfg := client.GetAPI().GetConfig()
+	txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber)-1, nil)
 	// placeholder
 	tx0 := &types.Transaction{}
 	txs = append([]*types.Transaction{tx0}, txs...)
 
 	var newblock types.Block
-	newblock.ParentHash = lastBlock.Hash()
+	newblock.ParentHash = lastBlock.Hash(cfg)
 	newblock.Height = lastBlock.Height + 1
 	client.AddTxsToBlock(&newblock, txs)
 	//固定难度
-	newblock.Difficulty = types.GetP(0).PowLimitBits
+	newblock.Difficulty = cfg.GetP(0).PowLimitBits
 	//newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
@@ -483,13 +485,14 @@ func (client *Client) BuildBlock() *types.Block {
 
 // CommitBlock call WriteBlock to commit to chain
 func (client *Client) CommitBlock(block *types.Block) error {
+	cfg := client.GetAPI().GetConfig()
 	retErr := client.WriteBlock(nil, block)
 	if retErr != nil {
 		tendermintlog.Info("CommitBlock fail", "err", retErr)
 		if client.WaitBlock(block.Height) {
 			curBlock, err := client.RequestBlock(block.Height)
 			if err == nil {
-				if bytes.Equal(curBlock.Hash(), block.Hash()) {
+				if bytes.Equal(curBlock.Hash(cfg), block.Hash(cfg)) {
 					tendermintlog.Info("already has block")
 					return nil
 				}

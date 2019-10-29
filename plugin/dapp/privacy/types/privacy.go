@@ -76,8 +76,16 @@ var mapSignName2Type = map[string]int{
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(PrivacyX))
-	types.RegistorExecutor(PrivacyX, NewType())
-	types.RegisterDappFork(PrivacyX, "Enable", 980000)
+	types.RegFork(PrivacyX, InitFork)
+	types.RegExec(PrivacyX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(PrivacyX, "Enable", 980000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(PrivacyX, NewType(cfg))
 }
 
 // PrivacyType declare PrivacyType class
@@ -86,9 +94,10 @@ type PrivacyType struct {
 }
 
 // NewType create PrivacyType object
-func NewType() *PrivacyType {
+func NewType(cfg *types.Chain33Config) *PrivacyType {
 	c := &PrivacyType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

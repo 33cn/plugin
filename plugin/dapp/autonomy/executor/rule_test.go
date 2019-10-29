@@ -51,7 +51,7 @@ func testexecLocalRule(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalRule(tx, receipt)
 		assert.NoError(t, err)
@@ -80,7 +80,7 @@ func testexecLocalRule(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalRule(tx,
 			&types.ReceiptData{
@@ -116,7 +116,7 @@ func testexecLocalRule(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalRule(tx,
 			&types.ReceiptData{
@@ -164,7 +164,7 @@ func testexecDelLocalRule(t *testing.T) {
 
 	// 先执行local然后进行删除
 
-	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalRule(tx, receipt)
 	assert.NoError(t, err)
@@ -202,7 +202,7 @@ func testexecDelLocalRule(t *testing.T) {
 		}}
 	// 先执行local然后进行删除
 	// 自动回退测试时候，需要先设置一个前置状态
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalRule(tx, receipt)
 	assert.NoError(t, err)
@@ -210,7 +210,7 @@ func testexecDelLocalRule(t *testing.T) {
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalRule(tx, recpt)
 
@@ -259,9 +259,7 @@ func checkExecLocalRule(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalRu
 }
 
 func TestGetProposalRule(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, storedb, _ := util.CreateTestDB()
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
@@ -273,9 +271,7 @@ func TestGetProposalRule(t *testing.T) {
 }
 
 func TestListProposalRule(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, sdb, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 
@@ -394,7 +390,7 @@ func TestExecLocalCommentProp(t *testing.T) {
 
 func testexecLocalCommentProp(t *testing.T, auto bool) {
 	_, _, kvdb := util.CreateTestDB()
-	au := &Autonomy{}
+	au := newTestAutonomy()
 	au.SetLocalDB(kvdb)
 	propID := "11111111111111"
 	Repcmt := "2222222222"
@@ -420,7 +416,7 @@ func testexecLocalCommentProp(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalCommentProp(tx, receipt)
 		assert.NoError(t, err)
@@ -438,7 +434,7 @@ func TestExecDelLocalCommentProp(t *testing.T) {
 
 func testexecDelLocalCommentProp(t *testing.T) {
 	_, sdb, kvdb := util.CreateTestDB()
-	au := &Autonomy{}
+	au := newTestAutonomy()
 	au.SetLocalDB(kvdb)
 	propID := "11111111111111"
 	Repcmt := "2222222222"
@@ -460,7 +456,7 @@ func testexecDelLocalCommentProp(t *testing.T) {
 	var set *types.LocalDBSet
 	// 先执行local然后进行删除
 
-	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 
 	set, err = au.execAutoLocalCommentProp(tx, receipt)
@@ -479,9 +475,7 @@ func testexecDelLocalCommentProp(t *testing.T) {
 }
 
 func TestListProposalComment(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, _, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 

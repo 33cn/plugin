@@ -223,7 +223,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
-	if types.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
+	cfg := evm.StateDB.GetConfig()
+	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
 
@@ -382,13 +383,14 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	// 检查部署后的合约代码大小是否超限
 	maxCodeSizeExceeded := len(ret) > evm.maxCodeSize
 
+	cfg := evm.StateDB.GetConfig()
 	// 如果执行成功，计算存储合约代码需要花费的Gas
 	if err == nil && !maxCodeSizeExceeded {
 		createDataGas := uint64(len(ret)) * params.CreateDataGas
 		if contract.UseGas(createDataGas) {
 			evm.StateDB.SetCode(contractAddr.String(), ret)
 			// 设置 ABI (如果有的话)，这个动作不单独计费
-			if len(abi) > 0 && types.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMABI) {
+			if len(abi) > 0 && cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMABI) {
 				evm.StateDB.SetAbi(contractAddr.String(), abi)
 			}
 		} else {

@@ -526,24 +526,24 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 		Output:    privacyOutput,
 		AssetExec: req.GetAssetExec(),
 	}
-
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPublic2Privacy,
 		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
+		Execer:  []byte(cfg.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
+		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
+	tx.SetExpire(cfg, time.Duration(req.Expire))
 	tx.Signature = &types.Signature{
 		Signature: types.Encode(&privacytypes.PrivacySignatureParam{
 			ActionType: action.Ty,
 		}),
 	}
-	tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "calc fee failed", err)
 		return nil, err
@@ -556,7 +556,8 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 
 	//需要燃烧的utxo
 	var utxoBurnedAmount int64
-	isMainetCoins := !types.IsPara() && (req.AssetExec == "coins")
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	isMainetCoins := !cfg.IsPara() && (req.AssetExec == "coins")
 	if isMainetCoins {
 		utxoBurnedAmount = privacytypes.PrivacyTxFee
 	}
@@ -613,15 +614,15 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
+		Execer:  []byte(cfg.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
+		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
+	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
-		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+		tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
 		if err != nil {
 			bizlog.Error("createPrivacy2PrivacyTx", "calc fee failed", err)
 			return nil, err
@@ -645,7 +646,8 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	//需要燃烧的utxo
 	//需要燃烧的utxo
 	var utxoBurnedAmount int64
-	isMainetCoins := !types.IsPara() && (req.AssetExec == "coins")
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	isMainetCoins := !cfg.IsPara() && (req.AssetExec == "coins")
 	if isMainetCoins {
 		utxoBurnedAmount = privacytypes.PrivacyTxFee
 	}
@@ -701,15 +703,15 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(privacytypes.PrivacyX)),
+		Execer:  []byte(cfg.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
-		To:      address.ExecAddress(types.ExecName(privacytypes.PrivacyX)),
+		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
 	}
-	tx.SetExpire(time.Duration(req.Expire))
+	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
-		tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+		tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
 		if err != nil {
 			bizlog.Error("createPrivacy2PublicTx", "calc fee failed", err)
 			return nil, err
@@ -812,7 +814,8 @@ func (policy *privacyPolicy) reqUtxosByAddr(addrs []string) {
 	}
 	policy.store.saveREscanUTXOsAddresses(storeAddrs)
 
-	reqAddr := address.ExecAddress(types.ExecName(privacytypes.PrivacyX))
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	reqAddr := address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX))
 	var txInfo types.ReplyTxInfo
 	i := 0
 	operater := policy.getWalletOperate()
@@ -836,7 +839,7 @@ func (policy *privacyPolicy) reqUtxosByAddr(addrs []string) {
 		} else {
 			ReqAddr.Height = txInfo.GetHeight()
 			ReqAddr.Index = txInfo.GetIndex()
-			if !types.IsDappFork(ReqAddr.Height, privacytypes.PrivacyX, "ForkV21Privacy") { // 小于隐私分叉高度不做扫描
+			if !cfg.IsDappFork(ReqAddr.Height, privacytypes.PrivacyX, "ForkV21Privacy") { // 小于隐私分叉高度不做扫描
 				break
 			}
 		}
@@ -947,13 +950,13 @@ func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *pr
 		}
 		ringSign.Items[i] = item
 	}
-
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	ringSignData := types.Encode(ringSign)
 	tx.Signature = &types.Signature{
 		Ty:        privacytypes.RingBaseonED25519,
 		Signature: ringSignData,
 		// 这里填的是隐私合约的公钥，让框架保持一致
-		Pubkey: address.ExecPubKey(types.ExecName(privacytypes.PrivacyX)),
+		Pubkey: address.ExecPubKey(cfg.ExecName(privacytypes.PrivacyX)),
 	}
 	return nil
 }
@@ -1048,6 +1051,7 @@ func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, in
 		return
 	}
 
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	txExecRes := block.Receipts[index].Ty
 	var privateAction privacytypes.PrivacyAction
 	if err := types.Decode(tx.GetPayload(), &privateAction); err != nil {
@@ -1101,7 +1105,7 @@ func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, in
 									Owner:            *info.Addr,
 									Height:           block.Block.Height,
 									Txindex:          index,
-									Blockhash:        block.Block.Hash(),
+									Blockhash:        block.Block.Hash(cfg),
 								}
 
 								utxoGlobalIndex := &privacytypes.UTXOGlobalIndex{

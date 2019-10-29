@@ -53,7 +53,7 @@ func testexecLocalProject(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalProject(tx, receipt)
 		assert.NoError(t, err)
@@ -83,7 +83,7 @@ func testexecLocalProject(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalProject(tx,
 			&types.ReceiptData{
@@ -120,7 +120,7 @@ func testexecLocalProject(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalProject(tx,
 			&types.ReceiptData{
@@ -170,7 +170,7 @@ func testexecDelLocalProject(t *testing.T) {
 	}
 
 	// 先执行local然后进行删除
-	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalProject(tx, receipt)
 	assert.NoError(t, err)
@@ -207,7 +207,7 @@ func testexecDelLocalProject(t *testing.T) {
 		}}
 	// 先执行local然后进行删除
 	// 自动回退测试时候，需要先设置一个前置状态
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalProject(tx, receipt)
 	assert.NoError(t, err)
@@ -215,7 +215,7 @@ func testexecDelLocalProject(t *testing.T) {
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalProject(tx, recpt)
 
@@ -234,9 +234,7 @@ func testexecDelLocalProject(t *testing.T) {
 }
 
 func TestGetProposalProject(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, storedb, _ := util.CreateTestDB()
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
@@ -248,9 +246,7 @@ func TestGetProposalProject(t *testing.T) {
 }
 
 func TestListProposalProject(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, sdb, kvdb := util.CreateTestDB()
 	au.SetLocalDB(kvdb)
 

@@ -20,7 +20,8 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 	if receipt.GetTy() != types.ExecOk {
 		return set, nil
 	}
-	if types.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMState) {
+	cfg := evm.GetAPI().GetConfig()
+	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMState) {
 		// 需要将Exec中生成的合约状态变更信息写入localdb
 		for _, logItem := range receipt.Logs {
 			if evmtypes.TyLogEVMStateChangeItem == logItem.Ty {

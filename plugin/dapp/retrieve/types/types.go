@@ -12,11 +12,19 @@ import (
 )
 
 func init() {
-	// init executor type
-	types.RegistorExecutor(RetrieveX, NewType())
-	types.RegisterDappFork(RetrieveX, "Enable", 0)
-	types.RegisterDappFork(RetrieveX, ForkRetriveX, 180000)
-	types.RegisterDappFork(RetrieveX, ForkRetriveAssetX, 3150000)
+	types.AllowUserExec = append(types.AllowUserExec, ExecerRetrieve)
+	types.RegFork(RetrieveX, InitFork)
+	types.RegExec(RetrieveX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(RetrieveX, "Enable", 0)
+	cfg.RegisterDappFork(RetrieveX, ForkRetriveX, 180000)
+	cfg.RegisterDappFork(RetrieveX, ForkRetriveAssetX, 3150000)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(RetrieveX, NewType(cfg))
 }
 
 // RetrieveType def
@@ -25,9 +33,10 @@ type RetrieveType struct {
 }
 
 // NewType for retrieve
-func NewType() *RetrieveType {
+func NewType(cfg *types.Chain33Config) *RetrieveType {
 	c := &RetrieveType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

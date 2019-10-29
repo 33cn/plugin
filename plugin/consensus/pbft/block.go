@@ -70,13 +70,14 @@ func (client *Client) CreateBlock() {
 	if !client.isPrimary {
 		return
 	}
+	cfg := client.GetQueueClient().GetConfig()
 	for {
 		if issleep {
 			time.Sleep(10 * time.Second)
 		}
 		plog.Info("=============start get tx===============")
 		lastBlock := client.GetCurrentBlock()
-		txs := client.RequestTx(int(types.GetP(lastBlock.Height+1).MaxTxNumber), nil)
+		txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
 		if len(txs) == 0 {
 			issleep = true
 			continue
@@ -88,7 +89,7 @@ func (client *Client) CreateBlock() {
 		//fmt.Println(len(txs))
 
 		var newblock types.Block
-		newblock.ParentHash = lastBlock.Hash()
+		newblock.ParentHash = lastBlock.Hash(cfg)
 		newblock.Height = lastBlock.Height + 1
 		newblock.Txs = txs
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)

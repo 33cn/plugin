@@ -94,7 +94,8 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if err != nil {
 		return nil, err
 	}
-	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+	cfg := p.GetAPI().GetConfig()
+	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
 		stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
 	}
@@ -103,7 +104,8 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 
 func (p *Paracross) getMainHeight() (int64, error) {
 	mainHeight := p.GetMainHeight()
-	if types.IsPara() {
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
 		block, err := p.GetAPI().GetBlocks(&types.ReqBlocks{Start: p.GetHeight(), End: p.GetHeight()})
 		if err != nil || block == nil || len(block.Items) == 0 {
 			return -1, types.ErrBlockExist
@@ -122,12 +124,13 @@ func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Mess
 	if err != nil {
 		return nil, err
 	}
-	stat, err := getNodeIDWithFork(p.GetStateDB(), in.Title, mainHeight, in.Id)
+	cfg := p.GetAPI().GetConfig()
+	stat, err := getNodeIDWithFork(cfg, p.GetStateDB(), in.Title, mainHeight, in.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		stat.Id = getParaNodeIDSuffix(stat.Id)
 	}
 	return stat, nil
@@ -146,7 +149,8 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 	if err != nil {
 		return nil, err
 	}
-	if !pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+	cfg := p.GetAPI().GetConfig()
+	if !pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		return resp, err
 	}
 	addrs := resp.(*pt.RespParacrossNodeAddrs)
@@ -169,7 +173,8 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	if err != nil {
 		return nil, err
 	}
-	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+	cfg := p.GetAPI().GetConfig()
+	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		stat.Id = getParaNodeIDSuffix(stat.Id)
 	}
 	return stat, nil
@@ -188,7 +193,8 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	if err != nil {
 		return nil, err
 	}
-	if pt.IsParaForkHeight(mainHeight, pt.ForkLoopCheckCommitTxDone) {
+	cfg := p.GetAPI().GetConfig()
+	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		addrs := resp.(*pt.RespParacrossNodeGroups)
 		for _, id := range addrs.Ids {
 			id.Id = getParaNodeIDSuffix(id.Id)

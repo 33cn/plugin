@@ -12,7 +12,8 @@ import (
 )
 
 func main() {
-	forks, err := types.CloneFork("chain33")
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
+	forks, err := cfg.GetForks()
 	if err != nil {
 		fmt.Printf("clone fork failed: %v", err)
 		return
@@ -35,6 +36,7 @@ func main() {
 		[fork.sub.store-kvmvccmavl]
 		ForkKvmvccmavl=2270000 # store-kvmvccmavl.ForkKvmvccmavl=1870000
 */
+
 func fmtForks(forks map[string]int64) {
 	systemFork := make(map[string]int64)
 	subFork := make(map[string]map[string]int64)

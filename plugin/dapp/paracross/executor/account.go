@@ -20,13 +20,13 @@ import (
 // symbol: coins.bty, token.{TEST}
 // 完整的帐号地址 mavl-{paracross}-coins.bty-{user-address} 不带title{paracross}
 // 对应主链上paracross 子帐号 malv-coins-bty-exec-{Address(paracross)}:{Address(user.p.{guodun}.paracross)}
-func NewParaAccount(paraTitle, mainExecName, mainSymbol string, db db.KV) (*account.DB, error) {
+func NewParaAccount(cfg *types.Chain33Config, paraTitle, mainExecName, mainSymbol string, db db.KV) (*account.DB, error) {
 	// 按照现在的配置， title 是 带 "." 做结尾
 	// paraExec := paraTitle + types.ParaX
 	paraExec := pt.ParaX // 现在平行链是执行器注册和算地址是不带前缀的，
 	// 如果能确保(或规定) tokne 的 symbol  和 coins 中的 symbol 不会混淆，  localExecName 可以不要
 	paraSymbol := mainExecName + "." + mainSymbol
-	return account.NewAccountDB(paraExec, paraSymbol, db)
+	return account.NewAccountDB(cfg, paraExec, paraSymbol, db)
 }
 
 //NewMainAccount create new Main account
@@ -35,9 +35,9 @@ func NewParaAccount(paraTitle, mainExecName, mainSymbol string, db db.KV) (*acco
 // symbol: user.p.{guodun}.coins.{guodun}  user.p.{guodun}.token.{TEST}
 // 完整的帐号地址 mavl-paracross-user.p.{guodun}.coins.guodun-{user-address}
 // 对应平行链上子地址  mavl-coins-{guodun}-exec-{Address(paracross)}:{Address(paracross)}
-func NewMainAccount(paraTitle, paraExecName, paraSymbol string, db db.KV) (*account.DB, error) {
+func NewMainAccount(cfg *types.Chain33Config, paraTitle, paraExecName, paraSymbol string, db db.KV) (*account.DB, error) {
 	mainSymbol := paraTitle + paraExecName + "." + paraSymbol
-	return account.NewAccountDB(pt.ParaX, mainSymbol, db)
+	return account.NewAccountDB(cfg, pt.ParaX, mainSymbol, db)
 }
 
 func assetDepositBalance(acc *account.DB, addr string, amount int64) (*types.Receipt, error) {
