@@ -15,9 +15,9 @@ import (
 )
 
 var (
-    clog = log.New("module", "execs.blackwhite")
-    blackwhiteAddr string
-    driverName = gt.BlackwhiteX
+	clog           = log.New("module", "execs.blackwhite")
+	blackwhiteAddr string
+	driverName     = gt.BlackwhiteX
 )
 
 // Init 重命名执行器名称
