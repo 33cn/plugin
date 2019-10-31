@@ -23,6 +23,7 @@ type IssuanceDebtTx struct {
 // IssuanceRepayTx for construction
 type IssuanceRepayTx struct {
 	IssuanceID string `json:"issuanceId"`
+	DebtID     string `json:"debtId"`
 	Fee       int64  `json:"fee"`
 }
 

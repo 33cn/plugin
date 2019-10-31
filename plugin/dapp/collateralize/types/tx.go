@@ -20,13 +20,14 @@ type CollateralizeBorrowTx struct {
 // CollateralizeRepayTx for construction
 type CollateralizeRepayTx struct {
 	CollateralizeID string `json:"collateralizeId"`
-	Value    int64  `json:"value"`
+	RecordID string `json:"recordID"`
 	Fee       int64  `json:"fee"`
 }
 
 // CollateralizeAppednTx for construction
 type CollateralizeAppendTx struct {
 	CollateralizeID string `json:"collateralizeId"`
+	RecordID string `json:"recordID"`
 	Value    int64  `json:"value"`
 	Fee       int64  `json:"fee"`
 }

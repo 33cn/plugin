@@ -143,6 +143,26 @@ func (c *Issuance) deleteIssuanceRecordStatus(status int32, index int64) (kvs []
 	return kvs
 }
 
+func (c *Issuance) addIssuancePriceRecord(recordTime int64, price float32) (kvs []*types.KeyValue) {
+	key := calcIssuancePriceKey(string(recordTime))
+
+	record := &pty.IssuanceAssetPriceRecord{
+		RecordTime:recordTime,
+		BtyPrice:price,
+	}
+	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
+	kvs = append(kvs, kv)
+	return kvs
+}
+
+func (c *Issuance) deleteIssuancePriceRecord(recordTime int64) (kvs []*types.KeyValue) {
+	key := calcIssuancePriceKey(string(recordTime))
+
+	kv := &types.KeyValue{Key: key, Value:nil}
+	kvs = append(kvs, kv)
+	return kvs
+}
+
 // CheckReceiptExecOk return true to check if receipt ty is ok
 func (c *Issuance) CheckReceiptExecOk() bool {
 	return true

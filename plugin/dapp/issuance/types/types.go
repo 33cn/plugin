@@ -24,7 +24,7 @@ const (
 // Issuance name
 const (
 	IssuanceX = "issuance"
-	CCNYTokenName = "ccny"
+	CCNYTokenName = "CCNY"
 	IssuancePreLiquidationRatio = 1.1 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 

@@ -201,7 +201,7 @@ func CreateRawCollateralizeRepayTx(parm *CollateralizeRepayTx) (*types.Transacti
 
 	v := &CollateralizeRepay{
 		CollateralizeId: parm.CollateralizeID,
-		Value: parm.Value,
+		RecordId:parm.RecordID,
 	}
 	repay := &CollateralizeAction{
 		Ty:    CollateralizeActionRepay,
@@ -230,6 +230,7 @@ func CreateRawCollateralizeAppendTx(parm *CollateralizeAppendTx) (*types.Transac
 
 	v := &CollateralizeAppend{
 		CollateralizeId: parm.CollateralizeID,
+		RecordId:parm.RecordID,
 		CollateralValue: parm.Value,
 	}
 	append := &CollateralizeAction{

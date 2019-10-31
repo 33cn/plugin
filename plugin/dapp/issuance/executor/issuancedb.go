@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -24,6 +25,9 @@ const (
 
 const (
 	Coin                      = types.Coin      // 1e8
+	DefaultDebtCeiling        = 100000           // 默认借贷限额
+	DefaultLiquidationRatio   = 0.25             // 默认质押比
+	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
 	PriceWarningRate          = 1.3             // 价格提前预警率
 	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
 )
@@ -61,7 +65,7 @@ func getGuarantorAddr(db dbm.KV) (string, error) {
 		return "", err
 	}
 
-	return item.GetAddr(), nil
+	return item.GetArr().Value[0], nil
 }
 
 func isRightAddr(key string, addr string, db dbm.KV) bool {
@@ -89,6 +93,29 @@ func isRightAddr(key string, addr string, db dbm.KV) bool {
 	}
 	return false
 
+}
+
+func isSuperAddr(addr string, db dbm.KV) bool {
+	data, err := db.Get(AddrKey())
+	if err != nil {
+		clog.Error("getSuperAddr", "error", err)
+		return false
+	}
+
+	var item types.ConfigItem
+	err = types.Decode(data, &item)
+	if err != nil {
+		clog.Error("isSuperAddr", "Decode", data)
+		return false
+	}
+
+	for _, op := range item.GetArr().Value {
+		if op == addr {
+			return true
+		}
+	}
+
+	return false
 }
 
 // IssuanceDB def
@@ -120,7 +147,13 @@ func Key(id string) (key []byte) {
 
 // Key for IssuanceAddrConfig
 func AddrKey() (key []byte) {
-	key = append(key, []byte("mavl-"+pty.IssuanceX+"addr")...)
+	key = append(key, []byte("mavl-"+pty.IssuanceX+"-addr")...)
+	return key
+}
+
+// Key for IssuancePriceFeed
+func PriceKey() (key []byte) {
+	key = append(key, []byte("mavl-"+pty.IssuanceX+"-price")...)
 	return key
 }
 
@@ -156,22 +189,15 @@ func NewIssuanceAction(c *Issuance, tx *types.Transaction, index int) *Action {
 		execaddr: dapp.ExecAddress(string(tx.Execer)), difficulty: c.GetDifficulty(), index: index, Issuance: c}
 }
 
-// GetCollCommonRecipt generate logs for Issuance common action
-func (action *Action) GetCollCommonRecipt(issuance *pty.Issuance) *pty.ReceiptIssuance {
-	c := &pty.ReceiptIssuance{}
-	c.IssuanceId = issuance.IssuanceId
-	c.Status = issuance.Status
-	c.Index = issuance.Index
-	c.PreIndex = issuance.PreIndex
-	return c
-}
-
 // GetCreateReceiptLog generate logs for Issuance create action
 func (action *Action) GetCreateReceiptLog(issuance *pty.Issuance) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogIssuanceCreate
 
-	c := action.GetCollCommonRecipt(issuance)
+	c := &pty.ReceiptIssuance{}
+	c.IssuanceId = issuance.IssuanceId
+	c.Status = issuance.Status
+	c.Index = issuance.Index
 
 	log.Log = types.Encode(c)
 
@@ -183,10 +209,12 @@ func (action *Action) GetDebtReceiptLog(issuance *pty.Issuance, debtRecord *pty.
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogIssuanceDebt
 
-	c := action.GetCollCommonRecipt(issuance)
+	c := &pty.ReceiptIssuance{}
+	c.IssuanceId = issuance.IssuanceId
 	c.AccountAddr = action.fromaddr
 	c.DebtId = debtRecord.DebtId
-	c.RecordStatus = debtRecord.Status
+	c.Status = debtRecord.Status
+	c.Index = debtRecord.Index
 
 	log.Log = types.Encode(c)
 
@@ -198,11 +226,14 @@ func (action *Action) GetRepayReceiptLog(issuance *pty.Issuance, debtRecord *pty
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogIssuanceRepay
 
-	c := action.GetCollCommonRecipt(issuance)
+	c := &pty.ReceiptIssuance{}
+	c.IssuanceId = issuance.IssuanceId
 	c.AccountAddr = action.fromaddr
 	c.DebtId = debtRecord.DebtId
-	c.RecordStatus = debtRecord.Status
-	c.RecordPreStatus = debtRecord.PreStatus
+	c.Status = debtRecord.Status
+	c.PreStatus = debtRecord.PreStatus
+	c.Index = debtRecord.Index
+	c.PreIndex = debtRecord.PreIndex
 
 	log.Log = types.Encode(c)
 
@@ -214,11 +245,27 @@ func (action *Action) GetFeedReceiptLog(issuance *pty.Issuance, debtRecord *pty.
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogIssuanceFeed
 
-	c := action.GetCollCommonRecipt(issuance)
+	c := &pty.ReceiptIssuance{}
+	c.IssuanceId = issuance.IssuanceId
 	c.AccountAddr = debtRecord.AccountAddr
 	c.DebtId = debtRecord.DebtId
-	c.RecordStatus = debtRecord.Status
-	c.RecordPreStatus = debtRecord.PreStatus
+	c.Status = debtRecord.Status
+	c.PreStatus = debtRecord.PreStatus
+	c.Index = debtRecord.Index
+	c.PreIndex = debtRecord.PreIndex
+
+	log.Log = types.Encode(c)
+
+	return log
+}
+
+// GetFeedReceiptLog generate logs for Issuance price feed action
+func (action *Action) GetPriceReceiptLog(price *pty.IssuanceAssetPriceRecord) *types.ReceiptLog {
+	log := &types.ReceiptLog{}
+	log.Ty = pty.TyLogIssuanceFeed
+	c := &pty.ReceiptIssuance{}
+	c.RecordTime = price.RecordTime
+	c.BtyPrice = price.BtyPrice
 
 	log.Log = types.Encode(c)
 
@@ -226,11 +273,16 @@ func (action *Action) GetFeedReceiptLog(issuance *pty.Issuance, debtRecord *pty.
 }
 
 // GetCloseReceiptLog generate logs for Issuance close action
-func (action *Action) GetCloseReceiptLog(Issuance *pty.Issuance) *types.ReceiptLog {
+func (action *Action) GetCloseReceiptLog(issuance *pty.Issuance) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogIssuanceClose
 
-	c := action.GetCollCommonRecipt(Issuance)
+	c := &pty.ReceiptIssuance{}
+	c.IssuanceId = issuance.IssuanceId
+	c.Status = issuance.Status
+	c.PreStatus = pty.IssuanceStatusCreated
+	c.Index = issuance.Index
+	c.PreIndex = issuance.PreIndex
 
 	log.Log = types.Encode(c)
 
@@ -277,24 +329,29 @@ func (action *Action) IssuanceManage(manage *pty.IssuanceManage) (*types.Receipt
 	}
 
 	// 添加大户地址
+	var item types.ConfigItem
 	data, err := action.db.Get(AddrKey())
 	if err != nil {
 		if err != types.ErrNotFound {
 			clog.Error("IssuanceManage", "error", err)
 			return nil, err
 		}
-		value := types.Encode(manage)
+		emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
+		arr := types.ConfigItem_Arr{Arr: emptyValue}
+		item.Value = &arr
+		item.GetArr().Value = append(item.GetArr().Value, manage.SuperAddrs...)
+
+		value := types.Encode(&item)
 		action.db.Set(AddrKey(), value)
 		kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
 	} else {
-		var addrStore pty.IssuanceManage
-		err = types.Decode(data, &addrStore)
+		err = types.Decode(data, &item)
 		if err != nil {
 			clog.Debug("IssuanceManage", "decode", err)
 			return nil, err
 		}
-		addrStore.SuperAddrs = append(addrStore.SuperAddrs, manage.SuperAddrs...)
-		value := types.Encode(&addrStore)
+		item.GetArr().Value = append(item.GetArr().Value, manage.SuperAddrs...)
+		value := types.Encode(&item)
 		action.db.Set(AddrKey(), value)
 		kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
 	}
@@ -320,20 +377,6 @@ func (action *Action) getSuperAddr() []string {
 	return addrStore.SuperAddrs
 }
 
-func isSuperAddr(super []string, addr string) bool {
-	if super == nil || len(super) == 0 {
-		return false
-	}
-
-	for _, superAddr := range super {
-		if superAddr == addr {
-			return true
-		}
-	}
-
-	return false
-}
-
 // IssuanceCreate 创建借贷，持有一定数量ccny的用户可创建借贷，提供给其他用户借贷
 func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -347,7 +390,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	}
 
 	// 检查ccny余额
-	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance*Coin, false) {
 		return nil, types.ErrInsufficientBalance
 	}
 
@@ -360,7 +403,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	}
 
 	// 冻结ccny
-	receipt, err = action.tokenAccount.ExecFrozen(action.fromaddr, action.execaddr, create.TotalBalance)
+	receipt, err = action.tokenAccount.ExecFrozen(action.fromaddr, action.execaddr, create.TotalBalance*Coin)
 	if err != nil {
 		clog.Error("IssuanceCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", create.TotalBalance)
 		return nil, err
@@ -371,16 +414,27 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	// 构造coll结构
 	issu := &IssuanceDB{}
 	issu.IssuanceId = issuanceID
-	issu.LiquidationRatio = create.LiquidationRatio
 	issu.TotalBalance = create.TotalBalance
+	if create.LiquidationRatio != 0 {
+		issu.LiquidationRatio = create.LiquidationRatio
+	} else {
+		issu.LiquidationRatio = DefaultLiquidationRatio
+	}
+	if create.DebtCeiling != 0 {
+		issu.DebtCeiling = create.DebtCeiling
+	} else {
+		issu.DebtCeiling = DefaultDebtCeiling
+	}
+	if create.Period != 0 {
+		issu.Period = create.Period
+	} else {
+		issu.Period = DefaultPeriod
+	}
 	issu.Balance = create.TotalBalance
-	issu.DebtCeiling = create.DebtCeiling
-	issu.Period = create.Period
 	issu.CreateTime = action.blocktime
 	issu.IssuerAddr = action.fromaddr
 	issu.Status = pty.IssuanceActionCreate
 	issu.Index = action.GetIndex()
-	issu.CreateIndex = issu.Index
 
 	clog.Debug("IssuanceCreate created", "IssuanceID", issuanceID, "TotalBalance", issu.TotalBalance)
 
@@ -410,16 +464,16 @@ func getBtyNumToFrozen(value int64, price float32, ratio float32) (int64,error) 
 
 // 获取最近抵押物价格
 func (action *Action)getLatestPrice(db dbm.KV) (float32, error) {
-	data, err := db.Get(calcIssuanceLatestPriceKey())
+	data, err := db.Get(PriceKey())
 	if err != nil {
-		clog.Debug("getLatestPrice", "get", err)
+		clog.Error("getLatestPrice", "get", err)
 		return -1, err
 	}
 	var price pty.IssuanceAssetPriceRecord
 	//decode
 	err = types.Decode(data, &price)
 	if err != nil {
-		clog.Debug("getLatestPrice", "decode", err)
+		clog.Error("getLatestPrice", "decode", err)
 		return -1, err
 	}
 
@@ -455,6 +509,11 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
+	if !isSuperAddr(action.fromaddr, action.db) {
+		clog.Error("IssuanceDebt", "error", "IssuanceDebt need super address")
+		return nil, pty.ErrPermissionDeny
+	}
+
 	// 查找对应的借贷ID
 	issuance, err := queryIssuanceByID(action.db, debt.IssuanceId)
 	if err != nil {
@@ -468,13 +527,6 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 		return nil, pty.ErrIssuanceStatus
 	}
 
-	//// 一个地址在一期借贷中只允许借出一次
-	//for _, record := range issuance.DebtRecords {
-	//	if record.AccountAddr == action.fromaddr {
-	//		clog.Error("IssuanceDebt","IssuanceId", debt.IssuanceId, action.fromaddr, "execaddr", action.execaddr, "err", pty.ErrIssuanceAccountExist)
-	//		return nil, err
-	//	}
-	//}
 	issu := &IssuanceDB{*issuance}
 
 	// 借贷金额检查
@@ -511,7 +563,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	}
 
 	// 检查抵押物账户余额
-	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen, 0) {
+	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen*Coin, 0) {
 		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
@@ -526,7 +578,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物冻结
-	receipt, err = action.coinsAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, btyFrozen)
+	receipt, err = action.coinsAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, btyFrozen*Coin)
 	if err != nil {
 		clog.Error("IssuanceDebt.Frozen", "addr", issu.IssuerAddr, "execaddr", action.execaddr, "amount", btyFrozen)
 		return nil, err
@@ -535,7 +587,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	kv = append(kv, receipt.KV...)
 
 	// 借出ccny
-	receipt, err = action.tokenAccount.ExecTransfer(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value)
+	receipt, err = action.tokenAccount.ExecTransfer(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value*Coin)
 	if err != nil {
 		clog.Error("IssuanceDebt.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debt.Value)
 		return nil, err
@@ -554,6 +606,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	debtRecord.LiquidationPrice = issu.LiquidationRatio * lastPrice * pty.IssuancePreLiquidationRatio
 	debtRecord.Status = pty.IssuanceUserStatusCreate
 	debtRecord.ExpireTime = action.blocktime + issu.Period
+	debtRecord.Index = action.GetIndex()
 
 	// 记录当前借贷的最高自动清算价格
 	if issu.LatestLiquidationPrice < debtRecord.LiquidationPrice {
@@ -565,8 +618,6 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	issu.CollateralValue += btyFrozen
 	issu.DebtValue += debt.Value
 	issu.Balance -= debt.Value
-	issu.PreIndex = issu.Index
-	issu.Index = action.GetIndex()
 	issu.Save(action.db)
 	kv = append(kv, issu.GetKVSet()...)
 
@@ -615,13 +666,13 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	}
 
 	// 检查
-	if !action.CheckExecTokenAccount(action.fromaddr, debtRecord.DebtValue, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, debtRecord.DebtValue*Coin, false) {
 		clog.Error("IssuanceRepay", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrInsufficientBalance)
 		return nil, types.ErrNoBalance
 	}
 
 	// ccny转移
-	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, debtRecord.DebtValue)
+	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, debtRecord.DebtValue*Coin)
 	if err != nil {
 		clog.Error("IssuanceRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.DebtValue)
 		return nil, err
@@ -630,7 +681,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物归还
-	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, action.execaddr, action.execaddr, debtRecord.CollateralValue)
+	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debtRecord.CollateralValue*Coin)
 	if err != nil {
 		clog.Error("IssuanceRepay.ExecTransferFrozen", "addr", issu.IssuerAddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue)
 		return nil, err
@@ -641,6 +692,8 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	// 借贷记录关闭
 	debtRecord.PreStatus = debtRecord.Status
 	debtRecord.Status = pty.IssuanceUserStatusClose
+	debtRecord.PreIndex = debtRecord.Index
+	debtRecord.Index = action.GetIndex()
 
 	// 保存
 	issu.Balance += debtRecord.DebtValue
@@ -650,8 +703,6 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	issu.InvalidRecords = append(issu.InvalidRecords, debtRecord)
 	issu.LatestLiquidationPrice = getLatestLiquidationPrice(&issu.Issuance)
 	issu.LatestExpireTime = getLatestExpireTime(&issu.Issuance)
-	issu.PreIndex = issu.Index
-	issu.Index = action.GetIndex()
 	issu.Save(action.db)
 	kv = append(kv, issu.GetKVSet()...)
 
@@ -687,7 +738,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 			}
 
 			// 抵押物转移
-			receipt, err := action.coinsAccount.ExecTransferFrozen(action.fromaddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
+			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue*Coin)
 			if err != nil {
 				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
 				continue
@@ -699,14 +750,16 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 			debtRecord.LiquidateTime = action.blocktime
 			debtRecord.PreStatus = debtRecord.Status
 			debtRecord.Status = pty.IssuanceUserStatusSystemLiquidate
-			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
+			debtRecord.PreIndex = debtRecord.Index
+			debtRecord.Index = action.GetIndex()
 			issu.InvalidRecords = append(issu.InvalidRecords, debtRecord)
+			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
 		} else {
+			debtRecord.PreIndex = debtRecord.Index
+			debtRecord.Index = action.GetIndex()
 			debtRecord.PreStatus = debtRecord.Status
 			debtRecord.Status = pty.IssuanceUserStatusWarning
 		}
-		issu.PreIndex = issu.Index
-		issu.Index = action.GetIndex()
 
 		log := action.GetFeedReceiptLog(issu, debtRecord)
 		logs = append(logs, log)
@@ -743,7 +796,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			}
 
 			// 抵押物转移
-			receipt, err := action.coinsAccount.ExecTransferFrozen(action.fromaddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
+			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue*Coin)
 			if err != nil {
 				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
 				continue
@@ -755,14 +808,16 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			debtRecord.LiquidateTime = action.blocktime
 			debtRecord.PreStatus = debtRecord.Status
 			debtRecord.Status = pty.IssuanceUserStatusExpireLiquidate
-			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
+			debtRecord.PreIndex = debtRecord.Index
+			debtRecord.Index = action.GetIndex()
 			issu.InvalidRecords = append(issu.InvalidRecords, debtRecord)
+			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
 		} else {
+			debtRecord.PreIndex = debtRecord.Index
+			debtRecord.Index = action.GetIndex()
 			debtRecord.PreStatus = debtRecord.Status
 			debtRecord.Status = pty.IssuanceUserStatusExpire
 		}
-		issu.PreIndex = issu.Index
-		issu.Index = action.GetIndex()
 
 		log := action.GetFeedReceiptLog(issu, debtRecord)
 		logs = append(logs, log)
@@ -815,14 +870,14 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 		return nil, pty.ErrPriceInvalid
 	}
 
-	collIDRecords, err := queryIssuanceByStatus(action.localDB, pty.IssuanceStatusCreated)
+	ids, err := queryIssuanceByStatus(action.localDB, pty.IssuanceStatusCreated)
 	if err != nil {
 		clog.Error("IssuancePriceFeed", "get issuance record error", err)
 		return nil, err
 	}
 
-	for _, collID := range collIDRecords {
-		issu, err := queryIssuanceByID(action.db, collID.IssuanceId)
+	for _, collID := range ids {
+		issu, err := queryIssuanceByID(action.db, collID)
 		if err != nil {
 			clog.Error("IssuancePriceFeed", "Issuance ID", issu.IssuanceId, "get issuance record by id error", err)
 			continue
@@ -854,12 +909,11 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 	priceRecord.RecordTime = action.blocktime
 
 	// 喂价记录
-	pricekv := &types.KeyValue{Key: calcIssuancePriceKey(string(action.blocktime)), Value: types.Encode(&priceRecord)}
-	action.db.Set(pricekv.Key, pricekv.Value)
-	kv = append(kv, pricekv)
+	log := action.GetPriceReceiptLog(&priceRecord)
+	logs = append(logs, log)
 
 	// 最近喂价记录
-	pricekv = &types.KeyValue{Key: calcIssuanceLatestPriceKey(), Value: types.Encode(&priceRecord)}
+	pricekv := &types.KeyValue{Key: PriceKey(), Value: types.Encode(&priceRecord)}
 	action.db.Set(pricekv.Key, pricekv.Value)
 	kv = append(kv, pricekv)
 
@@ -871,11 +925,17 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
+	var receipt *types.Receipt
 
 	issuance, err := queryIssuanceByID(action.db, close.IssuanceId)
 	if err != nil {
 		clog.Error("IssuanceClose", "IssuanceId", close.IssuanceId, "err", err)
 		return nil, err
+	}
+
+	if !isRightAddr(manageKey, action.fromaddr, action.db) {
+		clog.Error("IssuanceClose", "addr", action.fromaddr, "error", "Address has no permission to close")
+		return nil, pty.ErrPermissionDeny
 	}
 
 	for _, debtRecord := range issuance.DebtRecords {
@@ -885,11 +945,20 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 		}
 	}
 
+	// 解冻ccny
+	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.TotalBalance*Coin)
+	if err != nil {
+		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.TotalBalance)
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
+
 	clog.Debug("IssuanceClose", "ID", close.IssuanceId)
 
 	issu := &IssuanceDB{*issuance}
 	issu.Status = pty.IssuanceStatusClose
-	issu.PreIndex = issu.CreateIndex
+	issu.PreIndex = issu.Index
 	issu.Index = action.GetIndex()
 
 	issu.Save(action.db)
@@ -905,7 +974,6 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 func queryIssuanceByID(db dbm.KV, issuanceID string) (*pty.Issuance, error) {
 	data, err := db.Get(Key(issuanceID))
 	if err != nil {
-		clog.Error("queryIssuanceByID", "error", err)
 		return nil, err
 	}
 
@@ -919,14 +987,14 @@ func queryIssuanceByID(db dbm.KV, issuanceID string) (*pty.Issuance, error) {
 }
 
 // 根据发行状态查找发行ID
-func queryIssuanceByStatus(localdb dbm.Lister, status int32) ([]*pty.IssuanceRecord, error) {
+func queryIssuanceByStatus(localdb dbm.Lister, status int32) ([]string, error) {
 	data, err := localdb.List(calcIssuanceStatusPrefix(status), nil, DefultCount, ListDESC)
 	if err != nil {
 		clog.Debug("queryIssuancesByStatus", "error", err)
 		return nil, err
 	}
 
-	var colls []*pty.IssuanceRecord
+	var ids []string
 	var issu pty.IssuanceRecord
 	for _, collBytes := range data {
 		err = types.Decode(collBytes, &issu)
@@ -934,10 +1002,10 @@ func queryIssuanceByStatus(localdb dbm.Lister, status int32) ([]*pty.IssuanceRec
 			clog.Debug("queryIssuancesByStatus", "decode", err)
 			return nil, err
 		}
-		colls = append(colls, &issu)
+		ids = append(ids, issu.IssuanceId)
 	}
 
-	return colls, nil
+	return ids, nil
 }
 
 // 精确查找发行记录
@@ -969,7 +1037,7 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32) (
 	if status == 0 {
 		statusKey = ""
 	} else {
-		statusKey = string(status)
+		statusKey = fmt.Sprintf("%d", status)
 	}
 
 	data, err := localdb.List(calcIssuanceRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
@@ -984,13 +1052,13 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32) (
 		err = types.Decode(collBytes, &issu)
 		if err != nil {
 			clog.Error("queryIssuanceRecordsByStatus", "decode", err)
-			return nil, err
+			continue
 		}
 
 		record, err := queryIssuanceRecordByID(db, issu.IssuanceId, issu.DebtId)
 		if err != nil {
 			clog.Error("queryIssuanceRecordsByStatus", "decode", err)
-			return nil, err
+			continue
 		}
 		records = append(records, record)
 	}

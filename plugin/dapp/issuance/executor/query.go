@@ -22,6 +22,8 @@ func (c *Issuance) Query_IssuanceInfoByID(req *pty.ReqIssuanceInfo) (types.Messa
 		DebtCeiling:        issu.DebtCeiling,
 		LiquidationRatio:   issu.LiquidationRatio,
 		Balance:            issu.Balance,
+		CollateralValue:    issu.CollateralValue,
+		DebtValue:          issu.DebtValue,
 	}, nil
 }
 
@@ -40,6 +42,8 @@ func (c *Issuance) Query_IssuanceInfoByIDs(req *pty.ReqIssuanceInfos) (types.Mes
 			DebtCeiling:        issu.DebtCeiling,
 			LiquidationRatio:   issu.LiquidationRatio,
 			Balance:            issu.Balance,
+			CollateralValue:    issu.CollateralValue,
+			DebtValue:          issu.DebtValue,
 		})
 	}
 
@@ -50,49 +54,46 @@ func (c *Issuance) Query_IssuanceByStatus(req *pty.ReqIssuanceByStatus) (types.M
 	ids := &pty.RepIssuanceIDs{}
 	issuIDRecords, err := queryIssuanceByStatus(c.GetLocalDB(), req.Status)
 	if err != nil {
-		clog.Error("Query_IssuanceByStatus", "get issuance record error", err)
+		clog.Error("Query_IssuanceByStatus", "get issuance error", err)
 		return nil, err
 	}
-
-	for _, record := range issuIDRecords {
-		ids.IDs = append(ids.IDs, record.IssuanceId)
-	}
+	ids.IDs = append(ids.IDs, issuIDRecords...)
 
 	return ids, nil
 }
 
 func (c *Issuance) Query_IssuanceRecordByID(req *pty.ReqIssuanceDebtInfo) (types.Message, error) {
+	ret := &pty.RepIssuanceDebtInfo{}
 	issuRecord, err := queryIssuanceRecordByID(c.GetStateDB(), req.IssuanceId, req.DebtId)
 	if err != nil {
 		clog.Error("Query_IssuanceRecordByID", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepIssuanceDebtInfo{}
 	ret.Record = issuRecord
-	return issuRecord, nil
+	return ret, nil
 }
 
 func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecordsByAddr) (types.Message, error) {
+	ret := &pty.RepIssuanceRecords{}
 	records, err := queryIssuanceRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {
 		clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepIssuanceRecords{}
 	ret.Records = records
 	return ret, nil
 }
 
 func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecordsByStatus) (types.Message, error) {
+	ret := &pty.RepIssuanceRecords{}
 	records, err := queryIssuanceRecordsByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status)
 	if err != nil {
-		clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
+		clog.Error("Query_IssuanceDebtInfoByStatus", "get issuance record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepIssuanceRecords{}
-	ret.Records = records
+	ret.Records = append(ret.Records, records...)
 	return ret, nil
 }

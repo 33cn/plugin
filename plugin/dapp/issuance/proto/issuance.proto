@@ -21,7 +21,6 @@ message Issuance {
     string      issuerAddr              = 15;//发行地址
     int64       index                   = 16;//当前索引
     int64       preIndex                = 17;//上级索引
-    int64       createIndex             = 18;//创建索引，用于close删除状态
 }
 
 // 抵押记录
@@ -37,6 +36,8 @@ message DebtRecord {
     int64       expireTime           = 9; //超时清算时间
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
     string      debtId               = 11;//借贷id
+    int64       index                = 12;//当前索引
+    int64       preIndex             = 13;//上级索引
 }
 
 // 资产价格记录
@@ -98,12 +99,13 @@ message IssuanceClose {
 message ReceiptIssuance {
     string      issuanceId      = 1;
     string      accountAddr     = 2;
-    int32       status          = 3;
-    string      debtId          = 4;
-    int32       recordStatus    = 5;
-    int32       recordPreStatus = 6;
-    int64       index           = 7;
-    int64       preIndex        = 8;
+    string      debtId          = 3;
+    int32       status          = 4;
+    int32       preStatus       = 5;
+    int64       index           = 6;
+    int64       preIndex        = 7;
+    int64       recordTime      = 8; //价格记录时间
+    float       btyPrice        = 9; //bty价格
 }
 
 // exec_local 借贷记录信息

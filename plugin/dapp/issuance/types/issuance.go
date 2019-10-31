@@ -84,7 +84,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawIssuanceRepayTx(&param)
-	} else if action == "IssuanceFeed" {
+	} else if action == "IssuancePriceFeed" {
 		var param IssuanceFeedTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -117,7 +117,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 func (Issuance IssuanceType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create": IssuanceActionCreate,
-		"Borrow": IssuanceActionDebt,
+		"Debt": IssuanceActionDebt,
 		"Repay":  IssuanceActionRepay,
 		"Feed":   IssuanceActionFeed,
 		"Close":  IssuanceActionClose,
@@ -191,6 +191,7 @@ func CreateRawIssuanceRepayTx(parm *IssuanceRepayTx) (*types.Transaction, error)
 
 	v := &IssuanceRepay{
 		IssuanceId: parm.IssuanceID,
+		DebtId: parm.DebtID,
 	}
 	repay := &IssuanceAction{
 		Ty:    IssuanceActionRepay,

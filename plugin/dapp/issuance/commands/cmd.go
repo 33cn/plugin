@@ -2,11 +2,11 @@ package commands
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/issuance/types"
+	"github.com/spf13/cobra"
 	"strconv"
 )
 
@@ -44,6 +44,7 @@ func IssuanceCreateRawTxCmd() *cobra.Command {
 
 func addIssuanceCreateFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("balance", "b", 0, "balance")
+	cmd.MarkFlagRequired("balance")
 	cmd.Flags().Uint64P("debtCeiling", "d", 0, "debtCeiling")
 	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
 	cmd.Flags().Uint64P("period", "p", 0, "period")
@@ -56,11 +57,10 @@ func IssuanceCreate(cmd *cobra.Command, args []string) {
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
 	period, _ := cmd.Flags().GetUint64("period")
 
-
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceCreate",
-		Payload:    []byte(fmt.Sprintf("{\"balance\":%d, \"debtCeiling\":%d, \"liquidationRatio\":%f, \"period\":%d,}",
+		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%d, \"debtCeiling\":%d, \"liquidationRatio\":%f, \"period\":%d}",
 			balance, debtCeiling, liquidationRatio, period)),
 	}
 
@@ -95,7 +95,7 @@ func IssuanceDebt(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceDebt",
-		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":%s,\"value\":%d}", issuanceID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":\"%s\",\"value\":%d}", issuanceID, value)),
 	}
 
 	var res string
@@ -117,16 +117,19 @@ func IssuanceRepayRawTxCmd() *cobra.Command {
 func addIssuanceRepayFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("issuanceID", "g", "", "issuance ID")
 	cmd.MarkFlagRequired("issuanceID")
+	cmd.Flags().StringP("debtID", "d", "", "debt ID")
+	cmd.MarkFlagRequired("debtID")
 }
 
 func IssuanceRepay(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	issuanceID, _ := cmd.Flags().GetString("issuanceID")
+	debtID, _ := cmd.Flags().GetString("debtID")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceRepay",
-		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":%s}", issuanceID)),
+		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":\"%s\", \"debtID\":\"%s\"}", issuanceID, debtID)),
 	}
 
 	var res string
@@ -160,7 +163,7 @@ func IssuancePriceFeed(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuancePriceFeed",
-		Payload:    []byte(fmt.Sprintf("{[\"price\":%s],[\"volume\":%d]}", price, volume)),
+		Payload:    []byte(fmt.Sprintf("{\"price\":[ %f ], \"volume\":[ %d ]}", price, volume)),
 	}
 
 	var res string
@@ -191,7 +194,7 @@ func IssuanceClose(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceClose",
-		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":%s}", issuanceID)),
+		Payload:    []byte(fmt.Sprintf("{\"issuanceId\":\"%s\"}", issuanceID)),
 	}
 
 	var res string
@@ -212,6 +215,7 @@ func IssuanceManageRawTxCmd() *cobra.Command {
 
 func addIssuanceManageFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "addr")
+	cmd.MarkFlagRequired("addr")
 }
 
 func IssuanceManage(cmd *cobra.Command, args []string) {
@@ -221,7 +225,7 @@ func IssuanceManage(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceManage",
-		Payload:    []byte(fmt.Sprintf("{[\"addr\":%s]}", addr)),
+		Payload:    []byte(fmt.Sprintf("{\"addr\":[\"%s\"]}", addr)),
 	}
 
 	var res string
@@ -270,11 +274,15 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 	//	req.Index = index
 	//}
 
-	status, err := strconv.ParseInt(statusStr, 10, 32)
-	if err != nil {
-		fmt.Println(err)
-		cmd.Help()
-		return
+	var status int64
+	var err error
+	if statusStr != "" {
+		status, err = strconv.ParseInt(statusStr, 10, 32)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
 	}
 
 	if issuanceID != "" {
@@ -297,7 +305,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 				Addr: address,
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepIssuanceDebtInfo
+			var res pkt.RepIssuanceRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else if debtID != ""{
@@ -308,7 +316,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 				DebtId: debtID,
 			}
 			params.Payload = types.MustPBToJSON(req)
-			var res pkt.RepIssuanceCurrentInfo
+			var res pkt.RepIssuanceDebtInfo
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
 		} else {
@@ -342,7 +350,6 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else {
-		fmt.Println("Error: requeres at least one of gameID, address or status")
 		cmd.Help()
 	}
 }

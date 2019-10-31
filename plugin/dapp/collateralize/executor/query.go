@@ -58,10 +58,7 @@ func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByS
 		return nil, err
 	}
 
-	for _, record := range collIDRecords {
-		ids.IDs = append(ids.IDs, record.CollateralizeId)
-	}
-
+	ids.IDs = append(ids.IDs, collIDRecords...)
 	return ids, nil
 }
 
@@ -73,47 +70,42 @@ func (c *Collateralize) Query_CollateralizeByAddr(req *pty.ReqCollateralizeByAdd
 		return nil, err
 	}
 
-	for _, record := range collIDRecords {
-		ids.IDs = append(ids.IDs, record.CollateralizeId)
-	}
-
+	ids.IDs = append(ids.IDs, collIDRecords...)
 	return ids, nil
 }
 
 func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeRecord) (types.Message, error) {
+	ret := &pty.RepCollateralizeRecord{}
 	issuRecord, err := queryCollateralizeRecordByID(c.GetStateDB(), req.CollateralizeId, req.RecordId)
 	if err != nil {
-		clog.Error("Query_IssuanceRecordByID", "get issuance record error", err)
+		clog.Error("Query_IssuanceRecordByID", "get collateralize record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepCollateralizeRecord{}
 	ret.Record = issuRecord
-	return issuRecord, nil
+	return ret, nil
 }
 
 func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
+	ret := &pty.RepCollateralizeRecords{}
 	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {
 		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepCollateralizeRecords{}
 	ret.Records = records
-
 	return ret, nil
 }
 
 func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
+	ret := &pty.RepCollateralizeRecords{}
 	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status)
 	if err != nil {
-		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
+		clog.Error("Query_CollateralizeRecordByStatus", "get collateralize record error", err)
 		return nil, err
 	}
 
-	ret := &pty.RepCollateralizeRecords{}
 	ret.Records = records
-
 	return ret, nil
 }

@@ -16,7 +16,7 @@ func (c *Issuance) Exec_Create(payload *pty.IssuanceCreate, tx *types.Transactio
 }
 
 // Exec_Borrow Action
-func (c *Issuance) Exec_Borrow(payload *pty.IssuanceDebt, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (c *Issuance) Exec_Debt(payload *pty.IssuanceDebt, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewIssuanceAction(c, tx, index)
 	return actiondb.IssuanceDebt(payload)
 }
@@ -37,4 +37,10 @@ func (c *Issuance) Exec_Feed(payload *pty.IssuanceFeed, tx *types.Transaction, i
 func (c *Issuance) Exec_Close(payload *pty.IssuanceClose, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewIssuanceAction(c, tx, index)
 	return actiondb.IssuanceClose(payload)
+}
+
+// Exec_Manage Action
+func (c *Issuance) Exec_Manage(payload *pty.IssuanceManage, tx *types.Transaction, index int) (*types.Receipt, error) {
+	actiondb := NewIssuanceAction(c, tx, index)
+	return actiondb.IssuanceManage(payload)
 }

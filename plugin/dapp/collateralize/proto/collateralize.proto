@@ -85,7 +85,6 @@ message CollateralizeBorrow {
 message CollateralizeRepay {
     string collateralizeId = 1; //借贷期数ID
     string recordId        = 2; //借贷ID
-    int64  value           = 3; //借贷价值(ccny)
 }
 
 // 追加抵押物
