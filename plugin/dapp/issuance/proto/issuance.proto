@@ -150,6 +150,7 @@ message RepIssuanceCurrentInfos {
 // 根据发行状态查询
 message ReqIssuanceByStatus {
     int32 status = 1;
+    int64 index  = 2;
 }
 
 // 返回借贷ID列表
@@ -161,12 +162,14 @@ message RepIssuanceIDs {
 message ReqIssuanceRecordsByAddr {
     string issuanceId = 1;
     string addr       = 2;
+    int64 index       = 3;
 }
 
 // 根据状态查询发行记录
 message ReqIssuanceRecordsByStatus {
     string issuanceId = 1;
     int32 status      = 2;
+    int64 index       = 3;
 }
 
 // 返回记录列表

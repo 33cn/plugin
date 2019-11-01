@@ -983,7 +983,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 		return nil, pty.ErrPriceInvalid
 	}
 
-	ids, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated)
+	ids, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated, 0)
 	if err != nil {
 		clog.Error("CollateralizePriceFeed", "get collateralize record error", err)
 		return nil, err
@@ -1095,8 +1095,14 @@ func queryCollateralizeByID(db dbm.KV, collateralizeID string) (*pty.Collaterali
 	return &coll, nil
 }
 
-func queryCollateralizeByStatus(localdb dbm.Lister, status int32) ([]string, error) {
-	data, err := localdb.List(calcCollateralizeStatusPrefix(status), nil, DefultCount, ListDESC)
+func queryCollateralizeByStatus(localdb dbm.Lister, status int32, index int64) ([]string, error) {
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcCollateralizeStatusPrefix(status), calcCollateralizeStatusKey(status, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcCollateralizeStatusPrefix(status), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Debug("queryCollateralizesByStatus", "error", err)
 		return nil, err
@@ -1116,8 +1122,14 @@ func queryCollateralizeByStatus(localdb dbm.Lister, status int32) ([]string, err
 	return ids, nil
 }
 
-func queryCollateralizeByAddr(localdb dbm.Lister, addr string) ([]string, error) {
-	data, err := localdb.List(calcCollateralizeAddrPrefix(addr), nil, DefultCount, ListDESC)
+func queryCollateralizeByAddr(localdb dbm.Lister, addr string, index int64) ([]string, error) {
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcCollateralizeAddrPrefix(addr), calcCollateralizeAddrKey(addr, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcCollateralizeAddrPrefix(addr), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Debug("queryCollateralizesByAddr", "error", err)
 		return nil, err
@@ -1160,8 +1172,14 @@ func queryCollateralizeRecordByID(db dbm.KV, collateralizeID string, recordID st
 	return nil, types.ErrNotFound
 }
 
-func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string) ([]*pty.BorrowRecord, error) {
-	data, err := localdb.List(calcCollateralizeRecordAddrPrefix(addr), nil, DefultCount, ListDESC)
+func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string, index int64) ([]*pty.BorrowRecord, error) {
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcCollateralizeRecordAddrPrefix(addr), calcCollateralizeRecordAddrKey(addr, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcCollateralizeRecordAddrPrefix(addr), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Debug("queryCollateralizeRecordByAddr", "error", err)
 		return nil, err
@@ -1187,7 +1205,7 @@ func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string) 
 	return records, nil
 }
 
-func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.Lister, status int32) ([]*pty.BorrowRecord, error) {
+func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.Lister, status int32, index int64) ([]*pty.BorrowRecord, error) {
 	var statusKey string
 	if status == 0 {
 		statusKey = ""
@@ -1195,7 +1213,13 @@ func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.Lister, status int3
 		statusKey = fmt.Sprintf("%d", status)
 	}
 
-	data, err := localdb.List(calcCollateralizeRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcCollateralizeRecordStatusPrefix(statusKey), calcCollateralizeRecordStatusKey(status, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcCollateralizeRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Debug("queryCollateralizeRecordByStatus", "error", err)
 		return nil, err

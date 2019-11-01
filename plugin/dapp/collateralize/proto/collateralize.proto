@@ -160,11 +160,13 @@ message RepCollateralizeCurrentInfos {
 // 根据借贷状态查询
 message ReqCollateralizeByStatus {
     int32 status = 1;
+    int64  index = 2;
 }
 
 // 根据用户地址查询
 message ReqCollateralizeByAddr {
-    string addr = 1;
+    string addr  = 1;
+    int64  index = 2;
 }
 
 // 返回借贷ID列表
@@ -176,12 +178,14 @@ message RepCollateralizeIDs {
 message ReqCollateralizeRecordByAddr {
     string collateralizeId = 1;
     string addr            = 2;
+    int64  index           = 3;
 }
 
 // 根据状态和借贷ID混合查询具体借贷记录
 message ReqCollateralizeRecordByStatus {
     string collateralizeId = 1;
-    int32 status           = 2;
+    int32  status          = 2;
+    int64  index           = 3;
 }
 
 // 返回借贷记录

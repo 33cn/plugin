@@ -864,7 +864,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 		return nil, pty.ErrPriceInvalid
 	}
 
-	ids, err := queryIssuanceByStatus(action.localDB, pty.IssuanceStatusCreated)
+	ids, err := queryIssuanceByStatus(action.localDB, pty.IssuanceStatusCreated, 0)
 	if err != nil {
 		clog.Error("IssuancePriceFeed", "get issuance record error", err)
 		return nil, err
@@ -981,8 +981,14 @@ func queryIssuanceByID(db dbm.KV, issuanceID string) (*pty.Issuance, error) {
 }
 
 // 根据发行状态查找发行ID
-func queryIssuanceByStatus(localdb dbm.Lister, status int32) ([]string, error) {
-	data, err := localdb.List(calcIssuanceStatusPrefix(status), nil, DefultCount, ListDESC)
+func queryIssuanceByStatus(localdb dbm.Lister, status int32, index int64) ([]string, error) {
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcIssuanceStatusPrefix(status), calcIssuanceStatusKey(status, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcIssuanceStatusPrefix(status), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Debug("queryIssuancesByStatus", "error", err)
 		return nil, err
@@ -1026,7 +1032,7 @@ func queryIssuanceRecordByID(db dbm.KV, issuanceID string, debtID string) (*pty.
 }
 
 // 根据发行状态查找
-func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32) ([]*pty.DebtRecord, error) {
+func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32, index int64) ([]*pty.DebtRecord, error) {
 	var statusKey string
 	if status == 0 {
 		statusKey = ""
@@ -1034,7 +1040,13 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32) (
 		statusKey = fmt.Sprintf("%d", status)
 	}
 
-	data, err := localdb.List(calcIssuanceRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcIssuanceRecordStatusPrefix(statusKey), calcIssuanceRecordStatusKey(status, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcIssuanceRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Error("queryIssuanceRecordsByStatus", "error", err)
 		return nil, err
@@ -1061,8 +1073,14 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.Lister, status int32) (
 }
 
 // 根据用户地址查找
-func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string) ([]*pty.DebtRecord, error) {
-	data, err := localdb.List(calcIssuanceRecordAddrPrefix(addr), nil, DefultCount, ListDESC)
+func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string, index int64) ([]*pty.DebtRecord, error) {
+	var data [][]byte
+	var err error
+	if index != 0 {
+		data, err = localdb.List(calcIssuanceRecordAddrPrefix(addr), calcIssuanceRecordAddrKey(addr, index), DefultCount, ListDESC)
+	} else {
+		data, err = localdb.List(calcIssuanceRecordAddrPrefix(addr), nil, DefultCount, ListDESC)
+	}
 	if err != nil {
 		clog.Error("queryIssuanceRecordByAddr", "error", err)
 		return nil, err
