@@ -93,7 +93,7 @@ func (Collateralize CollateralizeType) CreateTx(action string, message json.RawM
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawCollateralizeAppendTx(&param)
-	} else if action == "CollateralizeFeed" {
+	} else if action == "CollateralizePriceFeed" {
 		var param CollateralizeFeedTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {

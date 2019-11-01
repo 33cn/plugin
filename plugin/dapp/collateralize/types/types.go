@@ -26,7 +26,7 @@ const (
 // Collateralize name
 const (
 	CollateralizeX = "collateralize"
-	CCNYTokenName = "ccny"
+	CCNYTokenName = "CCNY"
 	CollateralizePreLiquidationRatio = 1.1 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 
@@ -36,11 +36,12 @@ const (
 	CollateralizeStatusClose
 )
 
-const (
-	CollateralizeAssetTypeBty = 1 + iota
-	CollateralizeAssetTypeBtc
-	CollateralizeAssetTypeEth
-)
+//暂时只支持bty
+//const (
+//	CollateralizeAssetTypeBty = 1 + iota
+//	CollateralizeAssetTypeBtc
+//	CollateralizeAssetTypeEth
+//)
 
 const (
 	CollateralizeUserStatusCreate = 1 + iota

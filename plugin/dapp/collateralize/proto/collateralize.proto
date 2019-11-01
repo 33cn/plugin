@@ -14,13 +14,11 @@ message Collateralize {
     repeated BorrowRecord borrowRecords  = 8; //借贷记录
     repeated BorrowRecord InvalidRecords = 9; //失效的借贷记录
     int32       status                   = 10;//当期借贷的状态，是否关闭
-    int32       collType                 = 11;//质押资产类型(1，bty，2，btc，3，eth...)
-    float       latestLiquidationPrice   = 12;//最高清算价格
-    int64       period                   = 13;//借贷最大期限
-    int64       latestExpireTime         = 14;//最近超期时间
-    int64       index                    = 15;//当前索引
-    int64       preIndex                 = 16;//上一个索引
-    int64       createIndex              = 17;//创建时的索引，用于close删除记录
+    float       latestLiquidationPrice   = 11;//最高清算价格
+    int64       period                   = 12;//借贷最大期限
+    int64       latestExpireTime         = 13;//最近超期时间
+    int64       index                    = 14;//当前索引
+    int64       preIndex                 = 15;//上一个索引
 }
 
 // 借出记录
@@ -36,6 +34,8 @@ message BorrowRecord {
     int64       expireTime           = 9; //超时清算时间
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
     string      recordId             = 11;//借出id，标识一次借出记录
+    int64       index                = 12;//当前索引
+    int64       preIndex             = 13;//上级索引
 }
 
 // 资产价格记录
@@ -111,13 +111,12 @@ message ReceiptCollateralize {
     string      collateralizeId    = 1;
     string      createAddr         = 2;
     string      accountAddr        = 3;
-    int32       status             = 4;
-    int64       index              = 5;
-    int32       recordStatus       = 6;
-    int32       recordPreStatus    = 7;
-    string      recordId           = 8;
-    int64       preIndex           = 9;
-}
+    string      recordId           = 4;
+    int32       status             = 5;
+    int32       PreStatus          = 6;
+    int64       index              = 7;
+    int64       preIndex           = 8;
+ }
 
 // exec_local 借贷记录信息
 message CollateralizeRecord {

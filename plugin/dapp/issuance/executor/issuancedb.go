@@ -32,12 +32,6 @@ const (
 	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
 )
 
-const (
-	priceFeedKey = "issuance-price-feed"
-	guarantorKey = "issuance-guarantor"
-	manageKey    = "issuance-manage"
-)
-
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
 	manageKey := types.ManageKey(key)
 	value, err := db.Get([]byte(manageKey))
@@ -48,7 +42,7 @@ func getManageKey(key string, db dbm.KV) ([]byte, error) {
 }
 
 func getGuarantorAddr(db dbm.KV) (string, error) {
-	value, err := getManageKey(guarantorKey, db)
+	value, err := getManageKey(pty.GuarantorKey, db)
 	if err != nil {
 		clog.Error("IssuancePriceFeed", "getGuarantorAddr", err)
 		return "", err
@@ -323,7 +317,7 @@ func (action *Action) IssuanceManage(manage *pty.IssuanceManage) (*types.Receipt
 	var receipt *types.Receipt
 
 	// 是否配置管理用户
-	if !isRightAddr(manageKey, action.fromaddr, action.db) {
+	if !isRightAddr(pty.ManageKey, action.fromaddr, action.db) {
 		clog.Error("IssuanceManage", "addr", action.fromaddr, "error", "Address has no permission to config")
 		return nil, pty.ErrPermissionDeny
 	}
@@ -384,7 +378,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	var receipt *types.Receipt
 
 	// 是否配置管理用户
-	if !isRightAddr(manageKey, action.fromaddr, action.db) {
+	if !isRightAddr(pty.ManageKey, action.fromaddr, action.db) {
 		clog.Error("IssuanceCreate", "addr", action.fromaddr, "error", "Address has no permission to create")
 		return nil, pty.ErrPermissionDeny
 	}
@@ -859,7 +853,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 	}
 
 	// 是否后台管理用户
-	if !isRightAddr(priceFeedKey, action.fromaddr, action.db) {
+	if !isRightAddr(pty.PriceFeedKey, action.fromaddr, action.db) {
 		clog.Error("IssuancePriceFeed", "addr", action.fromaddr, "error", "Address has no permission to feed price")
 		return nil, pty.ErrPermissionDeny
 	}
@@ -933,7 +927,7 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 		return nil, err
 	}
 
-	if !isRightAddr(manageKey, action.fromaddr, action.db) {
+	if !isRightAddr(pty.ManageKey, action.fromaddr, action.db) {
 		clog.Error("IssuanceClose", "addr", action.fromaddr, "error", "Address has no permission to close")
 		return nil, pty.ErrPermissionDeny
 	}

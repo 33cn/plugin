@@ -42,3 +42,9 @@ const (
 	IssuanceUserStatusExpireLiquidate
 	IssuanceUserStatusClose
 )
+
+const (
+	PriceFeedKey = "issuance-price-feed"
+	GuarantorKey = "issuance-guarantor"
+	ManageKey    = "issuance-manage"
+)

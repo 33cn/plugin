@@ -55,7 +55,7 @@ func CollateralizeCreate(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeCreate",
-		Payload:    []byte(fmt.Sprintf("{\"balance\":%d}", balance)),
+		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%d}", balance)),
 	}
 
 	var res string
@@ -89,7 +89,7 @@ func CollateralizeBorrow(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeBorrow",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":%s,\"value\":%d}", collateralizeID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"value\":%d}", collateralizeID, value)),
 	}
 
 	var res string
@@ -111,6 +111,8 @@ func CollateralizeAppendRawTxCmd() *cobra.Command {
 func addCollateralizeAppendFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("collateralizeID", "g", "", "collateralize ID")
 	cmd.MarkFlagRequired("collateralizeID")
+	cmd.Flags().StringP("recordID", "r", "", "recordID")
+	cmd.MarkFlagRequired("recordID")
 	cmd.Flags().Uint64P("value", "v", 0, "value")
 	cmd.MarkFlagRequired("value")
 }
@@ -118,12 +120,13 @@ func addCollateralizeAppendFlags(cmd *cobra.Command) {
 func CollateralizeAppend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
+	recordID, _ := cmd.Flags().GetString("recordID")
 	value, _ := cmd.Flags().GetUint64("value")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeAppend",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":%s,\"value\":%d}", collateralizeID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"recordID\":\"%s\", \"value\":%d}", collateralizeID, recordID, value)),
 	}
 
 	var res string
@@ -145,19 +148,19 @@ func CollateralizeRepayRawTxCmd() *cobra.Command {
 func addCollateralizeRepayFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("collateralizeID", "g", "", "collateralize ID")
 	cmd.MarkFlagRequired("collateralizeID")
-	cmd.Flags().Uint64P("value", "v", 0, "value")
-	cmd.MarkFlagRequired("value")
+	cmd.Flags().StringP("recordID", "r", "", "recordID")
+	cmd.MarkFlagRequired("recordID")
 }
 
 func CollateralizeRepay(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
-	value, _ := cmd.Flags().GetUint64("value")
+	recordID, _ := cmd.Flags().GetString("recordID")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeRepay",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":%s,\"value\":%d}", collateralizeID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"recordID\":\"%s\"}", collateralizeID, recordID)),
 	}
 
 	var res string
@@ -191,7 +194,7 @@ func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizePriceFeed",
-		Payload:    []byte(fmt.Sprintf("{[\"price\":%s],[\"volume\":%d]}", price, volume)),
+		Payload:    []byte(fmt.Sprintf("{\"price\":[ %f ], \"volume\":[ %d ]}", price, volume)),
 	}
 
 	var res string
@@ -222,7 +225,7 @@ func CollateralizeClose(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeClose",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":%s}", collateralizeID)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\"}", collateralizeID)),
 	}
 
 	var res string
@@ -258,7 +261,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     types.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
-		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%s}",
+		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period)),
 	}
 
@@ -308,11 +311,15 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	//	req.Index = index
 	//}
 
-	status, err := strconv.ParseInt(statusStr, 10, 32)
-	if err != nil {
-		fmt.Println(err)
-		cmd.Help()
-		return
+	var status int64
+	var err error
+	if statusStr != "" {
+		status, err = strconv.ParseInt(statusStr, 10, 32)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
 	}
 
 	if collateralizeID != "" {

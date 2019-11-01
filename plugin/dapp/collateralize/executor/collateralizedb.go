@@ -73,6 +73,12 @@ func AddrKey() (key []byte) {
 	return key
 }
 
+// Key for IssuancePriceFeed
+func PriceKey() (key []byte) {
+	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-price")...)
+	return key
+}
+
 // Action struct
 type Action struct {
 	coinsAccount *account.DB  // bty账户
@@ -105,23 +111,16 @@ func NewCollateralizeAction(c *Collateralize, tx *types.Transaction, index int) 
 		execaddr: dapp.ExecAddress(string(tx.Execer)), difficulty: c.GetDifficulty(), index: index, Collateralize: c}
 }
 
-// GetCollCommonRecipt generate logs for Collateralize common action
-func (action *Action) GetCollCommonRecipt(collateralize *pty.Collateralize) *pty.ReceiptCollateralize {
-	c := &pty.ReceiptCollateralize{}
-	c.CollateralizeId = collateralize.CollateralizeId
-	c.Status = collateralize.Status
-	c.PreIndex = collateralize.PreIndex
-	c.Index = collateralize.Index
-	return c
-}
-
 // GetCreateReceiptLog generate logs for Collateralize create action
 func (action *Action) GetCreateReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeCreate
 
-	c := action.GetCollCommonRecipt(collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
+	c.Status = collateralize.Status
 	c.CreateAddr = action.fromaddr
+	c.Index = collateralize.Index
 
 	log.Log = types.Encode(c)
 
@@ -133,10 +132,12 @@ func (action *Action) GetBorrowReceiptLog(collateralize *pty.Collateralize, reco
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeBorrow
 
-	c := action.GetCollCommonRecipt(collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
 	c.AccountAddr = action.fromaddr
 	c.RecordId = record.RecordId
-	c.RecordStatus = record.Status
+	c.Status = record.Status
+	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -148,11 +149,14 @@ func (action *Action) GetRepayReceiptLog(collateralize *pty.Collateralize, recor
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeRepay
 
-	c := action.GetCollCommonRecipt(collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
 	c.AccountAddr = action.fromaddr
 	c.RecordId = record.RecordId
-	c.RecordStatus = record.Status
-	c.RecordPreStatus = record.PreStatus
+	c.Status = record.Status
+	c.PreStatus = record.PreStatus
+	c.PreIndex = record.PreIndex
+	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -160,11 +164,18 @@ func (action *Action) GetRepayReceiptLog(collateralize *pty.Collateralize, recor
 }
 
 // GetAppendReceiptLog generate logs for Collateralize append action
-func (action *Action) GetAppendReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
+func (action *Action) GetAppendReceiptLog(collateralize *pty.Collateralize, record *pty.BorrowRecord) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeAppend
 
-	c := action.GetCollCommonRecipt(collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
+	c.AccountAddr = action.fromaddr
+	c.RecordId = record.RecordId
+	c.Status = record.Status
+	c.PreStatus = record.PreStatus
+	c.PreIndex = record.PreIndex
+	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -176,11 +187,14 @@ func (action *Action) GetFeedReceiptLog(collateralize *pty.Collateralize, record
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeFeed
 
-	c := action.GetCollCommonRecipt(collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
 	c.AccountAddr = record.AccountAddr
 	c.RecordId = record.RecordId
-	c.RecordStatus = record.Status
-	c.RecordPreStatus = record.PreStatus
+	c.Status = record.Status
+	c.PreStatus = record.PreStatus
+	c.PreIndex = record.PreIndex
+	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -188,11 +202,17 @@ func (action *Action) GetFeedReceiptLog(collateralize *pty.Collateralize, record
 }
 
 // GetCloseReceiptLog generate logs for Collateralize close action
-func (action *Action) GetCloseReceiptLog(Collateralize *pty.Collateralize) *types.ReceiptLog {
+func (action *Action) GetCloseReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeClose
 
-	c := action.GetCollCommonRecipt(Collateralize)
+	c := &pty.ReceiptCollateralize{}
+	c.CollateralizeId = collateralize.CollateralizeId
+	c.Status = collateralize.Status
+	c.PreStatus = pty.CollateralizeStatusCreated
+	c.CreateAddr = action.fromaddr
+	c.PreIndex = collateralize.PreIndex
+	c.Index = collateralize.Index
 
 	log.Log = types.Encode(c)
 
@@ -233,7 +253,7 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	var receipt *types.Receipt
 
 	// 是否配置管理用户
-	if !isRightAddr(configKey, action.fromaddr, action.db) {
+	if !isRightAddr(issuanceE.ManageKey, action.fromaddr, action.db) {
 		clog.Error("CollateralizeManage", "addr", action.fromaddr, "error", "Address has no permission to config")
 		return nil, pty.ErrPermissionDeny
 	}
@@ -245,10 +265,29 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	}
 
 	collConfig := &pty.CollateralizeManage{}
-	collConfig.StabilityFeeRatio = manage.StabilityFeeRatio
-	collConfig.Period = manage.Period
-	collConfig.LiquidationRatio = manage.LiquidationRatio
-	collConfig.DebtCeiling = manage.DebtCeiling
+	if manage.StabilityFeeRatio != 0 {
+		collConfig.StabilityFeeRatio = manage.StabilityFeeRatio
+	} else  {
+		collConfig.StabilityFeeRatio = DefaultStabilityFeeRation
+	}
+
+	if manage.Period != 0 {
+		collConfig.Period = manage.Period
+	} else {
+		collConfig.Period = DefaultPeriod
+	}
+
+	if manage.LiquidationRatio != 0 {
+		collConfig.LiquidationRatio = manage.LiquidationRatio
+	} else {
+		collConfig.LiquidationRatio = DefaultLiquidationRatio
+	}
+
+	if manage.DebtCeiling != 0 {
+		collConfig.DebtCeiling = manage.DebtCeiling
+	} else {
+		collConfig.DebtCeiling = DefaultDebtCeiling
+	}
 
 	value := types.Encode(collConfig)
 	action.db.Set(ConfigKey(), value)
@@ -313,6 +352,7 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 
 	// 检查ccny余额
 	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
+		clog.Error("CollateralizeCreate", "fromaddr", action.fromaddr, "balance", create.TotalBalance, "error", types.ErrInsufficientBalance)
 		return nil, types.ErrInsufficientBalance
 	}
 
@@ -353,7 +393,6 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	coll.CreateAddr = action.fromaddr
 	coll.Status = pty.CollateralizeActionCreate
 	coll.Index = action.GetIndex()
-	coll.CreateIndex = coll.Index
 
 	clog.Debug("CollateralizeCreate created", "CollateralizeID", collateralizeID, "TotalBalance", coll.TotalBalance)
 
@@ -391,8 +430,8 @@ func calcLiquidationPrice(value int64, colValue int64) float32 {
 }
 
 // 获取最近抵押物价格
-func (action *Action)getLatestPrice(db dbm.KV, assetType int32) (float32, error) {
-	data, err := db.Get(calcCollateralizeLatestPriceKey())
+func (action *Action)getLatestPrice(db dbm.KV) (float32, error) {
+	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
 		return -1, err
@@ -405,16 +444,7 @@ func (action *Action)getLatestPrice(db dbm.KV, assetType int32) (float32, error)
 		return -1, err
 	}
 
-	switch assetType {
-	case pty.CollateralizeAssetTypeBty:
-		return price.BtcPrice, nil
-	case pty.CollateralizeAssetTypeBtc:
-		return price.BtcPrice, nil
-	case pty.CollateralizeAssetTypeEth:
-		return price.EthPrice, nil
-	default:
-		return -1, pty.ErrAssetType
-	}
+	return price.BtyPrice, nil
 }
 
 // CheckExecAccountBalance 检查账户抵押物余额
@@ -480,7 +510,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	clog.Debug("CollateralizeBorrow", "value", borrow.GetValue())
 
 	// 获取抵押物价格
-	lastPrice, err := action.getLatestPrice(action.db, coll.CollType)
+	lastPrice, err := action.getLatestPrice(action.db)
 	if err != nil {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
@@ -537,6 +567,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	borrowRecord.LiquidationPrice = coll.LiquidationRatio * lastPrice * pty.CollateralizePreLiquidationRatio
 	borrowRecord.Status = pty.CollateralizeUserStatusCreate
 	borrowRecord.ExpireTime = action.blocktime + coll.Period
+	borrowRecord.Index = action.GetIndex()
 
 	// 记录当前借贷的最高自动清算价格
 	if coll.LatestLiquidationPrice < borrowRecord.LiquidationPrice {
@@ -547,8 +578,6 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	coll.BorrowRecords = append(coll.BorrowRecords, borrowRecord)
 	coll.Status = pty.CollateralizeStatusCreated
 	coll.Balance -= borrow.Value
-	coll.PreIndex = coll.Index
-	coll.Index = action.GetIndex()
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -597,7 +626,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	realRepay := borrowRecord.DebtValue + int64(float32(borrowRecord.DebtValue) * coll.StabilityFeeRatio) + 1
+	realRepay := borrowRecord.DebtValue + int64(float32(borrowRecord.DebtValue) * coll.StabilityFeeRatio)
 
 	// 检查
 	if !action.CheckExecTokenAccount(action.fromaddr, realRepay*Coin, false) {
@@ -626,6 +655,8 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	// 借贷记录关闭
 	borrowRecord.PreStatus = borrowRecord.Status
 	borrowRecord.Status = pty.CollateralizeUserStatusClose
+	borrowRecord.PreIndex = borrowRecord.Index
+	borrowRecord.Index = action.GetIndex()
 
 	// 保存
 	coll.Balance += borrowRecord.DebtValue
@@ -633,8 +664,6 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 	coll.LatestLiquidationPrice = getLatestLiquidationPrice(&coll.Collateralize)
 	coll.LatestExpireTime = getLatestExpireTime(&coll.Collateralize)
-	coll.PreIndex = coll.Index
-	coll.Index = action.GetIndex()
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -681,7 +710,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	clog.Debug("CollateralizeAppend", "value", cAppend.CollateralValue)
 
 	// 获取抵押物价格
-	lastPrice, err := action.getLatestPrice(action.db, coll.CollType)
+	lastPrice, err := action.getLatestPrice(action.db)
 	if err != nil {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
@@ -720,6 +749,8 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 		if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeStatusCreated
+			borrowRecord.PreIndex = borrowRecord.Index
+			borrowRecord.Index = action.GetIndex()
 		}
 	}
 
@@ -731,7 +762,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 
 	kv = append(kv, coll.GetKVSet()...)
 
-	receiptLog := action.GetAppendReceiptLog(&coll.Collateralize)
+	receiptLog := action.GetAppendReceiptLog(&coll.Collateralize, borrowRecord)
 	logs = append(logs, receiptLog)
 
 	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
@@ -746,12 +777,6 @@ func getManageKey(key string, db dbm.KV) ([]byte, error) {
 	}
 	return value, nil
 }
-
-const (
-	priceFeedKey = "collateralize-price-feed"
-	guarantorKey = "collateralize-guarantor"
-	configKey    = "collateralize-config"
-)
 
 func isRightAddr(key string, addr string, db dbm.KV) bool {
 	value, err := getManageKey(key, db)
@@ -781,7 +806,7 @@ func isRightAddr(key string, addr string, db dbm.KV) bool {
 }
 
 func getGuarantorAddr(db dbm.KV) (string, error) {
-	value, err := getManageKey(guarantorKey, db)
+	value, err := getManageKey(issuanceE.GuarantorKey, db)
 	if err != nil {
 		clog.Error("CollateralizePriceFeed", "getGuarantorAddr", err)
 		return "", err
@@ -838,15 +863,17 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float32) 
 			borrowRecord.LiquidateTime = action.blocktime
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusSystemLiquidate
+			borrowRecord.PreIndex = borrowRecord.Index
+			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 		} else {
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusWarning
+			borrowRecord.PreIndex = borrowRecord.Index
+			borrowRecord.Index = action.GetIndex()
 		}
 
-		coll.PreIndex = coll.Index
-		coll.Index = action.GetIndex()
 		log := action.GetFeedReceiptLog(coll, borrowRecord)
 		logs = append(logs, log)
 	}
@@ -894,15 +921,17 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			borrowRecord.LiquidateTime = action.blocktime
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusExpireLiquidate
+			borrowRecord.PreIndex = borrowRecord.Index
+			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 		} else {
+			borrowRecord.PreIndex = borrowRecord.Index
+			borrowRecord.Index = action.GetIndex()
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusExpire
 		}
 
-		coll.PreIndex = coll.Index
-		coll.Index = action.GetIndex()
 		log := action.GetFeedReceiptLog(coll, borrowRecord)
 		logs = append(logs, log)
 	}
@@ -943,7 +972,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 	}
 
 	// 是否后台管理用户
-	if !isRightAddr(priceFeedKey, action.fromaddr, action.db) {
+	if !isRightAddr(issuanceE.PriceFeedKey, action.fromaddr, action.db) {
 		clog.Error("CollateralizePriceFeed", "addr", action.fromaddr, "error", "Address has no permission to feed price")
 		return nil, pty.ErrPermissionDeny
 	}
@@ -989,24 +1018,11 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 	}
 
 	var priceRecord pty.AssetPriceRecord
-	if feed.CollType == pty.CollateralizeAssetTypeBty {
-		priceRecord.BtyPrice = price
-	} else if feed.CollType == pty.CollateralizeAssetTypeBtc {
-		priceRecord.BtcPrice = price
-	} else if feed.CollType == pty.CollateralizeAssetTypeEth {
-		priceRecord.EthPrice = price
-	} else {
-		priceRecord.BtyPrice = price
-	}
+	priceRecord.BtyPrice = price
 	priceRecord.RecordTime = action.blocktime
 
-	// 喂价记录
-	pricekv := &types.KeyValue{Key: calcCollateralizePriceKey(string(action.blocktime)), Value: types.Encode(&priceRecord)}
-	action.db.Set(pricekv.Key, pricekv.Value)
-	kv = append(kv, pricekv)
-
 	// 最近喂价记录
-	pricekv = &types.KeyValue{Key: calcCollateralizeLatestPriceKey(), Value: types.Encode(&priceRecord)}
+	pricekv := &types.KeyValue{Key: PriceKey(), Value: types.Encode(&priceRecord)}
 	action.db.Set(pricekv.Key, pricekv.Value)
 	kv = append(kv, pricekv)
 
@@ -1051,7 +1067,7 @@ func (action *Action) CollateralizeClose(close *pty.CollateralizeClose) (*types.
 
 	coll := &CollateralizeDB{*collateralize}
 	coll.Status = pty.CollateralizeStatusClose
-	coll.PreIndex = coll.CreateIndex
+	coll.PreIndex = coll.Index
 	coll.Index = action.GetIndex()
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
