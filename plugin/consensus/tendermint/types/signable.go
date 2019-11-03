@@ -25,6 +25,7 @@ var (
 	ErrVoteInvalidSignature          = errors.New("Invalid signature")
 	ErrVoteInvalidBlockHash          = errors.New("Invalid block hash")
 	ErrVoteNonDeterministicSignature = errors.New("Non-deterministic signature")
+	ErrVoteConflict                  = errors.New("Conflicting vote")
 	ErrVoteNil                       = errors.New("Nil vote")
 	votelog                          = log15.New("module", "tendermint-vote")
 )
@@ -70,7 +71,7 @@ func NewProposal(height int64, round int, blockhash []byte, polRound int, polBlo
 
 // String returns a string representation of the Proposal.
 func (p *Proposal) String() string {
-	return fmt.Sprintf("Proposal{%v/%v (%v,%v) %X %v @ %s}",
+	return fmt.Sprintf("Proposal{%v/%v (%v, %X) %X %X @ %s}",
 		p.Height, p.Round, p.POLRound, p.POLBlockID,
 		p.Blockhash, p.Signature, CanonicalTime(time.Unix(0, p.Timestamp)))
 }
@@ -117,34 +118,6 @@ func (heartbeat *Heartbeat) WriteSignBytes(chainID string, w io.Writer, n *int, 
 	number, writeErr := w.Write(byteHeartbeat)
 	*n = number
 	*err = writeErr
-}
-
-// ErrVoteConflictingVotes ...
-type ErrVoteConflictingVotes struct {
-	*DuplicateVoteEvidence
-}
-
-func (err *ErrVoteConflictingVotes) Error() string {
-	pubkey, error := PubKeyFromString(err.PubKey)
-	if error != nil {
-		return fmt.Sprintf("Conflicting votes from validator PubKey:%v,error:%v", err.PubKey, error)
-	}
-	addr := GenAddressByPubKey(pubkey)
-	return fmt.Sprintf("Conflicting votes from validator %v", addr)
-}
-
-// NewConflictingVoteError ...
-func NewConflictingVoteError(val *Validator, voteA, voteB *tmtypes.Vote) *ErrVoteConflictingVotes {
-	keyString := fmt.Sprintf("%X", val.PubKey)
-	return &ErrVoteConflictingVotes{
-		&DuplicateVoteEvidence{
-			&tmtypes.DuplicateVoteEvidence{
-				PubKey: keyString,
-				VoteA:  voteA,
-				VoteB:  voteB,
-			},
-		},
-	}
 }
 
 // Types of votes
@@ -211,7 +184,7 @@ func (vote *Vote) String() string {
 		PanicSanity("Unknown vote type")
 	}
 
-	return fmt.Sprintf("Vote{%v:%X %v/%02d/%v(%v) %X %v @ %s}",
+	return fmt.Sprintf("Vote{%v:%X %v/%02d/%v(%v) %X %X @ %s}",
 		vote.ValidatorIndex, Fingerprint(vote.ValidatorAddress),
 		vote.Height, vote.Round, vote.Type, typeString,
 		Fingerprint(vote.BlockID.Hash), vote.Signature,
@@ -240,7 +213,6 @@ func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
 // Hash ...
 func (vote *Vote) Hash() []byte {
 	if vote == nil {
-		//votelog.Error("vote hash is nil")
 		return nil
 	}
 	bytes, err := json.Marshal(vote)

@@ -62,7 +62,8 @@ func (e *Paracross) Exec_Miner(payload *pt.ParacrossMinerAction, tx *types.Trans
 	if index != 0 {
 		return nil, pt.ErrParaMinerBaseIndex
 	}
-	if !types.IsPara() {
+	cfg := e.GetAPI().GetConfig()
+	if !cfg.IsPara() {
 		return nil, types.ErrNotSupport
 	}
 	a := newAction(e, tx)

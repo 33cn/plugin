@@ -5,6 +5,7 @@
 package raft
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -66,8 +67,8 @@ func (h *httpRaftAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func serveHTTPRaftAPI(port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
-	srv := http.Server{
+func serveHTTPRaftAPI(ctx context.Context, port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
+	srv := &http.Server{
 		Addr: "localhost:" + strconv.Itoa(port),
 		Handler: &httpRaftAPI{
 			confChangeC: confChangeC,
@@ -78,9 +79,13 @@ func serveHTTPRaftAPI(port int, confChangeC chan<- raftpb.ConfChange, errorC <-c
 			rlog.Error(fmt.Sprintf("ListenAndServe have a err: (%v)", err.Error()))
 		}
 	}()
-
-	// exit when raft goes down
-	if err, ok := <-errorC; ok {
-		rlog.Error(fmt.Sprintf("the errorC chan receive a err (%v)\n", err.Error()))
+	select {
+	case <-ctx.Done():
+		srv.Close()
+	case err := <-errorC:
+		srv.Close()
+		if err != nil {
+			rlog.Error(fmt.Sprintf("the errorC chan receive a err (%v)\n", err.Error()))
+		}
 	}
 }

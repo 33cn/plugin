@@ -87,24 +87,25 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 		return nil, err
 	}
 	var replys pty.ReplyTradeOrders
+	cfg := t.GetAPI().GetConfig()
 	for _, row := range rows {
 		o, ok := row.Data.(*pty.LocalOrder)
 		if !ok {
 			tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
 			return nil, types.ErrTypeAsset
 		}
-		reply := fmtReply(o)
+		reply := fmtReply(cfg, o)
 		replys.Orders = append(replys.Orders, reply)
 	}
 	return &replys, nil
 }
 
-func fmtReply(order *pty.LocalOrder) *pty.ReplyTradeOrder {
+func fmtReply(cfg *types.Chain33Config, order *pty.LocalOrder) *pty.ReplyTradeOrder {
 	priceExec := order.PriceExec
 	priceSymbol := order.PriceSymbol
 	if priceExec == "" {
 		priceExec = defaultPriceExec
-		priceSymbol = types.GetCoinSymbol()
+		priceSymbol = cfg.GetCoinSymbol()
 	}
 
 	return &pty.ReplyTradeOrder{
@@ -143,7 +144,8 @@ func (t *trade) GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
 		tradelog.Error("query GetData failed", "err", "bad row type")
 		return nil, types.ErrTypeAsset
 	}
-	reply := fmtReply(o)
+	cfg := t.GetAPI().GetConfig()
+	reply := fmtReply(cfg, o)
 
 	return reply, nil
 }

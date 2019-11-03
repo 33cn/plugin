@@ -17,6 +17,7 @@ import (
 	"github.com/33cn/chain33/types"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -46,13 +47,14 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 
 	suite.exec = newParacross().(*Paracross)
+	suite.exec.SetAPI(suite.api)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
 	suite.exec.SetBlockInfo([]byte(""), []byte(""), 3)
-	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
 	//forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
@@ -61,15 +63,15 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//
 	//}
 
-	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
-	types.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
+	chain33TestCfg.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	chain33TestCfg.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
 
 	// TODO, more fields
 	// setup block
 	blockDetail := &types.BlockDetail{
 		Block: &types.Block{},
 	}
-	MainBlockHash10 = blockDetail.Block.Hash()
+	MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
 
 }
 
@@ -179,7 +181,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 		Id:    id,
 		Value: pt.ParaNodeVoteYes,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(config)
+	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	count++
@@ -206,7 +208,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -221,7 +223,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Id: g.Current.Id,
 		Op: pt.ParacrossNodeGroupQuit,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
@@ -236,7 +238,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -251,7 +253,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Id: g.Current.Id,
 		Op: pt.ParacrossNodeGroupApprove,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey12Q, tx)
@@ -265,7 +267,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:   pt.ParaNodeJoin,
 		Addr: Account14K,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(config)
+	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
@@ -284,7 +286,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:   pt.ParaNodeQuit,
 		Addr: Account14K,
 	}
-	tx, err = pt.CreateRawNodeConfigTx(config)
+	tx, err = pt.CreateRawNodeConfigTx(chain33TestCfg, config)
 	suite.Nil(err)
 	receipt = nodeCommit(suite, PrivKeyD, tx)
 	checkQuitReceipt(suite, receipt)
@@ -304,12 +306,7 @@ func (suite *NodeManageTestSuite) TestExec() {
 }
 
 func TestNodeManageSuite(t *testing.T) {
-	tempTitle = types.GetTitle()
-	types.SetTitleOnlyForTest(Title)
-
 	suite.Run(t, new(NodeManageTestSuite))
-
-	types.SetTitleOnlyForTest(tempTitle)
 }
 
 func (suite *NodeManageTestSuite) TearDownSuite() {

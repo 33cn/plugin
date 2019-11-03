@@ -21,11 +21,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	confManager = types.ConfSub(manager.ManageX)
-	conf        = types.ConfSub(pt.ParaX)
-)
-
 func deepCopy(dst, src interface{}) error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
@@ -58,8 +53,8 @@ func getNodeID(db dbm.KV, id string) (*pt.ParaNodeIdStatus, error) {
 }
 
 //分叉之前 id是"mavl-paracros-...0x12342308b"格式，分叉以后只支持输入为去掉了mavl-paracross前缀的交易id，系统会为id加上前缀
-func getNodeIDWithFork(db dbm.KV, title string, height int64, id string) (*pt.ParaNodeIdStatus, error) {
-	if pt.IsParaForkHeight(height, pt.ForkLoopCheckCommitTxDone) {
+func getNodeIDWithFork(cfg *types.Chain33Config, db dbm.KV, title string, height int64, id string) (*pt.ParaNodeIdStatus, error) {
+	if pt.IsParaForkHeight(cfg, height, pt.ForkLoopCheckCommitTxDone) {
 		id = calcParaNodeIDKey(title, id)
 	}
 	return getNodeID(db, id)
@@ -86,8 +81,8 @@ func getDb(db dbm.KV, key []byte) ([]byte, error) {
 }
 
 //分叉之前 id是"mavl-paracros-...0x12342308b"格式，分叉以后只支持输入为去掉了mavl-paracross前缀的交易id，系统会为id加上前缀
-func getNodeGroupID(db dbm.KV, title string, height int64, id string) (*pt.ParaNodeGroupStatus, error) {
-	if pt.IsParaForkHeight(height, pt.ForkLoopCheckCommitTxDone) {
+func getNodeGroupID(cfg *types.Chain33Config, db dbm.KV, title string, height int64, id string) (*pt.ParaNodeGroupStatus, error) {
+	if pt.IsParaForkHeight(cfg, height, pt.ForkLoopCheckCommitTxDone) {
 		id = calcParaNodeGroupIDKey(title, id)
 	}
 	val, err := getDb(db, []byte(id))
@@ -255,7 +250,8 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	if !types.IsPara() {
+	cfg := a.api.GetConfig()
+	if !cfg.IsPara() {
 		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen, 1)
 		if err != nil {
 			return nil, err
@@ -317,7 +313,8 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 }
 
 func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	stat, err := getNodeIDWithFork(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	cfg := a.api.GetConfig()
+	stat, err := getNodeIDWithFork(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +340,8 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	}
 	if stat.Status == pt.ParacrossNodeJoining {
 		receipt := &types.Receipt{Ty: types.ExecOk}
-		if !types.IsPara() {
+		cfg := a.api.GetConfig()
+		if !cfg.IsPara() {
 			r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 			if err != nil {
 				return nil, err
@@ -368,7 +366,8 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 }
 
 // IsSuperManager is supper manager or not
-func isSuperManager(addr string) bool {
+func isSuperManager(cfg *types.Chain33Config, addr string) bool {
+	confManager := types.ConfSub(cfg, manager.ManageX)
 	for _, m := range confManager.GStrList("superManager") {
 		if addr == m {
 			return true
@@ -403,7 +402,8 @@ func (a *action) superManagerVoteProc(title string) error {
 	if err != nil {
 		return err
 	}
-
+	cfg := a.api.GetConfig()
+	conf := types.ConfSub(cfg, pt.ParaX)
 	confStopBlocks := conf.GInt("paraConsensusStopBlocks")
 	data, err := a.exec.paracrossGetHeight(title)
 	if err != nil {
@@ -444,6 +444,7 @@ func updateVotes(stat *pt.ParaNodeIdStatus, nodes map[string]struct{}) {
 }
 
 func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
 		if !isNotFound(err) {
@@ -476,7 +477,7 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		addrStat.QuitId = stat.Id
 		receipt := makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat)
 
-		if !types.IsPara() {
+		if !cfg.IsPara() {
 			r, err := a.nodeGroupCoinsActive(proposalStat.FromAddr, proposalStat.CoinsFrozen, 1)
 			if err != nil {
 				return nil, err
@@ -494,11 +495,12 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
-	if !validNode(a.fromaddr, nodes) && !isSuperManager(a.fromaddr) {
+	cfg := a.api.GetConfig()
+	if !validNode(a.fromaddr, nodes) && !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
 	}
 
-	stat, err := getNodeIDWithFork(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	stat, err := getNodeIDWithFork(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -541,9 +543,9 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	most, vote := getMostVote(stat)
 	if !isCommitDone(nodes, most) {
 		superManagerPass := false
-		if isSuperManager(a.fromaddr) {
+		if isSuperManager(cfg, a.fromaddr) {
 			//如果主链执行失败，交易不会过滤到平行链，如果主链成功，平行链直接成功
-			if !types.IsPara() {
+			if !cfg.IsPara() {
 				err := a.superManagerVoteProc(config.Title)
 				if err != nil {
 					return nil, err
@@ -565,7 +567,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParacrossNodeClosed
 			stat.Height = a.height
 			//active coins
-			if !types.IsPara() {
+			if !cfg.IsPara() {
 				r, err := a.nodeGroupCoinsActive(stat.FromAddr, stat.CoinsFrozen, 1)
 				if err != nil {
 					return nil, err
@@ -606,7 +608,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
-			if a.exec.GetMainHeight() > pt.GetDappForkHeight(pt.ForkLoopCheckCommitTxDone) {
+			if a.exec.GetMainHeight() > pt.GetDappForkHeight(cfg, pt.ForkLoopCheckCommitTxDone) {
 				//node quit后，如果committx满足2/3目标，自动触发commitDone
 				r, err = a.loopCommitTxDone(config.Title)
 				if err != nil {
@@ -715,6 +717,8 @@ func (a *action) checkNodeGroupExist(title string) error {
 
 func (a *action) nodeGroupCoinsFrozen(createAddr string, configCoinsFrozen int64, nodeCounts int64) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
+	cfg := a.api.GetConfig()
+	conf := types.ConfSub(cfg, pt.ParaX)
 	confCoins := conf.GInt("nodeGroupFrozenCoins")
 	if configCoinsFrozen < confCoins {
 		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
@@ -771,7 +775,8 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
-	if !types.IsPara() {
+	cfg := a.api.GetConfig()
+	if !cfg.IsPara() {
 		r, err := a.nodeGroupCoinsFrozen(a.fromaddr, config.CoinsFrozen, int64(len(addrs)))
 		if err != nil {
 			return nil, err
@@ -812,7 +817,8 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 }
 
 func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
-	status, err := getNodeGroupID(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	cfg := a.api.GetConfig()
+	status, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +841,7 @@ func (a *action) nodeGroupQuit(config *pt.ParaNodeGroupConfig) (*types.Receipt, 
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
-	if !types.IsPara() {
+	if !cfg.IsPara() {
 		r, err := a.nodeGroupCoinsActive(status.FromAddr, status.CoinsFrozen, int64(len(applyAddrs)))
 		if err != nil {
 			return nil, err
@@ -927,11 +933,12 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
-	if !isSuperManager(a.fromaddr) {
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
 	}
 
-	id, err := getNodeGroupID(a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	id, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -992,7 +999,8 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt
 
 //NodeGroupConfig support super node group config
 func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
-	if !validTitle(config.Title) {
+	cfg := a.api.GetConfig()
+	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
 
@@ -1029,7 +1037,8 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt
 
 //NodeConfig support super account node config
 func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
-	if !validTitle(config.Title) {
+	cfg := a.api.GetConfig()
+	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
 

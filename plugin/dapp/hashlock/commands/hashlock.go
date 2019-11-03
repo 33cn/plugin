@@ -55,18 +55,25 @@ func addHashlockLockCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("return", "r", "", "return address")
 	cmd.MarkFlagRequired("return")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
-	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
+	cmd.Flags().Float64P("fee", "f", 0.0, "transaction fee")
 }
 
 func hashlockLockCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 	toAddr, _ := cmd.Flags().GetString("to")
 	returnAddr, _ := cmd.Flags().GetString("return")
 	delay, _ := cmd.Flags().GetInt64("delay")
 	amount, _ := cmd.Flags().GetFloat64("amount")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	if delay < 60 {
 		fmt.Println("delay period changed to 60")
@@ -112,14 +119,21 @@ func addHashlockCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("secret", "s", "", "secret information")
 	cmd.MarkFlagRequired("secret")
 
-	defaultFee := float64(types.GInt("MinFee")) / float64(types.Coin)
-	cmd.Flags().Float64P("fee", "f", defaultFee, "transaction fee")
+	cmd.Flags().Float64P("fee", "f", 0.0, "transaction fee")
 }
 
 func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := pty.HashlockUnlockTx{
@@ -152,9 +166,17 @@ func HashlockSendCmd() *cobra.Command {
 }
 
 func hashlockSendCmd(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
+
+	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	if fee < defaultFee {
+		fee = defaultFee
+	}
 
 	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := pty.HashlockSendTx{

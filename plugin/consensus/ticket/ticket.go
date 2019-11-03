@@ -109,15 +109,16 @@ func (client *Client) Close() {
 
 // CreateGenesisTx ticket create genesis tx
 func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
+	cfg := client.GetAPI().GetConfig()
 	for _, genesis := range client.subcfg.Genesis {
-		tx1 := createTicket(genesis.MinerAddr, genesis.ReturnAddr, genesis.Count, 0)
+		tx1 := createTicket(cfg, genesis.MinerAddr, genesis.ReturnAddr, genesis.Count, 0)
 		ret = append(ret, tx1...)
 	}
 	return ret
 }
 
 //316190000 coins
-func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret []*types.Transaction) {
+func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count int32, height int64) (ret []*types.Transaction) {
 	tx1 := types.Transaction{}
 	tx1.Execer = []byte("coins")
 
@@ -125,7 +126,7 @@ func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret 
 	tx1.To = minerAddr
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: ty.GetTicketMinerParam(height).TicketPrice}
+	g.Genesis = &types.AssetsGenesis{Amount: ty.GetTicketMinerParam(cfg, height).TicketPrice}
 	tx1.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx1)
 
@@ -135,7 +136,7 @@ func createTicket(minerAddr, returnAddr string, count int32, height int64) (ret 
 	tx2.To = driver.ExecAddress("ticket")
 	//gen payload
 	g = &cty.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * ty.GetTicketMinerParam(height).TicketPrice, ReturnAddress: returnAddr}
+	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * ty.GetTicketMinerParam(cfg, height).TicketPrice, ReturnAddress: returnAddr}
 	tx2.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx2)
 
@@ -307,7 +308,8 @@ func (client *Client) getModify(beg, end int64) ([]byte, error) {
 
 // CheckBlock ticket implete checkblock func
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
-	cfg := ty.GetTicketMinerParam(current.Block.Height)
+	chain33Cfg := client.GetAPI().GetConfig()
+	cfg := ty.GetTicketMinerParam(chain33Cfg, current.Block.Height)
 	if current.Block.BlockTime-types.Now().Unix() > cfg.FutureBlockTime {
 		return types.ErrFutureBlock
 	}
@@ -367,7 +369,7 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 		return types.ErrBlockSize
 	}
 	//vrf verify
-	if types.IsDappFork(current.Block.Height, ty.TicketX, "ForkTicketVrf") {
+	if chain33Cfg.IsDappFork(current.Block.Height, ty.TicketX, "ForkTicketVrf") {
 		var input []byte
 		if current.Block.Height > 1 {
 			LastTicketAction, err := client.getMinerTx(parent)
@@ -413,8 +415,9 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 }
 
 func (client *Client) getNextTarget(block *types.Block, bits uint32) (*big.Int, []byte, error) {
+	cfg := client.GetAPI().GetConfig()
 	if block.Height == 0 {
-		powLimit := difficulty.CompactToBig(types.GetP(0).PowLimitBits)
+		powLimit := difficulty.CompactToBig(cfg.GetP(0).PowLimitBits)
 		return powLimit, defaultModify, nil
 	}
 	targetBits, modify, err := client.getNextRequiredDifficulty(block, bits)
@@ -440,12 +443,13 @@ func (client *Client) getCurrentTarget(blocktime int64, id string, modify []byte
 // the exported version uses the current best chain as the previous block node
 // while this function accepts any block node.
 func (client *Client) getNextRequiredDifficulty(block *types.Block, bits uint32) (uint32, []byte, error) {
+	chain33Cfg := client.GetAPI().GetConfig()
 	// Genesis block.
 	if block == nil {
-		return types.GetP(0).PowLimitBits, defaultModify, nil
+		return chain33Cfg.GetP(0).PowLimitBits, defaultModify, nil
 	}
-	powLimitBits := types.GetP(block.Height).PowLimitBits
-	cfg := ty.GetTicketMinerParam(block.Height)
+	powLimitBits := chain33Cfg.GetP(block.Height).PowLimitBits
+	cfg := ty.GetTicketMinerParam(chain33Cfg, block.Height)
 	blocksPerRetarget := int64(cfg.TargetTimespan / cfg.TargetTimePerBlock)
 	// Return the previous block's difficulty requirements if this block
 	// is not at a difficulty retarget interval.
@@ -527,6 +531,7 @@ func printBInt(data *big.Int) string {
 }
 
 func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket, crypto.PrivKey, *big.Int, []byte, string, error) {
+	cfg := client.GetAPI().GetConfig()
 	bits := parent.Difficulty
 	diff, modify, err := client.getNextTarget(parent, bits)
 	if err != nil {
@@ -543,7 +548,7 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 			continue
 		}
 		//已经到成熟期
-		if !ticket.GetIsGenesis() && (block.BlockTime-ticket.GetCreateTime() <= ty.GetTicketMinerParam(block.Height).TicketFrozenTime) {
+		if !ticket.GetIsGenesis() && (block.BlockTime-ticket.GetCreateTime() <= ty.GetTicketMinerParam(cfg, block.Height).TicketFrozenTime) {
 			continue
 		}
 		// 查找私钥
@@ -632,6 +637,7 @@ func genPrivHash(priv crypto.PrivKey, tid string) ([]byte, error) {
 
 func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv crypto.PrivKey, tid string, modify []byte) error {
 	//return 0 always
+	cfg := client.GetAPI().GetConfig()
 	fee := calcTotalFee(block)
 
 	var ticketAction ty.TicketAction
@@ -639,14 +645,14 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	miner.TicketId = tid
 	miner.Bits = difficulty.BigToCompact(diff)
 	miner.Modify = modify
-	miner.Reward = ty.GetTicketMinerParam(block.Height).CoinReward + fee
+	miner.Reward = ty.GetTicketMinerParam(cfg, block.Height).CoinReward + fee
 	privHash, err := genPrivHash(priv, tid)
 	if err != nil {
 		return err
 	}
 	miner.PrivHash = privHash
 	//add vrf
-	if types.IsDappFork(block.Height, ty.TicketX, "ForkTicketVrf") {
+	if cfg.IsDappFork(block.Height, ty.TicketX, "ForkTicketVrf") {
 		var input []byte
 		if block.Height > 1 {
 			LastTicketAction, err := client.getMinerTx(parent)
@@ -686,7 +692,8 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 }
 
 func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.PrivKey) *types.Transaction {
-	tx, err := types.CreateFormatTx("ticket", types.Encode(ticketAction))
+	cfg := client.GetAPI().GetConfig()
+	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ticketAction))
 	if err != nil {
 		return nil
 	}
@@ -695,20 +702,22 @@ func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.Priv
 }
 
 func (client *Client) createBlock() (*types.Block, *types.Block) {
+	cfg := client.GetAPI().GetConfig()
 	lastBlock := client.GetCurrentBlock()
 	var newblock types.Block
-	newblock.ParentHash = lastBlock.Hash()
+	newblock.ParentHash = lastBlock.Hash(cfg)
 	newblock.Height = lastBlock.Height + 1
 	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
 		newblock.BlockTime = lastBlock.BlockTime
 	}
-	txs := client.RequestTx(int(types.GetP(newblock.Height).MaxTxNumber)-1, nil)
+	txs := client.RequestTx(int(cfg.GetP(newblock.Height).MaxTxNumber)-1, nil)
 	client.AddTxsToBlock(&newblock, txs)
 	return &newblock, lastBlock
 }
 
 func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*types.Block, *types.Block, [][]byte) {
+	chain33Cfg := client.GetAPI().GetConfig()
 	lastBlock := client.GetCurrentBlock()
 	newblock := *block
 	newblock.BlockTime = types.Now().Unix()
@@ -718,9 +727,9 @@ func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*typ
 		newblock.Txs = client.CheckTxDup(newblock.Txs)
 		newblock.Txs = client.CheckTxExpire(newblock.Txs, lastBlock.Height+1, newblock.BlockTime)
 	}
-	newblock.ParentHash = lastBlock.Hash()
+	newblock.ParentHash = lastBlock.Hash(chain33Cfg)
 	newblock.Height = lastBlock.Height + 1
-	cfg := types.GetP(newblock.Height)
+	cfg := chain33Cfg.GetP(newblock.Height)
 	var txs []*types.Transaction
 	if len(newblock.Txs) < int(cfg.MaxTxNumber-1) {
 		txs = client.RequestTx(int(cfg.MaxTxNumber)-1-len(newblock.Txs), txHashList)

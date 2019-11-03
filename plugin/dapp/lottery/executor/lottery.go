@@ -17,27 +17,28 @@ import (
 var llog = log.New("module", "execs.lottery")
 var driverName = pty.LotteryX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Lottery{}))
-}
-
 type subConfig struct {
 	ParaRemoteGrpcClient string `json:"paraRemoteGrpcClient"`
 }
 
-var cfg subConfig
+var subCfg subConfig
 
 // Init lottery
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
 	}
 	if sub != nil {
-		types.MustDecode(sub, &cfg)
+		types.MustDecode(sub, &subCfg)
 	}
-	drivers.Register(driverName, newLottery, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newLottery, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Lottery{}))
 }
 
 // GetName for lottery

@@ -63,7 +63,7 @@ func (signatory *Signatory) SignApprove(in *TokenFinish, out *interface{}) error
 	}
 
 	var err error
-	tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(types.DefaultMinFee)
 	if err != nil {
 		log.Error("SignApprove", "calc fee failed", err)
 		return err
@@ -104,7 +104,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	}
 
 	var err error
-	tx.Fee, err = tx.GetRealFee(types.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(types.DefaultMinFee)
 	if err != nil {
 		log.Error("SignTranfer", "calc fee failed", err)
 		return err

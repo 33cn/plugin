@@ -14,6 +14,7 @@ import (
 func (e *Type) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	elog.Debug("echo.CreateTx", "action", action)
 	// 只接受ping/pang两种交易操作
+	cfg := e.GetConfig()
 	if action == "ping" || action == "pang" {
 		var param Tx
 		err := json.Unmarshal(message, &param)
@@ -21,12 +22,12 @@ func (e *Type) CreateTx(action string, message json.RawMessage) (*types.Transact
 			elog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return createPingTx(action, &param)
+		return createPingTx(cfg, action, &param)
 	}
 	return nil, types.ErrNotSupport
 }
 
-func createPingTx(op string, parm *Tx) (*types.Transaction, error) {
+func createPingTx(cfg *types.Chain33Config, op string, parm *Tx) (*types.Transaction, error) {
 	var action *EchoAction
 	var err error
 	if strings.EqualFold(op, "ping") {
@@ -38,10 +39,10 @@ func createPingTx(op string, parm *Tx) (*types.Transaction, error) {
 		return nil, err
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(EchoX)),
+		Execer:  []byte(cfg.ExecName(EchoX)),
 		Payload: types.Encode(action),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
-		To:      address.ExecAddress(types.ExecName(EchoX)),
+		To:      address.ExecAddress(cfg.ExecName(EchoX)),
 	}
 	return tx, nil
 }

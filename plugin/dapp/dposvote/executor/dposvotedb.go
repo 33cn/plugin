@@ -640,7 +640,7 @@ func queryTopNByVersion(db dbm.KV, req *dty.TopNCandidatorsQuery) (types.Message
 	strVersion := fmt.Sprintf("%018d", req.Version)
 	data, err := db.Get(TopNKey(strVersion))
 	if err != nil || data == nil {
-		logger.Error("queryTopNByVersion have err:", "err", err.Error())
+		logger.Error("queryTopNByVersion have err", "err", err.Error())
 		return nil, err
 	}
 	var cands dty.TopNCandidators

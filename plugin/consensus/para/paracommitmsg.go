@@ -373,13 +373,13 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 		tx.Sign(types.SECP256K1, client.privateKey)
 		return tx, nil
 	}
-
-	group, err := types.CreateTxGroup(txsArr.Txs, types.GInt("MinFee"))
+	cfg := client.paraClient.GetAPI().GetConfig()
+	group, err := types.CreateTxGroup(txsArr.Txs, cfg.GInt("MinFee"))
 	if err != nil {
 		plog.Error("para CreateTxGroup", "err", err.Error())
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxFee"))
+	err = group.Check(cfg, 0, cfg.GInt("MinFee"), cfg.GInt("MaxFee"))
 	if err != nil {
 		plog.Error("para CheckTxGroup", "err", err.Error())
 		return nil, err
@@ -394,12 +394,13 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 
 func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
+	cfg := client.paraClient.GetAPI().GetConfig()
 	for _, status := range notifications {
 		execName := pt.ParaX
 		if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
-			execName = paracross.GetExecName()
+			execName = paracross.GetExecName(cfg)
 		}
-		tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
+		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -416,10 +417,11 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
+	cfg := client.paraClient.GetAPI().GetConfig()
 	if client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight) {
-		execName = paracross.GetExecName()
+		execName = paracross.GetExecName(cfg)
 	}
-	tx, err := paracross.CreateRawCommitTx4MainChain(status, execName, feeRate)
+	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -521,8 +523,9 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	count := req.End - req.Start + 1
 	nodeList := make(map[int64]*pt.ParacrossNodeStatus, count+1)
 	keys := &types.LocalDBGet{}
+	cfg := client.paraClient.GetAPI().GetConfig()
 	for i := 0; i < int(count); i++ {
-		key := paracross.CalcMinerHeightKey(types.GetTitle(), req.Start+int64(i))
+		key := paracross.CalcMinerHeightKey(cfg.GetTitle(), req.Start+int64(i))
 		keys.Keys = append(keys.Keys, key)
 	}
 
@@ -568,8 +571,8 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 			plog.Error("paracommitmsg get node status block", "height", block.Block.Height, "expect start", req.Start, "end", req.End)
 			return nil, errors.New("paracommitmsg wrong block result")
 		}
-		nodeList[block.Block.Height].BlockHash = block.Block.Hash()
-		if !paracross.IsParaForkHeight(nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
+		nodeList[block.Block.Height].BlockHash = block.Block.Hash(cfg)
+		if !paracross.IsParaForkHeight(cfg, nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
 			nodeList[block.Block.Height].StateHash = block.Block.StateHash
 		}
 	}
@@ -608,9 +611,10 @@ func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, 
 	if block.Height != 0 {
 		return nil, errors.New("block chain not return 0 height block")
 	}
-	status.Title = types.GetTitle()
+	cfg := client.paraClient.GetAPI().GetConfig()
+	status.Title = cfg.GetTitle()
 	status.Height = block.Height
-	status.BlockHash = block.Hash()
+	status.BlockHash = block.Hash(cfg)
 
 	return &status, nil
 }
@@ -703,13 +707,13 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 	if err != nil {
 		return nil, err
 	}
-
+	cfg := client.paraClient.GetAPI().GetConfig()
 	if client.paraClient.isParaSelfConsensusForked(block.MainHeight) {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
 			FuncName: "GetTitle",
-			Param:    types.Encode(&types.ReqString{Data: types.GetTitle()}),
+			Param:    types.Encode(&types.ReqString{Data: cfg.GetTitle()}),
 		})
 		if err != nil {
 			plog.Error("getSelfConsensusStatus ", "err", err.Error())
@@ -723,7 +727,7 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
 		if resp.Height > -1 {
 			var statusMainHeight int64
-			if pt.IsParaForkHeight(resp.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+			if pt.IsParaForkHeight(cfg, resp.MainHeight, pt.ForkLoopCheckCommitTxDone) {
 				statusMainHeight = resp.MainHeight
 			} else {
 				block, err := client.paraClient.GetBlockByHeight(resp.Height)
@@ -749,12 +753,12 @@ func (client *commitMsgClient) getMainConsensusStatus() (*pt.ParacrossStatus, er
 	if err != nil {
 		return nil, err
 	}
-
+	cfg := client.paraClient.GetAPI().GetConfig()
 	//去主链获取共识高度
 	reply, err := client.paraClient.grpcClient.QueryChain(context.Background(), &types.ChainExecutor{
 		Driver:   "paracross",
 		FuncName: "GetTitleByHash",
-		Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: types.GetTitle(), BlockHash: block.MainHash}),
+		Param:    types.Encode(&pt.ReqParacrossTitleHash{Title: cfg.GetTitle(), BlockHash: block.MainHash}),
 	})
 	if err != nil {
 		plog.Error("getMainConsensusStatus", "err", err.Error())
@@ -776,10 +780,11 @@ func (client *commitMsgClient) getMainConsensusStatus() (*pt.ParacrossStatus, er
 
 //node group会在主链和平行链都同时配置,只本地查询就可以
 func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
+	cfg := client.paraClient.GetAPI().GetConfig()
 	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "paracross",
 		FuncName: "GetNodeGroupAddrs",
-		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: types.GetTitle()}),
+		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle()}),
 	})
 	if err != nil {
 		plog.Error("commitmsg.getNodeGroupAddrs ", "err", err.Error())

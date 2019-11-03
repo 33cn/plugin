@@ -86,6 +86,9 @@ func addRegistFlags(cmd *cobra.Command) {
 }
 
 func regist(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	address, _ := cmd.Flags().GetString("address")
@@ -93,7 +96,7 @@ func regist(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"IP\":\"%s\"}", pubkey, address, ip)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistTx,
 		Payload:    []byte(payload),
 	}
@@ -124,13 +127,16 @@ func addCancelRegistFlags(cmd *cobra.Command) {
 }
 
 func cancelRegist(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	address, _ := cmd.Flags().GetString("address")
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\"}", pubkey, address)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateCancelRegistTx,
 		Payload:    []byte(payload),
 	}
@@ -161,6 +167,9 @@ func addVoteFlags(cmd *cobra.Command) {
 }
 
 func vote(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	votes, _ := cmd.Flags().GetInt64("votes")
@@ -168,7 +177,7 @@ func vote(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"votes\":\"%d\", \"fromAddr\":\"%s\"}", pubkey, votes, addr)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateVoteTx,
 		Payload:    []byte(payload),
 	}
@@ -198,13 +207,16 @@ func addCancelVoteFlags(cmd *cobra.Command) {
 }
 
 func cancelVote(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	index, _ := cmd.Flags().GetInt64("index")
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"index\":\"%d\"}", pubkey, index)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateCancelVoteTx,
 		Payload:    []byte(payload),
 	}
@@ -237,6 +249,9 @@ func addReRegistFlags(cmd *cobra.Command) {
 }
 
 func reRegist(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	address, _ := cmd.Flags().GetString("address")
@@ -244,7 +259,7 @@ func reRegist(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"address\":\"%s\", \"IP\":\"%s\"}", pubkey, address, ip)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateReRegistTx,
 		Payload:    []byte(payload),
 	}
@@ -369,6 +384,9 @@ func addVrfMFlags(cmd *cobra.Command) {
 }
 
 func vrfM(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	cycle, _ := cmd.Flags().GetInt64("cycle")
@@ -376,7 +394,7 @@ func vrfM(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"m\":\"%s\"}", pubkey, cycle, m)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistVrfMTx,
 		Payload:    []byte(payload),
 	}
@@ -412,6 +430,9 @@ func addVrfRPRegistFlags(cmd *cobra.Command) {
 }
 
 func vrfRP(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	cycle, _ := cmd.Flags().GetInt64("cycle")
@@ -420,7 +441,7 @@ func vrfRP(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"pubkey\":\"%s\", \"cycle\":\"%d\", \"r\":\"%s\", \"p\":\"%s\"}", pubkey, cycle, hash, proof)
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateRegistVrfRPTx,
 		Payload:    []byte(payload),
 	}
@@ -805,6 +826,9 @@ func recordCB(cmd *cobra.Command, args []string) {
 	if err != nil {
 		return
 	}
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("privKey")
 	cycle, _ := cmd.Flags().GetInt64("cycle")
@@ -851,7 +875,7 @@ func recordCB(cmd *cobra.Command, args []string) {
 		cycle, height, hash, hex.EncodeToString(privKey.PubKey().Bytes()), sig)
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(dty.DPosX),
+		Execer:     cfg.ExecName(dty.DPosX),
 		ActionName: dty.CreateRecordCBTx,
 		Payload:    []byte(payload),
 	}

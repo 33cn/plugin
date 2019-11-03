@@ -38,16 +38,17 @@ var privacylog = log.New("module", "execs.privacy")
 
 var driverName = "privacy"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&privacy{}))
-}
-
 // Init initialize executor driver
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newPrivacy, types.GetDappFork(driverName, "Enable"))
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newPrivacy, cfg.GetDappFork(driverName, "Enable"))
 	// 如果需要在开发环境下使用隐私交易，则需要使用下面这行代码，否则用上面的代码
 	//drivers.Register(newPrivacy().GetName(), newPrivacy, 0)
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&privacy{}))
 }
 
 // GetName get privacy name
@@ -269,7 +270,8 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
-	if !types.IsPara() && (assertExec == "" || assertExec == "coins") {
+	cfg := p.GetAPI().GetConfig()
+	if !cfg.IsPara() && (assertExec == "" || assertExec == "coins") {
 
 		for _, output := range output.Keyoutput {
 			totalOutput += output.Amount

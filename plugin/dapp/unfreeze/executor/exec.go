@@ -30,7 +30,8 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(payload.AssetExec, payload.AssetSymbol, u.GetStateDB())
+	cfg := u.GetAPI().GetConfig()
+	acc, err := account.NewAccountDB(cfg, payload.AssetExec, payload.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		uflog.Error("unfreeze create new account", "addr", tx.From(), "execAddr",
 			dapp.ExecAddress(string(tx.Execer)), "exec", payload.AssetExec, "symbol", payload.AssetSymbol)
@@ -48,7 +49,8 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 
 // Exec_Withdraw 执行冻结合约中提币
 func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
+	cfg := u.GetAPI().GetConfig()
+	if cfg.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
 		payload.UnfreezeID = unfreezeIDFromHex(payload.UnfreezeID)
 	}
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
@@ -70,7 +72,7 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
+	acc, err := account.NewAccountDB(cfg, unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,8 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 
 // Exec_Terminate 执行终止冻结合约
 func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
+	cfg := u.GetAPI().GetConfig()
+	if cfg.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkUnfreezeIDX) {
 		payload.UnfreezeID = unfreezeIDFromHex(payload.UnfreezeID)
 	}
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
@@ -106,7 +109,7 @@ func (u *Unfreeze) Exec_Terminate(payload *pty.UnfreezeTerminate, tx *types.Tran
 		return nil, err
 	}
 
-	acc, err := account.NewAccountDB(unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
+	acc, err := account.NewAccountDB(cfg, unfreeze.AssetExec, unfreeze.AssetSymbol, u.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +138,8 @@ func (u *Unfreeze) newEntity(payload *pty.UnfreezeCreate, tx *types.Transaction)
 	if unfreeze.StartTime == 0 {
 		unfreeze.StartTime = u.GetBlockTime()
 	}
-	means, err := newMeans(payload.Means, u.GetHeight())
+	cfg := u.GetAPI().GetConfig()
+	means, err := newMeans(cfg, payload.Means, u.GetHeight())
 	if err != nil {
 		return nil, err
 
@@ -178,7 +182,8 @@ func getUnfreezeLog(prev, cur *pty.Unfreeze, ty int32) *types.ReceiptLog {
 
 // 提取解冻币
 func (u *Unfreeze) withdraw(unfreeze *pty.Unfreeze) (int64, *types.Receipt, error) {
-	means, err := newMeans(unfreeze.Means, u.GetHeight())
+	cfg := u.GetAPI().GetConfig()
+	means, err := newMeans(cfg, unfreeze.Means, u.GetHeight())
 	if err != nil {
 		return 0, nil, err
 
@@ -210,11 +215,12 @@ func (u *Unfreeze) terminator(unfreeze *pty.Unfreeze) (int64, *types.Receipt, er
 
 	unfreezeOld := *unfreeze
 	var amount int64
-	if types.IsDappFork(u.GetHeight(), pty.UnfreezeX, "ForkTerminatePart") {
+	cfg := u.GetAPI().GetConfig()
+	if cfg.IsDappFork(u.GetHeight(), pty.UnfreezeX, "ForkTerminatePart") {
 		if unfreeze.Terminated {
 			return 0, nil, pty.ErrTerminated
 		}
-		m, err := newMeans(unfreeze.Means, u.GetHeight())
+		m, err := newMeans(cfg, unfreeze.Means, u.GetHeight())
 		if err != nil {
 			return 0, nil, err
 		}

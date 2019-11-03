@@ -8,7 +8,6 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/autonomy/commands"
 	"github.com/33cn/plugin/plugin/dapp/autonomy/executor"
-	"github.com/33cn/plugin/plugin/dapp/autonomy/rpc"
 	"github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
@@ -18,6 +17,5 @@ func init() {
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.AutonomyCmd,
-		RPC:      rpc.Init,
 	})
 }

@@ -25,6 +25,7 @@ default: depends build
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
+	go build $(BUILD_FLAGS) -v -i -o build/fork-config github.com/33cn/plugin/cli/fork_config/
 	@cp chain33.toml  $(CHAIN33_PATH)/build/system-test-rpc.sh build/
 	@cp chain33.para.toml build/ci/paracross/
 
@@ -68,7 +69,7 @@ update: ## version 可以是git tag打的具体版本号,也可以是commit hash
 	go get github.com/33cn/chain33@master ;fi
 	@go mod tidy
 dep:
-	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
+	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
 	@go get -u golang.org/x/tools/cmd/goimports
 	@go get -u github.com/mitchellh/gox
 	@go get -u github.com/vektra/mockery/.../

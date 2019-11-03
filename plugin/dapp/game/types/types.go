@@ -18,22 +18,31 @@ var tlog = log.New("module", GameX)
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(GameX))
-	types.RegistorExecutor(GameX, NewType())
-	types.RegisterDappFork(GameX, "Enable", 0)
+	types.RegFork(GameX, InitFork)
+	types.RegExec(GameX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(GameX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(GameX, NewType(cfg))
 }
 
 //getRealExecName
 //如果paraName == "", 那么自动用 types.ExecName("game")
 //如果设置了paraName , 那么强制用paraName
 //也就是说，我们可以构造其他平行链的交易
-func getRealExecName(paraName string) string {
-	return types.ExecName(paraName + GameX)
+func getRealExecName(cfg *types.Chain33Config, paraName string) string {
+	return cfg.ExecName(paraName + GameX)
 }
 
 // NewType  new type
-func NewType() *GameType {
+func NewType(cfg *types.Chain33Config) *GameType {
 	c := &GameType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -75,6 +84,7 @@ func (gt *GameType) GetTypeMap() map[string]int32 {
 // CreateTx  unused,just empty implementation
 func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	tlog.Debug("Game.CreateTx", "action", action)
+	cfg := gt.GetConfig()
 	if action == ActionCreateGame {
 		var param GamePreCreateTx
 		err := json.Unmarshal(message, &param)
@@ -83,7 +93,7 @@ func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			return nil, types.ErrInvalidParam
 		}
 
-		return CreateRawGamePreCreateTx(&param)
+		return CreateRawGamePreCreateTx(cfg, &param)
 	} else if action == ActionMatchGame {
 		var param GamePreMatchTx
 		err := json.Unmarshal(message, &param)
@@ -92,7 +102,7 @@ func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			return nil, types.ErrInvalidParam
 		}
 
-		return CreateRawGamePreMatchTx(&param)
+		return CreateRawGamePreMatchTx(cfg, &param)
 	} else if action == ActionCancelGame {
 		var param GamePreCancelTx
 		err := json.Unmarshal(message, &param)
@@ -101,7 +111,7 @@ func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			return nil, types.ErrInvalidParam
 		}
 
-		return CreateRawGamePreCancelTx(&param)
+		return CreateRawGamePreCancelTx(cfg, &param)
 	} else if action == ActionCloseGame {
 		var param GamePreCloseTx
 		err := json.Unmarshal(message, &param)
@@ -110,13 +120,13 @@ func (gt GameType) CreateTx(action string, message json.RawMessage) (*types.Tran
 			return nil, types.ErrInvalidParam
 		}
 
-		return CreateRawGamePreCloseTx(&param)
+		return CreateRawGamePreCloseTx(cfg, &param)
 	}
 	return nil, types.ErrNotSupport
 }
 
 // CreateRawGamePreCreateTx  unused,just empty implementation
-func CreateRawGamePreCreateTx(parm *GamePreCreateTx) (*types.Transaction, error) {
+func CreateRawGamePreCreateTx(cfg *types.Chain33Config, parm *GamePreCreateTx) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("CreateRawGamePreCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -132,13 +142,13 @@ func CreateRawGamePreCreateTx(parm *GamePreCreateTx) (*types.Transaction, error)
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(cfg, cfg.GetParaName())),
 		Payload: types.Encode(precreate),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	name := getRealExecName(types.GetParaName())
-	tx, err := types.FormatTx(name, tx)
+	name := getRealExecName(cfg, cfg.GetParaName())
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +156,7 @@ func CreateRawGamePreCreateTx(parm *GamePreCreateTx) (*types.Transaction, error)
 }
 
 // CreateRawGamePreMatchTx  unused,just empty implementation
-func CreateRawGamePreMatchTx(parm *GamePreMatchTx) (*types.Transaction, error) {
+func CreateRawGamePreMatchTx(cfg *types.Chain33Config, parm *GamePreMatchTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -160,13 +170,13 @@ func CreateRawGamePreMatchTx(parm *GamePreMatchTx) (*types.Transaction, error) {
 		Value: &GameAction_Match{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(cfg, cfg.GetParaName())),
 		Payload: types.Encode(game),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	name := getRealExecName(types.GetParaName())
-	tx, err := types.FormatTx(name, tx)
+	name := getRealExecName(cfg, cfg.GetParaName())
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +184,7 @@ func CreateRawGamePreMatchTx(parm *GamePreMatchTx) (*types.Transaction, error) {
 }
 
 // CreateRawGamePreCancelTx  unused,just empty implementation
-func CreateRawGamePreCancelTx(parm *GamePreCancelTx) (*types.Transaction, error) {
+func CreateRawGamePreCancelTx(cfg *types.Chain33Config, parm *GamePreCancelTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -186,13 +196,13 @@ func CreateRawGamePreCancelTx(parm *GamePreCancelTx) (*types.Transaction, error)
 		Value: &GameAction_Cancel{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(cfg, cfg.GetParaName())),
 		Payload: types.Encode(cancel),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	name := getRealExecName(types.GetParaName())
-	tx, err := types.FormatTx(name, tx)
+	name := getRealExecName(cfg, cfg.GetParaName())
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +210,7 @@ func CreateRawGamePreCancelTx(parm *GamePreCancelTx) (*types.Transaction, error)
 }
 
 // CreateRawGamePreCloseTx  unused,just empty implementation
-func CreateRawGamePreCloseTx(parm *GamePreCloseTx) (*types.Transaction, error) {
+func CreateRawGamePreCloseTx(cfg *types.Chain33Config, parm *GamePreCloseTx) (*types.Transaction, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -213,13 +223,13 @@ func CreateRawGamePreCloseTx(parm *GamePreCloseTx) (*types.Transaction, error) {
 		Value: &GameAction_Close{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(getRealExecName(types.GetParaName())),
+		Execer:  []byte(getRealExecName(cfg, cfg.GetParaName())),
 		Payload: types.Encode(close),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(getRealExecName(types.GetParaName())),
+		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
 	}
-	name := getRealExecName(types.GetParaName())
-	tx, err := types.FormatTx(name, tx)
+	name := getRealExecName(cfg, cfg.GetParaName())
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}

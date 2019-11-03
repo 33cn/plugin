@@ -15,24 +15,26 @@ import (
 var clog = log.New("module", "execs.cert")
 var driverName = ct.CertX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Cert{}))
-}
-
 // Init 初始化
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
-	var cfg ct.Authority
+	var scfg ct.Authority
 	if sub != nil {
-		types.MustDecode(sub, &cfg)
+		types.MustDecode(sub, &scfg)
 	}
-	err := authority.Author.Init(&cfg)
+	err := authority.Author.Init(&scfg)
 	if err != nil {
 		clog.Error("error to initialize authority", err)
 		return
 	}
-	drivers.Register(driverName, newCert, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newCert, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+// InitExecType Init Exec Type
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Cert{}))
 }
 
 // GetName 获取cert执行器名

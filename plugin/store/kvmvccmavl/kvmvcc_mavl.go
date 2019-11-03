@@ -61,7 +61,11 @@ func DisableLog() {
 
 func init() {
 	drivers.Reg("kvmvccmavl", New)
-	types.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
+	types.RegFork("store-kvmvccmavl", InitFork)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -74,7 +78,7 @@ type KVmMavlStore struct {
 
 type subKVMVCCConfig struct {
 	EnableMVCCIter  bool  `json:"enableMVCCIter"`
-	EnableMavlPrune bool  `json:"enableMavlPrune"`
+	EnableMVCCPrune bool  `json:"enableMVCCPrune"`
 	PruneHeight     int32 `json:"pruneHeight"`
 }
 
@@ -96,7 +100,9 @@ type subConfig struct {
 	EnableMavlPrefix bool  `json:"enableMavlPrefix"`
 	EnableMVCC       bool  `json:"enableMVCC"`
 	EnableMavlPrune  bool  `json:"enableMavlPrune"`
-	PruneHeight      int32 `json:"pruneHeight"`
+	PruneMavlHeight  int32 `json:"pruneMavlHeight"`
+	EnableMVCCPrune  bool  `json:"enableMVCCPrune"`
+	PruneMVCCHeight  int32 `json:"pruneMVCCHeight"`
 	// 是否使能内存树
 	EnableMemTree bool `json:"enableMemTree"`
 	// 是否使能内存树中叶子节点
@@ -106,7 +112,7 @@ type subConfig struct {
 }
 
 // New construct KVMVCCStore module
-func New(cfg *types.Store, sub []byte) queue.Module {
+func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Module {
 	var kvms *KVmMavlStore
 	var subcfg subConfig
 	var subKVMVCCcfg subKVMVCCConfig
@@ -114,13 +120,13 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 		subKVMVCCcfg.EnableMVCCIter = subcfg.EnableMVCCIter
-		subKVMVCCcfg.EnableMavlPrune = subcfg.EnableMavlPrune
-		subKVMVCCcfg.PruneHeight = subcfg.PruneHeight
+		subKVMVCCcfg.EnableMVCCPrune = subcfg.EnableMVCCPrune
+		subKVMVCCcfg.PruneHeight = subcfg.PruneMVCCHeight
 
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
 		subMavlcfg.EnableMavlPrune = subcfg.EnableMavlPrune
-		subMavlcfg.PruneHeight = subcfg.PruneHeight
+		subMavlcfg.PruneHeight = subcfg.PruneMavlHeight
 		subMavlcfg.EnableMemTree = subcfg.EnableMemTree
 		subMavlcfg.EnableMemVal = subcfg.EnableMemVal
 		subMavlcfg.TkCloseCacheLen = subcfg.TkCloseCacheLen
@@ -142,7 +148,9 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 	// 查询是否是删除裁剪版mavl
 	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
 	// 读取fork高度
-	kvmvccMavlFork = types.GetDappFork("store-kvmvccmavl", "ForkKvmvccmavl")
+	if chain33cfg != nil {
+		kvmvccMavlFork = chain33cfg.GetDappFork("store-kvmvccmavl", "ForkKvmvccmavl")
+	}
 	delMavlDataHeight = kvmvccMavlFork + 10000
 	bs.SetChild(kvms)
 	return kvms
