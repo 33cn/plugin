@@ -56,8 +56,16 @@ var (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(JsX))
-	types.RegistorExecutor(JsX, NewType())
-	types.RegisterDappFork(JsX, "Enable", 0)
+	types.RegFork(JsX, InitFork)
+	types.RegExec(JsX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(JsX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(JsX, NewType(cfg))
 }
 
 //JsType 类型
@@ -66,9 +74,10 @@ type JsType struct {
 }
 
 //NewType 新建一个plugin 类型
-func NewType() *JsType {
+func NewType(cfg *types.Chain33Config) *JsType {
 	c := &JsType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

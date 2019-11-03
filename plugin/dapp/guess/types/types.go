@@ -12,9 +12,17 @@ import (
 
 func init() {
 	// init executor type
-	types.RegistorExecutor(GuessX, NewType())
 	types.AllowUserExec = append(types.AllowUserExec, ExecerGuess)
-	types.RegisterDappFork(GuessX, "Enable", 0)
+	types.RegFork(GuessX, InitFork)
+	types.RegExec(GuessX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(GuessX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(GuessX, NewType(cfg))
 }
 
 // GuessType struct
@@ -23,9 +31,10 @@ type GuessType struct {
 }
 
 // NewType method
-func NewType() *GuessType {
+func NewType(cfg *types.Chain33Config) *GuessType {
 	c := &GuessType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

@@ -18,9 +18,17 @@ const (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, ExecerCert)
-	types.RegistorExecutor(CertX, NewType())
 	// init executor type
-	types.RegisterDappFork(CertX, "Enable", 0)
+	types.RegFork(CertX, InitFork)
+	types.RegExec(CertX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(CertX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(CertX, NewType(cfg))
 }
 
 // CertType cert执行器类型结构
@@ -29,9 +37,10 @@ type CertType struct {
 }
 
 // NewType 新建cert类型结构
-func NewType() *CertType {
+func NewType(cfg *types.Chain33Config) *CertType {
 	c := &CertType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

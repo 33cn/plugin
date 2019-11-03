@@ -21,16 +21,14 @@ import (
 // BlockExecutor provides the context and accessories for properly executing a block.
 type BlockExecutor struct {
 	// save state, validators, consensus params, abci responses here
-	db     *CSStateDB
-	evpool ttypes.EvidencePool
+	db *CSStateDB
 }
 
 // NewBlockExecutor returns a new BlockExecutor with a NopEventBus.
 // Call SetEventBus to provide one.
-func NewBlockExecutor(db *CSStateDB, evpool ttypes.EvidencePool) *BlockExecutor {
+func NewBlockExecutor(db *CSStateDB) *BlockExecutor {
 	return &BlockExecutor{
-		db:     db,
-		evpool: evpool,
+		db: db,
 	}
 }
 
@@ -59,12 +57,6 @@ func (blockExec *BlockExecutor) ApplyBlock(s State, blockID ttypes.BlockID, bloc
 	}
 
 	blockExec.db.SaveState(s)
-
-	// Update evpool now that state is saved
-	// TODO: handle the crash/recover scenario
-	// ie. (may need to call Update for last block)
-	blockExec.evpool.Update(block)
-
 	return s, nil
 }
 
@@ -191,7 +183,10 @@ func changeInVotingPowerMoreOrEqualToOneThird(currentSet *ttypes.ValidatorSet, u
 }
 
 func validateBlock(stateDB *CSStateDB, s State, b *ttypes.TendermintBlock) error {
-	newTxs := b.Header.NumTxs
+	// Validate internal consistency.
+	if err := b.ValidateBasic(); err != nil {
+		return err
+	}
 
 	// validate basic info
 	if b.Header.ChainID != s.ChainID {
@@ -206,6 +201,7 @@ func validateBlock(stateDB *CSStateDB, s State, b *ttypes.TendermintBlock) error
 		return fmt.Errorf("Wrong Block.Header.LastBlockID.  Expected %v, got %v", s.LastBlockID, b.Header.LastBlockID)
 	}
 
+	newTxs := b.Header.NumTxs
 	if b.Header.TotalTxs != s.LastBlockTotalTx+newTxs {
 		return fmt.Errorf("Wrong Block.Header.TotalTxs. Expected %v, got %v", s.LastBlockTotalTx+newTxs, b.Header.TotalTxs)
 	}
@@ -242,13 +238,5 @@ func validateBlock(stateDB *CSStateDB, s State, b *ttypes.TendermintBlock) error
 		}
 	}
 
-	for _, ev := range b.Evidence.Evidence {
-		evidence := ttypes.EvidenceEnvelope2Evidence(ev)
-		if evidence != nil {
-			if err := VerifyEvidence(stateDB, s, evidence); err != nil {
-				return ttypes.NewEvidenceInvalidErr(evidence, err)
-			}
-		}
-	}
 	return nil
 }

@@ -45,14 +45,15 @@ func (u *js) newTable(name, config, defaultvalue string) (id int64, err error) {
 	if err != nil {
 		return 0, err
 	}
+	cfg := u.GetAPI().GetConfig()
 	var kvdb db.KV
 	var prefix []byte
 	if row.config["#db"] == "localdb" {
 		kvdb = u.GetLocalDB()
-		_, prefix = calcAllPrefix(name)
+		_, prefix = calcAllPrefix(cfg, name)
 	} else if row.config["#db"] == "statedb" {
 		kvdb = u.GetStateDB()
-		prefix, _ = calcAllPrefix(name)
+		prefix, _ = calcAllPrefix(cfg, name)
 	} else {
 		return 0, ptypes.ErrDBType
 	}

@@ -38,8 +38,16 @@ var elog = log.New("module", EchoX)
 func init() {
 	// 将本执行器添加到系统白名单
 	types.AllowUserExec = append(types.AllowUserExec, []byte(EchoX))
-	// 向系统注册本执行器类型
-	types.RegistorExecutor(EchoX, NewType())
+	types.RegFork(EchoX, InitFork)
+	types.RegExec(EchoX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(EchoX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(EchoX, NewType(cfg))
 }
 
 // Type 定义本执行器类型
@@ -48,9 +56,10 @@ type Type struct {
 }
 
 // NewType 初始化本执行器类型
-func NewType() *Type {
+func NewType(cfg *types.Chain33Config) *Type {
 	c := &Type{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

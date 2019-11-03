@@ -5,8 +5,8 @@ import (
 	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 )
 
-func calcAllPrefix(name string) ([]byte, []byte) {
-	execer := types.ExecName("user." + ptypes.JsX + "." + name)
+func calcAllPrefix(cfg *types.Chain33Config, name string) ([]byte, []byte) {
+	execer := cfg.ExecName("user." + ptypes.JsX + "." + name)
 	state := types.CalcStatePrefix([]byte(execer))
 	local := types.CalcLocalPrefix([]byte(execer))
 	return state, local

@@ -40,7 +40,6 @@ const (
 	defaultSearchMatchedBlockDepth  int32 = 10000
 	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
 	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
-	mainForkParacrossCommitTx       int64 = types.MaxHeight //support paracross commit tx fork height in main chain: ForkParacrossCommitTx
 )
 
 var (
@@ -78,18 +77,17 @@ type subConfig struct {
 	WriteBlockSeconds               int64                 `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient            string                `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight                     int64                 `json:"startHeight,omitempty"`
+	GenesisStartHeightSame          bool                  `json:"genesisStartHeightSame,omitempty"`
 	EmptyBlockInterval              []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
 	AuthAccount                     string                `json:"authAccount,omitempty"`
 	WaitBlocks4CommitMsg            int32                 `json:"waitBlocks4CommitMsg,omitempty"`
-	SearchHashMatchedBlockDepth     int32                 `json:"searchHashMatchedBlockDepth,omitempty"`
 	GenesisAmount                   int64                 `json:"genesisAmount,omitempty"`
 	MainBlockHashForkHeight         int64                 `json:"mainBlockHashForkHeight,omitempty"`
 	MainParaSelfConsensusForkHeight int64                 `json:"mainParaSelfConsensusForkHeight,omitempty"`
-	MainForkParacrossCommitTx       int64                 `json:"mainForkParacrossCommitTx,omitempty"`
 	WaitConsensStopTimes            uint32                `json:"waitConsensStopTimes,omitempty"`
 	MaxCacheCount                   int64                 `json:"maxCacheCount,omitempty"`
 	MaxSyncErrCount                 int32                 `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsEnable        bool                  `json:"fetchFilterParaTxsEnable,omitempty"`
+	FetchFilterParaTxsClose         bool                  `json:"fetchFilterParaTxsClose,omitempty"`
 	BatchFetchBlockCount            int64                 `json:"batchFetchBlockCount,omitempty"`
 	ParaConsensStartHeight          int64                 `json:"paraConsensStartHeight,omitempty"`
 	MultiDownloadOpen               bool                  `json:"multiDownloadOpen,omitempty"`
@@ -121,19 +119,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic("para EmptyBlockInterval config not correct")
 	}
 
-	if subcfg.SearchHashMatchedBlockDepth <= 0 {
-		subcfg.SearchHashMatchedBlockDepth = defaultSearchMatchedBlockDepth
-	}
 	if subcfg.MainBlockHashForkHeight <= 0 {
 		subcfg.MainBlockHashForkHeight = defaultMainBlockHashForkHeight
 	}
 
 	if subcfg.MainParaSelfConsensusForkHeight <= 0 {
 		subcfg.MainParaSelfConsensusForkHeight = mainParaSelfConsensusForkHeight
-	}
-
-	if subcfg.MainForkParacrossCommitTx <= 0 {
-		subcfg.MainForkParacrossCommitTx = mainForkParacrossCommitTx
 	}
 
 	if subcfg.BatchFetchBlockCount <= 0 {
@@ -156,14 +147,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		panic(err)
 	}
 
-	grpcCli, err := grpcclient.NewMainChainClient("")
-	if err != nil {
-		panic(err)
-	}
-
 	para := &client{
 		BaseClient:  c,
-		grpcClient:  grpcCli,
 		authAccount: subcfg.AuthAccount,
 		privateKey:  priKey,
 		subCfg:      &subcfg,
@@ -286,6 +271,12 @@ func (client *client) InitBlock() {
 	var err error
 
 	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
+	cfg := client.GetAPI().GetConfig()
+	grpcCli, err := grpcclient.NewMainChainClient(cfg, "")
+	if err != nil {
+		panic(err)
+	}
+	client.grpcClient = grpcCli
 
 	block, err := client.RequestLastBlock()
 	if err != nil {
@@ -304,7 +295,12 @@ func (client *client) InitBlock() {
 		newblock.BlockTime = genesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
+
+		//缺省是减1,但有些特殊项目方6.2.0版本升级上来要求blockhash不变，则需与6.2.0保持一致，不减一
 		newblock.MainHeight = client.subCfg.StartHeight - 1
+		if client.subCfg.GenesisStartHeightSame {
+			newblock.MainHeight = client.subCfg.StartHeight
+		}
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
 		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
@@ -322,7 +318,6 @@ func (client *client) InitBlock() {
 	}
 
 	plog.Debug("para consensus init parameter", "mainBlockHashForkHeight", client.subCfg.MainBlockHashForkHeight)
-	plog.Debug("para consensus init parameter", "mainParaSelfConsensusForkHeight", client.subCfg.MainParaSelfConsensusForkHeight)
 
 }
 
@@ -364,7 +359,8 @@ func (client *client) GetStartMainHash(height int64) []byte {
 
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
-	tx.Execer = []byte(types.ExecName(cty.CoinsX))
+	cfg := client.GetAPI().GetConfig()
+	tx.Execer = []byte(cfg.ExecName(cty.CoinsX))
 	tx.To = client.Cfg.Genesis
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}

@@ -11,37 +11,37 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
-func createRawRelayOrderTx(parm *ty.RelayCreate) ([]byte, error) {
+func createRawRelayOrderTx(cfg *types.Chain33Config, parm *ty.RelayCreate) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 	v := *parm
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "Create", &v)
+	return types.CallCreateTx(cfg, cfg.ExecName(ty.RelayX), "Create", &v)
 }
 
-func createRawRelayAcceptTx(parm *ty.RelayAccept) ([]byte, error) {
+func createRawRelayAcceptTx(cfg *types.Chain33Config, parm *ty.RelayAccept) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "Accept", parm)
+	return types.CallCreateTx(cfg, cfg.ExecName(ty.RelayX), "Accept", parm)
 }
 
-func createRawRelayRevokeTx(parm *ty.RelayRevoke) ([]byte, error) {
+func createRawRelayRevokeTx(cfg *types.Chain33Config, parm *ty.RelayRevoke) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "Revoke", parm)
+	return types.CallCreateTx(cfg, cfg.ExecName(ty.RelayX), "Revoke", parm)
 }
 
-func createRawRelayConfirmTx(parm *ty.RelayConfirmTx) ([]byte, error) {
+func createRawRelayConfirmTx(cfg *types.Chain33Config, parm *ty.RelayConfirmTx) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
 
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "ConfirmTx", parm)
+	return types.CallCreateTx(cfg, cfg.ExecName(ty.RelayX), "ConfirmTx", parm)
 }
 
-func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
+func createRawRelaySaveBTCHeadTx(cfg *types.Chain33Config, parm *ty.BtcHeader) ([]byte, error) {
 	if parm == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -59,12 +59,13 @@ func createRawRelaySaveBTCHeadTx(parm *ty.BtcHeader) ([]byte, error) {
 
 	v := &ty.BtcHeaders{}
 	v.BtcHeader = append(v.BtcHeader, head)
-	return types.CallCreateTx(types.ExecName(ty.RelayX), "BtcHeaders", v)
+	return types.CallCreateTx(cfg, cfg.ExecName(ty.RelayX), "BtcHeaders", v)
 }
 
 //CreateRawRelayOrderTx jrpc create raw relay order
 func (c *Jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) error {
-	reply, err := createRawRelayOrderTx(in)
+	cfg := c.cli.GetConfig()
+	reply, err := createRawRelayOrderTx(cfg, in)
 	if err != nil {
 		return err
 	}
@@ -74,7 +75,8 @@ func (c *Jrpc) CreateRawRelayOrderTx(in *ty.RelayCreate, result *interface{}) er
 
 //CreateRawRelayAcceptTx jrpc creat relay accept tx
 func (c *Jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) error {
-	reply, err := createRawRelayAcceptTx(in)
+	cfg := c.cli.GetConfig()
+	reply, err := createRawRelayAcceptTx(cfg, in)
 	if err != nil {
 		return err
 	}
@@ -85,7 +87,8 @@ func (c *Jrpc) CreateRawRelayAcceptTx(in *ty.RelayAccept, result *interface{}) e
 
 //CreateRawRelayRevokeTx jrpc create revoke tx
 func (c *Jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) error {
-	reply, err := createRawRelayRevokeTx(in)
+	cfg := c.cli.GetConfig()
+	reply, err := createRawRelayRevokeTx(cfg, in)
 	if err != nil {
 		return err
 	}
@@ -96,7 +99,8 @@ func (c *Jrpc) CreateRawRelayRevokeTx(in *ty.RelayRevoke, result *interface{}) e
 
 //CreateRawRelayConfirmTx jrpc create confirm tx
 func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{}) error {
-	reply, err := createRawRelayConfirmTx(in)
+	cfg := c.cli.GetConfig()
+	reply, err := createRawRelayConfirmTx(cfg, in)
 	if err != nil {
 		return err
 	}
@@ -107,7 +111,8 @@ func (c *Jrpc) CreateRawRelayConfirmTx(in *ty.RelayConfirmTx, result *interface{
 
 //CreateRawRelaySaveBTCHeadTx jrpc save btc header
 func (c *Jrpc) CreateRawRelaySaveBTCHeadTx(in *ty.BtcHeader, result *interface{}) error {
-	reply, err := createRawRelaySaveBTCHeadTx(in)
+	cfg := c.cli.GetConfig()
+	reply, err := createRawRelaySaveBTCHeadTx(cfg, in)
 	if err != nil {
 		return err
 	}

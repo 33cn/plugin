@@ -19,6 +19,7 @@ import (
 func TestRPCTokenPreCreate(t *testing.T) {
 	// 启动RPCmocker
 	mock33 := testnode.New("", nil)
+	cfg := mock33.GetAPI().GetConfig()
 	defer mock33.Close()
 	mock33.Listen()
 	//precreate
@@ -30,7 +31,7 @@ func TestRPCTokenPreCreate(t *testing.T) {
 	acc = mock33.GetAccount(block.StateHash, mock33.GetHotAddress())
 	assert.Equal(t, acc.Balance, 10000*types.Coin)
 
-	tx := util.CreateManageTx(mock33.GetHotKey(), "token-blacklist", "add", "BTY")
+	tx := util.CreateManageTx(cfg, mock33.GetHotKey(), "token-blacklist", "add", "BTY")
 	reply, err := mock33.GetAPI().SendTx(tx)
 	assert.Nil(t, err)
 	detail, err := mock33.WaitTx(reply.GetMsg())

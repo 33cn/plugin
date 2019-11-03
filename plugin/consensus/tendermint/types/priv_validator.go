@@ -440,7 +440,7 @@ func (pv *PrivValidatorImp) SignHeartbeat(chainID string, heartbeat *Heartbeat) 
 
 // String returns a string representation of the PrivValidatorImp.
 func (pv *PrivValidatorImp) String() string {
-	return Fmt("PrivValidator{%v LH:%v, LR:%v, LS:%v}", pv.GetAddress(), pv.LastHeight, pv.LastRound, pv.LastStep)
+	return Fmt("PrivValidator{%X LH:%v, LR:%v, LS:%v}", pv.GetAddress(), pv.LastHeight, pv.LastRound, pv.LastStep)
 }
 
 // GetLastHeight ...

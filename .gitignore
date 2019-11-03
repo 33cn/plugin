@@ -10,6 +10,7 @@ datadir*
 build/chain33*
 chain33_raft-1
 build/datadir
+build/fork-config
 build/bityuan*
 build/para
 build/cli

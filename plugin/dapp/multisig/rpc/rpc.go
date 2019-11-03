@@ -16,8 +16,8 @@ func (c *Jrpc) MultiSigAccCreateTx(param *mty.MultiSigAccCreate, result *interfa
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigAccCreate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigAccCreate", param)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,8 @@ func (c *Jrpc) MultiSigOwnerOperateTx(param *mty.MultiSigOwnerOperate, result *i
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigOwnerOperate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigOwnerOperate", param)
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,8 @@ func (c *Jrpc) MultiSigAccOperateTx(param *mty.MultiSigAccOperate, result *inter
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigAccOperate", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigAccOperate", param)
 	if err != nil {
 		return err
 	}
@@ -56,7 +58,8 @@ func (c *Jrpc) MultiSigConfirmTx(param *mty.MultiSigConfirmTx, result *interface
 	if param == nil {
 		return types.ErrInvalidParam
 	}
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigConfirmTx", param)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigConfirmTx", param)
 	if err != nil {
 		return err
 	}
@@ -70,7 +73,8 @@ func (c *Jrpc) MultiSigAccTransferInTx(param *mty.MultiSigExecTransferTo, result
 		return types.ErrInvalidParam
 	}
 	v := *param
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", &v)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigExecTransferTo", &v)
 	if err != nil {
 		return err
 	}
@@ -84,7 +88,8 @@ func (c *Jrpc) MultiSigAccTransferOutTx(param *mty.MultiSigExecTransferFrom, res
 		return types.ErrInvalidParam
 	}
 	v := *param
-	data, err := types.CallCreateTx(types.ExecName(mty.MultiSigX), "MultiSigExecTransferFrom", &v)
+	cfg := c.cli.GetConfig()
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(mty.MultiSigX), "MultiSigExecTransferFrom", &v)
 	if err != nil {
 		return err
 	}

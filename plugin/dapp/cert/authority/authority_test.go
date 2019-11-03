@@ -81,8 +81,9 @@ func signtxs(priv crypto.PrivKey, cert []byte) {
 /**
 初始化Author实例和userloader
 */
-func initEnv() error {
-	_, sub := types.InitCfg("./test/chain33.auth.test.toml")
+func initEnv() (*types.Chain33Config, error) {
+	cfg := types.NewChain33Config(types.ReadFile("./test/chain33.auth.test.toml"))
+	sub := cfg.GetSubConfig()
 	var subcfg ct.Authority
 	if sub.Exec["cert"] != nil {
 		types.MustDecode(sub.Exec["cert"], &subcfg)
@@ -94,36 +95,34 @@ func initEnv() error {
 	err := userLoader.Init(subcfg.CryptoPath, subcfg.SignType)
 	if err != nil {
 		fmt.Printf("Init user loader falied -> %v", err)
-		return err
+		return nil, err
 	}
 
 	user, err := userLoader.Get(USERNAME)
 	if err != nil {
 		fmt.Printf("Get user failed")
-		return err
+		return nil, err
 	}
 
 	signtxs(user.Key, user.Cert)
 	if err != nil {
 		fmt.Printf("Init authority failed")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return cfg, nil
 }
 
 /**
 TestCase01 带证书的交易验签
 */
 func TestChckSign(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	if !tx1.CheckSign() {
 		t.Error("check signature failed")
@@ -135,14 +134,12 @@ func TestChckSign(t *testing.T) {
 TestCase10 带证书的多交易验签
 */
 func TestChckSigns(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	for i, tx := range txs {
 		if !tx.CheckSign() {
@@ -156,18 +153,16 @@ func TestChckSigns(t *testing.T) {
 TestCase02 带证书的交易并行验签
 */
 func TestChckSignsPara(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	block := types.Block{}
 	block.Txs = txs
-	if !block.CheckSign() {
+	if !block.CheckSign(cfg) {
 		t.Error("error check txs")
 		return
 	}
@@ -177,14 +172,12 @@ func TestChckSignsPara(t *testing.T) {
 TestCase03 不带证书，公链签名算法验证
 */
 func TestChckSignWithNoneAuth(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	tx14.Sign(types.SECP256K1, privKey)
 	if !tx14.CheckSign() {
@@ -204,14 +197,12 @@ func TestChckSignWithSm2(t *testing.T) {
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
 		Fee:     1000000, Expire: 2, To: address.PubKeyToAddress(privKeysm2.PubKey().Bytes()).String()}
 
-	err = initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	tx15.Sign(ct.AuthSM2, privKeysm2)
 	if !tx15.CheckSign() {
@@ -230,14 +221,12 @@ func TestChckSignWithEcdsa(t *testing.T) {
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
 		Fee:     1000000, Expire: 2, To: address.PubKeyToAddress(privKeyecdsa.PubKey().Bytes()).String()}
 
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	tx16.Sign(ct.AuthECDSA, privKeyecdsa)
 	if !tx16.CheckSign() {
@@ -250,15 +239,13 @@ func TestChckSignWithEcdsa(t *testing.T) {
 TestCase 06 证书检验
 */
 func TestValidateCert(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
 
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	for _, tx := range txs {
 		err = authority.Author.Validate(tx.Signature)
@@ -273,7 +260,7 @@ func TestValidateCert(t *testing.T) {
 Testcase07 noneimpl校验器验证（回滚到未开启证书验证的区块使用）
 */
 func TestValidateTxWithNoneAuth(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
@@ -282,9 +269,7 @@ func TestValidateTxWithNoneAuth(t *testing.T) {
 	noneCertdata.CurHeigth = 0
 	authority.Author.ReloadCert(noneCertdata)
 
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	err = authority.Author.Validate(tx14.Signature)
 	if err != nil {
@@ -297,15 +282,13 @@ func TestValidateTxWithNoneAuth(t *testing.T) {
 Testcase08 重载历史证书
 */
 func TestReloadCert(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
 
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	store := &types.HistoryCertStore{}
 
@@ -321,14 +304,12 @@ func TestReloadCert(t *testing.T) {
 Testcase09 根据高度重载历史证书
 */
 func TestReloadByHeight(t *testing.T) {
-	err := initEnv()
+	cfg, err := initEnv()
 	if err != nil {
 		t.Errorf("init env failed, error:%s", err)
 		return
 	}
-	prev := types.GInt("MinFee")
-	types.SetMinFee(0)
-	defer types.SetMinFee(prev)
+	cfg.SetMinFee(0)
 
 	authority.Author.ReloadCertByHeght(30)
 	if authority.Author.HistoryCertCache.CurHeight != 30 {

@@ -91,8 +91,8 @@ func (h Hash160Address) ToAddress() Address {
 }
 
 // NewAddress xHash生成EVM合约地址
-func NewAddress(txHash []byte) Address {
-	execAddr := address.GetExecAddress(types.ExecName("user.evm.") + BytesToHash(txHash).Hex())
+func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
+	execAddr := address.GetExecAddress(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
 	return Address{addr: execAddr}
 }
 

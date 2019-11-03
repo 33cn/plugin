@@ -49,29 +49,30 @@ func calcTopNVersion(height int64) (version, left int64) {
 	return height / blockNumToUpdateDelegate, height % blockNumToUpdateDelegate
 }
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&DPos{}))
-}
-
 // Init DPos Executor
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
 	}
 
-	drivers.Register(driverName, newDposVote, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newDposVote, cfg.GetDappFork(driverName, "Enable"))
 
 	//读取一下配置项，用于和共识模块一致计算cycle
-	dposDelegateNum = types.Conf("config.consensus.sub.dpos").GInt("delegateNum")
-	dposBlockInterval = types.Conf("config.consensus.sub.dpos").GInt("blockInterval")
-	dposContinueBlockNum = types.Conf("config.consensus.sub.dpos").GInt("continueBlockNum")
-	blockNumToUpdateDelegate = types.Conf("config.consensus.sub.dpos").GInt("blockNumToUpdateDelegate")
-	registTopNHeightLimit = types.Conf("config.consensus.sub.dpos").GInt("registTopNHeightLimit")
-	updateTopNHeightLimit = types.Conf("config.consensus.sub.dpos").GInt("updateTopNHeightLimit")
+	dposDelegateNum = types.Conf(cfg, "config.consensus.sub.dpos").GInt("delegateNum")
+	dposBlockInterval = types.Conf(cfg, "config.consensus.sub.dpos").GInt("blockInterval")
+	dposContinueBlockNum = types.Conf(cfg, "config.consensus.sub.dpos").GInt("continueBlockNum")
+	blockNumToUpdateDelegate = types.Conf(cfg, "config.consensus.sub.dpos").GInt("blockNumToUpdateDelegate")
+	registTopNHeightLimit = types.Conf(cfg, "config.consensus.sub.dpos").GInt("registTopNHeightLimit")
+	updateTopNHeightLimit = types.Conf(cfg, "config.consensus.sub.dpos").GInt("updateTopNHeightLimit")
 	dposCycle = dposDelegateNum * dposBlockInterval * dposContinueBlockNum
 	dposPeriod = dposBlockInterval * dposContinueBlockNum
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&DPos{}))
 }
 
 //DPos 执行器，用于Dpos候选节点注册、投票，VRF信息注册管理等功能

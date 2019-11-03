@@ -54,6 +54,9 @@ func addBindMinerFlags(cmd *cobra.Command) {
 }
 
 func bindMiner(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	bindAddr, _ := cmd.Flags().GetString("bind_addr")
 	originAddr, _ := cmd.Flags().GetString("origin_addr")
 	//c, _ := crypto.New(types.GetSignName(wallet.SignType))
@@ -68,7 +71,7 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	ta.Value = &ty.TicketAction_Tbind{Tbind: tBind}
 	ta.Ty = ty.TicketActionBind
 
-	tx, err := types.CreateFormatTx("ticket", types.Encode(ta))
+	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ta))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

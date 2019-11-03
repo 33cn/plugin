@@ -50,7 +50,7 @@ func InitFund(stateDB dbm.KV, amount int64) {
 		Frozen:  0,
 		Addr:    autonomyAddr,
 	}
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	//accCoin.ExecIssueCoins(autonomyAddr, amount)
 	accCoin.SaveAccount(&accountA)
@@ -251,7 +251,7 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	env.endHeight = opt1.EndBlockHeight
 
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, proposalAmount, account.Frozen)
@@ -265,7 +265,7 @@ func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
 		Ty:    auty.AutonomyActionPropProject,
 		Value: &auty.AutonomyAction_PropProject{PropProject: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -302,17 +302,10 @@ func revokeProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	assert.NotNil(t, set)
 
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
-	// check Project
-	au := &Autonomy{
-		drivers.DriverBase{},
-	}
-	au.SetStateDB(stateDB)
-	au.SetLocalDB(kvdb)
-	//action := newAction(au, &types.Transaction{}, 0)
 }
 
 func revokeProposalProjectTx(parm *auty.RevokeProposalProject) (*types.Transaction, error) {
@@ -323,7 +316,7 @@ func revokeProposalProjectTx(parm *auty.RevokeProposalProject) (*types.Transacti
 		Ty:    auty.AutonomyActionRvkPropProject,
 		Value: &auty.AutonomyAction_RvkPropProject{RvkPropProject: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
@@ -429,7 +422,7 @@ func voteProposalProjectTx(parm *auty.VoteProposalProject) (*types.Transaction, 
 		Ty:    auty.AutonomyActionVotePropProject,
 		Value: &auty.AutonomyAction_VotePropProject{VotePropProject: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID string) {
@@ -443,7 +436,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
 	// balance
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -462,6 +455,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 
 func pubVoteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
@@ -560,7 +554,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	assert.Equal(t, int32(auty.AutonomyStatusTmintPropProject), cur.Status)
 	assert.Equal(t, AddrA, cur.Address)
 	// balance
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
@@ -586,11 +580,12 @@ func pubVoteProposalProjectTx(parm *auty.PubVoteProposalProject) (*types.Transac
 		Ty:    auty.AutonomyActionPubVotePropProject,
 		Value: &auty.AutonomyAction_PubVotePropProject{PubVotePropProject: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
@@ -638,18 +633,10 @@ func terminateProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, s
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
-	accCoin := account.NewCoinsAccount()
+	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
-
-	// check Project
-	au := &Autonomy{
-		drivers.DriverBase{},
-	}
-	au.SetStateDB(stateDB)
-	au.SetLocalDB(kvdb)
-	//action := newAction(au, &types.Transaction{}, 0)
 }
 
 func terminateProposalProjectTx(parm *auty.TerminateProposalProject) (*types.Transaction, error) {
@@ -660,7 +647,7 @@ func terminateProposalProjectTx(parm *auty.TerminateProposalProject) (*types.Tra
 		Ty:    auty.AutonomyActionTmintPropProject,
 		Value: &auty.AutonomyAction_TmintPropProject{TmintPropProject: parm},
 	}
-	return types.CreateFormatTx(types.ExecName(auty.AutonomyX), types.Encode(val))
+	return types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), types.Encode(val))
 }
 
 func TestGetProjectReceiptLog(t *testing.T) {

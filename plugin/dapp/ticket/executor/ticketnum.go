@@ -97,8 +97,9 @@ func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickett
 		tlog.Error("getTxActions", "blockHash", blockHash, "blockNum", blockNum, "err", err)
 		return txActions, err
 	}
+	cfg := ticket.GetAPI().GetConfig()
 	for _, block := range blockDetails.Items {
-		tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", common.ToHex(block.Block.Hash()))
+		tlog.Debug("getTxActions", "blockHeight", block.Block.Height, "blockhash", common.ToHex(block.Block.Hash(cfg)))
 		ticketAction, err := ticket.getMinerTx(block.Block)
 		if err != nil {
 			return txActions, err

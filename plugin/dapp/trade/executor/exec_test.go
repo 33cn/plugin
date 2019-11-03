@@ -7,7 +7,10 @@ package executor
 import (
 	"testing"
 
+	"strings"
+
 	"github.com/33cn/chain33/account"
+	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -16,6 +19,7 @@ import (
 	"github.com/33cn/chain33/util"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type execEnv struct {
@@ -50,7 +54,12 @@ var (
 		[]byte("1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"),
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
+	chain33TestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 )
+
+func init() {
+	Init(pty.TradeX, chain33TestCfg, nil)
+}
 
 func TestTrade_Exec_SellLimit(t *testing.T) {
 	sellArgs := &orderArgs{100, 2, 2, 100}
@@ -71,21 +80,24 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradePriceX),
+		chain33TestCfg.GetDappFork("trade", pty.ForkTradePriceX),
 		2,
 		1539918074,
 		"hash",
 	}
 
 	_, ldb, kvdb := util.CreateTestDB()
-	accB := account.NewCoinsAccount()
+	accB := account.NewCoinsAccount(chain33TestCfg)
 	accB.SetDB(kvdb)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, Symbol, kvdb)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 	driver := newTrade()
+	driver.SetAPI(api)
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(kvdb)
 	driver.SetLocalDB(kvdb)
@@ -101,7 +113,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 		PriceExec:         "coins",
 		PriceSymbol:       "bty",
 	}
-	tx, _ := pty.CreateRawTradeSellTx(sell)
+	tx, _ := pty.CreateRawTradeSellTx(chain33TestCfg, sell)
 	tx, _ = signTx(tx, PrivKeyA)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -142,7 +154,7 @@ func TestTrade_Exec_SellLimit(t *testing.T) {
 		BoardlotCnt: buyArgs.total,
 		Fee:         0,
 	}
-	tx, _ = pty.CreateRawTradeBuyTx(buy)
+	tx, _ = pty.CreateRawTradeBuyTx(chain33TestCfg, buy)
 	tx, _ = signTx(tx, PrivKeyB)
 	receipt, err = driver.Exec(tx, env.index)
 	if err != nil {
@@ -212,7 +224,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 
 	env := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradeAssetX),
+		-1,
 		2,
 		1539918074,
 		"hash",
@@ -221,14 +233,17 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, ldb, kvdb := util.CreateTestDB()
 
-	accB, _ := account.NewAccountDB(AssetExecToken, SymbolA, stateDB)
+	accB, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, SymbolA, stateDB)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 	driver := newTrade()
+	driver.SetAPI(api)
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(stateDB)
 	driver.SetLocalDB(kvdb)
@@ -244,7 +259,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 		PriceExec:         AssetExecToken,
 		PriceSymbol:       SymbolA,
 	}
-	tx, _ := pty.CreateRawTradeBuyLimitTx(buy)
+	tx, _ := pty.CreateRawTradeBuyLimitTx(chain33TestCfg, buy)
 	tx, _ = signTx(tx, PrivKeyB)
 
 	receipt, err := driver.Exec(tx, env.index)
@@ -284,7 +299,7 @@ func TestTrade_Exec_BuyLimit(t *testing.T) {
 		BoardlotCnt: sellArgs.total,
 		Fee:         0,
 	}
-	tx, _ = pty.CreateRawTradeSellMarketTx(sell)
+	tx, _ = pty.CreateRawTradeSellMarketTx(chain33TestCfg, sell)
 	tx, _ = signTx(tx, PrivKeyA)
 	receipt, err = driver.Exec(tx, env.index)
 	if err != nil {
@@ -345,10 +360,10 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 }
 
 func TestTradeSellFixAssetDB(t *testing.T) {
-	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeAssetX, int64(10))
-	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeIDX, int64(10))
-	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradeFixAssetDBX, int64(20))
-	types.SetDappFork(types.GetTitle(), pty.TradeX, pty.ForkTradePriceX, int64(30))
+	chain33TestCfg.SetDappFork(pty.TradeX, pty.ForkTradeAssetX, int64(10))
+	chain33TestCfg.SetDappFork(pty.TradeX, pty.ForkTradeIDX, int64(10))
+	chain33TestCfg.SetDappFork(pty.TradeX, pty.ForkTradeFixAssetDBX, int64(20))
+	chain33TestCfg.SetDappFork(pty.TradeX, pty.ForkTradePriceX, int64(30))
 
 	sellArgs := &orderArgs{100, 2, 2, 100}
 	buyArgs := &orderArgs{total: 5}
@@ -368,7 +383,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 
 	envA := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradeAssetX) - 1,
+		chain33TestCfg.GetDappFork("trade", pty.ForkTradeAssetX) - 1,
 		2,
 		1539918074,
 		"hash",
@@ -376,7 +391,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 
 	envB := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradeFixAssetDBX) - 1,
+		chain33TestCfg.GetDappFork("trade", pty.ForkTradeFixAssetDBX) - 1,
 		2,
 		1539918074,
 		"hash",
@@ -384,21 +399,24 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 
 	envC := execEnv{
 		1539918074,
-		types.GetDappFork("trade", pty.ForkTradeFixAssetDBX),
+		chain33TestCfg.GetDappFork("trade", pty.ForkTradeFixAssetDBX),
 		2,
 		1539918074,
 		"hash",
 	}
 
 	_, ldb, kvdb := util.CreateTestDB()
-	accB := account.NewCoinsAccount()
+	accB := account.NewCoinsAccount(chain33TestCfg)
 	accB.SetDB(kvdb)
 	accB.SaveExecAccount(address.ExecAddress("trade"), &accountB)
 
-	accA, _ := account.NewAccountDB(AssetExecToken, Symbol, kvdb)
+	accA, _ := account.NewAccountDB(chain33TestCfg, AssetExecToken, Symbol, kvdb)
 	accA.SaveExecAccount(address.ExecAddress("trade"), &accountA)
 
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 	driver := newTrade()
+	driver.SetAPI(api)
 	driver.SetEnv(envA.blockHeight, envA.blockTime, envA.difficulty)
 	driver.SetStateDB(kvdb)
 	driver.SetLocalDB(kvdb)
@@ -412,7 +430,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 		Fee:               0,
 		//AssetExec:         AssetExecToken,
 	}
-	tx, _ := pty.CreateRawTradeSellTx(sell)
+	tx, _ := pty.CreateRawTradeSellTx(chain33TestCfg, sell)
 	tx, _ = signTx(tx, PrivKeyA)
 
 	receipt, err := driver.Exec(tx, envA.index)
@@ -454,7 +472,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 		BoardlotCnt: buyArgs.total,
 		Fee:         0,
 	}
-	tx, _ = pty.CreateRawTradeBuyTx(buyB)
+	tx, _ = pty.CreateRawTradeBuyTx(chain33TestCfg, buyB)
 	tx, _ = signTx(tx, PrivKeyB)
 	receipt, err = driver.Exec(tx, envB.index)
 	assert.Equal(t, types.ErrNoBalance, err)
@@ -465,7 +483,7 @@ func TestTradeSellFixAssetDB(t *testing.T) {
 		BoardlotCnt: buyArgs.total,
 		Fee:         0,
 	}
-	tx, _ = pty.CreateRawTradeBuyTx(buy)
+	tx, _ = pty.CreateRawTradeBuyTx(chain33TestCfg, buy)
 	tx, _ = signTx(tx, PrivKeyB)
 	receipt, err = driver.Exec(tx, envC.index)
 	if err != nil {

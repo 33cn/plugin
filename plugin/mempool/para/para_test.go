@@ -33,13 +33,14 @@ func TestParaNodeMempool(t *testing.T) {
 	main := testnode.New("", nil)
 	main.Listen()
 
-	cfg, sub := types.InitCfgString(paratest.DefaultConfig)
-	testnode.ModifyParaClient(sub, main.GetCfg().RPC.GrpcBindAddr)
+	chainCfg := types.NewChain33ConfigNoInit(paratest.DefaultConfig)
+	testnode.ModifyParaClient(chainCfg, main.GetCfg().RPC.GrpcBindAddr)
+	cfg := chainCfg.GetModuleConfig()
 	cfg.Mempool.Name = "para"
-	para := testnode.NewWithConfig(cfg, sub, nil)
+	para := testnode.NewWithConfig(chainCfg, nil)
 	para.Listen()
 	mockpara := paratest.NewParaNode(main, para)
-	tx := util.CreateTxWithExecer(mockpara.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx := util.CreateTxWithExecer(chainCfg, mockpara.Para.GetGenesisKey(), "user.p.guodun.none")
 	hash := mockpara.Para.SendTx(tx)
 	assert.Equal(t, tx.Hash(), hash)
 

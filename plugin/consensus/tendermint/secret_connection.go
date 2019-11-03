@@ -133,7 +133,6 @@ func (sc *SecretConnection) Write(data []byte) (n int, err error) {
 		// encrypt the frame
 		var sealedFrame = make([]byte, sealedFrameSize)
 		secretbox.Seal(sealedFrame[:0], frame, sc.sendNonce, sc.shrSecret)
-		// fmt.Printf("secretbox.Seal(sealed:%X,sendNonce:%X,shrSecret:%X\n", sealedFrame, sc.sendNonce, sc.shrSecret)
 		incr2Nonce(sc.sendNonce)
 		// end encryption
 
@@ -162,7 +161,6 @@ func (sc *SecretConnection) Read(data []byte) (n int, err error) {
 
 	// decrypt the frame
 	var frame = make([]byte, totalFrameSize)
-	// fmt.Printf("secretbox.Open(sealed:%X,recvNonce:%X,shrSecret:%X\n", sealedFrame, sc.recvNonce, sc.shrSecret)
 	_, ok := secretbox.Open(frame[:0], sealedFrame, sc.recvNonce, sc.shrSecret)
 	if !ok {
 		return n, errors.New("Failed to decrypt SecretConnection")
@@ -298,9 +296,7 @@ func shareAuthSignature(sc io.ReadWriter, pubKey crypto.PubKey, signature crypto
 			if err2 != nil {
 				return
 			}
-			//n := int(0) // not used.
-			//recvMsg = wire.ReadBinary(authSigMessage{}, bytes.NewBuffer(readBuffer), authSigMsgSize, &n, &err2).(authSigMessage)
-			//secret.Info("shareAuthSignature", "readBuffer", readBuffer)
+
 			recvMsg.Key, err2 = types.ConsensusCrypto.PubKeyFromBytes(readBuffer[:32])
 			if err2 != nil {
 				return

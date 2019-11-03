@@ -21,7 +21,23 @@ var driverName = ptypes.JsX
 var basevm *otto.Otto
 var codecache *lru.Cache
 
-func init() {
+var isinit int64
+
+//Init 插件初始化
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	if atomic.CompareAndSwapInt64(&isinit, 0, 1) {
+		//最新的64个code做cache
+		var err error
+		codecache, err = lru.New(512)
+		if err != nil {
+			panic(err)
+		}
+		drivers.Register(cfg, GetName(), newjs, 0)
+	}
+	InitExecType()
+}
+
+func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&js{}))
 	basevm = otto.New()
@@ -31,21 +47,6 @@ func init() {
 	}
 	execaddressFunc(basevm)
 	sha256Func(basevm)
-}
-
-var isinit int64
-
-//Init 插件初始化
-func Init(name string, sub []byte) {
-	if atomic.CompareAndSwapInt64(&isinit, 0, 1) {
-		//最新的64个code做cache
-		var err error
-		codecache, err = lru.New(512)
-		if err != nil {
-			panic(err)
-		}
-		drivers.Register(GetName(), newjs, 0)
-	}
 }
 
 type js struct {
@@ -80,7 +81,8 @@ func (u *js) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool 
 	if othertx == nil {
 		return false
 	}
-	exec := types.GetParaExec(othertx.Execer)
+	cfg := u.GetAPI().GetConfig()
+	exec := cfg.GetParaExec(othertx.Execer)
 	if exec == nil || len(bytes.TrimSpace(exec)) == 0 {
 		return false
 	}
@@ -191,7 +193,8 @@ func (u *js) getContext(tx *types.Transaction, index int64) *blockContext {
 }
 
 func (u *js) statedbFunc(vm *otto.Otto, name string) {
-	prefix, _ := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	prefix, _ := calcAllPrefix(cfg, name)
 	vm.Set("getstatedb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
@@ -213,7 +216,8 @@ func (u *js) statedbFunc(vm *otto.Otto, name string) {
 }
 
 func (u *js) localdbFunc(vm *otto.Otto, name string) {
-	_, prefix := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	_, prefix := calcAllPrefix(cfg, name)
 	vm.Set("getlocaldb", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()
 		if err != nil {
@@ -235,8 +239,9 @@ func (u *js) localdbFunc(vm *otto.Otto, name string) {
 }
 
 func (u *js) execnameFunc(vm *otto.Otto, name string) {
+	cfg := u.GetAPI().GetConfig()
 	vm.Set("execname", func(call otto.FunctionCall) otto.Value {
-		return okReturn(vm, types.ExecName("user."+ptypes.JsX+"."+name))
+		return okReturn(vm, cfg.ExecName("user."+ptypes.JsX+"."+name))
 	})
 }
 
@@ -258,7 +263,8 @@ func (u *js) randnumFunc(vm *otto.Otto, name string) {
 
 func (u *js) listdbFunc(vm *otto.Otto, name string) {
 	//List(prefix, key []byte, count, direction int32) ([][]byte, error)
-	_, plocal := calcAllPrefix(name)
+	cfg := u.GetAPI().GetConfig()
+	_, plocal := calcAllPrefix(cfg, name)
 	vm.Set("listdb", func(call otto.FunctionCall) otto.Value {
 		prefix, err := call.Argument(0).ToString()
 		if err != nil {
@@ -382,7 +388,8 @@ func (u *js) Allow(tx *types.Transaction, index int) error {
 	//增加新的规则:
 	//主链: user.jsvm.xxx  执行 jsvm 合约
 	//平行链: user.p.guodun.user.jsvm.xxx 执行 jsvm 合约
-	exec := types.GetParaExec(tx.Execer)
+	cfg := u.GetAPI().GetConfig()
+	exec := cfg.GetParaExec(tx.Execer)
 	if u.AllowIsUserDot2(exec) {
 		return nil
 	}

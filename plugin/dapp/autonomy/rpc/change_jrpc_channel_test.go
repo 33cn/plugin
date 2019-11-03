@@ -24,7 +24,7 @@ func testPropChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "PropChange",
 		Payload:    payLoad,
 	}
@@ -39,7 +39,7 @@ func testRevokeProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "RvkPropChange",
 		Payload:    payLoad,
 	}
@@ -54,7 +54,7 @@ func testVoteProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) erro
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "VotePropChange",
 		Payload:    payLoad,
 	}
@@ -69,7 +69,7 @@ func testTerminateProposalChangeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient)
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "TmintPropChange",
 		Payload:    payLoad,
 	}

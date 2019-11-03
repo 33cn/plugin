@@ -19,9 +19,17 @@ var (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(HashlockX))
-	types.RegistorExecutor(HashlockX, NewType())
-	types.RegisterDappFork(HashlockX, "Enable", 0)
-	types.RegisterDappFork(HashlockX, ForkBadRepeatSecretX, 2715575)
+	types.RegFork(HashlockX, InitFork)
+	types.RegExec(HashlockX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(HashlockX, "Enable", 0)
+	cfg.RegisterDappFork(HashlockX, ForkBadRepeatSecretX, 2715575)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(HashlockX, NewType(cfg))
 }
 
 // HashlockType def
@@ -30,9 +38,10 @@ type HashlockType struct {
 }
 
 // NewType method
-func NewType() *HashlockType {
+func NewType(cfg *types.Chain33Config) *HashlockType {
 	c := &HashlockType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -50,6 +59,7 @@ func (hashlock *HashlockType) GetPayload() types.Message {
 func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	hlog.Debug("hashlock.CreateTx", "action", action)
 
+	cfg := hashlock.GetConfig()
 	if action == "HashlockLock" {
 		var param HashlockLockTx
 		err := json.Unmarshal(message, &param)
@@ -57,7 +67,7 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 			hlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawHashlockLockTx(&param)
+		return CreateRawHashlockLockTx(cfg, &param)
 	} else if action == "HashlockUnlock" {
 		var param HashlockUnlockTx
 		err := json.Unmarshal(message, &param)
@@ -65,7 +75,7 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 			hlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawHashlockUnlockTx(&param)
+		return CreateRawHashlockUnlockTx(cfg, &param)
 	} else if action == "HashlockSend" {
 		var param HashlockSendTx
 		err := json.Unmarshal(message, &param)
@@ -73,7 +83,7 @@ func (hashlock *HashlockType) CreateTx(action string, message json.RawMessage) (
 			hlog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawHashlockSendTx(&param)
+		return CreateRawHashlockSendTx(cfg, &param)
 	}
 	return nil, types.ErrNotSupport
 
@@ -94,7 +104,7 @@ func (hashlock *HashlockType) GetLogMap() map[int64]*types.LogInfo {
 }
 
 // CreateRawHashlockLockTx method
-func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
+func CreateRawHashlockLockTx(cfg *types.Chain33Config, parm *HashlockLockTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockLockTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -112,12 +122,12 @@ func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
 		Value: &HashlockAction_Hlock{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(HashlockX)),
+		Execer:  []byte(cfg.ExecName(HashlockX)),
 		Payload: types.Encode(lock),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(HashlockX)),
+		To:      address.ExecAddress(cfg.ExecName(HashlockX)),
 	}
-	tx, err := types.FormatTx(types.ExecName(HashlockX), tx)
+	tx, err := types.FormatTx(cfg, cfg.ExecName(HashlockX), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +135,7 @@ func CreateRawHashlockLockTx(parm *HashlockLockTx) (*types.Transaction, error) {
 }
 
 // CreateRawHashlockUnlockTx method
-func CreateRawHashlockUnlockTx(parm *HashlockUnlockTx) (*types.Transaction, error) {
+func CreateRawHashlockUnlockTx(cfg *types.Chain33Config, parm *HashlockUnlockTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockUnlockTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -139,13 +149,13 @@ func CreateRawHashlockUnlockTx(parm *HashlockUnlockTx) (*types.Transaction, erro
 		Value: &HashlockAction_Hunlock{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(HashlockX)),
+		Execer:  []byte(cfg.ExecName(HashlockX)),
 		Payload: types.Encode(unlock),
 		Fee:     parm.Fee,
 		To:      address.ExecAddress(HashlockX),
 	}
 
-	tx, err := types.FormatTx(types.ExecName(HashlockX), tx)
+	tx, err := types.FormatTx(cfg, cfg.ExecName(HashlockX), tx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +164,7 @@ func CreateRawHashlockUnlockTx(parm *HashlockUnlockTx) (*types.Transaction, erro
 }
 
 // CreateRawHashlockSendTx method
-func CreateRawHashlockSendTx(parm *HashlockSendTx) (*types.Transaction, error) {
+func CreateRawHashlockSendTx(cfg *types.Chain33Config, parm *HashlockSendTx) (*types.Transaction, error) {
 	if parm == nil {
 		hlog.Error("CreateRawHashlockSendTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -173,7 +183,7 @@ func CreateRawHashlockSendTx(parm *HashlockSendTx) (*types.Transaction, error) {
 		Fee:     parm.Fee,
 		To:      address.ExecAddress(HashlockX),
 	}
-	tx, err := types.FormatTx(types.ExecName(HashlockX), tx)
+	tx, err := types.FormatTx(cfg, cfg.ExecName(HashlockX), tx)
 	if err != nil {
 		return nil, err
 	}
