@@ -49,11 +49,17 @@ func addCollateralizeCreateFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeCreate(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	balance, _ := cmd.Flags().GetUint64("balance")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeCreate",
 		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%d}", balance)),
 	}
@@ -82,12 +88,18 @@ func addCollateralizeBorrowFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeBorrow(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	value, _ := cmd.Flags().GetUint64("value")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeBorrow",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"value\":%d}", collateralizeID, value)),
 	}
@@ -118,13 +130,19 @@ func addCollateralizeAppendFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeAppend(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	recordID, _ := cmd.Flags().GetString("recordID")
 	value, _ := cmd.Flags().GetUint64("value")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeAppend",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"recordID\":\"%s\", \"value\":%d}", collateralizeID, recordID, value)),
 	}
@@ -153,12 +171,18 @@ func addCollateralizeRepayFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeRepay(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	recordID, _ := cmd.Flags().GetString("recordID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeRepay",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"recordID\":\"%s\"}", collateralizeID, recordID)),
 	}
@@ -187,12 +211,18 @@ func addCollateralizePriceFeedFlags(cmd *cobra.Command) {
 }
 
 func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	price, _ := cmd.Flags().GetFloat32("price")
 	volume, _ := cmd.Flags().GetUint64("volume")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizePriceFeed",
 		Payload:    []byte(fmt.Sprintf("{\"price\":[ %f ], \"volume\":[ %d ]}", price, volume)),
 	}
@@ -219,11 +249,17 @@ func addCollateralizeCloseFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeClose(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeClose",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\"}", collateralizeID)),
 	}
@@ -252,6 +288,12 @@ func addCollateralizeManageFlags(cmd *cobra.Command) {
 }
 
 func CollateralizeManage(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	debtCeiling, _ := cmd.Flags().GetUint64("debtCeiling")
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
@@ -259,7 +301,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	period, _ := cmd.Flags().GetUint64("period")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.CollateralizeX),
+		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
 		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period)),

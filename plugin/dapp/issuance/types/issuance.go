@@ -19,8 +19,16 @@ var (
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(IssuanceX))
-	types.RegistorExecutor(IssuanceX, NewType())
-	types.RegisterDappFork(IssuanceX, "Enable", 0)
+	types.RegFork(IssuanceX, InitFork)
+	types.RegExec(IssuanceX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(IssuanceX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(IssuanceX, NewType(cfg))
 }
 
 // IssuanceType def
@@ -29,19 +37,20 @@ type IssuanceType struct {
 }
 
 // NewType method
-func NewType() *IssuanceType {
+func NewType(cfg *types.Chain33Config) *IssuanceType {
 	c := &IssuanceType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
 // GetName 获取执行器名称
-func (Issuance *IssuanceType) GetName() string {
+func (issuance *IssuanceType) GetName() string {
 	return IssuanceX
 }
 
 // GetLogMap method
-func (Issuance *IssuanceType) GetLogMap() map[int64]*types.LogInfo {
+func (issuance *IssuanceType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogIssuanceCreate: {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceCreate"},
 		TyLogIssuanceDebt:    {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceDebt"},
@@ -52,13 +61,14 @@ func (Issuance *IssuanceType) GetLogMap() map[int64]*types.LogInfo {
 }
 
 // GetPayload method
-func (Issuance *IssuanceType) GetPayload() types.Message {
+func (issuance *IssuanceType) GetPayload() types.Message {
 	return &IssuanceAction{}
 }
 
 // CreateTx method
-func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+func (issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	llog.Debug("Issuance.CreateTx", "action", action)
+	cfg := issuance.GetConfig()
 
 	if action == "IssuanceCreate" {
 		var param IssuanceCreateTx
@@ -67,7 +77,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceCreateTx(&param)
+		return CreateRawIssuanceCreateTx(cfg, &param)
 	} else if action == "IssuanceDebt" {
 		var param IssuanceDebtTx
 		err := json.Unmarshal(message, &param)
@@ -75,7 +85,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceDebtTx(&param)
+		return CreateRawIssuanceDebtTx(cfg, &param)
 	} else if action == "IssuanceRepay" {
 		var param IssuanceRepayTx
 		err := json.Unmarshal(message, &param)
@@ -83,7 +93,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceRepayTx(&param)
+		return CreateRawIssuanceRepayTx(cfg, &param)
 	} else if action == "IssuancePriceFeed" {
 		var param IssuanceFeedTx
 		err := json.Unmarshal(message, &param)
@@ -91,7 +101,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceFeedTx(&param)
+		return CreateRawIssuanceFeedTx(cfg, &param)
 	} else if action == "IssuanceClose" {
 		var param IssuanceCloseTx
 		err := json.Unmarshal(message, &param)
@@ -99,7 +109,7 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceCloseTx(&param)
+		return CreateRawIssuanceCloseTx(cfg, &param)
 	} else if action == "IssuanceManage" {
 		var param IssuanceManageTx
 		err := json.Unmarshal(message, &param)
@@ -107,14 +117,14 @@ func (Issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawIssuanceManageTx(&param)
+		return CreateRawIssuanceManageTx(cfg, &param)
 	} else {
 		return nil, types.ErrNotSupport
 	}
 }
 
 // GetTypeMap method
-func (Issuance IssuanceType) GetTypeMap() map[string]int32 {
+func (issuance IssuanceType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create": IssuanceActionCreate,
 		"Debt": IssuanceActionDebt,
@@ -126,7 +136,7 @@ func (Issuance IssuanceType) GetTypeMap() map[string]int32 {
 }
 
 // CreateRawIssuanceCreateTx method
-func CreateRawIssuanceCreateTx(parm *IssuanceCreateTx) (*types.Transaction, error) {
+func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuanceCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -140,13 +150,13 @@ func CreateRawIssuanceCreateTx(parm *IssuanceCreateTx) (*types.Transaction, erro
 		Value: &IssuanceAction_Create{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(create),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +164,7 @@ func CreateRawIssuanceCreateTx(parm *IssuanceCreateTx) (*types.Transaction, erro
 }
 
 // CreateRawIssuanceDebtTx method
-func CreateRawIssuanceDebtTx(parm *IssuanceDebtTx) (*types.Transaction, error) {
+func CreateRawIssuanceDebtTx(cfg *types.Chain33Config, parm *IssuanceDebtTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuanceBorrowTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -169,13 +179,13 @@ func CreateRawIssuanceDebtTx(parm *IssuanceDebtTx) (*types.Transaction, error) {
 		Value: &IssuanceAction_Debt{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(debt),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +193,7 @@ func CreateRawIssuanceDebtTx(parm *IssuanceDebtTx) (*types.Transaction, error) {
 }
 
 // CreateRawIssuanceRepayTx method
-func CreateRawIssuanceRepayTx(parm *IssuanceRepayTx) (*types.Transaction, error) {
+func CreateRawIssuanceRepayTx(cfg *types.Chain33Config, parm *IssuanceRepayTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuanceRepayTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -198,13 +208,13 @@ func CreateRawIssuanceRepayTx(parm *IssuanceRepayTx) (*types.Transaction, error)
 		Value: &IssuanceAction_Repay{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(repay),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +222,7 @@ func CreateRawIssuanceRepayTx(parm *IssuanceRepayTx) (*types.Transaction, error)
 }
 
 // CreateRawIssuanceFeedTx method
-func CreateRawIssuanceFeedTx(parm *IssuanceFeedTx) (*types.Transaction, error) {
+func CreateRawIssuanceFeedTx(cfg *types.Chain33Config, parm *IssuanceFeedTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuancePriceFeedTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -227,13 +237,13 @@ func CreateRawIssuanceFeedTx(parm *IssuanceFeedTx) (*types.Transaction, error) {
 		Value: &IssuanceAction_Feed{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(feed),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +251,7 @@ func CreateRawIssuanceFeedTx(parm *IssuanceFeedTx) (*types.Transaction, error) {
 }
 
 // CreateRawIssuanceCloseTx method
-func CreateRawIssuanceCloseTx(parm *IssuanceCloseTx) (*types.Transaction, error) {
+func CreateRawIssuanceCloseTx(cfg *types.Chain33Config, parm *IssuanceCloseTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuanceCloseTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -255,14 +265,14 @@ func CreateRawIssuanceCloseTx(parm *IssuanceCloseTx) (*types.Transaction, error)
 		Value: &IssuanceAction_Close{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(close),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
 
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +280,7 @@ func CreateRawIssuanceCloseTx(parm *IssuanceCloseTx) (*types.Transaction, error)
 }
 
 // CreateRawIssuanceManageTx method
-func CreateRawIssuanceManageTx(parm *IssuanceManageTx) (*types.Transaction, error) {
+func CreateRawIssuanceManageTx(cfg *types.Chain33Config, parm *IssuanceManageTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawIssuanceManageTx", "parm", parm)
 		return nil, types.ErrInvalidParam
@@ -283,14 +293,14 @@ func CreateRawIssuanceManageTx(parm *IssuanceManageTx) (*types.Transaction, erro
 		Value: &IssuanceAction_Manage{v},
 	}
 	tx := &types.Transaction{
-		Execer:  []byte(types.ExecName(IssuanceX)),
+		Execer:  []byte(cfg.ExecName(IssuanceX)),
 		Payload: types.Encode(manage),
 		Fee:     parm.Fee,
-		To:      address.ExecAddress(types.ExecName(IssuanceX)),
+		To:      address.ExecAddress(cfg.ExecName(IssuanceX)),
 	}
 
-	name := types.ExecName(IssuanceX)
-	tx, err := types.FormatTx(name, tx)
+	name := cfg.ExecName(IssuanceX)
+	tx, err := types.FormatTx(cfg, name, tx)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ import (
 var clog = log.New("module", "execs.issuance")
 var driverName = pty.IssuanceX
 
-func init() {
+func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Issuance{}))
 }
@@ -26,7 +26,7 @@ type subConfig struct {
 var cfg subConfig
 
 // Init issuance
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
@@ -34,7 +34,8 @@ func Init(name string, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &cfg)
 	}
-	drivers.Register(driverName, newIssuance, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newIssuance, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
 // GetName for Issuance
@@ -170,7 +171,8 @@ func (c *Issuance) CheckReceiptExecOk() bool {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (c *Issuance) ExecutorOrder() int64 {
-	if types.IsFork(c.GetHeight(), "ForkLocalDBAccess") {
+	cfg := c.GetAPI().GetConfig()
+	if cfg.IsFork(c.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
 	return c.DriverBase.ExecutorOrder()

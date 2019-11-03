@@ -14,7 +14,7 @@ import (
 var clog = log.New("module", "execs.collateralize")
 var driverName = pty.CollateralizeX
 
-func init() {
+func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Collateralize{}))
 }
@@ -26,7 +26,7 @@ type subConfig struct {
 var cfg subConfig
 
 // Init collateralize
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
@@ -34,7 +34,8 @@ func Init(name string, sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &cfg)
 	}
-	drivers.Register(driverName, newCollateralize, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newCollateralize, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
 // GetName for Collateralize
@@ -170,7 +171,8 @@ func (c *Collateralize) CheckReceiptExecOk() bool {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (c *Collateralize) ExecutorOrder() int64 {
-	if types.IsFork(c.GetHeight(), "ForkLocalDBAccess") {
+	cfg := c.GetAPI().GetConfig()
+	if cfg.IsFork(c.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
 	return c.DriverBase.ExecutorOrder()
