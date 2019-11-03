@@ -53,16 +53,6 @@ var (
 	msgQueueSize = 1000
 )
 
-// internally generated messages which may update the state
-type timeoutInfo struct {
-	Duration time.Duration `json:"duration"`
-	State    int           `json:"state"`
-}
-
-func (ti *timeoutInfo) String() string {
-	return fmt.Sprintf("%v", ti.Duration)
-}
-
 // ConsensusState handles execution of the consensus algorithm.
 type ConsensusState struct {
 	// config details
@@ -78,7 +68,7 @@ type ConsensusState struct {
 	// msgs from ourself, or by timeouts
 	peerMsgQueue     chan MsgInfo
 	internalMsgQueue chan MsgInfo
-	timeoutTicker    TimeoutTicker
+	timer            *time.Timer
 
 	broadcastChannel chan<- MsgInfo
 	ourID            ID
@@ -120,7 +110,6 @@ func NewConsensusState(client *Client, valMgr ValidatorMgr) *ConsensusState {
 		client:           client,
 		peerMsgQueue:     make(chan MsgInfo, msgQueueSize),
 		internalMsgQueue: make(chan MsgInfo, msgQueueSize),
-		timeoutTicker:    NewTimeoutTicker(),
 
 		Quit:             make(chan struct{}),
 		dposState:        InitStateObj,
@@ -184,55 +173,35 @@ func (cs *ConsensusState) SetPrivValidator(priv ttypes.PrivValidator, index int)
 	cs.privValidatorIndex = index
 }
 
-// SetTimeoutTicker sets the local timer. It may be useful to overwrite for testing.
-//func (cs *ConsensusState) SetTimeoutTicker(timeoutTicker TimeoutTicker) {
-//	cs.mtx.Lock()
-//	defer cs.mtx.Unlock()
-//	cs.timeoutTicker = timeoutTicker
-//}
-
 // Start It start first time starts the timeout receive routines.
 func (cs *ConsensusState) Start() {
 	if atomic.CompareAndSwapUint32(&cs.started, 0, 1) {
 		if atomic.LoadUint32(&cs.stopped) == 1 {
 			dposlog.Error("ConsensusState already stoped")
 		}
-		cs.timeoutTicker.Start()
 
 		// now start the receiveRoutine
 		go cs.receiveRoutine()
-
-		// schedule the first round!
-		cs.scheduleDPosTimeout(time.Second*3, InitStateType)
 	}
 }
 
 // Stop timer and receive routine
 func (cs *ConsensusState) Stop() {
-	cs.timeoutTicker.Stop()
 	cs.Quit <- struct{}{}
 }
 
-// Attempt to schedule a timeout (by sending timeoutInfo on the tickChan)
-func (cs *ConsensusState) scheduleDPosTimeout(duration time.Duration, stateType int) {
-	cs.timeoutTicker.ScheduleTimeout(timeoutInfo{Duration: duration, State: stateType})
+// Attempt to reset the timer
+func (cs *ConsensusState) resetTimer(duration time.Duration, stateType int) {
+	dposlog.Info("set timer", "duration", duration, "state", StateTypeMapping[stateType])
+	if !cs.timer.Stop() {
+		select {
+		case <-cs.timer.C:
+		default:
+		}
+	}
+	cs.timer.Reset(duration)
 }
 
-// send a msg into the receiveRoutine regarding our own proposal, block part, or vote
-/*
-func (cs *ConsensusState) sendInternalMessage(mi MsgInfo) {
-	select {
-	case cs.internalMsgQueue <- mi:
-	default:
-		// NOTE: using the go-routine means our votes can
-		// be processed out of order.
-		// TODO: use CList here for strict determinism and
-		// attempt push to internalMsgQueue in receiveRoutine
-		dposlog.Info("Internal msg queue is full. Using a go-routine")
-		go func() { cs.internalMsgQueue <- mi }()
-	}
-}
-*/
 // Updates ConsensusState and increments height to match that of state.
 // The round becomes 0 and cs.Step becomes ttypes.RoundStepNewHeight.
 func (cs *ConsensusState) updateToValMgr(valMgr ValidatorMgr) {
@@ -254,6 +223,8 @@ func (cs *ConsensusState) receiveRoutine() {
 		}
 	}()
 
+	cs.timer = time.NewTimer(time.Second * 3)
+
 	for {
 		var mi MsgInfo
 
@@ -265,12 +236,11 @@ func (cs *ConsensusState) receiveRoutine() {
 		case mi = <-cs.internalMsgQueue:
 			// handles proposals, block parts, votes
 			cs.handleMsg(mi)
-		case ti := <-cs.timeoutTicker.Chan(): // tockChan:
-			// if the timeout is relevant to the rs
-			// go to the next step
-			cs.handleTimeout(ti)
+		case <-cs.timer.C:
+			cs.handleTimeout()
 		case <-cs.Quit:
 			dposlog.Info("ConsensusState recv quit signal.")
+			cs.timer.Stop()
 			return
 		}
 	}
@@ -302,9 +272,7 @@ func (cs *ConsensusState) handleMsg(mi MsgInfo) {
 	}
 }
 
-func (cs *ConsensusState) handleTimeout(ti timeoutInfo) {
-	dposlog.Debug("Received tock", "timeout", ti.Duration, "state", StateTypeMapping[ti.State])
-
+func (cs *ConsensusState) handleTimeout() {
 	// the timeout will now cause a state transition
 	cs.mtx.Lock()
 	defer cs.mtx.Unlock()
@@ -445,14 +413,6 @@ func (cs *ConsensusState) CacheVotes(vote *dpostype.DPosVote) {
 	if !addrExistFlag {
 		cs.cachedVotes = append(cs.cachedVotes, vote)
 	} else if vote.VoteTimestamp > cs.cachedVotes[index].VoteTimestamp {
-		/*
-			if index == len(cs.cachedVotes) - 1 {
-				cs.cachedVotes = append(cs.cachedVotes, vote)
-			}else {
-				cs.cachedVotes = append(cs.cachedVotes[:index], cs.dposVotes[(index + 1):]...)
-				cs.cachedVotes = append(cs.cachedVotes, vote)
-			}
-		*/
 		cs.cachedVotes[index] = vote
 	}
 }
