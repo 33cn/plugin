@@ -304,6 +304,7 @@ func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller,
 		Addr:   caller,
 		TxHex:  rawTx,
 		Expire: expire,
+		Fee:    tx.Fee,
 	}
 
 	var res string
@@ -355,6 +356,7 @@ func createEvmTransferTx(cfg *types.Chain33Config, cmd *cobra.Command, caller, e
 		Addr:   caller,
 		TxHex:  rawTx,
 		Expire: expire,
+		Fee:    tx.Fee,
 	}
 
 	var res string
