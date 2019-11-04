@@ -171,7 +171,8 @@ type Action struct {
 func NewIssuanceAction(c *Issuance, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-	tokenDb, err := account.NewAccountDB(tokenE.GetName(), pty.CCNYTokenName, c.GetStateDB())
+	cfg := c.GetAPI().GetConfig()
+	tokenDb, err := account.NewAccountDB(cfg, tokenE.GetName(), pty.CCNYTokenName, c.GetStateDB())
 	if err != nil {
 		clog.Error("NewIssuanceAction", "Get Account DB error", "err", err)
 		return nil
