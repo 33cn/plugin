@@ -7,6 +7,8 @@ package types
 import "errors"
 
 var (
+	// ErrHeightLessThanOne error type
+	ErrHeightLessThanOne = errors.New("ErrHeightLessThanOne")
 	// ErrBaseTxType error type
 	ErrBaseTxType = errors.New("ErrBaseTxType")
 	// ErrBlockInfoTx error type
