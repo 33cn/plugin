@@ -76,6 +76,7 @@ type subKVMVCCConfig struct {
 	EnableMVCCIter  bool  `json:"enableMVCCIter"`
 	EnableMVCCPrune bool  `json:"enableMVCCPrune"`
 	PruneHeight     int32 `json:"pruneHeight"`
+	EnableEmptyBlockHandle bool `json:"enableEmptyBlockHandle"`
 }
 
 type subMavlConfig struct {
@@ -105,6 +106,8 @@ type subConfig struct {
 	EnableMemVal bool `json:"enableMemVal"`
 	// 缓存close ticket数目
 	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
+	// 使能空块处理
+	EnableEmptyBlockHandle bool `json:"enableEmptyBlockHandle"`
 }
 
 // New construct KVMVCCStore module
@@ -118,6 +121,7 @@ func New(cfg *types.Store, sub []byte) queue.Module {
 		subKVMVCCcfg.EnableMVCCIter = subcfg.EnableMVCCIter
 		subKVMVCCcfg.EnableMVCCPrune = subcfg.EnableMVCCPrune
 		subKVMVCCcfg.PruneHeight = subcfg.PruneMVCCHeight
+		subKVMVCCcfg.EnableEmptyBlockHandle = subcfg.EnableEmptyBlockHandle
 
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
@@ -167,10 +171,18 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 		if err != nil {
 			return hash, err
 		}
-		_, err = kvmMavls.KVMVCCStore.Set(datas, hash, sync)
-		if err != nil {
-			return hash, err
+		if kvmMavls.enableEmptyBlockHandle {
+			_, err := kvmMavls.KVMVCCStore.SetRdm(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
+		} else {
+			_, err = kvmMavls.KVMVCCStore.Set(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
 		}
+
 		if err == nil {
 			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
@@ -191,6 +203,17 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 
 // Get kvs with statehash from KVmMavlStore
 func (kvmMavls *KVmMavlStore) Get(datas *types.StoreGet) [][]byte {
+	if kvmMavls.enableEmptyBlockHandle {
+		// 空块情况下只有第一个hash的为非空块
+		mvccHash, err := kvmMavls.KVMVCCStore.GetFirstHashRdm(datas.StateHash)
+		if err == nil {
+			nData := &types.StoreGet {
+				StateHash: mvccHash,
+				Keys: datas.Keys,
+			}
+			return kvmMavls.KVMVCCStore.Get(nData)
+		}
+	}
 	return kvmMavls.KVMVCCStore.Get(datas)
 }
 
@@ -201,17 +224,31 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 		if err != nil {
 			return hash, err
 		}
-		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
-		if err != nil {
-			return hash, err
+		if kvmMavls.enableEmptyBlockHandle {
+			_, err = kvmMavls.KVMVCCStore.MemSetRdm(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
+		} else {
+			_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
 		}
+
 		if err == nil {
 			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
 		return hash, err
 	}
 	// 仅仅做kvmvcc
-	hash, err := kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	var hash []byte
+	var err  error
+	if kvmMavls.enableEmptyBlockHandle && datas.Height == kvmvccMavlFork {// kvmvccMavlFork高度下前一个区块需要映射
+		hash, err = kvmMavls.KVMVCCStore.MemSetRdm(datas, nil, sync)
+	} else {
+		hash, err = kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	}
 	if err == nil {
 		kvmMavls.cache.Add(string(hash), datas.Height)
 	}
@@ -249,7 +286,20 @@ func (kvmMavls *KVmMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 			if err != nil {
 				return hash, err
 			}
-			_, err = kvmMavls.KVMVCCStore.Rollback(req)
+			realReq := &types.ReqHash{
+				Hash: req.Hash,
+				Upgrade: req.Upgrade,
+			}
+			// 获取kvmvcc的实际statehash
+			if kvmMavls.enableEmptyBlockHandle {
+				if value, ok := kvmMavls.cache.Get(string(realReq.Hash)); ok {
+					mvccHash, err := kvmMavls.KVMVCCStore.GetHashRdm(realReq.Hash, value.(int64))
+					if err == nil {
+						realReq.Hash = mvccHash
+					}
+				}
+			}
+			_, err = kvmMavls.KVMVCCStore.Rollback(realReq)
 			return hash, err
 		}
 		return kvmMavls.KVMVCCStore.Rollback(req)
@@ -259,15 +309,18 @@ func (kvmMavls *KVmMavlStore) Rollback(req *types.ReqHash) ([]byte, error) {
 
 // IterateRangeByStateHash travel with Prefix by StateHash  to get the latest version kvs.
 func (kvmMavls *KVmMavlStore) IterateRangeByStateHash(statehash []byte, start []byte, end []byte, ascending bool, fn func(key, value []byte) bool) {
-	if value, ok := kvmMavls.cache.Get(string(statehash)); ok {
-		if value.(int64) < kvmvccMavlFork {
-			kvmMavls.MavlStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
-			return
-		}
-		kvmMavls.KVMVCCStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
+	if value, ok := kvmMavls.cache.Get(string(statehash)); ok && value.(int64) < kvmvccMavlFork{
+		kvmMavls.MavlStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
 		return
 	}
-	kvmMavls.KVMVCCStore.IterateRangeByStateHash(statehash, start, end, ascending, fn)
+	hash := statehash
+	if kvmMavls.enableEmptyBlockHandle {
+		mvccHash, err := kvmMavls.KVMVCCStore.GetFirstHashRdm(statehash)
+		if err == nil {
+			hash = mvccHash
+		}
+	}
+	kvmMavls.KVMVCCStore.IterateRangeByStateHash(hash, start, end, ascending, fn)
 }
 
 // ProcEvent handles supported events
@@ -295,17 +348,32 @@ func (kvmMavls *KVmMavlStore) MemSetUpgrade(datas *types.StoreSet, sync bool) ([
 				return hash, err
 			}
 		}
-		_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
-		if err != nil {
-			return hash, err
+
+		if kvmMavls.enableEmptyBlockHandle {
+			_, err = kvmMavls.KVMVCCStore.MemSetRdm(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
+		} else {
+			_, err = kvmMavls.KVMVCCStore.MemSet(datas, hash, sync)
+			if err != nil {
+				return hash, err
+			}
 		}
+
 		if err == nil {
 			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
 		return hash, err
 	}
 	// 仅仅做kvmvcc
-	hash, err := kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	var hash []byte
+	var err  error
+	if kvmMavls.enableEmptyBlockHandle && datas.Height == kvmvccMavlFork {// kvmvccMavlFork高度下前一个区块需要映射
+		hash, err = kvmMavls.KVMVCCStore.MemSetRdm(datas, nil, sync)
+	} else {
+		hash, err = kvmMavls.KVMVCCStore.MemSet(datas, nil, sync)
+	}
 	if err == nil {
 		kvmMavls.cache.Add(string(hash), datas.Height)
 	}
@@ -335,14 +403,25 @@ func (kvmMavls *KVmMavlStore) Del(req *types.StoreDel) ([]byte, error) {
 		if err != nil {
 			return hash, err
 		}
-		hash, err = kvmMavls.KVMVCCStore.Del(req)
+		storeDel := &types.StoreDel{
+			StateHash: req.StateHash,
+			Height: req.Height,
+		}
+		// 获取kvmvcc的实际statehash
+		if kvmMavls.enableEmptyBlockHandle {
+			mvccHash, err := kvmMavls.KVMVCCStore.GetHashRdm(req.StateHash, req.Height)
+			if err == nil {
+				storeDel.StateHash = mvccHash
+			}
+		}
+		_, err = kvmMavls.KVMVCCStore.Del(storeDel)
 		if err != nil {
-			return hash, err
+			return req.StateHash, err
 		}
 		if err == nil {
 			kvmMavls.cache.Remove(string(req.StateHash))
 		}
-		return hash, err
+		return req.StateHash, err
 	}
 	// 仅仅做kvmvcc
 	hash, err := kvmMavls.KVMVCCStore.Del(req)
