@@ -91,9 +91,9 @@ timeoutPrecommit=1000
 timeoutPrecommitDelta=500
 timeoutCommit=500
 skipTimeoutCommit=false
-createEmptyBlocks=false
-createEmptyBlocksInterval=0
-validatorNodes=["127.0.0.1:46656"]
+createEmptyBlocks=true
+createEmptyBlocksInterval=1
+validatorNodes=["127.0.0.1:46656", "127.0.0.2:46656"]
 
 [store]
 name="kvdb"

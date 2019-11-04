@@ -1,1 +1,1 @@
-{"genesis_time":"0001-01-01T00:00:00Z","chain_id":"test-chain-Ep9EcD","validators":[{"pub_key":{"type":"ed25519","data":"220ACBE680DF2473A0CB48987A00FCC1812F106A7390BE6B8E2D31122C992A19"},"power":10,"name":""}],"app_hash":""}
+{"genesis_time":"2019-10-25T10:25:24.027375266+08:00","chain_id":"chain33-ROPNZn","validators":[{"pub_key":{"type":"ed25519","data":"8D80E15927EF2854C78D981015BD2AD469867957081357D0FADD88871752A7E1"},"power":10,"name":""}],"app_hash":null}

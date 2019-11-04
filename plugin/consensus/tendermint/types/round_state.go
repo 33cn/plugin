@@ -32,17 +32,16 @@ const (
 	RoundStepCommit        = RoundStepType(0x08) // Entered commit state machine
 	// NOTE: RoundStepNewHeight acts as RoundStepCommitWait.
 
-	NewRoundStepID      = byte(0x02)
-	CommitStepID        = byte(0x03)
-	ProposalID          = byte(0x04)
-	ProposalPOLID       = byte(0x05)
-	VoteID              = byte(0x06)
-	HasVoteID           = byte(0x07)
-	VoteSetMaj23ID      = byte(0x08)
-	VoteSetBitsID       = byte(0x09)
-	ProposalHeartbeatID = byte(0x0a)
-	ProposalBlockID     = byte(0x0b)
-	ValidBlockID        = byte(0x0c)
+	NewRoundStepID      = byte(0x01)
+	ProposalID          = byte(0x02)
+	ProposalPOLID       = byte(0x03)
+	VoteID              = byte(0x04)
+	HasVoteID           = byte(0x05)
+	VoteSetMaj23ID      = byte(0x06)
+	VoteSetBitsID       = byte(0x07)
+	ProposalHeartbeatID = byte(0x08)
+	ProposalBlockID     = byte(0x09)
+	ValidBlockID        = byte(0x0a)
 
 	PacketTypePing = byte(0xff)
 	PacketTypePong = byte(0xfe)
@@ -52,7 +51,6 @@ const (
 func InitMessageMap() {
 	MsgMap = map[byte]reflect.Type{
 		NewRoundStepID:      reflect.TypeOf(tmtypes.NewRoundStepMsg{}),
-		CommitStepID:        reflect.TypeOf(tmtypes.CommitStepMsg{}),
 		ProposalID:          reflect.TypeOf(tmtypes.Proposal{}),
 		ProposalPOLID:       reflect.TypeOf(tmtypes.ProposalPOLMsg{}),
 		VoteID:              reflect.TypeOf(tmtypes.Vote{}),

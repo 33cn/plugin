@@ -87,7 +87,7 @@ type ConsensusState struct {
 	broadcastChannel chan<- MsgInfo
 	ourID            ID
 	status           uint32 // 0-stop, 1-start
-	Quit             chan struct{}
+	quit             chan struct{}
 
 	txsAvailable      chan int64
 	begCons           time.Time
@@ -103,7 +103,7 @@ func NewConsensusState(client *Client, state State, blockExec *BlockExecutor) *C
 		internalMsgQueue: make(chan MsgInfo, msgQueueSize),
 		timeoutTicker:    NewTimeoutTicker(),
 
-		Quit:         make(chan struct{}),
+		quit:         make(chan struct{}),
 		txsAvailable: make(chan int64, 1),
 		begCons:      time.Time{},
 	}
@@ -205,7 +205,7 @@ func (cs *ConsensusState) Start() {
 func (cs *ConsensusState) Stop() {
 	atomic.CompareAndSwapUint32(&cs.status, 1, 0)
 	cs.timeoutTicker.Stop()
-	cs.Quit <- struct{}{}
+	cs.quit <- struct{}{}
 }
 
 //------------------------------------------------------------
@@ -383,7 +383,7 @@ func (cs *ConsensusState) receiveRoutine(maxSteps int) {
 			// if the timeout is relevant to the rs
 			// go to the next step
 			cs.handleTimeout(ti, rs)
-		case <-cs.Quit:
+		case <-cs.quit:
 			// NOTE: the internalMsgQueue may have signed messages from our
 			// priv_val that haven't hit the WAL, but its ok because
 			// priv_val tracks LastSig
@@ -667,7 +667,13 @@ func (cs *ConsensusState) defaultDecideProposal(height int64, round int) {
 
 	// Decide on block
 	if cs.ValidBlock != nil {
-		// If there is valid block, choose that.
+		// If there is valid block, PreExec that.
+		pblockNew := cs.client.PreExecBlock(cs.ValidBlock.Data, false)
+		if pblockNew == nil {
+			tendermintlog.Error("defaultDecideProposal PreExecBlock fail")
+			return
+		}
+		cs.ValidBlock.Data = pblockNew
 		block = cs.ValidBlock
 	} else {
 		// Create a new proposal block from state/txs from the mempool.
@@ -737,6 +743,10 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	proposerAddr := cs.privValidator.GetAddress()
 	block = cs.state.MakeBlock(cs.Height, int64(cs.Round), pblock, commit, proposerAddr)
 	baseTx := cs.createBaseTx(block.TendermintBlock)
+	if baseTx == nil {
+		tendermintlog.Error("createProposalBlock createBaseTx fail")
+		return nil
+	}
 	block.Data.Txs[0] = baseTx
 	block.Data.TxHash = merkle.CalcMerkleRoot(block.Data.Txs)
 	pblockNew := cs.client.PreExecBlock(block.Data, false)
@@ -748,17 +758,21 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	return block
 }
 
-func (cs *ConsensusState) createBaseTx(block *tmtypes.TendermintBlock) (tx *types.Transaction) {
+func (cs *ConsensusState) createBaseTx(block *tmtypes.TendermintBlock) *types.Transaction {
 	var state *tmtypes.State
 	if cs.Height == 1 {
-		state = &tmtypes.State{}
+		genState := cs.client.GenesisState()
+		if genState == nil {
+			return nil
+		}
+		state = SaveState(*genState)
 	} else {
 		state = cs.client.csStore.LoadStateFromStore()
 		if state == nil {
-			panic("createBaseTx LoadStateFromStore fail")
+			return nil
 		}
 	}
-	tx = CreateBlockInfoTx(cs.client.pubKey, state, block)
+	tx := CreateBlockInfoTx(cs.client.pubKey, state, block)
 	return tx
 }
 
@@ -1160,8 +1174,9 @@ func (cs *ConsensusState) defaultSetProposal(proposal *tmtypes.Proposal) error {
 	}
 
 	// Verify POLRound, which must be -1 or in range [0, proposal.Round).
-	if proposal.POLRound != -1 ||
-		(proposal.POLRound >= 0 && proposal.Round >= proposal.POLRound) {
+	if proposal.POLRound < -1 ||
+		(proposal.POLRound >= 0 && proposal.POLRound >= proposal.Round) {
+		tendermintlog.Error("Invalid POLRound", "POLRound", proposal.POLRound, "Round", proposal.Round)
 		return ErrInvalidProposalPOLRound
 	}
 

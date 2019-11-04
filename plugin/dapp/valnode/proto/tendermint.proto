@@ -135,10 +135,6 @@ message ValidBlockMsg {
     bool isCommit   = 4;
 }
 
-message CommitStepMsg {
-    int64 height = 1;
-}
-
 message ProposalPOLMsg {
     int64              height           = 1;
     int32              proposalPOLRound = 2;

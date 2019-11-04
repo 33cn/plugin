@@ -16,8 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/33cn/chain33/blockchain"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/limits"
@@ -29,8 +27,10 @@ import (
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
-	ty "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	vty "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
@@ -39,7 +39,7 @@ import (
 )
 
 var (
-	random    *rand.Rand
+	r         *rand.Rand
 	loopCount = 3
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
@@ -50,7 +50,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	random = rand.New(rand.NewSource(types.Now().UnixNano()))
+	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	log.SetLogLevel("info")
 }
 func TestTendermintPerf(t *testing.T) {
@@ -128,7 +128,6 @@ func createConn() error {
 		return err
 	}
 	c = types.NewChain33Client(conn)
-	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	return nil
 }
 
@@ -164,7 +163,7 @@ func prepareTxList() *types.Transaction {
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
-	tx.Nonce = random.Int63()
+	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 	return tx
 }
@@ -198,11 +197,11 @@ func AddNode() {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	nput := &ty.ValNodeAction_Node{Node: &ty.ValNode{PubKey: pubkeybyte, Power: int64(2)}}
-	action := &ty.ValNodeAction{Value: nput, Ty: ty.ValNodeActionUpdate}
+	nput := &vty.ValNodeAction_Node{Node: &vty.ValNode{PubKey: pubkeybyte, Power: int64(2)}}
+	action := &vty.ValNodeAction{Value: nput, Ty: vty.ValNodeActionUpdate}
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
-	tx.Nonce = random.Int63()
+	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
@@ -217,11 +216,75 @@ func AddNode() {
 }
 
 func CheckState(t *testing.T, client *Client) {
+	state := client.csState.GetState()
+	assert.NotEmpty(t, state)
+	_, curVals := state.GetValidators()
+	assert.NotEmpty(t, curVals)
+	assert.True(t, state.Equals(state.Copy()))
+
+	_, vals := client.csState.GetValidators()
+	assert.Len(t, vals, 1)
+
+	storeHeight := client.csStore.LoadStateHeight()
+	assert.True(t, storeHeight > 0)
+
+	sc := client.csState.LoadCommit(storeHeight)
+	assert.NotEmpty(t, sc)
+	bc := client.csState.LoadCommit(storeHeight - 1)
+	assert.NotEmpty(t, bc)
+
+	assert.NotEmpty(t, client.LoadBlockState(storeHeight))
+	assert.NotEmpty(t, client.LoadProposalBlock(storeHeight))
+
+	assert.Nil(t, client.LoadBlockCommit(0))
+	assert.Nil(t, client.LoadBlockState(0))
+	assert.Nil(t, client.LoadProposalBlock(0))
+
+	csdb := client.csState.blockExec.db
+	assert.NotEmpty(t, csdb)
+	assert.NotEmpty(t, csdb.LoadState())
+	valset, err := csdb.LoadValidators(storeHeight - 1)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, valset)
+
+	genState, err := MakeGenesisStateFromFile("genesis.json")
+	assert.Nil(t, err)
+	assert.Equal(t, genState.LastBlockHeight, int64(0))
+
+	assert.Equal(t, client.csState.Prevote(0), 1000*time.Millisecond)
+	assert.Equal(t, client.csState.Precommit(0), 1000*time.Millisecond)
+	assert.Equal(t, client.csState.PeerGossipSleep(), 100*time.Millisecond)
+	assert.Equal(t, client.csState.PeerQueryMaj23Sleep(), 2000*time.Millisecond)
+	assert.Equal(t, client.csState.IsProposer(), true)
+	assert.Nil(t, client.csState.GetPrevotesState(state.LastBlockHeight, 0, nil))
+	assert.Nil(t, client.csState.GetPrecommitsState(state.LastBlockHeight, 0, nil))
+
+	assert.NotEmpty(t, client.PrivValidator())
+	assert.Len(t, client.GenesisDoc().Validators, 1)
+
 	msg1, err := client.Query_IsHealthy(&types.ReqNil{})
 	assert.Nil(t, err)
-	flag := msg1.(*ty.IsHealthy).IsHealthy
+	flag := msg1.(*vty.IsHealthy).IsHealthy
 	assert.Equal(t, true, flag)
 
-	_, err = client.Query_NodeInfo(&types.ReqNil{})
+	msg2, err := client.Query_NodeInfo(&types.ReqNil{})
 	assert.Nil(t, err)
+	tvals := msg2.(*vty.ValidatorSet).Validators
+	assert.Len(t, tvals, 1)
+
+	err = client.CommitBlock(client.GetCurrentBlock())
+	assert.Nil(t, err)
+}
+
+func TestCompareHRS(t *testing.T) {
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepNewHeight, 1, 1, ty.RoundStepNewHeight), 0)
+
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 2, 1, ty.RoundStepNewHeight), -1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 1, 2, ty.RoundStepNewHeight), -1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 1, 1, ty.RoundStepPrecommit), -1)
+
+	assert.Equal(t, CompareHRS(2, 1, ty.RoundStepNewHeight, 1, 1, ty.RoundStepPrevote), 1)
+	assert.Equal(t, CompareHRS(1, 2, ty.RoundStepNewHeight, 1, 1, ty.RoundStepPrevote), 1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrecommit, 1, 1, ty.RoundStepPrevote), 1)
+	fmt.Println("TestCompareHRS ok")
 }
