@@ -44,6 +44,9 @@ var (
 	//mvccLast               = append(mvccPrefix, []byte("l.")...)
 	//mvccMetaVersion        = append(mvccMeta, []byte("version.")...)
 	//mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
+
+	// for empty block
+	rdmHashPrefix = append(mvccPrefix, []byte("rdm.")...)
 )
 
 // KVMVCCStore provide kvmvcc store interface implementation
@@ -55,6 +58,7 @@ type KVMVCCStore struct {
 	enableMVCCPrune bool
 	pruneHeight     int32
 	sync            bool
+	enableEmptyBlockHandle bool
 }
 
 // NewKVMVCC construct KVMVCCStore module
@@ -66,10 +70,10 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 	}
 	if enable {
 		kvs = &KVMVCCStore{db, dbm.NewMVCCIter(db), make(map[string][]*types.KeyValue),
-			true, sub.EnableMVCCPrune, sub.PruneHeight, false}
+			true, sub.EnableMVCCPrune, sub.PruneHeight, false, sub.EnableEmptyBlockHandle}
 	} else {
 		kvs = &KVMVCCStore{db, dbm.NewMVCC(db), make(map[string][]*types.KeyValue),
-			false, sub.EnableMVCCPrune, sub.PruneHeight, false}
+			false, sub.EnableMVCCPrune, sub.PruneHeight, false, sub.EnableEmptyBlockHandle}
 	}
 	EnablePrune(sub.EnableMVCCPrune)
 	SetPruneHeight(int(sub.PruneHeight))
@@ -335,6 +339,107 @@ func (mvccs *KVMVCCStore) checkVersion(height int64) ([]*types.KeyValue, error) 
 func calcHash(datas proto.Message) []byte {
 	b := types.Encode(datas)
 	return common.Sha256(b)
+}
+
+func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
+	mvccHash := calcHash(datas)
+	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, mvccHash, datas.StateHash, datas.Height)
+	if err != nil {
+		return nil, err
+	}
+	// add rdm
+	key := calcRdmKey(mavlHash, datas.Height)
+	kvlist = append(kvlist, &types.KeyValue{Key:key, Value:mvccHash})
+	mvccs.saveKVSets(kvlist, sync)
+	return mavlHash, nil
+}
+
+func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
+	beg := types.Now()
+	defer func() {
+		kmlog.Debug("kvmvcc MemSetRdm", "cost", types.Since(beg))
+	}()
+	kvset, err := mvccs.checkVersion(datas.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	//kmlog.Debug("KVMVCCStore MemSet AddMVCC", "prestatehash", common.ToHex(datas.StateHash), "hash", common.ToHex(hash), "height", datas.Height)
+	mvcchash := calcHash(datas)
+
+	// 取出前一个hash映射
+	var preMvccHash []byte
+	if datas.Height > 0 {
+		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height - 1)
+		if err != nil {
+			kmlog.Debug("kvmvcc GetHashRdm", "error", err)
+			return nil, err
+		}
+	}
+
+	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, mvcchash, preMvccHash, datas.Height)
+	if err != nil {
+		return nil, err
+	}
+	if len(kvlist) > 0 {
+		kvset = append(kvset, kvlist...)
+	}
+	// add rdm
+	kv := &types.KeyValue{Key:calcRdmKey(mavlHash, datas.Height), Value:mvcchash}
+	kvset = append(kvset, kv)
+	// 如果mavlHash是nil,即返回mvcchash
+	hash := mvcchash
+	if mavlHash != nil {
+		hash = mavlHash
+	}
+	mvccs.kvsetmap[string(hash)] = kvset
+	mvccs.sync = sync
+
+	// 进行裁剪
+	if enablePrune && !isPruning() &&
+		pruneHeight != 0 &&
+		datas.Height%int64(pruneHeight) == 0 &&
+		datas.Height/int64(pruneHeight) > 1 {
+		wg.Add(1)
+		go pruning(mvccs.db, datas.Height)
+	}
+	return hash, nil
+}
+
+func (mvccs *KVMVCCStore) AddHashRdm(mavlHash, mvccHash []byte, height int64) {
+	key := calcRdmKey(mavlHash, height)
+	kvset, ok := mvccs.kvsetmap[string(mvccHash)]
+	if !ok {
+		return
+	}
+	kvset = append(kvset, &types.KeyValue{Key:key, Value:mvccHash})
+	// 缓存时候将key改为mavlHash便于外部commint时候查找
+	mvccs.kvsetmap[string(mavlHash)] = kvset
+	// 删除mvccHash
+	delete(mvccs.kvsetmap, string(mvccHash))
+	return
+}
+
+func (mvccs *KVMVCCStore) GetHashRdm(hash []byte, height int64) ([]byte, error) {
+	key := calcRdmKey(hash, height)
+	return mvccs.db.Get(key)
+}
+
+func (mvccs *KVMVCCStore) GetFirstHashRdm(hash []byte) ([]byte, error) {
+	prefix := append(rdmHashPrefix, hash...)
+	it := mvccs.db.Iterator(prefix, nil, false)
+	defer it.Close()
+	for it.Rewind(); it.Valid(); it.Next() {
+		return mvccs.db.Get(it.Key())
+	}
+	return nil, types.ErrNotFound
+}
+
+func calcRdmKey(hash []byte, height int64) []byte {
+	key := append(rdmHashPrefix, hash...)
+	key = append(key, []byte(".")...)
+	key = append(key, pad(height)...)
+	return key
 }
 
 /*裁剪-------------------------------------------*/
