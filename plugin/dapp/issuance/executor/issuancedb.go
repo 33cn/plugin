@@ -781,7 +781,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			continue
 		}
 
-		if debtRecord.ExpireTime >= action.blocktime {
+		if debtRecord.ExpireTime <= action.blocktime {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
 				if err != nil {

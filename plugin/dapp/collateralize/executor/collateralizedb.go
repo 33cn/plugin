@@ -900,7 +900,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			continue
 		}
 
-		if borrowRecord.ExpireTime >= action.blocktime {
+		if borrowRecord.ExpireTime <= action.blocktime {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
 				if err != nil {
