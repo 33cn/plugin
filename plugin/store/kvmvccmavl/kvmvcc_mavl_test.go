@@ -777,7 +777,7 @@ func TestEmptyBlock(t *testing.T) {
 	os.RemoveAll(dir)       //删除已存在目录
 	storeCfg := newStoreCfg(dir)
 	subcfg := &subConfig{
-		EnableMVCCIter: true,
+		EnableMVCCIter:  true,
 		PruneMavlHeight: 10000,
 		PruneMVCCHeight: 10000,
 		// 使能空块处理
@@ -787,6 +787,7 @@ func TestEmptyBlock(t *testing.T) {
 	assert.NoError(t, err)
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
+
 
 	var kv []*types.KeyValue
 	var key string
@@ -803,7 +804,6 @@ func TestEmptyBlock(t *testing.T) {
 		StateHash: drivers.EmptyRoot[:],
 		KV:        kv,
 		Height:    0}
-
 
 	var hash []byte
 	for i := 0; i < 10; i++ {
@@ -822,16 +822,16 @@ func TestEmptyBlock(t *testing.T) {
 	for i := 10; i < 16; i++ {
 		eData := &types.StoreSet{
 			StateHash: datas.StateHash,
-			KV: nil,
-			Height: int64(i),
+			KV:        nil,
+			Height:    int64(i),
 		}
-		hash=testStore(t, eData, store)
+		hash = testStore(t, eData, store)
 		gdatas := &types.StoreGet{
 			StateHash: hash,
-			Keys: keys,
+			Keys:      keys,
 		}
 		values := store.Get(gdatas)
-		for i, da := range kv  {
+		for i, da := range kv {
 			require.Equal(t, values[i], da.Value)
 		}
 	}
@@ -839,34 +839,34 @@ func TestEmptyBlock(t *testing.T) {
 	// 回退4个块
 	eData := &types.StoreSet{
 		StateHash: datas.StateHash,
-		KV: nil,
-		Height: 12,
+		KV:        nil,
+		Height:    12,
 	}
 	testStore(t, eData, store)
 	// check
 	gdatas := &types.StoreGet{
 		StateHash: hash,
-		Keys: keys,
+		Keys:      keys,
 	}
 	values := store.Get(gdatas)
-	for i, da := range kv  {
+	for i, da := range kv {
 		require.Equal(t, values[i], da.Value)
 	}
 
 	// 在加入高度为13的块
 	eData = &types.StoreSet{
 		StateHash: datas.StateHash,
-		KV: nil,
-		Height: 13,
+		KV:        nil,
+		Height:    13,
 	}
 	testStore(t, eData, store)
 	// check
 	gdatas = &types.StoreGet{
 		StateHash: hash,
-		Keys: keys,
+		Keys:      keys,
 	}
 	values = store.Get(gdatas)
-	for i, da := range kv  {
+	for i, da := range kv {
 		require.Equal(t, values[i], da.Value)
 	}
 
@@ -876,8 +876,8 @@ func TestEmptyBlock(t *testing.T) {
 	newKV := []*types.KeyValue{{Key: newK, Value: newV}}
 	eData = &types.StoreSet{
 		StateHash: datas.StateHash,
-		KV:  newKV,
-		Height: 14,
+		KV:        newKV,
+		Height:    14,
 	}
 	newHash, err := store.MemSet(eData, true)
 	require.NoError(t, err)
@@ -890,11 +890,11 @@ func TestEmptyBlock(t *testing.T) {
 	// check1 check hash高度下
 	gdatas = &types.StoreGet{
 		StateHash: hash,
-		Keys: append(keys, newK),
+		Keys:      append(keys, newK),
 	}
 	values = store.Get(gdatas)
 	require.Equal(t, len(values), len(kv)+1)
-	for i, da := range kv  {
+	for i, da := range kv {
 		require.Equal(t, values[i], da.Value)
 	}
 	require.Nil(t, values[len(values)-1])
@@ -902,16 +902,15 @@ func TestEmptyBlock(t *testing.T) {
 	// check2 chek newHash
 	gdatas = &types.StoreGet{
 		StateHash: newHash,
-		Keys: append(keys, newK),
+		Keys:      append(keys, newK),
 	}
 	values = store.Get(gdatas)
 	kv = append(kv, newKV...)
-	for i, da := range kv  {
+	for i, da := range kv {
 		require.Equal(t, values[i], da.Value)
 	}
 
-	// TODO 加一个分叉高度测试
-
+	// test SetRdm
 }
 
 func testStore(t *testing.T, eData *types.StoreSet, store *KVmMavlStore) []byte {
@@ -925,6 +924,132 @@ func testStore(t *testing.T, eData *types.StoreSet, store *KVmMavlStore) []byte 
 	require.NoError(t, err)
 	return hash
 }
+
+func TestEmptyBlockForkSet(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	subcfg := &subConfig{
+		EnableMVCCIter:  true,
+		PruneMavlHeight: 10000,
+		PruneMVCCHeight: 10000,
+		// 使能空块处理
+		EnableEmptyBlockHandle: true,
+	}
+	sub, err := json.Marshal(subcfg)
+	assert.NoError(t, err)
+	store := New(storeCfg, sub).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+
+	var kv []*types.KeyValue
+	var key string
+	var value string
+	var keys [][]byte
+	for i := 0; i < 2; i++ {
+		key = GetRandomString(MaxKeylenth)
+		value = fmt.Sprintf("v%d", i)
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
+	}
+
+	// kvmvccMavlFork = 5 加一个分叉高度测试
+	kvmvccMavlFork = 5
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+
+	datas := &types.StoreSet{
+		StateHash: drivers.EmptyRoot[:],
+		KV:        kv,
+		Height:    0}
+
+	var hash []byte
+	for i := 0; i < 10; i++ {
+		datas.Height = int64(i)
+		hash, err = store.Set(datas, true)
+		require.NoError(t, err)
+		datas.StateHash = hash
+	}
+
+	// check
+	gdatas := &types.StoreGet{
+		StateHash: hash,
+		Keys:      keys,
+	}
+	values := store.Get(gdatas)
+	for i, da := range kv {
+		require.Equal(t, values[i], da.Value)
+	}
+}
+
+func TestEmptyBlockForkMemSet(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	subcfg := &subConfig{
+		EnableMVCCIter:  true,
+		PruneMavlHeight: 10000,
+		PruneMVCCHeight: 10000,
+		// 使能空块处理
+		EnableEmptyBlockHandle: true,
+	}
+	sub, err := json.Marshal(subcfg)
+	assert.NoError(t, err)
+	store := New(storeCfg, sub).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+
+	var kv []*types.KeyValue
+	var key string
+	var value string
+	var keys [][]byte
+	for i := 0; i < 2; i++ {
+		key = GetRandomString(MaxKeylenth)
+		value = fmt.Sprintf("v%d", i)
+		keys = append(keys, []byte(key))
+		kv = append(kv, &types.KeyValue{Key: []byte(key), Value: []byte(value)})
+	}
+
+	// kvmvccMavlFork = 5 加一个分叉高度测试
+	kvmvccMavlFork = 5
+	defer func() {
+		kvmvccMavlFork = 200 * 10000
+	}()
+
+	datas := &types.StoreSet{
+		StateHash: drivers.EmptyRoot[:],
+		KV:        kv,
+		Height:    0}
+
+	var hash []byte
+	for i := 0; i < 10; i++ {
+		datas.Height = int64(i)
+		hash, err = store.MemSet(datas, true)
+		require.NoError(t, err)
+		req := &types.ReqHash{
+			Hash: hash,
+		}
+		_, err = store.Commit(req)
+		require.NoError(t, err)
+		datas.StateHash = hash
+	}
+
+	// check
+	gdatas := &types.StoreGet{
+		StateHash: hash,
+		Keys:      keys,
+	}
+	values := store.Get(gdatas)
+	for i, da := range kv {
+		require.Equal(t, values[i], da.Value)
+	}
+}
+
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
 func BenchmarkGetkmvcc(b *testing.B)     { benchmarkGet(b, true) }

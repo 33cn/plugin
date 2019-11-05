@@ -343,15 +343,30 @@ func calcHash(datas proto.Message) []byte {
 
 func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
 	mvccHash := calcHash(datas)
-	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, mvccHash, datas.StateHash, datas.Height)
+	// 取出前一个hash映射
+	var preMvccHash []byte
+	var err error
+	if datas.Height > 0 {
+		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height - 1)
+		if err != nil {
+			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height - 1)
+			return nil, err
+		}
+	}
+	kvlist, err := mvccs.mvcc.AddMVCC(datas.KV, mvccHash, preMvccHash, datas.Height)
 	if err != nil {
 		return nil, err
 	}
 	// add rdm
 	key := calcRdmKey(mavlHash, datas.Height)
 	kvlist = append(kvlist, &types.KeyValue{Key:key, Value:mvccHash})
+
+	hash := mvccHash
+	if mavlHash != nil {
+		hash = mavlHash
+	}
 	mvccs.saveKVSets(kvlist, sync)
-	return mavlHash, nil
+	return hash, nil
 }
 
 func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
@@ -372,7 +387,7 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 	if datas.Height > 0 {
 		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height - 1)
 		if err != nil {
-			kmlog.Debug("kvmvcc GetHashRdm", "error", err)
+			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height - 1)
 			return nil, err
 		}
 	}
@@ -384,13 +399,14 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 	if len(kvlist) > 0 {
 		kvset = append(kvset, kvlist...)
 	}
-	// add rdm
-	kv := &types.KeyValue{Key:calcRdmKey(mavlHash, datas.Height), Value:mvcchash}
-	kvset = append(kvset, kv)
-	// 如果mavlHash是nil,即返回mvcchash
+
 	hash := mvcchash
 	if mavlHash != nil {
+		// 如果mavlHash是nil,即返回mvcchash
 		hash = mavlHash
+		// add rdm
+		kv := &types.KeyValue{Key:calcRdmKey(mavlHash, datas.Height), Value:mvcchash}
+		kvset = append(kvset, kv)
 	}
 	mvccs.kvsetmap[string(hash)] = kvset
 	mvccs.sync = sync
