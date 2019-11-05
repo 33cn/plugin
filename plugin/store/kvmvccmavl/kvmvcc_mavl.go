@@ -172,7 +172,7 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 			return hash, err
 		}
 		if kvmMavls.enableEmptyBlockHandle {
-			_, err := kvmMavls.KVMVCCStore.SetRdm(datas, hash, sync)
+			_, err = kvmMavls.KVMVCCStore.SetRdm(datas, hash, sync)
 			if err != nil {
 				return hash, err
 			}
@@ -189,7 +189,14 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 		return hash, err
 	}
 	// 仅仅做kvmvcc
-	hash, err := kvmMavls.KVMVCCStore.Set(datas, nil, sync)
+	var hash []byte
+	var err  error
+	if kvmMavls.enableEmptyBlockHandle && datas.Height == kvmvccMavlFork {// kvmvccMavlFork高度下前一个区块需要映射
+		hash, err = kvmMavls.KVMVCCStore.SetRdm(datas, nil, sync)
+	} else {
+		hash, err = kvmMavls.KVMVCCStore.Set(datas, nil, sync)
+	}
+
 	if err == nil {
 		kvmMavls.cache.Add(string(hash), datas.Height)
 	}
