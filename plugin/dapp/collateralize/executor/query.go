@@ -24,6 +24,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		StabilityFeeRatio:  coll.StabilityFeeRatio,
 		CreateAddr:         coll.CreateAddr,
 		Balance:            coll.Balance,
+		Period:             coll.Period,
 	}, nil
 }
 
@@ -44,6 +45,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			StabilityFeeRatio:  coll.StabilityFeeRatio,
 			CreateAddr:         coll.CreateAddr,
 			Balance:            coll.Balance,
+			Period:             coll.Period,
 		})
 	}
 
@@ -98,14 +100,37 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 	return ret, nil
 }
 
-func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
-	ret := &pty.RepCollateralizeRecords{}
-	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.Index)
+func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
+	config, err := getCollateralizeConfig(c.GetStateDB())
 	if err != nil {
-		clog.Error("Query_CollateralizeRecordByStatus", "get collateralize record error", err)
+		clog.Error("Query_CollateralizeConfig", "get collateralize config error", err)
 		return nil, err
 	}
 
-	ret.Records = records
+	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), pty.CollateralizeStatusCreated, 0)
+	if err != nil {
+		clog.Error("Query_CollateralizeByStatus", "get collateralize record error", err)
+		return nil, err
+	}
+
+	collBalance := config.CollTotalBalance
+	for _, id := range collIDRecords {
+		coll, err := queryCollateralizeByID(c.GetStateDB(), id)
+		if err != nil {
+			clog.Error("Query_CollateralizeInfoByID", "id", id, "error", err)
+			return nil, err
+		}
+
+		collBalance -= coll.TotalBalance
+	}
+	ret := &pty.RepCollateralizeConfig{
+		CollTotalBalance:config.CollTotalBalance,
+		DebtCeiling: config.DebtCeiling,
+		LiquidationRatio: config.LiquidationRatio,
+		StabilityFeeRatio: config.StabilityFeeRatio,
+		Period: config.Period,
+		CollBalance: collBalance,
+	}
+
 	return ret, nil
 }

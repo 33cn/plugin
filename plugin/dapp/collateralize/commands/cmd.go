@@ -285,6 +285,7 @@ func addCollateralizeManageFlags(cmd *cobra.Command) {
 	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
 	cmd.Flags().Float32P("stabilityFeeRatio", "s", 0, "stabilityFeeRatio")
 	cmd.Flags().Uint64P("period", "p", 0, "period")
+	cmd.Flags().Uint64P("totalBalance", "t", 0, "totalBalance")
 }
 
 func CollateralizeManage(cmd *cobra.Command, args []string) {
@@ -299,17 +300,39 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
 	stabilityFeeRatio, _ := cmd.Flags().GetFloat32("stabilityFeeRatio")
 	period, _ := cmd.Flags().GetUint64("period")
+	totalBalance, _ := cmd.Flags().GetUint64("totalBalance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
-		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d}",
-			debtCeiling, liquidationRatio, stabilityFeeRatio, period)),
+		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%d,}",
+			debtCeiling, liquidationRatio, stabilityFeeRatio, period, totalBalance)),
 	}
 
 	var res string
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
 	ctx.RunWithoutMarshal()
+}
+
+func CollateralizeQueryCfgCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Query config result",
+		Run:   CollateralizeQueryConfig,
+	}
+	return cmd
+}
+
+func CollateralizeQueryConfig(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pkt.CollateralizeX
+
+	params.FuncName = "CollateralizeConfig"
+	var res pkt.RepCollateralizeConfig
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }
 
 // CollateralizeQueryCmd 查询命令行
@@ -320,6 +343,9 @@ func CollateralizeQueryCmd() *cobra.Command {
 		Run:   CollateralizeQuery,
 	}
 	addCollateralizeQueryFlags(cmd)
+	cmd.AddCommand(
+		CollateralizeQueryCfgCmd(),
+	)
 	return cmd
 }
 
@@ -437,7 +463,7 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()
 	} else {
-		fmt.Println("Error: requeres at least one of gameID, address or status")
+		fmt.Println("Error: requeres at least one of collId, address or status")
 		cmd.Help()
 	}
 }

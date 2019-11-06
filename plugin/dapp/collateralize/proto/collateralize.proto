@@ -65,6 +65,7 @@ message CollateralizeManage {
     float liquidationRatio   = 2; //清算比例
     float stabilityFeeRatio  = 3; //稳定费
     int64 period             = 4; //合约期限
+    int64 collTotalBalance   = 5; //放贷总量
 }
 
 message CollateralizeAddr {
@@ -145,6 +146,7 @@ message RepCollateralizeCurrentInfo {
     float       stabilityFeeRatio       = 5; //稳定费
     string      createAddr              = 6; //创建人地址
     int64       balance                 = 7; //剩余可借贷金额(ccny)
+    int64       period                  = 8; //合约期限
 }
 
 // 根据ID列表查询多期借贷信息
@@ -202,4 +204,14 @@ message ReqCollateralizeRecord {
 // 返回记录
 message RepCollateralizeRecord {
     BorrowRecord record = 1;
+}
+
+// 返回放贷配置
+message RepCollateralizeConfig {
+    int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
+    float liquidationRatio   = 2; //清算比例
+    float stabilityFeeRatio  = 3; //稳定费
+    int64 period             = 4; //合约期限
+    int64 collTotalBalance   = 5; //放贷总量
+    int64 collBalance        = 6; //剩余放贷额度
 }

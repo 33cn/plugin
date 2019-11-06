@@ -35,18 +35,18 @@ func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) 
 				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
 				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
 					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
-				set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
+				//set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
 				break
 			case pty.TyLogIssuanceFeed:
 				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
 				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
 					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
-				set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
-				// 如果没有被清算，需要把地址索引更新
-				if issuanceLog.Status == pty.IssuanceUserStatusWarning || issuanceLog.Status == pty.IssuanceUserStatusExpire {
-					set.KV = append(set.KV, c.addIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.Index, issuanceLog.DebtId,
-						issuanceLog.IssuanceId)...)
-				}
+				//set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
+				//// 如果没有被清算，需要把地址索引更新
+				//if issuanceLog.Status == pty.IssuanceUserStatusWarning || issuanceLog.Status == pty.IssuanceUserStatusExpire {
+				//	set.KV = append(set.KV, c.addIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.Index, issuanceLog.DebtId,
+				//		issuanceLog.IssuanceId)...)
+				//}
 				set.KV = append(set.KV, c.addIssuancePriceRecord(issuanceLog.RecordTime, issuanceLog.BtyPrice)...)
 				break
 			case pty.TyLogIssuanceClose:

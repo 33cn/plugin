@@ -382,6 +382,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 		issuanceIDsS = append(issuanceIDsS, issuanceIDs)
 		req := &pkt.ReqIssuanceInfos{IssuanceIds: issuanceIDsS}
 		params.Payload = types.MustPBToJSON(req)
+		fmt.Println(params.Payload)
 		var res pkt.RepIssuanceCurrentInfos
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 		ctx.Run()

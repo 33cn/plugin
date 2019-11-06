@@ -30,6 +30,7 @@ const (
 	DefaultLiquidationRatio   = 0.4             // 默认质押比
 	DefaultStabilityFeeRation = 0.08            // 默认稳定费
 	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
+	DefaultCollTotalBalance   = 0               // 默认放贷总额
 	PriceWarningRate          = 1.3             // 价格提前预警率
 	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
 )
@@ -265,29 +266,46 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 		return nil, pty.ErrRiskParam
 	}
 
-	collConfig := &pty.CollateralizeManage{}
+	var collConfig *pty.CollateralizeManage
+	manConfig, _ := getCollateralizeConfig(action.db)
+	if manConfig == nil {
+		manConfig = &pty.CollateralizeManage{
+			DebtCeiling:       DefaultDebtCeiling,
+			LiquidationRatio:  DefaultLiquidationRatio,
+			StabilityFeeRatio: DefaultStabilityFeeRation,
+			Period:            DefaultPeriod,
+			CollTotalBalance:  DefaultCollTotalBalance,
+		}
+	}
+
 	if manage.StabilityFeeRatio != 0 {
 		collConfig.StabilityFeeRatio = manage.StabilityFeeRatio
 	} else  {
-		collConfig.StabilityFeeRatio = DefaultStabilityFeeRation
+		collConfig.StabilityFeeRatio = manConfig.StabilityFeeRatio
 	}
 
 	if manage.Period != 0 {
 		collConfig.Period = manage.Period
 	} else {
-		collConfig.Period = DefaultPeriod
+		collConfig.Period = manConfig.Period
 	}
 
 	if manage.LiquidationRatio != 0 {
 		collConfig.LiquidationRatio = manage.LiquidationRatio
 	} else {
-		collConfig.LiquidationRatio = DefaultLiquidationRatio
+		collConfig.LiquidationRatio = manConfig.LiquidationRatio
 	}
 
 	if manage.DebtCeiling != 0 {
 		collConfig.DebtCeiling = manage.DebtCeiling
 	} else {
-		collConfig.DebtCeiling = DefaultDebtCeiling
+		collConfig.DebtCeiling = manConfig.DebtCeiling
+	}
+
+	if manage.CollTotalBalance != 0 {
+		collConfig.CollTotalBalance = manage.CollTotalBalance
+	} else {
+		collConfig.CollTotalBalance = manConfig.CollTotalBalance
 	}
 
 	value := types.Encode(collConfig)
@@ -298,8 +316,8 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	return receipt, nil
 }
 
-func (action *Action) getCollateralizeConfig() (*pty.CollateralizeManage, error) {
-	data, err := action.db.Get(ConfigKey())
+func getCollateralizeConfig(db dbm.KV) (*pty.CollateralizeManage, error) {
+	data, err := db.Get(ConfigKey())
 	if err != nil {
 		clog.Debug("getCollateralizeConfig", "error", err)
 		return nil, err
@@ -375,9 +393,15 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 
 	// 获取借贷配置
 	var collcfg *pty.CollateralizeManage
-	cfg, err := action.getCollateralizeConfig()
-	if err != nil {
-		collcfg = &pty.CollateralizeManage{DebtCeiling:DefaultDebtCeiling, LiquidationRatio:DefaultLiquidationRatio, StabilityFeeRatio:DefaultStabilityFeeRation, Period:DefaultPeriod}
+	cfg, err := getCollateralizeConfig(action.db)
+	if cfg == nil {
+		collcfg = &pty.CollateralizeManage{
+			DebtCeiling:DefaultDebtCeiling,
+			LiquidationRatio:DefaultLiquidationRatio,
+			StabilityFeeRatio:DefaultStabilityFeeRation,
+			Period:DefaultPeriod,
+			CollTotalBalance:DefaultCollTotalBalance,
+		}
 	} else {
 		collcfg = cfg
 	}
@@ -835,9 +859,9 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float32) 
 	collDB := &CollateralizeDB{*coll}
 	for index, borrowRecord := range coll.BorrowRecords {
 		if borrowRecord.LiquidationPrice * PriceWarningRate < price {
-			if borrowRecord.Status == pty.CollateralizeUserStatusSystemLiquidate {
-				borrowRecord.Status = borrowRecord.PreStatus
-				borrowRecord.PreStatus = pty.CollateralizeUserStatusSystemLiquidate
+			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
+				borrowRecord.PreStatus = borrowRecord.Status
+				borrowRecord.Status = pty.CollateralizeUserStatusCreate
 			}
 			continue
 		}

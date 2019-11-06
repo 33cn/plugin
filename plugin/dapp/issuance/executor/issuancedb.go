@@ -716,9 +716,9 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 	collDB := &IssuanceDB{*issu}
 	for index, debtRecord := range issu.DebtRecords {
 		if debtRecord.LiquidationPrice * PriceWarningRate < price {
-			if debtRecord.Status == pty.IssuanceUserStatusSystemLiquidate {
-				debtRecord.Status = debtRecord.PreStatus
-				debtRecord.PreStatus = pty.IssuanceUserStatusSystemLiquidate
+			if debtRecord.Status == pty.IssuanceUserStatusWarning {
+				debtRecord.PreStatus = debtRecord.Status
+				debtRecord.Status = pty.IssuanceUserStatusCreate
 			}
 			continue
 		}

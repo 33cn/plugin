@@ -24,6 +24,7 @@ func (c *Issuance) Query_IssuanceInfoByID(req *pty.ReqIssuanceInfo) (types.Messa
 		Balance:            issu.Balance,
 		CollateralValue:    issu.CollateralValue,
 		DebtValue:          issu.DebtValue,
+		Period:             issu.Period,
 	}, nil
 }
 
@@ -44,6 +45,7 @@ func (c *Issuance) Query_IssuanceInfoByIDs(req *pty.ReqIssuanceInfos) (types.Mes
 			Balance:            issu.Balance,
 			CollateralValue:    issu.CollateralValue,
 			DebtValue:          issu.DebtValue,
+			Period:             issu.Period,
 		})
 	}
 

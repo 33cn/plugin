@@ -135,6 +135,7 @@ message RepIssuanceCurrentInfo {
     int64       balance                 = 5; //剩余可借贷金额(ccny)
     int64       collateralValue         = 6; //抵押物总数量(bty)
     int64       debtValue               = 7; //产生的ccny数量
+    int64       period                  = 8;//借贷最大期限
 }
 
 // 根据ID列表查询多期借贷信息
