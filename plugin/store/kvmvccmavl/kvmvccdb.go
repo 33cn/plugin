@@ -357,13 +357,13 @@ func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bo
 	if err != nil {
 		return nil, err
 	}
-	// add rdm
-	key := calcRdmKey(mavlHash, datas.Height)
-	kvlist = append(kvlist, &types.KeyValue{Key:key, Value:mvccHash})
 
 	hash := mvccHash
 	if mavlHash != nil {
 		hash = mavlHash
+		// add rdm
+		key := calcRdmKey(mavlHash, datas.Height)
+		kvlist = append(kvlist, &types.KeyValue{Key:key, Value:mvccHash})
 	}
 	mvccs.saveKVSets(kvlist, sync)
 	return hash, nil
@@ -443,10 +443,10 @@ func (mvccs *KVMVCCStore) GetHashRdm(hash []byte, height int64) ([]byte, error) 
 
 func (mvccs *KVMVCCStore) GetFirstHashRdm(hash []byte) ([]byte, error) {
 	prefix := append(rdmHashPrefix, hash...)
-	it := mvccs.db.Iterator(prefix, nil, false)
-	defer it.Close()
-	for it.Rewind(); it.Valid(); it.Next() {
-		return mvccs.db.Get(it.Key())
+	list := dbm.NewListHelper(mvccs.db)
+	values := list.IteratorScanFromFirst(prefix, 1)
+	if len(values) == 1 {
+		return values[0], nil
 	}
 	return nil, types.ErrNotFound
 }
