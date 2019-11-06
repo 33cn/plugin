@@ -51,13 +51,13 @@ var (
 
 // KVMVCCStore provide kvmvcc store interface implementation
 type KVMVCCStore struct {
-	db              dbm.DB
-	mvcc            dbm.MVCC
-	kvsetmap        map[string][]*types.KeyValue
-	enableMVCCIter  bool
-	enableMVCCPrune bool
-	pruneHeight     int32
-	sync            bool
+	db                     dbm.DB
+	mvcc                   dbm.MVCC
+	kvsetmap               map[string][]*types.KeyValue
+	enableMVCCIter         bool
+	enableMVCCPrune        bool
+	pruneHeight            int32
+	sync                   bool
 	enableEmptyBlockHandle bool
 }
 
@@ -347,9 +347,9 @@ func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bo
 	var preMvccHash []byte
 	var err error
 	if datas.Height > 0 {
-		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height - 1)
+		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height-1)
 		if err != nil {
-			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height - 1)
+			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height-1)
 			return nil, err
 		}
 	}
@@ -363,7 +363,7 @@ func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bo
 		hash = mavlHash
 		// add rdm
 		key := calcRdmKey(mavlHash, datas.Height)
-		kvlist = append(kvlist, &types.KeyValue{Key:key, Value:mvccHash})
+		kvlist = append(kvlist, &types.KeyValue{Key: key, Value: mvccHash})
 	}
 	mvccs.saveKVSets(kvlist, sync)
 	return hash, nil
@@ -385,9 +385,9 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 	// 取出前一个hash映射
 	var preMvccHash []byte
 	if datas.Height > 0 {
-		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height - 1)
+		preMvccHash, err = mvccs.GetHashRdm(datas.StateHash, datas.Height-1)
 		if err != nil {
-			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height - 1)
+			kmlog.Error("kvmvcc GetHashRdm", "error", err, "height", datas.Height-1)
 			return nil, err
 		}
 	}
@@ -405,7 +405,7 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 		// 如果mavlHash是nil,即返回mvcchash
 		hash = mavlHash
 		// add rdm
-		kv := &types.KeyValue{Key:calcRdmKey(mavlHash, datas.Height), Value:mvcchash}
+		kv := &types.KeyValue{Key: calcRdmKey(mavlHash, datas.Height), Value: mvcchash}
 		kvset = append(kvset, kv)
 	}
 	mvccs.kvsetmap[string(hash)] = kvset
@@ -428,7 +428,7 @@ func (mvccs *KVMVCCStore) AddHashRdm(mavlHash, mvccHash []byte, height int64) {
 	if !ok {
 		return
 	}
-	kvset = append(kvset, &types.KeyValue{Key:key, Value:mvccHash})
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: mvccHash})
 	// 缓存时候将key改为mavlHash便于外部commint时候查找
 	mvccs.kvsetmap[string(mavlHash)] = kvset
 	// 删除mvccHash
