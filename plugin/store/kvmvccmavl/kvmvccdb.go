@@ -422,20 +422,6 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 	return hash, nil
 }
 
-func (mvccs *KVMVCCStore) AddHashRdm(mavlHash, mvccHash []byte, height int64) {
-	key := calcRdmKey(mavlHash, height)
-	kvset, ok := mvccs.kvsetmap[string(mvccHash)]
-	if !ok {
-		return
-	}
-	kvset = append(kvset, &types.KeyValue{Key: key, Value: mvccHash})
-	// 缓存时候将key改为mavlHash便于外部commint时候查找
-	mvccs.kvsetmap[string(mavlHash)] = kvset
-	// 删除mvccHash
-	delete(mvccs.kvsetmap, string(mvccHash))
-	return
-}
-
 func (mvccs *KVMVCCStore) GetHashRdm(hash []byte, height int64) ([]byte, error) {
 	key := calcRdmKey(hash, height)
 	return mvccs.db.Get(key)
