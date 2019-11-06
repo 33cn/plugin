@@ -175,7 +175,6 @@ func TestAddMinerTx(t *testing.T) {
 	para := &client{BaseClient: &drivers.BaseClient{}}
 	para.SetAPI(api)
 	para.subCfg = new(subConfig)
-	para.subCfg.SelfConsensusEnable = append(para.subCfg.SelfConsensusEnable, &paraSelfConsEnable{Enable: false})
 	para.privateKey = priKey
 	para.commitMsgClient = new(commitMsgClient)
 	para.commitMsgClient.paraClient = para
@@ -286,37 +285,37 @@ func TestCheckEmptyInterval(t *testing.T) {
 
 }
 
-func TestCheckSelfConsensEnable(t *testing.T) {
-	int1 := &paraSelfConsEnable{BlockHeight: 0, Enable: false}
-	int2 := &paraSelfConsEnable{BlockHeight: 10, Enable: true}
-	int3 := &paraSelfConsEnable{BlockHeight: 5, Enable: false}
+//func TestCheckSelfConsensEnable(t *testing.T) {
+//	int1 := &paraSelfConsEnable{BlockHeight: 0, Enable: false}
+//	int2 := &paraSelfConsEnable{BlockHeight: 10, Enable: true}
+//	int3 := &paraSelfConsEnable{BlockHeight: 5, Enable: false}
+//
+//	ints := []*paraSelfConsEnable{int1, int2, int3}
+//	err := checkSelfConsensEnable(ints)
+//	assert.Equal(t, types.ErrInvalidParam, err)
+//
+//	int3.BlockHeight = 15
+//	err = checkSelfConsensEnable(ints)
+//	assert.Nil(t, err)
+//}
 
-	ints := []*paraSelfConsEnable{int1, int2, int3}
-	err := checkSelfConsensEnable(ints)
-	assert.Equal(t, types.ErrInvalidParam, err)
-
-	int3.BlockHeight = 15
-	err = checkSelfConsensEnable(ints)
-	assert.Nil(t, err)
-}
-
-func TestGetSelfConsEnableStatus(t *testing.T) {
-	int1 := &paraSelfConsEnable{BlockHeight: 0, Enable: false}
-	int2 := &paraSelfConsEnable{BlockHeight: 10, Enable: true}
-	int3 := &paraSelfConsEnable{BlockHeight: 15, Enable: false}
-
-	para := new(client)
-	para.subCfg = new(subConfig)
-	para.subCfg.SelfConsensusEnable = []*paraSelfConsEnable{int1, int2, int3}
-	selfConf := para.getSelfConsEnableStatus(5)
-	assert.Equal(t, int64(0), selfConf.BlockHeight)
-	assert.Equal(t, false, selfConf.Enable)
-
-	selfConf = para.getSelfConsEnableStatus(10)
-	assert.Equal(t, int64(10), selfConf.BlockHeight)
-	assert.Equal(t, true, selfConf.Enable)
-
-	selfConf = para.getSelfConsEnableStatus(16)
-	assert.Equal(t, int64(15), selfConf.BlockHeight)
-	assert.Equal(t, false, selfConf.Enable)
-}
+//func TestGetSelfConsEnableStatus(t *testing.T) {
+//	int1 := &paraSelfConsEnable{BlockHeight: 0, Enable: false}
+//	int2 := &paraSelfConsEnable{BlockHeight: 10, Enable: true}
+//	int3 := &paraSelfConsEnable{BlockHeight: 15, Enable: false}
+//
+//	para := new(client)
+//	para.subCfg = new(subConfig)
+//	para.subCfg.SelfConsensusEnable = []*paraSelfConsEnable{int1, int2, int3}
+//	selfConf := para.getSelfConsEnableStatus(5)
+//	assert.Equal(t, int64(0), selfConf.BlockHeight)
+//	assert.Equal(t, false, selfConf.Enable)
+//
+//	selfConf = para.getSelfConsEnableStatus(10)
+//	assert.Equal(t, int64(10), selfConf.BlockHeight)
+//	assert.Equal(t, true, selfConf.Enable)
+//
+//	selfConf = para.getSelfConsEnableStatus(16)
+//	assert.Equal(t, int64(15), selfConf.BlockHeight)
+//	assert.Equal(t, false, selfConf.Enable)
+//}

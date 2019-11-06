@@ -26,7 +26,9 @@ var (
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
 	// ForkConsensSupportJump 支持主链共识从-1开始跳跃一次
 	ForkConsensSupportJump = "ForkConsensSupportJump"
-)
+	// ForkParaSelfConsStages 平行链自共识分阶段共识
+	ForkParaSelfConsStages = "ForkParaSelfConsStages"
+	)
 
 func init() {
 	// init executor type
@@ -42,6 +44,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkConsensSupportJump, types.MaxHeight)
+	//只在平行链启用
+	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 }
 
 func InitExecutor(cfg *types.Chain33Config) {
@@ -87,6 +91,9 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaNodeVoteDone:          {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
 		TyLogParaNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
 		TyLogParaNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
+		TyLogParaSelfConsStageConfig:   {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
+		TyLogParaStageVoteDone:         {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
+		TyLogParaStageGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
 	}
 }
 
@@ -102,6 +109,7 @@ func (p *ParacrossType) GetTypeMap() map[string]int32 {
 		"TransferToExec":  ParacrossActionTransferToExec,
 		"NodeConfig":      ParacrossActionNodeConfig,
 		"NodeGroupConfig": ParacrossActionNodeGroupApply,
+		"SelfStageConfig": ParacrossActionSelfStageConfig,
 	}
 }
 
@@ -153,7 +161,18 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawNodeGroupApplyTx(&param)
+	} else if action == "selfConsStageConfig" {
+		if !cfg.IsPara() {
+			return nil, types.ErrNotSupport
+		}
+		var param ParaStageConfig
+		err := types.JSONToPB(message, &param)
+		//err := json.Unmarshal(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.selfConsStageConfig", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawSelfConsStageApplyTx(cfg, &param)
 	}
-
 	return nil, types.ErrNotSupport
 }

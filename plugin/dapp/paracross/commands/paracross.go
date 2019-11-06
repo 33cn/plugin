@@ -34,6 +34,7 @@ func ParcCmd() *cobra.Command {
 		CreateRawTransferToExecCmd(),
 		superNodeCmd(),
 		nodeGroupCmd(),
+		paraConfigCmd(),
 		GetParaInfoCmd(),
 		GetParaListCmd(),
 		IsSyncCmd(),
@@ -485,6 +486,137 @@ func nodeList(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func addSelfConsStageCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height apply for self consensus enable or not ")
+	cmd.MarkFlagRequired("height")
+
+	cmd.Flags().Uint32P("enable", "e", 0, "if self consensus enable at height,1:enable,2:disable")
+	cmd.MarkFlagRequired("enable")
+
+}
+
+func selfConsStage(cmd *cobra.Command, args []string) {
+	height, _ := cmd.Flags().GetInt64("height")
+	enable, _ := cmd.Flags().GetUint32("enable")
+
+	var config pt.ParaStageConfig
+	config.OpTy = pt.ParaOpNewApply
+	config.Op = &pt.ParaStageConfig_Stage{Stage: &pt.SelfConsensStage{BlockHeight: height, Enable: enable}}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pt.ParaX),
+		ActionName: "selfConsStageConfig",
+		Payload:    types.MustPBToJSON(&config),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func selfConsStageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "new",
+		Short: "apply for para chain's self consensus stages cmd",
+		Run:   selfConsStage,
+	}
+	addSelfConsStageCmdFlags(cmd)
+	return cmd
+}
+
+func addVoteFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("id", "i", "", "operating target apply id")
+	cmd.MarkFlagRequired("id")
+
+	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
+	cmd.MarkFlagRequired("value")
+}
+
+func createVoteTx(cmd *cobra.Command, args []string) {
+	id, _ := cmd.Flags().GetString("id")
+	val, _ := cmd.Flags().GetUint32("value")
+
+	var config pt.ParaStageConfig
+	config.OpTy = pt.ParaOpVote
+	config.Op = &pt.ParaStageConfig_Vote{Vote: &pt.ConfigVoteInfo{Id: id, Value: val}}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pt.ParaX),
+		ActionName: "selfConsStageConfig",
+		Payload:    types.MustPBToJSON(&config),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
+}
+
+func configVoteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vote",
+		Short: "vote for config cmd",
+		Run:   createVoteTx,
+	}
+	addVoteFlags(cmd)
+	return cmd
+}
+
+func stageCancelTx(cmd *cobra.Command, args []string) {
+	id, _ := cmd.Flags().GetString("id")
+
+	var config pt.ParaStageConfig
+	config.OpTy = pt.ParaOpCancel
+	config.Op = &pt.ParaStageConfig_Cancel{Cancel: &pt.ConfigCancelInfo{Id: id}}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     types.ExecName(pt.ParaX),
+		ActionName: "selfConsStageConfig",
+		Payload:    types.MustPBToJSON(&config),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
+}
+
+func configCancelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel",
+		Short: "cancel for config cmd",
+		Run:   stageCancelTx,
+	}
+	cmd.Flags().StringP("id", "i", "", "operating target apply id")
+	cmd.MarkFlagRequired("id")
+	return cmd
+}
+
+func paraStageConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stages",
+		Short: "self consensus stages config cmd",
+	}
+	cmd.AddCommand(selfConsStageCmd())
+	cmd.AddCommand(configVoteCmd())
+	cmd.AddCommand(configCancelCmd())
+	cmd.AddCommand(QuerySelfStagesCmd())
+	cmd.AddCommand(GetSelfConsStagesCmd())
+	cmd.AddCommand(GetSelfConsOneStageCmd())
+
+	return cmd
+}
+
+func paraConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "parachain config cmd",
+	}
+	cmd.AddCommand(paraStageConfigCmd())
+
+	return cmd
+}
+
 func nodeGroupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "nodegroup",
@@ -856,5 +988,87 @@ func nodeGroupList(cmd *cobra.Command, args []string) {
 
 	var res pt.RespParacrossNodeGroups
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListNodeGroupStatus", params, &res)
+	ctx.Run()
+}
+
+func stagesInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var res pt.SelfConsensStages
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsStages", nil, &res)
+	ctx.Run()
+}
+
+// GetParaInfoCmd get para chain status by height
+func GetSelfConsStagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all",
+		Short: "Get para chain self consensus stages",
+		Run:   stagesInfo,
+	}
+
+	return cmd
+}
+
+func stageOneInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var res pt.SelfConsensStage
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsOneStage", nil, &res)
+	ctx.Run()
+}
+
+// GetParaInfoCmd get para chain status by height
+func GetSelfConsOneStageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "one",
+		Short: "query para chain one self consensus stage",
+		Run:   stageOneInfo,
+	}
+	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
+	cmd.MarkFlagRequired("height")
+	return cmd
+}
+
+// QuerySelfStagesCmd 显示提案查询信息
+func QuerySelfStagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "show self consensus stage apply info",
+		Run:   showSelfStages,
+	}
+	addShowSelfStagesflags(cmd)
+	return cmd
+}
+
+func addShowSelfStagesflags(cmd *cobra.Command) {
+	cmd.Flags().StringP("id", "q", "", "stage apply ID")
+	cmd.Flags().Uint32P("status", "s", 0, "status")
+	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
+	cmd.Flags().Int32P("direction", "d", 0, "direction, default is reserve")
+	cmd.Flags().Int64P("height", "t", -1, "height, default is -1")
+	cmd.Flags().Int32P("index", "i", -1, "index, default is -1")
+}
+
+func showSelfStages(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	id, _ := cmd.Flags().GetString("id")
+	status, _ := cmd.Flags().GetUint32("status")
+	count, _ := cmd.Flags().GetInt32("count")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	height, _ := cmd.Flags().GetInt64("height")
+	index, _ := cmd.Flags().GetInt32("index")
+
+	params := &pt.ReqQuerySelfStages{
+		Status:    status,
+		Id:        id,
+		Count:     count,
+		Direction: direction,
+		Height:    height,
+		Index:     index,
+	}
+
+	var res pt.ReplyQuerySelfStages
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListSelfStages", params, &res)
 	ctx.Run()
 }

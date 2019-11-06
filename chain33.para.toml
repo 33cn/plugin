@@ -110,14 +110,13 @@ mainForkParacrossCommitTx=2270000
 mainLoopCheckCommitTxDoneForkHeight=4320000
 #精简commitMsg，删除多余的hash参数，缺省mainLoopCheckCommitTxDoneForkHeight一致，一些特殊的链如game需定制
 rmCommitMsgHashParamMainHeight=4320000
+#paraSelfConsInitDisable=false
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
 interval=50
 #平行链自共识开启对应的主链高度，必须大于等于MainForkParacrossCommitTx=2270000， -1 不开启，可以多个高度开启和关闭
-[[consensus.sub.para.selfConsensusEnable]]
-blockHeight=0
-enable=false
+#selfConsensEnablePreContract=["0-9848"]
 
 
 [store]
@@ -258,7 +257,7 @@ Enable=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
-ForkConsensSupportJump=0
+ForkParaSelfConsStages=0
 
 [fork.sub.evm]
 Enable=0

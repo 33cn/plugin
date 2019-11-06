@@ -71,11 +71,6 @@ type emptyBlockInterval struct {
 	Interval    int64 `json:"interval,omitempty"`
 }
 
-type paraSelfConsEnable struct {
-	BlockHeight int64 `json:"blockHeight,omitempty"`
-	Enable      bool  `json:"enable,omitempty"`
-}
-
 type subConfig struct {
 	WriteBlockSeconds              int64                 `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient           string                `json:"paraRemoteGrpcClient,omitempty"`
@@ -86,7 +81,6 @@ type subConfig struct {
 	WaitBlocks4CommitMsg           int32                 `json:"waitBlocks4CommitMsg,omitempty"`
 	GenesisAmount                  int64                 `json:"genesisAmount,omitempty"`
 	MainBlockHashForkHeight        int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	SelfConsensusEnable            []*paraSelfConsEnable `json:"selfConsensusEnable,omitempty"`
 	WaitConsensStopTimes           uint32                `json:"waitConsensStopTimes,omitempty"`
 	MaxCacheCount                  int64                 `json:"maxCacheCount,omitempty"`
 	MaxSyncErrCount                int32                 `json:"maxSyncErrCount,omitempty"`
@@ -121,20 +115,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	err := checkEmptyBlockInterval(subcfg.EmptyBlockInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
-	}
-
-	if len(subcfg.SelfConsensusEnable) == 0 {
-		selfEnable := &paraSelfConsEnable{Enable: false}
-		subcfg.SelfConsensusEnable = append(subcfg.SelfConsensusEnable, selfEnable)
-	}
-
-	if subcfg.SelfConsensusEnable[0].BlockHeight != 0 {
-		selfEnable := &paraSelfConsEnable{Enable: false}
-		subcfg.SelfConsensusEnable = append([]*paraSelfConsEnable{selfEnable}, subcfg.SelfConsensusEnable...)
-	}
-	err = checkSelfConsensEnable(subcfg.SelfConsensusEnable)
-	if err != nil {
-		panic("para selfConsensusEnable config not correct")
 	}
 
 	if subcfg.BatchFetchBlockCount <= 0 {
@@ -172,7 +152,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		consensHeight:        -2,
 		sendingHeight:        -1,
 		consensDoneHeight:    -1,
-		selfConsensMap:       make(map[int64]bool),
 		resetCh:              make(chan interface{}, 1),
 		quit:                 make(chan struct{}),
 	}
@@ -184,12 +163,14 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		para.commitMsgClient.waitConsensStopTimes = subcfg.WaitConsensStopTimes
 	}
 
-	para.commitMsgClient.setSelfConsensMap(subcfg.SelfConsensusEnable)
-
 	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
 	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
 	if subcfg.ParaConsensStartHeight > 0 {
 		para.commitMsgClient.consensDoneHeight = subcfg.ParaConsensStartHeight - 1
+	}
+	err = para.commitMsgClient.setSelfConsEnable()
+	if err != nil {
+		panic(err)
 	}
 
 	para.blockSyncClient = &blockSyncClient{
@@ -240,17 +221,6 @@ func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
 			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].BlockHeight)
 			return types.ErrInvalidParam
 		}
-	}
-	return nil
-}
-
-func checkSelfConsensEnable(in []*paraSelfConsEnable) error {
-	for i := 0; i < len(in); i++ {
-		if i > 0 && in[i].BlockHeight <= in[i-1].BlockHeight {
-			plog.Error("selfConsensEnable,blockHeight should be sequence", "preHeight", in[i-1].BlockHeight, "laterHeight", in[i].BlockHeight)
-			return types.ErrInvalidParam
-		}
-
 	}
 	return nil
 }
@@ -393,15 +363,6 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
-}
-
-func (client *client) getSelfConsEnableStatus(height int64) *paraSelfConsEnable {
-	for i := len(client.subCfg.SelfConsensusEnable) - 1; i >= 0; i-- {
-		if height >= client.subCfg.SelfConsensusEnable[i].BlockHeight {
-			return client.subCfg.SelfConsensusEnable[i]
-		}
-	}
-	panic(fmt.Sprintf("para selfConsensusEnable not set for height=%d", height))
 }
 
 func (client *client) ProcEvent(msg *queue.Message) bool {

@@ -264,12 +264,12 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil && !isNotFound(err) {
 		return nil, errors.Wrapf(err, "nodeJoin get title=%s,nodeAddr=%s", config.Title, config.Addr)
 	}
-	if addrStat != nil && addrStat.Status != pt.ParacrossNodeQuited {
+	if addrStat != nil && addrStat.Status != pt.ParaApplyQuited {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeJoin nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
 	}
 	stat := &pt.ParaNodeIdStatus{
 		Id:          calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
-		Status:      pt.ParacrossNodeJoining,
+		Status:      pt.ParaApplyJoining,
 		Title:       config.Title,
 		TargetAddr:  config.Addr,
 		FromAddr:    a.fromaddr,
@@ -296,13 +296,13 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "nodeAddr:%s get error", config.Addr)
 	}
-	if addrStat.Status != pt.ParacrossNodeJoined {
+	if addrStat.Status != pt.ParaApplyJoined {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "nodeAddr:%s status:%d", config.Addr, addrStat.Status)
 	}
 
 	stat := &pt.ParaNodeIdStatus{
 		Id:         calcParaNodeIDKey(config.Title, common.ToHex(a.txhash)),
-		Status:     pt.ParacrossNodeQuiting,
+		Status:     pt.ParaApplyQuiting,
 		Title:      config.Title,
 		TargetAddr: config.Addr,
 		FromAddr:   a.fromaddr,
@@ -328,7 +328,7 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, stat.Title)
 	}
 
-	if stat.Status != pt.ParacrossNodeJoining && stat.Status != pt.ParacrossNodeQuiting {
+	if stat.Status != pt.ParaApplyJoining && stat.Status != pt.ParaApplyQuiting {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, stat.Status)
 	}
 
@@ -338,7 +338,7 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		clog.Error("nodeaccount.nodeQuit deep copy fail", "copy", copyStat, "stat", stat)
 		return nil, err
 	}
-	if stat.Status == pt.ParacrossNodeJoining {
+	if stat.Status == pt.ParaApplyJoining {
 		receipt := &types.Receipt{Ty: types.ExecOk}
 		cfg := a.api.GetConfig()
 		if !cfg.IsPara() {
@@ -348,15 +348,15 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 			}
 			receipt = mergeReceipt(receipt, r)
 		}
-		stat.Status = pt.ParacrossNodeCanceled
+		stat.Status = pt.ParaApplyCanceled
 		stat.Height = a.height
 		r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
 		receipt = mergeReceipt(receipt, r)
 		return receipt, nil
 	}
 
-	if stat.Status == pt.ParacrossNodeQuiting {
-		stat.Status = pt.ParacrossNodeCanceled
+	if stat.Status == pt.ParaApplyQuiting {
+		stat.Status = pt.ParaApplyCanceled
 		stat.Height = a.height
 		return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 	}
@@ -376,19 +376,19 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func getMostVote(stat *pt.ParaNodeIdStatus) (int, int) {
+func getMostVote(stat *pt.ParaNodeVoteDetail) (int, int) {
 	var ok, nok int
-	for _, v := range stat.GetVotes().Votes {
-		if v == pt.ParaNodeVoteStr[pt.ParaNodeVoteYes] {
+	for _, v := range stat.Votes {
+		if v == pt.ParaNodeVoteStr[pt.ParaVoteYes] {
 			ok++
 		} else {
 			nok++
 		}
 	}
 	if ok > nok {
-		return ok, pt.ParaNodeVoteYes
+		return ok, pt.ParaVoteYes
 	}
-	return nok, pt.ParaNodeVoteNo
+	return nok, pt.ParaVoteNo
 
 }
 
@@ -432,17 +432,18 @@ func (a *action) superManagerVoteProc(title string) error {
 	return nil
 }
 
-func updateVotes(stat *pt.ParaNodeIdStatus, nodes map[string]struct{}) {
+func updateVotes(stat *pt.ParaNodeVoteDetail, nodes map[string]struct{}) {
 	votes := &pt.ParaNodeVoteDetail{}
-	for i, addr := range stat.Votes.Addrs {
+	for i, addr := range stat.Addrs {
 		if _, ok := nodes[addr]; ok {
 			votes.Addrs = append(votes.Addrs, addr)
-			votes.Votes = append(votes.Votes, stat.Votes.Votes[i])
+			votes.Votes = append(votes.Votes, stat.Votes[i])
 		}
 	}
-	stat.Votes = votes
+	stat = votes
 }
 
+//由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
 func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
@@ -453,27 +454,27 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		addrStat = &pt.ParaNodeAddrIdStatus{}
 		addrStat.Title = stat.Title
 		addrStat.Addr = stat.TargetAddr
-		addrStat.Status = pt.ParacrossNodeJoined
+		addrStat.Status = pt.ParaApplyJoined
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaNodeStatusReceipt(a.fromaddr, nil, addrStat), nil
 	}
 
 	preStat := *addrStat
-	if stat.Status == pt.ParacrossNodeJoining {
-		addrStat.Status = pt.ParacrossNodeJoined
+	if stat.Status == pt.ParaApplyJoining {
+		addrStat.Status = pt.ParaApplyJoined
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
 	}
 
-	if stat.Status == pt.ParacrossNodeQuiting {
+	if stat.Status == pt.ParaApplyQuiting {
 		proposalStat, err := getNodeID(a.db, addrStat.ProposalId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodeAddr:%s quiting wrong proposeid:%s", stat.TargetAddr, addrStat.ProposalId)
 		}
 
-		addrStat.Status = pt.ParacrossNodeQuited
+		addrStat.Status = pt.ParaApplyQuited
 		addrStat.QuitId = stat.Id
 		receipt := makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat)
 
@@ -507,15 +508,15 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	if config.Title != stat.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, stat.Title)
 	}
-	if stat.Status != pt.ParacrossNodeJoining && stat.Status != pt.ParacrossNodeQuiting {
+	if stat.Status != pt.ParaApplyJoining && stat.Status != pt.ParaApplyQuiting {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, stat.Status)
 	}
 
 	//已经被其他id pass 场景
-	if stat.Status == pt.ParacrossNodeJoining && validNode(stat.TargetAddr, nodes) {
+	if stat.Status == pt.ParaApplyJoining && validNode(stat.TargetAddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
 	}
-	if stat.Status == pt.ParacrossNodeQuiting && !validNode(stat.TargetAddr, nodes) {
+	if stat.Status == pt.ParaApplyQuiting && !validNode(stat.TargetAddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
 	}
 
@@ -538,9 +539,9 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 
 	//剔除已退出nodegroup的addr的投票
-	updateVotes(stat, nodes)
+	updateVotes(stat.Votes, nodes)
 
-	most, vote := getMostVote(stat)
+	most, vote := getMostVote(stat.Votes)
 	if !isCommitDone(nodes, most) {
 		superManagerPass := false
 		if isSuperManager(cfg, a.fromaddr) {
@@ -555,16 +556,16 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		}
 
 		//超级用户投yes票，共识停止了一定高度就可以通过，防止当前所有授权节点都忘掉私钥场景
-		if !(superManagerPass && most > 0 && vote == pt.ParaNodeVoteYes) {
+		if !(superManagerPass && most > 0 && vote == pt.ParaVoteYes) {
 			return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
 		}
 	}
 	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	if vote == pt.ParaNodeVoteNo {
-		if stat.Status == pt.ParacrossNodeJoining {
-			stat.Status = pt.ParacrossNodeClosed
+	if vote == pt.ParaVoteNo {
+		if stat.Status == pt.ParaApplyJoining {
+			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
 			//active coins
 			if !cfg.IsPara() {
@@ -574,13 +575,13 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				}
 				receipt = mergeReceipt(receipt, r)
 			}
-		} else if stat.Status == pt.ParacrossNodeQuiting {
-			stat.Status = pt.ParacrossNodeClosed
+		} else if stat.Status == pt.ParaApplyQuiting {
+			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
 		}
 
 	} else {
-		if stat.Status == pt.ParacrossNodeJoining {
+		if stat.Status == pt.ParaApplyJoining {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
 			if err != nil {
 				return nil, err
@@ -593,9 +594,9 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			}
 			receipt = mergeReceipt(receipt, r)
 
-			stat.Status = pt.ParacrossNodeClosed
+			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
-		} else if stat.Status == pt.ParacrossNodeQuiting {
+		} else if stat.Status == pt.ParaApplyQuiting {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
@@ -617,7 +618,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				receipt = mergeReceipt(receipt, r)
 			}
 
-			stat.Status = pt.ParacrossNodeClosed
+			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
 		}
 	}
@@ -927,6 +928,13 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
+	if types.IsPara() && types.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+		//不允许主链成功平行链失败导致不一致的情况，这里如果失败则手工设置init stage
+		r = selfConsensInitStage(a.db)
+		receipt.KV = append(receipt.KV, r.KV...)
+		receipt.Logs = append(receipt.Logs, r.Logs...)
+	}
+
 	return receipt, nil
 
 }
@@ -977,7 +985,7 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt
 	for i, addr := range nodes {
 		stat := &pt.ParaNodeIdStatus{
 			Id:          status.Id + "-" + strconv.Itoa(i),
-			Status:      pt.ParacrossNodeClosed,
+			Status:      pt.ParaApplyClosed,
 			Title:       status.Title,
 			TargetAddr:  addr,
 			Votes:       &pt.ParaNodeVoteDetail{Addrs: []string{a.fromaddr}, Votes: []string{"yes"}},
@@ -1042,20 +1050,20 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, pt.ErrInvalidTitle
 	}
 
-	if config.Op == pt.ParaNodeJoin {
+	if config.Op == pt.ParaOpNewApply {
 		return a.nodeJoin(config)
 
-	} else if config.Op == pt.ParaNodeQuit {
+	} else if config.Op == pt.ParaOpQuit {
 		return a.nodeQuit(config)
 
-	} else if config.Op == pt.ParaNodeCancel {
+	} else if config.Op == pt.ParaOpCancel {
 		if config.Id == "" {
 			return nil, types.ErrInvalidParam
 		}
 		return a.nodeCancel(config)
 
-	} else if config.Op == pt.ParaNodeVote {
-		if config.Id == "" || config.Value >= pt.ParaNodeVoteEnd {
+	} else if config.Op == pt.ParaOpVote {
+		if config.Id == "" || config.Value >= pt.ParaVoteEnd {
 			return nil, types.ErrInvalidParam
 		}
 		return a.nodeVote(config)
