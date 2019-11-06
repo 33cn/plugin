@@ -185,3 +185,8 @@ func (e *Paracross) ExecDelLocal_Withdraw(payload *types.AssetsWithdraw, tx *typ
 func (e *Paracross) ExecDelLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
+
+//ExecLocal_SelfConsensStageConfig transfer asset to exec local db process
+func (e *Paracross) ExecDelLocal_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.execAutoDelLocal(tx, receiptData)
+}

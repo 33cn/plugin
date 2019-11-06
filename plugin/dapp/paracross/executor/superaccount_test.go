@@ -129,7 +129,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeJoining), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyJoining), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -144,7 +144,7 @@ func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeQuiting), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyQuiting), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -178,9 +178,9 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	var count int
 	config := &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
-		Op:    pt.ParaNodeVote,
+		Op:    pt.ParaOpVote,
 		Id:    id,
-		Value: pt.ParaNodeVoteYes,
+		Value: pt.ParaVoteYes,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
@@ -270,7 +270,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
 	config := &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
-		Op:    pt.ParaNodeJoin,
+		Op:    pt.ParaOpNewApply,
 		Addr:  Account14K,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
@@ -290,7 +290,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
-		Op:    pt.ParaNodeQuit,
+		Op:    pt.ParaOpQuit,
 		Addr:  Account14K,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)
@@ -354,7 +354,7 @@ func TestUpdateVotes(t *testing.T) {
 	nodes["BB"] = struct{}{}
 	nodes["CC"] = struct{}{}
 
-	updateVotes(stat, nodes)
+	updateVotes(stat.Votes, nodes)
 	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
 	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }

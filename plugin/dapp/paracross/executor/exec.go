@@ -99,3 +99,9 @@ func (e *Paracross) Exec_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *ty
 	a := newAction(e, tx)
 	return a.NodeGroupConfig(payload)
 }
+
+//Exec_NodeGroupConfig node group config process
+func (e *Paracross) Exec_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.SelfStageConfig(payload)
+}

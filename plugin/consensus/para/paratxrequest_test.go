@@ -49,7 +49,6 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 	para.SetAPI(api)
 
 	para.subCfg = new(subConfig)
-	para.subCfg.SelfConsensusEnable = append(para.subCfg.SelfConsensusEnable, &paraSelfConsEnable{Enable: true})
 
 	priKey := getPrivKey(t)
 	client := &commitMsgClient{
@@ -91,7 +90,6 @@ func TestGetConsensusStatus(t *testing.T) {
 	para := &client{BaseClient: &drivers.BaseClient{}}
 
 	para.subCfg = new(subConfig)
-	para.subCfg.SelfConsensusEnable = append(para.subCfg.SelfConsensusEnable, &paraSelfConsEnable{Enable: true})
 	grpcClient := &typesmocks.Chain33Client{}
 	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
 	para.grpcClient = grpcClient

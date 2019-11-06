@@ -17,6 +17,8 @@ import (
 
 	"sync"
 
+	"strconv"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
@@ -33,6 +35,11 @@ const (
 	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
+type paraSelfConsEnable struct {
+	startHeight int64
+	endHeight   int64
+}
+
 type commitMsgClient struct {
 	paraClient           *client
 	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
@@ -45,12 +52,12 @@ type commitMsgClient struct {
 	sendingHeight        int64
 	consensHeight        int64
 	consensDoneHeight    int64
-	selfConsensForked    int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
+	selfConsensError     int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
 	txFeeRate            int64
-	selfConsensMap       map[int64]bool //selfConsensEnable 分段 map
+	selfConsEnableList   []*paraSelfConsEnable //适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
 	privateKey           crypto.PrivKey
 	quit                 chan struct{}
 	mutex                sync.Mutex
@@ -296,8 +303,8 @@ func (client *commitMsgClient) isSync() bool {
 		return false
 	}
 
-	if atomic.LoadInt32(&client.selfConsensForked) != 0 {
-		plog.Info("para is not Sync", "selfConsensForked", atomic.LoadInt32(&client.selfConsensForked))
+	if atomic.LoadInt32(&client.selfConsensError) != 0 {
+		plog.Info("para is not Sync", "selfConsensError", atomic.LoadInt32(&client.selfConsensError))
 		return false
 	}
 
@@ -399,15 +406,25 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 	return newtx, nil
 }
 
+func (client *commitMsgClient) getExecName(commitHeight int64) string {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	if cfg.IsDappFork(commitHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
+		return paracross.GetExecName()
+	}
+
+	execName := pt.ParaX
+	if client.isSelfConsEnable(commitHeight) {
+		execName = paracross.GetExecName(cfg)
+	}
+	return execName
+
+}
+
 func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	cfg := client.paraClient.GetAPI().GetConfig()
 	for _, status := range notifications {
-		execName := pt.ParaX
-		stat := client.paraClient.getSelfConsEnableStatus(status.Height)
-		if stat.Enable {
-			execName = paracross.GetExecName(cfg)
-		}
+		execName := client.getExecName(status.Height)
 		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
@@ -426,10 +443,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	execName := pt.ParaX
 	cfg := client.paraClient.GetAPI().GetConfig()
-	stat := client.paraClient.getSelfConsEnableStatus(status.Height)
-	if stat.Enable {
-		execName = paracross.GetExecName(cfg)
-	}
+	execName := client.getExecName(status.Height)
 	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
@@ -600,8 +614,6 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 		return nil, nil
 	}
 
-	client.setConsensStart(ret)
-
 	//clear flag
 	for _, v := range ret {
 		v.NonCommitTxCounts = 0
@@ -609,28 +621,6 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 
 	return ret, nil
 
-}
-
-// 主链共识可能从-1跃迁或者自共识可能分阶段开启场景，设置起始高度标志，主链只需要根据是否起始高度来允许跃迁
-// 1. 主链ParaConsensStartHeight　在selfCons设置的Disable范围没问题，只有主链做共识，平行链收不到共识交易
-// 2. 主链ParaConsensStartHeight 超过selfCons StartHeight也没问题，　自共识也从ParaConsensStartHeight　开始做自共识
-func (client *commitMsgClient) setConsensStart(invs []*pt.ParacrossNodeStatus) {
-	for _, v := range invs {
-		//平行链自共识
-		v.IsStartHeight = client.selfConsensMap[v.Height]
-
-		//主链共识起始高度，只允许从-1跃迁，否则可能存在未共识的asset withdraw交易
-		if v.Height == client.paraClient.subCfg.ParaConsensStartHeight {
-			v.IsStartHeight = true
-		}
-
-	}
-}
-
-func (client *commitMsgClient) setSelfConsensMap(invs []*paraSelfConsEnable) {
-	for _, v := range invs {
-		client.selfConsensMap[v.BlockHeight] = v.Enable
-	}
 }
 
 func (client *commitMsgClient) getGenesisNodeStatus() (*pt.ParacrossNodeStatus, error) {
@@ -706,9 +696,9 @@ out:
 
 			//如果主链的共识高度小于自共识高度，需要等待自共识回滚
 			if mainStatus.Height < selfHeight {
-				atomic.StoreInt32(&client.selfConsensForked, 1)
+				atomic.StoreInt32(&client.selfConsensError, 1)
 			} else {
-				atomic.StoreInt32(&client.selfConsensForked, 0)
+				atomic.StoreInt32(&client.selfConsensError, 0)
 			}
 
 			preHeight := atomic.LoadInt64(&client.consensHeight)
@@ -746,8 +736,24 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		return nil, err
 	}
 	cfg := client.paraClient.GetAPI().GetConfig()
-	selfCons := client.paraClient.getSelfConsEnableStatus(block.Height)
-	if selfCons.Enable {
+
+	//从本地查询共识高度
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetSelfConsOneStage",
+		Param:    types.Encode(&types.Int64{Data: block.Height}),
+	})
+	if err != nil {
+		plog.Error("getSelfConsensusStatus.GetSelfConsOneStage ", "err", err.Error())
+		return nil, err
+	}
+	stage, ok := ret.(*pt.SelfConsensStage)
+	if !ok {
+		plog.Error("getSelfConsensusStatus nok")
+		return nil, types.ErrInvalidParam
+	}
+	plog.Info("getSelfConsensusStatus ", "height", block.Height, "stageHeight", stage.BlockHeight, "enable", stage.Enable)
+	if stage.Enable == pt.ParaConfigYes {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 			Driver:   "paracross",
@@ -758,15 +764,14 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 			plog.Error("getSelfConsensusStatus ", "err", err.Error())
 			return nil, err
 		}
-		status, ok := ret.(*pt.ParacrossStatus)
+		resp, ok := ret.(*pt.ParacrossStatus)
 		if !ok {
 			plog.Error("getSelfConsensusStatus ParacrossStatus nok")
 			return nil, err
 		}
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
-		//本地共识高度一定要高于阶段共识高度的起始高度，为了适配平行链共识高度不连续场景，一定要设置新自共识起始高度高于当前主链共识高度，否则不生效
-		if status.Height >= selfCons.BlockHeight {
-			return status, nil
+		if resp.Height > stage.BlockHeight {
+			return resp, nil
 		}
 	}
 	return nil, types.ErrNotFound
@@ -894,4 +899,35 @@ func (client *commitMsgClient) fetchPriKey() error {
 	client.privateKey = priKey
 	plog.Info("para commit fetchPriKey success")
 	return nil
+}
+
+func (client *commitMsgClient) setSelfConsEnable() error {
+	var err error
+	selfEnables := types.Conf("config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
+	for _, v := range selfEnables {
+		hs := strings.Split(v, "-")
+		enable := &paraSelfConsEnable{}
+		enable.startHeight, err = strconv.ParseInt(hs[0], 0, 64)
+		if err != nil {
+			plog.Error("para setSelfConsEnable", "v0", hs[0])
+			return err
+		}
+		enable.endHeight, err = strconv.ParseInt(hs[1], 0, 64)
+		if err != nil {
+			plog.Error("para setSelfConsEnable", "v1", hs[1])
+			return err
+		}
+		client.selfConsEnableList = append(client.selfConsEnableList, enable)
+	}
+	return nil
+}
+
+//适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
+func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
+	for _, v := range client.selfConsEnableList {
+		if height >= v.startHeight && height <= v.endHeight {
+			return true
+		}
+	}
+	return false
 }

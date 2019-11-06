@@ -32,6 +32,9 @@ var (
 	localNodeTitleStatus      string
 	localNodeTitleDone        string
 	localNodeGroupStatusTitle string
+
+	paraSelfConsensStages        string
+	paraSelfConsensStageIDPrefix string
 )
 
 func setPrefix() {
@@ -43,6 +46,10 @@ func setPrefix() {
 	paraNodeGroupStatusAddrs = "mavl-paracross-nodegroup-apply-title-"
 	paraNodeIDPrefix = "mavl-paracross-title-nodeid-"
 	paraNodeGroupIDPrefix = "mavl-paracross-title-nodegroupid-"
+
+	paraSelfConsensStages = "mavl-paracross-selfconsens-stages-"
+	paraSelfConsensStageIDPrefix = "mavl-paracross-selfconsens-id-"
+
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
 	localTitleHeight = "LODB-paracross-titleHeight-"
@@ -92,16 +99,24 @@ func calcParaNodeGroupIDKey(title, hash string) string {
 	return fmt.Sprintf(paraNodeGroupIDPrefix+"%s-%s", title, hash)
 }
 
+func calcParaSelfConsStagesKey() []byte {
+	return []byte(fmt.Sprintf(paraSelfConsensStages))
+}
+
+func calcParaSelfConsensStageIDKey(hash string) string {
+	return fmt.Sprintf(paraSelfConsensStageIDPrefix+"%s", hash)
+}
+
 func getParaNodeIDSuffix(id string) string {
 	if !strings.HasPrefix(id, paraNodeIDUnifyPrefix) {
 		return id
 	}
 
-	ids := strings.Split(id, "-")
-	txID := ids[len(ids)-1]
-	if strings.HasPrefix(txID, "0x") {
+	ok, txID, ids := getRealTxHashID(id)
+	if ok {
 		return txID
 	}
+
 	//对于nodegroup 创建的"mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274587...a61e444e9f848a4c02d7b-1"特殊场景
 	if len(ids) > 1 {
 		txID = ids[len(ids)-2] + "-" + txID
@@ -110,6 +125,15 @@ func getParaNodeIDSuffix(id string) string {
 		}
 	}
 	return id
+}
+
+func getRealTxHashID(id string) (bool, string, []string) {
+	ids := strings.Split(id, "-")
+	txID := ids[len(ids)-1]
+	if strings.HasPrefix(txID, "0x") {
+		return true, txID, ids
+	}
+	return false, txID, ids
 }
 
 func calcLocalTxKey(title string, height int64, addr string) []byte {

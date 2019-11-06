@@ -370,10 +370,10 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 		status.PreStateHash = preStateHash
 	}
 
-	selfCons := client.paraClient.getSelfConsEnableStatus(status.Height)
+
 	tx, err := pt.CreateRawMinerTx(cfg, &pt.ParacrossMinerAction{
 		Status:          status,
-		IsSelfConsensus: selfCons.Enable,
+		IsSelfConsensus: client.paraClient.commitMsgClient.isSelfConsEnable(status.Height),
 	})
 	if err != nil {
 		return err
