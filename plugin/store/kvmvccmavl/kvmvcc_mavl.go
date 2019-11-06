@@ -220,6 +220,8 @@ func (kvmMavls *KVmMavlStore) Get(datas *types.StoreGet) [][]byte {
 			}
 			return kvmMavls.KVMVCCStore.Get(nData)
 		}
+		// ForkKvmvccmavl之后无mavl，即不需映射，直接获取
+		return kvmMavls.KVMVCCStore.Get(datas)
 	}
 	return kvmMavls.KVMVCCStore.Get(datas)
 }
