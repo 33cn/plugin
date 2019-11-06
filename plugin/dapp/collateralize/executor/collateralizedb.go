@@ -1010,8 +1010,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 
 	ids, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated, 0)
 	if err != nil {
-		clog.Error("CollateralizePriceFeed", "get collateralize record error", err)
-		return nil, err
+		clog.Debug("CollateralizePriceFeed", "get collateralize record error", err)
 	}
 
 	for _, collID := range ids {

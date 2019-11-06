@@ -867,8 +867,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 
 	ids, err := queryIssuanceByStatus(action.localDB, pty.IssuanceStatusCreated, 0)
 	if err != nil {
-		clog.Error("IssuancePriceFeed", "get issuance record error", err)
-		return nil, err
+		clog.Debug("IssuancePriceFeed", "get issuance record error", err)
 	}
 
 	for _, collID := range ids {
