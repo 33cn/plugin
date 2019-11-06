@@ -116,6 +116,7 @@ func TestTimeCompetition(t *testing.T) {
 	cache.Push(item3)
 	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item3.Value.Hash())))
+	assert.Equal(t, int64(item3.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestPriceCompetition(t *testing.T) {
@@ -124,6 +125,7 @@ func TestPriceCompetition(t *testing.T) {
 	cache.Push(item4)
 	assert.Equal(t, false, cache.Exist(string(item3.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item4.Value.Hash())))
+	assert.Equal(t, int64(item4.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestAddDuplicateItem(t *testing.T) {

@@ -37,6 +37,10 @@ func (item *priceScore) Compare(cmp skiplist.Scorer) int {
 	return skiplist.Small
 }
 
+func (item *priceScore) ByteSize() int64 {
+	return int64(proto.Size(item.Value))
+}
+
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
