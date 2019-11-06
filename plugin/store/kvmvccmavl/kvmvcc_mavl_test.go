@@ -788,7 +788,6 @@ func TestEmptyBlock(t *testing.T) {
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-
 	var kv []*types.KeyValue
 	var key string
 	var value string
@@ -943,7 +942,6 @@ func TestEmptyBlockForkSet(t *testing.T) {
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-
 	var kv []*types.KeyValue
 	var key string
 	var value string
@@ -1003,7 +1001,6 @@ func TestEmptyBlockForkMemSet(t *testing.T) {
 	store := New(storeCfg, sub).(*KVmMavlStore)
 	assert.NotNil(t, store)
 
-
 	var kv []*types.KeyValue
 	var key string
 	var value string
@@ -1049,7 +1046,6 @@ func TestEmptyBlockForkMemSet(t *testing.T) {
 		require.Equal(t, values[i], da.Value)
 	}
 }
-
 
 func BenchmarkGetkmvccMavl(b *testing.B) { benchmarkGet(b, false) }
 func BenchmarkGetkmvcc(b *testing.B)     { benchmarkGet(b, true) }
