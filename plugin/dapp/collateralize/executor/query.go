@@ -25,6 +25,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		CreateAddr:         coll.CreateAddr,
 		Balance:            coll.Balance,
 		Period:             coll.Period,
+		CollateralizeId:    coll.CollateralizeId,
 	}, nil
 }
 
@@ -46,6 +47,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			CreateAddr:         coll.CreateAddr,
 			Balance:            coll.Balance,
 			Period:             coll.Period,
+			CollateralizeId:    coll.CollateralizeId,
 		})
 	}
 
@@ -93,6 +95,18 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Index)
 	if err != nil {
 		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
+		return nil, err
+	}
+
+	ret.Records = records
+	return ret, nil
+}
+
+func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
+	ret := &pty.RepCollateralizeRecords{}
+	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.Index)
+	if err != nil {
+		clog.Error("Query_CollateralizeRecordByStatus", "get collateralize record error", err)
 		return nil, err
 	}
 

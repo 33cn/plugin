@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package types;
 
-// 借贷信息
+// 放贷信息
 message Collateralize {
-    string      collateralizeId          = 1; //借贷ID,一期借贷对应一个ID
-    int64       totalBalance             = 2; //当期可借贷的总金额(ccny)
+    string      collateralizeId          = 1; //放贷ID,一期放贷对应一个ID
+    int64       totalBalance             = 2; //当期放贷的总金额(ccny)
     int64       debtCeiling              = 3; //单用户可借出的限额(ccny)
     float       liquidationRatio         = 4; //清算比例
     float       stabilityFeeRatio        = 5; //稳定费率
     string      createAddr               = 6; //创建人地址
-    int64       balance                  = 7; //剩余可借贷金额(ccny)
+    int64       balance                  = 7; //放贷剩余金额(ccny)
     repeated BorrowRecord borrowRecords  = 8; //借贷记录
     repeated BorrowRecord InvalidRecords = 9; //失效的借贷记录
     int32       status                   = 10;//当期借贷的状态，是否关闭
@@ -33,9 +33,10 @@ message BorrowRecord {
     int64       liquidateTime        = 8; //清算时间
     int64       expireTime           = 9; //超时清算时间
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
-    string      recordId             = 11;//借出id，标识一次借出记录
-    int64       index                = 12;//当前索引
-    int64       preIndex             = 13;//上级索引
+    string      recordId             = 11;//借贷id，标识一次借出记录
+    string      collateralizeId      = 12;//放贷id
+    int64       index                = 13;//当前索引
+    int64       preIndex             = 14;//上级索引
 }
 
 // 资产价格记录
@@ -71,7 +72,7 @@ message CollateralizeManage {
 message CollateralizeAddr {
     repeated string superAddrs = 1; //大户地址
 }
-// 创建借贷
+// 创建放贷
 message CollateralizeCreate {
     int64 totalBalance       = 1; //可借贷总金额
 }
@@ -102,12 +103,12 @@ message CollateralizeFeed {
     repeated int64 volume = 3; //成交量
 }
 
-// 借贷关闭
+// 放贷关闭
 message CollateralizeClose {
     string collateralizeId = 1; //借贷期数ID
 }
 
-// exec_local 借贷信息
+// exec_local 放贷信息
 message ReceiptCollateralize {
     string      collateralizeId    = 1;
     string      createAddr         = 2;
@@ -119,7 +120,7 @@ message ReceiptCollateralize {
     int64       preIndex           = 8;
  }
 
-// exec_local 借贷记录信息
+// exec_local 放贷记录信息
 message CollateralizeRecord {
     string collateralizeId = 1;
     string addr            = 2;
@@ -127,17 +128,17 @@ message CollateralizeRecord {
     int64  index           = 4;
 }
 
-// exec_local 借贷记录信息列表
+// exec_local 放贷记录信息列表
 message CollateralizeRecords {
     repeated CollateralizeRecord records = 1;
 }
 
-// 根据ID查询一期借贷信息
+// 根据ID查询一期放贷信息
 message ReqCollateralizeInfo {
     string collateralizeId = 1;
 }
 
-// 返回一期借贷信息
+// 返回一期放贷信息
 message RepCollateralizeCurrentInfo {
     int32       status                  = 1;//当期借贷的状态，是否关闭
     int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
@@ -147,19 +148,20 @@ message RepCollateralizeCurrentInfo {
     string      createAddr              = 6; //创建人地址
     int64       balance                 = 7; //剩余可借贷金额(ccny)
     int64       period                  = 8; //合约期限
+    string      collateralizeId         = 9; //放贷ID
 }
 
-// 根据ID列表查询多期借贷信息
+// 根据ID列表查询多期放贷信息
 message ReqCollateralizeInfos {
     repeated string collateralizeIds = 1;
 }
 
-// 返回多期借贷信息
+// 返回多期放贷信息
 message RepCollateralizeCurrentInfos {
     repeated RepCollateralizeCurrentInfo infos = 1;
 }
 
-// 根据借贷状态查询
+// 根据放贷状态查询
 message ReqCollateralizeByStatus {
     int32 status = 1;
     int64  index = 2;
@@ -171,7 +173,7 @@ message ReqCollateralizeByAddr {
     int64  index = 2;
 }
 
-// 返回借贷ID列表
+// 返回放贷ID列表
 message RepCollateralizeIDs {
     repeated string IDs = 1;
 }
@@ -201,7 +203,7 @@ message ReqCollateralizeRecord {
     string recordId     = 2;
 }
 
-// 返回记录
+// 返回借贷记录
 message RepCollateralizeRecord {
     BorrowRecord record = 1;
 }

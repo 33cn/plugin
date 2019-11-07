@@ -594,6 +594,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	debtRecord := &pty.DebtRecord{}
 	debtRecord.AccountAddr = action.fromaddr
 	debtRecord.DebtId = common.ToHex(action.txhash)
+	debtRecord.IssuId = issu.IssuanceId
 	debtRecord.CollateralValue = btyFrozen
 	debtRecord.StartTime = action.blocktime
 	debtRecord.CollateralPrice = lastPrice

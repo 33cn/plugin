@@ -584,6 +584,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// 构造借出记录
 	borrowRecord := &pty.BorrowRecord{}
 	borrowRecord.RecordId = common.ToHex(action.txhash)
+	borrowRecord.CollateralizeId = coll.CollateralizeId
 	borrowRecord.AccountAddr = action.fromaddr
 	borrowRecord.CollateralValue = btyFrozen
 	borrowRecord.StartTime = action.blocktime

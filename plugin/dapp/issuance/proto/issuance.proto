@@ -2,19 +2,19 @@ syntax = "proto3";
 
 package types;
 
-// 借贷信息
+// 发行信息
 message Issuance {
-    string      issuanceId              = 1; //借贷ID,一期借贷对应一个ID
-    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
+    string      issuanceId              = 1; //发行ID,一期发行对应一个ID
+    int64       totalBalance            = 2; //当期发行的总金额(ccny)
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
     float       liquidationRatio        = 4; //清算比例
     int64       collateralValue         = 5; //抵押物总数量(bty)
     int64       debtValue               = 6; //产生的ccny数量
     repeated DebtRecord debtRecords     = 7; //大户抵押记录
     repeated DebtRecord invalidRecords  = 8; //大户抵押记录
-    int32       status                  = 9; //当期借贷的状态，是否关闭
-    float       latestLiquidationPrice  = 10; //最高清算价格
-    int64       period                  = 11;//借贷最大期限
+    int32       status                  = 9; //当期发行的状态，是否关闭
+    float       latestLiquidationPrice  = 10;//最高清算价格
+    int64       period                  = 11;//发行最大期限
     int64       latestExpireTime        = 12;//最近超期时间
     int64       createTime              = 13;//创建时间
     int64       balance                 = 14;//剩余可发行ccny
@@ -25,8 +25,8 @@ message Issuance {
 
 // 抵押记录
 message DebtRecord {
-    string      accountAddr          = 1; //借贷人地址
-    int64       startTime            = 2; //借贷时间
+    string      accountAddr          = 1; //抵押人地址
+    int64       startTime            = 2; //抵押时间
     int64       collateralValue      = 3; //抵押物价值(bty)
     float       collateralPrice      = 4; //抵押物价格
     int64       debtValue            = 5; //债务价值(ccny)
@@ -36,8 +36,9 @@ message DebtRecord {
     int64       expireTime           = 9; //超时清算时间
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
     string      debtId               = 11;//借贷id
-    int64       index                = 12;//当前索引
-    int64       preIndex             = 13;//上级索引
+    string      issuId               = 12;//发行id
+    int64       index                = 13;//当前索引
+    int64       preIndex             = 14;//上级索引
 }
 
 // 资产价格记录
@@ -49,8 +50,8 @@ message IssuanceAssetPriceRecord {
 // action
 message IssuanceAction {
     oneof value {
-        IssuanceCreate    create = 1; //创建一期借贷
-        IssuanceDebt      debt   = 2; //借贷
+        IssuanceCreate    create = 1; //创建一期发行
+        IssuanceDebt      debt   = 2; //抵押
         IssuanceRepay     repay  = 3; //清算
         IssuanceFeed      feed   = 4; //喂价
         IssuanceClose     close  = 5; //关闭
@@ -63,24 +64,24 @@ message IssuanceManage {
     repeated string superAddrs = 1; //大户地址
 }
 
-// 创建借贷
+// 创建发行
 message IssuanceCreate {
-    int64   totalBalance       = 1; //可借贷总金额
+    int64   totalBalance       = 1; //发行总金额
     int64   debtCeiling        = 2; //单用户可借出的限额(ccny)
     float   liquidationRatio   = 3; //清算比例
-    int64   period             = 4;//借贷最大期限
+    int64   period             = 4; //发行最大期限
 }
 
-// 质押借出
+// 抵押
 message IssuanceDebt {
-    string issuanceId = 1; //借贷期数ID
-    int64  value      = 2; //借贷价值(ccny)
+    string issuanceId = 1; //发行ID
+    int64  value      = 2; //借贷金额(ccny)
 }
 
 // 质押清算
 message IssuanceRepay {
-    string issuanceId = 1; //借贷期数ID
-    string debtId     = 2; //借贷ID
+    string issuanceId = 1; //发行ID
+    string debtId     = 2; //抵押ID
 }
 
 // 喂价
@@ -92,10 +93,10 @@ message IssuanceFeed {
 
 // 借贷关闭
 message IssuanceClose {
-    string issuanceId = 1; //借贷期数ID
+    string issuanceId = 1; //发行ID
 }
 
-// exec_local 借贷信息
+// exec_local 发行信息
 message ReceiptIssuance {
     string      issuanceId      = 1;
     string      accountAddr     = 2;
@@ -108,7 +109,7 @@ message ReceiptIssuance {
     float       btyPrice        = 9; //bty价格
 }
 
-// exec_local 借贷记录信息
+// exec_local 抵押记录信息
 message IssuanceRecord {
     string issuanceId   = 1;
     string addr         = 2;
@@ -116,34 +117,35 @@ message IssuanceRecord {
     int64  index        = 4;
 }
 
-// exec_local 借贷记录信息列表
+// exec_local 抵押记录信息列表
 message IssuanceRecords {
     repeated IssuanceRecord records = 1;
 }
 
-// 根据ID查询一期借贷信息
+// 根据ID查询发行信息
 message ReqIssuanceInfo {
     string issuanceId = 1;
 }
 
-// 返回一期借贷信息
+// 返回一期发行信息
 message RepIssuanceCurrentInfo {
-    int32       status                  = 1;//当期借贷的状态，是否关闭
-    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
+    int32       status                  = 1; //当期发行的状态，是否关闭
+    int64       totalBalance            = 2; //当期发行总金额(ccny)
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
     float       liquidationRatio        = 4; //清算比例
     int64       balance                 = 5; //剩余可借贷金额(ccny)
     int64       collateralValue         = 6; //抵押物总数量(bty)
     int64       debtValue               = 7; //产生的ccny数量
-    int64       period                  = 8;//借贷最大期限
+    int64       period                  = 8; //发行最大期限
+    string      issuId                  = 9; //发行ID
 }
 
-// 根据ID列表查询多期借贷信息
+// 根据ID列表查询多期发行信息
 message ReqIssuanceInfos {
     repeated string issuanceIds = 1;
 }
 
-// 返回多期借贷信息
+// 返回多期发行信息
 message RepIssuanceCurrentInfos {
     repeated RepIssuanceCurrentInfo infos = 1;
 }
@@ -154,19 +156,19 @@ message ReqIssuanceByStatus {
     int64 index  = 2;
 }
 
-// 返回借贷ID列表
+// 返回发行ID列表
 message RepIssuanceIDs {
     repeated string IDs = 1;
 }
 
-// 根据用户地址查询发行记录
+// 根据用户地址查询抵押记录
 message ReqIssuanceRecordsByAddr {
     string issuanceId = 1;
     string addr       = 2;
     int64 index       = 3;
 }
 
-// 根据状态查询发行记录
+// 根据状态查询抵押记录
 message ReqIssuanceRecordsByStatus {
     string issuanceId = 1;
     int32 status      = 2;
@@ -178,7 +180,7 @@ message RepIssuanceRecords {
     repeated DebtRecord records = 1;
 }
 
-// 精确查找发行记录
+// 精确查找抵押记录
 message ReqIssuanceDebtInfo {
     string issuanceId = 1;
     string debtId     = 2;
