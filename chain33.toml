@@ -180,7 +180,7 @@ enableMemTree=true
 enableMemVal=true
 # 缓存close ticket数目，该缓存越大同步速度越快，最大设置到1500000
 tkCloseCacheLen=100000
-# 该参数针对平行链，如果平行链的ForkKvmvccmavl高度不为0,这需要开启此功能
+# 该参数针对平行链，主链无需开启此功能
 enableEmptyBlockHandle=false
 
 [wallet]
