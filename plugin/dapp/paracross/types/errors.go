@@ -55,4 +55,6 @@ var (
 	ErrHeightHasPast = errors.New("ErrHeightHasPast")
 	// ErrKeyNotExist config key not exist
 	ErrKeyNotExist = errors.New("ErrKeyNotExist")
+	// ErrConsensClosed consensus closed
+	ErrConsensClosed = errors.New("ErrConsensClosed")
 )

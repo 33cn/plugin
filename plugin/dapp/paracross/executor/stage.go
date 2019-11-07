@@ -84,43 +84,53 @@ func makeStageGroupReceipt(prev, current *pt.SelfConsensStages) *types.Receipt {
 	}
 }
 
-func getSelfConsensStages(db dbm.KV) (map[int64]uint32, *pt.SelfConsensStages, error) {
+func getSelfConsensStages(db dbm.KV) (*pt.SelfConsensStages, error) {
 	key := calcParaSelfConsStagesKey()
 	item, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
 			err = pt.ErrKeyNotExist
 		}
-		return nil, nil, errors.Wrapf(err, "getSelfConsensStages key:%s", string(key))
+		return nil, errors.Wrapf(err, "getSelfConsensStages key:%s", string(key))
 	}
 	var config pt.SelfConsensStages
 	err = types.Decode(item, &config)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "getSelfConsensStages decode config")
+		return nil, errors.Wrap(err, "getSelfConsensStages decode config")
 	}
+	return &config, nil
+}
 
+func getSelfConsStagesMap(stages []*pt.SelfConsensStage) map[int64]uint32 {
 	stagesMap := make(map[int64]uint32)
-	for _, v := range config.Items {
+	for _, v := range stages {
 		stagesMap[v.BlockHeight] = v.Enable
 	}
+	return stagesMap
+}
 
-	return stagesMap, &config, nil
+func sortStages(stages *pt.SelfConsensStages, new *pt.SelfConsensStage) {
+	stages.Items = append(stages.Items, new)
+	sort.Slice(stages.Items, func(i, j int) bool { return stages.Items[i].BlockHeight < stages.Items[j].BlockHeight })
 }
 
 func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error) {
-	_, stages, err := getSelfConsensStages(db)
+	stages, err := getSelfConsensStages(db)
 	if err != nil {
 		return nil, err
 	}
-	oldStages := *stages
-	stages.Items = append(stages.Items, stage)
-	sort.Slice(stages.Items, func(i, j int) bool { return stages.Items[i].BlockHeight < stages.Items[j].BlockHeight })
-
-	return makeStageGroupReceipt(&oldStages, stages), nil
+	var old pt.SelfConsensStages
+	err = deepCopy(&old, stages)
+	if err != nil {
+		clog.Error("updateStages  deep copy fail", "copy", old, "stat", stages)
+		return nil, err
+	}
+	sortStages(stages, stage)
+	return makeStageGroupReceipt(&old, stages), nil
 
 }
 
-func selfConsensInitStage(db dbm.KV) *types.Receipt {
+func selfConsensInitStage() *types.Receipt {
 	close := types.IsEnable("consensus.sub.para.paraSelfConsInitDisable")
 	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
 	if close {
@@ -136,9 +146,21 @@ func getSelfConsOneStage(height int64, stages *pt.SelfConsensStages) *pt.SelfCon
 			return stages.Items[i]
 		}
 	}
-	clog.Error("getSelfConsOneStage height not hit", "height", height)
 	return &pt.SelfConsensStage{Enable: pt.ParaConfigNo}
 
+}
+
+func isSelfConsOn(db dbm.KV, height int64) (bool, error) {
+	stages, err := getSelfConsensStages(db)
+	if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
+		return false, err
+	}
+
+	if stages != nil {
+		stage := getSelfConsOneStage(height, stages)
+		return stage.Enable == pt.ParaConfigYes, nil
+	}
+	return false, nil
 }
 
 func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
@@ -147,12 +169,13 @@ func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
 		return errors.Wrapf(pt.ErrHeightHasPast, "checkValidStage config height:%d less than block height:%d", config.BlockHeight, a.height)
 	}
 	//2. 如果已经设置到stages中，简单起见，就不能更改了，应该也不会有很大影响
-	stages, _, err := getSelfConsensStages(a.db)
+	stages, err := getSelfConsensStages(a.db)
 	if err != nil {
 		return errors.Wrapf(err, "checkValidStage get stages")
 	}
 
-	if _, exist := stages[config.BlockHeight]; exist {
+	stageMap := getSelfConsStagesMap(stages.Items)
+	if _, exist := stageMap[config.BlockHeight]; exist {
 		return errors.Wrapf(err, "checkValidStage config height:%d existed", config.BlockHeight)
 	}
 
@@ -189,7 +212,7 @@ func (a *action) stageCancel(config *pt.ConfigCancelInfo) (*types.Receipt, error
 		return nil, errors.Wrapf(types.ErrNotAllow, "stage id create by:%s,not by:%s", stat.FromAddr, a.fromaddr)
 	}
 
-	if stat.Status != pt.ParaApplyJoining {
+	if stat.Status != pt.ParaApplyJoining && stat.Status != pt.ParaApplyVoting {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "stage config id:%s,status:%d", config.Id, stat.Status)
 	}
 
@@ -216,10 +239,10 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 	stat, err := getStageID(a.db, config.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "stageVote getStageID:%s", config.Id)
 	}
 
-	if stat.Status != pt.ParaApplyJoining {
+	if stat.Status != pt.ParaApplyJoining && stat.Status != pt.ParaApplyVoting {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, stat.Status)
 	}
 	//stage blockHeight　也不能小于当前vote tx height,不然没有意义
@@ -234,7 +257,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 		clog.Error("selfConsensVote deep copy fail", "copy", copyStat, "stat", stat)
 		return nil, err
 	}
-
+	stat.Status = pt.ParaApplyVoting
 	if stat.Votes == nil {
 		stat.Votes = &pt.ParaNodeVoteDetail{}
 	}
@@ -253,13 +276,13 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 	if !isCommitDone(nodes, most) {
 		return makeStageConfigReceipt(&copyStat, stat), nil
 	}
-	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
+	clog.Info("paracross.stageVote  ----pass", "most", most, "pass", vote)
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	if vote == pt.ParaVoteYes {
 		r, err := updateStages(a.db, stat.Stage)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "stageVote updateStages")
 		}
 		receipt = mergeReceipt(receipt, r)
 	}
@@ -279,7 +302,7 @@ func (a *action) SelfStageConfig(config *pt.ParaStageConfig) (*types.Receipt, er
 	if config.OpTy == pt.ParaOpNewApply {
 		return a.stageApply(config.GetStage())
 
-	} else if config.OpTy == pt.ParaOpQuit {
+	} else if config.OpTy == pt.ParaOpCancel {
 		return a.stageCancel(config.GetCancel())
 
 	} else if config.OpTy == pt.ParaOpVote {

@@ -128,6 +128,8 @@ const (
 	ParaApplyClosed
 	// ParaApplyCanceled to cancel apply of joining or quiting
 	ParaApplyCanceled
+	// ParaApplyVoting record voting status
+	ParaApplyVoting
 )
 
 //针对addr本身的生命周期，addr维护了申请id和quit id，方便查询如coinfrozen等额外信息

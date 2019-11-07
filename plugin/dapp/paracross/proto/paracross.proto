@@ -219,9 +219,9 @@ message LocalSelfConsStageInfo {
 
 
 message ConfigVoteInfo {
-    string id = 1;
+    string id       = 1;
     // 投票值　１:ok 2:nok
-    uint32 value = 2;
+    uint32 value    = 2;
 }
 
 message ConfigCancelInfo {
@@ -230,9 +230,9 @@ message ConfigCancelInfo {
 
 //广义配置类型
 message ParaStageConfig {
-    string title            = 1;
+    string title                        = 1;
     // 配置类型
-    uint32 opTy             = 2;
+    uint32 opTy                         = 2;
     oneof  op {
         SelfConsensStage        stage = 10;
         ConfigVoteInfo          vote  = 11;
@@ -247,12 +247,12 @@ message ReceiptSelfConsStageConfig {
 }
 
 message ReceiptSelfConsStageVoteDone {
-    string id               = 1;
-    SelfConsensStage  stage       = 2;
-    int32  totalNodes       = 3;
-    int32  totalVote        = 4;
-    int32  mostVote         = 5;
-    string voteRst          = 6;
+    string id                       = 1;
+    SelfConsensStage  stage         = 2;
+    int32  totalNodes               = 3;
+    int32  totalVote                = 4;
+    int32  mostVote                 = 5;
+    string voteRst                  = 6;
 }
 
 message ReceiptSelfConsStagesUpdate{

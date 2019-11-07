@@ -40,12 +40,8 @@ function para_set_toml() {
 
     sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
-    sed -i $xsedfix 's/^rmCommitMsgHashParamMainHeight=.*/rmCommitMsgHashParamMainHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
-
-    #sed -i $xsedfix '/\[\[consensus.sub.para.selfConsensusEnable\]\]/{n;n;s/enable=false/enable=true/}' "${1}"
-    sed -i $xsedfix '/\[\[consensus.sub.para.selfConsensusEnable\]\]/!b;n;n;cenable=true' "${1}"
 
     # rpc
     sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
