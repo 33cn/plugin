@@ -320,15 +320,14 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	cfg := a.api.GetConfig()
 	var stage *pt.SelfConsensStage
 	if types.IsPara() && types.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
-		_, stages, err := getSelfConsensStages(a.db)
+		stages, err := getSelfConsensStages(a.db)
 		if err != nil {
-			return &types.Receipt{}, nil
+			return nil, err
 		}
 
 		stage = getSelfConsOneStage(a.height, stages)
-		clog.Info("paracross.commit", "height", a.height, "stageHeight", stage.BlockHeight, "enable", stage.Enable)
 		if stage.Enable == pt.ParaConfigNo {
-			return &types.Receipt{}, nil
+			return nil, pt.ErrConsensClosed
 		}
 
 	}
@@ -950,16 +949,11 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	minerReceipt := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
 	isSelfConsensOn := miner.IsSelfConsensus
 	if types.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
-		_, stages, err := getSelfConsensStages(a.db)
-		if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
+		var err error
+		isSelfConsensOn, err = isSelfConsOn(a.db, miner.Status.Height)
+		if err != nil {
+			clog.Error("paracross miner getConsensus ", "height", miner.Status.Height, "err", err)
 			return nil, err
-		}
-
-		if stages != nil {
-			stage := getSelfConsOneStage(miner.Status.Height, stages)
-			isSelfConsensOn = stage.Enable == pt.ParaConfigYes
-		} else {
-			isSelfConsensOn = false
 		}
 	}
 

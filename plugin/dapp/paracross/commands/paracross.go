@@ -1059,7 +1059,7 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	height, _ := cmd.Flags().GetInt64("height")
 	index, _ := cmd.Flags().GetInt32("index")
 
-	params := &pt.ReqQuerySelfStages{
+	params := pt.ReqQuerySelfStages{
 		Status:    status,
 		Id:        id,
 		Count:     count,

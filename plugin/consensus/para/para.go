@@ -72,26 +72,26 @@ type emptyBlockInterval struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds              int64                 `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient           string                `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                    int64                 `json:"startHeight,omitempty"`
-	GenesisStartHeightSame         bool                  `json:"genesisStartHeightSame,omitempty"`
-	EmptyBlockInterval             []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
-	AuthAccount                    string                `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg           int32                 `json:"waitBlocks4CommitMsg,omitempty"`
-	GenesisAmount                  int64                 `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight        int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	WaitConsensStopTimes           uint32                `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount                  int64                 `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount                int32                 `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsClose        bool                  `json:"fetchFilterParaTxsClose,omitempty"`
-	BatchFetchBlockCount           int64                 `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight         int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen              bool                  `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob          int64                 `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum            uint32                `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime         uint32                `json:"multiDownServerRspTime,omitempty"`
-	RmCommitMsgHashParamMainHeight int64                 `json:"rmCommitMsgHashParamMainHeight,omitempty"`
+	WriteBlockSeconds       int64                 `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient    string                `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight             int64                 `json:"startHeight,omitempty"`
+	GenesisStartHeightSame  bool                  `json:"genesisStartHeightSame,omitempty"`
+	EmptyBlockInterval      []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
+	AuthAccount             string                `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg    int32                 `json:"waitBlocks4CommitMsg,omitempty"`
+	GenesisAmount           int64                 `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight int64                 `json:"mainBlockHashForkHeight,omitempty"`
+	WaitConsensStopTimes    uint32                `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount           int64                 `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount         int32                 `json:"maxSyncErrCount,omitempty"`
+	FetchFilterParaTxsClose bool                  `json:"fetchFilterParaTxsClose,omitempty"`
+	BatchFetchBlockCount    int64                 `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight  int64                 `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen       bool                  `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob   int64                 `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum     uint32                `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime  uint32                `json:"multiDownServerRspTime,omitempty"`
+	RmCommitParamMainHeight int64                 `json:"rmCommitParamMainHeight,omitempty"`
 }
 
 // New function to init paracross env

@@ -39,7 +39,7 @@ type StageRow struct {
 
 //NewStageRow 新建一个meta 结构
 func NewStageRow() *StageRow {
-	return &StageRow{LocalSelfConsStageInfo: nil}
+	return &StageRow{LocalSelfConsStageInfo: &pt.LocalSelfConsStageInfo{}}
 }
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)

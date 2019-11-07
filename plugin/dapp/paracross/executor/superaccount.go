@@ -930,7 +930,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 
 	if types.IsPara() && types.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
 		//不允许主链成功平行链失败导致不一致的情况，这里如果失败则手工设置init stage
-		r = selfConsensInitStage(a.db)
+		r = selfConsensInitStage()
 		receipt.KV = append(receipt.KV, r.KV...)
 		receipt.Logs = append(receipt.Logs, r.Logs...)
 	}

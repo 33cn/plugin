@@ -411,7 +411,7 @@ func (p *Paracross) paracrossGetAssetTxResult(hash []byte) (types.Message, error
 
 //Query_GetSelfConsStages get self consensus stages configed
 func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, error) {
-	_, stages, err := getSelfConsensStages(p.GetStateDB())
+	stages, err := getSelfConsensStages(p.GetStateDB())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -421,7 +421,7 @@ func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, er
 
 //Query_GetSelfConsOneStage get self consensus one stage
 func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, error) {
-	_, stages, err := getSelfConsensStages(p.GetStateDB())
+	stages, err := getSelfConsensStages(p.GetStateDB())
 	if err != nil {
 		return nil, errors.Cause(err)
 	}

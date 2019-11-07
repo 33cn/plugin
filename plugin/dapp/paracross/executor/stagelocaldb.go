@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -22,7 +23,7 @@ func (e *Paracross) execAutoLocalStage(tx *types.Transaction, receiptData *types
 
 func (e *Paracross) execLocalStage(receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	table := NewStageTable(e.GetLocalDB())
-	txIndex := dapp.HeightIndexStr(e.GetHeight(), int64(index))
+
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
 		case pt.TyLogParaSelfConsStageConfig:
@@ -32,13 +33,18 @@ func (e *Paracross) execLocalStage(receiptData *types.ReceiptData, index int) (*
 				if err != nil {
 					return nil, err
 				}
-				r := &pt.LocalSelfConsStageInfo{
-					Stage:   receipt.Current,
-					TxIndex: txIndex,
-				}
-				err = table.Replace(r)
-				if err != nil {
-					return nil, err
+				if receipt.Current.Status == pt.ParaApplyJoining {
+					txIndex := dapp.HeightIndexStr(e.GetHeight(), int64(index))
+					r := &pt.LocalSelfConsStageInfo{
+						Stage:   receipt.Current,
+						TxIndex: txIndex,
+					}
+					err = table.Add(r)
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					update(table, receipt.GetCurrent())
 				}
 			}
 		default:
@@ -64,6 +70,22 @@ func (e *Paracross) execAutoDelLocal(tx *types.Transaction, receiptData *types.R
 	return dbSet, nil
 }
 
+func update(ldb *table.Table, stage *pt.SelfConsensStageInfo) error {
+	xs, err := ldb.ListIndex("id", []byte(stage.Id), nil, 1, 0)
+	if err != nil || len(xs) != 1 {
+		clog.Error("SelfStages update query List failed", "key", stage.Id, "err", err, "len", len(xs))
+		return nil
+	}
+	u, ok := xs[0].Data.(*pt.LocalSelfConsStageInfo)
+	if !ok {
+		clog.Error("SelfStages update decode failed", "data", xs[0].Data)
+		return nil
+
+	}
+	u.Stage = stage
+	return ldb.Update([]byte(u.TxIndex), u)
+}
+
 func (e *Paracross) listSelfStages(req *pt.ReqQuerySelfStages) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
@@ -80,33 +102,30 @@ func (e *Paracross) listSelfStages(req *pt.ReqQuerySelfStages) (types.Message, e
 	} else if req.Id != "" {
 		indexName = "id"
 	}
-
 	cur := &StageRow{
-		LocalSelfConsStageInfo: &pt.LocalSelfConsStageInfo{},
+		LocalSelfConsStageInfo: &pt.LocalSelfConsStageInfo{Stage: &pt.SelfConsensStageInfo{}},
 	}
 
 	cur.Stage.Status = req.Status
-	cur.Stage.Id = req.Id
+	cur.Stage.Id = calcParaSelfConsensStageIDKey(req.Id)
 	prefix, err := cur.Get(indexName)
 	if err != nil {
-		clog.Error("Get", "indexName", indexName, "err", err)
+		clog.Error("listSelfStages Get", "indexName", indexName, "err", err)
 		return nil, err
 	}
-
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {
-		clog.Error("query List failed", "indexName", indexName, "prefix", "prefix", "key", string(primary), "err", err)
+		clog.Error("listSelfStages query failed", "indexName", indexName, "prefix", prefix, "key", string(primary), "err", err)
 		return nil, err
 	}
 	if len(rows) == 0 {
 		return nil, types.ErrNotFound
 	}
-
 	var rep pt.ReplyQuerySelfStages
 	for _, row := range rows {
 		r, ok := row.Data.(*pt.LocalSelfConsStageInfo)
 		if !ok {
-			clog.Error("listProposalProject", "err", "bad row type")
+			clog.Error("listSelfStages", "err", "bad row type")
 			return nil, types.ErrDecode
 		}
 		ok, txID, _ := getRealTxHashID(r.Stage.Id)
