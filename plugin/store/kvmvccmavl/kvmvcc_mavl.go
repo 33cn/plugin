@@ -182,7 +182,6 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 				return hash, err
 			}
 		}
-
 		if err == nil {
 			kvmMavls.cache.Add(string(hash), datas.Height)
 		}
