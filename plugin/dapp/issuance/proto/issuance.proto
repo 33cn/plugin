@@ -138,6 +138,7 @@ message RepIssuanceCurrentInfo {
     int64       debtValue               = 7; //产生的ccny数量
     int64       period                  = 8; //发行最大期限
     string      issuId                  = 9; //发行ID
+    int64       createTime              = 10;//创建时间
 }
 
 // 根据ID列表查询多期发行信息
