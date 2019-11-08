@@ -116,9 +116,15 @@ func sortStages(stages *pt.SelfConsensStages, new *pt.SelfConsensStage) {
 
 func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error) {
 	stages, err := getSelfConsensStages(db)
-	if err != nil {
+	if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
 		return nil, err
 	}
+	if stages == nil {
+		stages = &pt.SelfConsensStages{}
+		stages.Items = append(stages.Items, stage)
+		return makeStageGroupReceipt(nil, stages), nil
+	}
+
 	var old pt.SelfConsensStages
 	err = deepCopy(&old, stages)
 	if err != nil {
@@ -140,43 +146,50 @@ func selfConsensInitStage() *types.Receipt {
 	return makeStageGroupReceipt(nil, stages)
 }
 
-func getSelfConsOneStage(height int64, stages *pt.SelfConsensStages) *pt.SelfConsensStage {
+func getSelfConsOneStage(db dbm.KV, height int64) (*pt.SelfConsensStage, error) {
+	stages, err := getSelfConsensStages(db)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := len(stages.Items) - 1; i >= 0; i-- {
 		if height >= stages.Items[i].BlockHeight {
-			return stages.Items[i]
+			return stages.Items[i], nil
 		}
 	}
-	return &pt.SelfConsensStage{Enable: pt.ParaConfigNo}
+	return nil, errors.Wrapf(pt.ErrKeyNotExist, "SelfConsStage not found to height:%d", height)
 
 }
 
 func isSelfConsOn(db dbm.KV, height int64) (bool, error) {
-	stages, err := getSelfConsensStages(db)
-	if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
+	stage, err := getSelfConsOneStage(db, height)
+	if err != nil {
 		return false, err
 	}
-
-	if stages != nil {
-		stage := getSelfConsOneStage(height, stages)
-		return stage.Enable == pt.ParaConfigYes, nil
-	}
-	return false, nil
+	return stage.Enable == pt.ParaConfigYes, nil
 }
 
 func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
+	//0. 设置高度必须大于fork高度
+	if !types.IsDappFork(config.BlockHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
+		return errors.Wrapf(types.ErrNotAllow, "checkValidStage config height:%d less than fork height", config.BlockHeight)
+	}
+
 	//1. 设置高度必须大于当前区块高度
 	if config.BlockHeight <= a.height {
 		return errors.Wrapf(pt.ErrHeightHasPast, "checkValidStage config height:%d less than block height:%d", config.BlockHeight, a.height)
 	}
+
 	//2. 如果已经设置到stages中，简单起见，就不能更改了，应该也不会有很大影响
 	stages, err := getSelfConsensStages(a.db)
-	if err != nil {
+	if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
 		return errors.Wrapf(err, "checkValidStage get stages")
 	}
-
-	stageMap := getSelfConsStagesMap(stages.Items)
-	if _, exist := stageMap[config.BlockHeight]; exist {
-		return errors.Wrapf(err, "checkValidStage config height:%d existed", config.BlockHeight)
+	if stages != nil {
+		stageMap := getSelfConsStagesMap(stages.Items)
+		if _, exist := stageMap[config.BlockHeight]; exist {
+			return errors.Wrapf(err, "checkValidStage config height:%d existed", config.BlockHeight)
+		}
 	}
 
 	//3. enable check

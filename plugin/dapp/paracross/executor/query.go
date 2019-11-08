@@ -421,12 +421,10 @@ func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, er
 
 //Query_GetSelfConsOneStage get self consensus one stage
 func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, error) {
-	stages, err := getSelfConsensStages(p.GetStateDB())
+	stage, err := getSelfConsOneStage(p.GetStateDB(), in.Data)
 	if err != nil {
-		return nil, errors.Cause(err)
+		return nil, err
 	}
-
-	stage := getSelfConsOneStage(in.Data, stages)
 	return stage, nil
 }
 

@@ -1012,9 +1012,11 @@ func GetSelfConsStagesCmd() *cobra.Command {
 
 func stageOneInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetInt64("height")
 
+	params := types.Int64{Data: height}
 	var res pt.SelfConsensStage
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsOneStage", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsOneStage", params, &res)
 	ctx.Run()
 }
 
