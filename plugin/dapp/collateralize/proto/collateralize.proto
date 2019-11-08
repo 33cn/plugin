@@ -19,6 +19,7 @@ message Collateralize {
     int64       latestExpireTime         = 13;//最近超期时间
     int64       index                    = 14;//当前索引
     int64       preIndex                 = 15;//上一个索引
+    int64       collBalance              = 16;//抵押bty
 }
 
 // 借出记录
@@ -150,6 +151,7 @@ message RepCollateralizeCurrentInfo {
     int64       balance                 = 7; //剩余可借贷金额(ccny)
     int64       period                  = 8; //合约期限
     string      collateralizeId         = 9; //放贷ID
+    int64       collBalance             = 10;//抵押bty
 }
 
 // 根据ID列表查询多期放贷信息

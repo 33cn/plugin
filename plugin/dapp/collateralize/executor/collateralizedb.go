@@ -274,7 +274,6 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 			StabilityFeeRatio: DefaultStabilityFeeRation,
 			Period:            DefaultPeriod,
 			CollTotalBalance:  DefaultCollTotalBalance,
-			CurrentTime:       action.blocktime,
 		}
 	}
 
@@ -308,12 +307,7 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	} else {
 		collConfig.CollTotalBalance = manConfig.CollTotalBalance
 	}
-
-	if manage.CurrentTime != 0 {
-		collConfig.CollTotalBalance = manage.CollTotalBalance
-	} else {
-		collConfig.CollTotalBalance = manConfig.CollTotalBalance
-	}
+	collConfig.CurrentTime = action.blocktime
 
 	value := types.Encode(collConfig)
 	action.db.Set(ConfigKey(), value)
@@ -425,6 +419,7 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	coll.CreateAddr = action.fromaddr
 	coll.Status = pty.CollateralizeActionCreate
 	coll.Index = action.GetIndex()
+	coll.CollBalance = 0
 
 	clog.Debug("CollateralizeCreate created", "CollateralizeID", collateralizeID, "TotalBalance", coll.TotalBalance)
 
@@ -611,6 +606,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	coll.BorrowRecords = append(coll.BorrowRecords, borrowRecord)
 	coll.Status = pty.CollateralizeStatusCreated
 	coll.Balance -= borrow.Value
+	coll.CollBalance += btyFrozen
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -693,6 +689,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 
 	// 保存
 	coll.Balance += borrowRecord.DebtValue
+	coll.CollBalance -= borrowRecord.CollateralValue
 	coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 	coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 	coll.LatestLiquidationPrice = getLatestLiquidationPrice(&coll.Collateralize)
@@ -788,6 +785,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	}
 
 	// 记录当前借贷的最高自动清算价格
+	coll.CollBalance += cAppend.CollateralValue
 	coll.LatestLiquidationPrice = getLatestLiquidationPrice(&coll.Collateralize)
 	coll.LatestExpireTime = getLatestExpireTime(&coll.Collateralize)
 	// append操作不更新Index
@@ -900,6 +898,7 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float32) 
 			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
+			coll.CollBalance -= borrowRecord.CollateralValue
 		} else {
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusWarning
@@ -958,6 +957,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
+			coll.CollBalance -= borrowRecord.CollateralValue
 		} else {
 			borrowRecord.PreIndex = borrowRecord.Index
 			borrowRecord.Index = action.GetIndex()
@@ -987,6 +987,11 @@ func pricePolicy(feed *pty.CollateralizeFeed) float32 {
 		totalVolume += volume
 	}
 
+	if totalVolume == 0 {
+		clog.Error("collateralize price feed volume empty")
+		return 0
+	}
+
 	for i, price := range feed.Price {
 		totalPrice += price * float32(float64(feed.Volume[i])/float64(totalVolume))
 	}
@@ -1011,7 +1016,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 	}
 
 	price := pricePolicy(feed)
-	if price == 0 || price == -1 {
+	if price <= 0 {
 		clog.Error("CollateralizePriceFeed", "price", price, "err", pty.ErrPriceInvalid)
 		return nil, pty.ErrPriceInvalid
 	}

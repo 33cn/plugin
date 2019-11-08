@@ -837,6 +837,10 @@ func pricePolicy(feed *pty.IssuanceFeed) float32 {
 		totalVolume += volume
 	}
 
+	if totalVolume == 0 {
+		clog.Error("issuance price feed volume empty")
+		return 0
+	}
 	for i, price := range feed.Price {
 		totalPrice += price * float32(float64(feed.Volume[i])/float64(totalVolume))
 	}
@@ -861,7 +865,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 	}
 
 	price := pricePolicy(feed)
-	if price == 0 || price == -1 {
+	if price <= 0 {
 		clog.Error("IssuancePriceFeed", "price", price, "err", pty.ErrPriceInvalid)
 		return nil, pty.ErrPriceInvalid
 	}

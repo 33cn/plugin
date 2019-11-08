@@ -26,6 +26,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		Balance:            coll.Balance,
 		Period:             coll.Period,
 		CollateralizeId:    coll.CollateralizeId,
+		CollBalance:        coll.CollBalance,
 	}, nil
 }
 
@@ -48,6 +49,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			Balance:            coll.Balance,
 			Period:             coll.Period,
 			CollateralizeId:    coll.CollateralizeId,
+			CollBalance:        coll.CollBalance,
 		})
 	}
 
