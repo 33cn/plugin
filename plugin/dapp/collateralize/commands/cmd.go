@@ -305,7 +305,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
-		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%d,}",
+		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%d}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period, totalBalance)),
 	}
 

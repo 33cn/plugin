@@ -67,6 +67,7 @@ message CollateralizeManage {
     float stabilityFeeRatio  = 3; //稳定费
     int64 period             = 4; //合约期限
     int64 collTotalBalance   = 5; //放贷总量
+    int64 currentTime        = 6; //设置时间
 }
 
 message CollateralizeAddr {
@@ -216,4 +217,5 @@ message RepCollateralizeConfig {
     int64 period             = 4; //合约期限
     int64 collTotalBalance   = 5; //放贷总量
     int64 collBalance        = 6; //剩余放贷额度
+    int64 currentTime        = 7; //设置时间
 }

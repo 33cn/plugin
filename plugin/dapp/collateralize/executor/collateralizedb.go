@@ -266,7 +266,6 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 		return nil, pty.ErrRiskParam
 	}
 
-	var collConfig *pty.CollateralizeManage
 	manConfig, _ := getCollateralizeConfig(action.db)
 	if manConfig == nil {
 		manConfig = &pty.CollateralizeManage{
@@ -275,9 +274,11 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 			StabilityFeeRatio: DefaultStabilityFeeRation,
 			Period:            DefaultPeriod,
 			CollTotalBalance:  DefaultCollTotalBalance,
+			CurrentTime:       action.blocktime,
 		}
 	}
 
+	collConfig := &pty.CollateralizeManage{}
 	if manage.StabilityFeeRatio != 0 {
 		collConfig.StabilityFeeRatio = manage.StabilityFeeRatio
 	} else  {
@@ -303,6 +304,12 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	}
 
 	if manage.CollTotalBalance != 0 {
+		collConfig.CollTotalBalance = manage.CollTotalBalance
+	} else {
+		collConfig.CollTotalBalance = manConfig.CollTotalBalance
+	}
+
+	if manage.CurrentTime != 0 {
 		collConfig.CollTotalBalance = manage.CollTotalBalance
 	} else {
 		collConfig.CollTotalBalance = manConfig.CollTotalBalance

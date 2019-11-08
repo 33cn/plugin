@@ -331,7 +331,7 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 		LiquidationRatio:     parm.LiquidationRatio,
 		StabilityFeeRatio:    parm.StabilityFeeRatio,
 		Period:               parm.Period,
-		CollTotalBalance:     parm.TotalBalance,
+		CollTotalBalance:     parm.CollTotalBalance,
 	}
 
 	manage := &CollateralizeAction{
