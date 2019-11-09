@@ -1159,7 +1159,7 @@ func queryCollateralizeByStatus(localdb dbm.Lister, status int32, index int64) (
 	return ids, nil
 }
 
-func queryCollateralizeByAddr(localdb dbm.Lister, addr string, index int64) ([]string, error) {
+func queryCollateralizeByAddr(localdb dbm.Lister, addr string, status int32, index int64) ([]string, error) {
 	var data [][]byte
 	var err error
 	if index != 0 {
@@ -1180,7 +1180,9 @@ func queryCollateralizeByAddr(localdb dbm.Lister, addr string, index int64) ([]s
 			clog.Debug("queryCollateralizesByAddr", "decode", err)
 			return nil, err
 		}
-		ids = append(ids, coll.CollateralizeId)
+		if  status ==0 || coll.Status == status {
+			ids = append(ids, coll.CollateralizeId)
+		}
 	}
 
 	return ids, nil

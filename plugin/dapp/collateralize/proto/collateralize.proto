@@ -127,7 +127,8 @@ message CollateralizeRecord {
     string collateralizeId = 1;
     string addr            = 2;
     string recordId        = 3;
-    int64  index           = 4;
+    int32  status          = 4;
+    int64  index           = 5;
 }
 
 // exec_local 放贷记录信息列表
@@ -173,7 +174,8 @@ message ReqCollateralizeByStatus {
 // 根据用户地址查询
 message ReqCollateralizeByAddr {
     string addr  = 1;
-    int64  index = 2;
+    int32 status = 2;
+    int64  index = 3;
 }
 
 // 返回放贷ID列表

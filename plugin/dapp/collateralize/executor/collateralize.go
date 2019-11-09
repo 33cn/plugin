@@ -100,10 +100,11 @@ func (c *Collateralize) deleteCollateralizeStatus(status int32, index int64) (kv
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeId string, index int64) (kvs []*types.KeyValue) {
+func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeId string, status int32, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeAddrKey(addr, index)
 	record := &pty.CollateralizeRecord{
 		CollateralizeId:collateralizeId,
+		Status:status,
 		Index: index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}

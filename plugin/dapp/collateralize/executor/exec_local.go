@@ -24,7 +24,7 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 			switch item.Ty {
 			case pty.TyLogCollateralizeCreate:
 				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
+				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.Status, collateralizeLog.Index)...)
 				break
 			case pty.TyLogCollateralizeBorrow:
 				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId,
