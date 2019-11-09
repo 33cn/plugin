@@ -458,7 +458,7 @@ func getBtyNumToFrozen(value int64, price float32, ratio float32) (int64,error) 
 }
 
 // 获取最近抵押物价格
-func (action *Action)getLatestPrice(db dbm.KV) (float32, error) {
+func getLatestPrice(db dbm.KV) (float32, error) {
 	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
@@ -544,7 +544,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	clog.Debug("IssuanceDebt", "value", debt.GetValue())
 
 	// 获取抵押物价格
-	lastPrice, err := action.getLatestPrice(action.db)
+	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
 		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err

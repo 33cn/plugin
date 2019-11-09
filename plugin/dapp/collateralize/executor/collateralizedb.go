@@ -457,7 +457,7 @@ func calcLiquidationPrice(value int64, colValue int64) float32 {
 }
 
 // 获取最近抵押物价格
-func (action *Action)getLatestPrice(db dbm.KV) (float32, error) {
+func getLatestPrice(db dbm.KV) (float32, error) {
 	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
@@ -537,7 +537,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	clog.Debug("CollateralizeBorrow", "value", borrow.GetValue())
 
 	// 获取抵押物价格
-	lastPrice, err := action.getLatestPrice(action.db)
+	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
@@ -740,7 +740,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	clog.Debug("CollateralizeAppend", "value", cAppend.CollateralValue)
 
 	// 获取抵押物价格
-	lastPrice, err := action.getLatestPrice(action.db)
+	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err

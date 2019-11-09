@@ -192,3 +192,8 @@ message ReqIssuanceDebtInfo {
 message RepIssuanceDebtInfo {
     DebtRecord record = 1;
 }
+
+// 返回最新抵押物价格
+message RepIssuancePrice {
+    float price = 1; //当前抵押物最新价格
+}

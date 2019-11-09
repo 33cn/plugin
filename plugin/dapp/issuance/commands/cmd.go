@@ -269,6 +269,27 @@ func IssuanceManage(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+func IssuacneQueryPriceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "price",
+		Short: "Query latest price",
+		Run:   IssuanceQueryPrice,
+	}
+	return cmd
+}
+
+func IssuanceQueryPrice(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pkt.IssuanceX
+
+	params.FuncName = "IssuancePrice"
+	var res pkt.RepIssuancePrice
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
 // IssuanceQueryCmd 查询命令行
 func IssuanceQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -277,6 +298,9 @@ func IssuanceQueryCmd() *cobra.Command {
 		Run:   IssuanceQuery,
 	}
 	addIssuanceQueryFlags(cmd)
+	cmd.AddCommand(
+		IssuacneQueryPriceCmd(),
+	)
 	return cmd
 }
 

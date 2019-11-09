@@ -335,6 +335,27 @@ func CollateralizeQueryConfig(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func CollateralizeQueryPriceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "price",
+		Short: "Query latest price",
+		Run:   CollateralizeQueryPrice,
+	}
+	return cmd
+}
+
+func CollateralizeQueryPrice(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pkt.CollateralizeX
+
+	params.FuncName = "CollateralizePrice"
+	var res pkt.RepCollateralizePrice
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
 // CollateralizeQueryCmd 查询命令行
 func CollateralizeQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -345,6 +366,7 @@ func CollateralizeQueryCmd() *cobra.Command {
 	addCollateralizeQueryFlags(cmd)
 	cmd.AddCommand(
 		CollateralizeQueryCfgCmd(),
+		CollateralizeQueryPriceCmd(),
 	)
 	return cmd
 }

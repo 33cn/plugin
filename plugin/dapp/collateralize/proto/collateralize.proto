@@ -224,3 +224,8 @@ message RepCollateralizeConfig {
     int64 collBalance        = 6; //剩余放贷额度
     int64 currentTime        = 7; //设置时间
 }
+
+// 返回最新抵押物价格
+message RepCollateralizePrice {
+    float price = 1; //当前抵押物最新价格
+}

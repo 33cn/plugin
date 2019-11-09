@@ -158,3 +158,13 @@ func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecor
 
 	return ret, nil
 }
+
+func (c *Collateralize) Query_CollateralizePrice(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
+	price, err := getLatestPrice(c.GetStateDB())
+	if err != nil {
+		clog.Error("Query_CollateralizePrice", "error", err)
+		return nil, err
+	}
+
+	return &pty.RepCollateralizePrice{Price:price}, nil
+}

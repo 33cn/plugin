@@ -112,3 +112,13 @@ func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecordsBySt
 	ret.Records = append(ret.Records, records...)
 	return ret, nil
 }
+
+func (c *Issuance) Query_IssuancePrice(req *pty.ReqIssuanceRecordsByStatus) (types.Message, error) {
+	price, err := getLatestPrice(c.GetStateDB())
+	if err != nil {
+		clog.Error("Query_CollateralizePrice", "error", err)
+		return nil, err
+	}
+
+	return &pty.RepIssuancePrice{Price:price}, nil
+}
