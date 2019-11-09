@@ -185,7 +185,8 @@ message RepCollateralizeIDs {
 message ReqCollateralizeRecordByAddr {
     string collateralizeId = 1;
     string addr            = 2;
-    int64  index           = 3;
+    int32 status           = 3;
+    int64  index           = 4;
 }
 
 // 根据状态和借贷ID混合查询具体借贷记录

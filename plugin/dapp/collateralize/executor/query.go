@@ -100,7 +100,15 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 		return nil, err
 	}
 
-	ret.Records = records
+	if req.Status == 0 {
+		ret.Records = records
+	} else {
+		for _,record := range records {
+			if record.Status == req.Status {
+				ret.Records = append(ret.Records, record)
+			}
+		}
+	}
 	return ret, nil
 }
 

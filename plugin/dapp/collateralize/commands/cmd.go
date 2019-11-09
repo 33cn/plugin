@@ -391,23 +391,24 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	}
 
 	if collateralizeID != "" {
-		if statusStr != "" {
-			params.FuncName = "CollateralizeRecordByStatus"
+		 if address != "" {
+			params.FuncName = "CollateralizeRecordByAddr"
 
-			req := &pkt.ReqCollateralizeRecordByStatus{
+			req := &pkt.ReqCollateralizeRecordByAddr{
 				CollateralizeId: collateralizeID,
 				Status: int32(status),
+				Addr: address,
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepCollateralizeRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
-		} else if address != "" {
-			params.FuncName = "CollateralizeRecordByAddr"
+		} else if statusStr != "" {
+			params.FuncName = "CollateralizeRecordByStatus"
 
-			req := &pkt.ReqCollateralizeRecordByAddr{
+			req := &pkt.ReqCollateralizeRecordByStatus{
 				CollateralizeId: collateralizeID,
-				Addr: address,
+				Status: int32(status),
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepCollateralizeRecords

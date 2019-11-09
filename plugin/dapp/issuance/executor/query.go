@@ -88,7 +88,16 @@ func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecordsByAddr
 		return nil, err
 	}
 
-	ret.Records = records
+	if req.Status == 0 {
+		ret.Records = records
+	} else {
+		for _,record := range records {
+			if record.Status == req.Status {
+				ret.Records = append(ret.Records, record)
+			}
+		}
+	}
+
 	return ret, nil
 }
 
