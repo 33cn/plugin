@@ -172,7 +172,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx.selfConsStageConfig", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawSelfConsStageApplyTx(cfg, &param)
+		return CreateRawSelfConsStageApplyTx(&param)
 	}
 	return nil, types.ErrNotSupport
 }

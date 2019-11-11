@@ -136,8 +136,8 @@ func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error)
 
 }
 
-func selfConsensInitStage() *types.Receipt {
-	close := types.IsEnable("consensus.sub.para.paraSelfConsInitDisable")
+func selfConsensInitStage(cfg *types.Chain33Config) *types.Receipt {
+	close := cfg.IsEnable("consensus.sub.para.paraSelfConsInitDisable")
 	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
 	if close {
 		stage.Enable = pt.ParaConfigNo
@@ -170,8 +170,9 @@ func isSelfConsOn(db dbm.KV, height int64) (bool, error) {
 }
 
 func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
+	cfg := a.api.GetConfig()
 	//0. 设置高度必须大于fork高度
-	if !types.IsDappFork(config.BlockHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
+	if !cfg.IsDappFork(config.BlockHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
 		return errors.Wrapf(types.ErrNotAllow, "checkValidStage config height:%d less than fork height", config.BlockHeight)
 	}
 
@@ -242,9 +243,10 @@ func (a *action) stageCancel(config *pt.ConfigCancelInfo) (*types.Receipt, error
 }
 
 func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
-	nodes, _, err := getParacrossNodes(a.db, types.GetTitle())
+	cfg := a.api.GetConfig()
+	nodes, _, err := getParacrossNodes(a.db, cfg.GetTitle())
 	if err != nil {
-		return nil, errors.Wrapf(err, "getNodes for title:%s", types.GetTitle())
+		return nil, errors.Wrapf(err, "getNodes for title:%s", cfg.GetTitle())
 	}
 	if !validNode(a.fromaddr, nodes) {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)

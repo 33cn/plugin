@@ -248,7 +248,6 @@ func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, 
 
 //CreateRawSelfConsStageApplyTx create raw tx for self consens stage
 func CreateRawSelfConsStageApplyTx(apply *ParaStageConfig) (*types.Transaction, error) {
-
 	action := &ParacrossAction{
 		Ty:    ParacrossActionSelfStageConfig,
 		Value: &ParacrossAction_SelfStageConfig{apply},

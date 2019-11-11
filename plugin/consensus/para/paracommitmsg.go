@@ -409,7 +409,7 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 func (client *commitMsgClient) getExecName(commitHeight int64) string {
 	cfg := client.paraClient.GetAPI().GetConfig()
 	if cfg.IsDappFork(commitHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
-		return paracross.GetExecName()
+		return paracross.GetExecName(cfg)
 	}
 
 	execName := pt.ParaX
@@ -441,7 +441,6 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 }
 
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
-	execName := pt.ParaX
 	cfg := client.paraClient.GetAPI().GetConfig()
 	execName := client.getExecName(status.Height)
 	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
@@ -903,7 +902,8 @@ func (client *commitMsgClient) fetchPriKey() error {
 
 func (client *commitMsgClient) setSelfConsEnable() error {
 	var err error
-	selfEnables := types.Conf("config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
+	cfg := client.paraClient.GetAPI().GetConfig()
+	selfEnables := types.Conf(cfg, "config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
 	for _, v := range selfEnables {
 		hs := strings.Split(v, "-")
 		enable := &paraSelfConsEnable{}
@@ -930,4 +930,16 @@ func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 		}
 	}
 	return false
+}
+
+func (client *commitMsgClient) initConfig(){
+	err := client.setSelfConsEnable()
+	if err != nil{
+		panic(err)
+	}
+}
+
+func (client *commitMsgClient) process(){
+	client.initConfig()
+	client.handler()
 }
