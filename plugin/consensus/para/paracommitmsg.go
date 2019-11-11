@@ -751,7 +751,6 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		plog.Error("getSelfConsensusStatus nok")
 		return nil, types.ErrInvalidParam
 	}
-	plog.Info("getSelfConsensusStatus ", "height", block.Height, "stageHeight", stage.BlockHeight, "enable", stage.Enable)
 	if stage.Enable == pt.ParaConfigYes {
 		//从本地查询共识高度
 		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{

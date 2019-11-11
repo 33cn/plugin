@@ -432,15 +432,15 @@ func (a *action) superManagerVoteProc(title string) error {
 	return nil
 }
 
-func updateVotes(stat *pt.ParaNodeVoteDetail, nodes map[string]struct{}) {
+func updateVotes(in *pt.ParaNodeVoteDetail, nodes map[string]struct{}) *pt.ParaNodeVoteDetail {
 	votes := &pt.ParaNodeVoteDetail{}
-	for i, addr := range stat.Addrs {
+	for i, addr := range in.Addrs {
 		if _, ok := nodes[addr]; ok {
 			votes.Addrs = append(votes.Addrs, addr)
-			votes.Votes = append(votes.Votes, stat.Votes[i])
+			votes.Votes = append(votes.Votes, in.Votes[i])
 		}
 	}
-	stat = votes
+	return votes
 }
 
 //由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
@@ -539,7 +539,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	}
 
 	//剔除已退出nodegroup的addr的投票
-	updateVotes(stat.Votes, nodes)
+	stat.Votes = updateVotes(stat.Votes, nodes)
 
 	most, vote := getMostVote(stat.Votes)
 	if !isCommitDone(nodes, most) {

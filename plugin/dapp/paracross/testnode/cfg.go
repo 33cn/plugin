@@ -123,18 +123,11 @@ genesisAmount=100000000
 mainBlockHashForkHeight=1
 mainForkParacrossCommitTx=1
 mainLoopCheckCommitTxDoneForkHeight=11
+selfConsensEnablePreContract=["0-1000"]
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
 interval=2
-[[consensus.sub.para.selfConsensusEnable]]
-blockHeight=0
-enable=true
-[[consensus.sub.para.selfConsensusEnable]]
-blockHeight=20
-enable=false
-[[consensus.sub.para.selfConsensusEnable]]
-blockHeight=40
-enable=true
+
 
 [store]
 name="mavl"

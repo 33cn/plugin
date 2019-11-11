@@ -220,7 +220,7 @@ function paracross_ListTitles() {
     local ok
     local main_ip=${UNIT_HTTP//8901/8801}
     resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}' ${main_ip})
-    echo $resp
+    echo "$resp"
     ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
     [ "$ok" == true ]
     local rst=$?

@@ -82,45 +82,45 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 
 }
 
-func TestGetConsensusStatus(t *testing.T) {
-	chain33Cfg := types.NewChain33Config(testnode.DefaultConfig)
-
-	api := new(apimocks.QueueProtocolAPI)
-	api.On("GetConfig", mock.Anything).Return(chain33Cfg, nil)
-	para := &client{BaseClient: &drivers.BaseClient{}}
-
-	para.subCfg = new(subConfig)
-	grpcClient := &typesmocks.Chain33Client{}
-	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
-	para.grpcClient = grpcClient
-
-	client := &commitMsgClient{
-		paraClient: para,
-	}
-	para.commitMsgClient = client
-
-	block := &types.Block{
-		Height:     1,
-		MainHeight: 10,
-	}
-	getMockLastBlock(para, block)
-
-	status := &pt.ParacrossStatus{
-		Height: 1,
-	}
-
-	api.On("QueryChain", mock.Anything, mock.Anything, mock.Anything).Return(status, nil).Once()
-	detail := &types.BlockDetail{Block: block}
-	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
-
-	api.On("GetBlocks", mock.Anything).Return(details, nil).Once()
-
-	para.SetAPI(api)
-	ret, err := client.getSelfConsensusStatus()
-
-	assert.Nil(t, err)
-	assert.Equal(t, int64(1), ret.Height)
-}
+//func TestGetConsensusStatus(t *testing.T) {
+//	chain33Cfg := types.NewChain33Config(testnode.DefaultConfig)
+//
+//	api := new(apimocks.QueueProtocolAPI)
+//	api.On("GetConfig", mock.Anything).Return(chain33Cfg, nil)
+//	para := &client{BaseClient: &drivers.BaseClient{}}
+//
+//	para.subCfg = new(subConfig)
+//	grpcClient := &typesmocks.Chain33Client{}
+//	//grpcClient.On("GetFork", mock.Anything, &types.ReqKey{Key: []byte("ForkBlockHash")}).Return(&types.Int64{Data: 1}, errors.New("err")).Once()
+//	para.grpcClient = grpcClient
+//
+//	client := &commitMsgClient{
+//		paraClient: para,
+//	}
+//	para.commitMsgClient = client
+//
+//	block := &types.Block{
+//		Height:     1,
+//		MainHeight: 10,
+//	}
+//	getMockLastBlock(para, block)
+//
+//	status := &pt.ParacrossStatus{
+//		Height: 1,
+//	}
+//
+//	api.On("QueryChain", mock.Anything, mock.Anything, mock.Anything).Return(status, nil).Once()
+//	detail := &types.BlockDetail{Block: block}
+//	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
+//
+//	api.On("GetBlocks", mock.Anything).Return(details, nil).Once()
+//
+//	para.SetAPI(api)
+//	ret, err := client.getSelfConsensusStatus()
+//
+//	assert.Nil(t, err)
+//	assert.Equal(t, int64(1), ret.Height)
+//}
 
 func TestSendCommitMsg(t *testing.T) {
 	cfg := types.NewChain33Config(testnode.DefaultConfig)
