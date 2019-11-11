@@ -126,6 +126,17 @@ func (suite *CommitTestSuite) SetupSuite() {
 	}
 	assert.Equal(suite.T(), value, types.Encode(nodeValue))
 
+	stageKey := calcParaSelfConsStagesKey()
+	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
+	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
+	suite.stateDB.Set(stageKey, types.Encode(stages))
+	value, err = suite.stateDB.Get(stageKey)
+	if err != nil {
+		suite.T().Error("get setup stages failed", err)
+		return
+	}
+	assert.Equal(suite.T(), value, types.Encode(stages))
+
 	// setup state title 'test' height is 9
 	var titleStatus pt.ParacrossStatus
 	titleStatus.Title = Title
@@ -452,15 +463,39 @@ func (s *VoteTestSuite) TestFilterTxsForPara() {
 
 type VoteTestSuite struct {
 	suite.Suite
+	stateDB dbm.KV
+	localDB *dbmock.KVDB
+
 	exec *Paracross
 }
 
-func (s *VoteTestSuite) SetupSuite() {
+func (suite *VoteTestSuite) SetupSuite() {
 	//para_init(Title)
-	s.exec = newParacross().(*Paracross)
+	suite.exec = newParacross().(*Paracross)
 	api := new(apimock.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
-	s.exec.SetAPI(api)
+	suite.exec.SetAPI(api)
+
+	suite.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
+	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
+	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
+	suite.localDB = new(dbmock.KVDB)
+
+	suite.exec.SetLocalDB(suite.localDB)
+	suite.exec.SetStateDB(suite.stateDB)
+	suite.exec.SetEnv(0, 0, 0)
+
+	stageKey := calcParaSelfConsStagesKey()
+	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
+	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
+	suite.stateDB.Set(stageKey, types.Encode(stages))
+	value, err := suite.stateDB.Get(stageKey)
+	if err != nil {
+		suite.T().Error("get setup stages failed", err)
+		return
+	}
+	assert.Equal(suite.T(), value, types.Encode(stages))
+
 }
 
 func (s *VoteTestSuite) TestVoteTx() {

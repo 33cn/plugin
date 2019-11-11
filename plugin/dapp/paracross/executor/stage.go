@@ -285,7 +285,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 	}
 
 	//剔除已退出nodegroup的addr的投票
-	updateVotes(stat.Votes, nodes)
+	stat.Votes = updateVotes(stat.Votes, nodes)
 
 	most, vote := getMostVote(stat.Votes)
 	if !isCommitDone(nodes, most) {

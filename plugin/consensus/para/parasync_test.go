@@ -77,6 +77,9 @@ func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 		maxSyncErrCount: 100,
 	}
 
+	para.commitMsgClient = &commitMsgClient{
+		paraClient: para,
+	}
 	return para
 }
 

@@ -354,7 +354,7 @@ func TestUpdateVotes(t *testing.T) {
 	nodes["BB"] = struct{}{}
 	nodes["CC"] = struct{}{}
 
-	updateVotes(stat.Votes, nodes)
+	stat.Votes = updateVotes(stat.Votes, nodes)
 	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
 	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }
