@@ -927,10 +927,10 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	r = makeParaNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, apply)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
-
-	if types.IsPara() && types.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+	cfg := a.api.GetConfig()
+	if cfg.IsPara() && cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
 		//不允许主链成功平行链失败导致不一致的情况，这里如果失败则手工设置init stage
-		r = selfConsensInitStage()
+		r = selfConsensInitStage(cfg)
 		receipt.KV = append(receipt.KV, r.KV...)
 		receipt.Logs = append(receipt.Logs, r.Logs...)
 	}

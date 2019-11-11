@@ -366,7 +366,7 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 		MainBlockHeight: localBlock.MainHeight,
 	}
 
-	maxHeight := pt.GetDappForkHeight(cfg,pt.ForkLoopCheckCommitTxDone)
+	maxHeight := pt.GetDappForkHeight(cfg, pt.ForkLoopCheckCommitTxDone)
 	if maxHeight < client.paraClient.subCfg.RmCommitParamMainHeight {
 		maxHeight = client.paraClient.subCfg.RmCommitParamMainHeight
 	}

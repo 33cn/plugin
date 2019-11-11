@@ -168,10 +168,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.ParaConsensStartHeight > 0 {
 		para.commitMsgClient.consensDoneHeight = subcfg.ParaConsensStartHeight - 1
 	}
-	err = para.commitMsgClient.setSelfConsEnable()
-	if err != nil {
-		panic(err)
-	}
 
 	para.blockSyncClient = &blockSyncClient{
 		paraClient:      para,
@@ -254,7 +250,7 @@ func (client *client) SetQueueClient(c queue.Client) {
 	})
 	go client.EventLoop()
 	client.wg.Add(1)
-	go client.commitMsgClient.handler()
+	go client.commitMsgClient.process()
 	client.wg.Add(1)
 	go client.CreateBlock()
 	client.wg.Add(1)

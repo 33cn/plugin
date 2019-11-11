@@ -373,8 +373,9 @@ func (c *Jrpc) ListNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interfa
 
 // GetNodeGroupAddrs get super node group addrs
 func (c *channelClient) GetSelfConsStages(ctx context.Context, req *types.ReqNil) (*pt.SelfConsensStages, error) {
+	cfg := c.GetConfig()
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetSelfConsStages", &r)
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsStages", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -396,8 +397,9 @@ func (c *Jrpc) GetSelfConsStages(req *types.ReqNil, result *interface{}) error {
 
 // GetNodeGroupAddrs get super node group addrs
 func (c *channelClient) GetSelfConsOneStage(ctx context.Context, req *types.Int64) (*pt.SelfConsensStage, error) {
+	cfg := c.GetConfig()
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetSelfConsOneStage", &r)
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsOneStage", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -418,8 +420,9 @@ func (c *Jrpc) GetSelfConsOneStage(req *types.Int64, result *interface{}) error 
 }
 
 func (c *channelClient) ListSelfStages(ctx context.Context, req *pt.ReqQuerySelfStages) (*pt.ReplyQuerySelfStages, error) {
+	cfg := c.GetConfig()
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "ListSelfStages", &r)
+	data, err := c.Query(pt.GetExecName(cfg), "ListSelfStages", &r)
 	if err != nil {
 		return nil, err
 	}
