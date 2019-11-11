@@ -48,9 +48,9 @@ var (
 
 // KVMCCCConfig KVMCCC config
 type KVMCCCConfig struct {
-	EnableMVCCIter  bool
-	EnableMVCCPrune bool
-	PruneHeight     int32
+	EnableMVCCIter         bool
+	EnableMVCCPrune        bool
+	PruneHeight            int32
 	EnableEmptyBlockHandle bool
 }
 
@@ -73,9 +73,9 @@ func NewKVMVCC(sub *subKVMVCCConfig, db dbm.DB) *KVMVCCStore {
 		sub.PruneHeight = defaultPruneHeight
 	}
 	kvmvccCfg := &KVMCCCConfig{
-		EnableMVCCIter:  sub.EnableMVCCIter,
-		EnableMVCCPrune: sub.EnableMVCCPrune,
-		PruneHeight:     sub.PruneHeight,
+		EnableMVCCIter:         sub.EnableMVCCIter,
+		EnableMVCCPrune:        sub.EnableMVCCPrune,
+		PruneHeight:            sub.PruneHeight,
 		EnableEmptyBlockHandle: sub.EnableEmptyBlockHandle,
 	}
 	if kvmvccCfg.EnableMVCCIter {

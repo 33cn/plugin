@@ -77,9 +77,9 @@ type KVmMavlStore struct {
 }
 
 type subKVMVCCConfig struct {
-	EnableMVCCIter  bool  `json:"enableMVCCIter"`
-	EnableMVCCPrune bool  `json:"enableMVCCPrune"`
-	PruneHeight     int32 `json:"pruneHeight"`
+	EnableMVCCIter         bool  `json:"enableMVCCIter"`
+	EnableMVCCPrune        bool  `json:"enableMVCCPrune"`
+	PruneHeight            int32 `json:"pruneHeight"`
 	EnableEmptyBlockHandle bool  `json:"enableEmptyBlockHandle"`
 }
 
