@@ -932,14 +932,14 @@ func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 	return false
 }
 
-func (client *commitMsgClient) initConfig(){
+func (client *commitMsgClient) initConfig() {
 	err := client.setSelfConsEnable()
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 }
 
-func (client *commitMsgClient) process(){
+func (client *commitMsgClient) process() {
 	client.initConfig()
 	client.handler()
 }
