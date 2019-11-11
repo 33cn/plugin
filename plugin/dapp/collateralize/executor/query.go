@@ -16,7 +16,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		return nil, err
 	}
 
-	return &pty.RepCollateralizeCurrentInfo{
+	info :=  &pty.RepCollateralizeCurrentInfo{
 		Status:             coll.Status,
 		TotalBalance:       coll.TotalBalance,
 		DebtCeiling:        coll.DebtCeiling,
@@ -27,7 +27,11 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 		Period:             coll.Period,
 		CollateralizeId:    coll.CollateralizeId,
 		CollBalance:        coll.CollBalance,
-	}, nil
+	}
+	info.BorrowRecords = append(info.BorrowRecords, coll.BorrowRecords...)
+	info.BorrowRecords = append(info.BorrowRecords, coll.InvalidRecords...)
+
+	return info, nil
 }
 
 func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeInfos) (types.Message, error) {
@@ -39,7 +43,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			return nil, err
 		}
 
-		infos.Infos = append(infos.Infos, &pty.RepCollateralizeCurrentInfo{
+		info :=  &pty.RepCollateralizeCurrentInfo{
 			Status:             coll.Status,
 			TotalBalance:       coll.TotalBalance,
 			DebtCeiling:        coll.DebtCeiling,
@@ -50,7 +54,11 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 			Period:             coll.Period,
 			CollateralizeId:    coll.CollateralizeId,
 			CollBalance:        coll.CollBalance,
-		})
+		}
+		info.BorrowRecords = append(info.BorrowRecords, coll.BorrowRecords...)
+		info.BorrowRecords = append(info.BorrowRecords, coll.InvalidRecords...)
+
+		infos.Infos = append(infos.Infos, info)
 	}
 
 	return infos, nil

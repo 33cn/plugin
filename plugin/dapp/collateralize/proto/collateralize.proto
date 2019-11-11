@@ -143,16 +143,17 @@ message ReqCollateralizeInfo {
 
 // 返回一期放贷信息
 message RepCollateralizeCurrentInfo {
-    int32       status                  = 1;//当期借贷的状态，是否关闭
-    int64       totalBalance            = 2; //当期可借贷的总金额(ccny)
-    int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio        = 4; //清算比例
-    float       stabilityFeeRatio       = 5; //稳定费
-    string      createAddr              = 6; //创建人地址
-    int64       balance                 = 7; //剩余可借贷金额(ccny)
-    int64       period                  = 8; //合约期限
-    string      collateralizeId         = 9; //放贷ID
-    int64       collBalance             = 10;//抵押bty
+    int32       status                   = 1;//当期借贷的状态，是否关闭
+    int64       totalBalance             = 2; //当期可借贷的总金额(ccny)
+    int64       debtCeiling              = 3; //单用户可借出的限额(ccny)
+    float       liquidationRatio         = 4; //清算比例
+    float       stabilityFeeRatio        = 5; //稳定费
+    string      createAddr               = 6; //创建人地址
+    int64       balance                  = 7; //剩余可借贷金额(ccny)
+    int64       period                   = 8; //合约期限
+    string      collateralizeId          = 9; //放贷ID
+    int64       collBalance              = 10;//抵押bty
+    repeated BorrowRecord borrowRecords  = 11;//借贷记录
 }
 
 // 根据ID列表查询多期放贷信息
