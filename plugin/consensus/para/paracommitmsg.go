@@ -148,7 +148,7 @@ func (client *commitMsgClient) resetSend() {
 
 //自共识后直接从本地获取最新共识高度，没有自共识，获取主链的共识高度
 func (client *commitMsgClient) getConsensusHeight() int64 {
-	status, err := client.getSelfConsensusStatus()
+	status, err := client.getSelfConsensus()
 	if err != nil {
 		return atomic.LoadInt64(&client.consensHeight)
 	}
@@ -729,14 +729,12 @@ func (client *commitMsgClient) GetProperFeeRate() error {
 	return nil
 }
 
-func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, error) {
+//在自共识阶段获取共识高度
+func (client *commitMsgClient) getSelfConsensus() (*pt.ParacrossStatus, error) {
 	block, err := client.paraClient.getLastBlockInfo()
 	if err != nil {
 		return nil, err
 	}
-	cfg := client.paraClient.GetAPI().GetConfig()
-
-	//从本地查询共识高度
 	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "paracross",
 		FuncName: "GetSelfConsOneStage",
@@ -752,19 +750,8 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		return nil, types.ErrInvalidParam
 	}
 	if stage.Enable == pt.ParaConfigYes {
-		//从本地查询共识高度
-		ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
-			Driver:   "paracross",
-			FuncName: "GetTitle",
-			Param:    types.Encode(&types.ReqString{Data: cfg.GetTitle()}),
-		})
+		resp, err := client.getSelfConsensusStatus()
 		if err != nil {
-			plog.Error("getSelfConsensusStatus ", "err", err.Error())
-			return nil, err
-		}
-		resp, ok := ret.(*pt.ParacrossStatus)
-		if !ok {
-			plog.Error("getSelfConsensusStatus ParacrossStatus nok")
 			return nil, err
 		}
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
@@ -773,6 +760,27 @@ func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, er
 		}
 	}
 	return nil, types.ErrNotFound
+}
+
+//从本地查询共识高度
+func (client *commitMsgClient) getSelfConsensusStatus() (*pt.ParacrossStatus, error) {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetTitle",
+		Param:    types.Encode(&types.ReqString{Data: cfg.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("getSelfConsensusStatus ", "err", err)
+		return nil, err
+	}
+	resp, ok := ret.(*pt.ParacrossStatus)
+	if !ok {
+		plog.Error("getSelfConsensusStatus ParacrossStatus nok")
+		return nil, types.ErrNotFound
+	}
+	return resp, nil
+
 }
 
 //通过grpc获取主链状态可能耗时，放在定时器里面处理
@@ -794,7 +802,7 @@ func (client *commitMsgClient) getMainConsensusStatus() (*pt.ParacrossStatus, er
 	}
 	if !reply.GetIsOk() {
 		plog.Info("getMainConsensusStatus nok", "error", reply.GetMsg())
-		return nil, err
+		return nil, types.ErrNotFound
 	}
 	var result pt.ParacrossStatus
 	err = types.Decode(reply.Msg, &result)
@@ -899,25 +907,35 @@ func (client *commitMsgClient) fetchPriKey() error {
 	return nil
 }
 
-func (client *commitMsgClient) setSelfConsEnable() error {
+func parseSelfConsEnableStr(selfEnables []string) ([]*paraSelfConsEnable, error) {
 	var err error
-	cfg := client.paraClient.GetAPI().GetConfig()
-	selfEnables := types.Conf(cfg, "config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
+	var list []*paraSelfConsEnable
 	for _, v := range selfEnables {
 		hs := strings.Split(v, "-")
 		enable := &paraSelfConsEnable{}
 		enable.startHeight, err = strconv.ParseInt(hs[0], 0, 64)
 		if err != nil {
-			plog.Error("para setSelfConsEnable", "v0", hs[0])
-			return err
+			plog.Error("para setSelfConsEnable", "v0", hs[0], "err", err)
+			return nil, err
 		}
 		enable.endHeight, err = strconv.ParseInt(hs[1], 0, 64)
 		if err != nil {
-			plog.Error("para setSelfConsEnable", "v1", hs[1])
-			return err
+			plog.Error("para setSelfConsEnable", "v1", hs[1], "err", err)
+			return nil, err
 		}
-		client.selfConsEnableList = append(client.selfConsEnableList, enable)
+		list = append(list, enable)
 	}
+	return list, nil
+}
+
+func (client *commitMsgClient) setSelfConsEnable() error {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	selfEnables := types.Conf(cfg, "config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
+	list, err := parseSelfConsEnableStr(selfEnables)
+	if err != nil {
+		return err
+	}
+	client.selfConsEnableList = append(client.selfConsEnableList, list...)
 	return nil
 }
 
