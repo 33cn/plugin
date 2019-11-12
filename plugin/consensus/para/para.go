@@ -250,7 +250,7 @@ func (client *client) SetQueueClient(c queue.Client) {
 	})
 	go client.EventLoop()
 	client.wg.Add(1)
-	go client.commitMsgClient.process()
+	go client.commitMsgClient.handler()
 	client.wg.Add(1)
 	go client.CreateBlock()
 	client.wg.Add(1)
@@ -267,6 +267,11 @@ func (client *client) InitBlock() {
 		panic(err)
 	}
 	client.grpcClient = grpcCli
+
+	err = client.commitMsgClient.setSelfConsEnable()
+	if err != nil {
+		panic(err)
+	}
 
 	block, err := client.RequestLastBlock()
 	if err != nil {
