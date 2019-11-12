@@ -28,7 +28,19 @@ var (
 	ForkConsensSupportJump = "ForkConsensSupportJump"
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
-	)
+
+	//para toml config params
+	// ParaConsSubConf sub
+	ParaConsSubConf = "consensus.sub.para"
+	//ParaPrefixConsSubConf prefix
+	ParaPrefixConsSubConf = "config." + ParaConsSubConf
+	//ParaSelfConsInitConf self stage init config
+	ParaSelfConsInitConf = "paraSelfConsInitDisable"
+	//ParaSelfConsConfPreContract self consens enable string as ["0-100"] config pre stage contract
+	ParaSelfConsConfPreContract = "selfConsensEnablePreContract"
+	//ParaFilterIgnoreTxGroup adapt 6.1.0 to check para tx in group
+	ParaFilterIgnoreTxGroup = "FilterIgnoreParaTxGroup"
+)
 
 func init() {
 	// init executor type

@@ -354,7 +354,7 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 			key = MainLoopCheckCommitTxDoneForkHeight
 		}
 
-		forkHeight = types.Conf(cfg, "config.consensus.sub.para").GInt(key)
+		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
