@@ -469,32 +469,32 @@ type VoteTestSuite struct {
 	exec *Paracross
 }
 
-func (suite *VoteTestSuite) SetupSuite() {
+func (s *VoteTestSuite) SetupSuite() {
 	//para_init(Title)
-	suite.exec = newParacross().(*Paracross)
+	s.exec = newParacross().(*Paracross)
 	api := new(apimock.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
-	suite.exec.SetAPI(api)
+	s.exec.SetAPI(api)
 
-	suite.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
+	s.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
 	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
-	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
-	suite.localDB = new(dbmock.KVDB)
+	//s.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
+	s.localDB = new(dbmock.KVDB)
 
-	suite.exec.SetLocalDB(suite.localDB)
-	suite.exec.SetStateDB(suite.stateDB)
-	suite.exec.SetEnv(0, 0, 0)
+	s.exec.SetLocalDB(s.localDB)
+	s.exec.SetStateDB(s.stateDB)
+	s.exec.SetEnv(0, 0, 0)
 
 	stageKey := calcParaSelfConsStagesKey()
 	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
 	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
-	suite.stateDB.Set(stageKey, types.Encode(stages))
-	value, err := suite.stateDB.Get(stageKey)
+	s.stateDB.Set(stageKey, types.Encode(stages))
+	value, err := s.stateDB.Get(stageKey)
 	if err != nil {
-		suite.T().Error("get setup stages failed", err)
+		s.T().Error("get setup stages failed", err)
 		return
 	}
-	assert.Equal(suite.T(), value, types.Encode(stages))
+	assert.Equal(s.T(), value, types.Encode(stages))
 
 }
 
