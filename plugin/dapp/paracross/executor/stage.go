@@ -137,7 +137,7 @@ func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error)
 }
 
 func selfConsensInitStage(cfg *types.Chain33Config) *types.Receipt {
-	close := cfg.IsEnable("consensus.sub.para.paraSelfConsInitDisable")
+	close := cfg.IsEnable(pt.ParaConsSubConf + "." + pt.ParaSelfConsInitConf)
 	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
 	if close {
 		stage.Enable = pt.ParaConfigNo

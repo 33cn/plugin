@@ -930,7 +930,7 @@ func parseSelfConsEnableStr(selfEnables []string) ([]*paraSelfConsEnable, error)
 
 func (client *commitMsgClient) setSelfConsEnable() error {
 	cfg := client.paraClient.GetAPI().GetConfig()
-	selfEnables := types.Conf(cfg, "config.consensus.sub.para").GStrList("selfConsensEnablePreContract")
+	selfEnables := types.Conf(cfg, pt.ParaPrefixConsSubConf).GStrList(pt.ParaSelfConsConfPreContract)
 	list, err := parseSelfConsEnableStr(selfEnables)
 	if err != nil {
 		return err
