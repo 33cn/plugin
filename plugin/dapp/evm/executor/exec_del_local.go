@@ -5,7 +5,6 @@
 package executor
 
 import (
-	"bytes"
 	"github.com/33cn/chain33/types"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
@@ -30,18 +29,15 @@ func (evm *EVMExecutor) ExecDelLocal(tx *types.Transaction, receipt *types.Recei
 				if err != nil {
 					return set, err
 				}
-				//转换老的log的key-> 新的key
-				key := []byte(changeItem.Key)
-				if bytes.HasPrefix(key, []byte("mavl-")) {
-					key[0] = 'L'
-					key[1] = 'O'
-					key[2] = 'D'
-					key[3] = 'B'
-				}
-				set.KV = append(set.KV, &types.KeyValue{Key: []byte(key), Value: changeItem.PreValue})
+				set.KV = append(set.KV, &types.KeyValue{Key: []byte(changeItem.Key), Value: changeItem.PreValue})
 			}
 		}
 	}
-
+	kvs := set.KV
+	//reverse kvs
+	for left, right := 0, len(kvs)-1; left < right; left, right = left+1, right-1 {
+		kvs[left], kvs[right] = kvs[right], kvs[left]
+	}
+	set.KV = kvs
 	return set, err
 }
