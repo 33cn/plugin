@@ -9,7 +9,6 @@ MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 PARANAME="para"
 PARA_COIN_FROZEN="5.0000"
 MainLoopCheckForkHeight="60"
-TITLE="user.p.para."
 
 xsedfix=""
 if [ "$(uname)" == "Darwin" ]; then

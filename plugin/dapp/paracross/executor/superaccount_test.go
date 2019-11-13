@@ -177,6 +177,7 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	var count int
 	config := &pt.ParaNodeAddrConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParaNodeVote,
 		Id:    id,
 		Value: pt.ParaNodeVoteYes,
@@ -205,6 +206,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 
 func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -220,8 +222,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupQuit,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupQuit,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -235,6 +238,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.testNodeGroupConfigQuit()
 
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -250,8 +254,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupApprove,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupApprove,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -264,8 +269,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
 	config := &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeJoin,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaNodeJoin,
+		Addr:  Account14K,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
@@ -283,8 +289,9 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeQuit,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaNodeQuit,
+		Addr:  Account14K,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
