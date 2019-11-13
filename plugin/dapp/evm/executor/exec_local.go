@@ -43,6 +43,6 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 			}
 		}
 	}
-
+	set.KV = evm.AddRollbackKV(tx, []byte(evmtypes.ExecutorName), set.KV)
 	return set, err
 }
