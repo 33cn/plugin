@@ -181,7 +181,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 		Id:    id,
 		Value: pt.ParaNodeVoteYes,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	count++
@@ -208,7 +208,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -223,7 +223,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Id: g.Current.Id,
 		Op: pt.ParacrossNodeGroupQuit,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
@@ -238,7 +238,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -253,7 +253,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Id: g.Current.Id,
 		Op: pt.ParacrossNodeGroupApprove,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey12Q, tx)
@@ -267,7 +267,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:   pt.ParaNodeJoin,
 		Addr: Account14K,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
@@ -286,7 +286,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:   pt.ParaNodeQuit,
 		Addr: Account14K,
 	}
-	tx, err = pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 	receipt = nodeCommit(suite, PrivKeyD, tx)
 	checkQuitReceipt(suite, receipt)
