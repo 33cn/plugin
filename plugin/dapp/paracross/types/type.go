@@ -136,20 +136,14 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 
 		return p.CreateRawTransferTx(action, message)
 	} else if action == "NodeConfig" {
-		if !cfg.IsPara() {
-			return nil, types.ErrNotSupport
-		}
 		var param ParaNodeAddrConfig
 		err := types.JSONToPB(message, &param)
 		if err != nil {
 			glog.Error("CreateTx.NodeConfig", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawNodeConfigTx(cfg, &param)
+		return CreateRawNodeConfigTx(&param)
 	} else if action == "NodeGroupConfig" {
-		if !cfg.IsPara() {
-			return nil, types.ErrNotSupport
-		}
 		var param ParaNodeGroupConfig
 		err := types.JSONToPB(message, &param)
 		//err := json.Unmarshal(message, &param)
@@ -157,7 +151,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx.NodeGroupApply", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawNodeGroupApplyTx(cfg, &param)
+		return CreateRawNodeGroupApplyTx(&param)
 	}
 
 	return nil, types.ErrNotSupport
