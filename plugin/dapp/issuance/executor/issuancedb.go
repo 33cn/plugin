@@ -582,7 +582,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	kv = append(kv, receipt.KV...)
 
 	// 借出ccny
-	receipt, err = action.tokenAccount.ExecTransfer(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value*Coin)
+	receipt, err = action.tokenAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value*Coin)
 	if err != nil {
 		clog.Error("IssuanceDebt.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debt.Value)
 		return nil, err
@@ -671,6 +671,15 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, debtRecord.DebtValue*Coin)
 	if err != nil {
 		clog.Error("IssuanceRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.DebtValue)
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
+
+	// 冻结ccny
+	receipt, err = action.tokenAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, debtRecord.DebtValue*Coin)
+	if err != nil {
+		clog.Error("IssuanceCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.DebtValue)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)

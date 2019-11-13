@@ -575,7 +575,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	kv = append(kv, receipt.KV...)
 
 	// 借出ccny
-	receipt, err = action.tokenAccount.ExecTransfer(coll.CreateAddr, action.fromaddr, action.execaddr, borrow.Value*Coin)
+	receipt, err = action.tokenAccount.ExecTransferFrozen(coll.CreateAddr, action.fromaddr, action.execaddr, borrow.Value*Coin)
 	if err != nil {
 		clog.Error("CollateralizeBorrow.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", borrow.Value)
 		return nil, err
@@ -667,6 +667,15 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, coll.CreateAddr, action.execaddr, realRepay*Coin)
 	if err != nil {
 		clog.Error("CollateralizeRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", realRepay)
+		return nil, err
+	}
+	logs = append(logs, receipt.Logs...)
+	kv = append(kv, receipt.KV...)
+
+	// ccny冻结
+	receipt, err = action.tokenAccount.ExecFrozen(coll.CreateAddr, action.execaddr, realRepay * Coin)
+	if err != nil {
+		clog.Error("CollateralizeCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", realRepay)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
