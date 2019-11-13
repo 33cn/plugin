@@ -200,8 +200,7 @@ func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, na
 }
 
 // CreateRawNodeConfigTx create raw tx for node config
-func CreateRawNodeConfigTx(cfg *types.Chain33Config, config *ParaNodeAddrConfig) (*types.Transaction, error) {
-	config.Title = cfg.GetTitle()
+func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
 	config.Addr = strings.Trim(config.Addr, " ")
 	config.Id = strings.Trim(config.Id, " ")
 
@@ -217,8 +216,7 @@ func CreateRawNodeConfigTx(cfg *types.Chain33Config, config *ParaNodeAddrConfig)
 }
 
 //CreateRawNodeGroupApplyTx create raw tx for node group
-func CreateRawNodeGroupApplyTx(cfg *types.Chain33Config, apply *ParaNodeGroupConfig) (*types.Transaction, error) {
-	apply.Title = cfg.GetTitle()
+func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
 	apply.Id = strings.Trim(apply.Id, " ")
 
 	action := &ParacrossAction{

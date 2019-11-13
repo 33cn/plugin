@@ -260,18 +260,19 @@ func addNodeJoinFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("coins", "c", 0, "frozen coins amount, should not less nodegroup's setting")
 	cmd.MarkFlagRequired("coins")
+
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func createNodeJoinTx(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	opAddr, _ := cmd.Flags().GetString("addr")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
-	payload := &pt.ParaNodeAddrConfig{Op: 1, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeAddrConfig{Title: title, Op: 1, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -297,18 +298,19 @@ func addNodeVoteFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
 	cmd.MarkFlagRequired("value")
+
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func createNodeVoteTx(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
 
-	payload := &pt.ParaNodeAddrConfig{Op: 2, Id: id, Value: val}
+	payload := &pt.ParaNodeAddrConfig{Title: title, Op: 2, Id: id, Value: val}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -332,17 +334,18 @@ func nodeVoteCmd() *cobra.Command {
 func addNodeQuitFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "target quit addr")
 	cmd.MarkFlagRequired("addr")
+
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func createNodeQuitTx(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	opAddr, _ := cmd.Flags().GetString("addr")
 
-	payload := &pt.ParaNodeAddrConfig{Op: 3, Addr: opAddr}
+	payload := &pt.ParaNodeAddrConfig{Title: title, Op: 3, Addr: opAddr}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -366,17 +369,19 @@ func nodeQuitCmd() *cobra.Command {
 func addNodeCancelFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "operating target apply id")
 	cmd.MarkFlagRequired("id")
+
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
+
 }
 
 func createNodeCancelTx(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	id, _ := cmd.Flags().GetString("id")
 
-	payload := &pt.ParaNodeAddrConfig{Op: 4, Id: id}
+	payload := &pt.ParaNodeAddrConfig{Title: title, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -523,18 +528,18 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
 	cmd.MarkFlagRequired("coins")
 
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func nodeGroupApply(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	addrs, _ := cmd.Flags().GetString("addrs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
-	payload := &pt.ParaNodeGroupConfig{Op: 1, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: title, Op: 1, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeGroupConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -561,18 +566,18 @@ func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
 	cmd.MarkFlagRequired("coins")
 
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func nodeGroupApprove(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
-	payload := &pt.ParaNodeGroupConfig{Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: title, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeGroupConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -596,17 +601,17 @@ func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "apply quit id for nodegroup ")
 	cmd.MarkFlagRequired("id")
 
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func nodeGroupQuit(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	id, _ := cmd.Flags().GetString("id")
 
-	payload := &pt.ParaNodeGroupConfig{Op: 3, Id: id}
+	payload := &pt.ParaNodeGroupConfig{Title: title, Op: 3, Id: id}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeGroupConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -629,17 +634,18 @@ func nodeGroupQuitCmd() *cobra.Command {
 func addNodeGroupModifyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("coins", "c", 0, "modify coins amount to frozen, not less config")
 	cmd.MarkFlagRequired("coins")
+
+	cmd.Flags().StringP("ptitle", "t", "", "parallel chain's title")
+	cmd.MarkFlagRequired("ptitle")
 }
 
 func nodeGroupModify(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	title, _ := cmd.Flags().GetString("ptitle")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
-	payload := &pt.ParaNodeGroupConfig{Op: 4, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: title, Op: 4, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pt.ParaX),
+		Execer:     title + pt.ParaX,
 		ActionName: "NodeGroupConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
