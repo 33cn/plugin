@@ -607,6 +607,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	coll.Status = pty.CollateralizeStatusCreated
 	coll.Balance -= borrow.Value
 	coll.CollBalance += btyFrozen
+	coll.LatestExpireTime = getLatestExpireTime(&coll.Collateralize)
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -871,7 +872,6 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float32) 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	collDB := &CollateralizeDB{*coll}
 	for index, borrowRecord := range coll.BorrowRecords {
 		if borrowRecord.LiquidationPrice * PriceWarningRate < price {
 			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
@@ -922,6 +922,7 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float32) 
 	// 保存
 	coll.LatestLiquidationPrice = getLatestLiquidationPrice(coll)
 	coll.LatestExpireTime = getLatestExpireTime(coll)
+	collDB := &CollateralizeDB{*coll}
 	collDB.Save(action.db)
 	kv = append(kv, collDB.GetKVSet()...)
 
@@ -934,7 +935,6 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	collDB := &CollateralizeDB{*coll}
 	for index, borrowRecord := range coll.BorrowRecords {
 		if borrowRecord.ExpireTime - ExpireWarningTime > action.blocktime {
 			continue
@@ -981,6 +981,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 	// 保存
 	coll.LatestLiquidationPrice = getLatestLiquidationPrice(coll)
 	coll.LatestExpireTime = getLatestExpireTime(coll)
+	collDB := &CollateralizeDB{*coll}
 	collDB.Save(action.db)
 	kv = append(kv, collDB.GetKVSet()...)
 
@@ -1101,7 +1102,7 @@ func (action *Action) CollateralizeClose(close *pty.CollateralizeClose) (*types.
 	}
 
 	// 解冻ccny
-	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, collateralize.TotalBalance*Coin)
+	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, collateralize.Balance*Coin)
 	if err != nil {
 		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", collateralize.TotalBalance)
 		return nil, err

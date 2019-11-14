@@ -614,6 +614,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	issu.CollateralValue += btyFrozen
 	issu.DebtValue += debt.Value
 	issu.Balance -= debt.Value
+	issu.LatestExpireTime = getLatestExpireTime(&issu.Issuance)
 	issu.Save(action.db)
 	kv = append(kv, issu.GetKVSet()...)
 
@@ -723,7 +724,6 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	collDB := &IssuanceDB{*issu}
 	for index, debtRecord := range issu.DebtRecords {
 		if debtRecord.LiquidationPrice * PriceWarningRate < price {
 			if debtRecord.Status == pty.IssuanceUserStatusWarning {
@@ -773,6 +773,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 	// 保存
 	issu.LatestLiquidationPrice = getLatestLiquidationPrice(issu)
 	issu.LatestExpireTime = getLatestExpireTime(issu)
+	collDB := &IssuanceDB{*issu}
 	collDB.Save(action.db)
 	kv = append(kv, collDB.GetKVSet()...)
 
@@ -785,7 +786,6 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	collDB := &IssuanceDB{*issu}
 	for index, debtRecord := range issu.DebtRecords {
 		if debtRecord.ExpireTime - ExpireWarningTime > action.blocktime {
 			continue
@@ -831,6 +831,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 	// 保存
 	issu.LatestLiquidationPrice = getLatestLiquidationPrice(issu)
 	issu.LatestExpireTime = getLatestExpireTime(issu)
+	collDB := &IssuanceDB{*issu}
 	collDB.Save(action.db)
 	kv = append(kv, collDB.GetKVSet()...)
 
@@ -954,7 +955,7 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 	}
 
 	// 解冻ccny
-	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.TotalBalance*Coin)
+	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance*Coin)
 	if err != nil {
 		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.TotalBalance)
 		return nil, err
