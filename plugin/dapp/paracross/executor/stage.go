@@ -104,14 +104,14 @@ func getSelfConsensStages(db dbm.KV) (*pt.SelfConsensStages, error) {
 func getSelfConsStagesMap(stages []*pt.SelfConsensStage) map[int64]uint32 {
 	stagesMap := make(map[int64]uint32)
 	for _, v := range stages {
-		stagesMap[v.BlockHeight] = v.Enable
+		stagesMap[v.StartHeight] = v.Enable
 	}
 	return stagesMap
 }
 
 func sortStages(stages *pt.SelfConsensStages, new *pt.SelfConsensStage) {
 	stages.Items = append(stages.Items, new)
-	sort.Slice(stages.Items, func(i, j int) bool { return stages.Items[i].BlockHeight < stages.Items[j].BlockHeight })
+	sort.Slice(stages.Items, func(i, j int) bool { return stages.Items[i].StartHeight < stages.Items[j].StartHeight })
 }
 
 func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error) {
@@ -138,7 +138,7 @@ func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error)
 
 func selfConsensInitStage(cfg *types.Chain33Config) *types.Receipt {
 	close := cfg.IsEnable(pt.ParaConsSubConf + "." + pt.ParaSelfConsInitConf)
-	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
 	if close {
 		stage.Enable = pt.ParaConfigNo
 	}
@@ -153,7 +153,7 @@ func getSelfConsOneStage(db dbm.KV, height int64) (*pt.SelfConsensStage, error) 
 	}
 
 	for i := len(stages.Items) - 1; i >= 0; i-- {
-		if height >= stages.Items[i].BlockHeight {
+		if height >= stages.Items[i].StartHeight {
 			return stages.Items[i], nil
 		}
 	}
@@ -172,13 +172,13 @@ func isSelfConsOn(db dbm.KV, height int64) (bool, error) {
 func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
 	cfg := a.api.GetConfig()
 	//0. 设置高度必须大于fork高度
-	if !cfg.IsDappFork(config.BlockHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
-		return errors.Wrapf(types.ErrNotAllow, "checkValidStage config height:%d less than fork height", config.BlockHeight)
+	if !cfg.IsDappFork(config.StartHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
+		return errors.Wrapf(types.ErrNotAllow, "checkValidStage config height:%d less than fork height", config.StartHeight)
 	}
 
 	//1. 设置高度必须大于当前区块高度
-	if config.BlockHeight <= a.height {
-		return errors.Wrapf(pt.ErrHeightHasPast, "checkValidStage config height:%d less than block height:%d", config.BlockHeight, a.height)
+	if config.StartHeight <= a.height {
+		return errors.Wrapf(pt.ErrHeightHasPast, "checkValidStage config height:%d less than block height:%d", config.StartHeight, a.height)
 	}
 
 	//2. 如果已经设置到stages中，简单起见，就不能更改了，应该也不会有很大影响
@@ -188,8 +188,8 @@ func (a *action) checkValidStage(config *pt.SelfConsensStage) error {
 	}
 	if stages != nil {
 		stageMap := getSelfConsStagesMap(stages.Items)
-		if _, exist := stageMap[config.BlockHeight]; exist {
-			return errors.Wrapf(err, "checkValidStage config height:%d existed", config.BlockHeight)
+		if _, exist := stageMap[config.StartHeight]; exist {
+			return errors.Wrapf(err, "checkValidStage config height:%d existed", config.StartHeight)
 		}
 	}
 
@@ -314,13 +314,13 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 //SelfConsensStageConfig support self consens stage config
 func (a *action) SelfStageConfig(config *pt.ParaStageConfig) (*types.Receipt, error) {
-	if config.OpTy == pt.ParaOpNewApply {
+	if config.Op == pt.ParaOpNewApply {
 		return a.stageApply(config.GetStage())
 
-	} else if config.OpTy == pt.ParaOpCancel {
+	} else if config.Op == pt.ParaOpCancel {
 		return a.stageCancel(config.GetCancel())
 
-	} else if config.OpTy == pt.ParaOpVote {
+	} else if config.Op == pt.ParaOpVote {
 		return a.stageVote(config.GetVote())
 	}
 

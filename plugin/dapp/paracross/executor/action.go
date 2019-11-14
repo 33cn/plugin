@@ -732,7 +732,7 @@ func (a *action) isAllowParaConsensJump(commit *pt.ParacrossCommitAction, titleS
 		if stage == nil {
 			return false, nil
 		}
-		return stage.BlockHeight == commit.Status.Height, nil
+		return stage.StartHeight == commit.Status.Height, nil
 	}
 
 	//兼容分叉之前从１跳跃场景

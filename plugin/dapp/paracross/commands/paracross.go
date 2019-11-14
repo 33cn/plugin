@@ -498,13 +498,15 @@ func addSelfConsStageCmdFlags(cmd *cobra.Command) {
 func selfConsStage(cmd *cobra.Command, args []string) {
 	height, _ := cmd.Flags().GetInt64("height")
 	enable, _ := cmd.Flags().GetUint32("enable")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	var config pt.ParaStageConfig
-	config.OpTy = pt.ParaOpNewApply
-	config.Op = &pt.ParaStageConfig_Stage{Stage: &pt.SelfConsensStage{BlockHeight: height, Enable: enable}}
+	config.Title = paraName
+	config.Op = pt.ParaOpNewApply
+	config.Value = &pt.ParaStageConfig_Stage{Stage: &pt.SelfConsensStage{StartHeight: height, Enable: enable}}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     pt.ParaX,
+		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "selfConsStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
@@ -535,13 +537,15 @@ func addVoteFlags(cmd *cobra.Command) {
 func createVoteTx(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	var config pt.ParaStageConfig
-	config.OpTy = pt.ParaOpVote
-	config.Op = &pt.ParaStageConfig_Vote{Vote: &pt.ConfigVoteInfo{Id: id, Value: val}}
+	config.Title = paraName
+	config.Op = pt.ParaOpVote
+	config.Value = &pt.ParaStageConfig_Vote{Vote: &pt.ConfigVoteInfo{Id: id, Value: val}}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     pt.ParaX,
+		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "selfConsStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
@@ -564,13 +568,15 @@ func configVoteCmd() *cobra.Command {
 
 func stageCancelTx(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	var config pt.ParaStageConfig
-	config.OpTy = pt.ParaOpCancel
-	config.Op = &pt.ParaStageConfig_Cancel{Cancel: &pt.ConfigCancelInfo{Id: id}}
+	config.Title = paraName
+	config.Op = pt.ParaOpCancel
+	config.Value = &pt.ParaStageConfig_Cancel{Cancel: &pt.ConfigCancelInfo{Id: id}}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     pt.ParaX,
+		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "selfConsStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}

@@ -127,7 +127,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	assert.Equal(suite.T(), value, types.Encode(nodeValue))
 
 	stageKey := calcParaSelfConsStagesKey()
-	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
 	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
 	suite.stateDB.Set(stageKey, types.Encode(stages))
 	value, err = suite.stateDB.Get(stageKey)
@@ -486,7 +486,7 @@ func (s *VoteTestSuite) SetupSuite() {
 	s.exec.SetEnv(0, 0, 0)
 
 	stageKey := calcParaSelfConsStagesKey()
-	stage := &pt.SelfConsensStage{BlockHeight: 0, Enable: pt.ParaConfigYes}
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
 	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
 	s.stateDB.Set(stageKey, types.Encode(stages))
 	value, err := s.stateDB.Get(stageKey)
