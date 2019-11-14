@@ -755,7 +755,7 @@ func (client *commitMsgClient) getSelfConsensus() (*pt.ParacrossStatus, error) {
 			return nil, err
 		}
 		//开启自共识后也要等到自共识真正切换之后再使用，如果本地区块已经过了自共识高度，但自共识的高度还没达成，就会导致共识机制出错
-		if resp.Height > stage.BlockHeight {
+		if resp.Height > stage.StartHeight {
 			return resp, nil
 		}
 	}

@@ -13,16 +13,16 @@ import (
 
 func TestSortStages(t *testing.T) {
 	stages := &pt.SelfConsensStages{}
-	n1 := &pt.SelfConsensStage{BlockHeight: 200, Enable: pt.ParaConfigYes}
+	n1 := &pt.SelfConsensStage{StartHeight: 200, Enable: pt.ParaConfigYes}
 	e1 := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{n1}}
 
-	n2 := &pt.SelfConsensStage{BlockHeight: 100, Enable: pt.ParaConfigNo}
+	n2 := &pt.SelfConsensStage{StartHeight: 100, Enable: pt.ParaConfigNo}
 	e2 := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{n2, n1}}
 
-	n3 := &pt.SelfConsensStage{BlockHeight: 700, Enable: pt.ParaConfigYes}
+	n3 := &pt.SelfConsensStage{StartHeight: 700, Enable: pt.ParaConfigYes}
 	e3 := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{n2, n1, n3}}
 
-	n4 := &pt.SelfConsensStage{BlockHeight: 500, Enable: pt.ParaConfigNo}
+	n4 := &pt.SelfConsensStage{StartHeight: 500, Enable: pt.ParaConfigNo}
 	e4 := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{n2, n1, n4, n3}}
 
 	sortStages(stages, n1)

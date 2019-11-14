@@ -171,9 +171,6 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		}
 		return CreateRawNodeGroupApplyTx(&param)
 	} else if action == "selfConsStageConfig" {
-		if !cfg.IsPara() {
-			return nil, types.ErrNotSupport
-		}
 		var param ParaStageConfig
 		err := types.JSONToPB(message, &param)
 		//err := json.Unmarshal(message, &param)
