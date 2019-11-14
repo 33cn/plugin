@@ -144,6 +144,9 @@ func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx)
 
 	v := &IssuanceCreate{
 		TotalBalance:  parm.TotalBalance,
+		DebtCeiling:   parm.DebtCeiling,
+		LiquidationRatio: parm.LiquidationRatio,
+		Period: parm.Period,
 	}
 	create := &IssuanceAction{
 		Ty:    IssuanceActionCreate,
