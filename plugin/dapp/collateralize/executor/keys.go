@@ -37,12 +37,12 @@ func calcCollateralizePriceKey(time string) []byte {
 }
 
 func calcCollateralizeRecordAddrPrefix(addr string) []byte {
-	key := fmt.Sprintf("LODB-collateralize-record-addr:%d", addr)
+	key := fmt.Sprintf("LODB-collateralize-record-addr:%s", addr)
 	return []byte(key)
 }
 
 func calcCollateralizeRecordAddrKey(addr string, index int64) []byte {
-	key := fmt.Sprintf("LODB-collateralize-record-addr:%d:%018d", addr, index)
+	key := fmt.Sprintf("LODB-collateralize-record-addr:%s:%018d", addr, index)
 	return []byte(key)
 }
 
