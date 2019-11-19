@@ -48,3 +48,4 @@ build/sendstock
 build/sendstock.toml
 build/*.csv
 
+go.sum
