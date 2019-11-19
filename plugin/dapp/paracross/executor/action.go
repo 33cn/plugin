@@ -318,10 +318,10 @@ func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}
 
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if cfg.IsPara() && cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+	if cfg.IsPara() && cfg.IsDappFork(commit.Status.Height, pt.ParaX, pt.ForkParaSelfConsStages) {
 		//分叉之后，key不存在，自共识没配置也认为不支持自共识
 		isSelfConsOn, err := isSelfConsOn(a.db, commit.Status.Height)
-		if err != nil {
+		if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
 			return nil, err
 		}
 		if !isSelfConsOn {
