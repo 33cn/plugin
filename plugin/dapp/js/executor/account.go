@@ -65,7 +65,8 @@ func (u *js) getAccount(args otto.Value) (*account.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return account.NewAccountDB(execer, symbol, u.GetStateDB())
+	cfg := u.GetAPI().GetConfig()
+	return account.NewAccountDB(cfg, execer, symbol, u.GetStateDB())
 }
 
 func (u *js) genesisInitExecFunc(vm *otto.Otto) {

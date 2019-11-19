@@ -13,7 +13,12 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	pty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/assert"
+
 	//"github.com/33cn/chain33/types/jsonpb"
+	"strings"
+
+	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/stretchr/testify/mock"
 )
 
 type execEnv struct {
@@ -40,7 +45,8 @@ var (
 )
 
 func TestToken(t *testing.T) {
-	types.SetTitleOnlyForTest("chain33")
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
+	Init(pty.TokenX, cfg, nil)
 	tokenTotal := int64(10000 * 1e8)
 	tokenBurn := int64(10 * 1e8)
 	tokenMint := int64(20 * 1e8)
@@ -60,15 +66,15 @@ func TestToken(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, _, kvdb := util.CreateTestDB()
 
-	accA, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB, _ := account.NewAccountDB(AssetExecPara, Symbol, stateDB)
+	accB, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
 	env := execEnv{
 		10,
-		types.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
+		cfg.GetDappFork(pty.TokenX, pty.ForkTokenCheckX),
 		1539918074,
 	}
 
@@ -111,6 +117,9 @@ func TestToken(t *testing.T) {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
 	exec := newToken()
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
@@ -137,6 +146,7 @@ func TestToken(t *testing.T) {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
 	exec = newToken()
+	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
@@ -178,7 +188,7 @@ func TestToken(t *testing.T) {
 	for _, kv := range receipt.KV {
 		stateDB.Set(kv.Key, kv.Value)
 	}
-	accDB, _ := account.NewAccountDB(pty.TokenX, Symbol, stateDB)
+	accDB, _ := account.NewAccountDB(cfg, pty.TokenX, Symbol, stateDB)
 	accCheck := accDB.LoadAccount(string(Nodes[0]))
 	assert.Equal(t, tokenTotal, accCheck.Balance)
 

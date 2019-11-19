@@ -12,7 +12,8 @@ import (
 
 func (t *token) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	token := payload.GetCointoken()
-	db, err := account.NewAccountDB(t.GetName(), token, t.GetStateDB())
+	cfg := t.GetAPI().GetConfig()
+	db, err := account.NewAccountDB(cfg, t.GetName(), token, t.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +28,8 @@ func (t *token) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transacti
 
 func (t *token) Exec_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	token := payload.GetCointoken()
-	db, err := account.NewAccountDB(t.GetName(), token, t.GetStateDB())
+	cfg := t.GetAPI().GetConfig()
+	db, err := account.NewAccountDB(cfg, t.GetName(), token, t.GetStateDB())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +48,8 @@ func (t *token) Exec_TokenPreCreate(payload *tokenty.TokenPreCreate, tx *types.T
 }
 
 func (t *token) Exec_TokenFinishCreate(payload *tokenty.TokenFinishCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newTokenAction(t, types.MGStr("mver.consensus.fundKeyAddr", t.GetHeight()), tx)
+	cfg := t.GetAPI().GetConfig()
+	action := newTokenAction(t, cfg.MGStr("mver.consensus.fundKeyAddr", t.GetHeight()), tx)
 	return action.finishCreate(payload)
 }
 
@@ -57,7 +60,8 @@ func (t *token) Exec_TokenRevokeCreate(payload *tokenty.TokenRevokeCreate, tx *t
 
 func (t *token) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
 	token := payload.GetCointoken()
-	db, err := account.NewAccountDB(t.GetName(), token, t.GetStateDB())
+	cfg := t.GetAPI().GetConfig()
+	db, err := account.NewAccountDB(cfg, t.GetName(), token, t.GetStateDB())
 	if err != nil {
 		return nil, err
 	}

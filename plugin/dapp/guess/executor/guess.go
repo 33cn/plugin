@@ -15,19 +15,20 @@ var logger = log.New("module", "execs.guess")
 
 var driverName = gty.GuessX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Guess{}))
-}
-
 // Init Guess
-func Init(name string, sub []byte) {
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
 	if name != driverName {
 		panic("system dapp can't be rename")
 	}
 
-	drivers.Register(driverName, newGuessGame, types.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, driverName, newGuessGame, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+}
+
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Guess{}))
 }
 
 //Guess 执行器，用于竞猜合约的具体执行

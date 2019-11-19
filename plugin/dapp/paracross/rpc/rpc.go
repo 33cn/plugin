@@ -13,7 +13,8 @@ import (
 )
 
 func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
-	data, err := c.Query(pt.GetExecName(), "GetTitle", req)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetTitle", req)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +26,7 @@ func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt
 
 	if resp, ok := data.(*pt.ParacrossStatus); ok {
 		// 如果主链上查询平行链的高度，chain height应该是平行链的高度而不是主链高度， 平行链的真实高度需要在平行链侧查询
-		if !types.IsPara() {
+		if !cfg.IsPara() {
 			chainHeight = resp.Height
 		}
 		return &pt.ParacrossConsensusStatus{
@@ -40,9 +41,10 @@ func (c *channelClient) GetTitle(ctx context.Context, req *types.ReqString) (*pt
 
 // GetHeight jrpc get consensus height
 func (c *Jrpc) GetHeight(req *types.ReqString, result *interface{}) error {
+	cfg := c.cli.GetConfig()
 	if req == nil || req.Data == "" {
-		if types.IsPara() {
-			req = &types.ReqString{Data: types.GetTitle()}
+		if cfg.IsPara() {
+			req = &types.ReqString{Data: cfg.GetTitle()}
 		} else {
 			return types.ErrInvalidParam
 		}
@@ -58,7 +60,8 @@ func (c *Jrpc) GetHeight(req *types.ReqString, result *interface{}) error {
 }
 
 func (c *channelClient) ListTitles(ctx context.Context, req *types.ReqNil) (*pt.RespParacrossTitles, error) {
-	data, err := c.Query(pt.GetExecName(), "ListTitles", req)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "ListTitles", req)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,8 @@ func (c *Jrpc) ListTitles(req *types.ReqNil, result *interface{}) error {
 }
 
 func (c *channelClient) GetTitleHeight(ctx context.Context, req *pt.ReqParacrossTitleHeight) (*pt.ParacrossHeightStatusRsp, error) {
-	data, err := c.Query(pt.GetExecName(), "GetTitleHeight", req)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetTitleHeight", req)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +107,8 @@ func (c *Jrpc) GetTitleHeight(req *pt.ReqParacrossTitleHeight, result *interface
 }
 
 func (c *channelClient) GetDoneTitleHeight(ctx context.Context, req *pt.ReqParacrossTitleHeight) (*pt.RespParacrossDone, error) {
-	data, err := c.Query(pt.GetExecName(), "GetDoneTitleHeight", req)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetDoneTitleHeight", req)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +119,8 @@ func (c *channelClient) GetDoneTitleHeight(ctx context.Context, req *pt.ReqParac
 }
 
 func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqHash) (*pt.ParacrossAsset, error) {
-	data, err := c.Query(pt.GetExecName(), "GetAssetTxResult", req)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetAssetTxResult", req)
 	if err != nil {
 		return nil, err
 	}
@@ -185,11 +191,11 @@ func (c *channelClient) GetBlock2MainInfo(ctx context.Context, req *types.ReqBlo
 	if err != nil {
 		return nil, err
 	}
-
+	cfg := c.GetConfig()
 	for _, item := range details.Items {
 		data := &pt.ParaBlock2MainMap{
 			Height:     item.Block.Height,
-			BlockHash:  common.ToHex(item.Block.Hash()),
+			BlockHash:  common.ToHex(item.Block.Hash(cfg)),
 			MainHeight: item.Block.MainHeight,
 			MainHash:   common.ToHex(item.Block.MainHash),
 		}
@@ -216,7 +222,8 @@ func (c *Jrpc) GetBlock2MainInfo(req *types.ReqBlocks, result *interface{}) erro
 // GetNodeAddrStatus get super node status
 func (c *channelClient) GetNodeAddrStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeAddrIdStatus, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetNodeAddrInfo", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetNodeAddrInfo", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +236,8 @@ func (c *channelClient) GetNodeAddrStatus(ctx context.Context, req *pt.ReqParacr
 // GetNodeIDStatus get super node status
 func (c *channelClient) GetNodeIDStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeIdStatus, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetNodeIDInfo", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetNodeIDInfo", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +278,8 @@ func (c *Jrpc) GetNodeIDStatus(req *pt.ReqParacrossNodeInfo, result *interface{}
 //ListNodeStatus list super node by status
 func (c *channelClient) ListNodeStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.RespParacrossNodeAddrs, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "ListNodeStatusInfo", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "ListNodeStatusInfo", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +302,8 @@ func (c *Jrpc) ListNodeStatus(req *pt.ReqParacrossNodeInfo, result *interface{})
 // GetNodeGroupAddrs get super node group addrs
 func (c *channelClient) GetNodeGroupAddrs(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*types.ReplyConfig, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetNodeGroupAddrs", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetNodeGroupAddrs", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +326,8 @@ func (c *Jrpc) GetNodeGroupAddrs(req *pt.ReqParacrossNodeInfo, result *interface
 // GetNodeGroupStatus get super node group status
 func (c *channelClient) GetNodeGroupStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.ParaNodeGroupStatus, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "GetNodeGroupStatus", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "GetNodeGroupStatus", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +350,8 @@ func (c *Jrpc) GetNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interfac
 //ListNodeGroupStatus list super node group by status
 func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqParacrossNodeInfo) (*pt.RespParacrossNodeGroups, error) {
 	r := *req
-	data, err := c.Query(pt.GetExecName(), "ListNodeGroupStatus", &r)
+	cfg := c.GetConfig()
+	data, err := c.Query(pt.GetExecName(cfg), "ListNodeGroupStatus", &r)
 	if err != nil {
 		return nil, err
 	}
@@ -352,6 +364,77 @@ func (c *channelClient) ListNodeGroupStatus(ctx context.Context, req *pt.ReqPara
 //ListNodeGroupStatus list super node group by status
 func (c *Jrpc) ListNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interface{}) error {
 	data, err := c.cli.ListNodeGroupStatus(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *channelClient) GetSelfConsStages(ctx context.Context, req *types.ReqNil) (*pt.SelfConsensStages, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsStages", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.SelfConsensStages); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *Jrpc) GetSelfConsStages(req *types.ReqNil, result *interface{}) error {
+	data, err := c.cli.GetSelfConsStages(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *channelClient) GetSelfConsOneStage(ctx context.Context, req *types.Int64) (*pt.SelfConsensStage, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsOneStage", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.SelfConsensStage); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *Jrpc) GetSelfConsOneStage(req *types.Int64, result *interface{}) error {
+	data, err := c.cli.GetSelfConsOneStage(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+func (c *channelClient) ListSelfStages(ctx context.Context, req *pt.ReqQuerySelfStages) (*pt.ReplyQuerySelfStages, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "ListSelfStages", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.ReplyQuerySelfStages); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListSelfStages get paracross self consensus stage list
+func (c *Jrpc) ListSelfStages(req *pt.ReqQuerySelfStages, result *interface{}) error {
+	data, err := c.cli.ListSelfStages(context.Background(), req)
 	if err != nil {
 		return err
 	}

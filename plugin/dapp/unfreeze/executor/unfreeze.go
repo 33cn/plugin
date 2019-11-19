@@ -15,14 +15,15 @@ var uflog = log.New("module", "execs.unfreeze")
 
 var driverName = uf.UnfreezeX
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Unfreeze{}))
+// Init 重命名执行器名称
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newUnfreeze, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init 重命名执行器名称
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newUnfreeze, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Unfreeze{}))
 }
 
 // Unfreeze 执行器结构体

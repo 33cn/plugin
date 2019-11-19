@@ -81,6 +81,7 @@ function base_init() {
     sed -i $sedfix 's/^powLimitBits=.*/powLimitBits="0x1f2fffff"/g' chain33.toml
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
     sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
+    sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
 
     # p2p
     sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
@@ -382,6 +383,17 @@ function transfer() {
 }
 
 function dapp_test_address() {
+    echo "=========== # allocation for ticket rpc test ============="
+    hash=$(${1} send coins transfer -a 8600 -n transfer -t 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138)
+    echo "${hash}"
+
+    tx_wait "${1}" "${hash}"
+
+    hash=$(${1} send coins transfer -a 1500 -n transfer -t 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
+    echo "${hash}"
+
+    tx_wait "${1}" "${hash}"
+
     echo "=========== # import private key dapptest1 mining ============="
     result=$(${1} account import_key -k 56942AD84CCF4788ED6DACBC005A1D0C4F91B63BCF0C99A02BE03C8DEAE71138 -l dapptest1 | jq ".label")
     echo "${result}"
@@ -402,11 +414,6 @@ function dapp_test_address() {
     fi
 
     block_wait "${1}" 1
-
-    hash=$(${1} send coins transfer -a 1500 -n transfer -t 1PUiGcbsccfxW3zuvHXZBJfznziph5miAo -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)
-    echo "${hash}"
-
-    tx_wait "${1}" "${hash}"
 
     #total allocation for rpc test
     hash=$(${1} send coins transfer -a 8000 -n transfer -t 1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx -k 2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989)

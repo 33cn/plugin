@@ -7,6 +7,7 @@ package tendermint
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -26,7 +27,10 @@ import (
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
 	"github.com/33cn/chain33/types"
+	ty "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
+	vty "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
@@ -35,8 +39,8 @@ import (
 )
 
 var (
-	random    *rand.Rand
-	loopCount = 10
+	r         *rand.Rand
+	loopCount = 3
 	conn      *grpc.ClientConn
 	c         types.Chain33Client
 )
@@ -46,16 +50,16 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	random = rand.New(rand.NewSource(types.Now().UnixNano()))
+	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	log.SetLogLevel("info")
 }
 func TestTendermintPerf(t *testing.T) {
-	TendermintPerf()
+	TendermintPerf(t)
 	fmt.Println("=======start clear test data!=======")
 	clearTestData()
 }
 
-func TendermintPerf() {
+func TendermintPerf(t *testing.T) {
 	q, chain, s, mem, exec, cs, p2p := initEnvTendermint()
 	defer chain.Close()
 	defer mem.Close()
@@ -68,34 +72,43 @@ func TendermintPerf() {
 	for err != nil {
 		err = createConn()
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	for i := 0; i < loopCount; i++ {
 		NormPut()
 		time.Sleep(time.Second)
 	}
-	time.Sleep(10 * time.Second)
+	CheckState(t, cs.(*Client))
+	AddNode()
+	for i := 0; i < loopCount*3; i++ {
+		NormPut()
+		time.Sleep(time.Second)
+	}
+	time.Sleep(2 * time.Second)
 }
 
 func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
-	var q = queue.New("channel")
 	flag.Parse()
-	cfg, sub := types.InitCfg("chain33.test.toml")
-	types.Init(cfg.Title, cfg)
-	chain := blockchain.New(cfg.BlockChain)
+	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
+	var q = queue.New("channel")
+	q.SetConfig(chain33Cfg)
+	cfg := chain33Cfg.GetModuleConfig()
+	sub := chain33Cfg.GetSubConfig()
+
+	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
-	exec := executor.New(cfg.Exec, sub.Exec)
+	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
-	types.SetMinFee(0)
-	s := store.New(cfg.Store, sub.Store)
+	chain33Cfg.SetMinFee(0)
+	s := store.New(chain33Cfg)
 	s.SetQueueClient(q.Client())
 
 	cs := New(cfg.Consensus, sub.Consensus["tendermint"])
 	cs.SetQueueClient(q.Client())
 
-	mem := mempool.New(cfg.Mempool, nil)
+	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(cfg.P2P)
+	network := p2p.New(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
@@ -115,7 +128,6 @@ func createConn() error {
 		return err
 	}
 	c = types.NewChain33Client(conn)
-	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 	return nil
 }
 
@@ -151,7 +163,7 @@ func prepareTxList() *types.Transaction {
 	action := &pty.NormAction{Value: nput, Ty: pty.NormActionPut}
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
-	tx.Nonce = random.Int63()
+	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 	return tx
 }
@@ -176,4 +188,103 @@ func NormPut() {
 		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
 		return
 	}
+}
+
+func AddNode() {
+	pubkey := "788657125A5A547B499F8B74239092EBB6466E8A205348D9EA645D510235A671"
+	pubkeybyte, err := hex.DecodeString(pubkey)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	nput := &vty.ValNodeAction_Node{Node: &vty.ValNode{PubKey: pubkeybyte, Power: int64(2)}}
+	action := &vty.ValNodeAction{Value: nput, Ty: vty.ValNodeActionUpdate}
+	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
+	tx.To = address.ExecAddress("valnode")
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
+
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
+		return
+	}
+}
+
+func CheckState(t *testing.T, client *Client) {
+	state := client.csState.GetState()
+	assert.NotEmpty(t, state)
+	_, curVals := state.GetValidators()
+	assert.NotEmpty(t, curVals)
+	assert.True(t, state.Equals(state.Copy()))
+
+	_, vals := client.csState.GetValidators()
+	assert.Len(t, vals, 1)
+
+	storeHeight := client.csStore.LoadStateHeight()
+	assert.True(t, storeHeight > 0)
+
+	sc := client.csState.LoadCommit(storeHeight)
+	assert.NotEmpty(t, sc)
+	bc := client.csState.LoadCommit(storeHeight - 1)
+	assert.NotEmpty(t, bc)
+
+	assert.NotEmpty(t, client.LoadBlockState(storeHeight))
+	assert.NotEmpty(t, client.LoadProposalBlock(storeHeight))
+
+	assert.Nil(t, client.LoadBlockCommit(0))
+	assert.Nil(t, client.LoadBlockState(0))
+	assert.Nil(t, client.LoadProposalBlock(0))
+
+	csdb := client.csState.blockExec.db
+	assert.NotEmpty(t, csdb)
+	assert.NotEmpty(t, csdb.LoadState())
+	valset, err := csdb.LoadValidators(storeHeight - 1)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, valset)
+
+	genState, err := MakeGenesisStateFromFile("genesis.json")
+	assert.Nil(t, err)
+	assert.Equal(t, genState.LastBlockHeight, int64(0))
+
+	assert.Equal(t, client.csState.Prevote(0), 1000*time.Millisecond)
+	assert.Equal(t, client.csState.Precommit(0), 1000*time.Millisecond)
+	assert.Equal(t, client.csState.PeerGossipSleep(), 100*time.Millisecond)
+	assert.Equal(t, client.csState.PeerQueryMaj23Sleep(), 2000*time.Millisecond)
+	assert.Equal(t, client.csState.IsProposer(), true)
+	assert.Nil(t, client.csState.GetPrevotesState(state.LastBlockHeight, 0, nil))
+	assert.Nil(t, client.csState.GetPrecommitsState(state.LastBlockHeight, 0, nil))
+
+	assert.NotEmpty(t, client.PrivValidator())
+	assert.Len(t, client.GenesisDoc().Validators, 1)
+
+	msg1, err := client.Query_IsHealthy(&types.ReqNil{})
+	assert.Nil(t, err)
+	flag := msg1.(*vty.IsHealthy).IsHealthy
+	assert.Equal(t, true, flag)
+
+	msg2, err := client.Query_NodeInfo(&types.ReqNil{})
+	assert.Nil(t, err)
+	tvals := msg2.(*vty.ValidatorSet).Validators
+	assert.Len(t, tvals, 1)
+
+	err = client.CommitBlock(client.GetCurrentBlock())
+	assert.Nil(t, err)
+}
+
+func TestCompareHRS(t *testing.T) {
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepNewHeight, 1, 1, ty.RoundStepNewHeight), 0)
+
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 2, 1, ty.RoundStepNewHeight), -1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 1, 2, ty.RoundStepNewHeight), -1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrevote, 1, 1, ty.RoundStepPrecommit), -1)
+
+	assert.Equal(t, CompareHRS(2, 1, ty.RoundStepNewHeight, 1, 1, ty.RoundStepPrevote), 1)
+	assert.Equal(t, CompareHRS(1, 2, ty.RoundStepNewHeight, 1, 1, ty.RoundStepPrevote), 1)
+	assert.Equal(t, CompareHRS(1, 1, ty.RoundStepPrecommit, 1, 1, ty.RoundStepPrevote), 1)
+	fmt.Println("TestCompareHRS ok")
 }

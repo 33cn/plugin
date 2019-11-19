@@ -54,12 +54,15 @@ func addPokerbullStartFlags(cmd *cobra.Command) {
 }
 
 func pokerbullStart(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	value, _ := cmd.Flags().GetUint64("value")
 	playerCount, _ := cmd.Flags().GetUint32("playerCount")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.PokerBullX),
+		Execer:     cfg.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreateStartTx,
 		Payload:    []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value)*types.Coin, int32(playerCount))),
 	}
@@ -86,11 +89,14 @@ func addPokerbullContinueFlags(cmd *cobra.Command) {
 }
 
 func pokerbullContinue(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.PokerBullX),
+		Execer:     cfg.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreateContinueTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
@@ -117,11 +123,14 @@ func addPokerbullQuitFlags(cmd *cobra.Command) {
 }
 
 func pokerbullQuit(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.PokerBullX),
+		Execer:     cfg.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreateQuitTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
@@ -154,6 +163,9 @@ func addPokerbullPlayFlags(cmd *cobra.Command) {
 }
 
 func pokerbullPlay(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
 	round, _ := cmd.Flags().GetUint32("round")
@@ -169,7 +181,7 @@ func pokerbullPlay(cmd *cobra.Command, args []string) {
 	copy(payload.Address, address)
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pkt.PokerBullX),
+		Execer:     cfg.ExecName(pkt.PokerBullX),
 		ActionName: pkt.CreatePlayTx,
 		Payload:    types.MustPBToJSON(payload),
 	}

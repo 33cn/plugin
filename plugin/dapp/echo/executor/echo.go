@@ -18,15 +18,16 @@ var (
 	KeyPrefixPangLocal = "LODB-echo-pang:%s"
 )
 
-// init 初始化时通过反射获取本执行器的方法列表
-func init() {
-	ety := types.LoadExecutorType(echotypes.EchoX)
-	ety.InitFuncList(types.ListMethod(&Echo{}))
+// Init 本执行器的初始化动作，向系统注册本执行器，这里生效高度暂写为0
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	dapp.Register(cfg, echotypes.EchoX, newEcho, 0)
+	InitExecType()
 }
 
-// Init 本执行器的初始化动作，向系统注册本执行器，这里生效高度暂写为0
-func Init(name string, sub []byte) {
-	dapp.Register(echotypes.EchoX, newEcho, 0)
+// InitExecType 初始化时通过反射获取本执行器的方法列表
+func InitExecType() {
+	ety := types.LoadExecutorType(echotypes.EchoX)
+	ety.InitFuncList(types.ListMethod(&Echo{}))
 }
 
 // Echo 定义执行器对象

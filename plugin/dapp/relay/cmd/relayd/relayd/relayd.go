@@ -325,7 +325,11 @@ func (r *Relayd) transaction(payload []byte) *types.Transaction {
 		To:      address.ExecAddress(ty.RelayX),
 	}
 
-	fee, _ := tx.GetRealFee(types.GInt("MinFee"))
+	minFee := types.DefaultMinFee
+	if r.config.Chain33Cfg != nil {
+		minFee = r.config.Chain33Cfg.GInt("MinFee")
+	}
+	fee, _ := tx.GetRealFee(minFee)
 	tx.Fee = fee
 	tx.Sign(types.SECP256K1, r.privateKey)
 	log.Info("transaction", "fee : ", fee)

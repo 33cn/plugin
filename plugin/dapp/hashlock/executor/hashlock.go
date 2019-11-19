@@ -16,14 +16,15 @@ const minLockTime = 60
 
 var driverName = "hashlock"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Hashlock{}))
+// Init hashlock
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newHashlock, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init hashlock
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newHashlock, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Hashlock{}))
 }
 
 // GetName for hashlock

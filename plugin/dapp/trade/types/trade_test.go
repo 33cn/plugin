@@ -7,23 +7,27 @@ package types
 import (
 	"testing"
 
+	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTradeType_GetName(t *testing.T) {
-	tp := newType()
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	tp := NewType(cfg)
 	assert.Equal(t, TradeX, tp.GetName())
 }
 
 func TestTradeType_GetTypeMap(t *testing.T) {
-	tp := newType()
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	tp := NewType(cfg)
 	actoins := tp.GetTypeMap()
 	assert.NotNil(t, actoins)
 	assert.NotEqual(t, 0, len(actoins))
 }
 
 func TestTradeType_GetLogMap(t *testing.T) {
-	tp := newType()
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	tp := NewType(cfg)
 	l := tp.GetLogMap()
 	assert.NotNil(t, l)
 	assert.NotEqual(t, 0, len(l))

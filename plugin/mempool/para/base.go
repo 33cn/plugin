@@ -28,14 +28,6 @@ type Mempool struct {
 func NewMempool(cfg *types.Mempool) *Mempool {
 	pool := &Mempool{}
 	pool.key = topic
-	if types.IsPara() {
-		grpcCli, err := grpcclient.NewMainChainClient("")
-		if err != nil {
-			panic(err)
-		}
-		pool.mainGrpcCli = grpcCli
-	}
-
 	return pool
 }
 
@@ -43,6 +35,7 @@ func NewMempool(cfg *types.Mempool) *Mempool {
 func (mem *Mempool) SetQueueClient(client queue.Client) {
 	mem.client = client
 	mem.client.Sub(mem.key)
+	mem.setMainGrpcCli(client.GetConfig())
 	mem.wg.Add(1)
 	go func() {
 		defer mem.wg.Done()
@@ -66,6 +59,16 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 			}
 		}
 	}()
+}
+
+func (mem *Mempool) setMainGrpcCli(cfg *types.Chain33Config) {
+	if cfg != nil && cfg.IsPara() {
+		grpcCli, err := grpcclient.NewMainChainClient(cfg, "")
+		if err != nil {
+			panic(err)
+		}
+		mem.mainGrpcCli = grpcCli
+	}
 }
 
 // Wait for ready

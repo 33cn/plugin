@@ -13,12 +13,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-func bindMiner(param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
+func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
 	tBind := &ty.TicketBind{
 		MinerAddress:  param.BindAddr,
 		ReturnAddress: param.OriginAddr,
 	}
-	data, err := types.CallCreateTx(types.ExecName(ty.TicketX), "Tbind", tBind)
+	data, err := types.CallCreateTx(cfg, cfg.ExecName(ty.TicketX), "Tbind", tBind)
 	if err != nil {
 		return nil, err
 	}
@@ -37,16 +37,17 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 		return nil, err
 	}
 
+	cfg := g.GetConfig()
 	if in.CheckBalance {
 		header, err := g.GetLastHeader()
 		if err != nil {
 			return nil, err
 		}
-		price := ty.GetTicketMinerParam(header.Height).TicketPrice
+		price := ty.GetTicketMinerParam(cfg, header.Height).TicketPrice
 		if price == 0 {
 			return nil, types.ErrInvalidParam
 		}
-		if in.Amount%ty.GetTicketMinerParam(header.Height).TicketPrice != 0 || in.Amount < 0 {
+		if in.Amount%ty.GetTicketMinerParam(cfg, header.Height).TicketPrice != 0 || in.Amount < 0 {
 			return nil, types.ErrAmount
 		}
 
@@ -62,7 +63,7 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 			return nil, types.ErrNoBalance
 		}
 	}
-	return bindMiner(in)
+	return bindMiner(cfg, in)
 }
 
 // SetAutoMining set auto mining

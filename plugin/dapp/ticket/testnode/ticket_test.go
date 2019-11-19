@@ -22,9 +22,9 @@ func TestWalletTicket(t *testing.T) {
 	minerAddr := "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	t.Log("Begin wallet ticket test")
 
-	cfg, sub := testnode.GetDefaultConfig()
-	cfg.Consensus.Name = "ticket"
-	mock33 := testnode.NewWithConfig(cfg, sub, nil)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	mock33 := testnode.NewWithConfig(cfg, nil)
 	defer mock33.Close()
 	err := mock33.WaitHeight(0)
 	assert.Nil(t, err)

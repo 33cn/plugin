@@ -269,7 +269,8 @@ func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransferTo
 
 	//将指定账户上的资产从balance转账到多重签名账户的balance上
 	symbol := getRealSymbol(execTransfer.Symbol)
-	newAccountDB, err := account.NewAccountDB(execTransfer.Execname, symbol, a.db)
+	cfg := a.api.GetConfig()
+	newAccountDB, err := account.NewAccountDB(cfg, execTransfer.Execname, symbol, a.db)
 	if err != nil {
 		return nil, err
 	}
@@ -768,7 +769,8 @@ func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty
 
 		//执行此交易，从多重签名账户转币到指定账户，在multiSig合约中转账
 		symbol := getRealSymbol(transfer.Symbol)
-		execerAccDB, err := account.NewAccountDB(transfer.Execname, symbol, a.db)
+		cfg := a.api.GetConfig()
+		execerAccDB, err := account.NewAccountDB(cfg, transfer.Execname, symbol, a.db)
 		if err != nil {
 			multisiglog.Error("executeTransaction:NewAccountDB", "From", transfer.From, "To", transfer.To,
 				"execaddr", a.execaddr, "amount", amount, "Execer", transfer.Execname, "Symbol", transfer.Symbol, "error", err)

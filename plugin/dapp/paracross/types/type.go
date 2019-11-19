@@ -19,28 +19,50 @@ var (
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
 	// MainForkParacrossCommitTx 平行链配置项对应主链的ForkCommitTx 高度
-	MainForkParacrossCommitTx = "MainForkParacrossCommitTx"
-	// ParaSelfConsensForkHeight para self consens height string
-	ParaSelfConsensForkHeight = "MainParaSelfConsensusForkHeight"
+	MainForkParacrossCommitTx = "mainForkParacrossCommitTx"
 	// ForkLoopCheckCommitTxDone 循环检查共识交易done的fork
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
-	MainLoopCheckCommitTxDoneForkHeight = "MainLoopCheckCommitTxDoneForkHeight"
+	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
+	// ForkParaSelfConsStages 平行链自共识分阶段共识
+	ForkParaSelfConsStages = "ForkParaSelfConsStages"
+
+	// ParaConsSubConf sub
+	ParaConsSubConf = "consensus.sub.para"
+	//ParaPrefixConsSubConf prefix
+	ParaPrefixConsSubConf = "config." + ParaConsSubConf
+	//ParaSelfConsInitConf self stage init config
+	ParaSelfConsInitConf = "paraSelfConsInitDisable"
+	//ParaSelfConsConfPreContract self consens enable string as ["0-100"] config pre stage contract
+	ParaSelfConsConfPreContract = "selfConsensEnablePreContract"
+	//ParaFilterIgnoreTxGroup adapt 6.1.0 to check para tx in group
+	ParaFilterIgnoreTxGroup = "filterIgnoreParaTxGroup"
 )
 
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(ParaX))
-	types.RegistorExecutor(ParaX, NewType())
-	types.RegisterDappFork(ParaX, "Enable", 0)
-	types.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
-	types.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
-	types.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	types.RegFork(ParaX, InitFork)
+	types.RegExec(ParaX, InitExecutor)
+
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(ParaX, "Enable", 0)
+	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
+	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
+	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	//只在平行链启用
+	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(ParaX, NewType(cfg))
 }
 
 // GetExecName get para exec name
-func GetExecName() string {
-	return types.ExecName(ParaX)
+func GetExecName(cfg *types.Chain33Config) string {
+	return cfg.ExecName(ParaX)
 }
 
 // ParacrossType base paracross type
@@ -49,9 +71,10 @@ type ParacrossType struct {
 }
 
 // NewType get paracross type
-func NewType() *ParacrossType {
+func NewType(cfg *types.Chain33Config) *ParacrossType {
 	c := &ParacrossType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 
@@ -76,6 +99,9 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaNodeVoteDone:          {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
 		TyLogParaNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
 		TyLogParaNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
+		TyLogParaSelfConsStageConfig:   {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
+		TyLogParaStageVoteDone:         {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
+		TyLogParaStageGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
 	}
 }
 
@@ -91,6 +117,7 @@ func (p *ParacrossType) GetTypeMap() map[string]int32 {
 		"TransferToExec":  ParacrossActionTransferToExec,
 		"NodeConfig":      ParacrossActionNodeConfig,
 		"NodeGroupConfig": ParacrossActionNodeGroupApply,
+		"SelfStageConfig": ParacrossActionSelfStageConfig,
 	}
 }
 
@@ -101,6 +128,7 @@ func (p *ParacrossType) GetPayload() types.Message {
 
 // CreateTx paracross create tx by different action
 func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+	cfg := p.GetConfig()
 	if action == "ParacrossCommit" {
 		var param paracrossCommitTx
 		err := json.Unmarshal(message, &param)
@@ -109,7 +137,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 
-		return createRawParacrossCommitTx(&param)
+		return createRawParacrossCommitTx(cfg, &param)
 	} else if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
 		var param types.CreateTx
 		err := json.Unmarshal(message, &param)
@@ -117,7 +145,7 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			glog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawAssetTransferTx(&param)
+		return CreateRawAssetTransferTx(cfg, &param)
 
 	} else if action == "ParacrossTransfer" || action == "Transfer" ||
 		action == "ParacrossWithdraw" || action == "Withdraw" ||
@@ -125,9 +153,6 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 
 		return p.CreateRawTransferTx(action, message)
 	} else if action == "NodeConfig" {
-		if !types.IsPara() {
-			return nil, types.ErrNotSupport
-		}
 		var param ParaNodeAddrConfig
 		err := types.JSONToPB(message, &param)
 		if err != nil {
@@ -136,9 +161,6 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		}
 		return CreateRawNodeConfigTx(&param)
 	} else if action == "NodeGroupConfig" {
-		if !types.IsPara() {
-			return nil, types.ErrNotSupport
-		}
 		var param ParaNodeGroupConfig
 		err := types.JSONToPB(message, &param)
 		//err := json.Unmarshal(message, &param)
@@ -147,7 +169,15 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawNodeGroupApplyTx(&param)
+	} else if action == "selfConsStageConfig" {
+		var param ParaStageConfig
+		err := types.JSONToPB(message, &param)
+		//err := json.Unmarshal(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.selfConsStageConfig", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawSelfConsStageApplyTx(&param)
 	}
-
 	return nil, types.ErrNotSupport
 }

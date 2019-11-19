@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -166,6 +167,7 @@ type Action struct {
 	execaddr     string
 	localDB      dbm.Lister
 	index        int
+	api          client.QueueProtocolAPI
 }
 
 // NewAction new action
@@ -173,7 +175,7 @@ func NewAction(g *Game, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{g.GetCoinsAccount(), g.GetStateDB(), hash, fromaddr,
-		g.GetBlockTime(), g.GetHeight(), dapp.ExecAddress(string(tx.Execer)), g.GetLocalDB(), index}
+		g.GetBlockTime(), g.GetHeight(), dapp.ExecAddress(string(tx.Execer)), g.GetLocalDB(), index, g.GetAPI()}
 }
 
 func (action *Action) checkExecAccountBalance(fromAddr string, ToFrozen, ToActive int64) bool {
@@ -189,12 +191,13 @@ func (action *Action) GameCreate(create *gt.GameCreate) (*types.Receipt, error) 
 	gameID := common.ToHex(action.txhash)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
-	maxGameAmount := getConfValue(action.db, ConfNameMaxGameAmount, MaxGameAmount)
+	cfg := action.api.GetConfig()
+	maxGameAmount := getConfValue(cfg, action.db, ConfNameMaxGameAmount, MaxGameAmount)
 	if create.GetValue() > maxGameAmount*types.Coin {
 		glog.Error("Create the game, the deposit is too big  ", "value", create.GetValue(), "err", gt.ErrGameCreateAmount.Error())
 		return nil, gt.ErrGameCreateAmount
 	}
-	minGameAmount := getConfValue(action.db, ConfNameMinGameAmount, MinGameAmount)
+	minGameAmount := getConfValue(cfg, action.db, ConfNameMinGameAmount, MinGameAmount)
 	if create.GetValue() < minGameAmount*types.Coin || math.Remainder(float64(create.GetValue()), 2) != 0 {
 		return nil, fmt.Errorf("%s", "The amount you participate in cannot be less than 2 and must be an even number!")
 	}
@@ -486,7 +489,8 @@ func (action *Action) GameClose(close *gt.GameClose) (*types.Receipt, error) {
 // 检查开奖是否超时，若超过一天，则不让庄家开奖，但其他人可以开奖，
 // 若没有一天，则其他人没有开奖权限，只有庄家有开奖权限
 func (action *Action) checkGameIsTimeOut(game *gt.Game) bool {
-	activeTime := getConfValue(action.db, ConfNameActiveTime, ActiveTime)
+	cfg := action.api.GetConfig()
+	activeTime := getConfValue(cfg, action.db, ConfNameActiveTime, ActiveTime)
 	DurTime := 60 * 60 * activeTime
 	return action.blocktime > (game.GetMatchTime() + DurTime)
 }
@@ -551,26 +555,26 @@ func (action *Action) readGame(id string) (*gt.Game, error) {
 }
 
 // List query game list
-func List(db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
-	return QueryGameListByPage(db, stateDB, param)
+func List(cfg *types.Chain33Config, db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
+	return QueryGameListByPage(cfg, db, stateDB, param)
 }
 
 // QueryGameListByPage 分页查询
-func QueryGameListByPage(db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
+func QueryGameListByPage(cfg *types.Chain33Config, db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
 	switch param.GetStatus() {
 	case gt.GameActionCreate, gt.GameActionMatch, gt.GameActionClose, gt.GameActionCancel:
-		return queryGameListByStatusAndAddr(db, stateDB, param)
+		return queryGameListByStatusAndAddr(cfg, db, stateDB, param)
 	}
 	return nil, fmt.Errorf("%s", "the status only fill in 1,2,3,4!")
 }
 
-func queryGameListByStatusAndAddr(db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
+func queryGameListByStatusAndAddr(cfg *types.Chain33Config, db dbm.Lister, stateDB dbm.KV, param *gt.QueryGameListByStatusAndAddr) (types.Message, error) {
 	direction := ListDESC
 	if param.GetDirection() == ListASC {
 		direction = ListASC
 	}
-	count := int32(getConfValue(stateDB, ConfNameDefaultCount, DefaultCount))
-	maxCount := int32(getConfValue(stateDB, ConfNameMaxCount, MaxCount))
+	count := int32(getConfValue(cfg, stateDB, ConfNameDefaultCount, DefaultCount))
+	maxCount := int32(getConfValue(cfg, stateDB, ConfNameMaxCount, MaxCount))
 	if 0 < param.GetCount() && param.GetCount() <= maxCount {
 		count = param.GetCount()
 	}
@@ -679,9 +683,9 @@ func GetGameList(db dbm.KV, values []string) []*gt.Game {
 	}
 	return games
 }
-func getConfValue(db dbm.KV, key string, defaultValue int64) int64 {
+func getConfValue(cfg *types.Chain33Config, db dbm.KV, key string, defaultValue int64) int64 {
 	var item types.ConfigItem
-	value, err := getManageKey(key, db)
+	value, err := getManageKey(cfg, key, db)
 	if err != nil {
 		return defaultValue
 	}
@@ -705,11 +709,11 @@ func getConfValue(db dbm.KV, key string, defaultValue int64) int64 {
 	}
 	return v
 }
-func getManageKey(key string, db dbm.KV) ([]byte, error) {
+func getManageKey(cfg *types.Chain33Config, key string, db dbm.KV) ([]byte, error) {
 	manageKey := types.ManageKey(key)
 	value, err := db.Get([]byte(manageKey))
 	if err != nil {
-		if types.IsPara() { //平行链只有一种存储方式
+		if cfg.IsPara() { //平行链只有一种存储方式
 			glog.Error("gamedb getManage", "can't get value from db,key:", key, "err", err.Error())
 			return nil, err
 		}

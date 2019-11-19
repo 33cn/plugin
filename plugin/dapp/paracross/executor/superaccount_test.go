@@ -17,6 +17,7 @@ import (
 	"github.com/33cn/chain33/types"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -46,13 +47,14 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 
 	suite.exec = newParacross().(*Paracross)
+	suite.exec.SetAPI(suite.api)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
 	suite.exec.SetBlockInfo([]byte(""), []byte(""), 3)
-	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
 	//forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
@@ -61,15 +63,15 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	//
 	//}
 
-	types.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
-	types.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
+	chain33TestCfg.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	chain33TestCfg.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
 
 	// TODO, more fields
 	// setup block
 	blockDetail := &types.BlockDetail{
 		Block: &types.Block{},
 	}
-	MainBlockHash10 = blockDetail.Block.Hash()
+	MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
 
 }
 
@@ -127,7 +129,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeJoining), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyJoining), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -142,7 +144,7 @@ func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeQuiting), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyQuiting), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -175,9 +177,10 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	var count int
 	config := &pt.ParaNodeAddrConfig{
-		Op:    pt.ParaNodeVote,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpVote,
 		Id:    id,
-		Value: pt.ParaNodeVoteYes,
+		Value: pt.ParaVoteYes,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
@@ -203,6 +206,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 
 func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -218,8 +222,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupQuit,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupQuit,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -233,6 +238,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.testNodeGroupConfigQuit()
 
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
@@ -248,8 +254,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupApprove,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupApprove,
 	}
 	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
@@ -262,8 +269,9 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
 	config := &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeJoin,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpNewApply,
+		Addr:  Account14K,
 	}
 	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
@@ -281,8 +289,9 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeQuit,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpQuit,
+		Addr:  Account14K,
 	}
 	tx, err = pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
@@ -304,12 +313,7 @@ func (suite *NodeManageTestSuite) TestExec() {
 }
 
 func TestNodeManageSuite(t *testing.T) {
-	tempTitle = types.GetTitle()
-	types.SetTitleOnlyForTest(Title)
-
 	suite.Run(t, new(NodeManageTestSuite))
-
-	types.SetTitleOnlyForTest(tempTitle)
 }
 
 func (suite *NodeManageTestSuite) TearDownSuite() {
@@ -350,7 +354,7 @@ func TestUpdateVotes(t *testing.T) {
 	nodes["BB"] = struct{}{}
 	nodes["CC"] = struct{}{}
 
-	updateVotes(stat, nodes)
+	stat.Votes = updateVotes(stat.Votes, nodes)
 	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
 	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }

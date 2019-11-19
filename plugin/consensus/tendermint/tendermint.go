@@ -5,13 +5,15 @@
 package tendermint
 
 import (
+	"bytes"
 	"fmt"
+	"math/rand"
+	"os"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
-	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
@@ -38,16 +40,19 @@ var (
 	timeoutCommit               int32 = 1000
 	skipTimeoutCommit                 = false
 	createEmptyBlocks                 = false
+	fastSync                          = false
 	createEmptyBlocksInterval   int32 // second
 	validatorNodes                    = []string{"127.0.0.1:46656"}
 	peerGossipSleepDuration     int32 = 100
 	peerQueryMaj23SleepDuration int32 = 2000
 	zeroHash                    [32]byte
+	random                      *rand.Rand
 )
 
 func init() {
 	drivers.Reg("tendermint", New)
 	drivers.QueryData.Register("tendermint", &Client{})
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 // Client Tendermint implementation
@@ -59,7 +64,7 @@ type Client struct {
 	privKey       crypto.PrivKey // local node's p2p key
 	pubKey        string
 	csState       *ConsensusState
-	evidenceDB    dbm.DB
+	csStore       *ConsensusStore // save consensus state
 	crypto        crypto.Crypto
 	node          *Node
 	txsAvailable  chan int64
@@ -81,6 +86,7 @@ type subConfig struct {
 	CreateEmptyBlocks         bool     `json:"createEmptyBlocks"`
 	CreateEmptyBlocksInterval int32    `json:"createEmptyBlocksInterval"`
 	ValidatorNodes            []string `json:"validatorNodes"`
+	FastSync                  bool     `json:"fastSync"`
 }
 
 func (client *Client) applyConfig(sub []byte) {
@@ -126,12 +132,13 @@ func (client *Client) applyConfig(sub []byte) {
 	if len(subcfg.ValidatorNodes) > 0 {
 		validatorNodes = subcfg.ValidatorNodes
 	}
+	fastSync = subcfg.FastSync
 }
 
 // DefaultDBProvider returns a database using the DBBackend and DBDir
 // specified in the ctx.Config.
-func DefaultDBProvider(ID string) (dbm.DB, error) {
-	return dbm.NewDB(ID, "leveldb", "./datadir", 0), nil
+func DefaultDBProvider(name string) dbm.DB {
+	return dbm.NewDB(name, "leveldb", fmt.Sprintf("datadir%stendermint", string(os.PathSeparator)), 0)
 }
 
 // New ...
@@ -140,16 +147,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	//init rand
 	ttypes.Init()
 
-	genDoc, err := ttypes.GenesisDocFromFile("./genesis.json")
+	genDoc, err := ttypes.GenesisDocFromFile("genesis.json")
 	if err != nil {
 		tendermintlog.Error("NewTendermintClient", "msg", "GenesisDocFromFile failded", "error", err)
-		return nil
-	}
-
-	// Make Evidence Reactor
-	evidenceDB, err := DefaultDBProvider("CSevidence")
-	if err != nil {
-		tendermintlog.Error("NewTendermintClient", "msg", "DefaultDBProvider evidenceDB failded", "error", err)
 		return nil
 	}
 
@@ -167,7 +167,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		return nil
 	}
 
-	privValidator := ttypes.LoadOrGenPrivValidatorFS("./priv_validator.json")
+	privValidator := ttypes.LoadOrGenPrivValidatorFS("priv_validator.json")
 	if privValidator == nil {
 		tendermintlog.Error("NewTendermintClient create priv_validator file failed")
 		return nil
@@ -183,7 +183,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privValidator: privValidator,
 		privKey:       priv,
 		pubKey:        pubkey,
-		evidenceDB:    evidenceDB,
+		csStore:       NewConsensusStore(),
 		crypto:        cr,
 		txsAvailable:  make(chan int64, 1),
 		stopC:         make(chan struct{}, 1),
@@ -195,7 +195,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 }
 
 // PrivValidator returns the Node's PrivValidator.
-// XXX: for convenience only!
 func (client *Client) PrivValidator() ttypes.PrivValidator {
 	return client.privValidator
 }
@@ -203,6 +202,16 @@ func (client *Client) PrivValidator() ttypes.PrivValidator {
 // GenesisDoc returns the Node's GenesisDoc.
 func (client *Client) GenesisDoc() *ttypes.GenesisDoc {
 	return client.genesisDoc
+}
+
+// GenesisState returns the Node's GenesisState.
+func (client *Client) GenesisState() *State {
+	state, err := MakeGenesisState(client.genesisDoc)
+	if err != nil {
+		tendermintlog.Error("GenesisState", "err", err)
+		return nil
+	}
+	return &state
 }
 
 // Close TODO:may need optimize
@@ -223,16 +232,13 @@ func (client *Client) SetQueueClient(q queue.Client) {
 	go client.StartConsensus()
 }
 
-// DebugCatchup define whether catch up now
-const DebugCatchup = false
-
 // StartConsensus a routine that make the consensus start
 func (client *Client) StartConsensus() {
 	//进入共识前先同步到最大高度
 	hint := time.NewTicker(5 * time.Second)
 	beg := time.Now()
 OuterLoop:
-	for !DebugCatchup {
+	for fastSync {
 		select {
 		case <-hint.C:
 			tendermintlog.Info("Still catching up max height......", "Height", client.GetCurrentHeight(), "cost", time.Since(beg))
@@ -246,60 +252,46 @@ OuterLoop:
 	}
 	hint.Stop()
 
-	curHeight := client.GetCurrentHeight()
-	blockInfo, err := client.QueryBlockInfoByHeight(curHeight)
-	if curHeight != 0 && err != nil {
-		tendermintlog.Error("StartConsensus GetBlockInfo failed", "error", err)
-		panic(fmt.Sprintf("StartConsensus GetBlockInfo failed:%v", err))
-	}
-
+	// load state
 	var state State
-	if blockInfo == nil {
-		if curHeight != 0 {
-			tendermintlog.Error("StartConsensus", "msg", "block height is not 0 but blockinfo is nil")
-			panic(fmt.Sprintf("StartConsensus block height is %v but block info is nil", curHeight))
+	if client.GetCurrentHeight() == 0 {
+		genState := client.GenesisState()
+		if genState == nil {
+			panic("StartConsensus GenesisState fail")
 		}
-		statetmp, err := MakeGenesisState(client.genesisDoc)
-		if err != nil {
-			tendermintlog.Error("StartConsensus", "msg", "MakeGenesisState failded", "error", err)
-			return
+		state = genState.Copy()
+	} else if client.GetCurrentHeight() <= client.csStore.LoadStateHeight() {
+		stoState := client.csStore.LoadStateFromStore()
+		if stoState == nil {
+			panic("StartConsensus LoadStateFromStore fail")
 		}
-		state = statetmp.Copy()
+		state = LoadState(stoState)
+		tendermintlog.Info("Load state from store")
 	} else {
-		tendermintlog.Debug("StartConsensus", "blockinfo", blockInfo)
-		csState := blockInfo.GetState()
-		if csState == nil {
-			tendermintlog.Error("StartConsensus", "msg", "blockInfo.GetState is nil")
-			return
+		height := client.GetCurrentHeight()
+		blkState := client.LoadBlockState(height)
+		if blkState == nil {
+			panic("StartConsensus LoadBlockState fail")
 		}
-		state = LoadState(csState)
-		if seenCommit := blockInfo.SeenCommit; seenCommit != nil {
-			state.LastBlockID = ttypes.BlockID{
-				BlockID: tmtypes.BlockID{
-					Hash: seenCommit.BlockID.GetHash(),
-				},
-			}
+		state = LoadState(blkState)
+		tendermintlog.Info("Load state from block")
+		//save initial state in store
+		blkCommit := client.LoadBlockCommit(height)
+		if blkCommit == nil {
+			panic("StartConsensus LoadBlockCommit fail")
 		}
+		err := client.csStore.SaveConsensusState(height-1, blkState, blkCommit)
+		if err != nil {
+			panic(fmt.Sprintf("StartConsensus SaveConsensusState fail: %v", err))
+		}
+		tendermintlog.Info("Save state from block")
 	}
-
 	tendermintlog.Debug("Load state finish", "state", state)
-	valNodes, err := client.QueryValidatorsByHeight(curHeight)
-	if err == nil && valNodes != nil {
-		if len(valNodes.Nodes) > 0 {
-			tendermintlog.Info("StartConsensus validators update", "update-valnodes", valNodes)
-			prevValSet := state.LastValidators.Copy()
-			nextValSet := prevValSet.Copy()
-			err := updateValidators(nextValSet, valNodes.Nodes)
-			if err != nil {
-				tendermintlog.Error("Error changing validator set", "error", err)
-			}
-			// change results from this height but only applies to the next height
-			state.LastHeightValidatorsChanged = curHeight + 1
-			nextValSet.IncrementAccum(1)
-			state.Validators = nextValSet
-		}
-	}
-	tendermintlog.Info("StartConsensus", "validators", state.Validators)
+
+	// start
+	tendermintlog.Info("StartConsensus",
+		"privValidator", fmt.Sprintf("%X", ttypes.Fingerprint(client.privValidator.GetAddress())),
+		"Validators", state.Validators.String())
 	// Log whether this node is a validator or an observer
 	if state.Validators.HasAddress(client.privValidator.GetAddress()) {
 		tendermintlog.Info("This node is a validator")
@@ -309,15 +301,11 @@ OuterLoop:
 
 	stateDB := NewStateDB(client, state)
 
-	//make evidenceReactor
-	evidenceStore := NewEvidenceStore(client.evidenceDB)
-	evidencePool := NewEvidencePool(stateDB, state, evidenceStore)
-
 	// make block executor for consensus and blockchain reactors to execute blocks
-	blockExec := NewBlockExecutor(stateDB, evidencePool)
+	blockExec := NewBlockExecutor(stateDB)
 
 	// Make ConsensusReactor
-	csState := NewConsensusState(client, state, blockExec, evidencePool)
+	csState := NewConsensusState(client, state, blockExec)
 	// reset height, round, state begin at newheigt,0,0
 	client.privValidator.ResetLastHeight(state.LastBlockHeight)
 	csState.SetPrivValidator(client.privValidator)
@@ -326,7 +314,7 @@ OuterLoop:
 
 	// Create & add listener
 	protocol, listeningAddress := "tcp", "0.0.0.0:46656"
-	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermintVersion, csState, evidencePool)
+	node := NewNode(validatorNodes, protocol, listeningAddress, client.privKey, state.ChainID, tendermintVersion, csState)
 
 	client.node = node
 	node.Start()
@@ -353,14 +341,65 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	return
 }
 
-// CheckBlock 暂不检查任何的交易
+func (client *Client) getBlockInfoTx(current *types.Block) (*tmtypes.ValNodeAction, error) {
+	//检查第一笔交易
+	if len(current.Txs) == 0 {
+		return nil, types.ErrEmptyTx
+	}
+	baseTx := current.Txs[0]
+
+	var valAction tmtypes.ValNodeAction
+	err := types.Decode(baseTx.GetPayload(), &valAction)
+	if err != nil {
+		return nil, err
+	}
+	//检查交易类型
+	if valAction.GetTy() != tmtypes.ValNodeActionBlockInfo {
+		return nil, ttypes.ErrBaseTxType
+	}
+	//检查交易内容
+	if valAction.GetBlockInfo() == nil {
+		return nil, ttypes.ErrBlockInfoTx
+	}
+	return &valAction, nil
+}
+
+// CheckBlock 检查区块
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+	cfg := client.GetAPI().GetConfig()
+	if current.Block.Difficulty != cfg.GetP(0).PowLimitBits {
+		return types.ErrBlockHeaderDifficulty
+	}
+	valAction, err := client.getBlockInfoTx(current.Block)
+	if err != nil {
+		return err
+	}
+	if parent.Height+1 != current.Block.Height {
+		return types.ErrBlockHeight
+	}
+	//判断exec 是否成功
+	if current.Receipts[0].Ty != types.ExecOk {
+		return ttypes.ErrBaseExecErr
+	}
+	info := valAction.GetBlockInfo()
+	if current.Block.Height > 1 {
+		lastValAction, err := client.getBlockInfoTx(parent)
+		if err != nil {
+			return err
+		}
+		lastInfo := lastValAction.GetBlockInfo()
+		lastProposalBlock := &ttypes.TendermintBlock{TendermintBlock: lastInfo.GetBlock()}
+		if !lastProposalBlock.HashesTo(info.Block.Header.LastBlockID.Hash) {
+			return ttypes.ErrLastBlockID
+		}
+	}
 	return nil
 }
 
-// ProcEvent ...
+// ProcEvent reply not support action err
 func (client *Client) ProcEvent(msg *queue.Message) bool {
-	return false
+	msg.ReplyErr("Client", types.ErrActionNotSupport)
+	return true
 }
 
 // CreateBlock a routine monitor whether some transactions available and tell client by available channel
@@ -377,15 +416,28 @@ func (client *Client) CreateBlock() {
 		if issleep {
 			time.Sleep(time.Second)
 		}
-		if !client.CheckTxsAvailable() {
+		height, err := client.getLastHeight()
+		if err != nil {
+			issleep = true
+			continue
+		}
+		if !client.CheckTxsAvailable(height) {
 			issleep = true
 			continue
 		}
 		issleep = false
 
-		client.txsAvailable <- client.GetCurrentHeight() + 1
+		client.txsAvailable <- height + 1
 		time.Sleep(time.Duration(timeoutTxAvail) * time.Millisecond)
 	}
+}
+
+func (client *Client) getLastHeight() (int64, error) {
+	lastBlock, err := client.RequestLastBlock()
+	if err != nil {
+		return -1, err
+	}
+	return lastBlock.Height, nil
 }
 
 // TxsAvailable check available channel
@@ -399,9 +451,9 @@ func (client *Client) StopC() <-chan struct{} {
 }
 
 // CheckTxsAvailable check whether some new transactions arriving
-func (client *Client) CheckTxsAvailable() bool {
+func (client *Client) CheckTxsAvailable(height int64) bool {
 	txs := client.RequestTx(10, nil)
-	txs = client.CheckTxDup(txs, client.GetCurrentHeight())
+	txs = client.CheckTxDup(txs, height)
 	return len(txs) != 0
 }
 
@@ -416,58 +468,66 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 	return types.CacheToTxs(cacheTxs)
 }
 
-// BuildBlock build a new block contains some transactions
+// BuildBlock build a new block
 func (client *Client) BuildBlock() *types.Block {
-	lastHeight := client.GetCurrentHeight()
-	txs := client.RequestTx(int(types.GetP(lastHeight+1).MaxTxNumber)-1, nil)
-	newblock := &types.Block{}
-	newblock.Height = lastHeight + 1
-	client.AddTxsToBlock(newblock, txs)
-	return newblock
-}
+	lastBlock := client.GetCurrentBlock()
+	cfg := client.GetAPI().GetConfig()
+	txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber)-1, nil)
+	// placeholder
+	tx0 := &types.Transaction{}
+	txs = append([]*types.Transaction{tx0}, txs...)
 
-// CommitBlock call WriteBlock to real commit to chain
-func (client *Client) CommitBlock(propBlock *types.Block) error {
-	newblock := *propBlock
-	lastBlock, err := client.RequestBlock(newblock.Height - 1)
-	if err != nil {
-		tendermintlog.Error("RequestBlock fail", "err", err)
-		return err
-	}
-	newblock.ParentHash = lastBlock.Hash()
-	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
-	newblock.BlockTime = time.Now().Unix()
+	var newblock types.Block
+	newblock.ParentHash = lastBlock.Hash(cfg)
+	newblock.Height = lastBlock.Height + 1
+	client.AddTxsToBlock(&newblock, txs)
+	//固定难度
+	newblock.Difficulty = cfg.GetP(0).PowLimitBits
+	//newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
 		newblock.BlockTime = lastBlock.BlockTime + 1
 	}
-	newblock.Difficulty = types.GetP(0).PowLimitBits
+	return &newblock
+}
 
-	err = client.WriteBlock(lastBlock.StateHash, &newblock)
-	if err != nil {
-		tendermintlog.Error(fmt.Sprintf("********************CommitBlock err:%v", err.Error()))
-		return err
-	}
-	tendermintlog.Info("Commit block success", "height", newblock.Height, "CurrentHeight", client.GetCurrentHeight())
-	if client.GetCurrentHeight() != newblock.Height {
-		tendermintlog.Warn("Commit block fail", "height", newblock.Height, "CurrentHeight", client.GetCurrentHeight())
+// CommitBlock call WriteBlock to commit to chain
+func (client *Client) CommitBlock(block *types.Block) error {
+	cfg := client.GetAPI().GetConfig()
+	retErr := client.WriteBlock(nil, block)
+	if retErr != nil {
+		tendermintlog.Info("CommitBlock fail", "err", retErr)
+		if client.WaitBlock(block.Height) {
+			curBlock, err := client.RequestBlock(block.Height)
+			if err == nil {
+				if bytes.Equal(curBlock.Hash(cfg), block.Hash(cfg)) {
+					tendermintlog.Info("already has block")
+					return nil
+				}
+				tendermintlog.Info("block is different", "block", block, "curBlock", curBlock)
+				if bytes.Equal(curBlock.Txs[0].Hash(), block.Txs[0].Hash()) {
+					tendermintlog.Warn("base tx is same, origin maybe same")
+					return nil
+				}
+			}
+		}
+		return retErr
 	}
 	return nil
 }
 
-// CheckCommit by height
-func (client *Client) CheckCommit(height int64) bool {
+// WaitBlock by height
+func (client *Client) WaitBlock(height int64) bool {
 	retry := 0
-	var newHeight int64
 	for {
-		newHeight = client.GetCurrentHeight()
-		if newHeight >= height {
-			tendermintlog.Info("Sync block success", "height", height, "CurrentHeight", newHeight)
+		newHeight, err := client.getLastHeight()
+		if err == nil && newHeight >= height {
 			return true
 		}
 		retry++
 		time.Sleep(100 * time.Millisecond)
-		if retry >= 600 {
-			tendermintlog.Warn("Sync block fail", "height", height, "CurrentHeight", newHeight)
+		if retry >= 100 {
+			tendermintlog.Error("Wait block fail", "height", height, "CurrentHeight", newHeight)
 			return false
 		}
 	}
@@ -475,8 +535,8 @@ func (client *Client) CheckCommit(height int64) bool {
 
 // QueryValidatorsByHeight ...
 func (client *Client) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, error) {
-	if height <= 0 {
-		return nil, types.ErrInvalidParam
+	if height < 1 {
+		return nil, ttypes.ErrHeightLessThanOne
 	}
 	req := &tmtypes.ReqNodeInfo{Height: height}
 	param, err := proto.Marshal(req)
@@ -493,92 +553,62 @@ func (client *Client) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, 
 	}
 	msg, err = client.GetQueueClient().Wait(msg)
 	if err != nil {
+		tendermintlog.Info("QueryValidatorsByHeight result", "err", err)
 		return nil, err
 	}
 	return msg.GetData().(types.Message).(*tmtypes.ValNodes), nil
 }
 
-// QueryBlockInfoByHeight ...
-func (client *Client) QueryBlockInfoByHeight(height int64) (*tmtypes.TendermintBlockInfo, error) {
-	if height <= 0 {
-		return nil, types.ErrInvalidParam
+// QueryBlockInfoByHeight get blockInfo and block by height
+func (client *Client) QueryBlockInfoByHeight(height int64) (*tmtypes.TendermintBlockInfo, *types.Block, error) {
+	if height < 1 {
+		return nil, nil, ttypes.ErrHeightLessThanOne
 	}
-	req := &tmtypes.ReqBlockInfo{Height: height}
-	param, err := proto.Marshal(req)
+	block, err := client.RequestBlock(height)
 	if err != nil {
-		tendermintlog.Error("QueryBlockInfoByHeight marshal", "err", err)
-		return nil, types.ErrInvalidParam
+		return nil, nil, err
 	}
-	msg := client.GetQueueClient().NewMessage("execs", types.EventBlockChainQuery,
-		&types.ChainExecutor{Driver: "valnode", FuncName: "GetBlockInfoByHeight", StateHash: zeroHash[:], Param: param})
-	err = client.GetQueueClient().Send(msg, true)
+	valAction, err := client.getBlockInfoTx(block)
 	if err != nil {
-		tendermintlog.Error("QueryBlockInfoByHeight send", "err", err)
-		return nil, err
+		return nil, nil, err
 	}
-	msg, err = client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return nil, err
-	}
-	return msg.GetData().(types.Message).(*tmtypes.TendermintBlockInfo), nil
-}
-
-// LoadSeenCommit by height
-func (client *Client) LoadSeenCommit(height int64) *tmtypes.TendermintCommit {
-	blockInfo, err := client.QueryBlockInfoByHeight(height)
-	if err != nil {
-		panic(fmt.Sprintf("LoadSeenCommit GetBlockInfo failed:%v", err))
-	}
-	if blockInfo == nil {
-		tendermintlog.Error("LoadSeenCommit get nil block info")
-		return nil
-	}
-	return blockInfo.GetSeenCommit()
+	return valAction.GetBlockInfo(), block, nil
 }
 
 // LoadBlockCommit by height
 func (client *Client) LoadBlockCommit(height int64) *tmtypes.TendermintCommit {
-	blockInfo, err := client.QueryBlockInfoByHeight(height)
+	blockInfo, _, err := client.QueryBlockInfoByHeight(height)
 	if err != nil {
-		panic(fmt.Sprintf("LoadBlockCommit GetBlockInfo failed:%v", err))
-	}
-	if blockInfo == nil {
-		tendermintlog.Error("LoadBlockCommit get nil block info")
+		tendermintlog.Error("LoadBlockCommit GetBlockInfo fail", "err", err)
 		return nil
 	}
-	return blockInfo.GetLastCommit()
+	return blockInfo.GetBlock().GetLastCommit()
+}
+
+// LoadBlockState by height
+func (client *Client) LoadBlockState(height int64) *tmtypes.State {
+	blockInfo, _, err := client.QueryBlockInfoByHeight(height)
+	if err != nil {
+		tendermintlog.Error("LoadBlockState GetBlockInfo fail", "err", err)
+		return nil
+	}
+	return blockInfo.GetState()
 }
 
 // LoadProposalBlock by height
 func (client *Client) LoadProposalBlock(height int64) *tmtypes.TendermintBlock {
-	block, err := client.RequestBlock(height)
+	blockInfo, block, err := client.QueryBlockInfoByHeight(height)
 	if err != nil {
-		tendermintlog.Error("LoadProposal by height failed", "curHeight", client.GetCurrentHeight(), "requestHeight", height, "error", err)
+		tendermintlog.Error("LoadProposal GetBlockInfo fail", "err", err)
 		return nil
 	}
-	blockInfo, err := client.QueryBlockInfoByHeight(height)
-	if err != nil {
-		panic(fmt.Sprintf("LoadProposal GetBlockInfo failed:%v", err))
-	}
-	if blockInfo == nil {
-		tendermintlog.Error("LoadProposal get nil block info")
-		return nil
-	}
-
 	proposalBlock := blockInfo.GetBlock()
-	if proposalBlock != nil {
-		proposalBlock.Txs = append(proposalBlock.Txs, block.Txs[1:]...)
-		txHash := merkle.CalcMerkleRoot(proposalBlock.Txs)
-		tendermintlog.Debug("LoadProposalBlock txs hash", "height", proposalBlock.Header.Height, "tx-hash", fmt.Sprintf("%X", txHash))
-	}
+	proposalBlock.Data = block
 	return proposalBlock
 }
 
 // Query_IsHealthy query whether consensus is sync
 func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
 	isHealthy := false
 	if client.IsCaughtUp() && client.GetCurrentHeight() <= client.csState.GetRoundState().Height+1 {
 		isHealthy = true
@@ -588,9 +618,6 @@ func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) 
 
 // Query_NodeInfo query validator node info
 func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
 	nodes := client.csState.GetRoundState().Validators.Validators
 	validators := make([]*tmtypes.Validator, 0)
 	for _, node := range nodes {

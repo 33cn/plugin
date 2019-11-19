@@ -275,7 +275,8 @@ func (ch storageChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 }
 
 func (ch storageChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
-	if types.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
+	cfg := mdb.api.GetConfig()
+	if cfg.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
 		acc := mdb.accounts[ch.account]
 		if acc != nil {
 			currentVal := acc.GetState(ch.key)

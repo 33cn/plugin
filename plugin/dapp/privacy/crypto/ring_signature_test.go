@@ -17,12 +17,14 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
+	pexec "github.com/33cn/plugin/plugin/dapp/privacy/executor"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
 var (
-	pubsByte [10][]byte
-	secsByte [10][]byte
+	pubsByte     [10][]byte
+	secsByte     [10][]byte
+	chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
 )
 
 func init() {
@@ -54,6 +56,8 @@ func init() {
 		pubsByte[i], _ = common.FromHex(pubstrs[i])
 		secsByte[i], _ = common.FromHex(secstrs[i])
 	}
+
+	pexec.Init(privacytypes.PrivacyX, chainTestCfg, nil)
 }
 
 func TestGenerateKeyImage1(t *testing.T) {
@@ -85,6 +89,7 @@ func TestGenerateKeyImage1(t *testing.T) {
 }
 
 func TestGenerateKeyImage2(t *testing.T) {
+
 	c, err := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
 	if err != nil {
 		t.Errorf("create Crypto failed. %v\n", err)

@@ -93,8 +93,9 @@ func (m *multiDldClient) testConn(conn *connectCli, inv *inventory) {
 	recv := make(chan bool, 1)
 	testInv := &inventory{start: inv.start, end: inv.end, curHeight: inv.start, connCli: conn}
 
+	cfg := m.paraClient.GetAPI().GetConfig()
 	go func() {
-		_, err := requestMainBlocks(testInv)
+		_, err := requestMainBlocks(cfg, testInv)
 		if err != nil {
 			plog.Info("multiServerDownload.testconn ip error", "ip", conn.ip, "err", err.Error())
 			recv <- false
@@ -120,11 +121,12 @@ func (m *multiDldClient) testConn(conn *connectCli, inv *inventory) {
 }
 
 func (m *multiDldClient) getConns(inv *inventory) error {
-	paraRemoteGrpcIps := types.Conf("config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
+	cfg := m.paraClient.GetAPI().GetConfig()
+	paraRemoteGrpcIps := types.Conf(cfg, "config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
 	ips := strings.Split(paraRemoteGrpcIps, ",")
 	var conns []*connectCli
 	for _, ip := range ips {
-		conn, err := grpcclient.NewMainChainClient(ip)
+		conn, err := grpcclient.NewMainChainClient(cfg, ip)
 		if err == nil {
 			conns = append(conns, &connectCli{conn: conn, ip: ip, timeout: m.serverTimeout})
 		}
@@ -327,9 +329,10 @@ func (d *downloadJob) verifyDownloadBlock(inv *inventory, blocks *types.ParaTxDe
 }
 
 func (d *downloadJob) saveMainBlock(height int64, block *types.ParaTxDetail) error {
+	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
 
-	key := calcTitleMainHeightKey(types.GetTitle(), height)
+	key := calcTitleMainHeightKey(cfg.GetTitle(), height)
 	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
 	set.KV = append(set.KV, kv)
 
@@ -337,10 +340,11 @@ func (d *downloadJob) saveMainBlock(height int64, block *types.ParaTxDetail) err
 }
 
 func (d *downloadJob) saveBatchMainBlocks(txs *types.ParaTxDetails) error {
+	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
 
 	for _, block := range txs.Items {
-		key := calcTitleMainHeightKey(types.GetTitle(), block.Header.Height)
+		key := calcTitleMainHeightKey(cfg.GetTitle(), block.Header.Height)
 		kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
 		set.KV = append(set.KV, kv)
 	}
@@ -349,10 +353,11 @@ func (d *downloadJob) saveBatchMainBlocks(txs *types.ParaTxDetails) error {
 }
 
 func (d *downloadJob) rmvBatchMainBlocks(inv *inventory) error {
+	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
 
 	for i := inv.start; i < inv.curHeight; i++ {
-		key := calcTitleMainHeightKey(types.GetTitle(), i)
+		key := calcTitleMainHeightKey(cfg.GetTitle(), i)
 		kv := &types.KeyValue{Key: key, Value: nil}
 		set.KV = append(set.KV, kv)
 	}
@@ -361,7 +366,8 @@ func (d *downloadJob) rmvBatchMainBlocks(inv *inventory) error {
 }
 
 func (d *downloadJob) getBlockFromDb(height int64) (*types.ParaTxDetail, error) {
-	key := calcTitleMainHeightKey(types.GetTitle(), height)
+	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
+	key := calcTitleMainHeightKey(cfg.GetTitle(), height)
 	set := &types.LocalDBGet{Keys: [][]byte{key}}
 
 	value, err := d.mDldCli.paraClient.getLocalDb(set, len(set.Keys))
@@ -439,8 +445,8 @@ func (d *downloadJob) checkDownLoadRate() {
 
 }
 
-func requestMainBlocks(inv *inventory) (*types.ParaTxDetails, error) {
-	req := &types.ReqParaTxByTitle{IsSeq: false, Start: inv.curHeight, End: inv.end, Title: types.GetTitle()}
+func requestMainBlocks(cfg *types.Chain33Config, inv *inventory) (*types.ParaTxDetails, error) {
+	req := &types.ReqParaTxByTitle{IsSeq: false, Start: inv.curHeight, End: inv.end, Title: cfg.GetTitle()}
 	txs, err := inv.connCli.conn.GetParaTxByTitle(context.Background(), req)
 	if err != nil {
 		return nil, err
@@ -457,10 +463,10 @@ func requestMainBlocks(inv *inventory) (*types.ParaTxDetails, error) {
 	return validMainBlocks(txs), nil
 }
 
-func requestMainBlockWithTime(inv *inventory) *types.ParaTxDetails {
+func requestMainBlockWithTime(cfg *types.Chain33Config, inv *inventory) *types.ParaTxDetails {
 	retCh := make(chan *types.ParaTxDetails, 1)
 	go func() {
-		tx, err := requestMainBlocks(inv)
+		tx, err := requestMainBlocks(cfg, inv)
 		if err != nil {
 			plog.Error("requestMainBlockWithTime err", "start", inv.start, "end", inv.end, "ip", inv.connCli.ip, "err", err.Error())
 			close(retCh)
@@ -484,6 +490,7 @@ func requestMainBlockWithTime(inv *inventory) *types.ParaTxDetails {
 }
 
 func (d *downloadJob) getInvBlocks(inv *inventory, connPool chan *connectCli) {
+	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
 	start := time.Now()
 	defer func() {
 		connPool <- inv.connCli
@@ -493,7 +500,7 @@ func (d *downloadJob) getInvBlocks(inv *inventory, connPool chan *connectCli) {
 	inv.curHeight = inv.start
 	plog.Debug("getInvBlocks begin", "start", inv.start, "end", inv.end, "ip", inv.connCli.ip)
 	for {
-		txs := requestMainBlockWithTime(inv)
+		txs := requestMainBlockWithTime(cfg, inv)
 		if txs == nil || len(txs.Items) == 0 {
 			d.resetInv(inv)
 			plog.Error("getInvBlocks reqMainBlock nil", "ip", inv.connCli.ip)

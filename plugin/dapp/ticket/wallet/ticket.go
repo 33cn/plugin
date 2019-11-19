@@ -402,7 +402,8 @@ func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivK
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()
-	cfg := ty.GetTicketMinerParam(height)
+	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
+	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
 			if t.Status == 1 && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
@@ -496,7 +497,8 @@ func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()
-	cfg := ty.GetTicketMinerParam(height)
+	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
+	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
 			if now-t.GetCreateTime() < cfg.TicketWithdrawTime {
@@ -635,7 +637,8 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	}
 	//留一个币作为手续费，如果手续费不够了，不能挖矿
 	//判断手续费是否足够，如果不足要及时补充。
-	cfg := ty.GetTicketMinerParam(height)
+	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
+	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	fee := types.Coin
 	if acc1.Balance+acc2.Balance-2*fee >= cfg.TicketPrice {
 		// 如果可用余额+冻结余额，可以凑成新票，则转币到冻结余额
@@ -740,7 +743,8 @@ func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.Priv
 	}
 	total := 0
 	var hashes [][]byte
-	cfg := ty.GetTicketMinerParam(height)
+	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
+	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	for i := 0; i < len(addrs); i++ {
 		bizlog.Info("sourceaddr", "addr", addrs[i])
 		ok := checkMinerWhiteList(addrs[i])
@@ -830,7 +834,8 @@ func (policy *ticketPolicy) autoMining() {
 	defer operater.GetWaitGroup().Done()
 
 	// 只有ticket共识下ticket相关的操作才有效
-	q := types.Conf("config.consensus")
+	cfg := policy.walletOperate.GetAPI().GetConfig()
+	q := types.Conf(cfg, "config.consensus")
 	if q != nil {
 		cons := q.GStr("name")
 		if strings.Compare(strings.TrimSpace(cons), ty.TicketX) != 0 {

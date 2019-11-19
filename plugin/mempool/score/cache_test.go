@@ -116,6 +116,7 @@ func TestTimeCompetition(t *testing.T) {
 	cache.Push(item3)
 	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item3.Value.Hash())))
+	assert.Equal(t, int64(item3.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestPriceCompetition(t *testing.T) {
@@ -124,6 +125,7 @@ func TestPriceCompetition(t *testing.T) {
 	cache.Push(item4)
 	assert.Equal(t, false, cache.Exist(string(item3.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item4.Value.Hash())))
+	assert.Equal(t, int64(item4.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestAddDuplicateItem(t *testing.T) {
@@ -158,6 +160,7 @@ func TestQueueDirection(t *testing.T) {
 
 func TestRealNodeMempool(t *testing.T) {
 	mock33 := testnode.New("chain33.test.toml", nil)
+	cfg := mock33.GetClient().GetConfig()
 	defer mock33.Close()
 	mock33.Listen()
 	mock33.WaitHeight(0)
@@ -168,7 +171,7 @@ func TestRealNodeMempool(t *testing.T) {
 	keys := make([]crypto.PrivKey, n)
 	for i := 0; i < n; i++ {
 		addr, priv := util.Genaddress()
-		tx := util.CreateCoinsTx(mock33.GetHotKey(), addr, 10*types.Coin)
+		tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), addr, 10*types.Coin)
 		mock33.SendTx(tx)
 		keys[i] = priv
 	}
@@ -176,16 +179,16 @@ func TestRealNodeMempool(t *testing.T) {
 	for i := 0; i < n; i++ {
 		go func(priv crypto.PrivKey) {
 			for i := 0; i < 30; i++ {
-				tx := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
 				reply, err := mock33.GetAPI().SendTx(tx)
 				if err != nil {
 					log.Println(err)
 					continue
 				}
 				//发送交易组
-				tx1 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
-				tx2 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
-				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, types.GInt("MinFee"))
+				tx1 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx2 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, cfg.GInt("MinFee"))
 				if err != nil {
 					log.Println(err)
 					continue

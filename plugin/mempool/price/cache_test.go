@@ -41,7 +41,7 @@ var (
 
 func initEnv(size int64) *Queue {
 	if size == 0 {
-		size = 100
+		size = 1000
 	}
 	_, sub := types.InitCfg("chain33.test.toml")
 	var subcfg subConfig
@@ -115,6 +115,7 @@ func TestTimeCompetition(t *testing.T) {
 	cache.Push(item3)
 	assert.Equal(t, false, cache.Exist(string(item1.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item3.Value.Hash())))
+	assert.Equal(t, int64(item3.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestPriceCompetition(t *testing.T) {
@@ -123,6 +124,7 @@ func TestPriceCompetition(t *testing.T) {
 	cache.Push(item4)
 	assert.Equal(t, false, cache.Exist(string(item3.Value.Hash())))
 	assert.Equal(t, true, cache.Exist(string(item4.Value.Hash())))
+	assert.Equal(t, int64(item4.Value.Size()), cache.GetCacheBytes())
 }
 
 func TestAddDuplicateItem(t *testing.T) {
@@ -158,17 +160,31 @@ func TestQueueDirection(t *testing.T) {
 func TestGetProperFee(t *testing.T) {
 	cache := initEnv(0)
 	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
-
+	txs, err := types.CreateTxGroup([]*types.Transaction{tx2, tx3, tx5}, 1200000)
+	assert.NoError(t, err)
+	tx := txs.Tx()
+	groupItem := &drivers.Item{Value: tx, Priority: tx.Fee, EnterTime: item1.EnterTime - 1}
+	assert.Equal(t, cache.subConfig.ProperFee, cache.GetProperFee())
 	cache.Push(item1)
 	cache.Push(item4)
-	cache.GetProperFee()
-	txSize1 := proto.Size(item1.Value)
-	txSize2 := proto.Size(item4.Value)
-	assert.Equal(t, (item1.Value.Fee/int64(txSize1/1000+1)+item4.Value.Fee/int64(txSize2/1000+1))/2, cache.GetProperFee())
+	assert.NoError(t, cache.Push(groupItem))
+	for i := 0; i < 97; i++ {
+		item := *item1
+		tempTx := *item1.Value
+		item.Value = &tempTx
+		item.Value.Nonce = int64(i + 1)
+		assert.NoError(t, cache.Push(&item))
+	}
+	properFee := cache.GetProperFee()
+	feeRate1 := item1.Value.Fee / int64(proto.Size(item1.Value)/1000+1)
+	feeRate2 := item4.Value.Fee / int64(proto.Size(item4.Value)/1000+1)
+	t.Log(feeRate1, feeRate2)
+	assert.Equal(t, (feeRate1*98+feeRate2+1200000)/100, properFee)
 }
 
 func TestRealNodeMempool(t *testing.T) {
 	mock33 := testnode.New("chain33.test.toml", nil)
+	cfg := mock33.GetClient().GetConfig()
 	defer mock33.Close()
 	mock33.Listen()
 	mock33.WaitHeight(0)
@@ -179,7 +195,7 @@ func TestRealNodeMempool(t *testing.T) {
 	keys := make([]crypto.PrivKey, n)
 	for i := 0; i < n; i++ {
 		addr, priv := util.Genaddress()
-		tx := util.CreateCoinsTx(mock33.GetHotKey(), addr, 10*types.Coin)
+		tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), addr, 10*types.Coin)
 		mock33.SendTx(tx)
 		keys[i] = priv
 	}
@@ -187,16 +203,16 @@ func TestRealNodeMempool(t *testing.T) {
 	for i := 0; i < n; i++ {
 		go func(priv crypto.PrivKey) {
 			for i := 0; i < 30; i++ {
-				tx := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
 				reply, err := mock33.GetAPI().SendTx(tx)
 				if err != nil {
 					log.Println(err)
 					continue
 				}
 				//发送交易组
-				tx1 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
-				tx2 := util.CreateCoinsTx(priv, mock33.GetGenesisAddress(), types.Coin/1000)
-				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, types.GInt("MinFee"))
+				tx1 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				tx2 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, cfg.GInt("MinFee"))
 				if err != nil {
 					log.Println(err)
 					continue

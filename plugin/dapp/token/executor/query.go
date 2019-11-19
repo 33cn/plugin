@@ -64,7 +64,7 @@ func (t *token) Query_GetTxByToken(in *tokenty.ReqTokenTx) (types.Message, error
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	if !cfg.SaveTokenTxList {
+	if !subCfg.SaveTokenTxList {
 		return nil, types.ErrActionNotSupport
 	}
 	return t.getTxByToken(in)

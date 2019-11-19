@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/33cn/chain33/util/testnode"
 	wcom "github.com/33cn/chain33/wallet/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"github.com/stretchr/testify/assert"
@@ -30,17 +29,17 @@ const (
 	sendhash = "sendhash"
 )
 
-func TestMain(m *testing.M) {
-	cfg, _ := testnode.GetDefaultConfig()
-	cfg.Consensus.Name = "ticket"
-	types.Init(cfg.Title, cfg)
-	m.Run()
-}
-
 func TestForceCloseTicketList(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
-	ticket.walletOperate = new(walletOperateMock)
+	wallet := new(walletOperateMock)
+	qapi := new(mocks.QueueProtocolAPI)
+	qapi.On("GetConfig", mock.Anything).Return(cfg, nil)
+	wallet.api = qapi
+
+	ticket.walletOperate = wallet
 	t1 := &ty.Ticket{Status: 1, IsGenesis: false}
 	t2 := &ty.Ticket{Status: 2, IsGenesis: false}
 	t3 := &ty.Ticket{Status: 3, IsGenesis: false}
@@ -53,6 +52,9 @@ func TestForceCloseTicketList(t *testing.T) {
 }
 
 func TestCloseTicketsByAddr(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -63,6 +65,7 @@ func TestCloseTicketsByAddr(t *testing.T) {
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	wallet := new(walletOperateMock)
 	qapi := new(mocks.QueueProtocolAPI)
+	qapi.On("GetConfig", mock.Anything).Return(cfg, nil)
 	wallet.api = qapi
 	ticket.walletOperate = wallet
 
@@ -80,9 +83,15 @@ func TestCloseTicketsByAddr(t *testing.T) {
 }
 
 func TestBuyTicketOne(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
-	ticket.walletOperate = new(walletOperateMock)
+	wallet := new(walletOperateMock)
+	qapi := new(mocks.QueueProtocolAPI)
+	qapi.On("GetConfig", mock.Anything).Return(cfg, nil)
+	wallet.api = qapi
+	ticket.walletOperate = wallet
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -97,6 +106,9 @@ func TestBuyTicketOne(t *testing.T) {
 }
 
 func TestBuyMinerAddrTicketOne(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
 	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -109,6 +121,7 @@ func TestBuyMinerAddrTicketOne(t *testing.T) {
 	ticket.initMinerWhiteList(nil)
 	wallet := new(walletOperateMock)
 	qapi := new(mocks.QueueProtocolAPI)
+	qapi.On("GetConfig", mock.Anything).Return(cfg, nil)
 	wallet.api = qapi
 	ticket.walletOperate = wallet
 

@@ -15,7 +15,9 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -109,12 +111,16 @@ func runCase(tt *testing.T, c VMCase, file string) {
 
 	// 1 构建预置环境 pre
 	inst := evm.NewEVMExecutor()
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	inst.SetAPI(api)
 	inst.SetEnv(c.env.currentNumber, c.env.currentTimestamp, uint64(c.env.currentDifficulty))
 	inst.CheckInit()
 	statedb := inst.GetMStateDB()
 	mdb := createStateDB(statedb, c)
 	statedb.StateDB = mdb
-	statedb.CoinsAccount = account.NewCoinsAccount()
+	statedb.CoinsAccount = account.NewCoinsAccount(chainTestCfg)
 	statedb.CoinsAccount.SetDB(statedb.StateDB)
 
 	// 2 创建交易信息 create

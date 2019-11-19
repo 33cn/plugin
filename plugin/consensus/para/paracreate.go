@@ -22,14 +22,15 @@ import (
 )
 
 func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
+	cfg := client.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
 
-	key := calcTitleHeightKey(types.GetTitle(), height)
+	key := calcTitleHeightKey(cfg.GetTitle(), height)
 	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
 	set.KV = append(set.KV, kv)
 
 	//两个key原子操作
-	key = calcTitleLastHeightKey(types.GetTitle())
+	key = calcTitleLastHeightKey(cfg.GetTitle())
 	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height})}
 	set.KV = append(set.KV, kv)
 
@@ -59,13 +60,14 @@ func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
 }
 
 func (client *client) delLocalBlock(height int64) error {
+	cfg := client.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
-	key := calcTitleHeightKey(types.GetTitle(), height)
+	key := calcTitleHeightKey(cfg.GetTitle(), height)
 	kv := &types.KeyValue{Key: key, Value: nil}
 	set.KV = append(set.KV, kv)
 
 	//两个key原子操作
-	key = calcTitleLastHeightKey(types.GetTitle())
+	key = calcTitleLastHeightKey(cfg.GetTitle())
 	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height - 1})}
 	set.KV = append(set.KV, kv)
 
@@ -74,9 +76,10 @@ func (client *client) delLocalBlock(height int64) error {
 
 // localblock 设置到当前高度，当前高度后面block会被新的区块覆盖
 func (client *client) removeLocalBlocks(curHeight int64) error {
+	cfg := client.GetAPI().GetConfig()
 	set := &types.LocalDBSet{}
 
-	key := calcTitleLastHeightKey(types.GetTitle())
+	key := calcTitleLastHeightKey(cfg.GetTitle())
 	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: curHeight})}
 	set.KV = append(set.KV, kv)
 
@@ -84,7 +87,8 @@ func (client *client) removeLocalBlocks(curHeight int64) error {
 }
 
 func (client *client) getLastLocalHeight() (int64, error) {
-	key := calcTitleLastHeightKey(types.GetTitle())
+	cfg := client.GetAPI().GetConfig()
+	key := calcTitleLastHeightKey(cfg.GetTitle())
 	set := &types.LocalDBGet{Keys: [][]byte{key}}
 	value, err := client.getLocalDb(set, len(set.Keys))
 	if err != nil {
@@ -104,7 +108,8 @@ func (client *client) getLastLocalHeight() (int64, error) {
 }
 
 func (client *client) getLocalBlockByHeight(height int64) (*pt.ParaLocalDbBlock, error) {
-	key := calcTitleHeightKey(types.GetTitle(), height)
+	cfg := client.GetAPI().GetConfig()
+	key := calcTitleHeightKey(cfg.GetTitle(), height)
 	set := &types.LocalDBGet{Keys: [][]byte{key}}
 
 	value, err := client.getLocalDb(set, len(set.Keys))
@@ -395,12 +400,13 @@ func validMainBlocks(txs *types.ParaTxDetails) *types.ParaTxDetails {
 }
 
 func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
+	cfg := client.GetAPI().GetConfig()
 	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
 	if err != nil {
 		return nil, err
 	}
 
-	txDetail := blockSeq.Detail.FilterParaTxsByTitle(types.GetTitle())
+	txDetail := blockSeq.Detail.FilterParaTxsByTitle(cfg, cfg.GetTitle())
 	txDetail.Type = blockSeq.Seq.Type
 
 	if !isValidSeqType(txDetail.Type) {
@@ -416,7 +422,8 @@ func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte
 }
 
 func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count, Title: types.GetTitle()}
+	cfg := client.GetAPI().GetConfig()
+	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count, Title: cfg.GetTitle()}
 	details, err := client.GetParaTxByTitle(req)
 	if err != nil {
 		return nil, err
@@ -459,6 +466,7 @@ func (client *client) getEmptyInterval(lastBlock *pt.ParaLocalDbBlock) int64 {
 }
 
 func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error) {
+	cfg := client.GetAPI().GetConfig()
 	lastSeqMainHeight := mainBlock.Header.Height
 
 	lastBlock, err := client.getLastLocalBlock()
@@ -468,7 +476,7 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 	}
 	emptyInterval := client.getEmptyInterval(lastBlock)
 
-	txs := paraexec.FilterTxsForPara(mainBlock)
+	txs := paraexec.FilterTxsForPara(cfg, mainBlock)
 
 	plog.Info("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
 		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", lastSeqMainHeight,

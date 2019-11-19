@@ -31,32 +31,35 @@ func TestMain(m *testing.M) {
 }
 
 func TestTicketPrice(t *testing.T) {
+	cfg := mock33.GetAPI().GetConfig()
 	//test price
 	ti := &executor.DB{}
-	assert.Equal(t, ti.GetRealPrice(), 10000*types.Coin)
+	assert.Equal(t, ti.GetRealPrice(cfg), 10000*types.Coin)
 
 	ti = &executor.DB{}
 	ti.Price = 10
-	assert.Equal(t, ti.GetRealPrice(), int64(10))
+	assert.Equal(t, ti.GetRealPrice(cfg), int64(10))
 }
 
 func TestCheckFork(t *testing.T) {
-	assert.Equal(t, int64(1), types.GetFork("ForkChainParamV2"))
-	p1 := ty.GetTicketMinerParam(0)
+	cfg := mock33.GetAPI().GetConfig()
+	assert.Equal(t, int64(1), cfg.GetFork("ForkChainParamV2"))
+	p1 := ty.GetTicketMinerParam(cfg, 0)
 	assert.Equal(t, 10000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(1)
+	p1 = ty.GetTicketMinerParam(cfg, 1)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(2)
+	p1 = ty.GetTicketMinerParam(cfg, 2)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(3)
+	p1 = ty.GetTicketMinerParam(cfg, 3)
 	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
 }
 
 func TestTicket(t *testing.T) {
+	cfg := mock33.GetAPI().GetConfig()
 	reply, err := mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
 	assert.Equal(t, true, reply.(*types.Reply).IsOk)
-	acc := account.NewCoinsAccount()
+	acc := account.NewCoinsAccount(cfg)
 	addr := mock33.GetGenesisAddress()
 	accounts, err := acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
@@ -66,11 +69,11 @@ func TestTicket(t *testing.T) {
 	assert.Nil(t, err)
 	//assert.Equal(t, accounts[0].Balance, int64(1000000000000))
 	//send to address
-	tx := util.CreateCoinsTx(mock33.GetHotKey(), mock33.GetGenesisAddress(), types.Coin/100)
+	tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), mock33.GetGenesisAddress(), types.Coin/100)
 	mock33.SendTx(tx)
 	mock33.Wait()
 	//bind miner
-	tx = createBindMiner(t, hotaddr, addr, mock33.GetGenesisKey())
+	tx = createBindMiner(t, cfg, hotaddr, addr, mock33.GetGenesisKey())
 	hash := mock33.SendTx(tx)
 	detail, err := mock33.WaitTx(hash)
 	assert.Nil(t, err)
@@ -122,11 +125,11 @@ func TestTicket(t *testing.T) {
 	t.Error("wait 100 , open and close not happened")
 }
 
-func createBindMiner(t *testing.T, m, r string, priv crypto.PrivKey) *types.Transaction {
+func createBindMiner(t *testing.T, cfg *types.Chain33Config, m, r string, priv crypto.PrivKey) *types.Transaction {
 	ety := types.LoadExecutorType("ticket")
 	tx, err := ety.Create("Tbind", &ty.TicketBind{MinerAddress: m, ReturnAddress: r})
 	assert.Nil(t, err)
-	tx, err = types.FormatTx("ticket", tx)
+	tx, err = types.FormatTx(cfg, "ticket", tx)
 	assert.Nil(t, err)
 	tx.Sign(types.SECP256K1, priv)
 	return tx

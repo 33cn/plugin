@@ -100,9 +100,8 @@ func (hvs *HeightVoteSet) SetRound(round int) {
 
 func (hvs *HeightVoteSet) addRound(round int) {
 	if _, ok := hvs.roundVoteSets[round]; ok {
-		panic(Fmt("Panicked on a Sanity Check: %v", "addRound() for an existing round"))
+		panic("addRound() for an existing round")
 	}
-	// log.Debug("addRound(round)", "round", round)
 	prevotes := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrevote, hvs.valSet)
 	precommits := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrecommit, hvs.valSet)
 	hvs.roundVoteSets[round] = RoundVoteSet{
@@ -179,7 +178,7 @@ func (hvs *HeightVoteSet) getVoteSet(round int, voteType byte) *VoteSet {
 	case VoteTypePrecommit:
 		return rvs.Precommits
 	default:
-		panic(Fmt("Panicked on a Sanity Check: %v", Fmt("Unexpected vote type %X", voteType)))
+		panic(Fmt("Unexpected vote type %X", voteType))
 	}
 }
 

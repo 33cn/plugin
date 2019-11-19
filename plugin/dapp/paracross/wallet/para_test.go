@@ -17,6 +17,7 @@ import (
 
 func TestParaQuery(t *testing.T) {
 	para := node.NewParaNode(nil, nil)
+	paraCfg := para.Para.GetAPI().GetConfig()
 	defer para.Close()
 
 	var param types.ReqWalletImportPrivkey
@@ -31,10 +32,10 @@ func TestParaQuery(t *testing.T) {
 	para.Para.GetAPI().WalletLock()
 
 	//通过rpc 发生信息
-	tx := util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx := util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(1)
-	tx = util.CreateTxWithExecer(para.Para.GetGenesisKey(), "user.p.guodun.none")
+	tx = util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(2)
 

@@ -32,14 +32,15 @@ var multisiglog = log.New("module", "execs.multisig")
 
 var driverName = "multisig"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&MultiSig{}))
+// Init multisig模块初始化
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newMultiSig, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init multisig模块初始化
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newMultiSig, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&MultiSig{}))
 }
 
 // GetName multisig合约name
@@ -880,14 +881,14 @@ func (m *MultiSig) saveMultiSigTxCountUpdate(accTxCount mty.ReceiptTxCountUpdate
 //获取多重签名账户的指定资产
 func (m *MultiSig) getMultiSigAccAssets(multiSigAddr string, assets *mty.Assets) (*types.Account, error) {
 	symbol := getRealSymbol(assets.Symbol)
-
-	acc, err := account.NewAccountDB(assets.Execer, symbol, m.GetStateDB())
+	cfg := m.GetAPI().GetConfig()
+	acc, err := account.NewAccountDB(cfg, assets.Execer, symbol, m.GetStateDB())
 	if err != nil {
 		return &types.Account{}, err
 	}
 	var acc1 *types.Account
 
-	execaddress := dapp.ExecAddress(types.ExecName(m.GetName()))
+	execaddress := dapp.ExecAddress(cfg.ExecName(m.GetName()))
 	acc1 = acc.LoadExecAccount(multiSigAddr, execaddress)
 	return acc1, nil
 }

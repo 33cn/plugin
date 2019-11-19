@@ -32,6 +32,7 @@ func init() {
 func TestJRPCChannel(t *testing.T) {
 	// 启动RPCmocker
 	mocker := testnode.New("--notset--", nil)
+	cfg := mocker.GetAPI().GetConfig()
 	defer func() {
 		mocker.Close()
 	}()
@@ -41,7 +42,7 @@ func TestJRPCChannel(t *testing.T) {
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {
-		fn func(*testing.T, *jsonclient.JSONClient) error
+		fn func(*testing.T, *types.Chain33Config, *jsonclient.JSONClient) error
 	}{
 		{fn: testPublishEventRawCmd},
 		{fn: testAbortEventRawTxCmd},
@@ -50,7 +51,7 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testPublishResultRawTxCmd},
 	}
 	for index, testCase := range testCases {
-		err := testCase.fn(t, jrpcClient)
+		err := testCase.fn(t, cfg, jrpcClient)
 		if err == nil {
 			continue
 		}
@@ -60,7 +61,7 @@ func TestJRPCChannel(t *testing.T) {
 		}
 	}
 
-	testCases = []struct {
+	testCases1 := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
 		{fn: testQueryOracleListByIDsRawTxCmd},
@@ -74,13 +75,13 @@ func TestJRPCChannel(t *testing.T) {
 		types.ErrNotFound,
 		types.ErrNotFound,
 	}
-	for index, testCase := range testCases {
+	for index, testCase := range testCases1 {
 		err := testCase.fn(t, jrpcClient)
 		assert.Equal(t, result[index], err, fmt.Sprint(index))
 	}
 }
 
-func testPublishEventRawCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testPublishEventRawCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	timeStr := "2019-01-21 15:30:00"
 	layout := "2006-01-02 15:04:05"
 	ti, err := time.Parse(layout, timeStr)
@@ -96,7 +97,7 @@ func testPublishEventRawCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 		Introduction: "guess the sore result of football game between ChelSea and Manchester in 2019-01-21 14:00:00",
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oty.OracleX),
+		Execer:     cfg.ExecName(oty.OracleX),
 		ActionName: oty.CreateEventPublishTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -104,10 +105,10 @@ func testPublishEventRawCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testAbortEventRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testAbortEventRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &oty.EventAbort{EventID: "123"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oty.OracleX),
+		Execer:     cfg.ExecName(oty.OracleX),
 		ActionName: oty.CreateAbortEventPublishTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -115,14 +116,14 @@ func testAbortEventRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testPrePublishResultRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testPrePublishResultRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &oty.ResultPrePublish{
 		EventID: "123",
 		Source:  "新浪体育",
 		Result:  "{\"team1\":3, \"team2\":2}",
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oty.OracleX),
+		Execer:     cfg.ExecName(oty.OracleX),
 		ActionName: oty.CreatePrePublishResultTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -130,10 +131,10 @@ func testPrePublishResultRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) err
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testAbortPrePubResultRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testAbortPrePubResultRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &oty.EventAbort{EventID: "123"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oty.OracleX),
+		Execer:     cfg.ExecName(oty.OracleX),
 		ActionName: oty.CreateAbortResultPrePublishTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -141,14 +142,14 @@ func testAbortPrePubResultRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) er
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testPublishResultRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testPublishResultRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &oty.ResultPrePublish{
 		EventID: "123",
 		Source:  "新浪体育",
 		Result:  "{\"team1\":3, \"team2\":2}",
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(oty.OracleX),
+		Execer:     cfg.ExecName(oty.OracleX),
 		ActionName: oty.CreateResultPublishTx,
 		Payload:    types.MustPBToJSON(payload),
 	}

@@ -7,13 +7,28 @@ package executor
 import (
 	"testing"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/stretchr/testify/assert"
 )
+
+var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+
+func newTestAutonomy() *Autonomy {
+	au := &Autonomy{
+		dapp.DriverBase{},
+	}
+	q := queue.New("channel")
+	q.SetConfig(chainTestCfg)
+	api, _ := client.New(q.Client(), nil)
+	au.SetAPI(api)
+	return au
+}
 
 func TestExecLocalBoard(t *testing.T) {
 	testexecLocalBoard(t, false)
@@ -51,7 +66,7 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx, receipt)
 		assert.NoError(t, err)
@@ -80,7 +95,7 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx,
 			&types.ReceiptData{
@@ -116,7 +131,7 @@ func testexecLocalBoard(t *testing.T, auto bool) {
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 	} else {
-		tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+		tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 		assert.NoError(t, err)
 		set, err = au.execAutoLocalBoard(tx,
 			&types.ReceiptData{
@@ -164,7 +179,7 @@ func testexecDelLocalBoard(t *testing.T) {
 
 	// 先执行local然后进行删除
 
-	tx, err := types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err := types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err := au.execAutoLocalBoard(tx, receipt)
 	assert.NoError(t, err)
@@ -202,7 +217,7 @@ func testexecDelLocalBoard(t *testing.T) {
 	// 先执行local然后进行删除
 
 	// 自动回退测试时候，需要先设置一个前置状态
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalBoard(tx, receipt)
 	assert.NoError(t, err)
@@ -210,7 +225,7 @@ func testexecDelLocalBoard(t *testing.T) {
 	saveKvs(sdb, set.KV)
 
 	// 正常测试退回
-	tx, err = types.CreateFormatTx(types.ExecName(auty.AutonomyX), nil)
+	tx, err = types.CreateFormatTx(chainTestCfg, chainTestCfg.ExecName(auty.AutonomyX), nil)
 	assert.NoError(t, err)
 	set, err = au.execAutoLocalBoard(tx, recpt)
 
@@ -229,9 +244,7 @@ func testexecDelLocalBoard(t *testing.T) {
 }
 
 func TestGetProposalBoard(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, storedb, _ := util.CreateTestDB()
 	au.SetStateDB(storedb)
 	tx := "1111111111111111111"
@@ -358,9 +371,7 @@ func TestListProposalBoard(t *testing.T) {
 }
 
 func TestGetActiveBoard(t *testing.T) {
-	au := &Autonomy{
-		dapp.DriverBase{},
-	}
+	au := newTestAutonomy()
 	_, storedb, _ := util.CreateTestDB()
 	au.SetStateDB(storedb)
 	storedb.Set(activeBoardID(), types.Encode(&auty.ActiveBoard{Boards: []string{"111"}}))

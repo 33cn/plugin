@@ -190,6 +190,90 @@ message ParacrossNodeStatus {
     uint32   nonCommitTxCounts   = 14;
 }
 
+message SelfConsensStages {
+    repeated SelfConsensStage items = 1;
+}
+
+
+message SelfConsensStage {
+    int64   startHeight = 1;
+    uint32  enable      = 2;
+}
+
+message SelfConsensStageInfo {
+    string id                   = 1;
+    uint32 status               = 2;
+    SelfConsensStage stage      = 3;
+    string fromAddr             = 4;
+    int64  execHeight           = 5;
+    ParaNodeVoteDetail votes    = 6;
+}
+
+message LocalSelfConsStageInfo {
+    SelfConsensStageInfo stage = 1;
+    string txIndex = 2;
+}
+
+
+
+
+message ConfigVoteInfo {
+    string id       = 1;
+    // 投票值　１:ok 2:nok
+    uint32 value    = 2;
+}
+
+message ConfigCancelInfo {
+    string id = 1;
+}
+
+//广义配置类型
+message ParaStageConfig {
+    string title                       = 1;
+    // 配置类型
+    uint32 op                          = 2;
+    oneof  value {
+        SelfConsensStage        stage = 10;
+        ConfigVoteInfo          vote  = 11;
+        ConfigCancelInfo        cancel= 12;
+
+    }
+}
+
+message ReceiptSelfConsStageConfig {
+    SelfConsensStageInfo      prev    = 1;
+    SelfConsensStageInfo      current = 2;
+}
+
+message ReceiptSelfConsStageVoteDone {
+    string id                       = 1;
+    SelfConsensStage  stage         = 2;
+    int32  totalNodes               = 3;
+    int32  totalVote                = 4;
+    int32  mostVote                 = 5;
+    string voteRst                  = 6;
+}
+
+message ReceiptSelfConsStagesUpdate{
+    SelfConsensStages      prev    = 1;
+    SelfConsensStages      current = 2;
+}
+
+// query
+message ReqQuerySelfStages {
+    uint32  status    = 1;
+    string  id        = 2;
+    int32   count     = 3;
+    int32   direction = 4;
+    int64   height    = 5;
+    int32   index     = 6;
+}
+
+message ReplyQuerySelfStages {
+    repeated SelfConsensStageInfo stageInfo = 1;
+}
+
+
 message ParacrossCommitAction {
     ParacrossNodeStatus status = 1;
 }
@@ -210,6 +294,7 @@ message ParacrossAction {
         AssetsTransferToExec  transferToExec = 8;
         ParaNodeAddrConfig    nodeConfig     = 9;
         ParaNodeGroupConfig   nodeGroupConfig = 10;
+        ParaStageConfig       selfStageConfig = 11;
 
 
     }

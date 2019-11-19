@@ -70,7 +70,7 @@ func (v *Validator) String() string {
 	if v == nil {
 		return "nil-Validator"
 	}
-	return Fmt("Validator{%v %v VP:%v A:%v}",
+	return Fmt("Validator{ADDR:%X PUB:%X VP:%v A:%v}",
 		v.Address,
 		v.PubKey,
 		v.VotingPower,

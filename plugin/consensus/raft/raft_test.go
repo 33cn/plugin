@@ -25,16 +25,17 @@ import (
 // 执行： go test -cover
 func TestRaft(t *testing.T) {
 	mock33 := testnode.New("chain33.test.toml", nil)
+	cfg := mock33.GetClient().GetConfig()
 	defer mock33.Close()
 	mock33.Listen()
 	t.Log(mock33.GetGenesisAddress())
 	time.Sleep(10 * time.Second)
-	txs := util.GenNoneTxs(mock33.GetGenesisKey(), 10)
+	txs := util.GenNoneTxs(cfg, mock33.GetGenesisKey(), 10)
 	for i := 0; i < len(txs); i++ {
 		mock33.GetAPI().SendTx(txs[i])
 	}
 	mock33.WaitHeight(1)
-	txs = util.GenNoneTxs(mock33.GetGenesisKey(), 10)
+	txs = util.GenNoneTxs(cfg, mock33.GetGenesisKey(), 10)
 	for i := 0; i < len(txs); i++ {
 		mock33.GetAPI().SendTx(txs[i])
 	}

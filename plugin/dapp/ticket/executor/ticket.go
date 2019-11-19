@@ -28,14 +28,15 @@ import (
 var clog = log.New("module", "execs.ticket")
 var driverName = "ticket"
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Ticket{}))
+// Init initial
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newTicket, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init initial
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newTicket, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Ticket{}))
 }
 
 // GetName get name

@@ -3,13 +3,8 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20191017025459-6d5c61c7d134
+	github.com/33cn/chain33 v0.0.0-20191113065720-35a79536c298
 	github.com/BurntSushi/toml v0.3.1
-	//	Gossip/Sia v1.3.7
-	//	Gossip/entropy-mnemonics v0.0.0-20181203154559-bc7e13c5ccd8 // indirect
-	//	Gossip/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
-	//	Gossip/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
-	//	Gossip/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d // indirect
@@ -29,7 +24,8 @@ require (
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.6.0
-	github.com/spf13/cobra v0.0.4
+	github.com/spf13/cobra v0.0.3
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tjfoc/gmsm v0.0.0-20171124023159-98aa888b79d8
 	github.com/valyala/fasthttp v1.5.0
