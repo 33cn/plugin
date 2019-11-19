@@ -74,7 +74,7 @@ func newNode(conf *subConfig) *node {
 		bch:  make(chan *types.Block, 1),
 	}
 
-	plog.Info("@@@@@@@ node start:", "addr", addr, "listenon", conf.Pos33ListenAddr)
+	plog.Info("@@@@@@@ node start:", "addr", addr, "conf", conf)
 	return n
 }
 
@@ -198,7 +198,7 @@ func (n *node) makeBlock(round int) (*types.Block, error) {
 	nb.Difficulty = diff(w)
 
 	n.signBlock(nb)
-	plog.Info("@@@@@@@ I make a block: ", "height", height, "hash", hexs(nb.Hash()), "txHash", hexs(nb.TxHash), "diff", nb.Difficulty)
+	plog.Info("@@@@@@@ I make a block: ", "height", height, "hash", hexs(nb.Hash()), "txCount", len(nb.Txs), "diff", nb.Difficulty)
 	return nb, nil
 }
 
@@ -320,7 +320,8 @@ func (n *node) reSortition(height int64, round int) {
 	startHeight := height - pt.Pos33SortitionSize - height%pt.Pos33SortitionSize
 	b, err := n.RequestBlock(startHeight)
 	if err != nil {
-		panic(err)
+		plog.Info("should't go here. do nothing")
+		return
 	}
 	seed := zeroHash[:]
 	act, err := getBlockReword(b)
@@ -335,7 +336,7 @@ func (n *node) reSortition(height int64, round int) {
 		w := n.getWeight(n.addr, height)
 		rands, sig := pt.GenRands(allw, w, n.priv, height, seed, round, s)
 		if rands == nil {
-			plog.Info("sortiton nil", "height", height)
+			plog.Info("reSortiton nil", "height", height)
 			continue
 		}
 		plog.Info("node.resortition", "height", height, "allw", allw, "w", w, "weight", len(rands.Rands), "round", round)
@@ -396,13 +397,6 @@ func (n *node) handleVoteMsg(vm *pt.Pos33VoteMsg) {
 		plog.Info("votemsg error", "error", "elect msg too late", "height", m.Height)
 		return
 	}
-
-	/*
-		_, ok := n.ivs[m.Height+1]
-		if !ok {
-			return
-		}
-	*/
 
 	a := addr(m.Sig)
 	allw := n.allWeight(m.Height)
@@ -540,7 +534,7 @@ func (n *node) runLoop() {
 
 	plog.Info("pos33 node runing.......", "last block height", lb.Height)
 
-	n.gss = newGossip(n.priv.PubKey().KeyString(), n.conf.Pos33ListenAddr, n.conf.Pos33AdvertiseAddr, n.conf.Pos33PeerSeed)
+	n.gss = newGossip(address.PubKeyToAddress(n.priv.PubKey().Bytes()).String(), n.conf.Pos33ListenAddr, n.conf.Pos33AdvertiseAddr, n.conf.Pos33BootPeerAddr)
 	go n.gss.runBroadcast()
 	msgch := n.doGossipMsg()
 
@@ -574,12 +568,9 @@ func (n *node) runLoop() {
 			plog.Info("elect timeout: ", "height", height)
 			n.vote(height, round)
 
-			to := round * 2
-			if to == 0 {
-				to = 1
-			}
-			if to > 4 {
-				to = 4
+			to := (round + 1) * 2
+			if to > 16 {
+				to = 16
 			}
 
 			time.AfterFunc(time.Second*time.Duration(to), func() {
@@ -644,11 +635,11 @@ func (n *node) vote(height int64, round int) {
 	v := &pt.Pos33VoteMsg{Elect: e, BlockHash: vb.Hash()}
 	v.Sign(n.priv)
 	n.handleVoteMsg(v)
-	n.gss.broadcastTCP(marshalVoteMsg(v))
+	n.gss.gossip(marshalVoteMsg(v))
 }
 
 func (n *node) elect(height int64, round int) {
-	n.etm = time.NewTimer(time.Millisecond * 300)
+	n.etm = time.NewTimer(time.Millisecond * 1000)
 	pm, ok := n.ips[height]
 	if !ok {
 		plog.Info("elect: I'm not Proposer", "height", height, "round", round)
@@ -661,8 +652,8 @@ func (n *node) elect(height int64, round int) {
 	}
 	n.handleElectMsg(pm)
 	n.handleBlock(nb)
-	n.gss.broadcastTCP(marshalElectMsg(pm))
-	n.gss.broadcastTCP(marshalBlockMsg(&pt.Pos33BlockMsg{B: nb}))
+	n.gss.gossip(marshalElectMsg(pm))
+	n.gss.gossip(marshalBlockMsg(&pt.Pos33BlockMsg{B: nb}))
 }
 
 func marshalBlockMsg(m *pt.Pos33BlockMsg) []byte {

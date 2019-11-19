@@ -66,11 +66,7 @@ type subConfig struct {
 	Pos33SecretSeed    string `json:"Pos33SecretSeed,omitempty"`
 	Pos33ListenAddr    string `json:"Pos33ListenAddr,omitempty"`
 	Pos33AdvertiseAddr string `json:"Pos33AdvertiseAddr,omitempty"`
-	Pos33PeerSeed      string `json:"Pos33PeerSeed,omitempty"`
-	Pos33Test          bool   `json:"Pos33Test,omitempty"`
-	Pos33TestInit      bool   `json:"Pos33TestInit,omitempty"`
-	Pos33TestMaxAccs   int64  `json:"Pos33TestMaxAccs,omitempty"`
-	Pos33TestMaxTxs    int64  `json:"Pos33TestMaxTxs,omitempty"`
+	Pos33BootPeerAddr  string `json:"Pos33BootPeerAddr,omitempty"`
 	Pos33MaxTxs        int64  `json:"Pos33MaxTxs,omitempty"`
 	Pos33BlockTime     int64  `json:"Pos33BlockTime,omitempty"`
 	Pos33BlockTimeout  int64  `json:"Pos33BlockTimeout,omitempty"`
@@ -228,7 +224,7 @@ func (client *Client) setBlock(b *types.Block) error {
 		return nil
 	}
 
-	plog.Info("setBlock", "height", b.Height)
+	plog.Info("setBlock", "height", b.Height, "txCount", len(b.Txs))
 	lastBlock, err := client.RequestBlock(b.Height - 1)
 	if err != nil {
 		return err

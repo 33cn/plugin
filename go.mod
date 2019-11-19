@@ -5,7 +5,11 @@ go 1.12
 require (
 	github.com/33cn/chain33 v0.0.0-20191017025459-6d5c61c7d134
 	github.com/BurntSushi/toml v0.3.1
-	github.com/NebulousLabs/Sia v1.3.7
+	//	Gossip/Sia v1.3.7
+	//	Gossip/entropy-mnemonics v0.0.0-20181203154559-bc7e13c5ccd8 // indirect
+	//	Gossip/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
+	//	Gossip/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
+	//	Gossip/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d // indirect
@@ -21,11 +25,11 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/hashicorp/memberlist v0.1.5
-	github.com/pkg/errors v0.8.0
+	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.6.0
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v0.0.4
 	github.com/stretchr/testify v1.3.0
 	github.com/tjfoc/gmsm v0.0.0-20171124023159-98aa888b79d8
 	github.com/valyala/fasthttp v1.5.0
@@ -33,11 +37,12 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.2.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/crypto v0.0.0-20191106202628-ed6320f186d4
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.22.1
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
 
-replace github.com/33cn/chain33 v0.0.0-20190925142515-31e357c36c74 => /Users/w/go/src/github.com/33cn/chain33
+replace github.com/33cn/chain33 v0.0.0-20191017025459-6d5c61c7d134 => /Users/w/go/src/github.com/33cn/chain33

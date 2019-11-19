@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/memberlist"
 )
@@ -58,7 +59,7 @@ func (gd *gossipDelegate) NotifyMsg(b []byte) {
 // the limit. Care should be taken that this method does not block,
 // since doing so would block the entire UDP packet receive loop.
 func (gd *gossipDelegate) GetBroadcasts(overhead, limit int) [][]byte {
-	return gd.gss.broadcasts.GetBroadcasts(overhead, limit)
+	return nil //gd.gss.broadcasts.GetBroadcasts(overhead, limit)
 }
 
 // LocalState is used for a TCP Push/Pull. This is sent to
@@ -79,7 +80,7 @@ func (gd *gossipDelegate) MergeRemoteState(buf []byte, join bool) {
 type gossip struct {
 	conf *memberlist.Config
 	*memberlist.Memberlist
-	broadcasts *memberlist.TransmitLimitedQueue
+	//broadcasts *memberlist.TransmitLimitedQueue
 
 	tcpCh, udpCh chan []byte
 	recvCh       chan []byte
@@ -114,42 +115,46 @@ func createGossip(conf *memberlist.Config, publicKey, seedAddr string) *gossip {
 		if err != nil {
 			plog.Crit(err.Error())
 		}
+		plog.Info("@@@@@@@: memberlist", "members", ml.Members())
 	}
 
-	broadcasts := &memberlist.TransmitLimitedQueue{
-		NumNodes: func() int {
-			n := ml.NumMembers()
-			return n
-		},
-		RetransmitMult: 1,
-	}
+	/*
+		broadcasts := &memberlist.TransmitLimitedQueue{
+			NumNodes: func() int {
+				n := ml.NumMembers()
+				return n
+			},
+			RetransmitMult: 1,
+		}
+	*/
 
 	gss := &gossip{
 		Memberlist: ml,
-		broadcasts: broadcasts,
-		conf:       conf,
-		C:          recvCh,
-		tcpCh:      make(chan []byte, 16),
-		udpCh:      make(chan []byte, 16),
+		//broadcasts: broadcasts,
+		conf:  conf,
+		C:     recvCh,
+		tcpCh: make(chan []byte, 16),
+		udpCh: make(chan []byte, 16),
 	}
 	d.gss = gss
 	return gss
 }
 
-func newGossip(publicKey, listenAddr, advertiseAddr, seedAddr string) *gossip {
+func newGossip(publicKey, listenAddr, advertiseAddr, bootAddr string) *gossip {
 	conf := memberlist.DefaultWANConfig()
 	conf.Name = publicKey
-	bindAddr, bindPort := ipPort(listenAddr)
-	conf.BindAddr = bindAddr
-	conf.BindPort = bindPort
-
-	if len(advertiseAddr) > 0 {
-		adAddr, adPort := ipPort(advertiseAddr)
-		conf.AdvertiseAddr = adAddr
-		conf.AdvertisePort = adPort
+	addr, port := ipPort(listenAddr)
+	conf.BindAddr = addr
+	conf.BindPort = port
+	if advertiseAddr != "" {
+		addr, port = ipPort(advertiseAddr)
+		conf.AdvertiseAddr = addr
+		conf.AdvertisePort = port
+		plog.Info("@@@@@@@ newGossip", "advertiseAddr", addr, "advertisePort", port)
 	}
+	conf.ProtocolVersion = memberlist.ProtocolVersion2Compatible
 
-	return createGossip(conf, publicKey, seedAddr)
+	return createGossip(conf, publicKey, bootAddr)
 }
 
 type brInfo struct {
@@ -176,8 +181,11 @@ func (g *gossip) runBroadcast() {
 		}()
 	}
 
+	tch := time.NewTicker(time.Second * 60).C
 	for {
 		select {
+		case <-tch:
+			plog.Info("@@@@@@@: memberlist", "members", g.Members())
 		case msg := <-g.tcpCh:
 			for _, mb := range g.Members() {
 				if mb.Name != g.conf.Name {
@@ -215,10 +223,13 @@ func (g *gossip) broadcastUDP(msg []byte) {
 }
 
 func (g *gossip) gossip(msg []byte) {
-	g.broadcasts.QueueBroadcast(&broadcast{
-		msg:    msg,
-		notify: nil,
-	})
+	g.tcpCh <- msg
+	/*
+		g.broadcasts.QueueBroadcast(&broadcast{
+			msg:    msg,
+			notify: nil,
+		})
+	*/
 }
 
 func (g *gossip) send(public string, msg []byte) error {
