@@ -748,7 +748,7 @@ func (a *action) isAllowConsensJump(commit *pt.ParacrossCommitAction, titleStatu
 
 }
 
-func (a *action) execCrossTx(tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
 	if !bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
@@ -773,7 +773,7 @@ func (a *action) execCrossTx(tx *types.TransactionDetail, crossTxHash []byte) (*
 
 }
 
-func (a *action) rollbackCrossTx(tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
 	if !bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
@@ -886,6 +886,24 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 
 }
 
+func crossTxProc(a *action, txHash []byte, fn func(*action, *types.TransactionDetail, []byte) (*types.Receipt, error)) (*types.Receipt, error) {
+	tx, err := GetTx(a.api, txHash)
+	if err != nil {
+		clog.Crit("paracross.Commit Load Tx failed", "error", err, "txHash", hex.EncodeToString(txHash))
+		return nil, err
+	}
+	if tx == nil {
+		clog.Error("paracross.Commit Load Tx nil", "error", err, "txHash", hex.EncodeToString(txHash))
+		return nil, types.ErrHashNotExist
+	}
+	receiptCross, err := fn(a, tx, txHash)
+	if err != nil {
+		clog.Error("paracross.Commit execCrossTx", "error", err)
+		return nil, errors.Cause(err)
+	}
+	return receiptCross, nil
+}
+
 func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	var receipt types.Receipt
 
@@ -894,28 +912,14 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 		clog.Error("paracross.Commit getCrossTxHashs", "err", err.Error())
 		return nil, err
 	}
-	if len(crossTxHashs) == 0 {
-		return &receipt, nil
-	}
 
 	for i := 0; i < len(crossTxHashs); i++ {
 		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", hex.EncodeToString(crossTxHashs[i]),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
 		if util.BitMapBit(crossTxResult, uint32(i)) {
-			tx, err := GetTx(a.api, crossTxHashs[i])
+			receiptCross, err := crossTxProc(a, crossTxHashs[i], execCrossTx)
 			if err != nil {
-				clog.Crit("paracross.Commit Load Tx failed", "para title", title, "para height", status.Height,
-					"para tx index", i, "error", err, "txHash", hex.EncodeToString(crossTxHashs[i]))
-				return nil, err
-			}
-			if tx == nil {
-				clog.Error("paracross.Commit Load Tx nil", "para title", title, "para height", status.Height,
-					"para tx index", i, "error", err, "txHash", hex.EncodeToString(crossTxHashs[i]))
-				return nil, types.ErrHashNotExist
-			}
-			receiptCross, err := a.execCrossTx(tx, crossTxHashs[i])
-			if err != nil {
-				clog.Error("paracross.Commit execCrossTx", "para title", title, "para height", status.Height,
+				clog.Error("paracross.Commit execCrossTx", "para title", status.Title, "para height", status.Height,
 					"para tx index", i, "error", err)
 				return nil, errors.Cause(err)
 			}
@@ -926,24 +930,12 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 			receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 		} else {
 			clog.Error("paracross.Commit commitDone", "do cross number", i, "hash",
-				hex.EncodeToString(crossTxHashs[i]),
-				"para res", util.BitMapBit(crossTxResult, uint32(i)))
+				hex.EncodeToString(crossTxHashs[i]), "para res", util.BitMapBit(crossTxResult, uint32(i)))
 			cfg := a.api.GetConfig()
 			if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
-				tx, err := GetTx(a.api, crossTxHashs[i])
+				receiptCross, err := crossTxProc(a, crossTxHashs[i], rollbackCrossTx)
 				if err != nil {
-					clog.Crit("paracross.Commit rbk Load Tx failed", "para title", title, "para height", status.Height,
-						"para tx index", i, "error", err, "txHash", hex.EncodeToString(crossTxHashs[i]))
-					return nil, err
-				}
-				if tx == nil {
-					clog.Error("paracross.Commit rbk Load Tx nil", "para title", title, "para height", status.Height,
-						"para tx index", i, "error", err, "txHash", hex.EncodeToString(crossTxHashs[i]))
-					return nil, types.ErrHashNotExist
-				}
-				receiptCross, err := a.rollbackCrossTx(tx, crossTxHashs[i])
-				if err != nil {
-					clog.Error("paracross.Commit rollbackCrossTx", "para title", title, "para height", status.Height,
+					clog.Error("paracross.Commit rollbackCrossTx", "para title", status.Title, "para height", status.Height,
 						"para tx index", i, "error", err)
 					return nil, errors.Cause(err)
 				}
