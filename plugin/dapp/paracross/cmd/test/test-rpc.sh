@@ -302,7 +302,17 @@ function paracross_txgroupex() {
     local trade_exec_name="user.p.para.trade"
 
     #  资产从主链转移到平行链
-    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]'
+    echo "$req"
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    # echo "$resp"
+    err=$(jq '(.error)' <<<"$resp")
+    if [ "$err" != null ]; then
+        echo "$resp"
+        exit 1
+    fi
+    tx_hash_asset=$(jq -r ".result" <<<"$resp")
+    #    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
 
     #  资产从平行链转移到平行链合约
     req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"TransferToExec","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"${trade_exec_addr}"'","amount":'${amount_trade}', "cointoken":"coins.bty"}}]'
