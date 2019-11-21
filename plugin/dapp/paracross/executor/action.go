@@ -886,9 +886,6 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 
 }
 
-
-
-
 func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	var receipt types.Receipt
 
