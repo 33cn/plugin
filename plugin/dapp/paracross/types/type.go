@@ -26,6 +26,8 @@ var (
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
+	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
+	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -52,6 +54,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
+	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
+
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 }
