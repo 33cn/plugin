@@ -255,6 +255,7 @@ ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
 #平行链分阶段自共识支持合约配置，缺省是0
 ForkParaSelfConsStages=0
+ForkParaAssetTransferRbk=0
 
 [fork.sub.evm]
 Enable=0
