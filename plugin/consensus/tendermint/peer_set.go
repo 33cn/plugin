@@ -85,8 +85,10 @@ type peerConn struct {
 	started uint32 //atomic
 	stopped uint32 // atomic
 
-	quit     chan struct{}
-	waitQuit sync.WaitGroup
+	quitSend   chan struct{}
+	quitUpdate chan struct{}
+	quitBeat   chan struct{}
+	waitQuit   sync.WaitGroup
 
 	transferChannel chan MsgInfo
 
@@ -404,7 +406,9 @@ func (pc *peerConn) Start() error {
 		pc.pongChannel = make(chan struct{})
 		pc.sendQueue = make(chan MsgInfo, maxSendQueueSize)
 		pc.sendBuffer = make([]byte, 0, MaxMsgPacketPayloadSize)
-		pc.quit = make(chan struct{})
+		pc.quitSend = make(chan struct{})
+		pc.quitUpdate = make(chan struct{})
+		pc.quitBeat = make(chan struct{})
 		pc.state = &PeerConnState{ip: pc.ip, PeerRoundState: ttypes.PeerRoundState{
 			Round:              -1,
 			ProposalPOLRound:   -1,
@@ -413,7 +417,7 @@ func (pc *peerConn) Start() error {
 		}}
 		pc.updateStateQueue = make(chan MsgInfo, maxSendQueueSize)
 		pc.heartbeatQueue = make(chan proto.Message, 100)
-		pc.waitQuit.Add(5) //sendRoutine, updateStateRoutine,gossipDataRoutine,gossipVotesRoutine,queryMaj23Routine
+		pc.waitQuit.Add(5) //heartbeatRoutine, updateStateRoutine,gossipDataRoutine,gossipVotesRoutine,queryMaj23Routine
 
 		go pc.sendRoutine()
 		go pc.recvRoutine()
@@ -430,20 +434,18 @@ func (pc *peerConn) Start() error {
 
 func (pc *peerConn) Stop() {
 	if atomic.CompareAndSwapUint32(&pc.stopped, 0, 1) {
-		if pc.heartbeatQueue != nil {
-			close(pc.heartbeatQueue)
-			pc.heartbeatQueue = nil
-		}
-		if pc.quit != nil {
-			close(pc.quit)
-			tendermintlog.Info("peerConn stop quit wait", "peerIP", pc.ip.String())
-			pc.waitQuit.Wait()
-			tendermintlog.Info("peerConn stop quit wait finish", "peerIP", pc.ip.String())
-			pc.quit = nil
-		}
+		pc.quitSend <- struct{}{}
+		pc.quitUpdate <- struct{}{}
+		pc.quitBeat <- struct{}{}
+
+		pc.waitQuit.Wait()
+		tendermintlog.Info("peerConn stop waitQuit", "peerIP", pc.ip.String())
+
 		close(pc.sendQueue)
+		pc.sendQueue = nil
 		pc.transferChannel = nil
 		pc.CloseConn()
+		tendermintlog.Info("peerConn stop finish", "peerIP", pc.ip.String())
 	}
 }
 
@@ -460,8 +462,9 @@ func (pc *peerConn) stopForError(r interface{}) {
 	tendermintlog.Error("peerConn recovered panic", "error", r, "peer", pc.ip.String())
 	if pc.onPeerError != nil {
 		pc.onPeerError(pc, r)
+	} else {
+		pc.Stop()
 	}
-	pc.Stop()
 }
 
 func (pc *peerConn) sendRoutine() {
@@ -469,8 +472,7 @@ func (pc *peerConn) sendRoutine() {
 FOR_LOOP:
 	for {
 		select {
-		case <-pc.quit:
-			pc.waitQuit.Done()
+		case <-pc.quitSend:
 			break FOR_LOOP
 		case msg := <-pc.sendQueue:
 			bytes, err := proto.Marshal(msg.Msg)
@@ -519,6 +521,7 @@ FOR_LOOP:
 			}
 		}
 	}
+	tendermintlog.Info("peerConn stop sendRoutine", "peerIP", pc.ip.String())
 }
 
 func (pc *peerConn) recvRoutine() {
@@ -542,7 +545,6 @@ FOR_LOOP:
 			if err != nil {
 				tendermintlog.Error("Connection failed @ recvRoutine", "conn", pc, "err", err)
 				pc.stopForError(err)
-				panic(fmt.Sprintf("peerConn recvRoutine packetTypeMsg failed :%v", err))
 			}
 			pkt.Bytes = buf2
 		}
@@ -591,23 +593,24 @@ FOR_LOOP:
 	}
 
 	close(pc.pongChannel)
-	for range pc.pongChannel {
-		// Drain
-	}
+	close(pc.heartbeatQueue)
+	close(pc.updateStateQueue)
+	tendermintlog.Info("peerConn stop recvRoutine", "peerIP", pc.ip.String())
 }
 
 func (pc *peerConn) updateStateRoutine() {
 FOR_LOOP:
 	for {
 		select {
+		case <-pc.quitUpdate:
+			pc.waitQuit.Done()
+			break FOR_LOOP
 		case msg := <-pc.updateStateQueue:
 			typeID := msg.TypeID
 			if typeID == ttypes.NewRoundStepID {
 				pc.state.ApplyNewRoundStepMessage(msg.Msg.(*tmtypes.NewRoundStepMsg))
 			} else if typeID == ttypes.ValidBlockID {
 				pc.state.ApplyValidBlockMessage(msg.Msg.(*tmtypes.ValidBlockMsg))
-			} else if typeID == ttypes.CommitStepID {
-				pc.state.ApplyCommitStepMessage(msg.Msg.(*tmtypes.CommitStepMsg))
 			} else if typeID == ttypes.HasVoteID {
 				pc.state.ApplyHasVoteMessage(msg.Msg.(*tmtypes.HasVoteMsg))
 			} else if typeID == ttypes.VoteSetMaj23ID {
@@ -655,41 +658,37 @@ FOR_LOOP:
 					pc.state.ApplyVoteSetBitsMessage(tmp, nil)
 				}
 			} else {
-				tendermintlog.Error("msg not deal in updateStateRoutine", "msgTypeName", msg.Msg.String())
+				tendermintlog.Error("Unknown message type in updateStateRoutine", "msg", msg)
 			}
-		case <-pc.quit:
-			pc.waitQuit.Done()
-			break FOR_LOOP
 		}
 	}
-	close(pc.updateStateQueue)
-	for range pc.updateStateQueue {
-		// Drain
-	}
+	tendermintlog.Info("peerConn stop updateStateRoutine", "peerIP", pc.ip.String())
 }
 
 func (pc *peerConn) heartbeatRoutine() {
+FOR_LOOP:
 	for {
-		heartbeat, ok := <-pc.heartbeatQueue
-		if !ok {
-			tendermintlog.Debug("heartbeatQueue closed")
-			return
+		select {
+		case <-pc.quitBeat:
+			pc.waitQuit.Done()
+			break FOR_LOOP
+		case heartbeat := <-pc.heartbeatQueue:
+			msg := heartbeat.(*tmtypes.Heartbeat)
+			tendermintlog.Debug("Received proposal heartbeat message",
+				"height", msg.Height, "round", msg.Round, "sequence", msg.Sequence,
+				"valIdx", msg.ValidatorIndex, "valAddr", msg.ValidatorAddress)
 		}
-		msg := heartbeat.(*tmtypes.Heartbeat)
-		tendermintlog.Debug("Received proposal heartbeat message",
-			"height", msg.Height, "round", msg.Round, "sequence", msg.Sequence,
-			"valIdx", msg.ValidatorIndex, "valAddr", msg.ValidatorAddress)
 	}
+	tendermintlog.Info("peerConn stop heartbeatRoutine", "peerIP", pc.ip.String())
 }
 
 func (pc *peerConn) gossipDataRoutine() {
 OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
-
 		if !pc.IsRunning() {
-			tendermintlog.Error("Stopping gossipDataRoutine for peer")
 			pc.waitQuit.Done()
+			tendermintlog.Info("peerConn stop gossipDataRoutine", "peerIP", pc.ip.String())
 			return
 		}
 
@@ -790,8 +789,8 @@ OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
 		if !pc.IsRunning() {
-			tendermintlog.Info("Stopping gossipVotesRoutine for peer")
 			pc.waitQuit.Done()
+			tendermintlog.Info("peerConn stop gossipVotesRoutine", "peerIP", pc.ip.String())
 			return
 		}
 
@@ -915,8 +914,8 @@ OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
 		if !pc.IsRunning() {
-			tendermintlog.Info("Stopping queryMaj23Routine for peer")
 			pc.waitQuit.Done()
+			tendermintlog.Info("peerConn stop queryMaj23Routine", "peerIP", pc.ip.String())
 			return
 		}
 
@@ -1291,16 +1290,6 @@ func (ps *PeerConnState) ApplyNewRoundStepMessage(msg *tmtypes.NewRoundStepMsg) 
 		// We'll update the BitArray capacity later.
 		ps.CatchupCommitRound = -1
 		ps.CatchupCommit = nil
-	}
-}
-
-// ApplyCommitStepMessage updates the peer state for the new commit.
-func (ps *PeerConnState) ApplyCommitStepMessage(msg *tmtypes.CommitStepMsg) {
-	ps.mtx.Lock()
-	defer ps.mtx.Unlock()
-
-	if ps.Height != msg.Height {
-		return
 	}
 }
 

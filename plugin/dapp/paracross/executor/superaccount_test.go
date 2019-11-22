@@ -129,7 +129,7 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeJoining), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyJoining), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -144,7 +144,7 @@ func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
-	assert.Equal(suite.T(), int32(pt.ParacrossNodeQuiting), stat.Status)
+	assert.Equal(suite.T(), int32(pt.ParaApplyQuiting), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
 
 }
@@ -177,11 +177,12 @@ func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, co
 func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 	var count int
 	config := &pt.ParaNodeAddrConfig{
-		Op:    pt.ParaNodeVote,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpVote,
 		Id:    id,
-		Value: pt.ParaNodeVoteYes,
+		Value: pt.ParaVoteYes,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	count++
@@ -205,10 +206,11 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 
 func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -220,10 +222,11 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupQuit,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupQuit,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
@@ -235,10 +238,11 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.testNodeGroupConfigQuit()
 
 	config := &pt.ParaNodeGroupConfig{
+		Title: chain33TestCfg.GetTitle(),
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -250,10 +254,11 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	suite.Nil(err)
 
 	config = &pt.ParaNodeGroupConfig{
-		Id: g.Current.Id,
-		Op: pt.ParacrossNodeGroupApprove,
+		Title: chain33TestCfg.GetTitle(),
+		Id:    g.Current.Id,
+		Op:    pt.ParacrossNodeGroupApprove,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey12Q, tx)
@@ -264,10 +269,11 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 func (suite *NodeManageTestSuite) testNodeConfig() {
 	//Join test
 	config := &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeJoin,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpNewApply,
+		Addr:  Account14K,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err := pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
@@ -283,10 +289,11 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 
 	//Quit test
 	config = &pt.ParaNodeAddrConfig{
-		Op:   pt.ParaNodeQuit,
-		Addr: Account14K,
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParaOpQuit,
+		Addr:  Account14K,
 	}
-	tx, err = pt.CreateRawNodeConfigTx(chain33TestCfg, config)
+	tx, err = pt.CreateRawNodeConfigTx(config)
 	suite.Nil(err)
 	receipt = nodeCommit(suite, PrivKeyD, tx)
 	checkQuitReceipt(suite, receipt)
@@ -347,7 +354,7 @@ func TestUpdateVotes(t *testing.T) {
 	nodes["BB"] = struct{}{}
 	nodes["CC"] = struct{}{}
 
-	updateVotes(stat, nodes)
+	stat.Votes = updateVotes(stat.Votes, nodes)
 	assert.Equal(t, []string{"BB", "CC"}, stat.Votes.Addrs)
 	assert.Equal(t, []string{"no", "no"}, stat.Votes.Votes)
 }

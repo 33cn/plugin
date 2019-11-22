@@ -43,6 +43,9 @@ const (
 	TyLogParaNodeGroupConfig       = 660
 	TyLogParaNodeStatusUpdate      = 661
 	TyLogParaNodeGroupStatusUpdate = 664
+	TyLogParaSelfConsStageConfig   = 665
+	TyLogParaStageVoteDone         = 666
+	TyLogParaStageGroupUpdate      = 667
 )
 
 type paracrossCommitTx struct {
@@ -78,6 +81,8 @@ const (
 	ParacrossActionNodeConfig
 	//ParacrossActionNodeGroupApply apply for node group initially
 	ParacrossActionNodeGroupApply
+	//ParacrossActionSelfConsensStageConfig apply for self consensus stage config
+	ParacrossActionSelfStageConfig
 )
 
 // status
@@ -88,42 +93,51 @@ const (
 	ParacrossStatusCommitDone
 )
 
-// node config op
+// config op
 const (
-	ParaNodeJoin = iota + 1
-	ParaNodeVote
-	ParaNodeQuit
-	ParaNodeCancel
+	ParaOpNewApply = iota + 1
+	ParaOpVote
+	ParaOpQuit
+	ParaOpCancel
 )
 
 // node vote op
 const (
-	ParaNodeVoteInvalid = iota
-	ParaNodeVoteYes
-	ParaNodeVoteNo
-	ParaNodeVoteEnd
+	ParaVoteInvalid = iota
+	ParaVoteYes
+	ParaVoteNo
+	ParaVoteEnd
+)
+
+const (
+	ParaConfigInvalid = iota
+	ParaConfigYes
+	ParaConfigNo
 )
 
 // ParaNodeVoteStr ...
 var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
+//针对addr申请的id的生命周期
 const (
-	// ParacrossNodeJoined pass to add by votes
-	ParacrossNodeJoined = iota + 10
-	// ParacrossNodeQuited pass to quite by votes
-	ParacrossNodeQuited
+	// ParaApplyJoining apply for join group
+	ParaApplyJoining = iota + 1
+	// ParaApplyQuiting apply for quiting group
+	ParaApplyQuiting
+	// ParaApplyClosed id voting closed
+	ParaApplyClosed
+	// ParaApplyCanceled to cancel apply of joining or quiting
+	ParaApplyCanceled
+	// ParaApplyVoting record voting status
+	ParaApplyVoting
 )
 
-//voting status
+//针对addr本身的生命周期，addr维护了申请id和quit id，方便查询如coinfrozen等额外信息
 const (
-	// ParacrossNodeIDJoining apply for join group
-	ParacrossNodeJoining = iota + 1
-	// ParacrossNodeIDQuiting apply for quiting group
-	ParacrossNodeQuiting
-	// ParacrossNodeIDClosed id voting closed
-	ParacrossNodeClosed
-	// ParacrossNodeCanceled to cancel apply of joining or quiting
-	ParacrossNodeCanceled
+	// ParaApplyJoined pass to add by votes
+	ParaApplyJoined = iota + 10
+	// ParaApplyQuited pass to quite by votes
+	ParaApplyQuited
 )
 
 const (
@@ -200,8 +214,7 @@ func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, na
 }
 
 // CreateRawNodeConfigTx create raw tx for node config
-func CreateRawNodeConfigTx(cfg *types.Chain33Config, config *ParaNodeAddrConfig) (*types.Transaction, error) {
-	config.Title = cfg.GetTitle()
+func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
 	config.Addr = strings.Trim(config.Addr, " ")
 	config.Id = strings.Trim(config.Id, " ")
 
@@ -217,13 +230,27 @@ func CreateRawNodeConfigTx(cfg *types.Chain33Config, config *ParaNodeAddrConfig)
 }
 
 //CreateRawNodeGroupApplyTx create raw tx for node group
-func CreateRawNodeGroupApplyTx(cfg *types.Chain33Config, apply *ParaNodeGroupConfig) (*types.Transaction, error) {
-	apply.Title = cfg.GetTitle()
+func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
 	apply.Id = strings.Trim(apply.Id, " ")
 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionNodeGroupApply,
 		Value: &ParacrossAction_NodeGroupConfig{apply},
+	}
+
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+	}
+
+	return tx, nil
+
+}
+
+//CreateRawSelfConsStageApplyTx create raw tx for self consens stage
+func CreateRawSelfConsStageApplyTx(apply *ParaStageConfig) (*types.Transaction, error) {
+	action := &ParacrossAction{
+		Ty:    ParacrossActionSelfStageConfig,
+		Value: &ParacrossAction_SelfStageConfig{apply},
 	}
 
 	tx := &types.Transaction{
@@ -327,7 +354,7 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 			key = MainLoopCheckCommitTxDoneForkHeight
 		}
 
-		forkHeight = types.Conf(cfg, "config.consensus.sub.para").GInt(key)
+		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}

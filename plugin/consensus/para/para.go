@@ -33,13 +33,11 @@ const (
 
 	genesisBlockTime int64 = 1514533390
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
-	minerPrivateKey                       = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	defaultGenesisAmount            int64 = 1e8
-	poolMainBlockSec                int64 = 5
-	defaultEmptyBlockInterval       int64 = 50 //write empty block every interval blocks in mainchain
-	defaultSearchMatchedBlockDepth  int32 = 10000
-	defaultMainBlockHashForkHeight  int64 = 209186          //calc block hash fork height in main chain
-	mainParaSelfConsensusForkHeight int64 = types.MaxHeight //para chain self consensus height switch, must >= ForkParacrossCommitTx of main
+	minerPrivateKey                      = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	defaultGenesisAmount           int64 = 1e8
+	poolMainBlockSec               int64 = 5
+	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
+	defaultSearchMatchedBlockDepth int32 = 10000
 )
 
 var (
@@ -74,26 +72,26 @@ type emptyBlockInterval struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds               int64                 `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient            string                `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight                     int64                 `json:"startHeight,omitempty"`
-	GenesisStartHeightSame          bool                  `json:"genesisStartHeightSame,omitempty"`
-	EmptyBlockInterval              []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
-	AuthAccount                     string                `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg            int32                 `json:"waitBlocks4CommitMsg,omitempty"`
-	GenesisAmount                   int64                 `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight         int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	MainParaSelfConsensusForkHeight int64                 `json:"mainParaSelfConsensusForkHeight,omitempty"`
-	WaitConsensStopTimes            uint32                `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount                   int64                 `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount                 int32                 `json:"maxSyncErrCount,omitempty"`
-	FetchFilterParaTxsClose         bool                  `json:"fetchFilterParaTxsClose,omitempty"`
-	BatchFetchBlockCount            int64                 `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight          int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen               bool                  `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob           int64                 `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum             uint32                `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime          uint32                `json:"multiDownServerRspTime,omitempty"`
+	WriteBlockSeconds       int64                 `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient    string                `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight             int64                 `json:"startHeight,omitempty"`
+	GenesisStartHeightSame  bool                  `json:"genesisStartHeightSame,omitempty"`
+	EmptyBlockInterval      []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
+	AuthAccount             string                `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg    int32                 `json:"waitBlocks4CommitMsg,omitempty"`
+	GenesisAmount           int64                 `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight int64                 `json:"mainBlockHashForkHeight,omitempty"`
+	WaitConsensStopTimes    uint32                `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount           int64                 `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount         int32                 `json:"maxSyncErrCount,omitempty"`
+	FetchFilterParaTxsClose bool                  `json:"fetchFilterParaTxsClose,omitempty"`
+	BatchFetchBlockCount    int64                 `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight  int64                 `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen       bool                  `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob   int64                 `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum     uint32                `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime  uint32                `json:"multiDownServerRspTime,omitempty"`
+	RmCommitParamMainHeight int64                 `json:"rmCommitParamMainHeight,omitempty"`
 }
 
 // New function to init paracross env
@@ -117,14 +115,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	err := checkEmptyBlockInterval(subcfg.EmptyBlockInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
-	}
-
-	if subcfg.MainBlockHashForkHeight <= 0 {
-		subcfg.MainBlockHashForkHeight = defaultMainBlockHashForkHeight
-	}
-
-	if subcfg.MainParaSelfConsensusForkHeight <= 0 {
-		subcfg.MainParaSelfConsensusForkHeight = mainParaSelfConsensusForkHeight
 	}
 
 	if subcfg.BatchFetchBlockCount <= 0 {
@@ -161,7 +151,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		waitConsensStopTimes: waitConsensStopTimes,
 		consensHeight:        -2,
 		sendingHeight:        -1,
-		consensStartHeight:   -1,
+		consensDoneHeight:    -1,
 		resetCh:              make(chan interface{}, 1),
 		quit:                 make(chan struct{}),
 	}
@@ -176,7 +166,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
 	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
 	if subcfg.ParaConsensStartHeight > 0 {
-		para.commitMsgClient.consensStartHeight = subcfg.ParaConsensStartHeight - 1
+		para.commitMsgClient.consensDoneHeight = subcfg.ParaConsensStartHeight - 1
 	}
 
 	para.blockSyncClient = &blockSyncClient{
@@ -278,6 +268,11 @@ func (client *client) InitBlock() {
 	}
 	client.grpcClient = grpcCli
 
+	err = client.commitMsgClient.setSelfConsEnable()
+	if err != nil {
+		panic(err)
+	}
+
 	block, err := client.RequestLastBlock()
 	if err != nil {
 		panic(err)
@@ -369,10 +364,6 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
-}
-
-func (client *client) isParaSelfConsensusForked(height int64) bool {
-	return height > client.subCfg.MainParaSelfConsensusForkHeight
 }
 
 func (client *client) ProcEvent(msg *queue.Message) bool {

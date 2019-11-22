@@ -60,7 +60,7 @@ func filterParaTxGroup(cfg *types.Chain33Config, tx *types.Transaction, allTxs [
 	endIdx := headIdx + int(tx.GroupCount)
 	for i := headIdx; i < endIdx; i++ {
 		//缺省是在forkHeight之前与更老版本一致，不检查平行链交易,但有些特殊平行链6.2.0版本升级上来无更老版本且要求blockhash不变，则需与6.2.0保持一致，不检查
-		if cfg.IsPara() && mainBlockHeight < forkHeight && !types.Conf(cfg, "config.consensus.sub.para").IsEnable("FilterIgnoreParaTxGroup") {
+		if cfg.IsPara() && mainBlockHeight < forkHeight && !types.Conf(cfg, pt.ParaPrefixConsSubConf).IsEnable(pt.ParaFilterIgnoreTxGroup) {
 			if types.IsParaExecName(string(allTxs[i].Tx.Execer)) {
 				continue
 			}

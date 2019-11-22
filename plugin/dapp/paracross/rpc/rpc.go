@@ -370,3 +370,74 @@ func (c *Jrpc) ListNodeGroupStatus(req *pt.ReqParacrossNodeInfo, result *interfa
 	*result = data
 	return err
 }
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *channelClient) GetSelfConsStages(ctx context.Context, req *types.ReqNil) (*pt.SelfConsensStages, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsStages", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.SelfConsensStages); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *Jrpc) GetSelfConsStages(req *types.ReqNil, result *interface{}) error {
+	data, err := c.cli.GetSelfConsStages(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *channelClient) GetSelfConsOneStage(ctx context.Context, req *types.Int64) (*pt.SelfConsensStage, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "GetSelfConsOneStage", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.SelfConsensStage); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// GetNodeGroupAddrs get super node group addrs
+func (c *Jrpc) GetSelfConsOneStage(req *types.Int64, result *interface{}) error {
+	data, err := c.cli.GetSelfConsOneStage(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+func (c *channelClient) ListSelfStages(ctx context.Context, req *pt.ReqQuerySelfStages) (*pt.ReplyQuerySelfStages, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "ListSelfStages", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.ReplyQuerySelfStages); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListSelfStages get paracross self consensus stage list
+func (c *Jrpc) ListSelfStages(req *pt.ReqQuerySelfStages, result *interface{}) error {
+	data, err := c.cli.ListSelfStages(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}

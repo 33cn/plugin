@@ -10,9 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -23,10 +21,6 @@ import (
 )
 
 const fee = 1e6
-
-var (
-	r *rand.Rand
-)
 
 // State is a short description of the latest committed block of the Tendermint consensus.
 // It keeps all information necessary to validate new blocks,
@@ -91,6 +85,9 @@ func (s State) Copy() State {
 
 // Equals returns true if the States are identical.
 func (s State) Equals(s2 State) bool {
+	if s.Bytes() == nil || s2.Bytes() == nil {
+		return false
+	}
 	return bytes.Equal(s.Bytes(), s2.Bytes())
 }
 
@@ -98,7 +95,7 @@ func (s State) Equals(s2 State) bool {
 func (s State) Bytes() []byte {
 	sbytes, err := json.Marshal(s)
 	if err != nil {
-		fmt.Printf("Error reading GenesisDoc: %v", err)
+		fmt.Printf("Error State Marshal: %v", err)
 		return nil
 	}
 	return sbytes
@@ -214,7 +211,6 @@ type CSStateDB struct {
 
 // NewStateDB make a new one
 func NewStateDB(client *Client, state State) *CSStateDB {
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return &CSStateDB{
 		client: client,
 		state:  state,
@@ -229,8 +225,8 @@ func LoadState(state *tmtypes.State) State {
 		LastBlockTotalTx:                 state.GetLastBlockTotalTx(),
 		LastBlockID:                      ttypes.BlockID{BlockID: *state.LastBlockID},
 		LastBlockTime:                    state.LastBlockTime,
-		Validators:                       nil,
-		LastValidators:                   nil,
+		Validators:                       &ttypes.ValidatorSet{Validators: make([]*ttypes.Validator, 0), Proposer: &ttypes.Validator{}},
+		LastValidators:                   &ttypes.ValidatorSet{Validators: make([]*ttypes.Validator, 0), Proposer: &ttypes.Validator{}},
 		LastHeightValidatorsChanged:      state.LastHeightValidatorsChanged,
 		ConsensusParams:                  ttypes.ConsensusParams{BlockSize: ttypes.BlockSize{}, TxSize: ttypes.TxSize{}, BlockGossip: ttypes.BlockGossip{}, EvidenceParams: ttypes.EvidenceParams{}},
 		LastHeightConsensusParamsChanged: state.LastHeightConsensusParamsChanged,
@@ -241,15 +237,11 @@ func LoadState(state *tmtypes.State) State {
 		if array := validators.GetValidators(); array != nil {
 			targetArray := make([]*ttypes.Validator, len(array))
 			LoadValidators(targetArray, array)
-			stateTmp.Validators = &ttypes.ValidatorSet{Validators: targetArray, Proposer: nil}
+			stateTmp.Validators.Validators = targetArray
 		}
 		if proposer := validators.GetProposer(); proposer != nil {
-			if stateTmp.Validators == nil {
-				tendermintlog.Error("LoadState validator is nil but proposer")
-			} else {
-				if val, err := LoadProposer(proposer); err == nil {
-					stateTmp.Validators.Proposer = val
-				}
+			if val, err := LoadProposer(proposer); err == nil {
+				stateTmp.Validators.Proposer = val
 			}
 		}
 	}
@@ -257,15 +249,11 @@ func LoadState(state *tmtypes.State) State {
 		if array := lastValidators.GetValidators(); array != nil {
 			targetArray := make([]*ttypes.Validator, len(array))
 			LoadValidators(targetArray, array)
-			stateTmp.LastValidators = &ttypes.ValidatorSet{Validators: targetArray, Proposer: nil}
+			stateTmp.LastValidators.Validators = targetArray
 		}
 		if proposer := lastValidators.GetProposer(); proposer != nil {
-			if stateTmp.LastValidators == nil {
-				tendermintlog.Error("LoadState last validator is nil but proposer")
-			} else {
-				if val, err := LoadProposer(proposer); err == nil {
-					stateTmp.LastValidators.Proposer = val
-				}
+			if val, err := LoadProposer(proposer); err == nil {
+				stateTmp.LastValidators.Proposer = val
 			}
 		}
 	}
@@ -306,32 +294,22 @@ func (csdb *CSStateDB) LoadState() State {
 
 // LoadValidators by height
 func (csdb *CSStateDB) LoadValidators(height int64) (*ttypes.ValidatorSet, error) {
-	if height == 0 {
-		return nil, nil
+	csdb.mtx.Lock()
+	defer csdb.mtx.Unlock()
+
+	if height < 1 {
+		return nil, ttypes.ErrHeightLessThanOne
 	}
 	if csdb.state.LastBlockHeight == height {
 		return csdb.state.Validators, nil
 	}
 
-	blockInfo, err := csdb.client.QueryBlockInfoByHeight(height)
-	if err != nil {
-		tendermintlog.Error("LoadValidators GetBlockInfo failed", "error", err)
-		panic(fmt.Sprintf("LoadValidators GetBlockInfo failed:%v", err))
+	state := csdb.client.LoadBlockState(height)
+	if state == nil {
+		return nil, errors.New("ErrLoadBlockState")
 	}
-
-	var state State
-	if blockInfo == nil {
-		tendermintlog.Error("LoadValidators", "msg", "block height is not 0 but blockinfo is nil")
-		panic(fmt.Sprintf("LoadValidators block height is %v but block info is nil", height))
-	} else {
-		csState := blockInfo.GetState()
-		if csState == nil {
-			tendermintlog.Error("LoadValidators", "msg", "blockInfo.GetState is nil")
-			return nil, fmt.Errorf("LoadValidators get state from block info is nil")
-		}
-		state = LoadState(csState)
-	}
-	return state.Validators.Copy(), nil
+	load := LoadState(state)
+	return load.Validators.Copy(), nil
 }
 
 func saveConsensusParams(dest *tmtypes.ConsensusParams, source ttypes.ConsensusParams) {
@@ -474,7 +452,7 @@ func CreateBlockInfoTx(pubkey string, state *tmtypes.State, block *tmtypes.Tende
 	action := &tmtypes.ValNodeAction{Value: nput, Ty: tmtypes.ValNodeActionBlockInfo}
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
-	tx.Nonce = r.Int63()
+	tx.Nonce = random.Int63()
 	tx.Sign(types.SECP256K1, getprivkey(pubkey))
 
 	return tx

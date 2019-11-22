@@ -318,6 +318,17 @@ func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}
 
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
+	if cfg.IsPara() && cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+		//分叉之后，key不存在，自共识没配置也认为不支持自共识
+		isSelfConsOn, err := isSelfConsOn(a.db, commit.Status.Height)
+		if err != nil {
+			return nil, err
+		}
+		if !isSelfConsOn {
+			clog.Debug("paracross.Commit self consens off", "height", commit.Status.Height)
+			return &types.Receipt{Ty: types.ExecOk}, nil
+		}
+	}
 	err := checkCommitInfo(cfg, commit)
 	if err != nil {
 		return nil, err
@@ -456,11 +467,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	if commit.Status.Height > titleStatus.Height+1 {
 		saveTitleHeight(a.db, calcTitleHeightKey(commit.Status.Title, commit.Status.Height), stat)
 		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
-		allowJump, err := a.isAllowConsensJump(stat, titleStatus)
+		allow, err := a.isAllowConsensJump(commit, titleStatus)
 		if err != nil {
+			clog.Error("paracross.Commit allowJump", "err", err)
 			return nil, err
 		}
-		if !allowJump {
+		if !allow {
 			return receipt, nil
 		}
 	}
@@ -696,45 +708,43 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 }
 
 //主链共识跳跃条件： 仅支持主链共识初始高度为-1，也就是没有共识过，共识过不允许再跳跃
-func (a *action) isAllowMainConsensJump(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
+func (a *action) isAllowMainConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) bool {
 	cfg := a.api.GetConfig()
 	if cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkLoopCheckCommitTxDone) {
 		if titleStatus.Height == -1 {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 //平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
-// 这样在主链没有共识空洞前提下，平行链允许有条件的共识跳跃
-func (a *action) isAllowParaConsensJump(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
-	if titleStatus.Height == -1 {
-		return true, nil
-	}
+// 1. 分叉之前，开启过共识的平行链需要从１跳跃，没开启过的将使用新版本，从0开始发送，不用考虑从１跳跃的问题
+// 2. 分叉之后，只有stage.blockHeight== commit.height，也就是stage起始高度时候允许跳跃
+func (a *action) isAllowParaConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
 	cfg := a.api.GetConfig()
-	selfConsensForkHeight := pt.GetDappForkHeight(cfg, pt.ParaSelfConsensForkHeight)
-	lastStatusMainHeight := int64(-1)
-	if titleStatus.Height > -1 {
-		s, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, titleStatus.Height))
-		if err != nil {
-			clog.Error("paracross.Commit isAllowConsensJump getTitleHeight failed", "err", err.Error())
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+		stage, err := getSelfConsOneStage(a.db, commit.Status.Height)
+		if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
 			return false, err
 		}
-		lastStatusMainHeight = s.MainHeight
+		if stage == nil {
+			return false, nil
+		}
+		return stage.StartHeight == commit.Status.Height, nil
 	}
 
-	return commit.MainHeight > selfConsensForkHeight && lastStatusMainHeight < selfConsensForkHeight, nil
-
+	//兼容分叉之前从１跳跃场景
+	return titleStatus.Height == -1, nil
 }
 
-func (a *action) isAllowConsensJump(commit *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
+func (a *action) isAllowConsensJump(commit *pt.ParacrossCommitAction, titleStatus *pt.ParacrossStatus) (bool, error) {
 	cfg := a.api.GetConfig()
 	if cfg.IsPara() {
 		return a.isAllowParaConsensJump(commit, titleStatus)
 	}
-	return a.isAllowMainConsensJump(commit, titleStatus)
+	return a.isAllowMainConsensJump(commit, titleStatus), nil
 
 }
 
@@ -948,9 +958,18 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	logs = append(logs, log)
 
 	minerReceipt := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
+	isSelfConsensOn := miner.IsSelfConsensus
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSelfConsStages) {
+		var err error
+		isSelfConsensOn, err = isSelfConsOn(a.db, miner.Status.Height)
+		if err != nil && errors.Cause(err) != pt.ErrKeyNotExist {
+			clog.Error("paracross miner getConsensus ", "height", miner.Status.Height, "err", err)
+			return nil, err
+		}
+	}
 
 	//自共识后才挖矿
-	if miner.IsSelfConsensus {
+	if isSelfConsensOn {
 		//增发coins到paracross合约中，只处理发放，不做分配
 		totalReward := int64(0)
 		coinReward := cfg.MGInt("mver.consensus.paracross.coinReward", a.height)

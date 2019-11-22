@@ -285,3 +285,8 @@ func (e *Paracross) ExecLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.
 func (e *Paracross) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
+
+//ExecLocal_SelfConsensStageConfig transfer asset to exec local db process
+func (e *Paracross) ExecLocal_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.execAutoLocalStage(tx, receiptData, index)
+}

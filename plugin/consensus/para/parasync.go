@@ -365,13 +365,20 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 		MainBlockHash:   localBlock.MainHash,
 		MainBlockHeight: localBlock.MainHeight,
 	}
-	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+
+	maxHeight := pt.GetDappForkHeight(cfg, pt.ForkLoopCheckCommitTxDone)
+	if maxHeight < client.paraClient.subCfg.RmCommitParamMainHeight {
+		maxHeight = client.paraClient.subCfg.RmCommitParamMainHeight
+	}
+	if status.MainBlockHeight < maxHeight {
 		status.PreBlockHash = block.ParentHash
 		status.PreStateHash = preStateHash
 	}
+
+	//selfConsensEnablePreContract 是ForkParaSelfConsStages之前对是否开启共识的设置，fork之后采用合约控制，两个高度不能重叠
 	tx, err := pt.CreateRawMinerTx(cfg, &pt.ParacrossMinerAction{
 		Status:          status,
-		IsSelfConsensus: client.paraClient.isParaSelfConsensusForked(status.MainBlockHeight),
+		IsSelfConsensus: client.paraClient.commitMsgClient.isSelfConsEnable(status.Height),
 	})
 	if err != nil {
 		return err

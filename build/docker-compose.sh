@@ -81,6 +81,7 @@ function base_init() {
     sed -i $sedfix 's/^powLimitBits=.*/powLimitBits="0x1f2fffff"/g' chain33.toml
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
     sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
+    sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
 
     # p2p
     sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml

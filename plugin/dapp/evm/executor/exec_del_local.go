@@ -20,19 +20,11 @@ func (evm *EVMExecutor) ExecDelLocal(tx *types.Transaction, receipt *types.Recei
 	}
 	cfg := evm.GetAPI().GetConfig()
 	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMState) {
-		// 需要将Exec中生成的合约状态变更信息从localdb中恢复
-		for _, logItem := range receipt.Logs {
-			if evmtypes.TyLogEVMStateChangeItem == logItem.Ty {
-				data := logItem.Log
-				var changeItem evmtypes.EVMStateChangeItem
-				err = types.Decode(data, &changeItem)
-				if err != nil {
-					return set, err
-				}
-				set.KV = append(set.KV, &types.KeyValue{Key: []byte(changeItem.Key), Value: changeItem.PreValue})
-			}
+		kvs, err := evm.DelRollbackKV(tx, []byte(evmtypes.ExecutorName))
+		if err != nil {
+			return nil, err
 		}
+		set.KV = kvs
 	}
-
 	return set, err
 }
