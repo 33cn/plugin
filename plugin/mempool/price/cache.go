@@ -37,6 +37,10 @@ func (item *priceScore) Compare(cmp skiplist.Scorer) int {
 	return skiplist.Small
 }
 
+func (item *priceScore) ByteSize() int64 {
+	return int64(proto.Size(item.Value))
+}
+
 // NewQueue 创建队列
 func NewQueue(subcfg subConfig) *Queue {
 	return &Queue{
@@ -70,15 +74,25 @@ func (cache *Queue) Walk(count int, cb func(tx *mempool.Item) bool) {
 func (cache *Queue) GetProperFee() int64 {
 	var sumFeeRate int64
 	var properFeeRate int64
-	if cache.Size() == 0 {
+	if cache.Size() < 100 {
 		return cache.subConfig.ProperFee
 	}
 	i := 0
-	var txSize int
 	var feeRate int64
 	cache.Walk(100, func(item *mempool.Item) bool {
-		txSize = proto.Size(item.Value)
-		feeRate = item.Value.Fee / int64(txSize/1000+1)
+		//总单元费率的个数, 单个交易根据txsize/1000 + 1计算
+		unitFeeNum := proto.Size(item.Value)/1000 + 1
+		//交易组计算
+		if count := item.Value.GetGroupCount(); count > 0 {
+			unitFeeNum = int(count)
+			txs, err := item.Value.GetTxGroup()
+			if err != nil {
+				for _, tx := range txs.GetTxs() {
+					unitFeeNum += proto.Size(tx) / 1000
+				}
+			}
+		}
+		feeRate = item.Value.Fee / int64(unitFeeNum)
 		sumFeeRate += feeRate
 		i++
 		return true

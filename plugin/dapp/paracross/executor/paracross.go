@@ -27,15 +27,16 @@ type Paracross struct {
 	drivers.DriverBase
 }
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Paracross{}))
+//Init paracross exec register
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, GetName(), newParacross, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
+	setPrefix()
 }
 
-//Init paracross exec register
-func Init(name string, sub []byte) {
-	drivers.Register(GetName(), newParacross, types.GetDappFork(driverName, "Enable"))
-	setPrefix()
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Paracross{}))
 }
 
 //GetName return paracross name
@@ -280,7 +281,8 @@ func (c *Paracross) updateLocalAssetTransfer(paraHeight int64, tx *types.Transac
 //IsFriend call exec is same seariase exec
 func (c *Paracross) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
 	//不允许平行链
-	if types.IsPara() {
+	cfg := c.GetAPI().GetConfig()
+	if cfg.IsPara() {
 		return false
 	}
 	//friend 调用必须是自己在调用
@@ -299,7 +301,8 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 	// 增加新的规则: 在主链执行器带着title的 asset-transfer/asset-withdraw 交易允许执行
 	// 1. user.p.${tilte}.${paraX}
 	// 1. payload 的 actionType = t/w
-	if !types.IsPara() && c.allowIsParaTx(tx.Execer) {
+	cfg := c.GetAPI().GetConfig()
+	if !cfg.IsPara() && c.allowIsParaTx(tx.Execer) {
 		var payload pt.ParacrossAction
 		err := types.Decode(tx.Payload, &payload)
 		if err != nil {
@@ -308,7 +311,7 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw {
 			return nil
 		}
-		if types.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkCommitTx) {
+		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkCommitTx) {
 			if payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig ||
 				payload.Ty == pt.ParacrossActionNodeGroupApply {
 				return nil

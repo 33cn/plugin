@@ -27,6 +27,7 @@ type Config struct {
 	Btcd           Btcd
 	Log            types.Log
 	Auth           Auth
+	Chain33Cfg     *types.Chain33Config
 }
 
 // Btcd adapt to btcd

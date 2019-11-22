@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "transaction.proto";
+import "blockchain.proto";
 
 package types;
 
@@ -30,11 +30,9 @@ message TendermintCommit {
 }
 
 message TendermintBlockInfo {
-    TendermintCommit SeenCommit = 1;
-    TendermintCommit LastCommit = 2;
-    State            State      = 3;
-    Proposal         Proposal   = 4;
-    TendermintBlock  block      = 5;
+    State            State      = 2;
+    Proposal         Proposal   = 3;
+    TendermintBlock  block      = 4;
 }
 
 message BlockSize {
@@ -89,20 +87,6 @@ message State {
     bytes           AppHash                          = 12;
 }
 
-message DuplicateVoteEvidence {
-    string pubKey = 1;
-    Vote   voteA  = 2;
-    Vote   voteB  = 3;
-}
-
-message EvidenceEnvelope {
-    string typeName = 1;
-    bytes  data     = 2;
-}
-
-message EvidenceData {
-    repeated EvidenceEnvelope evidence = 1;
-}
 
 message TendermintBlockHeader {
     string  chainID         = 1;
@@ -117,15 +101,13 @@ message TendermintBlockHeader {
     bytes   consensusHash   = 10;
     bytes   appHash         = 11;
     bytes   lastResultsHash = 12;
-    bytes   evidenceHash    = 13;
+    bytes   proposerAddr    = 13;
 }
 
 message TendermintBlock {
-    TendermintBlockHeader header      = 1;
-    repeated Transaction txs          = 2;
-    EvidenceData         evidence     = 3;
-    TendermintCommit     lastCommit   = 4;
-    bytes                proposerAddr = 5;
+    TendermintBlockHeader header       = 1;
+    Block                 data         = 2;
+    TendermintCommit      lastCommit   = 4;
 }
 
 message Proposal {
@@ -146,8 +128,11 @@ message NewRoundStepMsg {
     int32 lastCommitRound       = 5;
 }
 
-message CommitStepMsg {
-    int64 height = 1;
+message ValidBlockMsg {
+    int64 height    = 1;
+    int32 round     = 2;
+    bytes blockhash = 3;
+    bool isCommit   = 4;
 }
 
 message ProposalPOLMsg {

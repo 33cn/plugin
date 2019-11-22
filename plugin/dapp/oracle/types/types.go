@@ -15,8 +15,16 @@ import (
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(OracleX))
-	types.RegistorExecutor(OracleX, NewType())
-	types.RegisterDappFork(OracleX, "Enable", 0)
+	types.RegFork(OracleX, InitFork)
+	types.RegExec(OracleX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(OracleX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(OracleX, NewType(cfg))
 }
 
 // OracleType 预言机执行器类型
@@ -25,9 +33,10 @@ type OracleType struct {
 }
 
 // NewType 创建执行器类型
-func NewType() *OracleType {
+func NewType(cfg *types.Chain33Config) *OracleType {
 	c := &OracleType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

@@ -38,11 +38,10 @@ function para_set_toml() {
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
     sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
 
-    sed -i $xsedfix 's/^MainForkParacrossCommitTx=.*/MainForkParacrossCommitTx=10/g' "${1}"
-    sed -i $xsedfix 's/^MainParaSelfConsensusForkHeight=.*/MainParaSelfConsensusForkHeight=50/g' "${1}"
-    sed -i $xsedfix 's/^MainLoopCheckCommitTxDoneForkHeight=.*/MainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
+    sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=10/g' "${1}"
+    sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
-    sed -i $xsedfix '/^MainForkParacrossCommitTx=.*/a MainBlockHashForkHeight=1' "${1}"
+    sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
 
     # rpc
     sed -i $xsedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"
@@ -337,11 +336,11 @@ function para_cross_transfer_withdraw() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
-    hash=$(${CLI} send para asset_transfer --title user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send para asset_transfer --ptitle user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    hash2=$(${CLI} send para asset_withdraw --title user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash2=$(${CLI} send para asset_withdraw --ptitle user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
 
     local times=200
     while true; do
@@ -427,12 +426,12 @@ function para_cross_transfer_withdraw_for_token() {
     query_tx "${MAIN_CLI}" "${hash}"
 
     echo "=========== # 2.transfer asset to para chain ============="
-    hash=$(${CLI} send para asset_transfer --title user.p.para. -s FZM -a 220 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${CLI} send para asset_transfer --ptitle user.p.para. -s FZM -a 220 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
     query_tx "${MAIN_CLI}" "${hash}"
 
     echo "=========== # 3.asset_withdraw from parachain ============="
-    ${CLI} send para asset_withdraw --title user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+    ${CLI} send para asset_withdraw --ptitle user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 
     local times=100
     while true; do
@@ -507,20 +506,20 @@ function para_create_nodegroup() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    status=$(${PARA_CLI} para nodegroup status -t user.p.para. | jq -r ".status")
+    status=$(${PARA_CLI} para nodegroup status | jq -r ".status")
     if [ "$status" != 2 ]; then
         echo "status not approve status=$status"
         exit 1
     fi
 
-    ${PARA_CLI} para nodegroup addrs -t user.p.para.
+    ${PARA_CLI} para nodegroup addrs
 
     echo "=========== # para chain quit node group fail ============="
     ##quit fail
     txhash=$(${PARA_CLI} send para nodegroup quit -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${CLI}" "${txhash}"
-    status=$(${CLI} para nodegroup status -t user.p.para. | jq -r ".status")
+    status=$(${PARA_CLI} para nodegroup status | jq -r ".status")
     if [ "$status" != 2 ]; then
         echo "status quit not approve status=$status"
         exit 1
@@ -546,26 +545,26 @@ function para_create_nodegroup() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    id=$(${PARA_CLI} para nodegroup status -t user.p.para. | jq -r ".id")
+    id=$(${PARA_CLI} para nodegroup status | jq -r ".id")
     if [ "$modifyid" != "$id" ]; then
         echo " approve new id wrong"
-        ${PARA_CLI} para nodegroup_status -t user.p.para.
+        ${PARA_CLI} para nodegroup_status
         exit 1
     fi
-    coins=$(${PARA_CLI} para nodegroup status -t user.p.para. | jq -r ".coinsFrozen")
+    coins=$(${PARA_CLI} para nodegroup status | jq -r ".coinsFrozen")
     if [ "$coins" != "500000000" ]; then
         echo " approve new coins wrong"
-        ${PARA_CLI} para nodegroup_status -t user.p.para.
+        ${PARA_CLI} para nodegroup_status
         exit 1
     fi
 }
 
 function para_nodegroup_behalf_quit_test() {
     echo "=========== # para chain behalf node quit ============="
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
     if [ "${status}" != "10" ]; then
         echo "wrong 1E5 status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
         exit 1
     fi
 
@@ -581,17 +580,17 @@ function para_nodegroup_behalf_quit_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
     if [ "${status}" != "11" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
         exit 1
     fi
 
-    node=$(${PARA_CLI} para nodegroup addrs -t user.p.para. | jq -r '.value|contains("1E5")')
+    node=$(${PARA_CLI} para nodegroup addrs | jq -r '.value|contains("1E5")')
     if [ "${node}" == "true" ]; then
         echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup addrs -t user.p.para.
+        ${PARA_CLI} para nodegroup addrs
         exit 1
     fi
 
@@ -663,24 +662,24 @@ function para_nodemanage_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY | jq -r ".status")
     if [ "${status}" == "10" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
+        ${PARA_CLI} para super_node addr_status -a 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY
         exit 1
     fi
 
-    status=$(${PARA_CLI} para super_node id_status -t user.p.para. -i "$id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$id" | jq -r ".status")
     if [ "${status}" != "3" ]; then
         echo "wrong cancel status"
-        ${PARA_CLI} para super_node id_status -t user.p.para. -i "$id"
+        ${PARA_CLI} para super_node id_status -i "$id"
         exit 1
     fi
 
-    node=$(${PARA_CLI} para nodegroup addrs -t user.p.para. | jq -r '.value|contains("1E5")')
+    node=$(${PARA_CLI} para nodegroup addrs | jq -r '.value|contains("1E5")')
     if [ "${node}" == "true" ]; then
         echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup addrs -t user.p.para.
+        ${PARA_CLI} para nodegroup addrs
         exit 1
     fi
 
@@ -702,23 +701,23 @@ function para_nodemanage_test() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 | jq -r ".status")
     if [ "${status}" != "10" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+        ${PARA_CLI} para super_node addr_status -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
         exit 1
     fi
 
-    status=$(${PARA_CLI} para super_node id_status -t user.p.para. -i "$id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$id" | jq -r ".status")
     if [ "${status}" != "3" ]; then
         echo "wrong close status"
-        ${PARA_CLI} para super_node id_status -t user.p.para. -i "$id"
+        ${PARA_CLI} para super_node id_status -i "$id"
         exit 1
     fi
-    node=$(${PARA_CLI} para nodegroup addrs -t user.p.para. | jq -r '.value|contains("1KS")')
+    node=$(${PARA_CLI} para nodegroup addrs | jq -r '.value|contains("1KS")')
     if [ "${node}" != "true" ]; then
         echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup addrs -t user.p.para.
+        ${PARA_CLI} para nodegroup addrs
         exit 1
     fi
 
@@ -762,23 +761,23 @@ function para_nodemanage_node_behalf_join() {
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
     if [ "${status}" != "10" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
+        ${PARA_CLI} para super_node addr_status -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
         exit 1
     fi
-    status=$(${PARA_CLI} para super_node id_status -t user.p.para. -i "$id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$id" | jq -r ".status")
     if [ "${status}" != "3" ]; then
         echo "wrong close status"
-        ${PARA_CLI} para super_node id_status -t user.p.para. -i "$id"
+        ${PARA_CLI} para super_node id_status -i "$id"
         exit 1
     fi
 
-    node=$(${PARA_CLI} para nodegroup addrs -t user.p.para. | jq -r '.value|contains("1NNa")')
+    node=$(${PARA_CLI} para nodegroup addrs | jq -r '.value|contains("1NNa")')
     if [ "${node}" != "true" ]; then
         echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup addrs -t user.p.para.
+        ${PARA_CLI} para nodegroup addrs
         exit 1
     fi
 
@@ -789,10 +788,10 @@ function para_nodemanage_node_behalf_join() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
-    status=$(${CLI} para super_node id_status -t user.p.para. -i "$node1_id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$node1_id" | jq -r ".status")
     if [ "${status}" == "3" ]; then
         echo "wrong vote status"
-        ${CLI} para super_node id_status -t user.p.para. -i "$node1_id"
+        ${PARA_CLI} para super_node id_status -i "$node1_id"
         exit 1
     fi
 
@@ -806,10 +805,10 @@ function para_nodemanage_node_behalf_join() {
         echo "unfrozen coinfrozen error balance=$balance"
         exit 1
     fi
-    status=$(${PARA_CLI} para super_node id_status -t user.p.para. -i "$node1_id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$node1_id" | jq -r ".status")
     if [ "${status}" != "4" ]; then
         echo "wrong cancel status"
-        ${PARA_CLI} para super_node id_status -t user.p.para. -i "$node1_id"
+        ${PARA_CLI} para super_node id_status -i "$node1_id"
         exit 1
     fi
 
@@ -833,22 +832,22 @@ function para_nodemanage_node_behalf_join() {
         exit 1
     fi
 
-    status=$(${PARA_CLI} para super_node addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
+    status=$(${PARA_CLI} para super_node addr_status -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB | jq -r ".status")
     if [ "${status}" != "11" ]; then
         echo "wrong vote status"
-        ${PARA_CLI} para super_node addr_status -t user.p.para. -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
+        ${PARA_CLI} para super_node addr_status -a 1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
         exit 1
     fi
-    status=$(${PARA_CLI} para super_node id_status -t user.p.para. -i "$id" | jq -r ".status")
+    status=$(${PARA_CLI} para super_node id_status -i "$id" | jq -r ".status")
     if [ "${status}" != "3" ]; then
         echo "wrong cancel status"
-        ${PARA_CLI} para super_node id_status -t user.p.para. -i "$id"
+        ${PARA_CLI} para super_node id_status -i "$id"
         exit 1
     fi
-    node=$(${PARA_CLI} para nodegroup addrs -t user.p.para. | jq -r '.value|contains("1NNa")')
+    node=$(${PARA_CLI} para nodegroup addrs | jq -r '.value|contains("1NNa")')
     if [ "${node}" == "true" ]; then
         echo "wrong node group addr"
-        ${PARA_CLI} para nodegroup addrs -t user.p.para.
+        ${PARA_CLI} para nodegroup addrs
         exit 1
     fi
 

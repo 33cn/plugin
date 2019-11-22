@@ -27,7 +27,8 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 
 	var addr common.Address
 	// 合约名称
-	if strings.HasPrefix(addrStr, types.ExecName(evmtypes.EvmPrefix)) {
+	cfg := evm.GetAPI().GetConfig()
+	if strings.HasPrefix(addrStr, cfg.ExecName(evmtypes.EvmPrefix)) {
 		addr = common.ExecAddress(addrStr)
 	} else {
 		// 合约地址
@@ -57,7 +58,7 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 	var (
 		caller common.Address
 	)
-
+	cfg := evm.GetAPI().GetConfig()
 	// 如果未指定调用地址，则直接使用一个虚拟的地址发起调用
 	if len(in.Caller) > 0 {
 		callAddr := common.StringToAddress(in.Caller)
@@ -65,7 +66,7 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 			caller = *callAddr
 		}
 	} else {
-		caller = common.ExecAddress(types.ExecName(evmtypes.ExecutorName))
+		caller = common.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
 	}
 
 	to := common.StringToAddress(in.To)
@@ -143,13 +144,14 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	}
 
 	// 如果未指定调用地址，则直接使用一个虚拟的地址发起调用
+	cfg := evm.GetAPI().GetConfig()
 	if len(in.Caller) > 0 {
 		callAddr := common.StringToAddress(in.Caller)
 		if callAddr != nil {
 			caller = *callAddr
 		}
 	} else {
-		caller = common.ExecAddress(types.ExecName(evmtypes.ExecutorName))
+		caller = common.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
 	}
 
 	msg := common.NewMessage(caller, common.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, "estimateGas", in.Input)

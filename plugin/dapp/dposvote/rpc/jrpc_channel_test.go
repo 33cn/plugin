@@ -27,6 +27,7 @@ func init() {
 func TestJRPCChannel(t *testing.T) {
 	// 启动RPCmocker
 	mocker := testnode.New("--notset--", nil)
+	cfg := mocker.GetAPI().GetConfig()
 	defer func() {
 		mocker.Close()
 	}()
@@ -36,7 +37,7 @@ func TestJRPCChannel(t *testing.T) {
 	assert.NotNil(t, jrpcClient)
 
 	testCases := []struct {
-		fn func(*testing.T, *jsonclient.JSONClient) error
+		fn func(*testing.T, *types.Chain33Config, *jsonclient.JSONClient) error
 	}{
 		{fn: testStartRawTxCmd},
 		{fn: testBetRawTxCmd},
@@ -45,11 +46,11 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testAbortRawTxCmd},
 	}
 	for _, testCase := range testCases {
-		err := testCase.fn(t, jrpcClient)
+		err := testCase.fn(t, cfg, jrpcClient)
 		assert.Nil(t, err)
 	}
 
-	testCases = []struct {
+	testCases1 := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
 		{fn: testQueryGameByID},
@@ -60,26 +61,26 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testQueryGamesByAdminStatus},
 		{fn: testQueryGamesByCategoryStatus},
 	}
-	for index, testCase := range testCases {
+	for index, testCase := range testCases1 {
 		err := testCase.fn(t, jrpcClient)
 		assert.Equal(t, err, types.ErrNotFound, fmt.Sprint(index))
 	}
 
-	testCases = []struct {
+	testCases2 := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
 		{fn: testQueryGamesByIDs},
 	}
-	for index, testCase := range testCases {
+	for index, testCase := range testCases2 {
 		err := testCase.fn(t, jrpcClient)
 		assert.Equal(t, err, nil, fmt.Sprint(index))
 	}
 }
 
-func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testStartRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.GuessGameStart{Topic: "WorldCup Final", Options: "A:France;B:Claodia", Category: "football", MaxBetsOneTime: 100e8, MaxBetsNumber: 1000e8, DevFeeFactor: 5, DevFeeAddr: "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7", PlatFeeFactor: 5, PlatFeeAddr: "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.GuessX),
+		Execer:     cfg.ExecName(pty.GuessX),
 		ActionName: pty.CreateStartTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -87,10 +88,10 @@ func testStartRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testBetRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testBetRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.GuessGameBet{GameID: "0x76dae82fcbe554d4b8df5ed1460d71dcac86a50864649a0df43e0c50b245f004", Option: "A", BetsNum: 5e8}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.GuessX),
+		Execer:     cfg.ExecName(pty.GuessX),
 		ActionName: pty.CreateBetTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -98,10 +99,10 @@ func testBetRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testStopBetRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testStopBetRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.GuessGameStopBet{GameID: "0x76dae82fcbe554d4b8df5ed1460d71dcac86a50864649a0df43e0c50b245f004"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.GuessX),
+		Execer:     cfg.ExecName(pty.GuessX),
 		ActionName: pty.CreateStopBetTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -109,10 +110,10 @@ func testStopBetRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testPublishRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testPublishRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.GuessGamePublish{GameID: "0x76dae82fcbe554d4b8df5ed1460d71dcac86a50864649a0df43e0c50b245f004", Result: "A"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.GuessX),
+		Execer:     cfg.ExecName(pty.GuessX),
 		ActionName: pty.CreatePublishTx,
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -120,10 +121,10 @@ func testPublishRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	return jrpc.Call("Chain33.CreateTransaction", params, &res)
 }
 
-func testAbortRawTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testAbortRawTxCmd(t *testing.T, cfg *types.Chain33Config, jrpc *jsonclient.JSONClient) error {
 	payload := &pty.GuessGameAbort{GameID: "0x76dae82fcbe554d4b8df5ed1460d71dcac86a50864649a0df43e0c50b245f004"}
 	params := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(pty.GuessX),
+		Execer:     cfg.ExecName(pty.GuessX),
 		ActionName: pty.CreateAbortTx,
 		Payload:    types.MustPBToJSON(payload),
 	}

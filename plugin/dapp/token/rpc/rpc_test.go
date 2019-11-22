@@ -17,7 +17,9 @@ import (
 )
 
 func newTestChannelClient() *channelClient {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig", mock.Anything).Return(cfg)
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
 	}
@@ -28,7 +30,9 @@ func newTestJrpcClient() *Jrpc {
 }
 
 func testChannelClientGetTokenBalanceToken(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg)
 
 	client := &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -46,7 +50,7 @@ func testChannelClientGetTokenBalanceToken(t *testing.T) {
 	var addrs = make([]string, 1)
 	addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
 	var in = &tokenty.ReqTokenBalance{
-		Execer:      types.ExecName(tokenty.TokenX),
+		Execer:      cfg.ExecName(tokenty.TokenX),
 		Addresses:   addrs,
 		TokenSymbol: "xxx",
 	}
@@ -58,7 +62,10 @@ func testChannelClientGetTokenBalanceToken(t *testing.T) {
 }
 
 func testChannelClientGetTokenBalanceOther(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg)
+
 	client := &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
 	}
@@ -75,7 +82,7 @@ func testChannelClientGetTokenBalanceOther(t *testing.T) {
 	var addrs = make([]string, 1)
 	addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
 	var in = &tokenty.ReqTokenBalance{
-		Execer:      types.ExecName("trade"),
+		Execer:      cfg.ExecName("trade"),
 		Addresses:   addrs,
 		TokenSymbol: "xxx",
 	}

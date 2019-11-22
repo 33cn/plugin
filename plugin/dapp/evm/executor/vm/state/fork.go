@@ -75,13 +75,13 @@ func InitForkData() {
 }
 
 // ProcessFork 处理硬分叉逻辑
-func ProcessFork(blockHeight int64, txHash []byte, receipt *types.Receipt) {
-	if types.IsLocal() {
+func ProcessFork(cfg *types.Chain33Config, blockHeight int64, txHash []byte, receipt *types.Receipt) {
+	if cfg.IsLocal() {
 		return
 	}
 
 	// 目前的分叉信息只在测试网中存在
-	if !types.IsTestNet() {
+	if !cfg.IsTestNet() {
 		return
 	}
 

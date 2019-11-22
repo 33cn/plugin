@@ -12,9 +12,17 @@ import (
 
 func init() {
 	// init executor type
-	types.RegistorExecutor(DPosX, NewType())
 	types.AllowUserExec = append(types.AllowUserExec, ExecerDposVote)
-	types.RegisterDappFork(DPosX, "Enable", 0)
+	types.RegFork(DPosX, InitFork)
+	types.RegExec(DPosX, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(DPosX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(DPosX, NewType(cfg))
 }
 
 // DPosType struct
@@ -23,9 +31,10 @@ type DPosType struct {
 }
 
 // NewType method
-func NewType() *DPosType {
+func NewType(cfg *types.Chain33Config) *DPosType {
 	c := &DPosType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

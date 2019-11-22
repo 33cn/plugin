@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/client/mocks"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -17,17 +16,20 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newTestChain33(api client.QueueProtocolAPI) *Jrpc {
+func newTestChain33() (*mocks.QueueProtocolAPI, *Jrpc) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	cli := &channelClient{
 		ChannelClient: rpctypes.ChannelClient{
 			QueueProtocolAPI: api,
 		},
 	}
-	return &Jrpc{cli: cli}
+	return api, &Jrpc{cli: cli}
 }
 
 func TestChain33_CreateRawTradeSellTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeSellTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -48,7 +50,7 @@ func TestChain33_CreateRawTradeSellTx(t *testing.T) {
 }
 
 func TestChain33_CreateRawTradeBuyTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeBuyTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -66,7 +68,7 @@ func TestChain33_CreateRawTradeBuyTx(t *testing.T) {
 }
 
 func TestChain33_CreateRawTradeRevokeTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeRevokeTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -84,7 +86,7 @@ func TestChain33_CreateRawTradeRevokeTx(t *testing.T) {
 }
 
 func TestChain33_CreateRawTradeBuyLimitTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeBuyLimitTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -106,7 +108,7 @@ func TestChain33_CreateRawTradeBuyLimitTx(t *testing.T) {
 }
 
 func TestChain33_CreateRawTradeSellMarketTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeSellMarketTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -125,7 +127,7 @@ func TestChain33_CreateRawTradeSellMarketTx(t *testing.T) {
 }
 
 func TestChain33_CreateRawTradeRevokeBuyTx(t *testing.T) {
-	client := newTestChain33(nil)
+	_, client := newTestChain33()
 	var testResult interface{}
 	err := client.CreateRawTradeRevokeBuyTx(nil, &testResult)
 	assert.NotNil(t, err)
@@ -274,14 +276,14 @@ func TestDecodeLogTradeBuyMarket(t *testing.T) {
 }
 
 func TestChain33_GetLastMemPoolOk(t *testing.T) {
-	api := new(mocks.QueueProtocolAPI)
-	testChain33 := newTestChain33(api)
+	api, testChain33 := newTestChain33()
+	cfg := api.GetConfig()
 
 	var txlist types.ReplyTxList
 	var action pty.Trade
 	act := types.Encode(&action)
 	var tx = &types.Transaction{
-		Execer:  []byte(types.ExecName(pty.TradeX)),
+		Execer:  []byte(cfg.ExecName(pty.TradeX)),
 		Payload: act,
 		To:      "to",
 	}

@@ -16,13 +16,14 @@ import (
 var logger = log.New("module", "execs.pokerbull")
 
 // Init 执行器初始化
-func Init(name string, sub []byte) {
-	drivers.Register(newPBGame().GetName(), newPBGame, types.GetDappFork(driverName, "Enable"))
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	drivers.Register(cfg, newPBGame().GetName(), newPBGame, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
 var driverName = pkt.PokerBullX
 
-func init() {
+func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&PokerBull{}))
 }
@@ -147,7 +148,8 @@ func (g *PokerBull) CheckReceiptExecOk() bool {
 
 // ExecutorOrder 设置localdb的EnableRead
 func (g *PokerBull) ExecutorOrder() int64 {
-	if types.IsFork(g.GetHeight(), "ForkLocalDBAccess") {
+	cfg := g.GetAPI().GetConfig()
+	if cfg.IsFork(g.GetHeight(), "ForkLocalDBAccess") {
 		return drivers.ExecLocalSameTime
 	}
 	return g.DriverBase.ExecutorOrder()

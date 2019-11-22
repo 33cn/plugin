@@ -20,21 +20,23 @@ type subConfig struct {
 var (
 	alog         = log.New("module", "execs.autonomy")
 	driverName   = auty.AutonomyX
-	autonomyAddr = address.ExecAddress(auty.AutonomyX)
-	cfg          subConfig
+	autonomyAddr string
+	subcfg       subConfig
 )
 
-func init() {
-	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&Autonomy{}))
+// Init 重命名执行器名称
+func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	if sub != nil {
+		types.MustDecode(sub, &subcfg)
+	}
+	autonomyAddr = address.ExecAddress(cfg.ExecName(auty.AutonomyX))
+	drivers.Register(cfg, GetName(), newAutonomy, cfg.GetDappFork(driverName, "Enable"))
+	InitExecType()
 }
 
-// Init 重命名执行器名称
-func Init(name string, sub []byte) {
-	if sub != nil {
-		types.MustDecode(sub, &cfg)
-	}
-	drivers.Register(GetName(), newAutonomy, types.GetDappFork(driverName, "Enable"))
+func InitExecType() {
+	ety := types.LoadExecutorType(driverName)
+	ety.InitFuncList(types.ListMethod(&Autonomy{}))
 }
 
 // Autonomy 执行器结构体

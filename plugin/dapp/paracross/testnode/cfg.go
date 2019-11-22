@@ -2,7 +2,7 @@ package testnode
 
 //DefaultConfig default config for testnode
 var DefaultConfig = `
-Title="user.p.guodun."
+Title="user.p.test."
 CoinSymbol="bty"
 # TestNet=true
 
@@ -120,12 +120,14 @@ waitBlocks4CommitMsg=2
 searchHashMatchedBlockDepth=10000
 #创世地址额度
 genesisAmount=100000000
-MainBlockHashForkHeight=1
-MainForkParacrossCommitTx=1
-MainLoopCheckCommitTxDoneForkHeight=11
+mainBlockHashForkHeight=1
+mainForkParacrossCommitTx=1
+mainLoopCheckCommitTxDoneForkHeight=11
+selfConsensEnablePreContract=["0-1000"]
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
 interval=2
+
 
 [store]
 name="mavl"

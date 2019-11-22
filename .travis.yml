@@ -9,12 +9,12 @@ matrix:
   include:
     - name: check_fmt
       sudo: require
-      go: "1.12.x"
+      go: "1.13.x"
       env:
         - GO111MODULE=on
       install:
         - go get -u golang.org/x/tools/cmd/goimports
-        - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
+        - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
         - go get -u mvdan.cc/sh/cmd/shfmt
         - go get -u mvdan.cc/sh/cmd/gosh
       script:
@@ -22,7 +22,7 @@ matrix:
         - make linter
 
     - name: unit-test
-      go: "1.12.x"
+      go: "1.13.x"
       env:
         - GO111MODULE=on
       install: skip
@@ -31,7 +31,7 @@ matrix:
 
     - name: coverage
       if: branch = master
-      go: "1.12.x"
+      go: "1.13.x"
       env:
         - GO111MODULE=on
       before_install:
@@ -43,7 +43,7 @@ matrix:
         - bash <(curl -s https://codecov.io/bash)
 
     - name: auto-test
-      go: "1.12.x"
+      go: "1.13.x"
       env:
         - GO111MODULE=on
       install: skip
@@ -56,7 +56,7 @@ matrix:
       sudo: required
       services:
         - docker
-      go: "1.12.x"
+      go: "1.13.x"
       env:
         - DOCKER_COMPOSE_VERSION=1.21.2
         - GO111MODULE=on

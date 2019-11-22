@@ -62,7 +62,8 @@ func (e *Paracross) Exec_Miner(payload *pt.ParacrossMinerAction, tx *types.Trans
 	if index != 0 {
 		return nil, pt.ErrParaMinerBaseIndex
 	}
-	if !types.IsPara() {
+	cfg := e.GetAPI().GetConfig()
+	if !cfg.IsPara() {
 		return nil, types.ErrNotSupport
 	}
 	a := newAction(e, tx)
@@ -97,4 +98,10 @@ func (e *Paracross) Exec_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Tr
 func (e *Paracross) Exec_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.NodeGroupConfig(payload)
+}
+
+//Exec_NodeGroupConfig node group config process
+func (e *Paracross) Exec_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.SelfStageConfig(payload)
 }

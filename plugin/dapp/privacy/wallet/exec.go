@@ -40,9 +40,10 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 		return nil, err
 	}
 
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	//为空时增加自动设置
 	if req.GetAssetExec() == "coins" && req.GetTokenname() == "" {
-		req.Tokenname = types.GetCoinSymbol()
+		req.Tokenname = cfg.GetCoinSymbol()
 	}
 
 	if req.AssetExec == "" || req.Tokenname == "" {

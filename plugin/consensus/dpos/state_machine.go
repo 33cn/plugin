@@ -142,7 +142,6 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 		PeriodStop:       task.PeriodStop,
 		Height:           height + 1,
 	}
-	cs.validatorMgr.FillVoteItem(voteItem)
 
 	encode, err := json.Marshal(voteItem)
 	if err != nil {
@@ -150,6 +149,8 @@ func generateVote(cs *ConsensusState) *dpostype.Vote {
 	}
 
 	voteItem.VoteID = crypto.Ripemd160(encode)
+
+	cs.validatorMgr.FillVoteItem(voteItem)
 
 	index := cs.validatorMgr.GetIndexByPubKey(cs.privValidator.GetPubKey().Bytes())
 
@@ -245,7 +246,7 @@ func checkTopNRegist(cs *ConsensusState) {
 		topN := cs.GetTopNCandidatorsByVersion(info.Version)
 		if topN == nil || !cs.IsTopNRegisted(topN) {
 			cands, err := cs.client.QueryCandidators()
-			if err != nil || cands == nil {
+			if err != nil || cands == nil || len(cands) != int(dposDelegateNum) {
 				dposlog.Error("QueryCandidators failed", "now", now, "height", height, "HeightRegLimit", info.HeightRegLimit, "pubkey", strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())))
 				LastCheckRegTopNTime = now
 				return
@@ -572,6 +573,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 	now := time.Now().Unix()
 	block := cs.client.GetCurrentBlock()
 	task := DecideTaskByTime(now)
+	cfg := cs.client.GetAPI().GetConfig()
 
 	dposlog.Info("address info", "privValidatorAddr", hex.EncodeToString(cs.privValidator.GetAddress()), "VotedNodeAddress", hex.EncodeToString(cs.currentVote.VotedNodeAddress))
 	if bytes.Equal(cs.privValidator.GetAddress(), cs.currentVote.VotedNodeAddress) {
@@ -598,7 +600,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 				info := &dty.DposCBInfo{
 					Cycle:      cs.currentVote.Cycle,
 					StopHeight: block.Height,
-					StopHash:   hex.EncodeToString(block.Hash()),
+					StopHash:   hex.EncodeToString(block.Hash(cfg)),
 					Pubkey:     strings.ToUpper(hex.EncodeToString(cs.privValidator.GetPubKey().Bytes())),
 				}
 
@@ -622,7 +624,7 @@ func (voted *VotedState) timeOut(cs *ConsensusState) {
 				DPosNotify: &dpostype.DPosNotify{
 					Vote:              cs.currentVote,
 					HeightStop:        block.Height,
-					HashStop:          block.Hash(),
+					HashStop:          block.Hash(cfg),
 					NotifyTimestamp:   now,
 					NotifyNodeAddress: cs.privValidator.GetAddress(),
 					NotifyNodeIndex:   int32(cs.privValidatorIndex),
@@ -833,6 +835,7 @@ func (wait *WaitNofifyState) sendNotify(cs *ConsensusState, notify *dpostype.DPo
 
 func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPosNotify) {
 	dposlog.Info("WaitNofifyState recvNotify")
+	cfg := cs.client.GetAPI().GetConfig()
 	//记录Notify，校验区块，标记不可逆区块高度
 	if !cs.VerifyNotify(notify) {
 		dposlog.Info("VotedState verify notify failed")
@@ -843,7 +846,7 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 	if block.Height > notify.HeightStop {
 		dposlog.Info("Local block height is advanced than notify, discard it.", "localheight", block.Height, "notify", printNotify(notify))
 		return
-	} else if block.Height == notify.HeightStop && bytes.Equal(block.Hash(), notify.HashStop) {
+	} else if block.Height == notify.HeightStop && bytes.Equal(block.Hash(cfg), notify.HashStop) {
 		dposlog.Info("Local block height is sync with notify", "notify", printNotify(notify))
 	} else {
 		dposlog.Info("Local block height is not sync with notify", "localheight", cs.client.GetCurrentHeight(), "notify", printNotify(notify))
@@ -856,7 +859,7 @@ func (wait *WaitNofifyState) recvNotify(cs *ConsensusState, notify *dpostype.DPo
 			case <-hint.C:
 				dposlog.Info("Still catching up max height......", "Height", cs.client.GetCurrentHeight(), "notifyHeight", notify.HeightStop, "cost", time.Since(beg))
 				if cs.client.IsCaughtUp() && cs.client.GetCurrentHeight() >= notify.HeightStop {
-					dposlog.Info("This node has caught up max height", "Height", cs.client.GetCurrentHeight(), "isHashSame", bytes.Equal(block.Hash(), notify.HashStop))
+					dposlog.Info("This node has caught up max height", "Height", cs.client.GetCurrentHeight(), "isHashSame", bytes.Equal(block.Hash(cfg), notify.HashStop))
 					break OuterLoop
 				}
 

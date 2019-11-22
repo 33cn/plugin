@@ -5,6 +5,7 @@
 package raft
 
 import (
+	"context"
 	"errors"
 	"net"
 	"time"
@@ -13,16 +14,16 @@ import (
 // 设置TCP keep-alive超时，接收stopc
 type stoppableListener struct {
 	*net.TCPListener
-	stopc <-chan struct{}
+	ctx context.Context
 }
 
 // 监听tcp连接
-func newStoppableListener(addr string, stopc <-chan struct{}) (*stoppableListener, error) {
+func newStoppableListener(ctx context.Context, addr string) (*stoppableListener, error) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
-	return &stoppableListener{ln.(*net.TCPListener), stopc}, nil
+	return &stoppableListener{ln.(*net.TCPListener), ctx}, nil
 }
 
 func (ln stoppableListener) Accept() (c net.Conn, err error) {
@@ -37,7 +38,7 @@ func (ln stoppableListener) Accept() (c net.Conn, err error) {
 		connc <- tc
 	}()
 	select {
-	case <-ln.stopc:
+	case <-ln.ctx.Done():
 		return nil, errors.New("server stopped")
 	case err := <-errc:
 		return nil, err

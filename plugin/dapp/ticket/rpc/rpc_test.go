@@ -23,28 +23,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var cfgstring = `
-Title="test"
-
-[mver.consensus]
-fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
-powLimitBits = "0x1f00ffff"
-maxTxNumber = 10000
-
-
-[mver.consensus.ticket]
-coinReward = 18
-coinDevFund = 12
-ticketPrice = 10000
-retargetAdjustmentFactor = 4
-futureBlockTime = 16
-ticketFrozenTime = 5
-ticketWithdrawTime = 10
-ticketMinerWaitTime = 2
-targetTimespan = 2304
-targetTimePerBlock = 16
-`
-
 func newGrpc(api client.QueueProtocolAPI) *channelClient {
 	return &channelClient{
 		ChannelClient: rpctypes.ChannelClient{QueueProtocolAPI: api},
@@ -56,20 +34,19 @@ func newJrpc(api client.QueueProtocolAPI) *Jrpc {
 }
 
 func TestChannelClient_BindMiner(t *testing.T) {
+	cfg := types.NewChain33Config(cfgstring)
 	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("ticket", nil, nil, nil)
-	head := &types.Header{StateHash: []byte("sdfadasds")}
-	api.On("GetLastHeader").Return(head, nil)
+	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
+	api.On("GetLastHeader").Return(head, nil).Times(4)
 
 	var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100000 * types.Coin}
 	accv := types.Encode(acc)
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
-	api.On("StoreGet", mock.Anything).Return(storevalue, nil)
-
-	types.SetTitleOnlyForTest("test")
-	types.InitCfgString(cfgstring)
+	api.On("StoreGet", mock.Anything).Return(storevalue, nil).Twice()
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
@@ -77,14 +54,16 @@ func TestChannelClient_BindMiner(t *testing.T) {
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		Amount:       10000 * types.Coin,
-		CheckBalance: true,
+		CheckBalance: false,
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
 }
 
 func testGetTicketCountOK(t *testing.T) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	g := newGrpc(api)
 	api.On("QueryConsensusFunc", "ticket", "GetTicketCount", mock.Anything).Return(&types.Int64{}, nil)
 	data, err := g.GetTicketCount(context.Background(), nil)
@@ -151,11 +130,13 @@ func TestJrpc_GetTicketCount(t *testing.T) {
 }
 
 func TestRPC_CallTestNode(t *testing.T) {
-	api := new(mocks.QueueProtocolAPI)
-	cfg, sub := testnode.GetDefaultConfig()
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	// 测试环境下，默认配置的共识为solo，需要修改
-	cfg.Consensus.Name = "ticket"
-	mock33 := testnode.NewWithConfig(cfg, sub, api)
+	cfg.GetModuleConfig().Consensus.Name = "ticket"
+
+	api := new(mocks.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	mock33 := testnode.NewWithConfig(cfg, api)
 	defer func() {
 		mock33.Close()
 		mock.AssertExpectationsForObjects(t, api)
@@ -212,3 +193,85 @@ func TestRPC_CallTestNode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, r.IsOk, true)
 }
+
+var cfgstring = `
+Title="test"
+
+[mempool]
+poolCacheSize=102400
+minTxFee=100000
+maxTxNumPerAccount=100
+
+[exec]
+isFree=false
+minExecFee=100000
+enableStat=false
+enableMVCC=false
+
+[wallet]
+minFee=100000
+driver="leveldb"
+dbPath="wallet"
+dbCache=16
+signType="secp256k1"
+minerdisable=false
+minerwhitelist=["*"]
+
+[mver.consensus]
+fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
+powLimitBits = "0x1f00ffff"
+maxTxNumber = 10000
+
+
+[mver.consensus.ticket]
+coinReward = 18
+coinDevFund = 12
+ticketPrice = 10000
+retargetAdjustmentFactor = 4
+futureBlockTime = 16
+ticketFrozenTime = 5
+ticketWithdrawTime = 10
+ticketMinerWaitTime = 2
+targetTimespan = 2304
+targetTimePerBlock = 16
+
+[mver.consensus.ticket.ForkChainParamV1]
+ticketPrice = 3000
+
+[mver.consensus.ticket.ForkChainParamV2]
+ticketPrice = 6000
+
+[fork.system]
+ForkChainParamV1= 10
+ForkChainParamV2= 20
+ForkStateDBSet=-1
+ForkCheckTxDup=0
+ForkBlockHash= 1
+ForkMinerTime= 10
+ForkTransferExec= 100000
+ForkExecKey= 200000
+ForkTxGroup= 200000
+ForkResetTx0= 200000
+ForkWithdraw= 200000
+ForkExecRollback= 450000
+ForkTxHeight= -1
+ForkTxGroupPara= -1
+ForkCheckBlockTime=1200000
+ForkMultiSignAddress=1298600
+ForkBlockCheck=1
+ForkLocalDBAccess=0
+ForkBase58AddressCheck=1800000
+ForkEnableParaRegExec=0
+ForkCacheDriver=0
+ForkTicketFundAddrV1=-1
+[fork.sub.coins]
+Enable=0
+
+[fork.sub.manage]
+Enable=0
+ForkManageExec=100000
+
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=1
+
+`

@@ -15,15 +15,23 @@ var name string
 func init() {
 	name = AutonomyX
 	types.AllowUserExec = append(types.AllowUserExec, []byte(name))
-	// init executor type
-	types.RegistorExecutor(name, NewType())
-	types.RegisterDappFork(name, "Enable", 0)
+	types.RegFork(name, InitFork)
+	types.RegExec(name, InitExecutor)
+}
+
+func InitFork(cfg *types.Chain33Config) {
+	cfg.RegisterDappFork(AutonomyX, "Enable", 0)
+}
+
+func InitExecutor(cfg *types.Chain33Config) {
+	types.RegistorExecutor(AutonomyX, NewType(cfg))
 }
 
 // NewType 生成新的基础类型
-func NewType() *AutonomyType {
+func NewType(cfg *types.Chain33Config) *AutonomyType {
 	c := &AutonomyType{}
 	c.SetChild(c)
+	c.SetConfig(cfg)
 	return c
 }
 

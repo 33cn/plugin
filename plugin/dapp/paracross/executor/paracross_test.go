@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"testing"
 
+	"strings"
+
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -17,8 +19,10 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -51,7 +55,8 @@ var (
 
 	TokenSymbol                = "X"
 	MainBlockHeightForTransfer = int64(9)
-	tempTitle                  = ""
+	chain33TestCfg             = types.NewChain33Config(testnode.DefaultConfig)
+	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
 )
 
 type CommitTestSuite struct {
@@ -83,7 +88,7 @@ func makeNodeInfo(key, addr string, cnt int) *types.ConfigItem {
 func init() {
 	log.SetFileLog(nil)
 	log.SetLogLevel("debug")
-	Init(pt.ParaX, nil)
+	Init(pt.ParaX, chain33TestCfg, nil)
 }
 
 func (suite *CommitTestSuite) SetupSuite() {
@@ -93,12 +98,13 @@ func (suite *CommitTestSuite) SetupSuite() {
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
+	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 
 	suite.exec = newParacross().(*Paracross)
+	suite.exec.SetAPI(suite.api)
 	suite.exec.SetLocalDB(suite.localDB)
 	suite.exec.SetStateDB(suite.stateDB)
 	suite.exec.SetEnv(0, 0, 0)
-	suite.exec.SetAPI(suite.api)
 	enableParacrossTransfer = false
 
 	// TODO, more fields
@@ -106,7 +112,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	blockDetail := &types.BlockDetail{
 		Block: &types.Block{},
 	}
-	MainBlockHash10 = blockDetail.Block.Hash()
+	MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
 	blockDetail.Block.MainHash = MainBlockHash10
 
 	// setup title nodes : len = 4
@@ -119,6 +125,17 @@ func (suite *CommitTestSuite) SetupSuite() {
 		return
 	}
 	assert.Equal(suite.T(), value, types.Encode(nodeValue))
+
+	stageKey := calcParaSelfConsStagesKey()
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
+	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
+	suite.stateDB.Set(stageKey, types.Encode(stages))
+	value, err = suite.stateDB.Get(stageKey)
+	if err != nil {
+		suite.T().Error("get setup stages failed", err)
+		return
+	}
+	assert.Equal(suite.T(), value, types.Encode(stages))
 
 	// setup state title 'test' height is 9
 	var titleStatus pt.ParacrossStatus
@@ -167,7 +184,7 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 		CrossTxResult:   []byte("abc"),
 		CrossTxHashs:    [][]byte{},
 	}
-	tx, err := pt.CreateRawCommitTx4MainChain(&st1, pt.GetExecName(), 0)
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, &st1, pt.GetExecName(chain33TestCfg), 0)
 	if err != nil {
 		suite.T().Error("TestExec", "create tx failed", err)
 	}
@@ -260,8 +277,8 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 2)
-	assert.Len(suite.T(), receipt.Logs, 2)
+	assert.Len(suite.T(), receipt.KV, 6)
+	assert.Len(suite.T(), receipt.Logs, 6)
 
 	key := calcTitleHeightKey(Title, TitleHeight)
 	suite.T().Log("title height key", string(key))
@@ -331,12 +348,7 @@ func (suite *CommitTestSuite) TestExec() {
 }
 
 func TestCommitSuite(t *testing.T) {
-	tempTitle = types.GetTitle()
-	types.SetTitleOnlyForTest(Title)
-
 	suite.Run(t, new(CommitTestSuite))
-
-	types.SetTitleOnlyForTest(tempTitle)
 }
 
 func TestGetTitle(t *testing.T) {
@@ -451,12 +463,39 @@ func (s *VoteTestSuite) TestFilterTxsForPara() {
 
 type VoteTestSuite struct {
 	suite.Suite
+	stateDB dbm.KV
+	localDB *dbmock.KVDB
+
 	exec *Paracross
 }
 
 func (s *VoteTestSuite) SetupSuite() {
-	para_init(Title)
+	//para_init(Title)
 	s.exec = newParacross().(*Paracross)
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+	s.exec.SetAPI(api)
+
+	s.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
+	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
+	//s.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
+	s.localDB = new(dbmock.KVDB)
+
+	s.exec.SetLocalDB(s.localDB)
+	s.exec.SetStateDB(s.stateDB)
+	s.exec.SetEnv(0, 0, 0)
+
+	stageKey := calcParaSelfConsStagesKey()
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
+	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
+	s.stateDB.Set(stageKey, types.Encode(stages))
+	value, err := s.stateDB.Get(stageKey)
+	if err != nil {
+		s.T().Error("get setup stages failed", err)
+		return
+	}
+	assert.Equal(s.T(), value, types.Encode(stages))
+
 }
 
 func (s *VoteTestSuite) TestVoteTx() {
@@ -636,7 +675,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 }
 
 func (s *VoteTestSuite) createVoteTx(status *pt.ParacrossNodeStatus, privFrom string) (*types.Transaction, error) {
-	tx, err := pt.CreateRawMinerTx(&pt.ParacrossMinerAction{Status: status})
+	tx, err := pt.CreateRawMinerTx(chain33TestCfg, &pt.ParacrossMinerAction{Status: status})
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
@@ -662,7 +701,7 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 		TokenSymbol: "",
 		ExecName:    Title + pt.ParaX,
 	}
-	tx, err := pt.CreateRawAssetTransferTx(&param)
+	tx, err := pt.CreateRawAssetTransferTx(chain33TestCfg, &param)
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
@@ -680,7 +719,7 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 	status := &pt.ParacrossNodeStatus{MainBlockHash: []byte("hash"), MainBlockHeight: 0, Title: Title}
 
-	tx, err := pt.CreateRawCommitTx4MainChain(status, Title+pt.ParaX, 0)
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, status, Title+pt.ParaX, 0)
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
@@ -696,11 +735,11 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-	group, err := types.CreateTxGroup(txs, types.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txs, chain33TestCfg.GInt("MinFee"))
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(0, types.GInt("MinFee"), types.GInt("MaxFee"))
+	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GInt("MinFee"), chain33TestCfg.GInt("MaxFee"))
 	if err != nil {
 		return nil, err
 	}
@@ -732,7 +771,7 @@ func createParaNormalTx(s suite.Suite, privFrom string, to []byte) (*types.Trans
 		To:      address.ExecAddress(param.GetExecName()),
 		Fee:     param.Fee,
 	}
-	tx, err := types.FormatTx(param.GetExecName(), tx)
+	tx, err := types.FormatTx(chain33TestCfg, param.GetExecName(), tx)
 	if err != nil {
 		return nil, err
 	}

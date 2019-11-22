@@ -14,6 +14,10 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 )
 
+func init() {
+	InitExecutor(nil)
+}
+
 func TestDecodeLogTokenTransfer(t *testing.T) {
 	var logTmp = &types.ReceiptAccountTransfer{}
 	dec := types.Encode(logTmp)

@@ -17,6 +17,8 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 )
 
+var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+
 func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &auty.ProposalBoard{}
 	payLoad, err := json.Marshal(params)
@@ -24,7 +26,7 @@ func testPropBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "PropBoard",
 		Payload:    payLoad,
 	}
@@ -39,7 +41,7 @@ func testRevokeProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) err
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "RvkPropBoard",
 		Payload:    payLoad,
 	}
@@ -54,7 +56,7 @@ func testVoteProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "VotePropBoard",
 		Payload:    payLoad,
 	}
@@ -69,7 +71,7 @@ func testTerminateProposalBoardTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) 
 		return err
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     types.ExecName(auty.AutonomyX),
+		Execer:     chainTestCfg.ExecName(auty.AutonomyX),
 		ActionName: "TmintPropBoard",
 		Payload:    payLoad,
 	}

@@ -252,30 +252,33 @@ type tradeAction struct {
 	blocktime int64
 	height    int64
 	execaddr  string
+	api       client.QueueProtocolAPI
 }
 
 func newTradeAction(t *trade, tx *types.Transaction) *tradeAction {
 	hash := hex.EncodeToString(tx.Hash())
 	fromaddr := tx.From()
 	return &tradeAction{t.GetStateDB(), hash, fromaddr,
-		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer))}
+		t.GetBlockTime(), t.GetHeight(), dapp.ExecAddress(string(tx.Execer)), t.GetAPI()}
 }
 
 func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, error) {
 	if sell.TotalBoardlot < 0 || sell.PricePerBoardlot < 0 || sell.MinBoardlot < 0 || sell.AmountPerBoardlot < 0 {
 		return nil, types.ErrInvalidParam
 	}
-	if !checkAsset(action.height, sell.AssetExec, sell.TokenSymbol) {
+	cfg := action.api.GetConfig()
+
+	if !checkAsset(cfg, action.height, sell.AssetExec, sell.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !checkPrice(action.height, sell.PriceExec, sell.PriceExec) {
+	if !checkPrice(cfg, action.height, sell.PriceExec, sell.PriceExec) {
 		return nil, types.ErrInvalidParam
 	}
-	if !notSameAsset(action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, sell.PriceExec) {
+	if !notSameAsset(cfg, action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, sell.PriceExec) {
 		return nil, pty.ErrAssetAndPriceSame
 	}
 
-	accDB, err := createAccountDB(action.height, action.db, sell.AssetExec, sell.TokenSymbol)
+	accDB, err := createAccountDB(cfg, action.height, action.db, sell.AssetExec, sell.TokenSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +323,8 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 }
 
 func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, error) {
-	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
 		buyOrder.SellID = calcTokenSellID(buyOrder.SellID)
 	}
 	if buyOrder.BoardlotCnt < 0 || !strings.HasPrefix(buyOrder.SellID, sellIDPrefix) {
@@ -347,7 +351,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, pty.ErrTCntLessThanMinBoardlot
 	}
 
-	priceAcc, err := createPriceDB(action.height, action.db, sellOrder.PriceExec, sellOrder.PriceSymbol)
+	priceAcc, err := createPriceDB(cfg, action.height, action.db, sellOrder.PriceExec, sellOrder.PriceSymbol)
 	if err != nil {
 		tradelog.Error("createPriceDB", "addrFrom", action.fromaddr, "height", action.height,
 			"price", sellOrder.PriceExec+"-"+sellOrder.PriceSymbol, "err", err)
@@ -361,7 +365,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, err
 	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
-	accDB, err := createAccountDB(action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
+	accDB, err := createAccountDB(cfg, action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
 	if err != nil {
 		tradelog.Error("createAccountDB", "addrFrom", action.fromaddr, "height", action.height,
 			"price", sellOrder.AssetExec+"-"+sellOrder.TokenSymbol, "err", err)
@@ -400,7 +404,8 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 }
 
 func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*types.Receipt, error) {
-	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
 		revoke.SellID = calcTokenSellID(revoke.SellID)
 	}
 	if !strings.HasPrefix(revoke.SellID, sellIDPrefix) {
@@ -424,7 +429,7 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 		return nil, pty.ErrTSellOrderRevoke
 	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
-	accDB, err := createAccountDB(action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
+	accDB, err := createAccountDB(cfg, action.height, action.db, sellOrder.AssetExec, sellOrder.TokenSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -477,17 +482,19 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 		}
 	}
 
-	if !checkAsset(action.height, buy.AssetExec, buy.TokenSymbol) {
+	cfg := action.api.GetConfig()
+
+	if !checkAsset(cfg, action.height, buy.AssetExec, buy.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !checkPrice(action.height, buy.PriceExec, buy.PriceExec) {
+	if !checkPrice(cfg, action.height, buy.PriceExec, buy.PriceExec) {
 		return nil, types.ErrInvalidParam
 	}
-	if !notSameAsset(action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, buy.PriceExec) {
+	if !notSameAsset(cfg, action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, buy.PriceExec) {
 		return nil, pty.ErrAssetAndPriceSame
 	}
 
-	priceAcc, err := createPriceDB(action.height, action.db, buy.PriceExec, buy.PriceSymbol)
+	priceAcc, err := createPriceDB(cfg, action.height, action.db, buy.PriceExec, buy.PriceSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +536,8 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 }
 
 func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*types.Receipt, error) {
-	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
 		sellOrder.BuyID = calcTokenBuyID(sellOrder.BuyID)
 	}
 	if sellOrder.BoardlotCnt < 0 || !strings.HasPrefix(sellOrder.BuyID, buyIDPrefix) {
@@ -554,7 +562,7 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	}
 
 	// 打token
-	accDB, err := createAccountDB(action.height, action.db, buyOrder.AssetExec, buyOrder.TokenSymbol)
+	accDB, err := createAccountDB(cfg, action.height, action.db, buyOrder.AssetExec, buyOrder.TokenSymbol)
 	if err != nil {
 		tradelog.Error("createAccountDB failed", "err", err, "order", buyOrder)
 		return nil, err
@@ -570,7 +578,7 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	}
 
 	//首先购买费用的划转
-	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	priceAcc, err := createPriceDB(cfg, action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -608,7 +616,8 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 }
 
 func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*types.Receipt, error) {
-	if types.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
+	cfg := action.api.GetConfig()
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
 		revoke.BuyID = calcTokenBuyID(revoke.BuyID)
 	}
 	if !strings.HasPrefix(revoke.BuyID, buyIDPrefix) {
@@ -630,7 +639,7 @@ func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*
 		return nil, pty.ErrTBuyOrderRevoke
 	}
 
-	priceAcc, err := createPriceDB(action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
+	priceAcc, err := createPriceDB(cfg, action.height, action.db, buyOrder.PriceExec, buyOrder.PriceSymbol)
 	if err != nil {
 		return nil, err
 	}

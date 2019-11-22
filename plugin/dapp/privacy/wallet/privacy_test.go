@@ -218,9 +218,10 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 		Nonce:   mock.walletOp.Nonce(),
 		To:      address.ExecAddress(ty.PrivacyX),
 	}
+	cfg := mock.walletOp.GetAPI().GetConfig()
 	txSize := types.Size(tx) + types.SignatureSize
-	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * types.GInt("MinFee")
+	realFee := int64((txSize+1023)>>types.Size1Kshiftlen) * cfg.GInt("MinFee")
 	tx.Fee = realFee
-	tx.SetExpire(time.Hour)
+	tx.SetExpire(cfg, time.Hour)
 	return tx
 }

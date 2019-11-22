@@ -171,13 +171,17 @@ enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
-pruneHeight=10000
+pruneMavlHeight=10000
+enableMVCCPrune=false
+pruneMVCCHeight=10000
 # 是否使能mavl数据载入内存
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
 enableMemVal=true
 # 缓存close ticket数目，该缓存越大同步速度越快，最大设置到1500000
 tkCloseCacheLen=100000
+# 该参数针对平行链，主链无需开启此功能
+enableEmptyBlockHandle=false
 
 [wallet]
 minFee=100000

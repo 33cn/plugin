@@ -16,6 +16,7 @@ import (
 
 	"github.com/33cn/chain33/queue"
 	typesmocks "github.com/33cn/chain33/types/mocks"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -76,6 +77,9 @@ func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 		maxSyncErrCount: 100,
 	}
 
+	para.commitMsgClient = &commitMsgClient{
+		paraClient: para,
+	}
 	return para
 }
 
@@ -428,7 +432,9 @@ func execTest(t *testing.T, para *client, testLoopCount int32) {
 
 //测试入口
 func TestSyncBlocks(t *testing.T) {
+	cfg := types.NewChain33Config(testnode.DefaultConfig)
 	q := queue.New("channel")
+	q.SetConfig(cfg)
 	defer q.Close()
 	para := createParaTestInstance(t, q)
 	go q.Start()

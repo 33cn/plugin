@@ -18,6 +18,7 @@ import (
 //ExecLocal_Commit commit tx local db process
 func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
+	cfg := e.GetAPI().GetConfig()
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParacrossCommit {
 			var g pt.ReceiptParacrossCommit
@@ -35,7 +36,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-			if !types.IsPara() && g.Height > 0 {
+			if !cfg.IsPara() && g.Height > 0 {
 				r, err := e.saveLocalParaTxs(tx, false)
 				if err != nil {
 					return nil, err
@@ -58,6 +59,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 //ExecLocal_NodeConfig node config add process
 func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
+	cfg := e.GetAPI().GetConfig()
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParaNodeConfig {
 			var g pt.ReceiptParaNodeConfig
@@ -90,7 +92,7 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 
 			key = calcLocalHeightKey(g.Title, g.Height)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
-			if !types.IsPara() && g.Height > 0 {
+			if !cfg.IsPara() && g.Height > 0 {
 				r, err := e.saveLocalParaTxsFork(&g, false)
 				if err != nil {
 					return nil, err
@@ -160,14 +162,14 @@ func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *t
 	return nil, nil
 }
 
-func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) error {
+func setMinerTxResult(cfg *types.Chain33Config, payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) error {
 	isCommitTx := make(map[string]bool)
 	var curTxHashs, paraTxHashs, crossTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
 		//对user.p.xx.paracross ,actionTy==commit 的tx不需要再发回主链
-		if types.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+		if cfg.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
 			var payload pt.ParacrossAction
 			err := types.Decode(tx.Payload, &payload)
 			if err != nil {
@@ -179,11 +181,11 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 			}
 		}
 		//跨链交易包含了主链交易，需要过滤出来
-		if types.IsMyParaExecName(string(tx.Execer)) && !isCommitTx[string(hash)] {
+		if cfg.IsMyParaExecName(string(tx.Execer)) && !isCommitTx[string(hash)] {
 			paraTxHashs = append(paraTxHashs, hash)
 		}
 	}
-	totalCrossTxHashs := FilterParaMainCrossTxHashes(types.GetTitle(), txs)
+	totalCrossTxHashs := FilterParaMainCrossTxHashes(cfg.GetTitle(), txs)
 	for _, crossHash := range totalCrossTxHashs {
 		if !isCommitTx[string(crossHash)] {
 			crossTxHashs = append(crossTxHashs, crossHash)
@@ -197,14 +199,14 @@ func setMinerTxResult(payload *pt.ParacrossMinerAction, txs []*types.Transaction
 	return nil
 }
 
-func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transaction, receipts []*types.ReceiptData) error {
+func setMinerTxResultFork(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus, txs []*types.Transaction, receipts []*types.ReceiptData) error {
 	isCommitTx := make(map[string]bool)
 	var curTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
 		curTxHashs = append(curTxHashs, hash)
 
-		if types.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+		if cfg.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
 			var payload pt.ParacrossAction
 			err := types.Decode(tx.Payload, &payload)
 			if err != nil {
@@ -228,7 +230,7 @@ func setMinerTxResultFork(status *pt.ParacrossNodeStatus, txs []*types.Transacti
 	status.TxResult = []byte(hex.EncodeToString(util.CalcSingleBitMap(curTxHashs, receipts)))
 
 	//ForkLoopCheckCommitTxDone 后只保留全部txreseult 结果
-	if !pt.IsParaForkHeight(status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		//跨链tx结果
 		crossTxHashs := FilterParaCrossTxHashes(txs)
 		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
@@ -247,15 +249,16 @@ func (e *Paracross) ExecLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.
 
 	var set types.LocalDBSet
 	txs := e.GetTxs()
+	cfg := e.GetAPI().GetConfig()
 
 	//removed the 0 vote tx
-	if pt.IsParaForkHeight(payload.Status.MainBlockHeight, pt.ForkCommitTx) {
-		err := setMinerTxResultFork(payload.Status, txs[1:], e.GetReceipt()[1:])
+	if pt.IsParaForkHeight(cfg, payload.Status.MainBlockHeight, pt.ForkCommitTx) {
+		err := setMinerTxResultFork(cfg, payload.Status, txs[1:], e.GetReceipt()[1:])
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err := setMinerTxResult(payload, txs[1:], e.GetReceipt()[1:])
+		err := setMinerTxResult(cfg, payload, txs[1:], e.GetReceipt()[1:])
 		if err != nil {
 			return nil, err
 		}
@@ -281,4 +284,9 @@ func (e *Paracross) ExecLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.
 //ExecLocal_TransferToExec transfer asset to exec local db process
 func (e *Paracross) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
+}
+
+//ExecLocal_SelfConsensStageConfig transfer asset to exec local db process
+func (e *Paracross) ExecLocal_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.execAutoLocalStage(tx, receiptData, index)
 }

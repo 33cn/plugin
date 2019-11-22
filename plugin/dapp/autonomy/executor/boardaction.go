@@ -413,8 +413,8 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 func (a *action) getTotalVotes(height int64) (int32, error) {
 	addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-	if cfg.Total != "" {
-		addr = cfg.Total
+	if subcfg.Total != "" {
+		addr = subcfg.Total
 	}
 	account, err := a.getStartHeightVoteAccount(addr, "", height)
 	if err != nil {
@@ -462,7 +462,7 @@ func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
 		return 0, err
 	}
 	amount := account.Frozen
-	if cfg.UseBalance {
+	if subcfg.UseBalance {
 		amount = account.Balance
 	}
 	return int32(amount / ticketPrice), nil
