@@ -539,20 +539,20 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// 获取抵押物价格
 	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
-		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("CollateralizeBorrow.getLatestPrice", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
 	}
 
 	// 根据价格和需要借贷的金额，计算需要质押的抵押物数量
 	btyFrozen, err := getBtyNumToFrozen(borrow.Value, lastPrice, coll.LiquidationRatio)
 	if err != nil {
-		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("CollateralizeBorrow.getBtyNumToFrozen", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
 	}
 
 	// 检查抵押物账户余额
 	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen, 0) {
-		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrNoBalance)
+		clog.Error("CollateralizeBorrow.CheckExecAccountBalance", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "balance", btyFrozen, "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
 

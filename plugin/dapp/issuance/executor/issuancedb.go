@@ -546,20 +546,20 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	// 获取抵押物价格
 	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("IssuanceDebt.getLatestPrice", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
 	}
 
 	// 根据价格和需要借贷的金额，计算需要质押的抵押物数量
 	btyFrozen, err := getBtyNumToFrozen(debt.Value, lastPrice, issu.LiquidationRatio)
 	if err != nil {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("IssuanceDebt.getBtyNumToFrozen", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
 		return nil, err
 	}
 
 	// 检查抵押物账户余额
 	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen*Coin, 0) {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrNoBalance)
+		clog.Error("IssuanceDebt.CheckExecAccountBalance", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "btyFrozen", btyFrozen, "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
 
