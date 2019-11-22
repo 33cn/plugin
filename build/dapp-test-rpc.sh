@@ -15,8 +15,12 @@ function dapp_test_rpc() {
         dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
-        parallel -k --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
+        parallel -k --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         local ret=$?
+        if [ $ret -ne 0 ]; then
+            wrongdapps=$(cat jobs.log | awk '{print $7,$9 }' | grep -a 1 | awk -F '/' '{print $2}')
+            parallel -k 'cat ./outdir/1/{}/stderr; cat ./outdir/1/{}/stdout' ::: "$wrongdapps"
+        fi
         echo "============ # check dapps test log: ============="
         cat ./jobs.log
         set -e
