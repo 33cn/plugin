@@ -2,8 +2,6 @@
 # shellcheck disable=SC2154
 set -e
 
-
-
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
@@ -36,10 +34,9 @@ function para_init() {
         tomlfile="chain33.para.$index.toml"
         para_set_toml "$tomlfile"
         sed -i $sedfix 's/^authAccount=.*/authAccount="'''"$auth"'''"/g' "$tomlfile"
-        (( index++ ))
+        ((index++))
     done
 }
-
 
 function para_set_toml() {
     cp chain33.para.toml "${1}"
@@ -52,12 +49,12 @@ function para_set_toml() {
     sed -i $sedfix 's/^grpcBindAddr=.*/grpcBindAddr="0.0.0.0:8902"/g' "${1}"
     sed -i $sedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
 
-    if [ -n "$superManager" ];then
+    if [ -n "$superManager" ]; then
         # shellcheck disable=SC1004
         sed -i $sedfix 's/^superManager=.*/superManager='''"$superManager"'''/g' "${1}"
     fi
 
-    if [ -n "$tokenApprs" ];then
+    if [ -n "$tokenApprs" ]; then
         # shellcheck disable=SC1004
         sed -i $sedfix 's/^tokenApprs=.*/tokenApprs='''"$tokenApprs"'''/g' "${1}"
     fi
@@ -65,8 +62,7 @@ function para_set_toml() {
 
 function para_set_wallet() {
     echo "=========== # para set wallet ============="
-    for ((i=0;i<${#authAccount[@]};i++))
-    do
+    for ((i = 0; i < ${#authAccount[@]}; i++)); do
         para_import_wallet "${authPort[$i]}" "${authPrikey[$i]}"
     done
 }
@@ -78,21 +74,18 @@ function para_import_wallet() {
     ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib"
 
     echo "=========== # unlock wallet ============="
-    ./$CHAIN33_CLI  --rpc_laddr "http://localhost:$port"  wallet unlock -p 1314fuzamei -t 0
+    ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" wallet unlock -p 1314fuzamei -t 0
 
     echo "=========== # import private key ============="
     echo "key: ${key}"
-    ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port"  account import_key -k "${key}" -l "paraAuthAccount"
+    ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" account import_key -k "${key}" -l "paraAuthAccount"
 
     echo "=========== # close auto mining ============="
-    ./$CHAIN33_CLI  --rpc_laddr "http://localhost:$port"  wallet auto_mine -f 0
+    ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" wallet auto_mine -f 0
 
     echo "=========== # wallet status ============="
-    ./$CHAIN33_CLI  --rpc_laddr "http://localhost:$port"  wallet status
+    ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" wallet status
 }
-
-
-
 
 function start() {
     echo "=========== # docker-compose ps ============="
@@ -112,11 +105,11 @@ function start() {
     echo "status"
     check_docker_status
 
-#    ./chain33-cli --rpc_laddr http://localhost:18901 block last_header
+    #    ./chain33-cli --rpc_laddr http://localhost:18901 block last_header
     $CLI --rpc_laddr http://localhost:8901 block last_header
 
-
 }
+
 function check_docker_status() {
     status=$(docker-compose ps | grep parachain1_1 | awk '{print $6}')
     statusPara=$(docker-compose ps | grep parachain1_1 | awk '{print $3}')
@@ -145,7 +138,7 @@ function query_tx() {
 
     local times=100
     while true; do
-        ret=$(${CLI} --rpc_laddr http://localhost:8901  tx query -s "${1}" | jq -r ".tx.hash")
+        ret=$(${CLI} --rpc_laddr http://localhost:8901 tx query -s "${1}" | jq -r ".tx.hash")
         echo "query hash is ${1}, return ${ret} "
         if [ "${ret}" != "${1}" ]; then
             sleep 5
@@ -163,15 +156,14 @@ function query_tx() {
 
 function create_yml() {
     touch docker-compose.yml
-cat >> docker-compose.yml << EOF
+    cat >>docker-compose.yml <<EOF
 version: '3'
 
 services:
 EOF
 
-    for ((i=1;i<=${#authAccount[@]};i++))
-    do
-cat >> docker-compose.yml << EOF
+    for ((i = 1; i <= ${#authAccount[@]}; i++)); do
+        cat >>docker-compose.yml <<EOF
   parachain$i:
     build:
       context: .
@@ -192,8 +184,7 @@ function create_storage() {
     mkdir -p storage
     cd storage
 
-    for ((i=0;i<${#authAccount[@]};i++))
-    do
+    for ((i = 0; i < ${#authAccount[@]}; i++)); do
         dirfile="parachain$i"
         mkdir -p "$dirfile"
     done
@@ -213,7 +204,7 @@ function para_create_nodegroup() {
     echo "=========== # para chain create node group ============="
     local auths=""
     for auth in "${authAccount[@]}"; do
-        if [ -z $auths ];then
+        if [ -z $auths ]; then
             auths="$auth"
         else
             auths="$auths,$auth"
@@ -224,37 +215,33 @@ function para_create_nodegroup() {
     ##apply
     txhash=$(${CLI} --rpc_laddr http://localhost:8901 --paraName "user.p.$paraName." send para nodegroup apply -a "$auths" -c "${authFrozenCoins}" -k "$applierPrikey")
     echo "tx=$txhash"
-    query_tx  "${txhash}"
+    query_tx "${txhash}"
     id=$txhash
     echo "need super manager approve id=$txhash"
 
-
-    if [ -n "$superManagerPrikey" ];then
+    if [ -n "$superManagerPrikey" ]; then
         echo "=========== # para chain approve node group ============="
         ##approve
-        txhash=$(${CLI} --rpc_laddr http://localhost:8901  --paraName "user.p.$paraName."   send para nodegroup approve -i "$id" -c "${authFrozenCoins}" -k "$superManagerPrikey")
+        txhash=$(${CLI} --rpc_laddr http://localhost:8901 --paraName "user.p.$paraName." send para nodegroup approve -i "$id" -c "${authFrozenCoins}" -k "$superManagerPrikey")
         echo "tx=$txhash"
         query_tx "${CLI}" "${txhash}"
 
-        status=$(${CLI} --rpc_laddr http://localhost:8901  --paraName "user.p.$paraName."  para nodegroup status | jq -r ".status")
+        status=$(${CLI} --rpc_laddr http://localhost:8901 --paraName "user.p.$paraName." para nodegroup status | jq -r ".status")
         if [ "$status" != 2 ]; then
             echo "status not approve status=$status"
             exit 1
         fi
 
-        ${CLI} --rpc_laddr http://localhost:8901  --paraName "user.p.$paraName."  para nodegroup addrs
+        ${CLI} --rpc_laddr http://localhost:8901 --paraName "user.p.$paraName." para nodegroup addrs
     fi
 
     echo "======== super node group config end ==================="
 }
 
-
-
-
 function main() {
     echo "==============================parachain startup op=$1========================================================"
     ### init para ####
-    if [ "$1" == "start" ];then
+    if [ "$1" == "start" ]; then
         create_storage
         create_build
         para_init
@@ -265,11 +252,11 @@ function main() {
         check_docker_container
     fi
 
-    if [ "$1" == "nodegroup" ];then
+    if [ "$1" == "nodegroup" ]; then
         para_create_nodegroup
     fi
 
-    if [ "$1" == "wallet" ];then
+    if [ "$1" == "wallet" ]; then
         para_set_wallet
     fi
 
